@@ -154,7 +154,7 @@ import {
 	getSummaryForDatastores,
 	wrapContext,
 } from "./channelCollection.js";
-import { IPerfSignalReport, ReportOpPerfTelemetry } from "./connectionTelemetry.js";
+import { ReportOpPerfTelemetry } from "./connectionTelemetry.js";
 import { ContainerFluidHandleContext } from "./containerHandleContext.js";
 import { channelToDataStore } from "./dataStore.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
@@ -209,7 +209,7 @@ import {
 	IPendingLocalState,
 	PendingStateManager,
 } from "./pendingStateManager.js";
-import { processSignalForTelemetry } from "./signalProcessing.js";
+import { createNewSignalEnvelope, SignalManager } from "./signalProcessing.js";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	DocumentsSchemaController,
@@ -913,8 +913,6 @@ export async function loadContainerRuntime(
 
 const defaultMaxConsecutiveReconnects = 7;
 
-const defaultTelemetrySignalSampleCount = 100;
-
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
@@ -1448,17 +1446,8 @@ export class ContainerRuntime
 	private emitDirtyDocumentEvent = true;
 	private readonly useDeltaManagerOpsProxy: boolean;
 	private readonly closeSummarizerDelayMs: number;
-	private readonly _signalTracking: IPerfSignalReport = {
-		totalSignalsSentInLatencyWindow: 0,
-		signalsLost: 0,
-		signalsOutOfOrder: 0,
-		signalsSentSinceLastLatencyMeasurement: 0,
-		broadcastSignalSequenceNumber: 0,
-		signalTimestamp: 0,
-		roundTripSignalSequenceNumber: undefined,
-		trackingSignalSequenceNumber: undefined,
-		minimumTrackingSignalSequenceNumber: undefined,
-	};
+
+	private readonly signalManager = new SignalManager();
 
 	/**
 	 * Summarizer is responsible for coordinating when to send generate and send summaries.
@@ -1884,12 +1873,12 @@ export class ContainerRuntime
 		// downstream stores to wrap the signal.
 		parentContext.submitSignal = (type: string, content: unknown, targetClientId?: string) => {
 			const envelope1 = content as IEnvelope;
-			const envelope2 = this.createNewSignalEnvelope(
-				envelope1.address,
-				type,
-				envelope1.contents,
+			const envelope2 = createNewSignalEnvelope(envelope1.address, type, envelope1.contents);
+			return this.signalManager.submitEnvelopedSignal(
+				this.submitSignalFn,
+				envelope2,
+				targetClientId,
 			);
-			return this.submitEnvelopedSignal(envelope2, targetClientId);
 		};
 
 		let snapshot: ISnapshot | ISnapshotTree | undefined = getSummaryForDatastores(
@@ -2796,14 +2785,7 @@ export class ContainerRuntime
 				0x3cd /* Connection is possible only if container exists in storage */,
 			);
 			if (changeOfState) {
-				this._signalTracking.signalsLost = 0;
-				this._signalTracking.signalsOutOfOrder = 0;
-				this._signalTracking.signalTimestamp = 0;
-				this._signalTracking.signalsSentSinceLastLatencyMeasurement = 0;
-				this._signalTracking.totalSignalsSentInLatencyWindow = 0;
-				this._signalTracking.roundTripSignalSequenceNumber = undefined;
-				this._signalTracking.trackingSignalSequenceNumber = undefined;
-				this._signalTracking.minimumTrackingSignalSequenceNumber = undefined;
+				this.signalManager.resetTracking();
 			}
 		}
 
@@ -3266,20 +3248,11 @@ export class ContainerRuntime
 
 		// Only collect signal telemetry for broadcast messages sent by the current client.
 		if (message.clientId === this.clientId) {
-			const signalTrackingUpdate = processSignalForTelemetry(
+			this.signalManager.processSignalForTelemetry(
 				envelope,
-				this._signalTracking,
 				this.mc.logger,
 				this.consecutiveReconnects,
 			);
-
-			// If necessary, update signal tracking object based on the results of processing the signal
-			if (signalTrackingUpdate !== undefined) {
-				for (const [key, value] of Object.entries(signalTrackingUpdate)) {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- signalTrackingUpdate has the same type as this._signalTracking, the properties match
-					this._signalTracking[key] = value;
-				}
-			}
 		}
 
 		if (envelope.address === undefined) {
@@ -3506,59 +3479,6 @@ export class ContainerRuntime
 		return true;
 	}
 
-	private createNewSignalEnvelope(
-		address: string | undefined,
-		type: string,
-		content: unknown,
-	): Omit<ISignalEnvelope, "broadcastSignalSequenceNumber"> {
-		const newEnvelope: Omit<ISignalEnvelope, "broadcastSignalSequenceNumber"> = {
-			address,
-			contents: { type, content },
-		};
-
-		return newEnvelope;
-	}
-
-	private submitEnvelopedSignal(envelope: ISignalEnvelope, targetClientId?: string): void {
-		const isBroadcastSignal = targetClientId === undefined;
-
-		if (isBroadcastSignal) {
-			const clientBroadcastSignalSequenceNumber = ++this._signalTracking
-				.broadcastSignalSequenceNumber;
-			// Stamp with the broadcast signal sequence number.
-			envelope.clientBroadcastSignalSequenceNumber = clientBroadcastSignalSequenceNumber;
-
-			this._signalTracking.signalsSentSinceLastLatencyMeasurement++;
-
-			if (
-				this._signalTracking.minimumTrackingSignalSequenceNumber === undefined ||
-				this._signalTracking.trackingSignalSequenceNumber === undefined
-			) {
-				// Signal monitoring window is undefined
-				// Initialize tracking to expect the next signal sent by the connected client.
-				this._signalTracking.minimumTrackingSignalSequenceNumber =
-					clientBroadcastSignalSequenceNumber;
-				this._signalTracking.trackingSignalSequenceNumber =
-					clientBroadcastSignalSequenceNumber;
-			}
-
-			// We should not track the round trip of a new signal in the case we are already tracking one.
-			if (
-				clientBroadcastSignalSequenceNumber % defaultTelemetrySignalSampleCount === 1 &&
-				this._signalTracking.roundTripSignalSequenceNumber === undefined
-			) {
-				this._signalTracking.signalTimestamp = Date.now();
-				this._signalTracking.roundTripSignalSequenceNumber =
-					clientBroadcastSignalSequenceNumber;
-				this._signalTracking.totalSignalsSentInLatencyWindow +=
-					this._signalTracking.signalsSentSinceLastLatencyMeasurement;
-				this._signalTracking.signalsSentSinceLastLatencyMeasurement = 0;
-			}
-		}
-
-		this.submitSignalFn(envelope, targetClientId);
-	}
-
 	/**
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
@@ -3573,8 +3493,12 @@ export class ContainerRuntime
 	 */
 	public submitSignal(type: string, content: unknown, targetClientId?: string): void {
 		this.verifyNotClosed();
-		const envelope = this.createNewSignalEnvelope(undefined /* address */, type, content);
-		return this.submitEnvelopedSignal(envelope, targetClientId);
+		const envelope = createNewSignalEnvelope(undefined /* address */, type, content);
+		return this.signalManager.submitEnvelopedSignal(
+			this.submitSignalFn,
+			envelope,
+			targetClientId,
+		);
 	}
 
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {

@@ -11,102 +11,200 @@ import type {
 
 import type { IPerfSignalReport } from "./connectionTelemetry.js";
 
-/**
- * Processes incoming signals for telemetry tracking.
- * @remarks
- * Instead of modifying the input signalTracking object, it returns an object with updates to be applied,
- * or undefined if no changes are needed.
- */
-export function processSignalForTelemetry(
-	envelope: ISignalEnvelope,
-	signalTracking: IPerfSignalReport,
-	logger: ITelemetryLoggerExt,
-	consecutiveReconnects: number,
-): IPerfSignalReport | undefined {
-	const {
-		clientBroadcastSignalSequenceNumber,
-		contents: envelopeContents,
-		address: envelopeAddress,
-	} = envelope;
+const defaultTelemetrySignalSampleCount = 100;
 
-	if (clientBroadcastSignalSequenceNumber === undefined) {
-		return undefined;
-	}
-
-	if (
-		signalTracking.trackingSignalSequenceNumber === undefined ||
-		signalTracking.minimumTrackingSignalSequenceNumber === undefined
-	) {
-		return undefined;
-	}
-
-	// Initialize the result with the received values
-	const result: IPerfSignalReport = {
-		...signalTracking,
+export function createNewSignalEnvelope(
+	address: string | undefined,
+	type: string,
+	content: unknown,
+): Omit<ISignalEnvelope, "broadcastSignalSequenceNumber"> {
+	const newEnvelope: Omit<ISignalEnvelope, "broadcastSignalSequenceNumber"> = {
+		address,
+		contents: { type, content },
 	};
 
-	if (clientBroadcastSignalSequenceNumber >= signalTracking.trackingSignalSequenceNumber) {
-		// Calculate the number of signals lost and log the event.
-		const signalsLost =
-			clientBroadcastSignalSequenceNumber - signalTracking.trackingSignalSequenceNumber;
-		if (signalsLost > 0) {
-			result.signalsLost = signalTracking.signalsLost + signalsLost;
-			logger.sendErrorEvent({
-				eventName: "SignalLost",
-				details: {
-					signalsLost, // Number of lost signals detected.
-					expectedSequenceNumber: signalTracking.trackingSignalSequenceNumber, // The next expected signal sequence number.
-					clientBroadcastSignalSequenceNumber, // Actual signal sequence number received.
-				},
-			});
+	return newEnvelope;
+}
+
+export class SignalManager {
+	private readonly signalTracking: IPerfSignalReport = {
+		totalSignalsSentInLatencyWindow: 0,
+		signalsLost: 0,
+		signalsOutOfOrder: 0,
+		signalsSentSinceLastLatencyMeasurement: 0,
+		broadcastSignalSequenceNumber: 0,
+		signalTimestamp: 0,
+		roundTripSignalSequenceNumber: undefined,
+		trackingSignalSequenceNumber: undefined,
+		minimumTrackingSignalSequenceNumber: undefined,
+	};
+
+	/**
+	 * Resets the signal tracking state in the {@link SignalManager}.
+	 * @param signalTracking - ONLY FOR TESTING. Allows setting the signal tracking state in the {@link SignalManager} to specific values.
+	 */
+	public resetTracking(signalTracking?: IPerfSignalReport): void {
+		if (signalTracking === undefined) {
+			this.signalTracking.signalsLost = 0;
+			this.signalTracking.signalsOutOfOrder = 0;
+			this.signalTracking.signalTimestamp = 0;
+			this.signalTracking.signalsSentSinceLastLatencyMeasurement = 0;
+			this.signalTracking.totalSignalsSentInLatencyWindow = 0;
+			this.signalTracking.roundTripSignalSequenceNumber = undefined;
+			this.signalTracking.trackingSignalSequenceNumber = undefined;
+			this.signalTracking.minimumTrackingSignalSequenceNumber = undefined;
+		} else {
+			for (const [key, value] of Object.entries(signalTracking)) {
+				// Object.entries() "forgets" the typing but we know we're working on an object of the same type
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+				this.signalTracking[key] = value;
+			}
 		}
-		// Update the tracking signal sequence number to the next expected signal in the sequence.
-		result.trackingSignalSequenceNumber = clientBroadcastSignalSequenceNumber + 1;
-	} else if (
-		// Check if this is a signal in range of interest.
-		clientBroadcastSignalSequenceNumber >= signalTracking.minimumTrackingSignalSequenceNumber
-	) {
-		result.signalsOutOfOrder = signalTracking.signalsOutOfOrder + 1;
-		const details: TelemetryEventPropertyTypeExt = {
-			expectedSequenceNumber: signalTracking.trackingSignalSequenceNumber, // The next expected signal sequence number.
-			clientBroadcastSignalSequenceNumber, // Sequence number of the out of order signal.
-		};
-		// Only log `contents.type` when address is for container to avoid chance that contents type is customer data.
-		if (envelopeAddress === undefined) {
-			details.contentsType = envelopeContents.type; // Type of signal that was received out of order.
-		}
-		logger.sendTelemetryEvent({
-			eventName: "SignalOutOfOrder",
-			details,
-		});
 	}
 
-	if (
-		signalTracking.roundTripSignalSequenceNumber !== undefined &&
-		clientBroadcastSignalSequenceNumber >= signalTracking.roundTripSignalSequenceNumber
-	) {
-		if (clientBroadcastSignalSequenceNumber === signalTracking.roundTripSignalSequenceNumber) {
-			// Latency tracked signal has been received.
-			// We now emit telemetry with the roundtrip duration of the tracked signal.
-			// The telemetry event also includes metrics for broadcast signals (sent, lost, and out of order),
-			// and these metrics are reset after emitting the event.
-			const duration = Date.now() - signalTracking.signalTimestamp;
-			logger.sendPerformanceEvent({
-				eventName: "SignalLatency",
-				details: {
-					duration, // Roundtrip duration of the tracked signal in milliseconds.
-					sent: result.totalSignalsSentInLatencyWindow, // Signals sent since the last logged SignalLatency event.
-					lost: result.signalsLost, // Signals lost since the last logged SignalLatency event.
-					outOfOrder: result.signalsOutOfOrder, // Out of order signals since the last logged SignalLatency event.
-					reconnectCount: consecutiveReconnects, // Container reconnect count.
-				},
-			});
-			result.signalsLost = 0;
-			result.signalsOutOfOrder = 0;
-			result.signalTimestamp = 0;
-			result.totalSignalsSentInLatencyWindow = 0;
+	/**
+	 * Returns the signal tracking state in the {@link SignalManager}.
+	 * @remarks Only for testing purposes.
+	 */
+	public readonly signalTrackingState: IPerfSignalReport = this.signalTracking;
+
+	/**
+	 * Processes incoming signals for telemetry tracking.
+	 */
+	public processSignalForTelemetry(
+		envelope: ISignalEnvelope,
+		logger: ITelemetryLoggerExt,
+		consecutiveReconnects: number,
+	): void {
+		const {
+			clientBroadcastSignalSequenceNumber,
+			contents: envelopeContents,
+			address: envelopeAddress,
+		} = envelope;
+
+		if (clientBroadcastSignalSequenceNumber === undefined) {
+			return undefined;
 		}
-		result.roundTripSignalSequenceNumber = undefined;
+
+		if (
+			this.signalTracking.trackingSignalSequenceNumber === undefined ||
+			this.signalTracking.minimumTrackingSignalSequenceNumber === undefined
+		) {
+			return undefined;
+		}
+
+		if (
+			clientBroadcastSignalSequenceNumber >= this.signalTracking.trackingSignalSequenceNumber
+		) {
+			// Calculate the number of signals lost and log the event.
+			const signalsLost =
+				clientBroadcastSignalSequenceNumber - this.signalTracking.trackingSignalSequenceNumber;
+			if (signalsLost > 0) {
+				this.signalTracking.signalsLost += signalsLost;
+				logger.sendErrorEvent({
+					eventName: "SignalLost",
+					details: {
+						signalsLost, // Number of lost signals detected.
+						expectedSequenceNumber: this.signalTracking.trackingSignalSequenceNumber, // The next expected signal sequence number.
+						clientBroadcastSignalSequenceNumber, // Actual signal sequence number received.
+					},
+				});
+			}
+			// Update the tracking signal sequence number to the next expected signal in the sequence.
+			this.signalTracking.trackingSignalSequenceNumber =
+				clientBroadcastSignalSequenceNumber + 1;
+		} else if (
+			// Check if this is a signal in range of interest.
+			clientBroadcastSignalSequenceNumber >=
+			this.signalTracking.minimumTrackingSignalSequenceNumber
+		) {
+			this.signalTracking.signalsOutOfOrder++;
+			const details: TelemetryEventPropertyTypeExt = {
+				expectedSequenceNumber: this.signalTracking.trackingSignalSequenceNumber, // The next expected signal sequence number.
+				clientBroadcastSignalSequenceNumber, // Sequence number of the out of order signal.
+			};
+			// Only log `contents.type` when address is for container to avoid chance that contents type is customer data.
+			if (envelopeAddress === undefined) {
+				details.contentsType = envelopeContents.type; // Type of signal that was received out of order.
+			}
+			logger.sendTelemetryEvent({
+				eventName: "SignalOutOfOrder",
+				details,
+			});
+		}
+
+		if (
+			this.signalTracking.roundTripSignalSequenceNumber !== undefined &&
+			clientBroadcastSignalSequenceNumber >= this.signalTracking.roundTripSignalSequenceNumber
+		) {
+			if (
+				clientBroadcastSignalSequenceNumber ===
+				this.signalTracking.roundTripSignalSequenceNumber
+			) {
+				// Latency tracked signal has been received.
+				// We now emit telemetry with the roundtrip duration of the tracked signal.
+				// The telemetry event also includes metrics for broadcast signals (sent, lost, and out of order),
+				// and these metrics are reset after emitting the event.
+				const duration = Date.now() - this.signalTracking.signalTimestamp;
+				logger.sendPerformanceEvent({
+					eventName: "SignalLatency",
+					details: {
+						duration, // Roundtrip duration of the tracked signal in milliseconds.
+						sent: this.signalTracking.totalSignalsSentInLatencyWindow, // Signals sent since the last logged SignalLatency event.
+						lost: this.signalTracking.signalsLost, // Signals lost since the last logged SignalLatency event.
+						outOfOrder: this.signalTracking.signalsOutOfOrder, // Out of order signals since the last logged SignalLatency event.
+						reconnectCount: consecutiveReconnects, // Container reconnect count.
+					},
+				});
+				this.signalTracking.signalsLost = 0;
+				this.signalTracking.signalsOutOfOrder = 0;
+				this.signalTracking.signalTimestamp = 0;
+				this.signalTracking.totalSignalsSentInLatencyWindow = 0;
+			}
+			this.signalTracking.roundTripSignalSequenceNumber = undefined;
+		}
 	}
-	return result;
+
+	public submitEnvelopedSignal(
+		submitFn: (envelope: ISignalEnvelope, targetClientId?: string) => void,
+		envelope: ISignalEnvelope,
+		targetClientId?: string,
+	): void {
+		const isBroadcastSignal = targetClientId === undefined;
+
+		if (isBroadcastSignal) {
+			const clientBroadcastSignalSequenceNumber = ++this.signalTracking
+				.broadcastSignalSequenceNumber;
+			// Stamp with the broadcast signal sequence number.
+			envelope.clientBroadcastSignalSequenceNumber = clientBroadcastSignalSequenceNumber;
+
+			this.signalTracking.signalsSentSinceLastLatencyMeasurement++;
+
+			if (
+				this.signalTracking.minimumTrackingSignalSequenceNumber === undefined ||
+				this.signalTracking.trackingSignalSequenceNumber === undefined
+			) {
+				// Signal monitoring window is undefined
+				// Initialize tracking to expect the next signal sent by the connected client.
+				this.signalTracking.minimumTrackingSignalSequenceNumber =
+					clientBroadcastSignalSequenceNumber;
+				this.signalTracking.trackingSignalSequenceNumber = clientBroadcastSignalSequenceNumber;
+			}
+
+			// We should not track the round trip of a new signal in the case we are already tracking one.
+			if (
+				clientBroadcastSignalSequenceNumber % defaultTelemetrySignalSampleCount === 1 &&
+				this.signalTracking.roundTripSignalSequenceNumber === undefined
+			) {
+				this.signalTracking.signalTimestamp = Date.now();
+				this.signalTracking.roundTripSignalSequenceNumber =
+					clientBroadcastSignalSequenceNumber;
+				this.signalTracking.totalSignalsSentInLatencyWindow +=
+					this.signalTracking.signalsSentSinceLastLatencyMeasurement;
+				this.signalTracking.signalsSentSinceLastLatencyMeasurement = 0;
+			}
+		}
+
+		submitFn(envelope, targetClientId);
+	}
 }
