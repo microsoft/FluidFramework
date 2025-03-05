@@ -209,7 +209,7 @@ import {
 	IPendingLocalState,
 	PendingStateManager,
 } from "./pendingStateManager.js";
-import { SignalTelemetryManager } from "./signalProcessing.js";
+import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	DocumentsSchemaController,
