@@ -4,6 +4,7 @@
  */
 
 import { StaticCodeLoader } from "@fluid-example/example-utils";
+import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import {
 	createDetachedContainer,
 	loadExistingContainer,
@@ -42,32 +43,31 @@ const codeLoader = new StaticCodeLoader(new DiceRollerContainerRuntimeFactory())
 
 async function start(): Promise<void> {
 	let id: string;
-	let diceRoller: IDiceRoller;
+	let container: IContainer;
 
 	if (location.hash.length === 0) {
-		const container = await createDetachedContainer({
+		container = await createDetachedContainer({
 			codeDetails: { package: "1.0" },
 			urlResolver,
 			documentServiceFactory,
 			codeLoader,
 		});
-		diceRoller = (await container.getEntryPoint()) as IDiceRoller;
 		await container.attach(createTinyliciousTestCreateNewRequest());
 		if (container.resolvedUrl === undefined) {
-			throw new Error("Resolved Url not available on attached container");
+			throw new Error("Resolved Url unexpectedly missing!");
 		}
 		id = container.resolvedUrl.id;
 	} else {
 		id = location.hash.substring(1);
-		const container = await loadExistingContainer({
+		container = await loadExistingContainer({
 			request: { url: id },
 			urlResolver,
 			documentServiceFactory,
 			codeLoader,
 		});
-		diceRoller = (await container.getEntryPoint()) as IDiceRoller;
 	}
 
+	const diceRoller = (await container.getEntryPoint()) as IDiceRoller;
 	render(diceRoller);
 	updateTabForId(id);
 }

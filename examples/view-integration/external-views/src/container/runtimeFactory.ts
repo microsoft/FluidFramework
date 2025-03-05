@@ -29,8 +29,8 @@ export class DiceRollerContainerRuntimeFactory implements IRuntimeFactory {
 		existing: boolean,
 	): Promise<IRuntime> {
 		const provideEntryPoint = async (
-			containerRuntime: IContainerRuntime,
-		): Promise<FluidObject> => getDataStoreEntryPoint(containerRuntime, diceRollerId);
+			entryPointRuntime: IContainerRuntime,
+		): Promise<FluidObject> => getDataStoreEntryPoint(entryPointRuntime, diceRollerId);
 
 		const runtime = await loadContainerRuntime({
 			context,
