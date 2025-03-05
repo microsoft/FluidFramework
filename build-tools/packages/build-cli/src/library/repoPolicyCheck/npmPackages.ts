@@ -2014,13 +2014,18 @@ export const handlers: Handler[] = [
 				const devDependencyErroredPkgs = devDependencyErrorString?.split(":")[1]?.split(",");
 				const dependencyErroredPkgs = dependencyErrorString?.split(":")[1]?.split(",");
 
-				// Delete unused dev dependency declaration from package.json
-				for (const pkgName of devDependencyErroredPkgs) {
-					delete packageJson.devDependencies?.[pkgName];
+				if (devDependencyErroredPkgs !== undefined && devDependencyErroredPkgs.length > 0) {
+					// Delete unused dev dependency declaration from package.json
+					for (const pkgName of devDependencyErroredPkgs) {
+						delete packageJson.devDependencies?.[pkgName];
+					}
 				}
-				// Delete unused dependency declaration from package.json
-				for (const pkgName of dependencyErroredPkgs) {
-					delete packageJson.dependencies?.[pkgName];
+
+				if (dependencyErroredPkgs !== undefined && dependencyErroredPkgs.length > 0) {
+					// Delete unused dependency declaration from package.json
+					for (const pkgName of dependencyErroredPkgs) {
+						delete packageJson.dependencies?.[pkgName];
+					}
 				}
 			});
 
