@@ -4,6 +4,9 @@
 
 ```ts
 
+// @public
+export type CompatibilityMode = "1" | "2";
+
 // (No @packageDocumentation comment for this package)
 
 ```

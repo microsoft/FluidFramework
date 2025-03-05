@@ -3,17 +3,32 @@
  * Licensed under the MIT License.
  */
 
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+
 import {
 	CompressionAlgorithms,
 	type IContainerRuntimeOptionsInternal,
-} from "@fluidframework/container-runtime/internal";
-import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+} from "./containerRuntime.js";
 
-import type { CompatibilityMode } from "./types.js";
+/**
+ * Valid compatibility modes that may be specified when creating a DOProviderContainerRuntimeFactory.
+ * @public
+ */
+export type CompatibilityMode = "1" | "2";
+
+/**
+ * The default compatibility mode is "1".
+ * This is based on our current cross-client compat policy, which states we must support the most recent
+ * adjacent public major version (currently 1.x).
+ * This value will need to be updated if our compat policy changes, or we release a major public version.
+ * @public
+ */
+export const defaultCompatibilityMode: CompatibilityMode = "1";
 
 /**
  * The CompatibilityMode selected determines the set of runtime options to use. In "1" mode we support
  * full interop with true 1.x clients, while in "2" mode we only support interop with 2.x clients.
+ * @internal
  */
 export const compatibilityModeRuntimeOptions: Record<
 	CompatibilityMode,
@@ -36,6 +51,8 @@ export const compatibilityModeRuntimeOptions: Record<
 		// Explicitly disable running Sweep in compat mode "1". Sweep is supported only in 2.x. So, when 1.x and 2.x
 		// clients are running in parallel, running sweep will fail 1.x clients.
 		gcOptions: { enableGCSweep: undefined },
+
+		disallowedVersions: [],
 	},
 	"2": {
 		// Explicit schema control explicitly makes the container incompatible with 1.x clients, to force their
@@ -47,5 +64,7 @@ export const compatibilityModeRuntimeOptions: Record<
 		// Explicitly disable running Sweep in compat mode "2". Although sweep is supported in 2.x, it is disabled by default.
 		// This setting explicitly disables it to be extra safe.
 		gcOptions: { enableGCSweep: undefined },
+
+		disallowedVersions: ["<2.0"],
 	},
 };
