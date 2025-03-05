@@ -292,8 +292,8 @@ export async function getSession(
 
 	let document: IDocument | null;
 	const docDeletedError = new NetworkError(404, "Document is deleted and cannot be accessed.");
-	const docParams = { tenantId, documentId };
 	try {
+		const docParams = { tenantId, documentId };
 		document = await documentRepository.readOne(docParams);
 		if (document === null) {
 			connectionTrace?.stampStage("FirstAttempNullDocument");
