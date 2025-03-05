@@ -254,6 +254,12 @@
 			"build:readme": {
 				"dependsOn": []
 			},
+			"check:depcheck": {
+				"dependsOn": [
+					"^check:depcheck"
+				],
+				"script": false
+			},
 			"check:format": {
 				"dependsOn": [
 					"check:format:repo"
@@ -268,7 +274,8 @@
 					"layer-check",
 					"syncpack:deps",
 					"syncpack:versions",
-					"check:versions"
+					"check:versions",
+					"check:depcheck"
 				],
 				"script": false
 			},

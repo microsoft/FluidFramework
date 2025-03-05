@@ -161,6 +161,12 @@ module.exports = {
 
 	multiCommandExecutables: ["oclif", "syncpack"],
 	declarativeTasks: {
+		// Depcheck looks at all files in the package, so we need to include all files in the input and output globs.
+		"depcheck": {
+			inputGlobs: ["*.*", "src/**"],
+			outputGlobs: ["*.*", "src/**"],
+			gitignore: ["input", "output"],
+		},
 		// fluid-build lowercases the executable name, so we need to use buildversion instead of buildVersion.
 		"flub check buildversion": {
 			inputGlobs: [
