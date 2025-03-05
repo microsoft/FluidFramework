@@ -203,22 +203,22 @@ describe("Prompt Generation Regression Tests", () => {
 			// We expect an error for this edit because the field is 'completed' not 'complete'
 			{
 				edit: {
-					type: "modify",
+					type: "setField",
 					explanation:
 						"Change the completed field to false for the todo at index 0 in the list of todos",
 					target: { target: todo1Id },
 					field: "complete",
-					modification: false,
+					newValue: false,
 				},
 			},
 			{
 				edit: {
-					type: "modify",
+					type: "setField",
 					explanation:
 						"Change the completed field to false for the todo at index 0 in the list of todos",
 					target: { target: todo1Id },
 					field: "completed",
-					modification: false,
+					newValue: false,
 				},
 			},
 		];
@@ -291,12 +291,12 @@ describe("Prompt Generation Regression Tests", () => {
 		const simpleSchema = getSimpleSchema(Tree.schema(view.root));
 		applyAgentEdit(
 			{
-				type: "modify",
+				type: "setField",
 				explanation:
 					"Change the completed field to false for the todo at index 0 in the list of todos",
 				target: { target: todo1Id },
 				field: "completed",
-				modification: false,
+				newValue: false,
 			},
 			idGenerator,
 			simpleSchema.definitions,

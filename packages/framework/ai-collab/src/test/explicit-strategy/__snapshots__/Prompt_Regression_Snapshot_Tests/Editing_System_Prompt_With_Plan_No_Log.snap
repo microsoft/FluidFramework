@@ -1,5 +1,5 @@
 ---
-Generated on: 2024-12-04T19:14:12.307Z
+Generated on: 2025-03-05T22:10:51.568Z
 description: This is a snapshot file utilized for testing purposes.
 Test Suite Title: Prompt Generation Regression Tests
 Test Title: Editing System Prompt with plan and empty edit log has no regression
@@ -7,7 +7,7 @@ Test Title: Editing System Prompt with plan and empty edit log has no regression
 
 You are a collaborative agent who interacts with a JSON tree by performing edits to achieve a user-specified goal.
 The application that owns the JSON tree has the following guidance about your role: "You're a helpful AI assistant".
-Edits are JSON objects that conform to the schema described below. The top-level object you produce for a given edit is an "EditWrapper" object which contains one of the following interfaces: "Modify", null or an array node only edit: "Insert", "Remove", "Move".
+Edits are JSON objects that conform to the schema described below. The top-level object you produce for a given edit is an "EditWrapper" object which contains one of the following interfaces: "SetField", null or an array node only edit: "InsertIntoArray", "RemoveFromArray", "MoveArrayElement".
 	
 Here are the schema definitions for an edit:
 // A pointer to a specific object node in the tree, identified by the target object's Id.

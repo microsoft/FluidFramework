@@ -51,8 +51,7 @@ export const typeField = "__fluid_type";
 export const objectIdKey = "__fluid_objectId";
 
 /**
- * Describes an edit to a field within a node.
- * @remarks TODO: what is the [key: string] for?
+ * An object being inserted (via an insertion or modification edit) into a tree.
  */
 export interface TreeEditObject {
 	[key: string]: TreeEditValue;
@@ -82,14 +81,14 @@ export interface EditWrapper {
 /**
  * Union type representing all possible types of edits that can be made to a tree.
  */
-export type TreeEdit = Insert | Modify | Remove | Move;
+export type TreeEdit = InsertIntoArray | SetField | RemoveFromArray | MoveArrayElement;
 
 /**
  * The base interface for all types of {@link TreeEdit}.
  */
 export interface Edit {
 	explanation: string;
-	type: "insert" | "modify" | "remove" | "move";
+	type: "setField" | "insertIntoArray" | "removeFromArray" | "moveArrayElement";
 }
 
 /**
@@ -133,7 +132,7 @@ export interface ObjectPlace extends ObjectTarget {
 
 /**
  * A range of objects within an array. This allows the LLM to select multiple nodes at once,
- * for example during an {@link Remove} operation to remove a range of nodes.
+ * for example during an {@link RemoveFromArray} operation to remove a range of nodes.
  */
 export interface Range {
 	from: ObjectPlace;
@@ -141,10 +140,10 @@ export interface Range {
 }
 
 /**
- * Describes an operation to insert a new node into the tree.
+ * Describes an operation to insert a new node into an array.
  */
-export interface Insert extends Edit {
-	type: "insert";
+export interface InsertIntoArray extends Edit {
+	type: "insertIntoArray";
 	content: TreeEditObject | JsonPrimitive;
 	destination: ObjectPlace | ArrayPlace;
 }
@@ -152,26 +151,29 @@ export interface Insert extends Edit {
 /**
  * Describes an operation to modify an existing node in the tree.
  */
-export interface Modify extends Edit {
-	type: "modify";
+export interface SetField extends Edit {
+	type: "setField";
 	target: ObjectTarget;
 	field: string;
-	modification: TreeEditValue;
+	newValue: TreeEditValue;
 }
 
 /**
  * Describes an operation to remove either a specific node or a range of nodes in an array.
  */
-export interface Remove extends Edit {
-	type: "remove";
+export interface RemoveFromArray extends Edit {
+	type: "removeFromArray";
 	source: Selection;
 }
 
 /**
- * Describes an operation to move a node within an array
+ * Describes an operation to move a node within an array or between arrays
  */
-export interface Move extends Edit {
-	type: "move";
+export interface MoveArrayElement extends Edit {
+	type: "moveArrayElement";
 	source: Selection;
 	destination: ObjectPlace | ArrayPlace;
 }
+
+// 1. Array of edits instead of a single edit per prompt
+// 2. Optionally specify an ID on each new node to leverage in subsequent edits

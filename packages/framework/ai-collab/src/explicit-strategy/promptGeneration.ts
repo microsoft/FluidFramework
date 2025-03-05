@@ -20,7 +20,14 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { createZodJsonValidator } from "typechat/zod";
 
-import { objectIdKey, type TreeEdit } from "./agentEditTypes.js";
+import {
+	objectIdKey,
+	type InsertIntoArray,
+	type MoveArrayElement,
+	type RemoveFromArray,
+	type SetField,
+	type TreeEdit,
+} from "./agentEditTypes.js";
 import type { IdGenerator } from "./idGenerator.js";
 import { doesNodeContainArraySchema, generateGenericEditTypes } from "./typeGeneration.js";
 import { fail } from "./utils.js";
@@ -140,8 +147,8 @@ export function getEditingSystemPrompt(
 	).getSchemaText();
 
 	const topLevelEditWrapperDescription = doesNodeContainArraySchema(treeNode)
-		? `contains one of the following interfaces: "Modify", null or an array node only edit: "Insert", "Remove", "Move"`
-		: `contains the interface "Modify" or null`;
+		? `contains one of the following interfaces: "${"SetField" satisfies Capitalize<SetField["type"]>}", null or an array node only edit: "${"InsertIntoArray" satisfies Capitalize<InsertIntoArray["type"]>}", "${"RemoveFromArray" satisfies Capitalize<RemoveFromArray["type"]>}", "${"MoveArrayElement" satisfies Capitalize<MoveArrayElement["type"]>}"`
+		: `contains the interface "${"SetField" satisfies Capitalize<SetField["type"]>}" or null`;
 
 	// TODO: security: user prompt in system prompt
 	const systemPrompt = `

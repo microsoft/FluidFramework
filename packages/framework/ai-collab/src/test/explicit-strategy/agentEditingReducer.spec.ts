@@ -137,7 +137,7 @@ describe("applyAgentEdit", () => {
 
 			const insertEdit: TreeEdit = {
 				explanation: "Insert a vector",
-				type: "insert",
+				type: "insertIntoArray",
 				content: { [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
 				destination: {
 					type: "objectPlace",
@@ -149,7 +149,7 @@ describe("applyAgentEdit", () => {
 
 			const insertEdit2: TreeEdit = {
 				explanation: "Insert a vector",
-				type: "insert",
+				type: "insertIntoArray",
 				content: { [typeField]: Vector2.identifier, x2: 3, y2: 4, z2: 5 },
 				destination: {
 					type: "objectPlace",
@@ -216,7 +216,7 @@ describe("applyAgentEdit", () => {
 
 			const insertEdit: TreeEdit = {
 				explanation: "Insert a vector",
-				type: "insert",
+				type: "insertIntoArray",
 				content: { [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
 				destination: {
 					type: "objectPlace",
@@ -279,7 +279,7 @@ describe("applyAgentEdit", () => {
 			const childId = idGenerator.getId(child) ?? fail("ID expected.");
 			const insertEdit: TreeEdit = {
 				explanation: "Insert an object with a field that defaults",
-				type: "insert",
+				type: "insertIntoArray",
 				content: { [typeField]: HasDefault.identifier },
 				destination: {
 					type: "objectPlace",
@@ -328,7 +328,7 @@ describe("applyAgentEdit", () => {
 
 			const insertEdit: TreeEdit = {
 				explanation: "Insert a vector",
-				type: "insert",
+				type: "insertIntoArray",
 				content: { [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
 				destination: {
 					type: "arrayPlace",
@@ -383,7 +383,7 @@ describe("applyAgentEdit", () => {
 
 			const insertEdit: TreeEdit = {
 				explanation: "Insert a vector",
-				type: "insert",
+				type: "insertIntoArray",
 				content: { [typeField]: Vector.identifier, x: 2, nonVectorField: "invalid", z: 4 },
 				destination: {
 					type: "objectPlace",
@@ -419,7 +419,7 @@ describe("applyAgentEdit", () => {
 
 			const insertEdit: TreeEdit = {
 				explanation: "Insert a vector",
-				type: "insert",
+				type: "insertIntoArray",
 				content: { [typeField]: Vector.identifier, x: 3, y: 4, z: 5 },
 				destination: {
 					type: "objectPlace",
@@ -454,10 +454,10 @@ describe("applyAgentEdit", () => {
 
 		const modifyEdit: TreeEdit = {
 			explanation: "Modify a vector",
-			type: "modify",
+			type: "setField",
 			target: { target: vectorId },
 			field: "vectors",
-			modification: [
+			newValue: [
 				{ [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
 				{ [typeField]: Vector2.identifier, x2: 3, y2: 4, z2: 5 },
 			],
@@ -466,10 +466,10 @@ describe("applyAgentEdit", () => {
 
 		const modifyEdit2: TreeEdit = {
 			explanation: "Modify a vector",
-			type: "modify",
+			type: "setField",
 			target: { target: vectorId },
 			field: "bools",
-			modification: [false],
+			newValue: [false],
 		};
 		applyAgentEdit(modifyEdit2, idGenerator, simpleSchema.definitions);
 
@@ -479,10 +479,10 @@ describe("applyAgentEdit", () => {
 
 		const modifyEdit3: TreeEdit = {
 			explanation: "Modify a vector",
-			type: "modify",
+			type: "setField",
 			target: { target: vectorId2 },
 			field: "x",
-			modification: 111,
+			newValue: 111,
 		};
 		applyAgentEdit(modifyEdit3, idGenerator, simpleSchema.definitions);
 
@@ -538,7 +538,7 @@ describe("applyAgentEdit", () => {
 
 			const removeEdit: TreeEdit = {
 				explanation: "remove a vector",
-				type: "remove",
+				type: "removeFromArray",
 				source: { target: vectorId1 },
 			};
 			applyAgentEdit(removeEdit, idGenerator, simpleSchema.definitions);
@@ -581,7 +581,7 @@ describe("applyAgentEdit", () => {
 
 			const removeEdit: TreeEdit = {
 				explanation: "remove a vector",
-				type: "remove",
+				type: "removeFromArray",
 				source: { target: vectorId1 },
 			};
 			applyAgentEdit(removeEdit, idGenerator, simpleSchema.definitions);
@@ -623,7 +623,7 @@ describe("applyAgentEdit", () => {
 
 			const removeEdit: TreeEdit = {
 				explanation: "remove a vector",
-				type: "remove",
+				type: "removeFromArray",
 				source: { target: singleVectorId },
 			};
 			applyAgentEdit(removeEdit, idGenerator, simpleSchema.definitions);
@@ -666,7 +666,7 @@ describe("applyAgentEdit", () => {
 
 			const removeEdit: TreeEdit = {
 				explanation: "remove a vector",
-				type: "remove",
+				type: "removeFromArray",
 				source: { target: singleVectorId },
 			};
 			applyAgentEdit(removeEdit, idGenerator, simpleSchema.definitions);
@@ -706,7 +706,7 @@ describe("applyAgentEdit", () => {
 
 			const removeEdit: TreeEdit = {
 				explanation: "remove the root",
-				type: "remove",
+				type: "removeFromArray",
 				source: { target: rootId },
 			};
 
@@ -744,7 +744,7 @@ describe("applyAgentEdit", () => {
 
 			const removeEdit: TreeEdit = {
 				explanation: "remove a vector",
-				type: "remove",
+				type: "removeFromArray",
 				source: {
 					from: {
 						target: vectorId1,
@@ -802,7 +802,7 @@ describe("applyAgentEdit", () => {
 
 			const removeEdit: TreeEdit = {
 				explanation: "remove a vector",
-				type: "remove",
+				type: "removeFromArray",
 				source: {
 					from: {
 						target: vectorId1,
@@ -857,7 +857,7 @@ describe("applyAgentEdit", () => {
 
 			const removeEdit: TreeEdit = {
 				explanation: "remove a vector",
-				type: "remove",
+				type: "removeFromArray",
 				source: {
 					from: {
 						target: vectorId1,
@@ -907,7 +907,7 @@ describe("applyAgentEdit", () => {
 
 			const moveEdit: TreeEdit = {
 				explanation: "Move a vector",
-				type: "move",
+				type: "moveArrayElement",
 				source: { target: vectorId1 },
 				destination: {
 					type: "arrayPlace",
@@ -974,7 +974,7 @@ describe("applyAgentEdit", () => {
 
 			const moveEdit: TreeEdit = {
 				explanation: "Move a vector",
-				type: "move",
+				type: "moveArrayElement",
 				source: {
 					from: {
 						target: vectorId1,
@@ -1059,7 +1059,7 @@ describe("applyAgentEdit", () => {
 			const vectorId3 = idGenerator.getId(view.root) ?? fail("ID expected.");
 
 			const moveEdit: TreeEdit = {
-				type: "move",
+				type: "moveArrayElement",
 				explanation: "Move a vector",
 				source: {
 					from: {
@@ -1112,7 +1112,7 @@ describe("applyAgentEdit", () => {
 			const vectorId3 = idGenerator.getId(view.root) ?? fail("ID expected.");
 
 			const moveEdit: TreeEdit = {
-				type: "move",
+				type: "moveArrayElement",
 				explanation: "Move a vector",
 				source: {
 					from: {
@@ -1166,7 +1166,7 @@ describe("applyAgentEdit", () => {
 			const vectorId = idGenerator.getId(view.root) ?? fail("ID expected.");
 
 			const moveEdit: TreeEdit = {
-				type: "move",
+				type: "moveArrayElement",
 				explanation: "Move a vector",
 				source: {
 					target: strId,
@@ -1209,7 +1209,7 @@ describe("applyAgentEdit", () => {
 			const vectorId = idGenerator.getId(view.root) ?? fail("ID expected.");
 
 			const moveEdit: TreeEdit = {
-				type: "move",
+				type: "moveArrayElement",
 				explanation: "Move a vector",
 				source: {
 					target: strId,
@@ -1249,7 +1249,7 @@ describe("applyAgentEdit", () => {
 
 		const insertEdit: TreeEdit = {
 			explanation: "Insert a vector",
-			type: "insert",
+			type: "insertIntoArray",
 			content: { [typeField]: Vector.identifier, x: 2, nonVectorField: "invalid", z: 4 },
 			destination: {
 				type: "objectPlace",
@@ -1265,7 +1265,7 @@ describe("applyAgentEdit", () => {
 
 		const insertEdit2: TreeEdit = {
 			explanation: "Insert a vector",
-			type: "insert",
+			type: "insertIntoArray",
 			content: { [typeField]: Vector.identifier, x: 2, nonVectorField: "invalid", z: 4 },
 			destination: {
 				type: "arrayPlace",
@@ -1281,7 +1281,7 @@ describe("applyAgentEdit", () => {
 		);
 
 		const moveEdit: TreeEdit = {
-			type: "move",
+			type: "moveArrayElement",
 			explanation: "Move a vector",
 			source: {
 				from: {
@@ -1310,7 +1310,7 @@ describe("applyAgentEdit", () => {
 		);
 
 		const moveEdit2: TreeEdit = {
-			type: "move",
+			type: "moveArrayElement",
 			explanation: "Move a vector",
 			source: {
 				target: "testObjectId1",
@@ -1331,10 +1331,10 @@ describe("applyAgentEdit", () => {
 
 		const modifyEdit: TreeEdit = {
 			explanation: "Modify a vector",
-			type: "modify",
+			type: "setField",
 			target: { target: "testObjectId" },
 			field: "x",
-			modification: 111,
+			newValue: 111,
 		};
 
 		assert.throws(

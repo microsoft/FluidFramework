@@ -1,5 +1,5 @@
 ---
-Generated on: 2024-12-04T19:14:12.318Z
+Generated on: 2025-03-05T22:10:51.571Z
 description: This is a snapshot file utilized for testing purposes.
 Test Suite Title: Prompt Generation Regression Tests
 Test Title: Editing System Prompt with plan and populated edit log has no regression
@@ -7,7 +7,7 @@ Test Title: Editing System Prompt with plan and populated edit log has no regres
 
 You are a collaborative agent who interacts with a JSON tree by performing edits to achieve a user-specified goal.
 The application that owns the JSON tree has the following guidance about your role: "You're a helpful AI assistant".
-Edits are JSON objects that conform to the schema described below. The top-level object you produce for a given edit is an "EditWrapper" object which contains one of the following interfaces: "Modify", null or an array node only edit: "Insert", "Remove", "Move".
+Edits are JSON objects that conform to the schema described below. The top-level object you produce for a given edit is an "EditWrapper" object which contains one of the following interfaces: "SetField", null or an array node only edit: "InsertIntoArray", "RemoveFromArray", "MoveArrayElement".
 	
 Here are the schema definitions for an edit:
 // A pointer to a specific object node in the tree, identified by the target object's Id.
@@ -76,8 +76,8 @@ interface EditWrapper {
 	The tree is a JSON object with the following schema: interface TestTodoAppSchema { title: string; description: string; todos: Todo[]; } interface Todo { title: string; completed: boolean; }
 	You have made a plan to accomplish the user's goal. The plan is: "Change the completed field to false for the todo at index 0 in the list of todos". You will perform one or more edits that correspond to that plan to accomplish the goal.
 	You have already performed the following edits:
-			1. {"type":"modify","explanation":"Change the completed field to false for the todo at index 0 in the list of todos","target":{"target":"Todo1"},"field":"complete","modification":false} This edit produced an error, and was discarded. The error message was: "Expected field schema"
-2. {"type":"modify","explanation":"Change the completed field to false for the todo at index 0 in the list of todos","target":{"target":"Todo1"},"field":"completed","modification":false}
+			1. {"type":"setField","explanation":"Change the completed field to false for the todo at index 0 in the list of todos","target":{"target":"Todo1"},"field":"complete","newValue":false} This edit produced an error, and was discarded. The error message was: "Expected field schema"
+2. {"type":"setField","explanation":"Change the completed field to false for the todo at index 0 in the list of todos","target":{"target":"Todo1"},"field":"completed","newValue":false}
 			This means that the current state of the tree reflects these changes.
 	The current state of the tree is: {"__fluid_objectId":"TestTodoAppSchema1","title":"My First Todo List","description":"This is a list of todos","todos":[{"__fluid_objectId":"Todo1","title":"Task 1","completed":false},{"__fluid_objectId":"Todo2","title":"Task 2","completed":true}]}.
 	Before you made the above edits the user requested you accomplish the following goal:

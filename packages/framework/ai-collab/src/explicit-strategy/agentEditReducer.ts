@@ -122,7 +122,7 @@ export function applyAgentEdit(
 ): TreeEdit {
 	assertObjectIdsExist(treeEdit, idGenerator);
 	switch (treeEdit.type) {
-		case "insert": {
+		case "insertIntoArray": {
 			const { array, index } = getPlaceInfo(treeEdit.destination, idGenerator);
 
 			const parentNodeSchema = Tree.schema(array);
@@ -149,7 +149,7 @@ export function applyAgentEdit(
 			}
 			fail("inserted node must be of an allowed type");
 		}
-		case "remove": {
+		case "removeFromArray": {
 			const source = treeEdit.source;
 			if (isObjectTarget(source)) {
 				const node = getNodeFromTarget(source, idGenerator);
@@ -183,7 +183,7 @@ export function applyAgentEdit(
 			}
 			return treeEdit;
 		}
-		case "modify": {
+		case "setField": {
 			const node = getNodeFromTarget(treeEdit.target, idGenerator);
 			const { treeNodeSchema } = getSimpleNodeSchema(node);
 
@@ -191,7 +191,7 @@ export function applyAgentEdit(
 				(treeNodeSchema.info as Record<string, ImplicitFieldSchema>)[treeEdit.field] ??
 				fail("Expected field schema");
 
-			const modification = treeEdit.modification;
+			const modification = treeEdit.newValue;
 
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			const schemaIdentifier = (modification as any)[typeField];
@@ -254,10 +254,10 @@ export function applyAgentEdit(
 				? treeEdit
 				: {
 						...treeEdit,
-						modification: contentWithIds(insertedObject, idGenerator),
+						newValue: contentWithIds(insertedObject, idGenerator),
 					};
 		}
-		case "move": {
+		case "moveArrayElement": {
 			// TODO: need to add schema check for valid moves
 			const source = treeEdit.source;
 			const destination = treeEdit.destination;
@@ -423,7 +423,7 @@ function getNodeFromTarget(target: ObjectTarget, idGenerator: IdGenerator): Tree
  */
 function assertObjectIdsExist(treeEdit: TreeEdit, idGenerator: IdGenerator): void {
 	switch (treeEdit.type) {
-		case "insert": {
+		case "insertIntoArray": {
 			if (treeEdit.destination.type === "objectPlace") {
 				if (idGenerator.getNode(treeEdit.destination.target) === undefined) {
 					throw new UsageError(`objectIdKey ${treeEdit.destination.target} does not exist`);
@@ -435,7 +435,7 @@ function assertObjectIdsExist(treeEdit: TreeEdit, idGenerator: IdGenerator): voi
 			}
 			break;
 		}
-		case "remove": {
+		case "removeFromArray": {
 			if (isRange(treeEdit.source)) {
 				const missingObjectIds = [
 					treeEdit.source.from.target,
@@ -453,13 +453,13 @@ function assertObjectIdsExist(treeEdit: TreeEdit, idGenerator: IdGenerator): voi
 			}
 			break;
 		}
-		case "modify": {
+		case "setField": {
 			if (idGenerator.getNode(treeEdit.target.target) === undefined) {
 				throw new UsageError(`objectIdKey ${treeEdit.target.target} does not exist`);
 			}
 			break;
 		}
-		case "move": {
+		case "moveArrayElement": {
 			const invalidObjectIds: string[] = [];
 			// check the source
 			if (isRange(treeEdit.source)) {
