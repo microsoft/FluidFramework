@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { getDataStoreEntryPoint } from "@fluid-example/example-utils";
 import type {
 	IContainerContext,
 	IRuntime,
@@ -30,7 +29,14 @@ export class DiceRollerContainerRuntimeFactory implements IRuntimeFactory {
 	): Promise<IRuntime> {
 		const provideEntryPoint = async (
 			entryPointRuntime: IContainerRuntime,
-		): Promise<FluidObject> => getDataStoreEntryPoint(entryPointRuntime, diceRollerId);
+		): Promise<FluidObject> => {
+			const diceRollerHandle =
+				await entryPointRuntime.getAliasedDataStoreEntryPoint(diceRollerId);
+			if (diceRollerHandle === undefined) {
+				throw new Error("Dice roller missing!");
+			}
+			return diceRollerHandle.get();
+		};
 
 		const runtime = await loadContainerRuntime({
 			context,
