@@ -1874,11 +1874,8 @@ export class ContainerRuntime
 		parentContext.submitSignal = (type: string, content: unknown, targetClientId?: string) => {
 			const envelope1 = content as IEnvelope;
 			const envelope2 = createNewSignalEnvelope(envelope1.address, type, envelope1.contents);
-			return this.signalManager.submitEnvelopedSignal(
-				this.submitSignalFn,
-				envelope2,
-				targetClientId,
-			);
+			this.signalManager.submitEnvelopedSignal(envelope2, targetClientId);
+			this.submitSignalFn(envelope2, targetClientId);
 		};
 
 		let snapshot: ISnapshot | ISnapshotTree | undefined = getSummaryForDatastores(
@@ -3494,11 +3491,8 @@ export class ContainerRuntime
 	public submitSignal(type: string, content: unknown, targetClientId?: string): void {
 		this.verifyNotClosed();
 		const envelope = createNewSignalEnvelope(undefined /* address */, type, content);
-		return this.signalManager.submitEnvelopedSignal(
-			this.submitSignalFn,
-			envelope,
-			targetClientId,
-		);
+		this.signalManager.submitEnvelopedSignal(envelope, targetClientId);
+		this.submitSignalFn(envelope, targetClientId);
 	}
 
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {

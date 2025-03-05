@@ -152,11 +152,7 @@ export class SignalTelemetryManager {
 		}
 	}
 
-	public submitEnvelopedSignal(
-		submitFn: (envelope: ISignalEnvelope, targetClientId?: string) => void,
-		envelope: ISignalEnvelope,
-		targetClientId?: string,
-	): void {
+	public submitEnvelopedSignal(envelope: ISignalEnvelope, targetClientId?: string): void {
 		const isBroadcastSignal = targetClientId === undefined;
 
 		if (isBroadcastSignal) {
@@ -191,7 +187,5 @@ export class SignalTelemetryManager {
 				this.signalTracking.signalsSentSinceLastLatencyMeasurement = 0;
 			}
 		}
-
-		submitFn(envelope, targetClientId);
 	}
 }
