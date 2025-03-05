@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { StaticCodeLoader } from "@fluid-example/example-utils";
-import type { IContainer } from "@fluidframework/container-definitions/legacy";
+import type {
+	ICodeDetailsLoader,
+	IContainer,
+	IFluidCodeDetails,
+	IFluidModuleWithDetails,
+} from "@fluidframework/container-definitions/legacy";
 import {
 	createDetachedContainer,
 	loadExistingContainer,
@@ -25,7 +29,14 @@ import { DiceRollerView } from "./view.js";
 const urlResolver = createInsecureTinyliciousTestUrlResolver();
 const tokenProvider = createInsecureTinyliciousTestTokenProvider();
 const documentServiceFactory = createRouterliciousDocumentServiceFactory(tokenProvider);
-const codeLoader = new StaticCodeLoader(new DiceRollerContainerRuntimeFactory());
+const codeLoader: ICodeDetailsLoader = {
+	load: async (details: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
+		return {
+			module: { fluidExport: new DiceRollerContainerRuntimeFactory() },
+			details,
+		};
+	},
+};
 
 let id: string;
 let container: IContainer;

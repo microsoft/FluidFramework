@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { StaticCodeLoader } from "@fluid-example/example-utils";
-import type { IContainer } from "@fluidframework/container-definitions/legacy";
+import type {
+	ICodeDetailsLoader,
+	IContainer,
+	IFluidCodeDetails,
+	IFluidModuleWithDetails,
+} from "@fluidframework/container-definitions/legacy";
 import {
 	createDetachedContainer,
 	loadExistingContainer,
@@ -38,7 +42,14 @@ const updateTabForId = (id: string): void => {
 
 const urlResolver = new LocalResolver();
 const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
-const codeLoader = new StaticCodeLoader(new DiceRollerContainerRuntimeFactory());
+const codeLoader: ICodeDetailsLoader = {
+	load: async (details: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
+		return {
+			module: { fluidExport: new DiceRollerContainerRuntimeFactory() },
+			details,
+		};
+	},
+};
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
