@@ -43,15 +43,15 @@ const compressionSuite = (getProvider, apis?) => {
 			},
 		};
 
-		let compatOldCreateVersion: boolean = false;
-		let compatOldLoaderVersion: boolean = false;
+		let compatLocalVersion: boolean = false;
+		let compatRemoteVersion: boolean = false;
 
 		beforeEach("createLocalAndRemoteMaps", async () => {
 			provider = await getProvider();
-			// If the runtime version for the loader or the container runtime is 1.4.0, then we need to skip the tests as a lot of the options being tested fail in this version.
+			// If the runtime version for the local or remote container runtime is 1.4.0, then we need to skip the tests as a lot of the options being tested fail in this version.
 			if (provider.type === "TestObjectProviderWithVersionedLoad") {
-				compatOldCreateVersion = apis.containerRuntime.version === "1.4.0";
-				compatOldLoaderVersion = apis.containerRuntimeForLoading.version === "1.4.0";
+				compatLocalVersion = apis.containerRuntime.version === "1.4.0";
+				compatRemoteVersion = apis.containerRuntimeForLoading.version === "1.4.0";
 			}
 		});
 
@@ -79,7 +79,7 @@ const compressionSuite = (getProvider, apis?) => {
 		});
 
 		it("Can compress and process compressed op", async function () {
-			if (compatOldCreateVersion || compatOldLoaderVersion) {
+			if (compatLocalVersion || compatRemoteVersion) {
 				this.skip();
 			}
 			await setupContainers();
@@ -101,7 +101,7 @@ const compressionSuite = (getProvider, apis?) => {
 		});
 
 		it("Processes ops that weren't worth compressing", async function () {
-			if (compatOldCreateVersion || compatOldLoaderVersion) {
+			if (compatLocalVersion || compatRemoteVersion) {
 				this.skip();
 			}
 			await setupContainers();
@@ -120,8 +120,8 @@ const compressionSuite = (getProvider, apis?) => {
 			{ compression: true, grouping: true, chunking: false },
 		].forEach((option) => {
 			it(`Correctly processes messages: compression [${option.compression}] chunking [${option.chunking}] grouping [${option.grouping}]`, async function () {
-				// Only skip for the loader. It can still process the messages if it was created with the old version.
-				if (compatOldLoaderVersion) {
+				// The tests are skipped when it is testing cross compatibility and the remote version is 1.4.0.
+				if (compatRemoteVersion) {
 					this.skip();
 				}
 				// This test has unreproducible flakiness against r11s (non-FRS).
