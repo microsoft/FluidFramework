@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+export { DiceRollerFactory } from "./diceRoller.js";
 export {
 	IDiceRoller,
 	IDiceRollerEvents,
-} from "./diceRoller/index.js";
-export { DiceRollerContainerRuntimeFactory } from "./runtimeFactory.js";
+} from "./interface.js";

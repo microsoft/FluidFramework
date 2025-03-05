@@ -13,7 +13,7 @@ import { loadContainerRuntime } from "@fluidframework/container-runtime/legacy";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 import type { FluidObject } from "@fluidframework/core-interfaces";
 
-import { DiceRollerFactory } from "./diceRoller.js";
+import { DiceRollerFactory } from "./diceRoller/index.js";
 
 const diceRollerId = "dice-roller";
 const diceRollerRegistryKey = "dice-roller";
