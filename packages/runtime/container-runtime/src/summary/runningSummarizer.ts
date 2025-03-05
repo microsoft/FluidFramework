@@ -28,9 +28,9 @@ import {
 
 import { opSize } from "../opProperties.js";
 
-import type { ISummaryConfiguration } from "./summarizer.js";
 import { SummarizeHeuristicRunner } from "./summarizerHeuristics.js";
-import {
+import type {
+	ISummaryConfiguration,
 	EnqueueSummarizeResult,
 	IEnqueueSummarizeOptions,
 	IOnDemandSummarizeOptions,
@@ -49,7 +49,7 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	ISummaryCancellationToken,
 	SubmitSummaryResult,
-	type IRetriableFailureError,
+	IRetriableFailureError,
 } from "./summarizerTypes.js";
 import {
 	IAckedSummary,

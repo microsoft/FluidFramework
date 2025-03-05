@@ -20,19 +20,7 @@ export {
 	neverCancelledSummaryToken,
 	RunWhileConnectedCoordinator,
 } from "./runWhileConnectedCoordinator.js";
-export {
-	Summarizer,
-	formCreateSummarizerFn,
-	summarizerRequestUrl,
-	validateSummaryHeuristicConfiguration,
-	DefaultSummaryConfiguration,
-	type ISummaryConfiguration,
-	type ISummaryConfigurationDisableHeuristics,
-	type ISummaryConfigurationDisableSummarizer,
-	type ISummaryConfigurationHeuristics,
-	type ISummaryBaseConfiguration,
-	isSummariesDisabled,
-} from "./summarizer.js";
+export { Summarizer } from "./summarizer.js";
 export {
 	ISummarizerClientElection,
 	ISummarizerClientElectionEvents,
@@ -77,6 +65,11 @@ export {
 	SubmitSummaryFailureData,
 	SummaryStage,
 	IRetriableFailureError,
+	type ISummaryConfiguration,
+	type ISummaryConfigurationDisableHeuristics,
+	type ISummaryConfigurationDisableSummarizer,
+	type ISummaryConfigurationHeuristics,
+	type ISummaryBaseConfiguration,
 } from "./summarizerTypes.js";
 export {
 	IAckedSummary,
@@ -115,6 +108,13 @@ export {
 	IFluidDataStoreAttributes2,
 	OmitAttributesVersions,
 } from "./summaryFormat.js";
+export {
+	formCreateSummarizerFn,
+	validateSummaryHeuristicConfiguration,
+	summarizerRequestUrl,
+	DefaultSummaryConfiguration,
+	isSummariesDisabled,
+} from "./summaryHelpers.js";
 export {
 	IdCompressorMode,
 	IDocumentSchemaCurrent,
