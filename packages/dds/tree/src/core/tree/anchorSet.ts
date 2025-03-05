@@ -753,7 +753,7 @@ export class AnchorSet implements AnchorLocator {
 						const keys = getOrCreate(eventsByNode, node, () => new Set());
 						keys.add(
 							changedField ??
-								fail("childrenChangedAfterBatch events should have a changedField"),
+								fail(0xb57 /* childrenChangedAfterBatch events should have a changedField */),
 						);
 					}
 				}

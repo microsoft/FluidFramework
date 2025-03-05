@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/map",
-	"version": "2.23.0",
+	"version": "2.30.0",
 	"description": "Distributed map",
 	"homepage": "https://fluidframework.com",
 	"repository": {

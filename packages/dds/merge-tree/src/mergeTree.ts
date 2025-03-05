@@ -1084,7 +1084,14 @@ export class MergeTree {
 		if (!this.collabWindow.collaborating || this.collabWindow.clientId === clientId) {
 			if (node.isLeaf()) {
 				return this.localNetLength(node, refSeq, localSeq);
-			} else if (localSeq === undefined) {
+			} else if (
+				localSeq === undefined ||
+				// All changes are visible. Small note on why we allow refSeq >= this.collabWindow.currentSeq rather than just equality:
+				// merge-tree eventing occurs before the collab window is updated to account for whatever op it is processing, and we want
+				// to support resolving positions from within the event handler which account for that op. e.g. undo-redo relies on this
+				// behavior with local references.
+				(localSeq === this.collabWindow.localSeq && refSeq >= this.collabWindow.currentSeq)
+			) {
 				// Local client sees all segments, even when collaborating
 				return node.cachedLength;
 			} else {
@@ -1179,6 +1186,8 @@ export class MergeTree {
 	 */
 	public referencePositionToLocalPosition(
 		refPos: ReferencePosition,
+		// Note: this is not `this.collabWindow.currentSeq` because we want to support resolving local reference positions to positions
+		// from within event handlers, and the collab window's sequence numbers are not updated in time in all of those cases.
 		refSeq = Number.MAX_SAFE_INTEGER,
 		clientId = this.collabWindow.clientId,
 		localSeq: number | undefined = this.collabWindow.localSeq,
@@ -1680,7 +1689,7 @@ export class MergeTree {
 				} else {
 					assert(
 						oldestUnacked !== undefined,
-						"Expected local obliterate to be defined if newestAcked is not equal to newest",
+						0xb55 /* Expected local obliterate to be defined if newestAcked is not equal to newest */,
 					);
 					// There's a pending local obliterate for this range, so it will be marked as obliterated by us. However,
 					// all other clients are under the impression that the most recent acked obliterate won the right to insert
