@@ -17,6 +17,8 @@ export interface Handler {
 	resolver?: (
 		file: string,
 		root: string,
+		/* output from the handler */
+		handlerOutput: string,
 	) =>
 		| Promise<{ resolved: boolean; message?: string }>
 		| { resolved: boolean; message?: string };

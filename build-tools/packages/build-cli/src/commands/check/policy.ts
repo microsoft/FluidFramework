@@ -273,7 +273,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 					// Resolvers are expected to be run serially to avoid any conflicts.
 					// eslint-disable-next-line no-await-in-loop
 					const resolveResult = await runWithPerf(handler.name, "resolve", async () =>
-						resolver(relPath, gitRoot),
+						resolver(relPath, gitRoot, result),
 					);
 
 					if (resolveResult?.message !== undefined) {
