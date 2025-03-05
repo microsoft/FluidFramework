@@ -4,6 +4,7 @@
  */
 
 import { StaticCodeLoader } from "@fluid-example/example-utils";
+import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import {
 	createDetachedContainer,
 	loadExistingContainer,
@@ -45,16 +46,15 @@ const codeLoader = new StaticCodeLoader(new DiceRollerContainerRuntimeFactory())
  */
 async function createContainerAndRenderInElement(element: HTMLDivElement): Promise<void> {
 	let id: string;
-	let diceRoller: IDiceRoller;
+	let container: IContainer;
 
 	if (location.hash.length === 0) {
-		const container = await createDetachedContainer({
+		container = await createDetachedContainer({
 			codeDetails: { package: "1.0" },
 			urlResolver,
 			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
 			codeLoader,
 		});
-		diceRoller = (await container.getEntryPoint()) as IDiceRoller;
 		const documentId = uuid();
 		await container.attach(createLocalResolverCreateNewRequest(documentId));
 		if (container.resolvedUrl === undefined) {
@@ -64,15 +64,15 @@ async function createContainerAndRenderInElement(element: HTMLDivElement): Promi
 		id = container.resolvedUrl.id;
 	} else {
 		id = location.hash.substring(1);
-		const container = await loadExistingContainer({
+		container = await loadExistingContainer({
 			request: { url: `${window.location.origin}/${id}` },
 			urlResolver,
 			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
 			codeLoader,
 		});
-		diceRoller = (await container.getEntryPoint()) as IDiceRoller;
 	}
 
+	const diceRoller = (await container.getEntryPoint()) as IDiceRoller;
 	const render = (diceRoller: IDiceRoller) => {
 		const appRoot = createRoot(element);
 		appRoot.render(createElement(DiceRollerView, { diceRoller }));
@@ -82,10 +82,6 @@ async function createContainerAndRenderInElement(element: HTMLDivElement): Promi
 	updateTabForId(id);
 	// Render it
 	render(diceRoller);
-
-	// Setting "fluidStarted" is just for our test automation
-	// eslint-disable-next-line @typescript-eslint/dot-notation
-	window["fluidStarted"] = true;
 }
 
 /**
@@ -102,6 +98,10 @@ async function setup(): Promise<void> {
 		throw new Error("sbs-right does not exist");
 	}
 	await createContainerAndRenderInElement(rightElement);
+
+	// Setting "fluidStarted" is just for our test automation
+	// eslint-disable-next-line @typescript-eslint/dot-notation
+	window["fluidStarted"] = true;
 }
 
 setup().catch((e) => {
