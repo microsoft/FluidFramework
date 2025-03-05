@@ -84,30 +84,17 @@ async function createContainerAndRenderInElement(element: HTMLDivElement): Promi
 	render(diceRoller);
 }
 
-/**
- * For local testing we have two div's that we are rendering into independently.
- */
-async function setup(): Promise<void> {
-	const leftElement = document.getElementById("sbs-left") as HTMLDivElement;
-	if (leftElement === null) {
-		throw new Error("sbs-left does not exist");
-	}
-	await createContainerAndRenderInElement(leftElement);
-	const rightElement = document.getElementById("sbs-right") as HTMLDivElement;
-	if (rightElement === null) {
-		throw new Error("sbs-right does not exist");
-	}
-	await createContainerAndRenderInElement(rightElement);
-
-	// Setting "fluidStarted" is just for our test automation
-	// eslint-disable-next-line @typescript-eslint/dot-notation
-	window["fluidStarted"] = true;
+const leftElement = document.getElementById("sbs-left") as HTMLDivElement;
+if (leftElement === null) {
+	throw new Error("sbs-left does not exist");
 }
+await createContainerAndRenderInElement(leftElement);
+const rightElement = document.getElementById("sbs-right") as HTMLDivElement;
+if (rightElement === null) {
+	throw new Error("sbs-right does not exist");
+}
+await createContainerAndRenderInElement(rightElement);
 
-setup().catch((e) => {
-	console.error(e);
-	console.log(
-		"%cThere were issues setting up and starting the in memory Fluid Server",
-		"font-size:30px",
-	);
-});
+// Setting "fluidStarted" is just for our test automation
+// eslint-disable-next-line @typescript-eslint/dot-notation
+window["fluidStarted"] = true;
