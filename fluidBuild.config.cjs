@@ -61,7 +61,7 @@ module.exports = {
 			script: false,
 		},
 		"checks": {
-			dependsOn: ["check:format"],
+			dependsOn: ["check:format", "check:depcheck"],
 			script: false,
 		},
 		"checks:fix": {
@@ -129,6 +129,7 @@ module.exports = {
 		},
 		"check:biome": [],
 		"check:prettier": [],
+		"check:depcheck": [],
 		// ADO #7297: Review why the direct dependency on 'build:esm:test' is necessary.
 		//            Should 'compile' be enough?  compile -> build:test -> build:test:esm
 		"eslint": ["compile", "build:test:esm"],
