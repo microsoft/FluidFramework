@@ -19,7 +19,10 @@ import { transformChildrenUnderTag } from "../Utilities.js";
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.
  */
-export function tableCellToHtml(node: TableCellNode, context: TransformationContext): HastElement {
+export function tableCellToHtml(
+	node: TableCellNode,
+	context: TransformationContext,
+): HastElement {
 	return transformChildrenUnderTag(
 		{ name: node.cellKind === TableCellKind.Header ? "th" : "td" },
 		node.children,
