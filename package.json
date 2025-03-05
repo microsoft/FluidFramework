@@ -381,7 +381,12 @@
 			"@fluentui/react-positioning>@floating-ui/dom": "~1.5.4",
 			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
 			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0",
-			"socket.io-client": "~4.7.5"
+			"socket.io-client": "~4.7.5",
+			"@fluid-tools/build-cli": "file:./build-tools/packages/build-cli",
+			"@fluidframework/build-tools": "file:./build-tools/packages/build-tools",
+			"@fluid-tools/version-tools": "file:./build-tools/packages/version-tools",
+			"@fluidframework/bundle-size-tools": "file:./build-tools/packages/bundle-size-tools",
+			"@fluid-tools/build-infrastructure": "file:./build-tools/packages/build-infrastructure"
 		},
 		"peerDependencyComments": [
 			"@types/node is ignored because it is usually not needed by packages, and if it is, then the package will hit a compilation failure.",

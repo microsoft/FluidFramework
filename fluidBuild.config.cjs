@@ -476,6 +476,27 @@ module.exports = {
 				// test packages
 				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
 			],
+			"npm-check-unused-dependencies": [
+				// Omitting some sub-directories. Following will eventually be removed from the exclude list as
+				// we progressively fix the unused dependency errors.
+				"^azure",
+				"^build-tools/",
+				"^common/",
+				"^docs/",
+				"^examples/",
+				"^experimental/",
+				"package.json",
+				// "^packages/",
+				"^server/charts/",
+				"^server/gitrest/",
+				"^server/gitssh/",
+				"^server/historian/",
+				"^server/routerlicious/",
+				"^tools/",
+				/^\.changeset\//,
+				/^\.github\//,
+				/^\.vscode\//,
+			],
 		},
 		packageNames: {
 			// The allowed package scopes for the repo.
