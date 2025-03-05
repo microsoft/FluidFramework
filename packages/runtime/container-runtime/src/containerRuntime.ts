@@ -1070,7 +1070,7 @@ export class ContainerRuntime
 		// 1. We check if any of the properties in protocolOptions are also defined in runtimeOptions. If they are not the same, we throw an error.
 		// 2. We set any undefined properties in runtimeOptions to the value in protocolOptions.
 		for (const key of Object.keys(protocolOptions)) {
-			if (key in runtimeOptions && protocolOptions[key] !== undefined) {
+			if (protocolOptions[key] !== undefined) {
 				if (runtimeOptions[key] === undefined) {
 					runtimeOptions[key] = protocolOptions[key] as IContainerRuntimeOptions;
 				} else if (runtimeOptions[key] !== protocolOptions[key]) {
