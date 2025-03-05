@@ -13,24 +13,6 @@ const sharedConfig = require("../../../.depcheckrc.base.cjs");
 /**
  * @type {import("depcheck").Config}
  */
-const config = {
-	ignores: [
-		...sharedConfig.ignores,
-
-		// The following deps are actually in use, but depcheck reports them unused.
-
-		// Oclif plugins are used dynamically at runtime.
-		"@oclif/plugin-*",
-
-		// Danger is used at runtime in the dangerfile.
-		"danger",
-
-		// Types from this package are used in markdown.ts.
-		"mdast",
-
-		// This is needed by the fluid-build task integration in policy-check.
-		"tslib",
-	],
-};
+const config = sharedConfig;
 
 module.exports = config;

@@ -114,6 +114,7 @@
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack . --exclude-entrypoints ./internal/test/containerRuntime ./internal/test/deltaScheduler ./internal/test/blobManager ./internal/test/summary ./internal/test/gc",
 		"check:biome": "biome check .",
+		"check:depcheck": "depcheck",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
 		"check:exports:cjs:legacy": "api-extractor run --config api-extractor/api-extractor-lint-legacy.cjs.json",
@@ -183,7 +184,6 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"@tylerbu/sorted-btree-es6": "^1.8.0",
 		"double-ended-queue": "^2.1.0-0",
 		"lz4js": "^0.2.0",
 		"uuid": "^9.0.0"
@@ -212,6 +212,7 @@
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
+		"depcheck": "^1.4.7",
 		"eslint": "~8.55.0",
 		"mocha": "^10.2.0",
 		"mocha-multi-reporters": "^1.5.1",

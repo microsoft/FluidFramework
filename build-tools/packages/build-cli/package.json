@@ -42,6 +42,7 @@
 		"build:readme": "oclif readme --version 0.0.0 --multi --no-aliases",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
+		"check:depcheck": "depcheck",
 		"check:format": "npm run check:biome",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib oclif.manifest.json \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
@@ -56,8 +57,7 @@
 		"postpack": "npm run clean:manifest",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm run test",
-		"test:mocha": "mocha --forbid-only \"lib/test/**/*.test.*js\"",
-		"check:depcheck": "depcheck"
+		"test:mocha": "mocha --forbid-only \"lib/test/**/*.test.*js\""
 	},
 	"c8": {
 		"all": true,

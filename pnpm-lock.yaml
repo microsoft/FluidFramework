@@ -95,6 +95,9 @@ importers:
       danger:
         specifier: ^11.3.0
         version: 11.3.1(encoding@0.1.13)
+      depcheck:
+        specifier: ^1.4.7
+        version: 1.4.7
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
@@ -12302,9 +12305,6 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
-      '@tylerbu/sorted-btree-es6':
-        specifier: ^1.8.0
-        version: 1.8.0
       double-ended-queue:
         specifier: ^2.1.0-0
         version: 2.1.0-0
@@ -12384,6 +12384,9 @@ importers:
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
+      depcheck:
+        specifier: ^1.4.7
+        version: 1.4.7
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
