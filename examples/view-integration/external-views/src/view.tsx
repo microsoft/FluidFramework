@@ -5,7 +5,7 @@
 
 import React, { type FC, useEffect, useState } from "react";
 
-import { IDiceRoller } from "./interface.js";
+import { IDiceRoller } from "./container/index.js";
 
 export interface IDiceRollerViewProps {
 	diceRoller: IDiceRoller;
