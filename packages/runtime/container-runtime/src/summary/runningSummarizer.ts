@@ -26,9 +26,9 @@ import {
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ISummaryConfiguration } from "../containerRuntime.js";
 import { opSize } from "../opProperties.js";
 
+import type { ISummaryConfiguration } from "./summarizer.js";
 import { SummarizeHeuristicRunner } from "./summarizerHeuristics.js";
 import {
 	EnqueueSummarizeResult,

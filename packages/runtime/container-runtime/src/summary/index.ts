@@ -20,7 +20,19 @@ export {
 	neverCancelledSummaryToken,
 	RunWhileConnectedCoordinator,
 } from "./runWhileConnectedCoordinator.js";
-export { Summarizer } from "./summarizer.js";
+export {
+	Summarizer,
+	formCreateSummarizerFn,
+	summarizerRequestUrl,
+	validateSummaryHeuristicConfiguration,
+	DefaultSummaryConfiguration,
+	type ISummaryConfiguration,
+	type ISummaryConfigurationDisableHeuristics,
+	type ISummaryConfigurationDisableSummarizer,
+	type ISummaryConfigurationHeuristics,
+	type ISummaryBaseConfiguration,
+	isSummariesDisabled,
+} from "./summarizer.js";
 export {
 	ISummarizerClientElection,
 	ISummarizerClientElectionEvents,

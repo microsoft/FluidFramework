@@ -27,8 +27,7 @@ import {
 	ITelemetryLoggerPropertyBag,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ISummaryConfigurationHeuristics } from "../containerRuntime.js";
-
+import type { ISummaryConfigurationHeuristics } from "./summarizer.js";
 import {
 	ISummaryAckMessage,
 	ISummaryNackMessage,
