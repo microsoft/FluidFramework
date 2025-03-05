@@ -7,8 +7,9 @@
 // See https://www.typescriptlang.org/docs/handbook/intro-to-js-ts.html#ts-check
 // @ts-check
 
-// This base depcheck config is shared by all packages in the repo.
 /**
+ * This base depcheck config is shared by all packages in the repo.
+ *
  * @type {import("depcheck").Config}
  */
 const config = {
