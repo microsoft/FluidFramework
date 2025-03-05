@@ -14,97 +14,116 @@ import {
 const sf = new SchemaFactory("com.fluidframework.json");
 
 /**
- * {@link AllowedTypes} for primitives types allowed in JSON.
- * @internal
- */
-export const JsonPrimitive = [
-	sf.null,
-	sf.boolean,
-	sf.number,
-	sf.string,
-] as const satisfies AllowedTypes;
-
-/**
- * @internal
- */
-export type JsonPrimitive = TreeNodeFromImplicitAllowedTypes<typeof JsonPrimitive>;
-
-/**
- * {@link AllowedTypes} for any content allowed in the JSON domain.
- * @example
- * ```typescript
- * const tree = TreeAlpha.importConcise(JsonUnion, { example: { nested: true }, value: 5 });
- * ```
- * @internal
- */
-export const JsonUnion = [() => JsonObject, () => JsonArray, ...JsonPrimitive] as const;
-
-/**
- * @internal
- */
-export type JsonUnion = TreeNodeFromImplicitAllowedTypes<typeof JsonUnion>;
-
-/**
- * Do not use. Exists only as a workaround for {@link https://github.com/microsoft/TypeScript/issues/59550} and {@link https://github.com/microsoft/rushstack/issues/4429}.
- * @system @internal
- */
-export const _APIExtractorWorkaroundJsonObjectBase = sf.mapRecursive("object", JsonUnion);
-
-/**
- * Arbitrary JSON object as a {@link TreeNode}.
+ * Utilities for storing JSON data in {@link TreeNode}s.
  * @remarks
- * API of the tree node is more aligned with an es6 map than a JS object using its properties like a map.
- * @example
- * ```typescript
- * // Due to TypeScript restrictions on recursive types, the constructor and be somewhat limiting.
- * const fromArray = new JsonObject([["a", 0]]);
- * // Using `importConcise` can work better for JSON data:
- * const imported = TreeAlpha.importConcise(JsonObject, { a: 0 });
- * // Node API is like a Map:
- * const value = imported.get("a");
- * ```
- * @sealed @internal
+ * Schema which replicate the JSON data model with {@link TreeNode}s.
+ *
+ * This allows JSON to be losslessly round-tripped through a tree with the following limitations:
+ *
+ * 1. Only information that would be preserved by JSON.parse is preserved. This means (among other things) that numbers are limited to JavasScript's numeric precision.
+ *
+ * 2. The order of fields on an object is not preserved. The resulting order is arbitrary.
+ *
+ * JSON data can be imported from JSON into this format using `JSON.parse` then {@link TreeAlpha.importConcise} with the {@link JsonAsTree.(Tree:variable)} schema.
+ *
+ * @alpha
  */
-export class JsonObject extends _APIExtractorWorkaroundJsonObjectBase {}
-{
-	type _check = ValidateRecursiveSchema<typeof JsonObject>;
-}
+export namespace JsonAsTree {
+	/**
+	 * {@link AllowedTypes} for primitives types allowed in JSON.
+	 * @alpha
+	 */
+	export const Primitive = [
+		sf.null,
+		sf.boolean,
+		sf.number,
+		sf.string,
+	] as const satisfies AllowedTypes;
 
-/**
- * D.ts bug workaround, see {@link FixRecursiveArraySchema}.
- * @privateRemarks
- * In the past this this had to reference the base type (_APIExtractorWorkaroundJsonArrayBase).
- * Testing for this in examples/utils/import-testing now shows it has to reference JsonArray instead.
- * @system @internal
- */
-export declare type _RecursiveArrayWorkaroundJsonArray = FixRecursiveArraySchema<
-	typeof JsonArray
->;
+	/**
+	 * @alpha
+	 */
+	export type Primitive = TreeNodeFromImplicitAllowedTypes<typeof Primitive>;
 
-/**
- * Do not use. Exists only as a workaround for {@link https://github.com/microsoft/TypeScript/issues/59550} and {@link https://github.com/microsoft/rushstack/issues/4429}.
- * @system @internal
- */
-export const _APIExtractorWorkaroundJsonArrayBase = sf.arrayRecursive("array", JsonUnion);
+	/**
+	 * {@link AllowedTypes} for any content allowed in the {@link JsonAsTree} domain.
+	 * @example
+	 * ```typescript
+	 * const tree = TreeAlpha.importConcise(JsonAsTree.Union, { example: { nested: true }, value: 5 });
+	 * ```
+	 * @alpha
+	 */
+	export const Tree = [() => JsonObject, () => Array, ...Primitive] as const;
 
-/**
- * Arbitrary JSON object as a {@link TreeNode}.
- * @remarks
- * This can be worked around by using {@link TreeAlpha.importConcise}.
- * @example
- * ```typescript
- * // Due to TypeScript restrictions on recursive types, the constructor can be somewhat limiting.
- * const usingConstructor = new JsonArray(["a", 0, new JsonArray([1])]);
- * // Using `importConcise` can work better for JSON data:
- * const imported = TreeAlpha.importConcise(JsonArray, ["a", 0, [1]]);
- * // Node API is like an Array:
- * const outer: JsonUnion = imported[0];
- * assert(Tree.is(outer, JsonArray));
- * const inner = outer[0];
- * ```
- * @sealed @internal
- */
-export class JsonArray extends _APIExtractorWorkaroundJsonArrayBase {}
-{
-	type _check = ValidateRecursiveSchema<typeof JsonArray>;
+	/**
+	 * @alpha
+	 */
+	export type Tree = TreeNodeFromImplicitAllowedTypes<typeof Tree>;
+
+	/**
+	 * Do not use. Exists only as a workaround for {@link https://github.com/microsoft/TypeScript/issues/59550} and {@link https://github.com/microsoft/rushstack/issues/4429}.
+	 * @system @alpha
+	 */
+	export const _APIExtractorWorkaroundObjectBase = sf.mapRecursive("object", Tree);
+
+	/**
+	 * Arbitrary JSON object as a {@link TreeNode}.
+	 * @remarks
+	 * API of the tree node is more aligned with an es6 map than a JS object using its properties like a map.
+	 * @example
+	 * ```typescript
+	 * // Due to TypeScript restrictions on recursive types, the constructor and be somewhat limiting.
+	 * const fromArray = new JsonAsTreeObject([["a", 0]]);
+	 * // Using `importConcise` can work better for JSON data:
+	 * const imported = TreeAlpha.importConcise(JsonAsTree.Object, { a: 0 });
+	 * // Node API is like a Map:
+	 * const value = imported.get("a");
+	 * ```
+	 * @privateRemarks
+	 * Due to https://github.com/microsoft/TypeScript/issues/61270 this can't be named `Object`.
+	 * @sealed @alpha
+	 */
+	export class JsonObject extends _APIExtractorWorkaroundObjectBase {}
+	{
+		type _check = ValidateRecursiveSchema<typeof JsonObject>;
+	}
+
+	/**
+	 * D.ts bug workaround, see {@link FixRecursiveArraySchema}.
+	 * @privateRemarks
+	 * In the past this this had to reference the base type (_APIExtractorWorkaroundArrayBase).
+	 * Testing for this in examples/utils/import-testing now shows it has to reference JsonAsTree.Array instead.
+	 * @system @alpha
+	 */
+	export declare type _RecursiveArrayWorkaroundJsonArray = FixRecursiveArraySchema<
+		typeof Array
+	>;
+
+	/**
+	 * Do not use. Exists only as a workaround for {@link https://github.com/microsoft/TypeScript/issues/59550} and {@link https://github.com/microsoft/rushstack/issues/4429}.
+	 * @system @alpha
+	 */
+	export const _APIExtractorWorkaroundArrayBase = sf.arrayRecursive("array", Tree);
+
+	/**
+	 * Arbitrary JSON array as a {@link TreeNode}.
+	 * @remarks
+	 * This can be imported using {@link TreeAlpha.importConcise}.
+	 * @example
+	 * ```typescript
+	 * // Due to TypeScript restrictions on recursive types, the constructor can be somewhat limiting.
+	 * const usingConstructor = new JsonAsTree.Array(["a", 0, new JsonAsTree.Array([1])]);
+	 * // Using `importConcise` can work better for JSON data:
+	 * const imported = TreeAlpha.importConcise(JsonAsTree.Array, ["a", 0, [1]]);
+	 * // Node API is like an Array:
+	 * const inner: JsonAsTree.Tree = imported[2];
+	 * assert(Tree.is(inner, JsonAsTree.Array));
+	 * const leaf = inner[0];
+	 * ```
+	 * @sealed @alpha
+	 */
+	export class Array extends _APIExtractorWorkaroundArrayBase {}
+	{
+		type _check = ValidateRecursiveSchema<typeof Array>;
+	}
 }

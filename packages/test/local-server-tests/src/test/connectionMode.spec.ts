@@ -20,11 +20,11 @@ import {
 } from "@fluidframework/server-local-server";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
+	createAndAttachContainerUsingProps,
 	ITestFluidObject,
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	TestFluidObjectFactory,
-	createAndAttachContainerUsingProps,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 

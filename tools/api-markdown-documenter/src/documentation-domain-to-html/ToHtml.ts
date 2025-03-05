@@ -28,7 +28,10 @@ export function documentToHtml(
 ): HastRoot {
 	const transformationContext = createTransformationContext(config);
 
-	const transformedChildren = documentationNodesToHtml(document.children, transformationContext);
+	const transformedChildren = documentationNodesToHtml(
+		document.children,
+		transformationContext,
+	);
 	return treeFromBody(transformedChildren, config);
 }
 

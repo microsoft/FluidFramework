@@ -293,10 +293,14 @@ export async function getSession(
 	let document: IDocument | null;
 	const docDeletedError = new NetworkError(404, "Document is deleted and cannot be accessed.");
 	try {
-		document = await documentRepository.readOne({ tenantId, documentId });
+		const docParams = { tenantId, documentId };
+		document = await documentRepository.readOne(docParams);
 		if (document === null) {
+			connectionTrace?.stampStage("FirstAttempNullDocument");
 			await delay(readDocumentRetryDelay);
-			document = await documentRepository.readOne({ tenantId, documentId });
+			connectionTrace?.stampStage("RetryingNullDocument");
+			document = await documentRepository.readOne(docParams);
+			connectionTrace?.stampStage("SecondAttemptFinished");
 		}
 		if (document === null) {
 			// Retry once in case of DB replication lag should be enough

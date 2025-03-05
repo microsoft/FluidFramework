@@ -10,7 +10,7 @@ import {
 } from "../../../feature-libraries/schema-index/schemaSummarizer.js";
 import { toStoredSchema } from "../../../simple-tree/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
-import { JsonUnion } from "../../../jsonDomainSchema.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 
 describe("schemaSummarizer", () => {
 	describe("encodeTreeSchema", () => {
@@ -24,7 +24,7 @@ describe("schemaSummarizer", () => {
 		});
 
 		it("simple encoded schema", () => {
-			const encoded = encodeTreeSchema(toStoredSchema(JsonUnion));
+			const encoded = encodeTreeSchema(toStoredSchema(JsonAsTree.Tree));
 			takeJsonSnapshot(encoded);
 		});
 	});

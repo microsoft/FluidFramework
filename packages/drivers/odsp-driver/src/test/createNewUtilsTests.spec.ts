@@ -15,13 +15,25 @@ import {
 	SharingLinkRole,
 	SharingLinkScope,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger, MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { useCreateNewModule } from "../createFile/index.js";
+import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest.js";
 import { EpochTracker } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
+import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";
+import {
+	OdspDriverUrlResolverForShareLink,
+	type ShareLinkFetcherProps,
+} from "../odspDriverUrlResolverForShareLink.js";
+import { getLocatorFromOdspUrl } from "../odspFluidFileLink.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
-import { IExistingFileInfo, INewFileInfo, createCacheSnapshotKey } from "../odspUtils.js";
+import {
+	IExistingFileInfo,
+	INewFileInfo,
+	createCacheSnapshotKey,
+	getOdspResolvedUrl,
+} from "../odspUtils.js";
 
 import { mockFetchOk } from "./mockFetch.js";
 
@@ -314,17 +326,23 @@ describe("Create New Utils Tests", () => {
 		mockSharingLinkData.webUrl =
 			"https://mock.url/?nav=cz0lMkZzaXRlVXJsJmQ9ZHJpdmVJZCZmPW1vY2tJdGVtSWQmYz0lMkYmZmx1aWQ9MQ%3D%3D";
 
-		assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
-			shareId: mockSharingData.shareId,
-			link: {
-				role: mockSharingData.sharingLink.type,
-				...mockSharingData.sharingLink,
+		assert.deepStrictEqual(
+			odspResolvedUrl.shareLinkInfo?.createLink,
+			{
+				shareId: mockSharingData.shareId,
+				link: {
+					role: mockSharingData.sharingLink.type,
+					...mockSharingData.sharingLink,
+				},
+				error: undefined,
 			},
-			error: undefined,
-		});
+			"shareLinkInfo should be set",
+		);
 
 		// Extract the Base64 encoded value of `nav`
-		const base64Value = mockSharingLinkData.webUrl.match(/nav=([^&]*)/)?.[1] as string;
+		const base64Value = odspResolvedUrl.shareLinkInfo.createLink.link.webUrl.match(
+			/nav=([^&]*)/,
+		)?.[1] as string;
 		// Decode the Base64 value to UTF-8, \r�� is being stored at the end of the string so we slice it off
 		const decodedValue = fromBase64ToUtf8(base64Value).slice(0, -3);
 
@@ -471,69 +489,131 @@ describe("Create New Utils Tests", () => {
 		assert(!odspResolvedUrl2.isClpCompliantApp, "isClpCompliantApp should be falsy");
 		await epochTracker.removeEntries().catch(() => {});
 	});
-	it("Should set the appropriate nav param info when a resolved url is sent", async () => {
-		const mockOdspResolvedUrl: IOdspResolvedUrl = {
-			...resolvedUrl,
-			odspResolvedUrl: true,
-			summarizer: true,
-			dataStorePath: "/dataStorePath",
-			codeHint: {
-				containerPackageName: "mockContainerPackageName",
+
+	describe("Adds nav parameter to sharing link when the file is created", () => {
+		const odspDocumentServiceFactory = new OdspDocumentServiceFactory(
+			async (_options) => "token",
+			async (_options) => "token",
+			new LocalPersistentCache(2000),
+			{
+				snapshotOptions: { timeout: 2000 },
+				enableSingleRequestForShareLinkWithCreate: true,
 			},
-			fileVersion: "mockFileVersion",
+		);
+
+		const expectedResponse = {
 			context: "mockContext",
-			appName: "mockAppName",
+			sequenceNumber: 1,
+			sha: "shaxxshaxx",
+			itemUrl: `mockItemUrl`,
+			driveId,
+			itemId,
+			id: "Summary Handle",
+			sharing: mockSharingData,
+			dataStorePath: "/path",
 		};
-		const odspResolvedUrl = await useCreateNewModule(createChildLogger(), async (module) =>
-			mockFetchOk(
-				async () =>
-					module.createNewFluidFile(
-						async (_options) => "token",
-						newFileParams,
-						createChildLogger(),
-						createSummary(),
-						epochTracker,
-						fileEntry,
-						false /* createNewCaching */,
-						false /* forceAccessTokenViaAuthorizationHeader */,
-						undefined /* isClpCompliantApp */,
-						true /* enableSingleRequestForShareLinkWithCreate */,
-						mockOdspResolvedUrl,
-					),
-				{
-					itemId: "mockItemId",
-					id: "mockId",
-					sharing: mockSharingData,
-					sharingLinkErrorReason: undefined,
-				},
+
+		const fileName = "fileName";
+		const request = createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
+		const logger = new MockLogger();
+
+		const sharingLinkFetcherProps: ShareLinkFetcherProps = {
+			tokenFetcher: async () => "token",
+			identityType: "Enterprise",
+		};
+
+		const getContext = async (
+			url: IOdspResolvedUrl,
+			dataStorePath: string,
+		): Promise<string> => {
+			if (dataStorePath === "") {
+				return "mockContext";
+			}
+			return url.dataStorePath ?? "mockContext";
+		};
+
+		it("Should set the appropriate nav param info when a request is made", async () => {
+			const shareLinkResolver = new OdspDriverUrlResolverForShareLink(
+				sharingLinkFetcherProps,
+				logger,
+				"=mockAppName",
+				getContext,
+				{ name: "containerPackageName" } /* IContainerPackageInfo */,
+			);
+
+			// We emulate the container behavior where we first have a resolved request and then create a container based on said request.
+			const resolved = await shareLinkResolver.resolve(request);
+			const summary = createSummary();
+			const docService = await mockFetchOk(
+				async () => odspDocumentServiceFactory.createContainer(summary, resolved, logger),
+				expectedResponse,
 				{ "x-fluid-epoch": "epoch1" },
-			),
-		);
+			);
 
-		// 's=%2FsiteUrl&d=driveId&f=mockItemId&c=%2F&fluid=1&a=mockAppName&p=mockContainerPackageName&x=mockContext'
-		// Update the webUrl to the version that has the nav parameter that was supposed to be added
-		mockSharingLinkData.webUrl =
-			"https://mock.url/?nav=cz0lMkZzaXRlVXJsJmQ9ZHJpdmVJZCZmPW1vY2tJdGVtSWQmYz0lMkYmZmx1aWQ9MSZhPW1vY2tBcHBOYW1lJnA9bW9ja0NvbnRhaW5lclBhY2thZ2VOYW1lJng9bW9ja0NvbnRleHQ%3D";
+			const finalResolverUrl = getOdspResolvedUrl(docService.resolvedUrl);
 
-		assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
-			shareId: mockSharingData.shareId,
-			link: {
-				role: mockSharingData.sharingLink.type,
-				...mockSharingData.sharingLink,
-			},
-			error: undefined,
+			// Extract the navigation parameter values from the resolved sharing link url
+			const navParamValues = getLocatorFromOdspUrl(
+				new URL(finalResolverUrl.shareLinkInfo?.createLink?.link?.webUrl ?? ""),
+			);
+
+			// Compare the values to make sure that the nav parameter was added correctly
+			assert.deepEqual(
+				navParamValues,
+				{
+					appName: "=mockAppName",
+					containerPackageName: "containerPackageName",
+					context: "mockContext",
+					dataStorePath: "/",
+					driveId: "driveId",
+					fileVersion: undefined,
+					itemId: "itemId",
+					siteUrl: "https://mock.url/siteUrl",
+				},
+				"Values should be equal",
+			);
 		});
-		// Extract the Base64 encoded value of `nav`
-		const base64Value = mockSharingLinkData.webUrl.match(/nav=([^&]*)/)?.[1] as string;
-		// Decode the Base64 value to UTF-8, need to slice off last unnecessary character
-		const decodedValue = fromBase64ToUtf8(base64Value).slice(0, -1);
 
-		// Compare the values to make sure that the nav parameter was added correctly
-		assert.equal(
-			decodedValue,
-			"s=%2FsiteUrl&d=driveId&f=mockItemId&c=%2F&fluid=1&a=mockAppName&p=mockContainerPackageName&x=mockContext",
-		);
-		// Reset the webUrl to the original value
-		mockSharingLinkData.webUrl = "https://mock.url";
+		it("Should set the appropriate nav param info when a request is made without an app name", async () => {
+			const shareLinkResolver = new OdspDriverUrlResolverForShareLink(
+				sharingLinkFetcherProps,
+				logger,
+				undefined,
+				getContext,
+				{ name: "containerPackageName" } /* IContainerPackageInfo */,
+			);
+
+			// We emulate the container behavior where we first have a resolved request and then create a container based on said request.
+			const resolved = await shareLinkResolver.resolve(request);
+			const summary = createSummary();
+			const docService = await mockFetchOk(
+				async () => odspDocumentServiceFactory.createContainer(summary, resolved, logger),
+				expectedResponse,
+				{ "x-fluid-epoch": "epoch1" },
+			);
+
+			const finalResolverUrl = getOdspResolvedUrl(docService.resolvedUrl);
+
+			// Extract the navigation parameter values from the resolved sharing link url
+			const navParamValues = getLocatorFromOdspUrl(
+				new URL(finalResolverUrl.shareLinkInfo?.createLink?.link?.webUrl ?? ""),
+			);
+
+			// Compare the values to make sure that the nav parameter was added correctly
+			assert.deepEqual(
+				navParamValues,
+				{
+					appName: undefined,
+					containerPackageName: "containerPackageName",
+					context: "mockContext",
+					dataStorePath: "/",
+					driveId: "driveId",
+					fileVersion: undefined,
+					itemId: "itemId",
+					siteUrl: "https://mock.url/siteUrl",
+				},
+				"Values should be equal",
+			);
+		});
 	});
 });

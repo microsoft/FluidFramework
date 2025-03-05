@@ -9,7 +9,6 @@ import {
 	SharedMap,
 	DirectoryFactory,
 	MapFactory,
-	// eslint-disable-next-line import/no-deprecated
 	SharedDirectory,
 } from "@fluidframework/map/internal";
 import type { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";

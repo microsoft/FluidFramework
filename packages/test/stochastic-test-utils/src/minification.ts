@@ -206,18 +206,7 @@ export class FuzzTestMinimizer<TOperation extends BaseOperation> {
 				return false;
 			}
 
-			const stackLines = error.stack.split("\n").map((s) => s.trim());
-
-			const stackTop = stackLines.findIndex((s) => s.startsWith("at"));
-
-			const message = stackLines[stackTop].startsWith("at assert ")
-				? // Reproduce based on the final two lines+col of the error if it is an assert error
-					// This ensures the same assert is triggered by the minified test
-					stackLines
-						.slice(stackTop, stackTop + 2)
-						.join("\n")
-				: // Otherwise the final line is sufficient
-					stackLines[stackTop];
+			const message = extractMessage(error.stack);
 
 			if (this.initialError === undefined) {
 				this.initialError = { message, op: lastOp };
@@ -229,4 +218,26 @@ export class FuzzTestMinimizer<TOperation extends BaseOperation> {
 			);
 		}
 	}
+}
+
+/**
+ * Collect relevant top portion of the stack.
+ * Include enough lines that the error doesn't look the same as too many other errors,
+ * but few enough that the stack doesn't include details not relevant to the error.
+ */
+export function extractMessage(stack: string): string {
+	const stackLines = stack.split("\n").map((s) => s.trim());
+
+	const stackTop = stackLines.findIndex((s) => s.startsWith("at"));
+
+	const linesToKeep: string[] = [];
+	for (const line of stackLines.slice(stackTop)) {
+		linesToKeep.push(line);
+		// Heuristically continue including lines if stack line matches this pattern:
+		if (!line.match(/^at (assert|fail) /)) {
+			break;
+		}
+	}
+
+	return linesToKeep.join("\n");
 }

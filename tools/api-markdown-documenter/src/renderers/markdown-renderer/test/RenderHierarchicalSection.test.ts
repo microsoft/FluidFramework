@@ -23,10 +23,7 @@ describe("HierarchicalSection Markdown rendering tests", () => {
 					HorizontalRuleNode.Singleton,
 					ParagraphNode.createFromPlainText("Bar"),
 				],
-				/* heading: */ HeadingNode.createFromPlainText(
-					"Hello World",
-					/* id: */ "heading-id",
-				),
+				/* heading: */ HeadingNode.createFromPlainText("Hello World", /* id: */ "heading-id"),
 			);
 
 			const result = testRender(input);
@@ -105,10 +102,7 @@ describe("HierarchicalSection Markdown rendering tests", () => {
 					HorizontalRuleNode.Singleton,
 					ParagraphNode.createFromPlainText("Bar"),
 				],
-				/* heading: */ HeadingNode.createFromPlainText(
-					"Hello World",
-					/* id: */ "heading-id",
-				),
+				/* heading: */ HeadingNode.createFromPlainText("Hello World", /* id: */ "heading-id"),
 			);
 
 			const result = testRender(input, { insideTable: true });

@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-const { apiDocsTransform, generateApiDocsSection } = require("./apiDocsLinkSectionTransform.cjs");
+const {
+	apiDocsTransform,
+	generateApiDocsSection,
+} = require("./apiDocsLinkSectionTransform.cjs");
 
 const {
 	generateExampleGettingStartedSection,

@@ -158,10 +158,21 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		clearTimeout(this.sessionEndTimers.get(sessionTimerKey));
 		if (otherConnectedClients.length === 0) {
 			// Start a timer to end the session after a period of inactivity
-			const timer = setTimeout(
-				() => this.handleClientSessionTimeout(existingSession),
-				this.sessionActivityTimeoutMs,
-			);
+			const timer = setTimeout(() => {
+				this.handleClientSessionTimeout(existingSession).catch((error) => {
+					Lumberjack.error(
+						"Failed to cleanup session on timeout",
+						{
+							...getLumberBaseProperties(
+								existingSession.documentId,
+								existingSession.tenantId,
+							),
+							...existingSession.telemetryProperties,
+						},
+						error,
+					);
+				});
+			}, this.sessionActivityTimeoutMs);
 			this.sessionEndTimers.set(sessionTimerKey, timer);
 			// Update the session to have a lastClientLeaveTime
 			await this.sessionManager.addOrUpdateSession({
@@ -198,14 +209,25 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 				now - session.lastClientLeaveTime >
 					this.sessionActivityTimeoutMs + inactiveSessionPruningBuffer,
 		);
-		for (const session of inactiveSessionsToPrune) {
-			// Dependin on how frequently pruning occurs, this could cause the session's
-			// telemetry to indicate the session's duration was longer than it actually was.
-			// However, we can ignore that because it is technically correct that the session
-			// was tracked as "active" for that duration. We log lastClientLeaveTime in the
-			// telemetry so that the actual end time is known.
-			this.handleClientSessionTimeout(session, "pruning");
-		}
+		const clientSessionTimeoutPs: Promise<void>[] = inactiveSessionsToPrune.map(
+			async (session) =>
+				// Depending on how frequently pruning occurs, this could cause the session's
+				// telemetry to indicate the session's duration was longer than it actually was.
+				// However, we can ignore that because it is technically correct that the session
+				// was tracked as "active" for that duration. We log lastClientLeaveTime in the
+				// telemetry so that the actual end time is known.
+				this.handleClientSessionTimeout(session, "pruning").catch((error) => {
+					Lumberjack.error(
+						"Failed to cleanup session on timeout detected by pruning",
+						{
+							...getLumberBaseProperties(session.documentId, session.tenantId),
+							...session.telemetryProperties,
+						},
+						error,
+					);
+				}),
+		);
+		await Promise.all(clientSessionTimeoutPs);
 	}
 
 	private async getSessionAndClients(
@@ -224,10 +246,10 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		return { existingSession, otherConnectedClients };
 	}
 
-	private handleClientSessionTimeout(
+	private async handleClientSessionTimeout(
 		session: ICollaborationSession,
 		reason = "inactivity",
-	): void {
+	): Promise<void> {
 		const now = Date.now();
 		const sessionDurationInMs = now - session.firstClientJoinTime;
 		const metric = Lumberjack.newLumberMetric(LumberEventName.NexusSessionResult, {
@@ -249,16 +271,7 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 
 		// For now, always a "success" result
 		metric.success(`Session ended due to ${reason}`);
-		this.cleanupSessionOnEnd(session).catch((error) => {
-			Lumberjack.error(
-				"Failed to cleanup session on end",
-				{
-					...getLumberBaseProperties(session.documentId, session.tenantId),
-					...session.telemetryProperties,
-				},
-				error,
-			);
-		});
+		return this.cleanupSessionOnEnd(session);
 	}
 
 	private async cleanupSessionOnEnd(session: ICollaborationSession): Promise<void> {

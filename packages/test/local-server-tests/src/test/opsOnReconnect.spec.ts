@@ -32,11 +32,11 @@ import {
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
+	createAndAttachContainerUsingProps,
 	ITestFluidObject,
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	TestFluidObjectFactory,
-	createAndAttachContainerUsingProps,
 	toIDeltaManagerFull,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";

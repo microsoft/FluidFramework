@@ -31,7 +31,7 @@ import { brand } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { numberSchema, stringSchema } from "../../../simple-tree/leafNodeSchema.js";
 import { validateUsageError } from "../../utils.js";
-import { JsonObject } from "../../../jsonDomainSchema.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 
 // Validate a few aspects of shapes that are easier to verify here than via checking the cursor.
 function validateShape(shape: ChunkShape): void {
@@ -83,7 +83,7 @@ describe("uniformChunk", () => {
 		builders: {
 			withKeys: (keys) => {
 				const withKeysShape = new TreeShape(
-					brand(JsonObject.identifier),
+					brand(JsonAsTree.JsonObject.identifier),
 					false,
 					keys.map((key) => [key, emptyShape, 1] as const),
 				);

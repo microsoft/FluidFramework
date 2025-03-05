@@ -31,7 +31,10 @@ const maxHeadingLevel = 6;
  *
  * Observes {@link RenderContext.headingLevel} to determine the heading level to use.
  */
-export function headingToHtml(headingNode: HeadingNode, context: TransformationContext): HastNodes {
+export function headingToHtml(
+	headingNode: HeadingNode,
+	context: TransformationContext,
+): HastNodes {
 	const { headingLevel } = context;
 
 	// HTML only supports heading levels up to 6. If our level is beyond that, we will transform the input to simple

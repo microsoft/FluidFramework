@@ -11,7 +11,11 @@ import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
-import { LoaderHeader, type IContainer } from "@fluidframework/container-definitions/internal";
+import {
+	LoaderHeader,
+	type IContainer,
+	type IRuntimeFactory,
+} from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
@@ -56,7 +60,7 @@ async function getObjectByHandle<T>(dataObject: IDataObject, key: string): Promi
 async function validateNewRoot(
 	rootDataObject: RootDO2,
 	provider: ITestObjectProvider,
-	runtimeFactory: ContainerRuntimeFactoryWithDefaultDataStore,
+	runtimeFactory: IRuntimeFactory,
 	readContainer?: IContainer,
 ) {
 	// Validate in memory objects
@@ -117,7 +121,7 @@ async function validateNewRoot(
 
 export interface IMigrationStrategy {
 	name: string;
-	runtimeFactory: ContainerRuntimeFactoryWithDefaultDataStore;
+	runtimeFactory: IRuntimeFactory;
 	migrateWithSummary(provider: ITestObjectProvider): Promise<string>;
 	migrateWithoutSummary(provider: ITestObjectProvider): Promise<RootDO2>;
 	migrateWithManyContainers(...containers: IContainer[]): Promise<RootDO2[]>;

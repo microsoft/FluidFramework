@@ -22,7 +22,7 @@ import {
 } from "../../feature-libraries/index.js";
 import { brand, isReadonlyArray, type JsonCompatible } from "../../util/index.js";
 
-import { JsonArray, JsonObject } from "../../jsonDomainSchema.js";
+import { JsonAsTree } from "../../jsonDomainSchema.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import {
 	booleanSchema,
@@ -51,9 +51,9 @@ const adapter: CursorAdapter<JsonCompatible> = {
 				if (node === null) {
 					return brand(nullSchema.identifier);
 				} else if (isReadonlyArray(node)) {
-					return brand(JsonArray.identifier);
+					return brand(JsonAsTree.Array.identifier);
 				} else {
-					return brand(JsonObject.identifier);
+					return brand(JsonAsTree.JsonObject.identifier);
 				}
 		}
 	},
@@ -133,13 +133,13 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
 			assert(reader.value !== undefined, 0x84f /* out of schema: missing value */);
 			assert(!isFluidHandle(reader.value), 0x850 /* out of schema: unexpected FluidHandle */);
 			return reader.value;
-		case JsonArray.identifier: {
+		case JsonAsTree.Array.identifier: {
 			reader.enterField(EmptyKey);
 			const result = mapCursorField(reader, cursorToJsonObject);
 			reader.exitField();
 			return result;
 		}
-		case JsonObject.identifier: {
+		case JsonAsTree.JsonObject.identifier: {
 			const result: JsonCompatible = {};
 			mapCursorFields(reader, (cursor) => {
 				const key = cursor.getFieldKey();

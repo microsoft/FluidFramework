@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import type { DataObjectKind } from "@fluidframework/aqueduct/internal";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions/internal";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { ContainerSchema, DataObjectKind, LoadableObjectKind } from "./types.js";
+import type { ContainerSchema, LoadableObjectKind } from "./types.js";
 
 /**
  * Runtime check to determine if an object is a {@link DataObjectKind}.
