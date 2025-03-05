@@ -296,8 +296,9 @@ export async function getSession(
 		document = await documentRepository.readOne({ tenantId, documentId });
 		if (document === null) {
 			await delay(readDocumentRetryDelay);
-			connectionTrace?.stampStage("RetryingNullDocument");
+			connectionTrace?.stampStage("FirstAttempNullDocument");
 			document = await documentRepository.readOne({ tenantId, documentId });
+			connectionTrace?.stampStage("SecondAttemptFinished");
 		}
 		if (document === null) {
 			// Retry once in case of DB replication lag should be enough
