@@ -243,11 +243,11 @@ export const objectWithPossibleRecursion: ObjectWithPossibleRecursion = {
 type ObjectWithOptionalRecursion = {
 	recursive?: ObjectWithOptionalRecursion;
 };
-export const objectWithRecursion: ObjectWithOptionalRecursion = {
+export const objectWithOptionalRecursion: ObjectWithOptionalRecursion = {
 	recursive: {},
 };
 export const objectWithEmbeddedRecursion = {
-	outer: objectWithRecursion,
+	outer: objectWithOptionalRecursion,
 };
 export const objectWithSelfReference: ObjectWithOptionalRecursion = {};
 objectWithSelfReference.recursive = objectWithSelfReference;
@@ -275,7 +275,7 @@ export const objectWithSymbolOrRecursion: ObjectWithSymbolOrRecursion = {
 	recurse: { recurse: Symbol("stop") },
 };
 
-export type ObjectWithFluidHandleOrRecursion = {
+type ObjectWithFluidHandleOrRecursion = {
 	recurseToHandle: ObjectWithFluidHandleOrRecursion | IFluidHandle<string>;
 };
 export const objectWithFluidHandleOrRecursion: ObjectWithFluidHandleOrRecursion = {

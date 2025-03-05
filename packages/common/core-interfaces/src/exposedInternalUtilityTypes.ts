@@ -490,7 +490,7 @@ export namespace InternalUtilityTypes {
 
 	/**
 	 * Replaces any instance where a type T recurses into itself or a portion of
-	 * itself with TReplacement.
+	 * itself with TRecursionMarker.
 	 *
 	 * @typeParam T - Type to process.
 	 * @typeParam TRecursionMarker - Replacement marker type.
@@ -792,7 +792,7 @@ export namespace InternalUtilityTypes {
 
 	/**
 	 * Sentinel type for use when marking points of recursion (in a recursive type).
-	 * Type is expected to be unique, though no lengths is taken to ensure that.
+	 * Type is expected to be unique, though no lengths are taken to ensure that.
 	 *
 	 * @system
 	 */

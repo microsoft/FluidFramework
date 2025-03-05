@@ -13,10 +13,7 @@ import {
 	replaceBigInt,
 	reviveBigInt,
 } from "./testUtils.js";
-import type {
-	ObjectWithFluidHandleOrRecursion,
-	SimpleObjectWithOptionalRecursion,
-} from "./testValues.js";
+import type { SimpleObjectWithOptionalRecursion } from "./testValues.js";
 import {
 	boolean,
 	number,
@@ -93,7 +90,7 @@ import {
 	objectWithMismatchedGetterAndSetterPropertyViaValue,
 	objectWithNever,
 	objectWithPossibleRecursion,
-	objectWithRecursion,
+	objectWithOptionalRecursion,
 	objectWithEmbeddedRecursion,
 	objectWithAlternatingRecursion,
 	objectWithSymbolOrRecursion,
@@ -421,8 +418,8 @@ describe("JsonDeserialized", () => {
 				assertIdenticalTypes(resultRead, objectWithPossibleRecursion);
 			});
 			it("object with optional type recursion", () => {
-				const resultRead = passThru(objectWithRecursion);
-				assertIdenticalTypes(resultRead, objectWithRecursion);
+				const resultRead = passThru(objectWithOptionalRecursion);
+				assertIdenticalTypes(resultRead, objectWithOptionalRecursion);
 			});
 			it("object with deep type recursion", () => {
 				const resultRead = passThru(objectWithEmbeddedRecursion);
@@ -1262,17 +1259,11 @@ describe("JsonDeserialized", () => {
 				});
 				it("object with `IFluidHandle`", () => {
 					const resultRead = passThruHandlingFluidHandle(objectWithFluidHandle);
-					assertIdenticalTypes(
-						resultRead,
-						createInstanceOf<{ handle: IFluidHandle<number> }>(),
-					);
+					assertIdenticalTypes(resultRead, objectWithFluidHandle);
 				});
 				it("object with `IFluidHandle` and recursion", () => {
 					const resultRead = passThruHandlingFluidHandle(objectWithFluidHandleOrRecursion);
-					assertIdenticalTypes(
-						resultRead,
-						createInstanceOf<ObjectWithFluidHandleOrRecursion>(),
-					);
+					assertIdenticalTypes(resultRead, objectWithFluidHandleOrRecursion);
 				});
 			});
 
