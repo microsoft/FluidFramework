@@ -41,12 +41,6 @@ export class SignalTelemetryManager {
 	}
 
 	/**
-	 * Returns the signal tracking state in the {@link SignalTelemetryManager}.
-	 * @remarks Only for testing purposes.
-	 */
-	public readonly signalTrackingState: IPerfSignalReport = this.signalTracking;
-
-	/**
 	 * Processes incoming signals for telemetry tracking.
 	 */
 	public processSignalForTelemetry(
@@ -143,7 +137,10 @@ export class SignalTelemetryManager {
 		}
 	}
 
-	public submitEnvelopedSignal(envelope: ISignalEnvelope, targetClientId?: string): void {
+	public applyTrackingToSignalEnvelope(
+		envelope: ISignalEnvelope,
+		targetClientId?: string,
+	): void {
 		const isBroadcastSignal = targetClientId === undefined;
 
 		if (isBroadcastSignal) {
