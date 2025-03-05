@@ -13,7 +13,13 @@ import { ISharingLinkKind } from "@fluidframework/odsp-driver-definitions/intern
 import { buildOdspShareLinkReqParams, getContainerPackageName } from "./odspUtils.js";
 
 /**
- * Original version of createOdspCreateContainerRequest
+ * Create the request object with url and headers for creating a new file on OneDrive Sharepoint
+ * @param siteUrl - Base url for OneDrive
+ * @param driveId - drive identifier
+ * @param filePath - path where file needs to be created
+ * @param fileName - name of the new file to be created
+ * @param createShareLinkType - type of sharing link you would like to create for this file. ShareLinkTypes
+ * will be deprecated soon, so for any new implementation please provide createShareLinkType of type ShareLink
  * @legacy
  * @alpha
  */
@@ -27,9 +33,17 @@ export function createOdspCreateContainerRequest(
 
 /**
  * Overloaded version of createOdspCreateContainerRequest that takes in containerPackageInfo
+ * @param siteUrl - Base url for OneDrive
+ * @param driveId - drive identifier
+ * @param filePath - path where file needs to be created
+ * @param fileName - name of the new file to be created
+ * @param createShareLinkType - type of sharing link you would like to create for this file. ShareLinkTypes
+ * will be deprecated soon, so for any new implementation please provide createShareLinkType of type ShareLink
+ * @param containerPackageInfo - **DEPRECATED PARAMETER** - container package information which will be used to extract the container package name.
+ * If not given that means that the container package does not have a name.
  * @legacy
  * @alpha
- * @deprecated - To be removed in 2.40
+ * @deprecated To be removed in 2.40
  * Add containerPackageInfo to the OdspDriverUrlResolverForShareLink constructor instead; see https://github.com/microsoft/FluidFramework/issues/23882 for more details.
  * Deprecating overloaded function to remove containerPackageInfo
  */
