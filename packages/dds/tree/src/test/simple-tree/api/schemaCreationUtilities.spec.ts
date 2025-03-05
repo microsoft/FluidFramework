@@ -83,11 +83,7 @@ describe("schemaCreationUtilities", () => {
 	it("enumFromStrings - construction tests", () => {
 		const schemaFactory = new SchemaFactory("com.myApp");
 
-		const ModeNodes = enumFromStrings(new SchemaFactory(`${schemaFactory.scope}.Mode`), [
-			"A",
-			"B",
-			"C",
-		]);
+		const ModeNodes = enumFromStrings(schemaFactory.scopedFactory("Mode"), ["A", "B", "C"]);
 		type ModeNodes = TreeNodeFromImplicitAllowedTypes<typeof ModeNodes.schema>;
 
 		type I0 = NodeFromSchema<(typeof ModeNodes.schema)[0]>;
@@ -128,7 +124,7 @@ describe("schemaCreationUtilities", () => {
 			b = "B",
 		}
 		// Define the schema for each member of the enum using a nested scope to group them together.
-		const ModeNodes = adaptEnum(new SchemaFactory(`${schemaFactory.scope}.Mode`), Mode);
+		const ModeNodes = adaptEnum(schemaFactory.scopedFactory("Mode"), Mode);
 		// Defined the types of the nodes which correspond to this the schema.
 		type ModeNodes = TreeNodeFromImplicitAllowedTypes<typeof ModeNodes.schema>;
 		// An example schema which has an enum as a child.
@@ -156,7 +152,7 @@ describe("schemaCreationUtilities", () => {
 			b = "b",
 			c = 6.3,
 		}
-		const ModeNodes = adaptEnum(new SchemaFactory(`${schemaFactory.scope}.Mode`), Mode);
+		const ModeNodes = adaptEnum(schemaFactory.scopedFactory("Mode"), Mode);
 		type ModeNodes = TreeNodeFromImplicitAllowedTypes<typeof ModeNodes.schema>;
 
 		const fromEnumValue = ModeNodes(Mode.a);
@@ -198,7 +194,7 @@ describe("schemaCreationUtilities", () => {
 			c = "C",
 		}
 		// Uses a nested schema factory, as recommended by adaptEnum's docs to ensure that pattern works.
-		const ModeNodes = adaptEnum(new SchemaFactory(`${schemaFactory.scope}.Mode`), Mode);
+		const ModeNodes = adaptEnum(schemaFactory.scopedFactory("Mode"), Mode);
 		type ModeNodes = TreeNodeFromImplicitAllowedTypes<typeof ModeNodes.schema>;
 
 		const fromEnumValue = ModeNodes(Mode.a);
