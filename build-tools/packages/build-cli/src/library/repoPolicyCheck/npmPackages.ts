@@ -2013,7 +2013,7 @@ export const handlers: Handler[] = [
 			const result: { resolved: boolean; message?: string } = { resolved: true };
 			// ---------- TODO ------------
 			// updatePackageJsonFile(path.dirname(packageJsonFilePath), (packageJson) => {
-				
+
 			// 	const requirements =
 			// 		getFlubConfig(rootDirectoryPath).policy?.publicPackageRequirements;
 			// 	if (requirements === undefined) {
