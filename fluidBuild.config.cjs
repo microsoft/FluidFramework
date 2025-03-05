@@ -529,6 +529,7 @@ module.exports = {
 				["concurrently", "concurrently"],
 				["copyfiles", "copyfiles"],
 				["cross-env", "cross-env"],
+				["depcheck", "depcheck"],
 				["depcruise", "dependency-cruiser"],
 				["eslint", "eslint"],
 				["flub", "@fluid-tools/build-cli"],

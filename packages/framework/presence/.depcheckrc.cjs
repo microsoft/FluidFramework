@@ -14,26 +14,17 @@ const config = {
 	ignores: [
 		// The following deps are actually in use, but depcheck reports them unused.
 
-		// Oclif plugins are used dynamically at runtime.
-		"@oclif/plugin-*",
-
-		// Danger is used at runtime in the dangerfile.
-		"danger",
-
-		// Types from this package are used in markdown.ts.
-		"mdast",
-
-		// This is needed by the fluid-build task integration in policy-check.
-		"tslib",
+		// This mocha plugin is used in the CI pipelines.
+		"mocha-multi-reporters",
 
 		// The following deps are reported as missing, but they are available.
 
 		// We use a 'hack' to make plugins from the shared eslint config available to our packages, those these deps are not
 		// directly needed in the package.
-		"@typescript-eslint/eslint-plugin",
-		"eslint-import-resolver-typescript",
-		"eslint-plugin-tsdoc",
-		"eslint-plugin-unicorn",
+		"eslint-config-prettier",
+
+		// This reference is flagged because of an unusual import in ./src/datastorePresenceManagerFactory.ts
+		"@fluidframework/presence",
 	],
 	ignorePatterns: [],
 };

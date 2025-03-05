@@ -165,6 +165,7 @@
 		"chai": "^4.5.0",
 		"chai-arrays": "^2.2.0",
 		"copyfiles": "^2.4.1",
+		"depcheck": "^1.4.7",
 		"eslint": "~8.57.0",
 		"eslint-config-oclif": "^5.2.1",
 		"eslint-config-oclif-typescript": "^3.1.12",
