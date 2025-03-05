@@ -17,12 +17,15 @@ import {
 } from "@fluidframework/local-driver/legacy";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
-import { DiceRollerContainerRuntimeFactory } from "../src/containerCode.js";
 import { createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { v4 as uuid } from "uuid";
+
+import {
+	DiceRollerContainerRuntimeFactory,
+	type IDiceRoller,
+} from "../src/container/index.js";
 import { DiceRollerView } from "../src/view.js";
-import type { IDiceRoller } from "../src/interface.js";
 
 const updateTabForId = (id: string): void => {
 	// Update the URL with the actual ID

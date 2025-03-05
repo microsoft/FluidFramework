@@ -18,8 +18,7 @@ import { createElement } from "react";
 // eslint-disable-next-line import/no-internal-modules
 import { createRoot } from "react-dom/client";
 
-import { DiceRollerContainerRuntimeFactory } from "./containerCode.js";
-import type { IDiceRoller } from "./interface.js";
+import { DiceRollerContainerRuntimeFactory, type IDiceRoller } from "./container/index.js";
 import { DiceRollerView } from "./view.js";
 
 const updateTabForId = (id: string): void => {
