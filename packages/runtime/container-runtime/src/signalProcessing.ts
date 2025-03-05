@@ -28,25 +28,16 @@ export class SignalTelemetryManager {
 
 	/**
 	 * Resets the signal tracking state in the {@link SignalTelemetryManager}.
-	 * @param signalTracking - ONLY FOR TESTING. Allows setting the signal tracking state in the {@link SignalTelemetryManager} to specific values.
 	 */
-	public resetTracking(
-		signalTracking?: Omit<IPerfSignalReport, "broadcastSignalSequenceNumber">,
-	): void {
-		if (signalTracking === undefined) {
-			this.signalTracking.signalsLost = 0;
-			this.signalTracking.signalsOutOfOrder = 0;
-			this.signalTracking.signalTimestamp = 0;
-			this.signalTracking.signalsSentSinceLastLatencyMeasurement = 0;
-			this.signalTracking.totalSignalsSentInLatencyWindow = 0;
-			this.signalTracking.roundTripSignalSequenceNumber = undefined;
-			this.signalTracking.trackingSignalSequenceNumber = undefined;
-			this.signalTracking.minimumTrackingSignalSequenceNumber = undefined;
-		} else {
-			for (const [key, value] of Object.entries(signalTracking)) {
-				this.signalTracking[key] = value;
-			}
-		}
+	public resetTracking(): void {
+		this.signalTracking.signalsLost = 0;
+		this.signalTracking.signalsOutOfOrder = 0;
+		this.signalTracking.signalTimestamp = 0;
+		this.signalTracking.signalsSentSinceLastLatencyMeasurement = 0;
+		this.signalTracking.totalSignalsSentInLatencyWindow = 0;
+		this.signalTracking.roundTripSignalSequenceNumber = undefined;
+		this.signalTracking.trackingSignalSequenceNumber = undefined;
+		this.signalTracking.minimumTrackingSignalSequenceNumber = undefined;
 	}
 
 	/**
