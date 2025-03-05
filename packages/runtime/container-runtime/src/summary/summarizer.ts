@@ -229,47 +229,6 @@ export class SummarizingWarning
 
 export const summarizerRequestUrl = "_summarizer";
 
-/**
- * Create and retrieve the summarizer
- */
-async function createSummarizer(loader: ILoader, url: string): Promise<ISummarizer> {
-	const request: IRequest = {
-		headers: {
-			[LoaderHeader.cache]: false,
-			[LoaderHeader.clientDetails]: {
-				capabilities: { interactive: false },
-				type: summarizerClientType,
-			},
-			[DriverHeader.summarizingClient]: true,
-			[LoaderHeader.reconnect]: false,
-		},
-		url,
-	};
-
-	const resolvedContainer = await loader.resolve(request);
-	let fluidObject: FluidObject<ISummarizer> | undefined;
-
-	// Older containers may not have the "getEntryPoint" API
-	// ! This check will need to stay until LTS of loader moves past 2.0.0-internal.7.0.0
-	if (resolvedContainer.getEntryPoint === undefined) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
-		const response = (await (resolvedContainer as any).request({
-			url: `/${summarizerRequestUrl}`,
-		})) as IResponse;
-		if (response.status !== 200 || response.mimeType !== "fluid/object") {
-			throw responseToException(response, request);
-		}
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		fluidObject = response.value;
-	} else {
-		fluidObject = await resolvedContainer.getEntryPoint();
-	}
-
-	if (fluidObject?.ISummarizer === undefined) {
-		throw new UsageError("Fluid object does not implement ISummarizer");
-	}
-	return fluidObject.ISummarizer;
-}
 export const createSummarizingWarning = (
 	errorMessage: string,
 	logged: boolean,
@@ -280,7 +239,42 @@ export const createSummarizingWarning = (
  */
 export function formCreateSummarizerFn(loader: ILoader): () => Promise<ISummarizer> {
 	return async () => {
-		return createSummarizer(loader, `/${summarizerRequestUrl}`);
+		const request: IRequest = {
+			headers: {
+				[LoaderHeader.cache]: false,
+				[LoaderHeader.clientDetails]: {
+					capabilities: { interactive: false },
+					type: summarizerClientType,
+				},
+				[DriverHeader.summarizingClient]: true,
+				[LoaderHeader.reconnect]: false,
+			},
+			url: `/${summarizerRequestUrl}`,
+		};
+
+		const resolvedContainer = await loader.resolve(request);
+		let fluidObject: FluidObject<ISummarizer> | undefined;
+
+		// Older containers may not have the "getEntryPoint" API
+		// ! This check will need to stay until LTS of loader moves past 2.0.0-internal.7.0.0
+		if (resolvedContainer.getEntryPoint === undefined) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+			const response = (await (resolvedContainer as any).request({
+				url: `/${summarizerRequestUrl}`,
+			})) as IResponse;
+			if (response.status !== 200 || response.mimeType !== "fluid/object") {
+				throw responseToException(response, request);
+			}
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			fluidObject = response.value;
+		} else {
+			fluidObject = await resolvedContainer.getEntryPoint();
+		}
+
+		if (fluidObject?.ISummarizer === undefined) {
+			throw new UsageError("Fluid object does not implement ISummarizer");
+		}
+		return fluidObject.ISummarizer;
 	};
 }
 
