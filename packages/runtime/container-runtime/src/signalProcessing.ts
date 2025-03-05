@@ -13,20 +13,7 @@ import type { IPerfSignalReport } from "./connectionTelemetry.js";
 
 const defaultTelemetrySignalSampleCount = 100;
 
-export function createNewSignalEnvelope(
-	address: string | undefined,
-	type: string,
-	content: unknown,
-): Omit<ISignalEnvelope, "broadcastSignalSequenceNumber"> {
-	const newEnvelope: Omit<ISignalEnvelope, "broadcastSignalSequenceNumber"> = {
-		address,
-		contents: { type, content },
-	};
-
-	return newEnvelope;
-}
-
-export class SignalManager {
+export class SignalTelemetryManager {
 	private readonly signalTracking: IPerfSignalReport = {
 		totalSignalsSentInLatencyWindow: 0,
 		signalsLost: 0,
@@ -40,8 +27,8 @@ export class SignalManager {
 	};
 
 	/**
-	 * Resets the signal tracking state in the {@link SignalManager}.
-	 * @param signalTracking - ONLY FOR TESTING. Allows setting the signal tracking state in the {@link SignalManager} to specific values.
+	 * Resets the signal tracking state in the {@link SignalTelemetryManager}.
+	 * @param signalTracking - ONLY FOR TESTING. Allows setting the signal tracking state in the {@link SignalTelemetryManager} to specific values.
 	 */
 	public resetTracking(
 		signalTracking?: Omit<IPerfSignalReport, "broadcastSignalSequenceNumber">,
@@ -63,7 +50,7 @@ export class SignalManager {
 	}
 
 	/**
-	 * Returns the signal tracking state in the {@link SignalManager}.
+	 * Returns the signal tracking state in the {@link SignalTelemetryManager}.
 	 * @remarks Only for testing purposes.
 	 */
 	public readonly signalTrackingState: IPerfSignalReport = this.signalTracking;

@@ -209,7 +209,7 @@ import {
 	IPendingLocalState,
 	PendingStateManager,
 } from "./pendingStateManager.js";
-import { createNewSignalEnvelope, SignalManager } from "./signalProcessing.js";
+import { SignalTelemetryManager } from "./signalProcessing.js";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	DocumentsSchemaController,
@@ -1447,7 +1447,7 @@ export class ContainerRuntime
 	private readonly useDeltaManagerOpsProxy: boolean;
 	private readonly closeSummarizerDelayMs: number;
 
-	private readonly signalManager = new SignalManager();
+	private readonly signalManager = new SignalTelemetryManager();
 
 	/**
 	 * Summarizer is responsible for coordinating when to send generate and send summaries.
@@ -4898,4 +4898,17 @@ export class ContainerRuntime
 	private get groupedBatchingEnabled(): boolean {
 		return this.sessionSchema.opGroupingEnabled === true;
 	}
+}
+
+export function createNewSignalEnvelope(
+	address: string | undefined,
+	type: string,
+	content: unknown,
+): Omit<ISignalEnvelope, "broadcastSignalSequenceNumber"> {
+	const newEnvelope: Omit<ISignalEnvelope, "broadcastSignalSequenceNumber"> = {
+		address,
+		contents: { type, content },
+	};
+
+	return newEnvelope;
 }

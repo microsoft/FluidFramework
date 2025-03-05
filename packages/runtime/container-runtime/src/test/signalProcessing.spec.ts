@@ -13,7 +13,8 @@ import {
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 
 import type { IPerfSignalReport } from "../connectionTelemetry.js";
-import { createNewSignalEnvelope, SignalManager } from "../signalProcessing.js";
+import { createNewSignalEnvelope } from "../containerRuntime.js";
+import { SignalTelemetryManager } from "../signalProcessing.js";
 
 const getEnvelopeObject = (
 	clientBroadcastSignalSequenceNumber: number | undefined,
@@ -28,8 +29,8 @@ const getSignalManager = (
 	trackingSignalSequenceNumber?: number,
 	minimumTrackingSignalSequenceNumber?: number,
 	roundTripSignalSequenceNumber?: number,
-): SignalManager => {
-	const signalManager = new SignalManager();
+): SignalTelemetryManager => {
+	const signalManager = new SignalTelemetryManager();
 	signalManager.resetTracking({
 		totalSignalsSentInLatencyWindow: 10,
 		signalsLost: 0,
