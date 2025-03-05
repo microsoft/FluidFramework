@@ -295,8 +295,9 @@ export async function getSession(
 	try {
 		document = await documentRepository.readOne({ tenantId, documentId });
 		if (document === null) {
-			await delay(readDocumentRetryDelay);
 			connectionTrace?.stampStage("FirstAttempNullDocument");
+			await delay(readDocumentRetryDelay);
+			connectionTrace?.stampStage("RetryingNullDocument");
 			document = await documentRepository.readOne({ tenantId, documentId });
 			connectionTrace?.stampStage("SecondAttemptFinished");
 		}
