@@ -15910,7 +15910,7 @@ importers:
         version: 23.0.1(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)
       '@previewjs/plugin-react':
         specifier: ^11.0.0
-        version: 11.0.0(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)(vite@4.5.5(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0))
+        version: 11.0.0(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)(vite@4.5.9(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0))
       '@testing-library/dom':
         specifier: ^10.4.0
         version: 10.4.0
@@ -16020,8 +16020,8 @@ importers:
         specifier: ~5.4.5
         version: 5.4.5
       vite:
-        specifier: ^4.5.2
-        version: 4.5.5(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)
+        specifier: ^4.5.9
+        version: 4.5.9(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)
 
   packages/tools/fetch-tool:
     dependencies:
@@ -27658,8 +27658,8 @@ packages:
   victory-vendor@36.9.2:
     resolution: {integrity: sha512-PnpQQMuxlwYdocC8fIJqVXvkeViHYzotI+NJrCuav0ZYFoq912ZHBk3mCeuj+5/VpodOjPe1z0Fk2ihgzlXqjQ==}
 
-  vite@4.5.5:
-    resolution: {integrity: sha512-ifW3Lb2sMdX+WU91s3R0FyQlAyLxOzCSCP37ujw0+r5POeHPwe6udWVIElKQq8gk3t7b8rkmvqC6IHBpCff4GQ==}
+  vite@4.5.9:
+    resolution: {integrity: sha512-qK9W4xjgD3gXbC0NmdNFFnVFLMWSNiR3swj957yutwzzN16xF/E7nmtAyp1rT9hviDroQANjE4HK3H4WqWdFtw==}
     engines: {node: ^14.18.0 || >=16.0.0}
     hasBin: true
     peerDependencies:
@@ -31888,14 +31888,14 @@ snapshots:
     dependencies:
       '@fluidframework/core-interfaces': 1.4.0
 
-  '@fwouts/vite-tsconfig-paths@4.2.1(typescript@5.4.5)(vite@4.5.5(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0))':
+  '@fwouts/vite-tsconfig-paths@4.2.1(typescript@5.4.5)(vite@4.5.9(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0))':
     dependencies:
       async-mutex: 0.4.1
       debug: 4.4.0(supports-color@8.1.1)
       globrex: 0.1.2
       tsconfck: 2.1.2(typescript@5.4.5)
     optionalDependencies:
-      vite: 4.5.5(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)
+      vite: 4.5.9(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -33533,7 +33533,7 @@ snapshots:
 
   '@previewjs/core@23.0.1(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)':
     dependencies:
-      '@fwouts/vite-tsconfig-paths': 4.2.1(typescript@5.4.5)(vite@4.5.5(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0))
+      '@fwouts/vite-tsconfig-paths': 4.2.1(typescript@5.4.5)(vite@4.5.9(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0))
       '@previewjs/api': 13.0.0
       '@previewjs/config': 4.9.16
       '@previewjs/iframe': 11.0.1
@@ -33555,7 +33555,7 @@ snapshots:
       ts-node: 10.9.2(@types/node@18.19.67)(typescript@5.4.5)
       tsconfig-paths: 4.2.0
       typescript: 5.4.5
-      vite: 4.5.5(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)
+      vite: 4.5.9(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)
     transitivePeerDependencies:
       - '@swc/core'
       - '@swc/wasm'
@@ -33571,14 +33571,14 @@ snapshots:
 
   '@previewjs/iframe@11.0.1': {}
 
-  '@previewjs/plugin-react@11.0.0(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)(vite@4.5.5(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0))':
+  '@previewjs/plugin-react@11.0.0(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)(vite@4.5.9(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0))':
     dependencies:
       '@previewjs/api': 13.0.0
       '@previewjs/serializable-values': 7.0.3
       '@previewjs/storybook-helpers': 3.0.0(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)
       '@previewjs/type-analyzer': 8.0.2
       '@previewjs/vfs': 2.1.4
-      '@vitejs/plugin-react': 4.3.4(vite@4.5.5(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0))
+      '@vitejs/plugin-react': 4.3.4(vite@4.5.9(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0))
       typescript: 5.4.5
     transitivePeerDependencies:
       - '@swc/core'
@@ -34763,14 +34763,14 @@ snapshots:
 
   '@ungap/structured-clone@1.2.1': {}
 
-  '@vitejs/plugin-react@4.3.4(vite@4.5.5(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0))':
+  '@vitejs/plugin-react@4.3.4(vite@4.5.9(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0))':
     dependencies:
       '@babel/core': 7.26.0
       '@babel/plugin-transform-react-jsx-self': 7.25.9(@babel/core@7.26.0)
       '@babel/plugin-transform-react-jsx-source': 7.25.9(@babel/core@7.26.0)
       '@types/babel__core': 7.20.5
       react-refresh: 0.14.2
-      vite: 4.5.5(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)
+      vite: 4.5.9(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -44229,7 +44229,7 @@ snapshots:
       d3-time: 3.1.0
       d3-timer: 3.0.1
 
-  vite@4.5.5(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0):
+  vite@4.5.9(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0):
     dependencies:
       esbuild: 0.18.20
       postcss: 8.4.49

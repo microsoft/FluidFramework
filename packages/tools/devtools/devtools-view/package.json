@@ -133,7 +133,7 @@
 		"simple-git": "^3.19.1",
 		"ts-jest": "^29.1.1",
 		"typescript": "~5.4.5",
-		"vite": "^4.5.2"
+		"vite": "^4.5.9"
 	},
 	"fluid": {
 		"browser": {
