@@ -230,7 +230,7 @@ export class SummarizingWarning
 export const summarizerRequestUrl = "_summarizer";
 
 /**
- * Create and retrieve the summmarizer
+ * Create and retrieve the summarizer
  */
 async function createSummarizer(loader: ILoader, url: string): Promise<ISummarizer> {
 	const request: IRequest = {
