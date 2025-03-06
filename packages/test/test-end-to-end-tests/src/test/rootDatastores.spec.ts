@@ -269,8 +269,8 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 			assert.equal(aliasResult1, "Success");
 			assert.equal(aliasResult2, "Conflict");
 
-			await provider.ensureSynchronized();
 			const container3 = await provider.loadTestContainer(testContainerConfig);
+			await provider.ensureSynchronized();
 			const dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 			assert.ok(await getAliasedDataStoreEntryPoint(dataObject3, alias));
 		});
