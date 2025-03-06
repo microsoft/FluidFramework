@@ -83,12 +83,6 @@ export namespace InternalUtilityTypes {
 		 * Typically this will be `NonNullJsonObjectWith<TupleToUnion<AllowExactly> | AllowExtensionOf>`.
 		 */
 		DegenerateNonNullObjectSubstitute: unknown;
-
-		/**
-		 * Same as `AllowExactly` but separated to allow for `AllowExactly` to
-		 * `unknown` while having internal secondary list.
-		 */
-		InternalAllowExactly: unknown;
 	}
 
 	/**
@@ -380,21 +374,16 @@ export namespace InternalUtilityTypes {
 						T,
 						Controls["AllowExactly"],
 						/* exactly replaced => */ T,
-						/* test for internal exact alternative */ IfExactTypeInUnion<
-							T,
-							Controls["InternalAllowExactly"],
-							/* exactly replaced => */ T,
-							/* test for known types that become null */ T extends undefined | symbol
-								? /* => */ null
-								: // eslint-disable-next-line @typescript-eslint/ban-types
-									T extends Function
-									? ExtractFunctionFromIntersection<T> extends {
-											classification: "exactly Function";
-										}
-										? null
-										: null | TBlessed
-									: TBlessed
-						>
+						/* test for known types that become null */ T extends undefined | symbol
+							? /* => */ null
+							: // eslint-disable-next-line @typescript-eslint/ban-types
+								T extends Function
+								? ExtractFunctionFromIntersection<T> extends {
+										classification: "exactly Function";
+									}
+									? null
+									: null | TBlessed
+								: TBlessed
 					>;
 
 	/**
@@ -942,7 +931,6 @@ export namespace InternalUtilityTypes {
 			: never;
 		DegenerateSubstitute: FormJsonDegenerateType<Options>;
 		DegenerateNonNullObjectSubstitute: FormJsonDegenerateNonNullObjectType<Options>;
-		InternalAllowExactly: never;
 	} extends infer Controls
 		? /* Controls should always satisfy DeserializedFilterControls, but Typescript wants a check */
 			Controls extends DeserializedFilterControls
@@ -958,11 +946,10 @@ export namespace InternalUtilityTypes {
 							JsonDeserializedFilter<
 								TNoRecursionAndOnlyPublics,
 								{
-									AllowExactly: Controls["AllowExactly"];
+									AllowExactly: [...Controls["AllowExactly"], RecursionMarker];
 									AllowExtensionOf: Controls["AllowExtensionOf"];
 									DegenerateSubstitute: Controls["DegenerateSubstitute"];
 									DegenerateNonNullObjectSubstitute: Controls["DegenerateNonNullObjectSubstitute"];
-									InternalAllowExactly: Controls["InternalAllowExactly"] | RecursionMarker;
 								},
 								0
 							>
@@ -1051,64 +1038,57 @@ export namespace InternalUtilityTypes {
 							"not found"
 						> extends true
 					? /* exact alternate type => */ T
-					: /* test for given internal exact alternate */ IfExactTypeInUnion<
-								T,
-								Controls["InternalAllowExactly"],
-								true,
-								"not found"
-							> extends true
-						? /* exact alternate type => */ T
-						: /* test for object */ T extends object
-							? /* object => */ ExtractFunctionFromIntersection<T> extends {
-									classification: "exactly Function";
-								}
-								? /* exactly function => */ never
-								: /* not exactly a function (Function portion, if any, is omitted) */
-									/* => test for array */ T extends readonly (infer _)[]
-									? /* array => */ {
-											/* array items may not not allow undefined */
-											/* use homomorphic mapped type to preserve tuple type */
-											[K in keyof T]: JsonForDeserializedArrayItem<
-												T[K],
-												Controls,
-												JsonDeserializedRecursion<T[K], Controls, RecurseLimit, TAncestorTypes>
-											>;
-										}
-									: /* not an array => test for exactly `object` */ IsExactlyObject<T> extends true
-										? /* `object` => */ Controls["DegenerateNonNullObjectSubstitute"]
-										: /* test for enum like types */ IfEnumLike<T> extends never
-											? /* enum or similar simple type (return as-is) => */ T
-											: /* property bag => */ FlattenIntersection<
-													/* properties with symbol keys or wholly unsupported values are removed */
-													{
-														/* properties with defined values are recursed */
-														[K in keyof T as NonSymbolWithDeserializablePropertyOf<
-															T,
-															Controls["AllowExactly"],
-															Controls["AllowExtensionOf"],
-															K
-														>]: JsonDeserializedRecursion<
-															T[K],
-															Controls,
-															RecurseLimit,
-															TAncestorTypes
-														>;
-													} & {
-														/* properties that may have undefined values are optional */
-														[K in keyof T as NonSymbolWithPossiblyDeserializablePropertyOf<
-															T,
-															Controls["AllowExactly"],
-															Controls["AllowExtensionOf"],
-															K
-														>]?: JsonDeserializedRecursion<
-															T[K],
-															Controls,
-															RecurseLimit,
-															TAncestorTypes
-														>;
-													}
-												>
-							: /* not an object => */ never;
+					: /* test for object */ T extends object
+						? /* object => */ ExtractFunctionFromIntersection<T> extends {
+								classification: "exactly Function";
+							}
+							? /* exactly function => */ never
+							: /* not exactly a function (Function portion, if any, is omitted) */
+								/* => test for array */ T extends readonly (infer _)[]
+								? /* array => */ {
+										/* array items may not not allow undefined */
+										/* use homomorphic mapped type to preserve tuple type */
+										[K in keyof T]: JsonForDeserializedArrayItem<
+											T[K],
+											Controls,
+											JsonDeserializedRecursion<T[K], Controls, RecurseLimit, TAncestorTypes>
+										>;
+									}
+								: /* not an array => test for exactly `object` */ IsExactlyObject<T> extends true
+									? /* `object` => */ Controls["DegenerateNonNullObjectSubstitute"]
+									: /* test for enum like types */ IfEnumLike<T> extends never
+										? /* enum or similar simple type (return as-is) => */ T
+										: /* property bag => */ FlattenIntersection<
+												/* properties with symbol keys or wholly unsupported values are removed */
+												{
+													/* properties with defined values are recursed */
+													[K in keyof T as NonSymbolWithDeserializablePropertyOf<
+														T,
+														Controls["AllowExactly"],
+														Controls["AllowExtensionOf"],
+														K
+													>]: JsonDeserializedRecursion<
+														T[K],
+														Controls,
+														RecurseLimit,
+														TAncestorTypes
+													>;
+												} & {
+													/* properties that may have undefined values are optional */
+													[K in keyof T as NonSymbolWithPossiblyDeserializablePropertyOf<
+														T,
+														Controls["AllowExactly"],
+														Controls["AllowExtensionOf"],
+														K
+													>]?: JsonDeserializedRecursion<
+														T[K],
+														Controls,
+														RecurseLimit,
+														TAncestorTypes
+													>;
+												}
+											>
+						: /* not an object => */ never;
 
 	// #endregion
 }
