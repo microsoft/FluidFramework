@@ -19,9 +19,7 @@ import {
 import {
 	IContainerContext,
 	IGetPendingLocalStateProps,
-	ILoader,
 	IRuntime,
-	LoaderHeader,
 	IDeltaManager,
 	IDeltaManagerFull,
 	isIDeltaManagerFull,
@@ -58,7 +56,6 @@ import {
 	SummaryType,
 } from "@fluidframework/driver-definitions";
 import {
-	DriverHeader,
 	FetchSource,
 	IDocumentStorageService,
 	type ISnapshot,
@@ -108,7 +105,6 @@ import {
 	calculateStats,
 	create404Response,
 	exceptionToResponse,
-	responseToException,
 	seqFromTree,
 } from "@fluidframework/runtime-utils/internal";
 import type {
@@ -237,7 +233,6 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	ISubmitSummaryOptions,
 	ISummarizeResults,
-	ISummarizer,
 	// eslint-disable-next-line import/no-deprecated
 	ISummarizerInternalsProvider,
 	// eslint-disable-next-line import/no-deprecated
@@ -268,6 +263,12 @@ import {
 	wrapSummaryInChannelsTree,
 	// eslint-disable-next-line import/no-deprecated
 	type IDocumentSchemaFeatures,
+	formCreateSummarizerFn,
+	summarizerRequestUrl,
+	validateSummaryHeuristicConfiguration,
+	ISummaryConfiguration,
+	DefaultSummaryConfiguration,
+	isSummariesDisabled,
 } from "./summary/index.js";
 import { Throttler, formExponentialFn } from "./throttler.js";
 
@@ -299,154 +300,6 @@ function getUnknownMessageTypeError(
 		},
 	);
 }
-
-/**
- * @legacy
- * @alpha
- */
-export interface ISummaryBaseConfiguration {
-	/**
-	 * Delay before first attempt to spawn summarizing container.
-	 */
-	initialSummarizerDelayMs: number;
-
-	/**
-	 * Defines the maximum allowed time to wait for a pending summary ack.
-	 * The maximum amount of time client will wait for a summarize is the minimum of
-	 * maxSummarizeAckWaitTime (currently 3 * 60 * 1000) and maxAckWaitTime.
-	 */
-	maxAckWaitTime: number;
-	/**
-	 * Defines the maximum number of Ops in between Summaries that can be
-	 * allowed before forcibly electing a new summarizer client.
-	 */
-	maxOpsSinceLastSummary: number;
-}
-
-/**
- * @legacy
- * @alpha
- */
-export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
-	state: "enabled";
-	/**
-	 * Defines the maximum allowed time, since the last received Ack, before running the summary
-	 * with reason maxTime.
-	 * For example, say we receive ops one by one just before the idle time is triggered.
-	 * In this case, we still want to run a summary since it's been a while since the last summary.
-	 */
-	maxTime: number;
-	/**
-	 * Defines the maximum number of Ops, since the last received Ack, that can be allowed
-	 * before running the summary with reason maxOps.
-	 */
-	maxOps: number;
-	/**
-	 * Defines the minimum number of Ops, since the last received Ack, that can be allowed
-	 * before running the last summary.
-	 */
-	minOpsForLastSummaryAttempt: number;
-	/**
-	 * Defines the lower boundary for the allowed time in between summarizations.
-	 * Pairs with maxIdleTime to form a range.
-	 * For example, if we only receive 1 op, we don't want to have the same idle time as say 100 ops.
-	 * Based on the boundaries we set in minIdleTime and maxIdleTime, the idle time will change
-	 * linearly depending on the number of ops we receive.
-	 */
-	minIdleTime: number;
-	/**
-	 * Defines the upper boundary for the allowed time in between summarizations.
-	 * Pairs with minIdleTime to form a range.
-	 * For example, if we only receive 1 op, we don't want to have the same idle time as say 100 ops.
-	 * Based on the boundaries we set in minIdleTime and maxIdleTime, the idle time will change
-	 * linearly depending on the number of ops we receive.
-	 */
-	maxIdleTime: number;
-	/**
-	 * Runtime op weight to use in heuristic summarizing.
-	 * This number is a multiplier on the number of runtime ops we process when running summarize heuristics.
-	 * For example: (multiplier) * (number of runtime ops) = weighted number of runtime ops
-	 */
-	runtimeOpWeight: number;
-	/**
-	 * Non-runtime op weight to use in heuristic summarizing
-	 * This number is a multiplier on the number of non-runtime ops we process when running summarize heuristics.
-	 * For example: (multiplier) * (number of non-runtime ops) = weighted number of non-runtime ops
-	 */
-	nonRuntimeOpWeight: number;
-
-	/**
-	 * Number of ops since last summary needed before a non-runtime op can trigger running summary heuristics.
-	 *
-	 * Note: Any runtime ops sent before the threshold is reached will trigger heuristics normally.
-	 * This threshold ONLY applies to non-runtime ops triggering summaries.
-	 *
-	 * For example: Say the threshold is 20. Sending 19 non-runtime ops will not trigger any heuristic checks.
-	 * Sending the 20th non-runtime op will trigger the heuristic checks for summarizing.
-	 */
-	nonRuntimeHeuristicThreshold?: number;
-}
-
-/**
- * @legacy
- * @alpha
- */
-export interface ISummaryConfigurationDisableSummarizer {
-	state: "disabled";
-}
-
-/**
- * @legacy
- * @alpha
- */
-export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConfiguration {
-	state: "disableHeuristics";
-}
-
-/**
- * @legacy
- * @alpha
- */
-export type ISummaryConfiguration =
-	| ISummaryConfigurationDisableSummarizer
-	| ISummaryConfigurationDisableHeuristics
-	| ISummaryConfigurationHeuristics;
-
-export function isSummariesDisabled(
-	config: ISummaryConfiguration,
-): config is ISummaryConfigurationDisableSummarizer {
-	return config.state === "disabled";
-}
-
-/**
- * @legacy
- * @alpha
- */
-export const DefaultSummaryConfiguration: ISummaryConfiguration = {
-	state: "enabled",
-
-	minIdleTime: 0,
-
-	maxIdleTime: 30 * 1000, // 30 secs.
-
-	maxTime: 60 * 1000, // 1 min.
-
-	maxOps: 100, // Summarize if 100 weighted ops received since last snapshot.
-
-	minOpsForLastSummaryAttempt: 10,
-
-	maxAckWaitTime: 3 * 60 * 1000, // 3 mins.
-
-	maxOpsSinceLastSummary: 7000,
-
-	initialSummarizerDelayMs: 5 * 1000, // 5 secs.
-
-	nonRuntimeOpWeight: 0.1,
-
-	runtimeOpWeight: 1,
-
-	nonRuntimeHeuristicThreshold: 20,
-};
 
 /**
  * @legacy
@@ -779,50 +632,6 @@ export const makeLegacySendBatchFn =
 
 		return clientSequenceNumber;
 	};
-
-const summarizerRequestUrl = "_summarizer";
-
-/**
- * Create and retrieve the summmarizer
- */
-async function createSummarizer(loader: ILoader, url: string): Promise<ISummarizer> {
-	const request: IRequest = {
-		headers: {
-			[LoaderHeader.cache]: false,
-			[LoaderHeader.clientDetails]: {
-				capabilities: { interactive: false },
-				type: summarizerClientType,
-			},
-			[DriverHeader.summarizingClient]: true,
-			[LoaderHeader.reconnect]: false,
-		},
-		url,
-	};
-
-	const resolvedContainer = await loader.resolve(request);
-	let fluidObject: FluidObject<ISummarizer> | undefined;
-
-	// Older containers may not have the "getEntryPoint" API
-	// ! This check will need to stay until LTS of loader moves past 2.0.0-internal.7.0.0
-	if (resolvedContainer.getEntryPoint === undefined) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
-		const response = (await (resolvedContainer as any).request({
-			url: `/${summarizerRequestUrl}`,
-		})) as IResponse;
-		if (response.status !== 200 || response.mimeType !== "fluid/object") {
-			throw responseToException(response, request);
-		}
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		fluidObject = response.value;
-	} else {
-		fluidObject = await resolvedContainer.getEntryPoint();
-	}
-
-	if (fluidObject?.ISummarizer === undefined) {
-		throw new UsageError("Fluid object does not implement ISummarizer");
-	}
-	return fluidObject.ISummarizer;
-}
 
 /**
  * Extract last message from the snapshot metadata.
@@ -1760,7 +1569,7 @@ export class ContainerRuntime
 		this.handleContext = new ContainerFluidHandleContext("", this);
 
 		if (summaryConfiguration.state === "enabled") {
-			this.validateSummaryHeuristicConfiguration(summaryConfiguration);
+			validateSummaryHeuristicConfiguration(summaryConfiguration);
 		}
 
 		this.summariesDisabled = isSummariesDisabled(summaryConfiguration);
@@ -2101,7 +1910,7 @@ export class ContainerRuntime
 					this, // IConnectedState
 					summaryCollection,
 					this.baseLogger,
-					this.formCreateSummarizerFn(loader),
+					formCreateSummarizerFn(loader),
 					new Throttler(
 						60 * 1000, // 60 sec delay window
 						30 * 1000, // 30 sec max delay
@@ -5027,33 +4836,6 @@ export class ContainerRuntime
 			throw new UsageError(`Can't summarize, disableSummaries: ${this.summariesDisabled}`);
 		} else {
 			return this.summaryManager.enqueueSummarize(options);
-		}
-	}
-
-	/**
-	 * Forms a function that will create and retrieve a Summarizer.
-	 */
-	private formCreateSummarizerFn(loader: ILoader) {
-		return async () => {
-			return createSummarizer(loader, `/${summarizerRequestUrl}`);
-		};
-	}
-
-	private validateSummaryHeuristicConfiguration(
-		configuration: ISummaryConfigurationHeuristics,
-	): void {
-		// eslint-disable-next-line no-restricted-syntax
-		for (const prop in configuration) {
-			if (typeof configuration[prop] === "number" && configuration[prop] < 0) {
-				throw new UsageError(
-					`Summary heuristic configuration property "${prop}" cannot be less than 0`,
-				);
-			}
-		}
-		if (configuration.minIdleTime > configuration.maxIdleTime) {
-			throw new UsageError(
-				`"minIdleTime" [${configuration.minIdleTime}] cannot be greater than "maxIdleTime" [${configuration.maxIdleTime}]`,
-			);
 		}
 	}
 
