@@ -123,6 +123,12 @@ import {
 	readonlyMapOfStringsToNumbers,
 	setOfNumbers,
 	readonlySetOfNumbers,
+	brandedNumber,
+	brandedString,
+	brandedObject,
+	brandedObjectWithString,
+	objectWithBrandedNumber,
+	objectWithBrandedString,
 	fluidHandleToNumber,
 	objectWithFluidHandle,
 	objectWithFluidHandleOrRecursion,
@@ -335,6 +341,14 @@ describe("JsonSerializable", () => {
 				const { filteredIn } = passThru(computedEnumValue);
 				assertIdenticalTypes(filteredIn, computedEnumValue);
 			});
+			it("branded `number`", () => {
+				const { filteredIn } = passThru(brandedNumber);
+				assertIdenticalTypes(filteredIn, brandedNumber);
+			});
+			it("branded `string`", () => {
+				const { filteredIn } = passThru(brandedString);
+				assertIdenticalTypes(filteredIn, brandedString);
+			});
 		});
 
 		describe("supported literal types", () => {
@@ -426,6 +440,15 @@ describe("JsonSerializable", () => {
 			it("object with number key", () => {
 				const { filteredIn } = passThru(objectWithNumberKey);
 				assertIdenticalTypes(filteredIn, objectWithNumberKey);
+			});
+
+			it("object with branded `number`", () => {
+				const { filteredIn } = passThru(objectWithBrandedNumber);
+				assertIdenticalTypes(filteredIn, objectWithBrandedNumber);
+			});
+			it("object with branded `string`", () => {
+				const { filteredIn } = passThru(objectWithBrandedString);
+				assertIdenticalTypes(filteredIn, objectWithBrandedString);
 			});
 
 			it("object with possible type recursion through union", () => {
@@ -815,6 +838,26 @@ describe("JsonSerializable", () => {
 					// voidValue is actually `null`; so, no runtime error.
 				);
 				filteredIn satisfies never;
+			});
+			it("branded `object`", () => {
+				const { filteredIn } = passThru(
+					// @ts-expect-error SerializationErrorPerNonPublicProperties
+					brandedObject,
+				);
+				assertIdenticalTypes(
+					filteredIn,
+					createInstanceOf<SerializationErrorPerNonPublicProperties>(),
+				);
+			});
+			it("branded object with `string`", () => {
+				const { filteredIn } = passThru(
+					// @ts-expect-error SerializationErrorPerNonPublicProperties
+					brandedObjectWithString,
+				);
+				assertIdenticalTypes(
+					filteredIn,
+					createInstanceOf<SerializationErrorPerNonPublicProperties>(),
+				);
 			});
 
 			describe("unions with unsupported primitive types", () => {

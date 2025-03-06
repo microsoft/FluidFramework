@@ -125,6 +125,12 @@ import {
 	readonlyMapOfStringsToNumbers,
 	setOfNumbers,
 	readonlySetOfNumbers,
+	brandedNumber,
+	brandedString,
+	brandedObject,
+	brandedObjectWithString,
+	objectWithBrandedNumber,
+	objectWithBrandedString,
 	fluidHandleToNumber,
 	objectWithFluidHandle,
 } from "./testValues.js";
@@ -258,6 +264,14 @@ describe("JsonDeserialized", () => {
 			it("computed enum", () => {
 				const resultRead = passThru(computedEnumValue);
 				assertIdenticalTypes(resultRead, computedEnumValue);
+			});
+			it("branded `number`", () => {
+				const resultRead = passThru(brandedNumber);
+				assertIdenticalTypes(resultRead, brandedNumber);
+			});
+			it("branded `string`", () => {
+				const resultRead = passThru(brandedString);
+				assertIdenticalTypes(resultRead, brandedString);
 			});
 		});
 
@@ -424,6 +438,15 @@ describe("JsonDeserialized", () => {
 			it("object with number key", () => {
 				const resultRead = passThru(objectWithNumberKey);
 				assertIdenticalTypes(resultRead, objectWithNumberKey);
+			});
+
+			it("object with branded `number`", () => {
+				const resultRead = passThru(objectWithBrandedNumber);
+				assertIdenticalTypes(resultRead, objectWithBrandedNumber);
+			});
+			it("object with branded `string`", () => {
+				const resultRead = passThru(objectWithBrandedString);
+				assertIdenticalTypes(resultRead, objectWithBrandedString);
 			});
 
 			it("object with possible type recursion through union", () => {
@@ -1065,6 +1088,19 @@ describe("JsonDeserialized", () => {
 							"instanceRead is not an instance of Set",
 						);
 					});
+				});
+			});
+
+			describe("branded non-primitive types lose branding", () => {
+				// Ideally there could be a transformation to JsonTypeWith<never> but
+				// `object` intersected with branding (which is an object) is just the branding.
+				it("branded `object` becomes just empty", () => {
+					const resultRead = passThru(brandedObject);
+					assertIdenticalTypes(resultRead, emptyObject);
+				});
+				it("branded object with `string`", () => {
+					const resultRead = passThru(brandedObjectWithString);
+					assertIdenticalTypes(resultRead, objectWithString);
 				});
 			});
 

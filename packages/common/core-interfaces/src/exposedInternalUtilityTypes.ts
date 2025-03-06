@@ -684,7 +684,11 @@ export namespace InternalUtilityTypes {
 					: /* test for non-public properties (class instance type) */
 						IfNonPublicProperties<
 								T,
-								Controls,
+								{
+									AllowExactly: Controls["AllowExactly"];
+									// Add in primitives that may be branded to ignore intersection classes
+									AllowExtensionOf: Controls["AllowExtensionOf"] | boolean | number | string;
+								},
 								"found non-publics",
 								"only publics"
 							> extends "found non-publics"
@@ -697,7 +701,10 @@ export namespace InternalUtilityTypes {
 										[TNextAncestor, ...TAncestorTypes]
 									>;
 								}
-							: /* not array => error */ SerializationErrorPerNonPublicProperties
+							: /* test for potentially branded primitive (intersection with a supported primitive) */
+								T extends boolean | number | string
+								? /* assume intersection is branding and allow as-is => */ T
+								: /* not array => error */ SerializationErrorPerNonPublicProperties
 						: /* no hidden properties => apply filtering => */ JsonSerializableFilter<
 								T,
 								Controls,
@@ -878,6 +885,10 @@ export namespace InternalUtilityTypes {
 						     properties (class instance type) */
 							IfNonPublicProperties<
 								T,
+								// Note: no extra allowance is made here for possible branded
+								// primitives as JsonDeserializedFilter will allow them as
+								// extensions of the primitives. Should there need a need to
+								// explicit allow them here, see JsonSerializableImpl's use.
 								Controls,
 								"found non-publics",
 								"only publics"

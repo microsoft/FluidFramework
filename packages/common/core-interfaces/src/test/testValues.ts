@@ -448,7 +448,27 @@ export const readonlySetOfNumbers: ReadonlySet<number> = setOfNumbers;
 
 // #endregion
 
-// #region Union types
+// #region Branded types
+
+declare class BrandedType<Brand> {
+	protected readonly brand: (dummy: never) => Brand;
+	private constructor();
+	public static [Symbol.hasInstance](value: never): value is never;
+}
+
+export const brandedNumber = 0 as number & BrandedType<"zero">;
+export const brandedString = "encoding" as string & BrandedType<"encoded">;
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+export const brandedObject = {} as object & BrandedType<"its a secret">;
+export const brandedObjectWithString = objectWithString as typeof objectWithString &
+	BrandedType<"metadata">;
+
+export const objectWithBrandedNumber = { brandedNumber };
+export const objectWithBrandedString = { brandedString };
+
+// #endregion
+
+// #region Fluid types
 
 export const fluidHandleToNumber: IFluidHandle<number> = {
 	isAttached: false,
