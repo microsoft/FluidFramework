@@ -6,7 +6,7 @@
 import events_pkg from "events_pkg";
 const { EventEmitter } = events_pkg;
 
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluidframework/server-common-utils";
 import {
 	ICommittedProposal,
 	IQuorum,

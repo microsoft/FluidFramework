@@ -731,15 +731,15 @@ importers:
 
   packages/protocol-base:
     dependencies:
-      '@fluidframework/common-utils':
-        specifier: ^3.1.0
-        version: 3.1.0
       '@fluidframework/gitresources':
         specifier: workspace:~
         version: link:../gitresources
       '@fluidframework/protocol-definitions':
         specifier: ^3.2.0
         version: 3.2.0
+      '@fluidframework/server-common-utils':
+        specifier: workspace:~
+        version: link:../common-utils
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
