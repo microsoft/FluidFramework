@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { delay, } from "@fluidframework/server-common-utils";
+import { delay } from "@fluidframework/server-common-utils";
 import {
 	ICollection,
 	IContext,

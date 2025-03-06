@@ -7,7 +7,7 @@ import {
 	IDocumentAttributes,
 	ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import { bufferToString, toUtf8, } from "@fluidframework/server-common-utils";
+import { bufferToString, toUtf8 } from "@fluidframework/server-common-utils";
 import {
 	convertWholeFlatSummaryToSnapshotTreeAndBlobs,
 	IGitManager,
