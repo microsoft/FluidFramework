@@ -37,7 +37,6 @@ export class TinyliciousRunner implements IRunner {
 		private readonly tenantManager: ITenantManager,
 		private readonly storage: IDocumentStorage,
 		private readonly mongoManager: MongoManager,
-		// eslint-disable-next-line import/no-deprecated
 		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	) {}
 
@@ -45,7 +44,6 @@ export class TinyliciousRunner implements IRunner {
 		const version = process.env.npm_package_version;
 		winston.info(`Starting tinylicious@${version}`);
 
-		// eslint-disable-next-line import/no-deprecated
 		this.runningDeferred = new Deferred<void>();
 
 		// Make sure provided port is unoccupied
