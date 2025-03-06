@@ -4,13 +4,13 @@
  */
 
 import {
-	assert,
 	stringToBuffer,
 	Uint8ArrayToString,
 	unreachableCase,
 } from "@fluidframework/server-common-utils";
 import { getGitType } from "@fluidframework/protocol-base";
 import { ISnapshotTree, SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
+import { assert } from "./assert";
 import {
 	ISummaryTree,
 	IWholeSummaryTree,

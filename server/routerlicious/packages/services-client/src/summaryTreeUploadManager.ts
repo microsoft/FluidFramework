@@ -4,7 +4,6 @@
  */
 
 import {
-	assert,
 	gitHashFile,
 	IsoBuffer,
 	Uint8ArrayToString,
@@ -19,6 +18,7 @@ import {
 	SummaryObject,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
+import { assert } from "./assert";
 import { ISummaryUploadManager, IGitManager } from "./storage";
 import { IWholeSummaryPayloadType } from "./storageContracts";
 

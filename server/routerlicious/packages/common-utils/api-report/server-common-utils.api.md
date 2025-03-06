@@ -7,9 +7,6 @@
 import { EventEmitter } from 'events';
 
 // @internal
-export function assert(condition: boolean, message: string | number): asserts condition;
-
-// @internal
 export class Buffer extends Uint8Array {
     // (undocumented)
     static from(value: any, encodingOrOffset?: any, length?: any): IsoBuffer;
