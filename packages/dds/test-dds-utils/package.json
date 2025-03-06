@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-dds-utils",
-	"version": "2.24.0",
+	"version": "2.30.0",
 	"description": "Fluid DDS test utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -95,7 +95,7 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"mocha": "^10.2.0",
+		"mocha": "^10.8.2",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {

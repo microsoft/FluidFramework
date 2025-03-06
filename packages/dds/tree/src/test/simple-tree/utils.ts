@@ -4,12 +4,13 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { initializeForest, TreeStoredSchemaRepository } from "../../core/index.js";
+import { TreeStoredSchemaRepository } from "../../core/index.js";
 import {
 	buildForest,
 	cursorForMapTreeNode,
 	defaultSchemaPolicy,
 	getSchemaAndPolicy,
+	initializeForest,
 	MockNodeKeyManager,
 } from "../../feature-libraries/index.js";
 import {

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/container-runtime",
-	"version": "2.24.0",
+	"version": "2.30.0",
 	"description": "Fluid container runtime",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -213,7 +213,7 @@
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
-		"mocha": "^10.2.0",
+		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
