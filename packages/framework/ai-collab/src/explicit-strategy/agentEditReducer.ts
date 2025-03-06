@@ -35,6 +35,7 @@ import {
 	type TreeEditObject,
 	type TreeEditValue,
 	typeField,
+	objectIdKey,
 } from "./agentEditTypes.js";
 import type { IdGenerator } from "./idGenerator.js";
 import type { JsonValue } from "./jsonTypes.js";
@@ -72,10 +73,25 @@ function populateDefaults(
 			}
 
 			for (const value of Object.values(json)) {
-				populateDefaults(value, definitionMap);
+				if (value !== undefined) {
+					populateDefaults(value, definitionMap);
+				}
 			}
 		}
 	}
+}
+
+function createObject(
+	json: TreeEditObject,
+	schema: TreeNodeSchema,
+	idGenerator: IdGenerator,
+): TreeNode {
+	const simpleNodeSchema = schema as unknown as new (dummy: unknown) => TreeNode;
+	const treeNode = new simpleNodeSchema(json);
+	if (typeof json[objectIdKey] === "string") {
+		idGenerator.getOrCreateId(treeNode, json[objectIdKey]);
+	}
+	return treeNode;
 }
 
 function getSchemaIdentifier(content: TreeEditValue): string | undefined {
@@ -137,8 +153,10 @@ export function applyAgentEdit(
 
 			for (const allowedType of allowedTypes.values()) {
 				if (allowedType.identifier === schemaIdentifier && typeof allowedType === "function") {
-					const simpleNodeSchema = allowedType as unknown as new (dummy: unknown) => TreeNode;
-					const insertNode = new simpleNodeSchema(treeEdit.content);
+					if (typeof treeEdit.content !== "object" || treeEdit.content === null) {
+						throw new UsageError("inserted node must be an object");
+					}
+					const insertNode = createObject(treeEdit.content, allowedType, idGenerator);
 					validator?.(insertNode);
 					array.insertAt(index, insertNode as unknown as IterableTreeArrayContent<never>);
 					return {
@@ -204,26 +222,31 @@ export function applyAgentEdit(
 			}
 			// If the fieldSchema is a function we can grab the constructor and make an instance of that node.
 			else if (typeof fieldSchema === "function") {
-				const simpleSchema = fieldSchema as unknown as new (dummy: unknown) => TreeNode;
 				populateDefaults(modification, definitionMap);
-				const constructedModification = new simpleSchema(modification);
-				validator?.(constructedModification);
-				insertedObject = constructedModification;
+				if (
+					typeof modification !== "object" ||
+					Array.isArray(modification) ||
+					modification === null
+				) {
+					throw new UsageError("inserted node must be an object");
+				}
+				insertedObject = createObject(modification, fieldSchema, idGenerator);
+				validator?.(insertedObject);
 
 				if (Array.isArray(modification)) {
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 					const field = (node as any)[treeEdit.field] as TreeArrayNode;
 					assert(Array.isArray(field), 0xa75 /* the field must be an array node */);
 					assert(
-						Array.isArray(constructedModification),
+						Array.isArray(insertedObject),
 						0xa76 /* the modification must be an array node */,
 					);
 					field.removeRange(0);
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-					(node as any)[treeEdit.field] = constructedModification;
+					(node as any)[treeEdit.field] = insertedObject;
 				} else {
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-					(node as any)[treeEdit.field] = constructedModification;
+					(node as any)[treeEdit.field] = insertedObject;
 				}
 			}
 			// If the fieldSchema is of type FieldSchema, we can check its allowed types and set the field.

@@ -25,9 +25,6 @@ import { applyAgentEdit } from "../../explicit-strategy/agentEditReducer.js";
 import { IdGenerator } from "../../explicit-strategy/idGenerator.js";
 import {
 	getEditingSystemPrompt,
-	getPlanningSystemPrompt,
-	getReviewSystemPrompt,
-	toDecoratedJson,
 	type EditLog,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../explicit-strategy/promptGeneration.js";
@@ -64,7 +61,7 @@ const initialAppState = {
 	todos: [
 		{
 			title: "Task 1",
-			completed: true,
+			completed: false,
 		},
 		{
 			title: "Task 2",
@@ -87,22 +84,9 @@ describe("Prompt Generation Regression Tests", () => {
 		idGenerator = new IdGenerator();
 	});
 
-	const userAsk = "Change the completed to false for the first task and create a new edit";
+	const userAsk =
+		"Make me some tasks - I need to get a haircut and wash my dog. Then, my dog needs a haircut too, lol. Let's do all the hair-related tasks first, put them at the top of the list. Also please mark any existing tasks as complete, I forgot to do that last night.";
 	const systemRoleContext = "You're a helpful AI assistant";
-	const plan =
-		"Change the completed field to false for the todo at index 0 in the list of todos";
-	it("Planning Prompt has no regression", function (this: Mocha.Context) {
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestTodoAppSchema }));
-		view.initialize(initialAppState);
-
-		const actualPrompt = getPlanningSystemPrompt(view.root, userAsk, systemRoleContext);
-
-		snapShotTester.expectToMatchSnapshot(this, actualPrompt, "Planning_System_Prompt");
-	});
 
 	it("Editing System Prompt with no plan and empty edit log has no regression", function (this: Mocha.Context) {
 		const tree = factory.create(
@@ -176,7 +160,6 @@ describe("Prompt Generation Regression Tests", () => {
 			view.root,
 			[],
 			systemRoleContext,
-			plan,
 		);
 
 		snapShotTester.expectToMatchSnapshot(
@@ -204,8 +187,6 @@ describe("Prompt Generation Regression Tests", () => {
 			{
 				edit: {
 					type: "setField",
-					explanation:
-						"Change the completed field to false for the todo at index 0 in the list of todos",
 					target: { target: todo1Id },
 					field: "complete",
 					newValue: false,
@@ -214,8 +195,6 @@ describe("Prompt Generation Regression Tests", () => {
 			{
 				edit: {
 					type: "setField",
-					explanation:
-						"Change the completed field to false for the todo at index 0 in the list of todos",
 					target: { target: todo1Id },
 					field: "completed",
 					newValue: false,
@@ -238,7 +217,6 @@ describe("Prompt Generation Regression Tests", () => {
 			view.root,
 			editLog,
 			systemRoleContext,
-			plan,
 		);
 
 		snapShotTester.expectToMatchSnapshot(
@@ -272,44 +250,5 @@ describe("Prompt Generation Regression Tests", () => {
 			actualPrompt,
 			"Editing_System_Prompt_No_Plan_No_Log_No_Arrays",
 		);
-	});
-
-	it("Review System Prompt has no regression", function (this: Mocha.Context) {
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestTodoAppSchema }));
-		view.initialize(initialAppState);
-
-		idGenerator.assignIds(view.root);
-
-		const originalDecoratedJson = toDecoratedJson(idGenerator, view.root);
-
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const todo1Id = idGenerator.getId(view.root.todos[0]!)!;
-		const simpleSchema = getSimpleSchema(Tree.schema(view.root));
-		applyAgentEdit(
-			{
-				type: "setField",
-				explanation:
-					"Change the completed field to false for the todo at index 0 in the list of todos",
-				target: { target: todo1Id },
-				field: "completed",
-				newValue: false,
-			},
-			idGenerator,
-			simpleSchema.definitions,
-		);
-
-		const actualPrompt = getReviewSystemPrompt(
-			userAsk,
-			idGenerator,
-			view.root,
-			originalDecoratedJson,
-			systemRoleContext,
-		);
-
-		snapShotTester.expectToMatchSnapshot(this, actualPrompt, "Review_System_Prompt");
 	});
 });

@@ -111,8 +111,8 @@ export function generateGenericEditTypes(
 ): [Record<string, Zod.ZodTypeAny>, root: string] {
 	return getOrCreate(cache, schema, () => {
 		const insertSet = new Set<string>();
-		const modifyFieldSet = new Set<string>();
-		const modifyTypeSet = new Set<string>();
+		const setFieldFieldSet = new Set<string>();
+		const setFieldTypeSet = new Set<string>();
 		const typeMap = new Map<string, Zod.ZodTypeAny>();
 
 		for (const name of schema.definitions.keys()) {
@@ -120,8 +120,8 @@ export function generateGenericEditTypes(
 				schema.definitions,
 				typeMap,
 				insertSet,
-				modifyFieldSet,
-				modifyTypeSet,
+				setFieldFieldSet,
+				setFieldTypeSet,
 				name,
 			);
 		}
@@ -149,30 +149,27 @@ export function generateGenericEditTypes(
 
 		const doesSchemaHaveArray = insertSet.size > 0;
 
-		const modify = z
+		const setField = z
 			.object({
-				type: z.enum(["modify"]),
-				explanation: z.string().describe(editDescription),
+				type: z.enum(["setField"]),
 				target: objectTarget,
-				field: z.enum([...modifyFieldSet] as [string, ...string[]]), // Modify with appropriate fields
-				modification: generateDomainTypes
-					? getType(modifyTypeSet)
+				field: z.enum([...setFieldFieldSet] as [string, ...string[]]), // Modify with appropriate fields
+				newValue: generateDomainTypes
+					? getType(setFieldTypeSet)
 					: z.any().describe("Domain-specific content here"),
 			})
 			.describe("Sets a field on a specific ObjectTarget.");
 
-		const remove = z
+		const removeFromArray = z
 			.object({
-				type: z.literal("remove"),
-				explanation: z.string().describe(editDescription),
+				type: z.literal("removeFromArray"),
 				source: z.union([objectTarget, range]),
 			})
 			.describe("Deletes an object or Range of objects from the tree.");
 
-		const insert = z
+		const insertIntoArray = z
 			.object({
-				type: z.literal("insert"),
-				explanation: z.string().describe(editDescription),
+				type: z.literal("insertIntoArray"),
 				content: generateDomainTypes
 					? getType(insertSet)
 					: z.any().describe("Domain-specific content here"),
@@ -180,10 +177,9 @@ export function generateGenericEditTypes(
 			})
 			.describe("Inserts a new object at a specific Place or ArrayPlace.");
 
-		const move = z
+		const moveArrayElement = z
 			.object({
-				type: z.literal("move"),
-				explanation: z.string().describe(editDescription),
+				type: z.literal("moveArrayElement"),
 				source: z.union([objectTarget, range]),
 				destination: z.union([arrayPlace, objectPlace]),
 			})
@@ -191,36 +187,31 @@ export function generateGenericEditTypes(
 
 		const typeRecord: Record<string, Zod.ZodTypeAny> = {
 			ObjectTarget: objectTarget,
-			Modify: modify,
+			SetField: setField,
 		};
-
-		typeRecord.Modify = modify;
 
 		if (doesSchemaHaveArray) {
 			typeRecord.ObjectPlace = objectPlace;
 			typeRecord.ArrayPlace = arrayPlace;
 			typeRecord.Range = range;
-			typeRecord.Insert = insert;
-			typeRecord.Remove = remove;
-			typeRecord.Move = move;
+			typeRecord.InsertIntoArray = insertIntoArray;
+			typeRecord.RemoveFromArray = removeFromArray;
+			typeRecord.MoveArrayElement = moveArrayElement;
 		}
 
 		const editTypes = doesSchemaHaveArray
-			? ([insert, remove, move, modify, z.null()] as const)
-			: ([modify, z.null()] as const);
+			? z.union([insertIntoArray, removeFromArray, moveArrayElement, setField] as const)
+			: setField;
 
-		const editWrapper = z.object({
-			edit: z
-				.union(editTypes)
-				.describe("The next edit to apply to the tree, or null if the task is complete."),
-		});
-		typeRecord.EditWrapper = editWrapper;
+		const editWrapper = z
+			.array(editTypes)
+			.describe("The next edit to apply to the tree, or null if the task is complete.");
+		typeRecord.EditArray = editWrapper;
 
-		return [typeRecord, "EditWrapper"];
+		return [typeRecord, "EditArray"];
 	});
 }
-const editDescription =
-	"A description of what this edit is meant to accomplish in human readable English";
+
 function getOrCreateType(
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
 	typeMap: Map<string, Zod.ZodTypeAny>,
@@ -268,6 +259,13 @@ function getOrCreateType(
 				);
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				properties[typeField] = z.enum([definition]);
+				properties[objectIdKey] = z.optional(
+					z
+						.string()
+						.describe(
+							`The id (${objectIdKey}) of the object (optional, only necessary if the object must be referred to later in the same task)`,
+						),
+				);
 				return z.object(properties);
 			}
 			case NodeKind.Array: {

@@ -14,7 +14,7 @@ export type JsonPrimitive = string | number | boolean | null;
  */
 // eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
 export interface JsonObject {
-	[key: string]: JsonValue;
+	[key: string]: JsonValue | undefined;
 }
 /**
  * An Array of {@link JsonValue}

@@ -72,39 +72,6 @@ export function toDecoratedJson(
 }
 
 /**
- * Generates a prompt designed to make an LLM produce a plan to edit the SharedTree to accomplish a user-specified goal.
- */
-export function getPlanningSystemPrompt(
-	treeNode: TreeNode,
-	userPrompt: string,
-	systemRoleContext?: string,
-): string {
-	const schema = Tree.schema(treeNode);
-
-	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema));
-	const role = `I'm an agent who makes plans for another agent to achieve a user-specified goal to update the state of an application.${
-		systemRoleContext === undefined
-			? ""
-			: `
-			The other agent follows this guidance: ${systemRoleContext}`
-	}`;
-
-	const editOptions = `modifying ${doesNodeContainArraySchema(treeNode) ? "as well as inserting, removing, or moving" : ""} elements in the tree`;
-
-	const systemPrompt = `
-	${role}
-	The application state tree is a JSON object with the following schema: ${promptFriendlySchema}
-	The current state is: ${JSON.stringify(treeNode)}.
-	The user requested that I accomplish the following goal:
-	"${userPrompt}"
-	I've made a plan to accomplish this goal by doing a sequence of edits to the tree.
-	Edits can include ${editOptions}.
-	Here is my plan:`;
-
-	return systemPrompt;
-}
-
-/**
  * Generates a prompt that provides a history of the edits an LLM has made to a SharedTree as well as any errors that occured from attemping to apply each respsecitve edit to the tree.
  */
 export function createEditListHistoryPrompt(edits: EditLog): string {
@@ -130,7 +97,6 @@ export function getEditingSystemPrompt(
 	treeNode: TreeNode,
 	log: EditLog,
 	appGuidance?: string,
-	plan?: string,
 ): string {
 	const schema = Tree.schema(treeNode);
 	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema));
@@ -147,15 +113,15 @@ export function getEditingSystemPrompt(
 	).getSchemaText();
 
 	const topLevelEditWrapperDescription = doesNodeContainArraySchema(treeNode)
-		? `contains one of the following interfaces: "${"SetField" satisfies Capitalize<SetField["type"]>}", null or an array node only edit: "${"InsertIntoArray" satisfies Capitalize<InsertIntoArray["type"]>}", "${"RemoveFromArray" satisfies Capitalize<RemoveFromArray["type"]>}", "${"MoveArrayElement" satisfies Capitalize<MoveArrayElement["type"]>}"`
-		: `contains the interface "${"SetField" satisfies Capitalize<SetField["type"]>}" or null`;
+		? `is one of the following interfaces: "${"SetField" satisfies Capitalize<SetField["type"]>}" for editing objects or one of "${"InsertIntoArray" satisfies Capitalize<InsertIntoArray["type"]>}", "${"RemoveFromArray" satisfies Capitalize<RemoveFromArray["type"]>}", "${"MoveArrayElement" satisfies Capitalize<MoveArrayElement["type"]>}" for editing arrays`
+		: `is the interface "${"SetField" satisfies Capitalize<SetField["type"]>}"`;
 
 	// TODO: security: user prompt in system prompt
 	const systemPrompt = `
-	${role}\nEdits are JSON objects that conform to the schema described below. The top-level object you produce for a given edit is an "EditWrapper" object which ${topLevelEditWrapperDescription}.
+	${role}\nEdits are JSON objects that conform to the schema described below. You produce an array of edits where each edit ${topLevelEditWrapperDescription}.
+	When creating new objects for ${"InsertIntoArray" satisfies Capitalize<InsertIntoArray["type"]>} or ${"SetField" satisfies Capitalize<SetField["type"]>}, you may create an ID and put it in the ${objectIdKey} property if you want to refer to the object in a later edit.
 	\nHere are the schema definitions for an edit:\n${treeSchemaString}\n
 	The tree is a JSON object with the following schema: ${promptFriendlySchema}
-	${plan === undefined ? "" : `You have made a plan to accomplish the user's goal. The plan is: "${plan}". You will perform one or more edits that correspond to that plan to accomplish the goal.`}
 	${
 		log.length === 0
 			? ""
@@ -164,46 +130,9 @@ export function getEditingSystemPrompt(
 			This means that the current state of the tree reflects these changes.`
 	}
 	The current state of the tree is: ${decoratedTreeJson}.
-	${log.length > 0 ? "Before you made the above edits t" : "T"}he user requested you accomplish the following goal:
+	The user requested you accomplish the following goal:
 	"${userPrompt}"
-	If the goal is now completed or is impossible, you should return null.
-	Otherwise, you should create an edit that makes progress towards the goal. It should have an English description ("explanation") of which edit to perform (specifying one of the allowed edit types).`;
-	return systemPrompt;
-}
-
-/**
- * Generates a prompt designed to make an LLM review the edits it created and applied to a SharedTree based
- * on a user-specified goal. This prompt is designed to give the LLM's ability to correct for mistakes and improve the accuracy/fidelity of its final set of tree edits
- */
-export function getReviewSystemPrompt(
-	userPrompt: string,
-	idGenerator: IdGenerator,
-	treeNode: TreeNode,
-	originalDecoratedJson: string,
-	appGuidance?: string,
-): string {
-	const schema = Tree.schema(treeNode);
-	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema));
-	const decoratedTreeJson = toDecoratedJson(idGenerator, treeNode);
-
-	const role = `You are a collaborative agent who interacts with a JSON tree by performing edits to achieve a user-specified goal.${
-		appGuidance === undefined
-			? ""
-			: `
-			The application that owns the JSON tree has the following guidance: ${appGuidance}`
-	}`;
-
-	// TODO: security: user prompt in system prompt
-	const systemPrompt = `
-	${role}
-	You have performed a number of actions already to accomplish a user request.
-	You must review the resulting state to determine if the actions you performed successfully accomplished the user's goal.
-	The tree is a JSON object with the following schema: ${promptFriendlySchema}
-	The state of the tree BEFORE changes was: ${originalDecoratedJson}.
-	The state of the tree AFTER changes is: ${decoratedTreeJson}.
-	The user requested that the following goal should be accomplished:
-	${userPrompt}
-	Was the goal accomplished?`;
+	You should create a sequence of one or more edits that accomplishes the goal.`;
 	return systemPrompt;
 }
 

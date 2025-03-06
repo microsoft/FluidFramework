@@ -24,14 +24,17 @@ export class IdGenerator {
 
 	public constructor() {}
 
-	public getOrCreateId(node: TreeNode): string {
+	public getOrCreateId(node: TreeNode, newId?: string): string {
 		const existingID = this.nodeToIdMap.get(node);
 		if (existingID !== undefined) {
 			return existingID;
 		}
+		if (newId !== undefined) {
+			assert(!this.idToNodeMap.has(newId), "ID already exists");
+		}
 
 		const schema = Tree.schema(node).identifier;
-		const id = this.generateID(schema);
+		const id = newId ?? this.generateID(schema);
 		this.nodeToIdMap.set(node, id);
 		this.idToNodeMap.set(id, node);
 
@@ -83,8 +86,14 @@ export class IdGenerator {
 
 		this.prefixMap.set(lastSegment, prefix);
 		const count = this.idCountMap.get(lastSegment) ?? 1;
-		this.idCountMap.set(lastSegment, count + 1);
 
-		return `${lastSegment}${count}`;
+		const newId = `${lastSegment}${count}`;
+		if (this.idToNodeMap.has(newId)) {
+			// TODO: optimize because this is a little bit silly
+			// We need this logic so that if the LLM already created this ID, we generate a different one instead
+			return this.generateID(schema);
+		}
+		this.idCountMap.set(lastSegment, count + 1);
+		return newId;
 	}
 }

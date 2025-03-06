@@ -38,6 +38,8 @@ import type { JsonPrimitive } from "./jsonTypes.js";
  * TODO: Structured Output fails when multiple schema types have the same first field name (e.g. id: sf.identifier on multiple types).
  *
  * TODO: Pass descriptions from schema metadata to the generated TS types that we put in the prompt
+ *
+ * TODO "target target" when you have an object target in a setField
  */
 
 /**
@@ -54,8 +56,9 @@ export const objectIdKey = "__fluid_objectId";
  * An object being inserted (via an insertion or modification edit) into a tree.
  */
 export interface TreeEditObject {
-	[key: string]: TreeEditValue;
+	[key: string]: TreeEditValue | undefined;
 	[typeField]: string;
+	[objectIdKey]?: string;
 }
 /**
  * An array of {@link TreeEditValue}'s, allowing a single {@link TreeEdit} to contain edits to multiple fields.
@@ -69,16 +72,6 @@ export type TreeEditArray = TreeEditValue[];
 export type TreeEditValue = JsonPrimitive | TreeEditObject | TreeEditArray;
 
 /**
- * This is the the final object we expected from an LLM response.
- * @remarks Because TreeEdit can be multiple different types (polymorphic),
- * we need to wrap to avoid anyOf at the root level when generating the necessary JSON Schema.
- */
-export interface EditWrapper {
-	// eslint-disable-next-line @rushstack/no-new-null
-	edit: TreeEdit | null;
-}
-
-/**
  * Union type representing all possible types of edits that can be made to a tree.
  */
 export type TreeEdit = InsertIntoArray | SetField | RemoveFromArray | MoveArrayElement;
@@ -87,7 +80,6 @@ export type TreeEdit = InsertIntoArray | SetField | RemoveFromArray | MoveArrayE
  * The base interface for all types of {@link TreeEdit}.
  */
 export interface Edit {
-	explanation: string;
 	type: "setField" | "insertIntoArray" | "removeFromArray" | "moveArrayElement";
 }
 
