@@ -13,9 +13,8 @@ const defaultTelemetrySignalSampleCount = 100;
 
 /**
  * Set of stats/values used to keep track of telemetry related to signals.
- * @remarks Exported just for testing purposes, shouldn't be necessary in production code.
  */
-export interface ISignalTelemetryTracking {
+interface ISignalTelemetryTracking {
 	/**
 	 * Accumulates the total number of broadcast signals sent during the current signal latency measurement window.
 	 * This value represents the total number of signals sent since the latency measurement began and is used
