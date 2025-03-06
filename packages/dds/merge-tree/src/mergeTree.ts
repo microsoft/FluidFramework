@@ -1661,50 +1661,36 @@ export class MergeTree {
 				continue;
 			}
 
+			const overlappingAckedObliterates: OperationTimestamp[] = [];
 			let oldest: ObliterateInfo | undefined;
-			let normalizedOldestSeq: number = 0;
 			let newest: ObliterateInfo | undefined;
-			let normalizedNewestSeq: number = 0;
-			const movedClientIds: number[] = [];
-			const movedSeqs: number[] = [];
 			let newestAcked: ObliterateInfo | undefined;
 			let oldestUnacked: ObliterateInfo | undefined;
+			// TODO: We should maybe be using perspective checks here
+			const refSeqTimestamp: OperationTimestamp = { seq: refSeq, clientId, localSeq };
 			for (const ob of this.obliterates.findOverlapping(newSegment)) {
-				// compute a normalized seq that takes into account local seqs
-				// but is still comparable to remote seqs to keep the checks below easy
-				// REMOTE SEQUENCE NUMBERS                                     LOCAL SEQUENCE NUMBERS
-				// [0, 1, 2, 3, ..., 100, ..., 1000, ..., (MAX - MaxLocalSeq), L1, L2, L3, L4, ..., L100, ..., L1000, ...(MAX)]
-				const normalizedObSeq =
-					ob.seq === UnassignedSequenceNumber
-						? Number.MAX_SAFE_INTEGER - this.collabWindow.localSeq + ob.localSeq!
-						: ob.seq;
-				if (normalizedObSeq > refSeq) {
+				if (timestampUtils.greaterThan(ob, refSeqTimestamp)) {
 					// Any obliterate from the same client that's inserting this segment cannot cause the segment to be marked as
 					// obliterated (since that client must have performed the obliterate before this insertion).
 					// We still need to consider such obliterates when determining the winning obliterate for the insertion point,
 					// see `obliteratePrecedingInsertion` docs.
 					if (clientId !== ob.clientId) {
-						if (oldest === undefined || normalizedOldestSeq > normalizedObSeq) {
-							normalizedOldestSeq = normalizedObSeq;
+						if (timestampUtils.isAcked(ob)) {
+							overlappingAckedObliterates.push({ seq: ob.seq, clientId: ob.clientId });
+						}
+
+						if (oldest === undefined || timestampUtils.lessThan(ob, oldest)) {
 							oldest = ob;
-							if (timestampUtils.isAcked(ob)) {
-								movedClientIds.unshift(ob.clientId);
-								movedSeqs.unshift(ob.seq);
-							}
-						} else if (timestampUtils.isAcked(ob)) {
-							movedClientIds.push(ob.clientId);
-							movedSeqs.push(ob.seq);
 						}
 					}
 
-					if (newest === undefined || normalizedNewestSeq < normalizedObSeq) {
-						normalizedNewestSeq = normalizedObSeq;
+					if (newest === undefined || timestampUtils.greaterThan(ob, newest)) {
 						newest = ob;
 					}
 
 					if (
-						ob.seq !== UnassignedSequenceNumber &&
-						(newestAcked === undefined || newestAcked.seq < ob.seq)
+						timestampUtils.isAcked(ob) &&
+						(newestAcked === undefined || timestampUtils.greaterThan(ob, newestAcked))
 					) {
 						newestAcked = ob;
 					}
@@ -1727,60 +1713,14 @@ export class MergeTree {
 			// mark it obliterated.
 			if (oldest && newest?.clientId !== clientId) {
 				const moveInfo: IHasMoveInfo = { moves: [] };
-				// TODO: probably refactor above to just work in terms of the different timestamps rather than
-				// conver to old format + convert back to new format.
 				if (newestAcked === newest || newestAcked?.clientId !== clientId) {
-					moveInfo.moves.push(
-						...movedClientIds.map((c, i) => ({
-							seq: movedSeqs[i],
-							clientId: c,
-							localSeq:
-								movedSeqs[i] === UnassignedSequenceNumber
-									? oldestUnacked?.localSeq
-									: undefined,
-						})),
-					);
-					// moveInfo = {
-					// 	moves: movedClientIds.map((c, i) => ({
-					// 		seq: movedSeqs[i],
-					// 		clientId: c,
-					// 		localSeq:
-					// 			movedSeqs[i] === UnassignedSequenceNumber
-					// 				? oldestUnacked?.localSeq
-					// 				: undefined,
-					// 	})),
-					// };
-					// moveInfo = {
-					// 	movedClientIds,
-					// 	movedSeq: oldest.seq,
-					// 	movedSeqs,
-					// 	localMovedSeq: oldestUnacked?.localSeq,
-					// };
+					moveInfo.moves = overlappingAckedObliterates;
+					// Because we found these by looking at overlapping obliterates, they are not necessarily currently sorted by seq.
+					// Address that now.
+					moveInfo.moves.sort(timestampUtils.compare);
 				}
-				// } else {
-				// 	assert(
-				// 		oldestUnacked !== undefined,
-				// 		"Expected local obliterate to be defined if newestAcked is not equal to newest",
-				// 	);
-				// 	// There's a pending local obliterate for this range, so it will be marked as obliterated by us. However,
-				// 	// all other clients are under the impression that the most recent acked obliterate won the right to insert
-				// 	// in this range.
-				// 	moveInfo = {
-				// 		moves: [
-				// 			{
-				// 				seq: oldestUnacked.seq,
-				// 				clientId: oldestUnacked.clientId,
-				// 				localSeq: oldestUnacked.localSeq,
-				// 			},
-				// 		],
-				// 	};
-				// 	// moveInfo = {
-				// 	// 	movedClientIds: [oldestUnacked.clientId],
-				// 	// 	movedSeq: oldestUnacked.seq,
-				// 	// 	movedSeqs: [oldestUnacked.seq],
-				// 	// 	localMovedSeq: oldestUnacked.localSeq,
-				// 	// };
-				// }
+
+				overwriteInfo(newSegment, moveInfo);
 
 				// There could be multiple local obliterates that overlap a given insertion point.
 				// This occurs e.g. if a client first obliterates "34", then "25"
@@ -1794,21 +1734,13 @@ export class MergeTree {
 						clientId: oldestUnacked.clientId,
 						localSeq: oldestUnacked.localSeq,
 					});
-				}
 
-				// Because we found these by looking at overlapping obliterates, they are not necessarily currently sorted by seq.
-				// Address that now.
-				moveInfo.moves.sort(timestampUtils.compare);
-
-				overwriteInfo(newSegment, moveInfo);
-
-				if (timestampUtils.isLocal(moveInfo.moves[moveInfo.moves.length - 1])) {
 					assert(
-						oldestUnacked?.segmentGroup !== undefined,
+						oldestUnacked.segmentGroup !== undefined,
 						0x86c /* expected segment group to exist */,
 					);
 
-					this.addToPendingList(newSegment, oldestUnacked?.segmentGroup);
+					this.addToPendingList(newSegment, oldestUnacked.segmentGroup);
 				}
 
 				if (newSegment.parent) {
