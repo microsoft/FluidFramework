@@ -11,7 +11,11 @@ import type {
 
 const defaultTelemetrySignalSampleCount = 100;
 
-export interface IPerfSignalReport {
+/**
+ * Set of stats/values used to keep track of telemetry related to signals.
+ * @remarks Exported just for testing purposes, shouldn't be necessary in production code.
+ */
+export interface ISignalTelemetryTracking {
 	/**
 	 * Accumulates the total number of broadcast signals sent during the current signal latency measurement window.
 	 * This value represents the total number of signals sent since the latency measurement began and is used
@@ -59,7 +63,7 @@ export interface IPerfSignalReport {
 }
 
 export class SignalTelemetryManager {
-	private readonly signalTracking: IPerfSignalReport = {
+	private readonly signalTracking: ISignalTelemetryTracking = {
 		totalSignalsSentInLatencyWindow: 0,
 		signalsLost: 0,
 		signalsOutOfOrder: 0,
@@ -192,7 +196,7 @@ export class SignalTelemetryManager {
 	 */
 	public applyTrackingToSignalEnvelope(
 		envelope: ISignalEnvelope,
-		isBroadcastSignal: boolean
+		isBroadcastSignal: boolean,
 	): void {
 		if (isBroadcastSignal) {
 			const clientBroadcastSignalSeqNo = ++this.broadcastSignalSequenceNumber;
