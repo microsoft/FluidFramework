@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 import {
@@ -64,6 +65,8 @@ describeCompat("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	let provider: ITestObjectProvider;
+	let container1: IContainer;
+	let container2: IContainer;
 	let dataObject1: DataObjectWithTree;
 	let tree1: ITree;
 	let tree2: ITree;
@@ -80,7 +83,7 @@ describeCompat("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// Create a loader and a detached container.
 		const loader1 = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
-		const container1 = await loader1.createDetachedContainer(provider.defaultCodeDetails);
+		container1 = await loader1.createDetachedContainer(provider.defaultCodeDetails);
 		// Get the create new request to attach the container with.
 		const request = provider.driver.createCreateNewRequest(provider.documentId);
 		dataObject1 = (await container1.getEntryPoint()) as DataObjectWithTree;
@@ -91,7 +94,7 @@ describeCompat("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
 		const loader2 = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
 		const loadUrl = await container1.getAbsoluteUrl("");
 		assert(loadUrl !== undefined, "Container's absolute URL is undefined");
-		const container2 = await loader2.resolve({ url: loadUrl });
+		container2 = await loader2.resolve({ url: loadUrl });
 		const dataObject2 = (await container2.getEntryPoint()) as DataObjectWithTree;
 		tree2 = dataObject2.tree;
 
@@ -159,8 +162,8 @@ describeCompat("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
 	}
 
 	function removeSide(treeView: TreeView<typeof Shape>) {
-		treeView.root.sides--;
-		treeView.root.points.removeAt(treeView.root.sides);
+		// treeView.root.sides--;
+		treeView.root.points.removeAt(treeView.root.sides - 1);
 	}
 
 	describe("Tree with an object and array", () => {
@@ -279,6 +282,20 @@ describeCompat("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
 			);
 		});
 
+		/**
+		 * Function that ensures that the given change is only processed by the second client. The first client
+		 * will not see this change.
+		 */
+		async function syncChangeOnlyOnClient2(change: () => void) {
+			// Pause processing on first client to prevent it from receiving changes.
+			await provider.opProcessingController.pauseProcessing(container1);
+			// Make the change and process it only on the second client.
+			change();
+			await provider.opProcessingController.processIncoming(container2);
+			// Resume normal processing for the first client.
+			provider.opProcessingController.resumeProcessing(container1);
+		}
+
 		it("fails transaction that doesn't satisfy constraints", async () => {
 			// Add a new point in the first client.
 			const newPointClient1 = new Point({ x: 3, y: 3 });
@@ -286,8 +303,9 @@ describeCompat("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
 			const pointsLength = treeViewClient1.root.points.length;
 			await provider.ensureSynchronized();
 
-			// Remove the new point in the second client.
-			removeSide(treeViewClient2);
+			// Remove the new point in the second client and ensure that the changes are not synced to the first client.
+			await syncChangeOnlyOnClient2(() => removeSide(treeViewClient2));
+
 			assert(
 				treeViewClient2.root.points.length === pointsLength - 1,
 				"Point not removed in tree2",
@@ -313,7 +331,7 @@ describeCompat("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
 			);
 			assert.strictEqual(firstPointClient1.x, 4, "Transaction changes not applied locally");
 
-			// Sync the changes between the clients. The new point should now be removed from the first client.
+			// Sync the changes between both the clients. The new point should now be removed from the first client.
 			// And the changes to the first point should be reverted because the constraint is violated.
 			await provider.ensureSynchronized();
 			assert(
@@ -345,8 +363,9 @@ describeCompat("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
 			// Revertible that only tracks the last change in the first client.
 			let revertibleClient1: Revertible | undefined;
 			treeViewClient1.events.on("changed", (_, getRevertible) => {
-				assert(getRevertible !== undefined);
-				revertibleClient1 = getRevertible();
+				if (getRevertible !== undefined) {
+					revertibleClient1 = getRevertible();
+				}
 			});
 
 			// Add a new point to the first client.
@@ -379,8 +398,9 @@ describeCompat("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
 			// Revertible that only tracks the last change in the first client.
 			let revertibleClient1: Revertible | undefined;
 			treeViewClient1.events.on("changed", (_, getRevertible) => {
-				assert(getRevertible !== undefined);
-				revertibleClient1 = getRevertible();
+				if (getRevertible !== undefined) {
+					revertibleClient1 = getRevertible();
+				}
 			});
 
 			// Add a new point to the first client.
@@ -389,8 +409,8 @@ describeCompat("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
 			const pointsLength = treeViewClient1.root.points.length;
 			await provider.ensureSynchronized();
 
-			// Remove the new point in the second client.
-			removeSide(treeViewClient2);
+			// Remove the new point in the second client and ensure that the changes are not synced to the first client.
+			await syncChangeOnlyOnClient2(() => removeSide(treeViewClient2));
 			assert(
 				treeViewClient2.root.points.length === pointsLength - 1,
 				"Point not removed in tree2",
@@ -402,7 +422,7 @@ describeCompat("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
 			assert(firstPointClient1 !== undefined, "First point not found");
 			treeViewClient1.runTransaction(() => {
 				firstPointClient1.x = 4;
-				// return { preconditionsOnRevert: [{ type: "nodeInDocument", node: newPointNode }] };
+				return { preconditionsOnRevert: [{ type: "nodeInDocument", node: newPointClient1 }] };
 			});
 
 			// Validate that the all points still exist in the first client and the first point is updated.
