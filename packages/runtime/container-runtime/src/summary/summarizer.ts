@@ -19,8 +19,6 @@ import {
 	wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ISummaryConfiguration } from "../containerRuntime.js";
-
 // eslint-disable-next-line import/no-deprecated
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator.js";
 import { RunningSummarizer } from "./runningSummarizer.js";
@@ -40,17 +38,16 @@ import {
 	ISummarizerRuntime,
 	ISummarizingWarning,
 	type IRetriableFailureError,
+	type ISummaryConfiguration,
 } from "./summarizerTypes.js";
 import { SummaryCollection } from "./summaryCollection.js";
 import { SummarizeResultBuilder } from "./summaryGenerator.js";
-
-const summarizingError = "summarizingError";
 
 export class SummarizingWarning
 	extends LoggingError
 	implements ISummarizingWarning, IFluidErrorBase
 {
-	readonly errorType = summarizingError;
+	readonly errorType = "summarizingError";
 	readonly canRetry = true;
 
 	constructor(
@@ -80,9 +77,7 @@ export const createSummarizingWarning = (
  * Summarizer is responsible for coordinating when to generate and send summaries.
  * It is the main entry point for summary work.
  * It is created only by summarizing container (i.e. one with clientType === "summarizer")
- * @legacy
- * @alpha
- * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
 	public get ISummarizer(): this {

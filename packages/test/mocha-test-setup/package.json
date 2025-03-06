@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/mocha-test-setup",
-	"version": "2.24.0",
+	"version": "2.30.0",
 	"description": "Utilities for Fluid tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -59,7 +59,7 @@
 	"dependencies": {
 		"@fluid-internal/test-driver-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
-		"mocha": "^10.2.0",
+		"mocha": "^10.8.2",
 		"source-map-support": "^0.5.21"
 	},
 	"devDependencies": {
