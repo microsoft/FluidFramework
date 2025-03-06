@@ -18,7 +18,6 @@ import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 	summarizeNow,
-	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
 import { TestPersistedCache } from "../testPersistedCache.js";
@@ -44,12 +43,12 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 	let provider: ITestObjectProvider;
 	const testPersistedCache = new TestPersistedCache();
 	beforeEach("getTestObjectProvider", async () => {
-		provider = getTestObjectProvider({ persistedCache: testPersistedCache });
+		provider = getTestObjectProvider({
+			persistedCache: testPersistedCache,
+			syncSummarizer: true,
+		});
 		container1 = await provider.makeTestContainer(testContainerConfig);
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
-		await waitForContainerConnection(container1);
-
-		await provider.ensureSynchronized();
 
 		container2 = await provider.loadTestContainer(testContainerConfig);
 		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
@@ -273,8 +272,6 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 			await provider.ensureSynchronized();
 			const container3 = await provider.loadTestContainer(testContainerConfig);
 			const dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
-
-			await provider.ensureSynchronized();
 			assert.ok(await getAliasedDataStoreEntryPoint(dataObject3, alias));
 		});
 
@@ -334,11 +331,10 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 				assert.equal(aliasResult1, "Success");
 				assert.equal(aliasResult2, "Conflict");
 
-				await provider.ensureSynchronized();
-
 				const { summarizer } = await createSummarizer(provider, container1, {
 					fluidDataObjectType: DataObjectFactoryType.Test,
 				});
+				await provider.ensureSynchronized();
 				const { summaryVersion } = await summarizeNow(summarizer);
 
 				// For the ODSP driver, we need to clear the cache to ensure we get the latest snapshot
