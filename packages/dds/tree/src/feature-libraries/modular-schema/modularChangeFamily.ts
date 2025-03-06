@@ -13,7 +13,6 @@ import {
 	type ChangeFamilyEditor,
 	type ChangeRebaser,
 	type ChangesetLocalId,
-	CursorLocationType,
 	type DeltaDetachedNodeBuild,
 	type DeltaDetachedNodeDestruction,
 	type DeltaDetachedNodeId,
@@ -24,7 +23,6 @@ import {
 	type FieldKey,
 	type FieldKindIdentifier,
 	type FieldUpPath,
-	type ITreeCursorSynchronous,
 	type RevisionInfo,
 	type RevisionMetadataSource,
 	type RevisionTag,
@@ -58,12 +56,7 @@ import {
 	RangeMap,
 	balancedReduce,
 } from "../../util/index.js";
-import {
-	type TreeChunk,
-	chunkFieldSingle,
-	chunkTree,
-	defaultChunkPolicy,
-} from "../chunked-forest/index.js";
+import type { TreeChunk } from "../chunked-forest/index.js";
 
 import {
 	type CrossFieldManager,
@@ -94,7 +87,6 @@ import {
 	type NodeChangeset,
 	type NodeId,
 } from "./modularChangeTypes.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -2660,29 +2652,20 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 
 	/**
 	 * @param firstId - The ID to associate with the first node
-	 * @param content - The node(s) to build. Can be in either Field or Node mode.
+	 * @param content - The node(s) to build.
 	 * @param revision - The revision to use for the build.
 	 * @returns A description of the edit that can be passed to `submitChanges`.
 	 */
 	public buildTrees(
 		firstId: ChangesetLocalId,
-		content: ITreeCursorSynchronous,
+		content: TreeChunk,
 		revision: RevisionTag,
-		idCompressor?: IIdCompressor,
 	): GlobalEditDescription {
-		if (content.mode === CursorLocationType.Fields && content.getFieldLength() === 0) {
+		if (content.topLevelLength === 0) {
 			return { type: "global", revision };
 		}
 		const builds: ChangeAtomIdBTree<TreeChunk> = newTupleBTree();
-		const chunkCompressor = {
-			policy: defaultChunkPolicy,
-			idCompressor,
-		};
-		const chunk =
-			content.mode === CursorLocationType.Fields
-				? chunkFieldSingle(content, chunkCompressor)
-				: chunkTree(content, chunkCompressor);
-		builds.set([revision, firstId], chunk);
+		builds.set([revision, firstId], content);
 
 		return {
 			type: "global",

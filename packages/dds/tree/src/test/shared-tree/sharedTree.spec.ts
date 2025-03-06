@@ -39,7 +39,6 @@ import {
 	MockNodeKeyManager,
 	TreeCompressionStrategy,
 	TreeStatus,
-	cursorForJsonableTreeNode,
 } from "../../feature-libraries/index.js";
 import {
 	ObjectForest,
@@ -87,6 +86,7 @@ import {
 	StringArray,
 	NumberArray,
 	validateViewConsistency,
+	chunkFromJsonableField,
 } from "../utils.js";
 import { configuredSharedTree, TreeFactory } from "../../treeFactory.js";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
@@ -235,10 +235,12 @@ describe("SharedTree", () => {
 			field: rootFieldKey,
 		});
 		field.set(
-			cursorForJsonableTreeNode({
-				type: brand(handleSchema.identifier),
-				value: provider.trees[0].handle,
-			}),
+			chunkFromJsonableField([
+				{
+					type: brand(handleSchema.identifier),
+					value: provider.trees[0].handle,
+				},
+			]),
 			true,
 		);
 	});

@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import type { ReferenceCounted } from "../../util/index.js";
-import type { FieldKey, TreeNodeSchemaIdentifier } from "../schema-stored/index.js";
+import type { FieldKey } from "../schema-stored/index.js";
 import { rootFieldKey } from "./types.js";
 import {
 	CursorLocationType,

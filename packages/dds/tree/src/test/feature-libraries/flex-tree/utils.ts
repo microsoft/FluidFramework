@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import {
 	type FieldAnchor,
 	type IEditableForest,
+	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
 	TreeNavigationResult,
 	TreeStoredSchemaRepository,
@@ -15,11 +16,7 @@ import {
 } from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { type Context, getTreeContext } from "../../../feature-libraries/flex-tree/context.js";
-import {
-	defaultSchemaPolicy,
-	MockNodeKeyManager,
-	type TreeChunk,
-} from "../../../feature-libraries/index.js";
+import { defaultSchemaPolicy, MockNodeKeyManager } from "../../../feature-libraries/index.js";
 import { MockTreeCheckout, forestWithContent } from "../../utils.js";
 import {
 	toStoredSchema,
@@ -61,7 +58,7 @@ export interface TreeSimpleContent {
 	 * Default tree content to initialize the tree with iff the tree is uninitialized
 	 * (meaning it does not even have any schema set at all).
 	 */
-	readonly initialTree: TreeChunk | undefined;
+	readonly initialTree: readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined;
 }
 
 /**

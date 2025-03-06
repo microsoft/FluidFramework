@@ -24,6 +24,8 @@ import {
 import { disposeSymbol, fail, getOrCreate } from "../../util/index.js";
 import {
 	FieldKinds,
+	MappedEditBuilder,
+	type IDefaultEditBuilder,
 	type OptionalFieldEditBuilder,
 	type SequenceFieldEditBuilder,
 	type ValueFieldEditBuilder,
@@ -247,6 +249,13 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 
 		throw new UsageError("Editing only allowed on fields with TreeStatus.InDocument status");
 	}
+
+	protected getEditor(): IDefaultEditBuilder<ITreeCursorSynchronous> {
+		return new MappedEditBuilder(
+			this.context.checkout.editor,
+			(cursor: ITreeCursorSynchronous) => this.context.checkout.forest.chunkField(cursor),
+		);
+	}
 }
 
 export class LazySequence extends LazyField implements FlexTreeSequenceField {
@@ -274,7 +283,7 @@ export class LazySequence extends LazyField implements FlexTreeSequenceField {
 
 	private sequenceEditor(): SequenceFieldEditBuilder<ITreeCursorSynchronous> {
 		const fieldPath = this.getFieldPathForEditing();
-		return this.context.checkout.editor.sequenceField(fieldPath);
+		return this.getEditor().sequenceField(fieldPath);
 	}
 }
 
@@ -299,7 +308,7 @@ export class LazyValueField extends ReadonlyLazyValueField implements FlexTreeRe
 
 	private valueFieldEditor(): ValueFieldEditBuilder<ITreeCursorSynchronous> {
 		const fieldPath = this.getFieldPathForEditing();
-		const fieldEditor = this.context.checkout.editor.valueField(fieldPath);
+		const fieldEditor = this.getEditor().valueField(fieldPath);
 		return fieldEditor;
 	}
 
@@ -320,7 +329,7 @@ export class LazyOptionalField extends LazyField implements FlexTreeOptionalFiel
 
 	private optionalEditor(): OptionalFieldEditBuilder<ITreeCursorSynchronous> {
 		const fieldPath = this.getFieldPathForEditing();
-		const fieldEditor = this.context.checkout.editor.optionalField(fieldPath);
+		const fieldEditor = this.getEditor().optionalField(fieldPath);
 		return fieldEditor;
 	}
 

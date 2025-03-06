@@ -20,7 +20,7 @@ import {
 	EmptyKey,
 	type RevertibleFactory,
 } from "../../core/index.js";
-import { FieldKinds, cursorForJsonableTreeField } from "../../feature-libraries/index.js";
+import { FieldKinds } from "../../feature-libraries/index.js";
 import {
 	getBranch,
 	Tree,
@@ -31,6 +31,7 @@ import {
 } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
+	chunkFromJsonableField,
 	createTestUndoRedoStacks,
 	expectSchemaEqual,
 	getView,
@@ -171,7 +172,7 @@ describe("sharedTreeView", () => {
 				checkout.editor
 					.optionalField(rootField)
 					.set(
-						cursorForJsonableTreeField([{ type: brand(stringSchema.identifier), value: "A" }]),
+						chunkFromJsonableField([{ type: brand(stringSchema.identifier), value: "A" }]),
 						true,
 					);
 
@@ -198,7 +199,7 @@ describe("sharedTreeView", () => {
 				checkout.editor
 					.optionalField(rootField)
 					.set(
-						cursorForJsonableTreeField([{ type: brand(stringSchema.identifier), value: "A" }]),
+						chunkFromJsonableField([{ type: brand(stringSchema.identifier), value: "A" }]),
 						true,
 					);
 				checkout.updateSchema(toStoredSchema(OptionalString));

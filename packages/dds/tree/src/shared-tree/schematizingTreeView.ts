@@ -183,10 +183,7 @@ export class SchematizingSimpleTreeView<
 			prepareContentForHydration(mapTree, this.checkout.forest);
 			initialize(this.checkout, {
 				schema: toStoredSchema(this.viewSchema.schema),
-				initialTree:
-					mapTree === undefined
-						? undefined
-						: this.checkout.forest.chunkField(cursorForMapTreeNode(mapTree)),
+				initialTree: mapTree === undefined ? undefined : cursorForMapTreeNode(mapTree),
 			});
 		});
 	}

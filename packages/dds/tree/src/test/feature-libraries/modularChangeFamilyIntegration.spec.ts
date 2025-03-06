@@ -607,7 +607,7 @@ describe("ModularChangeFamily integration", () => {
 					parent: { parent: undefined, parentField: fieldB, parentIndex: 0 },
 					field: fieldC,
 				})
-				.insert(0, newNode.cursor());
+				.insert(0, newNode);
 
 			const [move, insert] = getChanges();
 			const composed = family.compose([makeAnonChange(move), makeAnonChange(insert)]);
@@ -654,7 +654,7 @@ describe("ModularChangeFamily integration", () => {
 					parent: { parent: undefined, parentField: fieldB, parentIndex: 0 },
 					field: fieldC,
 				})
-				.insert(0, newNode.cursor());
+				.insert(0, newNode);
 
 			const [move, insert] = getChanges();
 			const moveTagged = tagChangeInline(move, tag1);
