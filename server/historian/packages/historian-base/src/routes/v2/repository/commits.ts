@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as git from "@fluidframework/gitresources";
 import {
 	IStorageNameRetriever,
 	IThrottler,
@@ -10,13 +11,22 @@ import {
 	IDocumentManager,
 } from "@fluidframework/server-services-core";
 import { IThrottleMiddlewareOptions, throttle } from "@fluidframework/server-services-utils";
-import { validateRequestParams } from "@fluidframework/server-services-shared";
+import {
+	containsPathTraversal,
+	validateRequestParams,
+} from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
-import { ICache, IDenyList, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
-import * as utils from "../utils";
-import { Constants } from "../../utils";
+import {
+	ICache,
+	IDenyList,
+	ITenantService,
+	ISimplifiedCustomDataRetriever,
+} from "../../../services";
+import * as utils from "../../utils";
+import { Constants } from "../../../utils";
+import { NetworkError } from "@fluidframework/server-services-client";
 
 export function create(
 	config: nconf.Provider,
@@ -41,12 +51,15 @@ export function create(
 		Constants.generalRestCallThrottleIdPrefix,
 	);
 
-	async function getContent(
+	async function getCommits(
 		tenantId: string,
 		authorization: string | undefined,
-		path: string,
-		ref: string | undefined,
-	): Promise<any> {
+		sha: string,
+		count: number = 1,
+	): Promise<git.ICommitDetails[]> {
+		if (sha === undefined) {
+			throw new NetworkError(400, "Missing required parameter 'sha'");
+		}
 		const service = await utils.createGitService({
 			config,
 			tenantId,
@@ -58,22 +71,40 @@ export function create(
 			denyList,
 			ephemeralDocumentTTLSec,
 		});
-		return service.getContent(path, ref);
+		return service.getCommits(sha, count);
 	}
 
 	router.get(
-		"/repos/:ignored?/:tenantId/contents/*",
-		validateRequestParams("tenantId", 0),
+		"/repos/:ignored?/:tenantId/commits",
+		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
 		utils.verifyToken(revokedTokenChecker),
 		(request, response, next) => {
-			const contentP = getContent(
+			const sha = utils.queryParamToString(request.query.sha);
+			if (sha === undefined) {
+				utils.handleResponse(
+					Promise.reject(new NetworkError(400, "Missing required parameter 'sha'")),
+					response,
+					false,
+				);
+				return;
+			}
+			if (containsPathTraversal(sha)) {
+				utils.handleResponse(
+					Promise.reject(new NetworkError(400, "Invalid sha")),
+					response,
+					false,
+				);
+				return;
+			}
+			const commitsP = getCommits(
 				request.params.tenantId,
 				request.get("Authorization"),
-				request.params[0],
-				utils.queryParamToString(request.query.ref),
+				sha,
+				utils.queryParamToNumber(request.query.count),
 			);
-			utils.handleResponse(contentP, response, false);
+
+			utils.handleResponse(commitsP, response, false);
 		},
 	);
 

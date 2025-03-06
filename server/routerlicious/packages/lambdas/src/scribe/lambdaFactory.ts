@@ -320,6 +320,7 @@ export class ScribeLambdaFactory
 			this.enableWholeSummaryUpload,
 			lastSummaryMessages,
 			this.getDeltasViaAlfred,
+			undefined /* maxRetriesOnError */,
 			this.maxLogtailLength,
 		);
 		const checkpointManager = new CheckpointManager(
