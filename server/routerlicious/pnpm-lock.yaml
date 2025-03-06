@@ -1254,9 +1254,9 @@ importers:
       '@fluidframework/protocol-definitions':
         specifier: ^3.2.0
         version: 3.2.0
-      assert:
-        specifier: ^2.0.0
-        version: 2.1.0
+      '@fluidframework/server-common-utils':
+        specifier: workspace:~
+        version: link:../common-utils
       axios:
         specifier: ^1.7.7
         version: 1.7.7(debug@4.3.4)
@@ -1294,9 +1294,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
-      '@fluidframework/server-common-utils':
-        specifier: workspace:~
-        version: link:../common-utils
       '@fluidframework/server-services-client-previous':
         specifier: npm:@fluidframework/server-services-client@5.0.0
         version: '@fluidframework/server-services-client@5.0.0'
