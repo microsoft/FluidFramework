@@ -227,11 +227,11 @@ function passThruIgnoreInaccessibleMembers<T, TExpected>(
  * Similar to {@link passThru} but specifically handles `bigint` values.
  */
 function passThruHandlingBigint<T, TExpected>(
-	filteredIn: JsonSerializable<T, { AllowExactly: bigint }>,
-	expectedDeserialization?: JsonDeserialized<TExpected, { AllowExactly: bigint }>,
+	filteredIn: JsonSerializable<T, { AllowExactly: [bigint] }>,
+	expectedDeserialization?: JsonDeserialized<TExpected, { AllowExactly: [bigint] }>,
 ): {
-	filteredIn: JsonSerializable<T, { AllowExactly: bigint }>;
-	out: JsonDeserialized<T, { AllowExactly: bigint }>;
+	filteredIn: JsonSerializable<T, { AllowExactly: [bigint] }>;
+	out: JsonDeserialized<T, { AllowExactly: [bigint] }>;
 } {
 	const stringified = JSON.stringify(filteredIn, replaceBigInt);
 	if (stringified === undefined) {
@@ -244,7 +244,7 @@ function passThruHandlingBigint<T, TExpected>(
 	}
 	const out = JSON.parse(stringified, reviveBigInt) as JsonDeserialized<
 		T,
-		{ AllowExactly: bigint }
+		{ AllowExactly: [bigint] }
 	>;
 	const expected =
 		// Don't use nullish coalescing here to allow for `null` to be expected.
@@ -258,9 +258,9 @@ function passThruHandlingBigint<T, TExpected>(
  * Similar to {@link passThruThrows} but specifically handles `bigint` values.
  */
 function passThruHandlingBigintThrows<T>(
-	filteredIn: JsonSerializable<T, { AllowExactly: bigint }>,
+	filteredIn: JsonSerializable<T, { AllowExactly: [bigint] }>,
 	expectedThrow: Error,
-): { filteredIn: JsonSerializable<T, { AllowExactly: bigint }> } {
+): { filteredIn: JsonSerializable<T, { AllowExactly: [bigint] }> } {
 	assert.throws(() => passThruHandlingBigint(filteredIn), expectedThrow);
 	return { filteredIn };
 }
@@ -269,14 +269,17 @@ function passThruHandlingBigintThrows<T>(
  * Similar to {@link passThru} but specifically handles certain function signatures.
  */
 function passThruHandlingSpecificFunction<T>(
-	filteredIn: JsonSerializable<T, { AllowExactly: (_: string) => number }>,
+	filteredIn: JsonSerializable<T, { AllowExactly: [(_: string) => number] }>,
 ): {
-	filteredIn: JsonSerializable<T, { AllowExactly: (_: string) => number }>;
-	out: JsonDeserialized<T, { AllowExactly: (_: string) => number }>;
+	filteredIn: JsonSerializable<T, { AllowExactly: [(_: string) => number] }>;
+	out: JsonDeserialized<T, { AllowExactly: [(_: string) => number] }>;
 } {
 	return {
 		filteredIn,
-		out: undefined as unknown as JsonDeserialized<T, { AllowExactly: (_: string) => number }>,
+		out: undefined as unknown as JsonDeserialized<
+			T,
+			{ AllowExactly: [(_: string) => number] }
+		>,
 	};
 }
 
@@ -299,14 +302,14 @@ function passThruHandlingFluidHandle<T>(
  * Similar to {@link passThru} but allows `unknown` rather than requiring `JsonTypeWith`.
  */
 function passThruAllowingUnknown<T>(
-	filteredIn: JsonSerializable<T, { AllowExactly: unknown }>,
+	filteredIn: JsonSerializable<T, { AllowExactly: [unknown] }>,
 ): {
-	filteredIn: JsonSerializable<T, { AllowExactly: unknown }>;
-	out: JsonDeserialized<T, { AllowExactly: unknown }>;
+	filteredIn: JsonSerializable<T, { AllowExactly: [unknown] }>;
+	out: JsonDeserialized<T, { AllowExactly: [unknown] }>;
 } {
 	return {
 		filteredIn,
-		out: undefined as unknown as JsonDeserialized<T, { AllowExactly: unknown }>,
+		out: undefined as unknown as JsonDeserialized<T, { AllowExactly: [unknown] }>,
 	};
 }
 

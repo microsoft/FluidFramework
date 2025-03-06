@@ -185,14 +185,14 @@ function passThruThrows<T>(v: T, expectedThrow: Error): JsonDeserialized<T> {
 function passThruHandlingBigint<T>(
 	v: T,
 	expected?: unknown,
-): JsonDeserialized<T, { AllowExactly: bigint }> {
+): JsonDeserialized<T, { AllowExactly: [bigint] }> {
 	const stringified = JSON.stringify(v, replaceBigInt);
 	if (stringified === undefined) {
 		throw new Error("JSON.stringify returned undefined");
 	}
 	const result = JSON.parse(stringified, reviveBigInt) as JsonDeserialized<
 		T,
-		{ AllowExactly: bigint }
+		{ AllowExactly: [bigint] }
 	>;
 	assert.deepStrictEqual(result, expected ?? v);
 	return result;
@@ -204,9 +204,9 @@ function passThruHandlingBigint<T>(
 function passThruHandlingBigintThrows<T>(
 	v: T,
 	expectedThrow: Error,
-): JsonDeserialized<T, { AllowExactly: bigint }> {
+): JsonDeserialized<T, { AllowExactly: [bigint] }> {
 	assert.throws(() => passThruHandlingBigint(v), expectedThrow);
-	return undefined as unknown as JsonDeserialized<T, { AllowExactly: bigint }>;
+	return undefined as unknown as JsonDeserialized<T, { AllowExactly: [bigint] }>;
 }
 
 /**
@@ -214,8 +214,11 @@ function passThruHandlingBigintThrows<T>(
  */
 function passThruHandlingSpecificFunction<T>(
 	_v: T,
-): JsonDeserialized<T, { AllowExactly: (_: string) => number }> {
-	return undefined as unknown as JsonDeserialized<T, { AllowExactly: (_: string) => number }>;
+): JsonDeserialized<T, { AllowExactly: [(_: string) => number] }> {
+	return undefined as unknown as JsonDeserialized<
+		T,
+		{ AllowExactly: [(_: string) => number] }
+	>;
 }
 
 /**
@@ -230,8 +233,10 @@ function passThruHandlingFluidHandle<T>(
 /**
  * Similar to {@link passThru} but preserves `unknown` instead of substituting `JsonTypeWith`.
  */
-function passThruPreservingUnknown<T>(_v: T): JsonDeserialized<T, { AllowExactly: unknown }> {
-	return undefined as unknown as JsonDeserialized<T, { AllowExactly: unknown }>;
+function passThruPreservingUnknown<T>(
+	_v: T,
+): JsonDeserialized<T, { AllowExactly: [unknown] }> {
+	return undefined as unknown as JsonDeserialized<T, { AllowExactly: [unknown] }>;
 }
 
 describe("JsonDeserialized", () => {

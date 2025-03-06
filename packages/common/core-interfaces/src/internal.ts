@@ -36,7 +36,7 @@ import type { JsonTypeWith as ExposedJsonTypeWith } from "./jsonType.js";
 export type JsonDeserialized<
 	T,
 	Options extends JsonDeserializedOptions = {
-		AllowExactly: never;
+		AllowExactly: [];
 		AllowExtensionOf: never;
 	},
 > = ExposedJsonDeserialized<T, Options>;
@@ -47,7 +47,7 @@ export type JsonDeserialized<
 export type JsonSerializable<
 	T,
 	Options extends JsonSerializableOptions = {
-		AllowExactly: never;
+		AllowExactly: [];
 		AllowExtensionOf: never;
 	},
 > = ExposedJsonSerializable<T, Options>;
