@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { Deferred } from "@fluidframework/server-common-utils";
 import {
 	ConnectionMode,
 	IClient,
@@ -17,7 +16,7 @@ import {
 	MessageType,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { IWebSocket } from "@fluidframework/server-services-core";
+import { Deferred, IWebSocket } from "@fluidframework/server-services-core";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { TestNotImplementedDocumentRepository } from "@fluidframework/server-test-utils";
 import Sinon from "sinon";

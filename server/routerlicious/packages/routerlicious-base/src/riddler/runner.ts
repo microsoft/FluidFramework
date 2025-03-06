@@ -4,8 +4,8 @@
  */
 
 import cluster from "cluster";
-import { Deferred } from "@fluidframework/server-common-utils";
 import {
+	Deferred,
 	IRunner,
 	ISecretManager,
 	IWebServerFactory,

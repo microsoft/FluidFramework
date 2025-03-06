@@ -365,9 +365,6 @@ importers:
 
   packages/lambdas-driver:
     dependencies:
-      '@fluidframework/server-common-utils':
-        specifier: workspace:~
-        version: link:../common-utils
       '@fluidframework/server-services-client':
         specifier: workspace:~
         version: link:../services-client
@@ -453,9 +450,6 @@ importers:
       '@fluidframework/protocol-definitions':
         specifier: ^3.2.0
         version: 3.2.0
-      '@fluidframework/server-common-utils':
-        specifier: workspace:~
-        version: link:../common-utils
       '@fluidframework/server-lambdas':
         specifier: workspace:~
         version: link:../lambdas
@@ -1443,9 +1437,6 @@ importers:
 
   packages/services-ordering-rdkafka:
     dependencies:
-      '@fluidframework/server-common-utils':
-        specifier: workspace:~
-        version: link:../common-utils
       '@fluidframework/server-services-client':
         specifier: workspace:~
         version: link:../services-client

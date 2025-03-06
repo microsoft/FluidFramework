@@ -4,9 +4,9 @@
  */
 
 import type * as kafkaTypes from "node-rdkafka";
-import { Deferred } from "@fluidframework/server-common-utils";
 import {
 	BoxcarType,
+	Deferred,
 	IBoxcarMessage,
 	IPendingBoxcar,
 	IProducer,

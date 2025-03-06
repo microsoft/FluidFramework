@@ -6,8 +6,8 @@
 import assert from "assert";
 import { EventEmitter } from "events";
 import { IClient, IDocumentMessage } from "@fluidframework/protocol-definitions";
-import { Deferred } from "@fluidframework/server-common-utils";
 import {
+	Deferred,
 	INode,
 	IOrderer,
 	IOrdererConnection,

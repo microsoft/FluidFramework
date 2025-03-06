@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { Deferred } from "@fluidframework/server-common-utils";
+import { Deferred } from "@fluidframework/server-services-core";
 import { NetworkError } from "@fluidframework/server-services-client";
 import type { Response, Request } from "express";
 import {

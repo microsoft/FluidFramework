@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred, TypedEventEmitter } from "@fluidframework/server-common-utils";
+import { TypedEventEmitter } from "@fluidframework/server-common-utils";
 import {
+	Deferred,
 	IDocumentStorage,
 	IOrdererManager,
 	ITenantManager,

@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 import { EventEmitter } from "events";
-import { Deferred } from "@fluidframework/server-common-utils";
 import {
+	Deferred,
 	IContext,
 	IQueuedMessage,
 	ILogger,

@@ -20,15 +20,6 @@ export class Buffer extends Uint8Array {
 export const bufferToString: (blob: ArrayBufferLike, encoding: string) => string;
 
 // @internal
-export class Deferred<T> {
-    constructor();
-    get isCompleted(): boolean;
-    get promise(): Promise<T>;
-    reject(error: any): void;
-    resolve(value: T | PromiseLike<T>): void;
-}
-
-// @internal
 export const delay: (timeMs: number) => Promise<void>;
 
 // @internal

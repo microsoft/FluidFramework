@@ -5,8 +5,8 @@
 
 import type * as kafkaTypes from "node-rdkafka";
 
-import { Deferred } from "@fluidframework/server-common-utils";
 import {
+	Deferred,
 	IConsumer,
 	IPartition,
 	IQueuedMessage,

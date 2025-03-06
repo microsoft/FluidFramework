@@ -58,7 +58,6 @@
 	},
 	"dependencies": {
 		"@fluidframework/protocol-definitions": "^3.2.0",
-		"@fluidframework/server-common-utils": "workspace:~",
 		"@fluidframework/server-lambdas": "workspace:~",
 		"@fluidframework/server-memory-orderer": "workspace:~",
 		"@fluidframework/server-services-client": "workspace:~",

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { Deferred } from "./deferred";
 export { delay } from "./delay";
 export {
 	TypedEventEmitter,
