@@ -1230,6 +1230,9 @@ importers:
       nconf:
         specifier: ^0.12.0
         version: 0.12.0
+      sha.js:
+        specifier: ^2.4.11
+        version: 2.4.11
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: 0.52.0-315632
@@ -1831,9 +1834,6 @@ importers:
 
   packages/test-utils:
     dependencies:
-      '@fluidframework/common-utils':
-        specifier: ^3.1.0
-        version: 3.1.0
       '@fluidframework/gitresources':
         specifier: workspace:~
         version: link:../gitresources
