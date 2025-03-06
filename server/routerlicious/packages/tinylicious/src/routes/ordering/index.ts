@@ -3,15 +3,13 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-deprecated
-import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	IBroadcastSignalEventPayload,
 	ICollaborationSessionEvents,
 	IRoom,
 	IRuntimeSignalEnvelope,
 } from "@fluidframework/server-lambdas";
-import { IDocumentStorage, MongoManager } from "@fluidframework/server-services-core";
+import { IDocumentStorage, MongoManager, TypedEventEmitter } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
 import * as deltas from "./deltas";
@@ -21,7 +19,6 @@ export function create(
 	config: Provider,
 	storage: IDocumentStorage,
 	mongoManager: MongoManager,
-	// eslint-disable-next-line import/no-deprecated
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 ): Router {
 	const router: Router = Router();

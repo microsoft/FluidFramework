@@ -13,8 +13,8 @@ import {
 	MongoManager,
 	DefaultMetricClient,
 	IRunner,
+	TypedEventEmitter,
 } from "@fluidframework/server-services-core";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import {

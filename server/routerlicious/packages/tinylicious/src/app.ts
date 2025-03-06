@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-deprecated
-import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
-import { IDocumentStorage, MongoManager } from "@fluidframework/server-services-core";
+import { IDocumentStorage, MongoManager, TypedEventEmitter } from "@fluidframework/server-services-core";
 import { RestLessServer } from "@fluidframework/server-services-shared";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
@@ -33,7 +31,6 @@ export function create(
 	config: Provider,
 	storage: IDocumentStorage,
 	mongoManager: MongoManager,
-	// eslint-disable-next-line import/no-deprecated
 	collaborationSessionEventEmitter: TypedEventEmitter<ICollaborationSessionEvents> | undefined,
 ) {
 	// Maximum REST request size

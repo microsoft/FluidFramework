@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-deprecated
-import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { LocalOrdererManager } from "@fluidframework/server-local-server";
 import { DocumentStorage } from "@fluidframework/server-services-shared";
@@ -14,6 +12,7 @@ import {
 	MongoManager,
 	IResourcesFactory,
 	MongoDocumentRepository,
+	TypedEventEmitter,
 } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
@@ -98,7 +97,6 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 		);
 
 		const collaborationSessionEventEmitter =
-			// eslint-disable-next-line import/no-deprecated
 			new TypedEventEmitter<ICollaborationSessionEvents>();
 
 		return new TinyliciousResources(
