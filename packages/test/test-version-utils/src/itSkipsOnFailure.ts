@@ -69,6 +69,10 @@ export function itSkipsFailureOnSpecificDrivers(
 	return it(name, createSkippedTestsWithDriverType(skippedDrivers, test));
 }
 
+/**
+ * Recreates the .only() functionality from Mocha Test
+ * @internal
+ */
 itSkipsFailureOnSpecificDrivers.only = function (
 	name: string,
 	skippedDrivers: TestDriverTypes[],
@@ -77,6 +81,10 @@ itSkipsFailureOnSpecificDrivers.only = function (
 	return it.only(name, createSkippedTestsWithDriverType(skippedDrivers, test));
 };
 
+/**
+ * Recreates the .skip() functionality from Mocha Test
+ * @internal
+ */
 itSkipsFailureOnSpecificDrivers.skip = function (
 	name: string,
 	skippedDrivers: TestDriverTypes[],
@@ -106,6 +114,10 @@ export function itExpectsSkipsFailureOnSpecificDrivers(
 	);
 }
 
+/**
+ * Recreates the .only() functionality from Mocha Test
+ * @internal
+ */
 itExpectsSkipsFailureOnSpecificDrivers.only = function (
 	name: string,
 	orderedExpectedEvents: ExpectedEvents,
@@ -121,6 +133,10 @@ itExpectsSkipsFailureOnSpecificDrivers.only = function (
 	);
 };
 
+/**
+ * Recreates the .skip() functionality from Mocha Test
+ * @internal
+ */
 itExpectsSkipsFailureOnSpecificDrivers.skip = function (
 	name: string,
 	orderedExpectedEvents: ExpectedEvents,

@@ -4,7 +4,25 @@
 
 ```ts
 
+/// <reference types="mocha" />
+
 export { DocumentType_2 as DocumentType }
+
+// @public (undocumented)
+export namespace itExpectsSkipsFailureOnSpecificDrivers {
+    var // (undocumented)
+    only: (name: string, orderedExpectedEvents: ExpectedEvents, skippedDrivers: TestDriverTypes[], test: Mocha.AsyncFunc) => Mocha.Test;
+    var // (undocumented)
+    skip: (name: string, orderedExpectedEvents: ExpectedEvents, skippedDrivers: TestDriverTypes[], test: Mocha.AsyncFunc) => Mocha.Test;
+}
+
+// @public (undocumented)
+export namespace itSkipsFailureOnSpecificDrivers {
+    var // (undocumented)
+    only: (name: string, skippedDrivers: TestDriverTypes[], test: Mocha.AsyncFunc) => Mocha.Test;
+    var // (undocumented)
+    skip: (name: string, skippedDrivers: TestDriverTypes[], test: Mocha.AsyncFunc) => Mocha.Test;
+}
 
 // (No @packageDocumentation comment for this package)
 
