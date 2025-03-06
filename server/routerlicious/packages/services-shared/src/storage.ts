@@ -30,9 +30,9 @@ import {
 	IStorageNameAllocator,
 	ITenantManager,
 	SequencedOperationType,
+	toUtf8
 } from "@fluidframework/server-services-core";
 import * as winston from "winston";
-import { toUtf8 } from "@fluidframework/common-utils";
 import {
 	BaseTelemetryProperties,
 	CommonProperties,

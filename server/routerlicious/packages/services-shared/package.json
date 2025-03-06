@@ -52,7 +52,6 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^3.1.0",
 		"@fluidframework/gitresources": "workspace:~",
 		"@fluidframework/protocol-base": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.2.0",
