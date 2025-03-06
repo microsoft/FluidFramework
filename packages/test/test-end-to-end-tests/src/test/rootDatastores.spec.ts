@@ -353,7 +353,7 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 				const aliasResult3 = await ds3.trySetAlias(alias);
 
 				assert.equal(aliasResult3, "Conflict");
-				assert.ok(timeoutAwait(getAliasedDataStoreEntryPoint(dataObject3, alias)));
+				assert.ok(await timeoutAwait(getAliasedDataStoreEntryPoint(dataObject3, alias)));
 			},
 		);
 	});
