@@ -10,7 +10,6 @@
  *
  * @param json - The JSON string to parse
  * @returns The result from `JSON.parse` if successful, otherwise `undefined`.
- * @internal
  */
 export function safelyParseJSON(json: string): any | undefined {
 	let parsed;

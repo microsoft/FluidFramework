@@ -5,7 +5,6 @@
 
 /**
  * Interface for a comparer.
- * @internal
  */
 export interface IComparer<T> {
 	/**
@@ -22,25 +21,7 @@ export interface IComparer<T> {
 }
 
 /**
- * A comparer for numbers.
- * @internal
- */
-export const NumberComparer: IComparer<number> = {
-	/**
-	 * The compare function for numbers.
-	 * @returns The difference of the two numbers.
-	 */
-	compare: (a, b): number => a - b,
-
-	/**
-	 * The minimum value of a JavaScript number, which is `Number.MIN_VALUE`.
-	 */
-	min: Number.MIN_VALUE,
-};
-
-/**
  * Interface to a node in {@link Heap}.
- * @internal
  */
 export interface IHeapNode<T> {
 	value: T;
@@ -49,7 +30,6 @@ export interface IHeapNode<T> {
 
 /**
  * Ordered {@link https://en.wikipedia.org/wiki/Heap_(data_structure) | Heap} data structure implementation.
- * @internal
  */
 export class Heap<T> {
 	private L: IHeapNode<T>[];
