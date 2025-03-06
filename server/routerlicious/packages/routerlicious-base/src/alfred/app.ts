@@ -17,8 +17,8 @@ import {
 	IClusterDrainingChecker,
 	IFluidAccessTokenGenerator,
 	IReadinessCheck,
+	TypedEventEmitter
 } from "@fluidframework/server-services-core";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";

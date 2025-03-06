@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import {
 	IDeltaService,
@@ -18,6 +17,7 @@ import {
 	IClusterDrainingChecker,
 	IFluidAccessTokenGenerator,
 	IReadinessCheck,
+	TypedEventEmitter
 } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";

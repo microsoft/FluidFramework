@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64, TypedEventEmitter } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import { IClient, IClientJoin, ScopeType } from "@fluidframework/protocol-definitions";
 import {
@@ -52,7 +51,7 @@ export function create(
 	tenantThrottlers: Map<string, core.IThrottler>,
 	jwtTokenCache?: core.ICache,
 	revokedTokenChecker?: core.IRevokedTokenChecker,
-	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+	collaborationSessionEventEmitter?: core.TypedEventEmitter<ICollaborationSessionEvents>,
 	fluidAccessTokenGenerator?: core.IFluidAccessTokenGenerator,
 ): Router {
 	const router: Router = Router();
@@ -152,7 +151,7 @@ export function create(
 			const blobData = request.body as IBlobData;
 			// TODO: why is this contacting external blob storage?
 			const externalHistorianUrl = config.get("worker:blobStorageUrl") as string;
-			const requestToken = fromUtf8ToBase64(tenantId);
+			const requestToken = core.fromUtf8ToBase64(tenantId);
 			const uri = `/repos/${tenantId}/git/blobs?token=${requestToken}`;
 			const requestBody: git.ICreateBlobParams = {
 				content: blobData.content,

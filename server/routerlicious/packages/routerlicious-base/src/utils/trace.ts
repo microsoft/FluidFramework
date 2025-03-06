@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "@fluidframework/common-utils";
-
 interface IStageTrace {
 	/**
 	 * Name of the Stage.
