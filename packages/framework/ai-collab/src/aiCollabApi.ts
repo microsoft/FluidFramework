@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import type { Anthropic } from "@anthropic-ai/sdk";
 import type { TreeNode } from "@fluidframework/tree";
 // eslint-disable-next-line import/no-named-as-default
-import type OpenAI from "openai";
+import OpenAI from "openai";
 
 /**
  * Core Debug event type for the ai-collab
@@ -71,6 +72,24 @@ export interface OpenAiClientOptions {
 		"messages" | "response_format"
 	>;
 	modelName?: string;
+}
+
+/**
+ * Anthropic client options for the {@link AiCollabOptions} interface.
+ *
+ * @alpha
+ */
+export interface ClaudeClientOptions {
+	client: Anthropic;
+}
+
+/**
+ * Checks whether the given options are OpenAI client options.
+ */
+export function isOpenAiClientOptions(
+	options: OpenAiClientOptions | ClaudeClientOptions,
+): options is OpenAiClientOptions {
+	return options.client instanceof OpenAI;
 }
 
 /**

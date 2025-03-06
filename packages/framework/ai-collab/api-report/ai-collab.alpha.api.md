@@ -67,6 +67,12 @@ export interface ApplyEditSuccess extends EventFlowDebugEvent {
 }
 
 // @alpha
+export interface ClaudeClientOptions {
+    // (undocumented)
+    client: Anthropic;
+}
+
+// @alpha
 export interface CoreEventLoopCompleted extends EventFlowDebugEvent {
     // (undocumented)
     errorMessage?: string;

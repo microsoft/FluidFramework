@@ -73,7 +73,7 @@ export async function aiCollab(
 	const response = await generateTreeEdits({
 		treeNode: options.treeNode,
 		validator: options.validator,
-		openAI: options.openAI,
+		clientOptions: options.openAI,
 		prompt: options.prompt,
 		limiters: options.limiters,
 		planningStep: options.planningStep,

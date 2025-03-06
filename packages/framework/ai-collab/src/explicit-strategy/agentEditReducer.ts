@@ -36,6 +36,7 @@ import {
 	type TreeEditValue,
 	typeField,
 	objectIdKey,
+	type TreeEditArray,
 } from "./agentEditTypes.js";
 import type { IdGenerator } from "./idGenerator.js";
 import type { JsonValue } from "./jsonTypes.js";
@@ -81,17 +82,62 @@ function populateDefaults(
 	}
 }
 
-function createObject(
-	json: TreeEditObject,
+function createObjectOrArray(
+	jsonObject: TreeEditObject | TreeEditArray,
 	schema: TreeNodeSchema,
 	idGenerator: IdGenerator,
 ): TreeNode {
+	const jsonWithoutIds = cloneWithoutProperty(jsonObject, objectIdKey);
 	const simpleNodeSchema = schema as unknown as new (dummy: unknown) => TreeNode;
-	const treeNode = new simpleNodeSchema(json);
-	if (typeof json[objectIdKey] === "string") {
-		idGenerator.getOrCreateId(treeNode, json[objectIdKey]);
+	const treeNode = new simpleNodeSchema(jsonWithoutIds);
+
+	function updateIds(node: TreeNode | TreeLeafValue, json: TreeEditValue): void {
+		if (typeof json === "object" && json !== null) {
+			if (Array.isArray(json)) {
+				for (let i = 0; i < json.length; i++) {
+					updateIds((node as TreeArrayNode)[i] ?? fail("TODO"), json[i] ?? fail("TODO"));
+				}
+			} else {
+				// TODO: assert that treeNode is a TreeNode
+				if (typeof json[objectIdKey] === "string") {
+					if (idGenerator.getNode(json[objectIdKey]) !== undefined) {
+						throw new UsageError(
+							`${objectIdKey} ${json[objectIdKey]} already exists in the tree`,
+						);
+					}
+					idGenerator.getOrCreateId(node as TreeNode, json[objectIdKey]);
+				}
+				for (const [key, value] of Object.entries(json)) {
+					if (value !== undefined) {
+						assert(node !== null, "");
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+						const child = (node as TreeNode)[key];
+						if (child !== undefined) {
+							updateIds(child as TreeNode | TreeLeafValue, value);
+						}
+					}
+				}
+			}
+		}
 	}
+
+	updateIds(treeNode, jsonObject);
 	return treeNode;
+}
+
+function cloneWithoutProperty(
+	obj: TreeEditObject | TreeEditArray,
+	propertyToRemove,
+): TreeEditObject | TreeEditArray {
+	// Custom replacer function to exclude specific property
+	function replacer<T>(key: string, value: T): T | undefined {
+		if (key === propertyToRemove) {
+			return undefined; // This will exclude the property
+		}
+		return value;
+	}
+	// Use stringify with the custom replacer, then parse back to an object
+	return JSON.parse(JSON.stringify(obj, replacer)) as TreeEditObject | TreeEditArray;
 }
 
 function getSchemaIdentifier(content: TreeEditValue): string | undefined {
@@ -156,7 +202,7 @@ export function applyAgentEdit(
 					if (typeof treeEdit.content !== "object" || treeEdit.content === null) {
 						throw new UsageError("inserted node must be an object");
 					}
-					const insertNode = createObject(treeEdit.content, allowedType, idGenerator);
+					const insertNode = createObjectOrArray(treeEdit.content, allowedType, idGenerator);
 					validator?.(insertNode);
 					array.insertAt(index, insertNode as unknown as IterableTreeArrayContent<never>);
 					return {
@@ -223,14 +269,10 @@ export function applyAgentEdit(
 			// If the fieldSchema is a function we can grab the constructor and make an instance of that node.
 			else if (typeof fieldSchema === "function") {
 				populateDefaults(modification, definitionMap);
-				if (
-					typeof modification !== "object" ||
-					Array.isArray(modification) ||
-					modification === null
-				) {
+				if (typeof modification !== "object" || modification === null) {
 					throw new UsageError("inserted node must be an object");
 				}
-				insertedObject = createObject(modification, fieldSchema, idGenerator);
+				insertedObject = createObjectOrArray(modification, fieldSchema, idGenerator);
 				validator?.(insertedObject);
 
 				if (Array.isArray(modification)) {

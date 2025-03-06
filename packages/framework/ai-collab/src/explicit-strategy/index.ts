@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type Anthropic from "@anthropic-ai/sdk";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	getSimpleSchema,
@@ -17,12 +18,16 @@ import type {
 	// eslint-disable-next-line import/no-internal-modules
 } from "openai/resources/index.mjs";
 import { v4 as uuidv4 } from "uuid";
+import { z } from "zod";
+import { zodToJsonSchema } from "zod-to-json-schema";
 
-import type {
-	DebugEventLogHandler,
-	OpenAiClientOptions,
-	TokenLimits,
-	TokenUsage,
+import {
+	isOpenAiClientOptions,
+	type ClaudeClientOptions,
+	type DebugEventLogHandler,
+	type OpenAiClientOptions,
+	type TokenLimits,
+	type TokenUsage,
 } from "../aiCollabApi.js";
 
 import { applyAgentEdit } from "./agentEditReducer.js";
@@ -68,7 +73,7 @@ export type {
  * @internal
  */
 export interface GenerateTreeEditsOptions {
-	openAI: OpenAiClientOptions;
+	clientOptions: OpenAiClientOptions | ClaudeClientOptions;
 	treeNode: TreeNode;
 	prompt: {
 		systemRoleContext: string;
@@ -281,7 +286,6 @@ async function* generateEdits(
 	const [types, rootTypeName] = generateGenericEditTypes(simpleSchema, true);
 
 	const systemPrompt = getEditingSystemPrompt(
-		options.prompt.userAsk,
 		idGenerator,
 		options.treeNode,
 		editLog,
@@ -299,18 +303,33 @@ async function* generateEdits(
 		llmPrompt: systemPrompt,
 	} satisfies GenerateTreeEditStarted);
 
-	const edits = (await getStructuredOutputFromLlm(
-		systemPrompt,
-		options.openAI,
-		schema,
-		"A JSON object that represents an edit to a JSON tree.",
-		tokensUsed,
-		debugOptions && {
-			...debugOptions,
-			triggeringEventFlowName: EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT,
-			eventFlowTraceId: generateTreeEditEventFlowId,
-		},
-	)) as TreeEdit[] | undefined;
+	const edits = isOpenAiClientOptions(options.clientOptions)
+		? ((await getStructuredOutputFromOpenAI(
+				systemPrompt,
+				options.prompt.userAsk,
+				options.clientOptions,
+				schema,
+				"A JSON object that represents an edit to a JSON tree.",
+				tokensUsed,
+				debugOptions && {
+					...debugOptions,
+					triggeringEventFlowName: EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT,
+					eventFlowTraceId: generateTreeEditEventFlowId,
+				},
+			)) as TreeEdit[] | undefined)
+		: ((await getStructuredOutputFromClaude(
+				systemPrompt,
+				options.prompt.userAsk,
+				options.clientOptions,
+				schema,
+				"A JSON object that represents an edit to a JSON tree.",
+				tokensUsed,
+				debugOptions && {
+					...debugOptions,
+					triggeringEventFlowName: EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT,
+					eventFlowTraceId: generateTreeEditEventFlowId,
+				},
+			)) as TreeEdit[] | undefined);
 
 	if (edits === undefined) {
 		return undefined;
@@ -335,11 +354,67 @@ async function* generateEdits(
 	}
 }
 
+async function getStructuredOutputFromClaude(
+	systemPrompt: string,
+	userPrompt: string,
+	claude: ClaudeClientOptions,
+	structuredOutputSchema: Zod.ZodTypeAny,
+	description?: string,
+	tokensUsed?: TokenUsage,
+	debugOptions?: {
+		eventLogHandler: DebugEventLogHandler;
+		traceId: string;
+		triggeringEventFlowName: EventFlowDebugName;
+		eventFlowTraceId: string;
+	},
+): Promise<unknown> {
+	// TODO: use langchain library to get this for free
+	// TODO: respect description, tokensUsed, and debugOptions
+	const wrapper = z.object({ edits: structuredOutputSchema });
+	const jsonSchema = zodToJsonSchema(wrapper, "schema");
+	const input_schema = jsonSchema.definitions?.schema as
+		| Anthropic.Tool.InputSchema
+		| undefined;
+	if (input_schema === undefined) {
+		throw new UsageError("Failed to generate JSON schema for structured output.");
+	}
+	const response = await claude.client.messages.create({
+		model: "claude-3-7-sonnet-latest",
+		max_tokens: 20000,
+		tools: [
+			{
+				name: "EditJsonTree",
+				description: "An array of edits to a user's SharedTree domain",
+				input_schema,
+			},
+		],
+		tool_choice: { name: "EditJsonTree", type: "tool" },
+		messages: [{ role: "user", content: userPrompt }],
+		system: systemPrompt,
+	});
+
+	if (response.content[0]?.type !== "tool_use") {
+		console.error(response);
+		throw new Error("Unexpected response from LLM API.");
+	}
+
+	const result = wrapper.safeParse(response.content[0].input);
+
+	if (result.success === false) {
+		console.error(result.error);
+		throw new Error("Response did not conform to provided schema.");
+	}
+
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	return result.data.edits;
+}
+
 /**
  * Calls the LLM to generate a structured output response based on the provided prompt.
  */
-async function getStructuredOutputFromLlm(
-	prompt: string,
+async function getStructuredOutputFromOpenAI(
+	systemPrompt: string,
+	userPrompt: string,
 	openAi: OpenAiClientOptions,
 	structuredOutputSchema: Zod.ZodTypeAny,
 	description?: string,
@@ -351,12 +426,16 @@ async function getStructuredOutputFromLlm(
 		eventFlowTraceId: string;
 	},
 ): Promise<unknown> {
-	const response_format = zodResponseFormat(structuredOutputSchema, "SharedTreeAI", {
+	const wrapper = z.object({ edits: structuredOutputSchema });
+	const response_format = zodResponseFormat(wrapper, "SharedTreeAI", {
 		description,
 	});
 
 	const body: ChatCompletionCreateParamsNonStreaming = {
-		messages: [{ role: "system", content: prompt }],
+		messages: [
+			{ role: "system", content: systemPrompt },
+			{ role: "user", content: userPrompt },
+		],
 		response_format,
 		...openAi.options,
 	};
@@ -386,7 +465,8 @@ async function getStructuredOutputFromLlm(
 	// TODO: fix types so this isn't null and doesn't need a cast
 	// The type should be derived from the zod schema
 	// TODO: Determine why this value would be undefined.
-	return result.choices[0]?.message.parsed;
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+	return (result.choices[0]?.message.parsed as any).edits;
 }
 
 class TokenLimitExceededError extends Error {}

@@ -84,10 +84,6 @@ describe("Prompt Generation Regression Tests", () => {
 		idGenerator = new IdGenerator();
 	});
 
-	const userAsk =
-		"Make me some tasks - I need to get a haircut and wash my dog. Then, my dog needs a haircut too, lol. Let's do all the hair-related tasks first, put them at the top of the list. Also please mark any existing tasks as complete, I forgot to do that last night.";
-	const systemRoleContext = "You're a helpful AI assistant";
-
 	it("Editing System Prompt with no plan and empty edit log has no regression", function (this: Mocha.Context) {
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
@@ -98,13 +94,7 @@ describe("Prompt Generation Regression Tests", () => {
 
 		idGenerator.assignIds(view.root);
 
-		const actualPrompt = getEditingSystemPrompt(
-			userAsk,
-			idGenerator,
-			view.root,
-			[],
-			systemRoleContext,
-		);
+		const actualPrompt = getEditingSystemPrompt(idGenerator, view.root, []);
 
 		snapShotTester.expectToMatchSnapshot(
 			this,
@@ -129,13 +119,7 @@ describe("Prompt Generation Regression Tests", () => {
 
 		idGenerator.assignIds(view.root);
 
-		const actualPrompt = getEditingSystemPrompt(
-			userAsk,
-			idGenerator,
-			view.root,
-			[],
-			systemRoleContext,
-		);
+		const actualPrompt = getEditingSystemPrompt(idGenerator, view.root, []);
 
 		snapShotTester.expectToMatchSnapshot(
 			this,
@@ -154,13 +138,7 @@ describe("Prompt Generation Regression Tests", () => {
 
 		idGenerator.assignIds(view.root);
 
-		const actualPrompt = getEditingSystemPrompt(
-			userAsk,
-			idGenerator,
-			view.root,
-			[],
-			systemRoleContext,
-		);
+		const actualPrompt = getEditingSystemPrompt(idGenerator, view.root, []);
 
 		snapShotTester.expectToMatchSnapshot(
 			this,
@@ -211,13 +189,7 @@ describe("Prompt Generation Regression Tests", () => {
 			}
 		}
 
-		const actualPrompt = getEditingSystemPrompt(
-			userAsk,
-			idGenerator,
-			view.root,
-			editLog,
-			systemRoleContext,
-		);
+		const actualPrompt = getEditingSystemPrompt(idGenerator, view.root, editLog);
 
 		snapShotTester.expectToMatchSnapshot(
 			this,
@@ -237,12 +209,10 @@ describe("Prompt Generation Regression Tests", () => {
 		idGenerator.assignIds(view.root);
 
 		const actualPrompt = getEditingSystemPrompt(
-			userAsk,
 			idGenerator,
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			view.root.todos[0]!,
 			[],
-			systemRoleContext,
 		);
 
 		snapShotTester.expectToMatchSnapshot(

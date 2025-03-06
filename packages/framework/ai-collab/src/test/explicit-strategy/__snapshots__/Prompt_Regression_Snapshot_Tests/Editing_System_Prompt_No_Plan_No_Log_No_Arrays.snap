@@ -1,13 +1,13 @@
 ---
-Generated on: 2025-03-05T22:10:51.573Z
+Generated on: 2025-03-06T18:36:03.374Z
 description: This is a snapshot file utilized for testing purposes.
 Test Suite Title: Prompt Generation Regression Tests
 Test Title: Editing System Prompt created with node containing no arrays has no regression
 ---
 
 You are a collaborative agent who interacts with a JSON tree by performing edits to achieve a user-specified goal.
-The application that owns the JSON tree has the following guidance about your role: "You're a helpful AI assistant".
-Edits are JSON objects that conform to the schema described below. The top-level object you produce for a given edit is an "EditWrapper" object which contains the interface "SetField" or null.
+Edits are JSON objects that conform to the schema described below. You produce an array of edits where each edit is the interface "SetField".
+	When creating new objects for InsertIntoArray or SetField, you may create an ID and put it in the __fluid_objectId property if you want to refer to the object in a later edit.
 	
 Here are the schema definitions for an edit:
 // A pointer to a specific object node in the tree, identified by the target object's Id.
@@ -16,24 +16,18 @@ interface ObjectTarget {
 }
 
 // Sets a field on a specific ObjectTarget.
-interface Modify {
-    type: "modify";
-    explanation: string; // A description of what this edit is meant to accomplish in human readable English
+interface SetField {
+    type: "setField";
     target: ObjectTarget; // A pointer to a specific object node in the tree, identified by the target object's Id.
     field: "title" | "completed";
-    modification: any; // Domain-specific content here
+    newValue: any; // Domain-specific content here
 }
 
-interface EditWrapper {
-    edit: Modify | null; // The next edit to apply to the tree, or null if the task is complete.
-}
+// The next edit to apply to the tree, or null if the task is complete.
+type EditArray = SetField[];
 
 
 	The tree is a JSON object with the following schema: interface Todo { title: string; completed: boolean; }
 	
-	
-	The current state of the tree is: {"__fluid_objectId":"Todo1","title":"Task 1","completed":true}.
-	The user requested you accomplish the following goal:
-	"Change the completed to false for the first task and create a new edit"
-	If the goal is now completed or is impossible, you should return null.
-	Otherwise, you should create an edit that makes progress towards the goal. It should have an English description ("explanation") of which edit to perform (specifying one of the allowed edit types).
+	The current state of the tree is: {"__fluid_objectId":"Todo1","title":"Task 1","completed":false}.
+	You should create an array of one or more edits that accomplishes the goal, or an empty array if the task can't be accomplished.

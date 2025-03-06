@@ -85,15 +85,15 @@ export class IdGenerator {
 		);
 
 		this.prefixMap.set(lastSegment, prefix);
-		const count = this.idCountMap.get(lastSegment) ?? 1;
+		const count = this.idCountMap.get(lastSegment) ?? 0;
 
-		const newId = `${lastSegment}${count}`;
-		if (this.idToNodeMap.has(newId)) {
-			// TODO: optimize because this is a little bit silly
-			// We need this logic so that if the LLM already created this ID, we generate a different one instead
-			return this.generateID(schema);
+		let c = count + 1;
+		let newId = `${lastSegment}${c}`;
+		// We need this logic so that if the LLM already created this ID, we generate a different one instead
+		while (this.idToNodeMap.has(newId)) {
+			newId = `${lastSegment}${++c}`;
 		}
-		this.idCountMap.set(lastSegment, count + 1);
+		this.idCountMap.set(lastSegment, c);
 		return newId;
 	}
 }

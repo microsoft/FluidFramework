@@ -25,6 +25,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../explicit-strategy/agentEditReducer.js";
 import {
+	objectIdKey,
 	typeField,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../explicit-strategy/agentEditTypes.js";
@@ -497,6 +498,70 @@ describe("applyAgentEdit", () => {
 			],
 			"bools": [false],
 		};
+
+		assert.deepEqual(
+			JSON.stringify(view.root, undefined, 2),
+			JSON.stringify(expected, undefined, 2),
+		);
+	});
+
+	it("content with llm-generated IDs", () => {
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
+		const config = new TreeViewConfiguration({ schema: RootObjectPolymorphic });
+		const view = tree.viewWith(config);
+		const simpleSchema = getSimpleSchema(view.schema);
+
+		view.initialize({
+			str: "testStr",
+			vectors: [new Vector({ x: 1, y: 2, z: 3 })],
+			bools: [true],
+		});
+
+		idGenerator.assignIds(view.root);
+		const vectorId = idGenerator.getId(view.root as TreeNode) ?? fail("ID expected.");
+
+		const modifyEdit: TreeEdit = {
+			type: "setField",
+			target: { target: vectorId },
+			field: "vectors",
+			newValue: [
+				{ [typeField]: Vector.identifier, x: 2, y: 3, z: 4, [objectIdKey]: "Vector2" },
+				{ [typeField]: Vector.identifier, x: 3, y: 4, z: 5 },
+			],
+		};
+		applyAgentEdit(modifyEdit, idGenerator, simpleSchema.definitions);
+
+		const identifier = (view.root.vectors[0] as Vector).id;
+		const identifier2 = (view.root.vectors[1] as Vector).id;
+
+		const expected = {
+			"str": "testStr",
+			"vectors": [
+				{
+					"id": identifier,
+					"x": 2,
+					"y": 3,
+					"z": 4,
+				},
+				{
+					"id": identifier2,
+					"x": 3,
+					"y": 4,
+					"z": 5,
+				},
+			],
+			"bools": [true],
+		};
+
+		// TODO: Expose a better way to ensure that the ID generator is functioning in the way that this test relies on.
+		assert(view.root.vectors[0] !== undefined);
+		assert(view.root.vectors[1] !== undefined);
+		assert.equal(idGenerator.getId(view.root.vectors[0]), "Vector2");
+		assert.equal(idGenerator.getId(view.root.vectors[1]), "Vector3");
+		assert.equal(idGenerator.getOrCreateId(new Vector({ x: 2, y: 3, z: 4 })), "Vector4");
 
 		assert.deepEqual(
 			JSON.stringify(view.root, undefined, 2),

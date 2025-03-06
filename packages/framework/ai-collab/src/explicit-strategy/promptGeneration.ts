@@ -92,7 +92,6 @@ export function createEditListHistoryPrompt(edits: EditLog): string {
  * and provides with both a serialized version of the current state of the provided tree node as well as  the interfaces that compromise said tree nodes data.
  */
 export function getEditingSystemPrompt(
-	userPrompt: string,
 	idGenerator: IdGenerator,
 	treeNode: TreeNode,
 	log: EditLog,
@@ -130,9 +129,7 @@ export function getEditingSystemPrompt(
 			This means that the current state of the tree reflects these changes.`
 	}
 	The current state of the tree is: ${decoratedTreeJson}.
-	The user requested you accomplish the following goal:
-	"${userPrompt}"
-	You should create a sequence of one or more edits that accomplishes the goal.`;
+	You should create an array of one or more edits that accomplishes the goal, or an empty array if the task can't be accomplished.`;
 	return systemPrompt;
 }
 

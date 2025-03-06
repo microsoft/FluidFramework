@@ -51,6 +51,7 @@ export {
 	type TokenUsage,
 	type TokenLimits,
 	type OpenAiClientOptions,
+	type ClaudeClientOptions,
 	type DebugEvent,
 	type DebugEventLogHandler,
 	type EventFlowDebugEvent,
