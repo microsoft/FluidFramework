@@ -11,6 +11,7 @@ import {
 	ISummaryTree,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
+import { toUtf8 } from "@fluidframework/server-common-utils";
 import {
 	IGitCache,
 	SummaryTreeUploadManager,
@@ -30,7 +31,6 @@ import {
 	IStorageNameAllocator,
 	ITenantManager,
 	SequencedOperationType,
-	toUtf8
 } from "@fluidframework/server-services-core";
 import * as winston from "winston";
 import {

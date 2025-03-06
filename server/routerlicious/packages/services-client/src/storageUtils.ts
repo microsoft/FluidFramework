@@ -4,13 +4,13 @@
  */
 
 import {
-	assert,
 	stringToBuffer,
 	Uint8ArrayToString,
 	unreachableCase,
-} from "@fluidframework/common-utils";
+} from "@fluidframework/server-common-utils";
 import { getGitType } from "@fluidframework/protocol-base";
 import { ISnapshotTree, SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
+import assert from "assert";
 import {
 	ISummaryTree,
 	IWholeSummaryTree,
@@ -124,7 +124,7 @@ export function convertSummaryTreeToWholeSummaryTree(
 		if (value) {
 			assert(
 				id === undefined,
-				0x0ad /* "Snapshot entry has both a tree value and a referenced id!" */,
+				"Snapshot entry has both a tree value and a referenced id!" /* 0x0ad */,
 			);
 			entry = {
 				value,

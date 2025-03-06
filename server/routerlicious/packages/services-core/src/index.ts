@@ -33,7 +33,6 @@ export {
 	IRetryable,
 	isRetryEnabled,
 } from "./database";
-export * from "./utils"; // eslint-disable-line no-restricted-syntax
 export { IDeltaService } from "./delta";
 export {
 	IClientSequenceNumber,

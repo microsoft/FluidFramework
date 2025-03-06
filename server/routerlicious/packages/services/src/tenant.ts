@@ -4,6 +4,7 @@
  */
 
 import { ScopeType, type IUser } from "@fluidframework/protocol-definitions";
+import { fromUtf8ToBase64 } from "@fluidframework/server-common-utils";
 import {
 	GitManager,
 	Historian,
@@ -160,7 +161,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		);
 
 		const defaultQueryString = {
-			token: core.fromUtf8ToBase64(`${tenantId}`),
+			token: fromUtf8ToBase64(`${tenantId}`),
 		};
 		const getDefaultHeaders = () => {
 			const credentials: ICredentials = {

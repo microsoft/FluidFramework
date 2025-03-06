@@ -5,7 +5,7 @@
 
 import fs from "fs";
 import { IBlob, ICreateBlobParams, ICreateBlobResponse } from "@fluidframework/gitresources";
-import { Uint8ArrayToString } from "@fluidframework/server-services-core";
+import { Uint8ArrayToString } from "@fluidframework/server-common-utils";
 import { Router } from "express";
 import * as git from "isomorphic-git";
 import nconf from "nconf";

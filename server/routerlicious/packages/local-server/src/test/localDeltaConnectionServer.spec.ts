@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { Deferred } from "@fluidframework/server-services-core";
+import { Deferred } from "@fluidframework/server-common-utils";
 import {
 	ConnectionMode,
 	IClient,

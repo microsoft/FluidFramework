@@ -4,6 +4,7 @@
  */
 
 import type * as kafkaTypes from "node-rdkafka";
+import { Deferred } from "@fluidframework/server-common-utils";
 import {
 	BoxcarType,
 	IBoxcarMessage,
@@ -14,7 +15,6 @@ import {
 } from "@fluidframework/server-services-core";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
-import { Deferred } from "@fluidframework/server-services-core";
 
 import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 

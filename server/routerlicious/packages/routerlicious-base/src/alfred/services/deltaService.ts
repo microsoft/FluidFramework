@@ -4,12 +4,12 @@
  */
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { toUtf8 } from "@fluidframework/server-common-utils";
 import {
 	ICollection,
 	IDeltaService,
 	ISequencedOperationMessage,
 	ITenantManager,
-	toUtf8
 } from "@fluidframework/server-services-core";
 
 /**

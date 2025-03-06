@@ -4,8 +4,8 @@
  */
 
 import cluster from "cluster";
+import { Deferred, TypedEventEmitter } from "@fluidframework/server-common-utils";
 import {
-	Deferred,
 	ICache,
 	IClientManager,
 	IClusterDrainingChecker,
@@ -22,7 +22,6 @@ import {
 	IRevokedTokenChecker,
 	ICollaborationSessionTracker,
 	IReadinessCheck,
-	TypedEventEmitter
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";

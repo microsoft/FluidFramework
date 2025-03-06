@@ -4,7 +4,8 @@
  */
 
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
-import { IDocumentStorage, MongoManager, TypedEventEmitter } from "@fluidframework/server-services-core";
+import { TypedEventEmitter } from "@fluidframework/server-common-utils";
+import { IDocumentStorage, MongoManager } from "@fluidframework/server-services-core";
 import { RestLessServer } from "@fluidframework/server-services-shared";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";

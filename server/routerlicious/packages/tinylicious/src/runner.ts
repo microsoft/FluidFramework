@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { Deferred, TypedEventEmitter } from "@fluidframework/server-common-utils";
 import {
-	Deferred,
 	IDocumentStorage,
 	IOrdererManager,
 	ITenantManager,
@@ -13,7 +13,6 @@ import {
 	MongoManager,
 	DefaultMetricClient,
 	IRunner,
-	TypedEventEmitter,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";

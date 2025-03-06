@@ -4,8 +4,9 @@
  */
 
 import { ISequencedDocumentMessage, ScopeType } from "@fluidframework/protocol-definitions";
+import { fromUtf8ToBase64 } from "@fluidframework/server-common-utils";
 import { BasicRestWrapper } from "@fluidframework/server-services-client";
-import { IDeltaService, type ITenantManager, fromUtf8ToBase64 } from "@fluidframework/server-services-core";
+import { IDeltaService, type ITenantManager } from "@fluidframework/server-services-core";
 import { getGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";
 import { getRefreshTokenIfNeededCallback, TenantManager } from "./tenant";
 import { logHttpMetrics } from "@fluidframework/server-services-utils";

@@ -14,6 +14,7 @@ import {
 	SummaryObject,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
+import { fromBase64ToUtf8 } from "@fluidframework/server-common-utils";
 import {
 	buildTreePath,
 	IGitManager,
@@ -35,7 +36,6 @@ import {
 	ISequencedOperationMessage,
 	requestWithRetry,
 	shouldRetryNetworkError,
-	fromBase64ToUtf8
 } from "@fluidframework/server-services-core";
 import {
 	CommonProperties,

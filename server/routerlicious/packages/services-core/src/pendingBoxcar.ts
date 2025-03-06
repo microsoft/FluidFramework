@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "./utils";
+import { Deferred } from "@fluidframework/server-common-utils";
+
 import { IPendingBoxcar } from "./queue";
 
 // 1MB batch size / (16KB max message size + overhead)

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Heap, IComparer, IHeapNode, IClientSequenceNumber } from "@fluidframework/server-services-core";
+import { Heap, IComparer, IHeapNode } from "@fluidframework/server-common-utils";
+import { IClientSequenceNumber } from "@fluidframework/server-services-core";
 
 const SequenceNumberComparer: IComparer<IClientSequenceNumber> = {
 	compare: (a, b) => a.referenceSequenceNumber - b.referenceSequenceNumber,

@@ -4,12 +4,11 @@
  */
 
 import {
-	assert,
 	gitHashFile,
 	IsoBuffer,
 	Uint8ArrayToString,
 	unreachableCase,
-} from "@fluidframework/common-utils";
+} from "@fluidframework/server-common-utils";
 import { ICreateTreeEntry } from "@fluidframework/gitresources";
 import { getGitMode, getGitType } from "@fluidframework/protocol-base";
 import {
@@ -19,6 +18,7 @@ import {
 	SummaryObject,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
+import assert from "assert";
 import { ISummaryUploadManager, IGitManager } from "./storage";
 import { IWholeSummaryPayloadType } from "./storageContracts";
 
@@ -116,7 +116,7 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 		if (!this.blobsShaCache.has(hash)) {
 			this.blobsShaCache.set(hash, "");
 			const blob = await this.manager.createBlob(parsedContent, encoding);
-			assert(hash === blob.sha, 0x0b6 /* "Blob.sha and hash do not match!!" */);
+			assert(hash === blob.sha, "Blob.sha and hash do not match!!" /* 0x0b6 */);
 		}
 		return hash;
 	}
@@ -144,7 +144,7 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 		/** Previous snapshot, subtree relative to this path part */
 		previousSnapshot: ISnapshotTreeEx,
 	): string {
-		assert(path.length > 0, 0x0b3 /* "Expected at least 1 path part" */);
+		assert(path.length > 0, "Expected at least 1 path part" /* 0x0b3 */);
 		const key = path[0];
 		if (path.length === 1) {
 			switch (handleType) {
@@ -152,7 +152,7 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 					const tryId = previousSnapshot.blobs[key];
 					assert(
 						!!tryId,
-						0x0b4 /* "Parent summary does not have blob handle for specified path." */,
+						"Parent summary does not have blob handle for specified path." /* 0x0b4 */,
 					);
 					return tryId;
 				}
@@ -160,7 +160,7 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 					const tryId = previousSnapshot.trees[key]?.id;
 					assert(
 						!!tryId,
-						0x0b5 /* "Parent summary does not have tree handle for specified path." */,
+						"Parent summary does not have tree handle for specified path." /* 0x0b5 */,
 					);
 					return tryId;
 				}

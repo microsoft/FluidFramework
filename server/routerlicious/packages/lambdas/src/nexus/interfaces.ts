@@ -4,6 +4,7 @@
  */
 
 import type { IClient, IConnected } from "@fluidframework/protocol-definitions";
+import { TypedEventEmitter } from "@fluidframework/server-common-utils";
 import type {
 	IClientManager,
 	IClusterDrainingChecker,
@@ -16,7 +17,6 @@ import type {
 	IThrottleAndUsageStorageManager,
 	IThrottler,
 	IWebSocketTracker,
-	TypedEventEmitter,
 } from "@fluidframework/server-services-core";
 import { IEvent } from "../events";
 import type { IRuntimeSignalEnvelope } from "../utils";

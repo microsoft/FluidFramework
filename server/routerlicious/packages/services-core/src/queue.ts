@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "./utils";
+import { Deferred } from "@fluidframework/server-common-utils";
+
 import { ITicketedMessage } from "./messages";
 
 /**

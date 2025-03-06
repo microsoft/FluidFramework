@@ -4,7 +4,8 @@
  */
 
 import { serializeError } from "serialize-error";
-import { Deferred, IWebServer } from "@fluidframework/server-services-core";
+import { Deferred } from "@fluidframework/server-common-utils";
+import { IWebServer } from "@fluidframework/server-services-core";
 import { Lumber, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { promiseTimeout } from "@fluidframework/server-services-client";
 import type { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";

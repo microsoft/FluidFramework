@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { fromUtf8ToBase64, stringToBuffer } from "@fluidframework/common-utils";
+import { fromUtf8ToBase64, stringToBuffer } from "@fluidframework/server-common-utils";
 import {
 	buildTreePath,
 	convertSummaryTreeToWholeSummaryTree,

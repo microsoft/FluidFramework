@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { TestHistorian } from "../testHistorian";
 import { GitManager } from "@fluidframework/server-services-client";
 import { ICreateBlobParams, ICreateCommitParams } from "@fluidframework/gitresources";
-import { fromUtf8ToBase64 } from "@fluidframework/server-services-core";
+import { fromUtf8ToBase64 } from "@fluidframework/server-common-utils";
 
 describe("Test for Historian", () => {
 	let gitManager: GitManager;

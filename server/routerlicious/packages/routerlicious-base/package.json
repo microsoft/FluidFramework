@@ -53,6 +53,7 @@
 	"dependencies": {
 		"@fluidframework/gitresources": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.2.0",
+		"@fluidframework/server-common-utils": "workspace:~",
 		"@fluidframework/server-kafka-orderer": "workspace:~",
 		"@fluidframework/server-lambdas": "workspace:~",
 		"@fluidframework/server-lambdas-driver": "workspace:~",

@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { Deferred } from "@fluidframework/server-services-core";
 import {
 	IClientJoin,
 	IConnect,
@@ -20,6 +19,7 @@ import {
 	IDocumentMessage,
 	type ISentSignalMessage,
 } from "@fluidframework/protocol-definitions";
+import { Deferred } from "@fluidframework/server-common-utils";
 import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
 import { LocalWebSocket, LocalWebSocketServer } from "@fluidframework/server-local-server";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";

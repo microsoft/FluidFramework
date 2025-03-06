@@ -19,6 +19,7 @@ import {
 	ISummaryContent,
 	IDocumentMessage,
 } from "@fluidframework/protocol-definitions";
+import { TypedEventEmitter } from "@fluidframework/server-common-utils";
 import {
 	canSummarize,
 	defaultHash,
@@ -55,7 +56,6 @@ import {
 	ISequencedSignalClient,
 	IClientManager,
 	ICheckpointService,
-	TypedEventEmitter,
 } from "@fluidframework/server-services-core";
 import {
 	CommonProperties,

@@ -5,7 +5,8 @@
 
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
-import { safelyParseJSON } from "./utils";
+import { safelyParseJSON } from "@fluidframework/server-common-utils";
+
 import { BoxcarType, IBoxcarMessage, IMessage } from "./messages";
 import { IQueuedMessage } from "./queue";
 

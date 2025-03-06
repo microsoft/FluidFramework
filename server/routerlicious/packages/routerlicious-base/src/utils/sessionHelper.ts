@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { delay } from "@fluidframework/server-common-utils";
 import { ISession, isNetworkError, NetworkError } from "@fluidframework/server-services-client";
 import {
 	IDocument,
 	runWithRetry,
 	IDocumentRepository,
 	IClusterDrainingChecker,
-	delay
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { StageTrace } from "./trace";

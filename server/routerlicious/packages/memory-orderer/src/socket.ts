@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import ws from "ws";
-import { IsoBuffer } from "@fluidframework/server-services-core";
+import { IsoBuffer } from "@fluidframework/server-common-utils";
 import { debug } from "./debug";
 
 export class Socket<T> extends EventEmitter {
