@@ -124,7 +124,7 @@ export function convertSummaryTreeToWholeSummaryTree(
 		if (value) {
 			assert(
 				id === undefined,
-				"Snapshot entry has both a tree value and a referenced id!" /* 0x0ad */,
+				0x0ad /* "Snapshot entry has both a tree value and a referenced id!" */,
 			);
 			entry = {
 				value,

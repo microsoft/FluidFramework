@@ -116,7 +116,7 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 		if (!this.blobsShaCache.has(hash)) {
 			this.blobsShaCache.set(hash, "");
 			const blob = await this.manager.createBlob(parsedContent, encoding);
-			assert(hash === blob.sha, "Blob.sha and hash do not match!!" /* 0x0b6 */);
+			assert(hash === blob.sha, 0x0b6 /* "Blob.sha and hash do not match!!" */);
 		}
 		return hash;
 	}
@@ -144,7 +144,7 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 		/** Previous snapshot, subtree relative to this path part */
 		previousSnapshot: ISnapshotTreeEx,
 	): string {
-		assert(path.length > 0, "Expected at least 1 path part" /* 0x0b3 */);
+		assert(path.length > 0, 0x0b3 /* "Expected at least 1 path part" */);
 		const key = path[0];
 		if (path.length === 1) {
 			switch (handleType) {
@@ -152,7 +152,7 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 					const tryId = previousSnapshot.blobs[key];
 					assert(
 						!!tryId,
-						"Parent summary does not have blob handle for specified path." /* 0x0b4 */,
+						0x0b4 /* "Parent summary does not have blob handle for specified path." */,
 					);
 					return tryId;
 				}
@@ -160,7 +160,7 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 					const tryId = previousSnapshot.trees[key]?.id;
 					assert(
 						!!tryId,
-						"Parent summary does not have tree handle for specified path." /* 0x0b5 */,
+						0x0b5 /* "Parent summary does not have tree handle for specified path." */,
 					);
 					return tryId;
 				}
