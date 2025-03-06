@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { Deferred } from "@fluidframework/common-utils";
+import { Deferred } from "@fluidframework/server-services-core";
 import { IConsumer, IQueuedMessage } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 

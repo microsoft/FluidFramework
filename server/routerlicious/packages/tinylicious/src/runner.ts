@@ -4,6 +4,7 @@
  */
 
 import {
+	Deferred,
 	IDocumentStorage,
 	IOrdererManager,
 	ITenantManager,
@@ -13,8 +14,7 @@ import {
 	DefaultMetricClient,
 	IRunner,
 } from "@fluidframework/server-services-core";
-// eslint-disable-next-line import/no-deprecated
-import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import {
@@ -28,7 +28,6 @@ import * as app from "./app";
 export class TinyliciousRunner implements IRunner {
 	private server?: IWebServer;
 
-	// eslint-disable-next-line import/no-deprecated
 	private runningDeferred?: Deferred<void>;
 
 	constructor(

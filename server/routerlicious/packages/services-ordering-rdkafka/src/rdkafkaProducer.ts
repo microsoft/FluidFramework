@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/server-services-core";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
-import { Deferred } from "@fluidframework/common-utils";
+import { Deferred } from "@fluidframework/server-services-core";
 
 import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 

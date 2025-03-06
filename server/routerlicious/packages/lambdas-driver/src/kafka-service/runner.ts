@@ -5,7 +5,7 @@
 
 import { inspect } from "util";
 import { serializeError } from "serialize-error";
-import { Deferred } from "@fluidframework/common-utils";
+import { Deferred } from "@fluidframework/server-services-core";
 import { promiseTimeout } from "@fluidframework/server-services-client";
 import {
 	IConsumer,
