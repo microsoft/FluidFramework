@@ -6,12 +6,7 @@
 module.exports = {
 	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
 	parserOptions: {
-		project: [
-			"./tsconfig.json",
-			"./src/test/mocha/tsconfig.json",
-			"./src/test/jest/tsconfig.json",
-			"./src/test/types/tsconfig.json",
-		],
+		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
 		// The whole server release group is intended to run in NodeJS; this is fine

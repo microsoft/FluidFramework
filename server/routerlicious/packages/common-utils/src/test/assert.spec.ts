@@ -5,7 +5,7 @@
 
 import { strict } from "assert";
 
-import { assert } from "../../assert";
+import { assert } from "../assert";
 
 describe("Assert", () => {
 	it("Validate Shortcode Format", async () => {

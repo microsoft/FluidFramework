@@ -2,13 +2,15 @@
 	"extends": "@fluidframework/build-common/ts-common-config.json",
 	"compilerOptions": {
 		"rootDir": "./",
-		"outDir": "../../../dist/test/jest",
-		"types": ["jest", "jest-environment-puppeteer", "node", "puppeteer"],
+		"outDir": "../../dist/test",
+		"types": ["node", "mocha"],
+		"declaration": false,
+		"declarationMap": false,
 	},
 	"include": ["./**/*"],
 	"references": [
 		{
-			"path": "../../..",
+			"path": "../..",
 		},
 	],
 }
