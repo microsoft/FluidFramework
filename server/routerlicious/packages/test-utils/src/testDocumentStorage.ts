@@ -9,11 +9,7 @@ import {
 	ICreateCommitParams,
 	ICreateTreeEntry,
 } from "@fluidframework/gitresources";
-import {
-	gitHashFile,
-	IsoBuffer,
-	Uint8ArrayToString,
-} from "@fluidframework/server-common-utils";
+import { gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/server-common-utils";
 import {
 	IGitCache,
 	IGitManager,
