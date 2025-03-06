@@ -26,11 +26,11 @@ import {
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ISummaryConfiguration } from "../containerRuntime.js";
 import { opSize } from "../opProperties.js";
 
 import { SummarizeHeuristicRunner } from "./summarizerHeuristics.js";
-import {
+import type {
+	ISummaryConfiguration,
 	EnqueueSummarizeResult,
 	IEnqueueSummarizeOptions,
 	IOnDemandSummarizeOptions,
@@ -49,7 +49,7 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	ISummaryCancellationToken,
 	SubmitSummaryResult,
-	type IRetriableFailureError,
+	IRetriableFailureError,
 } from "./summarizerTypes.js";
 import {
 	IAckedSummary,

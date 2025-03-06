@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/request-handler",
-	"version": "2.23.0",
+	"version": "2.30.0",
 	"description": "A simple request handling library for Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -141,7 +141,7 @@
 		"cross-env": "^7.0.3",
 		"diff": "^3.5.0",
 		"eslint": "~8.55.0",
-		"mocha": "^10.2.0",
+		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",

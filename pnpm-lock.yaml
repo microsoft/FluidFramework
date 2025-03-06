@@ -87,7 +87,7 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@22.10.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.10.1)(typescript@5.4.5))
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       prettier:
         specifier: ~3.0.3
@@ -1327,7 +1327,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -2181,7 +2181,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -3761,7 +3761,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -4021,7 +4021,7 @@ importers:
         specifier: ^3.0.2
         version: 3.0.2(jsdom@16.7.0)
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -4789,7 +4789,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -5034,7 +5034,7 @@ importers:
         specifier: ^9.1.0
         version: 9.1.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -5836,9 +5836,6 @@ importers:
 
   examples/view-integration/external-views:
     dependencies:
-      '@fluid-example/example-utils':
-        specifier: workspace:~
-        version: link:../../utils/example-utils
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../packages/common/client-utils
@@ -6182,7 +6179,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -6288,7 +6285,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -6450,7 +6447,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -6529,7 +6526,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -6653,7 +6650,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -6750,7 +6747,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -6847,7 +6844,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -6944,7 +6941,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -7101,7 +7098,7 @@ importers:
         specifier: ~9.0.0
         version: 9.0.0(eslint@8.55.0)
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -7341,7 +7338,7 @@ importers:
         specifier: ~9.0.0
         version: 9.0.0(eslint@8.55.0)
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -7465,7 +7462,7 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -7658,7 +7655,7 @@ importers:
         specifier: ~9.0.0
         version: 9.0.0(eslint@8.55.0)
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -7810,7 +7807,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -7910,7 +7907,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -8010,7 +8007,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -8137,7 +8134,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -8279,7 +8276,7 @@ importers:
         specifier: ^1.2.0
         version: 1.2.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -8403,7 +8400,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -8515,7 +8512,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -8615,7 +8612,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -8718,7 +8715,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -8854,7 +8851,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -8981,7 +8978,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -9087,7 +9084,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -9199,7 +9196,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -9256,7 +9253,7 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       uuid:
         specifier: ^9.0.0
@@ -9480,7 +9477,7 @@ importers:
         specifier: ~9.0.0
         version: 9.0.0(eslint@8.55.0)
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -9632,7 +9629,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -9896,7 +9893,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -10008,7 +10005,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -10148,7 +10145,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -10339,7 +10336,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -10430,7 +10427,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -10521,7 +10518,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       prettier:
         specifier: ~3.0.3
@@ -10706,7 +10703,7 @@ importers:
         specifier: ~9.0.0
         version: 9.0.0(eslint@8.55.0)
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -10815,7 +10812,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -10933,7 +10930,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -11024,7 +11021,7 @@ importers:
         specifier: ~4.6.0
         version: 4.6.2(eslint@8.55.0)
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       prettier:
         specifier: ~3.0.3
@@ -11115,7 +11112,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       prettier:
         specifier: ~3.0.3
@@ -11294,7 +11291,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -11488,7 +11485,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -11673,7 +11670,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -11764,7 +11761,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -11846,7 +11843,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -11940,7 +11937,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -12067,7 +12064,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -12170,7 +12167,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -12370,7 +12367,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -12546,7 +12543,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -12704,7 +12701,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -12868,7 +12865,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -12992,7 +12989,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -13101,7 +13098,7 @@ importers:
         specifier: workspace:~
         version: link:../../framework/fluid-framework
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       prettier:
         specifier: ~3.0.3
@@ -13197,7 +13194,7 @@ importers:
         specifier: ^7.0.3
         version: 7.0.3
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -13321,7 +13318,7 @@ importers:
         specifier: ^17.0.3
         version: 17.0.3
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -13473,7 +13470,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       prettier:
         specifier: ~3.0.3
@@ -13576,7 +13573,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       prettier:
         specifier: ~3.0.3
@@ -13702,7 +13699,7 @@ importers:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -13847,7 +13844,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -13964,7 +13961,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -13991,7 +13988,7 @@ importers:
         specifier: workspace:~
         version: link:../../common/core-interfaces
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       source-map-support:
         specifier: ^0.5.21
@@ -14109,7 +14106,7 @@ importers:
         specifier: workspace:~
         version: link:../test-utils
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
     devDependencies:
       '@biomejs/biome':
@@ -14228,7 +14225,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -14545,7 +14542,7 @@ importers:
         specifier: ^7.0.3
         version: 7.0.3
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       semver:
         specifier: ^7.5.3
@@ -14670,7 +14667,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       prettier:
         specifier: ~3.0.3
@@ -14800,7 +14797,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       prettier:
         specifier: ~3.0.3
@@ -14817,9 +14814,6 @@ importers:
       '@fluid-internal/test-driver-definitions':
         specifier: workspace:~
         version: link:../test-driver-definitions
-      '@fluidframework/aqueduct':
-        specifier: workspace:~
-        version: link:../../framework/aqueduct
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -14881,7 +14875,7 @@ importers:
         specifier: ^4.3.4
         version: 4.4.0(supports-color@8.1.1)
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       uuid:
         specifier: ^9.0.0
@@ -15114,7 +15108,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -15180,6 +15174,9 @@ importers:
         specifier: ~5.4.5
         version: 5.4.5
     devDependencies:
+      '@biomejs/biome':
+        specifier: ~1.9.3
+        version: 1.9.4
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -15272,7 +15269,7 @@ importers:
         specifier: ~3.0.0
         version: 3.0.0(eslint@8.55.0)
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -15465,7 +15462,7 @@ importers:
         specifier: ^3.0.2
         version: 3.0.2(jsdom@16.7.0)
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       prettier:
         specifier: ~3.0.3
@@ -15607,7 +15604,7 @@ importers:
         specifier: ~3.0.0
         version: 3.0.0(eslint@8.55.0)
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -15910,7 +15907,7 @@ importers:
         version: 23.0.1(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)
       '@previewjs/plugin-react':
         specifier: ^11.0.0
-        version: 11.0.0(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)(vite@4.5.5(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0))
+        version: 11.0.0(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)(vite@4.5.9(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0))
       '@testing-library/dom':
         specifier: ^10.4.0
         version: 10.4.0
@@ -15990,7 +15987,7 @@ importers:
         specifier: ^16.0.0
         version: 16.0.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -16020,8 +16017,8 @@ importers:
         specifier: ~5.4.5
         version: 5.4.5
       vite:
-        specifier: ^4.5.2
-        version: 4.5.5(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)
+        specifier: ^4.5.9
+        version: 4.5.9(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)
 
   packages/tools/fetch-tool:
     dependencies:
@@ -16196,7 +16193,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -16414,7 +16411,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -16511,7 +16508,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -16614,7 +16611,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -27658,8 +27655,8 @@ packages:
   victory-vendor@36.9.2:
     resolution: {integrity: sha512-PnpQQMuxlwYdocC8fIJqVXvkeViHYzotI+NJrCuav0ZYFoq912ZHBk3mCeuj+5/VpodOjPe1z0Fk2ihgzlXqjQ==}
 
-  vite@4.5.5:
-    resolution: {integrity: sha512-ifW3Lb2sMdX+WU91s3R0FyQlAyLxOzCSCP37ujw0+r5POeHPwe6udWVIElKQq8gk3t7b8rkmvqC6IHBpCff4GQ==}
+  vite@4.5.9:
+    resolution: {integrity: sha512-qK9W4xjgD3gXbC0NmdNFFnVFLMWSNiR3swj957yutwzzN16xF/E7nmtAyp1rT9hviDroQANjE4HK3H4WqWdFtw==}
     engines: {node: ^14.18.0 || >=16.0.0}
     hasBin: true
     peerDependencies:
@@ -30966,9 +30963,9 @@ snapshots:
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.4.5)
       eslint-config-biome: 1.9.4
       eslint-config-prettier: 9.0.0(eslint@8.55.0)
-      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
       eslint-plugin-eslint-comments: 3.2.0(eslint@8.55.0)
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
       eslint-plugin-jsdoc: 46.8.2(eslint@8.55.0)
       eslint-plugin-promise: 6.1.1(eslint@8.55.0)
       eslint-plugin-react: 7.33.2(eslint@8.55.0)
@@ -31888,14 +31885,14 @@ snapshots:
     dependencies:
       '@fluidframework/core-interfaces': 1.4.0
 
-  '@fwouts/vite-tsconfig-paths@4.2.1(typescript@5.4.5)(vite@4.5.5(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0))':
+  '@fwouts/vite-tsconfig-paths@4.2.1(typescript@5.4.5)(vite@4.5.9(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0))':
     dependencies:
       async-mutex: 0.4.1
       debug: 4.4.0(supports-color@8.1.1)
       globrex: 0.1.2
       tsconfck: 2.1.2(typescript@5.4.5)
     optionalDependencies:
-      vite: 4.5.5(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)
+      vite: 4.5.9(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -33533,7 +33530,7 @@ snapshots:
 
   '@previewjs/core@23.0.1(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)':
     dependencies:
-      '@fwouts/vite-tsconfig-paths': 4.2.1(typescript@5.4.5)(vite@4.5.5(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0))
+      '@fwouts/vite-tsconfig-paths': 4.2.1(typescript@5.4.5)(vite@4.5.9(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0))
       '@previewjs/api': 13.0.0
       '@previewjs/config': 4.9.16
       '@previewjs/iframe': 11.0.1
@@ -33555,7 +33552,7 @@ snapshots:
       ts-node: 10.9.2(@types/node@18.19.67)(typescript@5.4.5)
       tsconfig-paths: 4.2.0
       typescript: 5.4.5
-      vite: 4.5.5(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)
+      vite: 4.5.9(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)
     transitivePeerDependencies:
       - '@swc/core'
       - '@swc/wasm'
@@ -33571,14 +33568,14 @@ snapshots:
 
   '@previewjs/iframe@11.0.1': {}
 
-  '@previewjs/plugin-react@11.0.0(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)(vite@4.5.5(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0))':
+  '@previewjs/plugin-react@11.0.0(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)(vite@4.5.9(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0))':
     dependencies:
       '@previewjs/api': 13.0.0
       '@previewjs/serializable-values': 7.0.3
       '@previewjs/storybook-helpers': 3.0.0(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)
       '@previewjs/type-analyzer': 8.0.2
       '@previewjs/vfs': 2.1.4
-      '@vitejs/plugin-react': 4.3.4(vite@4.5.5(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0))
+      '@vitejs/plugin-react': 4.3.4(vite@4.5.9(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0))
       typescript: 5.4.5
     transitivePeerDependencies:
       - '@swc/core'
@@ -34763,14 +34760,14 @@ snapshots:
 
   '@ungap/structured-clone@1.2.1': {}
 
-  '@vitejs/plugin-react@4.3.4(vite@4.5.5(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0))':
+  '@vitejs/plugin-react@4.3.4(vite@4.5.9(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0))':
     dependencies:
       '@babel/core': 7.26.0
       '@babel/plugin-transform-react-jsx-self': 7.25.9(@babel/core@7.26.0)
       '@babel/plugin-transform-react-jsx-source': 7.25.9(@babel/core@7.26.0)
       '@types/babel__core': 7.20.5
       react-refresh: 0.14.2
-      vite: 4.5.5(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)
+      vite: 4.5.9(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -37035,33 +37032,33 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1)(eslint@8.55.0):
     dependencies:
       '@nolyfill/is-core-module': 1.0.39
       debug: 4.4.0(supports-color@8.1.1)
       enhanced-resolve: 5.17.1
       eslint: 8.55.0
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
       fast-glob: 3.3.2
       get-tsconfig: 4.8.1
       is-bun-module: 1.3.0
       is-glob: 4.0.3
     optionalDependencies:
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
     transitivePeerDependencies:
       - '@typescript-eslint/parser'
       - eslint-import-resolver-node
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-module-utils@2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-module-utils@2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.4.5)
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -37075,13 +37072,13 @@ snapshots:
       eslint: 8.55.0
       ignore: 5.3.2
 
-  eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0):
     dependencies:
       debug: 4.4.0(supports-color@8.1.1)
       doctrine: 3.0.0
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
       get-tsconfig: 4.8.1
       is-glob: 4.0.3
       minimatch: 3.1.2
@@ -44229,7 +44226,7 @@ snapshots:
       d3-time: 3.1.0
       d3-timer: 3.0.1
 
-  vite@4.5.5(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0):
+  vite@4.5.9(@types/node@18.19.67)(less@3.12.2)(sass@1.82.0)(terser@5.37.0):
     dependencies:
       esbuild: 0.18.20
       postcss: 8.4.49

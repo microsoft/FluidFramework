@@ -38,7 +38,6 @@ const readTemplate = (templateFileName, headingOffset = 0) => {
 	return unmodifiedContents.replace(/(^#)/gm, `$1${headingOffsetString}`);
 };
 
-
 /**
  * Reads contents of the target file within the provided (optional) line boundaries.
  *
@@ -185,9 +184,7 @@ function formattedSectionText(sectionBody, headingOptions) {
 	if (headingOptions?.includeHeading) {
 		const { headingLevel, headingText } = headingOptions;
 		if (!Number.isInteger(headingLevel) || headingLevel < 1) {
-			throw new TypeError(
-				`"headingLevel" must be a positive integer. Got "${headingLevel}".`,
-			);
+			throw new TypeError(`"headingLevel" must be a positive integer. Got "${headingLevel}".`);
 		}
 		heading = `${"#".repeat(headingLevel)} ${headingText}\n\n`;
 	}
@@ -249,7 +246,7 @@ function parseHeadingOptions(transformationOptions, headingText) {
 	return {
 		includeHeading: transformationOptions.includeHeading !== "FALSE",
 		headingLevel: transformationOptions.headingLevel
-			? Number.parseInt(transformationOptions.headingLevel) ?? defaultSectionHeadingLevel
+			? (Number.parseInt(transformationOptions.headingLevel) ?? defaultSectionHeadingLevel)
 			: defaultSectionHeadingLevel,
 		headingText: headingText,
 	};

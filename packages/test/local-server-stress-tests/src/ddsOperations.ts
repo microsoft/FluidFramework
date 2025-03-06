@@ -5,6 +5,7 @@
 
 import { type AsyncGenerator, type AsyncReducer } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzTestState, Client as DDSClient } from "@fluid-private/test-dds-utils";
+import { AttachState } from "@fluidframework/container-definitions/internal";
 import { fluidHandleSymbol } from "@fluidframework/core-interfaces";
 import { assert, isObject } from "@fluidframework/core-utils/internal";
 import type {
@@ -44,7 +45,7 @@ const covertLocalServerStateToDdsState = async (
 		clients: makeUnreachableCodePathProxy("clients"),
 		client: createDDSClient(state.channel),
 		containerRuntimeFactory: makeUnreachableCodePathProxy("containerRuntimeFactory"),
-		isDetached: state.isDetached,
+		isDetached: state.client.container.attachState === AttachState.Detached,
 		summarizerClient: makeUnreachableCodePathProxy("containerRuntimeFactory"),
 		random: {
 			...state.random,

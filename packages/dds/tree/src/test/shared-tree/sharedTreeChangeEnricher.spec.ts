@@ -12,7 +12,6 @@ import {
 	type RevisionTag,
 	type TaggedChange,
 	TreeStoredSchemaRepository,
-	initializeForest,
 	mapCursorField,
 	rootFieldKey,
 	tagChange,
@@ -29,6 +28,7 @@ import {
 	type TreeChunk,
 	buildForest,
 	fieldKinds,
+	initializeForest,
 } from "../../feature-libraries/index.js";
 import {
 	type SharedTreeMutableChangeEnricher,
