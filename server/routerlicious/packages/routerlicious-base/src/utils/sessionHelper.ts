@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { delay } from "@fluidframework/server-common-utils";
 import { ISession, isNetworkError, NetworkError } from "@fluidframework/server-services-client";
 import {
+	delay,
 	IDocument,
 	runWithRetry,
 	IDocumentRepository,

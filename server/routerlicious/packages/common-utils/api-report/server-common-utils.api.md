@@ -20,9 +20,6 @@ export class Buffer extends Uint8Array {
 export const bufferToString: (blob: ArrayBufferLike, encoding: string) => string;
 
 // @internal
-export const delay: (timeMs: number) => Promise<void>;
-
-// @internal
 export type EventEmitterEventType = EventEmitter extends {
     on(event: infer E, listener: any): any;
 } ? E : never;

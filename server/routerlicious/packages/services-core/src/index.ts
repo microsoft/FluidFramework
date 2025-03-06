@@ -34,6 +34,7 @@ export {
 	isRetryEnabled,
 } from "./database";
 export { Deferred } from "./deferred";
+export { delay } from "./delay";
 export { IDeltaService } from "./delta";
 export {
 	IClientSequenceNumber,

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { delay } from "./delay";
 export {
 	TypedEventEmitter,
 	TypedEventTransform,
