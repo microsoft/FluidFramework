@@ -5,8 +5,6 @@
 "section": deprecation
 ---
 
-The containerPackageInfo parameter of the createOdspCreateContainerRequest() function is deprecated and will be removed in 2.40.
-
 The parameter `containerPackageInfo` in `createOdspCreateContainerRequest()` is deprecated and will be removed in version 2.40.
 
 This will mean that the name of the containerPackage can no longer be sent through the request. Instead it can be added in the constructor of `OdspDriverUrlResolverForShareLink`.
