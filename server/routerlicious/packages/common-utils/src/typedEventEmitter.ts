@@ -89,13 +89,7 @@ export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any
 /**
  * Transforms the event overload by replacing {@link IEventThisPlaceHolder} with `TThis` in the event listener
  * arguments and having the overload return `TTHis` as well
- *
- * @deprecated Use {@link @fluidframework/core-interfaces#TransformedEvent} instead.
  * @internal
- *
- * @privateremarks
- * We need it here because TypedEventEmitter lives here, but otherwise should be removed in favor of the one in
- * core-interfaces.
  */
 
 export type TransformedEvent<TThis, E, A extends any[]> = (
@@ -112,12 +106,7 @@ export type TransformedEvent<TThis, E, A extends any[]> = (
  * At more than 15 overloads we start to hit {@link https://github.com/microsoft/TypeScript/issues/37209 | TS2589}.
  * If we need to move beyond 15 we should evaluate using a mapped type pattern like `{"event":(listenerArgs)=>void}`
  *
- * @deprecated Use {@link @fluidframework/core-interfaces#IEventTransformer} instead.
  * @internal
- *
- * @privateremarks
- * We need it here because TypedEventEmitter lives here, but otherwise should be removed in favor of the one in
- * core-interfaces.
  */
 export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 	(event: infer E0, listener: (...args: infer A0) => void);
