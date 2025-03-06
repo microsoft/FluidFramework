@@ -5836,9 +5836,6 @@ importers:
 
   examples/view-integration/external-views:
     dependencies:
-      '@fluid-example/example-utils':
-        specifier: workspace:~
-        version: link:../../utils/example-utils
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../packages/common/client-utils

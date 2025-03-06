@@ -31,7 +31,6 @@ import {
 	type TaggedChange,
 	type UpPath,
 	makeDetachedNodeId,
-	mapCursorField,
 	replaceAtomRevisions,
 	revisionMetadataSourceFromInfo,
 	areEqualChangeAtomIds,
@@ -65,7 +64,6 @@ import {
 	chunkTree,
 	defaultChunkPolicy,
 } from "../chunked-forest/index.js";
-import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 
 import {
 	type CrossFieldManager,

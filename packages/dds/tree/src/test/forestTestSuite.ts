@@ -25,18 +25,15 @@ import {
 	clonePath,
 	createAnnouncedVisitor,
 	detachedFieldAsKey,
-	initializeForest,
 	mapCursorField,
 	moveToDetachedField,
 	rootFieldKey,
 } from "../core/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
-	chunkTree,
 	cursorForJsonableTreeField,
-	defaultChunkPolicy,
+	initializeForest,
 	jsonableTreeFromCursor,
-	type TreeChunk,
 } from "../feature-libraries/index.js";
 import {
 	type IdAllocator,

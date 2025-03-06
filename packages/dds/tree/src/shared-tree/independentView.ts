@@ -14,9 +14,6 @@ import {
 	type RevisionTag,
 	RevisionTagCodec,
 	TreeStoredSchemaRepository,
-	initializeForest,
-	type ITreeCursorSynchronous,
-	mapCursorField,
 } from "../core/index.js";
 import {
 	createNodeKeyManager,
@@ -24,9 +21,8 @@ import {
 	makeSchemaCodec,
 	type FieldBatchEncodingContext,
 	defaultSchemaPolicy,
-	chunkTree,
-	defaultChunkPolicy,
 	TreeCompressionStrategy,
+	initializeForest,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { Format } from "../feature-libraries/schema-index/format.js";

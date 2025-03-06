@@ -13,7 +13,6 @@ import {
 	type TaggedChange,
 	type UpPath,
 	applyDelta,
-	initializeForest,
 	makeDetachedFieldIndex,
 	mapCursorField,
 	moveToDetachedField,
@@ -26,6 +25,7 @@ import {
 	buildForest,
 	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
+	initializeForest,
 	intoDelta,
 	jsonableTreeFromCursor,
 } from "../../../feature-libraries/index.js";
