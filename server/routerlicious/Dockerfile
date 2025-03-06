@@ -57,6 +57,7 @@ COPY lerna.json ./
 COPY scripts/*.* ./scripts/
 COPY patches/*.* ./patches/
 
+COPY packages/common-utils/package*.json packages/common-utils/
 COPY packages/gitresources/package*.json packages/gitresources/
 COPY packages/kafka-orderer/package*.json packages/kafka-orderer/
 COPY packages/lambdas-driver/package*.json packages/lambdas-driver/

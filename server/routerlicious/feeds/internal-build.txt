@@ -18,3 +18,4 @@ tinylicious
 @fluidframework/server-lambdas
 @fluidframework/server-kafka-orderer
 @fluidframework/gitresources
+@fluidframework/server-common-utils

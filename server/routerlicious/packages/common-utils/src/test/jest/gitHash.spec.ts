@@ -125,10 +125,12 @@ describe("Common-Utils", () => {
 		// Navigate to the local test server so crypto is available
 		await page.goto(`http://localhost:${port}`, { waitUntil: "load", timeout: 0 });
 
+		/* eslint-disable unicorn/prefer-module */
 		xmlFile = await getFileContents(path.join(__dirname, `${dataDir}/assets/book.xml`));
 		svgFile = await getFileContents(path.join(__dirname, `${dataDir}/assets/bindy.svg`));
 		pdfFile = await getFileContents(path.join(__dirname, `${dataDir}/assets/aka.pdf`));
 		gifFile = await getFileContents(path.join(__dirname, `${dataDir}/assets/grid.gif`));
+		/* eslint-enable unicorn/prefer-module */
 	});
 
 	afterAll(async () => {
@@ -188,28 +190,4 @@ describe("Common-Utils", () => {
 			expect(hash1Browser).toEqual(hash2Browser);
 		});
 	});
-
-	// describe("hashFile", () => {
-	// 	test("SHA256 hashes match", async () => {
-	// 		const expectedHash = "9b8abd0b90324ffce0b6a9630e5c4301972c364ed9aeb7e7329e424a4ae8a630";
-	// 		const hashNode = await HashNode.hashFile(svgFile, "SHA-256");
-	// 		const hashBrowser = await evaluateBrowserHash(page, svgFile, "SHA-256");
-	// 		expect(hashNode).toEqual(expectedHash);
-	// 		expect(hashBrowser).toEqual(expectedHash);
-	// 	});
-
-	// 	test("base64 encoded hashes match", async () => {
-	// 		const expectedHash1 = "4/nXhjtBQhhvXTNNSNq/cJgb4sQ=";
-	// 		const hashNode1 = await HashNode.hashFile(xmlFile, "SHA-1", "base64");
-	// 		const hashBrowser1 = await evaluateBrowserHash(page, xmlFile, "SHA-1", "base64");
-	// 		expect(hashNode1).toEqual(expectedHash1);
-	// 		expect(hashBrowser1).toEqual(expectedHash1);
-
-	// 		const expectedHash256 = "QPQh34aj1TNmyo34aPDA0vMIU7r5QC/6KNgIzlLYiFY=";
-	// 		const hashNode256 = await HashNode.hashFile(pdfFile, "SHA-256", "base64");
-	// 		const hashBrowser256 = await evaluateBrowserHash(page, pdfFile, "SHA-256", "base64");
-	// 		expect(hashNode256).toEqual(expectedHash256);
-	// 		expect(hashBrowser256).toEqual(expectedHash256);
-	// 	});
-	// });
 });

@@ -59,9 +59,9 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/server-common-utils": "workspace:~",
 		"@fluidframework/gitresources": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.2.0",
+		"@fluidframework/server-common-utils": "workspace:~",
 		"events_pkg": "npm:events@^3.1.0"
 	},
 	"devDependencies": {

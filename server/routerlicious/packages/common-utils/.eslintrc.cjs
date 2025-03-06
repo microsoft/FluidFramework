@@ -4,22 +4,29 @@
  */
 
 module.exports = {
-	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
-		"prettier",
-	],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
 	parserOptions: {
-		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+		project: [
+			"./tsconfig.json",
+			"./src/test/mocha/tsconfig.json",
+			"./src/test/jest/tsconfig.json",
+			"./src/test/types/tsconfig.json",
+		],
 	},
 	rules: {
+		// The whole server release group is intended to run in NodeJS; this is fine
 		"import/no-nodejs-modules": "off",
-		"promise/catch-or-return": ["error", { allowFinally: true }],
 
-		// TODO: enable strict null checks in tsconfig and remove these overrides
-		"@typescript-eslint/prefer-nullish-coalescing": "off",
-		"@typescript-eslint/strict-boolean-expressions": "off",
-
-		// TODO: remove usages of deprecated APIs and remove this override
-		"import/no-deprecated": "warn",
+		// This package has been deprecated. The following rules have a significant number of violations
+		// that will not be fixed here.
+		"@typescript-eslint/no-explicit-any": "off",
+		"@typescript-eslint/no-unsafe-argument": "off",
+		"@typescript-eslint/no-unsafe-member-access": "off",
+		"@typescript-eslint/no-unsafe-call": "off",
+		"@typescript-eslint/no-unsafe-assignment": "off",
+		"@typescript-eslint/explicit-module-boundary-types": "off",
+		"unicorn/text-encoding-identifier-case": "off",
+		"unicorn/prefer-node-protocol": "off",
+		"unicorn/prefer-code-point": "off",
 	},
 };
