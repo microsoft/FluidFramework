@@ -19,9 +19,7 @@ import {
 import {
 	IContainerContext,
 	IGetPendingLocalStateProps,
-	ILoader,
 	IRuntime,
-	LoaderHeader,
 	IDeltaManager,
 	IDeltaManagerFull,
 	isIDeltaManagerFull,
@@ -58,7 +56,6 @@ import {
 	SummaryType,
 } from "@fluidframework/driver-definitions";
 import {
-	DriverHeader,
 	FetchSource,
 	IDocumentStorageService,
 	type ISnapshot,
@@ -108,13 +105,11 @@ import {
 	calculateStats,
 	create404Response,
 	exceptionToResponse,
-	responseToException,
 	seqFromTree,
 } from "@fluidframework/runtime-utils/internal";
 import type {
 	IFluidErrorBase,
 	ITelemetryGenericEventExt,
-	TelemetryEventPropertyTypeExt,
 } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITelemetryLoggerExt,
@@ -155,7 +150,7 @@ import {
 	getSummaryForDatastores,
 	wrapContext,
 } from "./channelCollection.js";
-import { IPerfSignalReport, ReportOpPerfTelemetry } from "./connectionTelemetry.js";
+import { ReportOpPerfTelemetry } from "./connectionTelemetry.js";
 import { ContainerFluidHandleContext } from "./containerHandleContext.js";
 import { channelToDataStore } from "./dataStore.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
@@ -210,6 +205,7 @@ import {
 	IPendingLocalState,
 	PendingStateManager,
 } from "./pendingStateManager.js";
+import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	DocumentsSchemaController,
@@ -237,7 +233,6 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	ISubmitSummaryOptions,
 	ISummarizeResults,
-	ISummarizer,
 	// eslint-disable-next-line import/no-deprecated
 	ISummarizerInternalsProvider,
 	// eslint-disable-next-line import/no-deprecated
@@ -268,6 +263,12 @@ import {
 	wrapSummaryInChannelsTree,
 	// eslint-disable-next-line import/no-deprecated
 	type IDocumentSchemaFeatures,
+	formCreateSummarizerFn,
+	summarizerRequestUrl,
+	validateSummaryHeuristicConfiguration,
+	ISummaryConfiguration,
+	DefaultSummaryConfiguration,
+	isSummariesDisabled,
 } from "./summary/index.js";
 import { Throttler, formExponentialFn } from "./throttler.js";
 
@@ -299,154 +300,6 @@ function getUnknownMessageTypeError(
 		},
 	);
 }
-
-/**
- * @legacy
- * @alpha
- */
-export interface ISummaryBaseConfiguration {
-	/**
-	 * Delay before first attempt to spawn summarizing container.
-	 */
-	initialSummarizerDelayMs: number;
-
-	/**
-	 * Defines the maximum allowed time to wait for a pending summary ack.
-	 * The maximum amount of time client will wait for a summarize is the minimum of
-	 * maxSummarizeAckWaitTime (currently 3 * 60 * 1000) and maxAckWaitTime.
-	 */
-	maxAckWaitTime: number;
-	/**
-	 * Defines the maximum number of Ops in between Summaries that can be
-	 * allowed before forcibly electing a new summarizer client.
-	 */
-	maxOpsSinceLastSummary: number;
-}
-
-/**
- * @legacy
- * @alpha
- */
-export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
-	state: "enabled";
-	/**
-	 * Defines the maximum allowed time, since the last received Ack, before running the summary
-	 * with reason maxTime.
-	 * For example, say we receive ops one by one just before the idle time is triggered.
-	 * In this case, we still want to run a summary since it's been a while since the last summary.
-	 */
-	maxTime: number;
-	/**
-	 * Defines the maximum number of Ops, since the last received Ack, that can be allowed
-	 * before running the summary with reason maxOps.
-	 */
-	maxOps: number;
-	/**
-	 * Defines the minimum number of Ops, since the last received Ack, that can be allowed
-	 * before running the last summary.
-	 */
-	minOpsForLastSummaryAttempt: number;
-	/**
-	 * Defines the lower boundary for the allowed time in between summarizations.
-	 * Pairs with maxIdleTime to form a range.
-	 * For example, if we only receive 1 op, we don't want to have the same idle time as say 100 ops.
-	 * Based on the boundaries we set in minIdleTime and maxIdleTime, the idle time will change
-	 * linearly depending on the number of ops we receive.
-	 */
-	minIdleTime: number;
-	/**
-	 * Defines the upper boundary for the allowed time in between summarizations.
-	 * Pairs with minIdleTime to form a range.
-	 * For example, if we only receive 1 op, we don't want to have the same idle time as say 100 ops.
-	 * Based on the boundaries we set in minIdleTime and maxIdleTime, the idle time will change
-	 * linearly depending on the number of ops we receive.
-	 */
-	maxIdleTime: number;
-	/**
-	 * Runtime op weight to use in heuristic summarizing.
-	 * This number is a multiplier on the number of runtime ops we process when running summarize heuristics.
-	 * For example: (multiplier) * (number of runtime ops) = weighted number of runtime ops
-	 */
-	runtimeOpWeight: number;
-	/**
-	 * Non-runtime op weight to use in heuristic summarizing
-	 * This number is a multiplier on the number of non-runtime ops we process when running summarize heuristics.
-	 * For example: (multiplier) * (number of non-runtime ops) = weighted number of non-runtime ops
-	 */
-	nonRuntimeOpWeight: number;
-
-	/**
-	 * Number of ops since last summary needed before a non-runtime op can trigger running summary heuristics.
-	 *
-	 * Note: Any runtime ops sent before the threshold is reached will trigger heuristics normally.
-	 * This threshold ONLY applies to non-runtime ops triggering summaries.
-	 *
-	 * For example: Say the threshold is 20. Sending 19 non-runtime ops will not trigger any heuristic checks.
-	 * Sending the 20th non-runtime op will trigger the heuristic checks for summarizing.
-	 */
-	nonRuntimeHeuristicThreshold?: number;
-}
-
-/**
- * @legacy
- * @alpha
- */
-export interface ISummaryConfigurationDisableSummarizer {
-	state: "disabled";
-}
-
-/**
- * @legacy
- * @alpha
- */
-export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConfiguration {
-	state: "disableHeuristics";
-}
-
-/**
- * @legacy
- * @alpha
- */
-export type ISummaryConfiguration =
-	| ISummaryConfigurationDisableSummarizer
-	| ISummaryConfigurationDisableHeuristics
-	| ISummaryConfigurationHeuristics;
-
-export function isSummariesDisabled(
-	config: ISummaryConfiguration,
-): config is ISummaryConfigurationDisableSummarizer {
-	return config.state === "disabled";
-}
-
-/**
- * @legacy
- * @alpha
- */
-export const DefaultSummaryConfiguration: ISummaryConfiguration = {
-	state: "enabled",
-
-	minIdleTime: 0,
-
-	maxIdleTime: 30 * 1000, // 30 secs.
-
-	maxTime: 60 * 1000, // 1 min.
-
-	maxOps: 100, // Summarize if 100 weighted ops received since last snapshot.
-
-	minOpsForLastSummaryAttempt: 10,
-
-	maxAckWaitTime: 3 * 60 * 1000, // 3 mins.
-
-	maxOpsSinceLastSummary: 7000,
-
-	initialSummarizerDelayMs: 5 * 1000, // 5 secs.
-
-	nonRuntimeOpWeight: 0.1,
-
-	runtimeOpWeight: 1,
-
-	nonRuntimeHeuristicThreshold: 20,
-};
 
 /**
  * @legacy
@@ -587,9 +440,7 @@ export interface IContainerRuntimeOptionsInternal extends IContainerRuntimeOptio
 
 /**
  * Error responses when requesting a deleted object will have this header set to true
- * @legacy
- * @alpha
- * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 export const DeletedResponseHeaderKey = "wasDeleted";
 /**
@@ -782,50 +633,6 @@ export const makeLegacySendBatchFn =
 		return clientSequenceNumber;
 	};
 
-const summarizerRequestUrl = "_summarizer";
-
-/**
- * Create and retrieve the summmarizer
- */
-async function createSummarizer(loader: ILoader, url: string): Promise<ISummarizer> {
-	const request: IRequest = {
-		headers: {
-			[LoaderHeader.cache]: false,
-			[LoaderHeader.clientDetails]: {
-				capabilities: { interactive: false },
-				type: summarizerClientType,
-			},
-			[DriverHeader.summarizingClient]: true,
-			[LoaderHeader.reconnect]: false,
-		},
-		url,
-	};
-
-	const resolvedContainer = await loader.resolve(request);
-	let fluidObject: FluidObject<ISummarizer> | undefined;
-
-	// Older containers may not have the "getEntryPoint" API
-	// ! This check will need to stay until LTS of loader moves past 2.0.0-internal.7.0.0
-	if (resolvedContainer.getEntryPoint === undefined) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
-		const response = (await (resolvedContainer as any).request({
-			url: `/${summarizerRequestUrl}`,
-		})) as IResponse;
-		if (response.status !== 200 || response.mimeType !== "fluid/object") {
-			throw responseToException(response, request);
-		}
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		fluidObject = response.value;
-	} else {
-		fluidObject = await resolvedContainer.getEntryPoint();
-	}
-
-	if (fluidObject?.ISummarizer === undefined) {
-		throw new UsageError("Fluid object does not implement ISummarizer");
-	}
-	return fluidObject.ISummarizer;
-}
-
 /**
  * Extract last message from the snapshot metadata.
  * Uses legacy property if not using explicit schema control, otherwise uses the new property.
@@ -912,8 +719,6 @@ export async function loadContainerRuntime(
 }
 
 const defaultMaxConsecutiveReconnects = 7;
-
-const defaultTelemetrySignalSampleCount = 100;
 
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
@@ -1448,17 +1253,8 @@ export class ContainerRuntime
 	private emitDirtyDocumentEvent = true;
 	private readonly useDeltaManagerOpsProxy: boolean;
 	private readonly closeSummarizerDelayMs: number;
-	private readonly _signalTracking: IPerfSignalReport = {
-		totalSignalsSentInLatencyWindow: 0,
-		signalsLost: 0,
-		signalsOutOfOrder: 0,
-		signalsSentSinceLastLatencyMeasurement: 0,
-		broadcastSignalSequenceNumber: 0,
-		signalTimestamp: 0,
-		roundTripSignalSequenceNumber: undefined,
-		trackingSignalSequenceNumber: undefined,
-		minimumTrackingSignalSequenceNumber: undefined,
-	};
+
+	private readonly signalTelemetryManager = new SignalTelemetryManager();
 
 	/**
 	 * Summarizer is responsible for coordinating when to send generate and send summaries.
@@ -1762,7 +1558,7 @@ export class ContainerRuntime
 		this.handleContext = new ContainerFluidHandleContext("", this);
 
 		if (summaryConfiguration.state === "enabled") {
-			this.validateSummaryHeuristicConfiguration(summaryConfiguration);
+			validateSummaryHeuristicConfiguration(summaryConfiguration);
 		}
 
 		this.summariesDisabled = isSummariesDisabled(summaryConfiguration);
@@ -1884,12 +1680,9 @@ export class ContainerRuntime
 		// downstream stores to wrap the signal.
 		parentContext.submitSignal = (type: string, content: unknown, targetClientId?: string) => {
 			const envelope1 = content as IEnvelope;
-			const envelope2 = this.createNewSignalEnvelope(
-				envelope1.address,
-				type,
-				envelope1.contents,
-			);
-			return this.submitEnvelopedSignal(envelope2, targetClientId);
+			const envelope2 = createNewSignalEnvelope(envelope1.address, type, envelope1.contents);
+			this.signalTelemetryManager.applyTrackingToSignalEnvelope(envelope2, targetClientId);
+			this.submitSignalFn(envelope2, targetClientId);
 		};
 
 		let snapshot: ISnapshot | ISnapshotTree | undefined = getSummaryForDatastores(
@@ -2103,7 +1896,7 @@ export class ContainerRuntime
 					this, // IConnectedState
 					summaryCollection,
 					this.baseLogger,
-					this.formCreateSummarizerFn(loader),
+					formCreateSummarizerFn(loader),
 					new Throttler(
 						60 * 1000, // 60 sec delay window
 						30 * 1000, // 30 sec max delay
@@ -2796,14 +2589,7 @@ export class ContainerRuntime
 				0x3cd /* Connection is possible only if container exists in storage */,
 			);
 			if (changeOfState) {
-				this._signalTracking.signalsLost = 0;
-				this._signalTracking.signalsOutOfOrder = 0;
-				this._signalTracking.signalTimestamp = 0;
-				this._signalTracking.signalsSentSinceLastLatencyMeasurement = 0;
-				this._signalTracking.totalSignalsSentInLatencyWindow = 0;
-				this._signalTracking.roundTripSignalSequenceNumber = undefined;
-				this._signalTracking.trackingSignalSequenceNumber = undefined;
-				this._signalTracking.minimumTrackingSignalSequenceNumber = undefined;
+				this.signalTelemetryManager.resetTracking();
 			}
 		}
 
@@ -3255,107 +3041,6 @@ export class ContainerRuntime
 		}
 	}
 
-	/**
-	 * Emits the Signal event and update the perf signal data.
-	 */
-	private sendSignalTelemetryEvent(): void {
-		const duration = Date.now() - this._signalTracking.signalTimestamp;
-		this.mc.logger.sendPerformanceEvent({
-			eventName: "SignalLatency",
-			details: {
-				duration, // Roundtrip duration of the tracked signal in milliseconds.
-				sent: this._signalTracking.totalSignalsSentInLatencyWindow, // Signals sent since the last logged SignalLatency event.
-				lost: this._signalTracking.signalsLost, // Signals lost since the last logged SignalLatency event.
-				outOfOrder: this._signalTracking.signalsOutOfOrder, // Out of order signals since the last logged SignalLatency event.
-				reconnectCount: this.consecutiveReconnects, // Container reconnect count.
-			},
-		});
-		this._signalTracking.signalsLost = 0;
-		this._signalTracking.signalsOutOfOrder = 0;
-		this._signalTracking.signalTimestamp = 0;
-		this._signalTracking.totalSignalsSentInLatencyWindow = 0;
-	}
-
-	/**
-	 * Updates signal telemetry including emitting telemetry events.
-	 */
-	private processSignalForTelemetry(envelope: ISignalEnvelope): void {
-		const {
-			clientBroadcastSignalSequenceNumber,
-			contents: envelopeContents,
-			address: envelopeAddress,
-		} = envelope;
-		if (clientBroadcastSignalSequenceNumber === undefined) {
-			return;
-		}
-
-		if (
-			this._signalTracking.trackingSignalSequenceNumber === undefined ||
-			this._signalTracking.minimumTrackingSignalSequenceNumber === undefined
-		) {
-			return;
-		}
-
-		if (
-			clientBroadcastSignalSequenceNumber >= this._signalTracking.trackingSignalSequenceNumber
-		) {
-			// Calculate the number of signals lost and log the event.
-			const signalsLost =
-				clientBroadcastSignalSequenceNumber -
-				this._signalTracking.trackingSignalSequenceNumber;
-			if (signalsLost > 0) {
-				this._signalTracking.signalsLost += signalsLost;
-				this.mc.logger.sendErrorEvent({
-					eventName: "SignalLost",
-					details: {
-						signalsLost, // Number of lost signals detected.
-						expectedSequenceNumber: this._signalTracking.trackingSignalSequenceNumber, // The next expected signal sequence number.
-						clientBroadcastSignalSequenceNumber, // Actual signal sequence number received.
-					},
-				});
-			}
-			// Update the tracking signal sequence number to the next expected signal in the sequence.
-			this._signalTracking.trackingSignalSequenceNumber =
-				clientBroadcastSignalSequenceNumber + 1;
-		} else if (
-			// Check if this is a signal in range of interest.
-			clientBroadcastSignalSequenceNumber >=
-			this._signalTracking.minimumTrackingSignalSequenceNumber
-		) {
-			this._signalTracking.signalsOutOfOrder++;
-			const details: TelemetryEventPropertyTypeExt = {
-				expectedSequenceNumber: this._signalTracking.trackingSignalSequenceNumber, // The next expected signal sequence number.
-				clientBroadcastSignalSequenceNumber, // Sequence number of the out of order signal.
-			};
-			// Only log `contents.type` when address is for container to avoid
-			// chance that contents type is customer data.
-			if (envelopeAddress === undefined) {
-				details.contentsType = envelopeContents.type; // Type of signal that was received out of order.
-			}
-			this.mc.logger.sendTelemetryEvent({
-				eventName: "SignalOutOfOrder",
-				details,
-			});
-		}
-		if (
-			this._signalTracking.roundTripSignalSequenceNumber !== undefined &&
-			clientBroadcastSignalSequenceNumber >= this._signalTracking.roundTripSignalSequenceNumber
-		) {
-			if (
-				clientBroadcastSignalSequenceNumber ===
-				this._signalTracking.roundTripSignalSequenceNumber
-			) {
-				// Latency tracked signal has been received.
-				// We now log the roundtrip duration of the tracked signal.
-				// This telemetry event also logs metrics for broadcast signals
-				// sent, lost, and out of order.
-				// These metrics are reset after logging the telemetry event.
-				this.sendSignalTelemetryEvent();
-			}
-			this._signalTracking.roundTripSignalSequenceNumber = undefined;
-		}
-	}
-
 	public processSignal(message: ISignalMessage, local: boolean): void {
 		const envelope = message.content as ISignalEnvelope;
 		const transformed: IInboundSignalMessage = {
@@ -3367,7 +3052,11 @@ export class ContainerRuntime
 
 		// Only collect signal telemetry for broadcast messages sent by the current client.
 		if (message.clientId === this.clientId) {
-			this.processSignalForTelemetry(envelope);
+			this.signalTelemetryManager.processSignalForTelemetry(
+				envelope,
+				this.mc.logger,
+				this.consecutiveReconnects,
+			);
 		}
 
 		if (envelope.address === undefined) {
@@ -3594,59 +3283,6 @@ export class ContainerRuntime
 		return true;
 	}
 
-	private createNewSignalEnvelope(
-		address: string | undefined,
-		type: string,
-		content: unknown,
-	): Omit<ISignalEnvelope, "broadcastSignalSequenceNumber"> {
-		const newEnvelope: Omit<ISignalEnvelope, "broadcastSignalSequenceNumber"> = {
-			address,
-			contents: { type, content },
-		};
-
-		return newEnvelope;
-	}
-
-	private submitEnvelopedSignal(envelope: ISignalEnvelope, targetClientId?: string): void {
-		const isBroadcastSignal = targetClientId === undefined;
-
-		if (isBroadcastSignal) {
-			const clientBroadcastSignalSequenceNumber = ++this._signalTracking
-				.broadcastSignalSequenceNumber;
-			// Stamp with the broadcast signal sequence number.
-			envelope.clientBroadcastSignalSequenceNumber = clientBroadcastSignalSequenceNumber;
-
-			this._signalTracking.signalsSentSinceLastLatencyMeasurement++;
-
-			if (
-				this._signalTracking.minimumTrackingSignalSequenceNumber === undefined ||
-				this._signalTracking.trackingSignalSequenceNumber === undefined
-			) {
-				// Signal monitoring window is undefined
-				// Initialize tracking to expect the next signal sent by the connected client.
-				this._signalTracking.minimumTrackingSignalSequenceNumber =
-					clientBroadcastSignalSequenceNumber;
-				this._signalTracking.trackingSignalSequenceNumber =
-					clientBroadcastSignalSequenceNumber;
-			}
-
-			// We should not track the round trip of a new signal in the case we are already tracking one.
-			if (
-				clientBroadcastSignalSequenceNumber % defaultTelemetrySignalSampleCount === 1 &&
-				this._signalTracking.roundTripSignalSequenceNumber === undefined
-			) {
-				this._signalTracking.signalTimestamp = Date.now();
-				this._signalTracking.roundTripSignalSequenceNumber =
-					clientBroadcastSignalSequenceNumber;
-				this._signalTracking.totalSignalsSentInLatencyWindow +=
-					this._signalTracking.signalsSentSinceLastLatencyMeasurement;
-				this._signalTracking.signalsSentSinceLastLatencyMeasurement = 0;
-			}
-		}
-
-		this.submitSignalFn(envelope, targetClientId);
-	}
-
 	/**
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
@@ -3661,8 +3297,9 @@ export class ContainerRuntime
 	 */
 	public submitSignal(type: string, content: unknown, targetClientId?: string): void {
 		this.verifyNotClosed();
-		const envelope = this.createNewSignalEnvelope(undefined /* address */, type, content);
-		return this.submitEnvelopedSignal(envelope, targetClientId);
+		const envelope = createNewSignalEnvelope(undefined /* address */, type, content);
+		this.signalTelemetryManager.applyTrackingToSignalEnvelope(envelope, targetClientId);
+		this.submitSignalFn(envelope, targetClientId);
 	}
 
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
@@ -5032,34 +4669,20 @@ export class ContainerRuntime
 		}
 	}
 
-	/**
-	 * Forms a function that will create and retrieve a Summarizer.
-	 */
-	private formCreateSummarizerFn(loader: ILoader) {
-		return async () => {
-			return createSummarizer(loader, `/${summarizerRequestUrl}`);
-		};
-	}
-
-	private validateSummaryHeuristicConfiguration(
-		configuration: ISummaryConfigurationHeuristics,
-	): void {
-		// eslint-disable-next-line no-restricted-syntax
-		for (const prop in configuration) {
-			if (typeof configuration[prop] === "number" && configuration[prop] < 0) {
-				throw new UsageError(
-					`Summary heuristic configuration property "${prop}" cannot be less than 0`,
-				);
-			}
-		}
-		if (configuration.minIdleTime > configuration.maxIdleTime) {
-			throw new UsageError(
-				`"minIdleTime" [${configuration.minIdleTime}] cannot be greater than "maxIdleTime" [${configuration.maxIdleTime}]`,
-			);
-		}
-	}
-
 	private get groupedBatchingEnabled(): boolean {
 		return this.sessionSchema.opGroupingEnabled === true;
 	}
+}
+
+export function createNewSignalEnvelope(
+	address: string | undefined,
+	type: string,
+	content: unknown,
+): Omit<ISignalEnvelope, "broadcastSignalSequenceNumber"> {
+	const newEnvelope: Omit<ISignalEnvelope, "broadcastSignalSequenceNumber"> = {
+		address,
+		contents: { type, content },
+	};
+
+	return newEnvelope;
 }
