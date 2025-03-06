@@ -96,7 +96,7 @@ export class SignalTelemetryManager {
 	 * @param logger - The telemetry logger to use for emitting telemetry events.
 	 * @param consecutiveReconnects - The number of consecutive reconnects that have occurred. Only used for logging.
 	 */
-	public processSignalForTelemetry(
+	public trackReceivedSignal(
 		envelope: ISignalEnvelope,
 		logger: ITelemetryLoggerExt,
 		consecutiveReconnects: number,
@@ -184,12 +184,16 @@ export class SignalTelemetryManager {
 		}
 	}
 
+	/**
+	 * Updates tracking state for signals based on the provided signal envelope, and potentially updates the
+	 * envelope with additional information that the signal needs to have stamped on it.
+	 * @param envelope - The signal envelope to process.
+	 * @param isBroadcastSignal - Indicates whether the signal is a broadcast signal.
+	 */
 	public applyTrackingToSignalEnvelope(
 		envelope: ISignalEnvelope,
-		targetClientId?: string,
+		isBroadcastSignal: boolean
 	): void {
-		const isBroadcastSignal = targetClientId === undefined;
-
 		if (isBroadcastSignal) {
 			const clientBroadcastSignalSeqNo = ++this.broadcastSignalSequenceNumber;
 

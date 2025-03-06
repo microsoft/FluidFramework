@@ -1681,7 +1681,7 @@ export class ContainerRuntime
 		parentContext.submitSignal = (type: string, content: unknown, targetClientId?: string) => {
 			const envelope1 = content as IEnvelope;
 			const envelope2 = createNewSignalEnvelope(envelope1.address, type, envelope1.contents);
-			this.signalTelemetryManager.applyTrackingToSignalEnvelope(envelope2, targetClientId);
+			this.signalTelemetryManager.applyTrackingToSignalEnvelope(envelope2, targetClientId === undefined);
 			this.submitSignalFn(envelope2, targetClientId);
 		};
 
@@ -3052,7 +3052,7 @@ export class ContainerRuntime
 
 		// Only collect signal telemetry for broadcast messages sent by the current client.
 		if (message.clientId === this.clientId) {
-			this.signalTelemetryManager.processSignalForTelemetry(
+			this.signalTelemetryManager.trackReceivedSignal(
 				envelope,
 				this.mc.logger,
 				this.consecutiveReconnects,
@@ -3298,7 +3298,7 @@ export class ContainerRuntime
 	public submitSignal(type: string, content: unknown, targetClientId?: string): void {
 		this.verifyNotClosed();
 		const envelope = createNewSignalEnvelope(undefined /* address */, type, content);
-		this.signalTelemetryManager.applyTrackingToSignalEnvelope(envelope, targetClientId);
+		this.signalTelemetryManager.applyTrackingToSignalEnvelope(envelope, targetClientId === undefined);
 		this.submitSignalFn(envelope, targetClientId);
 	}
 
