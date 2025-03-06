@@ -164,6 +164,17 @@ export {
 } from "./throttler";
 export { TokenGenerator } from "./token";
 export {
+	TypedEventEmitter,
+	TypedEventTransform,
+	IEvent,
+	IEventProvider,
+	IEventTransformer,
+	TransformedEvent,
+	EventEmitterEventType,
+	IEventThisPlaceHolder,
+	ReplaceIEventThisPlaceHolder,
+} from "./typedEventEmitter";
+export {
 	clientConnectivityStorageId,
 	IUsageData,
 	signalUsageStorageId,

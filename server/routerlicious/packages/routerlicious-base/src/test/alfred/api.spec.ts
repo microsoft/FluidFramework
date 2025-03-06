@@ -4,13 +4,13 @@
  */
 
 import { ScopeType } from "@fluidframework/protocol-definitions";
-import { TypedEventEmitter } from "@fluidframework/server-common-utils";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { IAlfredTenant, NetworkError } from "@fluidframework/server-services-client";
 import {
 	IDocument,
 	MongoDatabaseManager,
 	MongoManager,
+	TypedEventEmitter,
 } from "@fluidframework/server-services-core";
 import { StartupCheck } from "@fluidframework/server-services-shared";
 import { Lumberjack, TestEngine1 } from "@fluidframework/server-services-telemetry";

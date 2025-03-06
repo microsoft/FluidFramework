@@ -6,6 +6,17 @@
 export { buildGitTreeHierarchy, getGitMode, getGitType } from "./gitHelper";
 export { IProtocolHandler, IScribeProtocolState, ProtocolOpHandler } from "./protocol";
 export {
+	TypedEventEmitter,
+	TypedEventTransform,
+	IEvent,
+	IEventProvider,
+	IEventTransformer,
+	TransformedEvent,
+	EventEmitterEventType,
+	IEventThisPlaceHolder,
+	ReplaceIEventThisPlaceHolder,
+} from "./typedEventEmitter";
+export {
 	IQuorumSnapshot,
 	Quorum,
 	QuorumClients,

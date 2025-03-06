@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluidframework/server-common-utils";
 import * as core from "@fluidframework/server-services-core";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { Provider } from "nconf";
@@ -17,7 +16,7 @@ export class TinyliciousResources implements core.IResources {
 		public mongoManager: core.MongoManager,
 		public port: any,
 		public webServerFactory: core.IWebServerFactory,
-		public collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+		public collaborationSessionEventEmitter?: core.TypedEventEmitter<ICollaborationSessionEvents>,
 	) {}
 
 	public async dispose(): Promise<void> {

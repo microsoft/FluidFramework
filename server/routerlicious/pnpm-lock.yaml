@@ -71,12 +71,6 @@ importers:
 
   packages/common-utils:
     dependencies:
-      '@types/events':
-        specifier: ^3.0.0
-        version: 3.0.3
-      events:
-        specifier: ^3.1.0
-        version: 3.3.0
       sha.js:
         specifier: ^2.4.11
         version: 2.4.11
@@ -674,9 +668,9 @@ importers:
       '@fluidframework/protocol-definitions':
         specifier: ^3.2.0
         version: 3.2.0
-      '@fluidframework/server-common-utils':
-        specifier: workspace:~
-        version: link:../common-utils
+      '@types/events':
+        specifier: ^3.0.0
+        version: 3.0.3
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
@@ -1297,6 +1291,9 @@ importers:
       '@fluidframework/server-services-telemetry':
         specifier: workspace:~
         version: link:../services-telemetry
+      '@types/events':
+        specifier: ^3.0.0
+        version: 3.0.3
       '@types/nconf':
         specifier: ^0.10.2
         version: 0.10.3

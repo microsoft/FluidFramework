@@ -5,7 +5,7 @@
 
 import * as git from "@fluidframework/gitresources";
 import { IClient, IClientJoin, ScopeType } from "@fluidframework/protocol-definitions";
-import { TypedEventEmitter, fromUtf8ToBase64 } from "@fluidframework/server-common-utils";
+import { fromUtf8ToBase64 } from "@fluidframework/server-common-utils";
 import {
 	IBroadcastSignalEventPayload,
 	ICollaborationSessionEvents,
@@ -52,7 +52,7 @@ export function create(
 	tenantThrottlers: Map<string, core.IThrottler>,
 	jwtTokenCache?: core.ICache,
 	revokedTokenChecker?: core.IRevokedTokenChecker,
-	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+	collaborationSessionEventEmitter?: core.TypedEventEmitter<ICollaborationSessionEvents>,
 	fluidAccessTokenGenerator?: core.IFluidAccessTokenGenerator,
 ): Router {
 	const router: Router = Router();

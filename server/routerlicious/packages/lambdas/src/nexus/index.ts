@@ -11,7 +11,6 @@ import {
 	ISignalMessage,
 	NackErrorType,
 } from "@fluidframework/protocol-definitions";
-import { TypedEventEmitter } from "@fluidframework/server-common-utils";
 import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
 import { v4 as uuid } from "uuid";
 import * as core from "@fluidframework/server-services-core";
@@ -112,7 +111,7 @@ export function configureWebSocketServices(
 	verifyMaxMessageSize?: boolean,
 	socketTracker?: core.IWebSocketTracker,
 	revokedTokenChecker?: core.IRevokedTokenChecker,
-	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+	collaborationSessionEventEmitter?: core.TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: core.IClusterDrainingChecker,
 	collaborationSessionTracker?: core.ICollaborationSessionTracker,
 ): void {

@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluidframework/server-common-utils";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
-import { IDocumentStorage, MongoManager } from "@fluidframework/server-services-core";
+import {
+	IDocumentStorage,
+	MongoManager,
+	TypedEventEmitter,
+} from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
 import * as ordering from "./ordering";

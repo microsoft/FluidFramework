@@ -60,8 +60,6 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@types/events": "^3.0.0",
-		"events": "^3.1.0",
 		"sha.js": "^2.4.11"
 	},
 	"devDependencies": {

@@ -4,7 +4,6 @@
  */
 
 import { isIPv4, isIPv6 } from "net";
-import { TypedEventEmitter } from "@fluidframework/server-common-utils";
 import {
 	IDeltaService,
 	IDocumentStorage,
@@ -18,6 +17,7 @@ import {
 	IClusterDrainingChecker,
 	IFluidAccessTokenGenerator,
 	IReadinessCheck,
+	TypedEventEmitter,
 } from "@fluidframework/server-services-core";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { json, urlencoded } from "body-parser";

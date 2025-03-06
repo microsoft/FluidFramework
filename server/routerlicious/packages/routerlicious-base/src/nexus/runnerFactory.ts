@@ -5,7 +5,6 @@
 
 import * as os from "os";
 import cluster from "cluster";
-import { TypedEventEmitter } from "@fluidframework/server-common-utils";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
 import {
@@ -75,7 +74,7 @@ export class NexusResources implements core.IResources {
 		public socketTracker?: core.IWebSocketTracker,
 		public tokenRevocationManager?: core.ITokenRevocationManager,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
-		public collaborationSessionEvents?: TypedEventEmitter<ICollaborationSessionEvents>,
+		public collaborationSessionEvents?: core.TypedEventEmitter<ICollaborationSessionEvents>,
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
 		public clusterDrainingChecker?: core.IClusterDrainingChecker,
 		public collaborationSessionTracker?: core.ICollaborationSessionTracker,
@@ -496,7 +495,8 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			ordererManagerOptions,
 		);
 
-		const collaborationSessionEvents = new TypedEventEmitter<ICollaborationSessionEvents>();
+		const collaborationSessionEvents =
+			new core.TypedEventEmitter<ICollaborationSessionEvents>();
 
 		// This wanst to create stuff
 		const port = utils.normalizePort(process.env.PORT || "3000");

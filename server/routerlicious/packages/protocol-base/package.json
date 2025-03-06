@@ -61,7 +61,7 @@
 	"dependencies": {
 		"@fluidframework/gitresources": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.2.0",
-		"@fluidframework/server-common-utils": "workspace:~",
+		"@types/events": "^3.0.0",
 		"events_pkg": "npm:events@^3.1.0"
 	},
 	"devDependencies": {
