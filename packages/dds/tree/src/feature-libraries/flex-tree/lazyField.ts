@@ -56,7 +56,7 @@ import {
 } from "./lazyEntity.js";
 import { type LazyTreeNode, makeTree } from "./lazyNode.js";
 import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
-import { cursorForMapTreeField, cursorForMapTreeNode } from "../mapTreeCursor.js";
+import { cursorForMapTreeField } from "../mapTreeCursor.js";
 
 /**
  * Reuse fields.
@@ -302,7 +302,7 @@ export class ReadonlyLazyValueField extends LazyField implements FlexTreeRequire
 export class LazyValueField extends ReadonlyLazyValueField implements FlexTreeRequiredField {
 	public override editor: ValueFieldEditBuilder<ExclusiveMapTree> = {
 		set: (newContent) => {
-			this.valueFieldEditor().set(cursorForMapTreeNode(newContent));
+			this.valueFieldEditor().set(cursorForMapTreeField([newContent]));
 		},
 	};
 
@@ -321,7 +321,7 @@ export class LazyOptionalField extends LazyField implements FlexTreeOptionalFiel
 	public editor: OptionalFieldEditBuilder<ExclusiveMapTree> = {
 		set: (newContent, wasEmpty) => {
 			this.optionalEditor().set(
-				newContent !== undefined ? cursorForMapTreeNode(newContent) : newContent,
+				newContent !== undefined ? cursorForMapTreeField([newContent]) : newContent,
 				wasEmpty,
 			);
 		},

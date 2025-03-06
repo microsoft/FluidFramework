@@ -55,7 +55,7 @@ import type { RevisionTag, TreeChunk } from "../index.js";
  * This needs to happen last to allow modifications to detached roots to be applied before they are destroyed.
  *
  * The details of the delta visit algorithm can impact how/when events are emitted by the objects that own the visitors.
- * For example, as of 2024-03-27, the subtreecChanged event of an AnchorNode is emitted when exiting a node during a
+ * For example, as of 2024-03-27, the subtreeChanged event of an AnchorNode is emitted when exiting a node during a
  * delta visit, and thus the two-pass nature of the algorithm means the event fires twice for any given change.
  * This two-pass nature also means that the event may fire at a time where no change is visible in the tree. E.g.,
  * if a node is being replaced, when the event fires during the detach pass no change in the tree has happened so the

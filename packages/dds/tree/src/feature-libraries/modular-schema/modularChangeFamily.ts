@@ -2655,6 +2655,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	 * @param content - The node(s) to build.
 	 * @param revision - The revision to use for the build.
 	 * @returns A description of the edit that can be passed to `submitChanges`.
+	 * The returned object may contain an owning reference to the given TreeChunk.
 	 */
 	public buildTrees(
 		firstId: ChangesetLocalId,
@@ -2664,6 +2665,10 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		if (content.topLevelLength === 0) {
 			return { type: "global", revision };
 		}
+
+		// This content will be added to a GlobalEditDescription whose lifetime exceeds the scope of this function.
+		content.referenceAdded();
+
 		const builds: ChangeAtomIdBTree<TreeChunk> = newTupleBTree();
 		builds.set([revision, firstId], content);
 

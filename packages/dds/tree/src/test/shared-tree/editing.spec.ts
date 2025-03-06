@@ -514,10 +514,10 @@ describe("Editing", () => {
 			insert(tree1, 0, "a");
 			expectJsonTree(tree1, ["a"]);
 
-			tree2.editor.sequenceField(rootField).insert(0, chunkFromJsonField(["{}"]));
+			tree2.editor.sequenceField(rootField).insert(0, chunkFromJsonField([{}]));
 			tree2.editor
 				.sequenceField({ parent: rootNode, field: brand("foo") })
-				.insert(0, chunkFromJsonField(["{}"]));
+				.insert(0, chunkFromJsonField([{}]));
 			expectJsonTree(tree2, [{ foo: {} }]);
 
 			tree2.rebaseOnto(tree1);
@@ -1566,7 +1566,7 @@ describe("Editing", () => {
 				parent: rootNode,
 				field: brand("src"),
 			});
-			field.set(chunkFromJsonField(["{}"]));
+			field.set(chunkFromJsonField([{}]));
 			tree.transaction.commit();
 
 			const expectedState: JsonCompatible = [{ src: {}, dst: ["A", "B"] }];
@@ -2506,7 +2506,7 @@ describe("Editing", () => {
 				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 
 				const rootSequence = tree.editor.sequenceField(rootField);
-				rootSequence.insert(0, chunkFromJsonField(["{}"]));
+				rootSequence.insert(0, chunkFromJsonField([{}]));
 				const treeSequence = tree.editor.sequenceField({
 					parent: rootNode,
 					field: brand("foo"),
@@ -2543,7 +2543,7 @@ describe("Editing", () => {
 				const tree = checkoutWithContent(emptyJsonContent);
 
 				const rootSequence = tree.editor.sequenceField(rootField);
-				rootSequence.insert(0, chunkFromJsonField(["{}"]));
+				rootSequence.insert(0, chunkFromJsonField([{}]));
 				const treeSequence = tree.editor.sequenceField({
 					parent: rootNode,
 					field: brand("foo"),
@@ -2629,7 +2629,7 @@ describe("Editing", () => {
 			it("optional field node exists constraint", () => {
 				const tree = checkoutWithContent(emptyJsonContent);
 				const rootSequence = tree.editor.sequenceField(rootField);
-				rootSequence.insert(0, chunkFromJsonField(["{}"]));
+				rootSequence.insert(0, chunkFromJsonField([{}]));
 				const optional = tree.editor.optionalField({
 					parent: rootNode,
 					field: brand("foo"),
@@ -2662,7 +2662,7 @@ describe("Editing", () => {
 				const tree = checkoutWithContent(emptyJsonContent);
 				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 				const rootSequence = tree.editor.sequenceField(rootField);
-				rootSequence.insert(0, chunkFromJsonField(["{}"]));
+				rootSequence.insert(0, chunkFromJsonField([{}]));
 
 				const optional = tree.editor.optionalField({
 					parent: rootNode,
@@ -2757,7 +2757,7 @@ describe("Editing", () => {
 			it("a change can depend on the existence of a node that is built in a prior change whose constraint was violated", () => {
 				const tree = checkoutWithContent(emptyJsonContent);
 				const rootSequence = tree.editor.sequenceField(rootField);
-				rootSequence.insert(0, chunkFromJsonField(["{}"]));
+				rootSequence.insert(0, chunkFromJsonField([{}]));
 				const optional = tree.editor.optionalField({
 					parent: rootNode,
 					field: brand("foo"),
@@ -2868,7 +2868,7 @@ describe("Editing", () => {
 					parentIndex: 0,
 				});
 				const tree2RootSequence = tree2.editor.sequenceField(rootField);
-				tree2RootSequence.insert(2, chunkFromJsonField(["{}"]));
+				tree2RootSequence.insert(2, chunkFromJsonField([{}]));
 				tree2.transaction.commit();
 
 				tree.merge(tree2, false);
@@ -3190,9 +3190,9 @@ describe("Editing", () => {
 				getInnerSequenceFieldPath({ parent: root1Path, field: brand("foo") }),
 			);
 			foo0.remove(1, 1);
-			foo1.insert(1, chunkFromJsonableField([{ type: brand("Number"), value: 41 }]));
+			foo0.insert(1, chunkFromJsonableField([{ type: brand("Number"), value: 41 }]));
 			foo0.remove(2, 1);
-			foo1.insert(1, chunkFromJsonableField([{ type: brand("Number"), value: 42 }]));
+			foo0.insert(1, chunkFromJsonableField([{ type: brand("Number"), value: 42 }]));
 			foo0.remove(0, 1);
 			rootSequence.insert(0, chunkFromJsonableField([{ type: brand("Test") }]));
 			foo1.remove(0, 1);
@@ -3229,7 +3229,7 @@ describe("Editing", () => {
 			.optionalField({ parent: rootNode, field: brand("foo") })
 			.set(chunkFromJsonField(["A"]), true);
 		moveWithin(tree.editor, rootField, 0, 1, 0);
-		tree.editor.sequenceField(rootField).insert(0, chunkFromJsonField(["{}"]));
+		tree.editor.sequenceField(rootField).insert(0, chunkFromJsonField([{}]));
 		tree.editor
 			.optionalField({ parent: rootNode, field: brand("bar") })
 			.set(chunkFromJsonField(["B"]), true);

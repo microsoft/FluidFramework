@@ -373,7 +373,8 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	public sequenceField(field: FieldUpPath): SequenceFieldEditBuilder<TreeChunk> {
 		return {
 			insert: (index: number, content: TreeChunk): void => {
-				if (content.topLevelLength === 0) {
+				const length = content.topLevelLength;
+				if (length === 0) {
 					return;
 				}
 
