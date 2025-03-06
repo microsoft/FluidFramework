@@ -4,10 +4,9 @@
  */
 
 /**
- * A browser friendly assert library.
- * Use this instead of the 'assert' package, which has a big impact on bundle sizes.
- * @param condition - The condition that should be true, if the condition is false an error will be thrown.
- * Only use this API when `false` indicates a logic error in the problem and thus a bug that should be fixed.
+ * Asserts that a condition is true.
+ * @param condition - The condition that should be true. If the condition is false an error will be thrown.
+ * Only use this API when `false` indicates a logic error in the program and thus a bug that should be fixed.
  * @param message - The message to include in the error when the condition does not hold.
  * A number should not be specified manually: use a string.
  * Before a release, policy-check should be run, which will convert any asserts still using strings to
