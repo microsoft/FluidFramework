@@ -33,7 +33,7 @@ export {
 	IRetryable,
 	isRetryEnabled,
 } from "./database";
-export { Deferred } from "./deferred";
+export { Deferred } from "./utils";
 export { IDeltaService } from "./delta";
 export {
 	IClientSequenceNumber,

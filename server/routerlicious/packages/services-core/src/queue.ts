@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "./deferred";
+import { Deferred } from "./utils";
 import { ITicketedMessage } from "./messages";
 
 /**

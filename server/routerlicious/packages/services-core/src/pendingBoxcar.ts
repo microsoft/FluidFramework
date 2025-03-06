@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "./deferred";
+import { Deferred } from "./utils";
 import { IPendingBoxcar } from "./queue";
 
 // 1MB batch size / (16KB max message size + overhead)

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { delay } from "@fluidframework/common-utils";
 import {
 	LogLevel,
 	Lumber,
@@ -11,6 +10,8 @@ import {
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
 import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
+
+import { delay } from "./utils";
 
 /**
  * Executes a given API while providing support to retry on failures, ignore failures, and taking action on error.

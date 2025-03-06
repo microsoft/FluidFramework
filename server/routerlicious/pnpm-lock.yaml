@@ -1215,9 +1215,6 @@ importers:
 
   packages/services-core:
     dependencies:
-      '@fluidframework/common-utils':
-        specifier: ^3.1.0
-        version: 3.1.0
       '@fluidframework/gitresources':
         specifier: workspace:~
         version: link:../gitresources
