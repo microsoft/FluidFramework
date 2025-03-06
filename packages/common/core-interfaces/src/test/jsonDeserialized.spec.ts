@@ -68,6 +68,8 @@ import {
 	objectWithNumberOrBigintOrSymbol,
 	objectWithFunctionOrSymbol,
 	objectWithStringOrSymbol,
+	objectWithUnknown,
+	objectWithOptionalUnknown,
 	objectWithUndefined,
 	objectWithOptionalUndefined,
 	objectWithOptionalBigint,
@@ -95,6 +97,10 @@ import {
 	objectWithAlternatingRecursion,
 	objectWithSymbolOrRecursion,
 	objectWithFluidHandleOrRecursion,
+	objectWithUnknownAdjacentToOptionalRecursion,
+	objectWithOptionalUnknownAdjacentToOptionalRecursion,
+	objectWithUnknownInOptionalRecursion,
+	objectWithOptionalUnknownInOptionalRecursion,
 	selfRecursiveFunctionWithProperties,
 	selfRecursiveObjectAndFunction,
 	objectInheritingOptionalRecursionAndWithNestedSymbol,
@@ -213,6 +219,13 @@ function passThruHandlingFluidHandle<T>(
 	_v: T,
 ): JsonDeserialized<T, { AllowExtensionOf: IFluidHandle }> {
 	return undefined as unknown as JsonDeserialized<T, { AllowExtensionOf: IFluidHandle }>;
+}
+
+/**
+ * Similar to {@link passThru} but preserves `unknown` instead of substituting `JsonTypeWith`.
+ */
+function passThruPreservingUnknown<T>(_v: T): JsonDeserialized<T, { AllowExactly: unknown }> {
+	return undefined as unknown as JsonDeserialized<T, { AllowExactly: unknown }>;
 }
 
 describe("JsonDeserialized", () => {
@@ -717,6 +730,29 @@ describe("JsonDeserialized", () => {
 											recurse?: {
 												recurse?: JsonTypeWith<never>;
 											};
+										};
+									};
+								};
+							};
+						}>(),
+					);
+				});
+				it("object with required `unknown` in recursion when `unknown` is allowed unrolls 4 times with optional `unknown`", () => {
+					const resultRead = passThruPreservingUnknown(objectWithUnknownInOptionalRecursion);
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{
+							unknown?: unknown;
+							recurse?: {
+								unknown?: unknown;
+								recurse?: {
+									unknown?: unknown;
+									recurse?: {
+										unknown?: unknown;
+										recurse?: {
+											unknown?: unknown;
+											// This is JsonTypeWith<unknown> which is simply `unknown`.
+											recurse?: unknown;
 										};
 									};
 								};
@@ -1265,6 +1301,39 @@ describe("JsonDeserialized", () => {
 					const resultRead = passThruHandlingFluidHandle(objectWithFluidHandleOrRecursion);
 					assertIdenticalTypes(resultRead, objectWithFluidHandleOrRecursion);
 				});
+				it("`unknown`", () => {
+					const resultRead = passThruPreservingUnknown(
+						unknownValueOfSimpleRecord,
+						// value is actually supported; so, no runtime error.
+					);
+					assertIdenticalTypes(resultRead, unknownValueOfSimpleRecord);
+				});
+				it("object with optional `unknown`", () => {
+					const resultRead = passThruPreservingUnknown(objectWithOptionalUnknown);
+					assertIdenticalTypes(resultRead, objectWithOptionalUnknown);
+				});
+				it("object with optional `unknown` and recursion", () => {
+					const resultRead = passThruPreservingUnknown(
+						objectWithOptionalUnknownInOptionalRecursion,
+					);
+					assertIdenticalTypes(resultRead, objectWithOptionalUnknownInOptionalRecursion);
+				});
+			});
+
+			describe("still modifies required `unknown` to become optional", () => {
+				it("object with required `unknown`", () => {
+					const resultRead = passThruPreservingUnknown(objectWithUnknown);
+					assertIdenticalTypes(resultRead, createInstanceOf<{ unknown?: unknown }>());
+				});
+				it("object with required `unknown` adjacent to recursion", () => {
+					const resultRead = passThruPreservingUnknown(
+						objectWithUnknownAdjacentToOptionalRecursion,
+					);
+					assertIdenticalTypes(
+						resultRead,
+						objectWithOptionalUnknownAdjacentToOptionalRecursion,
+					);
+				});
 			});
 
 			describe("continue rejecting unsupported that are not alternately allowed", () => {
@@ -1299,5 +1368,5 @@ describe("JsonDeserialized", () => {
 		});
 	});
 });
-// type X = Exclude<(() => any) | ((v: string) => number), (v: string) => number>;
+
 /* eslint-enable unicorn/no-null */

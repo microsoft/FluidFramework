@@ -72,6 +72,8 @@ import {
 	objectWithFunctionOrSymbol,
 	objectWithStringOrSymbol,
 	objectWithUndefined,
+	objectWithUnknown,
+	objectWithOptionalUnknown,
 	objectWithOptionalSymbol,
 	objectWithOptionalBigint,
 	objectWithNumberKey,
@@ -99,6 +101,10 @@ import {
 	objectWithAlternatingRecursion,
 	objectWithSelfReference,
 	objectWithSymbolOrRecursion,
+	objectWithUnknownAdjacentToOptionalRecursion,
+	objectWithOptionalUnknownAdjacentToOptionalRecursion,
+	objectWithUnknownInOptionalRecursion,
+	objectWithOptionalUnknownInOptionalRecursion,
 	selfRecursiveFunctionWithProperties,
 	selfRecursiveObjectAndFunction,
 	objectInheritingOptionalRecursionAndWithNestedSymbol,
@@ -280,6 +286,21 @@ function passThruHandlingFluidHandle<T>(
 	return {
 		filteredIn,
 		out: undefined as unknown as JsonDeserialized<T, { AllowExtensionOf: IFluidHandle }>,
+	};
+}
+
+/**
+ * Similar to {@link passThru} but allows `unknown` rather than requiring `JsonTypeWith`.
+ */
+function passThruAllowingUnknown<T>(
+	filteredIn: JsonSerializable<T, { AllowExactly: unknown }>,
+): {
+	filteredIn: JsonSerializable<T, { AllowExactly: unknown }>;
+	out: JsonDeserialized<T, { AllowExactly: unknown }>;
+} {
+	return {
+		filteredIn,
+		out: undefined as unknown as JsonDeserialized<T, { AllowExactly: unknown }>,
 	};
 }
 
@@ -1149,6 +1170,62 @@ describe("JsonSerializable", () => {
 					});
 				});
 
+				// While `unknown` may be "exactly allowed", since `unknown` allows `undefined`,
+				// any uses of `unknown` must be optional.
+				describe("object with required `unknown` even though exactly allowed", () => {
+					it("as exact property type", () => {
+						const { filteredIn } = passThruAllowingUnknown(
+							// @ts-expect-error not assignable to `{ "error required property may not allow undefined value": never; }`
+							objectWithUnknown,
+						);
+						assertIdenticalTypes(
+							filteredIn,
+							createInstanceOf<{
+								unknown: { "error required property may not allow undefined value": never };
+							}>(),
+						);
+					});
+					it("as exact property type adjacent to recursion", () => {
+						const { filteredIn } = passThruAllowingUnknown(
+							// @ts-expect-error not assignable to `{ "error required property may not allow undefined value": never; }`
+							objectWithUnknownAdjacentToOptionalRecursion,
+						);
+						assertIdenticalTypes(
+							filteredIn,
+							createInstanceOf<{
+								unknown: {
+									"error required property may not allow undefined value": never;
+								};
+								outer: {
+									recursive?: {
+										recursive?: typeof objectWithOptionalRecursion;
+									};
+								};
+							}>(),
+						);
+					});
+					it("as exact property type in recursion", () => {
+						const { filteredIn } = passThruAllowingUnknown(
+							// @ts-expect-error not assignable to `{ "error required property may not allow undefined value": never; }`
+							objectWithUnknownInOptionalRecursion,
+						);
+						assertIdenticalTypes(
+							filteredIn,
+							createInstanceOf<{
+								unknown: {
+									"error required property may not allow undefined value": never;
+								};
+								recurse?: {
+									unknown: {
+										"error required property may not allow undefined value": never;
+									};
+									recurse?: typeof objectWithUnknownInOptionalRecursion;
+								};
+							}>(),
+						);
+					});
+				});
+
 				describe("of class instance", () => {
 					it("with private data", () => {
 						const { filteredIn } = passThru(
@@ -1403,6 +1480,32 @@ describe("JsonSerializable", () => {
 				it("object with `IFluidHandle` and recursion", () => {
 					const { filteredIn } = passThruHandlingFluidHandle(objectWithFluidHandleOrRecursion);
 					assertIdenticalTypes(filteredIn, objectWithFluidHandleOrRecursion);
+				});
+				it("`unknown`", () => {
+					const { filteredIn } = passThruAllowingUnknown(
+						unknownValueOfSimpleRecord,
+						// value is actually supported; so, no runtime error.
+					);
+					assertIdenticalTypes(filteredIn, unknownValueOfSimpleRecord);
+				});
+				it("object with optional `unknown`", () => {
+					const { filteredIn } = passThruAllowingUnknown(objectWithOptionalUnknown);
+					assertIdenticalTypes(filteredIn, objectWithOptionalUnknown);
+				});
+				it("object with optional `unknown` adjacent to recursion", () => {
+					const { filteredIn } = passThruAllowingUnknown(
+						objectWithOptionalUnknownAdjacentToOptionalRecursion,
+					);
+					assertIdenticalTypes(
+						filteredIn,
+						objectWithOptionalUnknownAdjacentToOptionalRecursion,
+					);
+				});
+				it("object with optional `unknown` in recursion", () => {
+					const { filteredIn } = passThruAllowingUnknown(
+						objectWithOptionalUnknownInOptionalRecursion,
+					);
+					assertIdenticalTypes(filteredIn, objectWithOptionalUnknownInOptionalRecursion);
 				});
 			});
 

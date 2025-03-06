@@ -115,6 +115,12 @@ export const objectWithOptionalBigint: { bigint?: bigint } = { bigint: 0n };
 export const objectWithNumberKey = { 3: "value" };
 export const objectWithSymbolKey = { [symbol]: "value" };
 
+export const objectWithUnknown = { unknown: "value" as unknown };
+interface ObjectWithOptionalUnknown {
+	optUnknown?: unknown;
+}
+export const objectWithOptionalUnknown: ObjectWithOptionalUnknown = { optUnknown: "value" };
+
 export const objectWithUndefined = {
 	undef: undefined,
 };
@@ -281,6 +287,32 @@ type ObjectWithFluidHandleOrRecursion = {
 export const objectWithFluidHandleOrRecursion: ObjectWithFluidHandleOrRecursion = {
 	recurseToHandle: { recurseToHandle: "fake-handle" as unknown as IFluidHandle<string> },
 };
+
+export const objectWithUnknownAdjacentToOptionalRecursion = {
+	unknown: unknownValueOfSimpleRecord,
+	outer: objectWithOptionalRecursion,
+};
+type ObjectWithOptionalUnknownAdjacentToOptionalRecursion = {
+	unknown?: unknown;
+	outer: ObjectWithOptionalRecursion;
+};
+export const objectWithOptionalUnknownAdjacentToOptionalRecursion: ObjectWithOptionalUnknownAdjacentToOptionalRecursion =
+	objectWithUnknownAdjacentToOptionalRecursion;
+type ObjectWithUnknownInOptionalRecursion = {
+	unknown: unknown;
+	recurse?: ObjectWithUnknownInOptionalRecursion;
+};
+export const objectWithUnknownInOptionalRecursion: ObjectWithUnknownInOptionalRecursion = {
+	unknown: 458,
+	recurse: { unknown: "nested-value" },
+};
+
+type ObjectWithOptionalUnknownInOptionalRecursion = {
+	unknown?: unknown;
+	recurse?: ObjectWithOptionalUnknownInOptionalRecursion;
+};
+export const objectWithOptionalUnknownInOptionalRecursion: ObjectWithOptionalUnknownInOptionalRecursion =
+	objectWithUnknownInOptionalRecursion;
 
 export type SelfRecursiveFunctionWithProperties = (() => number) & {
 	recurse?: SelfRecursiveFunctionWithProperties;
