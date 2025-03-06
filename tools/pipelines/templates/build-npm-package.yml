@@ -402,11 +402,24 @@ extends:
                           script: |
                             set -eu -o pipefail
                             sed -e 's/\(filename=\".*[\\/]external .*\)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
+                            sed -e 's/\(filename=\".*[\\/]external .*\)"\(.*\)""/\1\&quot;\2\&quot;"/' clover.xml > clover-patched.xml
                       - task: PublishCodeCoverageResults@2
-                        displayName: Publish Code Coverage
+                        displayName: Publish Code Coverage(Cobertura)
                         condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
                         inputs:
                           summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
+                          failIfCoverageEmpty: true
+                      - task: PublishCodeCoverageResults@2
+                        displayName: Publish Code Coverage(Clover)
+                        condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+                        inputs:
+                          summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/clover-patched.xml
+                          failIfCoverageEmpty: true
+                      - task: PublishCodeCoverageResults@2
+                        displayName: Publish Code Coverage(Json-Summary)
+                        condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+                        inputs:
+                          summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/coverage-summary.json
                           failIfCoverageEmpty: true
                       - task: CopyFiles@2
                         displayName: Copy code coverage report to artifact staging directory
