@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
 	ISequencedDocumentMessage,
@@ -36,6 +35,7 @@ import {
 	ISequencedOperationMessage,
 	requestWithRetry,
 	shouldRetryNetworkError,
+	fromBase64ToUtf8
 } from "@fluidframework/server-services-core";
 import {
 	CommonProperties,

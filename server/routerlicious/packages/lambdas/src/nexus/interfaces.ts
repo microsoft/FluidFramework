@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { TypedEventEmitter } from "@fluidframework/common-utils";
 import type { IClient, IConnected } from "@fluidframework/protocol-definitions";
 import type {
 	IClientManager,
@@ -17,6 +16,7 @@ import type {
 	IThrottleAndUsageStorageManager,
 	IThrottler,
 	IWebSocketTracker,
+	TypedEventEmitter,
 } from "@fluidframework/server-services-core";
 import { IEvent } from "../events";
 import type { IRuntimeSignalEnvelope } from "../utils";

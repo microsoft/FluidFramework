@@ -5,7 +5,6 @@
 
 import { EventEmitter } from "events";
 import { inspect } from "util";
-import { toUtf8 } from "@fluidframework/common-utils";
 import {
 	ICheckpointService,
 	IClientManager,
@@ -24,6 +23,7 @@ import {
 	LambdaCloseType,
 	MongoManager,
 	requestWithRetry,
+	toUtf8,
 } from "@fluidframework/server-services-core";
 import { defaultHash, IGitManager } from "@fluidframework/server-services-client";
 import {

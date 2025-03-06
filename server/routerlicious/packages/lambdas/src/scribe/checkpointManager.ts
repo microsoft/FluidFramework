@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { delay } from "@fluidframework/common-utils";
 import {
 	ICollection,
 	IContext,
@@ -14,6 +13,7 @@ import {
 	IDeltaService,
 	IDocumentRepository,
 	ICheckpointService,
+	delay,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ICheckpointManager } from "./interfaces";

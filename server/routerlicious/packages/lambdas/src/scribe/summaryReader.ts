@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString, toUtf8 } from "@fluidframework/common-utils";
 import {
 	IDocumentAttributes,
 	ISequencedDocumentMessage,
@@ -18,6 +17,8 @@ import {
 	IDeliState,
 	requestWithRetry,
 	shouldRetryNetworkError,
+	bufferToString,
+	toUtf8,
 } from "@fluidframework/server-services-core";
 import {
 	CommonProperties,
