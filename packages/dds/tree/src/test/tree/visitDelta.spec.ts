@@ -93,7 +93,7 @@ function testDeltaVisit(
 				name === "create"
 					? ([
 							name,
-							(args[0] as ITreeCursorSynchronous[]).map(mapTreeFromCursor),
+							(args[0] as readonly ITreeCursorSynchronous[]).map(mapTreeFromCursor),
 							args[1] as FieldKey,
 						] as VisitCall)
 					: ([name, ...args] as VisitCall);
@@ -135,6 +135,8 @@ const barKey: FieldKey = brand("bar");
 const chunkX = chunkFromJsonField(["X"]);
 const chunkY = chunkFromJsonField(["Y"]);
 const chunkXY = chunkFromJsonField(["X", "Y"]);
+const mapTreeX = chunkToMapTreeField(chunkX);
+const mapTreeY = chunkToMapTreeField(chunkY);
 const field0: FieldKey = brand("-0");
 const field1: FieldKey = brand("-1");
 const field2: FieldKey = brand("-2");
@@ -161,7 +163,7 @@ describe("visitDelta", () => {
 			fields: new Map([[rootKey, rootFieldDelta]]),
 		};
 		const expected: VisitScript = [
-			["create", chunkToMapTreeField(chunkX), field0],
+			["create", mapTreeX, field0],
 			["enterField", rootKey],
 			["exitField", rootKey],
 			["enterField", rootKey],
@@ -193,7 +195,7 @@ describe("visitDelta", () => {
 			},
 		];
 		const expected: VisitScript = [
-			["create", chunkToMapTreeField(chunkX), field0],
+			["create", mapTreeX, field0],
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
@@ -291,7 +293,7 @@ describe("visitDelta", () => {
 			fields: new Map([[rootKey, [{ count: 1, attach: { minor: 43 } }]]]),
 		};
 		const expected: VisitScript = [
-			["create", chunkToMapTreeField(chunkX), field0],
+			["create", mapTreeX, field0],
 			["enterField", rootKey],
 			["exitField", rootKey],
 			["enterField", field0],
@@ -520,7 +522,7 @@ describe("visitDelta", () => {
 			destroy: [{ id: detachId, count: 1 }],
 		};
 		const expected: VisitScript = [
-			["create", chunkToMapTreeField(chunkX), field0],
+			["create", mapTreeX, field0],
 			["enterField", field0],
 			["detach", { start: 0, end: 1 }, field1],
 			["exitField", field0],
@@ -603,7 +605,7 @@ describe("visitDelta", () => {
 		};
 
 		const expected: VisitScript = [
-			["create", chunkToMapTreeField(chunkX), field0],
+			["create", mapTreeX, field0],
 			["enterField", rootKey],
 			["detach", { start: 0, end: 1 }, field1],
 			["enterNode", 0],
@@ -643,8 +645,8 @@ describe("visitDelta", () => {
 		};
 
 		const expected: VisitScript = [
-			["create", chunkToMapTreeField(chunkX), field0],
-			["create", chunkToMapTreeField(chunkY), field1],
+			["create", mapTreeX, field0],
+			["create", mapTreeY, field1],
 			["enterField", rootKey],
 			["exitField", rootKey],
 			["enterField", rootKey],
@@ -755,7 +757,7 @@ describe("visitDelta", () => {
 			rename: [{ oldId: { minor: 42 }, count: 1, newId: { minor: 43 } }],
 		};
 		const expected: VisitScript = [
-			["create", chunkToMapTreeField(chunkX), field0],
+			["create", mapTreeX, field0],
 			["enterField", field0],
 			["detach", { start: 0, end: 1 }, field1],
 			["exitField", field0],
@@ -782,7 +784,7 @@ describe("visitDelta", () => {
 			rename: [{ oldId: buildId, count: 1, newId: detachId }],
 		};
 		const expected: VisitScript = [
-			["create", chunkToMapTreeField(chunkX), field0], // field0: buildId
+			["create", mapTreeX, field0], // field0: buildId
 			["enterField", field0],
 			["enterNode", 0],
 			["enterField", barKey],
@@ -976,7 +978,7 @@ describe("visitDelta", () => {
 			rename: [renameOldNode, renameNewNode],
 		};
 		const expected: VisitScript = [
-			["create", chunkToMapTreeField(chunkX), field1], // field1: buildId
+			["create", mapTreeX, field1], // field1: buildId
 			["enterField", field0], // field0: node1
 			["detach", { start: 0, end: 1 }, field2], // field2: detachId
 			["exitField", field0],
@@ -1004,7 +1006,7 @@ describe("visitDelta", () => {
 				["enterField", rootKey],
 				["exitField", rootKey],
 				["enterField", rootKey],
-				["create", chunkToMapTreeField(chunkX), field0],
+				["create", mapTreeX, field0],
 				["attach", field0, 1, 0],
 				["exitField", rootKey],
 			];
@@ -1031,7 +1033,7 @@ describe("visitDelta", () => {
 				["enterField", rootKey],
 				["enterNode", 0],
 				["enterField", fooKey],
-				["create", chunkToMapTreeField(chunkX), field0],
+				["create", mapTreeX, field0],
 				["attach", field0, 1, 0],
 				["exitField", fooKey],
 				["exitNode", 0],
@@ -1057,7 +1059,7 @@ describe("visitDelta", () => {
 				["enterField", rootKey],
 				["exitField", rootKey],
 				["enterField", rootKey],
-				["create", chunkToMapTreeField(chunkY), field0],
+				["create", mapTreeY, field0],
 				["attach", field0, 1, 0],
 				["exitField", rootKey],
 			];
@@ -1070,8 +1072,8 @@ describe("visitDelta", () => {
 			const refresherId = { minor: 42 };
 			const buildId = { minor: 43 };
 			const expected: VisitScript = [
-				["create", chunkToMapTreeField(chunkX), field0],
-				["create", chunkToMapTreeField(chunkX), field1],
+				["create", mapTreeX, field0],
+				["create", mapTreeX, field1],
 				["enterField", field1],
 				["enterNode", 0],
 				["enterField", fooKey],
@@ -1136,7 +1138,7 @@ describe("visitDelta", () => {
 			const delta: DeltaRoot = {
 				build: [{ id: node, trees: chunkX }],
 			};
-			const expected: VisitScript = [["create", chunkToMapTreeField(chunkX), field0]];
+			const expected: VisitScript = [["create", mapTreeX, field0]];
 			const revision = mintRevisionTag();
 			testDeltaVisit(delta, expected, index, revision);
 			assert.deepEqual(Array.from(index.entries()), [
@@ -1204,8 +1206,8 @@ describe("visitDelta", () => {
 			};
 
 			const expected: VisitScript = [
-				["create", chunkToMapTreeField(chunkX), field0],
-				["create", chunkToMapTreeField(chunkY), field1],
+				["create", mapTreeX, field0],
+				["create", mapTreeY, field1],
 				["enterField", rootKey],
 				["detach", { start: 0, end: 1 }, field2],
 				["detach", { start: 0, end: 1 }, field3],
@@ -1241,7 +1243,7 @@ describe("visitDelta", () => {
 				["enterField", rootKey],
 				["exitField", rootKey],
 				["enterField", rootKey],
-				["create", chunkToMapTreeField(chunkX), field0],
+				["create", mapTreeX, field0],
 				["attach", field0, 1, 0],
 				["exitField", rootKey],
 			];
@@ -1279,7 +1281,7 @@ describe("visitDelta", () => {
 				fields: new Map([[rootKey, rootFieldDelta]]),
 			};
 			const expected: VisitScript = [
-				["create", chunkToMapTreeField(chunkX), field0],
+				["create", mapTreeX, field0],
 				["enterField", rootKey],
 				["exitField", rootKey],
 				["enterField", rootKey],

@@ -116,7 +116,7 @@ export interface Root<TTrees = ProtoNodes> {
 }
 
 /**
- * The default representation a chunk (sub-sequence) of inserted content.
+ * The default representation for a chunk (sub-sequence) of inserted content.
  */
 export type ProtoNodes = TreeChunk;
 

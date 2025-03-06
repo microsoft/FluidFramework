@@ -2034,6 +2034,7 @@ function copyDetachedNodes(
 	const copiedDetachedNodes: DeltaDetachedNodeBuild[] = [];
 	for (const [[major, minor], chunk] of detachedNodes.entries()) {
 		if (chunk.topLevelLength > 0) {
+			chunk.referenceAdded();
 			copiedDetachedNodes.push({
 				id: makeDetachedNodeId(major, minor),
 				trees: chunk,

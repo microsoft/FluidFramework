@@ -121,7 +121,7 @@ export interface AnnouncedVisitor extends DeltaVisitor {
 	/**
 	 * A hook that is called after all nodes have been created.
 	 */
-	afterCreate(content: ITreeCursorSynchronous[], destination: FieldKey): void;
+	afterCreate(content: readonly ITreeCursorSynchronous[], destination: FieldKey): void;
 	beforeDestroy(field: FieldKey, count: number): void;
 	beforeAttach(source: FieldKey, count: number, destination: PlaceIndex): void;
 	afterAttach(source: FieldKey, destination: Range): void;
@@ -141,8 +141,8 @@ export interface AnnouncedVisitor extends DeltaVisitor {
  */
 export function createAnnouncedVisitor(visitorFunctions: {
 	free?: () => void;
-	create?: (content: ITreeCursorSynchronous[], destination: FieldKey) => void;
-	afterCreate?: (content: ITreeCursorSynchronous[], destination: FieldKey) => void;
+	create?: (content: readonly ITreeCursorSynchronous[], destination: FieldKey) => void;
+	afterCreate?: (content: readonly ITreeCursorSynchronous[], destination: FieldKey) => void;
 	beforeDestroy?: (field: FieldKey, count: number) => void;
 	destroy?: (detachedField: FieldKey, count: number) => void;
 	beforeAttach?: (source: FieldKey, count: number, destination: PlaceIndex) => void;

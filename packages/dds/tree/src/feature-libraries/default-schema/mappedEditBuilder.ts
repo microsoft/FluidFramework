@@ -11,6 +11,9 @@ import type {
 	ValueFieldEditBuilder,
 } from "./defaultEditBuilder.js";
 
+/**
+ * An IDefaultEditBuilder implementation based on another IDefaultEditBuilder that uses a different content type for insertions.
+ */
 export class MappedEditBuilder<TBase, TAdapted> implements IDefaultEditBuilder<TAdapted> {
 	public constructor(
 		private readonly baseBuilder: IDefaultEditBuilder<TBase>,

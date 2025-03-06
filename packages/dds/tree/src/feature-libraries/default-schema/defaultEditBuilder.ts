@@ -42,7 +42,6 @@ import {
 	sequence,
 	required as valueFieldKind,
 } from "./defaultFieldKinds.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { CellId } from "../sequence-field/index.js";
 
 export type DefaultChangeset = ModularChangeset;
@@ -183,7 +182,6 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		family: ChangeFamily<ChangeFamilyEditor, DefaultChangeset>,
 		private readonly mintRevisionTag: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<DefaultChangeset>) => void,
-		private readonly idCompressor?: IIdCompressor,
 	) {
 		this.modularBuilder = new ModularEditBuilder(family, fieldKinds, changeReceiver);
 	}

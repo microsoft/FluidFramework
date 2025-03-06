@@ -263,7 +263,7 @@ export interface DeltaVisitor {
 	 * @param destination - The key for a new detached field.
 	 * A field with this key must not already exist.
 	 */
-	create(content: ITreeCursorSynchronous[], destination: FieldKey): void;
+	create(content: readonly ITreeCursorSynchronous[], destination: FieldKey): void;
 	/**
 	 * Recursively destroys the given detached field and all of the nodes within it.
 	 * @param detachedField - The key for the detached field to destroy.

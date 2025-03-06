@@ -13,7 +13,6 @@ import {
 	type RevisionTagCodec,
 	combineVisitors,
 	deltaForRootInitialization,
-	emptyDelta,
 	makeDetachedFieldIndex,
 	visitDelta,
 } from "../core/index.js";
@@ -36,10 +35,7 @@ export function initializeForest(
 	visitAnchors = false,
 ): void {
 	assert(forest.isEmpty, 0x747 /* forest must be empty */);
-	const delta: DeltaRoot =
-		content.getFieldLength() === 0
-			? emptyDelta
-			: deltaForRootInitialization(forest.chunkField(content));
+	const delta: DeltaRoot = deltaForRootInitialization(forest.chunkField(content));
 	let visitor = forest.acquireVisitor();
 	if (visitAnchors) {
 		assert(forest.anchors.isEmpty(), 0x9b7 /* anchor set must be empty */);

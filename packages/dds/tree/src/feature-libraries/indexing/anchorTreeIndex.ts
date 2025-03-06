@@ -123,7 +123,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 
 		return createAnnouncedVisitor({
 			// nodes (and their entire subtrees) are added to the index as soon as they are created
-			afterCreate: (content: ITreeCursorSynchronous[], destination: FieldKey) => {
+			afterCreate: (content: readonly ITreeCursorSynchronous[], destination: FieldKey) => {
 				const detachedCursor = this.forest.allocateCursor();
 				assert(
 					this.forest.tryMoveCursorToField(

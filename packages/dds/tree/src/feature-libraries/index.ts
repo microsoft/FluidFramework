@@ -99,7 +99,6 @@ export {
 	chunkFieldSingle,
 	buildChunkedForest,
 	defaultChunkPolicy,
-	emptyChunk,
 	type FieldBatch,
 	type FieldBatchCodec,
 	makeTreeChunker,
