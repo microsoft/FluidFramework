@@ -71,6 +71,7 @@ export {
 	type AnchorNode,
 	anchorSlot,
 	type UpPathDefault,
+	isDetachedUpPath,
 	inCursorField,
 	inCursorNode,
 	type AnchorEvents,
