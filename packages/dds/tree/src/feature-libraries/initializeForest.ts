@@ -17,7 +17,6 @@ import {
 	makeDetachedFieldIndex,
 	visitDelta,
 } from "../core/index.js";
-import { chunkFieldSingle, defaultChunkPolicy } from "./chunked-forest/index.js";
 
 /**
  * Initializes the given forest with the given content.
@@ -40,9 +39,7 @@ export function initializeForest(
 	const delta: DeltaRoot =
 		content.getFieldLength() === 0
 			? emptyDelta
-			: deltaForRootInitialization(
-					chunkFieldSingle(content, { idCompressor, policy: defaultChunkPolicy }),
-				);
+			: deltaForRootInitialization(forest.chunkField(content));
 	let visitor = forest.acquireVisitor();
 	if (visitAnchors) {
 		assert(forest.anchors.isEmpty(), 0x9b7 /* anchor set must be empty */);

@@ -14,6 +14,7 @@ export {
 	chunkField,
 } from "./chunkTree.js";
 export { buildChunkedForest } from "./chunkedForest.js";
+export { emptyChunk } from "./emptyChunk.js";
 export {
 	EncodedFieldBatch,
 	type FieldBatch,

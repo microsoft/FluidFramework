@@ -112,6 +112,7 @@ import {
 	cursorForJsonableTreeField,
 	initializeForest,
 	chunkFieldSingle,
+	emptyChunk,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
@@ -159,7 +160,7 @@ import {
 } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
-import { cursorToJsonObject, fieldJsonCursor, singleJsonCursor } from "./json/index.js";
+import { cursorToJsonObject, fieldJsonCursor } from "./json/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 import type { Transactor } from "../shared-tree-core/index.js";
@@ -622,7 +623,7 @@ export function validateFuzzTreeConsistency(
 function contentToJsonableTree(
 	content: TreeSimpleContent | TreeStoredContent,
 ): JsonableTree[] {
-	return jsonableTreeFromFieldCursor(normalizeNewFieldContent(content.initialTree));
+	return jsonableTreeFromFieldCursor((content.initialTree ?? emptyChunk).cursor());
 }
 
 export function validateTreeContent(tree: ITreeCheckout, content: TreeSimpleContent): void {
@@ -794,7 +795,7 @@ export function flexTreeViewWithContent(
 
 export function forestWithContent(content: TreeStoredContent): IEditableForest {
 	const forest = buildForest();
-	const fieldCursor = normalizeNewFieldContent(content.initialTree);
+	const fieldCursor = (content.initialTree ?? emptyChunk).cursor();
 	initializeForest(forest, fieldCursor, testRevisionTagCodec, testIdCompressor);
 	return forest;
 }
@@ -814,7 +815,7 @@ export const IdentifierSchema = sf.object("identifier-object", {
 export function makeTreeFromJson(json: JsonCompatible): ITreeCheckout {
 	return checkoutWithContent({
 		schema: toStoredSchema(JsonAsTree.Tree),
-		initialTree: singleJsonCursor(json),
+		initialTree: chunkFromJsonField([json]),
 	});
 }
 

@@ -14,6 +14,7 @@ import {
 	type DetachedField,
 	type ITreeCursor,
 	type ITreeCursorSynchronous,
+	type TreeChunk,
 	type UpPath,
 	detachedFieldAsKey,
 	rootField,
@@ -81,6 +82,15 @@ export interface IForestSubscription {
 	 * The new copy will not invalidate observers (dependents) of the old one.
 	 */
 	clone(schema: TreeStoredSchemaSubscription, anchors: AnchorSet): IEditableForest;
+
+	/**
+	 * Generate a TreeChunk for the content in the given field cursor.
+	 * This can be used to chunk data that is then inserted into the forest.
+	 *
+	 * @remarks
+	 * Like {@link chunkField}, but forces the results into a single TreeChunk.
+	 */
+	chunkField(cursor: ITreeCursorSynchronous): TreeChunk;
 
 	/**
 	 * Allocates a cursor in the "cleared" state.
