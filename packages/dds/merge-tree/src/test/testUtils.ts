@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 import fs from "node:fs";
 
-import { NonCollabClient, UnassignedSequenceNumber } from "../constants.js";
+import { NonCollabClient } from "../constants.js";
 import { LocalReferenceCollection } from "../localReference.js";
 import { MergeTree } from "../mergeTree.js";
 import {
@@ -263,10 +263,9 @@ function getPartialLengths(
 	const isMoved = (segment: ISegmentPrivate): boolean =>
 		info.isMoved(segment) &&
 		((localSeq !== undefined &&
-			segment.movedSeq === UnassignedSequenceNumber &&
-			segment.localMovedSeq !== undefined &&
-			segment.localMovedSeq <= localSeq) ||
-			(segment.movedSeq !== UnassignedSequenceNumber && segment.movedSeq <= seq));
+			timestampUtils.isLocal(segment.moves[segment.moves.length - 1]) &&
+			segment.moves[segment.moves.length - 1].localSeq! <= localSeq) ||
+			timestampUtils.lte(segment.moves[0], perspectiveStamp));
 
 	walkAllChildSegments(mergeBlock, (segment) => {
 		if (isInserted(segment) && !isRemoved(segment) && !isMoved(segment)) {

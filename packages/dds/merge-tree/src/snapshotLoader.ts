@@ -29,7 +29,7 @@ import {
 	IHasRemovalInfo,
 	overwriteInfo,
 	type IHasInsertionInfo,
-	type IMoveInfo,
+	type IHasMoveInfo,
 	type SegmentWithInfo,
 } from "./segmentInfos.js";
 import {
@@ -142,12 +142,16 @@ export class SnapshotLoader {
 					spec.movedClientIds !== undefined && spec.movedSeqs !== undefined,
 					0xaa5 /* must have movedIds ids */,
 				);
-				overwriteInfo<IMoveInfo>(seg, {
-					movedSeq: spec.movedSeq,
-					movedSeqs: spec.movedSeqs,
-					movedClientIds: spec.movedClientIds.map((id) =>
-						this.client.getOrAddShortClientId(id),
-					),
+				assert(
+					spec.movedClientIds.length === spec.movedSeqs.length,
+					"Expected same length for client ids and seqs",
+				);
+
+				overwriteInfo<IHasMoveInfo>(seg, {
+					moves: spec.movedClientIds.map((id, i) => ({
+						seq: spec.movedSeqs![i],
+						clientId: this.client.getOrAddShortClientId(id),
+					})),
 				});
 			}
 

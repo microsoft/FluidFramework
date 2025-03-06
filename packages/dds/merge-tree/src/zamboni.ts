@@ -15,7 +15,6 @@ import {
 	ISegmentPrivate,
 	Marker,
 	MaxNodesInBlock,
-	seqLTE,
 	timestampUtils,
 } from "./mergeTreeNodes.js";
 import { matchProperties } from "./properties.js";
@@ -152,12 +151,13 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 		const moveInfo = toMoveInfo(segment);
 		if (removalInfo !== undefined || moveInfo !== undefined) {
 			const firstRemove = removalInfo?.removes[0];
+			const firstMove = moveInfo?.moves[0];
 			// If the segment's removal is below the MSN and it's not being held onto by a tracking group,
 			// it can be unlinked (i.e. removed from the merge-tree)
 			if (
 				((!!firstRemove &&
 					timestampUtils.lte(firstRemove, mergeTree.collabWindow.minSeqTime)) ||
-					(!!moveInfo && seqLTE(moveInfo.movedSeq, mergeTree.collabWindow.minSeq))) &&
+					(!!firstMove && timestampUtils.lte(firstMove, mergeTree.collabWindow.minSeqTime))) &&
 				segment.trackingCollection.empty
 			) {
 				mergeTree.mergeTreeMaintenanceCallback?.(

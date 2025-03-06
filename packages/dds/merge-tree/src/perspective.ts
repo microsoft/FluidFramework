@@ -12,7 +12,7 @@ import {
 	isMoved,
 	isRemoved,
 	type IHasInsertionInfo,
-	type IMoveInfo,
+	type IHasMoveInfo,
 	type IHasRemovalInfo,
 	type SegmentWithInfo,
 } from "./segmentInfos.js";
@@ -115,17 +115,19 @@ export function wasRemovedBefore(
  * TODO:AB#29765: This function does not support non-local-client perspectives, but should.
  */
 export function wasMovedBefore(
-	seg: SegmentWithInfo<IHasInsertionInfo & IMoveInfo>,
+	seg: SegmentWithInfo<IHasInsertionInfo & IHasMoveInfo>,
 	{ refSeq, localSeq }: SeqTime,
 ): boolean {
-	if (
-		seg.movedSeq === UnassignedSequenceNumber &&
-		localSeq !== undefined &&
-		seg.localMovedSeq !== undefined
-	) {
-		return seg.localMovedSeq <= localSeq;
+	const firstMove = seg.moves?.[0];
+	if (firstMove === undefined) {
+		return false;
 	}
-	return seg.movedSeq !== undefined && seqLTE(seg.movedSeq, refSeq);
+
+	if (timestampUtils.isLocal(firstMove) && localSeq !== undefined) {
+		return firstMove.localSeq! <= localSeq;
+	}
+
+	return seqLTE(firstMove.seq, refSeq);
 }
 
 /**

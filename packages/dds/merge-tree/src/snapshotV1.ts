@@ -19,7 +19,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { IAttributionCollection } from "./attributionCollection.js";
-import { NonCollabClient, UnassignedSequenceNumber } from "./constants.js";
+import { NonCollabClient } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
 import { ISegmentPrivate, timestampUtils, type OperationTimestamp } from "./mergeTreeNodes.js";
@@ -235,7 +235,7 @@ export class SnapshotV1 {
 			if (
 				timestampUtils.isLocal(segment.insert) ||
 				(isRemoved(segment) && timestampUtils.lte(segment.removes[0], minSeqTimestamp)) ||
-				(isMoved(segment) && segment.movedSeq <= minSeq)
+				(isMoved(segment) && timestampUtils.lte(segment.moves[0], minSeqTimestamp))
 			) {
 				if (timestampUtils.isAcked(segment.insert)) {
 					originalSegments += 1;
@@ -252,7 +252,7 @@ export class SnapshotV1 {
 				timestampUtils.lte(segment.insert, minSeqTimestamp) && // Segment is below the MSN, and...
 				(!isRemoved(segment) || // .. Segment has not been removed, or...
 					timestampUtils.isLocal(segment.removes[0])) && // .. Removal op to be delivered on reconnect
-				(!isMoved(segment) || segment.movedSeq === UnassignedSequenceNumber)
+				(!isMoved(segment) || timestampUtils.isLocal(segment.moves[0]))
 			) {
 				// This segment is below the MSN, which means that future ops will not reference it.  Attempt to
 				// coalesce the new segment with the previous (if any).
@@ -314,13 +314,17 @@ export class SnapshotV1 {
 				}
 
 				if (isMoved(segment)) {
+					const firstMove = segment.moves[0];
 					assert(
-						segment.movedSeq !== UnassignedSequenceNumber && segment.movedSeq > minSeq,
+						timestampUtils.isAcked(firstMove) &&
+							timestampUtils.greaterThan(firstMove, minSeqTimestamp),
 						0x873 /* On move info preservation, segment has invalid moved sequence number! */,
 					);
-					raw.movedSeq = segment.movedSeq;
-					raw.movedSeqs = segment.movedSeqs;
-					raw.movedClientIds = segment.movedClientIds?.map((id) => this.getLongClientId(id));
+					raw.movedSeq = firstMove.seq;
+					raw.movedSeqs = segment.moves.map(({ seq }) => seq);
+					raw.movedClientIds = segment.moves.map(({ clientId }) =>
+						this.getLongClientId(clientId),
+					);
 				}
 
 				// Sanity check that we are preserving either the seq > minSeq or a (re)moved segment's info.

@@ -12,7 +12,6 @@ import {
 	MergeBlock,
 	type OperationTimestamp,
 } from "./mergeTreeNodes.js";
-import type { ReferencePosition } from "./referencePositions.js";
 
 export interface StringToType {
 	"string": string;
@@ -276,54 +275,59 @@ export const removeRemovalInfo: (nodeLike: IHasRemovalInfo) => asserts nodeLike 
  * obliterate. The fields below include "move" in their names to avoid renaming
  * in the future, when moves _are_ supported.
  */
-export interface IMoveInfo {
-	/**
-	 * Local seq at which this segment was moved if the move is yet-to-be
-	 * acked.
-	 */
-	localMovedSeq?: number;
+export interface IHasMoveInfo {
+	// TODO: document moveDst somewhere equivalent
+	moves: OperationTimestamp[];
+	// /**
+	//  * Local seq at which this segment was moved if the move is yet-to-be
+	//  * acked.
+	//  */
+	// localMovedSeq?: number;
 
-	/**
-	 * The first seq at which this segment was moved.
-	 */
-	movedSeq: number;
+	// /**
+	//  * The first seq at which this segment was moved.
+	//  */
+	// movedSeq: number;
 
-	/**
-	 * All seqs at which this segment was moved. In the case of overlapping,
-	 * concurrent moves this array will contain multiple seqs.
-	 *
-	 * The seq at  `movedSeqs[i]` corresponds to the client id at `movedClientIds[i]`.
-	 *
-	 * The first element corresponds to the seq of the first move
-	 */
-	movedSeqs: number[];
+	// /**
+	//  * All seqs at which this segment was moved. In the case of overlapping,
+	//  * concurrent moves this array will contain multiple seqs.
+	//  *
+	//  * The seq at  `movedSeqs[i]` corresponds to the client id at `movedClientIds[i]`.
+	//  *
+	//  * The first element corresponds to the seq of the first move
+	//  */
+	// movedSeqs: number[];
 
-	/**
-	 * A reference to the inserted destination segment corresponding to this
-	 * segment's move.
-	 *
-	 * If undefined, the move was an obliterate.
-	 *
-	 * Currently this field is unused, as we only support obliterate operations
-	 */
-	moveDst?: ReferencePosition;
+	// /**
+	//  * A reference to the inserted destination segment corresponding to this
+	//  * segment's move.
+	//  *
+	//  * If undefined, the move was an obliterate.
+	//  *
+	//  * Currently this field is unused, as we only support obliterate operations
+	//  */
+	// moveDst?: ReferencePosition;
 
-	/**
-	 * List of client IDs that have moved this segment.
-	 *
-	 * The client that actually moved the segment (i.e. whose move op was sequenced
-	 * first) is stored as the first client in this list. Other clients in the
-	 * list have all issued concurrent ops to move the segment.
-	 */
-	movedClientIds: number[];
+	// /**
+	//  * List of client IDs that have moved this segment.
+	//  *
+	//  * The client that actually moved the segment (i.e. whose move op was sequenced
+	//  * first) is stored as the first client in this list. Other clients in the
+	//  * list have all issued concurrent ops to move the segment.
+	//  */
+	// movedClientIds: number[];
 }
 
-export const toMoveInfo = (segmentLike: unknown): IMoveInfo | undefined =>
-	hasProp(segmentLike, "movedClientIds", "array") &&
-	hasProp(segmentLike, "movedSeq", "number") &&
-	hasProp(segmentLike, "movedSeqs", "array")
-		? segmentLike
+export const toMoveInfo = (segmentLike: unknown): IHasMoveInfo | undefined => {
+	const moves = (segmentLike as any)?.moves;
+	return moves !== undefined &&
+		moves.length > 0 &&
+		hasProp(moves[0], "clientId", "number") &&
+		hasProp(moves[0], "seq", "number")
+		? (segmentLike as IHasMoveInfo)
 		: undefined;
+};
 
 /**
  * A type-guard which determines if the segment has move info, and
@@ -332,7 +336,7 @@ export const toMoveInfo = (segmentLike: unknown): IMoveInfo | undefined =>
  * @param segmentLike - The segment-like object to check.
  * @returns True if the segment has move info, otherwise false.
  */
-export const isMoved = (segmentLike: unknown): segmentLike is IMoveInfo =>
+export const isMoved = (segmentLike: unknown): segmentLike is IHasMoveInfo =>
 	toMoveInfo(segmentLike) !== undefined;
 
 /**
@@ -346,7 +350,7 @@ export const isMoved = (segmentLike: unknown): segmentLike is IMoveInfo =>
  */
 export function wasMovedOnInsert(segment: IHasInsertionInfo & ISegmentPrivate): boolean {
 	const moveInfo = toMoveInfo(segment);
-	const movedSeq = moveInfo?.movedSeq;
+	const movedSeq = moveInfo?.moves[0].seq;
 	if (movedSeq === undefined || movedSeq === UnassignedSequenceNumber) {
 		return false;
 	}
@@ -361,15 +365,15 @@ export function wasMovedOnInsert(segment: IHasInsertionInfo & ISegmentPrivate): 
  * @param segmentLike - The segment-like object to check.
  * @throws Will throw an error if the segment does not have move info.
  */
-export const assertMoved: <T extends Partial<IMoveInfo> | undefined>(
-	segmentLike: ISegmentInternal | Partial<IMoveInfo> | T,
-) => asserts segmentLike is IMoveInfo | Exclude<T, Partial<IMoveInfo>> = (segmentLike) =>
+export const assertMoved: <T extends Partial<IHasMoveInfo> | undefined>(
+	segmentLike: ISegmentInternal | Partial<IHasMoveInfo> | T,
+) => asserts segmentLike is IHasMoveInfo | Exclude<T, Partial<IHasMoveInfo>> = (segmentLike) =>
 	assert(segmentLike === undefined || isMoved(segmentLike), 0xaa3 /* must be moveInfo */);
 
 /**
  * A union type representing any segment info.
  */
-export type SegmentInfo = IMergeNodeInfo | IHasInsertionInfo | IMoveInfo | IHasRemovalInfo;
+export type SegmentInfo = IMergeNodeInfo | IHasInsertionInfo | IHasMoveInfo | IHasRemovalInfo;
 
 /**
  * A type representing a segment with additional info.

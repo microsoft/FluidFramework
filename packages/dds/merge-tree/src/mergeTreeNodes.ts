@@ -25,7 +25,7 @@ import {
 	overwriteInfo,
 	type IHasInsertionInfo,
 	type IMergeNodeInfo,
-	type IMoveInfo,
+	type IHasMoveInfo,
 	type IHasRemovalInfo,
 	type SegmentWithInfo,
 } from "./segmentInfos.js";
@@ -267,6 +267,16 @@ export const timestampUtils = {
 	},
 	hasAnyAckedOperation: (list: OperationTimestamp[]) =>
 		list.some((ts) => timestampUtils.isAcked(ts)),
+	compare: (a: OperationTimestamp, b: OperationTimestamp) => {
+		// TODO: inlining might be better
+		if (timestampUtils.greaterThan(a, b)) {
+			return 1;
+		} else if (timestampUtils.lessThan(a, b)) {
+			return -1;
+		} else {
+			return 0;
+		}
+	},
 };
 
 function lessThan(a: OperationTimestamp, b: OperationTimestamp): boolean {
@@ -439,10 +449,9 @@ export abstract class BaseSegment implements ISegment {
 			});
 		}
 		if (isMoved(this)) {
-			overwriteInfo<IMoveInfo>(seg, {
-				movedSeq: this.movedSeq,
-				movedSeqs: [...this.movedSeqs],
-				movedClientIds: [...this.movedClientIds],
+			const moves = this.moves.map((m) => ({ ...m }));
+			overwriteInfo<IHasMoveInfo>(seg, {
+				moves,
 			});
 		}
 		seg.attribution = this.attribution?.clone();
@@ -499,11 +508,9 @@ export abstract class BaseSegment implements ISegment {
 			});
 		}
 		if (isMoved(this)) {
-			overwriteInfo<IMoveInfo>(leafSegment, {
-				movedClientIds: [...this.movedClientIds],
-				movedSeq: this.movedSeq,
-				movedSeqs: [...this.movedSeqs],
-				localMovedSeq: this.localMovedSeq,
+			const moves = this.moves.map((m) => ({ ...m }));
+			overwriteInfo<IHasMoveInfo>(leafSegment, {
+				moves,
 			});
 		}
 

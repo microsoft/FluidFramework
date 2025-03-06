@@ -973,7 +973,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 							this._mergeTree.options,
 							"mergeTreeEnableObliterateReconnect",
 						);
-						if (moveInfo.movedSeq !== UnassignedSequenceNumber) {
+						if (timestampUtils.isAcked(moveInfo.moves[0])) {
 							// the segment was remotely obliterated, so is considered removed
 							// we set the seq to the universal seq and remove the local seq,
 							// so its length is not considered for subsequent local changes
@@ -1006,9 +1006,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					if (
 						isRemoved(segment) &&
 						timestampUtils.isLocal(segment.removes[0]) &&
-						(!isMoved(segment) ||
-							(segment.localMovedSeq !== undefined &&
-								segment.movedSeq === UnassignedSequenceNumber))
+						!(isMoved(segment) && timestampUtils.isAcked(segment.moves[0]))
 					) {
 						newOp = createRemoveRangeOp(
 							segmentPosition,
@@ -1021,8 +1019,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					errorIfOptionNotTrue(this._mergeTree.options, "mergeTreeEnableObliterateReconnect");
 					if (
 						isMoved(segment) &&
-						segment.localMovedSeq !== undefined &&
-						segment.movedSeq === UnassignedSequenceNumber &&
+						timestampUtils.isLocal(segment.moves[0]) &&
 						!(isRemoved(segment) && timestampUtils.isAcked(segment.removes[0]))
 					) {
 						newOp = createObliterateRangeOp(

@@ -402,7 +402,7 @@ function toMoveOrRemove(segment: ISegmentPrivate): { seq: number } | undefined {
 	if (mi !== undefined || ri !== undefined) {
 		return {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-non-null-asserted-optional-chain
-			seq: mi?.movedSeq ?? ri?.removes[0].seq!,
+			seq: mi?.moves[0].seq ?? ri?.removes[0].seq!,
 		};
 	}
 }

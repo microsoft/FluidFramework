@@ -452,9 +452,8 @@ export class TestClient extends Client {
 		const isRemovedFromView = (s: ISegmentPrivate): boolean =>
 			isRemoved(s) && timestampUtils.lte(s.removes[0], perspectiveStamp);
 		const isMovedFromView = (s: ISegmentPrivate): boolean =>
-			isMoved(s) &&
-			(s.movedSeq !== UnassignedSequenceNumber ||
-				(s.localMovedSeq !== undefined && s.localMovedSeq <= localSeq));
+			isMoved(s) && timestampUtils.lte(s.moves[0], perspectiveStamp);
+
 		/*
             Walk the segments up to the current segment, and calculate its
             position taking into account local segments that were modified,
