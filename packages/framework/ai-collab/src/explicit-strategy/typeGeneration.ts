@@ -259,6 +259,7 @@ function getOrCreateType(
 				);
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				properties[typeField] = z.enum([definition]);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				properties[objectIdKey] = z.optional(
 					z
 						.string()
