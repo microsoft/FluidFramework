@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import {
 	type DeltaRoot,
+	EmptyKey,
 	type FieldKey,
 	type IForestSubscription,
 	type JsonableTree,
@@ -974,18 +975,12 @@ describe("DefaultEditBuilder", () => {
 
 		it("Moving 0 items does nothing.", () => {
 			const { builder, forest } = initializeEditableForest({
-				type: brand(JsonAsTree.JsonObject.identifier),
-				fields: {
-					foo: [],
-				},
+				type: brand(JsonAsTree.Array.identifier),
 			});
 			builder.move({ parent: root, field: fooKey }, 0, 0, { parent: root, field: fooKey }, 0);
 			const treeView = toJsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
-				type: brand(JsonAsTree.JsonObject.identifier),
-				fields: {
-					foo: [],
-				},
+				type: brand(JsonAsTree.Array.identifier),
 			};
 			assert.deepEqual(treeView, [expected]);
 		});

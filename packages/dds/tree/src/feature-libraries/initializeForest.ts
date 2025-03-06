@@ -13,10 +13,11 @@ import {
 	type RevisionTagCodec,
 	combineVisitors,
 	deltaForRootInitialization,
+	emptyDelta,
 	makeDetachedFieldIndex,
 	visitDelta,
 } from "../core/index.js";
-import { chunkTree, defaultChunkPolicy } from "./chunked-forest/index.js";
+import { chunkFieldSingle, defaultChunkPolicy } from "./chunked-forest/index.js";
 
 /**
  * Initializes the given forest with the given content.
@@ -36,8 +37,12 @@ export function initializeForest(
 	visitAnchors = false,
 ): void {
 	assert(forest.isEmpty, 0x747 /* forest must be empty */);
-	const chunk = chunkTree(content, { idCompressor, policy: defaultChunkPolicy });
-	const delta: DeltaRoot = deltaForRootInitialization(chunk);
+	const delta: DeltaRoot =
+		content.getFieldLength() === 0
+			? emptyDelta
+			: deltaForRootInitialization(
+					chunkFieldSingle(content, { idCompressor, policy: defaultChunkPolicy }),
+				);
 	let visitor = forest.acquireVisitor();
 	if (visitAnchors) {
 		assert(forest.anchors.isEmpty(), 0x9b7 /* anchor set must be empty */);

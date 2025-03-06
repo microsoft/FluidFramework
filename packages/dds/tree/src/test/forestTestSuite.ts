@@ -60,7 +60,7 @@ import {
 	toStoredSchema,
 } from "../simple-tree/index.js";
 import { jsonSequenceRootSchema } from "./sequenceRootUtils.js";
-import { cursorToJsonObject, fieldJsonCursor } from "./json/index.js";
+import { cursorToJsonObject, fieldJsonCursor, singleJsonCursor } from "./json/index.js";
 import { JsonAsTree } from "../jsonDomainSchema.js";
 
 /**
@@ -1069,7 +1069,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				};
 				const delta: DeltaFieldMap = new Map([[rootFieldKey, [modify]]]);
 				applyTestDelta(delta, forest);
-				const expectedCursor = fieldJsonCursor([{ y: 2 }]);
+				const expectedCursor = singleJsonCursor({ y: 2 });
 				const expected: JsonableTree[] = [jsonableTreeFromCursor(expectedCursor)];
 				const readCursor = forest.allocateCursor();
 				moveToDetachedField(forest, readCursor);

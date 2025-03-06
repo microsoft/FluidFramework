@@ -108,10 +108,10 @@ import {
 	type IDefaultEditBuilder,
 	type TreeChunk,
 	mapTreeFieldFromCursor,
-	chunkTree,
 	defaultChunkPolicy,
 	cursorForJsonableTreeField,
 	initializeForest,
+	chunkFieldSingle,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
@@ -1335,12 +1335,18 @@ export function moveWithin(
 
 export function chunkFromJsonField(field: JsonCompatible[]): TreeChunk {
 	const cursor = fieldJsonCursor(field);
-	return chunkTree(cursor, { idCompressor: testIdCompressor, policy: defaultChunkPolicy });
+	return chunkFieldSingle(cursor, {
+		idCompressor: testIdCompressor,
+		policy: defaultChunkPolicy,
+	});
 }
 
 export function chunkFromJsonableField(field: JsonableTree[]): TreeChunk {
 	const cursor = cursorForJsonableTreeField(field);
-	return chunkTree(cursor, { idCompressor: testIdCompressor, policy: defaultChunkPolicy });
+	return chunkFieldSingle(cursor, {
+		idCompressor: testIdCompressor,
+		policy: defaultChunkPolicy,
+	});
 }
 
 export function chunkToMapTreeField(chunk: TreeChunk): ExclusiveMapTree[] {
