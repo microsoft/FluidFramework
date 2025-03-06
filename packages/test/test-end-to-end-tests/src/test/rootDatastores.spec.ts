@@ -18,6 +18,7 @@ import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 	summarizeNow,
+	timeoutAwait,
 } from "@fluidframework/test-utils/internal";
 
 import { TestPersistedCache } from "../testPersistedCache.js";
@@ -273,7 +274,7 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 			const dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 
 			await provider.ensureSynchronized();
-			assert.ok(await getAliasedDataStoreEntryPoint(dataObject3, alias));
+			assert.ok(await timeoutAwait(getAliasedDataStoreEntryPoint(dataObject3, alias)));
 		});
 
 		it("getAliasedDataStoreEntryPoint only returns aliased data stores", async function () {
@@ -352,7 +353,7 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 				const aliasResult3 = await ds3.trySetAlias(alias);
 
 				assert.equal(aliasResult3, "Conflict");
-				assert.ok(await getAliasedDataStoreEntryPoint(dataObject3, alias));
+				assert.ok(timeoutAwait(getAliasedDataStoreEntryPoint(dataObject3, alias)));
 			},
 		);
 	});
