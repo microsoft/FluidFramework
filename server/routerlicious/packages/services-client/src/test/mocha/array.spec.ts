@@ -9,7 +9,7 @@ import {
 	dedupeSortedArray,
 	mergeKArrays,
 	mergeSortedArrays,
-} from "../array";
+} from "../../array";
 
 describe("convertToRanges", () => {
 	it("Should return empty array if input is empty", () => {

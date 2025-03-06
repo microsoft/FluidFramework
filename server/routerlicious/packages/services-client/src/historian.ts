@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64 } from "@fluidframework/server-common-utils";
 import * as git from "@fluidframework/gitresources";
 import { RestWrapper, BasicRestWrapper } from "./restWrapper";
 import { IHistorian } from "./storage";
 import { IWholeFlatSummary, IWholeSummaryPayload, IWriteSummaryResponse } from "./storageContracts";
 import { NetworkError } from "./error";
+import { fromUtf8ToBase64 } from "./common-utils";
 import { debug } from "./debug";
 
 function endsWith(value: string, endings: string[]): boolean {

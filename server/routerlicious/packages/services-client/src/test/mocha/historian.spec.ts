@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64 } from "@fluidframework/server-common-utils";
 import * as git from "@fluidframework/gitresources";
 import assert from "assert";
 import Axios, { AxiosRequestConfig } from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
-import { Historian, ICredentials, getAuthorizationTokenFromCredentials } from "../historian";
-import { BasicRestWrapper, RestWrapper } from "../restWrapper";
-import { IWholeSummaryPayload, IWriteSummaryResponse } from "../storageContracts";
+import { fromUtf8ToBase64 } from "../../common-utils";
+import { Historian, ICredentials, getAuthorizationTokenFromCredentials } from "../../historian";
+import { BasicRestWrapper, RestWrapper } from "../../restWrapper";
+import { IWholeSummaryPayload, IWriteSummaryResponse } from "../../storageContracts";
 
 describe("Historian", () => {
 	const endpoint = "http://test:3000";

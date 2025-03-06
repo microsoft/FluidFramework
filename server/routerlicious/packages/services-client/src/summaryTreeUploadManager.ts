@@ -3,11 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import {
-	gitHashFile,
-	IsoBuffer,
-	Uint8ArrayToString,
-} from "@fluidframework/server-common-utils";
 import { ICreateTreeEntry } from "@fluidframework/gitresources";
 import { getGitMode, getGitType } from "@fluidframework/protocol-base";
 import {
@@ -18,6 +13,7 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { assert } from "./assert";
+import { gitHashFile, IsoBuffer, Uint8ArrayToString } from "./common-utils";
 import { ISummaryUploadManager, IGitManager } from "./storage";
 import { IWholeSummaryPayloadType } from "./storageContracts";
 import { unreachableCase } from "./utils";

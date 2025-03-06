@@ -9,7 +9,12 @@ module.exports = {
 		"prettier",
 	],
 	parserOptions: {
-		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+		project: [
+			"./tsconfig.json",
+			"./src/test/mocha/tsconfig.json",
+			"./src/test/jest/tsconfig.json",
+			"./src/test/types/tsconfig.json",
+		],
 	},
 	rules: {
 		"import/no-nodejs-modules": "off",

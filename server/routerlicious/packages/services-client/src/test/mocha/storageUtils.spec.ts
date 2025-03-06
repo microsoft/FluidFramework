@@ -4,20 +4,20 @@
  */
 
 import assert from "assert";
-import { fromUtf8ToBase64, stringToBuffer } from "@fluidframework/server-common-utils";
+import { fromUtf8ToBase64, stringToBuffer } from "../../common-utils";
 import {
 	buildTreePath,
 	convertSummaryTreeToWholeSummaryTree,
 	convertWholeFlatSummaryToSnapshotTreeAndBlobs,
 	convertFirstSummaryWholeSummaryTreeToSummaryTree,
-} from "../storageUtils";
+} from "../../storageUtils";
 
 import {
 	IWholeFlatSummaryBlob,
 	IWholeFlatSummary,
 	IWholeFlatSummaryTree,
 	IWholeFlatSummaryTreeEntry,
-} from "../storageContracts";
+} from "../../storageContracts";
 import {
 	IDocumentAttributes,
 	ISummaryTree,

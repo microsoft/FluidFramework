@@ -3,13 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-	stringToBuffer,
-	Uint8ArrayToString,
-} from "@fluidframework/server-common-utils";
 import { getGitType } from "@fluidframework/protocol-base";
 import { ISnapshotTree, SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
 import { assert } from "./assert";
+import { stringToBuffer, Uint8ArrayToString } from "./common-utils";
 import {
 	ISummaryTree,
 	IWholeSummaryTree,

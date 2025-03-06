@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { Heap } from "../heap";
+import { Heap } from "../../heap";
 
 interface TestObject {
 	value: number;
