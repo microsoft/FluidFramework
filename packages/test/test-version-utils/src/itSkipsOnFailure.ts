@@ -61,11 +61,29 @@ export type SkippedErrorExpectingTestWithDriverType = (
  *
  * @internal
  */
-export const itSkipsFailureOnSpecificDrivers: SkippedTestWithDriverType = (
+export function itSkipsFailureOnSpecificDrivers(
 	name: string,
 	skippedDrivers: TestDriverTypes[],
 	test: Mocha.AsyncFunc,
-): Mocha.Test => it(name, createSkippedTestsWithDriverType(skippedDrivers, test));
+): Mocha.Test {
+	return it(name, createSkippedTestsWithDriverType(skippedDrivers, test));
+}
+
+itSkipsFailureOnSpecificDrivers.only = function (
+	name: string,
+	skippedDrivers: TestDriverTypes[],
+	test: Mocha.AsyncFunc,
+): Mocha.Test {
+	return it.only(name, createSkippedTestsWithDriverType(skippedDrivers, test));
+};
+
+itSkipsFailureOnSpecificDrivers.skip = function (
+	name: string,
+	skippedDrivers: TestDriverTypes[],
+	test: Mocha.AsyncFunc,
+): Mocha.Test {
+	return it.skip(name, createSkippedTestsWithDriverType(skippedDrivers, test));
+};
 
 /**
  * Similar to the `itExpects` function, but allow skipping for some if the error
@@ -73,17 +91,47 @@ export const itSkipsFailureOnSpecificDrivers: SkippedTestWithDriverType = (
  *
  * @internal
  */
-export const itExpectsSkipsFailureOnSpecificDrivers: SkippedErrorExpectingTestWithDriverType =
-	(
-		name: string,
-		orderedExpectedEvents: ExpectedEvents,
-		skippedDrivers: TestDriverTypes[],
-		test: Mocha.AsyncFunc,
-	): Mocha.Test =>
-		it(
-			name,
-			createSkippedTestsWithDriverType(
-				skippedDrivers,
-				createExpectsTest(orderedExpectedEvents, test),
-			),
-		);
+export function itExpectsSkipsFailureOnSpecificDrivers(
+	name: string,
+	orderedExpectedEvents: ExpectedEvents,
+	skippedDrivers: TestDriverTypes[],
+	test: Mocha.AsyncFunc,
+): Mocha.Test {
+	return it(
+		name,
+		createSkippedTestsWithDriverType(
+			skippedDrivers,
+			createExpectsTest(orderedExpectedEvents, test),
+		),
+	);
+}
+
+itExpectsSkipsFailureOnSpecificDrivers.only = function (
+	name: string,
+	orderedExpectedEvents: ExpectedEvents,
+	skippedDrivers: TestDriverTypes[],
+	test: Mocha.AsyncFunc,
+): Mocha.Test {
+	return it.only(
+		name,
+		createSkippedTestsWithDriverType(
+			skippedDrivers,
+			createExpectsTest(orderedExpectedEvents, test),
+		),
+	);
+};
+
+itExpectsSkipsFailureOnSpecificDrivers.skip = function (
+	name: string,
+	orderedExpectedEvents: ExpectedEvents,
+	skippedDrivers: TestDriverTypes[],
+	test: Mocha.AsyncFunc,
+): Mocha.Test {
+	return it.skip(
+		name,
+		createSkippedTestsWithDriverType(
+			skippedDrivers,
+			createExpectsTest(orderedExpectedEvents, test),
+		),
+	);
+};
