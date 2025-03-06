@@ -967,9 +967,6 @@ importers:
 
   packages/services:
     dependencies:
-      '@fluidframework/common-utils':
-        specifier: ^3.1.0
-        version: 3.1.0
       '@fluidframework/protocol-definitions':
         specifier: ^3.2.0
         version: 3.2.0

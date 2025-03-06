@@ -14,7 +14,6 @@ import {
 	parseToken,
 } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import {
 	extractTokenFromHeader,
 	getValidAccessToken,
@@ -161,7 +160,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		);
 
 		const defaultQueryString = {
-			token: fromUtf8ToBase64(`${tenantId}`),
+			token: core.fromUtf8ToBase64(`${tenantId}`),
 		};
 		const getDefaultHeaders = () => {
 			const credentials: ICredentials = {
