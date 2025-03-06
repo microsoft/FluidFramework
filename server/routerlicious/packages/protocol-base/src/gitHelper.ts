@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/server-common-utils";
 import * as git from "@fluidframework/gitresources";
 import {
 	FileMode,
@@ -95,4 +94,22 @@ export function buildGitTreeHierarchy(
 	}
 
 	return root;
+}
+
+/**
+ * This function can be used to assert at compile time that a given value has type never.
+ * One common usage is in the default case of a switch block, to ensure that all cases are explicitly handled.
+ *
+ * Example:
+ * ```typescript
+ * const bool: true | false = ...;
+ * switch(bool) {
+ *   case true: {...}
+ *   case false: {...}
+ *   default: unreachableCase(bool);
+ * }
+ * ```
+ */
+function unreachableCase(_: never, message = "Unreachable Case"): never {
+	throw new Error(message);
 }

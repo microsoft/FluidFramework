@@ -7,7 +7,6 @@ import {
 	gitHashFile,
 	IsoBuffer,
 	Uint8ArrayToString,
-	unreachableCase,
 } from "@fluidframework/server-common-utils";
 import { ICreateTreeEntry } from "@fluidframework/gitresources";
 import { getGitMode, getGitType } from "@fluidframework/protocol-base";
@@ -21,6 +20,7 @@ import {
 import { assert } from "./assert";
 import { ISummaryUploadManager, IGitManager } from "./storage";
 import { IWholeSummaryPayloadType } from "./storageContracts";
+import { unreachableCase } from "./utils";
 
 /**
  * Recursively writes summary tree as individual summary blobs.

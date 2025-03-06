@@ -249,9 +249,6 @@ export type TypedEventTransform<TThis, TEvent> = TransformedEvent<TThis, "newLis
 // @internal
 export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string;
 
-// @internal
-export function unreachableCase(_: never, message?: string): never;
-
 // (No @packageDocumentation comment for this package)
 
 ```
