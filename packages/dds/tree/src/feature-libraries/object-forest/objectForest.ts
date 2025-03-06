@@ -26,7 +26,6 @@ import {
 	type MapTree,
 	type PathRootPrefix,
 	type PlaceIndex,
-	type ProtoNodes,
 	type Range,
 	TreeNavigationResult,
 	type TreeNodeSchemaIdentifier,
@@ -163,7 +162,7 @@ export class ObjectForest implements IEditableForest {
 				preEdit();
 				this.forest.delete(detachedField);
 			}
-			public create(content: ProtoNodes, destination: FieldKey): void {
+			public create(content: ITreeCursorSynchronous[], destination: FieldKey): void {
 				preEdit();
 				this.forest.add(content, destination);
 				this.forest.#events.emit("afterRootFieldCreated", destination);

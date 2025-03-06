@@ -21,6 +21,7 @@ import {
 } from "../tree/index.js";
 
 import type { IForestSubscription, ITreeSubscriptionCursor } from "./forest.js";
+import { chunkTree, defaultChunkPolicy } from "../../feature-libraries/index.js";
 
 /**
  * Editing APIs.
@@ -51,13 +52,14 @@ export interface IEditableForest extends IForestSubscription {
  */
 export function initializeForest(
 	forest: IEditableForest,
-	content: readonly ITreeCursorSynchronous[],
+	content: ITreeCursorSynchronous,
 	revisionTagCodec: RevisionTagCodec,
 	idCompressor: IIdCompressor,
 	visitAnchors = false,
 ): void {
 	assert(forest.isEmpty, 0x747 /* forest must be empty */);
-	const delta: DeltaRoot = deltaForRootInitialization(content);
+	const chunk = chunkTree(content, { idCompressor, policy: defaultChunkPolicy });
+	const delta: DeltaRoot = deltaForRootInitialization(chunk);
 	let visitor = forest.acquireVisitor();
 	if (visitAnchors) {
 		assert(forest.anchors.isEmpty(), 0x9b7 /* anchor set must be empty */);

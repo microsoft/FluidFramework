@@ -24,6 +24,7 @@ import {
 	type DefaultChangeset,
 	DefaultEditBuilder,
 	buildForest,
+	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
 	intoDelta,
 	jsonableTreeFromCursor,
@@ -116,7 +117,7 @@ function initializeEditableForest(data?: JsonableTree): {
 	if (data !== undefined) {
 		initializeForest(
 			forest,
-			[cursorForJsonableTreeNode(data)],
+			cursorForJsonableTreeField([data]),
 			testRevisionTagCodec,
 			testIdCompressor,
 		);

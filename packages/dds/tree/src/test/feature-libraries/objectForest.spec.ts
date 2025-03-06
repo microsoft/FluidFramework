@@ -13,7 +13,7 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 } from "../../core/index.js";
-import { singleJsonCursor } from "../json/index.js";
+import { fieldJsonCursor } from "../json/index.js";
 import { cursorForMapTreeNode } from "../../feature-libraries/index.js";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
@@ -38,7 +38,7 @@ describe("object-forest", () => {
 			const forest = buildForest();
 			initializeForest(
 				forest,
-				[singleJsonCursor(content)],
+				fieldJsonCursor([content]),
 				testRevisionTagCodec,
 				testIdCompressor,
 			);
@@ -60,7 +60,7 @@ describe("object-forest", () => {
 			const forest = buildForest();
 			initializeForest(
 				forest,
-				[singleJsonCursor(content)],
+				fieldJsonCursor([content]),
 				testRevisionTagCodec,
 				testIdCompressor,
 			);
@@ -82,7 +82,7 @@ describe("object-forest", () => {
 			const forest = buildForest();
 			initializeForest(
 				forest,
-				[singleJsonCursor(content)],
+				fieldJsonCursor([content]),
 				testRevisionTagCodec,
 				testIdCompressor,
 			);
@@ -105,7 +105,7 @@ describe("object-forest", () => {
 		const forest = buildForest();
 		initializeForest(
 			forest,
-			[singleJsonCursor([1, 2])],
+			fieldJsonCursor([[1, 2]]),
 			testRevisionTagCodec,
 			testIdCompressor,
 		);
@@ -118,7 +118,7 @@ describe("object-forest", () => {
 		const forest = buildForest();
 		initializeForest(
 			forest,
-			[singleJsonCursor(content)],
+			fieldJsonCursor([content]),
 			testRevisionTagCodec,
 			testIdCompressor,
 		);

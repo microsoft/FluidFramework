@@ -2044,12 +2044,9 @@ function copyDetachedNodes(
 	const copiedDetachedNodes: DeltaDetachedNodeBuild[] = [];
 	for (const [[major, minor], chunk] of detachedNodes.entries()) {
 		if (chunk.topLevelLength > 0) {
-			const trees = mapCursorField(chunk.cursor(), (c) =>
-				cursorForMapTreeNode(mapTreeFromCursor(c)),
-			);
 			copiedDetachedNodes.push({
 				id: makeDetachedNodeId(major, minor),
-				trees,
+				trees: chunk,
 			});
 		}
 	}

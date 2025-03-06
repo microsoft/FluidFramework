@@ -21,7 +21,6 @@ import {
 	type ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
 	type PlaceIndex,
-	type ProtoNodes,
 	type Range,
 	TreeNavigationResult,
 	type TreeStoredSchemaSubscription,
@@ -136,7 +135,7 @@ export class ChunkedForest implements IEditableForest {
 				this.forest.#events.emit("beforeChange");
 				this.forest.roots.fields.delete(detachedField);
 			},
-			create(content: ProtoNodes, destination: FieldKey): void {
+			create(content: ITreeCursorSynchronous[], destination: FieldKey): void {
 				this.forest.#events.emit("beforeChange");
 				const chunks: TreeChunk[] = content.map((c) =>
 					chunkTree(c, {

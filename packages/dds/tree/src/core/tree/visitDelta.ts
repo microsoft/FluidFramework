@@ -8,12 +8,8 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { type NestedMap, setInNestedMap, tryGetFromNestedMap } from "../../util/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
-import type { ITreeCursorSynchronous } from "./cursor.js";
-// eslint-disable-next-line import/no-duplicates
+import { mapCursorField, type ITreeCursorSynchronous } from "./cursor.js";
 import type * as Delta from "./delta.js";
-// Since ProtoNodes is reexported, import it directly to avoid forcing Delta to be reexported.
-// eslint-disable-next-line import/no-duplicates
-import type { ProtoNodes } from "./delta.js";
 import {
 	areDetachedNodeIdsEqual,
 	isAttachMark,
@@ -24,7 +20,7 @@ import {
 import type { DetachedFieldIndex } from "./detachedFieldIndex.js";
 import type { ForestRootId, Major, Minor } from "./detachedFieldIndexTypes.js";
 import type { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
-import type { RevisionTag } from "../index.js";
+import type { RevisionTag, TreeChunk } from "../index.js";
 
 /**
  * Implementation notes:
@@ -89,9 +85,10 @@ export function visitDelta(
 	const rootDestructions: Delta.DetachedNodeDestruction[] = [];
 	const refreshers: NestedMap<Major, Minor, ITreeCursorSynchronous> = new Map();
 	delta.refreshers?.forEach(({ id: { major, minor }, trees }) => {
-		for (let i = 0; i < trees.length; i += 1) {
+		const treeCursors = nodeCursorsFromChunk(trees);
+		for (let i = 0; i < trees.topLevelLength; i += 1) {
 			const offsettedId = minor + i;
-			setInNestedMap(refreshers, major, offsettedId, trees[i]);
+			setInNestedMap(refreshers, major, offsettedId, treeCursors[i]);
 		}
 	});
 	const detachConfig: PassConfig = {
@@ -266,7 +263,7 @@ export interface DeltaVisitor {
 	 * @param destination - The key for a new detached field.
 	 * A field with this key must not already exist.
 	 */
-	create(content: ProtoNodes, destination: FieldKey): void;
+	create(content: ITreeCursorSynchronous[], destination: FieldKey): void;
 	/**
 	 * Recursively destroys the given detached field and all of the nodes within it.
 	 * @param detachedField - The key for the detached field to destroy.
@@ -476,7 +473,13 @@ function processBuilds(
 ): void {
 	if (builds !== undefined) {
 		for (const { id, trees } of builds) {
-			buildTrees(id, trees, config.detachedFieldIndex, config.latestRevision, visitor);
+			buildTrees(
+				id,
+				nodeCursorsFromChunk(trees),
+				config.detachedFieldIndex,
+				config.latestRevision,
+				visitor,
+			);
 		}
 	}
 }
@@ -591,4 +594,8 @@ function attachPass(
 			index += mark.count;
 		}
 	}
+}
+
+function nodeCursorsFromChunk(trees: TreeChunk): ITreeCursorSynchronous[] {
+	return mapCursorField(trees.cursor(), (c) => c.fork());
 }
