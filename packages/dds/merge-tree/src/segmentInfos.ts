@@ -191,26 +191,30 @@ export const removeMergeNodeInfo: (nodeLike: IMergeNodeInfo) => asserts nodeLike
 		ordinal: undefined,
 	});
 
-/**
- * Contains removal information associated to an {@link ISegment}.
- */
-export interface IRemovalInfo {
-	/**
-	 * Local seq at which this segment was removed, if the removal is yet-to-be acked.
-	 */
-	localRemovedSeq?: number;
-	/**
-	 * Seq at which this segment was removed.
-	 */
-	removedSeq: number;
-	/**
-	 * List of client IDs that have removed this segment.
-	 * The client that actually removed the segment (i.e. whose removal op was sequenced first) is stored as the first
-	 * client in this list. Other clients in the list have all issued concurrent ops to remove the segment.
-	 * @remarks When this list has length \> 1, this is referred to as the "overlapping remove" case.
-	 */
-	removedClientIds: number[];
+export interface IHasRemovalInfo {
+	removes: OperationTimestamp[];
 }
+
+// /**
+//  * Contains removal information associated to an {@link ISegment}.
+//  */
+// export interface IRemovalInfo {
+// 	/**
+// 	 * Local seq at which this segment was removed, if the removal is yet-to-be acked.
+// 	 */
+// 	localRemovedSeq?: number;
+// 	/**
+// 	 * Seq at which this segment was removed.
+// 	 */
+// 	removedSeq: number;
+// 	/**
+// 	 * List of client IDs that have removed this segment.
+// 	 * The client that actually removed the segment (i.e. whose removal op was sequenced first) is stored as the first
+// 	 * client in this list. Other clients in the list have all issued concurrent ops to remove the segment.
+// 	 * @remarks When this list has length \> 1, this is referred to as the "overlapping remove" case.
+// 	 */
+// 	removedClientIds: number[];
+// }
 
 /**
  * Converts a segment-like object to a removal info object if possible.
@@ -218,11 +222,15 @@ export interface IRemovalInfo {
  * @param segmentLike - The segment-like object to convert.
  * @returns The removal info object if the conversion is possible, otherwise undefined.
  */
-export const toRemovalInfo = (segmentLike: unknown): IRemovalInfo | undefined =>
-	hasProp(segmentLike, "removedClientIds", "array") &&
-	hasProp(segmentLike, "removedSeq", "number")
-		? segmentLike
+export const toRemovalInfo = (segmentLike: unknown): IHasRemovalInfo | undefined => {
+	const removal = (segmentLike as any)?.removes;
+	return removal !== undefined &&
+		removal.length > 0 &&
+		hasProp(removal[0], "clientId", "number") &&
+		hasProp(removal[0], "seq", "number")
+		? (segmentLike as IHasRemovalInfo)
 		: undefined;
+};
 
 /**
  * A type-guard which determines if the segment has removal info, and
@@ -231,7 +239,7 @@ export const toRemovalInfo = (segmentLike: unknown): IRemovalInfo | undefined =>
  * @param segmentLike - The segment-like object to check.
  * @returns True if the segment has removal info, otherwise false.
  */
-export const isRemoved = (segmentLike: unknown): segmentLike is IRemovalInfo =>
+export const isRemoved = (segmentLike: unknown): segmentLike is IHasRemovalInfo =>
 	toRemovalInfo(segmentLike) !== undefined;
 
 /**
@@ -240,9 +248,11 @@ export const isRemoved = (segmentLike: unknown): segmentLike is IRemovalInfo =>
  * @param segmentLike - The segment-like object to check.
  * @throws Will throw an error if the segment does not have removal info.
  */
-export const assertRemoved: <T extends Partial<IRemovalInfo> | undefined>(
-	segmentLike: ISegmentInternal | Partial<IRemovalInfo> | T,
-) => asserts segmentLike is IRemovalInfo | Exclude<T, Partial<IRemovalInfo>> = (segmentLike) =>
+export const assertRemoved: <T extends Partial<IHasRemovalInfo> | undefined>(
+	segmentLike: ISegmentInternal | Partial<IHasRemovalInfo> | T,
+) => asserts segmentLike is IHasRemovalInfo | Exclude<T, Partial<IHasRemovalInfo>> = (
+	segmentLike,
+) =>
 	assert(segmentLike === undefined || isRemoved(segmentLike), 0xaa2 /* must be removalInfo */);
 
 /**
@@ -252,13 +262,11 @@ export const assertRemoved: <T extends Partial<IRemovalInfo> | undefined>(
  * ensures no further usage of the removed removal info is allowed. if continued use is required other
  * type coercion methods should be use to correctly re-type the variable.
  */
-export const removeRemovalInfo: (nodeLike: IRemovalInfo) => asserts nodeLike is never = (
+export const removeRemovalInfo: (nodeLike: IHasRemovalInfo) => asserts nodeLike is never = (
 	nodeLike,
 ) =>
-	Object.assign<IRemovalInfo, Record<keyof IRemovalInfo, undefined>>(nodeLike, {
-		localRemovedSeq: undefined,
-		removedClientIds: undefined,
-		removedSeq: undefined,
+	Object.assign<IHasRemovalInfo, Record<keyof IHasRemovalInfo, undefined>>(nodeLike, {
+		removes: undefined,
 	});
 
 /**
@@ -361,7 +369,7 @@ export const assertMoved: <T extends Partial<IMoveInfo> | undefined>(
 /**
  * A union type representing any segment info.
  */
-export type SegmentInfo = IMergeNodeInfo | IHasInsertionInfo | IMoveInfo | IRemovalInfo;
+export type SegmentInfo = IMergeNodeInfo | IHasInsertionInfo | IMoveInfo | IHasRemovalInfo;
 
 /**
  * A type representing a segment with additional info.

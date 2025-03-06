@@ -256,10 +256,9 @@ function getPartialLengths(
 	const isRemoved = (segment: ISegmentPrivate): boolean =>
 		info.isRemoved(segment) &&
 		((localSeq !== undefined &&
-			segment.removedSeq === UnassignedSequenceNumber &&
-			segment.localRemovedSeq !== undefined &&
-			segment.localRemovedSeq <= localSeq) ||
-			(segment.removedSeq !== UnassignedSequenceNumber && segment.removedSeq <= seq));
+			timestampUtils.isLocal(segment.removes[segment.removes.length - 1]) &&
+			segment.removes[segment.removes.length - 1].localSeq! <= localSeq) ||
+			timestampUtils.lte(segment.removes[0], perspectiveStamp));
 
 	const isMoved = (segment: ISegmentPrivate): boolean =>
 		info.isMoved(segment) &&

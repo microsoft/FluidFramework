@@ -16,7 +16,7 @@ import {
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { NonCollabClient, UnassignedSequenceNumber } from "./constants.js";
+import { NonCollabClient } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
 import { timestampUtils, type ISegmentPrivate } from "./mergeTreeNodes.js";
 import { matchProperties } from "./properties.js";
@@ -212,8 +212,7 @@ export class SnapshotLegacy {
 				isInserted(segment) &&
 				timestampUtils.lte(segment.insert, collabWindow.minSeqTime) &&
 				(!isRemoved(segment) ||
-					segment.removedSeq === UnassignedSequenceNumber ||
-					segment.removedSeq > seq)
+					timestampUtils.gte(segment.removes[0], collabWindow.minSeqTime))
 			) {
 				originalSegments += 1;
 				const properties =

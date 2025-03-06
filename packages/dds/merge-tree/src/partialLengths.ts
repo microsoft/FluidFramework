@@ -564,7 +564,8 @@ export class PartialSequenceLengths {
 			const removeInfo = toRemovalInfo(segment);
 
 			const wasRemovedByInsertingClient =
-				removeInfo !== undefined && removeInfo.removedClientIds.includes(clientId);
+				removeInfo !== undefined &&
+				removeInfo.removes.some((remove) => remove.clientId === clientId);
 			const wasMovedByInsertingClient =
 				moveInfo !== undefined && moveInfo.movedClientIds.includes(clientId);
 
@@ -646,17 +647,17 @@ export class PartialSequenceLengths {
 			return;
 		}
 
+		const firstRemove = removalInfo?.removes[0];
 		if (
-			(removalInfo?.removedSeq !== undefined &&
-				seqLTE(removalInfo.removedSeq, collabWindow.minSeq)) ||
+			(firstRemove !== undefined &&
+				timestampUtils.lte(firstRemove, collabWindow.minSeqTime)) ||
 			(moveInfo?.movedSeq !== undefined && seqLTE(moveInfo.movedSeq, collabWindow.minSeq))
 		) {
 			combinedPartialLengths.minLength -= segment.cachedLength;
 			return;
 		}
 
-		const removalIsLocal =
-			!!removalInfo && removalInfo.removedSeq === UnassignedSequenceNumber;
+		const removalIsLocal = !!firstRemove && timestampUtils.isLocal(firstRemove);
 		const moveIsLocal = !!moveInfo && moveInfo.movedSeq === UnassignedSequenceNumber;
 		const isLocalInsertion = timestampUtils.isLocal(segment.insert);
 		const isOnlyLocalRemoval = removalIsLocal && (!moveInfo || moveIsLocal);
@@ -682,22 +683,20 @@ export class PartialSequenceLengths {
 		);
 
 		const clientsWithRemoveOrObliterate = new Set<number>([
-			...(removalInfo?.removedClientIds ?? []),
+			...(removalInfo?.removes.map(({ clientId }) => clientId) ?? []),
 			...(moveInfo?.movedClientIds ?? []),
 		]);
 
 		const removeHappenedFirst =
-			removalInfo &&
-			(!moveInfo ||
-				moveIsLocal ||
-				(!removalIsLocal && moveInfo.movedSeq > removalInfo.removedSeq));
+			firstRemove &&
+			(!moveInfo || moveIsLocal || (!removalIsLocal && moveInfo.movedSeq > firstRemove.seq));
 
 		if (removeHappenedFirst) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			seqOrLocalSeq = removalIsLocal ? removalInfo.localRemovedSeq! : removalInfo.removedSeq;
+			seqOrLocalSeq = removalIsLocal ? firstRemove.localSeq! : firstRemove.seq;
 			// The client who performed the remove is always stored
 			// in the first position of removalInfo.
-			clientId = removalInfo.removedClientIds[0];
+			clientId = firstRemove.clientId;
 		} else {
 			assert(
 				moveInfo !== undefined,
@@ -740,7 +739,7 @@ export class PartialSequenceLengths {
 			for (const id of clientsWithRemoveOrObliterate) {
 				if (id === collabWindow.clientId) {
 					// The local client also removed or obliterated this segment.
-					const localSeq = moveInfo?.localMovedSeq ?? removalInfo?.localRemovedSeq;
+					const localSeq = moveInfo?.localMovedSeq ?? firstRemove?.localSeq;
 					if (localSeq === undefined) {
 						// Sure, the local client did it--but that change was already acked.
 						// No need to account for it in the unsequenced records.
@@ -854,6 +853,7 @@ export class PartialSequenceLengths {
 			if (child.isLeaf()) {
 				const segment = child;
 				const removalInfo = toRemovalInfo(segment);
+				const firstRemove = removalInfo?.removes[0];
 				const moveInfo = toMoveInfo(segment);
 				if (seq === segment.insert.seq) {
 					// if this segment was moved on insert, its length should
@@ -874,7 +874,7 @@ export class PartialSequenceLengths {
 				}
 
 				const earlierDeletion = Math.min(
-					removalInfo?.removedSeq ?? Number.MAX_VALUE,
+					firstRemove?.seq ?? Number.MAX_VALUE,
 					moveInfo?.movedSeq ?? Number.MAX_VALUE,
 				);
 				if (timestampUtils.isAcked(segment.insert) && seq === earlierDeletion) {

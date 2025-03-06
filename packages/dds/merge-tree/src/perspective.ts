@@ -6,14 +6,14 @@
 import { UnassignedSequenceNumber } from "./constants.js";
 import { type MergeTree } from "./mergeTree.js";
 import { LeafAction, backwardExcursion, forwardExcursion } from "./mergeTreeNodeWalk.js";
-import { seqLTE, type ISegmentLeaf } from "./mergeTreeNodes.js";
+import { seqLTE, timestampUtils, type ISegmentLeaf } from "./mergeTreeNodes.js";
 import {
 	isInserted,
 	isMoved,
 	isRemoved,
 	type IHasInsertionInfo,
 	type IMoveInfo,
-	type IRemovalInfo,
+	type IHasRemovalInfo,
 	type SegmentWithInfo,
 } from "./segmentInfos.js";
 
@@ -90,17 +90,19 @@ export class PerspectiveImpl implements Perspective {
  * TODO:AB#29765: This function does not support non-local-client perspectives, but should.
  */
 export function wasRemovedBefore(
-	seg: SegmentWithInfo<IHasInsertionInfo & IRemovalInfo>,
+	seg: SegmentWithInfo<IHasInsertionInfo & IHasRemovalInfo>,
 	{ refSeq, localSeq }: SeqTime,
 ): boolean {
-	if (
-		seg.removedSeq === UnassignedSequenceNumber &&
-		localSeq !== undefined &&
-		seg.localRemovedSeq !== undefined
-	) {
-		return seg.localRemovedSeq <= localSeq;
+	const firstRemove = seg.removes?.[0];
+	if (firstRemove === undefined) {
+		return false;
 	}
-	return seg.removedSeq !== undefined && seqLTE(seg.removedSeq, refSeq);
+
+	if (timestampUtils.isLocal(firstRemove) && localSeq !== undefined) {
+		return firstRemove.localSeq! <= localSeq;
+	}
+
+	return seqLTE(firstRemove.seq, refSeq);
 }
 
 /**

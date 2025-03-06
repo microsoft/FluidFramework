@@ -234,7 +234,7 @@ export class SnapshotV1 {
 			//      segment, and therefore we can discard it.
 			if (
 				timestampUtils.isLocal(segment.insert) ||
-				(isRemoved(segment) && segment.removedSeq <= minSeq) ||
+				(isRemoved(segment) && timestampUtils.lte(segment.removes[0], minSeqTimestamp)) ||
 				(isMoved(segment) && segment.movedSeq <= minSeq)
 			) {
 				if (timestampUtils.isAcked(segment.insert)) {
@@ -251,7 +251,7 @@ export class SnapshotV1 {
 			if (
 				timestampUtils.lte(segment.insert, minSeqTimestamp) && // Segment is below the MSN, and...
 				(!isRemoved(segment) || // .. Segment has not been removed, or...
-					segment.removedSeq === UnassignedSequenceNumber) && // .. Removal op to be delivered on reconnect
+					timestampUtils.isLocal(segment.removes[0])) && // .. Removal op to be delivered on reconnect
 				(!isMoved(segment) || segment.movedSeq === UnassignedSequenceNumber)
 			) {
 				// This segment is below the MSN, which means that future ops will not reference it.  Attempt to
@@ -293,20 +293,23 @@ export class SnapshotV1 {
 				// We have already dispensed with removed segments below the MSN and removed segments with unassigned
 				// sequence numbers.  Any remaining removal info should be preserved.
 				if (isRemoved(segment)) {
+					const firstRemove = segment.removes[0];
 					assert(
-						segment.removedSeq !== UnassignedSequenceNumber && segment.removedSeq > minSeq,
+						timestampUtils.isAcked(firstRemove) &&
+							timestampUtils.greaterThan(firstRemove, minSeqTimestamp),
 						0x065 /* "On removal info preservation, segment has invalid removed sequence number!" */,
 					);
-					raw.removedSeq = segment.removedSeq;
+					// TODO: We drop data here which will be necessary to allow perspectives of remote clients that
+					// don't include all of their ops. This should be remedied at some point.
+					raw.removedSeq = firstRemove.seq;
 
 					// back compat for when we split overlap and removed client
-					raw.removedClient =
-						segment.removedClientIds === undefined
-							? undefined
-							: this.getLongClientId(segment.removedClientIds[0]);
+					// TODO: Document when we can remove this. It should be possible to remove once all clients in an ecosystem
+					// are writing the 'all clients in one array' format.
+					raw.removedClient = this.getLongClientId(firstRemove.clientId);
 
-					raw.removedClientIds = segment.removedClientIds?.map((id) =>
-						this.getLongClientId(id),
+					raw.removedClientIds = segment.removes.map(({ clientId }) =>
+						this.getLongClientId(clientId),
 					);
 				}
 

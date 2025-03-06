@@ -374,11 +374,7 @@ export class TestClient extends Client {
 			assertInserted(segment);
 			prefixes.push(opTimestampToString(segment.insert));
 			if (isRemoved(segment)) {
-				prefixes.push(
-					segment.removedSeq === UnassignedSequenceNumber
-						? `L${segment.localRemovedSeq}`
-						: segment.removedSeq,
-				);
+				prefixes.push(opTimestampToString(segment.removes[0]));
 			}
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			test.push(`${prefixes.join(",")}:${(segment as any).text}`);
@@ -414,8 +410,9 @@ export class TestClient extends Client {
 
 		const isRemovedFromView = (s: ISegmentPrivate): boolean =>
 			isRemoved(s) &&
-			((s.removedSeq !== UnassignedSequenceNumber && s.removedSeq <= seqNumberFrom) ||
-				(s.localRemovedSeq !== undefined && s.localRemovedSeq <= localSeq));
+			((timestampUtils.isAcked(s.removes[0]) && s.removes[0].seq <= seqNumberFrom) ||
+				(timestampUtils.isLocal(s.removes[s.removes.length - 1]) &&
+					s.removes[s.removes.length - 1].localSeq! <= localSeq));
 
 		walkAllChildSegments(this.mergeTree.root, (seg) => {
 			assertInserted(seg);
@@ -453,9 +450,7 @@ export class TestClient extends Client {
 		const isInsertedInView = (seg: ISegmentPrivate): boolean =>
 			isInserted(seg) && timestampUtils.lte(seg.insert, perspectiveStamp);
 		const isRemovedFromView = (s: ISegmentPrivate): boolean =>
-			isRemoved(s) &&
-			(s.removedSeq !== UnassignedSequenceNumber ||
-				(s.localRemovedSeq !== undefined && s.localRemovedSeq <= localSeq));
+			isRemoved(s) && timestampUtils.lte(s.removes[0], perspectiveStamp);
 		const isMovedFromView = (s: ISegmentPrivate): boolean =>
 			isMoved(s) &&
 			(s.movedSeq !== UnassignedSequenceNumber ||

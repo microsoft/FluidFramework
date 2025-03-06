@@ -41,8 +41,7 @@ abstract class BaseEndpointSegment implements IMergeNodeInfo {
 	 * of undefined/0. we leverage this to create
 	 * a 0 length segment for an endpoint of the tree
 	 */
-	removedSeq: number = 0;
-	removedClientIds: number[] = [LocalClientId];
+	removes = [{ seq: 0, clientId: LocalClientId }];
 	attribution: undefined;
 	propertyManager: undefined;
 	localSeq: undefined;

@@ -26,7 +26,7 @@ import {
 	type IHasInsertionInfo,
 	type IMergeNodeInfo,
 	type IMoveInfo,
-	type IRemovalInfo,
+	type IHasRemovalInfo,
 	type SegmentWithInfo,
 } from "./segmentInfos.js";
 import { PropertiesManager } from "./segmentPropertiesManager.js";
@@ -250,6 +250,23 @@ export const timestampUtils = {
 	gte: (a: OperationTimestamp, b: OperationTimestamp) => !lessThan(a, b),
 	isLocal: (a: OperationTimestamp) => a.seq === UnassignedSequenceNumber,
 	isAcked: (a: OperationTimestamp) => a.seq !== UnassignedSequenceNumber,
+	insertIntoList: (list: OperationTimestamp[], timestamp: OperationTimestamp) => {
+		if (timestampUtils.isLocal(timestamp) || list.length === 0) {
+			list.push(timestamp);
+		} else {
+			for (let i = list.length - 1; i >= 0; i--) {
+				if (greaterThan(timestamp, list[i])) {
+					list.splice(i + 1, 0, timestamp);
+					return;
+				}
+			}
+
+			// Less than all timestamps in the list: put it at the beginning.
+			list.unshift(timestamp);
+		}
+	},
+	hasAnyAckedOperation: (list: OperationTimestamp[]) =>
+		list.some((ts) => timestampUtils.isAcked(ts)),
 };
 
 function lessThan(a: OperationTimestamp, b: OperationTimestamp): boolean {
@@ -415,9 +432,10 @@ export abstract class BaseSegment implements ISegment {
 		// TODO: deep clone properties
 		seg.properties = clone(this.properties);
 		if (isRemoved(this)) {
-			overwriteInfo<IRemovalInfo>(seg, {
-				removedSeq: this.removedSeq,
-				removedClientIds: [...this.removedClientIds],
+			// TODO: Consider object.freezing timestamps and not cloning. Using an immutable model would be nice.
+			const removes = this.removes.map((r) => ({ ...r }));
+			overwriteInfo<IHasRemovalInfo>(seg, {
+				removes,
 			});
 		}
 		if (isMoved(this)) {
@@ -474,10 +492,10 @@ export abstract class BaseSegment implements ISegment {
 			overwriteInfo<IHasInsertionInfo>(leafSegment, { insert });
 		}
 		if (isRemoved(this)) {
-			overwriteInfo<IRemovalInfo>(leafSegment, {
-				removedClientIds: [...this.removedClientIds],
-				removedSeq: this.removedSeq,
-				localRemovedSeq: this.localRemovedSeq,
+			// TODO: Consider object.freezing timestamps and not cloning. Using an immutable model would be nice.
+			const removes = this.removes.map((r) => ({ ...r }));
+			overwriteInfo<IHasRemovalInfo>(leafSegment, {
+				removes,
 			});
 		}
 		if (isMoved(this)) {

@@ -36,6 +36,7 @@ import { LocalReferencePosition, SlidingPreference } from "./localReference.js";
 import {
 	MergeTree,
 	errorIfOptionNotTrue,
+	isRemovedAndAckedOrMovedAndAcked,
 	type IMergeTreeOptionsInternal,
 } from "./mergeTree.js";
 import type {
@@ -406,7 +407,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			if (isInserted(seg) && timestampUtils.isLocal(seg.insert)) {
 				localInserts++;
 			}
-			if (isRemoved(seg) && seg.removedSeq === UnassignedSequenceNumber) {
+			if (isRemoved(seg) && timestampUtils.isLocal(seg.removes[seg.removes.length - 1])) {
 				localRemoves++;
 			}
 			// Only serialize segments that have not been removed.
@@ -943,14 +944,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					// if the segment has been removed or obliterated, there's no need to send the annotate op
 					// unless the remove was local, in which case the annotate must have come
 					// before the remove
-					if (
-						(!isRemoved(segment) ||
-							(segment.localRemovedSeq !== undefined &&
-								segment.removedSeq === UnassignedSequenceNumber)) &&
-						(!isMoved(segment) ||
-							(segment.localMovedSeq !== undefined &&
-								segment.movedSeq === UnassignedSequenceNumber))
-					) {
+					if (!isRemovedAndAckedOrMovedAndAcked(segment)) {
 						newOp =
 							resetOp.props === undefined
 								? createAdjustRangeOp(
@@ -1006,10 +1000,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				}
 
 				case MergeTreeDeltaType.REMOVE: {
+					// TODO: Logic can be simplified. All we're checking is that nobody else removed it in the meantime,
+					// which we verify by checking if the first removal is still our own local edit.
+					// Same for obliterate codepath below.
 					if (
 						isRemoved(segment) &&
-						segment.localRemovedSeq !== undefined &&
-						segment.removedSeq === UnassignedSequenceNumber &&
+						timestampUtils.isLocal(segment.removes[0]) &&
 						(!isMoved(segment) ||
 							(segment.localMovedSeq !== undefined &&
 								segment.movedSeq === UnassignedSequenceNumber))
@@ -1027,9 +1023,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						isMoved(segment) &&
 						segment.localMovedSeq !== undefined &&
 						segment.movedSeq === UnassignedSequenceNumber &&
-						(!isRemoved(segment) ||
-							(segment.localRemovedSeq !== undefined &&
-								segment.removedSeq === UnassignedSequenceNumber))
+						!(isRemoved(segment) && timestampUtils.isAcked(segment.removes[0]))
 					) {
 						newOp = createObliterateRangeOp(
 							segmentPosition,
