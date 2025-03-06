@@ -5,7 +5,7 @@
 "section": deprecation
 ---
 
-The containerPackageInfo parameter of the createOdspCreateContainerRequest() function will be deprecated and removed in 2.40.
+The containerPackageInfo parameter of the createOdspCreateContainerRequest() function is deprecated and will be removed in 2.40.
 
 The parameter `containerPackageInfo` in `createOdspCreateContainerRequest()` is deprecated and will be removed in version 2.40.
 
