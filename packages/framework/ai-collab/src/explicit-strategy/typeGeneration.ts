@@ -24,74 +24,46 @@ import { z } from "zod";
 import { objectIdKey, typeField } from "./agentEditTypes.js";
 import { fail, getOrCreate, mapIterable } from "./utils.js";
 
-/**
- * Zod Object type used to represent & validate the ObjectTarget type within a {@link TreeEdit}.
- * @remarks this is used as a component with {@link generateGenericEditTypes} to produce the final zod validation objects.
- */
-const objectTarget = z
-	.object({
-		target: z
-			.string()
-			.describe(
-				`The id of the object (as specified by the object's ${objectIdKey} property) that is being referenced`,
-			),
-	})
+const objectPointer = z
+	.string()
 	.describe(
-		"A pointer to a specific object node in the tree, identified by the target object's Id.",
+		"Points to an object in the tree via its ID. ObjectPointer should always be preferred to point to an object, though PathPointer allows pointing to an array or primitive when needed.",
 	);
-/**
- * Zod Object type used to represent & validate the ObjectPlace type within a {@link TreeEdit}.
- * @remarks this is used as a component with {@link generateGenericEditTypes} to produce the final zod validation objects.
- */
-const objectPlace = z
-	.object({
-		type: z.enum(["objectPlace"]),
-		target: z
-			.string()
-			.describe(
-				`The id (${objectIdKey}) of the object that the new/moved object should be placed relative to. This must be the id of an object that already existed in the tree content that was originally supplied.`,
-			),
-		place: z
-			.enum(["before", "after"])
-			.describe(
-				"Where the new/moved object will be relative to the target object - either just before or just after",
-			),
-	})
+
+const pathPointer = z
+	.tuple([z.union([z.null(), objectPointer]), z.union([z.string(), z.number()])])
+	.rest(z.union([z.string(), z.number()]))
 	.describe(
-		"A pointer to a location either just before or just after an object that is in an array",
+		"Points to an object in the tree via a path. The path starts either at an object (via ID) or the root of the tree (via null). When possible, paths should always be relative to an object ID.",
 	);
-/**
- * Zod Object type used to represent & validate the ArrayPlace type within a {@link TreeEdit}.
- * @remarks this is used as a component with {@link generateGenericEditTypes} to produce the final zod validation objects.
- */
-const arrayPlace = z
-	.object({
-		type: z.enum(["arrayPlace"]),
-		parentId: z
-			.string()
-			.describe(
-				`The id (${objectIdKey}) of the parent object of the array. This must be the id of an object that already existed in the tree content that was originally supplied.`,
-			),
-		field: z.string().describe("The key of the array to insert into"),
-		location: z
-			.enum(["start", "end"])
-			.describe("Where to insert into the array - either the start or the end"),
-	})
+
+const pointer = z
+	.union([objectPointer, pathPointer])
 	.describe(
-		`either the "start" or "end" of an array, as specified by a "parent" ObjectTarget and a "field" name under which the array is stored (useful for prepending or appending)`,
+		"Represents a location in the JSON object tree. Either a pointer to an object via ID or a path to an element (can be object, array, or primitive) via path.",
 	);
+
+const arrayPosition = z
+	.union([
+		z.number().describe("Exact index, should be used only for arrays of primitives."),
+		z.literal("start").describe("Beginning of array"),
+		z.literal("end").describe("End of array"),
+		z.object({ after: pointer }).describe("Position after the referenced element"),
+		z.object({ before: pointer }).describe("Position before the referenced element"),
+	])
+	.describe("Describes a location within an array.");
+
 /**
- * Zod Object type used to represent & validate the Range type within a {@link TreeEdit}.
- * @remarks this is used as a component with {@link generateGenericEditTypes} to produce the final zod validation objects.
+ * Defines a range within an array.
  */
-const range = z
+export const arrayRange = z
 	.object({
-		from: objectPlace,
-		to: objectPlace,
+		array: pathPointer.describe("The array containing the range"),
+		from: arrayPosition.describe("Start of range (inclusive)"),
+		to: arrayPosition.describe("End of range (inclusive)"),
 	})
-	.describe(
-		'A range of objects in the same array specified by a "from" and "to" Place. The "to" and "from" objects MUST be in the same array.',
-	);
+	.describe("Defines a range within an array.");
+
 /**
  * Cache used to prevent repeatedly generating the same Zod validation objects for the same {@link SimpleTreeSchema} as generate propts for repeated calls to an LLM
  */
@@ -151,49 +123,78 @@ export function generateGenericEditTypes(
 
 		const setField = z
 			.object({
-				type: z.enum(["setField"]),
-				target: objectTarget,
-				field: z.enum([...setFieldFieldSet] as [string, ...string[]]), // Modify with appropriate fields
-				newValue: generateDomainTypes
+				type: z.literal("setField"),
+				object: objectPointer.describe("The parent object"),
+				field: z.string().describe("The field name to set"),
+				value: generateDomainTypes
 					? getType(setFieldTypeSet)
-					: z.any().describe("Domain-specific content here"),
+					: z
+							.any()
+							.describe(
+								"New content to set the field to. Must adhere to domain-specific schema.",
+							),
 			})
-			.describe("Sets a field on a specific ObjectTarget.");
+			.describe(
+				"Set a field on an object to a specified value. Can be used set optional fields to undefined.",
+			);
 
-		const removeFromArray = z
-			.object({
-				type: z.literal("removeFromArray"),
-				source: z.union([objectTarget, range]),
-			})
-			.describe("Deletes an object or Range of objects from the tree.");
+		const insertValue = generateDomainTypes
+			? getType(insertSet)
+			: z
+					.any()
+					.describe(
+						"New content to insert. The domain-specific schema must allow this type in the array.",
+					);
 
 		const insertIntoArray = z
 			.object({
 				type: z.literal("insertIntoArray"),
-				content: generateDomainTypes
-					? getType(insertSet)
-					: z.any().describe("Domain-specific content here"),
-				destination: z.union([arrayPlace, objectPlace]),
+				array: pathPointer.describe("The parent array"),
+				position: arrayPosition.describe("Where to add the element(s)"),
+				value: insertValue,
+				values: z.array(insertValue).optional().describe("Array of values to add"),
 			})
-			.describe("Inserts a new object at a specific Place or ArrayPlace.");
+			.describe(
+				"Add new element(s) to an array. Only one of `value` or `values` should be set.",
+			);
+
+		const removeFromArray = z
+			.object({
+				type: z.literal("removeFromArray"),
+				op: z.literal("removeFromArray"),
+				element: pointer.optional().describe("The element to remove"),
+				range: arrayRange.optional().describe("For removing a range"),
+			})
+			.describe(
+				"Remove element(s) from an array. Supports removing a single element or a range. Only one of `element` or `range` should be set.",
+			);
 
 		const moveArrayElement = z
 			.object({
 				type: z.literal("moveArrayElement"),
-				source: z.union([objectTarget, range]),
-				destination: z.union([arrayPlace, objectPlace]),
+				op: z.literal("moveArrayElement"),
+				source: z
+					.union([pointer, arrayRange])
+					.describe("Source can be a single element or a range"),
+				destination: z
+					.object({
+						target: pointer.describe("The target array"),
+						position: arrayPosition.describe("Where to place the element(s) in the array"),
+					})
+					.describe("Destination must be an array position"),
 			})
-			.describe("Moves an object or Range of objects to a new Place or ArrayPlace.");
+			.describe("Move a value from one location to another array");
 
 		const typeRecord: Record<string, Zod.ZodTypeAny> = {
-			ObjectTarget: objectTarget,
+			ObjectPointer: objectPointer,
 			SetField: setField,
 		};
 
 		if (doesSchemaHaveArray) {
-			typeRecord.ObjectPlace = objectPlace;
-			typeRecord.ArrayPlace = arrayPlace;
-			typeRecord.Range = range;
+			typeRecord.PathPointer = pathPointer;
+			typeRecord.Pointer = pointer;
+			typeRecord.ArrayPosition = arrayPosition;
+			typeRecord.ArrayRange = arrayRange;
 			typeRecord.InsertIntoArray = insertIntoArray;
 			typeRecord.RemoveFromArray = removeFromArray;
 			typeRecord.MoveArrayElement = moveArrayElement;
@@ -205,7 +206,7 @@ export function generateGenericEditTypes(
 
 		const editWrapper = z
 			.array(editTypes)
-			.describe("The next edit to apply to the tree, or null if the task is complete.");
+			.describe("The set of edits to apply to the JSON tree.");
 		typeRecord.EditArray = editWrapper;
 
 		return [typeRecord, "EditArray"];
@@ -318,6 +319,7 @@ function getOrCreateType(
 		}
 	});
 }
+
 function getOrCreateTypeForField(
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
 	typeMap: Map<string, Zod.ZodTypeAny>,

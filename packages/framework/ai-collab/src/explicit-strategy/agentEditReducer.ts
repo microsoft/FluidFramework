@@ -32,11 +32,11 @@ import {
 	type Range,
 	type ObjectPlace,
 	type ArrayPlace,
-	type TreeEditObject,
-	type TreeEditValue,
+	type TreeContentObject,
+	type TreeContent,
 	typeField,
 	objectIdKey,
-	type TreeEditArray,
+	type TreeContentArray,
 } from "./agentEditTypes.js";
 import type { IdGenerator } from "./idGenerator.js";
 import type { JsonValue } from "./jsonTypes.js";
@@ -83,7 +83,7 @@ function populateDefaults(
 }
 
 function createObjectOrArray(
-	jsonObject: TreeEditObject | TreeEditArray,
+	jsonObject: TreeContentObject | TreeContentArray,
 	schema: TreeNodeSchema,
 	idGenerator: IdGenerator,
 ): TreeNode {
@@ -91,7 +91,7 @@ function createObjectOrArray(
 	const simpleNodeSchema = schema as unknown as new (dummy: unknown) => TreeNode;
 	const treeNode = new simpleNodeSchema(jsonWithoutIds);
 
-	function updateIds(node: TreeNode | TreeLeafValue, json: TreeEditValue): void {
+	function updateIds(node: TreeNode | TreeLeafValue, json: TreeContent): void {
 		if (typeof json === "object" && json !== null) {
 			if (Array.isArray(json)) {
 				for (let i = 0; i < json.length; i++) {
@@ -126,9 +126,9 @@ function createObjectOrArray(
 }
 
 function cloneWithoutProperty(
-	obj: TreeEditObject | TreeEditArray,
+	obj: TreeContentObject | TreeContentArray,
 	propertyToRemove,
-): TreeEditObject | TreeEditArray {
+): TreeContentObject | TreeContentArray {
 	// Custom replacer function to exclude specific property
 	function replacer<T>(key: string, value: T): T | undefined {
 		if (key === propertyToRemove) {
@@ -137,10 +137,10 @@ function cloneWithoutProperty(
 		return value;
 	}
 	// Use stringify with the custom replacer, then parse back to an object
-	return JSON.parse(JSON.stringify(obj, replacer)) as TreeEditObject | TreeEditArray;
+	return JSON.parse(JSON.stringify(obj, replacer)) as TreeContentObject | TreeContentArray;
 }
 
-function getSchemaIdentifier(content: TreeEditValue): string | undefined {
+function getSchemaIdentifier(content: TreeContent): string | undefined {
 	switch (typeof content) {
 		case "boolean": {
 			return SchemaFactory.boolean.identifier;
@@ -169,8 +169,8 @@ function getSchemaIdentifier(content: TreeEditValue): string | undefined {
 	}
 }
 
-function contentWithIds(content: TreeNode, idGenerator: IdGenerator): TreeEditObject {
-	return JSON.parse(toDecoratedJson(idGenerator, content)) as TreeEditObject;
+function contentWithIds(content: TreeNode, idGenerator: IdGenerator): TreeContentObject {
+	return JSON.parse(toDecoratedJson(idGenerator, content)) as TreeContentObject;
 }
 
 /**
