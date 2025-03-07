@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "@fluid-internal/client-utils";
+import { performanceNow } from "@fluid-internal/client-utils";
 import {
 	ITelemetryBaseLogger,
 	ITelemetryBaseProperties,
@@ -54,7 +54,6 @@ import {
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { fetch } from "./fetch.js";
 import { storeLocatorInOdspUrl } from "./odspFluidFileLink.js";
 // eslint-disable-next-line import/no-deprecated
 import { ISnapshotContents } from "./odspPublicUtils.js";
@@ -135,12 +134,11 @@ export async function fetchHelper(
 	requestInfo: RequestInfo,
 	requestInit: RequestInit | undefined,
 ): Promise<IOdspResponse<Response>> {
-	const start = performance.now();
+	const start = performanceNow();
 
-	// Node-fetch and dom have conflicting typing, force them to work by casting for now
 	return fetch(requestInfo, requestInit).then(
 		async (fetchResponse) => {
-			const response = fetchResponse as unknown as Response;
+			const response = fetchResponse;
 			// Let's assume we can retry.
 			if (!response) {
 				throw new NonRetryableError(
@@ -165,7 +163,7 @@ export async function fetchHelper(
 				content: response,
 				headers,
 				propsToLog: getSPOAndGraphRequestIdsFromResponse(headers),
-				duration: performance.now() - start,
+				duration: performanceNow() - start,
 			};
 		},
 		(error) => {
@@ -221,6 +219,8 @@ export async function fetchHelper(
 		},
 	);
 }
+// This allows `fetch` to be mocked (e.g. with sinon `stub()`)
+fetchHelper.fetch = fetch;
 
 /**
  * A utility function to fetch and parse as JSON with support for retries
@@ -340,7 +340,8 @@ export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl 
 /**
  * Type narrowing utility to determine if the provided {@link @fluidframework/driver-definitions#IResolvedUrl}
  * is an {@link @fluidframework/odsp-driver-definitions#IOdspResolvedUrl}.
- * @internal
+ * @legacy
+ * @alpha
  */
 export function isOdspResolvedUrl(resolvedUrl: IResolvedUrl): resolvedUrl is IOdspResolvedUrl {
 	return "odspResolvedUrl" in resolvedUrl && resolvedUrl.odspResolvedUrl === true;
@@ -507,16 +508,16 @@ export function buildOdspShareLinkReqParams(
 }
 
 export function measure<T>(callback: () => T): [T, number] {
-	const start = performance.now();
+	const start = performanceNow();
 	const result = callback();
-	const time = performance.now() - start;
+	const time = performanceNow() - start;
 	return [result, time];
 }
 
 export async function measureP<T>(callback: () => Promise<T>): Promise<[T, number]> {
-	const start = performance.now();
+	const start = performanceNow();
 	const result = await callback();
-	const time = performance.now() - start;
+	const time = performanceNow() - start;
 	return [result, time];
 }
 

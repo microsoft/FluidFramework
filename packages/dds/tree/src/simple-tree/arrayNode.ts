@@ -18,6 +18,7 @@ import {
 	normalizeAllowedTypes,
 	type ImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type NodeSchemaMetadata,
 	type TreeLeafValue,
 	type TreeNodeFromImplicitAllowedTypes,
 } from "./schemaTypes.js";
@@ -857,7 +858,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	// Therefore it must include `length`,
 	// even though this "length" is never invoked (due to being shadowed by the proxy provided own property).
 	public get length(): number {
-		return fail("Proxy should intercept length");
+		return fail(0xadb /* Proxy should intercept length */);
 	}
 
 	public [Symbol.iterator](): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
@@ -992,7 +993,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		if (!destinationField.context.isHydrated()) {
 			if (!(sourceField instanceof UnhydratedTreeSequenceField)) {
 				throw new UsageError(
-					"Cannot move elements from an unhydrated array to a hydrated array.",
+					"Cannot move elements from a hydrated array to an unhydrated array.",
 				);
 			}
 
@@ -1044,7 +1045,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			throw new UsageError(`Concurrent editing and iteration is not allowed.`);
 		}
 		for (let i = 0; i < this.length; i++) {
-			yield this.at(i) ?? fail("Index is out of bounds");
+			yield this.at(i) ?? fail(0xadc /* Index is out of bounds */);
 			if (initialLastUpdatedStamp !== kernel.generationNumber) {
 				throw new UsageError(`Concurrent editing and iteration is not allowed.`);
 			}
@@ -1062,11 +1063,13 @@ export function arraySchema<
 	TName extends string,
 	const T extends ImplicitAllowedTypes,
 	const ImplicitlyConstructable extends boolean,
+	const TCustomMetadata = unknown,
 >(
 	identifier: TName,
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
 	customizable: boolean,
+	metadata?: NodeSchemaMetadata<TCustomMetadata>,
 ) {
 	type Output = TreeNodeSchemaBoth<
 		TName,
@@ -1075,7 +1078,8 @@ export function arraySchema<
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		ImplicitlyConstructable,
 		T,
-		undefined
+		undefined,
+		TCustomMetadata
 	>;
 
 	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(info));
@@ -1157,6 +1161,8 @@ export function arraySchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> | undefined =
+			metadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {

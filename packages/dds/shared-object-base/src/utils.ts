@@ -4,6 +4,7 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
@@ -45,8 +46,7 @@ export function makeHandlesSerializable(
 	value: unknown,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: AB#26129 use unknown instead of any (legacy breaking)
-): any {
+): unknown {
 	return serializer.encode(value, bind);
 }
 
@@ -61,8 +61,7 @@ export function makeHandlesSerializable(
  * @legacy
  * @alpha
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: AB#26129 use unknown instead of any (legacy breaking)
-export function parseHandles(value: unknown, serializer: IFluidSerializer): any {
+export function parseHandles(value: unknown, serializer: IFluidSerializer): unknown {
 	return serializer.decode(value);
 }
 
@@ -98,3 +97,11 @@ export function bindHandles(
 	// handles and binds them, but sometimes we only wish to do the latter
 	serializer.encode(value, bind);
 }
+
+/**
+ * Information about a Fluid channel.
+ * @privateRemarks
+ * This is distinct from {@link IChannel} as it omits the APIs used by the runtime to manage the channel and instead only has things which are useful (and safe) to expose to users of the channel.
+ * @internal
+ */
+export type IChannelView = Pick<IChannel, "id" | "attributes" | "isAttached">;

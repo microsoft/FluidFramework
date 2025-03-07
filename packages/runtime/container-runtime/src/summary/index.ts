@@ -44,12 +44,10 @@ export {
 	ISummarizeHeuristicData,
 	ISummarizer,
 	ISummarizeResults,
-	ISummarizerEvents,
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
 	ISummaryCancellationToken,
 	SubmitSummaryResult,
-	SummarizerStopReason,
 	EnqueueSummarizeResult,
 	IAckSummaryResult,
 	IBaseSummarizeResult,
@@ -67,7 +65,11 @@ export {
 	SubmitSummaryFailureData,
 	SummaryStage,
 	IRetriableFailureError,
-	ISummarizeEventProps,
+	type ISummaryConfiguration,
+	type ISummaryConfigurationDisableHeuristics,
+	type ISummaryConfigurationDisableSummarizer,
+	type ISummaryConfigurationHeuristics,
+	type ISummaryBaseConfiguration,
 } from "./summarizerTypes.js";
 export {
 	IAckedSummary,
@@ -106,6 +108,13 @@ export {
 	IFluidDataStoreAttributes2,
 	OmitAttributesVersions,
 } from "./summaryFormat.js";
+export {
+	formCreateSummarizerFn,
+	validateSummaryHeuristicConfiguration,
+	summarizerRequestUrl,
+	DefaultSummaryConfiguration,
+	isSummariesDisabled,
+} from "./summaryHelpers.js";
 export {
 	IdCompressorMode,
 	IDocumentSchemaCurrent,

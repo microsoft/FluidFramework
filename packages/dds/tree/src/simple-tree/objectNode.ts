@@ -6,7 +6,7 @@
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { FieldKey } from "../core/index.js";
+import type { FieldKey, SchemaPolicy } from "../core/index.js";
 import {
 	FieldKinds,
 	type FlexTreeField,
@@ -26,6 +26,7 @@ import {
 	normalizeFieldSchema,
 	type ImplicitAllowedTypes,
 	FieldKind,
+	type NodeSchemaMetadata,
 } from "./schemaTypes.js";
 import {
 	type TreeNodeSchema,
@@ -42,7 +43,11 @@ import {
 } from "./core/index.js";
 import { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
 import { type RestrictiveStringRecord, fail, type FlattenKeys } from "../util/index.js";
-import type { ObjectNodeSchema, ObjectNodeSchemaInternalData } from "./objectNodeTypes.js";
+import {
+	isObjectNodeSchema,
+	type ObjectNodeSchema,
+	type ObjectNodeSchemaInternalData,
+} from "./objectNodeTypes.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import { getUnhydratedContext } from "./createContext.js";
 
@@ -257,7 +262,7 @@ function createProxyHandler(
 			// For some reason, the getOwnPropertyDescriptor is not passed in the receiver, so use a weak map.
 			// If a refactoring is done to associated flex tree data with the target not the proxy, this extra map could be removed,
 			// and the design would be more compatible with proxyless nodes.
-			const proxy = targetToProxy.get(target) ?? fail("missing proxy");
+			const proxy = targetToProxy.get(target) ?? fail(0xadd /* missing proxy */);
 			const field = getOrCreateInnerNode(proxy).tryGetField(fieldInfo.storedKey);
 
 			const p: PropertyDescriptor = {
@@ -306,7 +311,7 @@ export function setField(
 		}
 
 		default:
-			fail("invalid FieldKind");
+			fail(0xade /* invalid FieldKind */);
 	}
 }
 
@@ -326,11 +331,15 @@ export function objectSchema<
 	TName extends string,
 	const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
 	const ImplicitlyConstructable extends boolean,
+	const TCustomMetadata = unknown,
 >(
 	identifier: TName,
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
-): ObjectNodeSchema<TName, T, ImplicitlyConstructable> & ObjectNodeSchemaInternalData {
+	allowUnknownOptionalFields: boolean,
+	metadata?: NodeSchemaMetadata<TCustomMetadata>,
+): ObjectNodeSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
+	ObjectNodeSchemaInternalData {
 	// Ensure no collisions between final set of property keys, and final set of stored keys (including those
 	// implicitly derived from property keys)
 	assertUniqueKeys(identifier, info);
@@ -368,6 +377,7 @@ export function objectSchema<
 			]),
 		);
 		public static readonly identifierFieldKeys: readonly FieldKey[] = identifierFieldKeys;
+		public static readonly allowUnknownOptionalFields: boolean = allowUnknownOptionalFields;
 
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
@@ -454,6 +464,8 @@ export function objectSchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> | undefined =
+			metadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {
@@ -508,4 +520,22 @@ function assertUniqueKeys<
 		}
 		derivedStoredKeys.add(storedKey);
 	}
+}
+
+/**
+ * Creates a policy for allowing unknown optional fields on an object node which delegates to the policy defined
+ * on the object node's internal schema data.
+ */
+export function createUnknownOptionalFieldPolicy(
+	schema: ImplicitFieldSchema,
+): SchemaPolicy["allowUnknownOptionalFields"] {
+	const context = getUnhydratedContext(schema);
+	return (identifier) => {
+		const storedSchema = context.schema.get(identifier);
+		return (
+			storedSchema !== undefined &&
+			isObjectNodeSchema(storedSchema) &&
+			storedSchema.allowUnknownOptionalFields
+		);
+	};
 }

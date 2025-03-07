@@ -131,6 +131,9 @@ export interface ISnapshotContents {
 }
 
 // @alpha
+export function isOdspResolvedUrl(resolvedUrl: IResolvedUrl): resolvedUrl is IOdspResolvedUrl;
+
+// @alpha
 export const locatorQueryParamName = "nav";
 
 // @alpha (undocumented)
@@ -171,7 +174,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 
 // @alpha
 export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
-    constructor(shareLinkFetcherProps?: ShareLinkFetcherProps | undefined, logger?: ITelemetryBaseLogger, appName?: string | undefined, getContext?: ((resolvedUrl: IOdspResolvedUrl, dataStorePath: string) => Promise<string | undefined>) | undefined);
+    constructor(shareLinkFetcherProps?: ShareLinkFetcherProps | undefined, logger?: ITelemetryBaseLogger, appName?: string | undefined, getContext?: ((resolvedUrl: IOdspResolvedUrl, dataStorePath: string) => Promise<string | undefined>) | undefined, containerPackageInfo?: IContainerPackageInfo | undefined);
     appendDataStorePath(requestUrl: URL, pathToAppend: string): string | undefined;
     appendLocatorParams(baseUrl: string, resolvedUrl: IResolvedUrl, dataStorePath: string, packageInfoSource?: IContainerPackageInfo): Promise<string>;
     static createDocumentUrl(baseUrl: string, driverInfo: OdspFluidDataStoreLocator): string;

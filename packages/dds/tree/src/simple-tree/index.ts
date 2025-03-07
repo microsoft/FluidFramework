@@ -35,6 +35,8 @@ export {
 	type SchemaCompatibilityStatus,
 	type ITreeConfigurationOptions,
 	SchemaFactory,
+	SchemaFactoryAlpha,
+	type SchemaFactoryObjectOptions,
 	type ScopedSchemaName,
 	type ValidateRecursiveSchema,
 	type FixRecursiveArraySchema,
@@ -118,6 +120,22 @@ export {
 	conciseFromCursor,
 	createFromCursor,
 	asTreeViewAlpha,
+	customFromCursorStored,
+	type CustomTreeNode,
+	type CustomTreeValue,
+	tryStoredSchemaAsArray,
+	type schemaStatics,
+	type ITreeAlpha,
+	type TransactionConstraint,
+	type NodeInDocumentConstraint,
+	type RunTransactionParams,
+	type VoidTransactionCallbackStatus,
+	type TransactionCallbackStatus,
+	type TransactionResult,
+	type TransactionResultExt,
+	type TransactionResultSuccess,
+	type TransactionResultFailed,
+	rollback,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
@@ -150,6 +168,8 @@ export {
 	type Input,
 	type ReadableField,
 	type ReadSchema,
+	type NodeSchemaOptions,
+	type NodeSchemaMetadata,
 } from "./schemaTypes.js";
 export {
 	getTreeNodeForField,
@@ -166,6 +186,7 @@ export {
 	type ObjectFromSchemaRecord,
 	type TreeObjectNode,
 	setField,
+	createUnknownOptionalFieldPolicy,
 } from "./objectNode.js";
 export type { TreeMapNode, MapNodeInsertableData } from "./mapNode.js";
 export {

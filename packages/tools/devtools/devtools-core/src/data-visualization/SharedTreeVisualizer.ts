@@ -3,26 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import { FieldKind } from "@fluidframework/tree";
 import type {
-	FieldMapObject,
-	JsonableTree,
-	SharedTreeContentSnapshot,
-	TreeNodeStoredSchema,
-	TreeTypeSet,
+	SimpleArrayNodeSchema,
+	SimpleMapNodeSchema,
+	SimpleNodeSchema,
+	SimpleObjectNodeSchema,
+	VerboseTree,
+	VerboseTreeNode,
 } from "@fluidframework/tree/internal";
-import {
-	EmptyKey,
-	LeafNodeStoredSchema,
-	MapNodeStoredSchema,
-	ObjectNodeStoredSchema,
-} from "@fluidframework/tree/internal";
+import { NodeKind, SchemaFactory, Tree } from "@fluidframework/tree/internal";
 
 import type { VisualizeChildData } from "./DataVisualization.js";
-import type {
-	SharedTreeLeafNode,
-	VisualSharedTreeNode,
-	SharedTreeSchemaNode,
-} from "./VisualSharedTreeTypes.js";
+import type { VisualSharedTreeNode, SharedTreeSchemaNode } from "./VisualSharedTreeTypes.js";
 import { VisualSharedTreeNodeKind } from "./VisualSharedTreeTypes.js";
 import {
 	type VisualChildNode,
@@ -93,6 +86,12 @@ function createToolTipContents(schema: SharedTreeSchemaNode): VisualTreeNode {
 	if (schema.allowedTypes !== undefined) {
 		children.allowedTypes = createAllowedTypesVisualTree(schema.allowedTypes);
 	}
+	if (schema.isRequired !== undefined) {
+		children.isRequired = {
+			nodeKind: VisualNodeKind.ValueNode,
+			value: schema.isRequired,
+		};
+	}
 	return {
 		nodeKind: VisualNodeKind.TreeNode,
 		children,
@@ -100,7 +99,7 @@ function createToolTipContents(schema: SharedTreeSchemaNode): VisualTreeNode {
 }
 
 /**
- * Converts the visual representation from {@link visualizeSharedTreeNodeBySchema} to a visual tree compatible with the devtools-view.
+ * Converts the visual representation from {@link visualizeNodeBySchema} to a visual tree compatible with the devtools-view.
  * @param tree - the visual representation of the SharedTree.
  * @returns - the visual representation of type {@link VisualChildNode}
  */
@@ -157,141 +156,90 @@ export function toVisualTree(tree: VisualSharedTreeNode): VisualChildNode {
 }
 
 /**
- * Concatenrate allowed types for `ObjectNodeStoredSchema` and `MapNodeStoredSchema`.
+ * Concatenate allowed types for `ObjectNodeStoredSchema` and `MapNodeStoredSchema`.
  */
-function concatenateTypes(fieldKey: string, fieldTypes: TreeTypeSet | undefined): string {
-	let fieldAllowedType = fieldKey === EmptyKey ? "" : `${fieldKey} : `;
-
-	if (fieldTypes === undefined) {
-		fieldAllowedType += "any";
-	} else {
-		const allowedTypes = [...fieldTypes].join(" | ");
-		fieldAllowedType += `${allowedTypes}`;
-	}
-
-	return fieldAllowedType;
+export function concatenateTypes(fieldTypes: ReadonlySet<string>): string {
+	return [...fieldTypes].join(" | ");
 }
 
 /**
- * Returns the allowed fields & types for the object fields (e.g., `foo : string | number, bar: boolean`)
+ * Properties that describe schema constraints for a field in the tree
  */
-function getObjectAllowedTypes(schema: ObjectNodeStoredSchema): string {
-	const result: string[] = [];
+interface FieldSchemaProperties {
+	allowedTypes: ReadonlySet<string> | undefined;
 
-	for (const [fieldKey, treeFieldStoredSchema] of schema.objectNodeFields) {
-		// Set of allowed tree types `TreeTypeSet`.
-		const fieldTypes = treeFieldStoredSchema.types;
-
-		result.push(concatenateTypes(fieldKey, fieldTypes));
-
-		// If the field key is `EmptyKey`, then it is an array field.
-		// Return the allowed types in string format, instead of JSON format.
-		if (fieldKey === EmptyKey) {
-			return result.join("");
-		}
-	}
-
-	return `{ ${result.join(", ")} }`;
+	/**
+	 * Whether the field is required (true) or optional (false).
+	 *
+	 * `undefined` indicates that the field is implicitly required.
+	 * In this case, no requirement information will be displayed by the devtools.
+	 */
+	isRequired: boolean | undefined;
 }
 
 /**
- * Returns the allowed fields & types for the map fields.
+ * Processes and visualizes the fields of a verbose tree node.
+ *
+ * @param treeFields - The fields of the tree node to visualize. Can be either an array of VerboseTree (for array nodes) or a Record of field names to VerboseTree (for object/map nodes).
+ * @param treeDefinitions - Map containing all schema definitions for the entire tree structure. Each definition describes the shape and constraints of a particular node type.
+ * @param fieldSchemaProperties - Record mapping field names to their schema properties, including allowed types and whether they are required.
+ * @param visualizeChildData - Callback function to visualize child node data.
+ *
+ * @returns A record mapping field names/indices to their visual tree representations.
  */
-function getMapAllowedTypes(
-	fields: FieldMapObject<JsonableTree> | undefined,
-	schema: MapNodeStoredSchema,
-): string {
-	if (fields === undefined) {
-		throw new TypeError("Fields should not be undefined.");
-	}
-
-	const mapFieldAllowedTypes = schema.mapFields.types;
-
-	const result: string[] = [];
-
-	for (const [fieldKey] of Object.entries(fields)) {
-		result.push(concatenateTypes(fieldKey, mapFieldAllowedTypes));
-	}
-
-	return `{ ${result.join(", ")} }`;
-}
-
-/**
- * Returns the schema & leaf value of the node with type {@link LeafNodeStoredSchema}.
- */
-async function visualizeLeafNode(
-	tree: JsonableTree,
+async function visualizeVerboseNodeFields(
+	treeFields: readonly VerboseTree[] | Record<string, VerboseTree>,
+	treeDefinitions: ReadonlyMap<string, SimpleNodeSchema>,
+	fieldSchemaProperties: Record<string, FieldSchemaProperties>,
 	visualizeChildData: VisualizeChildData,
-): Promise<SharedTreeLeafNode> {
-	return {
-		schema: {
-			schemaName: tree.type,
-		},
-		value: await visualizeChildData(tree.value),
-		kind: VisualSharedTreeNodeKind.LeafNode,
-	};
+): Promise<Record<string, VisualSharedTreeNode>> {
+	const fields: Record<string | number, VisualSharedTreeNode> = {};
+
+	for (const [fieldKey, childField] of Object.entries(treeFields)) {
+		fields[fieldKey] = await visualizeSharedTreeBySchema(
+			childField,
+			treeDefinitions,
+			{
+				allowedTypes: fieldSchemaProperties[fieldKey]?.allowedTypes,
+				isRequired: fieldSchemaProperties[fieldKey]?.isRequired,
+			},
+			visualizeChildData,
+		);
+	}
+
+	return fields;
 }
 
 /**
  * Returns the schema & fields of the node with type {@link ObjectNodeStoredSchema}.
  */
 async function visualizeObjectNode(
-	tree: JsonableTree,
-	schema: ObjectNodeStoredSchema,
-	contentSnapshot: SharedTreeContentSnapshot,
+	tree: VerboseTreeNode,
+	schema: SimpleObjectNodeSchema,
+	treeDefinitions: ReadonlyMap<string, SimpleNodeSchema>,
+	{ allowedTypes, isRequired }: FieldSchemaProperties,
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
-	const treeFields = tree.fields;
-
-	if (treeFields === undefined || Object.keys(treeFields).length === 0) {
-		return {
-			schema: {
-				schemaName: tree.type,
-				allowedTypes: getObjectAllowedTypes(schema),
-			},
-			fields: {},
-			kind: VisualSharedTreeNodeKind.InternalNode,
+	const objectNodeSchemaProperties: Record<string, FieldSchemaProperties> = {};
+	for (const [fieldKey, treeFieldSimpleSchema] of Object.entries(schema.fields)) {
+		objectNodeSchemaProperties[fieldKey] = {
+			allowedTypes: treeFieldSimpleSchema.allowedTypes,
+			isRequired: treeFieldSimpleSchema.kind === FieldKind.Required ? true : false,
 		};
-	}
-
-	const fields: Record<string | number, VisualSharedTreeNode> = {};
-
-	// `EmptyKey` indicates an array field (e.g., `schemabuilder.array()`).
-	// Hides level of indirection by omitting the empty key in the visual output.
-	if (
-		Object.keys(treeFields).length === 1 &&
-		Object.prototype.hasOwnProperty.call(treeFields, EmptyKey)
-	) {
-		const children = treeFields[EmptyKey];
-
-		for (let i = 0; i < children.length; i++) {
-			const childSchema = contentSnapshot.schema.nodeSchema.get(children[i].type);
-			fields[i] = await visualizeSharedTreeNodeBySchema(
-				children[i],
-				childSchema,
-				contentSnapshot,
-				visualizeChildData,
-			);
-		}
-	} else {
-		for (const [fieldKey, childField] of Object.entries(treeFields)) {
-			const childSchema = contentSnapshot.schema.nodeSchema.get(childField[0].type);
-
-			fields[fieldKey] = await visualizeSharedTreeNodeBySchema(
-				childField[0],
-				childSchema,
-				contentSnapshot,
-				visualizeChildData,
-			);
-		}
 	}
 
 	return {
 		schema: {
 			schemaName: tree.type,
-			allowedTypes: getObjectAllowedTypes(schema),
+			allowedTypes: concatenateTypes(allowedTypes ?? new Set()),
+			isRequired: isRequired?.toString(),
 		},
-		fields,
+		fields: await visualizeVerboseNodeFields(
+			tree.fields,
+			treeDefinitions,
+			objectNodeSchemaProperties,
+			visualizeChildData,
+		),
 		kind: VisualSharedTreeNodeKind.InternalNode,
 	};
 }
@@ -300,76 +248,175 @@ async function visualizeObjectNode(
  * Returns the schema & fields of the node with type {@link MapNodeStoredSchema}.
  */
 async function visualizeMapNode(
-	tree: JsonableTree,
-	schema: MapNodeStoredSchema,
-	contentSnapshot: SharedTreeContentSnapshot,
+	tree: VerboseTreeNode,
+	schema: SimpleMapNodeSchema,
+	treeDefinitions: ReadonlyMap<string, SimpleNodeSchema>,
+	{ allowedTypes, isRequired }: FieldSchemaProperties,
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
-	const treeFields = tree.fields;
-
-	if (treeFields === undefined || Object.keys(treeFields).length === 0) {
-		return {
-			schema: {
-				schemaName: tree.type,
-				allowedTypes: getMapAllowedTypes(treeFields, schema),
-			},
-			fields: {},
-			kind: VisualSharedTreeNodeKind.InternalNode,
+	const mapNodeSchemaProperties: Record<string, FieldSchemaProperties> = {};
+	for (const key of Object.keys(tree.fields)) {
+		mapNodeSchemaProperties[key] = {
+			allowedTypes: schema.allowedTypes,
+			// Map values are always required. Don't display field requirement information, since that information is redundant.
+			isRequired: undefined,
 		};
-	}
-
-	const fields: Record<string | number, VisualSharedTreeNode> = {};
-
-	for (const [fieldKey, childField] of Object.entries(treeFields)) {
-		const fieldSchema = contentSnapshot.schema.nodeSchema.get(childField[0].type);
-
-		fields[fieldKey] = await visualizeSharedTreeNodeBySchema(
-			childField[0],
-			fieldSchema,
-			contentSnapshot,
-			visualizeChildData,
-		);
 	}
 
 	return {
 		schema: {
 			schemaName: tree.type,
-			allowedTypes: getMapAllowedTypes(treeFields, schema),
+			allowedTypes: concatenateTypes(allowedTypes ?? new Set()),
+			isRequired: isRequired?.toString(),
 		},
-		fields,
+		fields: await visualizeVerboseNodeFields(
+			tree.fields,
+			treeDefinitions,
+			mapNodeSchemaProperties,
+			visualizeChildData,
+		),
 		kind: VisualSharedTreeNodeKind.InternalNode,
 	};
 }
 
 /**
- * Main recursive helper function to create the visual representation of the SharedTree.
- * Processes tree nodes based on their schema type (e.g., ObjectNodeStoredSchema, MapNodeStoredSchema, LeafNodeStoredSchema), producing the visual representation for each type.
+ * Returns the schema & fields of the node with type {@link ArrayNodeStoredSchema}.
+ */
+async function visualizeArrayNode(
+	tree: VerboseTreeNode,
+	schema: SimpleArrayNodeSchema,
+	treeDefinitions: ReadonlyMap<string, SimpleNodeSchema>,
+	{ allowedTypes, isRequired }: FieldSchemaProperties,
+	visualizeChildData: VisualizeChildData,
+): Promise<VisualSharedTreeNode> {
+	const children = tree.fields;
+	if (!Array.isArray(children)) {
+		throw new TypeError("Invalid array");
+	}
+
+	const arrayNodeSchemaProperties: Record<string, FieldSchemaProperties> = {};
+	for (const [i] of children.entries()) {
+		arrayNodeSchemaProperties[i] = {
+			allowedTypes: schema.allowedTypes,
+			// Array values are always required. Don't display field requirement information, since that information is redundant.
+			isRequired: undefined,
+		};
+	}
+
+	return {
+		schema: {
+			schemaName: tree.type,
+			allowedTypes: concatenateTypes(allowedTypes ?? new Set()),
+			isRequired: isRequired?.toString(),
+		},
+		fields: await visualizeVerboseNodeFields(
+			tree.fields,
+			treeDefinitions,
+			arrayNodeSchemaProperties,
+			visualizeChildData,
+		),
+		kind: VisualSharedTreeNodeKind.InternalNode,
+	};
+}
+
+/**
+ * Creates the visual representation of non-leaf SharedTree nodes.
+ *
+ * @remarks
+ * Processes internal tree nodes based on their schema type (e.g., ObjectNodeStoredSchema, MapNodeStoredSchema, ArrayNodeStoredSchema),
+ * producing the visual representation for each type.
  *
  * @see {@link https://fluidframework.com/docs/data-structures/tree/} for more information on the SharedTree schema.
  *
  * @remarks
  */
-export async function visualizeSharedTreeNodeBySchema(
-	tree: JsonableTree,
-	schema: TreeNodeStoredSchema | undefined,
-	contentSnapshot: SharedTreeContentSnapshot,
+async function visualizeNodeBySchema(
+	tree: VerboseTreeNode,
+	treeDefinitions: ReadonlyMap<string, SimpleNodeSchema>,
+	{ allowedTypes, isRequired }: FieldSchemaProperties,
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
-	if (schema instanceof LeafNodeStoredSchema) {
-		const leafVisualized = await visualizeLeafNode(tree, visualizeChildData);
-		return leafVisualized;
-	} else if (schema instanceof ObjectNodeStoredSchema) {
-		const objectVisualized = visualizeObjectNode(
-			tree,
-			schema,
-			contentSnapshot,
-			visualizeChildData,
-		);
-		return objectVisualized;
-	} else if (schema instanceof MapNodeStoredSchema) {
-		const mapVisualized = visualizeMapNode(tree, schema, contentSnapshot, visualizeChildData);
-		return mapVisualized;
-	} else {
+	const schema = treeDefinitions.get(tree.type);
+
+	if (schema === undefined) {
 		throw new TypeError("Unrecognized schema type.");
 	}
+
+	switch (schema.kind) {
+		case NodeKind.Object: {
+			const objectVisualized = visualizeObjectNode(
+				tree,
+				schema,
+				treeDefinitions,
+				{ allowedTypes, isRequired },
+				visualizeChildData,
+			);
+			return objectVisualized;
+		}
+		case NodeKind.Map: {
+			const mapVisualized = visualizeMapNode(
+				tree,
+				schema,
+				treeDefinitions,
+				{ allowedTypes, isRequired },
+				visualizeChildData,
+			);
+			return mapVisualized;
+		}
+		case NodeKind.Array: {
+			return visualizeArrayNode(
+				tree,
+				schema,
+				treeDefinitions,
+				{ allowedTypes, isRequired },
+				visualizeChildData,
+			);
+		}
+		default: {
+			throw new TypeError("Unrecognized schema type.");
+		}
+	}
+}
+
+/**
+ * Creates a visual representation of a SharedTree based on its schema.
+ * @param tree - The {@link VerboseTree} to visualize
+ * @param treeDefinitions - Map containing all schema definitions for the entire tree structure. Each definition
+ * describes the shape and constraints of a particular node type.
+ * @param fieldSchemaProperties - Properties describing schema constraints for this field:
+ * - `allowedTypes`: Set of type names that are valid for this specific node position in the tree.
+ * This is a subset of the types defined in treeDefinitions.
+ * - `isRequired`: Whether this field is required in its parent object schema.
+ * Only meaningful for direct children of object nodes.
+ * Undefined for array/map elements since they are always required within their parent.
+ * @param visualizeChildData - Callback function to visualize child node data
+ * @returns A visual representation of the tree that includes schema information and node values
+ *
+ * @remarks
+ * This function handles both leaf nodes (primitive values, handles) and internal nodes (objects, maps, arrays).
+ * For leaf nodes, it creates a visual representation with the node's schema and value.
+ * For internal nodes, it recursively processes the node's fields using {@link visualizeNodeBySchema}.
+ */
+export async function visualizeSharedTreeBySchema(
+	tree: VerboseTree,
+	treeDefinitions: ReadonlyMap<string, SimpleNodeSchema>,
+	{ allowedTypes, isRequired }: FieldSchemaProperties,
+	visualizeChildData: VisualizeChildData,
+): Promise<VisualSharedTreeNode> {
+	return Tree.is(tree, SchemaFactory.leaves)
+		? {
+				schema: {
+					schemaName: Tree.schema(tree).identifier,
+					allowedTypes: concatenateTypes(allowedTypes ?? new Set()),
+					isRequired: isRequired?.toString(),
+				},
+				value: await visualizeChildData(tree),
+				kind: VisualSharedTreeNodeKind.LeafNode,
+			}
+		: visualizeNodeBySchema(
+				tree,
+				treeDefinitions,
+				{ allowedTypes, isRequired },
+				visualizeChildData,
+			);
 }

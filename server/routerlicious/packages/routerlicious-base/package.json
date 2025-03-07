@@ -27,7 +27,7 @@
 		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"test:debug": "mocha inspect --recursive \"dist/test/**/*.spec.*js\"",
 		"tsc": "tsc",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
@@ -72,7 +72,7 @@
 		"compression": "^1.7.2",
 		"cookie-parser": "^1.4.7",
 		"cors": "^2.8.4",
-		"express": "^4.21.1",
+		"express": "^4.21.2",
 		"ioredis": "^5.2.3",
 		"json-stringify-safe": "^5.0.1",
 		"jsonwebtoken": "^9.0.0",
@@ -86,9 +86,9 @@
 		"ws": "^7.5.10"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.38.0",
+		"@fluid-tools/build-cli": "0.52.0-315632",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.38.0",
+		"@fluidframework/build-tools": "0.52.0-315632",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/server-local-server": "workspace:~",
 		"@fluidframework/server-routerlicious-base-previous": "npm:@fluidframework/server-routerlicious-base@5.0.0",
@@ -131,19 +131,29 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_NexusResources": {
+			"Class_AlfredResources": {
 				"forwardCompat": false
 			},
-			"ClassDeclaration_OrdererManager": {
+			"Class_NexusResources": {
 				"forwardCompat": false
 			},
-			"ClassDeclaration_AlfredResources": {
+			"Class_OrdererManager": {
 				"forwardCompat": false
 			},
-			"ClassDeclaration_RiddlerResources": {
-				"forwardCompat": false,
+			"Class_RiddlerResources": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"Class_TenantManager": {
+				"forwardCompat": false
+			},
+			"ClassStatics_RiddlerResources": {
+				"backCompat": false
+			},
+			"Interface_ITenantDocument": {
 				"backCompat": false
 			}
-		}
+		},
+		"entrypoint": "public"
 	}
 }

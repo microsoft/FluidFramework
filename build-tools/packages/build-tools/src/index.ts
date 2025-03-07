@@ -12,10 +12,7 @@ export { MonoRepo } from "./common/monoRepo";
 export {
 	Package,
 	type PackageJson,
-	updatePackageJsonFile,
-	updatePackageJsonFileAsync,
 } from "./common/npmPackage";
-export { Timer } from "./common/timer";
 
 // For repo policy check
 export {

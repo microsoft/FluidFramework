@@ -382,7 +382,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 	}
 
 	public getFieldKey(): FieldKey {
-		return this.fieldKey ?? fail("not in a field");
+		return this.fieldKey ?? fail(0xb09 /* not in a field */);
 	}
 
 	public getFieldLength(): number {
@@ -510,11 +510,13 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 	public exitNode(): void {
 		const info = this.nodeInfo(CursorLocationType.Nodes);
 		this.indexOfField =
-			info.indexOfParentField ?? fail("navigation up to root field not yet supported"); // TODO;
+			info.indexOfParentField ??
+			fail(0xb0a /* navigation up to root field not yet supported */); // TODO;
 		this.fieldKey = info.parentField;
 		this.mode = CursorLocationType.Fields;
 		this.moveToPosition(
-			info.indexOfParentPosition ?? fail("navigation up to root field not yet supported"),
+			info.indexOfParentPosition ??
+				fail(0xb0b /* navigation up to root field not yet supported */),
 		); // TODO
 	}
 
@@ -536,7 +538,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		this.indexOfField =
 			fieldInfo === undefined
 				? fieldMap.size
-				: (fieldInfo.indexOfParentField ?? fail("children should have parents"));
+				: (fieldInfo.indexOfParentField ?? fail(0xb0c /* children should have parents */));
 		this.fieldKey = key;
 		this.mode = CursorLocationType.Fields;
 	}

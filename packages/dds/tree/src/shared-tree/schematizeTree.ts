@@ -7,7 +7,6 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
 	AllowedUpdateType,
-	Compatibility,
 	CursorLocationType,
 	type ITreeCursorSynchronous,
 	type TreeStoredSchema,
@@ -24,7 +23,7 @@ import {
 import { fail, isReadonlyArray } from "../util/index.js";
 
 import type { ITreeCheckout } from "./treeCheckout.js";
-import type { ViewSchema } from "../simple-tree/index.js";
+import { toStoredSchema, type ViewSchema } from "../simple-tree/index.js";
 
 /**
  * Modify `storedSchema` and invoke `setInitialTree` when it's time to set the tree content.
@@ -120,10 +119,7 @@ export function evaluateUpdate(
 ): UpdateType {
 	const compatibility = viewSchema.checkCompatibility(checkout.storedSchema);
 
-	if (
-		compatibility.read === Compatibility.Compatible &&
-		compatibility.write === Compatibility.Compatible
-	) {
+	if (compatibility.canUpgrade && compatibility.canView) {
 		// Compatible as is
 		return UpdateType.None;
 	}
@@ -133,13 +129,13 @@ export function evaluateUpdate(
 		return UpdateType.Initialize;
 	}
 
-	if (compatibility.read !== Compatibility.Compatible) {
+	if (!compatibility.canUpgrade) {
 		// Existing stored schema permits trees which are incompatible with the view schema, so schema can not be updated
 		return UpdateType.Incompatible;
 	}
 
-	assert(compatibility.write === Compatibility.Incompatible, 0x8bd /* unexpected case */);
-	assert(compatibility.read === Compatibility.Compatible, 0x8be /* unexpected case */);
+	assert(!compatibility.canView, 0x8bd /* unexpected case */);
+	assert(compatibility.canUpgrade, 0x8be /* unexpected case */);
 
 	// eslint-disable-next-line no-bitwise
 	return allowedSchemaModifications & AllowedUpdateType.SchemaCompatible
@@ -202,7 +198,7 @@ export function initialize(checkout: ITreeCheckout, treeContent: TreeStoredConte
 					break;
 				}
 				default: {
-					fail("unexpected root field kind during initialize");
+					fail(0xac7 /* unexpected root field kind during initialize */);
 				}
 			}
 		});
@@ -244,7 +240,7 @@ export function ensureSchema(
 			return false;
 		}
 		case UpdateType.SchemaCompatible: {
-			checkout.updateSchema(viewSchema.schema);
+			checkout.updateSchema(toStoredSchema(viewSchema.schema));
 			return true;
 		}
 		case UpdateType.Initialize: {

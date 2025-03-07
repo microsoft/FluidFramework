@@ -41,6 +41,7 @@ import { apiItemToSections } from "../TransformApiItem.js";
 import { transformApiModel } from "../TransformApiModel.js";
 import {
 	type ApiItemTransformationConfiguration,
+	type ApiItemTransformationOptions,
 	getApiItemTransformationConfigurationWithDefaults,
 } from "../configuration/index.js";
 import { betaWarningSpan, wrapInSection } from "../helpers/index.js";
@@ -48,8 +49,8 @@ import { betaWarningSpan, wrapInSection } from "../helpers/index.js";
 /**
  * Sample "default" configuration.
  */
-const defaultPartialConfig: Omit<ApiItemTransformationConfiguration, "apiModel"> = {
-	uriRoot: ".",
+const defaultPartialConfig: Omit<ApiItemTransformationOptions, "apiModel"> = {
+	uriRoot: "",
 };
 
 // Relative to lib/api-item-transforms/test
@@ -114,9 +115,9 @@ function findApiMember(
  * Creates a config for testing.
  */
 function createConfig(
-	partialConfig: Omit<ApiItemTransformationConfiguration, "apiModel">,
+	partialConfig: Omit<ApiItemTransformationOptions, "apiModel">,
 	apiModel: ApiModel,
-): Required<ApiItemTransformationConfiguration> {
+): ApiItemTransformationConfiguration {
 	return getApiItemTransformationConfigurationWithDefaults({
 		...partialConfig,
 		apiModel,
@@ -135,7 +136,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		const config = createConfig(defaultPartialConfig, model);
 
-		const result = config.transformApiVariable(apiVariable, config);
+		const result = config.transformations[ApiItemKind.Variable](apiVariable, config);
 
 		const expected = [
 			wrapInSection(
@@ -172,7 +173,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		const config = createConfig(defaultPartialConfig, model);
 
-		const result = config.transformApiFunction(apiFunction, config);
+		const result = config.transformations[ApiItemKind.Function](apiFunction, config);
 
 		const expected = [
 			wrapInSection(
@@ -197,21 +198,13 @@ describe("ApiItem to Documentation transformation tests", () => {
 										new TableNode(
 											[
 												new TableBodyRowNode([
-													TableBodyCellNode.createFromPlainText(
-														"TTypeParameter",
-													),
-													TableBodyCellNode.createFromPlainText(
-														"A test type parameter",
-													),
+													TableBodyCellNode.createFromPlainText("TTypeParameter"),
+													TableBodyCellNode.createFromPlainText("A test type parameter"),
 												]),
 											],
 											new TableHeaderRowNode([
-												TableHeaderCellNode.createFromPlainText(
-													"Parameter",
-												),
-												TableHeaderCellNode.createFromPlainText(
-													"Description",
-												),
+												TableHeaderCellNode.createFromPlainText("Parameter"),
+												TableHeaderCellNode.createFromPlainText("Description"),
 											]),
 										),
 									],
@@ -233,22 +226,14 @@ describe("ApiItem to Documentation transformation tests", () => {
 									new TableBodyRowNode([
 										TableBodyCellNode.createFromPlainText("testParameter"),
 										TableBodyCellNode.Empty,
-										new TableBodyCellNode([
-											SpanNode.createFromPlainText("TTypeParameter"),
-										]),
+										new TableBodyCellNode([SpanNode.createFromPlainText("TTypeParameter")]),
 										TableBodyCellNode.createFromPlainText("A test parameter"),
 									]),
 									new TableBodyRowNode([
-										TableBodyCellNode.createFromPlainText(
-											"testOptionalParameter",
-										),
+										TableBodyCellNode.createFromPlainText("testOptionalParameter"),
 										TableBodyCellNode.createFromPlainText("optional"),
-										new TableBodyCellNode([
-											SpanNode.createFromPlainText("TTypeParameter"),
-										]),
-										TableBodyCellNode.createFromPlainText(
-											"An optional parameter",
-										),
+										new TableBodyCellNode([SpanNode.createFromPlainText("TTypeParameter")]),
+										TableBodyCellNode.createFromPlainText("An optional parameter"),
 									]),
 								],
 								new TableHeaderRowNode([
@@ -307,8 +292,10 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		const config = createConfig(defaultPartialConfig, model);
 
-		const result = config.transformApiInterface(apiInterface, config, (childItem) =>
-			apiItemToSections(childItem, config),
+		const result = config.transformations[ApiItemKind.Interface](
+			apiInterface,
+			config,
+			(childItem) => apiItemToSections(childItem, config),
 		);
 
 		const expected: DocumentationNode[] = [
@@ -341,12 +328,10 @@ describe("ApiItem to Documentation transformation tests", () => {
 								new TableBodyCellNode([
 									LinkNode.createFromPlainText(
 										"testOptionalInterfaceProperty",
-										"./test-package/testinterface-interface#testoptionalinterfaceproperty-propertysignature",
+										"/test-package/testinterface-interface#testoptionalinterfaceproperty-propertysignature",
 									),
 								]),
-								new TableBodyCellNode([
-									CodeSpanNode.createFromPlainText("optional"),
-								]),
+								new TableBodyCellNode([CodeSpanNode.createFromPlainText("optional")]),
 								TableBodyCellNode.createFromPlainText("0"),
 								new TableBodyCellNode([SpanNode.createFromPlainText("number")]),
 								TableBodyCellNode.createFromPlainText("Test optional property"),
@@ -370,9 +355,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 					wrapInSection(
 						[
 							// Summary section
-							wrapInSection([
-								ParagraphNode.createFromPlainText("Test optional property"),
-							]),
+							wrapInSection([ParagraphNode.createFromPlainText("Test optional property")]),
 							// Signature section
 							wrapInSection(
 								[
@@ -423,8 +406,10 @@ describe("ApiItem to Documentation transformation tests", () => {
 			model,
 		);
 
-		const result = config.transformApiNamespace(apiNamespace, config, (childItem) =>
-			apiItemToSections(childItem, config),
+		const result = config.transformations[ApiItemKind.Namespace](
+			apiNamespace,
+			config,
+			(childItem) => apiItemToSections(childItem, config),
 		);
 
 		// Note: the namespace being processed includes 3 const variables:
@@ -458,13 +443,11 @@ describe("ApiItem to Documentation transformation tests", () => {
 								new TableBodyCellNode([
 									LinkNode.createFromPlainText(
 										"bar",
-										"./test-package/testnamespace-namespace#bar-variable",
+										"/test-package/testnamespace-namespace/#bar-variable",
 									),
 								]),
 								new TableBodyCellNode([CodeSpanNode.createFromPlainText("Beta")]), // Alert
-								new TableBodyCellNode([
-									CodeSpanNode.createFromPlainText("readonly"),
-								]), // Modifier
+								new TableBodyCellNode([CodeSpanNode.createFromPlainText("readonly")]), // Modifier
 								TableBodyCellNode.Empty, // Type
 								TableBodyCellNode.Empty, // Description
 							]),
@@ -473,13 +456,11 @@ describe("ApiItem to Documentation transformation tests", () => {
 								new TableBodyCellNode([
 									LinkNode.createFromPlainText(
 										"foo",
-										"./test-package/testnamespace-namespace#foo-variable",
+										"/test-package/testnamespace-namespace/#foo-variable",
 									),
 								]),
 								TableBodyCellNode.Empty, // No alert for `@public`
-								new TableBodyCellNode([
-									CodeSpanNode.createFromPlainText("readonly"),
-								]), // Modifier
+								new TableBodyCellNode([CodeSpanNode.createFromPlainText("readonly")]), // Modifier
 								TableBodyCellNode.Empty, // Type
 								TableBodyCellNode.Empty, // Description
 							]),
@@ -509,12 +490,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 							wrapInSection([betaWarningSpan]),
 							// Signature
 							wrapInSection(
-								[
-									FencedCodeBlockNode.createFromPlainText(
-										'bar = "bar"',
-										"typescript",
-									),
-								],
+								[FencedCodeBlockNode.createFromPlainText('bar = "bar"', "typescript")],
 								{
 									title: "Signature",
 									id: "bar-signature",
@@ -533,12 +509,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 							wrapInSection([ParagraphNode.Empty]), // No summary docs on `bar`
 							// Signature
 							wrapInSection(
-								[
-									FencedCodeBlockNode.createFromPlainText(
-										'foo = "foo"',
-										"typescript",
-									),
-								],
+								[FencedCodeBlockNode.createFromPlainText('foo = "foo"', "typescript")],
 								{
 									title: "Signature",
 									id: "foo-signature",
@@ -571,16 +542,16 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		const expectedPackageDocument = new DocumentNode({
 			apiItem: model.packages[0],
-			documentPath: "test-package",
+			documentPath: "test-package/index",
 			children: [
 				new SectionNode(
 					[
 						// Breadcrumb
 						new SectionNode([
 							new ParagraphNode([
-								LinkNode.createFromPlainText("Packages", "./"),
+								LinkNode.createFromPlainText("Packages", "/"),
 								new PlainTextNode(" > "),
-								LinkNode.createFromPlainText("test-package", "./test-package"),
+								LinkNode.createFromPlainText("test-package", "/test-package/"),
 							]),
 						]),
 
@@ -590,11 +561,11 @@ describe("ApiItem to Documentation transformation tests", () => {
 								new UnorderedListNode([
 									LinkNode.createFromPlainText(
 										"entry-point-a",
-										"./test-package/entry-point-a-entrypoint",
+										"/test-package/entry-point-a-entrypoint",
 									),
 									LinkNode.createFromPlainText(
 										"entry-point-b",
-										"./test-package/entry-point-b-entrypoint",
+										"/test-package/entry-point-b-entrypoint",
 									),
 								]),
 							],
@@ -616,13 +587,13 @@ describe("ApiItem to Documentation transformation tests", () => {
 						// Breadcrumb
 						new SectionNode([
 							new ParagraphNode([
-								LinkNode.createFromPlainText("Packages", "./"),
+								LinkNode.createFromPlainText("Packages", "/"),
 								new PlainTextNode(" > "),
-								LinkNode.createFromPlainText("test-package", "./test-package"),
+								LinkNode.createFromPlainText("test-package", "/test-package/"),
 								new PlainTextNode(" > "),
 								LinkNode.createFromPlainText(
 									"entry-point-a",
-									"./test-package/entry-point-a-entrypoint",
+									"/test-package/entry-point-a-entrypoint",
 								),
 							]),
 						]),
@@ -634,14 +605,9 @@ describe("ApiItem to Documentation transformation tests", () => {
 									[
 										new TableBodyRowNode([
 											new TableBodyCellNode([
-												LinkNode.createFromPlainText(
-													"hello",
-													"./test-package#hello-variable",
-												),
+												LinkNode.createFromPlainText("hello", "/test-package/#hello-variable"),
 											]),
-											new TableBodyCellNode([
-												CodeSpanNode.createFromPlainText("readonly"),
-											]),
+											new TableBodyCellNode([CodeSpanNode.createFromPlainText("readonly")]),
 											TableBodyCellNode.Empty, // Type
 											TableBodyCellNode.createFromPlainText("Test Constant"),
 										]),
@@ -663,9 +629,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 								new SectionNode(
 									[
 										// Summary
-										new SectionNode([
-											ParagraphNode.createFromPlainText("Test Constant"),
-										]),
+										new SectionNode([ParagraphNode.createFromPlainText("Test Constant")]),
 
 										// Signature
 										new SectionNode(
@@ -675,10 +639,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 													"typescript",
 												),
 											],
-											HeadingNode.createFromPlainText(
-												"Signature",
-												"hello-signature",
-											),
+											HeadingNode.createFromPlainText("Signature", "hello-signature"),
 										),
 									],
 									HeadingNode.createFromPlainText("hello", "hello-variable"),
@@ -702,13 +663,13 @@ describe("ApiItem to Documentation transformation tests", () => {
 						// Breadcrumb
 						new SectionNode([
 							new ParagraphNode([
-								LinkNode.createFromPlainText("Packages", "./"),
+								LinkNode.createFromPlainText("Packages", "/"),
 								new PlainTextNode(" > "),
-								LinkNode.createFromPlainText("test-package", "./test-package"),
+								LinkNode.createFromPlainText("test-package", "/test-package/"),
 								new PlainTextNode(" > "),
 								LinkNode.createFromPlainText(
 									"entry-point-b",
-									"./test-package/entry-point-b-entrypoint",
+									"/test-package/entry-point-b-entrypoint",
 								),
 							]),
 						]),
@@ -720,10 +681,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 									[
 										new TableBodyRowNode([
 											new TableBodyCellNode([
-												LinkNode.createFromPlainText(
-													"world",
-													"./test-package#world-variable",
-												),
+												LinkNode.createFromPlainText("world", "/test-package/#world-variable"),
 											]),
 											TableBodyCellNode.Empty, // Type
 											TableBodyCellNode.createFromPlainText("Test Constant"),
@@ -745,9 +703,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 								new SectionNode(
 									[
 										// Summary
-										new SectionNode([
-											ParagraphNode.createFromPlainText("Test Constant"),
-										]),
+										new SectionNode([ParagraphNode.createFromPlainText("Test Constant")]),
 
 										// Signature
 										new SectionNode(
@@ -757,10 +713,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 													"typescript",
 												),
 											],
-											HeadingNode.createFromPlainText(
-												"Signature",
-												"world-signature",
-											),
+											HeadingNode.createFromPlainText("Signature", "world-signature"),
 										),
 									],
 									HeadingNode.createFromPlainText("world", "world-variable"),

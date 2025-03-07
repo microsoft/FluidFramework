@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISession, NetworkError } from "@fluidframework/server-services-client";
+import { ISession, isNetworkError, NetworkError } from "@fluidframework/server-services-client";
 import {
 	IDocument,
 	runWithRetry,
@@ -12,6 +12,7 @@ import {
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { StageTrace } from "./trace";
+import { delay } from "@fluidframework/common-utils";
 
 const defaultSessionStickinessDurationMs = 60 * 60 * 1000; // 60 minutes
 
@@ -284,13 +285,38 @@ export async function getSession(
 	clusterDrainingChecker?: IClusterDrainingChecker,
 	ephemeralDocumentTTLSec?: number,
 	connectionTrace?: StageTrace<string>,
+	readDocumentRetryDelay: number = 150,
+	readDocumentMaxRetries: number = 2,
 ): Promise<ISession> {
 	const baseLumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 
-	const document = await documentRepository.readOne({ tenantId, documentId });
-	if (!document || document?.scheduledDeletionTime !== undefined) {
-		connectionTrace?.stampStage("DocumentDoesNotExist");
-		throw new NetworkError(404, "Document is deleted and cannot be accessed.");
+	let document: IDocument | null;
+	const docDeletedError = new NetworkError(404, "Document is deleted and cannot be accessed.");
+	try {
+		const docParams = { tenantId, documentId };
+		document = await documentRepository.readOne(docParams);
+		if (document === null) {
+			connectionTrace?.stampStage("FirstAttempNullDocument");
+			await delay(readDocumentRetryDelay);
+			connectionTrace?.stampStage("RetryingNullDocument");
+			document = await documentRepository.readOne(docParams);
+			connectionTrace?.stampStage("SecondAttemptFinished");
+		}
+		if (document === null) {
+			// Retry once in case of DB replication lag should be enough
+			throw docDeletedError;
+		}
+	} catch (error: unknown) {
+		connectionTrace?.stampStage(
+			isNetworkError(error) && error.code === 404 ? "DocumentNotFound" : "DocumentDBError",
+		);
+		throw error;
+	}
+
+	// Check whether document was soft deleted
+	if (document.scheduledDeletionTime !== undefined) {
+		connectionTrace?.stampStage("DocumentSoftDeleted");
+		throw docDeletedError;
 	}
 	connectionTrace?.stampStage("DocumentExistenceChecked");
 
@@ -306,7 +332,6 @@ export async function getSession(
 			// If the document is ephemeral and older than the max ephemeral document TTL, throw an error indicating that it can't be accessed.
 			const documentExpiredByMs = currentTime - documentExpirationTime;
 			// TODO: switch back to "Ephemeral Container Expired" once clients update to use errorType, not error message. AB#12867
-			const error = new NetworkError(404, "Document is deleted and cannot be accessed.");
 			Lumberjack.warning(
 				"Document is older than the max ephemeral document TTL.",
 				{
@@ -315,10 +340,10 @@ export async function getSession(
 					documentExpirationTime,
 					documentExpiredByMs,
 				},
-				error,
+				docDeletedError,
 			);
 			connectionTrace?.stampStage("EphemeralDocumentExpired");
-			throw error;
+			throw docDeletedError;
 		}
 	}
 	connectionTrace?.stampStage("EphemeralExipiryChecked");
@@ -358,24 +383,6 @@ export async function getSession(
 		return existingSession;
 	}
 	connectionTrace?.stampStage("SessionLivenessChecked");
-
-	// Reject get session request on existing, inactive sessions if cluster is in draining process.
-	if (clusterDrainingChecker) {
-		try {
-			const isClusterDraining = await clusterDrainingChecker.isClusterDraining();
-			if (isClusterDraining) {
-				Lumberjack.info("Cluster is in draining process. Reject get session request.");
-				connectionTrace?.stampStage("ClusterIsDraining");
-				throw new NetworkError(
-					503,
-					"Server is unavailable. Please retry session discovery later.",
-				);
-			}
-		} catch (error) {
-			Lumberjack.error("Failed to get cluster draining status", lumberjackProperties, error);
-		}
-	}
-	connectionTrace?.stampStage("ClusterDrainingChecked");
 
 	// Session is not alive/discovered, so update and persist changes to DB.
 	const ignoreSessionStickiness = existingSession.ignoreSessionStickiness ?? false;

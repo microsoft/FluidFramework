@@ -24,79 +24,33 @@ import {
 import type { Listenable } from "@fluidframework/core-interfaces";
 import { createEmitter } from "@fluid-internal/client-utils";
 
-import { hasSome } from "../util/index.js";
+import { hasSome, defineLazyCachedProperty } from "../util/index.js";
 
 /**
- * Describes a change to a `SharedTreeBranch`. Various operations can mutate the head of the branch;
- * this change format describes each in terms of the "removed commits" (all commits which were present
- * on the branch before the operation but are no longer present after) and the "new commits" (all
- * commits which are present on the branch after the operation that were not present before). Each of
- * the following event types also provides a `change` which contains the net change to the branch
- * (or is undefined if there was no net change):
+ * Describes a change to a `SharedTreeBranch`. Each of the following event types provides a `change` which contains the net change to the branch (or is undefined if there was no net change):
  * * Append - when one or more commits are appended to the head of the branch, for example via
  * a change applied by the branch's editor, or as a result of merging another branch into this one
- * * Remove - when one or more commits are removed from the head of the branch. This occurs
- * when a transaction is aborted and all commits pending in that transaction are removed.
- * * Replace - when an operation simultaneously removes and appends commits. For example, when this
- * branch is rebased and some commits are removed and replaced with rebased versions, or when a
- * transaction completes and all pending commits are replaced with a single squash commit.
+ * * Remove - when one or more commits are removed from the head of the branch.
+ * * Rebase - when a rebase operation adds commits from another branch and replaces existing commits with their rebased versions.
  */
 export type SharedTreeBranchChange<TChange> =
 	| {
 			type: "append";
 			kind: CommitKind;
 			change: TaggedChange<TChange>;
+			/** The commits appended to the head of the branch by this operation */
 			newCommits: readonly [GraphCommit<TChange>, ...GraphCommit<TChange>[]];
 	  }
 	| {
 			type: "remove";
-			change: TaggedChange<TChange> | undefined;
+			change: TaggedChange<TChange>;
+			/** The commits removed from the head of the branch by this operation */
 			removedCommits: readonly [GraphCommit<TChange>, ...GraphCommit<TChange>[]];
 	  }
 	| {
-			type: "replace";
+			type: "rebase";
 			change: TaggedChange<TChange> | undefined;
-			removedCommits: readonly GraphCommit<TChange>[];
-			newCommits: readonly GraphCommit<TChange>[];
 	  };
-
-/**
- * Returns the operation that caused the given {@link SharedTreeBranchChange}.
- */
-export function getChangeReplaceType(
-	change: SharedTreeBranchChange<unknown> & { type: "replace" },
-): "transactionCommit" | "rebase" {
-	// The "replace" variant of the change event is emitted by two operations: committing a transaction and doing a rebase.
-	// Committing a transaction will always remove one or more commits (the commits that were squashed),
-	// and will add exactly one new commit (the squash commit).
-	if (change.removedCommits.length === 0 || change.newCommits.length !== 1) {
-		return "rebase";
-	}
-
-	// There is only one case in which a rebase both removes commits and adds exactly one new commit.
-	// This occurs when there is exactly one divergent, but equivalent, commit on each branch:
-	//
-	// A ─ B (branch X)	  -- rebase Y onto X -->   A ─ B (branch X)
-	// └─ B' (branch Y)                                └─ (branch Y)
-	//
-	// B' is removed and replaced by B because both have the same revision.
-	assert(
-		change.removedCommits[0] !== undefined,
-		0x9e4 /* This wont run due to the length check above */,
-	);
-	assert(
-		change.newCommits[0] !== undefined,
-		0x9e5 /* This wont run because a replace operation always has new commits */,
-	);
-	if (
-		change.removedCommits.length === 1 &&
-		change.removedCommits[0].revision === change.newCommits[0].revision
-	) {
-		return "rebase";
-	}
-
-	return "transactionCommit";
-}
 
 /**
  * The events emitted by a `SharedTreeBranch`
@@ -189,35 +143,31 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 
 	/**
 	 * Apply a change to this branch.
-	 * @param taggedChange - the change to apply
+	 * @param change - the change to apply
 	 * @param kind - the kind of change to apply
 	 * @returns the change that was applied and the new head commit of the branch
 	 */
-	public apply(
-		taggedChange: TaggedChange<TChange>,
-		kind: CommitKind = CommitKind.Default,
-	): [change: TChange, newCommit: GraphCommit<TChange>] {
+	public apply(change: TaggedChange<TChange>, kind: CommitKind = CommitKind.Default): void {
 		this.assertNotDisposed();
 
-		const revisionTag = taggedChange.revision;
+		const revisionTag = change.revision;
 		assert(revisionTag !== undefined, 0xa49 /* Revision tag must be provided */);
 
 		const newHead = mintCommit(this.head, {
 			revision: revisionTag,
-			change: taggedChange.change,
+			change: change.change,
 		});
 
 		const changeEvent = {
 			type: "append",
 			kind,
-			change: taggedChange,
+			change,
 			newCommits: [newHead],
 		} as const;
 
 		this.#events.emit("beforeChange", changeEvent);
 		this.head = newHead;
 		this.#events.emit("afterChange", changeEvent);
-		return [taggedChange.change, newHead];
 	}
 
 	/**
@@ -256,13 +206,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 	public rebaseOnto(
 		branch: SharedTreeBranch<TEditor, TChange>,
 		upTo = branch.getHead(),
-	): BranchRebaseResult<TChange> | undefined {
+	): void {
 		this.assertNotDisposed();
 
 		// Rebase this branch onto the given branch
 		const rebaseResult = this.rebaseBranch(this, branch, upTo);
 		if (rebaseResult === undefined) {
-			return undefined;
+			return;
 		}
 
 		// The net change to this branch is provided by the `rebaseBranch` API
@@ -272,7 +222,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 
 		const newCommits = targetCommits.concat(sourceCommits);
 		const changeEvent = {
-			type: "replace",
+			type: "rebase",
 			get change() {
 				const change = rebaseResult.sourceChange;
 				return change === undefined ? undefined : makeAnonChange(change);
@@ -284,7 +234,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 		this.#events.emit("beforeChange", changeEvent);
 		this.head = newSourceHead;
 		this.#events.emit("afterChange", changeEvent);
-		return rebaseResult;
 	}
 
 	/**
@@ -292,11 +241,9 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 	 * @param commit - All commits after (but not including) this commit will be removed.
 	 * @returns The net change to this branch and the commits that were removed from this branch.
 	 */
-	public removeAfter(
-		commit: GraphCommit<TChange>,
-	): [change: TaggedChange<TChange> | undefined, removedCommits: GraphCommit<TChange>[]] {
+	public removeAfter(commit: GraphCommit<TChange>): void {
 		if (commit === this.head) {
-			return [undefined, []];
+			return;
 		}
 
 		const removedCommits: GraphCommit<TChange>[] = [];
@@ -329,43 +276,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 		this.#events.emit("beforeChange", changeEvent);
 		this.head = commit;
 		this.#events.emit("afterChange", changeEvent);
-		return [change, removedCommits];
-	}
-
-	/**
-	 * Replace a range of commits on this branch with a single commit composed of equivalent changes.
-	 * @param commit - All commits after (but not including) this commit will be squashed.
-	 * @returns The commits that were squashed and removed from this branch.
-	 * @remarks The commits after `commit` will be removed from this branch, and the squash commit will become the new head of this branch.
-	 * The change event emitted by this operation will have a `change` property that is undefined, since no net change occurred.
-	 */
-	public squashAfter(commit: GraphCommit<TChange>): GraphCommit<TChange>[] {
-		if (commit === this.head) {
-			return [];
-		}
-
-		const removedCommits: GraphCommit<TChange>[] = [];
-		findAncestor([this.head, removedCommits], (c) => c === commit);
-		assert(hasSome(removedCommits), 0xa85 /* Commit must be in the branch's ancestry */);
-
-		const squashedChange = this.changeFamily.rebaser.compose(removedCommits);
-		const revision = this.mintRevisionTag();
-		const newHead = mintCommit(commit, {
-			revision,
-			change: this.changeFamily.rebaser.changeRevision(squashedChange, revision),
-		});
-
-		const changeEvent = {
-			type: "replace",
-			change: undefined,
-			removedCommits,
-			newCommits: [newHead],
-		} as const;
-
-		this.#events.emit("beforeChange", changeEvent);
-		this.head = newHead;
-		this.#events.emit("afterChange", changeEvent);
-		return removedCommits;
 	}
 
 	/**
@@ -375,9 +285,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 	 * @returns the net change to this branch and the commits that were added to this branch by the merge,
 	 * or undefined if nothing changed
 	 */
-	public merge(
-		branch: SharedTreeBranch<TEditor, TChange>,
-	): [change: TChange, newCommits: GraphCommit<TChange>[]] | undefined {
+	public merge(branch: SharedTreeBranch<TEditor, TChange>): void {
 		this.assertNotDisposed();
 		branch.assertNotDisposed();
 
@@ -394,21 +302,20 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 		// Compute the net change to this branch
 		const sourceCommits = rebaseResult.commits.sourceCommits;
 		assert(hasSome(sourceCommits), 0xa86 /* Expected source commits in non no-op merge */);
-		const change = this.changeFamily.rebaser.compose(sourceCommits);
-		const taggedChange = makeAnonChange(change);
-		const changeEvent = {
-			type: "append",
-			kind: CommitKind.Default,
-			get change(): TaggedChange<TChange> {
-				return taggedChange;
-			},
-			newCommits: sourceCommits,
-		} as const;
+		const { rebaser } = this.changeFamily;
+		const changeEvent = defineLazyCachedProperty(
+			{
+				type: "append",
+				kind: CommitKind.Default,
+				newCommits: sourceCommits,
+			} as const,
+			"change",
+			() => makeAnonChange(rebaser.compose(sourceCommits)),
+		);
 
 		this.#events.emit("beforeChange", changeEvent);
 		this.head = rebaseResult.newSourceHead;
 		this.#events.emit("afterChange", changeEvent);
-		return [change, sourceCommits];
 	}
 
 	/** Rebase `branchHead` onto `onto`, but return undefined if nothing changed */

@@ -3,29 +3,50 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import type {
-	HasListeners,
-	IEmitter,
-	Listenable,
+	ErasedType,
+	IFluidHandle,
+	IFluidLoadable,
 } from "@fluidframework/core-interfaces/internal";
-import { createEmitter } from "@fluid-internal/client-utils";
 import type {
 	IChannelAttributes,
-	IChannelFactory,
 	IFluidDataStoreRuntime,
-	IChannelServices,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import {
+	SharedObject,
+	type IChannelView,
+	type IFluidSerializer,
+	type ISharedObject,
+} from "@fluidframework/shared-object-base/internal";
+import {
+	UsageError,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type {
+	ITelemetryContext,
+	IExperimentalIncrementalSummaryContext,
+	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
+} from "@fluidframework/runtime-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { type ICodecOptions, noopValidator } from "../codec/index.js";
 import {
+	type GraphCommit,
 	type IEditableForest,
+	type ITreeCursor,
 	type JsonableTree,
+	LeafNodeStoredSchema,
+	MapNodeStoredSchema,
+	ObjectNodeStoredSchema,
 	RevisionTagCodec,
 	type TaggedChange,
+	type TreeFieldStoredSchema,
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	type TreeStoredSchemaSubscription,
@@ -35,6 +56,7 @@ import {
 
 import {
 	DetachedFieldIndexSummarizer,
+	FieldKinds,
 	ForestSummarizer,
 	SchemaSummarizer,
 	TreeCompressionStrategy,
@@ -47,18 +69,30 @@ import {
 	makeTreeChunker,
 } from "../feature-libraries/index.js";
 import {
+	type ClonableSchemaAndPolicy,
 	DefaultResubmitMachine,
 	type ExplicitCoreCodecVersions,
 	SharedTreeCore,
 } from "../shared-tree-core/index.js";
-import type {
-	ITree,
-	ImplicitFieldSchema,
-	ReadSchema,
-	TreeView,
-	TreeViewAlpha,
-	TreeViewConfiguration,
-	UnsafeUnknownSchema,
+import {
+	type ITree,
+	type ImplicitFieldSchema,
+	NodeKind,
+	type ReadSchema,
+	type SimpleFieldSchema,
+	type SimpleTreeSchema,
+	type TreeView,
+	type TreeViewAlpha,
+	type TreeViewConfiguration,
+	type UnsafeUnknownSchema,
+	type VerboseTree,
+	tryStoredSchemaAsArray,
+	type SimpleNodeSchema,
+	customFromCursorStored,
+	FieldKind,
+	type CustomTreeNode,
+	type CustomTreeValue,
+	type ITreeAlpha,
 } from "../simple-tree/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
@@ -66,20 +100,13 @@ import { SharedTreeReadonlyChangeEnricher } from "./sharedTreeChangeEnricher.js"
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
-import {
-	type CheckoutEvents,
-	type TreeCheckout,
-	type BranchableTree,
-	createTreeCheckout,
-} from "./treeCheckout.js";
-import { breakingClass, throwIfBroken } from "../util/index.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { type TreeCheckout, type BranchableTree, createTreeCheckout } from "./treeCheckout.js";
+import { Breakable, breakingClass, fail, throwIfBroken } from "../util/index.js";
 
 /**
- * Copy of data from an {@link ISharedTree} at some point in time.
+ * Copy of data from an {@link ITreePrivate} at some point in time.
  * @remarks
  * This is unrelated to Fluids concept of "snapshots".
- * @internal
  */
 export interface SharedTreeContentSnapshot {
 	/**
@@ -104,7 +131,15 @@ export interface SharedTreeContentSnapshot {
  * {@link ITree} extended with some non-public APIs.
  * @internal
  */
-export interface ISharedTree extends ISharedObject, ITree {
+export interface ITreeInternal extends IChannelView, ITreeAlpha {}
+
+/**
+ * {@link ITreeInternal} extended with some non-exported APIs.
+ * @remarks
+ * This allows access to the tree content using the internal data model used at the storage and "flex" layers,
+ * and should only be needed for testing and debugging this package's internals.
+ */
+export interface ITreePrivate extends ITreeInternal {
 	/**
 	 * Provides a copy of the current content of the tree.
 	 * This can be useful for inspecting the tree when no suitable view schema is available.
@@ -113,7 +148,19 @@ export interface ISharedTree extends ISharedObject, ITree {
 	 * This does not include everything that is included in a tree summary, since information about how to merge future edits is omitted.
 	 */
 	contentSnapshot(): SharedTreeContentSnapshot;
+
+	/**
+	 * Access to internals for testing.
+	 */
+	readonly kernel: SharedTreeKernel;
 }
+
+/**
+ * {@link ITreePrivate} extended with ISharedObject.
+ * @remarks
+ * This is used when integration testing this package with the Fluid runtime as it exposes the APIs the runtime consumes to manipulate the tree.
+ */
+export interface ISharedTree extends ISharedObject, ITreePrivate {}
 
 /**
  * Has an entry for each codec which writes an explicit version into its data.
@@ -158,71 +205,148 @@ function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
 }
 
 /**
- * Build and return a forest of the requested type.
+ * Shared object wrapping {@link SharedTreeKernel}.
  */
-export function buildConfiguredForest(
-	type: ForestType,
-	schema: TreeStoredSchemaSubscription,
-	idCompressor: IIdCompressor,
-): IEditableForest {
-	switch (type) {
-		case ForestType.Optimized:
-			return buildChunkedForest(
-				makeTreeChunker(schema, defaultSchemaPolicy),
-				undefined,
-				idCompressor,
-			);
-		case ForestType.Reference:
-			return buildForest();
-		case ForestType.Expensive:
-			return buildForest(undefined, true);
-		default:
-			unreachableCase(type);
+export class SharedTree extends SharedObject implements ISharedTree {
+	private readonly breaker: Breakable = new Breakable("Shared Tree");
+
+	public readonly kernel: SharedTreeKernel;
+
+	public constructor(
+		id: string,
+		runtime: IFluidDataStoreRuntime,
+		attributes: IChannelAttributes,
+		optionsParam: SharedTreeOptionsInternal,
+		telemetryContextPrefix: string = "fluid_sharedTree_",
+	) {
+		super(id, runtime, attributes, telemetryContextPrefix);
+		if (runtime.idCompressor === undefined) {
+			throw new UsageError("IdCompressor must be enabled to use SharedTree");
+		}
+		this.kernel = new SharedTreeKernel(
+			this.breaker,
+			this,
+			this.serializer,
+			(content, localOpMetadata) => this.submitLocalMessage(content, localOpMetadata),
+			() => this.deltaManager.lastSequenceNumber,
+			this.logger,
+			runtime.idCompressor,
+			optionsParam,
+		);
+	}
+
+	public summarizeCore(
+		serializer: IFluidSerializer,
+		telemetryContext?: ITelemetryContext,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
+	): ISummaryTreeWithStats {
+		return this.kernel.summarizeCore(serializer, telemetryContext, incrementalSummaryContext);
+	}
+
+	protected processCore(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: unknown,
+	): void {
+		this.kernel.processCore(message, local, localOpMetadata);
+	}
+
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		this.kernel.processMessagesCore(messagesCollection);
+	}
+
+	protected onDisconnect(): void {
+		this.kernel.onDisconnect();
+	}
+
+	public exportVerbose(): VerboseTree | undefined {
+		return this.kernel.exportVerbose();
+	}
+
+	public exportSimpleSchema(): SimpleTreeSchema {
+		return this.kernel.exportSimpleSchema();
+	}
+
+	public contentSnapshot(): SharedTreeContentSnapshot {
+		return this.kernel.contentSnapshot();
+	}
+
+	// For the new TreeViewAlpha API
+	public viewWith<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+		config: TreeViewConfiguration<ReadSchema<TRoot>>,
+	): SchematizingSimpleTreeView<TRoot> & TreeView<ReadSchema<TRoot>>;
+
+	// For the old TreeView API
+	public viewWith<TRoot extends ImplicitFieldSchema>(
+		config: TreeViewConfiguration<TRoot>,
+	): SchematizingSimpleTreeView<TRoot> & TreeView<TRoot>;
+
+	public viewWith<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+		config: TreeViewConfiguration<ReadSchema<TRoot>>,
+	): SchematizingSimpleTreeView<TRoot> & TreeView<ReadSchema<TRoot>> {
+		return this.kernel.viewWith(config);
+	}
+
+	protected override async loadCore(services: IChannelStorageService): Promise<void> {
+		await this.kernel.loadCore(services);
+	}
+
+	protected override didAttach(): void {
+		this.kernel.didAttach();
+	}
+
+	protected override applyStashedOp(
+		...args: Parameters<
+			SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>["applyStashedOp"]
+		>
+	): void {
+		this.kernel.applyStashedOp(...args);
+	}
+
+	protected override reSubmitCore(
+		...args: Parameters<
+			SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>["reSubmitCore"]
+		>
+	): void {
+		this.kernel.reSubmitCore(...args);
 	}
 }
 
 /**
- * Shared tree, configured with a good set of indexes and field kinds which will maintain compatibility over time.
+ * SharedTreeCore, configured with a good set of indexes and field kinds which will maintain compatibility over time.
  *
  * TODO: detail compatibility requirements.
  */
 @breakingClass
-export class SharedTree
-	extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>
-	implements ISharedTree
-{
-	private readonly _events: Listenable<CheckoutEvents> &
-		IEmitter<CheckoutEvents> &
-		HasListeners<CheckoutEvents>;
+class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange> {
 	public readonly checkout: TreeCheckout;
 	public get storedSchema(): TreeStoredSchemaRepository {
 		return this.checkout.storedSchema;
 	}
 
 	public constructor(
-		id: string,
-		runtime: IFluidDataStoreRuntime,
-		attributes: IChannelAttributes,
-		optionsParam: SharedTreeOptions,
-		telemetryContextPrefix: string = "fluid_sharedTree_",
+		breaker: Breakable,
+		sharedObject: IChannelView & IFluidLoadable,
+		serializer: IFluidSerializer,
+		submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
+		lastSequenceNumber: () => number | undefined,
+		logger: ITelemetryLoggerExt | undefined,
+		idCompressor: IIdCompressor,
+		optionsParam: SharedTreeOptionsInternal,
 	) {
-		if (runtime.idCompressor === undefined) {
-			throw new UsageError("IdCompressor must be enabled to use SharedTree");
-		}
-
 		const options = { ...defaultSharedTreeOptions, ...optionsParam };
 		const codecVersions = getCodecVersions(options.formatVersion);
 		const schema = new TreeStoredSchemaRepository();
-		const forest = buildConfiguredForest(options.forest, schema, runtime.idCompressor);
-		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
+		const forest = buildConfiguredForest(options.forest, schema, idCompressor);
+		const revisionTagCodec = new RevisionTagCodec(idCompressor);
 		const removedRoots = makeDetachedFieldIndex(
 			"repair",
 			revisionTagCodec,
-			runtime.idCompressor,
+			idCompressor,
 			options,
 		);
-		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options, {
-			getCurrentSeq: () => this.deltaManager.lastSequenceNumber,
+		const schemaSummarizer = new SchemaSummarizer(schema, options, {
+			getCurrentSeq: lastSequenceNumber,
 		});
 		const fieldBatchCodec = makeFieldBatchCodec(options, codecVersions.fieldBatch);
 
@@ -232,8 +356,8 @@ export class SharedTree
 				policy: defaultSchemaPolicy,
 			},
 			encodeType: options.treeEncodeType,
-			originatorId: runtime.idCompressor.localSessionId,
-			idCompressor: runtime.idCompressor,
+			originatorId: idCompressor.localSessionId,
+			idCompressor,
 		};
 		const forestSummarizer = new ForestSummarizer(
 			forest,
@@ -241,7 +365,7 @@ export class SharedTree
 			fieldBatchCodec,
 			encoderContext,
 			options,
-			runtime.idCompressor,
+			idCompressor,
 		);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
 		const innerChangeFamily = new SharedTreeChangeFamily(
@@ -249,7 +373,7 @@ export class SharedTree
 			fieldBatchCodec,
 			options,
 			options.treeEncodeType,
-			runtime.idCompressor,
+			idCompressor,
 		);
 		const changeFamily = makeMitigatedChangeFamily(
 			innerChangeFamily,
@@ -275,14 +399,16 @@ export class SharedTree
 		);
 		const changeEnricher = new SharedTreeReadonlyChangeEnricher(forest, schema, removedRoots);
 		super(
+			breaker,
+			sharedObject,
+			serializer,
+			submitLocalMessage,
+			logger,
 			[schemaSummarizer, forestSummarizer, removedRootsSummarizer],
 			changeFamily,
 			options,
 			codecVersions,
-			id,
-			runtime,
-			attributes,
-			telemetryContextPrefix,
+			idCompressor,
 			schema,
 			defaultSchemaPolicy,
 			new DefaultResubmitMachine(
@@ -292,44 +418,74 @@ export class SharedTree
 			),
 			changeEnricher,
 		);
-		this._events = createEmitter<CheckoutEvents>();
 		const localBranch = this.getLocalBranch();
-		this.checkout = createTreeCheckout(
-			runtime.idCompressor,
-			this.mintRevisionTag,
-			revisionTagCodec,
-			{
-				branch: localBranch,
-				changeFamily,
-				schema,
-				forest,
-				fieldBatchCodec,
-				events: this._events,
-				removedRoots,
-				chunkCompressionStrategy: options.treeEncodeType,
-				logger: this.logger,
-				breaker: this.breaker,
-			},
-		);
+		this.checkout = createTreeCheckout(idCompressor, this.mintRevisionTag, revisionTagCodec, {
+			branch: localBranch,
+			changeFamily,
+			schema,
+			forest,
+			fieldBatchCodec,
+			removedRoots,
+			chunkCompressionStrategy: options.treeEncodeType,
+			logger,
+			breaker: this.breaker,
+			disposeForksAfterTransaction: options.disposeForksAfterTransaction,
+		});
 
 		this.checkout.transaction.events.on("started", () => {
-			if (this.isAttached()) {
+			if (sharedObject.isAttached()) {
 				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
 				this.commitEnricher.startTransaction();
 			}
 		});
 		this.checkout.transaction.events.on("aborting", () => {
-			if (this.isAttached()) {
+			if (sharedObject.isAttached()) {
 				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
 				this.commitEnricher.abortTransaction();
 			}
 		});
 		this.checkout.transaction.events.on("committing", () => {
-			if (this.isAttached()) {
+			if (sharedObject.isAttached()) {
 				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
 				this.commitEnricher.commitTransaction();
 			}
 		});
+		this.checkout.events.on("beforeBatch", (event) => {
+			if (event.type === "append" && sharedObject.isAttached()) {
+				if (this.checkout.transaction.isInProgress()) {
+					this.commitEnricher.addTransactionCommits(event.newCommits);
+				}
+			}
+		});
+	}
+
+	public exportVerbose(): VerboseTree | undefined {
+		const cursor = this.checkout.forest.allocateCursor("contentSnapshot");
+		try {
+			moveToDetachedField(this.checkout.forest, cursor);
+			const length = cursor.getFieldLength();
+			if (length === 0) {
+				return undefined;
+			} else if (length === 1) {
+				cursor.enterNode(0);
+				return verboseFromCursor(cursor, this.storedSchema.nodeSchema);
+			} else {
+				fail(0xac8 /* Invalid document root length */);
+			}
+		} finally {
+			cursor.free();
+		}
+	}
+
+	public exportSimpleSchema(): SimpleTreeSchema {
+		return {
+			...exportSimpleFieldSchemaStored(this.storedSchema.rootFieldSchema),
+			definitions: new Map(
+				[...this.storedSchema.nodeSchema].map(([key, schema]) => {
+					return [key, exportSimpleNodeSchemaStored(schema)];
+				}),
+			),
+		};
 	}
 
 	@throwIfBroken
@@ -364,24 +520,12 @@ export class SharedTree
 			TreeView<ReadSchema<TRoot>>;
 	}
 
-	protected override async loadCore(services: IChannelStorageService): Promise<void> {
+	public override async loadCore(services: IChannelStorageService): Promise<void> {
 		await super.loadCore(services);
-		this.checkout.setTipRevisionForLoadedData(this.trunkHeadRevision);
-		this._events.emit("afterBatch");
+		this.checkout.load();
 	}
 
-	protected override submitCommit(
-		...args: Parameters<
-			SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>["submitCommit"]
-		>
-	): void {
-		// We do not submit ops for changes that are part of a transaction.
-		if (!this.checkout.transaction.isInProgress()) {
-			super.submitCommit(...args);
-		}
-	}
-
-	protected override didAttach(): void {
+	public override didAttach(): void {
 		if (this.checkout.transaction.isInProgress()) {
 			// Attaching during a transaction is not currently supported.
 			// At least part of of the system is known to not handle this case correctly - commit enrichment - and there may be others.
@@ -392,7 +536,7 @@ export class SharedTree
 		super.didAttach();
 	}
 
-	protected override applyStashedOp(
+	public override applyStashedOp(
 		...args: Parameters<
 			SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>["applyStashedOp"]
 		>
@@ -403,6 +547,29 @@ export class SharedTree
 		);
 		super.applyStashedOp(...args);
 	}
+
+	protected override submitCommit(
+		commit: GraphCommit<SharedTreeChange>,
+		schemaAndPolicy: ClonableSchemaAndPolicy,
+		isResubmit: boolean,
+	): void {
+		assert(
+			!this.checkout.transaction.isInProgress(),
+			0xaa6 /* Cannot submit a commit while a transaction is in progress */,
+		);
+		if (isResubmit) {
+			return super.submitCommit(commit, schemaAndPolicy, isResubmit);
+		}
+
+		// Refrain from submitting new commits until they are validated by the checkout.
+		// This is not a strict requirement for correctness in our system, but in the event that there is a bug when applying commits to the checkout
+		// that causes a crash (e.g. in the forest), this will at least prevent this client from sending the problematic commit to any other clients.
+		this.checkout.onCommitValid(commit, () =>
+			super.submitCommit(commit, schemaAndPolicy, isResubmit),
+		);
+	}
+
+	public onDisconnect(): void {}
 }
 
 /**
@@ -429,13 +596,13 @@ export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 	treeOrView: ITree | TreeViewAlpha<T>,
 ): BranchableTree {
-	assert(
-		treeOrView instanceof SharedTree || treeOrView instanceof SchematizingSimpleTreeView,
-		0xa48 /* Unsupported implementation */,
-	);
-	const checkout: TreeCheckout = treeOrView.checkout;
+	if (treeOrView instanceof SchematizingSimpleTreeView) {
+		return treeOrView.checkout as unknown as BranchableTree;
+	}
+	const kernel = (treeOrView as ITree as ITreePrivate).kernel;
+	assert(kernel instanceof SharedTreeKernel, 0xb56 /* Invalid ITree */);
 	// This cast is safe so long as TreeCheckout supports all the operations on the branch interface.
-	return checkout as unknown as BranchableTree;
+	return kernel.checkout as unknown as BranchableTree;
 }
 
 /**
@@ -486,6 +653,9 @@ export type SharedTreeOptions = Partial<ICodecOptions> &
 	Partial<SharedTreeFormatOptions> &
 	ForestOptions;
 
+export interface SharedTreeOptionsInternal extends SharedTreeOptions {
+	disposeForksAfterTransaction?: boolean;
+}
 /**
  * Configuration options for SharedTree's internal tree storage.
  * @alpha
@@ -523,58 +693,135 @@ export interface SharedTreeFormatOptions {
 
 /**
  * Used to distinguish between different forest types.
- * @alpha
+ * @remarks
+ * Current options are {@link ForestTypeReference}, {@link ForestTypeOptimized} and {@link ForestTypeExpensiveDebug}.
+ * @sealed @alpha
  */
-export enum ForestType {
-	/**
-	 * The "ObjectForest" forest type.
-	 */
-	Reference = 0,
-	/**
-	 * The "ChunkedForest" forest type.
-	 */
-	Optimized = 1,
-	/**
-	 * The "ObjectForest" forest type with expensive asserts for debugging.
-	 */
-	Expensive = 2,
-}
-
-export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
-	jsonValidator: noopValidator,
-	forest: ForestType.Reference,
-	treeEncodeType: TreeCompressionStrategy.Compressed,
-	formatVersion: SharedTreeFormatVersion.v3,
-};
+export interface ForestType extends ErasedType<"ForestType"> {}
 
 /**
- * A channel factory that creates {@link ISharedTree}s.
+ * Reference implementation of forest.
+ * @remarks
+ * A simple implementation with minimal complexity and moderate debuggability, validation and performance.
+ * @privateRemarks
+ * The "ObjectForest" forest type.
+ * @alpha
  */
-export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
-	public readonly type: string = "https://graph.microsoft.com/types/tree";
+export const ForestTypeReference = toForestType(() => buildForest());
 
-	public readonly attributes: IChannelAttributes = {
-		type: this.type,
-		snapshotFormatVersion: "0.0.0",
-		packageVersion: "0.0.0",
+/**
+ * Optimized implementation of forest.
+ * @remarks
+ * A complex optimized forest implementation, which has minimal validation and debuggability to optimize for performance.
+ * Uses an internal representation optimized for size designed to scale to larger datasets with reduced overhead.
+ * @privateRemarks
+ * The "ChunkedForest" forest type.
+ * @alpha
+ */
+export const ForestTypeOptimized = toForestType(
+	(schema: TreeStoredSchemaSubscription, idCompressor: IIdCompressor) =>
+		buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy), undefined, idCompressor),
+);
+
+/**
+ * Slow implementation of forest intended only for debugging.
+ * @remarks
+ * Includes validation with scales poorly.
+ * May be asymptotically slower than {@link ForestTypeReference}, and may perform very badly with larger data sizes.
+ * @privateRemarks
+ * The "ObjectForest" forest type with expensive asserts for debugging.
+ * @alpha
+ */
+export const ForestTypeExpensiveDebug = toForestType(() => buildForest(undefined, true));
+
+type ForestFactory = (
+	schema: TreeStoredSchemaSubscription,
+	idCompressor: IIdCompressor,
+) => IEditableForest;
+
+function toForestType(factory: ForestFactory): ForestType {
+	return factory as unknown as ForestType;
+}
+
+/**
+ * Build and return a forest of the requested type.
+ */
+export function buildConfiguredForest(
+	factory: ForestType,
+	schema: TreeStoredSchemaSubscription,
+	idCompressor: IIdCompressor,
+): IEditableForest {
+	return (factory as unknown as ForestFactory)(schema, idCompressor);
+}
+
+export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
+	jsonValidator: noopValidator,
+	forest: ForestTypeReference,
+	treeEncodeType: TreeCompressionStrategy.Compressed,
+	formatVersion: SharedTreeFormatVersion.v3,
+	disposeForksAfterTransaction: true,
+};
+
+function verboseFromCursor(
+	reader: ITreeCursor,
+	schema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>,
+): VerboseTree {
+	const fields = customFromCursorStored(reader, schema, verboseFromCursor);
+	const nodeSchema =
+		schema.get(reader.type) ?? fail(0xac9 /* missing schema for type in cursor */);
+	if (nodeSchema instanceof LeafNodeStoredSchema) {
+		return fields as CustomTreeValue<IFluidHandle>;
+	}
+
+	return {
+		type: reader.type,
+		fields: fields as CustomTreeNode<IFluidHandle>,
 	};
+}
 
-	public constructor(private readonly options: SharedTreeOptions = {}) {}
-
-	public async load(
-		runtime: IFluidDataStoreRuntime,
-		id: string,
-		services: IChannelServices,
-		channelAttributes: Readonly<IChannelAttributes>,
-	): Promise<SharedTree> {
-		const tree = new SharedTree(id, runtime, channelAttributes, this.options);
-		await tree.load(services);
-		return tree;
+function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFieldSchema {
+	let kind: FieldKind;
+	switch (schema.kind) {
+		case FieldKinds.identifier.identifier:
+			kind = FieldKind.Identifier;
+			break;
+		case FieldKinds.optional.identifier:
+			kind = FieldKind.Optional;
+			break;
+		case FieldKinds.required.identifier:
+			kind = FieldKind.Required;
+			break;
+		case FieldKinds.forbidden.identifier:
+			kind = FieldKind.Optional;
+			assert(schema.types.size === 0, 0xa94 /* invalid forbidden field */);
+			break;
+		default:
+			fail(0xaca /* invalid field kind */);
 	}
+	return { kind, allowedTypes: schema.types };
+}
 
-	public create(runtime: IFluidDataStoreRuntime, id: string): SharedTree {
-		const tree = new SharedTree(id, runtime, this.attributes, this.options);
-		tree.initializeLocal();
-		return tree;
+function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeSchema {
+	const arrayTypes = tryStoredSchemaAsArray(schema);
+	if (arrayTypes !== undefined) {
+		return { kind: NodeKind.Array, allowedTypes: arrayTypes };
 	}
+	if (schema instanceof ObjectNodeStoredSchema) {
+		const fields: Record<string, SimpleFieldSchema> = {};
+		for (const [key, field] of schema.objectNodeFields) {
+			fields[key] = exportSimpleFieldSchemaStored(field);
+		}
+		return { kind: NodeKind.Object, fields };
+	}
+	if (schema instanceof MapNodeStoredSchema) {
+		assert(
+			schema.mapFields.kind === FieldKinds.optional.identifier,
+			0xa95 /* Invalid map schema */,
+		);
+		return { kind: NodeKind.Map, allowedTypes: schema.mapFields.types };
+	}
+	if (schema instanceof LeafNodeStoredSchema) {
+		return { kind: NodeKind.Leaf, leafKind: schema.leafValue };
+	}
+	fail(0xacb /* invalid schema kind */);
 }

@@ -18,12 +18,8 @@ import {
 	FieldSchema,
 	normalizeAllowedTypes,
 	type ImplicitFieldSchema,
-	booleanSchema,
-	handleSchema,
-	nullSchema,
-	numberSchema,
-	stringSchema,
 	type IterableTreeArrayContent,
+	SchemaFactory,
 } from "@fluidframework/tree/internal";
 
 import {
@@ -68,23 +64,23 @@ function populateDefaults(
 function getSchemaIdentifier(content: TreeEditValue): string | undefined {
 	switch (typeof content) {
 		case "boolean": {
-			return booleanSchema.identifier;
+			return SchemaFactory.boolean.identifier;
 		}
 		case "number": {
-			return numberSchema.identifier;
+			return SchemaFactory.number.identifier;
 		}
 		case "string": {
-			return stringSchema.identifier;
+			return SchemaFactory.string.identifier;
 		}
 		case "object": {
 			if (content === null) {
-				return nullSchema.identifier;
+				return SchemaFactory.null.identifier;
 			}
 			if (Array.isArray(content)) {
 				throw new UsageError("Arrays are not currently supported in this context");
 			}
 			if (isFluidHandle(content)) {
-				return handleSchema.identifier;
+				return SchemaFactory.handle.identifier;
 			}
 			return content[typeField];
 		}

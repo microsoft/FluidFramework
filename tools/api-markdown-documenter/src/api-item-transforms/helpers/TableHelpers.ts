@@ -89,7 +89,7 @@ export interface TableCreationOptions {
  */
 export function createMemberTables(
 	memberTableProperties: readonly MemberTableProperties[],
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): SectionNode[] | undefined {
 	const sections: SectionNode[] = [];
 
@@ -111,7 +111,7 @@ export function createMemberTables(
  */
 export function createTableWithHeading(
 	memberTableProperties: MemberTableProperties,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): SectionNode | undefined {
 	const table = createSummaryTable(
 		memberTableProperties.items,
@@ -125,7 +125,7 @@ export function createTableWithHeading(
 		: new SectionNode(
 				[table],
 				HeadingNode.createFromPlainText(memberTableProperties.headingTitle),
-		  );
+			);
 }
 
 /**
@@ -142,7 +142,7 @@ export function createTableWithHeading(
 export function createSummaryTable(
 	apiItems: readonly ApiItem[],
 	itemKind: ApiItemKind,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 	options?: TableCreationOptions,
 ): TableNode | undefined {
 	if (itemKind === ApiItemKind.Model || itemKind === ApiItemKind.EntryPoint) {
@@ -199,7 +199,7 @@ export function createSummaryTable(
 export function createDefaultSummaryTable(
 	apiItems: readonly ApiItem[],
 	itemKind: ApiItemKind,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 	options?: TableCreationOptions,
 ): TableNode | undefined {
 	if (apiItems.length === 0) {
@@ -255,7 +255,7 @@ export function createDefaultSummaryTable(
 export function createParametersSummaryTable(
 	apiParameters: readonly Parameter[],
 	contextApiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): TableNode {
 	// Only display "Modifiers" column if there are any optional parameters present.
 	const hasOptionalParameters = apiParameters.some((apiParameter) => apiParameter.isOptional);
@@ -302,7 +302,7 @@ export function createParametersSummaryTable(
 export function createTypeParametersSummaryTable(
 	apiTypeParameters: readonly TypeParameter[],
 	contextApiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): TableNode {
 	// Only display the "Constraint" column if there are any constraints present among the type parameters.
 	const hasAnyConstraints = apiTypeParameters.some(
@@ -357,7 +357,9 @@ export function createTypeParametersSummaryTable(
 		if (hasAnyDefaults) {
 			bodyRowCells.push(createTypeDefaultCell(apiTypeParameter));
 		}
-		bodyRowCells.push(createTypeParameterSummaryCell(apiTypeParameter, contextApiItem, config));
+		bodyRowCells.push(
+			createTypeParameterSummaryCell(apiTypeParameter, contextApiItem, config),
+		);
 
 		bodyRows.push(new TableBodyRowNode(bodyRowCells));
 	}
@@ -377,7 +379,7 @@ export function createTypeParametersSummaryTable(
 export function createFunctionLikeSummaryTable(
 	apiItems: readonly ApiFunctionLike[],
 	itemKind: ApiItemKind,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 	options?: TableCreationOptions,
 ): TableNode | undefined {
 	if (apiItems.length === 0) {
@@ -439,7 +441,7 @@ export function createFunctionLikeSummaryTable(
  */
 export function createPropertiesTable(
 	apiProperties: readonly ApiPropertyItem[],
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 	options?: TableCreationOptions,
 ): TableNode | undefined {
 	if (apiProperties.length === 0) {
@@ -505,7 +507,7 @@ export function createPropertiesTable(
  */
 export function createVariablesTable(
 	apiVariables: readonly ApiVariable[],
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 	options?: TableCreationOptions,
 ): TableNode | undefined {
 	if (apiVariables.length === 0) {
@@ -562,7 +564,7 @@ export function createVariablesTable(
  */
 export function createPackagesTable(
 	apiPackages: readonly ApiPackage[],
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): TableNode | undefined {
 	if (apiPackages.length === 0) {
 		return undefined;
@@ -604,7 +606,7 @@ export function createPackagesTable(
  */
 export function createApiSummaryCell(
 	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): TableBodyCellNode {
 	if (apiItem instanceof ApiDocumentedItem) {
 		const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
@@ -632,7 +634,7 @@ export function createApiSummaryCell(
  */
 export function createReturnTypeCell(
 	apiItem: ApiFunctionLike,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): TableBodyCellNode {
 	return ApiReturnTypeMixin.isBaseClassOf(apiItem)
 		? createTypeExcerptCell(apiItem.returnTypeExcerpt, config)
@@ -650,7 +652,7 @@ export function createReturnTypeCell(
  */
 export function createApiTitleCell(
 	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): TableBodyCellNode {
 	const itemLink = getLinkForApiItem(apiItem, config);
 	return new TableBodyCellNode([LinkNode.createFromPlainTextLink(itemLink)]);
@@ -689,7 +691,7 @@ export function createModifiersCell(
  */
 export function createDefaultValueCell(
 	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): TableBodyCellNode {
 	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
 
@@ -742,7 +744,7 @@ export function createParameterTitleCell(apiParameter: Parameter): TableBodyCell
  */
 export function createParameterTypeCell(
 	apiParameter: Parameter,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): TableBodyCellNode {
 	return createTypeExcerptCell(apiParameter.parameterTypeExcerpt, config);
 }
@@ -759,7 +761,7 @@ export function createParameterTypeCell(
 export function createParameterSummaryCell(
 	apiParameter: Parameter,
 	contextApiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): TableBodyCellNode {
 	if (apiParameter.tsdocParamBlock === undefined) {
 		return TableBodyCellNode.Empty;
@@ -789,7 +791,7 @@ export function createParameterSummaryCell(
 export function createTypeParameterSummaryCell(
 	apiTypeParameter: TypeParameter,
 	contextApiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): TableBodyCellNode {
 	if (apiTypeParameter.tsdocTypeParamBlock === undefined) {
 		return TableBodyCellNode.Empty;
@@ -817,7 +819,7 @@ export function createTypeParameterSummaryCell(
  */
 export function createTypeExcerptCell(
 	typeExcerpt: Excerpt,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): TableBodyCellNode {
 	const excerptSpan = createExcerptSpanWithHyperlinks(typeExcerpt, config);
 	return excerptSpan === undefined

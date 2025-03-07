@@ -12,6 +12,12 @@ import type {
 	RevertibleFactory,
 } from "../../core/index.js";
 
+import type {
+	// This is referenced by doc comments.
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
+	TreeAlpha,
+} from "../../shared-tree/index.js";
+
 import {
 	type ImplicitFieldSchema,
 	type InsertableField,
@@ -31,6 +37,15 @@ import { markSchemaMostDerived } from "./schemaFactory.js";
 import { fail, getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
+import type { VerboseTree } from "./verboseTree.js";
+import type { SimpleTreeSchema } from "./simpleSchema.js";
+import type {
+	RunTransactionParams,
+	TransactionCallbackStatus,
+	TransactionResult,
+	TransactionResultExt,
+	VoidTransactionCallbackStatus,
+} from "./transactionTypes.js";
 /**
  * A tree from which a {@link TreeView} can be created.
  *
@@ -88,6 +103,28 @@ export interface ViewableTree {
  * @sealed @public
  */
 export interface ITree extends ViewableTree, IFluidLoadable {}
+
+/**
+ * {@link ITree} extended with some alpha APIs.
+ * @privateRemarks
+ * TODO: Promote this to alpha.
+ * @internal
+ */
+export interface ITreeAlpha extends ITree {
+	/**
+	 * Exports root in the same format as {@link TreeAlpha.(exportVerbose:1)} using stored keys.
+	 * @remarks
+	 * This is `undefined` if and only if the root field is empty (this can only happen if the root field is optional).
+	 */
+	exportVerbose(): VerboseTree | undefined;
+
+	/**
+	 * Exports the SimpleTreeSchema that is stored in the tree, using stored keys for object fields.
+	 * @remarks
+	 * To get the schema using property keys, use {@link getSimpleSchema} on the view schema.
+	 */
+	exportSimpleSchema(): SimpleTreeSchema;
+}
 
 /**
  * Options when constructing a tree view.
@@ -339,7 +376,7 @@ export function checkUnion(union: Iterable<TreeNodeSchema>, errors: string[]): v
 		// For each field of schema, remove schema from possiblyAmbiguous that do not have that field
 		for (const [key, field] of schema.fields) {
 			if (field.kind === FieldKind.Required) {
-				const withKey = allObjectKeys.get(key) ?? fail("missing schema");
+				const withKey = allObjectKeys.get(key) ?? fail(0xb35 /* missing schema */);
 				for (const candidate of possiblyAmbiguous) {
 					if (!withKey.has(candidate)) {
 						possiblyAmbiguous.delete(candidate);
@@ -455,6 +492,10 @@ export interface TreeBranch extends IDisposable {
  * Doing that would however complicate trivial "hello world" style example slightly, as well as be a breaking API change.
  * It also seems more complex to handle invalidation with that pattern.
  * Thus this design was chosen at the risk of apps blindly accessing `root` then breaking unexpectedly when the document is incompatible.
+ *
+ * @see {@link TreeViewAlpha}
+ * @see {@link asTreeViewAlpha}
+ *
  * @sealed @public
  */
 export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends IDisposable {
@@ -536,6 +577,72 @@ export interface TreeViewAlpha<
 
 	// Override the base branch method to return a typed view rather than merely a branch.
 	fork(): ReturnType<TreeBranch["fork"]> & TreeViewAlpha<TSchema>;
+
+	/**
+	 * Run a transaction which applies one or more edits to the tree as a single atomic unit.
+	 * @param transaction - The function to run as the body of the transaction.
+	 * It should return a status object of {@link TransactionCallbackStatus | TransactionCallbackStatus } type.
+	 * It includes a "rollback" property which may be returned as true at any point during the transaction. This will
+	 * abort the transaction and discard any changes it made so far.
+	 * "rollback" can be set to false or left undefined to indicate that the body of the transaction has successfully run.
+	 * @param params - The optional parameters for the transaction. It includes the constraints that will be checked before the transaction begins.
+	 * @returns A result object of {@link TransactionResultExt | TransactionResultExt} type. It includes the following:
+	 * - A "success" flag indicating whether the transaction was successful or not.
+	 * - The success of failure value as returned by the transaction function.
+	 * @remarks
+	 * This API will throw an error if the constraints are not met or something unexpected happens.
+	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
+	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
+	 * However, using a transaction has the following additional consequences:
+	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
+	 *
+	 * Local change events will be emitted for each change as the transaction is being applied.
+	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
+	 *
+	 * Nested transactions:
+	 * This API can be called from within the transaction callback of another runTransaction call. That will have slightly different behavior:
+	 * - If the inner transaction fails, only the inner transaction will be rolled back and the outer transaction will continue.
+	 * - Constraints will apply to the outermost transaction. Constraints are applied per commit and there will be one commit generated
+	 * for the outermost transaction which includes all inner transactions.
+	 * - Undo will undo the outermost transaction and all inner transactions.
+	 */
+	runTransaction<TSuccessValue, TFailureValue>(
+		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
+		params?: RunTransactionParams,
+	): TransactionResultExt<TSuccessValue, TFailureValue>;
+	/**
+	 * Run a transaction which applies one or more edits to the tree as a single atomic unit.
+	 * @param transaction - The function to run as the body of the transaction. It may return the following:
+	 * - Nothing to indicate that the body of the transaction has successfully run.
+	 * - A status object of {@link VoidTransactionCallbackStatus | VoidTransactionCallbackStatus } type. It includes a "rollback" property which
+	 * may be returned as true at any point during the transaction. This will abort the transaction and discard any changes it made so
+	 * far. "rollback" can be set to false or left undefined to indicate that the body of the transaction has successfully run.
+	 * @param params - The optional parameters for the transaction. It includes the constraints that will be checked before the transaction begins.
+	 * @returns A result object of {@link TransactionResult | TransactionResult} type. It includes a "success" flag indicating whether the
+	 * transaction was successful or not.
+	 * @remarks
+	 * This API will throw an error if the constraints are not met or something unexpected happens.
+	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
+	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
+	 * However, using a transaction has the following additional consequences:
+	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
+	 *
+	 * Local change events will be emitted for each change as the transaction is being applied.
+	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
+	 *
+	 * Nested transactions:
+	 * This API can be called from within the transaction callback of another runTransaction call. That will have slightly different behavior:
+	 * - If the inner transaction fails, only the inner transaction will be rolled back and the outer transaction will continue.
+	 * - Constraints will apply to the outermost transaction. Constraints are applied per commit and there will be one commit generated
+	 * for the outermost transaction which includes all inner transactions.
+	 * - Undo will undo the outermost transaction and all inner transactions.
+	 */
+	runTransaction(
+		transaction: () => VoidTransactionCallbackStatus | void,
+		params?: RunTransactionParams,
+	): TransactionResult;
 }
 
 /**

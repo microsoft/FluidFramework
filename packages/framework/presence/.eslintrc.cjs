@@ -7,6 +7,7 @@ module.exports = {
 	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
 	parserOptions: {
 		project: [
+			"./tsconfig.main.json",
 			"./tsconfig.json",
 			"./src/test/tsconfig.json",
 			"./src/test/core-interfaces/tsconfig.no-exactOptionalPropertyTypes.json",
@@ -29,7 +30,6 @@ module.exports = {
 				],
 			},
 		],
-		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},
 	overrides: [
 		{

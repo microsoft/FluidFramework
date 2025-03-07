@@ -1,5 +1,224 @@
 # @fluidframework/tree
 
+## 2.23.0
+
+### Minor Changes
+
+-   Creating large transactions and processing inbound changes is now faster ([#23929](https://github.com/microsoft/FluidFramework/pull/23929)) [35847b5ffe0](https://github.com/microsoft/FluidFramework/commit/35847b5ffe09d94cef42b74ab59e37c4bd6d8c2d)
+
+    SharedTree sometimes composes several sequential changes into a single change.
+    It does so whenever a transaction is created and when processing inbound changes.
+
+    Version 2.23.0 makes this composition process asymptotically faster.
+    For example, creating a transaction that performs 1000 edits on a single array now takes 170ms instead of 1.5s (an 89% improvement).
+
+    See [Change #23902](https://github.com/microsoft/FluidFramework/pull/23902) for more details.
+
+-   Faster processing of events for large transactions ([#23939](https://github.com/microsoft/FluidFramework/pull/23939)) [2a1e7e0617f](https://github.com/microsoft/FluidFramework/commit/2a1e7e0617f618f82134c0bba269119ed980aadc)
+
+    In versions prior to 2.23.0, event processing time could scale quadratically (`O(N^2)`) with the change count when
+    processing a batch of changes.
+
+    This performance characteristic has been corrected. See change
+    [#23908](https://github.com/microsoft/FluidFramework/pull/23908) for more details.
+
+-   Op bunching performance enhancements ([#23732](https://github.com/microsoft/FluidFramework/pull/23732)) [a98b04fc9e0](https://github.com/microsoft/FluidFramework/commit/a98b04fc9e000971bdfa8135251a7dc3e189502c)
+
+    `SharedTree` now takes advantage of a new feature called "op bunching" where contiguous ops in a grouped batch are
+    bunched and processed together. This improves the performance of processing ops asymptotically; as
+    the number of local ops and incoming ops increase, the processing time will reduce.
+
+    For example, with 10 local ops + 10 incoming ops, the performance increases by 70%; with 100 local ops + 100 incoming ops, the performance increases by 94%.
+
+    This will help improve performance in the following scenarios:
+
+    -   A client makes a large number of changes in a single JS turn. For example, copy pasting large data like a table.
+    -   A client has a large number of local changes. For example, slow clients whose changes are slow to ack or clients with
+        a local branch with large number of changes.
+
+-   Invalid schema base classes in Tree.is now throw an error instead of returning false ([#23938](https://github.com/microsoft/FluidFramework/pull/23938)) [00995654070](https://github.com/microsoft/FluidFramework/commit/00995654070a4e13b57b2562ff4a5935aba70a2f)
+
+    As documented in [`TreeNodeSchemaClass`](https://fluidframework.com/docs/api/fluid-framework/treenodeschemaclass-typealias#treenodeschemaclass-remarks), there are specific rules around sub-classing schema, mainly that only a single most derived class can be used.
+    One place where it was easy to accidentally violate this rule and get hard-to-debug results was [`Tree.is`](https://fluidframework.com/docs/data-structures/tree/nodes#treeis).
+    This has been mitigated by adding a check in `Tree.is` which detects this mistake (which used to result in `false` being returned) and instead throws a `UsageError` explaining the situation.
+    The error will look something like:
+
+    > Two schema classes were used (CustomObjectNode and Derived) which derived from the same SchemaFactory generated class ("com.example.Test"). This is invalid.
+
+    For applications wanting to test if a given `TreeNode` is an instance of some schema base class, this can be done using `instanceof` which includes base classes when doing the check.
+
+## 2.22.0
+
+### Minor Changes
+
+-   Add `leaves` and statics to `SchemaFactory`. ([#23787](https://github.com/microsoft/FluidFramework/pull/23787)) [efa90f6274](https://github.com/microsoft/FluidFramework/commit/efa90f6274152cadb55329b7bbf6a6cd8e299847)
+
+    `SchemaFactory` now has a `leaves` member that is an array of all leaf schema.
+
+    `SchemaFactory` now has static members to access leaf schema and create field schema.
+
+## 2.21.0
+
+Dependency updates only.
+
+## 2.20.0
+
+### Minor Changes
+
+-   Events-related interfaces have been moved to core-interfaces ([#23313](https://github.com/microsoft/FluidFramework/pull/23313)) [69a755ebd7](https://github.com/microsoft/FluidFramework/commit/69a755ebd76db36ffd4638d331062f96ec4c0648)
+
+    The following interfaces and types have been moved from the `@fluidframework/tree` package into the
+    `@fluidframework/core-interfaces` package. As such, they are now deprecated in the `@fluidframework/tree` package.
+
+    -   Listeners
+    -   IsListener
+    -   Listenable
+    -   Off
+
+    Users should now import them from either `@fluidframework/core-interfaces` or `fluid-framework`.
+
+    These deprecated interfaces will be removed from the `@fluidframework/tree` package in Fluid Framework v3.0.
+
+## 2.13.0
+
+### Minor Changes
+
+-   Metadata can be associated with Node Schema ([#23321](https://github.com/microsoft/FluidFramework/pull/23321)) [58619c3c4e](https://github.com/microsoft/FluidFramework/commit/58619c3c4ee55ca1497a117321ae0b364e6084e6)
+
+    Users of TreeView can now specify metadata when creating Node Schema, via `SchemaFactoryAlpha`.
+    This metadata may include system-understood properties like `description`.
+
+    Example:
+
+    ```typescript
+    const schemaFactory = new SchemaFactoryAlpha(...);
+    class Point extends schemaFactory.object("Point", {
+    	x: schemaFactory.required(schemaFactory.number),
+    	y: schemaFactory.required(schemaFactory.number),
+    },
+    {
+    	metadata: {
+    		description: "A point in 2D space",
+    	},
+    }) {}
+
+    ```
+
+    Functionality like the experimental conversion of Tree Schema to [JSON Schema](https://json-schema.org/) ([getJsonSchema](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.4.0#user-content-metadata-can-now-be-associated-with-field-schema-22564)) leverages such system-understood metadata to generate useful information.
+    In the case of the `description` property, it is mapped directly to the `description` property supported by JSON Schema.
+
+    Custom, user-defined properties can also be specified.
+    These properties will not be used by the system by default, but can be used to associate common application-specific properties with Node Schema.
+
+    #### `SchemaFactoryAlpha` Updates
+
+    -   `object` and `objectRecursive`, `arrayRecursive`, and `mapRecursive` now support `metadata` in their `options` parameter.
+    -   (new) `arrayAlpha` - Variant of `array` that accepts an options parameter which supports `metadata`
+    -   (new) `mapAlpha` - Variant of `map` that accepts an options parameter which supports `metadata`
+
+    #### Example
+
+    An application is implementing search functionality.
+    By default, the app author wishes for all app content to be potentially indexable by search, unless otherwise specified.
+    They can leverage schema metadata to decorate types of nodes that should be ignored by search, and leverage that information when walking the tree during a search.
+
+    ```typescript
+
+    interface AppMetadata {
+    	/**
+    	 * Whether or not nodes of this type should be ignored by search.
+    	 * @defaultValue `false`
+    	 */
+    	searchIgnore?: boolean;
+    }
+
+    const schemaFactory = new SchemaFactoryAlpha(...);
+    class Point extends schemaFactory.object("Point", {
+    	x: schemaFactory.required(schemaFactory.number),
+    	y: schemaFactory.required(schemaFactory.number),
+    },
+    {
+    	metadata: {
+    		description: "A point in 2D space",
+    		custom: {
+    			searchIgnore: true,
+    		},
+    	}
+    }) {}
+
+    ```
+
+    Search can then be implemented to look for the appropriate metadata, and leverage it to omit the unwanted position data from search.
+
+    #### Potential for breaking existing code
+
+    These changes add the new property "metadata" to the base type from which all node schema derive.
+    If you have existing node schema subclasses that include a property of this name, there is a chance for potential conflict here that could be breaking.
+    If you encounter issues here, consider renaming your property or leveraging the new metadata support.
+
+-   New alpha APIs for schema evolution ([#23362](https://github.com/microsoft/FluidFramework/pull/23362)) [2406e00efe](https://github.com/microsoft/FluidFramework/commit/2406e00efed282be58a9e09cb3478c9a9d170ef0)
+
+    There are now `@alpha` APIs for schema evolution which support adding optional fields to object node types without a staged rollout.
+
+    SharedTree has many safety checks in place to ensure applications understand the format of documents they must support.
+    One of these checks verifies that the view schema (defined in application's code) aligns with the document schema (determined by the document data at rest).
+    This helps to ensure that clients running incompatible versions of the application's code don't collaborate at the same time on some document, which could cause data loss or disrupt application invariants.
+    One general solution application authors can perform is to stage the rollout of a feature which changes document schema into multiple phases:
+
+    1. Release an application version which understands documents written with the new format but doesn't attempt to upgrade any documents
+    2. Wait for this application version to saturate in the app's ecosystem
+    3. Release an application version which upgrades documents to start leveraging the new format.
+
+    However, this process can be cumbersome for application authors: for many types of changes, an app author doesn't particularly care if older application code collaborates with newer code, as the only downside is that the older application version might not present a fully faithful experience.
+    As an example, consider an application which renders circles on a canvas (similar to what is presented [here](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/user-facing/schema-evolution.md)).
+    The application author might anticipate adding support to render the circle with various different other properties (border style, border width, background color, varying radius, etc.).
+    Therefore, they should declare their schema using `SchemaFactoryObjectOptions.allowUnknownOptionalFields` like so:
+
+    ```typescript
+    import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
+    // "Old" application code/schema
+    const factory = new SchemaFactoryAlpha("Geometry");
+    class Circle extends factory.object(
+    	"Circle",
+    	{
+    		x: factory.number,
+    		y: factory.number,
+    	},
+    	{ allowUnknownOptionalFields: true },
+    ) {}
+    ```
+
+    Later, they add some of these features to their application:
+
+    ```typescript
+    import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
+    // "New" application code/schema
+    const factory = new SchemaFactoryAlpha("Geometry");
+    class Circle extends factory.object(
+    	"Circle",
+    	{
+    		x: factory.number,
+    		y: factory.number,
+    		// Note that radius and color must both be declared as optional fields since this application must
+    		// support opening up existing documents that didn't have this information.
+    		radius: factory.optional(factory.number),
+    		color: factory.optional(factory.string), // ex: #00FF00
+    	},
+    	{ allowUnknownOptionalFields: true },
+    ) {}
+    ```
+
+    When they go to deploy this newer version of the application, they could opt to start upgrading documents as soon as the newer code is rolled out, and the older code would still be able to open up (and collaborate on) documents using the newer schema version.
+    Note that it's only important that the old _application code_ elected to allow opening documents with unknown optional fields.
+    This policy is not persisted into documents in any form, so applications are free to modify it at any point.
+
+    For specific API details, see documentation on `SchemaFactoryObjectOptions.allowUnknownOptionalFields`.
+    For a more thorough discussion of this topic, see [Schema Evolvability](https://github.com/microsoft/FluidFramework/tree/main/packages/dds/tree#schema-evolvability) in the SharedTree README.
+
+## 2.12.0
+
+Dependency updates only.
+
 ## 2.11.0
 
 ### Minor Changes

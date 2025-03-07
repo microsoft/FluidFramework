@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import type { ISegmentLeaf, ObliterateInfo } from "../mergeTreeNodes.js";
+import type { ISegmentPrivate, ObliterateInfo } from "../mergeTreeNodes.js";
 import { MergeTreeDeltaType } from "../ops.js";
 
 import { TestClient } from "./testClient.js";
@@ -179,15 +179,16 @@ describe("obliterate", () => {
 
 			const obliterateStart = 0;
 			const obliterateEnd = client.getLength();
-			const startSeg = client.getContainingSegment<ISegmentLeaf>(obliterateStart);
-			const endSeg = client.getContainingSegment<ISegmentLeaf>(obliterateEnd);
+			const startSeg = client.getContainingSegment<ISegmentPrivate>(obliterateStart);
+			const endSeg = client.getContainingSegment<ISegmentPrivate>(obliterateEnd);
+			let seq = refSeq;
 			obliterateRange({
 				mergeTree: client.mergeTree,
 				start: obliterateStart,
 				end: obliterateEnd,
 				refSeq,
 				clientId: remoteClientId,
-				seq: refSeq + 1,
+				seq: ++seq,
 				opArgs: undefined as never,
 			});
 			insertText({
@@ -195,7 +196,7 @@ describe("obliterate", () => {
 				pos: 1,
 				refSeq,
 				clientId: remoteClientId + 1,
-				seq: refSeq + 2,
+				seq: ++seq,
 				text: "more ",
 				props: undefined,
 				opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
@@ -212,7 +213,6 @@ describe("obliterate", () => {
 			});
 
 			// this will force Zamboni to run
-			let seq = refSeq;
 			for (let i = 0; i < 5; i++) {
 				const insert = client.makeOpMessage(
 					client.insertTextLocal(client.getLength(), i.toString()),

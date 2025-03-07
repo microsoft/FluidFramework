@@ -20,8 +20,8 @@ import {
 	type DocHtmlStartTag,
 } from "@microsoft/tsdoc";
 
-import type { ConfigurationBase } from "../ConfigurationBase.js";
 import type { Link } from "../Link.js";
+import type { LoggingConfiguration } from "../LoggingConfiguration.js";
 import {
 	CodeSpanNode,
 	type DocumentationNode,
@@ -61,7 +61,7 @@ import type { ApiItemTransformationConfiguration } from "./configuration/index.j
 export function transformTsdocNode(
 	node: DocNode,
 	contextApiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): DocumentationNode | undefined {
 	const transformOptions = getTsdocNodeTransformationOptions(contextApiItem, config);
 	return _transformTsdocNode(node, transformOptions);
@@ -70,7 +70,7 @@ export function transformTsdocNode(
 /**
  * Options for {@link @microsoft/tsdoc#DocNode} transformations.
  */
-export interface TsdocNodeTransformOptions extends ConfigurationBase {
+export interface TsdocNodeTransformOptions extends LoggingConfiguration {
 	/**
 	 * The API item with which the documentation node(s) are associated.
 	 */
@@ -298,7 +298,9 @@ export function transformTsdocInlineTag(node: DocInlineTag): SpanNode | undefine
 
 	// For all other inline tags, there isn't really anything we can do with them except emit them
 	// as is. However, to help differentiate them in the output, we will italicize them.
-	return SpanNode.createFromPlainText(`{${node.tagName} ${node.tagContent}}`, { italic: true });
+	return SpanNode.createFromPlainText(`{${node.tagName} ${node.tagContent}}`, {
+		italic: true,
+	});
 }
 
 /**
@@ -474,9 +476,7 @@ function filterNewlinesAdjacentToParagraphs(
 			const previousIsParagraph =
 				i > 0 ? nodes[i - 1].type === DocumentationNodeType.Paragraph : false;
 			const nextIsParagraph =
-				i < nodes.length - 1
-					? nodes[i + 1].type === DocumentationNodeType.Paragraph
-					: false;
+				i < nodes.length - 1 ? nodes[i + 1].type === DocumentationNodeType.Paragraph : false;
 			if (previousIsParagraph || nextIsParagraph) {
 				continue;
 			}

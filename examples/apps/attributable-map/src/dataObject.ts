@@ -5,7 +5,7 @@
 
 import type { EventEmitter } from "@fluid-example/example-utils";
 import { AttributableMap, ISharedMap } from "@fluid-experimental/attributable-map";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 export const greenKey = "green";

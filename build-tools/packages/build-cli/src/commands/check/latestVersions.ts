@@ -17,6 +17,9 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 	static readonly description =
 		"This command is used in CI to determine if a pipeline was triggered by a release branch with the latest minor version of a major version.";
 
+	static readonly deprecated =
+		"This command is deprecated and will be removed in a future release. Use vnext:check:latestVersions instead.";
+
 	static readonly args = {
 		version: semverArg({
 			required: true,
@@ -36,7 +39,8 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 			this.error(`Package not found: ${args.package_or_release_group}`);
 		}
 
-		const versions = await context.getAllVersions(rgOrPackage.name);
+		const gitRepo = await context.getGitRepository();
+		const versions = await gitRepo.getAllVersions(rgOrPackage.name);
 
 		if (!versions) {
 			this.error(`No versions found for ${rgOrPackage.name}`);

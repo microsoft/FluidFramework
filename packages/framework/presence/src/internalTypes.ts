@@ -22,15 +22,6 @@ export interface ClientRecord<TValue extends InternalTypes.ValueDirectoryOrState
 }
 
 /**
- * Object.entries retyped to support branded string-based keys.
- *
- * @internal
- */
-export const brandedObjectEntries = Object.entries as <K extends string, T>(
-	o: Record<K, T>,
-) => [K, T][];
-
-/**
  * This interface is a subset of (IContainerRuntime & IRuntimeInternal) and
  * (IFluidDataStoreRuntime) that is needed by the Presence States.
  *
@@ -55,5 +46,10 @@ export interface ValueManager<
 > {
 	// Most value managers should provide value - implement Required<ValueManager<...>>
 	readonly value?: TValueState;
-	update(client: ISessionClient, received: number, value: TValueState): void;
+	update(client: ISessionClient, received: number, value: TValueState): PostUpdateAction[];
 }
+
+/**
+ * @internal
+ */
+export type PostUpdateAction = () => void;

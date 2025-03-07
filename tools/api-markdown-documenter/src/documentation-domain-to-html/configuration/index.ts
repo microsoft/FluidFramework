@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export { getConfigurationWithDefaults, type TransformationConfig } from "./Configuration.js";
+export {
+	getConfigurationWithDefaults,
+	type TransformationConfiguration,
+} from "./Configuration.js";
 export {
 	defaultTransformations,
 	type Transformation,

@@ -11,7 +11,11 @@ import {
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { IContainerExperimental, Loader } from "@fluidframework/container-loader/internal";
+import {
+	IContainerExperimental,
+	loadExistingContainer,
+	type ILoaderProps,
+} from "@fluidframework/container-loader/internal";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
@@ -240,7 +244,9 @@ async function runnerProcess(
 
 			// Construct the loader
 			runConfig.loaderConfig = loaderOptions[runConfig.runId % loaderOptions.length];
-			const testConfiguration = configurations[runConfig.runId % configurations.length];
+			// non-null guaranteed by bounds check
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const testConfiguration = configurations[runConfig.runId % configurations.length]!;
 			runConfig.logger.sendTelemetryEvent({
 				eventName: "RunConfigOptions",
 				details: JSON.stringify({
@@ -250,7 +256,7 @@ async function runnerProcess(
 					configurations: { ...globalConfigurations, ...testConfiguration },
 				}),
 			});
-			const loader = new Loader({
+			const loaderProps: ILoaderProps = {
 				urlResolver: testDriver.createUrlResolver(),
 				documentServiceFactory,
 				codeLoader: createCodeLoader(
@@ -259,12 +265,16 @@ async function runnerProcess(
 				logger: runConfig.logger,
 				options: runConfig.loaderConfig,
 				configProvider: configProvider(testConfiguration),
-			});
+			};
 
 			const stashedOps = stashedOpP ? await stashedOpP : undefined;
 			stashedOpP = undefined; // delete to avoid reuse
 
-			container = await loader.resolve({ url, headers }, stashedOps);
+			container = await loadExistingContainer({
+				...loaderProps,
+				request: { url, headers },
+				pendingLocalState: stashedOps,
+			});
 
 			container.connect();
 			const test = (await container.getEntryPoint()) as ILoadTest;
@@ -556,8 +566,9 @@ async function setupOpsMetrics(
 	const getUserName = (userContainer: IContainer) => {
 		const clientId = userContainer.clientId;
 		if (clientId !== undefined && clientId.length > 0) {
-			if (clientIdUserNameMap[clientId]) {
-				return clientIdUserNameMap[clientId];
+			const maybeUserName = clientIdUserNameMap[clientId];
+			if (maybeUserName !== undefined) {
+				return maybeUserName;
 			}
 
 			const userName: string | undefined = userContainer.getQuorum().getMember(clientId)

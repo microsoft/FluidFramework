@@ -187,7 +187,7 @@ export function testCorrectness() {
 					for (let i = 1; i <= 10; ++i) {
 						const commit = applyLocalCommit(manager);
 						expectedTrimmedRevisions.add(commit.revision);
-						manager.addSequencedChange(commit, brand(i), brand(i - 1));
+						manager.addSequencedChanges([commit], commit.sessionId, brand(i), brand(i - 1));
 					}
 
 					assert.equal(manager.getTrunkChanges().length, 10);
@@ -198,7 +198,7 @@ export function testCorrectness() {
 					for (let i = 11; i <= 20; ++i) {
 						const commit = applyLocalCommit(manager);
 						expectedTrimmedRevisions.add(commit.revision);
-						manager.addSequencedChange(commit, brand(i), brand(i - 1));
+						manager.addSequencedChanges([commit], commit.sessionId, brand(i), brand(i - 1));
 					}
 
 					assert.equal(manager.getTrunkChanges().length, 10);
@@ -216,17 +216,17 @@ export function testCorrectness() {
 					const expectedTrimmedRevisions = new Set<RevisionTag>();
 					const commit1 = applyLocalCommit(manager);
 					expectedTrimmedRevisions.add(commit1.revision);
-					manager.addSequencedChange(commit1, brand(1), brand(0));
+					manager.addSequencedChanges([commit1], commit1.sessionId, brand(1), brand(0));
 					assert.equal(manager.getTrunkChanges().length, 1);
 					const commit2 = applyLocalCommit(manager);
 					expectedTrimmedRevisions.add(commit2.revision);
-					manager.addSequencedChange(commit2, brand(2), brand(1));
+					manager.addSequencedChanges([commit2], commit2.sessionId, brand(2), brand(1));
 					assert.equal(manager.getTrunkChanges().length, 2);
 					manager.advanceMinimumSequenceNumber(brand(1));
 					assert.equal(manager.getTrunkChanges().length, 1);
 					const commit3 = applyLocalCommit(manager);
 					expectedTrimmedRevisions.add(commit3.revision);
-					manager.addSequencedChange(commit3, brand(3), brand(2));
+					manager.addSequencedChanges([commit3], commit3.sessionId, brand(3), brand(2));
 					assert.equal(manager.getTrunkChanges().length, 2);
 					manager.advanceMinimumSequenceNumber(brand(3));
 					assert.equal(manager.getTrunkChanges().length, 0);
@@ -242,18 +242,28 @@ export function testCorrectness() {
 					// First, we receive a commit from a peer ("1").
 					const peerCommit1 = peerCommit(peer1, [], 1);
 					expectedTrimmedRevisions.add(peerCommit1.revision);
-					manager.addSequencedChange(peerCommit1, brand(1), brand(0));
+					manager.addSequencedChanges(
+						[peerCommit1],
+						peerCommit1.sessionId,
+						brand(1),
+						brand(0),
+					);
 					// We then submit and ack a local commit ("2").
 					// This prevents an upcoming rebase of the peer branch from hitting an eager fast-path that keeps the branch caught up to the head of the trunk.
 					const commit1 = applyLocalCommit(manager, [1], 2);
 					expectedTrimmedRevisions.add(commit1.revision);
-					manager.addSequencedChange(commit1, brand(2), brand(1));
+					manager.addSequencedChanges([commit1], commit1.sessionId, brand(2), brand(1));
 					// We receive a second commit from the peer ("3").
 					// Based on the ref seq number, we know that the peer is lagging "behind" by two commits,
 					// i.e. it has sent a second op without receiving its first op ("1") or the local op ("2") that we applied just above.
 					const peerCommit2 = peerCommit(peer1, [1], 3);
 					expectedTrimmedRevisions.add(peerCommit2.revision);
-					manager.addSequencedChange(peerCommit2, brand(3), brand(0));
+					manager.addSequencedChanges(
+						[peerCommit2],
+						peerCommit2.sessionId,
+						brand(3),
+						brand(0),
+					);
 					// Our trunk should have all the commits we've sequenced so far.
 					checkChangeList(manager, [1, 2, 3]);
 					// Suppose that the peer catches up, and we are informed of the new minimum sequence number via some means (e.g. an op).
@@ -263,7 +273,13 @@ export function testCorrectness() {
 					// We also expect our copy of the peer's local branch to be updated even though we have not received any new commits from that peer since commit "3".
 					// We can check this by receiving another commit from our peer.
 					// We'll fail when trying to rebase if the branch was not already updated and is referencing evicted commits.
-					manager.addSequencedChange(peerCommit(peer1, [1, 2, 3], 4), brand(4), brand(3));
+					const peerCommit3 = peerCommit(peer1, [1, 2, 3], 4);
+					manager.addSequencedChanges(
+						[peerCommit3],
+						peerCommit3.sessionId,
+						brand(4),
+						brand(3),
+					);
 					checkChangeList(manager, [4]);
 
 					assert.deepEqual(trimmedCommits, expectedTrimmedRevisions);
@@ -275,9 +291,15 @@ export function testCorrectness() {
 					const expectedTrimmedRevisions = new Set<RevisionTag>();
 					const commit1 = applyLocalCommit(manager, [], 1);
 					expectedTrimmedRevisions.add(commit1.revision);
-					manager.addSequencedChange(commit1, brand(1), brand(0));
+					manager.addSequencedChanges([commit1], commit1.sessionId, brand(1), brand(0));
 					manager.advanceMinimumSequenceNumber(brand(2));
-					manager.addSequencedChange(applyLocalCommit(manager, [1], 2), brand(3), brand(2));
+					const managerCommit1 = applyLocalCommit(manager, [1], 2);
+					manager.addSequencedChanges(
+						[managerCommit1],
+						managerCommit1.sessionId,
+						brand(3),
+						brand(2),
+					);
 					checkChangeList(manager, [2]);
 
 					assert.deepEqual(trimmedCommits, expectedTrimmedRevisions);
@@ -289,10 +311,10 @@ export function testCorrectness() {
 					const expectedTrimmedRevisions = new Set<RevisionTag>();
 					const commit1 = applyLocalCommit(manager, [], 1);
 					expectedTrimmedRevisions.add(commit1.revision);
-					manager.addSequencedChange(commit1, brand(1), brand(0));
+					manager.addSequencedChanges([commit1], commit1.sessionId, brand(1), brand(0));
 					const local = applyLocalCommit(manager, [1], 2);
 					manager.advanceMinimumSequenceNumber(brand(2));
-					manager.addSequencedChange(local, brand(3), brand(2));
+					manager.addSequencedChanges([local], local.sessionId, brand(3), brand(2));
 					checkChangeList(manager, [2]);
 
 					assert.deepEqual(trimmedCommits, expectedTrimmedRevisions);
@@ -304,10 +326,10 @@ export function testCorrectness() {
 					const expectedTrimmedRevisions = new Set<RevisionTag>();
 					const commit1 = applyLocalCommit(manager, [], 1);
 					expectedTrimmedRevisions.add(commit1.revision);
-					manager.addSequencedChange(commit1, brand(1), brand(0));
+					manager.addSequencedChanges([commit1], commit1.sessionId, brand(1), brand(0));
 					const local = applyLocalCommit(manager, [1], 2);
 					const fork = manager.localBranch.fork();
-					manager.addSequencedChange(local, brand(2), brand(1));
+					manager.addSequencedChanges([local], local.sessionId, brand(2), brand(1));
 					expectedTrimmedRevisions.add(local.revision);
 					checkChangeList(manager, [1, 2]);
 					manager.advanceMinimumSequenceNumber(brand(2));
@@ -325,10 +347,10 @@ export function testCorrectness() {
 					const local1 = applyLocalCommit(manager, [], 1);
 					const fork1 = manager.localBranch.fork();
 					expectedTrimmedRevisions.add(local1.revision);
-					manager.addSequencedChange(local1, brand(1), brand(0));
+					manager.addSequencedChanges([local1], local1.sessionId, brand(1), brand(0));
 					const local2 = applyLocalCommit(manager, [1], 2);
 					const fork2 = manager.localBranch.fork();
-					manager.addSequencedChange(local2, brand(2), brand(1));
+					manager.addSequencedChanges([local2], local2.sessionId, brand(2), brand(1));
 					checkChangeList(manager, [1, 2]);
 
 					// The code above defines the following relationships between commits:
@@ -371,15 +393,25 @@ export function testCorrectness() {
 					const fork1 = manager.localBranch.fork();
 					const peerCommit1 = peerCommit(peer1, [], 1);
 					expectedTrimmedRevisions.add(peerCommit1.revision);
-					manager.addSequencedChange(peerCommit1, brand(1), brand(0));
+					manager.addSequencedChanges(
+						[peerCommit1],
+						peerCommit1.sessionId,
+						brand(1),
+						brand(0),
+					);
 					expectedTrimmedRevisions.add(local1.revision);
-					manager.addSequencedChange(local1, brand(2), brand(0));
+					manager.addSequencedChanges([local1], local1.sessionId, brand(2), brand(0));
 					const local2 = applyLocalCommit(manager, [1, 2], 4);
 					const fork2 = manager.localBranch.fork();
 					const peerCommit2 = peerCommit(peer1, [1, 2], 3);
 					expectedTrimmedRevisions.add(peerCommit2.revision);
-					manager.addSequencedChange(peerCommit2, brand(3), brand(2));
-					manager.addSequencedChange(local2, brand(4), brand(2));
+					manager.addSequencedChanges(
+						[peerCommit2],
+						peerCommit2.sessionId,
+						brand(3),
+						brand(2),
+					);
+					manager.addSequencedChanges([local2], local2.sessionId, brand(4), brand(2));
 					checkChangeList(manager, [1, 2, 3, 4]);
 
 					// The code above defines the following relationships between commits:
@@ -425,30 +457,61 @@ export function testCorrectness() {
 					expectedTrimmedRevisions.add(peerCommit2.revision);
 					const peerCommit3 = peerCommit(peer1, [1, 2], 3);
 					expectedTrimmedRevisions.add(peerCommit3.revision);
-					manager.addSequencedChange(peerCommit1, brand(1), brand(0));
-					manager.addSequencedChange(peerCommit2, brand(1), brand(0));
-					manager.addSequencedChange(peerCommit3, brand(1), brand(0));
+					manager.addSequencedChanges(
+						[peerCommit1],
+						peerCommit1.sessionId,
+						brand(1),
+						brand(0),
+					);
+					manager.addSequencedChanges(
+						[peerCommit2],
+						peerCommit2.sessionId,
+						brand(1),
+						brand(0),
+					);
+					manager.addSequencedChanges(
+						[peerCommit3],
+						peerCommit3.sessionId,
+						brand(1),
+						brand(0),
+					);
 					checkChangeList(manager, [1, 2, 3]);
 					manager.advanceMinimumSequenceNumber(brand(2));
 					checkChangeList(manager, []);
 					const peerCommit4 = peerCommit(peer1, [1, 2, 3], 4);
 					expectedTrimmedRevisions.add(peerCommit4.revision);
-					manager.addSequencedChange(peerCommit4, brand(4), brand(1));
+					manager.addSequencedChanges(
+						[peerCommit4],
+						peerCommit4.sessionId,
+						brand(4),
+						brand(1),
+					);
 					const peerCommit5 = peerCommit(peer1, [1, 2, 3, 4], 5);
 					expectedTrimmedRevisions.add(peerCommit5.revision);
-					manager.addSequencedChange(peerCommit5, brand(4), brand(1));
-					manager.addSequencedChange(
-						peerCommit(peer2, [1, 2, 3, 4, 5], 6),
+					manager.addSequencedChanges(
+						[peerCommit5],
+						peerCommit5.sessionId,
+						brand(4),
+						brand(1),
+					);
+					const peerCommit6 = peerCommit(peer2, [1, 2, 3, 4, 5], 6);
+					manager.addSequencedChanges(
+						[peerCommit6],
+						peerCommit6.sessionId,
 						brand(5),
 						brand(4),
 					);
-					manager.addSequencedChange(
-						peerCommit(peer2, [1, 2, 3, 4, 5, 6], 7),
+					const peerCommit7 = peerCommit(peer2, [1, 2, 3, 4, 5, 6], 7);
+					manager.addSequencedChanges(
+						[peerCommit7],
+						peerCommit7.sessionId,
 						brand(5),
 						brand(4),
 					);
-					manager.addSequencedChange(
-						peerCommit(peer2, [1, 2, 3, 4, 5, 6, 7], 8),
+					const peerCommit8 = peerCommit(peer2, [1, 2, 3, 4, 5, 6, 7], 8);
+					manager.addSequencedChanges(
+						[peerCommit8],
+						peerCommit8.sessionId,
 						brand(5),
 						brand(4),
 					);
@@ -476,12 +539,14 @@ export function testCorrectness() {
 					],
 					peerLocalBranches: new Map(),
 				});
-				manager.addSequencedChange(
-					{
-						change: TestChange.mint([0, 1], [2]),
-						revision: mintRevisionTag(),
-						sessionId: "1" as SessionId,
-					},
+				manager.addSequencedChanges(
+					[
+						{
+							change: TestChange.mint([0, 1], [2]),
+							revision: mintRevisionTag(),
+						},
+					],
+					"1" as SessionId,
 					brand(2),
 					brand(1),
 				);
@@ -495,15 +560,15 @@ export function testCorrectness() {
 					const local2 = applyLocalCommit(manager, [1], 2);
 					const [commit1, commit2] = manager.getLocalCommits();
 
-					manager.addSequencedChange(local1, brand(1), brand(0));
+					manager.addSequencedChanges([local1], local1.sessionId, brand(1), brand(0));
 					assert.deepEqual([commit1], manager.getTrunkCommits());
 					assert.deepEqual([commit2], manager.getLocalCommits());
 
 					const local3 = applyLocalCommit(manager, [1, 2], 3);
 					const [_, commit3] = manager.getLocalCommits();
 
-					manager.addSequencedChange(local2, brand(2), brand(0));
-					manager.addSequencedChange(local3, brand(3), brand(1));
+					manager.addSequencedChanges([local2], local2.sessionId, brand(2), brand(0));
+					manager.addSequencedChanges([local3], local3.sessionId, brand(3), brand(1));
 					assert.deepEqual([commit1, commit2, commit3], manager.getTrunkCommits());
 					assert.deepEqual([], manager.getLocalCommits());
 				});
@@ -525,9 +590,9 @@ export function testCorrectness() {
 					//         └─(2) <- forkC
 					//             └─(3) <- forkD & local
 
-					manager.addSequencedChange(local1, brand(1), brand(0));
-					manager.addSequencedChange(local2, brand(2), brand(0));
-					manager.addSequencedChange(local3, brand(3), brand(0));
+					manager.addSequencedChanges([local1], local1.sessionId, brand(1), brand(0));
+					manager.addSequencedChanges([local2], local2.sessionId, brand(2), brand(0));
+					manager.addSequencedChanges([local3], local3.sessionId, brand(3), brand(0));
 
 					// Because of fast-forwarding, we should now be in the following state:
 					//   (r)─(1)─(2)─(3) <- local
@@ -568,9 +633,9 @@ export function testCorrectness() {
 					const fork = manager.localBranch.fork();
 					const forkCommit = applyBranchCommit(fork);
 					const commit1 = applyLocalCommit(manager);
-					manager.addSequencedChange(commit1, brand(1), brand(0));
+					manager.addSequencedChanges([commit1], commit1.sessionId, brand(1), brand(0));
 					const commit2 = applyLocalCommit(manager);
-					manager.addSequencedChange(commit2, brand(2), brand(1));
+					manager.addSequencedChanges([commit2], commit2.sessionId, brand(2), brand(1));
 					manager.advanceMinimumSequenceNumber(brand(2));
 					manager.localBranch.merge(fork);
 					assert.equal(manager.localBranch.getHead().revision, forkCommit.revision);
@@ -597,21 +662,30 @@ export function testCorrectness() {
 					manager.localBranch.apply({ change: TestChange.emptyChange, revision: revision1 });
 					const revision2 = mintRevisionTag();
 					manager.localBranch.apply({ change: TestChange.emptyChange, revision: revision2 });
-					manager.addSequencedChange(
-						{
-							change: TestChange.emptyChange,
-							revision: mintRevisionTag(),
-							sessionId: peer1,
-						},
+					const commit1 = {
+						change: TestChange.emptyChange,
+						revision: mintRevisionTag(),
+						sessionId: peer1,
+					};
+					manager.addSequencedChanges(
+						[
+							{
+								change: TestChange.emptyChange,
+								revision: mintRevisionTag(),
+							},
+						],
+						peer1,
 						brand(1),
 						brand(0),
 					);
-					manager.addSequencedChange(
-						{
-							change: TestChange.emptyChange,
-							revision: sequencedLocalChange,
-							sessionId: manager.localSessionId,
-						},
+					manager.addSequencedChanges(
+						[
+							{
+								change: TestChange.emptyChange,
+								revision: sequencedLocalChange,
+							},
+						],
+						manager.localSessionId,
 						brand(2),
 						brand(0),
 					);
@@ -628,30 +702,36 @@ export function testCorrectness() {
 					});
 					const revision1 = mintRevisionTag();
 					manager.localBranch.apply({ change: TestChange.emptyChange, revision: revision1 });
-					manager.addSequencedChange(
-						{
-							change: TestChange.emptyChange,
-							revision: sequencedLocalChange,
-							sessionId: manager.localSessionId,
-						},
+					manager.addSequencedChanges(
+						[
+							{
+								change: TestChange.emptyChange,
+								revision: sequencedLocalChange,
+							},
+						],
+						manager.localSessionId,
 						brand(1),
 						brand(0),
 					);
-					manager.addSequencedChange(
-						{
-							change: TestChange.emptyChange,
-							revision: mintRevisionTag(),
-							sessionId: peer1,
-						},
+					manager.addSequencedChanges(
+						[
+							{
+								change: TestChange.emptyChange,
+								revision: mintRevisionTag(),
+							},
+						],
+						peer1,
 						brand(2),
 						brand(0),
 					);
-					manager.addSequencedChange(
-						{
-							change: TestChange.emptyChange,
-							revision: mintRevisionTag(),
-							sessionId: peer1,
-						},
+					manager.addSequencedChanges(
+						[
+							{
+								change: TestChange.emptyChange,
+								revision: mintRevisionTag(),
+							},
+						],
+						peer1,
 						brand(3),
 						brand(0),
 					);
@@ -722,10 +802,11 @@ function applyBranchCommit(
 	intention: number | number[] = [],
 ): Commit<TestChange> {
 	const revision = mintRevisionTag();
-	const [_, commit] = branch.apply({
+	branch.apply({
 		change: TestChange.mint(inputContext, intention),
 		revision,
 	});
+	const commit = branch.getHead();
 	return {
 		change: commit.change,
 		revision: commit.revision,

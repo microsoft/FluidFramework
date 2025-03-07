@@ -15,8 +15,7 @@ import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/intern
 
 /**
  * Information from a snapshot needed to load BlobManager
- * @legacy
- * @alpha
+ * @internal
  */
 export interface IBlobManagerLoadInfo {
 	ids?: string[];
@@ -73,7 +72,9 @@ export const toRedirectTable = (
 	if (snapshot.ids) {
 		// If we are detached, we don't have storage IDs yet, so set to undefined
 		// Otherwise, set identity (id -> id) entries.
-		snapshot.ids.forEach((entry) => redirectTable.set(entry, detached ? undefined : entry));
+		for (const entry of snapshot.ids) {
+			redirectTable.set(entry, detached ? undefined : entry);
+		}
 	}
 	return redirectTable;
 };
@@ -90,12 +91,11 @@ const summarizeV1 = (
 	const storageIds = getStorageIds(redirectTable, attachState);
 
 	// if storageIds is empty, it means we are detached and have only local IDs, or that there are no blobs attached
-	const blobIds =
-		storageIds.size > 0 ? Array.from(storageIds) : Array.from(redirectTable.keys());
+	const blobIds = storageIds.size > 0 ? [...storageIds] : [...redirectTable.keys()];
 	const builder = new SummaryTreeBuilder();
-	blobIds.forEach((blobId) => {
+	for (const blobId of blobIds) {
 		builder.addAttachment(blobId);
-	});
+	}
 
 	// Any non-identity entries in the table need to be saved in the summary
 	if (redirectTable.size > blobIds.length) {
@@ -103,9 +103,7 @@ const summarizeV1 = (
 			redirectTableBlobName,
 			// filter out identity entries
 			JSON.stringify(
-				Array.from(redirectTable.entries()).filter(
-					([localId, storageId]) => localId !== storageId,
-				),
+				[...redirectTable.entries()].filter(([localId, storageId]) => localId !== storageId),
 			),
 		);
 	}
@@ -116,7 +114,7 @@ const summarizeV1 = (
 export const getStorageIds = (
 	redirectTable: Map<string, string | undefined>,
 	attachState: AttachState,
-) => {
+): Set<string> => {
 	const ids = new Set<string | undefined>(redirectTable.values());
 
 	// If we are detached, we will not have storage IDs, only undefined

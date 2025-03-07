@@ -16,6 +16,7 @@ import {
 	IRevokedTokenChecker,
 	IClusterDrainingChecker,
 	IFluidAccessTokenGenerator,
+	IReadinessCheck,
 } from "@fluidframework/server-services-core";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
@@ -37,7 +38,6 @@ import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
 import { IDocumentDeleteService } from "./services";
 import * as alfredRoutes from "./routes";
-import { IReadinessCheck } from "@fluidframework/server-services-core";
 
 export function create(
 	config: Provider,
@@ -63,6 +63,7 @@ export function create(
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
 	const enableLatencyMetric = config.get("alfred:enableLatencyMetric") ?? false;
+	const enableEventLoopLagMetric = config.get("alfred:enableEventLoopLagMetric") ?? false;
 	const httpServerConfig: IHttpServerConfig = config.get("system:httpServer");
 
 	// Express app configuration
@@ -147,6 +148,7 @@ export function create(
 					return additionalProperties;
 				},
 				enableLatencyMetric,
+				enableEventLoopLagMetric,
 			),
 		);
 	} else {

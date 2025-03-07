@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/test-tools",
-	"version": "2.0.0",
+	"version": "3.0.0",
 	"description": "Fluid test tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -32,8 +32,8 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.51.0",
-		"@fluidframework/eslint-config-fluid": "^5.6.0",
+		"@fluidframework/build-tools": "^0.53.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"eslint": "~8.55.0",
@@ -44,5 +44,5 @@
 		"rimraf": "^5.0.0",
 		"typescript": "~5.4.5"
 	},
-	"packageManager": "pnpm@8.15.8+sha512.d1a029e1a447ad90bc96cd58b0fad486d2993d531856396f7babf2d83eb1823bb83c5a3d0fc18f675b2d10321d49eb161fece36fe8134aa5823ecd215feed392"
+	"packageManager": "pnpm@9.15.3+sha512.1f79bc245a66eb0b07c5d4d83131240774642caaa86ef7d0434ab47c0d16f66b04e21e0c086eb61e62c77efc4d7f7ec071afad3796af64892fae66509173893a"
 }

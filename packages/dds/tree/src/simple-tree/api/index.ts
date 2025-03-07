@@ -15,9 +15,16 @@ export {
 	type TreeViewAlpha,
 	type TreeBranch,
 	type TreeBranchEvents,
+	type ITreeAlpha,
 	asTreeViewAlpha,
 } from "./tree.js";
-export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
+export {
+	SchemaFactory,
+	type ScopedSchemaName,
+	type SchemaFactoryObjectOptions,
+	type schemaStatics,
+} from "./schemaFactory.js";
+export { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
 export type {
 	ValidateRecursiveSchema,
 	FixRecursiveArraySchema,
@@ -90,7 +97,13 @@ export {
 	verboseFromCursor,
 } from "./verboseTree.js";
 
-export type { EncodeOptions } from "./customTree.js";
+export {
+	type EncodeOptions,
+	customFromCursorStored,
+	type CustomTreeNode,
+	type CustomTreeValue,
+	tryStoredSchemaAsArray,
+} from "./customTree.js";
 
 export { type ConciseTree, conciseFromCursor } from "./conciseTree.js";
 
@@ -106,6 +119,19 @@ export {
 	comparePersistedSchemaInternal,
 	comparePersistedSchema,
 } from "./storedSchema.js";
+
+export {
+	type TransactionConstraint,
+	type NodeInDocumentConstraint,
+	type RunTransactionParams,
+	type VoidTransactionCallbackStatus,
+	type TransactionCallbackStatus,
+	type TransactionResult,
+	type TransactionResultExt,
+	type TransactionResultSuccess,
+	type TransactionResultFailed,
+	rollback,
+} from "./transactionTypes.js";
 
 // Exporting the schema (RecursiveObject) to test that recursive types are working correctly.
 // These are `@internal` so they can't be included in the `InternalClassTreeTypes` due to https://github.com/microsoft/rushstack/issues/3639

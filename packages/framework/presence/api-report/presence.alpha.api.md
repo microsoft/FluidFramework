@@ -58,7 +58,7 @@ export function Latest<T extends object, Key extends string = string>(initialVal
 // @alpha
 export function LatestMap<T extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(initialValues?: {
     [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
-}, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T>, LatestMapValueManager<T, Keys>>;
+}, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapValueManager<T, Keys>>;
 
 // @alpha @sealed
 export interface LatestMapItemRemovedClientData<K extends string | number> {
@@ -100,6 +100,15 @@ export interface LatestMapValueManagerEvents<T, K extends string | number> {
     // @eventProperty
     itemUpdated: (updatedItem: LatestMapItemValueClientData<T, K>) => void;
     // @eventProperty
+    localItemRemoved: (removedItem: {
+        key: K;
+    }) => void;
+    // @eventProperty
+    localItemUpdated: (updatedItem: {
+        value: InternalUtilityTypes.FullyReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+        key: K;
+    }) => void;
+    // @eventProperty
     updated: (updates: LatestMapValueClientData<T, K>) => void;
 }
 
@@ -130,6 +139,10 @@ export interface LatestValueManager<T> {
 
 // @alpha @sealed (undocumented)
 export interface LatestValueManagerEvents<T> {
+    // @eventProperty
+    localUpdated: (update: {
+        value: InternalUtilityTypes.FullyReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+    }) => void;
     // @eventProperty
     updated: (update: LatestValueClientData<T>) => void;
 }

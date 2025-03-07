@@ -195,7 +195,7 @@ export class FluidDataStoreRuntime
 	private readonly pendingHandlesToMakeVisible: Set<IFluidHandleInternal> = new Set();
 
 	public readonly id: string;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 	public readonly options: Record<string | number, any>;
 	public readonly deltaManagerInternal: IDeltaManager<
 		ISequencedDocumentMessage,
@@ -790,8 +790,8 @@ export class FluidDataStoreRuntime
 
 	/**
 	 * back-compat ADO 21575.
-	 * This is still here for back-compat purposes because it exists on IFluidDataStoreChannel. Once it is removed from
-	 * the interface, this method can be removed.
+	 * @deprecated {@link FluidDataStoreRuntime.processMessages} should be used instead to process messages. This is still here for back-compat
+	 * because it exists on IFluidDataStoreChannel. Once it is removed from the interface, this method can be removed.
 	 */
 	public process(
 		message: ISequencedDocumentMessage,

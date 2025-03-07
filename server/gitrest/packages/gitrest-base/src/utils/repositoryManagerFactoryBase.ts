@@ -12,6 +12,7 @@ import {
 	Constants,
 	IFileSystemManager,
 	IFileSystemManagerFactories,
+	IFileSystemManagerParams,
 	IRepoManagerParams,
 	IRepositoryManager,
 	IRepositoryManagerFactory,
@@ -42,7 +43,11 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 	) => Promise<IRepositoryManager>;
 	// Cache repositories to allow for reuse
 	protected readonly repositoryCache = new Map<string, TRepo>();
-	protected abstract initGitRepo(fs: IFileSystemManager, gitdir: string): Promise<TRepo>;
+	protected abstract initGitRepo(
+		fs: IFileSystemManager,
+		gitdir: string,
+		fsParams: IFileSystemManagerParams | undefined,
+	): Promise<TRepo>;
 	protected abstract openGitRepo(gitdir: string): Promise<TRepo>;
 	protected abstract createRepoManager(
 		fileSystemManager: IFileSystemManager,
@@ -55,6 +60,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 		enableRepositoryManagerMetrics: boolean,
 		apiMetricsSamplingPeriod?: number,
 		isEphemeralContainer?: boolean,
+		maxBlobSizeBytes?: number,
 	): IRepositoryManager;
 
 	constructor(
@@ -65,6 +71,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 		private readonly enableRepositoryManagerMetrics: boolean = false,
 		private readonly enforceSynchronous: boolean = true,
 		private readonly apiMetricsSamplingPeriod?: number,
+		private readonly maxBlobSizeBytes?: number,
 	) {
 		this.internalHandler = repoPerDocEnabled
 			? this.repoPerDocInternalHandler.bind(this)
@@ -79,7 +86,11 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 			lumberjackBaseProperties: Record<string, any>,
 		) => {
 			// Create and then cache the repository
-			const repository = await this.initGitRepo(fileSystemManager, gitdir);
+			const repository = await this.initGitRepo(
+				fileSystemManager,
+				gitdir,
+				params.fileSystemManagerParams,
+			);
 			this.repositoryCache.set(repoPath, repository);
 			Lumberjack.info("Created a new repo", {
 				...lumberjackBaseProperties,
@@ -271,6 +282,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 				this.enableRepositoryManagerMetrics,
 				this.apiMetricsSamplingPeriod,
 				params.isEphemeralContainer,
+				this.maxBlobSizeBytes,
 			);
 		};
 
@@ -294,8 +306,18 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 				});
 			} catch (e: any) {
 				if (e === E_TIMEOUT) {
+					Lumberjack.error(
+						"Mutex timeout when trying to run action",
+						lumberjackBaseProperties,
+						e,
+					);
 					throw new NetworkError(500, "Could not complete action due to mutex timeout.");
 				}
+				Lumberjack.error(
+					"Unknown error when trying to run action",
+					lumberjackBaseProperties,
+					e,
+				);
 				throw new NetworkError(
 					500,
 					`Unknown error when trying to run action:  ${e?.message}`,

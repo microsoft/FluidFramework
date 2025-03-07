@@ -8,7 +8,10 @@ import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { Loader } from "@fluidframework/container-loader/internal";
+import {
+	createDetachedContainer,
+	type ILoaderProps,
+} from "@fluidframework/container-loader/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	LocalDocumentServiceFactory,
@@ -20,11 +23,11 @@ import {
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
+	createAndAttachContainerUsingProps,
 	ITestFluidObject,
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	TestFluidObjectFactory,
-	createAndAttachContainer,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
@@ -129,18 +132,18 @@ describe("Document Dirty", () => {
 			const urlResolver = new LocalResolver();
 			const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
 
-			const loader = new Loader({
+			const createDetachedContainerProps: ILoaderProps = {
 				urlResolver,
 				documentServiceFactory,
 				codeLoader,
-			});
-			loaderContainerTracker.add(loader);
+			};
 
-			return createAndAttachContainer(
-				codeDetails,
-				loader,
+			const containerUsingProps = await createAndAttachContainerUsingProps(
+				{ ...createDetachedContainerProps, codeDetails },
 				urlResolver.createCreateNewRequest(documentId),
 			);
+			loaderContainerTracker.addContainer(containerUsingProps);
+			return containerUsingProps;
 		}
 
 		beforeEach(async () => {
@@ -438,7 +441,7 @@ describe("Document Dirty", () => {
 	});
 
 	describe("Detached Container", () => {
-		async function createDetachedContainer(): Promise<IContainer> {
+		async function createDetachedContainerForTest(): Promise<IContainer> {
 			const defaultFactory: TestFluidObjectFactory = new TestFluidObjectFactory(
 				[[mapId, SharedMap.getFactory()]],
 				"default",
@@ -452,14 +455,18 @@ describe("Document Dirty", () => {
 			const urlResolver = new LocalResolver();
 			const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
 
-			const loader = new Loader({
+			const loaderProps: ILoaderProps = {
 				urlResolver,
 				documentServiceFactory,
 				codeLoader,
-			});
-			loaderContainerTracker.add(loader);
+			};
 
-			return loader.createDetachedContainer(codeDetails);
+			const containerUsingPops = await createDetachedContainer({
+				...loaderProps,
+				codeDetails,
+			});
+			loaderContainerTracker.addContainer(containerUsingPops);
+			return containerUsingPops;
 		}
 
 		/**
@@ -556,7 +563,7 @@ describe("Document Dirty", () => {
 			loaderContainerTracker = new LoaderContainerTracker();
 
 			// Create the first container, component and DDSes.
-			container = await createDetachedContainer();
+			container = await createDetachedContainerForTest();
 			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 			containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
 			sharedMap = await dataObject.getSharedObject<ISharedMap>(mapId);

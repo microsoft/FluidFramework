@@ -73,6 +73,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     flush(): void;
     // (undocumented)
     get isDirty(): boolean;
+    protected maybeProcessIdAllocationMessage(message: ISequencedDocumentMessage): boolean;
     // (undocumented)
     protected readonly outbox: IInternalMockRuntimeMessage[];
     // (undocumented)
@@ -83,6 +84,8 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     protected readonly pendingMessages: IMockContainerRuntimePendingMessage[];
     // (undocumented)
     process(message: ISequencedDocumentMessage): void;
+    // (undocumented)
+    protected processInternal(message: ISequencedDocumentMessage): [boolean, unknown];
     rebase(): void;
     // (undocumented)
     resolveHandle(handle: IFluidHandle): Promise<IResponse>;
@@ -91,6 +94,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
         content: any;
         localOpMetadata?: unknown;
     }[]): void;
+    protected readonly runtimeOptions: Required<IMockContainerRuntimeOptions>;
     // (undocumented)
     submit(messageContent: any, localOpMetadata?: unknown): number;
 }
@@ -101,7 +105,11 @@ export class MockContainerRuntimeFactory {
     // (undocumented)
     createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime): MockContainerRuntime;
     // (undocumented)
+    protected getFirstMessageToProcess(): ISequencedDocumentMessage;
+    // (undocumented)
     getMinSeq(): number;
+    // (undocumented)
+    protected lastProcessedMessage: ISequencedDocumentMessage | undefined;
     protected messages: ISequencedDocumentMessage[];
     // (undocumented)
     minSeq: Map<string, number>;
@@ -146,9 +154,16 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
     // (undocumented)
     protected readonly factory: MockContainerRuntimeFactoryForReconnection;
     // (undocumented)
+    flush(): void;
+    // (undocumented)
     initializeWithStashedOps(fromContainerRuntime: MockContainerRuntimeForReconnection): Promise<void>;
+    protected readonly pendingRemoteMessages: ISequencedDocumentMessage[];
     // (undocumented)
     process(message: ISequencedDocumentMessage): void;
+    // (undocumented)
+    protected readonly processedOps?: ISequencedDocumentMessage[];
+    // (undocumented)
+    protected processPendingMessages(pendingMessages: ISequencedDocumentMessage[]): void;
     // (undocumented)
     protected setConnectedState(connected: boolean): void;
     // (undocumented)

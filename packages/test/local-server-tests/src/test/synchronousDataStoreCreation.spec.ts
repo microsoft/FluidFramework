@@ -3,13 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject } from "@fluidframework/aqueduct/internal";
-import { DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import {
 	AttachState,
 	type IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
-import { waitContainerToCatchUp } from "@fluidframework/container-loader/internal";
+import {
+	createDetachedContainer,
+	loadExistingContainer,
+	waitContainerToCatchUp,
+} from "@fluidframework/container-loader/internal";
 import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle, type FluidObject } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
@@ -192,12 +195,12 @@ describe("Scenario Test", () => {
 	it("Synchronously create child data store", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 
-		const { loader, codeDetails, urlResolver } = createLoader({
+		const { loaderProps, codeDetails, urlResolver } = createLoader({
 			deltaConnectionServer,
 			runtimeFactory,
 		});
 
-		const container = await loader.createDetachedContainer(codeDetails);
+		const container = await createDetachedContainer({ ...loaderProps, codeDetails });
 
 		{
 			const entrypoint: FluidObject<ParentDataObject> = await container.getEntryPoint();
@@ -234,7 +237,7 @@ describe("Scenario Test", () => {
 		container.dispose();
 
 		{
-			const container2 = await loader.resolve({ url });
+			const container2 = await loadExistingContainer({ ...loaderProps, request: { url } });
 			await waitContainerToCatchUp(container2);
 			const entrypoint: FluidObject<ParentDataObject> = await container2.getEntryPoint();
 

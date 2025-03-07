@@ -46,6 +46,7 @@ import {
 import { EpochTracker } from "./epochTracker.js";
 import { getQueryString } from "./getQueryString.js";
 import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
+import { mockify } from "./mockify.js";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser.js";
 import { checkForKnownServerFarmType } from "./odspUrlHelper.js";
 import {
@@ -150,13 +151,8 @@ export async function fetchSnapshotWithRedeem(
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			if (enableRedeemFallback && isRedeemSharingLinkError(odspResolvedUrl, error)) {
 				// Execute the redeem fallback
+				await redeemSharingLink(odspResolvedUrl, storageTokenFetcher, logger);
 
-				await redeemSharingLink(
-					odspResolvedUrl,
-					storageTokenFetcher,
-					logger,
-					forceAccessTokenViaAuthorizationHeader,
-				);
 				const odspResolvedUrlWithoutShareLink: IOdspResolvedUrl = {
 					...odspResolvedUrl,
 					shareLinkInfo: {
@@ -213,7 +209,6 @@ async function redeemSharingLink(
 	odspResolvedUrl: IOdspResolvedUrl,
 	getAuthHeader: InstrumentedStorageTokenFetcher,
 	logger: ITelemetryLoggerExt,
-	forceAccessTokenViaAuthorizationHeader: boolean,
 ): Promise<void> {
 	await PerformanceEvent.timedExecAsync(
 		logger,
@@ -233,7 +228,12 @@ async function redeemSharingLink(
 			let redeemUrl: string | undefined;
 			async function callSharesAPI(baseUrl: string): Promise<void> {
 				await getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
-					redeemUrl = `${baseUrl}/_api/v2.0/shares/${encodedShareUrl}`;
+					// IMPORTANT: Note that redeemUrl has '/driveItem' in it. Technically it is not required for executing redeem operation.
+					// However, we have other cases that use '/shares' API and do require to specify '/driveItem' in order to get specific
+					// drive item properties. The reason this matters is when caller of this API must possess logical permissions to call
+					// this API (for instance, this will be the case when call is made with app-only token) then two separate logical
+					// permissions are needed for the '/shares' call with and without '/driveItem'.
+					redeemUrl = `${baseUrl}/_api/v2.0/shares/${encodedShareUrl}/driveItem`;
 					const url = redeemUrl;
 					const method = "GET";
 					const authHeader = await getAuthHeader(
@@ -694,87 +694,92 @@ function getTreeStatsCore(snapshotTree: ISnapshotTree, stats: ITreeStats): void 
  * @param epochTracker - epoch tracker used to add/validate epoch in the network call.
  * @returns fetched snapshot.
  */
-export async function downloadSnapshot(
-	odspResolvedUrl: IOdspResolvedUrl,
-	getAuthHeader: InstrumentedStorageTokenFetcher,
-	tokenFetchOptions: TokenFetchOptionsEx,
-	loadingGroupIds: string[] | undefined,
-	snapshotOptions: ISnapshotOptions | undefined,
-	snapshotFormatFetchType?: SnapshotFormatSupportType,
-	controller?: AbortController,
-	epochTracker?: EpochTracker,
-	scenarioName?: string,
-): Promise<ISnapshotRequestAndResponseOptions> {
-	// back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-	const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
-	if (sharingLinkToRedeem) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		odspResolvedUrl.shareLinkInfo = { ...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem };
-	}
+export const downloadSnapshot = mockify(
+	async (
+		odspResolvedUrl: IOdspResolvedUrl,
+		getAuthHeader: InstrumentedStorageTokenFetcher,
+		tokenFetchOptions: TokenFetchOptionsEx,
+		loadingGroupIds: string[] | undefined,
+		snapshotOptions: ISnapshotOptions | undefined,
+		snapshotFormatFetchType?: SnapshotFormatSupportType,
+		controller?: AbortController,
+		epochTracker?: EpochTracker,
+		scenarioName?: string,
+	): Promise<ISnapshotRequestAndResponseOptions> => {
+		// back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+		const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
+		if (sharingLinkToRedeem) {
+			odspResolvedUrl.shareLinkInfo = {
+				...odspResolvedUrl.shareLinkInfo,
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+				sharingLinkToRedeem,
+			};
+		}
 
-	const snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
+		const snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
 
-	const queryParams: Record<string, unknown> = { ump: 1 };
-	if (snapshotOptions !== undefined) {
-		for (const [key, value] of Object.entries(snapshotOptions)) {
-			// Exclude "timeout" from query string
-			if (value !== undefined && key !== "timeout") {
-				queryParams[key] = value;
+		const queryParams: Record<string, unknown> = { ump: 1 };
+		if (snapshotOptions !== undefined) {
+			for (const [key, value] of Object.entries(snapshotOptions)) {
+				// Exclude "timeout" from query string
+				if (value !== undefined && key !== "timeout") {
+					queryParams[key] = value;
+				}
 			}
 		}
-	}
 
-	if (loadingGroupIds !== undefined) {
-		queryParams.groupId = loadingGroupIds.join(",");
-	}
-
-	const queryString = getQueryString(queryParams);
-	const url = `${snapshotUrl}/trees/latest${queryString}`;
-	const method = "POST";
-	// The location of file can move on Spo in which case server returns 308(Permanent Redirect) error.
-	// Adding below header will make VROOM API return 404 instead of 308 and browser can intercept it.
-	// This error thrown by server will contain the new redirect location. Look at the 404 error parsing
-	// for further reference here: \packages\utils\odsp-doclib-utils\src\odspErrorUtils.ts
-	const header = { prefer: "manualredirect" };
-	const authHeader = await getAuthHeader(
-		{ ...tokenFetchOptions, request: { url, method } },
-		"downloadSnapshot",
-	);
-	assert(authHeader !== null, 0x1e5 /* "Storage token should not be null" */);
-	const { body, headers } = getFormBodyAndHeaders(odspResolvedUrl, authHeader, header);
-	const fetchOptions = {
-		body,
-		headers,
-		signal: controller?.signal,
-		method,
-	};
-	// Decide what snapshot format to fetch as per the feature gate.
-	switch (snapshotFormatFetchType) {
-		case SnapshotFormatSupportType.Binary: {
-			headers.accept = `application/ms-fluid; v=${currentReadVersion}`;
-			break;
+		if (loadingGroupIds !== undefined) {
+			queryParams.groupId = loadingGroupIds.join(",");
 		}
-		default: {
-			// By default ask both versions and let the server decide the format.
-			headers.accept = `application/json, application/ms-fluid; v=${currentReadVersion}`;
+
+		const queryString = getQueryString(queryParams);
+		const url = `${snapshotUrl}/trees/latest${queryString}`;
+		const method = "POST";
+		// The location of file can move on Spo in which case server returns 308(Permanent Redirect) error.
+		// Adding below header will make VROOM API return 404 instead of 308 and browser can intercept it.
+		// This error thrown by server will contain the new redirect location. Look at the 404 error parsing
+		// for further reference here: \packages\utils\odsp-doclib-utils\src\odspErrorUtils.ts
+		const header = { prefer: "manualredirect" };
+		const authHeader = await getAuthHeader(
+			{ ...tokenFetchOptions, request: { url, method } },
+			"downloadSnapshot",
+		);
+		assert(authHeader !== null, 0x1e5 /* "Storage token should not be null" */);
+		const { body, headers } = getFormBodyAndHeaders(odspResolvedUrl, authHeader, header);
+		const fetchOptions = {
+			body,
+			headers,
+			signal: controller?.signal,
+			method,
+		};
+		// Decide what snapshot format to fetch as per the feature gate.
+		switch (snapshotFormatFetchType) {
+			case SnapshotFormatSupportType.Binary: {
+				headers.accept = `application/ms-fluid; v=${currentReadVersion}`;
+				break;
+			}
+			default: {
+				// By default ask both versions and let the server decide the format.
+				headers.accept = `application/json, application/ms-fluid; v=${currentReadVersion}`;
+			}
 		}
-	}
 
-	const odspResponse = await (epochTracker?.fetch(
-		url,
-		fetchOptions,
-		"treesLatest",
-		true,
-		scenarioName,
-	) ?? fetchHelper(url, fetchOptions));
+		const odspResponse = await (epochTracker?.fetch(
+			url,
+			fetchOptions,
+			"treesLatest",
+			true,
+			scenarioName,
+		) ?? fetchHelper(url, fetchOptions));
 
-	return {
-		odspResponse,
-		requestHeaders: headers,
-		requestUrl: url,
-	};
-}
+		return {
+			odspResponse,
+			requestHeaders: headers,
+			requestUrl: url,
+		};
+	},
+);
 
 function isRedeemSharingLinkError(
 	odspResolvedUrl: IOdspResolvedUrl,

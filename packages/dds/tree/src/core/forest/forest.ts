@@ -112,7 +112,7 @@ export interface IForestSubscription {
 	): TreeNavigationResult;
 
 	/**
-	 * Set `cursorToMove` to location described by path.
+	 * Set `cursorToMove` to the {@link CursorLocationType.node} described by path.
 	 * This is NOT a relative move: current position is discarded.
 	 * Path must point to existing node.
 	 */

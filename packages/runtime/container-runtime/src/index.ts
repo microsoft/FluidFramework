@@ -5,11 +5,8 @@
 
 export {
 	ISummaryRuntimeOptions,
-	ISummaryBaseConfiguration,
-	ISummaryConfigurationHeuristics,
-	ISummaryConfigurationDisableSummarizer,
-	ISummaryConfigurationDisableHeuristics,
 	IContainerRuntimeOptions,
+	IContainerRuntimeOptionsInternal,
 	loadContainerRuntime,
 	LoadContainerRuntimeParams,
 	agentSchedulerId,
@@ -17,8 +14,6 @@ export {
 	DeletedResponseHeaderKey,
 	TombstoneResponseHeaderKey,
 	InactiveResponseHeaderKey,
-	ISummaryConfiguration,
-	DefaultSummaryConfiguration,
 	ICompressionRuntimeOptions,
 	CompressionAlgorithms,
 	RuntimeHeaderData,
@@ -54,7 +49,6 @@ export {
 	ISummaryCancellationToken,
 	neverCancelledSummaryToken,
 	Summarizer,
-	SummarizerStopReason,
 	SummaryCollection,
 	EnqueueSummarizeResult,
 	IAckSummaryResult,
@@ -74,7 +68,6 @@ export {
 	ISubmitSummaryOptions,
 	ISerializedElection,
 	ISummarizeOptions,
-	ISummarizerEvents,
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
 	ISummarizingWarning,
@@ -94,7 +87,6 @@ export {
 	SubmitSummaryFailureData,
 	SummaryStage,
 	IRetriableFailureError,
-	ISummarizeEventProps,
 	IdCompressorMode,
 	IDocumentSchema,
 	DocumentSchemaValueType,
@@ -108,6 +100,12 @@ export {
 	IFluidDataStoreAttributes1,
 	IFluidDataStoreAttributes2,
 	OmitAttributesVersions,
+	ISummaryBaseConfiguration,
+	ISummaryConfigurationHeuristics,
+	ISummaryConfigurationDisableSummarizer,
+	ISummaryConfigurationDisableHeuristics,
+	ISummaryConfiguration,
+	DefaultSummaryConfiguration,
 } from "./summary/index.js";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";
 export { ChannelCollection } from "./channelCollection.js";

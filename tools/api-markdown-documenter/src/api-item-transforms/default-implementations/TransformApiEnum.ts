@@ -11,8 +11,8 @@ import {
 } from "@microsoft/api-extractor-model";
 
 import type { DocumentationNode, SectionNode } from "../../documentation-domain/index.js";
-import { getScopedMemberNameForDiagnostics } from "../../utilities/index.js";
-import { filterChildMembers } from "../ApiItemTransformUtilities.js";
+import { getApiItemKind, getScopedMemberNameForDiagnostics } from "../../utilities/index.js";
+import { getFilteredMembers } from "../ApiItemTransformUtilities.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createMemberTables, wrapInSection } from "../helpers/index.js";
 
@@ -21,28 +21,27 @@ import { createMemberTables, wrapInSection } from "../helpers/index.js";
  */
 export function transformApiEnum(
 	apiEnum: ApiEnum,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 	generateChildContent: (apiItem: ApiItem) => SectionNode[],
 ): SectionNode[] {
 	const sections: SectionNode[] = [];
 
-	const filteredChildren = filterChildMembers(apiEnum, config);
+	const filteredChildren = getFilteredMembers(apiEnum, config);
 	if (filteredChildren.length > 0) {
 		// Accumulate child items
 		const flags: ApiEnumMember[] = [];
 		for (const child of filteredChildren) {
-			switch (child.kind) {
+			const childKind = getApiItemKind(child);
+			switch (childKind) {
 				case ApiItemKind.EnumMember: {
 					flags.push(child as ApiEnumMember);
 					break;
 				}
 				default: {
 					config.logger?.error(
-						`Child item "${
-							child.displayName
-						}" of Enum "${getScopedMemberNameForDiagnostics(
+						`Child item "${child.displayName}" of Enum "${getScopedMemberNameForDiagnostics(
 							apiEnum,
-						)}" is of unsupported API item kind: "${child.kind}"`,
+						)}" is of unsupported API item kind: "${childKind}"`,
 					);
 					break;
 				}
@@ -75,5 +74,5 @@ export function transformApiEnum(
 		}
 	}
 
-	return config.createDefaultLayout(apiEnum, sections, config);
+	return config.defaultSectionLayout(apiEnum, sections, config);
 }

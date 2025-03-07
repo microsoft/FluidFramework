@@ -49,8 +49,6 @@ import type { NodeData } from "./types.js";
  * Only use this type when needed for json compatible maps,
  * but even in those cases consider lists of key value pairs for serialization and using `Map`
  * for runtime.
- *
- * @internal
  */
 export interface FieldMapObject<TChild> {
 	[key: string]: TChild[];
@@ -59,14 +57,12 @@ export interface FieldMapObject<TChild> {
 /**
  * Json comparable tree node, generic over child type.
  * Json compatibility assumes `TChild` is also json compatible.
- * @internal
  */
 export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, NodeData {}
 
 /**
  * Json comparable field collection, generic over child type.
  * Json compatibility assumes `TChild` is also json compatible.
- * @internal
  */
 export interface GenericFieldsNode<TChild> {
 	fields?: FieldMapObject<TChild>;
@@ -79,7 +75,6 @@ export interface GenericFieldsNode<TChild> {
  * {@link @fluidframework/shared-object-base#IFluidSerializer.stringify} must be used instead of `JSON.stringify`.
  *
  * JsonableTrees should not store empty fields.
- * @internal
  */
 export interface JsonableTree extends GenericTreeNode<JsonableTree> {}
 
@@ -95,7 +90,7 @@ export function getGenericTreeField<T>(
 
 	// Do not just read field and check for undefined: see warning on FieldMapObject.
 	if (Object.prototype.hasOwnProperty.call(children, key)) {
-		return children[key] ?? fail("This wont be undefined due to the check above");
+		return children[key] ?? fail(0xaed /* This wont be undefined due to the check above */);
 	}
 	// Handle missing field:
 	if (createIfMissing === false) {

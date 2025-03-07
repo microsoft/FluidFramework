@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { Command, Flags, Interfaces } from "@oclif/core";
 // eslint-disable-next-line import/no-internal-modules
 import type { PrettyPrintableError } from "@oclif/core/errors";
 import chalk from "picocolors";
 
-import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
+import { type IBuildProject, loadBuildProject } from "@fluid-tools/build-infrastructure";
 import { CommandLogger } from "../../logging.js";
 import { Context } from "../context.js";
 import { indentString } from "../text.js";
@@ -20,15 +21,6 @@ export type Flags<T extends typeof Command> = Interfaces.InferredFlags<
 	(typeof BaseCommand)["baseFlags"] & T["flags"]
 >;
 export type Args<T extends typeof Command> = Interfaces.InferredArgs<T["args"]>;
-
-/**
- * A CLI flag to parse the root directory of the Fluid repo.
- */
-const rootPathFlag = Flags.custom({
-	description: "Root directory of the Fluid repo (default: env _FLUID_ROOT_).",
-	env: "_FLUID_ROOT_",
-	hidden: true,
-});
 
 /**
  * A base command that sets up common flags that all commands should have. Most commands should have this class in their
@@ -147,10 +139,8 @@ export abstract class BaseCommand<T extends typeof Command>
 	async getContext(): Promise<Context> {
 		if (this._context === undefined) {
 			const resolvedRoot = await getResolvedFluidRoot();
-			const gitRepo = new GitRepo(resolvedRoot);
-			const branch = await gitRepo.getCurrentBranchName();
 
-			this._context = new Context(gitRepo, "microsoft/FluidFramework", branch);
+			this._context = new Context(resolvedRoot);
 		}
 
 		return this._context;
@@ -192,17 +182,18 @@ export abstract class BaseCommand<T extends typeof Command>
 	/**
 	 * Logs a warning.
 	 */
-	public warning(message: string | Error | undefined): void {
+	public warning(message: string | Error): string | Error {
 		if (!this.suppressLogging) {
 			this.log(chalk.yellow(`WARNING: ${message}`));
 		}
+		return message;
 	}
 
 	/**
 	 * Logs a warning with a stack trace in debug mode.
 	 */
 	public warningWithDebugTrace(message: string | Error): string | Error {
-		return this.suppressLogging ? "" : super.warn(message);
+		return this.suppressLogging ? "" : this.warning(message);
 	}
 
 	// eslint-disable-next-line jsdoc/require-description
@@ -210,7 +201,7 @@ export abstract class BaseCommand<T extends typeof Command>
 	 * @deprecated Use {@link BaseCommand.warning} or {@link BaseCommand.warningWithDebugTrace} instead.
 	 */
 	public warn(input: string | Error): string | Error {
-		return this.suppressLogging ? "" : super.warn(input);
+		return this.suppressLogging ? "" : this.warning(input);
 	}
 
 	/**
@@ -277,10 +268,39 @@ export abstract class BaseCommand<T extends typeof Command>
 	/**
 	 * Logs a verbose log statement.
 	 */
-	public verbose(message: string | Error | undefined): void {
+	public verbose(message: string | Error): string | Error {
 		if (this.flags.verbose === true) {
 			const color = typeof message === "string" ? chalk.gray : chalk.red;
 			this.log(color(`VERBOSE: ${message}`));
 		}
+		return message;
+	}
+}
+
+export abstract class BaseCommandWithBuildProject<
+	T extends typeof Command,
+> extends BaseCommand<T> {
+	private _buildProject: IBuildProject | undefined;
+
+	/**
+	 * This method is deprecated and should only be called in BaseCommand instances.
+	 *
+	 * @deprecated This method should only be called in BaseCommand instances.
+	 */
+	public getContext(): never {
+		throw new Error("getContext method should only be called in BaseCommand instances");
+	}
+
+	/**
+	 * Gets the build project for the current command. The build project is loaded from the closest build root to searchPath.
+	 *
+	 * @param searchPath - The path to search for the build project.
+	 * @returns The build project.
+	 */
+	public getBuildProject(searchPath = process.cwd()): IBuildProject {
+		if (this._buildProject === undefined) {
+			this._buildProject = loadBuildProject(searchPath);
+		}
+		return this._buildProject;
 	}
 }

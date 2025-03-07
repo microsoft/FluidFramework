@@ -1,5 +1,48 @@
 # @fluidframework/datastore
 
+## 2.23.0
+
+### Minor Changes
+
+-   The FluidDataStoreRuntime.process function is now deprecated ([#23866](https://github.com/microsoft/FluidFramework/pull/23866)) [3f44d43e985](https://github.com/microsoft/FluidFramework/commit/3f44d43e985fea02ea349d024d3ae5d85f7eddd6)
+
+    A new function `processMessages` has been added in place of `process`. The new function will be called to process multiple messages instead of a single one on the data store runtime. This is part of a feature called "op bunching" where contiguous ops of a given type and to a given data store / DDS are bunched and sent together for processing.
+
+    Note that `process` may still be called in scenarios where this data store runtime (Datastore layer) is running with an older version of data store context (Runtime layer) in the same client. This is to support Fluid layer compatibility.
+
+## 2.22.0
+
+Dependency updates only.
+
+## 2.21.0
+
+Dependency updates only.
+
+## 2.20.0
+
+### Minor Changes
+
+-   The createDataStoreWithProps APIs on ContainerRuntime and IContainerRuntimeBase have been removed ([#22996](https://github.com/microsoft/FluidFramework/pull/22996)) [bd243fb292](https://github.com/microsoft/FluidFramework/commit/bd243fb2927915d87c42486e21ee0c990962a9a7)
+
+    `ContainerRuntime.createDataStoreWithProps` and `IContainerRuntimeBase.createDataStoreWithProps`
+    were [deprecated in version 0.25.0](https://github.com/microsoft/FluidFramework/blob/main/BREAKING.md#icontainerruntimebase_createdatastorewithprops-is-removed) and have been removed.
+
+    Replace uses of these APIs with `PureDataObjectFactory.createInstanceWithDataStore` and pass in props via the `initialState`
+    parameter.
+
+    These changes were originally announced in version 0.25.0. See the following issues for more details:
+
+    -   [#1537](https://github.com/microsoft/FluidFramework/issues/1537)
+    -   [#2931](https://github.com/microsoft/FluidFramework/pull/2931)
+
+## 2.13.0
+
+Dependency updates only.
+
+## 2.12.0
+
+Dependency updates only.
+
 ## 2.11.0
 
 Dependency updates only.

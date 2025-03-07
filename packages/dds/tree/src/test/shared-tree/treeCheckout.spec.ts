@@ -51,6 +51,7 @@ import {
 	getOrCreateInnerNode,
 	toStoredSchema,
 	type InsertableField,
+	type TreeBranch,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
@@ -156,7 +157,7 @@ describe("sharedTreeView", () => {
 
 			it("is fired for data and schema changes", () => {
 				const provider = new TestTreeProviderLite(1);
-				const checkout = provider.trees[0].checkout;
+				const checkout = provider.trees[0].kernel.checkout;
 
 				const log: string[] = [];
 				const unsubscribe = checkout.events.on("changed", () => log.push("changed"));
@@ -184,7 +185,7 @@ describe("sharedTreeView", () => {
 
 			it("does not allow schema changes to be reverted", () => {
 				const provider = new TestTreeProviderLite(1);
-				const checkout = provider.trees[0].checkout;
+				const checkout = provider.trees[0].kernel.checkout;
 
 				const log: string[] = [];
 				const unsubscribe = checkout.events.on("changed", (data, getRevertible) =>
@@ -496,7 +497,7 @@ describe("sharedTreeView", () => {
 			},
 			{
 				initialContent: {
-					schema: new SchemaFactory("fork schema").number,
+					schema: SchemaFactory.number,
 					initialTree: 3,
 				},
 			},
@@ -506,7 +507,7 @@ describe("sharedTreeView", () => {
 			const sf = new SchemaFactory("edits submitted schema");
 			const provider = new TestTreeProviderLite(2);
 			const branch1 = getBranch(provider.trees[0]);
-			const view1 = provider.trees[0].viewWith(
+			const view1 = provider.trees[0].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: sf.array(sf.string),
 					enableSchemaValidation,
@@ -514,7 +515,7 @@ describe("sharedTreeView", () => {
 			);
 			view1.initialize([]);
 			provider.processMessages();
-			const tree2 = provider.trees[1].viewWith(
+			const tree2 = provider.trees[1].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: sf.array(sf.string),
 					enableSchemaValidation,
@@ -540,7 +541,7 @@ describe("sharedTreeView", () => {
 			const provider = new TestTreeProviderLite(2);
 			const tree1 = provider.trees[0];
 			const branch1 = getBranch(tree1);
-			const view1 = tree1.viewWith(
+			const view1 = tree1.kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: sf.array(sf.string),
 					enableSchemaValidation,
@@ -564,7 +565,7 @@ describe("sharedTreeView", () => {
 		it("cannot create a second view from an uninitialized simple tree view's checkout", () => {
 			const sf = new SchemaFactory("schema1");
 			const provider = new TestTreeProviderLite(1);
-			const view1 = provider.trees[0].viewWith(
+			const view1 = provider.trees[0].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: sf.array(sf.string),
 					enableSchemaValidation,
@@ -575,7 +576,7 @@ describe("sharedTreeView", () => {
 			// created yet which has its own validation.
 			assert.throws(
 				() =>
-					provider.trees[0].viewWith(
+					provider.trees[0].kernel.viewWith(
 						new TreeViewConfiguration({
 							schema: sf.array(sf.string),
 							enableSchemaValidation,
@@ -588,7 +589,7 @@ describe("sharedTreeView", () => {
 		it("cannot create a second view from an initialized simple tree view's checkout", () => {
 			const sf = new SchemaFactory("schema1");
 			const provider = new TestTreeProviderLite(1);
-			const view1 = provider.trees[0].viewWith(
+			const view1 = provider.trees[0].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: sf.array(sf.string),
 					enableSchemaValidation,
@@ -599,7 +600,7 @@ describe("sharedTreeView", () => {
 
 			assert.throws(
 				() =>
-					provider.trees[0].viewWith(
+					provider.trees[0].kernel.viewWith(
 						new TreeViewConfiguration({
 							schema: sf.array(sf.string),
 							enableSchemaValidation,
@@ -858,7 +859,7 @@ describe("sharedTreeView", () => {
 			// Create and initialize a view.
 			const sf1 = new SchemaFactory("schema1");
 			const schema1 = sf1.array(sf1.string);
-			const view1 = provider.trees[0].viewWith(
+			const view1 = provider.trees[0].kernel.viewWith(
 				new TreeViewConfiguration({ schema: schema1, enableSchemaValidation }),
 			);
 			view1.initialize(["A", "B"]);
@@ -884,10 +885,10 @@ describe("sharedTreeView", () => {
 		const schema1 = sf1.array([sf1.string, sf1.number]);
 
 		const provider = new TestTreeProviderLite(2);
-		const view1 = provider.trees[0].viewWith(
+		const view1 = provider.trees[0].kernel.viewWith(
 			new TreeViewConfiguration({ schema: schema1, enableSchemaValidation }),
 		);
-		const view2 = provider.trees[1].viewWith(
+		const view2 = provider.trees[1].kernel.viewWith(
 			new TreeViewConfiguration({ schema: schema1, enableSchemaValidation }),
 		);
 
@@ -922,19 +923,19 @@ describe("sharedTreeView", () => {
 		assert.equal(view2.checkout.getRemovedRoots().length, 2);
 
 		const sf2 = new SchemaFactory("schema2");
-		provider.trees[0].checkout.updateSchema(toStoredSchema(sf2.array(sf1.number)));
+		provider.trees[0].kernel.checkout.updateSchema(toStoredSchema(sf2.array(sf1.number)));
 
 		// The undo stack contains the removal of A but not the schema change
 		assert.equal(checkout1Revertibles.undoStack.length, 1);
 		assert.equal(checkout1Revertibles.redoStack.length, 1);
-		assert.deepEqual(provider.trees[0].checkout.getRemovedRoots().length, 2);
+		assert.deepEqual(provider.trees[0].kernel.checkout.getRemovedRoots().length, 2);
 
 		provider.processMessages();
 
 		assert.equal(checkout2Revertibles.undoStack.length, 1);
 		assert.equal(checkout2Revertibles.redoStack.length, 1);
 		// trunk trimming causes a removed root to be garbage collected
-		assert.deepEqual(provider.trees[1].checkout.getRemovedRoots().length, 1);
+		assert.deepEqual(provider.trees[1].kernel.checkout.getRemovedRoots().length, 1);
 
 		checkout1Revertibles.unsubscribe();
 		checkout2Revertibles.unsubscribe();
@@ -950,7 +951,7 @@ describe("sharedTreeView", () => {
 			const oldSchemaConfig = { schema: oldSchema, enableSchemaValidation };
 			const tree1 = provider.trees[0];
 			const branch1 = getBranch(tree1);
-			const view1 = tree1.viewWith(new TreeViewConfiguration(oldSchemaConfig));
+			const view1 = tree1.kernel.viewWith(new TreeViewConfiguration(oldSchemaConfig));
 			view1.initialize(["A", "B", "C"]);
 
 			// Fork the main branch with new schema.
@@ -989,7 +990,7 @@ describe("sharedTreeView", () => {
 			// Create the main branch with old schema.
 			const sf1 = new SchemaFactory("schema1");
 			const oldSchema = sf1.array(sf1.string);
-			const view1 = provider.trees[0].viewWith(
+			const view1 = provider.trees[0].kernel.viewWith(
 				new TreeViewConfiguration({ schema: oldSchema, enableSchemaValidation }),
 			);
 			view1.initialize(["A", "B", "C"]);
@@ -1268,6 +1269,78 @@ describe("sharedTreeView", () => {
 			});
 		}
 	});
+
+	describe("throws an error if it is in the middle of an edit when a user attempts to", () => {
+		const sf = new SchemaFactory("Checkout and view test schema");
+		class NumberNode extends sf.object("Number", { number: sf.number }) {}
+
+		/** Tests that an error is thrown when a given action is taken during the execution of a nodeChanged/treeChanged listener */
+		function expectErrorDuringEdit(args: {
+			/**
+			 * Runs after the main view has been created but before the edit occurs
+			 * @returns (optionally) a view (e.g. a fork of the main view) that will be passed to `duringEdit`
+			 */
+			setup?: (
+				view: SchematizingSimpleTreeView<typeof NumberNode>,
+			) => void | SchematizingSimpleTreeView<typeof NumberNode>;
+			/** The code to run during the edit that should throw an error */
+			duringEdit: (view: SchematizingSimpleTreeView<typeof NumberNode>) => void;
+			/** The expected error message */
+			error: string;
+		}): void {
+			let view = getView(
+				new TreeViewConfiguration({ enableSchemaValidation, schema: NumberNode }),
+			);
+
+			view.initialize({ number: 3 });
+			view = args.setup?.(view) ?? view;
+
+			Tree.on(view.root, "nodeChanged", () => {
+				args.duringEdit(view);
+			});
+
+			assert.throws(() => (view.root.number = 0), new RegExp(args.error));
+		}
+
+		it("edit the tree", () => {
+			expectErrorDuringEdit({
+				duringEdit: (view) => {
+					view.root.number = 4;
+				},
+				error: "Editing the tree is forbidden during a nodeChanged or treeChanged event",
+			});
+		});
+
+		it("create a branch", () => {
+			expectErrorDuringEdit({
+				duringEdit: (view) => view.fork(),
+				error: ".*Branching is forbidden during a nodeChanged or treeChanged event.*",
+			});
+		});
+
+		it("rebase a branch", () => {
+			expectErrorDuringEdit({
+				duringEdit: (view) => view.rebaseOnto(view),
+				error: "Rebasing is forbidden during a nodeChanged or treeChanged event",
+			});
+		});
+
+		it("merge a branch", () => {
+			expectErrorDuringEdit({
+				duringEdit: (view) => view.merge(view),
+				error: "Merging is forbidden during a nodeChanged or treeChanged event",
+			});
+		});
+
+		it("dispose", () => {
+			let branch: TreeBranch | undefined;
+			expectErrorDuringEdit({
+				setup: (view) => (branch = view.fork()), // Create a fork of the view because the main view can't be disposed
+				duringEdit: (view) => view.dispose(),
+				error: "Disposing a view is forbidden during a nodeChanged or treeChanged event",
+			});
+		});
+	});
 });
 
 const defaultSf = new SchemaFactory("Checkout and view test schema");
@@ -1396,7 +1469,7 @@ function itView<
 		const [tree] = provider.trees;
 		const branch = getBranch(tree);
 		callWithView(fn, (config) => ({
-			view: tree.viewWith(config),
+			view: tree.kernel.viewWith(config),
 			tree: branch,
 			logger: provider.logger,
 		}));

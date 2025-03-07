@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-const { apiDocsTransform, generateApiDocsSection } = require("./apiDocsLinkSectionTransform.cjs");
+const {
+	apiDocsTransform,
+	generateApiDocsSection,
+} = require("./apiDocsLinkSectionTransform.cjs");
 
 const {
 	generateExampleGettingStartedSection,
@@ -13,6 +16,8 @@ const {
 const { generateSectionFromTemplate } = require("./generateSectionFromTemplate.cjs");
 
 const { includeTransform } = require("./includeTransform.cjs");
+
+const { includeCodeTransform } = require("./includeCodeTransform.cjs");
 
 const {
 	generateInstallationInstructionsSection,
@@ -45,6 +50,7 @@ module.exports = {
 	generatePackageScriptsSection,
 	generateSectionFromTemplate,
 	includeTransform,
+	includeCodeTransform,
 	installationInstructionsTransform,
 	importInstructionsTransform,
 	packageScopeNoticeTransform,

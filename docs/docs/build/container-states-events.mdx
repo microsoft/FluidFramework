@@ -5,7 +5,7 @@ sidebar_position: 3
 
 import { ApiLink } from "@site/src/components/shortLinks";
 
-This article provides a detailed description of the lifecycle states of the containers and container events. It assumes that you are familiar with [Containers](./containers).
+This article provides a detailed description of the lifecycle states of the containers and container events. It assumes that you are familiar with [Containers](./containers.mdx).
 
 :::note
 
@@ -56,16 +56,16 @@ Details are below the diagram.
 
 #### Unpublished
 
-When a [container is created](./containers#creating-a-container), it is in **unpublished** state and exists only on the creating client.
+When a [container is created](./containers.mdx#creating-a-container), it is in **unpublished** state and exists only on the creating client.
 
-Users, or your code, can start editing the data in the container right away, but the data is not shareable with other clients until the [container is published](./containers#publishing-a-container).
+Users, or your code, can start editing the data in the container right away, but the data is not shareable with other clients until the [container is published](./containers.mdx#publishing-a-container).
 Use the unpublished state to create initial data to populate your shared objects if needed.
 This is often useful in scenarios where you want to make sure that all connected clients have a coherent initial state.
 For example, if collaboration involves tables, your code can set a minimum table size.
 
 #### Publishing
 
-A container transitions to **publishing** state when `container.attach` method is called on the creating client. For details, see [Publishing a container](./containers#publishing-a-container). It is normally in this state only very briefly and then automatically transitions to **published** state when publication is complete.
+A container transitions to **publishing** state when `container.attach` method is called on the creating client. For details, see [Publishing a container](./containers.mdx#publishing-a-container). It is normally in this state only very briefly and then automatically transitions to **published** state when publication is complete.
 
 :::note
 
@@ -76,7 +76,7 @@ In the Fluid APIs, the terms "attach", "attaching", "attached" and "detached" me
 #### Published to the service
 
 When publishing completes, the container is **published**, so it exists in the Fluid service as well as the creating client.
-Subsequent clients can [connect to the container](./containers#connecting-to-a-container), synchronize with its latest data values, and edit them.
+Subsequent clients can [connect to the container](./containers.mdx#connecting-to-a-container), synchronize with its latest data values, and edit them.
 
 A container can never transition back to an unpublished state, but it can transition to a deleted state.
 
@@ -241,10 +241,10 @@ In this state, the client is attempting to connect to the Fluid service, but has
 A container moves into the **establishing connection** state in any of the following circumstances:
 
 -   On the creating client, your code calls the `container.attach` method.
-    For more information, see [Publishing a container](./containers#publishing-a-container).
+    For more information, see [Publishing a container](./containers.mdx#publishing-a-container).
     This method publishes the container _and_ connects the client to the service.
 -   Your code calls the client's `getContainer` method on a client that has not previously been connected.
-    For more information, see [Connecting to a container](./containers#connecting-to-a-container).
+    For more information, see [Connecting to a container](./containers.mdx#connecting-to-a-container).
 -   The Fluid client runtime tries to reconnect following a disconnection caused by a network problem.
 -   Your code calls the `container.connect` method on a client that had become disconnected.
 

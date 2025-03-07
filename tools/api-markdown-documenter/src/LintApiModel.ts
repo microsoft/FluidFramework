@@ -22,8 +22,8 @@ import {
 	DocNodeKind,
 } from "@microsoft/tsdoc";
 
-import type { ConfigurationBase } from "./ConfigurationBase.js";
 import { defaultConsoleLogger } from "./Logging.js";
+import type { LoggingConfiguration } from "./LoggingConfiguration.js";
 import { resolveSymbolicReference } from "./utilities/index.js";
 
 /**
@@ -31,19 +31,20 @@ import { resolveSymbolicReference } from "./utilities/index.js";
  *
  * @beta
  */
-export interface LintApiModelConfiguration extends ConfigurationBase {
+export interface LintApiModelConfiguration extends LoggingConfiguration {
 	/**
 	 * The API model to lint.
 	 */
-	apiModel: ApiModel;
+	readonly apiModel: ApiModel;
 }
 
 /**
  * {@link LintApiModelConfiguration} defaults.
  */
-const defaultLintApiModelConfiguration: Required<Omit<LintApiModelConfiguration, "apiModel">> = {
-	logger: defaultConsoleLogger,
-};
+const defaultLintApiModelConfiguration: Required<Omit<LintApiModelConfiguration, "apiModel">> =
+	{
+		logger: defaultConsoleLogger,
+	};
 
 // TODO: common TsdocError base (associatedItem, packageName)
 
@@ -134,7 +135,7 @@ export async function lintApiModel(
 	return anyErrors
 		? {
 				referenceErrors: errors.referenceErrors,
-		  }
+			}
 		: undefined;
 }
 

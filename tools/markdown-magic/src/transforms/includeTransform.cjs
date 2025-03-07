@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-const fs = require("fs");
 const {
 	formattedEmbeddedContentBody,
 	formattedSectionText,
+	readFile,
 	resolveRelativePath,
 } = require("../utilities.cjs");
 
@@ -16,14 +16,14 @@ const {
  * @param {object} content - The original document file contents.
  * @param {object} options - Transform options.
  * @param {string} options.path - Relative path from the document to the file being embedded.
- * @param {string | undefined} options.start - (optional) First line from the target file to be embedded (inclusive).
+ * @param {string | undefined} options.start - (optional) 0-based index of the first line from the target file to be embedded (inclusive).
  * Expected to be a string-formatted integer.
- * Default: 0.
- * Constraints are the same as those for the `end` parameter to
+ * Default: Start from the first line of the file..
+ * Constraints are the same as those for the `start` parameter to
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice#parameters | Array.slice}
- * @param {string | undefined} options.end - (optional) Line of the target file at which to end the embedded range (exclusive).
+ * @param {string | undefined} options.end - (optional) 0-based index of the last line of the target file to be embedded (exclusive).
  * Expected to be a string-formatted integer.
- * Default: <file-line-count> + 1.
+ * Default: Include through the last line of the file.
  * Constraints are the same as those for the `end` parameter to
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice#parameters | Array.slice}
  * @param {object} config - Transform configuration.
@@ -33,7 +33,8 @@ function includeTransform(content, options, config) {
 	const { path: relativeFilePath, start: startLineString, end: endLineString } = options;
 	const { originalPath: documentFilePath } = config;
 
-	const startLine = startLineString === undefined ? undefined : Number.parseInt(startLineString);
+	const startLine =
+		startLineString === undefined ? undefined : Number.parseInt(startLineString);
 	const endLine = endLineString === undefined ? undefined : Number.parseInt(endLineString);
 
 	if (!relativeFilePath) {
@@ -45,12 +46,8 @@ function includeTransform(content, options, config) {
 	const resolvedFilePath = resolveRelativePath(documentFilePath, relativeFilePath);
 
 	try {
-		let fileContents = fs.readFileSync(resolvedFilePath, "utf8");
-		if (startLine || endLine) {
-			const split = fileContents.split(/\r?\n/);
-			fileContents = split.slice(startLine, endLine).join("\n");
-		}
-		const section = formattedSectionText(fileContents.trim(), /* headingOptions: */ undefined);
+		const fileContents = readFile(resolvedFilePath, startLine, endLine);
+		const section = formattedSectionText(fileContents, /* headingOptions: */ undefined);
 
 		return formattedEmbeddedContentBody(section);
 	} catch (error) {
