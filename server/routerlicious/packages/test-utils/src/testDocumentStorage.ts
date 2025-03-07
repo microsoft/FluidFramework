@@ -9,13 +9,15 @@ import {
 	ICreateCommitParams,
 	ICreateTreeEntry,
 } from "@fluidframework/gitresources";
-import { gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/server-common-utils";
 import {
 	IGitCache,
 	IGitManager,
 	ISession,
 	getQuorumTreeEntries,
 	mergeAppAndProtocolTree,
+	gitHashFile,
+	IsoBuffer,
+	Uint8ArrayToString,
 } from "@fluidframework/server-services-client";
 import {
 	IDatabaseManager,

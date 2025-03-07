@@ -23,13 +23,14 @@ import {
 	ITree,
 	ITreeEntry,
 } from "@fluidframework/gitresources";
-import { gitHashFile, IsoBuffer } from "@fluidframework/server-common-utils";
 import {
 	IHistorian,
 	IWholeFlatSummary,
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,
 	NetworkError,
+	gitHashFile,
+	IsoBuffer,
 } from "@fluidframework/server-services-client";
 import { ICollection, IDb } from "@fluidframework/server-services-core";
 import { v4 as uuid } from "uuid";

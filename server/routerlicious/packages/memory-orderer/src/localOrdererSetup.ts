@@ -4,8 +4,7 @@
  */
 
 import { IDocumentAttributes } from "@fluidframework/protocol-definitions";
-import { fromBase64ToUtf8 } from "@fluidframework/server-common-utils";
-import { IGitManager } from "@fluidframework/server-services-client";
+import { IGitManager, fromBase64ToUtf8 } from "@fluidframework/server-services-client";
 import {
 	CheckpointService,
 	ICheckpoint,

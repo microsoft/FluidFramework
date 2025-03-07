@@ -14,9 +14,9 @@ import {
 	SummaryObject,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { fromBase64ToUtf8 } from "@fluidframework/server-common-utils";
 import {
 	buildTreePath,
+	fromBase64ToUtf8,
 	IGitManager,
 	ISummaryTree,
 	NetworkError,

@@ -30,7 +30,7 @@
 	"Utils": {
 		"layers": {
 			"Common-Utils": {
-				"packages": ["@fluidframework/common-utils", "@fluidframework/server-common-utils"],
+				"packages": ["@fluidframework/common-utils"],
 				"deps": ["Common-Definitions"]
 			},
 			"Core-Utils": {

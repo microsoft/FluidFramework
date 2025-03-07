@@ -69,64 +69,6 @@ importers:
         specifier: ~5.1.6
         version: 5.1.6
 
-  packages/common-utils:
-    dependencies:
-      sha.js:
-        specifier: ^2.4.11
-        version: 2.4.11
-    devDependencies:
-      '@fluid-tools/build-cli':
-        specifier: 0.52.0-315632
-        version: 0.52.0-315632(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
-      '@fluidframework/build-common':
-        specifier: ^2.0.3
-        version: 2.0.3
-      '@fluidframework/build-tools':
-        specifier: 0.52.0-315632
-        version: 0.52.0-315632(@types/node@18.19.39)
-      '@fluidframework/eslint-config-fluid':
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
-      '@microsoft/api-extractor':
-        specifier: ^7.45.1
-        version: 7.49.1(@types/node@18.19.39)
-      '@types/mocha':
-        specifier: ^10.0.10
-        version: 10.0.10
-      '@types/node':
-        specifier: ^18.19.39
-        version: 18.19.39
-      c8:
-        specifier: ^8.0.1
-        version: 8.0.1
-      concurrently:
-        specifier: ^8.2.1
-        version: 8.2.1
-      copyfiles:
-        specifier: ^2.4.1
-        version: 2.4.1
-      cross-env:
-        specifier: ^7.0.3
-        version: 7.0.3
-      eslint:
-        specifier: ~8.55.0
-        version: 8.55.0
-      mocha:
-        specifier: ^10.2.0
-        version: 10.2.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
-      puppeteer:
-        specifier: ^23.6.0
-        version: 23.11.1(typescript@5.1.6)
-      rimraf:
-        specifier: ^4.4.0
-        version: 4.4.1
-      typescript:
-        specifier: ~5.1.6
-        version: 5.1.6
-
   packages/gitresources:
     devDependencies:
       '@fluid-tools/build-cli':
@@ -220,9 +162,6 @@ importers:
       '@fluidframework/protocol-definitions':
         specifier: ^3.2.0
         version: 3.2.0
-      '@fluidframework/server-common-utils':
-        specifier: workspace:~
-        version: link:../common-utils
       '@fluidframework/server-lambdas-driver':
         specifier: workspace:~
         version: link:../lambdas-driver
@@ -559,9 +498,6 @@ importers:
       '@fluidframework/protocol-definitions':
         specifier: ^3.2.0
         version: 3.2.0
-      '@fluidframework/server-common-utils':
-        specifier: workspace:~
-        version: link:../common-utils
       '@fluidframework/server-lambdas':
         specifier: workspace:~
         version: link:../lambdas
@@ -835,9 +771,6 @@ importers:
       '@fluidframework/protocol-definitions':
         specifier: ^3.2.0
         version: 3.2.0
-      '@fluidframework/server-common-utils':
-        specifier: workspace:~
-        version: link:../common-utils
       '@fluidframework/server-kafka-orderer':
         specifier: workspace:~
         version: link:../kafka-orderer
@@ -1037,9 +970,6 @@ importers:
       '@fluidframework/protocol-definitions':
         specifier: ^3.2.0
         version: 3.2.0
-      '@fluidframework/server-common-utils':
-        specifier: workspace:~
-        version: link:../common-utils
       '@fluidframework/server-services-client':
         specifier: workspace:~
         version: link:../services-client
@@ -1303,9 +1233,6 @@ importers:
       '@fluidframework/protocol-definitions':
         specifier: ^3.2.0
         version: 3.2.0
-      '@fluidframework/server-common-utils':
-        specifier: workspace:~
-        version: link:../common-utils
       '@fluidframework/server-services-client':
         specifier: workspace:~
         version: link:../services-client
@@ -1598,9 +1525,6 @@ importers:
       '@fluidframework/protocol-definitions':
         specifier: ^3.2.0
         version: 3.2.0
-      '@fluidframework/server-common-utils':
-        specifier: workspace:~
-        version: link:../common-utils
       '@fluidframework/server-services-client':
         specifier: workspace:~
         version: link:../services-client
@@ -1943,9 +1867,6 @@ importers:
       '@fluidframework/protocol-definitions':
         specifier: ^3.2.0
         version: 3.2.0
-      '@fluidframework/server-common-utils':
-        specifier: workspace:~
-        version: link:../common-utils
       '@fluidframework/server-services-client':
         specifier: workspace:~
         version: link:../services-client
@@ -2052,9 +1973,6 @@ importers:
       '@fluidframework/protocol-definitions':
         specifier: ^3.2.0
         version: 3.2.0
-      '@fluidframework/server-common-utils':
-        specifier: workspace:~
-        version: link:../common-utils
       '@fluidframework/server-lambdas':
         specifier: workspace:~
         version: link:../lambdas
@@ -11199,9 +11117,9 @@ snapshots:
       '@typescript-eslint/eslint-plugin': 6.7.5(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0)(typescript@5.1.6)
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.1.6)
       eslint-config-prettier: 9.0.0(eslint@8.55.0)
-      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
       eslint-plugin-eslint-comments: 3.2.0(eslint@8.55.0)
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
       eslint-plugin-jsdoc: 46.8.2(eslint@8.55.0)
       eslint-plugin-promise: 6.1.1(eslint@8.55.0)
       eslint-plugin-react: 7.33.2(eslint@8.55.0)
@@ -15382,13 +15300,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1)(eslint@8.55.0):
     dependencies:
       debug: 4.3.4(supports-color@8.1.1)
       enhanced-resolve: 5.17.1
       eslint: 8.55.0
-      eslint-module-utils: 2.8.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-module-utils: 2.8.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
       fast-glob: 3.3.2
       get-tsconfig: 4.7.2
       is-core-module: 2.13.1
@@ -15399,24 +15317,24 @@ snapshots:
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-module-utils@2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-module-utils@2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.1.6)
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
     transitivePeerDependencies:
       - supports-color
 
-  eslint-module-utils@2.8.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-module-utils@2.8.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.1.6)
       eslint: 8.55.0
-      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -15426,13 +15344,13 @@ snapshots:
       eslint: 8.55.0
       ignore: 5.3.0
 
-  eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0):
     dependencies:
       debug: 4.4.0(supports-color@8.1.1)
       doctrine: 3.0.0
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
       get-tsconfig: 4.10.0
       is-glob: 4.0.3
       minimatch: 3.1.2

@@ -5,14 +5,13 @@
 
 import * as git from "@fluidframework/gitresources";
 import { IClient, IClientJoin, ScopeType } from "@fluidframework/protocol-definitions";
-import { fromUtf8ToBase64 } from "@fluidframework/server-common-utils";
 import {
 	IBroadcastSignalEventPayload,
 	ICollaborationSessionEvents,
 	IRoom,
 	IRuntimeSignalEnvelope,
 } from "@fluidframework/server-lambdas";
-import { BasicRestWrapper } from "@fluidframework/server-services-client";
+import { BasicRestWrapper, fromUtf8ToBase64 } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
 import {
 	throttle,

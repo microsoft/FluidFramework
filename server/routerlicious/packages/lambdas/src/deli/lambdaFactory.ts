@@ -5,7 +5,6 @@
 
 import { EventEmitter } from "events";
 import { inspect } from "util";
-import { toUtf8 } from "@fluidframework/server-common-utils";
 import {
 	ICheckpointService,
 	IClientManager,
@@ -25,7 +24,7 @@ import {
 	MongoManager,
 	requestWithRetry,
 } from "@fluidframework/server-services-core";
-import { defaultHash, IGitManager } from "@fluidframework/server-services-client";
+import { defaultHash, IGitManager, toUtf8 } from "@fluidframework/server-services-client";
 import {
 	Lumber,
 	LumberEventName,

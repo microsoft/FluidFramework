@@ -4,7 +4,6 @@
  */
 
 import { ScopeType, type IUser } from "@fluidframework/protocol-definitions";
-import { fromUtf8ToBase64 } from "@fluidframework/server-common-utils";
 import {
 	GitManager,
 	Historian,
@@ -13,6 +12,7 @@ import {
 	getAuthorizationTokenFromCredentials,
 	IGitManager,
 	parseToken,
+	fromUtf8ToBase64,
 } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
 import {

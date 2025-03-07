@@ -55,7 +55,6 @@
 		"@fluidframework/gitresources": "workspace:~",
 		"@fluidframework/protocol-base": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.2.0",
-		"@fluidframework/server-common-utils": "workspace:~",
 		"@fluidframework/server-services-client": "workspace:~",
 		"@fluidframework/server-services-core": "workspace:~",
 		"@fluidframework/server-services-telemetry": "workspace:~",

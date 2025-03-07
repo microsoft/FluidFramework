@@ -11,13 +11,13 @@ import {
 	ISummaryTree,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { toUtf8 } from "@fluidframework/server-common-utils";
 import {
 	IGitCache,
 	SummaryTreeUploadManager,
 	WholeSummaryUploadManager,
 	ISession,
 	getGlobalTimeoutContext,
+	toUtf8,
 } from "@fluidframework/server-services-client";
 import {
 	ICollection,
