@@ -138,7 +138,7 @@ export interface InsertIntoArray extends Edit {
  * Only one of `element` or `range` should be set.
  */
 export interface RemoveFromArray extends Edit {
-	op: "removeFromArray";
+	type: "removeFromArray";
 
 	// For removing a single element
 	element?: Pointer; // The element to remove
@@ -151,7 +151,7 @@ export interface RemoveFromArray extends Edit {
  * Move a value from one location to another array
  */
 export interface MoveArrayElement extends Edit {
-	op: "moveArrayElement";
+	type: "moveArrayElement";
 
 	// Source can be a single element or a range
 	source: Pointer | ArrayRange;

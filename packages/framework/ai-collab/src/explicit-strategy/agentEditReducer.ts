@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 // eslint-disable-next-line import/no-internal-modules
-import type { FieldSchemaMetadataAlpha } from "@fluidframework/tree/alpha";
+import type { FieldSchemaMetadataAlpha, TreeView } from "@fluidframework/tree/alpha";
 import {
 	Tree,
 	NodeKind,
@@ -27,16 +27,15 @@ import {
 
 import {
 	type TreeEdit,
-	type ObjectTarget,
-	type Selection,
-	type Range,
-	type ObjectPlace,
-	type ArrayPlace,
+	type Edit,
+	type ObjectPointer,
+	type Pointer,
 	type TreeContentObject,
 	type TreeContent,
 	typeField,
 	objectIdKey,
 	type TreeContentArray,
+	type PathPointer,
 } from "./agentEditTypes.js";
 import type { IdGenerator } from "./idGenerator.js";
 import type { JsonValue } from "./jsonTypes.js";
@@ -185,6 +184,7 @@ export function applyAgentEdit(
 	assertObjectIdsExist(treeEdit, idGenerator);
 	switch (treeEdit.type) {
 		case "insertIntoArray": {
+			const array = resolvePathPointer(treeEdit.array);
 			const { array, index } = getPlaceInfo(treeEdit.destination, idGenerator);
 
 			const parentNodeSchema = Tree.schema(array);
@@ -431,6 +431,73 @@ function getRangeInfo(range: Range, idGenerator: IdGenerator): RangeInfo {
 	}
 
 	return { array: arrayFrom, startIndex, endIndex };
+}
+
+function resolvePointer(
+	root: TreeNode,
+	pointer: Pointer,
+	idGenerator: IdGenerator,
+): TreeNode | TreeArrayNode {
+	if (typeof pointer === "string") {
+		return findObject(pointer, idGenerator);
+	}
+
+	return resolvePathPointer(root, pointer, idGenerator);
+}
+
+function resolvePathPointer(
+	view: TreeView<ImplicitFieldSchema>,
+	pointer: PathPointer,
+	idGenerator: IdGenerator,
+): TreeNode | TreeArrayNode {
+	const nodeId = pointer[0];
+	if (nodeId === undefined) {
+		throw new UsageError("Pointer should not be an empty array.");
+	}
+	let node = nodeId === null ? root : findObject(nodeId, idGenerator);
+	const [, ...path] = pointer;
+	for (const p of path) {
+		if (typeof p === "string") {
+			const schema = Tree.schema(node);
+			if (schema.kind !== NodeKind.Object) {
+				throw new UsageError("Expected node to be an object.");
+			}
+			const child = (
+				node as unknown as Record<string, TreeNode | TreeArrayNode | TreeLeafValue>
+			)[p];
+			ensurePointable(child);
+			node = child;
+		} else {
+			const schema = Tree.schema(node);
+			if (schema.kind !== NodeKind.Array) {
+				throw new UsageError("Expected node to be an array.");
+			}
+			const child = (node as TreeArrayNode).at(p);
+			ensurePointable(child);
+			node = child;
+		}
+	}
+
+	return node;
+}
+
+// We don't currently allow pointers to point to primitives, but we could.
+function ensurePointable(
+	node: TreeNode | TreeArrayNode | TreeLeafValue | undefined,
+): asserts node is TreeNode | TreeArrayNode {
+	if (typeof node !== "object" || node === null || isFluidHandle(node)) {
+		throw new UsageError(
+			`Pointer could not be resolved to a node in the tree (note that primitives and Fluid handles are not supported).`,
+		);
+	}
+}
+
+function findObject(pointer: ObjectPointer, idGenerator: IdGenerator): TreeNode {
+	const object = idGenerator.getNode(pointer);
+	if (object === undefined) {
+		throw new UsageError(`No object with id "${pointer}" found in the tree.`);
+	}
+	return object;
 }
 
 function getPlaceInfo(
