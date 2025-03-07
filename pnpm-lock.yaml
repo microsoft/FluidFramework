@@ -90,9 +90,6 @@ importers:
       mocha:
         specifier: ^10.2.0
         version: 10.8.2
-      node-fetch:
-        specifier: ^2.6.9
-        version: 2.7.0
       prettier:
         specifier: ~3.0.3
         version: 3.0.3

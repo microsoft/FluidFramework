@@ -178,7 +178,6 @@
 		"eslint": "~8.55.0",
 		"jest": "^29.6.2",
 		"mocha": "^10.2.0",
-		"node-fetch": "^2.6.9",
 		"prettier": "~3.0.3",
 		"pretty-quick": "^4.0.0",
 		"puppeteer": "^23.6.0",
