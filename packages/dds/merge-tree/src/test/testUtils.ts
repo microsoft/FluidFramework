@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 import fs from "node:fs";
 
-import { NonCollabClient } from "../constants.js";
+import { NonCollabClient, UnassignedSequenceNumber } from "../constants.js";
 import { LocalReferenceCollection } from "../localReference.js";
 import { MergeTree } from "../mergeTree.js";
 import {
@@ -73,12 +73,13 @@ export function insertMarker({
 	props,
 	opArgs,
 }: InsertMarkerArgs): void {
+	const localSeq =
+		seq === UnassignedSequenceNumber ? ++mergeTree.collabWindow.localSeq : undefined;
 	mergeTree.insertSegments(
 		pos,
 		[Marker.make(behaviors, props)],
 		refSeq,
-		clientId,
-		seq,
+		{ clientId, seq, localSeq },
 		opArgs,
 	);
 }
@@ -104,12 +105,14 @@ export function insertText({
 	props,
 	opArgs,
 }: InsertTextArgs): void {
+	const localSeq =
+		seq === UnassignedSequenceNumber ? ++mergeTree.collabWindow.localSeq : undefined;
+
 	mergeTree.insertSegments(
 		pos,
 		[TextSegment.make(text, props)],
 		refSeq,
-		clientId,
-		seq,
+		{ clientId, seq, localSeq },
 		opArgs,
 	);
 }
@@ -133,7 +136,10 @@ export function insertSegments({
 	seq,
 	opArgs,
 }: InsertSegmentsArgs): void {
-	mergeTree.insertSegments(pos, segments, refSeq, clientId, seq, opArgs);
+	const localSeq =
+		seq === UnassignedSequenceNumber ? ++mergeTree.collabWindow.localSeq : undefined;
+
+	mergeTree.insertSegments(pos, segments, refSeq, { clientId, seq, localSeq }, opArgs);
 }
 
 interface MarkRangeRemovedArgs {
@@ -156,7 +162,16 @@ export function markRangeRemoved({
 	seq,
 	opArgs,
 }: MarkRangeRemovedArgs): void {
-	mergeTree.markRangeRemoved(start, end, refSeq, clientId, seq, opArgs);
+	const localSeq =
+		seq === UnassignedSequenceNumber ? ++mergeTree.collabWindow.localSeq : undefined;
+
+	mergeTree.markRangeRemoved(
+		start,
+		end,
+		refSeq,
+		{ type: "set", clientId, seq, localSeq },
+		opArgs,
+	);
 }
 
 export function obliterateRange({
@@ -176,7 +191,16 @@ export function obliterateRange({
 	seq: number;
 	opArgs: IMergeTreeDeltaOpArgs;
 }): void {
-	mergeTree.obliterateRange(start, end, refSeq, clientId, seq, opArgs);
+	const localSeq =
+		seq === UnassignedSequenceNumber ? ++mergeTree.collabWindow.localSeq : undefined;
+
+	mergeTree.obliterateRange(
+		start,
+		end,
+		refSeq,
+		{ type: "slice", clientId, seq, localSeq },
+		opArgs,
+	);
 }
 
 export function nodeOrdinalsHaveIntegrity(block: MergeBlock): boolean {

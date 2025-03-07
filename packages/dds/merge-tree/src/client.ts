@@ -539,8 +539,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				start,
 				end,
 				clientArgs.referenceSequenceNumber,
-				clientArgs.clientId,
-				clientArgs.sequenceNumber,
+				{
+					type: "slice",
+					clientId: clientArgs.clientId,
+					seq: clientArgs.sequenceNumber,
+					localSeq: clientArgs.localSequenceNumber,
+				},
 				opArgs,
 			);
 		} else {
@@ -553,8 +557,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				range.start,
 				range.end,
 				clientArgs.referenceSequenceNumber,
-				clientArgs.clientId,
-				clientArgs.sequenceNumber,
+				{
+					type: "slice",
+					clientId: clientArgs.clientId,
+					seq: clientArgs.sequenceNumber,
+					localSeq: clientArgs.localSequenceNumber,
+				},
 				opArgs,
 			);
 		}
@@ -577,8 +585,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			range.start,
 			range.end,
 			clientArgs.referenceSequenceNumber,
-			clientArgs.clientId,
-			clientArgs.sequenceNumber,
+			{
+				type: "set",
+				clientId: clientArgs.clientId,
+				seq: clientArgs.sequenceNumber,
+				localSeq: clientArgs.localSequenceNumber,
+			},
 			opArgs,
 		);
 	}
@@ -628,8 +640,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			range.start,
 			segments,
 			clientArgs.referenceSequenceNumber,
-			clientArgs.clientId,
-			clientArgs.sequenceNumber,
+			{
+				seq: clientArgs.sequenceNumber,
+				clientId: clientArgs.clientId,
+				localSeq: clientArgs.localSequenceNumber,
+			},
 			opArgs,
 		);
 	}
@@ -814,13 +829,19 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				// Note: return value satisfies overload signatures despite the cast, as if input argument doesn't contain sequenceNumber,
 				// return value isn't expected to have it either.
 				sequenceNumber: (sequencedMessage as ISequencedDocumentMessage).sequenceNumber,
+				localSequenceNumber: undefined,
 			};
 		} else {
 			const segWindow = this.getCollabWindow();
+			const sequenceNumber = segWindow.collaborating
+				? UnassignedSequenceNumber
+				: UniversalSequenceNumber;
+			const localSeq = segWindow.collaborating ? ++segWindow.localSeq : undefined;
 			return {
 				clientId: segWindow.clientId,
 				referenceSequenceNumber: segWindow.currentSeq,
-				sequenceNumber: this.getLocalSequenceNumber(),
+				sequenceNumber,
+				localSequenceNumber: localSeq,
 			};
 		}
 	}
@@ -1324,11 +1345,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		const loader = new SnapshotLoader(runtime, this, this._mergeTree, this.logger, serializer);
 
 		return loader.initialize(storage);
-	}
-
-	private getLocalSequenceNumber(): number {
-		const segWindow = this.getCollabWindow();
-		return segWindow.collaborating ? UnassignedSequenceNumber : UniversalSequenceNumber;
 	}
 
 	// eslint-disable-next-line import/no-deprecated

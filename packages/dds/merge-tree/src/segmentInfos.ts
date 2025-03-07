@@ -11,6 +11,7 @@ import {
 	ISegmentPrivate,
 	MergeBlock,
 	type OperationTimestamp,
+	type RemoveOperationTimestamp,
 } from "./mergeTreeNodes.js";
 
 export interface StringToType {
@@ -189,10 +190,6 @@ export const removeMergeNodeInfo: (nodeLike: IMergeNodeInfo) => asserts nodeLike
 		index: undefined,
 		ordinal: undefined,
 	});
-
-export interface RemoveOperationTimestamp extends OperationTimestamp {
-	type: "slice" | "set";
-}
 
 // TODO:
 // - Document this, including moveDst or something like it.

@@ -348,8 +348,7 @@ function checkMarkRemoveMergeTree(
 		start,
 		end,
 		UniversalSequenceNumber,
-		LocalClientId,
-		UniversalSequenceNumber,
+		{ type: "set", clientId: LocalClientId, seq: UniversalSequenceNumber },
 		{ op: createRemoveRangeOp(start, end) },
 	);
 	accumTime += elapsedMicroseconds(clockStart);
@@ -369,8 +368,7 @@ export function mergeTreeTest1(): void {
 		0,
 		[TextSegment.make("the cat is on the mat")],
 		UniversalSequenceNumber,
-		LocalClientId,
-		UniversalSequenceNumber,
+		{ seq: UniversalSequenceNumber, clientId: LocalClientId },
 		undefined,
 	);
 	mergeTree.mapRange(printTextSegment, UniversalSequenceNumber, LocalClientId, undefined);
@@ -395,8 +393,7 @@ export function mergeTreeLargeTest(): void {
 		0,
 		[TextSegment.make("the cat is on the mat")],
 		UniversalSequenceNumber,
-		LocalClientId,
-		UniversalSequenceNumber,
+		{ seq: UniversalSequenceNumber, clientId: LocalClientId },
 		undefined,
 	);
 	const insertCount = 1000000;
@@ -456,8 +453,7 @@ export function mergeTreeLargeTest(): void {
 			pos,
 			pos + dlen,
 			UniversalSequenceNumber,
-			LocalClientId,
-			UniversalSequenceNumber,
+			{ type: "set", clientId: LocalClientId, seq: UniversalSequenceNumber },
 			undefined as never,
 		);
 		accumTime += elapsedMicroseconds(clockStart);
@@ -480,8 +476,7 @@ export function mergeTreeCheckedTest(): number {
 		0,
 		[TextSegment.make("the cat is on the mat")],
 		UniversalSequenceNumber,
-		LocalClientId,
-		UniversalSequenceNumber,
+		{ seq: UniversalSequenceNumber, clientId: LocalClientId },
 		undefined,
 	);
 	const insertCount = 2000;
@@ -1534,8 +1529,7 @@ function findReplacePerf(filename: string): void {
 					pos + i,
 					pos + i + 3,
 					UniversalSequenceNumber,
-					client.getClientId(),
-					1,
+					{ type: "set", clientId: client.getClientId(), seq: 1 },
 					undefined as never,
 				);
 				insertText({

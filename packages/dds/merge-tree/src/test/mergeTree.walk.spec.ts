@@ -24,8 +24,7 @@ describe("MergeTree walks", () => {
 			0,
 			[TextSegment.make(initialText)],
 			UniversalSequenceNumber,
-			LocalClientId,
-			UniversalSequenceNumber,
+			{ seq: UniversalSequenceNumber, clientId: LocalClientId },
 			undefined,
 		);
 		for (let i = 1; i < MaxNodesInBlock * MaxNodesInBlock; i++) {

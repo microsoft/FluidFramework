@@ -23,13 +23,16 @@ import {
 import { Client } from "./client.js";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
-import { ISegmentPrivate, timestampUtils } from "./mergeTreeNodes.js";
+import {
+	ISegmentPrivate,
+	timestampUtils,
+	type RemoveOperationTimestamp,
+} from "./mergeTreeNodes.js";
 import { IJSONSegment } from "./ops.js";
 import {
 	IHasRemovalInfo,
 	overwriteInfo,
 	type IHasInsertionInfo,
-	type RemoveOperationTimestamp,
 	type SegmentWithInfo,
 } from "./segmentInfos.js";
 import {
@@ -272,13 +275,12 @@ export class SnapshotLoader {
 
 		// Helper to insert segments at the end of the MergeTree.
 		const mergeTree = this.mergeTree;
-		const append = (segments: ISegmentPrivate[], cli: number, seq: number): void => {
+		const append = (segments: ISegmentPrivate[], clientId: number, seq: number): void => {
 			mergeTree.insertSegments(
 				mergeTree.root.cachedLength ?? 0,
 				segments,
 				/* refSeq: */ UniversalSequenceNumber,
-				cli,
-				seq,
+				{ seq, clientId },
 				undefined,
 			);
 		};

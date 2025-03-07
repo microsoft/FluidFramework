@@ -240,6 +240,18 @@ export interface OperationTimestamp {
 	localSeq?: number;
 }
 
+export interface SetRemoveOperationTimestamp extends OperationTimestamp {
+	type: "set";
+}
+
+export interface SliceRemoveOperationTimestamp extends OperationTimestamp {
+	type: "slice";
+}
+
+export type RemoveOperationTimestamp =
+	| SetRemoveOperationTimestamp
+	| SliceRemoveOperationTimestamp;
+
 export const timestampUtils = {
 	lessThan,
 	greaterThan,
@@ -432,18 +444,18 @@ export abstract class BaseSegment implements ISegment {
 	protected cloneInto(b: ISegment): void {
 		const seg: ISegmentPrivate = b;
 		if (isInserted(this)) {
-			const insert = { ...this.insert };
+			// TODO: Consider whether you want to keep this and subsequent Object.freezes in the prod codepath :)
+			Object.freeze(this.insert);
 			overwriteInfo<IHasInsertionInfo>(seg, {
-				insert,
+				insert: this.insert,
 			});
 		}
 		// TODO: deep clone properties
 		seg.properties = clone(this.properties);
 		if (isRemoved(this)) {
-			// TODO: Consider object.freezing timestamps and not cloning. Using an immutable model would be nice.
-			const removes = this.removes.map((r) => ({ ...r }));
+			this.removes.forEach(Object.freeze);
 			overwriteInfo<IHasRemovalInfo>(seg, {
-				removes,
+				removes: [...this.removes],
 			});
 		}
 
@@ -490,14 +502,14 @@ export abstract class BaseSegment implements ISegment {
 		}
 
 		if (isInserted(this)) {
-			const insert = { ...this.insert };
-			overwriteInfo<IHasInsertionInfo>(leafSegment, { insert });
+			// TODO: Consider whether you want to keep this and subsequent Object.freezes in the prod codepath :)
+			Object.freeze(this.insert);
+			overwriteInfo<IHasInsertionInfo>(leafSegment, { insert: this.insert });
 		}
 		if (isRemoved(this)) {
-			// TODO: Consider object.freezing timestamps and not cloning. Using an immutable model would be nice.
-			const removes = this.removes.map((r) => ({ ...r }));
+			this.removes.forEach(Object.freeze);
 			overwriteInfo<IHasRemovalInfo>(leafSegment, {
-				removes,
+				removes: [...this.removes],
 			});
 		}
 

@@ -10,6 +10,7 @@ import { MergeTree } from "./mergeTree.js";
 import { MergeTreeMaintenanceType } from "./mergeTreeDeltaCallback.js";
 import {
 	type MergeBlock,
+	type OperationTimestamp,
 	assignChild,
 	IMergeNode,
 	ISegmentPrivate,
@@ -24,6 +25,9 @@ export const zamboniSegmentsMax = 2;
 function underflow(node: MergeBlock): boolean {
 	return node.childCount < MaxNodesInBlock / 2;
 }
+
+// blockUpdatePathLengths requires an OperationTimestamp but it is unused when passing `newStructure: true`.
+const dummyStamp: OperationTimestamp = { seq: UnassignedSequenceNumber, clientId: -1 };
 
 export function zamboniSegments(
 	mergeTree: MergeTree,
@@ -67,7 +71,7 @@ export function zamboniSegments(
 					packParent(block.parent, mergeTree);
 				} else {
 					mergeTree.nodeUpdateOrdinals(block);
-					mergeTree.blockUpdatePathLengths(block, UnassignedSequenceNumber, -1, true);
+					mergeTree.blockUpdatePathLengths(block, dummyStamp, true);
 				}
 			}
 		}
@@ -129,7 +133,7 @@ export function packParent(parent: MergeBlock, mergeTree: MergeTree): void {
 		packParent(parent.parent, mergeTree);
 	} else {
 		mergeTree.nodeUpdateOrdinals(parent);
-		mergeTree.blockUpdatePathLengths(parent, UnassignedSequenceNumber, -1, true);
+		mergeTree.blockUpdatePathLengths(parent, dummyStamp, true);
 	}
 }
 
