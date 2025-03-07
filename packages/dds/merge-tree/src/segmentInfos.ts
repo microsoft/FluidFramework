@@ -194,30 +194,12 @@ export interface RemoveOperationTimestamp extends OperationTimestamp {
 	type: "slice" | "set";
 }
 
+// TODO:
+// - Document this, including moveDst or something like it.
+// See old code in this file for continuity.
 export interface IHasRemovalInfo {
 	removes: RemoveOperationTimestamp[];
 }
-
-// /**
-//  * Contains removal information associated to an {@link ISegment}.
-//  */
-// export interface IRemovalInfo {
-// 	/**
-// 	 * Local seq at which this segment was removed, if the removal is yet-to-be acked.
-// 	 */
-// 	localRemovedSeq?: number;
-// 	/**
-// 	 * Seq at which this segment was removed.
-// 	 */
-// 	removedSeq: number;
-// 	/**
-// 	 * List of client IDs that have removed this segment.
-// 	 * The client that actually removed the segment (i.e. whose removal op was sequenced first) is stored as the first
-// 	 * client in this list. Other clients in the list have all issued concurrent ops to remove the segment.
-// 	 * @remarks When this list has length \> 1, this is referred to as the "overlapping remove" case.
-// 	 */
-// 	removedClientIds: number[];
-// }
 
 /**
  * Converts a segment-like object to a removal info object if possible.
@@ -274,57 +256,6 @@ export const removeRemovalInfo: (nodeLike: IHasRemovalInfo) => asserts nodeLike 
 	Object.assign<IHasRemovalInfo, Record<keyof IHasRemovalInfo, undefined>>(nodeLike, {
 		removes: undefined,
 	});
-
-// /**
-//  * Tracks information about when and where this segment was moved to.
-//  *
-//  * Note that merge-tree does not currently support moving and only supports
-//  * obliterate. The fields below include "move" in their names to avoid renaming
-//  * in the future, when moves _are_ supported.
-//  */
-// export interface IHasMoveInfo {
-// 	// TODO: document moveDst somewhere equivalent
-// 	moves: OperationTimestamp[];
-// 	// /**
-// 	//  * Local seq at which this segment was moved if the move is yet-to-be
-// 	//  * acked.
-// 	//  */
-// 	// localMovedSeq?: number;
-
-// 	// /**
-// 	//  * The first seq at which this segment was moved.
-// 	//  */
-// 	// movedSeq: number;
-
-// 	// /**
-// 	//  * All seqs at which this segment was moved. In the case of overlapping,
-// 	//  * concurrent moves this array will contain multiple seqs.
-// 	//  *
-// 	//  * The seq at  `movedSeqs[i]` corresponds to the client id at `movedClientIds[i]`.
-// 	//  *
-// 	//  * The first element corresponds to the seq of the first move
-// 	//  */
-// 	// movedSeqs: number[];
-
-// 	// /**
-// 	//  * A reference to the inserted destination segment corresponding to this
-// 	//  * segment's move.
-// 	//  *
-// 	//  * If undefined, the move was an obliterate.
-// 	//  *
-// 	//  * Currently this field is unused, as we only support obliterate operations
-// 	//  */
-// 	// moveDst?: ReferencePosition;
-
-// 	// /**
-// 	//  * List of client IDs that have moved this segment.
-// 	//  *
-// 	//  * The client that actually moved the segment (i.e. whose move op was sequenced
-// 	//  * first) is stored as the first client in this list. Other clients in the
-// 	//  * list have all issued concurrent ops to move the segment.
-// 	//  */
-// 	// movedClientIds: number[];
-// }
 
 /**
  * Returns whether this segment was marked moved as soon as its insertion was acked.

@@ -1787,14 +1787,11 @@ export class MergeTree {
 
 			return (
 				timestampUtils.greaterThan(insertTimestamp, node.insert) ||
-				// newSeq > segSeq ||
 				// TODO: conditions here may be subtly different if localseq stuff matters
 				// Should this stuff be replaced with something more like a perspective check?
 				(isRemoved(node) &&
 					timestampUtils.isAcked(node.removes[0]) &&
 					timestampUtils.greaterThan(node.removes[0], insertTimestamp))
-				// node.removedSeq !== UnassignedSequenceNumber &&
-				// node.removedSeq > insertTimestamp.seq)
 			);
 		} else {
 			return true;
@@ -2149,7 +2146,6 @@ export class MergeTree {
 				clientId,
 				localSeq,
 			};
-			// Semantically:
 			// - Record the segment as moved
 			// - If this was the first thing to remove the segment from the local view, add it to movedSegments
 			// - Otherwise, if it was the first thing to remove the segment from the acked view, add it to localOverlapWithRefs (so we can slide them)
@@ -2159,23 +2155,9 @@ export class MergeTree {
 				});
 
 				removedSegments.push(moved);
-
-				// const movedSeg = overwriteInfo<IHasMoveInfo, ISegmentLeaf>(segment, {
-				// 	moves: [moveTimestamp],
-				// });
-
-				// const existingRemoval = toRemovalInfo(movedSeg);
-				// if (existingRemoval === undefined) {
-				// 	movedSegments.push(movedSeg);
-				// } else if (
-				// 	timestampUtils.isLocal(existingRemoval.removes[0]) &&
-				// 	segment.localRefs?.empty === false
-				// ) {
-				// 	// We removed this locally already so we don't need to event it again, but it might have references
-				// 	// that need sliding now that a move may have been acked.
-				// 	localOverlapWithRefs.push(segment);
-				// }
 			} else {
+				// The segment has already been removed, so we don't need to add it to removedSegments. However,
+				// if it's only been removed locally, we still need to slide any references that may exist on it.
 				if (
 					!timestampUtils.hasAnyAckedOperation(existingRemoveInfo.removes) &&
 					segment.localRefs?.empty === false
@@ -2320,20 +2302,6 @@ export class MergeTree {
 				});
 
 				removedSegments.push(removed);
-
-				// const existingMoveInfo = toMoveInfo(removed);
-				// if (existingMoveInfo === undefined) {
-				// 	removedSegments.push(removed);
-				// } else if (
-				// 	// The checks here are a little weird; semantically we also want "and the current remove isn't local as well" (i.e. "this is the first acked remove")
-				// 	// but that happens to be implied by below alone.
-				// 	timestampUtils.isLocal(existingMoveInfo.moves[0]) &&
-				// 	segment.localRefs?.empty === false
-				// ) {
-				// 	// We moved this locally already so we don't need to event it again, but it might have references
-				// 	// that need sliding now that a remove may have been acked.
-				// 	localOverlapWithRefs.push(segment);
-				// }
 			} else {
 				if (
 					!timestampUtils.hasAnyAckedOperation(existingRemovalInfo.removes) &&
@@ -2342,27 +2310,11 @@ export class MergeTree {
 					localOverlapWithRefs.push(segment);
 				}
 				timestampUtils.insertIntoList(existingRemovalInfo.removes, removeTimestamp);
-				// if (existingRemovalInfo.removedSeq === UnassignedSequenceNumber) {
-				// 	// we removed this locally, but someone else removed it first
-				// 	// so put them at the head of the list
-				// 	// The list isn't ordered, but we keep the first removal at the head
-				// 	// for partialLengths bookkeeping purposes
-				// 	existingRemovalInfo.removedClientIds.unshift(clientId);
-
-				// 	existingRemovalInfo.removedSeq = seq;
-				// 	if (segment.localRefs?.empty === false) {
-				// 		localOverlapWithRefs.push(segment);
-				// 	}
-				// } else {
-				// 	// Do not replace earlier sequence number for remove
-				// 	existingRemovalInfo.removedClientIds.push(clientId);
-				// }
 			}
 			assertRemoved(segment);
 
 			// Save segment so we can assign removed sequence number when acked by server
 			if (this.collabWindow.collaborating) {
-				// TODO: Maybe move this into the 'existing removal' vs 'no existing removal' paths?
 				if (
 					timestampUtils.isLocal(segment.removes[0]) &&
 					clientId === this.collabWindow.clientId

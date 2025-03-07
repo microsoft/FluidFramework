@@ -387,9 +387,7 @@ export class TestClient extends Client {
 		let offset = pos;
 		const isInsertedInView = (seg: ISegmentPrivate): boolean =>
 			isInserted(seg) &&
-			// ((seg.seq !== UnassignedSequenceNumber && seg.seq <= seqNumberFrom) ||
-			// (seg.localSeq !== undefined && seg.localSeq <= localSeq));
-			// Equivalent logic above. TODO: All of this function is really semantically doing perspective checks,
+			// TODO: All of this function is really semantically doing perspective checks,
 			// which should probably not be handled via operation timestamps.
 			(timestampUtils.lte(seg.insert, {
 				seq: seqNumberFrom,
