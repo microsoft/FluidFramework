@@ -166,9 +166,7 @@ describe("End to end chunked encoding", () => {
 		const checkout = new MockTreeCheckout(forest, {
 			editor: dummyEditor as unknown as ISharedTreeEditor,
 		});
-		checkout.editor
-			.sequenceField({ field: rootFieldKey, parent: undefined })
-			.insert(0, chunk.cursor());
+		checkout.editor.sequenceField({ field: rootFieldKey, parent: undefined }).insert(0, chunk);
 		// Check that inserted change contains chunk which is reference equal to the original chunk.
 		const { change: insertedChange, revision } = changeLog[0];
 		assert(insertedChange.builds !== undefined);
@@ -188,9 +186,7 @@ describe("End to end chunked encoding", () => {
 			initialTree: [],
 		});
 
-		checkout.editor
-			.sequenceField({ field: rootFieldKey, parent: undefined })
-			.insert(0, chunk.cursor());
+		checkout.editor.sequenceField({ field: rootFieldKey, parent: undefined }).insert(0, chunk);
 
 		const forestSummarizer = new ForestSummarizer(
 			checkout.forest,

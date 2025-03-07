@@ -8,7 +8,6 @@ import { strict as assert } from "node:assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { type FieldKey, moveToDetachedField, rootFieldKey } from "../../core/index.js";
-import { singleJsonCursor } from "../json/index.js";
 import { cursorForMapTreeNode, initializeForest } from "../../feature-libraries/index.js";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
@@ -16,6 +15,7 @@ import { buildForest } from "../../feature-libraries/object-forest/index.js";
 import { type JsonCompatible, brand } from "../../util/index.js";
 import { testForest } from "../forestTestSuite.js";
 import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
+import { fieldJsonCursor } from "../json/index.js";
 
 describe("object-forest", () => {
 	testForest({
@@ -33,7 +33,7 @@ describe("object-forest", () => {
 			const forest = buildForest();
 			initializeForest(
 				forest,
-				[singleJsonCursor(content)],
+				fieldJsonCursor([content]),
 				testRevisionTagCodec,
 				testIdCompressor,
 			);
@@ -55,7 +55,7 @@ describe("object-forest", () => {
 			const forest = buildForest();
 			initializeForest(
 				forest,
-				[singleJsonCursor(content)],
+				fieldJsonCursor([content]),
 				testRevisionTagCodec,
 				testIdCompressor,
 			);
@@ -77,7 +77,7 @@ describe("object-forest", () => {
 			const forest = buildForest();
 			initializeForest(
 				forest,
-				[singleJsonCursor(content)],
+				fieldJsonCursor([content]),
 				testRevisionTagCodec,
 				testIdCompressor,
 			);
@@ -100,7 +100,7 @@ describe("object-forest", () => {
 		const forest = buildForest();
 		initializeForest(
 			forest,
-			[singleJsonCursor([1, 2])],
+			fieldJsonCursor([[1, 2]]),
 			testRevisionTagCodec,
 			testIdCompressor,
 		);
@@ -113,7 +113,7 @@ describe("object-forest", () => {
 		const forest = buildForest();
 		initializeForest(
 			forest,
-			[singleJsonCursor(content)],
+			fieldJsonCursor([content]),
 			testRevisionTagCodec,
 			testIdCompressor,
 		);

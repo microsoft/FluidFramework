@@ -12,12 +12,11 @@ import {
 } from "../../shared-tree-core/index.js";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import {
-	cursorForJsonableTreeNode,
 	DefaultChangeFamily,
 	type DefaultChangeset,
 	type DefaultEditBuilder,
 } from "../../feature-libraries/index.js";
-import { failCodecFamily, mintRevisionTag } from "../utils.js";
+import { chunkFromJsonableField, failCodecFamily, mintRevisionTag } from "../utils.js";
 import {
 	findAncestor,
 	rootFieldKey,
@@ -274,8 +273,8 @@ describe("SquashingTransactionStacks", () => {
 	}
 
 	function edit(editor: DefaultEditBuilder, value: string): void {
-		const cursor = cursorForJsonableTreeNode({ type: brand("TestValue"), value });
-		editor.valueField({ parent: undefined, field: rootFieldKey }).set(cursor);
+		const content = chunkFromJsonableField([{ type: brand("TestValue"), value }]);
+		editor.valueField({ parent: undefined, field: rootFieldKey }).set(content);
 	}
 
 	function squash(commits: GraphCommit<DefaultChangeset>[]): TaggedChange<DefaultChangeset> {

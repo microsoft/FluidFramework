@@ -35,8 +35,12 @@ import type {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/sharedTreeChangeTypes.js";
 import { ajvValidator } from "../codec/index.js";
-import { failCodecFamily, mintRevisionTag, testRevisionTagCodec } from "../utils.js";
-import { singleJsonCursor } from "../json/index.js";
+import {
+	chunkFromJsonField,
+	failCodecFamily,
+	mintRevisionTag,
+	testRevisionTagCodec,
+} from "../utils.js";
 
 const dataChanges: ModularChangeset[] = [];
 const codecOptions: ICodecOptions = { jsonValidator: ajvValidator };
@@ -53,10 +57,10 @@ const defaultEditor = new DefaultEditBuilder(modularFamily, mintRevisionTag, (ta
 // Side effects results in `dataChanges` being populated
 defaultEditor
 	.valueField({ parent: undefined, field: rootFieldKey })
-	.set(singleJsonCursor("X"));
+	.set(chunkFromJsonField(["X"]));
 defaultEditor
 	.valueField({ parent: undefined, field: rootFieldKey })
-	.set(singleJsonCursor("Y"));
+	.set(chunkFromJsonField(["Y"]));
 
 const dataChange1 = dataChanges[0];
 const dataChange2 = dataChanges[1];

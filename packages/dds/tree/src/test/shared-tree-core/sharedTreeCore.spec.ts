@@ -34,11 +34,10 @@ import {
 	type GraphCommit,
 	rootFieldKey,
 } from "../../core/index.js";
-import {
-	type DefaultChangeset,
-	type DefaultEditBuilder,
-	type ModularChangeset,
-	cursorForJsonableTreeNode,
+import type {
+	DefaultChangeset,
+	DefaultEditBuilder,
+	ModularChangeset,
 } from "../../feature-libraries/index.js";
 import { Tree } from "../../shared-tree/index.js";
 import type {
@@ -51,7 +50,12 @@ import type {
 	SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
 import { brand, disposeSymbol } from "../../util/index.js";
-import { SharedTreeTestFactory, StringArray, TestTreeProviderLite } from "../utils.js";
+import {
+	chunkFromJsonableField,
+	SharedTreeTestFactory,
+	StringArray,
+	TestTreeProviderLite,
+} from "../utils.js";
 
 import { createTree, createTreeSharedObject, TestSharedTreeCore } from "./utils.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
@@ -649,7 +653,7 @@ function changeTree<TChange, TEditor extends DefaultEditBuilder>(
 	tree: SharedTreeCore<TEditor, TChange>,
 ): void {
 	const field = tree.getEditor().sequenceField({ parent: undefined, field: rootFieldKey });
-	field.insert(0, cursorForJsonableTreeNode({ type: brand("Node"), value: 42 }));
+	field.insert(0, chunkFromJsonableField([{ type: brand("Node"), value: 42 }]));
 }
 
 /** Returns the length of the trunk branch in the given tree. Acquired via unholy cast; use for glass-box tests only. */

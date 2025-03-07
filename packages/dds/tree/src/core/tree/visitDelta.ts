@@ -8,12 +8,8 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { type NestedMap, setInNestedMap, tryGetFromNestedMap } from "../../util/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
-import type { ITreeCursorSynchronous } from "./cursor.js";
-// eslint-disable-next-line import/no-duplicates
+import { mapCursorField, type ITreeCursorSynchronous } from "./cursor.js";
 import type * as Delta from "./delta.js";
-// Since ProtoNodes is reexported, import it directly to avoid forcing Delta to be reexported.
-// eslint-disable-next-line import/no-duplicates
-import type { ProtoNodes } from "./delta.js";
 import {
 	areDetachedNodeIdsEqual,
 	isAttachMark,
@@ -24,7 +20,7 @@ import {
 import type { DetachedFieldIndex } from "./detachedFieldIndex.js";
 import type { ForestRootId, Major, Minor } from "./detachedFieldIndexTypes.js";
 import type { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
-import type { RevisionTag } from "../index.js";
+import type { RevisionTag, TreeChunk } from "../index.js";
 
 /**
  * Implementation notes:
@@ -59,7 +55,7 @@ import type { RevisionTag } from "../index.js";
  * This needs to happen last to allow modifications to detached roots to be applied before they are destroyed.
  *
  * The details of the delta visit algorithm can impact how/when events are emitted by the objects that own the visitors.
- * For example, as of 2024-03-27, the subtreecChanged event of an AnchorNode is emitted when exiting a node during a
+ * For example, as of 2024-03-27, the subtreeChanged event of an AnchorNode is emitted when exiting a node during a
  * delta visit, and thus the two-pass nature of the algorithm means the event fires twice for any given change.
  * This two-pass nature also means that the event may fire at a time where no change is visible in the tree. E.g.,
  * if a node is being replaced, when the event fires during the detach pass no change in the tree has happened so the
@@ -89,9 +85,10 @@ export function visitDelta(
 	const rootDestructions: Delta.DetachedNodeDestruction[] = [];
 	const refreshers: NestedMap<Major, Minor, ITreeCursorSynchronous> = new Map();
 	delta.refreshers?.forEach(({ id: { major, minor }, trees }) => {
-		for (let i = 0; i < trees.length; i += 1) {
+		const treeCursors = nodeCursorsFromChunk(trees);
+		for (let i = 0; i < trees.topLevelLength; i += 1) {
 			const offsettedId = minor + i;
-			setInNestedMap(refreshers, major, offsettedId, trees[i]);
+			setInNestedMap(refreshers, major, offsettedId, treeCursors[i]);
 		}
 	});
 	const detachConfig: PassConfig = {
@@ -266,7 +263,7 @@ export interface DeltaVisitor {
 	 * @param destination - The key for a new detached field.
 	 * A field with this key must not already exist.
 	 */
-	create(content: ProtoNodes, destination: FieldKey): void;
+	create(content: readonly ITreeCursorSynchronous[], destination: FieldKey): void;
 	/**
 	 * Recursively destroys the given detached field and all of the nodes within it.
 	 * @param detachedField - The key for the detached field to destroy.
@@ -476,7 +473,13 @@ function processBuilds(
 ): void {
 	if (builds !== undefined) {
 		for (const { id, trees } of builds) {
-			buildTrees(id, trees, config.detachedFieldIndex, config.latestRevision, visitor);
+			buildTrees(
+				id,
+				nodeCursorsFromChunk(trees),
+				config.detachedFieldIndex,
+				config.latestRevision,
+				visitor,
+			);
 		}
 	}
 }
@@ -591,4 +594,13 @@ function attachPass(
 			index += mark.count;
 		}
 	}
+}
+
+/**
+ * Converts a chunk of trees into an array of cursors.
+ *
+ * TODO: Update the visitDelta logic and downstream APIs to avoid splitting up sequences into individual nodes.
+ */
+function nodeCursorsFromChunk(trees: TreeChunk): ITreeCursorSynchronous[] {
+	return mapCursorField(trees.cursor(), (c) => c.fork());
 }

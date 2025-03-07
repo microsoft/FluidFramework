@@ -16,7 +16,7 @@ import {
 	rootFieldKey,
 	tagChange,
 } from "../../core/index.js";
-import { cursorToJsonObject, singleJsonCursor } from "../json/index.js";
+import { cursorToJsonObject, fieldJsonCursor } from "../json/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { optional } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
@@ -94,12 +94,7 @@ export function setupEnricher() {
 		{ jsonValidator: typeboxValidator },
 	);
 	const forest = buildForest();
-	initializeForest(
-		forest,
-		[singleJsonCursor(content)],
-		testRevisionTagCodec,
-		testIdCompressor,
-	);
+	initializeForest(forest, fieldJsonCursor([content]), testRevisionTagCodec, testIdCompressor);
 	const schema = new TreeStoredSchemaRepository();
 	const enricher = new SharedTreeReadonlyChangeEnricher(
 		forest,

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	ChangeFamilyEditor,
 	RevisionTag,
@@ -55,17 +54,12 @@ export class SharedTreeEditBuilder
 		modularChangeFamily: ModularChangeFamily,
 		mintRevisionTag: () => RevisionTag,
 		private readonly changeReceiver: (change: TaggedChange<SharedTreeChange>) => void,
-		idCompressor?: IIdCompressor,
 	) {
-		super(
-			modularChangeFamily,
-			mintRevisionTag,
-			(taggedChange) =>
-				changeReceiver({
-					...taggedChange,
-					change: { changes: [{ type: "data", innerChange: taggedChange.change }] },
-				}),
-			idCompressor,
+		super(modularChangeFamily, mintRevisionTag, (taggedChange) =>
+			changeReceiver({
+				...taggedChange,
+				change: { changes: [{ type: "data", innerChange: taggedChange.change }] },
+			}),
 		);
 
 		this.schema = {
