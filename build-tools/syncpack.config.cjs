@@ -98,6 +98,14 @@ module.exports = {
 
 		{
 			label:
+				"Dependencies on build-tools at the root of the release group must use tilde dependency ranges",
+			dependencies: ["@fluid-tools/build-cli", "@fluidframework/build-tools"],
+			packages: ["build-tools-release-group-root"],
+			range: "~",
+		},
+
+		{
+			label:
 				"Dependencies on other fluid packages within the workspace should use tilde dependency ranges",
 			dependencies: [
 				"@fluid-tools/build-cli",
@@ -108,6 +116,10 @@ module.exports = {
 			],
 			packages: ["**"],
 			range: "~",
+			// This is so syncpack doesn't complain about the value of the "version" property in package.json
+			// Still don't quite understand why it thinks that a semver range would ever be correct in the version field.
+			// See https://github.com/JamieMason/syncpack/issues/238#issuecomment-2260668411 for more details.
+			dependencyTypes: ["!local"],
 		},
 
 		// All deps should use caret ranges unless previously overridden
