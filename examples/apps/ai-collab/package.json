@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/ai-collab",
-	"version": "2.23.0",
+	"version": "2.23.1",
 	"private": true,
 	"description": "Example app that showcases the experimental package for AI collaboration in Fluid-based applications.",
 	"homepage": "https://fluidframework.com",

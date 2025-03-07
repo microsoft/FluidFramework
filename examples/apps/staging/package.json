@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/staging",
-	"version": "2.23.0",
+	"version": "2.23.1",
 	"private": true,
 	"description": "Using the experimental staging feature.",
 	"homepage": "https://fluidframework.com",
