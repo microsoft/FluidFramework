@@ -1215,6 +1215,9 @@ importers:
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
+      puppeteer:
+        specifier: ^23.6.0
+        version: 23.11.1(typescript@5.1.6)
       rewire:
         specifier: ^5.0.0
         version: 5.0.0
@@ -12574,7 +12577,7 @@ snapshots:
       extract-zip: 2.0.1
       progress: 2.0.3
       proxy-agent: 6.5.0
-      semver: 7.6.3
+      semver: 7.7.1
       tar-fs: 3.0.8
       unbzip2-stream: 1.4.3
       yargs: 17.7.2
@@ -13559,7 +13562,7 @@ snapshots:
       '@typescript-eslint/typescript-estree': 5.59.11(typescript@5.1.6)
       eslint: 8.55.0
       eslint-scope: 5.1.1
-      semver: 7.6.3
+      semver: 7.7.1
     transitivePeerDependencies:
       - supports-color
       - typescript
