@@ -88,6 +88,10 @@ parameters:
   type: string
   default: '@ff-internal/aria-logger'
 
+- name: tenantSetup
+  type: string
+  default: '@ff-internal/trips-setup'
+
 # If true, skip publishing report files for test results.
 # Useful because our stress tests pipeline doesn't generate any test result files.
 - name: skipTestResultPublishing
@@ -383,10 +387,24 @@ stages:
               key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}"'
               path: ${{ parameters.testWorkspace }}/node_modules/@fluid-private/test-version-utils/node_modules/.legacy/
 
+        # Install TRIPS tenant management package
+        - task: Npm@1
+          displayName: 'npm install'
+          # ADO feeds have latency on the order of minutes before packages are available downstream. See:
+          # https://learn.microsoft.com/en-us/azure/devops/artifacts/concepts/upstream-sources?view=azure-devops#upstream-sources-health-status
+          # This pipeline installs packages which were published very recently relative to its runtime, hence the rather high retry count here.
+          retryCountOnTaskFailure: 10
+          inputs:
+            command: 'custom'
+            workingDir: ${{ parameters.testWorkspace }}
+            customCommand: 'install $(Initialize.testPackageTgz) ${{ parameters.tenantSetup }}'
+            customRegistry: 'useNpmrc'
+
         # Retrieve a tenant from the TRIPS tenant pool
-        # need to have some automated consent for the local flow
         - task: AzureCLI@2
           displayName: 'Set up and retrieve tenant credentials'
+          env:
+            SYSTEM_ACCESSTOKEN: $(System.AccessToken)
           inputs:
             azureSubscription: 'Fluid Framework Tests'
             addSpnToEnvironment: true
@@ -396,7 +414,9 @@ stages:
               set -eu -o pipefail
 
               az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
-              node 'tools/pipelines/templates/get-trips-tenants-ci.mjs';
+              trips-setup $SYSTEM_ACCESSTOKEN
+              echo ##vso[task.setvariable variable=tenantCreds;issecret=true;isoutput=true]$(loginTenants)
+              echo ##vso[task.setvariable variable=stringBearerToken;]$(stringBearerToken)
 
         # run the test
         - task: Npm@1
@@ -463,24 +483,10 @@ stages:
             scriptType: 'bash'
             scriptLocation: 'inlineScript'
             inlineScript: |
-              // define variables
-              moduleName="FFTestModule";
-
               set -eu -o pipefail
+
               az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
-
-              node -e "
-                const fetch = require('fetch');
-
-                fetch("https://tdff5prd.office.net/v2.0/reservations/current/modules?moduleName=${moduleName}", {
-                  method: "DELETE",
-                  headers: {
-                    // not sure if this access is correct
-                    Authorization: `BEARER $(stringBearerToken)`,
-                    // don't think this is right
-                    "TDF-ReservationClient": "odspTests",
-                  }).then((response) => response.json());
-              "
+              trips-cleanup $(stringBearerToken)
 
         # Log Test Failures
         # - template: include-process-test-results.yml
