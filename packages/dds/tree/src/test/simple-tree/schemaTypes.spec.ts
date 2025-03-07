@@ -19,19 +19,23 @@ import {
 } from "../../simple-tree/index.js";
 import {
 	type AllowedTypes,
+	type CustomizedSchemaTyping,
+	type DefaultInsertableTreeNodeFromImplicitAllowedTypes,
+	type DefaultTreeNodeFromImplicitAllowedTypes,
 	type FieldSchema,
 	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTreeNodeFromAllowedTypes,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type InsertableTypedNode,
 	type NodeBuilderData,
 	type NodeFromSchema,
+	type SchemaUnionToIntersection,
 	type TreeFieldFromImplicitField,
 	type TreeLeafValue,
 	type TreeNodeFromImplicitAllowedTypes,
+	type UnsafeUnknownSchema,
 	areImplicitFieldSchemaEqual,
 	normalizeAllowedTypes,
 	// eslint-disable-next-line import/no-internal-modules
@@ -75,6 +79,24 @@ describe("schemaTypes", () => {
 			>;
 		}
 
+		// CustomSchemaIntersection
+		{
+			type Original = A | B;
+			type Custom = CustomizedSchemaTyping<Original, { input: 1; output: 2; readWrite: 3 }>;
+			type OriginalIntersection = UnionToIntersection<Original>;
+			type CustomIntersection = UnionToIntersection<Custom>;
+
+			type OriginalSchemaIntersection = SchemaUnionToIntersection<Original>;
+			type CustomSchemaIntersection = SchemaUnionToIntersection<Custom>;
+
+			type _check1 = requireTrue<areSafelyAssignable<OriginalIntersection, never>>;
+			type _check2 = requireTrue<areSafelyAssignable<CustomIntersection, never>>;
+			type _check3 = requireTrue<areSafelyAssignable<OriginalSchemaIntersection, never>>;
+			type _check4 = requireTrue<
+				areSafelyAssignable<CustomSchemaIntersection, CustomSchemaIntersection>
+			>;
+		}
+
 		// InsertableTreeFieldFromImplicitField
 		{
 			// Input
@@ -104,22 +126,24 @@ describe("schemaTypes", () => {
 			type _check8 = requireTrue<areSafelyAssignable<I10, never>>;
 		}
 
-		// InsertableTreeNodeFromImplicitAllowedTypes
+		// DefaultInsertableTreeNodeFromImplicitAllowedTypes
 		{
 			// Input
-			type I3 = InsertableTreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>;
-			type I4 = InsertableTreeNodeFromImplicitAllowedTypes<AllowedTypes>;
-			type I5 = InsertableTreeNodeFromImplicitAllowedTypes<
+			type I3 = DefaultInsertableTreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>;
+			type I4 = DefaultInsertableTreeNodeFromImplicitAllowedTypes<AllowedTypes>;
+			type I5 = DefaultInsertableTreeNodeFromImplicitAllowedTypes<
 				typeof numberSchema | typeof stringSchema
 			>;
-			type I8 = InsertableTreeNodeFromImplicitAllowedTypes<TreeNodeSchema>;
+			type I8 = DefaultInsertableTreeNodeFromImplicitAllowedTypes<TreeNodeSchema>;
 
-			type I6 = InsertableTreeNodeFromImplicitAllowedTypes<
+			type I6 = DefaultInsertableTreeNodeFromImplicitAllowedTypes<
 				typeof numberSchema & typeof stringSchema
 			>;
-			type I7 = InsertableTreeNodeFromImplicitAllowedTypes<AllowedTypes & TreeNodeSchema>;
+			type I7 = DefaultInsertableTreeNodeFromImplicitAllowedTypes<
+				AllowedTypes & TreeNodeSchema
+			>;
 
-			type I9 = InsertableTreeNodeFromImplicitAllowedTypes<typeof A | typeof B>;
+			type I9 = DefaultInsertableTreeNodeFromImplicitAllowedTypes<typeof A | typeof B>;
 
 			// These types should behave contravariantly
 			type _check3 = requireTrue<areSafelyAssignable<I3, never>>;
@@ -128,19 +152,19 @@ describe("schemaTypes", () => {
 			type _check6 = requireTrue<areSafelyAssignable<I8, never>>;
 
 			// Actual schema unions
-			type I12 = InsertableTreeNodeFromImplicitAllowedTypes<typeof numberSchema>;
+			type I12 = DefaultInsertableTreeNodeFromImplicitAllowedTypes<typeof numberSchema>;
 			type _check12 = requireTrue<areSafelyAssignable<I12, number>>;
-			type I10 = InsertableTreeNodeFromImplicitAllowedTypes<[typeof numberSchema]>;
+			type I10 = DefaultInsertableTreeNodeFromImplicitAllowedTypes<[typeof numberSchema]>;
 			type _check10 = requireTrue<areSafelyAssignable<I10, number>>;
 
-			type I11 = InsertableTreeNodeFromImplicitAllowedTypes<
+			type I11 = DefaultInsertableTreeNodeFromImplicitAllowedTypes<
 				[typeof numberSchema, typeof stringSchema]
 			>;
 			type _check11 = requireTrue<areSafelyAssignable<I11, number | string>>;
 
 			// boolean
 			// boolean is sometimes a union of true and false, so it can break in its owns special ways
-			type I13 = InsertableTreeNodeFromImplicitAllowedTypes<typeof booleanSchema>;
+			type I13 = DefaultInsertableTreeNodeFromImplicitAllowedTypes<typeof booleanSchema>;
 			type _check13 = requireTrue<areSafelyAssignable<I13, boolean>>;
 		}
 
@@ -217,6 +241,40 @@ describe("schemaTypes", () => {
 			// boolean is sometimes a union of true and false, so it can break in its owns special ways
 			type I13 = InsertableField<typeof booleanSchema>;
 			type _check13 = requireTrue<areSafelyAssignable<I13, boolean>>;
+		}
+
+		// DefaultTreeNodeFromImplicitAllowedTypes
+		{
+			class Simple extends schema.object("A", { x: [schema.number] }) {}
+			class Customized extends schema.object("B", { x: [schema.number] }) {
+				public customized = true;
+			}
+
+			type TA = DefaultTreeNodeFromImplicitAllowedTypes<typeof Simple>;
+			type _checkA = requireAssignableTo<TA, Simple>;
+
+			type TB = DefaultTreeNodeFromImplicitAllowedTypes<typeof Customized>;
+			type _checkB = requireAssignableTo<TB, Customized>;
+		}
+
+		// Example CustomTypes
+
+		/**
+		 * Ignores schema, and allows any edit at compile time.
+		 */
+		interface AnyTypes {
+			input: InsertableField<UnsafeUnknownSchema>;
+			readWrite: TreeNode | TreeLeafValue;
+			output: TreeNode | TreeLeafValue;
+		}
+
+		/**
+		 * Ignores schema, forbidding all edits.
+		 */
+		interface UnknownTypes {
+			input: never;
+			readWrite: never;
+			output: TreeNode | TreeLeafValue;
 		}
 
 		// NodeFromSchema
