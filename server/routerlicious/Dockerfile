@@ -37,7 +37,8 @@ RUN apt-get update && apt-get install -y \
 # dependencies to run jest tests
 RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
-    libnss3
+    libnss3 \
+    libdbus-1-3
 
 # Add Tini
 ENV TINI_VERSION=v0.18.0
