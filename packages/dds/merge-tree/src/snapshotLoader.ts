@@ -23,13 +23,13 @@ import {
 import { Client } from "./client.js";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
-import { ISegmentPrivate } from "./mergeTreeNodes.js";
+import { ISegmentPrivate, timestampUtils } from "./mergeTreeNodes.js";
 import { IJSONSegment } from "./ops.js";
 import {
 	IHasRemovalInfo,
 	overwriteInfo,
 	type IHasInsertionInfo,
-	type IHasMoveInfo,
+	type RemoveOperationTimestamp,
 	type SegmentWithInfo,
 } from "./segmentInfos.js";
 import {
@@ -115,6 +115,8 @@ export class SnapshotLoader {
 				},
 			});
 
+			const removes2: RemoveOperationTimestamp[] = [];
+
 			if (spec.removedSeq !== undefined) {
 				// this format had a bug where it didn't store all the overlap clients
 				// this is for back compat, so we change the singular id to an array
@@ -130,12 +132,16 @@ export class SnapshotLoader {
 				// all ops, we need to actually record these in the summary. For now we use fake data, and it turns
 				// out ok since none of these values end up being used. (specifically, the 'firstRemovedSeq' is fake
 				// for all values other than the actual first remove)
-				overwriteInfo<IHasRemovalInfo>(seg, {
-					removes: spec.removedClientIds.map((id) => ({
-						seq: firstRemovedSeq,
-						clientId: this.client.getOrAddShortClientId(id),
-					})),
-				});
+				removes2.push(
+					...spec.removedClientIds.map(
+						(id) =>
+							({
+								type: "set",
+								seq: firstRemovedSeq,
+								clientId: this.client.getOrAddShortClientId(id),
+							}) as const,
+					),
+				);
 			}
 			if (spec.movedSeq !== undefined) {
 				assert(
@@ -147,12 +153,21 @@ export class SnapshotLoader {
 					"Expected same length for client ids and seqs",
 				);
 
-				overwriteInfo<IHasMoveInfo>(seg, {
-					moves: spec.movedClientIds.map((id, i) => ({
-						seq: spec.movedSeqs![i],
-						clientId: this.client.getOrAddShortClientId(id),
-					})),
-				});
+				removes2.push(
+					...spec.movedClientIds.map(
+						(id, i) =>
+							({
+								type: "slice",
+								seq: spec.movedSeqs![i],
+								clientId: this.client.getOrAddShortClientId(id),
+							}) as const,
+					),
+				);
+			}
+
+			if (removes2.length > 0) {
+				removes2.sort(timestampUtils.compare);
+				overwriteInfo<IHasRemovalInfo>(seg, { removes2 });
 			}
 
 			return seg;

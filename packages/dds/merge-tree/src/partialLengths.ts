@@ -13,12 +13,7 @@ import {
 	timestampUtils,
 	type MergeBlock,
 } from "./mergeTreeNodes.js";
-import {
-	toRemovalInfo,
-	toMoveInfo,
-	assertInserted,
-	wasMovedOnInsert,
-} from "./segmentInfos.js";
+import { toRemovalInfo, assertInserted, wasMovedOnInsert } from "./segmentInfos.js";
 import { SortedSet } from "./sortedSet.js";
 
 class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength> {
@@ -513,13 +508,13 @@ export class PartialSequenceLengths {
 		collabWindow: CollaborationWindow,
 	): void {
 		assertInserted(segment);
-		const moveInfo = toMoveInfo(segment);
+		const removeInfo = toRemovalInfo(segment);
 		assert(
-			moveInfo !== undefined && wasMovedOnInsert(segment),
+			removeInfo !== undefined && wasMovedOnInsert(segment),
 			0xab7 /* Segment was not moved on insert */,
 		);
-		const firstMove = moveInfo?.moves[0];
-		if (timestampUtils.lte(firstMove, collabWindow.minSeqTime)) {
+		const firstRemove = removeInfo?.removes2[0];
+		if (timestampUtils.lte(firstRemove, collabWindow.minSeqTime)) {
 			// This segment was obliterated as soon as it was inserted, and everyone was aware of the obliterate.
 			// Thus every single client treats this segment as length 0 from every perspective, and no adjustments
 			// are necessary.
@@ -552,7 +547,7 @@ export class PartialSequenceLengths {
 			});
 
 			combinedPartialLengths.addLocalAdjustment({
-				refSeq: firstMove.seq,
+				refSeq: firstRemove.seq,
 				localSeq,
 				seglen: -segment.cachedLength,
 			});
@@ -564,12 +559,10 @@ export class PartialSequenceLengths {
 
 			const wasRemovedByInsertingClient =
 				removeInfo !== undefined &&
-				removeInfo.removes.some((remove) => remove.clientId === clientId);
-			const wasMovedByInsertingClient =
-				moveInfo !== undefined && moveInfo.moves.some((move) => move.clientId === clientId);
+				removeInfo.removes2.some((remove) => remove.clientId === clientId);
 
-			if (!wasRemovedByInsertingClient && !wasMovedByInsertingClient) {
-				const moveSeq = firstMove?.seq;
+			if (!wasRemovedByInsertingClient) {
+				const moveSeq = firstRemove?.seq;
 				assert(
 					moveSeq !== undefined,
 					0xab8 /* ObliterateOnInsertion implies moveSeq is defined */,
@@ -641,34 +634,33 @@ export class PartialSequenceLengths {
 		assertInserted(segment);
 
 		const removalInfo = toRemovalInfo(segment);
-		const moveInfo = toMoveInfo(segment);
-		if (!removalInfo && !moveInfo) {
+		// const moveInfo = toMoveInfo(segment);
+		// if (!removalInfo && !moveInfo) {
+		if (!removalInfo) {
 			return;
 		}
 
-		const firstRemove = removalInfo?.removes[0];
-		const firstMove = moveInfo?.moves[0];
+		const firstRemove = removalInfo?.removes2[0];
+		// const firstMove = moveInfo?.moves[0];
 		if (
-			(firstRemove !== undefined &&
-				timestampUtils.lte(firstRemove, collabWindow.minSeqTime)) ||
-			(firstMove !== undefined && timestampUtils.lte(firstMove, collabWindow.minSeqTime))
+			//(
+			firstRemove !== undefined &&
+			timestampUtils.lte(firstRemove, collabWindow.minSeqTime)
+			//) || (firstMove !== undefined && timestampUtils.lte(firstMove, collabWindow.minSeqTime))
 		) {
 			combinedPartialLengths.minLength -= segment.cachedLength;
 			return;
 		}
 
 		const removalIsLocal = !!firstRemove && timestampUtils.isLocal(firstRemove);
-		const moveIsLocal = !!firstMove && timestampUtils.isLocal(firstMove);
+		// const moveIsLocal = !!firstMove && timestampUtils.isLocal(firstMove);
 		const isLocalInsertion = timestampUtils.isLocal(segment.insert);
-		const isOnlyLocalRemoval = removalIsLocal && (!moveInfo || moveIsLocal);
-		const isOnlyLocalMove = moveIsLocal && (!removalInfo || removalIsLocal);
-		const isLocal = isLocalInsertion || isOnlyLocalRemoval || isOnlyLocalMove;
+		// const isOnlyLocalRemoval = removalIsLocal && (!moveInfo || moveIsLocal);
+		const isOnlyLocalRemoval = removalIsLocal;
+		// const isOnlyLocalMove = moveIsLocal && (!removalInfo || removalIsLocal);
+		const isLocal = isLocalInsertion || isOnlyLocalRemoval; // || isOnlyLocalMove;
 
-		if (
-			isLocalInsertion &&
-			!(removalIsLocal && (!moveInfo || moveIsLocal)) &&
-			!(moveIsLocal && (!removalInfo || removalIsLocal))
-		) {
+		if (isLocalInsertion && !removalIsLocal) {
 			throw new Error("Should have handled this codepath in wasMovedOnInsertion");
 		}
 
@@ -676,41 +668,39 @@ export class PartialSequenceLengths {
 		let clientId: number;
 		let seqOrLocalSeq: number;
 
-		// it's not possible to have an overlapping obliterate and remove that are both local
-		assert(
-			(!moveIsLocal && !removalIsLocal) || moveIsLocal !== removalIsLocal,
-			0x870 /* overlapping local obliterate and remove */,
-		);
-
 		const clientsWithRemoveOrObliterate = new Set<number>([
-			...(removalInfo?.removes.map(({ clientId }) => clientId) ?? []),
-			...(moveInfo?.moves.map(({ clientId }) => clientId) ?? []),
+			...(removalInfo?.removes2.map(({ clientId }) => clientId) ?? []),
+			// ...(moveInfo?.moves.map(({ clientId }) => clientId) ?? []),
 		]);
 
-		const removeHappenedFirst =
-			firstRemove &&
-			(!firstMove ||
-				moveIsLocal ||
-				(!removalIsLocal && timestampUtils.lessThan(firstRemove, firstMove)));
+		// const removeHappenedFirst =
+		// 	firstRemove &&
+		// 	(!firstMove ||
+		// 		moveIsLocal ||
+		// 		(!removalIsLocal && timestampUtils.lessThan(firstRemove, firstMove)));
 
-		if (removeHappenedFirst) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			seqOrLocalSeq = removalIsLocal ? firstRemove.localSeq! : firstRemove.seq;
-			// The client who performed the remove is always stored
-			// in the first position of removalInfo.
-			clientId = firstRemove.clientId;
-		} else {
-			assert(
-				firstMove !== undefined,
-				0xab9 /* Expected move to exist if remove either did not exist or didn't happen first */,
-			);
-			// The client who performed the move is always stored
-			// in the first position of moveInfo.
-			clientId = firstMove.clientId;
+		// if (removeHappenedFirst) {
+		// 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		// 	seqOrLocalSeq = removalIsLocal ? firstRemove.localSeq! : firstRemove.seq;
+		// 	// The client who performed the remove is always stored
+		// 	// in the first position of removalInfo.
+		// 	clientId = firstRemove.clientId;
+		// } else {
+		// 	assert(
+		// 		firstMove !== undefined,
+		// 		0xab9 /* Expected move to exist if remove either did not exist or didn't happen first */,
+		// 	);
+		// 	// The client who performed the move is always stored
+		// 	// in the first position of moveInfo.
+		// 	clientId = firstMove.clientId;
 
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			seqOrLocalSeq = moveIsLocal ? firstMove.localSeq! : firstMove.seq;
-		}
+		// 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		// 	seqOrLocalSeq = moveIsLocal ? firstMove.localSeq! : firstMove.seq;
+		// }
+
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		seqOrLocalSeq = removalIsLocal ? firstRemove.localSeq! : firstRemove.seq;
+		clientId = firstRemove.clientId;
 
 		const partials = isLocal
 			? combinedPartialLengths.unsequencedRecords?.partialLengths
@@ -742,9 +732,7 @@ export class PartialSequenceLengths {
 				if (id === collabWindow.clientId) {
 					// The local client also removed or obliterated this segment.
 					// TODO: We were lacking test coverage here: I was looking at the first remove but I believe I want the last.
-					const localSeq =
-						moveInfo?.moves[moveInfo.moves.length - 1].localSeq ??
-						removalInfo?.removes[removalInfo.removes.length - 1]?.localSeq;
+					const { localSeq } = removalInfo?.removes2[removalInfo.removes2.length - 1];
 					if (localSeq === undefined) {
 						// Sure, the local client did it--but that change was already acked.
 						// No need to account for it in the unsequenced records.
@@ -858,20 +846,18 @@ export class PartialSequenceLengths {
 			if (child.isLeaf()) {
 				const segment = child;
 				const removalInfo = toRemovalInfo(segment);
-				const moveInfo = toMoveInfo(segment);
-				const firstRemove = removalInfo?.removes[0];
-				const firstMove = moveInfo?.moves[0];
+				const firstRemove = removalInfo?.removes2[0];
 				if (seq === segment.insert.seq) {
 					// if this segment was moved on insert, its length should
 					// only be visible to the inserting client
 					if (
-						// TODO: These checks look redundant with wasMovedOnInsert. Can we remove them?
+						// TODO: These commented out checks looked redundant with wasMovedOnInsert. Is the removal valid?
 						segment.insert.seq !== undefined &&
-						firstMove &&
-						firstMove.seq < segment.insert.seq &&
+						firstRemove !== undefined &&
+						// firstMove.seq < segment.insert.seq &&
 						wasMovedOnInsert(segment)
 					) {
-						this.addClientAdjustment(clientId, firstMove.seq, segment.cachedLength);
+						this.addClientAdjustment(clientId, firstRemove.seq, segment.cachedLength);
 						failIncrementalPropagation = true;
 					} else {
 						seqSeglen += segment.cachedLength;
@@ -879,11 +865,7 @@ export class PartialSequenceLengths {
 					}
 				}
 
-				const earlierDeletion = Math.min(
-					firstRemove?.seq ?? Number.MAX_VALUE,
-					firstMove?.seq ?? Number.MAX_VALUE,
-				);
-				if (timestampUtils.isAcked(segment.insert) && seq === earlierDeletion) {
+				if (timestampUtils.isAcked(segment.insert) && seq === firstRemove?.seq) {
 					seqSeglen -= segment.cachedLength;
 					if (clientId !== collabWindow.clientId) {
 						this.addClientAdjustment(clientId, seq, -segment.cachedLength);

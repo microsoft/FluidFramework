@@ -25,7 +25,7 @@ import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
 import { ISegmentPrivate, timestampUtils, type OperationTimestamp } from "./mergeTreeNodes.js";
 import type { IJSONSegment } from "./ops.js";
 import { PropertySet, matchProperties } from "./properties.js";
-import { assertInserted, isMoved, isRemoved } from "./segmentInfos.js";
+import { assertInserted, isRemoved2 } from "./segmentInfos.js";
 import {
 	IJSONSegmentWithMergeInfo,
 	JsonSegmentSpecs,
@@ -234,8 +234,7 @@ export class SnapshotV1 {
 			//      segment, and therefore we can discard it.
 			if (
 				timestampUtils.isLocal(segment.insert) ||
-				(isRemoved(segment) && timestampUtils.lte(segment.removes[0], minSeqTimestamp)) ||
-				(isMoved(segment) && timestampUtils.lte(segment.moves[0], minSeqTimestamp))
+				(isRemoved2(segment) && timestampUtils.lte(segment.removes2[0], minSeqTimestamp))
 			) {
 				if (timestampUtils.isAcked(segment.insert)) {
 					originalSegments += 1;
@@ -250,9 +249,7 @@ export class SnapshotV1 {
 			// have a pending remove.)
 			if (
 				timestampUtils.lte(segment.insert, minSeqTimestamp) && // Segment is below the MSN, and...
-				(!isRemoved(segment) || // .. Segment has not been removed, or...
-					timestampUtils.isLocal(segment.removes[0])) && // .. Removal op to be delivered on reconnect
-				(!isMoved(segment) || timestampUtils.isLocal(segment.moves[0]))
+				(!isRemoved2(segment) || timestampUtils.isLocal(segment.removes2[0]))
 			) {
 				// This segment is below the MSN, which means that future ops will not reference it.  Attempt to
 				// coalesce the new segment with the previous (if any).
@@ -290,10 +287,12 @@ export class SnapshotV1 {
 					raw.seq = segment.insert.seq;
 					raw.client = this.getLongClientId(segment.insert.clientId);
 				}
+
 				// We have already dispensed with removed segments below the MSN and removed segments with unassigned
 				// sequence numbers.  Any remaining removal info should be preserved.
-				if (isRemoved(segment)) {
-					const firstRemove = segment.removes[0];
+				if (isRemoved2(segment) && segment.removes2.some((r) => r.type === "set")) {
+					const removes = segment.removes2.filter((r) => r.type === "set");
+					const firstRemove = removes[0];
 					assert(
 						timestampUtils.isAcked(firstRemove) &&
 							timestampUtils.greaterThan(firstRemove, minSeqTimestamp),
@@ -308,23 +307,20 @@ export class SnapshotV1 {
 					// are writing the 'all clients in one array' format.
 					raw.removedClient = this.getLongClientId(firstRemove.clientId);
 
-					raw.removedClientIds = segment.removes.map(({ clientId }) =>
-						this.getLongClientId(clientId),
-					);
+					raw.removedClientIds = removes.map(({ clientId }) => this.getLongClientId(clientId));
 				}
 
-				if (isMoved(segment)) {
-					const firstMove = segment.moves[0];
+				if (isRemoved2(segment) && segment.removes2.some((r) => r.type === "slice")) {
+					const moves = segment.removes2.filter((r) => r.type === "slice");
+					const firstMove = moves[0];
 					assert(
 						timestampUtils.isAcked(firstMove) &&
 							timestampUtils.greaterThan(firstMove, minSeqTimestamp),
 						0x873 /* On move info preservation, segment has invalid moved sequence number! */,
 					);
 					raw.movedSeq = firstMove.seq;
-					raw.movedSeqs = segment.moves.map(({ seq }) => seq);
-					raw.movedClientIds = segment.moves.map(({ clientId }) =>
-						this.getLongClientId(clientId),
-					);
+					raw.movedSeqs = moves.map(({ seq }) => seq);
+					raw.movedClientIds = moves.map(({ clientId }) => this.getLongClientId(clientId));
 				}
 
 				// Sanity check that we are preserving either the seq > minSeq or a (re)moved segment's info.

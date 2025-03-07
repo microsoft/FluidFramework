@@ -90,10 +90,9 @@ import { PropertySet, type MapLike } from "./properties.js";
 import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
 import {
 	isInserted,
-	isMoved,
-	isRemoved,
+	isRemoved2,
 	overwriteInfo,
-	toMoveInfo,
+	toRemovalInfo,
 	type IHasInsertionInfo,
 } from "./segmentInfos.js";
 import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
@@ -403,15 +402,20 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	): void {
 		let localInserts = 0;
 		let localRemoves = 0;
+		let localObliterates = 0;
 		walkAllChildSegments(this._mergeTree.root, (seg: ISegmentPrivate) => {
 			if (isInserted(seg) && timestampUtils.isLocal(seg.insert)) {
 				localInserts++;
 			}
-			if (isRemoved(seg) && timestampUtils.isLocal(seg.removes[seg.removes.length - 1])) {
-				localRemoves++;
+			if (isRemoved2(seg) && timestampUtils.isLocal(seg.removes2[seg.removes2.length - 1])) {
+				if (seg.removes2[seg.removes2.length - 1].type === "set") {
+					localRemoves++;
+				} else {
+					localObliterates++;
+				}
 			}
 			// Only serialize segments that have not been removed.
-			if (!isRemoved(seg)) {
+			if (!isRemoved2(seg)) {
 				handleCollectingSerializer.stringify(seg.clone().toJSONObject(), handle);
 			}
 			return true;
@@ -422,6 +426,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				eventName: "LocalEditsInProcessGCData",
 				localInserts,
 				localRemoves,
+				localObliterates,
 			});
 		}
 	}
@@ -966,27 +971,29 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						isInserted(segment) && timestampUtils.isLocal(segment.insert),
 						0x037 /* "Segment already has assigned sequence number" */,
 					);
-					const moveInfo = toMoveInfo(segment);
+					const removeInfo = toRemovalInfo(segment);
 
-					if (moveInfo !== undefined) {
+					if (removeInfo !== undefined && timestampUtils.isAcked(removeInfo.removes2[0])) {
+						assert(
+							removeInfo.removes2[0].type === "slice",
+							"Remove on insertion must be caused by obliterate.",
+						);
 						errorIfOptionNotTrue(
 							this._mergeTree.options,
 							"mergeTreeEnableObliterateReconnect",
 						);
-						if (timestampUtils.isAcked(moveInfo.moves[0])) {
-							// the segment was remotely obliterated, so is considered removed
-							// we set the seq to the universal seq and remove the local seq,
-							// so its length is not considered for subsequent local changes
-							// this allows us to not send the op as even the local client will ignore the segment
-							overwriteInfo<IHasInsertionInfo>(segment, {
-								insert: {
-									seq: UniversalSequenceNumber,
-									localSeq: undefined,
-									clientId: NonCollabClient,
-								},
-							});
-							break;
-						}
+						// the segment was remotely obliterated, so is considered removed
+						// we set the seq to the universal seq and remove the local seq,
+						// so its length is not considered for subsequent local changes
+						// this allows us to not send the op as even the local client will ignore the segment
+						overwriteInfo<IHasInsertionInfo>(segment, {
+							insert: {
+								seq: UniversalSequenceNumber,
+								localSeq: undefined,
+								clientId: NonCollabClient,
+							},
+						});
+						break;
 					}
 
 					const segInsertOp: ISegment = segment.clone();
@@ -1003,11 +1010,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					// TODO: Logic can be simplified. All we're checking is that nobody else removed it in the meantime,
 					// which we verify by checking if the first removal is still our own local edit.
 					// Same for obliterate codepath below.
-					if (
-						isRemoved(segment) &&
-						timestampUtils.isLocal(segment.removes[0]) &&
-						!(isMoved(segment) && timestampUtils.isAcked(segment.moves[0]))
-					) {
+					if (isRemoved2(segment) && timestampUtils.isLocal(segment.removes2[0])) {
 						newOp = createRemoveRangeOp(
 							segmentPosition,
 							segmentPosition + segment.cachedLength,
@@ -1017,11 +1020,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				}
 				case MergeTreeDeltaType.OBLITERATE: {
 					errorIfOptionNotTrue(this._mergeTree.options, "mergeTreeEnableObliterateReconnect");
-					if (
-						isMoved(segment) &&
-						timestampUtils.isLocal(segment.moves[0]) &&
-						!(isRemoved(segment) && timestampUtils.isAcked(segment.removes[0]))
-					) {
+					if (isRemoved2(segment) && timestampUtils.isLocal(segment.removes2[0])) {
 						newOp = createObliterateRangeOp(
 							segmentPosition,
 							segmentPosition + segment.cachedLength,

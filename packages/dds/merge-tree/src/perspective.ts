@@ -9,10 +9,8 @@ import { LeafAction, backwardExcursion, forwardExcursion } from "./mergeTreeNode
 import { seqLTE, timestampUtils, type ISegmentLeaf } from "./mergeTreeNodes.js";
 import {
 	isInserted,
-	isMoved,
-	isRemoved,
+	isRemoved2,
 	type IHasInsertionInfo,
-	type IHasMoveInfo,
 	type IHasRemovalInfo,
 	type SegmentWithInfo,
 } from "./segmentInfos.js";
@@ -93,7 +91,7 @@ export function wasRemovedBefore(
 	seg: SegmentWithInfo<IHasInsertionInfo & IHasRemovalInfo>,
 	{ refSeq, localSeq }: SeqTime,
 ): boolean {
-	const firstRemove = seg.removes?.[0];
+	const firstRemove = seg.removes2?.[0];
 	if (firstRemove === undefined) {
 		return false;
 	}
@@ -106,41 +104,12 @@ export function wasRemovedBefore(
 }
 
 /**
- * Determines if the given segment was moved before the given perspective.
- * @param seg - The segment to check.
- * @param refSeq - The latest sequence number to consider.
- * @param localSeq - The latest local sequence number to consider.
- * @returns true iff this segment was moved (aka obliterated) in the given perspective.
- * @privateRemarks
- * TODO:AB#29765: This function does not support non-local-client perspectives, but should.
- */
-export function wasMovedBefore(
-	seg: SegmentWithInfo<IHasInsertionInfo & IHasMoveInfo>,
-	{ refSeq, localSeq }: SeqTime,
-): boolean {
-	const firstMove = seg.moves?.[0];
-	if (firstMove === undefined) {
-		return false;
-	}
-
-	if (timestampUtils.isLocal(firstMove) && localSeq !== undefined) {
-		return firstMove.localSeq! <= localSeq;
-	}
-
-	return seqLTE(firstMove.seq, refSeq);
-}
-
-/**
  * See {@link wasRemovedBefore} and {@link wasMovedBefore}.
  * @privateRemarks
  * TODO:AB#29765: This function does not support non-local-client perspectives, but should.
  */
 export function wasRemovedOrMovedBefore(seg: ISegmentLeaf, seqTime: SeqTime): boolean {
-	return (
-		isInserted(seg) &&
-		((isRemoved(seg) && wasRemovedBefore(seg, seqTime)) ||
-			(isMoved(seg) && wasMovedBefore(seg, seqTime)))
-	);
+	return isInserted(seg) && isRemoved2(seg) && wasRemovedBefore(seg, seqTime);
 }
 
 /**

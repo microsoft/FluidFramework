@@ -55,13 +55,7 @@ import {
 import { PropertySet } from "../properties.js";
 import { DetachedReferencePosition, refHasTileLabel } from "../referencePositions.js";
 import { MergeTreeRevertibleDriver } from "../revertibles.js";
-import {
-	assertInserted,
-	assertMergeNode,
-	isInserted,
-	isMoved,
-	isRemoved,
-} from "../segmentInfos.js";
+import { assertInserted, assertMergeNode, isInserted, isRemoved2 } from "../segmentInfos.js";
 import { SnapshotLegacy } from "../snapshotlegacy.js";
 import { TextSegment } from "../textSegment.js";
 
@@ -373,8 +367,8 @@ export class TestClient extends Client {
 			const prefixes: (string | undefined | number)[] = [];
 			assertInserted(segment);
 			prefixes.push(opTimestampToString(segment.insert));
-			if (isRemoved(segment)) {
-				prefixes.push(opTimestampToString(segment.removes[0]));
+			if (isRemoved2(segment)) {
+				prefixes.push(opTimestampToString(segment.removes2[0]));
 			}
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			test.push(`${prefixes.join(",")}:${(segment as any).text}`);
@@ -409,10 +403,10 @@ export class TestClient extends Client {
 					})));
 
 		const isRemovedFromView = (s: ISegmentPrivate): boolean =>
-			isRemoved(s) &&
-			((timestampUtils.isAcked(s.removes[0]) && s.removes[0].seq <= seqNumberFrom) ||
-				(timestampUtils.isLocal(s.removes[s.removes.length - 1]) &&
-					s.removes[s.removes.length - 1].localSeq! <= localSeq));
+			isRemoved2(s) &&
+			((timestampUtils.isAcked(s.removes2[0]) && s.removes2[0].seq <= seqNumberFrom) ||
+				(timestampUtils.isLocal(s.removes2[s.removes2.length - 1]) &&
+					s.removes2[s.removes2.length - 1].localSeq! <= localSeq));
 
 		walkAllChildSegments(this.mergeTree.root, (seg) => {
 			assertInserted(seg);
@@ -450,9 +444,7 @@ export class TestClient extends Client {
 		const isInsertedInView = (seg: ISegmentPrivate): boolean =>
 			isInserted(seg) && timestampUtils.lte(seg.insert, perspectiveStamp);
 		const isRemovedFromView = (s: ISegmentPrivate): boolean =>
-			isRemoved(s) && timestampUtils.lte(s.removes[0], perspectiveStamp);
-		const isMovedFromView = (s: ISegmentPrivate): boolean =>
-			isMoved(s) && timestampUtils.lte(s.moves[0], perspectiveStamp);
+			isRemoved2(s) && timestampUtils.lte(s.removes2[0], perspectiveStamp);
 
 		/*
             Walk the segments up to the current segment, and calculate its
@@ -470,7 +462,7 @@ export class TestClient extends Client {
 			//
 			// Note that all ACKed / remote ops are applied and we only need concern ourself with
 			// determining if locally pending ops fall before/after the given 'localSeq'.
-			if (isInsertedInView(seg) && !isRemovedFromView(seg) && !isMovedFromView(seg)) {
+			if (isInsertedInView(seg) && !isRemovedFromView(seg)) {
 				segmentPosition += seg.cachedLength;
 			}
 
@@ -643,7 +635,7 @@ export function getStats(tree: MergeTree): MergeTreeStats {
 			if (child.isLeaf()) {
 				stats.leafCount++;
 				const segment = child;
-				if (isRemoved(segment)) {
+				if (isRemoved2(segment)) {
 					stats.removedLeafCount++;
 				}
 			} else {

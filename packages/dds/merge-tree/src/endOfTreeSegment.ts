@@ -10,7 +10,11 @@ import { LocalReferenceCollection } from "./localReference.js";
 import { MergeTree } from "./mergeTree.js";
 import { NodeAction, depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
 import { ISegment, type ISegmentLeaf, type MergeBlock } from "./mergeTreeNodes.js";
-import { type IMergeNodeInfo } from "./segmentInfos.js";
+import {
+	type IHasInsertionInfo,
+	type IHasRemovalInfo,
+	type IMergeNodeInfo,
+} from "./segmentInfos.js";
 
 /**
  * This is a special segment that is not bound or known by the merge tree itself,
@@ -33,7 +37,9 @@ import { type IMergeNodeInfo } from "./segmentInfos.js";
  * must be possible in some way to refer to a position before or after the tree
  * respectively. The endpoint segments allow us to support such behavior.
  */
-abstract class BaseEndpointSegment implements IMergeNodeInfo {
+abstract class BaseEndpointSegment
+	implements IMergeNodeInfo, IHasRemovalInfo, IHasInsertionInfo
+{
 	constructor(protected readonly mergeTree: MergeTree) {}
 	/*
 	 * segments must be of at least length one, but
@@ -41,13 +47,12 @@ abstract class BaseEndpointSegment implements IMergeNodeInfo {
 	 * of undefined/0. we leverage this to create
 	 * a 0 length segment for an endpoint of the tree
 	 */
-	removes = [{ seq: 0, clientId: LocalClientId }];
+	removes2 = [{ type: "set", seq: 0, clientId: LocalClientId } as const];
 	attribution: undefined;
 	propertyManager: undefined;
 	localSeq: undefined;
 	localRemovedSeq: undefined;
 	properties: undefined;
-	seq = 0;
 	clientId = LocalClientId;
 	cachedLength = 1;
 

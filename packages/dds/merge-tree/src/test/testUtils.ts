@@ -254,21 +254,14 @@ function getPartialLengths(
 		info.isInserted(segment) && timestampUtils.lte(segment.insert, perspectiveStamp);
 
 	const isRemoved = (segment: ISegmentPrivate): boolean =>
-		info.isRemoved(segment) &&
+		info.isRemoved2(segment) &&
 		((localSeq !== undefined &&
-			timestampUtils.isLocal(segment.removes[segment.removes.length - 1]) &&
-			segment.removes[segment.removes.length - 1].localSeq! <= localSeq) ||
-			timestampUtils.lte(segment.removes[0], perspectiveStamp));
-
-	const isMoved = (segment: ISegmentPrivate): boolean =>
-		info.isMoved(segment) &&
-		((localSeq !== undefined &&
-			timestampUtils.isLocal(segment.moves[segment.moves.length - 1]) &&
-			segment.moves[segment.moves.length - 1].localSeq! <= localSeq) ||
-			timestampUtils.lte(segment.moves[0], perspectiveStamp));
+			timestampUtils.isLocal(segment.removes2[segment.removes2.length - 1]) &&
+			segment.removes2[segment.removes2.length - 1].localSeq! <= localSeq) ||
+			timestampUtils.lte(segment.removes2[0], perspectiveStamp));
 
 	walkAllChildSegments(mergeBlock, (segment) => {
-		if (isInserted(segment) && !isRemoved(segment) && !isMoved(segment)) {
+		if (isInserted(segment) && !isRemoved(segment)) {
 			actualLen += segment.cachedLength;
 		}
 		return true;

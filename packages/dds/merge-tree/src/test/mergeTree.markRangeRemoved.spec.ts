@@ -99,13 +99,13 @@ describe("MergeTree.markRangeRemoved", () => {
 
 		assert.equal(client.getText(), "");
 		assertRemoved(segment);
-		const localRemoveInfo = segment.removes[0];
+		const localRemoveInfo = segment.removes2[0];
 		assert.equal(localRemoveInfo.seq, UnassignedSequenceNumber);
 		assert(localRemoveInfo.localSeq !== undefined);
 
 		client.applyMsg(remoteDeleteMessage);
-		const remoteRemoveInfo = segment.removes[0];
-		assert.deepEqual(segment.removes[1], localRemoveInfo);
+		const remoteRemoveInfo = segment.removes2[0];
+		assert.deepEqual(segment.removes2[1], localRemoveInfo);
 		assert.equal(remoteRemoveInfo.seq, segmentExpectedRemovedSeq);
 		assert.equal(client.getText(), "");
 
@@ -113,8 +113,8 @@ describe("MergeTree.markRangeRemoved", () => {
 		// This ensures there's enough information to determine segment length in the case of
 		// reconnect.
 		client.applyMsg(localDeleteMessage);
-		const finalRemoveInfo = segment.removes[0];
-		assert.equal(segment.removes.length, 2);
+		const finalRemoveInfo = segment.removes2[0];
+		assert.equal(segment.removes2.length, 2);
 		assert.equal(finalRemoveInfo.seq, segmentExpectedRemovedSeq);
 		assert.equal(finalRemoveInfo.localSeq, undefined);
 		assert.equal(client.getText(), "");

@@ -20,12 +20,10 @@ import {
 	hasProp,
 	isInserted,
 	isMergeNodeInfo as isMergeNode,
-	isMoved,
-	isRemoved,
+	isRemoved2,
 	overwriteInfo,
 	type IHasInsertionInfo,
 	type IMergeNodeInfo,
-	type IHasMoveInfo,
 	type IHasRemovalInfo,
 	type SegmentWithInfo,
 } from "./segmentInfos.js";
@@ -191,7 +189,7 @@ export interface ISegment {
  * @alpha
  */
 export function segmentIsRemoved(segment: ISegment): boolean {
-	return isRemoved(segment);
+	return isRemoved2(segment);
 }
 
 /**
@@ -441,19 +439,14 @@ export abstract class BaseSegment implements ISegment {
 		}
 		// TODO: deep clone properties
 		seg.properties = clone(this.properties);
-		if (isRemoved(this)) {
+		if (isRemoved2(this)) {
 			// TODO: Consider object.freezing timestamps and not cloning. Using an immutable model would be nice.
-			const removes = this.removes.map((r) => ({ ...r }));
+			const removes2 = this.removes2.map((r) => ({ ...r }));
 			overwriteInfo<IHasRemovalInfo>(seg, {
-				removes,
+				removes2,
 			});
 		}
-		if (isMoved(this)) {
-			const moves = this.moves.map((m) => ({ ...m }));
-			overwriteInfo<IHasMoveInfo>(seg, {
-				moves,
-			});
-		}
+
 		seg.attribution = this.attribution?.clone();
 	}
 
@@ -500,17 +493,11 @@ export abstract class BaseSegment implements ISegment {
 			const insert = { ...this.insert };
 			overwriteInfo<IHasInsertionInfo>(leafSegment, { insert });
 		}
-		if (isRemoved(this)) {
+		if (isRemoved2(this)) {
 			// TODO: Consider object.freezing timestamps and not cloning. Using an immutable model would be nice.
-			const removes = this.removes.map((r) => ({ ...r }));
+			const removes2 = this.removes2.map((r) => ({ ...r }));
 			overwriteInfo<IHasRemovalInfo>(leafSegment, {
-				removes,
-			});
-		}
-		if (isMoved(this)) {
-			const moves = this.moves.map((m) => ({ ...m }));
-			overwriteInfo<IHasMoveInfo>(leafSegment, {
-				moves,
+				removes2,
 			});
 		}
 

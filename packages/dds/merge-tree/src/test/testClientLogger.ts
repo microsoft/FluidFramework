@@ -19,7 +19,7 @@ import { depthFirstNodeWalk } from "../mergeTreeNodeWalk.js";
 import { Marker, seqLTE, type ISegmentPrivate } from "../mergeTreeNodes.js";
 import { IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
 import { PropertySet, matchProperties } from "../properties.js";
-import { toInsertionInfo, toMoveInfo, toRemovalInfo } from "../segmentInfos.js";
+import { toInsertionInfo, toRemovalInfo } from "../segmentInfos.js";
 import { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
@@ -397,12 +397,6 @@ export class TestClientLogger {
 }
 
 function toMoveOrRemove(segment: ISegmentPrivate): { seq: number } | undefined {
-	const mi = toMoveInfo(segment);
 	const ri = toRemovalInfo(segment);
-	if (mi !== undefined || ri !== undefined) {
-		return {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-non-null-asserted-optional-chain
-			seq: mi?.moves[0].seq ?? ri?.removes[0].seq!,
-		};
-	}
+	return ri !== undefined ? ri.removes2[0] : undefined;
 }
