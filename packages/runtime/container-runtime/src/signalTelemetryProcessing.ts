@@ -201,10 +201,10 @@ export class SignalTelemetryManager {
 	 * @param envelope - The signal envelope to process.
 	 */
 	public applyTrackingToBroadcastSignalEnvelope(envelope: ISignalEnvelope): void {
-		const clientBroadcastSignalSeqNumber = ++this.broadcastSignalSequenceNumber;
+		const broadcastSignalSequenceNumber = ++this.broadcastSignalSequenceNumber;
 
 		// Stamp with the broadcast signal sequence number.
-		envelope.clientBroadcastSignalSequenceNumber = clientBroadcastSignalSeqNumber;
+		envelope.clientBroadcastSignalSequenceNumber = broadcastSignalSequenceNumber;
 
 		this.signalTracking.signalsSentSinceLastLatencyMeasurement++;
 
@@ -214,17 +214,17 @@ export class SignalTelemetryManager {
 			this.signalTracking.minimumTrackingSignalSequenceNumber === undefined ||
 			this.signalTracking.trackingSignalSequenceNumber === undefined
 		) {
-			this.signalTracking.minimumTrackingSignalSequenceNumber = clientBroadcastSignalSeqNumber;
-			this.signalTracking.trackingSignalSequenceNumber = clientBroadcastSignalSeqNumber;
+			this.signalTracking.minimumTrackingSignalSequenceNumber = broadcastSignalSequenceNumber;
+			this.signalTracking.trackingSignalSequenceNumber = broadcastSignalSequenceNumber;
 		}
 
 		// Start tracking roundtrip for a new signal only if we are not tracking one already (and sampling logic is met)
 		if (
 			this.signalTracking.roundTripSignalSequenceNumber === undefined &&
-			clientBroadcastSignalSeqNumber % defaultTelemetrySignalSampleCount === 1
+			broadcastSignalSequenceNumber % defaultTelemetrySignalSampleCount === 1
 		) {
 			this.signalTracking.signalTimestamp = Date.now();
-			this.signalTracking.roundTripSignalSequenceNumber = clientBroadcastSignalSeqNumber;
+			this.signalTracking.roundTripSignalSequenceNumber = broadcastSignalSequenceNumber;
 			this.signalTracking.totalSignalsSentInLatencyWindow +=
 				this.signalTracking.signalsSentSinceLastLatencyMeasurement;
 			this.signalTracking.signalsSentSinceLastLatencyMeasurement = 0;
