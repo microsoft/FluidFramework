@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
 import { asBatchMetadata, type IBatchMetadata } from "../metadata.js";
@@ -25,6 +26,8 @@ export interface IBatchManagerOptions {
 	 * If true, don't compare batchID of incoming batches to this. e.g. ID Allocation Batch IDs should be ignored
 	 */
 	readonly ignoreBatchId?: boolean;
+
+	rollback?: (message: BatchMessage) => void;
 }
 
 export interface BatchSequenceNumbers {
@@ -168,12 +171,22 @@ export class BatchManager {
 	public checkpoint(): IBatchCheckpoint {
 		const startPoint = this.pendingBatch.length;
 		return {
-			rollback: (process: (message: BatchMessage) => void) => {
+			isEmpty: () => this.empty,
+			rollback: () => {
+				if (this.options.rollback === undefined) {
+					if (!this.empty) {
+						throw new LoggingError(
+							"BatchManager: No rollback handler provided for batch, but batch is not empty",
+						);
+					}
+					return;
+				}
+
 				for (let i = this.pendingBatch.length; i > startPoint; ) {
 					i--;
 					const message = this.pendingBatch[i];
 					this.batchContentSize -= message.contents?.length ?? 0;
-					process(message);
+					this.options.rollback(message);
 				}
 
 				this.pendingBatch.length = startPoint;

@@ -396,7 +396,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				);
 
 				const untrackedHandle = manufactureHandle(
-					dataObject._context.IFluidHandleContext,
+					dataObject._runtime,
 					`/${unreferencedId}/unrecognizedSubPath`,
 				);
 				await assert.rejects(
@@ -579,9 +579,9 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 					unreferencedId,
 				);
 
-				const serializer = new FluidSerializer(dataObject._context.IFluidHandleContext);
+				const serializer = new FluidSerializer(dataObject._runtime);
 				const handle: IFluidHandle = parseHandles(
-					{ type: "__fluid_handle__", url: unreferencedId },
+					{ type: "__fluid_handle__", url: `/${unreferencedId}` },
 					serializer,
 				) as IFluidHandle;
 

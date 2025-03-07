@@ -37,9 +37,12 @@ describe("FluidSerializer", () => {
 	}
 
 	describe("vanilla JSON", () => {
-		const context = new MockHandleContext();
-		const serializer = new FluidSerializer(context);
-		const handle = new RemoteFluidObjectHandle("/root", context);
+		const channelsRoutingContext = new MockHandleContext();
+		const serializer = new FluidSerializer({
+			channelsRoutingContext,
+			inStagingMode: false,
+		});
+		const handle = new RemoteFluidObjectHandle("/root", channelsRoutingContext);
 
 		// Start with the various JSON-serializable types.  A mix of "truthy" and "falsy" values
 		// are of particular interest.
@@ -163,9 +166,9 @@ describe("FluidSerializer", () => {
 	});
 
 	describe("JSON w/embedded handles", () => {
-		const context = new MockHandleContext();
-		const serializer = new FluidSerializer(context);
-		const handle = new RemoteFluidObjectHandle("/root", context);
+		const channelsRoutingContext = new MockHandleContext();
+		const serializer = new FluidSerializer({ channelsRoutingContext, inStagingMode: false });
+		const handle = new RemoteFluidObjectHandle("/root", channelsRoutingContext);
 		const serializedHandle = {
 			type: "__fluid_handle__",
 			url: "/root",
@@ -276,7 +279,10 @@ describe("FluidSerializer", () => {
 		const rootContext = new MockHandleContext("");
 		const dsContext = new MockHandleContext("/default", rootContext);
 		// Create serialized with a handle context whose parent is a root handle context.
-		const serializer = new FluidSerializer(dsContext);
+		const serializer = new FluidSerializer({
+			channelsRoutingContext: dsContext,
+			inStagingMode: false,
+		});
 
 		it("can parse handles with absolute path", () => {
 			const serializedHandle = JSON.stringify({
@@ -325,7 +331,10 @@ describe("FluidSerializer", () => {
 	});
 
 	describe("Utils", () => {
-		const serializer = new FluidSerializer(new MockHandleContext());
+		const serializer = new FluidSerializer({
+			channelsRoutingContext: new MockHandleContext(),
+			inStagingMode: false,
+		});
 		it("makeSerializable is idempotent", () => {
 			const bind = new RemoteFluidObjectHandle("/", new MockHandleContext());
 			const handle = new RemoteFluidObjectHandle("/okay", new MockHandleContext());

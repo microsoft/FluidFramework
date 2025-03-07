@@ -94,6 +94,8 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;
     // (undocumented)
+    get inStagingMode(): boolean;
+    // (undocumented)
     readonly logger: ITelemetryBaseLogger;
     // (undocumented)
     readonly objectsRoutingContext: IFluidHandleContext;
