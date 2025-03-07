@@ -63,6 +63,14 @@ module.exports = {
 		},
 
 		{
+			label: "Ignore unsupported pnpm overidde entries",
+			dependencyTypes: ["pnpmOverrides"],
+			dependencies: ["json5@<1.0.2", "json5@>=2.0.0 <2.2.2", "oclif>@aws-sdk/client*"],
+			packages: ["build-tools-release-group-root"],
+			isIgnored: true,
+		},
+
+		{
 			label: "Deps in pnpm overrides should use caret dependency ranges",
 			dependencyTypes: ["pnpmOverrides"],
 			dependencies: ["**"],
@@ -113,13 +121,10 @@ module.exports = {
 				"@fluid-tools/version-tools",
 				"@fluidframework/build-tools",
 				"@fluidframework/bundle-size-tools",
+				"@fluidframework/build-tools-bin",
 			],
 			packages: ["**"],
 			range: "~",
-			// This is so syncpack doesn't complain about the value of the "version" property in package.json
-			// Still don't quite understand why it thinks that a semver range would ever be correct in the version field.
-			// See https://github.com/JamieMason/syncpack/issues/238#issuecomment-2260668411 for more details.
-			dependencyTypes: ["!local"],
 		},
 
 		// All deps should use caret ranges unless previously overridden
