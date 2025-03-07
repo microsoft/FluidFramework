@@ -106,14 +106,6 @@ module.exports = {
 
 		{
 			label:
-				"Dependencies on build-tools at the root of the release group must use tilde dependency ranges",
-			dependencies: ["@fluid-tools/build-cli", "@fluidframework/build-tools"],
-			packages: ["build-tools-release-group-root"],
-			range: "~",
-		},
-
-		{
-			label:
 				"Dependencies on other fluid packages within the workspace should use tilde dependency ranges",
 			dependencies: [
 				"@fluid-tools/build-cli",
