@@ -596,6 +596,11 @@ function attachPass(
 	}
 }
 
+/**
+ * Converts a chunk of trees into an array of cursors.
+ *
+ * TODO: Update the visitDelta logic and downstream APIs to avoid splitting up sequences into individual nodes.
+ */
 function nodeCursorsFromChunk(trees: TreeChunk): ITreeCursorSynchronous[] {
 	return mapCursorField(trees.cursor(), (c) => c.fork());
 }

@@ -89,6 +89,8 @@ export interface IForestSubscription {
 	 *
 	 * @remarks
 	 * Like {@link chunkField}, but forces the results into a single TreeChunk.
+	 * While any TreeChunk is compatible with any forest, this method creates one optimized for this specific forest.
+	 * The provided data must be compatible with the forest's current schema.
 	 */
 	chunkField(cursor: ITreeCursorSynchronous): TreeChunk;
 

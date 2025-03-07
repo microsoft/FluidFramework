@@ -19,6 +19,7 @@ import {
 	type ChunkPolicy,
 	type ShapeInfo,
 	basicOnlyChunkPolicy,
+	chunkField,
 	chunkRange,
 	defaultChunkPolicy,
 	insertValues,
@@ -28,6 +29,8 @@ import {
 	uniformChunkFromCursor,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
+// eslint-disable-next-line import/no-internal-modules
+import { emptyChunk } from "../../../feature-libraries/chunked-forest/emptyChunk.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk.js";
 import {
@@ -325,6 +328,16 @@ describe("chunkTree", () => {
 			);
 			assert(chunk.isShared());
 			assert.equal(chunks[0], chunk);
+		});
+	});
+
+	describe("chunkField", () => {
+		it("empty chunk", () => {
+			const chunks = chunkField(emptyChunk.cursor(), {
+				policy: defaultChunkPolicy,
+				idCompressor: undefined,
+			});
+			assert.equal(chunks.length, 0);
 		});
 	});
 
