@@ -156,7 +156,13 @@ export class OpGroupingManager {
 	public shouldGroup(batch: IBatch): boolean {
 		return (
 			// Grouped batching must be enabled
-			this.config.groupedBatchingEnabled
+			this.config.groupedBatchingEnabled &&
+			// The number of ops in the batch must be 2 or more
+			// or be empty (to allow for empty batches to be grouped)
+			// TODO: Can we remove this, as it creates problems for staging mode
+			// as we always want re-submit, even if only 1 op.
+			batch.messages.length !== 1
+			// Support for reentrant batches will be on by default
 		);
 	}
 	public groupedBatchingEnabled(): boolean {
