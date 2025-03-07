@@ -260,13 +260,14 @@ function getOrCreateType(
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				properties[typeField] = z.enum([definition]);
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				properties[objectIdKey] = z.optional(
+				properties[objectIdKey] = z.union([
+					z.null(),
 					z
 						.string()
 						.describe(
-							`The id (${objectIdKey}) of the object (optional, only necessary if the object must be referred to later in the same task)`,
+							`The id (${objectIdKey}) of the object (only necessary if the object must be referred to later in the same task - if not, set to null)`,
 						),
-				);
+				]);
 				return z.object(properties);
 			}
 			case NodeKind.Array: {

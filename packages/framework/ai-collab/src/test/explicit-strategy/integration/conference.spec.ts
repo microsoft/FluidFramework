@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Anthropic } from "@anthropic-ai/sdk";
 // eslint-disable-next-line import/no-internal-modules
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 // eslint-disable-next-line import/no-internal-modules
@@ -77,7 +78,7 @@ export class Conference extends sf.object("Conference", {
 
 const factory = SharedTree.getFactory();
 
-const TEST_MODEL_NAME = "gpt-4o";
+// const TEST_MODEL_NAME = "gpt-4o";
 
 describe.skip("Agent Editing Integration", () => {
 	process.env.OPENAI_API_KEY = ""; // DON'T COMMIT THIS
@@ -101,7 +102,7 @@ describe.skip("Agent Editing Integration", () => {
 						{
 							title: "Can Roblox achieve 120 hz?",
 							abstract:
-								"With the latest advancements in the G transformation, we may achieve up to 120 hz and still have time for lunch.",
+								"With the latest advancements in the G transformation, we may achieve up to 120 hz and still have time for lunch. This highly technical talk will be given by a Phd in mathematics.",
 							sessionType: SessionType.session,
 							created: Date.now(),
 							lastChanged: Date.now(),
@@ -135,7 +136,7 @@ describe.skip("Agent Editing Integration", () => {
 					sessions: [
 						{
 							title: "Monetizing Children",
-							abstract: "Maximize those Robux.",
+							abstract: "Maximize those Robux? Or, confront an ethical dilemma?",
 							sessionType: SessionType.session,
 							created: Date.now(),
 							lastChanged: Date.now(),
@@ -161,13 +162,17 @@ describe.skip("Agent Editing Integration", () => {
 				},
 			],
 		});
-		const openAIClient = initializeOpenAIClient("openai");
+		// const openAIClient = initializeOpenAIClient("openai");
+		const claudeClient = new Anthropic({
+			apiKey: "TODO",
+		});
 		const abortController = new AbortController();
 		await generateTreeEdits({
-			clientOptions: { client: openAIClient, options: { model: TEST_MODEL_NAME } },
+			clientOptions: { client: claudeClient /* options: { model: TEST_MODEL_NAME } */ },
 			treeNode: view.root,
 			prompt: {
-				userAsk: "Please alphabetize the sessions.",
+				userAsk:
+					"Please organize the sessions so that the ones for adults are on the first day, and the ones that kids would find enjoyable are on the second day. Also make sure the sessions are in alphabetical order within the day.",
 				systemRoleContext: "",
 			},
 			limiters: {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type Anthropic from "@anthropic-ai/sdk";
+import type { Anthropic } from "@anthropic-ai/sdk";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	getSimpleSchema,
@@ -322,6 +322,7 @@ async function* generateEdits(
 				options.prompt.userAsk,
 				options.clientOptions,
 				schema,
+				types,
 				"A JSON object that represents an edit to a JSON tree.",
 				tokensUsed,
 				debugOptions && {
@@ -359,6 +360,7 @@ async function getStructuredOutputFromClaude(
 	userPrompt: string,
 	claude: ClaudeClientOptions,
 	structuredOutputSchema: Zod.ZodTypeAny,
+	types: Record<string, Zod.ZodTypeAny>,
 	description?: string,
 	tokensUsed?: TokenUsage,
 	debugOptions?: {
@@ -371,15 +373,24 @@ async function getStructuredOutputFromClaude(
 	// TODO: use langchain library to get this for free
 	// TODO: respect description, tokensUsed, and debugOptions
 	const wrapper = z.object({ edits: structuredOutputSchema });
-	const jsonSchema = zodToJsonSchema(wrapper, "schema");
+	const jsonSchema = zodToJsonSchema(wrapper, {
+		name: "schema",
+		definitions: types,
+		$refStrategy: "none",
+	});
+	// jsonSchema.$schema = "http://json-schema.org/draft/2020-12/schema#";
 	const input_schema = jsonSchema.definitions?.schema as
 		| Anthropic.Tool.InputSchema
 		| undefined;
+
 	if (input_schema === undefined) {
 		throw new UsageError("Failed to generate JSON schema for structured output.");
 	}
-	const response = await claude.client.messages.create({
+	const response = await claude.client.beta.messages.create({
+		betas: ["token-efficient-tools-2025-02-19"],
 		model: "claude-3-7-sonnet-latest",
+		thinking: { type: "enabled", budget_tokens: 10000 },
+		stream: false,
 		max_tokens: 20000,
 		tools: [
 			{
@@ -388,17 +399,18 @@ async function getStructuredOutputFromClaude(
 				input_schema,
 			},
 		],
-		tool_choice: { name: "EditJsonTree", type: "tool" },
+		tool_choice: { type: "auto" },
 		messages: [{ role: "user", content: userPrompt }],
-		system: systemPrompt,
+		system: `${systemPrompt} You must use the EditJsonTree tool to respond.`,
 	});
 
-	if (response.content[0]?.type !== "tool_use") {
+	const r = response.content.find((v) => v.type === "tool_use");
+	if (r?.type !== "tool_use") {
 		console.error(response);
 		throw new Error("Unexpected response from LLM API.");
 	}
 
-	const result = wrapper.safeParse(response.content[0].input);
+	const result = wrapper.safeParse(r.input);
 
 	if (result.success === false) {
 		console.error(result.error);
@@ -466,7 +478,7 @@ async function getStructuredOutputFromOpenAI(
 	// The type should be derived from the zod schema
 	// TODO: Determine why this value would be undefined.
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-	return (result.choices[0]?.message.parsed as any).edits;
+	return (result.choices[0]?.message.parsed as any).wrapped.edits;
 }
 
 class TokenLimitExceededError extends Error {}
