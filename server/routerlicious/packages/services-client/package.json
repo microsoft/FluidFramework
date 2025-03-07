@@ -39,13 +39,9 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
-		"test": "npm run test:mocha && npm run test:jest",
-		"test:coverage": "c8 npm run test:report",
+		"test": "mocha --recursive \"dist/test/mocha/**/*.spec.*js\"",
+		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"test:jest": "jest --ci",
-		"test:jest:report": "npm run test:jest -- --coverage",
-		"test:mocha": "mocha --recursive \"dist/test/mocha/**/*.spec.*js\"",
-		"test:mocha:report": "c8 npm test:mocha -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-		"test:report": "npm run test:mocha:report && npm run test:jest:report",
 		"tsc": "tsc",
 		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
@@ -130,6 +126,9 @@
 		],
 		"build:test:types": [
 			"tsc"
+		],
+		"test": [
+			"test:jest"
 		]
 	},
 	"typeValidation": {
