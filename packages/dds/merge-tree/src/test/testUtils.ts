@@ -254,11 +254,11 @@ function getPartialLengths(
 		info.isInserted(segment) && timestampUtils.lte(segment.insert, perspectiveStamp);
 
 	const isRemoved = (segment: ISegmentPrivate): boolean =>
-		info.isRemoved2(segment) &&
+		info.isRemoved(segment) &&
 		((localSeq !== undefined &&
-			timestampUtils.isLocal(segment.removes2[segment.removes2.length - 1]) &&
-			segment.removes2[segment.removes2.length - 1].localSeq! <= localSeq) ||
-			timestampUtils.lte(segment.removes2[0], perspectiveStamp));
+			timestampUtils.isLocal(segment.removes[segment.removes.length - 1]) &&
+			segment.removes[segment.removes.length - 1].localSeq! <= localSeq) ||
+			timestampUtils.lte(segment.removes[0], perspectiveStamp));
 
 	walkAllChildSegments(mergeBlock, (segment) => {
 		if (isInserted(segment) && !isRemoved(segment)) {

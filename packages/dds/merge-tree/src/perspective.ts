@@ -9,7 +9,7 @@ import { LeafAction, backwardExcursion, forwardExcursion } from "./mergeTreeNode
 import { seqLTE, timestampUtils, type ISegmentLeaf } from "./mergeTreeNodes.js";
 import {
 	isInserted,
-	isRemoved2,
+	isRemoved,
 	type IHasInsertionInfo,
 	type IHasRemovalInfo,
 	type SegmentWithInfo,
@@ -91,7 +91,7 @@ export function wasRemovedBefore(
 	seg: SegmentWithInfo<IHasInsertionInfo & IHasRemovalInfo>,
 	{ refSeq, localSeq }: SeqTime,
 ): boolean {
-	const firstRemove = seg.removes2?.[0];
+	const firstRemove = seg.removes?.[0];
 	if (firstRemove === undefined) {
 		return false;
 	}
@@ -109,7 +109,7 @@ export function wasRemovedBefore(
  * TODO:AB#29765: This function does not support non-local-client perspectives, but should.
  */
 export function wasRemovedOrMovedBefore(seg: ISegmentLeaf, seqTime: SeqTime): boolean {
-	return isInserted(seg) && isRemoved2(seg) && wasRemovedBefore(seg, seqTime);
+	return isInserted(seg) && isRemoved(seg) && wasRemovedBefore(seg, seqTime);
 }
 
 /**

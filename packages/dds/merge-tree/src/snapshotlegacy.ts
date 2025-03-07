@@ -20,7 +20,7 @@ import { NonCollabClient } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
 import { timestampUtils, type ISegmentPrivate } from "./mergeTreeNodes.js";
 import { matchProperties } from "./properties.js";
-import { isInserted, isRemoved2 } from "./segmentInfos.js";
+import { isInserted, isRemoved } from "./segmentInfos.js";
 import {
 	JsonSegmentSpecs,
 	MergeTreeChunkLegacy,
@@ -213,8 +213,8 @@ export class SnapshotLegacy {
 				timestampUtils.lte(segment.insert, collabWindow.minSeqTime) &&
 				// TODO: Audit old code. You changed the behavior here as it previously didn't check for obliterate.
 				// That seems like a bug and the changed version here seems more correct, but beware it is different.
-				(!isRemoved2(segment) ||
-					timestampUtils.gte(segment.removes2[0], collabWindow.minSeqTime))
+				(!isRemoved(segment) ||
+					timestampUtils.gte(segment.removes[0], collabWindow.minSeqTime))
 			) {
 				originalSegments += 1;
 				const properties =

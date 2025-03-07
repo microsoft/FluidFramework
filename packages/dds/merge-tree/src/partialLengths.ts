@@ -513,7 +513,7 @@ export class PartialSequenceLengths {
 			removeInfo !== undefined && wasMovedOnInsert(segment),
 			0xab7 /* Segment was not moved on insert */,
 		);
-		const firstRemove = removeInfo?.removes2[0];
+		const firstRemove = removeInfo?.removes[0];
 		if (timestampUtils.lte(firstRemove, collabWindow.minSeqTime)) {
 			// This segment was obliterated as soon as it was inserted, and everyone was aware of the obliterate.
 			// Thus every single client treats this segment as length 0 from every perspective, and no adjustments
@@ -559,7 +559,7 @@ export class PartialSequenceLengths {
 
 			const wasRemovedByInsertingClient =
 				removeInfo !== undefined &&
-				removeInfo.removes2.some((remove) => remove.clientId === clientId);
+				removeInfo.removes.some((remove) => remove.clientId === clientId);
 
 			if (!wasRemovedByInsertingClient) {
 				const moveSeq = firstRemove?.seq;
@@ -640,7 +640,7 @@ export class PartialSequenceLengths {
 			return;
 		}
 
-		const firstRemove = removalInfo?.removes2[0];
+		const firstRemove = removalInfo?.removes[0];
 		// const firstMove = moveInfo?.moves[0];
 		if (
 			//(
@@ -669,7 +669,7 @@ export class PartialSequenceLengths {
 		let seqOrLocalSeq: number;
 
 		const clientsWithRemoveOrObliterate = new Set<number>([
-			...(removalInfo?.removes2.map(({ clientId }) => clientId) ?? []),
+			...(removalInfo?.removes.map(({ clientId }) => clientId) ?? []),
 			// ...(moveInfo?.moves.map(({ clientId }) => clientId) ?? []),
 		]);
 
@@ -732,7 +732,7 @@ export class PartialSequenceLengths {
 				if (id === collabWindow.clientId) {
 					// The local client also removed or obliterated this segment.
 					// TODO: We were lacking test coverage here: I was looking at the first remove but I believe I want the last.
-					const { localSeq } = removalInfo?.removes2[removalInfo.removes2.length - 1];
+					const { localSeq } = removalInfo?.removes[removalInfo.removes.length - 1];
 					if (localSeq === undefined) {
 						// Sure, the local client did it--but that change was already acked.
 						// No need to account for it in the unsequenced records.
@@ -846,7 +846,7 @@ export class PartialSequenceLengths {
 			if (child.isLeaf()) {
 				const segment = child;
 				const removalInfo = toRemovalInfo(segment);
-				const firstRemove = removalInfo?.removes2[0];
+				const firstRemove = removalInfo?.removes[0];
 				if (seq === segment.insert.seq) {
 					// if this segment was moved on insert, its length should
 					// only be visible to the inserting client

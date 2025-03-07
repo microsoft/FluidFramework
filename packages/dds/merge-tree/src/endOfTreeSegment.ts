@@ -47,7 +47,7 @@ abstract class BaseEndpointSegment
 	 * of undefined/0. we leverage this to create
 	 * a 0 length segment for an endpoint of the tree
 	 */
-	removes2 = [{ type: "set", seq: 0, clientId: LocalClientId } as const];
+	removes = [{ type: "set", seq: 0, clientId: LocalClientId } as const];
 	attribution: undefined;
 	propertyManager: undefined;
 	localSeq: undefined;

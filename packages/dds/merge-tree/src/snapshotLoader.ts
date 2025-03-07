@@ -115,7 +115,7 @@ export class SnapshotLoader {
 				},
 			});
 
-			const removes2: RemoveOperationTimestamp[] = [];
+			const removes: RemoveOperationTimestamp[] = [];
 
 			if (spec.removedSeq !== undefined) {
 				// this format had a bug where it didn't store all the overlap clients
@@ -132,7 +132,7 @@ export class SnapshotLoader {
 				// all ops, we need to actually record these in the summary. For now we use fake data, and it turns
 				// out ok since none of these values end up being used. (specifically, the 'firstRemovedSeq' is fake
 				// for all values other than the actual first remove)
-				removes2.push(
+				removes.push(
 					...spec.removedClientIds.map(
 						(id) =>
 							({
@@ -153,7 +153,7 @@ export class SnapshotLoader {
 					"Expected same length for client ids and seqs",
 				);
 
-				removes2.push(
+				removes.push(
 					...spec.movedClientIds.map(
 						(id, i) =>
 							({
@@ -165,9 +165,9 @@ export class SnapshotLoader {
 				);
 			}
 
-			if (removes2.length > 0) {
-				removes2.sort(timestampUtils.compare);
-				overwriteInfo<IHasRemovalInfo>(seg, { removes2 });
+			if (removes.length > 0) {
+				removes.sort(timestampUtils.compare);
+				overwriteInfo<IHasRemovalInfo>(seg, { removes });
 			}
 
 			return seg;

@@ -398,5 +398,5 @@ export class TestClientLogger {
 
 function toMoveOrRemove(segment: ISegmentPrivate): { seq: number } | undefined {
 	const ri = toRemovalInfo(segment);
-	return ri !== undefined ? ri.removes2[0] : undefined;
+	return ri !== undefined ? ri.removes[0] : undefined;
 }

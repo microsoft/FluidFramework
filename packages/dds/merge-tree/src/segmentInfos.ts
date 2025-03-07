@@ -195,7 +195,7 @@ export interface RemoveOperationTimestamp extends OperationTimestamp {
 }
 
 export interface IHasRemovalInfo {
-	removes2: RemoveOperationTimestamp[];
+	removes: RemoveOperationTimestamp[];
 }
 
 // /**
@@ -226,7 +226,7 @@ export interface IHasRemovalInfo {
  * @returns The removal info object if the conversion is possible, otherwise undefined.
  */
 export const toRemovalInfo = (segmentLike: unknown): IHasRemovalInfo | undefined => {
-	const removal = (segmentLike as any)?.removes2;
+	const removal = (segmentLike as any)?.removes;
 	return removal !== undefined &&
 		removal.length > 0 &&
 		hasProp(removal[0], "clientId", "number") &&
@@ -245,7 +245,7 @@ export const toRemovalInfo = (segmentLike: unknown): IHasRemovalInfo | undefined
 // export const isRemoved = (segmentLike: unknown): segmentLike is IHasRemovalInfo =>
 // 	toRemovalInfo(segmentLike) !== undefined;
 
-export const isRemoved2 = (segmentLike: unknown): segmentLike is IHasRemovalInfo =>
+export const isRemoved = (segmentLike: unknown): segmentLike is IHasRemovalInfo =>
 	toRemovalInfo(segmentLike) !== undefined;
 
 /**
@@ -259,10 +259,7 @@ export const assertRemoved: <T extends Partial<IHasRemovalInfo> | undefined>(
 ) => asserts segmentLike is IHasRemovalInfo | Exclude<T, Partial<IHasRemovalInfo>> = (
 	segmentLike,
 ) =>
-	assert(
-		segmentLike === undefined || isRemoved2(segmentLike),
-		0xaa2 /* must be removalInfo */,
-	);
+	assert(segmentLike === undefined || isRemoved(segmentLike), 0xaa2 /* must be removalInfo */);
 
 /**
  * Removes the removal info. This is used in rollback.
@@ -275,7 +272,7 @@ export const removeRemovalInfo: (nodeLike: IHasRemovalInfo) => asserts nodeLike 
 	nodeLike,
 ) =>
 	Object.assign<IHasRemovalInfo, Record<keyof IHasRemovalInfo, undefined>>(nodeLike, {
-		removes2: undefined,
+		removes: undefined,
 	});
 
 // /**
@@ -340,7 +337,7 @@ export const removeRemovalInfo: (nodeLike: IHasRemovalInfo) => asserts nodeLike 
  */
 export function wasMovedOnInsert(segment: IHasInsertionInfo & ISegmentPrivate): boolean {
 	const removeInfo = toRemovalInfo(segment);
-	const movedSeq = removeInfo?.removes2[0].seq;
+	const movedSeq = removeInfo?.removes[0].seq;
 	if (movedSeq === undefined || movedSeq === UnassignedSequenceNumber) {
 		return false;
 	}

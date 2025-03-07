@@ -90,7 +90,7 @@ import { PropertySet, type MapLike } from "./properties.js";
 import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
 import {
 	isInserted,
-	isRemoved2,
+	isRemoved,
 	overwriteInfo,
 	toRemovalInfo,
 	type IHasInsertionInfo,
@@ -407,15 +407,15 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			if (isInserted(seg) && timestampUtils.isLocal(seg.insert)) {
 				localInserts++;
 			}
-			if (isRemoved2(seg) && timestampUtils.isLocal(seg.removes2[seg.removes2.length - 1])) {
-				if (seg.removes2[seg.removes2.length - 1].type === "set") {
+			if (isRemoved(seg) && timestampUtils.isLocal(seg.removes[seg.removes.length - 1])) {
+				if (seg.removes[seg.removes.length - 1].type === "set") {
 					localRemoves++;
 				} else {
 					localObliterates++;
 				}
 			}
 			// Only serialize segments that have not been removed.
-			if (!isRemoved2(seg)) {
+			if (!isRemoved(seg)) {
 				handleCollectingSerializer.stringify(seg.clone().toJSONObject(), handle);
 			}
 			return true;
@@ -973,9 +973,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					);
 					const removeInfo = toRemovalInfo(segment);
 
-					if (removeInfo !== undefined && timestampUtils.isAcked(removeInfo.removes2[0])) {
+					if (removeInfo !== undefined && timestampUtils.isAcked(removeInfo.removes[0])) {
 						assert(
-							removeInfo.removes2[0].type === "slice",
+							removeInfo.removes[0].type === "slice",
 							"Remove on insertion must be caused by obliterate.",
 						);
 						errorIfOptionNotTrue(
@@ -1010,7 +1010,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					// TODO: Logic can be simplified. All we're checking is that nobody else removed it in the meantime,
 					// which we verify by checking if the first removal is still our own local edit.
 					// Same for obliterate codepath below.
-					if (isRemoved2(segment) && timestampUtils.isLocal(segment.removes2[0])) {
+					if (isRemoved(segment) && timestampUtils.isLocal(segment.removes[0])) {
 						newOp = createRemoveRangeOp(
 							segmentPosition,
 							segmentPosition + segment.cachedLength,
@@ -1020,7 +1020,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				}
 				case MergeTreeDeltaType.OBLITERATE: {
 					errorIfOptionNotTrue(this._mergeTree.options, "mergeTreeEnableObliterateReconnect");
-					if (isRemoved2(segment) && timestampUtils.isLocal(segment.removes2[0])) {
+					if (isRemoved(segment) && timestampUtils.isLocal(segment.removes[0])) {
 						newOp = createObliterateRangeOp(
 							segmentPosition,
 							segmentPosition + segment.cachedLength,
