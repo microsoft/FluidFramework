@@ -161,8 +161,9 @@ export class OpGroupingManager {
 			// or be empty (to allow for empty batches to be grouped)
 			// TODO: Can we remove this, as it creates problems for staging mode
 			// as we always want re-submit, even if only 1 op.
-			batch.messages.length !== 1
-			// Support for reentrant batches will be on by default
+			(batch.messages.length !== 1 ||
+				// Support for reentrant batches will be on by default
+				batch.hasReentrantOps === true)
 		);
 	}
 	public groupedBatchingEnabled(): boolean {

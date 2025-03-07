@@ -245,7 +245,7 @@ describe("Scenario Test", () => {
 		);
 	});
 
-	it.only("enter staging mode, create dds, and merge", async () => {
+	it("enter staging mode, create dds, and merge", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
 
