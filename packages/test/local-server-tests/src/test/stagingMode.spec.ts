@@ -16,6 +16,8 @@ import {
 } from "@fluidframework/container-loader/internal";
 import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { type FluidObject } from "@fluidframework/core-interfaces/internal";
+import { SharedMap } from "@fluidframework/map/internal";
+import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	LocalDeltaConnectionServer,
 	type ILocalDeltaConnectionServer,
@@ -43,11 +45,33 @@ class RootDataObject extends DataObject {
 		this.root.set(`${prefix}-${this.instanceNumber}`, this.root.size);
 	}
 
+	public addDDS(prefix: string) {
+		const newMap = SharedMap.create(this.runtime);
+		this.root.set(`${prefix}-${this.instanceNumber}`, newMap.handle);
+	}
+
 	public get state(): Record<string, unknown> {
 		return [...this.root.keys()].reduce<Record<string, unknown>>((pv, cv) => {
-			pv[cv] = this.root.get(cv);
+			const value = (pv[cv] = this.root.get(cv));
+			if (isFluidHandle(value)) {
+				pv[cv] = toFluidHandleInternal(value).absolutePath;
+			}
 			return pv;
 		}, {});
+	}
+
+	public async loadState(): Promise<Record<string, unknown>> {
+		const state: Record<string, unknown> = {};
+		const loadStateInt = async (map) => {
+			for (const key of map.keys()) {
+				const value = (state[key] = map.get(key));
+				if (isFluidHandle(value)) {
+					state[key] = await loadStateInt(await value.get());
+				}
+			}
+		};
+		await loadStateInt(this.root);
+		return state;
 	}
 
 	public enterStagingMode() {
@@ -217,6 +241,56 @@ describe("Scenario Test", () => {
 		assert.deepStrictEqual(
 			clients.original.dataObject.state,
 			clients.loaded.dataObject.state,
+			"states should match after save",
+		);
+	});
+
+	it("enter staging mode, create dds, and merge", async () => {
+		const deltaConnectionServer = LocalDeltaConnectionServer.create();
+		const clients = await createClients(deltaConnectionServer);
+
+		const branchData = clients.original.dataObject.enterStagingMode();
+		assert.deepStrictEqual(
+			clients.original.dataObject.state,
+			clients.loaded.dataObject.state,
+			"states should match after branch",
+		);
+
+		clients.original.dataObject.addDDS("branch-only");
+		clients.loaded.dataObject.makeEdit("after-branch");
+
+		assert.notDeepStrictEqual(
+			clients.original.dataObject.state,
+			clients.loaded.dataObject.state,
+			"should not match before save",
+		);
+
+		await waitForSave([clients.loaded]);
+
+		// Wait for the mainline changes to propagate
+		//* TODO: Need some of e2e test utils like ContainerLoaderTracker to properly wait here
+		await new Promise<void>((resolve) => setTimeout(resolve, 100));
+
+		assert.notDeepStrictEqual(
+			clients.original.dataObject.state,
+			clients.loaded.dataObject.state,
+			"should not match after save",
+		);
+
+		const branchState = clients.original.dataObject.state;
+		assert.notEqual(
+			Object.keys(branchState).find((k) => k.startsWith("after-branch")),
+			undefined,
+			"Expected mainline change to reach branch",
+		);
+
+		branchData.commitChanges();
+
+		await waitForSave(clients);
+
+		assert.deepStrictEqual(
+			await clients.original.dataObject.loadState(),
+			await clients.loaded.dataObject.loadState(),
 			"states should match after save",
 		);
 	});

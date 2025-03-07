@@ -129,12 +129,22 @@ export class FluidSerializer implements IFluidSerializer {
 	// If the given 'value' is an IFluidHandle, returns the encoded IFluidHandle.
 	// Otherwise returns the original 'value'.  Used by 'encode()' and 'stringify()'.
 	private readonly encodeValue = (value: unknown, bind?: IFluidHandleInternal): unknown => {
-		// If 'value' is an IFluidHandle return its encoded form.
-		if (isFluidHandle(value)) {
-			assert(bind !== undefined, 0xa93 /* Cannot encode a handle without a bind context */);
-			return this.serializeHandle(toFluidHandleInternal(value), bind);
+		let result = value;
+		if (isSerializedHandle(result)) {
+			const deferred = this.deferedHandleMap.get(result.url);
+			if (deferred !== undefined) {
+				this.deferedHandleMap.delete(result.url);
+				result = deferred;
+			}
 		}
-		return value;
+
+		// If 'value' is an IFluidHandle return its encoded form.
+		if (isFluidHandle(result)) {
+			assert(bind !== undefined, 0xa93 /* Cannot encode a handle without a bind context */);
+			return this.serializeHandle(toFluidHandleInternal(result), bind);
+		}
+
+		return result;
 	};
 
 	// If the given 'value' is an encoded IFluidHandle, returns the decoded IFluidHandle.
@@ -201,6 +211,8 @@ export class FluidSerializer implements IFluidSerializer {
 		return clone ?? input;
 	}
 
+	private readonly deferedHandleMap = new Map<string, IFluidHandleInternal>();
+
 	protected serializeHandle(
 		handle: IFluidHandleInternal,
 		bind: IFluidHandleInternal,
@@ -213,7 +225,9 @@ export class FluidSerializer implements IFluidSerializer {
 		// not binding them prevent attach ops from being created, so rollback is a no-op. On acceptance of the staging mode changes we do a re-submit/rebase
 		// of all changes, and at that point we are out of staging mode, so the bind happens then, which basically defers attach op creation until all
 		// changes are accepted.
-		if (!this.runtime.inStagingMode) {
+		if (this.runtime.inStagingMode) {
+			this.deferedHandleMap.set(handle.absolutePath, handle);
+		} else {
 			bind.bind(handle);
 		}
 		return {
