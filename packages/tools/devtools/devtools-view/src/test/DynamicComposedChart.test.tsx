@@ -75,7 +75,7 @@ describe("DynamicComposedChart component test", () => {
 	test("renders without crashing with data", () => {
 		render(<DynamicComposedChart dataSets={testDataSets} />);
 		const dynamicComposedChartElement = screen.findByTestId("test-dynamic-composed-chart");
-		expect(dynamicComposedChartElement).not.toBeNull();
+		expect(dynamicComposedChartElement).toBeNull();
 		expect(dynamicComposedChartElement).toBeDefined();
 	});
 
