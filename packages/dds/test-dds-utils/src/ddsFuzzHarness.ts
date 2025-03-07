@@ -971,7 +971,7 @@ export function mixinSynchronization<
 				const readonlyChannel = state.summarizerClient;
 				for (const client of connectedClients) {
 					try {
-						await model.validateConsistency(readonlyChannel, client);
+						await model.validateConsistency(client, readonlyChannel);
 					} catch (error: unknown) {
 						if (error instanceof Error) {
 							error.message = `Comparing client ${readonlyChannel.channel.id} vs client ${client.channel.id}\n${error.message}`;
