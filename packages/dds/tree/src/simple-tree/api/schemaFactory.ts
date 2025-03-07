@@ -1045,6 +1045,18 @@ export class SchemaFactory<
 			undefined
 		>;
 	}
+
+	/**
+	 * Create a {@link SchemaFactory} with a {@link SchemaFactory.scope|scope} which is a combination of this factory's scope and the provided name.
+	 * @remarks
+	 * The main use-case for this is when creating a collection of related schema (for example using a function that creates multiple schema).
+	 * Creating such related schema using a sub-scope helps ensure they won't collide with other schema in the parent scope.
+	 */
+	public scopedFactory<const T extends TName, TNameInner extends number | string = string>(
+		name: T,
+	): SchemaFactory<ScopedSchemaName<TScope, T>, TNameInner> {
+		return new SchemaFactory(this.scoped(name));
+	}
 }
 
 export function structuralName<const T extends string>(
