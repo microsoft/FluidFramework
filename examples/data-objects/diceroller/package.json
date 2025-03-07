@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/diceroller",
-	"version": "2.23.0",
+	"version": "2.23.1",
 	"private": true,
 	"description": "Minimal Fluid Container & Object sample to implement a collaborative dice roller.",
 	"homepage": "https://fluidframework.com",
