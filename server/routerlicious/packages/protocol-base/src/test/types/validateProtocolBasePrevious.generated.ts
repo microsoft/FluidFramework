@@ -103,6 +103,7 @@ declare type current_as_old_for_ClassStatics_ProtocolOpHandler = requireAssignab
  * typeValidation.broken:
  * "ClassStatics_Quorum": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_Quorum = requireAssignableTo<TypeOnly<typeof current.Quorum>, TypeOnly<typeof old.Quorum>>
 
 /*
@@ -112,6 +113,7 @@ declare type current_as_old_for_ClassStatics_Quorum = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "ClassStatics_QuorumClients": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_QuorumClients = requireAssignableTo<TypeOnly<typeof current.QuorumClients>, TypeOnly<typeof old.QuorumClients>>
 
 /*
@@ -121,6 +123,7 @@ declare type current_as_old_for_ClassStatics_QuorumClients = requireAssignableTo
  * typeValidation.broken:
  * "ClassStatics_QuorumProposals": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_QuorumProposals = requireAssignableTo<TypeOnly<typeof current.QuorumProposals>, TypeOnly<typeof old.QuorumProposals>>
 
 /*

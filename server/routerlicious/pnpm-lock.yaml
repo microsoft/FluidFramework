@@ -604,9 +604,9 @@ importers:
       '@fluidframework/protocol-definitions':
         specifier: ^3.2.0
         version: 3.2.0
-      '@types/events':
-        specifier: ^3.0.0
-        version: 3.0.3
+      '@types/events_pkg':
+        specifier: npm:@types/events@^3.0.0
+        version: '@types/events@3.0.3'
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0

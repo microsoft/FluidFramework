@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-nodejs-modules
-import { EventEmitter } from "events";
+import { EventEmitter } from "events_pkg";
 
 /**
  * Base interface for event emitters.

@@ -61,7 +61,7 @@
 	"dependencies": {
 		"@fluidframework/gitresources": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.2.0",
-		"@types/events": "^3.0.0",
+		"@types/events_pkg": "npm:@types/events@^3.0.0",
 		"events_pkg": "npm:events@^3.1.0"
 	},
 	"devDependencies": {
@@ -84,7 +84,17 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"ClassStatics_Quorum": {
+				"backCompat": false
+			},
+			"ClassStatics_QuorumClients": {
+				"backCompat": false
+			},
+			"ClassStatics_QuorumProposals": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "public"
 	}
 }

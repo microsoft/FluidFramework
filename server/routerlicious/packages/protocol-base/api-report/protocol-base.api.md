@@ -4,7 +4,7 @@
 
 ```ts
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'events_pkg';
 import * as git from '@fluidframework/gitresources';
 import { ICommittedProposal } from '@fluidframework/protocol-definitions';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
