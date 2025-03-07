@@ -91,7 +91,7 @@
 		"inquirer": "^8.2.6",
 		"rimraf": "^4.4.1",
 		"run-script-os": "^1.1.6",
-		"syncpack": "^10.9.3",
+		"syncpack": "^11.2.1",
 		"typescript": "~5.4.5"
 	},
 	"packageManager": "pnpm@9.15.3+sha512.1f79bc245a66eb0b07c5d4d83131240774642caaa86ef7d0434ab47c0d16f66b04e21e0c086eb61e62c77efc4d7f7ec071afad3796af64892fae66509173893a",

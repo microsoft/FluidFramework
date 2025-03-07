@@ -182,7 +182,7 @@
 		"puppeteer": "^23.6.0",
 		"rimraf": "^4.4.0",
 		"run-script-os": "^1.1.6",
-		"syncpack": "^10.9.3",
+		"syncpack": "^11.2.1",
 		"ts2esm": "^1.4.0",
 		"typescript": "~5.4.5"
 	},
