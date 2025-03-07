@@ -1,0 +1,15 @@
+{
+	"name": "example-package",
+	"private": true,
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "build-tools/packages/build-cli/src/test/data/example-package"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"dependencies": {
+		"@fluid-internal/mocha-test-setup": "^2.4.0"
+	}
+}
