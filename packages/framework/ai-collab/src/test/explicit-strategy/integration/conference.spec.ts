@@ -16,7 +16,6 @@ import {
 } from "@fluidframework/tree/internal";
 
 import { generateTreeEdits } from "../../../explicit-strategy/index.js";
-import { initializeOpenAIClient } from "../utils.js";
 
 const sf = new SchemaFactory("Planner");
 
