@@ -27,6 +27,23 @@ export {
 	sharedTreeTraverse,
 } from "./implicit-strategy/index.js";
 
+export type {
+	ApplyEditFailure,
+	ApplyEditSuccess,
+	CoreEventLoopCompleted,
+	CoreEventLoopStarted,
+	FinalReviewCompleted,
+	FinalReviewStarted,
+	GenerateTreeEditCompleted,
+	GenerateTreeEditStarted,
+	LlmApiCallDebugEvent,
+	PlanningPromptCompleted,
+	PlanningPromptStarted,
+	LlmTreeEdit,
+	EventFlowDebugName,
+	EventFlowDebugNames,
+} from "./explicit-strategy/index.js";
+
 export {
 	type AiCollabOptions,
 	type AiCollabSuccessResponse,
@@ -34,6 +51,9 @@ export {
 	type TokenUsage,
 	type TokenLimits,
 	type OpenAiClientOptions,
+	type DebugEvent,
+	type DebugEventLogHandler,
+	type EventFlowDebugEvent,
 } from "./aiCollabApi.js";
 
 export { aiCollab } from "./aiCollab.js";

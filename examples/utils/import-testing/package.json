@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/import-testing",
-	"version": "2.22.0",
+	"version": "2.30.0",
 	"private": true,
 	"description": "import-testing",
 	"homepage": "https://fluidframework.com",
@@ -31,8 +31,8 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",
 		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
-		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.*js\" --exit",
-		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit",
+		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.*js\"",
+		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\"",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
@@ -46,14 +46,14 @@
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluidframework/build-tools": "^0.51.0",
+		"@fluidframework/build-tools": "^0.54.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
-		"mocha": "^10.2.0",
+		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"

@@ -7,14 +7,9 @@ import { strict as assert } from "node:assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import {
-	type FieldKey,
-	initializeForest,
-	moveToDetachedField,
-	rootFieldKey,
-} from "../../core/index.js";
+import { type FieldKey, moveToDetachedField, rootFieldKey } from "../../core/index.js";
 import { singleJsonCursor } from "../json/index.js";
-import { cursorForMapTreeNode } from "../../feature-libraries/index.js";
+import { cursorForMapTreeNode, initializeForest } from "../../feature-libraries/index.js";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { buildForest } from "../../feature-libraries/object-forest/index.js";
@@ -111,7 +106,7 @@ describe("object-forest", () => {
 		);
 		const cursor = forest.allocateCursor();
 		forest.moveCursorToPath(undefined, cursor);
-		assert.deepEqual(cursor.getFieldKey(), cursorForMapTreeNode(forest.roots).getFieldKey());
+		assert.deepEqual(cursor.fieldIndex, cursorForMapTreeNode(forest.roots).fieldIndex);
 	});
 
 	it("uses cursor sources in errors", () => {

@@ -13,7 +13,6 @@ import {
 	type TaggedChange,
 	type UpPath,
 	applyDelta,
-	initializeForest,
 	makeDetachedFieldIndex,
 	mapCursorField,
 	moveToDetachedField,
@@ -25,6 +24,7 @@ import {
 	DefaultEditBuilder,
 	buildForest,
 	cursorForJsonableTreeNode,
+	initializeForest,
 	intoDelta,
 	jsonableTreeFromCursor,
 } from "../../../feature-libraries/index.js";
@@ -36,7 +36,7 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
-import { JsonObject } from "../../json/index.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import { numberSchema, stringSchema } from "../../../simple-tree/index.js";
 
 const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily);
@@ -162,7 +162,7 @@ describe("DefaultEditBuilder", () => {
 
 	it("Produces one delta for each editing call made to it", () => {
 		const { builder, deltas, forest } = initializeEditableForest({
-			type: brand(JsonObject.identifier),
+			type: brand(JsonAsTree.JsonObject.identifier),
 			fields: {
 				foo: [{ type: brand(numberSchema.identifier), value: 0 }],
 			},
@@ -178,7 +178,7 @@ describe("DefaultEditBuilder", () => {
 			cursorForJsonableTreeNode({ type: brand(numberSchema.identifier), value: 42 }),
 		);
 		expectForest(forest, {
-			type: brand(JsonObject.identifier),
+			type: brand(JsonAsTree.JsonObject.identifier),
 			fields: {
 				foo: [{ type: brand(numberSchema.identifier), value: 42 }],
 			},
@@ -192,7 +192,7 @@ describe("DefaultEditBuilder", () => {
 	describe("Value Field Edits", () => {
 		it("Can overwrite a populated root field", () => {
 			const { builder, forest } = initializeEditableForest({
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 			});
 			builder
 				.valueField({ parent: undefined, field: rootKey })
@@ -202,13 +202,13 @@ describe("DefaultEditBuilder", () => {
 
 		it("Can overwrite a populated child field", () => {
 			const { builder, forest } = initializeEditableForest({
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{ type: brand(numberSchema.identifier), value: 0 },
 						{ type: brand(numberSchema.identifier), value: 1 },
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								foo: [{ type: brand(numberSchema.identifier), value: 0 }],
 							},
@@ -220,13 +220,13 @@ describe("DefaultEditBuilder", () => {
 				.valueField({ parent: root_foo2, field: fooKey })
 				.set(cursorForJsonableTreeNode(nodeX));
 			const expected: JsonableTree = {
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{ type: brand(numberSchema.identifier), value: 0 },
 						{ type: brand(numberSchema.identifier), value: 1 },
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								foo: [nodeX],
 							},
@@ -241,7 +241,7 @@ describe("DefaultEditBuilder", () => {
 	describe("Optional Field Edits", () => {
 		it("Can overwrite a populated root field", () => {
 			const { builder, forest } = initializeEditableForest({
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 			});
 			builder
 				.optionalField({ parent: undefined, field: rootKey })
@@ -251,13 +251,13 @@ describe("DefaultEditBuilder", () => {
 
 		it("Can overwrite a populated child field", () => {
 			const { builder, forest } = initializeEditableForest({
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{ type: brand(numberSchema.identifier), value: 0 },
 						{ type: brand(numberSchema.identifier), value: 1 },
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								foo: [{ type: brand(numberSchema.identifier), value: 0 }],
 							},
@@ -269,13 +269,13 @@ describe("DefaultEditBuilder", () => {
 				.optionalField({ parent: root_foo2, field: fooKey })
 				.set(cursorForJsonableTreeNode(nodeX), false);
 			const expected: JsonableTree = {
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{ type: brand(numberSchema.identifier), value: 0 },
 						{ type: brand(numberSchema.identifier), value: 1 },
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								foo: [nodeX],
 							},
@@ -296,12 +296,12 @@ describe("DefaultEditBuilder", () => {
 
 		it("Can set an empty child field", () => {
 			const { builder, forest } = initializeEditableForest({
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{ type: brand(numberSchema.identifier), value: 0 },
 						{ type: brand(numberSchema.identifier), value: 1 },
-						{ type: brand(JsonObject.identifier) },
+						{ type: brand(JsonAsTree.JsonObject.identifier) },
 					],
 				},
 			});
@@ -309,12 +309,12 @@ describe("DefaultEditBuilder", () => {
 				.optionalField({ parent: root_foo2, field: fooKey })
 				.set(cursorForJsonableTreeNode(nodeX), true);
 			const expected: JsonableTree = {
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{ type: brand(numberSchema.identifier), value: 0 },
 						{ type: brand(numberSchema.identifier), value: 1 },
-						{ type: brand(JsonObject.identifier), fields: { foo: [nodeX] } },
+						{ type: brand(JsonAsTree.JsonObject.identifier), fields: { foo: [nodeX] } },
 					],
 				},
 			};
@@ -333,13 +333,13 @@ describe("DefaultEditBuilder", () => {
 
 		it("Can insert a child node", () => {
 			const { builder, forest } = initializeEditableForest({
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{ type: brand(numberSchema.identifier), value: 0 },
 						{ type: brand(numberSchema.identifier), value: 1 },
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								foo: [
 									{ type: brand(numberSchema.identifier), value: 0 },
@@ -357,13 +357,13 @@ describe("DefaultEditBuilder", () => {
 				.sequenceField({ parent: root_foo2, field: fooKey })
 				.insert(5, cursorForJsonableTreeNode(nodeX));
 			const expected: JsonableTree = {
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{ type: brand(numberSchema.identifier), value: 0 },
 						{ type: brand(numberSchema.identifier), value: 1 },
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								foo: [
 									{ type: brand(numberSchema.identifier), value: 0 },
@@ -389,13 +389,13 @@ describe("DefaultEditBuilder", () => {
 
 		it("Can remove child nodes", () => {
 			const { builder, forest } = initializeEditableForest({
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{ type: brand(numberSchema.identifier), value: 0 },
 						{ type: brand(numberSchema.identifier), value: 1 },
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								foo: [
 									{ type: brand(numberSchema.identifier), value: 0 },
@@ -413,13 +413,13 @@ describe("DefaultEditBuilder", () => {
 			});
 			builder.sequenceField({ parent: root_foo2, field: fooKey }).remove(5, 2);
 			const expected: JsonableTree = {
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{ type: brand(numberSchema.identifier), value: 0 },
 						{ type: brand(numberSchema.identifier), value: 1 },
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								foo: [
 									{ type: brand(numberSchema.identifier), value: 0 },
@@ -438,7 +438,7 @@ describe("DefaultEditBuilder", () => {
 
 		it("Can move nodes to the right within a field", () => {
 			const { builder, forest } = initializeEditableForest({
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{ type: brand(numberSchema.identifier), value: 0 },
@@ -451,7 +451,7 @@ describe("DefaultEditBuilder", () => {
 			builder.move({ parent: root, field: fooKey }, 0, 3, { parent: root, field: fooKey }, 4);
 			const treeView = toJsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{ type: brand(numberSchema.identifier), value: 3 },
@@ -466,7 +466,7 @@ describe("DefaultEditBuilder", () => {
 
 		it("Can move nodes to the left within a field", () => {
 			const { builder, forest } = initializeEditableForest({
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{ type: brand(numberSchema.identifier), value: 0 },
@@ -479,7 +479,7 @@ describe("DefaultEditBuilder", () => {
 			builder.move({ parent: root, field: fooKey }, 1, 3, { parent: root, field: fooKey }, 0);
 			const treeView = toJsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{ type: brand(numberSchema.identifier), value: 1 },
@@ -494,7 +494,7 @@ describe("DefaultEditBuilder", () => {
 
 		it("Can move nodes in their own midst", () => {
 			const { builder, forest } = initializeEditableForest({
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{ type: brand(numberSchema.identifier), value: 0 },
@@ -507,7 +507,7 @@ describe("DefaultEditBuilder", () => {
 			builder.move({ parent: root, field: fooKey }, 1, 2, { parent: root, field: fooKey }, 2);
 			const treeView = toJsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{ type: brand(numberSchema.identifier), value: 0 },
@@ -522,7 +522,7 @@ describe("DefaultEditBuilder", () => {
 
 		it("Can move nodes across fields of the same parent", () => {
 			const { builder, forest } = initializeEditableForest({
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{ type: brand(numberSchema.identifier), value: 0 },
@@ -536,7 +536,7 @@ describe("DefaultEditBuilder", () => {
 			builder.move({ parent: root, field: fooKey }, 1, 3, { parent: root, field: barKey }, 1);
 			const treeView = toJsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [{ type: brand(numberSchema.identifier), value: 0 }],
 					bar: [
@@ -552,11 +552,11 @@ describe("DefaultEditBuilder", () => {
 
 		it("Can move nodes to the right across subtrees of the same field", () => {
 			const { builder, forest } = initializeEditableForest({
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								foo: [
 									{ type: brand(numberSchema.identifier), value: 0 },
@@ -567,7 +567,7 @@ describe("DefaultEditBuilder", () => {
 							},
 						},
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								foo: [{ type: brand(numberSchema.identifier), value: 0 }],
 							},
@@ -584,17 +584,17 @@ describe("DefaultEditBuilder", () => {
 			);
 			const treeView = toJsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								foo: [{ type: brand(numberSchema.identifier), value: 0 }],
 							},
 						},
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								foo: [
 									{ type: brand(numberSchema.identifier), value: 0 },
@@ -612,17 +612,17 @@ describe("DefaultEditBuilder", () => {
 
 		it("Can move nodes to the left across subtrees of the same field", () => {
 			const { builder, forest } = initializeEditableForest({
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								foo: [{ type: brand(numberSchema.identifier), value: 0 }],
 							},
 						},
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								foo: [
 									{ type: brand(numberSchema.identifier), value: 0 },
@@ -644,11 +644,11 @@ describe("DefaultEditBuilder", () => {
 			);
 			const treeView = toJsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								foo: [
 									{ type: brand(numberSchema.identifier), value: 0 },
@@ -659,7 +659,7 @@ describe("DefaultEditBuilder", () => {
 							},
 						},
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								foo: [{ type: brand(numberSchema.identifier), value: 0 }],
 							},
@@ -672,11 +672,11 @@ describe("DefaultEditBuilder", () => {
 
 		it("Can move nodes across subtrees of different fields", () => {
 			const { builder, forest } = initializeEditableForest({
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								foo: [
 									{ type: brand(numberSchema.identifier), value: 0 },
@@ -689,7 +689,7 @@ describe("DefaultEditBuilder", () => {
 					],
 					bar: [
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								bar: [{ type: brand(numberSchema.identifier), value: 0 }],
 							},
@@ -706,11 +706,11 @@ describe("DefaultEditBuilder", () => {
 			);
 			const treeView = toJsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								foo: [{ type: brand(numberSchema.identifier), value: 0 }],
 							},
@@ -718,7 +718,7 @@ describe("DefaultEditBuilder", () => {
 					],
 					bar: [
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								bar: [
 									{ type: brand(numberSchema.identifier), value: 0 },
@@ -736,11 +736,11 @@ describe("DefaultEditBuilder", () => {
 
 		it("Can move nodes before an ancestor of the moved node", () => {
 			const { builder, forest } = initializeEditableForest({
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								foo: [
 									{ type: brand(numberSchema.identifier), value: 0 },
@@ -762,14 +762,14 @@ describe("DefaultEditBuilder", () => {
 			);
 			const treeView = toJsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{ type: brand(numberSchema.identifier), value: 1 },
 						{ type: brand(numberSchema.identifier), value: 2 },
 						{ type: brand(numberSchema.identifier), value: 3 },
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								foo: [{ type: brand(numberSchema.identifier), value: 0 }],
 							},
@@ -782,11 +782,11 @@ describe("DefaultEditBuilder", () => {
 
 		it("Can move nodes after an ancestor of the moved node", () => {
 			const { builder, forest } = initializeEditableForest({
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								foo: [
 									{ type: brand(numberSchema.identifier), value: 0 },
@@ -808,11 +808,11 @@ describe("DefaultEditBuilder", () => {
 			);
 			const treeView = toJsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								foo: [{ type: brand(numberSchema.identifier), value: 0 }],
 							},
@@ -828,11 +828,11 @@ describe("DefaultEditBuilder", () => {
 
 		it("Errors when attempting to move a node under itself", () => {
 			const statingState: JsonableTree = {
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 						},
 					],
 				},
@@ -853,15 +853,15 @@ describe("DefaultEditBuilder", () => {
 
 		it("Can move nodes across deep subtrees of different fields", () => {
 			const { builder, forest } = initializeEditableForest({
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								foo: [
 									{
-										type: brand(JsonObject.identifier),
+										type: brand(JsonAsTree.JsonObject.identifier),
 										fields: {
 											foo: [
 												{ type: brand(numberSchema.identifier), value: 0 },
@@ -877,7 +877,7 @@ describe("DefaultEditBuilder", () => {
 					],
 					bar: [
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								bar: [
 									{
@@ -901,15 +901,15 @@ describe("DefaultEditBuilder", () => {
 			);
 			const treeView = toJsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								foo: [
 									{
-										type: brand(JsonObject.identifier),
+										type: brand(JsonAsTree.JsonObject.identifier),
 										fields: {
 											foo: [{ type: brand(numberSchema.identifier), value: 0 }],
 										},
@@ -920,7 +920,7 @@ describe("DefaultEditBuilder", () => {
 					],
 					bar: [
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								bar: [
 									{
@@ -945,7 +945,7 @@ describe("DefaultEditBuilder", () => {
 
 		it("Can move all nodes into another field", () => {
 			const { builder, forest } = initializeEditableForest({
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [
 						{ type: brand(numberSchema.identifier), value: 1 },
@@ -958,7 +958,7 @@ describe("DefaultEditBuilder", () => {
 			builder.move({ parent: root, field: fooKey }, 0, 3, { parent: root, field: barKey }, 1);
 			const treeView = toJsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					bar: [
 						{ type: brand(numberSchema.identifier), value: 0 },
@@ -973,7 +973,7 @@ describe("DefaultEditBuilder", () => {
 
 		it("Moving 0 items does nothing.", () => {
 			const { builder, forest } = initializeEditableForest({
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [],
 				},
@@ -981,7 +981,7 @@ describe("DefaultEditBuilder", () => {
 			builder.move({ parent: root, field: fooKey }, 0, 0, { parent: root, field: fooKey }, 0);
 			const treeView = toJsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					foo: [],
 				},

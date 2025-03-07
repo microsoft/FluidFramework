@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/devtools-view",
-	"version": "2.22.0",
+	"version": "2.30.0",
 	"private": true,
 	"description": "Contains a visualization suite for use alongside the Fluid Devtools",
 	"homepage": "https://fluidframework.com",
@@ -29,7 +29,6 @@
 	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
-		"build-and-test-mocha": "npm run build && npm run test:mocha:verbose",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "fluid-tsc module --project ./tsconfig.esm.json && copyfiles -f ../../../../common/build/build-common/src/esm/package.json ./lib",
@@ -86,9 +85,9 @@
 		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.51.0",
+		"@fluid-tools/build-cli": "^0.54.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.51.0",
+		"@fluidframework/build-tools": "^0.54.0",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
@@ -124,7 +123,7 @@
 		"globby": "^13.2.2",
 		"jest": "^29.6.2",
 		"jest-junit": "^16.0.0",
-		"mocha": "^10.2.0",
+		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"playwright": "^1.36.0",
@@ -134,7 +133,7 @@
 		"simple-git": "^3.19.1",
 		"ts-jest": "^29.1.1",
 		"typescript": "~5.4.5",
-		"vite": "^4.5.2"
+		"vite": "^4.5.9"
 	},
 	"fluid": {
 		"browser": {

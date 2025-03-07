@@ -48,7 +48,7 @@ export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): Laz
 	const anchor = cursor.buildAnchor();
 	const anchorNode =
 		context.checkout.forest.anchors.locate(anchor) ??
-		fail("cursor should point to a node that is not the root of the AnchorSet");
+		fail(0xb12 /* cursor should point to a node that is not the root of the AnchorSet */);
 	const cached = anchorNode.slots.get(flexTreeSlot);
 	if (cached !== undefined) {
 		context.checkout.forest.anchors.forget(anchor);
@@ -60,7 +60,8 @@ export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): Laz
 }
 
 function cleanupTree(anchor: AnchorNode): void {
-	const cached = anchor.slots.get(flexTreeSlot) ?? fail("tree should only be cleaned up once");
+	const cached =
+		anchor.slots.get(flexTreeSlot) ?? fail(0xb13 /* tree should only be cleaned up once */);
 	assert(cached instanceof LazyTreeNode, 0x92d /* Expected LazyTreeNode */);
 	cached[disposeSymbol]();
 }
@@ -86,7 +87,8 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements FlexTreeNode {
 		anchor: Anchor,
 	) {
 		super(context, cursor, anchor);
-		this.storedSchema = context.schema.nodeSchema.get(this.schema) ?? fail("missing schema");
+		this.storedSchema =
+			context.schema.nodeSchema.get(this.schema) ?? fail(0xb14 /* missing schema */);
 		assert(cursor.mode === CursorLocationType.Nodes, 0x783 /* must be in nodes mode */);
 		anchorNode.slots.set(flexTreeSlot, this);
 		this.#removeDeleteCallback = anchorNode.events.on("afterDestroy", cleanupTree);
@@ -180,7 +182,7 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements FlexTreeNode {
 			cursor.enterField(key);
 			const nodeSchema =
 				this.context.schema.nodeSchema.get(parentType) ??
-				fail("requested schema that does not exist");
+				fail(0xb15 /* requested schema that does not exist */);
 			fieldSchema = nodeSchema.getFieldSchema(key).kind;
 		}
 
