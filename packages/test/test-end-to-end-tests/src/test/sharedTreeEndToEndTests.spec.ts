@@ -97,8 +97,6 @@ describeCompat("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
 		container2 = await loader2.resolve({ url: loadUrl });
 		const dataObject2 = (await container2.getEntryPoint()) as DataObjectWithTree;
 		tree2 = dataObject2.tree;
-
-		await provider.ensureSynchronized();
 	});
 
 	const sf = new SchemaFactory("sharedTreeE2ETests");
@@ -230,6 +228,22 @@ describeCompat("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
 		let treeViewClient1: TreeViewAlpha<typeof Shape>;
 		let treeViewClient2: TreeViewAlpha<typeof Shape>;
 
+		/**
+		 * Function that ensures that the given change is only processed by the second client. The first client
+		 * will not see this change.
+		 * Note that this is added to make the test deterministic and not rely on factors such as containers being
+		 * connected in write mode before this logic starts.
+		 */
+		async function syncChangeOnlyOnClient2(change: () => void) {
+			// Pause processing on first client to prevent it from receiving changes.
+			await provider.opProcessingController.pauseProcessing(container1);
+			// Make the change and process it only on the second client.
+			change();
+			await provider.opProcessingController.processIncoming(container2);
+			// Resume normal processing for the first client.
+			provider.opProcessingController.resumeProcessing(container1);
+		}
+
 		beforeEach(async () => {
 			treeViewClient1 = asTreeViewAlpha(tree1.viewWith(treeViewConfig));
 			treeViewClient2 = asTreeViewAlpha(tree2.viewWith(treeViewConfig));
@@ -281,20 +295,6 @@ describeCompat("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
 				"Transaction from first client not synchronized",
 			);
 		});
-
-		/**
-		 * Function that ensures that the given change is only processed by the second client. The first client
-		 * will not see this change.
-		 */
-		async function syncChangeOnlyOnClient2(change: () => void) {
-			// Pause processing on first client to prevent it from receiving changes.
-			await provider.opProcessingController.pauseProcessing(container1);
-			// Make the change and process it only on the second client.
-			change();
-			await provider.opProcessingController.processIncoming(container2);
-			// Resume normal processing for the first client.
-			provider.opProcessingController.resumeProcessing(container1);
-		}
 
 		it("fails transaction that doesn't satisfy constraints", async () => {
 			// Add a new point in the first client.
