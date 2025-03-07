@@ -29,6 +29,7 @@ import {
 } from "@microsoft/tsdoc";
 
 import type { Heading } from "../../Heading.js";
+import type { Link } from "../../Link.js";
 import type { Logger } from "../../Logging.js";
 import {
 	type DocumentationNode,
@@ -55,19 +56,25 @@ import {
 	getDeprecatedBlock,
 	getExampleBlocks,
 	getReturnsBlock,
+	getApiItemKind,
 	type ValidApiItemKind,
+	getFilteredParent,
 } from "../../utilities/index.js";
 import {
 	doesItemKindRequireOwnDocument,
-	doesItemRequireOwnDocument,
-	getAncestralHierarchy,
 	getLinkForApiItem,
 } from "../ApiItemTransformUtilities.js";
 import { transformTsdocSection } from "../TsdocNodeTransforms.js";
 import { getTsdocNodeTransformationOptions } from "../Utilities.js";
-import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
+import {
+	HierarchyKind,
+	type ApiItemTransformationConfiguration,
+} from "../configuration/index.js";
 
-import { createParametersSummaryTable, createTypeParametersSummaryTable } from "./TableHelpers.js";
+import {
+	createParametersSummaryTable,
+	createTypeParametersSummaryTable,
+} from "./TableHelpers.js";
 
 /**
  * Generates a section for an API signature.
@@ -381,10 +388,10 @@ export function createExcerptSpanWithHyperlinks(
  * Renders a simple navigation breadcrumb.
  *
  * @remarks Displayed as a ` > `-separated list of hierarchical page links.
- * 1 for each element in the provided item's ancestory for which a separate document is generated
- * (see {@link DocumentBoundaries}).
+ * 1 for each element in the provided item's ancestry for which a separate document is generated
+ * (see {@link HierarchyConfiguration}).
  *
- * @param apiItem - The API item whose ancestory will be used to generate the breadcrumb.
+ * @param apiItem - The API item whose ancestry will be used to generate the breadcrumb.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  *
  * @public
@@ -393,23 +400,32 @@ export function createBreadcrumbParagraph(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): ParagraphNode {
-	// Get ordered ancestry of document items
-	const ancestry = getAncestralHierarchy(apiItem, (hierarchyItem) =>
-		doesItemRequireOwnDocument(hierarchyItem, config.documentBoundaries),
-	).reverse(); // Reverse from ascending to descending order
+	// #region Get hierarchy of document items
+
+	const breadcrumbLinks: Link[] = [getLinkForApiItem(apiItem, config)];
+
+	let currentItem: ApiItem | undefined = getFilteredParent(apiItem);
+	while (currentItem !== undefined) {
+		const currentItemKind = getApiItemKind(currentItem);
+		const currentItemHierarchy = config.hierarchy[currentItemKind];
+		// Push breadcrumb entries for all files in the hierarchy.
+		if (currentItemHierarchy.kind !== HierarchyKind.Section) {
+			breadcrumbLinks.push(getLinkForApiItem(currentItem, config));
+		}
+
+		currentItem = getFilteredParent(currentItem);
+	}
+	breadcrumbLinks.reverse(); // Items are populated in ascending order, but we want them in descending order.
+
+	// #endregion
+
+	const renderedLinks = breadcrumbLinks.map((link) => LinkNode.createFromPlainTextLink(link));
 
 	const breadcrumbSeparator = new PlainTextNode(" > ");
 
-	const links = ancestry.map((hierarchyItem) =>
-		LinkNode.createFromPlainTextLink(getLinkForApiItem(hierarchyItem, config)),
-	);
-
-	// Add link for current document item
-	links.push(LinkNode.createFromPlainTextLink(getLinkForApiItem(apiItem, config)));
-
 	// Inject breadcrumb separator between each link
 	const contents: DocumentationNode[] = injectSeparator<DocumentationNode>(
-		links,
+		renderedLinks,
 		breadcrumbSeparator,
 	);
 
@@ -920,7 +936,10 @@ export function createReturnsSection(
 	}
 
 	// Generate paragraph with notes about the return type
-	if (ApiReturnTypeMixin.isBaseClassOf(apiItem) && apiItem.returnTypeExcerpt.text.trim() !== "") {
+	if (
+		ApiReturnTypeMixin.isBaseClassOf(apiItem) &&
+		apiItem.returnTypeExcerpt.text.trim() !== ""
+	) {
 		// Special case to detect when the return type is `void`.
 		// We will skip declaring the return type in this case.
 		// eslint-disable-next-line unicorn/no-lonely-if
@@ -945,7 +964,7 @@ export function createReturnsSection(
 		: wrapInSection(children, {
 				title: "Returns",
 				id: `${getFileSafeNameForApiItem(apiItem)}-returns`,
-		  });
+			});
 }
 
 /**
@@ -997,7 +1016,7 @@ export function createChildDetailsSection(
 		// (i.e. it does not get rendered to its own document).
 		// Also only render the section if it actually has contents to render (to avoid empty headings).
 		if (
-			!doesItemKindRequireOwnDocument(childItem.itemKind, config.documentBoundaries) &&
+			!doesItemKindRequireOwnDocument(childItem.itemKind, config.hierarchy) &&
 			childItem.items.length > 0
 		) {
 			const childContents: DocumentationNode[] = [];

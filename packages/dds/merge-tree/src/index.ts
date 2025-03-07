@@ -59,7 +59,6 @@ export {
 	BaseSegment,
 	CollaborationWindow,
 	IJSONMarkerSegment,
-	IMergeNodeCommon,
 	segmentIsRemoved,
 	ISegment,
 	ISegmentAction,
@@ -120,10 +119,6 @@ export {
 	reservedRangeLabelsKey,
 	reservedTileLabelsKey,
 } from "./referencePositions.js";
-export {
-	IMoveInfo,
-	IRemovalInfo,
-} from "./segmentInfos.js";
 export {
 	PropsOrAdjust,
 	copyPropertiesAndManager,

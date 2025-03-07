@@ -5,7 +5,8 @@
 
 import { assert, isObject } from "@fluidframework/core-utils/internal";
 
-import { ISegmentInternal, ISegmentPrivate } from "./mergeTreeNodes.js";
+import { UnassignedSequenceNumber } from "./constants.js";
+import { ISegmentInternal, ISegmentPrivate, MergeBlock } from "./mergeTreeNodes.js";
 import type { ReferencePosition } from "./referencePositions.js";
 
 export interface StringToType {
@@ -97,13 +98,90 @@ export const assertInserted: <T extends Partial<IInsertionInfo> | undefined>(
 	segmentLike: ISegmentInternal | Partial<IInsertionInfo> | T,
 ) => asserts segmentLike is IInsertionInfo | Exclude<T, Partial<IInsertionInfo>> = (
 	segmentLike,
-) => assert(segmentLike === undefined || isInserted(segmentLike), "must be insertionInfo");
+) =>
+	assert(
+		segmentLike === undefined || isInserted(segmentLike),
+		0xaa0 /* must be insertionInfo */,
+	);
+
+/**
+ * Common properties for a node in a merge tree.
+ */
+export interface IMergeNodeInfo {
+	/**
+	 * The parent merge block if the node is parented
+	 */
+	parent: MergeBlock;
+
+	/**
+	 * The index of this node in its parent's list of children.
+	 */
+	index: number;
+
+	/**
+	 * A string that can be used for comparing the location of this node to other `MergeNode`s in the same tree.
+	 * `a.ordinal < b.ordinal` if and only if `a` comes before `b` in a pre-order traversal of the tree.
+	 */
+	ordinal: string;
+}
+
+/**
+ * Converts a segment-like object to a merge node info object if possible.
+ *
+ * @param segmentLike - The segment-like object to convert.
+ * @returns The merge node info object if the conversion is possible, otherwise undefined.
+ */
+export const toMergeNodeInfo = (nodeLike: unknown): IMergeNodeInfo | undefined =>
+	propInstanceOf(nodeLike, "parent", MergeBlock) &&
+	hasProp(nodeLike, "ordinal", "string") &&
+	hasProp(nodeLike, "index", "number")
+		? nodeLike
+		: undefined;
+
+/**
+ * A type-guard which determines if the segment has merge node info, and
+ * returns true if it does, along with applying strong typing.
+ *
+ * @param nodeLike - The segment-like object to check.
+ * @returns True if the segment has merge node info, otherwise false.
+ */
+export const isMergeNodeInfo = (nodeLike: unknown): nodeLike is IMergeNodeInfo =>
+	toMergeNodeInfo(nodeLike) !== undefined;
+
+/**
+ * Asserts that the segment has merge node info. Usage of this function should not produce a user facing error.
+ *
+ * @param segmentLike - The segment-like object to check.
+ * @throws Will throw an error if the segment does not have merge node info.
+ */
+export const assertMergeNode: <T extends Partial<IMergeNodeInfo> | undefined>(
+	nodeLike: ISegmentInternal | ISegmentPrivate | Partial<IMergeNodeInfo> | T,
+) => asserts nodeLike is IMergeNodeInfo | Exclude<T, Partial<IMergeNodeInfo>> = (
+	segmentLike,
+) =>
+	assert(
+		segmentLike === undefined || isMergeNodeInfo(segmentLike),
+		0xaa1 /* must be MergeNodeInfo */,
+	);
+
+/**
+ * Removes the merge node info. This is used to remove nodes from the merge-tree.
+ * @param segmentLike - The segment-like object to check.
+ * @returns This function will change the type of the provided node like to never via an assertion. This
+ * ensures no further usage of the removed merge node info is allowed. if continued use is required other
+ * type coercion methods should be used to correctly re-type the variable.
+ */
+export const removeMergeNodeInfo: (nodeLike: IMergeNodeInfo) => asserts nodeLike is never = (
+	nodeLike,
+) =>
+	Object.assign<IMergeNodeInfo, Record<keyof IMergeNodeInfo, undefined>>(nodeLike, {
+		parent: undefined,
+		index: undefined,
+		ordinal: undefined,
+	});
 
 /**
  * Contains removal information associated to an {@link ISegment}.
- * @legacy
- * @alpha
- * @deprecated - This interface will be removed in 2.20 with no replacement.
  */
 export interface IRemovalInfo {
 	/**
@@ -154,10 +232,19 @@ export const isRemoved = (segmentLike: unknown): segmentLike is IRemovalInfo =>
 export const assertRemoved: <T extends Partial<IRemovalInfo> | undefined>(
 	segmentLike: ISegmentInternal | Partial<IRemovalInfo> | T,
 ) => asserts segmentLike is IRemovalInfo | Exclude<T, Partial<IRemovalInfo>> = (segmentLike) =>
-	assert(segmentLike === undefined || isRemoved(segmentLike), "must be removalInfo");
+	assert(segmentLike === undefined || isRemoved(segmentLike), 0xaa2 /* must be removalInfo */);
 
-export const removeRemovalInfo = (nodeLike: IRemovalInfo): Partial<IRemovalInfo> =>
-	Object.assign<IRemovalInfo, Partial<IRemovalInfo>>(nodeLike, {
+/**
+ * Removes the removal info. This is used in rollback.
+ * @param segmentLike - The segment-like object to check.
+ * @returns This function will change the type of the provided node like to never via an assertion. This
+ * ensures no further usage of the removed removal info is allowed. if continued use is required other
+ * type coercion methods should be use to correctly re-type the variable.
+ */
+export const removeRemovalInfo: (nodeLike: IRemovalInfo) => asserts nodeLike is never = (
+	nodeLike,
+) =>
+	Object.assign<IRemovalInfo, Record<keyof IRemovalInfo, undefined>>(nodeLike, {
 		localRemovedSeq: undefined,
 		removedClientIds: undefined,
 		removedSeq: undefined,
@@ -169,9 +256,6 @@ export const removeRemovalInfo = (nodeLike: IRemovalInfo): Partial<IRemovalInfo>
  * Note that merge-tree does not currently support moving and only supports
  * obliterate. The fields below include "move" in their names to avoid renaming
  * in the future, when moves _are_ supported.
- * @legacy
- * @alpha
- * @deprecated - This interface will be removed in 2.20 with no replacement.
  */
 export interface IMoveInfo {
 	/**
@@ -213,28 +297,12 @@ export interface IMoveInfo {
 	 * list have all issued concurrent ops to move the segment.
 	 */
 	movedClientIds: number[];
-
-	/**
-	 * If this segment was inserted into a concurrently moved range and
-	 * the move op was sequenced before the insertion op. In this case,
-	 * the segment is visible only to the inserting client
-	 *
-	 * `wasMovedOnInsert` only applies for acked obliterates. That is, if
-	 * a segment inserted by a remote client is moved on insertion by a local
-	 * and unacked obliterate, we do not consider it as having been moved
-	 * on insert
-	 *
-	 * If a segment is moved on insertion, its length is only ever visible to
-	 * the client that inserted the segment. This is relevant in partial length
-	 * calculations
-	 */
-	wasMovedOnInsert: boolean;
 }
+
 export const toMoveInfo = (segmentLike: unknown): IMoveInfo | undefined =>
 	hasProp(segmentLike, "movedClientIds", "array") &&
 	hasProp(segmentLike, "movedSeq", "number") &&
-	hasProp(segmentLike, "movedSeqs", "array") &&
-	hasProp(segmentLike, "wasMovedOnInsert", "boolean")
+	hasProp(segmentLike, "movedSeqs", "array")
 		? segmentLike
 		: undefined;
 
@@ -249,6 +317,26 @@ export const isMoved = (segmentLike: unknown): segmentLike is IMoveInfo =>
 	toMoveInfo(segmentLike) !== undefined;
 
 /**
+ * Returns whether this segment was marked moved as soon as its insertion was acked.
+ *
+ * This can happen when an an insert occurs concurrent to an obliterate over the range the segment was inserted into,
+ * and the obliterate was sequenced first.
+ *
+ * When this happens, the segment is only ever visible to the client that inserted the segment
+ * (and only until that client has seen the obliterate which removed their segment).
+ */
+export function wasMovedOnInsert(segment: IInsertionInfo & ISegmentPrivate): boolean {
+	const moveInfo = toMoveInfo(segment);
+	const movedSeq = moveInfo?.movedSeq;
+	if (movedSeq === undefined || movedSeq === UnassignedSequenceNumber) {
+		return false;
+	}
+
+	const insertSeq = segment.seq;
+	return insertSeq === UnassignedSequenceNumber || insertSeq > movedSeq;
+}
+
+/**
  * Asserts that the segment has move info. Usage of this function should not produce a user facing error.
  *
  * @param segmentLike - The segment-like object to check.
@@ -257,12 +345,12 @@ export const isMoved = (segmentLike: unknown): segmentLike is IMoveInfo =>
 export const assertMoved: <T extends Partial<IMoveInfo> | undefined>(
 	segmentLike: ISegmentInternal | Partial<IMoveInfo> | T,
 ) => asserts segmentLike is IMoveInfo | Exclude<T, Partial<IMoveInfo>> = (segmentLike) =>
-	assert(segmentLike === undefined || isMoved(segmentLike), "must be moveInfo");
+	assert(segmentLike === undefined || isMoved(segmentLike), 0xaa3 /* must be moveInfo */);
 
 /**
  * A union type representing any segment info.
  */
-export type SegmentInfo = IInsertionInfo | IMoveInfo | IRemovalInfo;
+export type SegmentInfo = IMergeNodeInfo | IInsertionInfo | IMoveInfo | IRemovalInfo;
 
 /**
  * A type representing a segment with additional info.

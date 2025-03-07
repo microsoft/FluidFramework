@@ -27,6 +27,7 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import { Constants, getRequestErrorTranslator } from "../utils";
 import { ICache } from "./definitions";
+import { logHttpMetrics } from "@fluidframework/server-services-utils";
 
 // We include the historian version in the user-agent string
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -65,6 +66,7 @@ export class RestGitService {
 		private readonly storageUrl?: string,
 		private readonly isEphemeralContainer?: boolean,
 		private readonly maxCacheableSummarySize?: number,
+		private readonly simplifiedCustomData?: string,
 	) {
 		const defaultHeaders: RawAxiosRequestHeaders =
 			storageName !== undefined
@@ -82,6 +84,9 @@ export class RestGitService {
 				`${storage.credentials.user}:${storage.credentials.password}`,
 			);
 			defaultHeaders.Authorization = `Basic ${token.toString("base64")}`;
+		}
+		if (this.simplifiedCustomData) {
+			defaultHeaders[Constants.SimplifiedCustomData] = this.simplifiedCustomData;
 		}
 
 		// We set the flag only for ephemeral containers
@@ -118,6 +123,8 @@ export class RestGitService {
 				getGlobalTelemetryContext().getProperties().correlationId ??
 				uuid() /* getCorrelationId */,
 			() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
+			undefined /* refreshTokenIfNeeded */,
+			logHttpMetrics,
 		);
 	}
 

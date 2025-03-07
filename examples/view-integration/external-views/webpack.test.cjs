@@ -10,7 +10,7 @@ const webpack = require("webpack");
 module.exports = (env) => {
 	return {
 		entry: {
-			app: "./tests/index.ts",
+			app: "./tests/app.ts",
 		},
 		resolve: {
 			extensionAlias: {
@@ -23,10 +23,6 @@ module.exports = (env) => {
 				{
 					test: /\.tsx?$/,
 					loader: "ts-loader",
-				},
-				{
-					test: /\.css$/i,
-					use: ["style-loader", "css-loader"],
 				},
 			],
 		},

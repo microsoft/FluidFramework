@@ -6,13 +6,14 @@
 import type { SummarizerStopReason } from "@fluidframework/container-runtime-definitions/internal";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 
+// eslint-disable-next-line import/no-deprecated
 import { IConnectableRuntime, ISummaryCancellationToken } from "./summarizerTypes.js";
 
 /**
  * Similar to AbortController, but using promise instead of events
- * @legacy
- * @alpha
+ * @internal
  */
+// eslint-disable-next-line import/no-deprecated
 export interface ICancellableSummarizerController extends ISummaryCancellationToken {
 	stop(reason: SummarizerStopReason): void;
 }
@@ -22,6 +23,7 @@ export interface ICancellableSummarizerController extends ISummaryCancellationTo
  * This object implements ISummaryCancellationToken interface but cancellation is never leveraged.
  * @internal
  */
+// eslint-disable-next-line import/no-deprecated
 export const neverCancelledSummaryToken: ISummaryCancellationToken = {
 	cancelled: false,
 	waitCancelled: new Promise(() => {}),
@@ -36,7 +38,7 @@ export class RunWhileConnectedCoordinator implements ICancellableSummarizerContr
 	private _cancelled = false;
 	private readonly stopDeferred = new Deferred<SummarizerStopReason>();
 
-	public get cancelled() {
+	public get cancelled(): boolean {
 		if (!this._cancelled) {
 			assert(this.active(), 0x25d /* "We should never connect as 'read'" */);
 
@@ -63,13 +65,18 @@ export class RunWhileConnectedCoordinator implements ICancellableSummarizerContr
 		return this.stopDeferred.promise;
 	}
 
-	public static async create(runtime: IConnectableRuntime, active: () => boolean) {
+	public static async create(
+		// eslint-disable-next-line import/no-deprecated
+		runtime: IConnectableRuntime,
+		active: () => boolean,
+	): Promise<RunWhileConnectedCoordinator> {
 		const obj = new RunWhileConnectedCoordinator(runtime, active);
 		await obj.waitStart();
 		return obj;
 	}
 
 	protected constructor(
+		// eslint-disable-next-line import/no-deprecated
 		private readonly runtime: IConnectableRuntime,
 		private readonly active: () => boolean,
 	) {}
@@ -87,7 +94,7 @@ export class RunWhileConnectedCoordinator implements ICancellableSummarizerContr
 	 * of non-summarized ops, where can make determination to continue with summary even if main
 	 * client is disconnected.
 	 */
-	protected async waitStart() {
+	protected async waitStart(): Promise<void> {
 		if (this.runtime.disposed) {
 			this.stop("summarizerClientDisconnected");
 			return;

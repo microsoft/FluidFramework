@@ -1,5 +1,101 @@
 # @fluidframework/container-runtime
 
+## 2.23.0
+
+Dependency updates only.
+
+## 2.22.0
+
+Dependency updates only.
+
+## 2.21.0
+
+### Minor Changes
+
+-   Many unnecessary exports have been deprecated in the container-runtime package ([#23607](https://github.com/microsoft/FluidFramework/pull/23607)) [3da5b427ef](https://github.com/microsoft/FluidFramework/commit/3da5b427ef406799abade04196e43bb6d66d898d)
+
+    The following types in the `@fluidframework/container-runtime` package are now deprecated. These types are unnecessary for external users of this package.
+
+    -   currentDocumentVersionSchema
+    -   DeletedResponseHeaderKey
+    -   DocumentSchemaValueType
+    -   DocumentsSchemaController
+    -   GCFeatureMatrix
+    -   GCNodeType
+    -   GCVersion
+    -   IBlobManagerLoadInfo
+    -   ICancellableSummarizerController
+    -   ICancellationToken
+    -   IConnectableRuntime
+    -   IContainerRuntimeMetadata
+    -   ICreateContainerMetadata
+    -   IDocumentSchema
+    -   IDocumentSchemaChangeMessage
+    -   IDocumentSchemaCurrent
+    -   IDocumentSchemaFeatures
+    -   IGCMetadata
+    -   IGCStats
+    -   IMarkPhaseStats
+    -   IRefreshSummaryAckOptions
+    -   ISerializedElection
+    -   ISubmitSummaryOptions
+    -   ISummarizerInternalsProvider
+    -   ISummarizerRuntime
+    -   ISummaryCancellationToken
+    -   ISummaryMetadataMessage
+    -   ISweepPhaseStats
+    -   Summarizer
+
+## 2.20.0
+
+### Minor Changes
+
+-   The ContainerRuntime class has been removed ([#23341](https://github.com/microsoft/FluidFramework/pull/23341)) [61ba06aa98](https://github.com/microsoft/FluidFramework/commit/61ba06aa9881c30ffeeedcaaede9c5a1a0c81abd)
+
+    The `ContainerRuntime` class was [deprecated in version 2.12.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.12.0#user-content-the-containerruntime-class-is-now-deprecated-23331) and has been removed.
+    Use `IContainerRuntime` to replace type usages and use the free function `loadContainerRuntime` to replace usages of the static method `ContainerRuntime.loadRuntime`.
+
+    See the [deprecation
+    announcement](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.12.0#user-content-the-containerruntime-class-is-now-deprecated-23331)
+    for more details about how to update existing code.
+
+-   The IContainerRuntimeOptions.flushMode property has been removed ([#23337](https://github.com/microsoft/FluidFramework/pull/23337)) [fe8279c774](https://github.com/microsoft/FluidFramework/commit/fe8279c774fcc3c4805b49ce4f64d0e03a64c39b)
+
+    The `IContainerRuntimeOptions.flushMode` property was [deprecated in version 2.12.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.12.0#user-content-icontainerruntimeoptionsflushmode-is-now-deprecated-23288) and has been removed.
+
+    Only the default value, `FlushMode.TurnBased`, is supported when calling `ContainerRuntime.loadRuntime` directly,
+    so there's no need for consumers to pass this option in.
+
+-   The createDataStoreWithProps APIs on ContainerRuntime and IContainerRuntimeBase have been removed ([#22996](https://github.com/microsoft/FluidFramework/pull/22996)) [bd243fb292](https://github.com/microsoft/FluidFramework/commit/bd243fb2927915d87c42486e21ee0c990962a9a7)
+
+    `ContainerRuntime.createDataStoreWithProps` and `IContainerRuntimeBase.createDataStoreWithProps`
+    were [deprecated in version 0.25.0](https://github.com/microsoft/FluidFramework/blob/main/BREAKING.md#icontainerruntimebase_createdatastorewithprops-is-removed) and have been removed.
+
+    Replace uses of these APIs with `PureDataObjectFactory.createInstanceWithDataStore` and pass in props via the `initialState`
+    parameter.
+
+    These changes were originally announced in version 0.25.0. See the following issues for more details:
+
+    -   [#1537](https://github.com/microsoft/FluidFramework/issues/1537)
+    -   [#2931](https://github.com/microsoft/FluidFramework/pull/2931)
+
+-   Enabling Op Compression without Op Grouping is no longer supported ([#23608](https://github.com/microsoft/FluidFramework/pull/23608)) [92b695aa4b](https://github.com/microsoft/FluidFramework/commit/92b695aa4b36eee41a4d235a71c6408d2c70b54b)
+
+    `IContainerRuntimeOptions.enableGroupedBatching` was deprecated in 2.12 (see [release notes](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.12.0#user-content-icontainerruntimeoptionsenablegroupedbatching-is-now-deprecated-23260)).
+    While this option is not yet removed (and still defaults to `true`), disabling it (by setting to `false`) is not supported
+    if compression is enabled (by passing a finite value for `IContainerRuntimeOptions.compressionOptions.minimumBatchSizeInBytes`).
+
+-   Summarizer-related types have been moved to container-runtime-definitions ([#23483](https://github.com/microsoft/FluidFramework/pull/23483)) [6666d496e6](https://github.com/microsoft/FluidFramework/commit/6666d496e63031026cdedee98c24bb59fa79edcf)
+
+    `SummarizerStopReason`, `ISummarizeEventProps`, and `ISummarizerEvents` have all been moved from the
+    `"@fluidframework/container-runtime"` package to `@fluidframework/container-runtime-definitions`.
+
+    Users should now import them from `@fluidframework/container-runtime-definitions`.
+
+## 2.13.0
+
+Dependency updates only.
+
 ## 2.12.0
 
 ### Minor Changes

@@ -46,25 +46,27 @@ import {
 	type TreeBranchEvents,
 	getOrCreateInnerNode,
 	getKernel,
-} from "../simple-tree/index.js";
-import { Breakable, breakingClass, disposeSymbol, type WithBreakable } from "../util/index.js";
-
-import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
-import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
-import { CheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
-import {
+	type VoidTransactionCallbackStatus,
+	type TransactionCallbackStatus,
+	type TransactionResult,
+	type TransactionResultExt,
+	type RunTransactionParams,
+	type TransactionConstraint,
 	HydratedContext,
 	SimpleContextSlot,
 	areImplicitFieldSchemaEqual,
 	createUnknownOptionalFieldPolicy,
 } from "../simple-tree/index.js";
-import type {
-	VoidTransactionCallbackStatus,
-	TransactionCallbackStatus,
-	TransactionResult,
-	TransactionResultExt,
-	RunTransactionParams,
-} from "./transactionTypes.js";
+import {
+	type Breakable,
+	breakingClass,
+	disposeSymbol,
+	type WithBreakable,
+} from "../util/index.js";
+
+import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
+import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
+import { CheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
 
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
@@ -110,14 +112,15 @@ export class SchematizingSimpleTreeView<
 	private midUpgrade = false;
 
 	private readonly rootFieldSchema: FieldSchema;
+	public readonly breaker: Breakable;
 
 	public constructor(
 		public readonly checkout: TreeCheckout,
 		public readonly config: TreeViewConfiguration<ReadSchema<TRootSchema>>,
 		public readonly nodeKeyManager: NodeKeyManager,
-		public readonly breaker: Breakable = new Breakable("SchematizingSimpleTreeView"),
 		private readonly onDispose?: () => void,
 	) {
+		this.breaker = checkout.breaker;
 		if (checkout.forest.anchors.slots.has(ViewSlot)) {
 			throw new UsageError("Cannot create a second tree view from the same checkout");
 		}
@@ -244,28 +247,38 @@ export class SchematizingSimpleTreeView<
 			| void,
 		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
-		this.checkout.transaction.start();
-		const preconditions = params?.preconditions ?? [];
-		for (const constraint of preconditions) {
-			switch (constraint.type) {
-				case "nodeInDocument": {
-					const node = getOrCreateInnerNode(constraint.node);
-					const nodeStatus = getKernel(constraint.node).getStatus();
-					const kernel = getKernel(constraint.node);
-					assert(kernel !== undefined, 0x8c1 /* Node should have a kernel */);
-					if (nodeStatus !== TreeStatus.InDocument) {
-						throw new UsageError(
-							`Attempted to add a "nodeInDocument" constraint, but the node is not currently in the document. Node status: ${nodeStatus}`,
-						);
+		const addConstraints = (
+			constraintsOnRevert: boolean,
+			constraints: readonly TransactionConstraint[] = [],
+		): void => {
+			for (const constraint of constraints) {
+				switch (constraint.type) {
+					case "nodeInDocument": {
+						const node = getOrCreateInnerNode(constraint.node);
+						const nodeStatus = getKernel(constraint.node).getStatus();
+						if (nodeStatus !== TreeStatus.InDocument) {
+							const revertText = constraintsOnRevert ? " on revert" : "";
+							throw new UsageError(
+								`Attempted to add a "nodeInDocument" constraint${revertText}, but the node is not currently in the document. Node status: ${nodeStatus}`,
+							);
+						}
+						if (constraintsOnRevert) {
+							this.checkout.editor.addNodeExistsConstraintOnRevert(node.anchorNode);
+						} else {
+							this.checkout.editor.addNodeExistsConstraint(node.anchorNode);
+						}
+						break;
 					}
-					this.checkout.editor.addNodeExistsConstraint(node.anchorNode);
-					break;
+					default:
+						unreachableCase(constraint.type);
 				}
-				default:
-					unreachableCase(constraint.type);
 			}
-		}
+		};
 
+		this.checkout.transaction.start();
+
+		// Validate preconditions before running the transaction callback.
+		addConstraints(false /* constraintsOnRevert */, params?.preconditions);
 		const transactionCallbackStatus = transaction();
 		const rollback = transactionCallbackStatus?.rollback;
 		const value = (
@@ -278,6 +291,12 @@ export class SchematizingSimpleTreeView<
 				? { success: false, value: value as TFailureValue }
 				: { success: false };
 		}
+
+		// Validate preconditions on revert after running the transaction callback and was successful.
+		addConstraints(
+			true /* constraintsOnRevert */,
+			transactionCallbackStatus?.preconditionsOnRevert,
+		);
 
 		this.checkout.transaction.commit();
 		return value !== undefined

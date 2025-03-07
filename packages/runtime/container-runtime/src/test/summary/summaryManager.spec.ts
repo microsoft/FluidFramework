@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
@@ -22,7 +22,6 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 import sinon from "sinon";
 
-import { DefaultSummaryConfiguration } from "../../containerRuntime.js";
 import {
 	IConnectedEvents,
 	IConnectedState,
@@ -39,6 +38,7 @@ import {
 	SummaryManager,
 	SummaryManagerState,
 	neverCancelledSummaryToken,
+	DefaultSummaryConfiguration,
 } from "../../summary/index.js";
 
 class MockRuntime {
@@ -129,7 +129,7 @@ describe("Summary Manager", () => {
 
 	class TestSummarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
 		private notImplemented(): never {
-			throw Error("not implemented");
+			throw new Error("not implemented");
 		}
 		public onBehalfOf: string | undefined;
 		public state: "notStarted" | "running" | "stopped" = "notStarted";
@@ -177,7 +177,7 @@ describe("Summary Manager", () => {
 				neverCancelledSummaryToken,
 				// stopSummarizerCallback
 				(reason) => {},
-				mockRuntime as any as ISummarizerRuntime,
+				mockRuntime as unknown as ISummarizerRuntime,
 			);
 			await Promise.all([this.stopDeferred.promise, this.runDeferred.promise]);
 			await runningSummarizer.waitStop(true);
@@ -233,7 +233,9 @@ describe("Summary Manager", () => {
 		return summarizer;
 	};
 
-	/** Completes the pending request Summarizer call. */
+	/**
+	 * Completes the pending request Summarizer call.
+	 */
 	const completeSummarizerRequest = () => requestDeferred.resolve();
 
 	function createSummaryManager({
@@ -276,7 +278,7 @@ describe("Summary Manager", () => {
 		clock.reset();
 
 		// Make sure we don't accidentally reuse the same summary manager across tests
-		summaryManager = undefined as any;
+		summaryManager = undefined as unknown as SummaryManager;
 	});
 
 	it("Should become summarizer if connected, then elected; stop summarizer after disconnect", async () => {
@@ -396,10 +398,13 @@ describe("Summary Manager", () => {
 			});
 
 			// Simulate disposing the summary manager in between (potential) initial delay and actually starting
-			const summaryManager_delayBeforeCreatingSummarizer = (
-				summaryManager as any
-			).delayBeforeCreatingSummarizer.bind(summaryManager);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			const summaryManager_delayBeforeCreatingSummarizer =
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+				(summaryManager as any).delayBeforeCreatingSummarizer.bind(summaryManager);
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 			(summaryManager as any).delayBeforeCreatingSummarizer = async (...args) => {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
 				const result = await summaryManager_delayBeforeCreatingSummarizer(args);
 				summaryManager.dispose();
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-return

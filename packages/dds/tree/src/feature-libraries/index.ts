@@ -16,7 +16,6 @@ export {
 	mapTreeFromCursor,
 	mapTreeFieldFromCursor,
 } from "./mapTreeCursor.js";
-export { MemoizedIdRangeAllocator, type IdRange } from "./memoizedIdRangeAllocator.js";
 export { buildForest } from "./object-forest/index.js";
 export { SchemaSummarizer, encodeTreeSchema, makeSchemaCodec } from "./schema-index/index.js";
 export {
@@ -194,3 +193,5 @@ export {
 	type TreeIndexKey,
 	type TreeIndexNodes,
 } from "./indexing/index.js";
+
+export { initializeForest } from "./initializeForest.js";

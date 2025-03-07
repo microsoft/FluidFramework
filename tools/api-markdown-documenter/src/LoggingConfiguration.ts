@@ -6,7 +6,7 @@
 import type { Logger } from "./Logging.js";
 
 /**
- * Common base interface for configuration interfaces.
+ * Common base interface for configurations that take a logger.
  *
  * @public
  */

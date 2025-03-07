@@ -1,5 +1,89 @@
 # @fluidframework/shared-object-base
 
+## 2.23.0
+
+Dependency updates only.
+
+## 2.22.0
+
+### Minor Changes
+
+-   Change when the `pre-op` and `op` events on `ISharedObjectEvents` are emitted ([#23836](https://github.com/microsoft/FluidFramework/pull/23836)) [5eb19a0fc6](https://github.com/microsoft/FluidFramework/commit/5eb19a0fc6f00ba47ddc338a1a5932e683a6039c)
+
+    Previous behavior - `pre-op` was emitted immediately before an op was processed. Then the op was processed and `op` was emitted immediately after that.
+
+    New behavior - `pre-op` will still be emitted before an op is processed and `op` will still be emitted after an op is processed. However, these won't be immediate and other ops in a batch for the shared object may be processed in between.
+
+    Note that these events are for internal use only as mentioned in the @remarks section of their definition.
+
+-   Deprecate `processCore` on `SharedObject` and `SharedObjectCore` in favor of `processMessagesCore` ([#23836](https://github.com/microsoft/FluidFramework/pull/23836)) [5eb19a0fc6](https://github.com/microsoft/FluidFramework/commit/5eb19a0fc6f00ba47ddc338a1a5932e683a6039c)
+
+    A new function `processMessagesCore` has been added in place of `processCore`, which will be called to process multiple messages instead of a single one on the channel. This is part of a feature called "Op bunching" where contiguous ops in a grouped batch are bunched and processed together by the shared object.
+
+    Implementations of `SharedObject` and `SharedObjectCore` must now also implement `processMessagesCore`. A basic implementation could be to iterate over the messages' content and process them one by one as it happens now. Note that some DDS may be able to optimize processing by processing the messages together.
+
+## 2.21.0
+
+Dependency updates only.
+
+## 2.20.0
+
+### Minor Changes
+
+-   Replace 'any' in return type for several APIs ([#23238](https://github.com/microsoft/FluidFramework/pull/23238)) [0783a31731](https://github.com/microsoft/FluidFramework/commit/0783a317317647e8881ec717a6f85c531cdbc956)
+
+    To improve type safety of the Fluid Framework legacy+alpha API surface,
+    we're moving away from using the `any` type in favor of `unknown`.
+
+    We expect that any changes required in consumers of these APIs will be limited to having to provide explicit types
+    when calling any of the APIs whose return value changed to `unknown`, like `IFluidSerializer.parse()`.
+
+    In summary, code that looked like this:
+
+    ```typescript
+    // 'myVariable' ended up typed as 'any' here and TypeScript would not do any type-safety checks on it.
+    const myVariable = this.serializer.parse(stringHeader);
+    ```
+
+    Will now have to look like this:
+
+    ```typescript
+    // Do this if you know the type of the object you expect to get back.
+    const myVariable = this.serializer.parse(stringHeader) as MyType;
+
+    // Alternatively, this will maintain current behavior but also means no type-safety checks will be done by TS.
+    // const myVariable = this.serializer.parse(stringHeader) as any;
+    ```
+
+    The appropriate type will depend on what the calling code is doing and the objects it expects to be dealing with.
+
+    We further encourage consumers of any of these APIs to add runtime checks
+    to validate that the returned object actually matches the expected type.
+
+    The list of affected APIs is as follows:
+
+    -   `IFluidSerializer.encode(...)` now takes `value: unknown` instead of `value: any` and returns `unknown` instead of `any`.
+    -   `IFluidSerializer.decode(...)` now takes `input: unknown` instead of `input: any` and returns `unknown` instead of `any`.
+    -   `IFluidSerializer.stringify(...)` now takes `value: unknown` instead of `value: any`.
+    -   `IFluidSerializer.parse(...)` now returns `unknown` instead of `any`.
+    -   `SharedObjectCore.applyStashedOps(...)` now takes `content: unknown` instead of `content: any`.
+    -   `SharedObjectCore.rollback(...)` now takes `content: unknown` instead of `content: any`.
+    -   `SharedObjectCore.submitLocalMessage(...)` now takes `content: unknown` instead of `content: any`.
+    -   `SharedObjectCore.reSubmitCore(...)` now takes `content: unknown` instead of `content: any`.
+    -   In `SharedObjectCore.newAckBasedPromise<T>(...)` the `executor` parameter now takes `reject: (reason?: unknown)`
+        instead of `reject: (reason?: any)`.
+    -   `makeHandlesSerializable(...)` now returns `unknown` instead of `any`.
+    -   `parseHandles(...)` now returns `unknown` instead of `any`.
+
+    Additionally, the following APIs were never designed to return a value and have thus been updated to return `void` instead of `any`:
+
+    -   `SharedObjectCore.processCore(...)`.
+    -   `SharedObjectCore.onDisconnect(...)`
+
+## 2.13.0
+
+Dependency updates only.
+
 ## 2.12.0
 
 Dependency updates only.

@@ -25,10 +25,13 @@ import {
 	IAckSummaryResult,
 	IBroadcastSummaryResult,
 	INackSummaryResult,
+	// eslint-disable-next-line import/no-deprecated
 	IRefreshSummaryAckOptions,
+	// eslint-disable-next-line import/no-deprecated
 	ISubmitSummaryOptions,
 	ISummarizeHeuristicData,
 	ISummarizeResults,
+	// eslint-disable-next-line import/no-deprecated
 	ISummaryCancellationToken,
 	SubmitSummaryFailureData,
 	SubmitSummaryResult,
@@ -43,10 +46,13 @@ export type raceTimerResult<T> =
 	| { result: IPromiseTimerResult["timerResult"] }
 	| { result: "cancelled" };
 
-/** Helper function to wait for a promise or PromiseTimer to elapse. */
+/**
+ * Wait for a promise or PromiseTimer to elapse.
+ */
 export async function raceTimer<T>(
 	promise: Promise<T>,
 	timer: Promise<IPromiseTimerResult>,
+	// eslint-disable-next-line import/no-deprecated
 	cancellationToken?: ISummaryCancellationToken,
 ): Promise<raceTimerResult<T>> {
 	const promises: Promise<raceTimerResult<T>>[] = [
@@ -95,9 +101,13 @@ export type SummarizeReason =
 	 * stay connected long enough for summarizer client to catch up.
 	 */
 	| "lastSummary"
-	/** On-demand summary requested with specified reason. */
+	/**
+	 * On-demand summary requested with specified reason.
+	 */
 	| `onDemand;${string}`
-	/** Enqueue summarize attempt with specified reason. */
+	/**
+	 * Enqueue summarize attempt with specified reason.
+	 */
 	| `enqueue;${string}`;
 
 const summarizeErrors = {
@@ -130,7 +140,7 @@ const summarizeErrors = {
 export type SummarizeErrorCode = keyof typeof summarizeErrors;
 
 // Helper functions to report failures and return.
-export const getFailMessage = (errorCode: SummarizeErrorCode) =>
+export const getFailMessage = (errorCode: SummarizeErrorCode): string =>
 	`${errorCode}: ${summarizeErrors[errorCode]}`;
 
 export class SummarizeResultBuilder {
@@ -155,7 +165,7 @@ export class SummarizeResultBuilder {
 		error: IRetriableFailureError,
 		submitFailureResult?: SubmitSummaryFailureData,
 		nackSummaryResult?: INackSummaryResult,
-	) {
+	): void {
 		assert(
 			!this.receivedSummaryAckOrNack.isCompleted,
 			0x25e /* "no reason to call fail if all promises have been completed" */,
@@ -205,10 +215,12 @@ export class SummaryGenerator {
 		private readonly pendingAckTimer: IPromiseTimer,
 		private readonly heuristicData: ISummarizeHeuristicData,
 		private readonly submitSummaryCallback: (
+			// eslint-disable-next-line import/no-deprecated
 			options: ISubmitSummaryOptions,
 		) => Promise<SubmitSummaryResult>,
 		private readonly successfulSummaryCallback: () => void,
 		private readonly refreshLatestSummaryCallback: (
+			// eslint-disable-next-line import/no-deprecated
 			options: IRefreshSummaryAckOptions,
 		) => Promise<void>,
 		private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
@@ -226,19 +238,23 @@ export class SummaryGenerator {
 	 * @param resultsBuilder - optional, result builder to use to build pass or fail result.
 	 */
 	public summarize(
+		// eslint-disable-next-line import/no-deprecated
 		summaryOptions: ISubmitSummaryOptions,
 		resultsBuilder = new SummarizeResultBuilder(),
 	): ISummarizeResults {
-		this.summarizeCore(summaryOptions, resultsBuilder).catch((error) => {
-			const message = "UnexpectedSummarizeError";
-			summaryOptions.summaryLogger.sendErrorEvent({ eventName: message }, error);
-			resultsBuilder.fail(message, error);
-		});
+		this.summarizeCore(summaryOptions, resultsBuilder).catch(
+			(error: IRetriableFailureError) => {
+				const message = "UnexpectedSummarizeError";
+				summaryOptions.summaryLogger.sendErrorEvent({ eventName: message }, error);
+				resultsBuilder.fail(message, error);
+			},
+		);
 
 		return resultsBuilder.build();
 	}
 
 	private async summarizeCore(
+		// eslint-disable-next-line import/no-deprecated
 		submitSummaryOptions: ISubmitSummaryOptions,
 		resultsBuilder: SummarizeResultBuilder,
 	): Promise<void> {
@@ -278,7 +294,7 @@ export class SummaryGenerator {
 			properties?: SummaryGeneratorTelemetry,
 			submitFailureResult?: SubmitSummaryFailureData,
 			nackSummaryResult?: INackSummaryResult,
-		) => {
+		): void => {
 			// Report any failure as an error unless it was due to cancellation (like "disconnected" error)
 			// If failure happened on upload, we may not yet realized that socket disconnected, so check
 			// offlineError too.
@@ -515,17 +531,19 @@ export class SummaryGenerator {
 		initialProps: SummaryGeneratorTelemetry,
 	): SummaryGeneratorTelemetry {
 		switch (summaryData.stage) {
-			case "base":
+			case "base": {
 				return initialProps;
+			}
 
-			case "generate":
+			case "generate": {
 				return {
 					...initialProps,
 					...summaryData.summaryStats,
 					generateDuration: summaryData.generateDuration,
 				};
+			}
 
-			case "upload":
+			case "upload": {
 				return {
 					...initialProps,
 					...summaryData.summaryStats,
@@ -533,8 +551,9 @@ export class SummaryGenerator {
 					handle: summaryData.handle,
 					uploadDuration: summaryData.uploadDuration,
 				};
+			}
 
-			case "submit":
+			case "submit": {
 				return {
 					...initialProps,
 					...summaryData.summaryStats,
@@ -547,15 +566,17 @@ export class SummaryGenerator {
 					nonRuntimeOpsSinceLastSummary: this.heuristicData.numNonRuntimeOps,
 					runtimeOpsSinceLastSummary: this.heuristicData.numRuntimeOps,
 				};
+			}
 
-			default:
+			default: {
 				assert(true, 0x397 /* Unexpected summary stage */);
+			}
 		}
 
 		return initialProps;
 	}
 
-	private summarizeTimerHandler(time: number, count: number) {
+	private summarizeTimerHandler(time: number, count: number): void {
 		this.logger.sendPerformanceEvent({
 			eventName: "SummarizeTimeout",
 			timeoutTime: time,
@@ -570,7 +591,7 @@ export class SummaryGenerator {
 		}
 	}
 
-	public dispose() {
+	public dispose(): void {
 		this.summarizeTimer.clear();
 	}
 }

@@ -25,6 +25,9 @@ export {
 	verifyStorageToken,
 	validateTokenScopeClaims,
 	verifyToken,
+	isTokenValid,
+	extractTokenFromHeader,
+	getValidAccessToken,
 } from "./auth";
 export { getBooleanFromConfig, getNumberFromConfig } from "./configUtils";
 export { parseBoolean } from "./conversion";
@@ -62,3 +65,5 @@ export {
 	IRedisClientConnectionManager,
 } from "./redisClientConnectionManager";
 export { ITenantKeyGenerator, TenantKeyGenerator } from "./tenantKeyGenerator";
+export { ResponseSizeMiddleware } from "./responseSizeMiddleware";
+export { logHttpMetrics } from "./httpRequestMetricsLogger";

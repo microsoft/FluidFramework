@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict as assert, fail } from "node:assert";
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -21,9 +21,10 @@ import {
 	type InsertableField,
 	type InsertableTypedNode,
 	type UnsafeUnknownSchema,
+	type TransactionResult,
+	type TransactionResultExt,
+	toStoredSchema,
 } from "../../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../../simple-tree/toStoredSchema.js";
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
@@ -34,8 +35,6 @@ import {
 import { insert } from "../sequenceRootUtils.js";
 import {
 	CheckoutFlexTreeView,
-	type TransactionResult,
-	type TransactionResultExt,
 	type TreeCheckout,
 	type TreeStoredContent,
 } from "../../shared-tree/index.js";
@@ -407,6 +406,40 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(redoStack.length, 1);
 	});
 
+	const schemaFactory = new SchemaFactory(undefined);
+	class ChildObject extends schemaFactory.object("ChildObject", {
+		content: schemaFactory.number,
+	}) {}
+	class TestObject extends schemaFactory.object("TestObject", {
+		content: schemaFactory.number,
+		child: schemaFactory.optional(ChildObject),
+	}) {}
+
+	function getTestObjectView(child?: InsertableTypedNode<typeof ChildObject>) {
+		const view = getView(new TreeViewConfiguration({ schema: TestObject }));
+		view.initialize({
+			content: 42,
+			child,
+		});
+		return view;
+	}
+
+	it("breaks on error", () => {
+		const view = getTestObjectView();
+		const node = view.root;
+		assert.throws(() => view.breaker.break(new Error("Oh no")));
+
+		assert.throws(() => view.root, validateUsageError(/Oh no/));
+
+		// Ideally this would error, but thats not too important: reads are less dangerous.
+		// assert.throws(() => node.content, validateUsageError(/Oh no/));
+
+		// Its important that editing errors when we might be in an invalid state.
+		assert.throws(() => {
+			node.content = 5;
+		}, validateUsageError(/Oh no/));
+	});
+
 	describe("events", () => {
 		it("schemaChanged", () => {
 			const content = {
@@ -475,22 +508,6 @@ describe("SchematizingSimpleTreeView", () => {
 	});
 
 	describe("runTransaction", () => {
-		const schemaFactory = new SchemaFactory(undefined);
-		class ChildObject extends schemaFactory.object("ChildObject", {}) {}
-		class TestObject extends schemaFactory.object("TestObject", {
-			content: schemaFactory.number,
-			child: schemaFactory.optional(ChildObject),
-		}) {}
-
-		function getTestObjectView(child?: InsertableTypedNode<typeof ChildObject>) {
-			const view = getView(new TreeViewConfiguration({ schema: TestObject }));
-			view.initialize({
-				content: 42,
-				child,
-			});
-			return view;
-		}
-
 		describe("transaction callback return values", () => {
 			it("implicit success", () => {
 				const view = getTestObjectView();
@@ -573,6 +590,45 @@ describe("SchematizingSimpleTreeView", () => {
 					"The runTransaction result is incorrect",
 				);
 			});
+
+			it("success + preconditions on revert", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					return {
+						preconditionsOnRevert: [{ type: "nodeInDocument", node: view.root }],
+					};
+				});
+				assert.equal(view.root.content, 43, "The transaction did not commit");
+				const expectedResult: TransactionResult = {
+					success: true,
+				};
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
+			});
+
+			it("rollback + preconditions on revert", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					return {
+						rollback: true,
+						preconditionsOnRevert: [{ type: "nodeInDocument", node: view.root }],
+					};
+				});
+				assert.equal(view.root.content, 42, "The transaction did not rollback");
+				const expectedResult: TransactionResult = {
+					success: false,
+				};
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
+			});
 		});
 
 		describe("transactions", () => {
@@ -607,6 +663,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 			it("breaks the view on error", () => {
 				const view = getTestObjectView();
+				const node = view.root;
 				assert.throws(
 					() =>
 						view.runTransaction(() => {
@@ -617,7 +674,7 @@ describe("SchematizingSimpleTreeView", () => {
 						return e instanceof Error && e.message === "Oh no";
 					},
 				);
-				assert.throws(() => view.root.content, "View should be broken");
+				assert.throws(() => view.root, validateUsageError(/Oh no/));
 			});
 
 			it("undoes and redoes entire transaction", () => {
@@ -649,7 +706,7 @@ describe("SchematizingSimpleTreeView", () => {
 			});
 
 			it("fails if node existence constraint is already violated", () => {
-				const view = getTestObjectView({});
+				const view = getTestObjectView({ content: 42 });
 				const childB = view.root.child;
 				assert(childB !== undefined);
 				// The node given to the constraint is deleted from the document, so the transaction can't possibly succeed even locally/optimistically
@@ -682,10 +739,10 @@ describe("SchematizingSimpleTreeView", () => {
 				const provider = new TestTreeProviderLite(2);
 				const [treeA, treeB] = provider.trees;
 				const viewA = treeA.viewWith(viewConfig);
-				const viewB = treeB.viewWith(viewConfig);
+				const viewB = treeB.kernel.viewWith(viewConfig);
 				viewA.initialize({
 					content: 42,
-					child: {},
+					child: { content: 42 },
 				});
 				provider.processMessages();
 
@@ -716,6 +773,82 @@ describe("SchematizingSimpleTreeView", () => {
 				provider.processMessages();
 				assert.equal(viewB.root.content, 42);
 				assert.equal(viewB.root.content, 42);
+			});
+
+			/**
+			 * This test exercises the precondition on revert constraints API with a representative scenario.
+			 * For more in-depth testing of undo precondition constraints, see editing.spec.ts.
+			 */
+			it("constraint on revert violated by transaction body", () => {
+				const view = getTestObjectView({ content: 42 });
+				const child = view.root.child;
+				assert(child !== undefined);
+
+				// Called by the transaction body. This violates the constraint on revert but the transaction
+				// body doesn't know about it.
+				const doSomething = () => {
+					view.root.child = undefined;
+				};
+				assert.throws(
+					() =>
+						view.runTransaction(() => {
+							child.content = 43;
+							// Simulates a side effect where a code that the transaction calls ends up violating the
+							// constraint on revert.
+							doSomething();
+							return {
+								preconditionsOnRevert: [{ type: "nodeInDocument", node: child }],
+							};
+						}),
+					(e) => {
+						return (
+							e instanceof UsageError &&
+							e.message.startsWith(
+								`Attempted to add a "nodeInDocument" constraint on revert, but the node is not currently in the document`,
+							)
+						);
+					},
+				);
+				assert.throws(() => view.root.content, "View should be broken");
+			});
+
+			/**
+			 * This test exercises the precondition on revert constraints API with a representative scenario.
+			 * For more in-depth testing of undo precondition constraints, see editing.spec.ts.
+			 */
+			it("constraint on revert violated by interim change", () => {
+				const view = getTestObjectView({ content: 42 });
+				const child = view.root.child;
+				assert(child !== undefined);
+
+				const stack = createTestUndoRedoStacks(view.events);
+
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					return {
+						preconditionsOnRevert: [{ type: "nodeInDocument", node: child }],
+					};
+				});
+				assert.equal(view.root.content, 43, "The transaction did not succeed");
+				const expectedResult: TransactionResult = {
+					success: true,
+				};
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
+
+				const changed42To43 = stack.undoStack[0] ?? fail("Missing undo");
+
+				// This change should violate the constraint in the revert
+				view.root.child = undefined;
+
+				// This revert should do nothing since its constraint has been violated
+				changed42To43.revert();
+				assert.equal(view.root.content, 43, "The revert should have been ignored");
+
+				stack.unsubscribe();
 			});
 		});
 	});

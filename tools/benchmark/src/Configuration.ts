@@ -57,6 +57,9 @@ export enum BenchmarkType {
 	OwnCorrectness,
 }
 
+/**
+ * @public
+ */
 export enum TestType {
 	/**
 	 * Tests that measure execution time
@@ -476,12 +479,20 @@ export function benchmarkArgumentsIsCustom(
  *
  * @public
  */
-export function qualifiedTitle(args: BenchmarkDescription & Titled): string {
+export function qualifiedTitle(
+	args: BenchmarkDescription & Titled & { testType?: TestType | undefined },
+): string {
 	const benchmarkTypeTag =
 		BenchmarkType[args.type ?? BenchmarkType.Measurement] ??
 		assert.fail("Invalid BenchmarkType");
-	const testTypeTag = TestType[TestType.ExecutionTime] ?? assert.fail("Invalid TestType");
-	let qualifiedTitle = `${performanceTestSuiteTag} @${benchmarkTypeTag} @${testTypeTag} ${args.title}`;
+	const tags = [performanceTestSuiteTag, `@${benchmarkTypeTag}`];
+	if (args.testType !== undefined) {
+		const testTypeTag =
+			TestType[args.testType] ?? assert.fail(`Invalid TestType: ${args.testType}`);
+		tags.push(`@${testTypeTag}`);
+	}
+
+	let qualifiedTitle = `${tags.join(" ")} ${args.title}`;
 
 	if (args.category !== "" && args.category !== undefined) {
 		qualifiedTitle = `${qualifiedTitle} ${userCategoriesSplitter} @${args.category}`;

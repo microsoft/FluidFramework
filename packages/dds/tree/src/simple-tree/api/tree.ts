@@ -13,11 +13,6 @@ import type {
 } from "../../core/index.js";
 
 import type {
-	RunTransactionParams,
-	VoidTransactionCallbackStatus,
-	TransactionCallbackStatus,
-	TransactionResult,
-	TransactionResultExt,
 	// This is referenced by doc comments.
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
 	TreeAlpha,
@@ -42,6 +37,15 @@ import { markSchemaMostDerived } from "./schemaFactory.js";
 import { fail, getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
+import type { VerboseTree } from "./verboseTree.js";
+import type { SimpleTreeSchema } from "./simpleSchema.js";
+import type {
+	RunTransactionParams,
+	TransactionCallbackStatus,
+	TransactionResult,
+	TransactionResultExt,
+	VoidTransactionCallbackStatus,
+} from "./transactionTypes.js";
 /**
  * A tree from which a {@link TreeView} can be created.
  *
@@ -52,7 +56,6 @@ import { walkFieldSchema } from "../walkFieldSchema.js";
  * Maybe rename "exportJsonSchema" to align on "concise" terminology.
  * Ensure schema exporting APIs here align and reference APIs for exporting view schema to the same formats (which should include stored vs property key choice).
  * Make sure users of independentView can use these export APIs (maybe provide a reference back to the ViewableTree from the TreeView to accomplish that).
- * Some of these APIs are on ISharedTree and can get moved here.
  * @system @sealed @public
  */
 export interface ViewableTree {
@@ -100,6 +103,28 @@ export interface ViewableTree {
  * @sealed @public
  */
 export interface ITree extends ViewableTree, IFluidLoadable {}
+
+/**
+ * {@link ITree} extended with some alpha APIs.
+ * @privateRemarks
+ * TODO: Promote this to alpha.
+ * @internal
+ */
+export interface ITreeAlpha extends ITree {
+	/**
+	 * Exports root in the same format as {@link TreeAlpha.(exportVerbose:1)} using stored keys.
+	 * @remarks
+	 * This is `undefined` if and only if the root field is empty (this can only happen if the root field is optional).
+	 */
+	exportVerbose(): VerboseTree | undefined;
+
+	/**
+	 * Exports the SimpleTreeSchema that is stored in the tree, using stored keys for object fields.
+	 * @remarks
+	 * To get the schema using property keys, use {@link getSimpleSchema} on the view schema.
+	 */
+	exportSimpleSchema(): SimpleTreeSchema;
+}
 
 /**
  * Options when constructing a tree view.
@@ -351,7 +376,7 @@ export function checkUnion(union: Iterable<TreeNodeSchema>, errors: string[]): v
 		// For each field of schema, remove schema from possiblyAmbiguous that do not have that field
 		for (const [key, field] of schema.fields) {
 			if (field.kind === FieldKind.Required) {
-				const withKey = allObjectKeys.get(key) ?? fail("missing schema");
+				const withKey = allObjectKeys.get(key) ?? fail(0xb35 /* missing schema */);
 				for (const candidate of possiblyAmbiguous) {
 					if (!withKey.has(candidate)) {
 						possiblyAmbiguous.delete(candidate);
@@ -467,6 +492,10 @@ export interface TreeBranch extends IDisposable {
  * Doing that would however complicate trivial "hello world" style example slightly, as well as be a breaking API change.
  * It also seems more complex to handle invalidation with that pattern.
  * Thus this design was chosen at the risk of apps blindly accessing `root` then breaking unexpectedly when the document is incompatible.
+ *
+ * @see {@link TreeViewAlpha}
+ * @see {@link asTreeViewAlpha}
+ *
  * @sealed @public
  */
 export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends IDisposable {

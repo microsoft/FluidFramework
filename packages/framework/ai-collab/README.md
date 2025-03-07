@@ -85,14 +85,14 @@ export class PlannerAppState extends sf.object("PlannerAppState", {
 ### Example 1: Collaborate with AI
 
 ```ts
-import { aiCollab } from "@fluidframework/ai-collab/alpha";
+import { aiCollab, DebugEvent } from "@fluidframework/ai-collab/alpha";
 import { PlannerAppState } from "./types.ts"
 // This is not a real file, this is meant to represent how you initialize your app data.
 import { initializeAppState } from "./yourAppInitializationFile.ts"
 
 //  --------- File name: "app.ts" ---------
 
-// Initialize your app state somehow
+// Initialize your Fluid app state somehow
 const appState: PlannerAppState = initializeAppState({
 		taskGroups: [
 		{
@@ -143,9 +143,12 @@ const response = await aiCollab({
 				"You are a manager that is helping out with a project management tool. You have been asked to edit a group of tasks.",
 			userAsk: userAsk,
 		},
+		limiters: {
+			maxModelCalls: 25
+		}
 		planningStep: true,
 		finalReviewStep: true,
-		dumpDebugLog: true,
+		debugEventLogHandler: (event: DebugEvent) => {console.log(event);}
 	});
 
 if (response.status === 'sucess') {
@@ -174,12 +177,75 @@ Once the `aiCollab` function call is initiated, an LLM will immediately begin at
      - `promptGeneration.ts`: Logic for producing the different types of prompts sent to an LLM in order to edit a SharedTree.
      - `typeGeneration.ts`: Generates serialized(/able) representations of a SharedTree Schema which is used within prompts and the generated of the structured output JSON schema
      - `utils.ts`: Utilities for interacting with a SharedTree
+	 - `debugEvents.ts`: Types and helper functions for `DebugEvent`'s emitted to the callback provided to the aiCollab's `debugEventLogHandler`
 - `/implicit-strategy`: The original implicit strategy, currently not used under the exported aiCollab API surface.
+
+## Debug Events
+This package allows users to consume `DebugEvents` that can be very helpful in understanding what's going on internally and debugging potential issues.
+Users can consume these events by passing in a `debugEventLogHandler` when calling the `aiCollab()` function:
+```ts
+aiCollab({
+	openAI: {
+		client: new OpenAI({
+			apiKey: OPENAI_API_KEY,
+		}),
+		modelName: "gpt-4o",
+	},
+	treeNode: view.root.taskGroups[0],
+	prompt: {
+		systemRoleContext:
+			"You are a manager that is helping out with a project management tool. You have been asked to edit a group of tasks.",
+		userAsk: userAsk,
+	},
+	limiters: {
+		maxModelCalls: 25
+	}
+	planningStep: true,
+	finalReviewStep: true,
+	debugEventLogHandler: (event: DebugEvent) => {console.log(event);} // This should be your debug event log handler
+});
+
+```
+
+All debug events implement the `DebugEvent` interface. Some also implement `EventFlowDebugEvent`, which lets them mark a progress point in a specific logic flow within a given execution of `aiCollab()`.
+
+### Event flow Overview
+To see detailed information about each event, please read their cooresponding [tsdoc](./src/explicit-strategy/debugEvents.ts#L46)
+
+1. **Core Event Loop** - The start and end of a single execution of aiCollab.
+	- Events:
+		1. **Core Event Loop Started**
+		1. **Core Event Loop Completed**
+2. **Generate Planning Prompt** - The event flow for producing an initial LLM generated plan to assist the LLM with creating edits to the users Shared Tree.
+	- Events
+		1. **Generate Planning Prompt Started**
+			- Child `DebugEvent`'s triggered:
+				1. **Llm Api Call** - An event detailing the raw api request to the LLM client.
+		1. **Generate Planning Prompt Completed**
+3. **Generate Tree Edit** - The event flow for generating an edit to the users Shared Tree to further complete the users request.
+	- Events:
+		1. **Generate Tree Edit Started**
+			- Child `DebugEvent`'s triggered:
+				1. **Llm Api Call** - An event detailing the raw api request to the LLM client.
+		1. **Generate Tree Edit Completed**
+		1. **Apply Edit Success** OR **Apply Edit Failure** - The outcome of applying the LLM generated tree edit.
+4. **Final Review** - The event flow for asking the LLM to complete a final review of work it has completed and confirming if the users request has been completed. If the LLM is not satisfied, the **Generate Tree Edit** loop will start again.
+	- Events:
+		- **Final Review Started**
+			- Child `DebugEvent`'s triggered:
+				1. **Llm Api Call** - An event detailing the raw api request to the LLM client.
+		- **Final Review Completed**
+
+
+### Using Trace Id's
+Debug Events in ai-collab have two different types of trace id's:
+- `traceId`: This field exists on all debug events and can be used to correlate all debug events that happened in a single execution of `aiCollab()`. Sorting the events by timestamp will show the proper chronological order of the events. Note that the events should already be emitted in chronological order.
+- `eventFlowTraceId`: this field exists on all `EventFlowDebugEvents` and can be used to correlate all events from a particular event flow. Additionally all LLM api call events will contain the `eventFlowTraceId` field as well as a `triggeringEventFlowName` so you can link LLM API calls to a particular event flow.
+
 
 ## Known Issues & limitations
 
 1. Union types for a TreeNode are not present when generating App Schema. This will require extracting a field schema instead of TreeNodeSchema when passed a non root node.
-1. The Editing System prompt & structured out schema currently provide array related edits even when there are no arrays. This forces you to have an array in your schema to produce a valid json schema
 1. Optional roots are not allowed, This is because if you pass undefined as your treeNode to the API, we cannot disambiguate whether you passed the root or not.
 1. Primitive root nodes are not allowed to be passed to the API. You must use an object or array as your root.
 1. Optional nodes are not supported -- when we use optional nodes, the OpenAI API returns an error complaining that the structured output JSON schema is invalid. I have introduced a fix that should work upon manual validation of the json schema, but there looks to be an issue with their API. I have filed a ticket with OpenAI to address this
@@ -210,6 +276,7 @@ When making such a request please include if the configuration already works (an
 ### Supported Runtimes
 
 -   NodeJs ^20.10.0 except that we will drop support for it [when NodeJs 20 loses its upstream support on 2026-04-30](https://github.com/nodejs/release#release-schedule), and will support a newer LTS version of NodeJS (22) at least 1 year before 20 is end-of-life. This same policy applies to NodeJS 22 when it is end of life (2027-04-30).
+    -   Running Fluid in a Node.js environment with the `--no-experimental-fetch` flag is not supported.
 -   Modern browsers supporting the es2022 standard library: in response to asks we can add explicit support for using babel to polyfill to target specific standards or runtimes (meaning we can avoid/remove use of things that don't polyfill robustly, but otherwise target modern standards).
 
 ### Supported Tools

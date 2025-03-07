@@ -145,16 +145,6 @@ stages:
           value: true
         - name: artifactPipeline
           value: Build - client packages
-        - name: feed
-          ${{ if eq(variables.isTestBranch, 'true') }}:
-            value: $(ado-feeds-internal) # Comes from the ado-feeds variable group
-          ${{ else }}:
-            value: $(ado-feeds-build) # Comes from the ado-feeds variable group
-        - name: devFeed
-          ${{ if eq(variables.isTestBranch, 'true') }}:
-            value: $(ado-feeds-internal) # Comes from the ado-feeds variable group
-          ${{ else }}:
-            value: $(ado-feeds-dev) # Comes from the ado-feeds variable group
 
         steps:
         # Setup
@@ -204,8 +194,6 @@ stages:
                 isTestBranch=${{ variables.isTestBranch }}
                 testWorkspace=${{ parameters.testWorkspace }}
                 testPackageFilePattern=${{ variables.testPackageFilePattern }}
-                feed=${{ variables.feed }}
-                devFeed=${{ variables.devFeed }}
                 testCommand=${{ parameters.testCommand }}
                 continueOnError=${{ parameters.continueOnError }}
                 variant.flag=${{ variant.flags }}
@@ -214,7 +202,9 @@ stages:
                 artifactBuildId=${{ parameters.artifactBuildId }}
               "
 
-        - template: include-use-node-version.yml
+        - template: /tools/pipelines/templates/include-use-node-version.yml@self
+
+        - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
 
         # Download artifact
         - task: DownloadPipelineArtifact@2
@@ -236,7 +226,6 @@ stages:
             # - buildId: <the id of the triggering build>
             # preferTriggeringPipeline: true
 
-
         - task: Bash@3
           displayName: Create test directory
           inputs:
@@ -252,35 +241,11 @@ stages:
           inputs:
             targetType: 'inline'
             workingDirectory: ${{ parameters.testWorkspace }}
-            # Note: $(ado-feeds-build) and $(ado-feeds-office) come from the ado-feeds variable group
             script: |
               set -eu -o pipefail
 
               echo Initialize package
               npm init --yes
-
-              echo Generating .npmrc
-              echo "registry=https://registry.npmjs.org" >> ./.npmrc
-              echo "always-auth=false" >> ./.npmrc
-
-              echo "@fluidframework:registry=${{ variables.feed }}" >> ./.npmrc
-              echo "@fluid-experimental:registry=${{ variables.feed }}" >> ./.npmrc
-
-              # This is confusing, but we are using the .npmrc here to load dependencies from different feeds. These
-              # scopes must be loaded from the "dev" feed because that is the only place they are published. Ideally this
-              # logic will be centralized outside of CI in the future.
-              echo "@fluid-internal:registry=${{ variables.devFeed }}" >> ./.npmrc
-              echo "@fluid-private:registry=${{ variables.devFeed }}" >> ./.npmrc
-              echo "@fluid-tools:registry=${{ variables.devFeed }}" >> ./.npmrc
-
-              # This scope must be loaded from the "build" feed
-              echo "@ff-internal:registry=$(ado-feeds-build)" >> ./.npmrc
-
-              # This scope must be loaded from the internal Office feed
-              echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
-
-              echo "always-auth=true" >> ./.npmrc
-              cat .npmrc
 
               if [[ `ls -1 ${{ variables.testPackagePathPattern }} | wc -l` -eq 1 ]]; then
                 echo "##vso[task.setvariable variable=testPackageTgz;isOutput=true]`ls ${{ variables.testPackagePathPattern }}`"
@@ -290,24 +255,17 @@ stages:
                 exit -1
               fi
 
-        # Auth to internal feed
-        - task: npmAuthenticate@0
-          displayName: 'npm authenticate (internal feed)'
-          inputs:
-            workingFile: ${{ parameters.testWorkspace }}/.npmrc
-
         # Install test and logger package
-        - task: Npm@1
+        - task: Bash@3
           displayName: 'npm install'
           # ADO feeds have latency on the order of minutes before packages are available downstream. See:
           # https://learn.microsoft.com/en-us/azure/devops/artifacts/concepts/upstream-sources?view=azure-devops#upstream-sources-health-status
           # This pipeline installs packages which were published very recently relative to its runtime, hence the rather high retry count here.
           retryCountOnTaskFailure: 10
           inputs:
-            command: 'custom'
-            workingDir: ${{ parameters.testWorkspace }}
-            customCommand: 'install $(Initialize.testPackageTgz) ${{ parameters.loggerPackage }}'
-            customRegistry: 'useNpmrc'
+            workingDirectory: ${{ parameters.testWorkspace }}
+            targetType: 'inline'
+            script: 'npm install $(Initialize.testPackageTgz) ${{ parameters.loggerPackage }}'
 
         # Download Test Files & Install Extra Dependencies
         # These steps are intended to include extra dependencies that are not available as
@@ -369,14 +327,13 @@ stages:
                   require('fs').writeFileSync('$pkgJsonPath', JSON.stringify(pkg));
                 "
 
-          - task: Npm@1
+          - task: Bash@3
             displayName: 'npm install - extra dependencies for test files'
             retryCountOnTaskFailure: 10
             inputs:
-              command: 'custom'
-              workingDir: ${{ parameters.testWorkspace }}
-              customCommand: 'install'
-              customRegistry: 'useNpmrc'
+              workingDirectory: ${{ parameters.testWorkspace }}
+              targetType: 'inline'
+              script: 'npm install'
 
         - ${{ if eq(parameters.cacheCompatVersionsInstalls, true) }}:
           - task: Cache@2
@@ -489,7 +446,7 @@ stages:
               trips-cleanup $(stringBearerToken)
 
         # Log Test Failures
-        # - template: include-process-test-results.yml
+        # - template: /tools/pipelines/templates/include-process-test-results.yml@self
         #   parameters:
         #     buildDirectory: ${{ variables.testPackageDir }}
 
