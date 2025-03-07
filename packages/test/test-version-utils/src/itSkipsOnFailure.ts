@@ -49,34 +49,36 @@ export type SkippedTestWithDriverType = (
  * @internal
  */
 export type skippedTestWithDriver = SkippedTestWithDriverType & {
+
+	/**
+	 * Like Mocha's `it.skip`, but for the driver tests.
+	 */
 	only: SkippedTestWithDriverType;
+
+	/**
+	* Like Mocha's `it.skip`, but for the driver tests.
+	*/
 	skip: SkippedTestWithDriverType;
 }
 
 function createSkippedTestWithDriver(): skippedTestWithDriver {
-	const skippedTestWithDriver : skippedTestWithDriver = function (
+	const skippedTestWithDriver: skippedTestWithDriver = (
 		name: string,
 		skippedDrivers: TestDriverTypes[],
 		test: Mocha.AsyncFunc,
-	) {
-		return it(name, createSkippedTestsWithDriverType(skippedDrivers, test));
-	};
+	) => it(name, createSkippedTestsWithDriverType(skippedDrivers, test));
 
-	skippedTestWithDriver.only = function (
+	skippedTestWithDriver.only = (
 		name: string,
 		skippedDrivers: TestDriverTypes[],
 		test: Mocha.AsyncFunc,
-	) {
-		return it.only(name, createSkippedTestsWithDriverType(skippedDrivers, test));
-	};
+	) => it.only(name, createSkippedTestsWithDriverType(skippedDrivers, test));
 
-	skippedTestWithDriver.skip = function (
+	skippedTestWithDriver.skip = (
 		name: string,
 		skippedDrivers: TestDriverTypes[],
 		test: Mocha.AsyncFunc,
-	) {
-		return it.skip(name, createSkippedTestsWithDriverType(skippedDrivers, test));
-	};
+	) => it.skip(name, createSkippedTestsWithDriverType(skippedDrivers, test));
 
 	return skippedTestWithDriver;
 }
@@ -104,55 +106,59 @@ export type SkippedErrorExpectingTestWithDriverType = (
  * @internal
  */
 export type skippedErrorExpectingTestWithDriver = SkippedErrorExpectingTestWithDriverType & {
+
+	/**
+	 * Like Mocha's `it.only`, but for the driver tests.
+	 */
 	only: SkippedErrorExpectingTestWithDriverType;
+
+	/**
+	 * Like Mocha's `it.skip`, but for the driver tests.
+	 */
 	skip: SkippedErrorExpectingTestWithDriverType;
 }
 
 function createSkippedErrorExpectingTestWithDriver(): skippedErrorExpectingTestWithDriver {
-	const skippedErrorExpectingTestWithDriver : skippedErrorExpectingTestWithDriver = function (
+	const skippedErrorExpectingTestWithDriver: skippedErrorExpectingTestWithDriver = (
 		name: string,
 		orderedExpectedEvents: ExpectedEvents,
 		skippedDrivers: TestDriverTypes[],
 		test: Mocha.AsyncFunc,
-	) {
-		return it(
-			name,
-			createSkippedTestsWithDriverType(
-				skippedDrivers,
-				createExpectsTest(orderedExpectedEvents, test),
-			),
-		);
-	};
+	) => it(
+		name,
+		createSkippedTestsWithDriverType(
+			skippedDrivers,
+			createExpectsTest(orderedExpectedEvents, test),
+		),
+	);
 
-	skippedErrorExpectingTestWithDriver.only = function (
-		name: string,
-		orderedExpectedEvents: ExpectedEvents,
-		skippedDrivers: TestDriverTypes[],
-		test: Mocha.AsyncFunc,
-	) {
-		return it.only(
-			name,
-			createSkippedTestsWithDriverType(
-				skippedDrivers,
-				createExpectsTest(orderedExpectedEvents, test),
-			),
-		);
-	};
 
-	skippedErrorExpectingTestWithDriver.skip = function (
+	skippedErrorExpectingTestWithDriver.only = (
 		name: string,
 		orderedExpectedEvents: ExpectedEvents,
 		skippedDrivers: TestDriverTypes[],
 		test: Mocha.AsyncFunc,
-	) {
-		return it.skip(
-			name,
-			createSkippedTestsWithDriverType(
-				skippedDrivers,
-				createExpectsTest(orderedExpectedEvents, test),
-			),
-		);
-	};
+	) => it.only(
+		name,
+		createSkippedTestsWithDriverType(
+			skippedDrivers,
+			createExpectsTest(orderedExpectedEvents, test),
+		),
+	);
+	;
+
+	skippedErrorExpectingTestWithDriver.skip = (
+		name: string,
+		orderedExpectedEvents: ExpectedEvents,
+		skippedDrivers: TestDriverTypes[],
+		test: Mocha.AsyncFunc,
+	) => it.skip(
+		name,
+		createSkippedTestsWithDriverType(
+			skippedDrivers,
+			createExpectsTest(orderedExpectedEvents, test),
+		),
+	);
 
 	return skippedErrorExpectingTestWithDriver;
 }
