@@ -9,6 +9,8 @@ export {
 	debugAssert,
 	configureDebugAsserts,
 	nonProductionConditionalsIncluded,
+	emulateProductionBuild,
+	onAssertionFailure,
 } from "./assert.js";
 export { compareArrays } from "./compare.js";
 export { delay } from "./delay.js";

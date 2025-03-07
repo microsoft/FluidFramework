@@ -19,7 +19,7 @@
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
-		"clean": "rimraf --glob dist lib bundleAnalysis \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"clean": "rimraf --glob dist lib bundleAnalysis \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"explore:tree": "npm run build && npm run webpack && source-map-explorer ./dist/sharedTree.js --html bundleAnalysis/reportTree.html",
@@ -29,6 +29,7 @@
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"prepack": "npm run webpack",
+		"test": "node ./lib/src/test/checkDebugAsserts.js",
 		"webpack": "webpack",
 		"webpack:profile": "npm run webpack"
 	},
@@ -73,6 +74,20 @@
 	"comments": [
 		"@cerner/duplicate-package-checker-webpack-plugin is pinned since newer version (2.3 through 2.6) refuse to work on NodeJS other than 10 || 12 || 14 due to https://github.com/cerner/terra-toolkit/issues/828"
 	],
+	"fluidBuild": {
+		"tasks": {
+			"webpack": {
+				"dependsOn": [
+					"build"
+				]
+			},
+			"test": {
+				"dependsOn": [
+					"webpack"
+				]
+			}
+		}
+	},
 	"typeValidation": {
 		"disabled": true,
 		"broken": {},

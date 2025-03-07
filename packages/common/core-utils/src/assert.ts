@@ -29,9 +29,13 @@
  * @legacy
  * @alpha
  */
-export function assert(condition: boolean, message: string | number): asserts condition {
+export function assert(
+	condition: boolean,
+	message: string | number,
+	debugMessageBuilder?: () => string,
+): asserts condition {
 	if (!condition) {
-		fail(message);
+		fail(message, debugMessageBuilder);
 	}
 }
 
@@ -50,16 +54,53 @@ export function assert(condition: boolean, message: string | number): asserts co
  * ```
  * @internal
  */
-export function fail(message: string | number): never {
-	throw new Error(
-		typeof message === "number" ? `0x${message.toString(16).padStart(3, "0")}` : message,
-	);
+export function fail(message: string | number, debugMessageBuilder?: () => string): never {
+	let messageString =
+		typeof message === "number" ? `0x${message.toString(16).padStart(3, "0")}` : message;
+	skipInProduction(() => {
+		if (debugMessageBuilder !== undefined) {
+			messageString = `${messageString}\nDebug Message:${debugMessageBuilder()}`;
+		}
+		console.error(`Bug in Fluid Framework: Failed Assertion: ${messageString}`);
+	});
+	const error = new Error(messageString);
+	onAssertionError(error);
+	throw error;
+}
+
+function onAssertionError(error: Error): void {
+	for (const handler of firstChanceAssertionHandler) {
+		handler(error);
+	}
+}
+
+const firstChanceAssertionHandler = new Set<(error: Error) => void>();
+
+/**
+ * Add a callback which can be used to report an assertion before it is thrown.
+ * @param handler - Called when an assertion occurs before the exception is thrown.
+ * @returns a function to remove the handler.
+ * @remarks
+ * This is mainly useful for triggering a `debugger;` statement and/or reporting telemetry to aid Fluid with diagnosing and fixing the bugs which cause asserts.
+ * It can also be used to record that an fatal error has occurred to help avoid complicating the diagnosis by doing more work after the error which might error again in a different way.
+ * @alpha
+ */
+export function onAssertionFailure(handler: (error: Error) => void): () => void {
+	// To avoid issues if the same callback is registered twice (mainly it not triggering twice and the first unregister removing it),
+	// generate a wrapper around the handler.
+	const wrapper = (error: Error): void => {
+		handler(error);
+	};
+	firstChanceAssertionHandler.add(wrapper);
+	return () => {
+		firstChanceAssertionHandler.delete(wrapper);
+	};
 }
 
 /**
  * Asserts that can be conditionally enabled in debug/development builds but will be optimized out of production builds.
  *
- * Disabled by default.
+ * Enabled by default.
  *
  * If the assert must be enforced/checked in production or enabled by default, use {@link assert} instead.
  *
@@ -97,18 +138,28 @@ export function debugAssert(predicate: () => true | { toString(): string }): voi
 			const result = predicate();
 			if (result !== true) {
 				debugger;
-				throw new Error(`Debug assert failed: ${result.toString()}`);
+				const error = new Error(`Debug assert failed: ${result.toString()}`);
+				onAssertionError(error);
+				throw error;
 			}
 		}
 	});
 }
 
-let debugAssertsEnabled = false;
+let debugAssertsEnabled = true;
 
 /**
  * Enables {@link debugAssert} validation.
  * @remarks
  * Throws if debugAsserts have been optimized out.
+ *
+ * Disabling debugAsserts has two main use cases:
+ *
+ * 1. Testing that the code behaves correctly in a more production like configuration.
+ * 2. Reducing performance overhead.
+ *
+ * Disabling debugAsserts does not make everything production like: see {@link emulateProductionBuild} for a way to disable more non-production code.
+ *
  * @returns The previous state of debugAsserts.
  * @internal
  */
@@ -127,7 +178,7 @@ export function configureDebugAsserts(enabled: boolean): boolean {
  * @remarks
  * Such code can be optimized out by bundlers: this checks if that has occurred.
  * @privateRemarks
- * See {@link skipInProduction}.
+ * See {@link skipInProductionInner}.
  * @internal
  */
 export function nonProductionConditionalsIncluded(): boolean {
@@ -136,6 +187,53 @@ export function nonProductionConditionalsIncluded(): boolean {
 		included = true;
 	});
 	return included;
+}
+
+/**
+ * Overrides the behavior code which optimizes out non-production conditional code like {@link debugAssert} and {@link nonProductionConditionalsIncluded}.
+ *
+ * Can be called multiple times. Will emulate production builds if called with `true` more times than `false`.
+ * Emulation of production builds is disabled when enabled and disabled counts match (including at 0, by default).
+ * It is an error to disabled this more than it was enabled.
+ *
+ * @remarks
+ * This is intended testing that the code behaves correctly in production configurations.
+ * Since tools like {@link debugAssert} typically add additional validation to help catch more bugs, tests should generally be run with such checks enabled (and thus emulateProductionBuild in its default disabled state).
+ * However it is possible that some debugAsserts could accidentally change behavior and hide a bug.
+ * Thus function provides a way to globally disable the debugAsserts so it is possible to run test suites in this mode without having to do a production bundling of them.
+ *
+ * To avoid introducing additional risk that code does production specific logic using this setting, the actual setting is not exposed.
+ * The intended use is that a pipeline could enable this before running the test suite (for example based on a CLI flag).
+ * Such a run may have to also use some filtering to skip any tests which explicity check development only tooling, possibly via {@link nonProductionConditionalsIncluded} or some other mechanism like a test tag.
+ *
+ * @privateRemarks
+ * See {@link skipInProduction}.
+ *
+ * This design, with a counter, was picked so that its always safe for some scope to opt in when trying to test production behavior,
+ * and it should be basically impossible to accidentally fail to test the production mode when trying to.
+ * Some tests or test suites may want to run in production mode and they can use this API to op in (via before and after hooks for example).
+ * Additionally something might want to opt into to production mode at some other level (for example test running the entire test suite again with production mode enabled).
+ * In such setups, its important that tests which were explicitly opting in don't accidentally disable production mode for the rest of the run when ending if something higher level enabled it.
+ *
+ * The approach taken with `configureDebugAsserts` is a bit more flexible, allowing both opt in and opt out, but also more error prone.
+ * This API, `emulateProductionBuild` provides a more restrictive but less error prone option targeted at being a final defense for detecting cases where production mode causes issues.
+ * It catches some cases `configureDebugAsserts` can't, like dependency on side effects of failing asserts debug message callback.
+ * @internal
+ */
+export function emulateProductionBuild(enable = true): void {
+	emulateProductionBuildCount += enable ? 1 : -1;
+	assert(
+		emulateProductionBuildCount >= 0,
+		"emulateProductionBuild disabled more than it was enabled",
+	);
+}
+
+let emulateProductionBuildCount = 0;
+
+function skipInProduction(conditional: () => void): void {
+	skipInProductionInner(() => {
+		if (emulateProductionBuildCount === 0) conditional();
+	});
 }
 
 /**
@@ -156,7 +254,7 @@ export function nonProductionConditionalsIncluded(): boolean {
 // Using the exact syntax from https://github.com/javascript-compiler-hints/compiler-notations-spec/blob/main/no-side-effects-notation-spec.md to maximize compatibility with tree-shaking tools.
 // eslint-disable-next-line spaced-comment
 /*#__NO_SIDE_EFFECTS__*/
-function skipInProduction(conditional: () => void): void {
+function skipInProductionInner(conditional: () => void): void {
 	// Here __PURE__ annotation is used to indicate that is is safe to optimize out this call.
 	// This is valid since the contract for this function is that "conditional" should be side effect free if it were run in production scenarios
 	// See https://webpack.js.org/guides/tree-shaking/#mark-a-function-call-as-side-effect-free for documentation on this annotation.

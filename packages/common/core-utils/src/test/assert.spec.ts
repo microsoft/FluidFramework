@@ -9,8 +9,10 @@ import {
 	assert,
 	configureDebugAsserts,
 	debugAssert,
+	emulateProductionBuild,
 	nonProductionConditionalsIncluded,
-} from "@fluidframework/core-utils/internal";
+	onAssertionFailure,
+} from "../assert.js";
 
 describe("assert", () => {
 	it("Validate Shortcode Format", () => {
@@ -28,24 +30,80 @@ describe("assert", () => {
 	it("debugAssert", () => {
 		strict.equal(nonProductionConditionalsIncluded(), true);
 
-		// debugAsserts are disabled by default
+		const log: string[] = [];
+		// debugAsserts are enabled by default
+		debugAssert(() => {
+			log.push("A");
+			return true;
+		});
+		strict.deepEqual(log, ["A"]);
+		strict.throws(() => debugAssert(() => "test"), /Debug assert failed: test/);
+		strict.throws(() => debugAssert(() => false), /Debug assert failed/);
+
+		strict.equal(configureDebugAsserts(false), true);
+
 		debugAssert(() => {
 			throw new Error("Should not run");
 		});
 
 		strict.equal(configureDebugAsserts(true), false);
-
-		debugAssert(() => true);
-		debugAssert(() => true);
-		strict.throws(() => debugAssert(() => "test"), /Debug assert failed: test/);
-		strict.throws(() => debugAssert(() => false), /Debug assert failed/);
-
-		strict.equal(configureDebugAsserts(true), true);
 		strict.equal(configureDebugAsserts(false), true);
-		strict.equal(configureDebugAsserts(false), false);
+		strict.equal(configureDebugAsserts(true), false);
 
 		debugAssert(() => {
+			log.push("B");
+			return true;
+		});
+
+		emulateProductionBuild(true);
+		debugAssert(() => {
+			log.push("C");
+			return false;
+		});
+		emulateProductionBuild(false);
+
+		strict.deepEqual(log, ["A", "B"]);
+	});
+
+	it("assert", () => {
+		assert(true, "message", () => {
 			throw new Error("Should not run");
 		});
+		strict.throws(() => assert(false, "message", () => "test"), "message\ntest");
+
+		strict.equal(configureDebugAsserts(false), true);
+
+		const log: string[] = [];
+		emulateProductionBuild(true);
+		strict.throws(
+			() =>
+				assert(false, "message", () => {
+					log.push("X");
+					return "X";
+				}),
+			"Error: message",
+		);
+		emulateProductionBuild(false);
+
+		strict.deepEqual(log, []);
+	});
+
+	it("onAssertionFailure", () => {
+		const log: string[] = [];
+		const handler = (error: Error): void => {
+			log.push(error.message);
+		};
+		const removeListener = onAssertionFailure(handler);
+		strict.throws(() => assert(false, "A", () => "Extra"));
+
+		const removeListener2 = onAssertionFailure(handler);
+
+		strict.throws(() => assert(false, "B"));
+		removeListener();
+		strict.throws(() => assert(false, "C"));
+		removeListener2();
+		strict.throws(() => assert(false, "D"));
+
+		strict.deepEqual(log, ["A\nDebug Message:Extra", "B", "B", "C"]);
 	});
 });
