@@ -17,6 +17,7 @@ import {
 	WholeSummaryUploadManager,
 	ISession,
 	getGlobalTimeoutContext,
+	toUtf8,
 } from "@fluidframework/server-services-client";
 import {
 	ICollection,
@@ -32,7 +33,6 @@ import {
 	SequencedOperationType,
 } from "@fluidframework/server-services-core";
 import * as winston from "winston";
-import { toUtf8 } from "@fluidframework/common-utils";
 import {
 	BaseTelemetryProperties,
 	CommonProperties,

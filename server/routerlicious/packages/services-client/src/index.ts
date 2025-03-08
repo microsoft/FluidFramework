@@ -15,6 +15,8 @@ export {
 	mergeKArrays,
 	mergeSortedArrays,
 } from "./array";
+// eslint-disable-next-line no-restricted-syntax
+export * from "./common-utils";
 export {
 	CorrelationIdHeaderName,
 	DriverVersionHeaderName,

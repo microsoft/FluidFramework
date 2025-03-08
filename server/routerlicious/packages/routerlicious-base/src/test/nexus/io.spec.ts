@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { Deferred } from "@fluidframework/common-utils";
 import {
 	IClientJoin,
 	IConnect,
@@ -30,6 +29,7 @@ import {
 	clientConnectivityStorageId,
 	DefaultMetricClient,
 	DefaultServiceConfiguration,
+	Deferred,
 	IClientManager,
 	IOrdererManager,
 	MongoDatabaseManager,

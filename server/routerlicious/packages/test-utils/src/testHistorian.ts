@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { gitHashFile, IsoBuffer } from "@fluidframework/common-utils";
 import {
 	IAuthor,
 	IBlob,
@@ -30,6 +29,8 @@ import {
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,
 	NetworkError,
+	gitHashFile,
+	IsoBuffer,
 } from "@fluidframework/server-services-client";
 import { ICollection, IDb } from "@fluidframework/server-services-core";
 import { v4 as uuid } from "uuid";

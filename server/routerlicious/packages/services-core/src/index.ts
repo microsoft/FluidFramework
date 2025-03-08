@@ -33,6 +33,8 @@ export {
 	IRetryable,
 	isRetryEnabled,
 } from "./database";
+export { Deferred } from "./deferred";
+export { delay } from "./delay";
 export { IDeltaService } from "./delta";
 export {
 	IClientSequenceNumber,
@@ -161,6 +163,17 @@ export {
 	ThrottlingError,
 } from "./throttler";
 export { TokenGenerator } from "./token";
+export {
+	TypedEventEmitter,
+	TypedEventTransform,
+	IEvent,
+	IEventProvider,
+	IEventTransformer,
+	TransformedEvent,
+	EventEmitterEventType,
+	IEventThisPlaceHolder,
+	ReplaceIEventThisPlaceHolder,
+} from "./typedEventEmitter";
 export {
 	clientConnectivityStorageId,
 	IUsageData,

@@ -5,6 +5,7 @@
 
 import { ISession, isNetworkError, NetworkError } from "@fluidframework/server-services-client";
 import {
+	delay,
 	IDocument,
 	runWithRetry,
 	IDocumentRepository,
@@ -12,7 +13,6 @@ import {
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { StageTrace } from "./trace";
-import { delay } from "@fluidframework/common-utils";
 
 const defaultSessionStickinessDurationMs = 60 * 60 * 1000; // 60 minutes
 

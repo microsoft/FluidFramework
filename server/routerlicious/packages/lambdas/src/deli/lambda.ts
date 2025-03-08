@@ -55,6 +55,7 @@ import {
 	ISequencedSignalClient,
 	IClientManager,
 	ICheckpointService,
+	TypedEventEmitter,
 } from "@fluidframework/server-services-core";
 import {
 	CommonProperties,
@@ -64,7 +65,6 @@ import {
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
 import { DocumentContext } from "@fluidframework/server-lambdas-driver";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IEvent } from "../events";
 import {
 	logCommonSessionEndMetrics,
