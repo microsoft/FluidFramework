@@ -61,7 +61,7 @@ module.exports = {
 			script: false,
 		},
 		"checks": {
-			dependsOn: ["check:format"],
+			dependsOn: ["check:format", "check:knip"],
 			script: false,
 		},
 		"checks:fix": {
@@ -129,6 +129,7 @@ module.exports = {
 		},
 		"check:biome": [],
 		"check:prettier": [],
+		"check:knip": [],
 		// ADO #7297: Review why the direct dependency on 'build:esm:test' is necessary.
 		//            Should 'compile' be enough?  compile -> build:test -> build:test:esm
 		"eslint": ["compile", "build:test:esm"],
@@ -160,6 +161,11 @@ module.exports = {
 
 	multiCommandExecutables: ["oclif", "syncpack"],
 	declarativeTasks: {
+		"knip": {
+			inputGlobs: ["*.*", "src/**"],
+			outputGlobs: ["*.*", "src/**"],
+			gitignore: ["input", "output"],
+		},
 		// fluid-build lowercases the executable name, so we need to use buildversion instead of buildVersion.
 		"flub check buildversion": {
 			inputGlobs: [
@@ -533,6 +539,7 @@ module.exports = {
 				["flub", "@fluid-tools/build-cli"],
 				["fluid-build", "@fluidframework/build-tools"],
 				["gf", "good-fences"],
+				["knip", "knip"],
 				["mocha", "mocha"],
 				["nyc", "nyc"],
 				["oclif", "oclif"],
