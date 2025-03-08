@@ -20,9 +20,9 @@ import type {
 	ISnapshotTree,
 	ISummaryContent,
 	IVersion,
-	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 
 import type { IAudience } from "./audience.js";
 import type { IDeltaManager } from "./deltas.js";
@@ -293,4 +293,14 @@ export interface IGetPendingLocalStateProps {
 	 * Snapshot sequence number. It will help the runtime to know which ops should still be stashed.
 	 */
 	readonly snapshotSequenceNumber?: number;
+}
+
+/**
+ * Tells if message was sent by container runtime
+ * @returns whether the message is a runtime message
+ * @internal
+ */
+export function isRuntimeMessage(message: { type: string }): boolean {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+	return message.type === MessageType.Operation;
 }

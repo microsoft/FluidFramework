@@ -6,7 +6,10 @@
 import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import {
+	IDeltaManager,
+	isRuntimeMessage,
+} from "@fluidframework/container-definitions/internal";
 import {
 	IContainerRuntimeEvents,
 	type ISummarizeEventProps,
@@ -26,7 +29,6 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 import sinon from "sinon";
