@@ -103,7 +103,6 @@ export class SnapshotLoader {
 		return [];
 	}
 
-	// TODO: This method should translate existing wire format to new in-memory stuff
 	private readonly specToSegment = (
 		spec: IJSONSegment | IJSONSegmentWithMergeInfo,
 	): SegmentWithInfo<IHasInsertionInfo> => {

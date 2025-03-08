@@ -3,49 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { UnassignedSequenceNumber } from "./constants.js";
 import { type MergeTree } from "./mergeTree.js";
 import { LeafAction, backwardExcursion, forwardExcursion } from "./mergeTreeNodeWalk.js";
-import { seqLTE, timestampUtils, type ISegmentLeaf } from "./mergeTreeNodes.js";
-import {
-	isInserted,
-	isRemoved,
-	type IHasInsertionInfo,
-	type IHasRemovalInfo,
-	type SegmentWithInfo,
-} from "./segmentInfos.js";
+import { seqLTE, type ISegmentLeaf } from "./mergeTreeNodes.js";
+import { isInserted, isRemoved } from "./segmentInfos.js";
 
-/**
- * Provides a view of a MergeTree from the perspective of a specific client at a specific sequence number.
- */
 export interface Perspective {
-	nextSegment(segment: ISegmentLeaf, forward?: boolean): ISegmentLeaf;
-	previousSegment(segment: ISegmentLeaf): ISegmentLeaf;
+	readonly refSeq: number;
+	readonly clientId: number;
+	readonly localSeq?: number;
+	isSegmentPresent(segment: ISegmentLeaf): boolean;
+
+	nextSegment(mergeTree: MergeTree, segment: ISegmentLeaf, forward?: boolean): ISegmentLeaf;
+	previousSegment(mergeTree: MergeTree, segment: ISegmentLeaf): ISegmentLeaf;
+	// May want this instead of letting merge-tree calculate it? Or maybe not. This is nice and self contained.
+	// lengthOf(segment: ISegmentLeaf): number | undefined;
 }
 
-/**
- * Represents a point in time inside the collaboration window.
- */
-export interface SeqTime {
-	refSeq: number;
-	localSeq?: number;
-}
-
-/**
- * Implementation of {@link Perspective}.
- * @privateRemarks
- * TODO:AB#29765: This class does not support non-local-client perspectives, but should.
- */
-export class PerspectiveImpl implements Perspective {
-	/**
-	 * @param _mergeTree - The {@link MergeTree} to view.
-	 * @param _seqTime - The latest sequence number and local sequence number to consider.
-	 */
-	public constructor(
-		private readonly _mergeTree: MergeTree,
-		private readonly _seqTime: SeqTime,
-	) {}
-
+abstract class PerspectiveBase {
+	abstract isSegmentPresent(seg: ISegmentLeaf): boolean;
 	/**
 	 * Returns the immediately adjacent segment in the specified direction from this perspective.
 	 * There may actually be multiple segments between the given segment and the returned segment,
@@ -55,16 +31,20 @@ export class PerspectiveImpl implements Perspective {
 	 * @param forward - The direction to search.
 	 * @returns the next segment in the specified direction, or the start or end of the tree if there is no next segment.
 	 */
-	public nextSegment(segment: ISegmentLeaf, forward: boolean = true): ISegmentLeaf {
+	public nextSegment(
+		mergeTree: MergeTree,
+		segment: ISegmentLeaf,
+		forward: boolean = true,
+	): ISegmentLeaf {
 		let next: ISegmentLeaf | undefined;
 		const action = (seg: ISegmentLeaf): boolean | undefined => {
-			if (isSegmentPresent(seg, this._seqTime)) {
+			if (this.isSegmentPresent(seg)) {
 				next = seg;
 				return LeafAction.Exit;
 			}
 		};
 		(forward ? forwardExcursion : backwardExcursion)(segment, action);
-		return next ?? (forward ? this._mergeTree.endOfTree : this._mergeTree.startOfTree);
+		return next ?? (forward ? mergeTree.endOfTree : mergeTree.startOfTree);
 	}
 
 	/**
@@ -73,85 +53,93 @@ export class PerspectiveImpl implements Perspective {
 	 * @returns the previous segment, or the start of the tree if there is no previous segment.
 	 * @remarks This is a convenient equivalent to calling `nextSegment(segment, false)`.
 	 */
-	public previousSegment(segment: ISegmentLeaf): ISegmentLeaf {
-		return this.nextSegment(segment, false);
+	public previousSegment(mergeTree: MergeTree, segment: ISegmentLeaf): ISegmentLeaf {
+		return this.nextSegment(mergeTree, segment, false);
 	}
 }
 
 /**
- * Determines if the given segment was removed before the given perspective.
- * @param seg - The segment to check.
- * @param seq - The latest sequence number to consider.
- * @param localSeq - The latest local sequence number to consider.
- * @returns true iff this segment was removed in the given perspective.
- * @privateRemarks
- * TODO:AB#29765: This function does not support non-local-client perspectives, but should.
+ * A perspective which includes edits at or before some reference sequence number alongside all edits from some particular client.
+ *
+ * @remarks
+ * This works for both the local client as well as remote clients since refSeq-based checks disallow unacked edits, but the clientId check
+ * catches unacked edits from the local client.
  */
-export function wasRemovedBefore(
-	seg: SegmentWithInfo<IHasInsertionInfo & IHasRemovalInfo>,
-	{ refSeq, localSeq }: SeqTime,
-): boolean {
-	const firstRemove = seg.removes?.[0];
-	if (firstRemove === undefined) {
-		return false;
+export class PriorPerspective extends PerspectiveBase implements Perspective {
+	public constructor(
+		public readonly refSeq: number,
+		public readonly clientId: number,
+	) {
+		super();
 	}
 
-	if (timestampUtils.isLocal(firstRemove) && localSeq !== undefined) {
-		return firstRemove.localSeq! <= localSeq;
-	}
-
-	return seqLTE(firstRemove.seq, refSeq);
-}
-
-/**
- * See {@link wasRemovedBefore} and {@link wasMovedBefore}.
- * @privateRemarks
- * TODO:AB#29765: This function does not support non-local-client perspectives, but should.
- */
-export function wasRemovedOrMovedBefore(seg: ISegmentLeaf, seqTime: SeqTime): boolean {
-	return isInserted(seg) && isRemoved(seg) && wasRemovedBefore(seg, seqTime);
-}
-
-/**
- * Determines if the given segment is present in the given perspective.
- * @param seg - The segment to check.
- * @param seqTime - The latest sequence number and local sequence number to consider.
- * @returns true iff this segment was inserted before the given perspective,
- * and it was not removed or moved in the given perspective.
- * @privateRemarks
- * TODO:AB#29765: This function does not support non-local-client perspectives, but should.
- */
-export function isSegmentPresent(seg: ISegmentLeaf, seqTime: SeqTime): boolean {
-	const { refSeq, localSeq } = seqTime;
-	// If seg.seq is undefined, then this segment has existed since minSeq.
-	// It may have been moved or removed since.
-	if (isInserted(seg)) {
-		// TODO: This function should be replaceable with things in the spirit of the following:
-		// if (
-		// 	timestampUtils.greaterThan(seg.insert, {
-		// 		seq: refSeq,
-		// 		clientId: NonCollabClient,
-		// 		localSeq,
-		// 	})
-		// ) {
-		// 	return false;
-		// }
-		// However, it may need some special casing for the local client + unassigned seqs similar to what we have in localNetLength...
-		if (seg.insert.seq !== UnassignedSequenceNumber) {
-			if (!seqLTE(seg.insert.seq, refSeq)) {
+	public isSegmentPresent(seg: ISegmentLeaf): boolean {
+		// If seg.seq is undefined, then this segment has existed since minSeq.
+		// It may have been moved or removed since.
+		if (isInserted(seg)) {
+			const visibleViaRefSeq = seqLTE(seg.insert.seq, this.refSeq);
+			const visibleViaSameClient = seg.insert.clientId === this.clientId;
+			if (!visibleViaRefSeq && !visibleViaSameClient) {
 				return false;
 			}
-		} else if (
-			seg.insert.localSeq !== undefined && // seg.seq === UnassignedSequenceNumber
-			// If the current perspective does not include local sequence numbers,
-			// then this segment does not exist yet.
-			(localSeq === undefined || seg.insert.localSeq > localSeq)
-		) {
-			return false;
 		}
+
+		if (isRemoved(seg)) {
+			const removalViaRefSeq = seqLTE(seg.removes[0].seq, this.refSeq);
+			if (removalViaRefSeq) {
+				return false;
+			}
+			const removalViaSameClient = seg.removes.some(
+				({ clientId }) => clientId === this.clientId,
+			);
+			return !removalViaSameClient;
+		}
+
+		return true;
 	}
-	if (wasRemovedOrMovedBefore(seg, seqTime)) {
-		return false;
+}
+
+/**
+ * A perspective which includes edits which were either:
+ * - acked and at or before some reference sequence number
+ * - unacked, but at or before some local sequence number
+ *
+ * This is a useful perspective when the local client is in the process of reconnecting, since it must
+ * rederive positions for unacked ops while only considering a portion of its own edits as having been applied.
+ */
+export class LocalReconnectingPerspective extends PerspectiveBase implements Perspective {
+	public constructor(
+		public readonly refSeq: number,
+		public readonly clientId: number,
+		public readonly localSeq: number,
+	) {
+		super();
 	}
-	return true;
+
+	public isSegmentPresent(seg: ISegmentLeaf): boolean {
+		if (isInserted(seg)) {
+			const visibleViaRefSeq = seqLTE(seg.insert.seq, this.refSeq);
+			const visibleViaLocalSeq =
+				seg.insert.localSeq !== undefined && seg.insert.localSeq <= this.localSeq;
+			if (!visibleViaRefSeq && !visibleViaLocalSeq) {
+				return false;
+			}
+		}
+
+		if (isRemoved(seg)) {
+			const removalViaRefSeq = seqLTE(seg.removes[0].seq, this.refSeq);
+			if (removalViaRefSeq) {
+				return false;
+			}
+
+			const lastRemove = seg.removes[seg.removes.length - 1];
+			const removalViaLocalSeq =
+				lastRemove.localSeq !== undefined && lastRemove.localSeq <= this.localSeq;
+			if (removalViaLocalSeq) {
+				return false;
+			}
+		}
+
+		return true;
+	}
 }

@@ -79,7 +79,7 @@ import {
 	ReferenceType,
 } from "./ops.js";
 import { PartialSequenceLengths } from "./partialLengths.js";
-import { PerspectiveImpl, isSegmentPresent } from "./perspective.js";
+import { PriorPerspective, LocalReconnectingPerspective } from "./perspective.js";
 import { PropertySet, createMap, extend, extendIfUndefined } from "./properties.js";
 import {
 	DetachedReferencePosition,
@@ -1153,10 +1153,6 @@ export class MergeTree {
 					node.insert.clientId === clientId
 					? segment.cachedLength
 					: 0;
-				// TODO: Why is there a ?? 0 here?
-				// return seqLTE(node.seq ?? 0, refSeq) || segment.insert.clientId === clientId
-				// 	? segment.cachedLength
-				// 	: 0;
 			} else {
 				const partialLen = node.partialLengths!.getPartialLength(refSeq, clientId);
 
@@ -1203,7 +1199,7 @@ export class MergeTree {
 		// from within event handlers, and the collab window's sequence numbers are not updated in time in all of those cases.
 		refSeq = Number.MAX_SAFE_INTEGER,
 		clientId = this.collabWindow.clientId,
-		localSeq: number | undefined = this.collabWindow.localSeq,
+		localSeq: number | undefined = undefined,
 	): number {
 		const seg = refPos.getSegment();
 		if (seg === undefined || !isSegmentLeaf(seg)) {
@@ -1214,10 +1210,15 @@ export class MergeTree {
 			return this.getPosition(seg, refSeq, clientId, localSeq);
 		}
 		if (refTypeIncludesFlag(refPos, ReferenceType.Transient) || seg.localRefs?.has(refPos)) {
+			// TODO: Most of the time we actually have refSeq at the default value, which we could optimize for further.
+			const perspective =
+				localSeq !== undefined
+					? new LocalReconnectingPerspective(refSeq, this.collabWindow.clientId, localSeq)
+					: new PriorPerspective(refSeq, this.collabWindow.clientId);
 			if (
 				seg !== this.startOfTree &&
 				seg !== this.endOfTree &&
-				!isSegmentPresent(seg, { refSeq, localSeq })
+				!perspective.isSegmentPresent(seg)
 			) {
 				const forward = refPos.slidingPreference === SlidingPreference.FORWARD;
 				const removeInfo = toRemovalInfo(seg);
@@ -1228,11 +1229,16 @@ export class MergeTree {
 						? firstMove.seq
 						: refSeq;
 
-				const perspective = new PerspectiveImpl(this, {
-					refSeq: slideSeq,
-					localSeq: lastMove?.localSeq,
-				});
-				const slidSegment = perspective.nextSegment(seg, forward);
+				const perspective =
+					lastMove?.localSeq === undefined
+						? new PriorPerspective(slideSeq, this.collabWindow.clientId)
+						: new LocalReconnectingPerspective(
+								slideSeq,
+								this.collabWindow.clientId,
+								lastMove.localSeq,
+							);
+
+				const slidSegment = perspective.nextSegment(this, seg, forward);
 				return (
 					this.getPosition(slidSegment, refSeq, clientId, localSeq) +
 					(forward ? 0 : slidSegment.cachedLength === 0 ? 0 : slidSegment.cachedLength - 1)
@@ -2093,15 +2099,12 @@ export class MergeTree {
 			this.pendingSegments.push(obliterate.segmentGroup);
 		}
 		this.obliterates.addOrUpdate(obliterate);
+		const perspective = new PriorPerspective(refSeq, stamp.clientId);
 
 		const markMoved = (segment: ISegmentLeaf, pos: number): boolean => {
 			if (
 				(start.side === Side.After && startPos === pos + segment.cachedLength) || // exclusive start segment
-				(end.side === Side.Before &&
-					endPos === pos &&
-					// TODO:AB#29765: The clientId check here should be handled by isSegmentPresent and/or PerspectiveImpl
-					(segment.insert.clientId === stamp.clientId ||
-						isSegmentPresent(segment, { refSeq, localSeq: stamp.localSeq }))) // exclusive end segment
+				(end.side === Side.Before && endPos === pos && perspective.isSegmentPresent(segment)) // exclusive end segment
 			) {
 				// We walk these segments because we want to also walk any concurrently inserted segments between here and the obliterated segments.
 				// These segments are outside of the obliteration range though, so return true to keep walking.
