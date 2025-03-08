@@ -7,7 +7,7 @@ parameters:
 # The node version required. The version must already be installed in the image.
 - name: version
   type: string
-  default: '18.17.1'
+  default: '18.20.7'
 
 steps:
 - task: Bash@3
