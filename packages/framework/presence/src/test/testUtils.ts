@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { InternalUtilityTypes } from "@fluidframework/core-interfaces/internal";
 import type { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { getUnexpectedLogErrorException } from "@fluidframework/test-utils/internal";
 import type { SinonFakeTimers } from "sinon";
@@ -13,7 +14,6 @@ import type { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
 import type { ClientConnectionId, ClientSessionId } from "@fluidframework/presence/alpha";
 import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
-import type { InternalUtilityTypes } from "@fluidframework/presence/internal/core-interfaces";
 
 /**
  * Use to compile-time assert types of two variables are identical.

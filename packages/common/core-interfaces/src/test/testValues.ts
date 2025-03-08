@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { assertIdenticalTypes } from "./testUtils.js";
+
 import type { IFluidHandle, IFluidHandleErased } from "@fluidframework/core-interfaces";
 import { fluidHandleSymbol } from "@fluidframework/core-interfaces";
-
-import type { JsonTypeWith } from "../../core-interfaces/index.js";
-
-import { assertIdenticalTypes } from "./testUtils.js";
+import type { JsonTypeWith } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 /* eslint-disable jsdoc/require-jsdoc */
 /* eslint-disable unicorn/no-null */
@@ -85,6 +84,8 @@ export const arrayOfBigintAndObjects: (bigint | { property: string })[] = [
 ];
 export const arrayOfSymbolsAndObjects: (symbol | { property: string })[] = [Symbol("symbol")];
 
+export const readonlyArrayOfNumbers: readonly number[] = arrayOfNumbers;
+
 // #endregion
 
 // #region Object (record) types
@@ -113,6 +114,12 @@ export const objectWithOptionalBigint: { bigint?: bigint } = { bigint: 0n };
 
 export const objectWithNumberKey = { 3: "value" };
 export const objectWithSymbolKey = { [symbol]: "value" };
+
+export const objectWithUnknown = { unknown: "value" as unknown };
+interface ObjectWithOptionalUnknown {
+	optUnknown?: unknown;
+}
+export const objectWithOptionalUnknown: ObjectWithOptionalUnknown = { optUnknown: "value" };
 
 export const objectWithUndefined = {
 	undef: undefined,
@@ -242,11 +249,11 @@ export const objectWithPossibleRecursion: ObjectWithPossibleRecursion = {
 type ObjectWithOptionalRecursion = {
 	recursive?: ObjectWithOptionalRecursion;
 };
-export const objectWithRecursion: ObjectWithOptionalRecursion = {
+export const objectWithOptionalRecursion: ObjectWithOptionalRecursion = {
 	recursive: {},
 };
 export const objectWithEmbeddedRecursion = {
-	outer: objectWithRecursion,
+	outer: objectWithOptionalRecursion,
 };
 export const objectWithSelfReference: ObjectWithOptionalRecursion = {};
 objectWithSelfReference.recursive = objectWithSelfReference;
@@ -274,12 +281,38 @@ export const objectWithSymbolOrRecursion: ObjectWithSymbolOrRecursion = {
 	recurse: { recurse: Symbol("stop") },
 };
 
-export type ObjectWithFluidHandleOrRecursion = {
+type ObjectWithFluidHandleOrRecursion = {
 	recurseToHandle: ObjectWithFluidHandleOrRecursion | IFluidHandle<string>;
 };
 export const objectWithFluidHandleOrRecursion: ObjectWithFluidHandleOrRecursion = {
 	recurseToHandle: { recurseToHandle: "fake-handle" as unknown as IFluidHandle<string> },
 };
+
+export const objectWithUnknownAdjacentToOptionalRecursion = {
+	unknown: unknownValueOfSimpleRecord,
+	outer: objectWithOptionalRecursion,
+};
+type ObjectWithOptionalUnknownAdjacentToOptionalRecursion = {
+	unknown?: unknown;
+	outer: ObjectWithOptionalRecursion;
+};
+export const objectWithOptionalUnknownAdjacentToOptionalRecursion: ObjectWithOptionalUnknownAdjacentToOptionalRecursion =
+	objectWithUnknownAdjacentToOptionalRecursion;
+type ObjectWithUnknownInOptionalRecursion = {
+	unknown: unknown;
+	recurse?: ObjectWithUnknownInOptionalRecursion;
+};
+export const objectWithUnknownInOptionalRecursion: ObjectWithUnknownInOptionalRecursion = {
+	unknown: 458,
+	recurse: { unknown: "nested-value" },
+};
+
+type ObjectWithOptionalUnknownInOptionalRecursion = {
+	unknown?: unknown;
+	recurse?: ObjectWithOptionalUnknownInOptionalRecursion;
+};
+export const objectWithOptionalUnknownInOptionalRecursion: ObjectWithOptionalUnknownInOptionalRecursion =
+	objectWithUnknownInOptionalRecursion;
 
 export type SelfRecursiveFunctionWithProperties = (() => number) & {
 	recurse?: SelfRecursiveFunctionWithProperties;
@@ -403,9 +436,39 @@ export const classInstanceWithPublicDataAndIsFunction = Object.assign(
 	() => 26,
 );
 
+// #region Common Class types
+
+export const mapOfStringsToNumbers = new Map<string, number>();
+export const readonlyMapOfStringsToNumbers: ReadonlyMap<string, number> =
+	mapOfStringsToNumbers;
+export const setOfNumbers = new Set<number>();
+export const readonlySetOfNumbers: ReadonlySet<number> = setOfNumbers;
+
 // #endregion
 
-// #region Union types
+// #endregion
+
+// #region Branded types
+
+declare class BrandedType<Brand> {
+	protected readonly brand: (dummy: never) => Brand;
+	private constructor();
+	public static [Symbol.hasInstance](value: never): value is never;
+}
+
+export const brandedNumber = 0 as number & BrandedType<"zero">;
+export const brandedString = "encoding" as string & BrandedType<"encoded">;
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+export const brandedObject = {} as object & BrandedType<"its a secret">;
+export const brandedObjectWithString = objectWithString as typeof objectWithString &
+	BrandedType<"metadata">;
+
+export const objectWithBrandedNumber = { brandedNumber };
+export const objectWithBrandedString = { brandedString };
+
+// #endregion
+
+// #region Fluid types
 
 export const fluidHandleToNumber: IFluidHandle<number> = {
 	isAttached: false,

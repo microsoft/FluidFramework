@@ -3,23 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
+import type { InternalUtilityTypes } from "./exposedInternalUtilityTypes.js";
 
 /**
  * Options for {@link JsonSerializable}.
  *
- * @alpha
+ * @beta
  */
 export interface JsonSerializableOptions {
 	/**
-	 * Exact types that are managed by custom serialization logic (beyond
+	 * Tuple of exact types that are managed by custom serialization logic (beyond
 	 * {@link https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify|JSON.stringify}
 	 * without a replacer). Only exact types matching specification will be
 	 * preserved unaltered.
 	 *
-	 * The default value is `never`.
+	 * The default value is `[]`.
 	 */
-	AllowExactly?: unknown;
+	AllowExactly?: unknown[];
 
 	/**
 	 * General types that are managed by custom serialization logic (beyond
@@ -79,7 +79,7 @@ export interface JsonSerializableOptions {
  *
  * - Getter and setters properties are lost. (Though appear supported.)
  *
- * - Functions with properties may be absent or the properties may be perserved
+ * - Functions with properties may be absent or the properties may be preserved
  * depending on the runtime typo of the value. (If built via Object.assign the
  * target member's type is preserved.) typeof =\> 'function' is lost whereas when
  * typeof =\> 'object' the properties are preserved.
@@ -94,12 +94,18 @@ export interface JsonSerializableOptions {
  *
  * Class instances are indistinguishable from general objects by type checking
  * unless they have non-public members.
- * Unless `Option.IgnoreInaccessibleMembers` is used, types with non-public
+ *
+ * - Unless `Option.IgnoreInaccessibleMembers` is used, types with non-public
  * members will result in {@link SerializationErrorPerNonPublicProperties}.
  * When `Option.IgnoreInaccessibleMembers` is `ignore-inaccessible-members`,
  * non-public (non-function) members are preserved without error, but they are
  * filtered away by the type filters and thus produce an incorrectly narrowed
  * type compared to actual data. Though such a result may be customer desired.
+ *
+ * - An exception is made for classes  that are intersected with primitives
+ * (specifically `boolean`, `number`, * and `string`). In these cases, it is
+ * assumed that the class only exists as a type modifier and not as a value
+ * at runtime, and thus the class is permitted as no serialization is required.
  *
  * Perhaps a https://github.com/microsoft/TypeScript/issues/22677 fix will
  * enable better support.
@@ -116,12 +122,12 @@ export interface JsonSerializableOptions {
  * proper use, that will never be an issue as any filtering of types will happen
  * before T recursion.
  *
- * @alpha
+ * @beta
  */
 export type JsonSerializable<
 	T,
 	Options extends JsonSerializableOptions = {
-		AllowExactly: never;
+		AllowExactly: [];
 		AllowExtensionOf: never;
 	},
 > = InternalUtilityTypes.JsonSerializableImpl<T, Options>;

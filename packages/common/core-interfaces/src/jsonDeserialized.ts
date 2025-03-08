@@ -3,23 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
+import type { InternalUtilityTypes } from "./exposedInternalUtilityTypes.js";
 
 /**
  * Options for {@link JsonDeserialized}.
  *
- * @alpha
+ * @beta
  */
 export interface JsonDeserializedOptions {
 	/**
-	 * Exact types that are managed by custom deserialization logic (beyond
+	 * Tuple of exact types that are managed by custom deserialization logic (beyond
 	 * {@link https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse|JSON.parse}
 	 * without a reviver). Only exact types matching specification will be
 	 * preserved unaltered.
 	 *
-	 * The default value is `never`.
+	 * The default value is `[]`.
 	 */
-	AllowExactly?: unknown;
+	AllowExactly?: unknown[];
 
 	/**
 	 * General types that are managed by custom deserialization logic (beyond
@@ -88,11 +88,14 @@ export interface JsonDeserializedOptions {
  * Recursive types without any required modification are preserved intact.
  * Recursive types that require modification are unrolled a limited number of
  * times (currently 4) and then further instances of recursion are replaced with
- * {@link JsonTypeWith|JsonTypeWith<Options.AllowExactly "or" Options.AllowExtensionOf>}.
+ * {@link JsonTypeWith|JsonTypeWith<Options.AllowExactly[number] "or" Options.AllowExtensionOf>}.
  *
  * Under basic serialization, class instances become simple data objects that
  * lose hidden properties and prototypes that are required for `instanceof`
- * runtime checks.
+ * runtime checks. An exception is made for classes that are intersected with
+ * primitive types (specifically `boolean`, `string`, and `number`) under the
+ * assumption that such classes are present only as type modifiers (as would
+ * be the case for branding) and not as require runtime values.
  *
  * The optional 'Options.AllowExactly' and 'Options.AllowExtensionOf'
  * parameters may be used to permit additional leaf types handled by custom
@@ -104,12 +107,12 @@ export interface JsonDeserializedOptions {
  * function foo<T>(): JsonDeserialized<T> { ... }
  * ```
  *
- * @alpha
+ * @beta
  */
 export type JsonDeserialized<
 	T,
 	Options extends JsonDeserializedOptions = {
-		AllowExactly: never;
+		AllowExactly: [];
 		AllowExtensionOf: never;
 	},
 > = InternalUtilityTypes.JsonDeserializedImpl<T, Options>;
