@@ -9,6 +9,13 @@ import { SharedTreeCore } from "../../shared-tree-core/index.js";
 import { SummarizeType, TestTreeProvider, spyOnMethod } from "../utils.js";
 
 describe("TestTreeProvider", () => {
+	it("can create 1", async () => {
+		const provider = await TestTreeProvider.create(1);
+	});
+	it("can create 2", async () => {
+		const provider = await TestTreeProvider.create(2);
+	});
+
 	it("can manually trigger summaries with summarizeOnDemand", async () => {
 		let summaryCount = 0;
 		const unspy = spyOnMethod(SharedTreeCore, "summarizeCore", () => {
