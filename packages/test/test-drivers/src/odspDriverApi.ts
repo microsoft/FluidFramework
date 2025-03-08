@@ -12,6 +12,7 @@ import {
 import {
 	OdspDocumentServiceFactory,
 	OdspDriverUrlResolver,
+	// eslint-disable-next-line import/no-deprecated
 	createOdspCreateContainerRequest,
 	createOdspUrl,
 } from "@fluidframework/odsp-driver/internal";
@@ -31,6 +32,7 @@ export const OdspDriverApi = {
 	version: pkgVersion,
 	OdspDocumentServiceFactory,
 	OdspDriverUrlResolver,
+	// eslint-disable-next-line import/no-deprecated
 	createOdspCreateContainerRequest,
 	createOdspUrl, // REVIEW: does this need to be back compat?
 };
