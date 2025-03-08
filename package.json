@@ -86,8 +86,10 @@
 		"start:docker": "docker-compose -f server/docker-compose.yml up",
 		"stop:docker": "docker-compose -f server/docker-compose.yml down",
 		"stop:docker:full": "docker-compose -f server/docker-compose.yml down && docker volume prune --force",
+		"syncpack": "npm run syncpack:deps && npm run syncpack:versions",
 		"syncpack:deps": "syncpack lint-semver-ranges",
 		"syncpack:deps:fix": "syncpack set-semver-ranges",
+		"syncpack:fix": "npm run syncpack:deps:fix && npm run syncpack:versions:fix",
 		"syncpack:versions": "syncpack list-mismatches",
 		"syncpack:versions:fix": "syncpack fix-mismatches",
 		"test": "npm run test:mocha && npm run test:jest && npm run test:realsvc && npm run test:stress",
@@ -182,7 +184,7 @@
 		"puppeteer": "^23.6.0",
 		"rimraf": "^4.4.0",
 		"run-script-os": "^1.1.6",
-		"syncpack": "14.0.0-alpha.9",
+		"syncpack": "^13.0.2",
 		"ts2esm": "^1.4.0",
 		"typescript": "~5.4.5"
 	},
@@ -190,6 +192,54 @@
 	"engines": {
 		"node": ">=18.17.1",
 		"pnpm": "9"
+	},
+	"pnpm": {
+		"peerDependencyRules": {
+			"allowedVersions": {
+				"react": "18.3.1",
+				"react-dom": "18.3.1",
+				"webpack": "^5.94.0"
+			},
+			"ignoreMissing": [
+				"@types/node",
+				"fluid-framework",
+				"markdown-magic",
+				"@aws-sdk/*"
+			]
+		},
+		"overrides": {
+			"@fluentui/react-positioning>@floating-ui/dom": "~1.5.4",
+			"@types/node@<18": "^18.19.0",
+			"get-tsconfig": "^4.7.3",
+			"good-fences>nodegit": "npm:empty-npm-package@1.0.0",
+			"node-fetch": "^2.6.9",
+			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
+			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0",
+			"qs": "^6.11.0",
+			"sharp": "^0.33.2",
+			"simplemde>codemirror": "^5.65.11",
+			"simplemde>marked": "^4.3.0",
+			"socket.io-client": "~4.7.5"
+		},
+		"patchedDependencies": {
+			"@microsoft/api-extractor@7.47.8": "patches/@microsoft__api-extractor@7.47.8.patch"
+		},
+		"comments": [
+			"nodegit is replaced with an empty package here because it's currently only used by good-fences for features we do not need, and has issues building when changing node versions. See https://github.com/smikula/good-fences/issues/105 for details.",
+			"codemirror and marked overrides are because simplemde use * versions, and the fully up to date versions of its deps do not work. packageExtensions was tried to fix this, but did not work.",
+			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix",
+			"@fluentui/react-positioning's dependency on @floating-ui/dom causes a peer dependency violation, so overriding it forces a version that meets peer dependency requirements is installed.",
+			"get-tsconfig has a bug below 4.7.3 which causes eslint to fail to resolve typescript configurations. See https://github.com/privatenumber/get-tsconfig/issues/67",
+			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently.",
+			"socket.io-client has an issue with 4.8.0 which breaks the build, so avoid it: https://github.com/socketio/socket.io/issues/5202"
+		],
+		"peerDependencyComments": [
+			"@types/node is ignored because it is usually not needed by packages, and if it is, then the package will hit a compilation failure.",
+			"Peer dependencies on fluid-framework are never fulfilled since that's an in-repo dependency; we expect a customer using some packages to install it as a dependency.",
+			"markdown-magic is provided by another dependency so is ignored here.",
+			"oclif includes some AWS-related features, but we don't use them, so we ignore @aws-sdk peer dependencies.",
+			"The react-split-pane package used by devtools-view has a peer dependency on React 16, but it doesn't seem to be maintained and it works fine with React 18. TODO: AB#18876"
+		]
 	},
 	"fluidBuild": {
 		"tasks": {
@@ -357,54 +407,6 @@
 				],
 				"script": false
 			}
-		}
-	},
-	"pnpm": {
-		"comments": [
-			"nodegit is replaced with an empty package here because it's currently only used by good-fences for features we do not need, and has issues building when changing node versions. See https://github.com/smikula/good-fences/issues/105 for details.",
-			"codemirror and marked overrides are because simplemde use * versions, and the fully up to date versions of its deps do not work. packageExtensions was tried to fix this, but did not work.",
-			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix",
-			"@fluentui/react-positioning's dependency on @floating-ui/dom causes a peer dependency violation, so overriding it forces a version that meets peer dependency requirements is installed.",
-			"get-tsconfig has a bug below 4.7.3 which causes eslint to fail to resolve typescript configurations. See https://github.com/privatenumber/get-tsconfig/issues/67",
-			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently.",
-			"socket.io-client has an issue with 4.8.0 which breaks the build, so avoid it: https://github.com/socketio/socket.io/issues/5202"
-		],
-		"overrides": {
-			"@types/node@<18": "^18.19.0",
-			"get-tsconfig": "^4.7.3",
-			"node-fetch": "^2.6.9",
-			"good-fences>nodegit": "npm:empty-npm-package@1.0.0",
-			"qs": "^6.11.0",
-			"simplemde>codemirror": "^5.65.11",
-			"simplemde>marked": "^4.3.0",
-			"sharp": "^0.33.2",
-			"@fluentui/react-positioning>@floating-ui/dom": "~1.5.4",
-			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
-			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0",
-			"socket.io-client": "~4.7.5"
-		},
-		"peerDependencyComments": [
-			"@types/node is ignored because it is usually not needed by packages, and if it is, then the package will hit a compilation failure.",
-			"Peer dependencies on fluid-framework are never fulfilled since that's an in-repo dependency; we expect a customer using some packages to install it as a dependency.",
-			"markdown-magic is provided by another dependency so is ignored here.",
-			"oclif includes some AWS-related features, but we don't use them, so we ignore @aws-sdk peer dependencies.",
-			"The react-split-pane package used by devtools-view has a peer dependency on React 16, but it doesn't seem to be maintained and it works fine with React 18. TODO: AB#18876"
-		],
-		"peerDependencyRules": {
-			"allowedVersions": {
-				"react": "18.3.1",
-				"react-dom": "18.3.1",
-				"webpack": "^5.94.0"
-			},
-			"ignoreMissing": [
-				"@types/node",
-				"fluid-framework",
-				"markdown-magic",
-				"@aws-sdk/*"
-			]
-		},
-		"patchedDependencies": {
-			"@microsoft/api-extractor@7.47.8": "patches/@microsoft__api-extractor@7.47.8.patch"
 		}
 	}
 }
