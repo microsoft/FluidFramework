@@ -727,6 +727,9 @@ export class Container
 	/**
 	 * Get the package info for the code details that were used to load the container.
 	 * @returns The package info for the code details that were used to load the container if it is loaded, undefined otherwise
+	 * @deprecated To be removed in 2.40.
+	 * Use getLoadedCodeDetails instead; see https://github.com/microsoft/FluidFramework/issues/23898 for details.
+	 * Deprecating the function here to avoid polluting public container api surface.
 	 */
 	public getContainerPackageInfo?(): IContainerPackageInfo | undefined {
 		return getPackageName(this._loadedCodeDetails);
