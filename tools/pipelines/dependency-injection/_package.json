@@ -3,6 +3,7 @@
     "version": "0.0.1",
     "description": "Install dependencies on pipeline VM for DI",
     "dependencies": {
-        "@ff-internal/aria-logger": ">0.0.0"
+        "@ff-internal/aria-logger": ">0.0.0",
+        "@ff-internal/trips-setup": ">0.0.0"
     }
 }

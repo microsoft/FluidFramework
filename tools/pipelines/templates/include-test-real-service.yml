@@ -88,6 +88,10 @@ parameters:
   type: string
   default: '@ff-internal/aria-logger'
 
+- name: tenantSetup
+  type: string
+  default: '@ff-internal/trips-setup'
+
 # If true, skip publishing report files for test results.
 # Useful because our stress tests pipeline doesn't generate any test result files.
 - name: skipTestResultPublishing
@@ -340,12 +344,43 @@ stages:
               key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}"'
               path: ${{ parameters.testWorkspace }}/node_modules/@fluid-private/test-version-utils/node_modules/.legacy/
 
+        # Install TRIPS tenant management package
+        - task: Npm@1
+          displayName: 'npm install'
+          # ADO feeds have latency on the order of minutes before packages are available downstream. See:
+          # https://learn.microsoft.com/en-us/azure/devops/artifacts/concepts/upstream-sources?view=azure-devops#upstream-sources-health-status
+          # This pipeline installs packages which were published very recently relative to its runtime, hence the rather high retry count here.
+          retryCountOnTaskFailure: 10
+          inputs:
+            command: 'custom'
+            workingDir: ${{ parameters.testWorkspace }}
+            customCommand: 'install $(Initialize.testPackageTgz) ${{ parameters.tenantSetup }}'
+            customRegistry: 'useNpmrc'
+
+        # Retrieve a tenant from the TRIPS tenant pool
+        - task: AzureCLI@2
+          displayName: 'Set up and retrieve tenant credentials'
+          env:
+            SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+          inputs:
+            azureSubscription: 'Fluid Framework Tests'
+            addSpnToEnvironment: true
+            scriptType: 'bash'
+            scriptLocation: 'inlineScript'
+            scriptPath: |
+              set -eu -o pipefail
+
+              az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
+              trips-setup $SYSTEM_ACCESSTOKEN
+              echo ##vso[task.setvariable variable=tenantCreds;issecret=true;isoutput=true]$(loginTenants)
+              echo ##vso[task.setvariable variable=stringBearerToken;]$(stringBearerToken)
+
         # run the test
         - task: Npm@1
           displayName: '[test] ${{ parameters.testCommand }} ${{ variant.flags }}'
           continueOnError: ${{ parameters.continueOnError }}
           env:
-            ${{ parameters.env }}
+            login__odsp__test__tenants: $(tenantCreds)
           inputs:
             command: 'custom'
             workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
@@ -395,6 +430,20 @@ stages:
               publishLocation: 'pipeline'
             condition: always()
             continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
+
+        # Release the tenant back to the TRIPS tenant pool
+        - task: AzureCLI@2
+          displayName: 'Cleanup resources'
+          inputs:
+            azureSubscription: 'Fluid Framework Tests'
+            addSpnToEnvironment: true
+            scriptType: 'bash'
+            scriptLocation: 'inlineScript'
+            inlineScript: |
+              set -eu -o pipefail
+
+              az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
+              trips-cleanup $(stringBearerToken)
 
         # Log Test Failures
         # - template: /tools/pipelines/templates/include-process-test-results.yml@self
