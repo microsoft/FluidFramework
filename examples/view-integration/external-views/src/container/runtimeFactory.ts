@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { getDataStoreEntryPoint } from "@fluid-example/example-utils";
 import type {
 	IContainerContext,
 	IRuntime,
@@ -13,7 +12,7 @@ import { loadContainerRuntime } from "@fluidframework/container-runtime/legacy";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 import type { FluidObject } from "@fluidframework/core-interfaces";
 
-import { DiceRollerFactory } from "./diceRoller.js";
+import { DiceRollerFactory } from "./diceRoller/index.js";
 
 const diceRollerId = "dice-roller";
 const diceRollerRegistryKey = "dice-roller";
@@ -29,8 +28,15 @@ export class DiceRollerContainerRuntimeFactory implements IRuntimeFactory {
 		existing: boolean,
 	): Promise<IRuntime> {
 		const provideEntryPoint = async (
-			containerRuntime: IContainerRuntime,
-		): Promise<FluidObject> => getDataStoreEntryPoint(containerRuntime, diceRollerId);
+			entryPointRuntime: IContainerRuntime,
+		): Promise<FluidObject> => {
+			const diceRollerHandle =
+				await entryPointRuntime.getAliasedDataStoreEntryPoint(diceRollerId);
+			if (diceRollerHandle === undefined) {
+				throw new Error("Dice roller missing!");
+			}
+			return diceRollerHandle.get();
+		};
 
 		const runtime = await loadContainerRuntime({
 			context,
