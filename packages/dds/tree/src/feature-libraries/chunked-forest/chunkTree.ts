@@ -379,7 +379,7 @@ function newBasicChunkTree(
  *
  * @param cursor - cursor at the starting node in the field.
  * @param policy - heuristics to impact chunking
- * @param length - how many nodes to process (at the top level). When 0, the cursor is not moved, and may be at the end of the field (and in Fields mode)
+ * @param length - how many nodes to process (at the top level). When 0, the cursor is not moved, and may be at the end of the field (and thus in Fields mode)
  * @param skipLastNavigation - if true, leaves the cursor at the last node instead of moving off of it. Invalid if length is 0.
  */
 export function chunkRange(
