@@ -25,7 +25,6 @@ import {
 	clonePath,
 	createAnnouncedVisitor,
 	detachedFieldAsKey,
-	initializeForest,
 	mapCursorField,
 	moveToDetachedField,
 	rootFieldKey,
@@ -33,6 +32,7 @@ import {
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
 	cursorForJsonableTreeNode,
+	initializeForest,
 	jsonableTreeFromCursor,
 } from "../feature-libraries/index.js";
 import {
