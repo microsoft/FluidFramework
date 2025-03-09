@@ -110,7 +110,6 @@ export {
 	type ForestLocation,
 	type ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
-	initializeForest,
 	type FieldAnchor,
 	moveToDetachedField,
 	type ForestEvents,

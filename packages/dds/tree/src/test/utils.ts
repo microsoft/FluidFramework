@@ -78,7 +78,6 @@ import {
 	applyDelta,
 	clonePath,
 	compareUpPaths,
-	initializeForest,
 	makeDetachedFieldIndex,
 	mapCursorField,
 	moveToDetachedField,
@@ -107,6 +106,7 @@ import {
 	MockNodeKeyManager,
 	cursorForMapTreeField,
 	type IDefaultEditBuilder,
+	initializeForest,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";

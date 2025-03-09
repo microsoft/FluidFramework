@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/ai-collab",
-	"version": "2.23.0",
+	"version": "2.30.0",
 	"description": "Experimental package to simplify integrating AI into Fluid-based applications",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -140,7 +140,7 @@
 		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
-		"mocha": "^10.2.0",
+		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
