@@ -449,7 +449,7 @@ export class DocumentDeltaConnection
 
 		// Let user of connection object know about disconnect.
 		this.emit("disconnect", err);
-	}
+	};
 
 	/**
 	 * Disconnect from the websocket.
@@ -457,7 +457,7 @@ export class DocumentDeltaConnection
 	 */
 	protected disconnectCore = (err: IAnyDriverError) => {
 		this.socket.disconnect();
-	}
+	};
 
 	protected async initialize(connectMessage: IConnect, timeout: number) {
 		this.socket.on("op", this.earlyOpHandler);
