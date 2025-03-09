@@ -94,7 +94,6 @@ declare type current_as_old_for_Interface_DetachedAttributionKey = requireAssign
  * typeValidation.broken:
  * "Interface_IAttachMessage": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IAttachMessage = requireAssignableTo<TypeOnly<old.IAttachMessage>, TypeOnly<current.IAttachMessage>>
 
 /*
@@ -104,7 +103,6 @@ declare type old_as_current_for_Interface_IAttachMessage = requireAssignableTo<T
  * typeValidation.broken:
  * "Interface_IAttachMessage": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IAttachMessage = requireAssignableTo<TypeOnly<current.IAttachMessage>, TypeOnly<old.IAttachMessage>>
 
 /*
@@ -690,7 +688,6 @@ declare type current_as_old_for_TypeAlias_FluidDataStoreRegistryEntry = requireA
  * typeValidation.broken:
  * "TypeAlias_InboundAttachMessage": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_InboundAttachMessage = requireAssignableTo<TypeOnly<old.InboundAttachMessage>, TypeOnly<current.InboundAttachMessage>>
 
 /*
@@ -700,7 +697,6 @@ declare type old_as_current_for_TypeAlias_InboundAttachMessage = requireAssignab
  * typeValidation.broken:
  * "TypeAlias_InboundAttachMessage": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_InboundAttachMessage = requireAssignableTo<TypeOnly<current.InboundAttachMessage>, TypeOnly<old.InboundAttachMessage>>
 
 /*
