@@ -415,7 +415,8 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
 		switch (value.type) {
 			case SummaryType.Blob: {
 				let parsedContent: string;
-				let encoding: "utf8" | "base64" = "utf8";
+				// eslint-disable-next-line unicorn/text-encoding-identifier-case
+				let encoding: "utf-8" | "base64" = "utf-8";
 				if (typeof value.content === "string") {
 					parsedContent = value.content;
 				} else {
@@ -478,7 +479,8 @@ export function processAttachMessageGCData(
 	}
 
 	assert(
-		gcDataEntry.type === TreeEntry.Blob && gcDataEntry.value.encoding === "utf8",
+		// eslint-disable-next-line unicorn/text-encoding-identifier-case
+		gcDataEntry.type === TreeEntry.Blob && gcDataEntry.value.encoding === "utf-8",
 		0x8ff /* GC data should be a utf-8-encoded blob */,
 	);
 
