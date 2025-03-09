@@ -9,6 +9,8 @@ import { strict as assert, fail } from "node:assert";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+// eslint-disable-next-line import/no-internal-modules
+import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 import {
 	getSimpleSchema,
 	SchemaFactory,
@@ -246,6 +248,58 @@ describe("applyAgentEdit", () => {
 					},
 				],
 				"bools": [true],
+			};
+
+			assert.deepEqual(
+				JSON.stringify(view.root, undefined, 2),
+				JSON.stringify(expected, undefined, 2),
+			);
+		});
+
+		it("provide defaults from field schema metadata", () => {
+			const sfa = new SchemaFactoryAlpha(undefined);
+			class HasDefault extends sfa.object("HasDefault", {
+				str: sfa.optional(sf.string, { metadata: { llmDefault: () => "defaulted" } }),
+			}) {}
+			class Root extends sfa.object("Root", {
+				children: sfa.array(HasDefault),
+			}) {}
+
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"tree",
+			);
+			const config = new TreeViewConfiguration({ schema: Root });
+			const view = tree.viewWith(config);
+			const simpleSchema = getSimpleSchema(view.schema);
+			view.initialize({ children: [new HasDefault({})] });
+			idGenerator.assignIds(view.root);
+			const child = view.root.children[0];
+			assert(child !== undefined);
+			const childId = idGenerator.getId(child) ?? fail("ID expected.");
+			const insertEdit: TreeEdit = {
+				explanation: "Insert an object with a field that defaults",
+				type: "insert",
+				content: { [typeField]: HasDefault.identifier },
+				destination: {
+					type: "objectPlace",
+					target: childId,
+					place: "after",
+				},
+			};
+			applyAgentEdit(insertEdit, idGenerator, simpleSchema.definitions);
+
+			const child2 = view.root.children[1];
+			assert(child2 !== undefined);
+			assert.equal(child2.str, "defaulted");
+
+			const expected = {
+				"children": [
+					{},
+					{
+						"str": "defaulted",
+					},
+				],
 			};
 
 			assert.deepEqual(

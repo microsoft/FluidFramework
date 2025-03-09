@@ -10,6 +10,10 @@ import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import {
+	SchemaFactoryAlpha,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/tree/alpha";
+import {
 	SchemaFactory,
 	getJsonSchema,
 	SharedTree,
@@ -187,5 +191,13 @@ describe("Makes TS type strings from schema", () => {
 			getPromptFriendlyTreeSchema(getJsonSchema(RootObject)),
 			"interface RootObject { str: string; vectors: Vector[]; bools: boolean[]; } interface Vector { x: number; y: number; z: number | undefined; }",
 		);
+	});
+
+	it("for omitted objects", () => {
+		const testSf = new SchemaFactoryAlpha("test");
+		class Foo extends testSf.object("Foo", {
+			omitted: testSf.required(testSf.string, { metadata: { omitFromJson: true } }),
+		}) {}
+		assert.equal(getPromptFriendlyTreeSchema(getJsonSchema(Foo)), "interface Foo { }");
 	});
 });
