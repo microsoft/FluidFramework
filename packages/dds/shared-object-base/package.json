@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/shared-object-base",
-	"version": "2.23.0",
+	"version": "2.30.0",
 	"description": "Fluid base class for shared distributed data structures",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -136,9 +136,9 @@
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/test-pairwise-generator": "workspace:~",
-		"@fluid-tools/build-cli": "catalog:buildTools",
+		"@fluid-tools/build-cli": "^0.54.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "catalog:buildTools",
+		"@fluidframework/build-tools": "^0.54.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/shared-object-base-previous": "npm:@fluidframework/shared-object-base@2.22.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
@@ -153,7 +153,7 @@
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
-		"mocha": "^10.2.0",
+		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
