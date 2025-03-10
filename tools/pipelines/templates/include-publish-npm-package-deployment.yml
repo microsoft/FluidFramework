@@ -69,6 +69,17 @@ jobs:
         deploy:
           steps:
           - template: /tools/pipelines/templates/include-use-node-version.yml@self
+
+          - task: Bash@3
+            name: listFilesInWorkspace
+            displayName: List files in worksspace
+            inputs:
+              targetType: 'inline'
+              workingDirectory: '$(Pipeline.Workspace)'
+              script: |
+                echo "Listing files in directory: $(pwd)"
+                ls -la
+
           - task: Bash@3
             name: InstallBuildToolsFromTarball
             displayName: Install Fluid Build Tools from Artifact Tarball

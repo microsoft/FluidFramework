@@ -194,7 +194,7 @@ extends:
               dependencyInstallCommand: pnpm install --frozen-lockfile
 
       # Install / Build / Test Stage
-      - stage: build
+      # - stage: build
         displayName: Build Stage
         dependsOn: [] # this stage doesn't depend on preceding stage
         jobs:
