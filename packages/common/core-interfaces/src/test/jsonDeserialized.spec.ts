@@ -47,6 +47,7 @@ import {
 	arrayOfNumbersOrUndefined,
 	arrayOfBigints,
 	arrayOfSymbols,
+	arrayOfUnknown,
 	arrayOfFunctions,
 	arrayOfFunctionsWithProperties,
 	arrayOfObjectAndFunctions,
@@ -75,6 +76,18 @@ import {
 	objectWithOptionalBigint,
 	objectWithSymbolKey,
 	objectWithNumberKey,
+	objectWithArrayOfNumbers,
+	objectWithArrayOfNumbersSparse,
+	objectWithArrayOfNumbersOrUndefined,
+	objectWithArrayOfBigints,
+	objectWithArrayOfSymbols,
+	objectWithArrayOfUnknown,
+	objectWithArrayOfFunctions,
+	objectWithArrayOfFunctionsWithProperties,
+	objectWithArrayOfObjectAndFunctions,
+	objectWithArrayOfBigintAndObjects,
+	objectWithArrayOfSymbolsAndObjects,
+	objectWithReadonlyArrayOfNumbers,
 	objectWithOptionalNumberNotPresent,
 	objectWithOptionalNumberUndefined,
 	objectWithOptionalNumberDefined,
@@ -388,6 +401,10 @@ describe("JsonDeserialized", () => {
 				const resultRead = passThru(arrayOfNumbersOrUndefined, [0, null, 2]);
 				assertIdenticalTypes(resultRead, createInstanceOf<(number | null)[]>());
 			});
+			it("array of `unknown` becomes array of `JsonTypeWith<never>`", () => {
+				const resultRead = passThru(arrayOfUnknown);
+				assertIdenticalTypes(resultRead, createInstanceOf<JsonTypeWith<never>[]>());
+			});
 			it("array of partially supported (bigint or basic object) becomes basic object only", () => {
 				const resultRead = passThruThrows(
 					arrayOfBigintAndObjects,
@@ -462,6 +479,17 @@ describe("JsonDeserialized", () => {
 			it("object with number key", () => {
 				const resultRead = passThru(objectWithNumberKey);
 				assertIdenticalTypes(resultRead, objectWithNumberKey);
+			});
+
+			it("object with array of supported types (numbers) are preserved", () => {
+				const resultRead = passThru(objectWithArrayOfNumbers);
+				assertIdenticalTypes(resultRead, objectWithArrayOfNumbers);
+			});
+			it("object with sparse array is filled in with null", () => {
+				const resultRead = passThru(objectWithArrayOfNumbersSparse, {
+					arrayOfNumbersSparse: [0, null, null, 3],
+				});
+				assertIdenticalTypes(resultRead, objectWithArrayOfNumbersSparse);
 			});
 
 			it("object with branded `number`", () => {
@@ -874,6 +902,100 @@ describe("JsonDeserialized", () => {
 							};
 						}>(),
 					);
+				});
+			});
+
+			describe("partially supported array properties are modified like top-level arrays", () => {
+				it("object with array of partially supported (numbers or undefined) is modified with null", () => {
+					const resultRead = passThru(objectWithArrayOfNumbersOrUndefined, {
+						arrayOfNumbersOrUndefined: [0, null, 2],
+					});
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{ arrayOfNumbersOrUndefined: (number | null)[] }>(),
+					);
+				});
+				it("object with array of `unknown` becomes array of `JsonTypeWith<never>`", () => {
+					const resultRead = passThru(objectWithArrayOfUnknown);
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{ arrayOfUnknown: JsonTypeWith<never>[] }>(),
+					);
+				});
+				it("object with array of partially supported (bigint or basic object) becomes basic object only", () => {
+					const resultRead = passThruThrows(
+						objectWithArrayOfBigintAndObjects,
+						new TypeError("Do not know how to serialize a BigInt"),
+					);
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{ arrayOfBigintAndObjects: { property: string }[] }>(),
+					);
+				});
+				it("object with array of partially supported (symbols or basic object) is modified with null", () => {
+					const resultRead = passThru(objectWithArrayOfSymbolsAndObjects, {
+						arrayOfSymbolsAndObjects: [null],
+					});
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{ arrayOfSymbolsAndObjects: ({ property: string } | null)[] }>(),
+					);
+				});
+				it("object with array of unsupported (bigint) becomes never[]", () => {
+					const resultRead = passThruThrows(
+						objectWithArrayOfBigints,
+						new TypeError("Do not know how to serialize a BigInt"),
+					);
+					assertIdenticalTypes(resultRead, createInstanceOf<{ arrayOfBigints: never[] }>());
+				});
+				it("object with array of unsupported (symbols) becomes null[]", () => {
+					const resultRead = passThru(objectWithArrayOfSymbols, { arrayOfSymbols: [null] });
+					assertIdenticalTypes(resultRead, createInstanceOf<{ arrayOfSymbols: null[] }>());
+				});
+				it("object with array of unsupported (functions) becomes null[]", () => {
+					const resultRead = passThru(objectWithArrayOfFunctions, {
+						arrayOfFunctions: [null],
+					});
+					assertIdenticalTypes(resultRead, createInstanceOf<{ arrayOfFunctions: null[] }>());
+				});
+				it("object with array of functions with properties becomes ({...}|null)[]", () => {
+					const resultRead = passThru(objectWithArrayOfFunctionsWithProperties, {
+						arrayOfFunctionsWithProperties: [null],
+					});
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{
+							arrayOfFunctionsWithProperties: ({ property: number } | null)[];
+						}>(),
+					);
+				});
+				it("object with array of objects and functions becomes ({...}|null)[]", () => {
+					const resultRead = passThru(objectWithArrayOfObjectAndFunctions, {
+						arrayOfObjectAndFunctions: [{ property: 6 }],
+					});
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{ arrayOfObjectAndFunctions: ({ property: number } | null)[] }>(),
+					);
+				});
+				it("object with array of `bigint | symbol` becomes null[]", () => {
+					const resultRead = passThru({ array: [bigintOrSymbol] }, { array: [null] });
+					assertIdenticalTypes(resultRead, createInstanceOf<{ array: null[] }>());
+				});
+				it("object with array of `number | bigint | symbol` becomes (number|null)[]", () => {
+					const resultRead = passThru({ array: [numberOrBigintOrSymbol] }, { array: [7] });
+					assertIdenticalTypes(resultRead, createInstanceOf<{ array: (number | null)[] }>());
+				});
+				it("object with readonly array of supported types (numbers) are preserved", () => {
+					const resultRead = passThru(objectWithReadonlyArrayOfNumbers);
+					assertIdenticalTypes(resultRead, objectWithReadonlyArrayOfNumbers);
+					// @ts-expect-error readonly array does not appear to support `push`, but works at runtime.
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+					resultRead.readonlyArrayOfNumbers.push(0);
+					assert.deepStrictEqual(resultRead.readonlyArrayOfNumbers, [
+						...objectWithReadonlyArrayOfNumbers.readonlyArrayOfNumbers,
+						0,
+					]);
 				});
 			});
 
@@ -1614,6 +1736,14 @@ describe("JsonDeserialized", () => {
 						partialStringRecordOfUnknownWithKnownProperties,
 					);
 					assertIdenticalTypes(resultRead, partialStringRecordOfUnknownWithKnownProperties);
+				});
+				it("array of `unknown`", () => {
+					const resultRead = passThruPreservingUnknown(arrayOfUnknown);
+					assertIdenticalTypes(resultRead, arrayOfUnknown);
+				});
+				it("object with array of `unknown`", () => {
+					const resultRead = passThruPreservingUnknown(objectWithArrayOfUnknown);
+					assertIdenticalTypes(resultRead, objectWithArrayOfUnknown);
 				});
 			});
 

@@ -78,6 +78,7 @@ arrayOfNumbersSparse[3] = 3;
 export const arrayOfNumbersOrUndefined = [0, undefined, 2];
 export const arrayOfBigints = [bigint];
 export const arrayOfSymbols: symbol[] = [Symbol("symbol")];
+export const arrayOfUnknown: unknown[] = [unknownValueOfSimpleRecord];
 export const arrayOfFunctions = [aFunction];
 export const arrayOfFunctionsWithProperties = [functionWithProperties];
 export const arrayOfObjectAndFunctions = [objectAndFunction];
@@ -117,6 +118,19 @@ export const objectWithOptionalBigint: { bigint?: bigint } = { bigint: 0n };
 
 export const objectWithNumberKey = { 3: "value" };
 export const objectWithSymbolKey = { [symbol]: "value" };
+
+export const objectWithArrayOfNumbers = { arrayOfNumbers };
+export const objectWithArrayOfNumbersSparse = { arrayOfNumbersSparse };
+export const objectWithArrayOfNumbersOrUndefined = { arrayOfNumbersOrUndefined };
+export const objectWithArrayOfBigints = { arrayOfBigints };
+export const objectWithArrayOfSymbols = { arrayOfSymbols };
+export const objectWithArrayOfUnknown = { arrayOfUnknown };
+export const objectWithArrayOfFunctions = { arrayOfFunctions };
+export const objectWithArrayOfFunctionsWithProperties = { arrayOfFunctionsWithProperties };
+export const objectWithArrayOfObjectAndFunctions = { arrayOfObjectAndFunctions };
+export const objectWithArrayOfBigintAndObjects = { arrayOfBigintAndObjects };
+export const objectWithArrayOfSymbolsAndObjects = { arrayOfSymbolsAndObjects };
+export const objectWithReadonlyArrayOfNumbers = { readonlyArrayOfNumbers };
 
 export const objectWithUnknown = { unknown: "value" as unknown };
 interface ObjectWithOptionalUnknown {

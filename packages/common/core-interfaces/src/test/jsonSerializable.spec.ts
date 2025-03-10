@@ -50,6 +50,7 @@ import {
 	arrayOfNumbersOrUndefined,
 	arrayOfBigints,
 	arrayOfSymbols,
+	arrayOfUnknown,
 	arrayOfFunctions,
 	arrayOfFunctionsWithProperties,
 	arrayOfObjectAndFunctions,
@@ -78,6 +79,18 @@ import {
 	objectWithOptionalBigint,
 	objectWithNumberKey,
 	objectWithSymbolKey,
+	objectWithArrayOfNumbers,
+	objectWithArrayOfNumbersSparse,
+	objectWithArrayOfNumbersOrUndefined,
+	objectWithArrayOfBigints,
+	objectWithArrayOfSymbols,
+	objectWithArrayOfUnknown,
+	objectWithArrayOfFunctions,
+	objectWithArrayOfFunctionsWithProperties,
+	objectWithArrayOfObjectAndFunctions,
+	objectWithArrayOfBigintAndObjects,
+	objectWithArrayOfSymbolsAndObjects,
+	objectWithReadonlyArrayOfNumbers,
 	objectWithOptionalNumberNotPresent,
 	objectWithOptionalNumberUndefined,
 	objectWithOptionalNumberDefined,
@@ -464,6 +477,15 @@ describe("JsonSerializable", () => {
 				assertIdenticalTypes(filteredIn, objectWithNumberKey);
 			});
 
+			it("object with array of `number`s", () => {
+				const { filteredIn } = passThru(objectWithArrayOfNumbers);
+				assertIdenticalTypes(filteredIn, objectWithArrayOfNumbers);
+			});
+			it("readonly array of `number`s", () => {
+				const { filteredIn } = passThru(objectWithReadonlyArrayOfNumbers);
+				assertIdenticalTypes(filteredIn, objectWithReadonlyArrayOfNumbers);
+			});
+
 			it("object with branded `number`", () => {
 				const { filteredIn } = passThru(objectWithBrandedNumber);
 				assertIdenticalTypes(filteredIn, objectWithBrandedNumber);
@@ -681,6 +703,13 @@ describe("JsonSerializable", () => {
 				it("sparse array of supported types", () => {
 					const { filteredIn } = passThru(arrayOfNumbersSparse, [0, null, null, 3]);
 					assertIdenticalTypes(filteredIn, arrayOfNumbersSparse);
+				});
+
+				it("object with sparse array of supported types", () => {
+					const { filteredIn } = passThru(objectWithArrayOfNumbersSparse, {
+						arrayOfNumbersSparse: [0, null, null, 3],
+					});
+					assertIdenticalTypes(filteredIn, objectWithArrayOfNumbersSparse);
 				});
 			});
 		});
@@ -955,6 +984,13 @@ describe("JsonSerializable", () => {
 					);
 					assertIdenticalTypes(filteredIn, createInstanceOf<never[]>());
 				});
+				it("array of `unknown`", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error 'unknown[]' is not assignable to parameter of type 'JsonTypeWith<never>[]'
+						arrayOfUnknown,
+					);
+					assertIdenticalTypes(filteredIn, createInstanceOf<JsonTypeWith<never>[]>());
+				});
 				it("array of functions", () => {
 					const { filteredIn } = passThru(
 						// @ts-expect-error `Function` is not supported (becomes 'never')
@@ -1106,6 +1142,112 @@ describe("JsonSerializable", () => {
 					assertIdenticalTypes(
 						filteredIn,
 						createInstanceOf<{ numberOrBigintOrSymbol: number }>(),
+					);
+				});
+
+				it("object with array of `bigint`s", () => {
+					const { filteredIn } = passThruThrows(
+						// @ts-expect-error 'bigint' is not supported (becomes 'never')
+						objectWithArrayOfBigints,
+						new TypeError("Do not know how to serialize a BigInt"),
+					);
+					assertIdenticalTypes(filteredIn, createInstanceOf<{ arrayOfBigints: never[] }>());
+				});
+				it("object with array of `symbol`s", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error 'symbol' is not supported (becomes 'never')
+						objectWithArrayOfSymbols,
+						{ arrayOfSymbols: [null] },
+					);
+					assertIdenticalTypes(filteredIn, createInstanceOf<{ arrayOfSymbols: never[] }>());
+				});
+				it("object with array of `unknown`", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error 'unknown[]' is not assignable to parameter of type 'JsonTypeWith<never>[]'
+						objectWithArrayOfUnknown,
+					);
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{ arrayOfUnknown: JsonTypeWith<never>[] }>(),
+					);
+				});
+				it("object with array of functions", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error `Function` is not supported (becomes 'never')
+						objectWithArrayOfFunctions,
+						{ arrayOfFunctions: [null] },
+					);
+					assertIdenticalTypes(filteredIn, createInstanceOf<{ arrayOfFunctions: never[] }>());
+				});
+				it("object with array of functions with properties", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error 'Function & {...}' is not supported (becomes 'never')
+						objectWithArrayOfFunctionsWithProperties,
+						{ arrayOfFunctionsWithProperties: [null] },
+					);
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{ arrayOfFunctionsWithProperties: never[] }>(),
+					);
+				});
+				it("object with array of objects and functions", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error '{...} & Function' is not supported (becomes 'never')
+						objectWithArrayOfObjectAndFunctions,
+						{ arrayOfObjectAndFunctions: [{ property: 6 }] },
+					);
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{ arrayOfObjectAndFunctions: never[] }>(),
+					);
+				});
+				it("object with array of `number | undefined`s", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error 'undefined' is not supported (becomes 'SerializationErrorPerUndefinedArrayElement')
+						objectWithArrayOfNumbersOrUndefined,
+						{ arrayOfNumbersOrUndefined: [0, null, 2] },
+					);
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{
+							arrayOfNumbersOrUndefined: (
+								| number
+								| SerializationErrorPerUndefinedArrayElement
+							)[];
+						}>(),
+					);
+				});
+				it("object with array of `bigint` or basic object", () => {
+					const { filteredIn } = passThruThrows(
+						// @ts-expect-error 'bigint' is not supported (becomes 'never')
+						objectWithArrayOfBigintAndObjects,
+						new TypeError("Do not know how to serialize a BigInt"),
+					);
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{ arrayOfBigintAndObjects: { property: string }[] }>(),
+					);
+				});
+				it("object with array of `symbol` or basic object", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error 'symbol' is not supported (becomes 'never')
+						objectWithArrayOfSymbolsAndObjects,
+						{ arrayOfSymbolsAndObjects: [null] },
+					);
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{ arrayOfSymbolsAndObjects: { property: string }[] }>(),
+					);
+				});
+				it("object with array of `bigint | symbol`s", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error 'bigint | symbol' is not assignable to 'never'
+						{ arrayOfBigintOrSymbols: [bigintOrSymbol] },
+						{ arrayOfBigintOrSymbols: [null] },
+					);
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{ arrayOfBigintOrSymbols: never[] }>(),
 					);
 				});
 
@@ -1668,6 +1810,14 @@ describe("JsonSerializable", () => {
 						// value is actually supported; so, no runtime error.
 					);
 					assertIdenticalTypes(filteredIn, unknownValueOfSimpleRecord);
+				});
+				it("array of `unknown`", () => {
+					const { filteredIn } = passThruAllowingUnknown(arrayOfUnknown);
+					assertIdenticalTypes(filteredIn, arrayOfUnknown);
+				});
+				it("object with array of `unknown`", () => {
+					const { filteredIn } = passThruAllowingUnknown(objectWithArrayOfUnknown);
+					assertIdenticalTypes(filteredIn, objectWithArrayOfUnknown);
 				});
 				it("object with optional `unknown`", () => {
 					const { filteredIn } = passThruAllowingUnknown(objectWithOptionalUnknown);
