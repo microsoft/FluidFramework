@@ -74,7 +74,7 @@ export function fieldShaper(
 	cache: EncoderCache,
 	storedSchema: StoredSchemaCollection,
 ): FieldEncoder {
-	const kind = cache.fieldShapes.get(field.kind) ?? fail("missing FieldKind");
+	const kind = cache.fieldShapes.get(field.kind) ?? fail(0xb52 /* missing FieldKind */);
 	const type = oneFromSet(field.types);
 	const nodeEncoder = type !== undefined ? treeHandler.shapeFromTree(type) : anyNodeEncoder;
 	if (kind.multiplicity === Multiplicity.Single) {
@@ -113,7 +113,8 @@ export function treeShaper(
 	fieldHandler: FieldShaper,
 	schemaName: TreeNodeSchemaIdentifier,
 ): NodeShape {
-	const schema = fullSchema.nodeSchema.get(schemaName) ?? fail("missing node schema");
+	const schema =
+		fullSchema.nodeSchema.get(schemaName) ?? fail(0xb53 /* missing node schema */);
 
 	if (schema instanceof ObjectNodeStoredSchema) {
 		// TODO:Performance:
@@ -146,7 +147,7 @@ export function treeShaper(
 		);
 		return shape;
 	}
-	fail("unsupported node kind");
+	fail(0xb54 /* unsupported node kind */);
 }
 
 export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {

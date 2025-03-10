@@ -24,6 +24,7 @@ export interface IBasicRestWrapperMetricProps {
 	axiosError: AxiosError<any>;
 	status: number | string;
 	method: string;
+	baseUrl: string;
 	url: string;
 	correlationId: string;
 	durationInMs: number;
@@ -322,6 +323,10 @@ export class BasicRestWrapper extends RestWrapper {
 						const requestProps: IBasicRestWrapperMetricProps = {
 							axiosError,
 							status,
+							baseUrl:
+								options.baseURL ??
+								axiosError?.config?.baseURL ??
+								"BASE_URL_UNAVAILABLE",
 							method: options.method ?? "METHOD_UNAVAILABLE",
 							url: options.url ?? "URL_UNAVAILABLE",
 							correlationId,
