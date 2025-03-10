@@ -9,10 +9,10 @@
 "section": legacy
 ---
 
-The functions `process` and `processDocumentSchemaOp` have been removed.
+The functions `process` and `processDocumentSchemaOp` have been removed
 
 `process` has been replaced by `processMessages` from the following:
-- `DocumentsSchemaController`
+
 - `FluidDataStoreRuntime`
 - `IDeltaHandler`
 - `IFluidDataStoreChannel`
