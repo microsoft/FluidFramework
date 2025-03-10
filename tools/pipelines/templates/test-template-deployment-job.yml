@@ -7,6 +7,9 @@ parameters:
 - name: pool
   type: object
   default: Small-eastus2
+- name: environment
+  type: string
+  default: test-package-build-feed
 
 jobs:
 - deployment: publish_${{ replace(parameters.environment, '-', '_') }}
