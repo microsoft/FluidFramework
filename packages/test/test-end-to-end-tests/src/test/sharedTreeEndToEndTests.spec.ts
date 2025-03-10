@@ -22,7 +22,7 @@ import {
 	type TreeViewAlpha,
 } from "@fluidframework/tree/internal";
 
-describeCompat.only("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 
