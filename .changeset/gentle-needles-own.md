@@ -1,6 +1,5 @@
 ---
 "@fluid-private/test-end-to-end-tests": minor
-"@fluid-experimental/tree": minor
 ---
 ---
 "section": deprecation
