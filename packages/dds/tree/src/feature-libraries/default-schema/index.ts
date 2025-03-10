@@ -29,3 +29,5 @@ export {
 export { SchemaValidationErrors, isNodeInSchema, isFieldInSchema } from "./schemaChecker.js";
 
 export { defaultSchemaPolicy } from "./defaultSchema.js";
+
+export { MappedEditBuilder } from "./mappedEditBuilder.js";
