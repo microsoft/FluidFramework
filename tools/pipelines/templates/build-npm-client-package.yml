@@ -185,17 +185,16 @@ extends:
     customBuildTags:
       - ES365AIMigrationTooling
     stages:
-      # - ${{ if ne(convertToJson(parameters.checks), '[]') }}:
-      #     - template: /tools/pipelines/templates/include-policy-check.yml@self
-      #       parameters:
-      #         buildDirectory: '${{ parameters.buildDirectory }}'
-      #         checks: '${{ parameters.checks }}'
-      #         # Install all dependencies, not just the root ones
-      #         dependencyInstallCommand: pnpm install --frozen-lockfile
+      - ${{ if ne(convertToJson(parameters.checks), '[]') }}:
+          - template: /tools/pipelines/templates/include-policy-check.yml@self
+            parameters:
+              buildDirectory: '${{ parameters.buildDirectory }}'
+              checks: '${{ parameters.checks }}'
+              # Install all dependencies, not just the root ones
+              dependencyInstallCommand: pnpm install --frozen-lockfile
 
-      # Publish stage
-      # - ${{ if eq(parameters.publish, true) }}:
-      - template: /tools/pipelines/templates/include-publish-npm-package.yml@self
+      # Test deployment job
+      - template: /tools/pipelines/templates/test-template-deployment-job.yml@self
         parameters:
           tagName: ${{ parameters.tagName }}
           isReleaseGroup: ${{ parameters.isReleaseGroup }}
@@ -804,14 +803,14 @@ extends:
                     buildDirectory: '${{ parameters.buildDirectory }}'
                     testResultDirs: '${{ parameters.testResultDirs }}'
 
-      # # Publish stage
-      # - ${{ if eq(parameters.publish, true) }}:
-      #   - template: /tools/pipelines/templates/include-publish-npm-package.yml@self
-      #     parameters:
-      #       tagName: ${{ parameters.tagName }}
-      #       isReleaseGroup: ${{ parameters.isReleaseGroup }}
-      #       buildDirectory: ${{ parameters.buildDirectory }}
-      #       buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+      # Publish stage
+      - ${{ if eq(parameters.publish, true) }}:
+        - template: /tools/pipelines/templates/include-publish-npm-package.yml@self
+          parameters:
+            tagName: ${{ parameters.tagName }}
+            isReleaseGroup: ${{ parameters.isReleaseGroup }}
+            buildDirectory: ${{ parameters.buildDirectory }}
+            buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
 
       # Capture pipeline stage results
       - ${{ if eq(parameters.telemetry, true) }}:
