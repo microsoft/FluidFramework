@@ -1674,7 +1674,7 @@ export class ContainerRuntime
 		// what is the interface of passing signals, we need the
 		// downstream stores to wrap the signal.
 		parentContext.submitSignal = (type: string, content: unknown, targetClientId?: string) => {
-			// Can the `content` argument type be IEnvelope?
+			// Future: Can the `content` argument type be IEnvelope?
 			// verifyNotClosed is called in FluidDataStoreContext, which is *the* expected caller.
 			const envelope1 = content as IEnvelope;
 			const envelope2 = createNewSignalEnvelope(envelope1.address, type, envelope1.contents);
