@@ -329,6 +329,30 @@ describe("chunkTree", () => {
 			assert(chunk.isShared());
 			assert.equal(chunks[0], chunk);
 		});
+
+		it("at end", () => {
+			const chunk = new BasicChunk(brand("Foo"), new Map());
+			const cursor = chunk.cursor();
+			cursor.firstNode();
+			cursor.nextNode();
+			const chunks = chunkRange(
+				cursor,
+				{ policy: defaultChunkPolicy, idCompressor: undefined },
+				0,
+				false,
+			);
+			assert.deepEqual(chunks, []);
+		});
+	});
+
+	describe("chunkField", () => {
+		it("empty chunk", () => {
+			const chunks = chunkField(emptyChunk.cursor(), {
+				policy: defaultChunkPolicy,
+				idCompressor: undefined,
+			});
+			assert.equal(chunks.length, 0);
+		});
 	});
 
 	describe("chunkField", () => {
