@@ -27,7 +27,7 @@ import {
 import { brand } from "../../util/index.js";
 import {
 	applyTestDelta,
-	chunkFromJsonableField,
+	chunkFromJsonableTrees,
 	expectEqualPaths,
 	testIdCompressor,
 	testRevisionTagCodec,
@@ -86,7 +86,7 @@ describe("AnchorSet", () => {
 	it("can rebase over insert", () => {
 		const [anchors, anchor1, anchor2, anchor3] = setup();
 
-		const trees = chunkFromJsonableField([node, node]);
+		const trees = chunkFromJsonableTrees([node, node]);
 		const fieldChanges: DeltaFieldChanges = [{ count: 4 }, { count: 2, attach: buildId }];
 		applyTestDelta(makeFieldDelta(fieldChanges, makeFieldPath(fieldFoo)), anchors, {
 			build: [{ id: buildId, trees }],
@@ -424,7 +424,7 @@ describe("AnchorSet", () => {
 		const build = [
 			{
 				id: buildId,
-				trees: chunkFromJsonableField([{ type: brand(stringSchema.identifier), value: "x" }]),
+				trees: chunkFromJsonableTrees([{ type: brand(stringSchema.identifier), value: "x" }]),
 			},
 		];
 		applyTestDelta(new Map([[rootFieldKey, [detachMark, insertMark]]]), anchors, { build });

@@ -25,7 +25,7 @@ import {
 	onForkTransitive,
 } from "../../shared-tree-core/index.js";
 import { brand, fail } from "../../util/index.js";
-import { chunkFromJsonableField, failCodecFamily, mintRevisionTag } from "../utils.js";
+import { chunkFromJsonableTrees, failCodecFamily, mintRevisionTag } from "../utils.js";
 
 const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily);
 
@@ -394,7 +394,7 @@ describe("Branches", () => {
 
 	/** Apply an arbitrary but unique change to the given branch and return the tag for the new commit */
 	function change(branch: DefaultBranch): RevisionTag {
-		const content = chunkFromJsonableField([{ type: brand("TestValue"), value: changeValue }]);
+		const content = chunkFromJsonableTrees([{ type: brand("TestValue"), value: changeValue }]);
 		branch.editor.valueField({ parent: undefined, field: rootFieldKey }).set(content);
 		return branch.getHead().revision;
 	}

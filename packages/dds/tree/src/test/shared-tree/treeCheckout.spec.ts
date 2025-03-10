@@ -31,7 +31,7 @@ import {
 } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
-	chunkFromJsonableField,
+	chunkFromJsonableTrees,
 	createTestUndoRedoStacks,
 	expectSchemaEqual,
 	getView,
@@ -172,7 +172,7 @@ describe("sharedTreeView", () => {
 				checkout.editor
 					.optionalField(rootField)
 					.set(
-						chunkFromJsonableField([{ type: brand(stringSchema.identifier), value: "A" }]),
+						chunkFromJsonableTrees([{ type: brand(stringSchema.identifier), value: "A" }]),
 						true,
 					);
 
@@ -199,7 +199,7 @@ describe("sharedTreeView", () => {
 				checkout.editor
 					.optionalField(rootField)
 					.set(
-						chunkFromJsonableField([{ type: brand(stringSchema.identifier), value: "A" }]),
+						chunkFromJsonableTrees([{ type: brand(stringSchema.identifier), value: "A" }]),
 						true,
 					);
 				checkout.updateSchema(toStoredSchema(OptionalString));

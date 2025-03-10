@@ -45,7 +45,7 @@ import {
 	StringArray,
 	TestTreeProviderLite,
 	checkoutWithContent,
-	chunkFromJsonField,
+	chunkFromJsonTrees,
 	flexTreeViewWithContent,
 	toJsonableTree,
 } from "../utils.js";
@@ -251,7 +251,7 @@ describe("SharedTree benchmarks", () => {
 						for (let value = 1; value <= setCount; value++) {
 							tree.editor
 								.valueField({ parent: path, field: localFieldKey })
-								.set(chunkFromJsonField([value]));
+								.set(chunkFromJsonTrees([value]));
 						}
 						const after = state.timer.now();
 						duration = state.timer.toSeconds(before, after);
@@ -301,7 +301,7 @@ describe("SharedTree benchmarks", () => {
 						const before = state.timer.now();
 						for (let value = 1; value <= setCount; value++) {
 							editor.remove(nodeIndex, 1);
-							editor.insert(nodeIndex, chunkFromJsonField([value]));
+							editor.insert(nodeIndex, chunkFromJsonTrees([value]));
 						}
 						const after = state.timer.now();
 						duration = state.timer.toSeconds(before, after);

@@ -21,7 +21,7 @@ import {
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
 import {
-	chunkFromJsonField,
+	chunkFromJsonTrees,
 	chunkToMapTreeField,
 	mintRevisionTag,
 	rootFromDeltaFieldMap,
@@ -131,9 +131,9 @@ function testTreeVisit(
 const rootKey: FieldKey = brand("root");
 const fooKey: FieldKey = brand("foo");
 const barKey: FieldKey = brand("bar");
-const chunkX = chunkFromJsonField(["X"]);
-const chunkY = chunkFromJsonField(["Y"]);
-const chunkXY = chunkFromJsonField(["X", "Y"]);
+const chunkX = chunkFromJsonTrees(["X"]);
+const chunkY = chunkFromJsonTrees(["Y"]);
+const chunkXY = chunkFromJsonTrees(["X", "Y"]);
 const mapTreeX = chunkToMapTreeField(chunkX);
 const mapTreeY = chunkToMapTreeField(chunkY);
 const field0: FieldKey = brand("-0");

@@ -16,7 +16,7 @@ import {
 	type DefaultChangeset,
 	type DefaultEditBuilder,
 } from "../../feature-libraries/index.js";
-import { chunkFromJsonableField, failCodecFamily, mintRevisionTag } from "../utils.js";
+import { chunkFromJsonableTrees, failCodecFamily, mintRevisionTag } from "../utils.js";
 import {
 	findAncestor,
 	rootFieldKey,
@@ -273,7 +273,7 @@ describe("SquashingTransactionStacks", () => {
 	}
 
 	function edit(editor: DefaultEditBuilder, value: string): void {
-		const content = chunkFromJsonableField([{ type: brand("TestValue"), value }]);
+		const content = chunkFromJsonableTrees([{ type: brand("TestValue"), value }]);
 		editor.valueField({ parent: undefined, field: rootFieldKey }).set(content);
 	}
 

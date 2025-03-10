@@ -45,8 +45,8 @@ import {
 import { testGeneralPurposeTreeCursor, testTreeSchema } from "./cursorTestSuite.js";
 import {
 	applyTestDelta,
-	chunkFromJsonableField,
-	chunkFromJsonField,
+	chunkFromJsonableTrees,
+	chunkFromJsonTrees,
 	expectEqualFieldPaths,
 	expectEqualPaths,
 	testIdCompressor,
@@ -184,7 +184,7 @@ export function testForest(config: ForestTestConfiguration): void {
 
 			const insert: DeltaFieldChanges = [{ count: 1, attach: { minor: 1 } }];
 			applyTestDelta(new Map([[brand("different root"), insert]]), forest, {
-				build: [{ id: { minor: 1 }, trees: chunkFromJsonField([[]]) }],
+				build: [{ id: { minor: 1 }, trees: chunkFromJsonTrees([[]]) }],
 			});
 			assert(!forest.isEmpty);
 		});
@@ -647,7 +647,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					build: [
 						{
 							id: buildId,
-							trees: chunkFromJsonableField([
+							trees: chunkFromJsonableTrees([
 								{
 									type: brand(booleanSchema.identifier),
 									value: true,
@@ -683,7 +683,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					build: [
 						{
 							id: buildId,
-							trees: chunkFromJsonableField([
+							trees: chunkFromJsonableTrees([
 								{
 									type: brand(booleanSchema.identifier),
 									value: true,
@@ -776,7 +776,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					[rootFieldKey, [{ count: 1, attach: buildId }]],
 				]);
 				applyTestDelta(delta, forest, {
-					build: [{ id: buildId, trees: chunkFromJsonField([3]) }],
+					build: [{ id: buildId, trees: chunkFromJsonTrees([3]) }],
 				});
 
 				const reader = forest.allocateCursor();
@@ -806,7 +806,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				};
 				const delta: DeltaFieldMap = new Map([[rootFieldKey, [moveIn]]]);
 				applyTestDelta(delta, forest, {
-					build: [{ id: buildId, trees: chunkFromJsonField([{ x: 0 }]) }],
+					build: [{ id: buildId, trees: chunkFromJsonTrees([{ x: 0 }]) }],
 					global: [
 						{
 							id: buildId,
@@ -876,7 +876,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					build: [
 						{
 							id: buildId,
-							trees: chunkFromJsonableField([
+							trees: chunkFromJsonableTrees([
 								{
 									type: brand(numberSchema.identifier),
 									value: 3,
@@ -885,7 +885,7 @@ export function testForest(config: ForestTestConfiguration): void {
 						},
 						{
 							id: buildId2,
-							trees: chunkFromJsonableField([
+							trees: chunkFromJsonableTrees([
 								{
 									type: brand(numberSchema.identifier),
 									value: 4,
@@ -984,7 +984,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				};
 				const delta: DeltaFieldMap = new Map([[rootFieldKey, [mark]]]);
 				applyTestDelta(delta, forest, {
-					build: [{ id: buildId, trees: chunkFromJsonField([3]) }],
+					build: [{ id: buildId, trees: chunkFromJsonTrees([3]) }],
 				});
 
 				const reader = forest.allocateCursor();
@@ -1101,12 +1101,12 @@ export function testForest(config: ForestTestConfiguration): void {
 			forest.registerAnnouncedVisitor(acquireVisitor);
 			const delta: DeltaFieldMap = new Map([[rootFieldKey, [{ count: 1, attach: buildId }]]]);
 			applyTestDelta(delta, forest, {
-				build: [{ id: buildId, trees: chunkFromJsonField([3]) }],
+				build: [{ id: buildId, trees: chunkFromJsonTrees([3]) }],
 			});
 
 			forest.deregisterAnnouncedVisitor(acquireVisitor);
 			applyTestDelta(delta, forest, {
-				build: [{ id: buildId, trees: chunkFromJsonField([4]) }],
+				build: [{ id: buildId, trees: chunkFromJsonTrees([4]) }],
 			});
 
 			assert.equal(treesCreated, 1);

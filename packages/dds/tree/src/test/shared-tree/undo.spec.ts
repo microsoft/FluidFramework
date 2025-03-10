@@ -14,7 +14,7 @@ import { singleJsonCursor } from "../json/index.js";
 import type { ITreeCheckout } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand } from "../../util/index.js";
 import {
-	chunkFromJsonField,
+	chunkFromJsonTrees,
 	createTestUndoRedoStacks,
 	expectJsonTree,
 	moveWithin,
@@ -363,9 +363,9 @@ describe("Undo and redo", () => {
 			const tree2 = tree1.branch();
 
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2.events);
-			tree1.editor.sequenceField(rootField).insert(3, chunkFromJsonField([1]));
-			tree2.editor.sequenceField(rootField).insert(0, chunkFromJsonField([2]));
-			tree2.editor.sequenceField(rootField).insert(0, chunkFromJsonField([3]));
+			tree1.editor.sequenceField(rootField).insert(3, chunkFromJsonTrees([1]));
+			tree2.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees([2]));
+			tree2.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees([3]));
 			undoStack.pop()?.revert();
 			expectJsonTree(tree2, [2, 0, 0, 0]);
 			tree2.rebaseOnto(tree1);
@@ -405,8 +405,8 @@ describe("Undo and redo", () => {
 			const { undoStack: undoStack1, unsubscribe: unsubscribe1 } = createTestUndoRedoStacks(
 				tree1.events,
 			);
-			tree1.editor.sequenceField(rootField).insert(0, chunkFromJsonField(["A"]));
-			tree1.editor.sequenceField(rootField).insert(2, chunkFromJsonField(["C"]));
+			tree1.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees(["A"]));
+			tree1.editor.sequenceField(rootField).insert(2, chunkFromJsonTrees(["C"]));
 			undoStack1.pop()?.revert();
 			undoStack1.pop()?.revert();
 
@@ -428,7 +428,7 @@ describe("Undo and redo", () => {
 
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 			tree.transaction.start();
-			tree.editor.sequenceField(rootField).insert(2, chunkFromJsonField(["C"]));
+			tree.editor.sequenceField(rootField).insert(2, chunkFromJsonTrees(["C"]));
 			tree.editor.sequenceField(rootField).remove(0, 1);
 			tree.transaction.commit();
 
@@ -445,7 +445,7 @@ describe("Undo and redo", () => {
 
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 			const branch = tree.branch();
-			branch.editor.sequenceField(rootField).insert(2, chunkFromJsonField(["C"]));
+			branch.editor.sequenceField(rootField).insert(2, chunkFromJsonTrees(["C"]));
 			branch.editor.sequenceField(rootField).remove(0, 1);
 			tree.merge(branch);
 
@@ -468,13 +468,13 @@ describe("Undo and redo", () => {
 
 			const branch = tree.branch();
 
-			branch.editor.sequenceField(rootField).insert(2, chunkFromJsonField(["C"]));
+			branch.editor.sequenceField(rootField).insert(2, chunkFromJsonTrees(["C"]));
 			tree.merge(branch, false);
 			expectJsonTree(tree, ["A", "B", "C"]);
 			undoStack.pop()?.revert();
 			expectJsonTree(tree, ["A", "B"]);
 
-			branch.editor.sequenceField(rootField).insert(2, chunkFromJsonField(["C"]));
+			branch.editor.sequenceField(rootField).insert(2, chunkFromJsonTrees(["C"]));
 			tree.merge(branch);
 			expectJsonTree(tree, ["A", "B", "C"]);
 			undoStack.pop()?.revert();

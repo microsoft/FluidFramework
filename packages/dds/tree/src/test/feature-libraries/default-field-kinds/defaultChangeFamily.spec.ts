@@ -32,7 +32,7 @@ import {
 import { brand } from "../../../util/index.js";
 import {
 	assertDeltaEqual,
-	chunkFromJsonableField,
+	chunkFromJsonableTrees,
 	failCodecFamily,
 	mintRevisionTag,
 	testIdCompressor,
@@ -97,7 +97,7 @@ const root_bar0_bar0: UpPath = {
 };
 
 const nodeX: JsonableTree = { type: brand(stringSchema.identifier), value: "X" };
-const nodeXChunk = chunkFromJsonableField([nodeX]);
+const nodeXChunk = chunkFromJsonableTrees([nodeX]);
 
 function assertDeltasEqual(actual: DeltaRoot[], expected: DeltaRoot[]): void {
 	assert.equal(actual.length, expected.length);
@@ -178,7 +178,7 @@ describe("DefaultEditBuilder", () => {
 		assert.equal(deltas.length, 1);
 		fooEditor.insert(
 			0,
-			chunkFromJsonableField([{ type: brand(numberSchema.identifier), value: 42 }]),
+			chunkFromJsonableTrees([{ type: brand(numberSchema.identifier), value: 42 }]),
 		);
 		expectForest(forest, {
 			type: brand(JsonAsTree.JsonObject.identifier),

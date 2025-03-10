@@ -64,7 +64,7 @@ import {
 import {
 	type EncodingTestData,
 	assertDeltaEqual,
-	chunkFromJsonField,
+	chunkFromJsonTrees,
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	testChangeReceiver,
@@ -442,8 +442,8 @@ const rootChangeWithoutNodeFieldChanges: ModularChangeset = family.compose([
 	makeAnonChange(buildExistsConstraint(pathA0)),
 ]);
 
-const objectNode = chunkFromJsonField([{}]);
-const node1Chunk = chunkFromJsonField([1]);
+const objectNode = chunkFromJsonTrees([{}]);
+const node1Chunk = chunkFromJsonTrees([1]);
 const nodesChunk = chunkFieldSingle(fieldJsonCursor([{}, {}]), {
 	policy: defaultChunkPolicy,
 	idCompressor: testIdCompressor,

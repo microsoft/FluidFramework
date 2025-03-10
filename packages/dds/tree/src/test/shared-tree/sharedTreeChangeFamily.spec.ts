@@ -36,7 +36,7 @@ import type {
 } from "../../shared-tree/sharedTreeChangeTypes.js";
 import { ajvValidator } from "../codec/index.js";
 import {
-	chunkFromJsonField,
+	chunkFromJsonTrees,
 	failCodecFamily,
 	mintRevisionTag,
 	testRevisionTagCodec,
@@ -57,10 +57,10 @@ const defaultEditor = new DefaultEditBuilder(modularFamily, mintRevisionTag, (ta
 // Side effects results in `dataChanges` being populated
 defaultEditor
 	.valueField({ parent: undefined, field: rootFieldKey })
-	.set(chunkFromJsonField(["X"]));
+	.set(chunkFromJsonTrees(["X"]));
 defaultEditor
 	.valueField({ parent: undefined, field: rootFieldKey })
-	.set(chunkFromJsonField(["Y"]));
+	.set(chunkFromJsonTrees(["Y"]));
 
 const dataChange1 = dataChanges[0];
 const dataChange2 = dataChanges[1];

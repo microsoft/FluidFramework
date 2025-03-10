@@ -1333,7 +1333,7 @@ export function moveWithin(
 	editor.move(field, sourceIndex, count, field, destIndex);
 }
 
-export function chunkFromJsonField(field: JsonCompatible[]): TreeChunk {
+export function chunkFromJsonTrees(field: JsonCompatible[]): TreeChunk {
 	const cursor = fieldJsonCursor(field);
 	return chunkFieldSingle(cursor, {
 		idCompressor: testIdCompressor,
@@ -1341,7 +1341,7 @@ export function chunkFromJsonField(field: JsonCompatible[]): TreeChunk {
 	});
 }
 
-export function chunkFromJsonableField(field: JsonableTree[]): TreeChunk {
+export function chunkFromJsonableTrees(field: JsonableTree[]): TreeChunk {
 	const cursor = cursorForJsonableTreeField(field);
 	return chunkFieldSingle(cursor, {
 		idCompressor: testIdCompressor,

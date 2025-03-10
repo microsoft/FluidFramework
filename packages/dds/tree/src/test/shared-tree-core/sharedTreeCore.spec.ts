@@ -51,7 +51,7 @@ import type {
 } from "../../shared-tree-core/index.js";
 import { brand, disposeSymbol } from "../../util/index.js";
 import {
-	chunkFromJsonableField,
+	chunkFromJsonableTrees,
 	SharedTreeTestFactory,
 	StringArray,
 	TestTreeProviderLite,
@@ -653,7 +653,7 @@ function changeTree<TChange, TEditor extends DefaultEditBuilder>(
 	tree: SharedTreeCore<TEditor, TChange>,
 ): void {
 	const field = tree.getEditor().sequenceField({ parent: undefined, field: rootFieldKey });
-	field.insert(0, chunkFromJsonableField([{ type: brand("Node"), value: 42 }]));
+	field.insert(0, chunkFromJsonableTrees([{ type: brand("Node"), value: 42 }]));
 }
 
 /** Returns the length of the trunk branch in the given tree. Acquired via unholy cast; use for glass-box tests only. */

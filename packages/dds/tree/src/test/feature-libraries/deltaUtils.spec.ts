@@ -15,9 +15,9 @@ import type {
 import { mapRootChanges } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
-import { chunkFromJsonField, chunkToMapTreeField } from "../utils.js";
+import { chunkFromJsonTrees, chunkToMapTreeField } from "../utils.js";
 
-const nodeX = chunkFromJsonField(["X"]);
+const nodeX = chunkFromJsonTrees(["X"]);
 const fooField = brand<FieldKey>("foo");
 const detachId: DeltaDetachedNodeId = { minor: 43 };
 

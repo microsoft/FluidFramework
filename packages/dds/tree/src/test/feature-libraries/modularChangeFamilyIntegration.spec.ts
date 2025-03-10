@@ -42,7 +42,7 @@ import {
 } from "../../util/index.js";
 import {
 	assertDeltaEqual,
-	chunkFromJsonField,
+	chunkFromJsonTrees,
 	defaultRevisionMetadataFromChanges,
 	failCodecFamily,
 	mintRevisionTag,
@@ -601,7 +601,7 @@ describe("ModularChangeFamily integration", () => {
 				0,
 			);
 
-			const newNode = chunkFromJsonField(["new value"]);
+			const newNode = chunkFromJsonTrees(["new value"]);
 			editor
 				.sequenceField({
 					parent: { parent: undefined, parentField: fieldB, parentIndex: 0 },
@@ -648,7 +648,7 @@ describe("ModularChangeFamily integration", () => {
 				0,
 			);
 
-			const newNode = chunkFromJsonField(["new value"]);
+			const newNode = chunkFromJsonTrees(["new value"]);
 			editor
 				.sequenceField({
 					parent: { parent: undefined, parentField: fieldB, parentIndex: 0 },

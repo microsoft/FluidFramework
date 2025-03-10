@@ -13,7 +13,7 @@ import { FieldKinds } from "../feature-libraries/index.js";
 import type { ITreeCheckout } from "../shared-tree/index.js";
 import { stringSchema, toStoredSchema } from "../simple-tree/index.js";
 import { brand, type JsonCompatible } from "../util/index.js";
-import { checkoutWithContent, chunkFromJsonableField } from "./utils.js";
+import { checkoutWithContent, chunkFromJsonableTrees } from "./utils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { normalizeAllowedTypes } from "../simple-tree/schemaTypes.js";
 import { singleJsonCursor } from "./json/index.js";
@@ -45,7 +45,7 @@ export function insert(tree: ITreeCheckout, index: number, ...values: string[]):
 	const fieldEditor = tree.editor.sequenceField({ field: rootFieldKey, parent: undefined });
 	fieldEditor.insert(
 		index,
-		chunkFromJsonableField(
+		chunkFromJsonableTrees(
 			values.map(
 				(value): JsonableTree => ({
 					type: brand(stringSchema.identifier),

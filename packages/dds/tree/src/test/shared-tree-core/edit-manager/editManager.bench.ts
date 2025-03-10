@@ -18,7 +18,7 @@ import type { Commit } from "../../../shared-tree-core/index.js";
 import { brand } from "../../../util/index.js";
 import { type Editor, makeEditMinter } from "../../editMinter.js";
 import { NoOpChangeRebaser, TestChange, testChangeFamilyFactory } from "../../testChange.js";
-import { chunkFromJsonField, failCodecFamily, mintRevisionTag } from "../../utils.js";
+import { chunkFromJsonTrees, failCodecFamily, mintRevisionTag } from "../../utils.js";
 
 import {
 	editManagerFactory,
@@ -57,7 +57,7 @@ describe("EditManager - Bench", () => {
 	const sequencePrepend: Editor = (builder) => {
 		builder
 			.sequenceField({ parent: undefined, field: rootFieldKey })
-			.insert(0, chunkFromJsonField([1]));
+			.insert(0, chunkFromJsonTrees([1]));
 	};
 
 	// Family is invariant over the change type, so using any is required to write generic Family processing code.

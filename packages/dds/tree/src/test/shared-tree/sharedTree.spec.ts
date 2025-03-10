@@ -85,7 +85,7 @@ import {
 	StringArray,
 	NumberArray,
 	validateViewConsistency,
-	chunkFromJsonableField,
+	chunkFromJsonableTrees,
 	expectEqualPaths,
 } from "../utils.js";
 import { configuredSharedTree, TreeFactory } from "../../treeFactory.js";
@@ -235,7 +235,7 @@ describe("SharedTree", () => {
 			field: rootFieldKey,
 		});
 		field.set(
-			chunkFromJsonableField([
+			chunkFromJsonableTrees([
 				{
 					type: brand(handleSchema.identifier),
 					value: provider.trees[0].handle,
