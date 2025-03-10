@@ -713,32 +713,6 @@ export namespace InternalUtilityTypes {
 	 */
 	export type TupleToUnion<T extends unknown[]> = T[number];
 
-	/**
-	 * Forms the broad Json base type from the filter controls provided.
-	 *
-	 * @system
-	 */
-	export type FormJsonDegenerateType<Options extends Partial<FilterControls>> = JsonTypeWith<
-		| (Options extends { AllowExactly: unknown[] }
-				? TupleToUnion<Options["AllowExactly"]>
-				: never)
-		| (Options extends { AllowExtensionOf: unknown } ? Options["AllowExtensionOf"] : never)
-	>;
-
-	/**
-	 * Forms the broad Json base type narrowed to a non-null object from the
-	 * filter controls provided.
-	 *
-	 * @system
-	 */
-	export type FormJsonDegenerateNonNullObjectType<Options extends Partial<FilterControls>> =
-		NonNullJsonObjectWith<
-			| (Options extends { AllowExactly: unknown[] }
-					? TupleToUnion<Options["AllowExactly"]>
-					: never)
-			| (Options extends { AllowExtensionOf: unknown } ? Options["AllowExtensionOf"] : never)
-		>;
-
 	// #region JsonSerializable implementation
 
 	/**
@@ -760,7 +734,15 @@ export namespace InternalUtilityTypes {
 		AllowExtensionOf: Options extends { AllowExtensionOf: unknown }
 			? Options["AllowExtensionOf"]
 			: never;
-		DegenerateSubstitute: FormJsonDegenerateType<Options>;
+		// There Substitute type could be extracted to helper type, but are kept explicit here
+		// to make JsonTypeWith show explicitly in results for users, rather
+		// than either the helper type name or a partially unrolled version.
+		DegenerateSubstitute: JsonTypeWith<
+			| (Options extends { AllowExactly: unknown[] }
+					? TupleToUnion<Options["AllowExactly"]>
+					: never)
+			| (Options extends { AllowExtensionOf: unknown } ? Options["AllowExtensionOf"] : never)
+		>;
 	} extends infer Controls
 		? /* Controls should always satisfy FilterControlsWithSubstitution, but Typescript wants a check */
 			Controls extends FilterControlsWithSubstitution
@@ -992,8 +974,21 @@ export namespace InternalUtilityTypes {
 		AllowExtensionOf: Options extends { AllowExtensionOf: unknown }
 			? Options["AllowExtensionOf"]
 			: never;
-		DegenerateSubstitute: FormJsonDegenerateType<Options>;
-		DegenerateNonNullObjectSubstitute: FormJsonDegenerateNonNullObjectType<Options>;
+		// There Substitute types could be extracted to helper type, but are kept explicit here
+		// to make JsonTypeWith/NonNullJsonObjectWith show explicitly in results for users, rather
+		// than either the helper type name or a partially unrolled version.
+		DegenerateSubstitute: JsonTypeWith<
+			| (Options extends { AllowExactly: unknown[] }
+					? TupleToUnion<Options["AllowExactly"]>
+					: never)
+			| (Options extends { AllowExtensionOf: unknown } ? Options["AllowExtensionOf"] : never)
+		>;
+		DegenerateNonNullObjectSubstitute: NonNullJsonObjectWith<
+			| (Options extends { AllowExactly: unknown[] }
+					? TupleToUnion<Options["AllowExactly"]>
+					: never)
+			| (Options extends { AllowExtensionOf: unknown } ? Options["AllowExtensionOf"] : never)
+		>;
 	} extends infer Controls
 		? /* Controls should always satisfy DeserializedFilterControls, but Typescript wants a check */
 			Controls extends DeserializedFilterControls
