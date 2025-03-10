@@ -108,13 +108,14 @@ describeCompat("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
 
 	describe("Tree with a simple object", () => {
 		const treeViewConfig = new TreeViewConfiguration({ schema: Point });
-		const initialPoint = { x: 1, y: 2 };
+		let initialPoint: Point;
 		let treeViewClient1: TreeView<typeof Point>;
 		let treeViewClient2: TreeView<typeof Point>;
 
 		beforeEach(async () => {
 			treeViewClient1 = tree1.viewWith(treeViewConfig);
 			treeViewClient2 = tree2.viewWith(treeViewConfig);
+			initialPoint = new Point({ x: 1, y: 2 });
 			treeViewClient1.initialize(initialPoint);
 			await provider.ensureSynchronized();
 		});
@@ -123,7 +124,7 @@ describeCompat("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
 			// Validate that the second client received the initial tree data.
 			assert.deepStrictEqual(
 				treeViewClient2.root,
-				new Point(initialPoint),
+				initialPoint,
 				"Initial tree data not synchronized",
 			);
 		});
@@ -166,14 +167,16 @@ describeCompat("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
 
 	describe("Tree with an object and array", () => {
 		const treeViewConfig = new TreeViewConfiguration({ schema: Shape });
-		const initialPoint1 = { x: 1, y: 1 };
-		const initialPoint2 = { x: 2, y: 2 };
+		let initialPoint1: Point;
+		let initialPoint2: Point;
 		let treeViewClient1: TreeView<typeof Shape>;
 		let treeViewClient2: TreeView<typeof Shape>;
 
 		beforeEach(async () => {
 			treeViewClient1 = tree1.viewWith(treeViewConfig);
 			treeViewClient2 = tree2.viewWith(treeViewConfig);
+			initialPoint1 = new Point({ x: 1, y: 1 });
+			initialPoint2 = new Point({ x: 2, y: 2 });
 			treeViewClient1.initialize({
 				sides: 2,
 				points: [initialPoint1, initialPoint2],
@@ -190,12 +193,12 @@ describeCompat("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
 			);
 			assert.deepStrictEqual(
 				treeViewClient2.root.points.at(0),
-				new Point(initialPoint1),
+				initialPoint1,
 				"Initial point 1 not synchronized",
 			);
 			assert.deepStrictEqual(
 				treeViewClient2.root.points.at(1),
-				new Point(initialPoint2),
+				initialPoint2,
 				"Initial point 2 not synchronized",
 			);
 		});
