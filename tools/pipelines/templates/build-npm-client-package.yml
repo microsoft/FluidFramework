@@ -814,63 +814,63 @@ extends:
       #       buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
 
       # Capture pipeline stage results
-      - ${{ if eq(parameters.telemetry, true) }}:
-        - stage: upload_run_telemetry
-          displayName: Upload pipeline run telemetry to Kusto
-          condition: succeededOrFailed()
-          dependsOn:
-            - build
-            # Note: the publish stages are created in include-publish-npm-package.yml. We need to match the ids exactly.
-            - publish_npm_internal_test
-            - publish_npm_internal_build
-            - publish_npm_public
-            # NOTE: This is brittle; since the publish_npm_internal_dev stage is addded to the pipeline conditionally,
-            # we create a dependency on it based on the same condition.
-            # So this needs to be kept in sync with the logic that include-publish-npm-package.yml uses to create the stage.
-            # At some point it might be preferable to always create the stage, control its execution solely with
-            # 'condition:', and update this bit to always depend on publish_npm_internal_dev, since it will always exist.
-            - ${{ if eq(parameters.isReleaseGroup, true) }}:
-              - publish_npm_internal_dev
-          jobs:
-            - job: upload_run_telemetry
-              displayName: Upload pipeline run telemetry to Kusto
-              pool: Small-eastus2
-              variables:
-              - group: ado-feeds
-              - name: pipelineTelemetryWorkdir
-                value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir/timingOutput
-                readonly: true
-              steps:
-              - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
-                parameters:
-                  pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
-              - task: Bash@3
-                displayName: Get stage timing and result data from ADO
-                env:
-                  BUILD_ID: $(Build.BuildId)
-                  ADO_API_TOKEN: $(System.AccessToken)
-                  WORK_FOLDER: $(pipelineTelemetryWorkdir)
-                inputs:
-                  targetType: inline
-                  script: |
-                    set -eu -o pipefail
-                    echo "Creating work folder '$WORK_FOLDER'";
-                    mkdir -p $WORK_FOLDER;
+      # - ${{ if eq(parameters.telemetry, true) }}:
+      #   - stage: upload_run_telemetry
+      #     displayName: Upload pipeline run telemetry to Kusto
+      #     condition: succeededOrFailed()
+      #     dependsOn:
+      #       - build
+      #       # Note: the publish stages are created in include-publish-npm-package.yml. We need to match the ids exactly.
+      #       - publish_npm_internal_test
+      #       - publish_npm_internal_build
+      #       - publish_npm_public
+      #       # NOTE: This is brittle; since the publish_npm_internal_dev stage is addded to the pipeline conditionally,
+      #       # we create a dependency on it based on the same condition.
+      #       # So this needs to be kept in sync with the logic that include-publish-npm-package.yml uses to create the stage.
+      #       # At some point it might be preferable to always create the stage, control its execution solely with
+      #       # 'condition:', and update this bit to always depend on publish_npm_internal_dev, since it will always exist.
+      #       - ${{ if eq(parameters.isReleaseGroup, true) }}:
+      #         - publish_npm_internal_dev
+      #     jobs:
+      #       - job: upload_run_telemetry
+      #         displayName: Upload pipeline run telemetry to Kusto
+      #         pool: Small-eastus2
+      #         variables:
+      #         - group: ado-feeds
+      #         - name: pipelineTelemetryWorkdir
+      #           value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir/timingOutput
+      #           readonly: true
+      #         steps:
+      #         - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
+      #           parameters:
+      #             pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
+      #         - task: Bash@3
+      #           displayName: Get stage timing and result data from ADO
+      #           env:
+      #             BUILD_ID: $(Build.BuildId)
+      #             ADO_API_TOKEN: $(System.AccessToken)
+      #             WORK_FOLDER: $(pipelineTelemetryWorkdir)
+      #           inputs:
+      #             targetType: inline
+      #             script: |
+      #               set -eu -o pipefail
+      #               echo "Creating work folder '$WORK_FOLDER'";
+      #               mkdir -p $WORK_FOLDER;
 
-                    echo "Retrieving data from ADO API";
-                    echo "curl -u \":<REDACTED>\" \"https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline?api-version=7.1-preview.2\""
-                    curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline?api-version=7.1-preview.2" > $WORK_FOLDER/output.json
-              - task: Bash@3
-                displayName: Submit telemetry for stage timing and result
-                env:
-                  BUILD_ID: $(Build.BuildId)
-                  PIPELINE: BuildClient
-                  WORK_FOLDER: $(pipelineTelemetryWorkdir)
-                inputs:
-                  targetType: inline
-                  workingDirectory: $(pathToTelemetryGenerator)
-                  script: |
-                    set -eu -o pipefail
-                    echo "Listing files in '$WORK_FOLDER'"
-                    ls -laR $WORK_FOLDER;
-                    npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/stageTimingRetriever.js" --dir "$WORK_FOLDER";
+      #               echo "Retrieving data from ADO API";
+      #               echo "curl -u \":<REDACTED>\" \"https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline?api-version=7.1-preview.2\""
+      #               curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline?api-version=7.1-preview.2" > $WORK_FOLDER/output.json
+      #         - task: Bash@3
+      #           displayName: Submit telemetry for stage timing and result
+      #           env:
+      #             BUILD_ID: $(Build.BuildId)
+      #             PIPELINE: BuildClient
+      #             WORK_FOLDER: $(pipelineTelemetryWorkdir)
+      #           inputs:
+      #             targetType: inline
+      #             workingDirectory: $(pathToTelemetryGenerator)
+      #             script: |
+      #               set -eu -o pipefail
+      #               echo "Listing files in '$WORK_FOLDER'"
+      #               ls -laR $WORK_FOLDER;
+      #               npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/stageTimingRetriever.js" --dir "$WORK_FOLDER";
