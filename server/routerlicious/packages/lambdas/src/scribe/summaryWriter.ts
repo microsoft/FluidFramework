@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
 	ISequencedDocumentMessage,
@@ -17,6 +16,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
 	buildTreePath,
+	fromBase64ToUtf8,
 	IGitManager,
 	ISummaryTree,
 	NetworkError,

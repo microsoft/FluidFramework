@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
 import * as resources from "@fluidframework/gitresources";
 import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
+import { assert } from "./assert";
 import { debug } from "./debug";
 import {
 	ICreateRefParamsExternal,

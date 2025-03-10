@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString, toUtf8 } from "@fluidframework/common-utils";
 import {
 	IDocumentAttributes,
 	ISequencedDocumentMessage,
@@ -13,6 +12,8 @@ import {
 	IGitManager,
 	IWholeFlatSummary,
 	LatestSummaryId,
+	bufferToString,
+	toUtf8,
 } from "@fluidframework/server-services-client";
 import {
 	IDeliState,

@@ -12,9 +12,9 @@ import {
 	getAuthorizationTokenFromCredentials,
 	IGitManager,
 	parseToken,
+	fromUtf8ToBase64,
 } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import {
 	extractTokenFromHeader,
 	getValidAccessToken,

@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, ScopeType } from "@fluidframework/protocol-definitions";
-import { BasicRestWrapper } from "@fluidframework/server-services-client";
+import { BasicRestWrapper, fromUtf8ToBase64 } from "@fluidframework/server-services-client";
 import { IDeltaService, type ITenantManager } from "@fluidframework/server-services-core";
 import { getGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";
 import { getRefreshTokenIfNeededCallback, TenantManager } from "./tenant";

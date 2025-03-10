@@ -7,8 +7,8 @@ import { strict as assert } from "assert";
 import Axios, { AxiosHeaders } from "axios";
 import { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
-import { CorrelationIdHeaderName } from "../constants";
-import { BasicRestWrapper } from "../restWrapper";
+import { CorrelationIdHeaderName } from "../../constants";
+import { BasicRestWrapper } from "../../restWrapper";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { jwtDecode } from "jwt-decode";
 

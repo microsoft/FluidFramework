@@ -32,6 +32,20 @@ export class BasicRestWrapper extends RestWrapper {
 }
 
 // @internal
+class Buffer_2 extends Uint8Array {
+    // (undocumented)
+    static from(value: any, encodingOrOffset?: any, length?: any): IsoBuffer;
+    // (undocumented)
+    static isBuffer(obj: any): obj is Buffer_2;
+    // (undocumented)
+    toString(encoding?: string): string;
+}
+export { Buffer_2 as Buffer }
+
+// @internal
+export const bufferToString: (blob: ArrayBufferLike, encoding: string) => string;
+
+// @internal
 export const buildTreePath: (...nodeNames: string[]) => string;
 
 // @internal
@@ -88,6 +102,12 @@ export const DriverVersionHeaderName = "x-driver-version";
 // @internal (undocumented)
 export type ExtendedSummaryObject = SummaryObject | IEmbeddedSummaryHandle;
 
+// @internal
+export const fromBase64ToUtf8: (input: string) => string;
+
+// @internal
+export const fromUtf8ToBase64: (input: string) => string;
+
 // @internal (undocumented)
 export function generateServiceProtocolEntries(deli: string, scribe: string): ITreeEntry[];
 
@@ -117,6 +137,9 @@ export const getRandomInt: (range: number) => number;
 
 // @internal (undocumented)
 export function getRandomName(connector?: string, capitalize?: boolean): string;
+
+// @internal
+export function gitHashFile(file: IsoBuffer): Promise<string>;
 
 // @internal (undocumented)
 export class GitManager implements IGitManager {
@@ -164,6 +187,9 @@ export class GitManager implements IGitManager {
     upsertRef(branch: string, commitSha: string): Promise<resources.IRef>;
     write(branch: string, inputTree: api.ITree, parents: string[], message: string): Promise<resources.ICommit>;
 }
+
+// @internal
+export function hashFile(file: IsoBuffer, algorithm?: "SHA-1" | "SHA-256", hashEncoding?: "hex" | "base64"): Promise<string>;
 
 // @internal
 export class Heap<T> {
@@ -444,6 +470,12 @@ export interface ISession {
 export function isNetworkError(error: unknown): error is NetworkError;
 
 // @internal (undocumented)
+export const IsoBuffer: typeof Buffer_2;
+
+// @internal (undocumented)
+export type IsoBuffer = Buffer_2;
+
+// @internal (undocumented)
 export interface ISummaryTree extends ISummaryTree_2 {
     // (undocumented)
     tree: {
@@ -669,6 +701,9 @@ export abstract class RestWrapper {
 export const setGlobalTimeoutContext: (timeoutContext: ITimeoutContext) => void;
 
 // @internal
+export function stringToBuffer(input: string, encoding: string): ArrayBufferLike;
+
+// @internal
 export class SummaryTreeUploadManager implements ISummaryUploadManager {
     constructor(manager: IGitManager, blobsShaCache: Map<string, string>, getPreviousFullSnapshot: (parentHandle: string) => Promise<ISnapshotTreeEx | null | undefined>);
     // (undocumented)
@@ -683,6 +718,15 @@ export function throwFluidServiceNetworkError(statusCode: number, errorData?: IN
 
 // @internal
 export const TokenRevokeScopeType = "token:revoke";
+
+// @internal
+export const toUtf8: (input: string, encoding: string) => string;
+
+// @internal
+export function Uint8ArrayToArrayBuffer(array: Uint8Array): ArrayBuffer;
+
+// @internal
+export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string;
 
 // @internal
 export function validateTokenClaims(token: string, documentId: string, tenantId: string): ITokenClaims;

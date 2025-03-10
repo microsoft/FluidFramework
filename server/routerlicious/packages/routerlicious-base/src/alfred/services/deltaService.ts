@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { toUtf8 } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { toUtf8 } from "@fluidframework/server-services-client";
 import {
 	ICollection,
 	IDeltaService,

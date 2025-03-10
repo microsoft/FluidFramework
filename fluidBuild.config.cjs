@@ -322,7 +322,10 @@ module.exports = {
 				// TODO: AB#7630 uses lint only ts projects for coverage which don't have representative tsc scripts
 				"^packages/tools/fluid-runner/package.json",
 			],
-			"fluid-build-tasks-tsc": [],
+			"fluid-build-tasks-tsc": [
+				// Not seeing the dependencies it wants even when I add them
+				"^server/routerlicious/packages/services-client/package.json",
+			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
 				"tools/api-markdown-documenter/src/test/snapshots/.*",

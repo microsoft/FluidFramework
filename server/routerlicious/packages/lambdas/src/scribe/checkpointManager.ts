@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { delay } from "@fluidframework/common-utils";
 import {
+	delay,
 	ICollection,
 	IContext,
 	isRetryEnabled,

@@ -4,6 +4,7 @@
  */
 
 import {
+	Deferred,
 	IDocumentStorage,
 	IOrdererManager,
 	ITenantManager,
@@ -12,9 +13,8 @@ import {
 	MongoManager,
 	DefaultMetricClient,
 	IRunner,
+	TypedEventEmitter,
 } from "@fluidframework/server-services-core";
-// eslint-disable-next-line import/no-deprecated
-import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import {
@@ -28,7 +28,6 @@ import * as app from "./app";
 export class TinyliciousRunner implements IRunner {
 	private server?: IWebServer;
 
-	// eslint-disable-next-line import/no-deprecated
 	private runningDeferred?: Deferred<void>;
 
 	constructor(
@@ -39,7 +38,6 @@ export class TinyliciousRunner implements IRunner {
 		private readonly tenantManager: ITenantManager,
 		private readonly storage: IDocumentStorage,
 		private readonly mongoManager: MongoManager,
-		// eslint-disable-next-line import/no-deprecated
 		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	) {}
 
@@ -47,7 +45,6 @@ export class TinyliciousRunner implements IRunner {
 		const version = process.env.npm_package_version;
 		winston.info(`Starting tinylicious@${version}`);
 
-		// eslint-disable-next-line import/no-deprecated
 		this.runningDeferred = new Deferred<void>();
 
 		// Make sure provided port is unoccupied

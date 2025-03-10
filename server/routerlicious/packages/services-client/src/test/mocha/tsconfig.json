@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"strictNullChecks": false,
 		"rootDir": "./",
-		"outDir": "../../dist/test",
+		"outDir": "../../../dist/test/mocha",
 		"types": ["node", "mocha"],
 		"declaration": false,
 		"declarationMap": false,
@@ -11,7 +11,7 @@
 	"include": ["./**/*"],
 	"references": [
 		{
-			"path": "../..",
+			"path": "../../..",
 		},
 	],
 }

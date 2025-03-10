@@ -15,6 +15,9 @@ import {
 	ISession,
 	getQuorumTreeEntries,
 	mergeAppAndProtocolTree,
+	gitHashFile,
+	IsoBuffer,
+	Uint8ArrayToString,
 } from "@fluidframework/server-services-client";
 import {
 	IDatabaseManager,
@@ -35,7 +38,6 @@ import {
 	FileMode,
 } from "@fluidframework/protocol-definitions";
 import { IQuorumSnapshot, getGitMode, getGitType } from "@fluidframework/protocol-base";
-import { gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 
 // Forked from DocumentStorage to remove to server dependencies and enable testing of other data stores.
 /**

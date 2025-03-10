@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IDocumentAttributes } from "@fluidframework/protocol-definitions";
-import { IGitManager } from "@fluidframework/server-services-client";
+import { IGitManager, fromBase64ToUtf8 } from "@fluidframework/server-services-client";
 import {
 	CheckpointService,
 	ICheckpoint,
