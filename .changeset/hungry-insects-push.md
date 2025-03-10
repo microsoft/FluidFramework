@@ -8,4 +8,4 @@
 
 `TreeBranchEvents` exposes `rootChanged`
 
-`TreeBranchEvents` not includes the `rootChanged` event from `TreeViewEvents`.
+`TreeBranchEvents` now includes the `rootChanged` event from `TreeViewEvents`.
