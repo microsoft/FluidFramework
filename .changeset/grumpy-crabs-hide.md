@@ -6,6 +6,6 @@
 "section": tree
 ---
 
-Add `SchemaFactory.scopedFactory`
+Add `SchemaFactoryAlpha.scopedFactory`
 
-Add `SchemaFactory.scopedFactory` method as an easy way to create a new `SchemaFactory` with a nested scope string.
+Add `SchemaFactoryAlpha.scopedFactory` method as an easy way to create a new `SchemaFactory` with a nested scope string.

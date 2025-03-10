@@ -766,7 +766,6 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     readonly requiredRecursive: <const T extends unknown>(t: T, props?: Omit<FieldProps<unknown>, "defaultProvider"> | undefined) => FieldSchemaUnsafe<FieldKind.Required, T>;
     static readonly requiredRecursive: <const T extends unknown>(t: T, props?: Omit<FieldProps<unknown>, "defaultProvider"> | undefined) => FieldSchemaUnsafe<FieldKind.Required, T>;
     readonly scope: TScope;
-    scopedFactory<const T extends TName, TNameInner extends number | string = string>(name: T): SchemaFactory<ScopedSchemaName<TScope, T>, TNameInner>;
     readonly string: TreeNodeSchemaNonClass<"com.fluidframework.leaf.string", NodeKind.Leaf, string, string, true, unknown, never, unknown>;
     static readonly string: TreeNodeSchemaNonClass<"com.fluidframework.leaf.string", NodeKind.Leaf, string, string, true, unknown, never, unknown>;
 }

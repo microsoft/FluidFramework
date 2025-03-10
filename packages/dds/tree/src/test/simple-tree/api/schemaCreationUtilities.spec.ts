@@ -15,6 +15,7 @@ import {
 	type TreeView,
 	type InsertableTreeFieldFromImplicitField,
 	type TreeNodeFromImplicitAllowedTypes,
+	SchemaFactoryAlpha,
 } from "../../../simple-tree/index.js";
 import {
 	adaptEnum,
@@ -81,7 +82,7 @@ describe("schemaCreationUtilities", () => {
 	});
 
 	it("enumFromStrings - construction tests", () => {
-		const schemaFactory = new SchemaFactory("com.myApp");
+		const schemaFactory = new SchemaFactoryAlpha("com.myApp");
 
 		const ModeNodes = enumFromStrings(schemaFactory.scopedFactory("Mode"), ["A", "B", "C"]);
 		type ModeNodes = TreeNodeFromImplicitAllowedTypes<typeof ModeNodes.schema>;
@@ -117,7 +118,7 @@ describe("schemaCreationUtilities", () => {
 	});
 
 	it("adaptEnum example from docs", () => {
-		const schemaFactory = new SchemaFactory("com.myApp");
+		const schemaFactory = new SchemaFactoryAlpha("com.myApp");
 		// An enum for use in the tree. Must have string keys.
 		enum Mode {
 			a = "A",
@@ -146,7 +147,7 @@ describe("schemaCreationUtilities", () => {
 	});
 
 	it("adaptEnum - numbers", () => {
-		const schemaFactory = new SchemaFactory("com.myApp");
+		const schemaFactory = new SchemaFactoryAlpha("com.myApp");
 		enum Mode {
 			a = 1,
 			b = "b",
@@ -187,7 +188,7 @@ describe("schemaCreationUtilities", () => {
 	});
 
 	it("adaptEnum - construction tests", () => {
-		const schemaFactory = new SchemaFactory("com.myApp");
+		const schemaFactory = new SchemaFactoryAlpha("com.myApp");
 		enum Mode {
 			a = "A",
 			b = "B",
