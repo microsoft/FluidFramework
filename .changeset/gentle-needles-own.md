@@ -1,8 +1,8 @@
 ---
-"@fluid-private/test-end-to-end-tests": minor
+"@fluid-experimental/tree": minor
 ---
 ---
-"section": deprecation
+"section": other
 ---
 
 Adds `getLocalEdits` method to OrderedEditSet interface and removed `./test/EditLog` export
