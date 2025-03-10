@@ -22,7 +22,6 @@ import {
 	CommitKind,
 	type Revertible,
 	type UpPath,
-	compareUpPaths,
 	moveToDetachedField,
 	rootFieldKey,
 	storedEmptyFieldSchema,
@@ -87,6 +86,7 @@ import {
 	StringArray,
 	NumberArray,
 	validateViewConsistency,
+	expectEqualPaths,
 } from "../utils.js";
 import { configuredSharedTree, TreeFactory } from "../../treeFactory.js";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
@@ -1645,7 +1645,7 @@ describe("SharedTree", () => {
 				parentField: EmptyKey,
 				parentIndex: 1,
 			};
-			assert(compareUpPaths(childPath, expected));
+			expectEqualPaths(childPath, expected);
 		});
 	});
 
