@@ -372,15 +372,16 @@ stages:
 
               az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
               trips-setup $SYSTEM_ACCESSTOKEN
-              echo ##vso[task.setvariable variable=tenantCreds;issecret=true;isoutput=true]$(loginTenants)
-              echo ##vso[task.setvariable variable=stringBearerToken;]$(stringBearerToken)
 
         # run the test
         - task: Npm@1
           displayName: '[test] ${{ parameters.testCommand }} ${{ variant.flags }}'
           continueOnError: ${{ parameters.continueOnError }}
           env:
-            login__odsp__test__tenants: $(tenantCreds)
+            if eq(contains(${{ parameters.stageId }}, 'odspdf'), true):
+              login__odspdf__test__tenants: $(tenantCreds)
+            else:
+              login__odsp__test__tenants: $(tenantCreds)
           inputs:
             command: 'custom'
             workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}

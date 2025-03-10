@@ -170,6 +170,5 @@ stages:
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
         login__microsoft__clientId: $(login-microsoft-clientId)
-        login__odsp__test__tenants: $(automation-e2e-login-odsp-test-tenants)
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
