@@ -91,6 +91,24 @@ import {
 	objectWithMismatchedGetterAndSetterProperty,
 	objectWithMismatchedGetterAndSetterPropertyViaValue,
 	objectWithNever,
+	stringRecordOfNumbers,
+	stringRecordOfUndefined,
+	stringRecordOfUnknown,
+	stringOrNumberRecordOfStrings,
+	partialStringRecordOfNumbers,
+	partialStringRecordOfUnknown,
+	templatedRecordOfNumbers,
+	partialTemplatedRecordOfNumbers,
+	templatedRecordOfUnknown,
+	mixedRecordOfUnknown,
+	stringRecordOfNumbersOrStringsWithKnownProperties,
+	stringRecordOfUnknownWithKnownProperties,
+	partialStringRecordOfUnknownWithKnownProperties,
+	stringRecordOfUnknownWithOptionalKnownProperties,
+	stringRecordOfUnknownWithKnownUnknown,
+	stringRecordOfUnknownWithOptionalKnownUnknown,
+	stringOrNumberRecordOfStringWithKnownNumber,
+	stringOrNumberRecordOfUndefinedWithKnownNumber,
 	objectWithPossibleRecursion,
 	objectWithOptionalRecursion,
 	objectWithEmbeddedRecursion,
@@ -137,6 +155,7 @@ import {
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type {
+	InternalUtilityTypes,
 	JsonDeserialized,
 	JsonTypeWith,
 	NonNullJsonObjectWith,
@@ -454,6 +473,53 @@ describe("JsonDeserialized", () => {
 				assertIdenticalTypes(resultRead, objectWithBrandedString);
 			});
 
+			it("`string` indexed record of `number`s", () => {
+				const resultRead = passThru(stringRecordOfNumbers);
+				assertIdenticalTypes(resultRead, stringRecordOfNumbers);
+			});
+			it("`string`|`number` indexed record of `string`s", () => {
+				const resultRead = passThru(stringOrNumberRecordOfStrings);
+				assertIdenticalTypes(resultRead, stringOrNumberRecordOfStrings);
+			});
+			it("`string` indexed record of `number`|`string`s with known properties", () => {
+				const resultRead = passThru(stringRecordOfNumbersOrStringsWithKnownProperties);
+				assertIdenticalTypes(resultRead, stringRecordOfNumbersOrStringsWithKnownProperties);
+			});
+			it("`string`|`number` indexed record of `strings` with known `number` property (unassignable)", () => {
+				const resultRead = passThru(stringOrNumberRecordOfStringWithKnownNumber);
+				assertIdenticalTypes(resultRead, stringOrNumberRecordOfStringWithKnownNumber);
+			});
+			it("`Partial<>` `string` indexed record of `numbers`", () => {
+				// Warning: as of TypeScript 5.8.2, a Partial<> of an indexed type
+				// gains `| undefined` even under exactOptionalPropertyTypes=true.
+				// Preferred result is that there is no change applying Partial<>.
+				// In either case, this test can hold since there isn't a downside
+				// to allowing `undefined` in the result if that is how type is
+				// given since indexed properties are always inherently optional.
+				const resultRead = passThru(partialStringRecordOfNumbers, {
+					key1: 0,
+				});
+				assertIdenticalTypes(resultRead, partialStringRecordOfNumbers);
+			});
+			it("templated record of `numbers`", () => {
+				const resultRead = passThru(templatedRecordOfNumbers, {
+					key1: 0,
+				});
+				assertIdenticalTypes(resultRead, templatedRecordOfNumbers);
+			});
+			it("`Partial<>` templated record of `numbers`", () => {
+				// Warning: as of TypeScript 5.8.2, a Partial<> of an indexed type
+				// gains `| undefined` even under exactOptionalPropertyTypes=true.
+				// Preferred result is that there is no change applying Partial<>.
+				// In either case, this test can hold since there isn't a downside
+				// to allowing `undefined` in the result if that is how type is
+				// given since indexed properties are always inherently optional.
+				const resultRead = passThru(partialTemplatedRecordOfNumbers, {
+					key1: 0,
+				});
+				assertIdenticalTypes(resultRead, partialTemplatedRecordOfNumbers);
+			});
+
 			it("object with possible type recursion through union", () => {
 				const resultRead = passThru(objectWithPossibleRecursion);
 				assertIdenticalTypes(resultRead, objectWithPossibleRecursion);
@@ -618,6 +684,27 @@ describe("JsonDeserialized", () => {
 					assertIdenticalTypes(resultRead, {});
 					// @ts-expect-error `never` property (type never) should not be preserved
 					resultRead satisfies typeof objectWithNever;
+				});
+				it("`string` indexed record of `undefined`", () => {
+					const resultRead = passThru(stringRecordOfUndefined, {});
+					assertIdenticalTypes(resultRead, {});
+					// `Record<string, undefined>` has no required properties; so, result `{}` does satisfy original type.
+					resultRead satisfies typeof stringRecordOfUndefined;
+				});
+				it("`string` indexed record of `undefined` and known `number` property (unassignable)", () => {
+					const resultRead = passThru(stringOrNumberRecordOfUndefinedWithKnownNumber, {
+						knownNumber: 4,
+					});
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{
+							knownNumber: number;
+						}>(),
+					);
+					// If this type were not unassignable to begin with, then result would
+					// satisfy the original type.
+					// @ts-expect-error Property 'knownNumber' is incompatible with index signature. Type 'number' is not assignable to type 'undefined'.
+					resultRead satisfies typeof stringOrNumberRecordOfUndefinedWithKnownNumber;
 				});
 			});
 
@@ -1241,6 +1328,139 @@ describe("JsonDeserialized", () => {
 				);
 				assertIdenticalTypes(resultRead, createInstanceOf<JsonTypeWith<never>>());
 			});
+			it("`string` indexed record of `unknown` replaced with `JsonTypeWith<never>` (and becomes optional per current TS behavior)", () => {
+				const resultRead = passThru(stringRecordOfUnknown);
+				assertIdenticalTypes(
+					resultRead,
+					// Note: as of TypeScript 5.8.2, a Partial<> of an indexed type
+					// gains `| undefined` even under exactOptionalPropertyTypes=true.
+					// Preferred result is that there is no change applying Partial<>.
+					// In either case, this test hold since indexed properties are
+					// always inherently optional.
+					createInstanceOf<Partial<Record<string, JsonTypeWith<never>>>>(),
+				);
+			});
+			it("templated record of `unknown` replaced with `JsonTypeWith<never>` (and becomes optional per current TS behavior)", () => {
+				const resultRead = passThru(templatedRecordOfUnknown);
+				assertIdenticalTypes(
+					resultRead,
+					// Note: as of TypeScript 5.8.2, a Partial<> of an indexed type
+					// gains `| undefined` even under exactOptionalPropertyTypes=true.
+					// Preferred result is that there is no change applying Partial<>.
+					// In either case, this test hold since indexed properties are
+					// always inherently optional.
+					createInstanceOf<Partial<Record<`${string}Key`, JsonTypeWith<never>>>>(),
+				);
+			});
+			it("`string` indexed record of `unknown` and known properties has `unknown` replaced with `JsonTypeWith<never>` (and becomes optional per current TS behavior)", () => {
+				const resultRead = passThru(stringRecordOfUnknownWithKnownProperties);
+				assertIdenticalTypes(
+					resultRead,
+					createInstanceOf<
+						InternalUtilityTypes.FlattenIntersection<
+							// Note: as of TypeScript 5.8.2, a Partial<> of an indexed type
+							// gains `| undefined` even under exactOptionalPropertyTypes=true.
+							// Preferred result is that there is no change applying Partial<>.
+							// In either case, this test hold since indexed properties are
+							// always inherently optional.
+							Partial<Record<string, JsonTypeWith<never>>> & {
+								knownString: string;
+								knownNumber: number;
+							}
+						>
+					>(),
+				);
+			});
+			it("`string` indexed record of `unknown` and optional known properties has `unknown` replaced with `JsonTypeWith<never>` (and becomes optional per current TS behavior)", () => {
+				const resultRead = passThru(stringRecordOfUnknownWithOptionalKnownProperties, {
+					knownString: "string value",
+				});
+				assertIdenticalTypes(
+					resultRead,
+					createInstanceOf<
+						InternalUtilityTypes.FlattenIntersection<
+							// Note: as of TypeScript 5.8.2, a Partial<> of an indexed type
+							// gains `| undefined` even under exactOptionalPropertyTypes=true.
+							// Preferred result is that there is no change applying Partial<>.
+							// In either case, this test hold since indexed properties are
+							// always inherently optional.
+							Partial<Record<string, JsonTypeWith<never>>> & {
+								knownString?: string;
+								knownNumber?: number;
+							}
+						>
+					>(),
+				);
+			});
+			it("`string` indexed record of `unknown` and required known `unknown` has all `unknown` replaced with `JsonTypeWith<never>` (and known becomes explicitly optional)", () => {
+				const resultRead = passThru(stringRecordOfUnknownWithKnownUnknown);
+				assertIdenticalTypes(
+					resultRead,
+					createInstanceOf<
+						InternalUtilityTypes.FlattenIntersection<
+							// Note: as of TypeScript 5.8.2, a Partial<> of an indexed type
+							// gains `| undefined` even under exactOptionalPropertyTypes=true.
+							// Preferred result is that there is no change applying Partial<>.
+							// In either case, this test hold since indexed properties are
+							// always inherently optional.
+							Partial<Record<string, JsonTypeWith<never>>> & {
+								knownUnknown?: JsonTypeWith<never>;
+							}
+						>
+					>(),
+				);
+			});
+			it("`string` indexed record of `unknown` and optional known `unknown` has all `unknown` replaced with `JsonTypeWith<never>` (and becomes optional per current TS behavior)", () => {
+				const resultRead = passThru(stringRecordOfUnknownWithOptionalKnownUnknown);
+				assertIdenticalTypes(
+					resultRead,
+					createInstanceOf<
+						InternalUtilityTypes.FlattenIntersection<
+							// Note: as of TypeScript 5.8.2, a Partial<> of an indexed type
+							// gains `| undefined` even under exactOptionalPropertyTypes=true.
+							// Preferred result is that there is no change applying Partial<>.
+							// In either case, this test hold since indexed properties are
+							// always inherently optional.
+							Partial<Record<string, JsonTypeWith<never>>> & {
+								knownUnknown?: JsonTypeWith<never>;
+							}
+						>
+					>(),
+				);
+			});
+			it("`Partial<>` `string` indexed record of `unknown` replaced with `JsonTypeWith<never>`", () => {
+				const resultRead = passThru(partialStringRecordOfUnknown);
+				assertIdenticalTypes(
+					resultRead,
+					// Warning: as of TypeScript 5.8.2, a Partial<> of an indexed type
+					// gains `| undefined` even under exactOptionalPropertyTypes=true.
+					// Preferred result is that there is no change applying Partial<>.
+					// In either case, this test can hold since there isn't a downside
+					// to allowing `undefined` in the result if that is how type is
+					// given since indexed properties are always inherently optional.
+					createInstanceOf<Partial<Record<string, JsonTypeWith<never>>>>(),
+				);
+			});
+			it("`Partial<>` `string` indexed record of `unknown` and known properties has `unknown` replaced with `JsonTypeWith<never>`", () => {
+				const resultRead = passThru(partialStringRecordOfUnknownWithKnownProperties);
+				assertIdenticalTypes(
+					resultRead,
+					createInstanceOf<
+						InternalUtilityTypes.FlattenIntersection<
+							// Warning: as of TypeScript 5.8.2, a Partial<> of an indexed type
+							// gains `| undefined` even under exactOptionalPropertyTypes=true.
+							// Preferred result is that there is no change applying Partial<>.
+							// In either case, this test can hold since there isn't a downside
+							// to allowing `undefined` in the result if that is how type is
+							// given since indexed properties are always inherently optional.
+							Partial<Record<string, JsonTypeWith<never>>> & {
+								knownString: string;
+								knownNumber: number;
+							}
+						>
+					>(),
+				);
+			});
 			it("`symbol` becomes `never`", () => {
 				passThruThrows(symbol, new Error("JSON.stringify returned undefined")) satisfies never;
 			});
@@ -1359,6 +1579,42 @@ describe("JsonDeserialized", () => {
 					);
 					assertIdenticalTypes(resultRead, objectWithOptionalUnknownInOptionalRecursion);
 				});
+				it("`string` indexed record of `unknown`", () => {
+					const resultRead = passThruPreservingUnknown(stringRecordOfUnknown);
+					assertIdenticalTypes(resultRead, stringRecordOfUnknown);
+				});
+				it("templated record of `unknown`", () => {
+					const resultRead = passThruPreservingUnknown(templatedRecordOfUnknown);
+					assertIdenticalTypes(resultRead, templatedRecordOfUnknown);
+				});
+				it("`string` indexed record of `unknown` and known properties", () => {
+					const resultRead = passThruPreservingUnknown(
+						stringRecordOfUnknownWithKnownProperties,
+					);
+					assertIdenticalTypes(resultRead, stringRecordOfUnknownWithKnownProperties);
+				});
+				it("`string` indexed record of `unknown` and optional known properties", () => {
+					const resultRead = passThruPreservingUnknown(
+						stringRecordOfUnknownWithOptionalKnownProperties,
+					);
+					assertIdenticalTypes(resultRead, stringRecordOfUnknownWithOptionalKnownProperties);
+				});
+				it("`string` indexed record of `unknown` and optional known `unknown`", () => {
+					const resultRead = passThruPreservingUnknown(
+						stringRecordOfUnknownWithOptionalKnownUnknown,
+					);
+					assertIdenticalTypes(resultRead, stringRecordOfUnknownWithOptionalKnownUnknown);
+				});
+				it("`Partial<>` `string` indexed record of `unknown`", () => {
+					const resultRead = passThruPreservingUnknown(partialStringRecordOfUnknown);
+					assertIdenticalTypes(resultRead, partialStringRecordOfUnknown);
+				});
+				it("`Partial<>` `string` indexed record of `unknown` and known properties", () => {
+					const resultRead = passThruPreservingUnknown(
+						partialStringRecordOfUnknownWithKnownProperties,
+					);
+					assertIdenticalTypes(resultRead, partialStringRecordOfUnknownWithKnownProperties);
+				});
 			});
 
 			describe("still modifies required `unknown` to become optional", () => {
@@ -1374,6 +1630,19 @@ describe("JsonDeserialized", () => {
 						resultRead,
 						objectWithOptionalUnknownAdjacentToOptionalRecursion,
 					);
+				});
+				it("mixed record of `unknown`", () => {
+					const resultRead = passThruPreservingUnknown(mixedRecordOfUnknown);
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<
+							Partial<Record<number | "aKey" | `bKey_${string}` | `bKey_${number}`, unknown>>
+						>(),
+					);
+				});
+				it("`string` indexed record of `unknown` and required known `unknown`", () => {
+					const resultRead = passThruPreservingUnknown(stringRecordOfUnknownWithKnownUnknown);
+					assertIdenticalTypes(resultRead, stringRecordOfUnknownWithOptionalKnownUnknown);
 				});
 			});
 

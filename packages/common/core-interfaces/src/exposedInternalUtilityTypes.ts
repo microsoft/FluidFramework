@@ -87,6 +87,7 @@ export namespace InternalUtilityTypes {
 
 	/**
 	 * Returns non-symbol keys for optional properties of an object type.
+	 * This excludes indexed properties that are inherently _optional_.
 	 *
 	 * For homomorphic mapping use with `as` to filter. Example:
 	 * `[K in keyof T as OptionalNonSymbolKeysOf<T, K>]: ...`
@@ -105,6 +106,7 @@ export namespace InternalUtilityTypes {
 
 	/**
 	 * Returns non-symbol keys for required properties of an object type.
+	 * This includes indexed properties that are inherently _optional_.
 	 *
 	 * For homomorphic mapping use with `as` to filter. Example:
 	 * `[K in keyof T as RequiredNonSymbolKeysOf<T, K>]: ...`
@@ -422,6 +424,10 @@ export namespace InternalUtilityTypes {
 	 *
 	 * Implementation derived from https://github.com/Microsoft/TypeScript/issues/27024#issuecomment-421529650
 	 *
+	 * @remarks Use caution when one of the type might be `{}`. That type is
+	 * special and produces unexpected results. This includes variability
+	 * on past usages.
+	 *
 	 * @system
 	 */
 	export type IfSameType<X, Y, IfSame = unknown, IfDifferent = never> = (<T>() => T extends X
@@ -439,7 +445,7 @@ export namespace InternalUtilityTypes {
 	 * @typeParam IfNoMatch - Type to return if no match is found.
 	 *
 	 * @privateRemarks
-	 * Tests for an extact match of `T` in `Tuple[0]`. If not found,
+	 * Tests for an exact match of `T` in `Tuple[0]`. If not found,
 	 * recurses with the remainder of the tuple.
 	 */
 	export type IfExactTypeInTuple<
@@ -479,6 +485,10 @@ export namespace InternalUtilityTypes {
 	 * Test for type equality
 	 *
 	 * @returns `true` if identical and `false` otherwise.
+	 *
+	 * @remarks Use caution when one of the type might be `{}`. That type is
+	 * special and produces unexpected results. This includes variability
+	 * on past usages.
 	 *
 	 * @system
 	 */
@@ -793,6 +803,51 @@ export namespace InternalUtilityTypes {
 		: never /* unreachable else for infer */;
 
 	/**
+	 * Essentially a check for a template literal that has $\{string\} or
+	 * $\{number\} in the pattern. Just `string` and/or `number` also match.
+	 *
+	 * @remarks This works recursively looking at first elements when not
+	 * `string` or `number`. `first` will just be a single character if
+	 * not $\{string\} or $\{number\}.
+	 *
+	 * @system
+	 */
+	export type IfIndexKey<T, IfIndex, IfLiteral> = `${string}` extends T
+		? IfIndex
+		: number extends T
+			? IfIndex
+			: T extends `${infer first}${infer rest}`
+				? string extends first
+					? IfIndex
+					: `${number}` extends first
+						? IfIndex
+						: IfIndexKey<rest, IfIndex, IfLiteral>
+				: IfLiteral;
+
+	/**
+	 * Helper for {@link JsonSerializableFilter} to determine if a property may
+	 * be `undefined` and selects from options for result.
+	 * Since `unknown` is a superset of `undefined`, it is given a special case.
+	 * Additionally since index signatures are inherently optional, `unknown` typed
+	 * values are treated as not undefined (`Result["Otherwise"]`).
+	 *
+	 * @system
+	 */
+	export type IfPossiblyUndefinedProperty<
+		TKey,
+		TValue,
+		Result extends {
+			IfPossiblyUndefined: unknown;
+			IfUnknownNonIndexed: unknown;
+			Otherwise: unknown;
+		},
+	> = undefined extends TValue
+		? unknown extends TValue
+			? IfIndexKey<TKey, Result["Otherwise"], Result["IfUnknownNonIndexed"]>
+			: Result["IfPossiblyUndefined"]
+		: Result["Otherwise"];
+
+	/**
 	 * Core implementation of {@link JsonSerializable}.
 	 *
 	 * @privateRemarks
@@ -861,15 +916,23 @@ export namespace InternalUtilityTypes {
 														[K in keyof T as RequiredNonSymbolKeysOf<
 															T,
 															K
-														>]-?: undefined extends T[K]
-															? {
-																	["error required property may not allow undefined value"]: never;
-																}
-															: JsonSerializableFilter<
+														>]-?: IfPossiblyUndefinedProperty<
+															K,
+															T[K],
+															{
+																IfPossiblyUndefined: {
+																	["error required property may not allow `undefined` value"]: never;
+																};
+																IfUnknownNonIndexed: {
+																	["error required property may not allow `unknown` value"]: never;
+																};
+																Otherwise: JsonSerializableFilter<
 																	T[K],
 																	Controls,
 																	[TNextAncestor, ...TAncestorTypes]
 																>;
+															}
+														>;
 													} & {
 														/* optional properties are recursed and, when exactOptionalPropertyTypes is
 														   false, are allowed to preserve undefined value type. */

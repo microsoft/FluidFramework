@@ -7,7 +7,10 @@ import { assertIdenticalTypes } from "./testUtils.js";
 
 import type { IFluidHandle, IFluidHandleErased } from "@fluidframework/core-interfaces";
 import { fluidHandleSymbol } from "@fluidframework/core-interfaces";
-import type { JsonTypeWith } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+import type {
+	JsonTypeWith,
+	InternalUtilityTypes,
+} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 /* eslint-disable jsdoc/require-jsdoc */
 /* eslint-disable unicorn/no-null */
@@ -235,6 +238,84 @@ export const objectWithMismatchedGetterAndSetterProperty: ObjectWithMismatchedGe
 	new ClassImplementsObjectWithMismatchedGetterAndSetterProperty();
 export const objectWithMismatchedGetterAndSetterPropertyViaValue: ObjectWithMismatchedGetterAndSetterProperty =
 	{ property: 0 };
+
+// #region Index signature types
+
+export const stringRecordOfNumbers: Record<string, number> = { key: 0 };
+export const stringRecordOfUndefined: Record<string, undefined> = { key: undefined };
+export const stringRecordOfUnknown: Record<string, unknown> = { key: 0 };
+export const stringOrNumberRecordOfStrings: Record<string | number, string> = { 5: "value" };
+// Ideally TypeScript would not allow this assignment. Index signatures are
+// inherently optional and modification via `Partial` should not modify the
+// type (particularly under exactOptionalPropertyTypes=true).
+// See https://github.com/microsoft/TypeScript/issues/46969
+export const partialStringRecordOfNumbers: Partial<Record<string, number>> = {
+	key1: 0,
+	key2: undefined,
+};
+export const partialStringRecordOfUnknown: Partial<Record<string, unknown>> = { key: 0 };
+// @ts-expect-error These types are not intended to be identical; so error is expected...
+assertIdenticalTypes(partialStringRecordOfUnknown, {});
+// Unfortunately the inverse test fails. An IfSameType check of the two types is unstable.
+// Results appear to vary on presence of prior uses, but injecting prior uses did not
+// provide desired consistency either.
+assertIdenticalTypes({}, partialStringRecordOfUnknown);
+
+export const templatedRecordOfNumbers: Record<`key${number}`, number> = { key1: 0 };
+// This assignment should not be allowed. See partialStringRecordOfNumbers comments.
+export const partialTemplatedRecordOfNumbers: Partial<Record<`key${number}`, number>> = {
+	key1: 0,
+	key2: undefined,
+};
+export const templatedRecordOfUnknown: Record<`${string}Key`, unknown> = {
+	aKey: '"unknown" value',
+};
+export const mixedRecordOfUnknown: Record<
+	`aKey` | `bKey_${string | number}` | number,
+	unknown
+> = {
+	aKey: '"unknown" value',
+};
+
+// Must use `type` over `interface` to enable intersection with `Record<>`.
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+type KnownStringAndNumber = { knownString: string; knownNumber: number };
+export const stringRecordOfNumbersOrStringsWithKnownProperties: InternalUtilityTypes.FlattenIntersection<
+	Record<string, number | string> & KnownStringAndNumber
+> = { key: 0, knownString: "string value", knownNumber: 4 };
+export const stringRecordOfUnknownWithKnownProperties: InternalUtilityTypes.FlattenIntersection<
+	Record<string, unknown> & KnownStringAndNumber
+> = { key: 0, knownString: "string value", knownNumber: 4 };
+export const partialStringRecordOfUnknownWithKnownProperties: InternalUtilityTypes.FlattenIntersection<
+	Partial<Record<string, unknown>> & KnownStringAndNumber
+> = stringRecordOfUnknownWithKnownProperties;
+export const stringRecordOfUnknownWithOptionalKnownProperties: InternalUtilityTypes.FlattenIntersection<
+	Record<string, unknown> & { knownString?: string; knownNumber?: number }
+> = { key: undefined, knownString: "string value" };
+export const stringRecordOfUnknownWithKnownUnknown: InternalUtilityTypes.FlattenIntersection<
+	Record<string, unknown> & { knownUnknown: unknown }
+> = { key: 0, knownUnknown: "unknown value" };
+export const stringRecordOfUnknownWithOptionalKnownUnknown: InternalUtilityTypes.FlattenIntersection<
+	Record<string, unknown> & { knownUnknown?: unknown }
+> = stringRecordOfUnknownWithKnownUnknown;
+type StringOrNumberRecordOfStringsWithKnownNumber_UnassignableType =
+	InternalUtilityTypes.FlattenIntersection<
+		Record<string | number, string> & { knownNumber: number }
+	>;
+export const stringOrNumberRecordOfStringWithKnownNumber = {
+	8: "string value",
+	knownNumber: 4,
+} as unknown as StringOrNumberRecordOfStringsWithKnownNumber_UnassignableType;
+type StringOrNumberRecordOfUndefinedWithKnownNumber_UnassignableType =
+	InternalUtilityTypes.FlattenIntersection<
+		Record<string | number, undefined> & { knownNumber: number }
+	>;
+export const stringOrNumberRecordOfUndefinedWithKnownNumber = {
+	5: undefined,
+	knownNumber: 4,
+} as unknown as StringOrNumberRecordOfUndefinedWithKnownNumber_UnassignableType;
+
+// #endregion
 
 // #region Recursive types
 
