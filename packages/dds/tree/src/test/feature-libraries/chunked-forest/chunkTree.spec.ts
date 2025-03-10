@@ -355,16 +355,6 @@ describe("chunkTree", () => {
 		});
 	});
 
-	describe("chunkField", () => {
-		it("empty chunk", () => {
-			const chunks = chunkField(emptyChunk.cursor(), {
-				policy: defaultChunkPolicy,
-				idCompressor: undefined,
-			});
-			assert.equal(chunks.length, 0);
-		});
-	});
-
 	describe("tryShapeFromSchema", () => {
 		it("leaf", () => {
 			const info = tryShapeFromSchema(

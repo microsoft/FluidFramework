@@ -174,9 +174,6 @@ export function chunkField(
 	policy: ChunkCompressor,
 ): TreeChunk[] {
 	const length = cursor.getFieldLength();
-	if (length === 0) {
-		return [];
-	}
 	const started = cursor.firstNode();
 	debugAssert(
 		() => started === (length !== 0) || "only 0 length fields should not have nodes",
