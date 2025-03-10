@@ -76,7 +76,7 @@ export interface OrderedEditSet<TChange = unknown> {
 	getEditInSessionAtIndex(index: number): Edit<TChange>;
 
 	/**
-	 * @returns all local edits.
+	 * Gets all local edits.
 	 */
 	getLocalEdits(): Iterable<Edit<TChange>>;
 }
