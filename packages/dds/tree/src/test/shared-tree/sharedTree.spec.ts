@@ -38,7 +38,6 @@ import {
 	MockNodeKeyManager,
 	TreeCompressionStrategy,
 	TreeStatus,
-	cursorForJsonableTreeNode,
 } from "../../feature-libraries/index.js";
 import {
 	ObjectForest,
@@ -86,6 +85,7 @@ import {
 	StringArray,
 	NumberArray,
 	validateViewConsistency,
+	chunkFromJsonableTrees,
 	expectEqualPaths,
 } from "../utils.js";
 import { configuredSharedTree, TreeFactory } from "../../treeFactory.js";
@@ -235,10 +235,12 @@ describe("SharedTree", () => {
 			field: rootFieldKey,
 		});
 		field.set(
-			cursorForJsonableTreeNode({
-				type: brand(handleSchema.identifier),
-				value: provider.trees[0].handle,
-			}),
+			chunkFromJsonableTrees([
+				{
+					type: brand(handleSchema.identifier),
+					value: provider.trees[0].handle,
+				},
+			]),
 			true,
 		);
 	});
