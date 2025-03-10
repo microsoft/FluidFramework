@@ -146,12 +146,7 @@ resources:
       type: git
       name: 1ESPipelineTemplates/M365GPT
       ref: refs/tags/release
-  pipelines:
-    # Listing this pipeline as a resource makes its artifacts automatically downloaded within a deployment job.
-    - pipeline: buildTools-resource
-      project: internal
-      source: Build - build-tools
-      branch: main
+
 extends:
   # The pipeline extends the 1ES pipeline template which will inject different SDL and compliance tasks.
   # Read more: https://eng.ms/docs/cloud-ai-platform/devdiv/one-engineering-system-1es/1es-docs/1es-pipeline-templates/onboarding/overview
@@ -192,519 +187,519 @@ extends:
               dependencyInstallCommand: pnpm install --frozen-lockfile
 
       # Install / Build / Test Stage
-      # - stage: build
-      #   displayName: Build Stage
-      #   dependsOn: [] # this stage doesn't depend on preceding stage
-      #   jobs:
-      #     # Job - Build
-      #     - job: build
-      #       displayName: Build
-      #       ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
-      #         timeoutInMinutes: 120
-      #       ${{ else }}:
-      #         # CI builds run more aggressive compat configurations which can take longer.
-      #         # See "FullCompat" under packages\test\test-version-utils\README.md for more details.
-      #         # At the time of adding this comment, the full compat config is on the smaller side and so
-      #         # CI builds consistently pass with a 60 minutes timeout. However, it will naturally grow
-      #         # over time and it might be necessary to bump it.
-      #         # AB#6680 is also relevant here, which tracks rethinking how and where we run tests (likely with
-      #         # a focus on e2e tests)
-      #         # Note, This was recently updated to 90 minutes to account for the additional build time added from extending
-      #         # the Microsoft 1ES template required for corporate security compliance. Updated again to 120 to mitigate a
-      #         # series of build breaks due to timeouts.
-      #         timeoutInMinutes: 120
-      #       variables:
-      #         - group: ado-feeds
-      #         - group: storage-vars
-      #         - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
-      #           - name: targetBranchName
-      #             value: $(System.PullRequest.TargetBranch)
-      #       steps:
-      #         # Setup
-      #         - checkout: self
-      #           clean: true
-      #           lfs: '${{ parameters.checkoutSubmodules }}'
-      #           submodules: '${{ parameters.checkoutSubmodules }}'
+      - stage: build
+        displayName: Build Stage
+        dependsOn: [] # this stage doesn't depend on preceding stage
+        jobs:
+          # Job - Build
+          - job: build
+            displayName: Build
+            ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+              timeoutInMinutes: 120
+            ${{ else }}:
+              # CI builds run more aggressive compat configurations which can take longer.
+              # See "FullCompat" under packages\test\test-version-utils\README.md for more details.
+              # At the time of adding this comment, the full compat config is on the smaller side and so
+              # CI builds consistently pass with a 60 minutes timeout. However, it will naturally grow
+              # over time and it might be necessary to bump it.
+              # AB#6680 is also relevant here, which tracks rethinking how and where we run tests (likely with
+              # a focus on e2e tests)
+              # Note, This was recently updated to 90 minutes to account for the additional build time added from extending
+              # the Microsoft 1ES template required for corporate security compliance. Updated again to 120 to mitigate a
+              # series of build breaks due to timeouts.
+              timeoutInMinutes: 120
+            variables:
+              - group: ado-feeds
+              - group: storage-vars
+              - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+                - name: targetBranchName
+                  value: $(System.PullRequest.TargetBranch)
+            steps:
+              # Setup
+              - checkout: self
+                clean: true
+                lfs: '${{ parameters.checkoutSubmodules }}'
+                submodules: '${{ parameters.checkoutSubmodules }}'
 
-      #         - task: Bash@3
-      #           displayName: Parameters
-      #           inputs:
-      #             targetType: inline
-      #             workingDirectory: '${{ parameters.buildDirectory }}'
-      #             script: |
-      #               # Note: deliberately not using `set -eu -o pipefail` because this script leverages the return code of grep
-      #               # even in an error case
+              - task: Bash@3
+                displayName: Parameters
+                inputs:
+                  targetType: inline
+                  workingDirectory: '${{ parameters.buildDirectory }}'
+                  script: |
+                    # Note: deliberately not using `set -eu -o pipefail` because this script leverages the return code of grep
+                    # even in an error case
 
-      #               # Show all task group conditions
+                    # Show all task group conditions
 
-      #               echo "
-      #               Pipeline Variables:
+                    echo "
+                    Pipeline Variables:
 
-      #               Override Parameters:
-      #                 packageTypesOverride=${{ parameters.packageTypesOverride }}
-      #                 publishOverride=${{ parameters.publishOverride }}
-      #                 releaseBuildOverride=${{ parameters.releaseBuildOverride }}
+                    Override Parameters:
+                      packageTypesOverride=${{ parameters.packageTypesOverride }}
+                      publishOverride=${{ parameters.publishOverride }}
+                      releaseBuildOverride=${{ parameters.releaseBuildOverride }}
 
-      #               Tasks Parameters:
-      #                 Build=${{ parameters.taskBuild }}
-      #                 BuildDir=${{ parameters.buildDirectory }}
-      #                 BuildDoc=${{ parameters.taskBuildDocs }}
-      #                 Lint=${{ parameters.taskLint }}
-      #                 LintName: ${{ parameters.taskLintName }}
-      #                 PublishDocs=${{ parameters.publishDocs }}
-      #                 Test=${{ convertToJson(parameters.taskTest) }}
-      #                 TestCoverage=${{ parameters.testCoverage }}
-      #                 TestResultDirs=${{ convertToJson(parameters.testResultDirs) }}
+                    Tasks Parameters:
+                      Build=${{ parameters.taskBuild }}
+                      BuildDir=${{ parameters.buildDirectory }}
+                      BuildDoc=${{ parameters.taskBuildDocs }}
+                      Lint=${{ parameters.taskLint }}
+                      LintName: ${{ parameters.taskLintName }}
+                      PublishDocs=${{ parameters.publishDocs }}
+                      Test=${{ convertToJson(parameters.taskTest) }}
+                      TestCoverage=${{ parameters.testCoverage }}
+                      TestResultDirs=${{ convertToJson(parameters.testResultDirs) }}
 
-      #               Variables:
-      #                 pathToTelemetryGenerator=$(pathToTelemetryGenerator)
-      #                 BuildReason=${{ variables['Build.Reason'] }}
+                    Variables:
+                      pathToTelemetryGenerator=$(pathToTelemetryGenerator)
+                      BuildReason=${{ variables['Build.Reason'] }}
 
-      #               Publish Parameters:
-      #                 interdependencyRange='${{ parameters.interdependencyRange }}'
-      #                 packageTypesOverride='${{ parameters.packageTypesOverride }}'
-      #                 publish=${{ parameters.publish }}
+                    Publish Parameters:
+                      interdependencyRange='${{ parameters.interdependencyRange }}'
+                      packageTypesOverride='${{ parameters.packageTypesOverride }}'
+                      publish=${{ parameters.publish }}
 
-      #               Computed variables:
-      #                 canRelease=$(canRelease)
-      #                 release=$(release)
-      #                 shouldPublish=$(shouldPublish)
-      #               "
+                    Computed variables:
+                      canRelease=$(canRelease)
+                      release=$(release)
+                      shouldPublish=$(shouldPublish)
+                    "
 
-      #               # Target Branch variable (PR policy related)
-      #               if [[ ${{ variables['Build.Reason'] }} == "PullRequest" ]]; then
-      #                 echo "TargetBranchName=$(targetBranchName)"
-      #               fi
+                    # Target Branch variable (PR policy related)
+                    if [[ ${{ variables['Build.Reason'] }} == "PullRequest" ]]; then
+                      echo "TargetBranchName=$(targetBranchName)"
+                    fi
 
-      #               # Error checking
-      #               if [[ "$(release)" == "release" ]]; then
-      #                 if [[ "$(canRelease)" == "False" ]]; then
-      #                   echo "##vso[task.logissue type=error]Invalid branch ${{ variables['Build.SourceBranch'] }} for release"
-      #                   exit -1;
-      #                 fi
+                    # Error checking
+                    if [[ "$(release)" == "release" ]]; then
+                      if [[ "$(canRelease)" == "False" ]]; then
+                        echo "##vso[task.logissue type=error]Invalid branch ${{ variables['Build.SourceBranch'] }} for release"
+                        exit -1;
+                      fi
 
-      #                 if [ -f ".releaseGroup" ]; then
-      #                   grep -e fluid.*[0-9]-[0-9] `find packages -name 'package.json'`
-      #                 else
-      #                   grep -e fluid.*[0-9]-[0-9] `find . -name 'package.json'`
-      #                 fi
+                      if [ -f ".releaseGroup" ]; then
+                        grep -e fluid.*[0-9]-[0-9] `find packages -name 'package.json'`
+                      else
+                        grep -e fluid.*[0-9]-[0-9] `find . -name 'package.json'`
+                      fi
 
-      #                 if [[ $? == 0 ]]; then
-      #                   echo "##vso[task.logissue type=error]Release shouldn't contain prerelease dependencies"
-      #                   exit -1;
-      #                 fi
-      #               fi
+                      if [[ $? == 0 ]]; then
+                        echo "##vso[task.logissue type=error]Release shouldn't contain prerelease dependencies"
+                        exit -1;
+                      fi
+                    fi
 
-      #               if [[ "$(release)" == "prerelease" ]]; then
-      #                 if [[ "${{ parameters.buildNumberInPatch }}" == "true" ]]; then
-      #                   echo "##vso[task.logissue type=error] Prerelease not allow for builds that put build number as the patch version"
-      #                   exit -1;
-      #                 fi
-      #               fi
+                    if [[ "$(release)" == "prerelease" ]]; then
+                      if [[ "${{ parameters.buildNumberInPatch }}" == "true" ]]; then
+                        echo "##vso[task.logissue type=error] Prerelease not allow for builds that put build number as the patch version"
+                        exit -1;
+                      fi
+                    fi
 
-      #               if [[ "$(release)" != "prerelease" ]]; then
-      #                 if [[ "${{ parameters.packageTypesOverride }}" == "alpha" || "${{ parameters.packageTypesOverride }}" == "beta" ]]; then
-      #                   echo "##vso[task.logissue type=error]This release type is not supported. alpha/beta ***prerelease*** is allowed"
-      #                   exit -1;
-      #                 fi
-      #               fi
+                    if [[ "$(release)" != "prerelease" ]]; then
+                      if [[ "${{ parameters.packageTypesOverride }}" == "alpha" || "${{ parameters.packageTypesOverride }}" == "beta" ]]; then
+                        echo "##vso[task.logissue type=error]This release type is not supported. alpha/beta ***prerelease*** is allowed"
+                        exit -1;
+                      fi
+                    fi
 
-      #               if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
-      #                 if [[ "${{ parameters.publish }}" != "True" ]]; then
-      #                   echo "##vso[task.logissue type=error]'$(release)'' is set but package is not published. Either the branch doesn't default to publish or it is skipped."
-      #                   exit -1;
-      #                 fi
-      #               fi
+                    if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
+                      if [[ "${{ parameters.publish }}" != "True" ]]; then
+                        echo "##vso[task.logissue type=error]'$(release)'' is set but package is not published. Either the branch doesn't default to publish or it is skipped."
+                        exit -1;
+                      fi
+                    fi
 
-      #         - template: /tools/pipelines/templates/include-use-node-version.yml@self
+              - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
-      #         - template: /tools/pipelines/templates/include-install.yml@self
-      #           parameters:
-      #             packageManager: '${{ parameters.packageManager }}'
-      #             buildDirectory: '${{ parameters.buildDirectory }}'
-      #             packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
+              - template: /tools/pipelines/templates/include-install.yml@self
+                parameters:
+                  packageManager: '${{ parameters.packageManager }}'
+                  buildDirectory: '${{ parameters.buildDirectory }}'
+                  packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
 
-      #         # This check is a workaround. We don't want to set versions for the build-bundle-size-and-code-coverage-artifacts
-      #         # pipeline because it is special - it runs a client build but doesn't publish anything. Working around this properly is
-      #         # challenging and would create a much bigger change. Since this is the only pipeline that sets these variables to
-      #         # true, we use that to determine whether to set versions.
-      #         - ${{ if eq(parameters.taskPublishBundleSizeArtifacts, false) }}:
-      #             - template: /tools/pipelines/templates/include-set-package-version.yml@self
-      #               parameters:
-      #                 buildDirectory: '${{ parameters.buildDirectory }}'
-      #                 buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-      #                 buildToolsVersionToInstall: '${{ parameters.buildToolsVersionToInstall }}'
-      #                 tagName: '${{ parameters.tagName }}'
-      #                 interdependencyRange: '${{ parameters.interdependencyRange }}'
-      #                 packageTypesOverride: '${{ parameters.packageTypesOverride }}'
+              # This check is a workaround. We don't want to set versions for the build-bundle-size-and-code-coverage-artifacts
+              # pipeline because it is special - it runs a client build but doesn't publish anything. Working around this properly is
+              # challenging and would create a much bigger change. Since this is the only pipeline that sets these variables to
+              # true, we use that to determine whether to set versions.
+              - ${{ if eq(parameters.taskPublishBundleSizeArtifacts, false) }}:
+                  - template: /tools/pipelines/templates/include-set-package-version.yml@self
+                    parameters:
+                      buildDirectory: '${{ parameters.buildDirectory }}'
+                      buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+                      buildToolsVersionToInstall: '${{ parameters.buildToolsVersionToInstall }}'
+                      tagName: '${{ parameters.tagName }}'
+                      interdependencyRange: '${{ parameters.interdependencyRange }}'
+                      packageTypesOverride: '${{ parameters.packageTypesOverride }}'
 
-      #         # Build and Lint
-      #         - template: /tools/pipelines/templates/include-build-lint.yml@self
-      #           parameters:
-      #             taskBuild: '${{ parameters.taskBuild }}'
-      #             taskLint: '${{ parameters.taskLint }}'
-      #             taskLintName: '${{ parameters.taskLintName }}'
-      #             buildDirectory: '${{ parameters.buildDirectory }}'
+              # Build and Lint
+              - template: /tools/pipelines/templates/include-build-lint.yml@self
+                parameters:
+                  taskBuild: '${{ parameters.taskBuild }}'
+                  taskLint: '${{ parameters.taskLint }}'
+                  taskLintName: '${{ parameters.taskLintName }}'
+                  buildDirectory: '${{ parameters.buildDirectory }}'
 
-      #         # Test
-      #         - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
-      #             # Set variable startTest if the build succeed so that we can run all the test tasks whether they are failed or not
-      #             - script: |
-      #                 echo "##vso[task.setvariable variable=startTest]true"
-      #               displayName: Start Test
+              # Test
+              - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
+                  # Set variable startTest if the build succeed so that we can run all the test tasks whether they are failed or not
+                  - script: |
+                      echo "##vso[task.setvariable variable=startTest]true"
+                    displayName: Start Test
 
-      #             - ${{ each taskTestStep in parameters.taskTest }}:
-      #                 - template: /tools/pipelines/templates/include-test-task.yml@self
-      #                   parameters:
-      #                     taskTestStep: '${{ taskTestStep }}'
-      #                     buildDirectory: '${{ parameters.buildDirectory }}'
-      #                     testCoverage: ${{
-      #                       and(
-      #                         parameters.testCoverage,
-      #                         ne(variables['Build.Reason'], 'PullRequest')
-      #                       )}}
+                  - ${{ each taskTestStep in parameters.taskTest }}:
+                      - template: /tools/pipelines/templates/include-test-task.yml@self
+                        parameters:
+                          taskTestStep: '${{ taskTestStep }}'
+                          buildDirectory: '${{ parameters.buildDirectory }}'
+                          testCoverage: ${{
+                            and(
+                              parameters.testCoverage,
+                              ne(variables['Build.Reason'], 'PullRequest')
+                            )}}
 
-      #             - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}:
-      #               - task: Bash@3
-      #                 displayName: Upload tinylicious log
-      #                 condition: always()
-      #                 continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
-      #                 inputs:
-      #                   targetType: inline
-      #                   script: |
-      #                     set -eu -o pipefail
-      #                     PATH_TO_TINYLICIOUS_LOG=$(Build.SourcesDirectory)/packages/test/test-end-to-end-tests/tinylicious.log;
-      #                     if [ -f $PATH_TO_TINYLICIOUS_LOG ] ; then
-      #                       echo "Found file at '$PATH_TO_TINYLICIOUS_LOG'. Uploading.";
-      #                       echo "##vso[task.uploadfile]$PATH_TO_TINYLICIOUS_LOG";
-      #                     else
-      #                       echo "##vso[task.logissue type=warning]Failed to upload tinylicious log file ('$PATH_TO_TINYLICIOUS_LOG' not found).";
-      #                     fi
+                  - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}:
+                    - task: Bash@3
+                      displayName: Upload tinylicious log
+                      condition: always()
+                      continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
+                      inputs:
+                        targetType: inline
+                        script: |
+                          set -eu -o pipefail
+                          PATH_TO_TINYLICIOUS_LOG=$(Build.SourcesDirectory)/packages/test/test-end-to-end-tests/tinylicious.log;
+                          if [ -f $PATH_TO_TINYLICIOUS_LOG ] ; then
+                            echo "Found file at '$PATH_TO_TINYLICIOUS_LOG'. Uploading.";
+                            echo "##vso[task.uploadfile]$PATH_TO_TINYLICIOUS_LOG";
+                          else
+                            echo "##vso[task.logissue type=warning]Failed to upload tinylicious log file ('$PATH_TO_TINYLICIOUS_LOG' not found).";
+                          fi
 
-      #               # At this point we want to publish the tinylicious.log artifact, but as part of 1ES migration
-      #               # that is now part of templateContext.outputs below.
+                    # At this point we want to publish the tinylicious.log artifact, but as part of 1ES migration
+                    # that is now part of templateContext.outputs below.
 
-      #             # Test - Upload coverage results
-      #             # Some webpacked file using externals introduce file name with quotes in them
-      #             # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
-      #             # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
-      #             - ${{ if parameters.testCoverage }}:
-      #                 - task: Bash@3
-      #                   displayName: Check for nyc/report directory
-      #                   condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
-      #                   inputs:
-      #                     targetType: 'inline'
-      #                     workingDirectory: '${{ parameters.buildDirectory }}'
-      #                     script: |
-      #                       set -eu -o pipefail
-      #                       test -d nyc/report && echo '##vso[task.setvariable variable=ReportDirExists;]true' || echo 'No nyc/report directory'
-      #                 - task: Bash@3
-      #                   displayName: Patch Coverage Results
-      #                   condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-      #                   inputs:
-      #                     targetType: 'inline'
-      #                     workingDirectory: '${{ parameters.buildDirectory }}/nyc/report'
-      #                     script: |
-      #                       set -eu -o pipefail
-      #                       sed -e 's/\(filename=\".*[\\/]external .*\)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
-      #                 - task: PublishCodeCoverageResults@2
-      #                   displayName: Publish Code Coverage
-      #                   condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-      #                   inputs:
-      #                     summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
-      #                     failIfCoverageEmpty: true
-      #                 - task: CopyFiles@2
-      #                   displayName: Copy code coverage report to artifact staging directory
-      #                   condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-      #                   inputs:
-      #                     sourceFolder: '${{ parameters.buildDirectory }}/nyc/report'
-      #                     targetFolder: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
-      #                 - task: Bash@3
-      #                   displayName: Report Code Coverage Comparison
-      #                   condition: and(succeededOrFailed(), eq('${{ parameters.reportCodeCoverageComparison }}', true), eq(variables['ReportDirExists'], 'true'), eq(variables['System.PullRequest.TargetBranch'], 'main'))
-      #                   continueOnError: false
-      #                   env:
-      #                     ADO_API_TOKEN: '$(System.AccessToken)'
-      #                     GITHUB_API_TOKEN: '$(githubPublicRepoSecret)'
-      #                     TARGET_BRANCH_NAME: '$(targetBranchName)'
-      #                     ADO_BUILD_ID: '$(Build.BuildId)'
-      #                     GITHUB_PR_NUMBER: '$(System.PullRequest.PullRequestNumber)'
-      #                     GITHUB_REPOSITORY_NAME: '$(Build.Repository.Name)'
-      #                     ADO_CI_BUILD_DEFINITION_ID_BASELINE: 48
-      #                     ADO_CI_BUILD_DEFINITION_ID_PR: 11
-      #                   inputs:
-      #                     targetType: inline
-      #                     workingDirectory: '${{ parameters.buildDirectory }}'
-      #                     script: |
-      #                       set -eu -o pipefail
-      #                       echo "Github Repository Name: $GITHUB_REPOSITORY_NAME"
-      #                       echo "Github PR number: $GITHUB_PR_NUMBER"
-      #                       echo "ADO Build Number: $ADO_BUILD_ID"
-      #                       echo "Target Branch Name: $TARGET_BRANCH_NAME"
-      #                       echo "ADO CI BUILD_DEFINITION_ID for baseline: $ADO_CI_BUILD_DEFINITION_ID_BASELINE"
-      #                       echo "ADO CI BUILD_DEFINITION_ID for PR: $ADO_CI_BUILD_DEFINITION_ID_PR"
-      #                       echo "Running code coverage comparison"
-      #                       flub report codeCoverage --verbose
-
-
-      #             # Process test result, include publishing and logging
-      #             - template: /tools/pipelines/templates/include-process-test-results.yml@self
-      #               parameters:
-      #                 buildDirectory: '${{ parameters.buildDirectory }}'
-      #                 testResultDirs: '${{ parameters.testResultDirs }}'
-
-      #         # Pack
-      #         - ${{ if ne(parameters.taskPack, false) }}:
-      #             - task: Bash@3
-      #               displayName: npm pack
-      #               env:
-      #                 PACKAGE_MANAGER: '${{ parameters.packageManager }}'
-      #                 RELEASE_GROUP: '${{ parameters.tagName }}'
-      #                 STAGING_PATH: $(Build.ArtifactStagingDirectory)
-      #               inputs:
-      #                 targetType: filePath
-      #                 workingDirectory: '${{ parameters.buildDirectory }}'
-      #                 filePath: $(Build.SourcesDirectory)/scripts/pack-packages.sh
-
-      #             # At this point we want to publish the artifact with npm-packed packages, and the one with test files,
-      #             # but as part of 1ES migration that's now part of templateContext.outputs below.
-
-      #         # Collect/publish/run bundle analysis
-      #         - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
-      #             - task: Npm@1
-      #               displayName: 'npm run bundle-analysis:collect'
-      #               inputs:
-      #                 command: custom
-      #                 workingDir: '${{ parameters.buildDirectory }}'
-      #                 customCommand: 'run bundle-analysis:collect'
-
-      #             # Copy files so all artifacts we publish end up under the same parent folder.
-      #             # The sourceFolder should be wherever the 'npm run bundle-analysis:collect' task places its output.
-      #             - task: CopyFiles@2
-      #               displayName: Copy bundleAnalysis files to artifact staging directory
-      #               inputs:
-      #                 sourceFolder: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
-      #                 targetFolder: $(Build.ArtifactStagingDirectory)/bundleAnalysis
+                  # Test - Upload coverage results
+                  # Some webpacked file using externals introduce file name with quotes in them
+                  # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
+                  # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
+                  - ${{ if parameters.testCoverage }}:
+                      - task: Bash@3
+                        displayName: Check for nyc/report directory
+                        condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+                        inputs:
+                          targetType: 'inline'
+                          workingDirectory: '${{ parameters.buildDirectory }}'
+                          script: |
+                            set -eu -o pipefail
+                            test -d nyc/report && echo '##vso[task.setvariable variable=ReportDirExists;]true' || echo 'No nyc/report directory'
+                      - task: Bash@3
+                        displayName: Patch Coverage Results
+                        condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+                        inputs:
+                          targetType: 'inline'
+                          workingDirectory: '${{ parameters.buildDirectory }}/nyc/report'
+                          script: |
+                            set -eu -o pipefail
+                            sed -e 's/\(filename=\".*[\\/]external .*\)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
+                      - task: PublishCodeCoverageResults@2
+                        displayName: Publish Code Coverage
+                        condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+                        inputs:
+                          summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
+                          failIfCoverageEmpty: true
+                      - task: CopyFiles@2
+                        displayName: Copy code coverage report to artifact staging directory
+                        condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+                        inputs:
+                          sourceFolder: '${{ parameters.buildDirectory }}/nyc/report'
+                          targetFolder: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
+                      - task: Bash@3
+                        displayName: Report Code Coverage Comparison
+                        condition: and(succeededOrFailed(), eq('${{ parameters.reportCodeCoverageComparison }}', true), eq(variables['ReportDirExists'], 'true'), eq(variables['System.PullRequest.TargetBranch'], 'main'))
+                        continueOnError: false
+                        env:
+                          ADO_API_TOKEN: '$(System.AccessToken)'
+                          GITHUB_API_TOKEN: '$(githubPublicRepoSecret)'
+                          TARGET_BRANCH_NAME: '$(targetBranchName)'
+                          ADO_BUILD_ID: '$(Build.BuildId)'
+                          GITHUB_PR_NUMBER: '$(System.PullRequest.PullRequestNumber)'
+                          GITHUB_REPOSITORY_NAME: '$(Build.Repository.Name)'
+                          ADO_CI_BUILD_DEFINITION_ID_BASELINE: 48
+                          ADO_CI_BUILD_DEFINITION_ID_PR: 11
+                        inputs:
+                          targetType: inline
+                          workingDirectory: '${{ parameters.buildDirectory }}'
+                          script: |
+                            set -eu -o pipefail
+                            echo "Github Repository Name: $GITHUB_REPOSITORY_NAME"
+                            echo "Github PR number: $GITHUB_PR_NUMBER"
+                            echo "ADO Build Number: $ADO_BUILD_ID"
+                            echo "Target Branch Name: $TARGET_BRANCH_NAME"
+                            echo "ADO CI BUILD_DEFINITION_ID for baseline: $ADO_CI_BUILD_DEFINITION_ID_BASELINE"
+                            echo "ADO CI BUILD_DEFINITION_ID for PR: $ADO_CI_BUILD_DEFINITION_ID_PR"
+                            echo "Running code coverage comparison"
+                            flub report codeCoverage --verbose
 
 
-      #             # At this point we want to publish the artifact with the bundle size analysis,
-      #             # but as part of 1ES migration that's now part of templateContext.outputs below.
+                  # Process test result, include publishing and logging
+                  - template: /tools/pipelines/templates/include-process-test-results.yml@self
+                    parameters:
+                      buildDirectory: '${{ parameters.buildDirectory }}'
+                      testResultDirs: '${{ parameters.testResultDirs }}'
 
-      #             - task: Npm@1
-      #               displayName: run bundle size comparison
-      #               condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
-      #               continueOnError: true
-      #               env:
-      #                 ADO_API_TOKEN: $(System.AccessToken)
-      #                 DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)
-      #                 TARGET_BRANCH_NAME: '$(targetBranchName)'
-      #               inputs:
-      #                 command: custom
-      #                 workingDir: '${{ parameters.buildDirectory }}'
-      #                 customCommand: 'run bundle-analysis:run'
+              # Pack
+              - ${{ if ne(parameters.taskPack, false) }}:
+                  - task: Bash@3
+                    displayName: npm pack
+                    env:
+                      PACKAGE_MANAGER: '${{ parameters.packageManager }}'
+                      RELEASE_GROUP: '${{ parameters.tagName }}'
+                      STAGING_PATH: $(Build.ArtifactStagingDirectory)
+                    inputs:
+                      targetType: filePath
+                      workingDirectory: '${{ parameters.buildDirectory }}'
+                      filePath: $(Build.SourcesDirectory)/scripts/pack-packages.sh
 
-      #             - ${{ if and(or(eq(variables['Build.Reason'], 'IndividualCI'), eq(variables['Build.Reason'], 'BatchedCI')), eq(variables['System.TeamProject'], 'internal')) }}:
-      #                 - task: Bash@3
-      #                   displayName: List report.json
-      #                   inputs:
-      #                     targetType: inline
-      #                     workingDirectory: '${{ parameters.buildDirectory }}'
-      #                     script: |
-      #                       set -eu -o pipefail
-      #                       echo "Build Directory is ${{ parameters.buildDirectory }}";
-      #                       BUNDLE_SIZE_TESTS_DIR="$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests";
-      #                       echo "Contents of $BUNDLE_SIZE_TESTS_DIR:";
-      #                       ls -la $BUNDLE_SIZE_TESTS_DIR;
+                  # At this point we want to publish the artifact with npm-packed packages, and the one with test files,
+                  # but as part of 1ES migration that's now part of templateContext.outputs below.
 
-      #                 - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
-      #                   parameters:
-      #                     pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
+              # Collect/publish/run bundle analysis
+              - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
+                  - task: Npm@1
+                    displayName: 'npm run bundle-analysis:collect'
+                    inputs:
+                      command: custom
+                      workingDir: '${{ parameters.buildDirectory }}'
+                      customCommand: 'run bundle-analysis:collect'
 
-      #                 - task: Bash@3
-      #                   displayName: Write bundle sizes measurements to Aria/Kusto
-      #                   inputs:
-      #                     targetType: inline
-      #                     workingDirectory: $(pathToTelemetryGenerator)
-      #                     script: |
-      #                       set -eu -o pipefail
-      #                       echo "Writing the following performance tests results to Aria/Kusto"
-      #                       echo "Report Size:"
-      #                       ls -la '$(Build.SourcesDirectory)/examples/utils/bundle-size-tests/bundleAnalysis/report.json';
-      #                       npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/bundleSizeHandler.js" --dir '$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests';
+                  # Copy files so all artifacts we publish end up under the same parent folder.
+                  # The sourceFolder should be wherever the 'npm run bundle-analysis:collect' task places its output.
+                  - task: CopyFiles@2
+                    displayName: Copy bundleAnalysis files to artifact staging directory
+                    inputs:
+                      sourceFolder: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
+                      targetFolder: $(Build.ArtifactStagingDirectory)/bundleAnalysis
 
-      #         # Docs
-      #         - ${{ if ne(parameters.taskBuildDocs, false) }}:
-      #             - task: Npm@1
-      #               displayName: 'npm run ci:build:docs'
-      #               inputs:
-      #                 command: custom
-      #                 workingDir: '${{ parameters.buildDirectory }}'
-      #                 customCommand: 'run ci:build:docs'
 
-      #             # Copy files so all artifacts we publish end up under the same parent folder.
-      #             # The sourceFolder should be wherever the 'npm run ci:build:docs' task places its output.
-      #             - task: CopyFiles@2
-      #               displayName: Copy _api-extractor-temp files to artifact staging directory
-      #               inputs:
-      #                 sourceFolder: '${{ parameters.buildDirectory }}/_api-extractor-temp'
-      #                 targetFolder: $(Build.ArtifactStagingDirectory)/_api-extractor-temp
+                  # At this point we want to publish the artifact with the bundle size analysis,
+                  # but as part of 1ES migration that's now part of templateContext.outputs below.
 
-      #             # At this point we want to publish the artifact with the _api-extractor-temp folder,
-      #             # but as part of 1ES migration that's now part of templateContext.outputs below.
+                  - task: Npm@1
+                    displayName: run bundle size comparison
+                    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+                    continueOnError: true
+                    env:
+                      ADO_API_TOKEN: $(System.AccessToken)
+                      DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)
+                      TARGET_BRANCH_NAME: '$(targetBranchName)'
+                    inputs:
+                      command: custom
+                      workingDir: '${{ parameters.buildDirectory }}'
+                      customCommand: 'run bundle-analysis:run'
 
-      #         - ${{ if eq(parameters.packageManager, 'pnpm') }}:
-      #           # Reset the pnpm-lock.yaml file since it's been modified by the versioning. But for dependency caching we want
-      #           # the cache key (which is based on the contents of the lockfile) to be the unmodified file. So we reset the
-      #           # lockfile as the last step so that when the dependency cache is uploaded, the cache key matches what it was
-      #           # at the beginning of the CI job.
-      #           - task: Bash@3
-      #             displayName: Reset lockfile
-      #             inputs:
-      #               targetType: inline
-      #               workingDirectory: '${{ parameters.buildDirectory }}'
-      #               script: |
-      #                 set -eu -o pipefail
-      #                 git checkout HEAD -- pnpm-lock.yaml
+                  - ${{ if and(or(eq(variables['Build.Reason'], 'IndividualCI'), eq(variables['Build.Reason'], 'BatchedCI')), eq(variables['System.TeamProject'], 'internal')) }}:
+                      - task: Bash@3
+                        displayName: List report.json
+                        inputs:
+                          targetType: inline
+                          workingDirectory: '${{ parameters.buildDirectory }}'
+                          script: |
+                            set -eu -o pipefail
+                            echo "Build Directory is ${{ parameters.buildDirectory }}";
+                            BUNDLE_SIZE_TESTS_DIR="$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests";
+                            echo "Contents of $BUNDLE_SIZE_TESTS_DIR:";
+                            ls -la $BUNDLE_SIZE_TESTS_DIR;
 
-      #           # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.
-      #           - task: Bash@3
-      #             displayName: Prune pnpm store
-      #             inputs:
-      #               targetType: inline
-      #               workingDirectory: '${{ parameters.buildDirectory }}'
-      #               script: |
-      #                 set -eu -o pipefail
-      #                 pnpm store prune
+                      - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
+                        parameters:
+                          pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
 
-      #         - task: Bash@3
-      #           displayName: Check for extraneous modified files
-      #           inputs:
-      #             targetType: inline
-      #             script: |
-      #               # Note: deliberately not using `set -eu -o pipefail` because this script leverages the return code of grep
-      #               # even in an error case
-      #               git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|.npmrc|build-tools/.npmrc|\(use.*' | grep '^\s' > git_status.log
-      #               if [ `cat git_status.log | wc -l` != "0" ]; then
-      #                 cat git_status.log
-      #                 echo "##vso[task.logissue type=error]Build should not create extraneous files"
-      #                 exit -1;
-      #               fi
+                      - task: Bash@3
+                        displayName: Write bundle sizes measurements to Aria/Kusto
+                        inputs:
+                          targetType: inline
+                          workingDirectory: $(pathToTelemetryGenerator)
+                          script: |
+                            set -eu -o pipefail
+                            echo "Writing the following performance tests results to Aria/Kusto"
+                            echo "Report Size:"
+                            ls -la '$(Build.SourcesDirectory)/examples/utils/bundle-size-tests/bundleAnalysis/report.json';
+                            npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/bundleSizeHandler.js" --dir '$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests';
 
-      #         # This additional build step is used to run step not part of the main build. In build client pipeline,
-      #         # this is used to inject telemetry key file and upload built devtools extension.
-      #         - ${{ parameters.additionalBuildSteps }}
+              # Docs
+              - ${{ if ne(parameters.taskBuildDocs, false) }}:
+                  - task: Npm@1
+                    displayName: 'npm run ci:build:docs'
+                    inputs:
+                      command: custom
+                      workingDir: '${{ parameters.buildDirectory }}'
+                      customCommand: 'run ci:build:docs'
 
-      #       templateContext:
-      #         outputParentDirectory: $(Build.ArtifactStagingDirectory)
-      #         outputs:
-      #           - ${{ if ne(parameters.taskPack, false) }}:
-      #               - output: pipelineArtifact
-      #                 displayName: Publish Artifact - pack
-      #                 targetPath: $(Build.ArtifactStagingDirectory)/pack
-      #                 artifactName: pack
-      #                 publishLocation: pipeline
+                  # Copy files so all artifacts we publish end up under the same parent folder.
+                  # The sourceFolder should be wherever the 'npm run ci:build:docs' task places its output.
+                  - task: CopyFiles@2
+                    displayName: Copy _api-extractor-temp files to artifact staging directory
+                    inputs:
+                      sourceFolder: '${{ parameters.buildDirectory }}/_api-extractor-temp'
+                      targetFolder: $(Build.ArtifactStagingDirectory)/_api-extractor-temp
 
-      #               - output: pipelineArtifact
-      #                 displayName: Publish Artifact - Test Files
-      #                 targetPath: $(Build.ArtifactStagingDirectory)/test-files
-      #                 artifactName: test-files
-      #                 publishLocation: pipeline
-      #                 sbomEnabled: false
+                  # At this point we want to publish the artifact with the _api-extractor-temp folder,
+                  # but as part of 1ES migration that's now part of templateContext.outputs below.
 
-      #           - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
-      #               - output: pipelineArtifact
-      #                 displayName: Publish Artifacts - bundle-analysis
-      #                 condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true) )
-      #                 targetPath: $(Build.ArtifactStagingDirectory)/bundleAnalysis
-      #                 artifactName: bundleAnalysis
-      #                 sbomEnabled: false
-      #                 publishLocation: pipeline
+              - ${{ if eq(parameters.packageManager, 'pnpm') }}:
+                # Reset the pnpm-lock.yaml file since it's been modified by the versioning. But for dependency caching we want
+                # the cache key (which is based on the contents of the lockfile) to be the unmodified file. So we reset the
+                # lockfile as the last step so that when the dependency cache is uploaded, the cache key matches what it was
+                # at the beginning of the CI job.
+                - task: Bash@3
+                  displayName: Reset lockfile
+                  inputs:
+                    targetType: inline
+                    workingDirectory: '${{ parameters.buildDirectory }}'
+                    script: |
+                      set -eu -o pipefail
+                      git checkout HEAD -- pnpm-lock.yaml
 
-      #           # Publish the Code Coverage artifact in this format as it is easier for devs to find coverage html for each file.
-      #           - ${{ if eq(parameters.testCoverage, true) }}:
-      #             - output: pipelineArtifact
-      #               displayName: Publish Artifacts - code-coverage
-      #               condition: and( succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-      #               targetPath: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
-      #               artifactName: 'codeCoverageAnalysis-$(System.JobAttempt)'
-      #               sbomEnabled: false
-      #               publishLocation: pipeline
+                # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.
+                - task: Bash@3
+                  displayName: Prune pnpm store
+                  inputs:
+                    targetType: inline
+                    workingDirectory: '${{ parameters.buildDirectory }}'
+                    script: |
+                      set -eu -o pipefail
+                      pnpm store prune
 
-      #           - ${{ if or(eq(parameters.publishDocs, true), eq(parameters.taskBuildDocs, true)) }}:
-      #               - output: pipelineArtifact
-      #                 displayName: Publish Artifact - _api-extractor-temp
-      #                 targetPath: $(Build.ArtifactStagingDirectory)/_api-extractor-temp
-      #                 artifactName: _api-extractor-temp
-      #                 sbomEnabled: false
-      #                 publishLocation: pipeline
+              - task: Bash@3
+                displayName: Check for extraneous modified files
+                inputs:
+                  targetType: inline
+                  script: |
+                    # Note: deliberately not using `set -eu -o pipefail` because this script leverages the return code of grep
+                    # even in an error case
+                    git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|.npmrc|build-tools/.npmrc|\(use.*' | grep '^\s' > git_status.log
+                    if [ `cat git_status.log | wc -l` != "0" ]; then
+                      cat git_status.log
+                      echo "##vso[task.logissue type=error]Build should not create extraneous files"
+                      exit -1;
+                    fi
+
+              # This additional build step is used to run step not part of the main build. In build client pipeline,
+              # this is used to inject telemetry key file and upload built devtools extension.
+              - ${{ parameters.additionalBuildSteps }}
+
+            templateContext:
+              outputParentDirectory: $(Build.ArtifactStagingDirectory)
+              outputs:
+                - ${{ if ne(parameters.taskPack, false) }}:
+                    - output: pipelineArtifact
+                      displayName: Publish Artifact - pack
+                      targetPath: $(Build.ArtifactStagingDirectory)/pack
+                      artifactName: pack
+                      publishLocation: pipeline
+
+                    - output: pipelineArtifact
+                      displayName: Publish Artifact - Test Files
+                      targetPath: $(Build.ArtifactStagingDirectory)/test-files
+                      artifactName: test-files
+                      publishLocation: pipeline
+                      sbomEnabled: false
+
+                - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
+                    - output: pipelineArtifact
+                      displayName: Publish Artifacts - bundle-analysis
+                      condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true) )
+                      targetPath: $(Build.ArtifactStagingDirectory)/bundleAnalysis
+                      artifactName: bundleAnalysis
+                      sbomEnabled: false
+                      publishLocation: pipeline
+
+                # Publish the Code Coverage artifact in this format as it is easier for devs to find coverage html for each file.
+                - ${{ if eq(parameters.testCoverage, true) }}:
+                  - output: pipelineArtifact
+                    displayName: Publish Artifacts - code-coverage
+                    condition: and( succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+                    targetPath: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
+                    artifactName: 'codeCoverageAnalysis-$(System.JobAttempt)'
+                    sbomEnabled: false
+                    publishLocation: pipeline
+
+                - ${{ if or(eq(parameters.publishDocs, true), eq(parameters.taskBuildDocs, true)) }}:
+                    - output: pipelineArtifact
+                      displayName: Publish Artifact - _api-extractor-temp
+                      targetPath: $(Build.ArtifactStagingDirectory)/_api-extractor-temp
+                      artifactName: _api-extractor-temp
+                      sbomEnabled: false
+                      publishLocation: pipeline
 
       # Publish stage
-      # - ${{ if eq(parameters.publish, true) }}:
-      - template: /tools/pipelines/templates/include-publish-npm-package.yml@self
-        parameters:
-          tagName: ${{ parameters.tagName }}
-          isReleaseGroup: ${{ parameters.isReleaseGroup }}
-          buildDirectory: ${{ parameters.buildDirectory }}
-          buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+      - ${{ if eq(parameters.publish, true) }}:
+        - template: /tools/pipelines/templates/include-publish-npm-package.yml@self
+          parameters:
+            tagName: ${{ parameters.tagName }}
+            isReleaseGroup: ${{ parameters.isReleaseGroup }}
+            buildDirectory: ${{ parameters.buildDirectory }}
+            buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
 
       # Capture pipeline stage results
-      # - ${{ if eq(parameters.telemetry, true) }}:
-      #   - stage: upload_run_telemetry
-      #     displayName: Upload pipeline run telemetry to Kusto
-      #     condition: succeededOrFailed()
-      #     dependsOn:
-      #       - build
-      #       # Note: the publish stages are created in include-publish-npm-package.yml. We need to match the ids exactly.
-      #       - publish_npm_internal_test
-      #       - publish_npm_internal_build
-      #       - publish_npm_public
-      #       # NOTE: This is brittle; since the publish_npm_internal_dev stage is addded to the pipeline conditionally,
-      #       # we create a dependency on it based on the same condition.
-      #       # So this needs to be kept in sync with the logic that include-publish-npm-package.yml uses to create the stage.
-      #       # At some point it might be preferable to always create the stage, control its execution solely with
-      #       # 'condition:', and update this bit to always depend on publish_npm_internal_dev, since it will always exist.
-      #       - ${{ if eq(parameters.isReleaseGroup, true) }}:
-      #         - publish_npm_internal_dev
-      #     jobs:
-      #       - job: upload_run_telemetry
-      #         displayName: Upload pipeline run telemetry to Kusto
-      #         pool: Small-eastus2
-      #         variables:
-      #         - group: ado-feeds
-      #         - name: pipelineTelemetryWorkdir
-      #           value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir/timingOutput
-      #           readonly: true
-      #         steps:
-      #         - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
-      #           parameters:
-      #             pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
-      #         - task: Bash@3
-      #           displayName: Get stage timing and result data from ADO
-      #           env:
-      #             BUILD_ID: $(Build.BuildId)
-      #             ADO_API_TOKEN: $(System.AccessToken)
-      #             WORK_FOLDER: $(pipelineTelemetryWorkdir)
-      #           inputs:
-      #             targetType: inline
-      #             script: |
-      #               set -eu -o pipefail
-      #               echo "Creating work folder '$WORK_FOLDER'";
-      #               mkdir -p $WORK_FOLDER;
+      - ${{ if eq(parameters.telemetry, true) }}:
+        - stage: upload_run_telemetry
+          displayName: Upload pipeline run telemetry to Kusto
+          condition: succeededOrFailed()
+          dependsOn:
+            - build
+            # Note: the publish stages are created in include-publish-npm-package.yml. We need to match the ids exactly.
+            - publish_npm_internal_test
+            - publish_npm_internal_build
+            - publish_npm_public
+            # NOTE: This is brittle; since the publish_npm_internal_dev stage is addded to the pipeline conditionally,
+            # we create a dependency on it based on the same condition.
+            # So this needs to be kept in sync with the logic that include-publish-npm-package.yml uses to create the stage.
+            # At some point it might be preferable to always create the stage, control its execution solely with
+            # 'condition:', and update this bit to always depend on publish_npm_internal_dev, since it will always exist.
+            - ${{ if eq(parameters.isReleaseGroup, true) }}:
+              - publish_npm_internal_dev
+          jobs:
+            - job: upload_run_telemetry
+              displayName: Upload pipeline run telemetry to Kusto
+              pool: Small-eastus2
+              variables:
+              - group: ado-feeds
+              - name: pipelineTelemetryWorkdir
+                value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir/timingOutput
+                readonly: true
+              steps:
+              - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
+                parameters:
+                  pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
+              - task: Bash@3
+                displayName: Get stage timing and result data from ADO
+                env:
+                  BUILD_ID: $(Build.BuildId)
+                  ADO_API_TOKEN: $(System.AccessToken)
+                  WORK_FOLDER: $(pipelineTelemetryWorkdir)
+                inputs:
+                  targetType: inline
+                  script: |
+                    set -eu -o pipefail
+                    echo "Creating work folder '$WORK_FOLDER'";
+                    mkdir -p $WORK_FOLDER;
 
-      #               echo "Retrieving data from ADO API";
-      #               echo "curl -u \":<REDACTED>\" \"https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline?api-version=7.1-preview.2\""
-      #               curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline?api-version=7.1-preview.2" > $WORK_FOLDER/output.json
-      #         - task: Bash@3
-      #           displayName: Submit telemetry for stage timing and result
-      #           env:
-      #             BUILD_ID: $(Build.BuildId)
-      #             PIPELINE: BuildClient
-      #             WORK_FOLDER: $(pipelineTelemetryWorkdir)
-      #           inputs:
-      #             targetType: inline
-      #             workingDirectory: $(pathToTelemetryGenerator)
-      #             script: |
-      #               set -eu -o pipefail
-      #               echo "Listing files in '$WORK_FOLDER'"
-      #               ls -laR $WORK_FOLDER;
-      #               npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/stageTimingRetriever.js" --dir "$WORK_FOLDER";
+                    echo "Retrieving data from ADO API";
+                    echo "curl -u \":<REDACTED>\" \"https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline?api-version=7.1-preview.2\""
+                    curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline?api-version=7.1-preview.2" > $WORK_FOLDER/output.json
+              - task: Bash@3
+                displayName: Submit telemetry for stage timing and result
+                env:
+                  BUILD_ID: $(Build.BuildId)
+                  PIPELINE: BuildClient
+                  WORK_FOLDER: $(pipelineTelemetryWorkdir)
+                inputs:
+                  targetType: inline
+                  workingDirectory: $(pathToTelemetryGenerator)
+                  script: |
+                    set -eu -o pipefail
+                    echo "Listing files in '$WORK_FOLDER'"
+                    ls -laR $WORK_FOLDER;
+                    npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/stageTimingRetriever.js" --dir "$WORK_FOLDER";
