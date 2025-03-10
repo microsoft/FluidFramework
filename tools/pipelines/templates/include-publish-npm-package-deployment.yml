@@ -54,11 +54,11 @@ jobs:
     type: releaseJob
     isProduction: true
     # Inputs here are automatically downloaded at the beginning of the job.
-    inputs:
-      - input: pipelineArtifact
-        artifactName: pack
-        buildType: current
-        targetPath: $(Pipeline.Workspace)/pack
+    # inputs:
+    #   - input: pipelineArtifact
+    #     artifactName: pack
+    #     buildType: current
+    #     targetPath: $(Pipeline.Workspace)/pack
 
   workspace:
     clean: all
