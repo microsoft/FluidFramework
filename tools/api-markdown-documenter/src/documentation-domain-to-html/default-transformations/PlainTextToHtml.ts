@@ -20,7 +20,10 @@ import { applyFormatting } from "./Utilities.js";
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.
  */
-export function plainTextToHtml(node: PlainTextNode, context: TransformationContext): HastTree {
+export function plainTextToHtml(
+	node: PlainTextNode,
+	context: TransformationContext,
+): HastTree {
 	// Any "escaped" text coming from the DocumentationDomain is intended to be passed through as raw text in the output.
 	// This allows things like embedded HTML and Markdown in TSDoc comments to be preserved in the output.
 	// We are leveraging the `hast-util-raw` plugin to handle this for us.

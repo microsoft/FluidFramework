@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/container-runtime-definitions",
-	"version": "2.23.0",
+	"version": "2.30.0",
 	"description": "Fluid Runtime definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -89,10 +89,10 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
-		"@fluid-tools/build-cli": "catalog:buildTools",
+		"@fluid-tools/build-cli": "^0.54.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "catalog:buildTools",
-		"@fluidframework/container-runtime-definitions-previous": "npm:@fluidframework/container-runtime-definitions@2.22.0",
+		"@fluidframework/build-tools": "^0.54.0",
+		"@fluidframework/container-runtime-definitions-previous": "npm:@fluidframework/container-runtime-definitions@2.23.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@microsoft/api-extractor": "7.47.8",
 		"concurrently": "^8.2.1",

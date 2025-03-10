@@ -107,7 +107,7 @@
 		"jest": "^29.6.2",
 		"jest-junit": "^10.0.0",
 		"jest-puppeteer": "^10.1.3",
-		"mocha": "^10.2.0",
+		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
@@ -119,7 +119,7 @@
 		"ts-node": "^10.9.1",
 		"typescript": "~5.4.5"
 	},
-	"packageManager": "pnpm@9.15.3+sha512.1f79bc245a66eb0b07c5d4d83131240774642caaa86ef7d0434ab47c0d16f66b04e21e0c086eb61e62c77efc4d7f7ec071afad3796af64892fae66509173893a",
+	"packageManager": "pnpm@9.15.7+sha512.ed98f9c748442673c46964b70345bd2282c9b305e8eae539b34ab31d6ef24ef8dd59d8b55f27466f705500b009d9c113471cf87e544f3d5036b297330c26e996",
 	"fluidBuild": {
 		"branchReleaseTypes": {
 			"main": "minor",
