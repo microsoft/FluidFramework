@@ -1,6 +1,6 @@
 # Chunked Forest Codec Tests
 
-Ideally we try hnd have unit tests correspond one to one with implementation logic, and keep dependencies of the tests minimal, ideally gut to the code its testing and its existing dependencies.
+Ideally we try and have unit tests correspond one to one with implementation logic, and keep dependencies of the tests minimal, ideally gut to the code its testing and its existing dependencies.
 For this case that would mean encode tests testing encoding, and decode tests testing decoding.
 This does not cover the use of round trip testing which uses both encode and decode.
 Since round trip testing which is low cost and high value it is worth including even if it adds a less than ideal test dependency.

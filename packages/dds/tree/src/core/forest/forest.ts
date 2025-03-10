@@ -159,6 +159,7 @@ export interface IForestSubscription {
 }
 
 /**
+ * Returns an anchor to the given field.
  * @param field - defaults to {@link rootField}.
  * @returns anchor to `field`.
  */
@@ -170,8 +171,10 @@ export function rootAnchor(field: DetachedField = rootField): FieldAnchor {
 }
 
 /**
+ * Moves the given cursor to the detached fields in the given forst.
+ * @param forest - forest to move cursor in.
+ * @param cursorToMove - cursor to move.
  * @param field - defaults to {@link rootField}.
- * @returns anchor to `field`.
  */
 export function moveToDetachedField(
 	forest: IForestSubscription,
