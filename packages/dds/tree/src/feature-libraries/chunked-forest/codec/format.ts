@@ -109,16 +109,25 @@ export enum SpecialField {
  * In JavaScript the property may be missing or explicitly `undefined`.
  * In JSON this will serialize as the property being omitted.
  * In this case, the value will be encoded as either:
+ *
  * - `false` (when there is no value) OR
+ *
  * - `true, value` when there is a value.
  *
  * For a more compact encoding, there are 4 options for the shape:
+ *
  * - `true`: there is a value, and it will simply be encoded by putting it in the output buffer (so `value`).
+ *
  * - `false`: there is never a value, and it takes up no space in the output buffer.
+ *
  * - `[value]`: there is a value, and its always the same.
- * - `SpecialField.Identifier`: special case for node identifier handling.
  * Takes up no space in the output buffer: the value comes from the shape arrays's content.
  * It is wrapped in an array to differentiate value shape types.
+ *
+ * - `SpecialField.Identifier`: special case for node identifier handling.
+ * It takes up 1 space in the output buffer.
+ * If it's a string, it is a decompressed identifier.
+ * If it's a number, it is an OpSpaceCompressedId.
  *
  * In the future other value shape formats may be added, likely as objects.
  *
