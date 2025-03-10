@@ -8,11 +8,6 @@ parameters:
   type: object
   default: Small-eastus2
 
-# The path to the pnpm store.
-- name: pnpmStorePath
-  type: string
-  default: $(Pipeline.Workspace)/.pnpm-store
-
 jobs:
 - deployment: publish_${{ replace(parameters.environment, '-', '_') }}
   # Depend on the build job
