@@ -511,7 +511,7 @@ extends:
                 - output: pipelineArtifact
                   displayName: Publish Artifact - nested_lib_dist
                   targetPath: $(Build.ArtifactStagingDirectory)/nested_lib_dist
-                  artifactName: nested_lib_dist
+                  artifactName: nested_lib_dist-$(System.JobAttempt)
                   publishLocation: pipeline
 
                 - ${{ if ne(parameters.taskPack, false) }}:
@@ -585,7 +585,7 @@ extends:
 
               - task: DownloadPipelineArtifact@2
                 inputs:
-                  artifact: nested_lib_dist
+                  artifact: nested_lib_dist-$(System.JobAttempt)
                   targetPath: $(Build.SourcesDirectory)
 
               - script: |
@@ -729,7 +729,7 @@ extends:
 
                 - task: DownloadPipelineArtifact@2
                   inputs:
-                    artifact: nested_lib_dist
+                    artifact: nested_lib_dist-$(System.JobAttempt)
                     targetPath: $(Build.SourcesDirectory)
 
                 - script: |
