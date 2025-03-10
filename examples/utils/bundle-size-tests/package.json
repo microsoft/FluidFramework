@@ -16,6 +16,7 @@
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
@@ -29,7 +30,7 @@
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"prepack": "npm run webpack",
-		"test": "node ./lib/src/test/checkDebugAsserts.js",
+		"test": "mocha",
 		"webpack": "webpack",
 		"webpack:profile": "npm run webpack"
 	},
@@ -57,8 +58,10 @@
 		"@fluidframework/bundle-size-tools": "^0.54.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@mixer/webpack-bundle-compare": "^0.1.0",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"eslint": "~8.55.0",
+		"mocha": "^10.8.2",
 		"prettier": "~3.0.3",
 		"puppeteer": "^23.6.0",
 		"rimraf": "^4.4.0",
@@ -83,7 +86,14 @@
 			},
 			"test": {
 				"dependsOn": [
+					"...",
 					"webpack"
+				]
+			},
+			"build:test": {
+				"dependsOn": [
+					"...",
+					"build:esnext"
 				]
 			}
 		}
