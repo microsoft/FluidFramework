@@ -195,11 +195,6 @@ extends:
 
       # Test deployment job
       - template: /tools/pipelines/templates/test-template-deployment-job.yml@self
-        parameters:
-          tagName: ${{ parameters.tagName }}
-          isReleaseGroup: ${{ parameters.isReleaseGroup }}
-          buildDirectory: ${{ parameters.buildDirectory }}
-          buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
 
       # Install / Build / Test Stage
       - stage: build

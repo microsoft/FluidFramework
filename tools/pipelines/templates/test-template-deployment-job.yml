@@ -4,37 +4,9 @@
 # include-publish-npm-package-deployment
 
 parameters:
-- name: feedKind
-  type: string
-
-- name: feedUrl
-  type: string
-
-- name: environment
-  type: string
-
 - name: pool
   type: object
   default: Small-eastus2
-
-- name: publishFlags
-  type: string
-  default:
-
-- name: customEndPoint
-  type: string
-  default:
-
-- name: tagName
-  type: string
-  default:
-
-- name: buildDirectory
-  type: string
-
-- name: buildToolsVersionToInstall
-  type: string
-  default: repo
 
 # The path to the pnpm store.
 - name: pnpmStorePath
