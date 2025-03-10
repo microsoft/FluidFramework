@@ -92,12 +92,12 @@ import {
 	type RevertibleAlphaFactory,
 	type DeltaDetachedNodeChanges,
 	type DeltaDetachedNodeRename,
+	type ExclusiveMapTree,
 } from "../core/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
 	type NodeKeyManager,
 	buildForest,
-	cursorForMapTreeNode,
 	defaultSchemaPolicy,
 	jsonableTreeFromFieldCursor,
 	jsonableTreeFromForest,
@@ -106,7 +106,12 @@ import {
 	MockNodeKeyManager,
 	cursorForMapTreeField,
 	type IDefaultEditBuilder,
+	type TreeChunk,
+	mapTreeFieldFromCursor,
+	defaultChunkPolicy,
+	cursorForJsonableTreeField,
 	initializeForest,
+	chunkFieldSingle,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
@@ -154,7 +159,7 @@ import {
 } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
-import { cursorToJsonObject, singleJsonCursor } from "./json/index.js";
+import { cursorToJsonObject, fieldJsonCursor, singleJsonCursor } from "./json/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 import type { Transactor } from "../shared-tree-core/index.js";
@@ -536,8 +541,8 @@ export function assertDeltaFieldMapEqual(a: DeltaFieldMap, b: DeltaFieldMap): vo
  * Assert two Delta are equal, handling cursors.
  */
 export function assertDeltaEqual(a: DeltaRoot, b: DeltaRoot): void {
-	const aTree = mapRootChanges(a, mapTreeFromCursor);
-	const bTree = mapRootChanges(b, mapTreeFromCursor);
+	const aTree = mapRootChanges(a, chunkToMapTreeField);
+	const bTree = mapRootChanges(b, chunkToMapTreeField);
 	assert.deepStrictEqual(aTree, bTree);
 }
 
@@ -792,11 +797,7 @@ export function flexTreeViewWithContent(
 export function forestWithContent(content: TreeStoredContent): IEditableForest {
 	const forest = buildForest();
 	const fieldCursor = normalizeNewFieldContent(content.initialTree);
-	// TODO:AB6712 Make the delta format accept a single cursor in Field mode.
-	const nodeCursors = mapCursorField(fieldCursor, (c) =>
-		cursorForMapTreeNode(mapTreeFromCursor(c)),
-	);
-	initializeForest(forest, nodeCursors, testRevisionTagCodec, testIdCompressor);
+	initializeForest(forest, fieldCursor, testRevisionTagCodec, testIdCompressor);
 	return forest;
 }
 
@@ -1342,4 +1343,28 @@ export function configureBenchmarkHooks(): void {
 	after(() => {
 		assert.equal(configureDebugAsserts(debugBefore), !isInPerformanceTestingMode);
 	});
+}
+
+export function chunkFromJsonTrees(field: JsonCompatible[]): TreeChunk {
+	const cursor = fieldJsonCursor(field);
+	return chunkFieldSingle(cursor, {
+		idCompressor: testIdCompressor,
+		policy: defaultChunkPolicy,
+	});
+}
+
+export function chunkFromJsonableTrees(field: JsonableTree[]): TreeChunk {
+	const cursor = cursorForJsonableTreeField(field);
+	return chunkFieldSingle(cursor, {
+		idCompressor: testIdCompressor,
+		policy: defaultChunkPolicy,
+	});
+}
+
+export function chunkToMapTreeField(chunk: TreeChunk): ExclusiveMapTree[] {
+	return mapTreeFieldFromCursor(chunk.cursor());
+}
+
+export function nodeCursorsFromChunk(trees: TreeChunk): ITreeCursorSynchronous[] {
+	return mapCursorField(trees.cursor(), (c) => c.fork());
 }

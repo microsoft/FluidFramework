@@ -14,7 +14,6 @@ import {
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { EmptyKey, rootFieldKey } from "../../core/index.js";
-import { singleJsonCursor } from "../json/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { typeboxValidator } from "../../external-utilities/typeboxValidator.js";
 import {
@@ -47,6 +46,7 @@ import {
 	TestTreeProviderLite,
 	checkoutWithContent,
 	configureBenchmarkHooks,
+	chunkFromJsonTrees,
 	flexTreeViewWithContent,
 	toJsonableTree,
 } from "../utils.js";
@@ -253,7 +253,7 @@ describe("SharedTree benchmarks", () => {
 						for (let value = 1; value <= setCount; value++) {
 							tree.editor
 								.valueField({ parent: path, field: localFieldKey })
-								.set(singleJsonCursor(value));
+								.set(chunkFromJsonTrees([value]));
 						}
 						const after = state.timer.now();
 						duration = state.timer.toSeconds(before, after);
@@ -303,7 +303,7 @@ describe("SharedTree benchmarks", () => {
 						const before = state.timer.now();
 						for (let value = 1; value <= setCount; value++) {
 							editor.remove(nodeIndex, 1);
-							editor.insert(nodeIndex, singleJsonCursor(value));
+							editor.insert(nodeIndex, chunkFromJsonTrees([value]));
 						}
 						const after = state.timer.now();
 						duration = state.timer.toSeconds(before, after);
