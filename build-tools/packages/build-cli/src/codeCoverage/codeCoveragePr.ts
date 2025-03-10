@@ -11,7 +11,10 @@ import {
 	getBuildArtifactForSpecificBuild,
 } from "../library/azureDevops/getBaselineBuildMetrics.js";
 import type { CommandLogger } from "../logging.js";
-import { type CodeCoverageComparison, compareCodeCoverage } from "./compareCodeCoverage.js";
+import {
+	type CodeCoverageComparisonForPackages,
+	compareCodeCoverage,
+} from "./compareCodeCoverage.js";
 import { getCoverageMetricsFromArtifact } from "./getCoverageMetrics.js";
 
 /**
@@ -21,7 +24,7 @@ export interface CodeCoverageReport {
 	/**
 	 * Comparison data for each package.
 	 */
-	comparisonData: CodeCoverageComparison[];
+	comparisonData: CodeCoverageComparisonForPackages[];
 
 	/**
 	 * Baseline build metrics against which the PR build metrics are compared.

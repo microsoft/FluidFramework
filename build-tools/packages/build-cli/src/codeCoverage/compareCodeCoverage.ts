@@ -4,7 +4,7 @@
  */
 
 import type { CommandLogger } from "../logging.js";
-import type { CoverageMetric } from "./getCoverageMetrics.js";
+import type { CoverageMetric, CoverageMetricForPackages } from "./getCoverageMetrics.js";
 
 // List of packages to be ignored from code coverage analysis. These are just prefixes. Reason is that when the package src code contains different
 // folders, coverage report calculates coverage of sub folders separately. Also, for example we want to ignore all packages inside examples. So, checking
@@ -41,7 +41,7 @@ export interface CodeCoverageComparison {
 	/**
 	 * Path of the package
 	 */
-	packagePath: string;
+	path: string;
 	/**
 	 * Line coverage in baseline build (as a percent)
 	 */
@@ -67,14 +67,30 @@ export interface CodeCoverageComparison {
 	 */
 	branchCoverageDiff: number;
 	/**
-	 * Flag to indicate if the package is new
+	 * method coverage in baseline build (as a percent)
 	 */
-	isNewPackage: boolean;
+	methodCoverageInBaseline: number;
+	/**
+	 * method coverage in pr build (as a percent)
+	 */
+	methodCoverageInPr: number;
+	/**
+	 * difference between method coverage in pr build and baseline build (percentage points)
+	 */
+	methodCoverageDiff: number;
+	/**
+	 * Flag to indicate if the package/file is new
+	 */
+	isNew: boolean;
+}
+
+export interface CodeCoverageComparisonForPackages extends CodeCoverageComparison {
+	filesCoverageComparison: CodeCoverageComparison[];
 }
 
 export interface CodeCoverageChangeForPackages {
-	codeCoverageComparisonForNewPackages: CodeCoverageComparison[];
-	codeCoverageComparisonForExistingPackages: CodeCoverageComparison[];
+	codeCoverageComparisonForNewPackages: CodeCoverageComparisonForPackages[];
+	codeCoverageComparisonForExistingPackages: CodeCoverageComparisonForPackages[];
 }
 
 /**
@@ -82,12 +98,12 @@ export interface CodeCoverageChangeForPackages {
  * one per package.
  */
 export function compareCodeCoverage(
-	baselineCoverageReport: Map<string, CoverageMetric>,
-	prCoverageReport: Map<string, CoverageMetric>,
+	baselineCoverageReport: Map<string, CoverageMetricForPackages>,
+	prCoverageReport: Map<string, CoverageMetricForPackages>,
 	changedFiles: string[],
-): CodeCoverageComparison[] {
-	const results: CodeCoverageComparison[] = [];
-
+): CodeCoverageComparisonForPackages[] {
+	const results: CodeCoverageComparisonForPackages[] = [];
+	const changesFilesSet = new Set(changedFiles);
 	const changedPackagesList = changedFiles.map((fileName) => {
 		const packagePath = fileName.split("/").slice(0, -1).join(".");
 		return packagePath;
@@ -120,26 +136,87 @@ export function compareCodeCoverage(
 
 		let lineCoverageInBaseline = 0;
 		let branchCoverageInBaseline = 0;
+		let methodCoverageInBaseline = 0;
 		const lineCoverageInPr = prCoverageMetrics.lineCoverage;
 		const branchCoverageInPr = prCoverageMetrics.branchCoverage;
+		const methodCoverageInPr = prCoverageMetrics.methodCoverage;
 
 		if (baselineCoverageMetrics) {
 			lineCoverageInBaseline = baselineCoverageMetrics.lineCoverage;
 			branchCoverageInBaseline = baselineCoverageMetrics.branchCoverage;
+			methodCoverageInBaseline = baselineCoverageMetrics.methodCoverage;
 		}
 
+		const filesCoverageComparison = compareCodeCoverageForFiles(
+			baselineCoverageMetrics?.filesCoverage,
+			prCoverageMetrics.filesCoverage,
+			changesFilesSet,
+		);
+
 		results.push({
-			packagePath: changedPackage,
+			path: changedPackage,
 			lineCoverageInBaseline,
 			lineCoverageInPr,
 			lineCoverageDiff: lineCoverageInPr - lineCoverageInBaseline,
 			branchCoverageInBaseline,
 			branchCoverageInPr,
 			branchCoverageDiff: branchCoverageInPr - branchCoverageInBaseline,
-			isNewPackage,
+			methodCoverageInBaseline,
+			methodCoverageInPr,
+			methodCoverageDiff: methodCoverageInPr - methodCoverageInBaseline,
+			isNew: isNewPackage,
+			filesCoverageComparison,
 		});
 	}
 
+	return results;
+}
+
+/**
+ * Compares the code coverage for pr and baseline build and returns an array of objects with comparison results,
+ * one per file.
+ */
+function compareCodeCoverageForFiles(
+	baselineFilesCoverage: Map<string, CoverageMetric> | undefined,
+	prFilesCoverage: Map<string, CoverageMetric>,
+	changesFilesSet: Set<string>,
+): CodeCoverageComparison[] {
+	const results: CodeCoverageComparison[] = [];
+	const files = changesFilesSet.values();
+	for (const file of files) {
+		let lineCoverageInBaseline = 0;
+		let branchCoverageInBaseline = 0;
+		let methodCoverageInBaseline = 0;
+		const prFileCoverageMetrics = prFilesCoverage.get(file);
+		const baselineFileCoverageMetrics = baselineFilesCoverage?.get(file);
+		if (prFileCoverageMetrics === undefined) {
+			continue;
+		}
+		changesFilesSet.delete(file);
+		const lineCoverageInPr = prFileCoverageMetrics.lineCoverage;
+		const branchCoverageInPr = prFileCoverageMetrics.branchCoverage;
+		const methodCoverageInPr = prFileCoverageMetrics.methodCoverage;
+		const isNewFile = baselineFileCoverageMetrics === undefined;
+
+		if (baselineFileCoverageMetrics) {
+			lineCoverageInBaseline = baselineFileCoverageMetrics.lineCoverage;
+			branchCoverageInBaseline = baselineFileCoverageMetrics.branchCoverage;
+			methodCoverageInBaseline = baselineFileCoverageMetrics.methodCoverage;
+		}
+		results.push({
+			path: file,
+			lineCoverageInBaseline,
+			lineCoverageInPr,
+			lineCoverageDiff: lineCoverageInPr - lineCoverageInBaseline,
+			branchCoverageInBaseline,
+			branchCoverageInPr,
+			branchCoverageDiff: branchCoverageInPr - branchCoverageInBaseline,
+			methodCoverageInBaseline,
+			methodCoverageInPr,
+			methodCoverageDiff: methodCoverageInPr - methodCoverageInBaseline,
+			isNew: isNewFile,
+		});
+	}
 	return results;
 }
 
@@ -149,18 +226,21 @@ export function compareCodeCoverage(
  * @param logger - The logger to log messages.
  */
 export function getPackagesWithCodeCoverageChanges(
-	codeCoverageComparisonData: CodeCoverageComparison[],
+	codeCoverageComparisonData: CodeCoverageComparisonForPackages[],
 	logger?: CommandLogger,
 ): CodeCoverageChangeForPackages {
 	// Find new packages that do not have test setup and are being impacted by changes in the PR
 	const newPackagesIdentifiedByCodeCoverage = codeCoverageComparisonData.filter(
-		(codeCoverageReport) => codeCoverageReport.isNewPackage,
+		(codeCoverageReport) => codeCoverageReport.isNew,
 	);
 	logger?.verbose(`Found ${newPackagesIdentifiedByCodeCoverage.length} new packages`);
 
 	// Find existing packages that have reported a change in coverage for the current PR
 	const existingPackagesWithCoverageChange = codeCoverageComparisonData.filter(
-		(codeCoverageReport) => codeCoverageReport.branchCoverageDiff !== 0,
+		(codeCoverageReport) =>
+			codeCoverageReport.isNew !== true &&
+			(codeCoverageReport.branchCoverageDiff !== 0 ||
+				codeCoverageReport.methodCoverageDiff !== 0),
 	);
 	logger?.verbose(
 		`Found ${existingPackagesWithCoverageChange.length} packages with code coverage changes`,
@@ -184,7 +264,8 @@ export function isCodeCoverageCriteriaPassed(
 	const { codeCoverageComparisonForNewPackages, codeCoverageComparisonForExistingPackages } =
 		codeCoverageChangeForPackages;
 	const packagesWithNotableRegressions = codeCoverageComparisonForExistingPackages.filter(
-		(codeCoverageReport: CodeCoverageComparison) => codeCoverageReport.branchCoverageDiff < -1,
+		(codeCoverageReport: CodeCoverageComparison) =>
+			codeCoverageReport.branchCoverageDiff < -1 || codeCoverageReport.methodCoverageDiff < -1,
 	);
 
 	logger?.verbose(
@@ -193,7 +274,8 @@ export function isCodeCoverageCriteriaPassed(
 
 	// Code coverage for the newly added package should be less than 50% to fail.
 	const newPackagesWithNotableRegressions = codeCoverageComparisonForNewPackages.filter(
-		(codeCoverageReport) => codeCoverageReport.branchCoverageInPr < 50,
+		(codeCoverageReport) =>
+			codeCoverageReport.branchCoverageInPr < 50 || codeCoverageReport.methodCoverageInPr < 50,
 	);
 
 	logger?.verbose(

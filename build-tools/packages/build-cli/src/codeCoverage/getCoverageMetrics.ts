@@ -8,35 +8,116 @@ import { Parser } from "xml2js";
 import type { CommandLogger } from "../logging.js";
 
 /**
- * The type for the coverage report, containing the line coverage and branch coverage(in percentage)
+ * The type for the coverage metric, containing the line, method and branch coverage(in percentage)
  */
 export interface CoverageMetric {
 	lineCoverage: number;
 	branchCoverage: number;
+	methodCoverage: number;
+}
+
+/**
+ * The type for the coverage metric for files in package, containing the line, method and branch coverage(in percentage)
+ */
+export interface CoverageMetricForPackages extends CoverageMetric {
+	filesCoverage: Map<string, CoverageMetric>;
 }
 
 interface XmlCoverageReportSchema {
 	coverage: {
-		packages: XmlCoverageReportSchemaForPackage[];
+		"$": {
+			"line-rate": string;
+			"branch-rate": string;
+		};
+		packages: [
+			{
+				package: XmlCoverageReportSchemaForPackage[];
+			},
+		];
 	};
 }
 
 interface XmlCoverageReportSchemaForPackage {
-	package: [
+	"$": {
+		name: string;
+		"line-rate": string;
+		"branch-rate": string;
+	};
+	classes: [
 		{
-			"$": {
-				name: string;
-				"line-rate": string;
-				"branch-rate": string;
-			};
+			class?: XmlCoverageReportSchemaForFile[];
 		},
 	];
 }
 
+interface XmlCoverageReportSchemaForFile {
+	"$": {
+		name: string;
+		"line-rate": string;
+		"branch-rate": string;
+		filename: string;
+	};
+	methods: [
+		{
+			method?: XmlCoverageReportSchemaForMethod[];
+		},
+	];
+}
+
+interface XmlCoverageReportSchemaForMethod {
+	"$": {
+		name: string;
+		"hits": string;
+	};
+}
+
+function extractCoverageForEachFiles(
+	coverageForFiles: XmlCoverageReportSchemaForFile[] | undefined,
+): {
+	filesCoverage: Map<string, CoverageMetric>;
+	packageMethodCoverage: number;
+} {
+	const filesCoverage: Map<
+		string,
+		{
+			lineCoverage: number;
+			branchCoverage: number;
+			methodCoverage: number;
+		}
+	> = new Map();
+	if (coverageForFiles === undefined) {
+		return { filesCoverage, packageMethodCoverage: 100 };
+	}
+	let totalMethods = 0;
+	let totalMethodsCovered = 0;
+	for (const file of coverageForFiles) {
+		const filePath = file.$.filename;
+		const lineCoverage = Number.parseFloat(file.$["line-rate"]) * 100;
+		const branchCoverage = Number.parseFloat(file.$["branch-rate"]) * 100;
+		const methods = file.methods[0].method;
+		const methodCoverage =
+			methods !== undefined && methods.length > 0
+				? (methods.reduce((acc, method) => {
+						return acc + (Number.parseInt(method.$.hits, 10) > 0 ? 1 : 0);
+					}, 0) /
+						methods.length) *
+					100
+				: 100;
+		totalMethods += methods?.length ?? 0;
+		totalMethodsCovered += methods === undefined ? 0 : (methodCoverage / 100) * methods.length;
+		filesCoverage.set(filePath, {
+			lineCoverage,
+			branchCoverage,
+			methodCoverage,
+		});
+	}
+	return { filesCoverage, packageMethodCoverage: (totalMethodsCovered / totalMethods) * 100 };
+}
+
 const extractCoverageMetrics = (
 	xmlForCoverageReportFromArtifact: XmlCoverageReportSchema,
-): Map<string, CoverageMetric> => {
-	const report: Map<string, CoverageMetric> = new Map();
+): Map<string, CoverageMetricForPackages> => {
+	const report: Map<string, CoverageMetricForPackages> = new Map();
 	const coverageForPackagesResult =
 		xmlForCoverageReportFromArtifact.coverage.packages[0]?.package;
 
@@ -44,10 +125,18 @@ const extractCoverageMetrics = (
 		const packagePath = coverageForPackage.$.name;
 		const lineCoverage = Number.parseFloat(coverageForPackage.$["line-rate"]) * 100;
 		const branchCoverage = Number.parseFloat(coverageForPackage.$["branch-rate"]) * 100;
-		if (packagePath && !Number.isNaN(lineCoverage) && !Number.isNaN(branchCoverage)) {
+		const filesCoverage = extractCoverageForEachFiles(coverageForPackage.classes[0].class);
+		if (
+			packagePath &&
+			!Number.isNaN(lineCoverage) &&
+			!Number.isNaN(branchCoverage) &&
+			!Number.isNaN(filesCoverage.packageMethodCoverage)
+		) {
 			report.set(packagePath, {
 				lineCoverage,
 				branchCoverage,
+				methodCoverage: filesCoverage.packageMethodCoverage,
+				filesCoverage: filesCoverage.filesCoverage,
 			});
 		}
 	}
@@ -63,7 +152,7 @@ const extractCoverageMetrics = (
 export const getCoverageMetricsFromArtifact = async (
 	artifactZip: JSZip,
 	logger?: CommandLogger,
-): Promise<Map<string, CoverageMetric>> => {
+): Promise<Map<string, CoverageMetricForPackages>> => {
 	const coverageReportsFiles: string[] = [];
 	// eslint-disable-next-line unicorn/no-array-for-each -- required as JSZip does not implement [Symbol.iterator]() which is required by for...of
 	artifactZip.forEach((filePath) => {
@@ -71,7 +160,7 @@ export const getCoverageMetricsFromArtifact = async (
 			coverageReportsFiles.push(filePath);
 	});
 
-	let coverageMetricsForBaseline: Map<string, CoverageMetric> = new Map();
+	let coverageMetricsForBaseline: Map<string, CoverageMetricForPackages> = new Map();
 	const xmlParser = new Parser();
 
 	try {
