@@ -22,7 +22,7 @@ import {
 	type TreeViewAlpha,
 } from "@fluidframework/tree/internal";
 
-describeCompat("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat.only("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 
@@ -71,14 +71,14 @@ describeCompat("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
 	let tree1: ITree;
 	let tree2: ITree;
 
-	beforeEach("setup", async () => {
+	beforeEach("setup", async function () {
 		provider = getTestObjectProvider();
 
 		// These tests are not service specific. They test internals of the SharedTree and different services
 		// won't make a difference. So, only run them for local server to reduce the number of test combinations
 		// it runs in.
 		if (provider.driver.type !== "local") {
-			return;
+			this.skip();
 		}
 
 		// Create a loader and a detached container.
