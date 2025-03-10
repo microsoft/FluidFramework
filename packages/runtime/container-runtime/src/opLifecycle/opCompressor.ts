@@ -82,7 +82,7 @@ export class OpCompressor {
 	/**
 	 * Combine the batch's content strings into a single JSON string (a serialized array)
 	 */
-	private serializeBatchContents(batch: IBatch): string {
+	public serializeBatchContents(batch: IBatch): string {
 		try {
 			// Yields a valid JSON array, since each message.contents is already serialized to JSON
 			return `[${batch.messages.map(({ contents }) => contents).join(",")}]`;

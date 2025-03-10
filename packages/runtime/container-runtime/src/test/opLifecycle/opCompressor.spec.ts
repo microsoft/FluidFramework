@@ -82,6 +82,21 @@ describe("OpCompressor", () => {
 					"Expected error was not thrown",
 				);
 			});
+			it(`Not serializing batch of ${batch.messages.length} ops of total size ${toMB(
+				batch.contentSizeInBytes,
+			)} MB`, () => {
+				assert.throws(
+					() => {
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+						compressor.serializeBatchContents(batch);
+					},
+					(error: Error) => {
+						assert.strictEqual(error.message, "Payload too large");
+						return true;
+					},
+					"Expected error was not thrown",
+				);
+			});
 		}
 	});
 });
