@@ -33,6 +33,7 @@ export {
 	BenchmarkSyncFunction,
 	BenchmarkAsyncFunction,
 	OnBatch,
+	OnBatchAsync,
 	BenchmarkDescription,
 	CustomBenchmark,
 	BenchmarkTimer,
