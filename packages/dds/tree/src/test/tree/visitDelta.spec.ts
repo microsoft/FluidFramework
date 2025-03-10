@@ -14,7 +14,6 @@ import {
 	type DeltaVisitor,
 	type DetachedFieldIndex,
 	type FieldKey,
-	type ITreeCursorSynchronous,
 	type MapTree,
 	type RevisionTag,
 	makeDetachedFieldIndex,
@@ -93,8 +92,8 @@ function testDeltaVisit(
 				name === "create"
 					? ([
 							name,
-							(args[0] as readonly ITreeCursorSynchronous[]).map(mapTreeFromCursor),
-							args[1] as FieldKey,
+							(args as Parameters<DeltaVisitor["create"]>)[0].map(mapTreeFromCursor),
+							args[1],
 						] as VisitCall)
 					: ([name, ...args] as VisitCall);
 			result.push(call);
