@@ -54,19 +54,19 @@ interface IOdspTestDriverConfig extends TokenConfig {
 }
 
 // specific a range of user name from <prefix><start> to <prefix><start + count - 1> all having the same password
-interface LoginTenantRange {
-	prefix: string;
-	start: number;
-	count: number;
-	password: string;
-}
+// interface LoginTenantRange {
+// 	prefix: string;
+// 	start: number;
+// 	count: number;
+// 	password: string;
+// }
 
-interface LoginTenants {
-	[tenant: string]: {
-		range: LoginTenantRange;
-		// add different format here
-	};
-}
+// interface LoginTenants {
+// 	[tenant: string]: {
+// 		range: LoginTenantRange;
+// 		// add different format here
+// 	};
+// }
 
 /**
  * Properties of the credentials for an individual user returned from the TRIPS API.
@@ -124,12 +124,13 @@ export function getOdspCredentials(
 	 */
 	if (loginTenants !== undefined) {
 		const output: CredentialOutput = JSON.parse(loginTenants);
-		if (output.resources[tenantIndex] === undefined) {
+		const tenant = output.resources[tenantIndex];
+		if (tenant?.resources === undefined) {
 			throw new Error("No resources found in the login tenants");
 		}
 
 		// Return the set of accounts to choose from a single tenant
-		for (const account of output.resources[tenantIndex].resources) {
+		for (const account of tenant.resources) {
 			const username = account.name;
 			const password = account.properties.Password;
 			if (requestedUserName === undefined || requestedUserName === username) {
