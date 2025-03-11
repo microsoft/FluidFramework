@@ -3,10 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// Enable TypeScript type-checking for this file.
-// See https://www.typescriptlang.org/docs/handbook/intro-to-js-ts.html#ts-check
-// @ts-check
-
 export default {
 
 	// Knip has the capability to report many issue types. For now we are only using "dependencies" to check for unused dependency declaration in package.json

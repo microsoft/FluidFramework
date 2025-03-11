@@ -3,15 +3,11 @@
  * Licensed under the MIT License.
  */
 
-// Enable TypeScript type-checking for this file.
-// See https://www.typescriptlang.org/docs/handbook/intro-to-js-ts.html#ts-check
-// @ts-check
-
 // Import the shared config from the root of the repo.
 import sharedConfig from "../../../knip.base.ts";
 
 export default {
-	include: [...sharedConfig.include],
+	...sharedConfig,
 	ignoreDependencies: [
 		...sharedConfig.ignoreDependencies,
 
