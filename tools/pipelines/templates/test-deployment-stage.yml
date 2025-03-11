@@ -58,7 +58,7 @@ stages:
               displayName: Install Fluid Build Tools from Artifact Tarball
               inputs:
                 targetType: 'inline'
-                workingDirectory: '$(Pipeline.Workspace)/buildTools-resource/pack/tarballs'
+                workingDirectory: '$(Pipeline.Workspace)/tarballs'
                 script: |
                   echo "Listing files in directory: $(pwd)"
                   ls -la
