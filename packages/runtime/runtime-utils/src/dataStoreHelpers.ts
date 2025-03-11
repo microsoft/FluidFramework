@@ -21,7 +21,7 @@ interface IResponseException extends Error {
 }
 
 /**
- * Type guard for determining if an error is an IResponseException
+ * Type guard for determining if an error is an {@link IResponseException }
  * @internal
  */
 function isResponseException(err: unknown): err is IResponseException {
