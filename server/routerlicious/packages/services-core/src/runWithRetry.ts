@@ -55,10 +55,12 @@ export async function runWithRetry<T>(
 				const result = await api();
 				success = true;
 				if (retryCount >= 1) {
-					Lumberjack.info(
-						`Succeeded in executing ${callName} with ${retryCount} retries`,
-						telemetryProperties,
-					);
+					Lumberjack.info(`Succeeded in executing runWithRetry`, {
+						...telemetryProperties,
+						callName,
+						retryCount,
+						maxRetries,
+					});
 				}
 				return result;
 			} catch (error) {
@@ -68,14 +70,24 @@ export async function runWithRetry<T>(
 				latestResultError = error;
 				if (retryCount < maxRetries && maxRetries !== -1) {
 					Lumberjack.warning(
-						`Error running ${callName}: retryCount ${retryCount}`,
-						telemetryProperties,
+						`Error in runWithRetry, will retry`,
+						{
+							...telemetryProperties,
+							callName,
+							retryCount,
+							maxRetries,
+						},
 						error,
 					);
 				} else {
 					Lumberjack.error(
-						`Error running ${callName}: retryCount ${retryCount}`,
-						telemetryProperties,
+						`Error in runWithRetry`,
+						{
+							...telemetryProperties,
+							callName,
+							retryCount,
+							maxRetries,
+						},
 						error,
 					);
 				}
@@ -176,10 +188,12 @@ export async function requestWithRetry<T>(
 				const result = await request();
 				success = true;
 				if (retryCount >= 1) {
-					Lumberjack.info(
-						`Succeeded in executing ${callName} with ${retryCount} retries`,
-						telemetryProperties,
-					);
+					Lumberjack.info(`Succeeded in executing requestWithRetry`, {
+						...telemetryProperties,
+						callName,
+						retryCount,
+						maxRetries,
+					});
 				}
 				return result;
 			} catch (error: unknown) {
@@ -189,14 +203,24 @@ export async function requestWithRetry<T>(
 				latestResultError = error;
 				if (retryCount < maxRetries && maxRetries !== -1) {
 					Lumberjack.warning(
-						`Error running ${callName}: retryCount ${retryCount}`,
-						telemetryProperties,
+						`Error in requestWithRetry, will retry`,
+						{
+							...telemetryProperties,
+							callName,
+							retryCount,
+							maxRetries,
+						},
 						error,
 					);
 				} else {
 					Lumberjack.error(
-						`Error running ${callName}: retryCount ${retryCount}`,
-						telemetryProperties,
+						`Error in requestWithRetry`,
+						{
+							...telemetryProperties,
+							callName,
+							retryCount,
+							maxRetries,
+						},
 						error,
 					);
 				}
