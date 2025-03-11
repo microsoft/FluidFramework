@@ -45,9 +45,9 @@ import {
 	EventFlowDebugNames,
 } from "./debugEvents.js";
 import { IdGenerator } from "./idGenerator.js";
-import { getEditingSystemPrompt, type EditLog } from "./promptGeneration.js";
+import { getEditingSystemPrompt } from "./promptGeneration.js";
 import { generateGenericEditTypes } from "./typeGeneration.js";
-import { fail } from "./utils.js";
+import { fail, type View } from "./utils.js";
 
 // TODO: Create a proper index file and move the logic of this file to a new location
 export type {
@@ -67,6 +67,8 @@ export type {
 	EventFlowDebugNames,
 } from "./debugEvents.js";
 
+export { type View } from "./utils.js";
+
 /**
  * {@link generateTreeEdits} options.
  *
@@ -74,6 +76,7 @@ export type {
  */
 export interface GenerateTreeEditsOptions {
 	clientOptions: OpenAiClientOptions | ClaudeClientOptions;
+	treeView: View;
 	treeNode: TreeNode;
 	prompt: {
 		systemRoleContext: string;
@@ -121,7 +124,6 @@ export async function generateTreeEdits(
 	options: GenerateTreeEditsOptions,
 ): Promise<GenerateTreeEditsSuccessResponse | GenerateTreeEditsErrorResponse> {
 	const idGenerator = new IdGenerator();
-	const editLog: EditLog = [];
 	let editCount = 0;
 	let sequentialErrorCount = 0;
 
@@ -144,7 +146,6 @@ export async function generateTreeEdits(
 			options,
 			simpleSchema,
 			idGenerator,
-			editLog,
 			options.limiters?.tokenLimits,
 			tokensUsed,
 			options.debugEventLogHandler && {
@@ -153,13 +154,13 @@ export async function generateTreeEdits(
 			},
 		)) {
 			try {
-				const result = applyAgentEdit(
+				applyAgentEdit(
+					options.treeView,
 					generateEditResult.edit,
 					idGenerator,
 					simpleSchema.definitions,
 					options.validator,
 				);
-				editLog.push({ edit: { ...result } });
 				sequentialErrorCount = 0;
 
 				options.debugEventLogHandler?.({
@@ -182,7 +183,6 @@ export async function generateTreeEdits(
 
 				if (error instanceof UsageError) {
 					sequentialErrorCount += 1;
-					editLog.push({ edit: generateEditResult.edit, error: error.message });
 				} else {
 					throw error;
 				}
@@ -275,7 +275,6 @@ async function* generateEdits(
 	options: GenerateTreeEditsOptions,
 	simpleSchema: SimpleTreeSchema,
 	idGenerator: IdGenerator,
-	editLog: EditLog,
 	tokenLimits: TokenLimits | undefined,
 	tokensUsed: TokenUsage,
 	debugOptions?: {
@@ -288,7 +287,6 @@ async function* generateEdits(
 	const systemPrompt = getEditingSystemPrompt(
 		idGenerator,
 		options.treeNode,
-		editLog,
 		options.prompt.systemRoleContext,
 	);
 
@@ -372,20 +370,11 @@ async function getStructuredOutputFromClaude(
 ): Promise<unknown> {
 	// TODO: use langchain library to get this for free
 	// TODO: respect description, tokensUsed, and debugOptions
-	const wrapper = z.object({ edits: structuredOutputSchema });
-	const jsonSchema = zodToJsonSchema(wrapper, {
-		name: "schema",
-		definitions: types,
-		$refStrategy: "none",
+	const wrapper = z.object({
+		edits: z.array(z.unknown()).describe(`An array of well-formed TreeEdits`),
 	});
-	// jsonSchema.$schema = "http://json-schema.org/draft/2020-12/schema#";
-	const input_schema = jsonSchema.definitions?.schema as
-		| Anthropic.Tool.InputSchema
-		| undefined;
-
-	if (input_schema === undefined) {
-		throw new UsageError("Failed to generate JSON schema for structured output.");
-	}
+	const input_schema = zodToJsonSchema(wrapper, { name: "foo" }).definitions
+		?.foo as Anthropic.Tool.InputSchema;
 	const response = await claude.client.beta.messages.create({
 		betas: ["token-efficient-tools-2025-02-19"],
 		model: "claude-3-7-sonnet-latest",
@@ -410,6 +399,16 @@ async function getStructuredOutputFromClaude(
 		throw new Error("Unexpected response from LLM API.");
 	}
 
+	// const text = response.content.find(
+	// 	(c): c is Anthropic.Beta.BetaTextBlock => c.type === "text",
+	// )?.text;
+	// if (text === undefined) {
+	// 	throw new Error("Unexpected response from LLM API.");
+	// }
+
+	// const start = text.lastIndexOf("```json");
+	// const end = text.lastIndexOf("```");
+	// const jsonString = text.slice(start + 7, end + 1);
 	const result = wrapper.safeParse(r.input);
 
 	if (result.success === false) {
@@ -417,7 +416,6 @@ async function getStructuredOutputFromClaude(
 		throw new Error("Response did not conform to provided schema.");
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	return result.data.edits;
 }
 

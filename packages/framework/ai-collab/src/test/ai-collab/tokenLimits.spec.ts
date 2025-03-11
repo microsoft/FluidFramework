@@ -57,6 +57,7 @@ describe.skip("Token limits work as expected", () => {
 
 		const inputTokenLimit = 500;
 		const response = await aiCollab({
+			treeView: view,
 			openAI: {
 				client: new OpenAI({
 					apiKey: OPENAI_API_KEY,
@@ -104,6 +105,7 @@ describe.skip("Token limits work as expected", () => {
 		const outputTokenLimit = 100;
 
 		const response = await aiCollab({
+			treeView: view,
 			openAI: {
 				client: new OpenAI({
 					apiKey: OPENAI_API_KEY,

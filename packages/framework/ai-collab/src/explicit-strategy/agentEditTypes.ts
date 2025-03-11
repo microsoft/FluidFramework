@@ -110,6 +110,19 @@ export interface ArrayRange {
 }
 
 /**
+ * Typeguard for ArrayRange
+ */
+export function isArrayRange(value: unknown): value is ArrayRange {
+	return (
+		typeof value === "object" &&
+		value !== null &&
+		"array" in value &&
+		"from" in value &&
+		"to" in value
+	);
+}
+
+/**
  * Set a field on an object to a specified value.
  * Can be used set optional fields to undefined.
  */
@@ -154,11 +167,11 @@ export interface MoveArrayElement extends Edit {
 	type: "moveArrayElement";
 
 	// Source can be a single element or a range
-	source: Pointer | ArrayRange;
+	source: ObjectPointer | ArrayRange;
 
 	// Destination must be an array position
 	destination: {
-		target: Pointer; // The target array
+		target: PathPointer; // The target array
 		position: ArrayPosition; // Where to place the element(s) in the array
 	};
 }

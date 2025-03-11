@@ -31,6 +31,7 @@ export interface AiCollabOptions {
         readonly userAsk: string;
     };
     readonly treeNode: TreeNode;
+    readonly treeView: View;
     readonly validator?: (newContent: TreeNode) => void;
 }
 
@@ -337,5 +338,8 @@ export interface TokenUsage {
     inputTokens: number;
     outputTokens: number;
 }
+
+// @alpha
+export type View = Pick<TreeView<ImplicitFieldSchema>, "root">;
 
 ```

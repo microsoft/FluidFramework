@@ -8,6 +8,8 @@ import type { TreeNode } from "@fluidframework/tree";
 // eslint-disable-next-line import/no-named-as-default
 import OpenAI from "openai";
 
+import type { View } from "./explicit-strategy/index.js";
+
 /**
  * Core Debug event type for the ai-collab
  * @alpha
@@ -102,6 +104,10 @@ export interface AiCollabOptions {
 	 * The OpenAI client options to use for the LLM based AI collaboration.
 	 */
 	readonly openAI: OpenAiClientOptions;
+	/**
+	 * TODO doc
+	 */
+	readonly treeView: View;
 	/**
 	 * The specific tree node you want the AI to collaborate on. Pass the root node of your tree if you intend
 	 * for the AI to work on the entire tree.

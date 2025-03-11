@@ -3,45 +3,44 @@
  * Licensed under the MIT License.
  */
 
-import {
-	Trace,
-	TypedEventEmitter,
-	type ILayerCompatDetails,
-	type IProvideLayerCompatDetails,
+import type {
+	ILayerCompatDetails,
+	IProvideLayerCompatDetails,
 } from "@fluid-internal/client-utils";
-import {
-	AttachState,
+import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
+import type {
 	IAudience,
 	ISelf,
 	ICriticalContainerError,
-	type IAudienceEvents,
+	IAudienceEvents,
 } from "@fluidframework/container-definitions";
-import {
+import { AttachState } from "@fluidframework/container-definitions";
+import type {
 	IContainerContext,
 	IGetPendingLocalStateProps,
 	IRuntime,
 	IDeltaManager,
 	IDeltaManagerFull,
-	isIDeltaManagerFull,
 } from "@fluidframework/container-definitions/internal";
-import {
+import { isIDeltaManagerFull } from "@fluidframework/container-definitions/internal";
+import type {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions/internal";
-import {
+import type {
 	FluidObject,
 	IFluidHandle,
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import {
-	type IErrorBase,
+import type {
+	IErrorBase,
 	IFluidHandleContext,
-	type IFluidHandleInternal,
+	IFluidHandleInternal,
 	IProvideFluidHandleContext,
+	ISignalEnvelope,
 } from "@fluidframework/core-interfaces/internal";
-import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
 	Deferred,
@@ -49,24 +48,23 @@ import {
 	PromiseCache,
 	delay,
 } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IClientDetails,
 	IQuorumClients,
 	ISummaryTree,
-	SummaryType,
 } from "@fluidframework/driver-definitions";
-import {
-	FetchSource,
+import { SummaryType } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentStorageService,
-	type ISnapshot,
 	IDocumentMessage,
-	ISnapshotTree,
-	ISummaryContent,
-	MessageType,
 	ISequencedDocumentMessage,
 	ISignalMessage,
-	type ISummaryContext,
+	ISnapshot,
+	ISnapshotTree,
+	ISummaryContent,
+	ISummaryContext,
 } from "@fluidframework/driver-definitions/internal";
+import { FetchSource, MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
@@ -75,13 +73,11 @@ import type {
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
 } from "@fluidframework/id-compressor/internal";
-import {
+import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	IGarbageCollectionData,
 	CreateChildSummarizerNodeParam,
-	FlushMode,
-	FlushModeExperimental,
 	IDataStore,
 	IEnvelope,
 	IFluidDataStoreContextDetached,
@@ -90,11 +86,15 @@ import {
 	InboundAttachMessage,
 	NamedFluidDataStoreRegistryEntries,
 	SummarizeInternalFn,
+	IInboundSignalMessage,
+	IRuntimeMessagesContent,
+	ISummarizerNodeWithGC,
+} from "@fluidframework/runtime-definitions/internal";
+import {
+	FlushMode,
+	FlushModeExperimental,
 	channelsTreeName,
 	gcTreeKey,
-	IInboundSignalMessage,
-	type IRuntimeMessagesContent,
-	type ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -108,19 +108,18 @@ import {
 	seqFromTree,
 } from "@fluidframework/runtime-utils/internal";
 import type {
+	IEventSampler,
 	IFluidErrorBase,
 	ITelemetryGenericEventExt,
-	TelemetryEventPropertyTypeExt,
+	ITelemetryLoggerExt,
+	MonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import {
-	ITelemetryLoggerExt,
 	DataCorruptionError,
 	DataProcessingError,
 	extractSafePropertiesFromMessage,
 	GenericError,
-	IEventSampler,
 	LoggingError,
-	MonitoringContext,
 	PerformanceEvent,
 	// eslint-disable-next-line import/no-deprecated
 	TaggedLoggerAdapter,
@@ -143,7 +142,6 @@ import {
 	blobsTreeName,
 	isBlobPath,
 	loadBlobManagerLoadInfo,
-	// eslint-disable-next-line import/no-deprecated
 	type IBlobManagerLoadInfo,
 } from "./blobManager/index.js";
 import {
@@ -151,7 +149,7 @@ import {
 	getSummaryForDatastores,
 	wrapContext,
 } from "./channelCollection.js";
-import { IPerfSignalReport, ReportOpPerfTelemetry } from "./connectionTelemetry.js";
+import { ReportOpPerfTelemetry } from "./connectionTelemetry.js";
 import { ContainerFluidHandleContext } from "./containerHandleContext.js";
 import { channelToDataStore } from "./dataStore.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
@@ -161,11 +159,9 @@ import {
 } from "./deltaManagerProxies.js";
 import { DeltaScheduler } from "./deltaScheduler.js";
 import {
-	// eslint-disable-next-line import/no-deprecated
 	GCNodeType,
 	GarbageCollector,
 	IGCRuntimeOptions,
-	// eslint-disable-next-line import/no-deprecated
 	IGCStats,
 	IGarbageCollector,
 	gcGenerationOptionName,
@@ -206,38 +202,27 @@ import {
 	IPendingLocalState,
 	PendingStateManager,
 } from "./pendingStateManager.js";
+import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
 import {
-	// eslint-disable-next-line import/no-deprecated
 	DocumentsSchemaController,
 	EnqueueSummarizeResult,
 	IBaseSummarizeResult,
-	// eslint-disable-next-line import/no-deprecated
 	IConnectableRuntime,
-	// eslint-disable-next-line import/no-deprecated
 	IContainerRuntimeMetadata,
-	// eslint-disable-next-line import/no-deprecated
 	ICreateContainerMetadata,
-	// eslint-disable-next-line import/no-deprecated
 	type IDocumentSchemaChangeMessage,
-	// eslint-disable-next-line import/no-deprecated
 	type IDocumentSchemaCurrent,
 	IEnqueueSummarizeOptions,
 	IGenerateSummaryTreeResult,
 	IGeneratedSummaryStats,
 	IOnDemandSummarizeOptions,
-	// eslint-disable-next-line import/no-deprecated
 	IRefreshSummaryAckOptions,
 	IRootSummarizerNodeWithGC,
-	// eslint-disable-next-line import/no-deprecated
 	ISerializedElection,
-	// eslint-disable-next-line import/no-deprecated
 	ISubmitSummaryOptions,
 	ISummarizeResults,
-	// eslint-disable-next-line import/no-deprecated
 	ISummarizerInternalsProvider,
-	// eslint-disable-next-line import/no-deprecated
 	ISummarizerRuntime,
-	// eslint-disable-next-line import/no-deprecated
 	ISummaryMetadataMessage,
 	IdCompressorMode,
 	OrderedClientCollection,
@@ -245,7 +230,6 @@ import {
 	RetriableSummaryError,
 	RunWhileConnectedCoordinator,
 	SubmitSummaryResult,
-	// eslint-disable-next-line import/no-deprecated
 	Summarizer,
 	SummarizerClientElection,
 	SummaryCollection,
@@ -261,7 +245,6 @@ import {
 	rootHasIsolatedChannels,
 	summarizerClientType,
 	wrapSummaryInChannelsTree,
-	// eslint-disable-next-line import/no-deprecated
 	type IDocumentSchemaFeatures,
 	formCreateSummarizerFn,
 	summarizerRequestUrl,
@@ -418,7 +401,7 @@ export interface IContainerRuntimeOptions {
  *
  * These options are not available to consumers when creating a new container runtime,
  * but we do need to expose them for internal use, e.g. when configuring the container runtime
- * to ensure compability with older versions.
+ * to ensure compatibility with older versions.
  *
  * @internal
  */
@@ -640,9 +623,7 @@ export const makeLegacySendBatchFn =
  * Please see addMetadataToSummary() as well
  */
 function lastMessageFromMetadata(
-	// eslint-disable-next-line import/no-deprecated
 	metadata: IContainerRuntimeMetadata | undefined,
-	// eslint-disable-next-line import/no-deprecated
 ): ISummaryMetadataMessage | undefined {
 	return metadata?.documentSchema?.runtime?.explicitSchemaControl
 		? metadata?.lastMessage
@@ -720,8 +701,6 @@ export async function loadContainerRuntime(
 
 const defaultMaxConsecutiveReconnects = 7;
 
-const defaultTelemetrySignalSampleCount = 100;
-
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
@@ -733,9 +712,7 @@ export class ContainerRuntime
 	implements
 		IContainerRuntime,
 		IRuntime,
-		// eslint-disable-next-line import/no-deprecated
 		ISummarizerRuntime,
-		// eslint-disable-next-line import/no-deprecated
 		ISummarizerInternalsProvider,
 		IProvideFluidHandleContext,
 		IProvideLayerCompatDetails
@@ -759,7 +736,7 @@ export class ContainerRuntime
 		context: IContainerContext;
 		registryEntries: NamedFluidDataStoreRegistryEntries;
 		existing: boolean;
-		runtimeOptions?: IContainerRuntimeOptions; // May also include options from IContainerRuntimeOptionsInternal
+		runtimeOptions?: IContainerRuntimeOptionsInternal;
 		containerScope?: FluidObject;
 		containerRuntimeCtor?: typeof ContainerRuntime;
 		/**
@@ -774,7 +751,7 @@ export class ContainerRuntime
 			existing,
 			requestHandler,
 			provideEntryPoint,
-			runtimeOptions = {} satisfies IContainerRuntimeOptions,
+			runtimeOptions = {} satisfies IContainerRuntimeOptionsInternal,
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
 		} = params;
@@ -839,9 +816,9 @@ export class ContainerRuntime
 			tryFetchBlob<ReturnType<DuplicateBatchDetector["getRecentBatchInfoForSummary"]>>(
 				recentBatchInfoBlobName,
 			),
-			// eslint-disable-next-line import/no-deprecated
+
 			tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName),
-			// eslint-disable-next-line import/no-deprecated
+
 			tryFetchBlob<ISerializedElection>(electedSummarizerBlobName),
 			tryFetchBlob<[string, string][]>(aliasBlobName),
 			tryFetchBlob<SerializedIdCompressorWithNoSession>(idCompressorBlobName),
@@ -977,7 +954,6 @@ export class ContainerRuntime
 			compressionOptions.minimumBatchSizeInBytes !== Number.POSITIVE_INFINITY &&
 			compressionOptions.compressionAlgorithm === "lz4";
 
-		// eslint-disable-next-line import/no-deprecated
 		const documentSchemaController = new DocumentsSchemaController(
 			existing,
 			protocolSequenceNumber,
@@ -1115,11 +1091,9 @@ export class ContainerRuntime
 	 * this op roundtrips, compression will be On. Client can't send compressed ops until it's change in schema.
 	 */
 	public get sessionSchema(): {
-		// eslint-disable-next-line import/no-deprecated
 		[P in keyof IDocumentSchemaFeatures]?: IDocumentSchemaFeatures[P] extends boolean
 			? true
-			: // eslint-disable-next-line import/no-deprecated
-				IDocumentSchemaFeatures[P];
+			: IDocumentSchemaFeatures[P];
 	} {
 		return this.documentsSchemaController.sessionSchema.runtime;
 	}
@@ -1255,24 +1229,15 @@ export class ContainerRuntime
 	private emitDirtyDocumentEvent = true;
 	private readonly useDeltaManagerOpsProxy: boolean;
 	private readonly closeSummarizerDelayMs: number;
-	private readonly _signalTracking: IPerfSignalReport = {
-		totalSignalsSentInLatencyWindow: 0,
-		signalsLost: 0,
-		signalsOutOfOrder: 0,
-		signalsSentSinceLastLatencyMeasurement: 0,
-		broadcastSignalSequenceNumber: 0,
-		signalTimestamp: 0,
-		roundTripSignalSequenceNumber: undefined,
-		trackingSignalSequenceNumber: undefined,
-		minimumTrackingSignalSequenceNumber: undefined,
-	};
+
+	private readonly signalTelemetryManager = new SignalTelemetryManager();
 
 	/**
 	 * Summarizer is responsible for coordinating when to send generate and send summaries.
 	 * It is the main entry point for summary work.
 	 * It is created only by summarizing container (i.e. one with clientType === "summarizer")
 	 */
-	// eslint-disable-next-line import/no-deprecated
+
 	private readonly _summarizer?: Summarizer;
 	private readonly deltaScheduler: DeltaScheduler;
 	private readonly inboundBatchAggregator: InboundBatchAggregator;
@@ -1288,12 +1253,11 @@ export class ContainerRuntime
 	/**
 	 * The last message processed at the time of the last summary.
 	 */
-	// eslint-disable-next-line import/no-deprecated
+
 	private messageAtLastSummary: ISummaryMetadataMessage | undefined;
 
 	private readonly summariesDisabled: boolean;
 
-	// eslint-disable-next-line import/no-deprecated
 	private readonly createContainerMetadata: ICreateContainerMetadata;
 	/**
 	 * The summary number of the next summary that will be generated for this container. This is incremented every time
@@ -1353,22 +1317,22 @@ export class ContainerRuntime
 	protected constructor(
 		context: IContainerContext,
 		private readonly registry: IFluidDataStoreRegistry,
-		// eslint-disable-next-line import/no-deprecated
+
 		private readonly metadata: IContainerRuntimeMetadata | undefined,
-		// eslint-disable-next-line import/no-deprecated
+
 		electedSummarizerData: ISerializedElection | undefined,
 		chunks: [string, string[]][],
 		dataStoreAliasMap: [string, string][],
-		baseRuntimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
+		runtimeOptions: Readonly<Required<IContainerRuntimeOptionsInternal>>,
 		private readonly containerScope: FluidObject,
 		// Create a custom ITelemetryBaseLogger to output telemetry events.
 		public readonly baseLogger: ITelemetryBaseLogger,
 		existing: boolean,
-		// eslint-disable-next-line import/no-deprecated
+
 		blobManagerSnapshot: IBlobManagerLoadInfo,
 		private readonly _storage: IDocumentStorageService,
 		private readonly createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>,
-		// eslint-disable-next-line import/no-deprecated
+
 		private readonly documentsSchemaController: DocumentsSchemaController,
 		featureGatesForTelemetry: Record<string, boolean | number | undefined>,
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
@@ -1381,7 +1345,7 @@ export class ContainerRuntime
 			// the defaults
 			...DefaultSummaryConfiguration,
 			// the runtime configuration overrides
-			...baseRuntimeOptions.summaryOptions?.summaryConfigOverrides,
+			...runtimeOptions.summaryOptions?.summaryConfigOverrides,
 		},
 		recentBatchInfo?: [number, string][],
 	) {
@@ -1413,11 +1377,6 @@ export class ContainerRuntime
 		const maybeLoaderCompatDetails = context as FluidObject<ILayerCompatDetails>;
 		validateLoaderCompatibility(maybeLoaderCompatDetails.ILayerCompatDetails, this.disposeFn);
 
-		// Backfill in defaults for the internal runtimeOptions, since they may not be present on the provided runtimeOptions object
-		const runtimeOptions = {
-			flushMode: defaultFlushMode,
-			...baseRuntimeOptions,
-		};
 		this.mc = createChildMonitoringContext({
 			logger: this.baseLogger,
 			namespace: "ContainerRuntime",
@@ -1690,13 +1649,14 @@ export class ContainerRuntime
 		// what is the interface of passing signals, we need the
 		// downstream stores to wrap the signal.
 		parentContext.submitSignal = (type: string, content: unknown, targetClientId?: string) => {
+			// Future: Can the `content` argument type be IEnvelope?
+			// verifyNotClosed is called in FluidDataStoreContext, which is *the* expected caller.
 			const envelope1 = content as IEnvelope;
-			const envelope2 = this.createNewSignalEnvelope(
-				envelope1.address,
-				type,
-				envelope1.contents,
-			);
-			return this.submitEnvelopedSignal(envelope2, targetClientId);
+			const envelope2 = createNewSignalEnvelope(envelope1.address, type, envelope1.contents);
+			if (targetClientId === undefined) {
+				this.signalTelemetryManager.applyTrackingToBroadcastSignalEnvelope(envelope2);
+			}
+			this.submitSignalFn(envelope2, targetClientId);
 		};
 
 		let snapshot: ISnapshot | ISnapshotTree | undefined = getSummaryForDatastores(
@@ -1865,14 +1825,13 @@ export class ContainerRuntime
 			);
 
 			if (isSummarizerClient) {
-				// eslint-disable-next-line import/no-deprecated
 				this._summarizer = new Summarizer(
 					this /* ISummarizerRuntime */,
 					() => summaryConfiguration,
 					this /* ISummarizerInternalsProvider */,
 					this.handleContext,
 					summaryCollection,
-					// eslint-disable-next-line import/no-deprecated
+
 					async (runtime: IConnectableRuntime) =>
 						RunWhileConnectedCoordinator.create(
 							runtime,
@@ -1953,7 +1912,7 @@ export class ContainerRuntime
 			summaryFormatVersion: metadata?.summaryFormatVersion,
 			disableIsolatedChannels: metadata?.disableIsolatedChannels,
 			gcVersion: metadata?.gcFeature,
-			options: JSON.stringify(baseRuntimeOptions),
+			options: JSON.stringify(runtimeOptions),
 			idCompressorModeMetadata: metadata?.documentSchema?.runtime?.idCompressorMode,
 			idCompressorMode: this.sessionSchema.idCompressorMode,
 			sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
@@ -1982,7 +1941,6 @@ export class ContainerRuntime
 		this.skipSavedCompressorOps = pendingRuntimeState?.pendingIdCompressorState !== undefined;
 	}
 
-	// eslint-disable-next-line import/no-deprecated
 	public onSchemaChange(schema: IDocumentSchemaCurrent): void {
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "SchemaChangeAccept",
@@ -2306,7 +2264,6 @@ export class ContainerRuntime
 		// Is document schema explicit control on?
 		const explicitSchemaControl = documentSchema?.runtime.explicitSchemaControl;
 
-		// eslint-disable-next-line import/no-deprecated
 		const metadata: IContainerRuntimeMetadata = {
 			...this.createContainerMetadata,
 			// Increment the summary number for the next summary that will be generated.
@@ -2320,8 +2277,7 @@ export class ContainerRuntime
 			// last message's sequence number.
 			// See also lastMessageFromMetadata()
 			message: explicitSchemaControl
-				? // eslint-disable-next-line import/no-deprecated
-					({ sequenceNumber: -1 } as unknown as ISummaryMetadataMessage)
+				? ({ sequenceNumber: -1 } as unknown as ISummaryMetadataMessage)
 				: message,
 			lastMessage: explicitSchemaControl ? message : undefined,
 			documentSchema,
@@ -2603,14 +2559,7 @@ export class ContainerRuntime
 				0x3cd /* Connection is possible only if container exists in storage */,
 			);
 			if (changeOfState) {
-				this._signalTracking.signalsLost = 0;
-				this._signalTracking.signalsOutOfOrder = 0;
-				this._signalTracking.signalTimestamp = 0;
-				this._signalTracking.signalsSentSinceLastLatencyMeasurement = 0;
-				this._signalTracking.totalSignalsSentInLatencyWindow = 0;
-				this._signalTracking.roundTripSignalSequenceNumber = undefined;
-				this._signalTracking.trackingSignalSequenceNumber = undefined;
-				this._signalTracking.minimumTrackingSignalSequenceNumber = undefined;
+				this.signalTelemetryManager.resetTracking();
 			}
 		}
 
@@ -3014,7 +2963,6 @@ export class ContainerRuntime
 			}
 			case ContainerMessageType.DocumentSchemaChange: {
 				this.documentsSchemaController.processDocumentSchemaMessages(
-					// eslint-disable-next-line import/no-deprecated
 					contents as IDocumentSchemaChangeMessage[],
 					local,
 					message.sequenceNumber,
@@ -3062,107 +3010,6 @@ export class ContainerRuntime
 		}
 	}
 
-	/**
-	 * Emits the Signal event and update the perf signal data.
-	 */
-	private sendSignalTelemetryEvent(): void {
-		const duration = Date.now() - this._signalTracking.signalTimestamp;
-		this.mc.logger.sendPerformanceEvent({
-			eventName: "SignalLatency",
-			details: {
-				duration, // Roundtrip duration of the tracked signal in milliseconds.
-				sent: this._signalTracking.totalSignalsSentInLatencyWindow, // Signals sent since the last logged SignalLatency event.
-				lost: this._signalTracking.signalsLost, // Signals lost since the last logged SignalLatency event.
-				outOfOrder: this._signalTracking.signalsOutOfOrder, // Out of order signals since the last logged SignalLatency event.
-				reconnectCount: this.consecutiveReconnects, // Container reconnect count.
-			},
-		});
-		this._signalTracking.signalsLost = 0;
-		this._signalTracking.signalsOutOfOrder = 0;
-		this._signalTracking.signalTimestamp = 0;
-		this._signalTracking.totalSignalsSentInLatencyWindow = 0;
-	}
-
-	/**
-	 * Updates signal telemetry including emitting telemetry events.
-	 */
-	private processSignalForTelemetry(envelope: ISignalEnvelope): void {
-		const {
-			clientBroadcastSignalSequenceNumber,
-			contents: envelopeContents,
-			address: envelopeAddress,
-		} = envelope;
-		if (clientBroadcastSignalSequenceNumber === undefined) {
-			return;
-		}
-
-		if (
-			this._signalTracking.trackingSignalSequenceNumber === undefined ||
-			this._signalTracking.minimumTrackingSignalSequenceNumber === undefined
-		) {
-			return;
-		}
-
-		if (
-			clientBroadcastSignalSequenceNumber >= this._signalTracking.trackingSignalSequenceNumber
-		) {
-			// Calculate the number of signals lost and log the event.
-			const signalsLost =
-				clientBroadcastSignalSequenceNumber -
-				this._signalTracking.trackingSignalSequenceNumber;
-			if (signalsLost > 0) {
-				this._signalTracking.signalsLost += signalsLost;
-				this.mc.logger.sendErrorEvent({
-					eventName: "SignalLost",
-					details: {
-						signalsLost, // Number of lost signals detected.
-						expectedSequenceNumber: this._signalTracking.trackingSignalSequenceNumber, // The next expected signal sequence number.
-						clientBroadcastSignalSequenceNumber, // Actual signal sequence number received.
-					},
-				});
-			}
-			// Update the tracking signal sequence number to the next expected signal in the sequence.
-			this._signalTracking.trackingSignalSequenceNumber =
-				clientBroadcastSignalSequenceNumber + 1;
-		} else if (
-			// Check if this is a signal in range of interest.
-			clientBroadcastSignalSequenceNumber >=
-			this._signalTracking.minimumTrackingSignalSequenceNumber
-		) {
-			this._signalTracking.signalsOutOfOrder++;
-			const details: TelemetryEventPropertyTypeExt = {
-				expectedSequenceNumber: this._signalTracking.trackingSignalSequenceNumber, // The next expected signal sequence number.
-				clientBroadcastSignalSequenceNumber, // Sequence number of the out of order signal.
-			};
-			// Only log `contents.type` when address is for container to avoid
-			// chance that contents type is customer data.
-			if (envelopeAddress === undefined) {
-				details.contentsType = envelopeContents.type; // Type of signal that was received out of order.
-			}
-			this.mc.logger.sendTelemetryEvent({
-				eventName: "SignalOutOfOrder",
-				details,
-			});
-		}
-		if (
-			this._signalTracking.roundTripSignalSequenceNumber !== undefined &&
-			clientBroadcastSignalSequenceNumber >= this._signalTracking.roundTripSignalSequenceNumber
-		) {
-			if (
-				clientBroadcastSignalSequenceNumber ===
-				this._signalTracking.roundTripSignalSequenceNumber
-			) {
-				// Latency tracked signal has been received.
-				// We now log the roundtrip duration of the tracked signal.
-				// This telemetry event also logs metrics for broadcast signals
-				// sent, lost, and out of order.
-				// These metrics are reset after logging the telemetry event.
-				this.sendSignalTelemetryEvent();
-			}
-			this._signalTracking.roundTripSignalSequenceNumber = undefined;
-		}
-	}
-
 	public processSignal(message: ISignalMessage, local: boolean): void {
 		const envelope = message.content as ISignalEnvelope;
 		const transformed: IInboundSignalMessage = {
@@ -3174,7 +3021,11 @@ export class ContainerRuntime
 
 		// Only collect signal telemetry for broadcast messages sent by the current client.
 		if (message.clientId === this.clientId) {
-			this.processSignalForTelemetry(envelope);
+			this.signalTelemetryManager.trackReceivedSignal(
+				envelope,
+				this.mc.logger,
+				this.consecutiveReconnects,
+			);
 		}
 
 		if (envelope.address === undefined) {
@@ -3401,59 +3252,6 @@ export class ContainerRuntime
 		return true;
 	}
 
-	private createNewSignalEnvelope(
-		address: string | undefined,
-		type: string,
-		content: unknown,
-	): Omit<ISignalEnvelope, "broadcastSignalSequenceNumber"> {
-		const newEnvelope: Omit<ISignalEnvelope, "broadcastSignalSequenceNumber"> = {
-			address,
-			contents: { type, content },
-		};
-
-		return newEnvelope;
-	}
-
-	private submitEnvelopedSignal(envelope: ISignalEnvelope, targetClientId?: string): void {
-		const isBroadcastSignal = targetClientId === undefined;
-
-		if (isBroadcastSignal) {
-			const clientBroadcastSignalSequenceNumber = ++this._signalTracking
-				.broadcastSignalSequenceNumber;
-			// Stamp with the broadcast signal sequence number.
-			envelope.clientBroadcastSignalSequenceNumber = clientBroadcastSignalSequenceNumber;
-
-			this._signalTracking.signalsSentSinceLastLatencyMeasurement++;
-
-			if (
-				this._signalTracking.minimumTrackingSignalSequenceNumber === undefined ||
-				this._signalTracking.trackingSignalSequenceNumber === undefined
-			) {
-				// Signal monitoring window is undefined
-				// Initialize tracking to expect the next signal sent by the connected client.
-				this._signalTracking.minimumTrackingSignalSequenceNumber =
-					clientBroadcastSignalSequenceNumber;
-				this._signalTracking.trackingSignalSequenceNumber =
-					clientBroadcastSignalSequenceNumber;
-			}
-
-			// We should not track the round trip of a new signal in the case we are already tracking one.
-			if (
-				clientBroadcastSignalSequenceNumber % defaultTelemetrySignalSampleCount === 1 &&
-				this._signalTracking.roundTripSignalSequenceNumber === undefined
-			) {
-				this._signalTracking.signalTimestamp = Date.now();
-				this._signalTracking.roundTripSignalSequenceNumber =
-					clientBroadcastSignalSequenceNumber;
-				this._signalTracking.totalSignalsSentInLatencyWindow +=
-					this._signalTracking.signalsSentSinceLastLatencyMeasurement;
-				this._signalTracking.signalsSentSinceLastLatencyMeasurement = 0;
-			}
-		}
-
-		this.submitSignalFn(envelope, targetClientId);
-	}
-
 	/**
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
@@ -3468,8 +3266,11 @@ export class ContainerRuntime
 	 */
 	public submitSignal(type: string, content: unknown, targetClientId?: string): void {
 		this.verifyNotClosed();
-		const envelope = this.createNewSignalEnvelope(undefined /* address */, type, content);
-		return this.submitEnvelopedSignal(envelope, targetClientId);
+		const envelope = createNewSignalEnvelope(undefined /* address */, type, content);
+		if (targetClientId === undefined) {
+			this.signalTelemetryManager.applyTrackingToBroadcastSignalEnvelope(envelope);
+		}
+		this.submitSignalFn(envelope, targetClientId);
 	}
 
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
@@ -3718,13 +3519,12 @@ export class ContainerRuntime
 	 * Returns the type of the GC node. Currently, there are nodes that belong to the root ("/"), data stores or
 	 * blob manager.
 	 */
-	// eslint-disable-next-line import/no-deprecated
+
 	public getNodeType(nodePath: string): GCNodeType {
 		if (isBlobPath(nodePath)) {
-			// eslint-disable-next-line import/no-deprecated
 			return GCNodeType.Blob;
 		}
-		// eslint-disable-next-line import/no-deprecated
+
 		return this.channelCollection.getGCNodeType(nodePath) ?? GCNodeType.Other;
 	}
 
@@ -3740,13 +3540,12 @@ export class ContainerRuntime
 		}
 
 		switch (this.getNodeType(nodePath)) {
-			// eslint-disable-next-line import/no-deprecated
 			case GCNodeType.Blob: {
 				return [blobManagerBasePath];
 			}
-			// eslint-disable-next-line import/no-deprecated
+
 			case GCNodeType.DataStore:
-			// eslint-disable-next-line import/no-deprecated
+
 			case GCNodeType.SubDataStore: {
 				return this.channelCollection.getDataStorePackagePath(nodePath);
 			}
@@ -3798,7 +3597,6 @@ export class ContainerRuntime
 			fullGC?: boolean;
 		},
 		telemetryContext?: ITelemetryContext,
-		// eslint-disable-next-line import/no-deprecated
 	): Promise<IGCStats | undefined> {
 		return this.garbageCollector.collectGarbage(options, telemetryContext);
 	}
@@ -3841,7 +3639,7 @@ export class ContainerRuntime
 	 * op processing, updating SummarizerNode state tracking, and garbage collection.
 	 * @param options - options controlling how the summary is generated or submitted
 	 */
-	// eslint-disable-next-line import/no-deprecated
+
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
 		const {
 			cancellationToken,
@@ -4607,7 +4405,7 @@ export class ContainerRuntime
 	/**
 	 * Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck
 	 */
-	// eslint-disable-next-line import/no-deprecated
+
 	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void> {
 		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
 		// proposalHandle is always passed from RunningSummarizer.
@@ -4842,4 +4640,17 @@ export class ContainerRuntime
 	private get groupedBatchingEnabled(): boolean {
 		return this.sessionSchema.opGroupingEnabled === true;
 	}
+}
+
+export function createNewSignalEnvelope(
+	address: string | undefined,
+	type: string,
+	content: unknown,
+): Omit<ISignalEnvelope, "broadcastSignalSequenceNumber"> {
+	const newEnvelope: Omit<ISignalEnvelope, "broadcastSignalSequenceNumber"> = {
+		address,
+		contents: { type, content },
+	};
+
+	return newEnvelope;
 }

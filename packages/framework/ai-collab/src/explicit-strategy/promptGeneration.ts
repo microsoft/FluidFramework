@@ -8,7 +8,6 @@ import {
 	NodeKind,
 	type ImplicitFieldSchema,
 	type TreeFieldFromImplicitField,
-	getJsonSchema,
 	type JsonFieldSchema,
 	type JsonNodeSchema,
 	type JsonSchemaRef,
@@ -16,6 +15,7 @@ import {
 	getSimpleSchema,
 	Tree,
 	type TreeNode,
+	getJsonSchema,
 } from "@fluidframework/tree/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { createZodJsonValidator } from "typechat/zod";
@@ -94,7 +94,6 @@ export function createEditListHistoryPrompt(edits: EditLog): string {
 export function getEditingSystemPrompt(
 	idGenerator: IdGenerator,
 	treeNode: TreeNode,
-	log: EditLog,
 	appGuidance?: string,
 ): string {
 	const schema = Tree.schema(treeNode);
@@ -121,16 +120,43 @@ export function getEditingSystemPrompt(
 	When creating new objects for ${"InsertIntoArray" satisfies Capitalize<InsertIntoArray["type"]>} or ${"SetField" satisfies Capitalize<SetField["type"]>}, you may create an ID and put it in the ${objectIdKey} property if you want to refer to the object in a later edit.
 	\nHere are the schema definitions for an edit:\n${treeSchemaString}\n
 	The tree is a JSON object with the following schema: ${promptFriendlySchema}
-	${
-		log.length === 0
-			? ""
-			: `You have already performed the following edits:
-			${createEditListHistoryPrompt(log)}
-			This means that the current state of the tree reflects these changes.`
-	}
 	The current state of the tree is: ${decoratedTreeJson}.
 	You should create an array of one or more edits that accomplishes the goal, or an empty array if the task can't be accomplished.`;
 	return systemPrompt;
+}
+
+/**
+ * TODO
+ */
+export function getFunctionSystemPrompt(
+	idGenerator: IdGenerator,
+	treeNode: TreeNode,
+	appGuidance?: string,
+): string {
+	const schema = Tree.schema(treeNode);
+	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema));
+	const decoratedTreeJson = toDecoratedJson(idGenerator, treeNode);
+
+	const role = `You are a collaborative agent who edits a JSON tree to achieve a user-specified goal.${
+		appGuidance === undefined
+			? ""
+			: `\nThe application that owns the JSON tree has the following guidance about your role: "${appGuidance}".`
+	}`;
+
+	// const treeSchemaString = createZodJsonValidator(
+	// 	...generateGenericEditTypes(getSimpleSchema(schema), false),
+	// ).getSchemaText();
+
+	return `
+	${role}
+	The tree is a JSON object with the following schema: ${promptFriendlySchema}
+	The current state of the tree is: ${decoratedTreeJson}.
+	You should write a JavaScript function that mutates the tree object in order to accomplish the goal.
+	Note that any arrays in the object are to be mutated in a different way than normal JavaScript arrays.
+	Do not use any of the following methods: "copyWithin", "fill", "pop", "push", "reverse", "shift", "sort", "splice", or "unshift".
+	Instead, use the following methods to do array mutations:
+
+	`;
 }
 
 /**

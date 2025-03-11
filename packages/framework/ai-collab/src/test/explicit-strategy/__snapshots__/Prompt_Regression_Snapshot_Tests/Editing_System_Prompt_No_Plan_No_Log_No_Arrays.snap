@@ -1,5 +1,5 @@
 ---
-Generated on: 2025-03-06T18:36:03.374Z
+Generated on: 2025-03-11T16:33:03.094Z
 description: This is a snapshot file utilized for testing purposes.
 Test Suite Title: Prompt Generation Regression Tests
 Test Title: Editing System Prompt created with node containing no arrays has no regression
@@ -10,24 +10,21 @@ Edits are JSON objects that conform to the schema described below. You produce a
 	When creating new objects for InsertIntoArray or SetField, you may create an ID and put it in the __fluid_objectId property if you want to refer to the object in a later edit.
 	
 Here are the schema definitions for an edit:
-// A pointer to a specific object node in the tree, identified by the target object's Id.
-interface ObjectTarget {
-    target: string; // The id of the object (as specified by the object's __fluid_objectId property) that is being referenced
-}
+// Points to an object in the tree via its ID. ObjectPointer should always be preferred to point to an object, though PathPointer allows pointing to an array or primitive when needed.
+type ObjectPointer = string;
 
-// Sets a field on a specific ObjectTarget.
+// Set a field on an object to a specified value. Can be used set optional fields to undefined.
 interface SetField {
     type: "setField";
-    target: ObjectTarget; // A pointer to a specific object node in the tree, identified by the target object's Id.
-    field: "title" | "completed";
-    newValue: any; // Domain-specific content here
+    object: string; // The parent object
+    field: string; // The field name to set
+    value: any; // New content to set the field to. Must adhere to domain-specific schema.
 }
 
-// The next edit to apply to the tree, or null if the task is complete.
+// The set of edits to apply to the JSON tree.
 type EditArray = SetField[];
 
 
 	The tree is a JSON object with the following schema: interface Todo { title: string; completed: boolean; }
-	
 	The current state of the tree is: {"__fluid_objectId":"Todo1","title":"Task 1","completed":false}.
 	You should create an array of one or more edits that accomplishes the goal, or an empty array if the task can't be accomplished.

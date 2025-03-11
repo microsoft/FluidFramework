@@ -415,8 +415,6 @@ module.exports = {
 				// Packages that violate the API linting rules
 				// ae-missing-release-tags, ae-incompatible-release-tags
 				"^examples/data-objects/table-document/",
-				// AB#8147: ./test/EditLog export should be ./internal/... or tagged for support
-				"^experimental/dds/tree/",
 
 				// Packages with APIs that don't need strict API linting
 				"^build-tools/",

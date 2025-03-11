@@ -174,11 +174,11 @@ export function generateGenericEditTypes(
 				type: z.literal("moveArrayElement"),
 				op: z.literal("moveArrayElement"),
 				source: z
-					.union([pointer, arrayRange])
+					.union([objectPointer, arrayRange])
 					.describe("Source can be a single element or a range"),
 				destination: z
 					.object({
-						target: pointer.describe("The target array"),
+						target: pathPointer.describe("The target array"),
 						position: arrayPosition.describe("Where to place the element(s) in the array"),
 					})
 					.describe("Destination must be an array position"),

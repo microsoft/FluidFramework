@@ -42,6 +42,7 @@ export type {
 	LlmTreeEdit,
 	EventFlowDebugName,
 	EventFlowDebugNames,
+	View,
 } from "./explicit-strategy/index.js";
 
 export {

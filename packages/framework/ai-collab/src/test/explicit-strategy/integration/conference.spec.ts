@@ -167,6 +167,7 @@ describe.skip("Agent Editing Integration", () => {
 		});
 		const abortController = new AbortController();
 		await generateTreeEdits({
+			treeView: view,
 			clientOptions: { client: claudeClient /* options: { model: TEST_MODEL_NAME } */ },
 			treeNode: view.root,
 			prompt: {

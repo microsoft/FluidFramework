@@ -267,6 +267,7 @@ describe.skip("AI Job Listings App Benchmark", () => {
 		const startTime = Date.now();
 		try {
 			await aiCollab({
+				treeView: view,
 				openAI: {
 					client: new OpenAI({
 						apiKey: OPENAI_API_KEY,
@@ -384,6 +385,7 @@ describe.skip("AI Job Listings App Benchmark", () => {
 		const startTime = Date.now();
 		try {
 			await aiCollab({
+				treeView: view,
 				openAI: {
 					client: new OpenAI({
 						apiKey: OPENAI_API_KEY,
@@ -522,6 +524,7 @@ describe.skip("AI Job Listings App Benchmark", () => {
 		const startTime = Date.now();
 		try {
 			await aiCollab({
+				treeView: view,
 				openAI: {
 					client: new OpenAI({
 						apiKey: OPENAI_API_KEY,
@@ -631,6 +634,7 @@ describe.skip("AI Job Listings App Benchmark", () => {
 		const startTime = Date.now();
 		try {
 			await aiCollab({
+				treeView: view,
 				openAI: {
 					client: new OpenAI({
 						apiKey: OPENAI_API_KEY,
@@ -764,6 +768,7 @@ describe.skip("AI Job Listings App Benchmark", () => {
 		const startTime = Date.now();
 		try {
 			await aiCollab({
+				treeView: view,
 				openAI: {
 					client: new OpenAI({
 						apiKey: OPENAI_API_KEY,
@@ -862,6 +867,7 @@ describe.skip("AI Job Listings App Benchmark", () => {
 		const startTime = Date.now();
 		try {
 			await aiCollab({
+				treeView: view,
 				openAI: {
 					client: new OpenAI({
 						apiKey: OPENAI_API_KEY,

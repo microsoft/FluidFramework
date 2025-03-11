@@ -168,6 +168,7 @@ export function TaskCard(props: {
 
 			// 2. execute the ai collaboration
 			const response: AiCollabSuccessResponse | AiCollabErrorResponse = await aiCollab({
+				treeView: newBranchTree,
 				openAI: {
 					client: getOpenAiClient(),
 					options: { model: "gpt-4o" },

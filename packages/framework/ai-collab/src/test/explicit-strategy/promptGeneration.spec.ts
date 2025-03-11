@@ -3,29 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
-
 // eslint-disable-next-line import/no-internal-modules
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import {
-	getSimpleSchema,
 	SchemaFactory,
 	SharedTree,
-	Tree,
 	TreeViewConfiguration,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/internal";
 import { describe, it } from "mocha";
 
 // eslint-disable-next-line import/no-internal-modules
-import { applyAgentEdit } from "../../explicit-strategy/agentEditReducer.js";
-// eslint-disable-next-line import/no-internal-modules
 import { IdGenerator } from "../../explicit-strategy/idGenerator.js";
 import {
 	getEditingSystemPrompt,
-	type EditLog,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../explicit-strategy/promptGeneration.js";
 
@@ -94,7 +87,7 @@ describe("Prompt Generation Regression Tests", () => {
 
 		idGenerator.assignIds(view.root);
 
-		const actualPrompt = getEditingSystemPrompt(idGenerator, view.root, []);
+		const actualPrompt = getEditingSystemPrompt(idGenerator, view.root);
 
 		snapShotTester.expectToMatchSnapshot(
 			this,
@@ -119,7 +112,7 @@ describe("Prompt Generation Regression Tests", () => {
 
 		idGenerator.assignIds(view.root);
 
-		const actualPrompt = getEditingSystemPrompt(idGenerator, view.root, []);
+		const actualPrompt = getEditingSystemPrompt(idGenerator, view.root);
 
 		snapShotTester.expectToMatchSnapshot(
 			this,
@@ -138,63 +131,12 @@ describe("Prompt Generation Regression Tests", () => {
 
 		idGenerator.assignIds(view.root);
 
-		const actualPrompt = getEditingSystemPrompt(idGenerator, view.root, []);
+		const actualPrompt = getEditingSystemPrompt(idGenerator, view.root);
 
 		snapShotTester.expectToMatchSnapshot(
 			this,
 			actualPrompt,
 			"Editing_System_Prompt_With_Plan_No_Log",
-		);
-	});
-
-	it("Editing System Prompt with plan and populated edit log has no regression", function (this: Mocha.Context) {
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestTodoAppSchema }));
-		view.initialize(initialAppState);
-
-		idGenerator.assignIds(view.root);
-
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const todo1Id = idGenerator.getId(view.root.todos[0]!)!;
-
-		const editLog: EditLog = [
-			// We expect an error for this edit because the field is 'completed' not 'complete'
-			{
-				edit: {
-					type: "setField",
-					target: { target: todo1Id },
-					field: "complete",
-					newValue: false,
-				},
-			},
-			{
-				edit: {
-					type: "setField",
-					target: { target: todo1Id },
-					field: "completed",
-					newValue: false,
-				},
-			},
-		];
-		const simpleSchema = getSimpleSchema(Tree.schema(view.root));
-		for (const editLogEntry of editLog) {
-			try {
-				applyAgentEdit(editLogEntry.edit, idGenerator, simpleSchema.definitions);
-			} catch (error) {
-				assert(error instanceof Error);
-				editLogEntry.error = error.message;
-			}
-		}
-
-		const actualPrompt = getEditingSystemPrompt(idGenerator, view.root, editLog);
-
-		snapShotTester.expectToMatchSnapshot(
-			this,
-			actualPrompt,
-			"Editing_System_Prompt_With_Plan_With_Log",
 		);
 	});
 
@@ -212,7 +154,6 @@ describe("Prompt Generation Regression Tests", () => {
 			idGenerator,
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			view.root.todos[0]!,
-			[],
 		);
 
 		snapShotTester.expectToMatchSnapshot(

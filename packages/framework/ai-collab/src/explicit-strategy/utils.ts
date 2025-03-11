@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { ImplicitFieldSchema, TreeView } from "@fluidframework/tree";
+
 /**
  * Subset of Map interface.
  *
@@ -58,3 +60,9 @@ export function getOrCreate<K, V>(
 	}
 	return value;
 }
+
+/**
+ * TODO
+ * @alpha
+ */
+export type View = Pick<TreeView<ImplicitFieldSchema>, "root">;

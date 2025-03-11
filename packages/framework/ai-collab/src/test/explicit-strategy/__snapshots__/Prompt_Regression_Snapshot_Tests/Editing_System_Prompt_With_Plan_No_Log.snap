@@ -1,5 +1,5 @@
 ---
-Generated on: 2025-03-06T18:36:03.369Z
+Generated on: 2025-03-11T16:33:03.092Z
 description: This is a snapshot file utilized for testing purposes.
 Test Suite Title: Prompt Generation Regression Tests
 Test Title: Editing System Prompt with plan and empty edit log has no regression
@@ -10,65 +10,69 @@ Edits are JSON objects that conform to the schema described below. You produce a
 	When creating new objects for InsertIntoArray or SetField, you may create an ID and put it in the __fluid_objectId property if you want to refer to the object in a later edit.
 	
 Here are the schema definitions for an edit:
-// A pointer to a specific object node in the tree, identified by the target object's Id.
-interface ObjectTarget {
-    target: string; // The id of the object (as specified by the object's __fluid_objectId property) that is being referenced
-}
+// Points to an object in the tree via its ID. ObjectPointer should always be preferred to point to an object, though PathPointer allows pointing to an array or primitive when needed.
+type ObjectPointer = string;
 
-// Sets a field on a specific ObjectTarget.
+// Set a field on an object to a specified value. Can be used set optional fields to undefined.
 interface SetField {
     type: "setField";
-    target: ObjectTarget; // A pointer to a specific object node in the tree, identified by the target object's Id.
-    field: "title" | "description" | "completed";
-    newValue: any; // Domain-specific content here
+    object: string; // The parent object
+    field: string; // The field name to set
+    value: any; // New content to set the field to. Must adhere to domain-specific schema.
 }
 
-// A pointer to a location either just before or just after an object that is in an array
-interface ObjectPlace {
-    type: "objectPlace";
-    target: string; // The id (__fluid_objectId) of the object that the new/moved object should be placed relative to. This must be the id of an object that already existed in the tree content that was originally supplied.
-    place: "before" | "after"; // Where the new/moved object will be relative to the target object - either just before or just after
+// Points to an object in the tree via a path. The path starts either at an object (via ID) or the root of the tree (via null). When possible, paths should always be relative to an object ID.
+type PathPointer = [null | ObjectPointer, string | number, ...(string | number)[]];
+
+// Represents a location in the JSON object tree. Either a pointer to an object via ID or a path to an element (can be object, array, or primitive) via path.
+type Pointer = ObjectPointer | PathPointer;
+
+// Describes a location within an array.
+type ArrayPosition = number | "start" | "end" | {
+    after: Pointer; // Represents a location in the JSON object tree. Either a pointer to an object via ID or a path to an element (can be object, array, or primitive) via path.
+} | {
+    before: Pointer; // Represents a location in the JSON object tree. Either a pointer to an object via ID or a path to an element (can be object, array, or primitive) via path.
+};
+
+// Defines a range within an array.
+interface ArrayRange {
+    array: [null | ObjectPointer, string | number, ...(string | number)[]]; // The array containing the range
+    from: ArrayPosition; // Start of range (inclusive)
+    to: ArrayPosition; // End of range (inclusive)
 }
 
-// either the "start" or "end" of an array, as specified by a "parent" ObjectTarget and a "field" name under which the array is stored (useful for prepending or appending)
-interface ArrayPlace {
-    type: "arrayPlace";
-    parentId: string; // The id (__fluid_objectId) of the parent object of the array. This must be the id of an object that already existed in the tree content that was originally supplied.
-    field: string; // The key of the array to insert into
-    location: "start" | "end"; // Where to insert into the array - either the start or the end
-}
-
-// A range of objects in the same array specified by a "from" and "to" Place. The "to" and "from" objects MUST be in the same array.
-interface Range {
-    from: ObjectPlace; // A pointer to a location either just before or just after an object that is in an array
-    to: ObjectPlace; // A pointer to a location either just before or just after an object that is in an array
-}
-
-// Inserts a new object at a specific Place or ArrayPlace.
+// Add new element(s) to an array. Only one of `value` or `values` should be set.
 interface InsertIntoArray {
     type: "insertIntoArray";
-    content: any; // Domain-specific content here
-    destination: ArrayPlace | ObjectPlace;
+    array: [null | ObjectPointer, string | number, ...(string | number)[]]; // The parent array
+    position: ArrayPosition; // Where to add the element(s)
+    value: any; // New content to insert. The domain-specific schema must allow this type in the array.
+    values?: any[]; // Array of values to add
 }
 
-// Deletes an object or Range of objects from the tree.
+// Remove element(s) from an array. Supports removing a single element or a range. Only one of `element` or `range` should be set.
 interface RemoveFromArray {
     type: "removeFromArray";
-    source: ObjectTarget | Range;
+    op: "removeFromArray";
+    element?: Pointer; // The element to remove
+    range?: ArrayRange; // For removing a range
 }
 
-// Moves an object or Range of objects to a new Place or ArrayPlace.
+// Move a value from one location to another array
 interface MoveArrayElement {
     type: "moveArrayElement";
-    source: ObjectTarget | Range;
-    destination: ArrayPlace | ObjectPlace;
+    op: "moveArrayElement";
+    source: ObjectPointer | ArrayRange; // Source can be a single element or a range
+    destination: {
+        target: [null | ObjectPointer, string | number, ...(string | number)[]]; // The target array
+        position: ArrayPosition; // Where to place the element(s) in the array
+    }; // Destination must be an array position
 }
 
-// The next edit to apply to the tree, or null if the task is complete.
+// The set of edits to apply to the JSON tree.
 type EditArray = (InsertIntoArray | RemoveFromArray | MoveArrayElement | SetField)[];
 
 
 	The tree is a JSON object with the following schema: interface TestTodoAppSchema { title: string; description: string; todos: Todo[]; } interface Todo { title: string; completed: boolean; }
-	
 	The current state of the tree is: {"__fluid_objectId":"TestTodoAppSchema1","title":"My First Todo List","description":"This is a list of todos","todos":[{"__fluid_objectId":"Todo1","title":"Task 1","completed":false},{"__fluid_objectId":"Todo2","title":"Task 2","completed":true}]}.
 	You should create an array of one or more edits that accomplishes the goal, or an empty array if the task can't be accomplished.

@@ -10,12 +10,13 @@ import { type IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
 import type { RevisionTag, RevisionTagCodec } from "../rebase/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
-import type { ProtoNodes, Root } from "./delta.js";
+import type { Root } from "./delta.js";
 import { DetachedFieldIndex } from "./detachedFieldIndex.js";
 import type { ForestRootId } from "./detachedFieldIndexTypes.js";
 import type { PlaceIndex, Range } from "./pathTree.js";
 import { type DeltaVisitor, visitDelta } from "./visitDelta.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { ITreeCursorSynchronous } from "./cursor.js";
 
 export function makeDetachedFieldIndex(
 	prefix: string = "Temp",
@@ -120,7 +121,7 @@ export interface AnnouncedVisitor extends DeltaVisitor {
 	/**
 	 * A hook that is called after all nodes have been created.
 	 */
-	afterCreate(content: ProtoNodes, destination: FieldKey): void;
+	afterCreate(content: readonly ITreeCursorSynchronous[], destination: FieldKey): void;
 	beforeDestroy(field: FieldKey, count: number): void;
 	beforeAttach(source: FieldKey, count: number, destination: PlaceIndex): void;
 	afterAttach(source: FieldKey, destination: Range): void;
