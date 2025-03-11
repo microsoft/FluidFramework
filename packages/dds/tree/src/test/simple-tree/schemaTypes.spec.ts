@@ -562,7 +562,7 @@ describe("schemaTypes", () => {
 		// This could be due to the compiler limitation noted in https://github.com/microsoft/TypeScript/issues/52144#issuecomment-2686250788
 
 		/**
-		 * Tests where the generic code constructs TreeNodes for the generic its defining.
+		 * Tests where the generic code constructs TreeNodes for the generic it's defining.
 		 * This scenario seems to be particularly problematic as the {@link Input} types seems to perform especially poorly due
 		 * to them using non distributive conditional types, which hits the issue noted above.
 		 */
@@ -586,7 +586,7 @@ describe("schemaTypes", () => {
 			}
 
 			/**
-			 * Define a generic container which holds the provided `T` in an required field.
+			 * Define a generic container which holds the provided `T` in a required field.
 			 *
 			 * This should function identically to the implicit one, but it doesn't.
 			 */
