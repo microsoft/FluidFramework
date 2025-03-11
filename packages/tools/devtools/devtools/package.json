@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/devtools",
-	"version": "2.23.0",
+	"version": "2.23.1",
 	"description": "Fluid Framework developer tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -129,7 +129,7 @@
 		"@fluid-tools/build-cli": "^0.54.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.54.0",
-		"@fluidframework/devtools-previous": "npm:@fluidframework/devtools@2.22.0",
+		"@fluidframework/devtools-previous": "npm:@fluidframework/devtools@2.23.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/chai": "^4.0.0",

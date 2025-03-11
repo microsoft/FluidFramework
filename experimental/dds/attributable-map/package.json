@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/attributable-map",
-	"version": "2.23.0",
+	"version": "2.23.1",
 	"description": "Distributed map",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -101,7 +101,7 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
-		"@fluid-experimental/attributable-map-previous": "npm:@fluid-experimental/attributable-map@2.22.0",
+		"@fluid-experimental/attributable-map-previous": "npm:@fluid-experimental/attributable-map@2.23.0",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-private/test-dds-utils": "workspace:~",

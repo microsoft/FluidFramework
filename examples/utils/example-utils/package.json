@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/example-utils",
-	"version": "2.23.0",
+	"version": "2.23.1",
 	"private": true,
 	"description": "Shared utilities used by examples.",
 	"homepage": "https://fluidframework.com",

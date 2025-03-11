@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/bundle-size-tests",
-	"version": "2.23.0",
+	"version": "2.23.1",
 	"private": true,
 	"description": "A package for understanding the bundle size of Fluid Framework",
 	"homepage": "https://fluidframework.com",

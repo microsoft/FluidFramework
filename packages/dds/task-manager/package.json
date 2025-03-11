@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/task-manager",
-	"version": "2.23.0",
+	"version": "2.23.1",
 	"description": "Distributed data structure for queueing exclusive tasks",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -138,7 +138,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.54.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
-		"@fluidframework/task-manager-previous": "npm:@fluidframework/task-manager@2.22.0",
+		"@fluidframework/task-manager-previous": "npm:@fluidframework/task-manager@2.23.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/mocha": "^10.0.10",
