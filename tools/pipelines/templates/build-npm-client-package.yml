@@ -524,7 +524,7 @@ extends:
                     - output: pipelineArtifact
                       displayName: Publish Artifact - Test Files
                       targetPath: $(Build.ArtifactStagingDirectory)/test-files
-                      artifactName: test-files
+                      artifactName: test-files-$(System.JobAttempt)
                       publishLocation: pipeline
                       sbomEnabled: false
 
@@ -533,7 +533,7 @@ extends:
                       displayName: Publish Artifacts - bundle-analysis
                       condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true) )
                       targetPath: $(Build.ArtifactStagingDirectory)/bundleAnalysis
-                      artifactName: bundleAnalysis
+                      artifactName: bundleAnalysis-$(System.JobAttempt)
                       sbomEnabled: false
                       publishLocation: pipeline
 
@@ -541,7 +541,7 @@ extends:
                     - output: pipelineArtifact
                       displayName: Publish Artifact - _api-extractor-temp
                       targetPath: $(Build.ArtifactStagingDirectory)/_api-extractor-temp
-                      artifactName: _api-extractor-temp
+                      artifactName: _api-extractor-temp-$(System.JobAttempt)
                       sbomEnabled: false
                       publishLocation: pipeline
 
