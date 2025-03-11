@@ -6,18 +6,10 @@ parameters:
     type: string
     default: Small-eastus2
 
-resources:
-  pipelines:
-    # Listing this pipeline as a resource makes its artifacts automatically downloaded within a deployment job.
-    - pipeline: buildTools-resource
-      project: internal
-      source: Build - build-tools
-      branch: main
-
 stages:
 
 # This stage only runs for test-branch builds
-- stage: test-deployment-job-stage
+- stage: test_deployment_job_stage
   displayName: Test Deployment Job Stage
   variables:
   - group: ado-feeds

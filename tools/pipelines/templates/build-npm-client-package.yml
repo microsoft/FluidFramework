@@ -147,6 +147,12 @@ resources:
       type: git
       name: 1ESPipelineTemplates/M365GPT
       ref: refs/tags/release
+  pipelines:
+    # Listing this pipeline as a resource makes its artifacts automatically downloaded within a deployment job.
+    - pipeline: buildTools-resource
+      project: internal
+      source: Build - build-tools
+      branch: main
 
 extends:
   # The pipeline extends the 1ES pipeline template which will inject different SDL and compliance tasks.
@@ -179,6 +185,9 @@ extends:
     customBuildTags:
       - ES365AIMigrationTooling
     stages:
+
+      - template: /tools/pipelines/templates/test-deployment-stage.yml@self
+
       - ${{ if ne(convertToJson(parameters.checks), '[]') }}:
           - template: /tools/pipelines/templates/include-policy-check.yml@self
             parameters:
@@ -187,7 +196,6 @@ extends:
               # Install all dependencies, not just the root ones
               dependencyInstallCommand: pnpm install --frozen-lockfile
 
-      - template: /tools/pipelines/templates/test-deployment-stage.yml@self
 
       # Install / Build / Test Stage
       - stage: build
