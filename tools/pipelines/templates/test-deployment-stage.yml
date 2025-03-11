@@ -26,16 +26,20 @@ stages:
     templateContext:
       type: releaseJob
       isProduction: true
+      inputs:
+        - input: pipelineArtifact
+          pipeline: buildTools-resource  #  Optional, refers to a pipeline defined in pipeline resources. This value cannot be a variable.
+          artifactName: pack
     workspace:
       clean: all
     strategy:
       runOnce:
           deploy:
             steps:
-            - download: buildTools-resource
-              artifact: pack
-              patterns: '**'
-              displayName: 'Download Pipeline Artifact'
+            # - download: buildTools-resource
+            #   artifact: pack
+            #   patterns: '**'
+            #   displayName: 'Download Pipeline Artifact'
 
             - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
