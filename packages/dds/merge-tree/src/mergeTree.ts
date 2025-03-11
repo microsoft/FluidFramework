@@ -135,7 +135,7 @@ function nodeTotalLength(mergeTree: MergeTree, node: IMergeNode): number | undef
 	if (!node.isLeaf()) {
 		return node.cachedLength;
 	}
-	return mergeTree.localNetLength(node);
+	return mergeTree.leafLength(node);
 }
 
 const LRUSegmentComparer: IComparer<LRUSegment> = {
@@ -608,6 +608,10 @@ export class MergeTree {
 
 	public readonly attributionPolicy: AttributionPolicy | undefined;
 
+	public localPerspective: Perspective = new LocalDefaultPerspective(
+		this.collabWindow.clientId,
+	);
+
 	/**
 	 * Whether or not all blocks in the mergeTree currently have information about local partial lengths computed.
 	 * This information is only necessary on reconnect, and otherwise costly to bookkeep.
@@ -646,75 +650,17 @@ export class MergeTree {
 		return block;
 	}
 
-	public localNetLengthOld(
-		segment: ISegmentLeaf,
-		refSeq?: number,
-		localSeq?: number,
-	): number | undefined {
-		const removalInfo = toRemovalInfo(segment);
-		if (
-			removalInfo !== undefined &&
-			this.collabWindow.minSeqPerspective.hasOccurred(removalInfo.removes[0])
-		) {
-			// this segment's removal has already moved outside the collab window which means it is zamboni eligible
-			// this also means the segment could be completely absent from other client's in-memory merge trees,
-			// so we should not consider it when making decisions about conflict resolutions
-			return undefined;
-		}
-
-		if (localSeq === undefined) {
-			return removalInfo === undefined ? segment.cachedLength : 0;
-		}
-
-		assert(
-			refSeq !== undefined,
-			0x398 /* localSeq provided for local length without refSeq */,
-		);
-
-		assert(segment.insert.seq !== undefined, 0x399 /* segment with no seq in mergeTree */);
-
-		const { seq } = segment.insert;
-		const earliestRemove = removalInfo?.removes[0];
-		const latestRemove = removalInfo?.removes[removalInfo.removes.length - 1];
-		if (seq === UnassignedSequenceNumber) {
-			const timestamp: OperationTimestamp = {
-				clientId: this.collabWindow.clientId,
-				seq: UnassignedSequenceNumber,
-				localSeq,
-			};
-			assert(
-				segment.insert.localSeq !== undefined,
-				0x39a /* unacked segment with undefined localSeq */,
-			);
-			// Segment exists iff it was already inserted by the time of this perspective and not yet removed.
-			// TODO: Replace this with a perspective check that checks for having seen only those ops up to localSeq [refSeq is irrelevant since the segment was inserted locally]
-			// Also see if this can be unified with the below block.
-			return timestampUtils.gte(timestamp, segment.insert) &&
-				(earliestRemove === undefined || timestampUtils.lessThan(timestamp, earliestRemove))
-				? segment.cachedLength
-				: 0;
-		} else {
-			// TODO: Replace this with a perspective check that checks for having seen only those ops up to refSeq and localSeq.
-			return seq <= refSeq &&
-				(earliestRemove === undefined ||
-					timestampUtils.isLocal(earliestRemove) ||
-					earliestRemove.seq > refSeq) &&
-				(latestRemove?.localSeq === undefined || latestRemove.localSeq! > localSeq)
-				? segment.cachedLength
-				: 0;
-		}
-	}
-
 	/**
+	 * TODO: Update this comment
 	 * Compute the net length of this segment from a local perspective.
 	 * @param segment - Segment whose length to find
 	 * @param localSeq - localSeq at which to find the length of this segment. If not provided,
 	 * default is to consider the local client's current perspective. Only local sequence
 	 * numbers corresponding to un-acked operations give valid results.
 	 */
-	public localNetLengthNew(
+	public leafLength(
 		segment: ISegmentLeaf,
-		perspective: Perspective,
+		perspective: Perspective = this.localPerspective,
 	): number | undefined {
 		const removalInfo = toRemovalInfo(segment);
 		if (
@@ -728,19 +674,6 @@ export class MergeTree {
 		}
 
 		return perspective.isSegmentPresent(segment) ? segment.cachedLength : 0;
-	}
-
-	public localNetLength(
-		segment: ISegmentLeaf,
-		perspective: Perspective = new LocalDefaultPerspective(this.collabWindow.clientId),
-	): number | undefined {
-		const old = this.localNetLengthOld(segment, perspective.refSeq, perspective.localSeq);
-		const newLength = this.localNetLengthNew(segment, perspective);
-		if (old !== newLength) {
-			this.localNetLengthNew(segment, perspective);
-		}
-		assert(old === newLength, "uh oh" /* new and old localNetLengths do not match */);
-		return newLength;
 	}
 
 	public unlinkMarker(marker: Marker): void {
@@ -813,6 +746,7 @@ export class MergeTree {
 		this.collabWindow.minSeq = minSeq;
 		this.collabWindow.collaborating = true;
 		this.collabWindow.currentSeq = currentSeq;
+		this.localPerspective = new LocalDefaultPerspective(localClientId);
 		this.nodeUpdateLengthNewStructure(this.root, true);
 	}
 
@@ -853,7 +787,7 @@ export class MergeTree {
 			clientId === this.collabWindow.clientId
 				? localSeq !== undefined
 					? new LocalReconnectingPerspective(refSeq, clientId, localSeq)
-					: new LocalDefaultPerspective(clientId)
+					: this.localPerspective
 				: new PriorPerspective(refSeq, clientId);
 		let totalOffset = 0;
 		let parent = node.parent;
@@ -891,7 +825,7 @@ export class MergeTree {
 			clientId === this.collabWindow.clientId
 				? localSeq !== undefined
 					? new LocalReconnectingPerspective(refSeq, clientId, localSeq)
-					: new LocalDefaultPerspective(clientId)
+					: this.localPerspective
 				: new PriorPerspective(refSeq, clientId);
 		let segment: ISegmentLeaf | undefined;
 		let offset: number | undefined;
@@ -1139,12 +1073,57 @@ export class MergeTree {
 	}
 
 	private nodeLength(node: IMergeNode, perspective: Perspective): number | undefined {
+		const oldLen = this.nodeLengthOld(node, perspective);
+		const newLen = this.nodeLengthNew(node, perspective);
+		if (oldLen !== newLen && !(perspective instanceof RemoteObliteratePerspective)) {
+			this.nodeLengthOld(node, perspective);
+			this.nodeLengthNew(node, perspective);
+		}
+		assert(
+			oldLen === newLen || perspective instanceof RemoteObliteratePerspective,
+			"Expected equal lengths",
+		);
+		return newLen;
+	}
+
+	private nodeLengthNew(node: IMergeNode, perspective: Perspective): number | undefined {
+		if (node.isLeaf()) {
+			return this.leafLength(node, perspective);
+		}
+
+		const { refSeq, clientId, localSeq } = perspective;
+
+		const isLocalPerspective =
+			!this.collabWindow.collaborating || this.collabWindow.clientId === clientId;
+		if (
+			isLocalPerspective &&
+			(localSeq === undefined ||
+				(localSeq === this.collabWindow.localSeq && refSeq >= this.collabWindow.currentSeq))
+		) {
+			// All changes are visible. Small note on why we allow refSeq >= this.collabWindow.currentSeq rather than just equality:
+			// merge-tree eventing occurs before the collab window is updated to account for whatever op it is processing, and we want
+			// to support resolving positions from within the event handler which account for that op. e.g. undo-redo relies on this
+			// behavior with local references.
+			return node.cachedLength;
+		}
+
+		if (localSeq !== undefined) {
+			this.computeLocalPartials(refSeq);
+		}
+
+		const length = node.partialLengths!.getPartialLength(refSeq, clientId, localSeq);
+
+		PartialSequenceLengths.options.verifyExpected?.(this, node, refSeq, clientId, localSeq);
+		return length;
+	}
+
+	private nodeLengthOld(node: IMergeNode, perspective: Perspective): number | undefined {
 		const { refSeq, clientId, localSeq } = perspective;
 		// TODO: This should not be a OperationTimestamp. You should be using something like a perspective passed in here.
 		const timestamp: OperationTimestamp = { seq: refSeq, clientId, localSeq };
 		if (!this.collabWindow.collaborating || this.collabWindow.clientId === clientId) {
 			if (node.isLeaf()) {
-				return this.localNetLength(node, perspective);
+				return this.leafLength(node, perspective);
 			} else if (
 				localSeq === undefined ||
 				// All changes are visible. Small note on why we allow refSeq >= this.collabWindow.currentSeq rather than just equality:
@@ -1522,7 +1501,7 @@ export class MergeTree {
 		// Also, seems like you never converted annotate to also operate in terms of stamps.
 		const perspective =
 			stamp.seq === UnassignedSequenceNumber
-				? new LocalDefaultPerspective(stamp.clientId)
+				? this.localPerspective
 				: new PriorPerspective(refSeq, stamp.clientId);
 		this.ensureIntervalBoundary(pos, perspective);
 
@@ -2037,7 +2016,7 @@ export class MergeTree {
 
 		const perspective =
 			seq === UnassignedSequenceNumber || clientId === this.collabWindow.clientId
-				? new LocalDefaultPerspective(clientId)
+				? this.localPerspective
 				: new PriorPerspective(refSeq, clientId);
 		this.ensureIntervalBoundary(start, perspective);
 		this.ensureIntervalBoundary(end, perspective);
@@ -2115,7 +2094,7 @@ export class MergeTree {
 
 		const perspective =
 			stamp.seq === UnassignedSequenceNumber || stamp.clientId === this.collabWindow.clientId
-				? new LocalDefaultPerspective(stamp.clientId)
+				? this.localPerspective
 				: new PriorPerspective(refSeq, stamp.clientId);
 		this.ensureIntervalBoundary(startPos, perspective);
 		this.ensureIntervalBoundary(endPos, perspective);
@@ -2330,7 +2309,7 @@ export class MergeTree {
 		let _overwrite = false;
 		const perspective =
 			stamp.seq === UnassignedSequenceNumber || stamp.clientId === this.collabWindow.clientId
-				? new LocalDefaultPerspective(stamp.clientId)
+				? this.localPerspective
 				: new PriorPerspective(refSeq, stamp.clientId);
 		this.ensureIntervalBoundary(start, perspective);
 		this.ensureIntervalBoundary(end, perspective);
@@ -2783,7 +2762,7 @@ export class MergeTree {
 			}
 			if (node.isLeaf()) {
 				const segment = node;
-				if ((this.localNetLength(segment) ?? 0) > 0 && Marker.is(segment)) {
+				if ((this.leafLength(segment) ?? 0) > 0 && Marker.is(segment)) {
 					const markerId = segment.getId();
 					// Also in insertMarker but need for reload segs case
 					// can add option for this only from reload segs

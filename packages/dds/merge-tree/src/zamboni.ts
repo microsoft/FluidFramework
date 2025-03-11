@@ -179,7 +179,7 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 			prevSegment = undefined;
 		} else {
 			if (timestampUtils.lte(segment.insert, mergeTree.collabWindow.minSeqTime)) {
-				const segmentHasPositiveLength = (mergeTree.localNetLength(segment) ?? 0) > 0;
+				const segmentHasPositiveLength = (mergeTree.leafLength(segment) ?? 0) > 0;
 				const canAppend =
 					prevSegment?.canAppend(segment) &&
 					matchProperties(prevSegment.properties, segment.properties) &&

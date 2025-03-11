@@ -7,7 +7,7 @@ import { IIntegerRange } from "./client.js";
 import { UniversalSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
 import { ISegmentPrivate } from "./mergeTreeNodes.js";
-import { LocalDefaultPerspective, PriorPerspective } from "./perspective.js";
+import { PriorPerspective } from "./perspective.js";
 import { IMergeTreeTextHelper, TextSegment } from "./textSegment.js";
 
 interface ITextAccumulator {
@@ -28,7 +28,7 @@ export class MergeTreeTextHelper implements IMergeTreeTextHelper {
 	): string {
 		const perspective =
 			refSeq === UniversalSequenceNumber || clientId === this.mergeTree.collabWindow.clientId
-				? new LocalDefaultPerspective(clientId)
+				? this.mergeTree.localPerspective
 				: new PriorPerspective(refSeq, clientId);
 		const range = this.getValidRange(start, end, refSeq, clientId);
 
