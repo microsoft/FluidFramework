@@ -101,6 +101,9 @@ export function enumFromStrings<TScope extends string, const Members extends rea
         }, Record<string, never>, true, Record<string, never>, undefined>; }[Members[number]] : never>;
 };
 
+// @alpha
+export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>): T;
+
 // @public
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 

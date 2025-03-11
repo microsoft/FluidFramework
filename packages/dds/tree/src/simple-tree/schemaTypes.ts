@@ -16,6 +16,7 @@ import {
 	compareSets,
 	type requireTrue,
 	type areOnlyKeys,
+	getOrCreate,
 } from "../util/index.js";
 import type {
 	Unhydrated,
@@ -26,9 +27,12 @@ import type {
 	TreeNodeSchemaCore,
 	TreeNodeSchemaNonClass,
 } from "./core/index.js";
+import { inPrototypeChain } from "./core/index.js";
 import type { FieldKey } from "../core/index.js";
 import type { InsertableContent } from "./toMapTree.js";
 import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
+import { LeafNodeSchema } from "./leafNodeSchema.js";
+import { TreeNodeValid } from "./treeNodeValid.js";
 
 /**
  * Returns true if the given schema is a {@link TreeNodeSchemaClass}, or otherwise false if it is a {@link TreeNodeSchemaNonClass}.
@@ -69,6 +73,8 @@ export function isTreeNodeSchemaClass<
  * way to declare and manipulate unordered sets of types in TypeScript.
  *
  * Not intended for direct use outside of package.
+ * @privateRemarks
+ * Code reading data from this should use `normalizeAllowedTypes` to ensure consistent handling, caching, nice errors etc.
  * @system @public
  */
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
@@ -379,6 +385,8 @@ export function normalizeAllowedTypes(
 ): ReadonlySet<TreeNodeSchema> {
 	const normalized = new Set<TreeNodeSchema>();
 	if (isReadonlyArray(types)) {
+		// Types array must not be modified after it is normalized since that would result in the user of the normalized data having wrong (out of date) content.
+		Object.freeze(types);
 		for (const lazyType of types) {
 			normalized.add(evaluateLazySchema(lazyType));
 		}
@@ -469,14 +477,59 @@ function areMetadataEqual(
 	return a?.custom === b?.custom && a?.description === b?.description;
 }
 
-function evaluateLazySchema(value: LazyItem<TreeNodeSchema>): TreeNodeSchema {
-	const evaluatedSchema = isLazy(value) ? value() : value;
+const cachedLazyItem = new WeakMap<() => unknown, unknown>();
+
+/**
+ * Returns the schema referenced by the {@link LazyItem}.
+ * @remarks
+ * Caches results to handle {@link LazyItem}s which compute their resulting schema.
+ * @alpha
+ */
+export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>): T {
+	const evaluatedSchema = isLazy(value)
+		? (getOrCreate(cachedLazyItem, value, value) as T)
+		: value;
 	if (evaluatedSchema === undefined) {
 		throw new UsageError(
 			`Encountered an undefined schema. This could indicate that some referenced schema has not yet been instantiated.`,
 		);
 	}
+	markSchemaMostDerived(evaluatedSchema);
 	return evaluatedSchema;
+}
+
+/**
+ * Indicates that a schema is the "most derived" version which is allowed to be used, see {@link MostDerivedData}.
+ * Calling this helps with error messages about invalid schema usage (using more than one type from single {@link SchemaFactory} produced type hierarchy,
+ * and thus calling this for one than one subclass).
+ * @param oneTimeInitialize - If true this runs {@link TreeNodeValid.oneTimeInitialize} which does even more initialization and validation.
+ * `oneTimeInitialize` can't safely be run until all transitively referenced schema are defined, so which cases can safely use it are more limited.
+ * @remarks
+ * Helper for invoking {@link TreeNodeValid.markMostDerived} for any {@link TreeNodeSchema} if it needed.
+ */
+export function markSchemaMostDerived(
+	schema: TreeNodeSchema,
+	oneTimeInitialize = false,
+): void {
+	if (schema instanceof LeafNodeSchema) {
+		return;
+	}
+
+	if (!inPrototypeChain(schema, TreeNodeValid)) {
+		// Use JSON.stringify to quote and escape identifier string.
+		throw new UsageError(
+			`Schema for ${JSON.stringify(
+				schema.identifier,
+			)} does not extend a SchemaFactory generated class. This is invalid.`,
+		);
+	}
+
+	const schemaValid = schema as typeof TreeNodeValid & TreeNodeSchema;
+	if (oneTimeInitialize) {
+		schemaValid.oneTimeInitialize();
+	} else {
+		schemaValid.markMostDerived();
+	}
 }
 
 /**
@@ -508,6 +561,8 @@ function evaluateLazySchema(value: LazyItem<TreeNodeSchema>): TreeNodeSchema {
  * class A extends sf.array("example", [() => B]) {}
  * class B extends sf.array("Inner", sf.number) {}
  * ```
+ * @privateRemarks
+ * Code reading data from this should use `normalizeAllowedTypes` to ensure consistent handling, caching, nice errors etc.
  * @public
  */
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;

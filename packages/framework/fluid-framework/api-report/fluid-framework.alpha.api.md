@@ -145,6 +145,9 @@ export abstract class ErasedType<out Name = unknown> {
     protected abstract brand(dummy: never): Name;
 }
 
+// @alpha
+export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>): T;
+
 // @public
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
