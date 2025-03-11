@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { StaticCodeLoader } from "@fluid-example/example-utils";
+import type {
+	ICodeDetailsLoader,
+	IContainer,
+	IFluidCodeDetails,
+	IFluidModuleWithDetails,
+} from "@fluidframework/container-definitions/legacy";
 import {
 	createDetachedContainer,
 	loadExistingContainer,
@@ -17,12 +22,15 @@ import {
 } from "@fluidframework/local-driver/legacy";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
-import { DiceRollerContainerRuntimeFactory } from "../src/containerCode.js";
 import { createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { v4 as uuid } from "uuid";
+
+import {
+	DiceRollerContainerRuntimeFactory,
+	type IDiceRoller,
+} from "../src/container/index.js";
 import { DiceRollerView } from "../src/view.js";
-import type { IDiceRoller } from "../src/interface.js";
 
 const updateTabForId = (id: string): void => {
 	// Update the URL with the actual ID
@@ -34,7 +42,14 @@ const updateTabForId = (id: string): void => {
 
 const urlResolver = new LocalResolver();
 const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
-const codeLoader = new StaticCodeLoader(new DiceRollerContainerRuntimeFactory());
+const codeLoader: ICodeDetailsLoader = {
+	load: async (details: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
+		return {
+			module: { fluidExport: new DiceRollerContainerRuntimeFactory() },
+			details,
+		};
+	},
+};
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
@@ -42,16 +57,15 @@ const codeLoader = new StaticCodeLoader(new DiceRollerContainerRuntimeFactory())
  */
 async function createContainerAndRenderInElement(element: HTMLDivElement): Promise<void> {
 	let id: string;
-	let diceRoller: IDiceRoller;
+	let container: IContainer;
 
 	if (location.hash.length === 0) {
-		const container = await createDetachedContainer({
+		container = await createDetachedContainer({
 			codeDetails: { package: "1.0" },
 			urlResolver,
 			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
 			codeLoader,
 		});
-		diceRoller = (await container.getEntryPoint()) as IDiceRoller;
 		const documentId = uuid();
 		await container.attach(createLocalResolverCreateNewRequest(documentId));
 		if (container.resolvedUrl === undefined) {
@@ -61,15 +75,15 @@ async function createContainerAndRenderInElement(element: HTMLDivElement): Promi
 		id = container.resolvedUrl.id;
 	} else {
 		id = location.hash.substring(1);
-		const container = await loadExistingContainer({
+		container = await loadExistingContainer({
 			request: { url: `${window.location.origin}/${id}` },
 			urlResolver,
 			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
 			codeLoader,
 		});
-		diceRoller = (await container.getEntryPoint()) as IDiceRoller;
 	}
 
+	const diceRoller = (await container.getEntryPoint()) as IDiceRoller;
 	const render = (diceRoller: IDiceRoller) => {
 		const appRoot = createRoot(element);
 		appRoot.render(createElement(DiceRollerView, { diceRoller }));
@@ -79,32 +93,19 @@ async function createContainerAndRenderInElement(element: HTMLDivElement): Promi
 	updateTabForId(id);
 	// Render it
 	render(diceRoller);
-
-	// Setting "fluidStarted" is just for our test automation
-	// eslint-disable-next-line @typescript-eslint/dot-notation
-	window["fluidStarted"] = true;
 }
 
-/**
- * For local testing we have two div's that we are rendering into independently.
- */
-async function setup(): Promise<void> {
-	const leftElement = document.getElementById("sbs-left") as HTMLDivElement;
-	if (leftElement === null) {
-		throw new Error("sbs-left does not exist");
-	}
-	await createContainerAndRenderInElement(leftElement);
-	const rightElement = document.getElementById("sbs-right") as HTMLDivElement;
-	if (rightElement === null) {
-		throw new Error("sbs-right does not exist");
-	}
-	await createContainerAndRenderInElement(rightElement);
+const leftElement = document.getElementById("sbs-left") as HTMLDivElement;
+if (leftElement === null) {
+	throw new Error("sbs-left does not exist");
 }
+await createContainerAndRenderInElement(leftElement);
+const rightElement = document.getElementById("sbs-right") as HTMLDivElement;
+if (rightElement === null) {
+	throw new Error("sbs-right does not exist");
+}
+await createContainerAndRenderInElement(rightElement);
 
-setup().catch((e) => {
-	console.error(e);
-	console.log(
-		"%cThere were issues setting up and starting the in memory Fluid Server",
-		"font-size:30px",
-	);
-});
+// Setting "fluidStarted" is just for our test automation
+// eslint-disable-next-line @typescript-eslint/dot-notation
+window["fluidStarted"] = true;
