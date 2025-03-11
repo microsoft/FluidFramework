@@ -11,6 +11,7 @@ import { IFluidHandle, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
+	createContainerRuntimeFactoryWithDefaultDataStore,
 	createTestConfigProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
@@ -25,9 +26,9 @@ import {
  *
  * ADO:18003
  */
-describeCompat.skip(
+describeCompat(
 	"Summary handles work as expected",
-	"NoCompat",
+	"FullCompat",
 	(getTestObjectProvider, apis) => {
 		const configProvider = createTestConfigProvider();
 		const {
@@ -36,17 +37,20 @@ describeCompat.skip(
 			dds: { SharedDirectory },
 		} = apis;
 		const defaultFactory = new TestFluidObjectFactory([]);
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
-			defaultFactory,
-			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-			runtimeOptions: {
-				summaryOptions: {
-					summaryConfigOverrides: {
-						state: "disabled",
+		const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+			ContainerRuntimeFactoryWithDefaultDataStore,
+			{
+				defaultFactory,
+				registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+				runtimeOptions: {
+					summaryOptions: {
+						summaryConfigOverrides: {
+							state: "disabled",
+						},
 					},
 				},
-			},
-		});
+			}
+		);
 
 		let provider: ITestObjectProvider;
 
@@ -59,7 +63,8 @@ describeCompat.skip(
 
 		it("A data store id with special character `[` works properly with summary handles", async () => {
 			// Enable short ids for this test to create a data store with special chanracter.
-			configProvider.set("Fluid.Runtime.UseShortIds", true);
+			// configProvider.set("Fluid.Runtime.UseShortIds", true);
+			configProvider.set("Fluid.Container.summarizeProtocolTree2", true);
 			const container = await provider.createDetachedContainer(runtimeFactory, {
 				configProvider,
 			});
