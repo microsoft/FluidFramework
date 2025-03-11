@@ -20,7 +20,7 @@ export class RequestParser implements IRequest {
 		const pathParts: string[] = [];
 		const urlPath = url.slice(
 			0,
-			Math.max(0, queryStartIndex < 0 ? url.length : queryStartIndex),
+			queryStartIndex < 0 ? url.length : queryStartIndex,
 		);
 
 		for (const part of urlPath.split("/")) {
