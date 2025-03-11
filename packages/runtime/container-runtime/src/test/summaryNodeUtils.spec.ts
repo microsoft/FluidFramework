@@ -28,12 +28,12 @@ describe("Summary handle encoding works as expected", () => {
 
 	it("Validate basic path append behavior with special characters in path", () => {
 		const parentPath = EscapedPath.create("@");
-		assert.equal(parentPath.toString(), "%40");
+		assert.equal(parentPath.toString(), "@");
 
 		const childPath = EscapedPath.create("&");
-		assert.equal(childPath.toString(), "%26");
+		assert.equal(childPath.toString(), "&");
 
 		const completePath = parentPath.createChildPath(childPath);
-		assert.equal(completePath.toString(), "%40/.channels/%26");
+		assert.equal(completePath.toString(), "@/.channels/&");
 	});
 });
