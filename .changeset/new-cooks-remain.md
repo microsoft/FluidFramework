@@ -6,7 +6,7 @@
 "section": tree
 ---
 
-Rules regarding how and when lazy references Schema are resolved have been clarified
+Rules regarding how and when lazy schema references are resolved have been clarified
 
 A lazy schema reference is a [LazyItem](https://fluidframework.com/docs/api/fluid-framework/lazyitem-typealias) referencing a [TreeNodeSchema](https://fluidframework.com/docs/api/fluid-framework/treenodeschema-typealias).
 They typically look like `() => MySchema` and are used when a forward reference from one schema to another is required (including but not limited to recursive and co-recursive schema).
