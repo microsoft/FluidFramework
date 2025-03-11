@@ -69,7 +69,6 @@ export function utf8ByteLength(str: string): number {
 	let s = str.length;
 	for (let i = str.length - 1; i >= 0; i--) {
 		const code = str.codePointAt(i);
-		// Add null check to handle potential undefined
 		if (code !== undefined) {
 			if (code > 0x7f && code <= 0x7ff) {
 				s++;
