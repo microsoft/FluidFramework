@@ -588,9 +588,7 @@ export interface IContainerRuntimeOptionsInternal extends IContainerRuntimeOptio
 
 /**
  * Error responses when requesting a deleted object will have this header set to true
- * @legacy
- * @alpha
- * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 export const DeletedResponseHeaderKey = "wasDeleted";
 /**
@@ -2728,7 +2726,22 @@ export class ContainerRuntime
 		return this._loadIdCompressor;
 	}
 
+	private lastStagingSetConnectionState: { connected: boolean; clientId?: string } | undefined;
 	public setConnectionState(connected: boolean, clientId?: string): void {
+		// hack: defer connecting if we are in staging mode. This prevents a bug where
+		// we reconnect with outstanding ops that were generated before we entered staging mode
+		// and the ops end up ahead of the ops we created within staging mode in the outbox.
+		// ideally we could solve this in a way that still lets the old ops be resubmitted.
+		if (this.inStagingMode) {
+			if (connected) {
+				this.lastStagingSetConnectionState = { connected, clientId };
+				return;
+			}
+			this.lastStagingSetConnectionState = undefined;
+			if (connected === this.connected) {
+				return;
+			}
+		}
 		// Validate we have consistent state
 		const currentClientId = this._audience.getSelf()?.clientId;
 		assert(clientId === currentClientId, 0x977 /* input clientId does not match Audience */);
@@ -3466,22 +3479,51 @@ export class ContainerRuntime
 		return result;
 	}
 
+	private stageControls: StageControls | undefined;
+	public get inStagingMode(): boolean {
+		return this.stageControls !== undefined;
+	}
+
 	enterStagingMode = (): StageControls => {
+		if (this.stageControls !== undefined) {
+			throw new Error("already in staging mode");
+		}
+		//* Is this flush still right?
+		this.outbox.flush();
 		this.outbox.doNotSend = true;
-		const branchInfo = {
-			discardChanges: () => {
-				this.outbox.flush();
-				//* TODO: Tell PSM to discard pending states
-				this.outbox.doNotSend = false;
-			},
-			commitChanges: () => {
-				this.outbox.flush();
-				//* TODO: Rebase (like resubmit) pending states
-				this.outbox.doNotSend = false;
-			},
+		this.ensureNoDataModelChangesCalls++;
+
+		const exitStagingMode = (act: () => void) => (): void => {
+			this.ensureNoDataModelChangesCalls--;
+			this.stageControls = undefined;
+
+			this.outbox.flush();
+
+			act();
+
+			this.outbox.doNotSend = false;
+
+			if (this.lastStagingSetConnectionState !== undefined) {
+				this.setConnectionState(
+					this.lastStagingSetConnectionState.connected,
+					this.lastStagingSetConnectionState.clientId,
+				);
+				this.lastStagingSetConnectionState = undefined;
+			}
 		};
 
-		return branchInfo;
+		const stageControls = {
+			discardChanges: exitStagingMode(() => {
+				//* TODO: Tell PSM to discard pending states
+			}),
+			commitChanges: exitStagingMode(() => {
+				this.stageControls = undefined;
+
+				//* TODO: Rebase (like resubmit) pending states
+			}),
+		};
+
+		return (this.stageControls = stageControls);
 	};
 
 	/**

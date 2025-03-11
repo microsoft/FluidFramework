@@ -600,7 +600,7 @@ export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		return treeOrView.checkout as unknown as BranchableTree;
 	}
 	const kernel = (treeOrView as ITree as ITreePrivate).kernel;
-	assert(kernel instanceof SharedTreeKernel, "Invalid ITree");
+	assert(kernel instanceof SharedTreeKernel, 0xb56 /* Invalid ITree */);
 	// This cast is safe so long as TreeCheckout supports all the operations on the branch interface.
 	return kernel.checkout as unknown as BranchableTree;
 }

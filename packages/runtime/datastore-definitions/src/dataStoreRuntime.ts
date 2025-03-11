@@ -76,6 +76,8 @@ export interface IFluidDataStoreRuntime
 	 */
 	readonly attachState: AttachState;
 
+	get inStagingMode(): boolean;
+
 	readonly idCompressor: IIdCompressor | undefined;
 
 	/**
