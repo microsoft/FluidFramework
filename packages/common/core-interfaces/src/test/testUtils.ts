@@ -3,10 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import type { InternalUtilityTypes } from "../../core-interfaces/index.js";
+import type { InternalUtilityTypes } from "../exposedInternalUtilityTypes.js";
 
 /**
  * Use to compile-time assert types of two variables are identical.
+ *
+ * @remarks Note that this has not been found to be reliable when one of the
+ * types (especially first type) is `{}` (which is a special type and may be
+ * produced during type manipulation intentionally or not).
  */
 export function assertIdenticalTypes<T, U>(
 	_actual: T & InternalUtilityTypes.IfSameType<T, U>,
