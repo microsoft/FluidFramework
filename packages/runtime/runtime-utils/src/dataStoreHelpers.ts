@@ -21,26 +21,35 @@ interface IResponseException extends Error {
 }
 
 /**
+ * Type guard for determining if an error is an IResponseException
+ * @internal
+ */
+function isResponseException(err: unknown): err is IResponseException {
+    return (
+        err !== null &&
+        typeof err === "object" &&
+        "errorFromRequestFluidObject" in err &&
+        (err as { errorFromRequestFluidObject: unknown }).errorFromRequestFluidObject === true
+    );
+}
+
+/**
  * Converts an error object into an {@link @fluidframework/core-interfaces#IResponse}
  * @internal
  */
 export function exceptionToResponse(err: unknown): IResponse {
 	const status = 500;
 	if (
-		err !== null &&
-		typeof err === "object" &&
-		"errorFromRequestFluidObject" in err &&
-		err.errorFromRequestFluidObject === true
+		isResponseException(err)
 	) {
-		const responseErr = err as IResponseException;
 		return {
 			mimeType: "text/plain",
-			status: responseErr.code,
-			value: responseErr.message,
+			status: err.code,
+			value: err.message,
 			get stack() {
-				return responseErr.stack;
+				return err.stack;
 			},
-			headers: responseErr.underlyingResponseHeaders,
+			headers: err.underlyingResponseHeaders,
 		};
 	}
 
