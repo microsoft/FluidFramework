@@ -33,6 +33,11 @@ stages:
       runOnce:
           deploy:
             steps:
+            - download: buildTools-resource
+              artifact: pack
+              patterns: '**'
+              displayName: 'Download Pipeline Artifact'
+
             - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
             - task: Bash@3
