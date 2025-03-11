@@ -109,7 +109,7 @@ export const create404Response = (request: IRequest): IResponse =>
  * @param value - Error message or description
  * @param request - The request that resulted in this error
  * @param headers - Optional headers to include in the response
- * @returns An IResponse object representing the error
+ * @returns An {@link @fluidframework/core-interfaces#IResponse } object representing the error
  * @internal
  */
 export function createResponseError(
