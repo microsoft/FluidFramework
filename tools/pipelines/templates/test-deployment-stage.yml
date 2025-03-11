@@ -9,7 +9,7 @@ parameters:
 stages:
 
 # This stage only runs for test-branch builds
-- stage: test-deployment-job-stage
+- stage: test_deployment_job_stage
   displayName: Test Deployment Job Stage
   variables:
   - group: ado-feeds
