@@ -77,7 +77,7 @@ export async function runWithRetry<T>(
 						`Error running ${callName}: retryCount ${retryCount}`,
 						telemetryProperties,
 						error,
-					)
+					);
 				}
 				if (shouldIgnoreError !== undefined && shouldIgnoreError(error) === true) {
 					Lumberjack.info(`Should ignore error for ${callName}`, telemetryProperties);
@@ -198,7 +198,7 @@ export async function requestWithRetry<T>(
 						`Error running ${callName}: retryCount ${retryCount}`,
 						telemetryProperties,
 						error,
-					)
+					);
 				}
 				if (shouldRetry !== undefined && shouldRetry(error) === false) {
 					Lumberjack.error(
