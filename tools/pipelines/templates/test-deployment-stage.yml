@@ -30,6 +30,8 @@ stages:
         - input: pipelineArtifact
           pipeline: buildTools-resource  #  Optional, refers to a pipeline defined in pipeline resources. This value cannot be a variable.
           artifactName: pack
+          targetPath: $(Pipeline.Workspace)/buildTools-zip
+
     workspace:
       clean: all
     strategy:
@@ -58,20 +60,9 @@ stages:
               displayName: Install Fluid Build Tools from Artifact Tarball
               inputs:
                 targetType: 'inline'
-                workingDirectory: '$(Pipeline.Workspace)/tarballs'
+                workingDirectory: ' $(Pipeline.Workspace)//buildTools-zip/tarballs'
                 script: |
                   echo "Listing files in directory: $(pwd)"
                   ls -la
                   echo "attempting tarball install"
                   npm i -g ./*.tgz
-
-
-    # - template: /tools/pipelines/templates/include-publish-npm-package-deployment.yml@self
-    #   parameters:
-    #     feedUrl: $(ado-feeds-test) # Comes from the ado-feeds variable group
-    #     feedKind: internal-test
-    #     environment: test-package-build-feed
-    #     pool: ${{ parameters.pool }}
-    #     buildDirectory: ${{ parameters.buildDirectory }}
-    #     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
-    #     pnpmStorePath: ${{ parameters.pnpmStorePath }}
