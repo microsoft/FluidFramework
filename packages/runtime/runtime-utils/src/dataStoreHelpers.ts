@@ -21,7 +21,7 @@ interface IResponseException extends Error {
 }
 
 /**
- * Converts an error object into an IResponse
+ * Converts an error object into an {@link @fluidframework/core-interfaces#IResponse}
  * @internal
  */
 export function exceptionToResponse(err: unknown): IResponse {
