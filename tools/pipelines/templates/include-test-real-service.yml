@@ -378,9 +378,9 @@ stages:
           displayName: '[test] ${{ parameters.testCommand }} ${{ variant.flags }}'
           continueOnError: ${{ parameters.continueOnError }}
           env:
-            if eq(contains(${{ parameters.stageId }}, 'odspdf'), true):
+            ${{ if eq(endsWith(parameters.stageId, 'odspdf'), true) }}:
               login__odspdf__test__tenants: $(tenantCreds)
-            else:
+            ${{ if eq(endsWith(parameters.stageId, 'odsp'), true) }}:
               login__odsp__test__tenants: $(tenantCreds)
           inputs:
             command: 'custom'
