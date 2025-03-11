@@ -12,13 +12,13 @@ import {
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	type FieldUpPath,
 	type Revertible,
 	rootFieldKey,
 	RevertibleStatus,
 	CommitKind,
 	EmptyKey,
 	type RevertibleFactory,
+	type NormalizedFieldUpPath,
 } from "../../core/index.js";
 import { FieldKinds, cursorForJsonableTreeField } from "../../feature-libraries/index.js";
 import {
@@ -56,7 +56,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
 
-const rootField: FieldUpPath = {
+const rootField: NormalizedFieldUpPath = {
 	parent: undefined,
 	field: rootFieldKey,
 };

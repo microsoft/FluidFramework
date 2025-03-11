@@ -11,6 +11,7 @@ import {
 	type DeltaRoot,
 	type FieldKey,
 	type FieldKindIdentifier,
+	type NormalizedUpPath,
 	type RevisionTag,
 	type TaggedChange,
 	type UpPath,
@@ -310,8 +311,17 @@ describe("ModularChangeFamily integration", () => {
 			const fieldAPath = { parent: undefined, field: fieldA };
 
 			// Note that these are the paths before any edits have happened.
-			const node1Path = { parent: undefined, parentField: fieldA, parentIndex: 1 };
-			const node2Path = { parent: node1Path, parentField: fieldB, parentIndex: 1 };
+			const node1Path: NormalizedUpPath = {
+				detachedNodeId: undefined,
+				parent: undefined,
+				parentField: fieldA,
+				parentIndex: 1,
+			};
+			const node2Path: NormalizedUpPath = {
+				parent: node1Path,
+				parentField: fieldB,
+				parentIndex: 1,
+			};
 
 			editor.enterTransaction();
 
@@ -809,8 +819,17 @@ describe("ModularChangeFamily integration", () => {
 
 			// Moves node1 to an earlier position in the field
 			moveWithin(editor, fieldAPath, 1, 1, 0);
-			const node1Path = { parent: undefined, parentField: fieldA, parentIndex: 0 };
-			const node2Path = { parent: node1Path, parentField: fieldB, parentIndex: 0 };
+			const node1Path: NormalizedUpPath = {
+				detachedNodeId: undefined,
+				parent: undefined,
+				parentField: fieldA,
+				parentIndex: 0,
+			};
+			const node2Path: NormalizedUpPath = {
+				parent: node1Path,
+				parentField: fieldB,
+				parentIndex: 0,
+			};
 
 			// Moves node2, which is a child of node1 to an earlier position in its field
 			moveWithin(

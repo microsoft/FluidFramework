@@ -49,6 +49,9 @@ export {
 	topDownPath,
 	getDepth,
 	type UpPath,
+	type NormalizedUpPath,
+	type INormalizedUpPath,
+	type NormalizedFieldUpPath,
 	type FieldUpPath,
 	type Range,
 	type RangeUpPath,
@@ -57,7 +60,7 @@ export {
 	type NodeIndex,
 	compareUpPaths,
 	compareFieldUpPaths,
-	isDetachedUpPath,
+	isDetachedUpPathRoot as isDetachedUpPath,
 	getDetachedFieldContainingPath,
 	type UpPathDefault,
 } from "./pathTree.js";

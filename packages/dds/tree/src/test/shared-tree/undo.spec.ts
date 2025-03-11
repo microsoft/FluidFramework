@@ -4,10 +4,10 @@
  */
 
 import {
-	type FieldUpPath,
+	type NormalizedFieldUpPath,
+	type NormalizedUpPath,
 	type Revertible,
 	RevertibleStatus,
-	type UpPath,
 	rootFieldKey,
 } from "../../core/index.js";
 import { singleJsonCursor } from "../json/index.js";
@@ -36,13 +36,14 @@ import {
 import { initialize } from "../../shared-tree/schematizeTree.js";
 import { TreeFactory } from "../../treeFactory.js";
 
-const rootPath: UpPath = {
+const rootPath: NormalizedUpPath = {
+	detachedNodeId: undefined,
 	parent: undefined,
 	parentField: rootFieldKey,
 	parentIndex: 0,
 };
 
-const rootField: FieldUpPath = {
+const rootField: NormalizedFieldUpPath = {
 	parent: undefined,
 	field: rootFieldKey,
 };
@@ -92,7 +93,7 @@ const testCases: {
 	{
 		name: "nested removes",
 		edit: (actedOn) => {
-			const listNode: UpPath = {
+			const listNode: NormalizedUpPath = {
 				parent: rootPath,
 				parentField: brand("foo"),
 				parentIndex: 0,
@@ -113,7 +114,7 @@ const testCases: {
 	{
 		name: "move out under remove",
 		edit: (actedOn) => {
-			const listNode: UpPath = {
+			const listNode: NormalizedUpPath = {
 				parent: rootPath,
 				parentField: brand("foo"),
 				parentIndex: 0,

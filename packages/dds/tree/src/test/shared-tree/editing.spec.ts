@@ -9,11 +9,11 @@ import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
 	EmptyKey,
-	type FieldUpPath,
 	TreeNavigationResult,
-	type UpPath,
 	moveToDetachedField,
 	rootFieldKey,
+	type NormalizedFieldUpPath,
+	type NormalizedUpPath,
 } from "../../core/index.js";
 import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
 import type { ITreeCheckout, TreeStoredContent } from "../../shared-tree/index.js";
@@ -31,21 +31,23 @@ import { insert, makeTreeFromJsonSequence, remove } from "../sequenceRootUtils.j
 import { SchemaFactory, stringSchema, toStoredSchema } from "../../simple-tree/index.js";
 import { JsonUnion, singleJsonCursor } from "../json/index.js";
 
-const rootField: FieldUpPath = {
+const rootField: NormalizedFieldUpPath = {
 	parent: undefined,
 	field: rootFieldKey,
 };
 
-const rootNode: UpPath = {
+const rootNode: NormalizedUpPath = {
 	parent: undefined,
 	parentField: rootFieldKey,
 	parentIndex: 0,
+	detachedNodeId: undefined,
 };
 
-const rootNode2: UpPath = {
+const rootNode2: NormalizedUpPath = {
 	parent: undefined,
 	parentField: rootFieldKey,
 	parentIndex: 1,
+	detachedNodeId: undefined,
 };
 
 const emptyJsonContent: TreeStoredContent = {
@@ -143,13 +145,13 @@ describe("Editing", () => {
 
 			const tree2 = tree1.branch();
 
-			const fooArrayPath: UpPath = {
+			const fooArrayPath: NormalizedUpPath = {
 				parent: rootNode,
 				parentField: brand("foo"),
 				parentIndex: 0,
 			};
 
-			const barArrayPath: UpPath = {
+			const barArrayPath: NormalizedUpPath = {
 				parent: rootNode,
 				parentField: brand("bar"),
 				parentIndex: 0,
@@ -189,13 +191,13 @@ describe("Editing", () => {
 
 			const tree2 = tree1.branch();
 
-			const fooArrayPath: UpPath = {
+			const fooArrayPath: NormalizedUpPath = {
 				parent: rootNode,
 				parentField: brand("foo"),
 				parentIndex: 0,
 			};
 
-			const barArrayPath: UpPath = {
+			const barArrayPath: NormalizedUpPath = {
 				parent: rootNode,
 				parentField: brand("bar"),
 				parentIndex: 0,
@@ -329,12 +331,16 @@ describe("Editing", () => {
 
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const { parent, parentField, parentIndex } = tree2.locate(anchor)!;
-			const expectedPath: UpPath = {
+			const expectedPath: NormalizedUpPath = {
+				detachedNodeId: undefined,
 				parent: undefined,
 				parentField: rootFieldKey,
 				parentIndex: 3,
 			};
-			assert.deepEqual({ parent, parentField, parentIndex }, expectedPath);
+			assert.deepEqual(
+				{ detachedNodeId: undefined, parent, parentField, parentIndex },
+				expectedPath,
+			);
 		});
 
 		it("can rebase a local remove", () => {
@@ -351,7 +357,11 @@ describe("Editing", () => {
 		});
 
 		it("can edit a concurrently removed tree", () => {
-			const fooList: UpPath = { parent: rootNode, parentField: brand("foo"), parentIndex: 0 };
+			const fooList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("foo"),
+				parentIndex: 0,
+			};
 			const tree1 = makeTreeFromJson({ foo: ["A", "B", "C"] });
 			const tree2 = tree1.branch();
 
@@ -359,7 +369,10 @@ describe("Editing", () => {
 			remove(tree1, 0, 1);
 			const removal = undoStack.pop();
 
-			const fooListPath: FieldUpPath = { parent: fooList, field: brand("") };
+			const fooListPath: NormalizedFieldUpPath = {
+				parent: fooList,
+				field: brand(""),
+			};
 			const listEditor = tree2.editor.sequenceField(fooListPath);
 			moveWithin(tree2.editor, fooListPath, 2, 1, 1);
 			listEditor.insert(
@@ -549,8 +562,7 @@ describe("Editing", () => {
 			const tree1 = makeTreeFromJsonSequence(["A", { foo: "B" }]);
 			const tree2 = tree1.branch();
 
-			const parent = { parent: undefined, parentField: rootFieldKey, parentIndex: 1 };
-			const editor = tree1.editor.valueField({ parent, field: brand("foo") });
+			const editor = tree1.editor.valueField({ parent: rootNode2, field: brand("foo") });
 			editor.set(
 				cursorForJsonableTreeNode({ type: brand(stringSchema.identifier), value: "C" }),
 			);
@@ -573,14 +585,7 @@ describe("Editing", () => {
 			// Move B before A.
 			tree1.editor.move(rootField, 1, 1, rootField, 0);
 
-			const editor = tree2.editor.valueField({
-				parent: {
-					parent: undefined,
-					parentField: rootFieldKey,
-					parentIndex: 1,
-				},
-				field: brand("foo"),
-			});
+			const editor = tree2.editor.valueField({ parent: rootNode2, field: brand("foo") });
 			editor.set(
 				cursorForJsonableTreeNode({ type: brand(stringSchema.identifier), value: "C" }),
 			);
@@ -597,9 +602,16 @@ describe("Editing", () => {
 			const tree1 = makeTreeFromJson({ seq: [{ foo: "A" }, "B"] });
 			const tree2 = tree1.branch();
 
-			const seqList: UpPath = { parent: rootNode, parentField: brand("seq"), parentIndex: 0 };
-			const seqField: FieldUpPath = { parent: seqList, field: brand("") };
-			const fooField: FieldUpPath = {
+			const seqList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("seq"),
+				parentIndex: 0,
+			};
+			const seqField: NormalizedFieldUpPath = {
+				parent: seqList,
+				field: brand(""),
+			};
+			const fooField: NormalizedFieldUpPath = {
 				parent: { parent: seqList, parentField: brand(""), parentIndex: 0 },
 				field: brand("foo"),
 			};
@@ -622,8 +634,16 @@ describe("Editing", () => {
 			});
 			const tree2 = tree1.branch();
 
-			const fooList: UpPath = { parent: rootNode, parentField: brand("foo"), parentIndex: 0 };
-			const barList: UpPath = { parent: rootNode, parentField: brand("bar"), parentIndex: 0 };
+			const fooList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("foo"),
+				parentIndex: 0,
+			};
+			const barList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("bar"),
+				parentIndex: 0,
+			};
 
 			// Change value of A to C
 			const editor = tree1.editor.valueField({
@@ -662,7 +682,11 @@ describe("Editing", () => {
 			});
 			const tree2 = tree1.branch();
 
-			const fooList: UpPath = { parent: rootNode, parentField: brand("foo"), parentIndex: 0 };
+			const fooList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("foo"),
+				parentIndex: 0,
+			};
 
 			// Move A out of foo.
 			tree1.editor.move({ parent: fooList, field: brand("") }, 0, 1, rootField, 0);
@@ -685,8 +709,16 @@ describe("Editing", () => {
 			});
 			const tree2 = tree1.branch();
 
-			const fooList: UpPath = { parent: rootNode, parentField: brand("foo"), parentIndex: 0 };
-			const barList: UpPath = { parent: rootNode, parentField: brand("bar"), parentIndex: 0 };
+			const fooList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("foo"),
+				parentIndex: 0,
+			};
+			const barList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("bar"),
+				parentIndex: 0,
+			};
 
 			// Move A after B.
 			tree1.editor.move(
@@ -721,7 +753,7 @@ describe("Editing", () => {
 
 			tree1.transaction.start();
 
-			const listNode: UpPath = {
+			const listNode: NormalizedUpPath = {
 				parent: rootNode,
 				parentField: brand("foo"),
 				parentIndex: 0,
@@ -799,18 +831,6 @@ describe("Editing", () => {
 			const tree = makeTreeFromJsonSequence([{ foo: ["a"] }, {}]);
 			const tree2 = tree.branch();
 
-			const first: UpPath = {
-				parent: undefined,
-				parentIndex: 0,
-				parentField: rootFieldKey,
-			};
-
-			const second: UpPath = {
-				parent: undefined,
-				parentIndex: 1,
-				parentField: rootFieldKey,
-			};
-
 			const { undoStack } = createTestUndoRedoStacks(tree.events);
 
 			const sequence = tree.editor.sequenceField(rootField);
@@ -820,10 +840,10 @@ describe("Editing", () => {
 			const deletion = undoStack.pop();
 
 			tree2.editor.move(
-				{ parent: first, field: brand("foo") },
+				{ parent: rootNode, field: brand("foo") },
 				0,
 				1,
-				{ parent: second, field: brand("bar") },
+				{ parent: rootNode2, field: brand("bar") },
 				0,
 			);
 
@@ -842,18 +862,6 @@ describe("Editing", () => {
 			const tree = makeTreeFromJsonSequence([{ foo: ["a"] }, {}]);
 			const tree2 = tree.branch();
 
-			const first: UpPath = {
-				parent: undefined,
-				parentIndex: 0,
-				parentField: rootFieldKey,
-			};
-
-			const second: UpPath = {
-				parent: undefined,
-				parentIndex: 1,
-				parentField: rootFieldKey,
-			};
-
 			const { undoStack } = createTestUndoRedoStacks(tree.events);
 
 			const sequence = tree.editor.sequenceField(rootField);
@@ -863,10 +871,10 @@ describe("Editing", () => {
 			const deletion = undoStack.pop();
 
 			tree2.editor.move(
-				{ parent: first, field: brand("foo") },
+				{ parent: rootNode, field: brand("foo") },
 				0,
 				1,
-				{ parent: second, field: brand("bar") },
+				{ parent: rootNode2, field: brand("bar") },
 				0,
 			);
 
@@ -886,18 +894,6 @@ describe("Editing", () => {
 			const tree2 = tree.branch();
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 
-			const first: UpPath = {
-				parent: undefined,
-				parentIndex: 0,
-				parentField: rootFieldKey,
-			};
-
-			const second: UpPath = {
-				parent: undefined,
-				parentIndex: 1,
-				parentField: rootFieldKey,
-			};
-
 			const sequence = tree.editor.sequenceField(rootField);
 
 			// Remove source's ancestor concurrently
@@ -906,10 +902,10 @@ describe("Editing", () => {
 			undoStack.pop()?.revert();
 
 			tree2.editor.move(
-				{ parent: first, field: brand("foo") },
+				{ parent: rootNode, field: brand("foo") },
 				0,
 				1,
-				{ parent: second, field: brand("bar") },
+				{ parent: rootNode2, field: brand("bar") },
 				0,
 			);
 
@@ -925,18 +921,6 @@ describe("Editing", () => {
 			const tree2 = tree.branch();
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 
-			const first: UpPath = {
-				parent: undefined,
-				parentIndex: 0,
-				parentField: rootFieldKey,
-			};
-
-			const second: UpPath = {
-				parent: undefined,
-				parentIndex: 1,
-				parentField: rootFieldKey,
-			};
-
 			// Remove source's ancestor concurrently
 			tree.editor.sequenceField(rootField).remove(0, 1);
 			expectJsonTree(tree, [{}]);
@@ -944,14 +928,14 @@ describe("Editing", () => {
 			undoStack.pop()?.revert();
 			expectJsonTree(tree, [{ foo: ["a"] }, {}]);
 			// Remove ["a"]
-			tree.editor.sequenceField({ parent: first, field: brand("foo") }).remove(0, 1);
+			tree.editor.sequenceField({ parent: rootNode, field: brand("foo") }).remove(0, 1);
 			expectJsonTree(tree, [{}, {}]);
 
 			tree2.editor.move(
-				{ parent: first, field: brand("foo") },
+				{ parent: rootNode, field: brand("foo") },
 				0,
 				1,
-				{ parent: second, field: brand("bar") },
+				{ parent: rootNode2, field: brand("bar") },
 				0,
 			);
 
@@ -967,14 +951,8 @@ describe("Editing", () => {
 			const tree2 = tree.branch();
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2.events);
 
-			const first: UpPath = {
-				parent: undefined,
-				parentIndex: 0,
-				parentField: rootFieldKey,
-			};
-
-			const sequenceUpPath: UpPath = {
-				parent: first,
+			const sequenceUpPath: NormalizedUpPath = {
+				parent: rootNode,
 				parentIndex: 0,
 				parentField: brand("foo"),
 			};
@@ -1008,14 +986,8 @@ describe("Editing", () => {
 			const tree2 = tree.branch();
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 
-			const first: UpPath = {
-				parent: undefined,
-				parentIndex: 0,
-				parentField: rootFieldKey,
-			};
-
-			const sequenceUpPath: UpPath = {
-				parent: first,
+			const sequenceUpPath: NormalizedUpPath = {
+				parent: rootNode,
 				parentIndex: 0,
 				parentField: brand("foo"),
 			};
@@ -1051,20 +1023,8 @@ describe("Editing", () => {
 			const tree2 = tree.branch();
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 
-			const first: UpPath = {
-				parent: undefined,
-				parentIndex: 0,
-				parentField: rootFieldKey,
-			};
-
-			const second: UpPath = {
-				parent: undefined,
-				parentIndex: 1,
-				parentField: rootFieldKey,
-			};
-
 			// Remove ["a"]
-			tree.editor.sequenceField({ parent: first, field: brand("foo") }).remove(0, 1);
+			tree.editor.sequenceField({ parent: rootNode, field: brand("foo") }).remove(0, 1);
 			expectJsonTree(tree, [{}, {}]);
 			// Revive ["a"]
 			undoStack.pop()?.revert();
@@ -1074,10 +1034,10 @@ describe("Editing", () => {
 			expectJsonTree(tree, [{}]);
 
 			tree2.editor.move(
-				{ parent: first, field: brand("foo") },
+				{ parent: rootNode, field: brand("foo") },
 				0,
 				1,
-				{ parent: second, field: brand("bar") },
+				{ parent: rootNode2, field: brand("bar") },
 				0,
 			);
 
@@ -1090,24 +1050,13 @@ describe("Editing", () => {
 
 		it("remove ancestor of return source", () => {
 			const tree = makeTreeFromJsonSequence([{ foo: ["a"] }, {}]);
-			const first: UpPath = {
-				parent: undefined,
-				parentIndex: 0,
-				parentField: rootFieldKey,
-			};
-
-			const second: UpPath = {
-				parent: undefined,
-				parentIndex: 1,
-				parentField: rootFieldKey,
-			};
 
 			// Move to bar: [{}, { bar: ["a"] }}]
 			tree.editor.move(
-				{ parent: first, field: brand("foo") },
+				{ parent: rootNode, field: brand("foo") },
 				0,
 				1,
-				{ parent: second, field: brand("bar") },
+				{ parent: rootNode2, field: brand("bar") },
 				0,
 			);
 
@@ -1140,25 +1089,14 @@ describe("Editing", () => {
 
 		it("remove ancestor of return destination", () => {
 			const tree = makeTreeFromJsonSequence([{ foo: ["a"] }, {}]);
-			const first: UpPath = {
-				parent: undefined,
-				parentIndex: 0,
-				parentField: rootFieldKey,
-			};
-
-			const second: UpPath = {
-				parent: undefined,
-				parentIndex: 1,
-				parentField: rootFieldKey,
-			};
 
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 			// Move to bar: [{}, { bar: ["a"] }}]
 			tree.editor.move(
-				{ parent: first, field: brand("foo") },
+				{ parent: rootNode, field: brand("foo") },
 				0,
 				1,
-				{ parent: second, field: brand("bar") },
+				{ parent: rootNode2, field: brand("bar") },
 				0,
 			);
 
@@ -1184,8 +1122,16 @@ describe("Editing", () => {
 				bar: ["E"],
 			});
 
-			const fooList: UpPath = { parent: rootNode, parentField: brand("foo"), parentIndex: 0 };
-			const barList: UpPath = { parent: rootNode, parentField: brand("bar"), parentIndex: 0 };
+			const fooList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("foo"),
+				parentIndex: 0,
+			};
+			const barList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("bar"),
+				parentIndex: 0,
+			};
 
 			tree.transaction.start();
 			// Move nodes from foo into bar.
@@ -1220,8 +1166,16 @@ describe("Editing", () => {
 			const tree1 = makeTreeFromJsonSequence([{ foo: [], bar: [] }, "A"]);
 			const tree2 = tree1.branch();
 
-			const fooList: UpPath = { parent: rootNode, parentField: brand("foo"), parentIndex: 0 };
-			const barList: UpPath = { parent: rootNode, parentField: brand("bar"), parentIndex: 0 };
+			const fooList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("foo"),
+				parentIndex: 0,
+			};
+			const barList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("bar"),
+				parentIndex: 0,
+			};
 
 			tree1.editor.move(rootField, 1, 1, { parent: fooList, field: brand("") }, 0);
 			expectJsonTree(tree1, [{ foo: ["A"], bar: [] }]);
@@ -1241,9 +1195,21 @@ describe("Editing", () => {
 				baz: ["I", "J", "K", "L"],
 			});
 
-			const fooList: UpPath = { parent: rootNode, parentField: brand("foo"), parentIndex: 0 };
-			const barList: UpPath = { parent: rootNode, parentField: brand("bar"), parentIndex: 0 };
-			const bazList: UpPath = { parent: rootNode, parentField: brand("baz"), parentIndex: 0 };
+			const fooList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("foo"),
+				parentIndex: 0,
+			};
+			const barList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("bar"),
+				parentIndex: 0,
+			};
+			const bazList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("baz"),
+				parentIndex: 0,
+			};
 
 			tree.transaction.start();
 			// Move nodes from foo into bar.
@@ -1289,8 +1255,16 @@ describe("Editing", () => {
 				bar: ["E"],
 			});
 
-			const fooList: UpPath = { parent: rootNode, parentField: brand("foo"), parentIndex: 0 };
-			const barList: UpPath = { parent: rootNode, parentField: brand("bar"), parentIndex: 0 };
+			const fooList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("foo"),
+				parentIndex: 0,
+			};
+			const barList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("bar"),
+				parentIndex: 0,
+			};
 
 			tree.transaction.start();
 			// inserts nodes to move
@@ -1333,8 +1307,16 @@ describe("Editing", () => {
 				bar: ["E"],
 			});
 
-			const fooList: UpPath = { parent: rootNode, parentField: brand("foo"), parentIndex: 0 };
-			const barList: UpPath = { parent: rootNode, parentField: brand("bar"), parentIndex: 0 };
+			const fooList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("foo"),
+				parentIndex: 0,
+			};
+			const barList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("bar"),
+				parentIndex: 0,
+			};
 
 			tree.transaction.start();
 			// Move nodes from foo into bar.
@@ -1366,8 +1348,16 @@ describe("Editing", () => {
 				bar: ["F"],
 			});
 
-			const fooList: UpPath = { parent: rootNode, parentField: brand("foo"), parentIndex: 0 };
-			const barList: UpPath = { parent: rootNode, parentField: brand("bar"), parentIndex: 0 };
+			const fooList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("foo"),
+				parentIndex: 0,
+			};
+			const barList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("bar"),
+				parentIndex: 0,
+			};
 
 			tree.transaction.start();
 			// Move nodes from foo into bar.
@@ -1400,9 +1390,21 @@ describe("Editing", () => {
 				baz: ["F"],
 			});
 
-			const fooList: UpPath = { parent: rootNode, parentField: brand("foo"), parentIndex: 0 };
-			const barList: UpPath = { parent: rootNode, parentField: brand("bar"), parentIndex: 0 };
-			const bazList: UpPath = { parent: rootNode, parentField: brand("baz"), parentIndex: 0 };
+			const fooList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("foo"),
+				parentIndex: 0,
+			};
+			const barList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("bar"),
+				parentIndex: 0,
+			};
+			const bazList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("baz"),
+				parentIndex: 0,
+			};
 
 			tree.transaction.start();
 			// Move nodes from foo into bar.
@@ -1442,14 +1444,26 @@ describe("Editing", () => {
 				baz: ["D"],
 			});
 
-			const fooList: UpPath = { parent: rootNode, parentField: brand("foo"), parentIndex: 0 };
-			const barList: UpPath = { parent: rootNode, parentField: brand("bar"), parentIndex: 0 };
-			const barListChild: UpPath = {
+			const fooList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("foo"),
+				parentIndex: 0,
+			};
+			const barList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("bar"),
+				parentIndex: 0,
+			};
+			const barListChild: NormalizedUpPath = {
 				parent: barList,
 				parentField: brand(""),
 				parentIndex: 0,
 			};
-			const bazList: UpPath = { parent: rootNode, parentField: brand("baz"), parentIndex: 0 };
+			const bazList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("baz"),
+				parentIndex: 0,
+			};
 
 			tree.transaction.start();
 			// Move node from foo into bar.
@@ -1488,14 +1502,26 @@ describe("Editing", () => {
 				baz: ["D"],
 			});
 
-			const fooList: UpPath = { parent: rootNode, parentField: brand("foo"), parentIndex: 0 };
-			const fooListChild: UpPath = {
+			const fooList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("foo"),
+				parentIndex: 0,
+			};
+			const fooListChild: NormalizedUpPath = {
 				parent: fooList,
 				parentField: brand(""),
 				parentIndex: 1,
 			};
-			const barList: UpPath = { parent: rootNode, parentField: brand("bar"), parentIndex: 0 };
-			const bazList: UpPath = { parent: rootNode, parentField: brand("baz"), parentIndex: 0 };
+			const barList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("bar"),
+				parentIndex: 0,
+			};
+			const bazList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("baz"),
+				parentIndex: 0,
+			};
 
 			tree.transaction.start();
 			// Move child node from foo into baz.
@@ -1529,8 +1555,16 @@ describe("Editing", () => {
 
 		it("can move a node out from under its parent, and remove that parent from its containing sequence field", () => {
 			const tree = makeTreeFromJson({ src: ["A"], dst: ["B"] });
-			const srcList: UpPath = { parent: rootNode, parentField: brand("src"), parentIndex: 0 };
-			const dstList: UpPath = { parent: rootNode, parentField: brand("dst"), parentIndex: 0 };
+			const srcList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("src"),
+				parentIndex: 0,
+			};
+			const dstList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("dst"),
+				parentIndex: 0,
+			};
 
 			tree.transaction.start();
 			// Move node from foo into rootField.
@@ -1555,8 +1589,16 @@ describe("Editing", () => {
 
 		it("can move a node out from under its parent, and remove that parent from its containing optional field", () => {
 			const tree = makeTreeFromJson({ src: ["A"], dst: ["B"] });
-			const srcList: UpPath = { parent: rootNode, parentField: brand("src"), parentIndex: 0 };
-			const dstList: UpPath = { parent: rootNode, parentField: brand("dst"), parentIndex: 0 };
+			const srcList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("src"),
+				parentIndex: 0,
+			};
+			const dstList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("dst"),
+				parentIndex: 0,
+			};
 
 			tree.transaction.start();
 			// Move node from foo into rootField.
@@ -1581,8 +1623,16 @@ describe("Editing", () => {
 
 		it("can move a node out from under its parent, and remove that parent from its containing value field", () => {
 			const tree = makeTreeFromJson({ src: ["A"], dst: ["B"] });
-			const srcList: UpPath = { parent: rootNode, parentField: brand("src"), parentIndex: 0 };
-			const dstList: UpPath = { parent: rootNode, parentField: brand("dst"), parentIndex: 0 };
+			const srcList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("src"),
+				parentIndex: 0,
+			};
+			const dstList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("dst"),
+				parentIndex: 0,
+			};
 
 			tree.transaction.start();
 			// Move node from foo into rootField.
@@ -1616,8 +1666,16 @@ describe("Editing", () => {
 			const tree = makeTreeFromJson({ src: ["A", "B"], dst: ["C", "D"] });
 			const childBranch = tree.branch();
 
-			const srcList: UpPath = { parent: rootNode, parentField: brand("src"), parentIndex: 0 };
-			const dstList: UpPath = { parent: rootNode, parentField: brand("dst"), parentIndex: 0 };
+			const srcList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("src"),
+				parentIndex: 0,
+			};
+			const dstList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("dst"),
+				parentIndex: 0,
+			};
 
 			// In the child branch, move a node from src to dst.
 			childBranch.editor.move(
@@ -1647,8 +1705,16 @@ describe("Editing", () => {
 			const tree = makeTreeFromJson({ src: ["A", "B"], dst: ["C", "D"] });
 			const childBranch = tree.branch();
 
-			const srcList: UpPath = { parent: rootNode, parentField: brand("src"), parentIndex: 0 };
-			const dstList: UpPath = { parent: rootNode, parentField: brand("dst"), parentIndex: 0 };
+			const srcList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("src"),
+				parentIndex: 0,
+			};
+			const dstList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("dst"),
+				parentIndex: 0,
+			};
 
 			// In the child branch, move a node from src to dst.
 			childBranch.editor.move(
@@ -1678,8 +1744,16 @@ describe("Editing", () => {
 			const tree = makeTreeFromJson({ src: ["A", "B"], dst: ["C", "D"] });
 			const childBranch = tree.branch();
 
-			const srcList: UpPath = { parent: rootNode, parentField: brand("src"), parentIndex: 0 };
-			const dstList: UpPath = { parent: rootNode, parentField: brand("dst"), parentIndex: 0 };
+			const srcList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("src"),
+				parentIndex: 0,
+			};
+			const dstList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("dst"),
+				parentIndex: 0,
+			};
 
 			// In the child branch, move a node from src to dst.
 			childBranch.editor.move(
@@ -1716,17 +1790,17 @@ describe("Editing", () => {
 			const tree1 = tree.branch();
 			const tree2 = tree.branch();
 
-			const fooList: UpPath = {
+			const fooList: NormalizedUpPath = {
 				parent: rootNode,
 				parentField: brand("foo"),
 				parentIndex: 0,
 			};
-			const foo1: UpPath = {
+			const foo1: NormalizedUpPath = {
 				parent: fooList,
 				parentField: brand(""),
 				parentIndex: 0,
 			};
-			const nodeB: UpPath = {
+			const nodeB: NormalizedUpPath = {
 				parent: fooList,
 				parentField: brand(""),
 				parentIndex: 1,
@@ -1747,7 +1821,7 @@ describe("Editing", () => {
 
 		it("throws when moved under child node", () => {
 			const tree = makeTreeFromJson({ foo: { bar: "A" } });
-			const fooPath: UpPath = {
+			const fooPath: NormalizedUpPath = {
 				parent: rootNode,
 				parentField: brand("foo"),
 				parentIndex: 0,
@@ -1771,19 +1845,17 @@ describe("Editing", () => {
 			const tree = makeTreeFromJsonSequence([["foo"], ["bar"]]);
 			const tree2 = tree.branch();
 
-			const fooList: UpPath = {
-				parent: undefined,
-				parentField: rootFieldKey,
-				parentIndex: 0,
-			};
-			const barList: UpPath = {
-				parent: undefined,
-				parentField: rootFieldKey,
-				parentIndex: 1,
-			};
+			const fooList = rootNode;
+			const barList = rootNode2;
 
-			const fooSequence: FieldUpPath = { field: brand(""), parent: fooList };
-			const barSequence: FieldUpPath = { field: brand(""), parent: barList };
+			const fooSequence: NormalizedFieldUpPath = {
+				field: brand(""),
+				parent: fooList,
+			};
+			const barSequence: NormalizedFieldUpPath = {
+				field: brand(""),
+				parent: barList,
+			};
 
 			tree.editor.move(rootField, 0, 1, barSequence, 0);
 			expectJsonTree(tree, [[["foo"], "bar"]]);
@@ -1821,18 +1893,22 @@ describe("Editing", () => {
 			const startState = [{ seq: ["A"] }, { seq: [] }, { seq: ["B"] }];
 			const tree = makeTreeFromJsonSequence(startState);
 
-			const [root0Array, root1Array, root2Array]: FieldUpPath[] = makeArray(3, (i) => ({
-				parent: {
+			const [root0Array, root1Array, root2Array]: NormalizedFieldUpPath[] = makeArray(
+				3,
+				(i) => ({
 					parent: {
-						parent: undefined,
-						parentField: rootFieldKey,
-						parentIndex: i,
+						parent: {
+							parent: undefined,
+							parentField: rootFieldKey,
+							parentIndex: i,
+							detachedNodeId: undefined,
+						},
+						parentField: brand("seq"),
+						parentIndex: 0,
 					},
-					parentField: brand("seq"),
-					parentIndex: 0,
-				},
-				field: brand(""),
-			}));
+					field: brand(""),
+				}),
+			);
 
 			const treeA = tree.branch();
 			const treeC = tree.branch();
@@ -1960,8 +2036,11 @@ describe("Editing", () => {
 			}
 
 			const delAction = (peer: ITreeCheckout, idx: number) => remove(peer, idx, 1);
-			const srcField: FieldUpPath = rootField;
-			const dstField: FieldUpPath = { parent: undefined, field: brand("dst") };
+			const srcField: NormalizedFieldUpPath = rootField;
+			const dstField: NormalizedFieldUpPath = {
+				parent: undefined,
+				field: brand("dst"),
+			};
 			const moveAction = (peer: ITreeCheckout, idx: number) =>
 				peer.editor.move(srcField, idx, 1, dstField, 0);
 
@@ -2065,9 +2144,18 @@ describe("Editing", () => {
 		});
 
 		describe("revert semantics", () => {
-			const fooField: FieldUpPath = { parent: rootNode, field: brand("foo") };
-			const barField: FieldUpPath = { parent: rootNode, field: brand("bar") };
-			const bazField: FieldUpPath = { parent: rootNode, field: brand("baz") };
+			const fooField: NormalizedFieldUpPath = {
+				parent: rootNode,
+				field: brand("foo"),
+			};
+			const barField: NormalizedFieldUpPath = {
+				parent: rootNode,
+				field: brand("bar"),
+			};
+			const bazField: NormalizedFieldUpPath = {
+				parent: rootNode,
+				field: brand("baz"),
+			};
 
 			const revertibleAction = [
 				{
@@ -2084,12 +2172,12 @@ describe("Editing", () => {
 			const disruptions = [
 				{
 					title: "moved to baz",
-					delegate: (tree: ITreeCheckout, srcField: FieldUpPath) =>
+					delegate: (tree: ITreeCheckout, srcField: NormalizedFieldUpPath) =>
 						tree.editor.move(srcField, 0, 1, bazField, 0),
 				},
 				{
 					title: "removed",
-					delegate: (tree: ITreeCheckout, srcField: FieldUpPath) =>
+					delegate: (tree: ITreeCheckout, srcField: NormalizedFieldUpPath) =>
 						tree.editor.sequenceField(srcField).remove(0, 1),
 				},
 			];
@@ -2610,7 +2698,10 @@ describe("Editing", () => {
 
 				const tree2 = tree.branch();
 
-				const fooPath: FieldUpPath = { parent: rootNode, field: brand("foo") };
+				const fooPath: NormalizedFieldUpPath = {
+					parent: rootNode,
+					field: brand("foo"),
+				};
 
 				// Modify the field containing the node existence constraint then remove its ancestor
 				tree.transaction.start();
@@ -2660,7 +2751,8 @@ describe("Editing", () => {
 
 				tree2.transaction.start();
 
-				const dPath = {
+				const dPath: NormalizedUpPath = {
+					detachedNodeId: undefined,
 					parent: undefined,
 					parentField: rootFieldKey,
 					parentIndex: 1,
@@ -2936,25 +3028,14 @@ describe("Editing", () => {
 				const tree = makeTreeFromJsonSequence([{ foo: ["a"] }, {}]);
 				const tree2 = tree.branch();
 
-				const firstPath = {
-					parent: undefined,
-					parentField: rootFieldKey,
-					parentIndex: 0,
-				};
-
-				const secondPath = {
-					...firstPath,
-					parentIndex: 1,
-				};
-
 				tree.transaction.start();
 				tree.editor.move(
-					{ field: brand("foo"), parent: firstPath },
+					{ field: brand("foo"), parent: rootNode },
 					0,
 					1,
 					{
 						field: brand("foo2"),
-						parent: secondPath,
+						parent: rootNode2,
 					},
 					0,
 				);
@@ -2965,7 +3046,7 @@ describe("Editing", () => {
 
 				tree2.transaction.start();
 				tree2.editor.addNodeExistsConstraint({
-					parent: firstPath,
+					parent: rootNode,
 					parentField: brand("foo"),
 					parentIndex: 0,
 				});
@@ -2983,27 +3064,16 @@ describe("Editing", () => {
 				const tree = makeTreeFromJsonSequence([{ foo: ["a"] }, {}]);
 				const tree2 = tree.branch();
 
-				const firstPath = {
-					parent: undefined,
-					parentField: rootFieldKey,
-					parentIndex: 0,
-				};
-
-				const secondPath = {
-					...firstPath,
-					parentIndex: 1,
-				};
-
 				// Move "a" from foo to foo2 in the second node in the root sequence and then remove
 				// the second node in the root sequence
 				tree.transaction.start();
 				tree.editor.move(
-					{ field: brand("foo"), parent: firstPath },
+					{ field: brand("foo"), parent: rootNode },
 					0,
 					1,
 					{
 						field: brand("foo2"),
-						parent: secondPath,
+						parent: rootNode2,
 					},
 					0,
 				);
@@ -3016,7 +3086,7 @@ describe("Editing", () => {
 				// a's ancestor will be removed so this insert should be dropped
 				tree2.transaction.start();
 				tree2.editor.addNodeExistsConstraint({
-					parent: firstPath,
+					parent: rootNode,
 					parentField: brand("foo"),
 					parentIndex: 0,
 				});
@@ -3156,11 +3226,7 @@ describe("Editing", () => {
 
 			// This transaction will be conflicted after rebasing since the previous edit deletes the constrained node.
 			tree2.transaction.start();
-			tree2.editor.addNodeExistsConstraint({
-				parent: undefined,
-				parentField: rootFieldKey,
-				parentIndex: 0,
-			});
+			tree2.editor.addNodeExistsConstraint(rootNode);
 
 			// Remove B
 			remove(tree2, 1, 1);
@@ -3268,9 +3334,13 @@ describe("Editing", () => {
 	});
 
 	describe("Can abort transactions", () => {
-		function getInnerSequenceFieldPath(outer: FieldUpPath): FieldUpPath {
+		function getInnerSequenceFieldPath(outer: NormalizedFieldUpPath): NormalizedFieldUpPath {
 			return {
-				parent: { parent: outer.parent, parentField: outer.field, parentIndex: 0 },
+				parent: {
+					parent: outer.parent ?? assert.fail("Missing array node"),
+					parentField: outer.field,
+					parentIndex: 0,
+				},
 				field: brand(""),
 			};
 		}
@@ -3278,21 +3348,12 @@ describe("Editing", () => {
 		function abortTransaction(branch: ITreeCheckout): void {
 			branch.transaction.start();
 			const rootSequence = branch.editor.sequenceField(rootField);
-			const root0Path = {
-				parent: undefined,
-				parentField: rootFieldKey,
-				parentIndex: 0,
-			};
-			const root1Path = {
-				parent: undefined,
-				parentField: rootFieldKey,
-				parentIndex: 1,
-			};
+
 			const foo0 = branch.editor.sequenceField(
-				getInnerSequenceFieldPath({ parent: root0Path, field: brand("foo") }),
+				getInnerSequenceFieldPath({ parent: rootNode, field: brand("foo") }),
 			);
 			const foo1 = branch.editor.sequenceField(
-				getInnerSequenceFieldPath({ parent: root1Path, field: brand("foo") }),
+				getInnerSequenceFieldPath({ parent: rootNode2, field: brand("foo") }),
 			);
 			foo0.remove(1, 1);
 			foo0.insert(1, cursorForJsonableTreeNode({ type: brand("Number"), value: 41 }));

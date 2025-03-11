@@ -22,7 +22,14 @@ import {
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type * as Delta from "./delta.js";
-import { isDetachedUpPath, type PlaceIndex, type Range, type UpPath } from "./pathTree.js";
+import {
+	isDetachedUpPathRoot,
+	type INormalizedUpPath,
+	type NormalizedUpPath,
+	type PlaceIndex,
+	type Range,
+	type UpPath,
+} from "./pathTree.js";
 import { EmptyKey } from "./types.js";
 import type { DeltaVisitor } from "./visitDelta.js";
 import { offsetDetachId } from "./deltaUtil.js";
@@ -197,7 +204,7 @@ export interface AnchorSetRootEvents {
 /**
  * Node in a tree of anchors.
  */
-export interface AnchorNode extends UpPath<AnchorNode> {
+export interface AnchorNode extends INormalizedUpPath<AnchorNode> {
 	/**
 	 * Events for this anchor node.
 	 */
@@ -568,8 +575,8 @@ export class AnchorSet implements AnchorLocator {
 			node.parentIndex += destination.parentIndex - coupleInfo.startParentIndex;
 			node.parentPath = destinationPath;
 			node.parentField = destination.parentField;
-			// If the destination is a detached UpPath, propagate its detachedNodeId, otherwise remove any existing one
-			node.detachedNodeId = isDetachedUpPath(destination)
+			// If the destination is a detached root, propagate its detachedNodeId, otherwise remove any existing one
+			node.detachedNodeId = isDetachedUpPathRoot(destination)
 				? offsetDetachId(
 						destination.detachedNodeId,
 						node.parentIndex - destination.parentIndex,
@@ -852,7 +859,7 @@ export class AnchorSet implements AnchorLocator {
 					parentField: this.parentField,
 					parentIndex: source.start,
 				};
-				const destinationPath: UpPath = {
+				const destinationPath: NormalizedUpPath = {
 					parent: this.anchorSet.root,
 					parentField: destination,
 					parentIndex: 0,
@@ -987,7 +994,10 @@ enum Status {
  * 2. refcount is non-zero.
  * 3. events are registered.
  */
-class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorNode {
+class PathNode
+	extends ReferenceCountedBase
+	implements INormalizedUpPath<PathNode>, AnchorNode
+{
 	public status: Status = Status.Alive;
 	/**
 	 * Event emitter for this anchor.
@@ -1013,7 +1023,7 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 	/**
 	 * {@inheritdoc UpPath.detachedNodeId}
 	 */
-	public detachedNodeId?: Delta.DetachedNodeId;
+	public detachedNodeId: Delta.DetachedNodeId | undefined;
 
 	/**
 	 * Construct a PathNode with refcount 1.

@@ -16,6 +16,7 @@ import {
 	type DetachedField,
 	type FieldKey,
 	type FieldUpPath,
+	type INormalizedUpPath,
 	type JsonableTree,
 	type UpPath,
 	anchorSlot,
@@ -649,7 +650,7 @@ function checkEquality(actual: UpPath | undefined, expected: UpPath | undefined)
 }
 
 function checkRemoved(
-	path: UpPath | undefined,
+	path: INormalizedUpPath | undefined,
 	expectedDetachedNodeId: DeltaDetachedNodeId | undefined,
 	expected: FieldKey = brand("Temp-0"),
 ): void {

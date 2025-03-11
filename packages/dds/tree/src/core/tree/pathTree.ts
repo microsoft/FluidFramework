@@ -40,10 +40,60 @@ export interface UpPath<TParent = UpPathDefault> {
 	 * The index within `parentField` this path is pointing to.
 	 */
 	readonly parentIndex: NodeIndex;
+}
+
+/**
+ * Identical to {@link INormalizedUpPath}, but a duplicate declaration is needed to make the default type parameter compile.
+ */
+export type INormalizedUpPathDefault = INormalizedUpPath;
+
+/**
+ * Identical to {@link UpPath}, but a with a {@link DetachedNodeId} to specify the ID of detached roots.
+ * Note that document roots (i.e., any node in the root field) are not considered detached roots and therefore do not have an associated ID.
+ *
+ * Use this interface for implementing a class that needs to be used as a {@link NormalizedUpPath}.
+ */
+export interface INormalizedUpPath<TParent = INormalizedUpPathDefault>
+	extends UpPath<TParent> {
+	readonly detachedNodeId: DetachedNodeId | undefined;
+}
+
+/**
+ * Identical to {@link UpPath}, but a with a {@link DetachedNodeId} to specify the ID of detached roots.
+ * Note that document roots (i.e., any node in the root field) are not considered detached roots and therefore do not have an associated ID.
+ *
+ * Prefer this type over {@link INormalizedUpPath} except when implementing a class that needs to be used as a {@link NormalizedUpPath}.
+ */
+export type NormalizedUpPath =
+	| INormalizedUpPath<NormalizedUpPath>
+	| NormalizedUpPathInterior<NormalizedUpPath>
+	| NormalizedUpPathRoot;
+
+/**
+ * The root element of a {@link NormalizedUpPath}.
+ */
+export interface NormalizedUpPathRoot extends UpPath<undefined> {
 	/**
 	 * The ID associated with this node if it is a detached root.
 	 */
-	readonly detachedNodeId?: DetachedNodeId;
+	readonly detachedNodeId: DetachedNodeId | undefined;
+}
+
+/**
+ * Identical to {@link NormalizedUpPathInterior}, but a duplicate declaration is needed to make the default type parameter compile.
+ */
+export type NormalizedUpPathInteriorDefault = NormalizedUpPathInterior;
+
+/**
+ * An interior (i.e., non-root) element element of a {@link NormalizedUpPath}.
+ */
+export interface NormalizedUpPathInterior<
+	TParent = NormalizedUpPathInteriorDefault | NormalizedUpPathRoot,
+> extends UpPath<TParent> {
+	/**
+	 * The parent.
+	 */
+	readonly parent: TParent;
 }
 
 /**
@@ -51,7 +101,14 @@ export interface UpPath<TParent = UpPathDefault> {
  *
  * See {@link UpPath}.
  */
-export interface FieldUpPath<TUpPath extends UpPath = UpPath> {
+export type NormalizedFieldUpPath<TParent = NormalizedUpPath> = FieldUpPath<TParent>;
+
+/**
+ * Path from a field in the tree upward.
+ *
+ * See {@link FieldUpPath} and {@link NormalizedUpPath}.
+ */
+export interface FieldUpPath<TUpPath = UpPath> {
 	/**
 	 * The parent, or undefined in the case where this path is to a detached sequence.
 	 */
@@ -67,8 +124,10 @@ export interface FieldUpPath<TUpPath extends UpPath = UpPath> {
 /**
  * Given an {@link UpPath}, checks if it is a path to a detached root.
  */
-export function isDetachedUpPath(path: UpPath): boolean {
-	return path.detachedNodeId !== undefined;
+export function isDetachedUpPathRoot<T>(
+	path: UpPath<T> | NormalizedUpPath,
+): path is NormalizedUpPathRoot {
+	return (path as NormalizedUpPathRoot).detachedNodeId !== undefined;
 }
 
 /**

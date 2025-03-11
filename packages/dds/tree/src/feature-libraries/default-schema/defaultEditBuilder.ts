@@ -18,6 +18,8 @@ import {
 	type DeltaRoot,
 	type FieldUpPath,
 	type ITreeCursorSynchronous,
+	type NormalizedFieldUpPath,
+	type NormalizedUpPath,
 	type RevisionTag,
 	type TaggedChange,
 	type UpPath,
@@ -127,7 +129,7 @@ export interface IDefaultEditBuilder {
 	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
 	 * is bounded by the lifetime of this edit builder.
 	 */
-	valueField(field: FieldUpPath): ValueFieldEditBuilder<ITreeCursorSynchronous>;
+	valueField(field: NormalizedFieldUpPath): ValueFieldEditBuilder<ITreeCursorSynchronous>;
 
 	/**
 	 * @param field - the optional field which is being edited under the parent node
@@ -135,7 +137,9 @@ export interface IDefaultEditBuilder {
 	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
 	 * is bounded by the lifetime of this edit builder.
 	 */
-	optionalField(field: FieldUpPath): OptionalFieldEditBuilder<ITreeCursorSynchronous>;
+	optionalField(
+		field: NormalizedFieldUpPath,
+	): OptionalFieldEditBuilder<ITreeCursorSynchronous>;
 
 	/**
 	 * @param field - the sequence field which is being edited under the parent node
@@ -144,7 +148,9 @@ export interface IDefaultEditBuilder {
 	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
 	 * is bounded by the lifetime of this edit builder.
 	 */
-	sequenceField(field: FieldUpPath): SequenceFieldEditBuilder<ITreeCursorSynchronous>;
+	sequenceField(
+		field: NormalizedFieldUpPath,
+	): SequenceFieldEditBuilder<ITreeCursorSynchronous>;
 
 	/**
 	 * Moves a subsequence from one sequence field to another sequence field.
@@ -153,10 +159,10 @@ export interface IDefaultEditBuilder {
 	 * For example, `move(field, 0, 1, field, 2)` changes `[A, B, C]` to `[B, A, C]`.
 	 */
 	move(
-		sourceField: FieldUpPath,
+		sourceField: NormalizedFieldUpPath,
 		sourceIndex: number,
 		count: number,
-		destinationField: FieldUpPath,
+		destinationField: NormalizedFieldUpPath,
 		destinationIndex: number,
 	): void;
 
@@ -164,13 +170,13 @@ export interface IDefaultEditBuilder {
 	 * Add a constraint that the node at the given path must exist.
 	 * @param path - The path to the node that must exist.
 	 */
-	addNodeExistsConstraint(path: UpPath): void;
+	addNodeExistsConstraint(path: NormalizedUpPath): void;
 
 	/**
 	 * Add a constraint that the node at the given path must exist when reverting a change.
 	 * @param path - The path to the node that must exist when reverting a change.
 	 */
-	addNodeExistsConstraintOnRevert(path: UpPath): void;
+	addNodeExistsConstraintOnRevert(path: NormalizedUpPath): void;
 }
 
 /**
