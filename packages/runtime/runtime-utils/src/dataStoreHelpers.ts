@@ -25,12 +25,12 @@ interface IResponseException extends Error {
  * @internal
  */
 function isResponseException(err: unknown): err is IResponseException {
-    return (
-        err !== null &&
-        typeof err === "object" &&
-        "errorFromRequestFluidObject" in err &&
-        (err as { errorFromRequestFluidObject: unknown }).errorFromRequestFluidObject === true
-    );
+	return (
+		err !== null &&
+		typeof err === "object" &&
+		"errorFromRequestFluidObject" in err &&
+		(err as { errorFromRequestFluidObject: unknown }).errorFromRequestFluidObject === true
+	);
 }
 
 /**
@@ -39,9 +39,7 @@ function isResponseException(err: unknown): err is IResponseException {
  */
 export function exceptionToResponse(err: unknown): IResponse {
 	const status = 500;
-	if (
-		isResponseException(err)
-	) {
+	if (isResponseException(err)) {
 		return {
 			mimeType: "text/plain",
 			status: err.code,
