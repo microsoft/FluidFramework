@@ -66,11 +66,19 @@ export async function runWithRetry<T>(
 					onErrorFn(error);
 				}
 				latestResultError = error;
-				Lumberjack.error(
-					`Error running ${callName}: retryCount ${retryCount}`,
-					telemetryProperties,
-					error,
-				);
+				if (retryCount < maxRetries && maxRetries !== -1) {
+					Lumberjack.warning(
+						`Error running ${callName}: retryCount ${retryCount}`,
+						telemetryProperties,
+						error,
+					);
+				} else {
+					Lumberjack.error(
+						`Error running ${callName}: retryCount ${retryCount}`,
+						telemetryProperties,
+						error,
+					)
+				}
 				if (shouldIgnoreError !== undefined && shouldIgnoreError(error) === true) {
 					Lumberjack.info(`Should ignore error for ${callName}`, telemetryProperties);
 					return undefined as unknown as T; // Ensure a value of type T is returned
@@ -179,11 +187,19 @@ export async function requestWithRetry<T>(
 					onErrorFn(error);
 				}
 				latestResultError = error;
-				Lumberjack.error(
-					`Error running ${callName}: retryCount ${retryCount}`,
-					telemetryProperties,
-					error,
-				);
+				if (retryCount < maxRetries && maxRetries !== -1) {
+					Lumberjack.warning(
+						`Error running ${callName}: retryCount ${retryCount}`,
+						telemetryProperties,
+						error,
+					);
+				} else {
+					Lumberjack.error(
+						`Error running ${callName}: retryCount ${retryCount}`,
+						telemetryProperties,
+						error,
+					)
+				}
 				if (shouldRetry !== undefined && shouldRetry(error) === false) {
 					Lumberjack.error(
 						`Should not retry ${callName} for the current error, rejecting`,
