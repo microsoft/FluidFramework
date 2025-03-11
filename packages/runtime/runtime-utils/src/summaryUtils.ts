@@ -87,7 +87,7 @@ export function utf8ByteLength(str: string): number {
 /**
  * Gets the size of a blob
  * @param content - The content of the blob
- * @returns The size of the blob
+ * @returns The size of the blob in bytes
  * @internal
  */
 export function getBlobSize(content: ISummaryBlob["content"]): number {
