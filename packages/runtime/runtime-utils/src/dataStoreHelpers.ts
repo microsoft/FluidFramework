@@ -142,7 +142,7 @@ export function createResponseError(
 export type Factory = IFluidDataStoreFactory & Partial<IProvideFluidDataStoreRegistry>;
 
 /**
- * Creates a combined IFluidDataStoreFactory and IFluidDataStoreRegistry implementation
+ * Creates a combined {@link @fluidframework/runtime-definitions#IFluidDataStoreFactory } and {@link @fluidframework/runtime-definitions#IFluidDataStoreRegistry } implementation
  * from a factory type and implementation
  * @param type - The unique identifier for this data store factory
  * @param factory - The factory implementation or promise that resolves to one
