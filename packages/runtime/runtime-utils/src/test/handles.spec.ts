@@ -15,7 +15,7 @@ describe("Handles", () => {
 			assert(!isFluidHandle(0));
 			assert(!isFluidHandle({}));
 			assert(!isFluidHandle(undefined));
-			// eslint-disable-next-line unicorn/no-null
+			// eslint-disable-next-line unicorn/no-null -- We want to explicitly test for null
 			assert(!isFluidHandle(null));
 			assert(!isFluidHandle([]));
 			assert(!isFluidHandle({ get: () => {} }));
