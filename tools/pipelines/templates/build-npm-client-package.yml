@@ -185,9 +185,6 @@ extends:
     customBuildTags:
       - ES365AIMigrationTooling
     stages:
-
-      - template: /tools/pipelines/templates/test-deployment-stage.yml@self
-
       - ${{ if ne(convertToJson(parameters.checks), '[]') }}:
           - template: /tools/pipelines/templates/include-policy-check.yml@self
             parameters:
