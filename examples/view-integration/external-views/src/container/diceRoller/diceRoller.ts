@@ -7,7 +7,10 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/legacy";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/legacy";
-import type { IChannelFactory } from "@fluidframework/datastore-definitions/legacy";
+import type {
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/legacy";
 import { MapFactory, type ISharedMap, type IValueChanged } from "@fluidframework/map/legacy";
 import type {
 	IFluidDataStoreChannel,
@@ -68,19 +71,20 @@ export class DiceRollerFactory implements IFluidDataStoreFactory {
 		context: IFluidDataStoreContext,
 		existing: boolean,
 	): Promise<IFluidDataStoreChannel> {
-		let map: ISharedMap;
+		const provideEntryPoint = async (entryPointRuntime: IFluidDataStoreRuntime) => {
+			const map = (await entryPointRuntime.getChannel(mapId)) as ISharedMap;
+			return new DiceRoller(map);
+		};
+
 		const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
 			context,
 			diceRollerSharedObjectRegistry,
 			existing,
-			async () => {
-				map ??= (await runtime.getChannel(mapId)) as ISharedMap;
-				return new DiceRoller(map);
-			},
+			provideEntryPoint,
 		);
 
 		if (!existing) {
-			map = runtime.createChannel(mapId, mapFactory.type) as ISharedMap;
+			const map = runtime.createChannel(mapId, mapFactory.type) as ISharedMap;
 			map.set(diceValueKey, 1);
 			map.bindToContext();
 		}

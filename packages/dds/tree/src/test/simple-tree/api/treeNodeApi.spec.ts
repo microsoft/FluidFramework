@@ -11,7 +11,6 @@ import {
 
 import { type UpPath, rootFieldKey } from "../../../core/index.js";
 import {
-	cursorForJsonableTreeNode,
 	MockNodeKeyManager,
 	TreeStatus,
 	type StableNodeKey,
@@ -29,7 +28,7 @@ import {
 	TreeViewConfiguration,
 	type UnsafeUnknownSchema,
 } from "../../../simple-tree/index.js";
-import { getView, validateUsageError } from "../../utils.js";
+import { chunkFromJsonableTrees, getView, validateUsageError } from "../../utils.js";
 import { getViewForForkedBranch, hydrate } from "../utils.js";
 import { brand, type areSafelyAssignable, type requireTrue } from "../../../util/index.js";
 
@@ -778,10 +777,10 @@ describe("treeNodeApi", () => {
 			const branch = checkout.branch();
 			branch.editor
 				.valueField({ parent: rootNode, field: brand("prop1") })
-				.set(cursorForJsonableTreeNode({ type: brand(numberSchema.identifier), value: 2 }));
+				.set(chunkFromJsonableTrees([{ type: brand(numberSchema.identifier), value: 2 }]));
 			branch.editor
 				.valueField({ parent: rootNode, field: brand("prop2") })
-				.set(cursorForJsonableTreeNode({ type: brand(numberSchema.identifier), value: 2 }));
+				.set(chunkFromJsonableTrees([{ type: brand(numberSchema.identifier), value: 2 }]));
 
 			checkout.merge(branch);
 
