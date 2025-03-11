@@ -27,7 +27,7 @@ describe("Handles", () => {
 			assert(isFluidHandle(loopy));
 			assert(!isFluidHandle({ IFluidHandle: 5 }));
 			assert(!isFluidHandle({ IFluidHandle: {} }));
-			// eslint-disable-next-line unicorn/no-null
+			// eslint-disable-next-line unicorn/no-null -- We want to explicitly test for null
 			assert(!isFluidHandle({ IFluidHandle: null }));
 
 			// Symbol based:
