@@ -117,11 +117,15 @@ export function getEditingSystemPrompt(
 	// TODO: security: user prompt in system prompt
 	const systemPrompt = `
 	${role}\nEdits are JSON objects that conform to the schema described below. You produce an array of edits where each edit ${topLevelEditWrapperDescription}.
-	When creating new objects for ${"InsertIntoArray" satisfies Capitalize<InsertIntoArray["type"]>} or ${"SetField" satisfies Capitalize<SetField["type"]>}, you may create an ID and put it in the ${objectIdKey} property if you want to refer to the object in a later edit.
-	\nHere are the schema definitions for an edit:\n${treeSchemaString}\n
+	When creating new objects for ${"InsertIntoArray" satisfies Capitalize<InsertIntoArray["type"]>} or ${"SetField" satisfies Capitalize<SetField["type"]>},
+	you may create an ID and put it in the ${objectIdKey} property if you want to refer to the object in a later edit. For example, if you want to insert a new object into an array and (in a subsequent edit)
+	move another piece of content to after the newly inserted one, you can use the ID of the newly inserted object in the ${"MoveArrayElement" satisfies Capitalize<MoveArrayElement["type"]>} edit.
+	\nThe schema definitions for an edit are:\n${treeSchemaString}\n
 	The tree is a JSON object with the following schema: ${promptFriendlySchema}
 	The current state of the tree is: ${decoratedTreeJson}.
-	You should create an array of one or more edits that accomplishes the goal, or an empty array if the task can't be accomplished.`;
+	Your final output should be an array of one or more edits that accomplishes the goal, or an empty array if the task can't be accomplished.
+	Before returning the edits, you should check that they are valid according to both the application schema and the editing language schema.
+	Finally, double check that the edits would accomplish the users request (if it is possible).`;
 	return systemPrompt;
 }
 
