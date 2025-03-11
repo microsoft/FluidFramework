@@ -96,7 +96,7 @@ export function responseToException(response: IResponse, request: IRequest): Err
 /**
  * Creates a 404 "not found" response for the given request
  * @param request - The request that resulted in the 404 response
- * @returns An IResponse object with 404 status code
+ * @returns An {@link @fluidframework/core-interfaces#IResponse } object with 404 status code
  * @legacy
  * @alpha
  */
