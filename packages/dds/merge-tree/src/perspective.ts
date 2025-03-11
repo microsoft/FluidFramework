@@ -5,7 +5,13 @@
 
 import { type MergeTree } from "./mergeTree.js";
 import { LeafAction, backwardExcursion, forwardExcursion } from "./mergeTreeNodeWalk.js";
-import { seqLTE, type ISegmentLeaf } from "./mergeTreeNodes.js";
+import {
+	seqLTE,
+	timestampUtils,
+	type ISegmentLeaf,
+	type OperationTimestamp,
+	type RemoveOperationTimestamp,
+} from "./mergeTreeNodes.js";
 import { isInserted, isRemoved } from "./segmentInfos.js";
 
 export interface Perspective {
@@ -14,14 +20,15 @@ export interface Perspective {
 	readonly localSeq?: number;
 	isSegmentPresent(segment: ISegmentLeaf): boolean;
 
+	hasOccurred(stamp: OperationTimestamp): boolean;
+
 	nextSegment(mergeTree: MergeTree, segment: ISegmentLeaf, forward?: boolean): ISegmentLeaf;
 	previousSegment(mergeTree: MergeTree, segment: ISegmentLeaf): ISegmentLeaf;
-	// May want this instead of letting merge-tree calculate it? Or maybe not. This is nice and self contained.
-	// lengthOf(segment: ISegmentLeaf): number | undefined;
 }
 
 abstract class PerspectiveBase {
-	abstract isSegmentPresent(seg: ISegmentLeaf): boolean;
+	abstract hasOccurred(stamp: OperationTimestamp): boolean;
+
 	/**
 	 * Returns the immediately adjacent segment in the specified direction from this perspective.
 	 * There may actually be multiple segments between the given segment and the returned segment,
@@ -56,6 +63,19 @@ abstract class PerspectiveBase {
 	public previousSegment(mergeTree: MergeTree, segment: ISegmentLeaf): ISegmentLeaf {
 		return this.nextSegment(mergeTree, segment, false);
 	}
+
+	public isSegmentPresent(seg: ISegmentLeaf): boolean {
+		if (isInserted(seg) && !this.hasOccurred(seg.insert)) {
+			return false;
+		}
+
+		// TODO: Previous factoring was able to fast-path refSeq and localSeq based remove (which look at first and last timestamp before others)
+		if (isRemoved(seg) && seg.removes.some((remove) => this.hasOccurred(remove))) {
+			return false;
+		}
+
+		return true;
+	}
 }
 
 /**
@@ -73,29 +93,10 @@ export class PriorPerspective extends PerspectiveBase implements Perspective {
 		super();
 	}
 
-	public isSegmentPresent(seg: ISegmentLeaf): boolean {
-		// If seg.seq is undefined, then this segment has existed since minSeq.
-		// It may have been moved or removed since.
-		if (isInserted(seg)) {
-			const visibleViaRefSeq = seqLTE(seg.insert.seq, this.refSeq);
-			const visibleViaSameClient = seg.insert.clientId === this.clientId;
-			if (!visibleViaRefSeq && !visibleViaSameClient) {
-				return false;
-			}
-		}
-
-		if (isRemoved(seg)) {
-			const removalViaRefSeq = seqLTE(seg.removes[0].seq, this.refSeq);
-			if (removalViaRefSeq) {
-				return false;
-			}
-			const removalViaSameClient = seg.removes.some(
-				({ clientId }) => clientId === this.clientId,
-			);
-			return !removalViaSameClient;
-		}
-
-		return true;
+	public hasOccurred(stamp: OperationTimestamp): boolean {
+		const predatesViaRefSeq = seqLTE(stamp.seq, this.refSeq);
+		const predatesViaSameClient = stamp.clientId === this.clientId;
+		return predatesViaRefSeq || predatesViaSameClient;
 	}
 }
 
@@ -116,30 +117,87 @@ export class LocalReconnectingPerspective extends PerspectiveBase implements Per
 		super();
 	}
 
-	public isSegmentPresent(seg: ISegmentLeaf): boolean {
-		if (isInserted(seg)) {
-			const visibleViaRefSeq = seqLTE(seg.insert.seq, this.refSeq);
-			const visibleViaLocalSeq =
-				seg.insert.localSeq !== undefined && seg.insert.localSeq <= this.localSeq;
-			if (!visibleViaRefSeq && !visibleViaLocalSeq) {
-				return false;
-			}
-		}
+	// public isSegmentPresent(seg: ISegmentLeaf): boolean {
+	// 	if (isInserted(seg)) {
+	// 		const visibleViaRefSeq = seqLTE(seg.insert.seq, this.refSeq);
+	// 		const visibleViaLocalSeq =
+	// 			seg.insert.localSeq !== undefined && seg.insert.localSeq <= this.localSeq;
+	// 		if (!visibleViaRefSeq && !visibleViaLocalSeq) {
+	// 			return false;
+	// 		}
+	// 	}
 
-		if (isRemoved(seg)) {
-			const removalViaRefSeq = seqLTE(seg.removes[0].seq, this.refSeq);
-			if (removalViaRefSeq) {
-				return false;
-			}
+	// 	if (isRemoved(seg)) {
+	// 		const removalViaRefSeq = seqLTE(seg.removes[0].seq, this.refSeq);
+	// 		if (removalViaRefSeq) {
+	// 			return false;
+	// 		}
 
-			const lastRemove = seg.removes[seg.removes.length - 1];
-			const removalViaLocalSeq =
-				lastRemove.localSeq !== undefined && lastRemove.localSeq <= this.localSeq;
-			if (removalViaLocalSeq) {
-				return false;
-			}
+	// 		const lastRemove = seg.removes[seg.removes.length - 1];
+	// 		const removalViaLocalSeq =
+	// 			lastRemove.localSeq !== undefined && lastRemove.localSeq <= this.localSeq;
+	// 		if (removalViaLocalSeq) {
+	// 			return false;
+	// 		}
+	// 	}
+
+	// 	return true;
+	// }
+
+	public hasOccurred(stamp: OperationTimestamp): boolean {
+		const predatesViaRefSeq = seqLTE(stamp.seq, this.refSeq);
+		const predatesViaLocalSeq =
+			stamp.localSeq !== undefined && stamp.localSeq <= this.localSeq;
+		return predatesViaRefSeq || predatesViaLocalSeq;
+	}
+}
+
+/**
+ * A perspective which includes all known edits.
+ *
+ * This is the perspective that the application sees.
+ * @remarks
+ * This should be representable using {@link PriorPerspective} with a refSeq of `Number.MAX_SAFE_INTEGER`, but having an explicit
+ * variant of this perspective renders extra refSeq checks unnecessary and is a bit easier to read.
+ */
+export class LocalDefaultPerspective extends PerspectiveBase implements Perspective {
+	public readonly refSeq = Number.MAX_SAFE_INTEGER;
+
+	public constructor(public readonly clientId: number) {
+		super();
+	}
+
+	public hasOccurred(_stamp: OperationTimestamp): boolean {
+		return true;
+	}
+}
+
+/**
+ * A perspective dictating whether segments are 'visible' to a remote obliterate operation.
+ */
+export class RemoteObliteratePerspective extends PerspectiveBase implements Perspective {
+	public readonly refSeq = Number.MAX_SAFE_INTEGER;
+
+	constructor(public readonly clientId: number) {
+		super();
+	}
+
+	public hasOccurred(stamp: OperationTimestamp): boolean {
+		// Local-only removals are not visible to an obliterate operation, since this means the local removal was concurrent
+		// to a remote obliterate and we may need to mark the segment appropriately to reflect this overlapping remove.
+		// Every other type of operation is visible: obliterates do not affect segments that have already been removed and acked,
+		// and they always affect segments within their range that have not been removed, even if those segments were inserted
+		// after the obliterate's refSeq.
+		if (isRemoveOperationTimestamp(stamp) && timestampUtils.isLocal(stamp)) {
+			return false;
 		}
 
 		return true;
 	}
+}
+
+function isRemoveOperationTimestamp(
+	stamp: OperationTimestamp,
+): stamp is RemoveOperationTimestamp {
+	return (stamp as any).type === "slice" || (stamp as any).type === "set";
 }

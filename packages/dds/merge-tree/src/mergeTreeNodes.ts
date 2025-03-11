@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
 import { IAttributionCollection } from "./attributionCollection.js";
-import { LocalClientId, UnassignedSequenceNumber } from "./constants.js";
+import { LocalClientId, NonCollabClient, UnassignedSequenceNumber } from "./constants.js";
 import { LocalReferenceCollection, type LocalReferencePosition } from "./localReference.js";
 import { TrackingGroupCollection } from "./mergeTreeTracking.js";
 import { IJSONSegment, IMarkerDef, ReferenceType } from "./ops.js";
@@ -28,6 +28,7 @@ import {
 	type SegmentWithInfo,
 } from "./segmentInfos.js";
 import { PropertiesManager } from "./segmentPropertiesManager.js";
+import { PriorPerspective, type Perspective } from "./perspective.js";
 
 /**
  * This interface exposes internal things to dds that leverage merge tree,
@@ -674,7 +675,11 @@ export class CollaborationWindow {
 
 	public get minSeqTime(): OperationTimestamp {
 		// TODO: Audit usages that care about the timestamp of this. Such things seem wrong, but it's also weird that we force one here.
-		return { seq: this.minSeq, clientId: this.clientId };
+		return { seq: this.minSeq, clientId: NonCollabClient };
+	}
+
+	public get minSeqPerspective(): Perspective {
+		return new PriorPerspective(this.minSeq, NonCollabClient);
 	}
 
 	/**

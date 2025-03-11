@@ -21,7 +21,7 @@ import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import { Client } from "../client.js";
 import { DoublyLinkedList } from "../collections/index.js";
-import { UnassignedSequenceNumber } from "../constants.js";
+import { UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants.js";
 import { IMergeTreeOptions, ReferencePosition } from "../index.js";
 import { MergeTree, getSlideToSegoff } from "../mergeTree.js";
 import {
@@ -37,7 +37,6 @@ import {
 	type SegmentGroup,
 	assertSegmentLeaf,
 	type OperationTimestamp,
-	timestampUtils,
 } from "../mergeTreeNodes.js";
 import {
 	createAnnotateRangeOp,
@@ -55,12 +54,13 @@ import {
 import { PropertySet } from "../properties.js";
 import { DetachedReferencePosition, refHasTileLabel } from "../referencePositions.js";
 import { MergeTreeRevertibleDriver } from "../revertibles.js";
-import { assertInserted, assertMergeNode, isInserted, isRemoved } from "../segmentInfos.js";
+import { assertInserted, assertMergeNode, isRemoved } from "../segmentInfos.js";
 import { SnapshotLegacy } from "../snapshotlegacy.js";
 import { TextSegment } from "../textSegment.js";
 
 import { TestSerializer } from "./testSerializer.js";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils.js";
+import { LocalReconnectingPerspective } from "../perspective.js";
 
 export function specToSegment(spec: IJSONSegment): ISegmentPrivate {
 	const maybeText = TextSegment.fromJSONObject(spec);
@@ -198,7 +198,16 @@ export class TestClient extends Client {
 	}
 
 	public getText(start?: number, end?: number): string {
-		return this.textHelper.getText(this.getCurrentSeq(), this.getClientId(), "", start, end);
+		return this.textHelper.getText(
+			// Current sequence number of the collab window *should* be sufficient here, but some tests perform operations on the merge tree directly
+			// which doesn't update that. In reality this probably gets cleaned up by propagating perspectives more thoroughly and using a perspective here
+			// which just ignores ref seqs.
+			UniversalSequenceNumber,
+			this.getClientId(),
+			"",
+			start,
+			end,
+		);
 	}
 
 	public enqueueTestString(): void {
@@ -385,32 +394,18 @@ export class TestClient extends Client {
 		let segment: ISegmentPrivate | undefined;
 		let posAccumulated = 0;
 		let offset = pos;
-		const isInsertedInView = (seg: ISegmentPrivate): boolean =>
-			isInserted(seg) &&
-			// TODO: All of this function is really semantically doing perspective checks,
-			// which should probably not be handled via operation timestamps.
-			(timestampUtils.lte(seg.insert, {
-				seq: seqNumberFrom,
-				clientId: this.getCollabWindow().clientId,
-			}) ||
-				(timestampUtils.isLocal(seg.insert) &&
-					timestampUtils.lte(seg.insert, {
-						seq: UnassignedSequenceNumber,
-						clientId: this.getCollabWindow().clientId,
-						localSeq,
-					})));
 
-		const isRemovedFromView = (s: ISegmentPrivate): boolean =>
-			isRemoved(s) &&
-			((timestampUtils.isAcked(s.removes[0]) && s.removes[0].seq <= seqNumberFrom) ||
-				(timestampUtils.isLocal(s.removes[s.removes.length - 1]) &&
-					s.removes[s.removes.length - 1].localSeq! <= localSeq));
+		const perspective = new LocalReconnectingPerspective(
+			seqNumberFrom,
+			this.getCollabWindow().clientId,
+			localSeq,
+		);
 
 		walkAllChildSegments(this.mergeTree.root, (seg) => {
 			assertInserted(seg);
 			segment = seg;
 
-			if (isInsertedInView(seg) && !isRemovedFromView(seg)) {
+			if (perspective.isSegmentPresent(seg)) {
 				posAccumulated += seg.cachedLength;
 				if (offset >= seg.cachedLength) {
 					offset -= seg.cachedLength;
@@ -433,16 +428,12 @@ export class TestClient extends Client {
 	public findReconnectionPosition(segment: ISegmentPrivate, localSeq: number): number {
 		const fasterComputedPosition = super.findReconnectionPosition(segment, localSeq);
 
-		const perspectiveStamp: OperationTimestamp = {
-			seq: UnassignedSequenceNumber,
-			clientId: this.getCollabWindow().clientId,
+		const perspective = new LocalReconnectingPerspective(
+			Number.MAX_SAFE_INTEGER,
+			this.getCollabWindow().clientId,
 			localSeq,
-		};
+		);
 		let segmentPosition = 0;
-		const isInsertedInView = (seg: ISegmentPrivate): boolean =>
-			isInserted(seg) && timestampUtils.lte(seg.insert, perspectiveStamp);
-		const isRemovedFromView = (s: ISegmentPrivate): boolean =>
-			isRemoved(s) && timestampUtils.lte(s.removes[0], perspectiveStamp);
 
 		/*
             Walk the segments up to the current segment, and calculate its
@@ -455,12 +446,8 @@ export class TestClient extends Client {
 				return false;
 			}
 
-			// Otherwise, advance segmentPosition if the segment has been inserted and not removed
-			// with respect to the given 'localSeq'.
-			//
-			// Note that all ACKed / remote ops are applied and we only need concern ourself with
-			// determining if locally pending ops fall before/after the given 'localSeq'.
-			if (isInsertedInView(seg) && !isRemovedFromView(seg)) {
+			// Otherwise, advance segmentPosition if the segment is visible at the given perspective.
+			if (perspective.isSegmentPresent(seg)) {
 				segmentPosition += seg.cachedLength;
 			}
 

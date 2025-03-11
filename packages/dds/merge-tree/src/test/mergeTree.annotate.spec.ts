@@ -20,6 +20,7 @@ import type { PropsOrAdjust } from "../segmentPropertiesManager.js";
 import { TextSegment } from "../textSegment.js";
 
 import { insertSegments } from "./testUtils.js";
+import { LocalDefaultPerspective } from "../perspective.js";
 
 function splitAt(mergeTree: MergeTree, pos: number): ISegmentPrivate | undefined {
 	let segment: ISegmentPrivate | undefined;
@@ -28,8 +29,7 @@ function splitAt(mergeTree: MergeTree, pos: number): ISegmentPrivate | undefined
 			segment = seg;
 			return false;
 		},
-		mergeTree.collabWindow.currentSeq,
-		mergeTree.collabWindow.clientId,
+		new LocalDefaultPerspective(mergeTree.collabWindow.clientId),
 		undefined,
 		pos,
 		pos + 1,

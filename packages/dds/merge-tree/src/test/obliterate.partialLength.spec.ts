@@ -247,6 +247,10 @@ describe("obliterate partial lengths", () => {
 		});
 
 		it("passes for remote obliterate and local obliterate", () => {
+			// TODO: This test is doing some really weird stuff as-is. The operations are only overlaping because
+			// the obliterateRange below doesn't go through the client, so the refSeq on the subsequent local op is interpreted
+			// as concurrent (even though that would naturally not happen). In general, mixing the helpers that operate on the merge tree
+			// and using the client's methods seems problematic.
 			obliterateRange({
 				mergeTree: client.mergeTree,
 				start: 0,

@@ -26,6 +26,7 @@ import {
 	MergeTreeChunkLegacy,
 	serializeAsMinSupportedVersion,
 } from "./snapshotChunks.js";
+import { PriorPerspective } from "./perspective.js";
 
 interface SnapshotHeader {
 	chunkCount?: number;
@@ -230,7 +231,8 @@ export class SnapshotLegacy {
 			return true;
 		};
 
-		this.mergeTree.mapRange(extractSegment, this.seq, NonCollabClient, undefined);
+		const minSeqPerspective = new PriorPerspective(this.seq, NonCollabClient);
+		this.mergeTree.mapRange(extractSegment, minSeqPerspective, undefined);
 
 		this.segments = [];
 		let totalLength: number = 0;

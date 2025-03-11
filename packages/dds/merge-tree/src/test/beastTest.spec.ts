@@ -51,6 +51,7 @@ import { _dirname } from "./dirname.cjs";
 import { TestClient, getStats, specToSegment } from "./testClient.js";
 import { TestServer } from "./testServer.js";
 import { insertText, loadTextFromFile, nodeOrdinalsHaveIntegrity } from "./testUtils.js";
+import { LocalDefaultPerspective } from "../perspective.js";
 
 function LinearDictionary<TKey, TData>(
 	compareKeys: KeyComparer<TKey>,
@@ -371,7 +372,8 @@ export function mergeTreeTest1(): void {
 		{ seq: UniversalSequenceNumber, clientId: LocalClientId },
 		undefined,
 	);
-	mergeTree.mapRange(printTextSegment, UniversalSequenceNumber, LocalClientId, undefined);
+	const localPerspective = new LocalDefaultPerspective(mergeTree.collabWindow.clientId);
+	mergeTree.mapRange(printTextSegment, localPerspective, undefined);
 	let fuzzySeg = makeCollabTextSegment("fuzzy, fuzzy ");
 	checkInsertMergeTree(mergeTree, 4, fuzzySeg);
 	fuzzySeg = makeCollabTextSegment("fuzzy, fuzzy ");
@@ -379,7 +381,7 @@ export function mergeTreeTest1(): void {
 	checkMarkRemoveMergeTree(mergeTree, 4, 13);
 	// checkRemoveSegTree(segTree, 4, 13);
 	checkInsertMergeTree(mergeTree, 4, makeCollabTextSegment("fi"));
-	mergeTree.mapRange(printTextSegment, UniversalSequenceNumber, LocalClientId, undefined);
+	mergeTree.mapRange(printTextSegment, localPerspective, undefined);
 	const segoff = mergeTree.getContainingSegment(4, UniversalSequenceNumber, LocalClientId);
 	log(mergeTree.getPosition(segoff.segment!, UniversalSequenceNumber, LocalClientId));
 	log(new MergeTreeTextHelper(mergeTree).getText(UniversalSequenceNumber, LocalClientId));

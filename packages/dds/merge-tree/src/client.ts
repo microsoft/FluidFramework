@@ -100,6 +100,7 @@ import { SnapshotLoader } from "./snapshotLoader.js";
 import { SnapshotV1 } from "./snapshotV1.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
 import { IMergeTreeTextHelper } from "./textSegment.js";
+import { LocalDefaultPerspective, type Perspective } from "./perspective.js";
 
 type IMergeTreeDeltaRemoteOpArgs = Omit<IMergeTreeDeltaOpArgs, "sequencedMessage"> &
 	Required<Pick<IMergeTreeDeltaOpArgs, "sequencedMessage">>;
@@ -153,6 +154,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	public longClientId: string | undefined;
 
 	private readonly _mergeTree: MergeTree;
+	private readonly localPerspective: Perspective;
 
 	private readonly clientNameToIds = new RedBlackTree<string, number>(compareStrings);
 	private readonly shortClientIdMap: string[] = [];
@@ -181,6 +183,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	) {
 		super();
 		this._mergeTree = new MergeTree(options);
+		this.localPerspective = new LocalDefaultPerspective(this.getClientId());
 		this._mergeTree.mergeTreeDeltaCallback = (opArgs, deltaArgs): void => {
 			this.emit("delta", opArgs, deltaArgs, this);
 		};
@@ -370,15 +373,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		accum: TClientData,
 		splitRange: boolean = false,
 	): void {
-		this._mergeTree.mapRange(
-			handler,
-			this.getCurrentSeq(),
-			this.getClientId(),
-			accum,
-			start,
-			end,
-			splitRange,
-		);
+		this._mergeTree.mapRange(handler, this.localPerspective, accum, start, end, splitRange);
 	}
 
 	protected walkAllSegments<TClientData>(

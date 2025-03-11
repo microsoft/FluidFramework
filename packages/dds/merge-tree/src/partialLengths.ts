@@ -15,6 +15,11 @@ import {
 } from "./mergeTreeNodes.js";
 import { toRemovalInfo, assertInserted, wasMovedOnInsert } from "./segmentInfos.js";
 import { SortedSet } from "./sortedSet.js";
+import {
+	LocalDefaultPerspective,
+	LocalReconnectingPerspective,
+	PriorPerspective,
+} from "./perspective.js";
 
 class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength> {
 	protected compare(a: PartialSequenceLength, b: PartialSequenceLength): number {
@@ -1131,7 +1136,13 @@ export function verifyExpectedPartialLengths(
 			continue;
 		}
 		if (thisNode.isLeaf()) {
-			expected += mergeTree["nodeLength"](thisNode, refSeq, clientId, localSeq) ?? 0;
+			const perspective =
+				clientId === mergeTree.collabWindow.clientId
+					? localSeq !== undefined
+						? new LocalReconnectingPerspective(refSeq, clientId, localSeq)
+						: new LocalDefaultPerspective(clientId)
+					: new PriorPerspective(refSeq, clientId);
+			expected += mergeTree["nodeLength"](thisNode, perspective) ?? 0;
 		} else {
 			nodesToVisit.push(...thisNode.children.slice(0, thisNode.childCount));
 		}

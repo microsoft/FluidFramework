@@ -79,7 +79,13 @@ import {
 	ReferenceType,
 } from "./ops.js";
 import { PartialSequenceLengths } from "./partialLengths.js";
-import { PriorPerspective, LocalReconnectingPerspective } from "./perspective.js";
+import {
+	PriorPerspective,
+	LocalReconnectingPerspective,
+	type Perspective,
+	LocalDefaultPerspective,
+	RemoteObliteratePerspective,
+} from "./perspective.js";
 import { PropertySet, createMap, extend, extendIfUndefined } from "./properties.js";
 import {
 	DetachedReferencePosition,
@@ -640,31 +646,24 @@ export class MergeTree {
 		return block;
 	}
 
-	/**
-	 * Compute the net length of this segment from a local perspective.
-	 * @param segment - Segment whose length to find
-	 * @param localSeq - localSeq at which to find the length of this segment. If not provided,
-	 * default is to consider the local client's current perspective. Only local sequence
-	 * numbers corresponding to un-acked operations give valid results.
-	 */
-	public localNetLength(
+	public localNetLengthOld(
 		segment: ISegmentLeaf,
 		refSeq?: number,
 		localSeq?: number,
 	): number | undefined {
 		const removalInfo = toRemovalInfo(segment);
+		if (
+			removalInfo !== undefined &&
+			this.collabWindow.minSeqPerspective.hasOccurred(removalInfo.removes[0])
+		) {
+			// this segment's removal has already moved outside the collab window which means it is zamboni eligible
+			// this also means the segment could be completely absent from other client's in-memory merge trees,
+			// so we should not consider it when making decisions about conflict resolutions
+			return undefined;
+		}
+
 		if (localSeq === undefined) {
-			if (removalInfo !== undefined) {
-				if (timestampUtils.greaterThan(removalInfo.removes[0], this.collabWindow.minSeqTime)) {
-					return 0;
-				}
-				// this segment removed and outside the collab window which means it is zamboni eligible
-				// this also means the segment could be completely absent from other client's in-memory merge trees,
-				// so we should not consider it when making decisions about conflict resolutions
-				return undefined;
-			} else {
-				return segment.cachedLength;
-			}
+			return removalInfo === undefined ? segment.cachedLength : 0;
 		}
 
 		assert(
@@ -704,6 +703,44 @@ export class MergeTree {
 				? segment.cachedLength
 				: 0;
 		}
+	}
+
+	/**
+	 * Compute the net length of this segment from a local perspective.
+	 * @param segment - Segment whose length to find
+	 * @param localSeq - localSeq at which to find the length of this segment. If not provided,
+	 * default is to consider the local client's current perspective. Only local sequence
+	 * numbers corresponding to un-acked operations give valid results.
+	 */
+	public localNetLengthNew(
+		segment: ISegmentLeaf,
+		perspective: Perspective,
+	): number | undefined {
+		const removalInfo = toRemovalInfo(segment);
+		if (
+			removalInfo &&
+			this.collabWindow.minSeqPerspective.hasOccurred(removalInfo.removes[0])
+		) {
+			// this segment's removal has already moved outside the collab window which means it is zamboni eligible
+			// this also means the segment could be completely absent from other client's in-memory merge trees,
+			// so we should not consider it when making decisions about conflict resolutions
+			return undefined;
+		}
+
+		return perspective.isSegmentPresent(segment) ? segment.cachedLength : 0;
+	}
+
+	public localNetLength(
+		segment: ISegmentLeaf,
+		perspective: Perspective = new LocalDefaultPerspective(this.collabWindow.clientId),
+	): number | undefined {
+		const old = this.localNetLengthOld(segment, perspective.refSeq, perspective.localSeq);
+		const newLength = this.localNetLengthNew(segment, perspective);
+		if (old !== newLength) {
+			this.localNetLengthNew(segment, perspective);
+		}
+		assert(old === newLength, "uh oh" /* new and old localNetLengths do not match */);
+		return newLength;
 	}
 
 	public unlinkMarker(marker: Marker): void {
@@ -812,6 +849,12 @@ export class MergeTree {
 			return 0;
 		}
 
+		const perspective =
+			clientId === this.collabWindow.clientId
+				? localSeq !== undefined
+					? new LocalReconnectingPerspective(refSeq, clientId, localSeq)
+					: new LocalDefaultPerspective(clientId)
+				: new PriorPerspective(refSeq, clientId);
 		let totalOffset = 0;
 		let parent = node.parent;
 		let prevParent: MergeBlock | undefined;
@@ -822,7 +865,7 @@ export class MergeTree {
 				if ((!!prevParent && child === prevParent) || child === node) {
 					break;
 				}
-				totalOffset += this.nodeLength(child, refSeq, clientId, localSeq) ?? 0;
+				totalOffset += this.nodeLength(child, perspective) ?? 0;
 			}
 			prevParent = parent;
 			parent = parent.parent;
@@ -843,6 +886,13 @@ export class MergeTree {
 			localSeq === undefined || clientId === this.collabWindow.clientId,
 			0x39b /* localSeq provided for non-local client */,
 		);
+
+		const perspective =
+			clientId === this.collabWindow.clientId
+				? localSeq !== undefined
+					? new LocalReconnectingPerspective(refSeq, clientId, localSeq)
+					: new LocalDefaultPerspective(clientId)
+				: new PriorPerspective(refSeq, clientId);
 		let segment: ISegmentLeaf | undefined;
 		let offset: number | undefined;
 
@@ -851,7 +901,7 @@ export class MergeTree {
 			offset = start;
 			return false;
 		};
-		this.nodeMap(refSeq, clientId, leaf, undefined, pos, pos + 1, localSeq);
+		this.nodeMap(perspective, leaf, undefined, pos, pos + 1);
 		return { segment, offset };
 	}
 
@@ -1088,17 +1138,13 @@ export class MergeTree {
 		this.localPartialsComputed = true;
 	}
 
-	private nodeLength(
-		node: IMergeNode,
-		refSeq: number,
-		clientId: number,
-		localSeq?: number,
-	): number | undefined {
+	private nodeLength(node: IMergeNode, perspective: Perspective): number | undefined {
+		const { refSeq, clientId, localSeq } = perspective;
 		// TODO: This should not be a OperationTimestamp. You should be using something like a perspective passed in here.
 		const timestamp: OperationTimestamp = { seq: refSeq, clientId, localSeq };
 		if (!this.collabWindow.collaborating || this.collabWindow.clientId === clientId) {
 			if (node.isLeaf()) {
-				return this.localNetLength(node, refSeq, localSeq);
+				return this.localNetLength(node, perspective);
 			} else if (
 				localSeq === undefined ||
 				// All changes are visible. Small note on why we allow refSeq >= this.collabWindow.currentSeq rather than just equality:
@@ -1128,6 +1174,16 @@ export class MergeTree {
 		} else {
 			// Sequence number within window
 			if (node.isLeaf()) {
+				// const removalInfo = toRemovalInfo(node);
+				// if (
+				// 	removalInfo &&
+				// 	this.collabWindow.minSeqPerspective.hasOccurred(removalInfo.removes[0])
+				// ) {
+				// 	return undefined;
+				// }
+				// const perspective = new PriorPerspective(refSeq, clientId);
+				// return perspective.isSegmentPresent(node) ? node.cachedLength : 0;
+
 				const segment = node;
 				const removalInfo = toRemovalInfo(segment);
 				if (removalInfo !== undefined) {
@@ -1229,7 +1285,7 @@ export class MergeTree {
 						? firstMove.seq
 						: refSeq;
 
-				const perspective =
+				const slidePerspective =
 					lastMove?.localSeq === undefined
 						? new PriorPerspective(slideSeq, this.collabWindow.clientId)
 						: new LocalReconnectingPerspective(
@@ -1238,7 +1294,7 @@ export class MergeTree {
 								lastMove.localSeq,
 							);
 
-				const slidSegment = perspective.nextSegment(this, seg, forward);
+				const slidSegment = slidePerspective.nextSegment(this, seg, forward);
 				return (
 					this.getPosition(slidSegment, refSeq, clientId, localSeq) +
 					(forward ? 0 : slidSegment.cachedLength === 0 ? 0 : slidSegment.cachedLength - 1)
@@ -1462,9 +1518,15 @@ export class MergeTree {
 		stamp: OperationTimestamp,
 		opArgs: IMergeTreeDeltaOpArgs | undefined,
 	): void {
-		this.ensureIntervalBoundary(pos, refSeq, stamp.clientId);
+		// TODO: Convert all of these public methods to just take in perspective rather than construct.
+		// Also, seems like you never converted annotate to also operate in terms of stamps.
+		const perspective =
+			stamp.seq === UnassignedSequenceNumber
+				? new LocalDefaultPerspective(stamp.clientId)
+				: new PriorPerspective(refSeq, stamp.clientId);
+		this.ensureIntervalBoundary(pos, perspective);
 
-		this.blockInsert(pos, refSeq, stamp, segments);
+		this.blockInsert(pos, perspective, stamp, segments);
 
 		// opArgs == undefined => loading snapshot or test code
 		if (opArgs !== undefined) {
@@ -1532,7 +1594,7 @@ export class MergeTree {
 
 	private blockInsert<T extends ISegmentPrivate>(
 		pos: number,
-		refSeq: number,
+		perspective: Perspective,
 		stamp: OperationTimestamp,
 		newSegments: T[],
 	): void {
@@ -1599,7 +1661,7 @@ export class MergeTree {
 				}
 			}
 
-			const splitNode = this.insertingWalk(this.root, insertPos, refSeq, stamp, {
+			const splitNode = this.insertingWalk(this.root, insertPos, perspective, stamp, {
 				leaf: onLeaf,
 				candidateSegment: newSegment,
 				continuePredicate: continueFrom,
@@ -1632,7 +1694,7 @@ export class MergeTree {
 			let oldestUnacked: ObliterateInfo | undefined;
 			// TODO: We should maybe be using perspective checks here
 			const refSeqTimestamp: OperationTimestamp = {
-				seq: refSeq,
+				seq: perspective.refSeq,
 				clientId: stamp.clientId,
 				localSeq: stamp.localSeq,
 			};
@@ -1766,12 +1828,12 @@ export class MergeTree {
 		return { next };
 	};
 
-	private ensureIntervalBoundary(pos: number, refSeq: number, clientId: number): void {
+	private ensureIntervalBoundary(pos: number, perspective: Perspective): void {
 		const splitNode = this.insertingWalk(
 			this.root,
 			pos,
-			refSeq,
-			{ seq: TreeMaintenanceSequenceNumber, clientId },
+			perspective,
+			{ seq: TreeMaintenanceSequenceNumber, clientId: perspective.clientId },
 			{ leaf: this.splitLeafSegment },
 		);
 		this.updateRoot(splitNode);
@@ -1804,7 +1866,7 @@ export class MergeTree {
 	private insertingWalk(
 		block: MergeBlock,
 		pos: number,
-		refSeq: number,
+		perspective: Perspective,
 		stamp: OperationTimestamp,
 		context: InsertContext,
 		isLastChildBlock: boolean = true,
@@ -1821,8 +1883,7 @@ export class MergeTree {
 			// ensure we walk down the far edge of the tree, even if all sub-tree is eligible for zamboni
 			const isLastNonLeafBlock =
 				isLastChildBlock && !child.isLeaf() && childIndex === block.childCount - 1;
-			const len =
-				this.nodeLength(child, refSeq, stamp.clientId) ?? (isLastChildBlock ? 0 : undefined);
+			const len = this.nodeLength(child, perspective) ?? (isLastChildBlock ? 0 : undefined);
 
 			if (len === undefined) {
 				// if the seg len is undefined, the segment
@@ -1854,7 +1915,7 @@ export class MergeTree {
 					const splitNode = this.insertingWalk(
 						childBlock,
 						_pos,
-						refSeq,
+						perspective,
 						stamp,
 						context,
 						isLastNonLeafBlock,
@@ -1903,11 +1964,16 @@ export class MergeTree {
 				// Don't update ordinals because higher block will do it
 				const newNodeFromSplit = this.split(block);
 
-				PartialSequenceLengths.options.verifyExpected?.(this, block, refSeq, stamp.clientId);
+				PartialSequenceLengths.options.verifyExpected?.(
+					this,
+					block,
+					perspective.refSeq,
+					stamp.clientId,
+				);
 				PartialSequenceLengths.options.verifyExpected?.(
 					this,
 					newNodeFromSplit,
-					refSeq,
+					perspective.refSeq,
 					stamp.clientId,
 				);
 
@@ -1969,8 +2035,12 @@ export class MergeTree {
 			errorIfOptionNotTrue(this.options, "mergeTreeEnableAnnotateAdjust");
 		}
 
-		this.ensureIntervalBoundary(start, refSeq, clientId);
-		this.ensureIntervalBoundary(end, refSeq, clientId);
+		const perspective =
+			seq === UnassignedSequenceNumber || clientId === this.collabWindow.clientId
+				? new LocalDefaultPerspective(clientId)
+				: new PriorPerspective(refSeq, clientId);
+		this.ensureIntervalBoundary(start, perspective);
+		this.ensureIntervalBoundary(end, perspective);
 		const deltaSegments: IMergeTreeSegmentDelta[] = [];
 		const localSeq =
 			seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
@@ -2015,7 +2085,7 @@ export class MergeTree {
 			return true;
 		};
 
-		this.nodeMap(refSeq, clientId, annotateSegment, undefined, start, end);
+		this.nodeMap(perspective, annotateSegment, undefined, start, end);
 
 		// OpArgs == undefined => test code
 		if (deltaSegments.length > 0) {
@@ -2043,8 +2113,12 @@ export class MergeTree {
 		const startPos = start.side === Side.Before ? start.pos : start.pos + 1;
 		const endPos = end.side === Side.Before ? end.pos : end.pos + 1;
 
-		this.ensureIntervalBoundary(startPos, refSeq, stamp.clientId);
-		this.ensureIntervalBoundary(endPos, refSeq, stamp.clientId);
+		const perspective =
+			stamp.seq === UnassignedSequenceNumber || stamp.clientId === this.collabWindow.clientId
+				? new LocalDefaultPerspective(stamp.clientId)
+				: new PriorPerspective(refSeq, stamp.clientId);
+		this.ensureIntervalBoundary(startPos, perspective);
+		this.ensureIntervalBoundary(endPos, perspective);
 
 		let _overwrite = false;
 		const localOverlapWithRefs: ISegmentLeaf[] = [];
@@ -2099,7 +2173,6 @@ export class MergeTree {
 			this.pendingSegments.push(obliterate.segmentGroup);
 		}
 		this.obliterates.addOrUpdate(obliterate);
-		const perspective = new PriorPerspective(refSeq, stamp.clientId);
 
 		const markMoved = (segment: ISegmentLeaf, pos: number): boolean => {
 			if (
@@ -2181,14 +2254,16 @@ export class MergeTree {
 		};
 
 		this.nodeMap(
-			refSeq,
-			stamp.clientId,
+			perspective,
 			markMoved,
 			afterMarkMoved,
 			start.pos,
 			end.pos + 1, // include the segment containing the end reference
-			undefined,
-			stamp.seq === UnassignedSequenceNumber ? undefined : stamp.seq,
+			// Use a visibilityPerspective which includes all segments (including local ones) which are in the obliteration range.
+			// This ensures that concurrently inserted segments will also be marked obliterated.
+			timestampUtils.isLocal(stamp)
+				? perspective
+				: new RemoteObliteratePerspective(stamp.clientId),
 		);
 
 		this.slideAckedRemovedSegmentReferences(localOverlapWithRefs);
@@ -2253,8 +2328,12 @@ export class MergeTree {
 		opArgs: IMergeTreeDeltaOpArgs,
 	): void {
 		let _overwrite = false;
-		this.ensureIntervalBoundary(start, refSeq, stamp.clientId);
-		this.ensureIntervalBoundary(end, refSeq, stamp.clientId);
+		const perspective =
+			stamp.seq === UnassignedSequenceNumber || stamp.clientId === this.collabWindow.clientId
+				? new LocalDefaultPerspective(stamp.clientId)
+				: new PriorPerspective(refSeq, stamp.clientId);
+		this.ensureIntervalBoundary(start, perspective);
+		this.ensureIntervalBoundary(end, perspective);
 
 		let segmentGroup: SegmentGroup;
 		const removedSegments: SegmentWithInfo<IHasRemovalInfo, ISegmentLeaf>[] = [];
@@ -2310,7 +2389,7 @@ export class MergeTree {
 			}
 			return true;
 		};
-		this.nodeMap(refSeq, stamp.clientId, markRemoved, afterMarkRemoved, start, end);
+		this.nodeMap(perspective, markRemoved, afterMarkRemoved, start, end);
 		// these segments are already viewed as being removed locally and are not event-ed
 		// so can slide non-StayOnRemove refs immediately
 		this.slideAckedRemovedSegmentReferences(localOverlapWithRefs);
@@ -2782,31 +2861,30 @@ export class MergeTree {
 	 */
 	public mapRange<TClientData>(
 		handler: ISegmentAction<TClientData>,
-		refSeq: number,
-		clientId: number,
+		perspective: Perspective,
 		accum: TClientData,
 		start?: number,
 		end?: number,
 		splitRange: boolean = false,
-		visibilitySeq: number = refSeq,
+		visibilityPerspective: Perspective = perspective,
 	): void {
 		if (splitRange) {
 			if (start) {
-				this.ensureIntervalBoundary(start, refSeq, clientId);
+				this.ensureIntervalBoundary(start, perspective);
 			}
 			if (end) {
-				this.ensureIntervalBoundary(end, refSeq, clientId);
+				this.ensureIntervalBoundary(end, perspective);
 			}
 		}
+		// TODO: Do you want to change signature of handler as well?
 		this.nodeMap(
-			refSeq,
-			clientId,
-			(seg, pos, _start, _end) => handler(seg, pos, refSeq, clientId, _start, _end, accum),
+			perspective,
+			(seg, pos, _start, _end) =>
+				handler(seg, pos, perspective.refSeq, perspective.clientId, _start, _end, accum),
 			undefined,
 			start,
 			end,
-			undefined,
-			visibilitySeq,
+			visibilityPerspective,
 		);
 	}
 
@@ -2834,16 +2912,14 @@ export class MergeTree {
 	 * ignored for the purposes of tracking when traversal should end.
 	 */
 	private nodeMap(
-		refSeq: number,
-		clientId: number,
+		perspective: Perspective,
 		leaf: (segment: ISegmentLeaf, pos: number, start: number, end: number) => boolean,
 		post?: (block: MergeBlock) => boolean,
 		start: number = 0,
 		end?: number,
-		localSeq?: number,
-		visibilitySeq: number = refSeq,
+		visibilityPerspective: Perspective = perspective,
 	): void {
-		const endPos = end ?? this.nodeLength(this.root, refSeq, clientId, localSeq) ?? 0;
+		const endPos = end ?? this.nodeLength(this.root, perspective) ?? 0;
 		if (endPos === start) {
 			return;
 		}
@@ -2858,15 +2934,17 @@ export class MergeTree {
 					return NodeAction.Exit;
 				}
 
-				const len = this.nodeLength(node, visibilitySeq, clientId, localSeq);
+				const len = this.nodeLength(node, visibilityPerspective);
 				const lenAtRefSeq =
-					(visibilitySeq === refSeq
-						? len
-						: this.nodeLength(node, refSeq, clientId, localSeq)) ?? 0;
+					(visibilityPerspective === perspective ? len : this.nodeLength(node, perspective)) ??
+					0;
 
 				const isUnackedAndInObliterate =
-					visibilitySeq !== refSeq && (!node.isLeaf() || timestampUtils.isLocal(node.insert));
+					visibilityPerspective !== perspective &&
+					(!node.isLeaf() || timestampUtils.isLocal(node.insert));
 
+				// TODO: I think this block becomes unnecessary assuming we're going to be using some sort of local perspective for visibility
+				// on obliterate to get all segments in the given range.
 				if (
 					(len === undefined && lenAtRefSeq === 0) ||
 					(len === 0 && !isUnackedAndInObliterate && lenAtRefSeq === 0)
