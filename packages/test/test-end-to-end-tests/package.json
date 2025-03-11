@@ -50,7 +50,7 @@
 		"test:realsvc:r11s:docker": "npm run test:realsvc:run -- --driver=r11s --r11sEndpointName=docker --timeout=20s",
 		"test:realsvc:routerlicious": "npm run test:realsvc:r11s",
 		"test:realsvc:routerlicious:report": "npm run test:realsvc:r11s --",
-		"test:realsvc:run": "mocha lib/test/summarization/summarizeNode.spec.js --config src/test/.mocharc.cjs --exclude \"lib/test/benchmark/**/*\" --verbose",
+		"test:realsvc:run": "mocha lib/test --config src/test/.mocharc.cjs --exclude \"lib/test/benchmark/**/*\" --verbose",
 		"test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7070 test:realsvc:tinylicious:run",
 		"test:realsvc:tinylicious:report": "npm run test:realsvc:tinylicious",
 		"test:realsvc:tinylicious:report:full": "cross-env fluid__test__backCompat=FULL npm run test:realsvc:tinylicious",
