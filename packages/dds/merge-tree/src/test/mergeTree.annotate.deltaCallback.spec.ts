@@ -16,6 +16,16 @@ import { MergeTreeDeltaType } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
 
 import { countOperations, insertSegments, insertText, markRangeRemoved } from "./testUtils.js";
+import type { OperationTimestamp } from "../mergeTreeNodes.js";
+import { PriorPerspective } from "../perspective.js";
+
+function mintLocalChange(tree: MergeTree): OperationTimestamp {
+	return {
+		seq: UnassignedSequenceNumber,
+		clientId: tree.collabWindow.clientId,
+		localSeq: ++tree.collabWindow.currentSeq,
+	};
+}
 
 describe("MergeTree", () => {
 	let mergeTree: MergeTree;
@@ -51,9 +61,8 @@ describe("MergeTree", () => {
 				{
 					props: { foo: "bar" },
 				},
-				currentSequenceNumber,
-				localClientId,
-				UnassignedSequenceNumber,
+				mergeTree.localPerspective,
+				mintLocalChange(mergeTree),
 				undefined as never,
 			);
 
@@ -71,9 +80,8 @@ describe("MergeTree", () => {
 				{
 					props: { foo: "bar" },
 				},
-				currentSequenceNumber,
-				localClientId,
-				++currentSequenceNumber,
+				mergeTree.localPerspective,
+				{ seq: ++currentSequenceNumber, clientId: localClientId },
 				undefined as never,
 			);
 
@@ -102,9 +110,8 @@ describe("MergeTree", () => {
 				{
 					props: { foo: "bar" },
 				},
-				currentSequenceNumber,
-				localClientId,
-				UnassignedSequenceNumber,
+				mergeTree.localPerspective,
+				mintLocalChange(mergeTree),
 				undefined as never,
 			);
 
@@ -137,9 +144,8 @@ describe("MergeTree", () => {
 				{
 					props: { foo: "bar" },
 				},
-				currentSequenceNumber,
-				localClientId,
-				UnassignedSequenceNumber,
+				mergeTree.localPerspective,
+				mintLocalChange(mergeTree),
 				undefined as never,
 			);
 
@@ -172,9 +178,8 @@ describe("MergeTree", () => {
 				{
 					props: { foo: "bar" },
 				},
-				currentSequenceNumber,
-				localClientId,
-				UnassignedSequenceNumber,
+				mergeTree.localPerspective,
+				mintLocalChange(mergeTree),
 				undefined as never,
 			);
 
@@ -207,9 +212,8 @@ describe("MergeTree", () => {
 				{
 					props: { foo: "bar" },
 				},
-				remoteSequenceNumber,
-				remoteClientId,
-				++remoteSequenceNumber,
+				new PriorPerspective(remoteSequenceNumber, remoteClientId),
+				{ seq: ++remoteSequenceNumber, clientId: remoteClientId },
 				undefined as never,
 			);
 

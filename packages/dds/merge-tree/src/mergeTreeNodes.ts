@@ -446,7 +446,7 @@ export abstract class BaseSegment implements ISegment {
 		const seg: ISegmentPrivate = b;
 		if (isInserted(this)) {
 			// TODO: Consider whether you want to keep this and subsequent Object.freezes in the prod codepath :)
-			Object.freeze(this.insert);
+			// Object.freeze(this.insert);
 			overwriteInfo<IHasInsertionInfo>(seg, {
 				insert: this.insert,
 			});
@@ -454,7 +454,7 @@ export abstract class BaseSegment implements ISegment {
 		// TODO: deep clone properties
 		seg.properties = clone(this.properties);
 		if (isRemoved(this)) {
-			this.removes.forEach(Object.freeze);
+			// this.removes.forEach(Object.freeze);
 			overwriteInfo<IHasRemovalInfo>(seg, {
 				removes: [...this.removes],
 			});
@@ -504,11 +504,11 @@ export abstract class BaseSegment implements ISegment {
 
 		if (isInserted(this)) {
 			// TODO: Consider whether you want to keep this and subsequent Object.freezes in the prod codepath :)
-			Object.freeze(this.insert);
+			// Object.freeze(this.insert);
 			overwriteInfo<IHasInsertionInfo>(leafSegment, { insert: this.insert });
 		}
 		if (isRemoved(this)) {
-			this.removes.forEach(Object.freeze);
+			// this.removes.forEach(Object.freeze);
 			overwriteInfo<IHasRemovalInfo>(leafSegment, {
 				removes: [...this.removes],
 			});

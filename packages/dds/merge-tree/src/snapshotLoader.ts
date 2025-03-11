@@ -42,6 +42,7 @@ import {
 } from "./snapshotChunks.js";
 import { SnapshotV1 } from "./snapshotV1.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
+import { PriorPerspective } from "./perspective.js";
 
 export class SnapshotLoader {
 	private readonly logger: ITelemetryLoggerExt;
@@ -278,7 +279,7 @@ export class SnapshotLoader {
 			mergeTree.insertSegments(
 				mergeTree.root.cachedLength ?? 0,
 				segments,
-				/* refSeq: */ UniversalSequenceNumber,
+				new PriorPerspective(UniversalSequenceNumber, clientId),
 				{ seq, clientId },
 				undefined,
 			);

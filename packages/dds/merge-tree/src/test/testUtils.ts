@@ -33,6 +33,7 @@ import * as info from "../segmentInfos.js";
 import { TextSegment } from "../textSegment.js";
 
 import { loadText } from "./text.js";
+import { PriorPerspective } from "../perspective.js";
 
 export function loadTextFromFile(
 	filename: string,
@@ -75,10 +76,15 @@ export function insertMarker({
 }: InsertMarkerArgs): void {
 	const localSeq =
 		seq === UnassignedSequenceNumber ? ++mergeTree.collabWindow.localSeq : undefined;
+
+	const perspective =
+		seq === UnassignedSequenceNumber || clientId === mergeTree.collabWindow.clientId
+			? mergeTree.localPerspective
+			: new PriorPerspective(refSeq, clientId);
 	mergeTree.insertSegments(
 		pos,
 		[Marker.make(behaviors, props)],
-		refSeq,
+		perspective,
 		{ clientId, seq, localSeq },
 		opArgs,
 	);
@@ -109,11 +115,14 @@ export function insertText({
 }: InsertTextArgs): void {
 	const localSeq =
 		seq === UnassignedSequenceNumber ? ++mergeTree.collabWindow.localSeq : undefined;
-
+	const perspective =
+		seq === UnassignedSequenceNumber || clientId === mergeTree.collabWindow.clientId
+			? mergeTree.localPerspective
+			: new PriorPerspective(refSeq, clientId);
 	mergeTree.insertSegments(
 		pos,
 		[TextSegment.make(text, props)],
-		refSeq,
+		perspective,
 		{ clientId, seq, localSeq },
 		opArgs,
 	);
@@ -141,7 +150,11 @@ export function insertSegments({
 	const localSeq =
 		seq === UnassignedSequenceNumber ? ++mergeTree.collabWindow.localSeq : undefined;
 
-	mergeTree.insertSegments(pos, segments, refSeq, { clientId, seq, localSeq }, opArgs);
+	const perspective =
+		seq === UnassignedSequenceNumber || clientId === mergeTree.collabWindow.clientId
+			? mergeTree.localPerspective
+			: new PriorPerspective(refSeq, clientId);
+	mergeTree.insertSegments(pos, segments, perspective, { clientId, seq, localSeq }, opArgs);
 }
 
 interface MarkRangeRemovedArgs {
@@ -167,10 +180,15 @@ export function markRangeRemoved({
 	const localSeq =
 		seq === UnassignedSequenceNumber ? ++mergeTree.collabWindow.localSeq : undefined;
 
+	const perspective =
+		seq === UnassignedSequenceNumber || clientId === mergeTree.collabWindow.clientId
+			? mergeTree.localPerspective
+			: new PriorPerspective(refSeq, clientId);
+
 	mergeTree.markRangeRemoved(
 		start,
 		end,
-		refSeq,
+		perspective,
 		{ type: "set", clientId, seq, localSeq },
 		opArgs,
 	);
@@ -196,10 +214,15 @@ export function obliterateRange({
 	const localSeq =
 		seq === UnassignedSequenceNumber ? ++mergeTree.collabWindow.localSeq : undefined;
 
+	const perspective =
+		seq === UnassignedSequenceNumber || clientId === mergeTree.collabWindow.clientId
+			? mergeTree.localPerspective
+			: new PriorPerspective(refSeq, clientId);
+
 	mergeTree.obliterateRange(
 		start,
 		end,
-		refSeq,
+		perspective,
 		{ type: "slice", clientId, seq, localSeq },
 		opArgs,
 	);

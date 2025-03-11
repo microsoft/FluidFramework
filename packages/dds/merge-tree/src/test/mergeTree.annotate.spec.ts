@@ -13,14 +13,22 @@ import {
 	UniversalSequenceNumber,
 } from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
-import { Marker, type ISegmentPrivate } from "../mergeTreeNodes.js";
+import { Marker, type ISegmentPrivate, type OperationTimestamp } from "../mergeTreeNodes.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { assertMergeNode } from "../segmentInfos.js";
 import type { PropsOrAdjust } from "../segmentPropertiesManager.js";
 import { TextSegment } from "../textSegment.js";
 
 import { insertSegments } from "./testUtils.js";
-import { LocalDefaultPerspective } from "../perspective.js";
+import { LocalDefaultPerspective, PriorPerspective } from "../perspective.js";
+
+function mintLocalChange(tree: MergeTree): OperationTimestamp {
+	return {
+		seq: UnassignedSequenceNumber,
+		clientId: tree.collabWindow.clientId,
+		localSeq: ++tree.collabWindow.currentSeq,
+	};
+}
 
 function splitAt(mergeTree: MergeTree, pos: number): ISegmentPrivate | undefined {
 	let segment: ISegmentPrivate | undefined;
@@ -82,9 +90,8 @@ describe("MergeTree", () => {
 					{
 						props: { propertySource: "remote" },
 					},
-					currentSequenceNumber,
-					remoteClientId,
-					currentSequenceNumber + 1,
+					new PriorPerspective(currentSequenceNumber, remoteClientId),
+					{ seq: currentSequenceNumber + 1, clientId: remoteClientId },
 					undefined as never,
 				);
 
@@ -104,9 +111,8 @@ describe("MergeTree", () => {
 					{
 						props: { propertySource: "local" },
 					},
-					currentSequenceNumber,
-					localClientId,
-					UnassignedSequenceNumber,
+					mergeTree.localPerspective,
+					mintLocalChange(mergeTree),
 					undefined as never,
 				);
 
@@ -136,9 +142,8 @@ describe("MergeTree", () => {
 						annotateStart,
 						annotateEnd,
 						props,
-						currentSequenceNumber,
-						localClientId,
-						UnassignedSequenceNumber,
+						mergeTree.localPerspective,
+						mintLocalChange(mergeTree),
 						undefined as never,
 					);
 				});
@@ -160,9 +165,8 @@ describe("MergeTree", () => {
 						{
 							props: { secondProperty: "local" },
 						},
-						currentSequenceNumber,
-						localClientId,
-						UnassignedSequenceNumber,
+						mergeTree.localPerspective,
+						mintLocalChange(mergeTree),
 						undefined as never,
 					);
 
@@ -198,9 +202,8 @@ describe("MergeTree", () => {
 						annotateStart,
 						annotateEnd,
 						secondChangeProps,
-						currentSequenceNumber,
-						localClientId,
-						UnassignedSequenceNumber,
+						mergeTree.localPerspective,
+						mintLocalChange(mergeTree),
 						undefined as never,
 					);
 
@@ -214,9 +217,8 @@ describe("MergeTree", () => {
 						splitPos,
 						annotateEnd,
 						splitOnlyProps,
-						currentSequenceNumber,
-						localClientId,
-						UnassignedSequenceNumber,
+						mergeTree.localPerspective,
+						mintLocalChange(mergeTree),
 						undefined as never,
 					);
 
@@ -318,9 +320,8 @@ describe("MergeTree", () => {
 						{
 							props: { propertySource: "remote", remoteProperty: 1 },
 						},
-						currentSequenceNumber,
-						remoteClientId,
-						++currentSequenceNumber,
+						new PriorPerspective(currentSequenceNumber, remoteClientId),
+						{ seq: ++currentSequenceNumber, clientId: remoteClientId },
 						undefined as never,
 					);
 
@@ -378,9 +379,8 @@ describe("MergeTree", () => {
 						{
 							props: { propertySource: "remote", remoteProperty: 1 },
 						},
-						currentSequenceNumber,
-						remoteClientId,
-						++currentSequenceNumber,
+						new PriorPerspective(currentSequenceNumber, remoteClientId),
+						{ seq: ++currentSequenceNumber, clientId: remoteClientId },
 						undefined as never,
 					);
 
@@ -413,9 +413,8 @@ describe("MergeTree", () => {
 						annotateStart,
 						annotateEnd,
 						props2,
-						currentSequenceNumber,
-						localClientId,
-						UnassignedSequenceNumber,
+						mergeTree.localPerspective,
+						mintLocalChange(mergeTree),
 						undefined as never,
 					);
 
@@ -431,9 +430,8 @@ describe("MergeTree", () => {
 						annotateStart,
 						annotateEnd,
 						props3,
-						currentSequenceNumber,
-						localClientId,
-						UnassignedSequenceNumber,
+						mergeTree.localPerspective,
+						mintLocalChange(mergeTree),
 						undefined as never,
 					);
 
@@ -497,9 +495,8 @@ describe("MergeTree", () => {
 						{
 							props: { secondSource: "local2" },
 						},
-						currentSequenceNumber,
-						localClientId,
-						UnassignedSequenceNumber,
+						mergeTree.localPerspective,
+						mintLocalChange(mergeTree),
 						undefined as never,
 					);
 
@@ -521,9 +518,8 @@ describe("MergeTree", () => {
 						{
 							props: { propertySource: "remote", remoteOnly: 1, secondSource: "remote" },
 						},
-						currentSequenceNumber,
-						remoteClientId,
-						++currentSequenceNumber,
+						new PriorPerspective(currentSequenceNumber, remoteClientId),
+						{ seq: ++currentSequenceNumber, clientId: remoteClientId },
 						undefined as never,
 					);
 
@@ -547,9 +543,8 @@ describe("MergeTree", () => {
 						{
 							props: { propertySource: "remote", remoteProperty: 1 },
 						},
-						currentSequenceNumber,
-						remoteClientId,
-						++currentSequenceNumber,
+						new PriorPerspective(currentSequenceNumber, remoteClientId),
+						{ seq: ++currentSequenceNumber, clientId: remoteClientId },
 						undefined as never,
 					);
 
@@ -593,9 +588,8 @@ describe("MergeTree", () => {
 						{
 							props: { propertySource: "local" },
 						},
-						currentSequenceNumber,
-						localClientId,
-						UnassignedSequenceNumber,
+						mergeTree.localPerspective,
+						mintLocalChange(mergeTree),
 						undefined as never,
 					);
 
@@ -625,9 +619,8 @@ describe("MergeTree", () => {
 						annotateStart,
 						annotateEnd,
 						props,
-						currentSequenceNumber,
-						localClientId,
-						UnassignedSequenceNumber,
+						mergeTree.localPerspective,
+						mintLocalChange(mergeTree),
 						undefined as never,
 					);
 
@@ -659,9 +652,8 @@ describe("MergeTree", () => {
 						annotateStart,
 						annotateEnd,
 						props,
-						currentSequenceNumber,
-						localClientId,
-						UnassignedSequenceNumber,
+						mergeTree.localPerspective,
+						mintLocalChange(mergeTree),
 						undefined as never,
 					);
 				});
@@ -673,9 +665,8 @@ describe("MergeTree", () => {
 						{
 							props: { propertySource: "local2", secondProperty: "local" },
 						},
-						currentSequenceNumber,
-						localClientId,
-						UnassignedSequenceNumber,
+						mergeTree.localPerspective,
+						mintLocalChange(mergeTree),
 						undefined as never,
 					);
 
@@ -696,9 +687,8 @@ describe("MergeTree", () => {
 						{
 							props: { propertySource: "remote", remoteProperty: 1 },
 						},
-						currentSequenceNumber,
-						remoteClientId,
-						++currentSequenceNumber,
+						new PriorPerspective(currentSequenceNumber, remoteClientId),
+						{ seq: ++currentSequenceNumber, clientId: remoteClientId },
 						undefined as never,
 					);
 
@@ -733,9 +723,8 @@ describe("MergeTree", () => {
 						{
 							props: { propertySource: "remote", remoteProperty: 1 },
 						},
-						currentSequenceNumber,
-						remoteClientId,
-						++currentSequenceNumber,
+						new PriorPerspective(currentSequenceNumber, remoteClientId),
+						{ seq: ++currentSequenceNumber, clientId: remoteClientId },
 						undefined as never,
 					);
 
@@ -758,9 +747,8 @@ describe("MergeTree", () => {
 						{
 							props: { secondSource: "local2" },
 						},
-						currentSequenceNumber,
-						localClientId,
-						UnassignedSequenceNumber,
+						mergeTree.localPerspective,
+						mintLocalChange(mergeTree),
 						undefined as never,
 					);
 
@@ -782,9 +770,8 @@ describe("MergeTree", () => {
 						{
 							props: { propertySource: "remote", remoteOnly: 1, secondSource: "remote" },
 						},
-						currentSequenceNumber,
-						remoteClientId,
-						++currentSequenceNumber,
+						new PriorPerspective(currentSequenceNumber, remoteClientId),
+						{ seq: ++currentSequenceNumber, clientId: remoteClientId },
 						undefined as never,
 					);
 

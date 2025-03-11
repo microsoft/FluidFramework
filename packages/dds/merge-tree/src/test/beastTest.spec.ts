@@ -348,7 +348,7 @@ function checkMarkRemoveMergeTree(
 	mergeTree.markRangeRemoved(
 		start,
 		end,
-		UniversalSequenceNumber,
+		mergeTree.localPerspective,
 		{ type: "set", clientId: LocalClientId, seq: UniversalSequenceNumber },
 		{ op: createRemoveRangeOp(start, end) },
 	);
@@ -368,7 +368,7 @@ export function mergeTreeTest1(): void {
 	mergeTree.insertSegments(
 		0,
 		[TextSegment.make("the cat is on the mat")],
-		UniversalSequenceNumber,
+		mergeTree.localPerspective,
 		{ seq: UniversalSequenceNumber, clientId: LocalClientId },
 		undefined,
 	);
@@ -394,7 +394,7 @@ export function mergeTreeLargeTest(): void {
 	mergeTree.insertSegments(
 		0,
 		[TextSegment.make("the cat is on the mat")],
-		UniversalSequenceNumber,
+		mergeTree.localPerspective,
 		{ seq: UniversalSequenceNumber, clientId: LocalClientId },
 		undefined,
 	);
@@ -454,7 +454,7 @@ export function mergeTreeLargeTest(): void {
 		mergeTree.markRangeRemoved(
 			pos,
 			pos + dlen,
-			UniversalSequenceNumber,
+			mergeTree.localPerspective,
 			{ type: "set", clientId: LocalClientId, seq: UniversalSequenceNumber },
 			undefined as never,
 		);
@@ -477,7 +477,7 @@ export function mergeTreeCheckedTest(): number {
 	mergeTree.insertSegments(
 		0,
 		[TextSegment.make("the cat is on the mat")],
-		UniversalSequenceNumber,
+		mergeTree.localPerspective,
 		{ seq: UniversalSequenceNumber, clientId: LocalClientId },
 		undefined,
 	);
@@ -1530,7 +1530,7 @@ function findReplacePerf(filename: string): void {
 				client.mergeTree.markRangeRemoved(
 					pos + i,
 					pos + i + 3,
-					UniversalSequenceNumber,
+					client.mergeTree.localPerspective,
 					{ type: "set", clientId: client.getClientId(), seq: 1 },
 					undefined as never,
 				);

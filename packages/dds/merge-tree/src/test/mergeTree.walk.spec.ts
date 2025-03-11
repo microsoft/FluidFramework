@@ -23,7 +23,7 @@ describe("MergeTree walks", () => {
 		mergeTree.insertSegments(
 			0,
 			[TextSegment.make(initialText)],
-			UniversalSequenceNumber,
+			mergeTree.localPerspective,
 			{ seq: UniversalSequenceNumber, clientId: LocalClientId },
 			undefined,
 		);

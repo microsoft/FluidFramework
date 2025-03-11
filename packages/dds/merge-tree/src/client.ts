@@ -56,6 +56,7 @@ import {
 	compareStrings,
 	isSegmentLeaf,
 	timestampUtils,
+	type OperationTimestamp,
 } from "./mergeTreeNodes.js";
 import {
 	createAdjustRangeOp,
@@ -100,6 +101,7 @@ import { SnapshotLoader } from "./snapshotLoader.js";
 import { SnapshotV1 } from "./snapshotV1.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
 import { IMergeTreeTextHelper } from "./textSegment.js";
+import { PriorPerspective } from "./perspective.js";
 
 type IMergeTreeDeltaRemoteOpArgs = Omit<IMergeTreeDeltaOpArgs, "sequencedMessage"> &
 	Required<Pick<IMergeTreeDeltaOpArgs, "sequencedMessage">>;
@@ -532,17 +534,17 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		);
 		const op = opArgs.op;
 		const clientArgs = this.getClientSequenceArgs(opArgs);
+		const { perspective, stamp } = this.perspectiveFromClientSeqArgs(clientArgs);
+
 		if (this._mergeTree.options?.mergeTreeEnableSidedObliterate) {
 			const { start, end } = this.getValidSidedRange(op, clientArgs);
 			this._mergeTree.obliterateRange(
 				start,
 				end,
-				clientArgs.referenceSequenceNumber,
+				perspective,
 				{
 					type: "slice",
-					clientId: clientArgs.clientId,
-					seq: clientArgs.sequenceNumber,
-					localSeq: clientArgs.localSequenceNumber,
+					...stamp,
 				},
 				opArgs,
 			);
@@ -551,20 +553,36 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				op.type === MergeTreeDeltaType.OBLITERATE,
 				0xa43 /* Unexpected sided obliterate while mergeTreeEnableSidedObliterate is disabled */,
 			);
-			const range = this.getValidOpRange(op, clientArgs);
+			const { start, end } = this.getValidOpRange(op, clientArgs);
 			this._mergeTree.obliterateRange(
-				range.start,
-				range.end,
-				clientArgs.referenceSequenceNumber,
+				start,
+				end,
+				perspective,
 				{
 					type: "slice",
-					clientId: clientArgs.clientId,
-					seq: clientArgs.sequenceNumber,
-					localSeq: clientArgs.localSequenceNumber,
+					...stamp,
 				},
 				opArgs,
 			);
 		}
+	}
+
+	private perspectiveFromClientSeqArgs(clientArgs: IMergeTreeClientSequenceArgs): {
+		perspective: PriorPerspective;
+		stamp: OperationTimestamp;
+	} {
+		const perspective =
+			clientArgs.sequenceNumber === UnassignedSequenceNumber ||
+			clientArgs.clientId === this.getClientId()
+				? this._mergeTree.localPerspective
+				: new PriorPerspective(clientArgs.referenceSequenceNumber, clientArgs.clientId);
+
+		const stamp = {
+			clientId: clientArgs.clientId,
+			seq: clientArgs.sequenceNumber,
+			localSeq: clientArgs.localSequenceNumber,
+		};
+		return { perspective, stamp };
 	}
 
 	/**
@@ -580,15 +598,14 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		const clientArgs = this.getClientSequenceArgs(opArgs);
 		const range = this.getValidOpRange(op, clientArgs);
 
+		const { perspective, stamp } = this.perspectiveFromClientSeqArgs(clientArgs);
 		this._mergeTree.markRangeRemoved(
 			range.start,
 			range.end,
-			clientArgs.referenceSequenceNumber,
+			perspective,
 			{
 				type: "set",
-				clientId: clientArgs.clientId,
-				seq: clientArgs.sequenceNumber,
-				localSeq: clientArgs.localSequenceNumber,
+				...stamp,
 			},
 			opArgs,
 		);
@@ -607,15 +624,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		const clientArgs = this.getClientSequenceArgs(opArgs);
 		const range = this.getValidOpRange(op, clientArgs);
 
-		this._mergeTree.annotateRange(
-			range.start,
-			range.end,
-			op,
-			clientArgs.referenceSequenceNumber,
-			clientArgs.clientId,
-			clientArgs.sequenceNumber,
-			opArgs,
-		);
+		const { perspective, stamp } = this.perspectiveFromClientSeqArgs(clientArgs);
+
+		this._mergeTree.annotateRange(range.start, range.end, op, perspective, stamp, opArgs);
 	}
 
 	/**
@@ -635,17 +646,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		const segments = [this.specToSegment(op.seg)];
 
-		this._mergeTree.insertSegments(
-			range.start,
-			segments,
-			clientArgs.referenceSequenceNumber,
-			{
-				seq: clientArgs.sequenceNumber,
-				clientId: clientArgs.clientId,
-				localSeq: clientArgs.localSequenceNumber,
-			},
-			opArgs,
-		);
+		const { perspective, stamp } = this.perspectiveFromClientSeqArgs(clientArgs);
+		this._mergeTree.insertSegments(range.start, segments, perspective, stamp, opArgs);
 	}
 
 	/**

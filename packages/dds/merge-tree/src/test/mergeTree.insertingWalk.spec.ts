@@ -157,7 +157,7 @@ const treeFactories: ITestTreeFactory[] = [
 			mergeTree.markRangeRemoved(
 				0,
 				remove,
-				UniversalSequenceNumber,
+				mergeTree.localPerspective,
 				{ type: "set", clientId: localClientId, seq: UniversalSequenceNumber },
 				undefined as never,
 			);
@@ -167,7 +167,7 @@ const treeFactories: ITestTreeFactory[] = [
 			mergeTree.markRangeRemoved(
 				initialText.length - remove,
 				initialText.length,
-				UniversalSequenceNumber,
+				mergeTree.localPerspective,
 				{ type: "set", clientId: localClientId, seq: UniversalSequenceNumber },
 				undefined as never,
 			);

@@ -174,6 +174,11 @@ export class LocalDefaultPerspective extends PerspectiveBase implements Perspect
 
 /**
  * A perspective dictating whether segments are 'visible' to a remote obliterate operation.
+ *
+ * NOTE: Beware that partial lengths doesn't support this perspective, in the sense that consulting partial lengths' for the length of a block
+ * can give different results than summing the lengths of present segments in that block.
+ * This ends up not affecting the current obliterate implementation (which has some special casing in the mapRange calls it uses),
+ * but use with caution.
  */
 export class RemoteObliteratePerspective extends PerspectiveBase implements Perspective {
 	public readonly refSeq = Number.MAX_SAFE_INTEGER;
