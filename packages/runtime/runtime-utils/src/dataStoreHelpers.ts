@@ -71,7 +71,7 @@ export function exceptionToResponse(err: unknown): IResponse {
 
 /**
  * Converts an IResponse object back into an Error object that can be thrown
- * @param response - The IResponse object to convert
+ * @param response - The {@link @fluidframework/core-interfaces#IResponse } object to convert
  * @param request - The original IRequest object
  * @returns An Error object with additional properties from the response
  * @internal
