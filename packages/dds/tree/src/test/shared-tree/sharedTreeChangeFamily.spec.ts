@@ -35,8 +35,12 @@ import type {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/sharedTreeChangeTypes.js";
 import { ajvValidator } from "../codec/index.js";
-import { failCodecFamily, mintRevisionTag, testRevisionTagCodec } from "../utils.js";
-import { singleJsonCursor } from "../json/index.js";
+import {
+	chunkFromJsonTrees,
+	failCodecFamily,
+	mintRevisionTag,
+	testRevisionTagCodec,
+} from "../utils.js";
 
 const dataChanges: ModularChangeset[] = [];
 const codecOptions: ICodecOptions = { jsonValidator: ajvValidator };
@@ -53,10 +57,10 @@ const defaultEditor = new DefaultEditBuilder(modularFamily, mintRevisionTag, (ta
 // Side effects results in `dataChanges` being populated
 defaultEditor
 	.valueField({ parent: undefined, field: rootFieldKey })
-	.set(singleJsonCursor("X"));
+	.set(chunkFromJsonTrees(["X"]));
 defaultEditor
 	.valueField({ parent: undefined, field: rootFieldKey })
-	.set(singleJsonCursor("Y"));
+	.set(chunkFromJsonTrees(["Y"]));
 
 const dataChange1 = dataChanges[0];
 const dataChange2 = dataChanges[1];
@@ -226,21 +230,22 @@ describe("SharedTreeChangeFamily", () => {
 		for (const isRollback of [true, false]) {
 			it(`when inverting (isRollback = ${isRollback})`, () => {
 				const tag = mintRevisionTag();
-				assert.deepEqual(
-					sharedTreeFamily.invert(makeAnonChange(stDataChange1), isRollback, tag),
-					{
-						changes: [
-							{
-								type: "data",
-								innerChange: modularFamily.invert(
-									makeAnonChange(dataChange1),
-									isRollback,
-									tag,
-								),
-							},
-						],
-					},
+				const inverted = sharedTreeFamily.invert(
+					makeAnonChange(stDataChange1),
+					isRollback,
+					tag,
 				);
+
+				const expected = {
+					changes: [
+						{
+							type: "data",
+							innerChange: modularFamily.invert(makeAnonChange(dataChange1), isRollback, tag),
+						},
+					],
+				};
+
+				assert.deepEqual(inverted, expected);
 			});
 		}
 	});

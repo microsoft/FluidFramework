@@ -34,9 +34,6 @@ export { ContainerStateChangeKind } from "./Container.js";
 export type { ContainerDevtoolsProps } from "./ContainerDevtools.js";
 export type { ContainerStateMetadata } from "./ContainerMetadata.js";
 export type {
-	Edit,
-	EditData,
-	EditSharedObject,
 	FluidHandleNode,
 	FluidObjectNode,
 	FluidObjectNodeBase,
@@ -45,7 +42,6 @@ export type {
 	FluidUnknownObjectNode,
 	Primitive,
 	RootHandleNode,
-	SharedObjectEdit,
 	TreeNodeBase,
 	ValueNodeBase,
 	VisualChildNode,
@@ -60,7 +56,7 @@ export type { ContainerDevtoolsFeatureFlags, DevtoolsFeatureFlags } from "./Feat
 export type { IFluidDevtools } from "./IFluidDevtools.js";
 export { createDevtoolsLogger, type IDevtoolsLogger } from "./DevtoolsLogger.js";
 export type { FluidDevtoolsProps } from "./FluidDevtools.js";
-export { initializeDevtools } from "./FluidDevtools.js";
+export { initializeDevtools, tryGetFluidDevtools } from "./FluidDevtools.js";
 export type {
 	AudienceChangeLogEntry,
 	ConnectionStateChangeLogEntry,
@@ -83,7 +79,6 @@ export {
 	ContainerList,
 	ContainerStateChange,
 	ContainerStateHistory,
-	DataEdit,
 	DataVisualization,
 	DevtoolsDisposed,
 	DevtoolsFeatures,

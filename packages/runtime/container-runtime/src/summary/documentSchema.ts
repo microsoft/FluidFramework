@@ -13,8 +13,7 @@ import { pkgVersion } from "../packageVersion.js";
  * Please note that for all property types we should use undefined to indicate that particular capability is off.
  * Using false, or some string value (like "off") will result in clients who do not understand that property failing, whereas
  * we want them to continue to collaborate alongside clients who support that capability, but such capability is shipping dark for now.
- * @legacy
- * @alpha
+ * @internal
  */
 export type DocumentSchemaValueType = string | string[] | true | number | undefined;
 
@@ -57,8 +56,7 @@ export type IdCompressorMode = "on" | "delayed" | undefined;
  *
  * For now we are limiting it to just plain properties, and only really simple types, but that can be changed in the future.
  *
- * @legacy
- * @alpha
+ * @internal
  */
 export interface IDocumentSchema {
 	// version that describes how data is stored in this structure.
@@ -78,8 +76,7 @@ export interface IDocumentSchema {
  * ContainerMessageType.DocumentSchemaChange messages use CAS (Compare-and-swap) semantics, and convey
  * regSeq of last known schema change (known to a client proposing schema change).
  * @see ContainerRuntimeDocumentSchemaMessage
- * @legacy
- * @alpha
+ * @internal
  */
 export type IDocumentSchemaChangeMessage = IDocumentSchema;
 
@@ -89,8 +86,7 @@ export type IDocumentSchemaChangeMessage = IDocumentSchema;
  * WARNING: This type is used to infer IDocumentSchemaCurrent type!
  * Any changes here (including renaming of properties) are potentially changing document format and should be considered carefully!
  *
- * @legacy
- * @alpha
+ * @internal
  */
 export interface IDocumentSchemaFeatures {
 	// Tells if client uses legacy behavior of changing schema.
@@ -119,15 +115,13 @@ export interface IDocumentSchemaFeatures {
  * This must be bumped whenever the format of document schema or protocol for changing the current document schema changes.
  * Ex: adding a new configuration property (under IDocumentSchema.runtime) does not require changing this version.
  * Ex: Changing the 'document schema acceptance' mechanism from convert-and-swap to one requiring consensus does require changing this version.
- * @legacy
- * @alpha
+ * @internal
  */
 export const currentDocumentVersionSchema = 1;
 
 /**
  * Current document schema.
- * @legacy
- * @alpha
+ * @internal
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type IDocumentSchemaCurrent = {
@@ -148,21 +142,21 @@ interface IProperty<T = unknown> {
 }
 
 class TrueOrUndefined implements IProperty<true | undefined> {
-	public and(currentDocSchema?: true, desiredDocSchema?: true) {
+	public and(currentDocSchema?: true, desiredDocSchema?: true): true | undefined {
 		return currentDocSchema === true && desiredDocSchema === true ? true : undefined;
 	}
 
-	public or(currentDocSchema?: true, desiredDocSchema?: true) {
+	public or(currentDocSchema?: true, desiredDocSchema?: true): true | undefined {
 		return currentDocSchema === true || desiredDocSchema === true ? true : undefined;
 	}
 
-	public validate(t: unknown) {
+	public validate(t: unknown): t is true | undefined {
 		return t === undefined || t === true;
 	}
 }
 
 class TrueOrUndefinedMax extends TrueOrUndefined {
-	public and(currentDocSchema?: true, desiredDocSchema?: true) {
+	public and(currentDocSchema?: true, desiredDocSchema?: true): true | undefined {
 		return this.or(currentDocSchema, desiredDocSchema);
 	}
 }
@@ -170,7 +164,7 @@ class TrueOrUndefinedMax extends TrueOrUndefined {
 class MultiChoice implements IProperty<string | undefined> {
 	constructor(private readonly choices: string[]) {}
 
-	public and(currentDocSchema?: string, desiredDocSchema?: string) {
+	public and(currentDocSchema?: string, desiredDocSchema?: string): string | undefined {
 		if (currentDocSchema === undefined || desiredDocSchema === undefined) {
 			return undefined;
 		}
@@ -179,7 +173,7 @@ class MultiChoice implements IProperty<string | undefined> {
 		];
 	}
 
-	public or(currentDocSchema?: string, desiredDocSchema?: string) {
+	public or(currentDocSchema?: string, desiredDocSchema?: string): string | undefined {
 		if (currentDocSchema === undefined) {
 			return desiredDocSchema;
 		}
@@ -191,30 +185,36 @@ class MultiChoice implements IProperty<string | undefined> {
 		];
 	}
 
-	public validate(t: unknown) {
+	public validate(t: unknown): boolean {
 		return t === undefined || (typeof t === "string" && this.choices.includes(t));
 	}
 }
 
 class IdCompressorProperty extends MultiChoice {
 	// document schema always wins!
-	public and(currentDocSchema?: string, desiredDocSchema?: string) {
+	public and(currentDocSchema?: string, desiredDocSchema?: string): string | undefined {
 		return currentDocSchema;
 	}
 }
 
 class CheckVersions implements IProperty<string[] | undefined> {
-	public or(currentDocSchema: string[] = [], desiredDocSchema: string[] = []) {
+	public or(
+		currentDocSchema: string[] = [],
+		desiredDocSchema: string[] = [],
+	): string[] | undefined {
 		const set = new Set<string>([...currentDocSchema, ...desiredDocSchema]);
 		return arrayToProp([...set.values()]);
 	}
 
 	// Once version is there, it stays there forever.
-	public and(currentDocSchema: string[] = [], desiredDocSchema: string[] = []) {
+	public and(
+		currentDocSchema: string[] = [],
+		desiredDocSchema: string[] = [],
+	): string[] | undefined {
 		return this.or(currentDocSchema, desiredDocSchema);
 	}
 
-	public validate(t: unknown) {
+	public validate(t: unknown): boolean {
 		return t === undefined || (Array.isArray(t) && !t.includes(pkgVersion));
 	}
 }
@@ -238,7 +238,7 @@ const documentSchemaSupportedConfigs = {
 function checkRuntimeCompatibility(
 	documentSchema: IDocumentSchema | undefined,
 	schemaName: string,
-) {
+): void {
 	// Back-compat - we can't do anything about legacy documents.
 	// There is no way to validate them, so we are taking a guess that safe deployment processes used by a given app
 	// do not run into compat problems.
@@ -278,6 +278,7 @@ function checkRuntimeCompatibility(
 	}
 
 	if (unknownProperty !== undefined) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const value = documentSchema[unknownProperty];
 		throw DataProcessingError.create(
 			msg,
@@ -286,6 +287,7 @@ function checkRuntimeCompatibility(
 			{
 				codeVersion: currentDocumentVersionSchema,
 				property: unknownProperty,
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				value,
 				schemaName,
 			},
@@ -354,11 +356,11 @@ function same(
 	return true;
 }
 
-function boolToProp(b: boolean) {
+function boolToProp(b: boolean): true | undefined {
 	return b ? true : undefined;
 }
 
-function arrayToProp(arr: string[]) {
+function arrayToProp(arr: string[]): string[] | undefined {
 	return arr.length === 0 ? undefined : arr;
 }
 
@@ -427,8 +429,7 @@ function arrayToProp(arr: string[]) {
  * Clients can retry, but current implementation is simply - they will not (and will rely on next session / reload to do
  * recalc and decide if schema needs to be changed or not).
  *
- * @legacy
- * @alpha
+ * @internal
  * @sealed
  */
 export class DocumentsSchemaController {
@@ -488,9 +489,8 @@ export class DocumentsSchemaController {
 		// Schema coming from document metadata (snapshot we loaded from), or if no document exists
 		// (this is a new document) then this is the same as desiredSchema (same as session schema in such case).
 		// Latter is importnat sure that's what will go into summary.
-		this.documentSchema = !existing
-			? this.desiredSchema
-			: ((documentMetadataSchema as IDocumentSchemaCurrent) ??
+		this.documentSchema = existing
+			? ((documentMetadataSchema as IDocumentSchemaCurrent) ??
 				({
 					version: currentDocumentVersionSchema,
 					// see comment in summarizeDocumentSchema() on why it has to stay zero
@@ -500,7 +500,8 @@ export class DocumentsSchemaController {
 					runtime: {
 						explicitSchemaControl: boolToProp(!existing && features.explicitSchemaControl),
 					},
-				} satisfies IDocumentSchemaCurrent));
+				} satisfies IDocumentSchemaCurrent))
+			: this.desiredSchema;
 
 		checkRuntimeCompatibility(this.documentSchema, "document");
 		this.validateSeqNumber(this.documentSchema.refSeq, snapshotSequenceNumber, "summary");
@@ -580,7 +581,11 @@ export class DocumentsSchemaController {
 		}
 	}
 
-	private validateSeqNumber(schemaSeqNumber: number, lastKnowSeqNumber, message: string) {
+	private validateSeqNumber(
+		schemaSeqNumber: number,
+		lastKnowSeqNumber: number,
+		message: string,
+	): void {
 		if (!Number.isInteger(schemaSeqNumber) || !(schemaSeqNumber <= lastKnowSeqNumber)) {
 			throw DataProcessingError.create(
 				"DocSchema: Incorrect sequence number",
@@ -608,7 +613,7 @@ export class DocumentsSchemaController {
 		content: IDocumentSchemaChangeMessage,
 		local: boolean,
 		sequenceNumber: number,
-	) {
+	): boolean {
 		return this.processDocumentSchemaMessages([content], local, sequenceNumber);
 	}
 
@@ -624,7 +629,7 @@ export class DocumentsSchemaController {
 		contents: IDocumentSchemaChangeMessage[],
 		local: boolean,
 		sequenceNumber: number,
-	) {
+	): boolean {
 		for (const content of contents) {
 			this.validateSeqNumber(content.refSeq, this.documentSchema.refSeq, "content.refSeq");
 			this.validateSeqNumber(this.documentSchema.refSeq, sequenceNumber, "refSeq");
@@ -672,7 +677,7 @@ export class DocumentsSchemaController {
 		return true;
 	}
 
-	public onDisconnect() {
+	public onDisconnect(): void {
 		this.sendOp = true;
 	}
 }

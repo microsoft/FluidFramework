@@ -196,7 +196,7 @@ function nodeDataToMapTree(
 			result = objectToMapTree(data, schema);
 			break;
 		default:
-			fail(`Unrecognized schema kind: ${schema.kind}.`);
+			fail(0xae0 /* Unrecognized schema kind */);
 	}
 
 	return result;
@@ -642,7 +642,7 @@ export function addDefaultsToMapTree(
 ): void {
 	const schema =
 		find(normalizeAllowedTypes(allowedTypes), (s) => s.identifier === mapTree.type) ??
-		fail("MapTree is incompatible with schema");
+		fail(0xae1 /* MapTree is incompatible with schema */);
 
 	if (isObjectNodeSchema(schema)) {
 		for (const [_key, fieldInfo] of schema.flexKeyMap) {
@@ -660,7 +660,7 @@ export function addDefaultsToMapTree(
 						setFieldValue(mapTree.fields, data, fieldInfo.schema, fieldInfo.storedKey);
 						// call addDefaultsToMapTree on newly inserted default values
 						for (const child of mapTree.fields.get(fieldInfo.storedKey) ??
-							fail("Expected field to be populated")) {
+							fail(0xae2 /* Expected field to be populated */)) {
 							addDefaultsToMapTree(child, fieldInfo.schema.allowedTypes, context);
 						}
 					}

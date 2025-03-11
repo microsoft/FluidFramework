@@ -1,5 +1,29 @@
 # @fluidframework/odsp-driver
 
+## 2.23.0
+
+Dependency updates only.
+
+## 2.22.0
+
+### Minor Changes
+
+-   odsp-driver no longer depends on node-fetch ([#23796](https://github.com/microsoft/FluidFramework/pull/23796)) [b17276c186](https://github.com/microsoft/FluidFramework/commit/b17276c186043723486dfbd0714da0dcb5ca1e17)
+
+    The `@fluidframework/odsp-driver` package had a dependency on [node-fetch](https://www.npmjs.com/package/node-fetch) to provide consistent behavior of the [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) across Node.js and browsers.
+    Since v18 of Node.js, the Node-native Fetch API implementation no longer requires extra flags to be enabled, so the Fetch API is effectively now natively available on all browsers and Node.js.
+    This dependency removal should reduce Fluid Framework's contribution to application bundle sizes.
+
+    We expect this change to have no impact for Fluid Framework consumers. However, if you are running Fluid in a Node.js environment with the `--no-experimental-fetch` flag, this is no longer supported.
+
+## 2.21.0
+
+Dependency updates only.
+
+## 2.20.0
+
+Dependency updates only.
+
 ## 2.13.0
 
 Dependency updates only.

@@ -57,12 +57,14 @@ import {
 	brand,
 	idAllocatorFromMaxId,
 	nestedMapFromFlatList,
+	newTupleBTree,
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../../util/index.js";
 import {
 	type EncodingTestData,
 	assertDeltaEqual,
+	chunkFromJsonTrees,
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	testChangeReceiver,
@@ -73,12 +75,13 @@ import {
 import { type ValueChangeset, valueField } from "./basicRebasers.js";
 import { ajvValidator } from "../../codec/index.js";
 import { fieldJsonCursor, singleJsonCursor } from "../../json/index.js";
-import type {
-	ChangeAtomIdBTree,
-	CrossFieldKeyTable,
-	FieldChangeMap,
-	FieldId,
-	NodeChangeset,
+import {
+	newCrossFieldKeyTable,
+	type ChangeAtomIdBTree,
+	type CrossFieldKeyTable,
+	type FieldChangeMap,
+	type FieldId,
+	type NodeChangeset,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
@@ -86,12 +89,11 @@ import {
 	intoDelta,
 	updateRefreshers,
 	relevantRemovedRoots as relevantDetachedTreesImplementation,
-	newCrossFieldKeyTable,
-	newTupleBTree,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import type {
 	EncodedNodeChangeset,
+	FieldChangeDelta,
 	FieldChangeEncodingContext,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
@@ -113,9 +115,10 @@ const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
 };
 
 const singleNodeEditor: FieldEditor<SingleNodeChangeset> = {
-	buildChildChange: (index: number, change: NodeId): SingleNodeChangeset => {
-		assert(index === 0, "This field kind only supports one node in its field");
-		return change;
+	buildChildChanges: (changes: Iterable<[number, NodeId]>): SingleNodeChangeset => {
+		const changesArray = Array.from(changes);
+		assert(changesArray.length <= 1, "This field kind only supports one node in its field");
+		return changesArray[0] === undefined ? undefined : changesArray[0][1];
 	},
 };
 
@@ -139,7 +142,7 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	rebaser: singleNodeRebaser,
 	codecsFactory: (revisionTagCodec) => makeCodecFamily([[1, singleNodeCodec]]),
 	editor: singleNodeEditor,
-	intoDelta: (change, deltaFromChild): DeltaFieldChanges => ({
+	intoDelta: (change, deltaFromChild): FieldChangeDelta => ({
 		local: [{ count: 1, fields: change !== undefined ? deltaFromChild(change) : undefined }],
 	}),
 	relevantRemovedRoots: (change, relevantRemovedRootsFromChild) =>
@@ -439,9 +442,8 @@ const rootChangeWithoutNodeFieldChanges: ModularChangeset = family.compose([
 	makeAnonChange(buildExistsConstraint(pathA0)),
 ]);
 
-const node1 = singleJsonCursor(1);
-const objectNode = singleJsonCursor({});
-const node1Chunk = treeChunkFromCursor(node1);
+const objectNode = chunkFromJsonTrees([{}]);
+const node1Chunk = chunkFromJsonTrees([1]);
 const nodesChunk = chunkFieldSingle(fieldJsonCursor([{}, {}]), {
 	policy: defaultChunkPolicy,
 	idCompressor: testIdCompressor,
@@ -751,8 +753,8 @@ describe("ModularChangeFamily", () => {
 				{
 					...Change.empty(),
 					builds: newTupleBTree([
-						[[undefined, brand(0)], treeChunkFromCursor(node1)],
-						[[tag3, brand(0)], treeChunkFromCursor(node1)],
+						[[undefined, brand(0)], node1Chunk],
+						[[tag3, brand(0)], node1Chunk],
 					]),
 					destroys: newTupleBTree([
 						[[undefined, brand(1)], 1],
@@ -766,8 +768,8 @@ describe("ModularChangeFamily", () => {
 				{
 					...Change.empty(),
 					builds: newTupleBTree([
-						[[undefined, brand(2)], treeChunkFromCursor(node1)],
-						[[tag3, brand(2)], treeChunkFromCursor(node1)],
+						[[undefined, brand(2)], node1Chunk],
+						[[tag3, brand(2)], node1Chunk],
 					]),
 					destroys: newTupleBTree([
 						[[undefined, brand(3)], 1],
@@ -784,17 +786,17 @@ describe("ModularChangeFamily", () => {
 			const expected: ModularChangeset = {
 				...Change.empty(),
 				builds: newTupleBTree([
-					[[tag1 as RevisionTag | undefined, brand(0)], treeChunkFromCursor(node1)],
-					[[tag2, brand(2)], treeChunkFromCursor(node1)],
+					[[tag1 as RevisionTag | undefined, brand(0)], node1Chunk],
+					[[tag2, brand(2)], node1Chunk],
 					[
 						[
 							tag3,
 
 							brand(0),
 						],
-						treeChunkFromCursor(node1),
+						node1Chunk,
 					],
-					[[tag3, brand(2)], treeChunkFromCursor(node1)],
+					[[tag3, brand(2)], node1Chunk],
 				]),
 				destroys: newTupleBTree([
 					[[tag1 as RevisionTag | undefined, brand(1)], 1],
@@ -813,7 +815,7 @@ describe("ModularChangeFamily", () => {
 				{
 					...Change.empty(),
 					refreshers: newTupleBTree([
-						[[tag3 as RevisionTag | undefined, brand(0)], treeChunkFromCursor(node1)],
+						[[tag3 as RevisionTag | undefined, brand(0)], node1Chunk],
 					]),
 				},
 				tag1,
@@ -823,8 +825,8 @@ describe("ModularChangeFamily", () => {
 				{
 					...Change.empty(),
 					refreshers: newTupleBTree([
-						[[undefined, brand(2)], treeChunkFromCursor(node1)],
-						[[tag3, brand(2)], treeChunkFromCursor(node1)],
+						[[undefined, brand(2)], node1Chunk],
+						[[tag3, brand(2)], node1Chunk],
 					]),
 					revisions: [{ revision: tag2 }],
 				},
@@ -838,9 +840,9 @@ describe("ModularChangeFamily", () => {
 			const expected: ModularChangeset = {
 				...Change.empty(),
 				refreshers: newTupleBTree([
-					[[undefined, brand(2)], treeChunkFromCursor(node1)],
-					[[tag3, brand(0)], treeChunkFromCursor(node1)],
-					[[tag3, brand(2)], treeChunkFromCursor(node1)],
+					[[undefined, brand(2)], node1Chunk],
+					[[tag3, brand(0)], node1Chunk],
+					[[tag3, brand(2)], node1Chunk],
 				]),
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
 			};
@@ -853,7 +855,7 @@ describe("ModularChangeFamily", () => {
 				{
 					...Change.empty(),
 					refreshers: newTupleBTree([
-						[[tag3 as RevisionTag | undefined, brand(0)], treeChunkFromCursor(node1)],
+						[[tag3 as RevisionTag | undefined, brand(0)], node1Chunk],
 					]),
 				},
 				tag1,
@@ -863,7 +865,7 @@ describe("ModularChangeFamily", () => {
 				{
 					...Change.empty(),
 					refreshers: newTupleBTree([
-						[[tag3 as RevisionTag | undefined, brand(0)], treeChunkFromCursor(objectNode)],
+						[[tag3 as RevisionTag | undefined, brand(0)], objectNode],
 					]),
 					revisions: [{ revision: tag2 }],
 				},
@@ -876,9 +878,7 @@ describe("ModularChangeFamily", () => {
 
 			const expected: ModularChangeset = {
 				...Change.empty(),
-				refreshers: newTupleBTree([
-					[[tag3 as RevisionTag | undefined, brand(0)], treeChunkFromCursor(node1)],
-				]),
+				refreshers: newTupleBTree([[[tag3 as RevisionTag | undefined, brand(0)], node1Chunk]]),
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
 			};
 
@@ -970,9 +970,6 @@ describe("ModularChangeFamily", () => {
 			const actualRollback = family.invert(change1, true, revisionForInvert);
 			const actualUndo = family.invert(change1, false, revisionForInvert);
 
-			actualRollback.crossFieldKeys.unfreeze();
-			actualUndo.crossFieldKeys.unfreeze();
-
 			const expectedRollback: ModularChangeset = {
 				...Change.empty(),
 				destroys: newTupleBTree([
@@ -1047,26 +1044,19 @@ describe("ModularChangeFamily", () => {
 
 	describe("intoDelta", () => {
 		it("fieldChanges", () => {
-			const nodeDelta: DeltaFieldChanges = {
-				local: [
-					{
-						count: 1,
-						fields: new Map([
-							[
-								fieldA,
-								{
-									local: [{ count: 1, detach: { minor: 0 }, attach: { minor: 1 } }],
-								},
-							],
-						]),
-					},
-				],
-			};
+			const nodeDelta: DeltaFieldChanges = [
+				{
+					count: 1,
+					fields: new Map([
+						[fieldA, [{ count: 1, detach: { minor: 0 }, attach: { minor: 1 } }]],
+					]),
+				},
+			];
 
 			const expectedDelta: DeltaRoot = {
 				fields: new Map([
 					[fieldA, nodeDelta],
-					[fieldB, { local: [{ count: 1, detach: { minor: 1 }, attach: { minor: 2 } }] }],
+					[fieldB, [{ count: 1, detach: { minor: 1 }, attach: { minor: 2 } }]],
 				]),
 			};
 
@@ -1096,9 +1086,9 @@ describe("ModularChangeFamily", () => {
 
 			const expectedDelta: DeltaRoot = {
 				build: [
-					{ id: { major: tag1, minor: 1 }, trees: [node1] },
-					{ id: { major: tag2, minor: 2 }, trees: [node1] },
-					{ id: { major: tag2, minor: 3 }, trees: [objectNode, objectNode] },
+					{ id: { major: tag1, minor: 1 }, trees: node1Chunk },
+					{ id: { major: tag2, minor: 2 }, trees: node1Chunk },
+					{ id: { major: tag2, minor: 3 }, trees: nodesChunk },
 				],
 			};
 
@@ -1146,9 +1136,9 @@ describe("ModularChangeFamily", () => {
 
 			const expectedDelta: DeltaRoot = {
 				refreshers: [
-					{ id: { major: tag1, minor: 1 }, trees: [node1] },
-					{ id: { major: tag2, minor: 2 }, trees: [node1] },
-					{ id: { major: tag2, minor: 3 }, trees: [objectNode, objectNode] },
+					{ id: { major: tag1, minor: 1 }, trees: node1Chunk },
+					{ id: { major: tag2, minor: 2 }, trees: node1Chunk },
+					{ id: { major: tag2, minor: 3 }, trees: nodesChunk },
 				],
 			};
 
@@ -1576,10 +1566,10 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 			);
 
 			const crossFieldKeys = changeHandler.getCrossFieldKeys(fieldChange.change);
-			for (const key of crossFieldKeys) {
-				const prevId = change.crossFieldKeys.get(key);
+			for (const { key, count } of crossFieldKeys) {
+				const prevId = change.crossFieldKeys.getFirst(key, count)?.value;
 				assert(prevId !== undefined, "Should be an entry for each cross-field key");
-				crossFieldKeyTable.set(key, remapFieldId(prevId));
+				crossFieldKeyTable.set(key, count, remapFieldId(prevId));
 			}
 		}
 

@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import type { SinonFakeTimers } from "sinon";
-import { useFakeTimers } from "sinon";
+import { useFakeTimers, spy } from "sinon";
 
 import { createPresenceManager } from "../presenceManager.js";
 
@@ -50,14 +52,14 @@ describe("Presence", () => {
 
 		it("sends join when connected during initialization", () => {
 			// Setup, Act (call to createPresenceManager), & Verify (post createPresenceManager call)
-			prepareConnectedPresence(runtime, "seassionId-2", "client2", clock, logger);
+			prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
 		});
 
 		describe("responds to ClientJoin", () => {
 			let presence: ReturnType<typeof createPresenceManager>;
 
 			beforeEach(() => {
-				presence = prepareConnectedPresence(runtime, "seassionId-2", "client2", clock, logger);
+				presence = prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
 
 				// Pass a little time (to mimic reality)
 				clock.tick(10);
@@ -83,7 +85,7 @@ describe("Presence", () => {
 									"client2": {
 										"rev": 0,
 										"timestamp": initialTime,
-										"value": "seassionId-2",
+										"value": "sessionId-2",
 									},
 								},
 							},
@@ -153,7 +155,7 @@ describe("Presence", () => {
 									"client2": {
 										"rev": 0,
 										"timestamp": initialTime,
-										"value": "seassionId-2",
+										"value": "sessionId-2",
 									},
 								},
 							},
@@ -169,6 +171,177 @@ describe("Presence", () => {
 				// Verify
 				assertFinalExpectations(runtime, logger);
 				// #endregion
+			});
+		});
+
+		/**
+		 * These tests are skipped as 'workspaceActivated' event is not yet implemented.
+		 * TODO: Re-enable tests once {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/29939} is completed
+		 */
+		describe.skip("receiving DatastoreUpdate", () => {
+			let presence: ReturnType<typeof createPresenceManager>;
+
+			const systemWorkspaceUpdate = {
+				"clientToSessionId": {
+					"client1": {
+						"rev": 0,
+						"timestamp": 0,
+						"value": "sessionId-1",
+					},
+				},
+			};
+
+			const statesWorkspaceUpdate = {
+				"latest": {
+					"sessionId-1": {
+						"rev": 1,
+						"timestamp": 0,
+						"value": {},
+					},
+				},
+			};
+
+			const notificationsWorkspaceUpdate = {
+				"testEvents": {
+					"sessionId-1": {
+						"rev": 0,
+						"timestamp": 0,
+						"value": {},
+						"ignoreUnmonitored": true,
+					},
+				},
+			};
+
+			beforeEach(() => {
+				presence = prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
+
+				// Pass a little time (to mimic reality)
+				clock.tick(10);
+			});
+
+			it("with unregistered States workspace emits 'workspaceActivated'", () => {
+				// Setup
+				const listener = spy();
+				presence.events.on("workspaceActivated", listener);
+
+				// Act
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							sendTimestamp: clock.now - 10,
+							avgLatency: 20,
+							data: {
+								"system:presence": systemWorkspaceUpdate,
+								"n:name:testStateWorkspace": statesWorkspaceUpdate,
+							},
+						},
+						clientId: "client1",
+					},
+					false,
+				);
+
+				// Verify
+				assert.strictEqual(listener.calledOnce, true);
+				assert.strictEqual(listener.calledWith("name:testStateWorkspace", "States"), true);
+			});
+			it("with unregistered Notifications workspace 'workspaceActivated'", () => {
+				// Setup
+				const listener = spy();
+				presence.events.on("workspaceActivated", listener);
+
+				// Act
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							sendTimestamp: clock.now - 10,
+							avgLatency: 20,
+							data: {
+								"system:presence": systemWorkspaceUpdate,
+								"n:name:testNotificationWorkspace": notificationsWorkspaceUpdate,
+							},
+						},
+						clientId: "client1",
+					},
+					false,
+				);
+
+				// Verify
+				assert.strictEqual(listener.calledOnce, true);
+				assert.strictEqual(
+					listener.calledWith("name:testNotificationWorkspace", "Notifications"),
+					true,
+				);
+			});
+			it("with unregistered workspace of unknown type emits 'workspaceActivated'", () => {
+				// Setup
+				const listener = spy();
+				presence.events.on("workspaceActivated", listener);
+
+				// Act
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							sendTimestamp: clock.now - 10,
+							avgLatency: 20,
+							data: {
+								"system:presence": systemWorkspaceUpdate,
+								"u:name:testUnknownWorkspace": {
+									"latest": {
+										"sessionId-1": {
+											"rev": 1,
+											"timestamp": 0,
+											"value": { x: 1, y: 1, z: 1 },
+										},
+									},
+								},
+							},
+						},
+						clientId: "client1",
+					},
+					false,
+				);
+
+				// Verify
+				assert.strictEqual(listener.calledOnce, true);
+				assert.strictEqual(
+					listener.calledWith("name:name:testUnknownWorkspace", "Unknown"),
+					true,
+				);
+			});
+			it("with registered workspace does NOT emit 'workspaceActivated'", () => {
+				// Setup
+				const listener = spy();
+				presence.events.on("workspaceActivated", listener);
+				presence.getStates("name:testStateWorkspace", {});
+				presence.getNotifications("name:testNotificationWorkspace", {});
+
+				// Act
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							sendTimestamp: clock.now - 10,
+							avgLatency: 20,
+							data: {
+								"system:presence": systemWorkspaceUpdate,
+								"n:name:testStateWorkspace": statesWorkspaceUpdate,
+								"n:name:testNotificationWorkspace": notificationsWorkspaceUpdate,
+							},
+						},
+						clientId: "client1",
+					},
+					false,
+				);
+
+				// Verify
+				assert.strictEqual(listener.called, false);
 			});
 		});
 	});

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/merge-tree",
-	"version": "2.20.0",
+	"version": "2.30.0",
 	"description": "Merge tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -87,7 +87,7 @@
 		"ci:build:api-reports:current": "api-extractor run --config api-extractor/api-extractor.current.json",
 		"ci:build:api-reports:legacy": "api-extractor run --config api-extractor/api-extractor.legacy.json",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
+		"clean": "rimraf --glob dist lib {alpha,beta,internal,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix",
 		"format": "npm run format:biome",
@@ -103,8 +103,8 @@
 		"test:benchmark:report": "mocha \"dist/test/*.perf.spec.*js\" --node-option unhandled-rejections=strict,expose-gc --exit --perfMode --fgrep @Benchmark -r @fluid-internal/mocha-test-setup --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 60000",
 		"test:coverage": "c8 npm test",
 		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
-		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.*js\" --exit",
-		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit",
+		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.*js\"",
+		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\"",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:stress": "cross-env FUZZ_STRESS_RUN=1 FUZZ_TEST_COUNT=normal npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
@@ -152,11 +152,11 @@
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-private/test-pairwise-generator": "workspace:~",
 		"@fluid-tools/benchmark": "^0.50.0",
-		"@fluid-tools/build-cli": "^0.51.0",
+		"@fluid-tools/build-cli": "^0.54.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.51.0",
-		"@fluidframework/eslint-config-fluid": "^5.6.0",
-		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@2.13.0",
+		"@fluidframework/build-tools": "^0.54.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
+		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@2.23.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/diff": "^3.5.1",
@@ -168,7 +168,7 @@
 		"cross-env": "^7.0.3",
 		"diff": "^3.5.0",
 		"eslint": "~8.55.0",
-		"mocha": "^10.2.0",
+		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
@@ -177,65 +177,7 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"Class_BaseSegment": {
-				"backCompat": false
-			},
-			"Class_Marker": {
-				"backCompat": false
-			},
-			"Class_TextSegment": {
-				"backCompat": false
-			},
-			"Class_TrackingGroup": {
-				"backCompat": false
-			},
-			"ClassStatics_BaseSegment": {
-				"backCompat": false
-			},
-			"ClassStatics_Marker": {
-				"backCompat": false
-			},
-			"ClassStatics_TextSegment": {
-				"backCompat": false
-			},
-			"ClassStatics_TrackingGroup": {
-				"backCompat": false
-			},
-			"Interface_IMergeTreeDeltaCallbackArgs": {
-				"backCompat": false
-			},
-			"Interface_IMergeTreeMaintenanceCallbackArgs": {
-				"backCompat": false
-			},
-			"Interface_IMergeTreeSegmentDelta": {
-				"backCompat": false
-			},
-			"Interface_ISegment": {
-				"backCompat": false
-			},
-			"Interface_ITrackingGroup": {
-				"backCompat": false
-			},
-			"TypeAlias_MergeTreeDeltaRevertible": {
-				"backCompat": false
-			},
-			"TypeAlias_Trackable": {
-				"backCompat": false
-			},
-			"Interface_IMergeNodeCommon": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"Interface_IMoveInfo": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"Interface_IRemovalInfo": {
-				"forwardCompat": false,
-				"backCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "legacy"
 	}
 }

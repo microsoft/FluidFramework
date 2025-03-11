@@ -7,22 +7,15 @@ import { strict as assert } from "node:assert";
 
 import {
 	type Anchor,
-	type AnchorNode,
 	AnchorSet,
 	type DeltaFieldChanges,
 	type DeltaFieldMap,
 	type DeltaMark,
 	type DeltaVisitor,
 	type DetachedField,
-	type DetachedPlaceUpPath,
-	type DetachedRangeUpPath,
 	type FieldKey,
 	type FieldUpPath,
 	type JsonableTree,
-	type PathVisitor,
-	type PlaceUpPath,
-	type ProtoNodes,
-	type RangeUpPath,
 	type UpPath,
 	anchorSlot,
 	clonePath,
@@ -31,11 +24,10 @@ import {
 	makeDetachedFieldIndex,
 	rootFieldKey,
 } from "../../core/index.js";
-import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 import {
-	announceTestDelta,
 	applyTestDelta,
+	chunkFromJsonableTrees,
 	expectEqualPaths,
 	testIdCompressor,
 	testRevisionTagCodec,
@@ -83,10 +75,8 @@ describe("AnchorSet", () => {
 			attach: moveId,
 		};
 
-		const delta = new Map([
-			[rootFieldKey, { local: [{ count: 1 }, moveOut, { count: 1 }, moveIn] }],
-		]);
-		announceTestDelta(delta, anchors);
+		const delta = new Map([[rootFieldKey, [{ count: 1 }, moveOut, { count: 1 }, moveIn]]]);
+		applyTestDelta(delta, anchors);
 		checkEquality(anchors.locate(anchor0), makePath([rootFieldKey, 0]));
 		checkEquality(anchors.locate(anchor1), makePath([rootFieldKey, 2]));
 		checkEquality(anchors.locate(anchor2), makePath([rootFieldKey, 1]));
@@ -96,17 +86,11 @@ describe("AnchorSet", () => {
 	it("can rebase over insert", () => {
 		const [anchors, anchor1, anchor2, anchor3] = setup();
 
-		const trees = [node, node].map(cursorForJsonableTreeNode);
-		const fieldChanges: DeltaFieldChanges = {
-			local: [{ count: 4 }, { count: 2, attach: buildId }],
-		};
-		announceTestDelta(
-			makeFieldDelta(fieldChanges, makeFieldPath(fieldFoo)),
-			anchors,
-			undefined,
-			undefined,
-			[{ id: buildId, trees }],
-		);
+		const trees = chunkFromJsonableTrees([node, node]);
+		const fieldChanges: DeltaFieldChanges = [{ count: 4 }, { count: 2, attach: buildId }];
+		applyTestDelta(makeFieldDelta(fieldChanges, makeFieldPath(fieldFoo)), anchors, {
+			build: [{ id: buildId, trees }],
+		});
 
 		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 7], [fieldBar, 4]));
 		checkEquality(anchors.locate(anchor2), makePath([fieldFoo, 3], [fieldBaz, 2]));
@@ -136,7 +120,7 @@ describe("AnchorSet", () => {
 			detach: detachId,
 		};
 
-		announceTestDelta(makeDelta(detachMark, makePath([fieldFoo, 4])), anchors);
+		applyTestDelta(makeDelta(detachMark, makePath([fieldFoo, 4])), anchors);
 		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 4]));
 		checkEquality(anchors.locate(anchor2), path2);
 		checkRemoved(anchors.locate(anchor3));
@@ -194,7 +178,7 @@ describe("AnchorSet", () => {
 			detach: detachId,
 		};
 
-		announceTestDelta(makeDelta(detachMark, makePath([fieldFoo, 5])), anchors);
+		applyTestDelta(makeDelta(detachMark, makePath([fieldFoo, 5])), anchors);
 		checkRemoved(anchors.locate(anchor4));
 		checkRemoved(anchors.locate(anchor1));
 		assert.doesNotThrow(() => anchors.forget(anchor4));
@@ -205,14 +189,14 @@ describe("AnchorSet", () => {
 		assert.throws(() => anchors.locate(anchor1));
 
 		checkEquality(anchors.locate(anchor2), path2);
-		announceTestDelta(makeDelta(detachMark, makePath([fieldFoo, 3])), anchors);
+		applyTestDelta(makeDelta(detachMark, makePath([fieldFoo, 3])), anchors);
 		checkRemoved(anchors.locate(anchor2));
 		assert.doesNotThrow(() => anchors.forget(anchor2));
 		assert.throws(() => anchors.locate(anchor2));
 
 		// The index of anchor3 has changed from 4 to 3 because of the deletion of the node at index 3.
 		checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 3]));
-		announceTestDelta(makeDelta(detachMark, makePath([fieldFoo, 3])), anchors);
+		applyTestDelta(makeDelta(detachMark, makePath([fieldFoo, 3])), anchors);
 		checkRemoved(anchors.locate(anchor3));
 		assert.doesNotThrow(() => anchors.forget(anchor3));
 		assert.throws(() => anchors.locate(anchor3));
@@ -233,13 +217,11 @@ describe("AnchorSet", () => {
 
 		const modify: DeltaMark = {
 			count: 1,
-			fields: new Map([[fieldBar, { local: [{ count: 3 }, moveIn] }]]),
+			fields: new Map([[fieldBar, [{ count: 3 }, moveIn]]]),
 		};
 
-		const delta = new Map([
-			[fieldFoo, { local: [{ count: 3 }, moveOut, { count: 1 }, modify] }],
-		]);
-		announceTestDelta(delta, anchors);
+		const delta = new Map([[fieldFoo, [{ count: 3 }, moveOut, { count: 1 }, modify]]]);
+		applyTestDelta(delta, anchors);
 		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 5]));
 		checkEquality(
 			anchors.locate(anchor2),
@@ -260,11 +242,9 @@ describe("AnchorSet", () => {
 			testIdCompressor,
 		);
 
-		announceTestDelta(
-			makeDelta(detachMark, makePath([fieldFoo, 3])),
-			anchors,
+		applyTestDelta(makeDelta(detachMark, makePath([fieldFoo, 3])), anchors, {
 			detachedFieldIndex,
-		);
+		});
 		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 4]));
 		checkRemoved(anchors.locate(anchor2), brand("repair-0"));
 		checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 3]));
@@ -275,11 +255,9 @@ describe("AnchorSet", () => {
 			attach: detachId,
 		};
 
-		announceTestDelta(
-			makeDelta(restoreMark, makePath([fieldFoo, 3])),
-			anchors,
+		applyTestDelta(makeDelta(restoreMark, makePath([fieldFoo, 3])), anchors, {
 			detachedFieldIndex,
-		);
+		});
 		checkEquality(anchors.locate(anchor1), path1);
 		checkEquality(anchors.locate(anchor2), path2);
 		checkEquality(anchors.locate(anchor3), path3);
@@ -298,11 +276,9 @@ describe("AnchorSet", () => {
 			testIdCompressor,
 		);
 
-		announceTestDelta(
-			makeDelta(detachMark, makePath([fieldFoo, 3])),
-			anchors,
+		applyTestDelta(makeDelta(detachMark, makePath([fieldFoo, 3])), anchors, {
 			detachedFieldIndex,
-		);
+		});
 		checkRemoved(anchors.locate(anchor1), brand("repair-2"));
 		checkRemoved(anchors.locate(anchor2), brand("repair-0"));
 		checkRemoved(anchors.locate(anchor3), brand("repair-1"));
@@ -313,11 +289,9 @@ describe("AnchorSet", () => {
 			attach: { minor: 44 },
 		};
 
-		announceTestDelta(
-			makeDelta(restoreMark, makePath([fieldFoo, 3])),
-			anchors,
+		applyTestDelta(makeDelta(restoreMark, makePath([fieldFoo, 3])), anchors, {
 			detachedFieldIndex,
-		);
+		});
 		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 3], [fieldBar, 4]));
 		checkRemoved(anchors.locate(anchor2), brand("repair-0"));
 		checkRemoved(anchors.locate(anchor3), brand("repair-1"));
@@ -425,7 +399,7 @@ describe("AnchorSet", () => {
 		};
 
 		log.expect([]);
-		announceTestDelta(new Map([[rootFieldKey, { local: [detachMark] }]]), anchors);
+		applyTestDelta(new Map([[rootFieldKey, [detachMark]]]), anchors);
 
 		log.expect([
 			["root childrenChange", 1],
@@ -450,25 +424,10 @@ describe("AnchorSet", () => {
 		const build = [
 			{
 				id: buildId,
-				trees: [
-					cursorForJsonableTreeNode({ type: brand(stringSchema.identifier), value: "x" }),
-				],
+				trees: chunkFromJsonableTrees([{ type: brand(stringSchema.identifier), value: "x" }]),
 			},
 		];
-		announceTestDelta(
-			new Map([
-				[
-					rootFieldKey,
-					{
-						local: [detachMark, insertMark],
-					},
-				],
-			]),
-			anchors,
-			undefined,
-			undefined,
-			build,
-		);
+		applyTestDelta(new Map([[rootFieldKey, [detachMark, insertMark]]]), anchors, { build });
 
 		log.expect([
 			["root childrenChange", 2],
@@ -477,17 +436,15 @@ describe("AnchorSet", () => {
 		log.clear();
 
 		const insertAtFoo5 = makeFieldDelta(
-			{
-				local: [{ count: 5 }, insertMark],
-			},
+			[{ count: 5 }, insertMark],
 			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
 		);
-		announceTestDelta(insertAtFoo5, anchors, undefined, undefined, build);
+		applyTestDelta(insertAtFoo5, anchors, { build });
 
 		log.expect([["root treeChange", 1]]);
 		log.clear();
 
-		announceTestDelta(new Map([[rootFieldKey, { local: [detachMark] }]]), anchors);
+		applyTestDelta(new Map([[rootFieldKey, [detachMark]]]), anchors);
 		log.expect([
 			["root childrenChange", 1],
 			["root treeChange", 1],
@@ -535,152 +492,6 @@ describe("AnchorSet", () => {
 
 		// Make sure the listener actually fired and validated the changed fields.
 		assert.equal(listenerFired, true);
-	});
-
-	it("triggers path visitor callbacks", () => {
-		const build = [
-			{
-				id: buildId,
-				trees: [
-					cursorForJsonableTreeNode({ type: brand(stringSchema.identifier), value: "x" }),
-				],
-			},
-		];
-		const insertAtFoo4 = makeFieldDelta(
-			{
-				local: [{ count: 4 }, { count: 1, attach: buildId }],
-			},
-			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
-		);
-		const detachMark: DeltaMark = {
-			count: 1,
-			detach: detachId,
-		};
-		const replaceMark: DeltaMark = {
-			count: 1,
-			attach: buildId,
-			detach: { minor: 42 },
-		};
-		const replaceAtFoo5 = makeFieldDelta(
-			{
-				local: [{ count: 5 }, replaceMark],
-			},
-			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
-		);
-		const log = new UnorderedTestLogger();
-		const anchors = new AnchorSet();
-		const trees = [cursorForJsonableTreeNode(node)];
-		const fieldChanges: DeltaFieldChanges = {
-			local: [{ count: 3 }, { count: 1, attach: buildId }],
-		};
-		announceTestDelta(
-			makeFieldDelta(fieldChanges, makeFieldPath(fieldFoo, [rootFieldKey, 0])),
-			anchors,
-			undefined,
-			undefined,
-			[{ id: buildId, trees }],
-		);
-		const anchor0 = anchors.track(makePath([rootFieldKey, 0]));
-		const node0 = anchors.locate(anchor0) ?? assert.fail();
-		const pathVisitor: PathVisitor = {
-			onRemove(path: UpPath, count: number): void {
-				log.logger(
-					`visitSubtreeChange.onRemove-${String(path.parentField)}-${
-						path.parentIndex
-					}-${count}`,
-				)();
-			},
-			onInsert(path: UpPath, content: ProtoNodes): void {
-				log.logger(
-					`visitSubtreeChange.onInsert-${String(path.parentField)}-${path.parentIndex}`,
-				)();
-			},
-			afterCreate(content: DetachedRangeUpPath): void {
-				log.logger(`visitSubtreeChange.afterCreate-${rangeToString(content)}`)();
-			},
-			beforeReplace(
-				newContent: DetachedRangeUpPath,
-				oldContent: RangeUpPath,
-				oldContentDestination: DetachedPlaceUpPath,
-			): void {
-				log.logger(
-					`visitSubtreeChange.beforeReplace-old:${rangeToString(
-						oldContent,
-					)}-new:${rangeToString(newContent)}`,
-				)();
-			},
-
-			afterReplace(
-				newContentSource: DetachedPlaceUpPath,
-				newContent: RangeUpPath,
-				oldContent: DetachedRangeUpPath,
-			): void {
-				log.logger(
-					`visitSubtreeChange.afterReplace-old:${rangeToString(
-						oldContent,
-					)}-new:${rangeToString(newContent)}`,
-				)();
-			},
-			beforeDestroy(content: DetachedRangeUpPath): void {
-				log.logger(`visitSubtreeChange.beforeDestroy-${rangeToString(content)}`)();
-			},
-			beforeAttach(source: DetachedRangeUpPath, destination: PlaceUpPath): void {
-				log.logger(
-					`visitSubtreeChange.beforeAttach-src:${rangeToString(source)}-dst:${placeToString(
-						destination,
-					)}`,
-				)();
-			},
-			afterAttach(source: DetachedPlaceUpPath, destination: RangeUpPath): void {
-				log.logger(
-					`visitSubtreeChange.afterAttach-src:${placeToString(source)}-dst:${rangeToString(
-						destination,
-					)}`,
-				)();
-			},
-			beforeDetach(source: RangeUpPath, destination: DetachedPlaceUpPath): void {
-				log.logger(
-					`visitSubtreeChange.beforeDetach-src:${rangeToString(source)}-dst:${placeToString(
-						destination,
-					)}`,
-				)();
-			},
-			afterDetach(source: PlaceUpPath, destination: DetachedRangeUpPath): void {
-				log.logger(
-					`visitSubtreeChange.afterDetach-src:${placeToString(source)}-dst:${rangeToString(
-						destination,
-					)}`,
-				)();
-			},
-		};
-		const unsubscribePathVisitor = node0.events.on(
-			"subtreeChanging",
-			(n: AnchorNode) => pathVisitor,
-		);
-		announceTestDelta(insertAtFoo4, anchors, undefined, undefined, build);
-		log.expect([
-			["visitSubtreeChange.beforeAttach-src:Temp-0[0, 1]-dst:foo[4]", 1],
-			["visitSubtreeChange.afterAttach-src:Temp-0[0]-dst:foo[4, 5]", 1],
-		]);
-		log.clear();
-		announceTestDelta(replaceAtFoo5, anchors, undefined, undefined, build);
-		log.expect([
-			["visitSubtreeChange.beforeReplace-old:foo[5, 6]-new:Temp-0[0, 1]", 1],
-			["visitSubtreeChange.afterReplace-old:Temp-1[0, 1]-new:foo[5, 6]", 1],
-		]);
-		log.clear();
-		announceTestDelta(
-			makeDelta(detachMark, makePath([rootFieldKey, 0], [fieldFoo, 5])),
-			anchors,
-		);
-		log.expect([
-			["visitSubtreeChange.beforeDetach-src:foo[5, 6]-dst:Temp-0[0]", 1],
-			["visitSubtreeChange.afterDetach-src:foo[5]-dst:Temp-0[0, 1]", 1],
-		]);
-		log.clear();
-		unsubscribePathVisitor();
-		announceTestDelta(insertAtFoo4, anchors, undefined, undefined, build);
-		log.expect([]);
 	});
 
 	// Simple scenario using just anchorSets to validate if cache implementation of the FlexTree.treeStatus api works.
@@ -783,7 +594,7 @@ function checkRemoved(path: UpPath | undefined, expected: FieldKey = brand("Temp
 
 function makeDelta(mark: DeltaMark, path: UpPath): DeltaFieldMap {
 	const fields: DeltaFieldMap = new Map([
-		[path.parentField, { local: [{ count: path.parentIndex }, mark] }],
+		[path.parentField, [{ count: path.parentIndex }, mark]],
 	]);
 	if (path.parent === undefined) {
 		return fields;
@@ -799,11 +610,4 @@ function makeFieldDelta(changes: DeltaFieldChanges, path: FieldUpPath): DeltaFie
 	}
 
 	return makeDelta({ count: 1, fields }, path.parent);
-}
-
-function rangeToString(range: RangeUpPath | DetachedRangeUpPath): string {
-	return `${range.field}[${range.start}, ${range.end}]`;
-}
-function placeToString(place: PlaceUpPath | DetachedPlaceUpPath): string {
-	return `${place.field}[${place.index}]`;
 }

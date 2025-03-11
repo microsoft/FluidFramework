@@ -4,12 +4,13 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { initializeForest, TreeStoredSchemaRepository } from "../../core/index.js";
+import { TreeStoredSchemaRepository } from "../../core/index.js";
 import {
 	buildForest,
-	cursorForMapTreeNode,
+	cursorForMapTreeField,
 	defaultSchemaPolicy,
 	getSchemaAndPolicy,
+	initializeForest,
 	MockNodeKeyManager,
 } from "../../feature-libraries/index.js";
 import {
@@ -142,8 +143,8 @@ export function hydrate<const TSchema extends ImplicitFieldSchema>(
 	);
 	prepareContentForHydration(mapTree, field.context.checkout.forest);
 	if (mapTree === undefined) return undefined as TreeFieldFromImplicitField<TSchema>;
-	const cursor = cursorForMapTreeNode(mapTree);
-	initializeForest(forest, [cursor], testRevisionTagCodec, testIdCompressor, true);
+	const cursor = cursorForMapTreeField([mapTree]);
+	initializeForest(forest, cursor, testRevisionTagCodec, testIdCompressor, true);
 	return getTreeNodeForField(field) as TreeFieldFromImplicitField<TSchema>;
 }
 

@@ -21,7 +21,6 @@ import {
 	type ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
 	type PlaceIndex,
-	type ProtoNodes,
 	type Range,
 	TreeNavigationResult,
 	type TreeStoredSchemaSubscription,
@@ -44,7 +43,7 @@ import {
 } from "../../util/index.js";
 
 import { BasicChunk, BasicChunkCursor, type SiblingsOrKey } from "./basicChunk.js";
-import { type IChunker, basicChunkTree, chunkTree } from "./chunkTree.js";
+import { type IChunker, basicChunkTree, chunkFieldSingle, chunkTree } from "./chunkTree.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 function makeRoot(): BasicChunk {
@@ -89,6 +88,10 @@ export class ChunkedForest implements IEditableForest {
 	public clone(schema: TreeStoredSchemaSubscription, anchors: AnchorSet): ChunkedForest {
 		this.roots.referenceAdded();
 		return new ChunkedForest(this.roots, schema, this.chunker.clone(schema), anchors);
+	}
+
+	public chunkField(cursor: ITreeCursorSynchronous): TreeChunk {
+		return chunkFieldSingle(cursor, { idCompressor: this.idCompressor, policy: this.chunker });
 	}
 
 	public forgetAnchor(anchor: Anchor): void {
@@ -136,7 +139,7 @@ export class ChunkedForest implements IEditableForest {
 				this.forest.#events.emit("beforeChange");
 				this.forest.roots.fields.delete(detachedField);
 			},
-			create(content: ProtoNodes, destination: FieldKey): void {
+			create(content: readonly ITreeCursorSynchronous[], destination: FieldKey): void {
 				this.forest.#events.emit("beforeChange");
 				const chunks: TreeChunk[] = content.map((c) =>
 					chunkTree(c, {
@@ -227,7 +230,7 @@ export class ChunkedForest implements IEditableForest {
 				assert(this.mutableChunk === undefined, 0x535 /* should be in field */);
 				const parent = this.getParent();
 				const chunks =
-					parent.mutableChunk.fields.get(parent.key) ?? fail("missing edited field");
+					parent.mutableChunk.fields.get(parent.key) ?? fail(0xaf6 /* missing edited field */);
 				let indexWithinChunk = index;
 				let indexOfChunk = 0;
 				let chunk = chunks[indexOfChunk] ?? oob();
@@ -236,7 +239,7 @@ export class ChunkedForest implements IEditableForest {
 					indexWithinChunk -= chunk.topLevelLength;
 					indexOfChunk++;
 					if (indexOfChunk === chunks.length) {
-						fail("missing edited node");
+						fail(0xaf7 /* missing edited node */);
 					}
 				}
 				let found = chunks[indexOfChunk] ?? oob();
@@ -277,7 +280,7 @@ export class ChunkedForest implements IEditableForest {
 				this.mutableChunk = undefined;
 			},
 			exitField(key: FieldKey): void {
-				const top = this.mutableChunkStack.pop() ?? fail("should not be at root");
+				const top = this.mutableChunkStack.pop() ?? fail(0xaf8 /* should not be at root */);
 				assert(this.mutableChunk === undefined, 0x539 /* should be in field */);
 				this.mutableChunk = top.mutableChunk;
 			},

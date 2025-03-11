@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	dataStoreNodePathOnly,
@@ -51,12 +51,12 @@ describe("Garbage Collection Helpers Tests", () => {
 				expectedShouldAllowValue: false,
 			},
 		];
-		testCases.forEach(({ persisted, current, expectedShouldAllowValue }) => {
+		for (const { persisted, current, expectedShouldAllowValue } of testCases) {
 			it(`persisted=${persisted}, current=${current}`, () => {
 				const shouldAllow = shouldAllowGcSweep({ tombstoneGeneration: persisted }, current);
 				assert.equal(shouldAllow, expectedShouldAllowValue);
 			});
-		});
+		}
 	});
 
 	describe("shouldAllowGcSweep", () => {
@@ -116,12 +116,12 @@ describe("Garbage Collection Helpers Tests", () => {
 				expectedShouldAllowValue: false,
 			},
 		];
-		testCases.forEach(({ persisted, current, expectedShouldAllowValue }) => {
+		for (const { persisted, current, expectedShouldAllowValue } of testCases) {
 			it(`persisted=${JSON.stringify(persisted)}, current=${current}`, () => {
 				const shouldAllow = shouldAllowGcSweep(persisted, current);
 				assert.equal(shouldAllow, expectedShouldAllowValue);
 			});
-		});
+		}
 	});
 
 	describe("dataStoreNodePathOnly", () => {
@@ -146,12 +146,12 @@ describe("Garbage Collection Helpers Tests", () => {
 				expected: "/a",
 			},
 		];
-		testCases.forEach(({ path, expected }) => {
+		for (const { path, expected } of testCases) {
 			it(`path=${path}`, () => {
 				const result = dataStoreNodePathOnly(path);
 				assert.equal(result, expected);
 			});
-		});
+		}
 	});
 
 	describe("urlToGCNodePath", () => {
@@ -192,11 +192,11 @@ describe("Garbage Collection Helpers Tests", () => {
 				expected: "/a/b",
 			},
 		];
-		testCases.forEach(({ url, expected }) => {
+		for (const { url, expected } of testCases) {
 			it(`url=${url}`, () => {
 				const result = urlToGCNodePath(url);
 				assert.equal(result, expected);
 			});
-		});
+		}
 	});
 });
