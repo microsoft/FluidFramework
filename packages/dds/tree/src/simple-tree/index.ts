@@ -124,6 +124,11 @@ export {
 	type CustomTreeNode,
 	type CustomTreeValue,
 	tryStoredSchemaAsArray,
+	type GetTypesUnsafe,
+	type DefaultInsertableTreeNodeFromImplicitAllowedTypesUnsafe,
+	type DefaultTreeNodeFromImplicitAllowedTypesUnsafe,
+	type StrictTypesUnsafe,
+	type AssignableTreeFieldFromImplicitFieldUnsafe,
 	type schemaStatics,
 	type ITreeAlpha,
 	type TransactionConstraint,
@@ -136,6 +141,7 @@ export {
 	type TransactionResultSuccess,
 	type TransactionResultFailed,
 	rollback,
+	Component,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
@@ -170,6 +176,17 @@ export {
 	type ReadSchema,
 	type NodeSchemaOptions,
 	type NodeSchemaMetadata,
+	customizeSchemaTyping,
+	type DefaultTreeNodeFromImplicitAllowedTypes,
+	type Customizer,
+	type GetTypes,
+	type StrictTypes,
+	type CustomTypes,
+	type CustomizedSchemaTyping,
+	CustomizedTyping,
+	type DefaultInsertableTreeNodeFromImplicitAllowedTypes,
+	type SchemaUnionToIntersection,
+	evaluateLazySchema,
 } from "./schemaTypes.js";
 export {
 	getTreeNodeForField,
@@ -184,6 +201,8 @@ export {
 	type FieldHasDefault,
 	type InsertableObjectFromSchemaRecord,
 	type ObjectFromSchemaRecord,
+	type AssignableTreeFieldFromImplicitField,
+	type ApplyKindAssignment,
 	type TreeObjectNode,
 	setField,
 	createUnknownOptionalFieldPolicy,
@@ -203,4 +222,9 @@ export {
 	handleSchema,
 	nullSchema,
 } from "./leafNodeSchema.js";
-export type { LazyItem, FlexList, FlexListToUnion, ExtractItemType } from "./flexList.js";
+export type {
+	LazyItem,
+	FlexList,
+	FlexListToUnion,
+	ExtractItemType,
+} from "./flexList.js";

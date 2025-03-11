@@ -27,13 +27,13 @@ import {
 	type TreeFieldFromImplicitField,
 	type UnsafeUnknownSchema,
 	FieldKind,
+	markSchemaMostDerived,
 } from "../schemaTypes.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import { toStoredSchema } from "../toStoredSchema.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
 import { assert } from "@fluidframework/core-utils/internal";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "../objectNodeTypes.js";
-import { markSchemaMostDerived } from "./schemaFactory.js";
 import { fail, getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
@@ -280,7 +280,7 @@ export class TreeViewConfiguration<
 			// This ensures if multiple schema extending the same schema factory generated class are present (or have been constructed, or get constructed in the future),
 			// an error is reported.
 
-			node: markSchemaMostDerived,
+			node: (schema) => markSchemaMostDerived(schema, true),
 			allowedTypes(types): void {
 				if (config.preventAmbiguity) {
 					checkUnion(types, ambiguityErrors);

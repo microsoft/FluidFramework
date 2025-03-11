@@ -44,28 +44,18 @@ export function markEager<T>(t: T): T {
  * By default, items that are of type `"function"` will be considered lazy and all other items will be considered eager.
  * To force a `"function"` item to be treated as an eager item, call `markEager` before putting it in the list.
  * This is necessary e.g. when the eager list items are function types and the lazy items are functions that _return_ function types.
- * `FlexList`s are processed by `normalizeFlexList` and `normalizeFlexListEager`.
+ * Our one use of FlexList has some special normalization logic, see {@link normalizeAllowedTypes}.
  * @system @public
  */
 export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
 /**
- * Given a `FlexList` of eager and lazy items, return an equivalent list where all items are eager.
- */
-export function normalizeFlexListEager<T>(t: FlexList<T>): T[] {
-	const data: T[] = t.map((value: LazyItem<T>) => {
-		if (isLazy(value)) {
-			return value();
-		}
-		return value;
-	});
-	return data;
-}
-
-/**
  * An "eager" or "lazy" Item in a `FlexList`.
  * Lazy items are wrapped in a function to allow referring to themselves before they are declared.
  * This makes recursive and co-recursive items possible.
+ * @privateRemarks
+ * `schemaTypes.ts`'s `evaluateLazySchema` (via {@link normalizeAllowedTypes})
+ * applies caching for the only current use of this type.
  * @public
  */
 export type LazyItem<Item = unknown> = Item | (() => Item);
