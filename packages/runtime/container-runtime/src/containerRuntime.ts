@@ -3,45 +3,44 @@
  * Licensed under the MIT License.
  */
 
-import {
-	Trace,
-	TypedEventEmitter,
-	type ILayerCompatDetails,
-	type IProvideLayerCompatDetails,
+import type {
+	ILayerCompatDetails,
+	IProvideLayerCompatDetails,
 } from "@fluid-internal/client-utils";
-import {
-	AttachState,
+import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
+import type {
 	IAudience,
 	ISelf,
 	ICriticalContainerError,
-	type IAudienceEvents,
+	IAudienceEvents,
 } from "@fluidframework/container-definitions";
-import {
+import { AttachState } from "@fluidframework/container-definitions";
+import type {
 	IContainerContext,
 	IGetPendingLocalStateProps,
 	IRuntime,
 	IDeltaManager,
 	IDeltaManagerFull,
-	isIDeltaManagerFull,
 } from "@fluidframework/container-definitions/internal";
-import {
+import { isIDeltaManagerFull } from "@fluidframework/container-definitions/internal";
+import type {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions/internal";
-import {
+import type {
 	FluidObject,
 	IFluidHandle,
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import {
-	type IErrorBase,
+import type {
+	IErrorBase,
 	IFluidHandleContext,
-	type IFluidHandleInternal,
+	IFluidHandleInternal,
 	IProvideFluidHandleContext,
+	ISignalEnvelope,
 } from "@fluidframework/core-interfaces/internal";
-import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
 	Deferred,
@@ -49,24 +48,23 @@ import {
 	PromiseCache,
 	delay,
 } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IClientDetails,
 	IQuorumClients,
 	ISummaryTree,
-	SummaryType,
 } from "@fluidframework/driver-definitions";
-import {
-	FetchSource,
+import { SummaryType } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentStorageService,
-	type ISnapshot,
 	IDocumentMessage,
-	ISnapshotTree,
-	ISummaryContent,
-	MessageType,
 	ISequencedDocumentMessage,
 	ISignalMessage,
-	type ISummaryContext,
+	ISnapshot,
+	ISnapshotTree,
+	ISummaryContent,
+	ISummaryContext,
 } from "@fluidframework/driver-definitions/internal";
+import { FetchSource, MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
@@ -75,13 +73,11 @@ import type {
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
 } from "@fluidframework/id-compressor/internal";
-import {
+import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	IGarbageCollectionData,
 	CreateChildSummarizerNodeParam,
-	FlushMode,
-	FlushModeExperimental,
 	IDataStore,
 	IEnvelope,
 	IFluidDataStoreContextDetached,
@@ -90,11 +86,15 @@ import {
 	InboundAttachMessage,
 	NamedFluidDataStoreRegistryEntries,
 	SummarizeInternalFn,
+	IInboundSignalMessage,
+	IRuntimeMessagesContent,
+	ISummarizerNodeWithGC,
+} from "@fluidframework/runtime-definitions/internal";
+import {
+	FlushMode,
+	FlushModeExperimental,
 	channelsTreeName,
 	gcTreeKey,
-	IInboundSignalMessage,
-	type IRuntimeMessagesContent,
-	type ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -108,18 +108,18 @@ import {
 	seqFromTree,
 } from "@fluidframework/runtime-utils/internal";
 import type {
+	IEventSampler,
 	IFluidErrorBase,
 	ITelemetryGenericEventExt,
+	ITelemetryLoggerExt,
+	MonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import {
-	ITelemetryLoggerExt,
 	DataCorruptionError,
 	DataProcessingError,
 	extractSafePropertiesFromMessage,
 	GenericError,
-	IEventSampler,
 	LoggingError,
-	MonitoringContext,
 	PerformanceEvent,
 	// eslint-disable-next-line import/no-deprecated
 	TaggedLoggerAdapter,
@@ -418,7 +418,7 @@ export interface IContainerRuntimeOptions {
  *
  * These options are not available to consumers when creating a new container runtime,
  * but we do need to expose them for internal use, e.g. when configuring the container runtime
- * to ensure compability with older versions.
+ * to ensure compatibility with older versions.
  *
  * @internal
  */
@@ -757,7 +757,7 @@ export class ContainerRuntime
 		context: IContainerContext;
 		registryEntries: NamedFluidDataStoreRegistryEntries;
 		existing: boolean;
-		runtimeOptions?: IContainerRuntimeOptions; // May also include options from IContainerRuntimeOptionsInternal
+		runtimeOptions?: IContainerRuntimeOptionsInternal;
 		containerScope?: FluidObject;
 		containerRuntimeCtor?: typeof ContainerRuntime;
 		/**
@@ -772,7 +772,7 @@ export class ContainerRuntime
 			existing,
 			requestHandler,
 			provideEntryPoint,
-			runtimeOptions = {} satisfies IContainerRuntimeOptions,
+			runtimeOptions = {} satisfies IContainerRuntimeOptionsInternal,
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
 		} = params;
@@ -1348,7 +1348,7 @@ export class ContainerRuntime
 		electedSummarizerData: ISerializedElection | undefined,
 		chunks: [string, string[]][],
 		dataStoreAliasMap: [string, string][],
-		baseRuntimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
+		runtimeOptions: Readonly<Required<IContainerRuntimeOptionsInternal>>,
 		private readonly containerScope: FluidObject,
 		// Create a custom ITelemetryBaseLogger to output telemetry events.
 		public readonly baseLogger: ITelemetryBaseLogger,
@@ -1370,7 +1370,7 @@ export class ContainerRuntime
 			// the defaults
 			...DefaultSummaryConfiguration,
 			// the runtime configuration overrides
-			...baseRuntimeOptions.summaryOptions?.summaryConfigOverrides,
+			...runtimeOptions.summaryOptions?.summaryConfigOverrides,
 		},
 		recentBatchInfo?: [number, string][],
 	) {
@@ -1402,11 +1402,6 @@ export class ContainerRuntime
 		const maybeLoaderCompatDetails = context as FluidObject<ILayerCompatDetails>;
 		validateLoaderCompatibility(maybeLoaderCompatDetails.ILayerCompatDetails, this.disposeFn);
 
-		// Backfill in defaults for the internal runtimeOptions, since they may not be present on the provided runtimeOptions object
-		const runtimeOptions = {
-			flushMode: defaultFlushMode,
-			...baseRuntimeOptions,
-		};
 		this.mc = createChildMonitoringContext({
 			logger: this.baseLogger,
 			namespace: "ContainerRuntime",
@@ -1679,6 +1674,8 @@ export class ContainerRuntime
 		// what is the interface of passing signals, we need the
 		// downstream stores to wrap the signal.
 		parentContext.submitSignal = (type: string, content: unknown, targetClientId?: string) => {
+			// Future: Can the `content` argument type be IEnvelope?
+			// verifyNotClosed is called in FluidDataStoreContext, which is *the* expected caller.
 			const envelope1 = content as IEnvelope;
 			const envelope2 = createNewSignalEnvelope(envelope1.address, type, envelope1.contents);
 			if (targetClientId === undefined) {
@@ -1941,7 +1938,7 @@ export class ContainerRuntime
 			summaryFormatVersion: metadata?.summaryFormatVersion,
 			disableIsolatedChannels: metadata?.disableIsolatedChannels,
 			gcVersion: metadata?.gcFeature,
-			options: JSON.stringify(baseRuntimeOptions),
+			options: JSON.stringify(runtimeOptions),
 			idCompressorModeMetadata: metadata?.documentSchema?.runtime?.idCompressorMode,
 			idCompressorMode: this.sessionSchema.idCompressorMode,
 			sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
