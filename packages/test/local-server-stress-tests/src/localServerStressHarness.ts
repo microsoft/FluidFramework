@@ -399,7 +399,7 @@ function mixinAddRemoveClient<TOperation extends BaseOperation>(
 				}
 
 				if (clients.length < options.clientJoinOptions.maxNumberOfClients) {
-					const url = await timeoutAwait(validationClient.container.getAbsoluteUrl(""));
+					const url = await validationClient.container.getAbsoluteUrl("");
 					assert(url !== undefined, "url for client must exist");
 					return {
 						type: "addClient",
@@ -502,7 +502,7 @@ function mixinAttach<TOperation extends BaseOperation>(
 			const clientA: Client = state.clients[0];
 
 			await clientA.container.attach(createLocalResolverCreateNewRequest("stress test"));
-			const url = await timeoutAwait(clientA.container.getAbsoluteUrl(""));
+			const url = await clientA.container.getAbsoluteUrl("");
 			assert(url !== undefined, "container must have a url");
 			// After attaching, we use a newly loaded client as a read-only client for consistency comparison validation.
 			// This makes debugging easier as the state of a client is easier to interpret if it has no local changes.
@@ -753,10 +753,16 @@ async function loadClient(
 			codeLoader,
 			logger: createStressLogger(seed),
 		}),
+		{
+			errorMsg: `Timed out waiting for client to load ${tag}`,
+		},
 	);
 
 	const maybe: FluidObject<DefaultStressDataObject> | undefined = await timeoutAwait(
 		container.getEntryPoint(),
+		{
+			errorMsg: `Timed out waiting for client entrypoint ${tag}`,
+		},
 	);
 	assert(maybe.DefaultStressDataObject !== undefined, "must be DefaultStressDataObject");
 
@@ -785,27 +791,37 @@ async function synchronizeClients(connectedClients: Client[]) {
 	try {
 		await Promise.all(
 			connectedClients.map(async (c) =>
-				timeoutPromise((resolve, reject) => {
-					if (c.container.connectionState !== ConnectionState.Connected) {
-						c.container.once("connected", () => resolve());
-						rejects.get(c)?.push(reject);
-					} else {
-						resolve();
-					}
-				}),
+				timeoutPromise(
+					(resolve, reject) => {
+						if (c.container.connectionState !== ConnectionState.Connected) {
+							c.container.once("connected", () => resolve());
+							rejects.get(c)?.push(reject);
+						} else {
+							resolve();
+						}
+					},
+					{
+						errorMsg: `Timed out waiting for client to connect ${c.tag}`,
+					},
+				),
 			),
 		);
 
 		await Promise.all(
 			connectedClients.map(async (c) =>
-				timeoutPromise((resolve, reject) => {
-					if (c.container.isDirty) {
-						c.container.once("saved", () => resolve());
-						rejects.get(c)?.push(reject);
-					} else {
-						resolve();
-					}
-				}),
+				timeoutPromise(
+					(resolve, reject) => {
+						if (c.container.isDirty) {
+							c.container.once("saved", () => resolve());
+							rejects.get(c)?.push(reject);
+						} else {
+							resolve();
+						}
+					},
+					{
+						errorMsg: `Timed out waiting for client to save ${c.tag}`,
+					},
+				),
 			),
 		);
 		const maxSeq = Math.max(
@@ -828,7 +844,9 @@ async function synchronizeClients(connectedClients: Client[]) {
 		};
 		await Promise.all(
 			connectedClients.map(async (c) =>
-				timeoutPromise((resolve, reject) => makeOpHandler(c, resolve, reject)),
+				timeoutPromise((resolve, reject) => makeOpHandler(c, resolve, reject), {
+					errorMsg: `Timed out waiting for client to catch up: ${c.tag} seq: ${maxSeq}`,
+				}),
 			),
 		);
 	} finally {

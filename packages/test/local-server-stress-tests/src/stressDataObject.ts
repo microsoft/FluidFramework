@@ -65,9 +65,8 @@ export class StressDataObject extends DataObject {
 		"defaultStressDataObject",
 	);
 	protected async getDefaultStressDataObject(): Promise<DefaultStressDataObject> {
-		const defaultDataStore = await timeoutAwait(
-			this.context.containerRuntime.getAliasedDataStoreEntryPoint("default"),
-		);
+		const defaultDataStore =
+			await this.context.containerRuntime.getAliasedDataStoreEntryPoint("default");
 		assert(defaultDataStore !== undefined, "default must exist");
 
 		const maybe: FluidObject<DefaultStressDataObject> | undefined =
@@ -97,7 +96,9 @@ export class StressDataObject extends DataObject {
 			// to get all channel each time, as we have no way to
 			// observer when a channel moves from detached to attached,
 			// especially on remove clients/
-			const channel = await timeoutAwait(this.runtime.getChannel(name)).catch(() => undefined);
+			const channel = await timeoutAwait(this.runtime.getChannel(name), {
+				errorMsg: `Timed out waiting for channel: ${name}`,
+			}).catch(() => undefined);
 			if (channel !== undefined) {
 				channels.push(channel);
 			}
@@ -190,6 +191,9 @@ export class DefaultStressDataObject extends StressDataObject {
 					url,
 					headers: { [RuntimeHeaders.wait]: false },
 				}),
+				{
+					errorMsg: `Timed out waiting for client to resolveHandle: ${url}`,
+				},
 			);
 			if (resp.status === 200) {
 				const maybe: FluidObject<IFluidLoadable & StressDataObject> | undefined = resp.value;
