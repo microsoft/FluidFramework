@@ -70,7 +70,7 @@ steps:
     pipeline: ${{ parameters.artifactPipeline }}
     buildVersionToDownload: specific
     buildId: ${{ parameters.artifactBuildId }}
-    artifact: test-files
+    artifact: test-files-$(System.JobAttempt)
     path: ${{ parameters.testFilesPath }}
     # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
     # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific

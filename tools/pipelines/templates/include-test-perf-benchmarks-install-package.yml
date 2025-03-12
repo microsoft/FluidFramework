@@ -84,7 +84,7 @@ steps:
     pipeline: ${{ parameters.artifactPipeline }}
     buildVersionToDownload: specific
     buildId: ${{ parameters.artifactBuildId }}
-    artifact: pack
+    artifact: pack-$(System.JobAttempt)
     patterns: "**/$(itpbip_sanitizedPackageName)"
     path: $(itpbip_downloadPath)
     # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific

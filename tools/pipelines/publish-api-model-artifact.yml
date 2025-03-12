@@ -165,7 +165,7 @@ stages:
                   pipeline: 'Build - client packages'
                   buildVersionToDownload: latestFromBranch
                   branchName: ${{ variables['Build.SourceBranch'] }}
-                  artifact: _api-extractor-temp
+                  artifact: _api-extractor-temp-$(System.JobAttempt)
                   allowPartiallySucceededBuilds: true
 
               # Copy and merge the api-extractor outputs to a central location

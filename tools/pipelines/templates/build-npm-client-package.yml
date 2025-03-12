@@ -518,7 +518,7 @@ extends:
                     - output: pipelineArtifact
                       displayName: Publish Artifact - pack
                       targetPath: $(Build.ArtifactStagingDirectory)/pack
-                      artifactName: pack
+                      artifactName: pack-$(System.JobAttempt)
                       publishLocation: pipeline
 
                     - output: pipelineArtifact
