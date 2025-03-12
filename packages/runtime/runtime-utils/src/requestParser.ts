@@ -18,10 +18,7 @@ export class RequestParser implements IRequest {
 	public static getPathParts(url: string): readonly string[] {
 		const queryStartIndex = url.indexOf("?");
 		const pathParts: string[] = [];
-		const urlPath = url.slice(
-			0,
-			queryStartIndex < 0 ? url.length : queryStartIndex,
-		);
+		const urlPath = url.slice(0, queryStartIndex < 0 ? url.length : queryStartIndex);
 
 		for (const part of urlPath.split("/")) {
 			if (part !== undefined && part.length > 0) {
