@@ -519,7 +519,7 @@ export class PartialSequenceLengths {
 			0xab7 /* Segment was not moved on insert */,
 		);
 		const firstRemove = removeInfo?.removes[0];
-		if (opstampUtils.lte(firstRemove, collabWindow.minSeqTime)) {
+		if (opstampUtils.lte(firstRemove, collabWindow.minSeqStamp)) {
 			// This segment was obliterated as soon as it was inserted, and everyone was aware of the obliterate.
 			// Thus every single client treats this segment as length 0 from every perspective, and no adjustments
 			// are necessary.
@@ -587,7 +587,7 @@ export class PartialSequenceLengths {
 		collabWindow: CollaborationWindow,
 	): void {
 		assertInserted(segment);
-		if (opstampUtils.lte(segment.insert, collabWindow.minSeqTime)) {
+		if (opstampUtils.lte(segment.insert, collabWindow.minSeqStamp)) {
 			combinedPartialLengths.minLength += segment.cachedLength;
 			return;
 		}
@@ -643,7 +643,7 @@ export class PartialSequenceLengths {
 		}
 
 		const firstRemove = removalInfo?.removes[0];
-		if (firstRemove !== undefined && opstampUtils.lte(firstRemove, collabWindow.minSeqTime)) {
+		if (firstRemove !== undefined && opstampUtils.lte(firstRemove, collabWindow.minSeqStamp)) {
 			combinedPartialLengths.minLength -= segment.cachedLength;
 			return;
 		}
@@ -695,7 +695,6 @@ export class PartialSequenceLengths {
 			for (const id of clientsWithRemoveOrObliterate) {
 				if (id === collabWindow.clientId) {
 					// The local client also removed or obliterated this segment.
-					// TODO:ADS We were lacking test coverage here: I was looking at the first remove but I believe I want the last.
 					const { localSeq } = removalInfo?.removes[removalInfo.removes.length - 1];
 					if (localSeq === undefined) {
 						// Sure, the local client did it--but that change was already acked.
@@ -742,7 +741,7 @@ export class PartialSequenceLengths {
 					// We already add this entry as part of the accountForInsertion codepath for the client that
 					// actually did insert the segment, hence not doing so [again] here.
 					if (
-						opstampUtils.greaterThan(segment.insert, collabWindow.minSeqTime) &&
+						opstampUtils.greaterThan(segment.insert, collabWindow.minSeqStamp) &&
 						id !== segment.insert.clientId
 					) {
 						combinedPartialLengths.addClientAdjustment(
@@ -832,7 +831,7 @@ export class PartialSequenceLengths {
 					if (clientId !== collabWindow.clientId) {
 						this.addClientAdjustment(clientId, seq, -segment.cachedLength);
 						if (
-							opstampUtils.greaterThan(segment.insert, collabWindow.minSeqTime) &&
+							opstampUtils.greaterThan(segment.insert, collabWindow.minSeqStamp) &&
 							segment.insert.clientId !== clientId
 						) {
 							this.addClientAdjustment(clientId, segment.insert.seq, segment.cachedLength);

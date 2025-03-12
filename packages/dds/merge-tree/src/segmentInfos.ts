@@ -53,25 +53,6 @@ export function propInstanceOf<P extends string, T>(
  */
 export interface IHasInsertionInfo {
 	insert: InsertOperationStamp;
-	// TODO:ADS: Update this doc
-	// /**
-	//  * Short clientId for the client that inserted this segment.
-	//  */
-	// clientId: number;
-	// /**
-	//  * Local seq at which this segment was inserted.
-	//  * This is defined if and only if the insertion of the segment is pending ack, i.e. `seq` is UnassignedSequenceNumber.
-	//  * Once the segment is acked, this field is cleared.
-	//  *
-	//  * @privateRemarks
-	//  * See {@link CollaborationWindow.localSeq} for more information on the semantics of localSeq.
-	//  */
-	// localSeq?: number;
-	// /**
-	//  * Seq at which this segment was inserted.
-	//  * If undefined, it is assumed the segment was inserted prior to the collab window's minimum sequence number.
-	//  */
-	// seq: number;
 }
 
 /**
@@ -192,10 +173,15 @@ export const removeMergeNodeInfo: (nodeLike: IMergeNodeInfo) => asserts nodeLike
 		ordinal: undefined,
 	});
 
-// TODO:ADS: Update this doc
-// - Document this, including moveDst or something like it.
-// See old code in this file for continuity.
+/**
+ * Contains removal information associated with an {@link ISegment}.
+ *
+ * Segments can be removed concurrently by multiple clients.
+ */
 export interface IHasRemovalInfo {
+	/**
+	 * Operation stamps which have removed this segment. This list is sorted by stamp order, where removes[0] is the earliest removal.
+	 */
 	removes: RemoveOperationStamp[];
 }
 

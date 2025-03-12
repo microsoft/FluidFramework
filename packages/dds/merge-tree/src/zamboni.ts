@@ -158,7 +158,7 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 			// it can be unlinked (i.e. removed from the merge-tree)
 			if (
 				!!firstRemove &&
-				opstampUtils.lte(firstRemove, mergeTree.collabWindow.minSeqTime) &&
+				opstampUtils.lte(firstRemove, mergeTree.collabWindow.minSeqStamp) &&
 				segment.trackingCollection.empty
 			) {
 				mergeTree.mergeTreeMaintenanceCallback?.(
@@ -178,7 +178,7 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 
 			prevSegment = undefined;
 		} else {
-			if (opstampUtils.lte(segment.insert, mergeTree.collabWindow.minSeqTime)) {
+			if (opstampUtils.lte(segment.insert, mergeTree.collabWindow.minSeqStamp)) {
 				const segmentHasPositiveLength = (mergeTree.leafLength(segment) ?? 0) > 0;
 				const canAppend =
 					prevSegment?.canAppend(segment) &&

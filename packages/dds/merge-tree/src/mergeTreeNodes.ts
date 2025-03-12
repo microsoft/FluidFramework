@@ -228,21 +228,40 @@ export interface ObliterateInfo {
 	segmentGroup: SegmentGroup | undefined;
 }
 
-// TODO:ADS Think through how these interact with causal following terminology
-// I think you probably want to use Operation stamps to signify events that are linearized as
-// [remote seq 1, remote seq 2, ... , remote seq N, local seq 1, local seq 2, ... , local seq M]
-// but then use some other interface for comparisons about reasoning around what other clients were thinking of
-// when they applied some edit.
 /**
  * A stamp that identifies provenance of an operation performed on the MergeTree.
+ *
+ * Stamps identify a point in time (`seq`/`localSeq`) as well as the source (`clientId`) for the operation.
+ * This provides enough information to linearize all known applied operations: acked operations happen before
+ * local+unacked ones, with acked operations ordered by their sequence numbers and local+unacked operations
+ * ordered by their localSeq.
+ *
+ * By including `clientId`, it also provides enough information to resolve whether segments are visible
+ * from alternative perspectives: a remote client will have seen all of its own previous operations as well as
+ * those at or below the op's reference sequence number.
  *
  * @remarks - As the `readonly` identifies suggest, these stamps should be treated as immutable.
  * New operations applied to a merge-tree should create new stamps rather than modify existing ones (e.g. when
  * a change's ack happens).
  */
 export interface OperationStamp {
+	/**
+	 * Thge sequence number at which this operation was applied.
+	 */
 	readonly seq: number;
+
+	/**
+	 * Short clientId for the client that performed this operation.
+	 */
 	readonly clientId: number;
+
+	/**
+	 * Local seq at which this operation was applied.
+	 * This is defined if and only if the operation is pending an ack, i.e. `seq` is UnassignedSequenceNumber.
+	 *
+	 * @privateRemarks
+	 * See {@link CollaborationWindow.localSeq} for more information on the semantics of localSeq.
+	 */
 	readonly localSeq?: number;
 }
 
@@ -697,8 +716,7 @@ export class CollaborationWindow {
 	 */
 	currentSeq = 0;
 
-	public get minSeqTime(): OperationStamp {
-		// TODO:ADS Audit usages that care about the stamp of this. Such things seem wrong, but it's also weird that we force one here.
+	public get minSeqStamp(): OperationStamp {
 		return { seq: this.minSeq, clientId: NonCollabClient };
 	}
 

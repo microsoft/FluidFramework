@@ -1479,7 +1479,7 @@ export class MergeTree {
 				// locSegment.seq > this.collabWindow.currentSeq
 				else if (
 					MergeTree.options.zamboniSegments &&
-					opstampUtils.greaterThan(locSegment.insert, this.collabWindow.minSeqTime)
+					opstampUtils.greaterThan(locSegment.insert, this.collabWindow.minSeqStamp)
 				) {
 					this.addToLRUSet(locSegment, locSegment.insert.seq);
 				}

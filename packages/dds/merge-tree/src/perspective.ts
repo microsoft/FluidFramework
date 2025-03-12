@@ -70,7 +70,6 @@ abstract class PerspectiveBase {
 			return false;
 		}
 
-		// TODO:ADS Previous factoring was able to fast-path refSeq and localSeq based remove (which look at first and last stamp before others)
 		if (isRemoved(seg) && seg.removes.some((remove) => this.hasOccurred(remove))) {
 			return false;
 		}

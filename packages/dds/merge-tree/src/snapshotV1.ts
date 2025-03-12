@@ -298,8 +298,8 @@ export class SnapshotV1 {
 							opstampUtils.greaterThan(firstRemove, minSeqStamp),
 						0x065 /* "On removal info preservation, segment has invalid removed sequence number!" */,
 					);
-					// TODO:ADS By not preserving sequence numbers other than the first move,
-					//  We drop data here which will be necessary to allow perspectives of remote clients that
+					// TODO:AB#32299 By not preserving sequence numbers other than the first move,
+					// We drop data here which will be necessary to allow perspectives of remote clients that
 					// don't include all of their ops. This should be remedied at some point.
 					raw.removedSeq = firstRemove.seq;
 
