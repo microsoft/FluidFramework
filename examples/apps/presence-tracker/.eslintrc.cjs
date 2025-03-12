@@ -9,7 +9,4 @@ module.exports = {
 		"prettier",
 		"../../.eslintrc.cjs",
 	],
-	rules: {
-		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
-	},
 };

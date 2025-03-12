@@ -10,7 +10,6 @@ module.exports = {
 	],
 	rules: {
 		"import/no-nodejs-modules": "off",
-		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},
 	parserOptions: {
 		project: ["./src/test/tsconfig.json"],
