@@ -207,10 +207,11 @@ function ackSegment(
 			allowIncrementalPartialLengthsUpdate = segment.removes.length === 1;
 			const obliterateInfo = segmentGroup.obliterateInfo;
 			assert(obliterateInfo !== undefined, 0xa40 /* must have obliterate info */);
-			// TODO: Convert ObliterateInfo to op stamp as well?
-			obliterateInfo.localSeq = undefined;
-			// TODO: Tests passed without setting this???? Do we actually use it? Plausibly no after this (just the info in segment.removes)
-			obliterateInfo.seq = sequenceNumber;
+			obliterateInfo.stamp = {
+				type: "sliceRemove",
+				seq: sequenceNumber,
+				clientId: latestMove.clientId,
+			};
 			segment.removes[segment.removes.length - 1] = {
 				type: "sliceRemove",
 				seq: sequenceNumber,
@@ -539,7 +540,7 @@ class Obliterates {
 
 	public setMinSeq(minSeq: number): void {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-		while (!this.seqOrdered.empty && this.seqOrdered.first?.data.seq! <= minSeq) {
+		while (!this.seqOrdered.empty && this.seqOrdered.first?.data.stamp.seq! <= minSeq) {
 			const ob = this.seqOrdered.shift()!;
 			this.startOrdered.remove(ob.data.start);
 			this.mergeTree.removeLocalReferencePosition(ob.data.start);
@@ -548,7 +549,10 @@ class Obliterates {
 	}
 
 	public addOrUpdate(obliterateInfo: ObliterateInfo): void {
-		const { seq, start } = obliterateInfo;
+		const {
+			stamp: { seq },
+			start,
+		} = obliterateInfo;
 		if (seq !== UnassignedSequenceNumber) {
 			this.seqOrdered.push(obliterateInfo);
 		}
@@ -1271,7 +1275,7 @@ export class MergeTree {
 			});
 
 			if (pendingSegmentGroup.obliterateInfo !== undefined) {
-				pendingSegmentGroup.obliterateInfo.seq = seq;
+				pendingSegmentGroup.obliterateInfo.stamp = { type: "sliceRemove", ...stamp };
 				this.obliterates.addOrUpdate(pendingSegmentGroup.obliterateInfo);
 			}
 
@@ -1551,39 +1555,37 @@ export class MergeTree {
 				localSeq: stamp.localSeq,
 			};
 			for (const ob of this.obliterates.findOverlapping(newSegment)) {
-				if (opstampUtils.greaterThan(ob, refSeqStamp)) {
+				if (opstampUtils.greaterThan(ob.stamp, refSeqStamp)) {
 					// Any obliterate from the same client that's inserting this segment cannot cause the segment to be marked as
 					// obliterated (since that client must have performed the obliterate before this insertion).
 					// We still need to consider such obliterates when determining the winning obliterate for the insertion point,
 					// see `obliteratePrecedingInsertion` docs.
-					if (stamp.clientId !== ob.clientId) {
-						if (opstampUtils.isAcked(ob)) {
-							overlappingAckedObliterates.push({
-								type: "sliceRemove",
-								seq: ob.seq,
-								clientId: ob.clientId,
-							});
+					if (stamp.clientId !== ob.stamp.clientId) {
+						if (opstampUtils.isAcked(ob.stamp)) {
+							overlappingAckedObliterates.push(ob.stamp);
 						}
 
-						if (oldest === undefined || opstampUtils.lessThan(ob, oldest)) {
+						if (oldest === undefined || opstampUtils.lessThan(ob.stamp, oldest.stamp)) {
 							oldest = ob;
 						}
 					}
 
-					if (newest === undefined || opstampUtils.greaterThan(ob, newest)) {
+					if (newest === undefined || opstampUtils.greaterThan(ob.stamp, newest.stamp)) {
 						newest = ob;
 					}
 
 					if (
-						opstampUtils.isAcked(ob) &&
-						(newestAcked === undefined || opstampUtils.greaterThan(ob, newestAcked))
+						opstampUtils.isAcked(ob.stamp) &&
+						(newestAcked === undefined ||
+							opstampUtils.greaterThan(ob.stamp, newestAcked.stamp))
 					) {
 						newestAcked = ob;
 					}
 
 					if (
-						ob.seq === UnassignedSequenceNumber &&
-						(oldestUnacked === undefined || oldestUnacked.localSeq! > ob.localSeq!)
+						opstampUtils.isLocal(ob.stamp) &&
+						(oldestUnacked === undefined ||
+							opstampUtils.greaterThan(oldestUnacked.stamp, ob.stamp))
 					) {
 						// There can be one local obliterate surrounding a segment if a client repeatedly obliterates
 						// a region (ex: in the text ABCDEFG, obliterate D, then obliterate CE, then BF). In this case,
@@ -1597,9 +1599,9 @@ export class MergeTree {
 			// See doc comment on obliteratePrecedingInsertion for more details: if the newest obliterate was performed
 			// by the same client that's inserting this segment, we let them insert into this range and therefore don't
 			// mark it obliterated.
-			if (oldest && newest?.clientId !== stamp.clientId) {
+			if (oldest && newest?.stamp.clientId !== stamp.clientId) {
 				const removeInfo: IHasRemovalInfo = { removes: [] };
-				if (newestAcked === newest || newestAcked?.clientId !== stamp.clientId) {
+				if (newestAcked === newest || newestAcked?.stamp.clientId !== stamp.clientId) {
 					removeInfo.removes = overlappingAckedObliterates;
 					// Because we found these by looking at overlapping obliterates, they are not necessarily currently sorted by seq.
 					// Address that now.
@@ -1616,12 +1618,7 @@ export class MergeTree {
 				// so we can ignore all the others.
 				// TODO: move this comment to a place that makes more sense.
 				if (oldestUnacked !== undefined) {
-					removeInfo.removes.push({
-						type: "sliceRemove",
-						seq: oldestUnacked.seq,
-						clientId: oldestUnacked.clientId,
-						localSeq: oldestUnacked.localSeq,
-					});
+					removeInfo.removes.push(oldestUnacked.stamp);
 
 					assert(
 						oldestUnacked.segmentGroup !== undefined,
@@ -1961,12 +1958,10 @@ export class MergeTree {
 		const removedSegments: SegmentWithInfo<IHasRemovalInfo, ISegmentLeaf>[] = [];
 
 		const obliterate: ObliterateInfo = {
-			clientId: stamp.clientId,
+			start: createDetachedLocalReferencePosition(undefined),
 			end: createDetachedLocalReferencePosition(undefined),
 			refSeq: perspective.refSeq,
-			seq: stamp.seq,
-			start: createDetachedLocalReferencePosition(undefined),
-			localSeq: stamp.localSeq,
+			stamp,
 			segmentGroup: undefined,
 		};
 
@@ -2027,7 +2022,7 @@ export class MergeTree {
 			// will win against the obliterate we're processing, hence the early exit.
 			if (
 				opstampUtils.isLocal(segment.insert) &&
-				segment.obliteratePrecedingInsertion?.seq === UnassignedSequenceNumber &&
+				segment.obliteratePrecedingInsertion?.stamp.seq === UnassignedSequenceNumber &&
 				stamp.seq !== UnassignedSequenceNumber
 			) {
 				// We chose to not obliterate this segment because we are aware of an unacked local obliteration.

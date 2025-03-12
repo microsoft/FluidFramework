@@ -224,9 +224,7 @@ export interface ObliterateInfo {
 	start: LocalReferencePosition;
 	end: LocalReferencePosition;
 	refSeq: number;
-	clientId: number;
-	seq: number;
-	localSeq: number | undefined;
+	stamp: SliceRemoveOperationStamp;
 	segmentGroup: SegmentGroup | undefined;
 }
 
@@ -235,17 +233,24 @@ export interface ObliterateInfo {
 // [remote seq 1, remote seq 2, ... , remote seq N, local seq 1, local seq 2, ... , local seq M]
 // but then use some other interface for comparisons about reasoning around what other clients were thinking of
 // when they applied some edit.
+/**
+ * A stamp that identifies provenance of an operation performed on the MergeTree.
+ *
+ * @remarks - As the `readonly` identifies suggest, these stamps should be treated as immutable.
+ * New operations applied to a merge-tree should create new stamps rather than modify existing ones (e.g. when
+ * a change's ack happens).
+ */
 export interface OperationStamp {
-	seq: number;
-	clientId: number;
-	localSeq?: number;
+	readonly seq: number;
+	readonly clientId: number;
+	readonly localSeq?: number;
 }
 
 /**
  * {@link OperationStamp} for an 'insert' operation.
  */
 export interface InsertOperationStamp extends OperationStamp {
-	type: "insert";
+	readonly type: "insert";
 }
 
 /**
@@ -259,7 +264,7 @@ export interface InsertOperationStamp extends OperationStamp {
  * of merge-tree code only cares about segment visibility and not the specific operation that caused a segment to be removed.
  */
 export interface SetRemoveOperationStamp extends OperationStamp {
-	type: "setRemove";
+	readonly type: "setRemove";
 }
 
 /**
@@ -273,7 +278,7 @@ export interface SetRemoveOperationStamp extends OperationStamp {
  * of merge-tree code only cares about segment visibility and not the specific operation that caused a segment to be removed.
  */
 export interface SliceRemoveOperationStamp extends OperationStamp {
-	type: "sliceRemove";
+	readonly type: "sliceRemove";
 }
 
 export type RemoveOperationStamp = SetRemoveOperationStamp | SliceRemoveOperationStamp;
