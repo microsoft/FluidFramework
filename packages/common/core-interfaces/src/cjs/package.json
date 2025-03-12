@@ -1,0 +1,19 @@
+{
+	"name": "@fluidframework/core-interfaces",
+	"type": "commonjs",
+	"exports": {
+		".": {
+			"types": "./public.d.ts",
+			"default": "./index.js"
+		},
+		"./legacy": {
+			"types": "./legacy.d.ts",
+			"default": "./index.js"
+		},
+		"./internal": {
+			"types": "./internal.d.ts",
+			"default": "./index.js"
+		},
+		"./internal/exposedUtilityTypes": "./exposedUtilityTypes.js"
+	}
+}

@@ -7,24 +7,13 @@
 
 import { strict as assert } from "node:assert";
 
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-
-import type {
-	JsonDeserialized,
-	JsonTypeWith,
-	NonNullJsonObjectWith,
-} from "../../core-interfaces/index.js";
-
 import {
 	assertIdenticalTypes,
 	createInstanceOf,
 	replaceBigInt,
 	reviveBigInt,
 } from "./testUtils.js";
-import type {
-	ObjectWithFluidHandleOrRecursion,
-	SimpleObjectWithOptionalRecursion,
-} from "./testValues.js";
+import type { SimpleObjectWithOptionalRecursion } from "./testValues.js";
 import {
 	boolean,
 	number,
@@ -58,11 +47,13 @@ import {
 	arrayOfNumbersOrUndefined,
 	arrayOfBigints,
 	arrayOfSymbols,
+	arrayOfUnknown,
 	arrayOfFunctions,
 	arrayOfFunctionsWithProperties,
 	arrayOfObjectAndFunctions,
 	arrayOfBigintAndObjects,
 	arrayOfSymbolsAndObjects,
+	readonlyArrayOfNumbers,
 	object,
 	emptyObject,
 	objectWithBoolean,
@@ -78,11 +69,25 @@ import {
 	objectWithNumberOrBigintOrSymbol,
 	objectWithFunctionOrSymbol,
 	objectWithStringOrSymbol,
+	objectWithUnknown,
+	objectWithOptionalUnknown,
 	objectWithUndefined,
 	objectWithOptionalUndefined,
 	objectWithOptionalBigint,
 	objectWithSymbolKey,
 	objectWithNumberKey,
+	objectWithArrayOfNumbers,
+	objectWithArrayOfNumbersSparse,
+	objectWithArrayOfNumbersOrUndefined,
+	objectWithArrayOfBigints,
+	objectWithArrayOfSymbols,
+	objectWithArrayOfUnknown,
+	objectWithArrayOfFunctions,
+	objectWithArrayOfFunctionsWithProperties,
+	objectWithArrayOfObjectAndFunctions,
+	objectWithArrayOfBigintAndObjects,
+	objectWithArrayOfSymbolsAndObjects,
+	objectWithReadonlyArrayOfNumbers,
 	objectWithOptionalNumberNotPresent,
 	objectWithOptionalNumberUndefined,
 	objectWithOptionalNumberDefined,
@@ -99,12 +104,34 @@ import {
 	objectWithMismatchedGetterAndSetterProperty,
 	objectWithMismatchedGetterAndSetterPropertyViaValue,
 	objectWithNever,
+	stringRecordOfNumbers,
+	stringRecordOfUndefined,
+	stringRecordOfUnknown,
+	stringOrNumberRecordOfStrings,
+	partialStringRecordOfNumbers,
+	partialStringRecordOfUnknown,
+	templatedRecordOfNumbers,
+	partialTemplatedRecordOfNumbers,
+	templatedRecordOfUnknown,
+	mixedRecordOfUnknown,
+	stringRecordOfNumbersOrStringsWithKnownProperties,
+	stringRecordOfUnknownWithKnownProperties,
+	partialStringRecordOfUnknownWithKnownProperties,
+	stringRecordOfUnknownWithOptionalKnownProperties,
+	stringRecordOfUnknownWithKnownUnknown,
+	stringRecordOfUnknownWithOptionalKnownUnknown,
+	stringOrNumberRecordOfStringWithKnownNumber,
+	stringOrNumberRecordOfUndefinedWithKnownNumber,
 	objectWithPossibleRecursion,
-	objectWithRecursion,
+	objectWithOptionalRecursion,
 	objectWithEmbeddedRecursion,
 	objectWithAlternatingRecursion,
 	objectWithSymbolOrRecursion,
 	objectWithFluidHandleOrRecursion,
+	objectWithUnknownAdjacentToOptionalRecursion,
+	objectWithOptionalUnknownAdjacentToOptionalRecursion,
+	objectWithUnknownInOptionalRecursion,
+	objectWithOptionalUnknownInOptionalRecursion,
 	selfRecursiveFunctionWithProperties,
 	selfRecursiveObjectAndFunction,
 	objectInheritingOptionalRecursionAndWithNestedSymbol,
@@ -125,9 +152,27 @@ import {
 	ClassWithPrivateSetter,
 	ClassWithPublicData,
 	ClassWithPublicMethod,
+	mapOfStringsToNumbers,
+	readonlyMapOfStringsToNumbers,
+	setOfNumbers,
+	readonlySetOfNumbers,
+	brandedNumber,
+	brandedString,
+	brandedObject,
+	brandedObjectWithString,
+	objectWithBrandedNumber,
+	objectWithBrandedString,
 	fluidHandleToNumber,
 	objectWithFluidHandle,
 } from "./testValues.js";
+
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type {
+	InternalUtilityTypes,
+	JsonDeserialized,
+	JsonTypeWith,
+	NonNullJsonObjectWith,
+} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 /**
  * Defined using `JsonDeserialized` type filter tests `JsonDeserialized` at call site.
@@ -172,14 +217,14 @@ function passThruThrows<T>(v: T, expectedThrow: Error): JsonDeserialized<T> {
 function passThruHandlingBigint<T>(
 	v: T,
 	expected?: unknown,
-): JsonDeserialized<T, { AllowExactly: bigint }> {
+): JsonDeserialized<T, { AllowExactly: [bigint] }> {
 	const stringified = JSON.stringify(v, replaceBigInt);
 	if (stringified === undefined) {
 		throw new Error("JSON.stringify returned undefined");
 	}
 	const result = JSON.parse(stringified, reviveBigInt) as JsonDeserialized<
 		T,
-		{ AllowExactly: bigint }
+		{ AllowExactly: [bigint] }
 	>;
 	assert.deepStrictEqual(result, expected ?? v);
 	return result;
@@ -191,9 +236,9 @@ function passThruHandlingBigint<T>(
 function passThruHandlingBigintThrows<T>(
 	v: T,
 	expectedThrow: Error,
-): JsonDeserialized<T, { AllowExactly: bigint }> {
+): JsonDeserialized<T, { AllowExactly: [bigint] }> {
 	assert.throws(() => passThruHandlingBigint(v), expectedThrow);
-	return undefined as unknown as JsonDeserialized<T, { AllowExactly: bigint }>;
+	return undefined as unknown as JsonDeserialized<T, { AllowExactly: [bigint] }>;
 }
 
 /**
@@ -201,8 +246,11 @@ function passThruHandlingBigintThrows<T>(
  */
 function passThruHandlingSpecificFunction<T>(
 	_v: T,
-): JsonDeserialized<T, { AllowExactly: (_: string) => number }> {
-	return undefined as unknown as JsonDeserialized<T, { AllowExactly: (_: string) => number }>;
+): JsonDeserialized<T, { AllowExactly: [(_: string) => number] }> {
+	return undefined as unknown as JsonDeserialized<
+		T,
+		{ AllowExactly: [(_: string) => number] }
+	>;
 }
 
 /**
@@ -212,6 +260,15 @@ function passThruHandlingFluidHandle<T>(
 	_v: T,
 ): JsonDeserialized<T, { AllowExtensionOf: IFluidHandle }> {
 	return undefined as unknown as JsonDeserialized<T, { AllowExtensionOf: IFluidHandle }>;
+}
+
+/**
+ * Similar to {@link passThru} but preserves `unknown` instead of substituting `JsonTypeWith`.
+ */
+function passThruPreservingUnknown<T>(
+	_v: T,
+): JsonDeserialized<T, { AllowExactly: [unknown] }> {
+	return undefined as unknown as JsonDeserialized<T, { AllowExactly: [unknown] }>;
 }
 
 describe("JsonDeserialized", () => {
@@ -244,6 +301,14 @@ describe("JsonDeserialized", () => {
 			it("computed enum", () => {
 				const resultRead = passThru(computedEnumValue);
 				assertIdenticalTypes(resultRead, computedEnumValue);
+			});
+			it("branded `number`", () => {
+				const resultRead = passThru(brandedNumber);
+				assertIdenticalTypes(resultRead, brandedNumber);
+			});
+			it("branded `string`", () => {
+				const resultRead = passThru(brandedString);
+				assertIdenticalTypes(resultRead, brandedString);
 			});
 		});
 
@@ -296,17 +361,6 @@ describe("JsonDeserialized", () => {
 			it("object with literals", () => {
 				const resultRead = passThru(objectWithLiterals);
 				assertIdenticalTypes(resultRead, objectWithLiterals);
-				// In the meantime, until https://github.com/microsoft/TypeScript/pull/58296,
-				// we can check assignability.
-				resultRead satisfies typeof objectWithLiterals;
-				assert.ok(
-					objectWithLiterals instanceof Object,
-					"objectWithLiterals is at least a plain Object",
-				);
-				assert.ok(
-					resultRead instanceof objectWithLiterals.constructor,
-					"objectRead is same type as objectWithLiterals (plain Object)",
-				);
 			});
 			it("array of literals", () => {
 				const resultRead = passThru(arrayOfLiterals);
@@ -346,6 +400,10 @@ describe("JsonDeserialized", () => {
 			it("array of partially supported (numbers or undefined) is modified with null", () => {
 				const resultRead = passThru(arrayOfNumbersOrUndefined, [0, null, 2]);
 				assertIdenticalTypes(resultRead, createInstanceOf<(number | null)[]>());
+			});
+			it("array of `unknown` becomes array of `JsonTypeWith<never>`", () => {
+				const resultRead = passThru(arrayOfUnknown);
+				assertIdenticalTypes(resultRead, createInstanceOf<JsonTypeWith<never>[]>());
 			});
 			it("array of partially supported (bigint or basic object) becomes basic object only", () => {
 				const resultRead = passThruThrows(
@@ -389,6 +447,14 @@ describe("JsonDeserialized", () => {
 				const resultRead = passThru([numberOrBigintOrSymbol], [7]);
 				assertIdenticalTypes(resultRead, createInstanceOf<(number | null)[]>());
 			});
+			it("readonly array of supported types (numbers) are preserved", () => {
+				const resultRead = passThru(readonlyArrayOfNumbers);
+				assertIdenticalTypes(resultRead, readonlyArrayOfNumbers);
+				// @ts-expect-error readonly array does not appear to support `push`, but works at runtime.
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+				resultRead.push(0);
+				assert.deepStrictEqual(resultRead, [...readonlyArrayOfNumbers, 0]);
+			});
 		});
 
 		describe("fully supported object types are preserved", () => {
@@ -415,13 +481,80 @@ describe("JsonDeserialized", () => {
 				assertIdenticalTypes(resultRead, objectWithNumberKey);
 			});
 
+			it("object with array of supported types (numbers) are preserved", () => {
+				const resultRead = passThru(objectWithArrayOfNumbers);
+				assertIdenticalTypes(resultRead, objectWithArrayOfNumbers);
+			});
+			it("object with sparse array is filled in with null", () => {
+				const resultRead = passThru(objectWithArrayOfNumbersSparse, {
+					arrayOfNumbersSparse: [0, null, null, 3],
+				});
+				assertIdenticalTypes(resultRead, objectWithArrayOfNumbersSparse);
+			});
+
+			it("object with branded `number`", () => {
+				const resultRead = passThru(objectWithBrandedNumber);
+				assertIdenticalTypes(resultRead, objectWithBrandedNumber);
+			});
+			it("object with branded `string`", () => {
+				const resultRead = passThru(objectWithBrandedString);
+				assertIdenticalTypes(resultRead, objectWithBrandedString);
+			});
+
+			it("`string` indexed record of `number`s", () => {
+				const resultRead = passThru(stringRecordOfNumbers);
+				assertIdenticalTypes(resultRead, stringRecordOfNumbers);
+			});
+			it("`string`|`number` indexed record of `string`s", () => {
+				const resultRead = passThru(stringOrNumberRecordOfStrings);
+				assertIdenticalTypes(resultRead, stringOrNumberRecordOfStrings);
+			});
+			it("`string` indexed record of `number`|`string`s with known properties", () => {
+				const resultRead = passThru(stringRecordOfNumbersOrStringsWithKnownProperties);
+				assertIdenticalTypes(resultRead, stringRecordOfNumbersOrStringsWithKnownProperties);
+			});
+			it("`string`|`number` indexed record of `strings` with known `number` property (unassignable)", () => {
+				const resultRead = passThru(stringOrNumberRecordOfStringWithKnownNumber);
+				assertIdenticalTypes(resultRead, stringOrNumberRecordOfStringWithKnownNumber);
+			});
+			it("`Partial<>` `string` indexed record of `numbers`", () => {
+				// Warning: as of TypeScript 5.8.2, a Partial<> of an indexed type
+				// gains `| undefined` even under exactOptionalPropertyTypes=true.
+				// Preferred result is that there is no change applying Partial<>.
+				// In either case, this test can hold since there isn't a downside
+				// to allowing `undefined` in the result if that is how type is
+				// given since indexed properties are always inherently optional.
+				const resultRead = passThru(partialStringRecordOfNumbers, {
+					key1: 0,
+				});
+				assertIdenticalTypes(resultRead, partialStringRecordOfNumbers);
+			});
+			it("templated record of `numbers`", () => {
+				const resultRead = passThru(templatedRecordOfNumbers, {
+					key1: 0,
+				});
+				assertIdenticalTypes(resultRead, templatedRecordOfNumbers);
+			});
+			it("`Partial<>` templated record of `numbers`", () => {
+				// Warning: as of TypeScript 5.8.2, a Partial<> of an indexed type
+				// gains `| undefined` even under exactOptionalPropertyTypes=true.
+				// Preferred result is that there is no change applying Partial<>.
+				// In either case, this test can hold since there isn't a downside
+				// to allowing `undefined` in the result if that is how type is
+				// given since indexed properties are always inherently optional.
+				const resultRead = passThru(partialTemplatedRecordOfNumbers, {
+					key1: 0,
+				});
+				assertIdenticalTypes(resultRead, partialTemplatedRecordOfNumbers);
+			});
+
 			it("object with possible type recursion through union", () => {
 				const resultRead = passThru(objectWithPossibleRecursion);
 				assertIdenticalTypes(resultRead, objectWithPossibleRecursion);
 			});
 			it("object with optional type recursion", () => {
-				const resultRead = passThru(objectWithRecursion);
-				assertIdenticalTypes(resultRead, objectWithRecursion);
+				const resultRead = passThru(objectWithOptionalRecursion);
+				assertIdenticalTypes(resultRead, objectWithOptionalRecursion);
 			});
 			it("object with deep type recursion", () => {
 				const resultRead = passThru(objectWithEmbeddedRecursion);
@@ -580,6 +713,27 @@ describe("JsonDeserialized", () => {
 					// @ts-expect-error `never` property (type never) should not be preserved
 					resultRead satisfies typeof objectWithNever;
 				});
+				it("`string` indexed record of `undefined`", () => {
+					const resultRead = passThru(stringRecordOfUndefined, {});
+					assertIdenticalTypes(resultRead, {});
+					// `Record<string, undefined>` has no required properties; so, result `{}` does satisfy original type.
+					resultRead satisfies typeof stringRecordOfUndefined;
+				});
+				it("`string` indexed record of `undefined` and known `number` property (unassignable)", () => {
+					const resultRead = passThru(stringOrNumberRecordOfUndefinedWithKnownNumber, {
+						knownNumber: 4,
+					});
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{
+							knownNumber: number;
+						}>(),
+					);
+					// If this type were not unassignable to begin with, then result would
+					// satisfy the original type.
+					// @ts-expect-error Property 'knownNumber' is incompatible with index signature. Type 'number' is not assignable to type 'undefined'.
+					resultRead satisfies typeof stringOrNumberRecordOfUndefinedWithKnownNumber;
+				});
 			});
 
 			describe("partially unsupported properties become optional for those supported", () => {
@@ -725,6 +879,123 @@ describe("JsonDeserialized", () => {
 							};
 						}>(),
 					);
+				});
+				it("object with required `unknown` in recursion when `unknown` is allowed unrolls 4 times with optional `unknown`", () => {
+					const resultRead = passThruPreservingUnknown(objectWithUnknownInOptionalRecursion);
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{
+							unknown?: unknown;
+							recurse?: {
+								unknown?: unknown;
+								recurse?: {
+									unknown?: unknown;
+									recurse?: {
+										unknown?: unknown;
+										recurse?: {
+											unknown?: unknown;
+											// This is JsonTypeWith<unknown> which is simply `unknown`.
+											recurse?: unknown;
+										};
+									};
+								};
+							};
+						}>(),
+					);
+				});
+			});
+
+			describe("partially supported array properties are modified like top-level arrays", () => {
+				it("object with array of partially supported (numbers or undefined) is modified with null", () => {
+					const resultRead = passThru(objectWithArrayOfNumbersOrUndefined, {
+						arrayOfNumbersOrUndefined: [0, null, 2],
+					});
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{ arrayOfNumbersOrUndefined: (number | null)[] }>(),
+					);
+				});
+				it("object with array of `unknown` becomes array of `JsonTypeWith<never>`", () => {
+					const resultRead = passThru(objectWithArrayOfUnknown);
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{ arrayOfUnknown: JsonTypeWith<never>[] }>(),
+					);
+				});
+				it("object with array of partially supported (bigint or basic object) becomes basic object only", () => {
+					const resultRead = passThruThrows(
+						objectWithArrayOfBigintAndObjects,
+						new TypeError("Do not know how to serialize a BigInt"),
+					);
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{ arrayOfBigintAndObjects: { property: string }[] }>(),
+					);
+				});
+				it("object with array of partially supported (symbols or basic object) is modified with null", () => {
+					const resultRead = passThru(objectWithArrayOfSymbolsAndObjects, {
+						arrayOfSymbolsAndObjects: [null],
+					});
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{ arrayOfSymbolsAndObjects: ({ property: string } | null)[] }>(),
+					);
+				});
+				it("object with array of unsupported (bigint) becomes never[]", () => {
+					const resultRead = passThruThrows(
+						objectWithArrayOfBigints,
+						new TypeError("Do not know how to serialize a BigInt"),
+					);
+					assertIdenticalTypes(resultRead, createInstanceOf<{ arrayOfBigints: never[] }>());
+				});
+				it("object with array of unsupported (symbols) becomes null[]", () => {
+					const resultRead = passThru(objectWithArrayOfSymbols, { arrayOfSymbols: [null] });
+					assertIdenticalTypes(resultRead, createInstanceOf<{ arrayOfSymbols: null[] }>());
+				});
+				it("object with array of unsupported (functions) becomes null[]", () => {
+					const resultRead = passThru(objectWithArrayOfFunctions, {
+						arrayOfFunctions: [null],
+					});
+					assertIdenticalTypes(resultRead, createInstanceOf<{ arrayOfFunctions: null[] }>());
+				});
+				it("object with array of functions with properties becomes ({...}|null)[]", () => {
+					const resultRead = passThru(objectWithArrayOfFunctionsWithProperties, {
+						arrayOfFunctionsWithProperties: [null],
+					});
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{
+							arrayOfFunctionsWithProperties: ({ property: number } | null)[];
+						}>(),
+					);
+				});
+				it("object with array of objects and functions becomes ({...}|null)[]", () => {
+					const resultRead = passThru(objectWithArrayOfObjectAndFunctions, {
+						arrayOfObjectAndFunctions: [{ property: 6 }],
+					});
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{ arrayOfObjectAndFunctions: ({ property: number } | null)[] }>(),
+					);
+				});
+				it("object with array of `bigint | symbol` becomes null[]", () => {
+					const resultRead = passThru({ array: [bigintOrSymbol] }, { array: [null] });
+					assertIdenticalTypes(resultRead, createInstanceOf<{ array: null[] }>());
+				});
+				it("object with array of `number | bigint | symbol` becomes (number|null)[]", () => {
+					const resultRead = passThru({ array: [numberOrBigintOrSymbol] }, { array: [7] });
+					assertIdenticalTypes(resultRead, createInstanceOf<{ array: (number | null)[] }>());
+				});
+				it("object with readonly array of supported types (numbers) are preserved", () => {
+					const resultRead = passThru(objectWithReadonlyArrayOfNumbers);
+					assertIdenticalTypes(resultRead, objectWithReadonlyArrayOfNumbers);
+					// @ts-expect-error readonly array does not appear to support `push`, but works at runtime.
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+					resultRead.readonlyArrayOfNumbers.push(0);
+					assert.deepStrictEqual(resultRead.readonlyArrayOfNumbers, [
+						...objectWithReadonlyArrayOfNumbers.readonlyArrayOfNumbers,
+						0,
+					]);
 				});
 			});
 
@@ -957,6 +1228,94 @@ describe("JsonDeserialized", () => {
 						}>(),
 					);
 				});
+
+				describe("for common class instance of", () => {
+					it("Map", () => {
+						const instanceRead = passThru(mapOfStringsToNumbers, {});
+						assertIdenticalTypes(instanceRead, {
+							size: number,
+						} as const);
+						// @ts-expect-error methods are missing, but required
+						instanceRead satisfies typeof mapOfStringsToNumbers;
+						// @ts-expect-error methods are missing, but required
+						assertIdenticalTypes(instanceRead, mapOfStringsToNumbers);
+						assert.ok(
+							mapOfStringsToNumbers instanceof Map,
+							"mapOfStringsToNumbers is an instance of Map",
+						);
+						assert.ok(
+							!(instanceRead instanceof Map),
+							"instanceRead is not an instance of Map",
+						);
+					});
+					it("ReadonlyMap", () => {
+						const instanceRead = passThru(readonlyMapOfStringsToNumbers, {});
+						assertIdenticalTypes(instanceRead, {
+							size: number,
+						} as const);
+						// @ts-expect-error methods are missing, but required
+						instanceRead satisfies typeof readonlyMapOfStringsToNumbers;
+						// @ts-expect-error methods are missing, but required
+						assertIdenticalTypes(instanceRead, readonlyMapOfStringsToNumbers);
+						assert.ok(
+							mapOfStringsToNumbers instanceof Map,
+							"mapOfStringsToNumbers is an instance of Map",
+						);
+						assert.ok(
+							!(instanceRead instanceof Map),
+							"instanceRead is not an instance of Map",
+						);
+					});
+					it("Set", () => {
+						const instanceRead = passThru(setOfNumbers, {});
+						assertIdenticalTypes(instanceRead, {
+							size: number,
+						} as const);
+						// @ts-expect-error methods are missing, but required
+						instanceRead satisfies typeof setOfNumbers;
+						// @ts-expect-error methods are missing, but required
+						assertIdenticalTypes(instanceRead, setOfNumbers);
+						assert.ok(
+							setOfNumbers instanceof Set,
+							"mapOfStringsToNumbers is an instance of Set",
+						);
+						assert.ok(
+							!(instanceRead instanceof Set),
+							"instanceRead is not an instance of Set",
+						);
+					});
+					it("ReadonlySet", () => {
+						const instanceRead = passThru(readonlySetOfNumbers, {});
+						assertIdenticalTypes(instanceRead, {
+							size: number,
+						} as const);
+						// @ts-expect-error methods are missing, but required
+						instanceRead satisfies typeof readonlySetOfNumbers;
+						// @ts-expect-error methods are missing, but required
+						assertIdenticalTypes(instanceRead, readonlySetOfNumbers);
+						assert.ok(
+							setOfNumbers instanceof Set,
+							"mapOfStringsToNumbers is an instance of Set",
+						);
+						assert.ok(
+							!(instanceRead instanceof Set),
+							"instanceRead is not an instance of Set",
+						);
+					});
+				});
+			});
+
+			describe("branded non-primitive types lose branding", () => {
+				// Ideally there could be a transformation to JsonTypeWith<never> but
+				// `object` intersected with branding (which is an object) is just the branding.
+				it("branded `object` becomes just empty", () => {
+					const resultRead = passThru(brandedObject);
+					assertIdenticalTypes(resultRead, emptyObject);
+				});
+				it("branded object with `string`", () => {
+					const resultRead = passThru(brandedObjectWithString);
+					assertIdenticalTypes(resultRead, objectWithString);
+				});
 			});
 
 			it("`object` (plain object) becomes non-null Json object", () => {
@@ -1091,6 +1450,139 @@ describe("JsonDeserialized", () => {
 				);
 				assertIdenticalTypes(resultRead, createInstanceOf<JsonTypeWith<never>>());
 			});
+			it("`string` indexed record of `unknown` replaced with `JsonTypeWith<never>` (and becomes optional per current TS behavior)", () => {
+				const resultRead = passThru(stringRecordOfUnknown);
+				assertIdenticalTypes(
+					resultRead,
+					// Note: as of TypeScript 5.8.2, a Partial<> of an indexed type
+					// gains `| undefined` even under exactOptionalPropertyTypes=true.
+					// Preferred result is that there is no change applying Partial<>.
+					// In either case, this test hold since indexed properties are
+					// always inherently optional.
+					createInstanceOf<Partial<Record<string, JsonTypeWith<never>>>>(),
+				);
+			});
+			it("templated record of `unknown` replaced with `JsonTypeWith<never>` (and becomes optional per current TS behavior)", () => {
+				const resultRead = passThru(templatedRecordOfUnknown);
+				assertIdenticalTypes(
+					resultRead,
+					// Note: as of TypeScript 5.8.2, a Partial<> of an indexed type
+					// gains `| undefined` even under exactOptionalPropertyTypes=true.
+					// Preferred result is that there is no change applying Partial<>.
+					// In either case, this test hold since indexed properties are
+					// always inherently optional.
+					createInstanceOf<Partial<Record<`${string}Key`, JsonTypeWith<never>>>>(),
+				);
+			});
+			it("`string` indexed record of `unknown` and known properties has `unknown` replaced with `JsonTypeWith<never>` (and becomes optional per current TS behavior)", () => {
+				const resultRead = passThru(stringRecordOfUnknownWithKnownProperties);
+				assertIdenticalTypes(
+					resultRead,
+					createInstanceOf<
+						InternalUtilityTypes.FlattenIntersection<
+							// Note: as of TypeScript 5.8.2, a Partial<> of an indexed type
+							// gains `| undefined` even under exactOptionalPropertyTypes=true.
+							// Preferred result is that there is no change applying Partial<>.
+							// In either case, this test hold since indexed properties are
+							// always inherently optional.
+							Partial<Record<string, JsonTypeWith<never>>> & {
+								knownString: string;
+								knownNumber: number;
+							}
+						>
+					>(),
+				);
+			});
+			it("`string` indexed record of `unknown` and optional known properties has `unknown` replaced with `JsonTypeWith<never>` (and becomes optional per current TS behavior)", () => {
+				const resultRead = passThru(stringRecordOfUnknownWithOptionalKnownProperties, {
+					knownString: "string value",
+				});
+				assertIdenticalTypes(
+					resultRead,
+					createInstanceOf<
+						InternalUtilityTypes.FlattenIntersection<
+							// Note: as of TypeScript 5.8.2, a Partial<> of an indexed type
+							// gains `| undefined` even under exactOptionalPropertyTypes=true.
+							// Preferred result is that there is no change applying Partial<>.
+							// In either case, this test hold since indexed properties are
+							// always inherently optional.
+							Partial<Record<string, JsonTypeWith<never>>> & {
+								knownString?: string;
+								knownNumber?: number;
+							}
+						>
+					>(),
+				);
+			});
+			it("`string` indexed record of `unknown` and required known `unknown` has all `unknown` replaced with `JsonTypeWith<never>` (and known becomes explicitly optional)", () => {
+				const resultRead = passThru(stringRecordOfUnknownWithKnownUnknown);
+				assertIdenticalTypes(
+					resultRead,
+					createInstanceOf<
+						InternalUtilityTypes.FlattenIntersection<
+							// Note: as of TypeScript 5.8.2, a Partial<> of an indexed type
+							// gains `| undefined` even under exactOptionalPropertyTypes=true.
+							// Preferred result is that there is no change applying Partial<>.
+							// In either case, this test hold since indexed properties are
+							// always inherently optional.
+							Partial<Record<string, JsonTypeWith<never>>> & {
+								knownUnknown?: JsonTypeWith<never>;
+							}
+						>
+					>(),
+				);
+			});
+			it("`string` indexed record of `unknown` and optional known `unknown` has all `unknown` replaced with `JsonTypeWith<never>` (and becomes optional per current TS behavior)", () => {
+				const resultRead = passThru(stringRecordOfUnknownWithOptionalKnownUnknown);
+				assertIdenticalTypes(
+					resultRead,
+					createInstanceOf<
+						InternalUtilityTypes.FlattenIntersection<
+							// Note: as of TypeScript 5.8.2, a Partial<> of an indexed type
+							// gains `| undefined` even under exactOptionalPropertyTypes=true.
+							// Preferred result is that there is no change applying Partial<>.
+							// In either case, this test hold since indexed properties are
+							// always inherently optional.
+							Partial<Record<string, JsonTypeWith<never>>> & {
+								knownUnknown?: JsonTypeWith<never>;
+							}
+						>
+					>(),
+				);
+			});
+			it("`Partial<>` `string` indexed record of `unknown` replaced with `JsonTypeWith<never>`", () => {
+				const resultRead = passThru(partialStringRecordOfUnknown);
+				assertIdenticalTypes(
+					resultRead,
+					// Warning: as of TypeScript 5.8.2, a Partial<> of an indexed type
+					// gains `| undefined` even under exactOptionalPropertyTypes=true.
+					// Preferred result is that there is no change applying Partial<>.
+					// In either case, this test can hold since there isn't a downside
+					// to allowing `undefined` in the result if that is how type is
+					// given since indexed properties are always inherently optional.
+					createInstanceOf<Partial<Record<string, JsonTypeWith<never>>>>(),
+				);
+			});
+			it("`Partial<>` `string` indexed record of `unknown` and known properties has `unknown` replaced with `JsonTypeWith<never>`", () => {
+				const resultRead = passThru(partialStringRecordOfUnknownWithKnownProperties);
+				assertIdenticalTypes(
+					resultRead,
+					createInstanceOf<
+						InternalUtilityTypes.FlattenIntersection<
+							// Warning: as of TypeScript 5.8.2, a Partial<> of an indexed type
+							// gains `| undefined` even under exactOptionalPropertyTypes=true.
+							// Preferred result is that there is no change applying Partial<>.
+							// In either case, this test can hold since there isn't a downside
+							// to allowing `undefined` in the result if that is how type is
+							// given since indexed properties are always inherently optional.
+							Partial<Record<string, JsonTypeWith<never>>> & {
+								knownString: string;
+								knownNumber: number;
+							}
+						>
+					>(),
+				);
+			});
 			it("`symbol` becomes `never`", () => {
 				passThruThrows(symbol, new Error("JSON.stringify returned undefined")) satisfies never;
 			});
@@ -1186,17 +1678,101 @@ describe("JsonDeserialized", () => {
 				});
 				it("object with `IFluidHandle`", () => {
 					const resultRead = passThruHandlingFluidHandle(objectWithFluidHandle);
-					assertIdenticalTypes(
-						resultRead,
-						createInstanceOf<{ handle: IFluidHandle<number> }>(),
-					);
+					assertIdenticalTypes(resultRead, objectWithFluidHandle);
 				});
 				it("object with `IFluidHandle` and recursion", () => {
 					const resultRead = passThruHandlingFluidHandle(objectWithFluidHandleOrRecursion);
+					assertIdenticalTypes(resultRead, objectWithFluidHandleOrRecursion);
+				});
+				it("`unknown`", () => {
+					const resultRead = passThruPreservingUnknown(
+						unknownValueOfSimpleRecord,
+						// value is actually supported; so, no runtime error.
+					);
+					assertIdenticalTypes(resultRead, unknownValueOfSimpleRecord);
+				});
+				it("object with optional `unknown`", () => {
+					const resultRead = passThruPreservingUnknown(objectWithOptionalUnknown);
+					assertIdenticalTypes(resultRead, objectWithOptionalUnknown);
+				});
+				it("object with optional `unknown` and recursion", () => {
+					const resultRead = passThruPreservingUnknown(
+						objectWithOptionalUnknownInOptionalRecursion,
+					);
+					assertIdenticalTypes(resultRead, objectWithOptionalUnknownInOptionalRecursion);
+				});
+				it("`string` indexed record of `unknown`", () => {
+					const resultRead = passThruPreservingUnknown(stringRecordOfUnknown);
+					assertIdenticalTypes(resultRead, stringRecordOfUnknown);
+				});
+				it("templated record of `unknown`", () => {
+					const resultRead = passThruPreservingUnknown(templatedRecordOfUnknown);
+					assertIdenticalTypes(resultRead, templatedRecordOfUnknown);
+				});
+				it("`string` indexed record of `unknown` and known properties", () => {
+					const resultRead = passThruPreservingUnknown(
+						stringRecordOfUnknownWithKnownProperties,
+					);
+					assertIdenticalTypes(resultRead, stringRecordOfUnknownWithKnownProperties);
+				});
+				it("`string` indexed record of `unknown` and optional known properties", () => {
+					const resultRead = passThruPreservingUnknown(
+						stringRecordOfUnknownWithOptionalKnownProperties,
+					);
+					assertIdenticalTypes(resultRead, stringRecordOfUnknownWithOptionalKnownProperties);
+				});
+				it("`string` indexed record of `unknown` and optional known `unknown`", () => {
+					const resultRead = passThruPreservingUnknown(
+						stringRecordOfUnknownWithOptionalKnownUnknown,
+					);
+					assertIdenticalTypes(resultRead, stringRecordOfUnknownWithOptionalKnownUnknown);
+				});
+				it("`Partial<>` `string` indexed record of `unknown`", () => {
+					const resultRead = passThruPreservingUnknown(partialStringRecordOfUnknown);
+					assertIdenticalTypes(resultRead, partialStringRecordOfUnknown);
+				});
+				it("`Partial<>` `string` indexed record of `unknown` and known properties", () => {
+					const resultRead = passThruPreservingUnknown(
+						partialStringRecordOfUnknownWithKnownProperties,
+					);
+					assertIdenticalTypes(resultRead, partialStringRecordOfUnknownWithKnownProperties);
+				});
+				it("array of `unknown`", () => {
+					const resultRead = passThruPreservingUnknown(arrayOfUnknown);
+					assertIdenticalTypes(resultRead, arrayOfUnknown);
+				});
+				it("object with array of `unknown`", () => {
+					const resultRead = passThruPreservingUnknown(objectWithArrayOfUnknown);
+					assertIdenticalTypes(resultRead, objectWithArrayOfUnknown);
+				});
+			});
+
+			describe("still modifies required `unknown` to become optional", () => {
+				it("object with required `unknown`", () => {
+					const resultRead = passThruPreservingUnknown(objectWithUnknown);
+					assertIdenticalTypes(resultRead, createInstanceOf<{ unknown?: unknown }>());
+				});
+				it("object with required `unknown` adjacent to recursion", () => {
+					const resultRead = passThruPreservingUnknown(
+						objectWithUnknownAdjacentToOptionalRecursion,
+					);
 					assertIdenticalTypes(
 						resultRead,
-						createInstanceOf<ObjectWithFluidHandleOrRecursion>(),
+						objectWithOptionalUnknownAdjacentToOptionalRecursion,
 					);
+				});
+				it("mixed record of `unknown`", () => {
+					const resultRead = passThruPreservingUnknown(mixedRecordOfUnknown);
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<
+							Partial<Record<number | "aKey" | `bKey_${string}` | `bKey_${number}`, unknown>>
+						>(),
+					);
+				});
+				it("`string` indexed record of `unknown` and required known `unknown`", () => {
+					const resultRead = passThruPreservingUnknown(stringRecordOfUnknownWithKnownUnknown);
+					assertIdenticalTypes(resultRead, stringRecordOfUnknownWithOptionalKnownUnknown);
 				});
 			});
 
@@ -1232,5 +1808,5 @@ describe("JsonDeserialized", () => {
 		});
 	});
 });
-// type X = Exclude<(() => any) | ((v: string) => number), (v: string) => number>;
+
 /* eslint-enable unicorn/no-null */

@@ -1594,12 +1594,6 @@ export class MergeTree {
 				// Note that we don't need to worry about preserving any existing remove information since the segment is new.
 				overwriteInfo(newSegment, removeInfo);
 
-				// There could be multiple local obliterates that overlap a given insertion point.
-				// This occurs e.g. if a client first obliterates "34", then "25"
-				// from "123456" while another client attempts to insert between the 3 and the 4.
-				// In such a case, the obliterate that actually removes the segment is the earliest overlapping one
-				// so we can ignore all the others.
-				// TODO: move this comment to a place that makes more sense.
 				if (oldestUnacked !== undefined) {
 					removeInfo.removes.push(oldestUnacked.stamp);
 
