@@ -36,8 +36,8 @@ import {
 	MaxNodesInBlock,
 	type SegmentGroup,
 	assertSegmentLeaf,
-	type OperationStamp,
 } from "../mergeTreeNodes.js";
+import type { OperationStamp } from "../stamps.js";
 import {
 	createAnnotateRangeOp,
 	createInsertSegmentOp,

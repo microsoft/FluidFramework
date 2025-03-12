@@ -55,18 +55,20 @@ import {
 	assignChild,
 	isSegmentLeaf,
 	reservedMarkerIdKey,
-	opstampUtils,
 	type IMergeNodeBuilder,
 	type ISegmentInternal,
 	type ISegmentLeaf,
 	type ISegmentPrivate,
-	type InsertOperationStamp,
 	type ObliterateInfo,
-	type OperationStamp,
-	type RemoveOperationStamp,
-	type SetRemoveOperationStamp,
-	type SliceRemoveOperationStamp,
 } from "./mergeTreeNodes.js";
+import * as opstampUtils from "./stamps.js";
+import type {
+	OperationStamp,
+	InsertOperationStamp,
+	RemoveOperationStamp,
+	SetRemoveOperationStamp,
+	SliceRemoveOperationStamp,
+} from "./stamps.js";
 import type { TrackingGroup } from "./mergeTreeTracking.js";
 import {
 	createAnnotateRangeOp,

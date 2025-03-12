@@ -6,13 +6,8 @@
 import { assert, isObject } from "@fluidframework/core-utils/internal";
 
 import { UnassignedSequenceNumber } from "./constants.js";
-import {
-	ISegmentInternal,
-	ISegmentPrivate,
-	MergeBlock,
-	type InsertOperationStamp,
-	type RemoveOperationStamp,
-} from "./mergeTreeNodes.js";
+import { ISegmentInternal, ISegmentPrivate, MergeBlock } from "./mergeTreeNodes.js";
+import type { InsertOperationStamp, RemoveOperationStamp } from "./stamps.js";
 
 export interface StringToType {
 	"string": string;

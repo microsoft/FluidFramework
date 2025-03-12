@@ -5,15 +5,10 @@
 
 import { type MergeTree } from "./mergeTree.js";
 import { LeafAction, backwardExcursion, forwardExcursion } from "./mergeTreeNodeWalk.js";
-import {
-	seqLTE,
-	opstampUtils,
-	type InsertOperationStamp,
-	type ISegmentLeaf,
-	type OperationStamp,
-	type RemoveOperationStamp,
-} from "./mergeTreeNodes.js";
+import { seqLTE, type ISegmentLeaf } from "./mergeTreeNodes.js";
 import { isInserted, isRemoved } from "./segmentInfos.js";
+import * as opstampUtils from "./stamps.js";
+import type { OperationStamp, InsertOperationStamp, RemoveOperationStamp } from "./stamps.js";
 
 export interface Perspective {
 	readonly refSeq: number;

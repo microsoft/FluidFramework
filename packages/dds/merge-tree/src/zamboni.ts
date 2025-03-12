@@ -10,14 +10,14 @@ import { MergeTree } from "./mergeTree.js";
 import { MergeTreeMaintenanceType } from "./mergeTreeDeltaCallback.js";
 import {
 	type MergeBlock,
-	type OperationStamp,
 	assignChild,
 	IMergeNode,
 	ISegmentPrivate,
 	Marker,
 	MaxNodesInBlock,
-	opstampUtils,
 } from "./mergeTreeNodes.js";
+import * as opstampUtils from "./stamps.js";
+import type { OperationStamp } from "./stamps.js";
 import { matchProperties } from "./properties.js";
 import { toRemovalInfo, removeMergeNodeInfo } from "./segmentInfos.js";
 

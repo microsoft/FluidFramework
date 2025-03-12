@@ -23,7 +23,9 @@ import {
 import { Client } from "./client.js";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
-import { ISegmentPrivate, opstampUtils, type RemoveOperationStamp } from "./mergeTreeNodes.js";
+import { ISegmentPrivate } from "./mergeTreeNodes.js";
+import * as opstampUtils from "./stamps.js";
+import type { RemoveOperationStamp } from "./stamps.js";
 import { IJSONSegment } from "./ops.js";
 import {
 	IHasRemovalInfo,

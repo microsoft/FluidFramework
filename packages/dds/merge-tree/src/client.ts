@@ -50,9 +50,9 @@ import {
 	SegmentGroup,
 	compareStrings,
 	isSegmentLeaf,
-	opstampUtils,
-	type OperationStamp,
 } from "./mergeTreeNodes.js";
+import * as opstampUtils from "./stamps.js";
+import type { OperationStamp } from "./stamps.js";
 import {
 	createAdjustRangeOp,
 	createAnnotateMarkerOp,

@@ -10,9 +10,9 @@ import {
 	CollaborationWindow,
 	IMergeNode,
 	ISegmentPrivate,
-	opstampUtils,
 	type MergeBlock,
 } from "./mergeTreeNodes.js";
+import * as opstampUtils from "./stamps.js";
 import { toRemovalInfo, assertInserted, wasMovedOnInsert } from "./segmentInfos.js";
 import { SortedSet } from "./sortedSet.js";
 import {
