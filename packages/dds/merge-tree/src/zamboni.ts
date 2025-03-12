@@ -10,13 +10,13 @@ import { MergeTree } from "./mergeTree.js";
 import { MergeTreeMaintenanceType } from "./mergeTreeDeltaCallback.js";
 import {
 	type MergeBlock,
-	type OperationTimestamp,
+	type OperationStamp,
 	assignChild,
 	IMergeNode,
 	ISegmentPrivate,
 	Marker,
 	MaxNodesInBlock,
-	timestampUtils,
+	opstampUtils,
 } from "./mergeTreeNodes.js";
 import { matchProperties } from "./properties.js";
 import { toRemovalInfo, removeMergeNodeInfo } from "./segmentInfos.js";
@@ -26,8 +26,8 @@ function underflow(node: MergeBlock): boolean {
 	return node.childCount < MaxNodesInBlock / 2;
 }
 
-// blockUpdatePathLengths requires an OperationTimestamp but it is unused when passing `newStructure: true`.
-const dummyStamp: OperationTimestamp = { seq: UnassignedSequenceNumber, clientId: -1 };
+// blockUpdatePathLengths requires an OperationStamp but it is unused when passing `newStructure: true`.
+const dummyStamp: OperationStamp = { seq: UnassignedSequenceNumber, clientId: -1 };
 
 export function zamboniSegments(
 	mergeTree: MergeTree,
@@ -158,7 +158,7 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 			// it can be unlinked (i.e. removed from the merge-tree)
 			if (
 				!!firstRemove &&
-				timestampUtils.lte(firstRemove, mergeTree.collabWindow.minSeqTime) &&
+				opstampUtils.lte(firstRemove, mergeTree.collabWindow.minSeqTime) &&
 				segment.trackingCollection.empty
 			) {
 				mergeTree.mergeTreeMaintenanceCallback?.(
@@ -178,7 +178,7 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 
 			prevSegment = undefined;
 		} else {
-			if (timestampUtils.lte(segment.insert, mergeTree.collabWindow.minSeqTime)) {
+			if (opstampUtils.lte(segment.insert, mergeTree.collabWindow.minSeqTime)) {
 				const segmentHasPositiveLength = (mergeTree.leafLength(segment) ?? 0) > 0;
 				const canAppend =
 					prevSegment?.canAppend(segment) &&

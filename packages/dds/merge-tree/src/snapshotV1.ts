@@ -22,7 +22,7 @@ import { IAttributionCollection } from "./attributionCollection.js";
 import { NonCollabClient } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
-import { ISegmentPrivate, timestampUtils, type OperationTimestamp } from "./mergeTreeNodes.js";
+import { ISegmentPrivate, opstampUtils, type OperationStamp } from "./mergeTreeNodes.js";
 import type { IJSONSegment } from "./ops.js";
 import { PropertySet, matchProperties } from "./properties.js";
 import { assertInserted, isRemoved } from "./segmentInfos.js";
@@ -190,7 +190,7 @@ export class SnapshotV1 {
 	extractSync(): JsonSegmentSpecs[] {
 		const mergeTree = this.mergeTree;
 		const minSeq = this.header.minSequenceNumber;
-		const minSeqTimestamp: OperationTimestamp = { seq: minSeq, clientId: NonCollabClient };
+		const minSeqStamp: OperationStamp = { seq: minSeq, clientId: NonCollabClient };
 
 		let originalSegments = 0;
 		let segmentsAfterCombine = 0;
@@ -233,10 +233,10 @@ export class SnapshotV1 {
 			//   b) The segment was removed at or below the MSN.  Pending ops can no longer reference this
 			//      segment, and therefore we can discard it.
 			if (
-				timestampUtils.isLocal(segment.insert) ||
-				(isRemoved(segment) && timestampUtils.lte(segment.removes[0], minSeqTimestamp))
+				opstampUtils.isLocal(segment.insert) ||
+				(isRemoved(segment) && opstampUtils.lte(segment.removes[0], minSeqStamp))
 			) {
-				if (timestampUtils.isAcked(segment.insert)) {
+				if (opstampUtils.isAcked(segment.insert)) {
 					originalSegments += 1;
 				}
 				return true;
@@ -248,8 +248,8 @@ export class SnapshotV1 {
 			// (seq, client, etc.)  This information is only needed if the segment is above the MSN (and doesn't
 			// have a pending remove.)
 			if (
-				timestampUtils.lte(segment.insert, minSeqTimestamp) && // Segment is below the MSN, and...
-				(!isRemoved(segment) || timestampUtils.isLocal(segment.removes[0]))
+				opstampUtils.lte(segment.insert, minSeqStamp) && // Segment is below the MSN, and...
+				(!isRemoved(segment) || opstampUtils.isLocal(segment.removes[0]))
 			) {
 				// This segment is below the MSN, which means that future ops will not reference it.  Attempt to
 				// coalesce the new segment with the previous (if any).
@@ -283,7 +283,7 @@ export class SnapshotV1 {
 					json: segment.toJSONObject() as IJSONSegment,
 				};
 				// If the segment insertion is above the MSN, record the insertion merge info.
-				if (timestampUtils.greaterThan(segment.insert, minSeqTimestamp)) {
+				if (opstampUtils.greaterThan(segment.insert, minSeqStamp)) {
 					raw.seq = segment.insert.seq;
 					raw.client = this.getLongClientId(segment.insert.clientId);
 				}
@@ -294,8 +294,8 @@ export class SnapshotV1 {
 					const removes = segment.removes.filter((r) => r.type === "setRemove");
 					const firstRemove = removes[0];
 					assert(
-						timestampUtils.isAcked(firstRemove) &&
-							timestampUtils.greaterThan(firstRemove, minSeqTimestamp),
+						opstampUtils.isAcked(firstRemove) &&
+							opstampUtils.greaterThan(firstRemove, minSeqStamp),
 						0x065 /* "On removal info preservation, segment has invalid removed sequence number!" */,
 					);
 					// TODO: By not preserving sequence numbers other than the first move,
@@ -315,8 +315,8 @@ export class SnapshotV1 {
 					const moves = segment.removes.filter((r) => r.type === "sliceRemove");
 					const firstMove = moves[0];
 					assert(
-						timestampUtils.isAcked(firstMove) &&
-							timestampUtils.greaterThan(firstMove, minSeqTimestamp),
+						opstampUtils.isAcked(firstMove) &&
+							opstampUtils.greaterThan(firstMove, minSeqStamp),
 						0x873 /* On move info preservation, segment has invalid moved sequence number! */,
 					);
 					raw.movedSeq = firstMove.seq;

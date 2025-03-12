@@ -36,7 +36,7 @@ import {
 	MaxNodesInBlock,
 	type SegmentGroup,
 	assertSegmentLeaf,
-	type OperationTimestamp,
+	type OperationStamp,
 } from "../mergeTreeNodes.js";
 import {
 	createAnnotateRangeOp,
@@ -79,10 +79,8 @@ export function specToSegment(spec: IJSONSegment): ISegmentPrivate {
 
 const random = makeRandom(0xdeadbeef, 0xfeedbed);
 
-function opTimestampToString(timestamp: OperationTimestamp): string {
-	return timestamp.seq === UnassignedSequenceNumber
-		? `L${timestamp.localSeq}`
-		: `${timestamp.seq}`;
+function opStampToString(stamp: OperationStamp): string {
+	return stamp.seq === UnassignedSequenceNumber ? `L${stamp.localSeq}` : `${stamp.seq}`;
 }
 
 export class TestClient extends Client {
@@ -388,9 +386,9 @@ export class TestClient extends Client {
 		walkAllChildSegments(tree.root, (segment: ISegmentPrivate) => {
 			const prefixes: (string | undefined | number)[] = [];
 			assertInserted(segment);
-			prefixes.push(opTimestampToString(segment.insert));
+			prefixes.push(opStampToString(segment.insert));
 			if (isRemoved(segment)) {
-				prefixes.push(opTimestampToString(segment.removes[0]));
+				prefixes.push(opStampToString(segment.removes[0]));
 			}
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			test.push(`${prefixes.join(",")}:${(segment as any).text}`);

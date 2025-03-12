@@ -10,7 +10,7 @@ import {
 	CollaborationWindow,
 	IMergeNode,
 	ISegmentPrivate,
-	timestampUtils,
+	opstampUtils,
 	type MergeBlock,
 } from "./mergeTreeNodes.js";
 import { toRemovalInfo, assertInserted, wasMovedOnInsert } from "./segmentInfos.js";
@@ -519,7 +519,7 @@ export class PartialSequenceLengths {
 			0xab7 /* Segment was not moved on insert */,
 		);
 		const firstRemove = removeInfo?.removes[0];
-		if (timestampUtils.lte(firstRemove, collabWindow.minSeqTime)) {
+		if (opstampUtils.lte(firstRemove, collabWindow.minSeqTime)) {
 			// This segment was obliterated as soon as it was inserted, and everyone was aware of the obliterate.
 			// Thus every single client treats this segment as length 0 from every perspective, and no adjustments
 			// are necessary.
@@ -527,7 +527,7 @@ export class PartialSequenceLengths {
 		}
 
 		const { insert } = segment;
-		const isLocal = timestampUtils.isLocal(insert);
+		const isLocal = opstampUtils.isLocal(insert);
 		const clientId = insert.clientId;
 
 		const partials = isLocal
@@ -588,14 +588,14 @@ export class PartialSequenceLengths {
 	): void {
 		assertInserted(segment);
 		// TODO: why was there an undefined check for segment.seq in the old code?
-		if (timestampUtils.lte(segment.insert, collabWindow.minSeqTime)) {
+		if (opstampUtils.lte(segment.insert, collabWindow.minSeqTime)) {
 			combinedPartialLengths.minLength += segment.cachedLength;
 			return;
 		}
 
 		const { insert } = segment;
 
-		const isLocal = timestampUtils.isLocal(insert);
+		const isLocal = opstampUtils.isLocal(insert);
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const seqOrLocalSeq = isLocal ? insert.localSeq! : insert.seq;
 		const segmentLen = segment.cachedLength;
@@ -644,16 +644,13 @@ export class PartialSequenceLengths {
 		}
 
 		const firstRemove = removalInfo?.removes[0];
-		if (
-			firstRemove !== undefined &&
-			timestampUtils.lte(firstRemove, collabWindow.minSeqTime)
-		) {
+		if (firstRemove !== undefined && opstampUtils.lte(firstRemove, collabWindow.minSeqTime)) {
 			combinedPartialLengths.minLength -= segment.cachedLength;
 			return;
 		}
 
-		const removalIsLocal = !!firstRemove && timestampUtils.isLocal(firstRemove);
-		const isLocalInsertion = timestampUtils.isLocal(segment.insert);
+		const removalIsLocal = !!firstRemove && opstampUtils.isLocal(firstRemove);
+		const isLocalInsertion = opstampUtils.isLocal(segment.insert);
 		const isOnlyLocalRemoval = removalIsLocal;
 		const isLocal = isLocalInsertion || isOnlyLocalRemoval;
 
@@ -746,7 +743,7 @@ export class PartialSequenceLengths {
 					// We already add this entry as part of the accountForInsertion codepath for the client that
 					// actually did insert the segment, hence not doing so [again] here.
 					if (
-						timestampUtils.greaterThan(segment.insert, collabWindow.minSeqTime) &&
+						opstampUtils.greaterThan(segment.insert, collabWindow.minSeqTime) &&
 						id !== segment.insert.clientId
 					) {
 						combinedPartialLengths.addClientAdjustment(
@@ -831,12 +828,12 @@ export class PartialSequenceLengths {
 					}
 				}
 
-				if (timestampUtils.isAcked(segment.insert) && seq === firstRemove?.seq) {
+				if (opstampUtils.isAcked(segment.insert) && seq === firstRemove?.seq) {
 					seqSeglen -= segment.cachedLength;
 					if (clientId !== collabWindow.clientId) {
 						this.addClientAdjustment(clientId, seq, -segment.cachedLength);
 						if (
-							timestampUtils.greaterThan(segment.insert, collabWindow.minSeqTime) &&
+							opstampUtils.greaterThan(segment.insert, collabWindow.minSeqTime) &&
 							segment.insert.clientId !== clientId
 						) {
 							this.addClientAdjustment(clientId, segment.insert.seq, segment.cachedLength);

@@ -13,7 +13,7 @@ import {
 	UniversalSequenceNumber,
 } from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
-import { Marker, type ISegmentPrivate, type OperationTimestamp } from "../mergeTreeNodes.js";
+import { Marker, type ISegmentPrivate, type OperationStamp } from "../mergeTreeNodes.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { assertMergeNode } from "../segmentInfos.js";
 import type { PropsOrAdjust } from "../segmentPropertiesManager.js";
@@ -22,7 +22,7 @@ import { TextSegment } from "../textSegment.js";
 import { insertSegments } from "./testUtils.js";
 import { LocalDefaultPerspective, PriorPerspective } from "../perspective.js";
 
-function mintLocalChange(tree: MergeTree): OperationTimestamp {
+function mintLocalChange(tree: MergeTree): OperationStamp {
 	return {
 		seq: UnassignedSequenceNumber,
 		clientId: tree.collabWindow.clientId,

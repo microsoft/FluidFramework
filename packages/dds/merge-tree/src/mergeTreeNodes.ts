@@ -231,25 +231,25 @@ export interface ObliterateInfo {
 }
 
 // TODO: Think through how these interact with causal following terminology
-// I think you probably want to use Operation timestamps to signify events that are linearized as
+// I think you probably want to use Operation stamps to signify events that are linearized as
 // [remote seq 1, remote seq 2, ... , remote seq N, local seq 1, local seq 2, ... , local seq M]
 // but then use some other interface for comparisons about reasoning around what other clients were thinking of
 // when they applied some edit.
-export interface OperationTimestamp {
+export interface OperationStamp {
 	seq: number;
 	clientId: number;
 	localSeq?: number;
 }
 
 /**
- * {@link OperationTimestamp} for an 'insert' operation.
+ * {@link OperationStamp} for an 'insert' operation.
  */
-export interface InsertOperationTimestamp extends OperationTimestamp {
+export interface InsertOperationStamp extends OperationStamp {
 	type: "insert";
 }
 
 /**
- * {@link OperationTimestamp} for a 'set remove' operation. This aligns with the `mapRangeRemoved` API in MergeTree.
+ * {@link OperationStamp} for a 'set remove' operation. This aligns with the `mapRangeRemoved` API in MergeTree.
  *
  * @remarks The terminology here comes from the fact that the removal should affect only the *set* of nodes that were
  * specified at the time the local client issued the remove, and not any nodes that were inserted concurrently.
@@ -258,12 +258,12 @@ export interface InsertOperationTimestamp extends OperationTimestamp {
  * "removed from the tree, either by MergeTree.obliterateRange or MergeTree.removeRange". This is convenient as the vast majority
  * of merge-tree code only cares about segment visibility and not the specific operation that caused a segment to be removed.
  */
-export interface SetRemoveOperationTimestamp extends OperationTimestamp {
+export interface SetRemoveOperationStamp extends OperationStamp {
 	type: "setRemove";
 }
 
 /**
- * {@link OperationTimestamp} for a 'set remove' operation. This aligns with the `mapRangeRemoved` API in MergeTree.
+ * {@link OperationStamp} for a 'set remove' operation. This aligns with the `mapRangeRemoved` API in MergeTree.
  *
  * @remarks The terminology here comes from the fact that the removal should affect the *slice* of nodes between the
  * start and end point specified by the local client, which includes any nodes that were inserted concurrently.
@@ -272,44 +272,42 @@ export interface SetRemoveOperationTimestamp extends OperationTimestamp {
  * "removed from the tree, either by MergeTree.obliterateRange or MergeTree.removeRange". This is convenient as the vast majority
  * of merge-tree code only cares about segment visibility and not the specific operation that caused a segment to be removed.
  */
-export interface SliceRemoveOperationTimestamp extends OperationTimestamp {
+export interface SliceRemoveOperationStamp extends OperationStamp {
 	type: "sliceRemove";
 }
 
-export type RemoveOperationTimestamp =
-	| SetRemoveOperationTimestamp
-	| SliceRemoveOperationTimestamp;
+export type RemoveOperationStamp = SetRemoveOperationStamp | SliceRemoveOperationStamp;
 
-export const timestampUtils = {
+export const opstampUtils = {
 	lessThan,
 	greaterThan,
 	equal,
-	lte: (a: OperationTimestamp, b: OperationTimestamp) => !greaterThan(a, b),
-	gte: (a: OperationTimestamp, b: OperationTimestamp) => !lessThan(a, b),
-	isLocal: (a: OperationTimestamp) => a.seq === UnassignedSequenceNumber,
-	isAcked: (a: OperationTimestamp) => a.seq !== UnassignedSequenceNumber,
-	insertIntoList: (list: OperationTimestamp[], timestamp: OperationTimestamp) => {
-		if (timestampUtils.isLocal(timestamp) || list.length === 0) {
-			list.push(timestamp);
+	lte: (a: OperationStamp, b: OperationStamp) => !greaterThan(a, b),
+	gte: (a: OperationStamp, b: OperationStamp) => !lessThan(a, b),
+	isLocal: (a: OperationStamp) => a.seq === UnassignedSequenceNumber,
+	isAcked: (a: OperationStamp) => a.seq !== UnassignedSequenceNumber,
+	insertIntoList: (list: OperationStamp[], stamp: OperationStamp) => {
+		if (opstampUtils.isLocal(stamp) || list.length === 0) {
+			list.push(stamp);
 		} else {
 			for (let i = list.length - 1; i >= 0; i--) {
-				if (greaterThan(timestamp, list[i])) {
-					list.splice(i + 1, 0, timestamp);
+				if (greaterThan(stamp, list[i])) {
+					list.splice(i + 1, 0, stamp);
 					return;
 				}
 			}
 
-			// Less than all timestamps in the list: put it at the beginning.
-			list.unshift(timestamp);
+			// Less than all stamps in the list: put it at the beginning.
+			list.unshift(stamp);
 		}
 	},
-	hasAnyAckedOperation: (list: OperationTimestamp[]) =>
-		list.some((ts) => timestampUtils.isAcked(ts)),
-	compare: (a: OperationTimestamp, b: OperationTimestamp) => {
+	hasAnyAckedOperation: (list: OperationStamp[]) =>
+		list.some((ts) => opstampUtils.isAcked(ts)),
+	compare: (a: OperationStamp, b: OperationStamp) => {
 		// TODO: inlining might be better
-		if (timestampUtils.greaterThan(a, b)) {
+		if (opstampUtils.greaterThan(a, b)) {
 			return 1;
-		} else if (timestampUtils.lessThan(a, b)) {
+		} else if (opstampUtils.lessThan(a, b)) {
 			return -1;
 		} else {
 			return 0;
@@ -317,7 +315,7 @@ export const timestampUtils = {
 	},
 };
 
-function lessThan(a: OperationTimestamp, b: OperationTimestamp): boolean {
+function lessThan(a: OperationStamp, b: OperationStamp): boolean {
 	if (a.seq === UnassignedSequenceNumber) {
 		return b.seq === UnassignedSequenceNumber && a.localSeq! < b.localSeq!;
 	}
@@ -329,7 +327,7 @@ function lessThan(a: OperationTimestamp, b: OperationTimestamp): boolean {
 	return a.seq < b.seq;
 }
 
-function greaterThan(a: OperationTimestamp, b: OperationTimestamp): boolean {
+function greaterThan(a: OperationStamp, b: OperationStamp): boolean {
 	if (a.seq === UnassignedSequenceNumber) {
 		return b.seq !== UnassignedSequenceNumber || a.localSeq! > b.localSeq!;
 	}
@@ -341,7 +339,7 @@ function greaterThan(a: OperationTimestamp, b: OperationTimestamp): boolean {
 	return a.seq > b.seq;
 }
 
-function equal(a: OperationTimestamp, b: OperationTimestamp): boolean {
+function equal(a: OperationStamp, b: OperationStamp): boolean {
 	return a.seq === b.seq && a.clientId === b.clientId && a.localSeq === b.localSeq;
 }
 
@@ -700,8 +698,8 @@ export class CollaborationWindow {
 	 */
 	currentSeq = 0;
 
-	public get minSeqTime(): OperationTimestamp {
-		// TODO: Audit usages that care about the timestamp of this. Such things seem wrong, but it's also weird that we force one here.
+	public get minSeqTime(): OperationStamp {
+		// TODO: Audit usages that care about the stamp of this. Such things seem wrong, but it's also weird that we force one here.
 		return { seq: this.minSeq, clientId: NonCollabClient };
 	}
 

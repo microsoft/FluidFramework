@@ -23,11 +23,7 @@ import {
 import { Client } from "./client.js";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
-import {
-	ISegmentPrivate,
-	timestampUtils,
-	type RemoveOperationTimestamp,
-} from "./mergeTreeNodes.js";
+import { ISegmentPrivate, opstampUtils, type RemoveOperationStamp } from "./mergeTreeNodes.js";
 import { IJSONSegment } from "./ops.js";
 import {
 	IHasRemovalInfo,
@@ -119,7 +115,7 @@ export class SnapshotLoader {
 				},
 			});
 
-			const removes: RemoveOperationTimestamp[] = [];
+			const removes: RemoveOperationStamp[] = [];
 
 			if (spec.removedSeq !== undefined) {
 				// this format had a bug where it didn't store all the overlap clients
@@ -170,7 +166,7 @@ export class SnapshotLoader {
 			}
 
 			if (removes.length > 0) {
-				removes.sort(timestampUtils.compare);
+				removes.sort(opstampUtils.compare);
 				overwriteInfo<IHasRemovalInfo>(seg, { removes });
 			}
 

@@ -50,8 +50,8 @@ import {
 	SegmentGroup,
 	compareStrings,
 	isSegmentLeaf,
-	timestampUtils,
-	type OperationTimestamp,
+	opstampUtils,
+	type OperationStamp,
 } from "./mergeTreeNodes.js";
 import {
 	createAdjustRangeOp,
@@ -404,10 +404,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		let localRemoves = 0;
 		let localObliterates = 0;
 		walkAllChildSegments(this._mergeTree.root, (seg: ISegmentPrivate) => {
-			if (isInserted(seg) && timestampUtils.isLocal(seg.insert)) {
+			if (isInserted(seg) && opstampUtils.isLocal(seg.insert)) {
 				localInserts++;
 			}
-			if (isRemoved(seg) && timestampUtils.isLocal(seg.removes[seg.removes.length - 1])) {
+			if (isRemoved(seg) && opstampUtils.isLocal(seg.removes[seg.removes.length - 1])) {
 				if (seg.removes[seg.removes.length - 1].type === "setRemove") {
 					localRemoves++;
 				} else {
@@ -565,7 +565,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 */
 	private getOperationStamp(
 		sequencedMessage: ISequencedDocumentMessage | undefined,
-	): OperationTimestamp {
+	): OperationStamp {
 		if (!sequencedMessage) {
 			return this._mergeTree.mintNextLocalOperationStamp();
 		}
@@ -918,12 +918,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 				case MergeTreeDeltaType.INSERT: {
 					assert(
-						isInserted(segment) && timestampUtils.isLocal(segment.insert),
+						isInserted(segment) && opstampUtils.isLocal(segment.insert),
 						0x037 /* "Segment already has assigned sequence number" */,
 					);
 					const removeInfo = toRemovalInfo(segment);
 
-					if (removeInfo !== undefined && timestampUtils.isAcked(removeInfo.removes[0])) {
+					if (removeInfo !== undefined && opstampUtils.isAcked(removeInfo.removes[0])) {
 						assert(
 							removeInfo.removes[0].type === "sliceRemove",
 							"Remove on insertion must be caused by obliterate.",
@@ -961,7 +961,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					// TODO: Logic can be simplified. All we're checking is that nobody else removed it in the meantime,
 					// which we verify by checking if the first removal is still our own local edit.
 					// Same for obliterate codepath below.
-					if (isRemoved(segment) && timestampUtils.isLocal(segment.removes[0])) {
+					if (isRemoved(segment) && opstampUtils.isLocal(segment.removes[0])) {
 						newOp = createRemoveRangeOp(
 							segmentPosition,
 							segmentPosition + segment.cachedLength,
@@ -971,7 +971,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				}
 				case MergeTreeDeltaType.OBLITERATE: {
 					errorIfOptionNotTrue(this._mergeTree.options, "mergeTreeEnableObliterateReconnect");
-					if (isRemoved(segment) && timestampUtils.isLocal(segment.removes[0])) {
+					if (isRemoved(segment) && opstampUtils.isLocal(segment.removes[0])) {
 						newOp = createObliterateRangeOp(
 							segmentPosition,
 							segmentPosition + segment.cachedLength,

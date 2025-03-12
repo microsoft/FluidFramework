@@ -16,10 +16,10 @@ import { MergeTreeDeltaType } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
 
 import { countOperations, insertSegments, insertText, markRangeRemoved } from "./testUtils.js";
-import type { OperationTimestamp } from "../mergeTreeNodes.js";
+import type { OperationStamp } from "../mergeTreeNodes.js";
 import { PriorPerspective } from "../perspective.js";
 
-function mintLocalChange(tree: MergeTree): OperationTimestamp {
+function mintLocalChange(tree: MergeTree): OperationStamp {
 	return {
 		seq: UnassignedSequenceNumber,
 		clientId: tree.collabWindow.clientId,

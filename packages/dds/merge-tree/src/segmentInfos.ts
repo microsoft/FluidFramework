@@ -10,8 +10,8 @@ import {
 	ISegmentInternal,
 	ISegmentPrivate,
 	MergeBlock,
-	type InsertOperationTimestamp,
-	type RemoveOperationTimestamp,
+	type InsertOperationStamp,
+	type RemoveOperationStamp,
 } from "./mergeTreeNodes.js";
 
 export interface StringToType {
@@ -52,7 +52,7 @@ export function propInstanceOf<P extends string, T>(
  * Contains insertion information associated to an {@link ISegment}.
  */
 export interface IHasInsertionInfo {
-	insert: InsertOperationTimestamp;
+	insert: InsertOperationStamp;
 	// /**
 	//  * Short clientId for the client that inserted this segment.
 	//  */
@@ -195,7 +195,7 @@ export const removeMergeNodeInfo: (nodeLike: IMergeNodeInfo) => asserts nodeLike
 // - Document this, including moveDst or something like it.
 // See old code in this file for continuity.
 export interface IHasRemovalInfo {
-	removes: RemoveOperationTimestamp[];
+	removes: RemoveOperationStamp[];
 }
 
 /**
