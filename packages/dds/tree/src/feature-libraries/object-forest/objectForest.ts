@@ -26,8 +26,8 @@ import {
 	type MapTree,
 	type PathRootPrefix,
 	type PlaceIndex,
-	type ProtoNodes,
 	type Range,
+	type TreeChunk,
 	TreeNavigationResult,
 	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchemaSubscription,
@@ -46,6 +46,7 @@ import {
 } from "../../util/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import { type CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
+import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/index.js";
 
 /** A `MapTree` with mutable fields */
 interface MutableMapTree extends MapTree {
@@ -107,6 +108,10 @@ export class ObjectForest implements IEditableForest {
 		return new ObjectForest(anchors, this.additionalAsserts, this.roots);
 	}
 
+	public chunkField(cursor: ITreeCursorSynchronous): TreeChunk {
+		return chunkFieldSingle(cursor, { idCompressor: undefined, policy: defaultChunkPolicy });
+	}
+
 	public forgetAnchor(anchor: Anchor): void {
 		this.anchors.forget(anchor);
 	}
@@ -163,7 +168,7 @@ export class ObjectForest implements IEditableForest {
 				preEdit();
 				this.forest.delete(detachedField);
 			}
-			public create(content: ProtoNodes, destination: FieldKey): void {
+			public create(content: readonly ITreeCursorSynchronous[], destination: FieldKey): void {
 				preEdit();
 				this.forest.add(content, destination);
 				this.forest.#events.emit("afterRootFieldCreated", destination);
