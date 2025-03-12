@@ -49,7 +49,7 @@ describeCompat.skip(
 						},
 					},
 				},
-			}
+			},
 		);
 
 		let provider: ITestObjectProvider;
