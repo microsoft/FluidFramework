@@ -110,6 +110,8 @@
 		"**/_api-extractor-temp": true,
 		// exclude built `dist` folders
 		"**/dist/*": true,
+		// exclude built `.next` folders (from NextJS' local dev server)
+		"**/.next/*": true,
 		// exclude built `lib` folders but preserve ./common/lib
 		//   paths with packages container
 		"**/packages/**/lib/*": true,
