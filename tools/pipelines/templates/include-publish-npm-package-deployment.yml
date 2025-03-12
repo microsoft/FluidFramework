@@ -76,7 +76,7 @@ jobs:
             displayName: Install Fluid Build Tools from artifact tarball
             inputs:
               targetType: 'inline'
-              workingDirectory: ' $(Pipeline.Workspace)//buildTools-zip/tarballs'
+              workingDirectory: '$(Pipeline.Workspace)/buildTools-zip/tarballs'
               script: |
                 echo "Listing files in directory: $(pwd)"
                 ls -la
