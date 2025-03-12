@@ -73,6 +73,7 @@
 		],
 		"overrides": {
 			"@types/node": "^18.17.1",
+      "nanoid": "^3.3.8",
 			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
 			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0",
 			"qs": "^6.11.0",
