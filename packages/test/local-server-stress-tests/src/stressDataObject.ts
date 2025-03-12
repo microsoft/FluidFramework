@@ -25,6 +25,7 @@ import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import { timeoutAwait } from "@fluidframework/test-utils/internal";
 
 import { ddsModelMap } from "./ddsModels.js";
 import { makeUnreachableCodePathProxy } from "./utils.js";
@@ -95,7 +96,9 @@ export class StressDataObject extends DataObject {
 			// to get all channel each time, as we have no way to
 			// observer when a channel moves from detached to attached,
 			// especially on remove clients/
-			const channel = await this.runtime.getChannel(name).catch(() => undefined);
+			const channel = await timeoutAwait(this.runtime.getChannel(name), {
+				errorMsg: `Timed out waiting for channel: ${name}`,
+			}).catch(() => undefined);
 			if (channel !== undefined) {
 				channels.push(channel);
 			}
@@ -183,10 +186,15 @@ export class DefaultStressDataObject extends StressDataObject {
 			// Due to the both the above, we need to always try
 			// to resolve each object, and just ignore those which can't
 			// be found.
-			const resp = await containerRuntime.resolveHandle({
-				url,
-				headers: { [RuntimeHeaders.wait]: false },
-			});
+			const resp = await timeoutAwait(
+				containerRuntime.resolveHandle({
+					url,
+					headers: { [RuntimeHeaders.wait]: false },
+				}),
+				{
+					errorMsg: `Timed out waiting for client to resolveHandle: ${url}`,
+				},
+			);
 			if (resp.status === 200) {
 				const maybe: FluidObject<IFluidLoadable & StressDataObject> | undefined = resp.value;
 				const handle = maybe?.IFluidLoadable?.handle;

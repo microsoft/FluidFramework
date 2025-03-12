@@ -1199,7 +1199,7 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		it("wasMovedOnInsert remains after leaf node is split", () => {
+		it("wasMovedOnInsert computation remains accurate after leaf node is split", () => {
 			const helper = new ReconnectTestHelper();
 
 			// CD-B-A

@@ -878,10 +878,9 @@ export interface TreeBranch extends IDisposable {
 }
 
 // @alpha @sealed
-export interface TreeBranchEvents {
+export interface TreeBranchEvents extends Omit<TreeViewEvents, "commitApplied"> {
     changed(data: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void;
     commitApplied(data: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void;
-    schemaChanged(): void;
 }
 
 // @alpha @sealed

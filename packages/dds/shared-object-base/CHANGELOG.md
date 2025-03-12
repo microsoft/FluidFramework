@@ -1,5 +1,9 @@
 # @fluidframework/shared-object-base
 
+## 2.23.0
+
+Dependency updates only.
+
 ## 2.22.0
 
 ### Minor Changes

@@ -23,10 +23,10 @@ import {
 } from "../../util/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
-import type * as Delta from "./delta.js";
 import type { PlaceIndex, Range, UpPath } from "./pathTree.js";
 import { EmptyKey } from "./types.js";
 import type { DeltaVisitor } from "./visitDelta.js";
+import type { ITreeCursorSynchronous } from "./cursor.js";
 
 /**
  * A way to refer to a particular tree location within an {@link AnchorSet}.
@@ -753,7 +753,7 @@ export class AnchorSet implements AnchorLocator {
 						const keys = getOrCreate(eventsByNode, node, () => new Set());
 						keys.add(
 							changedField ??
-								fail("childrenChangedAfterBatch events should have a changedField"),
+								fail(0xb57 /* childrenChangedAfterBatch events should have a changedField */),
 						);
 					}
 				}
@@ -864,7 +864,7 @@ export class AnchorSet implements AnchorLocator {
 					count,
 				);
 			},
-			create(content: Delta.ProtoNodes, destination: FieldKey): void {
+			create(content: ITreeCursorSynchronous[], destination: FieldKey): void {
 				// Nothing to do since content can only be created in a new detached field,
 				// which cannot contain any anchors.
 			},

@@ -22,7 +22,6 @@ import {
 	CommitKind,
 	type Revertible,
 	type UpPath,
-	compareUpPaths,
 	moveToDetachedField,
 	rootFieldKey,
 	storedEmptyFieldSchema,
@@ -39,7 +38,6 @@ import {
 	MockNodeKeyManager,
 	TreeCompressionStrategy,
 	TreeStatus,
-	cursorForJsonableTreeNode,
 } from "../../feature-libraries/index.js";
 import {
 	ObjectForest,
@@ -87,6 +85,8 @@ import {
 	StringArray,
 	NumberArray,
 	validateViewConsistency,
+	chunkFromJsonableTrees,
+	expectEqualPaths,
 } from "../utils.js";
 import { configuredSharedTree, TreeFactory } from "../../treeFactory.js";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
@@ -235,10 +235,12 @@ describe("SharedTree", () => {
 			field: rootFieldKey,
 		});
 		field.set(
-			cursorForJsonableTreeNode({
-				type: brand(handleSchema.identifier),
-				value: provider.trees[0].handle,
-			}),
+			chunkFromJsonableTrees([
+				{
+					type: brand(handleSchema.identifier),
+					value: provider.trees[0].handle,
+				},
+			]),
 			true,
 		);
 	});
@@ -1645,7 +1647,7 @@ describe("SharedTree", () => {
 				parentField: EmptyKey,
 				parentIndex: 1,
 			};
-			assert(compareUpPaths(childPath, expected));
+			expectEqualPaths(childPath, expected);
 		});
 	});
 

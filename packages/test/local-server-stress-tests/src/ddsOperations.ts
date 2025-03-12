@@ -5,6 +5,7 @@
 
 import { type AsyncGenerator, type AsyncReducer } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzTestState, Client as DDSClient } from "@fluid-private/test-dds-utils";
+import { AttachState } from "@fluidframework/container-definitions/internal";
 import { fluidHandleSymbol } from "@fluidframework/core-interfaces";
 import { assert, isObject } from "@fluidframework/core-utils/internal";
 import type {
@@ -12,6 +13,7 @@ import type {
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import { timeoutAwait } from "@fluidframework/test-utils/internal";
 
 import { ddsModelMap } from "./ddsModels.js";
 import { LocalServerStressState, Client } from "./localServerStressHarness.js";
@@ -44,7 +46,7 @@ const covertLocalServerStateToDdsState = async (
 		clients: makeUnreachableCodePathProxy("clients"),
 		client: createDDSClient(state.channel),
 		containerRuntimeFactory: makeUnreachableCodePathProxy("containerRuntimeFactory"),
-		isDetached: state.isDetached,
+		isDetached: state.client.container.attachState === AttachState.Detached,
 		summarizerClient: makeUnreachableCodePathProxy("containerRuntimeFactory"),
 		random: {
 			...state.random,
@@ -81,7 +83,12 @@ export const DDSModelOpGenerator: AsyncGenerator<DDSModelOp, LocalServerStressSt
 	const model = ddsModelMap.get(channel.attributes.type);
 	assert(model !== undefined, "must have model");
 
-	const op = await model.generator(await covertLocalServerStateToDdsState(state));
+	const op = await timeoutAwait(
+		model.generator(await covertLocalServerStateToDdsState(state)),
+		{
+			errorMsg: `Timed out waiting for dds generator: ${state.channel.attributes.type}`,
+		},
+	);
 
 	return {
 		type: "DDSModelOp",
@@ -114,7 +121,9 @@ export const DDSModelOpReducer: AsyncReducer<DDSModelOp, LocalServerStressState>
 		}
 		return value;
 	});
-	await baseModel.reducer(await covertLocalServerStateToDdsState(state), subOp);
+	await timeoutAwait(baseModel.reducer(await covertLocalServerStateToDdsState(state), subOp), {
+		errorMsg: `Timed out waiting for dds reducer: ${state.channel.attributes.type}`,
+	});
 };
 
 export const validateConsistencyOfAllDDS = async (clientA: Client, clientB: Client) => {
