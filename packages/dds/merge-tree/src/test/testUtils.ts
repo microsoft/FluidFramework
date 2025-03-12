@@ -94,8 +94,6 @@ interface InsertTextArgs {
 	opArgs?: IMergeTreeDeltaOpArgs;
 }
 
-// TODO: This function and friends are problematic when used with clients and not an isolated mergeTree, since they don't update
-// collab window sequence numbers. See comment on obliterate.partialLength.spec.ts.
 export function insertText({
 	mergeTree,
 	pos,

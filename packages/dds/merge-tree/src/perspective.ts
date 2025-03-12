@@ -70,7 +70,7 @@ abstract class PerspectiveBase {
 			return false;
 		}
 
-		// TODO: Previous factoring was able to fast-path refSeq and localSeq based remove (which look at first and last stamp before others)
+		// TODO:ADS Previous factoring was able to fast-path refSeq and localSeq based remove (which look at first and last stamp before others)
 		if (isRemoved(seg) && seg.removes.some((remove) => this.hasOccurred(remove))) {
 			return false;
 		}
@@ -117,33 +117,6 @@ export class LocalReconnectingPerspective extends PerspectiveBase implements Per
 	) {
 		super();
 	}
-
-	// public isSegmentPresent(seg: ISegmentLeaf): boolean {
-	// 	if (isInserted(seg)) {
-	// 		const visibleViaRefSeq = seqLTE(seg.insert.seq, this.refSeq);
-	// 		const visibleViaLocalSeq =
-	// 			seg.insert.localSeq !== undefined && seg.insert.localSeq <= this.localSeq;
-	// 		if (!visibleViaRefSeq && !visibleViaLocalSeq) {
-	// 			return false;
-	// 		}
-	// 	}
-
-	// 	if (isRemoved(seg)) {
-	// 		const removalViaRefSeq = seqLTE(seg.removes[0].seq, this.refSeq);
-	// 		if (removalViaRefSeq) {
-	// 			return false;
-	// 		}
-
-	// 		const lastRemove = seg.removes[seg.removes.length - 1];
-	// 		const removalViaLocalSeq =
-	// 			lastRemove.localSeq !== undefined && lastRemove.localSeq <= this.localSeq;
-	// 		if (removalViaLocalSeq) {
-	// 			return false;
-	// 		}
-	// 	}
-
-	// 	return true;
-	// }
 
 	public hasOccurred(stamp: OperationStamp): boolean {
 		const predatesViaRefSeq = seqLTE(stamp.seq, this.refSeq);

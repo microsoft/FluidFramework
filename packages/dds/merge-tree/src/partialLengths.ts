@@ -587,7 +587,6 @@ export class PartialSequenceLengths {
 		collabWindow: CollaborationWindow,
 	): void {
 		assertInserted(segment);
-		// TODO: why was there an undefined check for segment.seq in the old code?
 		if (opstampUtils.lte(segment.insert, collabWindow.minSeqTime)) {
 			combinedPartialLengths.minLength += segment.cachedLength;
 			return;
@@ -696,7 +695,7 @@ export class PartialSequenceLengths {
 			for (const id of clientsWithRemoveOrObliterate) {
 				if (id === collabWindow.clientId) {
 					// The local client also removed or obliterated this segment.
-					// TODO: We were lacking test coverage here: I was looking at the first remove but I believe I want the last.
+					// TODO:ADS We were lacking test coverage here: I was looking at the first remove but I believe I want the last.
 					const { localSeq } = removalInfo?.removes[removalInfo.removes.length - 1];
 					if (localSeq === undefined) {
 						// Sure, the local client did it--but that change was already acked.

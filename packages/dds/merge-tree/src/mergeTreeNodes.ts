@@ -228,7 +228,7 @@ export interface ObliterateInfo {
 	segmentGroup: SegmentGroup | undefined;
 }
 
-// TODO: Think through how these interact with causal following terminology
+// TODO:ADS Think through how these interact with causal following terminology
 // I think you probably want to use Operation stamps to signify events that are linearized as
 // [remote seq 1, remote seq 2, ... , remote seq N, local seq 1, local seq 2, ... , local seq M]
 // but then use some other interface for comparisons about reasoning around what other clients were thinking of
@@ -475,8 +475,6 @@ export abstract class BaseSegment implements ISegment {
 	protected cloneInto(b: ISegment): void {
 		const seg: ISegmentPrivate = b;
 		if (isInserted(this)) {
-			// TODO: Consider whether you want to keep this and subsequent Object.freezes in the prod codepath :)
-			// Object.freeze(this.insert);
 			overwriteInfo<IHasInsertionInfo>(seg, {
 				insert: this.insert,
 			});
@@ -484,7 +482,6 @@ export abstract class BaseSegment implements ISegment {
 		// TODO: deep clone properties
 		seg.properties = clone(this.properties);
 		if (isRemoved(this)) {
-			// this.removes.forEach(Object.freeze);
 			overwriteInfo<IHasRemovalInfo>(seg, {
 				removes: [...this.removes],
 			});
@@ -533,12 +530,9 @@ export abstract class BaseSegment implements ISegment {
 		}
 
 		if (isInserted(this)) {
-			// TODO: Consider whether you want to keep this and subsequent Object.freezes in the prod codepath :)
-			// Object.freeze(this.insert);
 			overwriteInfo<IHasInsertionInfo>(leafSegment, { insert: this.insert });
 		}
 		if (isRemoved(this)) {
-			// this.removes.forEach(Object.freeze);
 			overwriteInfo<IHasRemovalInfo>(leafSegment, {
 				removes: [...this.removes],
 			});
@@ -704,7 +698,7 @@ export class CollaborationWindow {
 	currentSeq = 0;
 
 	public get minSeqTime(): OperationStamp {
-		// TODO: Audit usages that care about the stamp of this. Such things seem wrong, but it's also weird that we force one here.
+		// TODO:ADS Audit usages that care about the stamp of this. Such things seem wrong, but it's also weird that we force one here.
 		return { seq: this.minSeq, clientId: NonCollabClient };
 	}
 

@@ -53,6 +53,7 @@ export function propInstanceOf<P extends string, T>(
  */
 export interface IHasInsertionInfo {
 	insert: InsertOperationStamp;
+	// TODO:ADS: Update this doc
 	// /**
 	//  * Short clientId for the client that inserted this segment.
 	//  */
@@ -191,7 +192,7 @@ export const removeMergeNodeInfo: (nodeLike: IMergeNodeInfo) => asserts nodeLike
 		ordinal: undefined,
 	});
 
-// TODO:
+// TODO:ADS: Update this doc
 // - Document this, including moveDst or something like it.
 // See old code in this file for continuity.
 export interface IHasRemovalInfo {

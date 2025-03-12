@@ -298,13 +298,13 @@ export class SnapshotV1 {
 							opstampUtils.greaterThan(firstRemove, minSeqStamp),
 						0x065 /* "On removal info preservation, segment has invalid removed sequence number!" */,
 					);
-					// TODO: By not preserving sequence numbers other than the first move,
+					// TODO:ADS By not preserving sequence numbers other than the first move,
 					//  We drop data here which will be necessary to allow perspectives of remote clients that
 					// don't include all of their ops. This should be remedied at some point.
 					raw.removedSeq = firstRemove.seq;
 
 					// back compat for when we split overlap and removed client
-					// TODO: Document when we can remove this. It should be possible to remove once all clients in an ecosystem
+					// TODO:ADS Document when we can remove this. It should be possible to remove once all clients in an ecosystem
 					// are writing the 'all clients in one array' format.
 					raw.removedClient = this.getLongClientId(firstRemove.clientId);
 

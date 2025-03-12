@@ -958,9 +958,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				}
 
 				case MergeTreeDeltaType.REMOVE: {
-					// TODO: Logic can be simplified. All we're checking is that nobody else removed it in the meantime,
-					// which we verify by checking if the first removal is still our own local edit.
-					// Same for obliterate codepath below.
+					// Only bother resubmitting if nobody else has removed it in the meantime.
+					// When that happens, the first removal will have been acked.
 					if (isRemoved(segment) && opstampUtils.isLocal(segment.removes[0])) {
 						newOp = createRemoveRangeOp(
 							segmentPosition,
@@ -971,6 +970,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				}
 				case MergeTreeDeltaType.OBLITERATE: {
 					errorIfOptionNotTrue(this._mergeTree.options, "mergeTreeEnableObliterateReconnect");
+					// Only bother resubmitting if nobody else has removed it in the meantime.
+					// When that happens, the first removal will have been acked.
 					if (isRemoved(segment) && opstampUtils.isLocal(segment.removes[0])) {
 						newOp = createObliterateRangeOp(
 							segmentPosition,

@@ -128,7 +128,7 @@ export class SnapshotLoader {
 				}
 				assert(spec.removedClientIds !== undefined, 0xaac /* must have removedClient ids */);
 				const firstRemovedSeq = spec.removedSeq;
-				// TODO: To correctly support perspectives from other clients which don't assume they have seen
+				// TODO:ADS To correctly support perspectives from other clients which don't assume they have seen
 				// all ops, we need to actually record these in the summary. For now we use fake data, and it turns
 				// out ok since none of these values end up being used. (specifically, the 'firstRemovedSeq' is fake
 				// for all values other than the actual first remove)

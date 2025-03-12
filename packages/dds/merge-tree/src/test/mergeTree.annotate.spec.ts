@@ -7,13 +7,9 @@ import { strict as assert } from "node:assert";
 
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
-import {
-	LocalClientId,
-	UnassignedSequenceNumber,
-	UniversalSequenceNumber,
-} from "../constants.js";
+import { LocalClientId, UniversalSequenceNumber } from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
-import { Marker, type ISegmentPrivate, type OperationStamp } from "../mergeTreeNodes.js";
+import { Marker, type ISegmentPrivate } from "../mergeTreeNodes.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { assertMergeNode } from "../segmentInfos.js";
 import type { PropsOrAdjust } from "../segmentPropertiesManager.js";
@@ -21,14 +17,6 @@ import { TextSegment } from "../textSegment.js";
 
 import { insertSegments } from "./testUtils.js";
 import { LocalDefaultPerspective, PriorPerspective } from "../perspective.js";
-
-function mintLocalChange(tree: MergeTree): OperationStamp {
-	return {
-		seq: UnassignedSequenceNumber,
-		clientId: tree.collabWindow.clientId,
-		localSeq: ++tree.collabWindow.currentSeq,
-	};
-}
 
 function splitAt(mergeTree: MergeTree, pos: number): ISegmentPrivate | undefined {
 	let segment: ISegmentPrivate | undefined;
@@ -111,7 +99,7 @@ describe("MergeTree", () => {
 						props: { propertySource: "local" },
 					},
 					mergeTree.localPerspective,
-					mintLocalChange(mergeTree),
+					mergeTree.mintNextLocalOperationStamp(),
 					undefined as never,
 				);
 
@@ -141,7 +129,7 @@ describe("MergeTree", () => {
 						annotateEnd,
 						props,
 						mergeTree.localPerspective,
-						mintLocalChange(mergeTree),
+						mergeTree.mintNextLocalOperationStamp(),
 						undefined as never,
 					);
 				});
@@ -163,7 +151,7 @@ describe("MergeTree", () => {
 							props: { secondProperty: "local" },
 						},
 						mergeTree.localPerspective,
-						mintLocalChange(mergeTree),
+						mergeTree.mintNextLocalOperationStamp(),
 						undefined as never,
 					);
 
@@ -198,7 +186,7 @@ describe("MergeTree", () => {
 						annotateEnd,
 						secondChangeProps,
 						mergeTree.localPerspective,
-						mintLocalChange(mergeTree),
+						mergeTree.mintNextLocalOperationStamp(),
 						undefined as never,
 					);
 
@@ -213,7 +201,7 @@ describe("MergeTree", () => {
 						annotateEnd,
 						splitOnlyProps,
 						mergeTree.localPerspective,
-						mintLocalChange(mergeTree),
+						mergeTree.mintNextLocalOperationStamp(),
 						undefined as never,
 					);
 
@@ -403,7 +391,7 @@ describe("MergeTree", () => {
 						annotateEnd,
 						props2,
 						mergeTree.localPerspective,
-						mintLocalChange(mergeTree),
+						mergeTree.mintNextLocalOperationStamp(),
 						undefined as never,
 					);
 
@@ -420,7 +408,7 @@ describe("MergeTree", () => {
 						annotateEnd,
 						props3,
 						mergeTree.localPerspective,
-						mintLocalChange(mergeTree),
+						mergeTree.mintNextLocalOperationStamp(),
 						undefined as never,
 					);
 
@@ -485,7 +473,7 @@ describe("MergeTree", () => {
 							props: { secondSource: "local2" },
 						},
 						mergeTree.localPerspective,
-						mintLocalChange(mergeTree),
+						mergeTree.mintNextLocalOperationStamp(),
 						undefined as never,
 					);
 
@@ -574,7 +562,7 @@ describe("MergeTree", () => {
 							props: { propertySource: "local" },
 						},
 						mergeTree.localPerspective,
-						mintLocalChange(mergeTree),
+						mergeTree.mintNextLocalOperationStamp(),
 						undefined as never,
 					);
 
@@ -603,7 +591,7 @@ describe("MergeTree", () => {
 						annotateEnd,
 						props,
 						mergeTree.localPerspective,
-						mintLocalChange(mergeTree),
+						mergeTree.mintNextLocalOperationStamp(),
 						undefined as never,
 					);
 
@@ -636,7 +624,7 @@ describe("MergeTree", () => {
 						annotateEnd,
 						props,
 						mergeTree.localPerspective,
-						mintLocalChange(mergeTree),
+						mergeTree.mintNextLocalOperationStamp(),
 						undefined as never,
 					);
 				});
@@ -649,7 +637,7 @@ describe("MergeTree", () => {
 							props: { propertySource: "local2", secondProperty: "local" },
 						},
 						mergeTree.localPerspective,
-						mintLocalChange(mergeTree),
+						mergeTree.mintNextLocalOperationStamp(),
 						undefined as never,
 					);
 
@@ -728,7 +716,7 @@ describe("MergeTree", () => {
 							props: { secondSource: "local2" },
 						},
 						mergeTree.localPerspective,
-						mintLocalChange(mergeTree),
+						mergeTree.mintNextLocalOperationStamp(),
 						undefined as never,
 					);
 

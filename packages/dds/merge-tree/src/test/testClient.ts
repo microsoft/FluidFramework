@@ -198,9 +198,10 @@ export class TestClient extends Client {
 
 	public getText(start?: number, end?: number): string {
 		return this.textHelper.getText(
-			// Current sequence number of the collab window *should* be sufficient here, but some tests perform operations on the merge tree directly
-			// which doesn't update that. In reality this probably gets cleaned up by propagating perspectives more thoroughly and using a perspective here
-			// which just ignores ref seqs.
+			// Current sequence number of the collab window *should* be sufficient here, but some tests create a client but then perform operations
+			// on the merge tree directly which doesn't update that.
+			// Once textHelper.getText takes in a perspective rather than the older representation of refSeq / clientId,
+			// we can just pass in the local perspective here which is much more natural.
 			UniversalSequenceNumber,
 			this.getClientId(),
 			"",

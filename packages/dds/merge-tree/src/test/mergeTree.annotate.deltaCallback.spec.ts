@@ -16,16 +16,7 @@ import { MergeTreeDeltaType } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
 
 import { countOperations, insertSegments, insertText, markRangeRemoved } from "./testUtils.js";
-import type { OperationStamp } from "../mergeTreeNodes.js";
 import { PriorPerspective } from "../perspective.js";
-
-function mintLocalChange(tree: MergeTree): OperationStamp {
-	return {
-		seq: UnassignedSequenceNumber,
-		clientId: tree.collabWindow.clientId,
-		localSeq: ++tree.collabWindow.currentSeq,
-	};
-}
 
 describe("MergeTree", () => {
 	let mergeTree: MergeTree;
@@ -62,7 +53,7 @@ describe("MergeTree", () => {
 					props: { foo: "bar" },
 				},
 				mergeTree.localPerspective,
-				mintLocalChange(mergeTree),
+				mergeTree.mintNextLocalOperationStamp(),
 				undefined as never,
 			);
 
@@ -111,7 +102,7 @@ describe("MergeTree", () => {
 					props: { foo: "bar" },
 				},
 				mergeTree.localPerspective,
-				mintLocalChange(mergeTree),
+				mergeTree.mintNextLocalOperationStamp(),
 				undefined as never,
 			);
 
@@ -145,7 +136,7 @@ describe("MergeTree", () => {
 					props: { foo: "bar" },
 				},
 				mergeTree.localPerspective,
-				mintLocalChange(mergeTree),
+				mergeTree.mintNextLocalOperationStamp(),
 				undefined as never,
 			);
 
@@ -179,7 +170,7 @@ describe("MergeTree", () => {
 					props: { foo: "bar" },
 				},
 				mergeTree.localPerspective,
-				mintLocalChange(mergeTree),
+				mergeTree.mintNextLocalOperationStamp(),
 				undefined as never,
 			);
 

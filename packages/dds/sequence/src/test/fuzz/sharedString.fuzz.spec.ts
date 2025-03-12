@@ -67,7 +67,7 @@ describe("SharedString fuzz with obliterate", () => {
 			// Sided obliterate doesn't support reconnect yet.
 			reconnectProbability: 0,
 			// Uncomment this line to replay a specific seed from its failure file:
-			// replay: 95,
+			// replay: 0,
 			// TODO:AB#7220: This seed should be enabled. The failure here is unrelated to obliterate.
 			skip: [51],
 		},

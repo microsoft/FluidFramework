@@ -1453,8 +1453,6 @@ export class MergeTree {
 		stamp: InsertOperationStamp,
 		newSegments: T[],
 	): void {
-		// TODO: Is keeping the freeze necessary?
-		// Object.freeze(stamp);
 		// Keeping this function within the scope of blockInsert for readability.
 		// eslint-disable-next-line unicorn/consistent-function-scoping
 		const continueFrom = (node: MergeBlock): boolean => {
