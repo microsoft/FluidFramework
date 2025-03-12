@@ -8,6 +8,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import {
 	FluidObject,
 	IFluidHandle,
+	IFluidLoadable,
 	IRequest,
 	type IResponse,
 } from "@fluidframework/core-interfaces";
@@ -97,7 +98,7 @@ export class AgentScheduler
 		return agentScheduler;
 	}
 
-	public get IAgentScheduler(): IAgentScheduler {
+	public get IAgentScheduler(): AgentScheduler {
 		return this;
 	}
 	public get IFluidLoadable(): IFluidLoadable {
