@@ -994,10 +994,7 @@ enum Status {
  * 2. refcount is non-zero.
  * 3. events are registered.
  */
-class PathNode
-	extends ReferenceCountedBase
-	implements INormalizedUpPath<PathNode>, AnchorNode
-{
+class PathNode extends ReferenceCountedBase implements AnchorNode {
 	public status: Status = Status.Alive;
 	/**
 	 * Event emitter for this anchor.
