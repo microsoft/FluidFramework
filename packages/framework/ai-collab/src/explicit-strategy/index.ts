@@ -385,13 +385,11 @@ export async function clod(options: GenerateTreeEditsOptions): Promise<boolean> 
 	const input_schema = zodToJsonSchema(wrapper, { name: "foo" }).definitions
 		?.foo as Anthropic.Tool.InputSchema;
 
-	const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [
-		{ role: "user", content: options.prompt.userAsk },
-	];
-
 	const max_tokens = options.limiters?.tokenLimits?.outputTokens ?? 20000;
 
-	async function queryClod(): Promise<Anthropic.Beta.Messages.BetaMessage> {
+	async function queryClod(
+		messages2: Anthropic.Beta.Messages.BetaMessageParam[],
+	): Promise<Anthropic.Beta.Messages.BetaMessage> {
 		const message = await client.beta.messages.create({
 			betas: ["token-efficient-tools-2025-02-19"],
 			model: "claude-3-7-sonnet-latest",
@@ -406,14 +404,17 @@ export async function clod(options: GenerateTreeEditsOptions): Promise<boolean> 
 				},
 			],
 			tool_choice: { type: "auto" },
-			messages,
+			messages: messages2,
 			system: `${systemPrompt} You must use the EditJsonTree tool to respond.`,
 		});
 
 		return message;
 	}
 
-	let response = await queryClod();
+	const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [
+		{ role: "user", content: options.prompt.userAsk },
+	];
+	let response = await queryClod(messages);
 
 	const thinking =
 		response.content.find(
@@ -486,7 +487,7 @@ export async function clod(options: GenerateTreeEditsOptions): Promise<boolean> 
 			);
 		}
 
-		response = await queryClod();
+		response = await queryClod(retryMessages);
 	}
 
 	return false;

@@ -22,6 +22,7 @@ import { createZodJsonValidator } from "typechat/zod";
 
 import {
 	objectIdKey,
+	typeField,
 	type InsertIntoArray,
 	type MoveArrayElement,
 	type RemoveFromArray,
@@ -116,11 +117,12 @@ export function getEditingSystemPrompt(
 
 	// TODO: security: user prompt in system prompt
 	const systemPrompt = `
-	${role}
+${role}
 Edits are JSON objects that conform to the schema described below. You produce an array of edits where each edit ${topLevelEditWrapperDescription}.
 When creating new objects for ${"InsertIntoArray" satisfies Capitalize<InsertIntoArray["type"]>} or ${"SetField" satisfies Capitalize<SetField["type"]>},
 you may create an ID and put it in the ${objectIdKey} property if you want to refer to the object in a later edit. For example, if you want to insert a new object into an array and (in a subsequent edit)
 move another piece of content to after the newly inserted one, you can use the ID of the newly inserted object in the ${"MoveArrayElement" satisfies Capitalize<MoveArrayElement["type"]>} edit.
+Additionally, if the type of the new object cannot be inferred from its properties alone, you should also set the ${typeField} property to the type of the object.
 The schema definitions for an edit are:\n${treeSchemaString}
 The tree is a JSON object with the following schema: ${promptFriendlySchema}
 The current state of the tree is: ${decoratedTreeJson}.

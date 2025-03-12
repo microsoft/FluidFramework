@@ -68,3 +68,15 @@ export function getOrCreate<K, V>(
  * @alpha
  */
 export type View = Pick<TreeViewAlpha<ImplicitFieldSchema>, "root" | "fork" | "merge">;
+
+/**
+ * TODO
+ * @returns
+ */
+export function tryGetSingleton<T>(set: ReadonlySet<T>): T | undefined {
+	if (set.size === 1) {
+		for (const item of set) {
+			return item;
+		}
+	}
+}

@@ -5,7 +5,7 @@
 
 /* eslint-disable unicorn/no-negated-condition */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 // eslint-disable-next-line import/no-internal-modules
@@ -25,6 +25,7 @@ import {
 	type IterableTreeArrayContent,
 	SchemaFactory,
 	type TreeLeafValue,
+	type SimpleArrayNodeSchema,
 } from "@fluidframework/tree/internal";
 
 import {
@@ -43,26 +44,74 @@ import {
 import type { IdGenerator } from "./idGenerator.js";
 import type { JsonValue } from "./jsonTypes.js";
 import { toDecoratedJson } from "./promptGeneration.js";
-import { fail, type View } from "./utils.js";
+import { fail, mapIterable, tryGetSingleton, type View } from "./utils.js";
 
-function populateDefaults(
+// eslint-disable-next-line eslint-comments/disable-enable-pair
+/* eslint-disable unicorn/no-null */
+
+/**
+ * For a JSON tree being inserted into some field, this:
+ * 1. Populates llm defaults
+ * 2. Validates that any objects in the inserted tree are unambiguously constructable
+ * @returns the constructor
+ */
+function validateInsertedTree(
+	allowedTypes: ReadonlySet<string>,
 	json: JsonValue,
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
 ): void {
 	if (typeof json === "object") {
 		if (json === null) {
-			return;
-		}
-		if (Array.isArray(json)) {
+			if (!allowedTypes.has(SchemaFactory.null.identifier)) {
+				throw new UsageError(
+					`Unexpected value ${null}. Allowed types are ${[...allowedTypes].join(",")}`,
+				);
+			}
+		} else if (Array.isArray(json)) {
+			const arraySchema = [...allowedTypes]
+				.map((t) => definitionMap.get(t) ?? fail("Unexpected schema"))
+				.filter((s): s is SimpleArrayNodeSchema => s?.kind === NodeKind.Array);
+
+			if (arraySchema.length === 0) {
+				throw new UsageError(
+					`Unexpected array. Allowed types are ${[...allowedTypes].join(",")}`,
+				);
+			} else if (arraySchema.length > 1) {
+				// TODO: We can be smarter by checking the type of the element against the allowed types of the arrays and looking for (exactly) one that allows it
+				throw new UsageError(
+					`Ambiguous array. Allowed types are ${[...allowedTypes].join(",")}`,
+				);
+			}
 			for (const element of json) {
-				populateDefaults(element, definitionMap);
+				validateInsertedTree(
+					arraySchema[0]?.allowedTypes ?? fail("Expected element"),
+					element,
+					definitionMap,
+				);
 			}
 		} else {
-			assert(
-				typeof json[typeField] === "string",
-				0xa73 /* The typeField must be present in new JSON content */,
+			const candidates = findObjectsThatHaveAllKeys(
+				definitionMap,
+				allowedTypes,
+				Object.keys(json),
 			);
-			const nodeSchema = definitionMap.get(json[typeField]);
+
+			let type: string;
+			if (candidates.size === 0) {
+				throw new UsageError(
+					`Unexpected object. Allowed types are ${[...allowedTypes].join(",")}`,
+				);
+			} else if (candidates.size > 1) {
+				if (typeof json[typeField] === "string") {
+					type = json[typeField];
+				} else {
+					throw new UsageError(`The ${typeField} field must be set .`);
+				}
+			} else {
+				type = tryGetSingleton(candidates) ?? fail("Expected type");
+			}
+
+			const nodeSchema = definitionMap.get(type);
 			assert(nodeSchema?.kind === NodeKind.Object, 0xa74 /* Expected object schema */);
 
 			for (const [key, fieldSchema] of Object.entries(nodeSchema.fields)) {
@@ -75,13 +124,70 @@ function populateDefaults(
 				}
 			}
 
-			for (const value of Object.values(json)) {
+			for (const [key, value] of Object.entries(json)) {
 				if (value !== undefined) {
-					populateDefaults(value, definitionMap);
+					const fieldSchema =
+						nodeSchema.fields[key] ?? failUsage(`Unexpected property ${key} in new content`);
+
+					validateInsertedTree(fieldSchema.allowedTypes, value, definitionMap);
 				}
 			}
 		}
+	} else {
+		switch (typeof json) {
+			case "boolean": {
+				if (!allowedTypes.has(SchemaFactory.boolean.identifier)) {
+					throw new UsageError(
+						`Unexpected value ${json}. Allowed types are ${[...allowedTypes].join(",")}`,
+					);
+				}
+				break;
+			}
+			case "number": {
+				if (!allowedTypes.has(SchemaFactory.number.identifier)) {
+					throw new UsageError(
+						`Unexpected value ${json}. Allowed types are ${[...allowedTypes].join(",")}`,
+					);
+				}
+				break;
+			}
+			case "string": {
+				if (!allowedTypes.has(SchemaFactory.string.identifier)) {
+					throw new UsageError(
+						`Unexpected value ${json}. Allowed types are ${[...allowedTypes].join(",")}`,
+					);
+				}
+				break;
+			}
+			default: {
+				unreachableCase(json);
+			}
+		}
 	}
+}
+
+function findObjectsThatHaveAllKeys(
+	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
+	allowedTypes: Iterable<string>,
+	keys: Iterable<string>,
+): Set<string> {
+	const candidates = new Set<string>();
+	for (const type of allowedTypes) {
+		const s = definitionMap.get(type) ?? fail("Expected schema");
+		if (s.kind === NodeKind.Object) {
+			let hasAllKeys = true;
+			for (const key of keys) {
+				if (s.fields[key] === undefined) {
+					hasAllKeys = false;
+					break;
+				}
+			}
+			if (hasAllKeys) {
+				candidates.add(type);
+			}
+		}
+	}
+	return candidates;
 }
 
 function createObjectOrArray(
@@ -281,7 +387,11 @@ export function applyAgentEdit(
 					treeEdit.value ?? failUsage(`Either "value" or "values" must be provided`),
 				];
 				for (const value of values) {
-					populateDefaults(value, definitionMap);
+					validateInsertedTree(
+						new Set(mapIterable(parentNodeSchema.childTypes, (s) => s.identifier)),
+						value,
+						definitionMap,
+					);
 					const schemaIdentifier = getSchemaIdentifier(value);
 
 					// We assume that the parentNode for inserts edits are guaranteed to be an arrayNode.
@@ -358,7 +468,7 @@ export function applyAgentEdit(
 			}
 			// If the fieldSchema is a function we can grab the constructor and make an instance of that node.
 			else if (typeof fieldSchema === "function") {
-				populateDefaults(modification, definitionMap);
+				validateInsertedTree(new Set([fieldSchema.identifier]), modification, definitionMap);
 				if (typeof modification !== "object" || modification === null) {
 					throw new UsageError("inserted node must be an object");
 				}
@@ -383,6 +493,7 @@ export function applyAgentEdit(
 			}
 			// If the fieldSchema is of type FieldSchema, we can check its allowed types and set the field.
 			else if (fieldSchema instanceof FieldSchema) {
+				// TODO: validateInsertedTree in this branch too
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 				const schemaIdentifier = (modification as any)[typeField];
 				if (fieldSchema.kind === FieldKind.Optional && modification === undefined) {

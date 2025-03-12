@@ -22,7 +22,7 @@ import type {
 import { z } from "zod";
 
 import { objectIdKey, typeField } from "./agentEditTypes.js";
-import { fail, getOrCreate, mapIterable } from "./utils.js";
+import { fail, getOrCreate, mapIterable, tryGetSingleton } from "./utils.js";
 
 const objectPointer = z
 	.string()
@@ -68,6 +68,42 @@ export const arrayRange = z
  * Cache used to prevent repeatedly generating the same Zod validation objects for the same {@link SimpleTreeSchema} as generate propts for repeated calls to an LLM
  */
 const cache = new WeakMap<SimpleTreeSchema, ReturnType<typeof generateGenericEditTypes>>();
+// /**
+//  * A map from field string to all object identifiers that can have a field with that key.
+//  */
+// const fieldToObjectIdentifier = new Map<string, Set<string>>();
+
+// function something(schema: SimpleTreeSchema, keys: Iterable<string>): Set<string> {
+// 	// Find all candidates that have at least one of the given keys
+// 	const candidates = new Set<string>();
+// 	for (const key of [...keys]) {
+// 		const objects = fieldToObjectIdentifier.get(key);
+// 		if (objects !== undefined) {
+// 			for (const o of objects) {
+// 				candidates.add(o);
+// 			}
+// 		}
+// 	}
+
+// 	// Refine to all candidates that have all of the given keys
+// 	const candidates2 = new Set<string>();
+// 	for (const c of candidates) {
+// 		const objectSchema = schema.definitions.get(c);
+// 		assert(objectSchema?.kind === NodeKind.Object, "Expected object schema");
+// 		let hasAllKeys = true;
+// 		for (const key of keys) {
+// 			if (objectSchema.fields[key] === undefined) {
+// 				hasAllKeys = false;
+// 				break;
+// 			}
+// 		}
+// 		if (hasAllKeys) {
+// 			candidates2.add(c);
+// 		}
+// 	}
+
+// 	return candidates2;
+// }
 
 /**
  * Generates a set of ZOD validation objects for the various types of data that can be put into the provided {@link SimpleTreeSchema}
@@ -227,6 +263,7 @@ function getOrCreateType(
 		switch (nodeSchema.kind) {
 			case NodeKind.Object: {
 				for (const [key, field] of Object.entries(nodeSchema.fields)) {
+					// getOrCreate(fieldToObjectIdentifier, key, () => new Set()).add(definition);
 					// TODO: Remove when AI better
 					if (
 						Array.from(
@@ -399,14 +436,6 @@ function getTypeForAllowedTypes(
 			modifyTypeSet,
 			single,
 		);
-	}
-}
-
-function tryGetSingleton<T>(set: ReadonlySet<T>): T | undefined {
-	if (set.size === 1) {
-		for (const item of set) {
-			return item;
-		}
 	}
 }
 

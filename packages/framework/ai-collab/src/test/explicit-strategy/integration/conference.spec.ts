@@ -80,7 +80,7 @@ const factory = SharedTree.getFactory();
 
 // const TEST_MODEL_NAME = "gpt-4o";
 
-describe.skip("Agent Editing Integration", () => {
+describe("Agent Editing Integration", () => {
 	process.env.OPENAI_API_KEY = ""; // DON'T COMMIT THIS
 	process.env.AZURE_OPENAI_API_KEY = "TODO "; // DON'T COMMIT THIS
 	process.env.AZURE_OPENAI_ENDPOINT = "TODO ";
@@ -168,7 +168,7 @@ describe.skip("Agent Editing Integration", () => {
 		});
 		await clod({
 			treeView: asTreeViewAlpha(view),
-			clientOptions: { client: claudeClient /* options: { model: TEST_MODEL_NAME } */ },
+			clientOptions: { client: claudeClient },
 			treeNode: view.root,
 			prompt: {
 				userAsk:
