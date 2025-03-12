@@ -304,8 +304,8 @@ export class SnapshotV1 {
 					raw.removedSeq = firstRemove.seq;
 
 					// back compat for when we split overlap and removed client
-					// TODO:ADS Document when we can remove this. It should be possible to remove once all clients in an ecosystem
-					// are writing the 'all clients in one array' format.
+					// This can be removed when we can safely assume no clients running fluid packages <= 0.58 will ever
+					// load a document produced by a version beyond the removal. It is vestigial in the meantime.
 					raw.removedClient = this.getLongClientId(firstRemove.clientId);
 
 					raw.removedClientIds = removes.map(({ clientId }) => this.getLongClientId(clientId));
