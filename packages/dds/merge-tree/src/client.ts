@@ -32,7 +32,7 @@ import { LocalReferencePosition, SlidingPreference } from "./localReference.js";
 import {
 	MergeTree,
 	errorIfOptionNotTrue,
-	isRemovedAndAckedOrMovedAndAcked,
+	isRemovedAndAcked,
 	type IMergeTreeOptionsInternal,
 } from "./mergeTree.js";
 import type {
@@ -899,7 +899,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					// if the segment has been removed or obliterated, there's no need to send the annotate op
 					// unless the remove was local, in which case the annotate must have come
 					// before the remove
-					if (!isRemovedAndAckedOrMovedAndAcked(segment)) {
+					if (!isRemovedAndAcked(segment)) {
 						newOp =
 							resetOp.props === undefined
 								? createAdjustRangeOp(

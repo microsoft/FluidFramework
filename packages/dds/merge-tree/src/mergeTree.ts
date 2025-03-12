@@ -117,19 +117,11 @@ import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
 import { SortedSegmentSet } from "./sortedSegmentSet.js";
 import { zamboniSegments } from "./zamboni.js";
 
-function isRemovedAndAcked(
+export function isRemovedAndAcked(
 	segment: ISegmentPrivate,
 ): segment is ISegmentLeaf & IHasRemovalInfo {
 	const removalInfo = toRemovalInfo(segment);
 	return removalInfo !== undefined && timestampUtils.isAcked(removalInfo.removes[0]);
-}
-
-export function isRemovedAndAckedOrMovedAndAcked(segment: ISegmentPrivate): boolean {
-	return isRemovedAndAcked(segment);
-}
-
-function isRemovedOrMoved(segment: ISegmentLeaf): boolean {
-	return isRemoved(segment);
 }
 
 function nodeTotalLength(mergeTree: MergeTree, node: IMergeNode): number | undefined {
@@ -423,11 +415,7 @@ function getSlideToSegment(
 	cache?: Map<ISegmentLeaf, { seg?: ISegmentLeaf }>,
 	useNewSlidingBehavior: boolean = false,
 ): [ISegmentLeaf | undefined, "start" | "end" | undefined] {
-	if (
-		!segment ||
-		!isRemovedAndAckedOrMovedAndAcked(segment) ||
-		segment.endpointType !== undefined
-	) {
+	if (!segment || !isRemovedAndAcked(segment) || segment.endpointType !== undefined) {
 		return [segment, undefined];
 	}
 
@@ -438,7 +426,7 @@ function getSlideToSegment(
 	const result: { seg?: ISegmentLeaf } = {};
 	cache?.set(segment, result);
 	const goFurtherToFindSlideToSegment = (seg: ISegmentLeaf): boolean => {
-		if (timestampUtils.isAcked(seg.insert) && !isRemovedAndAckedOrMovedAndAcked(seg)) {
+		if (timestampUtils.isAcked(seg.insert) && !isRemovedAndAcked(seg)) {
 			result.seg = seg;
 			return false;
 		}
@@ -981,7 +969,7 @@ export class MergeTree {
 		const backwardSegmentCache = new Map<ISegmentLeaf, { seg?: ISegmentLeaf }>();
 		for (const segment of segments) {
 			assert(
-				isRemovedAndAckedOrMovedAndAcked(segment),
+				isRemovedAndAcked(segment),
 				0x2f1 /* slideReferences from a segment which has not been removed and acked */,
 			);
 			if (segment.localRefs === undefined || segment.localRefs.empty) {
@@ -1919,7 +1907,7 @@ export class MergeTree {
 				rollback,
 			);
 
-			if (!isRemovedOrMoved(segment)) {
+			if (!isRemoved(segment)) {
 				deltaSegments.push({ segment, propertyDeltas });
 			}
 			if (this.collabWindow.collaborating) {
@@ -2425,7 +2413,7 @@ export class MergeTree {
 		if (
 			_segment !== "start" &&
 			_segment !== "end" &&
-			isRemovedAndAckedOrMovedAndAcked(_segment) &&
+			isRemovedAndAcked(_segment) &&
 			!refTypeIncludesFlag(
 				refType,
 				ReferenceType.SlideOnRemove | ReferenceType.Transient | ReferenceType.StayOnRemove,
