@@ -113,7 +113,7 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 	 */
 	protected disconnectCore(err: IAnyDriverError): void {
 		// tell the server we are disconnecting this client from the document
-		if(this.socket.connected && err?.errorType !== undefined) {
+		if (this.socket.connected && err?.errorType !== undefined) {
 			this.socket.emit("abnormal_disconnect", this.clientId, this.documentId, err.errorType);
 		}
 		super.disconnectCore(err);
