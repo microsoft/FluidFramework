@@ -13,9 +13,9 @@ They typically look like `() => MySchema` and are used when a forward reference 
 
 [TreeViewConfiguration](https://fluidframework.com/docs/api/fluid-framework/treeviewconfiguration-class#_constructor_-constructor) now documents its significance with respect to lazy schema references.
 Additionally some implicit assumptions like no modifications of [AllowedTypes](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias)
-after resolving of lazy schema references have been enforced (such modifications would previous cause undefined behavior in the future, and now error is thrown when trying to modify them).
+after resolving of lazy schema references have been enforced (such modifications would previously cause undefined behavior in the future, and now an error is thrown when trying to modify them).
 
 `evaluateLazySchema` has been added as an `@alpha` API that is now consistently used by all internal code when evaluating lazy schema references.
 This ensures consistent behavior and error reporting, but also adds caching.
-Therefor it is now supported for applications to have lazy schema references which compute the schema when invoked,
+Therefore it is now supported for applications to have lazy schema references which compute the schema when invoked,
 without having to implement their own caching as long as those applications use `evaluateLazySchema` anytime they need to evaluate a lazy schema reference.
