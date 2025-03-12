@@ -102,25 +102,25 @@ async function handleBroadcastSignal(
 	// 	throw new NetworkError(500, `No emitter configured for the broadcast-signal endpoint`);
 	// }
 
-	const deltaStreamUrl: string = config.get("worker:deltaStreamUrl");
-	const document = await storage?.getDocument(tenantId, documentId);
-	if (!document || !document.session.isSessionActive) {
-		Lumberjack.error("Document not found", { tenantId, documentId });
-		throw new NetworkError(404, "Document not found");
-	}
-	if (!document.session.isSessionAlive) {
-		Lumberjack.warning("Document session not alive", { tenantId, documentId });
-		throw new NetworkError(410, "Document session not alive");
-	}
-	if (document.session.deltaStreamUrl !== deltaStreamUrl) {
-		Lumberjack.info("Redirecting broadcast-signal to correct cluster", {
-			documentUrl: document.session.deltaStreamUrl,
-			currentUrl: deltaStreamUrl,
-			targetUrlAndPath: `${document.session.deltaStreamUrl}${request.originalUrl}`,
-		});
-		response.redirect(`${document.session.deltaStreamUrl}${request.originalUrl}`);
-		return;
-	}
+	// const deltaStreamUrl: string = config.get("worker:deltaStreamUrl");
+	// const document = await storage.getDocument(tenantId, documentId);
+	// if (!document || !document.session.isSessionActive) {
+	// 	Lumberjack.error("Document not found", { tenantId, documentId });
+	// 	throw new NetworkError(404, "Document not found");
+	// }
+	// if (!document.session.isSessionAlive) {
+	// 	Lumberjack.warning("Document session not alive", { tenantId, documentId });
+	// 	throw new NetworkError(410, "Document session not alive");
+	// }
+	// if (document.session.deltaStreamUrl !== deltaStreamUrl) {
+	// 	Lumberjack.info("Redirecting broadcast-signal to correct cluster", {
+	// 		documentUrl: document.session.deltaStreamUrl,
+	// 		currentUrl: deltaStreamUrl,
+	// 		targetUrlAndPath: `${document.session.deltaStreamUrl}${request.originalUrl}`,
+	// 	});
+	// 	response.redirect(`${document.session.deltaStreamUrl}${request.originalUrl}`);
+	// 	return;
+	// }
 
 	const signalRoom: IRoom = { tenantId, documentId };
 	const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
