@@ -46,7 +46,7 @@ const covertLocalServerStateToDdsState = async (
 		client: createDDSClient(state.channel),
 		containerRuntimeFactory: makeUnreachableCodePathProxy("containerRuntimeFactory"),
 		isDetached: state.client.container.attachState === AttachState.Detached,
-		summarizerClient: makeUnreachableCodePathProxy("containerRuntimeFactory"),
+		summarizerClient: makeUnreachableCodePathProxy("summarizerClient"),
 		random: {
 			...state.random,
 			handle: () => {
