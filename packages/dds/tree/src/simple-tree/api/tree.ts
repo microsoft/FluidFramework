@@ -735,12 +735,7 @@ export interface SchemaCompatibilityStatus {
  * Events for {@link TreeBranch}.
  * @sealed @alpha
  */
-export interface TreeBranchEvents {
-	/**
-	 * The stored schema for the document has changed.
-	 */
-	schemaChanged(): void;
-
+export interface TreeBranchEvents extends Omit<TreeViewEvents, "commitApplied"> {
 	/**
 	 * Fired when a change is made to the branch. Includes data about the change that is made which listeners
 	 * can use to filter on changes they care about (e.g. local vs. remote changes).
