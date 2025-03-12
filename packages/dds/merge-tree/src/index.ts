@@ -46,7 +46,6 @@ export {
 	getSlideToSegoff,
 } from "./mergeTree.js";
 export {
-	IMergeTreeClientSequenceArgs,
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeDeltaOpArgs,
 	IMergeTreeMaintenanceCallbackArgs,

@@ -145,17 +145,6 @@ export interface IMergeTreeDeltaOpArgs {
 /**
  * @internal
  */
-export interface IMergeTreeClientSequenceArgs {
-	// TODO: This interface probably gets split into a perspective and a stamp for the operation
-	readonly clientId: number;
-	readonly referenceSequenceNumber: number;
-	readonly sequenceNumber: number;
-	readonly localSequenceNumber: number | undefined;
-}
-
-/**
- * @internal
- */
 export type MergeTreeDeltaCallback = (
 	opArgs: IMergeTreeDeltaOpArgs,
 	deltaArgs: IMergeTreeDeltaCallbackArgs,

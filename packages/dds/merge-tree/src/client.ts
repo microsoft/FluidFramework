@@ -27,11 +27,7 @@ import {
 
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
 import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";
-import {
-	NonCollabClient,
-	UnassignedSequenceNumber,
-	UniversalSequenceNumber,
-} from "./constants.js";
+import { NonCollabClient, UniversalSequenceNumber } from "./constants.js";
 import { LocalReferencePosition, SlidingPreference } from "./localReference.js";
 import {
 	MergeTree,
@@ -40,7 +36,6 @@ import {
 	type IMergeTreeOptionsInternal,
 } from "./mergeTree.js";
 import type {
-	IMergeTreeClientSequenceArgs,
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeDeltaOpArgs,
 	IMergeTreeMaintenanceCallbackArgs,
@@ -531,13 +526,14 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	private applyObliterateRangeOp(opArgs: IMergeTreeDeltaOpArgs): void {
+		const { op, sequencedMessage } = opArgs;
 		assert(
-			opArgs.op.type === MergeTreeDeltaType.OBLITERATE ||
-				opArgs.op.type === MergeTreeDeltaType.OBLITERATE_SIDED,
+			op.type === MergeTreeDeltaType.OBLITERATE ||
+				op.type === MergeTreeDeltaType.OBLITERATE_SIDED,
 			0x866 /* Unexpected op type on range obliterate! */,
 		);
-		const op = opArgs.op;
-		const { perspective, stamp } = this.computePerspectiveAndStamp(opArgs);
+		const perspective = this.getOperationPerspective(sequencedMessage);
+		const stamp = this.getOperationStamp(sequencedMessage);
 
 		if (this._mergeTree.options?.mergeTreeEnableSidedObliterate) {
 			const { start, end } = this.getValidSidedRange(op, perspective);
@@ -552,34 +548,34 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 	}
 
-	private computePerspectiveAndStamp(opArgs: IMergeTreeDeltaOpArgs): {
-		perspective: PriorPerspective;
-		stamp: OperationTimestamp;
-	} {
-		const { sequencedMessage } = opArgs;
-		if (sequencedMessage) {
-			const { sequenceNumber: seq, referenceSequenceNumber: refSeq } = sequencedMessage;
-			const clientId = this.getOrAddShortClientIdFromMessage(sequencedMessage);
-			return {
-				perspective: new PriorPerspective(refSeq, clientId),
-				stamp: {
-					seq,
-					clientId,
-				},
-			};
-		} else {
-			const segWindow = this.getCollabWindow();
-			const seq = segWindow.collaborating ? UnassignedSequenceNumber : UniversalSequenceNumber;
-			const localSeq = segWindow.collaborating ? ++segWindow.localSeq : undefined;
-			return {
-				perspective: this._mergeTree.localPerspective,
-				stamp: {
-					clientId: segWindow.clientId,
-					seq,
-					localSeq,
-				},
-			};
+	private getOperationPerspective(
+		sequencedMessage: ISequencedDocumentMessage | undefined,
+	): Perspective {
+		if (!sequencedMessage) {
+			return this._mergeTree.localPerspective;
 		}
+
+		const clientId = this.getOrAddShortClientIdFromMessage(sequencedMessage);
+		const { referenceSequenceNumber: refSeq } = sequencedMessage;
+		return new PriorPerspective(refSeq, clientId);
+	}
+
+	/**
+	 * Returns the operation stamp to apply for a change, minting a new one local one if necessary.
+	 */
+	private getOperationStamp(
+		sequencedMessage: ISequencedDocumentMessage | undefined,
+	): OperationTimestamp {
+		if (!sequencedMessage) {
+			return this._mergeTree.mintNextLocalOperationStamp();
+		}
+
+		const { sequenceNumber: seq } = sequencedMessage;
+		const clientId = this.getOrAddShortClientIdFromMessage(sequencedMessage);
+		return {
+			seq,
+			clientId,
+		};
 	}
 
 	/**
@@ -587,12 +583,13 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param opArgs - The ops args for the op
 	 */
 	private applyRemoveRangeOp(opArgs: IMergeTreeDeltaOpArgs): void {
+		const { op, sequencedMessage } = opArgs;
 		assert(
-			opArgs.op.type === MergeTreeDeltaType.REMOVE,
+			op.type === MergeTreeDeltaType.REMOVE,
 			0x02d /* "Unexpected op type on range remove!" */,
 		);
-		const op = opArgs.op;
-		const { perspective, stamp } = this.computePerspectiveAndStamp(opArgs);
+		const perspective = this.getOperationPerspective(sequencedMessage);
+		const stamp = this.getOperationStamp(sequencedMessage);
 		const range = this.getValidOpRange(op, perspective);
 
 		this._mergeTree.markRangeRemoved(range.start, range.end, perspective, stamp, opArgs);
@@ -603,12 +600,13 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param opArgs - The ops args for the op
 	 */
 	private applyAnnotateRangeOp(opArgs: IMergeTreeDeltaOpArgs): void {
+		const { op, sequencedMessage } = opArgs;
 		assert(
-			opArgs.op.type === MergeTreeDeltaType.ANNOTATE,
+			op.type === MergeTreeDeltaType.ANNOTATE,
 			0x02e /* "Unexpected op type on range annotate!" */,
 		);
-		const op = opArgs.op;
-		const { perspective, stamp } = this.computePerspectiveAndStamp(opArgs);
+		const perspective = this.getOperationPerspective(sequencedMessage);
+		const stamp = this.getOperationStamp(sequencedMessage);
 		const range = this.getValidOpRange(op, perspective);
 
 		this._mergeTree.annotateRange(range.start, range.end, op, perspective, stamp, opArgs);
@@ -620,12 +618,13 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @returns True if the insert was applied. False if it could not be.
 	 */
 	private applyInsertOp(opArgs: IMergeTreeDeltaOpArgs): void {
+		const { op, sequencedMessage } = opArgs;
 		assert(
-			opArgs.op.type === MergeTreeDeltaType.INSERT,
+			op.type === MergeTreeDeltaType.INSERT,
 			0x02f /* "Unexpected op type on range insert!" */,
 		);
-		const op = opArgs.op;
-		const { perspective, stamp } = this.computePerspectiveAndStamp(opArgs);
+		const perspective = this.getOperationPerspective(sequencedMessage);
+		const stamp = this.getOperationStamp(sequencedMessage);
 		const range = this.getValidOpRange(op, perspective);
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
@@ -781,43 +780,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 		// start and end are guaranteed to be non-null here, otherwise we throw above.
 		return { start: start!, end: end! };
-	}
-
-	/**
-	 * Gets the client args from the op if remote, otherwise uses the local clients info
-	 * @param sequencedMessage - The sequencedMessage to get the client sequence args for
-	 */
-	private getClientSequenceArgsForMessage(
-		sequencedMessage:
-			| ISequencedDocumentMessage
-			| Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">
-			| undefined,
-	): IMergeTreeClientSequenceArgs {
-		// If there this no sequenced message, then the op is local
-		// and unacked, so use this clients sequenced args
-		//
-		if (sequencedMessage) {
-			return {
-				clientId: this.getOrAddShortClientIdFromMessage(sequencedMessage),
-				referenceSequenceNumber: sequencedMessage.referenceSequenceNumber,
-				// Note: return value satisfies overload signatures despite the cast, as if input argument doesn't contain sequenceNumber,
-				// return value isn't expected to have it either.
-				sequenceNumber: (sequencedMessage as ISequencedDocumentMessage).sequenceNumber,
-				localSequenceNumber: undefined,
-			};
-		} else {
-			const segWindow = this.getCollabWindow();
-			const sequenceNumber = segWindow.collaborating
-				? UnassignedSequenceNumber
-				: UniversalSequenceNumber;
-			const localSeq = segWindow.collaborating ? ++segWindow.localSeq : undefined;
-			return {
-				clientId: segWindow.clientId,
-				referenceSequenceNumber: segWindow.currentSeq,
-				sequenceNumber,
-				localSequenceNumber: localSeq,
-			};
-		}
 	}
 
 	private ackPendingSegment(opArgs: IMergeTreeDeltaRemoteOpArgs): void {
@@ -1359,15 +1321,20 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		segment: T | undefined;
 		offset: number | undefined;
 	} {
-		const { referenceSequenceNumber, clientId } =
-			this.getClientSequenceArgsForMessage(sequenceArgs);
+		let perspective: Perspective;
+		const clientId =
+			sequenceArgs !== undefined
+				? this.getOrAddShortClientIdFromMessage(sequenceArgs)
+				: this.getClientId();
+		const refSeq = sequenceArgs?.referenceSequenceNumber ?? this.getCollabWindow().currentSeq;
+		if (localSeq !== undefined) {
+			perspective = new LocalReconnectingPerspective(refSeq, clientId, localSeq);
+		} else if (sequenceArgs !== undefined) {
+			perspective = new PriorPerspective(refSeq, clientId);
+		} else {
+			perspective = this._mergeTree.localPerspective;
+		}
 
-		const perspective =
-			clientId === this.getClientId()
-				? localSeq !== undefined
-					? new LocalReconnectingPerspective(referenceSequenceNumber, clientId, localSeq)
-					: this._mergeTree.localPerspective
-				: new PriorPerspective(referenceSequenceNumber, clientId);
 		return this._mergeTree.getContainingSegment(pos, perspective) as {
 			segment: T | undefined;
 			offset: number | undefined;
