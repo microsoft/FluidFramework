@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { assertIdenticalTypes } from "./testUtils.js";
+
 import type { IFluidHandle, IFluidHandleErased } from "@fluidframework/core-interfaces";
 import { fluidHandleSymbol } from "@fluidframework/core-interfaces";
-
-import type { JsonTypeWith } from "../../core-interfaces/index.js";
-
-import { assertIdenticalTypes } from "./testUtils.js";
+import type {
+	JsonTypeWith,
+	InternalUtilityTypes,
+} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 /* eslint-disable jsdoc/require-jsdoc */
 /* eslint-disable unicorn/no-null */
@@ -76,6 +78,7 @@ arrayOfNumbersSparse[3] = 3;
 export const arrayOfNumbersOrUndefined = [0, undefined, 2];
 export const arrayOfBigints = [bigint];
 export const arrayOfSymbols: symbol[] = [Symbol("symbol")];
+export const arrayOfUnknown: unknown[] = [unknownValueOfSimpleRecord];
 export const arrayOfFunctions = [aFunction];
 export const arrayOfFunctionsWithProperties = [functionWithProperties];
 export const arrayOfObjectAndFunctions = [objectAndFunction];
@@ -84,6 +87,8 @@ export const arrayOfBigintAndObjects: (bigint | { property: string })[] = [
 	bigint,
 ];
 export const arrayOfSymbolsAndObjects: (symbol | { property: string })[] = [Symbol("symbol")];
+
+export const readonlyArrayOfNumbers: readonly number[] = arrayOfNumbers;
 
 // #endregion
 
@@ -113,6 +118,25 @@ export const objectWithOptionalBigint: { bigint?: bigint } = { bigint: 0n };
 
 export const objectWithNumberKey = { 3: "value" };
 export const objectWithSymbolKey = { [symbol]: "value" };
+
+export const objectWithArrayOfNumbers = { arrayOfNumbers };
+export const objectWithArrayOfNumbersSparse = { arrayOfNumbersSparse };
+export const objectWithArrayOfNumbersOrUndefined = { arrayOfNumbersOrUndefined };
+export const objectWithArrayOfBigints = { arrayOfBigints };
+export const objectWithArrayOfSymbols = { arrayOfSymbols };
+export const objectWithArrayOfUnknown = { arrayOfUnknown };
+export const objectWithArrayOfFunctions = { arrayOfFunctions };
+export const objectWithArrayOfFunctionsWithProperties = { arrayOfFunctionsWithProperties };
+export const objectWithArrayOfObjectAndFunctions = { arrayOfObjectAndFunctions };
+export const objectWithArrayOfBigintAndObjects = { arrayOfBigintAndObjects };
+export const objectWithArrayOfSymbolsAndObjects = { arrayOfSymbolsAndObjects };
+export const objectWithReadonlyArrayOfNumbers = { readonlyArrayOfNumbers };
+
+export const objectWithUnknown = { unknown: "value" as unknown };
+interface ObjectWithOptionalUnknown {
+	optUnknown?: unknown;
+}
+export const objectWithOptionalUnknown: ObjectWithOptionalUnknown = { optUnknown: "value" };
 
 export const objectWithUndefined = {
 	undef: undefined,
@@ -229,6 +253,84 @@ export const objectWithMismatchedGetterAndSetterProperty: ObjectWithMismatchedGe
 export const objectWithMismatchedGetterAndSetterPropertyViaValue: ObjectWithMismatchedGetterAndSetterProperty =
 	{ property: 0 };
 
+// #region Index signature types
+
+export const stringRecordOfNumbers: Record<string, number> = { key: 0 };
+export const stringRecordOfUndefined: Record<string, undefined> = { key: undefined };
+export const stringRecordOfUnknown: Record<string, unknown> = { key: 0 };
+export const stringOrNumberRecordOfStrings: Record<string | number, string> = { 5: "value" };
+// Ideally TypeScript would not allow this assignment. Index signatures are
+// inherently optional and modification via `Partial` should not modify the
+// type (particularly under exactOptionalPropertyTypes=true).
+// See https://github.com/microsoft/TypeScript/issues/46969
+export const partialStringRecordOfNumbers: Partial<Record<string, number>> = {
+	key1: 0,
+	key2: undefined,
+};
+export const partialStringRecordOfUnknown: Partial<Record<string, unknown>> = { key: 0 };
+// @ts-expect-error These types are not intended to be identical; so error is expected...
+assertIdenticalTypes(partialStringRecordOfUnknown, {});
+// Unfortunately the inverse test fails. An IfSameType check of the two types is unstable.
+// Results appear to vary on presence of prior uses, but injecting prior uses did not
+// provide desired consistency either.
+assertIdenticalTypes({}, partialStringRecordOfUnknown);
+
+export const templatedRecordOfNumbers: Record<`key${number}`, number> = { key1: 0 };
+// This assignment should not be allowed. See partialStringRecordOfNumbers comments.
+export const partialTemplatedRecordOfNumbers: Partial<Record<`key${number}`, number>> = {
+	key1: 0,
+	key2: undefined,
+};
+export const templatedRecordOfUnknown: Record<`${string}Key`, unknown> = {
+	aKey: '"unknown" value',
+};
+export const mixedRecordOfUnknown: Record<
+	`aKey` | `bKey_${string | number}` | number,
+	unknown
+> = {
+	aKey: '"unknown" value',
+};
+
+// Must use `type` over `interface` to enable intersection with `Record<>`.
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+type KnownStringAndNumber = { knownString: string; knownNumber: number };
+export const stringRecordOfNumbersOrStringsWithKnownProperties: InternalUtilityTypes.FlattenIntersection<
+	Record<string, number | string> & KnownStringAndNumber
+> = { key: 0, knownString: "string value", knownNumber: 4 };
+export const stringRecordOfUnknownWithKnownProperties: InternalUtilityTypes.FlattenIntersection<
+	Record<string, unknown> & KnownStringAndNumber
+> = { key: 0, knownString: "string value", knownNumber: 4 };
+export const partialStringRecordOfUnknownWithKnownProperties: InternalUtilityTypes.FlattenIntersection<
+	Partial<Record<string, unknown>> & KnownStringAndNumber
+> = stringRecordOfUnknownWithKnownProperties;
+export const stringRecordOfUnknownWithOptionalKnownProperties: InternalUtilityTypes.FlattenIntersection<
+	Record<string, unknown> & { knownString?: string; knownNumber?: number }
+> = { key: undefined, knownString: "string value" };
+export const stringRecordOfUnknownWithKnownUnknown: InternalUtilityTypes.FlattenIntersection<
+	Record<string, unknown> & { knownUnknown: unknown }
+> = { key: 0, knownUnknown: "unknown value" };
+export const stringRecordOfUnknownWithOptionalKnownUnknown: InternalUtilityTypes.FlattenIntersection<
+	Record<string, unknown> & { knownUnknown?: unknown }
+> = stringRecordOfUnknownWithKnownUnknown;
+type StringOrNumberRecordOfStringsWithKnownNumber_UnassignableType =
+	InternalUtilityTypes.FlattenIntersection<
+		Record<string | number, string> & { knownNumber: number }
+	>;
+export const stringOrNumberRecordOfStringWithKnownNumber = {
+	8: "string value",
+	knownNumber: 4,
+} as unknown as StringOrNumberRecordOfStringsWithKnownNumber_UnassignableType;
+type StringOrNumberRecordOfUndefinedWithKnownNumber_UnassignableType =
+	InternalUtilityTypes.FlattenIntersection<
+		Record<string | number, undefined> & { knownNumber: number }
+	>;
+export const stringOrNumberRecordOfUndefinedWithKnownNumber = {
+	5: undefined,
+	knownNumber: 4,
+} as unknown as StringOrNumberRecordOfUndefinedWithKnownNumber_UnassignableType;
+
+// #endregion
+
 // #region Recursive types
 
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
@@ -242,11 +344,11 @@ export const objectWithPossibleRecursion: ObjectWithPossibleRecursion = {
 type ObjectWithOptionalRecursion = {
 	recursive?: ObjectWithOptionalRecursion;
 };
-export const objectWithRecursion: ObjectWithOptionalRecursion = {
+export const objectWithOptionalRecursion: ObjectWithOptionalRecursion = {
 	recursive: {},
 };
 export const objectWithEmbeddedRecursion = {
-	outer: objectWithRecursion,
+	outer: objectWithOptionalRecursion,
 };
 export const objectWithSelfReference: ObjectWithOptionalRecursion = {};
 objectWithSelfReference.recursive = objectWithSelfReference;
@@ -274,12 +376,38 @@ export const objectWithSymbolOrRecursion: ObjectWithSymbolOrRecursion = {
 	recurse: { recurse: Symbol("stop") },
 };
 
-export type ObjectWithFluidHandleOrRecursion = {
+type ObjectWithFluidHandleOrRecursion = {
 	recurseToHandle: ObjectWithFluidHandleOrRecursion | IFluidHandle<string>;
 };
 export const objectWithFluidHandleOrRecursion: ObjectWithFluidHandleOrRecursion = {
 	recurseToHandle: { recurseToHandle: "fake-handle" as unknown as IFluidHandle<string> },
 };
+
+export const objectWithUnknownAdjacentToOptionalRecursion = {
+	unknown: unknownValueOfSimpleRecord,
+	outer: objectWithOptionalRecursion,
+};
+type ObjectWithOptionalUnknownAdjacentToOptionalRecursion = {
+	unknown?: unknown;
+	outer: ObjectWithOptionalRecursion;
+};
+export const objectWithOptionalUnknownAdjacentToOptionalRecursion: ObjectWithOptionalUnknownAdjacentToOptionalRecursion =
+	objectWithUnknownAdjacentToOptionalRecursion;
+type ObjectWithUnknownInOptionalRecursion = {
+	unknown: unknown;
+	recurse?: ObjectWithUnknownInOptionalRecursion;
+};
+export const objectWithUnknownInOptionalRecursion: ObjectWithUnknownInOptionalRecursion = {
+	unknown: 458,
+	recurse: { unknown: "nested-value" },
+};
+
+type ObjectWithOptionalUnknownInOptionalRecursion = {
+	unknown?: unknown;
+	recurse?: ObjectWithOptionalUnknownInOptionalRecursion;
+};
+export const objectWithOptionalUnknownInOptionalRecursion: ObjectWithOptionalUnknownInOptionalRecursion =
+	objectWithUnknownInOptionalRecursion;
 
 export type SelfRecursiveFunctionWithProperties = (() => number) & {
 	recurse?: SelfRecursiveFunctionWithProperties;
@@ -403,9 +531,39 @@ export const classInstanceWithPublicDataAndIsFunction = Object.assign(
 	() => 26,
 );
 
+// #region Common Class types
+
+export const mapOfStringsToNumbers = new Map<string, number>();
+export const readonlyMapOfStringsToNumbers: ReadonlyMap<string, number> =
+	mapOfStringsToNumbers;
+export const setOfNumbers = new Set<number>();
+export const readonlySetOfNumbers: ReadonlySet<number> = setOfNumbers;
+
 // #endregion
 
-// #region Union types
+// #endregion
+
+// #region Branded types
+
+declare class BrandedType<Brand> {
+	protected readonly brand: (dummy: never) => Brand;
+	private constructor();
+	public static [Symbol.hasInstance](value: never): value is never;
+}
+
+export const brandedNumber = 0 as number & BrandedType<"zero">;
+export const brandedString = "encoding" as string & BrandedType<"encoded">;
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+export const brandedObject = {} as object & BrandedType<"its a secret">;
+export const brandedObjectWithString = objectWithString as typeof objectWithString &
+	BrandedType<"metadata">;
+
+export const objectWithBrandedNumber = { brandedNumber };
+export const objectWithBrandedString = { brandedString };
+
+// #endregion
+
+// #region Fluid types
 
 export const fluidHandleToNumber: IFluidHandle<number> = {
 	isAttached: false,
