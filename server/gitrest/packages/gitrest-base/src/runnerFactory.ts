@@ -130,6 +130,8 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 					redisConfig,
 					redisConfig.enableClustering,
 					redisConfig.slotsRefreshTimeout,
+					undefined /* retryDelays */,
+					redisConfig.enableVerboseErrorLogging,
 				);
 			return new RedisFsManagerFactory(
 				config,

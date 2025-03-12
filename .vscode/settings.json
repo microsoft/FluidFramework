@@ -25,7 +25,11 @@
 		"fence.json": "jsonc",
 		".git-blame-ignore-revs": "ignore",
 	},
-	"[azure-pipelines].customSchemaFile": "",
+
+	// Leverage the 1ES Pipeline templates schema for syntax check in YAML files if possible.
+	// Only works if signed in to the Azure Pipelines extension with a @microsoft.com account.
+	"azure-pipelines.1ESPipelineTemplatesSchemaFile": true,
+
 	"deno.enable": false,
 	"deno.lint": false,
 	"deno.unstable": false,
@@ -106,6 +110,8 @@
 		"**/_api-extractor-temp": true,
 		// exclude built `dist` folders
 		"**/dist/*": true,
+		// exclude built `.next` folders (from NextJS' local dev server)
+		"**/.next/*": true,
 		// exclude built `lib` folders but preserve ./common/lib
 		//   paths with packages container
 		"**/packages/**/lib/*": true,

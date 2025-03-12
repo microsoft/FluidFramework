@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/devtools-test-app",
-	"version": "2.23.0",
+	"version": "2.30.0",
 	"private": true,
 	"description": "An example application demonstrating how Fluid's devtools can be integrated into an application",
 	"homepage": "https://fluidframework.com",
@@ -75,7 +75,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.51.0",
+		"@fluidframework/build-tools": "^0.54.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/test-utils": "workspace:~",
 		"@testing-library/dom": "^10.4.0",

@@ -81,7 +81,6 @@ export const config = new TreeViewConfiguration({ schema: Canvas });
 
 // Recursive cases
 // This lint rule doesn't work well with our schema when using the lazy format
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 export class RecursiveObject extends schema.objectRecursive("RO", {
 	x: [() => RecursiveObject, schema.number],
 }) {}
@@ -100,10 +99,8 @@ export class RecursiveMap extends schema.mapRecursive("RM", [() => RecursiveMap]
  * Workaround to avoid
  * `error TS2310: Type 'RecursiveArray' recursively references itself as a base type.` in the d.ts file.
  */
-export declare const _RecursiveArrayWorkaround: FixRecursiveArraySchema<typeof RecursiveArray>;
+export declare type _RecursiveArrayWorkaround = FixRecursiveArraySchema<typeof RecursiveArray>;
 export class RecursiveArray extends schema.arrayRecursive("RA", [() => RecursiveArray]) {}
 {
 	type _check = ValidateRecursiveSchema<typeof RecursiveArray>;
 }
-
-/* eslint-enable @typescript-eslint/explicit-function-return-type */

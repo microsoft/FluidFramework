@@ -127,7 +127,7 @@ async function createDataObject<
 }
 
 /**
- * PureDataObjectFactory is a barebones IFluidDataStoreFactory for use with PureDataObject.
+ * PureDataObjectFactory is a bare-bones IFluidDataStoreFactory for use with PureDataObject.
  * Consumers should typically use DataObjectFactory instead unless creating
  * another base data store factory.
  *

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/multiview-triangle-view",
-	"version": "2.23.0",
+	"version": "2.30.0",
 	"private": true,
 	"description": "View for multiview sample",
 	"homepage": "https://fluidframework.com",
@@ -46,7 +46,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.51.0",
+		"@fluidframework/build-tools": "^0.54.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@types/react": "^18.3.11",
 		"copyfiles": "^2.4.1",
