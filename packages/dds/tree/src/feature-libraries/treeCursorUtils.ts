@@ -182,7 +182,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 		const siblings = this.getField();
 		if (!(index in siblings)) {
 			throw new UsageError(
-				`A child does not exist at the index ${index} in field containing ${siblings.length} nodes.`,
+				`A child does not exist at index '${index}' in field containing ${siblings.length} nodes.`,
 			);
 		}
 		this.siblingStack.push(this.siblings);
