@@ -90,7 +90,6 @@ export class RelativeLoader implements ILoader {
 	}
 }
 
-
 /**
  * @deprecated IFluidModuleWithDetails interface is moved to
  * {@link @fluidframework/container-definitions#IFluidModuleWithDetails}
