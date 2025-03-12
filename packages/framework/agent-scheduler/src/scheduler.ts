@@ -219,7 +219,7 @@ export class AgentScheduler
 	public pickedTasks(): string[] {
 		return [...this.runningTasks.values()];
 	}
-
+	/* eslint-disable unicorn/no-null */
 	private async registerCore(taskUrls: string[]): Promise<void> {
 		if (taskUrls.length > 0) {
 			const registersP: Promise<void>[] = [];
@@ -382,6 +382,7 @@ export class AgentScheduler
 			}
 		}
 	}
+	/* eslint-enable unicorn/no-null */
 
 	private isActive(): boolean {
 		// Scheduler should be active in detached container.
@@ -477,7 +478,7 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
 	public static readonly type = "_scheduler";
 	public readonly type = AgentSchedulerFactory.type;
 
-	public get IFluidDataStoreFactory(): IFluidDataStoreFactory {
+	public get IFluidDataStoreFactory(): AgentSchedulerFactory {
 		return this;
 	}
 
