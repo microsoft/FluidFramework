@@ -85,7 +85,7 @@ export interface NormalizedUpPathRoot extends UpPath<undefined> {
 export type NormalizedUpPathInteriorDefault = NormalizedUpPathInterior;
 
 /**
- * An interior (i.e., non-root) element element of a {@link NormalizedUpPath}.
+ * An interior (i.e., non-root) element of a {@link NormalizedUpPath}.
  */
 export interface NormalizedUpPathInterior<
 	TParent = NormalizedUpPathInteriorDefault | NormalizedUpPathRoot,

@@ -287,13 +287,9 @@ export interface DeltaVisitor {
 	 * @param source - The bounds of the range of nodes to detach.
 	 * @param destination - The key for a new detached field.
 	 * A field with this key must not already exist.
-	 * @param destinationDetachedNodeId - The first detached node id for the detached nodes.
+	 * @param id - The ID assigned to the first detached node as a result of the detach. The other nodes in the detached range are assigned subsequent IDs.
 	 */
-	detach(
-		source: Range,
-		destination: FieldKey,
-		destinationDetachedNodeId: Delta.DetachedNodeId,
-	): void;
+	detach(source: Range, destination: FieldKey, id: Delta.DetachedNodeId): void;
 	/**
 	 * Replaces a range of nodes in the current field by transferring them out to a new detached field
 	 * and transferring in all the nodes from an existing detached field in their place.
@@ -301,13 +297,13 @@ export interface DeltaVisitor {
 	 * @param newContentSource - The detached field to transfer the new nodes from.
 	 * @param range - The bounds of the range of nodes to replace.
 	 * @param oldContentDestination - The key for a new detached field to transfer the old nodes to.
-	 * @param oldContentId - The ID assigned to the first replaced as a result of the replace. The other nodes in the replaced range are assigned subsequent IDs.
+	 * @param oldContentId - The ID assigned to the first replaced node as a result of the replace. The other nodes in the replaced range are assigned subsequent IDs.
 	 */
 	replace(
 		newContentSource: FieldKey,
 		range: Range,
 		oldContentDestination: FieldKey,
-		destinationDetachedNodeId: Delta.DetachedNodeId,
+		oldContentId: Delta.DetachedNodeId,
 	): void;
 
 	/**

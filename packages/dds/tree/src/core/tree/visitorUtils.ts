@@ -92,13 +92,9 @@ export function combineVisitors(
 				}),
 			);
 		},
-		detach: (
-			source: Range,
-			destination: FieldKey,
-			destinationDetachedNodeId: DetachedNodeId,
-		) => {
+		detach: (source: Range, destination: FieldKey, id: DetachedNodeId) => {
 			announcedVisitors.forEach((v) => v.beforeDetach(source, destination));
-			visitors.forEach((v) => v.detach(source, destination, destinationDetachedNodeId));
+			visitors.forEach((v) => v.detach(source, destination, id));
 			announcedVisitors.forEach((v) =>
 				v.afterDetach(source.start, source.end - source.start, destination),
 			);
@@ -107,13 +103,13 @@ export function combineVisitors(
 			newContent: FieldKey,
 			oldContent: Range,
 			oldContentDestination: FieldKey,
-			destinationDetachedNodeId: DetachedNodeId,
+			oldContentId: DetachedNodeId,
 		) => {
 			announcedVisitors.forEach((v) =>
 				v.beforeReplace(newContent, oldContent, oldContentDestination),
 			);
 			visitors.forEach((v) =>
-				v.replace(newContent, oldContent, oldContentDestination, destinationDetachedNodeId),
+				v.replace(newContent, oldContent, oldContentDestination, oldContentId),
 			);
 			announcedVisitors.forEach((v) =>
 				v.afterReplace(newContent, oldContent, oldContentDestination),

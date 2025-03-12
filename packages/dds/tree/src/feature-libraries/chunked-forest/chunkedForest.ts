@@ -151,11 +151,7 @@ export class ChunkedForest implements IEditableForest {
 			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
 				this.attachEdit(source, count, destination);
 			},
-			detach(
-				source: Range,
-				destination: FieldKey,
-				destinationDetachedNodeId: DeltaDetachedNodeId,
-			): void {
+			detach(source: Range, destination: FieldKey, id: DeltaDetachedNodeId): void {
 				this.detachEdit(source, destination);
 			},
 			/**
@@ -215,7 +211,7 @@ export class ChunkedForest implements IEditableForest {
 				newContentSource: FieldKey,
 				range: Range,
 				oldContentDestination: FieldKey,
-				destinationDetachedNodeId: DeltaDetachedNodeId,
+				oldContentId: DeltaDetachedNodeId,
 			): void {
 				assert(
 					newContentSource !== oldContentDestination,

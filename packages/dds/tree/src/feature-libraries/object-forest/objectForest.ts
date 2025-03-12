@@ -173,11 +173,7 @@ export class ObjectForest implements IEditableForest {
 				preEdit();
 				this.attachEdit(source, count, destination);
 			}
-			public detach(
-				source: Range,
-				destination: FieldKey,
-				destinationDetachedNodeId: DeltaDetachedNodeId,
-			): void {
+			public detach(source: Range, destination: FieldKey, id: DeltaDetachedNodeId): void {
 				preEdit();
 				this.detachEdit(source, destination);
 			}
@@ -240,7 +236,7 @@ export class ObjectForest implements IEditableForest {
 				newContentSource: FieldKey,
 				range: Range,
 				oldContentDestination: FieldKey,
-				destinationDetachedNodeId: DeltaDetachedNodeId,
+				oldContentId: DeltaDetachedNodeId,
 			): void {
 				preEdit();
 				assert(
