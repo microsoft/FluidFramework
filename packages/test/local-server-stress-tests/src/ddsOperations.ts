@@ -17,6 +17,7 @@ import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { ddsModelMap } from "./ddsModels.js";
 import { LocalServerStressState, Client } from "./localServerStressHarness.js";
 import { makeUnreachableCodePathProxy } from "./utils.js";
+import { timeoutAwait } from "@fluidframework/test-utils";
 
 export interface DDSModelOp {
 	type: "DDSModelOp";
@@ -82,7 +83,9 @@ export const DDSModelOpGenerator: AsyncGenerator<DDSModelOp, LocalServerStressSt
 	const model = ddsModelMap.get(channel.attributes.type);
 	assert(model !== undefined, "must have model");
 
-	const op = await model.generator(await covertLocalServerStateToDdsState(state));
+	const op = await timeoutAwait(
+		model.generator(await covertLocalServerStateToDdsState(state)),
+	);
 
 	return {
 		type: "DDSModelOp",
@@ -115,7 +118,7 @@ export const DDSModelOpReducer: AsyncReducer<DDSModelOp, LocalServerStressState>
 		}
 		return value;
 	});
-	await baseModel.reducer(await covertLocalServerStateToDdsState(state), subOp);
+	await timeoutAwait(baseModel.reducer(await covertLocalServerStateToDdsState(state), subOp));
 };
 
 export const validateConsistencyOfAllDDS = async (clientA: Client, clientB: Client) => {
