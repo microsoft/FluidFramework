@@ -101,7 +101,11 @@ import { SnapshotLoader } from "./snapshotLoader.js";
 import { SnapshotV1 } from "./snapshotV1.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
 import { IMergeTreeTextHelper } from "./textSegment.js";
-import { PriorPerspective } from "./perspective.js";
+import {
+	LocalReconnectingPerspective,
+	PriorPerspective,
+	type Perspective,
+} from "./perspective.js";
 
 type IMergeTreeDeltaRemoteOpArgs = Omit<IMergeTreeDeltaOpArgs, "sequencedMessage"> &
 	Required<Pick<IMergeTreeDeltaOpArgs, "sequencedMessage">>;
@@ -445,12 +449,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		if (!isSegmentLeaf(segment)) {
 			return -1;
 		}
-		return this._mergeTree.getPosition(
-			segment,
-			this.getCurrentSeq(),
-			this.getClientId(),
-			localSeq,
-		);
+
+		const perspective =
+			localSeq !== undefined
+				? new LocalReconnectingPerspective(this.getCurrentSeq(), this.getClientId(), localSeq)
+				: this._mergeTree.localPerspective;
+		return this._mergeTree.getPosition(segment, perspective);
 	}
 
 	/**
@@ -512,7 +516,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param relativePos - Id of marker (may be indirect) and whether position is before or after marker.
 	 */
 	public posFromRelativePos(relativePos: IRelativePosition): number {
-		return this._mergeTree.posFromRelativePos(relativePos);
+		return this._mergeTree.posFromRelativePos(relativePos, this._mergeTree.localPerspective);
 	}
 
 	public getMarkerFromId(id: string): ISegment | undefined {
@@ -533,11 +537,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			0x866 /* Unexpected op type on range obliterate! */,
 		);
 		const op = opArgs.op;
-		const clientArgs = this.getClientSequenceArgs(opArgs);
-		const { perspective, stamp } = this.perspectiveFromClientSeqArgs(clientArgs);
+		const { perspective, stamp } = this.perspectiveFromOpArgs(opArgs);
 
 		if (this._mergeTree.options?.mergeTreeEnableSidedObliterate) {
-			const { start, end } = this.getValidSidedRange(op, clientArgs);
+			const { start, end } = this.getValidSidedRange(op, perspective);
 			this._mergeTree.obliterateRange(
 				start,
 				end,
@@ -553,7 +556,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				op.type === MergeTreeDeltaType.OBLITERATE,
 				0xa43 /* Unexpected sided obliterate while mergeTreeEnableSidedObliterate is disabled */,
 			);
-			const { start, end } = this.getValidOpRange(op, clientArgs);
+			const { start, end } = this.getValidOpRange(op, perspective);
 			this._mergeTree.obliterateRange(
 				start,
 				end,
@@ -567,22 +570,34 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 	}
 
-	private perspectiveFromClientSeqArgs(clientArgs: IMergeTreeClientSequenceArgs): {
+	private perspectiveFromOpArgs(opArgs: IMergeTreeDeltaOpArgs): {
 		perspective: PriorPerspective;
 		stamp: OperationTimestamp;
 	} {
-		const perspective =
-			clientArgs.sequenceNumber === UnassignedSequenceNumber ||
-			clientArgs.clientId === this.getClientId()
-				? this._mergeTree.localPerspective
-				: new PriorPerspective(clientArgs.referenceSequenceNumber, clientArgs.clientId);
-
-		const stamp = {
-			clientId: clientArgs.clientId,
-			seq: clientArgs.sequenceNumber,
-			localSeq: clientArgs.localSequenceNumber,
-		};
-		return { perspective, stamp };
+		const { sequencedMessage } = opArgs;
+		if (sequencedMessage) {
+			const { sequenceNumber: seq, referenceSequenceNumber: refSeq } = sequencedMessage;
+			const clientId = this.getOrAddShortClientIdFromMessage(sequencedMessage);
+			return {
+				perspective: new PriorPerspective(refSeq, clientId),
+				stamp: {
+					seq,
+					clientId,
+				},
+			};
+		} else {
+			const segWindow = this.getCollabWindow();
+			const seq = segWindow.collaborating ? UnassignedSequenceNumber : UniversalSequenceNumber;
+			const localSeq = segWindow.collaborating ? ++segWindow.localSeq : undefined;
+			return {
+				perspective: this._mergeTree.localPerspective,
+				stamp: {
+					clientId: segWindow.clientId,
+					seq,
+					localSeq,
+				},
+			};
+		}
 	}
 
 	/**
@@ -595,10 +610,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			0x02d /* "Unexpected op type on range remove!" */,
 		);
 		const op = opArgs.op;
-		const clientArgs = this.getClientSequenceArgs(opArgs);
-		const range = this.getValidOpRange(op, clientArgs);
+		const { perspective, stamp } = this.perspectiveFromOpArgs(opArgs);
+		const range = this.getValidOpRange(op, perspective);
 
-		const { perspective, stamp } = this.perspectiveFromClientSeqArgs(clientArgs);
 		this._mergeTree.markRangeRemoved(
 			range.start,
 			range.end,
@@ -621,10 +635,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			0x02e /* "Unexpected op type on range annotate!" */,
 		);
 		const op = opArgs.op;
-		const clientArgs = this.getClientSequenceArgs(opArgs);
-		const range = this.getValidOpRange(op, clientArgs);
-
-		const { perspective, stamp } = this.perspectiveFromClientSeqArgs(clientArgs);
+		const { perspective, stamp } = this.perspectiveFromOpArgs(opArgs);
+		const range = this.getValidOpRange(op, perspective);
 
 		this._mergeTree.annotateRange(range.start, range.end, op, perspective, stamp, opArgs);
 	}
@@ -640,13 +652,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			0x02f /* "Unexpected op type on range insert!" */,
 		);
 		const op = opArgs.op;
-		const clientArgs = this.getClientSequenceArgs(opArgs);
-		const range = this.getValidOpRange(op, clientArgs);
+		const { perspective, stamp } = this.perspectiveFromOpArgs(opArgs);
+		const range = this.getValidOpRange(op, perspective);
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		const segments = [this.specToSegment(op.seg)];
 
-		const { perspective, stamp } = this.perspectiveFromClientSeqArgs(clientArgs);
 		this._mergeTree.insertSegments(range.start, segments, perspective, stamp, opArgs);
 	}
 
@@ -659,7 +670,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	private getValidSidedRange(
 		// eslint-disable-next-line import/no-deprecated
 		op: IMergeTreeObliterateSidedMsg | IMergeTreeObliterateMsg,
-		clientArgs: IMergeTreeClientSequenceArgs,
+		perspective: Perspective,
 	): {
 		start: InteriorSequencePlace;
 		end: InteriorSequencePlace;
@@ -685,11 +696,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 
 		// Validate if local op
-		if (clientArgs.clientId === this.getClientId()) {
-			const length = this._mergeTree.getLength(
-				this.getCollabWindow().currentSeq,
-				this.getClientId(),
-			);
+		if (perspective.clientId === this.getClientId()) {
+			const length = this._mergeTree.getLength(this._mergeTree.localPerspective);
 			if (start !== undefined && (start.pos >= length || start.pos < 0)) {
 				// start out of bounds
 				invalidPositions.push("start");
@@ -742,28 +750,20 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			| IMergeTreeRemoveMsg
 			// eslint-disable-next-line import/no-deprecated
 			| IMergeTreeObliterateMsg,
-		clientArgs: IMergeTreeClientSequenceArgs,
+		perspective: Perspective,
 	): IIntegerRange {
 		let start: number | undefined = op.pos1;
 		if (start === undefined && op.relativePos1) {
-			start = this._mergeTree.posFromRelativePos(
-				op.relativePos1,
-				clientArgs.referenceSequenceNumber,
-				clientArgs.clientId,
-			);
+			start = this._mergeTree.posFromRelativePos(op.relativePos1, perspective);
 		}
 
 		let end: number | undefined = op.pos2;
 		if (end === undefined && op.relativePos2) {
-			end = this._mergeTree.posFromRelativePos(
-				op.relativePos2,
-				clientArgs.referenceSequenceNumber,
-				clientArgs.clientId,
-			);
+			end = this._mergeTree.posFromRelativePos(op.relativePos2, perspective);
 		}
 
 		// Validate if local op
-		if (clientArgs.clientId === this.getClientId()) {
+		if (perspective.clientId === this.getClientId()) {
 			const length = this.getLength();
 
 			const invalidPositions: string[] = [];
@@ -847,14 +847,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 	}
 
-	/**
-	 * Gets the client args from the op if remote, otherwise uses the local clients info
-	 * @param opArgs - The op arg to get the client sequence args for
-	 */
-	private getClientSequenceArgs(opArgs: IMergeTreeDeltaOpArgs): IMergeTreeClientSequenceArgs {
-		return this.getClientSequenceArgsForMessage(opArgs.sequencedMessage);
-	}
-
 	private ackPendingSegment(opArgs: IMergeTreeDeltaRemoteOpArgs): void {
 		if (opArgs.op.type === MergeTreeDeltaType.GROUP) {
 			for (const memberOp of opArgs.op.ops) {
@@ -913,7 +905,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		if (!isSegmentLeaf(segment)) {
 			throw new UsageError(UNBOUND_SEGMENT_ERROR);
 		}
-		return this._mergeTree.getPosition(segment, currentSeq, clientId, localSeq);
+		const perspective = new LocalReconnectingPerspective(currentSeq, clientId, localSeq);
+		return this._mergeTree.getPosition(segment, perspective);
 	}
 
 	private resetPendingDeltaToOps(
@@ -1394,12 +1387,14 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	} {
 		const { referenceSequenceNumber, clientId } =
 			this.getClientSequenceArgsForMessage(sequenceArgs);
-		return this._mergeTree.getContainingSegment(
-			pos,
-			referenceSequenceNumber,
-			clientId,
-			localSeq,
-		) as {
+
+		const perspective =
+			clientId === this.getClientId()
+				? localSeq !== undefined
+					? new LocalReconnectingPerspective(referenceSequenceNumber, clientId, localSeq)
+					: this._mergeTree.localPerspective
+				: new PriorPerspective(referenceSequenceNumber, clientId);
+		return this._mergeTree.getContainingSegment(pos, perspective) as {
 			segment: T | undefined;
 			offset: number | undefined;
 		};
@@ -1482,7 +1477,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param forwards - Whether the desired marker comes before (false) or after (true) `startPos`
 	 */
 	searchForMarker(startPos: number, markerLabel: string, forwards = true): Marker | undefined {
-		const clientId = this.getClientId();
-		return this._mergeTree.searchForMarker(startPos, clientId, markerLabel, forwards);
+		return this._mergeTree.searchForMarker(
+			startPos,
+			this._mergeTree.localPerspective,
+			markerLabel,
+			forwards,
+		);
 	}
 }

@@ -97,8 +97,7 @@ describe("MergeTree", () => {
 
 				const segmentInfo = mergeTree.getContainingSegment(
 					annotateStart,
-					currentSequenceNumber,
-					localClientId,
+					mergeTree.localPerspective,
 				);
 				const segment = segmentInfo.segment as ISegmentPrivate;
 				assert.equal(segment?.properties?.propertySource, "remote");
@@ -118,8 +117,7 @@ describe("MergeTree", () => {
 
 				const segmentInfo = mergeTree.getContainingSegment(
 					annotateStart,
-					currentSequenceNumber,
-					localClientId,
+					mergeTree.localPerspective,
 				);
 				const segment = segmentInfo.segment as ISegmentPrivate;
 				assert.equal(segment.properties?.propertySource, "local");
@@ -151,8 +149,7 @@ describe("MergeTree", () => {
 				it("unsequenced local", () => {
 					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
-						currentSequenceNumber,
-						localClientId,
+						mergeTree.localPerspective,
 					);
 					const segment = segmentInfo.segment as ISegmentPrivate;
 					assert.equal(segment.properties?.propertySource, "local");
@@ -172,8 +169,7 @@ describe("MergeTree", () => {
 
 					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
-						currentSequenceNumber,
-						localClientId,
+						mergeTree.localPerspective,
 					);
 					const segment = segmentInfo.segment as ISegmentPrivate;
 					assert.equal(segment.properties?.secondProperty, "local");
@@ -182,8 +178,7 @@ describe("MergeTree", () => {
 				it("unsequenced local split", () => {
 					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
-						currentSequenceNumber,
-						localClientId,
+						mergeTree.localPerspective,
 					);
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const splitSegment = splitAt(mergeTree, splitPos)!;
@@ -224,15 +219,13 @@ describe("MergeTree", () => {
 
 					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
-						currentSequenceNumber,
-						localClientId,
+						mergeTree.localPerspective,
 					);
 					const segment = segmentInfo.segment as ISegmentPrivate;
 
 					const splitSegmentInfo = mergeTree.getContainingSegment(
 						splitPos,
-						currentSequenceNumber,
-						localClientId,
+						mergeTree.localPerspective,
 					);
 					const splitSegment = splitSegmentInfo.segment as ISegmentPrivate;
 
@@ -327,8 +320,7 @@ describe("MergeTree", () => {
 
 					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
-						currentSequenceNumber,
-						localClientId,
+						mergeTree.localPerspective,
 					);
 					const segment = segmentInfo.segment as ISegmentPrivate;
 
@@ -352,8 +344,7 @@ describe("MergeTree", () => {
 
 					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
-						currentSequenceNumber,
-						localClientId,
+						mergeTree.localPerspective,
 					);
 					const segment = segmentInfo.segment as ISegmentPrivate;
 					assert.equal(segment.segmentGroups?.size, 0);
@@ -386,8 +377,7 @@ describe("MergeTree", () => {
 
 					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
-						currentSequenceNumber,
-						localClientId,
+						mergeTree.localPerspective,
 					);
 					const segment = segmentInfo.segment as ISegmentPrivate;
 
@@ -399,8 +389,7 @@ describe("MergeTree", () => {
 				it("three local changes", () => {
 					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
-						currentSequenceNumber,
-						localClientId,
+						mergeTree.localPerspective,
 					);
 					const segment = segmentInfo.segment as ISegmentPrivate;
 
@@ -525,8 +514,7 @@ describe("MergeTree", () => {
 
 					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
-						currentSequenceNumber,
-						localClientId,
+						mergeTree.localPerspective,
 					);
 					const segment = segmentInfo.segment as ISegmentPrivate;
 
@@ -550,16 +538,14 @@ describe("MergeTree", () => {
 
 					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
-						currentSequenceNumber,
-						localClientId,
+						mergeTree.localPerspective,
 					);
 					assert(segmentInfo.segment?.segmentGroups?.size !== 0);
 				});
 				it("remote only", () => {
 					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
-						currentSequenceNumber,
-						localClientId,
+						mergeTree.localPerspective,
 					);
 					const segment = segmentInfo.segment as ISegmentPrivate;
 					assert.equal(segment.properties?.propertySource, "remote");
@@ -569,8 +555,7 @@ describe("MergeTree", () => {
 				it("split remote", () => {
 					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
-						currentSequenceNumber,
-						localClientId,
+						mergeTree.localPerspective,
 					);
 
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -595,8 +580,7 @@ describe("MergeTree", () => {
 
 					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
-						currentSequenceNumber,
-						localClientId,
+						mergeTree.localPerspective,
 					);
 					const segment = segmentInfo.segment as ISegmentPrivate;
 					assert.equal(segment.properties?.propertySource, "local");
@@ -610,8 +594,7 @@ describe("MergeTree", () => {
 
 					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
-						currentSequenceNumber,
-						localClientId,
+						mergeTree.localPerspective,
 					);
 					assert(segmentInfo.segment?.segmentGroups?.empty !== false);
 
@@ -672,8 +655,7 @@ describe("MergeTree", () => {
 
 					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
-						currentSequenceNumber,
-						localClientId,
+						mergeTree.localPerspective,
 					);
 					const segment = segmentInfo.segment as ISegmentPrivate;
 					assert.equal(segment.properties?.propertySource, "local2");
@@ -694,8 +676,7 @@ describe("MergeTree", () => {
 
 					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
-						currentSequenceNumber,
-						localClientId,
+						mergeTree.localPerspective,
 					);
 					const segment = segmentInfo.segment as ISegmentPrivate;
 
@@ -730,8 +711,7 @@ describe("MergeTree", () => {
 
 					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
-						currentSequenceNumber,
-						localClientId,
+						mergeTree.localPerspective,
 					);
 					const segment = segmentInfo.segment as ISegmentPrivate;
 
@@ -777,8 +757,7 @@ describe("MergeTree", () => {
 
 					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
-						currentSequenceNumber,
-						localClientId,
+						mergeTree.localPerspective,
 					);
 					const segment = segmentInfo.segment as ISegmentPrivate;
 

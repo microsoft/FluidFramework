@@ -41,6 +41,7 @@ import {
 import {
 	createAnnotateRangeOp,
 	createInsertSegmentOp,
+	createObliterateRangeOp,
 	createRemoveRangeOp,
 } from "../opBuilder.js";
 import {
@@ -269,6 +270,18 @@ export class TestClient extends Client {
 	): void {
 		this.applyMsg(
 			this.makeOpMessage(createRemoveRangeOp(start, end), seq, refSeq, longClientId),
+		);
+	}
+
+	public obliterateRangeRemote(
+		start: number,
+		end: number,
+		seq: number,
+		refSeq: number,
+		longClientId: string,
+	): void {
+		this.applyMsg(
+			this.makeOpMessage(createObliterateRangeOp(start, end), seq, refSeq, longClientId),
 		);
 	}
 

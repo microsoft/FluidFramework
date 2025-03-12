@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 import fs from "node:fs";
 
-import { NonCollabClient, UnassignedSequenceNumber } from "../constants.js";
+import { UnassignedSequenceNumber } from "../constants.js";
 import { LocalReferenceCollection } from "../localReference.js";
 import { MergeTree } from "../mergeTree.js";
 import {
@@ -15,13 +15,7 @@ import {
 	type IMergeTreeMaintenanceCallbackArgs,
 } from "../mergeTreeDeltaCallback.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import {
-	MergeBlock,
-	ISegmentPrivate,
-	Marker,
-	type OperationTimestamp,
-	timestampUtils,
-} from "../mergeTreeNodes.js";
+import { MergeBlock, ISegmentPrivate, Marker } from "../mergeTreeNodes.js";
 import { ReferenceType } from "../ops.js";
 import {
 	PartialSequenceLengths,
@@ -29,11 +23,10 @@ import {
 	verifyPartialLengths,
 } from "../partialLengths.js";
 import { PropertySet } from "../properties.js";
-import * as info from "../segmentInfos.js";
 import { TextSegment } from "../textSegment.js";
 
 import { loadText } from "./text.js";
-import { PriorPerspective } from "../perspective.js";
+import { LocalReconnectingPerspective, PriorPerspective } from "../perspective.js";
 
 export function loadTextFromFile(
 	filename: string,
@@ -288,29 +281,14 @@ function getPartialLengths(
 } {
 	const partialLen = mergeBlock.partialLengths?.getPartialLength(seq, clientId, localSeq);
 
+	const perspective =
+		localSeq !== undefined
+			? new LocalReconnectingPerspective(seq, clientId, localSeq)
+			: new PriorPerspective(seq, clientId);
 	let actualLen = 0;
 
-	// TODO: The new and old codepath for this function never cares about the case where a client expects another client to see
-	// their own prior operations. Looks like most test code that uses this indirectly via validatePartialLengths doesn't exercise
-	// places where it matters, but we should probably fix this.
-	const perspectiveStamp: OperationTimestamp = {
-		seq,
-		clientId: NonCollabClient,
-		localSeq,
-	};
-
-	const isInserted = (segment: ISegmentPrivate): boolean =>
-		info.isInserted(segment) && timestampUtils.lte(segment.insert, perspectiveStamp);
-
-	const isRemoved = (segment: ISegmentPrivate): boolean =>
-		info.isRemoved(segment) &&
-		((localSeq !== undefined &&
-			timestampUtils.isLocal(segment.removes[segment.removes.length - 1]) &&
-			segment.removes[segment.removes.length - 1].localSeq! <= localSeq) ||
-			timestampUtils.lte(segment.removes[0], perspectiveStamp));
-
 	walkAllChildSegments(mergeBlock, (segment) => {
-		if (isInserted(segment) && !isRemoved(segment)) {
+		if (perspective.isSegmentPresent(segment)) {
 			actualLen += segment.cachedLength;
 		}
 		return true;
@@ -325,19 +303,14 @@ function getPartialLengths(
 export function validatePartialLengths(
 	clientId: number,
 	mergeTree: MergeTree,
-	expectedValues?: { seq: number; len: number; localSeq?: number }[],
-	localSeq?: number,
+	expectedValues: { seq: number; len: number; localSeq?: number }[] = [],
+	minRefSeqForLocalSeq = new Map<number, number>(),
 	mergeBlock: MergeBlock = mergeTree.root,
 ): void {
-	mergeTree.computeLocalPartials(0);
-	for (
-		let i = mergeTree.collabWindow.minSeq + 1;
-		i <= mergeTree.collabWindow.currentSeq;
-		i++
-	) {
+	function validatePartialLengthAt(seq: number, localSeq?: number, len?: number): void {
 		const { partialLen, actualLen } = getPartialLengths(
 			clientId,
-			i,
+			seq,
 			mergeTree,
 			localSeq,
 			mergeBlock,
@@ -346,24 +319,46 @@ export function validatePartialLengths(
 		if (partialLen && partialLen < 0) {
 			assert.fail("Negative partial length returned");
 		}
-		assert.equal(partialLen, actualLen);
-	}
-
-	if (!expectedValues) {
-		return;
-	}
-
-	for (const { seq, len, localSeq: expectedLocalSeq } of expectedValues) {
-		const { partialLen, actualLen } = getPartialLengths(
-			clientId,
-			seq,
-			mergeTree,
-			expectedLocalSeq ?? localSeq,
-			mergeBlock,
+		assert.equal(
+			partialLen,
+			actualLen,
+			"Partial length did not match value obtained from walking all segments in the block.",
 		);
+		if (len !== undefined) {
+			assert.equal(partialLen, len, "Partial length did not match expected value.");
+		}
+	}
 
-		assert.equal(partialLen, len);
-		assert.equal(actualLen, len);
+	if (clientId === mergeTree.collabWindow.clientId) {
+		mergeTree.computeLocalPartials(0);
+		// We don't add entries to the local partial lengths entries that ensure that a query for a given localSeq includes any dependent removes.
+		// For example, in a scenario where segments are inserted between seqs 1 and 10 causing a length increase of 10, but then this entire range
+		// is removed locally at localSeq 5, computing the length of the block using partial lengths at (seq: 1, localSeq: 5) can yield a negative
+		// result since the computation "sees" the removal of length 10 but only one of the inserts that this removal affected.
+		//
+		// In the production codepath, this doesn't matter because we only ever query for (refSeq, localSeq) for which the refSeq is at or above the original
+		// context in which the edit was applied, which means this 'dependency' is always included in the query.
+		// We could fix it if we wanted to by using a similar solution to what we do for non-local edits (add adjustments to the unsequenced lengths
+		// to ensure whenever the removal of a segment applies, so does existence of that segment), at which point we could validate for a wider range
+		// of local perspectives.
+		for (const [localSeq, minRefSeq] of minRefSeqForLocalSeq.entries()) {
+			for (let refSeq = minRefSeq; refSeq <= mergeTree.collabWindow.currentSeq; refSeq++) {
+				validatePartialLengthAt(refSeq, localSeq);
+			}
+		}
+	} else {
+		// We don't use partial lengths for the local client unless it's a reconnecting perspective (we just use the mergeBlock's cachedLength field).
+		for (
+			let seq = mergeTree.collabWindow.minSeq + 1;
+			seq <= mergeTree.collabWindow.currentSeq;
+			seq++
+		) {
+			validatePartialLengthAt(seq);
+		}
+	}
+
+	for (const { seq, len, localSeq } of expectedValues) {
+		validatePartialLengthAt(seq, localSeq, len);
 	}
 }
 

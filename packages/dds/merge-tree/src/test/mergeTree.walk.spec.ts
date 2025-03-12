@@ -31,7 +31,7 @@ describe("MergeTree walks", () => {
 			const text = i.toString();
 			insertText({
 				mergeTree,
-				pos: mergeTree.getLength(UniversalSequenceNumber, localClientId),
+				pos: mergeTree.getLength(mergeTree.localPerspective),
 				refSeq: UniversalSequenceNumber,
 				clientId: localClientId,
 				seq: UniversalSequenceNumber,

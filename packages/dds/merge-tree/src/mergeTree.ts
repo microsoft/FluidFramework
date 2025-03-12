@@ -759,8 +759,8 @@ export class MergeTree {
 		}
 	}
 
-	public getLength(refSeq: number, clientId: number): number {
-		return this.blockLength(this.root, refSeq, clientId);
+	public getLength(perspective: Perspective): number {
+		return this.nodeLength(this.root, perspective) ?? 0;
 	}
 
 	/**
@@ -770,22 +770,11 @@ export class MergeTree {
 		return this.root.cachedLength;
 	}
 
-	public getPosition(
-		node: IMergeNode,
-		refSeq: number,
-		clientId: number,
-		localSeq?: number,
-	): number {
+	public getPosition(node: IMergeNode, perspective: Perspective): number {
 		if (node.isLeaf() && node.endpointType === "start") {
 			return 0;
 		}
 
-		const perspective =
-			clientId === this.collabWindow.clientId
-				? localSeq !== undefined
-					? new LocalReconnectingPerspective(refSeq, clientId, localSeq)
-					: this.localPerspective
-				: new PriorPerspective(refSeq, clientId);
 		let totalOffset = 0;
 		let parent = node.parent;
 		let prevParent: MergeBlock | undefined;
@@ -806,24 +795,17 @@ export class MergeTree {
 
 	public getContainingSegment(
 		pos: number,
-		refSeq: number,
-		clientId: number,
-		localSeq?: number,
+		perspective: Perspective,
 	): {
 		segment: ISegmentLeaf | undefined;
 		offset: number | undefined;
 	} {
 		assert(
-			localSeq === undefined || clientId === this.collabWindow.clientId,
+			perspective.localSeq === undefined ||
+				perspective.clientId === this.collabWindow.clientId,
 			0x39b /* localSeq provided for non-local client */,
 		);
 
-		const perspective =
-			clientId === this.collabWindow.clientId
-				? localSeq !== undefined
-					? new LocalReconnectingPerspective(refSeq, clientId, localSeq)
-					: this.localPerspective
-				: new PriorPerspective(refSeq, clientId);
 		let segment: ISegmentLeaf | undefined;
 		let offset: number | undefined;
 
@@ -1039,12 +1021,6 @@ export class MergeTree {
 		);
 	}
 
-	private blockLength(node: MergeBlock, refSeq: number, clientId: number): number {
-		return this.collabWindow.collaborating && clientId !== this.collabWindow.clientId
-			? node.partialLengths!.getPartialLength(refSeq, clientId)
-			: (node.cachedLength ?? 0);
-	}
-
 	/**
 	 * Compute local partial length information
 	 *
@@ -1138,13 +1114,19 @@ export class MergeTree {
 		clientId = this.collabWindow.clientId,
 		localSeq: number | undefined = undefined,
 	): number {
+		const perspective =
+			clientId === this.collabWindow.clientId
+				? localSeq !== undefined
+					? new LocalReconnectingPerspective(refSeq, clientId, localSeq)
+					: this.localPerspective
+				: new PriorPerspective(refSeq, clientId);
 		const seg = refPos.getSegment();
 		if (seg === undefined || !isSegmentLeaf(seg)) {
 			// We have no idea where this reference is, because it refers to a segment which is not in the tree.
 			return DetachedReferencePosition;
 		}
 		if (refPos.isLeaf()) {
-			return this.getPosition(seg, refSeq, clientId, localSeq);
+			return this.getPosition(seg, perspective);
 		}
 		if (refTypeIncludesFlag(refPos, ReferenceType.Transient) || seg.localRefs?.has(refPos)) {
 			// TODO: Most of the time we actually have refSeq at the default value, which we could optimize for further.
@@ -1177,11 +1159,11 @@ export class MergeTree {
 
 				const slidSegment = slidePerspective.nextSegment(this, seg, forward);
 				return (
-					this.getPosition(slidSegment, refSeq, clientId, localSeq) +
+					this.getPosition(slidSegment, perspective) +
 					(forward ? 0 : slidSegment.cachedLength === 0 ? 0 : slidSegment.cachedLength - 1)
 				);
 			}
-			return this.getPosition(seg, refSeq, clientId, localSeq) + refPos.getOffset();
+			return this.getPosition(seg, perspective) + refPos.getOffset();
 		}
 		return DetachedReferencePosition;
 	}
@@ -1200,13 +1182,13 @@ export class MergeTree {
 	 */
 	public searchForMarker(
 		startPos: number,
-		clientId: number,
+		perspective: Perspective,
 		markerLabel: string,
 		forwards = true,
 	): Marker | undefined {
 		let foundMarker: Marker | undefined;
 
-		const { segment } = this.getContainingSegment(startPos, UniversalSequenceNumber, clientId);
+		const { segment } = this.getContainingSegment(startPos, perspective);
 		if (!isSegmentLeaf(segment)) {
 			return undefined;
 		}
@@ -1366,18 +1348,14 @@ export class MergeTree {
 	 * @param refseq - The reference sequence number at which to compute the position.
 	 * @param clientId - The client id with which to compute the position.
 	 */
-	public posFromRelativePos(
-		relativePos: IRelativePosition,
-		refseq = this.collabWindow.currentSeq,
-		clientId = this.collabWindow.clientId,
-	): number {
+	public posFromRelativePos(relativePos: IRelativePosition, perspective: Perspective): number {
 		let pos = -1;
 		let marker: Marker | undefined;
 		if (relativePos.id) {
 			marker = this.getMarkerFromId(relativePos.id);
 		}
 		if (isSegmentLeaf(marker)) {
-			pos = this.getPosition(marker, refseq, clientId);
+			pos = this.getPosition(marker, perspective);
 			if (relativePos.before) {
 				if (relativePos.offset !== undefined) {
 					pos -= relativePos.offset;
@@ -1449,20 +1427,15 @@ export class MergeTree {
 			return undefined;
 		}
 
-		const segmentInfo = this.getContainingSegment(
-			remoteClientPosition,
-			remoteClientRefSeq,
-			remoteClientId,
-		);
-
-		const { currentSeq, clientId } = this.collabWindow;
+		const remotePerspective = new PriorPerspective(remoteClientRefSeq, remoteClientId);
+		const segmentInfo = this.getContainingSegment(remoteClientPosition, remotePerspective);
 
 		if (isSegmentLeaf(segmentInfo?.segment)) {
-			const segmentPosition = this.getPosition(segmentInfo.segment, currentSeq, clientId);
+			const segmentPosition = this.getPosition(segmentInfo.segment, this.localPerspective);
 			return segmentPosition + segmentInfo.offset!;
 		} else {
-			if (remoteClientPosition === this.getLength(remoteClientRefSeq, remoteClientId)) {
-				return this.getLength(currentSeq, clientId);
+			if (remoteClientPosition === this.getLength(remotePerspective)) {
+				return this.getLength(this.localPerspective);
 			}
 		}
 	}
@@ -1994,16 +1967,8 @@ export class MergeTree {
 			segmentGroup: undefined,
 		};
 
-		const { segment: startSeg } = this.getContainingSegment(
-			start.pos,
-			perspective.refSeq,
-			stamp.clientId,
-		);
-		const { segment: endSeg } = this.getContainingSegment(
-			end.pos,
-			perspective.refSeq,
-			stamp.clientId,
-		);
+		const { segment: startSeg } = this.getContainingSegment(start.pos, perspective);
+		const { segment: endSeg } = this.getContainingSegment(end.pos, perspective);
 		assert(
 			isSegmentLeaf(startSeg) && isSegmentLeaf(endSeg),
 			0xa3f /* segments cannot be undefined */,
