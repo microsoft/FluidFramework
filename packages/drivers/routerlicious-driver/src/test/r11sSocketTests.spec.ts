@@ -147,7 +147,7 @@ describe("R11s Socket Tests", () => {
 				(resolve) => {
 					assert(socket !== undefined, "Socket should be defined");
 					socket.on(
-						"disconnect_document",
+						"abnormal_disconnect",
 						(clientId: string, _documentId: string, errorType: string) => {
 							resolve({ clientId, errorType });
 						},
@@ -199,14 +199,14 @@ describe("R11s Socket Tests", () => {
 		},
 	];
 
-	connectErrorTests.forEach((test) =>
+	for (const test of connectErrorTests.values()) {
 		runConnectDocumentErrorTest(
 			test.description,
 			test.errorToThrow,
 			test.expectedErrorType,
 			test.expectedInternalErrorCode,
-		),
-	);
+		);
+	}
 
 	// Socket error tests
 	const socketErrorTests = [
