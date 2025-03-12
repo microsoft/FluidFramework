@@ -64,6 +64,7 @@ import {
 import {
 	type EncodingTestData,
 	assertDeltaEqual,
+	chunkFromJsonTrees,
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	testChangeReceiver,
@@ -441,9 +442,8 @@ const rootChangeWithoutNodeFieldChanges: ModularChangeset = family.compose([
 	makeAnonChange(buildExistsConstraint(pathA0)),
 ]);
 
-const node1 = singleJsonCursor(1);
-const objectNode = singleJsonCursor({});
-const node1Chunk = treeChunkFromCursor(node1);
+const objectNode = chunkFromJsonTrees([{}]);
+const node1Chunk = chunkFromJsonTrees([1]);
 const nodesChunk = chunkFieldSingle(fieldJsonCursor([{}, {}]), {
 	policy: defaultChunkPolicy,
 	idCompressor: testIdCompressor,
@@ -753,8 +753,8 @@ describe("ModularChangeFamily", () => {
 				{
 					...Change.empty(),
 					builds: newTupleBTree([
-						[[undefined, brand(0)], treeChunkFromCursor(node1)],
-						[[tag3, brand(0)], treeChunkFromCursor(node1)],
+						[[undefined, brand(0)], node1Chunk],
+						[[tag3, brand(0)], node1Chunk],
 					]),
 					destroys: newTupleBTree([
 						[[undefined, brand(1)], 1],
@@ -768,8 +768,8 @@ describe("ModularChangeFamily", () => {
 				{
 					...Change.empty(),
 					builds: newTupleBTree([
-						[[undefined, brand(2)], treeChunkFromCursor(node1)],
-						[[tag3, brand(2)], treeChunkFromCursor(node1)],
+						[[undefined, brand(2)], node1Chunk],
+						[[tag3, brand(2)], node1Chunk],
 					]),
 					destroys: newTupleBTree([
 						[[undefined, brand(3)], 1],
@@ -786,17 +786,17 @@ describe("ModularChangeFamily", () => {
 			const expected: ModularChangeset = {
 				...Change.empty(),
 				builds: newTupleBTree([
-					[[tag1 as RevisionTag | undefined, brand(0)], treeChunkFromCursor(node1)],
-					[[tag2, brand(2)], treeChunkFromCursor(node1)],
+					[[tag1 as RevisionTag | undefined, brand(0)], node1Chunk],
+					[[tag2, brand(2)], node1Chunk],
 					[
 						[
 							tag3,
 
 							brand(0),
 						],
-						treeChunkFromCursor(node1),
+						node1Chunk,
 					],
-					[[tag3, brand(2)], treeChunkFromCursor(node1)],
+					[[tag3, brand(2)], node1Chunk],
 				]),
 				destroys: newTupleBTree([
 					[[tag1 as RevisionTag | undefined, brand(1)], 1],
@@ -815,7 +815,7 @@ describe("ModularChangeFamily", () => {
 				{
 					...Change.empty(),
 					refreshers: newTupleBTree([
-						[[tag3 as RevisionTag | undefined, brand(0)], treeChunkFromCursor(node1)],
+						[[tag3 as RevisionTag | undefined, brand(0)], node1Chunk],
 					]),
 				},
 				tag1,
@@ -825,8 +825,8 @@ describe("ModularChangeFamily", () => {
 				{
 					...Change.empty(),
 					refreshers: newTupleBTree([
-						[[undefined, brand(2)], treeChunkFromCursor(node1)],
-						[[tag3, brand(2)], treeChunkFromCursor(node1)],
+						[[undefined, brand(2)], node1Chunk],
+						[[tag3, brand(2)], node1Chunk],
 					]),
 					revisions: [{ revision: tag2 }],
 				},
@@ -840,9 +840,9 @@ describe("ModularChangeFamily", () => {
 			const expected: ModularChangeset = {
 				...Change.empty(),
 				refreshers: newTupleBTree([
-					[[undefined, brand(2)], treeChunkFromCursor(node1)],
-					[[tag3, brand(0)], treeChunkFromCursor(node1)],
-					[[tag3, brand(2)], treeChunkFromCursor(node1)],
+					[[undefined, brand(2)], node1Chunk],
+					[[tag3, brand(0)], node1Chunk],
+					[[tag3, brand(2)], node1Chunk],
 				]),
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
 			};
@@ -855,7 +855,7 @@ describe("ModularChangeFamily", () => {
 				{
 					...Change.empty(),
 					refreshers: newTupleBTree([
-						[[tag3 as RevisionTag | undefined, brand(0)], treeChunkFromCursor(node1)],
+						[[tag3 as RevisionTag | undefined, brand(0)], node1Chunk],
 					]),
 				},
 				tag1,
@@ -865,7 +865,7 @@ describe("ModularChangeFamily", () => {
 				{
 					...Change.empty(),
 					refreshers: newTupleBTree([
-						[[tag3 as RevisionTag | undefined, brand(0)], treeChunkFromCursor(objectNode)],
+						[[tag3 as RevisionTag | undefined, brand(0)], objectNode],
 					]),
 					revisions: [{ revision: tag2 }],
 				},
@@ -878,9 +878,7 @@ describe("ModularChangeFamily", () => {
 
 			const expected: ModularChangeset = {
 				...Change.empty(),
-				refreshers: newTupleBTree([
-					[[tag3 as RevisionTag | undefined, brand(0)], treeChunkFromCursor(node1)],
-				]),
+				refreshers: newTupleBTree([[[tag3 as RevisionTag | undefined, brand(0)], node1Chunk]]),
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
 			};
 
@@ -1088,9 +1086,9 @@ describe("ModularChangeFamily", () => {
 
 			const expectedDelta: DeltaRoot = {
 				build: [
-					{ id: { major: tag1, minor: 1 }, trees: [node1] },
-					{ id: { major: tag2, minor: 2 }, trees: [node1] },
-					{ id: { major: tag2, minor: 3 }, trees: [objectNode, objectNode] },
+					{ id: { major: tag1, minor: 1 }, trees: node1Chunk },
+					{ id: { major: tag2, minor: 2 }, trees: node1Chunk },
+					{ id: { major: tag2, minor: 3 }, trees: nodesChunk },
 				],
 			};
 
@@ -1138,9 +1136,9 @@ describe("ModularChangeFamily", () => {
 
 			const expectedDelta: DeltaRoot = {
 				refreshers: [
-					{ id: { major: tag1, minor: 1 }, trees: [node1] },
-					{ id: { major: tag2, minor: 2 }, trees: [node1] },
-					{ id: { major: tag2, minor: 3 }, trees: [objectNode, objectNode] },
+					{ id: { major: tag1, minor: 1 }, trees: node1Chunk },
+					{ id: { major: tag2, minor: 2 }, trees: node1Chunk },
+					{ id: { major: tag2, minor: 3 }, trees: nodesChunk },
 				],
 			};
 
