@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { ImplicitFieldSchema, TreeView } from "@fluidframework/tree";
+import type { ImplicitFieldSchema } from "@fluidframework/tree";
+// eslint-disable-next-line import/no-internal-modules
+import type { TreeViewAlpha } from "@fluidframework/tree/alpha";
 
 /**
  * Subset of Map interface.
@@ -65,4 +67,4 @@ export function getOrCreate<K, V>(
  * TODO
  * @alpha
  */
-export type View = Pick<TreeView<ImplicitFieldSchema>, "root">;
+export type View = Pick<TreeViewAlpha<ImplicitFieldSchema>, "root" | "fork" | "merge">;

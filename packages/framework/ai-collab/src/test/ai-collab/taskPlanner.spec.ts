@@ -13,6 +13,7 @@ import {
 	SchemaFactory,
 	SharedTree,
 	TreeViewConfiguration,
+	asTreeViewAlpha,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/internal";
 import { APIError, OpenAI } from "openai";
@@ -179,7 +180,7 @@ describe.skip("Ai Planner App", () => {
 		view.initialize(INITIAL_APP_STATE);
 
 		await aiCollab({
-			treeView: view,
+			treeView: asTreeViewAlpha(view),
 			openAI: {
 				client: new OpenAI({
 					apiKey: OPENAI_API_KEY,
@@ -213,7 +214,7 @@ describe.skip("Ai Planner App", () => {
 		view.initialize({ priority: "low" });
 
 		await aiCollab({
-			treeView: view,
+			treeView: asTreeViewAlpha(view),
 			openAI: {
 				client: new OpenAI({
 					apiKey: OPENAI_API_KEY,
@@ -258,7 +259,7 @@ describe.skip("Ai Planner App", () => {
 
 		try {
 			await aiCollab({
-				treeView: view,
+				treeView: asTreeViewAlpha(view),
 				openAI: {
 					client: new OpenAI({
 						apiKey: OPENAI_API_KEY,
@@ -304,7 +305,7 @@ describe.skip("Ai Planner App", () => {
 
 		try {
 			await aiCollab({
-				treeView: view,
+				treeView: asTreeViewAlpha(view),
 				openAI: {
 					client: new OpenAI({
 						apiKey: OPENAI_API_KEY,
@@ -346,7 +347,7 @@ describe.skip("Ai Planner App", () => {
 		view2.initialize({ nonOptionalProp: "Hello" });
 
 		await aiCollab({
-			treeView: view,
+			treeView: asTreeViewAlpha(view),
 			openAI: {
 				client: new OpenAI({
 					apiKey: OPENAI_API_KEY,

@@ -340,6 +340,6 @@ export interface TokenUsage {
 }
 
 // @alpha
-export type View = Pick<TreeView<ImplicitFieldSchema>, "root">;
+export type View = Pick<TreeViewAlpha<ImplicitFieldSchema>, "root" | "fork" | "merge">;
 
 ```

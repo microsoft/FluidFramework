@@ -19,6 +19,7 @@ import {
 	TreeViewConfiguration,
 	SharedTree,
 	type TreeNode,
+	asTreeViewAlpha,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/internal";
 
@@ -126,7 +127,9 @@ describe("applyAgentEdit", () => {
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"tree",
 			);
-			const view = tree.viewWith(new TreeViewConfiguration({ schema: RootObjectPolymorphic }));
+			const view = asTreeViewAlpha(
+				tree.viewWith(new TreeViewConfiguration({ schema: RootObjectPolymorphic })),
+			);
 			const simpleSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
@@ -196,7 +199,7 @@ describe("applyAgentEdit", () => {
 				"tree",
 			);
 			const config2 = new TreeViewConfiguration({ schema: RootObject });
-			const view = tree.viewWith(config2);
+			const view = asTreeViewAlpha(tree.viewWith(config2));
 			const simpleSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
@@ -262,7 +265,7 @@ describe("applyAgentEdit", () => {
 				"tree",
 			);
 			const config = new TreeViewConfiguration({ schema: Root });
-			const view = tree.viewWith(config);
+			const view = asTreeViewAlpha(tree.viewWith(config));
 			const simpleSchema = getSimpleSchema(view.schema);
 			view.initialize({ children: [new HasDefault({})] });
 			idGenerator.assignIds(view.root);
@@ -302,7 +305,7 @@ describe("applyAgentEdit", () => {
 				"tree",
 			);
 			const config2 = new TreeViewConfiguration({ schema: RootObject });
-			const view = tree.viewWith(config2);
+			const view = asTreeViewAlpha(tree.viewWith(config2));
 			const simpleSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
@@ -350,7 +353,7 @@ describe("applyAgentEdit", () => {
 				"tree",
 			);
 			const config2 = new TreeViewConfiguration({ schema: RootObject });
-			const view = tree.viewWith(config2);
+			const view = asTreeViewAlpha(tree.viewWith(config2));
 			const simpleSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
@@ -383,7 +386,7 @@ describe("applyAgentEdit", () => {
 				"tree",
 			);
 			const config2 = new TreeViewConfiguration({ schema: RootObjectWithNonArrayVectorField });
-			const view = tree.viewWith(config2);
+			const view = asTreeViewAlpha(tree.viewWith(config2));
 			const simpleSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
@@ -415,7 +418,7 @@ describe("applyAgentEdit", () => {
 			"tree",
 		);
 		const config = new TreeViewConfiguration({ schema: RootObjectPolymorphic });
-		const view = tree.viewWith(config);
+		const view = asTreeViewAlpha(tree.viewWith(config));
 		const simpleSchema = getSimpleSchema(view.schema);
 
 		view.initialize({
@@ -502,7 +505,7 @@ describe("applyAgentEdit", () => {
 			"tree",
 		);
 		const config = new TreeViewConfiguration({ schema: RootObjectPolymorphic });
-		const view = tree.viewWith(config);
+		const view = asTreeViewAlpha(tree.viewWith(config));
 		const simpleSchema = getSimpleSchema(view.schema);
 
 		view.initialize({
@@ -569,7 +572,7 @@ describe("applyAgentEdit", () => {
 			const configWithMultipleVectors = new TreeViewConfiguration({
 				schema: [RootObject],
 			});
-			const view = tree.viewWith(configWithMultipleVectors);
+			const view = asTreeViewAlpha(tree.viewWith(configWithMultipleVectors));
 			const simpleSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
@@ -607,7 +610,7 @@ describe("applyAgentEdit", () => {
 			const configWithMultipleVectors = new TreeViewConfiguration({
 				schema: [RootObjectWithSubtree],
 			});
-			const view = tree.viewWith(configWithMultipleVectors);
+			const view = asTreeViewAlpha(tree.viewWith(configWithMultipleVectors));
 			const simpleSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
@@ -651,7 +654,7 @@ describe("applyAgentEdit", () => {
 			const configWithMultipleVectors = new TreeViewConfiguration({
 				schema: [RootObject],
 			});
-			const view = tree.viewWith(configWithMultipleVectors);
+			const view = asTreeViewAlpha(tree.viewWith(configWithMultipleVectors));
 			const simpleSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
@@ -685,7 +688,7 @@ describe("applyAgentEdit", () => {
 			const configWithMultipleVectors = new TreeViewConfiguration({
 				schema: [RootObject],
 			});
-			const view = tree.viewWith(configWithMultipleVectors);
+			const view = asTreeViewAlpha(tree.viewWith(configWithMultipleVectors));
 			const simpleSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
@@ -729,7 +732,7 @@ describe("applyAgentEdit", () => {
 			const configWithMultipleVectors = new TreeViewConfiguration({
 				schema: [RootObjectWithSubtree],
 			});
-			const view = tree.viewWith(configWithMultipleVectors);
+			const view = asTreeViewAlpha(tree.viewWith(configWithMultipleVectors));
 			const simpleSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
@@ -781,7 +784,7 @@ describe("applyAgentEdit", () => {
 			const configWithMultipleVectors = new TreeViewConfiguration({
 				schema: [RootObjectWithMultipleVectorArrays],
 			});
-			const view = tree.viewWith(configWithMultipleVectors);
+			const view = asTreeViewAlpha(tree.viewWith(configWithMultipleVectors));
 			const simpleSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
@@ -824,7 +827,7 @@ describe("applyAgentEdit", () => {
 			const configWithMultipleVectors = new TreeViewConfiguration({
 				schema: [RootObjectWithMultipleVectorArrays],
 			});
-			const view = tree.viewWith(configWithMultipleVectors);
+			const view = asTreeViewAlpha(tree.viewWith(configWithMultipleVectors));
 			const simpleSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
@@ -886,7 +889,7 @@ describe("applyAgentEdit", () => {
 			const configWithMultipleVectors = new TreeViewConfiguration({
 				schema: [RootObjectWithMultipleVectorArrays],
 			});
-			const view = tree.viewWith(configWithMultipleVectors);
+			const view = asTreeViewAlpha(tree.viewWith(configWithMultipleVectors));
 			const simpleSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
@@ -962,7 +965,7 @@ describe("applyAgentEdit", () => {
 			const configWithMultipleVectors = new TreeViewConfiguration({
 				schema: [RootObjectWithDifferentVectorArrayTypes],
 			});
-			const view = tree.viewWith(configWithMultipleVectors);
+			const view = asTreeViewAlpha(tree.viewWith(configWithMultipleVectors));
 			const simpleSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
@@ -1007,7 +1010,7 @@ describe("applyAgentEdit", () => {
 			const configWithMultipleVectors = new TreeViewConfiguration({
 				schema: [RootObjectWithMultipleVectorArrays],
 			});
-			const view = tree.viewWith(configWithMultipleVectors);
+			const view = asTreeViewAlpha(tree.viewWith(configWithMultipleVectors));
 			const simpleSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
@@ -1053,7 +1056,7 @@ describe("applyAgentEdit", () => {
 			const configWithMultipleVectors = new TreeViewConfiguration({
 				schema: [RootObjectWithNonArrayVectorField],
 			});
-			const view = tree.viewWith(configWithMultipleVectors);
+			const view = asTreeViewAlpha(tree.viewWith(configWithMultipleVectors));
 			const simpleSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
@@ -1091,7 +1094,7 @@ describe("applyAgentEdit", () => {
 			const configWithMultipleVectors = new TreeViewConfiguration({
 				schema: [RootObjectWithNonArrayVectorField],
 			});
-			const view = tree.viewWith(configWithMultipleVectors);
+			const view = asTreeViewAlpha(tree.viewWith(configWithMultipleVectors));
 			const simpleSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
@@ -1130,7 +1133,7 @@ describe("applyAgentEdit", () => {
 		const configWithMultipleVectors = new TreeViewConfiguration({
 			schema: [RootObjectWithMultipleVectorArrays],
 		});
-		const view = tree.viewWith(configWithMultipleVectors);
+		const view = asTreeViewAlpha(tree.viewWith(configWithMultipleVectors));
 		const simpleSchema = getSimpleSchema(view.schema);
 
 		view.initialize({

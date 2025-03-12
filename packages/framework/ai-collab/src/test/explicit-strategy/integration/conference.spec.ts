@@ -12,10 +12,11 @@ import {
 	SchemaFactory,
 	SharedTree,
 	TreeViewConfiguration,
+	asTreeViewAlpha,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/internal";
 
-import { generateTreeEdits } from "../../../explicit-strategy/index.js";
+import { clod } from "../../../explicit-strategy/index.js";
 
 const sf = new SchemaFactory("Planner");
 
@@ -165,9 +166,8 @@ describe.skip("Agent Editing Integration", () => {
 		const claudeClient = new Anthropic({
 			apiKey: "TODO",
 		});
-		const abortController = new AbortController();
-		await generateTreeEdits({
-			treeView: view,
+		await clod({
+			treeView: asTreeViewAlpha(view),
 			clientOptions: { client: claudeClient /* options: { model: TEST_MODEL_NAME } */ },
 			treeNode: view.root,
 			prompt: {
@@ -175,11 +175,10 @@ describe.skip("Agent Editing Integration", () => {
 					"Please organize the sessions so that the ones for adults are on the first day, and the ones that kids would find enjoyable are on the second day. Also make sure the sessions are in alphabetical order within the day.",
 				systemRoleContext: "",
 			},
-			limiters: {
-				abortController,
-				maxModelCalls: 15,
+			onEdits: (state) => {
+				debugger;
+				return true;
 			},
-			finalReviewStep: true,
 		});
 
 		const stringified = JSON.stringify(view.root, undefined, 2);

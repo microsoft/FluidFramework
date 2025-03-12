@@ -82,6 +82,12 @@ export interface GenerateTreeEditsOptions {
 		systemRoleContext: string;
 		userAsk: string;
 	};
+	onEdits?: (args: {
+		systemPrompt: string;
+		userPrompt: string;
+		edits: TreeEdit[];
+		retryState: RetryState;
+	}) => boolean;
 	limiters?: {
 		abortController?: AbortController;
 		maxSequentialErrors?: number;
@@ -262,6 +268,17 @@ export async function generateTreeEdits(
 	};
 }
 
+interface RetryState {
+	readonly thinking:
+		| Anthropic.Beta.BetaThinkingBlock
+		| Anthropic.Beta.BetaRedactedThinkingBlock;
+	readonly errors: {
+		readonly error: UsageError;
+		readonly editIndex: number;
+		readonly toolUse: Anthropic.Beta.BetaToolUseBlock;
+	}[];
+}
+
 /**
  * Generates a single {@link TreeEdit} from an LLM.
  *
@@ -301,34 +318,24 @@ async function* generateEdits(
 		llmPrompt: systemPrompt,
 	} satisfies GenerateTreeEditStarted);
 
-	const edits = isOpenAiClientOptions(options.clientOptions)
-		? ((await getStructuredOutputFromOpenAI(
-				systemPrompt,
-				options.prompt.userAsk,
-				options.clientOptions,
-				schema,
-				"A JSON object that represents an edit to a JSON tree.",
-				tokensUsed,
-				debugOptions && {
-					...debugOptions,
-					triggeringEventFlowName: EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT,
-					eventFlowTraceId: generateTreeEditEventFlowId,
-				},
-			)) as TreeEdit[] | undefined)
-		: ((await getStructuredOutputFromClaude(
-				systemPrompt,
-				options.prompt.userAsk,
-				options.clientOptions,
-				schema,
-				types,
-				"A JSON object that represents an edit to a JSON tree.",
-				tokensUsed,
-				debugOptions && {
-					...debugOptions,
-					triggeringEventFlowName: EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT,
-					eventFlowTraceId: generateTreeEditEventFlowId,
-				},
-			)) as TreeEdit[] | undefined);
+	let edits: TreeEdit[] | undefined;
+	if (isOpenAiClientOptions(options.clientOptions)) {
+		edits = (await getStructuredOutputFromOpenAI(
+			systemPrompt,
+			options.prompt.userAsk,
+			options.clientOptions,
+			schema,
+			"A JSON object that represents an edit to a JSON tree.",
+			tokensUsed,
+			debugOptions && {
+				...debugOptions,
+				triggeringEventFlowName: EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT,
+				eventFlowTraceId: generateTreeEditEventFlowId,
+			},
+		)) as TreeEdit[] | undefined;
+	} else {
+		throw new Error("Unsupported client type.");
+	}
 
 	if (edits === undefined) {
 		return undefined;
@@ -353,21 +360,23 @@ async function* generateEdits(
 	}
 }
 
-async function getStructuredOutputFromClaude(
-	systemPrompt: string,
-	userPrompt: string,
-	claude: ClaudeClientOptions,
-	structuredOutputSchema: Zod.ZodTypeAny,
-	types: Record<string, Zod.ZodTypeAny>,
-	description?: string,
-	tokensUsed?: TokenUsage,
-	debugOptions?: {
-		eventLogHandler: DebugEventLogHandler;
-		traceId: string;
-		triggeringEventFlowName: EventFlowDebugName;
-		eventFlowTraceId: string;
-	},
-): Promise<unknown> {
+/**
+ * TODO
+ */
+export async function clod(options: GenerateTreeEditsOptions): Promise<boolean> {
+	const idGenerator = new IdGenerator();
+	const simpleSchema = getSimpleSchema(Tree.schema(options.treeNode));
+	const systemPrompt = getEditingSystemPrompt(
+		idGenerator,
+		options.treeNode,
+		options.prompt.systemRoleContext,
+	);
+
+	if (isOpenAiClientOptions(options.clientOptions)) {
+		throw new Error("OpenAI client not supported.");
+	}
+	const client = options.clientOptions.client;
+
 	// TODO: use langchain library to get this for free
 	// TODO: respect description, tokensUsed, and debugOptions
 	const wrapper = z.object({
@@ -375,48 +384,112 @@ async function getStructuredOutputFromClaude(
 	});
 	const input_schema = zodToJsonSchema(wrapper, { name: "foo" }).definitions
 		?.foo as Anthropic.Tool.InputSchema;
-	const response = await claude.client.beta.messages.create({
-		betas: ["token-efficient-tools-2025-02-19"],
-		model: "claude-3-7-sonnet-latest",
-		thinking: { type: "enabled", budget_tokens: 10000 },
-		stream: false,
-		max_tokens: 20000,
-		tools: [
-			{
-				name: "EditJsonTree",
-				description: "An array of edits to a user's SharedTree domain",
-				input_schema,
-			},
-		],
-		tool_choice: { type: "auto" },
-		messages: [{ role: "user", content: userPrompt }],
-		system: `${systemPrompt} You must use the EditJsonTree tool to respond.`,
-	});
 
-	const r = response.content.find((v) => v.type === "tool_use");
-	if (r?.type !== "tool_use") {
-		console.error(response);
-		throw new Error("Unexpected response from LLM API.");
+	const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [
+		{ role: "user", content: options.prompt.userAsk },
+	];
+
+	const max_tokens = options.limiters?.tokenLimits?.outputTokens ?? 20000;
+
+	async function queryClod(): Promise<Anthropic.Beta.Messages.BetaMessage> {
+		const message = await client.beta.messages.create({
+			betas: ["token-efficient-tools-2025-02-19"],
+			model: "claude-3-7-sonnet-latest",
+			thinking: { type: "enabled", budget_tokens: max_tokens / 2 },
+			stream: false,
+			max_tokens,
+			tools: [
+				{
+					name: "EditJsonTree",
+					description: "An array of edits to a user's SharedTree domain",
+					input_schema,
+				},
+			],
+			tool_choice: { type: "auto" },
+			messages,
+			system: `${systemPrompt} You must use the EditJsonTree tool to respond.`,
+		});
+
+		return message;
 	}
 
-	// const text = response.content.find(
-	// 	(c): c is Anthropic.Beta.BetaTextBlock => c.type === "text",
-	// )?.text;
-	// if (text === undefined) {
-	// 	throw new Error("Unexpected response from LLM API.");
-	// }
+	let response = await queryClod();
 
-	// const start = text.lastIndexOf("```json");
-	// const end = text.lastIndexOf("```");
-	// const jsonString = text.slice(start + 7, end + 1);
-	const result = wrapper.safeParse(r.input);
+	const thinking =
+		response.content.find(
+			(c): c is Anthropic.Beta.BetaThinkingBlock => c.type === "thinking",
+		) ?? fail("Expected thinking block");
 
-	if (result.success === false) {
-		console.error(result.error);
-		throw new Error("Response did not conform to provided schema.");
+	const retryState: RetryState = {
+		thinking,
+		errors: [],
+	};
+
+	while (retryState.errors.length <= (options.limiters?.maxSequentialErrors ?? 3)) {
+		const toolUse =
+			response.content.find(
+				(v): v is Anthropic.Beta.BetaToolUseBlock => v.type === "tool_use",
+			) ?? fail("Expected tool use block");
+
+		const parse = wrapper.safeParse(toolUse.input);
+
+		if (parse.success === false) {
+			console.error(parse.error);
+			throw new Error("Response did not conform to provided schema.");
+		}
+
+		const edits = parse.data.edits as TreeEdit[];
+
+		const branch = options.treeView.fork();
+		let editIndex = 0;
+		try {
+			if (
+				options.onEdits?.({
+					edits,
+					systemPrompt,
+					userPrompt: options.prompt.userAsk,
+					retryState,
+				}) === false
+			) {
+				return false;
+			}
+			while (editIndex < edits.length) {
+				const edit = edits[editIndex++] ?? fail("Expected edit");
+				applyAgentEdit(branch, edit, idGenerator, simpleSchema.definitions, options.validator);
+			}
+			options.treeView.merge(branch);
+			return true;
+		} catch (error: unknown) {
+			if (error instanceof UsageError) {
+				retryState.errors.push({
+					editIndex,
+					error,
+					toolUse,
+				});
+			}
+		}
+
+		const retryMessages: Anthropic.Beta.Messages.BetaMessageParam[] = [...messages];
+		for (const retry of retryState.errors) {
+			retryMessages.push(
+				{ role: "assistant", content: [retryState.thinking, retry.toolUse] },
+				{
+					role: "user",
+					content: [
+						{
+							type: "tool_result",
+							tool_use_id: retry.toolUse.id,
+							content: `Error: "${retry.error.message}" when applying TreeEdit at index ${retry.editIndex}.`,
+						},
+					],
+				},
+			);
+		}
+
+		response = await queryClod();
 	}
 
-	return result.data.edits;
+	return false;
 }
 
 /**

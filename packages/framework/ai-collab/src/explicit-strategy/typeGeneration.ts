@@ -31,7 +31,7 @@ const objectPointer = z
 	);
 
 const pathPointer = z
-	.tuple([z.union([z.null(), objectPointer]), z.union([z.string(), z.number()])])
+	.tuple([z.union([z.null(), objectPointer])])
 	.rest(z.union([z.string(), z.number()]))
 	.describe(
 		"Points to an object in the tree via a path. The path starts either at an object (via ID) or the root of the tree (via null). When possible, paths should always be relative to an object ID.",
@@ -58,7 +58,7 @@ const arrayPosition = z
  */
 export const arrayRange = z
 	.object({
-		array: pathPointer.describe("The array containing the range"),
+		array: describeProp(pathPointer, "The array containing the range"),
 		from: arrayPosition.describe("Start of range (inclusive)"),
 		to: arrayPosition.describe("End of range (inclusive)"),
 	})
@@ -124,7 +124,7 @@ export function generateGenericEditTypes(
 		const setField = z
 			.object({
 				type: z.literal("setField"),
-				object: objectPointer.describe("The parent object"),
+				object: describeProp(objectPointer, "The parent object"),
 				field: z.string().describe("The field name to set"),
 				value: generateDomainTypes
 					? getType(setFieldTypeSet)
@@ -138,21 +138,24 @@ export function generateGenericEditTypes(
 				"Set a field on an object to a specified value. Can be used set optional fields to undefined.",
 			);
 
-		const insertValue = generateDomainTypes
-			? getType(insertSet)
-			: z
-					.any()
-					.describe(
-						"New content to insert. The domain-specific schema must allow this type in the array.",
-					);
+		const insertValue = generateDomainTypes ? getType(insertSet) : z.any();
 
 		const insertIntoArray = z
 			.object({
 				type: z.literal("insertIntoArray"),
-				array: pathPointer.describe("The parent array"),
+				array: describeProp(pathPointer, "The parent array"),
 				position: arrayPosition.describe("Where to add the element(s)"),
-				value: insertValue,
-				values: z.array(insertValue).optional().describe("Array of values to add"),
+				value: insertValue
+					.optional()
+					.describe(
+						"New content to insert. The domain-specific schema must allow this type in the array.",
+					),
+				values: z
+					.array(insertValue)
+					.optional()
+					.describe(
+						"Array of values to add. The domain-specific schema must allow these types in the array.",
+					),
 			})
 			.describe(
 				"Add new element(s) to an array. Only one of `value` or `values` should be set.",
@@ -161,7 +164,6 @@ export function generateGenericEditTypes(
 		const removeFromArray = z
 			.object({
 				type: z.literal("removeFromArray"),
-				op: z.literal("removeFromArray"),
 				element: pointer.optional().describe("The element to remove"),
 				range: arrayRange.optional().describe("For removing a range"),
 			})
@@ -172,13 +174,12 @@ export function generateGenericEditTypes(
 		const moveArrayElement = z
 			.object({
 				type: z.literal("moveArrayElement"),
-				op: z.literal("moveArrayElement"),
 				source: z
 					.union([objectPointer, arrayRange])
 					.describe("Source can be a single element or a range"),
 				destination: z
 					.object({
-						target: pathPointer.describe("The target array"),
+						target: describeProp(pathPointer, "The target array"),
 						position: arrayPosition.describe("Where to place the element(s) in the array"),
 					})
 					.describe("Destination must be an array position"),
@@ -426,4 +427,14 @@ export function doesNodeContainArraySchema(node: TreeNode): boolean {
 	}
 
 	return false;
+}
+
+function describeProp<T extends z.ZodTypeAny>(type: T, description: string): z.ZodUnion<[T]> {
+	// This is a hack to get around the fact that Zod doesn't allow unions of a single type.
+	// However, we need to use such unions in some cases.
+	// Sometimes, when a type is used for a property and we want to describe the property, appending a `.describe(...)` to the type causes TypeChat to inline the contents of the type instead of using the type name for that property.
+	// This doesn't seem to happen consistently, but if we wrap the type in a union of one, it seems to do the correct thing.
+	return z.union([type] as unknown as [T, T]).describe(description) as unknown as z.ZodUnion<
+		[T]
+	>;
 }
