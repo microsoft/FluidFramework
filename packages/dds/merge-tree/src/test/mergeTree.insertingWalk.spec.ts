@@ -158,7 +158,7 @@ const treeFactories: ITestTreeFactory[] = [
 				0,
 				remove,
 				mergeTree.localPerspective,
-				{ type: "set", clientId: localClientId, seq: UniversalSequenceNumber },
+				{ clientId: localClientId, seq: UniversalSequenceNumber },
 				undefined as never,
 			);
 			initialText = initialText.slice(Math.max(0, remove));
@@ -168,7 +168,7 @@ const treeFactories: ITestTreeFactory[] = [
 				initialText.length - remove,
 				initialText.length,
 				mergeTree.localPerspective,
-				{ type: "set", clientId: localClientId, seq: UniversalSequenceNumber },
+				{ clientId: localClientId, seq: UniversalSequenceNumber },
 				undefined as never,
 			);
 			initialText = initialText.slice(0, Math.max(0, initialText.length - remove));

@@ -10,7 +10,7 @@ import {
 	ISegmentInternal,
 	ISegmentPrivate,
 	MergeBlock,
-	type OperationTimestamp,
+	type InsertOperationTimestamp,
 	type RemoveOperationTimestamp,
 } from "./mergeTreeNodes.js";
 
@@ -52,7 +52,7 @@ export function propInstanceOf<P extends string, T>(
  * Contains insertion information associated to an {@link ISegment}.
  */
 export interface IHasInsertionInfo {
-	insert: OperationTimestamp;
+	insert: InsertOperationTimestamp;
 	// /**
 	//  * Short clientId for the client that inserted this segment.
 	//  */

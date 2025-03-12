@@ -60,6 +60,7 @@ import {
 	type ISegmentInternal,
 	type ISegmentLeaf,
 	type ISegmentPrivate,
+	type InsertOperationTimestamp,
 	type ObliterateInfo,
 	type OperationTimestamp,
 	type RemoveOperationTimestamp,
@@ -173,6 +174,7 @@ function ackSegment(
 			);
 
 			segment.insert = {
+				type: "insert",
 				seq: sequenceNumber,
 				clientId: segment.insert.clientId,
 			};
@@ -192,7 +194,7 @@ function ackSegment(
 			// also seems like you should probably account for overlapping move here...
 			allowIncrementalPartialLengthsUpdate = segment.removes.length === 1;
 			segment.removes[segment.removes.length - 1] = {
-				type: "set",
+				type: "setRemove",
 				seq: sequenceNumber,
 				clientId: latestRemove.clientId,
 			};
@@ -218,7 +220,7 @@ function ackSegment(
 			// TODO: Tests passed without setting this???? Do we actually use it? Plausibly no after this (just the info in segment.removes)
 			obliterateInfo.seq = sequenceNumber;
 			segment.removes[segment.removes.length - 1] = {
-				type: "slice",
+				type: "sliceRemove",
 				seq: sequenceNumber,
 				clientId: latestMove.clientId,
 			};
@@ -1374,9 +1376,10 @@ export class MergeTree {
 		pos: number,
 		segments: ISegmentPrivate[],
 		perspective: Perspective,
-		stamp: OperationTimestamp,
+		stampArg: OperationTimestamp,
 		opArgs: IMergeTreeDeltaOpArgs | undefined,
 	): void {
+		const stamp: InsertOperationTimestamp = { ...stampArg, type: "insert" };
 		this.ensureIntervalBoundary(pos, perspective);
 
 		this.blockInsert(pos, perspective, stamp, segments);
@@ -1443,7 +1446,7 @@ export class MergeTree {
 	private blockInsert<T extends ISegmentPrivate>(
 		pos: number,
 		perspective: Perspective,
-		stamp: OperationTimestamp,
+		stamp: InsertOperationTimestamp,
 		newSegments: T[],
 	): void {
 		// TODO: Is keeping the freeze necessary?
@@ -1556,7 +1559,7 @@ export class MergeTree {
 					if (stamp.clientId !== ob.clientId) {
 						if (timestampUtils.isAcked(ob)) {
 							overlappingAckedObliterates.push({
-								type: "slice",
+								type: "sliceRemove",
 								seq: ob.seq,
 								clientId: ob.clientId,
 							});
@@ -1614,7 +1617,7 @@ export class MergeTree {
 				// TODO: move this comment to a place that makes more sense.
 				if (oldestUnacked !== undefined) {
 					removeInfo.removes.push({
-						type: "slice",
+						type: "sliceRemove",
 						seq: oldestUnacked.seq,
 						clientId: oldestUnacked.clientId,
 						localSeq: oldestUnacked.localSeq,
@@ -2128,10 +2131,11 @@ export class MergeTree {
 		start: number | InteriorSequencePlace,
 		end: number | InteriorSequencePlace,
 		perspective: Perspective,
-		stamp: SliceRemoveOperationTimestamp,
+		stampArg: OperationTimestamp,
 		opArgs: IMergeTreeDeltaOpArgs,
 	): void {
 		errorIfOptionNotTrue(this.options, "mergeTreeEnableObliterate");
+		const stamp: SliceRemoveOperationTimestamp = { ...stampArg, type: "sliceRemove" };
 		if (this.options?.mergeTreeEnableSidedObliterate) {
 			assert(
 				typeof start === "object" && typeof end === "object",
@@ -2157,10 +2161,11 @@ export class MergeTree {
 		start: number,
 		end: number,
 		perspective: Perspective,
-		stamp: SetRemoveOperationTimestamp,
+		stampArg: OperationTimestamp,
 		opArgs: IMergeTreeDeltaOpArgs,
 	): void {
 		let _overwrite = false;
+		const stamp: SetRemoveOperationTimestamp = { ...stampArg, type: "setRemove" };
 		this.ensureIntervalBoundary(start, perspective);
 		this.ensureIntervalBoundary(end, perspective);
 
@@ -2266,7 +2271,7 @@ export class MergeTree {
 				assert(
 					isRemoved(segment) &&
 						segment.removes[0].clientId === this.collabWindow.clientId &&
-						segment.removes[0].type === "set",
+						segment.removes[0].type === "setRemove",
 					0x39d /* Rollback segment removedClientId does not match local client */,
 				);
 				let updateNode: MergeBlock | undefined = segment.parent;
@@ -2314,12 +2319,13 @@ export class MergeTree {
 				const start = this.findRollbackPosition(segment);
 				if (op.type === MergeTreeDeltaType.INSERT) {
 					segment.insert = {
+						type: "insert",
 						seq: UniversalSequenceNumber,
 						clientId: this.collabWindow.clientId,
 					};
 					const removeOp = createRemoveRangeOp(start, start + segment.cachedLength);
 					const removeStamp: SetRemoveOperationTimestamp = {
-						type: "set",
+						type: "setRemove",
 						seq: UniversalSequenceNumber,
 						clientId: this.collabWindow.clientId,
 					};

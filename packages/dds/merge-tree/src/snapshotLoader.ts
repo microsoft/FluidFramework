@@ -110,6 +110,7 @@ export class SnapshotLoader {
 		if (hasMergeInfo(spec)) {
 			const seg = overwriteInfo<IHasInsertionInfo>(this.client.specToSegment(spec.json), {
 				insert: {
+					type: "insert",
 					seq: spec.seq ?? UniversalSequenceNumber,
 					clientId:
 						spec.client === undefined
@@ -139,7 +140,7 @@ export class SnapshotLoader {
 					...spec.removedClientIds.map(
 						(id) =>
 							({
-								type: "set",
+								type: "setRemove",
 								seq: firstRemovedSeq,
 								clientId: this.client.getOrAddShortClientId(id),
 							}) as const,
@@ -160,7 +161,7 @@ export class SnapshotLoader {
 					...spec.movedClientIds.map(
 						(id, i) =>
 							({
-								type: "slice",
+								type: "sliceRemove",
 								seq: spec.movedSeqs![i],
 								clientId: this.client.getOrAddShortClientId(id),
 							}) as const,
@@ -177,6 +178,7 @@ export class SnapshotLoader {
 		}
 		return overwriteInfo(this.client.specToSegment(spec), {
 			insert: {
+				type: "insert",
 				seq: UniversalSequenceNumber,
 				clientId: NonCollabClient,
 			},

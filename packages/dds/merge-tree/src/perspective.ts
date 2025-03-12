@@ -8,6 +8,7 @@ import { LeafAction, backwardExcursion, forwardExcursion } from "./mergeTreeNode
 import {
 	seqLTE,
 	timestampUtils,
+	type InsertOperationTimestamp,
 	type ISegmentLeaf,
 	type OperationTimestamp,
 	type RemoveOperationTimestamp,
@@ -20,14 +21,14 @@ export interface Perspective {
 	readonly localSeq?: number;
 	isSegmentPresent(segment: ISegmentLeaf): boolean;
 
-	hasOccurred(stamp: OperationTimestamp): boolean;
+	hasOccurred(stamp: RemoveOperationTimestamp | InsertOperationTimestamp): boolean;
 
 	nextSegment(mergeTree: MergeTree, segment: ISegmentLeaf, forward?: boolean): ISegmentLeaf;
 	previousSegment(mergeTree: MergeTree, segment: ISegmentLeaf): ISegmentLeaf;
 }
 
 abstract class PerspectiveBase {
-	abstract hasOccurred(stamp: OperationTimestamp): boolean;
+	abstract hasOccurred(stamp: RemoveOperationTimestamp | InsertOperationTimestamp): boolean;
 
 	/**
 	 * Returns the immediately adjacent segment in the specified direction from this perspective.
@@ -187,22 +188,16 @@ export class RemoteObliteratePerspective extends PerspectiveBase implements Pers
 		super();
 	}
 
-	public hasOccurred(stamp: OperationTimestamp): boolean {
+	public hasOccurred(stamp: InsertOperationTimestamp | RemoveOperationTimestamp): boolean {
 		// Local-only removals are not visible to an obliterate operation, since this means the local removal was concurrent
 		// to a remote obliterate and we may need to mark the segment appropriately to reflect this overlapping remove.
 		// Every other type of operation is visible: obliterates do not affect segments that have already been removed and acked,
 		// and they always affect segments within their range that have not been removed, even if those segments were inserted
 		// after the obliterate's refSeq.
-		if (isRemoveOperationTimestamp(stamp) && timestampUtils.isLocal(stamp)) {
+		if (stamp.type !== "insert" && timestampUtils.isLocal(stamp)) {
 			return false;
 		}
 
 		return true;
 	}
-}
-
-function isRemoveOperationTimestamp(
-	stamp: OperationTimestamp,
-): stamp is RemoveOperationTimestamp {
-	return (stamp as any).type === "slice" || (stamp as any).type === "set";
 }

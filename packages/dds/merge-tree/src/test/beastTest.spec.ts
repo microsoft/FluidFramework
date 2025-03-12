@@ -349,7 +349,7 @@ function checkMarkRemoveMergeTree(
 		start,
 		end,
 		mergeTree.localPerspective,
-		{ type: "set", clientId: LocalClientId, seq: UniversalSequenceNumber },
+		{ clientId: LocalClientId, seq: UniversalSequenceNumber },
 		{ op: createRemoveRangeOp(start, end) },
 	);
 	accumTime += elapsedMicroseconds(clockStart);
@@ -455,7 +455,7 @@ export function mergeTreeLargeTest(): void {
 			pos,
 			pos + dlen,
 			mergeTree.localPerspective,
-			{ type: "set", clientId: LocalClientId, seq: UniversalSequenceNumber },
+			{ clientId: LocalClientId, seq: UniversalSequenceNumber },
 			undefined as never,
 		);
 		accumTime += elapsedMicroseconds(clockStart);
@@ -1524,7 +1524,7 @@ function findReplacePerf(filename: string): void {
 					pos + i,
 					pos + i + 3,
 					client.mergeTree.localPerspective,
-					{ type: "set", clientId: client.getClientId(), seq: 1 },
+					{ clientId: client.getClientId(), seq: 1 },
 					undefined as never,
 				);
 				insertText({

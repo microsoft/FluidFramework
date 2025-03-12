@@ -178,13 +178,7 @@ export function markRangeRemoved({
 			? mergeTree.localPerspective
 			: new PriorPerspective(refSeq, clientId);
 
-	mergeTree.markRangeRemoved(
-		start,
-		end,
-		perspective,
-		{ type: "set", clientId, seq, localSeq },
-		opArgs,
-	);
+	mergeTree.markRangeRemoved(start, end, perspective, { clientId, seq, localSeq }, opArgs);
 }
 
 export function obliterateRange({
@@ -212,13 +206,7 @@ export function obliterateRange({
 			? mergeTree.localPerspective
 			: new PriorPerspective(refSeq, clientId);
 
-	mergeTree.obliterateRange(
-		start,
-		end,
-		perspective,
-		{ type: "slice", clientId, seq, localSeq },
-		opArgs,
-	);
+	mergeTree.obliterateRange(start, end, perspective, { clientId, seq, localSeq }, opArgs);
 }
 
 export function nodeOrdinalsHaveIntegrity(block: MergeBlock): boolean {

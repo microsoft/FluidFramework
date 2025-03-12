@@ -241,12 +241,39 @@ export interface OperationTimestamp {
 	localSeq?: number;
 }
 
-export interface SetRemoveOperationTimestamp extends OperationTimestamp {
-	type: "set";
+/**
+ * {@link OperationTimestamp} for an 'insert' operation.
+ */
+export interface InsertOperationTimestamp extends OperationTimestamp {
+	type: "insert";
 }
 
+/**
+ * {@link OperationTimestamp} for a 'set remove' operation. This aligns with the `mapRangeRemoved` API in MergeTree.
+ *
+ * @remarks The terminology here comes from the fact that the removal should affect only the *set* of nodes that were
+ * specified at the time the local client issued the remove, and not any nodes that were inserted concurrently.
+ *
+ * Not using "remove" and "obliterate" here allows us to unambiguously use the term "remove" elsewhere in code to mean
+ * "removed from the tree, either by MergeTree.obliterateRange or MergeTree.removeRange". This is convenient as the vast majority
+ * of merge-tree code only cares about segment visibility and not the specific operation that caused a segment to be removed.
+ */
+export interface SetRemoveOperationTimestamp extends OperationTimestamp {
+	type: "setRemove";
+}
+
+/**
+ * {@link OperationTimestamp} for a 'set remove' operation. This aligns with the `mapRangeRemoved` API in MergeTree.
+ *
+ * @remarks The terminology here comes from the fact that the removal should affect the *slice* of nodes between the
+ * start and end point specified by the local client, which includes any nodes that were inserted concurrently.
+ *
+ * Not using "remove" and "obliterate" here allows us to unambiguously use the term "remove" elsewhere in code to mean
+ * "removed from the tree, either by MergeTree.obliterateRange or MergeTree.removeRange". This is convenient as the vast majority
+ * of merge-tree code only cares about segment visibility and not the specific operation that caused a segment to be removed.
+ */
 export interface SliceRemoveOperationTimestamp extends OperationTimestamp {
-	type: "slice";
+	type: "sliceRemove";
 }
 
 export type RemoveOperationTimestamp =

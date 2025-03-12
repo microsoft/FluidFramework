@@ -47,7 +47,7 @@ abstract class BaseEndpointSegment
 	 * of undefined/0. we leverage this to create
 	 * a 0 length segment for an endpoint of the tree
 	 */
-	removes = [{ type: "set", seq: 0, clientId: LocalClientId } as const];
+	removes = [{ type: "setRemove", seq: 0, clientId: LocalClientId } as const];
 	attribution: undefined;
 	propertyManager: undefined;
 	localSeq: undefined;
@@ -56,7 +56,7 @@ abstract class BaseEndpointSegment
 	clientId = LocalClientId;
 	cachedLength = 1;
 
-	insert = { seq: 0, clientId: LocalClientId };
+	insert = { type: "insert", seq: 0, clientId: LocalClientId } as const;
 
 	isLeaf(): this is ISegment {
 		return true;

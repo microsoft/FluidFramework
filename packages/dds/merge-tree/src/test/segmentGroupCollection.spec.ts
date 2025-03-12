@@ -18,6 +18,7 @@ describe("segmentGroupCollection", () => {
 		parent = new MergeBlock(1);
 		const newSeg = (segment = overwriteInfo<IHasInsertionInfo>(TextSegment.make("abc"), {
 			insert: {
+				type: "insert",
 				clientId: 0,
 				seq: 1,
 			},
@@ -68,6 +69,7 @@ describe("segmentGroupCollection", () => {
 
 		const segmentCopy = overwriteInfo<IHasInsertionInfo>(TextSegment.make(""), {
 			insert: {
+				type: "insert",
 				clientId: 0,
 				seq: 1,
 			},

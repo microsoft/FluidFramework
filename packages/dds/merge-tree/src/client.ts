@@ -413,7 +413,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				localInserts++;
 			}
 			if (isRemoved(seg) && timestampUtils.isLocal(seg.removes[seg.removes.length - 1])) {
-				if (seg.removes[seg.removes.length - 1].type === "set") {
+				if (seg.removes[seg.removes.length - 1].type === "setRemove") {
 					localRemoves++;
 				} else {
 					localObliterates++;
@@ -537,40 +537,22 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			0x866 /* Unexpected op type on range obliterate! */,
 		);
 		const op = opArgs.op;
-		const { perspective, stamp } = this.perspectiveFromOpArgs(opArgs);
+		const { perspective, stamp } = this.computePerspectiveAndStamp(opArgs);
 
 		if (this._mergeTree.options?.mergeTreeEnableSidedObliterate) {
 			const { start, end } = this.getValidSidedRange(op, perspective);
-			this._mergeTree.obliterateRange(
-				start,
-				end,
-				perspective,
-				{
-					type: "slice",
-					...stamp,
-				},
-				opArgs,
-			);
+			this._mergeTree.obliterateRange(start, end, perspective, stamp, opArgs);
 		} else {
 			assert(
 				op.type === MergeTreeDeltaType.OBLITERATE,
 				0xa43 /* Unexpected sided obliterate while mergeTreeEnableSidedObliterate is disabled */,
 			);
 			const { start, end } = this.getValidOpRange(op, perspective);
-			this._mergeTree.obliterateRange(
-				start,
-				end,
-				perspective,
-				{
-					type: "slice",
-					...stamp,
-				},
-				opArgs,
-			);
+			this._mergeTree.obliterateRange(start, end, perspective, stamp, opArgs);
 		}
 	}
 
-	private perspectiveFromOpArgs(opArgs: IMergeTreeDeltaOpArgs): {
+	private computePerspectiveAndStamp(opArgs: IMergeTreeDeltaOpArgs): {
 		perspective: PriorPerspective;
 		stamp: OperationTimestamp;
 	} {
@@ -610,19 +592,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			0x02d /* "Unexpected op type on range remove!" */,
 		);
 		const op = opArgs.op;
-		const { perspective, stamp } = this.perspectiveFromOpArgs(opArgs);
+		const { perspective, stamp } = this.computePerspectiveAndStamp(opArgs);
 		const range = this.getValidOpRange(op, perspective);
 
-		this._mergeTree.markRangeRemoved(
-			range.start,
-			range.end,
-			perspective,
-			{
-				type: "set",
-				...stamp,
-			},
-			opArgs,
-		);
+		this._mergeTree.markRangeRemoved(range.start, range.end, perspective, stamp, opArgs);
 	}
 
 	/**
@@ -635,7 +608,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			0x02e /* "Unexpected op type on range annotate!" */,
 		);
 		const op = opArgs.op;
-		const { perspective, stamp } = this.perspectiveFromOpArgs(opArgs);
+		const { perspective, stamp } = this.computePerspectiveAndStamp(opArgs);
 		const range = this.getValidOpRange(op, perspective);
 
 		this._mergeTree.annotateRange(range.start, range.end, op, perspective, stamp, opArgs);
@@ -652,7 +625,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			0x02f /* "Unexpected op type on range insert!" */,
 		);
 		const op = opArgs.op;
-		const { perspective, stamp } = this.perspectiveFromOpArgs(opArgs);
+		const { perspective, stamp } = this.computePerspectiveAndStamp(opArgs);
 		const range = this.getValidOpRange(op, perspective);
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
@@ -990,7 +963,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 					if (removeInfo !== undefined && timestampUtils.isAcked(removeInfo.removes[0])) {
 						assert(
-							removeInfo.removes[0].type === "slice",
+							removeInfo.removes[0].type === "sliceRemove",
 							"Remove on insertion must be caused by obliterate.",
 						);
 						errorIfOptionNotTrue(
@@ -1003,6 +976,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						// this allows us to not send the op as even the local client will ignore the segment
 						overwriteInfo<IHasInsertionInfo>(segment, {
 							insert: {
+								type: "insert",
 								seq: UniversalSequenceNumber,
 								localSeq: undefined,
 								clientId: NonCollabClient,

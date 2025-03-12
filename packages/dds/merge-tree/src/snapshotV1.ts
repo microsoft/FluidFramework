@@ -290,15 +290,16 @@ export class SnapshotV1 {
 
 				// We have already dispensed with removed segments below the MSN and removed segments with unassigned
 				// sequence numbers.  Any remaining removal info should be preserved.
-				if (isRemoved(segment) && segment.removes.some((r) => r.type === "set")) {
-					const removes = segment.removes.filter((r) => r.type === "set");
+				if (isRemoved(segment) && segment.removes.some((r) => r.type === "setRemove")) {
+					const removes = segment.removes.filter((r) => r.type === "setRemove");
 					const firstRemove = removes[0];
 					assert(
 						timestampUtils.isAcked(firstRemove) &&
 							timestampUtils.greaterThan(firstRemove, minSeqTimestamp),
 						0x065 /* "On removal info preservation, segment has invalid removed sequence number!" */,
 					);
-					// TODO: We drop data here which will be necessary to allow perspectives of remote clients that
+					// TODO: By not preserving sequence numbers other than the first move,
+					//  We drop data here which will be necessary to allow perspectives of remote clients that
 					// don't include all of their ops. This should be remedied at some point.
 					raw.removedSeq = firstRemove.seq;
 
@@ -310,8 +311,8 @@ export class SnapshotV1 {
 					raw.removedClientIds = removes.map(({ clientId }) => this.getLongClientId(clientId));
 				}
 
-				if (isRemoved(segment) && segment.removes.some((r) => r.type === "slice")) {
-					const moves = segment.removes.filter((r) => r.type === "slice");
+				if (isRemoved(segment) && segment.removes.some((r) => r.type === "sliceRemove")) {
+					const moves = segment.removes.filter((r) => r.type === "sliceRemove");
 					const firstMove = moves[0];
 					assert(
 						timestampUtils.isAcked(firstMove) &&

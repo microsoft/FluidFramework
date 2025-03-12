@@ -17,6 +17,7 @@ import { TextSegment } from "../textSegment.js";
 
 const defaultInsertionInfo: IHasInsertionInfo = {
 	insert: {
+		type: "insert",
 		clientId: NonCollabClient,
 		seq: UniversalSequenceNumber,
 	},
