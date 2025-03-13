@@ -26,7 +26,6 @@ describe("reactSharedTreeView", () => {
 				// as well as a key under the root data object, and SharedObjects only need one key.
 				// Maybe we can default the shared object's key to be derived from the data objects key by default?
 				tree: treeDataObject(
-					"tree",
 					new TreeViewConfiguration({ schema: Inventory }),
 					() => new Inventory({ nuts: 5, bolts: 6 }),
 				),
