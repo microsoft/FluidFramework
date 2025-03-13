@@ -13,7 +13,6 @@ import {
 	loadContainerRuntime,
 	RuntimeHeaders,
 	type IContainerRuntimeOptionsInternal,
-	type ISummaryConfigurationHeuristics,
 } from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import/no-deprecated
 import type { IContainerRuntimeWithResolveHandle_Deprecated } from "@fluidframework/container-runtime-definitions/internal";
@@ -79,15 +78,13 @@ export class StressDataObject extends DataObject {
 		"defaultStressDataObject",
 	);
 	protected async getDefaultStressDataObject(): Promise<DefaultStressDataObject> {
-		const defaultDataStoreHandle =
-			await this.context.containerRuntime.getAliasedDataStoreEntryPoint(
-				DefaultStressDataObject.alias,
-			);
-		assert(defaultDataStoreHandle !== undefined, "default must exist");
+		const defaultDataStore =
+			await this.context.containerRuntime.getAliasedDataStoreEntryPoint("default");
+		assert(defaultDataStore !== undefined, "default must exist");
 
 		const maybe: FluidObject<DefaultStressDataObject> | undefined =
-			await defaultDataStoreHandle.get();
-		assert(maybe?.DefaultStressDataObject !== undefined, "must be DefaultStressDataObject");
+			await defaultDataStore.get();
+		assert(maybe.DefaultStressDataObject !== undefined, "must be DefaultStressDataObject");
 		return maybe.DefaultStressDataObject;
 	}
 
@@ -149,8 +146,7 @@ export class StressDataObject extends DataObject {
 	public async createDataStore(tag: `datastore-${number}`, asChild: boolean) {
 		const dataStore = await this.context.containerRuntime.createDataStore(
 			asChild
-				? //* Q: I don't understand what this is doing. I don't really know how package paths work
-					[...this.context.packagePath, StressDataObject.factory.type]
+				? [...this.context.packagePath, StressDataObject.factory.type]
 				: StressDataObject.factory.type,
 		);
 
@@ -164,7 +160,6 @@ export class StressDataObject extends DataObject {
 		});
 	}
 }
-
 export type ContainerObjects =
 	| { type: "newBlob"; handle: IFluidHandle; tag: `blob-${number}` }
 	| {
@@ -188,7 +183,6 @@ export class DefaultStressDataObject extends StressDataObject {
 	 */
 	private readonly _locallyCreatedObjects: ContainerObjects[] = [];
 	public async getContainerObjects(): Promise<readonly Readonly<ContainerObjects>[]> {
-		//* Q: How do we not end up with duplicates of the locally created ones, since they'll also be found in this.containerObjectMap?
 		const containerObjects: Readonly<ContainerObjects>[] = [...this._locallyCreatedObjects];
 		const containerRuntime = // eslint-disable-next-line import/no-deprecated
 			this.context.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
@@ -211,7 +205,6 @@ export class DefaultStressDataObject extends StressDataObject {
 				const maybe: FluidObject<IFluidLoadable & StressDataObject> | undefined = resp.value;
 				const handle = maybe?.IFluidLoadable?.handle;
 				if (handle !== undefined) {
-					//* Q: Is having the entry containerObjectsMap redundant with handle.get?
 					const type = entry?.type;
 					switch (type) {
 						case "newBlob":
@@ -284,23 +277,17 @@ export class DefaultStressDataObject extends StressDataObject {
 	}
 
 	public inStagingMode(): boolean {
-		const inStagingMode = this.context.containerRuntime.inStagingMode;
-		assert(inStagingMode === (this.stageControls !== undefined), "staging mode mismatch");
-		return inStagingMode;
+		return this.context.containerRuntime.inStagingMode;
 	}
 
 	public exitStagingMode(commit: boolean) {
 		assert(this.stageControls !== undefined, "must have staging mode handle");
-		assert(this.inStagingMode(), "must be in staging mode");
-
 		if (commit) {
 			this.stageControls.commitChanges();
 		} else {
 			this.stageControls.discardChanges();
 		}
-
 		this.stageControls = undefined;
-		assert(this.inStagingMode() === false, "must not be in staging mode after exit");
 	}
 }
 
@@ -318,7 +305,7 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 			summaryConfigOverrides: {
 				maxOps: 3,
 				initialSummarizerDelayMs: 0,
-			} satisfies Partial<ISummaryConfigurationHeuristics> as ISummaryConfigurationHeuristics,
+			} as any,
 		},
 	};
 

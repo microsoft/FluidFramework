@@ -28,8 +28,6 @@ function repeatFactoryAsync<T, TState = void>(
 	};
 }
 
-//* Q: Why are we left using any here? Well, when I try using BaseOperation,
-//* the reducer hits a type error since it takes in TOperation so it's a contravariance thing or something
 const generateSubModelMap = (
 	...models: Omit<DDSFuzzModel<IChannelFactory, any>, "workloadName">[]
 ) => {

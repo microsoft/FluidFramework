@@ -11,6 +11,7 @@ import type {
 	AsyncReducer,
 	BaseFuzzTestState,
 	BaseOperation,
+	IRandom,
 	MinimizationTransform,
 	SaveDestination,
 	SaveInfo,
@@ -75,6 +76,7 @@ export interface LocalServerStressState extends BaseFuzzTestState {
 	localDeltaConnectionServer: ILocalDeltaConnectionServer;
 	codeLoader: ICodeDetailsLoader;
 	validationClient: Client;
+	random: IRandom;
 	clients: Client[];
 	client: Client;
 	datastore: StressDataObject;
