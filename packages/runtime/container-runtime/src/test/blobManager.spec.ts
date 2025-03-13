@@ -97,7 +97,7 @@ export class MockRuntime
 		this.blobManager = new BlobManager({
 			routeContext: undefined as unknown as IFluidHandleContext,
 			snapshot,
-			getStorage: () => this.getStorage(),
+			storage: this.getStorage(),
 			sendBlobAttachOp: (localId: string, blobId?: string) =>
 				this.sendBlobAttachOp(localId, blobId),
 			blobRequested: () => undefined,

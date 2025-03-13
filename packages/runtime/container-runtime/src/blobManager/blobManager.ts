@@ -177,7 +177,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private stopAttaching: boolean = false;
 
 	private readonly routeContext: IFluidHandleContext;
-	private readonly getStorage: () => IDocumentStorageService;
+	private readonly storage: IDocumentStorageService;
 	// Called when a blob node is requested. blobPath is the path of the blob's node in GC's graph.
 	// blobPath's format - `/<basePath>/<blobId>`.
 	private readonly blobRequested: (blobPath: string) => void;
@@ -194,7 +194,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		readonly routeContext: IFluidHandleContext;
 
 		snapshot: IBlobManagerLoadInfo;
-		readonly getStorage: () => IDocumentStorageService;
+		readonly storage: IDocumentStorageService;
 		/**
 		 * Submit a BlobAttach op. When a blob is uploaded, there is a short grace period before which the blob is
 		 * deleted. The BlobAttach op notifies the server that blob is in use. The server will then not delete the
@@ -220,7 +220,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		const {
 			routeContext,
 			snapshot,
-			getStorage,
+			storage,
 			sendBlobAttachOp,
 			blobRequested,
 			isBlobDeleted,
@@ -229,7 +229,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			localBlobIdGenerator,
 		} = props;
 		this.routeContext = routeContext;
-		this.getStorage = getStorage;
+		this.storage = storage;
 		this.blobRequested = blobRequested;
 		this.isBlobDeleted = isBlobDeleted;
 		this.runtime = runtime;
@@ -374,16 +374,14 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			this.mc.logger,
 			{ eventName: "AttachmentReadBlob", id: storageId },
 			async (event) => {
-				return this.getStorage()
-					.readBlob(storageId)
-					.catch((error) => {
-						if (this.runtime.disposed) {
-							// If the runtime is disposed, this is not an error we care to track, it's expected behavior.
-							event.cancel({ category: "generic" });
-						}
+				return this.storage.readBlob(storageId).catch((error) => {
+					if (this.runtime.disposed) {
+						// If the runtime is disposed, this is not an error we care to track, it's expected behavior.
+						event.cancel({ category: "generic" });
+					}
 
-						throw error;
-					});
+					throw error;
+				});
 			},
 			{ end: true, cancel: "error" },
 		);
@@ -417,7 +415,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		// Blobs created while the container is detached are stored in IDetachedBlobStorage.
 		// The 'IDocumentStorageService.createBlob()' call below will respond with a localId.
-		const response = await this.getStorage().createBlob(blob);
+		const response = await this.storage.createBlob(blob);
 		this.setRedirection(response.id, undefined);
 		return this.getBlobHandle(response.id);
 	}
@@ -476,7 +474,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		return runWithRetry(
 			async () => {
 				try {
-					return await this.getStorage().createBlob(blob);
+					return await this.storage.createBlob(blob);
 				} catch (error) {
 					const entry = this.pendingBlobs.get(localId);
 					assert(

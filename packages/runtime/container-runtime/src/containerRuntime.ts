@@ -1687,7 +1687,7 @@ export class ContainerRuntime
 		this.blobManager = new BlobManager({
 			routeContext: this.handleContext,
 			snapshot: blobManagerSnapshot,
-			getStorage: () => this.storage,
+			storage: this.storage,
 			sendBlobAttachOp: (localId: string, blobId?: string) => {
 				if (!this.disposed) {
 					this.submit(
