@@ -11,14 +11,46 @@ import * as opstampUtils from "./stamps.js";
 import type { OperationStamp, InsertOperationStamp, RemoveOperationStamp } from "./stamps.js";
 
 /**
- * @internal
+ * A perspective which includes some subset of operations known to the local client.
+ *
+ * This helps the local client reason about the state of other clients when they issued an operation.
  */
 export interface Perspective {
+	/**
+	 * The sequence number last seen from this perspective. Same concept as `ISequencedDocumentMessage.referenceSequenceNumber`.
+	 * @privateRemarks
+	 * This currently allows inter-operation between MergeTree methods and the partial lengths implementation, which still depends
+	 * on the (refSeq, clientId, localSeq?) representation of perspectives.
+	 */
 	readonly refSeq: number;
+
+	/**
+	 * The client id for this perspective.
+	 * @privateRemarks
+	 * This currently allows inter-operation between MergeTree methods and the partial lengths implementation, which still depends
+	 * on the (refSeq, clientId, localSeq?) representation of perspectives.
+	 */
 	readonly clientId: number;
+
+	/**
+	 * When this is a local perspective, the local sequence number last seen from this perspective.
+	 *
+	 * Perspectives with defined `localSeq` values are useful in reconnection flows, where the local client may need to resend some
+	 * of its ops after rederiving their new equivalents.
+	 * @privateRemarks
+	 * This currently allows inter-operation between MergeTree methods and the partial lengths implementation, which still depends
+	 * on the (refSeq, clientId, localSeq?) representation of perspectives.
+	 */
 	readonly localSeq?: number;
+
+	/**
+	 * @returns Whether the segment is present (visible) from this perspective
+	 */
 	isSegmentPresent(segment: ISegmentLeaf): boolean;
 
+	/**
+	 * @returns Whether this perspective has seen the given operation.
+	 */
 	hasOccurred(stamp: RemoveOperationStamp | InsertOperationStamp): boolean;
 
 	nextSegment(mergeTree: MergeTree, segment: ISegmentLeaf, forward?: boolean): ISegmentLeaf;
@@ -128,7 +160,7 @@ export class LocalReconnectingPerspective extends PerspectiveBase implements Per
  *
  * This is the perspective that the application sees.
  * @remarks
- * This should be representable using {@link PriorPerspective} with a refSeq of `Number.MAX_SAFE_INTEGER`, but having an explicit
+ * This can be represented using {@link PriorPerspective} with a refSeq of `Number.MAX_SAFE_INTEGER`, but having an explicit
  * variant of this perspective renders extra refSeq checks unnecessary and is a bit easier to read.
  */
 export class LocalDefaultPerspective extends PerspectiveBase implements Perspective {
