@@ -872,9 +872,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					}
 					// Wait for all blobs to be attached. This is important, otherwise serialized container
 					// could send the blobAttach op without any op that references the blob, making it useless.
-					await Promise.allSettled(attachBlobsP).catch(() => {
-						return undefined;
-					});
+					await Promise.allSettled(attachBlobsP);
 				}
 
 				for (const [id, entry] of this.pendingBlobs) {
