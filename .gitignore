@@ -43,6 +43,3 @@ UPCOMING.md
 # This is created to later publish its content on the pipeline and do not need to be included on git as
 # artifacts or bundleAnalisys folders. See scripts/pack-distlib.sh for more details.
 nested_lib_dist
-
-# Local server stress tests
-packages/test/local-server-stress-tests/src/test/results/default/

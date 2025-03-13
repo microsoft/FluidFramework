@@ -332,7 +332,7 @@ export class Outbox {
 		batchManager: BatchManager,
 		disableGroupedBatching: boolean = false,
 		resubmittingBatchId?: BatchId,
-		stagedArg?: boolean, //* Revisit name.  Also see if this is redundant with 'staged' in the BatchManager's messages
+		stagedArg?: boolean,
 	): void {
 		if (batchManager.empty) {
 			return;
@@ -341,8 +341,6 @@ export class Outbox {
 		const rawBatch = batchManager.popBatch(resubmittingBatchId);
 		const staged = stagedArg === true || rawBatch.staged === true;
 
-		//* Double-check (and test) about reentrancy for staged batch.
-		//* Is it possible to be flushing a staged batch that turns out to be reentrant?
 		const shouldGroup =
 			!disableGroupedBatching && this.params.groupingManager.shouldGroup(rawBatch);
 		if (batchManager.options.canRebase && rawBatch.hasReentrantOps === true && shouldGroup) {

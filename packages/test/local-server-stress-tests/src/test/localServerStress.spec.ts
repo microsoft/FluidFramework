@@ -89,7 +89,7 @@ function makeGenerator(): AsyncGenerator<StressOperations, LocalServerStressStat
 		[
 			async ({ random }) => ({
 				type: "exitStagingMode",
-				commit: true, //* random.bool(),
+				commit: true, //* TODO: Back to random.bool(),
 			}),
 			25,
 			(state) =>

@@ -201,6 +201,7 @@ describe("Scenario Test", () => {
 	 * --- Reconnect during staging mode (should resubmit that before we exit)
 	 * --- No reconnect during staging mode (state still pending, wait for ack)
 	 * --- Offline during staging mode (state still pending, wait for reconnect)
+	 * - Reentrancy while in staging mode
 	 */
 	it("enter staging mode and merge", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
@@ -225,7 +226,7 @@ describe("Scenario Test", () => {
 		await waitForSave([clients.loaded]);
 
 		// Wait for the mainline changes to propagate
-		//* TODO: Need some of e2e test utils like ContainerLoaderTracker to properly wait here
+		//* TODO: Replace this with a promise that actually waits for the mainline changes to propagate (update waitForSave above?)
 		await new Promise<void>((resolve) => setTimeout(resolve, 100));
 
 		assert.notDeepStrictEqual(
@@ -275,7 +276,7 @@ describe("Scenario Test", () => {
 		await waitForSave([clients.loaded]);
 
 		// Wait for the mainline changes to propagate
-		//* TODO: Need some of e2e test utils like ContainerLoaderTracker to properly wait here
+		//* TODO: Replace this with a promise that actually waits for the mainline changes to propagate (update waitForSave above?)
 		await new Promise<void>((resolve) => setTimeout(resolve, 100));
 
 		assert.notDeepStrictEqual(

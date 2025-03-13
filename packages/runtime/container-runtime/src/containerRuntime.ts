@@ -2726,22 +2726,7 @@ export class ContainerRuntime
 		return this._loadIdCompressor;
 	}
 
-	private lastStagingSetConnectionState: { connected: boolean; clientId?: string } | undefined;
 	public setConnectionState(connected: boolean, clientId?: string): void {
-		// hack: defer connecting if we are in staging mode. This prevents a bug where
-		// we reconnect with outstanding ops that were generated before we entered staging mode
-		// and the ops end up ahead of the ops we created within staging mode in the outbox.
-		// ideally we could solve this in a way that still lets the old ops be resubmitted.
-		if (this.inStagingMode) {
-			if (connected) {
-				this.lastStagingSetConnectionState = { connected, clientId };
-				return;
-			}
-			this.lastStagingSetConnectionState = undefined;
-			if (connected === this.connected) {
-				return;
-			}
-		}
 		// Validate we have consistent state
 		const currentClientId = this._audience.getSelf()?.clientId;
 		assert(clientId === currentClientId, 0x977 /* input clientId does not match Audience */);
@@ -3504,15 +3489,6 @@ export class ContainerRuntime
 			this.outbox.flush(undefined, true /* staged */);
 
 			discardOrCommit();
-
-			//* TODO: Should be able to remove this
-			if (this.lastStagingSetConnectionState !== undefined) {
-				this.setConnectionState(
-					this.lastStagingSetConnectionState.connected,
-					this.lastStagingSetConnectionState.clientId,
-				);
-				this.lastStagingSetConnectionState = undefined;
-			}
 		};
 
 		const stageControls = {
@@ -3521,7 +3497,7 @@ export class ContainerRuntime
 			}),
 			commitChanges: exitStagingMode(() => {
 				// All staged changes are in the PSM, so just replay them (ignore pre-staging batches)
-				//* FUTURE: Have this do squash-rebase instead of resubmitting all intermediate changes
+				// FUTURE: Have this do squash-rebase instead of resubmitting all intermediate changes
 				if (this.connected) {
 					this.pendingStateManager.replayPendingStates(true /* onlyStagedBatched */);
 				} else {
@@ -4683,9 +4659,8 @@ export class ContainerRuntime
 			if (flushImmediatelyOnSubmit) {
 				this.flush();
 			} else {
-				//* TODO: Is there a race condition where you're IN Staging Mode here, but OUT by the time it's actually run?
-				//* If that happened, exiting Staging Mode would flush the outbox, and the resulting flush would be a no-op (or would have post-stage changes).
-				//* So we can/should simply check inStagingMode at the time flush is actually run.
+				// Note: We don't pass 'inStagingMode', since exiting Staging Mode would flush the outbox,
+				// and whenever this scheduled flush runs it should check the current state as of then.
 				this.scheduleFlush();
 			}
 		} catch (error) {

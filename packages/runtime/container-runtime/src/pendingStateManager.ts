@@ -461,9 +461,6 @@ export class PendingStateManager implements IDisposable {
 		message: InboundSequencedContainerRuntimeMessage;
 		localOpMetadata: unknown;
 	}[] {
-		//* Once we leave StagingMode, we would clear the 'staged' flag on the pending messages,
-		//* so we should be able to assert here that the pending messages are not marked as 'staged'.
-
 		if ("batchStart" in inbound) {
 			this.onLocalBatchBegin(inbound.batchStart, inbound.length);
 		}
@@ -577,6 +574,7 @@ export class PendingStateManager implements IDisposable {
 			pendingMessage !== undefined,
 			0xa21 /* No pending message found as we start processing this remote batch */,
 		);
+		assert(pendingMessage.batchInfo.staged !== true, "Can't get an ack from a staged batch");
 
 		// If this batch became empty on resubmit, batch.messages will be empty (but keyMessage is always set)
 		// and the next pending message should be an empty batch marker.
@@ -778,7 +776,6 @@ export class PendingStateManager implements IDisposable {
 function patchbatchInfo(
 	message: IPendingMessageFromStash,
 ): asserts message is IPendingMessage {
-	//* TODO: Update this to fill in staged as applicable (maybe nothing to do here). Also in the future we could call all these staged to give user a chance to "review"
 	const batchInfo: IPendingMessageFromStash["batchInfo"] = message.batchInfo;
 	if (batchInfo === undefined) {
 		// Using uuid guarantees uniqueness, retaining existing behavior
