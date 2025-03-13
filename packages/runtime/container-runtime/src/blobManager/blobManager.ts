@@ -15,6 +15,7 @@ import {
 } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	IEvent,
+	IEventProvider,
 	IFluidHandleContext,
 	IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
@@ -147,9 +148,13 @@ const stashedPendingBlobOverrides: Pick<
 
 export const blobManagerBasePath = "_blobs" as const;
 
-export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
+export class BlobManager {
 	private readonly mc: MonitoringContext;
 
+	private readonly publicEvents = new TypedEventEmitter<IBlobManagerEvents>();
+	public get events(): IEventProvider<IBlobManagerEvents> {
+		return this.publicEvents;
+	}
 	private readonly internalEvents = new TypedEventEmitter<IBlobManagerInternalEvents>();
 
 	/**
@@ -216,7 +221,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		stashedBlobs: IPendingBlobs | undefined;
 		readonly localBlobIdGenerator?: (() => string) | undefined;
 	}) {
-		super();
 		const {
 			routeContext,
 			snapshot,
@@ -533,7 +537,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	private deletePendingBlob(id: string): void {
 		if (this.pendingBlobs.delete(id) && !this.hasPendingBlobs) {
-			this.emit("noPendingBlobs");
+			this.publicEvents.emit("noPendingBlobs");
 		}
 	}
 

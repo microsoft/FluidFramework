@@ -373,7 +373,7 @@ describe("BlobManager", () => {
 			assert((runtime.blobManager as any).pendingBlobs.size === 0);
 		};
 
-		runtime.blobManager.on("noPendingBlobs", () => onNoPendingBlobs());
+		runtime.blobManager.events.on("noPendingBlobs", () => onNoPendingBlobs());
 	});
 
 	afterEach(async () => {
@@ -420,7 +420,7 @@ describe("BlobManager", () => {
 		await runtime.attach();
 		await runtime.connect();
 		let count = 0;
-		runtime.blobManager.on("noPendingBlobs", () => count++);
+		runtime.blobManager.events.on("noPendingBlobs", () => count++);
 
 		await createBlob(IsoBuffer.from("blob", "utf8"));
 		await runtime.processAll();
