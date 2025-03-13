@@ -18,7 +18,7 @@ export interface IInventoryListAppModel {
 	/**
 	 * An inventory tracker list using the new shared tree.
 	 */
-	readonly newTreeInventoryList: IInventoryList;
+	// readonly newTreeInventoryList: IInventoryList;
 }
 
 export interface IInventoryItemEvents {
@@ -45,4 +45,6 @@ export interface IInventoryList extends EventEmitter {
 	 * TODO: Consider using tiny-typed-emitter if not using DataObject
 	 */
 	on(event: "itemAdded" | "itemDeleted", listener: (item: IInventoryItem) => void): this;
+
+	readonly isNewTree: boolean;
 }

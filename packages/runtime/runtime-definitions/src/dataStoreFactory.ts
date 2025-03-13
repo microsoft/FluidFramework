@@ -82,4 +82,6 @@ export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
 	createDataStore?(context: IFluidDataStoreContext): {
 		readonly runtime: IFluidDataStoreChannel;
 	};
+
+	convertDataFn?(runtime: IFluidDataStoreChannel): Promise<void>;
 }

@@ -14,6 +14,11 @@ import { PureDataObject } from "./pureDataObject.js";
 import type { DataObjectTypes } from "./types.js";
 
 /**
+ * TODO
+ */
+export const dataObjectRootDirectoryId = "root";
+
+/**
  * DataObject is a base data store that is primed with a root directory. It
  * ensures that it is created and ready before you can access it.
  *
@@ -29,7 +34,7 @@ export abstract class DataObject<
 	I extends DataObjectTypes = DataObjectTypes,
 > extends PureDataObject<I> {
 	private internalRoot: ISharedDirectory | undefined;
-	private readonly rootDirectoryId = "root";
+	private readonly rootDirectoryId = dataObjectRootDirectoryId;
 
 	/**
 	 * The root directory will either be ready or will return an error. If an error is thrown

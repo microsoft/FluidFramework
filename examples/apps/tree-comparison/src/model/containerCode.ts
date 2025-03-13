@@ -13,23 +13,31 @@ import type { IContainerRuntime } from "@fluidframework/container-runtime-defini
 import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces.js";
 
 import { InventoryListAppModel } from "./appModel.js";
-import { LegacyTreeInventoryListFactory } from "./legacyTreeInventoryList.js";
-import { NewTreeInventoryListFactory } from "./newTreeInventoryList.js";
+import {
+	LegacyTreeInventoryListFactory,
+	LegacyTreeInventoryListFactoryNew,
+} from "./legacyTreeInventoryList.js";
+// import { NewTreeInventoryListFactory } from "./newTreeInventoryList.js";
 
 export const legacyTreeInventoryListId = "legacy-tree-inventory-list";
-export const newTreeInventoryListId = "new-tree-inventory-list";
+// export const newTreeInventoryListId = "new-tree-inventory-list";
 
 /**
  * @internal
  */
 export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IInventoryListAppModel> {
-	public constructor() {
+	public constructor(useNew: boolean = false) {
 		super(
 			new Map([
-				LegacyTreeInventoryListFactory.registryEntry,
-				NewTreeInventoryListFactory.registryEntry,
+				useNew
+					? LegacyTreeInventoryListFactoryNew.registryEntry
+					: LegacyTreeInventoryListFactory.registryEntry,
+				// NewTreeInventoryListFactory.registryEntry,
 			]), // registryEntries
-			{ enableRuntimeIdCompressor: "on" },
+			{
+				enableRuntimeIdCompressor: "on",
+				summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
+			},
 		);
 	}
 
@@ -41,10 +49,10 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 			LegacyTreeInventoryListFactory.type,
 		);
 		await legacyTreeInventoryList.trySetAlias(legacyTreeInventoryListId);
-		const newTreeInventoryList = await runtime.createDataStore(
-			NewTreeInventoryListFactory.type,
-		);
-		await newTreeInventoryList.trySetAlias(newTreeInventoryListId);
+		// const newTreeInventoryList = await runtime.createDataStore(
+		// 	NewTreeInventoryListFactory.type,
+		// );
+		// await newTreeInventoryList.trySetAlias(newTreeInventoryListId);
 	}
 
 	/**
@@ -55,10 +63,10 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 			runtime,
 			legacyTreeInventoryListId,
 		);
-		const newTreeInventoryList = await getDataStoreEntryPoint<IInventoryList>(
-			runtime,
-			newTreeInventoryListId,
-		);
-		return new InventoryListAppModel(legacyTreeInventoryList, newTreeInventoryList);
+		// const newTreeInventoryList = await getDataStoreEntryPoint<IInventoryList>(
+		// 	runtime,
+		// 	newTreeInventoryListId,
+		// );
+		return new InventoryListAppModel(legacyTreeInventoryList);
 	}
 }

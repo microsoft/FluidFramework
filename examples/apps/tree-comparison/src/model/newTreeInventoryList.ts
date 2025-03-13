@@ -43,7 +43,7 @@ export class InventorySchema extends builder.object("Contoso:Inventory-1.0.0", {
 
 export const treeConfiguration = new TreeViewConfiguration({ schema: InventorySchema });
 
-const sharedTreeKey = "sharedTree";
+export const sharedTreeKey = "sharedTree";
 
 /**
  * NewTreeInventoryItem is the local object with a friendly interface for the view to use.
@@ -89,6 +89,7 @@ class NewTreeInventoryItem
 }
 
 export class NewTreeInventoryList extends DataObject implements IInventoryList {
+	public isNewTree = true;
 	private _sharedTree: ITree | undefined;
 	private get sharedTree(): ITree {
 		if (this._sharedTree === undefined) {

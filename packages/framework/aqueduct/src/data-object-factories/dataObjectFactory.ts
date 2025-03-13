@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
+import { Deferred } from "@fluidframework/core-utils/internal";
+import {
+	DataStoreMessageType,
+	FluidDataStoreRuntime,
+} from "@fluidframework/datastore/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
 	SharedMap,
@@ -11,11 +15,21 @@ import {
 	MapFactory,
 	// eslint-disable-next-line import/no-deprecated
 	SharedDirectory,
+	type ISharedDirectory,
 } from "@fluidframework/map/internal";
-import type { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
+import type {
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	NamedFluidDataStoreRegistryEntries,
+} from "@fluidframework/runtime-definitions/internal";
 import type { FluidObjectSymbolProvider } from "@fluidframework/synthesize/internal";
 
-import type { DataObject, DataObjectTypes, IDataObjectProps } from "../data-objects/index.js";
+import {
+	type DataObject,
+	type DataObjectTypes,
+	type IDataObjectProps,
+	dataObjectRootDirectoryId,
+} from "../data-objects/index.js";
 
 import { PureDataObjectFactory } from "./pureDataObjectFactory.js";
 
@@ -40,6 +54,7 @@ export class DataObjectFactory<
 		optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>,
 		registryEntries?: NamedFluidDataStoreRegistryEntries,
 		runtimeFactory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
+		convertDataFn?: (runtime: FluidDataStoreRuntime, root: ISharedDirectory) => Promise<void>,
 	) {
 		const mergedObjects = [...sharedObjects];
 
@@ -55,6 +70,85 @@ export class DataObjectFactory<
 			mergedObjects.push(SharedMap.getFactory());
 		}
 
-		super(type, ctor, mergedObjects, optionalProviders, registryEntries, runtimeFactory);
+		let converted = false;
+		const convertRoundTripP = new Deferred<void>();
+
+		const fullConvertDataFn =
+			convertDataFn === undefined
+				? undefined
+				: async (runtime: FluidDataStoreRuntime) => {
+						if (!converted) {
+							converted = true;
+							submitConversionOp(runtime);
+							await convertRoundTripP.promise;
+
+							const root = (await runtime.getChannel(
+								dataObjectRootDirectoryId,
+							)) as ISharedDirectory;
+							await convertDataFn(runtime, root);
+						}
+					};
+
+		const submitConversionOp = (runtime: FluidDataStoreRuntime): void => {
+			runtime.submitMessage(DataStoreMessageType.ChannelOp, "conversion", undefined);
+		};
+
+		super(
+			type,
+			ctor,
+			mergedObjects,
+			optionalProviders,
+			registryEntries,
+			class ConverterDataStoreRuntime extends runtimeFactory {
+				public processMessages(messageCollection: IRuntimeMessageCollection): void {
+					let contents: IRuntimeMessagesContent[] = [];
+					// eslint-disable-next-line unicorn/prefer-ternary
+					if (
+						fullConvertDataFn !== undefined &&
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+						messageCollection.envelope.type === DataStoreMessageType.ChannelOp
+					) {
+						if (
+							messageCollection.messagesContent.some((val) => val.contents === "conversion")
+						) {
+							convertRoundTripP.resolve();
+						}
+
+						contents = messageCollection.messagesContent.filter(
+							(val) => typeof val.contents !== "string" || val.contents !== "conversion",
+						);
+					} else {
+						contents = [...messageCollection.messagesContent];
+					}
+
+					if (contents.length === 0) {
+						return;
+					}
+					super.processMessages({
+						...messageCollection,
+						messagesContent: contents,
+					});
+				}
+
+				public reSubmit(
+					type2: DataStoreMessageType,
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					content: any,
+					localOpMetadata: unknown,
+				): void {
+					if (
+						fullConvertDataFn !== undefined &&
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+						type2 === DataStoreMessageType.ChannelOp &&
+						content === "conversion"
+					) {
+						submitConversionOp(this);
+						return;
+					}
+					super.reSubmit(type2, content, localOpMetadata);
+				}
+			},
+			fullConvertDataFn,
+		);
 	}
 }
