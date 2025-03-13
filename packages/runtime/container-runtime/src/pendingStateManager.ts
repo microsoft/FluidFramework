@@ -51,8 +51,6 @@ export interface IPendingMessage {
 		 * The Batch's original clientId, from when it was first flushed to be submitted.
 		 * Or, a random uuid if it was never submitted (and batchStartCsn will be -1)
 		 */
-		//* NOTE: Could we just use empty string for never-submitted? Or the word "NEVER_SUBMITTED"?
-		//* I'm thinking about it because staged batches will be in this case, so maybe we want to simplify it
 		clientId: string;
 		/**
 		 * The Batch's original clientSequenceNumber, from when it was first flushed to be submitted
@@ -70,7 +68,6 @@ export interface IPendingMessage {
 		/**
 		 * If true, this batch is staged and should not actually be submitted on replayPendingStates.
 		 */
-		//* NEXT: Make this required...?
 		staged?: boolean;
 	};
 }

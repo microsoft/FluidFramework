@@ -3387,8 +3387,6 @@ export class ContainerRuntime
 		this.channelCollection.processSignal(transformed, local);
 	}
 
-	//* NEXT: Both optional params below are only set when resubmitting, maybe combine them
-
 	/**
 	 * Flush the pending ops manually.
 	 * This method is expected to be called at the end of a batch.
@@ -4756,8 +4754,6 @@ export class ContainerRuntime
 		batchId: BatchId,
 		staged: boolean,
 	): void {
-		//* NOTE: I wonder if we could assert that the outbox is empty here?
-
 		this.orderSequentially(() => {
 			for (const message of batch) {
 				this.reSubmit(message);

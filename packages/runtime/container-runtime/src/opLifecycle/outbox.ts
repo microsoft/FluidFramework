@@ -217,12 +217,9 @@ export class Outbox {
 		}
 
 		if (!this.params.config.disablePartialFlush) {
-			//* ugly params
 			this.flushAll(undefined, staged);
 		}
 	}
-
-	//* NEXT: Probably make the 'staged' parameter required throughout
 
 	public submit(message: BatchMessage): void {
 		this.maybeFlushPartialBatch(message.staged);
@@ -410,7 +407,8 @@ export class Outbox {
 			this.batchRebasesToReport--;
 		}
 
-		//* ugly params
+		ugly;
+		params;
 		this.flushInternal(batchManager, false, undefined, staged);
 		this.rebasing = false;
 	}
