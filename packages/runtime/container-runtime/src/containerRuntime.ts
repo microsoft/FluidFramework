@@ -3387,7 +3387,7 @@ export class ContainerRuntime
 		this.channelCollection.processSignal(transformed, local);
 	}
 
-	//* Both optional params below are only set when resubmitting, maybe combine them
+	//* NEXT: Both optional params below are only set when resubmitting, maybe combine them
 
 	/**
 	 * Flush the pending ops manually.
@@ -4756,7 +4756,7 @@ export class ContainerRuntime
 		batchId: BatchId,
 		staged: boolean,
 	): void {
-		//* What if outbox is NOT empty at this point?  Anything to do here?  Maybe this is why we flush when entering staging mode.
+		//* NOTE: I wonder if we could assert that the outbox is empty here?
 
 		this.orderSequentially(() => {
 			for (const message of batch) {

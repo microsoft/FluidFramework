@@ -222,7 +222,7 @@ export class Outbox {
 		}
 	}
 
-	//* TODO: Probably make the 'staged' parameter required throughout
+	//* NEXT: Probably make the 'staged' parameter required throughout
 
 	public submit(message: BatchMessage): void {
 		this.maybeFlushPartialBatch(message.staged);
