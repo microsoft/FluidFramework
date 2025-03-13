@@ -140,7 +140,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.54.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
-		"@fluidframework/shared-object-base-previous": "npm:@fluidframework/shared-object-base@2.22.0",
+		"@fluidframework/shared-object-base-previous": "npm:@fluidframework/shared-object-base@2.23.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/benchmark": "^2.1.0",

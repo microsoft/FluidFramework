@@ -54,7 +54,11 @@ import {
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import { LocalCodeLoader } from "@fluidframework/test-utils/internal";
+import {
+	LocalCodeLoader,
+	timeoutPromise,
+	timeoutAwait,
+} from "@fluidframework/test-utils/internal";
 
 import {
 	createRuntimeFactory,
@@ -744,16 +748,25 @@ async function loadClient(
 	url: string,
 	seed: number,
 ): Promise<Client> {
-	const container = await loadExistingContainer({
-		documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),
-		request: { url },
-		urlResolver: new LocalResolver(),
-		codeLoader,
-		logger: createStressLogger(seed),
-	});
+	const container = await timeoutAwait(
+		loadExistingContainer({
+			documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),
+			request: { url },
+			urlResolver: new LocalResolver(),
+			codeLoader,
+			logger: createStressLogger(seed),
+		}),
+		{
+			errorMsg: `Timed out waiting for client to load ${tag}`,
+		},
+	);
 
-	const maybe: FluidObject<DefaultStressDataObject> | undefined =
-		await container.getEntryPoint();
+	const maybe: FluidObject<DefaultStressDataObject> | undefined = await timeoutAwait(
+		container.getEntryPoint(),
+		{
+			errorMsg: `Timed out waiting for client entrypoint ${tag}`,
+		},
+	);
 	assert(maybe.DefaultStressDataObject !== undefined, "must be DefaultStressDataObject");
 
 	return {
@@ -780,30 +793,38 @@ async function synchronizeClients(connectedClients: Client[]) {
 	}
 	try {
 		await Promise.all(
-			connectedClients.map(
-				async (c) =>
-					new Promise<void>((resolve, reject) => {
+			connectedClients.map(async (c) =>
+				timeoutPromise(
+					(resolve, reject) => {
 						if (c.container.connectionState !== ConnectionState.Connected) {
 							c.container.once("connected", () => resolve());
 							rejects.get(c)?.push(reject);
 						} else {
 							resolve();
 						}
-					}),
+					},
+					{
+						errorMsg: `Timed out waiting for client to connect ${c.tag}`,
+					},
+				),
 			),
 		);
 
 		await Promise.all(
-			connectedClients.map(
-				async (c) =>
-					new Promise<void>((resolve, reject) => {
+			connectedClients.map(async (c) =>
+				timeoutPromise(
+					(resolve, reject) => {
 						if (c.container.isDirty) {
 							c.container.once("saved", () => resolve());
 							rejects.get(c)?.push(reject);
 						} else {
 							resolve();
 						}
-					}),
+					},
+					{
+						errorMsg: `Timed out waiting for client to save ${c.tag}`,
+					},
+				),
 			),
 		);
 		const maxSeq = Math.max(
@@ -825,8 +846,10 @@ async function synchronizeClients(connectedClients: Client[]) {
 			}
 		};
 		await Promise.all(
-			connectedClients.map(
-				async (c) => new Promise<void>((resolve, reject) => makeOpHandler(c, resolve, reject)),
+			connectedClients.map(async (c) =>
+				timeoutPromise((resolve, reject) => makeOpHandler(c, resolve, reject), {
+					errorMsg: `Timed out waiting for client to catch up: ${c.tag} seq: ${maxSeq}`,
+				}),
 			),
 		);
 	} finally {

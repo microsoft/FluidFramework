@@ -193,3 +193,5 @@ export {
 	type TreeIndexKey,
 	type TreeIndexNodes,
 } from "./indexing/index.js";
+
+export { initializeForest } from "./initializeForest.js";
