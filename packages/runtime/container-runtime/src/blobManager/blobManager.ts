@@ -317,7 +317,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	public get allBlobsAttached(): boolean {
-		for (const [, entry] of this.pendingBlobs) {
+		for (const entry of this.pendingBlobs.values()) {
 			if (entry.attached === false) {
 				return false;
 			}
