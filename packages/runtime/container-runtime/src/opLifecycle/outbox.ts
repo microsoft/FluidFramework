@@ -407,8 +407,6 @@ export class Outbox {
 			this.batchRebasesToReport--;
 		}
 
-		ugly;
-		params;
 		this.flushInternal(batchManager, false, undefined, staged);
 		this.rebasing = false;
 	}
