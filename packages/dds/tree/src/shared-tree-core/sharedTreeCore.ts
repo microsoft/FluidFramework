@@ -4,19 +4,20 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type {
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-} from "@fluidframework/datastore-definitions/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type {
 	IExperimentalIncrementalSummaryContext,
+	IRuntimeMessageCollection,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import type {
+	IChannelView,
+	IFluidSerializer,
+} from "@fluidframework/shared-object-base/internal";
 
 import type { ICodecOptions, IJsonCodec } from "../codec/index.js";
 import {
@@ -53,7 +54,6 @@ import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 import { BranchCommitEnricher } from "./branchCommitEnricher.js";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import type { IFluidLoadable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import type { IChannelView } from "../shared-tree/index.js";
 
 // TODO: Organize this to be adjacent to persisted types.
 const summarizablesTreeKey = "indexes";
@@ -99,8 +99,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		MessageEncodingContext
 	>;
 
-	private readonly idCompressor: IIdCompressor;
-
 	private readonly resubmitMachine: ResubmitMachine<TChange>;
 	public readonly commitEnricher: BranchCommitEnricher<TChange>;
 
@@ -126,7 +124,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		changeFamily: ChangeFamily<TEditor, TChange>,
 		options: ICodecOptions,
 		formatOptions: ExplicitCoreCodecVersions,
-		runtime: IFluidDataStoreRuntime,
+		private readonly idCompressor: IIdCompressor,
 		schema: TreeStoredSchemaRepository,
 		schemaPolicy: SchemaPolicy,
 		resubmitMachine?: ResubmitMachine<TChange>,
@@ -143,18 +141,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			namespace: "Rebase",
 		});
 
-		assert(
-			runtime.idCompressor !== undefined,
-			0x886 /* IdCompressor must be enabled to use SharedTree */,
-		);
-		this.idCompressor = runtime.idCompressor;
 		this.mintRevisionTag = () => this.idCompressor.generateCompressedId();
 		/**
 		 * A random ID that uniquely identifies this client in the collab session.
 		 * This is sent alongside every op to identify which client the op originated from.
 		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
 		 */
-		const localSessionId = runtime.idCompressor.localSessionId;
+		const localSessionId = idCompressor.localSessionId;
 		this.editManager = new EditManager(
 			changeFamily,
 			localSessionId,
@@ -174,7 +167,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			}
 		});
 
-		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
+		const revisionTagCodec = new RevisionTagCodec(idCompressor);
 		const editManagerCodec = makeEditManagerCodec(
 			this.editManager.changeFamily.codecs,
 			revisionTagCodec,
@@ -197,7 +190,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 
 		this.messageCodec = makeMessageCodec(
 			changeFamily.codecs,
-			new RevisionTagCodec(runtime.idCompressor),
+			new RevisionTagCodec(idCompressor),
 			options,
 			formatOptions.message,
 		);
@@ -311,8 +304,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		if (this.detachedRevision !== undefined) {
 			const newRevision: SeqNumber = brand((this.detachedRevision as number) + 1);
 			this.detachedRevision = newRevision;
-			this.editManager.addSequencedChange(
-				{ ...enrichedCommit, sessionId: this.editManager.localSessionId },
+			this.editManager.addSequencedChanges(
+				[enrichedCommit],
+				this.editManager.localSessionId,
 				newRevision,
 				this.detachedRevision,
 			);
@@ -337,24 +331,68 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		this.resubmitMachine.onCommitSubmitted(enrichedCommit);
 	}
 
+	/**
+	 * Process a message from the runtime.
+	 * @deprecated - Use processMessagesCore to process a bunch of messages together.
+	 */
 	public processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
-		// Empty context object is passed in, as our decode function is schema-agnostic.
-		const { commit, sessionId } = this.messageCodec.decode(message.contents, {
-			idCompressor: this.idCompressor,
+		this.processMessagesCore({
+			envelope: message,
+			local,
+			messagesContent: [
+				{
+					clientSequenceNumber: message.clientSequenceNumber,
+					contents: message.contents,
+					localOpMetadata,
+				},
+			],
 		});
+	}
 
-		this.editManager.addSequencedChange(
-			{ ...commit, sessionId },
-			brand(message.sequenceNumber),
-			brand(message.referenceSequenceNumber),
+	/**
+	 * Process a bunch of messages from the runtime. SharedObject will call this method with a bunch of messages.
+	 */
+	public processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, local, messagesContent } = messagesCollection;
+		const commits: GraphCommit<TChange>[] = [];
+		let messagesSessionId: SessionId | undefined;
+
+		// Get a list of all the commits from the messages.
+		for (const messageContent of messagesContent) {
+			// Empty context object is passed in, as our decode function is schema-agnostic.
+			const { commit, sessionId } = this.messageCodec.decode(messageContent.contents, {
+				idCompressor: this.idCompressor,
+			});
+			commits.push(commit);
+
+			if (messagesSessionId !== undefined) {
+				assert(
+					messagesSessionId === sessionId,
+					0xad9 /* All messages in a bunch must have the same session ID */,
+				);
+			}
+			messagesSessionId = sessionId;
+		}
+
+		assert(messagesSessionId !== undefined, 0xada /* Messages must have a session ID */);
+
+		this.editManager.addSequencedChanges(
+			commits,
+			messagesSessionId,
+			brand(envelope.sequenceNumber),
+			brand(envelope.referenceSequenceNumber),
 		);
-		this.resubmitMachine.onSequencedCommitApplied(local);
 
-		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
+		// Update the resubmit machine for each commit applied.
+		for (const _ of messagesContent) {
+			this.resubmitMachine.onSequencedCommitApplied(local);
+		}
+
+		this.editManager.advanceMinimumSequenceNumber(brand(envelope.minimumSequenceNumber));
 	}
 
 	public getLocalBranch(): SharedTreeBranch<TEditor, TChange> {

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/core-interfaces",
-	"version": "2.22.0",
+	"version": "2.30.0",
 	"description": "Fluid object interfaces",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -35,13 +35,17 @@
 		},
 		"./internal": {
 			"import": {
-				"types": "./lib/index.d.ts",
+				"types": "./lib/internal.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/index.d.ts",
+				"types": "./dist/internal.d.ts",
 				"default": "./dist/index.js"
 			}
+		},
+		"./internal/exposedUtilityTypes": {
+			"import": "./lib/exposedUtilityTypes.js",
+			"require": "./dist/exposedUtilityTypes.js"
 		}
 	},
 	"main": "lib/index.js",
@@ -58,9 +62,10 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
-		"build:test": "npm run build:test:esm && npm run build:test:cjs",
+		"build:test": "npm run build:test:esm && npm run build:test:cjs && npm run build:test:esm:no-exactOptionalPropertyTypes",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
+		"build:test:esm:no-exactOptionalPropertyTypes": "tsc --project ./src/test/tsconfig.no-exactOptionalPropertyTypes.json",
 		"check:are-the-types-wrong": "attw --pack .",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
@@ -78,7 +83,7 @@
 		"ci:build:docs": "api-extractor run",
 		"ci:test": "echo No test for this package",
 		"ci:test:coverage": "echo No test for this package",
-		"clean": "rimraf --glob dist lib {alpha,beta,internal,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
+		"clean": "rimraf --glob dist lib {alpha,beta,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
@@ -86,28 +91,66 @@
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"place:cjs:package-stub": "copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
+		"place:cjs:package-stub": "copyfiles -f ./src/cjs/package.json ./dist",
+		"test": "npm run test:mocha",
+		"test:coverage": "c8 npm test",
+		"test:mocha": "npm run test:mocha:esm && echo npm run test:mocha:cjs",
+		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.*js\"",
+		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\"",
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && npm run place:cjs:package-stub",
 		"tsc:watch": "npm run place:cjs:package-stub && fluid-tsc commonjs --project ./tsconfig.cjs.json --watch",
 		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
+	"c8": {
+		"all": true,
+		"cache-dir": "nyc/.cache",
+		"exclude": [
+			"src/test/**/*.*ts",
+			"lib/test/**/*.*js"
+		],
+		"exclude-after-remap": false,
+		"include": [
+			"src/**/*.*ts",
+			"lib/**/*.*js"
+		],
+		"report-dir": "nyc/report",
+		"reporter": [
+			"cobertura",
+			"html",
+			"text"
+		],
+		"temp-directory": "nyc/.nyc_output"
+	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
-		"@fluid-tools/build-cli": "^0.51.0",
+		"@fluid-tools/build-cli": "^0.54.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.51.0",
-		"@fluidframework/core-interfaces-previous": "npm:@fluidframework/core-interfaces@2.21.0",
+		"@fluidframework/build-tools": "^0.54.0",
+		"@fluidframework/core-interfaces-previous": "npm:@fluidframework/core-interfaces@2.23.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@microsoft/api-extractor": "7.47.8",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
+		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
+		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
+		"mocha": "^10.8.2",
+		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build:test:esm:no-exactOptionalPropertyTypes": [
+				"build:esnext"
+			]
+		}
 	},
 	"typeValidation": {
 		"broken": {},

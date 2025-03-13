@@ -13,10 +13,10 @@ import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
-	IChannel,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	SharedObject,
+	type IChannelView,
 	type IFluidSerializer,
 	type ISharedObject,
 } from "@fluidframework/shared-object-base/internal";
@@ -29,6 +29,7 @@ import type {
 	ITelemetryContext,
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
@@ -100,13 +101,7 @@ import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { type TreeCheckout, type BranchableTree, createTreeCheckout } from "./treeCheckout.js";
-import {
-	Breakable,
-	breakingClass,
-	fail,
-	throwIfBroken,
-	type WithBreakable,
-} from "../util/index.js";
+import { Breakable, breakingClass, fail, throwIfBroken } from "../util/index.js";
 
 /**
  * Copy of data from an {@link ITreePrivate} at some point in time.
@@ -133,14 +128,6 @@ export interface SharedTreeContentSnapshot {
 }
 
 /**
- * Information about a Fluid channel.
- * @privateRemarks
- * This is distinct from {@link IChannel} as it omits the APIs used by the runtime to manage the channel and instead only has things which are useful (and safe) to expose to users of the channel.
- * @internal
- */
-export type IChannelView = Pick<IChannel, "id" | "attributes" | "isAttached">;
-
-/**
  * {@link ITree} extended with some non-public APIs.
  * @internal
  */
@@ -161,6 +148,11 @@ export interface ITreePrivate extends ITreeInternal {
 	 * This does not include everything that is included in a tree summary, since information about how to merge future edits is omitted.
 	 */
 	contentSnapshot(): SharedTreeContentSnapshot;
+
+	/**
+	 * Access to internals for testing.
+	 */
+	readonly kernel: SharedTreeKernel;
 }
 
 /**
@@ -215,17 +207,10 @@ function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
 /**
  * Shared object wrapping {@link SharedTreeKernel}.
  */
-export class SharedTree extends SharedObject implements ISharedTree, WithBreakable {
-	public readonly breaker: Breakable = new Breakable("Shared Tree");
+export class SharedTree extends SharedObject implements ISharedTree {
+	private readonly breaker: Breakable = new Breakable("Shared Tree");
 
-	public get checkout(): TreeCheckout {
-		return this.kernel.checkout;
-	}
-	public get storedSchema(): TreeStoredSchemaRepository {
-		return this.checkout.storedSchema;
-	}
-
-	private readonly kernel: SharedTreeKernel;
+	public readonly kernel: SharedTreeKernel;
 
 	public constructor(
 		id: string,
@@ -235,6 +220,9 @@ export class SharedTree extends SharedObject implements ISharedTree, WithBreakab
 		telemetryContextPrefix: string = "fluid_sharedTree_",
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
+		if (runtime.idCompressor === undefined) {
+			throw new UsageError("IdCompressor must be enabled to use SharedTree");
+		}
 		this.kernel = new SharedTreeKernel(
 			this.breaker,
 			this,
@@ -242,13 +230,9 @@ export class SharedTree extends SharedObject implements ISharedTree, WithBreakab
 			(content, localOpMetadata) => this.submitLocalMessage(content, localOpMetadata),
 			() => this.deltaManager.lastSequenceNumber,
 			this.logger,
-			runtime,
+			runtime.idCompressor,
 			optionsParam,
 		);
-	}
-
-	public get editor(): SharedTreeEditBuilder {
-		return this.kernel.getEditor();
 	}
 
 	public summarizeCore(
@@ -267,7 +251,13 @@ export class SharedTree extends SharedObject implements ISharedTree, WithBreakab
 		this.kernel.processCore(message, local, localOpMetadata);
 	}
 
-	protected onDisconnect(): void {}
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		this.kernel.processMessagesCore(messagesCollection);
+	}
+
+	protected onDisconnect(): void {
+		this.kernel.onDisconnect();
+	}
 
 	public exportVerbose(): VerboseTree | undefined {
 		return this.kernel.exportVerbose();
@@ -341,25 +331,21 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 		submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
 		lastSequenceNumber: () => number | undefined,
 		logger: ITelemetryLoggerExt | undefined,
-		runtime: IFluidDataStoreRuntime,
+		idCompressor: IIdCompressor,
 		optionsParam: SharedTreeOptionsInternal,
 	) {
-		if (runtime.idCompressor === undefined) {
-			throw new UsageError("IdCompressor must be enabled to use SharedTree");
-		}
-
 		const options = { ...defaultSharedTreeOptions, ...optionsParam };
 		const codecVersions = getCodecVersions(options.formatVersion);
 		const schema = new TreeStoredSchemaRepository();
-		const forest = buildConfiguredForest(options.forest, schema, runtime.idCompressor);
-		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
+		const forest = buildConfiguredForest(options.forest, schema, idCompressor);
+		const revisionTagCodec = new RevisionTagCodec(idCompressor);
 		const removedRoots = makeDetachedFieldIndex(
 			"repair",
 			revisionTagCodec,
-			runtime.idCompressor,
+			idCompressor,
 			options,
 		);
-		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options, {
+		const schemaSummarizer = new SchemaSummarizer(schema, options, {
 			getCurrentSeq: lastSequenceNumber,
 		});
 		const fieldBatchCodec = makeFieldBatchCodec(options, codecVersions.fieldBatch);
@@ -370,8 +356,8 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 				policy: defaultSchemaPolicy,
 			},
 			encodeType: options.treeEncodeType,
-			originatorId: runtime.idCompressor.localSessionId,
-			idCompressor: runtime.idCompressor,
+			originatorId: idCompressor.localSessionId,
+			idCompressor,
 		};
 		const forestSummarizer = new ForestSummarizer(
 			forest,
@@ -379,7 +365,7 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 			fieldBatchCodec,
 			encoderContext,
 			options,
-			runtime.idCompressor,
+			idCompressor,
 		);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
 		const innerChangeFamily = new SharedTreeChangeFamily(
@@ -387,7 +373,7 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 			fieldBatchCodec,
 			options,
 			options.treeEncodeType,
-			runtime.idCompressor,
+			idCompressor,
 		);
 		const changeFamily = makeMitigatedChangeFamily(
 			innerChangeFamily,
@@ -422,7 +408,7 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 			changeFamily,
 			options,
 			codecVersions,
-			runtime,
+			idCompressor,
 			schema,
 			defaultSchemaPolicy,
 			new DefaultResubmitMachine(
@@ -433,23 +419,18 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 			changeEnricher,
 		);
 		const localBranch = this.getLocalBranch();
-		this.checkout = createTreeCheckout(
-			runtime.idCompressor,
-			this.mintRevisionTag,
-			revisionTagCodec,
-			{
-				branch: localBranch,
-				changeFamily,
-				schema,
-				forest,
-				fieldBatchCodec,
-				removedRoots,
-				chunkCompressionStrategy: options.treeEncodeType,
-				logger,
-				breaker: this.breaker,
-				disposeForksAfterTransaction: options.disposeForksAfterTransaction,
-			},
-		);
+		this.checkout = createTreeCheckout(idCompressor, this.mintRevisionTag, revisionTagCodec, {
+			branch: localBranch,
+			changeFamily,
+			schema,
+			forest,
+			fieldBatchCodec,
+			removedRoots,
+			chunkCompressionStrategy: options.treeEncodeType,
+			logger,
+			breaker: this.breaker,
+			disposeForksAfterTransaction: options.disposeForksAfterTransaction,
+		});
 
 		this.checkout.transaction.events.on("started", () => {
 			if (sharedObject.isAttached()) {
@@ -489,7 +470,7 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 				cursor.enterNode(0);
 				return verboseFromCursor(cursor, this.storedSchema.nodeSchema);
 			} else {
-				fail("Invalid document root length");
+				fail(0xac8 /* Invalid document root length */);
 			}
 		} finally {
 			cursor.free();
@@ -587,6 +568,8 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 			super.submitCommit(commit, schemaAndPolicy, isResubmit),
 		);
 	}
+
+	public onDisconnect(): void {}
 }
 
 /**
@@ -613,13 +596,13 @@ export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 	treeOrView: ITree | TreeViewAlpha<T>,
 ): BranchableTree {
-	assert(
-		treeOrView instanceof SharedTree || treeOrView instanceof SchematizingSimpleTreeView,
-		0xa48 /* Unsupported implementation */,
-	);
-	const checkout: TreeCheckout = treeOrView.checkout;
+	if (treeOrView instanceof SchematizingSimpleTreeView) {
+		return treeOrView.checkout as unknown as BranchableTree;
+	}
+	const kernel = (treeOrView as ITree as ITreePrivate).kernel;
+	assert(kernel instanceof SharedTreeKernel, 0xb56 /* Invalid ITree */);
 	// This cast is safe so long as TreeCheckout supports all the operations on the branch interface.
-	return checkout as unknown as BranchableTree;
+	return kernel.checkout as unknown as BranchableTree;
 }
 
 /**
@@ -784,7 +767,8 @@ function verboseFromCursor(
 	schema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>,
 ): VerboseTree {
 	const fields = customFromCursorStored(reader, schema, verboseFromCursor);
-	const nodeSchema = schema.get(reader.type) ?? fail("missing schema for type in cursor");
+	const nodeSchema =
+		schema.get(reader.type) ?? fail(0xac9 /* missing schema for type in cursor */);
 	if (nodeSchema instanceof LeafNodeStoredSchema) {
 		return fields as CustomTreeValue<IFluidHandle>;
 	}
@@ -812,7 +796,7 @@ function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFie
 			assert(schema.types.size === 0, 0xa94 /* invalid forbidden field */);
 			break;
 		default:
-			fail("invalid field kind");
+			fail(0xaca /* invalid field kind */);
 	}
 	return { kind, allowedTypes: schema.types };
 }
@@ -839,5 +823,5 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 	if (schema instanceof LeafNodeStoredSchema) {
 		return { kind: NodeKind.Leaf, leafKind: schema.leafValue };
 	}
-	fail("invalid schema kind");
+	fail(0xacb /* invalid schema kind */);
 }

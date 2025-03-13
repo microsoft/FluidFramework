@@ -29,13 +29,27 @@ export const testTemporaryDirectoryPath = Path.resolve(dirname, "test_temp");
  * Snapshot directory to which generated test data will be copied.
  * @remarks Relative to lib/test
  */
-export const snapshotsDirectoryPath = Path.resolve(dirname, "..", "..", "src", "test", "snapshots");
+export const snapshotsDirectoryPath = Path.resolve(
+	dirname,
+	"..",
+	"..",
+	"src",
+	"test",
+	"snapshots",
+);
 
 /**
  * Directory containing the end-to-end test models.
  * @remarks Relative to lib/test
  */
-export const testDataDirectoryPath = Path.resolve(dirname, "..", "..", "src", "test", "test-data");
+export const testDataDirectoryPath = Path.resolve(
+	dirname,
+	"..",
+	"..",
+	"src",
+	"test",
+	"test-data",
+);
 
 /**
  * Test hierarchy configurations

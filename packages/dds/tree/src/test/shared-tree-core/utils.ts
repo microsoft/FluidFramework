@@ -43,6 +43,7 @@ import { testIdCompressor } from "../utils.js";
 import { strict as assert } from "node:assert";
 import {
 	SharedObject,
+	type IChannelView,
 	type IFluidSerializer,
 } from "@fluidframework/shared-object-base/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
@@ -51,13 +52,15 @@ import type {
 	IExperimentalIncrementalSummaryContext,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	type IIdCompressor,
+} from "@fluidframework/id-compressor/internal";
 import type {
 	IFluidHandle,
 	IFluidLoadable,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import type { IChannelView } from "../../shared-tree/index.js";
 import { Breakable } from "../../util/index.js";
 import { mockSerializer } from "../mockSerializer.js";
 
@@ -93,7 +96,7 @@ export function createTree<TIndexes extends readonly Summarizable[]>(
 		logger,
 		indexes,
 		TreeCompressionStrategy.Uncompressed,
-		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+		createIdCompressor(),
 		new TreeStoredSchemaRepository(),
 		resubmitMachine,
 		enricher,
@@ -128,17 +131,15 @@ function createTreeInner(
 	logger: ITelemetryBaseLogger | undefined,
 	summarizables: readonly Summarizable[],
 	chunkCompressionStrategy: TreeCompressionStrategy,
-	runtime: IFluidDataStoreRuntime,
+	idCompressor: IIdCompressor,
 	schema: TreeStoredSchemaRepository,
 	resubmitMachine?: ResubmitMachine<DefaultChangeset>,
 	enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>,
 	editor?: () => DefaultEditBuilder,
 ): [SharedTreeCore<DefaultEditBuilder, DefaultChangeset>, DefaultChangeFamily] {
-	assert(runtime.idCompressor !== undefined, "The runtime must provide an ID compressor");
-
 	const codec = makeModularChangeCodecFamily(
 		fieldKindConfigurations,
-		new RevisionTagCodec(runtime.idCompressor),
+		new RevisionTagCodec(idCompressor),
 		makeFieldBatchCodec(codecOptions, formatVersions.fieldBatch),
 		codecOptions,
 		chunkCompressionStrategy,
@@ -156,7 +157,7 @@ function createTreeInner(
 			changeFamily,
 			codecOptions,
 			formatVersions,
-			runtime,
+			idCompressor,
 			schema,
 			defaultSchemaPolicy,
 			resubmitMachine,
@@ -208,6 +209,7 @@ export class TestSharedTreeCore extends SharedObject {
 		enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>,
 	) {
 		super(id, runtime, TestSharedTreeCore.attributes, id);
+		assert(runtime.idCompressor !== undefined, "The runtime must provide an ID compressor");
 		[this.kernel, this.changeFamily] = createTreeInner(
 			this,
 			this.serializer,
@@ -215,7 +217,7 @@ export class TestSharedTreeCore extends SharedObject {
 			this.logger,
 			summarizables,
 			chunkCompressionStrategy,
-			runtime,
+			runtime.idCompressor,
 			schema,
 			resubmitMachine,
 			enricher,

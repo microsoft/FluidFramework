@@ -14,12 +14,15 @@ import {
 	type DeltaVisitor,
 	type DetachedFieldIndex,
 	type FieldKey,
+	type MapTree,
 	type RevisionTag,
 	makeDetachedFieldIndex,
 	visitDelta,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
 import {
+	chunkFromJsonTrees,
+	chunkToMapTreeField,
 	mintRevisionTag,
 	rootFromDeltaFieldMap,
 	testIdCompressor,
@@ -27,7 +30,7 @@ import {
 	type DeltaParams,
 } from "../utils.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
-import { singleJsonCursor } from "../json/index.js";
+import { mapTreeFromCursor } from "../../feature-libraries/index.js";
 
 function visit(
 	delta: DeltaRoot,
@@ -49,7 +52,9 @@ type CallSignatures<T> = {
 	[K in keyof T]: T[K] extends (...args: any) => any ? [K, ...Parameters<T[K]>] : never;
 };
 type PropType<T> = T[keyof T];
-type VisitCall = PropType<CallSignatures<DeltaVisitor>>;
+type VisitCall =
+	| PropType<CallSignatures<Omit<DeltaVisitor, "create">>>
+	| ["create", MapTree[], FieldKey];
 type VisitScript = VisitCall[];
 
 const visitorMethods: (keyof DeltaVisitor)[] = [
@@ -81,9 +86,17 @@ function testDeltaVisit(
 	let callIndex = 0;
 	const result: VisitScript = [];
 	const makeChecker =
-		(name: string) =>
+		(name: keyof DeltaVisitor) =>
 		(...args: unknown[]) => {
-			result.push([name, ...args] as VisitCall);
+			const call: VisitCall =
+				name === "create"
+					? ([
+							name,
+							(args as Parameters<DeltaVisitor["create"]>)[0].map(mapTreeFromCursor),
+							args[1],
+						] as VisitCall)
+					: ([name, ...args] as VisitCall);
+			result.push(call);
 			// To break when the first off script event happens, enable this line:
 			// assert.deepStrictEqual([name, ...args], expected[callIndex]);
 			callIndex += 1;
@@ -118,7 +131,11 @@ function testTreeVisit(
 const rootKey: FieldKey = brand("root");
 const fooKey: FieldKey = brand("foo");
 const barKey: FieldKey = brand("bar");
-const content = singleJsonCursor("X");
+const chunkX = chunkFromJsonTrees(["X"]);
+const chunkY = chunkFromJsonTrees(["Y"]);
+const chunkXY = chunkFromJsonTrees(["X", "Y"]);
+const mapTreeX = chunkToMapTreeField(chunkX);
+const mapTreeY = chunkToMapTreeField(chunkY);
 const field0: FieldKey = brand("-0");
 const field1: FieldKey = brand("-1");
 const field2: FieldKey = brand("-2");
@@ -141,11 +158,11 @@ describe("visitDelta", () => {
 		const node = { minor: 42 };
 		const rootFieldDelta: DeltaFieldChanges = [{ count: 1, attach: node }];
 		const delta: DeltaRoot = {
-			build: [{ id: node, trees: [content] }],
+			build: [{ id: node, trees: chunkX }],
 			fields: new Map([[rootKey, rootFieldDelta]]),
 		};
 		const expected: VisitScript = [
-			["create", [content], field0],
+			["create", mapTreeX, field0],
 			["enterField", rootKey],
 			["exitField", rootKey],
 			["enterField", rootKey],
@@ -161,7 +178,7 @@ describe("visitDelta", () => {
 		index.createEntry(node);
 		const rootFieldDelta: DeltaFieldChanges = [{ count: 1, attach: node }];
 		const delta: DeltaRoot = {
-			build: [{ id: node, trees: [content] }],
+			build: [{ id: node, trees: chunkX }],
 			fields: new Map([[rootKey, rootFieldDelta]]),
 		};
 		assert.throws(() => testDeltaVisit(delta, [], index));
@@ -177,7 +194,7 @@ describe("visitDelta", () => {
 			},
 		];
 		const expected: VisitScript = [
-			["create", [content], field0],
+			["create", mapTreeX, field0],
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
@@ -193,7 +210,7 @@ describe("visitDelta", () => {
 			["exitField", rootKey],
 		];
 		const delta: DeltaRoot = {
-			build: [{ id: buildId, trees: [content] }],
+			build: [{ id: buildId, trees: chunkX }],
 			fields: new Map([[rootKey, rootFieldDelta]]),
 		};
 		testDeltaVisit(delta, expected, index);
@@ -271,11 +288,11 @@ describe("visitDelta", () => {
 					fields: new Map([[fooKey, [{ count: 42 }, moveOut, moveIn]]]),
 				},
 			],
-			build: [{ id: { minor: 43 }, trees: [content] }],
+			build: [{ id: { minor: 43 }, trees: chunkX }],
 			fields: new Map([[rootKey, [{ count: 1, attach: { minor: 43 } }]]]),
 		};
 		const expected: VisitScript = [
-			["create", [content], field0],
+			["create", mapTreeX, field0],
 			["enterField", rootKey],
 			["exitField", rootKey],
 			["enterField", field0],
@@ -500,11 +517,11 @@ describe("visitDelta", () => {
 		const detachId = { minor: 43 };
 		const delta: DeltaRoot = {
 			rename: [{ oldId: buildId, newId: detachId, count: 1 }],
-			build: [{ id: buildId, trees: [content] }],
+			build: [{ id: buildId, trees: chunkX }],
 			destroy: [{ id: detachId, count: 1 }],
 		};
 		const expected: VisitScript = [
-			["create", [content], field0],
+			["create", mapTreeX, field0],
 			["enterField", field0],
 			["detach", { start: 0, end: 1 }, field1, detachId],
 			["exitField", field0],
@@ -582,12 +599,12 @@ describe("visitDelta", () => {
 		const fieldChanges: DeltaFieldChanges = [moveOut1, moveOut2, moveIn];
 
 		const delta: DeltaRoot = {
-			build: [{ id: buildId, trees: [content] }],
+			build: [{ id: buildId, trees: chunkX }],
 			fields: new Map([[rootKey, fieldChanges]]),
 		};
 
 		const expected: VisitScript = [
-			["create", [content], field0],
+			["create", mapTreeX, field0],
 			["enterField", rootKey],
 			["detach", { start: 0, end: 1 }, field1, moveId],
 			["enterNode", 0],
@@ -622,13 +639,13 @@ describe("visitDelta", () => {
 
 		const fieldChanges: DeltaFieldChanges = [replace];
 		const delta: DeltaRoot = {
-			build: [{ id: buildId, trees: [content, content] }],
+			build: [{ id: buildId, trees: chunkXY }],
 			fields: new Map([[rootKey, fieldChanges]]),
 		};
 
 		const expected: VisitScript = [
-			["create", [content], field0],
-			["create", [content], field1],
+			["create", mapTreeX, field0],
+			["create", mapTreeY, field1],
 			["enterField", rootKey],
 			["exitField", rootKey],
 			["enterField", rootKey],
@@ -735,11 +752,11 @@ describe("visitDelta", () => {
 	it("transient insert", () => {
 		const index = makeDetachedFieldIndex("", testRevisionTagCodec, testIdCompressor);
 		const delta: DeltaRoot = {
-			build: [{ id: { minor: 42 }, trees: [content] }],
+			build: [{ id: { minor: 42 }, trees: chunkX }],
 			rename: [{ oldId: { minor: 42 }, count: 1, newId: { minor: 43 } }],
 		};
 		const expected: VisitScript = [
-			["create", [content], field0],
+			["create", mapTreeX, field0],
 			["enterField", field0],
 			["detach", { start: 0, end: 1 }, field1, { minor: 43 }],
 			["exitField", field0],
@@ -761,12 +778,12 @@ describe("visitDelta", () => {
 		const buildId = { minor: 42 };
 		const detachId = { minor: 43 };
 		const delta: DeltaRoot = {
-			build: [{ id: buildId, trees: [content] }],
+			build: [{ id: buildId, trees: chunkX }],
 			global: [{ id: buildId, fields: new Map([[barKey, [moveOut, moveIn]]]) }],
 			rename: [{ oldId: buildId, count: 1, newId: detachId }],
 		};
 		const expected: VisitScript = [
-			["create", [content], field0], // field0: buildId
+			["create", mapTreeX, field0], // field0: buildId
 			["enterField", field0],
 			["enterNode", 0],
 			["enterField", barKey],
@@ -956,11 +973,11 @@ describe("visitDelta", () => {
 			newId: node1,
 		};
 		const delta = {
-			build: [{ id: buildId, trees: [content] }],
+			build: [{ id: buildId, trees: chunkX }],
 			rename: [renameOldNode, renameNewNode],
 		};
 		const expected: VisitScript = [
-			["create", [content], field1], // field1: buildId
+			["create", mapTreeX, field1], // field1: buildId
 			["enterField", field0], // field0: node1
 			["detach", { start: 0, end: 1 }, field2, detachId], // field2: detachId
 			["exitField", field0],
@@ -981,14 +998,14 @@ describe("visitDelta", () => {
 			const node = { minor: 42 };
 			const rootFieldDelta: DeltaFieldChanges = [{ count: 1, attach: node }];
 			const delta: DeltaRoot = {
-				refreshers: [{ id: node, trees: [content] }],
+				refreshers: [{ id: node, trees: chunkX }],
 				fields: new Map([[rootKey, rootFieldDelta]]),
 			};
 			const expected: VisitScript = [
 				["enterField", rootKey],
 				["exitField", rootKey],
 				["enterField", rootKey],
-				["create", [content], field0],
+				["create", mapTreeX, field0],
 				["attach", field0, 1, 0],
 				["exitField", rootKey],
 			];
@@ -1015,14 +1032,14 @@ describe("visitDelta", () => {
 				["enterField", rootKey],
 				["enterNode", 0],
 				["enterField", fooKey],
-				["create", [content], field0],
+				["create", mapTreeX, field0],
 				["attach", field0, 1, 0],
 				["exitField", fooKey],
 				["exitNode", 0],
 				["exitField", rootKey],
 			];
 			const delta: DeltaRoot = {
-				refreshers: [{ id: buildId, trees: [content] }],
+				refreshers: [{ id: buildId, trees: chunkX }],
 				fields: new Map([[rootKey, rootFieldDelta]]),
 			};
 			testDeltaVisit(delta, expected, index);
@@ -1034,14 +1051,14 @@ describe("visitDelta", () => {
 			const node = { minor: 42 };
 			const rootFieldDelta: DeltaFieldChanges = [{ count: 1, attach: { minor: 43 } }];
 			const delta: DeltaRoot = {
-				refreshers: [{ id: node, trees: [content, content] }],
+				refreshers: [{ id: node, trees: chunkXY }],
 				fields: new Map([[rootKey, rootFieldDelta]]),
 			};
 			const expected: VisitScript = [
 				["enterField", rootKey],
 				["exitField", rootKey],
 				["enterField", rootKey],
-				["create", [content], field0],
+				["create", mapTreeY, field0],
 				["attach", field0, 1, 0],
 				["exitField", rootKey],
 			];
@@ -1054,8 +1071,8 @@ describe("visitDelta", () => {
 			const refresherId = { minor: 42 };
 			const buildId = { minor: 43 };
 			const expected: VisitScript = [
-				["create", [content], field0],
-				["create", [content], field1],
+				["create", mapTreeX, field0],
+				["create", mapTreeX, field1],
 				["enterField", field1],
 				["enterNode", 0],
 				["enterField", fooKey],
@@ -1077,8 +1094,8 @@ describe("visitDelta", () => {
 						fields: new Map([[fooKey, [{ count: 1, attach: buildId }]]]),
 					},
 				],
-				refreshers: [{ id: refresherId, trees: [content] }],
-				build: [{ id: buildId, trees: [content] }],
+				refreshers: [{ id: refresherId, trees: chunkX }],
+				build: [{ id: buildId, trees: chunkX }],
 				// TODO the global was in this so it might've changed the expected value
 				// fields: new Map([[rootKey, rootFieldDelta]]),
 			};
@@ -1097,7 +1114,7 @@ describe("visitDelta", () => {
 			newId: moveId,
 		};
 		const delta = {
-			refreshers: [{ id: node1, trees: [content] }],
+			refreshers: [{ id: node1, trees: chunkX }],
 			rename: [rename],
 		};
 		const expected: VisitScript = [
@@ -1118,9 +1135,9 @@ describe("visitDelta", () => {
 			const index = makeDetachedFieldIndex("", testRevisionTagCodec, testIdCompressor);
 			const node = { minor: 42 };
 			const delta: DeltaRoot = {
-				build: [{ id: node, trees: [content] }],
+				build: [{ id: node, trees: chunkX }],
 			};
-			const expected: VisitScript = [["create", [content], field0]];
+			const expected: VisitScript = [["create", mapTreeX, field0]];
 			const revision = mintRevisionTag();
 			testDeltaVisit(delta, expected, index, revision);
 			assert.deepEqual(Array.from(index.entries()), [
@@ -1183,13 +1200,13 @@ describe("visitDelta", () => {
 
 			const rootChanges: DeltaFieldChanges = [replace];
 			const delta: DeltaRoot = {
-				build: [{ id: buildId, trees: [content, content] }],
+				build: [{ id: buildId, trees: chunkXY }],
 				fields: new Map([[rootKey, rootChanges]]),
 			};
 
 			const expected: VisitScript = [
-				["create", [content], field0],
-				["create", [content], field1],
+				["create", mapTreeX, field0],
+				["create", mapTreeY, field1],
 				["enterField", rootKey],
 				["detach", { start: 0, end: 1 }, field2, { minor: 2 }],
 				["detach", { start: 0, end: 1 }, field3, { minor: 3 }],
@@ -1216,8 +1233,8 @@ describe("visitDelta", () => {
 			const rootFieldDelta: DeltaFieldChanges = [{ count: 1, attach: node2 }];
 			const delta: DeltaRoot = {
 				refreshers: [
-					{ id: node, trees: [content] },
-					{ id: node2, trees: [content] },
+					{ id: node, trees: chunkX },
+					{ id: node2, trees: chunkX },
 				],
 				fields: new Map([[rootKey, rootFieldDelta]]),
 			};
@@ -1225,7 +1242,7 @@ describe("visitDelta", () => {
 				["enterField", rootKey],
 				["exitField", rootKey],
 				["enterField", rootKey],
-				["create", [content], field0],
+				["create", mapTreeX, field0],
 				["attach", field0, 1, 0],
 				["exitField", rootKey],
 			];
@@ -1239,7 +1256,7 @@ describe("visitDelta", () => {
 			index.createEntry(node, undefined, 1);
 			const rootFieldDelta: DeltaFieldChanges = [{ count: 1, attach: node }];
 			const delta: DeltaRoot = {
-				refreshers: [{ id: node, trees: [content] }],
+				refreshers: [{ id: node, trees: chunkX }],
 				fields: new Map([[rootKey, rootFieldDelta]]),
 			};
 			const expected: VisitScript = [
@@ -1258,12 +1275,12 @@ describe("visitDelta", () => {
 			const node = { minor: 42 };
 			const rootFieldDelta: DeltaFieldChanges = [{ count: 1, attach: node }];
 			const delta: DeltaRoot = {
-				build: [{ id: node, trees: [content] }],
-				refreshers: [{ id: node, trees: [content] }],
+				build: [{ id: node, trees: chunkX }],
+				refreshers: [{ id: node, trees: chunkX }],
 				fields: new Map([[rootKey, rootFieldDelta]]),
 			};
 			const expected: VisitScript = [
-				["create", [content], field0],
+				["create", mapTreeX, field0],
 				["enterField", rootKey],
 				["exitField", rootKey],
 				["enterField", rootKey],

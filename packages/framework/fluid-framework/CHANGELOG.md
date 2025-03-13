@@ -1,5 +1,73 @@
 # fluid-framework
 
+## 2.23.0
+
+### Minor Changes
+
+-   Creating large transactions and processing inbound changes is now faster ([#23929](https://github.com/microsoft/FluidFramework/pull/23929)) [35847b5ffe0](https://github.com/microsoft/FluidFramework/commit/35847b5ffe09d94cef42b74ab59e37c4bd6d8c2d)
+
+    SharedTree sometimes composes several sequential changes into a single change.
+    It does so whenever a transaction is created and when processing inbound changes.
+
+    Version 2.23.0 makes this composition process asymptotically faster.
+    For example, creating a transaction that performs 1000 edits on a single array now takes 170ms instead of 1.5s (an 89% improvement).
+
+    See [Change #23902](https://github.com/microsoft/FluidFramework/pull/23902) for more details.
+
+-   Faster processing of events for large transactions ([#23939](https://github.com/microsoft/FluidFramework/pull/23939)) [2a1e7e0617f](https://github.com/microsoft/FluidFramework/commit/2a1e7e0617f618f82134c0bba269119ed980aadc)
+
+    In versions prior to 2.23.0, event processing time could scale quadratically (`O(N^2)`) with the change count when
+    processing a batch of changes.
+
+    This performance characteristic has been corrected. See change
+    [#23908](https://github.com/microsoft/FluidFramework/pull/23908) for more details.
+
+-   Op bunching performance enhancements ([#23732](https://github.com/microsoft/FluidFramework/pull/23732)) [a98b04fc9e0](https://github.com/microsoft/FluidFramework/commit/a98b04fc9e000971bdfa8135251a7dc3e189502c)
+
+    `SharedTree` now takes advantage of a new feature called "op bunching" where contiguous ops in a grouped batch are
+    bunched and processed together. This improves the performance of processing ops asymptotically; as
+    the number of local ops and incoming ops increase, the processing time will reduce.
+
+    For example, with 10 local ops + 10 incoming ops, the performance increases by 70%; with 100 local ops + 100 incoming ops, the performance increases by 94%.
+
+    This will help improve performance in the following scenarios:
+
+    -   A client makes a large number of changes in a single JS turn. For example, copy pasting large data like a table.
+    -   A client has a large number of local changes. For example, slow clients whose changes are slow to ack or clients with
+        a local branch with large number of changes.
+
+-   Invalid schema base classes in Tree.is now throw an error instead of returning false ([#23938](https://github.com/microsoft/FluidFramework/pull/23938)) [00995654070](https://github.com/microsoft/FluidFramework/commit/00995654070a4e13b57b2562ff4a5935aba70a2f)
+
+    As documented in [`TreeNodeSchemaClass`](https://fluidframework.com/docs/api/fluid-framework/treenodeschemaclass-typealias#treenodeschemaclass-remarks), there are specific rules around sub-classing schema, mainly that only a single most derived class can be used.
+    One place where it was easy to accidentally violate this rule and get hard-to-debug results was [`Tree.is`](https://fluidframework.com/docs/data-structures/tree/nodes#treeis).
+    This has been mitigated by adding a check in `Tree.is` which detects this mistake (which used to result in `false` being returned) and instead throws a `UsageError` explaining the situation.
+    The error will look something like:
+
+    > Two schema classes were used (CustomObjectNode and Derived) which derived from the same SchemaFactory generated class ("com.example.Test"). This is invalid.
+
+    For applications wanting to test if a given `TreeNode` is an instance of some schema base class, this can be done using `instanceof` which includes base classes when doing the check.
+
+## 2.22.0
+
+### Minor Changes
+
+-   Target ES2021 ([#23307](https://github.com/microsoft/FluidFramework/pull/23307)) [36ed18289b](https://github.com/microsoft/FluidFramework/commit/36ed18289bd9b076a996dc48965a9ef12a95bda6)
+
+    The TypeScript build for Fluid Framework packages has been updated to target ES2021 instead of ES2020.
+    This may result in newer JavaScript language features being used.
+    This does not change TypeScript types, nor the JavaScript libraries being used.
+    We only support users which support ES2022, so updating to target ES2021 should not break any supported use-case.
+    Any users which do not have at least ES2021 language feature support may need to transpile out some additional cases after this change.
+
+    This should result in slightly reduced bundle size and slightly improved performance for users not transpiling these features out.
+    No major impact is expected.
+
+-   Add `leaves` and statics to `SchemaFactory`. ([#23787](https://github.com/microsoft/FluidFramework/pull/23787)) [efa90f6274](https://github.com/microsoft/FluidFramework/commit/efa90f6274152cadb55329b7bbf6a6cd8e299847)
+
+    `SchemaFactory` now has a `leaves` member that is an array of all leaf schema.
+
+    `SchemaFactory` now has static members to access leaf schema and create field schema.
+
 ## 2.21.0
 
 Dependency updates only.

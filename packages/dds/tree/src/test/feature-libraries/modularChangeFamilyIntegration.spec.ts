@@ -26,7 +26,6 @@ import {
 	DefaultEditBuilder,
 	type FieldKindWithEditor,
 	type ModularChangeset,
-	cursorForJsonableTreeNode,
 	type SequenceField as SF,
 	type EditDescription,
 	genericFieldKind,
@@ -44,6 +43,7 @@ import {
 } from "../../util/index.js";
 import {
 	assertDeltaEqual,
+	chunkFromJsonTrees,
 	defaultRevisionMetadataFromChanges,
 	failCodecFamily,
 	mintRevisionTag,
@@ -61,7 +61,6 @@ import { MarkMaker } from "./sequence-field/testEdits.js";
 import { assertEqual, Change, removeAliases } from "./modular-schema/modularChangesetUtil.js";
 // eslint-disable-next-line import/no-internal-modules
 import { newGenericChangeset } from "../../feature-libraries/modular-schema/genericFieldKindTypes.js";
-import { numberSchema } from "../../simple-tree/index.js";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map([
 	[sequence.identifier, sequence],
@@ -612,11 +611,7 @@ describe("ModularChangeFamily integration", () => {
 				0,
 			);
 
-			const newValue = "new value";
-			const newNode = cursorForJsonableTreeNode({
-				type: brand(numberSchema.identifier),
-				value: newValue,
-			});
+			const newNode = chunkFromJsonTrees(["new value"]);
 			editor
 				.sequenceField({
 					parent: { parent: undefined, parentField: fieldB, parentIndex: 0 },
@@ -629,7 +624,7 @@ describe("ModularChangeFamily integration", () => {
 			const tagForCompare = mintRevisionTag();
 			const taggedComposed = tagChangeInline(composed, tagForCompare);
 			const expected: DeltaRoot = {
-				build: [{ id: { minor: 2, major: tagForCompare }, trees: [newNode] }],
+				build: [{ id: { minor: 2, major: tagForCompare }, trees: newNode }],
 				fields: new Map([
 					[
 						fieldA,
@@ -663,11 +658,7 @@ describe("ModularChangeFamily integration", () => {
 				0,
 			);
 
-			const newValue = "new value";
-			const newNode = cursorForJsonableTreeNode({
-				type: brand(numberSchema.identifier),
-				value: newValue,
-			});
+			const newNode = chunkFromJsonTrees(["new value"]);
 			editor
 				.sequenceField({
 					parent: { parent: undefined, parentField: fieldB, parentIndex: 0 },
@@ -692,7 +683,7 @@ describe("ModularChangeFamily integration", () => {
 				build: [
 					{
 						id: { major: tag2, minor: 2 },
-						trees: [newNode],
+						trees: newNode,
 					},
 				],
 				fields: new Map([

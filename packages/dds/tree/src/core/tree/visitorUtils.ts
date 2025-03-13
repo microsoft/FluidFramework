@@ -10,12 +10,13 @@ import { type IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
 import type { RevisionTag, RevisionTagCodec } from "../rebase/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
-import type { DetachedNodeId, ProtoNodes, Root } from "./delta.js";
+import type { DetachedNodeId, Root } from "./delta.js";
 import { DetachedFieldIndex } from "./detachedFieldIndex.js";
 import type { ForestRootId } from "./detachedFieldIndexTypes.js";
-import type { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
+import type { PlaceIndex, Range } from "./pathTree.js";
 import { type DeltaVisitor, visitDelta } from "./visitDelta.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { ITreeCursorSynchronous } from "./cursor.js";
 
 export function makeDetachedFieldIndex(
 	prefix: string = "Temp",
@@ -130,7 +131,7 @@ export interface AnnouncedVisitor extends DeltaVisitor {
 	/**
 	 * A hook that is called after all nodes have been created.
 	 */
-	afterCreate(content: ProtoNodes, destination: FieldKey): void;
+	afterCreate(content: readonly ITreeCursorSynchronous[], destination: FieldKey): void;
 	beforeDestroy(field: FieldKey, count: number): void;
 	beforeAttach(source: FieldKey, count: number, destination: PlaceIndex): void;
 	afterAttach(source: FieldKey, destination: Range): void;
@@ -148,39 +149,9 @@ export interface AnnouncedVisitor extends DeltaVisitor {
  * Creates an announced visitor with only the provided functions and uses a no op for the rest.
  * This is provided to make some of the delta visitor definitions cleaner.
  */
-export function createAnnouncedVisitor(visitorFunctions: {
-	free?: () => void;
-	create?: (content: ProtoNodes, destination: FieldKey) => void;
-	afterCreate?: (content: ProtoNodes, destination: FieldKey) => void;
-	beforeDestroy?: (field: FieldKey, count: number) => void;
-	destroy?: (detachedField: FieldKey, count: number) => void;
-	beforeAttach?: (source: FieldKey, count: number, destination: PlaceIndex) => void;
-	attach?: (source: FieldKey, count: number, destination: PlaceIndex) => void;
-	afterAttach?: (source: FieldKey, destination: Range) => void;
-	beforeDetach?: (source: Range, destination: FieldKey) => void;
-	afterDetach?: (source: PlaceIndex, count: number, destination: FieldKey) => void;
-	detach?: (
-		source: Range,
-		destination: FieldKey,
-		destinationDetachedNodeId: DetachedNodeId,
-	) => void;
-	beforeReplace?: (
-		newContent: FieldKey,
-		oldContent: Range,
-		oldContentDestination: FieldKey,
-	) => void;
-	replace?: (
-		newContentSource: FieldKey,
-		range: Range,
-		oldContentDestination: FieldKey,
-		destinationDetachedNodeId: DetachedNodeId,
-	) => void;
-	afterReplace?: (newContentSource: FieldKey, newContent: Range, oldContent: FieldKey) => void;
-	enterNode?: (index: NodeIndex) => void;
-	exitNode?: (index: NodeIndex) => void;
-	enterField?: (key: FieldKey) => void;
-	exitField?: (key: FieldKey) => void;
-}): AnnouncedVisitor {
+export function createAnnouncedVisitor(
+	visitorFunctions: Partial<AnnouncedVisitor>,
+): AnnouncedVisitor {
 	const noOp = (): void => {};
 	return {
 		free: visitorFunctions.free ?? noOp,
