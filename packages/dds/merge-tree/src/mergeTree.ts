@@ -2026,7 +2026,7 @@ export class MergeTree {
 				) {
 					localOverlapWithRefs.push(segment);
 				}
-				opstampUtils.insertIntoList(existingRemoveInfo.removes, stamp);
+				opstampUtils.spliceIntoList(existingRemoveInfo.removes, stamp);
 			}
 			assertRemoved(segment);
 			// Save segment so can assign sequence number when acked by server
@@ -2165,7 +2165,7 @@ export class MergeTree {
 				) {
 					localOverlapWithRefs.push(segment);
 				}
-				opstampUtils.insertIntoList(existingRemovalInfo.removes, stamp);
+				opstampUtils.spliceIntoList(existingRemovalInfo.removes, stamp);
 			}
 			assertRemoved(segment);
 

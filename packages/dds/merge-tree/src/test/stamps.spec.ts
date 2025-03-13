@@ -86,41 +86,41 @@ describe("opstampUtils", () => {
 		});
 	});
 
-	describe("insertIntoList", () => {
+	describe("spliceIntoList", () => {
 		it("inserts unacked into empty list", () => {
 			const list: OperationStamp[] = [];
-			opstampUtils.insertIntoList(list, local1);
+			opstampUtils.spliceIntoList(list, local1);
 			assert.deepStrictEqual(list, [local1]);
 		});
 
 		it("inserts acked into empty list", () => {
 			const list: OperationStamp[] = [];
-			opstampUtils.insertIntoList(list, acked1);
+			opstampUtils.spliceIntoList(list, acked1);
 			assert.deepStrictEqual(list, [acked1]);
 		});
 
 		it("inserts unacked after acked", () => {
 			const list: OperationStamp[] = [acked1];
-			opstampUtils.insertIntoList(list, local1);
+			opstampUtils.spliceIntoList(list, local1);
 			assert.deepStrictEqual(list, [acked1, local1]);
 		});
 
 		it("inserts acked before unacked", () => {
 			const list: OperationStamp[] = [acked1, acked2, local1];
-			opstampUtils.insertIntoList(list, acked3);
+			opstampUtils.spliceIntoList(list, acked3);
 			assert.deepStrictEqual(list, [acked1, acked2, acked3, local1]);
 		});
 
 		it("inserts acked before single unacked", () => {
 			const list: OperationStamp[] = [local1];
-			opstampUtils.insertIntoList(list, acked2);
+			opstampUtils.spliceIntoList(list, acked2);
 			assert.deepStrictEqual(list, [acked2, local1]);
 		});
 
 		it("inserts local seqs at end", () => {
 			const list: OperationStamp[] = [acked1, acked2];
-			opstampUtils.insertIntoList(list, local1);
-			opstampUtils.insertIntoList(list, local2);
+			opstampUtils.spliceIntoList(list, local1);
+			opstampUtils.spliceIntoList(list, local2);
 			assert.deepStrictEqual(list, [acked1, acked2, local1, local2]);
 		});
 	});
