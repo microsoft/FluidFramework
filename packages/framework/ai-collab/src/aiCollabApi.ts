@@ -168,6 +168,10 @@ export interface AiCollabSuccessResponse {
 	 * {@inheritDoc TokenUsage}
 	 */
 	readonly tokensUsed: TokenUsage;
+	/**
+	 * The diffs that the AI collaboration performed on the SharedTree.
+	 */
+	readonly diffs: Diff[];
 }
 
 /**
@@ -233,3 +237,70 @@ export interface TokenLimits {
 	 */
 	readonly outputTokens?: number;
 }
+
+/**
+ *
+ *
+ * @alpha
+ */
+export interface DiffMoveRange {
+	from: string | number;
+	to: string | number;
+}
+
+/**
+ * Represents a new tree node being created and inserted a given parent array node.
+ * Meaning that an attribute (a shared tree node) was identified as being created.
+ *
+ * @alpha
+ */
+export interface DiffInsert {
+	type: "INSERT";
+	objectId?: string | number | undefined;
+	field: string;
+	value: unknown;
+}
+
+/**
+ * Represents a child node being removed (and deleted) from its respective parent array tree node.
+ * Meaning that an attribute (a shared tree node) was identified as being deleted.
+ * When using object ids, removes are identifiers by an object with a given id no longer existing.
+ *
+ * @alpha
+ */
+export interface DiffRemove {
+	type: "REMOVE";
+	objectId?: string | number | undefined;
+}
+
+/**
+ * Represents a value within a given tree node being changed to a new value
+ * Meaning that an attribute (a shared tree node) was identified as being changed from one value to another.
+ *
+ * @alpha
+ */
+export interface DiffChange {
+	type: "CHANGE";
+	field: string;
+	value: unknown;
+	objectId?: string | number | undefined;
+}
+
+/**
+ * Represents a child node being moved to a new index within its respective parent tree array node.
+ * Meaning that an object (shared tree node) was identified as being moved from one index to another based on its unique id.
+ *
+ * @alpha
+ */
+export interface DiffMove {
+	type: "MOVE";
+	newIndex: number;
+	objectId?: string | number | undefined;
+}
+
+/**
+ * Union for all possible difference types.
+ *
+ * @alpha
+ */
+export type Diff = DiffInsert | DiffRemove | DiffChange | DiffMove;
