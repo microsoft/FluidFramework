@@ -17,7 +17,7 @@ import {
 	IFluidHandleContext,
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
-import { assert, Deferred, LazyPromise } from "@fluidframework/core-utils/internal";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentStorageService,
 	ICreateBlobResponse,
@@ -267,13 +267,11 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			});
 		}
 
-		this.stashedBlobsUploadP = new LazyPromise(async () =>
-			PerformanceEvent.timedExecAsync(
-				this.mc.logger,
-				{ eventName: "BlobUploadProcessStashedChanges", count: this.pendingStashedBlobs.size },
-				async () => Promise.all(this.pendingStashedBlobs.values()),
-				{ start: true, end: true },
-			),
+		this.stashedBlobsUploadP = PerformanceEvent.timedExecAsync(
+			this.mc.logger,
+			{ eventName: "BlobUploadProcessStashedChanges", count: this.pendingStashedBlobs.size },
+			async () => Promise.all(this.pendingStashedBlobs.values()),
+			{ start: true, end: true },
 		).finally(() => {
 			this.pendingStashedBlobs.clear();
 		});
