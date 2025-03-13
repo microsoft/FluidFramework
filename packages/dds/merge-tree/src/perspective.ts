@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { LocalClientId, UnassignedSequenceNumber } from "./constants.js";
 import { type MergeTree } from "./mergeTree.js";
 import { LeafAction, backwardExcursion, forwardExcursion } from "./mergeTreeNodeWalk.js";
 import { seqLTE, type ISegmentLeaf } from "./mergeTreeNodes.js";
-import { isInserted, isRemoved } from "./segmentInfos.js";
+import { isInserted, toMoveInfo, toRemovalInfo } from "./segmentInfos.js";
 import * as opstampUtils from "./stamps.js";
 import type { OperationStamp, InsertOperationStamp, RemoveOperationStamp } from "./stamps.js";
 
@@ -96,11 +97,52 @@ abstract class PerspectiveBase {
 	}
 
 	public isSegmentPresent(seg: ISegmentLeaf): boolean {
-		if (isInserted(seg) && !this.hasOccurred(seg.insert)) {
+		const insert: InsertOperationStamp = {
+			type: "insert",
+			clientId: seg.clientId,
+			seq: seg.seq,
+			localSeq: seg.localSeq,
+		};
+		if (isInserted(seg) && !this.hasOccurred(insert)) {
 			return false;
 		}
 
-		if (isRemoved(seg) && seg.removes.some((remove) => this.hasOccurred(remove))) {
+		const removes: RemoveOperationStamp[] = [];
+		const removalInfo = toRemovalInfo(seg);
+		if (removalInfo !== undefined) {
+			removes.push(
+				...removalInfo.removedClientIds.map((clientId) =>
+					(clientId === LocalClientId || clientId === 0) &&
+					removalInfo.localRemovedSeq !== undefined
+						? ({
+								type: "setRemove",
+								seq: UnassignedSequenceNumber,
+								clientId,
+								localSeq: removalInfo.localRemovedSeq,
+							} as const)
+						: ({ type: "setRemove", seq: removalInfo.removedSeq, clientId } as const),
+				),
+			);
+		}
+
+		const moveInfo = toMoveInfo(seg);
+		if (moveInfo !== undefined) {
+			removes.push(
+				...moveInfo.movedClientIds.map((clientId, index) =>
+					(clientId === LocalClientId || clientId === 0) &&
+					moveInfo.localMovedSeq !== undefined
+						? ({
+								type: "sliceRemove",
+								seq: UnassignedSequenceNumber,
+								clientId,
+								localSeq: moveInfo.localMovedSeq,
+							} as const)
+						: ({ type: "setRemove", seq: moveInfo.movedSeqs[index]!, clientId } as const),
+				),
+			);
+		}
+
+		if (removes.some((remove) => this.hasOccurred(remove))) {
 			return false;
 		}
 
