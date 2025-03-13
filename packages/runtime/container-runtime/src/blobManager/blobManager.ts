@@ -928,7 +928,7 @@ const getBlobIdFromGCNodePath = (nodePath: string): string => {
 export const isBlobPath = (path: string): path is `/${typeof blobManagerBasePath}/${string}` =>
 	areBlobPathParts(path.split("/"));
 
-export const areBlobPathParts = (
+const areBlobPathParts = (
 	pathParts: string[],
 ): pathParts is ["", typeof blobManagerBasePath, string] =>
 	pathParts.length === 3 && pathParts[1] === blobManagerBasePath;
