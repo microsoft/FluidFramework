@@ -42,6 +42,7 @@ import {
 } from "../mergeTreeNodes.js";
 import { createRemoveRangeOp } from "../opBuilder.js";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import { LocalDefaultPerspective } from "../perspective.js";
 import { reservedRangeLabelsKey, reservedTileLabelsKey } from "../referencePositions.js";
 import { JsonSegmentSpecs } from "../snapshotChunks.js";
 import { SnapshotLegacy } from "../snapshotlegacy.js";
@@ -51,7 +52,6 @@ import { _dirname } from "./dirname.cjs";
 import { TestClient, getStats, specToSegment } from "./testClient.js";
 import { TestServer } from "./testServer.js";
 import { insertText, loadTextFromFile, nodeOrdinalsHaveIntegrity } from "./testUtils.js";
-import { LocalDefaultPerspective } from "../perspective.js";
 
 function LinearDictionary<TKey, TData>(
 	compareKeys: KeyComparer<TKey>,

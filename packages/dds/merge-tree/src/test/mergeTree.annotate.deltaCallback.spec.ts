@@ -13,10 +13,10 @@ import {
 import { MergeTree } from "../mergeTree.js";
 import { MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback.js";
 import { MergeTreeDeltaType } from "../ops.js";
+import { PriorPerspective } from "../perspective.js";
 import { TextSegment } from "../textSegment.js";
 
 import { countOperations, insertSegments, insertText, markRangeRemoved } from "./testUtils.js";
-import { PriorPerspective } from "../perspective.js";
 
 describe("MergeTree", () => {
 	let mergeTree: MergeTree;

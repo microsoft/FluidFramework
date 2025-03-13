@@ -61,14 +61,6 @@ import {
 	type ISegmentPrivate,
 	type ObliterateInfo,
 } from "./mergeTreeNodes.js";
-import * as opstampUtils from "./stamps.js";
-import type {
-	OperationStamp,
-	InsertOperationStamp,
-	RemoveOperationStamp,
-	SetRemoveOperationStamp,
-	SliceRemoveOperationStamp,
-} from "./stamps.js";
 import type { TrackingGroup } from "./mergeTreeTracking.js";
 import {
 	createAnnotateRangeOp,
@@ -117,6 +109,14 @@ import {
 } from "./segmentPropertiesManager.js";
 import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
 import { SortedSegmentSet } from "./sortedSegmentSet.js";
+import type {
+	OperationStamp,
+	InsertOperationStamp,
+	RemoveOperationStamp,
+	SetRemoveOperationStamp,
+	SliceRemoveOperationStamp,
+} from "./stamps.js";
+import * as opstampUtils from "./stamps.js";
 import { zamboniSegments } from "./zamboni.js";
 
 export function isRemovedAndAcked(
@@ -1107,9 +1107,9 @@ export class MergeTree {
 	): number {
 		const perspective =
 			clientId === this.collabWindow.clientId
-				? localSeq !== undefined
-					? new LocalReconnectingPerspective(refSeq, clientId, localSeq)
-					: this.localPerspective
+				? localSeq === undefined
+					? this.localPerspective
+					: new LocalReconnectingPerspective(refSeq, clientId, localSeq)
 				: new PriorPerspective(refSeq, clientId);
 		const seg = refPos.getSegment();
 		if (seg === undefined || !isSegmentLeaf(seg)) {
@@ -1120,10 +1120,6 @@ export class MergeTree {
 			return this.getPosition(seg, perspective);
 		}
 		if (refTypeIncludesFlag(refPos, ReferenceType.Transient) || seg.localRefs?.has(refPos)) {
-			const perspective =
-				localSeq !== undefined
-					? new LocalReconnectingPerspective(refSeq, this.collabWindow.clientId, localSeq)
-					: new PriorPerspective(refSeq, this.collabWindow.clientId);
 			if (
 				seg !== this.startOfTree &&
 				seg !== this.endOfTree &&
@@ -1132,17 +1128,16 @@ export class MergeTree {
 				const forward = refPos.slidingPreference === SlidingPreference.FORWARD;
 				const removeInfo = toRemovalInfo(seg);
 				const firstMove = removeInfo?.removes[0];
-				const lastMove = removeInfo?.removes[removeInfo.removes.length - 1];
 				const slideSeq =
 					firstMove !== undefined && opstampUtils.isAcked(firstMove) ? firstMove.seq : refSeq;
 
 				const slidePerspective =
-					lastMove?.localSeq === undefined
+					firstMove?.localSeq === undefined
 						? new PriorPerspective(slideSeq, this.collabWindow.clientId)
 						: new LocalReconnectingPerspective(
 								slideSeq,
 								this.collabWindow.clientId,
-								lastMove.localSeq,
+								firstMove.localSeq,
 							);
 
 				const slidSegment = slidePerspective.nextSegment(this, seg, forward);

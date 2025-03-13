@@ -23,8 +23,6 @@ import { NonCollabClient } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
 import { ISegmentPrivate } from "./mergeTreeNodes.js";
-import * as opstampUtils from "./stamps.js";
-import type { OperationStamp } from "./stamps.js";
 import type { IJSONSegment } from "./ops.js";
 import { PropertySet, matchProperties } from "./properties.js";
 import { assertInserted, isRemoved } from "./segmentInfos.js";
@@ -38,6 +36,8 @@ import {
 	type VersionedMergeTreeChunk,
 } from "./snapshotChunks.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
+import type { OperationStamp } from "./stamps.js";
+import * as opstampUtils from "./stamps.js";
 
 export class SnapshotV1 {
 	// Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content

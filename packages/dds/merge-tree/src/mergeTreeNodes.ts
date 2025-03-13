@@ -13,6 +13,7 @@ import { TrackingGroupCollection } from "./mergeTreeTracking.js";
 import { IJSONSegment, IMarkerDef, ReferenceType } from "./ops.js";
 import { computeHierarchicalOrdinal } from "./ordinal.js";
 import type { PartialSequenceLengths } from "./partialLengths.js";
+import { PriorPerspective, type Perspective } from "./perspective.js";
 import { PropertySet, clone, createMap, type MapLike } from "./properties.js";
 import { ReferencePosition } from "./referencePositions.js";
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
@@ -28,7 +29,6 @@ import {
 	type SegmentWithInfo,
 } from "./segmentInfos.js";
 import { PropertiesManager } from "./segmentPropertiesManager.js";
-import { PriorPerspective, type Perspective } from "./perspective.js";
 import type { OperationStamp, SliceRemoveOperationStamp } from "./stamps.js";
 
 /**

@@ -51,13 +51,11 @@ import {
 	compareStrings,
 	isSegmentLeaf,
 } from "./mergeTreeNodes.js";
-import * as opstampUtils from "./stamps.js";
-import type { OperationStamp } from "./stamps.js";
 import {
 	createAdjustRangeOp,
 	createAnnotateMarkerOp,
 	createAnnotateRangeOp,
-	// eslint-disable-next-line import/no-deprecated
+	 
 	createGroupOp,
 	createInsertSegmentOp,
 	createObliterateRangeOp,
@@ -82,6 +80,11 @@ import {
 	type IMergeTreeAnnotateAdjustMsg,
 	type IMergeTreeObliterateSidedMsg,
 } from "./ops.js";
+import {
+	LocalReconnectingPerspective,
+	PriorPerspective,
+	type Perspective,
+} from "./perspective.js";
 import { PropertySet, type MapLike } from "./properties.js";
 import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
 import {
@@ -95,12 +98,9 @@ import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
 import { SnapshotLoader } from "./snapshotLoader.js";
 import { SnapshotV1 } from "./snapshotV1.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
+import type { OperationStamp } from "./stamps.js";
+import * as opstampUtils from "./stamps.js";
 import { IMergeTreeTextHelper } from "./textSegment.js";
-import {
-	LocalReconnectingPerspective,
-	PriorPerspective,
-	type Perspective,
-} from "./perspective.js";
 
 type IMergeTreeDeltaRemoteOpArgs = Omit<IMergeTreeDeltaOpArgs, "sequencedMessage"> &
 	Required<Pick<IMergeTreeDeltaOpArgs, "sequencedMessage">>;
@@ -446,9 +446,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 
 		const perspective =
-			localSeq !== undefined
-				? new LocalReconnectingPerspective(this.getCurrentSeq(), this.getClientId(), localSeq)
-				: this._mergeTree.localPerspective;
+			localSeq === undefined
+				? this._mergeTree.localPerspective
+				: new LocalReconnectingPerspective(this.getCurrentSeq(), this.getClientId(), localSeq);
 		return this._mergeTree.getPosition(segment, perspective);
 	}
 
@@ -1164,7 +1164,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			if (Array.isArray(segmentGroup)) {
 				if (segmentGroup.length === 0) {
 					// sometimes we rebase to an empty op
-					// eslint-disable-next-line import/no-deprecated
+					 
 					return createGroupOp();
 				}
 				firstGroup = segmentGroup[0];
@@ -1219,7 +1219,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			);
 			opList.push(...this.resetPendingDeltaToOps(resetOp, segmentGroup));
 		}
-		// eslint-disable-next-line import/no-deprecated
+		 
 		return opList.length === 1 ? opList[0] : createGroupOp(...opList);
 	}
 
@@ -1324,16 +1324,16 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	} {
 		let perspective: Perspective;
 		const clientId =
-			sequenceArgs !== undefined
-				? this.getOrAddShortClientIdFromMessage(sequenceArgs)
-				: this.getClientId();
+			sequenceArgs === undefined
+				? this.getClientId()
+				: this.getOrAddShortClientIdFromMessage(sequenceArgs);
 		const refSeq = sequenceArgs?.referenceSequenceNumber ?? this.getCollabWindow().currentSeq;
 		if (localSeq !== undefined) {
 			perspective = new LocalReconnectingPerspective(refSeq, clientId, localSeq);
-		} else if (sequenceArgs !== undefined) {
-			perspective = new PriorPerspective(refSeq, clientId);
-		} else {
+		} else if (sequenceArgs === undefined) {
 			perspective = this._mergeTree.localPerspective;
+		} else {
+			perspective = new PriorPerspective(refSeq, clientId);
 		}
 
 		return this._mergeTree.getContainingSegment(pos, perspective) as {

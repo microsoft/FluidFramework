@@ -10,6 +10,9 @@ import { isInserted, isRemoved } from "./segmentInfos.js";
 import * as opstampUtils from "./stamps.js";
 import type { OperationStamp, InsertOperationStamp, RemoveOperationStamp } from "./stamps.js";
 
+/**
+ * @internal
+ */
 export interface Perspective {
 	readonly refSeq: number;
 	readonly clientId: number;

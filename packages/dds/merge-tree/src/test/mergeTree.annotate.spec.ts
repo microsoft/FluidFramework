@@ -11,12 +11,12 @@ import { LocalClientId, UniversalSequenceNumber } from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
 import { Marker, type ISegmentPrivate } from "../mergeTreeNodes.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import { LocalDefaultPerspective, PriorPerspective } from "../perspective.js";
 import { assertMergeNode } from "../segmentInfos.js";
 import type { PropsOrAdjust } from "../segmentPropertiesManager.js";
 import { TextSegment } from "../textSegment.js";
 
 import { insertSegments } from "./testUtils.js";
-import { LocalDefaultPerspective, PriorPerspective } from "../perspective.js";
 
 function splitAt(mergeTree: MergeTree, pos: number): ISegmentPrivate | undefined {
 	let segment: ISegmentPrivate | undefined;

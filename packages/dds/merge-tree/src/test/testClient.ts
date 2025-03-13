@@ -37,7 +37,6 @@ import {
 	type SegmentGroup,
 	assertSegmentLeaf,
 } from "../mergeTreeNodes.js";
-import type { OperationStamp } from "../stamps.js";
 import {
 	createAnnotateRangeOp,
 	createInsertSegmentOp,
@@ -52,16 +51,18 @@ import {
 	ReferenceType,
 	type IMergeTreeInsertMsg,
 } from "../ops.js";
+import { LocalReconnectingPerspective } from "../perspective.js";
 import { PropertySet } from "../properties.js";
 import { DetachedReferencePosition, refHasTileLabel } from "../referencePositions.js";
 import { MergeTreeRevertibleDriver } from "../revertibles.js";
 import { assertInserted, assertMergeNode, isRemoved } from "../segmentInfos.js";
 import { SnapshotLegacy } from "../snapshotlegacy.js";
+import type { OperationStamp } from "../stamps.js";
 import { TextSegment } from "../textSegment.js";
 
 import { TestSerializer } from "./testSerializer.js";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils.js";
-import { LocalReconnectingPerspective } from "../perspective.js";
+
 
 export function specToSegment(spec: IJSONSegment): ISegmentPrivate {
 	const maybeText = TextSegment.fromJSONObject(spec);

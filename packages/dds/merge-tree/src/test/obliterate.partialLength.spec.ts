@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { NonCollabClient } from "../constants.js";
 import { MergeTreeDeltaType } from "../ops.js";
 
 import { TestClient } from "./testClient.js";
@@ -13,7 +14,6 @@ import {
 	useStrictPartialLengthChecks,
 	validatePartialLengths,
 } from "./testUtils.js";
-import { NonCollabClient } from "../constants.js";
 
 describe("obliterate partial lengths", () => {
 	let client: TestClient;

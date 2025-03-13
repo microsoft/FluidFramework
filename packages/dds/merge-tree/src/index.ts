@@ -105,6 +105,7 @@ export {
 	matchProperties,
 	PropertySet,
 } from "./properties.js";
+export { Perspective } from "./perspective.js";
 export {
 	compareReferencePositions,
 	DetachedReferencePosition,
@@ -141,3 +142,4 @@ export {
 	MergeTreeRevertibleDriver,
 	revertMergeTreeDeltaRevertibles,
 } from "./revertibles.js";
+export { OperationStamp } from "./stamps.js";

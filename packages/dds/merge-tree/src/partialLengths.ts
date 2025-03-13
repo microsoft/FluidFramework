@@ -12,14 +12,14 @@ import {
 	ISegmentPrivate,
 	type MergeBlock,
 } from "./mergeTreeNodes.js";
-import * as opstampUtils from "./stamps.js";
-import { toRemovalInfo, assertInserted, wasMovedOnInsert } from "./segmentInfos.js";
-import { SortedSet } from "./sortedSet.js";
 import {
 	LocalDefaultPerspective,
 	LocalReconnectingPerspective,
 	PriorPerspective,
 } from "./perspective.js";
+import { toRemovalInfo, assertInserted, wasMovedOnInsert } from "./segmentInfos.js";
+import { SortedSet } from "./sortedSet.js";
+import * as opstampUtils from "./stamps.js";
 
 class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength> {
 	protected compare(a: PartialSequenceLength, b: PartialSequenceLength): number {
@@ -526,9 +526,9 @@ export class PartialSequenceLengths {
 			return;
 		}
 
-		const { insert } = segment;
+		const { insert, cachedLength } = segment;
 		const isLocal = opstampUtils.isLocal(insert);
-		const clientId = insert.clientId;
+		const { clientId } = insert;
 
 		const partials = isLocal
 			? combinedPartialLengths.unsequencedRecords?.partialLengths
@@ -547,21 +547,19 @@ export class PartialSequenceLengths {
 			partials.addOrUpdate({
 				seq: localSeq,
 				len: 0,
-				seglen: segment.cachedLength,
+				seglen: cachedLength,
 				clientId,
 			});
 
 			combinedPartialLengths.addLocalAdjustment({
 				refSeq: firstRemove.seq,
 				localSeq,
-				seglen: -segment.cachedLength,
+				seglen: -cachedLength,
 			});
 		} else {
 			// Segment was obliterated on insert. Generally this means it should be visible only to the
 			// inserting client (in which case we add an adjustment to only that client's perspective),
 			// but if that client has also removed it, we don't need to add anything.
-			const removeInfo = toRemovalInfo(segment);
-
 			const wasRemovedByInsertingClient =
 				removeInfo !== undefined &&
 				removeInfo.removes.some((remove) => remove.clientId === clientId);
@@ -572,7 +570,7 @@ export class PartialSequenceLengths {
 					moveSeq !== undefined,
 					0xab8 /* ObliterateOnInsertion implies moveSeq is defined */,
 				);
-				combinedPartialLengths.addClientAdjustment(clientId, moveSeq, segment.cachedLength);
+				combinedPartialLengths.addClientAdjustment(clientId, moveSeq, cachedLength);
 			}
 		}
 	}
@@ -592,12 +590,11 @@ export class PartialSequenceLengths {
 			return;
 		}
 
-		const { insert } = segment;
+		const { insert, cachedLength: segmentLen } = segment;
 
 		const isLocal = opstampUtils.isLocal(insert);
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const seqOrLocalSeq = isLocal ? insert.localSeq! : insert.seq;
-		const segmentLen = segment.cachedLength;
 		const clientId = insert.clientId;
 
 		const partials = isLocal
@@ -663,7 +660,7 @@ export class PartialSequenceLengths {
 		const clientId = firstRemove.clientId;
 
 		const clientsWithRemoveOrObliterate = new Set<number>(
-			removalInfo?.removes.map(({ clientId }) => clientId),
+			removalInfo?.removes.map((stamp) => stamp.clientId),
 		);
 
 		const partials = isLocal
@@ -695,7 +692,7 @@ export class PartialSequenceLengths {
 			for (const id of clientsWithRemoveOrObliterate) {
 				if (id === collabWindow.clientId) {
 					// The local client also removed or obliterated this segment.
-					const { localSeq } = removalInfo?.removes[removalInfo.removes.length - 1];
+					const { localSeq } = removalInfo.removes[removalInfo.removes.length - 1];
 					if (localSeq === undefined) {
 						// Sure, the local client did it--but that change was already acked.
 						// No need to account for it in the unsequenced records.
@@ -1133,9 +1130,9 @@ export function verifyExpectedPartialLengths(
 		if (thisNode.isLeaf()) {
 			const perspective =
 				clientId === mergeTree.collabWindow.clientId
-					? localSeq !== undefined
-						? new LocalReconnectingPerspective(refSeq, clientId, localSeq)
-						: new LocalDefaultPerspective(clientId)
+					? localSeq === undefined
+						? new LocalDefaultPerspective(clientId)
+						: new LocalReconnectingPerspective(refSeq, clientId, localSeq)
 					: new PriorPerspective(refSeq, clientId);
 			expected += mergeTree["nodeLength"](thisNode, perspective) ?? 0;
 		} else {

@@ -19,13 +19,13 @@ import {
 import { NonCollabClient } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
 import { isSegmentLeaf, type ISegmentPrivate } from "./mergeTreeNodes.js";
+import { PriorPerspective } from "./perspective.js";
 import { matchProperties } from "./properties.js";
 import {
 	JsonSegmentSpecs,
 	MergeTreeChunkLegacy,
 	serializeAsMinSupportedVersion,
 } from "./snapshotChunks.js";
-import { PriorPerspective } from "./perspective.js";
 
 interface SnapshotHeader {
 	chunkCount?: number;

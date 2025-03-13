@@ -20,6 +20,7 @@ import { UnassignedSequenceNumber } from "./constants.js";
  * @remarks - As the `readonly` identifies suggest, these stamps should be treated as immutable.
  * New operations applied to a merge-tree should create new stamps rather than modify existing ones (e.g. when
  * a change's ack happens).
+ * @internal
  */
 export interface OperationStamp {
 	/**
@@ -81,6 +82,7 @@ export type RemoveOperationStamp = SetRemoveOperationStamp | SliceRemoveOperatio
 
 export function lessThan(a: OperationStamp, b: OperationStamp): boolean {
 	if (a.seq === UnassignedSequenceNumber) {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return b.seq === UnassignedSequenceNumber && a.localSeq! < b.localSeq!;
 	}
 
@@ -97,6 +99,7 @@ export function gte(a: OperationStamp, b: OperationStamp): boolean {
 
 export function greaterThan(a: OperationStamp, b: OperationStamp): boolean {
 	if (a.seq === UnassignedSequenceNumber) {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return b.seq !== UnassignedSequenceNumber || a.localSeq! > b.localSeq!;
 	}
 
@@ -115,11 +118,11 @@ export function equal(a: OperationStamp, b: OperationStamp): boolean {
 	return a.seq === b.seq && a.clientId === b.clientId && a.localSeq === b.localSeq;
 }
 
-export function isLocal(a: OperationStamp) {
+export function isLocal(a: OperationStamp): boolean {
 	return a.seq === UnassignedSequenceNumber;
 }
 
-export function isAcked(a: OperationStamp) {
+export function isAcked(a: OperationStamp): boolean {
 	return a.seq !== UnassignedSequenceNumber;
 }
 
@@ -142,11 +145,11 @@ export function insertIntoList(list: OperationStamp[], stamp: OperationStamp): v
 	}
 }
 
-export function hasAnyAckedOperation(list: OperationStamp[]) {
+export function hasAnyAckedOperation(list: OperationStamp[]): boolean {
 	return list.some((ts) => isAcked(ts));
 }
 
-export function compare(a: OperationStamp, b: OperationStamp) {
+export function compare(a: OperationStamp, b: OperationStamp): number {
 	if (greaterThan(a, b)) {
 		return 1;
 	} else if (lessThan(a, b)) {

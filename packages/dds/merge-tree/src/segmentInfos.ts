@@ -13,7 +13,7 @@ export interface StringToType {
 	"string": string;
 	"number": number;
 	"object": object;
-	"array": [];
+	"array": unknown[];
 	"boolean": boolean;
 }
 
@@ -57,11 +57,10 @@ export interface IHasInsertionInfo {
  * @returns The insertion info object if the conversion is possible, otherwise undefined.
  */
 export const toInsertionInfo = (segmentLike: unknown): IHasInsertionInfo | undefined => {
-	const insert = (segmentLike as any)?.insert;
-
-	return insert !== undefined &&
-		hasProp(insert, "clientId", "number") &&
-		hasProp(insert, "seq", "number")
+	return segmentLike !== undefined &&
+		hasProp(segmentLike, "insert", "object") &&
+		hasProp(segmentLike.insert, "clientId", "number") &&
+		hasProp(segmentLike.insert, "seq", "number")
 		? (segmentLike as IHasInsertionInfo)
 		: undefined;
 };
@@ -187,11 +186,10 @@ export interface IHasRemovalInfo {
  * @returns The removal info object if the conversion is possible, otherwise undefined.
  */
 export const toRemovalInfo = (segmentLike: unknown): IHasRemovalInfo | undefined => {
-	const removal = (segmentLike as any)?.removes;
-	return removal !== undefined &&
-		removal.length > 0 &&
-		hasProp(removal[0], "clientId", "number") &&
-		hasProp(removal[0], "seq", "number")
+	return hasProp(segmentLike, "removes", "array") &&
+		segmentLike.removes.length > 0 &&
+		hasProp(segmentLike.removes[0], "clientId", "number") &&
+		hasProp(segmentLike.removes[0], "seq", "number")
 		? (segmentLike as IHasRemovalInfo)
 		: undefined;
 };

@@ -24,9 +24,8 @@ import { Client } from "./client.js";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
 import { ISegmentPrivate } from "./mergeTreeNodes.js";
-import * as opstampUtils from "./stamps.js";
-import type { RemoveOperationStamp } from "./stamps.js";
 import { IJSONSegment } from "./ops.js";
+import { PriorPerspective } from "./perspective.js";
 import {
 	IHasRemovalInfo,
 	overwriteInfo,
@@ -40,7 +39,8 @@ import {
 } from "./snapshotChunks.js";
 import { SnapshotV1 } from "./snapshotV1.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
-import { PriorPerspective } from "./perspective.js";
+import type { RemoveOperationStamp } from "./stamps.js";
+import * as opstampUtils from "./stamps.js";
 
 export class SnapshotLoader {
 	private readonly logger: ITelemetryLoggerExt;

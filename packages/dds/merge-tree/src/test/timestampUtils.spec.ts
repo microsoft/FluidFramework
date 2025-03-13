@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
+import { UnassignedSequenceNumber } from "../constants.js";
 import * as opstampUtils from "../stamps.js";
 import type { OperationStamp } from "../stamps.js";
-import { UnassignedSequenceNumber } from "../constants.js";
 
 describe("opstampUtils", () => {
 	describe("insertIntoList", () => {

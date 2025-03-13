@@ -22,11 +22,11 @@ import {
 	verifyExpectedPartialLengths,
 	verifyPartialLengths,
 } from "../partialLengths.js";
+import { LocalReconnectingPerspective, PriorPerspective } from "../perspective.js";
 import { PropertySet } from "../properties.js";
 import { TextSegment } from "../textSegment.js";
 
 import { loadText } from "./text.js";
-import { LocalReconnectingPerspective, PriorPerspective } from "../perspective.js";
 
 export function loadTextFromFile(
 	filename: string,
@@ -268,9 +268,9 @@ function getPartialLengths(
 	const partialLen = mergeBlock.partialLengths?.getPartialLength(seq, clientId, localSeq);
 
 	const perspective =
-		localSeq !== undefined
-			? new LocalReconnectingPerspective(seq, clientId, localSeq)
-			: new PriorPerspective(seq, clientId);
+		localSeq === undefined
+			? new PriorPerspective(seq, clientId)
+			: new LocalReconnectingPerspective(seq, clientId, localSeq);
 	let actualLen = 0;
 
 	walkAllChildSegments(mergeBlock, (segment) => {

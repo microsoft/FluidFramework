@@ -16,10 +16,10 @@ import {
 	Marker,
 	MaxNodesInBlock,
 } from "./mergeTreeNodes.js";
-import * as opstampUtils from "./stamps.js";
-import type { OperationStamp } from "./stamps.js";
 import { matchProperties } from "./properties.js";
 import { toRemovalInfo, removeMergeNodeInfo } from "./segmentInfos.js";
+import * as opstampUtils from "./stamps.js";
+import type { OperationStamp } from "./stamps.js";
 
 export const zamboniSegmentsMax = 2;
 function underflow(node: MergeBlock): boolean {
@@ -152,32 +152,7 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 
 		const segment = childNode;
 		const removalInfo = toRemovalInfo(segment);
-		if (removalInfo !== undefined) {
-			const firstRemove = removalInfo?.removes[0];
-			// If the segment's removal is below the MSN and it's not being held onto by a tracking group,
-			// it can be unlinked (i.e. removed from the merge-tree)
-			if (
-				!!firstRemove &&
-				opstampUtils.lte(firstRemove, mergeTree.collabWindow.minSeqStamp) &&
-				segment.trackingCollection.empty
-			) {
-				mergeTree.mergeTreeMaintenanceCallback?.(
-					{
-						operation: MergeTreeMaintenanceType.UNLINK,
-						deltaSegments: [{ segment }],
-					},
-					undefined,
-				);
-				if (Marker.is(segment)) {
-					mergeTree.unlinkMarker(segment);
-				}
-				removeMergeNodeInfo(segment);
-			} else {
-				holdNodes.push(segment);
-			}
-
-			prevSegment = undefined;
-		} else {
+		if (removalInfo === undefined) {
 			if (opstampUtils.lte(segment.insert, mergeTree.collabWindow.minSeqStamp)) {
 				const segmentHasPositiveLength = (mergeTree.leafLength(segment) ?? 0) > 0;
 				const canAppend =
@@ -206,6 +181,31 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 				holdNodes.push(segment);
 				prevSegment = undefined;
 			}
+		} else {
+			const firstRemove = removalInfo?.removes[0];
+			// If the segment's removal is below the MSN and it's not being held onto by a tracking group,
+			// it can be unlinked (i.e. removed from the merge-tree)
+			if (
+				!!firstRemove &&
+				opstampUtils.lte(firstRemove, mergeTree.collabWindow.minSeqStamp) &&
+				segment.trackingCollection.empty
+			) {
+				mergeTree.mergeTreeMaintenanceCallback?.(
+					{
+						operation: MergeTreeMaintenanceType.UNLINK,
+						deltaSegments: [{ segment }],
+					},
+					undefined,
+				);
+				if (Marker.is(segment)) {
+					mergeTree.unlinkMarker(segment);
+				}
+				removeMergeNodeInfo(segment);
+			} else {
+				holdNodes.push(segment);
+			}
+
+			prevSegment = undefined;
 		}
 	}
 }
