@@ -67,43 +67,19 @@ export const arrayRange = z
 /**
  * Cache used to prevent repeatedly generating the same Zod validation objects for the same {@link SimpleTreeSchema} as generate propts for repeated calls to an LLM
  */
-const cache = new WeakMap<SimpleTreeSchema, ReturnType<typeof generateGenericEditTypes>>();
-// /**
-//  * A map from field string to all object identifiers that can have a field with that key.
-//  */
-// const fieldToObjectIdentifier = new Map<string, Set<string>>();
+const treeSchemaCache = new WeakMap<
+	SimpleTreeSchema,
+	ReturnType<typeof generateGenericEditTypes>
+>();
 
-// function something(schema: SimpleTreeSchema, keys: Iterable<string>): Set<string> {
-// 	// Find all candidates that have at least one of the given keys
-// 	const candidates = new Set<string>();
-// 	for (const key of [...keys]) {
-// 		const objects = fieldToObjectIdentifier.get(key);
-// 		if (objects !== undefined) {
-// 			for (const o of objects) {
-// 				candidates.add(o);
-// 			}
-// 		}
-// 	}
+const objectSchemaCache = new WeakMap<SimpleNodeSchema, Zod.ZodTypeAny>();
 
-// 	// Refine to all candidates that have all of the given keys
-// 	const candidates2 = new Set<string>();
-// 	for (const c of candidates) {
-// 		const objectSchema = schema.definitions.get(c);
-// 		assert(objectSchema?.kind === NodeKind.Object, "Expected object schema");
-// 		let hasAllKeys = true;
-// 		for (const key of keys) {
-// 			if (objectSchema.fields[key] === undefined) {
-// 				hasAllKeys = false;
-// 				break;
-// 			}
-// 		}
-// 		if (hasAllKeys) {
-// 			candidates2.add(c);
-// 		}
-// 	}
-
-// 	return candidates2;
-// }
+/**
+ * Gets the Zod validation objects for the provided {@link SimpleTreeSchema} from the cache.
+ */
+export function getZodForSchema(schema: SimpleNodeSchema): Zod.ZodTypeAny {
+	return objectSchemaCache.get(schema) ?? fail("Expected schema to be cached");
+}
 
 /**
  * Generates a set of ZOD validation objects for the various types of data that can be put into the provided {@link SimpleTreeSchema}
@@ -117,21 +93,13 @@ export function generateGenericEditTypes(
 	schema: SimpleTreeSchema,
 	generateDomainTypes: boolean,
 ): [Record<string, Zod.ZodTypeAny>, root: string] {
-	return getOrCreate(cache, schema, () => {
+	return getOrCreate(treeSchemaCache, schema, () => {
 		const insertSet = new Set<string>();
 		const setFieldFieldSet = new Set<string>();
 		const setFieldTypeSet = new Set<string>();
-		const typeMap = new Map<string, Zod.ZodTypeAny>();
 
 		for (const name of schema.definitions.keys()) {
-			getOrCreateType(
-				schema.definitions,
-				typeMap,
-				insertSet,
-				setFieldFieldSet,
-				setFieldTypeSet,
-				name,
-			);
+			getOrCreateType(schema.definitions, insertSet, setFieldFieldSet, setFieldTypeSet, name);
 		}
 		function getType(allowedTypes: ReadonlySet<string>): Zod.ZodTypeAny {
 			switch (allowedTypes.size) {
@@ -140,14 +108,19 @@ export function generateGenericEditTypes(
 				}
 				case 1: {
 					return (
-						typeMap.get(tryGetSingleton(allowedTypes) ?? fail("Expected singleton")) ??
-						fail("Unknown type")
+						objectSchemaCache.get(
+							schema.definitions.get(
+								tryGetSingleton(allowedTypes) ?? fail("Expected singleton"),
+							) ?? fail("Unknown type"),
+						) ?? fail("Unknown type")
 					);
 				}
 				default: {
 					const types = Array.from(
 						allowedTypes,
-						(name) => typeMap.get(name) ?? fail("Unknown type"),
+						(name) =>
+							objectSchemaCache.get(schema.definitions.get(name) ?? fail("Expected type")) ??
+							fail("Unknown type"),
 					);
 					assert(hasAtLeastTwo(types), 0xa7d /* Expected at least two types */);
 					return z.union(types);
@@ -252,14 +225,13 @@ export function generateGenericEditTypes(
 
 function getOrCreateType(
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
-	typeMap: Map<string, Zod.ZodTypeAny>,
 	insertSet: Set<string>,
 	modifyFieldSet: Set<string>,
 	modifyTypeSet: Set<string>,
 	definition: string,
 ): Zod.ZodTypeAny {
-	return getOrCreate(typeMap, definition, () => {
-		const nodeSchema = definitionMap.get(definition) ?? fail("Unexpected definition");
+	const nodeSchema = definitionMap.get(definition) ?? fail("Unexpected definition");
+	return getOrCreate(objectSchemaCache, nodeSchema, () => {
 		switch (nodeSchema.kind) {
 			case NodeKind.Object: {
 				for (const [key, field] of Object.entries(nodeSchema.fields)) {
@@ -286,7 +258,6 @@ function getOrCreateType(
 								key,
 								getOrCreateTypeForField(
 									definitionMap,
-									typeMap,
 									insertSet,
 									modifyFieldSet,
 									modifyTypeSet,
@@ -297,16 +268,19 @@ function getOrCreateType(
 						.filter(([, value]) => value !== undefined),
 				);
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				properties[typeField] = z.enum([definition]);
+				properties[typeField] = z
+					.literal(definition)
+					.optional()
+					.describe(
+						"The type ID of the object, only necessary if the new object's type is ambiguous at the insertion location.",
+					);
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				properties[objectIdKey] = z.union([
-					z.null(),
-					z
-						.string()
-						.describe(
-							`The id (${objectIdKey}) of the object (only necessary if the object must be referred to later in the same task - if not, set to null)`,
-						),
-				]);
+				properties[objectIdKey] = z
+					.string()
+					.optional()
+					.describe(
+						`The id (${objectIdKey}) of the object (only set if the object must be referred to later in the same task)`,
+					);
 				return z.object(properties);
 			}
 			case NodeKind.Array: {
@@ -324,7 +298,6 @@ function getOrCreateType(
 				return z.array(
 					getTypeForAllowedTypes(
 						definitionMap,
-						typeMap,
 						insertSet,
 						modifyFieldSet,
 						modifyTypeSet,
@@ -360,7 +333,6 @@ function getOrCreateType(
 
 function getOrCreateTypeForField(
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
-	typeMap: Map<string, Zod.ZodTypeAny>,
 	insertSet: Set<string>,
 	modifyFieldSet: Set<string>,
 	modifyTypeSet: Set<string>,
@@ -374,7 +346,6 @@ function getOrCreateTypeForField(
 		case FieldKind.Required: {
 			return getTypeForAllowedTypes(
 				definitionMap,
-				typeMap,
 				insertSet,
 				modifyFieldSet,
 				modifyTypeSet,
@@ -386,7 +357,6 @@ function getOrCreateTypeForField(
 				z.null(),
 				getTypeForAllowedTypes(
 					definitionMap,
-					typeMap,
 					insertSet,
 					modifyFieldSet,
 					modifyTypeSet,
@@ -405,7 +375,6 @@ function getOrCreateTypeForField(
 
 function getTypeForAllowedTypes(
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
-	typeMap: Map<string, Zod.ZodTypeAny>,
 	insertSet: Set<string>,
 	modifyFieldSet: Set<string>,
 	modifyTypeSet: Set<string>,
@@ -415,27 +384,13 @@ function getTypeForAllowedTypes(
 	if (single === undefined) {
 		const types = [
 			...mapIterable(allowedTypes, (name) => {
-				return getOrCreateType(
-					definitionMap,
-					typeMap,
-					insertSet,
-					modifyFieldSet,
-					modifyTypeSet,
-					name,
-				);
+				return getOrCreateType(definitionMap, insertSet, modifyFieldSet, modifyTypeSet, name);
 			}),
 		];
 		assert(hasAtLeastTwo(types), 0xa7e /* Expected at least two types */);
 		return z.union(types);
 	} else {
-		return getOrCreateType(
-			definitionMap,
-			typeMap,
-			insertSet,
-			modifyFieldSet,
-			modifyTypeSet,
-			single,
-		);
+		return getOrCreateType(definitionMap, insertSet, modifyFieldSet, modifyTypeSet, single);
 	}
 }
 
