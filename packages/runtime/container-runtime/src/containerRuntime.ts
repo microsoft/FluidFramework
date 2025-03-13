@@ -3520,12 +3520,13 @@ export class ContainerRuntime
 				//* TODO: Rebase (like resubmit) pending states
 			}),
 			commitChanges: exitStagingMode(() => {
-				// All staged changes are in the PSM, so just replay them
+				// All staged changes are in the PSM, so just replay them (ignore pre-staging batches)
 				//* FUTURE: Have this do squash-rebase instead of resubmitting all intermediate changes
-				this.pendingStateManager.replayPendingStates();
-
-				//* TODO: We need special replay that first waits for pre-stage changes to ack (or waits for disconnect),
-				//* and then replays the staged changes (allowing the clientId to be unchanged since it doesn't apply)
+				if (this.connected) {
+					this.pendingStateManager.replayPendingStates(true /* onlyStagedBatched */);
+				} else {
+					this.pendingStateManager.clearStagingFlags();
+				}
 			}),
 		};
 

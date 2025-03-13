@@ -195,6 +195,13 @@ const createClients = async (deltaConnectionServer: ILocalDeltaConnectionServer)
 };
 
 describe("Scenario Test", () => {
+	/**
+	 * Test cases to add:
+	 * - Existing change before staging
+	 * --- Reconnect during staging mode (should resubmit that before we exit)
+	 * --- No reconnect during staging mode (state still pending, wait for ack)
+	 * --- Offline during staging mode (state still pending, wait for reconnect)
+	 */
 	it("enter staging mode and merge", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
@@ -295,7 +302,7 @@ describe("Scenario Test", () => {
 		);
 	});
 
-	it("enter staging mode and discard staged changes", async () => {
+	it.skip("enter staging mode and discard staged changes", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
 

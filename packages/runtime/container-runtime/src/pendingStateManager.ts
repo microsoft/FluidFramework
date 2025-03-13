@@ -628,18 +628,22 @@ export class PendingStateManager implements IDisposable {
 	 * Called when the Container's connection state changes. If the Container gets connected, it replays all the pending
 	 * states in its queue. This includes triggering resubmission of unacked ops.
 	 * ! Note: successfully resubmitting an op that has been successfully sequenced is not possible due to checks in the ConnectionStateHandler (Loader layer)
+	 * @param onlyStagedBatches - If true, only replay staged batches. This is used when we are exiting staging mode and want to rebase and submit the staged batches.
 	 */
-	public replayPendingStates(): void {
+	public replayPendingStates(onlyStagedBatches?: boolean): void {
 		assert(
 			this.stateHandler.connected(),
 			0x172 /* "The connection state is not consistent with the runtime" */,
 		);
 
-		// This assert suggests we are about to send same ops twice, which will result in data loss.
-		assert(
-			this.clientIdFromLastReplay !== this.stateHandler.clientId(),
-			0x173 /* "replayPendingStates called twice for same clientId!" */,
-		);
+		// Staged batches have not yet been submitted so check doesn't apply
+		if (!onlyStagedBatches) {
+			// This assert suggests we are about to send same ops twice, which will result in data loss.
+			assert(
+				this.clientIdFromLastReplay !== this.stateHandler.clientId(),
+				0x173 /* "replayPendingStates called twice for same clientId!" */,
+			);
+		}
 		this.clientIdFromLastReplay = this.stateHandler.clientId();
 
 		assert(
@@ -650,6 +654,8 @@ export class PendingStateManager implements IDisposable {
 		const initialPendingMessagesCount = this.pendingMessages.length;
 		let remainingPendingMessagesCount = this.pendingMessages.length;
 
+		let seenStagedBatch = false;
+
 		// Process exactly `pendingMessagesCount` items in the queue as it represents the number of messages that were
 		// pending when we connected. This is important because the `reSubmitFn` might add more items in the queue
 		// which must not be replayed.
@@ -657,6 +663,18 @@ export class PendingStateManager implements IDisposable {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			let pendingMessage = this.pendingMessages.shift()!;
 			remainingPendingMessagesCount--;
+
+			// Re-queue pre-staging messages if we are only processing staged batches
+			if (onlyStagedBatches) {
+				if (!pendingMessage.batchInfo.staged) {
+					assert(!seenStagedBatch, "Staged batch was followed by non-staged batch");
+					this.pendingMessages.push(pendingMessage);
+					continue;
+				}
+
+				seenStagedBatch = true;
+				pendingMessage.batchInfo.staged = false; // Clear staged flag so we can submit
+			}
 
 			const batchMetadataFlag = asBatchMetadata(pendingMessage.opMetadata)?.batch;
 			assert(batchMetadataFlag !== false, 0x41b /* We cannot process batches in chunks */);
@@ -739,6 +757,17 @@ export class PendingStateManager implements IDisposable {
 				count: initialPendingMessagesCount,
 				clientId: this.stateHandler.clientId(),
 			});
+		}
+	}
+
+	/**
+	 * Clears the 'staged' flag off all pending messages.
+	 */
+	public clearStagingFlags(): void {
+		for (const message of this.pendingMessages.toArray()) {
+			if (message.batchInfo.staged) {
+				message.batchInfo.staged = false;
+			}
 		}
 	}
 }
