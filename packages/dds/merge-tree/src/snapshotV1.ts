@@ -306,7 +306,7 @@ export class SnapshotV1 {
 					raw.removedSeq = firstRemove.seq;
 
 					// back compat for when we split overlap and removed client
-					// This can be removed when we can safely assume no clients running fluid packages <= 0.58 will ever
+					// This can be removed when we can safely assume no clients running Fluid packages <= 0.58 will ever
 					// load a document produced by a version beyond the removal. It is vestigial in the meantime.
 					raw.removedClient = this.getLongClientId(firstRemove.clientId);
 

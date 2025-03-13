@@ -51,7 +51,7 @@ export interface InsertOperationStamp extends OperationStamp {
 }
 
 /**
- * {@link OperationStamp} for a 'set remove' operation. This aligns with the `mapRangeRemoved` API in MergeTree.
+ * {@link OperationStamp} for a 'set remove' operation. This aligns with the `markRangeRemoved` API in MergeTree.
  *
  * @remarks The terminology here comes from the fact that the removal should affect only the *set* of nodes that were
  * specified at the time the local client issued the remove, and not any nodes that were inserted concurrently.
@@ -65,7 +65,7 @@ export interface SetRemoveOperationStamp extends OperationStamp {
 }
 
 /**
- * {@link OperationStamp} for a 'set remove' operation. This aligns with the `mapRangeRemoved` API in MergeTree.
+ * {@link OperationStamp} for a 'set remove' operation. This aligns with the `obliterateRange` API in MergeTree.
  *
  * @remarks The terminology here comes from the fact that the removal should affect the *slice* of nodes between the
  * start and end point specified by the local client, which includes any nodes that were inserted concurrently.
