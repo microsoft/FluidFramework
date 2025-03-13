@@ -1336,7 +1336,8 @@ export function moveWithin(
 }
 
 /**
- * Invoke inside a describe block for benchmarks to add hooks that configure things for maximum performance if isInPerformanceTestingMode
+ * Invoke inside a describe block for benchmarks to add hooks that configure things for maximum performance if isInPerformanceTestingMode,
+ * and enable debug asserts otherwise.
  */
 export function configureBenchmarkHooks(): void {
 	let debugBefore: boolean;
