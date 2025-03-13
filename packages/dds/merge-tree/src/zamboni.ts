@@ -11,6 +11,7 @@ import { MergeTreeMaintenanceType } from "./mergeTreeDeltaCallback.js";
 import {
 	type MergeBlock,
 	assignChild,
+	getMinSeqStamp,
 	IMergeNode,
 	ISegmentPrivate,
 	Marker,
@@ -152,8 +153,9 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 
 		const segment = childNode;
 		const removalInfo = toRemovalInfo(segment);
+		const minSeqStamp = getMinSeqStamp(mergeTree.collabWindow);
 		if (removalInfo === undefined) {
-			if (opstampUtils.lte(segment.insert, mergeTree.collabWindow.minSeqStamp)) {
+			if (opstampUtils.lte(segment.insert, minSeqStamp)) {
 				const segmentHasPositiveLength = (mergeTree.leafLength(segment) ?? 0) > 0;
 				const canAppend =
 					prevSegment?.canAppend(segment) &&
@@ -182,12 +184,12 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 				prevSegment = undefined;
 			}
 		} else {
-			const firstRemove = removalInfo?.removes[0];
+			const firstRemove = removalInfo.removes[0];
 			// If the segment's removal is below the MSN and it's not being held onto by a tracking group,
 			// it can be unlinked (i.e. removed from the merge-tree)
 			if (
 				!!firstRemove &&
-				opstampUtils.lte(firstRemove, mergeTree.collabWindow.minSeqStamp) &&
+				opstampUtils.lte(firstRemove, minSeqStamp) &&
 				segment.trackingCollection.empty
 			) {
 				mergeTree.mergeTreeMaintenanceCallback?.(

@@ -560,6 +560,32 @@ export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 }
 
 /**
+ * Returns a stamp that occurs at the minimum sequence number.
+ * @privateRemarks
+ * This is a free function over something obtainable on CollaborationWindow to avoid exposing Perspective
+ * and OperationStamp from the package (even internally), at least for now.
+ * If/when `Client`'s API is refactored to be structured similarly to MergeTree (so that SharedString passes in
+ * things closer to `Perspective`s when calling methods on `Client` rather than refSeq/localSeq/clientId etc),
+ * it may be more reasonable to expose this more directly on `CollaborationWindow`.
+ */
+export function getMinSeqStamp(collabWindow: CollaborationWindow): OperationStamp {
+	return { seq: collabWindow.minSeq, clientId: NonCollabClient };
+}
+
+/**
+ * Returns a perspective representing a readonly client's view of the tree at the minimum sequence number.
+ * @privateRemarks
+ * This is a free function over something obtainable on CollaborationWindow to avoid exposing Perspective
+ * and OperationStamp from the package (even internally), at least for now.
+ * If/when `Client`'s API is refactored to be structured similarly to MergeTree (so that SharedString passes in
+ * things closer to `Perspective`s when calling methods on `Client` rather than refSeq/localSeq/clientId etc),
+ * it may be more reasonable to expose this more directly on `CollaborationWindow`.
+ */
+export function getMinSeqPerspective(collabWindow: CollaborationWindow): Perspective {
+	return new PriorPerspective(collabWindow.minSeq, NonCollabClient);
+}
+
+/**
  * This class is used to track facts about the current window of collaboration. This window is defined by the server
  * specified minimum sequence number to the last sequence number seen. Additionally, it track state for outstanding
  * local operations.
@@ -577,14 +603,6 @@ export class CollaborationWindow {
 	 * Highest-numbered segment in window and current reference sequence number for this client.
 	 */
 	currentSeq = 0;
-
-	public get minSeqStamp(): OperationStamp {
-		return { seq: this.minSeq, clientId: NonCollabClient };
-	}
-
-	public get minSeqPerspective(): Perspective {
-		return new PriorPerspective(this.minSeq, NonCollabClient);
-	}
 
 	/**
 	 * Highest-numbered localSeq used for a pending segment.

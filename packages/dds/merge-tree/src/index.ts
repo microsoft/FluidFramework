@@ -105,7 +105,6 @@ export {
 	matchProperties,
 	PropertySet,
 } from "./properties.js";
-export { Perspective } from "./perspective.js";
 export {
 	compareReferencePositions,
 	DetachedReferencePosition,

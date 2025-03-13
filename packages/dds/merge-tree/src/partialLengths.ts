@@ -8,6 +8,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { MergeTree } from "./mergeTree.js";
 import {
 	CollaborationWindow,
+	getMinSeqStamp,
 	IMergeNode,
 	ISegmentPrivate,
 	type MergeBlock,
@@ -519,7 +520,7 @@ export class PartialSequenceLengths {
 			0xab7 /* Segment was not moved on insert */,
 		);
 		const firstRemove = removeInfo?.removes[0];
-		if (opstampUtils.lte(firstRemove, collabWindow.minSeqStamp)) {
+		if (opstampUtils.lte(firstRemove, getMinSeqStamp(collabWindow))) {
 			// This segment was obliterated as soon as it was inserted, and everyone was aware of the obliterate.
 			// Thus every single client treats this segment as length 0 from every perspective, and no adjustments
 			// are necessary.
@@ -585,7 +586,7 @@ export class PartialSequenceLengths {
 		collabWindow: CollaborationWindow,
 	): void {
 		assertInserted(segment);
-		if (opstampUtils.lte(segment.insert, collabWindow.minSeqStamp)) {
+		if (opstampUtils.lte(segment.insert, getMinSeqStamp(collabWindow))) {
 			combinedPartialLengths.minLength += segment.cachedLength;
 			return;
 		}
@@ -640,7 +641,8 @@ export class PartialSequenceLengths {
 		}
 
 		const firstRemove = removalInfo?.removes[0];
-		if (firstRemove !== undefined && opstampUtils.lte(firstRemove, collabWindow.minSeqStamp)) {
+		const minSeqStamp = getMinSeqStamp(collabWindow);
+		if (firstRemove !== undefined && opstampUtils.lte(firstRemove, minSeqStamp)) {
 			combinedPartialLengths.minLength -= segment.cachedLength;
 			return;
 		}
@@ -738,7 +740,7 @@ export class PartialSequenceLengths {
 					// We already add this entry as part of the accountForInsertion codepath for the client that
 					// actually did insert the segment, hence not doing so [again] here.
 					if (
-						opstampUtils.greaterThan(segment.insert, collabWindow.minSeqStamp) &&
+						opstampUtils.greaterThan(segment.insert, minSeqStamp) &&
 						id !== segment.insert.clientId
 					) {
 						combinedPartialLengths.addClientAdjustment(
@@ -828,7 +830,7 @@ export class PartialSequenceLengths {
 					if (clientId !== collabWindow.clientId) {
 						this.addClientAdjustment(clientId, seq, -segment.cachedLength);
 						if (
-							opstampUtils.greaterThan(segment.insert, collabWindow.minSeqStamp) &&
+							opstampUtils.greaterThan(segment.insert, getMinSeqStamp(collabWindow)) &&
 							segment.insert.clientId !== clientId
 						) {
 							this.addClientAdjustment(clientId, segment.insert.seq, segment.cachedLength);

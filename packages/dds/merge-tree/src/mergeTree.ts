@@ -53,6 +53,8 @@ import {
 	SegmentGroup,
 	assertSegmentLeaf,
 	assignChild,
+	getMinSeqPerspective,
+	getMinSeqStamp,
 	isSegmentLeaf,
 	reservedMarkerIdKey,
 	type IMergeNodeBuilder,
@@ -653,7 +655,7 @@ export class MergeTree {
 		const removalInfo = toRemovalInfo(segment);
 		if (
 			removalInfo &&
-			this.collabWindow.minSeqPerspective.hasOccurred(removalInfo.removes[0])
+			getMinSeqPerspective(this.collabWindow).hasOccurred(removalInfo.removes[0])
 		) {
 			// this segment's removal has already moved outside the collab window which means it is zamboni eligible
 			// this also means the segment could be completely absent from other client's in-memory merge trees,
@@ -1460,7 +1462,7 @@ export class MergeTree {
 				// locSegment.seq > this.collabWindow.currentSeq
 				else if (
 					MergeTree.options.zamboniSegments &&
-					opstampUtils.greaterThan(locSegment.insert, this.collabWindow.minSeqStamp)
+					opstampUtils.greaterThan(locSegment.insert, getMinSeqStamp(this.collabWindow))
 				) {
 					this.addToLRUSet(locSegment, locSegment.insert.seq);
 				}
