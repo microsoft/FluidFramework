@@ -499,16 +499,17 @@ export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>)
 }
 
 /**
- * Indicates that a schema is the "most derived" version which is allowed to be used, see {@link MostDerivedData}.
+ * Indicates that the provided schema is the "most derived" version in its class hierarchy.
  *
  * @param oneTimeInitialize - If true this runs {@link TreeNodeValid.oneTimeInitialize} which does even more initialization and validation.
  * `oneTimeInitialize` can't safely be run until all transitively referenced schema are defined, so which cases can safely use it are more limited.
  * When legal for the caller to set this to true, it is preferred, but it is often not safe due to possible forward references.
  * @remarks
- * Helper for invoking {@link TreeNodeValid.markMostDerived} for any {@link TreeNodeSchema} if it needed.
+ * See {@link MostDerivedData} and {@link SchemaFactory} for details on what a "most derived" schema is any why it matters.
  *
- * Calling this helps with error messages about invalid schema usage (using more than one type from single {@link SchemaFactory} produced type hierarchy,
- * and thus calling this for one than one subclass).
+ * This is a helper for invoking {@link TreeNodeValid.markMostDerived} for {@link TreeNodeSchema}.
+ *
+ * Calling this helps with error messages about invalid schema usage (See {@link SchemaFactory} for the rules, some of which this helps validate).
  * Typically this should be called for each schema as early as practical to improve error reporting for invalid usages of schema
  * (using two different schema derived from the same {@link SchemaFactory} produced base class).
  *
