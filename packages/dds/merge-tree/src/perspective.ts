@@ -120,7 +120,8 @@ abstract class PerspectiveBase {
 								clientId,
 								localSeq: removalInfo.localRemovedSeq,
 							} as const)
-						: ({ type: "setRemove", seq: removalInfo.removedSeq, clientId } as const),
+						: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							({ type: "setRemove", seq: removalInfo.removedSeq, clientId } as const),
 				),
 			);
 		}
@@ -137,7 +138,8 @@ abstract class PerspectiveBase {
 								clientId,
 								localSeq: moveInfo.localMovedSeq,
 							} as const)
-						: ({ type: "setRemove", seq: moveInfo.movedSeqs[index]!, clientId } as const),
+						: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							({ type: "setRemove", seq: moveInfo.movedSeqs[index]!, clientId } as const),
 				),
 			);
 		}

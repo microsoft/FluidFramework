@@ -1231,7 +1231,7 @@ export class MergeTree {
 							? removeInfo.removedSeq
 							: refSeq;
 				const slideLocalSeq = moveInfo?.localMovedSeq ?? removeInfo?.localRemovedSeq;
-				const perspective =
+				const slidePerspective =
 					slideLocalSeq === undefined
 						? new PriorPerspective(slideSeq, this.collabWindow.clientId)
 						: new LocalReconnectingPerspective(
@@ -1239,7 +1239,7 @@ export class MergeTree {
 								this.collabWindow.clientId,
 								slideLocalSeq,
 							);
-				const slidSegment = perspective.nextSegment(this, seg, forward);
+				const slidSegment = slidePerspective.nextSegment(this, seg, forward);
 				return (
 					this.getPosition(slidSegment, refSeq, clientId, localSeq) +
 					(forward ? 0 : slidSegment.cachedLength === 0 ? 0 : slidSegment.cachedLength - 1)
