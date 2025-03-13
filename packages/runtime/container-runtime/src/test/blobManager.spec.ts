@@ -86,7 +86,7 @@ export class MockRuntime
 	public readonly clientDetails: IClientDetails = { capabilities: { interactive: true } };
 	constructor(
 		public mc: MonitoringContext,
-		snapshot: IBlobManagerLoadInfo = {},
+		blobManagerLoadInfo: IBlobManagerLoadInfo = {},
 		attached = false,
 		stashed: unknown[] = [[], {}],
 	) {
@@ -96,7 +96,7 @@ export class MockRuntime
 		this.baseLogger = mc.logger;
 		this.blobManager = new BlobManager({
 			routeContext: undefined as unknown as IFluidHandleContext,
-			snapshot,
+			blobManagerLoadInfo,
 			storage: this.getStorage(),
 			sendBlobAttachOp: (localId: string, blobId?: string) =>
 				this.sendBlobAttachOp(localId, blobId),

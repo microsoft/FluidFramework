@@ -198,7 +198,7 @@ export class BlobManager {
 	constructor(props: {
 		readonly routeContext: IFluidHandleContext;
 
-		snapshot: IBlobManagerLoadInfo;
+		blobManagerLoadInfo: IBlobManagerLoadInfo;
 		readonly storage: IDocumentStorageService;
 		/**
 		 * Submit a BlobAttach op. When a blob is uploaded, there is a short grace period before which the blob is
@@ -223,7 +223,7 @@ export class BlobManager {
 	}) {
 		const {
 			routeContext,
-			snapshot,
+			blobManagerLoadInfo,
 			storage,
 			sendBlobAttachOp,
 			blobRequested,
@@ -244,7 +244,11 @@ export class BlobManager {
 			namespace: "BlobManager",
 		});
 
-		this.redirectTable = toRedirectTable(snapshot, this.mc.logger, this.runtime.attachState);
+		this.redirectTable = toRedirectTable(
+			blobManagerLoadInfo,
+			this.mc.logger,
+			this.runtime.attachState,
+		);
 
 		// Begin uploading stashed blobs from previous container instance
 		for (const [localId, entry] of Object.entries(stashedBlobs ?? {})) {

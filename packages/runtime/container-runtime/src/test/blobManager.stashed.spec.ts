@@ -49,7 +49,7 @@ function createBlobManager(overrides?: Partial<ConstructorParameters<typeof Blob
 			// defaults, these can still be overridden below
 			runtime,
 			routeContext,
-			snapshot: {},
+			blobManagerLoadInfo: {},
 			stashedBlobs: undefined,
 			localBlobIdGenerator: undefined,
 
