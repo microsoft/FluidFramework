@@ -172,6 +172,8 @@ import {
 	MockContainerRuntimeFactoryWithOpBunching,
 	type MockContainerRuntimeWithOpBunching,
 } from "./mocksForOpBunching.js";
+import { configureDebugAsserts } from "@fluidframework/core-utils/internal";
+import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 
 // Testing utilities
 
@@ -1331,6 +1333,19 @@ export function moveWithin(
 	destIndex: number,
 ) {
 	editor.move(field, sourceIndex, count, field, destIndex);
+}
+
+/**
+ * Invoke inside a describe block for benchmarks to add hooks that configure things for maximum performance if isInPerformanceTestingMode
+ */
+export function configureBenchmarkHooks(): void {
+	let debugBefore: boolean;
+	before(() => {
+		debugBefore = configureDebugAsserts(!isInPerformanceTestingMode);
+	});
+	after(() => {
+		assert.equal(configureDebugAsserts(debugBefore), !isInPerformanceTestingMode);
+	});
 }
 
 export function chunkFromJsonTrees(field: JsonCompatible[]): TreeChunk {
