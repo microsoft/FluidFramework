@@ -92,6 +92,7 @@ import {
 	type RevertibleAlphaFactory,
 	type DeltaDetachedNodeChanges,
 	type DeltaDetachedNodeRename,
+	type NormalizedFieldUpPath,
 	type ExclusiveMapTree,
 } from "../core/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
@@ -1327,7 +1328,7 @@ function normalizeNewFieldContent(
  */
 export function moveWithin(
 	editor: IDefaultEditBuilder,
-	field: FieldUpPath,
+	field: NormalizedFieldUpPath,
 	sourceIndex: number,
 	count: number,
 	destIndex: number,
