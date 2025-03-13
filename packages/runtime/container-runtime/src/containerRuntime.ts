@@ -3402,19 +3402,23 @@ export class ContainerRuntime
 		this.channelCollection.processSignal(transformed, local);
 	}
 
+	//* Both optional params below are only set when resubmitting, maybe combine them
+
 	/**
 	 * Flush the pending ops manually.
 	 * This method is expected to be called at the end of a batch.
 	 * @param resubmittingBatchId - If defined, indicates this is a resubmission of a batch
 	 * with the given Batch ID, which must be preserved
+	 * @param staged - Indicates whether the batch is staged (if so, don't actually submit).
+	 * By default, we fall back on the inStagingMode property.
 	 */
-	private flush(resubmittingBatchId?: BatchId): void {
+	private flush(resubmittingBatchId?: BatchId, staged: boolean = this.inStagingMode): void {
 		assert(
 			this._orderSequentiallyCalls === 0,
 			0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */,
 		);
 
-		this.outbox.flush(resubmittingBatchId);
+		this.outbox.flush(resubmittingBatchId, staged);
 		assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
 	}
 
@@ -3488,21 +3492,20 @@ export class ContainerRuntime
 		if (this.stageControls !== undefined) {
 			throw new Error("already in staging mode");
 		}
-		//* Is this flush still right?
-		this.outbox.flush();
-		this.outbox.doNotSend = true;
-		this.ensureNoDataModelChangesCalls++;
 
-		const exitStagingMode = (act: () => void) => (): void => {
-			this.ensureNoDataModelChangesCalls--;
+		// Make sure all BatchManagers are empty before entering staging mode,
+		// since we mark whole batches as "staged" or not to indicate whether to submit them.
+		this.outbox.flush();
+
+		const exitStagingMode = (discardOrCommit: () => void) => (): void => {
 			this.stageControls = undefined;
 
-			this.outbox.flush();
+			// Final flush of any last staged changes
+			this.outbox.flush(undefined, true /* staged */);
 
-			act();
+			discardOrCommit();
 
-			this.outbox.doNotSend = false;
-
+			//* TODO: Should be able to remove this
 			if (this.lastStagingSetConnectionState !== undefined) {
 				this.setConnectionState(
 					this.lastStagingSetConnectionState.connected,
@@ -3514,12 +3517,15 @@ export class ContainerRuntime
 
 		const stageControls = {
 			discardChanges: exitStagingMode(() => {
-				//* TODO: Tell PSM to discard pending states
+				//* TODO: Rebase (like resubmit) pending states
 			}),
 			commitChanges: exitStagingMode(() => {
-				this.stageControls = undefined;
+				// All staged changes are in the PSM, so just replay them
+				//* FUTURE: Have this do squash-rebase instead of resubmitting all intermediate changes
+				this.pendingStateManager.replayPendingStates();
 
-				//* TODO: Rebase (like resubmit) pending states
+				//* TODO: We need special replay that first waits for pre-stage changes to ack (or waits for disconnect),
+				//* and then replays the staged changes (allowing the clientId to be unchanged since it doesn't apply)
 			}),
 		};
 
@@ -4589,6 +4595,7 @@ export class ContainerRuntime
 				const idAllocationBatchMessage: BatchMessage = {
 					contents: serializeOpContents(idAllocationMessage),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+					staged: this.inStagingMode,
 				};
 				this.outbox.submitIdAllocation(idAllocationBatchMessage);
 			}
@@ -4652,6 +4659,7 @@ export class ContainerRuntime
 				this.outbox.submit({
 					contents: serializeOpContents(msg),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+					staged: this.inStagingMode,
 				});
 			}
 
@@ -4660,6 +4668,7 @@ export class ContainerRuntime
 				metadata,
 				localOpMetadata,
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+				staged: this.inStagingMode,
 			};
 			if (type === ContainerMessageType.BlobAttach) {
 				// BlobAttach ops must have their metadata visible and cannot be grouped (see opGroupingManager.ts)
@@ -4673,6 +4682,9 @@ export class ContainerRuntime
 			if (flushImmediatelyOnSubmit) {
 				this.flush();
 			} else {
+				//* TODO: Is there a race condition where you're IN Staging Mode here, but OUT by the time it's actually run?
+				//* If that happened, exiting Staging Mode would flush the outbox, and the resulting flush would be a no-op (or would have post-stage changes).
+				//* So we can/should simply check inStagingMode at the time flush is actually run.
 				this.scheduleFlush();
 			}
 		} catch (error) {
@@ -4763,7 +4775,13 @@ export class ContainerRuntime
 	 * @remarks - If the "Offline Load" feature is enabled, the batchId is included in the resubmitted messages,
 	 * for correlation to detect container forking.
 	 */
-	private reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId): void {
+	private reSubmitBatch(
+		batch: PendingMessageResubmitData[],
+		batchId: BatchId,
+		staged: boolean,
+	): void {
+		//* What if outbox is NOT empty at this point?  Anything to do here?  Maybe this is why we flush when entering staging mode.
+
 		this.orderSequentially(() => {
 			for (const message of batch) {
 				this.reSubmit(message);
@@ -4772,7 +4790,7 @@ export class ContainerRuntime
 
 		// Only include Batch ID if "Offline Load" feature is enabled
 		// It's only needed to identify batches across container forks arising from misuse of offline load.
-		this.flush(this.offlineEnabled ? batchId : undefined);
+		this.flush(this.offlineEnabled ? batchId : undefined, staged);
 	}
 
 	private reSubmit(message: PendingMessageResubmitData): void {

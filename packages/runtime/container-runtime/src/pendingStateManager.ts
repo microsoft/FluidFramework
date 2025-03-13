@@ -51,6 +51,8 @@ export interface IPendingMessage {
 		 * The Batch's original clientId, from when it was first flushed to be submitted.
 		 * Or, a random uuid if it was never submitted (and batchStartCsn will be -1)
 		 */
+		//* Side note: Could we just use empty string for never-submitted? Or the word "NEVER_SUBMITTED"?
+		//* I'm thinking about it because staged batches will be in this case, so maybe we want to simplify it
 		clientId: string;
 		/**
 		 * The Batch's original clientSequenceNumber, from when it was first flushed to be submitted
@@ -65,6 +67,10 @@ export interface IPendingMessage {
 		 * If true, don't compare batchID of incoming batches to this. e.g. ID Allocation Batch IDs should be ignored
 		 */
 		ignoreBatchId?: boolean;
+		/**
+		 * If true, this batch is staged and should not actually be submitted on replayPendingStates.
+		 */
+		staged?: boolean;
 	};
 }
 
@@ -101,7 +107,7 @@ export interface IRuntimeStateHandler {
 	connected(): boolean;
 	clientId(): string | undefined;
 	applyStashedOp(content: string): Promise<unknown>;
-	reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId): void;
+	reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId, staged?: boolean): void;
 	isActiveConnection: () => boolean;
 	isAttached: () => boolean;
 }
@@ -287,11 +293,13 @@ export class PendingStateManager implements IDisposable {
 	 * @param clientSequenceNumber - The CSN of the first message in the batch,
 	 * or undefined if the batch was not yet sent (e.g. by the time we flushed we lost the connection)
 	 * @param ignoreBatchId - Whether to ignore the batchId in the batchStartInfo
+	 * @param staged - Indicates whether batch is staged (not to be submitted while runtime is in Staging Mode)
 	 */
 	public onFlushBatch(
 		batch: BatchMessage[],
 		clientSequenceNumber: number | undefined,
 		ignoreBatchId?: boolean,
+		staged?: boolean,
 	): void {
 		// clientId and batchStartCsn are used for generating the batchId so we can detect container forks
 		// where this batch was submitted by two different clients rehydrating from the same local state.
@@ -299,6 +307,9 @@ export class PendingStateManager implements IDisposable {
 		// In the case where the batch was not sent, use a random uuid for clientId, and -1 for clientSequenceNumber to indicate this case.
 		// This will guarantee uniqueness of the batchId, and is a suitable fallback since clientId/CSN is only needed if the batch was actually sent/sequenced.
 		const batchWasSent = clientSequenceNumber !== undefined;
+		if (batchWasSent) {
+			assert(!staged, "Staged batches should not have been submitted");
+		}
 		const [clientId, batchStartCsn] = batchWasSent
 			? [this.stateHandler.clientId(), clientSequenceNumber]
 			: [uuid(), -1]; // -1 will indicate not a real clientId/CSN pair
@@ -321,7 +332,7 @@ export class PendingStateManager implements IDisposable {
 				localOpMetadata,
 				opMetadata,
 				// Note: We only will read this off the first message, but put it on all for simplicity
-				batchInfo: { clientId, batchStartCsn, length: batch.length, ignoreBatchId },
+				batchInfo: { clientId, batchStartCsn, length: batch.length, ignoreBatchId, staged },
 			};
 			this.pendingMessages.push(pendingMessage);
 		}
@@ -450,6 +461,9 @@ export class PendingStateManager implements IDisposable {
 		message: InboundSequencedContainerRuntimeMessage;
 		localOpMetadata: unknown;
 	}[] {
+		//* Once we leave StagingMode, we would clear the 'staged' flag on the pending messages,
+		//* so we should be able to assert here that the pending messages are not marked as 'staged'.
+
 		if ("batchStart" in inbound) {
 			this.onLocalBatchBegin(inbound.batchStart, inbound.length);
 		}
@@ -650,9 +664,11 @@ export class PendingStateManager implements IDisposable {
 			// The next message starts a batch (possibly single-message), and we'll need its batchId.
 			const batchId = getEffectiveBatchId(pendingMessage);
 
+			const staged = pendingMessage.batchInfo.staged;
+
 			if (asEmptyBatchLocalOpMetadata(pendingMessage.localOpMetadata)?.emptyBatch === true) {
 				// Resubmit no messages, with the batchId. Will result in another empty batch marker.
-				this.stateHandler.reSubmitBatch([], batchId);
+				this.stateHandler.reSubmitBatch([], batchId, staged);
 				continue;
 			}
 
@@ -673,6 +689,7 @@ export class PendingStateManager implements IDisposable {
 						},
 					],
 					batchId,
+					staged,
 				);
 				continue;
 			}
@@ -707,7 +724,7 @@ export class PendingStateManager implements IDisposable {
 				);
 			}
 
-			this.stateHandler.reSubmitBatch(batch, batchId);
+			this.stateHandler.reSubmitBatch(batch, batchId, staged);
 		}
 
 		// pending ops should no longer depend on previous sequenced local ops after resubmit
@@ -732,6 +749,7 @@ export class PendingStateManager implements IDisposable {
 function patchbatchInfo(
 	message: IPendingMessageFromStash,
 ): asserts message is IPendingMessage {
+	//* TODO: Update this to fill in staged as applicable (maybe nothing to do here). Also in the future we could call all these staged to give user a chance to "review"
 	const batchInfo: IPendingMessageFromStash["batchInfo"] = message.batchInfo;
 	if (batchInfo === undefined) {
 		// Using uuid guarantees uniqueness, retaining existing behavior

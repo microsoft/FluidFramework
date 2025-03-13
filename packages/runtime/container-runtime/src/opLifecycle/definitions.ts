@@ -14,6 +14,7 @@ export type BatchMessage = IBatchMessage & {
 	localOpMetadata?: unknown;
 	referenceSequenceNumber: number;
 	compression?: CompressionAlgorithms;
+	staged?: boolean; //* not sure about this... but necessary at the moment to plumb this around on original submit
 };
 
 /**
@@ -44,6 +45,8 @@ export interface IBatch<TMessages extends BatchMessage[] = BatchMessage[]> {
 	 * reference sequence number to be in agreement about the data model state.
 	 */
 	readonly hasReentrantOps?: boolean;
+
+	readonly staged?: boolean; //* not sure about this... but necessary at the moment to plumb this around on original submit
 }
 
 export interface IBatchCheckpoint {

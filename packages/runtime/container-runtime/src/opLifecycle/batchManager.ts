@@ -152,6 +152,7 @@ export class BatchManager {
 			contentSizeInBytes: this.batchContentSize,
 			referenceSequenceNumber: this.referenceSequenceNumber,
 			hasReentrantOps: this.hasReentrantOps,
+			staged: this.pendingBatch[0]?.staged, //* We know the batch isn't empty, maybe update logic or add an assert?
 		};
 
 		this.pendingBatch = [];
