@@ -13,9 +13,10 @@ import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions/internal";
-import {
+import type {
+	IEvent,
 	IFluidHandleContext,
-	type IFluidHandleInternal,
+	IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
@@ -126,8 +127,12 @@ export interface IPendingBlobs {
 	};
 }
 
-export interface IBlobManagerEvents {
+export interface IBlobManagerEvents extends IEvent {
 	(event: "noPendingBlobs", listener: () => void);
+}
+
+interface IBlobManagerInternalEvents extends IEvent {
+	(event: "blobAttached", listener: (pending: PendingBlob) => void);
 }
 
 const stashedPendingBlobOverrides: Pick<
@@ -144,6 +149,8 @@ export const blobManagerBasePath = "_blobs" as const;
 
 export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private readonly mc: MonitoringContext;
+
+	private readonly internalEvents = new TypedEventEmitter<IBlobManagerInternalEvents>();
 
 	/**
 	 * Map of local IDs to storage IDs. Contains identity entries (id → id) for storage IDs. All requested IDs should
@@ -393,7 +400,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			? () => {
 					pending.attached = true;
 					// Notify listeners (e.g. serialization process) that blob has been attached
-					this.emit("blobAttached", pending);
+					this.internalEvents.emit("blobAttached", pending);
 					this.deletePendingBlobMaybe(id);
 				}
 			: undefined;
@@ -855,16 +862,16 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 										},
 										{ once: true },
 									);
-									const onBlobAttached = (attachedEntry): void => {
+									const onBlobAttached = (attachedEntry: PendingBlob): void => {
 										if (attachedEntry === entry) {
-											this.off("blobAttached", onBlobAttached);
+											this.internalEvents.off("blobAttached", onBlobAttached);
 											resolve();
 										}
 									};
 									if (entry.attached) {
 										resolve();
 									} else {
-										this.on("blobAttached", onBlobAttached);
+										this.internalEvents.on("blobAttached", onBlobAttached);
 									}
 								}),
 							);
