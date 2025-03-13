@@ -31,7 +31,7 @@ abstract class PerspectiveBase {
 	/**
 	 * Returns the immediately adjacent segment in the specified direction from this perspective.
 	 * There may actually be multiple segments between the given segment and the returned segment,
-	 * but they were either inserted after this perspective, or have been removed or moved before this perspective.
+	 * but they were either inserted after this perspective, or have been removed before this perspective.
 	 *
 	 * @param segment - The segment to start from.
 	 * @param forward - The direction to search.

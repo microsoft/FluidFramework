@@ -55,7 +55,6 @@ import {
 	createAdjustRangeOp,
 	createAnnotateMarkerOp,
 	createAnnotateRangeOp,
-	 
 	createGroupOp,
 	createInsertSegmentOp,
 	createObliterateRangeOp,
@@ -1164,7 +1163,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			if (Array.isArray(segmentGroup)) {
 				if (segmentGroup.length === 0) {
 					// sometimes we rebase to an empty op
-					 
+
 					return createGroupOp();
 				}
 				firstGroup = segmentGroup[0];
@@ -1219,7 +1218,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			);
 			opList.push(...this.resetPendingDeltaToOps(resetOp, segmentGroup));
 		}
-		 
+
 		return opList.length === 1 ? opList[0] : createGroupOp(...opList);
 	}
 

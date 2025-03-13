@@ -204,7 +204,7 @@ describe("MergeTree.Client", () => {
 		// they have already been removed locally), we still need to slide local references that are on those segments.
 		// Failure to do so can break eventual consistency in features relying on SlideOnRemove references (such as
 		// IntervalCollection).
-		it("Remove then move", () => {
+		it("Remove then obliterate", () => {
 			const helper = new ReconnectTestHelper({
 				mergeTreeEnableSidedObliterate: true,
 			});

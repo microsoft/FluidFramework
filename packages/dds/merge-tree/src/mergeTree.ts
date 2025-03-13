@@ -503,10 +503,10 @@ const backwardPred = (ref: LocalReferencePosition): boolean =>
 
 class Obliterates {
 	/**
-	 * Array containing the all move operations within the
+	 * Array containing the all obliterate operations within the
 	 * collab window.
 	 *
-	 * The moves are stored in sequence order which accelerates clean up in setMinSeq
+	 * The obliterates are stored in sequence order which accelerates clean up in setMinSeq
 	 *
 	 * See https://github.com/microsoft/FluidFramework/blob/main/packages/dds/merge-tree/docs/Obliterate.md#remote-perspective
 	 * for additional context
@@ -1129,17 +1129,19 @@ export class MergeTree {
 			) {
 				const forward = refPos.slidingPreference === SlidingPreference.FORWARD;
 				const removeInfo = toRemovalInfo(seg);
-				const firstMove = removeInfo?.removes[0];
+				const firstRemove = removeInfo?.removes[0];
 				const slideSeq =
-					firstMove !== undefined && opstampUtils.isAcked(firstMove) ? firstMove.seq : refSeq;
+					firstRemove !== undefined && opstampUtils.isAcked(firstRemove)
+						? firstRemove.seq
+						: refSeq;
 
 				const slidePerspective =
-					firstMove?.localSeq === undefined
+					firstRemove?.localSeq === undefined
 						? new PriorPerspective(slideSeq, this.collabWindow.clientId)
 						: new LocalReconnectingPerspective(
 								slideSeq,
 								this.collabWindow.clientId,
-								firstMove.localSeq,
+								firstRemove.localSeq,
 							);
 
 				const slidSegment = slidePerspective.nextSegment(this, seg, forward);
@@ -1977,7 +1979,7 @@ export class MergeTree {
 		}
 		this.obliterates.addOrUpdate(obliterate);
 
-		const markMoved = (segment: ISegmentLeaf, pos: number): boolean => {
+		const markRemoved = (segment: ISegmentLeaf, pos: number): boolean => {
 			if (
 				(start.side === Side.After && startPos === pos + segment.cachedLength) || // exclusive start segment
 				(end.side === Side.Before && endPos === pos && perspective.isSegmentPresent(segment)) // exclusive end segment
@@ -2006,15 +2008,15 @@ export class MergeTree {
 			// Partial lengths incrementality is not supported for overlapping obliterate/removes.
 			_overwrite ||= existingRemoveInfo !== undefined;
 
-			// - Record the segment as moved
-			// - If this was the first thing to remove the segment from the local view, add it to movedSegments
+			// - Record the segment as removed
+			// - If this was the first thing to remove the segment from the local view, add it to removedSegments
 			// - Otherwise, if it was the first thing to remove the segment from the acked view, add it to localOverlapWithRefs (so we can slide them)
 			if (existingRemoveInfo === undefined) {
-				const moved = overwriteInfo<IHasRemovalInfo, ISegmentLeaf>(segment, {
+				const removed = overwriteInfo<IHasRemovalInfo, ISegmentLeaf>(segment, {
 					removes: [stamp],
 				});
 
-				removedSegments.push(moved);
+				removedSegments.push(removed);
 			} else {
 				// The segment has already been removed, so we don't need to add it to removedSegments. However,
 				// if it's only been removed locally, we still need to slide any references that may exist on it.
@@ -2027,7 +2029,7 @@ export class MergeTree {
 				opstampUtils.insertIntoList(existingRemoveInfo.removes, stamp);
 			}
 			assertRemoved(segment);
-			// Save segment so can assign moved sequence number when acked by server
+			// Save segment so can assign sequence number when acked by server
 			if (this.collabWindow.collaborating) {
 				if (
 					opstampUtils.isLocal(segment.removes[0]) &&
@@ -2047,7 +2049,7 @@ export class MergeTree {
 			return true;
 		};
 
-		const afterMarkMoved = (node: MergeBlock): boolean => {
+		const afterMarkRemoved = (node: MergeBlock): boolean => {
 			if (_overwrite) {
 				this.nodeUpdateLengthNewStructure(node);
 			} else {
@@ -2058,8 +2060,8 @@ export class MergeTree {
 
 		this.nodeMap(
 			perspective,
-			markMoved,
-			afterMarkMoved,
+			markRemoved,
+			afterMarkRemoved,
 			start.pos,
 			end.pos + 1, // include the segment containing the end reference
 			// Use a visibilityPerspective which includes all segments (including local ones) which are in the obliteration range.

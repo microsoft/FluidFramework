@@ -18,7 +18,7 @@ import {
 	LocalReconnectingPerspective,
 	PriorPerspective,
 } from "./perspective.js";
-import { toRemovalInfo, assertInserted, wasMovedOnInsert } from "./segmentInfos.js";
+import { toRemovalInfo, assertInserted, wasRemovedOnInsert } from "./segmentInfos.js";
 import { SortedSet } from "./sortedSet.js";
 import * as opstampUtils from "./stamps.js";
 
@@ -477,8 +477,8 @@ export class PartialSequenceLengths {
 			if (child.isLeaf()) {
 				// Leaf segment
 				const segment = child;
-				if (wasMovedOnInsert(segment)) {
-					PartialSequenceLengths.accountForMoveOnInsert(
+				if (wasRemovedOnInsert(segment)) {
+					PartialSequenceLengths.accountForRemoveOnInsert(
 						combinedPartialLengths,
 						segment,
 						collabWindow,
@@ -504,11 +504,11 @@ export class PartialSequenceLengths {
 	}
 
 	/**
-	 * Assuming this segment was moved on insertion, inserts length information about that operation
+	 * Assuming this segment was removed on insertion, inserts length information about that operation
 	 * into the appropriate per-client adjustments (the overall view needs no such adjustment since
 	 * from an observing client's perspective, the segment never exists).
 	 */
-	private static accountForMoveOnInsert(
+	private static accountForRemoveOnInsert(
 		combinedPartialLengths: PartialSequenceLengths,
 		segment: ISegmentPrivate,
 		collabWindow: CollaborationWindow,
@@ -516,8 +516,8 @@ export class PartialSequenceLengths {
 		assertInserted(segment);
 		const removeInfo = toRemovalInfo(segment);
 		assert(
-			removeInfo !== undefined && wasMovedOnInsert(segment),
-			0xab7 /* Segment was not moved on insert */,
+			removeInfo !== undefined && wasRemovedOnInsert(segment),
+			0xab7 /* Segment was not removed on insert */,
 		);
 		const firstRemove = removeInfo?.removes[0];
 		if (opstampUtils.lte(firstRemove, getMinSeqStamp(collabWindow))) {
@@ -541,7 +541,7 @@ export class PartialSequenceLengths {
 
 		if (isLocal) {
 			// Implication -> this is a local segment which will be obliterated as soon as it is acked.
-			// For refSeqs preceding that movedSeq and localSeqs following the localSeq, it will be visible.
+			// For refSeqs preceding that removedSeq and localSeqs following the localSeq, it will be visible.
 			// For the rest, it will not be visible.
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const localSeq = insert.localSeq!;
@@ -566,12 +566,12 @@ export class PartialSequenceLengths {
 				removeInfo.removes.some((remove) => remove.clientId === clientId);
 
 			if (!wasRemovedByInsertingClient) {
-				const moveSeq = firstRemove?.seq;
+				const removeSeq = firstRemove?.seq;
 				assert(
-					moveSeq !== undefined,
-					0xab8 /* ObliterateOnInsertion implies moveSeq is defined */,
+					removeSeq !== undefined,
+					0xab8 /* ObliterateOnInsertion implies removeSeq is defined */,
 				);
-				combinedPartialLengths.addClientAdjustment(clientId, moveSeq, cachedLength);
+				combinedPartialLengths.addClientAdjustment(clientId, removeSeq, cachedLength);
 			}
 		}
 	}
@@ -653,7 +653,7 @@ export class PartialSequenceLengths {
 		const isLocal = isLocalInsertion || isOnlyLocalRemoval;
 
 		if (isLocalInsertion && !removalIsLocal) {
-			throw new Error("Should have handled this codepath in wasMovedOnInsertion");
+			throw new Error("Should have handled this codepath in wasRemovedOnInsertion");
 		}
 
 		const lenDelta = -segment.cachedLength;
@@ -707,7 +707,7 @@ export class PartialSequenceLengths {
 					}
 					assert(
 						localSeq !== undefined,
-						0xaba /* Local client was in move/removed client ids but segment has no local seq for either */,
+						0xaba /* Local client was in removed client ids but segment has no local seq for either */,
 					);
 
 					unsequencedRecords.partialLengths.addOrUpdate({
@@ -731,7 +731,7 @@ export class PartialSequenceLengths {
 					});
 				} else {
 					// Note that all clients that have a remove or obliterate operation on this segment
-					// use the seq of the winning move/obliterate in their per-client adjustments!
+					// use the seq of the winning obliterate in their per-client adjustments!
 					combinedPartialLengths.addClientAdjustment(id, seqOrLocalSeq, lenDelta);
 
 					// Also ensure that all these clients have seen the segment as inserted before being removed
@@ -810,12 +810,12 @@ export class PartialSequenceLengths {
 				const removalInfo = toRemovalInfo(segment);
 				const firstRemove = removalInfo?.removes[0];
 				if (seq === segment.insert.seq) {
-					// if this segment was moved on insert, its length should
+					// if this segment was removed on insert, its length should
 					// only be visible to the inserting client
 					if (
 						segment.insert.seq !== undefined &&
 						firstRemove !== undefined &&
-						wasMovedOnInsert(segment)
+						wasRemovedOnInsert(segment)
 					) {
 						this.addClientAdjustment(clientId, firstRemove.seq, segment.cachedLength);
 						failIncrementalPropagation = true;

@@ -235,7 +235,7 @@ export const removeRemovalInfo: (nodeLike: IHasRemovalInfo) => asserts nodeLike 
 	});
 
 /**
- * Returns whether this segment was marked moved as soon as its insertion was acked.
+ * Returns whether this segment was marked removed as soon as its insertion was acked.
  *
  * This can happen when an an insert occurs concurrent to an obliterate over the range the segment was inserted into,
  * and the obliterate was sequenced first.
@@ -243,15 +243,15 @@ export const removeRemovalInfo: (nodeLike: IHasRemovalInfo) => asserts nodeLike 
  * When this happens, the segment is only ever visible to the client that inserted the segment
  * (and only until that client has seen the obliterate which removed their segment).
  */
-export function wasMovedOnInsert(segment: IHasInsertionInfo & ISegmentPrivate): boolean {
+export function wasRemovedOnInsert(segment: IHasInsertionInfo & ISegmentPrivate): boolean {
 	const removeInfo = toRemovalInfo(segment);
-	const movedSeq = removeInfo?.removes[0].seq;
-	if (movedSeq === undefined || movedSeq === UnassignedSequenceNumber) {
+	const removedSeq = removeInfo?.removes[0].seq;
+	if (removedSeq === undefined || removedSeq === UnassignedSequenceNumber) {
 		return false;
 	}
 
 	const insertSeq = segment.insert.seq;
-	return insertSeq === UnassignedSequenceNumber || insertSeq > movedSeq;
+	return insertSeq === UnassignedSequenceNumber || insertSeq > removedSeq;
 }
 
 /**

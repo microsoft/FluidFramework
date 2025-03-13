@@ -63,7 +63,6 @@ import { TextSegment } from "../textSegment.js";
 import { TestSerializer } from "./testSerializer.js";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils.js";
 
-
 export function specToSegment(spec: IJSONSegment): ISegmentPrivate {
 	const maybeText = TextSegment.fromJSONObject(spec);
 	if (maybeText) {

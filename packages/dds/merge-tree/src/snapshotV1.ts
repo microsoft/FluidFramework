@@ -314,6 +314,7 @@ export class SnapshotV1 {
 				}
 
 				if (isRemoved(segment) && segment.removes.some((r) => r.type === "sliceRemove")) {
+					// In this format, we used the term "move" to refer to a sliceRemove/obliterate.
 					const moves = segment.removes.filter((r) => r.type === "sliceRemove");
 					const firstMove = moves[0];
 					assert(
