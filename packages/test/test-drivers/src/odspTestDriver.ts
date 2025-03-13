@@ -54,18 +54,41 @@ interface IOdspTestDriverConfig extends TokenConfig {
 }
 
 // specific a range of user name from <prefix><start> to <prefix><start + count - 1> all having the same password
-interface LoginTenantRange {
-	prefix: string;
-	start: number;
-	count: number;
-	password: string;
-}
+// interface LoginTenantRange {
+// 	prefix: string;
+// 	start: number;
+// 	count: number;
+// 	password: string;
+// }
 
-interface LoginTenants {
-	[tenant: string]: {
-		range: LoginTenantRange;
-		// add different format here
-	};
+// interface LoginTenants {
+// 	[tenant: string]: {
+// 		range: LoginTenantRange;
+// 		// add different format here
+// 	};
+// }
+
+/**
+ * Properties of the credentials for an individual user returned from the TRIPS API.
+ */
+export interface CredentialProperties {
+	UserPrincipalName: string;
+	TenantId: string;
+	Password: string;
+	TestAssetId: string;
+	ExpirationDate: string;
+	LeaseExpirationDate: string;
+}
+/**
+ * Response type from the TRIPS API.
+ * Within the top-level resources array, each entry is a user with the account
+ * name, password, etc detailed in properties.
+ */
+export interface CredentialOutput {
+	name: string;
+	profileName: string;
+	properties: CredentialProperties;
+	resources: CredentialOutput[];
 }
 
 /**
@@ -96,25 +119,22 @@ export function getOdspCredentials(
 		odspEndpointName === "odsp"
 			? process.env.login__odsp__test__tenants
 			: process.env.login__odspdf__test__tenants;
+	/**
+	 * For the expected format of loginTenants, see {@link CredentialOutput}
+	 */
 	if (loginTenants !== undefined) {
-		const tenants: LoginTenants = JSON.parse(loginTenants);
-		const tenantNames = Object.keys(tenants);
-		const tenant = tenantNames[tenantIndex % tenantNames.length];
-		if (tenant === undefined) {
-			throw new Error("tenant should not be undefined when getting odsp credentials");
+		const output: CredentialOutput = JSON.parse(loginTenants);
+		const tenant = output.resources[tenantIndex];
+		if (tenant?.resources === undefined) {
+			throw new Error("No resources found in the login tenants");
 		}
-		const tenantInfo = tenants[tenant];
-		if (tenantInfo === undefined) {
-			throw new Error("tenantInfo should not be undefined when getting odsp credentials");
-		}
-		// Translate all the user from that user to the full user principle name by appending the tenant domain
-		const range = tenantInfo.range;
 
-		// Return the set of account to choose from a single tenant
-		for (let i = 0; i < range.count; i++) {
-			const username = `${range.prefix}${range.start + i}@${tenant}`;
+		// Return the set of accounts to choose from a single tenant
+		for (const account of tenant.resources) {
+			const username = account.name;
+			const password = account.properties.Password;
 			if (requestedUserName === undefined || requestedUserName === username) {
-				creds.push({ username, password: range.password });
+				creds.push({ username, password });
 			}
 		}
 	} else {
@@ -132,6 +152,21 @@ export function getOdspCredentials(
 				}`,
 			);
 		}
+
+		// ***** USE ONLY IF CHANGING TENANT FORMAT IN STRESSTESTS.TS *****
+		// const output: CredentialOutput = JSON.parse(loginAccounts);
+		// if (output.resources[0]?.resources[0] === undefined) {
+		// 	throw new Error("No resources found in the login tenants");
+		// }
+		// const username = requestedUserName ?? output.resources[0].resources[0].name;
+		// if (username === undefined) {
+		// 	throw new Error("username should not be undefined when getting odsp credentials");
+		// }
+		// const password = output.resources[0].resources[0].properties.Password;
+		// if (password === undefined) {
+		// 	throw new Error("password should not be undefined when getting odsp credentials");
+		// }
+		// creds.push({ username, password });
 
 		// Expected format of login__odsp__test__accounts is simply string key-value pairs of username and password
 		const passwords: { [user: string]: string } = JSON.parse(loginAccounts);
