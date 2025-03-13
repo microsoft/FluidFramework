@@ -232,7 +232,7 @@ export class DeliLambdaFactory
 								async () => gitManager.deleteSummary(false),
 								"deliLambda_onClose" /* callName */,
 								baseLumberjackProperties /* telemetryProperties */,
-								(error) => true /* shouldRetry */,
+								undefined /* shouldRetry */, // The default retry function will ensure NetworkErrors are retried only if canRetry is true and isFatal is false
 								3 /* maxRetries */,
 							);
 						}
