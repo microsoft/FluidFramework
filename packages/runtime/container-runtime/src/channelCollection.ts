@@ -76,7 +76,6 @@ import {
 import { v4 as uuid } from "uuid";
 
 import {
-	// eslint-disable-next-line import/no-deprecated
 	DeletedResponseHeaderKey,
 	RuntimeHeaderData,
 	defaultRuntimeHeaderData,
@@ -97,12 +96,10 @@ import {
 } from "./dataStoreContext.js";
 import { DataStoreContexts } from "./dataStoreContexts.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
-// eslint-disable-next-line import/no-deprecated
 import { GCNodeType, IGCNodeUpdatedProps, urlToGCNodePath } from "./gc/index.js";
 import { ContainerMessageType, LocalContainerRuntimeMessage } from "./messageTypes.js";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs.js";
 import {
-	// eslint-disable-next-line import/no-deprecated
 	IContainerRuntimeMetadata,
 	nonDataStorePaths,
 	rootHasIsolatedChannels,
@@ -324,7 +321,24 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				unreferencedDataStoreCount++;
 			}
 			// If we have a detached container, then create local data store contexts.
-			if (this.parentContext.attachState !== AttachState.Detached) {
+			if (this.parentContext.attachState === AttachState.Detached) {
+				if (typeof value !== "object") {
+					throw new LoggingError("Snapshot should be there to load from!!");
+				}
+				const snapshotTree = value;
+				dataStoreContext = new LocalFluidDataStoreContext({
+					id: key,
+					pkg: undefined,
+					parentContext: this.wrapContextForInnerChannel(key),
+					storage: this.parentContext.storage,
+					scope: this.parentContext.scope,
+					createSummarizerNodeFn: this.parentContext.getCreateChildSummarizerNodeFn(key, {
+						type: CreateSummarizerNodeSource.FromSummary,
+					}),
+					makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(key),
+					snapshotTree,
+				});
+			} else {
 				let snapshotForRemoteFluidDatastoreContext: ISnapshot | ISnapshotTree = value;
 				if (isInstanceOfISnapshot(baseSnapshot)) {
 					snapshotForRemoteFluidDatastoreContext = {
@@ -342,23 +356,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 						type: CreateSummarizerNodeSource.FromSummary,
 					}),
 					loadingGroupId: value.groupId,
-				});
-			} else {
-				if (typeof value !== "object") {
-					throw new LoggingError("Snapshot should be there to load from!!");
-				}
-				const snapshotTree = value;
-				dataStoreContext = new LocalFluidDataStoreContext({
-					id: key,
-					pkg: undefined,
-					parentContext: this.wrapContextForInnerChannel(key),
-					storage: this.parentContext.storage,
-					scope: this.parentContext.scope,
-					createSummarizerNodeFn: this.parentContext.getCreateChildSummarizerNodeFn(key, {
-						type: CreateSummarizerNodeSource.FromSummary,
-					}),
-					makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(key),
-					snapshotTree,
 				});
 			}
 			this.contexts.addBoundOrRemoted(dataStoreContext);
@@ -996,7 +993,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			// The requested data store has been deleted by gc. Create a 404 response exception.
 			throw responseToException(
 				createResponseError(404, "DataStore was deleted", originalRequest, {
-					// eslint-disable-next-line import/no-deprecated
 					[DeletedResponseHeaderKey]: true,
 				}),
 				originalRequest,
@@ -1063,7 +1059,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		}
 
 		const idToLog =
-			originalRequest !== undefined ? urlToGCNodePath(originalRequest.url) : dataStoreNodePath;
+			originalRequest === undefined ? dataStoreNodePath : urlToGCNodePath(originalRequest.url);
 
 		// Log the package details asynchronously since getInitialSnapshotDetails is async
 		const recentlyDeletedContext = this.contexts.getRecentlyDeletedContext(id);
@@ -1479,14 +1475,15 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		// If the node belongs to a data store, return its package path. For DDSes, we return the package path of the
 		// data store that contains it.
 		const context = this.contexts.get(nodePath.split("/")[1]);
-		return (await context?.getInitialSnapshotDetails())?.pkg;
+		const initialSnapshotDetails = await context?.getInitialSnapshotDetails();
+		return initialSnapshotDetails?.pkg;
 	}
 
 	/**
 	 * Called by GC to determine if a node is for a data store or for an object within a data store (for e.g. DDS).
 	 * @returns the GC node type if the node belongs to a data store or object within data store, undefined otherwise.
 	 */
-	// eslint-disable-next-line import/no-deprecated
+
 	public getGCNodeType(nodePath: string): GCNodeType | undefined {
 		const pathParts = nodePath.split("/");
 		if (!this.contexts.has(pathParts[1])) {
@@ -1496,10 +1493,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		// Data stores paths are of the format "/dataStoreId".
 		// Sub data store paths are of the format "/dataStoreId/subPath/...".
 		if (pathParts.length === 2) {
-			// eslint-disable-next-line import/no-deprecated
 			return GCNodeType.DataStore;
 		}
-		// eslint-disable-next-line import/no-deprecated
+
 		return GCNodeType.SubDataStore;
 	}
 
@@ -1564,7 +1560,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 export function getSummaryForDatastores(
 	snapshot: ISnapshotTree | undefined,
-	// eslint-disable-next-line import/no-deprecated
+
 	metadata?: IContainerRuntimeMetadata,
 ): ISnapshotTree | undefined {
 	if (!snapshot) {

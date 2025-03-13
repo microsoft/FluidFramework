@@ -146,7 +146,9 @@ describe("DuplicateBatchDetector", () => {
 		detector.processInboundBatch(inboundBatch1);
 
 		const summaryPayload = JSON.stringify(detector.getRecentBatchInfoForSummary());
-		const detector2 = new DuplicateBatchDetector(JSON.parse(summaryPayload));
+		const detector2 = new DuplicateBatchDetector(
+			JSON.parse(summaryPayload) as [number, string][] | undefined,
+		);
 
 		const inboundBatch2 = makeBatch({
 			sequenceNumber: seqNum++, // 2

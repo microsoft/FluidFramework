@@ -64,27 +64,25 @@ function populateDefaults(
 }
 
 function getSchemaIdentifier(content: TreeEditValue): string | undefined {
-	const sf = new SchemaFactory(undefined);
-
 	switch (typeof content) {
 		case "boolean": {
-			return sf.boolean.identifier;
+			return SchemaFactory.boolean.identifier;
 		}
 		case "number": {
-			return sf.number.identifier;
+			return SchemaFactory.number.identifier;
 		}
 		case "string": {
-			return sf.string.identifier;
+			return SchemaFactory.string.identifier;
 		}
 		case "object": {
 			if (content === null) {
-				return sf.null.identifier;
+				return SchemaFactory.null.identifier;
 			}
 			if (Array.isArray(content)) {
 				throw new UsageError("Arrays are not currently supported in this context");
 			}
 			if (isFluidHandle(content)) {
-				return sf.handle.identifier;
+				return SchemaFactory.handle.identifier;
 			}
 			return content[typeField];
 		}

@@ -14,9 +14,6 @@ import {
 	type RevisionTag,
 	RevisionTagCodec,
 	TreeStoredSchemaRepository,
-	initializeForest,
-	type ITreeCursorSynchronous,
-	mapCursorField,
 } from "../core/index.js";
 import {
 	createNodeKeyManager,
@@ -24,9 +21,8 @@ import {
 	makeSchemaCodec,
 	type FieldBatchEncodingContext,
 	defaultSchemaPolicy,
-	chunkTree,
-	defaultChunkPolicy,
 	TreeCompressionStrategy,
+	initializeForest,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { Format } from "../feature-libraries/schema-index/format.js";
@@ -116,9 +112,7 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
 	assert(fieldCursors.length === 1, 0xa5b /* must have exactly 1 field in batch */);
 	// Checked above.
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const cursors = fieldCursorToNodesCursors(fieldCursors[0]!);
-
-	initializeForest(forest, cursors, revisionTagCodec, idCompressor, false);
+	initializeForest(forest, fieldCursors[0]!, revisionTagCodec, idCompressor, false);
 
 	const checkout = createTreeCheckout(idCompressor, mintRevisionTag, revisionTagCodec, {
 		forest,
@@ -130,24 +124,6 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
 		createNodeKeyManager(idCompressor),
 	);
 	return out;
-}
-
-function fieldCursorToNodesCursors(
-	fieldCursor: ITreeCursorSynchronous,
-): ITreeCursorSynchronous[] {
-	return mapCursorField(fieldCursor, copyNodeCursor);
-}
-
-/**
- * TODO: avoid needing this, or optimize it.
- */
-function copyNodeCursor(cursor: ITreeCursorSynchronous): ITreeCursorSynchronous {
-	const copy = chunkTree(cursor, {
-		policy: defaultChunkPolicy,
-		idCompressor: undefined,
-	}).cursor();
-	copy.enterNode(0);
-	return copy;
 }
 
 /**

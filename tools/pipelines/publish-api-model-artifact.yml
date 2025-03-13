@@ -78,10 +78,14 @@ variables:
   - name: pnpmStorePath
     value: $(Pipeline.Workspace)/.pnpm-store
 
-trigger:
-  branches:
-    include:
-    - release/client/*
+resources:
+  pipelines:
+  - pipeline: client
+    source: Build - client packages
+    trigger:
+      branches:
+        include:
+        - release/client/*
 pr: none
 
 stages:
@@ -120,10 +124,12 @@ stages:
             targetType: 'inline'
             workingDirectory: $(Build.SourcesDirectory)
             script: |
+              # Extract version without build number suffix
+              VERSION_TRIMMED=$(echo $(SetVersion.version) | sed 's/-[0-9]*//')
               # Check if the version is the latest minor of its corresponding major version series
               # Sets variable shouldDeploy to true if the version is the latest minor and false otherwise
               # Sets variable majorVersion to the major version extracted from $(SetVersion.version)
-              flub check latestVersions $(SetVersion.version) client
+              flub check latestVersions $VERSION_TRIMMED client
 
     - deployment: upload_json
       displayName: 'Combine api-extractor JSON'

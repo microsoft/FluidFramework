@@ -31,7 +31,10 @@ export function renderLineBreak(
 	}
 }
 
-function renderLineBreakWithMarkdownSyntax(writer: DocumentWriter, context: RenderContext): void {
+function renderLineBreakWithMarkdownSyntax(
+	writer: DocumentWriter,
+	context: RenderContext,
+): void {
 	// In standard Markdown context, a line break is represented by a blank line.
 	// However, if we are in a code block context, we instead want to treat it as a simple line break,
 	// so as not to alter formatting.

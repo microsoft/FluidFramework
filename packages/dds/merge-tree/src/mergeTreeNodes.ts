@@ -73,11 +73,22 @@ export interface ISegmentPrivate extends ISegmentInternal {
 	segmentGroups?: SegmentGroupCollection;
 	propertyManager?: PropertiesManager;
 	/**
-	 * If a segment is inserted into an obliterated range,
-	 * but the newest obliteration of that range was by the inserting client,
-	 * then the segment is not obliterated because it is aware of the latest obliteration.
+	 * Populated iff this segment was inserted into a range affected by concurrent obliterates at the time of its insertion.
+	 * Contains information about the 'most recent' (i.e. 'winning' in the sense below) obliterate.
+	 *
+	 * BEWARE: We have opted for a certain form of last-write wins (LWW) semantics for obliterates:
+	 * the client which last obliterated a range is considered to have "won ownership" of that range and may insert into it
+	 * without that insertion being obliterated by other clients' concurrent obliterates.
+	 *
+	 * Therefore, this field can be populated even if the segment has not been obliterated (i.e. is still visible).
+	 * This happens precisely when the segment was inserted by the same client that 'won' the obliterate (in a scenario where
+	 * a client first issues a sided obliterate impacting a range, then inserts into that range before the server has acked the obliterate).
+	 *
+	 * See the test case "obliterate with mismatched final states" for an example of such a scenario.
+	 *
+	 * TODO:AB#29553: This property is not persisted in the summary, but it should be.
 	 */
-	prevObliterateByInserter?: ObliterateInfo;
+	obliteratePrecedingInsertion?: ObliterateInfo;
 }
 /**
  * Segment leafs are segments that have both IMergeNodeInfo and IInsertionInfo. This means they
@@ -364,7 +375,6 @@ export abstract class BaseSegment implements ISegment {
 			overwriteInfo<IMoveInfo>(seg, {
 				movedSeq: this.movedSeq,
 				movedSeqs: [...this.movedSeqs],
-				wasMovedOnInsert: this.wasMovedOnInsert,
 				movedClientIds: [...this.movedClientIds],
 			});
 		}
@@ -430,7 +440,6 @@ export abstract class BaseSegment implements ISegment {
 				movedSeq: this.movedSeq,
 				movedSeqs: [...this.movedSeqs],
 				localMovedSeq: this.localMovedSeq,
-				wasMovedOnInsert: this.wasMovedOnInsert,
 			});
 		}
 

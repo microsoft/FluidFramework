@@ -300,7 +300,8 @@ export abstract class FluidDataStoreContext
 			return aliasedDataStores.has(this.id);
 		}
 
-		return (await this.getInitialSnapshotDetails()).isRootDataStore;
+		const snapshotDetails = await this.getInitialSnapshotDetails();
+		return snapshotDetails.isRootDataStore;
 	}
 
 	/**
@@ -613,9 +614,7 @@ export abstract class FluidDataStoreContext
 		channel: IFluidDataStoreChannel,
 		messageCollection: IRuntimeMessageCollection,
 	): void {
-		if (channel.processMessages !== undefined) {
-			channel.processMessages(messageCollection);
-		} else {
+		if (channel.processMessages === undefined) {
 			const { envelope, messagesContent, local } = messageCollection;
 			for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
 				channel.process(
@@ -624,6 +623,8 @@ export abstract class FluidDataStoreContext
 					localOpMetadata,
 				);
 			}
+		} else {
+			channel.processMessages(messageCollection);
 		}
 	}
 
@@ -848,12 +849,6 @@ export abstract class FluidDataStoreContext
 		}
 	}
 
-	/**
-	 * Submits the signal to be sent to other clients.
-	 * @param type - Type of the signal.
-	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
-	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
-	 */
 	public submitSignal(type: string, content: unknown, targetClientId?: string): void {
 		this.verifyNotClosed("submitSignal");
 

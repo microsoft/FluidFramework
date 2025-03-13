@@ -13,7 +13,6 @@ import {
 	type ChangeFamilyEditor,
 	type ChangeRebaser,
 	type ChangesetLocalId,
-	CursorLocationType,
 	type DeltaDetachedNodeBuild,
 	type DeltaDetachedNodeDestruction,
 	type DeltaDetachedNodeId,
@@ -24,14 +23,12 @@ import {
 	type FieldKey,
 	type FieldKindIdentifier,
 	type FieldUpPath,
-	type ITreeCursorSynchronous,
 	type RevisionInfo,
 	type RevisionMetadataSource,
 	type RevisionTag,
 	type TaggedChange,
 	type UpPath,
 	makeDetachedNodeId,
-	mapCursorField,
 	replaceAtomRevisions,
 	revisionMetadataSourceFromInfo,
 	areEqualChangeAtomIds,
@@ -52,19 +49,14 @@ import {
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
 	type RangeQueryResult,
-	getOrAddInMapLazy,
+	getOrCreate,
 	newTupleBTree,
 	mergeTupleBTrees,
 	type TupleBTree,
 	RangeMap,
+	balancedReduce,
 } from "../../util/index.js";
-import {
-	type TreeChunk,
-	chunkFieldSingle,
-	chunkTree,
-	defaultChunkPolicy,
-} from "../chunked-forest/index.js";
-import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
+import type { TreeChunk } from "../chunked-forest/index.js";
 
 import {
 	type CrossFieldManager,
@@ -95,7 +87,6 @@ import {
 	type NodeChangeset,
 	type NodeId,
 } from "./modularChangeTypes.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -131,8 +122,6 @@ export class ModularChangeFamily
 	private normalizeFieldChanges(
 		change1: FieldChange,
 		change2: FieldChange,
-		genId: IdAllocator,
-		revisionMetadata: RevisionMetadataSource,
 	): {
 		fieldKind: FieldKindIdentifier;
 		changeHandler: FieldChangeHandler<unknown>;
@@ -156,18 +145,8 @@ export class ModularChangeFamily
 		}
 		const fieldKind = getFieldKind(this.fieldKinds, kind);
 		const changeHandler = fieldKind.changeHandler;
-		const normalizedChange1 = this.normalizeFieldChange(
-			change1,
-			changeHandler,
-			genId,
-			revisionMetadata,
-		);
-		const normalizedChange2 = this.normalizeFieldChange(
-			change2,
-			changeHandler,
-			genId,
-			revisionMetadata,
-		);
+		const normalizedChange1 = this.normalizeFieldChange(change1, changeHandler);
+		const normalizedChange2 = this.normalizeFieldChange(change2, changeHandler);
 		return {
 			fieldKind: kind,
 			changeHandler,
@@ -179,8 +158,6 @@ export class ModularChangeFamily
 	private normalizeFieldChange<T>(
 		fieldChange: FieldChange,
 		handler: FieldChangeHandler<T>,
-		genId: IdAllocator,
-		revisionMetadata: RevisionMetadataSource,
 	): FieldChangeset {
 		if (fieldChange.fieldKind !== genericFieldKind.identifier) {
 			return fieldChange.change;
@@ -188,20 +165,7 @@ export class ModularChangeFamily
 
 		// The cast is based on the `fieldKind` check above
 		const genericChange = fieldChange.change as unknown as GenericChangeset;
-		const convertedChange = convertGenericChange(
-			genericChange,
-			handler,
-			(child1, child2) => {
-				assert(
-					child1 === undefined || child2 === undefined,
-					0x92f /* Should not have two changesets to compose */,
-				);
-
-				return child1 ?? child2 ?? fail("Should not compose two undefined node IDs");
-			},
-			genId,
-			revisionMetadata,
-		) as FieldChangeset;
+		const convertedChange = convertGenericChange(genericChange, handler) as FieldChangeset;
 
 		return convertedChange;
 	}
@@ -210,13 +174,15 @@ export class ModularChangeFamily
 		const { revInfos, maxId } = getRevInfoFromTaggedChanges(changes);
 		const idState: IdAllocationState = { maxId };
 
-		if (changes.length === 0) {
-			return makeModularChangeset();
-		}
+		const pairwiseDelegate = (
+			left: ModularChangeset,
+			right: ModularChangeset,
+		): ModularChangeset => {
+			return this.composePair(left, right, revInfos, idState);
+		};
 
-		return changes
-			.map((change) => change.change)
-			.reduce((change1, change2) => this.composePair(change1, change2, revInfos, idState));
+		const innerChanges = changes.map((change) => change.change);
+		return balancedReduce(innerChanges, pairwiseDelegate, makeModularChangeset);
 	}
 
 	private composePair(
@@ -345,7 +311,7 @@ export class ModularChangeFamily
 				crossFieldTable.pendingCompositions.nodeIdsToCompose.push([child1, child2]);
 			}
 
-			return child1 ?? child2 ?? fail("Should not compose two undefined nodes");
+			return child1 ?? child2 ?? fail(0xb22 /* Should not compose two undefined nodes */);
 		};
 
 		const amendedChange = rebaser.compose(
@@ -578,7 +544,7 @@ export class ModularChangeFamily
 			changeHandler,
 			change1: change1Normalized,
 			change2: change2Normalized,
-		} = this.normalizeFieldChanges(change1, change2, idAllocator, revisionMetadata);
+		} = this.normalizeFieldChanges(change1, change2);
 
 		const manager = new ComposeManager(crossFieldTable, change1, fieldId);
 
@@ -590,7 +556,7 @@ export class ModularChangeFamily
 					setInChangeAtomIdMap(crossFieldTable.newToBaseNodeId, child2, child1);
 					crossFieldTable.pendingCompositions.nodeIdsToCompose.push([child1, child2]);
 				}
-				return child1 ?? child2 ?? fail("Should not compose two undefined nodes");
+				return child1 ?? child2 ?? fail(0xb23 /* Should not compose two undefined nodes */);
 			},
 			idAllocator,
 			manager,
@@ -1155,12 +1121,7 @@ export class ModularChangeFamily
 			changeHandler,
 			change1: fieldChangeset,
 			change2: baseChangeset,
-		} = this.normalizeFieldChanges(
-			context.newChange,
-			context.baseChange,
-			genId,
-			rebaseMetadata,
-		);
+		} = this.normalizeFieldChanges(context.newChange, context.baseChange);
 
 		const rebaseChild = (
 			curr: NodeId | undefined,
@@ -1338,7 +1299,7 @@ export class ModularChangeFamily
 				changeHandler,
 				change1: fieldChangeset,
 				change2: baseChangeset,
-			} = this.normalizeFieldChanges(fieldChange, baseChange, genId, revisionMetadata);
+			} = this.normalizeFieldChanges(fieldChange, baseChange);
 
 			const manager = new RebaseManager(crossFieldTable, baseChange, fieldId);
 
@@ -1455,7 +1416,8 @@ export class ModularChangeFamily
 		constraintState: ConstraintState,
 		revertConstraintState: ConstraintState,
 	): void {
-		const node = nodes.get([nodeId.revision, nodeId.localId]) ?? fail("Unknown node ID");
+		const node =
+			nodes.get([nodeId.revision, nodeId.localId]) ?? fail(0xb24 /* Unknown node ID */);
 		if (node.nodeExistsConstraint !== undefined) {
 			const isNowViolated = inputAttachState === NodeAttachState.Detached;
 			if (node.nodeExistsConstraint.violated !== isNowViolated) {
@@ -1953,7 +1915,7 @@ export function updateRefreshers(
 
 	if (change.builds !== undefined) {
 		for (const [[revision, id], chunk] of change.builds.entries()) {
-			const lengthTree = getOrAddInMapLazy(chunkLengths, revision, () => new BTree());
+			const lengthTree = getOrCreate(chunkLengths, revision, () => new BTree());
 			lengthTree.set(id, chunk.topLevelLength);
 		}
 	}
@@ -2072,12 +2034,10 @@ function copyDetachedNodes(
 	const copiedDetachedNodes: DeltaDetachedNodeBuild[] = [];
 	for (const [[major, minor], chunk] of detachedNodes.entries()) {
 		if (chunk.topLevelLength > 0) {
-			const trees = mapCursorField(chunk.cursor(), (c) =>
-				cursorForMapTreeNode(mapTreeFromCursor(c)),
-			);
+			chunk.referenceAdded();
 			copiedDetachedNodes.push({
 				id: makeDetachedNodeId(major, minor),
-				trees,
+				trees: chunk,
 			});
 		}
 	}
@@ -2693,29 +2653,25 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 
 	/**
 	 * @param firstId - The ID to associate with the first node
-	 * @param content - The node(s) to build. Can be in either Field or Node mode.
+	 * @param content - The node(s) to build.
 	 * @param revision - The revision to use for the build.
 	 * @returns A description of the edit that can be passed to `submitChanges`.
+	 * The returned object may contain an owning reference to the given TreeChunk.
 	 */
 	public buildTrees(
 		firstId: ChangesetLocalId,
-		content: ITreeCursorSynchronous,
+		content: TreeChunk,
 		revision: RevisionTag,
-		idCompressor?: IIdCompressor,
 	): GlobalEditDescription {
-		if (content.mode === CursorLocationType.Fields && content.getFieldLength() === 0) {
+		if (content.topLevelLength === 0) {
 			return { type: "global", revision };
 		}
+
+		// This content will be added to a GlobalEditDescription whose lifetime exceeds the scope of this function.
+		content.referenceAdded();
+
 		const builds: ChangeAtomIdBTree<TreeChunk> = newTupleBTree();
-		const chunkCompressor = {
-			policy: defaultChunkPolicy,
-			idCompressor,
-		};
-		const chunk =
-			content.mode === CursorLocationType.Fields
-				? chunkFieldSingle(content, chunkCompressor)
-				: chunkTree(content, chunkCompressor);
-		builds.set([revision, firstId], chunk);
+		builds.set([revision, firstId], content);
 
 		return {
 			type: "global",
@@ -2938,10 +2894,9 @@ function buildModularChangesetFromNode(props: {
 		nodeId = { localId: brand(props.idAllocator.allocate()), revision: props.revision },
 	} = props;
 	setInChangeAtomIdMap(props.nodeChanges, nodeId, props.nodeChange);
-	const fieldChangeset = genericFieldKind.changeHandler.editor.buildChildChange(
-		path.parentIndex,
-		nodeId,
-	);
+	const fieldChangeset = genericFieldKind.changeHandler.editor.buildChildChanges([
+		[path.parentIndex, nodeId],
+	]);
 
 	const fieldChange: FieldChange = {
 		fieldKind: genericFieldKind.identifier,
@@ -3032,7 +2987,7 @@ function fieldChangeFromId(
 	id: FieldId,
 ): FieldChange {
 	const fieldMap = fieldMapFromNodeId(fields, nodes, id.nodeId);
-	return fieldMap.get(id.field) ?? fail("No field exists for the given ID");
+	return fieldMap.get(id.field) ?? fail(0xb25 /* No field exists for the given ID */);
 }
 
 function fieldMapFromNodeId(

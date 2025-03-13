@@ -140,8 +140,6 @@ export class SnapshotLoader {
 					movedClientIds: spec.movedClientIds.map((id) =>
 						this.client.getOrAddShortClientId(id),
 					),
-					// BUG? This isn't persisted
-					wasMovedOnInsert: false,
 				});
 			}
 

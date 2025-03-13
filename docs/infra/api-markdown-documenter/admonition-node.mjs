@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+//@ts-check
+/** @typedef {import("@fluid-tools/api-markdown-documenter").DocumentationNode} DocumentationNode */
+
 import { DocumentationParentNodeBase } from "@fluid-tools/api-markdown-documenter";
 
 /**
@@ -44,7 +47,7 @@ export const admonitionNodeType = "Admonition";
  */
 export class AdmonitionNode extends DocumentationParentNodeBase {
 	/**
-	 * @param {@fluid-tools/api-markdown-documenter#DocumentationNode[]} children - Child node content.
+	 * @param {DocumentationNode[]} children - Child node content.
 	 * @param {string} admonitionKind - The kind of admonition. See {@link https://docusaurus.io/docs/markdown-features/admonitions}.
 	 * @param {string | undefined} title - (Optional) Title text for the admonition.
 	 */
