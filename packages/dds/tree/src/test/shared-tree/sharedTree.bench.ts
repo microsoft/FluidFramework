@@ -45,6 +45,7 @@ import {
 	StringArray,
 	TestTreeProviderLite,
 	checkoutWithContent,
+	configureBenchmarkHooks,
 	chunkFromJsonTrees,
 	flexTreeViewWithContent,
 	toJsonableTree,
@@ -75,6 +76,7 @@ const factory = new TreeFactory({
 
 // TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
 describe("SharedTree benchmarks", () => {
+	configureBenchmarkHooks();
 	describe("Direct JS Object", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
 			let tree: JSDeepTree;
