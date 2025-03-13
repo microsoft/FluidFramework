@@ -303,7 +303,7 @@ describe("Scenario Test", () => {
 		);
 	});
 
-	it.skip("enter staging mode and discard staged changes", async () => {
+	it("enter staging mode and discard staged changes", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
 

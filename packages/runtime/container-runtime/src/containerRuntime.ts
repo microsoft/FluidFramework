@@ -3491,7 +3491,10 @@ export class ContainerRuntime
 
 		const stageControls = {
 			discardChanges: exitStagingMode(() => {
-				//* TODO: Rebase (like resubmit) pending states
+				// Pop all staged batches from the PSM and roll them back in LIFO order
+				this.pendingStateManager.popStagedBatches(({ content, localOpMetadata }) =>
+					this.rollback(content, localOpMetadata),
+				);
 			}),
 			commitChanges: exitStagingMode(() => {
 				// All staged changes are in the PSM, so just replay them (ignore pre-staging batches)

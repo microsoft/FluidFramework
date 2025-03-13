@@ -766,6 +766,25 @@ export class PendingStateManager implements IDisposable {
 			}
 		}
 	}
+
+	/**
+	 * Pops all staged batches, invoking the callback on each one in order (LIFO)
+	 */
+	public popStagedBatches(callback: (stagedMessage: IPendingMessage) => void): void {
+		while (!this.pendingMessages.isEmpty()) {
+			const stagedMessage = this.pendingMessages.peekBack();
+			if (stagedMessage?.batchInfo.staged === true) {
+				callback(stagedMessage);
+				this.pendingMessages.pop();
+			} else {
+				break; // no more staged messages
+			}
+		}
+		assert(
+			this.pendingMessages.toArray().every((m) => m.batchInfo.staged !== true),
+			"Shouldn't be any more staged messages",
+		);
+	}
 }
 
 /**
