@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { IEmitter } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
@@ -11,7 +12,7 @@ import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type { IEphemeralRuntime, PostUpdateAction } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
-import type { ClientSessionId, ISessionClient } from "./presence.js";
+import type { ClientSessionId, ISessionClient, PresenceEvents } from "./presence.js";
 import type {
 	ClientUpdateEntry,
 	RuntimeLocalUpdateOptions,
@@ -86,6 +87,12 @@ function isPresenceMessage(
 	return message.type.startsWith("Pres:");
 }
 
+function isPresenceWorkspaceAddress(
+	workspaceAddress: string,
+): workspaceAddress is PresenceWorkspaceAddress {
+	return workspaceAddress.includes(":");
+}
+
 /**
  * @internal
  */
@@ -153,6 +160,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		private readonly runtime: IEphemeralRuntime,
 		private readonly lookupClient: (clientId: ClientSessionId) => ISessionClient,
 		private readonly logger: ITelemetryLoggerExt | undefined,
+		private readonly events: IEmitter<Pick<PresenceEvents, "workspaceActivated">>,
 		systemWorkspaceDatastore: SystemWorkspaceDatastore,
 		systemWorkspace: PresenceWorkspaceEntry<PresenceStatesSchema>,
 	) {
@@ -403,7 +411,36 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				if (workspaceDatastore === undefined) {
 					workspaceDatastore = this.datastore[workspaceAddress] = {};
 					if (!workspaceAddress.startsWith("system:")) {
-						// TODO: Emit workspaceActivated event for PresenceEvents
+						// Separate internal type prefix from public workspace address
+						const match = workspaceAddress.match(/^([a-z]):(.*)/);
+						// Skip if no match
+						if (match === null) {
+							continue;
+						}
+						const prefix = match[1];
+						const publicWorkspaceAddress = match[2];
+						// Skip if public workspace address is invalid
+						if (
+							publicWorkspaceAddress === undefined ||
+							!isPresenceWorkspaceAddress(publicWorkspaceAddress)
+						) {
+							continue;
+						}
+						const internalWorkspaceTypes = {
+							s: "States",
+							n: "Notifications",
+						} as const;
+
+						// Convert prefix to internal workspace type
+						const internalWorkspaceType =
+							internalWorkspaceTypes[prefix as keyof typeof internalWorkspaceTypes] ??
+							"Unknown";
+
+						this.events.emit(
+							"workspaceActivated",
+							publicWorkspaceAddress,
+							internalWorkspaceType,
+						);
 					}
 				}
 				for (const [key, remoteAllKnownState] of Object.entries(remoteDatastore)) {
