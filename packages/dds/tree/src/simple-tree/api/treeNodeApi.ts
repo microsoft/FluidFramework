@@ -7,13 +7,14 @@ import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import { EmptyKey, rootFieldKey } from "../../core/index.js";
 import { type TreeStatus, isTreeValue, FieldKinds } from "../../feature-libraries/index.js";
-import { fail, extractFromOpaque, isReadonlyArray } from "../../util/index.js";
+import { fail, extractFromOpaque } from "../../util/index.js";
 import {
 	type TreeLeafValue,
 	type ImplicitFieldSchema,
 	FieldSchema,
 	type ImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
+	normalizeAllowedTypes,
 } from "../schemaTypes.js";
 import {
 	booleanSchema,
@@ -39,8 +40,6 @@ import {
 	getOrCreateInnerNode,
 } from "../core/index.js";
 import { isObjectNodeSchema } from "../objectNodeTypes.js";
-import { isLazy, type LazyItem } from "../flexList.js";
-import { markSchemaMostDerived } from "./schemaFactory.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -212,19 +211,7 @@ export const treeNodeApi: TreeNodeApi = {
 		if (actualSchema === undefined) {
 			return false;
 		}
-		if (isReadonlyArray<LazyItem<TreeNodeSchema>>(schema)) {
-			for (const singleSchema of schema) {
-				const testSchema = isLazy(singleSchema) ? singleSchema() : singleSchema;
-				markSchemaMostDerived(testSchema);
-				if (testSchema === actualSchema) {
-					return true;
-				}
-			}
-			return false;
-		} else {
-			markSchemaMostDerived(schema);
-			return schema === actualSchema;
-		}
+		return normalizeAllowedTypes(schema).has(actualSchema);
 	},
 	schema(node: TreeNode | TreeLeafValue): TreeNodeSchema {
 		return tryGetSchema(node) ?? fail(0xb37 /* Not a tree node */);

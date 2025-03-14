@@ -170,6 +170,7 @@ export {
 	type ReadSchema,
 	type NodeSchemaOptions,
 	type NodeSchemaMetadata,
+	evaluateLazySchema,
 } from "./schemaTypes.js";
 export {
 	getTreeNodeForField,
