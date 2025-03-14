@@ -109,7 +109,6 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     readonly disposed?: boolean;
     forceReadonly?(readonly: boolean): any;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-    getContainerPackageInfo?(): IContainerPackageInfo | undefined;
     getEntryPoint(): Promise<FluidObject>;
     getLoadedCodeDetails(): IFluidCodeDetails | undefined;
     getQuorum(): IQuorumClients;
