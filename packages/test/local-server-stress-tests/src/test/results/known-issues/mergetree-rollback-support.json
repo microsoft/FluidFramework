@@ -1,0 +1,132 @@
+[
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "setKey",
+            "key": "0",
+            "value": 22
+        },
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "createChannel",
+        "channelType": "https://graph.microsoft.com/types/mergeTree",
+        "tag": "channel-1",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "addText",
+            "index": 0,
+            "content": "rtjPKh"
+        },
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-1"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "addInterval",
+            "start": 4,
+            "end": 5,
+            "collectionName": "comments",
+            "id": "fc3a2178-9767-4f1b-9d8a-6f49830babf3",
+            "startSide": 1,
+            "endSide": 1
+        },
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-1"
+    },
+    {
+        "type": "createChannel",
+        "channelType": "https://graph.microsoft.com/types/map",
+        "tag": "channel-2",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-1"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "setKey",
+            "key": "1",
+            "value": {
+                "tag": "channel-2",
+                "absolutePath": "/128ad7ec-2534-437a-a1f7-fec42bb2d09d/channel-2",
+                "isAttached": true
+            }
+        },
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "attach"
+    },
+    {
+        "type": "addClient",
+        "clientTag": "client-4"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "setKey",
+            "key": "3",
+            "value": {
+                "tag": "channel-1",
+                "absolutePath": "/128ad7ec-2534-437a-a1f7-fec42bb2d09d/channel-1",
+                "isAttached": true
+            }
+        },
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-2"
+    },
+    {
+        "type": "createDataStore",
+        "asChild": false,
+        "tag": "datastore-1",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-2"
+    },
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "enterStagingMode",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-1",
+        "channelTag": "root"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "changeInterval",
+            "startSide": 1,
+            "endSide": 1,
+            "properties": {
+                "prop3": "uUTmf"
+            },
+            "id": "fc3a2178-9767-4f1b-9d8a-6f49830babf3",
+            "collectionName": "comments"
+        },
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-1"
+    },
+    {
+        "type": "exitStagingMode",
+        "commit": false,
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    }
+]
