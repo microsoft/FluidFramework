@@ -563,13 +563,13 @@ extends:
             - output: pipelineArtifact
               displayName: 'Publish Artifact - pack'
               targetPath: '$(hostPathToPackArtifact)'
-              artifactName: pack
+              artifactName: pack-$(System.JobAttempt)
               publishLocation: 'pipeline'
           - ${{ if eq(parameters.docs, true) }}:
             - output: pipelineArtifact
               displayName: 'Docs: Publish Artifact'
               targetPath: '$(hostPathToApiExtractorArtifact)'
-              artifactName: _api-extractor-temp
+              artifactName: _api-extractor-temp-$(System.JobAttempt)
               publishLocation: 'pipeline'
               sbomEnabled: false
 
