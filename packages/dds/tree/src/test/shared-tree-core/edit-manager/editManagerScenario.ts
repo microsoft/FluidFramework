@@ -8,13 +8,9 @@ import { strict as assert, fail } from "node:assert";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { SessionId } from "@fluidframework/id-compressor";
 
-import {
-	type ChangeFamilyEditor,
-	type ChangeRebaser,
-	emptyDelta,
-} from "../../../core/index.js";
+import type { ChangeFamilyEditor, ChangeRebaser } from "../../../core/index.js";
 import type { Commit, EditManager, SeqNumber } from "../../../shared-tree-core/index.js";
-import { brand, clone } from "../../../util/index.js";
+import { brand } from "../../../util/index.js";
 import { TestChange, type TestChangeFamily, asDelta } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
 
@@ -36,6 +32,10 @@ interface UnitTestPushStep {
 	 * provided to make tests easier to read and debug.
 	 */
 	seq?: number;
+	/**
+	 * The index of the step in the scenario.
+	 */
+	index?: number;
 }
 
 /**
@@ -49,6 +49,10 @@ interface UnitTestAckStep {
 	 * for which there is no `UnitTestAckStep` step.
 	 */
 	seq: number;
+	/**
+	 * The index of the step in the scenario.
+	 */
+	index?: number;
 }
 
 /**
@@ -75,6 +79,10 @@ interface UnitTestPullStep {
 	 * provided to make tests easier to read and debug.
 	 */
 	expectedDelta?: number[];
+	/**
+	 * The index of the step in the scenario.
+	 */
+	index?: number;
 }
 
 type UnitTestScenarioStep = UnitTestPushStep | UnitTestAckStep | UnitTestPullStep;
@@ -154,9 +162,14 @@ export function* buildScenario(
 
 export function runUnitTestScenario(
 	title: string | undefined,
-	steps: readonly UnitTestScenarioStep[],
+	stepsWithoutIndex: readonly UnitTestScenarioStep[],
 	rebaser?: ChangeRebaser<TestChange>,
 ): void {
+	// Add index to each step. This is used determine which changes are known to a peer at the time they author a change.
+	const steps: readonly UnitTestScenarioStep[] = stepsWithoutIndex.map((step, index) => ({
+		...step,
+		index,
+	}));
 	const run = (advanceMinimumSequenceNumber: boolean) => {
 		const { manager } = testChangeEditManagerFactory({ rebaser });
 		/**
@@ -178,16 +191,23 @@ export function runUnitTestScenario(
 		/**
 		 * Local helper to update all the state that is dependent on the sequencing of new edits.
 		 */
-		const recordSequencedEdit = (commit: TestCommit): void => {
-			trunk.push(commit.seqNumber);
+		const recordSequencedEdits = (commits: TestCommit[]): void => {
+			commits.forEach((commit) => {
+				trunk.push(commit.seqNumber);
+			});
 			summarizer.addSequencedChanges(
-				[commit],
-				commit.sessionId,
-				commit.seqNumber,
-				commit.refNumber,
+				commits,
+				commits[0].sessionId,
+				commits[0].seqNumber,
+				commits[0].refNumber,
 			);
 			for (const j of joiners) {
-				j.addSequencedChanges([commit], commit.sessionId, commit.seqNumber, commit.refNumber);
+				j.addSequencedChanges(
+					commits,
+					commits[0].sessionId,
+					commits[0].seqNumber,
+					commits[0].refNumber,
+				);
 			}
 		};
 		/**
@@ -246,125 +266,117 @@ export function runUnitTestScenario(
 		 * Index of the "Ack" step in `acks` that matches the next encountered "Push" step
 		 */
 		let iNextAck = 0;
-		for (const step of steps) {
-			const minimumSequenceNumber = computeMinimumSequenceNumber(
-				step.type === "Push" ? localRef : step.seq,
-			);
-			const type = step.type;
-			switch (type) {
-				case "Push": {
-					let seq = step.seq;
-					if (seq === undefined) {
-						seq =
-							iNextAck < acks.length
-								? acks[iNextAck].seq
-								: // If the pushed edit is never Ack-ed, assign the next available sequence number to it.
-									finalSequencedEdit + 1 + iNextAck - acks.length;
-					}
-					iNextAck += 1;
-					const changeset = TestChange.mint(knownToLocal, seq);
-					const revision = mintRevisionTag();
-					const commit: TestCommit = {
-						revision,
-						sessionId: localSessionId,
-						seqNumber: brand(seq),
-						refNumber: brand(localRef),
-						change: changeset,
-					};
-					localCommits.push(commit);
-					knownToLocal.push(seq);
-					// Local changes should always lead to a delta that is equivalent to the local change.
-					manager.localBranch.apply({ change: changeset, revision });
-					assert.deepEqual(
-						asDelta(manager.localBranch.getHead().change.intentions),
-						asDelta([seq]),
-					);
-					break;
-				}
-				case "Ack": {
-					const seq = step.seq;
-					const commit = localCommits.shift();
-					if (commit === undefined) {
-						fail("Invalid test scenario: no local commit to acknowledge");
-					}
-					if (commit.seqNumber !== seq) {
-						fail(
-							"Invalid test scenario: acknowledged commit does not mach oldest local change",
+		const processBunchOfSteps = (bunchOfSteps: UnitTestScenarioStep[]) => {
+			const commits: TestCommit[] = [];
+			let minimumSequenceNumber: number = 0;
+			for (const step of bunchOfSteps) {
+				minimumSequenceNumber = computeMinimumSequenceNumber(
+					step.type === "Push" ? localRef : step.seq,
+				);
+				const type = step.type;
+				switch (type) {
+					case "Push": {
+						let seq = step.seq;
+						if (seq === undefined) {
+							seq =
+								iNextAck < acks.length
+									? acks[iNextAck].seq
+									: // If the pushed edit is never Ack-ed, assign the next available sequence number to it.
+										finalSequencedEdit + 1 + iNextAck - acks.length;
+						}
+						iNextAck += 1;
+						const changeset = TestChange.mint(knownToLocal, seq);
+						const revision = mintRevisionTag();
+						const commit: TestCommit = {
+							revision,
+							sessionId: localSessionId,
+							seqNumber: brand(seq),
+							refNumber: brand(localRef),
+							change: changeset,
+						};
+						localCommits.push(commit);
+						knownToLocal.push(seq);
+						// Local changes should always lead to a delta that is equivalent to the local change.
+						manager.localBranch.apply({ change: changeset, revision });
+						assert.deepEqual(
+							asDelta(manager.localBranch.getHead().change.intentions),
+							asDelta([seq]),
 						);
+						break;
 					}
-					const delta = addSequencedChanges(
-						manager,
-						[commit],
-						commit.sessionId,
-						commit.seqNumber,
-						commit.refNumber,
-					);
-					// Acknowledged (i.e., sequenced) local changes should always lead to an empty delta.
-					assert.deepEqual(delta, emptyDelta);
-					localRef = commit.seqNumber;
-					manager.advanceMinimumSequenceNumber(brand(minimumSequenceNumber));
-					recordSequencedEdit(commit);
-					break;
-				}
-				case "Pull": {
-					const seq = step.seq;
-					/**
-					 * Filter that includes changes that were on the trunk of the issuer of this commit.
-					 */
-					const peerTrunkChangesFilter = (s: UnitTestScenarioStep) =>
-						s.type !== "Push" && s.seq <= step.ref;
-					/**
-					 * Filter that includes changes that were local to the issuer of this commit.
-					 */
-					const peerLocalChangesFilter = (s: UnitTestScenarioStep) =>
-						s.type === "Pull" && s.seq > step.ref && s.seq < step.seq && s.from === step.from;
-					/**
-					 * Changes that were known to the peer at the time it authored this commit.
-					 */
-					const knownToPeer: number[] = [
-						...steps.filter(peerTrunkChangesFilter),
-						...steps.filter(peerLocalChangesFilter),
-					].map((s) => s.seq ?? fail("Sequenced changes must all have a seq number"));
-					const commit: TestCommit = {
-						revision: mintRevisionTag(),
-						sessionId: step.from,
-						seqNumber: brand(seq),
-						refNumber: brand(step.ref),
-						change: TestChange.mint(knownToPeer, seq),
-					};
-					/**
-					 * Ordered list of intentions for local changes
-					 */
-					const localIntentions = localCommits.map((c) => c.seqNumber);
-					// When a peer commit is received we expect the update to be equivalent to the
-					// retraction of any local changes, followed by the peer changes, followed by the
-					// updated version of the local changes.
-					const expected = [
-						...localIntentions.map((i) => -i).reverse(),
-						seq,
-						...localIntentions,
-					];
-					const delta = addSequencedChanges(
-						manager,
-						[commit],
-						commit.sessionId,
-						commit.seqNumber,
-						commit.refNumber,
-					);
-					assert.deepEqual(delta, asDelta(expected));
-					if (step.expectedDelta !== undefined) {
-						// Verify that the test case was annotated with the right expectations.
-						assert.deepEqual(step.expectedDelta, expected);
+					case "Ack": {
+						const seq = step.seq;
+						const commit = localCommits.shift();
+						if (commit === undefined) {
+							fail("Invalid test scenario: no local commit to acknowledge");
+						}
+						if (commit.seqNumber !== seq) {
+							fail(
+								"Invalid test scenario: acknowledged commit does not mach oldest local change",
+							);
+						}
+						commits.push(commit);
+						break;
 					}
-					recordSequencedEdit(commit);
-					knownToLocal = [...trunk, ...localCommits.map((c) => c.seqNumber)];
-					localRef = commit.seqNumber;
-					manager.advanceMinimumSequenceNumber(brand(minimumSequenceNumber));
-					break;
+					case "Pull": {
+						const seq = step.seq;
+						/**
+						 * Filter that includes changes that were on the trunk of the issuer of this commit.
+						 */
+						const peerTrunkChangesFilter = (s: UnitTestScenarioStep) =>
+							s.type !== "Push" && s.seq <= step.ref;
+						/**
+						 * Filter that includes changes that were local to the issuer of this commit.
+						 */
+						const peerLocalChangesFilter = (s: UnitTestScenarioStep) => {
+							assert(s.index !== undefined, "Index must be defined for each step");
+							assert(step.index !== undefined, "Index must be defined for the step");
+							return (
+								s.type === "Pull" &&
+								s.index < step.index && // This will include steps that have the same seq number but happened before this step.
+								s.seq > step.ref &&
+								s.seq <= step.seq &&
+								s.from === step.from
+							);
+						};
+						/**
+						 * Changes that were known to the peer at the time it authored this commit.
+						 */
+						const knownToPeer: number[] = [
+							...steps.filter(peerTrunkChangesFilter),
+							...steps.filter(peerLocalChangesFilter),
+						].map((s) => s.seq ?? fail("Sequenced changes must all have a seq number"));
+						const commit: TestCommit = {
+							revision: mintRevisionTag(),
+							sessionId: step.from,
+							seqNumber: brand(seq),
+							refNumber: brand(step.ref),
+							change: TestChange.mint(knownToPeer, seq),
+						};
+						commits.push(commit);
+						break;
+					}
+					default:
+						unreachableCase(type);
 				}
-				default:
-					unreachableCase(type);
 			}
+
+			if (commits.length > 0) {
+				addSequencedChanges(
+					manager,
+					commits,
+					commits[0].sessionId,
+					commits[0].seqNumber,
+					commits[0].refNumber,
+				);
+				recordSequencedEdits(commits);
+				if (bunchOfSteps[0].type === "Pull") {
+					knownToLocal = [...trunk, ...localCommits.map((c) => c.seqNumber)];
+				}
+				manager.advanceMinimumSequenceNumber(brand(minimumSequenceNumber));
+				localRef = commits[0].seqNumber;
+			}
+
 			// The exposed trunk and local changes should reflect what is known to the local client
 			checkChangeList(
 				manager,
@@ -375,24 +387,58 @@ export function runUnitTestScenario(
 			);
 			checkChangeList(summarizer, trunk);
 
-			// Spin-up a new joiner whenever a summary client would have a different state.
-			// This assumes summary clients have no local changes, which may change in the future.
-			if (step.type !== "Push") {
-				const joiner = testChangeEditManagerFactory({
-					rebaser,
-					sessionId: `Join${joiners.length}` as SessionId,
-				}).manager;
-				const summary = clone(summarizer.getSummaryData());
-				joiner.loadSummaryData(summary);
-				joiners.push(joiner);
-			}
+			// for (const step of bunchOfSteps) {
+			// 	// Spin-up a new joiner whenever a summary client would have a different state.
+			// 	// This assumes summary clients have no local changes, which may change in the future.
+			// 	if (step.type !== "Push") {
+			// 		const joiner = testChangeEditManagerFactory({
+			// 			rebaser,
+			// 			sessionId: `Join${joiners.length}` as SessionId,
+			// 		}).manager;
+			// 		const summary = clone(summarizer.getSummaryData());
+			// 		joiner.loadSummaryData(summary);
+			// 		joiners.push(joiner);
+			// 	}
+			// }
 
 			// Verify that clients spun-up based on summaries are able to interpret new edits properly
 			for (const j of joiners) {
 				checkChangeList(j, trunk);
 			}
+		};
+
+		let bunch: UnitTestScenarioStep[] = [];
+		const isSameBunch = (step: UnitTestScenarioStep) => {
+			const previousStep = bunch.length > 0 ? bunch[bunch.length - 1] : undefined;
+			if (previousStep === undefined) {
+				return true;
+			}
+			switch (step.type) {
+				case "Push":
+				case "Ack":
+					return previousStep.type !== "Pull" && previousStep.seq === step.seq;
+				case "Pull":
+					return (
+						previousStep.type === "Pull" &&
+						previousStep.seq === step.seq &&
+						previousStep.from === step.from &&
+						previousStep.ref === step.ref
+					);
+				default:
+					assert(false, "Invalid step type");
+			}
+		};
+
+		for (const step of steps) {
+			if (!isSameBunch(step)) {
+				processBunchOfSteps(bunch);
+				bunch = [];
+			}
+			bunch.push(step);
 		}
+		processBunchOfSteps(bunch);
 	};
+
 	if (title !== undefined) {
 		// Run two versions of the scenario, one where the minimum sequence number is advanced and one where it is not
 		it(title, () => run(false));

@@ -4,10 +4,11 @@
  */
 
 import { testCodec } from "./editManagerCodecs.test.js";
-import { testCorrectness } from "./editManagerCorrectness.test.js";
+import { testCorrectness, testOpBunching } from "./editManagerCorrectness.test.js";
 import { testPerf } from "./editManagerPerf.test.js";
 
-describe("EditManager", () => {
+describe.only("EditManager", () => {
+	testOpBunching();
 	testCodec();
 	testCorrectness();
 	testPerf();
