@@ -143,6 +143,18 @@ module.exports = {
 			before: ["*"],
 		},
 
+		// Non-incremental tasks of convenience to ensure build is up-to-date
+		// before command is run. And some aliases for convenience.
+		"test:cjs": { dependsOn: ["test:unit:cjs"], script: false },
+		"test:esm": { dependsOn: ["test:unit:esm"], script: false },
+		"test:jest": ["build:compile"],
+		"test:mocha": ["build:test"],
+		"test:mocha:cjs": ["build:test:cjs"],
+		"test:mocha:esm": ["build:test:esm"],
+		"test:unit": { dependsOn: ["test:mocha", "test:jest"], script: false },
+		"test:unit:cjs": { dependsOn: ["test:mocha:cjs"], script: false },
+		"test:unit:esm": { dependsOn: ["test:mocha:esm"], script: false },
+
 		// alias for back compat
 		"build:full": {
 			dependsOn: ["full"],
