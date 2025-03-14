@@ -75,7 +75,12 @@ import {
 	ReferenceType,
 } from "./ops.js";
 import { PartialSequenceLengths } from "./partialLengths.js";
-import { PerspectiveImpl, isSegmentPresent } from "./perspective.js";
+import {
+	LocalDefaultPerspective,
+	LocalReconnectingPerspective,
+	PriorPerspective,
+	type Perspective,
+} from "./perspective.js";
 import { PropertySet, createMap, extend, extendIfUndefined } from "./properties.js";
 import {
 	DetachedReferencePosition,
@@ -581,6 +586,10 @@ export class MergeTree {
 	public readonly segmentsToScour = new Heap<LRUSegment>(LRUSegmentComparer);
 
 	public readonly attributionPolicy: AttributionPolicy | undefined;
+
+	public localPerspective: Perspective = new LocalDefaultPerspective(
+		this.collabWindow.clientId,
+	);
 
 	/**
 	 * Whether or not all blocks in the mergeTree currently have information about local partial lengths computed.
@@ -1192,6 +1201,12 @@ export class MergeTree {
 		clientId = this.collabWindow.clientId,
 		localSeq: number | undefined = this.collabWindow.localSeq,
 	): number {
+		const perspective =
+			clientId === this.collabWindow.clientId
+				? localSeq === undefined
+					? this.localPerspective
+					: new LocalReconnectingPerspective(refSeq, clientId, localSeq)
+				: new PriorPerspective(refSeq, clientId);
 		const seg = refPos.getSegment();
 		if (!isSegmentLeaf(seg)) {
 			// We have no idea where this reference is, because it refers to a segment which is not in the tree.
@@ -1204,7 +1219,7 @@ export class MergeTree {
 			if (
 				seg !== this.startOfTree &&
 				seg !== this.endOfTree &&
-				!isSegmentPresent(seg, { refSeq, localSeq })
+				!perspective.isSegmentPresent(seg)
 			) {
 				const forward = refPos.slidingPreference === SlidingPreference.FORWARD;
 				const moveInfo = toMoveInfo(seg);
@@ -1216,11 +1231,15 @@ export class MergeTree {
 							? removeInfo.removedSeq
 							: refSeq;
 				const slideLocalSeq = moveInfo?.localMovedSeq ?? removeInfo?.localRemovedSeq;
-				const perspective = new PerspectiveImpl(this, {
-					refSeq: slideSeq,
-					localSeq: slideLocalSeq,
-				});
-				const slidSegment = perspective.nextSegment(seg, forward);
+				const slidePerspective =
+					slideLocalSeq === undefined
+						? new PriorPerspective(slideSeq, this.collabWindow.clientId)
+						: new LocalReconnectingPerspective(
+								slideSeq,
+								this.collabWindow.clientId,
+								slideLocalSeq,
+							);
+				const slidSegment = slidePerspective.nextSegment(this, seg, forward);
 				return (
 					this.getPosition(slidSegment, refSeq, clientId, localSeq) +
 					(forward ? 0 : slidSegment.cachedLength === 0 ? 0 : slidSegment.cachedLength - 1)
@@ -2061,6 +2080,11 @@ export class MergeTree {
 		const localSeq =
 			seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
 
+		const perspective =
+			seq === UnassignedSequenceNumber
+				? this.localPerspective
+				: new PriorPerspective(refSeq, clientId);
+
 		const obliterate: ObliterateInfo = {
 			clientId,
 			end: createDetachedLocalReferencePosition(undefined),
@@ -2114,10 +2138,7 @@ export class MergeTree {
 		const markMoved = (segment: ISegmentLeaf, pos: number): boolean => {
 			if (
 				(start.side === Side.After && startPos === pos + segment.cachedLength) || // exclusive start segment
-				(end.side === Side.Before &&
-					endPos === pos &&
-					// TODO:AB#29765: The clientId check here should be handled by isSegmentPresent and/or PerspectiveImpl
-					(segment.clientId === clientId || isSegmentPresent(segment, { refSeq, localSeq }))) // exclusive end segment
+				(end.side === Side.Before && endPos === pos && perspective.isSegmentPresent(segment)) // exclusive end segment
 			) {
 				// We walk these segments because we want to also walk any concurrently inserted segments between here and the obliterated segments.
 				// These segments are outside of the obliteration range though, so return true to keep walking.
