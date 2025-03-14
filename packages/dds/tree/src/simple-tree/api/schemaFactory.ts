@@ -11,7 +11,7 @@ import type { IFluidHandle as _dummyImport } from "@fluidframework/core-interfac
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import type { TreeValue } from "../../core/index.js";
-import type { NodeKeyManager } from "../../feature-libraries/index.js";
+import type { NodeIdentifierManager } from "../../feature-libraries/index.js";
 import {
 	type RestrictiveStringRecord,
 	getOrCreate,
@@ -909,8 +909,10 @@ export class SchemaFactory<
 	 */
 	public get identifier(): FieldSchema<FieldKind.Identifier, typeof this.string> {
 		const defaultIdentifierProvider: DefaultProvider = getDefaultProvider(
-			(nodeKeyManager: NodeKeyManager) => {
-				return nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
+			(nodeKeyManager: NodeIdentifierManager) => {
+				return nodeKeyManager.stabilizeNodeIdentifier(
+					nodeKeyManager.generateLocalNodeIdentifier(),
+				);
 			},
 		);
 		return createFieldSchema(FieldKind.Identifier, this.string, {
