@@ -170,8 +170,8 @@ export class OpGroupingManager {
 			// problems in pact-map, and requires skipping migration
 			// tests, as pact-map doesn't resbmit even during rebase
 			(batch.messages.length !== 1 ||
-			// Support for reentrant batches will be on by default
-			batch.hasReentrantOps === true)
+				// Support for reentrant batches will be on by default
+				batch.hasReentrantOps === true)
 		);
 	}
 	public groupedBatchingEnabled(): boolean {
