@@ -171,9 +171,9 @@ export function rootAnchor(field: DetachedField = rootField): FieldAnchor {
 }
 
 /**
- * Moves the given cursor to the detached fields in the given forest.
+ * Moves the given cursor to the given detached fields in the given forest.
  * @param forest - forest to move cursor in.
- * @param cursorToMove - cursor to move.
+ * @param cursorToMove - cursor to move, must be allocated by the given forest
  * @param field - defaults to {@link rootField}.
  */
 export function moveToDetachedField(

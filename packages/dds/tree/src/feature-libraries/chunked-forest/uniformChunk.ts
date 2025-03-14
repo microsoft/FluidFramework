@@ -234,9 +234,9 @@ class OffsetShape {
 	 * @param shape - the shape of each child in this field
 	 * @param topLevelLength - number of top level nodes in this sequence chunk (either field within a chunk, or top level chunk)
 	 * @param offset - number of nodes before this in the parent's subtree. The nodes are considered in depth first pre order
-	 * traversal, so a parent is is the first node in its subtree (before its children) with offset 0.
+	 * traversal, so a parent is the first node in its subtree (before its children) with offset 0
 	 * @param key - field key
-	 * @param indexOfParentField - Index to this shape in the parent's array of fields.
+	 * @param indexOfParentField - index to this shape in the parent's array of fields
 	 */
 	public constructor(
 		public readonly shape: TreeShape,
