@@ -14,7 +14,7 @@ import {
 } from "../../core/index.js";
 import type { Listenable } from "@fluidframework/core-interfaces";
 import { type IDisposable, disposeSymbol } from "../../util/index.js";
-import type { NodeIdentifierManager } from "../node-key/index.js";
+import type { NodeIdentifierManager } from "../node-identifier/index.js";
 
 import type { FlexTreeField } from "./flexTreeTypes.js";
 import { type LazyEntity, prepareForEditSymbol } from "./lazyEntity.js";

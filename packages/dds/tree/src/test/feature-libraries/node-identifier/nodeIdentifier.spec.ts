@@ -32,7 +32,7 @@ async function getIIDCompressor(tree?: ITreePrivate): Promise<IIdCompressor> {
 	return runtime.idCompressor ?? fail("Expected IIdCompressor to be present in runtime");
 }
 
-describe("Node Keys", () => {
+describe("Node Identifier", () => {
 	function itNodeKeyManager(
 		title: string,
 		fn: (manager: NodeIdentifierManager) => void,

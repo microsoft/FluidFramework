@@ -9,7 +9,7 @@ import { assertIsStableId, isStableId } from "@fluidframework/id-compressor/inte
 
 import { brand, extractFromOpaque } from "../../util/index.js";
 
-import type { LocalNodeIdentifier, StableNodeIdentifier } from "./nodeKey.js";
+import type { LocalNodeIdentifier, StableNodeIdentifier } from "./nodeIdentifier.js";
 
 /**
  * An object which handles the generation of node identifiers as well as conversion between their two types ({@link StableNodeIdentifier} and {@link LocalNodeIdentifier}).
