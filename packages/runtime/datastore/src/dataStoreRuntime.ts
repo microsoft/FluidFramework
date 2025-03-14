@@ -340,10 +340,10 @@ export class FluidDataStoreRuntime
 			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
 
 		// eslint-disable-next-line import/no-deprecated
-		const base: IContainerRuntimeBaseExperimental =
+		const base: IContainerRuntimeBaseExperimental | undefined =
 			// eslint-disable-next-line import/no-deprecated
 			this.dataStoreContext.containerRuntime satisfies IContainerRuntimeBaseExperimental;
-		if ("inStagingMode" in base) {
+		if (base !== undefined && "inStagingMode" in base) {
 			Object.defineProperty(this, "inStagingMode", {
 				get: () => {
 					return base.inStagingMode;
