@@ -6,11 +6,14 @@
 import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { getW3CData } from "@fluidframework/driver-base/internal";
-import { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import {
+	ISnapshot,
+	ISnapshotTree,
+	MessageType,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	DriverErrorTelemetryProps,
 	NonRetryableError,
-	isRuntimeMessage,
 } from "@fluidframework/driver-utils/internal";
 import {
 	fetchIncorrectResponse,
@@ -549,7 +552,7 @@ async function fetchLatestSnapshotCore(
 				fetchSnapshotForLoadingGroup,
 				useLegacyFlowWithoutGroups:
 					useLegacyFlowWithoutGroupsForSnapshotFetch(loadingGroupIds),
-				userOps: snapshot.ops?.filter((op) => isRuntimeMessage(op)).length ?? 0,
+				userOps: snapshot.ops?.filter((op) => op.type === MessageType.Operation).length ?? 0,
 				// Measures time to make fetch call. Should be similar to
 				// fetchStartToResponseEndTime - receiveContentTime, i.e. it looks like it's time till first byte /
 				// end of response headers

@@ -5,7 +5,11 @@
 
 import { TypedEventEmitter, performanceNow } from "@fluid-internal/client-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { IDeltaQueue, ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
+import {
+	IDeltaQueue,
+	ReadOnlyInfo,
+	isRuntimeMessage,
+} from "@fluidframework/container-definitions/internal";
 import {
 	IDisposable,
 	ITelemetryBaseProperties,
@@ -37,7 +41,6 @@ import {
 	createGenericNetworkError,
 	createWriteError,
 	getRetryDelayFromError,
-	isRuntimeMessage,
 	logNetworkFailure,
 	type GenericNetworkError,
 	type ThrottlingError,

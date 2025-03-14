@@ -10,16 +10,6 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 
 /**
- * Tells if message was sent by container runtime
- * @privateRemarks ADO #1385: To be moved to container-definitions
- * @returns whether the message is a runtime message
- * @internal
- */
-export function isRuntimeMessage(message: { type: string }): boolean {
-	return message.type === MessageType.Operation;
-}
-
-/**
  * @privateRemarks ADO #1385: To be moved to packages/protocol-base/src/protocol.ts
  * @internal
  */
