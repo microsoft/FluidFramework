@@ -217,6 +217,7 @@ export {
 	type TransactionResultFailed,
 	rollback,
 	generateSchemaFromSimpleSchema,
+	evaluateLazySchema,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

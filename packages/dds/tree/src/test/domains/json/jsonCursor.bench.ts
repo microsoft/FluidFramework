@@ -13,7 +13,6 @@ import {
 	type ITreeCursor,
 	type JsonableTree,
 	TreeStoredSchemaRepository,
-	initializeForest,
 	moveToDetachedField,
 } from "../../../core/index.js";
 import {
@@ -25,9 +24,11 @@ import {
 import {
 	buildChunkedForest,
 	buildForest,
+	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
 	cursorForMapTreeNode,
 	defaultSchemaPolicy,
+	initializeForest,
 	jsonableTreeFromCursor,
 	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
@@ -98,7 +99,7 @@ function bench(
 						const forest = buildForest();
 						initializeForest(
 							forest,
-							[cursorForJsonableTreeNode(encodedTree)],
+							cursorForJsonableTreeField([encodedTree]),
 							testRevisionTagCodec,
 							testIdCompressor,
 						);
@@ -132,7 +133,7 @@ function bench(
 						);
 						initializeForest(
 							forest,
-							[cursorForJsonableTreeNode(encodedTree)],
+							cursorForJsonableTreeField([encodedTree]),
 							testRevisionTagCodec,
 							testIdCompressor,
 						);
