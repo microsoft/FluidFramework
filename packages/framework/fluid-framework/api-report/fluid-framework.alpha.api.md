@@ -68,7 +68,7 @@ export interface CommitMetadata {
 export function comparePersistedSchema(persisted: JsonCompatible, view: ImplicitFieldSchema, options: ICodecOptions, canInitialize: boolean): SchemaCompatibilityStatus;
 
 // @alpha
-export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle | ConciseTree<THandle>[] | {
+export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle | readonly ConciseTree<THandle>[] | {
     [key: string]: ConciseTree<THandle>;
 };
 
@@ -896,6 +896,9 @@ export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
 // @alpha
 export const noopValidator: JsonValidator;
 
+// @alpha
+export function normalizeFieldSchema(schema: ImplicitFieldSchema): FieldSchema;
+
 // @public
 type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = {
     -readonly [Property in keyof T]: Property extends string ? TreeFieldFromImplicitField<T[Property]> : unknown;
@@ -904,6 +907,16 @@ type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchem
 // @public
 type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>> = {
     -readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
+};
+
+// @alpha
+export interface ObjectNodeSchema<TName extends string = string, T extends RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>, ImplicitlyConstructable extends boolean = boolean, TCustomMetadata = unknown> extends TreeNodeSchemaClass<TName, NodeKind.Object, TreeObjectNode<T, TName>, object & InsertableObjectFromSchemaRecord<T>, ImplicitlyConstructable, T, never, TCustomMetadata> {
+    readonly fields: ReadonlyMap<string, FieldSchema>;
+}
+
+// @alpha (undocumented)
+export const ObjectNodeSchema: {
+    readonly [Symbol.hasInstance]: (value: TreeNodeSchema) => value is ObjectNodeSchema<string, RestrictiveStringRecord<ImplicitFieldSchema>, boolean, unknown>;
 };
 
 // @public

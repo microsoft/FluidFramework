@@ -10,12 +10,7 @@ import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import {
-	SchemaFactoryAlpha,
-	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/tree/alpha";
-import {
 	SchemaFactory,
-	getJsonSchema,
 	SharedTree,
 	TreeViewConfiguration,
 	// eslint-disable-next-line import/no-internal-modules
@@ -26,7 +21,6 @@ import { objectIdKey } from "../../explicit-strategy/agentEditTypes.js";
 // eslint-disable-next-line import/no-internal-modules
 import { IdGenerator } from "../../explicit-strategy/idGenerator.js";
 import {
-	getPromptFriendlyTreeSchema,
 	toDecoratedJson,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../explicit-strategy/promptGeneration.js";
@@ -121,83 +115,83 @@ describe("toDecoratedJson", () => {
 	});
 });
 
-describe("Makes TS type strings from schema", () => {
-	it("for objects with primitive fields", () => {
-		const testSf = new SchemaFactory("test");
-		class Foo extends testSf.object("Foo", {
-			x: testSf.number,
-			y: testSf.string,
-			z: testSf.optional(testSf.null),
-		}) {}
-		assert.equal(
-			getPromptFriendlyTreeSchema(getJsonSchema(Foo)),
-			"interface Foo { x: number; y: string; z: null | undefined; }",
-		);
-	});
+// describe("Makes TS type strings from schema", () => {
+// 	it("for objects with primitive fields", () => {
+// 		const testSf = new SchemaFactory("test");
+// 		class Foo extends testSf.object("Foo", {
+// 			x: testSf.number,
+// 			y: testSf.string,
+// 			z: testSf.optional(testSf.null),
+// 		}) {}
+// 		assert.equal(
+// 			getPromptFriendlyTreeSchema(getJsonSchema(Foo)),
+// 			"interface Foo { x: number; y: string; z: null | undefined; }",
+// 		);
+// 	});
 
-	// This test fails due to the fact that identifier fields are incorrectly set as optional in the JSON Schema
-	it.skip("for objects with identifier fields", () => {
-		const testSf = new SchemaFactory("test");
-		class Foo extends testSf.object("Foo", {
-			y: testSf.identifier,
-		}) {}
-		assert.equal(
-			getPromptFriendlyTreeSchema(getJsonSchema(Foo)),
-			"interface Foo { y: string; }",
-		);
-	});
+// 	// This test fails due to the fact that identifier fields are incorrectly set as optional in the JSON Schema
+// 	it.skip("for objects with identifier fields", () => {
+// 		const testSf = new SchemaFactory("test");
+// 		class Foo extends testSf.object("Foo", {
+// 			y: testSf.identifier,
+// 		}) {}
+// 		assert.equal(
+// 			getPromptFriendlyTreeSchema(getJsonSchema(Foo)),
+// 			"interface Foo { y: string; }",
+// 		);
+// 	});
 
-	it("for objects with polymorphic fields", () => {
-		const testSf = new SchemaFactory("test");
-		class Bar extends testSf.object("Bar", {
-			z: testSf.number,
-		}) {}
-		class Foo extends testSf.object("Foo", {
-			y: demoSf.required([demoSf.number, demoSf.string, Bar]),
-		}) {}
-		assert.equal(
-			getPromptFriendlyTreeSchema(getJsonSchema(Foo)),
-			"interface Foo { y: number | string | Bar; } interface Bar { z: number; }",
-		);
-	});
+// 	it("for objects with polymorphic fields", () => {
+// 		const testSf = new SchemaFactory("test");
+// 		class Bar extends testSf.object("Bar", {
+// 			z: testSf.number,
+// 		}) {}
+// 		class Foo extends testSf.object("Foo", {
+// 			y: demoSf.required([demoSf.number, demoSf.string, Bar]),
+// 		}) {}
+// 		assert.equal(
+// 			getPromptFriendlyTreeSchema(getJsonSchema(Foo)),
+// 			"interface Foo { y: number | string | Bar; } interface Bar { z: number; }",
+// 		);
+// 	});
 
-	it("for objects with array fields", () => {
-		const testSf = new SchemaFactory("test");
-		class Foo extends testSf.object("Foo", {
-			y: demoSf.array(demoSf.number),
-		}) {}
-		assert.equal(
-			getPromptFriendlyTreeSchema(getJsonSchema(Foo)),
-			"interface Foo { y: number[]; }",
-		);
-	});
+// 	it("for objects with array fields", () => {
+// 		const testSf = new SchemaFactory("test");
+// 		class Foo extends testSf.object("Foo", {
+// 			y: demoSf.array(demoSf.number),
+// 		}) {}
+// 		assert.equal(
+// 			getPromptFriendlyTreeSchema(getJsonSchema(Foo)),
+// 			"interface Foo { y: number[]; }",
+// 		);
+// 	});
 
-	it("for objects with nested array fields", () => {
-		const testSf = new SchemaFactory("test");
-		class Foo extends testSf.object("Foo", {
-			y: demoSf.array([
-				demoSf.number,
-				demoSf.array([demoSf.number, demoSf.array(demoSf.string)]),
-			]),
-		}) {}
-		assert.equal(
-			getPromptFriendlyTreeSchema(getJsonSchema(Foo)),
-			"interface Foo { y: (number | (number | string[])[])[]; }",
-		);
-	});
+// 	it("for objects with nested array fields", () => {
+// 		const testSf = new SchemaFactory("test");
+// 		class Foo extends testSf.object("Foo", {
+// 			y: demoSf.array([
+// 				demoSf.number,
+// 				demoSf.array([demoSf.number, demoSf.array(demoSf.string)]),
+// 			]),
+// 		}) {}
+// 		assert.equal(
+// 			getPromptFriendlyTreeSchema(getJsonSchema(Foo)),
+// 			"interface Foo { y: (number | (number | string[])[])[]; }",
+// 		);
+// 	});
 
-	it("for objects in the demo schema", () => {
-		assert.equal(
-			getPromptFriendlyTreeSchema(getJsonSchema(RootObject)),
-			"interface RootObject { str: string; vectors: Vector[]; bools: boolean[]; } interface Vector { x: number; y: number; z: number | undefined; }",
-		);
-	});
+// 	it("for objects in the demo schema", () => {
+// 		assert.equal(
+// 			getPromptFriendlyTreeSchema(getJsonSchema(RootObject)),
+// 			"interface RootObject { str: string; vectors: Vector[]; bools: boolean[]; } interface Vector { x: number; y: number; z: number | undefined; }",
+// 		);
+// 	});
 
-	it("for omitted objects", () => {
-		const testSf = new SchemaFactoryAlpha("test");
-		class Foo extends testSf.object("Foo", {
-			omitted: testSf.required(testSf.string, { metadata: { omitFromJson: true } }),
-		}) {}
-		assert.equal(getPromptFriendlyTreeSchema(getJsonSchema(Foo)), "interface Foo { }");
-	});
-});
+// 	it("for omitted objects", () => {
+// 		const testSf = new SchemaFactoryAlpha("test");
+// 		class Foo extends testSf.object("Foo", {
+// 			omitted: testSf.required(testSf.string, { metadata: { omitFromJson: true } }),
+// 		}) {}
+// 		assert.equal(getPromptFriendlyTreeSchema(getJsonSchema(Foo)), "interface Foo { }");
+// 	});
+// });

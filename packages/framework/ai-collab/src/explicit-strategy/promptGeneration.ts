@@ -5,17 +5,11 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	NodeKind,
 	type ImplicitFieldSchema,
 	type TreeFieldFromImplicitField,
-	type JsonFieldSchema,
-	type JsonNodeSchema,
-	type JsonSchemaRef,
-	type JsonTreeSchema,
 	getSimpleSchema,
 	Tree,
 	type TreeNode,
-	getJsonSchema,
 } from "@fluidframework/tree/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { createZodJsonValidator } from "typechat/zod";
@@ -30,7 +24,7 @@ import {
 	type TreeEdit,
 } from "./agentEditTypes.js";
 import type { IdGenerator } from "./idGenerator.js";
-import { doesNodeContainArraySchema, generateGenericEditTypes } from "./typeGeneration.js";
+import { doesNodeContainArraySchema, generateEditTypesForPrompt } from "./typeGeneration.js";
 import { fail } from "./utils.js";
 
 /**
@@ -98,7 +92,23 @@ export function getEditingSystemPrompt(
 	appGuidance?: string,
 ): string {
 	const schema = Tree.schema(treeNode);
-	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema));
+	const { editTypes, editRoot, domainTypes, domainRoot } = generateEditTypesForPrompt(
+		getSimpleSchema(schema),
+	);
+	for (const [key, value] of Object.entries(domainTypes)) {
+		const friendlyKey = getFriendlySchemaName(key);
+		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+		delete domainTypes[key];
+		if (
+			friendlyKey !== undefined &&
+			friendlyKey !== "string" &&
+			friendlyKey !== "number" &&
+			friendlyKey !== "boolean"
+		) {
+			domainTypes[friendlyKey] = value;
+		}
+	}
+	const domainSchemaString = createZodJsonValidator(domainTypes, domainRoot).getSchemaText();
 	const decoratedTreeJson = toDecoratedJson(idGenerator, treeNode);
 
 	const role = `You are a collaborative agent who interacts with a JSON tree by performing edits to achieve a user-specified goal.${
@@ -107,26 +117,30 @@ export function getEditingSystemPrompt(
 			: `\nThe application that owns the JSON tree has the following guidance about your role: "${appGuidance}".`
 	}`;
 
-	const treeSchemaString = createZodJsonValidator(
-		...generateGenericEditTypes(getSimpleSchema(schema), false),
-	).getSchemaText();
+	const treeSchemaString = createZodJsonValidator(editTypes, editRoot).getSchemaText();
 
+	const setFieldType = "SetField" satisfies Capitalize<SetField["type"]>;
+	const insertIntoArrayType = "InsertIntoArray" satisfies Capitalize<InsertIntoArray["type"]>;
 	const topLevelEditWrapperDescription = doesNodeContainArraySchema(treeNode)
-		? `is one of the following interfaces: "${"SetField" satisfies Capitalize<SetField["type"]>}" for editing objects or one of "${"InsertIntoArray" satisfies Capitalize<InsertIntoArray["type"]>}", "${"RemoveFromArray" satisfies Capitalize<RemoveFromArray["type"]>}", "${"MoveArrayElement" satisfies Capitalize<MoveArrayElement["type"]>}" for editing arrays`
-		: `is the interface "${"SetField" satisfies Capitalize<SetField["type"]>}"`;
+		? `is one of the following interfaces: "${setFieldType}" for editing objects or one of "${insertIntoArrayType}", "${"RemoveFromArray" satisfies Capitalize<RemoveFromArray["type"]>}", "${"MoveArrayElement" satisfies Capitalize<MoveArrayElement["type"]>}" for editing arrays`
+		: `is the interface "${setFieldType}"`;
 
 	// TODO: security: user prompt in system prompt
 	const systemPrompt = `
 ${role}
 Edits are JSON objects that conform to the schema described below. You produce an array of edits where each edit ${topLevelEditWrapperDescription}.
-When creating new objects for ${"InsertIntoArray" satisfies Capitalize<InsertIntoArray["type"]>} or ${"SetField" satisfies Capitalize<SetField["type"]>},
+When creating new objects for ${insertIntoArrayType} or ${setFieldType},
 you may create an ID and put it in the ${objectIdKey} property if you want to refer to the object in a later edit. For example, if you want to insert a new object into an array and (in a subsequent edit)
 move another piece of content to after the newly inserted one, you can use the ID of the newly inserted object in the ${"MoveArrayElement" satisfies Capitalize<MoveArrayElement["type"]>} edit.
 Additionally, if the type of the new object cannot be inferred from its properties alone, you should also set the ${typeField} property to the type of the object.
 The schema definitions for an edit are:\n${treeSchemaString}
-The tree is a JSON object with the following schema: ${promptFriendlySchema}
+The tree is a JSON object with the following schema:
+
+${domainSchemaString}
+
 The current state of the tree is: ${decoratedTreeJson}.
 Your final output should be an array of one or more edits that accomplishes the goal, or an empty array if the task can't be accomplished.
+For a ${setFieldType} or ${insertIntoArrayType} edit, you might insert an object into a location where it is ambiguous what the type of the object is from the data alone. In that case, supply the type in the ${typeField} property of the object.
 Before returning the edits, you should check that they are valid according to both the application schema and the editing language schema.
 When possible, ensure that the edits preserve the identity of objects already in the tree (for example, prefer move operations over removal and reinsertion).
 Finally, double check that the edits would accomplish the users request (if it is possible).`;
@@ -136,36 +150,35 @@ Finally, double check that the edits would accomplish the users request (if it i
 /**
  * TODO
  */
-export function getFunctionSystemPrompt(
-	idGenerator: IdGenerator,
-	treeNode: TreeNode,
-	appGuidance?: string,
-): string {
-	const schema = Tree.schema(treeNode);
-	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema));
-	const decoratedTreeJson = toDecoratedJson(idGenerator, treeNode);
+// export function getFunctionSystemPrompt(
+// 	idGenerator: IdGenerator,
+// 	treeNode: TreeNode,
+// 	appGuidance?: string,
+// ): string {
+// 	const schema = Tree.schema(treeNode);
+// 	const decoratedTreeJson = toDecoratedJson(idGenerator, treeNode);
 
-	const role = `You are a collaborative agent who edits a JSON tree to achieve a user-specified goal.${
-		appGuidance === undefined
-			? ""
-			: `\nThe application that owns the JSON tree has the following guidance about your role: "${appGuidance}".`
-	}`;
+// 	const role = `You are a collaborative agent who edits a JSON tree to achieve a user-specified goal.${
+// 		appGuidance === undefined
+// 			? ""
+// 			: `\nThe application that owns the JSON tree has the following guidance about your role: "${appGuidance}".`
+// 	}`;
 
-	// const treeSchemaString = createZodJsonValidator(
-	// 	...generateGenericEditTypes(getSimpleSchema(schema), false),
-	// ).getSchemaText();
+// 	// const treeSchemaString = createZodJsonValidator(
+// 	// 	...generateGenericEditTypes(getSimpleSchema(schema), false),
+// 	// ).getSchemaText();
 
-	return `
-	${role}
-	The tree is a JSON object with the following schema: ${promptFriendlySchema}
-	The current state of the tree is: ${decoratedTreeJson}.
-	You should write a JavaScript function that mutates the tree object in order to accomplish the goal.
-	Note that any arrays in the object are to be mutated in a different way than normal JavaScript arrays.
-	Do not use any of the following methods: "copyWithin", "fill", "pop", "push", "reverse", "shift", "sort", "splice", or "unshift".
-	Instead, use the following methods to do array mutations:
+// 	return `
+// 	${role}
+// 	The tree is a JSON object with the following schema: ${promptFriendlySchema}
+// 	The current state of the tree is: ${decoratedTreeJson}.
+// 	You should write a JavaScript function that mutates the tree object in order to accomplish the goal.
+// 	Note that any arrays in the object are to be mutated in a different way than normal JavaScript arrays.
+// 	Do not use any of the following methods: "copyWithin", "fill", "pop", "push", "reverse", "shift", "sort", "splice", or "unshift".
+// 	Instead, use the following methods to do array mutations:
 
-	`;
-}
+// 	`;
+// }
 
 /**
  * Converts a fully-qualified SharedTree schema name to a single-word name for use in textual TypeScript-style types.
@@ -174,87 +187,98 @@ export function getFunctionSystemPrompt(
  * - TODO: Determine what to do with user-provided names that include periods (e.g. "Foo.Bar").
  * - TODO: Should probably ensure name starts with an uppercase character.
  */
-export function getPromptFriendlyTreeSchema(jsonSchema: JsonTreeSchema): string {
-	let stringifiedSchema = "";
-	for (const [name, def] of Object.entries(jsonSchema.$defs)) {
-		if (def.type !== "object" || def._treeNodeSchemaKind === NodeKind.Map) {
-			continue;
-		}
+// export function getPromptFriendlyTreeSchema(jsonSchema: JsonTreeSchema): string {
+// 	let stringifiedSchema = "";
+// 	for (const [name, def] of Object.entries(jsonSchema.$defs)) {
+// 		if (def.type !== "object" || def._treeNodeSchemaKind === NodeKind.Map) {
+// 			continue;
+// 		}
 
-		let stringifiedEntry = `interface ${getFriendlySchemaName(name)} {`;
+// 		let stringifiedEntry = `interface ${getFriendlySchemaName(name)} {`;
 
-		for (const [fieldName, fieldSchema] of Object.entries(def.properties)) {
-			let typeString: string;
-			if (isJsonSchemaRef(fieldSchema)) {
-				const nextFieldName = fieldSchema.$ref;
-				const nextDef = getDef(jsonSchema.$defs, nextFieldName);
-				typeString = `${getTypeString(jsonSchema.$defs, [nextFieldName, nextDef])}`;
-			} else {
-				typeString = `${getAnyOfTypeString(jsonSchema.$defs, fieldSchema.anyOf, true)}`;
-			}
-			if (def.required && !def.required.includes(fieldName)) {
-				typeString = `${typeString} | undefined`;
-			}
-			stringifiedEntry += ` ${fieldName}: ${typeString};`;
-		}
+// 		for (const [fieldName, fieldSchema] of Object.entries(def.properties)) {
+// 			let typeString: string;
+// 			if (isJsonSchemaRef(fieldSchema)) {
+// 				const nextFieldName = fieldSchema.$ref;
+// 				const nextDef = getDef(jsonSchema.$defs, nextFieldName);
+// 				typeString = `${getTypeString(jsonSchema.$defs, [nextFieldName, nextDef])}`;
+// 			} else {
+// 				typeString = `${getAnyOfTypeString(jsonSchema.$defs, fieldSchema.anyOf, true)}`;
+// 			}
+// 			if (def.required && !def.required.includes(fieldName)) {
+// 				typeString = `${typeString} | undefined`;
+// 			}
+// 			stringifiedEntry += ` ${fieldName}: ${typeString};`;
+// 		}
 
-		stringifiedEntry += " }";
+// 		stringifiedEntry += " }";
 
-		stringifiedSchema += (stringifiedSchema === "" ? "" : " ") + stringifiedEntry;
-	}
-	return stringifiedSchema;
-}
+// 		stringifiedSchema += (stringifiedSchema === "" ? "" : " ") + stringifiedEntry;
+// 	}
+// 	return stringifiedSchema;
+// }
 
-function getTypeString(
-	defs: Record<string, JsonNodeSchema>,
-	[name, currentDef]: [string, JsonNodeSchema],
-): string {
-	const { _treeNodeSchemaKind } = currentDef;
-	if (_treeNodeSchemaKind === NodeKind.Leaf) {
-		return currentDef.type;
-	}
-	if (_treeNodeSchemaKind === NodeKind.Object) {
-		return getFriendlySchemaName(name);
-	}
-	if (_treeNodeSchemaKind === NodeKind.Array) {
-		const items = currentDef.items;
-		const innerType = isJsonSchemaRef(items)
-			? getTypeString(defs, [items.$ref, getDef(defs, items.$ref)])
-			: getAnyOfTypeString(defs, items.anyOf);
-		return `${innerType}[]`;
-	}
-	fail("Non-object, non-leaf, non-array schema type.");
-}
+// function getTypeString(
+// 	defs: Record<string, JsonNodeSchema>,
+// 	[name, currentDef]: [string, JsonNodeSchema],
+// ): string {
+// 	const { _treeNodeSchemaKind } = currentDef;
+// 	if (_treeNodeSchemaKind === NodeKind.Leaf) {
+// 		return currentDef.type;
+// 	}
+// 	if (_treeNodeSchemaKind === NodeKind.Object) {
+// 		return getFriendlySchemaName(name);
+// 	}
+// 	if (_treeNodeSchemaKind === NodeKind.Array) {
+// 		const items = currentDef.items;
+// 		const innerType = isJsonSchemaRef(items)
+// 			? getTypeString(defs, [items.$ref, getDef(defs, items.$ref)])
+// 			: getAnyOfTypeString(defs, items.anyOf);
+// 		return `${innerType}[]`;
+// 	}
+// 	fail("Non-object, non-leaf, non-array schema type.");
+// }
 
-function getAnyOfTypeString(
-	defs: Record<string, JsonNodeSchema>,
-	refList: JsonSchemaRef[],
-	topLevel = false,
-): string {
-	const typeNames: string[] = [];
-	for (const ref of refList) {
-		typeNames.push(getTypeString(defs, [ref.$ref, getDef(defs, ref.$ref)]));
-	}
-	const typeString = typeNames.join(" | ");
-	return topLevel ? typeString : `(${typeString})`;
-}
+// function getAnyOfTypeString(
+// 	defs: Record<string, JsonNodeSchema>,
+// 	refList: JsonSchemaRef[],
+// 	topLevel = false,
+// ): string {
+// 	const typeNames: string[] = [];
+// 	for (const ref of refList) {
+// 		typeNames.push(getTypeString(defs, [ref.$ref, getDef(defs, ref.$ref)]));
+// 	}
+// 	const typeString = typeNames.join(" | ");
+// 	return topLevel ? typeString : `(${typeString})`;
+// }
 
-function isJsonSchemaRef(field: JsonFieldSchema): field is JsonSchemaRef {
-	return (field as JsonSchemaRef).$ref !== undefined;
-}
+// function isJsonSchemaRef(field: JsonFieldSchema): field is JsonSchemaRef {
+// 	return (field as JsonSchemaRef).$ref !== undefined;
+// }
 
-function getDef(defs: Record<string, JsonNodeSchema>, ref: string): JsonNodeSchema {
-	// strip the "#/$defs/" prefix
-	const strippedRef = ref.slice(8);
-	const nextDef = defs[strippedRef];
-	assert(nextDef !== undefined, 0xa7c /* Ref not found. */);
-	return nextDef;
-}
+// function getDef(defs: Record<string, JsonNodeSchema>, ref: string): JsonNodeSchema {
+// 	// strip the "#/$defs/" prefix
+// 	const strippedRef = ref.slice(8);
+// 	const nextDef = defs[strippedRef];
+// 	assert(nextDef !== undefined, 0xa7c /* Ref not found. */);
+// 	return nextDef;
+// }
 
 /**
  * TBD
  */
-export function getFriendlySchemaName(schemaName: string): string {
+export function getFriendlySchemaName(schemaName: string): string | undefined {
+	// TODO: Kludge
+	const arrayTypes = schemaName.match(/Array<\["(.*)"]>/);
+	if (arrayTypes?.[1] !== undefined) {
+		return undefined;
+		// const types = arrayTypes[1].split(`","`);
+		// if (types[0] !== undefined) {
+		// 	return `${getFriendlySchemaName(types[0])}[]`;
+		// }
+		// return `(${types.map((type) => getFriendlySchemaName(type)).join(" | ")})[]`;
+	}
+
 	const matches = schemaName.match(/[^.]+$/);
 	if (matches === null) {
 		// empty scope

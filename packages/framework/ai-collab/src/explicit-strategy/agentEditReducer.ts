@@ -8,178 +8,85 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-// eslint-disable-next-line import/no-internal-modules
-import type { FieldSchemaMetadataAlpha } from "@fluidframework/tree/alpha";
+import type {
+	InsertableContent,
+	UnsafeUnknownSchema,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/tree/alpha";
 import {
 	Tree,
 	NodeKind,
-	type ImplicitAllowedTypes,
 	type TreeArrayNode,
 	type TreeNode,
 	type TreeNodeSchema,
 	type SimpleNodeSchema,
-	FieldKind,
-	FieldSchema,
-	normalizeAllowedTypes,
-	type ImplicitFieldSchema,
 	type IterableTreeArrayContent,
-	SchemaFactory,
 	type TreeLeafValue,
+	TreeAlpha,
+	normalizeFieldSchema,
+	ObjectNodeSchema,
+	FieldKind,
+	type ImplicitAllowedTypes,
+	normalizeAllowedTypes,
 } from "@fluidframework/tree/internal";
+
+// TODO: Expose these functions
 
 import {
 	type TreeEdit,
 	type ObjectPointer,
 	type Pointer,
-	type TreeContentObject,
 	type TreeContent,
-	typeField,
 	objectIdKey,
-	type TreeContentArray,
 	type PathPointer,
 	type ArrayPosition,
 	isArrayRange,
+	typeField,
 } from "./agentEditTypes.js";
 import type { IdGenerator } from "./idGenerator.js";
-import type { JsonValue } from "./jsonTypes.js";
-import { toDecoratedJson } from "./promptGeneration.js";
 import { fail, type View } from "./utils.js";
 
-// eslint-disable-next-line eslint-comments/disable-enable-pair
-/* eslint-disable unicorn/no-null */
+// function populateDefaults(
+// 	json: JsonValue,
+// 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
+// ): void {
+// 	if (typeof json === "object") {
+// 		if (json === null) {
+// 			return;
+// 		}
+// 		if (Array.isArray(json)) {
+// 			for (const element of json) {
+// 				populateDefaults(element, definitionMap);
+// 			}
+// 		} else {
+// 			assert(
+// 				typeof json[typeField] === "string",
+// 				0xa73 /* The typeField must be present in new JSON content */,
+// 			);
+// 			const nodeSchema = definitionMap.get(json[typeField]);
+// 			assert(nodeSchema?.kind === NodeKind.Object, 0xa74 /* Expected object schema */);
 
-function populateDefaults(
-	json: JsonValue,
-	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
-): void {
-	if (typeof json === "object") {
-		if (json === null) {
-			return;
-		}
-		if (Array.isArray(json)) {
-			for (const element of json) {
-				populateDefaults(element, definitionMap);
-			}
-		} else {
-			assert(
-				typeof json[typeField] === "string",
-				0xa73 /* The typeField must be present in new JSON content */,
-			);
-			const nodeSchema = definitionMap.get(json[typeField]);
-			assert(nodeSchema?.kind === NodeKind.Object, 0xa74 /* Expected object schema */);
+// 			for (const [key, fieldSchema] of Object.entries(nodeSchema.fields)) {
+// 				const defaulter = (fieldSchema?.metadata as FieldSchemaMetadataAlpha)?.llmDefault as
+// 					| (() => TreeNode | TreeLeafValue)
+// 					| undefined;
 
-			for (const [key, fieldSchema] of Object.entries(nodeSchema.fields)) {
-				const defaulter = (fieldSchema?.metadata as FieldSchemaMetadataAlpha)?.llmDefault as
-					| (() => TreeNode | TreeLeafValue)
-					| undefined;
+// 				if (defaulter !== undefined) {
+// 					(json as Record<string, TreeNode | TreeLeafValue>)[key] = defaulter();
+// 				}
+// 			}
 
-				if (defaulter !== undefined) {
-					(json as Record<string, TreeNode | TreeLeafValue>)[key] = defaulter();
-				}
-			}
-
-			for (const value of Object.values(json)) {
-				if (value !== undefined) {
-					populateDefaults(value, definitionMap);
-				}
-			}
-		}
-	}
-}
-
-function createObjectOrArray(
-	jsonObject: TreeContentObject | TreeContentArray,
-	schema: TreeNodeSchema,
-	idGenerator: IdGenerator,
-): TreeNode {
-	const jsonWithoutIds = cloneWithoutProperty(jsonObject, objectIdKey);
-	const simpleNodeSchema = schema as unknown as new (dummy: unknown) => TreeNode;
-	const treeNode = new simpleNodeSchema(jsonWithoutIds);
-
-	function updateIds(node: TreeNode | TreeLeafValue, json: TreeContent): void {
-		if (typeof json === "object" && json !== null) {
-			if (Array.isArray(json)) {
-				for (let i = 0; i < json.length; i++) {
-					updateIds((node as TreeArrayNode)[i] ?? fail("TODO"), json[i] ?? fail("TODO"));
-				}
-			} else {
-				// TODO: assert that treeNode is a TreeNode
-				if (typeof json[objectIdKey] === "string") {
-					if (idGenerator.getNode(json[objectIdKey]) !== undefined) {
-						throw new UsageError(
-							`${objectIdKey} ${json[objectIdKey]} already exists in the tree`,
-						);
-					}
-					idGenerator.getOrCreateId(node as TreeNode, json[objectIdKey]);
-				}
-				for (const [key, value] of Object.entries(json)) {
-					if (value !== undefined) {
-						assert(node !== null, "");
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-						const child = (node as TreeNode)[key];
-						if (child !== undefined) {
-							updateIds(child as TreeNode | TreeLeafValue, value);
-						}
-					}
-				}
-			}
-		}
-	}
-
-	updateIds(treeNode, jsonObject);
-	return treeNode;
-}
-
-function cloneWithoutProperty(
-	obj: TreeContentObject | TreeContentArray,
-	propertyToRemove,
-): TreeContentObject | TreeContentArray {
-	// Custom replacer function to exclude specific property
-	function replacer<T>(key: string, value: T): T | undefined {
-		if (key === propertyToRemove) {
-			return undefined; // This will exclude the property
-		}
-		return value;
-	}
-	// Use stringify with the custom replacer, then parse back to an object
-	return JSON.parse(JSON.stringify(obj, replacer)) as TreeContentObject | TreeContentArray;
-}
-
-function getSchemaIdentifier(content: TreeContent): string | undefined {
-	switch (typeof content) {
-		case "boolean": {
-			return SchemaFactory.boolean.identifier;
-		}
-		case "number": {
-			return SchemaFactory.number.identifier;
-		}
-		case "string": {
-			return SchemaFactory.string.identifier;
-		}
-		case "object": {
-			if (content === null) {
-				return SchemaFactory.null.identifier;
-			}
-			if (Array.isArray(content)) {
-				throw new UsageError("Arrays are not currently supported in this context");
-			}
-			if (isFluidHandle(content)) {
-				return SchemaFactory.handle.identifier;
-			}
-			return content[typeField];
-		}
-		default: {
-			throw new UsageError("Unsupported content type");
-		}
-	}
-}
+// 			for (const value of Object.values(json)) {
+// 				if (value !== undefined) {
+// 					populateDefaults(value, definitionMap);
+// 				}
+// 			}
+// 		}
+// 	}
+// }
 
 function isArrayNode(node: TreeNode | TreeArrayNode | TreeLeafValue): node is TreeArrayNode {
 	return Tree.schema(node).kind === NodeKind.Array;
-}
-
-function contentWithIds(content: TreeNode, idGenerator: IdGenerator): TreeContentObject {
-	return JSON.parse(toDecoratedJson(idGenerator, content)) as TreeContentObject;
 }
 
 function getIndex(
@@ -271,44 +178,21 @@ export function applyAgentEdit(
 ): void {
 	switch (treeEdit.type) {
 		case "insertIntoArray": {
-			{
-				const array = resolvePathPointer(view, treeEdit.array, idGenerator);
-				if (!isArrayNode(array)) {
-					throw new UsageError("The destination node must be an arrayNode");
-				}
-
-				const index = getIndex(view, array, treeEdit.position, idGenerator);
-				const parentNodeSchema = Tree.schema(array);
-
-				const values: TreeContent[] = treeEdit.values ?? [
-					treeEdit.value ?? failUsage(`Either "value" or "values" must be provided`),
-				];
-				for (const value of values) {
-					populateDefaults(value, definitionMap);
-					const schemaIdentifier = getSchemaIdentifier(value);
-
-					// We assume that the parentNode for inserts edits are guaranteed to be an arrayNode.
-					const allowedTypes = [
-						...normalizeAllowedTypes(parentNodeSchema.info as ImplicitAllowedTypes),
-					];
-
-					for (const allowedType of allowedTypes.values()) {
-						if (
-							allowedType.identifier === schemaIdentifier &&
-							typeof allowedType === "function"
-						) {
-							if (typeof value !== "object" || value === null) {
-								throw new UsageError("inserted node must be an object");
-							}
-							const insertNode = createObjectOrArray(value, allowedType, idGenerator);
-							validator?.(insertNode);
-							array.insertAt(index, insertNode as unknown as IterableTreeArrayContent<never>);
-							contentWithIds(insertNode, idGenerator);
-							break;
-						}
-					}
-				}
+			const array = resolvePathPointer(view, treeEdit.array, idGenerator);
+			if (!isArrayNode(array)) {
+				throw new UsageError("The destination node must be an arrayNode");
 			}
+
+			const index = getIndex(view, array, treeEdit.position, idGenerator);
+			const parentNodeSchema = Tree.schema(array);
+
+			const inserted = (
+				treeEdit.values ?? [
+					treeEdit.value ?? failUsage(`Either "value" or "values" must be provided`),
+				]
+			).map((v) => constructTree([...parentNodeSchema.childTypes], v, idGenerator));
+			array.insertAt(index, ...(inserted as unknown as IterableTreeArrayContent<never>));
+
 			break;
 		}
 		case "removeFromArray": {
@@ -347,73 +231,28 @@ export function applyAgentEdit(
 			const node = resolvePointer(view, treeEdit.object, idGenerator, "object");
 			const { treeNodeSchema } = getSimpleNodeSchema(node);
 
-			const fieldSchema =
-				(treeNodeSchema.info as Record<string, ImplicitFieldSchema>)[treeEdit.field] ??
-				fail("Expected field schema");
+			if (!(treeNodeSchema instanceof ObjectNodeSchema)) {
+				throw new UsageError("The target node must be an objectNode");
+			}
 
-			const modification = treeEdit.value;
+			const fieldSchema = normalizeFieldSchema(
+				treeNodeSchema.info[treeEdit.field] ??
+					failUsage(
+						`Property ${treeEdit.field} is not present on ${treeNodeSchema.identifier} object`,
+					),
+			);
 
-			let insertedObject: TreeNode | undefined;
-			// if fieldSchema is a LeafnodeSchema, we can check that it's a valid type and set the field.
-			if (isPrimitive(modification)) {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-				(node as any)[treeEdit.field] = modification ?? undefined;
+			if (treeEdit.value === undefined && fieldSchema.kind !== FieldKind.Optional) {
+				throw new UsageError(
+					`Field "${treeEdit.field}" is not optional. Cannot set it to undefined.`,
+				);
 			}
-			// If the fieldSchema is a function we can grab the constructor and make an instance of that node.
-			else if (typeof fieldSchema === "function") {
-				populateDefaults(modification, definitionMap);
-				if (typeof modification !== "object" || modification === null) {
-					throw new UsageError("inserted node must be an object");
-				}
-				insertedObject = createObjectOrArray(modification, fieldSchema, idGenerator);
-				validator?.(insertedObject);
 
-				if (Array.isArray(modification)) {
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-					const field = (node as any)[treeEdit.field] as TreeArrayNode;
-					assert(Array.isArray(field), 0xa75 /* the field must be an array node */);
-					assert(
-						Array.isArray(insertedObject),
-						0xa76 /* the modification must be an array node */,
-					);
-					field.removeRange(0);
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-					(node as any)[treeEdit.field] = insertedObject;
-				} else {
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-					(node as any)[treeEdit.field] = insertedObject;
-				}
-			}
-			// If the fieldSchema is of type FieldSchema, we can check its allowed types and set the field.
-			else if (fieldSchema instanceof FieldSchema) {
-				// TODO: validateInsertedTree in this branch too
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-				const schemaIdentifier = (modification as any)[typeField];
-				if (fieldSchema.kind === FieldKind.Optional && modification === undefined) {
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-					(node as any)[treeEdit.field] = undefined;
-				} else {
-					for (const allowedType of fieldSchema.allowedTypeSet.values()) {
-						if (allowedType.identifier === schemaIdentifier) {
-							if (typeof allowedType === "function") {
-								const simpleSchema = allowedType as unknown as new (
-									dummy: unknown,
-								) => TreeNode;
-								const constructedObject = new simpleSchema(modification);
-								insertedObject = constructedObject;
-								// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-								(node as any)[treeEdit.field] = constructedObject;
-							} else {
-								// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-								(node as any)[treeEdit.field] = modification;
-							}
-						}
-					}
-				}
-			}
-			if (insertedObject !== undefined) {
-				contentWithIds(insertedObject, idGenerator);
-			}
+			const inserted = constructTree(fieldSchema.allowedTypes, treeEdit.value, idGenerator);
+			// TODO: validation
+			// validator?.(inserted);
+			// TODO: Better typing
+			(node as unknown as Record<string, InsertableContent>)[treeEdit.field] = inserted;
 			break;
 		}
 		case "moveArrayElement": {
@@ -488,14 +327,88 @@ export function applyAgentEdit(
 	}
 }
 
-function isPrimitive(content: unknown): boolean {
-	return (
-		typeof content === "number" ||
-		typeof content === "string" ||
-		typeof content === "boolean" ||
-		content === undefined ||
-		content === null
-	);
+function constructTree(
+	allowedTypes: ImplicitAllowedTypes,
+	value: TreeContent,
+	idGenerator: IdGenerator,
+): TreeNode | TreeArrayNode | TreeLeafValue {
+	const normalizedAllowedTypes = [...normalizeAllowedTypes(allowedTypes)];
+	if (typeof value === "object" && value !== null) {
+		if (Array.isArray(value)) {
+			const [type, ...insert] = value;
+			assert(typeof type === "string", "Expected type value as first element in parsed array");
+			const schema = normalizedAllowedTypes.find((s) => s.identifier === type);
+			if (schema === undefined) {
+				throw new UsageError(
+					`Type "${type}" is not allowed in array which only allows "${normalizedAllowedTypes.join(`", "`)}"`,
+				);
+			}
+
+			const childAllowedTypes = [...schema.childTypes];
+			const transformed = insert.map((val) => {
+				return constructTree(childAllowedTypes, val, idGenerator);
+			});
+
+			const constructed =
+				TreeAlpha.create<UnsafeUnknownSchema>(schema, transformed) ??
+				fail("Expected array node to be created");
+
+			idGenerator.assignIds(constructed);
+			return constructed;
+		} else {
+			assert(typeof value[typeField] === "string", "Expected type property in parsed object");
+			const schema = normalizedAllowedTypes.find((s) => s.identifier === value[typeField]);
+			if (schema === undefined) {
+				throw new UsageError(
+					`Type "${value[typeField]}" is not allowed in a property which only allows "${normalizedAllowedTypes.join(
+						`", "`,
+					)}"`,
+				);
+			}
+			if (!(schema instanceof ObjectNodeSchema)) {
+				throw new UsageError(
+					`Type "${value[typeField]}" is not an object schema. Expected an object schema.`,
+				);
+			}
+
+			let id: string | undefined;
+			const transformed = Object.fromEntries(
+				Object.entries(value)
+					.filter((entry): entry is [string, TreeContent] => {
+						if (entry[0] === objectIdKey) {
+							id = entry[1] as string;
+							return false;
+						}
+						return entry[0] !== typeField && entry[1] !== undefined;
+					})
+					.map(([key, val]) => {
+						return [
+							key,
+							constructTree(
+								schema.fields.get(key)?.allowedTypes ??
+									fail("Expected field to have allowed types"),
+								val,
+								idGenerator,
+							),
+						];
+					}),
+			);
+
+			const constructed =
+				TreeAlpha.create<UnsafeUnknownSchema>(schema, transformed) ??
+				fail("Expected object node to be created");
+
+			if (id !== undefined) {
+				// TODO: properly assert is TreeNode
+				idGenerator.getOrCreateId(constructed as TreeNode, id);
+			}
+
+			idGenerator.assignIds(constructed);
+			return constructed;
+		}
+	}
+
+	return value;
 }
 
 function resolvePointer(

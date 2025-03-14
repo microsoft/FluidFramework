@@ -22,7 +22,7 @@ import type {
 import { z } from "zod";
 
 import { objectIdKey, typeField } from "./agentEditTypes.js";
-import { fail, getOrCreate, mapIterable, tryGetSingleton } from "./utils.js";
+import { fail, getOrCreate, mapIterable, tryGetSingleton, type MapGetSet } from "./utils.js";
 
 const objectPointer = z
 	.string()
@@ -67,18 +67,37 @@ export const arrayRange = z
 /**
  * Cache used to prevent repeatedly generating the same Zod validation objects for the same {@link SimpleTreeSchema} as generate propts for repeated calls to an LLM
  */
-const treeSchemaCache = new WeakMap<
+const promptSchemaCache = new WeakMap<
 	SimpleTreeSchema,
-	ReturnType<typeof generateGenericEditTypes>
+	ReturnType<typeof generateEditTypes>
+>();
+const insertionSchemaCache = new WeakMap<
+	SimpleTreeSchema,
+	ReturnType<typeof generateEditTypes>
 >();
 
-const objectSchemaCache = new WeakMap<SimpleNodeSchema, Zod.ZodTypeAny>();
+/**
+ * TODO
+ */
+export function generateEditTypesForPrompt(schema: SimpleTreeSchema): {
+	editTypes: Record<string, Zod.ZodTypeAny>;
+	editRoot: string;
+	domainTypes: Record<string, Zod.ZodTypeAny>;
+	domainRoot: string;
+} {
+	return getOrCreate(promptSchemaCache, schema, () => generateEditTypes(schema, false));
+}
 
 /**
- * Gets the Zod validation objects for the provided {@link SimpleTreeSchema} from the cache.
+ * TODO
  */
-export function getZodForSchema(schema: SimpleNodeSchema): Zod.ZodTypeAny {
-	return objectSchemaCache.get(schema) ?? fail("Expected schema to be cached");
+export function generateEditTypesForInsertion(
+	schema: SimpleTreeSchema,
+): Zod.ZodArray<Zod.ZodTypeAny> {
+	const { editTypes, editRoot } = getOrCreate(insertionSchemaCache, schema, () =>
+		generateEditTypes(schema, true),
+	);
+	return editTypes[editRoot] as Zod.ZodArray<Zod.ZodTypeAny>;
 }
 
 /**
@@ -89,138 +108,171 @@ export function getZodForSchema(schema: SimpleNodeSchema): Zod.ZodTypeAny {
  *
  * @remarks The return type of this function is designed to work with Typechat's createZodJsonValidator as well as be used as the JSON schema for OpenAi's structured output response format.
  */
-export function generateGenericEditTypes(
+function generateEditTypes(
 	schema: SimpleTreeSchema,
-	generateDomainTypes: boolean,
-): [Record<string, Zod.ZodTypeAny>, root: string] {
-	return getOrCreate(treeSchemaCache, schema, () => {
-		const insertSet = new Set<string>();
-		const setFieldFieldSet = new Set<string>();
-		const setFieldTypeSet = new Set<string>();
+	transformForParsing: boolean,
+): {
+	editTypes: Record<string, Zod.ZodTypeAny>;
+	editRoot: string;
+	domainTypes: Record<string, Zod.ZodTypeAny>;
+	domainRoot: string;
+} {
+	const objectSchemaCache = new Map<SimpleNodeSchema, Zod.ZodTypeAny>();
+	const insertSet = new Set<string>();
+	const setFieldFieldSet = new Set<string>();
+	const setFieldTypeSet = new Set<string>();
 
-		for (const name of schema.definitions.keys()) {
-			getOrCreateType(schema.definitions, insertSet, setFieldFieldSet, setFieldTypeSet, name);
-		}
-		function getType(allowedTypes: ReadonlySet<string>): Zod.ZodTypeAny {
-			switch (allowedTypes.size) {
-				case 0: {
-					return z.never();
-				}
-				case 1: {
-					return (
-						objectSchemaCache.get(
-							schema.definitions.get(
-								tryGetSingleton(allowedTypes) ?? fail("Expected singleton"),
-							) ?? fail("Unknown type"),
-						) ?? fail("Unknown type")
-					);
-				}
-				default: {
-					const types = Array.from(
-						allowedTypes,
-						(name) =>
-							objectSchemaCache.get(schema.definitions.get(name) ?? fail("Expected type")) ??
-							fail("Unknown type"),
-					);
-					assert(hasAtLeastTwo(types), 0xa7d /* Expected at least two types */);
-					return z.union(types);
-				}
+	const domainTypeRecord: Record<string, Zod.ZodTypeAny> = {};
+	for (const name of schema.definitions.keys()) {
+		domainTypeRecord[name] = getOrCreateType(
+			schema.definitions,
+			insertSet,
+			setFieldFieldSet,
+			setFieldTypeSet,
+			name,
+			transformForParsing,
+			objectSchemaCache,
+		);
+	}
+	function getType(allowedTypes: ReadonlySet<string>): Zod.ZodTypeAny {
+		switch (allowedTypes.size) {
+			case 0: {
+				return z.never();
+			}
+			case 1: {
+				return (
+					objectSchemaCache.get(
+						schema.definitions.get(
+							tryGetSingleton(allowedTypes) ?? fail("Expected singleton"),
+						) ?? fail("Unknown type"),
+					) ?? fail("Unknown type")
+				);
+			}
+			default: {
+				const types = Array.from(
+					allowedTypes,
+					(name) =>
+						objectSchemaCache.get(schema.definitions.get(name) ?? fail("Expected type")) ??
+						fail("Unknown type"),
+				);
+				assert(hasAtLeastTwo(types), 0xa7d /* Expected at least two types */);
+				return z.union(types);
 			}
 		}
+	}
 
-		const doesSchemaHaveArray = insertSet.size > 0;
+	const doesSchemaHaveArray = insertSet.size > 0;
 
-		const setField = z
-			.object({
-				type: z.literal("setField"),
-				object: describeProp(objectPointer, "The parent object"),
-				field: z.string().describe("The field name to set"),
-				value: generateDomainTypes
-					? getType(setFieldTypeSet)
-					: z
-							.any()
-							.describe(
-								"New content to set the field to. Must adhere to domain-specific schema.",
-							),
-			})
-			.describe(
-				"Set a field on an object to a specified value. Can be used set optional fields to undefined.",
-			);
+	const setField = z
+		.object({
+			type: z.literal("setField"),
+			object: describeProp(objectPointer, "The parent object"),
+			field: z.string().describe("The field name to set"),
+			value: transformForParsing
+				? getType(setFieldTypeSet)
+				: z
+						.any()
+						.describe(
+							"New content to set the field to. Must adhere to domain-specific schema.",
+						),
+		})
+		.describe(
+			"Set a field on an object to a specified value. Can be used set optional fields to undefined.",
+		);
 
-		const insertValue = generateDomainTypes ? getType(insertSet) : z.any();
+	const insertValue = transformForParsing ? getType(insertSet) : z.any();
 
-		const insertIntoArray = z
-			.object({
-				type: z.literal("insertIntoArray"),
-				array: describeProp(pathPointer, "The parent array"),
-				position: arrayPosition.describe("Where to add the element(s)"),
-				value: insertValue
-					.optional()
-					.describe(
-						"New content to insert. The domain-specific schema must allow this type in the array.",
-					),
-				values: z
-					.array(insertValue)
-					.optional()
-					.describe(
-						"Array of values to add. The domain-specific schema must allow these types in the array.",
-					),
-			})
-			.describe(
-				"Add new element(s) to an array. Only one of `value` or `values` should be set.",
-			);
+	const insertIntoArray = z
+		.object({
+			type: z.literal("insertIntoArray"),
+			array: describeProp(pathPointer, "The parent array"),
+			position: arrayPosition.describe("Where to add the element(s)"),
+			value: insertValue
+				.optional()
+				.describe(
+					"New content to insert. The domain-specific schema must allow this type in the array.",
+				),
+			values: z
+				.array(insertValue)
+				.optional()
+				.describe(
+					"Array of values to add. The domain-specific schema must allow these types in the array.",
+				),
+		})
+		.describe(
+			"Add new element(s) to an array. Only one of `value` or `values` should be set.",
+		);
 
-		const removeFromArray = z
-			.object({
-				type: z.literal("removeFromArray"),
-				element: pointer.optional().describe("The element to remove"),
-				range: arrayRange.optional().describe("For removing a range"),
-			})
-			.describe(
-				"Remove element(s) from an array. Supports removing a single element or a range. Only one of `element` or `range` should be set.",
-			);
+	const removeFromArray = z
+		.object({
+			type: z.literal("removeFromArray"),
+			element: pointer.optional().describe("The element to remove"),
+			range: arrayRange.optional().describe("For removing a range"),
+		})
+		.describe(
+			"Remove element(s) from an array. Supports removing a single element or a range. Only one of `element` or `range` should be set.",
+		);
 
-		const moveArrayElement = z
-			.object({
-				type: z.literal("moveArrayElement"),
-				source: z
-					.union([objectPointer, arrayRange])
-					.describe("Source can be a single element or a range"),
-				destination: z
-					.object({
-						target: describeProp(pathPointer, "The target array"),
-						position: arrayPosition.describe("Where to place the element(s) in the array"),
-					})
-					.describe("Destination must be an array position"),
-			})
-			.describe("Move a value from one location to another array");
+	const moveArrayElement = z
+		.object({
+			type: z.literal("moveArrayElement"),
+			source: z
+				.union([objectPointer, arrayRange])
+				.describe("Source can be a single element or a range"),
+			destination: z
+				.object({
+					target: describeProp(pathPointer, "The target array"),
+					position: arrayPosition.describe("Where to place the element(s) in the array"),
+				})
+				.describe("Destination must be an array position"),
+		})
+		.describe("Move a value from one location to another array");
 
-		const typeRecord: Record<string, Zod.ZodTypeAny> = {
-			ObjectPointer: objectPointer,
-			SetField: setField,
-		};
+	const editTypeRecord: Record<string, Zod.ZodTypeAny> = {
+		ObjectPointer: objectPointer,
+		SetField: setField,
+	};
 
-		if (doesSchemaHaveArray) {
-			typeRecord.PathPointer = pathPointer;
-			typeRecord.Pointer = pointer;
-			typeRecord.ArrayPosition = arrayPosition;
-			typeRecord.ArrayRange = arrayRange;
-			typeRecord.InsertIntoArray = insertIntoArray;
-			typeRecord.RemoveFromArray = removeFromArray;
-			typeRecord.MoveArrayElement = moveArrayElement;
-		}
+	if (doesSchemaHaveArray) {
+		editTypeRecord.PathPointer = pathPointer;
+		editTypeRecord.Pointer = pointer;
+		editTypeRecord.ArrayPosition = arrayPosition;
+		editTypeRecord.ArrayRange = arrayRange;
+		editTypeRecord.InsertIntoArray = insertIntoArray;
+		editTypeRecord.RemoveFromArray = removeFromArray;
+		editTypeRecord.MoveArrayElement = moveArrayElement;
+	}
 
-		const editTypes = doesSchemaHaveArray
-			? z.union([insertIntoArray, removeFromArray, moveArrayElement, setField] as const)
-			: setField;
+	const editTypes = doesSchemaHaveArray
+		? z.union([insertIntoArray, removeFromArray, moveArrayElement, setField] as const)
+		: setField;
 
-		const editWrapper = z
-			.array(editTypes)
-			.describe("The set of edits to apply to the JSON tree.");
-		typeRecord.EditArray = editWrapper;
+	const editWrapper = z
+		.array(editTypes)
+		.describe("The set of edits to apply to the JSON tree.");
+	editTypeRecord.EditArray = editWrapper;
 
-		return [typeRecord, "EditArray"];
-	});
+	const domainRootTypes = Array.from(schema.allowedTypes, (t) =>
+		getOrCreateType(
+			schema.definitions,
+			insertSet,
+			setFieldFieldSet,
+			setFieldTypeSet,
+			t,
+			transformForParsing,
+			objectSchemaCache,
+		),
+	);
+	domainTypeRecord.DomainRoot = hasAtLeastTwo(domainRootTypes)
+		? z.union(domainRootTypes)
+		: (domainRootTypes[0] ?? fail("Expected at least one root domain type"));
+
+	return {
+		editTypes: editTypeRecord,
+		editRoot: "EditArray",
+		domainTypes: domainTypeRecord,
+		domainRoot: "DomainRoot",
+	};
 }
 
 function getOrCreateType(
@@ -229,22 +281,23 @@ function getOrCreateType(
 	modifyFieldSet: Set<string>,
 	modifyTypeSet: Set<string>,
 	definition: string,
+	transformForParsing: boolean,
+	cache: MapGetSet<SimpleNodeSchema, Zod.ZodTypeAny>,
 ): Zod.ZodTypeAny {
 	const nodeSchema = definitionMap.get(definition) ?? fail("Unexpected definition");
-	return getOrCreate(objectSchemaCache, nodeSchema, () => {
+	return getOrCreate(cache, nodeSchema, () => {
 		switch (nodeSchema.kind) {
 			case NodeKind.Object: {
 				for (const [key, field] of Object.entries(nodeSchema.fields)) {
-					// getOrCreate(fieldToObjectIdentifier, key, () => new Set()).add(definition);
 					// TODO: Remove when AI better
-					if (
-						Array.from(
-							field.allowedTypes,
-							(n) => definitionMap.get(n) ?? fail("Unknown definition"),
-						).some((n) => n.kind === NodeKind.Array)
-					) {
-						continue;
-					}
+					// if (
+					// 	Array.from(
+					// 		field.allowedTypes,
+					// 		(n) => definitionMap.get(n) ?? fail("Unknown definition"),
+					// 	).some((n) => n.kind === NodeKind.Array)
+					// ) {
+					// 	continue;
+					// }
 					modifyFieldSet.add(key);
 					for (const type of field.allowedTypes) {
 						modifyTypeSet.add(type);
@@ -262,26 +315,34 @@ function getOrCreateType(
 									modifyFieldSet,
 									modifyTypeSet,
 									field,
+									transformForParsing,
+									cache,
 								),
 							];
 						})
 						.filter(([, value]) => value !== undefined),
 				);
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				properties[typeField] = z
-					.literal(definition)
-					.optional()
-					.describe(
-						"The type ID of the object, only necessary if the new object's type is ambiguous at the insertion location.",
-					);
+				if (transformForParsing) {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+					properties[typeField] = z.literal(definition).optional();
+				}
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				properties[objectIdKey] = z
 					.string()
 					.optional()
 					.describe(
-						`The id (${objectIdKey}) of the object (only set if the object must be referred to later in the same task)`,
+						`The id of the object (when creating a new tree, only supply if the object must be referred to later in the same task)`,
 					);
-				return z.object(properties);
+
+				const obj = z.object(properties);
+				return transformForParsing
+					? obj.transform((value) => {
+							return {
+								[typeField]: definition,
+								...value,
+							};
+						})
+					: obj;
 			}
 			case NodeKind.Array: {
 				for (const [name] of Array.from(
@@ -295,15 +356,21 @@ function getOrCreateType(
 				)) {
 					insertSet.add(name);
 				}
-				return z.array(
+
+				const arr = z.array(
 					getTypeForAllowedTypes(
 						definitionMap,
 						insertSet,
 						modifyFieldSet,
 						modifyTypeSet,
 						nodeSchema.allowedTypes,
+						transformForParsing,
+						cache,
 					),
 				);
+				return transformForParsing
+					? arr.transform((value: unknown[]) => [definition, ...value])
+					: arr;
 			}
 			case NodeKind.Leaf: {
 				switch (nodeSchema.leafKind) {
@@ -337,10 +404,10 @@ function getOrCreateTypeForField(
 	modifyFieldSet: Set<string>,
 	modifyTypeSet: Set<string>,
 	fieldSchema: SimpleFieldSchema,
+	transformForParsing: boolean,
+	cache: MapGetSet<SimpleNodeSchema, Zod.ZodTypeAny>,
 ): Zod.ZodTypeAny | undefined {
-	if ((fieldSchema.metadata as FieldSchemaMetadataAlpha)?.llmDefault !== undefined) {
-		return undefined;
-	}
+	const getDefault = (fieldSchema.metadata as FieldSchemaMetadataAlpha)?.llmDefault;
 
 	switch (fieldSchema.kind) {
 		case FieldKind.Required: {
@@ -350,19 +417,27 @@ function getOrCreateTypeForField(
 				modifyFieldSet,
 				modifyTypeSet,
 				fieldSchema.allowedTypes,
+				transformForParsing,
+				cache,
 			);
 		}
 		case FieldKind.Optional: {
-			return z.union([
-				z.null(),
-				getTypeForAllowedTypes(
-					definitionMap,
-					insertSet,
-					modifyFieldSet,
-					modifyTypeSet,
-					fieldSchema.allowedTypes,
-				),
-			]);
+			const opt = getTypeForAllowedTypes(
+				definitionMap,
+				insertSet,
+				modifyFieldSet,
+				modifyTypeSet,
+				fieldSchema.allowedTypes,
+				transformForParsing,
+				cache,
+			)
+				.optional()
+				.describe(
+					getDefault === undefined
+						? ""
+						: "Do not populate this field. It will be automatically supplied by the system after insertion.",
+				);
+			return transformForParsing ? opt.default(getDefault ?? undefined) : opt;
 		}
 		case FieldKind.Identifier: {
 			return undefined;
@@ -379,18 +454,36 @@ function getTypeForAllowedTypes(
 	modifyFieldSet: Set<string>,
 	modifyTypeSet: Set<string>,
 	allowedTypes: ReadonlySet<string>,
+	transformForParsing: boolean,
+	cache: MapGetSet<SimpleNodeSchema, Zod.ZodTypeAny>,
 ): Zod.ZodTypeAny {
 	const single = tryGetSingleton(allowedTypes);
 	if (single === undefined) {
 		const types = [
 			...mapIterable(allowedTypes, (name) => {
-				return getOrCreateType(definitionMap, insertSet, modifyFieldSet, modifyTypeSet, name);
+				return getOrCreateType(
+					definitionMap,
+					insertSet,
+					modifyFieldSet,
+					modifyTypeSet,
+					name,
+					transformForParsing,
+					cache,
+				);
 			}),
 		];
 		assert(hasAtLeastTwo(types), 0xa7e /* Expected at least two types */);
 		return z.union(types);
 	} else {
-		return getOrCreateType(definitionMap, insertSet, modifyFieldSet, modifyTypeSet, single);
+		return getOrCreateType(
+			definitionMap,
+			insertSet,
+			modifyFieldSet,
+			modifyTypeSet,
+			single,
+			transformForParsing,
+			cache,
+		);
 	}
 }
 

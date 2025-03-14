@@ -23,7 +23,12 @@ import { clod } from "../../../explicit-strategy/index.js";
 
 const sf = new SchemaFactoryAlpha("com.microsoft.fluid.fhl.textai");
 
-export class Word extends sf.object("Word", { characters: sf.string }) {}
+export class Word extends sf.object("Word", {
+	characters: sf.string,
+	createdDate: sf.optional(sf.string, {
+		metadata: { llmDefault: () => new Date().toISOString() },
+	}),
+}) {}
 
 export class Span extends sf.object("Span", {
 	identifier: sf.identifier,
@@ -84,38 +89,44 @@ describe.skip("Agent Editing Integration", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: Page }));
+		const view = tree.viewWith(
+			new TreeViewConfiguration({ schema: Page, preventAmbiguity: false }),
+		);
 		const today = new Date();
+		const createdDate = today.toISOString();
 		view.initialize({
 			paragraphs: [
 				new Paragraph({
 					content: [
 						new Span({
-							words: [new Word({ characters: "This" })],
+							words: [new Word({ characters: "This", createdDate })],
 							bold: false,
 							italic: true,
 							comments: [],
 						}),
-						new Word({ characters: "is" }),
-						new Word({ characters: "a" }),
+						new Word({ characters: "is", createdDate }),
+						new Word({ characters: "a", createdDate }),
 						new Span({
-							words: [new Word({ characters: "sample" })],
+							words: [new Word({ characters: "sample", createdDate })],
 							bold: true,
 							italic: false,
 							comments: [],
 						}),
 						new Span({
-							words: [new Word({ characters: "paragraph." })],
+							words: [
+								new Word({ characters: "paragraph", createdDate }),
+								new Word({ characters: ".", createdDate }),
+							],
 							bold: false,
 							italic: false,
 							comments: ["6663f83b-c7b6-4f5e-9a9d-8f1e4f451b9a"],
 						}),
 						new Span({
 							words: [
-								new Word({ characters: "It" }),
-								new Word({ characters: "was" }),
-								new Word({ characters: "written" }),
-								new Word({ characters: "on" }),
+								new Word({ characters: "It", createdDate }),
+								new Word({ characters: "was", createdDate }),
+								new Word({ characters: "written", createdDate }),
+								new Word({ characters: "on", createdDate }),
 							],
 							bold: false,
 							italic: false,
@@ -126,15 +137,16 @@ describe.skip("Agent Editing Integration", () => {
 							month: today.getMonth() + 1,
 							day: today.getDate(),
 						}),
-						new Word({ characters: "." }),
-						new Word({ characters: "Use" }),
-						new Word({ characters: "the" }),
-						new Word({ characters: "chat" }),
-						new Word({ characters: "box" }),
-						new Word({ characters: "below" }),
-						new Word({ characters: "to" }),
-						new Word({ characters: "make" }),
-						new Word({ characters: "edits." }),
+						new Word({ characters: ".", createdDate }),
+						new Word({ characters: "Use", createdDate }),
+						new Word({ characters: "the", createdDate }),
+						new Word({ characters: "chat", createdDate }),
+						new Word({ characters: "box", createdDate }),
+						new Word({ characters: "below", createdDate }),
+						new Word({ characters: "to", createdDate }),
+						new Word({ characters: "make", createdDate }),
+						new Word({ characters: "edits", createdDate }),
+						new Word({ characters: ".", createdDate }),
 					],
 				}),
 			],
@@ -164,7 +176,7 @@ describe.skip("Agent Editing Integration", () => {
 			},
 		});
 
-		const stringified = JSON.stringify(view.root, undefined, 2);
+		const stringified = toString(view.root);
 		console.log(stringified);
 
 		await clod({
@@ -182,7 +194,74 @@ describe.skip("Agent Editing Integration", () => {
 			},
 		});
 
-		const stringified2 = JSON.stringify(view.root, undefined, 2);
+		const stringified2 = toString(view.root);
 		console.log(stringified2);
 	});
+
+	function toString(page: Page): string {
+		return page.paragraphs
+			.map((p) => {
+				return p.content
+					.map((c) => {
+						if (c instanceof Word) {
+							return c.characters;
+						} else if (c instanceof Span) {
+							const text = c.words.map((w) => w.characters).join(" ");
+							if (c.bold) {
+								return `**${text}**`;
+							}
+							if (c.italic) {
+								return `_${text}_`;
+							}
+							return `${text}`;
+						} else if (c instanceof D8) {
+							return `${c.month}/${c.day}/${c.year}`;
+						}
+					})
+					.join(" ");
+			})
+			.join("\n");
+	}
+
+	// it("zod playground", () => {
+	// 	let bar1 = false;
+	// 	let bar2 = false;
+	// 	let baz1 = false;
+	// 	let baz2 = false;
+	// 	z.object({
+	// 		foo: z.union([
+	// 			z
+	// 				.object({
+	// 					bar: z.number().transform((val) => {
+	// 						bar1 = true;
+	// 						return val;
+	// 					}),
+	// 				})
+	// 				.transform((val) => {
+	// 					bar2 = true;
+	// 					return val;
+	// 				}),
+	// 			z
+	// 				.object({
+	// 					baz: z.number().transform((val) => {
+	// 						baz1 = true;
+	// 						return val;
+	// 					}),
+	// 				})
+	// 				.transform((val) => {
+	// 					baz2 = true;
+	// 					return val;
+	// 				}),
+	// 		]),
+	// 	}).safeParse({
+	// 		foo: {
+	// 			bar: 42,
+	// 		},
+	// 	});
+
+	// 	assert.equal(bar1, true);
+	// 	assert.equal(bar2, true);
+	// 	assert.equal(baz1, false);
+	// 	assert.equal(baz2, false);
+	// });
 });

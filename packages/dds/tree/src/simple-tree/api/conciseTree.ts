@@ -28,7 +28,7 @@ import { getUnhydratedContext } from "../createContext.js";
 export type ConciseTree<THandle = IFluidHandle> =
 	| Exclude<TreeLeafValue, IFluidHandle>
 	| THandle
-	| ConciseTree<THandle>[]
+	| readonly ConciseTree<THandle>[]
 	| {
 			[key: string]: ConciseTree<THandle>;
 	  };

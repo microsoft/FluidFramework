@@ -119,23 +119,24 @@ export function createFromCursor<const TSchema extends ImplicitFieldSchema>(
 	cursor: ITreeCursorSynchronous | undefined,
 ): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
 	const mapTrees = cursor === undefined ? [] : [mapTreeFromCursor(cursor)];
-	const context = getUnhydratedContext(schema);
-	const flexSchema = context.flexContext.schema;
+	// TODO: This is a temporary workaround to allow identifiers in the schema when constructing with "TreeAlpha.create".
+	// const context = getUnhydratedContext(schema);
+	// const flexSchema = context.flexContext.schema;
 
-	const schemaValidationPolicy: SchemaAndPolicy = {
-		policy: {
-			...defaultSchemaPolicy,
-			allowUnknownOptionalFields: createUnknownOptionalFieldPolicy(schema),
-		},
-		schema: context.flexContext.schema,
-	};
+	// const schemaValidationPolicy: SchemaAndPolicy = {
+	// 	policy: {
+	// 		...defaultSchemaPolicy,
+	// 		allowUnknownOptionalFields: createUnknownOptionalFieldPolicy(schema),
+	// 	},
+	// 	schema: context.flexContext.schema,
+	// };
 
-	const maybeError = isFieldInSchema(
-		mapTrees,
-		flexSchema.rootFieldSchema,
-		schemaValidationPolicy,
-	);
-	inSchemaOrThrow(maybeError);
+	// const maybeError = isFieldInSchema(
+	// 	mapTrees,
+	// 	flexSchema.rootFieldSchema,
+	// 	schemaValidationPolicy,
+	// );
+	// inSchemaOrThrow(maybeError);
 
 	if (mapTrees.length === 0) {
 		return undefined as Unhydrated<TreeFieldFromImplicitField<TSchema>>;

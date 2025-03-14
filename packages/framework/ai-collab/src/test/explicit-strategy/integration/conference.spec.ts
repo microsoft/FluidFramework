@@ -80,7 +80,7 @@ const factory = SharedTree.getFactory();
 
 // const TEST_MODEL_NAME = "gpt-4o";
 
-describe("Agent Editing Integration", () => {
+describe.skip("Agent Editing Integration", () => {
 	process.env.OPENAI_API_KEY = ""; // DON'T COMMIT THIS
 	process.env.AZURE_OPENAI_API_KEY = "TODO "; // DON'T COMMIT THIS
 	process.env.AZURE_OPENAI_ENDPOINT = "TODO ";

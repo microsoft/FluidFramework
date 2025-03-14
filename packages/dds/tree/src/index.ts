@@ -197,6 +197,7 @@ export {
 	type SimpleArrayNodeSchema,
 	type SimpleObjectNodeSchema,
 	normalizeAllowedTypes,
+	normalizeFieldSchema,
 	getSimpleSchema,
 	type ReadonlyArrayNode,
 	type InsertableTreeNodeFromAllowedTypes,
@@ -219,6 +220,7 @@ export {
 	type TransactionResultSuccess,
 	type TransactionResultFailed,
 	rollback,
+	ObjectNodeSchema,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

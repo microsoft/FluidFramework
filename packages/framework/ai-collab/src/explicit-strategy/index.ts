@@ -46,7 +46,7 @@ import {
 } from "./debugEvents.js";
 import { IdGenerator } from "./idGenerator.js";
 import { getEditingSystemPrompt } from "./promptGeneration.js";
-import { generateGenericEditTypes } from "./typeGeneration.js";
+import { generateEditTypesForInsertion } from "./typeGeneration.js";
 import { fail, type View } from "./utils.js";
 
 // TODO: Create a proper index file and move the logic of this file to a new location
@@ -299,15 +299,13 @@ async function* generateEdits(
 		traceId: string;
 	},
 ): AsyncGenerator<{ edit: TreeEdit; eventFlowTraceId: string }> {
-	const [types, rootTypeName] = generateGenericEditTypes(simpleSchema, true);
+	const editTypes = generateEditTypesForInsertion(simpleSchema);
 
 	const systemPrompt = getEditingSystemPrompt(
 		idGenerator,
 		options.treeNode,
 		options.prompt.systemRoleContext,
 	);
-
-	const schema = types[rootTypeName] ?? fail("Root type not found.");
 
 	const generateTreeEditEventFlowId = uuidv4();
 	debugOptions?.eventLogHandler?.({
@@ -324,7 +322,7 @@ async function* generateEdits(
 			systemPrompt,
 			options.prompt.userAsk,
 			options.clientOptions,
-			schema,
+			editTypes,
 			"A JSON object that represents an edit to a JSON tree.",
 			tokensUsed,
 			debugOptions && {
@@ -379,10 +377,10 @@ export async function clod(options: GenerateTreeEditsOptions): Promise<boolean> 
 
 	// TODO: use langchain library to get this for free
 	// TODO: respect description, tokensUsed, and debugOptions
-	const wrapper = z.object({
+	const toolWrapper = z.object({
 		edits: z.array(z.unknown()).describe(`An array of well-formed TreeEdits`),
 	});
-	const input_schema = zodToJsonSchema(wrapper, { name: "foo" }).definitions
+	const input_schema = zodToJsonSchema(toolWrapper, { name: "foo" }).definitions
 		?.foo as Anthropic.Tool.InputSchema;
 
 	const max_tokens = options.limiters?.tokenLimits?.outputTokens ?? 20000;
@@ -426,6 +424,10 @@ export async function clod(options: GenerateTreeEditsOptions): Promise<boolean> 
 		errors: [],
 	};
 
+	const wrapper = z.object({
+		edits: generateEditTypesForInsertion(simpleSchema),
+	});
+
 	while (retryState.errors.length <= (options.limiters?.maxSequentialErrors ?? 3)) {
 		const toolUse =
 			response.content.find(
@@ -433,41 +435,46 @@ export async function clod(options: GenerateTreeEditsOptions): Promise<boolean> 
 			) ?? fail("Expected tool use block");
 
 		const parse = wrapper.safeParse(toolUse.input);
+		if (parse.success) {
+			const edits = parse.data.edits as TreeEdit[];
 
-		if (parse.success === false) {
-			console.error(parse.error);
-			throw new Error("Response did not conform to provided schema.");
-		}
-
-		const edits = parse.data.edits as TreeEdit[];
-
-		const branch = options.treeView.fork();
-		let editIndex = 0;
-		try {
-			if (
-				options.onEdits?.({
-					edits,
-					systemPrompt,
-					userPrompt: options.prompt.userAsk,
-					retryState,
-				}) === false
-			) {
-				return false;
+			const branch = options.treeView.fork();
+			let editIndex = 0;
+			try {
+				if (
+					options.onEdits?.({
+						edits,
+						systemPrompt,
+						userPrompt: options.prompt.userAsk,
+						retryState,
+					}) === false
+				) {
+					return false;
+				}
+				while (editIndex < edits.length) {
+					const edit = edits[editIndex++] ?? fail("Expected edit");
+					applyAgentEdit(
+						branch,
+						edit,
+						idGenerator,
+						simpleSchema.definitions,
+						options.validator,
+					);
+				}
+				options.treeView.merge(branch);
+				return true;
+			} catch (error: unknown) {
+				if (error instanceof UsageError) {
+					retryState.errors.push({
+						editIndex,
+						error,
+						toolUse,
+					});
+				}
 			}
-			while (editIndex < edits.length) {
-				const edit = edits[editIndex++] ?? fail("Expected edit");
-				applyAgentEdit(branch, edit, idGenerator, simpleSchema.definitions, options.validator);
-			}
-			options.treeView.merge(branch);
-			return true;
-		} catch (error: unknown) {
-			if (error instanceof UsageError) {
-				retryState.errors.push({
-					editIndex,
-					error,
-					toolUse,
-				});
-			}
+		} else {
+			// TODO: Incorporate this into the retry state and error loop
+			throw new Error("Invalid response from LLM");
 		}
 
 		const retryMessages: Anthropic.Beta.Messages.BetaMessageParam[] = [...messages];
