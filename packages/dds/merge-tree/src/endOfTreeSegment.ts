@@ -50,10 +50,7 @@ abstract class BaseEndpointSegment
 	removes = [{ type: "setRemove", seq: 0, clientId: LocalClientId } as const];
 	attribution: undefined;
 	propertyManager: undefined;
-	localSeq: undefined;
-	localRemovedSeq: undefined;
 	properties: undefined;
-	clientId = LocalClientId;
 	cachedLength = 1;
 
 	insert = { type: "insert", seq: 0, clientId: LocalClientId } as const;

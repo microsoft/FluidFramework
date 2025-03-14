@@ -13,6 +13,8 @@ import {
 	RemoteObliteratePerspective,
 } from "../perspective.js";
 import type { InsertOperationStamp, OperationStamp, RemoveOperationStamp } from "../stamps.js";
+import type { IHasInsertionInfo, IHasRemovalInfo } from "../segmentInfos.js";
+import type { ISegmentLeaf } from "../mergeTreeNodes.js";
 
 const clientId = 17;
 describe("PriorPerspective", () => {
@@ -33,6 +35,46 @@ describe("PriorPerspective", () => {
 	it("Does not see operations from other clients above the refSeq", () => {
 		const stamp: OperationStamp = { clientId: clientId + 1, seq: refSeq + 1 };
 		assert.ok(!perspective.hasOccurred(stamp));
+	});
+
+	it("Uses operations to determine segment visibility", () => {
+		const insert: InsertOperationStamp = { type: "insert", seq: 5, clientId };
+		const remove1: RemoveOperationStamp = { type: "setRemove", seq: 10, clientId };
+		const remove2: RemoveOperationStamp = { type: "sliceRemove", seq: 12, clientId };
+		const seg1 = { insert } satisfies IHasInsertionInfo as unknown as ISegmentLeaf;
+		const seg2: ISegmentLeaf = { insert, removes: [remove1] } satisfies IHasInsertionInfo &
+			IHasRemovalInfo as unknown as ISegmentLeaf;
+		const seg3 = {
+			insert,
+			removes: [remove1, remove2],
+		} satisfies IHasInsertionInfo & IHasRemovalInfo as unknown as ISegmentLeaf;
+		const seg4 = {
+			insert,
+			removes: [remove2],
+		} satisfies IHasInsertionInfo & IHasRemovalInfo as unknown as ISegmentLeaf;
+		const perspective1 = new PriorPerspective(4, clientId + 1);
+		const perspective2 = new PriorPerspective(6, clientId + 1);
+		const perspective3 = new PriorPerspective(10, clientId + 1);
+
+		// Only perspectives 2 and 3 have seen the insert
+		assert.ok(!perspective1.isSegmentPresent(seg1));
+		assert.ok(perspective2.isSegmentPresent(seg1));
+		assert.ok(perspective3.isSegmentPresent(seg1));
+
+		// Perspectives 2 and 3 have seen the insert, and perspective 3 has seen the remove
+		assert.ok(!perspective1.isSegmentPresent(seg2));
+		assert.ok(perspective2.isSegmentPresent(seg2));
+		assert.ok(!perspective3.isSegmentPresent(seg2));
+
+		// Perspectives 2 and 3 have seen the insert, and perspective 3 has seen one of the removes
+		assert.ok(!perspective1.isSegmentPresent(seg3));
+		assert.ok(perspective2.isSegmentPresent(seg3));
+		assert.ok(!perspective3.isSegmentPresent(seg3));
+
+		// Perspectives 2 and 3 have seen the insert, and none have seen the remove
+		assert.ok(!perspective1.isSegmentPresent(seg4));
+		assert.ok(perspective2.isSegmentPresent(seg4));
+		assert.ok(perspective3.isSegmentPresent(seg4));
 	});
 });
 
