@@ -14,11 +14,12 @@ import {
 	LeafNodeStoredSchema,
 	mapCursorField,
 	ObjectNodeStoredSchema,
+	type FieldKey,
 	type ITreeCursor,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 } from "../../core/index.js";
-import { fail } from "../../util/index.js";
+import { fail, cloneWithReplacements } from "../../util/index.js";
 import type { TreeLeafValue } from "../schemaTypes.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import {
@@ -35,13 +36,7 @@ import { FieldKinds, valueSchemaAllows } from "../../feature-libraries/index.js"
  * Options for how to encode a tree.
  * @alpha
  */
-export interface EncodeOptions<TCustom> {
-	/**
-	 * How to encode any {@link @fluidframework/core-interfaces#IFluidHandle|IFluidHandles} in the tree.
-	 * @remarks
-	 * See note on {@link ParseOptions.valueConverter}.
-	 */
-	valueConverter(data: IFluidHandle): TCustom;
+export interface EncodeOptions {
 	/**
 	 * If true, interpret the input keys of object nodes as stored keys.
 	 * If false, interpret them as property keys.
@@ -51,14 +46,35 @@ export interface EncodeOptions<TCustom> {
 }
 
 /**
+ * Options for how to transcode handles.
+ * @remarks
+ * Can be applied using {@link replaceHandles}.
+ * @alpha
+ */
+export type HandleConverter<TCustom> = (data: IFluidHandle) => TCustom;
+
+/**
+ * Options for how to interpret a `ConciseTree<TCustom>` without relying on schema.
+ */
+export interface SchemalessParseOptions {
+	/**
+	 * Converts stored keys into whatever key the tree is using in its encoding.
+	 */
+	keyConverter?: {
+		parse(type: string, inputKey: string): FieldKey;
+		encode(type: string, key: FieldKey): string;
+	};
+}
+
+/**
  * Tree representation with fields as properties and customized handle and child representations.
  */
-export type CustomTree<TChild, THandle> = CustomTreeNode<TChild> | CustomTreeValue<THandle>;
+export type CustomTree<TChild> = CustomTreeNode<TChild> | CustomTreeValue;
 
 /**
  * TreeLeafValue except the handle type is customized.
  */
-export type CustomTreeValue<THandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle;
+export type CustomTreeValue = TreeLeafValue;
 
 /**
  * Tree node representation with fields as properties and customized child representation.
@@ -68,16 +84,16 @@ export type CustomTreeNode<TChild> = TChild[] | { [key: string]: TChild };
 /**
  * Builds an {@link CustomTree} from a cursor in Nodes mode.
  */
-export function customFromCursor<TChild, THandle>(
+export function customFromCursor<TChild>(
 	reader: ITreeCursor,
-	options: Required<EncodeOptions<THandle>>,
+	options: Required<EncodeOptions>,
 	schema: ReadonlyMap<string, TreeNodeSchema>,
 	childHandler: (
 		reader: ITreeCursor,
-		options: Required<EncodeOptions<THandle>>,
+		options: Required<EncodeOptions>,
 		schema: ReadonlyMap<string, TreeNodeSchema>,
 	) => TChild,
-): CustomTree<TChild, THandle> {
+): CustomTree<TChild> {
 	const type = reader.type;
 	const nodeSchema = schema.get(type) ?? fail(0xb2e /* missing schema for type in cursor */);
 
@@ -92,7 +108,7 @@ export function customFromCursor<TChild, THandle>(
 		case handleSchema.identifier:
 			assert(reader.value !== undefined, 0xa52 /* out of schema: missing value */);
 			assert(isFluidHandle(reader.value), 0xa53 /* out of schema: expected FluidHandle */);
-			return options.valueConverter(reader.value);
+			return reader.value;
 		default: {
 			assert(reader.value === undefined, 0xa54 /* out of schema: unexpected value */);
 			if (nodeSchema.kind === NodeKind.Array) {
@@ -136,7 +152,7 @@ export function customFromCursorStored<TChild>(
 		reader: ITreeCursor,
 		schema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>,
 	) => TChild,
-): CustomTree<TChild, IFluidHandle> {
+): CustomTree<TChild> {
 	const type = reader.type;
 	const nodeSchema = schema.get(type) ?? fail(0xb30 /* missing schema for type in cursor */);
 
@@ -185,4 +201,31 @@ export function tryStoredSchemaAsArray(
 			return empty.types;
 		}
 	}
+}
+
+/**
+ * Clones tree, replacing any handles.
+ * @remarks
+ * This can be useful converting data containing handles to JSON compatible formats,
+ * or just asserting data does not contain handles.
+ *
+ * Reversing this replacement depends on how the replacer encodes handles, and can often be impossible if the replacer
+ * does not have all the necessary context to restore the handles
+ * (e.g. if the handles are something insufficiently descriptive,
+ * if data referenced by the handle got garbage collected,
+ * if the encoded form of the handled couldn't be differentiated from other data,
+ * or the replacer doesn't have access to the correct Fluid container to to restore them from).
+ *
+ * Code attempting to reverse this replacement may want to use {@link cloneWithReplacements}.
+ * @alpha
+ */
+export function replaceHandles<T>(tree: unknown, replacer: HandleConverter<T>): unknown {
+	return cloneWithReplacements(tree, "", (key, value) => {
+		// eslint-disable-next-line unicorn/prefer-ternary
+		if (isFluidHandle(value)) {
+			return { clone: false, value: replacer(value) };
+		} else {
+			return { clone: true, value };
+		}
+	});
 }

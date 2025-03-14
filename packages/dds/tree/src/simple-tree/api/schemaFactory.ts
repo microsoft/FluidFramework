@@ -142,7 +142,7 @@ export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown>
 	 * ```
 	 *
 	 * If an application wants to be particularly careful to preserve all data on a node when editing it, it can use
-	 * {@link TreeAlpha.(importVerbose:2)|import}/{@link TreeAlpha.(exportVerbose:2)|export} APIs with persistent keys.
+	 * {@link TreeAlpha.importVerbose|import}/{@link TreeAlpha.exportVerbose|export} APIs with persistent keys.
 	 *
 	 * Note that public API methods which operate on entire nodes (such as `moveTo`, `moveToEnd`, etc. on arrays) do not encounter
 	 * this problem as SharedTree's implementation stores the entire node in its lower layers. It's only when application code
