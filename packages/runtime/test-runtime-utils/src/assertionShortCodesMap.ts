@@ -1761,7 +1761,7 @@ export const shortCodeMap = {
 	"0xb23": "Should not compose two undefined nodes",
 	"0xb24": "Unknown node ID",
 	"0xb25": "No field exists for the given ID",
-	"0xb26": "Key is not compressible",
+	"0xb26": "Identifier is not compressible",
 	"0xb27": "no path when at root",
 	"0xb28": "missing schema",
 	"0xb29": "Expected defined output ID",

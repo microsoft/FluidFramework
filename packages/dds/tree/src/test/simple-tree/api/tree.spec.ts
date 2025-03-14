@@ -16,7 +16,7 @@ import {
 } from "../../../simple-tree/index.js";
 import { TreeFactory } from "../../../treeFactory.js";
 import { getView, validateUsageError } from "../../utils.js";
-import { MockNodeKeyManager } from "../../../feature-libraries/index.js";
+import { MockNodeIdentifierManager } from "../../../feature-libraries/index.js";
 import { Tree } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { checkUnion } from "../../../simple-tree/api/tree.js";
@@ -432,7 +432,7 @@ describe("simple-tree tree", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				identifier: schema.identifier,
 			});
-			const nodeKeyManager = new MockNodeKeyManager();
+			const nodeKeyManager = new MockNodeIdentifierManager();
 			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
 			const view = getView(config, nodeKeyManager);
 			view.initialize({ identifier: undefined });
@@ -443,7 +443,7 @@ describe("simple-tree tree", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				testOptionalField: schema.optional(schema.string),
 			});
-			const nodeKeyManager = new MockNodeKeyManager();
+			const nodeKeyManager = new MockNodeIdentifierManager();
 			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
 			const view = getView(config, nodeKeyManager);
 			view.initialize({ testOptionalField: undefined });

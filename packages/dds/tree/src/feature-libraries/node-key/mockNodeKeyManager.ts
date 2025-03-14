@@ -6,41 +6,43 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import type { SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
 import { assertIsStableId } from "@fluidframework/id-compressor/internal";
-import type { LocalNodeKey, StableNodeKey } from "./nodeKey.js";
-import { isStableNodeKey, type NodeKeyManager } from "./nodeKeyManager.js";
+import type { LocalNodeIdentifier, StableNodeIdentifier } from "./nodeKey.js";
+import { isStableNodeIdentifier, type NodeIdentifierManager } from "./nodeKeyManager.js";
 import { brand, extractFromOpaque, fail } from "../../util/index.js";
 
 /**
- * Mock {@link NodeKeyManager} that generates deterministic {@link StableNodeKey}s and {@link LocalNodeKey}s.
+ * Mock {@link NodeIdentifierManager} that generates deterministic {@link StableNodeIdentifier}s and {@link LocalNodeIdentifier}s.
  * @remarks This is useful for test environments because it will always yield the same keys in the same order.
- * It should not be used for production environments for the same reason; the {@link StableNodeKey}s are not universally unique.
+ * It should not be used for production environments for the same reason; the {@link StableNodeIdentifier}s are not universally unique.
  */
-export class MockNodeKeyManager implements NodeKeyManager {
+export class MockNodeIdentifierManager implements NodeIdentifierManager {
 	private count = 0;
 
-	public generateStableNodeKey(): StableNodeKey {
+	public generateStableNodeIdentifier(): StableNodeIdentifier {
 		return brand(this.getId(this.count++));
 	}
 
-	public generateLocalNodeKey(): LocalNodeKey {
-		return this.localizeNodeKey(this.generateStableNodeKey());
+	public generateLocalNodeIdentifier(): LocalNodeIdentifier {
+		return this.localizeNodeIdentifier(this.generateStableNodeIdentifier());
 	}
 
-	public localizeNodeKey(key: StableNodeKey): LocalNodeKey {
-		return this.tryLocalizeNodeKey(key) ?? fail(0xb26 /* Key is not compressible */);
+	public localizeNodeIdentifier(key: StableNodeIdentifier): LocalNodeIdentifier {
+		return (
+			this.tryLocalizeNodeIdentifier(key) ?? fail(0xb26 /* Identifier is not compressible */)
+		);
 	}
 
-	public stabilizeNodeKey(key: LocalNodeKey): StableNodeKey {
+	public stabilizeNodeIdentifier(key: LocalNodeIdentifier): StableNodeIdentifier {
 		return brand(this.getId(extractFromOpaque(key)));
 	}
 
-	public tryLocalizeNodeKey(key: string): LocalNodeKey | undefined {
-		if (!isStableNodeKey(key) || !key.startsWith("a110ca7e-add1-4000-8000-")) {
+	public tryLocalizeNodeIdentifier(key: string): LocalNodeIdentifier | undefined {
+		if (!isStableNodeIdentifier(key) || !key.startsWith("a110ca7e-add1-4000-8000-")) {
 			return undefined;
 		}
-		const localNodeKey = Number.parseInt(key.substring(24), 16);
-		return localNodeKey < this.count
-			? brand(localNodeKey as SessionSpaceCompressedId)
+		const localNodeIdentifier = Number.parseInt(key.substring(24), 16);
+		return localNodeIdentifier < this.count
+			? brand(localNodeIdentifier as SessionSpaceCompressedId)
 			: undefined;
 	}
 
