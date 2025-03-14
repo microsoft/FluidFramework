@@ -6,15 +6,15 @@
 import { strict as assert } from "node:assert";
 
 import { UnassignedSequenceNumber } from "../constants.js";
+import type { ISegmentLeaf } from "../mergeTreeNodes.js";
 import {
 	LocalDefaultPerspective,
 	LocalReconnectingPerspective,
 	PriorPerspective,
 	RemoteObliteratePerspective,
 } from "../perspective.js";
-import type { InsertOperationStamp, OperationStamp, RemoveOperationStamp } from "../stamps.js";
 import type { IHasInsertionInfo, IHasRemovalInfo } from "../segmentInfos.js";
-import type { ISegmentLeaf } from "../mergeTreeNodes.js";
+import type { InsertOperationStamp, OperationStamp, RemoveOperationStamp } from "../stamps.js";
 
 const clientId = 17;
 describe("PriorPerspective", () => {
