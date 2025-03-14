@@ -9,7 +9,7 @@ import {
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { type UpPath, rootFieldKey } from "../../../core/index.js";
+import { type NormalizedUpPath, rootFieldKey } from "../../../core/index.js";
 import {
 	MockNodeKeyManager,
 	TreeStatus,
@@ -753,7 +753,8 @@ describe("treeNodeApi", () => {
 		});
 
 		it(`batched changes to several direct fields trigger 'nodeChanged' and 'treeChanged' the correct number of times`, () => {
-			const rootNode: UpPath = {
+			const rootNode: NormalizedUpPath = {
+				detachedNodeId: undefined,
 				parent: undefined,
 				parentField: rootFieldKey,
 				parentIndex: 0,

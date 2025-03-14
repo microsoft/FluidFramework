@@ -13,7 +13,7 @@ import {
 } from "@fluid-tools/benchmark";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import { EmptyKey, rootFieldKey } from "../../core/index.js";
+import { EmptyKey, rootFieldKey, type NormalizedUpPath } from "../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { typeboxValidator } from "../../external-utilities/typeboxValidator.js";
 import {
@@ -45,6 +45,7 @@ import {
 	StringArray,
 	TestTreeProviderLite,
 	checkoutWithContent,
+	configureBenchmarkHooks,
 	chunkFromJsonTrees,
 	flexTreeViewWithContent,
 	toJsonableTree,
@@ -75,6 +76,7 @@ const factory = new TreeFactory({
 
 // TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
 describe("SharedTree benchmarks", () => {
+	configureBenchmarkHooks();
 	describe("Direct JS Object", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
 			let tree: JSDeepTree;
@@ -286,7 +288,8 @@ describe("SharedTree benchmarks", () => {
 						// Setup
 						const tree = checkoutWithContent(makeWideStoredContentWithEndValue(numberOfNodes));
 
-						const rootPath = {
+						const rootPath: NormalizedUpPath = {
+							detachedNodeId: undefined,
 							parent: undefined,
 							parentField: rootFieldKey,
 							parentIndex: 0,
