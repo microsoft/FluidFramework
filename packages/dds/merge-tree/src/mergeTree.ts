@@ -1931,6 +1931,11 @@ export class MergeTree {
 		const localOverlapWithRefs: ISegmentLeaf[] = [];
 		const removedSegments: SegmentWithInfo<IHasRemovalInfo, ISegmentLeaf>[] = [];
 
+		const perspective =
+			seq === UnassignedSequenceNumber
+				? this.localPerspective
+				: new PriorPerspective(refSeq, clientId);
+
 		const obliterate: ObliterateInfo = {
 			start: createDetachedLocalReferencePosition(undefined),
 			end: createDetachedLocalReferencePosition(undefined),

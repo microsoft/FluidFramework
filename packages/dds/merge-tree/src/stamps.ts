@@ -24,7 +24,7 @@ import { UnassignedSequenceNumber } from "./constants.js";
  */
 export interface OperationStamp {
 	/**
-	 * Thge sequence number at which this operation was applied.
+	 * The sequence number at which this operation was applied.
 	 */
 	readonly seq: number;
 
@@ -130,7 +130,7 @@ export function isAcked(a: OperationStamp): boolean {
  * Inserts a stamp into a sorted list of stamps in the correct (sorted) position.
  *
  * Beware that this uses Array.splice, thus requires asymptotics considerations.
- * If inserting a variable number of timestamp, consider just pushing them and sorting the list
+ * If inserting a variable number of timestamps, consider just pushing them and sorting the list
  * after using {@link compare} instead.
  */
 export function spliceIntoList(list: OperationStamp[], stamp: OperationStamp): void {

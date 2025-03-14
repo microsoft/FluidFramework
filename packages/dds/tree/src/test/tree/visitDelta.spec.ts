@@ -227,8 +227,8 @@ describe("visitDelta", () => {
 			marks,
 			[
 				["enterField", rootKey],
-				["detach", { start: 1, end: 2 }, field0],
-				["detach", { start: 1, end: 2 }, field1],
+				["detach", { start: 1, end: 2 }, field0, { minor: 42 }],
+				["detach", { start: 1, end: 2 }, field1, { minor: 43 }],
 				["exitField", rootKey],
 				["enterField", rootKey],
 				["exitField", rootKey],
@@ -256,7 +256,7 @@ describe("visitDelta", () => {
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["detach", { start: 42, end: 43 }, field0],
+			["detach", { start: 42, end: 43 }, field0, { minor: 42 }],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", rootKey],
@@ -298,7 +298,7 @@ describe("visitDelta", () => {
 			["enterField", field0],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["detach", { start: 42, end: 43 }, field1],
+			["detach", { start: 42, end: 43 }, field1, moveId],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", field0],
@@ -329,7 +329,7 @@ describe("visitDelta", () => {
 		const marks = [{ count: 1 }, moveOut, { count: 1 }, moveIn];
 		const expected: VisitScript = [
 			["enterField", rootKey],
-			["detach", { start: 1, end: 2 }, field0],
+			["detach", { start: 1, end: 2 }, field0, moveId],
 			["exitField", rootKey],
 			["enterField", rootKey],
 			["attach", field0, 1, 2],
@@ -358,8 +358,8 @@ describe("visitDelta", () => {
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["detach", { start: 5, end: 6 }, field0],
-			["detach", { start: 5, end: 6 }, field1],
+			["detach", { start: 5, end: 6 }, field0, { minor: 1 }],
+			["detach", { start: 5, end: 6 }, field1, { minor: 2 }],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", rootKey],
@@ -400,7 +400,7 @@ describe("visitDelta", () => {
 			["enterField", fooKey],
 			["exitField", fooKey],
 			["enterField", barKey],
-			["detach", { start: 0, end: 1 }, field0],
+			["detach", { start: 0, end: 1 }, field0, moveId],
 			["exitField", barKey],
 			["exitNode", 0],
 			["exitField", rootKey],
@@ -438,10 +438,10 @@ describe("visitDelta", () => {
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["detach", { start: 0, end: 1 }, field0],
+			["detach", { start: 0, end: 1 }, field0, moveId],
 			["exitField", fooKey],
 			["exitNode", 0],
-			["detach", { start: 0, end: 1 }, field1],
+			["detach", { start: 0, end: 1 }, field1, { minor: 42 }],
 			["exitField", rootKey],
 			["enterField", rootKey],
 			["exitField", rootKey],
@@ -481,7 +481,7 @@ describe("visitDelta", () => {
 			["enterField", field0],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["detach", { start: 0, end: 1 }, field1],
+			["detach", { start: 0, end: 1 }, field1, moveId],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", field0],
@@ -523,7 +523,7 @@ describe("visitDelta", () => {
 		const expected: VisitScript = [
 			["create", mapTreeX, field0],
 			["enterField", field0],
-			["detach", { start: 0, end: 1 }, field1],
+			["detach", { start: 0, end: 1 }, field1, detachId],
 			["exitField", field0],
 			["destroy", field1, 1],
 		];
@@ -556,10 +556,10 @@ describe("visitDelta", () => {
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["detach", { start: 0, end: 1 }, field0],
+			["detach", { start: 0, end: 1 }, field0, moveId2],
 			["exitField", fooKey],
 			["exitNode", 0],
-			["detach", { start: 0, end: 1 }, field1],
+			["detach", { start: 0, end: 1 }, field1, moveId1],
 			["exitField", rootKey],
 			["enterField", rootKey],
 			["attach", field1, 1, 0],
@@ -606,12 +606,12 @@ describe("visitDelta", () => {
 		const expected: VisitScript = [
 			["create", mapTreeX, field0],
 			["enterField", rootKey],
-			["detach", { start: 0, end: 1 }, field1],
+			["detach", { start: 0, end: 1 }, field1, moveId],
 			["enterNode", 0],
 			["enterField", fooKey],
 			["exitField", fooKey],
 			["exitNode", 0],
-			["detach", { start: 0, end: 1 }, field2],
+			["detach", { start: 0, end: 1 }, field2, { minor: 3 }],
 			["exitField", rootKey],
 			["enterField", rootKey],
 			["attach", field1, 1, 0],
@@ -649,8 +649,8 @@ describe("visitDelta", () => {
 			["enterField", rootKey],
 			["exitField", rootKey],
 			["enterField", rootKey],
-			["replace", field0, { start: 0, end: 1 }, field2],
-			["replace", field1, { start: 1, end: 2 }, field3],
+			["replace", field0, { start: 0, end: 1 }, field2, { minor: 2 }],
+			["replace", field1, { start: 1, end: 2 }, field3, { minor: 3 }],
 			["exitField", rootKey],
 		];
 
@@ -685,13 +685,13 @@ describe("visitDelta", () => {
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["detach", { start: 0, end: 1 }, field0],
+			["detach", { start: 0, end: 1 }, field0, moveId2],
 			["exitField", fooKey],
 			["exitNode", 0],
-			["detach", { start: 1, end: 2 }, field1],
+			["detach", { start: 1, end: 2 }, field1, moveId1],
 			["exitField", rootKey],
 			["enterField", rootKey],
-			["replace", field1, { start: 0, end: 1 }, field2],
+			["replace", field1, { start: 0, end: 1 }, field2, { minor: 42 }],
 			["exitField", rootKey],
 			["enterField", field2],
 			["enterNode", 0],
@@ -732,13 +732,13 @@ describe("visitDelta", () => {
 			["enterField", rootKey],
 			["enterNode", 1],
 			["enterField", fooKey],
-			["detach", { start: 0, end: 1 }, field0],
+			["detach", { start: 0, end: 1 }, field0, moveId2],
 			["exitField", fooKey],
 			["exitNode", 1],
-			["detach", { start: 1, end: 2 }, field1],
+			["detach", { start: 1, end: 2 }, field1, moveId1],
 			["exitField", rootKey],
 			["enterField", rootKey],
-			["replace", field1, { start: 0, end: 1 }, field2],
+			["replace", field1, { start: 0, end: 1 }, field2, { minor: 42 }],
 			["enterNode", 0],
 			["enterField", fooKey],
 			["attach", field0, 1, 0],
@@ -758,7 +758,7 @@ describe("visitDelta", () => {
 		const expected: VisitScript = [
 			["create", mapTreeX, field0],
 			["enterField", field0],
-			["detach", { start: 0, end: 1 }, field1],
+			["detach", { start: 0, end: 1 }, field1, { minor: 43 }],
 			["exitField", field0],
 		];
 		testDeltaVisit(delta, expected, index);
@@ -787,12 +787,12 @@ describe("visitDelta", () => {
 			["enterField", field0],
 			["enterNode", 0],
 			["enterField", barKey],
-			["detach", { start: 0, end: 1 }, field1], // field1: moveId
+			["detach", { start: 0, end: 1 }, field1, moveId], // field1: moveId
 			["exitField", barKey],
 			["exitNode", 0],
 			["exitField", field0],
 			["enterField", field0],
-			["detach", { start: 0, end: 1 }, field2], // field2: detachId
+			["detach", { start: 0, end: 1 }, field2, detachId], // field2: detachId
 			["exitField", field0],
 			["enterField", field2],
 			["enterNode", 0],
@@ -843,7 +843,7 @@ describe("visitDelta", () => {
 			["enterField", rootKey],
 			["exitField", rootKey],
 			["enterField", field0],
-			["detach", { start: 0, end: 1 }, field1],
+			["detach", { start: 0, end: 1 }, field1, moveId],
 			["exitField", field0],
 			["enterField", rootKey],
 			["attach", field1, 1, 0],
@@ -874,7 +874,7 @@ describe("visitDelta", () => {
 			["enterField", field0],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["detach", { start: 0, end: 1 }, field1],
+			["detach", { start: 0, end: 1 }, field1, moveId],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", field0],
@@ -917,13 +917,13 @@ describe("visitDelta", () => {
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["detach", { start: 0, end: 1 }, field0], // field0: moveId2
+			["detach", { start: 0, end: 1 }, field0, moveId2], // field0: moveId2
 			["exitField", fooKey],
 			["exitNode", 0],
-			["detach", { start: 0, end: 1 }, field1], // field1: moveId1
+			["detach", { start: 0, end: 1 }, field1, moveId1], // field1: moveId1
 			["exitField", rootKey],
 			["enterField", field1],
-			["detach", { start: 0, end: 1 }, field2], // field2: detachId
+			["detach", { start: 0, end: 1 }, field2, detachId], // field2: detachId
 			["exitField", field1],
 			["enterField", rootKey],
 			["exitField", rootKey],
@@ -950,7 +950,7 @@ describe("visitDelta", () => {
 		const delta = { rename: [restore] };
 		const expected: VisitScript = [
 			["enterField", field0],
-			["detach", { start: 0, end: 1 }, field1],
+			["detach", { start: 0, end: 1 }, field1, { minor: 42 }],
 			["exitField", field0],
 		];
 		testDeltaVisit(delta, expected, index);
@@ -979,10 +979,10 @@ describe("visitDelta", () => {
 		const expected: VisitScript = [
 			["create", mapTreeX, field1], // field1: buildId
 			["enterField", field0], // field0: node1
-			["detach", { start: 0, end: 1 }, field2], // field2: detachId
+			["detach", { start: 0, end: 1 }, field2, detachId], // field2: detachId
 			["exitField", field0],
 			["enterField", field1],
-			["detach", { start: 0, end: 1 }, field3], // field3: node1
+			["detach", { start: 0, end: 1 }, field3, node1], // field3: node1
 			["exitField", field1],
 		];
 		testDeltaVisit(delta, expected, index);
@@ -1119,7 +1119,7 @@ describe("visitDelta", () => {
 		};
 		const expected: VisitScript = [
 			["enterField", field0],
-			["detach", { start: 0, end: 1 }, field1],
+			["detach", { start: 0, end: 1 }, field1, moveId],
 			["exitField", field0],
 		];
 		const revision = mintRevisionTag();
@@ -1169,7 +1169,7 @@ describe("visitDelta", () => {
 				["enterField", field0],
 				["enterNode", 0],
 				["enterField", fooKey],
-				["detach", { start: 0, end: 1 }, field1],
+				["detach", { start: 0, end: 1 }, field1, moveId],
 				["exitField", fooKey],
 				["exitNode", 0],
 				["exitField", field0],
@@ -1208,8 +1208,8 @@ describe("visitDelta", () => {
 				["create", mapTreeX, field0],
 				["create", mapTreeY, field1],
 				["enterField", rootKey],
-				["detach", { start: 0, end: 1 }, field2],
-				["detach", { start: 0, end: 1 }, field3],
+				["detach", { start: 0, end: 1 }, field2, { minor: 2 }],
+				["detach", { start: 0, end: 1 }, field3, { minor: 3 }],
 				["exitField", rootKey],
 				["enterField", rootKey],
 				["exitField", rootKey],
@@ -1313,7 +1313,7 @@ describe("visitDelta", () => {
 							? []
 							: [
 									["enterField", field0],
-									["detach", { start: 0, end: 1 }, field1],
+									["detach", { start: 0, end: 1 }, field1, end],
 									["exitField", field0],
 								];
 						testDeltaVisit(delta, expected, index);
@@ -1344,10 +1344,10 @@ describe("visitDelta", () => {
 							};
 							const expected: VisitScript = [
 								["enterField", field0],
-								["detach", { start: 0, end: 1 }, field1],
+								["detach", { start: 0, end: 1 }, field1, pointB],
 								["exitField", field0],
 								["enterField", field1],
-								["detach", { start: 0, end: 1 }, field2],
+								["detach", { start: 0, end: 1 }, field2, end],
 								["exitField", field1],
 							];
 							testDeltaVisit(delta, expected, index);
@@ -1387,13 +1387,13 @@ describe("visitDelta", () => {
 							};
 							const expected: VisitScript = [
 								["enterField", field0],
-								["detach", { start: 0, end: 1 }, field1],
+								["detach", { start: 0, end: 1 }, field1, pointB],
 								["exitField", field0],
 								["enterField", field1],
-								["detach", { start: 0, end: 1 }, field2],
+								["detach", { start: 0, end: 1 }, field2, pointC],
 								["exitField", field1],
 								["enterField", field2],
-								["detach", { start: 0, end: 1 }, field3],
+								["detach", { start: 0, end: 1 }, field3, end],
 								["exitField", field2],
 							];
 							const index = makeDetachedFieldIndex("", testRevisionTagCodec, testIdCompressor);
