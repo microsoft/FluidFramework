@@ -26,8 +26,6 @@ import {
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeEvents,
 	type IDeltaManagerErased,
-	// eslint-disable-next-line import/no-deprecated
-	type IFluidDataStoreRuntimeExperimental,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	IClientDetails,
@@ -129,12 +127,7 @@ export interface ISharedObjectRegistry {
 export class FluidDataStoreRuntime
 	extends TypedEventEmitter<IFluidDataStoreRuntimeEvents>
 	// eslint-disable-next-line import/no-deprecated
-	implements
-		IFluidDataStoreChannel,
-		IFluidDataStoreRuntime,
-		IFluidHandleContext,
-		// eslint-disable-next-line import/no-deprecated
-		IFluidDataStoreRuntimeExperimental
+	implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext
 {
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.entryPoint}
