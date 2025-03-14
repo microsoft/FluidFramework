@@ -13,6 +13,7 @@ import type {
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import { timeoutAwait } from "@fluidframework/test-utils/internal";
 
 import { ddsModelMap } from "./ddsModels.js";
 import { LocalServerStressState, Client } from "./localServerStressHarness.js";
@@ -82,7 +83,12 @@ export const DDSModelOpGenerator: AsyncGenerator<DDSModelOp, LocalServerStressSt
 	const model = ddsModelMap.get(channel.attributes.type);
 	assert(model !== undefined, "must have model");
 
-	const op = await model.generator(await covertLocalServerStateToDdsState(state));
+	const op = await timeoutAwait(
+		model.generator(await covertLocalServerStateToDdsState(state)),
+		{
+			errorMsg: `Timed out waiting for dds generator: ${state.channel.attributes.type}`,
+		},
+	);
 
 	return {
 		type: "DDSModelOp",
@@ -115,7 +121,9 @@ export const DDSModelOpReducer: AsyncReducer<DDSModelOp, LocalServerStressState>
 		}
 		return value;
 	});
-	await baseModel.reducer(await covertLocalServerStateToDdsState(state), subOp);
+	await timeoutAwait(baseModel.reducer(await covertLocalServerStateToDdsState(state), subOp), {
+		errorMsg: `Timed out waiting for dds reducer: ${state.channel.attributes.type}`,
+	});
 };
 
 export const validateConsistencyOfAllDDS = async (clientA: Client, clientB: Client) => {

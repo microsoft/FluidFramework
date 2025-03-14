@@ -22,7 +22,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { TestTreeProviderLite, testIdCompressor } from "../utils.js";
+import { TestTreeProviderLite, configureBenchmarkHooks, testIdCompressor } from "../utils.js";
 import { TreeViewConfiguration, type ImplicitFieldSchema } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeSimpleContentTyped } from "../feature-libraries/flex-tree/utils.js";
@@ -51,6 +51,7 @@ const nodesCountDeep: [numberOfNodes: number, minLength: number, maxLength: numb
 ];
 
 describe("Summary benchmarks", () => {
+	configureBenchmarkHooks();
 	// TODO: report these sizes as benchmark output which can be tracked over time.
 	describe("size of", () => {
 		it("an empty tree.", async () => {
