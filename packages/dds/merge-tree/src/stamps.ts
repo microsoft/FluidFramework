@@ -24,7 +24,7 @@ import { UnassignedSequenceNumber } from "./constants.js";
  */
 export interface OperationStamp {
 	/**
-	 * Thge sequence number at which this operation was applied.
+	 * The sequence number at which this operation was applied.
 	 */
 	readonly seq: number;
 
