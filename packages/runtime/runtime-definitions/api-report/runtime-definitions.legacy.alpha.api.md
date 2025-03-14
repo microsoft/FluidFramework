@@ -169,6 +169,8 @@ export const IFluidDataStoreFactory: keyof IProvideFluidDataStoreFactory;
 
 // @alpha
 export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
+    // (undocumented)
+    convertDataFn?(runtime: IFluidDataStoreChannel): Promise<void>;
     createDataStore?(context: IFluidDataStoreContext): {
         readonly runtime: IFluidDataStoreChannel;
     };
