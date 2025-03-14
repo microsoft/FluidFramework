@@ -10,10 +10,6 @@ import { createFieldSchema, type FieldSchema, type AllowedTypes } from "../schem
 import { SchemaFactory } from "./schemaFactory.js";
 import type { SimpleFieldSchema, SimpleNodeSchema, SimpleTreeSchema } from "./simpleSchema.js";
 
-/*
- * TODO: Tests for this file
- */
-
 const factory = new SchemaFactory(undefined);
 
 /**
@@ -31,6 +27,7 @@ export function generateSchemaFromSimpleSchema(simple: SimpleTreeSchema): FieldS
 	const context: Context = new Map(
 		[...simple.definitions].map(([id, schema]): [string, () => TreeNodeSchema] => [
 			id,
+			// This relies on the caching in evaluateLazySchema so that it only runs once.
 			() => generateNode(id, schema, context),
 		]),
 	);
