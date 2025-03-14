@@ -340,6 +340,9 @@ export function objectSchema<
 	metadata?: NodeSchemaMetadata<TCustomMetadata>,
 ): ObjectNodeSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
 	ObjectNodeSchemaInternalData {
+	// Field set can't be modified after this since derived data is stored in maps.
+	Object.freeze(info);
+
 	// Ensure no collisions between final set of property keys, and final set of stored keys (including those
 	// implicitly derived from property keys)
 	assertUniqueKeys(identifier, info);
