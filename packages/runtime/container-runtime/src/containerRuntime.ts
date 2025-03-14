@@ -2218,13 +2218,11 @@ export class ContainerRuntime
 
 			if (id === blobManagerBasePath && requestParser.isLeaf(2)) {
 				const blob = await this.blobManager.getBlob(requestParser.pathParts[1]);
-				return blob
-					? {
-							status: 200,
-							mimeType: "fluid/object",
-							value: blob,
-						}
-					: create404Response(request);
+				return {
+					status: 200,
+					mimeType: "fluid/object",
+					value: blob,
+				};
 			} else if (requestParser.pathParts.length > 0) {
 				return await this.channelCollection.request(request);
 			}
