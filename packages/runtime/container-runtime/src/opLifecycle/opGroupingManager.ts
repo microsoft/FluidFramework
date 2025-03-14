@@ -161,9 +161,17 @@ export class OpGroupingManager {
 			// or be empty (to allow for empty batches to be grouped)
 			// TODO: Can we remove this, as it creates problems for staging mode
 			// as we always want re-submit, even if only 1 op.
+			// i'm actually pretty sure there is a bug here.
+			// without this change we will not rebase re-entrant ops
+			// unless there is more than one op in the batch,
+			// but even 1 op must be rebased, as it could be based
+			// off a partial state as it was created reentrantly
+			// while applying another batch. fixing this exposes
+			// problems in pact-map, and requires skipping migration
+			// tests, as pact-map doesn't resbmit even during rebase
 			(batch.messages.length !== 1 ||
-				// Support for reentrant batches will be on by default
-				batch.hasReentrantOps === true)
+			// Support for reentrant batches will be on by default
+			batch.hasReentrantOps === true)
 		);
 	}
 	public groupedBatchingEnabled(): boolean {
