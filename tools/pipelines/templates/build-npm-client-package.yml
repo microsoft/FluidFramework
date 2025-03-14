@@ -147,8 +147,9 @@ resources:
       type: git
       name: 1ESPipelineTemplates/M365GPT
       ref: refs/tags/release
+  # Listing a pipeline as a resource makes its artifacts available for download in any job
   pipelines:
-    # Listing this pipeline as a resource makes its artifacts automatically downloaded within a deployment job.
+    # Access to this pipelines artifacts allows 1ES deployment jobs to install build tools without checking out out a repo.
     - pipeline: buildTools-resource
       project: internal
       source: Build - build-tools

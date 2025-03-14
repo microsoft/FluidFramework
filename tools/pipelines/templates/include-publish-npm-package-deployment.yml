@@ -53,8 +53,10 @@ jobs:
     isLatest: $[ stageDependencies.build.build.outputs['SetVersion.isLatest']]
   templateContext:
     type: releaseJob
-    isProduction: ${{ not(eq(variables['testBuild'], 'true')) }}
-    # This section downloads initial required artifacts/data for this job.
+    # in() returns true if the first parameter is equal to any of the others
+    isProduction: ${{ in(variables['release'], 'release', 'prerelease')  }}
+
+    # This 'inputs' section downloads initial required artifacts/data for this job.
     inputs:
       - input: pipelineArtifact
         pipeline: buildTools-resource
@@ -78,9 +80,10 @@ jobs:
               targetType: 'inline'
               workingDirectory: '$(Pipeline.Workspace)/buildTools-zip/tarballs'
               script: |
+                set -eu -o pipefail
                 echo "Listing files in directory: $(pwd)"
                 ls -la
-                echo "attempting tarball install"
+                echo "Attempting install of build tools from build tools pipeline artifact tarball"
                 npm i -g ./*.tgz
 
           - template: /tools/pipelines/templates/include-publish-npm-package-steps.yml@self
