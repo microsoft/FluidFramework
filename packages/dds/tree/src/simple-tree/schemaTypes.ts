@@ -505,7 +505,7 @@ export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>)
  * `oneTimeInitialize` can't safely be run until all transitively referenced schema are defined, so which cases can safely use it are more limited.
  * When legal for the caller to set this to true, it is preferred, but it is often not safe due to possible forward references.
  * @remarks
- * See {@link MostDerivedData} and {@link SchemaFactory} for details on what a "most derived" schema is any why it matters.
+ * See {@link MostDerivedData} and {@link SchemaFactory} for details on what a "most derived" schema is and why it matters.
  *
  * This is a helper for invoking {@link TreeNodeValid.markMostDerived} for {@link TreeNodeSchema}.
  *
