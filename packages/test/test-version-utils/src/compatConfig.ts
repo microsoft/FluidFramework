@@ -259,21 +259,25 @@ export function isCompatVersionBelowMinVersion(minVersion: string, config: Compa
 
 /**
  * Returns true if the given compat config is compliant with ODSP's version requirements.
- * ! If a summarizer's version is too old, ODSP will nack the summaries with "Upgrade to a newer version of the Fluid client packages to summarize".
+ * ! If a summarizer's version is too old (using dual-commit summaries), ODSP will nack the summaries with "Upgrade to a newer version of the Fluid client packages to summarize".
  */
 export function isOdspCompatCompliant(config: CompatConfig): boolean {
-	for (const ltsVersion of defaultCompatVersions.ltsVersions) {
-		if (
-			(typeof config.compatVersion === "string" &&
-				semver.compare(config.compatVersion, ltsVersion) <= 0) ||
-			(config.createVersion !== undefined &&
-				semver.compare(config.createVersion, ltsVersion) <= 0) ||
-			(config.loadVersion !== undefined && semver.compare(config.loadVersion, ltsVersion) <= 0)
-		) {
-			return false;
-		}
-	}
-	return true;
+	const versionIsCompliant = (version: string | number | undefined) => {
+		// ! Looking at current telemetry, the oldest hit that doesn't use dual-commit summaries was version "2.0.0-rc.5.0.7"
+		// ! Given this, version "2.0.0" is a fine cut off since we currently only test back to N-1
+		const odspMinVersion = "2.0.0";
+		return (
+			version === undefined ||
+			typeof version !== "string" ||
+			semver.compare(version, odspMinVersion) >= 0
+		);
+	};
+
+	return (
+		versionIsCompliant(config.compatVersion) &&
+		versionIsCompliant(config.createVersion) &&
+		versionIsCompliant(config.loadVersion)
+	);
 }
 
 // Helper function for genCrossVersionCompatConfig().
