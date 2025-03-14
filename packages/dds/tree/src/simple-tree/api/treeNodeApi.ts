@@ -245,7 +245,7 @@ export const treeNodeApi: TreeNodeApi = {
 				const identifierValue = identifier.value as string;
 
 				const localNodeKey =
-					identifier.context.nodeKeyManager.tryLocalizeNodeKey(identifierValue);
+					identifier.context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
 				return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : identifierValue;
 			}
 			default:
