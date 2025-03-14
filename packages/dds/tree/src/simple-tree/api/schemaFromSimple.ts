@@ -15,9 +15,9 @@ const factory = new SchemaFactory(undefined);
 /**
  * Create {@link FieldSchema} from a SimpleTreeSchema.
  * @remarks
- * Only use this API if a hand written (produced using {@link SchemaFactory} cannot be provided.
+ * Only use this API if hand written schema (produced using {@link SchemaFactory} cannot be provided.
  *
- * Using this resulting schema with schema aware APIs (designed to work with strongly typed schema) like {@link TreeViewConfiguration}
+ * Using generated schema with schema aware APIs (designed to work with strongly typed schema) like {@link TreeViewConfiguration}
  * will produce a poor TypeScript typing experience which is subject to change.
  *
  * Editing through a view produced using this schema can easily violate invariants other users of the document might expect and must be done with great care.
