@@ -24,7 +24,13 @@ import type {
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import type { StageControls } from "@fluidframework/runtime-definitions/internal";
+// eslint-disable-next-line import/no-deprecated
+import type {
+	// eslint-disable-next-line import/no-deprecated
+	IContainerRuntimeBaseExperimental,
+	// eslint-disable-next-line import/no-deprecated
+	StageControlsExperimental,
+} from "@fluidframework/runtime-definitions/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { timeoutAwait } from "@fluidframework/test-utils/internal";
 
@@ -279,13 +285,26 @@ export class DefaultStressDataObject extends StressDataObject {
 		this._locallyCreatedObjects.push(obj);
 	}
 
-	private stageControls: StageControls | undefined;
+	// eslint-disable-next-line import/no-deprecated
+	private stageControls: StageControlsExperimental | undefined;
+	// eslint-disable-next-line import/no-deprecated
+	private readonly containerRuntimeExp: IContainerRuntimeBaseExperimental =
+		// eslint-disable-next-line import/no-deprecated
+		this.context.containerRuntime satisfies IContainerRuntimeBaseExperimental;
 	public enterStagingMode() {
-		this.stageControls = this.context.containerRuntime.enterStagingMode();
+		assert(
+			this.containerRuntimeExp.enterStagingMode !== undefined,
+			"enterStagingMode must be defined",
+		);
+		this.stageControls = this.containerRuntimeExp.enterStagingMode();
 	}
 
 	public inStagingMode(): boolean {
-		return this.context.containerRuntime.inStagingMode;
+		assert(
+			this.containerRuntimeExp.inStagingMode !== undefined,
+			"inStagingMode must be defined",
+		);
+		return this.containerRuntimeExp.inStagingMode;
 	}
 
 	public exitStagingMode(commit: boolean) {

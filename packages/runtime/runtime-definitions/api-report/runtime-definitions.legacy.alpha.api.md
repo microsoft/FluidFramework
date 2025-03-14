@@ -105,6 +105,14 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "dispose", listener: () => void): any;
 }
 
+// @alpha @sealed @deprecated (undocumented)
+export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase {
+    // (undocumented)
+    enterStagingMode?(): StageControlsExperimental;
+    // (undocumented)
+    inStagingMode?(): boolean;
+}
+
 // @alpha
 export interface IDataStore {
     readonly entryPoint: IFluidHandleInternal<FluidObject>;

@@ -26,6 +26,8 @@ import {
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeEvents,
 	type IDeltaManagerErased,
+	// eslint-disable-next-line import/no-deprecated
+	type IFluidDataStoreRuntimeExperimental,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	IClientDetails,
@@ -56,6 +58,8 @@ import {
 	IInboundSignalMessage,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
+	// eslint-disable-next-line import/no-deprecated
+	type IContainerRuntimeBaseExperimental,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -124,7 +128,13 @@ export interface ISharedObjectRegistry {
  */
 export class FluidDataStoreRuntime
 	extends TypedEventEmitter<IFluidDataStoreRuntimeEvents>
-	implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext
+	// eslint-disable-next-line import/no-deprecated
+	implements
+		IFluidDataStoreChannel,
+		IFluidDataStoreRuntime,
+		IFluidHandleContext,
+		// eslint-disable-next-line import/no-deprecated
+		IFluidDataStoreRuntimeExperimental
 {
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.entryPoint}
@@ -133,10 +143,6 @@ export class FluidDataStoreRuntime
 
 	public get connected(): boolean {
 		return this.dataStoreContext.connected;
-	}
-
-	get inStagingMode(): boolean {
-		return this.dataStoreContext.containerRuntime.inStagingMode;
 	}
 
 	public get clientId(): string | undefined {
@@ -339,6 +345,18 @@ export class FluidDataStoreRuntime
 		// By default, a data store can log maximum 10 local changes telemetry in summarizer.
 		this.localChangesTelemetryCount =
 			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
+
+		// eslint-disable-next-line import/no-deprecated
+		const base: IContainerRuntimeBaseExperimental =
+			// eslint-disable-next-line import/no-deprecated
+			this.dataStoreContext.containerRuntime satisfies IContainerRuntimeBaseExperimental;
+		if ("inStagingMode" in base) {
+			Object.defineProperty(this, "inStagingMode", {
+				get: () => {
+					return base.inStagingMode;
+				},
+			});
+		}
 	}
 
 	get deltaManager(): IDeltaManagerErased {

@@ -17,6 +17,7 @@ import {
 import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { type FluidObject } from "@fluidframework/core-interfaces/internal";
 import { SharedMap } from "@fluidframework/map/internal";
+import type { IContainerRuntimeBaseExperimental } from "@fluidframework/runtime-definitions/internal";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	LocalDeltaConnectionServer,
@@ -37,6 +38,8 @@ class RootDataObject extends DataObject {
 			? -1
 			: RootDataObject.instanceCount++;
 
+	private readonly containerRuntimeExp: IContainerRuntimeBaseExperimental = this.context
+		.containerRuntime satisfies IContainerRuntimeBaseExperimental;
 	get ParentDataObject() {
 		return this;
 	}
@@ -75,7 +78,11 @@ class RootDataObject extends DataObject {
 	}
 
 	public enterStagingMode() {
-		return this.context.containerRuntime.enterStagingMode();
+		assert(
+			this.containerRuntimeExp.enterStagingMode !== undefined,
+			"enterStagingMode must be defined",
+		);
+		return this.containerRuntimeExp.enterStagingMode();
 	}
 }
 

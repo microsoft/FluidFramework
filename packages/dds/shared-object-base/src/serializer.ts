@@ -9,7 +9,8 @@ import {
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, shallowCloneObject } from "@fluidframework/core-utils/internal";
-import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+// eslint-disable-next-line import/no-deprecated
+import type { IFluidDataStoreRuntimeExperimental } from "@fluidframework/datastore-definitions/internal";
 import {
 	generateHandleContextPath,
 	isSerializedHandle,
@@ -66,7 +67,8 @@ export class FluidSerializer implements IFluidSerializer {
 
 	public constructor(
 		private readonly runtime: Pick<
-			IFluidDataStoreRuntime,
+			// eslint-disable-next-line import/no-deprecated
+			IFluidDataStoreRuntimeExperimental,
 			"inStagingMode" | "channelsRoutingContext"
 		>,
 	) {
@@ -225,7 +227,7 @@ export class FluidSerializer implements IFluidSerializer {
 		// not binding them prevent attach ops from being created, so rollback is a no-op. On acceptance of the staging mode changes we do a re-submit/rebase
 		// of all changes, and at that point we are out of staging mode, so the bind happens then, which basically defers attach op creation until all
 		// changes are accepted.
-		if (this.runtime.inStagingMode) {
+		if (this.runtime.inStagingMode === true) {
 			this.deferedHandleMap.set(handle.absolutePath, handle);
 		} else {
 			bind.bind(handle);
