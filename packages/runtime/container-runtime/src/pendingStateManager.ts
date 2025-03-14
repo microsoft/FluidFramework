@@ -297,7 +297,7 @@ export class PendingStateManager implements IDisposable {
 		batch: BatchMessage[],
 		clientSequenceNumber: number | undefined,
 		ignoreBatchId?: boolean,
-		staged?: boolean,
+		staged: boolean = false,
 	): void {
 		// clientId and batchStartCsn are used for generating the batchId so we can detect container forks
 		// where this batch was submitted by two different clients rehydrating from the same local state.

@@ -3392,16 +3392,16 @@ export class ContainerRuntime
 	 * This method is expected to be called at the end of a batch.
 	 * @param resubmittingBatchId - If defined, indicates this is a resubmission of a batch
 	 * with the given Batch ID, which must be preserved
-	 * @param staged - Indicates whether the batch is staged (if so, don't actually submit).
-	 * By default, we fall back on the inStagingMode property.
+	 * @param resubmittingStagedBatch - If defined, indicates this is a resubmission of a batch that is staged,
+	 * meaning it should not be sent to the ordering service yet.
 	 */
-	private flush(resubmittingBatchId?: BatchId, staged: boolean = this.inStagingMode): void {
+	private flush(resubmittingBatchId?: BatchId, resubmittingStagedBatch?: boolean): void {
 		assert(
 			this._orderSequentiallyCalls === 0,
 			0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */,
 		);
 
-		this.outbox.flush(resubmittingBatchId, staged);
+		this.outbox.flush(resubmittingBatchId, resubmittingStagedBatch);
 		assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
 	}
 
@@ -4573,7 +4573,9 @@ export class ContainerRuntime
 				const idAllocationBatchMessage: BatchMessage = {
 					contents: serializeOpContents(idAllocationMessage),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-					staged: this.inStagingMode,
+					// Note: For now, we will never stage ID Allocation messages.
+					// They won't contain personal info and no harm in extra allocations in case of discarding the staged changes
+					staged: false,
 				};
 				this.outbox.submitIdAllocation(idAllocationBatchMessage);
 			}
