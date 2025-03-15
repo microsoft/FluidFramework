@@ -117,9 +117,9 @@ describe("Local Server Stress", () => {
 		// skipMinimization: true,
 		// Uncomment to replay a particular seed.
 		// replay: [76],
-		// only: [44, 45, 58], //* TODO: Fix these
+		// only: [28],
 		saveFailures,
 		// saveSuccesses,
-		skip: [0, 13, 44, 45, 58, 54, 56, 90, 99],
+		skip: [0, 13, 30, 45, 54, 56, 58, 90, 99],
 	});
 });

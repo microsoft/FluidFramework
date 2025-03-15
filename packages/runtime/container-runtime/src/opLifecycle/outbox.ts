@@ -426,10 +426,7 @@ export class Outbox {
 			this.batchRebasesToReport--;
 		}
 
-		this.flushInternal({
-			batchManager,
-			disableGroupedBatching: false,
-		});
+		this.flushInternal({ batchManager });
 		this.rebasing = false;
 	}
 

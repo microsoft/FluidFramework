@@ -226,7 +226,6 @@ describe("Scenario Test", () => {
 		await waitForSave([clients.loaded]);
 
 		// Wait for the mainline changes to propagate
-		//* TODO: Replace this with a promise that actually waits for the mainline changes to propagate (update waitForSave above?)
 		await new Promise<void>((resolve) => setTimeout(resolve, 100));
 
 		assert.notDeepStrictEqual(
@@ -276,7 +275,6 @@ describe("Scenario Test", () => {
 		await waitForSave([clients.loaded]);
 
 		// Wait for the mainline changes to propagate
-		//* TODO: Replace this with a promise that actually waits for the mainline changes to propagate (update waitForSave above?)
 		await new Promise<void>((resolve) => setTimeout(resolve, 100));
 
 		assert.notDeepStrictEqual(
