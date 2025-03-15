@@ -25,6 +25,23 @@ const localSessionId: SessionId = "0" as SessionId;
 const peer1: SessionId = "1" as SessionId;
 const peer2: SessionId = "2" as SessionId;
 
+export function testOpBunching() {
+	describe("Op bunching", () => {
+		runUnitTestScenario("op bunching 1", [
+			{ seq: 1, type: "Push" },
+			{ seq: 1, type: "Ack" },
+			{ seq: 2, type: "Push" },
+			{ seq: 2, type: "Ack" },
+			{ seq: 3, type: "Pull", ref: 1, from: peer1 },
+			{ seq: 4, type: "Push" },
+			{ seq: 4, type: "Ack" },
+			{ seq: 5, type: "Pull", ref: 2, from: peer1 },
+			{ seq: 5, type: "Pull", ref: 2, from: peer1 },
+		]);
+		assert(true);
+	});
+}
+
 export function testCorrectness() {
 	describe("Correctness", () => {
 		describe("Unit Tests", () => {

@@ -706,27 +706,31 @@ export class EditManager<
 		}
 
 		// Remote changes, i.e., changes from remote clients are applied in three steps.
-		for (const newCommit of newCommits) {
-			// Step 1 - Recreate the peer remote client's local environment.
-			// Get the revision that the remote change is based on
-			const [, baseRevisionInTrunk] = this.getClosestTrunkCommit(referenceSequenceNumber);
-			// Rebase that peer local branch over the part of the trunk up to the base revision
-			// This will be a no-op if the sending client has not advanced since the last time we received an edit from it
-			const peerLocalBranch = getOrCreate(
-				this.peerLocalBranches,
-				sessionId,
-				() =>
-					new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily, this.mintRevisionTag),
-			);
-			peerLocalBranch.rebaseOnto(this.trunk, baseRevisionInTrunk);
 
-			// Step 2 - Append the change to the peer branch. Rebase the change to the tip of the trunk.
-			if (peerLocalBranch.getHead() === this.trunk.getHead()) {
-				// If the branch is fully caught up and empty after being rebased, then push to the trunk directly
+		// Step 1 - Recreate the peer remote client's local environment.
+		// Get the revision that the remote change is based on
+		const [, baseRevisionInTrunk] = this.getClosestTrunkCommit(referenceSequenceNumber);
+		// Rebase that peer local branch over the part of the trunk up to the base revision
+		// This will be a no-op if the sending client has not advanced since the last time we received an edit from it
+		const peerLocalBranch = getOrCreate(
+			this.peerLocalBranches,
+			sessionId,
+			() => new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily, this.mintRevisionTag),
+		);
+		peerLocalBranch.rebaseOnto(this.trunk, baseRevisionInTrunk);
+
+		// Step 2 - Append the change to the peer branch. Rebase the change to the tip of the trunk.
+
+		if (peerLocalBranch.getHead() === this.trunk.getHead()) {
+			// If the branch is fully caught up and empty after being rebased, then push to the trunk directly
+			for (const newCommit of newCommits) {
 				this.pushCommitToTrunk(nextSequenceId, { ...newCommit, sessionId });
 				peerLocalBranch.setHead(this.trunk.getHead());
-			} else {
-				// Otherwise, rebase the change over the trunk and append it, and append the original change to the peer branch.
+				nextSequenceId = getNextSequenceId(nextSequenceId);
+			}
+		} else {
+			// Otherwise, rebase the change over the trunk and append it, and append the original change to the peer branch.
+			for (const newCommit of newCommits) {
 				const { duration, output: newChangeFullyRebased } = measure(() =>
 					rebaseChange(
 						this.changeFamily.rebaser,
@@ -748,9 +752,32 @@ export class EditManager<
 					sessionId,
 					change: newChangeFullyRebased.change,
 				});
+				nextSequenceId = getNextSequenceId(nextSequenceId);
 			}
+		}
 
-			nextSequenceId = getNextSequenceId(nextSequenceId);
+		const trunkChanges = [];
+		let trunk = this.trunk.getHead();
+		while (trunk.parent !== undefined) {
+			trunkChanges.unshift({ revision: trunk.revision, change: trunk.change });
+			trunk = trunk.parent;
+		}
+		const peerBranchChanges = [];
+		let peerBranch = this.peerLocalBranches.get(sessionId)?.getHead();
+		if (peerBranch !== undefined) {
+			while (peerBranch.parent !== undefined) {
+				peerBranchChanges.unshift({
+					revision: peerBranch.revision,
+					change: peerBranch.change,
+				});
+				peerBranch = peerBranch.parent;
+			}
+		}
+
+		if (sequenceNumber === 5) {
+			console.log(
+				`Trunk changes: ${JSON.stringify(trunkChanges)} \n Peer branch changes: ${JSON.stringify(peerBranchChanges)}`,
+			);
 		}
 
 		// Step 3 - Rebase the local branch over the updated trunk.
