@@ -3,25 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict as assert, fail } from "node:assert";
 
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 import { testSpecializedCursor, type TestTree } from "../../cursorTestSuite.js";
 
-import {
-	SchemaFactory,
-	type EncodeOptions,
-	type TreeLeafValue,
-} from "../../../simple-tree/index.js";
+import { SchemaFactory, type EncodeOptions } from "../../../simple-tree/index.js";
 
 import {
 	applySchemaToParserOptions,
 	cursorFromVerbose,
+	replaceVerboseTreeHandles,
 	verboseFromCursor,
 	type ParseOptions,
 	type VerboseTree,
-	type VerboseTreeNode,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/verboseTree.js";
 import type { ITreeCursor } from "../../../core/index.js";
@@ -32,20 +28,6 @@ const schema = new SchemaFactory("Test");
 
 describe("simple-tree verboseTree", () => {
 	describe("applySchemaToParserOptions", () => {
-		it("valueConverter", () => {
-			const log: unknown[] = [];
-			const options = applySchemaToParserOptions<never>(schema.handle, {
-				valueConverter(data) {
-					log.push(data);
-					return "converted";
-				},
-				useStoredKeys: true,
-			});
-			assert.equal(options.keyConverter, undefined);
-			assert.equal(options.valueConverter("x"), "converted");
-			assert.deepEqual(log, ["x"]);
-		});
-
 		it("keyConverter", () => {
 			class A extends schema.object("A", {
 				a: schema.number,
@@ -55,10 +37,7 @@ describe("simple-tree verboseTree", () => {
 				b: schema.number,
 			}) {}
 			{
-				const options = applySchemaToParserOptions<never>([A, B], {
-					valueConverter(data) {
-						return data;
-					},
+				const options = applySchemaToParserOptions([A, B], {
 					useStoredKeys: false,
 				});
 				assert(options.keyConverter !== undefined);
@@ -70,20 +49,13 @@ describe("simple-tree verboseTree", () => {
 				assert.equal(options.keyConverter.encode(B.identifier, brand("b")), "b");
 			}
 			{
-				const options = applySchemaToParserOptions<never>([A, B], {
-					valueConverter(data) {
-						return data;
-					},
+				const options = applySchemaToParserOptions([A, B], {
 					useStoredKeys: true,
 				});
 				assert(options.keyConverter === undefined);
 			}
 			{
-				const options = applySchemaToParserOptions<never>([A, B], {
-					valueConverter(data) {
-						return data;
-					},
-				});
+				const options = applySchemaToParserOptions([A, B], {});
 				assert(options.keyConverter !== undefined);
 				assert.equal(options.keyConverter.encode(A.identifier, brand("stored")), "b");
 				assert.equal(options.keyConverter.parse(A.identifier, "b"), "stored");
@@ -93,11 +65,7 @@ describe("simple-tree verboseTree", () => {
 
 	describe("verboseFromCursor", () => {
 		it("minimal", () => {
-			const encodeOptions: EncodeOptions<IFluidHandle> = {
-				valueConverter(data: IFluidHandle): IFluidHandle {
-					return data;
-				},
-			};
+			const encodeOptions: EncodeOptions = {};
 			class TestObject extends schema.object("T", {}) {}
 			const cursor = cursorForJsonableTreeNode({ type: brand("Test.T") });
 			const verbose = verboseFromCursor(cursor, TestObject, encodeOptions);
@@ -158,16 +126,10 @@ describe("simple-tree verboseTree", () => {
 					});
 				}
 
-				const options: ParseOptions<IFluidHandle> = {
-					valueConverter(data: VerboseTree): TreeLeafValue | VerboseTreeNode {
-						return data;
-					},
+				const options: ParseOptions = {
 					useStoredKeys,
 				};
-				const encodeOptions: EncodeOptions<IFluidHandle> = {
-					valueConverter(data: IFluidHandle): IFluidHandle {
-						return data;
-					},
+				const encodeOptions: EncodeOptions = {
 					useStoredKeys,
 				};
 
@@ -195,5 +157,22 @@ describe("simple-tree verboseTree", () => {
 				});
 			});
 		}
+	});
+
+	describe("replaceVerboseTreeHandles", () => {
+		it("no handles", () => {
+			const tree = { type: "a", fields: { b: 1 } };
+			const clone = replaceVerboseTreeHandles(tree, () => {
+				fail();
+			});
+			assert.notEqual(clone, tree);
+			assert.deepEqual(clone, tree);
+		});
+
+		it("handles", () => {
+			const tree = { type: "a", fields: { b: new MockHandle(1) } };
+			const clone = replaceVerboseTreeHandles(tree, () => "handle");
+			assert.deepEqual(clone, { type: "a", fields: { b: "handle" } });
+		});
 	});
 });
