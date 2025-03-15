@@ -6,7 +6,7 @@
 import { assert } from '@fluidframework/core-utils/internal';
 import { type IChannelAttributes, type IDeltaHandler } from '@fluidframework/datastore-definitions/internal';
 import { MessageType, type ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
-import type { IRuntimeMessageCollection } from '@fluidframework/runtime-definitions/internal';
+import type { IRuntimeMessageCollection, IRuntimeMessagesContent } from '@fluidframework/runtime-definitions/internal';
 
 import { type IOpContents, type IShimDeltaHandler } from './types.js';
 import { attributesMatch, isStampedOp } from './utils.js';
@@ -48,7 +48,7 @@ export class SharedTreeShimDeltaHandler implements IShimDeltaHandler {
 		return this._handler !== undefined;
 	}
 
-	public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
+	private process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
 		// This allows us to process the migrate op and prevent the shared object from processing the wrong ops
 		// Drop v1 ops
 		assert(this.hasTreeDeltaHandler(), 0x831 /* Can't process ops before attaching tree handler */);
@@ -60,7 +60,14 @@ export class SharedTreeShimDeltaHandler implements IShimDeltaHandler {
 		if (this.shouldDropOp(contents)) {
 			return;
 		}
-		return this.handler.process(message, local, localOpMetadata);
+		const messagesContent: IRuntimeMessagesContent[] = [
+			{
+				contents,
+				localOpMetadata,
+				clientSequenceNumber: message.clientSequenceNumber,
+			},
+		];
+		return this.handler.processMessages({ envelope: message, messagesContent, local });
 	}
 
 	public processMessages(messagesCollection: IRuntimeMessageCollection): void {
