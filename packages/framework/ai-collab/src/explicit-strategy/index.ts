@@ -7,8 +7,8 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	getSimpleSchema,
 	Tree,
-	type SimpleTreeSchema,
 	type TreeNode,
+	type SimpleTreeSchema,
 } from "@fluidframework/tree/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { zodResponseFormat } from "openai/helpers/zod";
@@ -20,14 +20,24 @@ import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 
 import type {
+	AiCollabErrorResponse,
+	AiCollabOptions,
+	AiCollabSuccessResponse,
 	DebugEventLogHandler,
+	Diff,
 	OpenAiClientOptions,
 	TokenLimits,
 	TokenUsage,
 } from "../aiCollabApi.js";
 
 import { applyAgentEdit } from "./agentEditReducer.js";
-import type { EditWrapper, TreeEdit } from "./agentEditTypes.js";
+import type {
+	ArrayPlace,
+	EditWrapper,
+	ObjectTarget,
+	TreeEdit,
+	Range,
+} from "./agentEditTypes.js";
 import {
 	type ApplyEditFailure,
 	type ApplyEditSuccess,
@@ -97,11 +107,6 @@ export interface GenerateTreeEditsOptions {
 	planningStep?: boolean;
 }
 
-interface GenerateTreeEditsSuccessResponse {
-	status: "success";
-	tokensUsed: TokenUsage;
-}
-
 interface GenerateTreeEditsErrorResponse {
 	status: "failure" | "partial-failure";
 	errorMessage:
@@ -120,12 +125,10 @@ interface GenerateTreeEditsErrorResponse {
  * @remarks
  * - Optional root nodes are not supported
  * - Primitive root nodes are not supported
- *
- * @internal
  */
 export async function generateTreeEdits(
-	options: GenerateTreeEditsOptions,
-): Promise<GenerateTreeEditsSuccessResponse | GenerateTreeEditsErrorResponse> {
+	options: AiCollabOptions,
+): Promise<AiCollabSuccessResponse | AiCollabErrorResponse> {
 	const idGenerator = new IdGenerator();
 	const editLog: EditLog = [];
 	let editCount = 0;
@@ -263,9 +266,119 @@ export async function generateTreeEdits(
 		status: "success",
 	} satisfies CoreEventLoopCompleted);
 
+	// Transform editLog into diffs
+	const diffs: Diff[] = editLog
+		.map((log) => {
+			if (typeof log.edit.type !== "string") {
+				console.error(`Unknown edit type: ${log.edit}`);
+				return undefined;
+			}
+
+			switch (log.edit.type) {
+				case "move": {
+					const treeNode = idGenerator.getNode((log.edit.source as ObjectTarget).target);
+					if (!treeNode) {
+						console.error(
+							`Could not find node for: ${(log.edit.source as ObjectTarget).target}`,
+						);
+						return undefined;
+					}
+					const objectId = Tree.shortId(treeNode);
+					return {
+						type: "MOVE",
+						newIndex: 0,
+						objectId,
+					};
+				}
+				case "insert": {
+					const objectId =
+						typeof log.edit.content === "object" && log.edit.content !== null
+							? log.edit.content.id
+							: "";
+					return {
+						type: "INSERT",
+						objectId,
+						field: (log.edit.destination as ArrayPlace).field,
+						value: {
+							"title":
+								typeof log.edit.content === "object" && log.edit.content !== null
+									? log.edit.content.title
+									: "",
+							"id": objectId,
+							"description":
+								typeof log.edit.content === "object" && log.edit.content !== null
+									? log.edit.content.description
+									: "",
+							"priority":
+								typeof log.edit.content === "object" && log.edit.content !== null
+									? log.edit.content.priority
+									: "",
+							"complexity":
+								typeof log.edit.content === "object" && log.edit.content !== null
+									? log.edit.content.complexity
+									: "",
+							"status":
+								typeof log.edit.content === "object" && log.edit.content !== null
+									? log.edit.content.status
+									: "",
+							"assignee":
+								typeof log.edit.content === "object" && log.edit.content !== null
+									? log.edit.content.assignee
+									: "",
+						},
+					};
+				}
+				case "modify": {
+					const treeNode = idGenerator.getNode(log.edit.target.target);
+					if (!treeNode) {
+						console.error(`Could not find node for: ${log.edit.target.target}`);
+						return undefined;
+					}
+					const objectId = Tree.shortId(treeNode);
+					return {
+						type: "CHANGE",
+						field: log.edit.field,
+						value: log.edit.modification,
+						objectId,
+					};
+				}
+				case "remove": {
+					if ((log.edit.source as ObjectTarget).target === undefined) {
+						const range = {
+							from: (log.edit.source as Range).from.target,
+							to: (log.edit.source as Range).to.target,
+						};
+						return {
+							type: "REMOVE",
+							range,
+						};
+					} else {
+						const treeNode = idGenerator.getNode((log.edit.source as ObjectTarget).target);
+						if (!treeNode) {
+							console.error(
+								`Could not find node for: ${(log.edit.source as ObjectTarget).target}`,
+							);
+							return undefined;
+						}
+						const objectId = Tree.shortId(treeNode);
+						return {
+							type: "REMOVE",
+							objectId,
+						};
+					}
+				}
+				default: {
+					// skip unknown edit types
+					return undefined;
+				}
+			}
+		})
+		.filter((diff) => diff !== undefined) as Diff[];
+
 	return {
 		status: "success",
 		tokensUsed,
+		diffs,
 	};
 }
 
