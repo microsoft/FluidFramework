@@ -97,14 +97,14 @@ import {
 } from "../core/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
-	type NodeKeyManager,
+	type NodeIdentifierManager,
 	buildForest,
 	defaultSchemaPolicy,
 	jsonableTreeFromFieldCursor,
 	jsonableTreeFromForest,
 	mapRootChanges,
 	mapTreeFromCursor,
-	MockNodeKeyManager,
+	MockNodeIdentifierManager,
 	cursorForMapTreeField,
 	type IDefaultEditBuilder,
 	type TreeChunk,
@@ -781,7 +781,7 @@ export function flexTreeViewWithContent(
 		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
-		nodeKeyManager?: NodeKeyManager;
+		nodeKeyManager?: NodeIdentifierManager;
 	},
 ): CheckoutFlexTreeView {
 	const view = checkoutWithContent(
@@ -791,7 +791,7 @@ export function flexTreeViewWithContent(
 	return new CheckoutFlexTreeView(
 		view,
 		defaultSchemaPolicy,
-		args?.nodeKeyManager ?? new MockNodeKeyManager(),
+		args?.nodeKeyManager ?? new MockNodeIdentifierManager(),
 	);
 }
 
@@ -1198,7 +1198,7 @@ export function treeTestFactory(
  */
 export function getView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
-	nodeKeyManager?: NodeKeyManager,
+	nodeKeyManager?: NodeIdentifierManager,
 	logger?: ITelemetryLoggerExt,
 ): SchematizingSimpleTreeView<TSchema> {
 	const checkout = createTreeCheckout(
@@ -1214,7 +1214,7 @@ export function getView<const TSchema extends ImplicitFieldSchema>(
 	return new SchematizingSimpleTreeView<TSchema>(
 		checkout,
 		config,
-		nodeKeyManager ?? new MockNodeKeyManager(),
+		nodeKeyManager ?? new MockNodeIdentifierManager(),
 	);
 }
 
@@ -1225,7 +1225,11 @@ export function viewCheckout<const TSchema extends ImplicitFieldSchema>(
 	checkout: TreeCheckout,
 	config: TreeViewConfiguration<TSchema>,
 ): SchematizingSimpleTreeView<TSchema> {
-	return new SchematizingSimpleTreeView<TSchema>(checkout, config, new MockNodeKeyManager());
+	return new SchematizingSimpleTreeView<TSchema>(
+		checkout,
+		config,
+		new MockNodeIdentifierManager(),
+	);
 }
 
 /**
