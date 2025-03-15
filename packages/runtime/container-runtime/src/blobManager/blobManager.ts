@@ -119,7 +119,7 @@ interface PendingBlob {
 }
 
 export interface IPendingBlobs {
-	[id: string]: {
+	[localId: string]: {
 		blob: string;
 		storageId?: string;
 		uploadTime?: number;
@@ -158,7 +158,7 @@ export class BlobManager {
 	private readonly internalEvents = new TypedEventEmitter<IBlobManagerInternalEvents>();
 
 	/**
-	 * Map of local IDs to storage IDs. Contains identity entries (id → id) for storage IDs. All requested IDs should
+	 * Map of local IDs to storage IDs. Contains identity entries (storageId → storageId) for storage IDs. All requested IDs should
 	 * be a key in this map. Blobs created while the container is detached are stored in IDetachedBlobStorage which
 	 * gives local IDs; the storage IDs are filled in at attach time.
 	 * Note: It contains mappings from all clients, i.e., from remote clients as well. local ID comes from the client
@@ -395,25 +395,25 @@ export class BlobManager {
 		);
 	}
 
-	private getBlobHandle(id: string): BlobHandle {
+	private getBlobHandle(localId: string): BlobHandle {
 		assert(
-			this.redirectTable.has(id) || this.pendingBlobs.has(id),
+			this.redirectTable.has(localId) || this.pendingBlobs.has(localId),
 			0x384 /* requesting handle for unknown blob */,
 		);
-		const pending = this.pendingBlobs.get(id);
+		const pending = this.pendingBlobs.get(localId);
 		// Create a callback function for once the blob has been attached
 		const callback = pending
 			? () => {
 					pending.attached = true;
 					// Notify listeners (e.g. serialization process) that blob has been attached
 					this.internalEvents.emit("blobAttached", pending);
-					this.deletePendingBlobMaybe(id);
+					this.deletePendingBlobMaybe(localId);
 				}
 			: undefined;
 		return new BlobHandle(
-			getGCNodePathFromBlobId(id),
+			getGCNodePathFromBlobId(localId),
 			this.routeContext,
-			async () => this.getBlob(id),
+			async () => this.getBlob(localId),
 			callback,
 		);
 	}
@@ -530,11 +530,11 @@ export class BlobManager {
 		this.redirectTable.set(fromId, toId);
 	}
 
-	private deletePendingBlobMaybe(id: string): void {
-		if (this.pendingBlobs.has(id)) {
-			const entry = this.pendingBlobs.get(id);
+	private deletePendingBlobMaybe(localId: string): void {
+		if (this.pendingBlobs.has(localId)) {
+			const entry = this.pendingBlobs.get(localId);
 			if (entry?.attached && entry?.acked) {
-				this.deletePendingBlob(id);
+				this.deletePendingBlob(localId);
 			}
 		}
 	}
@@ -843,7 +843,7 @@ export class BlobManager {
 				// This while is used to stash blobs created while attaching and getting blobs
 				while (localBlobs.size < this.pendingBlobs.size) {
 					const attachBlobsP: Promise<void>[] = [];
-					for (const [id, entry] of this.pendingBlobs) {
+					for (const [localId, entry] of this.pendingBlobs) {
 						if (!localBlobs.has(entry)) {
 							localBlobs.add(entry);
 							// In order to follow natural blob creation flow we need to:
@@ -851,12 +851,12 @@ export class BlobManager {
 							// 2 resolve the blob handle
 							// 3 wait for op referencing the blob
 							if (!entry.opsent) {
-								this.sendBlobAttachOp(id, entry.storageId);
+								this.sendBlobAttachOp(localId, entry.storageId);
 							}
 							// Resolving the blob handle to let hosts continue with their operations (it will resolve
 							// original createBlob call) and let them attach the blob. This is a lie we told since the upload
 							// hasn't finished yet, but it's fine since we will retry on rehydration.
-							entry.handleP.resolve(this.getBlobHandle(id));
+							entry.handleP.resolve(this.getBlobHandle(localId));
 							// Array of promises that will resolve when blobs get attached.
 							attachBlobsP.push(
 								new Promise<void>((resolve, reject) => {
@@ -888,16 +888,16 @@ export class BlobManager {
 					await Promise.allSettled(attachBlobsP);
 				}
 
-				for (const [id, entry] of this.pendingBlobs) {
+				for (const [localId, entry] of this.pendingBlobs) {
 					if (stopBlobAttachingSignal?.aborted && !entry.attached) {
 						this.mc.logger.sendTelemetryEvent({
 							eventName: "UnableToStashBlob",
-							id,
+							id: localId,
 						});
 						continue;
 					}
 					assert(entry.attached === true, 0x790 /* stashed blob should be attached */);
-					blobs[id] = {
+					blobs[localId] = {
 						blob: bufferToString(entry.blob, "base64"),
 						storageId: entry.storageId,
 						acked: entry.acked,
