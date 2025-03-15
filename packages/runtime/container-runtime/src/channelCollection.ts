@@ -621,9 +621,13 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	 */
 	protected createDataStoreId(): string {
 		/**
-		 * There is currently a bug where certain data store ids such as "[" are getting converted to ASCII characters
-		 * in the snapshot.
-		 * So, return short ids only if explicitly enabled via feature flags. Else, return uuid();
+		 * There was a bug where certain data store ids with special characters like "[" were getting converted to ASCII characters
+		 * in the snapshot. The bug was fixed in the driver layer (PR#21680), which then also prompted a corresponding change in the runtime layer (PR#24032).
+		 * Unfortunately, because of cross-client and layer-compat boundaries which could break, we cannot enable the usage of ShortIds until a certain
+		 * level of saturation is reached.
+		 * AB#8568 lists the exact requirements for the safe enablement/removal of the feature gate.
+		 *
+		 * Here we return short ids only if explicitly enabled via the feature flag. Else, return uuid();
 		 */
 		if (this.mc.config.getBoolean("Fluid.Runtime.UseShortIds") === true) {
 			// We use three non-overlapping namespaces:
