@@ -107,14 +107,14 @@ export {
 } from "./chunked-forest/index.js";
 
 export {
-	compareLocalNodeKeys,
-	createNodeKeyManager,
-	isStableNodeKey,
-	type LocalNodeKey,
-	MockNodeKeyManager,
-	type NodeKeyManager,
+	compareLocalNodeIdentifiers,
+	createNodeIdentifierManager,
+	isStableNodeIdentifier,
+	type LocalNodeIdentifier,
+	MockNodeIdentifierManager,
+	type NodeIdentifierManager,
 	nodeKeyTreeIdentifier,
-	type StableNodeKey,
+	type StableNodeIdentifier,
 } from "./node-key/index.js";
 
 export {
