@@ -14,6 +14,7 @@ import {
 	ZookeeperClientConstructor,
 } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { InMemoryApiCounters } from "@fluidframework/server-services-utils";
 import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 
 /**
@@ -58,12 +59,21 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	private readonly latestOffsets: Map<number, number> = new Map();
 	private readonly paused: Map<number, boolean> = new Map();
 	private readonly pausedOffsets: Map<number, number> = new Map();
+	private readonly apiCounter = new InMemoryApiCounters();
+	private readonly failedApiCounterSuffix = ".Failed";
+	private consecutiveFailedCount = 0;
 
 	constructor(
 		endpoints: IKafkaEndpoints,
 		clientId: string,
 		topic: string,
 		public readonly groupId: string,
+		private readonly apiCounterEnabled: boolean,
+		private readonly apiCounterIntervalMS: number,
+		private readonly apiFailureRateTerminationThreshold: number,
+		private readonly apiMinimumCountToEnableTermination: number,
+		private readonly consecutiveFailedThresholdForLowerTotalRequests: number,
+		private readonly ignoreAndSkipCheckpointOnKafkaErrorCodes: number[],
 		options?: Partial<IKafkaConsumerOptions>,
 	) {
 		super(endpoints, clientId, topic, options);
@@ -87,6 +97,72 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			automaticConsume: options?.automaticConsume ?? true,
 			maxConsumerCommitRetries: options?.maxConsumerCommitRetries ?? 10,
 		};
+		if (this.apiCounterEnabled) {
+			setInterval(() => {
+				if (!this.apiCounter.countersAreActive) {
+					return;
+				}
+				const counters = this.apiCounter.getCounters();
+				this.apiCounter.resetAllCounters();
+				Lumberjack.info(
+					`KafkaConsumer counter for topic ${topic}`, // can be multiple partitions..?
+					counters,
+				);
+				this.terminateBasedOnCounterThreshold(counters);
+			}, this.apiCounterIntervalMS);
+		}
+	}
+
+	private terminateBasedOnCounterThreshold(counters: Record<string, number>): void {
+		if (this.apiFailureRateTerminationThreshold > 1) {
+			return; // If threshold set more than 1, meaning we should never terminate and skip followings.
+		}
+		let totalCount = 0;
+		let totalFailedCount = 0;
+
+		// currently we maintain counters for only `kafkaOffsetCommit` apiName
+		for (const [apiName, apiCounter] of Object.entries(counters)) {
+			totalCount += apiCounter;
+			if (apiName.endsWith(this.failedApiCounterSuffix)) {
+				totalFailedCount += apiCounter;
+			}
+		}
+
+		const failureRate = totalFailedCount / totalCount;
+
+		if (failureRate <= this.apiFailureRateTerminationThreshold) {
+			this.consecutiveFailedCount = 0;
+			return;
+		}
+
+		this.consecutiveFailedCount++;
+		const logProperties = {
+			failureRate,
+			totalCount,
+			totalFailedCount,
+			apiFailureRateTerminationThreshold: this.apiFailureRateTerminationThreshold,
+			apiMinimumCountToEnableTermination: this.apiMinimumCountToEnableTermination,
+			consecutiveFailedCount: this.consecutiveFailedCount,
+			consecutiveFailedThresholdForLowerTotalRequests:
+				this.consecutiveFailedThresholdForLowerTotalRequests,
+		};
+		if (
+			totalCount < this.apiMinimumCountToEnableTermination &&
+			this.consecutiveFailedCount < this.consecutiveFailedThresholdForLowerTotalRequests
+		) {
+			Lumberjack.warning("Total count didn't meet min threshold", logProperties);
+			return;
+		}
+
+		Lumberjack.warning("Failure rate more than threshold, terminating", logProperties);
+		this.error(new Error(`Failure rate more than threshold, terminating`), {
+			restart: true,
+			errorLabel: "rdkafkaConsumer:terminateBasedOnCounterThreshold",
+		});
+	}
+
+	public getIgnoreAndSkipCheckpointOnKafkaErrorCodes(): number[] {
+		return this.apiCounterEnabled ? this.ignoreAndSkipCheckpointOnKafkaErrorCodes : [];
 	}
 
 	/**
@@ -188,11 +264,26 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 						err.code === this.kafka.CODES.ERRORS.ERR_ILLEGAL_GENERATION);
 
 				if (!shouldRetryCommit) {
-					this.error(err, {
-						restart: false,
-						errorLabel: "rdkafkaConsumer:offset.commit",
-					});
+					if (
+						this.apiCounterEnabled &&
+						this.ignoreAndSkipCheckpointOnKafkaErrorCodes.includes(err.code)
+					) {
+						Lumberjack.info("Skipping checkpoint and incrementing api failed counter", {
+							error: err,
+							apiName: "kafkaOffsetCommit",
+						});
+						this.apiCounter.incrementCounter(
+							`kafkaOffsetCommit${this.failedApiCounterSuffix}`,
+						);
+					} else {
+						this.error(err, {
+							restart: false,
+							errorLabel: "rdkafkaConsumer:offset.commit",
+						});
+					}
 				}
+			} else if (this.apiCounterEnabled) {
+				this.apiCounter.incrementCounter("kafkaOffsetCommit");
 			}
 
 			for (const offset of offsets) {
