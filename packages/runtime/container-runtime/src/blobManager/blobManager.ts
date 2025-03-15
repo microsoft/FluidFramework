@@ -320,7 +320,7 @@ export class BlobManager {
 				}
 			}
 			pendingEntry.opsent = true;
-			return sendBlobAttachOp(localId, blobId);
+			sendBlobAttachOp(localId, blobId);
 		};
 	}
 
