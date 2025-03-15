@@ -85,7 +85,7 @@ const treeFactories: ITestTreeFactory[] = [
 				const text = i.toString();
 				insertText({
 					mergeTree,
-					pos: mergeTree.getLength(UniversalSequenceNumber, localClientId),
+					pos: mergeTree.getLength(mergeTree.localPerspective),
 					refSeq: UniversalSequenceNumber,
 					clientId: localClientId,
 					seq: UniversalSequenceNumber,
@@ -141,7 +141,7 @@ const treeFactories: ITestTreeFactory[] = [
 				const text = i.toString();
 				insertText({
 					mergeTree,
-					pos: mergeTree.getLength(UniversalSequenceNumber, localClientId),
+					pos: mergeTree.getLength(mergeTree.localPerspective),
 					refSeq: UniversalSequenceNumber,
 					clientId: localClientId,
 					seq: UniversalSequenceNumber,
@@ -157,9 +157,8 @@ const treeFactories: ITestTreeFactory[] = [
 			mergeTree.markRangeRemoved(
 				0,
 				remove,
-				UniversalSequenceNumber,
-				localClientId,
-				UniversalSequenceNumber,
+				mergeTree.localPerspective,
+				{ clientId: localClientId, seq: UniversalSequenceNumber },
 				undefined as never,
 			);
 			initialText = initialText.slice(Math.max(0, remove));
@@ -168,9 +167,8 @@ const treeFactories: ITestTreeFactory[] = [
 			mergeTree.markRangeRemoved(
 				initialText.length - remove,
 				initialText.length,
-				UniversalSequenceNumber,
-				localClientId,
-				UniversalSequenceNumber,
+				mergeTree.localPerspective,
+				{ clientId: localClientId, seq: UniversalSequenceNumber },
 				undefined as never,
 			);
 			initialText = initialText.slice(0, Math.max(0, initialText.length - remove));
@@ -219,7 +217,7 @@ describe("MergeTree.insertingWalk", () => {
 					});
 
 					assert.equal(
-						testData.mergeTree.getLength(testData.refSeq, localClientId),
+						testData.mergeTree.getLength(testData.mergeTree.localPerspective),
 						testData.initialText.length + 1,
 					);
 					const currentValue = testData.textHelper.getText(testData.refSeq, localClientId);
@@ -240,7 +238,7 @@ describe("MergeTree.insertingWalk", () => {
 					});
 
 					assert.equal(
-						testData.mergeTree.getLength(testData.refSeq, localClientId),
+						testData.mergeTree.getLength(testData.mergeTree.localPerspective),
 						testData.initialText.length + 1,
 					);
 					const currentValue = testData.textHelper.getText(testData.refSeq, localClientId);
@@ -261,7 +259,7 @@ describe("MergeTree.insertingWalk", () => {
 					});
 
 					assert.equal(
-						testData.mergeTree.getLength(testData.refSeq, localClientId),
+						testData.mergeTree.getLength(testData.mergeTree.localPerspective),
 						testData.initialText.length + 1,
 					);
 					const currentValue = testData.textHelper.getText(testData.refSeq, localClientId);

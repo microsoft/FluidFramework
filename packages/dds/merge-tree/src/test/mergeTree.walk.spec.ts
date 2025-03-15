@@ -23,16 +23,15 @@ describe("MergeTree walks", () => {
 		mergeTree.insertSegments(
 			0,
 			[TextSegment.make(initialText)],
-			UniversalSequenceNumber,
-			LocalClientId,
-			UniversalSequenceNumber,
+			mergeTree.localPerspective,
+			{ seq: UniversalSequenceNumber, clientId: LocalClientId },
 			undefined,
 		);
 		for (let i = 1; i < MaxNodesInBlock * MaxNodesInBlock; i++) {
 			const text = i.toString();
 			insertText({
 				mergeTree,
-				pos: mergeTree.getLength(UniversalSequenceNumber, localClientId),
+				pos: mergeTree.getLength(mergeTree.localPerspective),
 				refSeq: UniversalSequenceNumber,
 				clientId: localClientId,
 				seq: UniversalSequenceNumber,

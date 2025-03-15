@@ -46,7 +46,6 @@ export {
 	getSlideToSegoff,
 } from "./mergeTree.js";
 export {
-	IMergeTreeClientSequenceArgs,
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeDeltaOpArgs,
 	IMergeTreeMaintenanceCallbackArgs,
@@ -142,3 +141,4 @@ export {
 	MergeTreeRevertibleDriver,
 	revertMergeTreeDeltaRevertibles,
 } from "./revertibles.js";
+export { OperationStamp } from "./stamps.js";
