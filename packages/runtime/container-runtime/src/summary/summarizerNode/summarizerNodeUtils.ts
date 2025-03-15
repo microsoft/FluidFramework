@@ -91,8 +91,9 @@ export class EscapedPath {
 	 * @param path - Id or path part of a node
 	 */
 	public static create(path: string): EscapedPath {
-		return new EscapedPath(encodeURIComponent(path));
+		return new EscapedPath(path);
 	}
+
 	public toString(): string {
 		return this.path;
 	}
@@ -100,9 +101,7 @@ export class EscapedPath {
 	 * Creates and returns a new instance of this class for child of the current node.
 	 */
 	public createChildPath(childNodePath: EscapedPath): EscapedPath {
-		return new EscapedPath(
-			`${this.path}/${encodeURIComponent(channelsTreeName)}/${childNodePath.path}`,
-		);
+		return new EscapedPath(`${this.path}/${channelsTreeName}/${childNodePath.path}`);
 	}
 }
 export interface PendingSummaryInfo {
