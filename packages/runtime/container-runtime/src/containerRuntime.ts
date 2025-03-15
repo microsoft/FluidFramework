@@ -89,7 +89,10 @@ import type {
 	IInboundSignalMessage,
 	IRuntimeMessagesContent,
 	ISummarizerNodeWithGC,
-	StageControls,
+	// eslint-disable-next-line import/no-deprecated
+	StageControlsExperimental,
+	// eslint-disable-next-line import/no-deprecated
+	IContainerRuntimeBaseExperimental,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	FlushMode,
@@ -712,6 +715,8 @@ export class ContainerRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents>
 	implements
 		IContainerRuntime,
+		// eslint-disable-next-line import/no-deprecated
+		IContainerRuntimeBaseExperimental,
 		IRuntime,
 		ISummarizerRuntime,
 		ISummarizerInternalsProvider,
@@ -3126,12 +3131,14 @@ export class ContainerRuntime
 		return result;
 	}
 
-	private stageControls: StageControls | undefined;
+	// eslint-disable-next-line import/no-deprecated
+	private stageControls: StageControlsExperimental | undefined;
 	public get inStagingMode(): boolean {
 		return this.stageControls !== undefined;
 	}
 
-	enterStagingMode = (): StageControls => {
+	// eslint-disable-next-line import/no-deprecated
+	enterStagingMode = (): StageControlsExperimental => {
 		if (this.stageControls !== undefined) {
 			throw new Error("already in staging mode");
 		}

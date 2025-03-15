@@ -76,8 +76,6 @@ export interface IFluidDataStoreRuntime
 	 */
 	readonly attachState: AttachState;
 
-	get inStagingMode(): boolean;
-
 	readonly idCompressor: IIdCompressor | undefined;
 
 	/**
@@ -151,4 +149,15 @@ export interface IFluidDataStoreRuntime
 	 * with it.
 	 */
 	readonly entryPoint: IFluidHandle<FluidObject>;
+}
+
+/**
+ * @experimental
+ * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
+ * @legacy
+ * @alpha
+ * @sealed
+ */
+export interface IFluidDataStoreRuntimeExperimental extends IFluidDataStoreRuntime {
+	readonly inStagingMode?: boolean;
 }

@@ -62,8 +62,6 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     get IFluidHandleContext(): this;
     // (undocumented)
-    get inStagingMode(): boolean;
-    // (undocumented)
     get isAttached(): boolean;
     // (undocumented)
     get logger(): ITelemetryLoggerExt;

@@ -189,16 +189,6 @@ export interface IDataStore {
 }
 
 /**
- * @legacy
- * @alpha
- * @sealed
- */
-export interface StageControls {
-	readonly commitChanges: () => void;
-	readonly discardChanges: () => void;
-}
-
-/**
  * A reduced set of functionality of IContainerRuntime that a data store context/data store runtime will need
  * TODO: this should be merged into IFluidDataStoreContext
  * @legacy
@@ -217,9 +207,6 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * If the callback throws an error, the container will close and the error will be logged.
 	 */
 	orderSequentially(callback: () => void): void;
-
-	get inStagingMode(): boolean;
-	readonly enterStagingMode: () => StageControls;
 
 	/**
 	 * Submits a container runtime level signal to be sent to other clients.
@@ -311,6 +298,30 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 		loadingGroupIds: string[],
 		pathParts: string[],
 	): Promise<{ snapshotTree: ISnapshotTree; sequenceNumber: number }>;
+}
+
+/**
+ * @experimental
+ * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
+ * @legacy
+ * @alpha
+ * @sealed
+ */
+export interface StageControlsExperimental {
+	readonly commitChanges: () => void;
+	readonly discardChanges: () => void;
+}
+
+/**
+ * @experimental
+ * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
+ * @legacy
+ * @alpha
+ * @sealed
+ */
+export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase {
+	enterStagingMode?(): StageControlsExperimental;
+	readonly inStagingMode?: boolean;
 }
 
 /**

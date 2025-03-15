@@ -94,8 +94,6 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;
     // (undocumented)
-    get inStagingMode(): boolean;
-    // (undocumented)
     readonly logger: ITelemetryBaseLogger;
     // (undocumented)
     readonly objectsRoutingContext: IFluidHandleContext;
@@ -124,6 +122,12 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
     // (undocumented)
     (event: "connected", listener: (clientId: string) => void): any;
+}
+
+// @alpha @sealed @deprecated (undocumented)
+export interface IFluidDataStoreRuntimeExperimental extends IFluidDataStoreRuntime {
+    // (undocumented)
+    readonly inStagingMode?: boolean;
 }
 
 // @alpha (undocumented)
