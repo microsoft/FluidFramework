@@ -58,6 +58,8 @@ trigger:
     - next
     - lts
     - release/*
+    # DO NOT COMMIT TO MAIN. FOR TESTING BRANCH ONLY
+    - test/staging-mode
   paths:
     include:
     - .dockerignore
@@ -120,6 +122,8 @@ pr:
     - next
     - lts
     - release/*
+    # DO NOT COMMIT TO MAIN. FOR TESTING BRANCH ONLY
+    - test/staging-mode
   paths:
     include:
     - .dockerignore
