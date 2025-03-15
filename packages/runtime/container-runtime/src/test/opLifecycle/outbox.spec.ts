@@ -189,6 +189,7 @@ describe("Outbox", () => {
 		referenceSequenceNumber:
 			messages.length === 0 ? undefined : messages[0].referenceSequenceNumber,
 		hasReentrantOps: false,
+		staged: undefined,
 	});
 
 	const DefaultCompressionOptions = {
@@ -240,7 +241,6 @@ describe("Outbox", () => {
 			},
 			opReentrancy: () => state.isReentrant,
 			closeContainer: (error?: ICriticalContainerError) => {},
-			rollback: () => {},
 		});
 	};
 
@@ -533,10 +533,15 @@ describe("Outbox", () => {
 		assert.equal(state.batchesSubmitted.length, 2);
 		assert.equal(state.individualOpsSubmitted.length, 0);
 		assert.equal(state.deltaManagerFlushCalls, 0);
-		assert.deepEqual(state.batchesCompressed, [toBatch([messages[2]]), groupedMessages]);
+		assert.deepEqual(
+			state.batchesCompressed,
+			[toBatch([messages[2]]), groupedMessages],
+			"Compressed batches don't match expected",
+		);
 		assert.deepEqual(
 			state.batchesSubmitted.map((x) => x.messages),
 			[[batchedMessage(messages[2])], [batchedMessage(groupedMessages.messages[0])]],
+			"Submitted batches don't match expected",
 		);
 
 		// Note the expected CSN here is fixed to the batch's starting CSN
@@ -557,6 +562,7 @@ describe("Outbox", () => {
 				opMetadata: message.metadata,
 				batchStartCsn: csn,
 			})),
+			"Pending messages don't match expected order/properties",
 		);
 	});
 

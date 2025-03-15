@@ -53,7 +53,7 @@ describe("Pending State Manager", () => {
 			return { contents: payload } as unknown as BatchMessage;
 		}
 
-		const rollback = (m: BatchMessage) => {
+		const rollBackCallback = (m: BatchMessage) => {
 			rollbackCalled = true;
 			rollbackContent.push(m);
 			if (rollbackShouldThrow) {
@@ -66,12 +66,12 @@ describe("Pending State Manager", () => {
 			rollbackContent = [];
 			rollbackShouldThrow = false;
 
-			batchManager = new BatchManager({ hardLimit: 950 * 1024, canRebase: true, rollback });
+			batchManager = new BatchManager({ hardLimit: 950 * 1024, canRebase: true });
 		});
 
 		it("should do nothing when rolling back empty pending stack", () => {
 			const checkpoint = batchManager.checkpoint();
-			checkpoint.rollback();
+			checkpoint.rollback(rollBackCallback);
 
 			assert.strictEqual(rollbackCalled, false);
 			assert.strictEqual(batchManager.empty, true);
@@ -80,7 +80,7 @@ describe("Pending State Manager", () => {
 		it("should do nothing when rolling back nothing", () => {
 			batchManager.push(getMessage("1"), /* reentrant */ false);
 			const checkpoint = batchManager.checkpoint();
-			checkpoint.rollback();
+			checkpoint.rollback(rollBackCallback);
 
 			assert.strictEqual(rollbackCalled, false);
 			assert.strictEqual(batchManager.empty, false);
@@ -91,7 +91,7 @@ describe("Pending State Manager", () => {
 			batchManager.push(getMessage("11"), /* reentrant */ false);
 			batchManager.push(getMessage("22"), /* reentrant */ false);
 			batchManager.push(getMessage("33"), /* reentrant */ false);
-			checkpoint.rollback();
+			checkpoint.rollback(rollBackCallback);
 
 			assert.strictEqual(rollbackCalled, true);
 			assert.strictEqual(rollbackContent.length, 3);
@@ -106,7 +106,7 @@ describe("Pending State Manager", () => {
 			const checkpoint = batchManager.checkpoint();
 			batchManager.push(getMessage("22"), /* reentrant */ false);
 			batchManager.push(getMessage("33"), /* reentrant */ false);
-			checkpoint.rollback();
+			checkpoint.rollback(rollBackCallback);
 
 			assert.strictEqual(rollbackCalled, true);
 			assert.strictEqual(rollbackContent.length, 2);
@@ -120,7 +120,7 @@ describe("Pending State Manager", () => {
 			const checkpoint = batchManager.checkpoint();
 			batchManager.push(getMessage("11"), /* reentrant */ false);
 			assert.throws(() => {
-				checkpoint.rollback();
+				checkpoint.rollback(rollBackCallback);
 			});
 
 			assert.strictEqual(rollbackCalled, true);

@@ -55,7 +55,6 @@ export interface IOutboxParameters {
 	readonly reSubmit: (message: PendingMessageResubmitData) => void;
 	readonly opReentrancy: () => boolean;
 	readonly closeContainer: (error?: ICriticalContainerError) => void;
-	readonly rollback: (message: BatchMessage) => void;
 }
 
 /**
@@ -140,12 +139,7 @@ export class Outbox {
 			? Number.POSITIVE_INFINITY
 			: this.params.config.maxBatchSizeInBytes;
 
-		this.mainBatch = new BatchManager({
-			hardLimit,
-			canRebase: true,
-			rollback: params.rollback,
-		});
-		//* TODO: Figure out rollback requirements/impl for these two batch managers
+		this.mainBatch = new BatchManager({ hardLimit, canRebase: true });
 		this.blobAttachBatch = new BatchManager({ hardLimit, canRebase: true });
 		this.idAllocationBatch = new BatchManager({
 			hardLimit,
@@ -267,24 +261,20 @@ export class Outbox {
 	 * This method is expected to be called at the end of a batch.
 	 * @param resubmittingBatchId - If defined, indicates this is a resubmission of a batch
 	 * with the given Batch ID, which must be preserved
+	 * @param resubmittingStagedBatch - If defined, indicates this is a resubmission of a batch that is staged,
+	 * meaning it should not be sent to the ordering service yet.
 	 */
-	public flush(resubmittingBatchId?: BatchId): void {
-		if (this.blockFlush) {
-			return;
-		}
+	public flush(resubmittingBatchId?: BatchId, resubmittingStagedBatch?: boolean): void {
 		if (this.isContextReentrant()) {
 			const error = new UsageError("Flushing is not supported inside DDS event handlers");
 			this.params.closeContainer(error);
 			throw error;
 		}
 
-		this.flushAll(resubmittingBatchId);
+		this.flushAll(resubmittingBatchId, resubmittingStagedBatch);
 	}
 
-	private flushAll(resubmittingBatchId?: BatchId): void {
-		if (this.blockFlush) {
-			return;
-		}
+	private flushAll(resubmittingBatchId?: BatchId, resubmittingStagedBatch?: boolean): void {
 		// If we're resubmitting and all batches are empty, we need to flush an empty batch.
 		// Note that we currently resubmit one batch at a time, so on resubmit, 2 of the 3 batches will *always* be empty.
 		// It's theoretically possible that we don't *need* to resubmit this empty batch, and in those cases, it'll safely be ignored
@@ -293,28 +283,33 @@ export class Outbox {
 		const allBatchesEmpty =
 			this.idAllocationBatch.empty && this.blobAttachBatch.empty && this.mainBatch.empty;
 		if (resubmittingBatchId && allBatchesEmpty) {
-			this.flushEmptyBatch(resubmittingBatchId);
+			this.flushEmptyBatch(resubmittingBatchId, resubmittingStagedBatch);
 			return;
 		}
 		// Don't use resubmittingBatchId for idAllocationBatch.
 		// ID Allocation messages are not directly resubmitted so we don't want to reuse the batch ID.
-		this.flushInternal(this.idAllocationBatch);
-		this.flushInternal(
-			this.blobAttachBatch,
-			true /* disableGroupedBatching */,
+		this.flushInternal({
+			batchManager: this.idAllocationBatch,
+			// Note: For now, we will never stage ID Allocation messages.
+			// They won't contain personal info and no harm in extra allocations in case of discarding the staged changes
+		});
+		this.flushInternal({
+			batchManager: this.blobAttachBatch,
+			disableGroupedBatching: true,
 			resubmittingBatchId,
-		);
-		this.flushInternal(
-			this.mainBatch,
-			false /* disableGroupedBatching */,
+			resubmittingStagedBatch,
+		});
+		this.flushInternal({
+			batchManager: this.mainBatch,
 			resubmittingBatchId,
-		);
+			resubmittingStagedBatch,
+		});
 	}
 
-	private flushEmptyBatch(resubmittingBatchId: BatchId): void {
-		if (this.blockFlush) {
-			return;
-		}
+	private flushEmptyBatch(
+		resubmittingBatchId: BatchId,
+		resubmittingStagedBatch: boolean = false, // We know we're resubmitting, so default to false is ok
+	): void {
 		const referenceSequenceNumber =
 			this.params.getCurrentSequenceNumbers().referenceSequenceNumber;
 		assert(
@@ -326,26 +321,40 @@ export class Outbox {
 			referenceSequenceNumber,
 		);
 		let clientSequenceNumber: number | undefined;
-		if (this.params.shouldSend()) {
+		if (this.params.shouldSend() && !resubmittingStagedBatch) {
 			clientSequenceNumber = this.sendBatch(emptyGroupedBatch);
 		}
 		this.params.pendingStateManager.onFlushBatch(
 			emptyGroupedBatch.messages, // This is the single empty Grouped Batch message
 			clientSequenceNumber,
+			resubmittingStagedBatch,
 		);
 		return;
 	}
 
-	private flushInternal(
-		batchManager: BatchManager,
-		disableGroupedBatching: boolean = false,
-		resubmittingBatchId?: BatchId,
-	): void {
-		if (batchManager.empty || this.blockFlush) {
+	private flushInternal(params: {
+		batchManager: BatchManager;
+		disableGroupedBatching?: boolean;
+		resubmittingBatchId?: BatchId; // undefined if not resubmitting
+		resubmittingStagedBatch?: boolean; // undefined if not resubmitting
+	}): void {
+		const {
+			batchManager,
+			disableGroupedBatching = false,
+			resubmittingBatchId,
+			resubmittingStagedBatch,
+		} = params;
+		if (batchManager.empty) {
 			return;
 		}
 
 		const rawBatch = batchManager.popBatch(resubmittingBatchId);
+
+		// When resubmitting, we respect the staged state of the original batch.
+		// In this case rawBatch.staged will match the state of inStagingMode when
+		// the resubmit occurred, which is not relevant.
+		const staged = resubmittingStagedBatch ?? rawBatch.staged;
+
 		const shouldGroup =
 			!disableGroupedBatching && this.params.groupingManager.shouldGroup(rawBatch);
 		if (batchManager.options.canRebase && rawBatch.hasReentrantOps === true && shouldGroup) {
@@ -353,6 +362,9 @@ export class Outbox {
 			// If a batch contains reentrant ops (ops created as a result from processing another op)
 			// it needs to be rebased so that we can ensure consistent reference sequence numbers
 			// and eventual consistency at the DDS level.
+			// Note: Since this is happening in the same turn the ops were originally created with,
+			// and they haven't gone to PendingStateManager yet, we can just let them respect
+			// ContainerRuntime.inStagingMode
 			this.rebase(rawBatch, batchManager);
 			return;
 		}
@@ -361,7 +373,7 @@ export class Outbox {
 		// Did we disconnect? (i.e. is shouldSend false?)
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
-		if (this.params.shouldSend()) {
+		if (this.params.shouldSend() && !staged) {
 			const processedBatch = disableGroupedBatching
 				? rawBatch
 				: this.compressAndChunkBatch(
@@ -378,6 +390,7 @@ export class Outbox {
 			rawBatch.messages,
 			clientSequenceNumber,
 			batchManager.options.ignoreBatchId,
+			staged,
 		);
 	}
 
@@ -413,7 +426,7 @@ export class Outbox {
 			this.batchRebasesToReport--;
 		}
 
-		this.flushInternal(batchManager);
+		this.flushInternal({ batchManager });
 		this.rebasing = false;
 	}
 
@@ -517,31 +530,18 @@ export class Outbox {
 		return clientSequenceNumber;
 	}
 
-	private blockFlush: boolean = false;
 	/**
 	 * Gets a checkpoint object per batch that facilitates iterating over the batch messages when rolling back.
 	 */
-	public getBatchCheckpoints(blockFlush: boolean = false): {
-		unblockFlush: () => void;
+	public getBatchCheckpoints(): {
 		mainBatch: IBatchCheckpoint;
 		idAllocationBatch: IBatchCheckpoint;
 		blobAttachBatch: IBatchCheckpoint;
 	} {
-		const thisCheckpointBlocksFlush = !this.blockFlush && blockFlush === true;
-
-		if (thisCheckpointBlocksFlush) {
-			this.blockFlush = true;
-		}
-
 		// This variable is declared with a specific type so that we have a standard import of the IBatchCheckpoint type.
 		// When the type is inferred, the generated .d.ts uses a dynamic import which doesn't resolve.
 		const mainBatch: IBatchCheckpoint = this.mainBatch.checkpoint();
 		return {
-			unblockFlush: thisCheckpointBlocksFlush
-				? () => {
-						this.blockFlush = false;
-					}
-				: () => {},
 			mainBatch,
 			idAllocationBatch: this.idAllocationBatch.checkpoint(),
 			blobAttachBatch: this.blobAttachBatch.checkpoint(),
