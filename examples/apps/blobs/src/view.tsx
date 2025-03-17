@@ -30,9 +30,13 @@ export const BlobMapView: FC<IBlobMapViewProps> = ({ blobMap }: IBlobMapViewProp
 		blobViews.push(<div id={id}></div>);
 	}
 
+	const addBlob = () => {
+		blobMap.addBlob(Uint8Array.from([1, 2, 3]));
+	};
+
 	return (
 		<div>
-			<button style={{ fontSize: "50px" }} onClick={blobMap.addBlob}>
+			<button style={{ fontSize: "50px" }} onClick={addBlob}>
 				Add blob
 			</button>
 			{blobViews}

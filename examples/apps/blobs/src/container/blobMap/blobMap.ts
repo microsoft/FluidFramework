@@ -4,7 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { IEventProvider } from "@fluidframework/core-interfaces";
+import type { IEventProvider, IFluidHandle } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/legacy";
 import type {
 	IChannelFactory,
@@ -16,8 +16,11 @@ import type {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/legacy";
+import { v4 as uuid } from "uuid";
 
 import type { IBlobMap, IBlobMapEvents } from "./interface.js";
+
+type UploadBlobFn = (blob: ArrayBufferLike) => Promise<IFluidHandle<ArrayBufferLike>>;
 
 /**
  * The BlobMap is our data object that implements the IBlobMap interface.
@@ -28,7 +31,10 @@ class BlobMap implements IBlobMap {
 		return this._events;
 	}
 
-	public constructor(private readonly map: ISharedMap) {
+	public constructor(
+		private readonly map: ISharedMap,
+		private readonly uploadBlob: UploadBlobFn,
+	) {
 		this.map.on("valueChanged", (changed: IValueChanged) => {
 			this._events.emit("blobsChanged");
 		});
@@ -38,7 +44,13 @@ class BlobMap implements IBlobMap {
 		return this.map;
 	};
 
-	public readonly addBlob = () => {};
+	public readonly addBlob = (blob: ArrayBufferLike) => {
+		this.uploadBlob(blob)
+			.then((handle) => {
+				this.map.set(uuid(), handle);
+			})
+			.catch(console.error);
+	};
 }
 
 const mapId = "blob-map";
@@ -60,7 +72,9 @@ export class BlobMapFactory implements IFluidDataStoreFactory {
 	): Promise<IFluidDataStoreChannel> {
 		const provideEntryPoint = async (entryPointRuntime: IFluidDataStoreRuntime) => {
 			const map = (await entryPointRuntime.getChannel(mapId)) as ISharedMap;
-			return new BlobMap(map);
+			return new BlobMap(map, async (blob: ArrayBufferLike) =>
+				entryPointRuntime.uploadBlob(blob),
+			);
 		};
 
 		const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(

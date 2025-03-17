@@ -26,5 +26,5 @@ export interface IBlobMap {
 	 */
 	readonly getBlobs: () => Map<string, unknown>;
 
-	readonly addBlob: () => void;
+	readonly addBlob: (blob: ArrayBufferLike) => void;
 }
