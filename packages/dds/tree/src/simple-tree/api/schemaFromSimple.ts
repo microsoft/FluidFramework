@@ -41,7 +41,7 @@ function generateFieldSchema(simple: SimpleFieldSchema, context: Context): Field
 }
 
 function generateAllowedTypes(allowed: ReadonlySet<string>, context: Context): AllowedTypes {
-	return [...allowed].map((id) => context.get(id) ?? fail(`Missing schema`));
+	return [...allowed].map((id) => context.get(id) ?? fail(0xb5a /* Missing schema */));
 }
 
 function generateNode(id: string, schema: SimpleNodeSchema, context: Context): TreeNodeSchema {
@@ -59,7 +59,8 @@ function generateNode(id: string, schema: SimpleNodeSchema, context: Context): T
 			return factory.map(id, generateAllowedTypes(schema.allowedTypes, context));
 		case NodeKind.Leaf:
 			return (
-				SchemaFactory.leaves.find((leaf) => leaf.identifier === id) ?? fail(`Missing schema`)
+				SchemaFactory.leaves.find((leaf) => leaf.identifier === id) ??
+				fail(0xb5b /* Missing schema */)
 			);
 		default:
 			return unreachableCase(schema);
