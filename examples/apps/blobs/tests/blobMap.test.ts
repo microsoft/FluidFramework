@@ -5,7 +5,7 @@
 
 import { globals } from "../jest.config.cjs";
 
-describe("diceRoller", () => {
+describe("blobMap", () => {
 	beforeAll(async () => {
 		// Wait for the page to load first before running any tests
 		// so this time isn't attributed to the first test
@@ -18,8 +18,8 @@ describe("diceRoller", () => {
 		await page.waitForFunction(() => window["fluidStarted"]);
 	});
 
-	it("loads and there's a button with Roll", async () => {
+	it("loads and there's a button with Add blob", async () => {
 		// Validate there is a button that can be clicked
-		await expect(page).toClick("button", { text: "Roll" });
+		await expect(page).toClick("button", { text: "Add blob" });
 	});
 });

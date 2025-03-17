@@ -12,6 +12,11 @@ export interface IBlobMapEvents extends IEvent {
 	(event: "blobsChanged", listener: () => void);
 }
 
+export interface IBlobRecord {
+	readonly id: string;
+	readonly blob: Blob;
+}
+
 /**
  * IBlobMap describes the public API surface for our blob map data object.
  */
@@ -24,7 +29,7 @@ export interface IBlobMap {
 	/**
 	 * Get all the blobs in the map.
 	 */
-	readonly getBlobs: () => Map<string, unknown>;
+	readonly getBlobs: () => IBlobRecord[];
 
-	readonly addBlob: (blob: ArrayBufferLike) => void;
+	readonly addBlob: (blob: Blob) => void;
 }

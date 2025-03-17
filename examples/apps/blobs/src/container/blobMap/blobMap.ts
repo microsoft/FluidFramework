@@ -18,36 +18,52 @@ import type {
 } from "@fluidframework/runtime-definitions/legacy";
 import { v4 as uuid } from "uuid";
 
-import type { IBlobMap, IBlobMapEvents } from "./interface.js";
+import type { IBlobMap, IBlobMapEvents, IBlobRecord } from "./interface.js";
 
-type UploadBlobFn = (blob: ArrayBufferLike) => Promise<IFluidHandle<ArrayBufferLike>>;
+type UploadArrayBufferFn = (blob: ArrayBufferLike) => Promise<IFluidHandle<ArrayBufferLike>>;
 
 /**
  * The BlobMap is our data object that implements the IBlobMap interface.
  */
 class BlobMap implements IBlobMap {
+	private readonly blobMap = new Map<string, Blob>();
+	private readonly blobs: IBlobRecord[] = [];
+
 	private readonly _events = new TypedEventEmitter<IBlobMapEvents>();
 	public get events(): IEventProvider<IBlobMapEvents> {
 		return this._events;
 	}
 
 	public constructor(
-		private readonly map: ISharedMap,
-		private readonly uploadBlob: UploadBlobFn,
+		private readonly sharedMap: ISharedMap,
+		private readonly uploadArrayBuffer: UploadArrayBufferFn,
 	) {
-		this.map.on("valueChanged", (changed: IValueChanged) => {
-			this._events.emit("blobsChanged");
+		this.sharedMap.on("valueChanged", (changed: IValueChanged) => {
+			const handle = this.sharedMap.get(changed.key);
+			handle.get().then((arrayBuffer: ArrayBufferLike) => {
+				this.blobMap.set(changed.key, new Blob([arrayBuffer]));
+				this.blobs.push({
+					id: changed.key,
+					blob: new Blob([arrayBuffer]),
+				});
+				// Sort in case timestamps disagree with map insertion order
+				this.blobs.sort((a, b) => a.id.localeCompare(b.id, "en", { sensitivity: "base" }));
+				this._events.emit("blobsChanged");
+			});
 		});
 	}
 
 	public readonly getBlobs = () => {
-		return this.map;
+		return this.blobs;
 	};
 
-	public readonly addBlob = (blob: ArrayBufferLike) => {
-		this.uploadBlob(blob)
+	public readonly addBlob = (blob: Blob) => {
+		blob
+			.arrayBuffer()
+			.then(this.uploadArrayBuffer)
 			.then((handle) => {
-				this.map.set(uuid(), handle);
+				// Use timestamp as a hack for a consistent sortable order.
+				this.sharedMap.set(`${Date.now()}-${uuid()}`, handle);
 			})
 			.catch(console.error);
 	};
@@ -72,8 +88,8 @@ export class BlobMapFactory implements IFluidDataStoreFactory {
 	): Promise<IFluidDataStoreChannel> {
 		const provideEntryPoint = async (entryPointRuntime: IFluidDataStoreRuntime) => {
 			const map = (await entryPointRuntime.getChannel(mapId)) as ISharedMap;
-			return new BlobMap(map, async (blob: ArrayBufferLike) =>
-				entryPointRuntime.uploadBlob(blob),
+			return new BlobMap(map, async (arrayBuffer: ArrayBufferLike) =>
+				entryPointRuntime.uploadBlob(arrayBuffer),
 			);
 		};
 
