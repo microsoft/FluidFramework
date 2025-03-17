@@ -21,10 +21,10 @@ import { IMergeNode, Marker, seqLTE, type ISegmentPrivate } from "../mergeTreeNo
 import { IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
 import { PropertySet, matchProperties } from "../properties.js";
 import type { IHasInsertionInfo, IHasRemovalInfo } from "../segmentInfos.js";
+import type { RemoveOperationStamp } from "../stamps.js";
 import { TextSegment, TextSegmentGranularity } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
-import type { RemoveOperationStamp } from "../stamps.js";
 
 function getOpString(msg: ISequencedDocumentMessage | undefined): string {
 	if (msg === undefined) {
