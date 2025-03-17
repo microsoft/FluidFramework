@@ -82,11 +82,8 @@ describeCompat.only(
 		};
 
 		const executionOptions: BenchmarkTimingOptions = {
-			//* startPhase: Phase.CollectData, // This ensures we only run one iteration per batch, so beforeEachBatch becomes beforeEach
-			//* 50 enough? 100?
-			minBatchCount: 125, // Since we're only running one iteration per batch, we need to run a lot of batches to get a good sample
-			//* maxBenchmarkDurationSeconds: 0,
-			minBatchDurationSeconds: 0,
+			minBatchDurationSeconds: 0, // This ensures we only run one iteration per batch. These operations are slow enough that 1 iteration can be measured alone.
+			minBatchCount: 100, // Since we're only running one iteration per batch, we need to run a lot of batches to get a good sample (even if it takes longer than default 5s)
 		};
 
 		function sendOps(label: string) {
@@ -100,7 +97,7 @@ describeCompat.only(
 		benchmark({
 			//* only: true, //*
 			title: `Submit+Flush a single batch of ${batchSize} ops`,
-			...executionOptions,
+			...executionOptions, // We could use the defaults for this one, but this way the measurement is symmetrical with the "Process" benchmark below.
 			before: async () => {
 				await setup();
 			},
@@ -119,8 +116,7 @@ describeCompat.only(
 		});
 
 		benchmark({
-			//* only: true, //*
-			title: "Process 2000 Inbound ops (local)",
+			title: `Process a single batch of ${batchSize} Inbound ops (local)`,
 			...executionOptions,
 			async benchmarkFnCustom(state): Promise<void> {
 				let running = true;
@@ -128,16 +124,17 @@ describeCompat.only(
 				do {
 					await setup();
 
-					//* Let it calibrate this...??
 					assert(state.iterationsPerBatch === 1, "Expecting only one iteration per batch");
 
-					// This will get the ops to the server, but the inbound queue will remain paused
+					// This will get the batch of ops roundtripped and into the inbound queue, but the inbound queue will remain paused
 					await provider.opProcessingController.pauseProcessing();
 					sendOps(`[Batch-${batchId++}]`);
 					await provider.opProcessingController.processOutgoing();
 
-					// Measure how long it takes to process the ops when they roundtrip
+					// Now process the batch of ops that's sitting in the inbound queue.
+					// This is the precise duration we want to measure.
 					const start = state.timer.now();
+					// Note that process is synchronous, but this waits for the queue to become idle so it's async. Shouldn't affect measurement though.
 					await provider.opProcessingController.processIncoming();
 					const end = state.timer.now();
 
@@ -145,40 +142,15 @@ describeCompat.only(
 					const duration = state.timer.toSeconds(start, end);
 					running = state.recordBatch(duration);
 
+					// Tear down this container, we start fresh for each measurement
 					mainContainer.dispose();
 				} while (running);
 			},
-			//* IMPORTANT - Must add await to doBatchAsync in dist/runBenchmark.js
-			// beforeEachBatchX: (async () => {
-			// 	await toIDeltaManagerFull(containerRuntime.deltaManager).inbound.pause();
-			// 	sendOps("B");
-			// 	const opsSent = await timeoutPromise<number>(
-			// 		(resolve) => {
-			// 			toIDeltaManagerFull(containerRuntime.deltaManager).outbound.once("idle", resolve);
-			// 		},
-			// 		{ errorMsg: "container's outbound queue never reached idle state" },
-			// 	);
-			// 	assert(opsSent > 0, "Expecting op(s) to be sent (likely multiple chunked ops).");
-			// }) as any, //* Until new benchmark pkg release
-			// benchmarkFnAsyncX: async () => {
-			// 	toIDeltaManagerFull(containerRuntime.deltaManager).inbound.resume();
-			// 	await provider.ensureSynchronized();
-			// },
 		});
-
-		//*
-		// benchmark({
-		// 	title: "Roundtrip (includes local server sequencing time)",
-		// 	...executionOptions,
-		// 	benchmarkFnAsync: async () => {
-		// 		sendOps("B");
-		// 		await provider.ensureSynchronized();
-		// 	},
-		// });
 	},
 );
 
-describeCompat(
+describeCompat.only(
 	"Op Critical Paths - for investigating curious benchmark interference",
 	"NoCompat",
 	(getTestObjectProvider) => {
