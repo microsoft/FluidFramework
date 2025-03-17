@@ -4,12 +4,11 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils";
 import {
 	type ImplicitFieldSchema,
 	type TreeFieldFromImplicitField,
 	getSimpleSchema,
-	Tree,
-	type TreeNode,
 } from "@fluidframework/tree/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { createZodJsonValidator } from "typechat/zod";
@@ -25,7 +24,7 @@ import {
 } from "./agentEditTypes.js";
 import type { IdGenerator } from "./idGenerator.js";
 import { doesNodeContainArraySchema, generateEditTypesForPrompt } from "./typeGeneration.js";
-import { fail } from "./utils.js";
+import { fail, type View } from "./utils.js";
 
 /**
  * A log of edits that have been made to a tree.
@@ -44,25 +43,29 @@ export function toDecoratedJson(
 	root: TreeFieldFromImplicitField<ImplicitFieldSchema>,
 ): string {
 	idGenerator.assignIds(root);
-	const stringified: string = JSON.stringify(root, (_, value) => {
-		if (typeof value === "object" && !Array.isArray(value) && value !== null) {
-			// TODO: SharedTree Team needs to either publish TreeNode as a class to use .instanceof() or a typeguard.
-			// Uncomment this assertion back once we have a typeguard ready.
-			// assert(isTreeNode(node), "Non-TreeNode value in tree.");
-			const objId =
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-				idGenerator.getId(value) ?? fail("ID of new node should have been assigned.");
-			assert(
-				!Object.prototype.hasOwnProperty.call(value, objectIdKey),
-				0xa7b /* Collision of object id property. */,
-			);
-			return {
-				[objectIdKey]: objId,
-				...value,
-			} as unknown;
-		}
-		return value as unknown;
-	});
+	const stringified: string = JSON.stringify(
+		root,
+		(_, value) => {
+			if (typeof value === "object" && !Array.isArray(value) && value !== null) {
+				// TODO: SharedTree Team needs to either publish TreeNode as a class to use .instanceof() or a typeguard.
+				// Uncomment this assertion back once we have a typeguard ready.
+				// assert(isTreeNode(node), "Non-TreeNode value in tree.");
+				const objId =
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+					idGenerator.getId(value) ?? fail("ID of new node should have been assigned.");
+				assert(
+					!Object.prototype.hasOwnProperty.call(value, objectIdKey),
+					0xa7b /* Collision of object id property. */,
+				);
+				return {
+					[objectIdKey]: objId,
+					...value,
+				} as unknown;
+			}
+			return value as unknown;
+		},
+		2,
+	);
 	return stringified;
 }
 
@@ -87,14 +90,14 @@ export function createEditListHistoryPrompt(edits: EditLog): string {
  * and provides with both a serialized version of the current state of the provided tree node as well as  the interfaces that compromise said tree nodes data.
  */
 export function getEditingSystemPrompt(
+	view: View,
 	idGenerator: IdGenerator,
-	treeNode: TreeNode,
 	appGuidance?: string,
 ): string {
-	const schema = Tree.schema(treeNode);
-	const { editTypes, editRoot, domainTypes, domainRoot } = generateEditTypesForPrompt(
-		getSimpleSchema(schema),
-	);
+	// TODO: Support for non-object roots
+	assert(typeof view.root === "object" && view.root !== null && !isFluidHandle(view.root), "");
+	const schema = getSimpleSchema(view.schema);
+	const { editTypes, editRoot, domainTypes, domainRoot } = generateEditTypesForPrompt(schema);
 	for (const [key, value] of Object.entries(domainTypes)) {
 		const friendlyKey = getFriendlySchemaName(key);
 		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
@@ -108,8 +111,9 @@ export function getEditingSystemPrompt(
 			domainTypes[friendlyKey] = value;
 		}
 	}
-	const domainSchemaString = createZodJsonValidator(domainTypes, domainRoot).getSchemaText();
-	const decoratedTreeJson = toDecoratedJson(idGenerator, treeNode);
+	const domainSchema = createZodJsonValidator(domainTypes, domainRoot);
+	const domainSchemaString = domainSchema.getSchemaText();
+	const decoratedTreeJson = toDecoratedJson(idGenerator, view.root);
 
 	const role = `You are a collaborative agent who interacts with a JSON tree by performing edits to achieve a user-specified goal.${
 		appGuidance === undefined
@@ -121,10 +125,11 @@ export function getEditingSystemPrompt(
 
 	const setFieldType = "SetField" satisfies Capitalize<SetField["type"]>;
 	const insertIntoArrayType = "InsertIntoArray" satisfies Capitalize<InsertIntoArray["type"]>;
-	const topLevelEditWrapperDescription = doesNodeContainArraySchema(treeNode)
+	const topLevelEditWrapperDescription = doesNodeContainArraySchema(view.root)
 		? `is one of the following interfaces: "${setFieldType}" for editing objects or one of "${insertIntoArrayType}", "${"RemoveFromArray" satisfies Capitalize<RemoveFromArray["type"]>}", "${"MoveArrayElement" satisfies Capitalize<MoveArrayElement["type"]>}" for editing arrays`
 		: `is the interface "${setFieldType}"`;
 
+	const rootTypes = [...schema.allowedTypes];
 	// TODO: security: user prompt in system prompt
 	const systemPrompt = `
 ${role}
@@ -132,17 +137,24 @@ Edits are JSON objects that conform to the schema described below. You produce a
 When creating new objects for ${insertIntoArrayType} or ${setFieldType},
 you may create an ID and put it in the ${objectIdKey} property if you want to refer to the object in a later edit. For example, if you want to insert a new object into an array and (in a subsequent edit)
 move another piece of content to after the newly inserted one, you can use the ID of the newly inserted object in the ${"MoveArrayElement" satisfies Capitalize<MoveArrayElement["type"]>} edit.
-Additionally, if the type of the new object cannot be inferred from its properties alone, you should also set the ${typeField} property to the type of the object.
-The schema definitions for an edit are:\n${treeSchemaString}
+For a ${setFieldType} or ${insertIntoArrayType} edit, you might insert an object into a location where it is ambiguous what the type of the object is from the data alone. In that case, supply the type in the ${typeField} property of the object with a value that is the typescript type name of that object.
+The schema definitions for an edit are:
+\`\`\`typescript
+${treeSchemaString}
+\`\`\`
 The tree is a JSON object with the following schema:
-
+\`\`\`typescript
 ${domainSchemaString}
-
-The current state of the tree is: ${decoratedTreeJson}.
+\`\`\`
+The type${rootTypes.length > 1 ? "s" : ""} allowable at the root of the tree: ${rootTypes.map((t) => getFriendlySchemaName(t)).join(" | ")}.
+The current state of the tree:
+\`\`\`
+JSON${decoratedTreeJson}.
+\`\`\`
 Your final output should be an array of one or more edits that accomplishes the goal, or an empty array if the task can't be accomplished.
-For a ${setFieldType} or ${insertIntoArrayType} edit, you might insert an object into a location where it is ambiguous what the type of the object is from the data alone. In that case, supply the type in the ${typeField} property of the object.
 Before returning the edits, you should check that they are valid according to both the application schema and the editing language schema.
 When possible, ensure that the edits preserve the identity of objects already in the tree (for example, prefer move operations over removal and reinsertion).
+Do not put ${objectIdKey} properties on new objects that you create unless you are going to refer to them in a later edit.
 Finally, double check that the edits would accomplish the users request (if it is possible).`;
 	return systemPrompt;
 }

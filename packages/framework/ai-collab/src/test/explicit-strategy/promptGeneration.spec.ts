@@ -11,6 +11,7 @@ import {
 	SchemaFactory,
 	SharedTree,
 	TreeViewConfiguration,
+	asTreeViewAlpha,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/internal";
 import { describe, it } from "mocha";
@@ -82,12 +83,14 @@ describe("Prompt Generation Regression Tests", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestTodoAppSchema }));
+		const view = asTreeViewAlpha(
+			tree.viewWith(new TreeViewConfiguration({ schema: TestTodoAppSchema })),
+		);
 		view.initialize(initialAppState);
 
 		idGenerator.assignIds(view.root);
 
-		const actualPrompt = getEditingSystemPrompt(idGenerator, view.root);
+		const actualPrompt = getEditingSystemPrompt(view, idGenerator);
 
 		snapShotTester.expectToMatchSnapshot(
 			this,
@@ -106,13 +109,15 @@ describe("Prompt Generation Regression Tests", () => {
 			childNodeProperty: TestTodoAppSchema,
 		}) {}
 
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestWrapperNode }));
+		const view = asTreeViewAlpha(
+			tree.viewWith(new TreeViewConfiguration({ schema: TestWrapperNode })),
+		);
 
 		view.initialize({ childNodeProperty: initialAppState });
 
 		idGenerator.assignIds(view.root);
 
-		const actualPrompt = getEditingSystemPrompt(idGenerator, view.root);
+		const actualPrompt = getEditingSystemPrompt(view, idGenerator);
 
 		snapShotTester.expectToMatchSnapshot(
 			this,
@@ -126,12 +131,14 @@ describe("Prompt Generation Regression Tests", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestTodoAppSchema }));
+		const view = asTreeViewAlpha(
+			tree.viewWith(new TreeViewConfiguration({ schema: TestTodoAppSchema })),
+		);
 		view.initialize(initialAppState);
 
 		idGenerator.assignIds(view.root);
 
-		const actualPrompt = getEditingSystemPrompt(idGenerator, view.root);
+		const actualPrompt = getEditingSystemPrompt(view, idGenerator);
 
 		snapShotTester.expectToMatchSnapshot(
 			this,
@@ -140,26 +147,26 @@ describe("Prompt Generation Regression Tests", () => {
 		);
 	});
 
-	it("Editing System Prompt created with node containing no arrays has no regression", function (this: Mocha.Context) {
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestTodoAppSchema }));
-		view.initialize(initialAppState);
+	// it("Editing System Prompt created with node containing no arrays has no regression", function (this: Mocha.Context) {
+	// 	const tree = factory.create(
+	// 		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+	// 		"tree",
+	// 	);
+	// 	const view = asTreeViewAlpha(tree.viewWith(new TreeViewConfiguration({ schema: TestTodoAppSchema })));
+	// 	view.initialize(initialAppState);
 
-		idGenerator.assignIds(view.root);
+	// 	idGenerator.assignIds(view.root);
 
-		const actualPrompt = getEditingSystemPrompt(
-			idGenerator,
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			view.root.todos[0]!,
-		);
+	// 	const actualPrompt = getEditingSystemPrompt(
+	// 		idGenerator,
+	// 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	// 		view.root.todos[0]!,
+	// 	);
 
-		snapShotTester.expectToMatchSnapshot(
-			this,
-			actualPrompt,
-			"Editing_System_Prompt_No_Plan_No_Log_No_Arrays",
-		);
-	});
+	// 	snapShotTester.expectToMatchSnapshot(
+	// 		this,
+	// 		actualPrompt,
+	// 		"Editing_System_Prompt_No_Plan_No_Log_No_Arrays",
+	// 	);
+	// });
 });

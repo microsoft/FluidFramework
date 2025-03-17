@@ -83,10 +83,16 @@ export interface GenerateTreeEditsOptions {
 		userAsk: string;
 	};
 	onEdits?: (args: {
+		view: View;
 		systemPrompt: string;
 		userPrompt: string;
-		edits: TreeEdit[];
+		edits: string;
 		retryState: RetryState;
+	}) => boolean;
+	onEdit?: (args: {
+		edit: TreeEdit;
+		editIndex: number;
+		treeAfterEdit: string;
 	}) => boolean;
 	limiters?: {
 		abortController?: AbortController;
@@ -164,7 +170,6 @@ export async function generateTreeEdits(
 					options.treeView,
 					generateEditResult.edit,
 					idGenerator,
-					simpleSchema.definitions,
 					options.validator,
 				);
 				sequentialErrorCount = 0;
@@ -302,8 +307,8 @@ async function* generateEdits(
 	const editTypes = generateEditTypesForInsertion(simpleSchema);
 
 	const systemPrompt = getEditingSystemPrompt(
+		options.treeView,
 		idGenerator,
-		options.treeNode,
 		options.prompt.systemRoleContext,
 	);
 
@@ -365,8 +370,8 @@ export async function clod(options: GenerateTreeEditsOptions): Promise<boolean> 
 	const idGenerator = new IdGenerator();
 	const simpleSchema = getSimpleSchema(Tree.schema(options.treeNode));
 	const systemPrompt = getEditingSystemPrompt(
+		options.treeView,
 		idGenerator,
-		options.treeNode,
 		options.prompt.systemRoleContext,
 	);
 
@@ -434,32 +439,39 @@ export async function clod(options: GenerateTreeEditsOptions): Promise<boolean> 
 				(v): v is Anthropic.Beta.BetaToolUseBlock => v.type === "tool_use",
 			) ?? fail("Expected tool use block");
 
+		const branch = options.treeView.fork();
+		if (
+			options.onEdits?.({
+				view: branch,
+				edits: JSON.stringify(toolUse.input, undefined, 2),
+				systemPrompt,
+				userPrompt: options.prompt.userAsk,
+				retryState,
+			}) === false
+		) {
+			branch.dispose();
+			return false;
+		}
 		const parse = wrapper.safeParse(toolUse.input);
 		if (parse.success) {
 			const edits = parse.data.edits as TreeEdit[];
 
-			const branch = options.treeView.fork();
 			let editIndex = 0;
 			try {
-				if (
-					options.onEdits?.({
-						edits,
-						systemPrompt,
-						userPrompt: options.prompt.userAsk,
-						retryState,
-					}) === false
-				) {
-					return false;
-				}
 				while (editIndex < edits.length) {
-					const edit = edits[editIndex++] ?? fail("Expected edit");
-					applyAgentEdit(
-						branch,
-						edit,
-						idGenerator,
-						simpleSchema.definitions,
-						options.validator,
-					);
+					const edit = edits[editIndex] ?? fail("Expected edit");
+					applyAgentEdit(branch, edit, idGenerator, options.validator);
+					if (
+						options.onEdit?.({
+							edit,
+							editIndex,
+							treeAfterEdit: JSON.stringify(branch.root, undefined, 2),
+						}) === false
+					) {
+						branch.dispose();
+						return false;
+					}
+					editIndex += 1;
 				}
 				options.treeView.merge(branch);
 				return true;
@@ -471,10 +483,15 @@ export async function clod(options: GenerateTreeEditsOptions): Promise<boolean> 
 						toolUse,
 					});
 				}
+				branch.dispose();
 			}
 		} else {
-			// TODO: Incorporate this into the retry state and error loop
-			throw new Error("Invalid response from LLM");
+			retryState.errors.push({
+				error: new UsageError(parse.error.message),
+				editIndex: -1,
+				toolUse,
+			});
+			branch.dispose();
 		}
 
 		const retryMessages: Anthropic.Beta.Messages.BetaMessageParam[] = [...messages];
@@ -487,7 +504,10 @@ export async function clod(options: GenerateTreeEditsOptions): Promise<boolean> 
 						{
 							type: "tool_result",
 							tool_use_id: retry.toolUse.id,
-							content: `Error: "${retry.error.message}" when applying TreeEdit at index ${retry.editIndex}.`,
+							content:
+								retry.editIndex >= 0
+									? `Error: "${retry.error.message}" when applying TreeEdit at index ${retry.editIndex}.`
+									: `Error: "${retry.error.message}" when attempting to parse edits.`,
 						},
 					],
 				},

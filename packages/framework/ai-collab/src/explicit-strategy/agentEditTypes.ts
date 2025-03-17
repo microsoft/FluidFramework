@@ -39,12 +39,12 @@ export interface Edit {
 /**
  * This is the field we force the LLM to generate to avoid any type ambiguity (e.g. a vector and a point both have x/y and are ambiguous without the LLM telling us which it means).
  */
-export const typeField = "__fluid_type";
+export const typeField = "__schemaType";
 
 /**
  * A field that is  auto-generated and injected into nodes before passing data to the LLM to ensure the LLM can refer to nodes in a stable way.
  */
-export const objectIdKey = "__fluid_objectId";
+export const objectIdKey = "__tempObjectId";
 
 /**
  * An object being inserted (via an insertion or modification edit) into a tree.
@@ -91,22 +91,40 @@ export type PathPointer = [null | ObjectPointer, ...(string | number)[]];
 export type Pointer = ObjectPointer | PathPointer;
 
 /**
+ * Describes an absolute location within an array.
+ */
+export interface AbsoluteArrayPointer {
+	array: PathPointer; // The array containing the element
+	index: number | "end"; // The index of the element in the array
+}
+
+/**
+ * Describes a location within an array relative to an existing array element.
+ */
+export type RelativeArrayPointer =
+	| { after: ObjectPointer } // Position after the referenced element
+	| { before: ObjectPointer }; // Position before the referenced element
+
+/**
+ * Typeguard for AbsoluteArrayPointer
+ */
+export function isAbsolute(
+	arrayPointer: AbsoluteArrayPointer | RelativeArrayPointer,
+): arrayPointer is AbsoluteArrayPointer {
+	return "array" in arrayPointer;
+}
+
+/**
  * Describes a location within an array.
  */
-export type ArrayPosition =
-	| number // Exact index, should be used only for arrays of primitives.
-	| "start" // Beginning of array
-	| "end" // End of array
-	| { after: Pointer } // Position after the referenced element
-	| { before: Pointer }; // Position before the referenced element
+export type ArrayElementPointer = AbsoluteArrayPointer | RelativeArrayPointer;
 
 /**
  * Defines a range within an array.
  */
 export interface ArrayRange {
-	array: PathPointer; // The array containing the range
-	from: ArrayPosition; // Start of range (inclusive)
-	to: ArrayPosition; // End of range (inclusive)
+	from: ArrayElementPointer; // Start of range (inclusive)
+	to: ArrayElementPointer; // End of range (inclusive)
 }
 
 /**
@@ -139,8 +157,7 @@ export interface SetField extends Edit {
  */
 export interface InsertIntoArray extends Edit {
 	type: "insertIntoArray";
-	array: PathPointer; // The parent array
-	position: ArrayPosition; // Where to add the element(s)
+	position: ArrayElementPointer; // Where to add the element(s)
 	value?: TreeContent; // Value to add, or...
 	values?: TreeContent[]; // Array of values to add
 }
@@ -170,8 +187,5 @@ export interface MoveArrayElement extends Edit {
 	source: ObjectPointer | ArrayRange;
 
 	// Destination must be an array position
-	destination: {
-		target: PathPointer; // The target array
-		position: ArrayPosition; // Where to place the element(s) in the array
-	};
+	destination: ArrayElementPointer; // Where to place the element(s) in the array
 }

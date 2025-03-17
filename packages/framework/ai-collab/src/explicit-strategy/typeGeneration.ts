@@ -22,6 +22,7 @@ import type {
 import { z } from "zod";
 
 import { objectIdKey, typeField } from "./agentEditTypes.js";
+import { getFriendlySchemaName } from "./promptGeneration.js";
 import { fail, getOrCreate, mapIterable, tryGetSingleton, type MapGetSet } from "./utils.js";
 
 const objectPointer = z
@@ -43,13 +44,18 @@ const pointer = z
 		"Represents a location in the JSON object tree. Either a pointer to an object via ID or a path to an element (can be object, array, or primitive) via path.",
 	);
 
-const arrayPosition = z
+const arrayElementPointer = z
 	.union([
-		z.number().describe("Exact index, should be used only for arrays of primitives."),
-		z.literal("start").describe("Beginning of array"),
-		z.literal("end").describe("End of array"),
-		z.object({ after: pointer }).describe("Position after the referenced element"),
-		z.object({ before: pointer }).describe("Position before the referenced element"),
+		z.object({
+			array: describeProp(pathPointer, "The array containing the element"),
+			index: z
+				.union([z.number(), z.literal("end")])
+				.describe(
+					`The index in the array, or "end" to mean the end of the array. Indices should be used only for arrays of primitives - use "end" or ObjectPointer for arrays of objects.`,
+				),
+		}),
+		z.object({ after: objectPointer }).describe("Position after the referenced object"),
+		z.object({ before: objectPointer }).describe("Position before the referenced object"),
 	])
 	.describe("Describes a location within an array.");
 
@@ -58,9 +64,8 @@ const arrayPosition = z
  */
 export const arrayRange = z
 	.object({
-		array: describeProp(pathPointer, "The array containing the range"),
-		from: arrayPosition.describe("Start of range (inclusive)"),
-		to: arrayPosition.describe("End of range (inclusive)"),
+		from: arrayElementPointer.describe("Start of range (inclusive)"),
+		to: arrayElementPointer.describe("End of range (inclusive)"),
 	})
 	.describe("Defines a range within an array.");
 
@@ -185,8 +190,7 @@ function generateEditTypes(
 	const insertIntoArray = z
 		.object({
 			type: z.literal("insertIntoArray"),
-			array: describeProp(pathPointer, "The parent array"),
-			position: arrayPosition.describe("Where to add the element(s)"),
+			position: arrayElementPointer.describe("Where to add the element(s)"),
 			value: insertValue
 				.optional()
 				.describe(
@@ -219,12 +223,10 @@ function generateEditTypes(
 			source: z
 				.union([objectPointer, arrayRange])
 				.describe("Source can be a single element or a range"),
-			destination: z
-				.object({
-					target: describeProp(pathPointer, "The target array"),
-					position: arrayPosition.describe("Where to place the element(s) in the array"),
-				})
-				.describe("Destination must be an array position"),
+			destination: describeProp(
+				arrayElementPointer,
+				"Where to place the element(s) in the array",
+			),
 		})
 		.describe("Move a value from one location to another array");
 
@@ -236,7 +238,7 @@ function generateEditTypes(
 	if (doesSchemaHaveArray) {
 		editTypeRecord.PathPointer = pathPointer;
 		editTypeRecord.Pointer = pointer;
-		editTypeRecord.ArrayPosition = arrayPosition;
+		editTypeRecord.ArrayPosition = arrayElementPointer;
 		editTypeRecord.ArrayRange = arrayRange;
 		editTypeRecord.InsertIntoArray = insertIntoArray;
 		editTypeRecord.RemoveFromArray = removeFromArray;
@@ -252,8 +254,10 @@ function generateEditTypes(
 		.describe("The set of edits to apply to the JSON tree.");
 	editTypeRecord.EditArray = editWrapper;
 
-	const domainRootTypes = Array.from(schema.allowedTypes, (t) =>
-		getOrCreateType(
+	let domainRoot: string | undefined;
+	const domainRootTypes = Array.from(schema.allowedTypes, (t) => {
+		domainRoot = t;
+		return getOrCreateType(
 			schema.definitions,
 			insertSet,
 			setFieldFieldSet,
@@ -261,17 +265,19 @@ function generateEditTypes(
 			t,
 			transformForParsing,
 			objectSchemaCache,
-		),
-	);
-	domainTypeRecord.DomainRoot = hasAtLeastTwo(domainRootTypes)
-		? z.union(domainRootTypes)
-		: (domainRootTypes[0] ?? fail("Expected at least one root domain type"));
+		);
+	});
+
+	if (hasAtLeastTwo(domainRootTypes)) {
+		domainTypeRecord.RootOfTree = z.union(domainRootTypes);
+		domainRoot = "RootOfTree";
+	}
 
 	return {
 		editTypes: editTypeRecord,
 		editRoot: "EditArray",
 		domainTypes: domainTypeRecord,
-		domainRoot: "DomainRoot",
+		domainRoot: domainRoot ?? fail("Expected at least one allowed type in tree"),
 	};
 }
 
@@ -324,7 +330,7 @@ function getOrCreateType(
 				);
 				if (transformForParsing) {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-					properties[typeField] = z.literal(definition).optional();
+					properties[typeField] = z.literal(getFriendlySchemaName(definition)).optional();
 				}
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				properties[objectIdKey] = z
@@ -334,12 +340,12 @@ function getOrCreateType(
 						`The id of the object (when creating a new tree, only supply if the object must be referred to later in the same task)`,
 					);
 
-				const obj = z.object(properties);
+				const obj = z.object(properties).describe(nodeSchema.metadata?.description ?? "");
 				return transformForParsing
 					? obj.transform((value) => {
 							return {
-								[typeField]: definition,
 								...value,
+								[typeField]: definition,
 							};
 						})
 					: obj;
@@ -419,7 +425,7 @@ function getOrCreateTypeForField(
 				fieldSchema.allowedTypes,
 				transformForParsing,
 				cache,
-			);
+			).describe(fieldSchema.metadata?.description ?? "");
 		}
 		case FieldKind.Optional: {
 			const opt = getTypeForAllowedTypes(
@@ -434,7 +440,7 @@ function getOrCreateTypeForField(
 				.optional()
 				.describe(
 					getDefault === undefined
-						? ""
+						? (fieldSchema.metadata?.description ?? "")
 						: "Do not populate this field. It will be automatically supplied by the system after insertion.",
 				);
 			return transformForParsing ? opt.default(getDefault ?? undefined) : opt;

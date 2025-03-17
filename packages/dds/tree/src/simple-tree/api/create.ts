@@ -28,11 +28,9 @@ import {
 	mapTreeFromCursor,
 	type NodeKeyManager,
 } from "../../feature-libraries/index.js";
-import { isFieldInSchema } from "../../feature-libraries/index.js";
 import { toStoredSchema } from "../toStoredSchema.js";
-import { inSchemaOrThrow, mapTreeFromNodeData } from "../toMapTree.js";
+import { mapTreeFromNodeData } from "../toMapTree.js";
 import { getUnhydratedContext } from "../createContext.js";
-import { createUnknownOptionalFieldPolicy } from "../objectNode.js";
 
 /**
  * Construct tree content that is compatible with the field defined by the provided `schema`.

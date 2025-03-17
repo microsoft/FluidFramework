@@ -19,7 +19,6 @@ import {
 	type TreeArrayNode,
 	type TreeNode,
 	type TreeNodeSchema,
-	type SimpleNodeSchema,
 	type IterableTreeArrayContent,
 	type TreeLeafValue,
 	TreeAlpha,
@@ -39,9 +38,12 @@ import {
 	type TreeContent,
 	objectIdKey,
 	type PathPointer,
-	type ArrayPosition,
+	type ArrayElementPointer,
 	isArrayRange,
 	typeField,
+	isAbsolute,
+	type AbsoluteArrayPointer,
+	type RelativeArrayPointer,
 } from "./agentEditTypes.js";
 import type { IdGenerator } from "./idGenerator.js";
 import { fail, type View } from "./utils.js";
@@ -85,68 +87,63 @@ import { fail, type View } from "./utils.js";
 // 	}
 // }
 
-function isArrayNode(node: TreeNode | TreeArrayNode | TreeLeafValue): node is TreeArrayNode {
-	return Tree.schema(node).kind === NodeKind.Array;
+function resolveArrayElementPointer(
+	view: View,
+	pointer: ArrayElementPointer,
+	idGenerator: IdGenerator,
+): {
+	array: TreeArrayNode;
+	index: number;
+} {
+	if (isAbsolute(pointer)) {
+		return resolveAbsoluteArrayElementPointer(view, pointer, idGenerator);
+	}
+	return resolveRelativeArrayElementPointer(view, pointer, idGenerator);
 }
 
-function getIndex(
+function resolveAbsoluteArrayElementPointer(
 	view: View,
-	array: TreeArrayNode,
-	position: ArrayPosition,
+	pointer: AbsoluteArrayPointer,
 	idGenerator: IdGenerator,
-): number {
-	switch (typeof position) {
-		case "number": {
-			return position;
-		}
-		case "string": {
-			switch (position) {
-				case "start": {
-					return 0;
-				}
-				case "end": {
-					return array.length;
-				}
-				default: {
-					throw new UsageError(
-						`Invalid array position "${position}". Expected "start", "end", an index, or a position relative to an element.`,
-					);
-				}
-			}
-		}
-		case "object": {
-			if ("before" in position) {
-				const resolved = resolvePointer(view, position.before, idGenerator, "object");
-				if (Tree.parent(resolved) !== array) {
-					throw new UsageError(
-						`The "before" position must be within the same array as the target node.`,
-					);
-				}
-				const index = Tree.key(resolved);
-				assert(typeof index === "number", 0xa7a /* Expected number */);
-				return index;
-			}
-			if ("after" in position) {
-				const resolved = resolvePointer(view, position.after, idGenerator, "object");
-				if (Tree.parent(resolved) !== array) {
-					throw new UsageError(
-						`The "after" position must be within the same array as the target node.`,
-					);
-				}
-				const index = Tree.key(resolved);
-				assert(typeof index === "number", 0xa7b /* Expected number */);
-				return index + 1;
-			}
-			throw new UsageError(
-				`Invalid array position "${position}". Expected "start", "end", an index, or a position relative to an element.`,
-			);
-		}
-		default: {
-			throw new UsageError(
-				`Invalid array position "${position}". Expected "start", "end", an index, or a position relative to an element.`,
-			);
-		}
+): {
+	array: TreeArrayNode;
+	index: number;
+} {
+	const array = resolvePointer(view, pointer.array, idGenerator, "array");
+	if (typeof pointer.index === "number") {
+		return { array, index: pointer.index };
 	}
+	if (pointer.index === "end") {
+		return { array, index: array.length };
+	}
+	throw new UsageError(
+		`Invalid absolute array index "${pointer.index}". Expected an index or "end".`,
+	);
+}
+
+function resolveRelativeArrayElementPointer(
+	view: View,
+	pointer: RelativeArrayPointer,
+	idGenerator: IdGenerator,
+): {
+	array: TreeArrayNode;
+	index: number;
+} {
+	if ("before" in pointer) {
+		const resolved = resolvePointer(view, pointer.before, idGenerator, "object");
+		const index = Tree.key(resolved);
+		assert(typeof index === "number", 0xa7a /* Expected number */);
+		return { array: Tree.parent(resolved) as TreeArrayNode, index };
+	}
+	if ("after" in pointer) {
+		const resolved = resolvePointer(view, pointer.after, idGenerator, "object");
+		const index = Tree.key(resolved);
+		assert(typeof index === "number", 0xa7b /* Expected number */);
+		return { array: Tree.parent(resolved) as TreeArrayNode, index: index + 1 };
+	}
+	throw new UsageError(
+		`Invalid relative array position "${pointer}". Expected an object with a valid "before" or "after" ObjectPointer.`,
+	);
 }
 
 function failUsage(message: string): never {
@@ -155,15 +152,27 @@ function failUsage(message: string): never {
 
 function getRangeIndices(
 	view: View,
-	pointer: PathPointer,
-	start: ArrayPosition,
-	end: ArrayPosition,
+	start: ArrayElementPointer,
+	end: ArrayElementPointer,
 	idGenerator: IdGenerator,
 ): [TreeArrayNode, start: number, end: number] {
-	const array = resolvePointer(view, pointer, idGenerator, "array");
-	const fromIndex = getIndex(view, array, start, idGenerator);
-	const toIndex = getIndex(view, array, end, idGenerator);
-	return [array, fromIndex, toIndex];
+	const { array: startArray, index: startIndex } = resolveArrayElementPointer(
+		view,
+		start,
+		idGenerator,
+	);
+	const { array: endArray, index: endIndex } = resolveArrayElementPointer(
+		view,
+		end,
+		idGenerator,
+	);
+	if (startArray !== endArray) {
+		throw new UsageError(
+			`Start and end pointers must be in the same array. Start: ${startArray}, End: ${endArray}`,
+		);
+	}
+
+	return [startArray, startIndex, endIndex];
 }
 
 /**
@@ -173,17 +182,15 @@ export function applyAgentEdit(
 	view: View,
 	treeEdit: TreeEdit,
 	idGenerator: IdGenerator,
-	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
 	validator?: (edit: TreeNode) => void,
 ): void {
 	switch (treeEdit.type) {
 		case "insertIntoArray": {
-			const array = resolvePathPointer(view, treeEdit.array, idGenerator);
-			if (!isArrayNode(array)) {
-				throw new UsageError("The destination node must be an arrayNode");
-			}
-
-			const index = getIndex(view, array, treeEdit.position, idGenerator);
+			const { array, index } = resolveArrayElementPointer(
+				view,
+				treeEdit.position,
+				idGenerator,
+			);
 			const parentNodeSchema = Tree.schema(array);
 
 			const inserted = (
@@ -214,7 +221,6 @@ export function applyAgentEdit(
 			} else if (treeEdit.range !== undefined) {
 				const [array, fromIndex, toIndex] = getRangeIndices(
 					view,
-					treeEdit.range.array,
 					treeEdit.range.from,
 					treeEdit.range.to,
 					idGenerator,
@@ -263,7 +269,6 @@ export function applyAgentEdit(
 			if (isArrayRange(treeEdit.source)) {
 				[sourceArray, sourceStartIndex, sourceEndIndex] = getRangeIndices(
 					view,
-					treeEdit.source.array,
 					treeEdit.source.from,
 					treeEdit.source.to,
 					idGenerator,
@@ -279,16 +284,9 @@ export function applyAgentEdit(
 				sourceEndIndex = sourceStartIndex + 1;
 			}
 
-			const destinationArray = resolvePointer(
+			const { array: destinationArray, index: destinationIndex } = resolveArrayElementPointer(
 				view,
-				treeEdit.destination.target,
-				idGenerator,
-				"array",
-			);
-			const destinationIndex = getIndex(
-				view,
-				destinationArray,
-				treeEdit.destination.position,
+				treeEdit.destination,
 				idGenerator,
 			);
 

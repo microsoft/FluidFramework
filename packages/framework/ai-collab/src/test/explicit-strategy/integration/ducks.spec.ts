@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { writeFileSync } from "node:fs";
+
 import { Anthropic } from "@anthropic-ai/sdk";
 // eslint-disable-next-line import/no-internal-modules
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
@@ -38,7 +40,7 @@ export class Span extends sf.object("Span", {
 	comments: sf.required(sf.array(sf.string), {
 		metadata: {
 			description:
-				"The IDs of all comments that are associated with this decoration. The list of comments and their IDs is under the Page object.",
+				"The identifiers of all comments that are associated with this decoration. The list of comments and their IDs is under the Page object.",
 		},
 	}),
 }) {}
@@ -158,9 +160,13 @@ describe.skip("Agent Editing Integration", () => {
 			],
 		});
 
+		const systemRoleContext = `You are an assistant that helps people create and edit pages of text. When adding new text, each word (e.g. "the", "cat", "lemonade", etc.) should go in its own Word object. Do not add comments or style the text (i.e. do not use Spans) unless the user specifically asked you to. If the user asks you to style a particular word or phrase that is already included in a larger span, you may split the span into smaller spans in order to apply the style at the granularity requested. Likewise, if two or more adjacent spans have the exact same styling, merge them together.`;
+
 		const claudeClient = new Anthropic({
 			apiKey: "TODO",
 		});
+
+		let megaString = "# DUCKS\n";
 		await clod({
 			treeView: asTreeViewAlpha(view),
 			clientOptions: { client: claudeClient /* options: { model: TEST_MODEL_NAME } */ },
@@ -168,35 +174,40 @@ describe.skip("Agent Editing Integration", () => {
 			prompt: {
 				userAsk:
 					"Please replace the sample paragraph with an amusing short story about ducks going to a buffet.",
-				systemRoleContext: "",
+				systemRoleContext,
 			},
 			onEdits: (state) => {
-				debugger;
+				if (state.retryState.errors.length > 0) {
+					megaString += `## ERRORS\n`;
+					for (const error of state.retryState.errors) {
+						megaString += `### Error\n${error.error.message}\n`;
+					}
+				}
+				megaString += `## System Prompt\n${state.systemPrompt}\n`;
+				megaString += `## User Prompt\n${state.userPrompt}\n`;
+				megaString += `## Chain of Thought\n${state.retryState.thinking.type === "thinking" ? state.retryState.thinking.thinking : "-- Redacted by Anthropic --!"}\n`;
+				megaString += `## Result from LLM\n${state.edits}\n`;
+				megaString += `## Edits\n`;
+				return true;
+			},
+			onEdit: (state) => {
+				megaString += `### Edit\n${state.editIndex}\n${JSON.stringify(state.edit, undefined, 2)}\n`;
+				megaString += `#### Result\n${state.editIndex}\n${state.treeAfterEdit}\n`;
+				megaString += `${toString(view.root)}\n`;
 				return true;
 			},
 		});
 
-		const stringified = toString(view.root);
-		console.log(stringified);
-
-		await clod({
-			treeView: asTreeViewAlpha(view),
-			clientOptions: { client: claudeClient /* options: { model: TEST_MODEL_NAME } */ },
-			treeNode: view.root,
-			prompt: {
-				userAsk:
-					"Please make all text unbolded and not italic, but then make all the food-related words bold.",
-				systemRoleContext: "",
-			},
-			onEdits: (state) => {
-				debugger;
-				return true;
-			},
-		});
-
-		const stringified2 = toString(view.root);
-		console.log(stringified2);
+		writeFileSync("megaStringOutput.md", megaString, { encoding: "utf8" });
 	});
+
+	/**
+	 * 1. System prompt
+	 * 2. User prompt
+	 * 3. PRE - parsed edits
+	 * 4. errors, if any
+	 * 5. tree state after each edit
+	 */
 
 	function toString(page: Page): string {
 		return page.paragraphs
