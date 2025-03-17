@@ -86,7 +86,7 @@ export class MockRuntime
 	public readonly clientDetails: IClientDetails = { capabilities: { interactive: true } };
 	constructor(
 		public mc: MonitoringContext,
-		snapshot: IBlobManagerLoadInfo = {},
+		blobManagerLoadInfo: IBlobManagerLoadInfo = {},
 		attached = false,
 		stashed: unknown[] = [[], {}],
 	) {
@@ -96,8 +96,8 @@ export class MockRuntime
 		this.baseLogger = mc.logger;
 		this.blobManager = new BlobManager({
 			routeContext: undefined as unknown as IFluidHandleContext,
-			snapshot,
-			getStorage: () => this.getStorage(),
+			blobManagerLoadInfo,
+			storage: this.getStorage(),
 			sendBlobAttachOp: (localId: string, blobId?: string) =>
 				this.sendBlobAttachOp(localId, blobId),
 			blobRequested: () => undefined,
@@ -373,7 +373,7 @@ describe("BlobManager", () => {
 			assert((runtime.blobManager as any).pendingBlobs.size === 0);
 		};
 
-		runtime.blobManager.on("noPendingBlobs", () => onNoPendingBlobs());
+		runtime.blobManager.events.on("noPendingBlobs", () => onNoPendingBlobs());
 	});
 
 	afterEach(async () => {
@@ -420,7 +420,7 @@ describe("BlobManager", () => {
 		await runtime.attach();
 		await runtime.connect();
 		let count = 0;
-		runtime.blobManager.on("noPendingBlobs", () => count++);
+		runtime.blobManager.events.on("noPendingBlobs", () => count++);
 
 		await createBlob(IsoBuffer.from("blob", "utf8"));
 		await runtime.processAll();
