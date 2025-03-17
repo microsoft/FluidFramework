@@ -68,11 +68,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		clientId: string,
 		topic: string,
 		public readonly groupId: string,
-		private readonly apiCounterEnabled: boolean,
-		private readonly apiCounterIntervalMS: number,
-		private readonly apiFailureRateTerminationThreshold: number,
-		private readonly apiMinimumCountToEnableTermination: number,
-		private readonly consecutiveFailedThresholdForLowerTotalRequests: number,
+		private readonly apiCounterConfig: Record<string, any>,
 		private readonly ignoreAndSkipCheckpointOnKafkaErrorCodes: number[],
 		options?: Partial<IKafkaConsumerOptions>,
 	) {
@@ -97,7 +93,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			automaticConsume: options?.automaticConsume ?? true,
 			maxConsumerCommitRetries: options?.maxConsumerCommitRetries ?? 10,
 		};
-		if (this.apiCounterEnabled) {
+		if (this.apiCounterConfig.apiCounterEnabled) {
 			setInterval(() => {
 				if (!this.apiCounter.countersAreActive) {
 					return;
@@ -109,12 +105,12 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 					counters,
 				);
 				this.terminateBasedOnCounterThreshold(counters);
-			}, this.apiCounterIntervalMS);
+			}, this.apiCounterConfig.apiCounterIntervalMS);
 		}
 	}
 
 	private terminateBasedOnCounterThreshold(counters: Record<string, number>): void {
-		if (this.apiFailureRateTerminationThreshold > 1) {
+		if (this.apiCounterConfig.apiFailureRateTerminationThreshold > 1) {
 			return; // If threshold set more than 1, meaning we should never terminate and skip followings.
 		}
 		let totalCount = 0;
@@ -130,7 +126,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 
 		const failureRate = totalFailedCount / totalCount;
 
-		if (failureRate <= this.apiFailureRateTerminationThreshold) {
+		if (failureRate <= this.apiCounterConfig.apiFailureRateTerminationThreshold) {
 			this.consecutiveFailedCount = 0;
 			return;
 		}
@@ -140,15 +136,18 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			failureRate,
 			totalCount,
 			totalFailedCount,
-			apiFailureRateTerminationThreshold: this.apiFailureRateTerminationThreshold,
-			apiMinimumCountToEnableTermination: this.apiMinimumCountToEnableTermination,
+			apiFailureRateTerminationThreshold:
+				this.apiCounterConfig.apiFailureRateTerminationThreshold,
+			apiMinimumCountToEnableTermination:
+				this.apiCounterConfig.apiMinimumCountToEnableTermination,
 			consecutiveFailedCount: this.consecutiveFailedCount,
 			consecutiveFailedThresholdForLowerTotalRequests:
-				this.consecutiveFailedThresholdForLowerTotalRequests,
+				this.apiCounterConfig.consecutiveFailedThresholdForLowerTotalRequests,
 		};
 		if (
-			totalCount < this.apiMinimumCountToEnableTermination &&
-			this.consecutiveFailedCount < this.consecutiveFailedThresholdForLowerTotalRequests
+			totalCount < this.apiCounterConfig.apiMinimumCountToEnableTermination &&
+			this.consecutiveFailedCount <
+				this.apiCounterConfig.consecutiveFailedThresholdForLowerTotalRequests
 		) {
 			Lumberjack.warning("Total count didn't meet min threshold", logProperties);
 			return;
@@ -162,7 +161,9 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	}
 
 	public getIgnoreAndSkipCheckpointOnKafkaErrorCodes(): number[] {
-		return this.apiCounterEnabled ? this.ignoreAndSkipCheckpointOnKafkaErrorCodes : [];
+		return this.apiCounterConfig.apiCounterEnabled
+			? this.ignoreAndSkipCheckpointOnKafkaErrorCodes
+			: [];
 	}
 
 	/**
@@ -265,7 +266,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 
 				if (!shouldRetryCommit) {
 					if (
-						this.apiCounterEnabled &&
+						this.apiCounterConfig.apiCounterEnabled &&
 						this.ignoreAndSkipCheckpointOnKafkaErrorCodes.includes(err.code)
 					) {
 						Lumberjack.info("Skipping checkpoint and incrementing api failed counter", {
@@ -282,7 +283,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 						});
 					}
 				}
-			} else if (this.apiCounterEnabled) {
+			} else if (this.apiCounterConfig.apiCounterEnabled) {
 				this.apiCounter.incrementCounter("kafkaOffsetCommit");
 			}
 

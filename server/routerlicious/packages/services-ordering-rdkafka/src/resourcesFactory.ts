@@ -92,6 +92,14 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
 		const ignoreAndSkipCheckpointOnKafkaErrorCodes =
 			config.get("kafka:ignoreAndSkipCheckpointOnKafkaErrorCodes") ?? [];
 
+		const apiCounterConfig = {
+			apiCounterEnabled,
+			apiCounterIntervalMS,
+			apiFailureRateTerminationThreshold,
+			apiMinimumCountToEnableTermination,
+			consecutiveFailedThresholdForLowerTotalRequests,
+		};
+
 		// Receive topic and group - for now we will assume an entry in config mapping
 		// to the given name. Later though the lambda config will likely be split from the stream config
 		const streamConfig = config.get(`lambdas:${this.name}`);
@@ -126,11 +134,7 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
 			clientId,
 			receiveTopic,
 			groupId,
-			apiCounterEnabled,
-			apiCounterIntervalMS,
-			apiFailureRateTerminationThreshold,
-			apiMinimumCountToEnableTermination,
-			consecutiveFailedThresholdForLowerTotalRequests,
+			apiCounterConfig,
 			ignoreAndSkipCheckpointOnKafkaErrorCodes,
 			options,
 		);
