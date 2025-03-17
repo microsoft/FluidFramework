@@ -75,7 +75,12 @@ import {
 	ReferenceType,
 } from "./ops.js";
 import { PartialSequenceLengths } from "./partialLengths.js";
-import { PerspectiveImpl, isSegmentPresent } from "./perspective.js";
+import {
+	LocalDefaultPerspective,
+	LocalReconnectingPerspective,
+	PriorPerspective,
+	type Perspective,
+} from "./perspective.js";
 import { PropertySet, createMap, extend, extendIfUndefined } from "./properties.js";
 import {
 	DetachedReferencePosition,
@@ -95,6 +100,7 @@ import {
 	removeRemovalInfo,
 	toMoveInfo,
 	toRemovalInfo,
+	wasMovedOnInsert,
 	type IInsertionInfo,
 	type IMoveInfo,
 	type IRemovalInfo,
@@ -580,6 +586,10 @@ export class MergeTree {
 	public readonly segmentsToScour = new Heap<LRUSegment>(LRUSegmentComparer);
 
 	public readonly attributionPolicy: AttributionPolicy | undefined;
+
+	public localPerspective: Perspective = new LocalDefaultPerspective(
+		this.collabWindow.clientId,
+	);
 
 	/**
 	 * Whether or not all blocks in the mergeTree currently have information about local partial lengths computed.
@@ -1083,7 +1093,14 @@ export class MergeTree {
 		if (!this.collabWindow.collaborating || this.collabWindow.clientId === clientId) {
 			if (node.isLeaf()) {
 				return this.localNetLength(node, refSeq, localSeq);
-			} else if (localSeq === undefined) {
+			} else if (
+				localSeq === undefined ||
+				// All changes are visible. Small note on why we allow refSeq >= this.collabWindow.currentSeq rather than just equality:
+				// merge-tree eventing occurs before the collab window is updated to account for whatever op it is processing, and we want
+				// to support resolving positions from within the event handler which account for that op. e.g. undo-redo relies on this
+				// behavior with local references.
+				(localSeq === this.collabWindow.localSeq && refSeq >= this.collabWindow.currentSeq)
+			) {
 				// Local client sees all segments, even when collaborating
 				return node.cachedLength;
 			} else {
@@ -1178,10 +1195,18 @@ export class MergeTree {
 	 */
 	public referencePositionToLocalPosition(
 		refPos: ReferencePosition,
+		// Note: this is not `this.collabWindow.currentSeq` because we want to support resolving local reference positions to positions
+		// from within event handlers, and the collab window's sequence numbers are not updated in time in all of those cases.
 		refSeq = Number.MAX_SAFE_INTEGER,
 		clientId = this.collabWindow.clientId,
 		localSeq: number | undefined = this.collabWindow.localSeq,
 	): number {
+		const perspective =
+			clientId === this.collabWindow.clientId
+				? localSeq === undefined
+					? this.localPerspective
+					: new LocalReconnectingPerspective(refSeq, clientId, localSeq)
+				: new PriorPerspective(refSeq, clientId);
 		const seg = refPos.getSegment();
 		if (!isSegmentLeaf(seg)) {
 			// We have no idea where this reference is, because it refers to a segment which is not in the tree.
@@ -1194,7 +1219,7 @@ export class MergeTree {
 			if (
 				seg !== this.startOfTree &&
 				seg !== this.endOfTree &&
-				!isSegmentPresent(seg, { refSeq, localSeq })
+				!perspective.isSegmentPresent(seg)
 			) {
 				const forward = refPos.slidingPreference === SlidingPreference.FORWARD;
 				const moveInfo = toMoveInfo(seg);
@@ -1206,11 +1231,15 @@ export class MergeTree {
 							? removeInfo.removedSeq
 							: refSeq;
 				const slideLocalSeq = moveInfo?.localMovedSeq ?? removeInfo?.localRemovedSeq;
-				const perspective = new PerspectiveImpl(this, {
-					refSeq: slideSeq,
-					localSeq: slideLocalSeq,
-				});
-				const slidSegment = perspective.nextSegment(seg, forward);
+				const slidePerspective =
+					slideLocalSeq === undefined
+						? new PriorPerspective(slideSeq, this.collabWindow.clientId)
+						: new LocalReconnectingPerspective(
+								slideSeq,
+								this.collabWindow.clientId,
+								slideLocalSeq,
+							);
+				const slidSegment = slidePerspective.nextSegment(this, seg, forward);
 				return (
 					this.getPosition(slidSegment, refSeq, clientId, localSeq) +
 					(forward ? 0 : slidSegment.cachedLength === 0 ? 0 : slidSegment.cachedLength - 1)
@@ -1675,12 +1704,11 @@ export class MergeTree {
 						movedSeq: oldest.seq,
 						movedSeqs,
 						localMovedSeq: oldestUnacked?.localSeq,
-						wasMovedOnInsert: oldest.seq !== UnassignedSequenceNumber,
 					};
 				} else {
 					assert(
 						oldestUnacked !== undefined,
-						"Expected local obliterate to be defined if newestAcked is not equal to newest",
+						0xb55 /* Expected local obliterate to be defined if newestAcked is not equal to newest */,
 					);
 					// There's a pending local obliterate for this range, so it will be marked as obliterated by us. However,
 					// all other clients are under the impression that the most recent acked obliterate won the right to insert
@@ -1690,7 +1718,6 @@ export class MergeTree {
 						movedSeq: oldestUnacked.seq,
 						movedSeqs: [oldestUnacked.seq],
 						localMovedSeq: oldestUnacked.localSeq,
-						wasMovedOnInsert: false,
 					};
 				}
 
@@ -2053,6 +2080,11 @@ export class MergeTree {
 		const localSeq =
 			seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
 
+		const perspective =
+			seq === UnassignedSequenceNumber
+				? this.localPerspective
+				: new PriorPerspective(refSeq, clientId);
+
 		const obliterate: ObliterateInfo = {
 			clientId,
 			end: createDetachedLocalReferencePosition(undefined),
@@ -2106,10 +2138,7 @@ export class MergeTree {
 		const markMoved = (segment: ISegmentLeaf, pos: number): boolean => {
 			if (
 				(start.side === Side.After && startPos === pos + segment.cachedLength) || // exclusive start segment
-				(end.side === Side.Before &&
-					endPos === pos &&
-					// TODO:AB#29765: The clientId check here should be handled by isSegmentPresent and/or PerspectiveImpl
-					(segment.clientId === clientId || isSegmentPresent(segment, { refSeq, localSeq }))) // exclusive end segment
+				(end.side === Side.Before && endPos === pos && perspective.isSegmentPresent(segment)) // exclusive end segment
 			) {
 				// We walk these segments because we want to also walk any concurrently inserted segments between here and the obliterated segments.
 				// These segments are outside of the obliteration range though, so return true to keep walking.
@@ -2141,8 +2170,6 @@ export class MergeTree {
 					movedSeq: seq,
 					localMovedSeq: localSeq,
 					movedSeqs: [seq],
-					wasMovedOnInsert:
-						segment.seq === UnassignedSequenceNumber && seq !== UnassignedSequenceNumber,
 				});
 
 				const existingRemoval = toRemovalInfo(movedSeg);
@@ -2158,16 +2185,15 @@ export class MergeTree {
 				}
 			} else {
 				if (existingMoveInfo.movedSeq === UnassignedSequenceNumber) {
-					// Should not need explicit set here, but this should be implied:
 					assert(
-						!existingMoveInfo.wasMovedOnInsert,
+						!wasMovedOnInsert(segment),
 						0xab4 /* Local obliterate cannot have removed a segment as soon as it was inserted */,
 					);
 					assert(
 						seq !== UnassignedSequenceNumber,
 						0xab5 /* Cannot obliterate the same segment locally twice */,
 					);
-					existingMoveInfo.wasMovedOnInsert = segment.seq === UnassignedSequenceNumber;
+
 					// we moved this locally, but someone else moved it first
 					// so put them at the head of the list
 					// The list isn't ordered, but we keep the first move at the head

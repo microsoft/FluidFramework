@@ -26,7 +26,7 @@ import {
 	defaultSchemaPolicy,
 	FieldKinds,
 	mapTreeFromCursor,
-	type NodeKeyManager,
+	type NodeIdentifierManager,
 } from "../../feature-libraries/index.js";
 import { isFieldInSchema } from "../../feature-libraries/index.js";
 import { toStoredSchema } from "../toStoredSchema.js";
@@ -53,7 +53,7 @@ export function createFromInsertable<
 		? ImplicitFieldSchema
 		: TSchema & ImplicitFieldSchema,
 	data: InsertableField<TSchema>,
-	context?: NodeKeyManager | undefined,
+	context?: NodeIdentifierManager | undefined,
 ): Unhydrated<
 	TSchema extends ImplicitFieldSchema
 		? TreeFieldFromImplicitField<TSchema>
@@ -84,7 +84,7 @@ export function cursorFromInsertable<
 		? ImplicitFieldSchema
 		: TSchema & ImplicitFieldSchema,
 	data: InsertableField<TSchema>,
-	context?: NodeKeyManager | undefined,
+	context?: NodeIdentifierManager | undefined,
 ):
 	| ITreeCursorSynchronous
 	| (TSchema extends FieldSchema<FieldKind.Optional> ? undefined : never) {

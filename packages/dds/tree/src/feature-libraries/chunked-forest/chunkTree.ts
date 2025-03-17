@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert, debugAssert, oob } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
@@ -30,7 +30,7 @@ import type { FullSchemaPolicy } from "../modular-schema/index.js";
 import { BasicChunk } from "./basicChunk.js";
 import { SequenceChunk } from "./sequenceChunk.js";
 import { type FieldShape, TreeShape, UniformChunk } from "./uniformChunk.js";
-import { isStableNodeKey } from "../node-key/index.js";
+import { isStableNodeIdentifier } from "../node-identifier/index.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 export interface Disposable {
@@ -175,7 +175,9 @@ export function chunkField(
 ): TreeChunk[] {
 	const length = cursor.getFieldLength();
 	const started = cursor.firstNode();
-	assert(started, 0x57c /* field to chunk should have at least one node */);
+	debugAssert(
+		() => started === (length !== 0) || "only 0 length fields should not have nodes",
+	);
 	return chunkRange(cursor, policy, length, false);
 }
 
@@ -373,10 +375,12 @@ function newBasicChunkTree(
 }
 
 /**
- * @param cursor - cursor in nodes mode
+ * Chunk a portion of a field.
+ *
+ * @param cursor - cursor at the starting node in the field.
  * @param policy - heuristics to impact chunking
- * @param length - how many nodes to process (at the top level)
- * @param skipLastNavigation - if true, leaves the cursor at the last node instead of moving off of it.
+ * @param length - how many nodes to process (at the top level). When 0, the cursor is not moved, and may be at the end of the field (and thus in Fields mode)
+ * @param skipLastNavigation - if true, leaves the cursor at the last node instead of moving off of it. Invalid if length is 0.
  */
 export function chunkRange(
 	cursor: ITreeCursorSynchronous,
@@ -384,7 +388,14 @@ export function chunkRange(
 	length: number,
 	skipLastNavigation: boolean,
 ): TreeChunk[] {
-	assert(cursor.mode === CursorLocationType.Nodes, 0x57e /* should be in nodes */);
+	assert(
+		!(skipLastNavigation && length === 0),
+		0xb58 /* Cannot skip last navigation if length is 0 and thus last navigation already occurred. */,
+	);
+	assert(
+		(cursor.mode === CursorLocationType.Nodes) === length > 0,
+		0xb59 /* Should be in nodes mode if not past end */,
+	);
 	let output: TreeChunk[] = [];
 	let remaining = length;
 	while (remaining > 0) {
@@ -498,7 +509,7 @@ export function insertValues(
 		if (
 			typeof cursor.value === "string" &&
 			idCompressor !== undefined &&
-			isStableNodeKey(cursor.value)
+			isStableNodeIdentifier(cursor.value)
 		) {
 			values.push(idCompressor.tryRecompress(cursor.value) ?? cursor.value);
 		} else {

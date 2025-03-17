@@ -13,13 +13,14 @@ import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	type ChangeRebaser,
-	CursorLocationType,
 	type DeltaDetachedNodeId,
 	type DeltaRoot,
 	type FieldUpPath,
-	type ITreeCursorSynchronous,
+	type NormalizedFieldUpPath,
+	type NormalizedUpPath,
 	type RevisionTag,
 	type TaggedChange,
+	type TreeChunk,
 	type UpPath,
 	compareFieldUpPaths,
 	topDownPath,
@@ -43,7 +44,6 @@ import {
 	sequence,
 	required as valueFieldKind,
 } from "./defaultFieldKinds.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { CellId } from "../sequence-field/index.js";
 
 export type DefaultChangeset = ModularChangeset;
@@ -120,14 +120,14 @@ export function relevantRemovedRoots(change: ModularChangeset): Iterable<DeltaDe
  * If/when such a mechanism becomes available, an evaluation should be done to determine if any existing editing operations should be changed to leverage it
  * (Possibly by adding opt ins at the view schema layer).
  */
-export interface IDefaultEditBuilder {
+export interface IDefaultEditBuilder<TContent = TreeChunk> {
 	/**
 	 * @param field - the value field which is being edited under the parent node
 	 * @returns An object with methods to edit the given field of the given parent.
 	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
 	 * is bounded by the lifetime of this edit builder.
 	 */
-	valueField(field: FieldUpPath): ValueFieldEditBuilder<ITreeCursorSynchronous>;
+	valueField(field: NormalizedFieldUpPath): ValueFieldEditBuilder<TContent>;
 
 	/**
 	 * @param field - the optional field which is being edited under the parent node
@@ -135,7 +135,7 @@ export interface IDefaultEditBuilder {
 	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
 	 * is bounded by the lifetime of this edit builder.
 	 */
-	optionalField(field: FieldUpPath): OptionalFieldEditBuilder<ITreeCursorSynchronous>;
+	optionalField(field: NormalizedFieldUpPath): OptionalFieldEditBuilder<TContent>;
 
 	/**
 	 * @param field - the sequence field which is being edited under the parent node
@@ -144,7 +144,7 @@ export interface IDefaultEditBuilder {
 	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
 	 * is bounded by the lifetime of this edit builder.
 	 */
-	sequenceField(field: FieldUpPath): SequenceFieldEditBuilder<ITreeCursorSynchronous>;
+	sequenceField(field: NormalizedFieldUpPath): SequenceFieldEditBuilder<TContent>;
 
 	/**
 	 * Moves a subsequence from one sequence field to another sequence field.
@@ -153,10 +153,10 @@ export interface IDefaultEditBuilder {
 	 * For example, `move(field, 0, 1, field, 2)` changes `[A, B, C]` to `[B, A, C]`.
 	 */
 	move(
-		sourceField: FieldUpPath,
+		sourceField: NormalizedFieldUpPath,
 		sourceIndex: number,
 		count: number,
-		destinationField: FieldUpPath,
+		destinationField: NormalizedFieldUpPath,
 		destinationIndex: number,
 	): void;
 
@@ -164,13 +164,13 @@ export interface IDefaultEditBuilder {
 	 * Add a constraint that the node at the given path must exist.
 	 * @param path - The path to the node that must exist.
 	 */
-	addNodeExistsConstraint(path: UpPath): void;
+	addNodeExistsConstraint(path: NormalizedUpPath): void;
 
 	/**
 	 * Add a constraint that the node at the given path must exist when reverting a change.
 	 * @param path - The path to the node that must exist when reverting a change.
 	 */
-	addNodeExistsConstraintOnRevert(path: UpPath): void;
+	addNodeExistsConstraintOnRevert(path: NormalizedUpPath): void;
 }
 
 /**
@@ -184,7 +184,6 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		family: ChangeFamily<ChangeFamilyEditor, DefaultChangeset>,
 		private readonly mintRevisionTag: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<DefaultChangeset>) => void,
-		private readonly idCompressor?: IIdCompressor,
 	) {
 		this.modularBuilder = new ModularEditBuilder(family, fieldKinds, changeReceiver);
 	}
@@ -204,18 +203,13 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		this.modularBuilder.addNodeExistsConstraintOnRevert(path, this.mintRevisionTag());
 	}
 
-	public valueField(field: FieldUpPath): ValueFieldEditBuilder<ITreeCursorSynchronous> {
+	public valueField(field: FieldUpPath): ValueFieldEditBuilder<TreeChunk> {
 		return {
-			set: (newContent: ITreeCursorSynchronous): void => {
+			set: (newContent: TreeChunk): void => {
 				const revision = this.mintRevisionTag();
 				const fill: ChangeAtomId = { localId: this.modularBuilder.generateId(), revision };
 				const detach: ChangeAtomId = { localId: this.modularBuilder.generateId(), revision };
-				const build = this.modularBuilder.buildTrees(
-					fill.localId,
-					newContent,
-					revision,
-					this.idCompressor,
-				);
+				const build = this.modularBuilder.buildTrees(fill.localId, newContent, revision);
 				const change: FieldChangeset = brand(
 					valueFieldKind.changeHandler.editor.set({
 						fill,
@@ -235,21 +229,16 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		};
 	}
 
-	public optionalField(field: FieldUpPath): OptionalFieldEditBuilder<ITreeCursorSynchronous> {
+	public optionalField(field: FieldUpPath): OptionalFieldEditBuilder<TreeChunk> {
 		return {
-			set: (newContent: ITreeCursorSynchronous | undefined, wasEmpty: boolean): void => {
+			set: (newContent: TreeChunk | undefined, wasEmpty: boolean): void => {
 				const edits: EditDescription[] = [];
 				let optionalChange: OptionalChangeset;
 				const revision = this.mintRevisionTag();
 				const detach: ChangeAtomId = { localId: this.modularBuilder.generateId(), revision };
 				if (newContent !== undefined) {
 					const fill: ChangeAtomId = { localId: this.modularBuilder.generateId(), revision };
-					const build = this.modularBuilder.buildTrees(
-						fill.localId,
-						newContent,
-						revision,
-						this.idCompressor,
-					);
+					const build = this.modularBuilder.buildTrees(fill.localId, newContent, revision);
 					edits.push(build);
 
 					optionalChange = optional.changeHandler.editor.set(wasEmpty, {
@@ -381,23 +370,17 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		}
 	}
 
-	public sequenceField(field: FieldUpPath): SequenceFieldEditBuilder<ITreeCursorSynchronous> {
+	public sequenceField(field: FieldUpPath): SequenceFieldEditBuilder<TreeChunk> {
 		return {
-			insert: (index: number, content: ITreeCursorSynchronous): void => {
-				const length =
-					content.mode === CursorLocationType.Fields ? content.getFieldLength() : 1;
+			insert: (index: number, content: TreeChunk): void => {
+				const length = content.topLevelLength;
 				if (length === 0) {
 					return;
 				}
 
 				const revision = this.mintRevisionTag();
 				const firstId: CellId = { localId: this.modularBuilder.generateId(length), revision };
-				const build = this.modularBuilder.buildTrees(
-					firstId.localId,
-					content,
-					revision,
-					this.idCompressor,
-				);
+				const build = this.modularBuilder.buildTrees(firstId.localId, content, revision);
 				const change: FieldChangeset = brand(
 					sequence.changeHandler.editor.insert(index, length, firstId, revision),
 				);

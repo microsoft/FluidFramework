@@ -13,7 +13,6 @@ import {
 	type ChangeFamilyEditor,
 	type ChangeRebaser,
 	type ChangesetLocalId,
-	CursorLocationType,
 	type DeltaDetachedNodeBuild,
 	type DeltaDetachedNodeDestruction,
 	type DeltaDetachedNodeId,
@@ -24,14 +23,12 @@ import {
 	type FieldKey,
 	type FieldKindIdentifier,
 	type FieldUpPath,
-	type ITreeCursorSynchronous,
 	type RevisionInfo,
 	type RevisionMetadataSource,
 	type RevisionTag,
 	type TaggedChange,
 	type UpPath,
 	makeDetachedNodeId,
-	mapCursorField,
 	replaceAtomRevisions,
 	revisionMetadataSourceFromInfo,
 	areEqualChangeAtomIds,
@@ -59,13 +56,7 @@ import {
 	RangeMap,
 	balancedReduce,
 } from "../../util/index.js";
-import {
-	type TreeChunk,
-	chunkFieldSingle,
-	chunkTree,
-	defaultChunkPolicy,
-} from "../chunked-forest/index.js";
-import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
+import type { TreeChunk } from "../chunked-forest/index.js";
 
 import {
 	type CrossFieldManager,
@@ -96,7 +87,6 @@ import {
 	type NodeChangeset,
 	type NodeId,
 } from "./modularChangeTypes.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -2044,12 +2034,10 @@ function copyDetachedNodes(
 	const copiedDetachedNodes: DeltaDetachedNodeBuild[] = [];
 	for (const [[major, minor], chunk] of detachedNodes.entries()) {
 		if (chunk.topLevelLength > 0) {
-			const trees = mapCursorField(chunk.cursor(), (c) =>
-				cursorForMapTreeNode(mapTreeFromCursor(c)),
-			);
+			chunk.referenceAdded();
 			copiedDetachedNodes.push({
 				id: makeDetachedNodeId(major, minor),
-				trees,
+				trees: chunk,
 			});
 		}
 	}
@@ -2665,29 +2653,25 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 
 	/**
 	 * @param firstId - The ID to associate with the first node
-	 * @param content - The node(s) to build. Can be in either Field or Node mode.
+	 * @param content - The node(s) to build.
 	 * @param revision - The revision to use for the build.
 	 * @returns A description of the edit that can be passed to `submitChanges`.
+	 * The returned object may contain an owning reference to the given TreeChunk.
 	 */
 	public buildTrees(
 		firstId: ChangesetLocalId,
-		content: ITreeCursorSynchronous,
+		content: TreeChunk,
 		revision: RevisionTag,
-		idCompressor?: IIdCompressor,
 	): GlobalEditDescription {
-		if (content.mode === CursorLocationType.Fields && content.getFieldLength() === 0) {
+		if (content.topLevelLength === 0) {
 			return { type: "global", revision };
 		}
+
+		// This content will be added to a GlobalEditDescription whose lifetime exceeds the scope of this function.
+		content.referenceAdded();
+
 		const builds: ChangeAtomIdBTree<TreeChunk> = newTupleBTree();
-		const chunkCompressor = {
-			policy: defaultChunkPolicy,
-			idCompressor,
-		};
-		const chunk =
-			content.mode === CursorLocationType.Fields
-				? chunkFieldSingle(content, chunkCompressor)
-				: chunkTree(content, chunkCompressor);
-		builds.set([revision, firstId], chunk);
+		builds.set([revision, firstId], content);
 
 		return {
 			type: "global",
