@@ -42,13 +42,19 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 		timeoutMs = 60000,
 		logger?: ITelemetryBaseLogger,
 	): Promise<LocalDocumentDeltaConnection> {
-		const socket = (webSocketServer as LocalWebSocketServer).createConnection();
+		const server = webSocketServer as LocalWebSocketServer;
+
+		const socket = server.createConnection();
 
 		// Cast LocalWebSocket to SocketIOClient.Socket which is the socket that the base class needs. This is hacky
 		// but should be fine because this delta connection is for local use only.
 		const socketWithListener = socket as unknown as Socket;
 
 		const deltaConnection = new LocalDocumentDeltaConnection(socketWithListener, id, logger);
+
+		server.on("disconnect", () => {
+			deltaConnection.dispose();
+		});
 
 		const connectMessage: IConnect = {
 			client,

@@ -13,11 +13,25 @@ import {
 	NackErrorType,
 } from "@fluidframework/driver-definitions/internal";
 import { DefaultTokenProvider } from "@fluidframework/routerlicious-driver/internal";
-import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import {
+	ILocalDeltaConnectionServer,
+	LocalDeltaConnectionServer,
+} from "@fluidframework/server-local-server";
 
 import { createDocument } from "./localCreateDocument.js";
 import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection.js";
 import { createLocalDocumentService } from "./localDocumentService.js";
+
+// eslint-disable-next-line @typescript-eslint/unbound-method
+const originalClose = LocalDeltaConnectionServer.prototype.close;
+LocalDeltaConnectionServer.prototype.close = async function () {
+	(
+		this.webSocketServer as unknown as {
+			events: { emit: (event: "disconnect") => void };
+		}
+	).events.emit("disconnect");
+	return originalClose.bind(this)();
+};
 
 /**
  * Implementation of document service factory for local use.
