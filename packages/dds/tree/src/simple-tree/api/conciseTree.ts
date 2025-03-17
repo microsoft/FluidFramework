@@ -65,7 +65,7 @@ function conciseFromCursorInner(
 
 /**
  * Clones tree, replacing any handles.
- * A strongly types version of {@link replaceHandles}.
+ * @remarks A strongly typed version of {@link replaceHandles}.
  * @alpha
  */
 export function replaceConciseTreeHandles<T>(

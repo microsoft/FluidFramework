@@ -6,12 +6,12 @@
 /**
  * Like `JSON.stringify`, but returns a clone instead of stringifying the result.
  *
- * Only considers enumerable own properties with string keys.
+ * @remarks Only considers enumerable own properties with string keys.
  *
  * @param root - Data to clone.
- * @param rootKey - the key to pass to replacer for the root.
- * @param replacer - Like `JSON.stringify`'s replacer: called for every value while walking data. Unlike `JSON.stringify`'s replacer
- * returns a wrapper around the value, with a "clone" flag to indicate of the clone should recurse into that object (true) or use it as is (false).
+ * @param rootKey - The key to pass to replacer for the root.
+ * @param replacer - Like `JSON.stringify`'s replacer: called for every value while walking data. Unlike `JSON.stringify`'s replacer, this
+ * returns a wrapper around the value with a "clone" flag to indicate if the clone should recurse into that object (true) or use it as is (false).
  * @returns A clone of `root`.
  * @alpha
  */

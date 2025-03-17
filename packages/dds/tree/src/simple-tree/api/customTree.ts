@@ -207,7 +207,7 @@ export function tryStoredSchemaAsArray(
  * Clones tree, replacing any handles.
  * @remarks
  * This can be useful converting data containing handles to JSON compatible formats,
- * or just asserting data does not contain handles.
+ * or just asserting that data does not contain handles.
  *
  * Reversing this replacement depends on how the replacer encodes handles, and can often be impossible if the replacer
  * does not have all the necessary context to restore the handles
