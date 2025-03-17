@@ -27,7 +27,7 @@ import {
 	BlobCollectionContainerRuntimeFactory,
 	type IBlobCollection,
 } from "./container/index.js";
-import { BlobCollectionView } from "./view.js";
+import { BlobCollectionView, DebugView } from "./view.js";
 
 const urlResolver = createInsecureTinyliciousTestUrlResolver();
 const tokenProvider = createInsecureTinyliciousTestTokenProvider();
@@ -41,8 +41,8 @@ const codeLoader: ICodeDetailsLoader = {
 	},
 };
 
-let id: string;
 let container: IContainer;
+let attach: (() => void) | undefined;
 
 if (location.hash.length === 0) {
 	container = await createDetachedContainer({
@@ -51,19 +51,31 @@ if (location.hash.length === 0) {
 		documentServiceFactory,
 		codeLoader,
 	});
-	await container.attach(createTinyliciousTestCreateNewRequest());
-	if (container.resolvedUrl === undefined) {
-		throw new Error("Resolved Url unexpectedly missing!");
-	}
-	id = container.resolvedUrl.id;
+	attach = () => {
+		container
+			.attach(createTinyliciousTestCreateNewRequest())
+			.then(() => {
+				if (container.resolvedUrl === undefined) {
+					throw new Error("Resolved Url unexpectedly missing!");
+				}
+				const id = container.resolvedUrl.id;
+				// Update url and tab title
+				location.hash = id;
+				document.title = id;
+			})
+			.catch(console.error);
+	};
 } else {
-	id = location.hash.substring(1);
+	const id = location.hash.substring(1);
 	container = await loadExistingContainer({
 		request: { url: id },
 		urlResolver,
 		documentServiceFactory,
 		codeLoader,
 	});
+	// Update url and tab title
+	location.hash = id;
+	document.title = id;
 }
 
 const blobCollection = (await container.getEntryPoint()) as IBlobCollection;
@@ -73,6 +85,6 @@ const appDiv = document.getElementById("app") as HTMLDivElement;
 const appRoot = createRoot(appDiv);
 appRoot.render(createElement(BlobCollectionView, { blobCollection }));
 
-// Update url and tab title
-location.hash = id;
-document.title = id;
+const debugDiv = document.getElementById("debug") as HTMLDivElement;
+const debugRoot = createRoot(debugDiv);
+debugRoot.render(createElement(DebugView, { attach }));

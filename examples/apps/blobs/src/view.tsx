@@ -72,3 +72,24 @@ export const BlobCollectionView: FC<IBlobCollectionViewProps> = ({
 		</div>
 	);
 };
+
+export interface IDebugViewProps {
+	attach?: () => void;
+}
+
+export const DebugView: FC<IDebugViewProps> = ({ attach }) => {
+	const [showAttach, setShowAttach] = useState<boolean>(attach !== undefined);
+	const onAttachClick = () => {
+		// We'll only show the button if the function exists.
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		attach!();
+		setShowAttach(false);
+	};
+	return showAttach ? (
+		<div>
+			<button onClick={onAttachClick}>Attach container</button>
+		</div>
+	) : (
+		<></>
+	);
+};
