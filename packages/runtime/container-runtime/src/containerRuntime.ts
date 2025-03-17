@@ -825,7 +825,7 @@ export class ContainerRuntime
 		]);
 
 		// read snapshot blobs needed for BlobManager to load
-		const blobManagerSnapshot = await loadBlobManagerLoadInfo(context);
+		const blobManagerLoadInfo = await loadBlobManagerLoadInfo(context);
 
 		const messageAtLastSummary = lastMessageFromMetadata(metadata);
 
@@ -1002,7 +1002,7 @@ export class ContainerRuntime
 			containerScope,
 			logger,
 			existing,
-			blobManagerSnapshot,
+			blobManagerLoadInfo,
 			context.storage,
 			createIdCompressorFn,
 			documentSchemaController,
@@ -1329,7 +1329,7 @@ export class ContainerRuntime
 		public readonly baseLogger: ITelemetryBaseLogger,
 		existing: boolean,
 
-		blobManagerSnapshot: IBlobManagerLoadInfo,
+		blobManagerLoadInfo: IBlobManagerLoadInfo,
 		private readonly _storage: IDocumentStorageService,
 		private readonly createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>,
 
@@ -1686,8 +1686,8 @@ export class ContainerRuntime
 
 		this.blobManager = new BlobManager({
 			routeContext: this.handleContext,
-			snapshot: blobManagerSnapshot,
-			getStorage: () => this.storage,
+			blobManagerLoadInfo,
+			storage: this.storage,
 			sendBlobAttachOp: (localId: string, blobId?: string) => {
 				if (!this.disposed) {
 					this.submit(
@@ -2218,13 +2218,11 @@ export class ContainerRuntime
 
 			if (id === blobManagerBasePath && requestParser.isLeaf(2)) {
 				const blob = await this.blobManager.getBlob(requestParser.pathParts[1]);
-				return blob
-					? {
-							status: 200,
-							mimeType: "fluid/object",
-							value: blob,
-						}
-					: create404Response(request);
+				return {
+					status: 200,
+					mimeType: "fluid/object",
+					value: blob,
+				};
 			} else if (requestParser.pathParts.length > 0) {
 				return await this.channelCollection.request(request);
 			}
