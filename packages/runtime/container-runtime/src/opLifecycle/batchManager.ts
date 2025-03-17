@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
 import { asBatchMetadata, type IBatchMetadata } from "../metadata.js";
@@ -26,8 +25,6 @@ export interface IBatchManagerOptions {
 	 * If true, don't compare batchID of incoming batches to this. e.g. ID Allocation Batch IDs should be ignored
 	 */
 	readonly ignoreBatchId?: boolean;
-
-	rollback?: (message: BatchMessage) => void;
 }
 
 export interface BatchSequenceNumbers {
@@ -150,11 +147,13 @@ export class BatchManager {
 	 * Gets the pending batch and clears state for the next batch.
 	 */
 	public popBatch(batchId?: BatchId): IBatch {
+		assert(this.pendingBatch[0] !== undefined, "expected non-empty batch");
 		const batch: IBatch = {
 			messages: this.pendingBatch,
 			contentSizeInBytes: this.batchContentSize,
 			referenceSequenceNumber: this.referenceSequenceNumber,
 			hasReentrantOps: this.hasReentrantOps,
+			staged: this.pendingBatch[0].staged,
 		};
 
 		this.pendingBatch = [];
@@ -171,22 +170,12 @@ export class BatchManager {
 	public checkpoint(): IBatchCheckpoint {
 		const startPoint = this.pendingBatch.length;
 		return {
-			isEmpty: () => this.empty,
-			rollback: () => {
-				if (this.options.rollback === undefined) {
-					if (!this.empty) {
-						throw new LoggingError(
-							"BatchManager: No rollback handler provided for batch, but batch is not empty",
-						);
-					}
-					return;
-				}
-
+			rollback: (process: (message: BatchMessage) => void) => {
 				for (let i = this.pendingBatch.length; i > startPoint; ) {
 					i--;
 					const message = this.pendingBatch[i];
 					this.batchContentSize -= message.contents?.length ?? 0;
-					this.options.rollback(message);
+					process(message);
 				}
 
 				this.pendingBatch.length = startPoint;

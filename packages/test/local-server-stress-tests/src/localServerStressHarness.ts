@@ -777,13 +777,19 @@ async function loadClient(
 }
 
 async function synchronizeClients(connectedClients: Client[]) {
-	const rejects = new Map<Client, ((reason?: any) => void)[]>(
-		connectedClients.map((c) => [c, []]),
-	);
+	const closeOrDispose = new Map<
+		Client,
+		{ error?: Error; rejects: ((reason?: any) => void)[] }
+	>();
 
 	const cleanUps: (() => void)[] = [];
 	for (const c of connectedClients) {
-		const rejector = (err) => rejects.get(c)?.forEach((r) => r(err));
+		const rejector = (error) => {
+			const entry = closeOrDispose.get(c) ?? { rejects: [] };
+			entry.error ??= error;
+			closeOrDispose.set(c, entry);
+			entry.rejects.forEach((r) => r(entry.error));
+		};
 		c.container.once("closed", rejector);
 		c.container.once("disposed", rejector);
 		cleanUps.push(() => {
@@ -796,9 +802,13 @@ async function synchronizeClients(connectedClients: Client[]) {
 			connectedClients.map(async (c) =>
 				timeoutPromise(
 					(resolve, reject) => {
-						if (c.container.connectionState !== ConnectionState.Connected) {
+						const entry = closeOrDispose.get(c) ?? { rejects: [] };
+						closeOrDispose.set(c, entry);
+						if (entry.error) {
+							reject(entry.error);
+						} else if (c.container.connectionState !== ConnectionState.Connected) {
 							c.container.once("connected", () => resolve());
-							rejects.get(c)?.push(reject);
+							entry.rejects.push(reject);
 						} else {
 							resolve();
 						}
@@ -814,9 +824,13 @@ async function synchronizeClients(connectedClients: Client[]) {
 			connectedClients.map(async (c) =>
 				timeoutPromise(
 					(resolve, reject) => {
-						if (c.container.isDirty) {
+						const entry = closeOrDispose.get(c) ?? { rejects: [] };
+						closeOrDispose.set(c, entry);
+						if (entry.error) {
+							reject(entry.error);
+						} else if (c.container.isDirty) {
 							c.container.once("saved", () => resolve());
-							rejects.get(c)?.push(reject);
+							entry.rejects.push(reject);
 						} else {
 							resolve();
 						}
@@ -831,8 +845,12 @@ async function synchronizeClients(connectedClients: Client[]) {
 			...connectedClients.map((c) => c.container.deltaManager.lastKnownSeqNumber),
 		);
 
-		const makeOpHandler = (c: Client, resolve: () => void, reject: () => void) => {
-			if (c.container.deltaManager.lastKnownSeqNumber < maxSeq) {
+		const makeOpHandler = (c: Client, resolve: () => void, reject: (error) => void) => {
+			const entry = closeOrDispose.get(c) ?? { rejects: [] };
+			closeOrDispose.set(c, entry);
+			if (entry.error) {
+				reject(entry.error);
+			} else if (c.container.deltaManager.lastKnownSeqNumber < maxSeq) {
 				const handler = (msg) => {
 					if (msg.sequenceNumber >= maxSeq) {
 						c.container.off("op", handler);
@@ -840,7 +858,7 @@ async function synchronizeClients(connectedClients: Client[]) {
 					}
 				};
 				c.container.on("op", handler);
-				rejects.get(c)?.push(reject);
+				entry.rejects.push(reject);
 			} else {
 				resolve();
 			}

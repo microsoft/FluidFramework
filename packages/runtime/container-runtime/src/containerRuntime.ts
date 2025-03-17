@@ -1756,21 +1756,6 @@ export class ContainerRuntime
 			reSubmit: this.reSubmit.bind(this),
 			opReentrancy: () => this.ensureNoDataModelChangesCalls > 0,
 			closeContainer: this.closeFn,
-			rollback: (msg) => {
-				// Need to parse from string for back-compat
-				const { type, contents } = this.parseLocalOpContent(msg.contents);
-				switch (type) {
-					case ContainerMessageType.FluidDataStoreOp: {
-						// For operations, call rollbackDataStoreOp which will find the right store
-						// and trigger rollback on it.
-						this.channelCollection.rollback(type, contents, msg.localOpMetadata);
-						break;
-					}
-					default: {
-						throw new Error(`Can't rollback ${type}`);
-					}
-				}
-			},
 		});
 
 		this._quorum = quorum;
@@ -2511,22 +2496,7 @@ export class ContainerRuntime
 		return this._loadIdCompressor;
 	}
 
-	private lastStagingSetConnectionState: { connected: boolean; clientId?: string } | undefined;
 	public setConnectionState(connected: boolean, clientId?: string): void {
-		// hack: defer connecting if we are in staging mode. This prevents a bug where
-		// we reconnect with outstanding ops that were generated before we entered staging mode
-		// and the ops end up ahead of the ops we created within staging mode in the outbox.
-		// ideally we could solve this in a way that still lets the old ops be resubmitted.
-		if (this.inStagingMode) {
-			if (connected) {
-				this.lastStagingSetConnectionState = { connected, clientId };
-				return;
-			}
-			this.lastStagingSetConnectionState = undefined;
-			if (connected === this.connected) {
-				return;
-			}
-		}
 		// Validate we have consistent state
 		const currentClientId = this._audience.getSelf()?.clientId;
 		assert(clientId === currentClientId, 0x977 /* input clientId does not match Audience */);
@@ -3087,15 +3057,17 @@ export class ContainerRuntime
 	 * This method is expected to be called at the end of a batch.
 	 * @param resubmittingBatchId - If defined, indicates this is a resubmission of a batch
 	 * with the given Batch ID, which must be preserved
+	 * @param resubmittingStagedBatch - If defined, indicates this is a resubmission of a batch that is staged,
+	 * meaning it should not be sent to the ordering service yet.
 	 */
-	private flush(resubmittingBatchId?: BatchId): void {
+	private flush(resubmittingBatchId?: BatchId, resubmittingStagedBatch?: boolean): void {
 		assert(
 			this._orderSequentiallyCalls === 0,
 			0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */,
 		);
 
-		this.outbox.flush(resubmittingBatchId);
-		// assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
+		this.outbox.flush(resubmittingBatchId, resubmittingStagedBatch);
+		assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
 	}
 
 	/**
@@ -3117,7 +3089,9 @@ export class ContainerRuntime
 			if (checkpoint) {
 				// This will throw and close the container if rollback fails
 				try {
-					checkpoint.rollback();
+					checkpoint.rollback((message: BatchMessage) =>
+						this.rollback(message.contents, message.localOpMetadata),
+					);
 				} catch (error_) {
 					const error2 = wrapError(error_, (message) => {
 						return DataProcessingError.create(
@@ -3168,39 +3142,35 @@ export class ContainerRuntime
 		if (this.stageControls !== undefined) {
 			throw new Error("already in staging mode");
 		}
-		this.outbox.flush();
-		this.ensureNoDataModelChangesCalls++;
 
-		const exitStagingMode = (act: () => void) => (): void => {
-			this.ensureNoDataModelChangesCalls--;
+		// Make sure all BatchManagers are empty before entering staging mode,
+		// since we mark whole batches as "staged" or not to indicate whether to submit them.
+		this.outbox.flush();
+
+		const exitStagingMode = (discardOrCommit: () => void) => (): void => {
 			this.stageControls = undefined;
 
-			act();
+			// Final flush of any last staged changes
+			this.outbox.flush(undefined, true /* staged */);
 
-			if (this.lastStagingSetConnectionState !== undefined) {
-				this.setConnectionState(
-					this.lastStagingSetConnectionState.connected,
-					this.lastStagingSetConnectionState.clientId,
-				);
-				this.lastStagingSetConnectionState = undefined;
-			}
+			discardOrCommit();
 		};
 
-		const checkpoint = this.outbox.getBatchCheckpoints(true);
 		const stageControls = {
 			discardChanges: exitStagingMode(() => {
-				assert(
-					checkpoint.blobAttachBatch.isEmpty() && checkpoint.idAllocationBatch.isEmpty(),
-					"other batches must be empty",
+				// Pop all staged batches from the PSM and roll them back in LIFO order
+				this.pendingStateManager.popStagedBatches(({ content, localOpMetadata }) =>
+					this.rollback(content, localOpMetadata),
 				);
-
-				checkpoint.mainBatch.rollback();
-				checkpoint.unblockFlush();
 			}),
 			commitChanges: exitStagingMode(() => {
-				this.stageControls = undefined;
-				checkpoint.unblockFlush();
-				this.outbox.flush();
+				// All staged changes are in the PSM, so just replay them (ignore pre-staging batches)
+				// FUTURE: Have this do squash-rebase instead of resubmitting all intermediate changes
+				if (this.connected) {
+					this.pendingStateManager.replayPendingStates(true /* onlyStagedBatched */);
+				} else {
+					this.pendingStateManager.clearStagingFlags();
+				}
 			}),
 		};
 
@@ -4217,6 +4187,9 @@ export class ContainerRuntime
 				const idAllocationBatchMessage: BatchMessage = {
 					contents: serializeOpContents(idAllocationMessage),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+					// Note: For now, we will never stage ID Allocation messages.
+					// They won't contain personal info and no harm in extra allocations in case of discarding the staged changes
+					staged: false,
 				};
 				this.outbox.submitIdAllocation(idAllocationBatchMessage);
 			}
@@ -4280,6 +4253,7 @@ export class ContainerRuntime
 				this.outbox.submit({
 					contents: serializeOpContents(msg),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+					staged: this.inStagingMode,
 				});
 			}
 
@@ -4288,6 +4262,7 @@ export class ContainerRuntime
 				metadata,
 				localOpMetadata,
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+				staged: this.inStagingMode,
 			};
 			if (type === ContainerMessageType.BlobAttach) {
 				// BlobAttach ops must have their metadata visible and cannot be grouped (see opGroupingManager.ts)
@@ -4301,6 +4276,8 @@ export class ContainerRuntime
 			if (flushImmediatelyOnSubmit) {
 				this.flush();
 			} else {
+				// Note: We don't pass 'inStagingMode', since exiting Staging Mode would flush the outbox,
+				// and whenever this scheduled flush runs it should check the current state as of then.
 				this.scheduleFlush();
 			}
 		} catch (error) {
@@ -4391,7 +4368,11 @@ export class ContainerRuntime
 	 * @remarks - If the "Offline Load" feature is enabled, the batchId is included in the resubmitted messages,
 	 * for correlation to detect container forking.
 	 */
-	private reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId): void {
+	private reSubmitBatch(
+		batch: PendingMessageResubmitData[],
+		batchId: BatchId,
+		staged: boolean,
+	): void {
 		this.orderSequentially(() => {
 			for (const message of batch) {
 				this.reSubmit(message);
@@ -4400,7 +4381,7 @@ export class ContainerRuntime
 
 		// Only include Batch ID if "Offline Load" feature is enabled
 		// It's only needed to identify batches across container forks arising from misuse of offline load.
-		this.flush(this.offlineEnabled ? batchId : undefined);
+		this.flush(this.offlineEnabled ? batchId : undefined, staged);
 	}
 
 	private reSubmit(message: PendingMessageResubmitData): void {
@@ -4466,6 +4447,22 @@ export class ContainerRuntime
 				const error = getUnknownMessageTypeError(message.type, "reSubmitCore" /* codePath */);
 				this.closeFn(error);
 				throw error;
+			}
+		}
+	}
+
+	private rollback(content: string | undefined, localOpMetadata: unknown): void {
+		// Need to parse from string for back-compat
+		const { type, contents } = this.parseLocalOpContent(content);
+		switch (type) {
+			case ContainerMessageType.FluidDataStoreOp: {
+				// For operations, call rollbackDataStoreOp which will find the right store
+				// and trigger rollback on it.
+				this.channelCollection.rollback(type, contents, localOpMetadata);
+				break;
+			}
+			default: {
+				throw new Error(`Can't rollback ${type}`);
 			}
 		}
 	}

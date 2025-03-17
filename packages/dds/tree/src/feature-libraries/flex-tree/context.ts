@@ -14,7 +14,7 @@ import {
 } from "../../core/index.js";
 import type { Listenable } from "@fluidframework/core-interfaces";
 import { type IDisposable, disposeSymbol } from "../../util/index.js";
-import type { NodeKeyManager } from "../node-key/index.js";
+import type { NodeIdentifierManager } from "../node-key/index.js";
 
 import type { FlexTreeField } from "./flexTreeTypes.js";
 import { type LazyEntity, prepareForEditSymbol } from "./lazyEntity.js";
@@ -56,7 +56,7 @@ export interface FlexTreeHydratedContext extends FlexTreeContext {
 	 */
 	get root(): FlexTreeField;
 
-	readonly nodeKeyManager: NodeKeyManager;
+	readonly nodeKeyManager: NodeIdentifierManager;
 
 	/**
 	 * The checkout object associated with this context.
@@ -90,7 +90,7 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 	public constructor(
 		public readonly schemaPolicy: SchemaPolicy,
 		public readonly checkout: ITreeCheckout,
-		public readonly nodeKeyManager: NodeKeyManager,
+		public readonly nodeKeyManager: NodeIdentifierManager,
 	) {
 		this.eventUnregister = [
 			this.checkout.forest.events.on("beforeChange", () => {
@@ -178,7 +178,7 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 export function getTreeContext(
 	schema: SchemaPolicy,
 	checkout: ITreeCheckout,
-	nodeKeyManager: NodeKeyManager,
+	nodeKeyManager: NodeIdentifierManager,
 ): Context {
 	return new Context(schema, checkout, nodeKeyManager);
 }

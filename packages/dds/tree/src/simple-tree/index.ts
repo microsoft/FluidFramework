@@ -136,6 +136,7 @@ export {
 	type TransactionResultSuccess,
 	type TransactionResultFailed,
 	rollback,
+	generateSchemaFromSimpleSchema,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
@@ -170,6 +171,7 @@ export {
 	type ReadSchema,
 	type NodeSchemaOptions,
 	type NodeSchemaMetadata,
+	evaluateLazySchema,
 } from "./schemaTypes.js";
 export {
 	getTreeNodeForField,

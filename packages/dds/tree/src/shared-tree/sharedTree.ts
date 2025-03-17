@@ -478,14 +478,7 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 	}
 
 	public exportSimpleSchema(): SimpleTreeSchema {
-		return {
-			...exportSimpleFieldSchemaStored(this.storedSchema.rootFieldSchema),
-			definitions: new Map(
-				[...this.storedSchema.nodeSchema].map(([key, schema]) => {
-					return [key, exportSimpleNodeSchemaStored(schema)];
-				}),
-			),
-		};
+		return exportSimpleSchema(this.storedSchema);
 	}
 
 	@throwIfBroken
@@ -570,6 +563,17 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 	}
 
 	public onDisconnect(): void {}
+}
+
+export function exportSimpleSchema(storedSchema: TreeStoredSchema): SimpleTreeSchema {
+	return {
+		...exportSimpleFieldSchemaStored(storedSchema.rootFieldSchema),
+		definitions: new Map(
+			[...storedSchema.nodeSchema].map(([key, schema]) => {
+				return [key, exportSimpleNodeSchemaStored(schema)];
+			}),
+		),
+	};
 }
 
 /**
