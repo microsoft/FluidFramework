@@ -31,7 +31,7 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"prepack": "npm run webpack",
 		"test": "npm run test:mocha",
-		"test:mocha": "mocha",		
+		"test:mocha": "mocha",
 		"webpack": "webpack",
 		"webpack:profile": "npm run webpack"
 	},
