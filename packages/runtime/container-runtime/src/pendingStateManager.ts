@@ -496,16 +496,10 @@ export class PendingStateManager implements IDisposable {
 
 		this.pendingMessages.shift();
 
-		const n = 1;
-
-		//* Try skipping this step. Faster??  Or what if we repeat it N times? Slower?
 		// message is undefined in the Empty Batch case,
 		// because we don't have an incoming message to compare and pendingMessage is just a placeholder anyway.
-		if (message !== undefined && n > 0) {
+		if (message !== undefined) {
 			const messageContent = buildPendingMessageContent(message);
-
-			//* Do extra to see if we can detect it
-			Array.from({ length: n - 1 }).forEach((_, i) => buildPendingMessageContent(message));
 
 			// Stringified content should match
 			// If it doesn't, collect as much info about the difference as possible (privacy-wise) and log it

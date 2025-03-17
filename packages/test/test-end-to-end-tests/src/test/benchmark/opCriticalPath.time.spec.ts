@@ -50,12 +50,7 @@ type Patch<T, U> = Omit<T, keyof U> & U;
 
 type ContainerRuntime_WithPrivates = Patch<ContainerRuntime, { flush: () => void }>;
 
-//* ONLY
-//* ONLY
-//* ONLY
-//* ONLY
-//* ONLY
-describeCompat.only(
+describeCompat(
 	"Op Critical Paths - runtime benchmarks",
 	"NoCompat",
 	(getTestObjectProvider) => {
@@ -95,7 +90,6 @@ describeCompat.only(
 		}
 
 		benchmark({
-			//* only: true, //*
 			title: `Submit+Flush a single batch of ${batchSize} ops`,
 			...executionOptions, // We could use the defaults for this one, but this way the measurement is symmetrical with the "Process" benchmark below.
 			before: async () => {
@@ -145,47 +139,6 @@ describeCompat.only(
 					// Tear down this container, we start fresh for each measurement
 					mainContainer.dispose();
 				} while (running);
-			},
-		});
-	},
-);
-
-describeCompat.only(
-	"Op Critical Paths - for investigating curious benchmark interference",
-	"NoCompat",
-	(getTestObjectProvider) => {
-		let provider: ITestObjectProvider;
-		let mainContainer: IContainer;
-		let defaultDataStore: ITestDataObject;
-		let containerRuntime: ContainerRuntime_WithPrivates;
-
-		before(async () => {
-			provider = getTestObjectProvider();
-			const loader = provider.makeTestLoader(testContainerConfig);
-			mainContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
-
-			await mainContainer.attach(provider.driver.createCreateNewRequest());
-			defaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
-			containerRuntime = defaultDataStore._context
-				.containerRuntime as ContainerRuntime_WithPrivates;
-
-			defaultDataStore._root.set("force", "write connection");
-			await provider.ensureSynchronized();
-		});
-
-		function sendOps(label: string) {
-			Array.from({ length: 100 }).forEach((_, i) => {
-				defaultDataStore._root.set(`key-${i}`, `value-${label}`);
-			});
-
-			containerRuntime.flush();
-		}
-
-		benchmark({
-			title: "Roundtrip - Alone in describe block - takes 10x longer!",
-			benchmarkFnAsync: async () => {
-				sendOps("B");
-				await provider.ensureSynchronized();
 			},
 		});
 	},
