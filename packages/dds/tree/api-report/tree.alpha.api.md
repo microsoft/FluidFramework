@@ -21,6 +21,9 @@ export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 // @public
 type AllowedTypesUnsafe = readonly LazyItem<TreeNodeSchemaUnsafe>[];
 
+// @alpha
+export function allowUnused<T>(t?: T): void;
+
 // @public
 type ApplyKind<T, Kind extends FieldKind> = {
     [FieldKind.Required]: T;

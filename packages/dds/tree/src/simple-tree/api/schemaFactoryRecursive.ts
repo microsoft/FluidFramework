@@ -110,6 +110,13 @@ export function createFieldSchemaUnsafe<
  * }
  * ```
  *
+ * If your TypeScript configuration objects to this patten due to the unused local, you can use {@link allowUnused} to suppress the error:
+ *
+ * ```typescript
+ * class Test extends sf.arrayRecursive("Test", () => Test) {} // Bad
+ * allowUnused<ValidateRecursiveSchema<typeof Test>>(); // Reports compile error due to invalid schema above.
+ * ```
+ *
  * @privateRemarks
  * There are probably mistakes this misses: it's hard to guess all the wrong things people will accidentally do and defend against them.
  * Hopefully over time this can grow toward being robust, at least for common mistakes.
@@ -150,6 +157,19 @@ export type ValidateRecursiveSchema<
 		}[T["kind"]]
 	>,
 > = true;
+
+/**
+ * Does nothing with the provided value, but appears to use it to make unused locals warnings and errors go away.
+ *
+ * @remarks
+ * When TypeScript is configured to with "noUnusedLocals", it will produce an error if a local variable is declared but never used.
+ * When you want to have this check enabled, but not follow it for a specific variable, you can pass the type or value to this function.
+ *
+ * Instead of using this, consider disabling "noUnusedLocals" in your tsconfig.json file, and enabling a similar check via a linter.
+ * This will allow you to still have the check, but have more control over it, for example being able to suppress it, or enable patterns like allowing unused locals with an "_" prefix.
+ * @alpha
+ */
+export function allowUnused<T>(t?: T): void {}
 
 /**
  * Workaround for fixing errors resulting from an issue with recursive ArrayNode schema exports.
