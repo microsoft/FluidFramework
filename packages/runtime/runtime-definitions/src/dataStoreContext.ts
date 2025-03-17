@@ -329,13 +329,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * Process messages for this channel. The messages here are contiguous messages in a batch.
 	 * @param messageCollection - The collection of messages to process.
 	 */
-	processMessages?(messageCollection: IRuntimeMessageCollection): void;
-
-	/**
-	 * Processes the op.
-	 * @deprecated processMessages should be used instead to process messages for a channel.
-	 */
-	process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+	processMessages(messageCollection: IRuntimeMessageCollection): void;
 
 	/**
 	 * Processes the signal.

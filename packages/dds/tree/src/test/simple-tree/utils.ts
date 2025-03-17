@@ -11,7 +11,7 @@ import {
 	defaultSchemaPolicy,
 	getSchemaAndPolicy,
 	initializeForest,
-	MockNodeKeyManager,
+	MockNodeIdentifierManager,
 } from "../../feature-libraries/index.js";
 import {
 	HydratedContext,
@@ -127,7 +127,7 @@ export function hydrate<const TSchema extends ImplicitFieldSchema>(
 		forest,
 		schema: new TreeStoredSchemaRepository(toStoredSchema(schema)),
 	});
-	const manager = new MockNodeKeyManager();
+	const manager = new MockNodeIdentifierManager();
 	const checkout = new CheckoutFlexTreeView(branch, defaultSchemaPolicy, manager);
 	const field = checkout.flexTree;
 	branch.forest.anchors.slots.set(
