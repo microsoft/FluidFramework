@@ -43,7 +43,7 @@ import {
 	fieldKindConfigurations,
 	makeFieldBatchCodec,
 	makeModularChangeCodecFamily,
-	MockNodeKeyManager,
+	MockNodeIdentifierManager,
 	jsonableTreeFromCursor,
 	cursorForJsonableTreeNode,
 } from "../../../feature-libraries/index.js";
@@ -110,7 +110,7 @@ function getIdentifierEncodingContext(id: string) {
 	const initialTree = cursorFromInsertable(
 		HasIdentifier,
 		new HasIdentifier({ identifier: id }),
-		new MockNodeKeyManager(),
+		new MockNodeIdentifierManager(),
 	);
 	const flexSchema = toStoredSchema(HasIdentifier);
 	const flexConfig: TreeStoredContent = {
@@ -272,8 +272,10 @@ describe("End to end chunked encoding", () => {
 
 		it("is the uncompressed value when it is an unknown  identifier", () => {
 			// generate an id from a different id compressor.
-			const nodeKeyManager = new MockNodeKeyManager();
-			const id = nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
+			const nodeKeyManager = new MockNodeIdentifierManager();
+			const id = nodeKeyManager.stabilizeNodeIdentifier(
+				nodeKeyManager.generateLocalNodeIdentifier(),
+			);
 
 			const { encoderContext, checkout } = getIdentifierEncodingContext(id);
 
@@ -349,8 +351,8 @@ describe("End to end chunked encoding", () => {
 			const id = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
 
 			// Create a stable id from a different source.
-			const nodeKeyManager = new MockNodeKeyManager();
-			const unknownStableId = nodeKeyManager.generateStableNodeKey();
+			const nodeKeyManager = new MockNodeIdentifierManager();
+			const unknownStableId = nodeKeyManager.generateStableNodeIdentifier();
 
 			const initialTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),

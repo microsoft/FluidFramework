@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import {
 	type Anchor,
 	AnchorSet,
+	type DeltaDetachedNodeId,
 	type DeltaFieldChanges,
 	type DeltaFieldMap,
 	type DeltaMark,
@@ -15,11 +16,13 @@ import {
 	type DetachedField,
 	type FieldKey,
 	type FieldUpPath,
+	type INormalizedUpPath,
 	type JsonableTree,
 	type UpPath,
 	anchorSlot,
 	clonePath,
 	getDetachedFieldContainingPath,
+	isDetachedUpPath,
 	keyAsDetachedField,
 	makeDetachedFieldIndex,
 	rootFieldKey,
@@ -101,7 +104,7 @@ describe("AnchorSet", () => {
 		const [anchors, anchor1, anchor2, anchor3] = setup();
 		withVisitor(anchors, (v) => {
 			v.enterField(fieldFoo);
-			v.detach({ start: 4, end: 5 }, detachedField);
+			v.detach({ start: 4, end: 5 }, detachedField, detachId);
 			v.exitField(fieldFoo);
 			v.destroy(detachedField, 1);
 		});
@@ -123,7 +126,7 @@ describe("AnchorSet", () => {
 		applyTestDelta(makeDelta(detachMark, makePath([fieldFoo, 4])), anchors);
 		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 4]));
 		checkEquality(anchors.locate(anchor2), path2);
-		checkRemoved(anchors.locate(anchor3));
+		checkRemoved(anchors.locate(anchor3), detachId);
 		assert.doesNotThrow(() => anchors.forget(anchor3));
 		assert.throws(() => anchors.locate(anchor3));
 	});
@@ -133,7 +136,7 @@ describe("AnchorSet", () => {
 
 		withVisitor(anchors, (v) => {
 			v.enterField(fieldFoo);
-			v.detach({ start: 5, end: 6 }, detachedField);
+			v.detach({ start: 5, end: 6 }, detachedField, detachId);
 			v.exitField(fieldFoo);
 			v.destroy(detachedField, 1);
 		});
@@ -150,7 +153,7 @@ describe("AnchorSet", () => {
 		checkEquality(anchors.locate(anchor2), path2);
 		withVisitor(anchors, (v) => {
 			v.enterField(fieldFoo);
-			v.detach({ start: 3, end: 4 }, detachedField);
+			v.detach({ start: 3, end: 4 }, detachedField, detachId);
 			v.exitField(fieldFoo);
 			v.destroy(detachedField, 1);
 		});
@@ -162,7 +165,7 @@ describe("AnchorSet", () => {
 		checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 3]));
 		withVisitor(anchors, (v) => {
 			v.enterField(fieldFoo);
-			v.detach({ start: 3, end: 4 }, detachedField);
+			v.detach({ start: 3, end: 4 }, detachedField, detachId);
 			v.exitField(fieldFoo);
 			v.destroy(detachedField, 1);
 		});
@@ -173,14 +176,15 @@ describe("AnchorSet", () => {
 
 	it("can rebase over detach of parent node", () => {
 		const [anchors, anchor1, anchor2, anchor3, anchor4] = setup();
-		const detachMark = {
+		const detachId1 = { minor: 1 };
+		const detachMark1 = {
 			count: 1,
-			detach: detachId,
+			detach: detachId1,
 		};
 
-		applyTestDelta(makeDelta(detachMark, makePath([fieldFoo, 5])), anchors);
-		checkRemoved(anchors.locate(anchor4));
-		checkRemoved(anchors.locate(anchor1));
+		applyTestDelta(makeDelta(detachMark1, makePath([fieldFoo, 5])), anchors);
+		checkRemoved(anchors.locate(anchor4), detachId1);
+		checkRemoved(anchors.locate(anchor1), undefined);
 		assert.doesNotThrow(() => anchors.forget(anchor4));
 		assert.doesNotThrow(() => anchors.forget(anchor1));
 		checkEquality(anchors.locate(anchor2), path2);
@@ -188,16 +192,26 @@ describe("AnchorSet", () => {
 		assert.throws(() => anchors.locate(anchor4));
 		assert.throws(() => anchors.locate(anchor1));
 
+		const detachId2 = { minor: 2 };
+		const detachMark2 = {
+			count: 1,
+			detach: detachId2,
+		};
 		checkEquality(anchors.locate(anchor2), path2);
-		applyTestDelta(makeDelta(detachMark, makePath([fieldFoo, 3])), anchors);
-		checkRemoved(anchors.locate(anchor2));
+		applyTestDelta(makeDelta(detachMark2, makePath([fieldFoo, 3])), anchors);
+		checkRemoved(anchors.locate(anchor2), undefined);
 		assert.doesNotThrow(() => anchors.forget(anchor2));
 		assert.throws(() => anchors.locate(anchor2));
 
+		const detachId3 = { minor: 3 };
+		const detachMark3 = {
+			count: 1,
+			detach: detachId3,
+		};
 		// The index of anchor3 has changed from 4 to 3 because of the deletion of the node at index 3.
 		checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 3]));
-		applyTestDelta(makeDelta(detachMark, makePath([fieldFoo, 3])), anchors);
-		checkRemoved(anchors.locate(anchor3));
+		applyTestDelta(makeDelta(detachMark3, makePath([fieldFoo, 3])), anchors);
+		checkRemoved(anchors.locate(anchor3), detachId3);
 		assert.doesNotThrow(() => anchors.forget(anchor3));
 		assert.throws(() => anchors.locate(anchor3));
 	});
@@ -246,7 +260,7 @@ describe("AnchorSet", () => {
 			detachedFieldIndex,
 		});
 		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 4]));
-		checkRemoved(anchors.locate(anchor2), brand("repair-0"));
+		checkRemoved(anchors.locate(anchor2), undefined, brand("repair-0"));
 		checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 3]));
 		checkEquality(anchors.locate(anchor4), makePath([fieldFoo, 4]));
 
@@ -279,10 +293,10 @@ describe("AnchorSet", () => {
 		applyTestDelta(makeDelta(detachMark, makePath([fieldFoo, 3])), anchors, {
 			detachedFieldIndex,
 		});
-		checkRemoved(anchors.locate(anchor1), brand("repair-2"));
-		checkRemoved(anchors.locate(anchor2), brand("repair-0"));
-		checkRemoved(anchors.locate(anchor3), brand("repair-1"));
-		checkRemoved(anchors.locate(anchor4), brand("repair-2"));
+		checkRemoved(anchors.locate(anchor1), undefined, brand("repair-2"));
+		checkRemoved(anchors.locate(anchor2), undefined, brand("repair-0"));
+		checkRemoved(anchors.locate(anchor3), { minor: 43 }, brand("repair-1"));
+		checkRemoved(anchors.locate(anchor4), { minor: 44 }, brand("repair-2"));
 
 		const restoreMark = {
 			count: 1,
@@ -293,8 +307,9 @@ describe("AnchorSet", () => {
 			detachedFieldIndex,
 		});
 		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 3], [fieldBar, 4]));
-		checkRemoved(anchors.locate(anchor2), brand("repair-0"));
-		checkRemoved(anchors.locate(anchor3), brand("repair-1"));
+		assert(isDetachedUpPath(anchors.locate(anchor1) as UpPath) === false);
+		checkRemoved(anchors.locate(anchor2), undefined, brand("repair-0"));
+		checkRemoved(anchors.locate(anchor3), { minor: 43 }, brand("repair-1"));
 		checkEquality(anchors.locate(anchor4), makePath([fieldFoo, 3]));
 		assert.doesNotThrow(() => anchors.forget(anchor2));
 		assert.throws(() => anchors.locate(anchor2));
@@ -315,14 +330,59 @@ describe("AnchorSet", () => {
 			// This moves anchor4 (the only anchor under anchor1) out from under anchor1.
 			// If the visitor did not increase the ref count of anchor1 on its way down,
 			// anchor1 will be disposed as part of this operation.
-			v.detach({ start: 4, end: 5 }, detachedField);
+			v.detach({ start: 4, end: 5 }, detachedField, detachId);
 			v.exitField(fieldBar);
 			// If anchor1 is be disposed. This will throw.
 			v.exitNode(5);
 			v.exitField(fieldFoo);
 		});
 
-		checkRemoved(anchors.locate(anchor1), detachedField);
+		checkRemoved(anchors.locate(anchor1), detachId, detachedField);
+	});
+
+	it("can detach multiple nodes", () => {
+		const anchors = new AnchorSet();
+
+		// This tests that detaching nodes [a, b, c, d, e] while there are anchors to b and e works
+		const bPath = makePath([fieldFoo, 1]);
+		const ePath = makePath([fieldFoo, 4]);
+		const bAnchor = anchors.track(bPath);
+		const eAnchor = anchors.track(ePath);
+
+		withVisitor(anchors, (v) => {
+			v.enterField(fieldFoo);
+			v.detach({ start: 0, end: 5 }, detachedField, detachId);
+			v.exitField(fieldFoo);
+		});
+
+		checkRemoved(anchors.locate(bAnchor), { minor: 43 }, detachedField);
+		checkRemoved(anchors.locate(eAnchor), { minor: 46 }, detachedField);
+	});
+
+	it("does not retain detachedNodeIds when detached nodes are reattached", () => {
+		const anchors = new AnchorSet();
+
+		// This tests that detaching nodes [a, b, c, d, e] while there are anchors to b and e works
+		// and that reattaching [a, b, c] while there is an anchor to b removes the detachedNodeId from b
+		const bPath = makePath([fieldFoo, 1]);
+		const ePath = makePath([fieldFoo, 4]);
+		const bAnchor = anchors.track(bPath);
+		const eAnchor = anchors.track(ePath);
+
+		withVisitor(anchors, (v) => {
+			v.enterField(fieldFoo);
+			v.detach({ start: 0, end: 5 }, detachedField, detachId);
+			v.attach(detachedField, 3, 0);
+			v.exitField(fieldFoo);
+		});
+
+		assert(isDetachedUpPath(anchors.locate(bAnchor) as UpPath) === false);
+		const bPathLookup = anchors.locate(bAnchor);
+		const ePathLookup = anchors.locate(eAnchor);
+		assert(bPathLookup !== undefined);
+		assert(ePathLookup !== undefined);
+		assert(isDetachedUpPath(bPathLookup) === false);
+		assert(isDetachedUpPath(ePathLookup) === true);
 	});
 
 	describe("internalize path", () => {
@@ -474,7 +534,7 @@ describe("AnchorSet", () => {
 			v.enterField(rootFieldKey);
 			v.enterNode(0);
 			v.enterField(fieldOne);
-			v.detach({ start: 0, end: 1 }, brand("fakeDetachDestination"));
+			v.detach({ start: 0, end: 1 }, brand("fakeDetachDestination"), detachId);
 			v.exitField(fieldOne);
 			v.enterField(fieldTwo);
 			v.attach(brand("fakeAttachSource"), 1, 0);
@@ -484,6 +544,7 @@ describe("AnchorSet", () => {
 				brand("fakeReplaceSource"),
 				{ start: 0, end: 1 },
 				brand("fakeReplaceDestination"),
+				detachId,
 			);
 			v.exitField(fieldThree);
 			v.exitNode(0);
@@ -586,10 +647,19 @@ function checkEquality(actual: UpPath | undefined, expected: UpPath | undefined)
 	assert.deepEqual(clonePath(actual), clonePath(expected));
 }
 
-function checkRemoved(path: UpPath | undefined, expected: FieldKey = brand("Temp-0")): void {
+function checkRemoved(
+	path: INormalizedUpPath | undefined,
+	expectedDetachedNodeId: DeltaDetachedNodeId | undefined,
+	expected: FieldKey = brand("Temp-0"),
+): void {
 	assert.notEqual(path, undefined);
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	assert.equal(getDetachedFieldContainingPath(path!), expected);
+	assert.deepEqual(
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		path!.detachedNodeId,
+		expectedDetachedNodeId,
+	);
 }
 
 function makeDelta(mark: DeltaMark, path: UpPath): DeltaFieldMap {

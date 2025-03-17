@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import {
 	EmptyKey,
 	type FieldKey,
+	type NormalizedUpPath,
 	type UpPath,
 	moveToDetachedField,
 	rootFieldKey,
@@ -212,9 +213,10 @@ export function readDeepCursorTree(tree: CheckoutFlexTreeView): {
  * Path to linked list node at provided depth.
  * Depth 1 points to the root node.
  */
-export function deepPath(depth: number): UpPath {
+export function deepPath(depth: number): NormalizedUpPath {
 	assert(depth > 0);
-	let path: UpPath = {
+	let path: NormalizedUpPath = {
+		detachedNodeId: undefined,
 		parent: undefined,
 		parentField: rootFieldKey,
 		parentIndex: 0,

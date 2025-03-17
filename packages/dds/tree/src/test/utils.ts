@@ -92,18 +92,19 @@ import {
 	type RevertibleAlphaFactory,
 	type DeltaDetachedNodeChanges,
 	type DeltaDetachedNodeRename,
+	type NormalizedFieldUpPath,
 	type ExclusiveMapTree,
 } from "../core/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
-	type NodeKeyManager,
+	type NodeIdentifierManager,
 	buildForest,
 	defaultSchemaPolicy,
 	jsonableTreeFromFieldCursor,
 	jsonableTreeFromForest,
 	mapRootChanges,
 	mapTreeFromCursor,
-	MockNodeKeyManager,
+	MockNodeIdentifierManager,
 	cursorForMapTreeField,
 	type IDefaultEditBuilder,
 	type TreeChunk,
@@ -172,6 +173,8 @@ import {
 	MockContainerRuntimeFactoryWithOpBunching,
 	type MockContainerRuntimeWithOpBunching,
 } from "./mocksForOpBunching.js";
+import { configureDebugAsserts } from "@fluidframework/core-utils/internal";
+import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 
 // Testing utilities
 
@@ -778,7 +781,7 @@ export function flexTreeViewWithContent(
 		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
-		nodeKeyManager?: NodeKeyManager;
+		nodeKeyManager?: NodeIdentifierManager;
 	},
 ): CheckoutFlexTreeView {
 	const view = checkoutWithContent(
@@ -788,7 +791,7 @@ export function flexTreeViewWithContent(
 	return new CheckoutFlexTreeView(
 		view,
 		defaultSchemaPolicy,
-		args?.nodeKeyManager ?? new MockNodeKeyManager(),
+		args?.nodeKeyManager ?? new MockNodeIdentifierManager(),
 	);
 }
 
@@ -1195,7 +1198,7 @@ export function treeTestFactory(
  */
 export function getView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
-	nodeKeyManager?: NodeKeyManager,
+	nodeKeyManager?: NodeIdentifierManager,
 	logger?: ITelemetryLoggerExt,
 ): SchematizingSimpleTreeView<TSchema> {
 	const checkout = createTreeCheckout(
@@ -1211,7 +1214,7 @@ export function getView<const TSchema extends ImplicitFieldSchema>(
 	return new SchematizingSimpleTreeView<TSchema>(
 		checkout,
 		config,
-		nodeKeyManager ?? new MockNodeKeyManager(),
+		nodeKeyManager ?? new MockNodeIdentifierManager(),
 	);
 }
 
@@ -1222,7 +1225,11 @@ export function viewCheckout<const TSchema extends ImplicitFieldSchema>(
 	checkout: TreeCheckout,
 	config: TreeViewConfiguration<TSchema>,
 ): SchematizingSimpleTreeView<TSchema> {
-	return new SchematizingSimpleTreeView<TSchema>(checkout, config, new MockNodeKeyManager());
+	return new SchematizingSimpleTreeView<TSchema>(
+		checkout,
+		config,
+		new MockNodeIdentifierManager(),
+	);
 }
 
 /**
@@ -1325,12 +1332,26 @@ function normalizeNewFieldContent(
  */
 export function moveWithin(
 	editor: IDefaultEditBuilder,
-	field: FieldUpPath,
+	field: NormalizedFieldUpPath,
 	sourceIndex: number,
 	count: number,
 	destIndex: number,
 ) {
 	editor.move(field, sourceIndex, count, field, destIndex);
+}
+
+/**
+ * Invoke inside a describe block for benchmarks to add hooks that configure things for maximum performance if isInPerformanceTestingMode,
+ * and enable debug asserts otherwise.
+ */
+export function configureBenchmarkHooks(): void {
+	let debugBefore: boolean;
+	before(() => {
+		debugBefore = configureDebugAsserts(!isInPerformanceTestingMode);
+	});
+	after(() => {
+		assert.equal(configureDebugAsserts(debugBefore), !isInPerformanceTestingMode);
+	});
 }
 
 export function chunkFromJsonTrees(field: JsonCompatible[]): TreeChunk {

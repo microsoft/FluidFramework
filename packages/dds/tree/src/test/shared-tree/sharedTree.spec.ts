@@ -35,7 +35,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
-	MockNodeKeyManager,
+	MockNodeIdentifierManager,
 	TreeCompressionStrategy,
 	TreeStatus,
 } from "../../feature-libraries/index.js";
@@ -1469,7 +1469,7 @@ describe("SharedTree", () => {
 				const branchView = new SchematizingSimpleTreeView(
 					branch,
 					new TreeViewConfiguration({ schema, enableSchemaValidation }),
-					new MockNodeKeyManager(),
+					new MockNodeIdentifierManager(),
 				);
 				const outerList = branchView.root;
 				const innerList = outerList.at(0) ?? assert.fail();
@@ -1753,7 +1753,7 @@ describe("SharedTree", () => {
 					schema: StringArray,
 					enableSchemaValidation,
 				}),
-				new MockNodeKeyManager(),
+				new MockNodeIdentifierManager(),
 			);
 			Tree.runTransaction(childView, () => {
 				childView.root.insertAtStart("C");

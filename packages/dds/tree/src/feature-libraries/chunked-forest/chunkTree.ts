@@ -30,7 +30,7 @@ import type { FullSchemaPolicy } from "../modular-schema/index.js";
 import { BasicChunk } from "./basicChunk.js";
 import { SequenceChunk } from "./sequenceChunk.js";
 import { type FieldShape, TreeShape, UniformChunk } from "./uniformChunk.js";
-import { isStableNodeKey } from "../node-key/index.js";
+import { isStableNodeIdentifier } from "../node-identifier/index.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 export interface Disposable {
@@ -509,7 +509,7 @@ export function insertValues(
 		if (
 			typeof cursor.value === "string" &&
 			idCompressor !== undefined &&
-			isStableNodeKey(cursor.value)
+			isStableNodeIdentifier(cursor.value)
 		) {
 			values.push(idCompressor.tryRecompress(cursor.value) ?? cursor.value);
 		} else {
