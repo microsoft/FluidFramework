@@ -51,15 +51,33 @@ const defaultCodeDetails: IFluidCodeDetails = {
 	config: {},
 };
 
-//* Add comments
 /**
+ * Exposes fine-grained control over the Container's inbound and outbound op queues
+ *
  * @legacy
  * @alpha
  */
 export interface IOpProcessingController {
+	/**
+	 * Process all ops sitting in the inbound queue, leaving the inbound queue paused afterwards
+	 * @param containers - optional subset of all open containers
+	 */
 	processIncoming(...containers: IContainer[]): Promise<void>;
+	/**
+	 * Process all ops sitting in the outbound queue, leaving the inbound queue paused afterwards.
+	 * Also waits for the outbound ops to arrive in the inbound queue.
+	 * @param containers - optional subset of all open containers
+	 */
 	processOutgoing(...containers: IContainer[]): Promise<void>;
+	/**
+	 * Process all queue activities, to prepare for fine-grained control via processIncoming and processOutgoing
+	 * @param containers - optional subset of all open containers
+	 */
 	pauseProcessing(...containers: IContainer[]): Promise<void>;
+	/**
+	 * Resume all queue activities for normal operation of the container
+	 * @param containers - optional subset of all open containers
+	 */
 	resumeProcessing(...containers: IContainer[]): void;
 }
 
