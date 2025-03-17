@@ -776,6 +776,8 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	disposed: boolean = false;
 	dispose(error?: Error): void {
 		if (this.disposed) return;
+		this.disposed = true;
+
 		this.driverForCreating.dispose(error);
 		this.driverForLoading.dispose(error);
 	}

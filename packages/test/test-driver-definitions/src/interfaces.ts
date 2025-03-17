@@ -56,17 +56,17 @@ export interface ITestDriver extends IDisposable {
 	/**
 	 * Specific endpoint name if there are any
 	 */
-	readonly endpointName?: string;
+	readonly endpointName?: string | undefined;
 
 	/**
 	 * Tenant name if there are any
 	 */
-	readonly tenantName?: string;
+	readonly tenantName?: string | undefined;
 
 	/**
 	 * User index if there are any
 	 */
-	readonly userIndex?: number;
+	readonly userIndex?: number | undefined;
 
 	/**
 	 * The semantic version of the test drivers package.

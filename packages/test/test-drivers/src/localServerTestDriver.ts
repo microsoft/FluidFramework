@@ -57,6 +57,7 @@ export class LocalServerTestDriver implements ITestDriver {
 	}
 	tenantName?: string | undefined;
 	userIndex?: number | undefined;
+
 	public disposed: boolean = false;
 	dispose(error?: Error): void {
 		if (this.disposed) return;
