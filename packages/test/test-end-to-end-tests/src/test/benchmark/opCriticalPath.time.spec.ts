@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
-import { benchmark, Phase, type BenchmarkTimingOptions } from "@fluid-tools/benchmark";
+import { benchmark, type BenchmarkTimingOptions } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
@@ -18,8 +18,6 @@ import {
 	ITestObjectProvider,
 	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
-
-export const ___x = Phase;
 
 // NOTE: Changing this will rename the benchmark which will create a new chart on the dashboard
 const batchSize: number = 1000;
@@ -118,6 +116,7 @@ describeCompat(
 				do {
 					await setup();
 
+					// (This is about benchmark's "batch", not the batch of ops we are measuring)
 					assert(state.iterationsPerBatch === 1, "Expecting only one iteration per batch");
 
 					// This will get the batch of ops roundtripped and into the inbound queue, but the inbound queue will remain paused
