@@ -73,7 +73,6 @@ export {
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
-	type IChannelView,
 } from "./shared-tree/index.js";
 
 export {
@@ -217,6 +216,8 @@ export {
 	type TransactionResultSuccess,
 	type TransactionResultFailed,
 	rollback,
+	generateSchemaFromSimpleSchema,
+	evaluateLazySchema,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
@@ -259,3 +260,6 @@ export {
 export type { MapNodeInsertableData } from "./simple-tree/index.js";
 
 export type { JsonCompatible, JsonCompatibleObject } from "./util/index.js";
+
+export { JsonAsTree } from "./jsonDomainSchema.js";
+export { FluidSerializableAsTree } from "./serializableDomainSchema.js";

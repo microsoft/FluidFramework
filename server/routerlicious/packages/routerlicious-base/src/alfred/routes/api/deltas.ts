@@ -158,6 +158,7 @@ export function create(
 
 			const tenantId = request.params.tenantId || appTenants[0].id;
 			const caller = request.query.caller?.toString();
+			const fetchReason = request.query.fetchReason?.toString();
 
 			// Query for the deltas and return a filtered version of just the operations field
 			const deltasP = deltaService.getDeltas(
@@ -167,6 +168,7 @@ export function create(
 				from,
 				to,
 				caller,
+				fetchReason,
 			);
 
 			handleResponse(deltasP, response, undefined, 500);

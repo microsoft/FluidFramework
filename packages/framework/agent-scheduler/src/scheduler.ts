@@ -5,7 +5,13 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import type {
+	FluidObject,
+	IFluidHandle,
+	IFluidLoadable,
+	IRequest,
+	IResponse,
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	FluidDataStoreRuntime,
@@ -36,14 +42,14 @@ import { IAgentScheduler, IAgentSchedulerEvents } from "./agent.js";
 // Note: making sure this ID is unique and does not collide with storage provided clientID
 const UnattachedClientId = `${uuid()}_unattached`;
 
-const mapWait = async <T = any>(map: ISharedMap, key: string): Promise<T> => {
+const mapWait = async <T = unknown>(map: ISharedMap, key: string): Promise<T> => {
 	const maybeValue = map.get<T>(key);
 	if (maybeValue !== undefined) {
 		return maybeValue;
 	}
 
 	return new Promise((resolve) => {
-		const handler = (changed: IValueChanged) => {
+		const handler = (changed: IValueChanged): void => {
 			if (changed.key === key) {
 				map.off("valueChanged", handler);
 				const value = map.get<T>(changed.key);
@@ -67,16 +73,10 @@ export class AgentScheduler
 		runtime: IFluidDataStoreRuntime,
 		context: IFluidDataStoreContext,
 		existing: boolean,
-	) {
+	): Promise<IAgentScheduler> {
 		let root: ISharedMap;
 		let consensusRegisterCollection: ConsensusRegisterCollection<string | null>;
-		if (!existing) {
-			root = SharedMap.create(runtime, "root");
-			root.bindToContext();
-			consensusRegisterCollection = ConsensusRegisterCollection.create(runtime);
-			consensusRegisterCollection.bindToContext();
-			root.set(schedulerId, consensusRegisterCollection.handle);
-		} else {
+		if (existing) {
 			root = (await runtime.getChannel("root")) as ISharedMap;
 			const handle = await mapWait<IFluidHandle<ConsensusRegisterCollection<string | null>>>(
 				root,
@@ -84,6 +84,13 @@ export class AgentScheduler
 			);
 			assert(handle !== undefined, 0x116 /* "Missing handle on scheduler load" */);
 			consensusRegisterCollection = await handle.get();
+		} else {
+			root = SharedMap.create(runtime, "root");
+			root.bindToContext();
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			consensusRegisterCollection = ConsensusRegisterCollection.create(runtime);
+			consensusRegisterCollection.bindToContext();
+			root.set(schedulerId, consensusRegisterCollection.handle);
 		}
 		const agentScheduler = new AgentScheduler(runtime, context, consensusRegisterCollection);
 		agentScheduler.initialize();
@@ -91,10 +98,10 @@ export class AgentScheduler
 		return agentScheduler;
 	}
 
-	public get IAgentScheduler() {
+	public get IAgentScheduler(): IAgentScheduler {
 		return this;
 	}
-	public get IFluidLoadable() {
+	public get IFluidLoadable(): IFluidLoadable {
 		return this;
 	}
 
@@ -138,7 +145,7 @@ export class AgentScheduler
 		this._handle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
 	}
 
-	public get handle() {
+	public get handle(): IFluidHandle<this> {
 		return this._handle;
 	}
 
@@ -210,9 +217,9 @@ export class AgentScheduler
 	}
 
 	public pickedTasks(): string[] {
-		return Array.from(this.runningTasks.values());
+		return [...this.runningTasks.values()];
 	}
-
+	/* eslint-disable unicorn/no-null */
 	private async registerCore(taskUrls: string[]): Promise<void> {
 		if (taskUrls.length > 0) {
 			const registersP: Promise<void>[] = [];
@@ -231,7 +238,7 @@ export class AgentScheduler
 		}
 	}
 
-	private async releaseCore(taskUrls: string[]) {
+	private async releaseCore(taskUrls: string[]): Promise<void> {
 		if (taskUrls.length > 0) {
 			const releasesP: Promise<void>[] = [];
 			for (const taskUrl of taskUrls) {
@@ -243,7 +250,7 @@ export class AgentScheduler
 		}
 	}
 
-	private async clearTasks(taskUrls: string[]) {
+	private async clearTasks(taskUrls: string[]): Promise<void> {
 		assert(this.isActive(), 0x11b /* "Trying to clear tasks on inactive agent" */);
 		const clearP: Promise<void>[] = [];
 		for (const taskUrl of taskUrls) {
@@ -260,7 +267,7 @@ export class AgentScheduler
 		await this.consensusRegisterCollection.write(key, clientId);
 	}
 
-	private initialize() {
+	private initialize(): void {
 		const quorum = this.runtime.getQuorum();
 		// A client left the quorum. Iterate and clear tasks held by that client.
 		// Ideally a leader should do this cleanup. But it's complicated when a leader itself leaves.
@@ -271,7 +278,7 @@ export class AgentScheduler
 			if (!this.runtime.objectsRoutingContext.isAttached) return;
 			// Cleanup only if connected. If not, cleanup will happen in initializeCore() that runs on connection.
 			if (this.isActive()) {
-				const tasks: Promise<any>[] = [];
+				const tasks: Promise<unknown>[] = [];
 				const leftTasks: string[] = [];
 				for (const taskUrl of this.consensusRegisterCollection.keys()) {
 					if (this.getTaskClientId(taskUrl) === clientId) {
@@ -339,7 +346,7 @@ export class AgentScheduler
 		});
 	}
 
-	private onNewTaskAssigned(key: string) {
+	private onNewTaskAssigned(key: string): void {
 		assert(!this.runningTasks.has(key), 0x11d /* "task is already running" */);
 		this.runningTasks.add(key);
 		const worker = this.locallyRunnableTasks.get(key);
@@ -353,7 +360,7 @@ export class AgentScheduler
 		}
 	}
 
-	private async onTaskReassigned(key: string, currentClient: string | null) {
+	private async onTaskReassigned(key: string, currentClient: string | null): Promise<void> {
 		if (this.runningTasks.has(key)) {
 			this.runningTasks.delete(key);
 			this.emit("released", key);
@@ -375,8 +382,9 @@ export class AgentScheduler
 			}
 		}
 	}
+	/* eslint-enable unicorn/no-null */
 
-	private isActive() {
+	private isActive(): boolean {
 		// Scheduler should be active in detached container.
 		if (this.runtime.attachState === AttachState.Detached) {
 			return true;
@@ -391,11 +399,11 @@ export class AgentScheduler
 		return this.context.deltaManager.active;
 	}
 
-	private initializeCore() {
+	private initializeCore(): void {
 		// Nobody released the tasks held by last client in previous session.
 		// Check to see if this client needs to do this.
 		const clearCandidates: string[] = [];
-		const tasks: Promise<any>[] = [];
+		const tasks: Promise<unknown>[] = [];
 
 		for (const [taskUrl] of this.locallyRunnableTasks) {
 			if (!this.getTaskClientId(taskUrl)) {
@@ -417,7 +425,7 @@ export class AgentScheduler
 		});
 	}
 
-	private clearRunningTasks() {
+	private clearRunningTasks(): void {
 		const tasks = this.runningTasks;
 		this.runningTasks = new Set<string>();
 
@@ -432,7 +440,7 @@ export class AgentScheduler
 		}
 	}
 
-	private sendErrorEvent(eventName: string, error: any, key?: string) {
+	private sendErrorEvent(eventName: string, error: unknown, key?: string): void {
 		this.logger.sendErrorEvent({ eventName, key }, error);
 	}
 }
@@ -447,18 +455,16 @@ class AgentSchedulerRuntime extends FluidDataStoreRuntime {
 			AgentScheduler.load(this, dataStoreContext, existing),
 		);
 	}
-	public async request(request: IRequest) {
+	public async request(request: IRequest): Promise<IResponse> {
 		const response = await super.request(request);
-		if (response.status === 404) {
-			if (request.url === "" || request.url === "/") {
-				const agentScheduler = await this.entryPoint.get();
-				assert(
-					agentScheduler !== undefined,
-					0x466 /* entryPoint for AgentSchedulerRuntime should have been initialized by now */,
-				);
+		if (response.status === 404 && (request.url === "" || request.url === "/")) {
+			const agentScheduler = await this.entryPoint.get();
+			assert(
+				agentScheduler !== undefined,
+				0x466 /* entryPoint for AgentSchedulerRuntime should have been initialized by now */,
+			);
 
-				return { status: 200, mimeType: "fluid/object", value: agentScheduler };
-			}
+			return { status: 200, mimeType: "fluid/object", value: agentScheduler };
 		}
 		return response;
 	}
@@ -472,7 +478,7 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
 	public static readonly type = "_scheduler";
 	public readonly type = AgentSchedulerFactory.type;
 
-	public get IFluidDataStoreFactory() {
+	public get IFluidDataStoreFactory(): AgentSchedulerFactory {
 		return this;
 	}
 

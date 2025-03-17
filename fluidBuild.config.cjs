@@ -311,6 +311,7 @@ module.exports = {
 			// These should only be files that are not in an pnpm workspace.
 			"common/build/build-common/src/cjs/package.json",
 			"common/build/build-common/src/esm/package.json",
+			"packages/common/core-interfaces/src/cjs/package.json",
 			"packages/framework/presence/src/cjs/package.json",
 		],
 		// Exclusion per handler
@@ -415,8 +416,6 @@ module.exports = {
 				// Packages that violate the API linting rules
 				// ae-missing-release-tags, ae-incompatible-release-tags
 				"^examples/data-objects/table-document/",
-				// AB#8147: ./test/EditLog export should be ./internal/... or tagged for support
-				"^experimental/dds/tree/",
 
 				// Packages with APIs that don't need strict API linting
 				"^build-tools/",

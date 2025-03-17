@@ -6,7 +6,7 @@
 import type {
 	JsonDeserialized,
 	JsonSerializable,
-} from "@fluidframework/presence/internal/core-interfaces";
+} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 /**
  * Collection of value types that are not intended to be used/imported
