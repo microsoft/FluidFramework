@@ -62,6 +62,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	private readonly apiCounter = new InMemoryApiCounters();
 	private readonly failedApiCounterSuffix = ".Failed";
 	private consecutiveFailedCount = 0;
+	private apiCounterInterval: NodeJS.Timeout | undefined;
 
 	constructor(
 		endpoints: IKafkaEndpoints,
@@ -94,7 +95,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			maxConsumerCommitRetries: options?.maxConsumerCommitRetries ?? 10,
 		};
 		if (this.apiCounterConfig.apiCounterEnabled) {
-			setInterval(() => {
+			this.apiCounterInterval = setInterval(() => {
 				if (!this.apiCounter.countersAreActive) {
 					return;
 				}
@@ -429,9 +430,14 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			return;
 		}
 
-		if (!reconnecting) {
-			// when closed outside of this class, disable reconnecting
+		if (!reconnecting) { // when closed outside of this class
+			// disable reconnecting
 			this.closed = true;
+			// stop the api counter interval
+			if (this.apiCounterInterval !== undefined) {
+				clearInterval(this.apiCounterInterval);
+				this.apiCounterInterval = undefined;
+			}
 		}
 
 		// set consumer to undefined before disconnecting in order to
