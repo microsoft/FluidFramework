@@ -30,8 +30,6 @@ import { PureDataObjectFactory } from "./pureDataObjectFactory.js";
  *
  * @typeParam TSchema - The tree schema for the {@link TreeDataObject}.
  * @typeParam TDataObject - The concrete {@link TreeDataObject} type.
- *
- * @internal
  */
 export class TreeDataObjectFactory<
 	TSchema extends ImplicitFieldSchema,

@@ -21,7 +21,6 @@
 export {
 	DataObjectFactory,
 	PureDataObjectFactory,
-	TreeDataObjectFactory,
 } from "./data-object-factories/index.js";
 export {
 	DataObject,
