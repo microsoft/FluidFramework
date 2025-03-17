@@ -75,8 +75,6 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
     // (undocumented)
     readonly disposed: boolean;
-    // (undocumented)
-    readonly enterStagingMode: () => StageControls;
     generateDocumentUniqueId(): number | string;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
@@ -86,8 +84,6 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
         snapshotTree: ISnapshotTree;
         sequenceNumber: number;
     }>;
-    // (undocumented)
-    get inStagingMode(): boolean;
     orderSequentially(callback: () => void): void;
     submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
     // (undocumented)
@@ -103,6 +99,14 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
     // (undocumented)
     (event: "dispose", listener: () => void): any;
+}
+
+// @alpha @sealed @deprecated (undocumented)
+export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase {
+    // (undocumented)
+    enterStagingMode?(): StageControlsExperimental;
+    // (undocumented)
+    readonly inStagingMode?: boolean;
 }
 
 // @alpha
@@ -398,8 +402,8 @@ export interface OpAttributionKey {
     type: "op";
 }
 
-// @alpha @sealed (undocumented)
-export interface StageControls {
+// @alpha @sealed @deprecated (undocumented)
+export interface StageControlsExperimental {
     // (undocumented)
     readonly commitChanges: () => void;
     // (undocumented)
