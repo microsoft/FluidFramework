@@ -430,8 +430,8 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 						internalWorkspaceType,
 					);
 
-					// If the user registers workspace in response to 'workspaceActivated' we should process the update
-					// for the workspace. This is important for the Notifications workspace, as it could be registered lazily.
+					// We check here if the client registered workspace in response to 'workspaceActivated'
+					// If so, we should process the update we received with the new workspace.
 					const newWorkspace = this.workspaces.get(workspaceAddress);
 					if (newWorkspace) {
 						const senderID = message.clientId;
