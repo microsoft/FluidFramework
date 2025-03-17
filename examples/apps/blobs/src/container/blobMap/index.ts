@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export { DiceRollerFactory } from "./diceRoller.js";
+export { BlobMapFactory } from "./blobMap.js";
 export {
-	IDiceRoller,
-	IDiceRollerEvents,
+	IBlobMap,
+	IBlobMapEvents,
 } from "./interface.js";

@@ -23,8 +23,8 @@ import { createElement } from "react";
 // eslint-disable-next-line import/no-internal-modules
 import { createRoot } from "react-dom/client";
 
-import { DiceRollerContainerRuntimeFactory, type IDiceRoller } from "./container/index.js";
-import { DiceRollerView } from "./view.js";
+import { BlobMapContainerRuntimeFactory, type IBlobMap } from "./container/index.js";
+import { BlobMapView } from "./view.js";
 
 const urlResolver = createInsecureTinyliciousTestUrlResolver();
 const tokenProvider = createInsecureTinyliciousTestTokenProvider();
@@ -32,7 +32,7 @@ const documentServiceFactory = createRouterliciousDocumentServiceFactory(tokenPr
 const codeLoader: ICodeDetailsLoader = {
 	load: async (details: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
 		return {
-			module: { fluidExport: new DiceRollerContainerRuntimeFactory() },
+			module: { fluidExport: new BlobMapContainerRuntimeFactory() },
 			details,
 		};
 	},
@@ -63,12 +63,12 @@ if (location.hash.length === 0) {
 	});
 }
 
-const diceRoller = (await container.getEntryPoint()) as IDiceRoller;
+const blobMap = (await container.getEntryPoint()) as IBlobMap;
 
 // Render view
 const appDiv = document.getElementById("app") as HTMLDivElement;
 const appRoot = createRoot(appDiv);
-appRoot.render(createElement(DiceRollerView, { diceRoller }));
+appRoot.render(createElement(BlobMapView, { blobMap }));
 
 // Update url and tab title
 location.hash = id;

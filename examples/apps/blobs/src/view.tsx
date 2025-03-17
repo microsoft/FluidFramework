@@ -3,39 +3,39 @@
  * Licensed under the MIT License.
  */
 
-import React, { type FC, useEffect, useState } from "react";
+import React, { type FC, type ReactElement, useEffect, useState } from "react";
 
-import { IDiceRoller } from "./container/index.js";
+import { IBlobMap } from "./container/index.js";
 
-export interface IDiceRollerViewProps {
-	diceRoller: IDiceRoller;
+export interface IBlobMapViewProps {
+	blobMap: IBlobMap;
 }
 
-export const DiceRollerView: FC<IDiceRollerViewProps> = ({
-	diceRoller,
-}: IDiceRollerViewProps) => {
-	const [diceValue, setDiceValue] = useState(diceRoller.value);
+export const BlobMapView: FC<IBlobMapViewProps> = ({ blobMap }: IBlobMapViewProps) => {
+	const [blobs, setBlobs] = useState(blobMap.getBlobs());
 
 	useEffect(() => {
-		const onDiceRolled = () => {
-			setDiceValue(diceRoller.value);
+		const onBlobsChanged = () => {
+			setBlobs(blobMap.getBlobs());
 		};
-		diceRoller.events.on("diceRolled", onDiceRolled);
+		blobMap.events.on("blobsChanged", onBlobsChanged);
 		return () => {
-			diceRoller.events.off("diceRolled", onDiceRolled);
+			blobMap.events.off("blobsChanged", onBlobsChanged);
 		};
-	}, [diceRoller]);
+	}, [blobMap]);
 
-	// Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
-	const diceChar = String.fromCodePoint(0x267f + diceValue);
-	const color = `hsl(${diceValue * 60}, 70%, 50%)`;
+	const blobViews: ReactElement[] = [];
+	for (const [id, blob] of blobs) {
+		console.log(blob);
+		blobViews.push(<div id={id}></div>);
+	}
 
 	return (
-		<div style={{ textAlign: "center" }}>
-			<div style={{ fontSize: "200px", color }}>{diceChar}</div>
-			<button style={{ fontSize: "50px" }} onClick={diceRoller.roll}>
-				Roll
+		<div>
+			<button style={{ fontSize: "50px" }} onClick={blobMap.addBlob}>
+				Add blob
 			</button>
+			{blobViews}
 		</div>
 	);
 };

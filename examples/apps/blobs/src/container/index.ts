@@ -4,7 +4,7 @@
  */
 
 export {
-	IDiceRoller,
-	IDiceRollerEvents,
-} from "./diceRoller/index.js";
-export { DiceRollerContainerRuntimeFactory } from "./runtimeFactory.js";
+	IBlobMap,
+	IBlobMapEvents,
+} from "./blobMap/index.js";
+export { BlobMapContainerRuntimeFactory } from "./runtimeFactory.js";

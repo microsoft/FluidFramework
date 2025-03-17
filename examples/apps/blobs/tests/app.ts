@@ -26,11 +26,8 @@ import { createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { v4 as uuid } from "uuid";
 
-import {
-	DiceRollerContainerRuntimeFactory,
-	type IDiceRoller,
-} from "../src/container/index.js";
-import { DiceRollerView } from "../src/view.js";
+import { BlobMapContainerRuntimeFactory, type IBlobMap } from "../src/container/index.js";
+import { BlobMapView } from "../src/view.js";
 
 const updateTabForId = (id: string): void => {
 	// Update the URL with the actual ID
@@ -45,7 +42,7 @@ const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbF
 const codeLoader: ICodeDetailsLoader = {
 	load: async (details: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
 		return {
-			module: { fluidExport: new DiceRollerContainerRuntimeFactory() },
+			module: { fluidExport: new BlobMapContainerRuntimeFactory() },
 			details,
 		};
 	},
@@ -83,16 +80,16 @@ async function createContainerAndRenderInElement(element: HTMLDivElement): Promi
 		});
 	}
 
-	const diceRoller = (await container.getEntryPoint()) as IDiceRoller;
-	const render = (diceRoller: IDiceRoller) => {
+	const blobMap = (await container.getEntryPoint()) as IBlobMap;
+	const render = (blobMap: IBlobMap) => {
 		const appRoot = createRoot(element);
-		appRoot.render(createElement(DiceRollerView, { diceRoller }));
+		appRoot.render(createElement(BlobMapView, { blobMap }));
 	};
 
 	// update the browser URL and the window title with the actual container ID
 	updateTabForId(id);
 	// Render it
-	render(diceRoller);
+	render(blobMap);
 }
 
 const leftElement = document.getElementById("sbs-left") as HTMLDivElement;

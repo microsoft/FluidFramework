@@ -12,13 +12,13 @@ import { loadContainerRuntime } from "@fluidframework/container-runtime/legacy";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 import type { FluidObject } from "@fluidframework/core-interfaces";
 
-import { DiceRollerFactory } from "./diceRoller/index.js";
+import { BlobMapFactory } from "./blobMap/index.js";
 
-const diceRollerId = "dice-roller";
-const diceRollerRegistryKey = "dice-roller";
-const diceRollerFactory = new DiceRollerFactory();
+const blobMapId = "blob-map";
+const blobMapRegistryKey = "blob-map";
+const blobMapFactory = new BlobMapFactory();
 
-export class DiceRollerContainerRuntimeFactory implements IRuntimeFactory {
+export class BlobMapContainerRuntimeFactory implements IRuntimeFactory {
 	public get IRuntimeFactory(): IRuntimeFactory {
 		return this;
 	}
@@ -30,24 +30,23 @@ export class DiceRollerContainerRuntimeFactory implements IRuntimeFactory {
 		const provideEntryPoint = async (
 			entryPointRuntime: IContainerRuntime,
 		): Promise<FluidObject> => {
-			const diceRollerHandle =
-				await entryPointRuntime.getAliasedDataStoreEntryPoint(diceRollerId);
-			if (diceRollerHandle === undefined) {
-				throw new Error("Dice roller missing!");
+			const blobMapHandle = await entryPointRuntime.getAliasedDataStoreEntryPoint(blobMapId);
+			if (blobMapHandle === undefined) {
+				throw new Error("Blob map missing!");
 			}
-			return diceRollerHandle.get();
+			return blobMapHandle.get();
 		};
 
 		const runtime = await loadContainerRuntime({
 			context,
-			registryEntries: new Map([[diceRollerRegistryKey, Promise.resolve(diceRollerFactory)]]),
+			registryEntries: new Map([[blobMapRegistryKey, Promise.resolve(blobMapFactory)]]),
 			provideEntryPoint,
 			existing,
 		});
 
 		if (!existing) {
-			const diceRoller = await runtime.createDataStore(diceRollerRegistryKey);
-			await diceRoller.trySetAlias(diceRollerId);
+			const blobMap = await runtime.createDataStore(blobMapRegistryKey);
+			await blobMap.trySetAlias(blobMapId);
 		}
 
 		return runtime;
