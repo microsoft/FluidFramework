@@ -21,7 +21,7 @@ export const ___x = Phase;
 const testContainerConfig: ITestContainerConfig = {
 	runtimeOptions: {
 		enableGroupedBatching: true,
-		chunkSizeInBytes: 1024 * 1024 * 1024,
+		//* chunkSizeInBytes: 1024 * 1024 * 1024,
 		summaryOptions: {
 			initialSummarizerDelayMs: 0, // back-compat - Old runtime takes 5 seconds to start summarizer without thi
 			summaryConfigOverrides: {
@@ -69,7 +69,7 @@ describeCompat.only(
 		const executionOptions: BenchmarkTimingOptions = {
 			//* startPhase: Phase.CollectData, // This ensures we only run one iteration per batch, so beforeEachBatch becomes beforeEach
 			//* 50 enough? 100?
-			minBatchCount: 50, // Since we're only running one iteration per batch, we need to run a lot of batches to get a good sample
+			minBatchCount: 125, // Since we're only running one iteration per batch, we need to run a lot of batches to get a good sample
 			//* maxBenchmarkDurationSeconds: 0,
 			minBatchDurationSeconds: 0,
 		};
