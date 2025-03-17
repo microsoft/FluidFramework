@@ -23,6 +23,7 @@ import {
 	ITelemetryBaseProperties,
 	TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
+import type { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentServiceFactory,
@@ -65,7 +66,7 @@ export interface IOpProcessingController {
 /**
  * @internal
  */
-export interface ITestObjectProvider {
+export interface ITestObjectProvider extends IDisposable {
 	/**
 	 * Indicates which type of test object provider is being used.
 	 */
@@ -442,6 +443,12 @@ export class TestObjectProvider implements ITestObjectProvider {
 	) {
 		this._documentIdStrategy = getDocumentIdStrategy(driver.type);
 	}
+	disposed: boolean = false;
+	dispose(error?: Error): void {
+		if (this.disposed) return;
+		this.disposed = true;
+		this.driver.dispose(error);
+	}
 
 	/**
 	 * {@inheritDoc ITestObjectProvider.logger}
@@ -765,6 +772,12 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		private readonly telemetryProps?: ITelemetryLoggerPropertyBags,
 	) {
 		this._documentIdStrategy = getDocumentIdStrategy(driverForCreating.type);
+	}
+	disposed: boolean = false;
+	dispose(error?: Error): void {
+		if (this.disposed) return;
+		this.driverForCreating.dispose(error);
+		this.driverForLoading.dispose(error);
 	}
 
 	/**

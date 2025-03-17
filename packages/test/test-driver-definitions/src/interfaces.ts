@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { IDisposable } from "@fluidframework/core-interfaces";
 import type { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type {
 	IDocumentServiceFactory,
@@ -46,7 +47,7 @@ export type DriverEndpoint = RouterliciousEndpoint | OdspEndpoint;
  * Base interface for test drivers.
  * @internal
  */
-export interface ITestDriver {
+export interface ITestDriver extends IDisposable {
 	/**
 	 * The type of server the test driver executes against
 	 */

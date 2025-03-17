@@ -159,6 +159,11 @@ export class RouterliciousTestDriver implements ITestDriver {
 		);
 	}
 
+	disposed: boolean = false;
+	dispose(error?: Error): void {
+		this.disposed = true;
+	}
+
 	public readonly type = "routerlicious";
 	public get version() {
 		return this.api.version;

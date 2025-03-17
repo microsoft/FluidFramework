@@ -55,6 +55,14 @@ export class LocalServerTestDriver implements ITestDriver {
 			},
 		} as any); // Casting to "any" so we don't have to fill out all properties
 	}
+	tenantName?: string | undefined;
+	userIndex?: number | undefined;
+	public disposed: boolean = false;
+	dispose(error?: Error): void {
+		if (this.disposed) return;
+		this.disposed = true;
+		void this.server.close();
+	}
 
 	createDocumentServiceFactory(): IDocumentServiceFactory {
 		return new this.api.LocalDocumentServiceFactory(this._server);

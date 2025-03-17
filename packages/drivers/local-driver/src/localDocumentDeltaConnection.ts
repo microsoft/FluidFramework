@@ -53,6 +53,9 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 		const deltaConnection = new LocalDocumentDeltaConnection(socketWithListener, id, logger);
 
 		server.on("disconnect", () => {
+			if (!deltaConnection.disposed) {
+				socket.disconnect();
+			}
 			deltaConnection.dispose();
 		});
 

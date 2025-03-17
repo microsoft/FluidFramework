@@ -109,6 +109,10 @@ function createCompatSuite(
 					Object.defineProperty(this, "__fluidTestProvider", { get: () => provider });
 				});
 
+				after(() => {
+					provider.dispose();
+				});
+
 				tests.bind(this)((options?: ITestObjectProviderOptions) => {
 					resetAfterEach = options?.resetAfterEach ?? true;
 					if (options?.syncSummarizer === true) {

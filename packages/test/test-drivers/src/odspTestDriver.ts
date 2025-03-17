@@ -343,6 +343,10 @@ export class OdspTestDriver implements ITestDriver {
 		public readonly userIndex?: number,
 		public readonly endpointName?: string,
 	) {}
+	disposed: boolean = false;
+	dispose(error?: Error): void {
+		this.disposed = true;
+	}
 
 	/**
 	 * Returns the url to container which can be used to load the container through loader.

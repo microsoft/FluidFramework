@@ -31,6 +31,11 @@ export class TinyliciousTestDriver implements ITestDriver {
 		return this.api.version;
 	}
 
+	disposed: boolean = false;
+	dispose(error?: Error): void {
+		this.disposed = true;
+	}
+
 	constructor(private readonly api: RouterliciousDriverApiType = RouterliciousDriverApi) {}
 	createDocumentServiceFactory(): IDocumentServiceFactory {
 		return new this.api.RouterliciousDocumentServiceFactory(
