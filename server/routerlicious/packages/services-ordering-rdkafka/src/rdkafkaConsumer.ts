@@ -430,8 +430,8 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			return;
 		}
 
-		if (!reconnecting) { // when closed outside of this class
-			// disable reconnecting
+		if (!reconnecting) {
+			// when closed outside of this class, disable reconnecting
 			this.closed = true;
 			// stop the api counter interval
 			if (this.apiCounterInterval !== undefined) {
