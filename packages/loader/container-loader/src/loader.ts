@@ -9,7 +9,7 @@ import {
 	IFluidModule,
 	IHostLoader,
 	ILoader,
-	ILoaderOptions as ILoaderOptions1,
+	ILoaderOptions,
 	IProvideFluidCodeDetailsComparer,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
@@ -88,21 +88,6 @@ export class RelativeLoader implements ILoader {
 		}
 		return this.loader.resolve(request);
 	}
-}
-
-/**
- * @legacy
- * @alpha
- * @deprecated Use {@link @fluidframework/container-definitions#ILoaderOptions} instead
- */
-export interface ILoaderOptions extends ILoaderOptions1 {
-	/**
-	 *
-	 * @deprecated No longer needed or used (initially introduced to test single-commit summaries).
-	 * Driver layer can enable single-commit summaries via document service policies if needed.
-	 * ADO #9098: To remove declaration and usage from code.
-	 */
-	summarizeProtocolTree?: boolean;
 }
 
 /**
