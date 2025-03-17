@@ -2491,10 +2491,6 @@ export class Container
 		}
 		this._dirtyContainer = dirty;
 		this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
-		this.mc.logger.sendTelemetryEvent({
-			eventName: dirty ? "DirtyContainer" : "SavedContainer",
-			attachState: this.attachState,
-		});
 	};
 
 	/**
