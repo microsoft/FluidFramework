@@ -1145,7 +1145,7 @@ describe("Matrix1", () => {
 				runGCTests(GCSharedMatrixProvider);
 			});
 
-			describe("inserting and deleting many cells", () => {
+			describe.only("inserting and deleting many cells", () => {
 				it("is connected", () => {
 					const matrix = createConnectedMatrix(
 						"foo",

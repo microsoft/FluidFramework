@@ -566,6 +566,14 @@ class Obliterates {
 	}
 }
 
+interface InsertResult {
+	/**
+	 * If the insertion necessitated rebalancing, this field contains a `MergeBlock` that should be inserted after the block that `insertingWalk` was called on.
+	 */
+	remainder: MergeBlock | undefined;
+	hadChanges: boolean;
+}
+
 /**
  * @internal
  */
@@ -576,6 +584,11 @@ export class MergeTree {
 		zamboniSegments: true,
 	};
 
+	/**
+	 * A sentinel value that indicates an inserting walk should continue to the next block sibling.
+	 * This can occur for example when tie-break forces insertion of a segment past an entire block (and
+	 * the inserting walk first recurses into the block before realizing that).
+	 */
 	private static readonly theUnfinishedNode = { childCount: -1 } as unknown as MergeBlock;
 
 	public readonly collabWindow = new CollaborationWindow();
@@ -1484,7 +1497,7 @@ export class MergeTree {
 				}
 			}
 
-			const splitNode = this.insertingWalk(this.root, insertPos, perspective, stamp, {
+			const result = this.insertingWalk(this.root, insertPos, perspective, stamp, {
 				leaf: onLeaf,
 				candidateSegment: newSegment,
 				continuePredicate: continueFrom,
@@ -1501,7 +1514,7 @@ export class MergeTree {
 				});
 			}
 
-			this.updateRoot(splitNode);
+			this.updateRoot(result.remainder);
 
 			insertPos += newSegment.cachedLength;
 
@@ -1638,14 +1651,17 @@ export class MergeTree {
 	};
 
 	private ensureIntervalBoundary(pos: number, perspective: Perspective): void {
-		const splitNode = this.insertingWalk(
+		const result = this.insertingWalk(
 			this.root,
 			pos,
 			perspective,
-			{ seq: TreeMaintenanceSequenceNumber, clientId: perspective.clientId },
+			{
+				seq: TreeMaintenanceSequenceNumber,
+				clientId: perspective.clientId,
+			},
 			{ leaf: this.splitLeafSegment },
 		);
-		this.updateRoot(splitNode);
+		this.updateRoot(result.remainder);
 	}
 
 	// Assume called only when pos == len
@@ -1673,7 +1689,7 @@ export class MergeTree {
 		stamp: OperationStamp,
 		context: InsertContext,
 		isLastChildBlock: boolean = true,
-	): MergeBlock | undefined {
+	): InsertResult {
 		let _pos: number = pos;
 
 		const children = block.children;
@@ -1710,12 +1726,12 @@ export class MergeTree {
 						childIndex++; // Insert after
 					} else {
 						// No change
-						return undefined;
+						return { remainder: undefined, hadChanges: false };
 					}
 				} else {
 					const childBlock = child;
 					// Internal node
-					const splitNode = this.insertingWalk(
+					const insertResult = this.insertingWalk(
 						childBlock,
 						_pos,
 						perspective,
@@ -1723,15 +1739,17 @@ export class MergeTree {
 						context,
 						isLastNonLeafBlock,
 					);
-					if (splitNode === undefined) {
-						this.blockUpdateLength(block, stamp);
-						return undefined;
-					} else if (splitNode === MergeTree.theUnfinishedNode) {
+					if (insertResult.remainder === undefined) {
+						if (insertResult.hadChanges) {
+							this.blockUpdateLength(block, stamp);
+						}
+						return insertResult;
+					} else if (insertResult.remainder === MergeTree.theUnfinishedNode) {
 						_pos -= len; // Act as if shifted segment
 						continue;
 					} else {
-						newNode = splitNode;
-						fromSplit = splitNode;
+						newNode = insertResult.remainder;
+						fromSplit = insertResult.remainder;
 						childIndex++; // Insert after
 					}
 				}
@@ -1742,7 +1760,7 @@ export class MergeTree {
 		}
 		if (!newNode && _pos === 0) {
 			if (context.continuePredicate?.(block)) {
-				return MergeTree.theUnfinishedNode;
+				return { remainder: MergeTree.theUnfinishedNode, hadChanges: false };
 			} else {
 				const segmentChanges = context.leaf(undefined, _pos, context);
 				newNode = segmentChanges.next;
@@ -1762,7 +1780,7 @@ export class MergeTree {
 					this.nodeUpdateOrdinals(fromSplit);
 				}
 				this.blockUpdateLength(block, stamp);
-				return undefined;
+				return { remainder: undefined, hadChanges: true };
 			} else {
 				// Don't update ordinals because higher block will do it
 				const newNodeFromSplit = this.split(block);
@@ -1780,10 +1798,11 @@ export class MergeTree {
 					stamp.clientId,
 				);
 
-				return newNodeFromSplit;
+				return { remainder: newNodeFromSplit, hadChanges: true };
 			}
 		} else {
-			return undefined;
+			// TODO: is hadChanges right here?
+			return { remainder: undefined, hadChanges: false };
 		}
 	}
 
