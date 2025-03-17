@@ -40,9 +40,9 @@ For in browser testing update `./jest-puppeteer.config.js` to:
 
 ## Data model
 
-Dice Roller uses the following distributed data structures:
+BlobMap uses the following distributed data structures:
 
--   SharedDirectory - root
+-   SharedMap
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
