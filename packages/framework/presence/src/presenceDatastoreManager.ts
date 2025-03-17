@@ -86,13 +86,6 @@ function isPresenceMessage(
 ): message is DatastoreUpdateMessage | ClientJoinMessage {
 	return message.type.startsWith("Pres:");
 }
-
-function isPresenceWorkspaceAddress(
-	workspaceAddress: string,
-): workspaceAddress is PresenceWorkspaceAddress {
-	return workspaceAddress.includes(":");
-}
-
 /**
  * @internal
  */
@@ -410,44 +403,55 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				let workspaceDatastore = this.datastore[workspaceAddress];
 				if (workspaceDatastore === undefined) {
 					workspaceDatastore = this.datastore[workspaceAddress] = {};
-					if (!workspaceAddress.startsWith("system:")) {
-						// Separate internal type prefix from public workspace address
-						const match = workspaceAddress.match(/^([a-z]):(.*)/);
-						// Skip if no match
-						if (match === null) {
-							continue;
-						}
-						const prefix = match[1];
-						const publicWorkspaceAddress = match[2];
-						// Skip if public workspace address is invalid
-						if (
-							publicWorkspaceAddress === undefined ||
-							!isPresenceWorkspaceAddress(publicWorkspaceAddress)
-						) {
-							continue;
-						}
-						const internalWorkspaceTypes = {
-							s: "States",
-							n: "Notifications",
-						} as const;
+					// Separate internal type prefix from public workspace address
+					const match = workspaceAddress.match(/^([^:]):([^:]+:.+)$/) as
+						| null
+						| [string, string, PresenceWorkspaceAddress];
+					// Skip if no match
+					if (match === null) {
+						continue;
+					}
+					const prefix = match[1];
+					const publicWorkspaceAddress = match[2];
+					const internalWorkspaceTypes: Readonly<Record<string, string>> = {
+						s: "States",
+						n: "Notifications",
+					} as const;
 
-						// Convert prefix to internal workspace type
-						const internalWorkspaceType =
-							internalWorkspaceTypes[prefix as keyof typeof internalWorkspaceTypes] ??
-							"Unknown";
+					// Convert prefix to internal workspace type
+					const internalWorkspaceType = (internalWorkspaceTypes[prefix] ?? "Unknown") as
+						| "States"
+						| "Notifications"
+						| "Unknown";
 
-						this.events.emit(
-							"workspaceActivated",
-							publicWorkspaceAddress,
-							internalWorkspaceType,
+					this.events.emit(
+						"workspaceActivated",
+						publicWorkspaceAddress,
+						internalWorkspaceType,
+					);
+
+					// If the user registers workspace in response to 'workspaceActivated' we should process the update
+					// for the workspace. This is important for the Notifications workspace, as it could be registered lazily.
+					const newWorkspace = this.workspaces.get(workspaceAddress);
+					if (newWorkspace) {
+						const senderID = message.clientId;
+						postUpdateActions.push(
+							...newWorkspace.internal.processUpdate(
+								received,
+								timeModifier,
+								remoteDatastore,
+								senderID,
+							),
 						);
 					}
 				}
+
 				for (const [key, remoteAllKnownState] of Object.entries(remoteDatastore)) {
 					mergeUntrackedDatastore(key, remoteAllKnownState, workspaceDatastore, timeModifier);
 				}
 			}
 		}
+
 		for (const action of postUpdateActions) {
 			action();
 		}

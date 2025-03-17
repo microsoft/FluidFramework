@@ -340,7 +340,7 @@ describe("Presence", () => {
 				assert.strictEqual(listener.called, false);
 			});
 
-			it("with workspace that has an invalid internal address does NOT emit 'workspaceActivated'", () => {
+			it("with workspace that has an unrecognized internal address does NOT emit 'workspaceActivated'", () => {
 				// Setup
 				const listener = spy();
 				presence.events.on("workspaceActivated", listener);
@@ -355,7 +355,7 @@ describe("Presence", () => {
 							avgLatency: 20,
 							data: {
 								"system:presence": systemWorkspaceUpdate,
-								// Invalid internal address
+								// Unrecognized internal address
 								"sn:name:testStateWorkspace": statesWorkspaceUpdate,
 							},
 						},
@@ -394,6 +394,48 @@ describe("Presence", () => {
 
 				// Verify
 				assert.strictEqual(listener.called, false);
+			});
+
+			it("with workspace that has already been seen does NOT emit 'workspaceActivated'", () => {
+				// Setup
+				const listener = spy();
+				presence.events.on("workspaceActivated", listener);
+
+				// Act
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							sendTimestamp: clock.now - 20,
+							avgLatency: 20,
+							data: {
+								"system:presence": systemWorkspaceUpdate,
+								"s:name:testStateWorkspace": statesWorkspaceUpdate,
+							},
+						},
+						clientId: "client1",
+					},
+					false,
+				);
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							sendTimestamp: clock.now - 10,
+							avgLatency: 20,
+							data: {
+								"system:presence": systemWorkspaceUpdate,
+								"s:name:testStateWorkspace": statesWorkspaceUpdate,
+							},
+						},
+						clientId: "client1",
+					},
+					false,
+				);
+				// Verify
+				assert.strictEqual(listener.callCount, 1);
 			});
 		});
 	});

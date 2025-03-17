@@ -9,7 +9,7 @@ import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal
 import type { SinonFakeTimers, SinonSpy } from "sinon";
 import { useFakeTimers, spy } from "sinon";
 
-import type { ISessionClient } from "../index.js";
+import type { ISessionClient, PresenceWorkspaceAddress } from "../index.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import { assertFinalExpectations, prepareConnectedPresence } from "./testUtils.js";
@@ -653,6 +653,45 @@ describe("Presence", () => {
 				processUpdates(workspace);
 				// Verify
 				assertSpies();
+			});
+
+			it("from an unregistered workspace address", async () => {
+				// Setup
+				notificationSpy = spy();
+				const workspaceActivatedEventSpy = spy(
+					(workspaceAddress: PresenceWorkspaceAddress) => {
+						const notificationsWorkspace = presence.getNotifications(workspaceAddress, {
+							notifications: Notifications<{ newId: (id: number) => void }>({
+								newId: (_client: ISessionClient, _id: number) => {},
+							}),
+						});
+						notificationsWorkspace.props.notifications.notifications.on(
+							"newId",
+							notificationSpy,
+						);
+					},
+				);
+				presence.events.on("workspaceActivated", (workspaceAddress, type) => {
+					if (type === "Notifications") {
+						workspaceActivatedEventSpy(workspaceAddress);
+					}
+				});
+				const workspace = {
+					"n:name:testWorkspace": notificationsUpdate,
+				};
+
+				// Act
+				processUpdates(workspace);
+
+				// Verify
+				assert.ok(
+					workspaceActivatedEventSpy.calledOnce,
+					"workspace activated event not fired",
+				);
+				assert.ok(
+					notificationSpy.calledOnce,
+					`notification event not fired exactly once ${notificationSpy.callCount}`,
+				);
 			});
 		});
 	});
