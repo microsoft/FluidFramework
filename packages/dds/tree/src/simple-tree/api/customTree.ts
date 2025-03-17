@@ -213,7 +213,7 @@ export function tryStoredSchemaAsArray(
  * does not have all the necessary context to restore the handles
  * (e.g. if the handles are something insufficiently descriptive,
  * if data referenced by the handle got garbage collected,
- * if the encoded form of the handled couldn't be differentiated from other data,
+ * if the encoded form of the handle can't be differentiated from other data,
  * or the replacer doesn't have access to the correct Fluid container to to restore them from).
  *
  * Code attempting to reverse this replacement may want to use {@link cloneWithReplacements}.
