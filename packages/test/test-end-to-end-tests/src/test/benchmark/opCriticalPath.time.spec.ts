@@ -8,7 +8,10 @@ import { strict as assert } from "assert";
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import { benchmark, Phase, type BenchmarkTimingOptions } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import {
+	CompressionAlgorithms,
+	ContainerRuntime,
+} from "@fluidframework/container-runtime/internal";
 import {
 	toIDeltaManagerFull,
 	ITestContainerConfig,
@@ -18,12 +21,24 @@ import {
 
 export const ___x = Phase;
 
+// NOTE: Changing this will rename the benchmark which will create a new chart on the dashboard
+const batchSize: number = 1000;
+
+/**
+ * Key configurations:
+ * - Grouped Batching: ON  (this is the default and a critical part of submitting a batch)
+ * - Compression/Chunking: OFF (these don't always run anyway, based on content size, and should be profiled separately)
+ * - Summarization: OFF (irrelevant, and can cause interference)
+ */
 const testContainerConfig: ITestContainerConfig = {
 	runtimeOptions: {
 		enableGroupedBatching: true,
-		//* chunkSizeInBytes: 1024 * 1024 * 1024,
+		compressionOptions: {
+			minimumBatchSizeInBytes: Infinity,
+			compressionAlgorithm: CompressionAlgorithms.lz4,
+		},
+		chunkSizeInBytes: 1024 * 1024 * 1024,
 		summaryOptions: {
-			initialSummarizerDelayMs: 0, // back-compat - Old runtime takes 5 seconds to start summarizer without thi
 			summaryConfigOverrides: {
 				state: "disabled",
 			},
@@ -75,7 +90,7 @@ describeCompat.only(
 		};
 
 		function sendOps(label: string) {
-			Array.from({ length: 2000 }).forEach((_, i) => {
+			Array.from({ length: batchSize }).forEach((_, i) => {
 				defaultDataStore._root.set(`key-${i}-${label}`, `value-${label}`);
 			});
 
@@ -84,22 +99,27 @@ describeCompat.only(
 
 		benchmark({
 			//* only: true, //*
-			title: "Submit+Flush",
+			title: `Submit+Flush a single batch of ${batchSize} ops`,
 			...executionOptions,
+			before: async () => {
+				await setup();
+			},
 			benchmarkFnAsync: async () => {
 				sendOps("A");
+				// There's no event fired for "flush" so the simplest thing is to wait for the outbound queue to be idle.
+				// This should not add much time, and is part of the real flow so it's ok to include it in the benchmark.
 				const opsSent = await timeoutPromise<number>(
 					(resolve) => {
 						toIDeltaManagerFull(containerRuntime.deltaManager).outbound.once("idle", resolve);
 					},
 					{ errorMsg: "container's outbound queue never reached idle state" },
 				);
-				assert(opsSent > 0, "Expecting op(s) to be sent (likely multiple chunked ops).");
+				assert(opsSent === 1, "Expecting the single grouped batch op to be sent.");
 			},
 		});
 
 		benchmark({
-			only: true, //*
+			//* only: true, //*
 			title: "Process 2000 Inbound ops (local)",
 			...executionOptions,
 			async benchmarkFnCustom(state): Promise<void> {
