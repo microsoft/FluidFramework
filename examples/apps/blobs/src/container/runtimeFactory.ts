@@ -12,13 +12,13 @@ import { loadContainerRuntime } from "@fluidframework/container-runtime/legacy";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 import type { FluidObject } from "@fluidframework/core-interfaces";
 
-import { BlobMapFactory } from "./blobMap/index.js";
+import { BlobCollectionFactory } from "./blobCollection/index.js";
 
-const blobMapId = "blob-map";
-const blobMapRegistryKey = "blob-map";
-const blobMapFactory = new BlobMapFactory();
+const blobCollectionId = "blob-collection";
+const blobCollectionRegistryKey = "blob-collection";
+const blobCollectionFactory = new BlobCollectionFactory();
 
-export class BlobMapContainerRuntimeFactory implements IRuntimeFactory {
+export class BlobCollectionContainerRuntimeFactory implements IRuntimeFactory {
 	public get IRuntimeFactory(): IRuntimeFactory {
 		return this;
 	}
@@ -30,23 +30,26 @@ export class BlobMapContainerRuntimeFactory implements IRuntimeFactory {
 		const provideEntryPoint = async (
 			entryPointRuntime: IContainerRuntime,
 		): Promise<FluidObject> => {
-			const blobMapHandle = await entryPointRuntime.getAliasedDataStoreEntryPoint(blobMapId);
-			if (blobMapHandle === undefined) {
-				throw new Error("Blob map missing!");
+			const blobCollectionHandle =
+				await entryPointRuntime.getAliasedDataStoreEntryPoint(blobCollectionId);
+			if (blobCollectionHandle === undefined) {
+				throw new Error("Blob collection missing!");
 			}
-			return blobMapHandle.get();
+			return blobCollectionHandle.get();
 		};
 
 		const runtime = await loadContainerRuntime({
 			context,
-			registryEntries: new Map([[blobMapRegistryKey, Promise.resolve(blobMapFactory)]]),
+			registryEntries: new Map([
+				[blobCollectionRegistryKey, Promise.resolve(blobCollectionFactory)],
+			]),
 			provideEntryPoint,
 			existing,
 		});
 
 		if (!existing) {
-			const blobMap = await runtime.createDataStore(blobMapRegistryKey);
-			await blobMap.trySetAlias(blobMapId);
+			const blobCollection = await runtime.createDataStore(blobCollectionRegistryKey);
+			await blobCollection.trySetAlias(blobCollectionId);
 		}
 
 		return runtime;

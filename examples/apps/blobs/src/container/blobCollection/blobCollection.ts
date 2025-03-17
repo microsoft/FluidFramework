@@ -18,19 +18,18 @@ import type {
 } from "@fluidframework/runtime-definitions/legacy";
 import { v4 as uuid } from "uuid";
 
-import type { IBlobMap, IBlobMapEvents, IBlobRecord } from "./interface.js";
+import type { IBlobCollection, IBlobCollectionEvents, IBlobRecord } from "./interface.js";
 
 type UploadArrayBufferFn = (blob: ArrayBufferLike) => Promise<IFluidHandle<ArrayBufferLike>>;
 
 /**
- * The BlobMap is our data object that implements the IBlobMap interface.
+ * The BlobCollection is our data object that implements the IBlobCollection interface.
  */
-class BlobMap implements IBlobMap {
-	private readonly blobMap = new Map<string, Blob>();
+class BlobCollection implements IBlobCollection {
 	private readonly blobs: IBlobRecord[] = [];
 
-	private readonly _events = new TypedEventEmitter<IBlobMapEvents>();
-	public get events(): IEventProvider<IBlobMapEvents> {
+	private readonly _events = new TypedEventEmitter<IBlobCollectionEvents>();
+	public get events(): IEventProvider<IBlobCollectionEvents> {
 		return this._events;
 	}
 
@@ -41,7 +40,6 @@ class BlobMap implements IBlobMap {
 		this.sharedMap.on("valueChanged", (changed: IValueChanged) => {
 			const handle = this.sharedMap.get(changed.key);
 			handle.get().then((arrayBuffer: ArrayBufferLike) => {
-				this.blobMap.set(changed.key, new Blob([arrayBuffer]));
 				this.blobs.push({
 					id: changed.key,
 					blob: new Blob([arrayBuffer]),
@@ -73,7 +71,7 @@ const mapId = "blob-map";
 const mapFactory = new MapFactory();
 const sharedObjectRegistry = new Map<string, IChannelFactory>([[mapFactory.type, mapFactory]]);
 
-export class BlobMapFactory implements IFluidDataStoreFactory {
+export class BlobCollectionFactory implements IFluidDataStoreFactory {
 	public get type(): string {
 		throw new Error("Do not use the type on the data store factory");
 	}
@@ -88,7 +86,7 @@ export class BlobMapFactory implements IFluidDataStoreFactory {
 	): Promise<IFluidDataStoreChannel> {
 		const provideEntryPoint = async (entryPointRuntime: IFluidDataStoreRuntime) => {
 			const map = (await entryPointRuntime.getChannel(mapId)) as ISharedMap;
-			return new BlobMap(map, async (arrayBuffer: ArrayBufferLike) =>
+			return new BlobCollection(map, async (arrayBuffer: ArrayBufferLike) =>
 				entryPointRuntime.uploadBlob(arrayBuffer),
 			);
 		};

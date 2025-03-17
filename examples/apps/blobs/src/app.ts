@@ -23,8 +23,11 @@ import { createElement } from "react";
 // eslint-disable-next-line import/no-internal-modules
 import { createRoot } from "react-dom/client";
 
-import { BlobMapContainerRuntimeFactory, type IBlobMap } from "./container/index.js";
-import { BlobMapView } from "./view.js";
+import {
+	BlobCollectionContainerRuntimeFactory,
+	type IBlobCollection,
+} from "./container/index.js";
+import { BlobCollectionView } from "./view.js";
 
 const urlResolver = createInsecureTinyliciousTestUrlResolver();
 const tokenProvider = createInsecureTinyliciousTestTokenProvider();
@@ -32,7 +35,7 @@ const documentServiceFactory = createRouterliciousDocumentServiceFactory(tokenPr
 const codeLoader: ICodeDetailsLoader = {
 	load: async (details: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
 		return {
-			module: { fluidExport: new BlobMapContainerRuntimeFactory() },
+			module: { fluidExport: new BlobCollectionContainerRuntimeFactory() },
 			details,
 		};
 	},
@@ -63,12 +66,12 @@ if (location.hash.length === 0) {
 	});
 }
 
-const blobMap = (await container.getEntryPoint()) as IBlobMap;
+const blobCollection = (await container.getEntryPoint()) as IBlobCollection;
 
 // Render view
 const appDiv = document.getElementById("app") as HTMLDivElement;
 const appRoot = createRoot(appDiv);
-appRoot.render(createElement(BlobMapView, { blobMap }));
+appRoot.render(createElement(BlobCollectionView, { blobCollection }));
 
 // Update url and tab title
 location.hash = id;

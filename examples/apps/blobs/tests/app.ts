@@ -26,8 +26,11 @@ import { createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { v4 as uuid } from "uuid";
 
-import { BlobMapContainerRuntimeFactory, type IBlobMap } from "../src/container/index.js";
-import { BlobMapView } from "../src/view.js";
+import {
+	BlobCollectionContainerRuntimeFactory,
+	type IBlobCollection,
+} from "../src/container/index.js";
+import { BlobCollectionView } from "../src/view.js";
 
 const updateTabForId = (id: string): void => {
 	// Update the URL with the actual ID
@@ -42,7 +45,7 @@ const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbF
 const codeLoader: ICodeDetailsLoader = {
 	load: async (details: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
 		return {
-			module: { fluidExport: new BlobMapContainerRuntimeFactory() },
+			module: { fluidExport: new BlobCollectionContainerRuntimeFactory() },
 			details,
 		};
 	},
@@ -80,16 +83,16 @@ async function createContainerAndRenderInElement(element: HTMLDivElement): Promi
 		});
 	}
 
-	const blobMap = (await container.getEntryPoint()) as IBlobMap;
-	const render = (blobMap: IBlobMap) => {
+	const blobCollection = (await container.getEntryPoint()) as IBlobCollection;
+	const render = (blobCollection: IBlobCollection) => {
 		const appRoot = createRoot(element);
-		appRoot.render(createElement(BlobMapView, { blobMap }));
+		appRoot.render(createElement(BlobCollectionView, { blobCollection }));
 	};
 
 	// update the browser URL and the window title with the actual container ID
 	updateTabForId(id);
 	// Render it
-	render(blobMap);
+	render(blobCollection);
 }
 
 const leftElement = document.getElementById("sbs-left") as HTMLDivElement;

@@ -5,11 +5,7 @@
 
 import React, { type FC, type ReactElement, useEffect, useState } from "react";
 
-import { IBlobMap } from "./container/index.js";
-
-export interface IBlobMapViewProps {
-	blobMap: IBlobMap;
-}
+import { IBlobCollection } from "./container/index.js";
 
 const randInt = (max: number) => Math.floor(Math.random() * (max + 1));
 
@@ -37,19 +33,25 @@ const drawAPrettyPictureIntoBlob = async () => {
 	});
 };
 
-export const BlobMapView: FC<IBlobMapViewProps> = ({ blobMap }: IBlobMapViewProps) => {
+export interface IBlobCollectionViewProps {
+	blobCollection: IBlobCollection;
+}
+
+export const BlobCollectionView: FC<IBlobCollectionViewProps> = ({
+	blobCollection,
+}: IBlobCollectionViewProps) => {
 	// TODO Creating a unique array just to ensure we get re-renders
-	const [blobs, setBlobs] = useState([...blobMap.getBlobs()]);
+	const [blobs, setBlobs] = useState([...blobCollection.getBlobs()]);
 
 	useEffect(() => {
 		const onBlobsChanged = () => {
-			setBlobs([...blobMap.getBlobs()]);
+			setBlobs([...blobCollection.getBlobs()]);
 		};
-		blobMap.events.on("blobsChanged", onBlobsChanged);
+		blobCollection.events.on("blobsChanged", onBlobsChanged);
 		return () => {
-			blobMap.events.off("blobsChanged", onBlobsChanged);
+			blobCollection.events.off("blobsChanged", onBlobsChanged);
 		};
-	}, [blobMap]);
+	}, [blobCollection]);
 
 	const blobViews: ReactElement[] = [];
 	for (const { id, blob } of blobs) {
@@ -58,7 +60,7 @@ export const BlobMapView: FC<IBlobMapViewProps> = ({ blobMap }: IBlobMapViewProp
 	}
 
 	const addBlob = () => {
-		drawAPrettyPictureIntoBlob().then(blobMap.addBlob).catch(console.error);
+		drawAPrettyPictureIntoBlob().then(blobCollection.addBlob).catch(console.error);
 	};
 
 	return (

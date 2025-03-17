@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export { BlobMapFactory } from "./blobMap.js";
+export { BlobCollectionFactory } from "./blobCollection.js";
 export {
-	IBlobMap,
-	IBlobMapEvents,
+	IBlobCollection,
+	IBlobCollectionEvents,
 } from "./interface.js";

@@ -6,9 +6,9 @@
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 
 /**
- * IBlobMapEvents describes the events for an IBlobMap.
+ * IBlobCollectionEvents describes the events for an IBlobCollection.
  */
-export interface IBlobMapEvents extends IEvent {
+export interface IBlobCollectionEvents extends IEvent {
 	(event: "blobsChanged", listener: () => void);
 }
 
@@ -18,18 +18,21 @@ export interface IBlobRecord {
 }
 
 /**
- * IBlobMap describes the public API surface for our blob map data object.
+ * IBlobCollection describes the public API surface for our blob collection data object.
  */
-export interface IBlobMap {
+export interface IBlobCollection {
 	/**
 	 * Object that events for changes in the blob map.
 	 */
-	readonly events: IEventProvider<IBlobMapEvents>;
+	readonly events: IEventProvider<IBlobCollectionEvents>;
 
 	/**
 	 * Get all the blobs in the map.
 	 */
 	readonly getBlobs: () => IBlobRecord[];
 
+	/**
+	 * Add a blob to the map.
+	 */
 	readonly addBlob: (blob: Blob) => void;
 }

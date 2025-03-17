@@ -40,7 +40,7 @@ For in browser testing update `./jest-puppeteer.config.js` to:
 
 ## Data model
 
-BlobMap uses the following distributed data structures:
+BlobCollection uses the following distributed data structures:
 
 -   SharedMap
 

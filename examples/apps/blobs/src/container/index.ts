@@ -4,7 +4,7 @@
  */
 
 export {
-	IBlobMap,
-	IBlobMapEvents,
-} from "./blobMap/index.js";
-export { BlobMapContainerRuntimeFactory } from "./runtimeFactory.js";
+	IBlobCollection,
+	IBlobCollectionEvents,
+} from "./blobCollection/index.js";
+export { BlobCollectionContainerRuntimeFactory } from "./runtimeFactory.js";
