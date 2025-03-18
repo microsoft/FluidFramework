@@ -70,7 +70,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * (this getter is primarily only used in the test code)
 	 */
 	public get summaryHandleId(): string {
-		return this._summaryHandleId.toString();
+		return this._summaryHandleId;
 	}
 
 	protected readonly children = new Map<string, SummarizerNode>();
