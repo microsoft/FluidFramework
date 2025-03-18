@@ -140,8 +140,6 @@ export class SnapshotLoader {
 					movedClientIds: spec.movedClientIds.map((id) =>
 						this.client.getOrAddShortClientId(id),
 					),
-					// TODO:AB#29553: This property should be derived from segment data, not hard-coded.
-					wasMovedOnInsert: false,
 				});
 			}
 

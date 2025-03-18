@@ -7,13 +7,14 @@ import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import { EmptyKey, rootFieldKey } from "../../core/index.js";
 import { type TreeStatus, isTreeValue, FieldKinds } from "../../feature-libraries/index.js";
-import { fail, extractFromOpaque, isReadonlyArray } from "../../util/index.js";
+import { fail, extractFromOpaque } from "../../util/index.js";
 import {
 	type TreeLeafValue,
 	type ImplicitFieldSchema,
 	FieldSchema,
 	type ImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
+	normalizeAllowedTypes,
 } from "../schemaTypes.js";
 import {
 	booleanSchema,
@@ -39,7 +40,6 @@ import {
 	getOrCreateInnerNode,
 } from "../core/index.js";
 import { isObjectNodeSchema } from "../objectNodeTypes.js";
-import { isLazy, type LazyItem } from "../flexList.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -174,7 +174,7 @@ export const treeNodeApi: TreeNodeApi = {
 								changedFields,
 								(field) =>
 									nodeSchema.storedKeyToPropertyKey.get(field) ??
-									fail("Could not find stored key in schema."),
+									fail(0xb36 /* Could not find stored key in schema. */),
 							),
 						);
 						listener({ changedProperties });
@@ -203,26 +203,18 @@ export const treeNodeApi: TreeNodeApi = {
 		value: unknown,
 		schema: TSchema,
 	): value is TreeNodeFromImplicitAllowedTypes<TSchema> {
+		// This "is" utility would return false if the provided schema is a base type of the actual schema.
+		// This could be confusing, and that case can only be hit when violating the rule that there is a single most derived schema that gets used (See documentation on TreeNodeSchemaClass).
+		// Therefore this uses markSchemaMostDerived to ensure an informative usage error is thrown in the case where a base type is used.
+
 		const actualSchema = tryGetSchema(value);
 		if (actualSchema === undefined) {
 			return false;
 		}
-		if (isReadonlyArray<LazyItem<TreeNodeSchema>>(schema)) {
-			for (const singleSchema of schema) {
-				const testSchema = isLazy(singleSchema) ? singleSchema() : singleSchema;
-				if (testSchema === actualSchema) {
-					return true;
-				}
-			}
-			return false;
-		} else {
-			// Linter is incorrect about this bering unnecessary: it does not compile without the type assertion.
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-			return (schema as TreeNodeSchema) === actualSchema;
-		}
+		return normalizeAllowedTypes(schema).has(actualSchema);
 	},
 	schema(node: TreeNode | TreeLeafValue): TreeNodeSchema {
-		return tryGetSchema(node) ?? fail("Not a tree node");
+		return tryGetSchema(node) ?? fail(0xb37 /* Not a tree node */);
 	},
 	shortId(node: TreeNode): number | string | undefined {
 		const schema = node[typeSchemaSymbol];
@@ -253,7 +245,7 @@ export const treeNodeApi: TreeNodeApi = {
 				const identifierValue = identifier.value as string;
 
 				const localNodeKey =
-					identifier.context.nodeKeyManager.tryLocalizeNodeKey(identifierValue);
+					identifier.context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
 				return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : identifierValue;
 			}
 			default:
@@ -341,7 +333,7 @@ function getPropertyKeyFromStoredKey(
 	}
 
 	if (fields[storedKey] === undefined) {
-		fail("Existing stored key should always map to a property key");
+		fail(0xb38 /* Existing stored key should always map to a property key */);
 	}
 
 	return storedKey;

@@ -107,7 +107,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 
 	public async createTenant(tenantId?: string): Promise<core.ITenantConfig & { key: string }> {
 		const restWrapper = new BasicRestWrapper(
-			undefined /* baseUrl */,
+			this.endpoint /* baseUrl */,
 			undefined /* defaultQueryString */,
 			undefined /* maxBodyLength */,
 			undefined /* maxContentLength */,
@@ -121,7 +121,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			logHttpMetrics,
 		);
 		const result = await restWrapper.post<core.ITenantConfig & { key: string }>(
-			`${this.endpoint}/api/tenants/${encodeURIComponent(tenantId || "")}`,
+			`/api/tenants/${encodeURIComponent(tenantId || "")}`,
 			undefined,
 		);
 		return result;
@@ -247,7 +247,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 
 	public async verifyToken(tenantId: string, token: string): Promise<void> {
 		const restWrapper = new BasicRestWrapper(
-			undefined /* baseUrl */,
+			this.endpoint /* baseUrl */,
 			undefined /* defaultQueryString */,
 			undefined /* maxBodyLength */,
 			undefined /* maxContentLength */,
@@ -260,15 +260,12 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			undefined /* refreshTokenIfNeeded */,
 			logHttpMetrics,
 		);
-		await restWrapper.post(
-			`${this.endpoint}/api/tenants/${encodeURIComponent(tenantId)}/validate`,
-			{ token },
-		);
+		await restWrapper.post(`/api/tenants/${encodeURIComponent(tenantId)}/validate`, { token });
 	}
 
 	public async getKey(tenantId: string, includeDisabledTenant = false): Promise<string> {
 		const restWrapper = new BasicRestWrapper(
-			undefined /* baseUrl */,
+			this.endpoint /* baseUrl */,
 			undefined /* defaultQueryString */,
 			undefined /* maxBodyLength */,
 			undefined /* maxContentLength */,
@@ -282,7 +279,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			logHttpMetrics,
 		);
 		const result = await restWrapper.get<core.ITenantKeys>(
-			`${this.endpoint}/api/tenants/${encodeURIComponent(tenantId)}/keys`,
+			`/api/tenants/${encodeURIComponent(tenantId)}/keys`,
 			{ includeDisabledTenant },
 		);
 		return result.key1;
@@ -299,7 +296,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		includeDisabledTenant?: boolean,
 	): Promise<string> {
 		const restWrapper = new BasicRestWrapper(
-			undefined /* baseUrl */,
+			this.endpoint /* baseUrl */,
 			undefined /* defaultQueryString */,
 			undefined /* maxBodyLength */,
 			undefined /* maxContentLength */,
@@ -313,7 +310,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			logHttpMetrics,
 		);
 		const result = await restWrapper.post<core.IFluidAccessToken>(
-			`${this.endpoint}/api/tenants/${encodeURIComponent(tenantId)}/accesstoken`,
+			`/api/tenants/${encodeURIComponent(tenantId)}/accesstoken`,
 			{
 				documentId,
 				scopes,
@@ -340,7 +337,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		includeDisabledTenant = false,
 	): Promise<core.ITenantConfig> {
 		const restWrapper = new BasicRestWrapper(
-			undefined /* baseUrl */,
+			this.endpoint /* baseUrl */,
 			undefined /* defaultQueryString */,
 			undefined /* maxBodyLength */,
 			undefined /* maxContentLength */,
@@ -353,7 +350,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			undefined /* refreshTokenIfNeeded */,
 			logHttpMetrics,
 		);
-		return restWrapper.get<core.ITenantConfig>(`${this.endpoint}/api/tenants/${tenantId}`, {
+		return restWrapper.get<core.ITenantConfig>(`/api/tenants/${tenantId}`, {
 			includeDisabledTenant,
 		});
 	}

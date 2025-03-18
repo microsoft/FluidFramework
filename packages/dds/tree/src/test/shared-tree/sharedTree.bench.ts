@@ -13,15 +13,14 @@ import {
 } from "@fluid-tools/benchmark";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import { EmptyKey, rootFieldKey } from "../../core/index.js";
-import { singleJsonCursor } from "../json/index.js";
+import { EmptyKey, rootFieldKey, type NormalizedUpPath } from "../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { typeboxValidator } from "../../external-utilities/typeboxValidator.js";
 import {
 	TreeCompressionStrategy,
 	jsonableTreeFromCursor,
 } from "../../feature-libraries/index.js";
-import type { CheckoutFlexTreeView } from "../../shared-tree/index.js";
+import { Tree, type CheckoutFlexTreeView } from "../../shared-tree/index.js";
 import {
 	type JSDeepTree,
 	type JSWideTree,
@@ -43,14 +42,18 @@ import {
 	readWideTreeAsJSObject,
 } from "../scalableTestTrees.js";
 import {
+	StringArray,
 	TestTreeProviderLite,
 	checkoutWithContent,
+	configureBenchmarkHooks,
+	chunkFromJsonTrees,
 	flexTreeViewWithContent,
 	toJsonableTree,
 } from "../utils.js";
 import { insert } from "../sequenceRootUtils.js";
-import { cursorFromInsertable } from "../../simple-tree/index.js";
+import { cursorFromInsertable, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";
+import { makeArray } from "../../util/index.js";
 
 // number of nodes in test for wide trees
 const nodesCountWide = [
@@ -73,6 +76,7 @@ const factory = new TreeFactory({
 
 // TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
 describe("SharedTree benchmarks", () => {
+	configureBenchmarkHooks();
 	describe("Direct JS Object", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
 			let tree: JSDeepTree;
@@ -249,7 +253,7 @@ describe("SharedTree benchmarks", () => {
 						for (let value = 1; value <= setCount; value++) {
 							tree.editor
 								.valueField({ parent: path, field: localFieldKey })
-								.set(singleJsonCursor(value));
+								.set(chunkFromJsonTrees([value]));
 						}
 						const after = state.timer.now();
 						duration = state.timer.toSeconds(before, after);
@@ -284,7 +288,8 @@ describe("SharedTree benchmarks", () => {
 						// Setup
 						const tree = checkoutWithContent(makeWideStoredContentWithEndValue(numberOfNodes));
 
-						const rootPath = {
+						const rootPath: NormalizedUpPath = {
+							detachedNodeId: undefined,
 							parent: undefined,
 							parentField: rootFieldKey,
 							parentIndex: 0,
@@ -299,7 +304,7 @@ describe("SharedTree benchmarks", () => {
 						const before = state.timer.now();
 						for (let value = 1; value <= setCount; value++) {
 							editor.remove(nodeIndex, 1);
-							editor.insert(nodeIndex, singleJsonCursor(value));
+							editor.insert(nodeIndex, chunkFromJsonTrees([value]));
 						}
 						const after = state.timer.now();
 						duration = state.timer.toSeconds(before, after);
@@ -340,7 +345,7 @@ describe("SharedTree benchmarks", () => {
 						// TODO: specify a schema for these trees.
 						const [tree] = provider.trees;
 						for (let i = 0; i < size; i++) {
-							insert(tree.checkout, i, "test");
+							insert(tree.kernel.checkout, i, "test");
 						}
 
 						// Measure
@@ -389,7 +394,7 @@ describe("SharedTree benchmarks", () => {
 							for (let iCommit = 0; iCommit < commitCount; iCommit++) {
 								for (let iPeer = 0; iPeer < peerCount; iPeer++) {
 									const peer = provider.trees[iPeer];
-									insert(peer.checkout, 0, `p${iPeer}c${iCommit}`);
+									insert(peer.kernel.checkout, 0, `p${iPeer}c${iCommit}`);
 								}
 							}
 
@@ -398,7 +403,7 @@ describe("SharedTree benchmarks", () => {
 								for (let iPeer = 0; iPeer < peerCount; iPeer++) {
 									provider.processMessages(opsPerCommit);
 									const peer = provider.trees[iPeer];
-									insert(peer.checkout, 0, `p${iPeer}c${iCommit}`);
+									insert(peer.kernel.checkout, 0, `p${iPeer}c${iCommit}`);
 								}
 							}
 
@@ -414,7 +419,7 @@ describe("SharedTree benchmarks", () => {
 									timeSum += state.timer.toSeconds(before, after);
 									// We still generate commits because it affects local branch rebasing
 									const peer = provider.trees[iPeer];
-									insert(peer.checkout, 0, `p${iPeer}c${iCommit}`);
+									insert(peer.kernel.checkout, 0, `p${iPeer}c${iCommit}`);
 								}
 							}
 
@@ -479,11 +484,11 @@ describe("SharedTree benchmarks", () => {
 							// Add commits to the receiver's local branch but prevent them from being sent in order to ensure they remain on the local branch
 							receiver.setConnected(false);
 							for (let iCommit = 0; iCommit < localBranchSize; iCommit++) {
-								insert(receiver.checkout, 0, `r${iCommit}`);
+								insert(receiver.kernel.checkout, 0, `r${iCommit}`);
 							}
 							// These are the commits that should be bunched together
 							for (let iCommit = 0; iCommit < bunchSize; iCommit++) {
-								insert(sender.checkout, 0, `s${iCommit}`);
+								insert(sender.kernel.checkout, 0, `s${iCommit}`);
 							}
 							// Ensure the sender has sent the ops
 							provider.processMessages();
@@ -503,6 +508,55 @@ describe("SharedTree benchmarks", () => {
 				if (!isInPerformanceTestingMode) {
 					test.timeout(5000);
 				}
+			}
+		}
+	});
+
+	describe("big transaction composition", () => {
+		const editCounts = isInPerformanceTestingMode ? [10, 100, 1000] : [5];
+		for (const editCount of editCounts) {
+			const test = benchmark({
+				type: BenchmarkType.Measurement,
+				title: `Compose ${editCount} sequence edits into a single transaction`,
+				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+					let duration: number;
+					do {
+						// Since this setup one collects data from one iteration, assert that this is what is expected.
+						assert.equal(state.iterationsPerBatch, 1);
+						const provider = new TestTreeProviderLite(
+							1,
+							factory,
+							undefined /* useDeterministicSessionIds */,
+							FlushMode.TurnBased,
+						);
+						const tree = provider.trees[0];
+						tree.setConnected(false);
+						const view = provider.trees[0].viewWith(
+							new TreeViewConfiguration({
+								schema: StringArray,
+							}),
+						);
+						view.initialize([]);
+
+						const before = state.timer.now();
+						Tree.runTransaction(view, () => {
+							for (let iEdit = 0; iEdit < editCount; iEdit++) {
+								view.root.insertAtEnd(`${iEdit}`);
+							}
+						});
+						const after = state.timer.now();
+						duration = state.timer.toSeconds(before, after);
+
+						const actual = [...view.root];
+						const expected = makeArray(editCount, (index) => `${index}`);
+						assert.deepEqual(actual, expected);
+					} while (state.recordBatch(duration));
+				},
+				// Force batch size of 1
+				minBatchDurationSeconds: 0,
+			});
+			if (!isInPerformanceTestingMode) {
+				test.timeout(5000);
 			}
 		}
 	});

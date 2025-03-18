@@ -5,6 +5,7 @@
 
 export {
 	assert,
+	fail,
 	debugAssert,
 	configureDebugAsserts,
 	nonProductionConditionalsIncluded,

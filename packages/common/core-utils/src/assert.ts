@@ -31,10 +31,29 @@
  */
 export function assert(condition: boolean, message: string | number): asserts condition {
 	if (!condition) {
-		throw new Error(
-			typeof message === "number" ? `0x${message.toString(16).padStart(3, "0")}` : message,
-		);
+		fail(message);
 	}
+}
+
+/**
+ * Throw an error with a constant message.
+ * @remarks
+ * Works like {@link assert}, but errors unconditionally instead of taking in a condition.
+ *
+ * Unlike `assert`, this `fail` is not "tagged" by the assert tagging too by default.
+ * Use a `assertTagging.config.mjs` file to enable this and any other assert tagging customizations as needed.
+ *
+ * Returns `never` so it can be used inline as part of an expression, or as a return value.
+ * @example
+ * ```ts
+ *  const x: number = numbersMap.get("foo") ?? fail("foo missing from map");
+ * ```
+ * @internal
+ */
+export function fail(message: string | number): never {
+	throw new Error(
+		typeof message === "number" ? `0x${message.toString(16).padStart(3, "0")}` : message,
+	);
 }
 
 /**

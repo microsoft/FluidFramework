@@ -538,10 +538,12 @@ export class BuildGraph {
 		const spinner = new Spinner("Checking incremental build task status...");
 		spinner.start();
 
+		// Note: any console logging done here (e.g. in leafTask.ts' checkIsUpToDate()) runs the risk of getting truncated due to how picospinner works.
+		// Ideally we shouldn't do console logging between starting and stopping a spinner.
 		const isUpToDate = await this.isUpToDate();
 
-		timer?.time(`Check up to date completed`);
 		spinner.succeed("Tasks loaded.");
+		timer?.time(`Check up to date completed`);
 
 		log(
 			`Start tasks '${chalk.cyanBright(this.buildTaskNames.join("', '"))}' in ${

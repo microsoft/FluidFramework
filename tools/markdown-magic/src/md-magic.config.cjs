@@ -276,7 +276,10 @@ function libraryReadmeHeaderTransform(content, options, config) {
 		);
 	}
 
-	const includeImportInstructionsSection = parseBooleanOption(options.importInstructions, true);
+	const includeImportInstructionsSection = parseBooleanOption(
+		options.importInstructions,
+		true,
+	);
 	if (includeImportInstructionsSection) {
 		sections.push(generateImportInstructionsSection(packageMetadata, sectionHeadingOptions));
 	}

@@ -193,6 +193,12 @@ kafka:
   libname: rdkafka
   customRestartOnKafkaErrorCodes: [-195, -192, -187, -185, -181, 14]
   seekTimeoutAfterPause: 1000
+  apiCounterEnabled: false
+  apiCounterIntervalMS: 60000
+  apiFailureRateTerminationThreshold: 2
+  apiMinimumCountToEnableTermination: 20
+  consecutiveFailedThresholdForLowerTotalRequests: 3
+  ignoreAndSkipCheckpointOnKafkaErrorCodes: [-185]
 
 ingress:
   class: nginx-prod

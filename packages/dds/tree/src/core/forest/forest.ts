@@ -14,6 +14,7 @@ import {
 	type DetachedField,
 	type ITreeCursor,
 	type ITreeCursorSynchronous,
+	type TreeChunk,
 	type UpPath,
 	detachedFieldAsKey,
 	rootField,
@@ -83,6 +84,17 @@ export interface IForestSubscription {
 	clone(schema: TreeStoredSchemaSubscription, anchors: AnchorSet): IEditableForest;
 
 	/**
+	 * Generate a TreeChunk for the content in the given field cursor.
+	 * This can be used to chunk data that is then inserted into the forest.
+	 *
+	 * @remarks
+	 * Like {@link chunkField}, but forces the results into a single TreeChunk.
+	 * While any TreeChunk is compatible with any forest, this method creates one optimized for this specific forest.
+	 * The provided data must be compatible with the forest's current schema.
+	 */
+	chunkField(cursor: ITreeCursorSynchronous): TreeChunk;
+
+	/**
 	 * Allocates a cursor in the "cleared" state.
 	 * @param source - optional string identifying the source of the cursor for debugging purposes when cursors are not properly cleaned up.
 	 */
@@ -112,7 +124,7 @@ export interface IForestSubscription {
 	): TreeNavigationResult;
 
 	/**
-	 * Set `cursorToMove` to location described by path.
+	 * Set `cursorToMove` to the {@link CursorLocationType.node} described by path.
 	 * This is NOT a relative move: current position is discarded.
 	 * Path must point to existing node.
 	 */
@@ -147,6 +159,7 @@ export interface IForestSubscription {
 }
 
 /**
+ * Returns an anchor to the given field.
  * @param field - defaults to {@link rootField}.
  * @returns anchor to `field`.
  */
@@ -158,8 +171,10 @@ export function rootAnchor(field: DetachedField = rootField): FieldAnchor {
 }
 
 /**
+ * Moves the given cursor to the given detached fields in the given forest.
+ * @param forest - forest to move cursor in.
+ * @param cursorToMove - cursor to move, must be allocated by the given forest
  * @param field - defaults to {@link rootField}.
- * @returns anchor to `field`.
  */
 export function moveToDetachedField(
 	forest: IForestSubscription,

@@ -7,7 +7,7 @@ import { strict as assert, fail } from "node:assert";
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { MockNodeKeyManager } from "../../feature-libraries/index.js";
+import { MockNodeIdentifierManager } from "../../feature-libraries/index.js";
 import {
 	SchematizingSimpleTreeView,
 	// eslint-disable-next-line import/no-internal-modules
@@ -51,7 +51,7 @@ const configGeneralized2 = new TreeViewConfiguration({
 function checkoutWithInitialTree(
 	viewConfig: TreeViewConfiguration,
 	unhydratedInitialTree: InsertableField<UnsafeUnknownSchema>,
-	nodeKeyManager = new MockNodeKeyManager(),
+	nodeKeyManager = new MockNodeIdentifierManager(),
 ): TreeCheckout {
 	const initialTree = cursorFromInsertable<UnsafeUnknownSchema>(
 		viewConfig.schema,
@@ -75,7 +75,11 @@ describe("SchematizingSimpleTreeView", () => {
 			initialTree: undefined,
 		};
 		const checkout = checkoutWithContent(emptyContent);
-		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			config,
+			new MockNodeIdentifierManager(),
+		);
 
 		const { compatibility } = view;
 		assert.equal(compatibility.canView, false);
@@ -92,7 +96,11 @@ describe("SchematizingSimpleTreeView", () => {
 			initialTree: undefined,
 		};
 		const checkout = checkoutWithContent(emptyContent);
-		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			config,
+			new MockNodeIdentifierManager(),
+		);
 
 		assert.throws(() => view.root, validateUsageError(/compatibility/));
 
@@ -113,7 +121,11 @@ describe("SchematizingSimpleTreeView", () => {
 
 	it("Open and close existing document", () => {
 		const checkout = checkoutWithInitialTree(config, 5);
-		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			config,
+			new MockNodeIdentifierManager(),
+		);
 		assert.equal(view.compatibility.isEquivalent, true);
 		const root = view.root;
 		assert.equal(root, 5);
@@ -142,7 +154,11 @@ describe("SchematizingSimpleTreeView", () => {
 
 	it("Modify root", () => {
 		const checkout = checkoutWithInitialTree(config, 5);
-		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			config,
+			new MockNodeIdentifierManager(),
+		);
 		view.events.on("schemaChanged", () => log.push(["schemaChanged", getChangeData(view)]));
 		view.events.on("rootChanged", () => log.push(["rootChanged", getChangeData(view)]));
 		assert.equal(view.root, 5);
@@ -155,7 +171,11 @@ describe("SchematizingSimpleTreeView", () => {
 
 	it("Schema becomes un-upgradeable then exact match again", () => {
 		const checkout = checkoutWithInitialTree(config, 5);
-		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			config,
+			new MockNodeIdentifierManager(),
+		);
 		assert.equal(view.root, 5);
 		const log: [string, unknown][] = [];
 		view.events.on("schemaChanged", () => log.push(["schemaChanged", getChangeData(view)]));
@@ -219,7 +239,7 @@ describe("SchematizingSimpleTreeView", () => {
 		const viewSpecific = new SchematizingSimpleTreeView(
 			checkout,
 			personConfig,
-			new MockNodeKeyManager(),
+			new MockNodeIdentifierManager(),
 		);
 
 		assert.deepEqual(viewSpecific.compatibility, {
@@ -238,7 +258,7 @@ describe("SchematizingSimpleTreeView", () => {
 		const viewGeneralized = new SchematizingSimpleTreeView(
 			checkout,
 			personConfigGeneralied,
-			new MockNodeKeyManager(),
+			new MockNodeIdentifierManager(),
 		);
 		assert.deepEqual(viewGeneralized.compatibility, {
 			canView: true,
@@ -283,7 +303,7 @@ describe("SchematizingSimpleTreeView", () => {
 		const viewSpecific = new SchematizingSimpleTreeView(
 			checkout,
 			peopleConfig,
-			new MockNodeKeyManager(),
+			new MockNodeIdentifierManager(),
 		);
 
 		assert.deepEqual(viewSpecific.compatibility, {
@@ -305,7 +325,7 @@ describe("SchematizingSimpleTreeView", () => {
 		const viewGeneralized = new SchematizingSimpleTreeView(
 			checkout,
 			peopleGeneralizedConfig,
-			new MockNodeKeyManager(),
+			new MockNodeIdentifierManager(),
 		);
 		assert.deepEqual(viewGeneralized.compatibility, {
 			canView: true,
@@ -326,7 +346,7 @@ describe("SchematizingSimpleTreeView", () => {
 		const view = new SchematizingSimpleTreeView(
 			checkout,
 			configGeneralized,
-			new MockNodeKeyManager(),
+			new MockNodeIdentifierManager(),
 		);
 		const log: [string, unknown][] = [];
 		view.events.on("rootChanged", () => log.push(["rootChanged", getChangeData(view)]));
@@ -349,7 +369,11 @@ describe("SchematizingSimpleTreeView", () => {
 
 	it("Attempt to open document using view schema that is incompatible due to being too strict compared to the stored schema", () => {
 		const checkout = checkoutWithInitialTree(configGeneralized, 6);
-		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			config,
+			new MockNodeIdentifierManager(),
+		);
 
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, false);
@@ -370,7 +394,7 @@ describe("SchematizingSimpleTreeView", () => {
 		const view = new SchematizingSimpleTreeView(
 			checkout,
 			configGeneralized2,
-			new MockNodeKeyManager(),
+			new MockNodeIdentifierManager(),
 		);
 
 		assert.equal(view.compatibility.canView, false);
@@ -393,7 +417,11 @@ describe("SchematizingSimpleTreeView", () => {
 			initialTree: undefined,
 		};
 		const checkout = checkoutWithContent(emptyContent);
-		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			config,
+			new MockNodeIdentifierManager(),
+		);
 
 		const { undoStack, redoStack } = createTestUndoRedoStacks(view.events);
 
@@ -447,7 +475,11 @@ describe("SchematizingSimpleTreeView", () => {
 				initialTree: undefined,
 			};
 			const checkout = checkoutWithContent(content);
-			const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+			const view = new SchematizingSimpleTreeView(
+				checkout,
+				config,
+				new MockNodeIdentifierManager(),
+			);
 			const log: string[] = [];
 			view.events.on("schemaChanged", () => log.push("changed"));
 			assert.deepEqual(log, []);
@@ -461,7 +493,11 @@ describe("SchematizingSimpleTreeView", () => {
 				initialTree: undefined,
 			};
 			const checkout = checkoutWithContent(emptyContent);
-			const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+			const view = new SchematizingSimpleTreeView(
+				checkout,
+				config,
+				new MockNodeIdentifierManager(),
+			);
 
 			let localChanges = 0;
 
@@ -487,7 +523,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const main = new SchematizingSimpleTreeView(
 				checkout,
 				new TreeViewConfiguration({ schema: stringArraySchema }),
-				new MockNodeKeyManager(),
+				new MockNodeIdentifierManager(),
 			);
 			const branch = main.fork();
 			const mainRoot = main.root;
@@ -739,7 +775,7 @@ describe("SchematizingSimpleTreeView", () => {
 				const provider = new TestTreeProviderLite(2);
 				const [treeA, treeB] = provider.trees;
 				const viewA = treeA.viewWith(viewConfig);
-				const viewB = treeB.viewWith(viewConfig);
+				const viewB = treeB.kernel.viewWith(viewConfig);
 				viewA.initialize({
 					content: 42,
 					child: { content: 42 },

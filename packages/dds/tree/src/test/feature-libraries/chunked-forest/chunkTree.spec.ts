@@ -19,6 +19,7 @@ import {
 	type ChunkPolicy,
 	type ShapeInfo,
 	basicOnlyChunkPolicy,
+	chunkField,
 	chunkRange,
 	defaultChunkPolicy,
 	insertValues,
@@ -28,6 +29,8 @@ import {
 	uniformChunkFromCursor,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
+// eslint-disable-next-line import/no-internal-modules
+import { emptyChunk } from "../../../feature-libraries/chunked-forest/emptyChunk.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk.js";
 import {
@@ -56,8 +59,9 @@ import {
 	stringSchema,
 	toStoredSchema,
 } from "../../../simple-tree/index.js";
-import { fieldJsonCursor, JsonObject, singleJsonCursor } from "../../json/index.js";
+import { fieldJsonCursor, singleJsonCursor } from "../../json/index.js";
 import { testIdCompressor } from "../../utils.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 
 const builder = new SchemaFactory("chunkTree");
 const empty = builder.object("empty", {});
@@ -144,7 +148,7 @@ describe("chunkTree", () => {
 		it("encodes identifiers for in-memory representation", () => {
 			const identifierField: FieldKey = brand("identifierField");
 			const stringShape = new TreeShape(brand(stringSchema.identifier), true, [], true);
-			const identifierShape = new TreeShape(brand(JsonObject.identifier), false, [
+			const identifierShape = new TreeShape(brand(JsonAsTree.JsonObject.identifier), false, [
 				[identifierField, stringShape, 1],
 			]);
 
@@ -324,6 +328,30 @@ describe("chunkTree", () => {
 			);
 			assert(chunk.isShared());
 			assert.equal(chunks[0], chunk);
+		});
+
+		it("at end", () => {
+			const chunk = new BasicChunk(brand("Foo"), new Map());
+			const cursor = chunk.cursor();
+			cursor.firstNode();
+			cursor.nextNode();
+			const chunks = chunkRange(
+				cursor,
+				{ policy: defaultChunkPolicy, idCompressor: undefined },
+				0,
+				false,
+			);
+			assert.deepEqual(chunks, []);
+		});
+	});
+
+	describe("chunkField", () => {
+		it("empty chunk", () => {
+			const chunks = chunkField(emptyChunk.cursor(), {
+				policy: defaultChunkPolicy,
+				idCompressor: undefined,
+			});
+			assert.equal(chunks.length, 0);
 		});
 	});
 

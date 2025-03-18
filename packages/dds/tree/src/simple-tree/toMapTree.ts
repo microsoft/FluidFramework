@@ -19,7 +19,7 @@ import {
 import {
 	isTreeValue,
 	valueSchemaAllows,
-	type NodeKeyManager,
+	type NodeIdentifierManager,
 } from "../feature-libraries/index.js";
 import { brand, fail, isReadonlyArray, find, hasSome, hasSingle } from "../util/index.js";
 
@@ -104,19 +104,19 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 export function mapTreeFromNodeData(
 	data: InsertableContent,
 	allowedTypes: ImplicitAllowedTypes,
-	context?: NodeKeyManager,
+	context?: NodeIdentifierManager,
 	schemaValidationPolicy?: SchemaAndPolicy,
 ): ExclusiveMapTree;
 export function mapTreeFromNodeData(
 	data: InsertableContent | undefined,
 	allowedTypes: ImplicitFieldSchema,
-	context?: NodeKeyManager,
+	context?: NodeIdentifierManager,
 	schemaValidationPolicy?: SchemaAndPolicy,
 ): ExclusiveMapTree | undefined;
 export function mapTreeFromNodeData(
 	data: InsertableContent | undefined,
 	allowedTypes: ImplicitFieldSchema,
-	context?: NodeKeyManager,
+	context?: NodeIdentifierManager,
 	schemaValidationPolicy?: SchemaAndPolicy,
 ): ExclusiveMapTree | undefined {
 	const normalizedFieldSchema = normalizeFieldSchema(allowedTypes);
@@ -196,7 +196,7 @@ function nodeDataToMapTree(
 			result = objectToMapTree(data, schema);
 			break;
 		default:
-			fail("Unrecognized schema kind");
+			fail(0xae0 /* Unrecognized schema kind */);
 	}
 
 	return result;
@@ -638,11 +638,11 @@ function allowsValue(schema: TreeNodeSchema, value: TreeValue): boolean {
 export function addDefaultsToMapTree(
 	mapTree: ExclusiveMapTree,
 	allowedTypes: ImplicitAllowedTypes,
-	context: NodeKeyManager | undefined,
+	context: NodeIdentifierManager | undefined,
 ): void {
 	const schema =
 		find(normalizeAllowedTypes(allowedTypes), (s) => s.identifier === mapTree.type) ??
-		fail("MapTree is incompatible with schema");
+		fail(0xae1 /* MapTree is incompatible with schema */);
 
 	if (isObjectNodeSchema(schema)) {
 		for (const [_key, fieldInfo] of schema.flexKeyMap) {
@@ -660,7 +660,7 @@ export function addDefaultsToMapTree(
 						setFieldValue(mapTree.fields, data, fieldInfo.schema, fieldInfo.storedKey);
 						// call addDefaultsToMapTree on newly inserted default values
 						for (const child of mapTree.fields.get(fieldInfo.storedKey) ??
-							fail("Expected field to be populated")) {
+							fail(0xae2 /* Expected field to be populated */)) {
 							addDefaultsToMapTree(child, fieldInfo.schema.allowedTypes, context);
 						}
 					}
@@ -695,7 +695,7 @@ export function addDefaultsToMapTree(
  */
 function provideDefault(
 	fieldProvider: FieldProvider,
-	context: NodeKeyManager | undefined,
+	context: NodeIdentifierManager | undefined,
 ): InsertableContent | undefined {
 	if (context !== undefined) {
 		return fieldProvider(context);

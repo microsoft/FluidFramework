@@ -242,7 +242,7 @@ export class EditManager<
 	private trackBranch(b: SharedTreeBranch<TEditor, TChangeset>): void {
 		const trunkCommit =
 			findCommonAncestor(this.trunk.getHead(), b.getHead()) ??
-			fail("Expected branch to be related to trunk");
+			fail(0xad2 /* Expected branch to be related to trunk */);
 		const sequenceId = this.getCommitSequenceId(trunkCommit);
 		const branches = getOrCreate(this.trunkBranches, sequenceId, () => new Set());
 
@@ -253,10 +253,10 @@ export class EditManager<
 	private untrackBranch(b: SharedTreeBranch<TEditor, TChangeset>): void {
 		const trunkCommit =
 			findCommonAncestor(this.trunk.getHead(), b.getHead()) ??
-			fail("Expected branch to be related to trunk");
+			fail(0xad3 /* Expected branch to be related to trunk */);
 		const sequenceId = this.getCommitSequenceId(trunkCommit);
 		const branches =
-			this.trunkBranches.get(sequenceId) ?? fail("Expected branch to be tracked");
+			this.trunkBranches.get(sequenceId) ?? fail(0xad4 /* Expected branch to be tracked */);
 
 		assert(branches.delete(b), 0x671 /* Expected branch to be tracked */);
 		if (branches.size === 0) {
@@ -500,7 +500,8 @@ export class EditManager<
 					0xa61 /* Serialized trunk should not include the trunk base */,
 				);
 				const metadata =
-					this.trunkMetadata.get(c.revision) ?? fail("Expected metadata for trunk commit");
+					this.trunkMetadata.get(c.revision) ??
+					fail(0xad5 /* Expected metadata for trunk commit */);
 				const commit: SequencedCommit<TChangeset> = {
 					change: c.change,
 					revision: c.revision,
@@ -519,7 +520,7 @@ export class EditManager<
 				const branchPath: GraphCommit<TChangeset>[] = [];
 				const ancestor =
 					findCommonAncestor([branch.getHead(), branchPath], this.trunk.getHead()) ??
-					fail("Expected branch to be based on trunk");
+					fail(0xad6 /* Expected branch to be based on trunk */);
 
 				const base = ancestor === this.trunkBase ? rootRevision : ancestor.revision;
 				return [
@@ -582,7 +583,7 @@ export class EditManager<
 		for (const [sessionId, branch] of data.peerLocalBranches) {
 			const commit =
 				trunkRevisionCache.get(branch.base) ??
-				fail("Expected summary branch to be based off of a revision in the trunk");
+				fail(0xad7 /* Expected summary branch to be based off of a revision in the trunk */);
 
 			this.peerLocalBranches.set(
 				sessionId,
@@ -663,7 +664,7 @@ export class EditManager<
 		sequenceNumber: SeqNumber,
 		referenceSequenceNumber: SeqNumber,
 	): void {
-		assert(newCommits.length > 0, "Expected at least one sequenced change");
+		assert(newCommits.length > 0, 0xad8 /* Expected at least one sequenced change */);
 		assert(
 			sequenceNumber > this.minimumSequenceNumber,
 			0x713 /* Expected change sequence number to exceed the last known minimum sequence number */,
