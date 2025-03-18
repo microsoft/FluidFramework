@@ -348,6 +348,8 @@ describe("MergeTree.insertingWalk", () => {
 		assert.deepStrictEqual(segments, ["G", "F", "E", "(D)", "(C)", "(B)", "(A)", "x", "0"]);
 	});
 
+	// Inserting walk previously unnecessarily called `blockUpdate` for blocks even when no segment changes happened (e.g.
+	// we called `ensureIntervalBoundary` but there was already a segment boundary at the position we wanted to ensure had one).
 	it("avoids calling blockUpdate excessively", () => {
 		let seq = 1;
 		const mergeTree = new MergeTree();
