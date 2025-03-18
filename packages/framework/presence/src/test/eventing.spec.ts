@@ -669,8 +669,8 @@ describe("Presence", () => {
 						);
 					},
 				);
-				presence.events.on("workspaceActivated", (workspaceAddress, type) => {
-					if (type === "Notifications") {
+				presence.events.on("workspaceActivated", (workspaceAddress, _) => {
+					if (workspaceAddress === "name:testWorkspace") {
 						workspaceActivatedEventSpy(workspaceAddress);
 					}
 				});
@@ -690,6 +690,7 @@ describe("Presence", () => {
 					`notification event not fired exactly once ${notificationSpy.callCount}`,
 				);
 			});
+
 			it("from an unregistered workspace arrives with state updates", async () => {
 				setupMultipleStatesWorkspaces();
 

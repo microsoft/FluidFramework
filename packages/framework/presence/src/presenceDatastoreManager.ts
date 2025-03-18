@@ -60,6 +60,11 @@ interface GeneralDatastoreMessageContent {
 type DatastoreMessageContent = SystemDatastore & GeneralDatastoreMessageContent;
 
 const datastoreUpdateMessageType = "Pres:DatastoreUpdate";
+
+const internalWorkspaceTypes: Readonly<Record<string, "States" | "Notifications">> = {
+	s: "States",
+	n: "Notifications",
+} as const;
 interface DatastoreUpdateMessage extends IInboundSignalMessage {
 	type: typeof datastoreUpdateMessageType;
 	content: {
@@ -405,15 +410,8 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 
 			const prefix = match[1];
 			const publicWorkspaceAddress = match[2];
-			const internalWorkspaceTypes: Readonly<Record<string, string>> = {
-				s: "States",
-				n: "Notifications",
-			} as const;
 
-			const internalWorkspaceType = (internalWorkspaceTypes[prefix] ?? "Unknown") as
-				| "States"
-				| "Notifications"
-				| "Unknown";
+			const internalWorkspaceType = internalWorkspaceTypes[prefix] ?? "Unknown";
 
 			this.events.emit("workspaceActivated", publicWorkspaceAddress, internalWorkspaceType);
 		}
