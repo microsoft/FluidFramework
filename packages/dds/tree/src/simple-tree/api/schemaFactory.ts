@@ -72,7 +72,7 @@ import type {
 	TreeMapNodeUnsafe,
 	TreeObjectNodeUnsafe,
 	Unenforced,
-	UnenforcedImplicitAllowedTypes,
+	ImplicitAllowedTypesUnsafe,
 } from "./typesUnsafe.js";
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
 import { isLazy } from "../flexList.js";
@@ -282,7 +282,7 @@ export const schemaStatics = {
 	 * This version of {@link schemaStatics.optional} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
 	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
 	 */
-	optionalRecursive: <const T extends UnenforcedImplicitAllowedTypes>(
+	optionalRecursive: <const T extends ImplicitAllowedTypesUnsafe>(
 		t: T,
 		props?: Omit<FieldProps, "defaultProvider">,
 	): FieldSchemaUnsafe<FieldKind.Optional, T> => {
@@ -296,7 +296,7 @@ export const schemaStatics = {
 	 * This version of {@link schemaStatics.required} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
 	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
 	 */
-	requiredRecursive: <const T extends UnenforcedImplicitAllowedTypes>(
+	requiredRecursive: <const T extends ImplicitAllowedTypesUnsafe>(
 		t: T,
 		props?: Omit<FieldProps, "defaultProvider">,
 	): FieldSchemaUnsafe<FieldKind.Required, T> => {
@@ -968,10 +968,10 @@ export class SchemaFactory<
 	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-	public arrayRecursive<
-		const Name extends TName,
-		const T extends UnenforcedImplicitAllowedTypes,
-	>(name: Name, allowedTypes: T) {
+	public arrayRecursive<const Name extends TName, const T extends ImplicitAllowedTypesUnsafe>(
+		name: Name,
+		allowedTypes: T,
+	) {
 		const RecursiveArray = this.namedArray(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
@@ -1011,7 +1011,7 @@ export class SchemaFactory<
 	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-	public mapRecursive<Name extends TName, const T extends UnenforcedImplicitAllowedTypes>(
+	public mapRecursive<Name extends TName, const T extends ImplicitAllowedTypesUnsafe>(
 		name: Name,
 		allowedTypes: T,
 	) {
