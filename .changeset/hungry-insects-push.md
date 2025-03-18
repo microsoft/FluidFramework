@@ -6,6 +6,6 @@
 "section": tree
 ---
 
-`TreeBranchEvents` exposes `rootChanged`
+TreeBranchEvents now exposes the rootChanged event
 
 `TreeBranchEvents` now includes the `rootChanged` event from `TreeViewEvents`.

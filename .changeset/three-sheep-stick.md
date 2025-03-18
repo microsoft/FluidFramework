@@ -9,7 +9,7 @@
 "section": legacy
 ---
 
-The functions `process` and `processDocumentSchemaOp` have been removed
+The process and processDocumentSchemaOp functions have been removed
 
 `process` has been replaced by `processMessages` from the following:
 
