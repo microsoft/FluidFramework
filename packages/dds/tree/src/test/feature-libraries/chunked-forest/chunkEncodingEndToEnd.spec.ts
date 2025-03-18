@@ -43,7 +43,7 @@ import {
 	fieldKindConfigurations,
 	makeFieldBatchCodec,
 	makeModularChangeCodecFamily,
-	MockNodeKeyManager,
+	MockNodeIdentifierManager,
 	jsonableTreeFromCursor,
 	cursorForJsonableTreeNode,
 } from "../../../feature-libraries/index.js";
@@ -76,13 +76,12 @@ import type { Format } from "../../../feature-libraries/forest-summary/format.js
 // eslint-disable-next-line import/no-internal-modules
 import type { EncodedFieldBatch } from "../../../feature-libraries/chunked-forest/index.js";
 import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
-// eslint-disable-next-line import/no-internal-modules
-import { JsonObject } from "../../json/jsonDomainSchema.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import { brand } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
-import { TreeFactory } from "../../../treeFactory.js";
+import { configuredSharedTree } from "../../../treeFactory.js";
 
 const options = {
 	jsonValidator: typeboxValidator,
@@ -111,7 +110,7 @@ function getIdentifierEncodingContext(id: string) {
 	const initialTree = cursorFromInsertable(
 		HasIdentifier,
 		new HasIdentifier({ identifier: id }),
-		new MockNodeKeyManager(),
+		new MockNodeIdentifierManager(),
 	);
 	const flexSchema = toStoredSchema(HasIdentifier);
 	const flexConfig: TreeStoredContent = {
@@ -167,9 +166,7 @@ describe("End to end chunked encoding", () => {
 		const checkout = new MockTreeCheckout(forest, {
 			editor: dummyEditor as unknown as ISharedTreeEditor,
 		});
-		checkout.editor
-			.sequenceField({ field: rootFieldKey, parent: undefined })
-			.insert(0, chunk.cursor());
+		checkout.editor.sequenceField({ field: rootFieldKey, parent: undefined }).insert(0, chunk);
 		// Check that inserted change contains chunk which is reference equal to the original chunk.
 		const { change: insertedChange, revision } = changeLog[0];
 		assert(insertedChange.builds !== undefined);
@@ -189,9 +186,7 @@ describe("End to end chunked encoding", () => {
 			initialTree: [],
 		});
 
-		checkout.editor
-			.sequenceField({ field: rootFieldKey, parent: undefined })
-			.insert(0, chunk.cursor());
+		checkout.editor.sequenceField({ field: rootFieldKey, parent: undefined }).insert(0, chunk);
 
 		const forestSummarizer = new ForestSummarizer(
 			checkout.forest,
@@ -277,8 +272,10 @@ describe("End to end chunked encoding", () => {
 
 		it("is the uncompressed value when it is an unknown  identifier", () => {
 			// generate an id from a different id compressor.
-			const nodeKeyManager = new MockNodeKeyManager();
-			const id = nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
+			const nodeKeyManager = new MockNodeIdentifierManager();
+			const id = nodeKeyManager.stabilizeNodeIdentifier(
+				nodeKeyManager.generateLocalNodeIdentifier(),
+			);
 
 			const { encoderContext, checkout } = getIdentifierEncodingContext(id);
 
@@ -337,12 +334,12 @@ describe("End to end chunked encoding", () => {
 
 			const identifierParent: FieldKey = brand("identifierParent");
 
-			const identifierShape = new TreeShape(brand(JsonObject.identifier), false, [
+			const identifierShape = new TreeShape(brand(JsonAsTree.JsonObject.identifier), false, [
 				[identifierField, stringShape, 1],
 			]);
 
 			const parentNodeWithIdentifiersShape = new TreeShape(
-				brand(JsonObject.identifier),
+				brand(JsonAsTree.JsonObject.identifier),
 				false,
 				[
 					[identifierParent, identifierShape, 1],
@@ -354,15 +351,15 @@ describe("End to end chunked encoding", () => {
 			const id = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
 
 			// Create a stable id from a different source.
-			const nodeKeyManager = new MockNodeKeyManager();
-			const unknownStableId = nodeKeyManager.generateStableNodeKey();
+			const nodeKeyManager = new MockNodeIdentifierManager();
+			const unknownStableId = nodeKeyManager.generateStableNodeIdentifier();
 
 			const initialTree = {
-				type: brand(JsonObject.identifier),
+				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
 					identifierParent: [
 						{
-							type: brand(JsonObject.identifier),
+							type: brand(JsonAsTree.JsonObject.identifier),
 							fields: {
 								identifier: [{ type: brand("com.fluidframework.leaf.string"), value: id }],
 							},
@@ -395,10 +392,10 @@ describe("End to end chunked encoding", () => {
 		});
 
 		it("Initializing tree creates uniform chunks with encoded identifiers", async () => {
-			const factory = new TreeFactory({
+			const factory = configuredSharedTree({
 				jsonValidator: typeboxValidator,
 				forest: ForestTypeOptimized,
-			});
+			}).getFactory();
 
 			const runtime = new MockFluidDataStoreRuntime({
 				clientId: `test-client`,
@@ -422,7 +419,7 @@ describe("End to end chunked encoding", () => {
 			);
 			view.initialize({ identifier: stableId });
 
-			const forest = view.checkout.forest;
+			const forest = tree.kernel.checkout.forest;
 			assert(forest instanceof ChunkedForest);
 			const uniformChunk = forest.roots.fields.get(rootFieldKey)?.at(0);
 			assert(uniformChunk instanceof UniformChunk);

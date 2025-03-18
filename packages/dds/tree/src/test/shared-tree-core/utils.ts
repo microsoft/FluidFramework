@@ -43,6 +43,7 @@ import { testIdCompressor } from "../utils.js";
 import { strict as assert } from "node:assert";
 import {
 	SharedObject,
+	type IChannelView,
 	type IFluidSerializer,
 } from "@fluidframework/shared-object-base/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
@@ -60,7 +61,6 @@ import type {
 	IFluidLoadable,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import type { IChannelView } from "../../shared-tree/index.js";
 import { Breakable } from "../../util/index.js";
 import { mockSerializer } from "../mockSerializer.js";
 

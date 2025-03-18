@@ -73,7 +73,6 @@ export {
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
-	type IChannelView,
 } from "./shared-tree/index.js";
 
 export {
@@ -217,6 +216,12 @@ export {
 	type TransactionResultSuccess,
 	type TransactionResultFailed,
 	rollback,
+	generateSchemaFromSimpleSchema,
+	evaluateLazySchema,
+	replaceConciseTreeHandles,
+	replaceHandles,
+	replaceVerboseTreeHandles,
+	type HandleConverter,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
@@ -234,15 +239,18 @@ export {
 export { noopValidator } from "./codec/index.js";
 export { typeboxValidator } from "./external-utilities/index.js";
 
-export {
-	type RestrictiveReadonlyRecord,
-	type RestrictiveStringRecord,
-	type MakeNominal,
-	type IsUnion,
-	type UnionToIntersection,
-	type UnionToTuple,
-	type PopUnion,
+export type {
+	RestrictiveReadonlyRecord,
+	RestrictiveStringRecord,
+	MakeNominal,
+	IsUnion,
+	UnionToIntersection,
+	UnionToTuple,
+	PopUnion,
+	JsonCompatible,
+	JsonCompatibleObject,
 } from "./util/index.js";
+export { cloneWithReplacements } from "./util/index.js";
 
 import * as InternalTypes from "./internalTypes.js";
 export {
@@ -258,4 +266,5 @@ export {
 // The inferred type of 'NodeMap' cannot be named without a reference to '../../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.
 export type { MapNodeInsertableData } from "./simple-tree/index.js";
 
-export type { JsonCompatible, JsonCompatibleObject } from "./util/index.js";
+export { JsonAsTree } from "./jsonDomainSchema.js";
+export { FluidSerializableAsTree } from "./serializableDomainSchema.js";

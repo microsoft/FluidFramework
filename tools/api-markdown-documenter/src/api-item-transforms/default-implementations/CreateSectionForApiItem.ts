@@ -7,7 +7,10 @@ import { type ApiItem, ReleaseTag } from "@microsoft/api-extractor-model";
 
 import type { SectionNode } from "../../documentation-domain/index.js";
 import { getEffectiveReleaseLevel } from "../../utilities/index.js";
-import { doesItemRequireOwnDocument, getHeadingForApiItem } from "../ApiItemTransformUtilities.js";
+import {
+	doesItemRequireOwnDocument,
+	getHeadingForApiItem,
+} from "../ApiItemTransformUtilities.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import {
 	alphaWarningSpan,

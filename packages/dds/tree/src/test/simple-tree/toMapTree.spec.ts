@@ -57,8 +57,8 @@ import {
 import { brand } from "../../util/index.js";
 import {
 	FieldKinds,
-	MockNodeKeyManager,
-	type NodeKeyManager,
+	MockNodeIdentifierManager,
+	type NodeIdentifierManager,
 } from "../../feature-libraries/index.js";
 import { validateUsageError } from "../utils.js";
 
@@ -76,9 +76,9 @@ function getFieldSchema(
 }
 
 describe("toMapTree", () => {
-	let nodeKeyManager: MockNodeKeyManager;
+	let nodeKeyManager: MockNodeIdentifierManager;
 	beforeEach(() => {
-		nodeKeyManager = new MockNodeKeyManager();
+		nodeKeyManager = new MockNodeIdentifierManager();
 	});
 
 	it("string", () => {
@@ -887,7 +887,7 @@ describe("toMapTree", () => {
 			const constantProvider: ConstantFieldProvider = () => {
 				return defaultValue;
 			};
-			const contextualProvider: ContextualFieldProvider = (context: NodeKeyManager) => {
+			const contextualProvider: ContextualFieldProvider = (context: NodeIdentifierManager) => {
 				assert.equal(context, nodeKeyManager);
 				return defaultValue;
 			};
@@ -1330,7 +1330,7 @@ describe("toMapTree", () => {
 					mapTreeFromNodeData(
 						content,
 						[schemaFactory.string],
-						new MockNodeKeyManager(),
+						new MockNodeIdentifierManager(),
 						schemaValidationPolicy,
 					);
 				});
@@ -1343,7 +1343,7 @@ describe("toMapTree", () => {
 							mapTreeFromNodeData(
 								content,
 								[schemaFactory.string],
-								new MockNodeKeyManager(),
+								new MockNodeIdentifierManager(),
 								schemaValidationPolicy,
 							),
 						outOfSchemaExpectedError,
@@ -1385,7 +1385,7 @@ describe("toMapTree", () => {
 					mapTreeFromNodeData(
 						content,
 						[myObjectSchema, schemaFactory.string],
-						new MockNodeKeyManager(),
+						new MockNodeIdentifierManager(),
 						schemaValidationPolicy,
 					);
 				});
@@ -1397,7 +1397,7 @@ describe("toMapTree", () => {
 							mapTreeFromNodeData(
 								content,
 								[myObjectSchema, schemaFactory.string],
-								new MockNodeKeyManager(),
+								new MockNodeIdentifierManager(),
 								schemaValidationPolicy,
 							),
 						outOfSchemaExpectedError,
@@ -1413,7 +1413,7 @@ describe("toMapTree", () => {
 					mapTreeFromNodeData(
 						{ foo: "Hello world", notInSchemaKey: 5, anotherNotInSchemaKey: false },
 						[myObjectSchema, schemaFactory.string],
-						new MockNodeKeyManager(),
+						new MockNodeIdentifierManager(),
 						schemaValidationPolicy,
 					);
 				});
@@ -1446,7 +1446,7 @@ describe("toMapTree", () => {
 					mapTreeFromNodeData(
 						content,
 						[myMapSchema, schemaFactory.string],
-						new MockNodeKeyManager(),
+						new MockNodeIdentifierManager(),
 						schemaValidationPolicy,
 					);
 				});
@@ -1458,7 +1458,7 @@ describe("toMapTree", () => {
 							mapTreeFromNodeData(
 								content,
 								[myMapSchema, schemaFactory.string],
-								new MockNodeKeyManager(),
+								new MockNodeIdentifierManager(),
 								schemaValidationPolicy,
 							),
 						outOfSchemaExpectedError,
@@ -1493,7 +1493,7 @@ describe("toMapTree", () => {
 					mapTreeFromNodeData(
 						content,
 						[myArrayNodeSchema, schemaFactory.string],
-						new MockNodeKeyManager(),
+						new MockNodeIdentifierManager(),
 						schemaValidationPolicy,
 					);
 				});
@@ -1505,7 +1505,7 @@ describe("toMapTree", () => {
 							mapTreeFromNodeData(
 								content,
 								[myArrayNodeSchema, schemaFactory.string],
-								new MockNodeKeyManager(),
+								new MockNodeIdentifierManager(),
 								schemaValidationPolicy,
 							),
 						outOfSchemaExpectedError,

@@ -282,7 +282,6 @@ describe.skip("AI Job Listings App Benchmark", () => {
 					maxModelCalls: 10,
 				},
 				validator: treeNodeValidatorFn,
-				dumpDebugLog: true,
 			});
 			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs = Date.now() - startTime;
 		} catch (error) {
@@ -400,7 +399,6 @@ describe.skip("AI Job Listings App Benchmark", () => {
 					maxModelCalls: 10,
 				},
 				validator: treeNodeValidatorFn,
-				// dumpDebugLog: true,
 			});
 			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs = Date.now() - startTime;
 		} catch (error) {
@@ -539,7 +537,6 @@ describe.skip("AI Job Listings App Benchmark", () => {
 					maxModelCalls: 10,
 				},
 				validator: treeNodeValidatorFn,
-				// dumpDebugLog: true,
 			});
 			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs = Date.now() - startTime;
 		} catch (error) {
@@ -649,7 +646,6 @@ describe.skip("AI Job Listings App Benchmark", () => {
 					maxModelCalls: 10,
 				},
 				validator: treeNodeValidatorFn,
-				// dumpDebugLog: true,
 			});
 			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs = Date.now() - startTime;
 		} catch (error) {
@@ -782,7 +778,6 @@ describe.skip("AI Job Listings App Benchmark", () => {
 				limiters: {
 					maxModelCalls: 5,
 				},
-				dumpDebugLog: true,
 			});
 			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs = Date.now() - startTime;
 		} catch (error) {
@@ -881,7 +876,6 @@ describe.skip("AI Job Listings App Benchmark", () => {
 				limiters: {
 					maxModelCalls: 5,
 				},
-				dumpDebugLog: true,
 			});
 			completedTasksBenchmark[taskBencharmarkTitle].executionTimeMs = Date.now() - startTime;
 		} catch (error) {

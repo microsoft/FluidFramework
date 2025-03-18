@@ -1,5 +1,90 @@
 # fluid-framework
 
+## 2.30.0
+
+### Minor Changes
+
+-   New SchemaFactoryAlpha.scopedFactory method ([#23987](https://github.com/microsoft/FluidFramework/pull/23987)) [cddd5139c3](https://github.com/microsoft/FluidFramework/commit/cddd5139c3e070ef26db55331528435a99c0a1b1)
+
+    The [`SchemaFactoryAlpha.scopedFactory`](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class)
+    method has been added, providing an easy way to create a new `SchemaFactory` with a nested scope string.
+
+-   TreeBranchEvents now exposes the rootChanged event ([#24014](https://github.com/microsoft/FluidFramework/pull/24014)) [702a08af83](https://github.com/microsoft/FluidFramework/commit/702a08af83206c21e1016ca47051052fa8554aa5)
+
+    `TreeBranchEvents` now includes the `rootChanged` event from `TreeViewEvents`.
+
+-   Alpha APIs for replacing handles in export formats have been redesigned ([#24061](https://github.com/microsoft/FluidFramework/pull/24061)) [34b319cae7](https://github.com/microsoft/FluidFramework/commit/34b319cae7a78db5530dc898689e2eb846f1419f)
+
+    The various import and export [`VerboseTree`](https://fluidframework.com/docs/api/fluid-framework/verbosetree-typealias) and [`ConciseTree`](https://fluidframework.com/docs/api/fluid-framework/concisetree-typealias) APIs no longer include `valueConverter` options.
+    Instead the resulting tree can be further processed to do any desired replacements.
+    The following `@alpha` APIs have been added to assist with this:
+
+    1. `cloneWithReplacements`
+    2. `replaceHandles`
+    3. `replaceConciseTreeHandles`
+    4. `replaceVerboseTreeHandles`
+
+-   Rules regarding how and when lazy schema references are resolved have been clarified ([#24030](https://github.com/microsoft/FluidFramework/pull/24030)) [23f32794db](https://github.com/microsoft/FluidFramework/commit/23f32794dbd3672dcc18e2a9ba2f16f4bf1241f0)
+
+    A lazy schema reference is a [LazyItem](https://fluidframework.com/docs/api/fluid-framework/lazyitem-typealias) referencing a [TreeNodeSchema](https://fluidframework.com/docs/api/fluid-framework/treenodeschema-typealias).
+    They typically look like `() => MySchema` and are used when a [forward reference](https://en.wikipedia.org/wiki/Forward_declaration#Forward_reference) from one schema to another is required (including but not limited to recursive and co-recursive schema).
+
+    [TreeViewConfiguration](https://fluidframework.com/docs/api/fluid-framework/treeviewconfiguration-class#_constructor_-constructor) now documents its significance with respect to lazy schema references.
+    Additionally some implicit assumptions like no modifications of [AllowedTypes](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias)
+    after resolving of lazy schema references have been enforced (such modifications would previously cause undefined behavior in the future, and now an error is thrown when trying to modify them).
+
+    `evaluateLazySchema` has been added as an `@alpha` API that is now consistently used by all internal code when evaluating lazy schema references.
+    This ensures consistent behavior and error reporting, but also adds caching.
+    Therefore it is now supported for applications to have lazy schema references which compute the schema when invoked,
+    without having to implement their own caching as long as those applications use `evaluateLazySchema` anytime they need to evaluate a lazy schema reference.
+
+## 2.23.0
+
+### Minor Changes
+
+-   Creating large transactions and processing inbound changes is now faster ([#23929](https://github.com/microsoft/FluidFramework/pull/23929)) [35847b5ffe0](https://github.com/microsoft/FluidFramework/commit/35847b5ffe09d94cef42b74ab59e37c4bd6d8c2d)
+
+    SharedTree sometimes composes several sequential changes into a single change.
+    It does so whenever a transaction is created and when processing inbound changes.
+
+    Version 2.23.0 makes this composition process asymptotically faster.
+    For example, creating a transaction that performs 1000 edits on a single array now takes 170ms instead of 1.5s (an 89% improvement).
+
+    See [Change #23902](https://github.com/microsoft/FluidFramework/pull/23902) for more details.
+
+-   Faster processing of events for large transactions ([#23939](https://github.com/microsoft/FluidFramework/pull/23939)) [2a1e7e0617f](https://github.com/microsoft/FluidFramework/commit/2a1e7e0617f618f82134c0bba269119ed980aadc)
+
+    In versions prior to 2.23.0, event processing time could scale quadratically (`O(N^2)`) with the change count when
+    processing a batch of changes.
+
+    This performance characteristic has been corrected. See change
+    [#23908](https://github.com/microsoft/FluidFramework/pull/23908) for more details.
+
+-   Op bunching performance enhancements ([#23732](https://github.com/microsoft/FluidFramework/pull/23732)) [a98b04fc9e0](https://github.com/microsoft/FluidFramework/commit/a98b04fc9e000971bdfa8135251a7dc3e189502c)
+
+    `SharedTree` now takes advantage of a new feature called "op bunching" where contiguous ops in a grouped batch are
+    bunched and processed together. This improves the performance of processing ops asymptotically; as
+    the number of local ops and incoming ops increase, the processing time will reduce.
+
+    For example, with 10 local ops + 10 incoming ops, the performance increases by 70%; with 100 local ops + 100 incoming ops, the performance increases by 94%.
+
+    This will help improve performance in the following scenarios:
+
+    -   A client makes a large number of changes in a single JS turn. For example, copy pasting large data like a table.
+    -   A client has a large number of local changes. For example, slow clients whose changes are slow to ack or clients with
+        a local branch with large number of changes.
+
+-   Invalid schema base classes in Tree.is now throw an error instead of returning false ([#23938](https://github.com/microsoft/FluidFramework/pull/23938)) [00995654070](https://github.com/microsoft/FluidFramework/commit/00995654070a4e13b57b2562ff4a5935aba70a2f)
+
+    As documented in [`TreeNodeSchemaClass`](https://fluidframework.com/docs/api/fluid-framework/treenodeschemaclass-typealias#treenodeschemaclass-remarks), there are specific rules around sub-classing schema, mainly that only a single most derived class can be used.
+    One place where it was easy to accidentally violate this rule and get hard-to-debug results was [`Tree.is`](https://fluidframework.com/docs/data-structures/tree/nodes#treeis).
+    This has been mitigated by adding a check in `Tree.is` which detects this mistake (which used to result in `false` being returned) and instead throws a `UsageError` explaining the situation.
+    The error will look something like:
+
+    > Two schema classes were used (CustomObjectNode and Derived) which derived from the same SchemaFactory generated class ("com.example.Test"). This is invalid.
+
+    For applications wanting to test if a given `TreeNode` is an instance of some schema base class, this can be done using `instanceof` which includes base classes when doing the check.
+
 ## 2.22.0
 
 ### Minor Changes

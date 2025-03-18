@@ -156,6 +156,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 						redisConfig2.enableClustering,
 						redisConfig2.slotsRefreshTimeout,
 						retryDelays,
+						redisConfig2.enableVerboseErrorLogging,
 				  );
 		redisClientConnectionManagers.push(redisClientConnectionManagerForJwtCache);
 		const redisJwtCache = new services.RedisCache(redisClientConnectionManagerForJwtCache);
@@ -241,6 +242,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 						redisConfigForThrottling.enableClustering,
 						redisConfigForThrottling.slotsRefreshTimeout,
 						retryDelays,
+						redisConfigForThrottling.enableVerboseErrorLogging,
 				  );
 		redisClientConnectionManagers.push(redisClientConnectionManagerForThrottling);
 

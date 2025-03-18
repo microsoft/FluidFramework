@@ -747,7 +747,7 @@ export function splitMark<TMark extends Mark>(mark: TMark, length: number): [TMa
 	const markLength = mark.count;
 	const remainder = markLength - length;
 	if (length < 1 || remainder < 1) {
-		fail("Unable to split mark due to lengths");
+		fail(0xb2d /* Unable to split mark due to lengths */);
 	}
 
 	const [effect1, effect2] = splitMarkEffect(mark, length);

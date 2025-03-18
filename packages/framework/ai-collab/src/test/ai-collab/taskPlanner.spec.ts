@@ -194,7 +194,6 @@ describe.skip("Ai Planner App", () => {
 			},
 			planningStep: true,
 			finalReviewStep: true,
-			dumpDebugLog: true,
 		});
 
 		assert(view.root.taskGroups[0]?.tasks[0]?.priority === "high");

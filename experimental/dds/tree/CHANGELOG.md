@@ -1,5 +1,18 @@
 # @fluid-experimental/tree
 
+## 2.30.0
+
+### Minor Changes
+
+-   The OrderedEditSet interface now has a getLocalEdits method ([#23244](https://github.com/microsoft/FluidFramework/pull/23244)) [429c0b717f](https://github.com/microsoft/FluidFramework/commit/429c0b717f37d18da0311dd69fcfc3bd10fea13c)
+
+    Previously, `EditLog` was imported to cast to this type for access to the `getLocalEdits` method. In addition, the
+    `./test/EditLog` export has been removed.
+
+## 2.23.0
+
+Dependency updates only.
+
 ## 2.22.0
 
 Dependency updates only.

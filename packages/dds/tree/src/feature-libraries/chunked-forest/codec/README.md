@@ -8,8 +8,8 @@ Two main algorithms are used:
 
 -   Shape based encoding: Trees are split into "Shape" information and "Data".
     "Shape" can (but does not have to) contain information like type, which fields exist, and how many nodes are in them and the shapes of those nodes.
--   [Dictionary Coding](https://go-compression.github.io/algorithms/dictionary/) using `Counter` from [chunkCodexUtilities.ts](./chunkCodecUtilities.ts)
-    is applied to Identifiers (such a type names and field keys) and Shapes.
+-   [Dictionary Coding](https://go-compression.github.io/algorithms/dictionary/) using `Counter` from [chunkCodecUtilities.ts](./chunkCodecUtilities.ts)
+    is applied to Identifiers (such as type names and field keys) and Shapes.
 
 The main challenge is deciding what shapes to use: if too much information is captured in the shape, there will be more shapes which take up more space,
 but if too little information is captured in the shapes, the size of the encoded tree will be large.
@@ -20,7 +20,7 @@ A few implementations are included which make different choices here:
 -   [uncompressedEncode.ts](uncompressedEncode.ts): the simplest implementation, which captures nothing in the shape and does no Dictionary Coding of identifiers.
     This makes for more human readable data as well as a simple reference implementation.
 -   [compressedEncode.ts](compressedEncode.ts): some utilities for actual compressed encoding, but does not contain any advanced strategies (instead they must be provided to it via the `EncoderCache`)
--   [schemaBasedEncoding.ts](schemaBasedEncoding.ts): a strategy for compressedEncode using schema to infer commonly used shapes.
+-   [schemaBasedEncode.ts](schemaBasedEncode.ts): a strategy for compressedEncode using schema to infer commonly used shapes.
 
 ### Future Optimizations
 

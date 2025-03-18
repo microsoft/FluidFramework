@@ -22,6 +22,7 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Class_DocumentsSchemaController": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_DocumentsSchemaController = requireAssignableTo<TypeOnly<current.DocumentsSchemaController>, TypeOnly<old.DocumentsSchemaController>>
 
 /*
@@ -67,6 +68,7 @@ declare type current_as_old_for_Class_SummaryCollection = requireAssignableTo<Ty
  * typeValidation.broken:
  * "ClassStatics_DocumentsSchemaController": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_DocumentsSchemaController = requireAssignableTo<TypeOnly<typeof current.DocumentsSchemaController>, TypeOnly<typeof old.DocumentsSchemaController>>
 
 /*

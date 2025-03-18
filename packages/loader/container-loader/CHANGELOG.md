@@ -1,5 +1,24 @@
 # @fluidframework/container-loader
 
+## 2.30.0
+
+### Minor Changes
+
+-   Deprecated ILoaderOptions have been removed ([#24046](https://github.com/microsoft/FluidFramework/pull/24046)) [24b4c8cf09](https://github.com/microsoft/FluidFramework/commit/24b4c8cf098b499b9b7cd1ea94c2bf627e259956)
+
+    Previously `ILoaderOptions` exported from `container-loader` was extending the base `ILoaderOptions` defined in `container-definitions` to add an experimental `summarizeProtocolTree` property which was used to test single-commit summaries. The option is no longer required or in use, so the extended version of `ILoaderOptions` is not needed anymore. Use `@fluidframework/container-definitions#ILoaderOptions` instead.
+
+-   IContainer.getContainerPackageInfo() is now deprecated ([#23840](https://github.com/microsoft/FluidFramework/pull/23840)) [521be72619](https://github.com/microsoft/FluidFramework/commit/521be726198a1f88f4f8f06c0f273528a49d2957)
+
+    The `IContainer.getContainerPackageInfo()` function is now deprecated. This API will be removed in version 2.40.0.
+    Use `IFluidCodeDetails.package` returned by `IContainer.getLoadedCodeDetails()` instead.
+
+    See [issue #23898](https://github.com/microsoft/FluidFramework/issues/23898) for details.
+
+## 2.23.0
+
+Dependency updates only.
+
 ## 2.22.0
 
 Dependency updates only.

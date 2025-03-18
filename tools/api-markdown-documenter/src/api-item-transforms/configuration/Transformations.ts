@@ -109,10 +109,12 @@ const defaultApiItemTransformationOptions: ApiItemTransformations = {
 		DefaultTransformationImplementations.transformApiItemWithoutChildren,
 	[ApiItemKind.Class]: DefaultTransformationImplementations.transformApiTypeLike,
 	[ApiItemKind.Constructor]: DefaultTransformationImplementations.transformApiFunctionLike,
-	[ApiItemKind.ConstructSignature]: DefaultTransformationImplementations.transformApiFunctionLike,
+	[ApiItemKind.ConstructSignature]:
+		DefaultTransformationImplementations.transformApiFunctionLike,
 	[ApiItemKind.EntryPoint]: DefaultTransformationImplementations.transformApiEntryPoint,
 	[ApiItemKind.Enum]: DefaultTransformationImplementations.transformApiEnum,
-	[ApiItemKind.EnumMember]: DefaultTransformationImplementations.transformApiItemWithoutChildren,
+	[ApiItemKind.EnumMember]:
+		DefaultTransformationImplementations.transformApiItemWithoutChildren,
 	[ApiItemKind.Function]: DefaultTransformationImplementations.transformApiFunctionLike,
 	[ApiItemKind.IndexSignature]:
 		DefaultTransformationImplementations.transformApiItemWithoutChildren,

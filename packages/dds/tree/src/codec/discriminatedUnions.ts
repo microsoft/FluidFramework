@@ -124,7 +124,8 @@ export class DiscriminatedUnionDispatcher<
 		);
 		const key: keyof TUnion = keys[0] as keyof TUnion;
 		const value = union[key];
-		const factory = this.library.get(key) ?? fail("missing function for union member");
+		const factory =
+			this.library.get(key) ?? fail(0xac2 /* missing function for union member */);
 		const result = factory(value, ...args);
 		return result;
 	}

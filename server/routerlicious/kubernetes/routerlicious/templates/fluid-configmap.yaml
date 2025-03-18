@@ -75,7 +75,18 @@ data:
                 {{ toJson . }}{{- if ne $i $lastIndex -}}, {{ end }}
                 {{- end }}
             ],
-            "seekTimeoutAfterPause": {{ .Values.kafka.seekTimeoutAfterPause }}
+            "seekTimeoutAfterPause": {{ .Values.kafka.seekTimeoutAfterPause }},
+            "apiCounterEnabled": {{ .Values.kafka.apiCounterEnabled }},
+            "apiCounterIntervalMS": {{ .Values.kafka.apiCounterIntervalMS }},
+            "apiFailureRateTerminationThreshold": {{ .Values.kafka.apiFailureRateTerminationThreshold }},
+            "apiMinimumCountToEnableTermination": {{ .Values.kafka.apiMinimumCountToEnableTermination }},
+            "consecutiveFailedThresholdForLowerTotalRequests": {{ .Values.kafka.consecutiveFailedThresholdForLowerTotalRequests }},
+            "ignoreAndSkipCheckpointOnKafkaErrorCodes": [
+                {{- $lastIndex := sub (len .Values.kafka.ignoreAndSkipCheckpointOnKafkaErrorCodes) 1}}
+                {{- range $i, $tenant := .Values.kafka.ignoreAndSkipCheckpointOnKafkaErrorCodes }}
+                {{ toJson . }}{{- if ne $i $lastIndex -}}, {{ end }}
+                {{- end }}
+            ]
         },
         "zookeeper": {
             "endpoint": "{{ .Values.zookeeper.url }}"

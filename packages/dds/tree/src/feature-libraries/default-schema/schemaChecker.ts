@@ -90,7 +90,7 @@ export function isNodeInSchema(
 			}
 		}
 	} else {
-		fail("Unknown TreeNodeStoredSchema type");
+		fail(0xb0e /* Unknown TreeNodeStoredSchema type */);
 	}
 
 	return SchemaValidationErrors.NoError;

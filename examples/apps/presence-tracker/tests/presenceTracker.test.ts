@@ -74,18 +74,6 @@ describe("presence-tracker", () => {
 		session1id = "session1id needs reloaded";
 	});
 
-	async function throwWithPageAttendeeData(message: string, page: Page) {
-		const attendeeData = await page.evaluate(() => ({
-			/* eslint-disable @typescript-eslint/dot-notation */
-			attendeeCount: `${window["fluidSessionAttendeeCount"]}`,
-			attendees: window["fluidSessionAttendees"] ?? {},
-			attendeeJoinedCalled: `${window["fluidAttendeeJoinedCalled"]}`,
-			attendeeDisconnectedCalled: `${window["fluidAttendeeDisconnectedCalled"]}`,
-			/* eslint-enable @typescript-eslint/dot-notation */
-		}));
-		throw new Error(`${message} (${JSON.stringify(attendeeData)})`);
-	}
-
 	describe("Single client", () => {
 		it("Document is connected", async () => {
 			// Page's url should be updated to have document id
@@ -117,19 +105,10 @@ describe("presence-tracker", () => {
 		});
 
 		it("First client shows single client connected", async () => {
-			await page
-				// eslint-disable-next-line @typescript-eslint/dot-notation
-				.waitForFunction(() => window["fluidSessionAttendeeCount"] === 1, {
-					// While the expected state should be immediately true, this timeout
-					// appears to apply to the entire evaluation period which may not return
-					// in 50ms 6-9% of the time (even if the evaluation is a simple `true`).
-					// All evaluations of state when this fails have show an attendee count
-					// of 1. So use 100ms which appears reliable.
-					timeout: 100,
-				})
-				.catch(async () => {
-					await throwWithPageAttendeeData("Attendee count is not 1", page);
-				});
+			// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-return
+			const attendeeCount = await page.evaluate(() => window["fluidSessionAttendeeCount"]);
+			expect(attendeeCount).toBe(1);
+
 			const elementHandle = await page.waitForFunction(() =>
 				document.getElementById("focus-div"),
 			);
@@ -190,23 +169,28 @@ describe("presence-tracker", () => {
 			timeoutErrorMessage: string,
 		) {
 			/* Disabled for common window["foo"] access. */
+			/* eslint-disable @typescript-eslint/dot-notation */
 			await page
 				.waitForFunction(
-					// Note: this is a block disable instead of line suppression as Biome reformats comment away from line
-					/* eslint-disable @typescript-eslint/dot-notation */
 					(expectation) =>
 						(
 							window["fluidSessionAttendeeCheck"] as (
 								expected: Record<string, string>,
 							) => boolean
 						)(expectation),
-					/* eslint-enable @typescript-eslint/dot-notation */
 					{ timeout: 100 },
 					expected,
 				)
 				.catch(async () => {
-					await throwWithPageAttendeeData(timeoutErrorMessage, page);
+					const attendeeData = await page.evaluate(() => ({
+						attendeeCount: `${window["fluidSessionAttendeeCount"]}`,
+						attendees: window["fluidSessionAttendees"] ?? {},
+						attendeeJoinedCalled: `${window["fluidAttendeeJoinedCalled"]}`,
+						attendeeDisconnectedCalled: `${window["fluidAttendeeDisconnectedCalled"]}`,
+					}));
+					throw new Error(`${timeoutErrorMessage} (${JSON.stringify(attendeeData)})`);
 				});
+			/* eslint-enable @typescript-eslint/dot-notation */
 		}
 
 		it("Second client shows two clients connected", async () => {

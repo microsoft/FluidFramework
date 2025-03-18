@@ -858,7 +858,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	// Therefore it must include `length`,
 	// even though this "length" is never invoked (due to being shadowed by the proxy provided own property).
 	public get length(): number {
-		return fail("Proxy should intercept length");
+		return fail(0xadb /* Proxy should intercept length */);
 	}
 
 	public [Symbol.iterator](): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
@@ -1045,7 +1045,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			throw new UsageError(`Concurrent editing and iteration is not allowed.`);
 		}
 		for (let i = 0; i < this.length; i++) {
-			yield this.at(i) ?? fail("Index is out of bounds");
+			yield this.at(i) ?? fail(0xadc /* Index is out of bounds */);
 			if (initialLastUpdatedStamp !== kernel.generationNumber) {
 				throw new UsageError(`Concurrent editing and iteration is not allowed.`);
 			}

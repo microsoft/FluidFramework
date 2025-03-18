@@ -1,5 +1,33 @@
 # @fluidframework/datastore
 
+## 2.30.0
+
+### Minor Changes
+
+-   The process and processDocumentSchemaOp functions have been removed ([#24018](https://github.com/microsoft/FluidFramework/pull/24018)) [bc35d543d5](https://github.com/microsoft/FluidFramework/commit/bc35d543d58c7e4bf28944b09d645cc26bf28a29)
+
+    `process` has been replaced by `processMessages` from the following:
+
+    -   `FluidDataStoreRuntime`
+    -   `IDeltaHandler`
+    -   `IFluidDataStoreChannel`
+    -   `MockFluidDataStoreRuntime`
+    -   `MockDeltaConnection`
+
+    `processDocumentSchemaOp` has been replaced by `processDocumentSchemaMessages` from `DocumentsSchemaController`.
+
+    See the [deprecation release note](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.5.0#user-content-the-process-function-on-ifluiddatastorechannel-ideltahandler-mockfluiddatastoreruntime-and-mockdeltaconnection-is-now-deprecated-22840) for more details.
+
+## 2.23.0
+
+### Minor Changes
+
+-   The FluidDataStoreRuntime.process function is now deprecated ([#23866](https://github.com/microsoft/FluidFramework/pull/23866)) [3f44d43e985](https://github.com/microsoft/FluidFramework/commit/3f44d43e985fea02ea349d024d3ae5d85f7eddd6)
+
+    A new function `processMessages` has been added in place of `process`. The new function will be called to process multiple messages instead of a single one on the data store runtime. This is part of a feature called "op bunching" where contiguous ops of a given type and to a given data store / DDS are bunched and sent together for processing.
+
+    Note that `process` may still be called in scenarios where this data store runtime (Datastore layer) is running with an older version of data store context (Runtime layer) in the same client. This is to support Fluid layer compatibility.
+
 ## 2.22.0
 
 Dependency updates only.

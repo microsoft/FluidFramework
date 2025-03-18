@@ -16,7 +16,6 @@ import {
 	StablePlace,
 	type TraitLabel,
 } from "@fluid-experimental/tree";
-import { type EditLog } from "@fluid-experimental/tree/test/EditLog";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
@@ -151,7 +150,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		(legacyTree, newTree) => {
 			// Migration code that the customer writes
 			// Revert local edits - otherwise we will be eventually inconsistent
-			const edits = legacyTree.edits as EditLog;
+			const edits = legacyTree.edits;
 			const localEdits = [...edits.getLocalEdits()].reverse();
 			for (const edit of localEdits) {
 				legacyTree.revert(edit.id);

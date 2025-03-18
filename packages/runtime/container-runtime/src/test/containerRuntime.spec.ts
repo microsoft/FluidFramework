@@ -1737,7 +1737,7 @@ describe("Runtime", () => {
 						// Submit an op and yield for it to be flushed from outbox to pending state manager.
 						submitDataStoreOp(containerRuntime, "fakeId", "fakeContents");
 						await yieldEventLoop();
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+
 						return boundFn(...args);
 					};
 				};

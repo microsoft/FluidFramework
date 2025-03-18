@@ -184,6 +184,7 @@ declare type current_as_old_for_Interface_IExperimentalIncrementalSummaryContext
  * typeValidation.broken:
  * "Interface_IFluidDataStoreChannel": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IFluidDataStoreChannel = requireAssignableTo<TypeOnly<old.IFluidDataStoreChannel>, TypeOnly<current.IFluidDataStoreChannel>>
 
 /*
@@ -193,6 +194,7 @@ declare type old_as_current_for_Interface_IFluidDataStoreChannel = requireAssign
  * typeValidation.broken:
  * "Interface_IFluidDataStoreChannel": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IFluidDataStoreChannel = requireAssignableTo<TypeOnly<current.IFluidDataStoreChannel>, TypeOnly<old.IFluidDataStoreChannel>>
 
 /*
