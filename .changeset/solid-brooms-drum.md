@@ -5,7 +5,7 @@
 "section": legacy
 ---
 
-Unnecessary export removed from container-runtime
+Unnecessary exports are now removed from container-runtime
 
 The following types in the @fluidframework/container-runtime are now removed. These types are unnecessary for external users of this package.
 
