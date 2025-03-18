@@ -30,15 +30,12 @@ import {
 	BlobCollectionContainerRuntimeFactory,
 	type IBlobCollection,
 } from "../src/container/index.js";
-import { BlobCollectionView } from "../src/view.js";
+import { BlobCollectionView, DebugView } from "../src/view.js";
 
-const updateTabForId = (id: string): void => {
-	// Update the URL with the actual ID
-	location.hash = id;
-
-	// Put the ID in the tab title
-	document.title = id;
-};
+// To allow blob creation while the container is detached, we need the container to provide
+// us with memory blob storage.  This is currently controlled by a feature flag which we
+// can control by setting this value in sessionStorage.
+sessionStorage.setItem("Fluid.Container.MemoryBlobStorageEnabled", "true");
 
 const urlResolver = new LocalResolver();
 const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
@@ -56,8 +53,8 @@ const codeLoader: ICodeDetailsLoader = {
  * requires making async calls.
  */
 async function createContainerAndRenderInElement(element: HTMLDivElement): Promise<void> {
-	let id: string;
 	let container: IContainer;
+	let attach: (() => void) | undefined;
 
 	if (location.hash.length === 0) {
 		container = await createDetachedContainer({
@@ -66,31 +63,47 @@ async function createContainerAndRenderInElement(element: HTMLDivElement): Promi
 			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
 			codeLoader,
 		});
-		const documentId = uuid();
-		await container.attach(createLocalResolverCreateNewRequest(documentId));
-		if (container.resolvedUrl === undefined) {
-			throw new Error("Resolved Url not available on attached container");
-		}
-		// Should be the same as the uuid we generated above.
-		id = container.resolvedUrl.id;
+		attach = () => {
+			const documentId = uuid();
+			container
+				.attach(createLocalResolverCreateNewRequest(documentId))
+				.then(() => {
+					if (container.resolvedUrl === undefined) {
+						throw new Error("Resolved Url unexpectedly missing!");
+					}
+					const id = container.resolvedUrl.id;
+					// Update url and tab title
+					location.hash = id;
+					document.title = id;
+				})
+				.catch(console.error);
+		};
 	} else {
-		id = location.hash.substring(1);
+		const id = location.hash.substring(1);
 		container = await loadExistingContainer({
 			request: { url: `${window.location.origin}/${id}` },
 			urlResolver,
 			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
 			codeLoader,
 		});
+		// Update url and tab title
+		location.hash = id;
+		document.title = id;
 	}
 
 	const blobCollection = (await container.getEntryPoint()) as IBlobCollection;
 	const render = (blobCollection: IBlobCollection) => {
-		const appRoot = createRoot(element);
+		const appElement = document.createElement("div");
+		const debugElement = document.createElement("div");
+		element.append(debugElement, appElement);
+
+		const debugRoot = createRoot(debugElement);
+		debugRoot.render(createElement(DebugView, { attach }));
+
+		const appRoot = createRoot(appElement);
 		appRoot.render(createElement(BlobCollectionView, { blobCollection }));
 	};
 
-	// update the browser URL and the window title with the actual container ID
-	updateTabForId(id);
 	// Render it
 	render(blobCollection);
 }
