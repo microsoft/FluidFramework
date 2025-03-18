@@ -167,10 +167,7 @@ describe("Presence", () => {
 					expectedValue: LatestMapValueExpected;
 			  };
 
-		function verifyFinalState(
-			attendee: ISessionClient,
-			verifications: StateVerification[],
-		): void {
+		function verifyState(attendee: ISessionClient, verifications: StateVerification[]): void {
 			assert.ok(attendee, "Eventing does not reflect new attendee");
 			assert.strictEqual(
 				attendee.sessionId,
@@ -319,7 +316,7 @@ describe("Presence", () => {
 				let atteendeeEventSpy: SinonSpy;
 
 				function verify(): void {
-					verifyFinalState(getTestAttendee(), [
+					verifyState(getTestAttendee(), [
 						{ manager: "latest", expectedValue: { x: 1, y: 1, z: 1 } },
 						{
 							manager: "latestMap",
@@ -416,7 +413,7 @@ describe("Presence", () => {
 
 				describe("and 'latest' value updated", () => {
 					function verify(): void {
-						verifyFinalState(getTestAttendee(), [
+						verifyState(getTestAttendee(), [
 							{ manager: "latest", expectedValue: { x: 2, y: 2, z: 2 } },
 							{
 								manager: "latestMap",
@@ -488,7 +485,7 @@ describe("Presence", () => {
 
 				describe("and map item is updated", () => {
 					function verify(): void {
-						verifyFinalState(getTestAttendee(), [
+						verifyState(getTestAttendee(), [
 							{
 								manager: "latestMap",
 								expectedValue: { key1: { a: 2, b: 2 }, key2: undefined },
@@ -564,7 +561,7 @@ describe("Presence", () => {
 			let latestMapSpy: SinonSpy;
 
 			function verify(): void {
-				verifyFinalState(getTestAttendee(), [
+				verifyState(getTestAttendee(), [
 					{ manager: "latest", expectedValue: { x: 1, y: 1, z: 1 } },
 					{
 						manager: "latestMap",
@@ -655,11 +652,12 @@ describe("Presence", () => {
 				assertSpies();
 			});
 
-			it("from an unregistered workspace address", async () => {
+			it("from unregistered workspace triggers 'workspaceActivated' event", async () => {
 				// Setup
 				notificationSpy = spy();
 				const workspaceActivatedEventSpy = spy(
 					(workspaceAddress: PresenceWorkspaceAddress) => {
+						// Once activated, register the notifications workspace and listener for it's event
 						const notificationsWorkspace = presence.getNotifications(workspaceAddress, {
 							notifications: Notifications<{ newId: (id: number) => void }>({
 								newId: (_client: ISessionClient, _id: number) => {},
@@ -679,7 +677,6 @@ describe("Presence", () => {
 				const workspace = {
 					"n:name:testWorkspace": notificationsUpdate,
 				};
-
 				// Act
 				processUpdates(workspace);
 
@@ -692,6 +689,45 @@ describe("Presence", () => {
 					notificationSpy.calledOnce,
 					`notification event not fired exactly once ${notificationSpy.callCount}`,
 				);
+			});
+			it("from an unregistered workspace arrives with state updates", async () => {
+				setupMultipleStatesWorkspaces();
+
+				const initialWorkspaceUpdate = {
+					"s:name:testWorkspace1": latestUpdate,
+					"s:name:testWorkspace2": latestMapUpdate,
+				};
+				const secondWorkspaceUpdate = {
+					"s:name:testWorkspace1": latestUpdateRev2,
+					"n:name:testWorkspace": notificationsUpdate,
+					"s:name:testWorkspace2": itemUpdatedAndItemRemoveddMapUpdate,
+				};
+
+				presence.events.on("workspaceActivated", (_, type) => {
+					if (type === "Notifications") {
+						// Verify initial state maintains consistency
+						verifyState(getTestAttendee(), [
+							{ manager: "latest", expectedValue: { x: 1, y: 1, z: 1 } },
+							{
+								manager: "latestMap",
+								expectedValue: { key1: { a: 1, b: 1 }, key2: { c: 1, d: 1 } },
+							},
+						]);
+					}
+				});
+
+				// Act
+				processUpdates(initialWorkspaceUpdate);
+				processUpdates(secondWorkspaceUpdate);
+
+				// Verify
+				verifyState(getTestAttendee(), [
+					{ manager: "latest", expectedValue: { x: 2, y: 2, z: 2 } },
+					{
+						manager: "latestMap",
+						expectedValue: { key1: { a: 2, b: 2 }, key2: undefined },
+					},
+				]);
 			});
 		});
 	});
