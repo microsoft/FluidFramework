@@ -211,6 +211,7 @@ declare type current_as_old_for_Interface_IFluidModuleWithDetails = requireAssig
  * typeValidation.broken:
  * "Interface_ILoaderOptions": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ILoaderOptions = requireAssignableTo<TypeOnly<old.ILoaderOptions>, TypeOnly<current.ILoaderOptions>>
 
 /*
@@ -220,6 +221,7 @@ declare type old_as_current_for_Interface_ILoaderOptions = requireAssignableTo<T
  * typeValidation.broken:
  * "Interface_ILoaderOptions": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ILoaderOptions = requireAssignableTo<TypeOnly<current.ILoaderOptions>, TypeOnly<old.ILoaderOptions>>
 
 /*

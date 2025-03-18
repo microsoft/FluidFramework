@@ -137,6 +137,10 @@ export {
 	type TransactionResultFailed,
 	rollback,
 	generateSchemaFromSimpleSchema,
+	replaceConciseTreeHandles,
+	replaceHandles,
+	replaceVerboseTreeHandles,
+	type HandleConverter,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
