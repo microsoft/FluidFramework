@@ -18,6 +18,7 @@ import {
 } from "./benchmarkUtilities.js";
 import { SchemaFactory } from "../../simple-tree/index.js";
 import { hydrate, hydrateUnsafe } from "./utils.js";
+import { configureBenchmarkHooks } from "../utils.js";
 
 // number of nodes in test for wide trees
 const nodesCountWide = [
@@ -33,6 +34,7 @@ const nodesCountDeep = [
 ];
 
 describe("SimpleTree benchmarks", () => {
+	configureBenchmarkHooks();
 	describe("Read SimpleTree", () => {
 		const leafValue = 1;
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {

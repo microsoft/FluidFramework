@@ -1,5 +1,13 @@
 # @fluid-internal/devtools-view
 
+## 2.30.0
+
+Dependency updates only.
+
+## 2.23.0
+
+Dependency updates only.
+
 ## 2.22.0
 
 Dependency updates only.

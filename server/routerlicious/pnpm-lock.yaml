@@ -54,8 +54,8 @@ importers:
         specifier: ^2.4.1
         version: 2.4.1
       mocha:
-        specifier: ^10.2.0
-        version: 10.2.0
+        specifier: ^10.8.2
+        version: 10.8.2
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -275,8 +275,8 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
-        version: 10.2.0
+        specifier: ^10.8.2
+        version: 10.8.2
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -372,8 +372,8 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
-        version: 10.2.0
+        specifier: ^10.8.2
+        version: 10.8.2
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -412,7 +412,7 @@ importers:
         version: link:../test-utils
       debug:
         specifier: ^4.3.4
-        version: 4.3.4(supports-color@8.1.1)
+        version: 4.3.4
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
@@ -472,8 +472,8 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
-        version: 10.2.0
+        specifier: ^10.8.2
+        version: 10.8.2
       nock:
         specifier: ^13.3.3
         version: 13.3.3
@@ -542,7 +542,7 @@ importers:
         version: 2.0.0
       debug:
         specifier: ^4.3.4
-        version: 4.3.4(supports-color@8.1.1)
+        version: 4.3.4
       double-ended-queue:
         specifier: ^2.1.0-0
         version: 2.1.0-0
@@ -593,8 +593,8 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
-        version: 10.2.0
+        specifier: ^10.8.2
+        version: 10.8.2
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -663,8 +663,8 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
-        version: 10.2.0
+        specifier: ^10.8.2
+        version: 10.8.2
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -965,8 +965,8 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
-        version: 10.2.0
+        specifier: ^10.8.2
+        version: 10.8.2
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -1026,7 +1026,7 @@ importers:
         version: 1.7.7(debug@4.3.4)
       debug:
         specifier: ^4.3.4
-        version: 4.3.4(supports-color@8.1.1)
+        version: 4.3.4
       events:
         specifier: ^3.1.0
         version: 3.3.0
@@ -1107,8 +1107,8 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
-        version: 10.2.0
+        specifier: ^10.8.2
+        version: 10.8.2
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -1147,7 +1147,7 @@ importers:
         version: 1.2.0
       debug:
         specifier: ^4.3.4
-        version: 4.3.4(supports-color@8.1.1)
+        version: 4.3.4
       json-stringify-safe:
         specifier: ^5.0.1
         version: 5.0.1
@@ -1213,8 +1213,8 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
-        version: 10.2.0
+        specifier: ^10.8.2
+        version: 10.8.2
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -1250,7 +1250,7 @@ importers:
         version: 18.19.39
       debug:
         specifier: ^4.3.4
-        version: 4.3.4(supports-color@8.1.1)
+        version: 4.3.4
       events:
         specifier: ^3.1.0
         version: 3.3.0
@@ -1289,8 +1289,8 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
-        version: 10.2.0
+        specifier: ^10.8.2
+        version: 10.8.2
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -1394,6 +1394,9 @@ importers:
       '@fluidframework/server-services-telemetry':
         specifier: workspace:~
         version: link:../services-telemetry
+      '@fluidframework/server-services-utils':
+        specifier: workspace:~
+        version: link:../services-utils
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
@@ -1554,7 +1557,7 @@ importers:
         version: 1.20.3
       debug:
         specifier: ^4.3.4
-        version: 4.3.4(supports-color@8.1.1)
+        version: 4.3.4
       events:
         specifier: ^3.1.0
         version: 3.3.0
@@ -1650,8 +1653,8 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
-        version: 10.2.0
+        specifier: ^10.8.2
+        version: 10.8.2
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -1720,8 +1723,8 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
-        version: 10.2.0
+        specifier: ^10.8.2
+        version: 10.8.2
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -1751,7 +1754,7 @@ importers:
         version: link:../services-telemetry
       debug:
         specifier: ^4.3.4
-        version: 4.3.4(supports-color@8.1.1)
+        version: 4.3.4
       express:
         specifier: ^4.21.2
         version: 4.21.2
@@ -1850,8 +1853,8 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
-        version: 10.2.0
+        specifier: ^10.8.2
+        version: 10.8.2
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -1896,7 +1899,7 @@ importers:
         version: 2.0.0
       debug:
         specifier: ^4.3.4
-        version: 4.3.4(supports-color@8.1.1)
+        version: 4.3.4
       events:
         specifier: ^3.1.0
         version: 3.3.0
@@ -1959,8 +1962,8 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
-        version: 10.2.0
+        specifier: ^10.8.2
+        version: 10.8.2
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -2143,11 +2146,11 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
-        version: 10.2.0
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.2.0)
+        version: 1.5.1(mocha@10.8.2)
       moment:
         specifier: ^2.21.0
         version: 2.29.4
@@ -3814,10 +3817,6 @@ packages:
   ansi-align@3.0.1:
     resolution: {integrity: sha512-IOfwwBF5iczOjp/WeY4YxyjqAFMQoZufdQWDd19SEExbVLNXqvpzSJ/M7Za4/sCPmQ0+GRquoA7bGcINcxew6w==}
 
-  ansi-colors@4.1.1:
-    resolution: {integrity: sha512-JoX0apGbHaUJBNl6yF+p6JAFYZ666/hhCGKN5t9QFjbJQKUU/g8MNbFDbvfrgKXvI1QpZplPOnwIo99lX/AAmA==}
-    engines: {node: '>=6'}
-
   ansi-colors@4.1.3:
     resolution: {integrity: sha512-/6w/C21Pm1A7aZitlI5Ni/2J6FFQN8i1Cvz3kHABAAbw93v/NlvKdVOqz7CCWz/3iv/JplRSEEZ83XION15ovw==}
     engines: {node: '>=6'}
@@ -4702,10 +4701,6 @@ packages:
     resolution: {integrity: sha512-58lmxKSA4BNyLz+HHMUzlOEpg09FV+ev6ZMe3vJihgdxzgcwZ8VoEEPmALCZG9LmqfVoNMMKpttIYTVG6uDY7A==}
     engines: {node: '>=0.3.1'}
 
-  diff@5.0.0:
-    resolution: {integrity: sha512-/VTCrvm5Z0JGty/BWHljh+BAiw3IK+2j87NGMu8Nwc/f48WoDAC395uomO9ZD117ZOBaHmkX1oyLvkVM/aIT3w==}
-    engines: {node: '>=0.3.1'}
-
   diff@5.2.0:
     resolution: {integrity: sha512-uIFDxqpRZGZ6ThOk84hEfqWoHx2devRFvpTZcTHur85vImfaxUbTW9Ryh4CpCuDnToOP1CEtXKIgytHBPVff5A==}
     engines: {node: '>=0.3.1'}
@@ -5420,9 +5415,6 @@ packages:
     resolution: {integrity: sha512-fa46+tv1Ak0UPK1TOy/pZrIybNNt4HCv7SDzwyfiOZkvZLEbjsZkJBPtDHVshZjbecAoAGSC20MjLDG/qr679g==}
     engines: {node: '>=16 || 14 >=14.17'}
     hasBin: true
-
-  glob@7.2.0:
-    resolution: {integrity: sha512-lmLf6gtyrPq8tTjSmrO94wBeQbFR3HbLHbuyD69wuyQkImp2hWqMGB47OX65FBkPffO641IP9jWa1z4ivqG26Q==}
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
@@ -6556,10 +6548,6 @@ packages:
   minimatch@3.1.2:
     resolution: {integrity: sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==}
 
-  minimatch@5.0.1:
-    resolution: {integrity: sha512-nLDxIFRyhDblz3qMuq+SoRZED4+miJ/G+tdDrjkkkRnjAsBexeGpgjLEQ0blJy7rHhR2b93rhQY4SvyWu9v03g==}
-    engines: {node: '>=10'}
-
   minimatch@5.1.6:
     resolution: {integrity: sha512-lKwV/1brpG6mBUFHtb7NUmtABCb2WZZmm2wNiOA5hAb8VdCS4B3dtMWyvcoViccwAW/COERjXLt0zP1zXUN26g==}
     engines: {node: '>=10'}
@@ -6650,8 +6638,8 @@ packages:
     peerDependencies:
       mocha: '>=3.1.2'
 
-  mocha@10.2.0:
-    resolution: {integrity: sha512-IDY7fl/BecMwFHzoqF2sg/SHHANeBoMMXFlS9r0OXKDssYE1M5O43wUY/9BVPeIvfH2zmEbBfseqN9gBQZzXkg==}
+  mocha@10.8.2:
+    resolution: {integrity: sha512-VZlYo/WE8t1tstuRmqgeyBgCbJc/lEdopaa+axcKzTBJ+UIdlAB9XnmvTCAH4pwR4ElNInaedhEBmZD8iCSVEg==}
     engines: {node: '>= 14.0.0'}
     hasBin: true
 
@@ -6713,11 +6701,6 @@ packages:
 
   nan@2.19.0:
     resolution: {integrity: sha512-nO1xXxfh/RWNxfd/XPfbIfFk5vgLsAxUR9y5O0cHMJu/AW9U95JLXqthYHjEp+8gQ5p96K9jUp8nbVOxCdRbtw==}
-
-  nanoid@3.3.3:
-    resolution: {integrity: sha512-p1sjXuopFs0xg+fPASzQ28agW1oHD7xDsd9Xkf3T15H3c/cifrFHVwrh74PdoklAPi+i7MdRsE47vm2r6JoB+w==}
-    engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
-    hasBin: true
 
   napi-build-utils@1.0.2:
     resolution: {integrity: sha512-ONmRUqK7zj7DWX0D9ADe03wbwOBZxNAfF20PlGfCWQcD3+/MakShIHrMqx9YwPTfxDdF1zLeL+RGZiR9kGMLdg==}
@@ -7754,11 +7737,11 @@ packages:
     resolution: {integrity: sha512-3NnuWfM6vBYoy5gZFvHiYsVbafvI9vZv/+jlIigFn4oP4zjNPK3LhcY0xSCgeb1a5L8jO71Mit9LlNoi2UfDDQ==}
     engines: {node: '>=10'}
 
-  serialize-javascript@6.0.0:
-    resolution: {integrity: sha512-Qr3TosvguFt8ePWqsvRfrKyQXIiW+nGbYpy8XK24NQHE83caxWt+mIymTT19DGFbNWNLfEwsrkSmN64lVWB9ag==}
-
   serialize-javascript@6.0.1:
     resolution: {integrity: sha512-owoXEFjWRllis8/M1Q+Cw5k8ZH40e3zhp/ovX+Xr/vi1qj6QesbyXXViFbpNvWvPNAD62SutwEXavefrLJWj7w==}
+
+  serialize-javascript@6.0.2:
+    resolution: {integrity: sha512-Saa1xPByTTq2gdeFZYLLo+RFE35NHZkAbqZeWNd3BpzppeVisAqpDjcp8dyf6uIvEqJRd46jemmyA4iFIeVk8g==}
 
   serve-static@1.16.2:
     resolution: {integrity: sha512-VqpjJZKadQB/PEbEwvFdO43Ax5dFBZ2UECszz8bQ7pi7wt//PWe1P6MN7eCnjsatYtBT6EuiClbjSWP2WrIoTw==}
@@ -8689,8 +8672,8 @@ packages:
   wordwrap@1.0.0:
     resolution: {integrity: sha512-gvVzJFlPycKc5dZN4yPkP8w7Dc37BtP1yczEneOb4uq34pXZcvrtRTmWV8W+Ume+XCxKgbjM+nevkyFPMybd4Q==}
 
-  workerpool@6.2.1:
-    resolution: {integrity: sha512-ILEIE97kDZvF9Wb9f6h5aXK4swSlKGUcOEGiIYb2OOu/IrDU9iwj0fD//SsA6E5ibwJxpEvhullJY4Sl4GcpAw==}
+  workerpool@6.5.1:
+    resolution: {integrity: sha512-Fs4dNYcsdpYSAfVxhnl1L5zTksjvOJxtC5hzMNl+1t9B8hTJTdKDyZ5ju7ztgPy+ft9tBFXoOlDNiOT9WUXZlA==}
 
   wrap-ansi@6.2.0:
     resolution: {integrity: sha512-r6lPcBGxZXlIcymEu7InxDMhdW0KDxpLgoFLcguasxCaJ/SOIZwINatK9KY/tf+ZrlywOKU0UDj3ATXUBfxJXA==}
@@ -8771,10 +8754,6 @@ packages:
     resolution: {integrity: sha512-+hSoy/QHluxmC9kCIJyL/uyFmLmc+e5CFR5Wa+bpIhIj85LVb9ZH2nVnqrHoSvKogwODv0ClqZkmiSSaIH5LTA==}
     engines: {node: '>= 14'}
     hasBin: true
-
-  yargs-parser@20.2.4:
-    resolution: {integrity: sha512-WOkpgNhPTlE73h4VFAFsOnomJVaovO8VqLDzy5saChRBFQFBoMYirowyW+Q9HB4HFF4Z7VZTiG3iSzJJA29yRA==}
-    engines: {node: '>=10'}
 
   yargs-parser@20.2.9:
     resolution: {integrity: sha512-y11nGElTIV+CT3Zv9t7VKl+Q3hTQoT9a1Qzezhhl6Rp21gJ/IVTW7Z3y9EWXhuUBC2Shnf+DX0antecpAwSP8w==}
@@ -9480,7 +9459,7 @@ snapshots:
   '@eslint/eslintrc@2.1.4':
     dependencies:
       ajv: 6.12.6
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       espree: 9.6.1
       globals: 13.20.0
       ignore: 5.3.0
@@ -9507,7 +9486,7 @@ snapshots:
     dependencies:
       '@fluid-internal/test-driver-definitions': 2.0.5
       '@fluidframework/core-interfaces': 2.0.5
-      mocha: 10.2.0
+      mocha: 10.8.2
       source-map-support: 0.5.21
 
   '@fluid-internal/test-driver-definitions@2.0.5':
@@ -10059,7 +10038,7 @@ snapshots:
       '@fluidframework/server-services-core': 5.0.0
       '@fluidframework/server-services-telemetry': 5.0.0
       '@fluidframework/server-test-utils': 5.0.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       events_pkg: events@3.3.0
       jsrsasign: 11.0.0
       uuid: 9.0.1
@@ -10083,7 +10062,7 @@ snapshots:
       '@types/node': 18.19.39
       '@types/ws': 6.0.4
       assert: 2.1.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       double-ended-queue: 2.1.0-0
       events: 3.3.0
       lodash: 4.17.21
@@ -10173,7 +10152,7 @@ snapshots:
       '@fluidframework/protocol-definitions': 3.2.0
       axios: 1.7.7(debug@4.3.4)
       crc-32: 1.2.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       json-stringify-safe: 5.0.1
       jsrsasign: 11.0.0
       jwt-decode: 4.0.0
@@ -10191,7 +10170,7 @@ snapshots:
       '@fluidframework/server-services-telemetry': 5.0.0
       '@types/nconf': 0.10.6
       '@types/node': 18.19.39
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       events: 3.3.0
       nconf: 0.12.1
     transitivePeerDependencies:
@@ -10243,7 +10222,7 @@ snapshots:
       '@socket.io/redis-adapter': 8.3.0(socket.io-adapter@2.5.5)
       '@socket.io/sticky': 1.0.4
       body-parser: 1.20.3
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       events: 3.3.0
       fast-redact: 3.3.0
       ioredis: 5.3.2
@@ -10275,7 +10254,7 @@ snapshots:
       '@fluidframework/server-services-client': 5.0.0
       '@fluidframework/server-services-core': 5.0.0
       '@fluidframework/server-services-telemetry': 5.0.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       express: 4.21.2
       ioredis: 5.3.2
       json-stringify-safe: 5.0.1
@@ -10306,7 +10285,7 @@ snapshots:
       '@types/lodash': 4.14.202
       amqplib: 0.10.3
       axios: 1.7.7(debug@4.3.4)
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       events: 3.3.0
       ioredis: 5.3.2
       lodash: 4.17.21
@@ -10334,7 +10313,7 @@ snapshots:
       '@fluidframework/server-services-telemetry': 5.0.0
       '@types/ioredis-mock': 8.2.5
       assert: 2.1.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       events: 3.3.0
       ioredis: 5.3.2
       ioredis-mock: 8.9.0(@types/ioredis-mock@8.2.5)(ioredis@5.3.2)
@@ -10363,7 +10342,7 @@ snapshots:
   '@humanwhocodes/config-array@0.11.14':
     dependencies:
       '@humanwhocodes/object-schema': 2.0.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       minimatch: 3.1.2
     transitivePeerDependencies:
       - supports-color
@@ -11170,7 +11149,7 @@ snapshots:
       async: 3.2.5
       chalk: 3.0.0
       dayjs: 1.8.36
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       eventemitter2: 5.0.1
       fast-json-patch: 3.1.1
       fclone: 1.0.11
@@ -11188,7 +11167,7 @@ snapshots:
   '@pm2/io@6.0.1':
     dependencies:
       async: 2.6.4
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       eventemitter2: 6.4.9
       require-in-the-middle: 5.2.0
       semver: 7.5.4
@@ -11201,7 +11180,7 @@ snapshots:
   '@pm2/js-api@0.8.0':
     dependencies:
       async: 2.6.4
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       eventemitter2: 6.4.9
       extrareqp2: 1.0.0(debug@4.3.4)
       ws: 7.5.10
@@ -11708,7 +11687,7 @@ snapshots:
 
   '@socket.io/redis-adapter@8.3.0(socket.io-adapter@2.5.5)':
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       notepack.io: 3.0.1
       socket.io-adapter: 2.5.5
       uid2: 1.0.0
@@ -11717,7 +11696,7 @@ snapshots:
 
   '@socket.io/redis-emitter@4.1.1':
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       notepack.io: 2.1.3
       socket.io-parser: 4.2.4
     transitivePeerDependencies:
@@ -12014,7 +11993,7 @@ snapshots:
       '@typescript-eslint/type-utils': 6.7.5(eslint@8.55.0)(typescript@5.1.6)
       '@typescript-eslint/utils': 6.7.5(eslint@8.55.0)(typescript@5.1.6)
       '@typescript-eslint/visitor-keys': 6.7.5
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       eslint: 8.55.0
       graphemer: 1.4.0
       ignore: 5.3.0
@@ -12040,7 +12019,7 @@ snapshots:
       '@typescript-eslint/types': 6.7.5
       '@typescript-eslint/typescript-estree': 6.7.5(typescript@5.1.6)
       '@typescript-eslint/visitor-keys': 6.7.5
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       eslint: 8.55.0
     optionalDependencies:
       typescript: 5.1.6
@@ -12111,7 +12090,7 @@ snapshots:
       '@typescript-eslint/typescript-estree': 5.59.11(typescript@5.1.6)
       eslint: 8.55.0
       eslint-scope: 5.1.1
-      semver: 7.6.0
+      semver: 7.6.3
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -12358,7 +12337,7 @@ snapshots:
 
   agentkeepalive@4.3.0:
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       depd: 2.0.0
       humanize-ms: 1.2.1
     transitivePeerDependencies:
@@ -12420,8 +12399,6 @@ snapshots:
   ansi-align@3.0.1:
     dependencies:
       string-width: 4.2.3
-
-  ansi-colors@4.1.1: {}
 
   ansi-colors@4.1.3: {}
 
@@ -13290,11 +13267,9 @@ snapshots:
     dependencies:
       ms: 2.1.3
 
-  debug@4.3.4(supports-color@8.1.1):
+  debug@4.3.4:
     dependencies:
       ms: 2.1.2
-    optionalDependencies:
-      supports-color: 8.1.1
 
   debug@4.4.0(supports-color@8.1.1):
     dependencies:
@@ -13413,7 +13388,7 @@ snapshots:
   detect-port@1.5.1:
     dependencies:
       address: 1.2.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
 
@@ -13424,8 +13399,6 @@ snapshots:
   diff3@0.0.3: {}
 
   diff@4.0.2: {}
-
-  diff@5.0.0: {}
 
   diff@5.2.0: {}
 
@@ -13506,7 +13479,7 @@ snapshots:
       base64id: 2.0.0
       cookie: 0.7.2
       cors: 2.8.5
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       engine.io-parser: 5.2.1
       ws: 8.17.1
     transitivePeerDependencies:
@@ -13665,7 +13638,7 @@ snapshots:
 
   eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1)(eslint@8.55.0):
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       enhanced-resolve: 5.17.1
       eslint: 8.55.0
       eslint-module-utils: 2.8.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
@@ -13719,7 +13692,7 @@ snapshots:
       '@es-joy/jsdoccomment': 0.40.1
       are-docs-informative: 0.0.2
       comment-parser: 1.4.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       escape-string-regexp: 4.0.0
       eslint: 8.55.0
       esquery: 1.5.0
@@ -13815,7 +13788,7 @@ snapshots:
       ajv: 6.12.6
       chalk: 4.1.2
       cross-spawn: 7.0.6
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       doctrine: 3.0.0
       escape-string-regexp: 4.0.0
       eslint-scope: 7.2.2
@@ -14084,7 +14057,7 @@ snapshots:
 
   follow-redirects@1.15.6(debug@4.3.4):
     optionalDependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
 
   for-each@0.3.3:
     dependencies:
@@ -14262,7 +14235,7 @@ snapshots:
 
   gitlog@4.0.8:
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       tslib: 2.6.2
     transitivePeerDependencies:
       - supports-color
@@ -14284,15 +14257,6 @@ snapshots:
       minimatch: 9.0.5
       minipass: 6.0.2
       path-scurry: 1.11.1
-
-  glob@7.2.0:
-    dependencies:
-      fs.realpath: 1.0.0
-      inflight: 1.0.6
-      inherits: 2.0.4
-      minimatch: 3.1.2
-      once: 1.4.0
-      path-is-absolute: 1.0.1
 
   glob@7.2.3:
     dependencies:
@@ -14632,7 +14596,7 @@ snapshots:
     dependencies:
       '@ioredis/commands': 1.2.0
       cluster-key-slot: 1.1.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       denque: 2.1.0
       lodash.defaults: 4.2.0
       lodash.isarguments: 3.1.0
@@ -15652,10 +15616,6 @@ snapshots:
     dependencies:
       brace-expansion: 1.1.11
 
-  minimatch@5.0.1:
-    dependencies:
-      brace-expansion: 2.0.1
-
   minimatch@5.1.6:
     dependencies:
       brace-expansion: 2.0.1
@@ -15733,36 +15693,35 @@ snapshots:
 
   mkdirp@3.0.1: {}
 
-  mocha-multi-reporters@1.5.1(mocha@10.2.0):
+  mocha-multi-reporters@1.5.1(mocha@10.8.2):
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       lodash: 4.17.21
-      mocha: 10.2.0
+      mocha: 10.8.2
     transitivePeerDependencies:
       - supports-color
 
-  mocha@10.2.0:
+  mocha@10.8.2:
     dependencies:
-      ansi-colors: 4.1.1
+      ansi-colors: 4.1.3
       browser-stdout: 1.3.1
       chokidar: 3.5.3
-      debug: 4.3.4(supports-color@8.1.1)
-      diff: 5.0.0
+      debug: 4.4.0(supports-color@8.1.1)
+      diff: 5.2.0
       escape-string-regexp: 4.0.0
       find-up: 5.0.0
-      glob: 7.2.0
+      glob: 8.1.0
       he: 1.2.0
       js-yaml: 4.1.0
       log-symbols: 4.1.0
-      minimatch: 5.0.1
+      minimatch: 5.1.6
       ms: 2.1.3
-      nanoid: 3.3.3
-      serialize-javascript: 6.0.0
+      serialize-javascript: 6.0.2
       strip-json-comments: 3.1.1
       supports-color: 8.1.1
-      workerpool: 6.2.1
+      workerpool: 6.5.1
       yargs: 16.2.0
-      yargs-parser: 20.2.4
+      yargs-parser: 20.2.9
       yargs-unparser: 2.0.0
 
   module-details-from-path@1.0.3: {}
@@ -15830,8 +15789,6 @@ snapshots:
 
   nan@2.19.0: {}
 
-  nanoid@3.3.3: {}
-
   napi-build-utils@1.0.2:
     optional: true
 
@@ -15890,7 +15847,7 @@ snapshots:
 
   nock@13.3.3:
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       json-stringify-safe: 5.0.1
       lodash: 4.17.21
       propagate: 2.0.1
@@ -16466,7 +16423,7 @@ snapshots:
 
   pm2-axon-rpc@0.7.1:
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
 
@@ -16474,7 +16431,7 @@ snapshots:
     dependencies:
       amp: 0.3.1
       amp-message: 0.1.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       escape-string-regexp: 4.0.0
     transitivePeerDependencies:
       - supports-color
@@ -16491,7 +16448,7 @@ snapshots:
   pm2-sysmonit@1.2.8:
     dependencies:
       async: 3.2.5
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       pidusage: 2.0.21
       systeminformation: 5.21.24
       tx2: 1.0.5
@@ -16513,7 +16470,7 @@ snapshots:
       commander: 2.15.1
       croner: 4.1.97
       dayjs: 1.11.10
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       enquirer: 2.3.6
       eventemitter2: 5.0.1
       fclone: 1.0.11
@@ -17118,11 +17075,11 @@ snapshots:
     dependencies:
       type-fest: 0.20.2
 
-  serialize-javascript@6.0.0:
+  serialize-javascript@6.0.1:
     dependencies:
       randombytes: 2.1.0
 
-  serialize-javascript@6.0.1:
+  serialize-javascript@6.0.2:
     dependencies:
       randombytes: 2.1.0
 
@@ -17285,7 +17242,7 @@ snapshots:
 
   socket.io-adapter@2.5.5:
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       ws: 8.17.1
     transitivePeerDependencies:
       - bufferutil
@@ -17295,7 +17252,7 @@ snapshots:
   socket.io-parser@4.2.4:
     dependencies:
       '@socket.io/component-emitter': 3.1.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
 
@@ -17304,7 +17261,7 @@ snapshots:
       accepts: 1.3.8
       base64id: 2.0.0
       cors: 2.8.5
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       engine.io: 6.6.2
       socket.io-adapter: 2.5.5
       socket.io-parser: 4.2.4
@@ -18291,7 +18248,7 @@ snapshots:
 
   wordwrap@1.0.0: {}
 
-  workerpool@6.2.1: {}
+  workerpool@6.5.1: {}
 
   wrap-ansi@6.2.0:
     dependencies:
@@ -18350,8 +18307,6 @@ snapshots:
   yallist@4.0.0: {}
 
   yaml@2.7.0: {}
-
-  yargs-parser@20.2.4: {}
 
   yargs-parser@20.2.9: {}
 

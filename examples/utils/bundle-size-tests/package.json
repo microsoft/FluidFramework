@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/bundle-size-tests",
-	"version": "2.23.0",
+	"version": "2.31.0",
 	"private": true,
 	"description": "A package for understanding the bundle size of Fluid Framework",
 	"homepage": "https://fluidframework.com",
@@ -16,10 +16,11 @@
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
-		"clean": "rimraf --glob dist lib bundleAnalysis \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"clean": "rimraf --glob dist lib bundleAnalysis \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"explore:tree": "npm run build && npm run webpack && source-map-explorer ./dist/sharedTree.js --html bundleAnalysis/reportTree.html",
@@ -29,6 +30,8 @@
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"prepack": "npm run webpack",
+		"test": "npm run test:mocha",
+		"test:mocha": "mocha",
 		"webpack": "webpack",
 		"webpack:profile": "npm run webpack"
 	},
@@ -56,8 +59,10 @@
 		"@fluidframework/bundle-size-tools": "^0.54.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@mixer/webpack-bundle-compare": "^0.1.0",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"eslint": "~8.55.0",
+		"mocha": "^10.8.2",
 		"prettier": "~3.0.3",
 		"puppeteer": "^23.6.0",
 		"rimraf": "^4.4.0",
@@ -73,6 +78,27 @@
 	"comments": [
 		"@cerner/duplicate-package-checker-webpack-plugin is pinned since newer version (2.3 through 2.6) refuse to work on NodeJS other than 10 || 12 || 14 due to https://github.com/cerner/terra-toolkit/issues/828"
 	],
+	"fluidBuild": {
+		"tasks": {
+			"webpack": {
+				"dependsOn": [
+					"build"
+				]
+			},
+			"test:mocha": {
+				"dependsOn": [
+					"...",
+					"webpack"
+				]
+			},
+			"build:test": {
+				"dependsOn": [
+					"...",
+					"build:esnext"
+				]
+			}
+		}
+	},
 	"typeValidation": {
 		"disabled": true,
 		"broken": {},

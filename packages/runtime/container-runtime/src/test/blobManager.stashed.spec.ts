@@ -49,7 +49,7 @@ function createBlobManager(overrides?: Partial<ConstructorParameters<typeof Blob
 			// defaults, these can still be overridden below
 			runtime,
 			routeContext,
-			snapshot: {},
+			blobManagerLoadInfo: {},
 			stashedBlobs: undefined,
 			localBlobIdGenerator: undefined,
 
@@ -90,12 +90,11 @@ describe("BlobManager.stashed", () => {
 		const blobManager = createBlobManager({
 			sendBlobAttachOp(_localId, _storageId) {},
 			stashedBlobs: {},
-			getStorage: () =>
-				failProxy<IDocumentStorageService>({
-					createBlob: async () => {
-						return createResponse.promise;
-					},
-				}),
+			storage: failProxy<IDocumentStorageService>({
+				createBlob: async () => {
+					return createResponse.promise;
+				},
+			}),
 		});
 		const blob: ArrayBufferLike = stringToBuffer("content", "utf8");
 		const sameBlobAsStashedP = blobManager.createBlob(blob);
@@ -105,12 +104,11 @@ describe("BlobManager.stashed", () => {
 		const pendingBlobs = await pendingBlobsP;
 		const blobManager2 = createBlobManager({
 			stashedBlobs: pendingBlobs,
-			getStorage: () =>
-				failProxy<IDocumentStorageService>({
-					createBlob: async () => {
-						return createResponse.promise;
-					},
-				}),
+			storage: failProxy<IDocumentStorageService>({
+				createBlob: async () => {
+					return createResponse.promise;
+				},
+			}),
 		});
 		assert.strictEqual(blobManager2.hasPendingStashedUploads(), true);
 	});
@@ -120,12 +118,11 @@ describe("BlobManager.stashed", () => {
 		const blobManager = createBlobManager({
 			sendBlobAttachOp(_localId, _storageId) {},
 			stashedBlobs: {},
-			getStorage: () =>
-				failProxy<IDocumentStorageService>({
-					createBlob: async () => {
-						return createResponse.promise;
-					},
-				}),
+			storage: failProxy<IDocumentStorageService>({
+				createBlob: async () => {
+					return createResponse.promise;
+				},
+			}),
 			localBlobIdGenerator: () => "stubbed-local-id",
 			isBlobDeleted: () => false,
 			blobRequested: () => {},
@@ -140,12 +137,11 @@ describe("BlobManager.stashed", () => {
 		const createResponse2 = new Deferred<ICreateBlobResponse>();
 		const blobManager2 = createBlobManager({
 			stashedBlobs: pendingBlobs,
-			getStorage: () =>
-				failProxy<IDocumentStorageService>({
-					createBlob: async () => {
-						return createResponse2.promise;
-					},
-				}),
+			storage: failProxy<IDocumentStorageService>({
+				createBlob: async () => {
+					return createResponse2.promise;
+				},
+			}),
 			isBlobDeleted: () => false,
 		});
 		assert.strictEqual(blobManager2.hasPendingStashedUploads(), true);
@@ -183,12 +179,11 @@ describe("BlobManager.stashed", () => {
 					blob: "a",
 				},
 			},
-			getStorage: () =>
-				failProxy<IDocumentStorageService>({
-					createBlob: async () => {
-						return createResponse.promise;
-					},
-				}),
+			storage: failProxy<IDocumentStorageService>({
+				createBlob: async () => {
+					return createResponse.promise;
+				},
+			}),
 		});
 		assert.strictEqual(blobManager.hasPendingStashedUploads(), true);
 		await Promise.race([
@@ -213,12 +208,11 @@ describe("BlobManager.stashed", () => {
 			stashedBlobs: {
 				olderThanTTL,
 			},
-			getStorage: () =>
-				failProxy<IDocumentStorageService>({
-					createBlob: async () => {
-						return createResponse.promise;
-					},
-				}),
+			storage: failProxy<IDocumentStorageService>({
+				createBlob: async () => {
+					return createResponse.promise;
+				},
+			}),
 		});
 		assert.strictEqual(blobManager.hasPendingStashedUploads(), true);
 		await Promise.race([
@@ -254,12 +248,11 @@ describe("BlobManager.stashed", () => {
 			stashedBlobs: {
 				storageIdWithoutUploadTime,
 			},
-			getStorage: () =>
-				failProxy<IDocumentStorageService>({
-					createBlob: async () => {
-						return createResponse.promise;
-					},
-				}),
+			storage: failProxy<IDocumentStorageService>({
+				createBlob: async () => {
+					return createResponse.promise;
+				},
+			}),
 		});
 		assert.strictEqual(blobManager.hasPendingStashedUploads(), true);
 		await Promise.race([
@@ -298,13 +291,12 @@ describe("BlobManager.stashed", () => {
 
 		const blobManager = createBlobManager({
 			stashedBlobs,
-			getStorage: () =>
-				failProxy<IDocumentStorageService>({
-					createBlob: async (b) => {
-						await letUploadsComplete.promise;
-						return { id: `id:${bufferToString(b, "utf8")}` };
-					},
-				}),
+			storage: failProxy<IDocumentStorageService>({
+				createBlob: async (b) => {
+					await letUploadsComplete.promise;
+					return { id: `id:${bufferToString(b, "utf8")}` };
+				},
+			}),
 		});
 		assert.strictEqual(blobManager.hasPendingStashedUploads(), true);
 		await Promise.race([

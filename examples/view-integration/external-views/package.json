@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/app-integration-external-views",
-	"version": "2.23.0",
+	"version": "2.31.0",
 	"private": true,
 	"description": "Minimal Fluid Container & Data Object sample to implement a collaborative dice roller as a standalone app.",
 	"homepage": "https://fluidframework.com",
@@ -39,7 +39,6 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
-		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",

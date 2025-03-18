@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/presence",
-	"version": "2.23.0",
+	"version": "2.31.0",
 	"description": "A component for lightweight data sharing within a single session",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -26,10 +26,6 @@
 		"./internal/container-definitions/internal": {
 			"import": "./lib/container-definitions/index.js",
 			"require": "./dist/container-definitions/index.js"
-		},
-		"./internal/core-interfaces": {
-			"import": "./lib/core-interfaces/index.js",
-			"require": "./dist/core-interfaces/index.js"
 		},
 		"./internal/exposedInternalTypes": {
 			"import": "./lib/exposedInternalTypes.js",
@@ -57,10 +53,9 @@
 		"build:esnext": "npm run build:esnext:main && npm run build:esnext:experimental",
 		"build:esnext:experimental": "tsc --project ./tsconfig.json",
 		"build:esnext:main": "tsc --project ./tsconfig.main.json",
-		"build:test": "npm run build:test:esm && npm run build:test:cjs && npm run build:test:esm:core-interfaces-no-exactOptionalPropertyTypes",
+		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"build:test:esm:core-interfaces-no-exactOptionalPropertyTypes": "tsc --project ./src/test/core-interfaces/tsconfig.no-exactOptionalPropertyTypes.json",
 		"check:are-the-types-wrong": "attw --pack . --profile node16",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
@@ -146,7 +141,7 @@
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
-		"mocha": "^10.2.0",
+		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
@@ -161,9 +156,6 @@
 			"build:esnext:main": [
 				"^api",
 				"^build:esnext"
-			],
-			"build:test:esm:core-interfaces-no-exactOptionalPropertyTypes": [
-				"build:esnext"
 			],
 			"check:exports:bundle-release-tags": [
 				"build:esnext"

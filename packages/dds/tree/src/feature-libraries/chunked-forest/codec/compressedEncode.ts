@@ -37,7 +37,7 @@ import {
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
- * Encode data from `FieldBatch` in into an `EncodedChunk`.
+ * Encode data from `FieldBatch` into an `EncodedChunk`.
  *
  * Optimized for encoded size and encoding performance.
  *

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/azure-client",
-	"version": "2.23.0",
+	"version": "2.31.0",
 	"description": "A tool to enable creation and loading of Fluid containers using the Azure Fluid Relay service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -108,7 +108,7 @@
 		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-tools/build-cli": "^0.54.0",
-		"@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@2.22.0",
+		"@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@2.23.0",
 		"@fluidframework/azure-local-service": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.54.0",
@@ -125,7 +125,7 @@
 		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
 		"fluid-framework": "workspace:~",
-		"mocha": "^10.2.0",
+		"mocha": "^10.8.2",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"start-server-and-test": "^2.0.3",

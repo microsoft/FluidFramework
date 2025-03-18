@@ -4,13 +4,14 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { initializeForest, TreeStoredSchemaRepository } from "../../core/index.js";
+import { TreeStoredSchemaRepository } from "../../core/index.js";
 import {
 	buildForest,
-	cursorForMapTreeNode,
+	cursorForMapTreeField,
 	defaultSchemaPolicy,
 	getSchemaAndPolicy,
-	MockNodeKeyManager,
+	initializeForest,
+	MockNodeIdentifierManager,
 } from "../../feature-libraries/index.js";
 import {
 	HydratedContext,
@@ -126,7 +127,7 @@ export function hydrate<const TSchema extends ImplicitFieldSchema>(
 		forest,
 		schema: new TreeStoredSchemaRepository(toStoredSchema(schema)),
 	});
-	const manager = new MockNodeKeyManager();
+	const manager = new MockNodeIdentifierManager();
 	const checkout = new CheckoutFlexTreeView(branch, defaultSchemaPolicy, manager);
 	const field = checkout.flexTree;
 	branch.forest.anchors.slots.set(
@@ -142,8 +143,8 @@ export function hydrate<const TSchema extends ImplicitFieldSchema>(
 	);
 	prepareContentForHydration(mapTree, field.context.checkout.forest);
 	if (mapTree === undefined) return undefined as TreeFieldFromImplicitField<TSchema>;
-	const cursor = cursorForMapTreeNode(mapTree);
-	initializeForest(forest, [cursor], testRevisionTagCodec, testIdCompressor, true);
+	const cursor = cursorForMapTreeField([mapTree]);
+	initializeForest(forest, cursor, testRevisionTagCodec, testIdCompressor, true);
 	return getTreeNodeForField(field) as TreeFieldFromImplicitField<TSchema>;
 }
 

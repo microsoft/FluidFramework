@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/webflow",
-	"version": "2.23.0",
+	"version": "2.31.0",
 	"private": true,
 	"description": "Collaborative markdown editor.",
 	"homepage": "https://fluidframework.com",
@@ -112,7 +112,7 @@
 		"html-loader": "^5.1.0",
 		"jsdom": "^16.7.0",
 		"jsdom-global": "^3.0.2",
-		"mocha": "^10.2.0",
+		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",

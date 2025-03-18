@@ -17,17 +17,14 @@ import type {
 	SaveInfo,
 } from "@fluid-private/stochastic-test-utils";
 import {
-	ExitBehavior,
 	FuzzTestMinimizer,
 	asyncGeneratorFromArray,
 	chainAsync,
 	createFuzzDescribe,
-	defaultOptions,
 	done,
 	generateTestSeeds,
 	getSaveDirectory,
 	getSaveInfo,
-	interleaveAsync,
 	isOperationType,
 	makeRandom,
 	performFuzzActionsAsync,
@@ -35,6 +32,7 @@ import {
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import {
+	AttachState,
 	type ICodeDetailsLoader,
 	type IContainer,
 	type IFluidCodeDetails,
@@ -45,7 +43,6 @@ import {
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces";
-import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
 	createLocalResolverCreateNewRequest,
@@ -56,7 +53,12 @@ import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
-import { LocalCodeLoader } from "@fluidframework/test-utils/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	LocalCodeLoader,
+	timeoutPromise,
+	timeoutAwait,
+} from "@fluidframework/test-utils/internal";
 
 import {
 	createRuntimeFactory,
@@ -83,7 +85,7 @@ export interface LocalServerStressState extends BaseFuzzTestState {
 	client: Client;
 	datastore: StressDataObject;
 	channel: IChannel;
-	isDetached: boolean;
+	seed: number;
 	tag<T extends string>(prefix: T): `${T}-${number}`;
 }
 
@@ -109,7 +111,6 @@ interface Attach {
 interface AddClient {
 	type: "addClient";
 	clientTag: `client-${number}`;
-	url: string;
 }
 
 /**
@@ -128,10 +129,7 @@ interface Synchronize {
 	clients?: Client[];
 }
 
-export interface LocalServerStressModel<
-	TOperation extends BaseOperation,
-	TState extends LocalServerStressState = LocalServerStressState,
-> {
+export interface LocalServerStressModel<TOperation extends BaseOperation> {
 	/**
 	 * Name for this model. This is used for test case naming, and should generally reflect properties
 	 * about the kinds of operations that are generated.
@@ -147,12 +145,12 @@ export interface LocalServerStressModel<
 	 * @remarks DDS model generators can decide to use the "channel" or "client" field to decide which
 	 * client to perform the operation on.
 	 */
-	generatorFactory: () => AsyncGenerator<TOperation, TState>;
+	generatorFactory: () => AsyncGenerator<TOperation, LocalServerStressState>;
 
 	/**
 	 * Reducer capable of updating the test state according to the operations generated.
 	 */
-	reducer: AsyncReducer<TOperation, TState>;
+	reducer: AsyncReducer<TOperation, LocalServerStressState>;
 
 	/**
 	 * Equivalence validation function, which should verify that the provided channels contain the same data.
@@ -266,11 +264,7 @@ export interface LocalServerStressOptions {
 	 * In fixed interval mode, this synchronization happens on a predictable cadence: every `interval` operations
 	 * generated.
 	 */
-	validationStrategy:
-		| { type: "random"; probability: number }
-		| { type: "fixedInterval"; interval: number }
-		// WIP: This validation strategy still currently synchronizes all clients.
-		| { type: "partialSynchronization"; probability: number; clientProbability: number };
+	validationProbability: number;
 	parseOperations: (serialized: string) => BaseOperation[];
 
 	/**
@@ -290,7 +284,7 @@ export interface LocalServerStressOptions {
 	 * TODO: Improving workflows around fuzz test minimization, regression test generation for a particular seed,
 	 * or more flexibility around replay of test files would be a nice value add to this harness.
 	 */
-	replay?: number;
+	replay?: number | Iterable<number>;
 
 	/**
 	 * Runs only the provided seeds.
@@ -356,9 +350,9 @@ export interface LocalServerStressOptions {
  * @internal
  */
 const defaultLocalServerStressSuiteOptions: LocalServerStressOptions = {
-	defaultTestCount: defaultOptions.defaultTestCount,
+	defaultTestCount: 100,
 	detachedStartOptions: {
-		numOpsBeforeAttach: 5,
+		numOpsBeforeAttach: 20,
 	},
 	numberOfClients: 3,
 	clientJoinOptions: {
@@ -371,7 +365,7 @@ const defaultLocalServerStressSuiteOptions: LocalServerStressOptions = {
 	reconnectProbability: 0.01,
 	saveFailures: undefined,
 	saveSuccesses: undefined,
-	validationStrategy: { type: "random", probability: 0.05 },
+	validationProbability: 0.05,
 };
 
 /**
@@ -379,45 +373,43 @@ const defaultLocalServerStressSuiteOptions: LocalServerStressOptions = {
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
-function mixinAddRemoveClient<
-	TOperation extends BaseOperation,
-	TState extends LocalServerStressState,
->(
-	model: LocalServerStressModel<TOperation, TState>,
+function mixinAddRemoveClient<TOperation extends BaseOperation>(
+	model: LocalServerStressModel<TOperation>,
 	options: LocalServerStressOptions,
-): LocalServerStressModel<TOperation | AddClient | RemoveClient, TState> {
-	const generatorFactory: () => AsyncGenerator<TOperation | AddClient | RemoveClient, TState> =
-		() => {
-			const baseGenerator = model.generatorFactory();
-			return async (
-				state: TState,
-			): Promise<TOperation | AddClient | RemoveClient | typeof done> => {
-				const { clients, random, isDetached, validationClient } = state;
-				if (
-					options.clientJoinOptions !== undefined &&
-					!isDetached &&
-					random.bool(options.clientJoinOptions.clientAddProbability)
-				) {
-					if (clients.length > options.numberOfClients && random.bool()) {
-						return {
-							type: "removeClient",
-							clientTag: random.pick(clients).tag,
-						} satisfies RemoveClient;
-					}
-
-					if (clients.length < options.clientJoinOptions.maxNumberOfClients) {
-						const url = await validationClient.container.getAbsoluteUrl("");
-						assert(url !== undefined, "url for client must exist");
-						return {
-							type: "addClient",
-							url,
-							clientTag: state.tag("client"),
-						} satisfies AddClient;
-					}
+): LocalServerStressModel<TOperation | AddClient | RemoveClient> {
+	const generatorFactory: () => AsyncGenerator<
+		TOperation | AddClient | RemoveClient,
+		LocalServerStressState
+	> = () => {
+		const baseGenerator = model.generatorFactory();
+		return async (
+			state: LocalServerStressState,
+		): Promise<TOperation | AddClient | RemoveClient | typeof done> => {
+			const { clients, random, validationClient } = state;
+			if (
+				options.clientJoinOptions !== undefined &&
+				validationClient.container.attachState !== AttachState.Detached &&
+				random.bool(options.clientJoinOptions.clientAddProbability)
+			) {
+				if (clients.length > options.numberOfClients && random.bool()) {
+					return {
+						type: "removeClient",
+						clientTag: random.pick(clients).tag,
+					} satisfies RemoveClient;
 				}
-				return baseGenerator(state);
-			};
+
+				if (clients.length < options.clientJoinOptions.maxNumberOfClients) {
+					const url = await validationClient.container.getAbsoluteUrl("");
+					assert(url !== undefined, "url for client must exist");
+					return {
+						type: "addClient",
+						clientTag: state.tag("client"),
+					} satisfies AddClient;
+				}
+			}
+			return baseGenerator(state);
 		};
+	};
 
 	const minimizationTransforms: MinimizationTransform<
 		TOperation | AddClient | RemoveClient
@@ -426,16 +418,19 @@ function mixinAddRemoveClient<
 			| MinimizationTransform<TOperation | AddClient | RemoveClient>[]
 			| undefined) ?? [];
 
-	const reducer: AsyncReducer<TOperation | AddClient | RemoveClient, TState> = async (
-		state,
-		op,
-	) => {
+	const reducer: AsyncReducer<
+		TOperation | AddClient | RemoveClient,
+		LocalServerStressState
+	> = async (state, op) => {
 		if (isOperationType<AddClient>("addClient", op)) {
+			const url = await state.validationClient.container.getAbsoluteUrl("");
+			assert(url !== undefined, "url of container must be available");
 			const newClient = await loadClient(
 				state.localDeltaConnectionServer,
 				state.codeLoader,
 				op.clientTag,
-				op.url,
+				url,
+				state.seed,
 			);
 			state.clients.push(newClient);
 			return state;
@@ -464,57 +459,64 @@ function mixinAddRemoveClient<
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
-function mixinAttach<TOperation extends BaseOperation, TState extends LocalServerStressState>(
-	model: LocalServerStressModel<TOperation, TState>,
+function mixinAttach<TOperation extends BaseOperation>(
+	model: LocalServerStressModel<TOperation | AddClient>,
 	options: LocalServerStressOptions,
-): LocalServerStressModel<TOperation | Attach, TState> {
+): LocalServerStressModel<TOperation | Attach | AddClient> {
 	const { numOpsBeforeAttach } = options.detachedStartOptions;
-	const attachOp = async (): Promise<TOperation | Attach> => {
+	const attachOp = async (): Promise<TOperation | Attach | AddClient> => {
 		return { type: "attach" };
 	};
 
-	const generatorFactory: () => AsyncGenerator<TOperation | Attach, TState> = () => {
+	const generatorFactory: () => AsyncGenerator<
+		TOperation | Attach | AddClient,
+		LocalServerStressState
+	> = () => {
 		const baseGenerator = model.generatorFactory();
 		return chainAsync(
 			takeAsync(numOpsBeforeAttach, baseGenerator),
 			takeAsync(1, attachOp),
+			// use addClient ops to create initial clients
+			// this allows additional clients to minimized out
+			// and keeps repro's simpler
+			takeAsync(options.numberOfClients, async (state) => {
+				return {
+					type: "addClient",
+					clientTag: state.tag("client"),
+				} satisfies AddClient;
+			}),
 			baseGenerator,
 		);
 	};
 
 	const minimizationTransforms = model.minimizationTransforms as
-		| MinimizationTransform<TOperation | Attach>[]
+		| MinimizationTransform<TOperation | Attach | AddClient>[]
 		| undefined;
 
-	const reducer: AsyncReducer<TOperation | Attach, TState> = async (state, operation) => {
+	const reducer: AsyncReducer<
+		TOperation | Attach | AddClient,
+		LocalServerStressState
+	> = async (state, operation) => {
 		if (isOperationType<Attach>("attach", operation)) {
-			state.isDetached = false;
 			assert.equal(state.clients.length, 1);
 			const clientA: Client = state.clients[0];
 
 			await clientA.container.attach(createLocalResolverCreateNewRequest("stress test"));
 			const url = await clientA.container.getAbsoluteUrl("");
 			assert(url !== undefined, "container must have a url");
-			const clients: Client[] = await Promise.all(
-				Array.from({ length: options.numberOfClients }, async (_, index) =>
-					loadClient(
-						state.localDeltaConnectionServer,
-						state.codeLoader,
-						state.tag("client"),
-						url,
-					),
-				),
-			);
-
 			// After attaching, we use a newly loaded client as a read-only client for consistency comparison validation.
 			// This makes debugging easier as the state of a client is easier to interpret if it has no local changes.
-			const validationClient: Client = clients[0];
-			clients[0] = state.clients[0];
+			// we use the reserved client-0 tag for client, which makes the tags in the test sequential starting at 1
+			const validationClient = await loadClient(
+				state.localDeltaConnectionServer,
+				state.codeLoader,
+				"client-0",
+				url,
+				state.seed,
+			);
 
 			return {
 				...state,
-				isDetached: false,
-				clients,
 				validationClient,
 			} satisfies LocalServerStressState;
 		}
@@ -533,83 +535,39 @@ function mixinAttach<TOperation extends BaseOperation, TState extends LocalServe
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
-function mixinSynchronization<
-	TOperation extends BaseOperation,
-	TState extends LocalServerStressState,
->(
-	model: LocalServerStressModel<TOperation, TState>,
+function mixinSynchronization<TOperation extends BaseOperation>(
+	model: LocalServerStressModel<TOperation>,
 	options: LocalServerStressOptions,
-): LocalServerStressModel<TOperation | Synchronize, TState> {
-	const { validationStrategy } = options;
-	let generatorFactory: () => AsyncGenerator<TOperation | Synchronize, TState>;
+): LocalServerStressModel<TOperation | Synchronize> {
+	const { validationProbability } = options;
 
-	switch (validationStrategy.type) {
-		case "random": {
-			// passing 1 here causes infinite loops. passing close to 1 is wasteful
-			// as synchronization + eventual consistency validation should be idempotent.
-			// 0.5 is arbitrary but there's no reason anyone should want a probability near this.
-			assert(validationStrategy.probability < 0.5, "Use a lower synchronization probability.");
-			generatorFactory = (): AsyncGenerator<TOperation | Synchronize, TState> => {
-				const baseGenerator = model.generatorFactory();
-				return async (state: TState): Promise<TOperation | Synchronize | typeof done> =>
-					!state.isDetached && state.random.bool(validationStrategy.probability)
-						? { type: "synchronize" }
-						: baseGenerator(state);
-			};
-			break;
-		}
-
-		case "fixedInterval": {
-			generatorFactory = (): AsyncGenerator<TOperation | Synchronize, TState> => {
-				const baseGenerator = model.generatorFactory();
-				return interleaveAsync<TOperation | Synchronize, TState>(
-					baseGenerator,
-					async (state) =>
-						state.isDetached ? baseGenerator(state) : ({ type: "synchronize" } as const),
-					validationStrategy.interval,
-					1,
-					ExitBehavior.OnEitherExhausted,
-				);
-			};
-			break;
-		}
-
-		case "partialSynchronization": {
-			// passing 1 here causes infinite loops. passing close to 1 is wasteful
-			// as synchronization + eventual consistency validation should be idempotent.
-			// 0.5 is arbitrary but there's no reason anyone should want a probability near this.
-			assert(validationStrategy.probability < 0.5, "Use a lower synchronization probability.");
-			generatorFactory = (): AsyncGenerator<TOperation | Synchronize, TState> => {
-				const baseGenerator = model.generatorFactory();
-				return async (state: TState): Promise<TOperation | Synchronize | typeof done> => {
-					if (!state.isDetached && state.random.bool(validationStrategy.probability)) {
-						const selectedClients = new Set(
-							state.clients
-								.filter(
-									(client) => client.container.connectionState === ConnectionState.Connected,
-								)
-								.filter(() => state.random.bool(validationStrategy.clientProbability)),
-						);
-
-						return { type: "synchronize", clients: [...selectedClients] };
-					} else {
-						return baseGenerator(state);
-					}
-				};
-			};
-			break;
-		}
-		default: {
-			unreachableCase(validationStrategy);
-		}
-	}
+	// passing 1 here causes infinite loops. passing close to 1 is wasteful
+	// as synchronization + eventual consistency validation should be idempotent.
+	// 0.5 is arbitrary but there's no reason anyone should want a probability near this.
+	assert(validationProbability < 0.5, "Use a lower synchronization probability.");
+	const generatorFactory = (): AsyncGenerator<
+		TOperation | Synchronize,
+		LocalServerStressState
+	> => {
+		const baseGenerator = model.generatorFactory();
+		return async (
+			state: LocalServerStressState,
+		): Promise<TOperation | Synchronize | typeof done> =>
+			state.validationClient.container.attachState !== AttachState.Detached &&
+			state.random.bool(validationProbability)
+				? { type: "synchronize" }
+				: baseGenerator(state);
+	};
 
 	const minimizationTransforms = model.minimizationTransforms as
 		| MinimizationTransform<TOperation | Synchronize>[]
 		| undefined;
 
 	const isSynchronizeOp = (op: BaseOperation): op is Synchronize => op.type === "synchronize";
-	const reducer: AsyncReducer<TOperation | Synchronize, TState> = async (state, operation) => {
+	const reducer: AsyncReducer<TOperation | Synchronize, LocalServerStressState> = async (
+		state,
+		operation,
+	) => {
 		// TODO: Only synchronize listed clients if specified
 		if (isSynchronizeOp(operation)) {
 			const { clients, validationClient } = state;
@@ -620,79 +578,9 @@ function mixinSynchronization<
 				}
 				return client.container.connectionState !== ConnectionState.Disconnected;
 			});
-			connectedClients.push(validationClient);
-
-			const rejects = new Map<Client, ((reason?: any) => void)[]>(
-				connectedClients.map((c) => [c, []]),
-			);
-
-			const cleanUps: (() => void)[] = [];
-			for (const c of connectedClients) {
-				const rejector = (err) => rejects.get(c)?.forEach((r) => r(err));
-				c.container.once("closed", rejector);
-				c.container.once("disposed", rejector);
-				cleanUps.push(() => {
-					c.container.off("closed", rejector);
-					c.container.off("disposed", rejector);
-				});
-			}
-			try {
-				await Promise.all(
-					connectedClients.map(
-						async (c) =>
-							new Promise<void>((resolve, reject) => {
-								if (c.container.connectionState !== ConnectionState.Connected) {
-									c.container.once("connected", () => resolve());
-									rejects.get(c)?.push(reject);
-								} else {
-									resolve();
-								}
-							}),
-					),
-				);
-
-				await Promise.all(
-					connectedClients.map(
-						async (c) =>
-							new Promise<void>((resolve, reject) => {
-								if (c.container.isDirty) {
-									c.container.once("saved", () => resolve());
-									rejects.get(c)?.push(reject);
-								} else {
-									resolve();
-								}
-							}),
-					),
-				);
-				const maxSeq = Math.max(
-					...connectedClients.map((c) => c.container.deltaManager.lastKnownSeqNumber),
-				);
-
-				const makeOpHandler = (c: Client, resolve: () => void, reject: () => void) => {
-					if (c.container.deltaManager.lastKnownSeqNumber < maxSeq) {
-						const handler = (msg) => {
-							if (msg.sequenceNumber >= maxSeq) {
-								c.container.off("op", handler);
-								resolve();
-							}
-						};
-						c.container.on("op", handler);
-						rejects.get(c)?.push(reject);
-					} else {
-						resolve();
-					}
-				};
-				await Promise.all(
-					connectedClients.map(
-						async (c) =>
-							new Promise<void>((resolve, reject) => makeOpHandler(c, resolve, reject)),
-					),
-				);
-			} finally {
-				cleanUps.forEach((f) => f());
-			}
 
 			if (connectedClients.length > 0) {
+				await synchronizeClients([validationClient, ...connectedClients]);
 				for (const client of connectedClients) {
 					try {
 						await model.validateConsistency(validationClient, client);
@@ -729,14 +617,11 @@ const hasSelectedClientSpec = (op: unknown): op is SelectedClientSpec =>
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
-function mixinClientSelection<
-	TOperation extends BaseOperation,
-	TState extends LocalServerStressState,
->(
-	model: LocalServerStressModel<TOperation, TState>,
+function mixinClientSelection<TOperation extends BaseOperation>(
+	model: LocalServerStressModel<TOperation>,
 	_: LocalServerStressOptions,
-): LocalServerStressModel<TOperation, TState> {
-	const generatorFactory: () => AsyncGenerator<TOperation, TState> = () => {
+): LocalServerStressModel<TOperation> {
+	const generatorFactory: () => AsyncGenerator<TOperation, LocalServerStressState> = () => {
 		const baseGenerator = model.generatorFactory();
 		return async (state): Promise<TOperation | typeof done> => {
 			// Pick a channel, and:
@@ -768,7 +653,10 @@ function mixinClientSelection<
 		};
 	};
 
-	const reducer: AsyncReducer<TOperation | Synchronize, TState> = async (state, operation) => {
+	const reducer: AsyncReducer<TOperation | Synchronize, LocalServerStressState> = async (
+		state,
+		operation,
+	) => {
 		assert(hasSelectedClientSpec(operation), "operation should have been given a client");
 		const client = state.clients.find((c) => c.tag === operation.clientTag);
 		assert(client !== undefined);
@@ -796,12 +684,12 @@ function mixinClientSelection<
  *
  * Since the callback is async, this modification to the state could be an issue if multiple runs of this function are done concurrently.
  */
-async function runInStateWithClient<TState extends LocalServerStressState, Result>(
-	state: TState,
-	client: TState["client"],
-	datastore: TState["datastore"],
-	channel: TState["channel"],
-	callback: (state: TState) => Promise<Result>,
+async function runInStateWithClient<Result>(
+	state: LocalServerStressState,
+	client: LocalServerStressState["client"],
+	datastore: LocalServerStressState["datastore"],
+	channel: LocalServerStressState["channel"],
+	callback: (state: LocalServerStressState) => Promise<Result>,
 ): Promise<Result> {
 	const old = { ...state };
 	state.client = client;
@@ -818,17 +706,24 @@ async function runInStateWithClient<TState extends LocalServerStressState, Resul
 	}
 }
 
+function createStressLogger(seed: number) {
+	const logger = getTestLogger?.();
+	return createChildLogger({ logger, properties: { all: { seed } } });
+}
+
 async function createDetachedClient(
 	localDeltaConnectionServer: ILocalDeltaConnectionServer,
 	codeLoader: ICodeDetailsLoader,
 	codeDetails: IFluidCodeDetails,
 	tag: `client-${number}`,
+	seed: number,
 ): Promise<Client> {
 	const container = await createDetachedContainer({
 		codeLoader,
 		documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),
 		urlResolver: new LocalResolver(),
 		codeDetails,
+		logger: createStressLogger(seed),
 	});
 
 	const maybe: FluidObject<DefaultStressDataObject> | undefined =
@@ -848,16 +743,27 @@ async function loadClient(
 	codeLoader: ICodeDetailsLoader,
 	tag: `client-${number}`,
 	url: string,
+	seed: number,
 ): Promise<Client> {
-	const container = await loadExistingContainer({
-		documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),
-		request: { url },
-		urlResolver: new LocalResolver(),
-		codeLoader,
-	});
+	const container = await timeoutAwait(
+		loadExistingContainer({
+			documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),
+			request: { url },
+			urlResolver: new LocalResolver(),
+			codeLoader,
+			logger: createStressLogger(seed),
+		}),
+		{
+			errorMsg: `Timed out waiting for client to load ${tag}`,
+		},
+	);
 
-	const maybe: FluidObject<DefaultStressDataObject> | undefined =
-		await container.getEntryPoint();
+	const maybe: FluidObject<DefaultStressDataObject> | undefined = await timeoutAwait(
+		container.getEntryPoint(),
+		{
+			errorMsg: `Timed out waiting for client entrypoint ${tag}`,
+		},
+	);
 	assert(maybe.DefaultStressDataObject !== undefined, "must be DefaultStressDataObject");
 
 	return {
@@ -866,6 +772,106 @@ async function loadClient(
 		entryPoint: maybe.DefaultStressDataObject,
 	};
 }
+
+async function synchronizeClients(connectedClients: Client[]) {
+	const closeOrDispose = new Map<
+		Client,
+		{ error?: Error; rejects: ((reason?: any) => void)[] }
+	>();
+
+	const cleanUps: (() => void)[] = [];
+	for (const c of connectedClients) {
+		const rejector = (error) => {
+			const entry = closeOrDispose.get(c) ?? { rejects: [] };
+			entry.error ??= error;
+			closeOrDispose.set(c, entry);
+			entry.rejects.forEach((r) => r(entry.error));
+		};
+		c.container.once("closed", rejector);
+		c.container.once("disposed", rejector);
+		cleanUps.push(() => {
+			c.container.off("closed", rejector);
+			c.container.off("disposed", rejector);
+		});
+	}
+	try {
+		await Promise.all(
+			connectedClients.map(async (c) =>
+				timeoutPromise(
+					(resolve, reject) => {
+						const entry = closeOrDispose.get(c) ?? { rejects: [] };
+						closeOrDispose.set(c, entry);
+						if (entry.error) {
+							reject(entry.error);
+						} else if (c.container.connectionState !== ConnectionState.Connected) {
+							c.container.once("connected", () => resolve());
+							entry.rejects.push(reject);
+						} else {
+							resolve();
+						}
+					},
+					{
+						errorMsg: `Timed out waiting for client to connect ${c.tag}`,
+					},
+				),
+			),
+		);
+
+		await Promise.all(
+			connectedClients.map(async (c) =>
+				timeoutPromise(
+					(resolve, reject) => {
+						const entry = closeOrDispose.get(c) ?? { rejects: [] };
+						closeOrDispose.set(c, entry);
+						if (entry.error) {
+							reject(entry.error);
+						} else if (c.container.isDirty) {
+							c.container.once("saved", () => resolve());
+							entry.rejects.push(reject);
+						} else {
+							resolve();
+						}
+					},
+					{
+						errorMsg: `Timed out waiting for client to save ${c.tag}`,
+					},
+				),
+			),
+		);
+		const maxSeq = Math.max(
+			...connectedClients.map((c) => c.container.deltaManager.lastKnownSeqNumber),
+		);
+
+		const makeOpHandler = (c: Client, resolve: () => void, reject: (error) => void) => {
+			const entry = closeOrDispose.get(c) ?? { rejects: [] };
+			closeOrDispose.set(c, entry);
+			if (entry.error) {
+				reject(entry.error);
+			} else if (c.container.deltaManager.lastKnownSeqNumber < maxSeq) {
+				const handler = (msg) => {
+					if (msg.sequenceNumber >= maxSeq) {
+						c.container.off("op", handler);
+						resolve();
+					}
+				};
+				c.container.on("op", handler);
+				entry.rejects.push(reject);
+			} else {
+				resolve();
+			}
+		};
+		await Promise.all(
+			connectedClients.map(async (c) =>
+				timeoutPromise((resolve, reject) => makeOpHandler(c, resolve, reject), {
+					errorMsg: `Timed out waiting for client to catch up: ${c.tag} seq: ${maxSeq}`,
+				}),
+			),
+		);
+	} finally {
+		cleanUps.forEach((f) => f());
+	}
+}
+
 /**
  * Runs the provided DDS fuzz model. All functionality is already assumed to be mixed in.
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
@@ -873,59 +879,102 @@ async function loadClient(
  */
 async function runTestForSeed<TOperation extends BaseOperation>(
 	model: LocalServerStressModel<TOperation>,
-	options: Omit<LocalServerStressOptions, "only" | "skip">,
 	seed: number,
 	saveInfo?: SaveInfo,
 ): Promise<void> {
 	const random = makeRandom(seed);
 
-	const localDeltaConnectionServer = LocalDeltaConnectionServer.create();
+	const server = LocalDeltaConnectionServer.create();
 	const codeDetails: IFluidCodeDetails = {
 		package: "local-server-stress-tests",
 	};
 	const codeLoader = new LocalCodeLoader([[codeDetails, createRuntimeFactory()]]);
 	const tagCount: Partial<Record<string, number>> = {};
+	// we reserve prefix-0 for initialization objects
 	const tag: LocalServerStressState["tag"] = (prefix) =>
 		`${prefix}-${(tagCount[prefix] = (tagCount[prefix] ??= 0) + 1)}`;
 
 	const detachedClient = await createDetachedClient(
-		localDeltaConnectionServer,
+		server,
 		codeLoader,
 		codeDetails,
+		// we use tagging here, and not zero, as we will create client 0 after attach.
 		tag("client"),
+		seed,
 	);
 
 	const initialState: LocalServerStressState = {
 		clients: [detachedClient],
-		localDeltaConnectionServer,
+		localDeltaConnectionServer: server,
 		codeLoader,
 		random,
 		validationClient: detachedClient,
 		client: makeUnreachableCodePathProxy("client"),
 		datastore: makeUnreachableCodePathProxy("datastore"),
 		channel: makeUnreachableCodePathProxy("channel"),
-		isDetached: true,
+		seed,
 		tag,
 	};
 
 	let operationCount = 0;
-	const generator = model.generatorFactory();
-	const finalState = await performFuzzActionsAsync(
-		generator,
-		async (state, operation) => {
-			operationCount++;
-			return model.reducer(state, operation);
-		},
-		initialState,
-		saveInfo,
+	const finalSynchronization = {
+		type: "FinalSynchronization",
+	} as const;
+	const generator: AsyncGenerator<
+		TOperation | typeof finalSynchronization,
+		LocalServerStressState
+	> = chainAsync(
+		model.generatorFactory(),
+		takeAsync<TOperation | typeof finalSynchronization, LocalServerStressState>(
+			1,
+			async () => finalSynchronization,
+		),
 	);
+	const reducer: AsyncReducer<
+		TOperation | typeof finalSynchronization,
+		LocalServerStressState
+	> = async (state, operation) => {
+		if (operation.type === finalSynchronization.type) {
+			const { clients, validationClient } = state;
+			for (const client of clients) {
+				if (client.container.connectionState === ConnectionState.Disconnected) {
+					client.container.connect();
+				}
+			}
+			await synchronizeClients([validationClient, ...clients]);
+			for (const client of clients) {
+				await model.validateConsistency(client, validationClient);
+			}
+			return;
+		}
+		return model.reducer(state, operation as TOperation);
+	};
+
+	let finalState: LocalServerStressState = initialState;
+	try {
+		await performFuzzActionsAsync(
+			generator,
+			async (state: LocalServerStressState, operation) => {
+				operationCount++;
+				return (finalState = (await reducer(state, operation)) ?? finalState);
+			},
+			initialState,
+			saveInfo,
+		);
+	} finally {
+		if (finalState !== undefined) {
+			for (const client of finalState.clients) {
+				client.container.dispose();
+			}
+
+			finalState.validationClient.container.dispose();
+			await finalState.localDeltaConnectionServer.close();
+		}
+	}
 
 	// Sanity-check that the generator produced at least one operation. If it failed to do so,
 	// this usually indicates an error on the part of the test author.
 	assert(operationCount > 0, "Generator should have produced at least one operation.");
-
-	finalState.clients.forEach((c) => c.container.dispose());
-	finalState.validationClient.container.dispose();
 }
 
 function runTest<TOperation extends BaseOperation>(
@@ -954,7 +1003,7 @@ function runTest<TOperation extends BaseOperation>(
 
 		try {
 			// don't write to files in CI
-			await runTestForSeed(model, options, seed, inCi ? undefined : saveInfo);
+			await runTestForSeed(model, seed, inCi ? undefined : saveInfo);
 		} catch (error) {
 			if (!shouldMinimize || saveInfo === undefined) {
 				throw error;
@@ -1022,7 +1071,7 @@ export async function replayTest<TOperation extends BaseOperation>(
 		generatorFactory: () => generator,
 	};
 
-	await runTestForSeed(model, options, seed, saveInfo);
+	await runTestForSeed(model, seed, saveInfo);
 }
 
 /**
@@ -1040,6 +1089,7 @@ export function createLocalServerStressSuite<TOperation extends BaseOperation>(
 
 	const only = new Set(options.only);
 	const skip = new Set(options.skip);
+	const replay = options.replay;
 	Object.assign(options, { only, skip });
 	assert(isInternalOptions(options));
 
@@ -1065,25 +1115,27 @@ export function createLocalServerStressSuite<TOperation extends BaseOperation>(
 			runTest(model, options, seed, getSaveInfo(model, options, seed));
 		}
 
-		if (options.replay !== undefined) {
-			const seed = options.replay;
+		if (replay !== undefined) {
 			describe.only(`replay from file`, () => {
-				const saveInfo = getSaveInfo(model, options, seed);
-				assert(
-					saveInfo.saveOnFailure !== false,
-					"Cannot replay a file without a directory to save files in!",
-				);
-				const operations = options.parseOperations(
-					readFileSync(saveInfo.saveOnFailure.path).toString(),
-				);
+				const replaySeeds = typeof replay === "number" ? [replay] : replay;
+				for (const seed of replaySeeds) {
+					const saveInfo = getSaveInfo(model, options, seed);
+					assert(
+						saveInfo.saveOnFailure !== false,
+						"Cannot replay a file without a directory to save files in!",
+					);
+					const operations = options.parseOperations(
+						readFileSync(saveInfo.saveOnFailure.path).toString(),
+					);
 
-				const replayModel = {
-					...model,
-					// We lose some type safety here because the options interface isn't generic
-					generatorFactory: (): AsyncGenerator<TOperation, unknown> =>
-						asyncGeneratorFromArray(operations as TOperation[]),
-				};
-				runTest(replayModel, options, seed, undefined);
+					const replayModel = {
+						...model,
+						// We lose some type safety here because the options interface isn't generic
+						generatorFactory: (): AsyncGenerator<TOperation, unknown> =>
+							asyncGeneratorFromArray(operations as TOperation[]),
+					};
+					runTest(replayModel, { ...options, skipMinimization: true }, seed, undefined);
+				}
 			});
 		}
 	});
@@ -1102,38 +1154,40 @@ export interface ChangeConnectionState {
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
-export function mixinReconnect<
-	TOperation extends BaseOperation,
-	TState extends LocalServerStressState,
->(
-	model: LocalServerStressModel<TOperation, TState>,
+export function mixinReconnect<TOperation extends BaseOperation>(
+	model: LocalServerStressModel<TOperation>,
 	options: LocalServerStressOptions,
-): LocalServerStressModel<TOperation | ChangeConnectionState, TState> {
-	const generatorFactory: () => AsyncGenerator<TOperation | ChangeConnectionState, TState> =
-		() => {
-			const baseGenerator = model.generatorFactory();
-			return async (state): Promise<TOperation | ChangeConnectionState | typeof done> => {
-				if (!state.isDetached && state.random.bool(options.reconnectProbability)) {
-					const client = state.clients.find((c) => c.tag === state.client.tag);
-					assert(client !== undefined);
-					return {
-						type: "changeConnectionState",
-						connected: client.container.connectionState === ConnectionState.Connected,
-					};
-				}
+): LocalServerStressModel<TOperation | ChangeConnectionState> {
+	const generatorFactory: () => AsyncGenerator<
+		TOperation | ChangeConnectionState,
+		LocalServerStressState
+	> = () => {
+		const baseGenerator = model.generatorFactory();
+		return async (state): Promise<TOperation | ChangeConnectionState | typeof done> => {
+			if (
+				state.validationClient.container.attachState !== AttachState.Detached &&
+				state.random.bool(options.reconnectProbability)
+			) {
+				const client = state.clients.find((c) => c.tag === state.client.tag);
+				assert(client !== undefined);
+				return {
+					type: "changeConnectionState",
+					connected: client.container.connectionState === ConnectionState.Connected,
+				};
+			}
 
-				return baseGenerator(state);
-			};
+			return baseGenerator(state);
 		};
+	};
 
 	const minimizationTransforms = model.minimizationTransforms as
 		| MinimizationTransform<TOperation | ChangeConnectionState>[]
 		| undefined;
 
-	const reducer: AsyncReducer<TOperation | ChangeConnectionState, TState> = async (
-		state,
-		operation,
-	) => {
+	const reducer: AsyncReducer<
+		TOperation | ChangeConnectionState,
+		LocalServerStressState
+	> = async (state, operation) => {
 		if (isOperationType<ChangeConnectionState>("changeConnectionState", operation)) {
 			if (operation.connected) {
 				state.client.container.disconnect();
