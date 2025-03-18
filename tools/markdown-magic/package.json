@@ -22,8 +22,6 @@
 		"check:format": "npm run check:biome",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
-		"lint": "npm run prettier",
-		"lint:fix": "npm run prettier:fix",
 		"test": "node src/index.cjs --files \"test/**/*.md\" !test/README.md"
 	},
 	"dependencies": {
