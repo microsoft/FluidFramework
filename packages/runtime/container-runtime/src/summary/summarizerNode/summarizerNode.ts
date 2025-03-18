@@ -11,6 +11,7 @@ import {
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
+	channelsTreeName,
 	IExperimentalIncrementalSummaryContext,
 	ITelemetryContext,
 	CreateChildSummarizerNodeParam,
@@ -32,7 +33,6 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	EscapedPath,
 	ICreateChildDetails,
 	IRefreshSummaryResult,
 	IStartSummaryResult,
@@ -101,7 +101,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		/**
 		 * Encoded handle or path to the node
 		 */
-		private readonly _summaryHandleId: EscapedPath,
+		private readonly _summaryHandleId: string,
 		private _changeSequenceNumber: number,
 		/**
 		 * Summary reference sequence number, i.e. last sequence number seen when last successful summary was created
@@ -591,7 +591,8 @@ export class SummarizerNode implements IRootSummarizerNode {
 		}
 
 		const childTelemetryNodeId = `${this.telemetryNodeId ?? ""}/${id}`;
-		const childSummaryHandleId = this._summaryHandleId.createChildPath(EscapedPath.create(id));
+		// parentHandleId/.channels/childId
+		const childSummaryHandleId = `${this._summaryHandleId}/${channelsTreeName}/${id}`;
 
 		return {
 			changeSequenceNumber,
@@ -671,7 +672,7 @@ export const createRootSummarizerNode = (
 		logger,
 		summarizeInternalFn,
 		config,
-		EscapedPath.create("") /* summaryHandleId */,
+		"" /* summaryHandleId */,
 		changeSequenceNumber,
 		referenceSequenceNumber,
 		undefined /* wipSummaryLogger */,

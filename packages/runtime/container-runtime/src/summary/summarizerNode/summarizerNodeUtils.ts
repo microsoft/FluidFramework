@@ -5,7 +5,6 @@
 
 import { SummaryObject } from "@fluidframework/driver-definitions";
 import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
-import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,
 	TelemetryDataTag,
@@ -80,30 +79,6 @@ export interface ISummarizerNodeRootContract {
 	): Promise<IRefreshSummaryResult>;
 }
 
-/**
- * Class to build paths for nodes in a tree with escaped special characters
- */
-export class EscapedPath {
-	private constructor(public readonly path: string) {}
-
-	/**
-	 * Creates and returns a new instance of this class.
-	 * @param path - Id or path part of a node
-	 */
-	public static create(path: string): EscapedPath {
-		return new EscapedPath(path);
-	}
-
-	public toString(): string {
-		return this.path;
-	}
-	/**
-	 * Creates and returns a new instance of this class for child of the current node.
-	 */
-	public createChildPath(childNodePath: EscapedPath): EscapedPath {
-		return new EscapedPath(`${this.path}/${channelsTreeName}/${childNodePath.path}`);
-	}
-}
 export interface PendingSummaryInfo {
 	/**
 	 * The sequence number at which the summary was created.
@@ -126,7 +101,7 @@ export interface ICreateChildDetails {
 	/**
 	 * Summary handle for child node
 	 */
-	summaryHandleId: EscapedPath;
+	summaryHandleId: string;
 	/**
 	 * the reference sequence number of the last successful summary.
 	 */

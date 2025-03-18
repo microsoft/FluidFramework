@@ -215,10 +215,6 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 	/**
 	 * Adds an {@link @fluidframework/driver-definitions#ISummaryHandle} that references a subtree, blob, or attachment in a previous summary.
 	 *
-	 * @remarks
-	 * Previously we had had special limitations to both the key and handle parameters since we used encodeURIComponent and decodeURIComponent to encode and decode the key and handle parameters after they are added to the summary tree.
-	 * But we have removed the encode and decode logic now in the summarization flow both in driver and runtime layer now to avoid complications.
-	 *
 	 * @param key - The key to store the handle at in the current summary tree being generated. Should not contain any "/" characters.
 	 * @param handleType - the type of {@link @fluidframework/driver-definitions#SummaryObject} besides a SummaryHandle, i.e. {@link @fluidframework/driver-definitions#SummaryType.Tree}, {@link @fluidframework/driver-definitions#SummaryType.Blob}, {@link @fluidframework/driver-definitions#SummaryType.Attachment}
 	 * @param handle - The path pointing to the part of the previous summary being used to duplicate the data. Use {@link @fluidframework/driver-definitions#ISummaryHandle.handle} to help generate proper handle strings. Should not contain any "/" characters.
