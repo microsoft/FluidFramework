@@ -7,6 +7,8 @@ import { writeFileSync } from "node:fs";
 
 import { Anthropic } from "@anthropic-ai/sdk";
 // eslint-disable-next-line import/no-internal-modules
+import { fail } from "@fluidframework/core-utils/internal";
+// eslint-disable-next-line import/no-internal-modules
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
@@ -96,66 +98,93 @@ describe.skip("Agent Editing Integration", () => {
 		);
 		const today = new Date();
 		const createdDate = today.toISOString();
+		// view.initialize({
+		// 	paragraphs: [
+		// 		new Paragraph({
+		// 			content: [
+		// 				new Span({
+		// 					words: [new Word({ characters: "This", createdDate })],
+		// 					bold: false,
+		// 					italic: true,
+		// 					comments: [],
+		// 				}),
+		// 				new Word({ characters: "is", createdDate }),
+		// 				new Word({ characters: "a", createdDate }),
+		// 				new Span({
+		// 					words: [new Word({ characters: "sample", createdDate })],
+		// 					bold: true,
+		// 					italic: false,
+		// 					comments: [],
+		// 				}),
+		// 				new Span({
+		// 					words: [
+		// 						new Word({ characters: "paragraph", createdDate }),
+		// 						new Word({ characters: ".", createdDate }),
+		// 					],
+		// 					bold: false,
+		// 					italic: false,
+		// 					comments: ["6663f83b-c7b6-4f5e-9a9d-8f1e4f451b9a"],
+		// 				}),
+		// 				new Span({
+		// 					words: [
+		// 						new Word({ characters: "It", createdDate }),
+		// 						new Word({ characters: "was", createdDate }),
+		// 						new Word({ characters: "written", createdDate }),
+		// 						new Word({ characters: "on", createdDate }),
+		// 					],
+		// 					bold: false,
+		// 					italic: false,
+		// 					comments: [],
+		// 				}),
+		// 				new D8({
+		// 					year: today.getFullYear(),
+		// 					month: today.getMonth() + 1,
+		// 					day: today.getDate(),
+		// 				}),
+		// 				new Word({ characters: ".", createdDate }),
+		// 				new Word({ characters: "Use", createdDate }),
+		// 				new Word({ characters: "the", createdDate }),
+		// 				new Word({ characters: "chat", createdDate }),
+		// 				new Word({ characters: "box", createdDate }),
+		// 				new Word({ characters: "below", createdDate }),
+		// 				new Word({ characters: "to", createdDate }),
+		// 				new Word({ characters: "make", createdDate }),
+		// 				new Word({ characters: "edits", createdDate }),
+		// 				new Word({ characters: ".", createdDate }),
+		// 			],
+		// 		}),
+		// 	],
+		// 	comments: [
+		// 		{
+		// 			identifier: "6663f83b-c7b6-4f5e-9a9d-8f1e4f451b9a",
+		// 			text: "Should this be bold?",
+		// 		},
+		// 	],
+		// });
+
 		view.initialize({
 			paragraphs: [
 				new Paragraph({
 					content: [
+						new Word({ characters: "Bagels", createdDate }),
+						new Word({ characters: "are", createdDate }),
 						new Span({
-							words: [new Word({ characters: "This", createdDate })],
+							words: [
+								new Word({ characters: "a", createdDate }),
+								new Word({ characters: "real", createdDate }),
+								new Word({ characters: "treat", createdDate }),
+							],
 							bold: false,
 							italic: true,
-							comments: [],
+							comments: ["6633f83b-c7b6-4f5e-9a9d-8f1e4f451b9a"],
 						}),
-						new Word({ characters: "is", createdDate }),
-						new Word({ characters: "a", createdDate }),
-						new Span({
-							words: [new Word({ characters: "sample", createdDate })],
-							bold: true,
-							italic: false,
-							comments: [],
-						}),
-						new Span({
-							words: [
-								new Word({ characters: "paragraph", createdDate }),
-								new Word({ characters: ".", createdDate }),
-							],
-							bold: false,
-							italic: false,
-							comments: ["6663f83b-c7b6-4f5e-9a9d-8f1e4f451b9a"],
-						}),
-						new Span({
-							words: [
-								new Word({ characters: "It", createdDate }),
-								new Word({ characters: "was", createdDate }),
-								new Word({ characters: "written", createdDate }),
-								new Word({ characters: "on", createdDate }),
-							],
-							bold: false,
-							italic: false,
-							comments: [],
-						}),
-						new D8({
-							year: today.getFullYear(),
-							month: today.getMonth() + 1,
-							day: today.getDate(),
-						}),
-						new Word({ characters: ".", createdDate }),
-						new Word({ characters: "Use", createdDate }),
-						new Word({ characters: "the", createdDate }),
-						new Word({ characters: "chat", createdDate }),
-						new Word({ characters: "box", createdDate }),
-						new Word({ characters: "below", createdDate }),
-						new Word({ characters: "to", createdDate }),
-						new Word({ characters: "make", createdDate }),
-						new Word({ characters: "edits", createdDate }),
-						new Word({ characters: ".", createdDate }),
 					],
 				}),
 			],
 			comments: [
 				{
-					identifier: "6663f83b-c7b6-4f5e-9a9d-8f1e4f451b9a",
-					text: "Should this be bold?",
+					identifier: "6633f83b-c7b6-4f5e-9a9d-8f1e4f451b9a",
+					text: "I love this expression!",
 				},
 			],
 		});
@@ -172,7 +201,7 @@ describe.skip("Agent Editing Integration", () => {
 			treeNode: view.root,
 			prompt: {
 				userAsk:
-					"Please replace the sample paragraph with an amusing short story about ducks going to a buffet.",
+					"Please add a comment to the word 'treat' that says 'Makes me think of Halloween :)'",
 				systemRoleContext,
 			},
 			toString,
@@ -199,9 +228,9 @@ describe.skip("Agent Editing Integration", () => {
 	function toString(page: Page): string {
 		let result = "";
 		if (page.comments.length > 0) {
-			result += "Comments:\n\n";
-			for (const c of page.comments) {
-				result += `#### ${c.identifier}: ${c.text}\n\n`;
+			for (let i = 0; i < page.comments.length; i++) {
+				const c = page.comments[i] ?? fail("Comment not found");
+				result += `#### ${i + 1}: ${c.text}\n\n`;
 			}
 		}
 		result += page.paragraphs
@@ -212,18 +241,19 @@ describe.skip("Agent Editing Integration", () => {
 							return c.characters;
 						} else if (c instanceof Span) {
 							let text = c.words.map((w) => w.characters).join(" ");
-							const commentRef = c.comments[0];
-							if (commentRef !== undefined) {
-								const comment = page.comments.find((co) => co.identifier === commentRef);
-								text = `[${text}](#${comment?.identifier})`;
-							}
 							if (c.bold) {
 								text = `**${text}**`;
 							}
 							if (c.italic) {
 								text = `_${text}_`;
 							}
+							if (c.comments.length > 0) {
+								const ids = c.comments
+									.map((id) => page.comments.map((co) => co.identifier).indexOf(id) + 1)
+									.join(",");
 
+								text = `(${text})^${ids}`;
+							}
 							return text;
 						} else if (c instanceof D8) {
 							return `${c.month}/${c.day}/${c.year}`;

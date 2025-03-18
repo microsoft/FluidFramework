@@ -158,6 +158,7 @@ export async function generateTreeEdits(
 		)) {
 			try {
 				applyAgentEdit(
+					simpleSchema,
 					options.treeView,
 					generateEditResult.edit,
 					idGenerator,
@@ -485,7 +486,7 @@ export async function clod(
 			try {
 				while (editIndex < edits.length) {
 					const edit = edits[editIndex] ?? fail("Expected edit");
-					applyAgentEdit(branch, edit, idGenerator, options.validator);
+					applyAgentEdit(simpleSchema, branch, edit, idGenerator, options.validator);
 					log += `### Applied Edit ${editIndex + 1}\n\n`;
 					log += `The new state of the tree is:\n\n`;
 					log += `${
@@ -547,6 +548,7 @@ export async function clod(
 		response = await queryClod(retryMessages);
 	}
 
+	log += `# Exceeded Maximum Error Count`;
 	return log;
 }
 

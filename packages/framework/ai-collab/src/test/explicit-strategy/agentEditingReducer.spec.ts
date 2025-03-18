@@ -19,6 +19,7 @@ import {
 	SharedTree,
 	type TreeNode,
 	asTreeViewAlpha,
+	getSimpleSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/internal";
 
@@ -129,6 +130,7 @@ describe("applyAgentEdit", () => {
 			const view = asTreeViewAlpha(
 				tree.viewWith(new TreeViewConfiguration({ schema: RootObjectPolymorphic })),
 			);
+			const treeSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
 				str: "testStr",
@@ -145,14 +147,14 @@ describe("applyAgentEdit", () => {
 				position: { after: vectorId },
 				value: { [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
 			};
-			applyAgentEdit(view, insertEdit, idGenerator);
+			applyAgentEdit(treeSchema, view, insertEdit, idGenerator);
 
 			const insertEdit2: TreeEdit = {
 				type: "insertIntoArray",
 				position: { after: vectorId },
 				value: { [typeField]: Vector2.identifier, x2: 3, y2: 4, z2: 5 },
 			};
-			applyAgentEdit(view, insertEdit2, idGenerator);
+			applyAgentEdit(treeSchema, view, insertEdit2, idGenerator);
 
 			const identifier1 = (view.root.vectors[0] as Vector).id;
 			const identifier2 = (view.root.vectors[1] as Vector).id;
@@ -196,6 +198,7 @@ describe("applyAgentEdit", () => {
 			);
 			const config2 = new TreeViewConfiguration({ schema: RootObject });
 			const view = asTreeViewAlpha(tree.viewWith(config2));
+			const treeSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
 				str: "testStr",
@@ -213,7 +216,7 @@ describe("applyAgentEdit", () => {
 				position: { after: vectorId },
 				value: { [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
 			};
-			applyAgentEdit(view, insertEdit, idGenerator);
+			applyAgentEdit(treeSchema, view, insertEdit, idGenerator);
 
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const identifier1 = view.root.vectors[0]!.id;
@@ -260,6 +263,7 @@ describe("applyAgentEdit", () => {
 			);
 			const config = new TreeViewConfiguration({ schema: Root });
 			const view = asTreeViewAlpha(tree.viewWith(config));
+			const treeSchema = getSimpleSchema(view.schema);
 			view.initialize({ children: [new HasDefault({})] });
 			idGenerator.assignIds(view.root);
 			const child = view.root.children[0];
@@ -270,7 +274,7 @@ describe("applyAgentEdit", () => {
 				position: { after: childId },
 				value: { [typeField]: HasDefault.identifier },
 			};
-			applyAgentEdit(view, insertEdit, idGenerator);
+			applyAgentEdit(treeSchema, view, insertEdit, idGenerator);
 
 			const child2 = view.root.children[1];
 			assert(child2 !== undefined);
@@ -298,6 +302,7 @@ describe("applyAgentEdit", () => {
 			);
 			const config2 = new TreeViewConfiguration({ schema: RootObject });
 			const view = asTreeViewAlpha(tree.viewWith(config2));
+			const treeSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
 				str: "testStr",
@@ -313,7 +318,7 @@ describe("applyAgentEdit", () => {
 				position: { index: 0, array: [vectorId, "vectors"] },
 				value: { [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
 			};
-			applyAgentEdit(view, insertEdit, idGenerator);
+			applyAgentEdit(treeSchema, view, insertEdit, idGenerator);
 
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const identifier1 = view.root.vectors[0]!.id;
@@ -344,6 +349,7 @@ describe("applyAgentEdit", () => {
 			);
 			const config2 = new TreeViewConfiguration({ schema: RootObject });
 			const view = asTreeViewAlpha(tree.viewWith(config2));
+			const treeSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
 				str: "testStr",
@@ -363,7 +369,7 @@ describe("applyAgentEdit", () => {
 			};
 
 			assert.throws(
-				() => applyAgentEdit(view, insertEdit, idGenerator),
+				() => applyAgentEdit(treeSchema, view, insertEdit, idGenerator),
 				validateUsageError(/provided data is incompatible/),
 			);
 		});
@@ -375,6 +381,7 @@ describe("applyAgentEdit", () => {
 			);
 			const config2 = new TreeViewConfiguration({ schema: RootObjectWithNonArrayVectorField });
 			const view = asTreeViewAlpha(tree.viewWith(config2));
+			const treeSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
 				singleVector: new Vector({ x: 1, y: 2, z: 3 }),
@@ -392,7 +399,7 @@ describe("applyAgentEdit", () => {
 				value: { [typeField]: Vector.identifier, x: 3, y: 4, z: 5 },
 			};
 			assert.throws(
-				() => applyAgentEdit(view, insertEdit, idGenerator),
+				() => applyAgentEdit(treeSchema, view, insertEdit, idGenerator),
 				validateUsageError(/The destination node must be an arrayNode/),
 			);
 		});
@@ -405,6 +412,7 @@ describe("applyAgentEdit", () => {
 		);
 		const config = new TreeViewConfiguration({ schema: RootObjectPolymorphic });
 		const view = asTreeViewAlpha(tree.viewWith(config));
+		const treeSchema = getSimpleSchema(view.schema);
 
 		view.initialize({
 			str: "testStr",
@@ -425,7 +433,7 @@ describe("applyAgentEdit", () => {
 				{ [typeField]: Vector2.identifier, x2: 3, y2: 4, z2: 5 },
 			],
 		};
-		applyAgentEdit(view, modifyEdit, idGenerator);
+		applyAgentEdit(treeSchema, view, modifyEdit, idGenerator);
 
 		const modifyEdit2: TreeEdit = {
 			type: "setField",
@@ -433,7 +441,7 @@ describe("applyAgentEdit", () => {
 			field: "bools",
 			value: [false],
 		};
-		applyAgentEdit(view, modifyEdit2, idGenerator);
+		applyAgentEdit(treeSchema, view, modifyEdit2, idGenerator);
 
 		idGenerator.assignIds(view.root);
 		const vectorId2 =
@@ -445,7 +453,7 @@ describe("applyAgentEdit", () => {
 			field: "x",
 			value: 111,
 		};
-		applyAgentEdit(view, modifyEdit3, idGenerator);
+		applyAgentEdit(treeSchema, view, modifyEdit3, idGenerator);
 
 		const modifyEdit4: TreeEdit = {
 			type: "setField",
@@ -454,7 +462,7 @@ describe("applyAgentEdit", () => {
 			value: null,
 		};
 
-		applyAgentEdit(view, modifyEdit4, idGenerator);
+		applyAgentEdit(treeSchema, view, modifyEdit4, idGenerator);
 
 		const identifier = (view.root.vectors[0] as Vector).id;
 		const identifier2 = (view.root.vectors[1] as Vector2).id;
@@ -491,6 +499,7 @@ describe("applyAgentEdit", () => {
 		);
 		const config = new TreeViewConfiguration({ schema: RootObjectPolymorphic });
 		const view = asTreeViewAlpha(tree.viewWith(config));
+		const treeSchema = getSimpleSchema(view.schema);
 
 		view.initialize({
 			str: "testStr",
@@ -510,7 +519,7 @@ describe("applyAgentEdit", () => {
 				{ [typeField]: Vector.identifier, x: 3, y: 4, z: 5 },
 			],
 		};
-		applyAgentEdit(view, modifyEdit, idGenerator);
+		applyAgentEdit(treeSchema, view, modifyEdit, idGenerator);
 
 		const identifier = (view.root.vectors[0] as Vector).id;
 		const identifier2 = (view.root.vectors[1] as Vector).id;
@@ -557,6 +566,7 @@ describe("applyAgentEdit", () => {
 				schema: [RootObject],
 			});
 			const view = asTreeViewAlpha(tree.viewWith(configWithMultipleVectors));
+			const treeSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
 				str: "testStr",
@@ -572,7 +582,7 @@ describe("applyAgentEdit", () => {
 				type: "removeFromArray",
 				element: vectorId1,
 			};
-			applyAgentEdit(view, removeEdit, idGenerator);
+			applyAgentEdit(treeSchema, view, removeEdit, idGenerator);
 
 			const expected = {
 				"str": "testStr",
@@ -594,6 +604,7 @@ describe("applyAgentEdit", () => {
 				schema: [RootObjectWithSubtree],
 			});
 			const view = asTreeViewAlpha(tree.viewWith(configWithMultipleVectors));
+			const treeSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
 				innerObject: {
@@ -613,7 +624,7 @@ describe("applyAgentEdit", () => {
 				type: "removeFromArray",
 				element: vectorId1,
 			};
-			applyAgentEdit(view, removeEdit, idGenerator);
+			applyAgentEdit(treeSchema, view, removeEdit, idGenerator);
 
 			const expected = {
 				"innerObject": {
@@ -637,6 +648,7 @@ describe("applyAgentEdit", () => {
 				schema: [RootObject],
 			});
 			const view = asTreeViewAlpha(tree.viewWith(configWithMultipleVectors));
+			const treeSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
 				str: "testStr",
@@ -655,7 +667,7 @@ describe("applyAgentEdit", () => {
 			};
 
 			assert.throws(
-				() => applyAgentEdit(view, removeEdit, idGenerator),
+				() => applyAgentEdit(treeSchema, view, removeEdit, idGenerator),
 
 				validateUsageError(/Got undefined for non-optional field/),
 			);
@@ -670,6 +682,7 @@ describe("applyAgentEdit", () => {
 				schema: [RootObject],
 			});
 			const view = asTreeViewAlpha(tree.viewWith(configWithMultipleVectors));
+			const treeSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
 				str: "testStr",
@@ -690,7 +703,7 @@ describe("applyAgentEdit", () => {
 					to: { after: vectorId2 },
 				},
 			};
-			applyAgentEdit(view, removeEdit, idGenerator);
+			applyAgentEdit(treeSchema, view, removeEdit, idGenerator);
 
 			const expected = {
 				"str": "testStr",
@@ -712,6 +725,7 @@ describe("applyAgentEdit", () => {
 				schema: [RootObjectWithSubtree],
 			});
 			const view = asTreeViewAlpha(tree.viewWith(configWithMultipleVectors));
+			const treeSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
 				innerObject: {
@@ -738,7 +752,7 @@ describe("applyAgentEdit", () => {
 					to: { after: vectorId2 },
 				},
 			};
-			applyAgentEdit(view, removeEdit, idGenerator);
+			applyAgentEdit(treeSchema, view, removeEdit, idGenerator);
 
 			const expected = {
 				"innerObject": {
@@ -762,6 +776,7 @@ describe("applyAgentEdit", () => {
 				schema: [RootObjectWithMultipleVectorArrays],
 			});
 			const view = asTreeViewAlpha(tree.viewWith(configWithMultipleVectors));
+			const treeSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
 				str: "testStr",
@@ -785,7 +800,7 @@ describe("applyAgentEdit", () => {
 			};
 
 			assert.throws(
-				() => applyAgentEdit(view, removeEdit, idGenerator),
+				() => applyAgentEdit(treeSchema, view, removeEdit, idGenerator),
 				validateUsageError(
 					/The "after" position must be within the same array as the target node/,
 				),
@@ -803,6 +818,7 @@ describe("applyAgentEdit", () => {
 				schema: [RootObjectWithMultipleVectorArrays],
 			});
 			const view = asTreeViewAlpha(tree.viewWith(configWithMultipleVectors));
+			const treeSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
 				str: "testStr",
@@ -821,7 +837,7 @@ describe("applyAgentEdit", () => {
 				source: vectorId1,
 				destination: { index: 0, array: [vectorId2, "vectors2"] },
 			};
-			applyAgentEdit(view, moveEdit, idGenerator);
+			applyAgentEdit(treeSchema, view, moveEdit, idGenerator);
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const identifier = view.root.vectors2[0]!.id;
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -861,6 +877,7 @@ describe("applyAgentEdit", () => {
 				schema: [RootObjectWithMultipleVectorArrays],
 			});
 			const view = asTreeViewAlpha(tree.viewWith(configWithMultipleVectors));
+			const treeSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
 				str: "testStr",
@@ -884,7 +901,7 @@ describe("applyAgentEdit", () => {
 				},
 				destination: { index: 0, array: [vectorId3, "vectors2"] },
 			};
-			applyAgentEdit(view, moveEdit, idGenerator);
+			applyAgentEdit(treeSchema, view, moveEdit, idGenerator);
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const identifier = view.root.vectors2[0]!.id;
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -932,6 +949,7 @@ describe("applyAgentEdit", () => {
 				schema: [RootObjectWithDifferentVectorArrayTypes],
 			});
 			const view = asTreeViewAlpha(tree.viewWith(configWithMultipleVectors));
+			const treeSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
 				str: "testStr",
@@ -956,7 +974,7 @@ describe("applyAgentEdit", () => {
 				destination: { index: 0, array: [vectorId3, "vectors2"] },
 			};
 			assert.throws(
-				() => applyAgentEdit(view, moveEdit, idGenerator),
+				() => applyAgentEdit(treeSchema, view, moveEdit, idGenerator),
 				validateUsageError(
 					/The source node type "agentSchema.Vector" is not allowed in the destination array/,
 				),
@@ -972,6 +990,7 @@ describe("applyAgentEdit", () => {
 				schema: [RootObjectWithMultipleVectorArrays],
 			});
 			const view = asTreeViewAlpha(tree.viewWith(configWithMultipleVectors));
+			const treeSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
 				str: "testStr",
@@ -997,7 +1016,7 @@ describe("applyAgentEdit", () => {
 			};
 
 			assert.throws(
-				() => applyAgentEdit(view, moveEdit, idGenerator),
+				() => applyAgentEdit(treeSchema, view, moveEdit, idGenerator),
 				validateUsageError(
 					/The "after" position must be within the same array as the target node/,
 				),
@@ -1013,6 +1032,7 @@ describe("applyAgentEdit", () => {
 				schema: [RootObjectWithNonArrayVectorField],
 			});
 			const view = asTreeViewAlpha(tree.viewWith(configWithMultipleVectors));
+			const treeSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
 				singleVector: new Vector({ x: 1, y: 2, z: 3 }),
@@ -1033,7 +1053,7 @@ describe("applyAgentEdit", () => {
 			};
 
 			assert.throws(
-				() => applyAgentEdit(view, moveEdit, idGenerator),
+				() => applyAgentEdit(treeSchema, view, moveEdit, idGenerator),
 				validateUsageError(/The source node must be within an arrayNode/),
 			);
 		});
@@ -1047,6 +1067,7 @@ describe("applyAgentEdit", () => {
 				schema: [RootObjectWithNonArrayVectorField],
 			});
 			const view = asTreeViewAlpha(tree.viewWith(configWithMultipleVectors));
+			const treeSchema = getSimpleSchema(view.schema);
 
 			view.initialize({
 				singleVector: new Vector({ x: 1, y: 2, z: 3 }),
@@ -1067,7 +1088,7 @@ describe("applyAgentEdit", () => {
 			};
 
 			assert.throws(
-				() => applyAgentEdit(view, moveEdit, idGenerator),
+				() => applyAgentEdit(treeSchema, view, moveEdit, idGenerator),
 				validateUsageError(/The source node must be within an arrayNode/),
 			);
 		});
@@ -1082,6 +1103,7 @@ describe("applyAgentEdit", () => {
 			schema: [RootObjectWithMultipleVectorArrays],
 		});
 		const view = asTreeViewAlpha(tree.viewWith(configWithMultipleVectors));
+		const treeSchema = getSimpleSchema(view.schema);
 
 		view.initialize({
 			str: "testStr",
@@ -1097,7 +1119,7 @@ describe("applyAgentEdit", () => {
 		};
 
 		assert.throws(
-			() => applyAgentEdit(view, insertEdit, idGenerator),
+			() => applyAgentEdit(treeSchema, view, insertEdit, idGenerator),
 			validateUsageError(/No object with id "testObjectId" found in the tree/),
 		);
 
@@ -1108,7 +1130,7 @@ describe("applyAgentEdit", () => {
 		};
 
 		assert.throws(
-			() => applyAgentEdit(view, insertEdit2, idGenerator),
+			() => applyAgentEdit(treeSchema, view, insertEdit2, idGenerator),
 			validateUsageError(
 				/Pointer could not be resolved to a node in the tree \(note that primitives and Fluid handles are not supported\)./,
 			),
@@ -1123,7 +1145,7 @@ describe("applyAgentEdit", () => {
 			destination: { index: 0, array: ["testObjectId3", "vectors2"] },
 		};
 		assert.throws(
-			() => applyAgentEdit(view, moveEdit, idGenerator),
+			() => applyAgentEdit(treeSchema, view, moveEdit, idGenerator),
 			validateUsageError(/No object with id "testObjectId1" found in the tree/),
 		);
 
@@ -1134,7 +1156,7 @@ describe("applyAgentEdit", () => {
 		};
 
 		assert.throws(
-			() => applyAgentEdit(view, moveEdit2, idGenerator),
+			() => applyAgentEdit(treeSchema, view, moveEdit2, idGenerator),
 			validateUsageError(/No object with id "testObjectId1" found in the tree/),
 		);
 
@@ -1146,7 +1168,7 @@ describe("applyAgentEdit", () => {
 		};
 
 		assert.throws(
-			() => applyAgentEdit(view, modifyEdit, idGenerator),
+			() => applyAgentEdit(treeSchema, view, modifyEdit, idGenerator),
 			validateUsageError(/No object with id "testObjectId" found in the tree/),
 		);
 	});

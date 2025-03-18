@@ -23,7 +23,14 @@ import { z } from "zod";
 
 import { objectIdKey, typeField } from "./agentEditTypes.js";
 import { getFriendlySchemaName } from "./promptGeneration.js";
-import { fail, getOrCreate, mapIterable, tryGetSingleton, type MapGetSet } from "./utils.js";
+import {
+	fail,
+	getOrCreate,
+	hasAtLeastTwo,
+	mapIterable,
+	tryGetSingleton,
+	type MapGetSet,
+} from "./utils.js";
 
 const objectPointer = z
 	.string()
@@ -80,6 +87,7 @@ const insertionSchemaCache = new WeakMap<
 	SimpleTreeSchema,
 	ReturnType<typeof generateEditTypes>
 >();
+const insertionObjectCache = new WeakMap<SimpleNodeSchema, Zod.ZodTypeAny>();
 
 /**
  * TODO
@@ -90,7 +98,9 @@ export function generateEditTypesForPrompt(schema: SimpleTreeSchema): {
 	domainTypes: Record<string, Zod.ZodTypeAny>;
 	domainRoot: string;
 } {
-	return getOrCreate(promptSchemaCache, schema, () => generateEditTypes(schema, false));
+	return getOrCreate(promptSchemaCache, schema, () =>
+		generateEditTypes(schema, false, new Map()),
+	);
 }
 
 /**
@@ -100,7 +110,7 @@ export function generateEditTypesForInsertion(
 	schema: SimpleTreeSchema,
 ): Zod.ZodArray<Zod.ZodTypeAny> {
 	const { editTypes, editRoot } = getOrCreate(insertionSchemaCache, schema, () =>
-		generateEditTypes(schema, true),
+		generateEditTypes(schema, true, insertionObjectCache),
 	);
 	return editTypes[editRoot] as Zod.ZodArray<Zod.ZodTypeAny>;
 }
@@ -116,13 +126,13 @@ export function generateEditTypesForInsertion(
 function generateEditTypes(
 	schema: SimpleTreeSchema,
 	transformForParsing: boolean,
+	objectCache: MapGetSet<SimpleNodeSchema, Zod.ZodTypeAny>,
 ): {
 	editTypes: Record<string, Zod.ZodTypeAny>;
 	editRoot: string;
 	domainTypes: Record<string, Zod.ZodTypeAny>;
 	domainRoot: string;
 } {
-	const objectSchemaCache = new Map<SimpleNodeSchema, Zod.ZodTypeAny>();
 	const insertSet = new Set<string>();
 	const setFieldFieldSet = new Set<string>();
 	const setFieldTypeSet = new Set<string>();
@@ -136,34 +146,8 @@ function generateEditTypes(
 			setFieldTypeSet,
 			name,
 			transformForParsing,
-			objectSchemaCache,
+			objectCache,
 		);
-	}
-	function getType(allowedTypes: ReadonlySet<string>): Zod.ZodTypeAny {
-		switch (allowedTypes.size) {
-			case 0: {
-				return z.never();
-			}
-			case 1: {
-				return (
-					objectSchemaCache.get(
-						schema.definitions.get(
-							tryGetSingleton(allowedTypes) ?? fail("Expected singleton"),
-						) ?? fail("Unknown type"),
-					) ?? fail("Unknown type")
-				);
-			}
-			default: {
-				const types = Array.from(
-					allowedTypes,
-					(name) =>
-						objectSchemaCache.get(schema.definitions.get(name) ?? fail("Expected type")) ??
-						fail("Unknown type"),
-				);
-				assert(hasAtLeastTwo(types), 0xa7d /* Expected at least two types */);
-				return z.union(types);
-			}
-		}
 	}
 
 	const doesSchemaHaveArray = insertSet.size > 0;
@@ -173,31 +157,26 @@ function generateEditTypes(
 			type: z.literal("setField"),
 			object: describeProp(objectPointer, "The parent object"),
 			field: z.string().describe("The field name to set"),
-			value: transformForParsing
-				? getType(setFieldTypeSet)
-				: z
-						.any()
-						.describe(
-							"New content to set the field to. Must adhere to domain-specific schema.",
-						),
+			value: z
+				.unknown()
+				.describe("New content to set the field to. Must adhere to domain-specific schema."),
 		})
 		.describe(
 			"Set a field on an object to a specified value. Can be used set optional fields to undefined.",
 		);
 
-	const insertValue = transformForParsing ? getType(insertSet) : z.any();
-
 	const insertIntoArray = z
 		.object({
 			type: z.literal("insertIntoArray"),
 			position: arrayElementPointer.describe("Where to add the element(s)"),
-			value: insertValue
+			value: z
+				.unknown()
 				.optional()
 				.describe(
 					"New content to insert. The domain-specific schema must allow this type in the array.",
 				),
 			values: z
-				.array(insertValue)
+				.array(z.unknown())
 				.optional()
 				.describe(
 					"Array of values to add. The domain-specific schema must allow these types in the array.",
@@ -264,7 +243,7 @@ function generateEditTypes(
 			setFieldTypeSet,
 			t,
 			transformForParsing,
-			objectSchemaCache,
+			objectCache,
 		);
 	});
 
@@ -281,6 +260,23 @@ function generateEditTypes(
 	};
 }
 
+/**
+ * Creates a Zod type for the provided definition.
+ */
+export function getOrCreateTypeForInsertion(
+	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
+	definition: string,
+): Zod.ZodTypeAny {
+	return getOrCreateType(
+		definitionMap,
+		new Set<string>(),
+		new Set<string>(),
+		new Set<string>(),
+		definition,
+		true,
+		insertionObjectCache,
+	);
+}
 function getOrCreateType(
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
 	insertSet: Set<string>,
@@ -288,10 +284,10 @@ function getOrCreateType(
 	modifyTypeSet: Set<string>,
 	definition: string,
 	transformForParsing: boolean,
-	cache: MapGetSet<SimpleNodeSchema, Zod.ZodTypeAny>,
+	objectCache: MapGetSet<SimpleNodeSchema, Zod.ZodTypeAny>,
 ): Zod.ZodTypeAny {
 	const nodeSchema = definitionMap.get(definition) ?? fail("Unexpected definition");
-	return getOrCreate(cache, nodeSchema, () => {
+	return getOrCreate(objectCache, nodeSchema, () => {
 		switch (nodeSchema.kind) {
 			case NodeKind.Object: {
 				for (const [key, field] of Object.entries(nodeSchema.fields)) {
@@ -322,7 +318,7 @@ function getOrCreateType(
 									modifyTypeSet,
 									field,
 									transformForParsing,
-									cache,
+									objectCache,
 								),
 							];
 						})
@@ -371,7 +367,7 @@ function getOrCreateType(
 						modifyTypeSet,
 						nodeSchema.allowedTypes,
 						transformForParsing,
-						cache,
+						objectCache,
 					),
 				);
 				return transformForParsing
@@ -411,7 +407,7 @@ function getOrCreateTypeForField(
 	modifyTypeSet: Set<string>,
 	fieldSchema: SimpleFieldSchema,
 	transformForParsing: boolean,
-	cache: MapGetSet<SimpleNodeSchema, Zod.ZodTypeAny>,
+	objectCache: MapGetSet<SimpleNodeSchema, Zod.ZodTypeAny>,
 ): Zod.ZodTypeAny | undefined {
 	const getDefault = (fieldSchema.metadata as FieldSchemaMetadataAlpha)?.llmDefault;
 
@@ -424,7 +420,7 @@ function getOrCreateTypeForField(
 				modifyTypeSet,
 				fieldSchema.allowedTypes,
 				transformForParsing,
-				cache,
+				objectCache,
 			).describe(fieldSchema.metadata?.description ?? "");
 		}
 		case FieldKind.Optional: {
@@ -435,7 +431,7 @@ function getOrCreateTypeForField(
 				modifyTypeSet,
 				fieldSchema.allowedTypes,
 				transformForParsing,
-				cache,
+				objectCache,
 			)
 				.optional()
 				.describe(
@@ -491,10 +487,6 @@ function getTypeForAllowedTypes(
 			cache,
 		);
 	}
-}
-
-function hasAtLeastTwo<T>(array: T[]): array is [T, T, ...T[]] {
-	return array.length >= 2;
 }
 
 /**

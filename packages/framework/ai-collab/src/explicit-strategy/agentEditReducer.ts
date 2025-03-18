@@ -13,6 +13,7 @@ import type {
 	UnsafeUnknownSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/alpha";
+// eslint-disable-next-line import/order
 import {
 	Tree,
 	NodeKind,
@@ -27,9 +28,12 @@ import {
 	FieldKind,
 	type ImplicitAllowedTypes,
 	normalizeAllowedTypes,
+	type SimpleTreeSchema,
 } from "@fluidframework/tree/internal";
 
 // TODO: Expose these functions
+
+import { z } from "zod";
 
 import {
 	type TreeEdit,
@@ -46,7 +50,8 @@ import {
 	type RelativeArrayPointer,
 } from "./agentEditTypes.js";
 import type { IdGenerator } from "./idGenerator.js";
-import { fail, type View } from "./utils.js";
+import { getOrCreateTypeForInsertion } from "./typeGeneration.js";
+import { fail, hasAtLeastTwo, type View } from "./utils.js";
 
 // function populateDefaults(
 // 	json: JsonValue,
@@ -179,6 +184,7 @@ function getRangeIndices(
  * Manages applying the various types of {@link TreeEdit}'s to a a given {@link TreeNode}.
  */
 export function applyAgentEdit(
+	treeSchema: SimpleTreeSchema,
 	view: View,
 	treeEdit: TreeEdit,
 	idGenerator: IdGenerator,
@@ -197,7 +203,9 @@ export function applyAgentEdit(
 				treeEdit.values ?? [
 					treeEdit.value ?? failUsage(`Either "value" or "values" must be provided`),
 				]
-			).map((v) => constructTree([...parentNodeSchema.childTypes], v, idGenerator));
+			).map((v) =>
+				constructTree(treeSchema, [...parentNodeSchema.childTypes], v, idGenerator),
+			);
 			array.insertAt(index, ...(inserted as unknown as IterableTreeArrayContent<never>));
 
 			break;
@@ -254,7 +262,12 @@ export function applyAgentEdit(
 				);
 			}
 
-			const inserted = constructTree(fieldSchema.allowedTypes, treeEdit.value, idGenerator);
+			const inserted = constructTree(
+				treeSchema,
+				fieldSchema.allowedTypes,
+				treeEdit.value,
+				idGenerator,
+			);
 			// TODO: validation
 			// validator?.(inserted);
 			// TODO: Better typing
@@ -326,6 +339,39 @@ export function applyAgentEdit(
 }
 
 function constructTree(
+	treeSchema: SimpleTreeSchema,
+	allowedTypes: ImplicitAllowedTypes,
+	value: TreeContent,
+	idGenerator: IdGenerator,
+): TreeNode | TreeArrayNode | TreeLeafValue {
+	if (typeof value === "object" && value !== null) {
+		const normalizedAllowedTypes = [...normalizeAllowedTypes(allowedTypes)];
+		const zodAllowedTypes = normalizedAllowedTypes.map((s) =>
+			getOrCreateTypeForInsertion(treeSchema.definitions, s.identifier),
+		);
+
+		if (zodAllowedTypes[0] === undefined) {
+			throw new UsageError(`No types are allowed in this field`);
+		}
+
+		const zodParser = hasAtLeastTwo(zodAllowedTypes)
+			? z.union(zodAllowedTypes)
+			: zodAllowedTypes[0];
+
+		const parseResult = zodParser.safeParse(value);
+		if (!parseResult.success) {
+			throw new UsageError(
+				`Failed to parse "${JSON.stringify(value)}". Error: ${parseResult.error.message}`,
+			);
+		}
+
+		return constructTreeHelper(allowedTypes, parseResult.data as TreeContent, idGenerator);
+	}
+
+	return constructTreeHelper(allowedTypes, value, idGenerator);
+}
+
+function constructTreeHelper(
 	allowedTypes: ImplicitAllowedTypes,
 	value: TreeContent,
 	idGenerator: IdGenerator,
@@ -338,13 +384,13 @@ function constructTree(
 			const schema = normalizedAllowedTypes.find((s) => s.identifier === type);
 			if (schema === undefined) {
 				throw new UsageError(
-					`Type "${type}" is not allowed in array which only allows "${normalizedAllowedTypes.join(`", "`)}"`,
+					`Type "${type}" is not allowed in array which only allows "${normalizedAllowedTypes.map((t) => t.identifier).join(`", "`)}"`,
 				);
 			}
 
 			const childAllowedTypes = [...schema.childTypes];
 			const transformed = insert.map((val) => {
-				return constructTree(childAllowedTypes, val, idGenerator);
+				return constructTreeHelper(childAllowedTypes, val, idGenerator);
 			});
 
 			const constructed =
@@ -358,9 +404,9 @@ function constructTree(
 			const schema = normalizedAllowedTypes.find((s) => s.identifier === value[typeField]);
 			if (schema === undefined) {
 				throw new UsageError(
-					`Type "${value[typeField]}" is not allowed in a property which only allows "${normalizedAllowedTypes.join(
-						`", "`,
-					)}"`,
+					`Type "${value[typeField]}" is not allowed in a property which only allows "${normalizedAllowedTypes
+						.map((t) => t.identifier)
+						.join(`", "`)}"`,
 				);
 			}
 			if (!(schema instanceof ObjectNodeSchema)) {
@@ -382,7 +428,7 @@ function constructTree(
 					.map(([key, val]) => {
 						return [
 							key,
-							constructTree(
+							constructTreeHelper(
 								schema.fields.get(key)?.allowedTypes ??
 									fail("Expected field to have allowed types"),
 								val,

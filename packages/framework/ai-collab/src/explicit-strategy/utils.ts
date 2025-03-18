@@ -82,3 +82,10 @@ export function tryGetSingleton<T>(set: ReadonlySet<T>): T | undefined {
 		}
 	}
 }
+
+/**
+ * Does it have at least two elements?
+ */
+export function hasAtLeastTwo<T>(array: T[]): array is [T, T, ...T[]] {
+	return array.length >= 2;
+}
