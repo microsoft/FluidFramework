@@ -37,18 +37,26 @@ class BlobCollection implements IBlobCollection {
 		private readonly sharedMap: ISharedMap,
 		private readonly uploadArrayBuffer: UploadArrayBufferFn,
 	) {
-		this.sharedMap.on("valueChanged", (changed: IValueChanged) => {
-			const handle = this.sharedMap.get(changed.key);
+		const trackBlob = (key: string) => {
+			const handle = this.sharedMap.get(key);
 			handle.get().then((arrayBuffer: ArrayBufferLike) => {
 				this.blobs.push({
-					id: changed.key,
+					id: key,
 					blob: new Blob([arrayBuffer]),
 				});
 				// Sort in case timestamps disagree with map insertion order
 				this.blobs.sort((a, b) => a.id.localeCompare(b.id, "en", { sensitivity: "base" }));
 				this._events.emit("blobsChanged");
 			});
+		};
+		// Watch for incoming new blobs
+		this.sharedMap.on("valueChanged", (changed: IValueChanged) => {
+			trackBlob(changed.key);
 		});
+		// Track the blobs that are already in the map
+		for (const key of this.sharedMap.keys()) {
+			trackBlob(key);
+		}
 	}
 
 	public readonly getBlobs = () => {
