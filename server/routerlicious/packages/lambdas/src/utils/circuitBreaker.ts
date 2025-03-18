@@ -111,9 +111,9 @@ export class LambdaCircuitBreaker {
 		};
 		if (this.circuitBreakerMetric) {
 			this.circuitBreakerMetric?.setProperties(metricProperties);
-			this.circuitBreakerMetric?.success("Circuit breaker shutdown due to lambda close"); // could be due to rebalancing
+			this.circuitBreakerMetric?.success("Circuit breaker shutdown"); // could be due to rebalancing
 		} else {
-			Lumberjack.info("Circuit breaker shutdown due to lambda close", metricProperties);
+			Lumberjack.info("Circuit breaker shutdown", metricProperties);
 		}
 	}
 
