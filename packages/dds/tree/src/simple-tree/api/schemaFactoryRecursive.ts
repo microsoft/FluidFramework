@@ -7,7 +7,6 @@ import type { RestrictiveStringRecord } from "../../util/index.js";
 import type { InsertableObjectFromSchemaRecord } from "../objectNode.js";
 
 import {
-	type AllowedTypes,
 	type FieldKind,
 	type FieldProps,
 	createFieldSchema,
@@ -33,10 +32,11 @@ export function createFieldSchemaUnsafe<
 	props: FieldProps | undefined,
 ): FieldSchemaUnsafe<Kind, Types> {
 	// At runtime, we still want this to be a FieldSchema instance, but we can't satisfy its extends clause, so just return it as an FieldSchemaUnsafe
-	return createFieldSchema(kind, allowedTypes as AllowedTypes, props) as FieldSchemaUnsafe<
-		Kind,
-		Types
-	>;
+	return createFieldSchema(
+		kind,
+		allowedTypes as ImplicitAllowedTypes,
+		props,
+	) as FieldSchemaUnsafe<Kind, Types>;
 }
 
 /**
