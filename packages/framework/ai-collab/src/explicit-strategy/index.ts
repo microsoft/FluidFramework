@@ -478,6 +478,8 @@ export async function clod(
 		log += `## Result${retryState.errors.length > 0 ? ` Attempt ${retryState.errors.length + 1}` : ""}\n\n\`\`\`JSON\n${JSON.stringify(toolUse.input, undefined, 2)}\n\`\`\`\n\n`;
 
 		const branch = options.treeView.fork();
+		const idGenerator2 = new IdGenerator();
+		idGenerator2.assignIds(branch.root);
 		const parse = wrapper.safeParse(toolUse.input);
 		if (parse.success) {
 			const edits = parse.data.edits as TreeEdit[];
@@ -486,12 +488,12 @@ export async function clod(
 			try {
 				while (editIndex < edits.length) {
 					const edit = edits[editIndex] ?? fail("Expected edit");
-					applyAgentEdit(simpleSchema, branch, edit, idGenerator, options.validator);
+					applyAgentEdit(simpleSchema, branch, edit, idGenerator2, options.validator);
 					log += `### Applied Edit ${editIndex + 1}\n\n`;
 					log += `The new state of the tree is:\n\n`;
 					log += `${
-						options.toString?.(options.treeNode) ??
-						`\`\`\`JSON\n${JSON.stringify(options.treeNode, undefined, 2)}\n\`\`\``
+						options.toString?.(branch.root) ??
+						`\`\`\`JSON\n${JSON.stringify(branch.root, undefined, 2)}\n\`\`\``
 					}\n\n`;
 					editIndex += 1;
 				}
@@ -501,9 +503,9 @@ export async function clod(
 			} catch (error: unknown) {
 				log += `### Error Applying Edit ${editIndex + 1}\n\n`;
 				log += `\`${(error as Error)?.message}\`\n\n`;
-				log += `LLM will be queried again.\n\n`;
 				branch.dispose();
 				if (error instanceof UsageError) {
+					log += `LLM will be queried again.\n\n`;
 					retryState.errors.push({
 						editIndex,
 						error,

@@ -135,9 +135,11 @@ export function getEditingSystemPrompt(
 
 Edits are JSON objects that conform to the schema described below. You produce an array of edits where each edit ${topLevelEditWrapperDescription}.
 When creating new objects for \`${insertIntoArrayType}\` or \`${setFieldType}\`,
-you may create an ID and put it in the \`${objectIdKey}\` property if you want to refer to the object in a later edit. For example, if you want to insert a new object into an array and (in a subsequent edit)
-move another piece of content to after the newly inserted one, you can use the ID of the newly inserted object in the \`${"MoveArrayElement" satisfies Capitalize<MoveArrayElement["type"]>}\` edit.
-For a \`${setFieldType}\` or \`${insertIntoArrayType}\` edit, you might insert an object into a location where it is ambiguous what the type of the object is from the data alone. In that case, supply the type in the \`${typeField}\` property of the object with a value that is the typescript type name of that object.
+you may create an ID and put it in the \`${objectIdKey}\` property if you want to refer to the object in a later edit.
+For example, if you want to insert a new object into an array and (in a subsequent edit) move another piece of content to after the newly inserted one, you can use the ID of the newly inserted object in the \`${"MoveArrayElement" satisfies Capitalize<MoveArrayElement["type"]>}\` edit.
+New IDs must be unique, i.e. a new object cannot have the same ID as any object that has existed before.
+For a \`${setFieldType}\` or \`${insertIntoArrayType}\` edit, you might insert an object into a location where it is ambiguous what the type of the object is from the data alone.
+In that case, supply the type in the \`${typeField}\` property of the object with a value that is the typescript type name of that object.
 
 The schema definitions for an edit are:
 

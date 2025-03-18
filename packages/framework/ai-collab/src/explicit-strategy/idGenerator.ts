@@ -4,6 +4,7 @@
  */
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { Tree, NodeKind } from "@fluidframework/tree/internal";
 import type {
 	TreeNode,
@@ -29,8 +30,8 @@ export class IdGenerator {
 		if (existingID !== undefined) {
 			return existingID;
 		}
-		if (newId !== undefined) {
-			assert(!this.idToNodeMap.has(newId), "ID already exists");
+		if (newId !== undefined && this.idToNodeMap.has(newId)) {
+			throw new UsageError(`ID already exists: ${newId}. Do not reuse IDs.`);
 		}
 
 		const schema = Tree.schema(node).identifier;
