@@ -28,6 +28,7 @@ import type {
 	TreeArrayNodeUnsafe,
 	TreeMapNodeUnsafe,
 	Unenforced,
+	UnenforcedImplicitAllowedTypes,
 } from "./typesUnsafe.js";
 import { mapSchema, type MapNodeInsertableData, type TreeMapNode } from "../mapNode.js";
 import { arraySchema, type TreeArrayNode } from "../arrayNode.js";
@@ -165,7 +166,7 @@ export class SchemaFactoryAlpha<
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public override mapRecursive<
 		Name extends TName,
-		const T extends Unenforced<ImplicitAllowedTypes>,
+		const T extends UnenforcedImplicitAllowedTypes,
 		const TCustomMetadata = unknown,
 	>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>) {
 		return this.mapAlpha(
@@ -200,7 +201,7 @@ export class SchemaFactoryAlpha<
 	 *
 	 * @example
 	 * ```typescript
-	 * class NamedArray extends factory.array("name", factory.number) {}
+	 * class NamedArray extends factory.arrayAlpha("name", factory.number) {}
 	 * ```
 	 */
 	public arrayAlpha<
@@ -230,7 +231,7 @@ export class SchemaFactoryAlpha<
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public override arrayRecursive<
 		const Name extends TName,
-		const T extends Unenforced<ImplicitAllowedTypes>,
+		const T extends UnenforcedImplicitAllowedTypes,
 		const TCustomMetadata = unknown,
 	>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>) {
 		return this.arrayAlpha(

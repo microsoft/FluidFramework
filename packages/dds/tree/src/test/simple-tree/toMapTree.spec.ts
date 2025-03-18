@@ -36,6 +36,7 @@ import {
 	SchemaFactory,
 	stringSchema,
 	type TreeNodeSchema,
+	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
 import {
 	type ContextualFieldProvider,
@@ -131,11 +132,13 @@ describe("toMapTree", () => {
 	it("recursive", () => {
 		const schemaFactory = new SchemaFactory("test");
 		class Foo extends schemaFactory.objectRecursive("Foo", {
-			x: schemaFactory.optionalRecursive(() => Bar),
+			x: schemaFactory.optionalRecursive([() => Bar]),
 		}) {}
+		type _checkFoo = ValidateRecursiveSchema<typeof Foo>;
 		class Bar extends schemaFactory.objectRecursive("Bar", {
-			y: schemaFactory.optionalRecursive(() => Foo),
+			y: schemaFactory.optionalRecursive(Foo),
 		}) {}
+		type _checkBar = ValidateRecursiveSchema<typeof Bar>;
 
 		const actual = mapTreeFromNodeData(
 			{
@@ -181,8 +184,9 @@ describe("toMapTree", () => {
 
 		let Bar: TreeNodeSchema;
 		class Foo extends schemaFactory.objectRecursive("Foo", {
-			x: schemaFactory.optionalRecursive(() => Bar),
+			x: schemaFactory.optionalRecursive([() => Bar]),
 		}) {}
+		type _checkFoo = ValidateRecursiveSchema<typeof Foo>;
 
 		const tree = {
 			x: {

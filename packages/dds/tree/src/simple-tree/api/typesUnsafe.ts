@@ -151,6 +151,17 @@ export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<Implicit
 export type AllowedTypesUnsafe = readonly LazyItem<TreeNodeSchemaUnsafe>[];
 
 /**
+ * {@link Unenforced} version of {@link ImplicitAllowedTypes}.
+ * @remarks
+ * Do not use this type directly: it is only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @system @public
+ */
+export type UnenforcedImplicitAllowedTypes =
+	| TreeNodeSchemaUnsafe
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
+	| readonly LazyItem<Unenforced<TreeNodeSchema>>[];
+
+/**
  * {@link Unenforced} version of {@link TreeNodeFromImplicitAllowedTypes}.
  * @remarks
  * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.

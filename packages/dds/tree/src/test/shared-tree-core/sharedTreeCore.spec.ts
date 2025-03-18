@@ -59,6 +59,7 @@ import {
 
 import { createTree, createTreeSharedObject, TestSharedTreeCore } from "./utils.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
+// import { SchemaFactory, TreeViewConfiguration, type FieldKind, type FieldSchemaUnsafe, type NodeKind, type TreeNodeSchemaNonClass } from "../../simple-tree/index.js";
 import { mockSerializer } from "../mockSerializer.js";
 
 const enableSchemaValidation = true;
@@ -244,6 +245,10 @@ describe("SharedTreeCore", () => {
 		class TestNode extends sf.objectRecursive("test node", {
 			child: sf.optionalRecursive([() => TestNode, sf.number]),
 		}) {}
+
+		// type X = FieldSchemaUnsafe<FieldKind.Optional, readonly [() => typeof TestNode, TreeNodeSchemaNonClass<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number, true, unknown, never, unknown>]>;
+		// type Y = X extends { kind: unknown } ? true : false;
+		// type Z = keyof (typeof TestNode);// ["identifier"];
 
 		const tree2 = await factory.load(
 			dataStoreRuntime2,

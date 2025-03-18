@@ -108,6 +108,7 @@ export {
 	type TreeNodeSchemaClassUnsafe,
 	type TreeNodeSchemaUnsafe,
 	type AllowedTypesUnsafe,
+	type UnenforcedImplicitAllowedTypes,
 	type TreeNodeSchemaNonClassUnsafe,
 	type InsertableTreeNodeFromAllowedTypesUnsafe,
 	type TreeViewAlpha,
