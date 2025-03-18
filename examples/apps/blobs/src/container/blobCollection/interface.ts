@@ -22,17 +22,19 @@ export interface IBlobRecord {
  */
 export interface IBlobCollection {
 	/**
-	 * Object that events for changes in the blob map.
+	 * Object that events for changes in the blob collection.
 	 */
 	readonly events: IEventProvider<IBlobCollectionEvents>;
 
 	/**
-	 * Get all the blobs in the map.
+	 * Get all the blobs in the collection.
 	 */
 	readonly getBlobs: () => IBlobRecord[];
 
 	/**
-	 * Add a blob to the map.
+	 * Add a blob to the collection.  Although this method is synchronous, the addition
+	 * happens asynchronously.  The "blobsChanged" event will fire after the addition
+	 * completes.
 	 */
 	readonly addBlob: (blob: Blob) => void;
 }

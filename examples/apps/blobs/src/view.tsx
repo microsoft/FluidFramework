@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import React, { type FC, type ReactElement, useEffect, useState } from "react";
+import React, { type FC, useEffect, useState } from "react";
 
 import { IBlobCollection } from "./container/index.js";
 
 const randInt = (max: number) => Math.floor(Math.random() * (max + 1));
 
+// This creates an HTML Canvas element, draws some random circles into it, and returns a
+// Blob representing that image.
 const drawAPrettyPictureIntoBlob = async () => {
 	const canvasElm = document.createElement("canvas");
 	canvasElm.width = 200;
@@ -22,6 +24,7 @@ const drawAPrettyPictureIntoBlob = async () => {
 		ctx.arc(randInt(180) + 10, randInt(180) + 10, randInt(90) + 10, 0, 2 * Math.PI);
 		ctx.stroke();
 	}
+	// Annoyingly, canvas.toBlob is a callback-based API rather than returning a Promise.
 	return new Promise<Blob>((resolve, reject) => {
 		canvasElm.toBlob((blob) => {
 			if (blob !== null) {
@@ -40,11 +43,11 @@ export interface IBlobCollectionViewProps {
 export const BlobCollectionView: FC<IBlobCollectionViewProps> = ({
 	blobCollection,
 }: IBlobCollectionViewProps) => {
-	// TODO Creating a unique array just to ensure we get re-renders
 	const [blobs, setBlobs] = useState([...blobCollection.getBlobs()]);
 
 	useEffect(() => {
 		const onBlobsChanged = () => {
+			// Clone the array into a new reference to ensure we re-render.
 			setBlobs([...blobCollection.getBlobs()]);
 		};
 		blobCollection.events.on("blobsChanged", onBlobsChanged);
@@ -53,11 +56,15 @@ export const BlobCollectionView: FC<IBlobCollectionViewProps> = ({
 		};
 	}, [blobCollection]);
 
-	const blobViews: ReactElement[] = [];
-	for (const { id, blob } of blobs) {
-		const imgUrl = URL.createObjectURL(blob);
-		blobViews.push(<img key={id} src={imgUrl}></img>);
-	}
+	const blobViews = blobs.map(({ id, blob }) => (
+		<img
+			key={id}
+			// Note that since we create a new URL on every re-render the blobs' URLs will
+			// appear to change on every re-render.  A little noisy, but not a real problem.
+			src={URL.createObjectURL(blob)}
+			style={{ border: "1px solid black", margin: "10px" }}
+		></img>
+	));
 
 	const addBlob = () => {
 		drawAPrettyPictureIntoBlob().then(blobCollection.addBlob).catch(console.error);

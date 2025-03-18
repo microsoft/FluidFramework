@@ -26,6 +26,10 @@ type UploadArrayBufferFn = (blob: ArrayBufferLike) => Promise<IFluidHandle<Array
  * The BlobCollection is our data object that implements the IBlobCollection interface.
  */
 class BlobCollection implements IBlobCollection {
+	// The blobs member mirrors the contents of the sharedMap (pending the fetching of the Blobs).
+	// As a result it lags the sharedMap slightly (as the Blobs are fetched) but in exchange it provides
+	// synchronous access to the Blobs, which is convenient at the view layer.  We keep it sorted by
+	// id so that all clients observe a consistent ordering.
 	private readonly blobs: IBlobRecord[] = [];
 
 	private readonly _events = new TypedEventEmitter<IBlobCollectionEvents>();
@@ -35,6 +39,7 @@ class BlobCollection implements IBlobCollection {
 
 	public constructor(
 		private readonly sharedMap: ISharedMap,
+		// We can take a partially applied function for uploading blobs rather than the whole IFluidDataStoreRuntime.
 		private readonly uploadArrayBuffer: UploadArrayBufferFn,
 	) {
 		const trackBlob = (key: string) => {
@@ -42,6 +47,7 @@ class BlobCollection implements IBlobCollection {
 			handle.get().then((arrayBuffer: ArrayBufferLike) => {
 				this.blobs.push({
 					id: key,
+					// Blobs in Fluid are retrieved as ArrayBuffers, this translates it back to a Blob
 					blob: new Blob([arrayBuffer]),
 				});
 				// Sort in case timestamps disagree with map insertion order
@@ -64,6 +70,9 @@ class BlobCollection implements IBlobCollection {
 	};
 
 	public readonly addBlob = (blob: Blob) => {
+		// IFluidDataStoreRuntime.uploadBlob takes an ArrayBufferLike, but this data store wants
+		// to expose an interface that uses Blob (because that is convenient to use with Canvas).
+		// This function translates from Blob to ArrayBuffer before uploading.
 		blob
 			.arrayBuffer()
 			.then(this.uploadArrayBuffer)
