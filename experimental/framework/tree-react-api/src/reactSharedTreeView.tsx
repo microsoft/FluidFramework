@@ -4,8 +4,8 @@
  */
 
 import {
+	PureDataObjectFactory,
 	TreeDataObject,
-	TreeDataObjectFactory,
 	createDataObjectKind,
 } from "@fluidframework/aqueduct/internal";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
@@ -62,10 +62,12 @@ export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(
 	class SchemaAwareTreeDataObject extends ReactTreeDataObject<TSchema> {
 		public override readonly config = treeConfiguration;
 
-		public static readonly factory = new TreeDataObjectFactory<
-			TSchema,
-			ReactTreeDataObject<TSchema>
-		>(`TreeDataObject`, SchemaAwareTreeDataObject, [SharedTree.getFactory()], {});
+		public static readonly factory = new PureDataObjectFactory<ReactTreeDataObject<TSchema>>(
+			`TreeDataObject`,
+			SchemaAwareTreeDataObject,
+			[SharedTree.getFactory()],
+			{},
+		);
 
 		// Populate tree with initial data on document create
 		protected override async initializingFirstTime(): Promise<void> {
