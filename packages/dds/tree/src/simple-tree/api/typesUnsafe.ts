@@ -154,6 +154,10 @@ export type AllowedTypesUnsafe = readonly LazyItem<TreeNodeSchemaUnsafe>[];
  * {@link Unenforced} version of {@link ImplicitAllowedTypes}.
  * @remarks
  * Do not use this type directly: it is only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @privateRemarks
+ * This is similar to `Unenforced<ImplicitAllowedTypes>` in that it avoids constraining the schema
+ * (which is necessary to avoid breaking recursive types),
+ * but is superior from a safety perspective because it constrains the structure containing the schema.
  * @system @public
  */
 export type UnenforcedImplicitAllowedTypes =

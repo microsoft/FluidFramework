@@ -59,7 +59,6 @@ import {
 
 import { createTree, createTreeSharedObject, TestSharedTreeCore } from "./utils.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
-// import { SchemaFactory, TreeViewConfiguration, type FieldKind, type FieldSchemaUnsafe, type NodeKind, type TreeNodeSchemaNonClass } from "../../simple-tree/index.js";
 import { mockSerializer } from "../mockSerializer.js";
 
 const enableSchemaValidation = true;
