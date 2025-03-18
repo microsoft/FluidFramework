@@ -99,7 +99,7 @@ describe("MergeTree", () => {
 						props: { propertySource: "local" },
 					},
 					mergeTree.localPerspective,
-					mergeTree.mintNextLocalOperationStamp(),
+					mergeTree.collabWindow.mintNextLocalOperationStamp(),
 					undefined as never,
 				);
 
@@ -129,7 +129,7 @@ describe("MergeTree", () => {
 						annotateEnd,
 						props,
 						mergeTree.localPerspective,
-						mergeTree.mintNextLocalOperationStamp(),
+						mergeTree.collabWindow.mintNextLocalOperationStamp(),
 						undefined as never,
 					);
 				});
@@ -151,7 +151,7 @@ describe("MergeTree", () => {
 							props: { secondProperty: "local" },
 						},
 						mergeTree.localPerspective,
-						mergeTree.mintNextLocalOperationStamp(),
+						mergeTree.collabWindow.mintNextLocalOperationStamp(),
 						undefined as never,
 					);
 
@@ -186,7 +186,7 @@ describe("MergeTree", () => {
 						annotateEnd,
 						secondChangeProps,
 						mergeTree.localPerspective,
-						mergeTree.mintNextLocalOperationStamp(),
+						mergeTree.collabWindow.mintNextLocalOperationStamp(),
 						undefined as never,
 					);
 
@@ -201,7 +201,7 @@ describe("MergeTree", () => {
 						annotateEnd,
 						splitOnlyProps,
 						mergeTree.localPerspective,
-						mergeTree.mintNextLocalOperationStamp(),
+						mergeTree.collabWindow.mintNextLocalOperationStamp(),
 						undefined as never,
 					);
 
@@ -391,7 +391,7 @@ describe("MergeTree", () => {
 						annotateEnd,
 						props2,
 						mergeTree.localPerspective,
-						mergeTree.mintNextLocalOperationStamp(),
+						mergeTree.collabWindow.mintNextLocalOperationStamp(),
 						undefined as never,
 					);
 
@@ -408,7 +408,7 @@ describe("MergeTree", () => {
 						annotateEnd,
 						props3,
 						mergeTree.localPerspective,
-						mergeTree.mintNextLocalOperationStamp(),
+						mergeTree.collabWindow.mintNextLocalOperationStamp(),
 						undefined as never,
 					);
 
@@ -473,7 +473,7 @@ describe("MergeTree", () => {
 							props: { secondSource: "local2" },
 						},
 						mergeTree.localPerspective,
-						mergeTree.mintNextLocalOperationStamp(),
+						mergeTree.collabWindow.mintNextLocalOperationStamp(),
 						undefined as never,
 					);
 
@@ -562,7 +562,7 @@ describe("MergeTree", () => {
 							props: { propertySource: "local" },
 						},
 						mergeTree.localPerspective,
-						mergeTree.mintNextLocalOperationStamp(),
+						mergeTree.collabWindow.mintNextLocalOperationStamp(),
 						undefined as never,
 					);
 
@@ -591,7 +591,7 @@ describe("MergeTree", () => {
 						annotateEnd,
 						props,
 						mergeTree.localPerspective,
-						mergeTree.mintNextLocalOperationStamp(),
+						mergeTree.collabWindow.mintNextLocalOperationStamp(),
 						undefined as never,
 					);
 
@@ -624,7 +624,7 @@ describe("MergeTree", () => {
 						annotateEnd,
 						props,
 						mergeTree.localPerspective,
-						mergeTree.mintNextLocalOperationStamp(),
+						mergeTree.collabWindow.mintNextLocalOperationStamp(),
 						undefined as never,
 					);
 				});
@@ -637,7 +637,7 @@ describe("MergeTree", () => {
 							props: { propertySource: "local2", secondProperty: "local" },
 						},
 						mergeTree.localPerspective,
-						mergeTree.mintNextLocalOperationStamp(),
+						mergeTree.collabWindow.mintNextLocalOperationStamp(),
 						undefined as never,
 					);
 
@@ -716,7 +716,7 @@ describe("MergeTree", () => {
 							props: { secondSource: "local2" },
 						},
 						mergeTree.localPerspective,
-						mergeTree.mintNextLocalOperationStamp(),
+						mergeTree.collabWindow.mintNextLocalOperationStamp(),
 						undefined as never,
 					);
 

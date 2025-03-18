@@ -7,7 +7,12 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
 import { IAttributionCollection } from "./attributionCollection.js";
-import { LocalClientId, NonCollabClient, UnassignedSequenceNumber } from "./constants.js";
+import {
+	LocalClientId,
+	NonCollabClient,
+	UnassignedSequenceNumber,
+	UniversalSequenceNumber,
+} from "./constants.js";
 import { LocalReferenceCollection, type LocalReferencePosition } from "./localReference.js";
 import { TrackingGroupCollection } from "./mergeTreeTracking.js";
 import { IJSONSegment, IMarkerDef, ReferenceType } from "./ops.js";
@@ -669,11 +674,23 @@ export class CollaborationWindow {
 	 */
 	localSeq = 0;
 
-	loadFrom(a: CollaborationWindow): void {
+	public loadFrom(a: CollaborationWindow): void {
 		this.clientId = a.clientId;
 		this.collaborating = a.collaborating;
 		this.minSeq = a.minSeq;
 		this.currentSeq = a.currentSeq;
+	}
+
+	public mintNextLocalOperationStamp(): OperationStamp {
+		if (this.collaborating) {
+			this.localSeq++;
+		}
+
+		return {
+			seq: this.collaborating ? UnassignedSequenceNumber : UniversalSequenceNumber,
+			clientId: this.clientId,
+			localSeq: this.localSeq,
+		};
 	}
 }
 

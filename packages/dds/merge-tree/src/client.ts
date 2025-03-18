@@ -566,7 +566,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		sequencedMessage: ISequencedDocumentMessage | undefined,
 	): OperationStamp {
 		if (!sequencedMessage) {
-			return this._mergeTree.mintNextLocalOperationStamp();
+			return this.getCollabWindow().mintNextLocalOperationStamp();
 		}
 
 		const { sequenceNumber: seq } = sequencedMessage;

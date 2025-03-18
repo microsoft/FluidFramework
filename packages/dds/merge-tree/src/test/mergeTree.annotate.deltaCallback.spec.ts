@@ -53,7 +53,7 @@ describe("MergeTree", () => {
 					props: { foo: "bar" },
 				},
 				mergeTree.localPerspective,
-				mergeTree.mintNextLocalOperationStamp(),
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
 				undefined as never,
 			);
 
@@ -102,7 +102,7 @@ describe("MergeTree", () => {
 					props: { foo: "bar" },
 				},
 				mergeTree.localPerspective,
-				mergeTree.mintNextLocalOperationStamp(),
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
 				undefined as never,
 			);
 
@@ -136,7 +136,7 @@ describe("MergeTree", () => {
 					props: { foo: "bar" },
 				},
 				mergeTree.localPerspective,
-				mergeTree.mintNextLocalOperationStamp(),
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
 				undefined as never,
 			);
 
@@ -170,7 +170,7 @@ describe("MergeTree", () => {
 					props: { foo: "bar" },
 				},
 				mergeTree.localPerspective,
-				mergeTree.mintNextLocalOperationStamp(),
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
 				undefined as never,
 			);
 

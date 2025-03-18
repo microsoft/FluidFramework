@@ -612,20 +612,6 @@ export class MergeTree {
 		this.attributionPolicy = options?.attribution?.policyFactory?.();
 	}
 
-	public mintNextLocalOperationStamp(): OperationStamp {
-		if (this.collabWindow.collaborating) {
-			this.collabWindow.localSeq++;
-		}
-
-		return {
-			seq: this.collabWindow.collaborating
-				? UnassignedSequenceNumber
-				: UniversalSequenceNumber,
-			clientId: this.collabWindow.clientId,
-			localSeq: this.collabWindow.localSeq,
-		};
-	}
-
 	private _root: IRootMergeBlock;
 	public get root(): IRootMergeBlock {
 		return this._root;
