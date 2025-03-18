@@ -1,5 +1,57 @@
 # @fluidframework/container-runtime
 
+## 2.30.0
+
+### Minor Changes
+
+-   Unnecessary exports are now removed from container-runtime ([#23981](https://github.com/microsoft/FluidFramework/pull/23981)) [74896b92e8](https://github.com/microsoft/FluidFramework/commit/74896b92e8878911e9e4874a8ac45e659a293110)
+
+    The following types in the @fluidframework/container-runtime are now removed. These types are unnecessary for external users of this package.
+
+    -   currentDocumentVersionSchema
+    -   DeletedResponseHeaderKey
+    -   DocumentSchemaValueType
+    -   DocumentsSchemaController
+    -   GCFeatureMatrix
+    -   GCNodeType
+    -   GCVersion
+    -   IBlobManagerLoadInfo
+    -   ICancellableSummarizerController
+    -   ICancellationToken
+    -   IConnectableRuntime
+    -   IContainerRuntimeMetadata
+    -   ICreateContainerMetadata
+    -   IDocumentSchema
+    -   IDocumentSchemaChangeMessage
+    -   IDocumentSchemaCurrent
+    -   IDocumentSchemaFeatures
+    -   IGCMetadata
+    -   IGCStats
+    -   IMarkPhaseStats
+    -   IRefreshSummaryAckOptions
+    -   ISerializedElection
+    -   ISubmitSummaryOptions
+    -   ISummarizerInternalsProvider
+    -   ISummarizerRuntime
+    -   ISummaryCancellationToken
+    -   ISummaryMetadataMessage
+    -   ISweepPhaseStats
+    -   Summarizer
+
+-   The process and processDocumentSchemaOp functions have been removed ([#24018](https://github.com/microsoft/FluidFramework/pull/24018)) [bc35d543d5](https://github.com/microsoft/FluidFramework/commit/bc35d543d58c7e4bf28944b09d645cc26bf28a29)
+
+    `process` has been replaced by `processMessages` from the following:
+
+    -   `FluidDataStoreRuntime`
+    -   `IDeltaHandler`
+    -   `IFluidDataStoreChannel`
+    -   `MockFluidDataStoreRuntime`
+    -   `MockDeltaConnection`
+
+    `processDocumentSchemaOp` has been replaced by `processDocumentSchemaMessages` from `DocumentsSchemaController`.
+
+    See the [deprecation release note](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.5.0#user-content-the-process-function-on-ifluiddatastorechannel-ideltahandler-mockfluiddatastoreruntime-and-mockdeltaconnection-is-now-deprecated-22840) for more details.
+
 ## 2.23.0
 
 Dependency updates only.

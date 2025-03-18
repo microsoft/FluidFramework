@@ -1394,6 +1394,9 @@ importers:
       '@fluidframework/server-services-telemetry':
         specifier: workspace:~
         version: link:../services-telemetry
+      '@fluidframework/server-services-utils':
+        specifier: workspace:~
+        version: link:../services-utils
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
