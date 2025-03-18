@@ -2,6 +2,8 @@
 
 This example demonstrates how to create/upload blobs in a variety of scenarios, including before/after attach.
 
+WARNING: Blobs are not officially supported on Azure Fluid Relay/Tinylicious/Routerlicious.
+
 <!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_APP_README_HEADER:usesTinylicious=TRUE) -->
 
 <!-- prettier-ignore-start -->
