@@ -1145,7 +1145,7 @@ describe("Matrix1", () => {
 				runGCTests(GCSharedMatrixProvider);
 			});
 
-			describe.only("inserting and deleting many cells", () => {
+			describe("inserting and deleting many cells", () => {
 				it("is connected", () => {
 					const matrix = createConnectedMatrix(
 						"foo",
@@ -1153,7 +1153,7 @@ describe("Matrix1", () => {
 						isSetCellPolicyFWW,
 					);
 
-					for (let i = 0; i < 5000; i++) {
+					for (let i = 0; i < 10_000; i++) {
 						matrix.insertCols(0, 1);
 						matrix.insertRows(0, 1);
 						matrix.removeCols(0, 1);
@@ -1167,7 +1167,7 @@ describe("Matrix1", () => {
 						matrix.switchSetCellPolicy();
 					}
 
-					for (let i = 0; i <= 5000; i++) {
+					for (let i = 0; i <= 10_000; i++) {
 						matrix.insertCols(0, 1);
 						matrix.insertRows(0, 1);
 						matrix.removeCols(0, 1);

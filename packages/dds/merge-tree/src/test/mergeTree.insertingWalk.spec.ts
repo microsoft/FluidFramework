@@ -347,4 +347,59 @@ describe("MergeTree.insertingWalk", () => {
 
 		assert.deepStrictEqual(segments, ["G", "F", "E", "(D)", "(C)", "(B)", "(A)", "x", "0"]);
 	});
+
+	it("avoids calling blockUpdate excessively", () => {
+		let seq = 1;
+		const mergeTree = new MergeTree();
+		mergeTree.startCollaboration(localClientId, 0, seq);
+		for (const char of "hello world".split("")) {
+			mergeTree.insertSegments(
+				mergeTree.getLength(mergeTree.localPerspective),
+				[TextSegment.make(char)],
+				mergeTree.localPerspective,
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
+				undefined /* opArgs */,
+			);
+		}
+
+		const originalBlockUpdate = mergeTree["blockUpdate"].bind(mergeTree);
+		const blockUpdateCallLog: string[] = [];
+		mergeTree["blockUpdate"] = (block) => {
+			// This is called in the middle of updating lots of merge-tree bookkeeping, so we don't want to do too much
+			// advanced stuff here. However, walking the tree and concatenating all the text should be safe.
+			let text = "";
+			walkAllChildSegments(block, (seg) => {
+				if (TextSegment.is(seg)) {
+					text += seg.text;
+				}
+				return true;
+			});
+
+			blockUpdateCallLog.push(text);
+			originalBlockUpdate(block);
+		};
+
+		mergeTree.insertSegments(
+			0,
+			[TextSegment.make("Ot")],
+			mergeTree.localPerspective,
+			mergeTree.collabWindow.mintNextLocalOperationStamp(),
+			undefined /* opArgs */,
+		);
+
+		assert.deepEqual(blockUpdateCallLog, ["Othell", "Othello world"]);
+
+		blockUpdateCallLog.length = 0;
+
+		mergeTree.markRangeRemoved(
+			0,
+			"Othello world".length,
+			mergeTree.localPerspective,
+			mergeTree.collabWindow.mintNextLocalOperationStamp(),
+			undefined as never,
+		);
+
+		// The log ignores presence of segments. The important thing is that we only have one entry per block here.
+		assert.deepEqual(blockUpdateCallLog, ["Othell", "o world", "Othello world"]);
+	});
 });
