@@ -22,7 +22,7 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 // @internal
 export function buildGitTreeHierarchy(flatTree: git.ITree, blobsShaToPathCache?: Map<string, string>, removeAppTreePrefix?: boolean): ISnapshotTreeEx;
 
-// @internal (undocumented)
+// @internal
 export function canBeCoalescedByService(message: ISequencedDocumentMessage | IDocumentMessage): boolean;
 
 // @internal
