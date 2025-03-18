@@ -18,7 +18,7 @@ import { PureDataObject } from "./pureDataObject.js";
 /**
  * Channel ID of {@link TreeDataObject}'s root {@link @fluidframework/tree#SharedTree}.
  */
-const treeChannelId = "root";
+const treeChannelId = "tree-data-object";
 
 const uninitializedErrorString =
 	"The tree has not yet been initialized. The data object must be initialized before accessing.";
