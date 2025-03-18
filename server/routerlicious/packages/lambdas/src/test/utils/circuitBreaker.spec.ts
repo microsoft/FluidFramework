@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import Sinon from "sinon";
 import { TestContext } from "@fluidframework/server-test-utils";
 import { LambdaCircuitBreaker, circuitBreakerOptions } from "../../utils/circuitBreaker";
 
@@ -204,16 +205,44 @@ describe("Lambda CircuitBreaker", () => {
 			[false],
 		);
 
-		testContext.on("error", (error, errorData) => {
+		const contextErrorHandler = Sinon.spy((error, errorData) => {
 			assert.strictEqual(error.message, errorResponse);
 			assert.strictEqual(errorData.restart, true);
-		});
+		})
+		testContext.on("error", contextErrorHandler);
 
 		await assert.rejects(circuitBreaker.execute([false]), {
 			message: errorResponse,
 			circuitBreakerOpen: true,
 		});
 		assert.strictEqual(circuitBreaker.getCurrentState(), "opened");
+		await new Promise((resolve) => setTimeout(resolve, 1000)); // wait until fallbackToRestartTimeoutMs
+		Sinon.assert.calledOnce(contextErrorHandler); // context emits "error" event for a restart
+	});
+
+	it("should not fallback to restart if shutdown before fallbackToRestartTimeoutMs", async () => {
+		circuitBreaker = new LambdaCircuitBreaker(
+			{ ...options, resetTimeout: 100, fallbackToRestartTimeoutMs: 1000 },
+			testContext,
+			dependencyName,
+			dummyFunction,
+			dummyHealthCheck,
+			[false],
+		);
+
+		const contextErrorHandler = Sinon.spy((error, errorData) => {
+			assert.strictEqual(error.message, errorResponse);
+			assert.strictEqual(errorData.restart, true);
+		})
+		testContext.on("error", contextErrorHandler);
+
+		await assert.rejects(circuitBreaker.execute([false]), {
+			message: errorResponse,
+			circuitBreakerOpen: true,
+		});
+		assert.strictEqual(circuitBreaker.getCurrentState(), "opened");
+		circuitBreaker.shutdown();
 		await new Promise((resolve) => setTimeout(resolve, 1000));
+		Sinon.assert.notCalled(contextErrorHandler); // context should not emit "error" event for a restart
 	});
 });

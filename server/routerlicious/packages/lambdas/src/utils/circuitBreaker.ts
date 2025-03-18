@@ -99,6 +99,22 @@ export class LambdaCircuitBreaker {
 
 	public shutdown(): void {
 		this.circuitBreaker.shutdown();
+		// clear the fallback to restart timeout
+		if (this.fallbackToRestartTimeout !== undefined) {
+			clearTimeout(this.fallbackToRestartTimeout);
+			this.fallbackToRestartTimeout = undefined;
+		}
+		const metricProperties = {
+			timestampShutdown: new Date().toISOString(),
+			openCount: this.circuitBreakerOpenCount,
+			state: this.circuitBreaker.toJSON()?.state,
+		};
+		if (this.circuitBreakerMetric) {
+			this.circuitBreakerMetric?.setProperties(metricProperties);
+			this.circuitBreakerMetric?.success("Circuit breaker shutdown due to lambda close"); // could be due to rebalancing
+		} else {
+			Lumberjack.info("Circuit breaker shutdown due to lambda close", metricProperties);
+		}
 	}
 
 	private openCallback(): void {
