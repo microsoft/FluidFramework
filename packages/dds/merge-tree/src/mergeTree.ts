@@ -196,11 +196,10 @@ function ackSegment(
 			segment.removes[segment.removes.length - 1] = removeStamp;
 
 			const { obliterateInfo } = segmentGroup;
-			assert(
-				(obliterateInfo !== undefined) === (op.type !== MergeTreeDeltaType.REMOVE),
-				0xa40 /* must have obliterate info */,
-			);
-			if (obliterateInfo !== undefined) {
+			const hasObliterateInfo = obliterateInfo !== undefined;
+			const isObliterate = op.type !== MergeTreeDeltaType.REMOVE;
+			assert(hasObliterateInfo === isObliterate, 0xa40 /* must have obliterate info */);
+			if (hasObliterateInfo) {
 				obliterateInfo.stamp = removeStamp as SliceRemoveOperationStamp;
 			}
 			break;
@@ -1169,13 +1168,12 @@ export class MergeTree {
 	 */
 	public searchForMarker(
 		startPos: number,
-		perspective: Perspective,
 		markerLabel: string,
 		forwards = true,
 	): Marker | undefined {
 		let foundMarker: Marker | undefined;
 
-		const { segment } = this.getContainingSegment(startPos, perspective);
+		const { segment } = this.getContainingSegment(startPos, this.localPerspective);
 		if (!isSegmentLeaf(segment)) {
 			return undefined;
 		}

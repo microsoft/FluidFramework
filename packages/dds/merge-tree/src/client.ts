@@ -1418,11 +1418,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param forwards - Whether the desired marker comes before (false) or after (true) `startPos`
 	 */
 	searchForMarker(startPos: number, markerLabel: string, forwards = true): Marker | undefined {
-		return this._mergeTree.searchForMarker(
-			startPos,
-			this._mergeTree.localPerspective,
-			markerLabel,
-			forwards,
-		);
+		return this._mergeTree.searchForMarker(startPos, markerLabel, forwards);
 	}
 }
