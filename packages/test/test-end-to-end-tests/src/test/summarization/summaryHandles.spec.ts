@@ -11,6 +11,7 @@ import { IFluidHandle, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
+	createContainerRuntimeFactoryWithDefaultDataStore,
 	createTestConfigProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
@@ -19,7 +20,7 @@ import {
 /**
  * The test is skipped as we have an existing bug in our code where if the use of short ids for data stores and dds is enabled, the summaries will start failing.
  * Without short ids, the code works because the handle for a tree node is exactly able to point to a path of node in the summary tree, because the ids do not have any special characters which
- * could change with the encodeURIComponent(). Once shortids feature is enabled in container runtime, the ids can have special characters (like '[' ) which can result in a handle containing %5b -
+ * could change with the encodeURIComponent(). Once ShortIds feature is enabled in container runtime, the ids can have special characters (like '[' ) which can result in a handle containing %5b -
  * this will be problematic because when uploading a summary with such handles, the server will try to look for a path with %5b but will not find it, as the path to the tree will still be '['
  * since we removed encoding logic from the driver layer with this PR: https://github.com/microsoft/FluidFramework/pull/21680
  *
@@ -36,17 +37,20 @@ describeCompat.skip(
 			dds: { SharedDirectory },
 		} = apis;
 		const defaultFactory = new TestFluidObjectFactory([]);
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
-			defaultFactory,
-			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-			runtimeOptions: {
-				summaryOptions: {
-					summaryConfigOverrides: {
-						state: "disabled",
+		const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+			ContainerRuntimeFactoryWithDefaultDataStore,
+			{
+				defaultFactory,
+				registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+				runtimeOptions: {
+					summaryOptions: {
+						summaryConfigOverrides: {
+							state: "disabled",
+						},
 					},
 				},
 			},
-		});
+		);
 
 		let provider: ITestObjectProvider;
 
@@ -58,8 +62,10 @@ describeCompat.skip(
 		});
 
 		it("A data store id with special character `[` works properly with summary handles", async () => {
-			// Enable short ids for this test to create a data store with special chanracter.
+			// Enable short ids for this test to create a data store with special character.
 			configProvider.set("Fluid.Runtime.UseShortIds", true);
+			// Enable single-commit summaries so that when the test runs with old odsp driver, it doesn't fail with summary nacks.
+			configProvider.set("Fluid.Container.summarizeProtocolTree2", true);
 			const container = await provider.createDetachedContainer(runtimeFactory, {
 				configProvider,
 			});

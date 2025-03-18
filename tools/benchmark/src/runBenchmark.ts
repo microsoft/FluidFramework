@@ -203,9 +203,9 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 					rawValue: 1e9 * stats.arithmeticMean,
 					formattedValue: prettyNumber(1e9 * stats.arithmeticMean, 2),
 				},
-				"Margin of Error": {
+				"Margin of Error (ns)": {
 					rawValue: stats.marginOfError,
-					formattedValue: `±${prettyNumber(stats.marginOfError, 2)}%`,
+					formattedValue: `±${prettyNumber(1e9 * stats.marginOfError, 2)}`,
 				},
 				"Relative Margin of Error": {
 					rawValue: stats.marginOfErrorPercent,

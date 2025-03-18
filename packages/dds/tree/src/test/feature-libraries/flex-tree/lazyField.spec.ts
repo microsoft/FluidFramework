@@ -29,7 +29,7 @@ import {
 } from "../../../feature-libraries/flex-tree/lazyField.js";
 import {
 	FieldKinds,
-	MockNodeKeyManager,
+	MockNodeIdentifierManager,
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
 	getTreeContext,
@@ -465,7 +465,7 @@ describe("LazyField", () => {
 				new MockTreeCheckout(forest, {
 					schema: new TreeStoredSchemaRepository(schema),
 				}),
-				new MockNodeKeyManager(),
+				new MockNodeIdentifierManager(),
 			);
 			const cursor = initializeCursor(context, rootFieldAnchor);
 

@@ -32,7 +32,7 @@ import {
 	oneFromSet,
 	treeShaper,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/schemaBasedEncoding.js";
+} from "../../../../feature-libraries/chunked-forest/codec/schemaBasedEncode.js";
 // eslint-disable-next-line import/no-internal-modules
 import { FieldKinds, fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
 import {

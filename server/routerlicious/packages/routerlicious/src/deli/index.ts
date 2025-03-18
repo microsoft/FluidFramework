@@ -65,6 +65,9 @@ export async function deliCreate(
 	const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
 	const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl);
 	const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
+	const ephemeralDocumentTTLSec = config.get("storage:ephemeralDocumentTTLSec") as
+		| number
+		| undefined;
 	// Database connection for global db if enabled
 	const factory = await services.getDbFactory(config);
 
@@ -218,6 +221,7 @@ export async function deliCreate(
 		reverseProducer,
 		serviceConfiguration,
 		customizations?.clusterDrainingChecker,
+		ephemeralDocumentTTLSec,
 	);
 
 	deliLambdaFactory.on("dispose", () => {

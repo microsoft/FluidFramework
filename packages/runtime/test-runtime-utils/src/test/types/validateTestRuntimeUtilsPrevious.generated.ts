@@ -112,6 +112,7 @@ declare type current_as_old_for_Class_MockContainerRuntimeForReconnection = requ
  * typeValidation.broken:
  * "Class_MockDeltaConnection": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_MockDeltaConnection = requireAssignableTo<TypeOnly<old.MockDeltaConnection>, TypeOnly<current.MockDeltaConnection>>
 
 /*
@@ -121,6 +122,7 @@ declare type old_as_current_for_Class_MockDeltaConnection = requireAssignableTo<
  * typeValidation.broken:
  * "Class_MockDeltaConnection": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_MockDeltaConnection = requireAssignableTo<TypeOnly<current.MockDeltaConnection>, TypeOnly<old.MockDeltaConnection>>
 
 /*
@@ -193,6 +195,7 @@ declare type old_as_current_for_Class_MockFluidDataStoreRuntime = requireAssigna
  * typeValidation.broken:
  * "Class_MockFluidDataStoreRuntime": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_MockFluidDataStoreRuntime = requireAssignableTo<TypeOnly<current.MockFluidDataStoreRuntime>, TypeOnly<old.MockFluidDataStoreRuntime>>
 
 /*
@@ -337,6 +340,7 @@ declare type current_as_old_for_ClassStatics_MockContainerRuntimeForReconnection
  * typeValidation.broken:
  * "ClassStatics_MockDeltaConnection": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_MockDeltaConnection = requireAssignableTo<TypeOnly<typeof current.MockDeltaConnection>, TypeOnly<typeof old.MockDeltaConnection>>
 
 /*
@@ -373,6 +377,7 @@ declare type current_as_old_for_ClassStatics_MockFluidDataStoreContext = require
  * typeValidation.broken:
  * "ClassStatics_MockFluidDataStoreRuntime": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_MockFluidDataStoreRuntime = requireAssignableTo<TypeOnly<typeof current.MockFluidDataStoreRuntime>, TypeOnly<typeof old.MockFluidDataStoreRuntime>>
 
 /*

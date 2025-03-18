@@ -13,7 +13,7 @@ import {
 } from "@fluid-tools/benchmark";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import { EmptyKey, rootFieldKey } from "../../core/index.js";
+import { EmptyKey, rootFieldKey, type NormalizedUpPath } from "../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { typeboxValidator } from "../../external-utilities/typeboxValidator.js";
 import {
@@ -288,7 +288,8 @@ describe("SharedTree benchmarks", () => {
 						// Setup
 						const tree = checkoutWithContent(makeWideStoredContentWithEndValue(numberOfNodes));
 
-						const rootPath = {
+						const rootPath: NormalizedUpPath = {
+							detachedNodeId: undefined,
 							parent: undefined,
 							parentField: rootFieldKey,
 							parentIndex: 0,
