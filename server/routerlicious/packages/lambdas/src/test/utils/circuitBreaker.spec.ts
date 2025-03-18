@@ -208,7 +208,7 @@ describe("Lambda CircuitBreaker", () => {
 		const contextErrorHandler = Sinon.spy((error, errorData) => {
 			assert.strictEqual(error.message, errorResponse);
 			assert.strictEqual(errorData.restart, true);
-		})
+		});
 		testContext.on("error", contextErrorHandler);
 
 		await assert.rejects(circuitBreaker.execute([false]), {
@@ -233,7 +233,7 @@ describe("Lambda CircuitBreaker", () => {
 		const contextErrorHandler = Sinon.spy((error, errorData) => {
 			assert.strictEqual(error.message, errorResponse);
 			assert.strictEqual(errorData.restart, true);
-		})
+		});
 		testContext.on("error", contextErrorHandler);
 
 		await assert.rejects(circuitBreaker.execute([false]), {
