@@ -29,6 +29,7 @@ import { INexusResourcesCustomizations } from "./customizations";
 import { OrdererManager, type IOrdererManagerOptions } from "./ordererManager";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
 import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
+import type EventEmitter from "events";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
 	private readonly webSocketServer: ws.Server;
@@ -75,7 +76,7 @@ export class NexusResources implements core.IResources {
 		public socketTracker?: core.IWebSocketTracker,
 		public tokenRevocationManager?: core.ITokenRevocationManager,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
-		public collaborationSessionEvents?: TypedEventEmitter<ICollaborationSessionEvents>,
+		public collaborationSessionEvents?: EventEmitter, // TypedEventEmitter<ICollaborationSessionEvents>,
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
 		public clusterDrainingChecker?: core.IClusterDrainingChecker,
 		public collaborationSessionTracker?: core.ICollaborationSessionTracker,
@@ -490,7 +491,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			ordererManagerOptions,
 		);
 
-		const collaborationSessionEvents = new TypedEventEmitter<ICollaborationSessionEvents>();
+		const collaborationSessionEvents = customizations?.collaborationSessionEventEmitter ?? new TypedEventEmitter<ICollaborationSessionEvents>();
 
 		// This wanst to create stuff
 		const port = utils.normalizePort(process.env.PORT || "3000");

@@ -15,6 +15,7 @@ import {
 } from "@fluidframework/server-services-core";
 import type { SocketIoAdapterCreator } from "@fluidframework/server-services-shared";
 import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
+import type EventEmitter from "events";
 
 /**
  * @internal
@@ -35,4 +36,5 @@ export interface INexusResourcesCustomizations {
 	redisClientConnectionManagerForPub?: IRedisClientConnectionManager;
 	customCreateSocketIoAdapter?: SocketIoAdapterCreator;
 	readinessCheck?: IReadinessCheck;
+	collaborationSessionEventEmitter?: EventEmitter;
 }

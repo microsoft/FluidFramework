@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
+// import { TypedEventEmitter } from "@fluidframework/common-utils";
+// import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import {
 	IDeltaService,
 	IDocumentStorage,

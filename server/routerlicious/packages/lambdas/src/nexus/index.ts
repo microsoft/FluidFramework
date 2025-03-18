@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+// import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	IClient,
 	IConnect,
@@ -25,7 +25,7 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import { createNackMessage } from "../utils";
 import {
-	ICollaborationSessionEvents,
+	// ICollaborationSessionEvents,
 	IRoom,
 	type INexusLambdaSettings,
 	type INexusLambdaConnectionStateTrackers,
@@ -47,6 +47,7 @@ import { addNexusMessageTrace } from "./trace";
 import { connectDocument } from "./connect";
 import { disconnectDocument } from "./disconnect";
 import { isValidConnectionMessage } from "./protocol";
+import type EventEmitter from "events";
 
 export { IBroadcastSignalEventPayload, ICollaborationSessionEvents, IRoom } from "./interfaces";
 
@@ -112,7 +113,7 @@ export function configureWebSocketServices(
 	verifyMaxMessageSize?: boolean,
 	socketTracker?: core.IWebSocketTracker,
 	revokedTokenChecker?: core.IRevokedTokenChecker,
-	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+	collaborationSessionEventEmitter?: EventEmitter, // TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: core.IClusterDrainingChecker,
 	collaborationSessionTracker?: core.ICollaborationSessionTracker,
 ): void {

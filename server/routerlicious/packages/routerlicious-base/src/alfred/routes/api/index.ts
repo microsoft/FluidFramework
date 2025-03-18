@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+// import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	ICache,
 	IDeltaService,
@@ -18,7 +18,7 @@ import {
 	IFluidAccessTokenGenerator,
 	IReadinessCheck,
 } from "@fluidframework/server-services-core";
-import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
+// import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import cors from "cors";
 import { Router } from "express";
 import { Provider } from "nconf";
@@ -28,6 +28,7 @@ import * as api from "./api";
 import * as deltas from "./deltas";
 import * as documents from "./documents";
 import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
+import type EventEmitter from "events";
 
 export function create(
 	config: Provider,
@@ -44,7 +45,7 @@ export function create(
 	startupCheck: IReadinessCheck,
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
-	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+	collaborationSessionEventEmitter?: EventEmitter, // TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: IClusterDrainingChecker,
 	readinessCheck?: IReadinessCheck,
 	fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,

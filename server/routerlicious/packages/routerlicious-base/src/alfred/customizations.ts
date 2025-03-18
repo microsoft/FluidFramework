@@ -16,6 +16,7 @@ import {
 } from "@fluidframework/server-services-core";
 import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import { IDocumentDeleteService } from "./services";
+import type EventEmitter from "events";
 
 /**
  * @internal
@@ -33,4 +34,5 @@ export interface IAlfredResourcesCustomizations {
 	redisClientConnectionManagerForThrottling?: IRedisClientConnectionManager;
 	readinessCheck?: IReadinessCheck;
 	fluidAccessTokenGenerator?: IFluidAccessTokenGenerator;
+	collaborationSessionEventEmitter?: EventEmitter;
 }

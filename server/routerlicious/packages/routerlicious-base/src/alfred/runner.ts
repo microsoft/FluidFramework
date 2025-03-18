@@ -4,7 +4,7 @@
  */
 
 import cluster from "cluster";
-import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { Deferred, } from "@fluidframework/common-utils";
 import {
 	ICache,
 	IClusterDrainingChecker,

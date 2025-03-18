@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { TypedEventEmitter } from "@fluidframework/common-utils";
+// import type { TypedEventEmitter } from "@fluidframework/common-utils";
 import type { IClient, IConnected } from "@fluidframework/protocol-definitions";
 import type {
 	IClientManager,
@@ -21,6 +21,7 @@ import type {
 import { IEvent } from "../events";
 import type { IRuntimeSignalEnvelope } from "../utils";
 import type { ExpirationTimer } from "./utils";
+import type EventEmitter from "events";
 
 /**
  * Connection details of a client.
@@ -123,7 +124,7 @@ export interface INexusLambdaDependencies {
 	revokedTokenChecker?: IRevokedTokenChecker;
 	clusterDrainingChecker?: IClusterDrainingChecker;
 
-	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>;
+	collaborationSessionEventEmitter?: EventEmitter; // TypedEventEmitter<ICollaborationSessionEvents>;
 	collaborationSessionTracker?: ICollaborationSessionTracker;
 }
 
