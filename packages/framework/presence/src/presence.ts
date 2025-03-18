@@ -163,7 +163,7 @@ export interface PresenceEvents {
  */
 export interface IPresence {
 	/**
-	 * Events for Presence Manager.
+	 * Events for Presence.
 	 */
 	readonly events: Listenable<PresenceEvents>;
 
