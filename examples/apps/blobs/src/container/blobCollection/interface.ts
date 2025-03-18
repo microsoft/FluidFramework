@@ -5,16 +5,16 @@
 
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 
+export interface IBlobRecord {
+	readonly id: string;
+	readonly blob: Blob;
+}
+
 /**
  * IBlobCollectionEvents describes the events for an IBlobCollection.
  */
 export interface IBlobCollectionEvents extends IEvent {
-	(event: "blobsChanged", listener: () => void);
-}
-
-export interface IBlobRecord {
-	readonly id: string;
-	readonly blob: Blob;
+	(event: "blobAdded", listener: (blob: IBlobRecord) => void);
 }
 
 /**
@@ -33,7 +33,7 @@ export interface IBlobCollection {
 
 	/**
 	 * Add a blob to the collection.  Although this method is synchronous, the addition
-	 * happens asynchronously.  The "blobsChanged" event will fire after the addition
+	 * happens asynchronously.  The "blobAdded" event will fire after the addition
 	 * completes.
 	 */
 	readonly addBlob: (blob: Blob) => void;

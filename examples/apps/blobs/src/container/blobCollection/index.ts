@@ -7,4 +7,5 @@ export { BlobCollectionFactory } from "./blobCollection.js";
 export {
 	IBlobCollection,
 	IBlobCollectionEvents,
+	IBlobRecord,
 } from "./interface.js";

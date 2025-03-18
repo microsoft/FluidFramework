@@ -5,7 +5,7 @@
 
 import React, { type FC, useEffect, useState } from "react";
 
-import { IBlobCollection } from "./container/index.js";
+import type { IBlobCollection, IBlobRecord } from "./container/index.js";
 
 const randInt = (max: number) => Math.floor(Math.random() * (max + 1));
 
@@ -36,6 +36,22 @@ const drawAPrettyPictureIntoBlob = async () => {
 	});
 };
 
+// The view wants URLs for the stored blobs to render into img elements.
+interface IBlobUrlRecord {
+	id: string;
+	url: string;
+}
+
+const idSort = (a: { id: string }, b: { id: string }) =>
+	a.id.localeCompare(b.id, "en", { sensitivity: "base" });
+
+const blobRecordToBlobUrlRecord = ({ id, blob }: IBlobRecord): IBlobUrlRecord => {
+	return {
+		id,
+		url: URL.createObjectURL(blob),
+	};
+};
+
 export interface IBlobCollectionViewProps {
 	blobCollection: IBlobCollection;
 }
@@ -43,27 +59,26 @@ export interface IBlobCollectionViewProps {
 export const BlobCollectionView: FC<IBlobCollectionViewProps> = ({
 	blobCollection,
 }: IBlobCollectionViewProps) => {
-	const [blobs, setBlobs] = useState([...blobCollection.getBlobs()]);
+	const [blobUrlRecords, setBlobUrlRecords] = useState(
+		blobCollection.getBlobs().map(blobRecordToBlobUrlRecord).sort(idSort),
+	);
 
 	useEffect(() => {
-		const onBlobsChanged = () => {
-			// Clone the array into a new reference to ensure we re-render.
-			setBlobs([...blobCollection.getBlobs()]);
+		const onBlobAdded = (blobRecord: IBlobRecord) => {
+			// Retaining the existing blob URLs prevents leaking them or needing to revoke them.
+			// Setting the state to a new array triggers a re-render.
+			setBlobUrlRecords((previousBlobs) =>
+				[...previousBlobs, blobRecordToBlobUrlRecord(blobRecord)].sort(idSort),
+			);
 		};
-		blobCollection.events.on("blobsChanged", onBlobsChanged);
+		blobCollection.events.on("blobAdded", onBlobAdded);
 		return () => {
-			blobCollection.events.off("blobsChanged", onBlobsChanged);
+			blobCollection.events.off("blobAdded", onBlobAdded);
 		};
 	}, [blobCollection]);
 
-	const blobViews = blobs.map(({ id, blob }) => (
-		<img
-			key={id}
-			// Note that since we create a new URL on every re-render the blobs' URLs will
-			// appear to change on every re-render.  A little noisy, but not a real problem.
-			src={URL.createObjectURL(blob)}
-			style={{ border: "1px solid black", margin: "10px" }}
-		></img>
+	const blobViews = blobUrlRecords.map(({ id, url }) => (
+		<img key={id} src={url} style={{ border: "1px solid black", margin: "10px" }}></img>
 	));
 
 	const addBlob = () => {

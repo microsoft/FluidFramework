@@ -45,14 +45,15 @@ class BlobCollection implements IBlobCollection {
 		const trackBlob = (key: string) => {
 			const handle = this.sharedMap.get(key);
 			handle.get().then((arrayBuffer: ArrayBufferLike) => {
-				this.blobs.push({
+				const newBlob: IBlobRecord = {
 					id: key,
 					// Blobs in Fluid are retrieved as ArrayBuffers, this translates it back to a Blob
 					blob: new Blob([arrayBuffer]),
-				});
+				};
+				this.blobs.push(newBlob);
 				// Sort in case timestamps disagree with map insertion order
 				this.blobs.sort((a, b) => a.id.localeCompare(b.id, "en", { sensitivity: "base" }));
-				this._events.emit("blobsChanged");
+				this._events.emit("blobAdded", newBlob);
 			});
 		};
 		// Watch for incoming new blobs

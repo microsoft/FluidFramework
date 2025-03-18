@@ -7,7 +7,7 @@
 const testTools = require("@fluidframework/test-tools");
 const { name } = require("./package.json");
 
-mappedPort = testTools.getTestPort(name);
+const mappedPort = testTools.getTestPort(name);
 process.env["PORT"] = mappedPort;
 
 module.exports = {
