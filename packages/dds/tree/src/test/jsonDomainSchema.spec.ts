@@ -38,4 +38,9 @@ describe("JsonDomainSchema", () => {
 			assert.deepEqual([...inner], [1]);
 		}
 	});
+
+	it("types", () => {
+		// type Iterator = IterableIterator<[string, string | number | boolean | JsonAsTree.JsonObject | JsonAsTree.Array | null]>
+		type Iterator = ReturnType<JsonAsTree.JsonObject[typeof Symbol.iterator]>;
+	});
 });
