@@ -32,7 +32,6 @@ import {
 	verboseFromCursor,
 	type ParseOptions,
 	type VerboseTree,
-	type VerboseTreeNode,
 	toStoredSchema,
 	type EncodeOptions,
 	extractPersistedSchema,
@@ -126,65 +125,24 @@ export const TreeAlpha: {
 	 * Construct tree content compatible with a field defined by the provided `schema`.
 	 * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
 	 * @param data - The data used to construct the field content. See {@link TreeAlpha.(exportVerbose:1)}.
-	 * @remarks
-	 * This overload requires that any {@link @fluidframework/core-interfaces#IFluidHandle|IFluidHandles} are encoded as actual {@link @fluidframework/core-interfaces#IFluidHandle|IFluidHandles} in the input.
 	 */
 	importVerbose<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 		data: VerboseTree | undefined,
-		options?: Partial<ParseOptions<IFluidHandle>>,
+		options?: Partial<ParseOptions>,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
-
-	/**
-	 * Construct tree content compatible with a field defined by the provided `schema`.
-	 * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
-	 * @param data - The data used to construct the field content. See {@link TreeAlpha.(exportVerbose:2)}.
-	 *
-	 * @typeparam THandle - How {@link @fluidframework/core-interfaces#IFluidHandle|IFluidHandles} in the input `data` are encoded.
-	 * A converter from this encoding to {@link @fluidframework/core-interfaces#IFluidHandle} is required in `options`.
-	 */
-	importVerbose<const TSchema extends ImplicitFieldSchema, THandle>(
-		schema: TSchema,
-		data: VerboseTree<THandle> | undefined,
-		options: ParseOptions<THandle>,
-	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
-
-	/**
-	 * Same as {@link TreeAlpha.(exportConcise:2)}, except leaves handles as is.
-	 */
-	exportConcise(
-		node: TreeNode | TreeLeafValue,
-		options?: Partial<EncodeOptions<IFluidHandle>>,
-	): ConciseTree;
 
 	/**
 	 * Copy a snapshot of the current version of a TreeNode into a {@link ConciseTree}.
-	 *
-	 * @typeparam THandle - How {@link @fluidframework/core-interfaces#IFluidHandle|IFluidHandles} in the output should be encoded.
-	 * A converter from from {@link @fluidframework/core-interfaces#IFluidHandle} to this format is required in `options`.
 	 */
-	exportConcise<THandle>(
-		node: TreeNode | TreeLeafValue,
-		options: EncodeOptions<THandle>,
-	): ConciseTree<THandle>;
+	exportConcise(node: TreeNode | TreeLeafValue, options?: EncodeOptions): ConciseTree;
 
 	/**
-	 * Same {@link TreeAlpha.(exportVerbose:2)} except leaves handles as is.
-	 */
-	exportVerbose(
-		node: TreeNode | TreeLeafValue,
-		options?: Partial<EncodeOptions<IFluidHandle>>,
-	): VerboseTree;
-
-	/**
-	 * Copy a snapshot of the current version of a TreeNode into a JSON compatible plain old JavaScript Object.
-	 * Verbose tree format, with explicit type on every node.
-	 *
-	 * @typeparam THandle - How {@link @fluidframework/core-interfaces#IFluidHandle|IFluidHandles} in the output should be encoded.
-	 * A converter from from {@link @fluidframework/core-interfaces#IFluidHandle} to this format is required in `options`.
+	 * Copy a snapshot of the current version of a TreeNode into a JSON compatible plain old JavaScript Object (except for {@link @fluidframework/core-interfaces#IFluidHandle|IFluidHandles}).
+	 * Uses the {@link VerboseTree} format, with an explicit type on every node.
 	 *
 	 * @remarks
-	 * There are several cases this may be preferred to {@link TreeAlpha.(exportConcise:2)}:
+	 * There are several cases this may be preferred to {@link TreeAlpha.exportConcise}:
 	 *
 	 * 1. When not using {@link ITreeConfigurationOptions.preventAmbiguity} (or when using `useStableFieldKeys`), `exportConcise` can produce ambiguous data (the type may be unclear on some nodes).
 	 * `exportVerbose` will always be unambiguous and thus lossless.
@@ -193,7 +151,7 @@ export const TreeAlpha: {
 	 *
 	 * 3. When easy access to the type is desired.
 	 */
-	exportVerbose<T>(node: TreeNode | TreeLeafValue, options: EncodeOptions<T>): VerboseTree<T>;
+	exportVerbose(node: TreeNode | TreeLeafValue, options?: EncodeOptions): VerboseTree;
 
 	/**
 	 * Export the content of the provided `tree` in a compressed JSON compatible format.
@@ -274,17 +232,12 @@ export const TreeAlpha: {
 		>;
 	},
 
-	importVerbose<const TSchema extends ImplicitFieldSchema, THandle>(
+	importVerbose<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
-		data: VerboseTree<THandle> | undefined,
-		options?: Partial<ParseOptions<THandle>>,
+		data: VerboseTree | undefined,
+		options?: ParseOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
-		const config: ParseOptions<THandle> = {
-			valueConverter: (input: VerboseTree<THandle>) => {
-				return input as TreeLeafValue | VerboseTreeNode<THandle>;
-			},
-			...options,
-		};
+		const config: ParseOptions = { ...options };
 		// Create a config which is standalone, and thus can be used without having to refer back to the schema.
 		const schemalessConfig = applySchemaToParserOptions(schema, config);
 		if (data === undefined) {
@@ -294,20 +247,12 @@ export const TreeAlpha: {
 			}
 			return undefined as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 		}
-		const cursor = cursorFromVerbose<THandle>(data, schemalessConfig);
+		const cursor = cursorFromVerbose(data, schemalessConfig);
 		return createFromCursor(schema, cursor);
 	},
 
-	exportConcise<T>(
-		node: TreeNode | TreeLeafValue,
-		options?: Partial<EncodeOptions<T>>,
-	): ConciseTree<T> {
-		const config: EncodeOptions<T> = {
-			valueConverter(handle: IFluidHandle): T {
-				return handle as T;
-			},
-			...options,
-		};
+	exportConcise(node: TreeNode | TreeLeafValue, options?: EncodeOptions): ConciseTree {
+		const config: EncodeOptions = { ...options };
 
 		const cursor = borrowCursorFromTreeNodeOrValue(node);
 		return conciseFromCursor(
@@ -317,16 +262,8 @@ export const TreeAlpha: {
 		);
 	},
 
-	exportVerbose<T>(
-		node: TreeNode | TreeLeafValue,
-		options?: Partial<EncodeOptions<T>>,
-	): VerboseTree<T> {
-		const config: EncodeOptions<T> = {
-			valueConverter(handle: IFluidHandle): T {
-				return handle as T;
-			},
-			...options,
-		};
+	exportVerbose(node: TreeNode | TreeLeafValue, options?: EncodeOptions): VerboseTree {
+		const config: EncodeOptions = { ...options };
 
 		const cursor = borrowCursorFromTreeNodeOrValue(node);
 		return verboseFromCursor(

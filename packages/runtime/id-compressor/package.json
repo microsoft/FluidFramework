@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/id-compressor",
-	"version": "2.30.0",
+	"version": "2.31.0",
 	"description": "ID compressor",
 	"homepage": "https://fluidframework.com",
 	"repository": {
