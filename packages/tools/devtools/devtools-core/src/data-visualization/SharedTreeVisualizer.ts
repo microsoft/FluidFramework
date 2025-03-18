@@ -221,7 +221,7 @@ async function visualizeObjectNode(
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
 	const objectNodeSchemaProperties: Record<string, FieldSchemaProperties> = {};
-	for (const [fieldKey, treeFieldSimpleSchema] of Object.entries(schema.fields)) {
+	for (const [fieldKey, treeFieldSimpleSchema] of schema.fields) {
 		objectNodeSchemaProperties[fieldKey] = {
 			allowedTypes: treeFieldSimpleSchema.allowedTypes,
 			isRequired: treeFieldSimpleSchema.kind === FieldKind.Required ? true : false,

@@ -45,6 +45,7 @@ export type {
 	SimpleArrayNodeSchema,
 	SimpleObjectNodeSchema,
 	SimpleNodeSchemaBase,
+	SimpleObjectFieldSchema,
 } from "./simpleSchema.js";
 export {
 	type JsonSchemaId,

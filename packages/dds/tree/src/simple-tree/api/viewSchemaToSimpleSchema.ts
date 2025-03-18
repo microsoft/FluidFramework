@@ -5,6 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
+	getStoredKey,
 	normalizeFieldSchema,
 	type FieldSchema,
 	type ImplicitAllowedTypes,
@@ -16,6 +17,7 @@ import type {
 	SimpleLeafNodeSchema,
 	SimpleMapNodeSchema,
 	SimpleNodeSchema,
+	SimpleObjectFieldSchema,
 	SimpleObjectNodeSchema,
 	SimpleTreeSchema,
 } from "./simpleSchema.js";
@@ -116,9 +118,12 @@ function mapSchemaToSimpleSchema(schema: TreeNodeSchema): SimpleMapNodeSchema {
 }
 
 function objectSchemaToSimpleSchema(schema: ObjectNodeSchema): SimpleObjectNodeSchema {
-	const fields: Record<string, SimpleFieldSchema> = {};
-	for (const [key, field] of schema.fields) {
-		fields[key] = fieldSchemaToSimpleSchema(field);
+	const fields: Map<string, SimpleObjectFieldSchema> = new Map();
+	for (const [propertyKey, field] of schema.fields) {
+		fields.set(propertyKey, {
+			...fieldSchemaToSimpleSchema(field),
+			storedKey: getStoredKey(propertyKey, field),
+		});
 	}
 
 	const output: Mutable<SimpleObjectNodeSchema> = {
