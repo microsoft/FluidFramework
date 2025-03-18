@@ -813,7 +813,7 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 		return { kind: NodeKind.Array, allowedTypes: arrayTypes };
 	}
 	if (schema instanceof ObjectNodeStoredSchema) {
-		const fields: Map<FieldKey, SimpleObjectFieldSchema> = new Map();
+		const fields = new Map<FieldKey, SimpleObjectFieldSchema>();
 		for (const [storedKey, field] of schema.objectNodeFields) {
 			fields.set(storedKey, { ...exportSimpleFieldSchemaStored(field), storedKey });
 		}

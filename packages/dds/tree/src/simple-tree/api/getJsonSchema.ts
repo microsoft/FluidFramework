@@ -67,7 +67,7 @@ const jsonSchemaCache = new WeakMap<TreeNodeSchema, JsonTreeSchema>();
  * 2. With and without requiring values with defaults (for insertion vs reading)
  * 3. Using stored keys and property keys
  *
- * Thus current API seems to give ConciseTree with property keys and ignoring default values.
+ * This current API seems to give ConciseTree with property keys and ignoring default values.
  *
  *
  * @alpha

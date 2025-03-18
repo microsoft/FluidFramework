@@ -46,7 +46,7 @@ export interface SimpleObjectNodeSchema extends SimpleNodeSchemaBase<NodeKind.Ob
 	 * @remarks
 	 * The keys are the property keys if known, otherwise they are the stored keys.
 	 * @privateRemarks
-	 * TODO: Provide and link and way to translate between the stored keys and the property keys.
+	 * TODO: Provide and link a way to translate between the stored keys and the property keys.
 	 * TODO: Consider adding `storedKeysToFields` or something similar to reduce confusion,
 	 * especially if/when TreeNodeSchema for objects implement this and likely provide more maps.
 	 */
