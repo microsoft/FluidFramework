@@ -110,7 +110,6 @@
 		"eslint-plugin-react": "~7.33.2",
 		"eslint-plugin-react-hooks": "~4.6.0",
 		"mocha": "^10.8.2",
-		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"sinon": "^18.0.1",
 		"tslib": "^1.10.0",

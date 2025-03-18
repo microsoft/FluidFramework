@@ -18,12 +18,15 @@
 	"scripts": {
 		"build": "npm run build:docs",
 		"build:docs": "node src/index.cjs --files README.md",
-		"format": "npm run prettier:fix",
+		"format": "npm run format:biome",
 		"lint": "npm run prettier",
 		"lint:fix": "npm run prettier:fix",
-		"prettier": "prettier --check . --cache",
-		"prettier:fix": "prettier --write . --cache",
-		"test": "node src/index.cjs --files \"test/**/*.md\" !test/README.md"
+		"test": "node src/index.cjs --files \"test/**/*.md\" !test/README.md",
+		"check:format": "npm run check:biome",
+		"check:biome": "biome check .",
+		"format:biome": "biome check . --write",
+		"check:prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
+		"format:prettier": "prettier --write . --cache --ignore-path ../../.prettierignore"
 	},
 	"dependencies": {
 		"@rushstack/node-core-library": "^3.61.0",
@@ -34,7 +37,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
-		"prettier": "~3.0.3"
+		"@biomejs/biome": "~1.9.3"
 	},
 	"dependencyComments": [
 		"chalk is left at version 4 (not 5) to keep CommonJS support."

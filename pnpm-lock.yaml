@@ -4465,9 +4465,6 @@ importers:
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -7414,9 +7411,6 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.8.2)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -10265,9 +10259,6 @@ importers:
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -10756,9 +10747,6 @@ importers:
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -10847,9 +10835,6 @@ importers:
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -12773,9 +12758,6 @@ importers:
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -13139,9 +13121,6 @@ importers:
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -13242,9 +13221,6 @@ importers:
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -13513,9 +13489,6 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.8.2)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -14312,9 +14285,6 @@ importers:
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -14442,9 +14412,6 @@ importers:
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -14823,9 +14790,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -15095,9 +15059,6 @@ importers:
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -16254,9 +16215,6 @@ importers:
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
 
 packages:
 
