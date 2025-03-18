@@ -181,6 +181,10 @@ export class ProtocolOpHandler implements IProtocolHandler {
 }
 
 /**
+ * Checks if the message is free to be coalesced by the service.
+ *
+ * @param message - The message to check.
+ * @returns true if the message can be coalesced by the service.
  * @internal
  */
 export function canBeCoalescedByService(
