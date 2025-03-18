@@ -351,10 +351,10 @@ describe("MergeTree.insertingWalk", () => {
 	// Inserting walk previously unnecessarily called `blockUpdate` for blocks even when no segment changes happened (e.g.
 	// we called `ensureIntervalBoundary` but there was already a segment boundary at the position we wanted to ensure had one).
 	it("avoids calling blockUpdate excessively", () => {
-		let seq = 1;
+		const seq = 1;
 		const mergeTree = new MergeTree();
 		mergeTree.startCollaboration(localClientId, 0, seq);
-		for (const char of "hello world".split("")) {
+		for (const char of [..."hello world"]) {
 			mergeTree.insertSegments(
 				mergeTree.getLength(mergeTree.localPerspective),
 				[TextSegment.make(char)],
@@ -364,11 +364,15 @@ describe("MergeTree.insertingWalk", () => {
 			);
 		}
 
-		const originalBlockUpdate = mergeTree["blockUpdate"].bind(mergeTree);
+		const originalBlockUpdate: (block: MergeBlock) => void =
+			// eslint-disable-next-line @typescript-eslint/dot-notation
+			(mergeTree["blockUpdate"] as (block: MergeBlock) => void).bind(mergeTree);
 		const blockUpdateCallLog: string[] = [];
-		mergeTree["blockUpdate"] = (block) => {
+		// eslint-disable-next-line @typescript-eslint/dot-notation
+		mergeTree["blockUpdate"] = (block: MergeBlock) => {
 			// This is called in the middle of updating lots of merge-tree bookkeeping, so we don't want to do too much
-			// advanced stuff here. However, walking the tree and concatenating all the text should be safe.
+			// advanced stuff here. However, walking the tree and concatenating all the text (ignoring other segment properties)
+			// should be safe.
 			let text = "";
 			walkAllChildSegments(block, (seg) => {
 				if (TextSegment.is(seg)) {
