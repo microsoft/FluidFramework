@@ -172,7 +172,7 @@ export type UnenforcedImplicitAllowedTypes =
  * @system @public
  */
 export type TreeNodeFromImplicitAllowedTypesUnsafe<
-	TSchema extends Unenforced<ImplicitAllowedTypes>,
+	TSchema extends UnenforcedImplicitAllowedTypes,
 > = TSchema extends TreeNodeSchemaUnsafe
 	? NodeFromSchemaUnsafe<TSchema>
 	: TSchema extends AllowedTypesUnsafe
@@ -187,7 +187,7 @@ export type TreeNodeFromImplicitAllowedTypesUnsafe<
  * @system @public
  */
 export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
-	TSchema extends Unenforced<ImplicitAllowedTypes>,
+	TSchema extends UnenforcedImplicitAllowedTypes,
 > = [TSchema] extends [TreeNodeSchemaUnsafe]
 	? InsertableTypedNodeUnsafe<TSchema>
 	: [TSchema] extends [AllowedTypesUnsafe]
@@ -252,7 +252,7 @@ export type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> =
  * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
  * @system @sealed @public
  */
-export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAllowedTypes>>
+export interface TreeArrayNodeUnsafe<TAllowedTypes extends UnenforcedImplicitAllowedTypes>
 	extends TreeArrayNode<
 		TAllowedTypes,
 		TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>,
@@ -265,7 +265,7 @@ export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAl
  * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
  * @system @sealed @public
  */
-export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>>
+export interface TreeMapNodeUnsafe<T extends UnenforcedImplicitAllowedTypes>
 	extends ReadonlyMapInlined<string, T>,
 		TreeNode {
 	/**
@@ -293,7 +293,7 @@ export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>>
  * Authored by manually inlining ReadonlyMap from from the TypeScript lib which can be found by navigating to the definition of `ReadonlyMap`.
  * @system @sealed @public
  */
-export interface ReadonlyMapInlined<K, T extends Unenforced<ImplicitAllowedTypes>> {
+export interface ReadonlyMapInlined<K, T extends UnenforcedImplicitAllowedTypes> {
 	/** Returns an iterable of entries in the map. */
 	[Symbol.iterator](): IterableIterator<[K, TreeNodeFromImplicitAllowedTypesUnsafe<T>]>;
 
@@ -334,7 +334,7 @@ export interface ReadonlyMapInlined<K, T extends Unenforced<ImplicitAllowedTypes
 export type FieldHasDefaultUnsafe<T extends Unenforced<ImplicitFieldSchema>> =
 	T extends FieldSchemaUnsafe<
 		FieldKind.Optional | FieldKind.Identifier,
-		Unenforced<ImplicitAllowedTypes>
+		UnenforcedImplicitAllowedTypes
 	>
 		? true
 		: false;
@@ -385,7 +385,7 @@ export type InsertableTreeFieldFromImplicitFieldUnsafe<
  */
 export interface FieldSchemaUnsafe<
 	out Kind extends FieldKind,
-	out Types extends Unenforced<ImplicitAllowedTypes>,
+	out Types extends UnenforcedImplicitAllowedTypes,
 > extends FieldSchema<Kind, any> {
 	/**
 	 * {@inheritDoc FieldSchema.kind}

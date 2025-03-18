@@ -47,7 +47,7 @@ import {
 } from "./core/index.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import { getUnhydratedContext } from "./createContext.js";
-import type { Unenforced } from "./api/index.js";
+import type { UnenforcedImplicitAllowedTypes } from "./api/index.js";
 
 /**
  * A covariant base type for {@link (TreeArrayNode:interface)}.
@@ -73,7 +73,7 @@ export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue>
  * @sealed @public
  */
 export interface TreeArrayNode<
-	TAllowedTypes extends Unenforced<ImplicitAllowedTypes> = ImplicitAllowedTypes,
+	TAllowedTypes extends UnenforcedImplicitAllowedTypes = ImplicitAllowedTypes,
 	out T = [TAllowedTypes] extends [ImplicitAllowedTypes]
 		? TreeNodeFromImplicitAllowedTypes<TAllowedTypes>
 		: TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>,

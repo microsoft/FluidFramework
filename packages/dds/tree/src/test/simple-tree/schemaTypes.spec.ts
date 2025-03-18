@@ -647,7 +647,8 @@ describe("schemaTypes", () => {
 				const _createdEmpty = TreeAlpha.create(GenericContainer, { content: undefined });
 				// @ts-expect-error Compiler limitation, see comment above.
 				const _created = TreeAlpha.create(GenericContainer, { content });
-				const _constructedEmpty = new GenericContainer({ content: undefined }); // This one works.
+				// @ts-expect-error Compiler limitation, see comment above.
+				const _constructedEmpty = new GenericContainer({ content: undefined });
 				// @ts-expect-error Compiler limitation, see comment above.
 				return new GenericContainer({ content });
 			}
