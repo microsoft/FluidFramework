@@ -43,6 +43,8 @@ export type {
 	EventFlowDebugName,
 	EventFlowDebugNames,
 	View,
+	ClodOptions,
+	clod,
 } from "./explicit-strategy/index.js";
 
 export {

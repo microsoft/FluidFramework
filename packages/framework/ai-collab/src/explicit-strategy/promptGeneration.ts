@@ -118,7 +118,7 @@ export function getEditingSystemPrompt(
 	const role = `You are a collaborative agent who interacts with a JSON tree by performing edits to achieve a user-specified goal.${
 		appGuidance === undefined
 			? ""
-			: `\nThe application that owns the JSON tree has the following guidance about your role: "${appGuidance}".`
+			: `\n\nThe application that owns the JSON tree has the following guidance about your role: \n\n${appGuidance}`
 	}`;
 
 	const treeSchemaString = createZodJsonValidator(editTypes, editRoot).getSchemaText();
@@ -126,36 +126,44 @@ export function getEditingSystemPrompt(
 	const setFieldType = "SetField" satisfies Capitalize<SetField["type"]>;
 	const insertIntoArrayType = "InsertIntoArray" satisfies Capitalize<InsertIntoArray["type"]>;
 	const topLevelEditWrapperDescription = doesNodeContainArraySchema(view.root)
-		? `is one of the following interfaces: "${setFieldType}" for editing objects or one of "${insertIntoArrayType}", "${"RemoveFromArray" satisfies Capitalize<RemoveFromArray["type"]>}", "${"MoveArrayElement" satisfies Capitalize<MoveArrayElement["type"]>}" for editing arrays`
-		: `is the interface "${setFieldType}"`;
+		? `is one of the following interfaces: \`${setFieldType}\` for editing objects or one of \`${insertIntoArrayType}\`, \`${"RemoveFromArray" satisfies Capitalize<RemoveFromArray["type"]>}\`, \`${"MoveArrayElement" satisfies Capitalize<MoveArrayElement["type"]>}\` for editing arrays`
+		: `is the interface \`${setFieldType}\``;
 
 	const rootTypes = [...schema.allowedTypes];
 	// TODO: security: user prompt in system prompt
-	const systemPrompt = `
-${role}
+	const systemPrompt = `${role}
+
 Edits are JSON objects that conform to the schema described below. You produce an array of edits where each edit ${topLevelEditWrapperDescription}.
-When creating new objects for ${insertIntoArrayType} or ${setFieldType},
-you may create an ID and put it in the ${objectIdKey} property if you want to refer to the object in a later edit. For example, if you want to insert a new object into an array and (in a subsequent edit)
-move another piece of content to after the newly inserted one, you can use the ID of the newly inserted object in the ${"MoveArrayElement" satisfies Capitalize<MoveArrayElement["type"]>} edit.
-For a ${setFieldType} or ${insertIntoArrayType} edit, you might insert an object into a location where it is ambiguous what the type of the object is from the data alone. In that case, supply the type in the ${typeField} property of the object with a value that is the typescript type name of that object.
+When creating new objects for \`${insertIntoArrayType}\` or \`${setFieldType}\`,
+you may create an ID and put it in the \`${objectIdKey}\` property if you want to refer to the object in a later edit. For example, if you want to insert a new object into an array and (in a subsequent edit)
+move another piece of content to after the newly inserted one, you can use the ID of the newly inserted object in the \`${"MoveArrayElement" satisfies Capitalize<MoveArrayElement["type"]>}\` edit.
+For a \`${setFieldType}\` or \`${insertIntoArrayType}\` edit, you might insert an object into a location where it is ambiguous what the type of the object is from the data alone. In that case, supply the type in the \`${typeField}\` property of the object with a value that is the typescript type name of that object.
+
 The schema definitions for an edit are:
+
 \`\`\`typescript
 ${treeSchemaString}
 \`\`\`
+
 The tree is a JSON object with the following schema:
+
 \`\`\`typescript
 ${domainSchemaString}
 \`\`\`
-The type${rootTypes.length > 1 ? "s" : ""} allowable at the root of the tree: ${rootTypes.map((t) => getFriendlySchemaName(t)).join(" | ")}.
-The current state of the tree:
+
+The type${rootTypes.length > 1 ? "s" : ""} allowable at the root of the tree ${rootTypes.length > 1 ? "are" : "is"} \`${rootTypes.map((t) => getFriendlySchemaName(t)).join(" | ")}\`.
+The current state of the tree is
+
+\`\`\`JSON
+${decoratedTreeJson}.
 \`\`\`
-JSON${decoratedTreeJson}.
-\`\`\`
+
 Your final output should be an array of one or more edits that accomplishes the goal, or an empty array if the task can't be accomplished.
 Before returning the edits, you should check that they are valid according to both the application schema and the editing language schema.
 When possible, ensure that the edits preserve the identity of objects already in the tree (for example, prefer move operations over removal and reinsertion).
-Do not put ${objectIdKey} properties on new objects that you create unless you are going to refer to them in a later edit.
-Finally, double check that the edits would accomplish the users request (if it is possible).`;
+Do not put \`${objectIdKey}\` properties on new objects that you create unless you are going to refer to them in a later edit.
+Finally, double check that the edits would accomplish the user's request (if it is possible).`;
+
 	return systemPrompt;
 }
 

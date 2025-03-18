@@ -18,7 +18,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/internal";
 
-import { clod } from "../../../explicit-strategy/index.js";
+import { clod, type ClodOptions } from "../../../explicit-strategy/index.js";
 
 // eslint-disable-next-line eslint-comments/disable-enable-pair
 /* eslint-disable jsdoc/require-jsdoc */
@@ -166,8 +166,7 @@ describe.skip("Agent Editing Integration", () => {
 			apiKey: "TODO",
 		});
 
-		let megaString = "# DUCKS\n";
-		await clod({
+		const options: ClodOptions<typeof Page> = {
 			treeView: asTreeViewAlpha(view),
 			clientOptions: { client: claudeClient /* options: { model: TEST_MODEL_NAME } */ },
 			treeNode: view.root,
@@ -176,29 +175,17 @@ describe.skip("Agent Editing Integration", () => {
 					"Please replace the sample paragraph with an amusing short story about ducks going to a buffet.",
 				systemRoleContext,
 			},
-			onEdits: (state) => {
-				if (state.retryState.errors.length > 0) {
-					megaString += `## ERRORS\n`;
-					for (const error of state.retryState.errors) {
-						megaString += `### Error\n${error.error.message}\n`;
-					}
-				}
-				megaString += `## System Prompt\n${state.systemPrompt}\n`;
-				megaString += `## User Prompt\n${state.userPrompt}\n`;
-				megaString += `## Chain of Thought\n${state.retryState.thinking.type === "thinking" ? state.retryState.thinking.thinking : "-- Redacted by Anthropic --!"}\n`;
-				megaString += `## Result from LLM\n${state.edits}\n`;
-				megaString += `## Edits\n`;
-				return true;
-			},
-			onEdit: (state) => {
-				megaString += `### Edit\n${state.editIndex}\n${JSON.stringify(state.edit, undefined, 2)}\n`;
-				megaString += `#### Result\n${state.editIndex}\n${state.treeAfterEdit}\n`;
-				megaString += `${toString(view.root)}\n`;
-				return true;
-			},
-		});
+			toString,
+		};
 
-		writeFileSync("megaStringOutput.md", megaString, { encoding: "utf8" });
+		const log = await clod(options);
+
+		if (log === undefined) {
+			console.error("No log returned from clod");
+			throw new Error("No log returned from clod");
+		} else {
+			writeFileSync("llm_log.md", log, { encoding: "utf8" });
+		}
 	});
 
 	/**
@@ -210,21 +197,34 @@ describe.skip("Agent Editing Integration", () => {
 	 */
 
 	function toString(page: Page): string {
-		return page.paragraphs
+		let result = "";
+		if (page.comments.length > 0) {
+			result += "Comments:\n\n";
+			for (const c of page.comments) {
+				result += `#### ${c.identifier}: ${c.text}\n\n`;
+			}
+		}
+		result += page.paragraphs
 			.map((p) => {
 				return p.content
 					.map((c) => {
 						if (c instanceof Word) {
 							return c.characters;
 						} else if (c instanceof Span) {
-							const text = c.words.map((w) => w.characters).join(" ");
+							let text = c.words.map((w) => w.characters).join(" ");
+							const commentRef = c.comments[0];
+							if (commentRef !== undefined) {
+								const comment = page.comments.find((co) => co.identifier === commentRef);
+								text = `[${text}](#${comment?.identifier})`;
+							}
 							if (c.bold) {
-								return `**${text}**`;
+								text = `**${text}**`;
 							}
 							if (c.italic) {
-								return `_${text}_`;
+								text = `_${text}_`;
 							}
-							return `${text}`;
+
+							return text;
 						} else if (c instanceof D8) {
 							return `${c.month}/${c.day}/${c.year}`;
 						}
@@ -232,6 +232,8 @@ describe.skip("Agent Editing Integration", () => {
 					.join(" ");
 			})
 			.join("\n");
+
+		return result;
 	}
 
 	// it("zod playground", () => {

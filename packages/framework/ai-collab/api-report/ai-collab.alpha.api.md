@@ -30,9 +30,9 @@ export interface AiCollabOptions {
         readonly systemRoleContext: string;
         readonly userAsk: string;
     };
-    readonly treeNode: TreeNode;
+    readonly treeNode: TreeNode_2;
     readonly treeView: View;
-    readonly validator?: (newContent: TreeNode) => void;
+    readonly validator?: (newContent: TreeNode_2) => void;
 }
 
 // @alpha
@@ -71,6 +71,37 @@ export interface ApplyEditSuccess extends EventFlowDebugEvent {
 export interface ClaudeClientOptions {
     // (undocumented)
     client: Anthropic;
+}
+
+// @alpha
+export function clod(options: ClodOptions<ImplicitFieldSchema_2>): Promise<string | undefined>;
+
+// @alpha
+export interface ClodOptions<TRoot extends ImplicitFieldSchema_2> {
+    // (undocumented)
+    clientOptions: OpenAiClientOptions | ClaudeClientOptions;
+    // (undocumented)
+    finalReviewStep?: boolean;
+    // (undocumented)
+    limiters?: {
+        abortController?: AbortController;
+        maxSequentialErrors?: number;
+        maxModelCalls?: number;
+        tokenLimits?: TokenLimits;
+    };
+    // (undocumented)
+    prompt: {
+        systemRoleContext: string;
+        userAsk: string;
+    };
+    // (undocumented)
+    toString?: (node: ReadableField<TRoot>) => string;
+    // (undocumented)
+    treeNode: ReadableField<TRoot>;
+    // (undocumented)
+    treeView: View;
+    // (undocumented)
+    validator?: (newContent: TreeNode) => void;
 }
 
 // @alpha

@@ -8,6 +8,8 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	getSimpleSchema,
 	Tree,
+	type ImplicitFieldSchema,
+	type ReadableField,
 	type SimpleTreeSchema,
 	type TreeNode,
 } from "@fluidframework/tree/internal";
@@ -82,18 +84,6 @@ export interface GenerateTreeEditsOptions {
 		systemRoleContext: string;
 		userAsk: string;
 	};
-	onEdits?: (args: {
-		view: View;
-		systemPrompt: string;
-		userPrompt: string;
-		edits: string;
-		retryState: RetryState;
-	}) => boolean;
-	onEdit?: (args: {
-		edit: TreeEdit;
-		editIndex: number;
-		treeAfterEdit: string;
-	}) => boolean;
 	limiters?: {
 		abortController?: AbortController;
 		maxSequentialErrors?: number;
@@ -102,6 +92,7 @@ export interface GenerateTreeEditsOptions {
 	};
 	finalReviewStep?: boolean;
 	validator?: (newContent: TreeNode) => void;
+	toString?: (node: ReadableField<ImplicitFieldSchema>) => string;
 	debugEventLogHandler?: DebugEventLogHandler;
 	planningStep?: boolean;
 }
@@ -364,10 +355,39 @@ async function* generateEdits(
 }
 
 /**
- * TODO
+ * Options for {@link clod}.
+ * @alpha
  */
-export async function clod(options: GenerateTreeEditsOptions): Promise<boolean> {
+export interface ClodOptions<TRoot extends ImplicitFieldSchema> {
+	clientOptions: OpenAiClientOptions | ClaudeClientOptions;
+	treeView: View;
+	treeNode: ReadableField<TRoot>;
+	prompt: {
+		systemRoleContext: string;
+		userAsk: string;
+	};
+	limiters?: {
+		abortController?: AbortController;
+		maxSequentialErrors?: number;
+		maxModelCalls?: number;
+		tokenLimits?: TokenLimits;
+	};
+	finalReviewStep?: boolean;
+	validator?: (newContent: TreeNode) => void;
+	toString?: (node: ReadableField<TRoot>) => string;
+}
+
+/**
+ * TODO
+ * @alpha
+ */
+export async function clod(
+	options: ClodOptions<ImplicitFieldSchema>,
+): Promise<string | undefined> {
 	const idGenerator = new IdGenerator();
+	if (typeof options.treeNode !== "object" || options.treeNode === null) {
+		throw new UsageError("Primitive root nodes are not yet supported.");
+	}
 	const simpleSchema = getSimpleSchema(Tree.schema(options.treeNode));
 	const systemPrompt = getEditingSystemPrompt(
 		options.treeView,
@@ -389,6 +409,17 @@ export async function clod(options: GenerateTreeEditsOptions): Promise<boolean> 
 		?.foo as Anthropic.Tool.InputSchema;
 
 	const max_tokens = options.limiters?.tokenLimits?.outputTokens ?? 20000;
+
+	let log = "";
+	if (options.toString !== undefined) {
+		log += `# Initial Tree State\n\n`;
+		log += `${
+			options.toString?.(options.treeNode) ??
+			`\`\`\`JSON\n${JSON.stringify(options.treeNode, undefined, 2)}\n\`\`\``
+		}\n\n`;
+	}
+	log += `# System Prompt\n\n${systemPrompt}\n\n`;
+	log += `# User Prompt\n\n"${options.prompt.userAsk}"\n\n`;
 
 	async function queryClod(
 		messages2: Anthropic.Beta.Messages.BetaMessageParam[],
@@ -424,6 +455,8 @@ export async function clod(options: GenerateTreeEditsOptions): Promise<boolean> 
 			(c): c is Anthropic.Beta.BetaThinkingBlock => c.type === "thinking",
 		) ?? fail("Expected thinking block");
 
+	log += `# Chain of Thought\n\n${thinking.type === "thinking" ? thinking.thinking : "-- Redacted by LLM --"}\n\n`;
+
 	const retryState: RetryState = {
 		thinking,
 		errors: [],
@@ -433,25 +466,17 @@ export async function clod(options: GenerateTreeEditsOptions): Promise<boolean> 
 		edits: generateEditTypesForInsertion(simpleSchema),
 	});
 
+	log += `# Results\n\n`;
+
 	while (retryState.errors.length <= (options.limiters?.maxSequentialErrors ?? 3)) {
 		const toolUse =
 			response.content.find(
 				(v): v is Anthropic.Beta.BetaToolUseBlock => v.type === "tool_use",
 			) ?? fail("Expected tool use block");
 
+		log += `## Result${retryState.errors.length > 0 ? ` Attempt ${retryState.errors.length + 1}` : ""}\n\n\`\`\`JSON\n${JSON.stringify(toolUse.input, undefined, 2)}\n\`\`\`\n\n`;
+
 		const branch = options.treeView.fork();
-		if (
-			options.onEdits?.({
-				view: branch,
-				edits: JSON.stringify(toolUse.input, undefined, 2),
-				systemPrompt,
-				userPrompt: options.prompt.userAsk,
-				retryState,
-			}) === false
-		) {
-			branch.dispose();
-			return false;
-		}
 		const parse = wrapper.safeParse(toolUse.input);
 		if (parse.success) {
 			const edits = parse.data.edits as TreeEdit[];
@@ -461,31 +486,36 @@ export async function clod(options: GenerateTreeEditsOptions): Promise<boolean> 
 				while (editIndex < edits.length) {
 					const edit = edits[editIndex] ?? fail("Expected edit");
 					applyAgentEdit(branch, edit, idGenerator, options.validator);
-					if (
-						options.onEdit?.({
-							edit,
-							editIndex,
-							treeAfterEdit: JSON.stringify(branch.root, undefined, 2),
-						}) === false
-					) {
-						branch.dispose();
-						return false;
-					}
+					log += `### Applied Edit ${editIndex + 1}\n\n`;
+					log += `The new state of the tree is:\n\n`;
+					log += `${
+						options.toString?.(options.treeNode) ??
+						`\`\`\`JSON\n${JSON.stringify(options.treeNode, undefined, 2)}\n\`\`\``
+					}\n\n`;
 					editIndex += 1;
 				}
+
 				options.treeView.merge(branch);
-				return true;
+				return log;
 			} catch (error: unknown) {
+				log += `### Error Applying Edit ${editIndex + 1}\n\n`;
+				log += `\`${(error as Error)?.message}\`\n\n`;
+				log += `LLM will be queried again.\n\n`;
+				branch.dispose();
 				if (error instanceof UsageError) {
 					retryState.errors.push({
 						editIndex,
 						error,
 						toolUse,
 					});
+				} else {
+					throw error;
 				}
-				branch.dispose();
 			}
 		} else {
+			log += `### Error Parsing Result\n\n`;
+			log += `\`${parse.error.message}\`\n\n`;
+			log += `LLM will be queried again.\n\n`;
 			retryState.errors.push({
 				error: new UsageError(parse.error.message),
 				editIndex: -1,
@@ -517,7 +547,7 @@ export async function clod(options: GenerateTreeEditsOptions): Promise<boolean> 
 		response = await queryClod(retryMessages);
 	}
 
-	return false;
+	return log;
 }
 
 /**

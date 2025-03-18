@@ -175,10 +175,6 @@ describe.skip("Agent Editing Integration", () => {
 					"Please organize the sessions so that the ones for adults are on the first day, and the ones that kids would find enjoyable are on the second day. Also make sure the sessions are in alphabetical order within the day.",
 				systemRoleContext: "",
 			},
-			onEdits: (state) => {
-				debugger;
-				return true;
-			},
 		});
 
 		const stringified = JSON.stringify(view.root, undefined, 2);
