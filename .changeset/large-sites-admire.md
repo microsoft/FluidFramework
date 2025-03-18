@@ -2,9 +2,9 @@
 "@fluidframework/container-loader": minor
 ---
 ---
-"section": other
+"section": legacy
 ---
 
-Removed deprecated `ILoaderOptions` exported from container-loader.
+Deprecated ILoaderOptions have been removed
 
 Previously `ILoaderOptions` exported from `container-loader` was extending the base `ILoaderOptions` defined in `container-definitions` to add an experimental `summarizeProtocolTree` property which was used to test single-commit summaries. The option is no longer required or in use, so the extended version of `ILoaderOptions` is not needed anymore. Use `@fluidframework/container-definitions#ILoaderOptions` instead.
