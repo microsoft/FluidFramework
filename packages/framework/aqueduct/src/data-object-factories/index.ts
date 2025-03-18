@@ -5,4 +5,3 @@
 
 export { DataObjectFactory } from "./dataObjectFactory.js";
 export { PureDataObjectFactory } from "./pureDataObjectFactory.js";
-export { TreeDataObjectFactory } from "./treeDataObjectFactory.js";
