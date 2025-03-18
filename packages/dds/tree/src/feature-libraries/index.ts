@@ -115,7 +115,7 @@ export {
 	type NodeIdentifierManager,
 	nodeKeyTreeIdentifier,
 	type StableNodeIdentifier,
-} from "./node-key/index.js";
+} from "./node-identifier/index.js";
 
 export {
 	FieldKinds,

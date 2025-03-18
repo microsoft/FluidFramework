@@ -6,7 +6,7 @@
 import { assert } from '@fluidframework/core-utils/internal';
 import { type IChannelAttributes, type IDeltaHandler } from '@fluidframework/datastore-definitions/internal';
 import { MessageType, type ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
-import type { IRuntimeMessageCollection } from '@fluidframework/runtime-definitions/internal';
+import type { IRuntimeMessageCollection, IRuntimeMessagesContent } from '@fluidframework/runtime-definitions/internal';
 
 import { type IOpContents, type IShimDeltaHandler } from './types.js';
 import { attributesMatch, isBarrierOp, isStampedOp } from './utils.js';
@@ -81,7 +81,7 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 		assert(this.isUsingNewV2(), 0x7e5 /* Should be using new handler after swap */);
 	}
 
-	public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
+	private process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
 		// This allows us to process the migrate op and prevent the shared object from processing the wrong ops
 		assert(!this.isPreAttachState(), 0x82c /* Can't process ops before attaching tree handler */);
 		if (message.type !== MessageType.Operation) {
@@ -97,8 +97,15 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 		if (this.shouldDropOp(contents)) {
 			return;
 		}
+		const messagesContent: IRuntimeMessagesContent[] = [
+			{
+				contents,
+				localOpMetadata,
+				clientSequenceNumber: message.clientSequenceNumber,
+			},
+		];
 		// Another thought, flatten the IShimDeltaHandler and the MigrationShim into one class
-		return this.treeDeltaHandler.process(message, local, localOpMetadata);
+		return this.treeDeltaHandler.processMessages({ envelope: message, messagesContent, local });
 	}
 
 	public processMessages(messagesCollection: IRuntimeMessageCollection): void {

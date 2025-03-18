@@ -68,7 +68,6 @@ export {
 	IJSONSegment,
 	IMarkerDef,
 	IMergeTreeAnnotateMsg,
-	IMergeTreeClientSequenceArgs,
 	IMergeTreeDelta,
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeDeltaOp,

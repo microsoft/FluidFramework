@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-export { MockNodeIdentifierManager } from "./mockNodeKeyManager.js";
+export { MockNodeIdentifierManager } from "./mockNodeIdentifierManager.js";
 export {
 	compareLocalNodeIdentifiers,
 	type LocalNodeIdentifier,
 	type StableNodeIdentifier,
 	nodeKeyTreeIdentifier,
-} from "./nodeKey.js";
+} from "./nodeIdentifier.js";
 export {
 	createNodeIdentifierManager,
 	isStableNodeIdentifier,
 	type NodeIdentifierManager,
-} from "./nodeKeyManager.js";
+} from "./nodeIdentifierManager.js";
