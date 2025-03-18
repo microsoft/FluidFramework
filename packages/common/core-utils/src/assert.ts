@@ -51,9 +51,40 @@ export function assert(condition: boolean, message: string | number): asserts co
  * @internal
  */
 export function fail(message: string | number): never {
-	throw new Error(
+	const error = new Error(
 		typeof message === "number" ? `0x${message.toString(16).padStart(3, "0")}` : message,
 	);
+	onAssertionError(error);
+	throw error;
+}
+
+function onAssertionError(error: Error): void {
+	for (const handler of firstChanceAssertionHandler) {
+		handler(error);
+	}
+}
+
+const firstChanceAssertionHandler = new Set<(error: Error) => void>();
+
+/**
+ * Add a callback which can be used to report an assertion before it is thrown.
+ * @param handler - Called when an assertion occurs before the exception is thrown.
+ * @returns a function to remove the handler.
+ * @remarks
+ * This is mainly useful for triggering a `debugger;` statement and/or reporting telemetry to aid Fluid with diagnosing and fixing the bugs which cause asserts.
+ * It can also be used to record that an fatal error has occurred to help avoid complicating the diagnosis by doing more work after the error which might error again in a different way.
+ * @alpha
+ */
+export function onAssertionFailure(handler: (error: Error) => void): () => void {
+	// To avoid issues if the same callback is registered twice (mainly it not triggering twice and the first unregister removing it),
+	// generate a wrapper around the handler.
+	const wrapper = (error: Error): void => {
+		handler(error);
+	};
+	firstChanceAssertionHandler.add(wrapper);
+	return () => {
+		firstChanceAssertionHandler.delete(wrapper);
+	};
 }
 
 /**
@@ -97,7 +128,9 @@ export function debugAssert(predicate: () => true | { toString(): string }): voi
 			const result = predicate();
 			if (result !== true) {
 				debugger;
-				throw new Error(`Debug assert failed: ${result.toString()}`);
+				const error = new Error(`Debug assert failed: ${result.toString()}`);
+				onAssertionError(error);
+				throw error;
 			}
 		}
 	});
