@@ -165,7 +165,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	): Required<MostDerivedData> {
 		const cache = this.markMostDerived();
 		cache.oneTimeInitialized ??= this.oneTimeSetup();
-		// Typescript fails to narrow the type of `oneTimeInitialized` to `Context` here, so use a cast:
+		// TypeScript fails to narrow the type of `oneTimeInitialized` to `Context` here, so use a cast:
 		return cache as MostDerivedData & { oneTimeInitialized: Context };
 	}
 

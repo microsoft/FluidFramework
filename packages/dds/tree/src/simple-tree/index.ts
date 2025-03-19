@@ -65,6 +65,7 @@ export {
 	type SimpleMapNodeSchema,
 	type SimpleArrayNodeSchema,
 	type SimpleObjectNodeSchema,
+	type SimpleObjectFieldSchema,
 	type JsonSchemaId,
 	type JsonSchemaType,
 	type JsonObjectNodeSchema,
@@ -142,6 +143,11 @@ export {
 	type TransactionResultFailed,
 	rollback,
 	Component,
+	generateSchemaFromSimpleSchema,
+	replaceConciseTreeHandles,
+	replaceHandles,
+	replaceVerboseTreeHandles,
+	type HandleConverter,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,

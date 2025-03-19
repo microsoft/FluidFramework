@@ -11,7 +11,7 @@ import type { IFluidHandle as _dummyImport } from "@fluidframework/core-interfac
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import type { TreeValue } from "../../core/index.js";
-import type { NodeKeyManager } from "../../feature-libraries/index.js";
+import type { NodeIdentifierManager } from "../../feature-libraries/index.js";
 import {
 	type RestrictiveStringRecord,
 	getOrCreate,
@@ -142,7 +142,7 @@ export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown>
 	 * ```
 	 *
 	 * If an application wants to be particularly careful to preserve all data on a node when editing it, it can use
-	 * {@link TreeAlpha.(importVerbose:2)|import}/{@link TreeAlpha.(exportVerbose:2)|export} APIs with persistent keys.
+	 * {@link TreeAlpha.importVerbose|import}/{@link TreeAlpha.exportVerbose|export} APIs with persistent keys.
 	 *
 	 * Note that public API methods which operate on entire nodes (such as `moveTo`, `moveToEnd`, etc. on arrays) do not encounter
 	 * this problem as SharedTree's implementation stores the entire node in its lower layers. It's only when application code
@@ -325,6 +325,17 @@ export const schemaStatics = {
  * Therefor two calls to `array(allowedTypes)` with the same allowedTypes will return the same {@link TreeNodeSchema} instance.
  * On the other hand, two calls to `array(name, allowedTypes)` will always return different {@link TreeNodeSchema} instances
  * and it is an error to use both in the same tree (since their identifiers are not unique).
+ *
+ * For "customizable" schema (those which can be subclassed to customize them, see details below) some additional rules must be followed:
+ *
+ * 1. Only a single {@link TreeNodeSchema|schema} can be used from the class hierarchy deriving from the base class produced by this factory.
+ * It is legal to subclass the returned class, and even subclass that class,
+ * but only a single class from that class hierarchy can ever be instantiated or passed to any API as a {@link TreeNodeSchema|schema}.
+ * These base classes can be used with `instanceof`, but not with schema based APIs like `Tree.is`.
+ * 2. If overriding the constructor, the constructor must accept the same argument as the base constructor `super` and forward it to `super` unchanged.
+ * 3. Properties for fields defined in the schema should not be overridden.
+ * 4. Additional static members added to schema should pick relatively unique keys to reduce the risk of colliding with implementation details what are not exposed in the API.
+ * 5. If exporting the schema from a package which uses API-Extractor, export the base class and derived class separately to work around [a known limitation](https://github.com/microsoft/rushstack/issues/4429).
  *
  * Note:
  * POJO stands for Plain Old JavaScript Object.
@@ -898,8 +909,10 @@ export class SchemaFactory<
 	 */
 	public get identifier(): FieldSchema<FieldKind.Identifier, typeof this.string> {
 		const defaultIdentifierProvider: DefaultProvider = getDefaultProvider(
-			(nodeKeyManager: NodeKeyManager) => {
-				return nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
+			(nodeKeyManager: NodeIdentifierManager) => {
+				return nodeKeyManager.stabilizeNodeIdentifier(
+					nodeKeyManager.generateLocalNodeIdentifier(),
+				);
 			},
 		);
 		return createFieldSchema(FieldKind.Identifier, this.string, {

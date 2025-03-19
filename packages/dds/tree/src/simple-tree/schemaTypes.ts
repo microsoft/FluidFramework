@@ -7,7 +7,7 @@ import type { ErasedType, IFluidHandle } from "@fluidframework/core-interfaces";
 import { Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { NodeKeyManager } from "../feature-libraries/index.js";
+import type { NodeIdentifierManager } from "../feature-libraries/index.js";
 import {
 	type MakeNominal,
 	brand,
@@ -28,6 +28,7 @@ import {
 	type TreeNodeSchemaNonClass,
 	inPrototypeChain,
 } from "./core/index.js";
+import { inPrototypeChain } from "./core/index.js";
 import type { FieldKey } from "../core/index.js";
 import type { InsertableContent } from "./toMapTree.js";
 import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
@@ -208,7 +209,7 @@ export interface FieldProps<TCustomMetadata = unknown> {
  * A {@link FieldProvider} which requires additional context in order to produce its content
  */
 export type ContextualFieldProvider = (
-	context: NodeKeyManager,
+	context: NodeIdentifierManager,
 ) => InsertableContent | undefined;
 /**
  * A {@link FieldProvider} which can produce its content in a vacuum
@@ -385,7 +386,7 @@ export function normalizeAllowedTypes(
 ): ReadonlySet<TreeNodeSchema> {
 	const normalized = new Set<TreeNodeSchema>();
 	if (isReadonlyArray(types)) {
-		// Types array must not be modified after it is normalized since that would result if the user of the normalized data having wrong (out of date) content.
+		// Types array must not be modified after it is normalized since that would result in the user of the normalized data having wrong (out of date) content.
 		Object.freeze(types);
 		for (const lazyType of types) {
 			normalized.add(evaluateLazySchema(lazyType));
@@ -482,7 +483,7 @@ const cachedLazyItem = new WeakMap<() => unknown, unknown>();
 /**
  * Returns the schema referenced by the {@link LazyItem}.
  * @remarks
- * Caches results to handle {@link LazyItem} which compute their resulting schema.
+ * Caches results to handle {@link LazyItem}s which compute their resulting schema.
  * @alpha
  */
 export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>): T {
@@ -499,11 +500,24 @@ export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>)
 }
 
 /**
- * Indicates that a schema is the "most derived" version which is allowed to be used, see {@link MostDerivedData}.
- * Calling helps with error messages about invalid schema usage (using more than one type from single schema factor produced type,
- * and thus calling this for one than one subclass).
+ * Indicates that the provided schema is the "most derived" version in its class hierarchy.
+ *
+ * @param oneTimeInitialize - If true this runs {@link TreeNodeValid.oneTimeInitialize} which does even more initialization and validation.
+ * `oneTimeInitialize` can't safely be run until all transitively referenced schema are defined, so which cases can safely use it are more limited.
+ * When legal for the caller to set this to true, it is preferred, but it is often not safe due to possible forward references.
  * @remarks
- * Helper for invoking {@link TreeNodeValid.markMostDerived} for any {@link TreeNodeSchema} if it needed.
+ * See {@link MostDerivedData} and {@link SchemaFactory} for details on what a "most derived" schema is and why it matters.
+ *
+ * This is a helper for invoking {@link TreeNodeValid.markMostDerived} for {@link TreeNodeSchema}.
+ *
+ * Calling this helps with error messages about invalid schema usage (See {@link SchemaFactory} for the rules, some of which this helps validate).
+ * Typically this should be called for each schema as early as practical to improve error reporting for invalid usages of schema
+ * (using two different schema derived from the same {@link SchemaFactory} produced base class).
+ *
+ * Note that construction of actual {@link TreeNode} instances or use of a schema transitively in a {@link TreeViewConfiguration} already do this,
+ * so any calls to this that is unconditionally after that point for the given schema is not needed.
+ * Instead most usages of this should be from those cases, and from miscellaneous cases where a schema is passed into an public API where theoretically someone could accidentally
+ * pass in a base class of a schema instead of the most derived one.
  */
 export function markSchemaMostDerived(
 	schema: TreeNodeSchema,
