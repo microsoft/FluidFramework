@@ -142,6 +142,7 @@ export {
 	replaceHandles,
 	replaceVerboseTreeHandles,
 	type HandleConverter,
+	allowUnused,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,

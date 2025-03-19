@@ -223,6 +223,7 @@ export {
 	replaceHandles,
 	replaceVerboseTreeHandles,
 	type HandleConverter,
+	allowUnused,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
