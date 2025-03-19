@@ -49,9 +49,9 @@ export namespace JsonAsTree {
 	 */
 	export const Primitive = [
 		SchemaFactory.null,
-		SchemaFactory.boolean,
 		SchemaFactory.number,
 		SchemaFactory.string,
+		SchemaFactory.boolean,
 	] as const satisfies AllowedTypes;
 
 	/**
@@ -65,6 +65,11 @@ export namespace JsonAsTree {
 	 * ```typescript
 	 * const tree = TreeAlpha.importConcise(JsonAsTree.Union, { example: { nested: true }, value: 5 });
 	 * ```
+	 * @privateRemarks
+	 * The order here should not matter for any functionality related reasons.
+	 * In an attempt to improve readability of derived types (in errors, api-reports, IntelliSense etc.)
+	 * and possibly reduce incremental build related order dependence issues,
+	 * the simpler non-recursive types are listed first, followed by the recursive types.
 	 * @alpha
 	 */
 	export const Tree = [...Primitive, () => JsonObject, () => Array] as const;
