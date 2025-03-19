@@ -66,7 +66,7 @@ function makeLeaf<Name extends string, const T extends ValueSchema>(
  * A {@link TreeNodeSchema} for a {@link TreeLeafValue}.
  * @remarks
  * This is just a more specific alias for a particular {@link TreeNodeSchemaNonClass}.
- * It only exists to make the API (particularly errors, intellisense and generated d.ts files) more readable.
+ * It only exists to make the API (particularly errors, IntelliSense, and generated .d.ts files) more readable.
  *
  * See {@link SchemaFactory} and its various properties for actual leaf schema objects.
  * @privateRemarks
