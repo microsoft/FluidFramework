@@ -1333,6 +1333,7 @@ describe("SharedTree", () => {
 					outerList: view.root,
 					innerList: view.root.at(0) ?? assert.fail(),
 					setConnected: tree.setConnected,
+					dispose: tree.dispose,
 					assertOuterListEquals(expected: readonly (readonly string[])[]) {
 						const actual = [...this.outerList].map((inner) => [...inner]);
 						assert.deepEqual(actual, expected);

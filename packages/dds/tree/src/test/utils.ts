@@ -374,6 +374,7 @@ export class TestTreeProvider {
 
 export interface ConnectionSetter {
 	readonly setConnected: (connectionState: boolean) => void;
+	readonly dispose: () => void;
 }
 
 export type SharedTreeWithConnectionStateSetter = ISharedTree & ConnectionSetter;
@@ -440,6 +441,9 @@ export class TestTreeProviderLite {
 				connectionState: boolean,
 			) => {
 				containerRuntime.connected = connectionState;
+			};
+			(tree as Mutable<SharedTreeWithConnectionStateSetter>).dispose = () => {
+				runtime.dispose();
 			};
 			t.push(tree);
 		}
