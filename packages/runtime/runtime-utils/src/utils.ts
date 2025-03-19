@@ -35,6 +35,17 @@ export async function seqFromTree(
 }
 
 /**
+ * The following characters emulates the UTF-16 code sequence from 65 - 123, except for the `[` and `{`
+ * positioned at 91 and 123 respectively - which are changed to '(' and ')'. Used in the `encodeCompactIdToString` utility below.
+ * NOTE: The character set must never be changed - since it could result in collisions with existing ids.
+ * If changing, make sure to choose new characters that have never been
+ * used before, and the characters must not change their encoding with 'encodeURIComponent'.
+ * @internal
+ */
+export const charSetForEncodingIds =
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ(abcdefghijklmnopqrstuvwxyz)0123456789";
+
+/**
  * Encode compact ID (returned by IContainerRuntime.generateDocumentUniqueId()) to a compact string representation.
  * While this is the main usage pattern, it works with any non-negative integer or a string.
  * Strings are returned as is, and assumed to be UUIDs, i.e. unique enough to never overlap with
@@ -51,11 +62,7 @@ export function encodeCompactIdToString(idArg: number | string, prefix = "") {
 	if (typeof idArg === "string") {
 		return idArg;
 	}
-	// The following character emulates the UTF-16 code sequence from 65 - 123, except for the '[' and '{' positioned at 91 and 123 respectively - which are changed to '(' and ')'.
-	// NOTE: The character set must never be changed - since it could result in collisions with existing ids.
-	// If changing, make sure to choose new characters that have never been
-	// used before, and the characters must not change their encoding with 'encodeURIComponent'.
-	const charSet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ(abcdefghijklmnopqrstuvwxyz)0123456789";
+
 	// WARNING: result of this function are stored in storage!
 	// If you ever need to change this function, you will need to ensure that
 	// for any inputs N1 & N2, old(N1) !== new(N2), where old() - is the old implementation,
@@ -76,7 +83,7 @@ export function encodeCompactIdToString(idArg: number | string, prefix = "") {
 		// 10000 -> 'BaQ'
 		// 100000 -> 'XZf'
 		const encode = num % 64;
-		id = charSet[encode] + id;
+		id = charSetForEncodingIds[encode] + id;
 		num = Math.floor(num / 64) - 1;
 	} while (num !== -1);
 	return prefix + id;

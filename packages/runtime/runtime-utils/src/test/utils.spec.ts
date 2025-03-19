@@ -5,10 +5,17 @@
 
 import { strict as assert } from "assert";
 
-import { encodeCompactIdToString } from "../utils.js";
+import { charSetForEncodingIds, encodeCompactIdToString } from "../utils.js";
 
 describe("Utils", () => {
 	beforeEach(() => {});
+
+	it("charSetForEncodingIds doesn't change with encodeURIComponent", () => {
+		assert(
+			encodeURIComponent(charSetForEncodingIds) === charSetForEncodingIds,
+			`${charSetForEncodingIds} contains invalid character(s) which transforms when used with encodeURIComponent`,
+		);
+	});
 
 	it("encodeCompactIdToString() with strings", () => {
 		assert(encodeCompactIdToString("a-b-c") === "a-b-c", "text");
