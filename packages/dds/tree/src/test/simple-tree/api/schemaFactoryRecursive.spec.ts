@@ -23,17 +23,21 @@ import {
 	type ApplyKindInput,
 	type NodeBuilderData,
 	SchemaFactoryAlpha,
+	customizeSchemaTyping,
+	type AssignableTreeFieldFromImplicitField,
+	type ObjectFromSchemaRecord,
 } from "../../../simple-tree/index.js";
 import type {
 	ValidateRecursiveSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/schemaFactoryRecursive.js";
-import type {
-	FieldSchemaUnsafe,
-	InsertableTreeFieldFromImplicitFieldUnsafe,
-	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
-	TreeFieldFromImplicitFieldUnsafe,
-	TreeNodeFromImplicitAllowedTypesUnsafe,
+import {
+	customizeSchemaTypingUnsafe,
+	type FieldSchemaUnsafe,
+	type InsertableTreeFieldFromImplicitFieldUnsafe,
+	type InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
+	type TreeFieldFromImplicitFieldUnsafe,
+	type TreeNodeFromImplicitAllowedTypesUnsafe,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/typesUnsafe.js";
 import { TreeFactory } from "../../../treeFactory.js";
@@ -710,5 +714,118 @@ describe("SchemaFactory Recursive methods", () => {
 
 		const r = hydrate(Root, { r: new ArrayRecursive([]) });
 		assert.deepEqual([...r.r], []);
+	});
+
+	describe("custom types", () => {
+		it("custom non-recursive children", () => {
+			class O extends sf.objectRecursive("O", {
+				a: customizeSchemaTyping(sf.number).custom<{
+					input: 1;
+					readWrite: never;
+					output: 2;
+				}>(),
+				recursive: sf.optionalRecursive([() => O]),
+			}) {}
+
+			{
+				type _check = ValidateRecursiveSchema<typeof O>;
+			}
+			const obj = new O({ a: 1 });
+			const read = obj.a;
+			type _checkRead = requireAssignableTo<typeof read, 2>;
+
+			// @ts-expect-error Readonly.
+			obj.a = 2 as never;
+		});
+
+		it("custom recursive children", () => {
+			class O extends sf.objectRecursive("O", {
+				// Test that customizeSchemaTyping works for non recursive members of recursive types
+				a: customizeSchemaTyping(sf.number).custom<{
+					input: 1;
+					readWrite: never;
+					output: 2;
+				}>(),
+				recursive: sf.optionalRecursive(
+					customizeSchemaTypingUnsafe([() => O]).custom<{
+						input: unknown;
+						readWrite: never;
+					}>(),
+				),
+			}) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof O>;
+			}
+			// Check custom typing applies to "a" and "recursive"
+			const obj = new O({ a: 1, recursive: undefined as unknown });
+			const read = obj.recursive;
+			type _checkRead = requireAssignableTo<typeof read, O | undefined>;
+
+			// @ts-expect-error Readonly.
+			obj.recursive = new O({ a: 1 });
+
+			// Readonly fails to apply apply when using FieldSchema on recursive objects.
+			obj.recursive = undefined;
+			// @ts-expect-error Readonly.
+			obj.a = 1;
+
+			{
+				type Obj = ObjectFromSchemaRecord<typeof O.info>;
+				type A = AssignableTreeFieldFromImplicitField<typeof O.info.recursive>;
+				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+				const x: Obj = {} as O;
+				// @ts-expect-error Readonly.
+				x.recursive = undefined;
+			}
+
+			{
+				type A = AssignableTreeFieldFromImplicitField<typeof O.info.recursive>;
+				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+				const x: O = {} as O;
+				// Readonly fails to apply apply when using FieldSchema on recursive objects.
+				x.recursive = undefined;
+			}
+		});
+
+		it("readonly fields", () => {
+			class O extends sf.objectRecursive("O", {
+				// Test that customizeSchemaTyping works for non recursive members of recursive types
+				opt: sf.optional(
+					customizeSchemaTyping(sf.number).custom<{
+						readWrite: never;
+					}>(),
+				),
+				req: sf.required(
+					customizeSchemaTyping(sf.number).custom<{
+						readWrite: never;
+					}>(),
+				),
+				recursive: sf.optionalRecursive(
+					customizeSchemaTypingUnsafe([() => O]).custom<{
+						readWrite: never;
+					}>(),
+				),
+			}) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof O>;
+			}
+			// Check custom typing applies to "a" and "recursive"
+			const obj = new O({ req: 1 });
+			const read = obj.recursive;
+			type _checkRead = requireAssignableTo<typeof read, O | undefined>;
+
+			// @ts-expect-error Readonly.
+			obj.opt = 1;
+			// Ideally this would be an error as well, butt adding logic to do so breaks recursive type compilation when using it.
+			obj.opt = undefined;
+
+			// @ts-expect-error Readonly.
+			obj.req = 1;
+
+			assert.throws(() => {
+				// @ts-expect-error required.
+				obj.req = undefined;
+			});
+		});
 	});
 });

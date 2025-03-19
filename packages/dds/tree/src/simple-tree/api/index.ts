@@ -87,6 +87,11 @@ export type {
 	AllowedTypesUnsafe,
 	TreeNodeSchemaNonClassUnsafe,
 	InsertableTreeNodeFromAllowedTypesUnsafe,
+	GetTypesUnsafe,
+	DefaultInsertableTreeNodeFromImplicitAllowedTypesUnsafe,
+	DefaultTreeNodeFromImplicitAllowedTypesUnsafe,
+	StrictTypesUnsafe,
+	AssignableTreeFieldFromImplicitFieldUnsafe,
 } from "./typesUnsafe.js";
 
 export {
@@ -140,6 +145,8 @@ export {
 	type TransactionResultFailed,
 	rollback,
 } from "./transactionTypes.js";
+
+export { Component } from "./component.js";
 
 export { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
 
