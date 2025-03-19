@@ -12,7 +12,8 @@ import path from "node:path";
 import {
 	updatePackageJsonFile,
 	updatePackageJsonFileAsync,
- findGitRootSync } from "@fluid-tools/build-infrastructure";
+	findGitRootSync
+} from "@fluid-tools/build-infrastructure";
 import { PackageJson, getApiExtractorConfigFilePath } from "@fluidframework/build-tools";
 import { writeJson } from "fs-extra/esm";
 import JSON5 from "json5";
@@ -319,16 +320,16 @@ export function packagePublishesToFeed(
 
 type IReadmeInfo =
 	| {
-			exists: false;
-			filePath: string;
-	  }
+		exists: false;
+		filePath: string;
+	}
 	| {
-			exists: true;
-			filePath: string;
-			title: string;
-			trademark: boolean;
-			readme: string;
-	  };
+		exists: true;
+		filePath: string;
+		title: string;
+		trademark: boolean;
+		readme: string;
+	};
 
 function getReadmeInfo(dir: string): IReadmeInfo {
 	const filePath = path.join(dir, "README.md");
@@ -843,14 +844,14 @@ export const handlers: Handler[] = [
 					// The directory field should be omitted from the root package.
 					relativePkgDir === "."
 						? {
-								type: "git",
-								url: repository,
-							}
+							type: "git",
+							url: repository,
+						}
 						: {
-								type: "git",
-								url: repository,
-								directory: relativePkgDir,
-							};
+							type: "git",
+							url: repository,
+							directory: relativePkgDir,
+						};
 
 				json.homepage = homepage;
 			});
@@ -1248,8 +1249,8 @@ export const handlers: Handler[] = [
 
 			return missingDeps.length > 0
 				? `${file} is missing the following dependencies or devDependencies: \n\t${missingDeps.join(
-						"\n\t",
-					)}`
+					"\n\t",
+				)}`
 				: undefined;
 		},
 	},
@@ -1280,8 +1281,8 @@ export const handlers: Handler[] = [
 
 			return scriptsUsingInconsistentArgs.length > 0
 				? `${file} using inconsistent arguments in the following scripts:\n\t${scriptsUsingInconsistentArgs.join(
-						"\n\t",
-					)}`
+					"\n\t",
+				)}`
 				: undefined;
 		},
 		resolver: (file: string): { resolved: boolean; message?: string } => {
@@ -1668,7 +1669,7 @@ export const handlers: Handler[] = [
 				exportsRoot?.default?.default === undefined
 					? undefined
 					: // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
-						normalizePathField(exportsRoot?.default?.default);
+					normalizePathField(exportsRoot?.default?.default);
 
 			// CJS-only packages should use default, not import or require.
 			if (isCJSOnly) {
@@ -1693,7 +1694,7 @@ export const handlers: Handler[] = [
 					exportsRoot?.import?.default === undefined
 						? undefined
 						: // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
-							normalizePathField(exportsRoot?.import?.default);
+						normalizePathField(exportsRoot?.import?.default);
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const moduleField = normalizePathField(json.module!);
 				if (importField !== moduleField) {
@@ -1706,7 +1707,7 @@ export const handlers: Handler[] = [
 					exportsRoot?.require?.default === undefined
 						? undefined
 						: // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
-							normalizePathField(exportsRoot?.require?.default);
+						normalizePathField(exportsRoot?.require?.default);
 				const mainField = normalizePathField(json.main);
 				if (requireField !== mainField) {
 					return `${json.name} has both CJS and ESM entrypoints. Incorrect 'require' entry in 'exports' field in package.json. Expected '${mainField}', got '${requireField}'`;
@@ -1892,8 +1893,7 @@ export const handlers: Handler[] = [
 					) {
 						// Enforce that script body matches policy
 						errors.push(
-							`Expected body of script "${requiredScript.name}" to be "${
-								requiredScript.body
+							`Expected body of script "${requiredScript.name}" to be "${requiredScript.body
 							}". Found "${packageJson.scripts[requiredScript.name]}".`,
 						);
 					}
