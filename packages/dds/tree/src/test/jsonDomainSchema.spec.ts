@@ -41,12 +41,13 @@ describe("JsonDomainSchema", () => {
 	});
 
 	// Compile-time testing for some of the types generated as part of this Domain.
-	// It has exhibited some compilation nondeterminism, as well as some more generally odd behavior:
-	// these tests should help ensure that the types are actually working properly despite these issues,
-	// as well as provide a starting place for attempts to further investigate and debug related problems.
-	// This particular domain is showing typing oddities related to
-	// its recursive nature and the likely related occasional different ordering of unions in the iterators after incremental builds
-	// as well as the inlining of boolean schema failing to get simplified in the .d.ts file.
+	// This domain has exhibited some compilation nondeterminism, as well as some more generally odd behavior:
+	// these tests should help ensure that the types are actually working properly despite these issues.
+	// They should also provide a starting place for attempts to further investigate and debug related problems.
+	// The compilation nondeterminism results in unstable ordering of the type unions in the iterators and
+	// may be related to incremental builds ordering of recursive types.
+	// Additionally of boolean schema in the same type expressions is failing to get simplified in the .d.ts:
+	// this is odd, but not causing issues beyond reduced clarity when inspecting the resulting types.
 	it("generated TypeScript type validation", () => {
 		// Intellisense shows the JsonObject iterator type like this, which is the desired behavior:
 		type ExpectedJsonObjectIterator = IterableIterator<
