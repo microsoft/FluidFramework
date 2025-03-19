@@ -245,10 +245,6 @@ describe("SharedTreeCore", () => {
 			child: sf.optionalRecursive([() => TestNode, sf.number]),
 		}) {}
 
-		// type X = FieldSchemaUnsafe<FieldKind.Optional, readonly [() => typeof TestNode, TreeNodeSchemaNonClass<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number, true, unknown, never, unknown>]>;
-		// type Y = X extends { kind: unknown } ? true : false;
-		// type Z = keyof (typeof TestNode);// ["identifier"];
-
 		const tree2 = await factory.load(
 			dataStoreRuntime2,
 			"B",
