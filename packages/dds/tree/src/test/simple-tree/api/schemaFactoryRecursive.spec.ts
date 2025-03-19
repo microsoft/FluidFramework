@@ -617,18 +617,90 @@ describe("SchemaFactory Recursive methods", () => {
 			}
 		});
 
-		it("Node schema metadata", () => {
-			const factory = new SchemaFactoryAlpha("");
-
+		it("co-recursive object with inline array", () => {
+			const factory = new SchemaFactory("");
 			class Foo extends factory.objectRecursive("Foo", {
 				fooList: sf.arrayRecursive("FooList", [() => Foo]),
 			}) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof Foo>;
+			}
+		});
+
+		it("co-recursive object with inline array lazy", () => {
+			const factory = new SchemaFactory("");
+			class Foo extends factory.objectRecursive("Foo", {
+				fooList: [() => sf.arrayRecursive("FooList", [() => Foo])],
+			}) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof Foo>;
+			}
+		});
+
+		it("co-recursive map with inline array", () => {
+			const factory = new SchemaFactory("");
+			class Foo extends factory.mapRecursive(
+				"Foo",
+				sf.arrayRecursive("FooList", [() => Foo]),
+			) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof Foo>;
+			}
+		});
+
+		it("co-recursive map with inline array lazy", () => {
+			const factory = new SchemaFactory("");
+			class Foo extends factory.mapRecursive("Foo", [
+				() => sf.arrayRecursive("FooList", [() => Foo]),
+			]) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof Foo>;
+			}
+		});
+
+		it("co-recursive array with inline array", () => {
+			const factory = new SchemaFactory("");
+			class Foo extends factory.arrayRecursive(
+				"Foo",
+				sf.arrayRecursive("FooList", [() => Foo]),
+			) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof Foo>;
+			}
+		});
+
+		it("co-recursive array with inline array lazy", () => {
+			const factory = new SchemaFactory("");
+			class Foo extends factory.arrayRecursive("Foo", [
+				() => sf.arrayRecursive("FooList", [() => Foo]),
+			]) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof Foo>;
+			}
+		});
+
+		it("Node schema metadata", () => {
+			const factory = new SchemaFactoryAlpha("");
+
+			class Foos extends sf.arrayRecursive("FooList", [() => Foo]) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof Foos>;
+			}
+			class Foo extends factory.objectRecursive("Foo", {
+				fooList: Foos,
+			}) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof Foo>;
+			}
 			class FooList extends factory.arrayRecursive("FooList", [() => Foo], {
 				metadata: {
 					description: "A recursive list",
 					custom: { baz: true },
 				},
 			}) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof FooList>;
+			}
 
 			assert.deepEqual(FooList.metadata, {
 				description: "A recursive list",
@@ -686,20 +758,49 @@ describe("SchemaFactory Recursive methods", () => {
 		it("Node schema metadata", () => {
 			const factory = new SchemaFactoryAlpha("");
 
+			class Foos extends sf.arrayRecursive("FooList", [() => Foo]) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof Foos>;
+			}
 			class Foo extends factory.objectRecursive("Foo", {
-				fooList: sf.arrayRecursive("FooList", [() => Foo]),
+				fooList: Foos,
 			}) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof Foo>;
+			}
+
 			class FooList extends factory.mapRecursive("FooList", [() => Foo], {
 				metadata: {
 					description: "A recursive map",
 					custom: { baz: true },
 				},
 			}) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof FooList>;
+			}
 
 			assert.deepEqual(FooList.metadata, {
 				description: "A recursive map",
 				custom: { baz: true },
 			});
+		});
+
+		it("co-recursive map with inline map", () => {
+			const factory = new SchemaFactory("");
+			class Foo extends factory.mapRecursive("Foo", sf.mapRecursive("FooList", [() => Foo])) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof Foo>;
+			}
+		});
+
+		it("co-recursive map with inline map lazy", () => {
+			const factory = new SchemaFactory("");
+			class Foo extends factory.mapRecursive("Foo", [
+				() => sf.mapRecursive("FooList", [() => Foo]),
+			]) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof Foo>;
+			}
 		});
 	});
 
