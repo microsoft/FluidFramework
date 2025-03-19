@@ -200,6 +200,9 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 		category: testObject.category ?? "",
 	};
 
+	const BASELINE_MEMORY_USAGE = 1_000_000;
+	const ALLOWED_DEVIATION = 5;
+
 	return supportParentProcess({
 		title: qualifiedTitle({ ...testObject, testType: TestType.MemoryUsage }),
 		only: args.only,
@@ -295,6 +298,15 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 						runs < args.minSampleCount ||
 						heapUsedStats.marginOfErrorPercent > args.maxRelativeMarginOfError
 					);
+
+					const avgHeapUsed = heapUsedStats.arithmeticMean;
+					const allowedMemoryUsage = BASELINE_MEMORY_USAGE * ( 1 + ALLOWED_DEVIATION / 100);
+
+					if(avgHeapUsed > allowedMemoryUsage) {
+						throw new Error(
+							`Memory Regression detected for ${testObject.title}: Used ${avgHeapUsed} bytes, exceeding the baseline of ${allowedMemoryUsage} bytes.`
+						);
+					}
 
 					benchmarkStats.customData["Heap Used Avg"] = {
 						rawValue: heapUsedStats.arithmeticMean,
