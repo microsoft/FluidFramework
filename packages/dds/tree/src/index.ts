@@ -194,6 +194,7 @@ export {
 	type SimpleMapNodeSchema,
 	type SimpleArrayNodeSchema,
 	type SimpleObjectNodeSchema,
+	type SimpleObjectFieldSchema,
 	normalizeAllowedTypes,
 	getSimpleSchema,
 	type ReadonlyArrayNode,
