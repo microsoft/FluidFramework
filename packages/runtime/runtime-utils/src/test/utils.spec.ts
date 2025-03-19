@@ -16,7 +16,7 @@ describe("Utils", () => {
 	});
 
 	it("encodeCompactIdToString() has base of 64 (sort of)", () => {
-		const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ[abcdefghijklmnopqrstuvwxyz{01234567890";
+		const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ(abcdefghijklmnopqrstuvwxyz)01234567890";
 		for (let i = 0; i < 64; i++) {
 			const value = encodeCompactIdToString(i);
 			assert(value.length === 1, "length");
@@ -50,6 +50,8 @@ describe("Utils", () => {
 
 			// Strong rules:
 			assert(!value.includes("/"), "no slashses");
+			assert(!value.includes("["), "opening square bracket");
+			assert(!value.includes("}"), "closing curly bracket");
 			assert(value.length > 0, "length");
 
 			// Soft rules: these rules can be broken, but they are great to have for efficiency
