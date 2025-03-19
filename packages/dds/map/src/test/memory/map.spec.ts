@@ -71,8 +71,10 @@ describe("SharedMap memory usage", () => {
 				this.map = createLocalMap("testMap");
 			}
 			public afterIteration(): void {
-				const memoryUsage = process.memoryUsage().heapUsed;
-				saveBaseline(this.title, memoryUsage);
+				if(process.env.SAVE_MEMORY_BASELINE) {
+					const memoryUsage = process.memoryUsage().heapUsed;
+					saveBaseline(this.title, memoryUsage);
+				}
 			}
 		})(),
 	);
