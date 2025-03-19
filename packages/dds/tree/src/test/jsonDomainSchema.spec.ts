@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 import { Tree, TreeAlpha } from "../shared-tree/index.js";
 import { JsonAsTree } from "../jsonDomainSchema.js";
+import type { areSafelyAssignable, requireTrue } from "../util/typeCheck.js";
 
 describe("JsonDomainSchema", () => {
 	it("examples", () => {
@@ -39,8 +40,28 @@ describe("JsonDomainSchema", () => {
 		}
 	});
 
-	it("types", () => {
-		// type Iterator = IterableIterator<[string, string | number | boolean | JsonAsTree.JsonObject | JsonAsTree.Array | null]>
-		type Iterator = ReturnType<JsonAsTree.JsonObject[typeof Symbol.iterator]>;
+	// Compile time testing for some of the types generated as part of this Domain.
+	// It has exhibited some compilation nondeterminism, as well as some more generally odd behavior:
+	// these tests should help ensure that the types are actually working properly despite these issues,
+	// as well as provide a starting place for attempts to further investigate and debug related problems.
+	// This particular domain is showing typing oddities related to
+	// its recursive nature and the likely related occasional different ordering of unions in the iterators after incremental builds
+	// as well as the inlining of boolean schema failing to get simplified in the .d.ts file.
+	it("generated TypeScript type validation", () => {
+		// Intellisense shows the JsonObject iterator type like this, which is the desired behavior:
+		type ExpectedJsonObjectIterator = IterableIterator<
+			[string, string | number | boolean | JsonAsTree.JsonObject | JsonAsTree.Array | null]
+		>;
+		// Unfortunately the type shows up in a more complicated way in the .d.ts file and API reports.
+		// This test ensures that the type is actually working as expected despite this:
+		type JsonObjectIterator = ReturnType<JsonAsTree.JsonObject[typeof Symbol.iterator]>;
+
+		type _checkObjectIterator = requireTrue<
+			areSafelyAssignable<JsonObjectIterator, ExpectedJsonObjectIterator>
+		>;
+
+		// Due to the nature of this issue possibly being impacted by details of the .d.ts generation,
+		// there is also some testing in examples/utils/import-testing/src/test/importer.spec.ts
+		// which ensures it works from outside the package with both CJS and ESM.
 	});
 });

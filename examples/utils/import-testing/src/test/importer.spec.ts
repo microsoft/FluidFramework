@@ -22,6 +22,7 @@ describe("import tests", () => {
 		assert.equal(r[0], 1);
 	});
 
+	// See also the unit tests for JsonAsTree in tree's jsonDomainSchema.spec.ts
 	it("Iterator types", () => {
 		type ImportedArrayNodeIterator = ReturnType<JsonAsTree.Array[typeof Symbol.iterator]>;
 		type ImportedObjectNodeIterator = ReturnType<
