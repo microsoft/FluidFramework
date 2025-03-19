@@ -2514,8 +2514,6 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		baseDetachId: ChangeAtomId,
 		count: number,
 	): RangeQueryResult<ChangeAtomId, NodeId> {
-		// XXX: This needs to look at all IDs in the range, not just the first.
-		// XXX: Need to account for renames in the base changeset
 		const baseRenameEntry = firstAttachIdFromDetachId(
 			this.table.baseChange.rootNodes,
 			baseDetachId,
@@ -2524,6 +2522,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 
 		assert(baseRenameEntry.length === count, "XXX");
 
+		// XXX: This needs to look at all IDs in the range, not just the first.
 		const detachedNodeId = getFromChangeAtomIdMap(
 			this.table.newChange.rootNodes.nodeChanges,
 			baseRenameEntry.value,
