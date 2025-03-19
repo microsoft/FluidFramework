@@ -497,7 +497,9 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			ordererManagerOptions,
 		);
 
-		const collaborationSessionEvents = customizations?.collaborationSessionEventEmitter ?? new TypedEventEmitter<ICollaborationSessionEvents>();
+		const collaborationSessionEvents =
+			customizations?.collaborationSessionEventEmitter ??
+			new TypedEventEmitter<ICollaborationSessionEvents>();
 
 		// This wanst to create stuff
 		const port = utils.normalizePort(process.env.PORT || "3000");

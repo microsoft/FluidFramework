@@ -398,7 +398,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		}
 		const startupCheck = new StartupCheck();
 
-		const eventEmitter = customizations?.collaborationSessionEventEmitter ?? new TypedEventEmitter<ICollaborationSessionEvents>();
+		const eventEmitter =
+			customizations?.collaborationSessionEventEmitter ??
+			new TypedEventEmitter<ICollaborationSessionEvents>();
 
 		return new AlfredResources(
 			config,

@@ -19,8 +19,8 @@ import {
 	IFluidAccessTokenGenerator,
 	IReadinessCheck,
 } from "@fluidframework/server-services-core";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
+// import { TypedEventEmitter } from "@fluidframework/common-utils";
+// import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
 import cookieParser from "cookie-parser";
