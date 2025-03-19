@@ -148,7 +148,7 @@ function createGetCanonicalFileName(tsLib: typeof ts) {
 	return tsLib.sys.useCaseSensitiveFileNames
 		? (x: string) => x
 		: (x: string) =>
-				fileNameLowerCaseRegExp.test(x) ? x.replace(fileNameLowerCaseRegExp, toLowerCase) : x;
+			fileNameLowerCaseRegExp.test(x) ? x.replace(fileNameLowerCaseRegExp, toLowerCase) : x;
 }
 
 function createGetSourceFileVersion(tsLib: typeof ts) {
@@ -283,7 +283,7 @@ export function getTscUtils(path: string): TscUtil {
 		tscUtilLibPathCache.set(tsPath, tscUtil);
 		return tscUtil;
 	} catch (e) {
-		throw new Error(`Failed to load typescript module for ${path}`);
+		throw new Error(`Failed to load typescript module for ${path}: ${e.message}`);
 	}
 }
 
