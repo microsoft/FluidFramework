@@ -540,7 +540,7 @@ export class ComposeQueue {
 			return this.dequeueBase();
 		} else if (areOutputCellsEmpty(baseMark) && areInputCellsEmpty(newMark)) {
 			const baseCellId: ChangeAtomId =
-				getOutputCellId(baseMark) ?? fail("Expected defined output ID");
+				getOutputCellId(baseMark) ?? fail(0xb29 /* Expected defined output ID */);
 
 			if (markEmptiesCells(baseMark) && baseCellId.revision === undefined) {
 				// The base revision should always be defined except when squashing changes into a transaction.

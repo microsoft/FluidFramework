@@ -72,7 +72,10 @@ export interface Transformations {
  *
  * @public
  */
-export type Transformation = (node: DocumentationNode, context: TransformationContext) => HastNodes;
+export type Transformation = (
+	node: DocumentationNode,
+	context: TransformationContext,
+) => HastNodes;
 
 // Constants used in transformations below as an allocation optimization.
 const hastLineBreak = h("br");
@@ -88,10 +91,12 @@ export const defaultTransformations: Transformations = {
 		codeSpanToHtml(node as CodeSpanNode, context),
 	[DocumentationNodeType.FencedCode]: (node, context) =>
 		fencedCodeBlockToHtml(node as FencedCodeBlockNode, context),
-	[DocumentationNodeType.Heading]: (node, context) => headingToHtml(node as HeadingNode, context),
+	[DocumentationNodeType.Heading]: (node, context) =>
+		headingToHtml(node as HeadingNode, context),
 	[DocumentationNodeType.LineBreak]: () => hastLineBreak,
 	[DocumentationNodeType.Link]: (node, context) => linkToHtml(node as LinkNode, context),
-	[DocumentationNodeType.Section]: (node, context) => sectionToHtml(node as SectionNode, context),
+	[DocumentationNodeType.Section]: (node, context) =>
+		sectionToHtml(node as SectionNode, context),
 	[DocumentationNodeType.HorizontalRule]: () => hastHorizontalRule,
 	[DocumentationNodeType.OrderedList]: (node, context) =>
 		orderedListToHtml(node as OrderedListNode, context),

@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
+import { DoublyLinkedList } from "../collections/index.js";
 import { UnassignedSequenceNumber } from "../constants.js";
 import { IMergeTreeOptions } from "../index.js";
 import {
@@ -16,11 +17,11 @@ import {
 	type IMergeTreeMaintenanceCallbackArgs,
 } from "../mergeTreeDeltaCallback.js";
 import { depthFirstNodeWalk } from "../mergeTreeNodeWalk.js";
-import { Marker, seqLTE, type ISegmentPrivate } from "../mergeTreeNodes.js";
+import { IMergeNode, Marker, seqLTE, type ISegmentPrivate } from "../mergeTreeNodes.js";
 import { IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
 import { PropertySet, matchProperties } from "../properties.js";
-import { toInsertionInfo, toMoveInfo, toRemovalInfo } from "../segmentInfos.js";
-import { TextSegment } from "../textSegment.js";
+import type { IInsertionInfo, IMoveInfo, IRemovalInfo } from "../segmentInfos.js";
+import { TextSegment, TextSegmentGranularity } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
 
@@ -343,52 +344,63 @@ export class TestClientLogger {
 		return new LoggingError(`${e}\n${this.toString()}`);
 	}
 
+	/**
+	 * Get a string representation of the merge-tree state.
+	 *
+	 * @privateRemarks
+	 * This function is a dominating bottleneck in operation runner tests, as they log multiple client states per operation performed.
+	 * This takes more than 50% of the overall test time, so some inner-loop elements of this favor performance over readability/safety
+	 * (e.g. precomputing removed string representations, casting to the more internal segment interfaces to view insertion/removal info
+	 * rather than import typeguards, etc.)
+	 */
 	private static getSegString(client: TestClient): { acked: string; local: string } {
 		let acked: string = "";
 		let local: string = "";
-		const nodes = [...client.mergeTree.root.children];
-		let parent = nodes[0]?.parent;
+		const nodes = new DoublyLinkedList<IMergeNode>([client.mergeTree.root]);
+		let parent: IMergeNode | undefined;
+		const { minSeq } = client.getCollabWindow();
 		while (nodes.length > 0) {
-			const node = nodes.shift();
-			if (node) {
-				if (node.isLeaf()) {
-					if (node.parent !== parent) {
-						if (acked.length > 0) {
-							acked += " ";
-							local += " ";
-						}
-						parent = node.parent;
+			// Safe due to length check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const node = nodes.shift()!.data;
+			if (node.isLeaf()) {
+				if (node.parent !== parent) {
+					if (acked.length > 0) {
+						acked += " ";
+						local += " ";
 					}
-					const text = TextSegment.is(node) ? node.text : Marker.is(node) ? "¶" : undefined;
-					const insertionSeq = toInsertionInfo(node)?.seq;
-					if (text !== undefined) {
-						const removedNode = toMoveOrRemove(node);
-						if (removedNode === undefined) {
-							if (insertionSeq === UnassignedSequenceNumber) {
-								acked += "_".repeat(text.length);
-								local += text;
-							} else {
-								acked += text;
-								local += " ".repeat(text.length);
-							}
+					parent = node.parent;
+				}
+				const text = TextSegment.is(node) ? node.text : Marker.is(node) ? "¶" : undefined;
+				if (text !== undefined) {
+					const insertionSeq = (node as IInsertionInfo)?.seq;
+					const removedNode = toMoveOrRemove(node);
+					if (removedNode === undefined) {
+						if (insertionSeq === UnassignedSequenceNumber) {
+							acked += underscores[text.length];
+							local += text;
 						} else {
-							if (removedNode.seq === UnassignedSequenceNumber) {
-								acked += "_".repeat(text.length);
-								local +=
-									insertionSeq === UnassignedSequenceNumber
-										? "*".repeat(text.length)
-										: "-".repeat(text.length);
-							} else {
-								const removedSymbol = seqLTE(removedNode.seq, client.getCollabWindow().minSeq)
-									? "~"
-									: "-";
-								acked += removedSymbol.repeat(text.length);
-								local += " ".repeat(text.length);
-							}
+							acked += text;
+							local += spaces[text.length];
+						}
+					} else {
+						if (removedNode.seq === UnassignedSequenceNumber) {
+							acked += underscores[text.length];
+							local +=
+								insertionSeq === UnassignedSequenceNumber
+									? asterisks[text.length]
+									: dashes[text.length];
+						} else {
+							acked += seqLTE(removedNode.seq, minSeq)
+								? tildes[text.length]
+								: dashes[text.length];
+							local += spaces[text.length];
 						}
 					}
-				} else {
-					nodes.push(...node.children);
+				}
+			} else {
+				for (let i = 0; i < node.childCount; i++) {
+					nodes.push(node.children[i]);
 				}
 			}
 		}
@@ -396,13 +408,23 @@ export class TestClientLogger {
 	}
 }
 
+const maxSegmentLength = TextSegmentGranularity * 2;
+const underscores = Array.from({ length: maxSegmentLength }, (_, i) => "_".repeat(i));
+const spaces = Array.from({ length: maxSegmentLength }, (_, i) => " ".repeat(i));
+const dashes = Array.from({ length: maxSegmentLength }, (_, i) => "-".repeat(i));
+const asterisks = Array.from({ length: maxSegmentLength }, (_, i) => "*".repeat(i));
+const tildes = Array.from({ length: maxSegmentLength }, (_, i) => "~".repeat(i));
+
 function toMoveOrRemove(segment: ISegmentPrivate): { seq: number } | undefined {
-	const mi = toMoveInfo(segment);
-	const ri = toRemovalInfo(segment);
-	if (mi !== undefined || ri !== undefined) {
+	if ((segment as unknown as IMoveInfo).movedSeq !== undefined) {
 		return {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-non-null-asserted-optional-chain
-			seq: mi?.movedSeq ?? ri?.removedSeq!,
+			seq: (segment as unknown as IMoveInfo).movedSeq,
+		};
+	}
+
+	if ((segment as unknown as IRemovalInfo).removedSeq !== undefined) {
+		return {
+			seq: (segment as unknown as IRemovalInfo).removedSeq,
 		};
 	}
 }

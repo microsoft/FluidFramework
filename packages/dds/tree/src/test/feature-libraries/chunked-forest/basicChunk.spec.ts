@@ -39,7 +39,7 @@ import {
 } from "../../cursorTestSuite.js";
 import { numberSequenceField, validateChunkCursor } from "./fieldCursorTestUtilities.js";
 import { emptyShape, testData } from "./uniformChunkTestData.js";
-import { JsonObject } from "../../json/index.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import { numberSchema } from "../../../simple-tree/index.js";
 
 const basicOnlyChunkCompressor: ChunkCompressor = {
@@ -96,11 +96,14 @@ describe("basic chunk", () => {
 			name: data.name,
 			dataFactory: () =>
 				new BasicChunk(
-					brand(JsonObject.identifier),
+					brand(JsonAsTree.JsonObject.identifier),
 					new Map([[EmptyKey, [data.dataFactory()]]]),
 				),
 			reference: [
-				{ type: brand(JsonObject.identifier), fields: { [EmptyKey]: data.reference } },
+				{
+					type: brand(JsonAsTree.JsonObject.identifier),
+					fields: { [EmptyKey]: data.reference },
+				},
 			],
 			path: data.path,
 		});
@@ -111,7 +114,7 @@ describe("basic chunk", () => {
 		builders: {
 			withKeys: (keys) => {
 				const withKeysShape = new BasicChunk(
-					brand(JsonObject.identifier),
+					brand(JsonAsTree.JsonObject.identifier),
 					new Map(
 						keys.map((key) => [key, [uniformChunk(emptyShape.withTopLevelLength(1), [])]]),
 					),

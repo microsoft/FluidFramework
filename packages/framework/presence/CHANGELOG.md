@@ -1,5 +1,20 @@
 # @fluid-experimental/presence
 
+## 2.23.0
+
+### Minor Changes
+
+-   Local value changes in presence now raise events ([#23858](https://github.com/microsoft/FluidFramework/pull/23858)) [2896983fef9](https://github.com/microsoft/FluidFramework/commit/2896983fef96ccc193182f6bcc723ad8ded602b4)
+
+    The [presence value managers](https://fluidframework.com/docs/build/presence#value-managers) now raise events for local
+    value changes. The new events are as follows:
+
+    -   LatestValueManager
+        -   `localUpdated` raised when `local` is assigned
+    -   LatestMapValueManager
+        -   `localItemUpdated` raised when `local.set` is called
+        -   `localItemRemoved` raised when `local.delete` is called
+
 ## 2.22.0
 
 Dependency updates only.

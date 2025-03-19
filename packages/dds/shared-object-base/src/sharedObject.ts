@@ -537,17 +537,6 @@ export abstract class SharedObjectCore<
 		);
 		// attachDeltaHandler is only called after services is assigned
 		this.services.deltaConnection.attach({
-			process: (
-				message: ISequencedDocumentMessage,
-				local: boolean,
-				localOpMetadata: unknown,
-			) => {
-				this.process(
-					{ ...message, contents: parseHandles(message.contents, this.serializer) },
-					local,
-					localOpMetadata,
-				);
-			},
 			processMessages: (messagesCollection: IRuntimeMessageCollection) => {
 				this.processMessages(messagesCollection);
 			},
@@ -979,7 +968,7 @@ export interface SharedObjectKind<out TSharedObject = unknown>
  * Utility for creating ISharedObjectKind instances.
  * @remarks
  * This takes in a class which implements IChannelFactory,
- * and uses it to return a a single value which is intended to be used as the APi entry point for the corresponding shared object type.
+ * and uses it to return a a single value which is intended to be used as the API entry point for the corresponding shared object type.
  * The returned value implements {@link ISharedObjectKind} for use in the encapsulated API, as well as the type erased {@link SharedObjectKind} used by the declarative API.
  * See {@link @fluidframework/fluid-static#ContainerSchema} for how this is used in the declarative API.
  * @internal

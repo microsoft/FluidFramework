@@ -7,6 +7,13 @@ import type { ValueSchema } from "../../core/index.js";
 import type { NodeKind } from "../core/index.js";
 import type { FieldKind, FieldSchemaMetadata, NodeSchemaMetadata } from "../schemaTypes.js";
 
+/*
+ * TODO:
+ * - Make TreeNodeSchema implement these interfaces directly.
+ * - Customize their JSON serialization to use these formats or provide some other serialization scheme.
+ * - Promote these to alpha
+ */
+
 /**
  * Base interface for all {@link SimpleNodeSchema} implementations.
  *
@@ -38,6 +45,9 @@ export interface SimpleObjectNodeSchema extends SimpleNodeSchemaBase<NodeKind.Ob
 	 * Schemas for each of the object's fields, keyed off of schema's keys.
 	 * @remarks
 	 * Depending on how this schema was exported, the string keys may be either the property keys or the stored keys.
+	 * @privateRemarks
+	 * TODO: if these are supposed to be JSON compatible,
+	 * then using a record here makes sense, but if not, this should use a map, and the allowedTypes sets elsewhere should be arrays for JSON compatibility.
 	 */
 	readonly fields: Record<string, SimpleFieldSchema>;
 }

@@ -13,8 +13,7 @@ import {
 } from "@fluid-tools/benchmark";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import { EmptyKey, rootFieldKey } from "../../core/index.js";
-import { singleJsonCursor } from "../json/index.js";
+import { EmptyKey, rootFieldKey, type NormalizedUpPath } from "../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { typeboxValidator } from "../../external-utilities/typeboxValidator.js";
 import {
@@ -46,6 +45,8 @@ import {
 	StringArray,
 	TestTreeProviderLite,
 	checkoutWithContent,
+	configureBenchmarkHooks,
+	chunkFromJsonTrees,
 	flexTreeViewWithContent,
 	toJsonableTree,
 } from "../utils.js";
@@ -75,6 +76,7 @@ const factory = new TreeFactory({
 
 // TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
 describe("SharedTree benchmarks", () => {
+	configureBenchmarkHooks();
 	describe("Direct JS Object", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
 			let tree: JSDeepTree;
@@ -251,7 +253,7 @@ describe("SharedTree benchmarks", () => {
 						for (let value = 1; value <= setCount; value++) {
 							tree.editor
 								.valueField({ parent: path, field: localFieldKey })
-								.set(singleJsonCursor(value));
+								.set(chunkFromJsonTrees([value]));
 						}
 						const after = state.timer.now();
 						duration = state.timer.toSeconds(before, after);
@@ -286,7 +288,8 @@ describe("SharedTree benchmarks", () => {
 						// Setup
 						const tree = checkoutWithContent(makeWideStoredContentWithEndValue(numberOfNodes));
 
-						const rootPath = {
+						const rootPath: NormalizedUpPath = {
+							detachedNodeId: undefined,
 							parent: undefined,
 							parentField: rootFieldKey,
 							parentIndex: 0,
@@ -301,7 +304,7 @@ describe("SharedTree benchmarks", () => {
 						const before = state.timer.now();
 						for (let value = 1; value <= setCount; value++) {
 							editor.remove(nodeIndex, 1);
-							editor.insert(nodeIndex, singleJsonCursor(value));
+							editor.insert(nodeIndex, chunkFromJsonTrees([value]));
 						}
 						const after = state.timer.now();
 						duration = state.timer.toSeconds(before, after);
@@ -342,7 +345,7 @@ describe("SharedTree benchmarks", () => {
 						// TODO: specify a schema for these trees.
 						const [tree] = provider.trees;
 						for (let i = 0; i < size; i++) {
-							insert(tree.checkout, i, "test");
+							insert(tree.kernel.checkout, i, "test");
 						}
 
 						// Measure
@@ -391,7 +394,7 @@ describe("SharedTree benchmarks", () => {
 							for (let iCommit = 0; iCommit < commitCount; iCommit++) {
 								for (let iPeer = 0; iPeer < peerCount; iPeer++) {
 									const peer = provider.trees[iPeer];
-									insert(peer.checkout, 0, `p${iPeer}c${iCommit}`);
+									insert(peer.kernel.checkout, 0, `p${iPeer}c${iCommit}`);
 								}
 							}
 
@@ -400,7 +403,7 @@ describe("SharedTree benchmarks", () => {
 								for (let iPeer = 0; iPeer < peerCount; iPeer++) {
 									provider.processMessages(opsPerCommit);
 									const peer = provider.trees[iPeer];
-									insert(peer.checkout, 0, `p${iPeer}c${iCommit}`);
+									insert(peer.kernel.checkout, 0, `p${iPeer}c${iCommit}`);
 								}
 							}
 
@@ -416,7 +419,7 @@ describe("SharedTree benchmarks", () => {
 									timeSum += state.timer.toSeconds(before, after);
 									// We still generate commits because it affects local branch rebasing
 									const peer = provider.trees[iPeer];
-									insert(peer.checkout, 0, `p${iPeer}c${iCommit}`);
+									insert(peer.kernel.checkout, 0, `p${iPeer}c${iCommit}`);
 								}
 							}
 
@@ -481,11 +484,11 @@ describe("SharedTree benchmarks", () => {
 							// Add commits to the receiver's local branch but prevent them from being sent in order to ensure they remain on the local branch
 							receiver.setConnected(false);
 							for (let iCommit = 0; iCommit < localBranchSize; iCommit++) {
-								insert(receiver.checkout, 0, `r${iCommit}`);
+								insert(receiver.kernel.checkout, 0, `r${iCommit}`);
 							}
 							// These are the commits that should be bunched together
 							for (let iCommit = 0; iCommit < bunchSize; iCommit++) {
-								insert(sender.checkout, 0, `s${iCommit}`);
+								insert(sender.kernel.checkout, 0, `s${iCommit}`);
 							}
 							// Ensure the sender has sent the ops
 							provider.processMessages();

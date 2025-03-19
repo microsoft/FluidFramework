@@ -11,7 +11,6 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	IOrderedClientElection,
-	// eslint-disable-next-line import/no-deprecated
 	ISerializedElection,
 	ITrackedClient,
 } from "./orderedClientElection.js";
@@ -120,7 +119,6 @@ export class SummarizerClientElection
 		});
 	}
 
-	// eslint-disable-next-line import/no-deprecated
 	public serialize(): ISerializedElection {
 		const { electedClientId, electedParentId, electionSequenceNumber } =
 			this.clientElection.serialize();

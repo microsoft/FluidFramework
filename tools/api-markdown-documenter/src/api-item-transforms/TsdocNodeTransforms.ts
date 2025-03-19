@@ -298,7 +298,9 @@ export function transformTsdocInlineTag(node: DocInlineTag): SpanNode | undefine
 
 	// For all other inline tags, there isn't really anything we can do with them except emit them
 	// as is. However, to help differentiate them in the output, we will italicize them.
-	return SpanNode.createFromPlainText(`{${node.tagName} ${node.tagContent}}`, { italic: true });
+	return SpanNode.createFromPlainText(`{${node.tagName} ${node.tagContent}}`, {
+		italic: true,
+	});
 }
 
 /**
@@ -474,9 +476,7 @@ function filterNewlinesAdjacentToParagraphs(
 			const previousIsParagraph =
 				i > 0 ? nodes[i - 1].type === DocumentationNodeType.Paragraph : false;
 			const nextIsParagraph =
-				i < nodes.length - 1
-					? nodes[i + 1].type === DocumentationNodeType.Paragraph
-					: false;
+				i < nodes.length - 1 ? nodes[i + 1].type === DocumentationNodeType.Paragraph : false;
 			if (previousIsParagraph || nextIsParagraph) {
 				continue;
 			}
