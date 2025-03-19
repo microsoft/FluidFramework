@@ -237,7 +237,6 @@ export {
 	evaluateLazySchema,
 	Component,
 	generateSchemaFromSimpleSchema,
-	evaluateLazySchema,
 	replaceConciseTreeHandles,
 	replaceHandles,
 	replaceVerboseTreeHandles,

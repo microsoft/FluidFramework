@@ -19,55 +19,28 @@ import {
 } from "../../simple-tree/index.js";
 import {
 	type AllowedTypes,
-<<<<<<< HEAD
-type CustomizedSchemaTyping
-,
-type DefaultInsertableTreeNodeFromImplicitAllowedTypes
-,
-type DefaultTreeNodeFromImplicitAllowedTypes
-,
-=======
-type FieldKind
-,
->>>>>>> 0c7363626dca3c2d68a7b3a75538e1e0af30fe9e
-type FieldKind
-,
-=======
-type FieldKind
-,
->>>>>>> 0c7363626dca3c2d68a7b3a75538e1e0af30fe9e
-type FieldSchema
-,
-type ImplicitAllowedTypes
-,
-type ImplicitFieldSchema
-,
-type InsertableField
-,
-type InsertableTreeFieldFromImplicitField
-,
-type InsertableTreeNodeFromAllowedTypes
-,
-type InsertableTypedNode
-,
-type NodeBuilderData
-,
-type NodeFromSchema
-,
-type SchemaUnionToIntersection
-,
-type TreeFieldFromImplicitField
-,
-type TreeLeafValue
-,
-type TreeNodeFromImplicitAllowedTypes
-,
-type UnsafeUnknownSchema
-,
+	type CustomizedSchemaTyping,
+	type DefaultInsertableTreeNodeFromImplicitAllowedTypes,
+	type DefaultTreeNodeFromImplicitAllowedTypes,
+	type FieldKind,
+	type FieldSchema,
+	type ImplicitAllowedTypes,
+	type ImplicitFieldSchema,
+	type InsertableField,
+	type InsertableTreeFieldFromImplicitField,
+	type InsertableTreeNodeFromAllowedTypes,
+	type InsertableTypedNode,
+	type NodeBuilderData,
+	type NodeFromSchema,
+	type SchemaUnionToIntersection,
+	type TreeFieldFromImplicitField,
+	type TreeLeafValue,
+	type TreeNodeFromImplicitAllowedTypes,
+	type UnsafeUnknownSchema,
 	areImplicitFieldSchemaEqual,
 	normalizeAllowedTypes,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../simple-tree/schemaTypes.js"
+} from "../../simple-tree/schemaTypes.js";
 import type {
 	areSafelyAssignable,
 	requireAssignableTo,

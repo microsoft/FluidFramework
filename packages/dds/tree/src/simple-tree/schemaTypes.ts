@@ -18,15 +18,14 @@ import {
 	type areOnlyKeys,
 	getOrCreate,
 } from "../util/index.js";
-import {
-	type Unhydrated,
-	type NodeKind,
-	type TreeNodeSchema,
-	type TreeNodeSchemaClass,
-	type TreeNode,
-	type TreeNodeSchemaCore,
-	type TreeNodeSchemaNonClass,
-	inPrototypeChain,
+import type {
+	Unhydrated,
+	NodeKind,
+	TreeNodeSchema,
+	TreeNodeSchemaClass,
+	TreeNode,
+	TreeNodeSchemaCore,
+	TreeNodeSchemaNonClass,
 } from "./core/index.js";
 import { inPrototypeChain } from "./core/index.js";
 import type { FieldKey } from "../core/index.js";
