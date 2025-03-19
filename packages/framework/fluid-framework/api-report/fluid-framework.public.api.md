@@ -561,7 +561,9 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
 // @public @sealed
-export interface LeafSchema<Name extends string, T extends TreeLeafValue> extends TreeNodeSchemaNonClass<`com.fluidframework.leaf.${Name}`, NodeKind.Leaf, T, T, true> {
+export interface LeafSchema<Name extends string, T extends TreeLeafValue> extends TreeNodeSchemaNonClass<`com.fluidframework.leaf.${Name}`, NodeKind.Leaf, T, // TNode
+T, // TInsertable
+true> {
 }
 
 // @public @sealed
