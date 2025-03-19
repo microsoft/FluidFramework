@@ -639,11 +639,14 @@ describe("SchemaFactory Recursive methods", () => {
 
 		it("co-recursive map with inline array", () => {
 			const factory = new SchemaFactory("");
+			// @ts-expect-error Somtimes inline none lazy co-recursive schema cause "referenced directly or indirectly in its own base expression" errors.
 			class Foo extends factory.mapRecursive(
 				"Foo",
+				// @ts-expect-error Implicit any due to error above
 				sf.arrayRecursive("FooList", [() => Foo]),
 			) {}
 			{
+				// @ts-expect-error due to error above
 				type _check = ValidateRecursiveSchema<typeof Foo>;
 			}
 		});
@@ -660,11 +663,14 @@ describe("SchemaFactory Recursive methods", () => {
 
 		it("co-recursive array with inline array", () => {
 			const factory = new SchemaFactory("");
+			// @ts-expect-error Somtimes inline none lazy co-recursive schema cause "referenced directly or indirectly in its own base expression" errors.
 			class Foo extends factory.arrayRecursive(
 				"Foo",
+				// @ts-expect-error Implicit any due to error above
 				sf.arrayRecursive("FooList", [() => Foo]),
 			) {}
 			{
+				// @ts-expect-error due to error above
 				type _check = ValidateRecursiveSchema<typeof Foo>;
 			}
 		});
