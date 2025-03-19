@@ -23,18 +23,17 @@ describe("Utils", () => {
 	});
 
 	it("encodeCompactIdToString() has base of 64 (sort of)", () => {
-		const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ(abcdefghijklmnopqrstuvwxyz)01234567890";
 		for (let i = 0; i < 64; i++) {
 			const value = encodeCompactIdToString(i);
 			assert(value.length === 1, "length");
-			assert(chars[i] === value, "value");
+			assert(charSetForEncodingIds[i] === value, "value");
 		}
 
 		for (let i = 64; i < 65 * 64 - 1; i++) {
 			const value = encodeCompactIdToString(i);
 			assert(value.length === 2, "length");
-			assert(chars.includes(value[0]), "value");
-			assert(chars.includes(value[1]), "value");
+			assert(charSetForEncodingIds.includes(value[0]), "value");
+			assert(charSetForEncodingIds.includes(value[1]), "value");
 		}
 
 		// This is a bit weird, as it does not work as our intuition suggests.
