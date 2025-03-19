@@ -71,7 +71,7 @@ describe("SharedMap memory usage", () => {
 				this.map = createLocalMap("testMap");
 			}
 			public afterIteration(): void {
-				if(process.env.SAVE_MEMORY_BASELINE) {
+				if (process.env.SAVE_MEMORY_BASELINE) {
 					const memoryUsage = process.memoryUsage().heapUsed;
 					saveBaseline(this.title, memoryUsage);
 				}
