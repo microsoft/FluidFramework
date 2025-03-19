@@ -24,5 +24,9 @@ steps:
       set -eu -o pipefail
       TARFILE_NAME=npm-logs.tar
       # Put all files in a tarball, in case there's more than one
+      echo "Adding logs to tarball"
       tar -cvf $TARFILE_NAME .
+      echo "Listing files in current directory"
+      ls -lA
+      echo "Uploading tarball to logs"
       echo "##vso[task.uploadfile]$TARFILE_NAME";
