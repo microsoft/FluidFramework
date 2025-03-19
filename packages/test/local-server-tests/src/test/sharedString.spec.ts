@@ -124,28 +124,32 @@ describe("Scenario Test", () => {
 		};
 
 		const c2 = await load();
+		const sharedString2 = c2.sharedString;
 
-		c2.sharedString.on("sequenceDelta", (e) => {
+		sharedString2.on("sequenceDelta", (e) => {
 			const firstSeg = e.first.segment;
 			if (TextSegment.is(firstSeg) && firstSeg.text.startsWith("5")) {
-				c2.sharedString.insertText(c2.sharedString.getLength(), "reentrant");
+				sharedString2.insertText(sharedString2.getLength(), "reentrant");
+				// sharedString2.insertText(sharedString2.getLength(), "another");
 			}
 		});
 
 		const c1 = await load();
+		const sharedString1 = c1.sharedString;
 		for (let i = 0; i < 10; i++) {
-			c1.sharedString.insertText(0, i.toString());
+			sharedString1.insertText(0, i.toString());
 		}
 
 		assert.notStrictEqual(
-			c1.sharedString.getText(),
-			c2.sharedString.getText(),
+			sharedString1.getText(),
+			sharedString2.getText(),
 			"should be different before sync",
 		);
 
 		await Promise.all([
 			new Promise((resolve) => c1.container.once("saved", resolve)),
 			new Promise((resolve) => c2.container.once("saved", resolve)),
+			new Promise((resolve) => setTimeout(resolve, 1000)),
 		]);
 
 		assert.strictEqual(

@@ -9,7 +9,7 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { SharedDirectory, ISharedMap } from "@fluidframework/map/internal";
-import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree/internal";
+import { IMergeTreeInsertMsg, TextSegment } from "@fluidframework/merge-tree/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import {
@@ -123,6 +123,10 @@ describeCompat(
 			assert.ok(mapsAreEqual(sharedMap1, sharedMap2));
 		});
 
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		//* ONLY
 		[true].forEach((enableGroupedBatching) => {
 			it.only(`Eventual consistency with op reentry - ${
 				enableGroupedBatching ? "Grouped" : "Regular"
@@ -139,47 +143,23 @@ describeCompat(
 					},
 				});
 
-				sharedString1.insertText(0, "HELLO WORLD");
+				sharedString1.insertText(0, "  HELLO WORLD");
 				await provider.ensureSynchronized();
 
-				sharedString2.on("sequenceDelta", (sequenceDeltaEvent) => {
-					if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "e") {
-						sharedString2.insertText(sharedString2.getLength(), "xxxxx");
+				sharedString2.on("sequenceDelta", (e) => {
+					const firstSeg = e.first.segment;
+					if (TextSegment.is(firstSeg) && firstSeg.text.startsWith("5")) {
+						sharedString2.insertText(sharedString2.getLength(), "reentrant");
+						// sharedString2.insertText(sharedString2.getLength(), "another");
 					}
 				});
 
-				sharedString1.insertText(0, "j");
-				sharedString1.insertText(0, "i");
-				sharedString1.insertText(0, "h");
-				sharedString1.insertText(0, "g");
-				sharedString1.insertText(0, "f");
-				sharedString1.insertText(0, "e");
-				sharedString1.insertText(0, "d");
-				sharedString1.insertText(0, "c");
-				sharedString1.insertText(0, "b");
-				sharedString1.insertText(0, "a");
-
-				sharedMap2.on("valueChanged", (changed1) => {
-					if (changed1.key !== "key2" && changed1.key !== "key3") {
-						sharedMap2.on("valueChanged", (changed2) => {
-							if (changed2.key !== "key3") {
-								sharedMap2.set("key3", `${sharedMap1.get("key1")} updated`);
-							}
-						});
-
-						sharedMap2.set("key2", "3");
-					}
-				});
-
-				// sharedMap1.set("key1", "1");
+				for (let i = 0; i < 10; i++) {
+					sharedString1.insertText(0, i.toString());
+				}
 
 				await provider.ensureSynchronized();
 
-				// The offending container is still alive
-				// sharedString2.insertText(0, "z");
-				// await provider.ensureSynchronized();
-
-				// assert.strictEqual(sharedString1.getText(), "zyabBxcd");
 				assert.strictEqual(
 					sharedString1.getText(),
 					sharedString2.getText(),
