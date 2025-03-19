@@ -78,10 +78,16 @@ const executableToLeafTask: {
  * @param executable The command executable to find a matching task handler for.
  * @returns A `TaskHandler` for the task, if found. Otherwise `UnknownLeafTask` as the default handler.
  */
-function getTaskForExecutable(executable: string, node: BuildPackage, context: BuildContext): TaskHandler {
+function getTaskForExecutable(
+	executable: string,
+	node: BuildPackage,
+	context: BuildContext,
+): TaskHandler {
 	const config = context.fluidBuildConfig;
 	const declarativeTasks = config?.declarativeTasks;
-	const taskMatch = node.pkg.packageJson.fluidBuild?.declarativeTasks?.[executable] ?? declarativeTasks?.[executable];
+	const taskMatch =
+		node.pkg.packageJson.fluidBuild?.declarativeTasks?.[executable] ??
+		declarativeTasks?.[executable];
 
 	if (taskMatch !== undefined) {
 		return createDeclarativeTaskHandler(taskMatch);
@@ -128,8 +134,10 @@ export class TaskFactory {
 					const task = node.getScriptTask(scriptName, pendingInitDep);
 					if (task === undefined) {
 						throw new Error(
-							`${node.pkg.nameColored
-							}: Unable to find script '${scriptName}' listed in 'concurrently' command${taskName ? ` '${taskName}'` : ""
+							`${
+								node.pkg.nameColored
+							}: Unable to find script '${scriptName}' listed in 'concurrently' command${
+								taskName ? ` '${taskName}'` : ""
 							}`,
 						);
 					}
@@ -141,7 +149,8 @@ export class TaskFactory {
 			);
 			if (subTasks.length === 0) {
 				throw new Error(
-					`${node.pkg.nameColored}: Unable to find any tasks listed in 'concurrently' command${taskName ? ` '${taskName}'` : ""
+					`${node.pkg.nameColored}: Unable to find any tasks listed in 'concurrently' command${
+						taskName ? ` '${taskName}'` : ""
 					}`,
 				);
 			}
