@@ -118,7 +118,7 @@ export interface MemoryTestObjectProps extends MochaExclusiveOptions, Titled, Be
 	samplePercentageToUse?: number;
 
 	/**
-	 *
+	 * The baseline memory usage to compare against for the test, which is used to determine if the test regressed.
 	 */
 	baselineMemoryUsage?: number;
 }
