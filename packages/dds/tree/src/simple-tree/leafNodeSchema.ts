@@ -77,9 +77,9 @@ export interface LeafSchema<Name extends string, T extends TreeLeafValue>
 	extends TreeNodeSchemaNonClass<
 		`com.fluidframework.leaf.${Name}`,
 		NodeKind.Leaf,
-		T,
-		T,
-		true
+		T, // TNode
+		T, // TInsertable
+		true // ImplicitlyConstructable
 	> {}
 
 // Leaf schema shared between all SchemaFactory instances.
