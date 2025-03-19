@@ -22,11 +22,10 @@ steps:
     workingDirectory: '${{ parameters.npmLogsDirectory }}'
     script: |
       set -eu -o pipefail
-      TARFILE_NAME=npm-logs.tar
+      TARFILE_FULLPATH=$(Agent.TempDirectory)/npm-logs.tar
       # Put all files in a tarball, in case there's more than one
       echo "Adding logs to tarball"
-      tar -cvf $TARFILE_NAME .
-      echo "Listing files in current directory"
-      ls -lA
-      echo "Uploading tarball to logs"
-      echo "##vso[task.uploadfile]$TARFILE_NAME";
+      tar -cvf $TARFILE_FULLPATH .
+      echo "Uploading tarball to pipeline logs"
+      # Note: task.uploadFile requires an absolute path to be provided
+      echo "##vso[task.uploadfile]$TARFILE_FULLPATH";
