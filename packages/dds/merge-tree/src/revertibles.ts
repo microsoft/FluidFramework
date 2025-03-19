@@ -308,8 +308,7 @@ function revertLocalRemove(
 		driver.insertFromSpec(realPos, props.segSpec);
 		const insertSegment = mergeTreeWithRevert.getContainingSegment(
 			realPos,
-			mergeTreeWithRevert.collabWindow.currentSeq,
-			mergeTreeWithRevert.collabWindow.clientId,
+			mergeTreeWithRevert.localPerspective,
 		).segment;
 		assertSegmentLeaf(insertSegment);
 
@@ -395,11 +394,7 @@ function revertLocalAnnotate(
 }
 
 function getPosition(mergeTreeWithRevert: MergeTreeWithRevert, segment: ISegmentLeaf): number {
-	return mergeTreeWithRevert.getPosition(
-		segment,
-		mergeTreeWithRevert.collabWindow.currentSeq,
-		mergeTreeWithRevert.collabWindow.clientId,
-	);
+	return mergeTreeWithRevert.getPosition(segment, mergeTreeWithRevert.localPerspective);
 }
 
 /**

@@ -11,10 +11,9 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"scripts": {
-		"build": "npm run build:genver && npm run build:compile && npm run lint",
+		"build": "npm run build:compile && npm run lint",
 		"build:compile": "pnpm run -r --stream build:compile",
 		"build:docker": "docker build . --build-context root=../..",
-		"build:genver": "pnpm run -r --no-sort --stream --no-bail build:genver",
 		"ci:eslint": "pnpm run -r --no-sort --stream --no-bail eslint",
 		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"format": "npm run prettier:fix",
@@ -44,7 +43,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "0.52.0-315632",
+		"@fluid-tools/build-cli": "^0.54.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "0.52.0-315632",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
