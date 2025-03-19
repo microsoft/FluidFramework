@@ -116,6 +116,11 @@ export interface MemoryTestObjectProps extends MochaExclusiveOptions, Titled, Be
 	 * Use a lower number to drop the highest/lowest measurements.
 	 */
 	samplePercentageToUse?: number;
+
+	/**
+	 *
+	 */
+	baselineMemoryUsage?: number;
 }
 
 /**
@@ -195,12 +200,12 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 		maxRelativeMarginOfError: testObject.maxRelativeMarginOfError ?? 2.5,
 		only: testObject.only ?? false,
 		title: testObject.title,
+		baselineMemoryUsage: testObject.baselineMemoryUsage ?? 0,
 		type: testObject.type ?? BenchmarkType.Measurement,
 		samplePercentageToUse: testObject.samplePercentageToUse ?? 0.95,
 		category: testObject.category ?? "",
 	};
 
-	const BASELINE_MEMORY_USAGE = 1_000_000;
 	const ALLOWED_DEVIATION = 5;
 
 	return supportParentProcess({
@@ -300,11 +305,12 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 					);
 
 					const avgHeapUsed = heapUsedStats.arithmeticMean;
-					const allowedMemoryUsage = BASELINE_MEMORY_USAGE * ( 1 + ALLOWED_DEVIATION / 100);
+					const allowedMemoryUsage =
+						args.baselineMemoryUsage * (1 + ALLOWED_DEVIATION / 100);
 
-					if(avgHeapUsed > allowedMemoryUsage) {
+					if (avgHeapUsed > allowedMemoryUsage) {
 						throw new Error(
-							`Memory Regression detected for ${testObject.title}: Used ${avgHeapUsed} bytes, exceeding the baseline of ${allowedMemoryUsage} bytes.`
+							`Memory Regression detected for ${testObject.title}: Used ${avgHeapUsed} bytes, exceeding the baseline of ${allowedMemoryUsage} bytes.`,
 						);
 					}
 
