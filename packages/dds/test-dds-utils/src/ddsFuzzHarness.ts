@@ -267,6 +267,12 @@ export interface DDSFuzzModel<
 }
 
 /**
+ * This model is used within the harness to wrap the provided {@link DDSFuzzModel}.
+ *
+ * This model's reducer differs from the {@link DDSFuzzModel} in that it can be an asynchronous
+ * reducer. This is necessary for the harness to support asynchronous operations
+ * like loading new clients, and doing synchronization.
+ *
  * @internal
  */
 export interface DDSFuzzHarnessModel<
@@ -276,9 +282,6 @@ export interface DDSFuzzHarnessModel<
 > extends Omit<DDSFuzzModel<TChannelFactory, TOperation, TState>, "reducer"> {
 	/**
 	 * Reducer capable of updating the test state according to the operations generated.
-	 * This reducer differs from the {@link DDSFuzzModel} in that it can be an asynchronous
-	 * reducer. This is necessary for the harness to support asynchronous operations
-	 * like loading new clients, and doing synchronization.
 	 */
 	reducer: AsyncReducer<TOperation, TState> | Reducer<TOperation, TState>;
 }
