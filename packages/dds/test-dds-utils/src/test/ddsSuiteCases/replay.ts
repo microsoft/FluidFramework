@@ -27,7 +27,7 @@ const model: DDSFuzzModel<SharedNothingFactory, Operation> = {
 	...baseModel,
 	workloadName: "replay",
 	generatorFactory: () => generatorUnreachable,
-	reducer: async (state, op) => {
+	reducer: (state, op) => {
 		assert.deepEqual(op, expectedOps[currentIndex]);
 		assert.equal(state.client.channel.id, expectedOps[currentIndex].clientId);
 		// Note: the above checks failing if currentIndex goes out of bounds is part of the
