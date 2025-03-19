@@ -231,7 +231,7 @@ function getOrCreateType(
 		const nodeSchema = definitionMap.get(definition) ?? fail("Unexpected definition");
 		switch (nodeSchema.kind) {
 			case NodeKind.Object: {
-				for (const [key, field] of Object.entries(nodeSchema.fields)) {
+				for (const [key, field] of nodeSchema.fields) {
 					// TODO: Remove when AI better
 					if (
 						Array.from(
@@ -248,7 +248,7 @@ function getOrCreateType(
 				}
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				const properties = Object.fromEntries(
-					Object.entries(nodeSchema.fields)
+					[...nodeSchema.fields]
 						.map(([key, field]) => {
 							return [
 								key,

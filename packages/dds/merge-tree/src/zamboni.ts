@@ -11,19 +11,24 @@ import { MergeTreeMaintenanceType } from "./mergeTreeDeltaCallback.js";
 import {
 	type MergeBlock,
 	assignChild,
+	getMinSeqStamp,
 	IMergeNode,
 	ISegmentPrivate,
 	Marker,
 	MaxNodesInBlock,
-	seqLTE,
 } from "./mergeTreeNodes.js";
 import { matchProperties } from "./properties.js";
-import { toRemovalInfo, toMoveInfo, removeMergeNodeInfo } from "./segmentInfos.js";
+import { toRemovalInfo, removeMergeNodeInfo } from "./segmentInfos.js";
+import * as opstampUtils from "./stamps.js";
+import type { OperationStamp } from "./stamps.js";
 
 export const zamboniSegmentsMax = 2;
 function underflow(node: MergeBlock): boolean {
 	return node.childCount < MaxNodesInBlock / 2;
 }
+
+// blockUpdatePathLengths requires an OperationStamp but it is unused when passing `newStructure: true`.
+const dummyStamp: OperationStamp = { seq: UnassignedSequenceNumber, clientId: -1 };
 
 export function zamboniSegments(
 	mergeTree: MergeTree,
@@ -67,7 +72,7 @@ export function zamboniSegments(
 					packParent(block.parent, mergeTree);
 				} else {
 					mergeTree.nodeUpdateOrdinals(block);
-					mergeTree.blockUpdatePathLengths(block, UnassignedSequenceNumber, -1, true);
+					mergeTree.blockUpdatePathLengths(block, dummyStamp, true);
 				}
 			}
 		}
@@ -129,7 +134,7 @@ export function packParent(parent: MergeBlock, mergeTree: MergeTree): void {
 		packParent(parent.parent, mergeTree);
 	} else {
 		mergeTree.nodeUpdateOrdinals(parent);
-		mergeTree.blockUpdatePathLengths(parent, UnassignedSequenceNumber, -1, true);
+		mergeTree.blockUpdatePathLengths(parent, dummyStamp, true);
 	}
 }
 
@@ -148,34 +153,10 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 
 		const segment = childNode;
 		const removalInfo = toRemovalInfo(segment);
-		const moveInfo = toMoveInfo(segment);
-		if (removalInfo !== undefined || moveInfo !== undefined) {
-			// If the segment's removal is below the MSN and it's not being held onto by a tracking group,
-			// it can be unlinked (i.e. removed from the merge-tree)
-			if (
-				((!!removalInfo && seqLTE(removalInfo.removedSeq, mergeTree.collabWindow.minSeq)) ||
-					(!!moveInfo && seqLTE(moveInfo.movedSeq, mergeTree.collabWindow.minSeq))) &&
-				segment.trackingCollection.empty
-			) {
-				mergeTree.mergeTreeMaintenanceCallback?.(
-					{
-						operation: MergeTreeMaintenanceType.UNLINK,
-						deltaSegments: [{ segment }],
-					},
-					undefined,
-				);
-				if (Marker.is(segment)) {
-					mergeTree.unlinkMarker(segment);
-				}
-				removeMergeNodeInfo(segment);
-			} else {
-				holdNodes.push(segment);
-			}
-
-			prevSegment = undefined;
-		} else {
-			if (segment.seq <= mergeTree.collabWindow.minSeq) {
-				const segmentHasPositiveLength = (mergeTree.localNetLength(segment) ?? 0) > 0;
+		const minSeqStamp = getMinSeqStamp(mergeTree.collabWindow);
+		if (removalInfo === undefined) {
+			if (opstampUtils.lte(segment.insert, minSeqStamp)) {
+				const segmentHasPositiveLength = (mergeTree.leafLength(segment) ?? 0) > 0;
 				const canAppend =
 					prevSegment?.canAppend(segment) &&
 					matchProperties(prevSegment.properties, segment.properties) &&
@@ -202,6 +183,31 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 				holdNodes.push(segment);
 				prevSegment = undefined;
 			}
+		} else {
+			const firstRemove = removalInfo.removes[0];
+			// If the segment's removal is below the MSN and it's not being held onto by a tracking group,
+			// it can be unlinked (i.e. removed from the merge-tree)
+			if (
+				!!firstRemove &&
+				opstampUtils.lte(firstRemove, minSeqStamp) &&
+				segment.trackingCollection.empty
+			) {
+				mergeTree.mergeTreeMaintenanceCallback?.(
+					{
+						operation: MergeTreeMaintenanceType.UNLINK,
+						deltaSegments: [{ segment }],
+					},
+					undefined,
+				);
+				if (Marker.is(segment)) {
+					mergeTree.unlinkMarker(segment);
+				}
+				removeMergeNodeInfo(segment);
+			} else {
+				holdNodes.push(segment);
+			}
+
+			prevSegment = undefined;
 		}
 	}
 }
