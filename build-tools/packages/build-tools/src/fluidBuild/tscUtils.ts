@@ -268,19 +268,23 @@ export function getTscUtils(path: string): TscUtil {
 		return tscUtilFromPath;
 	}
 
-	const tsPath = require.resolve("typescript", { paths: [path] });
-	const tscUtilFromLibPath = tscUtilLibPathCache.get(tsPath);
-	if (tscUtilFromLibPath) {
-		tscUtilPathCache.set(path, tscUtilFromLibPath);
-		return tscUtilFromLibPath;
-	}
+	try {
+		const tsPath = require.resolve("typescript", { paths: [path] });
+		const tscUtilFromLibPath = tscUtilLibPathCache.get(tsPath);
+		if (tscUtilFromLibPath) {
+			tscUtilPathCache.set(path, tscUtilFromLibPath);
+			return tscUtilFromLibPath;
+		}
 
-	// eslint-disable-next-line @typescript-eslint/no-var-requires
-	const tsLib: typeof ts = require(tsPath);
-	const tscUtil = createTscUtil(tsLib);
-	tscUtilPathCache.set(path, tscUtil);
-	tscUtilLibPathCache.set(tsPath, tscUtil);
-	return tscUtil;
+		// eslint-disable-next-line @typescript-eslint/no-var-requires
+		const tsLib: typeof ts = require(tsPath);
+		const tscUtil = createTscUtil(tsLib);
+		tscUtilPathCache.set(path, tscUtil);
+		tscUtilLibPathCache.set(tsPath, tscUtil);
+		return tscUtil;
+	} catch (e) {
+		throw new Error(`Failed to load typescript module for ${path}`);
+	}
 }
 
 // Any paths given by typescript will be normalized to forward slashes.

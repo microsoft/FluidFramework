@@ -81,7 +81,7 @@ const executableToLeafTask: {
 function getTaskForExecutable(executable: string, context: BuildContext): TaskHandler {
 	const config = context.fluidBuildConfig;
 	const declarativeTasks = config?.declarativeTasks;
-	const taskMatch = declarativeTasks?.[executable];
+	const taskMatch = context.fluidBuildConfig?.[executable] ?? declarativeTasks?.[executable];
 
 	if (taskMatch !== undefined) {
 		return createDeclarativeTaskHandler(taskMatch);
