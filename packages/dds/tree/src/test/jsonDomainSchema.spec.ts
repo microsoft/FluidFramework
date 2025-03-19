@@ -40,7 +40,7 @@ describe("JsonDomainSchema", () => {
 		}
 	});
 
-	// Compile time testing for some of the types generated as part of this Domain.
+	// Compile-time testing for some of the types generated as part of this Domain.
 	// It has exhibited some compilation nondeterminism, as well as some more generally odd behavior:
 	// these tests should help ensure that the types are actually working properly despite these issues,
 	// as well as provide a starting place for attempts to further investigate and debug related problems.

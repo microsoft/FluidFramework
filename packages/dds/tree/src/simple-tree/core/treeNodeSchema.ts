@@ -23,7 +23,7 @@ import type { InternalTreeNode, TreeNode, Unhydrated } from "./types.js";
  * The long lists of type parameters here are awkward to deal with.
  * Switching to (or adding an option to use)
  * an interface based pattern with unordered named parameters for types like this would be a good idea.
- * The related `@system` types should be able to simple be ported to the new pattern, but stable public one like this will need to support both:
+ * The related `@system` types should be simple to port to the new pattern, but stable public one like this will need to support both:
  * the new one could either be added as a system type, or be recommended to replace this one (deprecating it).
  * @sealed @public
  */
