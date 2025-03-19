@@ -8,4 +8,4 @@
 
 Better type errors for invalid recursive schema
 
-Constraints are added to `*Recursive` schema builders to ensure correct use without relying on `ValidateRecursiveSchema` as much.
+Constraints are added to `*Recursive` [`SchemaFactory`](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class) methods to ensure correct use without relying on [`ValidateRecursiveSchema`](https://fluidframework.com/docs/api/fluid-framework/validaterecursiveschema-typealias) as much.
