@@ -14,6 +14,7 @@ import type {
 	BaseOperation,
 	IRandom,
 	MinimizationTransform,
+	Reducer,
 	SaveDestination,
 	SaveInfo,
 } from "@fluid-private/stochastic-test-utils";
@@ -242,7 +243,7 @@ export interface DDSFuzzModel<
 	/**
 	 * Reducer capable of updating the test state according to the operations generated.
 	 */
-	reducer: AsyncReducer<TOperation, TState>;
+	reducer: Reducer<TOperation, TState>;
 
 	/**
 	 * Equivalence validation function, which should verify that the provided channels contain the same data.
@@ -263,6 +264,20 @@ export interface DDSFuzzModel<
 	 * contents of the operations will remain unchanged.
 	 */
 	minimizationTransforms?: MinimizationTransform<TOperation>[];
+}
+
+/**
+ * @internal
+ */
+export interface DDSFuzzHarnessModel<
+	TChannelFactory extends IChannelFactory,
+	TOperation extends BaseOperation,
+	TState extends DDSFuzzTestState<TChannelFactory> = DDSFuzzTestState<TChannelFactory>,
+> extends Omit<DDSFuzzModel<TChannelFactory, TOperation, TState>, "reducer"> {
+	/**
+	 * Reducer capable of updating the test state according to the operations generated.
+	 */
+	reducer: AsyncReducer<TOperation, TState> | Reducer<TOperation, TState>;
 }
 
 /**
@@ -532,9 +547,9 @@ export function mixinNewClient<
 	TOperation extends BaseOperation,
 	TState extends DDSFuzzTestState<TChannelFactory>,
 >(
-	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
+	model: DDSFuzzHarnessModel<TChannelFactory, TOperation, TState>,
 	options: DDSFuzzSuiteOptions,
-): DDSFuzzModel<TChannelFactory, TOperation | AddClient, TState> {
+): DDSFuzzHarnessModel<TChannelFactory, TOperation | AddClient, TState> {
 	const isClientAddOp = (op: TOperation | AddClient): op is AddClient =>
 		op.type === "addClient";
 
@@ -606,9 +621,9 @@ export function mixinReconnect<
 	TOperation extends BaseOperation,
 	TState extends DDSFuzzTestState<TChannelFactory>,
 >(
-	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
+	model: DDSFuzzHarnessModel<TChannelFactory, TOperation, TState>,
 	options: DDSFuzzSuiteOptions,
-): DDSFuzzModel<TChannelFactory, TOperation | ChangeConnectionState, TState> {
+): DDSFuzzHarnessModel<TChannelFactory, TOperation | ChangeConnectionState, TState> {
 	const generatorFactory: () => AsyncGenerator<TOperation | ChangeConnectionState, TState> =
 		() => {
 			const baseGenerator = model.generatorFactory();
@@ -660,14 +675,14 @@ export function mixinAttach<
 	TOperation extends BaseOperation,
 	TState extends DDSFuzzTestState<TChannelFactory>,
 >(
-	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
+	model: DDSFuzzHarnessModel<TChannelFactory, TOperation, TState>,
 	options: DDSFuzzSuiteOptions,
-): DDSFuzzModel<TChannelFactory, TOperation | Attach | Attaching | Rehydrate, TState> {
+): DDSFuzzHarnessModel<TChannelFactory, TOperation | Attach | Attaching | Rehydrate, TState> {
 	const { numOpsBeforeAttach, rehydrateDisabled, attachingBeforeRehydrateDisable } =
 		options.detachedStartOptions;
 	if (numOpsBeforeAttach === 0) {
 		// not wrapping the reducer/generator in this case makes stepping through the harness slightly less painful.
-		return model as DDSFuzzModel<
+		return model as DDSFuzzHarnessModel<
 			TChannelFactory,
 			TOperation | Attach | Attaching | Rehydrate,
 			TState
@@ -824,9 +839,9 @@ export function mixinRebase<
 	TOperation extends BaseOperation,
 	TState extends DDSFuzzTestState<TChannelFactory>,
 >(
-	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
+	model: DDSFuzzHarnessModel<TChannelFactory, TOperation, TState>,
 	options: DDSFuzzSuiteOptions,
-): DDSFuzzModel<TChannelFactory, TOperation | TriggerRebase, TState> {
+): DDSFuzzHarnessModel<TChannelFactory, TOperation | TriggerRebase, TState> {
 	const generatorFactory: () => AsyncGenerator<TOperation | TriggerRebase, TState> = () => {
 		const baseGenerator = model.generatorFactory();
 		return async (state): Promise<TOperation | TriggerRebase | typeof done> => {
@@ -880,9 +895,9 @@ export function mixinSynchronization<
 	TOperation extends BaseOperation,
 	TState extends DDSFuzzTestState<TChannelFactory>,
 >(
-	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
+	model: DDSFuzzHarnessModel<TChannelFactory, TOperation, TState>,
 	options: DDSFuzzSuiteOptions,
-): DDSFuzzModel<TChannelFactory, TOperation | Synchronize, TState> {
+): DDSFuzzHarnessModel<TChannelFactory, TOperation | Synchronize, TState> {
 	const { validationStrategy } = options;
 	let generatorFactory: () => AsyncGenerator<TOperation | Synchronize, TState>;
 
@@ -1010,9 +1025,9 @@ export function mixinClientSelection<
 	TOperation extends BaseOperation,
 	TState extends DDSFuzzTestState<TChannelFactory>,
 >(
-	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
+	model: DDSFuzzHarnessModel<TChannelFactory, TOperation, TState>,
 	_: DDSFuzzSuiteOptions,
-): DDSFuzzModel<TChannelFactory, TOperation, TState> {
+): DDSFuzzHarnessModel<TChannelFactory, TOperation, TState> {
 	const generatorFactory: () => AsyncGenerator<TOperation, TState> = () => {
 		const baseGenerator = model.generatorFactory();
 		return async (state): Promise<TOperation | typeof done> => {
@@ -1054,11 +1069,11 @@ export function mixinStashedClient<
 	TOperation extends BaseOperation,
 	TState extends DDSFuzzTestState<TChannelFactory>,
 >(
-	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
+	model: DDSFuzzHarnessModel<TChannelFactory, TOperation, TState>,
 	options: DDSFuzzSuiteOptions,
-): DDSFuzzModel<TChannelFactory, TOperation | StashClient, TState> {
+): DDSFuzzHarnessModel<TChannelFactory, TOperation | StashClient, TState> {
 	if (options.clientJoinOptions?.stashableClientProbability === undefined) {
-		return model as DDSFuzzModel<TChannelFactory, TOperation | StashClient, TState>;
+		return model as DDSFuzzHarnessModel<TChannelFactory, TOperation | StashClient, TState>;
 	}
 
 	const generatorFactory: () => AsyncGenerator<TOperation | StashClient, TState> = () => {
@@ -1340,7 +1355,7 @@ export async function runTestForSeed<
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 >(
-	model: DDSFuzzModel<TChannelFactory, TOperation>,
+	model: DDSFuzzHarnessModel<TChannelFactory, TOperation>,
 	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
 	seed: number,
 	saveInfo?: SaveInfo,
@@ -1448,7 +1463,7 @@ export async function runTestForSeed<
 }
 
 function runTest<TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
-	model: DDSFuzzModel<TChannelFactory, TOperation>,
+	model: DDSFuzzHarnessModel<TChannelFactory, TOperation>,
 	options: InternalOptions,
 	seed: number,
 	saveInfo: SaveInfo | undefined,
@@ -1530,7 +1545,7 @@ export async function replayTest<
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 >(
-	ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
+	_model: DDSFuzzHarnessModel<TChannelFactory, TOperation>,
 	seed: number,
 	generator: AsyncGenerator<TOperation, unknown>,
 	saveInfo?: SaveInfo,
@@ -1542,8 +1557,6 @@ export async function replayTest<
 		only: new Set(providedOptions?.only ?? []),
 		skip: new Set(providedOptions?.skip ?? []),
 	};
-
-	const _model = getFullModel(ddsModel, options);
 
 	const model = {
 		..._model,
@@ -1627,7 +1640,7 @@ const getFullModel = <
 >(
 	ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
 	options: DDSFuzzSuiteOptions,
-): DDSFuzzModel<
+): DDSFuzzHarnessModel<
 	TChannelFactory,
 	| TOperation
 	| AddClient
