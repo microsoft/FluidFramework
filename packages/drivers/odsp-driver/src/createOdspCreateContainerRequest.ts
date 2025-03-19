@@ -13,25 +13,6 @@ import { ISharingLinkKind } from "@fluidframework/odsp-driver-definitions/intern
 import { buildOdspShareLinkReqParams, getContainerPackageName } from "./odspUtils.js";
 
 /**
- * Create the request object with url and headers for creating a new file on OneDrive Sharepoint
- * @param siteUrl - Base url for OneDrive
- * @param driveId - drive identifier
- * @param filePath - path where file needs to be created
- * @param fileName - name of the new file to be created
- * @param createShareLinkType - type of sharing link you would like to create for this file. ShareLinkTypes
- * will be deprecated soon, so for any new implementation please provide createShareLinkType of type ShareLink
- * @legacy
- * @alpha
- */
-export function createOdspCreateContainerRequest(
-	siteUrl: string,
-	driveId: string,
-	filePath: string,
-	fileName: string,
-	createShareLinkType?: ISharingLinkKind,
-): IRequest;
-
-/**
  * Overloaded version of createOdspCreateContainerRequest that takes in containerPackageInfo
  * @param siteUrl - Base url for OneDrive
  * @param driveId - drive identifier
@@ -52,7 +33,7 @@ export function createOdspCreateContainerRequest(
 	driveId: string,
 	filePath: string,
 	fileName: string,
-	createShareLinkType?: ISharingLinkKind,
+	createShareLinkType: ISharingLinkKind | undefined,
 	containerPackageInfo?: IContainerPackageInfo | undefined,
 ): IRequest;
 
@@ -64,7 +45,26 @@ export function createOdspCreateContainerRequest(
  * @param fileName - name of the new file to be created
  * @param createShareLinkType - type of sharing link you would like to create for this file. ShareLinkTypes
  * will be deprecated soon, so for any new implementation please provide createShareLinkType of type ShareLink
- * @deprecated This parameter is deprecated @param containerPackageInfo - **Deprecated Parameter** - container package information which will be used to extract the container package name.
+ * @legacy
+ * @alpha
+ */
+export function createOdspCreateContainerRequest(
+	siteUrl: string,
+	driveId: string,
+	filePath: string,
+	fileName: string,
+	createShareLinkType?: ISharingLinkKind,
+): IRequest;
+
+/**
+ * Create the request object with url and headers for creating a new file on OneDrive Sharepoint
+ * @param siteUrl - Base url for OneDrive
+ * @param driveId - drive identifier
+ * @param filePath - path where file needs to be created
+ * @param fileName - name of the new file to be created
+ * @param createShareLinkType - type of sharing link you would like to create for this file. ShareLinkTypes
+ * will be deprecated soon, so for any new implementation please provide createShareLinkType of type ShareLink
+ * @param containerPackageInfo - **Deprecated Parameter** - container package information which will be used to extract the container package name.
  * If not given that means that the container package does not have a name.
  * @legacy
  * @alpha

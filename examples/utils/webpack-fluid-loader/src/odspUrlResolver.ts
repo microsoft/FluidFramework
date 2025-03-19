@@ -11,7 +11,6 @@ import {
 } from "@fluidframework/odsp-doclib-utils/internal";
 import {
 	OdspDriverUrlResolver,
-	// eslint-disable-next-line import/no-deprecated
 	createOdspCreateContainerRequest,
 	createOdspUrl,
 } from "@fluidframework/odsp-driver/internal";
@@ -76,7 +75,6 @@ export class OdspUrlResolver implements IUrlResolver {
 			this.authRequestInfo,
 			false,
 		);
-		// eslint-disable-next-line import/no-deprecated
 		return createOdspCreateContainerRequest(
 			`https://${this.server}`,
 			driveId,
