@@ -463,7 +463,7 @@ describe("SchemaFactory Recursive methods", () => {
 
 			class Foo extends factory.objectRecursive(
 				"Foo",
-				{ bar: () => Bar },
+				{ bar: [() => Bar] },
 				{
 					metadata: {
 						description: "A recursive object called Foo",
@@ -473,7 +473,7 @@ describe("SchemaFactory Recursive methods", () => {
 			) {}
 			class Bar extends factory.objectRecursive(
 				"Bar",
-				{ foo: () => Foo },
+				{ foo: [() => Foo] },
 				{
 					metadata: {
 						description: "A recursive object called Bar",
