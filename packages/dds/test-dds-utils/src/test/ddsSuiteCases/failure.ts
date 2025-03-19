@@ -15,7 +15,7 @@ const model: DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionStat
 	workloadName: "failing configuration",
 	// note: overriding the infinite generator isn't necessary here as the test
 	// should exit immediately.
-	reducer: async () => {
+	reducer: () => {
 		throw new Error("Injected failure");
 	},
 };
