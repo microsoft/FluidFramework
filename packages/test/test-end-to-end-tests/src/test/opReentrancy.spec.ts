@@ -128,7 +128,7 @@ describeCompat(
 		//* ONLY
 		//* ONLY
 		[true].forEach((enableGroupedBatching) => {
-			it.only(`Eventual consistency with op reentry - ${
+			it(`Eventual consistency with op reentry - ${
 				enableGroupedBatching ? "Grouped" : "Regular"
 			} batches`, async function () {
 				if (provider.driver.type === "t9s" || provider.driver.type === "tinylicious") {

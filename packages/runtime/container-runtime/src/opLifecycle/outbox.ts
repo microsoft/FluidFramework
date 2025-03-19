@@ -200,8 +200,11 @@ export class Outbox {
 			return;
 		}
 
+		//* TODO: Try Craig's new onAssert thing?
+		// Basically an assert, but we'll keep it this way to get lots of data in case it gets hit
+		const error = getLongStack(() => new UsageError("Submission of an out of order message"));
 		if (++this.mismatchedOpsReported <= this.maxMismatchedOpsToReport) {
-			this.logger.sendTelemetryEvent(
+			this.logger.sendErrorEvent(
 				{
 					category: this.params.config.disablePartialFlush ? "error" : "generic",
 					eventName: "ReferenceSequenceNumberMismatch",
@@ -212,13 +215,20 @@ export class Outbox {
 					currentReferenceSequenceNumber: currentSequenceNumbers.referenceSequenceNumber,
 					currentClientSequenceNumber: currentSequenceNumbers.clientSequenceNumber,
 				},
-				getLongStack(() => new UsageError("Submission of an out of order message")),
+				error,
 			);
 		}
 
+		//* TODO: Update naming / comments
+		// We're reusing disablePartialFlush to cover this throw (it used to do flush, but should never happen now that we flush from process)
 		if (!this.params.config.disablePartialFlush) {
-			this.flushAll();
+			//* TODO: Close first?
+			throw error;
 		}
+
+		//* Delete (WIP comment)
+		// This will always result in rebase/resubmit, since the in-progress batch must have been reentrant
+		// in order for sequence numbers to be changing while it's accumulating.
 	}
 
 	public submit(message: BatchMessage): void {
@@ -273,17 +283,20 @@ export class Outbox {
 	}
 
 	private flushAll(resubmittingBatchId?: BatchId): void {
-		// If we're resubmitting and all batches are empty, we need to flush an empty batch.
-		// Note that we currently resubmit one batch at a time, so on resubmit, 2 of the 3 batches will *always* be empty.
-		// It's theoretically possible that we don't *need* to resubmit this empty batch, and in those cases, it'll safely be ignored
-		// by the rest of the system, including remote clients.
-		// In some cases we *must* resubmit the empty batch (to match up with a non-empty version tracked locally by a container fork), so we do it always.
 		const allBatchesEmpty =
 			this.idAllocationBatch.empty && this.blobAttachBatch.empty && this.mainBatch.empty;
-		if (resubmittingBatchId && allBatchesEmpty) {
-			this.flushEmptyBatch(resubmittingBatchId);
+		if (allBatchesEmpty) {
+			// If we're resubmitting and all batches are empty, we need to flush an empty batch.
+			// Note that we currently resubmit one batch at a time, so on resubmit, 2 of the 3 batches will *always* be empty.
+			// It's theoretically possible that we don't *need* to resubmit this empty batch, and in those cases, it'll safely be ignored
+			// by the rest of the system, including remote clients.
+			// In some cases we *must* resubmit the empty batch (to match up with a non-empty version tracked locally by a container fork), so we do it always.
+			if (resubmittingBatchId) {
+				this.flushEmptyBatch(resubmittingBatchId);
+			}
 			return;
 		}
+
 		// Don't use resubmittingBatchId for idAllocationBatch.
 		// ID Allocation messages are not directly resubmitted so we don't want to reuse the batch ID.
 		this.flushInternal(this.idAllocationBatch);
