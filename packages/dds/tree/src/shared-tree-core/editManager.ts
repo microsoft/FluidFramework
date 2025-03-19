@@ -16,7 +16,6 @@ import {
 	findAncestor,
 	findCommonAncestor,
 	mintCommit,
-	rebaseChange,
 	type RebaseStatsWithDuration,
 	tagChange,
 } from "../core/index.js";
@@ -39,7 +38,6 @@ import {
 } from "./sequenceIdUtils.js";
 import {
 	TelemetryEventBatcher,
-	measure,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -705,52 +703,47 @@ export class EditManager<
 			return;
 		}
 
-		// Remote changes, i.e., changes from remote clients are applied in three steps.
-		for (const newCommit of newCommits) {
-			// Step 1 - Recreate the peer remote client's local environment.
-			// Get the revision that the remote change is based on
-			const [, baseRevisionInTrunk] = this.getClosestTrunkCommit(referenceSequenceNumber);
-			// Rebase that peer local branch over the part of the trunk up to the base revision
-			// This will be a no-op if the sending client has not advanced since the last time we received an edit from it
-			const peerLocalBranch = getOrCreate(
-				this.peerLocalBranches,
-				sessionId,
-				() =>
-					new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily, this.mintRevisionTag),
-			);
-			peerLocalBranch.rebaseOnto(this.trunk, baseRevisionInTrunk);
+		/* Remote changes, i.e., changes from remote clients are applied in three steps. */
 
-			// Step 2 - Append the change to the peer branch. Rebase the change to the tip of the trunk.
-			if (peerLocalBranch.getHead() === this.trunk.getHead()) {
-				// If the branch is fully caught up and empty after being rebased, then push to the trunk directly
+		// Step 1 - Recreate the peer remote client's local environment.
+		// Get the revision that the remote change is based on
+		const [, baseRevisionInTrunk] = this.getClosestTrunkCommit(referenceSequenceNumber);
+		// Rebase that peer local branch over the part of the trunk up to the base revision
+		// This will be a no-op if the sending client has not advanced since the last time we received an edit from it
+		const peerLocalBranch = getOrCreate(
+			this.peerLocalBranches,
+			sessionId,
+			() => new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily, this.mintRevisionTag),
+		);
+		peerLocalBranch.rebaseOnto(this.trunk, baseRevisionInTrunk);
+
+		// Step 2 - Append the changes to the peer branch and rebase the changes to the tip of the trunk.
+		if (peerLocalBranch.getHead() === this.trunk.getHead()) {
+			// If the peer local branch is fully caught up and empty (no changes relative to the trunk) after being
+			// rebased, then push to changes the trunk directly and update the peer branch to the trunk's head.
+			for (const newCommit of newCommits) {
 				this.pushCommitToTrunk(nextSequenceId, { ...newCommit, sessionId });
 				peerLocalBranch.setHead(this.trunk.getHead());
-			} else {
-				// Otherwise, rebase the change over the trunk and append it, and append the original change to the peer branch.
-				const { duration, output: newChangeFullyRebased } = measure(() =>
-					rebaseChange(
-						this.changeFamily.rebaser,
-						newCommit,
-						peerLocalBranch.getHead(),
-						this.trunk.getHead(),
-						this.mintRevisionTag,
-					),
-				);
-
-				this.telemetryEventBatcher?.accumulateAndLog({
-					duration,
-					...newChangeFullyRebased.telemetryProperties,
-				});
-
-				peerLocalBranch.apply(tagChange(newCommit.change, newCommit.revision));
-				this.pushCommitToTrunk(nextSequenceId, {
-					...newCommit,
-					sessionId,
-					change: newChangeFullyRebased.change,
-				});
+				nextSequenceId = getNextSequenceId(nextSequenceId);
 			}
-
-			nextSequenceId = getNextSequenceId(nextSequenceId);
+		} else {
+			// Otherwise, push the changes to the peer local branch and merge the branch over the trunk.
+			for (const newCommit of newCommits) {
+				peerLocalBranch.apply(tagChange(newCommit.change, newCommit.revision));
+			}
+			const result = this.trunk.merge(peerLocalBranch);
+			if (result !== undefined) {
+				// If the merge resulted in any changes to the trunk, update the sequence map and trunk metadata
+				// with the rebased commits.
+				for (const sourceCommit of result.sourceCommits) {
+					this.sequenceMap.set(nextSequenceId, sourceCommit);
+					this.trunkMetadata.set(sourceCommit.revision, {
+						sequenceId: nextSequenceId,
+						sessionId,
+					});
+					nextSequenceId = getNextSequenceId(nextSequenceId);
+				}
+			}
 		}
 
 		// Step 3 - Rebase the local branch over the updated trunk.
