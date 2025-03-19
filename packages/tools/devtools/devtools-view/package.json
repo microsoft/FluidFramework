@@ -94,9 +94,9 @@
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@microsoft/api-extractor": "7.47.8",
 		"@previewjs/api": "^13.0.0",
-		"@previewjs/chromeless": "^7.0.3",
-		"@previewjs/core": "^23.0.0",
-		"@previewjs/plugin-react": "^11.0.0",
+		"@previewjs/chromeless": "^14.0.1",
+		"@previewjs/core": "^30.2.0",
+		"@previewjs/plugin-react": "^17.1.0",
 		"@testing-library/dom": "^10.4.0",
 		"@testing-library/jest-dom": "^5.16.5",
 		"@testing-library/react": "^16.0.1",
@@ -133,7 +133,7 @@
 		"simple-git": "^3.19.1",
 		"ts-jest": "^29.1.1",
 		"typescript": "~5.4.5",
-		"vite": "^4.5.9"
+		"vite": "^6.2.2"
 	},
 	"fluid": {
 		"browser": {
