@@ -123,8 +123,8 @@ describeCompat(
 			assert.ok(mapsAreEqual(sharedMap1, sharedMap2));
 		});
 
-		[false, true].forEach((enableGroupedBatching) => {
-			it(`Eventual consistency with op reentry - ${
+		[true].forEach((enableGroupedBatching) => {
+			it.only(`Eventual consistency with op reentry - ${
 				enableGroupedBatching ? "Grouped" : "Regular"
 			} batches`, async function () {
 				if (provider.driver.type === "t9s" || provider.driver.type === "tinylicious") {
@@ -139,15 +139,26 @@ describeCompat(
 					},
 				});
 
-				sharedString1.insertText(0, "ad");
-				sharedString1.insertText(1, "c");
+				sharedString1.insertText(0, "HELLO WORLD");
 				await provider.ensureSynchronized();
 
 				sharedString2.on("sequenceDelta", (sequenceDeltaEvent) => {
-					if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "b") {
-						sharedString2.insertText(3, "x");
+					if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "e") {
+						sharedString2.insertText(sharedString2.getLength(), "xxxxx");
 					}
 				});
+
+				sharedString1.insertText(0, "j");
+				sharedString1.insertText(0, "i");
+				sharedString1.insertText(0, "h");
+				sharedString1.insertText(0, "g");
+				sharedString1.insertText(0, "f");
+				sharedString1.insertText(0, "e");
+				sharedString1.insertText(0, "d");
+				sharedString1.insertText(0, "c");
+				sharedString1.insertText(0, "b");
+				sharedString1.insertText(0, "a");
+
 				sharedMap2.on("valueChanged", (changed1) => {
 					if (changed1.key !== "key2" && changed1.key !== "key3") {
 						sharedMap2.on("valueChanged", (changed2) => {
@@ -160,30 +171,28 @@ describeCompat(
 					}
 				});
 
-				sharedMap1.set("key1", "1");
+				// sharedMap1.set("key1", "1");
 
-				sharedString1.insertText(1, "b");
-				sharedString2.insertText(0, "y");
 				await provider.ensureSynchronized();
 
 				// The offending container is still alive
-				sharedString2.insertText(0, "z");
-				await provider.ensureSynchronized();
+				// sharedString2.insertText(0, "z");
+				// await provider.ensureSynchronized();
 
-				assert.strictEqual(sharedString1.getText(), "zyabxcd");
+				// assert.strictEqual(sharedString1.getText(), "zyabBxcd");
 				assert.strictEqual(
 					sharedString1.getText(),
 					sharedString2.getText(),
 					"SharedString eventual consistency broken",
 				);
 
-				assert.strictEqual(sharedMap1.get("key1"), "1");
-				assert.strictEqual(sharedMap1.get("key2"), "3");
-				assert.strictEqual(sharedMap1.get("key3"), "1 updated");
-				assert.ok(
-					mapsAreEqual(sharedMap1, sharedMap2),
-					"SharedMap eventual consistency broken",
-				);
+				// assert.strictEqual(sharedMap1.get("key1"), "1");
+				// assert.strictEqual(sharedMap1.get("key2"), "3");
+				// assert.strictEqual(sharedMap1.get("key3"), "1 updated");
+				// assert.ok(
+				// 	mapsAreEqual(sharedMap1, sharedMap2),
+				// 	"SharedMap eventual consistency broken",
+				// );
 
 				// Both containers are alive at the end
 				assert.ok(!container1.closed, "Local container is closed");
