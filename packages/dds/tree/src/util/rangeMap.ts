@@ -92,7 +92,10 @@ export class RangeMap<K, V> {
 		return entries;
 	}
 
-	// XXX
+	// XXX: Merge with getAll
+	/**
+	 * Like getAll, but includes entries where the value is undefined.
+	 */
 	public getAll2(start: K, length: number): RangeQueryResult<K, V>[] {
 		let nextKey = start;
 		let lengthRemaining = length;

@@ -103,18 +103,21 @@ function invertMark(
 			const outputId = getOutputCellId(mark);
 			const inputId = getInputCellId(mark);
 			let inverse: Mutable<Mark>;
+
+			const attachId = { revision: isRollback ? mark.revision : revision, localId: mark.id };
 			if (inputId === undefined) {
 				crossFieldManager.invertDetach(
 					{ revision: mark.revision, localId: mark.id },
 					mark.count,
 					mark.changes,
+					attachId,
 				);
 				inverse = {
 					type: "Insert",
 					id: mark.id,
 					cellId: outputId,
 					count: mark.count,
-					revision: mark.revision,
+					revision: attachId.revision,
 				};
 				return [inverse];
 			} else {
@@ -139,9 +142,10 @@ function invertMark(
 				type: "Remove",
 				count: mark.count,
 				id: mark.id,
-				revision: mark.revision,
+				revision: isRollback ? mark.revision : revision,
 			};
 
+			// XXX: Do we always need an override?
 			removeMark.idOverride = isRollback ? inputId : { revision, localId: mark.id };
 
 			return applyMovedChanges(removeMark, mark.revision, crossFieldManager);

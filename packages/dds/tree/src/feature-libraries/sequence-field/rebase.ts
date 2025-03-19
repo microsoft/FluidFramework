@@ -354,7 +354,7 @@ function moveRebasedChanges(
 	newDetach: Detach | undefined,
 ): void {
 	const newId = newDetach !== undefined ? getDetachedNodeId(newDetach) : undefined;
-	moveEffects.rebaseOverDetach(baseId, count, newId, nodeChange, newDetach);
+	moveEffects.rebaseOverDetach(baseId, count, newId, nodeChange);
 }
 
 function rebaseNodeChange(
@@ -417,15 +417,16 @@ function getMovedEffect(
 ): Detach | undefined {
 	const entry = moveEffects.getNewChangesForBaseAttach({ revision, localId }, count);
 	assert(entry.length === count, 0x6f3 /* Expected effect to cover entire mark */);
-	const movedEffect = entry.value?.fieldData;
-	if (movedEffect === undefined) {
+	const detachId = entry.value?.detachId;
+	if (detachId === undefined) {
 		return undefined;
 	}
-	if (isDetach(movedEffect)) {
-		// XXX
-		// moveEffects.moveKey(CrossFieldTarget.Source, movedEffect.revision, movedEffect.id, count);
-	}
-	return movedEffect;
+
+	const detach: Detach = { type: "Remove", revision: detachId.revision, id: detachId.localId };
+
+	// XXX
+	// moveEffects.moveKey(CrossFieldTarget.Source, movedEffect.revision, movedEffect.id, count);
+	return detach;
 }
 
 function getMovedChangesFromBaseMark(
@@ -445,4 +446,4 @@ function getMovedNodeChanges(
 	return moveEffects.getNewChangesForBaseAttach({ revision, localId }, 1).value?.nodeChange;
 }
 
-type SequenceRebaseNodeManager = RebaseNodeManager<Detach>;
+type SequenceRebaseNodeManager = RebaseNodeManager;

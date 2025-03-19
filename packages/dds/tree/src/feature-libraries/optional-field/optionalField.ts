@@ -232,7 +232,9 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 							};
 				if (!change.valueReplace.isEmpty) {
 					replace.src = change.valueReplace.dst;
-					nodeManager.invertDetach(change.valueReplace.dst, 1, change.childChange);
+
+					// XXX: We should use a new attach ID
+					nodeManager.invertDetach(change.valueReplace.dst, 1, change.childChange, undefined);
 					childChange = undefined;
 				}
 
@@ -270,13 +272,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		const rebasedChild = rebaseChild(change.childChange, baseChild);
 		if (isReplaceEffectful(overChange.valueReplace) && !overChange.valueReplace.isEmpty) {
 			// The child node was detached by overChange.
-			nodeManager.rebaseOverDetach(
-				overChange.valueReplace.dst,
-				1,
-				undefined,
-				rebasedChild,
-				undefined,
-			);
+			nodeManager.rebaseOverDetach(overChange.valueReplace.dst, 1, undefined, rebasedChild);
 		} else if (rebasedChild !== undefined) {
 			rebased.childChange = rebasedChild;
 		}

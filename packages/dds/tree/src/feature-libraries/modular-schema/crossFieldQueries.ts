@@ -26,7 +26,13 @@ export enum CrossFieldTarget {
 }
 
 export interface InvertNodeManager {
-	invertDetach(detachId: ChangeAtomId, count: number, nodeChanges: NodeId | undefined): void;
+	invertDetach(
+		detachId: ChangeAtomId,
+		count: number,
+		nodeChanges: NodeId | undefined,
+		newAttachId: ChangeAtomId | undefined,
+	): void;
+
 	invertAttach(
 		attachId: ChangeAtomId,
 		count: number,
@@ -58,24 +64,23 @@ export interface ComposeNodeManager {
 	): boolean;
 }
 
-export interface RebaseNodeManager<T = unknown> {
-	// XXX: We need to know if a new detach is now happening in this field
+export interface RebaseNodeManager {
+	// XXX: Support moving cross field keys
 	getNewChangesForBaseAttach(
 		baseAttachId: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<ChangeAtomId, DetachedNodeEntry<T>>;
+	): RangeQueryResult<ChangeAtomId, DetachedNodeEntry>;
 
-	// XXX: We need to know if a detach is no longer happening with in field
+	// XXX: Support moving/deleting cross field keys
 	rebaseOverDetach(
 		baseDetachId: ChangeAtomId,
 		count: number,
 		newDetachId: ChangeAtomId | undefined,
 		nodeChange: NodeId | undefined,
-		fieldData: T | undefined,
 	): void;
 }
 
-export interface DetachedNodeEntry<T = unknown> {
+export interface DetachedNodeEntry {
 	nodeChange?: NodeId;
-	fieldData?: T;
+	detachId?: ChangeAtomId;
 }
