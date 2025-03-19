@@ -10,8 +10,7 @@ import type {
 	FixRecursiveArraySchema,
 	TreeNodeFromImplicitAllowedTypes,
 	ValidateRecursiveSchema,
-	// Unused imports to make d.ts cleaner
-
+	// #region Unused imports to make d.ts cleaner
 	/* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
 	InsertableTypedNodeUnsafe,
 	TreeNodeSchemaNonClass,
@@ -23,6 +22,7 @@ import type {
 	TreeArrayNodeUnsafe,
 	LeafSchema,
 	/* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
+	// #endregion
 } from "./simple-tree/index.js";
 
 const sf = new SchemaFactory("com.fluidframework.json");
