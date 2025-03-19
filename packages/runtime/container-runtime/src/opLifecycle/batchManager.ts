@@ -99,7 +99,8 @@ export class BatchManager {
 	private get referenceSequenceNumber(): number | undefined {
 		return this.pendingBatch.length === 0
 			? undefined
-			: this.pendingBatch[this.pendingBatch.length - 1].referenceSequenceNumber;
+			: // NOTE: In case of reentrant ops, there could be multiple reference sequence numbers, but we will rebase before submitting.
+				this.pendingBatch[this.pendingBatch.length - 1].referenceSequenceNumber;
 	}
 
 	/**

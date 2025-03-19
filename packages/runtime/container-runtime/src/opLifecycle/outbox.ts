@@ -202,6 +202,13 @@ export class Outbox {
 			return;
 		}
 
+		if (this.isContextReentrant()) {
+			// Reference and/or Client sequence number will be advancing while processing this batch,
+			// so we can't use this check to detect wrongdoing.
+			// This is rare, and the reentrancy will be handled during Flush, so just return.
+			return;
+		}
+
 		// Basically an assert, but we'll keep it this way to get lots of data in case it gets hit
 		const error = getLongStack(() =>
 			//* TODO: Could pass DM last processed message here, but we don't have it in this context
