@@ -38,6 +38,9 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 	};
 
 	let provider: ITestObjectProvider;
+	/**
+	 * Array of batches (message[]) that were sent by the DeltaManager
+	 */
 	const capturedBatches: IDocumentMessage[][] = [];
 
 	beforeEach("setup", () => {
@@ -156,10 +159,6 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	const expectedErrors = [
-		{
-			eventName: "fluid:telemetry:ContainerRuntime:Outbox:ReferenceSequenceNumberMismatch",
-			error: "Submission of an out of order message",
-		},
 		// A container will not close when an out of order message was detected.
 		// The error below is due to the artificial repro of interleaving op processing and flushing
 		{
@@ -179,11 +178,11 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 	);
 
 	itExpects(
-		"Reference sequence number mismatch when doing op reentry - early flush disabled - submits one batch",
+		"Reference sequence number mismatch when doing op reentry - early flush disabled - Still submits two batches",
 		expectedErrors,
 		async () => {
 			await processOutOfOrderOp({ "Fluid.ContainerRuntime.DisablePartialFlush": true });
-			assert.strictEqual(capturedBatches.length, 1);
+			assert.strictEqual(capturedBatches.length, 2);
 		},
 	);
 

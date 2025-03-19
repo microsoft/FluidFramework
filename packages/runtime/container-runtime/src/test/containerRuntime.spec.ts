@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable require-atomic-updates */
 /* eslint-disable @fluid-internal/fluid/no-unchecked-record-access */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */

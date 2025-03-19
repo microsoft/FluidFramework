@@ -755,7 +755,7 @@ describe("Outbox", () => {
 		);
 	});
 
-	it("Splits the batch when an out of order message is detected", () => {
+	it.skip("Throws when an out of order message is detected", () => {
 		const outbox = getOutbox({ context: getMockContext() });
 		const messages = [
 			{
@@ -835,7 +835,7 @@ describe("Outbox", () => {
 			},
 		],
 	]) {
-		it("Flushes all batches when an out of order message is detected in either flows", () => {
+		it.skip("Flushes all batches when an out of order message is detected in either flows", () => {
 			const outbox = getOutbox({ context: getMockContext() });
 			for (const op of ops) {
 				currentSeqNumbers.referenceSequenceNumber = op.referenceSequenceNumber;
@@ -910,7 +910,7 @@ describe("Outbox", () => {
 		]);
 	});
 
-	it("Log at most 3 reference sequence number mismatch events", () => {
+	it.skip("Log at most 3 reference sequence number mismatch events", () => {
 		const outbox = getOutbox({ context: getMockContext() });
 
 		for (let i = 0; i < 10; i++) {

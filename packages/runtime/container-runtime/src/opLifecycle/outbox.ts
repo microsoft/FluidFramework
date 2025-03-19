@@ -8,6 +8,7 @@ import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
+	DataProcessingError,
 	GenericError,
 	UsageError,
 	createChildLogger,
@@ -168,6 +169,7 @@ export class Outbox {
 		return this.messageCount === 0;
 	}
 
+	//* Comment
 	/**
 	 * Detect whether batching has been interrupted by an incoming message being processed. In this case,
 	 * we will flush the accumulated messages to account for that and create a new batch with the new
@@ -178,7 +180,7 @@ export class Outbox {
 	 * last message processed by the ContainerRuntime. In the absence of op reentrancy, this
 	 * pair will remain stable during a single JS turn during which the batch is being built up.
 	 */
-	private maybeFlushPartialBatch(): void {
+	private assertSequenceNumberCoherency(): void {
 		const mainBatchSeqNums = this.mainBatch.sequenceNumbers;
 		const blobAttachSeqNums = this.blobAttachBatch.sequenceNumbers;
 		const idAllocSeqNums = this.idAllocationBatch.sequenceNumbers;
@@ -200,9 +202,14 @@ export class Outbox {
 			return;
 		}
 
-		//* TODO: Try Craig's new onAssert thing?
 		// Basically an assert, but we'll keep it this way to get lots of data in case it gets hit
-		const error = getLongStack(() => new UsageError("Submission of an out of order message"));
+		const error = getLongStack(() =>
+			//* TODO: Could pass DM last processed message here, but we don't have it in this context
+			DataProcessingError.create(
+				"Sequence numbers advanced as if ops were processed while a batch is accumulating",
+				"outboxSequenceNumberCoherencyCheck",
+			),
+		);
 		if (++this.mismatchedOpsReported <= this.maxMismatchedOpsToReport) {
 			this.logger.sendErrorEvent(
 				{
@@ -232,19 +239,19 @@ export class Outbox {
 	}
 
 	public submit(message: BatchMessage): void {
-		this.maybeFlushPartialBatch();
+		this.assertSequenceNumberCoherency();
 
 		this.addMessageToBatchManager(this.mainBatch, message);
 	}
 
 	public submitBlobAttach(message: BatchMessage): void {
-		this.maybeFlushPartialBatch();
+		this.assertSequenceNumberCoherency();
 
 		this.addMessageToBatchManager(this.blobAttachBatch, message);
 	}
 
 	public submitIdAllocation(message: BatchMessage): void {
-		this.maybeFlushPartialBatch();
+		this.assertSequenceNumberCoherency();
 
 		this.addMessageToBatchManager(this.idAllocationBatch, message);
 	}
