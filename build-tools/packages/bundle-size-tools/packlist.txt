@@ -92,6 +92,7 @@ dist/statsProcessors/totalSizeStatsProcessor.d.ts
 dist/statsProcessors/totalSizeStatsProcessor.d.ts.map
 dist/statsProcessors/totalSizeStatsProcessor.js
 dist/statsProcessors/totalSizeStatsProcessor.js.map
+dist/tsdoc-metadata.json
 dist/utilities/decompressStatsFile.d.ts
 dist/utilities/decompressStatsFile.d.ts.map
 dist/utilities/decompressStatsFile.js

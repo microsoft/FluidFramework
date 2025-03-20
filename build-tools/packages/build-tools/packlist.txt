@@ -106,10 +106,10 @@ dist/fluidBuild/options.d.ts
 dist/fluidBuild/options.d.ts.map
 dist/fluidBuild/options.js
 dist/fluidBuild/options.js.map
-dist/fluidBuild/symlinkUtils.d.ts
-dist/fluidBuild/symlinkUtils.d.ts.map
-dist/fluidBuild/symlinkUtils.js
-dist/fluidBuild/symlinkUtils.js.map
+dist/fluidBuild/parseCommands.d.ts
+dist/fluidBuild/parseCommands.d.ts.map
+dist/fluidBuild/parseCommands.js
+dist/fluidBuild/parseCommands.js.map
 dist/fluidBuild/tasks/groupTask.d.ts
 dist/fluidBuild/tasks/groupTask.d.ts.map
 dist/fluidBuild/tasks/groupTask.js

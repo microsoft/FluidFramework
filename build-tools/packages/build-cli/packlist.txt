@@ -90,6 +90,10 @@ lib/commands/generate/entrypoints.d.ts
 lib/commands/generate/entrypoints.d.ts.map
 lib/commands/generate/entrypoints.js
 lib/commands/generate/entrypoints.js.map
+lib/commands/generate/node10Entrypoints.d.ts
+lib/commands/generate/node10Entrypoints.d.ts.map
+lib/commands/generate/node10Entrypoints.js
+lib/commands/generate/node10Entrypoints.js.map
 lib/commands/generate/packlist.d.ts
 lib/commands/generate/packlist.d.ts.map
 lib/commands/generate/packlist.js
@@ -134,6 +138,10 @@ lib/commands/promote/package.d.ts
 lib/commands/promote/package.d.ts.map
 lib/commands/promote/package.js
 lib/commands/promote/package.js.map
+lib/commands/publish/bundleStats.d.ts
+lib/commands/publish/bundleStats.d.ts.map
+lib/commands/publish/bundleStats.js
+lib/commands/publish/bundleStats.js.map
 lib/commands/publish/tarballs.d.ts
 lib/commands/publish/tarballs.d.ts.map
 lib/commands/publish/tarballs.js
@@ -174,10 +182,6 @@ lib/commands/report/codeCoverage.d.ts
 lib/commands/report/codeCoverage.d.ts.map
 lib/commands/report/codeCoverage.js
 lib/commands/report/codeCoverage.js.map
-lib/commands/run/bundleStats.d.ts
-lib/commands/run/bundleStats.d.ts.map
-lib/commands/run/bundleStats.js
-lib/commands/run/bundleStats.js.map
 lib/commands/test-only-filter.d.ts
 lib/commands/test-only-filter.d.ts.map
 lib/commands/test-only-filter.js
@@ -190,6 +194,10 @@ lib/commands/typetests.d.ts
 lib/commands/typetests.d.ts.map
 lib/commands/typetests.js
 lib/commands/typetests.js.map
+lib/commands/vnext/check/latestVersions.d.ts
+lib/commands/vnext/check/latestVersions.d.ts.map
+lib/commands/vnext/check/latestVersions.js
+lib/commands/vnext/check/latestVersions.js.map
 lib/config.d.ts
 lib/config.d.ts.map
 lib/config.js
@@ -350,10 +358,6 @@ lib/library/releasePrepChecks.d.ts
 lib/library/releasePrepChecks.d.ts.map
 lib/library/releasePrepChecks.js
 lib/library/releasePrepChecks.js.map
-lib/library/repoPolicyCheck/assertShortCode.d.ts
-lib/library/repoPolicyCheck/assertShortCode.d.ts.map
-lib/library/repoPolicyCheck/assertShortCode.js
-lib/library/repoPolicyCheck/assertShortCode.js.map
 lib/library/repoPolicyCheck/common.d.ts
 lib/library/repoPolicyCheck/common.d.ts.map
 lib/library/repoPolicyCheck/common.js
