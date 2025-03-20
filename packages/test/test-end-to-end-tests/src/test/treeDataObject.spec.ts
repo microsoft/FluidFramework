@@ -74,19 +74,18 @@ describeCompat("TreeDataObject", "NoCompat", (getTestObjectProvider) => {
 		},
 	);
 
-	let provider: ITestObjectProvider;
-	let container: IContainer;
-	beforeEach(async () => {
-		provider = getTestObjectProvider();
-		container = await provider.createContainer(runtimeFactory);
-	});
-
 	it("First time initialization", async () => {
+		const provider = getTestObjectProvider();
+		const container = await provider.createContainer(runtimeFactory);
+
 		const dataObject = await getContainerEntryPointBackCompat<TestTreeDataObject>(container);
 		assert.deepEqual(dataObject.treeView.root.foo, "Hello world");
 	});
 
 	it("Load existing", async () => {
+		const provider = getTestObjectProvider();
+		await provider.createContainer(runtimeFactory);
+
 		// Load second container and check data.
 		const container2 = await provider.loadContainer(runtimeFactory);
 
