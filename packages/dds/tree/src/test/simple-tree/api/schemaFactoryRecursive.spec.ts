@@ -767,7 +767,7 @@ describe("SchemaFactory Recursive methods", () => {
 	 *
 	 * These patterns also [break type safety in .d.ts generation](https://github.com/microsoft/TypeScript/issues/55832):
 	 * this is one of the reasons they are not supported.
-	 * The import-testing package has test coverage for aspect.
+	 * The import-testing package has test coverage for this aspect.
 	 * They also have poorer error quality and IntelliSense, and tend to fail to compile in some cases.
 	 *
 	 * These tests are all about the typing.
