@@ -90,7 +90,7 @@ export abstract class TreeDataObject<
 					`Content with id ${channel.id} is not a SharedTree and cannot be loaded with treeDataObject.`,
 				);
 			}
-			const sharedTree = channel as ITree;
+			const sharedTree: ITree = channel;
 			this.#treeView = sharedTree.viewWith(this.config);
 		} else {
 			const sharedTree = SharedTree.create(this.runtime, treeChannelId);
