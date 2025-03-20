@@ -224,6 +224,7 @@ export {
 	replaceHandles,
 	replaceVerboseTreeHandles,
 	type HandleConverter,
+	ObjectNodeSchema,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

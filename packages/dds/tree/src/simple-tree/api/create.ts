@@ -28,11 +28,9 @@ import {
 	mapTreeFromCursor,
 	type NodeIdentifierManager,
 } from "../../feature-libraries/index.js";
-import { isFieldInSchema } from "../../feature-libraries/index.js";
 import { toStoredSchema } from "../toStoredSchema.js";
-import { inSchemaOrThrow, mapTreeFromNodeData } from "../toMapTree.js";
+import { mapTreeFromNodeData } from "../toMapTree.js";
 import { getUnhydratedContext } from "../createContext.js";
-import { createUnknownOptionalFieldPolicy } from "../objectNode.js";
 
 /**
  * Construct tree content that is compatible with the field defined by the provided `schema`.
@@ -119,23 +117,26 @@ export function createFromCursor<const TSchema extends ImplicitFieldSchema>(
 	cursor: ITreeCursorSynchronous | undefined,
 ): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
 	const mapTrees = cursor === undefined ? [] : [mapTreeFromCursor(cursor)];
-	const context = getUnhydratedContext(schema);
-	const flexSchema = context.flexContext.schema;
 
-	const schemaValidationPolicy: SchemaAndPolicy = {
-		policy: {
-			...defaultSchemaPolicy,
-			allowUnknownOptionalFields: createUnknownOptionalFieldPolicy(schema),
-		},
-		schema: context.flexContext.schema,
-	};
+	// TODO: The code below is temporarily commented out to avoid the fact that defaults will fail validation.
+	//
+	// const context = getUnhydratedContext(schema);
+	// const flexSchema = context.flexContext.schema;
 
-	const maybeError = isFieldInSchema(
-		mapTrees,
-		flexSchema.rootFieldSchema,
-		schemaValidationPolicy,
-	);
-	inSchemaOrThrow(maybeError);
+	// const schemaValidationPolicy: SchemaAndPolicy = {
+	// 	policy: {
+	// 		...defaultSchemaPolicy,
+	// 		allowUnknownOptionalFields: createUnknownOptionalFieldPolicy(schema),
+	// 	},
+	// 	schema: context.flexContext.schema,
+	// };
+
+	// const maybeError = isFieldInSchema(
+	// 	mapTrees,
+	// 	flexSchema.rootFieldSchema,
+	// 	schemaValidationPolicy,
+	// );
+	// inSchemaOrThrow(maybeError);
 
 	if (mapTrees.length === 0) {
 		return undefined as Unhydrated<TreeFieldFromImplicitField<TSchema>>;

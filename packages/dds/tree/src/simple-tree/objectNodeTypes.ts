@@ -15,6 +15,8 @@ import type { FieldKey } from "../core/index.js";
 
 /**
  * A schema for {@link TreeObjectNode}s.
+ * @internal
+ * @sealed
  * @privateRemarks
  * This is a candidate for being promoted to the public package API.
  */
@@ -65,6 +67,9 @@ export interface ObjectNodeSchemaInternalData {
 	readonly allowUnknownOptionalFields: boolean;
 }
 
+/**
+ * @internal
+ */
 export const ObjectNodeSchema = {
 	/**
 	 * instanceof-based narrowing support for ObjectNodeSchema in Javascript and TypeScript 5.3 or newer.

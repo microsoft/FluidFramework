@@ -212,3 +212,4 @@ export {
 	nullSchema,
 } from "./leafNodeSchema.js";
 export type { LazyItem, FlexList, FlexListToUnion, ExtractItemType } from "./flexList.js";
+export { ObjectNodeSchema } from "./objectNodeTypes.js";
