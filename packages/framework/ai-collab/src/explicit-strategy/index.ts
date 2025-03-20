@@ -25,6 +25,7 @@ import type {
 	TokenLimits,
 	TokenUsage,
 } from "../aiCollabApi.js";
+import type { UiDiff } from "../aiCollabDiffApi.js";
 
 import { applyAgentEdit } from "./agentEditReducer.js";
 import type { EditWrapper, TreeEdit } from "./agentEditTypes.js";
@@ -100,6 +101,7 @@ export interface GenerateTreeEditsOptions {
 interface GenerateTreeEditsSuccessResponse {
 	status: "success";
 	tokensUsed: TokenUsage;
+	uiDiffs: UiDiff[];
 }
 
 interface GenerateTreeEditsErrorResponse {
@@ -111,6 +113,7 @@ interface GenerateTreeEditsErrorResponse {
 		| "aborted"
 		| "unexpectedError";
 	tokensUsed: TokenUsage;
+	uiDiffs?: UiDiff[];
 }
 
 /**
@@ -128,6 +131,8 @@ export async function generateTreeEdits(
 ): Promise<GenerateTreeEditsSuccessResponse | GenerateTreeEditsErrorResponse> {
 	const idGenerator = new IdGenerator();
 	const editLog: EditLog = [];
+	const uiDiffs: UiDiff[] = [];
+
 	let editCount = 0;
 	let sequentialErrorCount = 0;
 
@@ -165,8 +170,9 @@ export async function generateTreeEdits(
 					simpleSchema.definitions,
 					options.validator,
 				);
-				const explanation = result.explanation;
-				editLog.push({ edit: { ...result, explanation } });
+				const explanation = result.edit.explanation;
+				editLog.push({ edit: { ...result.edit, explanation } });
+				uiDiffs.push(result.uiDiff);
 				sequentialErrorCount = 0;
 
 				options.debugEventLogHandler?.({
@@ -201,6 +207,7 @@ export async function generateTreeEdits(
 					editCount > 0 && sequentialErrorCount < editCount ? "partial-failure" : "failure",
 				errorMessage: "unexpectedError",
 				tokensUsed,
+				uiDiffs,
 			};
 
 			if (options.limiters?.abortController?.signal.aborted === true) {
@@ -250,6 +257,7 @@ export async function generateTreeEdits(
 					editCount > 0 && sequentialErrorCount < editCount ? "partial-failure" : "failure",
 				errorMessage: "tokenLimitExceeded",
 				tokensUsed,
+				uiDiffs,
 			};
 		}
 		throw error;
@@ -266,6 +274,7 @@ export async function generateTreeEdits(
 	return {
 		status: "success",
 		tokensUsed,
+		uiDiffs,
 	};
 }
 
