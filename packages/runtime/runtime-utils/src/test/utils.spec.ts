@@ -5,10 +5,17 @@
 
 import { strict as assert } from "assert";
 
-import { encodeCompactIdToString } from "../utils.js";
+import { charSetForEncodingIds, encodeCompactIdToString } from "../utils.js";
 
 describe("Utils", () => {
 	beforeEach(() => {});
+
+	it("charSetForEncodingIds doesn't change with encodeURIComponent", () => {
+		assert(
+			encodeURIComponent(charSetForEncodingIds) === charSetForEncodingIds,
+			`${charSetForEncodingIds} contains invalid character(s) which transforms when used with encodeURIComponent`,
+		);
+	});
 
 	it("encodeCompactIdToString() with strings", () => {
 		assert(encodeCompactIdToString("a-b-c") === "a-b-c", "text");
@@ -16,18 +23,17 @@ describe("Utils", () => {
 	});
 
 	it("encodeCompactIdToString() has base of 64 (sort of)", () => {
-		const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ[abcdefghijklmnopqrstuvwxyz{01234567890";
 		for (let i = 0; i < 64; i++) {
 			const value = encodeCompactIdToString(i);
 			assert(value.length === 1, "length");
-			assert(chars[i] === value, "value");
+			assert(charSetForEncodingIds[i] === value, "value");
 		}
 
 		for (let i = 64; i < 65 * 64 - 1; i++) {
 			const value = encodeCompactIdToString(i);
 			assert(value.length === 2, "length");
-			assert(chars.includes(value[0]), "value");
-			assert(chars.includes(value[1]), "value");
+			assert(charSetForEncodingIds.includes(value[0]), "value");
+			assert(charSetForEncodingIds.includes(value[1]), "value");
 		}
 
 		// This is a bit weird, as it does not work as our intuition suggests.
@@ -50,6 +56,8 @@ describe("Utils", () => {
 
 			// Strong rules:
 			assert(!value.includes("/"), "no slashses");
+			assert(!value.includes("["), "opening square bracket");
+			assert(!value.includes("}"), "closing curly bracket");
 			assert(value.length > 0, "length");
 
 			// Soft rules: these rules can be broken, but they are great to have for efficiency
