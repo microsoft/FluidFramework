@@ -823,7 +823,7 @@ describe("SchemaFactory Recursive methods", () => {
 		});
 
 		it("co-recursive map with inline array", () => {
-			// @ts-expect-error Sometimes inline none lazy co-recursive schema cause "referenced directly or indirectly in its own base expression" errors.
+			// @ts-expect-error Inline non-lazy co-recursive arrays cause "referenced directly or indirectly in its own base expression" errors.
 			class Foo extends sf.mapRecursive(
 				"Foo",
 				// @ts-expect-error Implicit any due to error above
@@ -845,7 +845,7 @@ describe("SchemaFactory Recursive methods", () => {
 		});
 
 		it("co-recursive array with inline array", () => {
-			// @ts-expect-error Sometimes inline none lazy co-recursive schema cause "referenced directly or indirectly in its own base expression" errors.
+			// @ts-expect-error Inline non-lazy co-recursive arrays cause "referenced directly or indirectly in its own base expression" errors.
 			class Foo extends sf.arrayRecursive(
 				"Foo",
 				// @ts-expect-error Implicit any due to error above
