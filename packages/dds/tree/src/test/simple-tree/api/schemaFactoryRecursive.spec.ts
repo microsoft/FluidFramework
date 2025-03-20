@@ -637,116 +637,6 @@ describe("SchemaFactory Recursive methods", () => {
 			class FooList extends sf.arrayRecursive("FooList", [() => FooList]) {}
 		});
 
-		/**
-		 * These cases are anti-patterns which are documented not to work, but still might get used my someone.
-		 * SchemaFactory documents the non explicit sub-classing pattern (POJO mode) is not supported for recursive schema.
-		 * Additionally it documents this pattern is not supported for Explicitly named Maps and Arrays.
-		 *
-		 * These tests violate both of these statements, seeing which version currently compile and which ones do not.
-		 * Having these tests in place will help know when.if be further break cases like these to adi in writing helpful changesets for impacted customers.
-		 *
-		 * These patterns also [break type safety in .d.ts generation](https://github.com/microsoft/TypeScript/issues/55832):
-		 * this is one of the reasons they are not supported.
-		 * The import-testing has test coverage for aspect.
-		 * They also have poorer error quality and IntelliSense, and tend to fail to compile in some cases.
-		 *
-		 * These tests are all about the Typing.
-		 * Specifically they check which cases TypeScript gives "referenced directly or indirectly in its own base expression" errors.
-		 */
-		describe("Use of recursive array without explicit sub-classing", () => {
-			it("recursive with non-subclassed array", () => {
-				const FooList = sf.arrayRecursive("FooList", [() => FooList]);
-			});
-
-			it("co-recursive object with out of line non-lazy array", () => {
-				const TheArray = sf.arrayRecursive("FooList", [() => Foo]);
-				{
-					type _check = ValidateRecursiveSchema<typeof TheArray>;
-				}
-
-				class Foo extends sf.objectRecursive("Foo", {
-					fooList: TheArray,
-				}) {}
-				{
-					type _check = ValidateRecursiveSchema<typeof Foo>;
-				}
-			});
-
-			it("co-recursive object with inline array", () => {
-				class Foo extends sf.objectRecursive("Foo", {
-					fooList: sf.arrayRecursive("FooList", [() => Foo]),
-				}) {}
-				{
-					type _check = ValidateRecursiveSchema<typeof Foo>;
-				}
-			});
-
-			it("co-recursive object with inline array class ", () => {
-				// @ts-expect-error Inlining an anonymous class does not help
-				class Foo extends sf.objectRecursive("Foo", {
-					// @ts-expect-error Implicit any due to error above
-					fooList: class extends sf.arrayRecursive("FooList", [() => Foo]) {},
-				}) {}
-				{
-					// @ts-expect-error due to error above
-					type _check = ValidateRecursiveSchema<typeof Foo>;
-				}
-			});
-
-			it("co-recursive object with inline array lazy", () => {
-				class Foo extends sf.objectRecursive("Foo", {
-					fooList: [() => sf.arrayRecursive("FooList", [() => Foo])],
-				}) {}
-				{
-					type _check = ValidateRecursiveSchema<typeof Foo>;
-				}
-			});
-
-			it("co-recursive map with inline array", () => {
-				// @ts-expect-error Sometimes inline none lazy co-recursive schema cause "referenced directly or indirectly in its own base expression" errors.
-				class Foo extends sf.mapRecursive(
-					"Foo",
-					// @ts-expect-error Implicit any due to error above
-					sf.arrayRecursive("FooList", [() => Foo]),
-				) {}
-				{
-					// @ts-expect-error due to error above
-					type _check = ValidateRecursiveSchema<typeof Foo>;
-				}
-			});
-
-			it("co-recursive map with inline array lazy", () => {
-				class Foo extends sf.mapRecursive("Foo", [
-					() => sf.arrayRecursive("FooList", [() => Foo]),
-				]) {}
-				{
-					type _check = ValidateRecursiveSchema<typeof Foo>;
-				}
-			});
-
-			it("co-recursive array with inline array", () => {
-				// @ts-expect-error Sometimes inline none lazy co-recursive schema cause "referenced directly or indirectly in its own base expression" errors.
-				class Foo extends sf.arrayRecursive(
-					"Foo",
-					// @ts-expect-error Implicit any due to error above
-					sf.arrayRecursive("FooList", [() => Foo]),
-				) {}
-				{
-					// @ts-expect-error due to error above
-					type _check = ValidateRecursiveSchema<typeof Foo>;
-				}
-			});
-
-			it("co-recursive array with inline array lazy", () => {
-				class Foo extends sf.arrayRecursive("Foo", [
-					() => sf.arrayRecursive("FooList", [() => Foo]),
-				]) {}
-				{
-					type _check = ValidateRecursiveSchema<typeof Foo>;
-				}
-			});
-		});
-
 		it("Node schema metadata", () => {
 			const factory = new SchemaFactoryAlpha("");
 
@@ -852,24 +742,6 @@ describe("SchemaFactory Recursive methods", () => {
 				custom: { baz: true },
 			});
 		});
-
-		it("co-recursive map with inline map", () => {
-			const factory = new SchemaFactory("");
-			class Foo extends factory.mapRecursive("Foo", sf.mapRecursive("FooList", [() => Foo])) {}
-			{
-				type _check = ValidateRecursiveSchema<typeof Foo>;
-			}
-		});
-
-		it("co-recursive map with inline map lazy", () => {
-			const factory = new SchemaFactory("");
-			class Foo extends factory.mapRecursive("Foo", [
-				() => sf.mapRecursive("FooList", [() => Foo]),
-			]) {}
-			{
-				type _check = ValidateRecursiveSchema<typeof Foo>;
-			}
-		});
 	});
 
 	it("recursive under non-recursive", () => {
@@ -883,5 +755,131 @@ describe("SchemaFactory Recursive methods", () => {
 
 		const r = hydrate(Root, { r: new ArrayRecursive([]) });
 		assert.deepEqual([...r.r], []);
+	});
+
+	/**
+	 * These cases are anti-patterns which are documented not to work, but still might get used my someone.
+	 * SchemaFactory documents the non explicit sub-classing pattern (POJO mode) is not supported for recursive schema.
+	 * Additionally it documents this pattern is not supported for Explicitly named Maps and Arrays.
+	 *
+	 * These tests violate both of these statements, seeing which version currently compile and which ones do not.
+	 * Having these tests in place will help know when.if be further break cases like these to adi in writing helpful changesets for impacted customers.
+	 *
+	 * These patterns also [break type safety in .d.ts generation](https://github.com/microsoft/TypeScript/issues/55832):
+	 * this is one of the reasons they are not supported.
+	 * The import-testing has test coverage for aspect.
+	 * They also have poorer error quality and IntelliSense, and tend to fail to compile in some cases.
+	 *
+	 * These tests are all about the Typing.
+	 * Specifically they check which cases TypeScript gives "referenced directly or indirectly in its own base expression" errors.
+	 */
+	describe("Use of recursive schema without explicit sub-classing", () => {
+		it("recursive with non-subclassed array", () => {
+			const FooList = sf.arrayRecursive("FooList", [() => FooList]);
+		});
+
+		it("co-recursive object with out of line non-lazy array", () => {
+			const TheArray = sf.arrayRecursive("FooList", [() => Foo]);
+			{
+				type _check = ValidateRecursiveSchema<typeof TheArray>;
+			}
+
+			class Foo extends sf.objectRecursive("Foo", {
+				fooList: TheArray,
+			}) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof Foo>;
+			}
+		});
+
+		it("co-recursive object with inline array", () => {
+			class Foo extends sf.objectRecursive("Foo", {
+				fooList: sf.arrayRecursive("FooList", [() => Foo]),
+			}) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof Foo>;
+			}
+		});
+
+		it("co-recursive object with inline array class ", () => {
+			// @ts-expect-error Inlining an anonymous class does not help
+			class Foo extends sf.objectRecursive("Foo", {
+				// @ts-expect-error Implicit any due to error above
+				fooList: class extends sf.arrayRecursive("FooList", [() => Foo]) {},
+			}) {}
+			{
+				// @ts-expect-error due to error above
+				type _check = ValidateRecursiveSchema<typeof Foo>;
+			}
+		});
+
+		it("co-recursive object with inline array lazy", () => {
+			class Foo extends sf.objectRecursive("Foo", {
+				fooList: [() => sf.arrayRecursive("FooList", [() => Foo])],
+			}) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof Foo>;
+			}
+		});
+
+		it("co-recursive map with inline array", () => {
+			// @ts-expect-error Sometimes inline none lazy co-recursive schema cause "referenced directly or indirectly in its own base expression" errors.
+			class Foo extends sf.mapRecursive(
+				"Foo",
+				// @ts-expect-error Implicit any due to error above
+				sf.arrayRecursive("FooList", [() => Foo]),
+			) {}
+			{
+				// @ts-expect-error due to error above
+				type _check = ValidateRecursiveSchema<typeof Foo>;
+			}
+		});
+
+		it("co-recursive map with inline array lazy", () => {
+			class Foo extends sf.mapRecursive("Foo", [
+				() => sf.arrayRecursive("FooList", [() => Foo]),
+			]) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof Foo>;
+			}
+		});
+
+		it("co-recursive array with inline array", () => {
+			// @ts-expect-error Sometimes inline none lazy co-recursive schema cause "referenced directly or indirectly in its own base expression" errors.
+			class Foo extends sf.arrayRecursive(
+				"Foo",
+				// @ts-expect-error Implicit any due to error above
+				sf.arrayRecursive("FooList", [() => Foo]),
+			) {}
+			{
+				// @ts-expect-error due to error above
+				type _check = ValidateRecursiveSchema<typeof Foo>;
+			}
+		});
+
+		it("co-recursive array with inline array lazy", () => {
+			class Foo extends sf.arrayRecursive("Foo", [
+				() => sf.arrayRecursive("FooList", [() => Foo]),
+			]) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof Foo>;
+			}
+		});
+
+		it("co-recursive map with inline map", () => {
+			class Foo extends sf.mapRecursive("Foo", sf.mapRecursive("FooList", [() => Foo])) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof Foo>;
+			}
+		});
+
+		it("co-recursive map with inline map lazy", () => {
+			class Foo extends sf.mapRecursive("Foo", [
+				() => sf.mapRecursive("FooList", [() => Foo]),
+			]) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof Foo>;
+			}
+		});
 	});
 });
