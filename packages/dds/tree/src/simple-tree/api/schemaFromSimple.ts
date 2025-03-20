@@ -48,7 +48,7 @@ function generateNode(id: string, schema: SimpleNodeSchema, context: Context): T
 	switch (schema.kind) {
 		case NodeKind.Object: {
 			const fields: Record<string, FieldSchema> = {};
-			for (const [key, field] of Object.entries(schema.fields)) {
+			for (const [key, field] of schema.fields) {
 				fields[key] = generateFieldSchema(field, context);
 			}
 			return factory.object(id, fields);

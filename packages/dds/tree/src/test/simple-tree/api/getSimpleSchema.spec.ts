@@ -166,16 +166,24 @@ describe("getSimpleSchema", () => {
 					"test.object",
 					{
 						kind: NodeKind.Object,
-						fields: {
-							foo: {
-								kind: FieldKind.Optional,
-								allowedTypes: new Set(["com.fluidframework.leaf.number"]),
-							},
-							bar: {
-								kind: FieldKind.Required,
-								allowedTypes: new Set(["com.fluidframework.leaf.string"]),
-							},
-						},
+						fields: new Map([
+							[
+								"foo",
+								{
+									kind: FieldKind.Optional,
+									allowedTypes: new Set(["com.fluidframework.leaf.number"]),
+									storedKey: "foo",
+								},
+							],
+							[
+								"bar",
+								{
+									kind: FieldKind.Required,
+									allowedTypes: new Set(["com.fluidframework.leaf.string"]),
+									storedKey: "bar",
+								},
+							],
+						]),
 					},
 				],
 				[
@@ -213,12 +221,16 @@ describe("getSimpleSchema", () => {
 					"test.object",
 					{
 						kind: NodeKind.Object,
-						fields: {
-							id: {
-								kind: FieldKind.Identifier,
-								allowedTypes: new Set(["com.fluidframework.leaf.string"]),
-							},
-						},
+						fields: new Map([
+							[
+								"id",
+								{
+									kind: FieldKind.Identifier,
+									allowedTypes: new Set(["com.fluidframework.leaf.string"]),
+									storedKey: "id",
+								},
+							],
+						]),
 					},
 				],
 				[
@@ -249,15 +261,19 @@ describe("getSimpleSchema", () => {
 					"test.object",
 					{
 						kind: NodeKind.Object,
-						fields: {
-							foo: {
-								kind: FieldKind.Required,
-								allowedTypes: new Set([
-									"com.fluidframework.leaf.number",
-									"com.fluidframework.leaf.string",
-								]),
-							},
-						},
+						fields: new Map([
+							[
+								"foo",
+								{
+									kind: FieldKind.Required,
+									allowedTypes: new Set([
+										"com.fluidframework.leaf.number",
+										"com.fluidframework.leaf.string",
+									]),
+									storedKey: "foo",
+								},
+							],
+						]),
 					},
 				],
 				[
@@ -295,15 +311,19 @@ describe("getSimpleSchema", () => {
 					"test.recursive-object",
 					{
 						kind: NodeKind.Object,
-						fields: {
-							foo: {
-								kind: FieldKind.Optional,
-								allowedTypes: new Set([
-									"com.fluidframework.leaf.string",
-									"test.recursive-object",
-								]),
-							},
-						},
+						fields: new Map([
+							[
+								"foo",
+								{
+									kind: FieldKind.Optional,
+									allowedTypes: new Set([
+										"com.fluidframework.leaf.string",
+										"test.recursive-object",
+									]),
+									storedKey: "foo",
+								},
+							],
+						]),
 					},
 				],
 				[

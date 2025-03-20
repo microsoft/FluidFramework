@@ -45,6 +45,7 @@ export type {
 	SimpleArrayNodeSchema,
 	SimpleObjectNodeSchema,
 	SimpleNodeSchemaBase,
+	SimpleObjectFieldSchema,
 } from "./simpleSchema.js";
 export {
 	type JsonSchemaId,
@@ -84,6 +85,7 @@ export type {
 	TreeNodeSchemaClassUnsafe,
 	TreeNodeSchemaUnsafe,
 	AllowedTypesUnsafe,
+	ImplicitAllowedTypesUnsafe,
 	TreeNodeSchemaNonClassUnsafe,
 	InsertableTreeNodeFromAllowedTypesUnsafe,
 } from "./typesUnsafe.js";
