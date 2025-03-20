@@ -758,11 +758,11 @@ describe("SchemaFactory Recursive methods", () => {
 	});
 
 	/**
-	 * These cases are anti-patterns which are documented not to work, but still might get used my someone.
+	 * These cases are anti-patterns which are documented not to work, but still might get used by someone.
 	 * SchemaFactory documents the non explicit sub-classing pattern (POJO mode) is not supported for recursive schema.
-	 * Additionally it documents this pattern is not supported for Explicitly named Maps and Arrays.
+	 * Additionally it documents this pattern is not supported for explicitly named Maps and Arrays.
 	 *
-	 * These tests violate both of these statements, seeing which version currently compile and which ones do not.
+	 * These tests violate both of these statements, seeing which versions currently compile and which ones do not.
 	 * Having these tests in place will help know when.if be further break cases like these to adi in writing helpful changesets for impacted customers.
 	 *
 	 * These patterns also [break type safety in .d.ts generation](https://github.com/microsoft/TypeScript/issues/55832):
@@ -770,7 +770,7 @@ describe("SchemaFactory Recursive methods", () => {
 	 * The import-testing has test coverage for aspect.
 	 * They also have poorer error quality and IntelliSense, and tend to fail to compile in some cases.
 	 *
-	 * These tests are all about the Typing.
+	 * These tests are all about the typing.
 	 * Specifically they check which cases TypeScript gives "referenced directly or indirectly in its own base expression" errors.
 	 */
 	describe("Use of recursive schema without explicit sub-classing", () => {
