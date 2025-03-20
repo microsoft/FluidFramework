@@ -24,6 +24,7 @@ import {
 import {
 	buildChunkedForest,
 	buildForest,
+	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
 	cursorForMapTreeNode,
 	defaultSchemaPolicy,
@@ -98,7 +99,7 @@ function bench(
 						const forest = buildForest();
 						initializeForest(
 							forest,
-							[cursorForJsonableTreeNode(encodedTree)],
+							cursorForJsonableTreeField([encodedTree]),
 							testRevisionTagCodec,
 							testIdCompressor,
 						);
@@ -132,7 +133,7 @@ function bench(
 						);
 						initializeForest(
 							forest,
-							[cursorForJsonableTreeNode(encodedTree)],
+							cursorForJsonableTreeField([encodedTree]),
 							testRevisionTagCodec,
 							testIdCompressor,
 						);

@@ -145,15 +145,6 @@ export interface IMergeTreeDeltaOpArgs {
 /**
  * @internal
  */
-export interface IMergeTreeClientSequenceArgs {
-	readonly clientId: number;
-	readonly referenceSequenceNumber: number;
-	readonly sequenceNumber: number;
-}
-
-/**
- * @internal
- */
 export type MergeTreeDeltaCallback = (
 	opArgs: IMergeTreeDeltaOpArgs,
 	deltaArgs: IMergeTreeDeltaCallbackArgs,

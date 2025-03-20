@@ -403,6 +403,8 @@ stages:
 
         - ${{ parameters.additionalSteps }}
 
+        - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
+
 - template: /tools/pipelines/templates/include-upload-stage-telemetry.yml@self
   parameters:
     stageId: ${{ parameters.stageId }}
