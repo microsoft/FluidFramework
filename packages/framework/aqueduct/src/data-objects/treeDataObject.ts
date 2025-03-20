@@ -38,6 +38,11 @@ const uninitializedErrorString =
  * }
  * ```
  *
+ * @privateRemarks
+ * TODOBefore promoting this beyond internal, we should consider alternative API patterns that don't depend on
+ * sub-classing and don't leak Fluid concepts that should ideally be internal.
+ * See `tree-react-api` for an example of a pattern that avoids unnecessary leakage of implementation details.
+ *
  * @internal
  */
 export abstract class TreeDataObject<
