@@ -5,11 +5,12 @@
 "section": other
 ---
 
-Update data object APIs to leverage new SharedTree-based data object class
+Simplify experimental tree data object implementation
 
-Rather than leveraging a classic `DataObject` with a `SharedDirectory` at the root, and a `SharedTree` beneath, the library now leverages a new data object class that uses the `SharedTree` directly at the root.
-Results in some simplifications to this package's APIs which are breaking.
-Namely,
+The experimental tree data object in `tree-react-api` has been simplified in a way that is incompatible with its previous version, which used `SharedDirectory` at the root.
+The library now leverages a new data object that uses the `SharedTree` directly at the root.
+In addition to breaking compatibility with existing documents, these changes include some related simplifications to the APIs which are also breaking:
+
 - Removes the `key` property from the data object configuration.
   This key was used to inform where the SharedTree was parented beneath the root SharedDirectory, so it no longer serves a purpose.
 - Inlined the `ITreeDataObject` interface into `IReactTreeDataObject`.
