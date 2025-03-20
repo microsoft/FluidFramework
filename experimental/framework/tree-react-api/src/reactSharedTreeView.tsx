@@ -100,7 +100,7 @@ export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> {
 	readonly config: TreeViewConfiguration<TSchema>;
 
 	/**
-	 * {@inheritDoc @fluidframework/aqueduct#TreeDataObject.tree}
+	 * The schema-aware view of the tree.
 	 */
 	readonly treeView: TreeView<TSchema>;
 
