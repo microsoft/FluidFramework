@@ -21,13 +21,14 @@ import { Provider } from "nconf";
 import { Constants } from "../../utils";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { NetworkError } from "@fluidframework/server-services-client";
+import type { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
 
 export function create(
 	config: Provider,
 	tenantManager: core.ITenantManager,
 	tenantThrottlers: Map<string, core.IThrottler>,
 	storage: core.IDocumentStorage,
-	webSocketServer: core.IWebSocketServer,
+	emitter?: RedisEmitter,
 ): Router {
 	const router: Router = Router();
 
@@ -49,7 +50,7 @@ export function create(
 				response,
 				config,
 				storage,
-				webSocketServer,
+				emitter,
 			);
 			handleResponse(
 				handleBroadcastSignalP,
@@ -79,7 +80,7 @@ async function handleBroadcastSignal(
 	response: Response,
 	config: Provider,
 	storage: core.IDocumentStorage,
-	webSocketServer: core.IWebSocketServer,
+	emitter?: RedisEmitter,
 ): Promise<void> {
 	const tenantId = request.params.tenantId;
 	const documentId = request.params.id;
@@ -94,38 +95,38 @@ async function handleBroadcastSignal(
 			`signalContent should contain 'contents.content' and 'contents.type' keys`,
 		);
 	}
-	// if (!webSocketServer) {
-	// 	Lumberjack.error("No emitter configured for the broadcast-signal endpoint", {
-	// 		tenantId,
-	// 		documentId,
-	// 	});
-	// 	throw new NetworkError(500, `No emitter configured for the broadcast-signal endpoint`);
-	// }
+	if (!emitter) {
+		Lumberjack.error("No emitter configured for the broadcast-signal endpoint", {
+			tenantId,
+			documentId,
+		});
+		throw new NetworkError(500, `No emitter configured for the broadcast-signal endpoint`);
+	}
 
-	// const deltaStreamUrl: string = config.get("worker:deltaStreamUrl");
-	// const document = await storage.getDocument(tenantId, documentId);
-	// if (!document || !document.session.isSessionActive) {
-	// 	Lumberjack.error("Document not found", { tenantId, documentId });
-	// 	throw new NetworkError(404, "Document not found");
-	// }
-	// if (!document.session.isSessionAlive) {
-	// 	Lumberjack.warning("Document session not alive", { tenantId, documentId });
-	// 	throw new NetworkError(410, "Document session not alive");
-	// }
-	// if (document.session.deltaStreamUrl !== deltaStreamUrl) {
-	// 	Lumberjack.info("Redirecting broadcast-signal to correct cluster", {
-	// 		documentUrl: document.session.deltaStreamUrl,
-	// 		currentUrl: deltaStreamUrl,
-	// 		targetUrlAndPath: `${document.session.deltaStreamUrl}${request.originalUrl}`,
-	// 	});
-	// 	response.redirect(`${document.session.deltaStreamUrl}${request.originalUrl}`);
-	// 	return;
-	// }
+	const deltaStreamUrl: string = config.get("worker:deltaStreamUrl");
+	const document = await storage.getDocument(tenantId, documentId);
+	if (!document || !document.session.isSessionActive) {
+		Lumberjack.error("Document not found", { tenantId, documentId });
+		throw new NetworkError(404, "Document not found");
+	}
+	if (!document.session.isSessionAlive) {
+		Lumberjack.warning("Document session not alive", { tenantId, documentId });
+		throw new NetworkError(410, "Document session not alive");
+	}
+	if (document.session.deltaStreamUrl !== deltaStreamUrl) {
+		Lumberjack.info("Redirecting broadcast-signal to correct cluster", {
+			documentUrl: document.session.deltaStreamUrl,
+			currentUrl: deltaStreamUrl,
+			targetUrlAndPath: `${document.session.deltaStreamUrl}${request.originalUrl}`,
+		});
+		response.redirect(`${document.session.deltaStreamUrl}${request.originalUrl}`);
+		return;
+	}
 
 	const signalRoom: IRoom = { tenantId, documentId };
 	const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
 	Lumberjack.info("Broadcasting signal to socket", { tenantId, documentId });
-	webSocketServer.emit?.(getRoomId(signalRoom), "signal", payload);
+	emitter.to(getRoomId(signalRoom)).emit("signal", payload);
 }
 
 const getRoomId = (room: IRoom): string => `${room.tenantId}/${room.documentId}`;

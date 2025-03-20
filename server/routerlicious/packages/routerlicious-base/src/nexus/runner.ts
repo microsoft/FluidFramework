@@ -34,6 +34,7 @@ import {
 import * as app from "./app";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 import { Constants } from "../utils";
+import type { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
 
 export class NexusRunner implements IRunner {
 	private server?: IWebServer;
@@ -61,7 +62,7 @@ export class NexusRunner implements IRunner {
 		private readonly socketTracker?: IWebSocketTracker,
 		private readonly tokenRevocationManager?: ITokenRevocationManager,
 		private readonly revokedTokenChecker?: IRevokedTokenChecker,
-		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+		private readonly redisEventEmitter?: RedisEmitter, // TypedEventEmitter<ICollaborationSessionEvents>,
 		private readonly clusterDrainingChecker?: IClusterDrainingChecker,
 		private readonly collaborationSessionTracker?: ICollaborationSessionTracker,
 		private readonly readinessCheck?: IReadinessCheck,
@@ -107,7 +108,7 @@ export class NexusRunner implements IRunner {
 				this.tenantManager,
 				throttler,
 				this.storage,
-				this.server.webSocketServer,
+				this.redisEventEmitter,
 			);
 
 			// Register all the socket.io stuff
@@ -134,7 +135,7 @@ export class NexusRunner implements IRunner {
 				this.verifyMaxMessageSize,
 				this.socketTracker,
 				this.revokedTokenChecker,
-				this.collaborationSessionEventEmitter,
+				new TypedEventEmitter<ICollaborationSessionEvents>(), // this.collaborationSessionEventEmitter,
 				this.clusterDrainingChecker,
 				this.collaborationSessionTracker,
 			);

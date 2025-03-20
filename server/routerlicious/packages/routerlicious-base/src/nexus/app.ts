@@ -20,8 +20,9 @@ import {
 	IThrottler,
 	IDocumentStorage,
 	ITenantManager,
-	type IWebSocketServer,
+	// type IWebSocketServer,
 } from "@fluidframework/server-services-core";
+import type { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
 
 export function create(
 	config: Provider,
@@ -63,10 +64,10 @@ export function bindNexusRoutes(
 	tenantManager: ITenantManager,
 	restThrottler: Map<string, IThrottler>,
 	storage: IDocumentStorage,
-	webSocketServer: IWebSocketServer,
+	redisEmitter?: RedisEmitter,
 ) {
 	if (config.get("nexus:notificationsApi:enabled")) {
-		const routes = api.create(config, tenantManager, restThrottler, storage, webSocketServer);
+		const routes = api.create(config, tenantManager, restThrottler, storage, redisEmitter);
 		app.use(routes);
 	}
 

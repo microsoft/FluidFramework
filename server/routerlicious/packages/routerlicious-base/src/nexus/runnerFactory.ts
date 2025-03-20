@@ -5,8 +5,9 @@
 
 import * as os from "os";
 import cluster from "cluster";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
+import { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
+// import { TypedEventEmitter } from "@fluidframework/common-utils";
+// import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
 import {
 	LocalNodeFactory,
@@ -75,7 +76,7 @@ export class NexusResources implements core.IResources {
 		public socketTracker?: core.IWebSocketTracker,
 		public tokenRevocationManager?: core.ITokenRevocationManager,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
-		public collaborationSessionEvents?: TypedEventEmitter<ICollaborationSessionEvents>,
+		public redisEmitter?: RedisEmitter, // TypedEventEmitter<ICollaborationSessionEvents>,
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
 		public clusterDrainingChecker?: core.IClusterDrainingChecker,
 		public collaborationSessionTracker?: core.ICollaborationSessionTracker,
@@ -496,7 +497,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			ordererManagerOptions,
 		);
 
-		const collaborationSessionEvents = new TypedEventEmitter<ICollaborationSessionEvents>();
+		// const collaborationSessionEvents = new TypedEventEmitter<ICollaborationSessionEvents>();
 
 		// This wanst to create stuff
 		const port = utils.normalizePort(process.env.PORT || "3000");
@@ -583,6 +584,8 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 
 		const startupCheck = new StartupCheck();
 
+		const redisEmitter = new RedisEmitter(redisClientConnectionManagerForPub.getRedisClient());
+
 		return new NexusResources(
 			config,
 			webServerFactory,
@@ -608,7 +611,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			socketTracker,
 			tokenRevocationManager,
 			revokedTokenChecker,
-			collaborationSessionEvents,
+			redisEmitter,
 			serviceMessageResourceManager,
 			customizations?.clusterDrainingChecker,
 			collaborationSessionTracker,
@@ -642,7 +645,7 @@ export class NexusRunnerFactory implements core.IRunnerFactory<NexusResources> {
 			resources.socketTracker,
 			resources.tokenRevocationManager,
 			resources.revokedTokenChecker,
-			resources.collaborationSessionEvents,
+			resources.redisEmitter,
 			resources.clusterDrainingChecker,
 			resources.collaborationSessionTracker,
 			resources.readinessCheck,
