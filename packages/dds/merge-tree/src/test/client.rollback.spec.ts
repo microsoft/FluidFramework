@@ -7,7 +7,6 @@
 
 import { strict as assert } from "node:assert";
 
-import { UniversalSequenceNumber } from "../constants.js";
 import {
 	ISegmentPrivate,
 	Marker,
@@ -19,7 +18,7 @@ import { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
 import { TestClientLogger } from "./testClientLogger.js";
-import { insertSegments, validatePartialLengths } from "./testUtils.js";
+import { validatePartialLengths } from "./testUtils.js";
 
 describe("client.rollback", () => {
 	const localUserLongId = "localUser";
@@ -27,15 +26,13 @@ describe("client.rollback", () => {
 
 	beforeEach(() => {
 		client = new TestClient();
-		insertSegments({
-			mergeTree: client.mergeTree,
-			pos: 0,
-			segments: [TextSegment.make("")],
-			refSeq: UniversalSequenceNumber,
-			clientId: client.getClientId(),
-			seq: UniversalSequenceNumber,
-			opArgs: undefined,
-		});
+		client.mergeTree.insertSegments(
+			0,
+			[TextSegment.make("")],
+			client.mergeTree.localPerspective,
+			client.mergeTree.collabWindow.mintNextLocalOperationStamp(),
+			undefined,
+		);
 		client.startOrUpdateCollaboration(localUserLongId);
 	});
 
