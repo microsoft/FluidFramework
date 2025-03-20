@@ -11,12 +11,10 @@ import {
 	PureDataObjectFactory,
 	TreeDataObject,
 } from "@fluidframework/aqueduct/internal";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import {
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	getContainerEntryPointBackCompat,
-	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 import {
 	SchemaFactory,
