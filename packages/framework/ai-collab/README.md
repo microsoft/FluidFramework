@@ -271,8 +271,6 @@ class TestAppRootObject extends sf.object("TestAppRootObject", {
 	}),
 }) {}
 
-const view = /* Code that creates a view of the SharedTree */ ;
-
 const response = aiCollab({
 	openAI: {
 		client: new OpenAI({
@@ -284,7 +282,7 @@ const response = aiCollab({
 	prompt: {
 		systemRoleContext:
 			"You are a manager that is helping out with a project management tool. You have been asked to edit a group of tasks.",
-		userAsk: "user-defined prompt for what they're asking the LLM to accomplish",
+		userAsk: userAsk,
 	},
 	limiters: {
 		maxModelCalls: 25
@@ -294,7 +292,7 @@ const response = aiCollab({
 	debugEventLogHandler: (event: DebugEvent) => {console.log(event);}
 });
 
-const diffs: Diff[] = response.diffs;
+const Diffs: diff[] = response.Diffs
 ```
 
 Each Diff includes one or more NodePath objects. A `NodePath` is an array of objects representing the path from the root node (provided to ai-collab) to the specific node being edited. The array starts with the target node and ends with the root node.
@@ -392,7 +390,7 @@ const result = aiCollab({
 	prompt: {
 		systemRoleContext:
 			"You are a manager that is helping out with a project management tool. You have been asked to edit a group of tasks.",
-		userAsk: "user-defined prompt for what they're asking the LLM to accomplish",
+		userAsk: userAsk,
 	},
 	limiters: {
 		maxModelCalls: 25
