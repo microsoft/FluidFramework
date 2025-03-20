@@ -53,7 +53,9 @@ class TestTreeDataObject extends TreeDataObject<typeof TestSchema> {
 	);
 }
 
-describeCompat.only("TreeDataObject", "NoCompat", (getTestObjectProvider) => {
+// Note: ideally these tests would live directly in the `aqueduct` package,
+// but much of the test infrastructure used below is not reachable from that package.
+describeCompat("TreeDataObject", "NoCompat", (getTestObjectProvider) => {
 	// Runtime ID compression is required to use SharedTree.
 	const runtimeOptions: IContainerRuntimeOptions = {
 		enableRuntimeIdCompressor: "on",
