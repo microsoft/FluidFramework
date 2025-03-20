@@ -7,8 +7,9 @@ import { strict as assert } from "node:assert";
 
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 
-import { DataCorruptionError, DataProcessingError } from "../error.js";
+import { DataCorruptionError, DataProcessingError, UsageError } from "../error.js";
 import { LoggingError, isILoggingError, normalizeError } from "../errorLogging.js";
+import { isFluidError } from "../fluidErrorBase.js";
 
 describe("Errors", () => {
 	describe("DataProcessingError.create", () => {
@@ -243,6 +244,14 @@ describe("Errors", () => {
 			assert(
 				coercedError.getTelemetryProperties().messageSequenceNumber === op.sequenceNumber,
 			);
+		});
+	});
+
+	describe("Type guards", () => {
+		// Although isFluidError should give us a guarentee of catching UsageError,
+		// this test gives one more layer of protection in case this logic changes.
+		it("isFluidError returns true for UsageError", () => {
+			assert(isFluidError(new UsageError("test")));
 		});
 	});
 });
