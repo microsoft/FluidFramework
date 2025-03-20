@@ -64,7 +64,7 @@ describe("MergeTree", () => {
 		});
 
 		it("Insert ending text", () => {
-			const textLength = mergeTree.getLength(currentSequenceNumber, localClientId);
+			const textLength = mergeTree.getLength(mergeTree.localPerspective);
 			let eventCalled: number = 0;
 
 			mergeTree.mergeTreeDeltaCallback = (opArgs, deltaArgs): void => {

@@ -44,12 +44,30 @@ export interface SimpleObjectNodeSchema extends SimpleNodeSchemaBase<NodeKind.Ob
 	/**
 	 * Schemas for each of the object's fields, keyed off of schema's keys.
 	 * @remarks
-	 * Depending on how this schema was exported, the string keys may be either the property keys or the stored keys.
+	 * The keys are the property keys if known, otherwise they are the stored keys.
 	 * @privateRemarks
-	 * TODO: if these are supposed to be JSON compatible,
-	 * then using a record here makes sense, but if not, this should use a map, and the allowedTypes sets elsewhere should be arrays for JSON compatibility.
+	 * TODO: Provide and link a way to translate between the stored keys and the property keys.
+	 * TODO: Consider adding `storedKeysToFields` or something similar to reduce confusion,
+	 * especially if/when TreeNodeSchema for objects implement this and likely provide more maps.
 	 */
-	readonly fields: Record<string, SimpleFieldSchema>;
+	readonly fields: ReadonlyMap<string, SimpleObjectFieldSchema>;
+}
+
+/**
+ * A {@link SimpleNodeSchema} for an object node.
+ * @remarks
+ * The only other case fields are uses in the root schema.
+ *
+ * @internal
+ * @sealed
+ */
+export interface SimpleObjectFieldSchema extends SimpleFieldSchema {
+	/**
+	 * The stored key of the field.
+	 * @remarks
+	 * See {@link FieldProps.key} for more information.
+	 */
+	readonly storedKey: string;
 }
 
 /**

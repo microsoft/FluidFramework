@@ -13,6 +13,7 @@ import {
 import { MergeTree } from "../mergeTree.js";
 import { MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback.js";
 import { MergeTreeDeltaType } from "../ops.js";
+import { PriorPerspective } from "../perspective.js";
 import { TextSegment } from "../textSegment.js";
 
 import { countOperations, insertSegments, insertText, markRangeRemoved } from "./testUtils.js";
@@ -51,9 +52,8 @@ describe("MergeTree", () => {
 				{
 					props: { foo: "bar" },
 				},
-				currentSequenceNumber,
-				localClientId,
-				UnassignedSequenceNumber,
+				mergeTree.localPerspective,
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
 				undefined as never,
 			);
 
@@ -71,9 +71,8 @@ describe("MergeTree", () => {
 				{
 					props: { foo: "bar" },
 				},
-				currentSequenceNumber,
-				localClientId,
-				++currentSequenceNumber,
+				mergeTree.localPerspective,
+				{ seq: ++currentSequenceNumber, clientId: localClientId },
 				undefined as never,
 			);
 
@@ -102,9 +101,8 @@ describe("MergeTree", () => {
 				{
 					props: { foo: "bar" },
 				},
-				currentSequenceNumber,
-				localClientId,
-				UnassignedSequenceNumber,
+				mergeTree.localPerspective,
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
 				undefined as never,
 			);
 
@@ -137,9 +135,8 @@ describe("MergeTree", () => {
 				{
 					props: { foo: "bar" },
 				},
-				currentSequenceNumber,
-				localClientId,
-				UnassignedSequenceNumber,
+				mergeTree.localPerspective,
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
 				undefined as never,
 			);
 
@@ -172,9 +169,8 @@ describe("MergeTree", () => {
 				{
 					props: { foo: "bar" },
 				},
-				currentSequenceNumber,
-				localClientId,
-				UnassignedSequenceNumber,
+				mergeTree.localPerspective,
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
 				undefined as never,
 			);
 
@@ -207,9 +203,8 @@ describe("MergeTree", () => {
 				{
 					props: { foo: "bar" },
 				},
-				remoteSequenceNumber,
-				remoteClientId,
-				++remoteSequenceNumber,
+				new PriorPerspective(remoteSequenceNumber, remoteClientId),
+				{ seq: ++remoteSequenceNumber, clientId: remoteClientId },
 				undefined as never,
 			);
 

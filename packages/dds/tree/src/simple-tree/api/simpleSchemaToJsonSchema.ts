@@ -138,10 +138,10 @@ function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): JsonLeafNodeSchema
 	};
 }
 
-function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObjectNodeSchema {
+export function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObjectNodeSchema {
 	const properties: Record<string, JsonFieldSchema> = {};
 	const required: string[] = [];
-	for (const [key, fieldSchema] of Object.entries(schema.fields)) {
+	for (const [key, fieldSchema] of schema.fields) {
 		const allowedTypes: JsonSchemaRef[] = [];
 		for (const allowedType of fieldSchema.allowedTypes) {
 			allowedTypes.push(createSchemaRef(allowedType));

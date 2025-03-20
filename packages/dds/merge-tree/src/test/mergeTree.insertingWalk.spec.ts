@@ -85,7 +85,7 @@ const treeFactories: ITestTreeFactory[] = [
 				const text = i.toString();
 				insertText({
 					mergeTree,
-					pos: mergeTree.getLength(UniversalSequenceNumber, localClientId),
+					pos: mergeTree.getLength(mergeTree.localPerspective),
 					refSeq: UniversalSequenceNumber,
 					clientId: localClientId,
 					seq: UniversalSequenceNumber,
@@ -141,7 +141,7 @@ const treeFactories: ITestTreeFactory[] = [
 				const text = i.toString();
 				insertText({
 					mergeTree,
-					pos: mergeTree.getLength(UniversalSequenceNumber, localClientId),
+					pos: mergeTree.getLength(mergeTree.localPerspective),
 					refSeq: UniversalSequenceNumber,
 					clientId: localClientId,
 					seq: UniversalSequenceNumber,
@@ -157,9 +157,8 @@ const treeFactories: ITestTreeFactory[] = [
 			mergeTree.markRangeRemoved(
 				0,
 				remove,
-				UniversalSequenceNumber,
-				localClientId,
-				UniversalSequenceNumber,
+				mergeTree.localPerspective,
+				{ clientId: localClientId, seq: UniversalSequenceNumber },
 				undefined as never,
 			);
 			initialText = initialText.slice(Math.max(0, remove));
@@ -168,9 +167,8 @@ const treeFactories: ITestTreeFactory[] = [
 			mergeTree.markRangeRemoved(
 				initialText.length - remove,
 				initialText.length,
-				UniversalSequenceNumber,
-				localClientId,
-				UniversalSequenceNumber,
+				mergeTree.localPerspective,
+				{ clientId: localClientId, seq: UniversalSequenceNumber },
 				undefined as never,
 			);
 			initialText = initialText.slice(0, Math.max(0, initialText.length - remove));
@@ -219,7 +217,7 @@ describe("MergeTree.insertingWalk", () => {
 					});
 
 					assert.equal(
-						testData.mergeTree.getLength(testData.refSeq, localClientId),
+						testData.mergeTree.getLength(testData.mergeTree.localPerspective),
 						testData.initialText.length + 1,
 					);
 					const currentValue = testData.textHelper.getText(testData.refSeq, localClientId);
@@ -240,7 +238,7 @@ describe("MergeTree.insertingWalk", () => {
 					});
 
 					assert.equal(
-						testData.mergeTree.getLength(testData.refSeq, localClientId),
+						testData.mergeTree.getLength(testData.mergeTree.localPerspective),
 						testData.initialText.length + 1,
 					);
 					const currentValue = testData.textHelper.getText(testData.refSeq, localClientId);
@@ -261,7 +259,7 @@ describe("MergeTree.insertingWalk", () => {
 					});
 
 					assert.equal(
-						testData.mergeTree.getLength(testData.refSeq, localClientId),
+						testData.mergeTree.getLength(testData.mergeTree.localPerspective),
 						testData.initialText.length + 1,
 					);
 					const currentValue = testData.textHelper.getText(testData.refSeq, localClientId);
@@ -348,5 +346,66 @@ describe("MergeTree.insertingWalk", () => {
 		});
 
 		assert.deepStrictEqual(segments, ["G", "F", "E", "(D)", "(C)", "(B)", "(A)", "x", "0"]);
+	});
+
+	// Inserting walk previously unnecessarily called `blockUpdate` for blocks even when no segment changes happened (e.g.
+	// we called `ensureIntervalBoundary` but there was already a segment boundary at the position we wanted to ensure had one).
+	it("avoids calling blockUpdate excessively", () => {
+		const seq = 1;
+		const mergeTree = new MergeTree();
+		mergeTree.startCollaboration(localClientId, 0, seq);
+		for (const char of [..."hello world"]) {
+			mergeTree.insertSegments(
+				mergeTree.getLength(mergeTree.localPerspective),
+				[TextSegment.make(char)],
+				mergeTree.localPerspective,
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
+				undefined /* opArgs */,
+			);
+		}
+
+		const originalBlockUpdate: (block: MergeBlock) => void =
+			// eslint-disable-next-line @typescript-eslint/dot-notation
+			(mergeTree["blockUpdate"] as (block: MergeBlock) => void).bind(mergeTree);
+		const blockUpdateCallLog: string[] = [];
+		// eslint-disable-next-line @typescript-eslint/dot-notation
+		mergeTree["blockUpdate"] = (block: MergeBlock) => {
+			// This is called in the middle of updating lots of merge-tree bookkeeping, so we don't want to do too much
+			// advanced stuff here. However, walking the tree and concatenating all the text (ignoring other segment properties)
+			// should be safe.
+			let text = "";
+			walkAllChildSegments(block, (seg) => {
+				if (TextSegment.is(seg)) {
+					text += seg.text;
+				}
+				return true;
+			});
+
+			blockUpdateCallLog.push(text);
+			originalBlockUpdate(block);
+		};
+
+		mergeTree.insertSegments(
+			0,
+			[TextSegment.make("Ot")],
+			mergeTree.localPerspective,
+			mergeTree.collabWindow.mintNextLocalOperationStamp(),
+			undefined /* opArgs */,
+		);
+
+		assert.deepEqual(blockUpdateCallLog, ["Othell", "Othello world"]);
+
+		blockUpdateCallLog.length = 0;
+
+		mergeTree.markRangeRemoved(
+			0,
+			"Othello world".length,
+			mergeTree.localPerspective,
+			mergeTree.collabWindow.mintNextLocalOperationStamp(),
+			undefined as never,
+		);
+
+		// The log ignores presence of segments. The important thing is that we only have one entry per block here.
+		assert.deepEqual(blockUpdateCallLog, ["Othell", "o world", "Othello world"]);
 	});
 });

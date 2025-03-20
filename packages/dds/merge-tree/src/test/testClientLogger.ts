@@ -20,7 +20,8 @@ import { depthFirstNodeWalk } from "../mergeTreeNodeWalk.js";
 import { IMergeNode, Marker, seqLTE, type ISegmentPrivate } from "../mergeTreeNodes.js";
 import { IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
 import { PropertySet, matchProperties } from "../properties.js";
-import type { IInsertionInfo, IMoveInfo, IRemovalInfo } from "../segmentInfos.js";
+import type { IHasInsertionInfo, IHasRemovalInfo } from "../segmentInfos.js";
+import type { RemoveOperationStamp } from "../stamps.js";
 import { TextSegment, TextSegmentGranularity } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
@@ -373,7 +374,7 @@ export class TestClientLogger {
 				}
 				const text = TextSegment.is(node) ? node.text : Marker.is(node) ? "¶" : undefined;
 				if (text !== undefined) {
-					const insertionSeq = (node as IInsertionInfo)?.seq;
+					const insertionSeq = (node as IHasInsertionInfo).insert.seq;
 					const removedNode = toMoveOrRemove(node);
 					if (removedNode === undefined) {
 						if (insertionSeq === UnassignedSequenceNumber) {
@@ -415,16 +416,8 @@ const dashes = Array.from({ length: maxSegmentLength }, (_, i) => "-".repeat(i))
 const asterisks = Array.from({ length: maxSegmentLength }, (_, i) => "*".repeat(i));
 const tildes = Array.from({ length: maxSegmentLength }, (_, i) => "~".repeat(i));
 
-function toMoveOrRemove(segment: ISegmentPrivate): { seq: number } | undefined {
-	if ((segment as unknown as IMoveInfo).movedSeq !== undefined) {
-		return {
-			seq: (segment as unknown as IMoveInfo).movedSeq,
-		};
-	}
-
-	if ((segment as unknown as IRemovalInfo).removedSeq !== undefined) {
-		return {
-			seq: (segment as unknown as IRemovalInfo).removedSeq,
-		};
+function toMoveOrRemove(segment: ISegmentPrivate): RemoveOperationStamp | undefined {
+	if ((segment as unknown as IHasRemovalInfo).removes !== undefined) {
+		return (segment as unknown as IHasRemovalInfo).removes[0];
 	}
 }

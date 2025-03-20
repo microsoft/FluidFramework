@@ -63,7 +63,7 @@ describe("client.getPosition", () => {
 		assert.strictEqual(pos, -1);
 	});
 
-	it("Moved Segment", () => {
+	it("Removed Segment", () => {
 		client.removeRangeLocal(segPos - 1, segPos);
 		const pos = client.getPosition(segment);
 		assert.strictEqual(pos, segPos - 1);
