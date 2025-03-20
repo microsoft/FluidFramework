@@ -2379,8 +2379,22 @@ class InvertNodeManagerI implements InvertNodeManager {
 		attachId: ChangeAtomId,
 		count: number,
 	): RangeQueryResult<ChangeAtomId, DetachedNodeEntry> {
+		deleteNodeRename(this.table.invertedRoots, attachId, count);
+
+		const detachEntry = firstDetachIdFromAttachId(
+			this.table.change.rootNodes,
+			attachId,
+			count,
+		);
+
+		assert(detachEntry.length === count, "XXX");
+
 		// XXX: This needs to look at all IDs in the range, not just the first.
-		const nodeId = getFromChangeAtomIdMap(this.table.change.rootNodes.nodeChanges, attachId);
+		const nodeId = getFromChangeAtomIdMap(
+			this.table.change.rootNodes.nodeChanges,
+			detachEntry.value,
+		);
+
 		if (nodeId !== undefined) {
 			return { start: attachId, value: { nodeChange: nodeId }, length: 1 };
 		}
@@ -2520,9 +2534,8 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			count,
 		);
 
-		assert(baseRenameEntry.length === count, "XXX");
-
 		// XXX: This needs to look at all IDs in the range, not just the first.
+		// XXX: Also consider split renames.
 		const detachedNodeId = getFromChangeAtomIdMap(
 			this.table.newChange.rootNodes.nodeChanges,
 			baseRenameEntry.value,
