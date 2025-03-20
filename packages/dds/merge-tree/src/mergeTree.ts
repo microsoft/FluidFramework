@@ -106,7 +106,6 @@ import {
 import {
 	copyPropertiesAndManager,
 	PropertiesManager,
-	PropertiesRollback,
 	type PropsOrAdjust,
 } from "./segmentPropertiesManager.js";
 import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
@@ -1821,7 +1820,6 @@ export class MergeTree {
 	 * @param clientId - The id of the client making the annotate
 	 * @param seq - The sequence number of the annotate operation
 	 * @param opArgs - The op args for the annotate op. this is passed to the merge tree callback if there is one
-	 * @param rollback - Whether this is for a local rollback and what kind
 	 */
 	public annotateRange(
 		start: number,
@@ -1830,7 +1828,6 @@ export class MergeTree {
 		perspective: Perspective,
 		stamp: OperationStamp,
 		opArgs: IMergeTreeDeltaOpArgs,
-		rollback: PropertiesRollback = PropertiesRollback.None,
 	): void {
 		if (propsOrAdjust.adjust !== undefined) {
 			errorIfOptionNotTrue(this.options, "mergeTreeEnableAnnotateAdjust");
@@ -1857,7 +1854,7 @@ export class MergeTree {
 				stamp.seq,
 				this.collabWindow.minSeq,
 				this.collabWindow.collaborating,
-				rollback,
+				opArgs.rollback === true,
 			);
 
 			if (!isRemoved(segment)) {
@@ -2242,7 +2239,10 @@ export class MergeTree {
 				// Note: optional chaining short-circuits:
 				// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining#short-circuiting
 				this.mergeTreeDeltaCallback?.(
-					{ op: createInsertSegmentOp(this.findRollbackPosition(segment), segment) },
+					{
+						op: createInsertSegmentOp(this.findRollbackPosition(segment), segment),
+						rollback: true,
+					},
 					{
 						operation: MergeTreeDeltaType.INSERT,
 						deltaSegments: [{ segment }],
@@ -2287,7 +2287,7 @@ export class MergeTree {
 						start + segment.cachedLength,
 						this.localPerspective,
 						removeStamp,
-						{ op: removeOp },
+						{ op: removeOp, rollback: true },
 					);
 				} /* op.type === MergeTreeDeltaType.ANNOTATE */ else {
 					const props = pendingSegmentGroup.previousProps![i];
@@ -2302,8 +2302,7 @@ export class MergeTree {
 						{ props },
 						this.localPerspective,
 						annotateStamp,
-						{ op: annotateOp },
-						PropertiesRollback.Rollback,
+						{ op: annotateOp, rollback: true },
 					);
 					i++;
 				}

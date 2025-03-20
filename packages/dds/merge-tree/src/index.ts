@@ -122,7 +122,6 @@ export {
 	PropsOrAdjust,
 	copyPropertiesAndManager,
 	PropertiesManager,
-	PropertiesRollback,
 } from "./segmentPropertiesManager.js";
 export {
 	InteriorSequencePlace,
