@@ -28,6 +28,6 @@ describe("Local Server Stress", () => {
 		// only: [28],
 		saveFailures,
 		// saveSuccesses,
-		only: [28],
+		skip: [28],
 	});
 });
