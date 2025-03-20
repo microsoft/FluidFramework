@@ -1884,7 +1884,7 @@ export class MergeTree {
 				stamp.seq,
 				this.collabWindow.minSeq,
 				this.collabWindow.collaborating,
-				opArgs.rollback === true,
+				opArgs?.rollback === true,
 			);
 
 			if (!isRemoved(segment)) {
