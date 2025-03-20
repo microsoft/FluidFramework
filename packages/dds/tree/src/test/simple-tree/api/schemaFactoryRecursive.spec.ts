@@ -763,11 +763,11 @@ describe("SchemaFactory Recursive methods", () => {
 	 * Additionally it documents this pattern is not supported for explicitly named Maps and Arrays.
 	 *
 	 * These tests violate both of these statements, seeing which versions currently compile and which ones do not.
-	 * Having these tests in place will help know when.if be further break cases like these to adi in writing helpful changesets for impacted customers.
+	 * Having these tests in place will help discover when/if further changes break cases like these to aid in writing helpful changesets for impacted customers using these unsupported patterns on accident.
 	 *
 	 * These patterns also [break type safety in .d.ts generation](https://github.com/microsoft/TypeScript/issues/55832):
 	 * this is one of the reasons they are not supported.
-	 * The import-testing has test coverage for aspect.
+	 * The import-testing package has test coverage for aspect.
 	 * They also have poorer error quality and IntelliSense, and tend to fail to compile in some cases.
 	 *
 	 * These tests are all about the typing.
