@@ -138,7 +138,7 @@ function scrubAndStringify(
 	// Scrub the whole object in case there are unexpected keys
 	const scrubbed: Record<string, unknown> = typesOfKeys(message);
 
-	// For these known/expected keys, we can either drill in (for contents)
+	// For these known/expected keys, we can either drill into the object (for contents)
 	// or just use the value as-is (since it's not personal info)
 	scrubbed.contents = message.contents && typesOfKeys(message.contents);
 	scrubbed.type = message.type;
@@ -149,7 +149,7 @@ function scrubAndStringify(
 /**
  * Finds and returns the index where the strings diverge, and the character at that index in each string (or undefined if not applicable)
  */
-export function findFirstCharacterMismatched(
+function findFirstRawCharacterMismatched(
 	a: string,
 	b: string,
 ): [index: number, charA?: string, charB?: string] {
@@ -166,6 +166,22 @@ export function findFirstCharacterMismatched(
 	return a.length === b.length
 		? [-1, undefined, undefined]
 		: [minLength, a[minLength], b[minLength]];
+}
+
+/**
+ * Finds and returns the index where the strings diverge, and the character at that index in each string (or undefined if not applicable)
+ * It scrubs non-ASCII characters since they convey more meaning (privacy consideration)
+ */
+export function findFirstCharacterMismatched(
+	a: string,
+	b: string,
+): [index: number, charA?: string, charB?: string] {
+	const [index, rawCharA, rawCharB] = findFirstRawCharacterMismatched(a, b);
+
+	const charA = (rawCharA?.codePointAt(0) ?? 0) <= 0x7f ? rawCharA : "[non-ASCII]";
+	const charB = (rawCharB?.codePointAt(0) ?? 0) <= 0x7f ? rawCharB : "[non-ASCII]";
+
+	return [index, charA, charB];
 }
 
 function withoutLocalOpMetadata(message: IPendingMessage): IPendingMessage {

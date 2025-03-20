@@ -674,15 +674,31 @@ export class PartialSequenceLengths {
 		}
 
 		if (isLocal) {
-			// The segment is either inserted only locally or removed/moved only locally.
+			// The segment is either inserted only locally or removed only locally.
 			// We already accounted for the insertion in the accountForInsertion codepath.
-			// Only thing left to do is account for the removal.
-			partials.addOrUpdate({
-				seq: seqOrLocalSeq,
-				clientId,
-				len: 0,
-				seglen: lenDelta,
-			});
+			// Only thing left to do is account for the removal in local partial lengths.
+			// One thing to be careful about is that the removal should only apply to perspectives that saw
+			// the segment's insertion in the first place.
+			// When the segment's insertion was common knowledge (at or below minSeq) or also by the local client,
+			// all possible perspectives will have seen it.
+			if (
+				opstampUtils.lte(segment.insert, minSeqStamp) ||
+				collabWindow.clientId === segment.insert.clientId
+			) {
+				partials.addOrUpdate({
+					seq: seqOrLocalSeq,
+					clientId,
+					len: 0,
+					seglen: lenDelta,
+				});
+			} else {
+				// ... otherwise, it's only visible to reconnecting perspectives above the seq of the insert.
+				combinedPartialLengths.addLocalAdjustment({
+					localSeq: seqOrLocalSeq,
+					refSeq: segment.insert.seq,
+					seglen: lenDelta,
+				});
+			}
 		} else {
 			partials.addOrUpdate({
 				seq: seqOrLocalSeq,
@@ -915,14 +931,13 @@ export class PartialSequenceLengths {
 			);
 			const unsequencedPartialLengths = this.unsequencedRecords.partialLengths;
 			// Local segments at or before localSeq should also be included
-			const local = unsequencedPartialLengths.latestLeq(localSeq);
-			if (local) {
-				length += local.len;
+			length += unsequencedPartialLengths.latestLeq(localSeq)?.len ?? 0;
 
-				// Lastly, we must add in any additional adjustment due to double-counting removes and obliterations
-				// removing local-only segments.
-				length += this.computeOverallRefSeqAdjustment(refSeq, localSeq);
-			}
+			// Lastly, we must add in any additional adjustment that should only take effect when both
+			// refSeq AND localSeq are above some threshold. This accounts for things like double-counting
+			// local+remote removes, or only subtracting the length out of a local remove if we've also seen
+			// the insert of the segment it affects. (see addLocalAdjustment usages for examples)
+			length += this.computeOverallRefSeqAdjustment(refSeq, localSeq);
 		}
 		return length;
 	}
