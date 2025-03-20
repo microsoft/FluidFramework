@@ -309,19 +309,14 @@ describe("obliterate partial lengths", () => {
 
 			const minRefSeqForLocalSeq = new Map<number, number>([
 				[initialLocalSeq, refSeq],
-				// TODO:AB#32300: We should be able to enable this or have a solid explanation on why it returns negative lengths.
-				// This particular test case should not be exercised in production, since the perspective here is actually the local default one
-				// so we'll avoid going through partial lengths, but it still suggests we may have reconnect bugs in obliterate related to partial lengths
-				// not reflecting an unacked obliterate's dependency on the insertion of each segment it affects.
-				// [initialLocalSeq + 1, refSeq],
+				[initialLocalSeq + 1, refSeq],
 			]);
 			validatePartialLengths(
 				localClientId,
 				client.mergeTree,
 				[
 					{ seq: refSeq, len: "hello world".length, localSeq: initialLocalSeq },
-					// See comment above and enable this line once this bug is fixed.
-					// { seq: refSeq, len: "".length, localSeq: initialLocalSeq + 1 },
+					{ seq: refSeq, len: "".length, localSeq: initialLocalSeq + 1 },
 					{ seq: refSeq + 1, len: "hellomore  world".length, localSeq: initialLocalSeq },
 					{ seq: refSeq + 1, len: "".length, localSeq: initialLocalSeq + 1 },
 				],

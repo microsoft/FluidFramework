@@ -109,6 +109,7 @@ export {
 	type TreeNodeSchemaClassUnsafe,
 	type TreeNodeSchemaUnsafe,
 	type AllowedTypesUnsafe,
+	type ImplicitAllowedTypesUnsafe,
 	type TreeNodeSchemaNonClassUnsafe,
 	type InsertableTreeNodeFromAllowedTypesUnsafe,
 	type TreeViewAlpha,
@@ -210,4 +211,5 @@ export {
 	handleSchema,
 	nullSchema,
 } from "./leafNodeSchema.js";
+export type { LeafSchema } from "./leafNodeSchema.js";
 export type { LazyItem, FlexList, FlexListToUnion, ExtractItemType } from "./flexList.js";
