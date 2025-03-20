@@ -20,7 +20,7 @@ import {
 	TreeCompressionStrategy,
 	jsonableTreeFromCursor,
 } from "../../feature-libraries/index.js";
-import { Tree, type CheckoutFlexTreeView } from "../../shared-tree/index.js";
+import { Tree, type CheckoutFlexTreeView, type ISharedTree } from "../../shared-tree/index.js";
 import {
 	type JSDeepTree,
 	type JSWideTree,
@@ -401,7 +401,7 @@ describe("SharedTree benchmarks", () => {
 							// This block generates commits that are all out of date to the same degree
 							for (let iCommit = 0; iCommit < commitCount; iCommit++) {
 								for (let iPeer = 0; iPeer < peerCount; iPeer++) {
-									provider.processMessages(opsPerCommit);
+									provider.processSomeMessages(opsPerCommit);
 									const peer = provider.trees[iPeer];
 									insert(peer.kernel.checkout, 0, `p${iPeer}c${iCommit}`);
 								}
@@ -414,7 +414,7 @@ describe("SharedTree benchmarks", () => {
 							for (let iCommit = 0; iCommit < sampleSize; iCommit++) {
 								for (let iPeer = 0; iPeer < peerCount; iPeer++) {
 									const before = state.timer.now();
-									provider.processMessages(opsPerCommit);
+									provider.processSomeMessages(opsPerCommit);
 									const after = state.timer.now();
 									timeSum += state.timer.toSeconds(before, after);
 									// We still generate commits because it affects local branch rebasing
@@ -439,77 +439,115 @@ describe("SharedTree benchmarks", () => {
 	});
 
 	// In this context "op bunch" refers to a group of ops for the same DDS that are sent by a peer in a single message.
-	describe("rebasing over op bunch", () => {
-		// The number of commits in a bunch for a given run of this test suite.
-		const bunchSizes = isInPerformanceTestingMode ? [1, 10, 100] : [2];
-		// Number of local commits to rebase over the inbound bunch
-		const localBranchSizes = isInPerformanceTestingMode ? [10, 100] : [2];
-		// The time taken by each scenario can be broken down into 4 time costs:
-		// 1. Constant factor overhead (we ignore this).
-		// 2. The time taken to rebase inbound commits onto the tip of the trunk.
-		// 3. The time taken to compose all inbound commits from a bunch into a single commit.
-		// 4. The time taken to rebase the local branch over the composed commit from #3.
-		//
-		// For the following timings:
-		// +----------------------+-------------+--------------+
-		// |                      | bunchSize:1 | bunchSize:10 |
-		// +----------------------+-------------+--------------+
-		// | localBranchSize: 10  | t1          | t2           |
-		// | localBranchSize: 100 | t3          | t4           |
-		// +----------------------+-------------+--------------+
-		// If op bunching is used, the time taken for each scenario is as follows:
-		// t1 = rebase 1  inbound commit  onto trunk + compose 1  commit  + rebase the local branch of size 10  over one commit
-		// t2 = rebase 10 inbound commits onto trunk + compose 10 commits + rebase the local branch of size 10  over one commit
-		// t3 = rebase 1  inbound commit  onto trunk + compose 1  commit  + rebase the local branch of size 100 over one commit
-		// t4 = rebase 10 inbound commits onto trunk + compose 10 commits + rebase the local branch of size 100 over one commit
-		// Therefore, if op bunching is used, then t4 should be roughly equal to t3 + t2 - t1.
-		for (const bunchSize of bunchSizes) {
-			for (const localBranchSize of localBranchSizes) {
-				const test = benchmark({
-					type: BenchmarkType.Measurement,
-					title: `Rebase ${localBranchSize} local commits over ${bunchSize} inbound commits`,
-					benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
-						let duration: number;
-						do {
-							// Since this setup one collects data from one iteration, assert that this is what is expected.
-							assert.equal(state.iterationsPerBatch, 1);
-							const provider = new TestTreeProviderLite(
-								2,
-								factory,
-								undefined /* useDeterministicSessionIds */,
-								FlushMode.TurnBased,
-							);
-							const sender = provider.trees[0];
-							const receiver = provider.trees[1];
-							// Add commits to the receiver's local branch but prevent them from being sent in order to ensure they remain on the local branch
-							receiver.setConnected(false);
-							for (let iCommit = 0; iCommit < localBranchSize; iCommit++) {
-								insert(receiver.kernel.checkout, 0, `r${iCommit}`);
-							}
-							// These are the commits that should be bunched together
-							for (let iCommit = 0; iCommit < bunchSize; iCommit++) {
-								insert(sender.kernel.checkout, 0, `s${iCommit}`);
-							}
-							// Ensure the sender has sent the ops
-							provider.processMessages();
-							// Prevent the sender from receiving anything else since we only want to measure the rebase on the receiver
-							sender.setConnected(false);
-							const before = state.timer.now();
-							// Allow the receiver to receive the bunched commits.
-							// This should force the local branch to be rebased over the bunch.
-							receiver.setConnected(true);
-							const after = state.timer.now();
-							duration = state.timer.toSeconds(before, after);
-						} while (state.recordBatch(duration));
-					},
-					// Force batch size of 1
-					minBatchDurationSeconds: 0,
-				});
-				if (!isInPerformanceTestingMode) {
-					test.timeout(5000);
-				}
+	describe("Op Bunching", () => {
+		/**
+		 * Helper function to setup the sender and receiver trees for the op bunching benchmarks.
+		 * @remarks It pauses the processing of both sender and receiver to enable the test to control when the
+		 * messages are processed.
+		 */
+		function setupSenderAndReceiver() {
+			const provider = new TestTreeProviderLite(
+				2,
+				factory,
+				undefined /* useDeterministicSessionIds */,
+				FlushMode.TurnBased,
+			);
+			const sender = provider.trees[0];
+			const receiver = provider.trees[1];
+			provider.pauseProcessing(sender.id);
+			provider.pauseProcessing(receiver.id);
+			return { provider, sender, receiver };
+		}
+
+		/**
+		 * Helper function to send local commits from a given tree.
+		 */
+		function sendLocalCommits(tree: ISharedTree, count: number, commitPrefix: string) {
+			for (let iCommit = 0; iCommit < count; iCommit++) {
+				insert(tree.kernel.checkout, 0, `${commitPrefix}${iCommit}`);
 			}
 		}
+
+		/**
+		 * Helper function that sends and sequences local commits from a given tree.
+		 */
+		function sequenceLocalCommits(
+			tree: ISharedTree,
+			count: number,
+			commitPrefix: string,
+			provider: TestTreeProviderLite,
+		) {
+			sendLocalCommits(tree, count, commitPrefix);
+			provider.flushMessages(tree.id);
+		}
+
+		/**
+		 * Helper function that processes all sequenced commits on a given tree.
+		 */
+		function receiveSequencedCommits(tree: ISharedTree, provider: TestTreeProviderLite) {
+			provider.resumeProcessing(tree.id);
+			provider.processMessages(false /* flush */);
+		}
+
+		describe("Rebasing inbound bunch over local changes", () => {
+			// The number of commits in a bunch for a given run of this test suite.
+			const bunchSizes = isInPerformanceTestingMode ? [1, 10, 100] : [2];
+			// Number of local commits to rebase over the inbound bunch
+			const localBranchSizes = isInPerformanceTestingMode ? [10, 100] : [2];
+			// The time taken by each scenario can be broken down into 4 time costs:
+			// 1. Constant factor overhead (we ignore this).
+			// 2. The time taken to rebase inbound commits onto the tip of the trunk.
+			// 3. The time taken to compose all inbound commits from a bunch into a single commit.
+			// 4. The time taken to rebase the local branch over the composed commit from #3.
+			//
+			// For the following timings:
+			// +----------------------+-------------+--------------+
+			// |                      | bunchSize:1 | bunchSize:10 |
+			// +----------------------+-------------+--------------+
+			// | localBranchSize: 10  | t1          | t2           |
+			// | localBranchSize: 100 | t3          | t4           |
+			// +----------------------+-------------+--------------+
+			// If op bunching is used, the time taken for each scenario is as follows:
+			// t1 = rebase 1  inbound commit  onto trunk + compose 1  commit  + rebase the local branch of size 10  over one commit
+			// t2 = rebase 10 inbound commits onto trunk + compose 10 commits + rebase the local branch of size 10  over one commit
+			// t3 = rebase 1  inbound commit  onto trunk + compose 1  commit  + rebase the local branch of size 100 over one commit
+			// t4 = rebase 10 inbound commits onto trunk + compose 10 commits + rebase the local branch of size 100 over one commit
+			// Therefore, if op bunching is used, then t4 should be roughly equal to t3 + t2 - t1.
+			for (const bunchSize of bunchSizes) {
+				for (const localBranchSize of localBranchSizes) {
+					const test = benchmark({
+						type: BenchmarkType.Measurement,
+						title: `Rebase ${localBranchSize} local commits over ${bunchSize} inbound commits`,
+						benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+							let duration: number;
+							do {
+								// Since this setup collects data from one iteration, assert that this is what is expected.
+								assert.equal(state.iterationsPerBatch, 1);
+
+								const { provider, sender, receiver } = setupSenderAndReceiver();
+								// Send local commits from the receiver but don't sequence them because we want them to be
+								// in the local branch.
+								sendLocalCommits(receiver, localBranchSize, "r");
+								// These are the commits that should be bunched together
+								sequenceLocalCommits(sender, bunchSize, "s", provider);
+
+								const before = state.timer.now();
+								// Resume the receiver to process the bunched commits. This should force the local branch to be rebased over the bunch.
+								// The receiver will not process its local commits since they are never flushed.
+								receiveSequencedCommits(receiver, provider);
+								const after = state.timer.now();
+								duration = state.timer.toSeconds(before, after);
+							} while (state.recordBatch(duration));
+						},
+						// Force batch size of 1
+						minBatchDurationSeconds: 0,
+					});
+					if (!isInPerformanceTestingMode) {
+						test.timeout(5000);
+					}
+				}
+			}
+		});
 	});
 
 	describe("big transaction composition", () => {
@@ -530,7 +568,7 @@ describe("SharedTree benchmarks", () => {
 							FlushMode.TurnBased,
 						);
 						const tree = provider.trees[0];
-						tree.setConnected(false);
+						provider.setConnected(tree.id, true);
 						const view = provider.trees[0].viewWith(
 							new TreeViewConfiguration({
 								schema: StringArray,

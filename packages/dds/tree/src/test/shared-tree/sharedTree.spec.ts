@@ -48,6 +48,7 @@ import {
 	ForestTypeOptimized,
 	ForestTypeReference,
 	getBranch,
+	type ISharedTree,
 	type ITreePrivate,
 	type SharedTree,
 	Tree,
@@ -69,10 +70,8 @@ import {
 } from "../../simple-tree/index.js";
 import { brand, fail } from "../../util/index.js";
 import {
-	type ConnectionSetter,
 	type ITestTreeProvider,
 	SharedTreeTestFactory,
-	type SharedTreeWithConnectionStateSetter,
 	SummarizeType,
 	TestTreeProvider,
 	TestTreeProviderLite,
@@ -1285,7 +1284,8 @@ describe("SharedTree", () => {
 			const innerListSchema = sf.array(sf.string);
 			const schema = sf.array(innerListSchema);
 
-			interface Peer extends ConnectionSetter {
+			interface Peer {
+				readonly id: string;
 				readonly checkout: TreeCheckout;
 				readonly view: TreeViewAlpha<typeof schema>;
 				readonly outerList: TreeFieldFromImplicitField<typeof schema>;
@@ -1320,7 +1320,7 @@ describe("SharedTree", () => {
 				});
 			}
 
-			function peerFromSharedTree(tree: SharedTreeWithConnectionStateSetter): Peer {
+			function peerFromSharedTree(tree: ISharedTree): Peer {
 				const view = tree.kernel.viewWith(
 					new TreeViewConfiguration({ schema, enableSchemaValidation }),
 				);
@@ -1328,11 +1328,11 @@ describe("SharedTree", () => {
 					view.initialize([["a"]]);
 				}
 				return {
+					id: tree.id,
 					checkout: tree.kernel.checkout,
 					view,
 					outerList: view.root,
 					innerList: view.root.at(0) ?? assert.fail(),
-					setConnected: tree.setConnected,
 					assertOuterListEquals(expected: readonly (readonly string[])[]) {
 						const actual = [...this.outerList].map((inner) => [...inner]);
 						assert.deepEqual(actual, expected);
@@ -1384,7 +1384,7 @@ describe("SharedTree", () => {
 					submitter.assertInnerListEquals(initialState);
 					resubmitter.assertInnerListEquals(initialState);
 
-					resubmitter.setConnected(false);
+					provider.setConnected(resubmitter.id, false);
 
 					s2.revert();
 					s1.revert();
@@ -1402,7 +1402,7 @@ describe("SharedTree", () => {
 					}
 					resubmitter.assertOuterListEquals([["a", "s1", "s2"]]);
 
-					resubmitter.setConnected(true);
+					provider.setConnected(resubmitter.id, true);
 					provider.processMessages();
 
 					const finalState = [["a"]];
@@ -1426,7 +1426,7 @@ describe("SharedTree", () => {
 					submitter.assertInnerListEquals(initialState);
 					resubmitter.assertInnerListEquals(initialState);
 
-					resubmitter.setConnected(false);
+					provider.setConnected(resubmitter.id, false);
 
 					if (scenario === "restore and edit") {
 						sRemove.revert();
@@ -1444,7 +1444,7 @@ describe("SharedTree", () => {
 					resubmitter.assertOuterListEquals([]);
 					resubmitter.assertInnerListEquals(["a", "s"]);
 
-					resubmitter.setConnected(true);
+					provider.setConnected(resubmitter.id, true);
 					provider.processMessages();
 
 					const finalState = [["a"]];
@@ -1456,7 +1456,7 @@ describe("SharedTree", () => {
 			it("the restore of a tree edited on a branch", () => {
 				const { provider, submitter, resubmitter } = setupResubmitTest();
 
-				resubmitter.setConnected(false);
+				provider.setConnected(resubmitter.id, false);
 
 				// This is the edit that will be rebased over during the re-submit phase
 				undoableInsertInInnerList(submitter, "s");
@@ -1483,7 +1483,7 @@ describe("SharedTree", () => {
 				rRemove.revert();
 				resubmitter.assertOuterListEquals([["a", "f"]]);
 
-				resubmitter.setConnected(true);
+				provider.setConnected(resubmitter.id, true);
 				provider.processMessages();
 
 				const finalState = [["a", "f", "s"]];
@@ -1838,7 +1838,7 @@ describe("SharedTree", () => {
 
 			provider.processMessages();
 
-			tree1.setConnected(false);
+			provider.setConnected(tree1.id, false);
 
 			view1.root.insertAtEnd("43");
 			view1.dispose();
@@ -1850,7 +1850,7 @@ describe("SharedTree", () => {
 			// TODO:#8915: This should be able to insert the _number_ 44, not the string, but currently cannot - see bug #8915
 			view1Json.root.insertAtEnd("44");
 
-			tree1.setConnected(true);
+			provider.setConnected(tree1.id, true);
 
 			provider.processMessages();
 

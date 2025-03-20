@@ -372,21 +372,15 @@ export class TestTreeProvider {
 	}
 }
 
-export interface ConnectionSetter {
-	readonly setConnected: (connectionState: boolean) => void;
-}
-
-export type SharedTreeWithConnectionStateSetter = ISharedTree & ConnectionSetter;
-
 /**
  * A test helper class that creates one or more SharedTrees connected to mock services.
  */
 export class TestTreeProviderLite {
-	private static readonly treeId = "TestSharedTree";
 	private readonly runtimeFactory: MockContainerRuntimeFactoryWithOpBunching;
-	public readonly trees: readonly SharedTreeWithConnectionStateSetter[];
+	public readonly trees: readonly ISharedTree[];
 	public readonly logger: IMockLoggerExt = createMockLoggerExt();
-	private readonly containerRuntimes: Set<MockContainerRuntimeWithOpBunching> = new Set();
+	private readonly containerRuntimeMap: Map<string, MockContainerRuntimeWithOpBunching> =
+		new Map();
 
 	/**
 	 * Create a new {@link TestTreeProviderLite} with a number of trees pre-initialized.
@@ -416,7 +410,7 @@ export class TestTreeProviderLite {
 			flushMode,
 		});
 		assert(trees >= 1, "Must initialize provider with at least one tree");
-		const t: SharedTreeWithConnectionStateSetter[] = [];
+		const t: ISharedTree[] = [];
 		const random = useDeterministicSessionIds ? makeRandom(0xdeadbeef) : makeRandom();
 		for (let i = 0; i < trees; i++) {
 			const sessionId = random.uuid4() as SessionId;
@@ -426,38 +420,84 @@ export class TestTreeProviderLite {
 				idCompressor: createIdCompressor(sessionId),
 				logger: this.logger,
 			});
-			const tree = this.factory.create(
-				runtime,
-				TestTreeProviderLite.treeId,
-			) as SharedTreeWithConnectionStateSetter;
+			const tree = this.factory.create(runtime, `tree-${i}`) as ISharedTree;
 			const containerRuntime = this.runtimeFactory.createContainerRuntime(runtime);
-			this.containerRuntimes.add(containerRuntime);
+			this.containerRuntimeMap.set(tree.id, containerRuntime);
 			tree.connect({
 				deltaConnection: runtime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			});
-			(tree as Mutable<SharedTreeWithConnectionStateSetter>).setConnected = (
-				connectionState: boolean,
-			) => {
-				containerRuntime.connected = connectionState;
-			};
 			t.push(tree);
 		}
 		this.trees = t;
 	}
 
-	public processMessages(count?: number): void {
-		// In TurnBased mode, flush the messages from all the runtimes before processing the messages.
-		// Note that this does not preserve the order in which the messages were sent. To do so, tests should
-		// flush messages from individual runtimes in the order they were created.
-		if (this.flushMode === FlushMode.TurnBased) {
-			this.containerRuntimes.forEach((containerRuntime) => {
+	/**
+	 * To be used in TurnBased mode where messages that are sent are not automatically flushed.
+	 * Flush the messages that have sent by a given tree.
+	 * @param treeId - The ID of the tree to flush messages for.
+	 */
+	public flushMessages(treeId: string): void {
+		const containerRuntime = this.containerRuntimeMap.get(treeId);
+		assert(containerRuntime !== undefined, "No tree found to flush messages");
+		containerRuntime.flush();
+	}
+
+	/**
+	 * Process the messages across all trees.
+	 * By default, this method also flushes the messages from all trees before processing them. In TurnBased mode,
+	 * messages are not automatically flushed so this ensures that all messages are processed. Flushing can be
+	 * disabled by setting the flush parameter to false. Then it is the responsibility of the test to flush the
+	 * messages before calling this method.
+	 * @param flush - Whether or not to flush the messages before processing them. Defaults to true.
+	 * @remarks Flushing does not preserve the order in which the messages were sent. To do so, tests should
+	 * call flushMessages on individual trees in the order messages were sent.
+	 */
+	public processMessages(flush: boolean = true): void {
+		if (flush) {
+			this.containerRuntimeMap.forEach((containerRuntime) => {
 				containerRuntime.flush();
 			});
 		}
-		this.runtimeFactory.processSomeMessages(
-			count ?? this.runtimeFactory.outstandingMessageCount,
-		);
+		this.runtimeFactory.processAllMessages();
+	}
+
+	/**
+	 * Process the given count of messages across all trees.
+	 */
+	public processSomeMessages(count: number): void {
+		this.runtimeFactory.processSomeMessages(count);
+	}
+
+	/**
+	 * Set the connection state of the given tree.
+	 * @param treeId - The ID of the tree to set the connection state for.
+	 */
+	public setConnected(treeId: string, connectionState: boolean): void {
+		const containerRuntime = this.containerRuntimeMap.get(treeId);
+		assert(containerRuntime !== undefined, "No tree found to set connection state");
+		containerRuntime.connected = connectionState;
+	}
+
+	/**
+	 * Pauses the processing of messages for the given tree.
+	 * @param treeId - The ID of the tree to pause processing for.
+	 */
+	public pauseProcessing(treeId: string): void {
+		const containerRuntime = this.containerRuntimeMap.get(treeId);
+		assert(containerRuntime !== undefined, "No tree found to pause processing");
+		containerRuntime.pauseProcessing();
+	}
+
+	/**
+	 * Resumes the processing of messages for the given tree.
+	 * @param treeId - The ID of the tree to resume processing for.
+	 * @remarks This will process the messages that were received while the tree was paused.
+	 */
+	public resumeProcessing(treeId: string): void {
+		const containerRuntime = this.containerRuntimeMap.get(treeId);
+		assert(containerRuntime !== undefined, "No tree found to resume processing");
+		containerRuntime.resumeProcessing();
 	}
 
 	public get minimumSequenceNumber(): number {
