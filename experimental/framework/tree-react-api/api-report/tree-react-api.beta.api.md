@@ -7,7 +7,7 @@
 // @public
 export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> {
     readonly config: TreeViewConfiguration<TSchema>;
-    readonly tree: TreeView<TSchema>;
+    readonly treeView: TreeView<TSchema>;
     readonly TreeViewComponent: (props: TreeViewProps<TSchema>) => React_2.JSX.Element;
 }
 

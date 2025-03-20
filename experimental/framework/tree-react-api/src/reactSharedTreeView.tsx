@@ -18,6 +18,7 @@ import type {
 	TreeView,
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
+	ITree,
 } from "@fluidframework/tree";
 import { configuredSharedTree, typeboxValidator } from "@fluidframework/tree/internal";
 import * as React from "react";
@@ -55,7 +56,7 @@ export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(
 	treeConfiguration: TreeViewConfiguration<TSchema>,
 	createInitialTree: () => InsertableTreeFieldFromImplicitField<TSchema>,
 ): SharedObjectKind<
-	IReactTreeDataObject<TSchema> & IFluidLoadable & TreeDataObject<TSchema>
+	IReactTreeDataObject<TSchema> & IFluidLoadable & TreeDataObject<TreeView<TSchema>>
 > & {
 	readonly factory: IFluidDataStoreFactory;
 } {
@@ -71,7 +72,7 @@ export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(
 
 		// Populate tree with initial data on document create
 		protected override async initializingFirstTime(): Promise<void> {
-			this.tree.initialize(createInitialTree());
+			this.treeView.initialize(createInitialTree());
 		}
 	}
 	return createDataObjectKind(SchemaAwareTreeDataObject);
@@ -84,14 +85,24 @@ export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(
  */
 export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> {
 	/**
-	 * {@inheritDoc @fluidframework/aqueduct#TreeDataObject.config}
+	 * The configuration used to initialize new documents, as well as to interpret (schematize) existing ones.
+	 *
+	 * @remarks
+	 * The fact that a single view schema is provided here (on the data object) makes it impossible to try and apply multiple different schema.
+	 * Since the view schema currently does not provide any adapters for handling differences between view and stored schema,
+	 * it's also impossible for this single view schema to handle multiple different stored schema.
+	 * Therefore, with this current API, two different applications (or different versions of the same application)
+	 * with differing stored schema requirements (as implied by their view schema) can not collaborate on the same tree.
+	 * The only schema evolution that's currently possible is upgrading the schema to one that supports a superset of what the old schema allowed,
+	 * and collaborating between clients which have view schema that exactly correspond to that stored schema.
+	 * Future work on tree as well as these utilities should address this limitation.
 	 */
 	readonly config: TreeViewConfiguration<TSchema>;
 
 	/**
 	 * {@inheritDoc @fluidframework/aqueduct#TreeDataObject.tree}
 	 */
-	readonly tree: TreeView<TSchema>;
+	readonly treeView: TreeView<TSchema>;
 
 	/**
 	 * React component which handles schematizing trees.
@@ -130,9 +141,15 @@ export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
 export abstract class ReactTreeDataObject<
 		TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
 	>
-	extends TreeDataObject<TSchema>
+	extends TreeDataObject<TreeView<TSchema>>
 	implements IReactTreeDataObject<TSchema>
 {
+	public abstract readonly config: TreeViewConfiguration<TSchema>;
+
+	public override generateView(tree: ITree): TreeView<TSchema> {
+		return tree.viewWith(this.config);
+	}
+
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
 	public readonly TreeViewComponent = ({
 		viewComponent,
@@ -199,7 +216,7 @@ function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 }: TreeViewProps<TSchema> & {
 	tree: ReactTreeDataObject<TSchema>;
 }) {
-	const view = tree.tree;
+	const view = tree.treeView;
 
 	const compatibility = useViewCompatibility(view);
 	const root = useViewRoot(view);

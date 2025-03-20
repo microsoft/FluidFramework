@@ -22,6 +22,8 @@ import {
 	SchemaFactory,
 	SharedTree,
 	TreeViewConfiguration,
+	type ITree,
+	type TreeView,
 } from "@fluidframework/tree/internal";
 
 const schemaFactory = new SchemaFactory("test");
@@ -31,12 +33,14 @@ class TestSchema extends schemaFactory.object("TestSchema", {
 
 const treeViewConfig = new TreeViewConfiguration({ schema: TestSchema });
 
-class TestTreeDataObject extends TreeDataObject<typeof TestSchema> {
-	public readonly config = treeViewConfig;
+class TestTreeDataObject extends TreeDataObject<TreeView<typeof TestSchema>> {
+	public override generateView(tree: ITree): TreeView<typeof TestSchema> {
+		return tree.viewWith(treeViewConfig);
+	}
 
 	public override async initializingFirstTime(): Promise<void> {
-		assert(this.tree.compatibility.canInitialize);
-		this.tree.initialize({ foo: "Hello world" });
+		assert(this.treeView.compatibility.canInitialize);
+		this.treeView.initialize({ foo: "Hello world" });
 	}
 
 	public static readonly type = "TestTreeDataObject";
@@ -79,7 +83,7 @@ describeCompat("TreeDataObject", "NoCompat", (getTestObjectProvider) => {
 
 	it("First time initialization", async () => {
 		const dataObject = await getContainerEntryPointBackCompat<TestTreeDataObject>(container);
-		assert.deepEqual(dataObject.tree.root.foo, "Hello world");
+		assert.deepEqual(dataObject.treeView.root.foo, "Hello world");
 	});
 
 	it("Load existing", async () => {
@@ -88,6 +92,6 @@ describeCompat("TreeDataObject", "NoCompat", (getTestObjectProvider) => {
 
 		const container2DataObject =
 			await getContainerEntryPointBackCompat<TestTreeDataObject>(container2);
-		assert.deepEqual(container2DataObject.tree.root.foo, "Hello world");
+		assert.deepEqual(container2DataObject.treeView.root.foo, "Hello world");
 	});
 });

@@ -5,13 +5,7 @@
 
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import {
-	type ImplicitFieldSchema,
-	type ITree,
-	SharedTree,
-	type TreeView,
-	type TreeViewConfiguration,
-} from "@fluidframework/tree/internal";
+import { type ITree, SharedTree } from "@fluidframework/tree/internal";
 
 import { PureDataObject } from "./pureDataObject.js";
 
@@ -28,7 +22,11 @@ const uninitializedErrorString =
  *
  * @remarks
  *
- * Note: to initialize the tree's data for initial creation, implementers of this class will need to override {@link PureDataObject.initializingFirstTime} and set the data in {@link TreeDataObject.tree}.
+ * Note: to initialize the tree's data for initial creation, implementers of this class will need to override {@link PureDataObject.initializingFirstTime} and set the data in {@link TreeDataObject.treeView}.
+ *
+ * @typeParam TTreeView - View derived from the underlying tree.
+ * Can be used to derive schema-aware views of the tree.
+ * See {@link TreeDataObject.generateView}.
  *
  * @example Implementing `initializingFirstTime`
  *
@@ -45,40 +43,30 @@ const uninitializedErrorString =
  *
  * @internal
  */
-export abstract class TreeDataObject<
-	TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
-> extends PureDataObject {
+export abstract class TreeDataObject<TTreeView> extends PureDataObject {
 	/**
-	 * The configuration used to initialize new documents, as well as to interpret (schematize) existing ones.
-	 *
-	 * @remarks
-	 * The fact that a single view schema is provided here (on the data object) makes it impossible to try and apply multiple different schema.
-	 * Since the view schema currently does not provide any adapters for handling differences between view and stored schema,
-	 * it's also impossible for this single view schema to handle multiple different stored schema.
-	 * Therefore, with this current API, two different applications (or different versions of the same application)
-	 * with differing stored schema requirements (as implied by their view schema) can not collaborate on the same tree.
-	 * The only schema evolution that's currently possible is upgrading the schema to one that supports a superset of what the old schema allowed,
-	 * and collaborating between clients which have view schema that exactly correspond to that stored schema.
-	 * Future work on tree as well as these utilities should address this limitation.
+	 * Generates a view of the data object's {@link @fluidframework/tree#ITree | tree}.
+	 * @remarks Called once during initialization.
 	 */
-	public abstract readonly config: TreeViewConfiguration<TSchema>;
+	public abstract generateView(tree: ITree): TTreeView;
 
 	/**
-	 * View of the underlying tree.
+	 * View derived from the underlying tree.
+	 * @remarks Populated via {@link TreeDataObject.generateView}.
 	 */
-	#treeView: TreeView<TSchema> | undefined;
+	#view: TTreeView | undefined;
 
 	/**
-	 * Gets the view of the underlying {@link @fluidframework/tree#ITree}.
+	 * Gets the derived view of the underlying tree.
 	 *
 	 * @throws
 	 * If the tree has not yet been initialized, this will throw an error.
 	 */
-	public get tree(): TreeView<TSchema> {
-		if (this.#treeView === undefined) {
+	public get treeView(): TTreeView {
+		if (this.#view === undefined) {
 			throw new UsageError(uninitializedErrorString);
 		}
-		return this.#treeView;
+		return this.#view;
 	}
 
 	public override async initializeInternal(existing: boolean): Promise<void> {
@@ -94,12 +82,12 @@ export abstract class TreeDataObject<
 				);
 			}
 			const sharedTree: ITree = channel;
-			this.#treeView = sharedTree.viewWith(this.config);
+			this.#view = this.generateView(sharedTree);
 		} else {
 			const sharedTree = SharedTree.create(this.runtime, treeChannelId);
 			(sharedTree as unknown as ISharedObject).bindToContext();
 
-			this.#treeView = sharedTree.viewWith(this.config);
+			this.#view = this.generateView(sharedTree);
 
 			// Note, the implementer is responsible for initializing the tree with initial data.
 			// Generally, this can be done via `initializingFirstTime`.

@@ -36,9 +36,9 @@ describe("reactSharedTreeView", () => {
 		const tinyliciousClient = new TinyliciousClient();
 
 		const { container } = await tinyliciousClient.createContainer(containerSchema, "2");
-		const tree = container.initialObjects.tree;
-		assert.equal(tree.tree.root.nuts, 5);
-		tree.tree.root.nuts += 1;
-		assert.equal(tree.tree.root.bolts, 6);
+		const dataObject = container.initialObjects.tree;
+		assert.equal(dataObject.treeView.root.nuts, 5);
+		dataObject.treeView.root.nuts += 1;
+		assert.equal(dataObject.treeView.root.bolts, 6);
 	});
 });
