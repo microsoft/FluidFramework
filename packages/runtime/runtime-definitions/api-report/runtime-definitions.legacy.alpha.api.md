@@ -93,7 +93,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 // @alpha @sealed (undocumented)
 export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "batchBegin", listener: (op: Omit<ISequencedDocumentMessage, "contents">) => void): any;
-    (event: "batchEnd", listener: (error: any, op: Omit<ISequencedDocumentMessage, "contents">) => void): any;
+    (event: "batchEnd", listener: (error: unknown, op: Omit<ISequencedDocumentMessage, "contents">) => void): any;
     (event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void): any;
     // (undocumented)
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
@@ -129,9 +129,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     makeVisibleAndAttachGraph(): void;
-    // @deprecated
-    process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    processMessages?(messageCollection: IRuntimeMessageCollection): void;
+    processMessages(messageCollection: IRuntimeMessageCollection): void;
     processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;

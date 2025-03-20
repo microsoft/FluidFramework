@@ -689,7 +689,7 @@ const annotationCases: Record<string, IFluidErrorAnnotations> = {
 describe("normalizeError", () => {
 	describe("Valid Errors (Legacy and Current)", () => {
 		for (const annotationCase of Object.keys(annotationCases)) {
-			const annotations: IFluidErrorAnnotations | undefined = annotationCases[annotationCase];
+			const annotations = annotationCases[annotationCase];
 			it(`Valid Fluid Error - untouched (annotations: ${annotationCase})`, () => {
 				// Arrange
 				const fluidError = new TestFluidError({ errorType: "et1", message: "m1" });

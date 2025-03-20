@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
@@ -58,7 +58,7 @@ function generateCompressedBatchMessage(length: number): ISequencedDocumentMessa
 		...messageBase,
 		// TODO: It's not clear if this shallow clone is required, as opposed to just setting "batch" to false.
 
-		metadata: { ...(messageBase.metadata as any), batch: true },
+		metadata: { ...(messageBase.metadata as object), batch: true },
 	};
 }
 

@@ -80,7 +80,7 @@ function validateBlobStateInSummary(
 
 	if (expectGCStateHandle) {
 		assert.equal(
-			summaryTree.tree[gcTreeKey]?.type,
+			summaryTree.tree[gcTreeKey].type,
 			SummaryType.Handle,
 			"Expecting the GC tree to be handle",
 		);

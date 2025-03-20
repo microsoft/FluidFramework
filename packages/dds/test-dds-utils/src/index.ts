@@ -7,10 +7,10 @@ export type { IGCTestProvider } from "./gcTestRunner.js";
 export { runGCTests } from "./gcTestRunner.js";
 export type {
 	AddClient,
-	BaseOperation,
 	ChangeConnectionState,
 	ClientSpec,
 	DDSFuzzModel,
+	DDSFuzzHarnessModel,
 	DDSFuzzSuiteOptions,
 	DDSFuzzTestState,
 	DDSFuzzHarnessEvents,
@@ -24,5 +24,4 @@ export {
 } from "./ddsFuzzHarness.js";
 export type { ISnapshotSuite } from "./ddsSnapshotHarness.js";
 export { createSnapshotSuite } from "./ddsSnapshotHarness.js";
-export type { MinimizationTransform } from "./minification.js";
 export type { Client, FuzzSerializedIdCompressor } from "./clientLoading.js";

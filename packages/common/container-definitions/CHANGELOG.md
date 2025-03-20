@@ -1,5 +1,37 @@
 # @fluidframework/container-definitions
 
+## 2.30.0
+
+### Minor Changes
+
+-   IContainer.getContainerPackageInfo() is now deprecated ([#23840](https://github.com/microsoft/FluidFramework/pull/23840)) [521be72619](https://github.com/microsoft/FluidFramework/commit/521be726198a1f88f4f8f06c0f273528a49d2957)
+
+    The `IContainer.getContainerPackageInfo()` function is now deprecated. This API will be removed in version 2.40.0.
+    Use `IFluidCodeDetails.package` returned by `IContainer.getLoadedCodeDetails()` instead.
+
+    See [issue #23898](https://github.com/microsoft/FluidFramework/issues/23898) for details.
+
+## 2.23.0
+
+Dependency updates only.
+
+## 2.22.0
+
+Dependency updates only.
+
+## 2.21.0
+
+### Minor Changes
+
+-   The IContainerContext.supportedFeatures property is now deprecated ([#22877](https://github.com/microsoft/FluidFramework/pull/22877)) [4c06412bb3](https://github.com/microsoft/FluidFramework/commit/4c06412bb365d680430f83b87c456d132d9da1be)
+
+    The `IContainerContext.supportedFeatures` optional property was used internally to communicate features supported by the
+    Loader layer to the Runtime layer. This has since been replaced with functionality that is not exposed externally.
+
+## 2.20.0
+
+Dependency updates only.
+
 ## 2.13.0
 
 Dependency updates only.

@@ -146,7 +146,7 @@ export class TreeNodeKernel {
 
 		if (innerNode instanceof UnhydratedFlexTreeNode) {
 			// Unhydrated case
-			mapTreeNodeToProxy.set(innerNode, node);
+			unhydratedFlexTreeNodeToTreeNodeInternal.set(innerNode, node);
 			// Register for change events from the unhydrated flex node.
 			// These will be fired if the unhydrated node is edited, and will also be forwarded later to the hydrated node.
 			this.#hydrationState = {
@@ -158,7 +158,7 @@ export class TreeNodeKernel {
 
 					let n: UnhydratedFlexTreeNode | undefined = innerNode;
 					while (n !== undefined) {
-						const treeNode = mapTreeNodeToProxy.get(n);
+						const treeNode = unhydratedFlexTreeNodeToTreeNodeInternal.get(n);
 						if (treeNode !== undefined) {
 							const kernel = getKernel(treeNode);
 							kernel.#unhydratedEvents.value.emit("subtreeChangedAfterBatch");
@@ -184,7 +184,7 @@ export class TreeNodeKernel {
 			// This can't be cached on this.#hydrated during hydration since initial tree is hydrated before the context is cached on the anchorSet.
 			return (
 				this.#hydrationState?.anchorNode.anchorSet.slots.get(SimpleContextSlot) ??
-				fail("missing simple-tree context")
+				fail(0xb40 /* missing simple-tree context */)
 			);
 		}
 		return this.initialContext;
@@ -200,7 +200,7 @@ export class TreeNodeKernel {
 	private hydrate(anchorNode: AnchorNode): void {
 		assert(!this.disposed, 0xa2a /* cannot hydrate a disposed node */);
 		assert(!isHydrated(this.#hydrationState), 0xa2b /* hydration should only happen once */);
-		mapTreeNodeToProxy.delete(this.#hydrationState.innerNode);
+		unhydratedFlexTreeNodeToTreeNodeInternal.delete(this.#hydrationState.innerNode);
 		this.#hydrationState = this.createHydratedState(anchorNode);
 
 		// If needed, register forwarding emitters for events from before hydration
@@ -303,7 +303,8 @@ export class TreeNodeKernel {
 			this.#hydrationState.innerNode = flexNode;
 		} else {
 			// ...otherwise, the flex node must be created
-			const context = anchorNode.anchorSet.slots.get(ContextSlot) ?? fail("missing context");
+			const context =
+				anchorNode.anchorSet.slots.get(ContextSlot) ?? fail(0xb41 /* missing context */);
 			const cursor = context.checkout.forest.allocateCursor("getFlexNode");
 			context.checkout.forest.moveCursorToPath(anchorNode, cursor);
 			this.#hydrationState.innerNode = makeTree(context, cursor);
@@ -332,7 +333,8 @@ export class TreeNodeKernel {
 	public anchorProxy(anchors: AnchorSet, path: UpPath): AnchorNode {
 		assert(!anchorForgetters.has(this.node), 0x91c /* Proxy anchor should not be set twice */);
 		const anchor = anchors.track(path);
-		const anchorNode = anchors.locate(anchor) ?? fail("Expected anchor node to be present");
+		const anchorNode =
+			anchors.locate(anchor) ?? fail(0xb42 /* Expected anchor node to be present */);
 		this.hydrate(anchorNode);
 		const forget = (): void => {
 			if (anchors.locate(anchor)) {
@@ -389,9 +391,20 @@ type KernelEvents = Pick<AnchorEvents, (typeof kernelEvents)[number]>;
 export type InnerNode = FlexTreeNode | UnhydratedFlexTreeNode;
 
 /**
- * {@inheritdoc proxyToMapTreeNode}
+ * Associates a given {@link UnhydratedFlexTreeNode} with a {@link TreeNode}.
  */
-export const mapTreeNodeToProxy = new WeakMap<UnhydratedFlexTreeNode, TreeNode>();
+const unhydratedFlexTreeNodeToTreeNodeInternal = new WeakMap<
+	UnhydratedFlexTreeNode,
+	TreeNode
+>();
+/**
+ * Retrieves the {@link TreeNode} associated with the given {@link UnhydratedFlexTreeNode} if any.
+ */
+export const unhydratedFlexTreeNodeToTreeNode =
+	unhydratedFlexTreeNodeToTreeNodeInternal as Pick<
+		WeakMap<UnhydratedFlexTreeNode, TreeNode>,
+		"get"
+	>;
 
 /**
  * An anchor slot which associates an anchor with its corresponding TreeNode, if there is one.
@@ -400,15 +413,6 @@ export const mapTreeNodeToProxy = new WeakMap<UnhydratedFlexTreeNode, TreeNode>(
  * FlexTree already has this assumption, and we also assume there is a single simple-tree per FlexTree, so this is valid.
  */
 export const proxySlot = anchorSlot<TreeNode>();
-
-/**
- * Retrieves the node associated with the given MapTreeNode node if any.
- */
-export function tryGetTreeNodeFromMapNode(
-	flexNode: UnhydratedFlexTreeNode,
-): TreeNode | undefined {
-	return mapTreeNodeToProxy.get(flexNode);
-}
 
 export function tryDisposeTreeNode(anchorNode: AnchorNode): void {
 	const treeNode = anchorNode.slots.get(proxySlot);
@@ -432,9 +436,9 @@ export function getTreeNodeSchemaFromHydratedFlexNode(flexNode: FlexTreeNode): T
 
 	const context =
 		flexNode.anchorNode.anchorSet.slots.get(SimpleContextSlot) ??
-		fail("Missing SimpleContextSlot");
+		fail(0xb43 /* Missing SimpleContextSlot */);
 
-	return context.schema.get(flexNode.schema) ?? fail("Missing schema");
+	return context.schema.get(flexNode.schema) ?? fail(0xb44 /* Missing schema */);
 }
 
 /**
@@ -459,7 +463,8 @@ function flexNodeFromAnchor(anchorNode: AnchorNode): FlexTreeNode {
 	if (flexNode !== undefined) {
 		return flexNode; // If it does have a flex node, return it...
 	} // ...otherwise, the flex node must be created
-	const context = anchorNode.anchorSet.slots.get(ContextSlot) ?? fail("missing context");
+	const context =
+		anchorNode.anchorSet.slots.get(ContextSlot) ?? fail(0xb45 /* missing context */);
 	const cursor = context.checkout.forest.allocateCursor("getFlexNode");
 	context.checkout.forest.moveCursorToPath(anchorNode, cursor);
 	const newFlexNode = makeTree(context, cursor);

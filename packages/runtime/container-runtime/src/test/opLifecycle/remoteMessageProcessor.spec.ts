@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import type { IBatchMessage } from "@fluidframework/container-definitions/internal";
@@ -29,6 +29,8 @@ import {
 	RemoteMessageProcessor,
 } from "../../opLifecycle/index.js";
 
+import { compressMultipleMessageBatch } from "./legacyCompression.js";
+
 describe("RemoteMessageProcessor", () => {
 	function getMessageProcessor(): RemoteMessageProcessor {
 		const logger = new MockLogger();
@@ -38,7 +40,6 @@ describe("RemoteMessageProcessor", () => {
 			new OpGroupingManager(
 				{
 					groupedBatchingEnabled: true,
-					opCountThreshold: Infinity,
 				},
 				logger,
 			),
@@ -53,7 +54,7 @@ describe("RemoteMessageProcessor", () => {
 					: {
 							batch: batchMetadata,
 						},
-			referenceSequenceNumber: Infinity,
+			referenceSequenceNumber: Number.POSITIVE_INFINITY,
 			contents: JSON.stringify({
 				contents: {
 					key: value,
@@ -81,7 +82,7 @@ describe("RemoteMessageProcessor", () => {
 			compression: undefined,
 			sequenceNumber: seqNum,
 			clientSequenceNumber: clientSeqNum,
-			referenceSequenceNumber: Infinity,
+			referenceSequenceNumber: Number.POSITIVE_INFINITY,
 			contents: {
 				key: value,
 			},
@@ -89,7 +90,7 @@ describe("RemoteMessageProcessor", () => {
 	}
 
 	const messageGenerationOptions = generatePairwiseOptions<{
-		/** chunking cannot happen without compression */
+		// chunking cannot happen without compression
 		compressionAndChunking:
 			| {
 					compression: false;
@@ -109,11 +110,11 @@ describe("RemoteMessageProcessor", () => {
 		grouping: [true, false],
 	});
 
-	messageGenerationOptions.forEach((option) => {
+	for (const option of messageGenerationOptions) {
 		it(`Correctly processes single batch: compression [${option.compressionAndChunking.compression}] chunking [${option.compressionAndChunking.chunking}] grouping [${option.grouping}]`, () => {
 			let batch: IBatch = {
 				contentSizeInBytes: 1,
-				referenceSequenceNumber: Infinity,
+				referenceSequenceNumber: Number.POSITIVE_INFINITY,
 				messages: [
 					getOutboundMessage("a", true),
 					getOutboundMessage("b"),
@@ -128,7 +129,6 @@ describe("RemoteMessageProcessor", () => {
 				const groupingManager = new OpGroupingManager(
 					{
 						groupedBatchingEnabled: true,
-						opCountThreshold: 2,
 					},
 					mockLogger,
 				);
@@ -138,8 +138,12 @@ describe("RemoteMessageProcessor", () => {
 			let leadingChunkCount = 0;
 			const outboundMessages: IBatchMessage[] = [];
 			if (option.compressionAndChunking.compression) {
-				const compressor = new OpCompressor(mockLogger);
-				batch = compressor.compressBatch(batch);
+				if (batch.messages.length === 1) {
+					const compressor = new OpCompressor(mockLogger);
+					batch = compressor.compressBatch(batch);
+				} else {
+					batch = compressMultipleMessageBatch(batch);
+				}
 
 				if (option.compressionAndChunking.chunking) {
 					const splitter = new OpSplitter(
@@ -150,7 +154,7 @@ describe("RemoteMessageProcessor", () => {
 							return 0;
 						},
 						2,
-						Infinity,
+						Number.POSITIVE_INFINITY,
 						mockLogger,
 					);
 					batch = splitter.splitFirstBatchMessage(batch);
@@ -178,7 +182,7 @@ describe("RemoteMessageProcessor", () => {
 				ensureContentsDeserialized(inboundMessage);
 				const result = messageProcessor.process(inboundMessage, () => {});
 				switch (result?.type) {
-					case "fullBatch":
+					case "fullBatch": {
 						assert(
 							option.compressionAndChunking.chunking || outboundMessages.length === 1,
 							"Apart from chunking, expected fullBatch for single-message batch only (includes Grouped Batches)",
@@ -186,18 +190,21 @@ describe("RemoteMessageProcessor", () => {
 						batchStart = result.batchStart;
 						inboundMessages.push(...result.messages);
 						break;
-					case "batchStartingMessage":
+					}
+					case "batchStartingMessage": {
 						batchStart = result.batchStart;
 						inboundMessages.push(result.nextMessage);
 						break;
-					case "nextBatchMessage":
+					}
+					case "nextBatchMessage": {
 						assert(
 							batchStart !== undefined,
 							"batchStart should have been set from a prior message",
 						);
 						inboundMessages.push(result.nextMessage);
 						break;
-					default:
+					}
+					default: {
 						// These are leading chunks
 						assert(result === undefined, "unexpected result type");
 						assert(
@@ -205,6 +212,7 @@ describe("RemoteMessageProcessor", () => {
 							"undefined result only expected with chunking",
 						);
 						break;
+					}
 				}
 			}
 
@@ -231,7 +239,7 @@ describe("RemoteMessageProcessor", () => {
 				"unexpected batchStartCsn",
 			);
 		});
-	});
+	}
 
 	it("Processes multiple batches (No Grouped Batching)", () => {
 		let csn = 1;
@@ -387,13 +395,16 @@ describe("RemoteMessageProcessor", () => {
 		);
 
 		// We checked messages in the previous assert, now clear them since they're not included in expectedInfo
-		const clearMessages = (result: any) => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const clearMessages = (result: any): InboundMessageResult => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			delete result.messages;
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			delete result.nextMessage;
 			return result as InboundMessageResult;
 		};
 		assert.deepStrictEqual(
-			processResults.map(clearMessages),
+			processResults.map((result) => clearMessages(result)),
 			expectedInfo,
 			"unexpected result info",
 		);
@@ -431,7 +442,7 @@ describe("RemoteMessageProcessor", () => {
 				() => {
 					inboundMessages.map((message) => processor.process(message, () => {}));
 				},
-				(e: any) => {
+				(e: Error) => {
 					return e.message === "0x9d6";
 				},
 				"unexpected batch end marker should trigger assert",
@@ -465,7 +476,7 @@ describe("RemoteMessageProcessor", () => {
 				() => {
 					inboundMessages.map((message) => processor.process(message, () => {}));
 				},
-				(e: any) => {
+				(e: Error) => {
 					return e.message === "0x9d5";
 				},
 				"unexpected batch start marker should trigger assert",

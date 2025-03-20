@@ -55,6 +55,9 @@ export function getSimpleVersion(fileVersion: string, argBuildNum: string, argRe
 export function getVersionRange(version: semver.SemVer | string, maxAutomaticBump: "minor" | "patch" | "~" | "^"): string;
 
 // @public
+export function getVersionsFromStrings(prefix: TagPrefix, tags: string[]): string[];
+
+// @public
 export type InterdependencyRange = WorkspaceRange | RangeOperator | RangeOperatorWithVersion | semver.SemVer;
 
 // @public

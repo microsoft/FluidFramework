@@ -235,7 +235,7 @@ describeCompat(
 			if (isGroupIdLoaderVersion(apis.loader.version)) {
 				const groupSnapshot = await snapshotADeferred.promise;
 				const snapshotTreeA =
-					groupSnapshot.snapshotTree.trees[".channels"]?.trees[dataObjectA2.id];
+					groupSnapshot.snapshotTree.trees[".channels"].trees[dataObjectA2.id];
 				assertPopulatedGroupIdTree(
 					snapshotTreeA,
 					groupSnapshot.blobContents,

@@ -23,7 +23,11 @@ export {
 	taggedAtomId,
 	taggedOptAtomId,
 	offsetChangeAtomId,
+	subtractChangeAtomIds,
 	replaceAtomRevisions,
+	type ChangeAtomIdRangeMap,
+	newChangeAtomIdRangeMap,
+	compareRevisions,
 } from "./types.js";
 export { RevisionTagCodec } from "./revisionTagCodec.js";
 export {

@@ -66,9 +66,13 @@ export enum ContainerMessageType {
  * This way stringified values can be compared.
  */
 interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TContents> {
-	/** Type of the op, within the ContainerRuntime's domain */
+	/**
+	 * Type of the op, within the ContainerRuntime's domain
+	 */
 	type: TType;
-	/** Domain-specific contents, interpreted according to the type */
+	/**
+	 * Domain-specific contents, interpreted according to the type
+	 */
 	contents: TContents;
 }
 
@@ -118,13 +122,16 @@ export type ContainerRuntimeDocumentSchemaMessage = TypedContainerRuntimeMessage
  * @internal
  */
 export interface UnknownContainerRuntimeMessage {
-	/** Invalid type of the op, within the ContainerRuntime's domain. This value should never exist at runtime.
+	/**
+	 * Invalid type of the op, within the ContainerRuntime's domain. This value should never exist at runtime.
 	 * This is useful for type narrowing but should never be used as an actual message type at runtime.
 	 * Actual value will not be "__unknown...", but the type `Exclude<string, ContainerMessageType>` is not supported.
 	 */
 	type: "__unknown_container_message_type__never_use_as_value__";
 
-	/** Domain-specific contents, but not decipherable by an unknown op. */
+	/**
+	 * Domain-specific contents, but not decipherable by an unknown op.
+	 */
 	contents: unknown;
 }
 
@@ -160,7 +167,9 @@ export type LocalContainerRuntimeMessage =
 	| UnknownContainerRuntimeMessage
 	| ContainerRuntimeDocumentSchemaMessage;
 
-/** A {@link TypedContainerRuntimeMessage} that is being sent to the server from the container runtime. */
+/**
+ * A {@link TypedContainerRuntimeMessage} that is being sent to the server from the container runtime.
+ */
 export type OutboundContainerRuntimeMessage =
 	| ContainerRuntimeDataStoreOpMessage
 	| OutboundContainerRuntimeAttachMessage

@@ -143,6 +143,18 @@ module.exports = {
 			before: ["*"],
 		},
 
+		// Non-incremental tasks of convenience to ensure build is up-to-date
+		// before command is run. And some aliases for convenience.
+		"test:cjs": { dependsOn: ["test:unit:cjs"], script: false },
+		"test:esm": { dependsOn: ["test:unit:esm"], script: false },
+		"test:jest": ["build:compile"],
+		"test:mocha": ["build:test"],
+		"test:mocha:cjs": ["build:test:cjs"],
+		"test:mocha:esm": ["build:test:esm"],
+		"test:unit": { dependsOn: ["test:mocha", "test:jest"], script: false },
+		"test:unit:cjs": { dependsOn: ["test:mocha:cjs"], script: false },
+		"test:unit:esm": { dependsOn: ["test:mocha:esm"], script: false },
+
 		// alias for back compat
 		"build:full": {
 			dependsOn: ["full"],
@@ -311,6 +323,7 @@ module.exports = {
 			// These should only be files that are not in an pnpm workspace.
 			"common/build/build-common/src/cjs/package.json",
 			"common/build/build-common/src/esm/package.json",
+			"packages/common/core-interfaces/src/cjs/package.json",
 			"packages/framework/presence/src/cjs/package.json",
 		],
 		// Exclusion per handler
@@ -415,8 +428,6 @@ module.exports = {
 				// Packages that violate the API linting rules
 				// ae-missing-release-tags, ae-incompatible-release-tags
 				"^examples/data-objects/table-document/",
-				// AB#8147: ./test/EditLog export should be ./internal/... or tagged for support
-				"^experimental/dds/tree/",
 
 				// Packages with APIs that don't need strict API linting
 				"^build-tools/",
@@ -430,6 +441,7 @@ module.exports = {
 				// packages. This is temporary and can be fixed once the build-tools/build-cli pigration is complete.
 				"^azure/",
 				"^build-tools/packages/build-tools/package.json",
+				"^build-tools/packages/build-infrastructure/package.json",
 				"^common/",
 				"^examples/",
 				"^experimental/",
@@ -585,9 +597,6 @@ module.exports = {
 
 	assertTagging: {
 		enabledPaths: [/^common\/lib\/common-utils/i, /^experimental/i, /^packages/i],
-		assertionFunctions: {
-			assert: 1,
-		},
 	},
 
 	// `flub bump` config. These settings influence `flub bump` behavior for a release group. These settings can be

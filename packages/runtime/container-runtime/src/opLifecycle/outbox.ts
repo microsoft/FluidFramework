@@ -77,6 +77,8 @@ export function serializeOpContents(contents: OutboundContainerRuntimeMessage): 
  * @returns the result of the action provided
  */
 export function getLongStack<T>(action: () => T, length: number = 50): T {
+	// TODO: better typing here
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
 	const errorObj = Error as any;
 	if (
 		/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
@@ -90,11 +92,14 @@ export function getLongStack<T>(action: () => T, length: number = 50): T {
 		return action();
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 	const originalStackTraceLimit = errorObj.stackTraceLimit;
 	try {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		errorObj.stackTraceLimit = length;
 		return action();
 	} finally {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 		errorObj.stackTraceLimit = originalStackTraceLimit;
 	}
 }
@@ -130,7 +135,9 @@ export class Outbox {
 			this.params.config.compressionOptions.minimumBatchSizeInBytes !==
 			Number.POSITIVE_INFINITY;
 		// We need to allow infinite size batches if we enable compression
-		const hardLimit = isCompressionEnabled ? Infinity : this.params.config.maxBatchSizeInBytes;
+		const hardLimit = isCompressionEnabled
+			? Number.POSITIVE_INFINITY
+			: this.params.config.maxBatchSizeInBytes;
 
 		this.mainBatch = new BatchManager({ hardLimit, canRebase: true });
 		this.blobAttachBatch = new BatchManager({ hardLimit, canRebase: true });
@@ -171,7 +178,7 @@ export class Outbox {
 	 * last message processed by the ContainerRuntime. In the absence of op reentrancy, this
 	 * pair will remain stable during a single JS turn during which the batch is being built up.
 	 */
-	private maybeFlushPartialBatch() {
+	private maybeFlushPartialBatch(): void {
 		const mainBatchSeqNums = this.mainBatch.sequenceNumbers;
 		const blobAttachSeqNums = this.blobAttachBatch.sequenceNumbers;
 		const idAllocSeqNums = this.idAllocationBatch.sequenceNumbers;
@@ -214,37 +221,25 @@ export class Outbox {
 		}
 	}
 
-	public submit(message: BatchMessage) {
+	public submit(message: BatchMessage): void {
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.mainBatch, message);
 	}
 
-	public submitBlobAttach(message: BatchMessage) {
+	public submitBlobAttach(message: BatchMessage): void {
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.blobAttachBatch, message);
-
-		// If compression is enabled, we will always successfully receive
-		// blobAttach ops and compress then send them at the next JS turn, regardless
-		// of the overall size of the accumulated ops in the batch.
-		// However, it is more efficient to flush these ops faster, preferably
-		// after they reach a size which would benefit from compression.
-		if (
-			this.blobAttachBatch.contentSizeInBytes >=
-			this.params.config.compressionOptions.minimumBatchSizeInBytes
-		) {
-			this.flushInternal(this.blobAttachBatch);
-		}
 	}
 
-	public submitIdAllocation(message: BatchMessage) {
+	public submitIdAllocation(message: BatchMessage): void {
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.idAllocationBatch, message);
 	}
 
-	private addMessageToBatchManager(batchManager: BatchManager, message: BatchMessage) {
+	private addMessageToBatchManager(batchManager: BatchManager, message: BatchMessage): void {
 		if (
 			!batchManager.push(
 				message,
@@ -267,7 +262,7 @@ export class Outbox {
 	 * @param resubmittingBatchId - If defined, indicates this is a resubmission of a batch
 	 * with the given Batch ID, which must be preserved
 	 */
-	public flush(resubmittingBatchId?: BatchId) {
+	public flush(resubmittingBatchId?: BatchId): void {
 		if (this.isContextReentrant()) {
 			const error = new UsageError("Flushing is not supported inside DDS event handlers");
 			this.params.closeContainer(error);
@@ -277,7 +272,7 @@ export class Outbox {
 		this.flushAll(resubmittingBatchId);
 	}
 
-	private flushAll(resubmittingBatchId?: BatchId) {
+	private flushAll(resubmittingBatchId?: BatchId): void {
 		// If we're resubmitting and all batches are empty, we need to flush an empty batch.
 		// Note that we currently resubmit one batch at a time, so on resubmit, 2 of the 3 batches will *always* be empty.
 		// It's theoretically possible that we don't *need* to resubmit this empty batch, and in those cases, it'll safely be ignored
@@ -304,7 +299,7 @@ export class Outbox {
 		);
 	}
 
-	private flushEmptyBatch(resubmittingBatchId: BatchId) {
+	private flushEmptyBatch(resubmittingBatchId: BatchId): void {
 		const referenceSequenceNumber =
 			this.params.getCurrentSequenceNumbers().referenceSequenceNumber;
 		assert(
@@ -330,7 +325,7 @@ export class Outbox {
 		batchManager: BatchManager,
 		disableGroupedBatching: boolean = false,
 		resubmittingBatchId?: BatchId,
-	) {
+	): void {
 		if (batchManager.empty) {
 			return;
 		}
@@ -352,9 +347,11 @@ export class Outbox {
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
 		if (this.params.shouldSend()) {
-			const processedBatch = this.compressBatch(
-				shouldGroup ? this.params.groupingManager.groupBatch(rawBatch) : rawBatch,
-			);
+			const processedBatch = disableGroupedBatching
+				? rawBatch
+				: this.compressAndChunkBatch(
+						shouldGroup ? this.params.groupingManager.groupBatch(rawBatch) : rawBatch,
+					);
 			clientSequenceNumber = this.sendBatch(processedBatch);
 			assert(
 				clientSequenceNumber === undefined || clientSequenceNumber >= 0,
@@ -375,7 +372,7 @@ export class Outbox {
 	 *
 	 * @param rawBatch - the batch to be rebased
 	 */
-	private rebase(rawBatch: IBatch, batchManager: BatchManager) {
+	private rebase(rawBatch: IBatch, batchManager: BatchManager): void {
 		assert(!this.rebasing, 0x6fb /* Reentrancy */);
 		assert(batchManager.options.canRebase, 0x9a7 /* BatchManager does not support rebase */);
 
@@ -415,16 +412,17 @@ export class Outbox {
 	 * @remarks - If chunking happens, a side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.
 	 *
 	 * @param batch - Raw or Grouped batch to consider for compression/chunking
-	 * @returns Either (A) the original batch, (B) a compressed batch (same length as original),
-	 * or (C) a batch containing the last chunk (plus empty placeholders from compression if applicable).
+	 * @returns Either (A) the original batch, (B) a compressed batch (same length as original)
+	 * or (C) a batch containing the last chunk.
 	 */
-	private compressBatch(batch: IBatch): IBatch {
+	private compressAndChunkBatch(batch: IBatch): IBatch {
 		if (
 			batch.messages.length === 0 ||
 			this.params.config.compressionOptions === undefined ||
 			this.params.config.compressionOptions.minimumBatchSizeInBytes >
 				batch.contentSizeInBytes ||
-			this.params.submitBatchFn === undefined
+			this.params.submitBatchFn === undefined ||
+			!this.params.groupingManager.groupedBatchingEnabled()
 		) {
 			// Nothing to do if the batch is empty or if compression is disabled or not supported, or if we don't need to compress
 			return batch;
@@ -459,7 +457,7 @@ export class Outbox {
 	 * @param batch - batch to be sent
 	 * @returns the clientSequenceNumber of the start of the batch, or undefined if nothing was sent
 	 */
-	private sendBatch(batch: IBatch) {
+	private sendBatch(batch: IBatch): number | undefined {
 		const length = batch.messages.length;
 		if (length === 0) {
 			return undefined; // Nothing submitted
@@ -505,9 +503,13 @@ export class Outbox {
 	}
 
 	/**
-	 * @returns A checkpoint object per batch that facilitates iterating over the batch messages when rolling back.
+	 * Gets a checkpoint object per batch that facilitates iterating over the batch messages when rolling back.
 	 */
-	public getBatchCheckpoints() {
+	public getBatchCheckpoints(): {
+		mainBatch: IBatchCheckpoint;
+		idAllocationBatch: IBatchCheckpoint;
+		blobAttachBatch: IBatchCheckpoint;
+	} {
 		// This variable is declared with a specific type so that we have a standard import of the IBatchCheckpoint type.
 		// When the type is inferred, the generated .d.ts uses a dynamic import which doesn't resolve.
 		const mainBatch: IBatchCheckpoint = this.mainBatch.checkpoint();

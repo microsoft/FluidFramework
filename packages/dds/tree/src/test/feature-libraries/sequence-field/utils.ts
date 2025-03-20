@@ -11,14 +11,15 @@ import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor
 import {
 	type ChangeAtomId,
 	type ChangeAtomIdMap,
+	type ChangeAtomIdRangeMap,
 	type ChangesetLocalId,
-	type DeltaFieldChanges,
 	type RevisionInfo,
 	type RevisionMetadataSource,
 	type RevisionTag,
 	type TaggedChange,
 	makeAnonChange,
 	mapTaggedChange,
+	newChangeAtomIdRangeMap,
 	revisionMetadataSourceFromInfo,
 	tagChange,
 	tagRollbackInverse,
@@ -29,6 +30,7 @@ import {
 	type CrossFieldManager,
 	type CrossFieldQuerySet,
 	CrossFieldTarget,
+	type FieldChangeDelta,
 	type NodeId,
 	type RebaseRevisionMetadata,
 	setInCrossFieldMap,
@@ -63,7 +65,6 @@ import {
 import {
 	type IdAllocator,
 	type Mutable,
-	RangeMap,
 	brand,
 	fail,
 	fakeIdAllocator,
@@ -492,7 +493,7 @@ export function checkDeltaEquality(actual: SF.Changeset, expected: SF.Changeset)
 	assertFieldChangesEqual(toDelta(actual), toDelta(expected));
 }
 
-export function toDelta(change: SF.Changeset): DeltaFieldChanges {
+export function toDelta(change: SF.Changeset): FieldChangeDelta {
 	deepFreeze(change);
 	return SF.sequenceFieldToDelta(change, TestNodeId.deltaFromChild);
 }
@@ -826,18 +827,18 @@ interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
 	srcQueries: CrossFieldQuerySet;
 	dstQueries: CrossFieldQuerySet;
 	isInvalidated: boolean;
-	mapSrc: Map<RevisionTag | undefined, RangeMap<T>>;
-	mapDst: Map<RevisionTag | undefined, RangeMap<T>>;
+	mapSrc: ChangeAtomIdRangeMap<T>;
+	mapDst: ChangeAtomIdRangeMap<T>;
 	reset: () => void;
 }
 
 function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
-	const srcQueries: CrossFieldQuerySet = new Map();
-	const dstQueries: CrossFieldQuerySet = new Map();
-	const mapSrc: Map<RevisionTag | undefined, RangeMap<T>> = new Map();
-	const mapDst: Map<RevisionTag | undefined, RangeMap<T>> = new Map();
+	const srcQueries: CrossFieldQuerySet = newChangeAtomIdRangeMap();
+	const dstQueries: CrossFieldQuerySet = newChangeAtomIdRangeMap();
+	const mapSrc = newChangeAtomIdRangeMap<T>();
+	const mapDst = newChangeAtomIdRangeMap<T>();
 
-	const getMap = (target: CrossFieldTarget): Map<RevisionTag | undefined, RangeMap<T>> =>
+	const getMap = (target: CrossFieldTarget): ChangeAtomIdRangeMap<T> =>
 		target === CrossFieldTarget.Source ? mapSrc : mapDst;
 
 	const getQueries = (target: CrossFieldTarget): CrossFieldQuerySet =>
@@ -860,8 +861,8 @@ function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 			if (addDependency) {
 				addCrossFieldQuery(getQueries(target), revision, id, count);
 			}
-			const rangeMap = getMap(target).get(revision) ?? new RangeMap<T>();
-			return rangeMap.get(id, count);
+			const rangeMap = getMap(target);
+			return rangeMap.getFirst({ revision, localId: id }, count);
 		},
 		set: (
 			target: CrossFieldTarget,
@@ -871,8 +872,11 @@ function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 			value: T,
 			invalidateDependents: boolean,
 		) => {
-			const queries = getQueries(target).get(revision);
-			if (invalidateDependents && queries?.get(id, count).value !== undefined) {
+			const queries = getQueries(target);
+			if (
+				invalidateDependents &&
+				queries.getFirst({ revision, localId: id }, count).value !== undefined
+			) {
 				table.isInvalidated = true;
 			}
 			setInCrossFieldMap(getMap(target), revision, id, count, value);

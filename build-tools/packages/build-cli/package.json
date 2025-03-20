@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-cli",
-	"version": "0.52.0",
+	"version": "0.55.0",
 	"description": "Build tools for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -37,9 +37,10 @@
 		"build:copy": "copyfiles -u 1 \"src/**/*.fsl\" lib",
 		"build:diagrams": "jssm-viz -i \"./src/machines/*.fsl\"",
 		"build:docs": "api-extractor run --local",
+		"build:esnext": "tsc",
 		"build:manifest": "oclif manifest",
 		"build:readme": "oclif readme --version 0.0.0 --multi --no-aliases",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"ci:build:docs": "api-extractor run",
@@ -55,8 +56,7 @@
 		"postpack": "npm run clean:manifest",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm run test",
-		"test:mocha": "mocha --forbid-only \"lib/test/**/*.test.*js\"",
-		"tsc": "tsc"
+		"test:mocha": "mocha --forbid-only \"lib/test/**/*.test.*js\""
 	},
 	"c8": {
 		"all": true,
@@ -80,6 +80,7 @@
 	},
 	"dependencies": {
 		"@andrewbranch/untar.js": "^1.0.3",
+		"@fluid-tools/build-infrastructure": "workspace:~",
 		"@fluid-tools/version-tools": "workspace:~",
 		"@fluidframework/build-tools": "workspace:~",
 		"@fluidframework/bundle-size-tools": "workspace:~",
@@ -246,6 +247,9 @@
 			},
 			"report": {
 				"description": "Report analysis about the codebase, like code coverage and bundle size measurements."
+			},
+			"vnext": {
+				"description": "Vnext commands are new implementations of standard flub commands using new infrastructure."
 			}
 		}
 	}

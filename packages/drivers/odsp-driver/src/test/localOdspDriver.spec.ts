@@ -23,6 +23,8 @@ import { LocalOdspDocumentService } from "../localOdspDriver/localOdspDocumentSe
 import { LocalOdspDocumentServiceFactory } from "../localOdspDriver/localOdspDocumentServiceFactory.js";
 import { LocalOdspDocumentStorageService } from "../localOdspDriver/localOdspDocumentStorageManager.js";
 
+import { _dirname } from "./dirname.cjs";
+
 /* eslint-enable import/no-internal-modules */
 
 describe("Local Odsp driver", () => {
@@ -50,7 +52,7 @@ describe("Local Odsp driver", () => {
 	};
 
 	const localSnapshot = fs.readFileSync(
-		`${__dirname}/../../src/test/localSnapshots/localSnapshot1.json`,
+		`${_dirname}/../../src/test/localSnapshots/localSnapshot1.json`,
 		{ encoding: "utf8" },
 	);
 
@@ -152,7 +154,7 @@ describe("Local Odsp driver", () => {
 
 		it("Delta storage service returns trailing ops", async () => {
 			const snapshotWithTrailingOps = fs.readFileSync(
-				`${__dirname}/../../src/test/localSnapshots/localSnapshot2.json`,
+				`${_dirname}/../../src/test/localSnapshots/localSnapshot2.json`,
 				{ encoding: "utf8" },
 			);
 			const service = new LocalOdspDocumentService(

@@ -8,6 +8,7 @@ export {
 	ISummarizerNodeRootContract,
 	ValidateSummaryResult,
 } from "./summarizerNodeUtils.js";
+
 export { IRootSummarizerNode, createRootSummarizerNode } from "./summarizerNode.js";
 export {
 	IRootSummarizerNodeWithGC,

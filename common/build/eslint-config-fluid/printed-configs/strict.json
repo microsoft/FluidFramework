@@ -1343,7 +1343,7 @@
             "error"
         ],
         "unicorn/no-array-push-push": [
-            "error"
+            "off"
         ],
         "unicorn/no-array-reduce": [
             "error"

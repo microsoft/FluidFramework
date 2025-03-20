@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
+import { TypedEventEmitter, performanceNow } from "@fluid-internal/client-utils";
 import {
 	IDeltaQueue,
 	IDeltaQueueEvents,
@@ -153,7 +153,7 @@ export class DeltaQueue<T>
 		count: number;
 		duration: number;
 	} {
-		const start = performance.now();
+		const start = performanceNow();
 		let count = 0;
 
 		// For grouping to work we must process all local messages immediately and in the single turn.
@@ -169,7 +169,7 @@ export class DeltaQueue<T>
 			this.emit("op", next);
 		}
 
-		const duration = performance.now() - start;
+		const duration = performanceNow() - start;
 		if (this.q.length === 0) {
 			this.emit("idle", count, duration);
 		}

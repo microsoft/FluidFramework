@@ -388,15 +388,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	implements ISharedSegmentSequence<T>
 {
 	/**
-	 * This promise is always immediately resolved, and awaiting it has no effect.
-	 * @deprecated SharedSegmentSequence no longer supports partial loading.
-	 * References to this promise may safely be deleted without affecting behavior.
-	 */
-	get loaded(): Promise<void> {
-		return Promise.resolve();
-	}
-
-	/**
 	 * This is a safeguard to avoid problematic reentrancy of local ops. This type of scenario occurs if the user of SharedString subscribes
 	 * to the `sequenceDelta` event and uses the callback for a local op to submit further local ops.
 	 * Historically (before 2.0.0-internal.6.1.0), doing so would result in eventual consistency issues or a corrupted document.
@@ -551,7 +542,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 		this.client.prependListener("delta", (opArgs, deltaArgs) => {
 			const event = new SequenceDeltaEventClass(opArgs, deltaArgs, this.client);
-			if (event.isLocal) {
+			if (event.isLocal && event.opArgs.rollback !== true) {
 				this.submitSequenceMessage(opArgs.op);
 			}
 			if (deltaArgs.deltaSegments.length > 0) {

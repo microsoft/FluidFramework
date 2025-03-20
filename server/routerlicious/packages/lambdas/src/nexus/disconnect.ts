@@ -127,18 +127,26 @@ function removeClientAndSendNotifications(
 			const client = clientMap.get(clientId);
 			const connectionTimestamp = connectionTimeMap.get(clientId);
 			if (client) {
-				collaborationSessionTracker.endClientSession(
-					{
-						clientId,
-						joinedTime: connectionTimestamp ?? 0,
-						isSummarizerClient: isSummarizer(client.details),
-						isWriteClient: isWriter(client.scopes, client.mode),
-					},
-					{
-						tenantId: room.tenantId,
-						documentId: room.documentId,
-					},
-				);
+				collaborationSessionTracker
+					.endClientSession(
+						{
+							clientId,
+							joinedTime: connectionTimestamp ?? 0,
+							isSummarizerClient: isSummarizer(client.details),
+							isWriteClient: isWriter(client.scopes, client.mode),
+						},
+						{
+							tenantId: room.tenantId,
+							documentId: room.documentId,
+						},
+					)
+					.catch((error) => {
+						Lumberjack.error(
+							"Failed to update collaboration session tracker for client disconnection",
+							{ messageMetaData },
+							error,
+						);
+					});
 			}
 		}
 	}

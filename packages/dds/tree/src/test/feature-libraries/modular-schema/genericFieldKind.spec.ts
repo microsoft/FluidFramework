@@ -7,7 +7,6 @@ import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
 import type { GenericChangeset, CrossFieldManager } from "../../../feature-libraries/index.js";
-import type { DeltaFieldChanges } from "../../../core/index.js";
 import { fakeIdAllocator, brand, idAllocatorFromMaxId } from "../../../util/index.js";
 import {
 	type EncodingTestData,
@@ -18,6 +17,7 @@ import {
 	testRevisionTagCodec,
 } from "../../utils.js";
 import {
+	type FieldChangeDelta,
 	type FieldChangeEncodingContext,
 	type NodeId,
 	type RebaseRevisionMetadata,
@@ -185,7 +185,7 @@ describe("GenericField", () => {
 			[2, nodeChange2],
 		]);
 
-		const expected: DeltaFieldChanges = {
+		const expected: FieldChangeDelta = {
 			local: [
 				{ count: 1, fields: TestNodeId.deltaFromChild(nodeChange1) },
 				{ count: 1 },
@@ -231,13 +231,25 @@ describe("GenericField", () => {
 		);
 	});
 
-	it("build child change", () => {
-		const change0 = genericChangeHandler.editor.buildChildChange(0, nodeId1);
-		const change1 = genericChangeHandler.editor.buildChildChange(1, nodeId2);
-		const change2 = genericChangeHandler.editor.buildChildChange(2, nodeId3);
-		assert.deepEqual(change0, newGenericChangeset([[0, nodeId1]]));
-		assert.deepEqual(change1, newGenericChangeset([[1, nodeId2]]));
-		assert.deepEqual(change2, newGenericChangeset([[2, nodeId3]]));
+	it("build empty child change", () => {
+		const change0 = genericChangeHandler.editor.buildChildChanges([]);
+		assert.deepEqual(change0, newGenericChangeset([]));
+	});
+
+	it("build child changes", () => {
+		const change0 = genericChangeHandler.editor.buildChildChanges([
+			[0, nodeId1],
+			[1, nodeId2],
+			[2, nodeId3],
+		]);
+		assert.deepEqual(
+			change0,
+			newGenericChangeset([
+				[0, nodeId1],
+				[1, nodeId2],
+				[2, nodeId3],
+			]),
+		);
 	});
 
 	it("relevantRemovedRoots", () => {

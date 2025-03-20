@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
@@ -11,6 +11,7 @@ import {
 	IBatchMessage,
 	IContainerContext,
 } from "@fluidframework/container-definitions/internal";
+import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import {
 	IDocumentMessage,
 	MessageType,
@@ -43,6 +44,7 @@ import {
 
 function typeFromBatchedOp(op: IBatchMessage) {
 	assert(op.contents !== undefined);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	return JSON.parse(op.contents).type as string;
 }
 
@@ -54,14 +56,14 @@ describe("Outbox", () => {
 		batchesSubmitted: { messages: IBatchMessage[]; referenceSequenceNumber?: number }[];
 		batchesCompressed: IBatch[];
 		batchesSplit: IBatch[];
-		individualOpsSubmitted: any[];
+		individualOpsSubmitted: unknown[];
 		pendingOpContents: Partial<IPendingMessage & { batchStartCsn: number }>[];
 		opsSubmitted: number;
 		opsResubmitted: number;
 		isReentrant: boolean;
 	}
 	// state will be set to defaults in beforeEach
-	const state: State = {} as any;
+	const state: State = {} as unknown as State;
 
 	const mockLogger = new MockLogger();
 	const getMockDeltaManager = (): Partial<
@@ -80,7 +82,7 @@ describe("Outbox", () => {
 			>,
 			clientDetails: { capabilities: { interactive: true } },
 			updateDirtyContainerState: (_dirty: boolean) => {},
-			submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => {
+			submitFn: (type: MessageType, contents: unknown, batch: boolean, appData?: unknown) => {
 				state.individualOpsSubmitted.push({ type, contents, batch, appData });
 				state.opsSubmitted++;
 				return state.opsSubmitted;
@@ -99,7 +101,7 @@ describe("Outbox", () => {
 		>,
 		clientDetails: { capabilities: { interactive: true } },
 		updateDirtyContainerState: (_dirty: boolean) => {},
-		submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => {
+		submitFn: (type: MessageType, contents: unknown, batch: boolean, appData?: unknown) => {
 			state.individualOpsSubmitted.push({ type, contents, batch, appData });
 			state.opsSubmitted++;
 			return state.opsSubmitted;
@@ -108,7 +110,7 @@ describe("Outbox", () => {
 	});
 
 	const getMockCompressor = (): Partial<OpCompressor> => ({
-		compressBatch: (batch: IBatch): IBatch => {
+		compressBatch: (batch: IBatch<[BatchMessage]>): IBatch<[BatchMessage]> => {
 			state.batchesCompressed.push(batch);
 			return batch;
 		},
@@ -129,21 +131,19 @@ describe("Outbox", () => {
 	const getMockPendingStateManager = (): Partial<PendingStateManager> => ({
 		// Similar implementation as the real PSM - queue each message 1-by-1
 		onFlushBatch: (batch: BatchMessage[], clientSequenceNumber: number | undefined): void => {
-			batch.forEach(
-				({
-					contents: content = "",
+			for (const {
+				contents: content = "",
+				referenceSequenceNumber,
+				metadata: opMetadata,
+				localOpMetadata,
+			} of batch)
+				state.pendingOpContents.push({
+					content,
 					referenceSequenceNumber,
-					metadata: opMetadata,
+					opMetadata,
 					localOpMetadata,
-				}) =>
-					state.pendingOpContents.push({
-						content,
-						referenceSequenceNumber,
-						opMetadata,
-						localOpMetadata,
-						batchStartCsn: clientSequenceNumber ?? -1,
-					}),
-			);
+					batchStartCsn: clientSequenceNumber ?? -1,
+				});
 		},
 	});
 
@@ -231,7 +231,6 @@ describe("Outbox", () => {
 			groupingManager: new OpGroupingManager(
 				params.opGroupingConfig ?? {
 					groupedBatchingEnabled: false,
-					opCountThreshold: Infinity,
 				},
 				mockLogger,
 			),
@@ -243,6 +242,13 @@ describe("Outbox", () => {
 			closeContainer: (error?: ICriticalContainerError) => {},
 		});
 	};
+
+	const opGroupingManager = new OpGroupingManager(
+		{
+			groupedBatchingEnabled: true,
+		},
+		mockLogger,
+	);
 
 	beforeEach(() => {
 		state.deltaManagerFlushCalls = 0;
@@ -324,7 +330,6 @@ describe("Outbox", () => {
 			context: getMockContext(),
 			opGroupingConfig: {
 				groupedBatchingEnabled: true,
-				opCountThreshold: 2,
 			},
 		});
 		currentSeqNumbers.referenceSequenceNumber = 0;
@@ -350,12 +355,11 @@ describe("Outbox", () => {
 		);
 	});
 
-	it("Batch ID added when applicable", () => {
+	it("Batch ID added when applicable (ungrouped batch)", () => {
 		const outbox = getOutbox({
 			context: getMockContext(),
 			opGroupingConfig: {
-				groupedBatchingEnabled: true,
-				opCountThreshold: 3,
+				groupedBatchingEnabled: false,
 			},
 		});
 		// Flush 1 - resubmit multi-message batch including ID Allocation
@@ -493,12 +497,15 @@ describe("Outbox", () => {
 		);
 	});
 
-	it("Compress only if compression is enabled", () => {
+	it("Compress if compression and grouping are enabled", () => {
 		const outbox = getOutbox({
 			context: getMockContext(),
 			compressionOptions: {
 				minimumBatchSizeInBytes: 1,
 				compressionAlgorithm: CompressionAlgorithms.lz4,
+			},
+			opGroupingConfig: {
+				groupedBatchingEnabled: true,
 			},
 		});
 
@@ -516,24 +523,19 @@ describe("Outbox", () => {
 
 		outbox.flush();
 
-		assert.equal(state.opsSubmitted, messages.length);
+		const groupedMessages = opGroupingManager.groupBatch(
+			toBatch([messages[0], messages[1], messages[3]]),
+		);
+
+		// Submits 2 ops, one for the id allocation and one for the grouped batch
+		assert.equal(state.opsSubmitted, 2);
 		assert.equal(state.batchesSubmitted.length, 2);
 		assert.equal(state.individualOpsSubmitted.length, 0);
 		assert.equal(state.deltaManagerFlushCalls, 0);
-		assert.deepEqual(state.batchesCompressed, [
-			toBatch([messages[2]]),
-			toBatch([messages[0], messages[1], messages[3]]),
-		]);
+		assert.deepEqual(state.batchesCompressed, [toBatch([messages[2]]), groupedMessages]);
 		assert.deepEqual(
 			state.batchesSubmitted.map((x) => x.messages),
-			[
-				[batchedMessage(messages[2])],
-				[
-					batchedMessage(messages[0], true),
-					batchedMessage(messages[1]),
-					batchedMessage(messages[3], false),
-				],
-			],
+			[[batchedMessage(messages[2])], [batchedMessage(groupedMessages.messages[0])]],
 		);
 
 		// Note the expected CSN here is fixed to the batch's starting CSN
@@ -619,13 +621,16 @@ describe("Outbox", () => {
 		);
 	});
 
-	it("Throws at flush, when compression is enabled and the compressed batch is still larger than the threshold", () => {
+	it("Throws at flush, when compression and grouping are enabled and the compressed batch is still larger than the threshold", () => {
 		const outbox = getOutbox({
 			context: getMockContext(),
 			maxBatchSize: 1,
 			compressionOptions: {
 				minimumBatchSizeInBytes: 1,
 				compressionAlgorithm: CompressionAlgorithms.lz4,
+			},
+			opGroupingConfig: {
+				groupedBatchingEnabled: true,
 			},
 		});
 
@@ -641,7 +646,9 @@ describe("Outbox", () => {
 
 		assert.throws(() => outbox.flush());
 		// The batch is compressed
-		assert.deepEqual(state.batchesCompressed, [toBatch(messages)]);
+		assert.deepEqual(state.batchesCompressed, [
+			opGroupingManager.groupBatch(toBatch(messages)),
+		]);
 		// The batch is not persisted
 		assert.deepEqual(state.pendingOpContents, []);
 	});
@@ -656,6 +663,9 @@ describe("Outbox", () => {
 			},
 			enableChunking: true,
 			chunkSizeInBytes: 2,
+			opGroupingConfig: {
+				groupedBatchingEnabled: true,
+			},
 		});
 
 		const messages = [
@@ -671,24 +681,16 @@ describe("Outbox", () => {
 		outbox.submit(messages[3]);
 
 		outbox.flush();
-		assert.deepEqual(state.batchesCompressed, [
-			toBatch([messages[2]]),
+
+		const groupedMessages = opGroupingManager.groupBatch(
 			toBatch([messages[0], messages[1], messages[3]]),
-		]);
-		assert.deepEqual(state.batchesSplit, [
-			toBatch([messages[2]]),
-			toBatch([messages[0], messages[1], messages[3]]),
-		]);
+		);
+
+		assert.deepEqual(state.batchesCompressed, [toBatch([messages[2]]), groupedMessages]);
+		assert.deepEqual(state.batchesSplit, [toBatch([messages[2]]), groupedMessages]);
 		assert.deepEqual(
 			state.batchesSubmitted.map((x) => x.messages),
-			[
-				[batchedMessage(messages[2])],
-				[
-					batchedMessage(messages[0], true),
-					batchedMessage(messages[1]),
-					batchedMessage(messages[3], false),
-				],
-			],
+			[[batchedMessage(messages[2])], [batchedMessage(groupedMessages.messages[0])]],
 		);
 
 		// Note the expected CSN here is fixed to the batch's starting CSN
@@ -712,7 +714,7 @@ describe("Outbox", () => {
 		);
 	});
 
-	it("Does not chunk when compression is enabled, compressed batch is smaller than the threshold and chunking is enabled", () => {
+	it("Does not chunk when compression and grouping are enabled, compressed batch is smaller than the threshold and chunking is enabled", () => {
 		const outbox = getOutbox({
 			context: getMockContext(),
 			maxBatchSize: 1,
@@ -722,6 +724,9 @@ describe("Outbox", () => {
 			},
 			enableChunking: true,
 			chunkSizeInBytes: 10000,
+			opGroupingConfig: {
+				groupedBatchingEnabled: true,
+			},
 		});
 
 		const messages = [
@@ -737,21 +742,16 @@ describe("Outbox", () => {
 		outbox.submit(messages[3]);
 
 		outbox.flush();
-		assert.deepEqual(state.batchesCompressed, [
-			toBatch([messages[2]]),
+
+		const groupedMessages = opGroupingManager.groupBatch(
 			toBatch([messages[0], messages[1], messages[3]]),
-		]);
+		);
+
+		assert.deepEqual(state.batchesCompressed, [toBatch([messages[2]]), groupedMessages]);
 		assert.deepEqual(state.batchesSplit, []);
 		assert.deepEqual(
 			state.batchesSubmitted.map((x) => x.messages),
-			[
-				[batchedMessage(messages[2])],
-				[
-					batchedMessage(messages[0], true),
-					batchedMessage(messages[1]),
-					batchedMessage(messages[3], false),
-				],
-			],
+			[[batchedMessage(messages[2])], [batchedMessage(groupedMessages.messages[0])]],
 		);
 	});
 
@@ -805,7 +805,7 @@ describe("Outbox", () => {
 		]);
 	});
 
-	[
+	for (const ops of [
 		[
 			{
 				...createMessage(ContainerMessageType.IdAllocation, "0"),
@@ -834,7 +834,7 @@ describe("Outbox", () => {
 				referenceSequenceNumber: 1,
 			},
 		],
-	].forEach((ops: BatchMessage[]) => {
+	]) {
 		it("Flushes all batches when an out of order message is detected in either flows", () => {
 			const outbox = getOutbox({ context: getMockContext() });
 			for (const op of ops) {
@@ -860,7 +860,7 @@ describe("Outbox", () => {
 				},
 			]);
 		});
-	});
+	}
 
 	it("Does not flush the batch when an out of order message is detected, if configured", () => {
 		const outbox = getOutbox({
@@ -927,9 +927,9 @@ describe("Outbox", () => {
 		}
 
 		mockLogger.assertMatch(
-			new Array(3).fill({
+			Array.from({ length: 3 }).fill({
 				eventName: "Outbox:ReferenceSequenceNumberMismatch",
-			}),
+			}) as Omit<ITelemetryBaseEvent, "category">[],
 		);
 	});
 
@@ -1005,7 +1005,6 @@ describe("Outbox", () => {
 				context: getMockContext(),
 				opGroupingConfig: {
 					groupedBatchingEnabled: false,
-					opCountThreshold: 2,
 				},
 			});
 
@@ -1027,7 +1026,6 @@ describe("Outbox", () => {
 				context: getMockContext(),
 				opGroupingConfig: {
 					groupedBatchingEnabled: true,
-					opCountThreshold: 2,
 				},
 			});
 
@@ -1051,7 +1049,6 @@ describe("Outbox", () => {
 				context: getMockContext(),
 				opGroupingConfig: {
 					groupedBatchingEnabled: true,
-					opCountThreshold: 2,
 				},
 			});
 
@@ -1073,7 +1070,6 @@ describe("Outbox", () => {
 				context: getMockContext(),
 				opGroupingConfig: {
 					groupedBatchingEnabled: false,
-					opCountThreshold: 2,
 				},
 			});
 
@@ -1095,7 +1091,6 @@ describe("Outbox", () => {
 				context: getMockContext(),
 				opGroupingConfig: {
 					groupedBatchingEnabled: true,
-					opCountThreshold: 2,
 				},
 			});
 

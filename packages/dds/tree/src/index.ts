@@ -12,15 +12,39 @@ export {
 	type RevertibleFactory,
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
-	cloneRevertibles,
 } from "./core/index.js";
 
-export type {
-	Listeners,
-	IsListener,
-	Listenable,
-	Off,
+import type {
+	Listeners as EventListeners,
+	IsListener as EventIsListener,
+	Listenable as EventListenable,
+	Off as EventOff,
 } from "@fluidframework/core-interfaces";
+
+/**
+ * {@inheritdoc @fluidframework/core-interfaces#Listeners}
+ * @public
+ * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
+ */
+export type Listeners<T extends object> = EventListeners<T>;
+/**
+ * {@inheritdoc @fluidframework/core-interfaces#IsListener}
+ * @public
+ * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
+ */
+export type IsListener<T> = EventIsListener<T>;
+/**
+ * {@inheritdoc @fluidframework/core-interfaces#Listenable}
+ * @public
+ * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
+ */
+export type Listenable<T extends object> = EventListenable<T>;
+/**
+ * {@inheritdoc @fluidframework/core-interfaces#Off}
+ * @public
+ * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
+ */
+export type Off = EventOff;
 
 export {
 	TreeStatus,
@@ -37,10 +61,7 @@ export {
 	type SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
 	Tree,
-	type TransactionConstraint,
-	type NodeInDocumentConstraint,
 	type RunTransaction,
-	rollback,
 	type ForestOptions,
 	getBranch,
 	type BranchableTree,
@@ -49,13 +70,6 @@ export {
 	type ViewContent,
 	TreeAlpha,
 	independentView,
-	type RunTransactionParams,
-	type VoidTransactionCallbackStatus,
-	type TransactionCallbackStatus,
-	type TransactionResult,
-	type TransactionResultExt,
-	type TransactionResultSuccess,
-	type TransactionResultFailed,
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
@@ -108,6 +122,7 @@ export {
 	// Can not be moved to internalTypes since doing so causes app code to throw errors like:
 	// error TS2742: The inferred type of 'Inventory' cannot be named without a reference to '../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.
 	type AllowedTypes,
+	type ImplicitAllowedTypesUnsafe,
 	type TreeObjectNodeUnsafe,
 	type InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
 	type TreeArrayNodeUnsafe,
@@ -180,6 +195,7 @@ export {
 	type SimpleMapNodeSchema,
 	type SimpleArrayNodeSchema,
 	type SimpleObjectNodeSchema,
+	type SimpleObjectFieldSchema,
 	normalizeAllowedTypes,
 	getSimpleSchema,
 	type ReadonlyArrayNode,
@@ -190,10 +206,31 @@ export {
 	asTreeViewAlpha,
 	type NodeSchemaOptions,
 	type NodeSchemaMetadata,
+	type schemaStatics,
+	type ITreeAlpha,
+	type TransactionConstraint,
+	type NodeInDocumentConstraint,
+	type RunTransactionParams,
+	type VoidTransactionCallbackStatus,
+	type TransactionCallbackStatus,
+	type TransactionResult,
+	type TransactionResultExt,
+	type TransactionResultSuccess,
+	type TransactionResultFailed,
+	rollback,
+	generateSchemaFromSimpleSchema,
+	evaluateLazySchema,
+	replaceConciseTreeHandles,
+	replaceHandles,
+	replaceVerboseTreeHandles,
+	type HandleConverter,
+	type LeafSchema,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
 	configuredSharedTree,
+	SharedTreeAttributes,
+	SharedTreeFactoryType,
 } from "./treeFactory.js";
 
 export {
@@ -205,15 +242,27 @@ export {
 export { noopValidator } from "./codec/index.js";
 export { typeboxValidator } from "./external-utilities/index.js";
 
-export {
-	type RestrictiveReadonlyRecord,
-	type RestrictiveStringRecord,
-	type MakeNominal,
-	type IsUnion,
-	type UnionToIntersection,
-	type UnionToTuple,
-	type PopUnion,
+export type {
+	// Type Testing
+	requireTrue,
+	requireFalse,
+	requireAssignableTo,
+	areSafelyAssignable,
+	isAssignableTo,
+	isAny,
+	eitherIsAny,
+	// Other
+	RestrictiveReadonlyRecord,
+	RestrictiveStringRecord,
+	MakeNominal,
+	IsUnion,
+	UnionToIntersection,
+	UnionToTuple,
+	PopUnion,
+	JsonCompatible,
+	JsonCompatibleObject,
 } from "./util/index.js";
+export { cloneWithReplacements } from "./util/index.js";
 
 import * as InternalTypes from "./internalTypes.js";
 export {
@@ -229,4 +278,5 @@ export {
 // The inferred type of 'NodeMap' cannot be named without a reference to '../../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.
 export type { MapNodeInsertableData } from "./simple-tree/index.js";
 
-export type { JsonCompatible, JsonCompatibleObject } from "./util/index.js";
+export { JsonAsTree } from "./jsonDomainSchema.js";
+export { FluidSerializableAsTree } from "./serializableDomainSchema.js";

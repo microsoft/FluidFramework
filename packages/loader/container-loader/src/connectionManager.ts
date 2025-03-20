@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
+import { TypedEventEmitter, performanceNow } from "@fluid-internal/client-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IDeltaQueue, ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
 import {
@@ -583,7 +583,7 @@ export class ConnectionManager implements IConnectionManager {
 
 		let delayMs = InitialReconnectDelayInMs;
 		let connectRepeatCount = 0;
-		const connectStartTime = performance.now();
+		const connectStartTime = performanceNow();
 		let lastError: unknown;
 
 		const abortController = new AbortController();
@@ -604,7 +604,7 @@ export class ConnectionManager implements IConnectionManager {
 				this.logger.sendTelemetryEvent({
 					eventName: "ConnectionAttemptCancelled",
 					attempts: connectRepeatCount,
-					duration: formatTick(performance.now() - connectStartTime),
+					duration: formatTick(performanceNow() - connectStartTime),
 					connectionEstablished: false,
 				});
 				return;
@@ -675,7 +675,7 @@ export class ConnectionManager implements IConnectionManager {
 						attempts: connectRepeatCount,
 						delay: delayMs, // milliseconds
 						eventName: "DeltaConnectionFailureToConnect",
-						duration: formatTick(performance.now() - connectStartTime),
+						duration: formatTick(performanceNow() - connectStartTime),
 					},
 					origError,
 				);
@@ -688,7 +688,7 @@ export class ConnectionManager implements IConnectionManager {
 					return;
 				}
 
-				const waitStartTime = performance.now();
+				const waitStartTime = performanceNow();
 				const retryDelayFromError = getRetryDelayFromError(origError);
 				// If the error told us to wait or browser signals us that we are offline, then calculate the time we
 				// want to wait for before retrying. then we wait for that time. If the error didn't tell us to wait,
@@ -714,7 +714,7 @@ export class ConnectionManager implements IConnectionManager {
 				await waitForOnline();
 				this.logger.sendPerformanceEvent({
 					eventName: "WaitBetweenConnectionAttempts",
-					duration: performance.now() - waitStartTime,
+					duration: performanceNow() - waitStartTime,
 					details: JSON.stringify({
 						retryDelayFromError,
 						delayMs,
@@ -730,7 +730,7 @@ export class ConnectionManager implements IConnectionManager {
 				{
 					eventName: "MultipleDeltaConnectionFailures",
 					attempts: connectRepeatCount,
-					duration: formatTick(performance.now() - connectStartTime),
+					duration: formatTick(performanceNow() - connectStartTime),
 				},
 				lastError,
 			);
@@ -742,7 +742,7 @@ export class ConnectionManager implements IConnectionManager {
 			this.logger.sendTelemetryEvent({
 				eventName: "ConnectionAttemptCancelled",
 				attempts: connectRepeatCount,
-				duration: formatTick(performance.now() - connectStartTime),
+				duration: formatTick(performanceNow() - connectStartTime),
 				connectionEstablished: true,
 			});
 			return;

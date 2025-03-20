@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { ContainerMessageType } from "../../messageTypes.js";
 import type { IBatchMetadata } from "../../metadata.js";
@@ -23,18 +23,20 @@ describe("BatchManager", () => {
 		canRebase: true,
 	};
 
-	const generateStringOfSize = (sizeInBytes: number): string =>
-		new Array(sizeInBytes + 1).join("0");
+	const generateStringOfSize = (sizeInBytes: number): string => "0".repeat(sizeInBytes);
 
 	const smallMessage = (): BatchMessage =>
 		({
 			contents: generateStringOfSize(smallMessageSize),
 			type: ContainerMessageType.FluidDataStoreOp,
-		}) as any as BatchMessage;
+		}) as unknown as BatchMessage;
 
 	it("BatchManager: 'infinity' hard limit allows everything", () => {
-		const message = { contents: generateStringOfSize(1024) } as any as BatchMessage;
-		const batchManager = new BatchManager({ ...defaultOptions, hardLimit: Infinity });
+		const message = { contents: generateStringOfSize(1024) } as unknown as BatchMessage;
+		const batchManager = new BatchManager({
+			...defaultOptions,
+			hardLimit: Number.POSITIVE_INFINITY,
+		});
 
 		for (let i = 1; i <= 10; i++) {
 			assert.equal(batchManager.push(message, /* reentrant */ false), true);
@@ -42,7 +44,7 @@ describe("BatchManager", () => {
 		}
 	});
 
-	[true, false].forEach((includeBatchId) =>
+	for (const includeBatchId of [true, false])
 		it(`Batch metadata is set correctly [with${includeBatchId ? "" : "out"} batchId]`, () => {
 			const batchManager = new BatchManager(defaultOptions);
 			const batchId = includeBatchId ? "BATCH_ID" : undefined;
@@ -92,8 +94,7 @@ describe("BatchManager", () => {
 					includeBatchId ? { batchId } : undefined, // batchId propertly should be omitted (v. set to undefined) if not provided
 				],
 			);
-		}),
-	);
+		});
 
 	it("BatchId Format", () => {
 		const clientId = "3627a2a9-963f-4e3b-a4d2-a31b1267ef29";
@@ -159,7 +160,7 @@ describe("BatchManager", () => {
 				{
 					contents: undefined,
 					type: ContainerMessageType.FluidDataStoreOp,
-				} as any as BatchMessage,
+				} as unknown as BatchMessage,
 				/* reentrant */ false,
 			); // empty op
 		}

@@ -28,10 +28,7 @@ export type {
 	IProtocolState,
 	IQuorum,
 	IQuorumClients,
-	IQuorumClientsEvents,
-	IQuorumEvents,
 	IQuorumProposals,
-	IQuorumProposalsEvents,
 	ISequencedProposal,
 } from "./consensus.js";
 export type { IsoDate } from "./date.js";
@@ -81,11 +78,5 @@ export type {
 	SummaryTypeNoHandle,
 } from "./summary.js";
 export { SummaryType } from "./summary.js";
-export type {
-	IActorClient,
-	ISummaryTokenClaims,
-	ITokenClaims,
-	ITokenProvider,
-	ITokenService,
-} from "./tokens.js";
+export type { ITokenClaims } from "./tokens.js";
 export type { IUser } from "./users.js";

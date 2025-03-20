@@ -49,7 +49,7 @@ const change2Inverted = inlineRevision(
 );
 
 const changeWithChildChange = inlineRevision(
-	optionalFieldEditor.buildChildChange(0, nodeChange1),
+	optionalFieldEditor.buildChildChanges([[0, nodeChange1]]),
 	tag1,
 );
 

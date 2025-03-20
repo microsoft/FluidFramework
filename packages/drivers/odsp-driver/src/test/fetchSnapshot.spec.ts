@@ -25,8 +25,8 @@ import { convertToCompactSnapshot } from "../compactSnapshotWriter.js";
 import { HostStoragePolicyInternal } from "../contracts.js";
 import { createOdspUrl } from "../createOdspUrl.js";
 import { EpochTracker } from "../epochTracker.js";
-import * as fetchSnapshotImport from "../fetchSnapshot.js";
-import { ISnapshotRequestAndResponseOptions } from "../fetchSnapshot.js";
+import { downloadSnapshot, ISnapshotRequestAndResponseOptions } from "../fetchSnapshot.js";
+import { mockify } from "../mockify.js";
 import { LocalPersistentCache, NonPersistentCache } from "../odspCache.js";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
@@ -139,7 +139,7 @@ describe("Tests1 for snapshot fetch", () => {
 			_response: Promise<ISnapshotRequestAndResponseOptions>,
 			callback: () => Promise<T>,
 		): Promise<T> {
-			const getDownloadSnapshotStub = stub(fetchSnapshotImport, "downloadSnapshot");
+			const getDownloadSnapshotStub = stub(downloadSnapshot, mockify.key);
 			getDownloadSnapshotStub.returns(_response);
 			try {
 				return await callback();
@@ -181,7 +181,7 @@ describe("Tests1 for snapshot fetch", () => {
 			_response: Promise<ISnapshotRequestAndResponseOptions>,
 			callback: () => Promise<T>,
 		): Promise<T> {
-			const getDownloadSnapshotStub = stub(fetchSnapshotImport, "downloadSnapshot");
+			const getDownloadSnapshotStub = stub(downloadSnapshot, mockify.key);
 			getDownloadSnapshotStub.returns(_response);
 			try {
 				return await callback();
@@ -222,7 +222,7 @@ describe("Tests1 for snapshot fetch", () => {
 			_response: Promise<ISnapshotRequestAndResponseOptions>,
 			callback: () => Promise<T>,
 		): Promise<T> {
-			const getDownloadSnapshotStub = stub(fetchSnapshotImport, "downloadSnapshot");
+			const getDownloadSnapshotStub = stub(downloadSnapshot, mockify.key);
 			getDownloadSnapshotStub.returns(_response);
 			try {
 				return await callback();
@@ -270,7 +270,7 @@ describe("Tests1 for snapshot fetch", () => {
 			_response: Promise<ISnapshotRequestAndResponseOptions>,
 			callback: () => Promise<T>,
 		): Promise<T> {
-			const getDownloadSnapshotStub = stub(fetchSnapshotImport, "downloadSnapshot");
+			const getDownloadSnapshotStub = stub(downloadSnapshot, mockify.key);
 			getDownloadSnapshotStub.returns(_response);
 			try {
 				return await callback();
@@ -336,7 +336,7 @@ describe("Tests1 for snapshot fetch", () => {
 			_response: Promise<ISnapshotRequestAndResponseOptions>,
 			callback: () => Promise<T>,
 		): Promise<T> {
-			const getDownloadSnapshotStub = stub(fetchSnapshotImport, "downloadSnapshot");
+			const getDownloadSnapshotStub = stub(downloadSnapshot, mockify.key);
 			getDownloadSnapshotStub.returns(_response);
 			try {
 				return await callback();
@@ -401,7 +401,7 @@ describe("Tests1 for snapshot fetch", () => {
 			_response: Promise<ISnapshotRequestAndResponseOptions>,
 			callback: () => Promise<T>,
 		): Promise<T> {
-			const getDownloadSnapshotStub = stub(fetchSnapshotImport, "downloadSnapshot");
+			const getDownloadSnapshotStub = stub(downloadSnapshot, mockify.key);
 			getDownloadSnapshotStub.returns(_response);
 			try {
 				return await callback();
@@ -455,7 +455,7 @@ describe("Tests1 for snapshot fetch", () => {
 			_response: Promise<ISnapshotRequestAndResponseOptions>,
 			callback: () => Promise<T>,
 		): Promise<T> {
-			const getDownloadSnapshotStub = stub(fetchSnapshotImport, "downloadSnapshot");
+			const getDownloadSnapshotStub = stub(downloadSnapshot, mockify.key);
 			getDownloadSnapshotStub.returns(_response);
 			try {
 				return await callback();

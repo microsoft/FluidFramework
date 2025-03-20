@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -35,6 +35,7 @@ import {
 	IGarbageCollectionDetailsBase,
 	SummarizeInternalFn,
 	channelsTreeName,
+	type IContainerRuntimeBase,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -167,14 +168,14 @@ describe("Data Store Context Tests", () => {
 				try {
 					await localDataStoreContext.realize();
 					assert.fail("realize should have thrown an error due to empty pkg array");
-				} catch (e) {
-					assert(isFluidError(e), "Expected a valid Fluid Error to be thrown");
+				} catch (error) {
+					assert(isFluidError(error), "Expected a valid Fluid Error to be thrown");
 					assert.equal(
-						e.errorType,
+						error.errorType,
 						ContainerErrorTypes.dataProcessingError,
 						"Error should be a DataProcessingError",
 					);
-					const props = e.getTelemetryProperties();
+					const props = error.getTelemetryProperties();
 					assert.strictEqual(
 						(props.fullPackageName as Tagged<TelemetryBaseEventPropertyType>)?.value,
 						fullPackageName.join("/"),
@@ -579,7 +580,7 @@ describe("Data Store Context Tests", () => {
 			parentContext = {
 				IFluidDataStoreRegistry: registry,
 				clientDetails: {} as unknown as IFluidParentContext["clientDetails"],
-				containerRuntime: parentContext as any,
+				containerRuntime: parentContext as unknown as IContainerRuntimeBase,
 			} satisfies Partial<IFluidParentContext> as unknown as IFluidParentContext;
 		});
 
@@ -1118,14 +1119,16 @@ describe("Data Store Context Tests", () => {
 					});
 
 					const dataStore = await factory.instantiateDataStore(localDataStoreContext, false);
-					await localDataStoreContext.attachRuntime(factory, dataStore).catch((error) => {
-						assert.strictEqual(
-							error.message,
-							"Registry does not contain entry for the package",
-							"Unexpected exception thrown",
-						);
-						exceptionOccurred = true;
-					});
+					await localDataStoreContext
+						.attachRuntime(factory, dataStore)
+						.catch((error: Error) => {
+							assert.strictEqual(
+								error.message,
+								"Registry does not contain entry for the package",
+								"Unexpected exception thrown",
+							);
+							exceptionOccurred = true;
+						});
 					assert.strictEqual(
 						exceptionOccurred,
 						true,
@@ -1151,14 +1154,16 @@ describe("Data Store Context Tests", () => {
 					});
 
 					const dataStore = await factory.instantiateDataStore(localDataStoreContext, false);
-					await localDataStoreContext.attachRuntime(factory, dataStore).catch((error) => {
-						assert.strictEqual(
-							error.message,
-							"Simulating failure when initializing EntryPoint",
-							"Unexpected exception thrown",
-						);
-						exceptionOccurred = true;
-					});
+					await localDataStoreContext
+						.attachRuntime(factory, dataStore)
+						.catch((error: Error) => {
+							assert.strictEqual(
+								error.message,
+								"Simulating failure when initializing EntryPoint",
+								"Unexpected exception thrown",
+							);
+							exceptionOccurred = true;
+						});
 					assert.strictEqual(
 						exceptionOccurred,
 						true,

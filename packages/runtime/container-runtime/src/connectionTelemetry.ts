@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "@fluid-internal/client-utils";
+import { performanceNow } from "@fluid-internal/client-utils";
 import { IDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
@@ -36,13 +37,21 @@ export const latencyThreshold = 5000;
 // 3.	Op received from service back (pushed to inbound queue).
 // 4.	Op is processed.
 interface IOpPerfTelemetryProperties {
-	/** Measure time between (1) and (2) - Measure time outbound op is sitting in queue due to active batch */
+	/**
+	 * Measure time between (1) and (2) - Measure time outbound op is sitting in queue due to active batch
+	 */
 	durationOutboundBatching: number; // was durationOutboundQueue in previous versions
-	/** Measure time between (2) and (3) - Track how long it took for op to be acked by service */
+	/**
+	 * Measure time between (2) and (3) - Track how long it took for op to be acked by service
+	 */
 	durationNetwork: number; // was durationInboundQueue
-	/** Measure time between (3) and (4) - Time between DM's inbound "push" event until DM's "op" event */
+	/**
+	 * Measure time between (3) and (4) - Time between DM's inbound "push" event until DM's "op" event
+	 */
 	durationInboundToProcessing: number;
-	/** Length of the DeltaManager's inbound queue at the time of the DM's inbound "push" event (3) */
+	/**
+	 * Length of the DeltaManager's inbound queue at the time of the DM's inbound "push" event (3)
+	 */
 	lengthInboundQueue: number;
 }
 
@@ -50,11 +59,17 @@ interface IOpPerfTelemetryProperties {
  * Timings collected at various moments during the op processing.
  */
 interface IOpPerfTimings {
-	/** Starting time for (1) */
+	/**
+	 * Starting time for (1)
+	 */
 	submitOpEventTime: number;
-	/** Starting time for (2) */
+	/**
+	 * Starting time for (2)
+	 */
 	outboundPushEventTime: number;
-	/** Starting time for (3) */
+	/**
+	 * Starting time for (3)
+	 */
 	inboundPushEventTime: number;
 }
 
@@ -77,13 +92,17 @@ class OpPerfTelemetry {
 
 	private firstConnection = true;
 	private connectionOpSeqNumber: number | undefined;
-	private readonly bootTime = performance.now();
+	private readonly bootTime = performanceNow();
 	private connectionStartTime = 0;
 	private gap = 0;
 
-	/** Count of no-ops sent by this client. This variable is reset everytime the OpStats sampled event is logged */
+	/**
+	 * Count of no-ops sent by this client. This variable is reset everytime the OpStats sampled event is logged
+	 */
 	private noOpCountForTelemetry = 0;
-	/** Cumulative size of the ops processed by this client. This variable is reset everytime the OpStats sampled event is logged */
+	/**
+	 * Cumulative size of the ops processed by this client. This variable is reset everytime the OpStats sampled event is logged
+	 */
 	private processedOpSizeForTelemetry = 0;
 
 	private readonly logger: ITelemetryLoggerExt;
@@ -185,7 +204,7 @@ class OpPerfTelemetry {
 			if (opsBehind !== undefined) {
 				this.connectionOpSeqNumber = this.deltaManager.lastKnownSeqNumber;
 				this.gap = opsBehind;
-				this.connectionStartTime = performance.now();
+				this.connectionStartTime = performanceNow();
 
 				// We might be already up-today. If so, report it right away.
 				if (this.gap <= 0) {
@@ -283,11 +302,11 @@ class OpPerfTelemetry {
 		});
 	}
 
-	private reportGettingUpToDate() {
+	private reportGettingUpToDate(): void {
 		this.connectionOpSeqNumber = undefined;
 		this.logger.sendPerformanceEvent({
 			eventName: "ConnectionSpeed",
-			duration: performance.now() - this.connectionStartTime,
+			duration: performanceNow() - this.connectionStartTime,
 			ops: this.gap,
 			// track time to connect only for first connection.
 			timeToConnect: this.firstConnection
@@ -297,7 +316,7 @@ class OpPerfTelemetry {
 		});
 	}
 
-	private recordPingTime(latency: number) {
+	private recordPingTime(latency: number): void {
 		this.pingLatency = latency;
 
 		// Log if latency is longer than 1 min
@@ -317,7 +336,7 @@ class OpPerfTelemetry {
 		}
 	}
 
-	private beforeOpSubmit(message: IDocumentMessage) {
+	private beforeOpSubmit(message: IDocumentMessage): void {
 		// start with first client op and measure latency every 500 client ops
 		if (
 			this.opLatencyLogger.isSamplingDisabled ||
@@ -344,7 +363,7 @@ class OpPerfTelemetry {
 		}
 	}
 
-	private afterProcessingOp(message: ISequencedDocumentMessage) {
+	private afterProcessingOp(message: ISequencedDocumentMessage): void {
 		const sequenceNumber = message.sequenceNumber;
 
 		if (sequenceNumber === this.connectionOpSeqNumber) {
@@ -438,57 +457,6 @@ class OpPerfTelemetry {
 		}
 	}
 }
-export interface IPerfSignalReport {
-	/**
-	 * Identifier to track broadcast signals being submitted in order to
-	 * allow collection of data around the roundtrip of signal messages.
-	 */
-	broadcastSignalSequenceNumber: number;
-
-	/**
-	 * Accumulates the total number of broadcast signals sent during the current signal latency measurement window.
-	 * This value represents the total number of signals sent since the latency measurement began and is used
-	 * logged in telemetry when the latency measurement completes.
-	 */
-	totalSignalsSentInLatencyWindow: number;
-
-	/**
-	 * Counts the number of broadcast signals sent since the last latency measurement was initiated.
-	 * This counter increments with each broadcast signal sent. When a new latency measurement starts,
-	 * this counter is added to `totalSignalsSentInLatencyWindow` and then reset to zero.
-	 */
-	signalsSentSinceLastLatencyMeasurement: number;
-
-	/**
-	 * Number of signals that were expected but not received.
-	 */
-	signalsLost: number;
-
-	/**
-	 * Number of signals received out of order/non-sequentially.
-	 */
-	signalsOutOfOrder: number;
-
-	/**
-	 * Timestamp before submitting the signal we will trace.
-	 */
-	signalTimestamp: number;
-
-	/**
-	 * Signal we will trace for roundtrip latency.
-	 */
-	roundTripSignalSequenceNumber: number | undefined;
-
-	/**
-	 * Next expected signal sequence number to be received.
-	 */
-	trackingSignalSequenceNumber: number | undefined;
-
-	/**
-	 * Inclusive lower bound of signal monitoring window.
-	 */
-	minimumTrackingSignalSequenceNumber: number | undefined;
-}
 
 /**
  * Starts monitoring and generation of telemetry related to op performance.
@@ -502,7 +470,12 @@ export function ReportOpPerfTelemetry(
 	clientId: string | undefined,
 	deltaManager: IDeltaManagerFull,
 	containerRuntimeEvents: IEventProvider<IContainerRuntimeEvents>,
-	logger: ITelemetryLoggerExt,
+	logger: ITelemetryBaseLogger,
 ): void {
-	new OpPerfTelemetry(clientId, deltaManager, containerRuntimeEvents, logger);
+	new OpPerfTelemetry(
+		clientId,
+		deltaManager,
+		containerRuntimeEvents,
+		createChildLogger({ logger }),
+	);
 }

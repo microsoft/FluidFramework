@@ -206,6 +206,9 @@ export interface IContainerContext {
 
 	updateDirtyContainerState(dirty: boolean): void;
 
+	/**
+	 * @deprecated - This has been deprecated. It was used internally and there is no replacement.
+	 */
 	readonly supportedFeatures?: ReadonlyMap<string, unknown>;
 
 	/**

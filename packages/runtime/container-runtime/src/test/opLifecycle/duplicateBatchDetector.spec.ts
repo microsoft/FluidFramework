@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { ITelemetryContext } from "@fluidframework/runtime-definitions/internal";
@@ -39,20 +39,24 @@ function makeBatch({
 
 type Patch<T, U> = Omit<T, keyof U> & U;
 
+type PatchedDuplicateBatchDetector = Patch<
+	DuplicateBatchDetector,
+	{
+		batchIdsAll: Set<string>;
+		batchIdsBySeqNum: Map<number, string>;
+	}
+>;
+
 describe("DuplicateBatchDetector", () => {
 	// expose private members for testing
-	let detector: Patch<
-		DuplicateBatchDetector,
-		{
-			batchIdsAll: Set<string>;
-			batchIdsBySeqNum: Map<number, string>;
-		}
-	>;
+	let detector: PatchedDuplicateBatchDetector;
 	let seqNum: number;
 
 	beforeEach("setup", () => {
 		seqNum = 1;
-		detector = new DuplicateBatchDetector(undefined /* batchIdsFromSnapshot */) as any;
+		detector = new DuplicateBatchDetector(
+			undefined /* batchIdsFromSnapshot */,
+		) as unknown as PatchedDuplicateBatchDetector;
 	});
 
 	afterEach("validation", () => {
@@ -68,7 +72,7 @@ describe("DuplicateBatchDetector", () => {
 			[1, "batch1"],
 			[2, "batch2"],
 		];
-		detector = new DuplicateBatchDetector(input) as any;
+		detector = new DuplicateBatchDetector(input) as unknown as PatchedDuplicateBatchDetector;
 		assert.deepEqual(detector.getRecentBatchInfoForSummary(), input);
 	});
 
@@ -142,7 +146,9 @@ describe("DuplicateBatchDetector", () => {
 		detector.processInboundBatch(inboundBatch1);
 
 		const summaryPayload = JSON.stringify(detector.getRecentBatchInfoForSummary());
-		const detector2 = new DuplicateBatchDetector(JSON.parse(summaryPayload));
+		const detector2 = new DuplicateBatchDetector(
+			JSON.parse(summaryPayload) as [number, string][] | undefined,
+		);
 
 		const inboundBatch2 = makeBatch({
 			sequenceNumber: seqNum++, // 2
@@ -213,7 +219,7 @@ describe("DuplicateBatchDetector", () => {
 
 			let setCalled = 0;
 			const telemetryContext = {
-				set: (key: string, subKey: string, value: any) => {
+				set: (key: string, subKey: string, value: unknown) => {
 					++setCalled;
 					assert.equal(key, "fluid_DuplicateBatchDetector_");
 					assert.equal(subKey, "recentBatchCount");

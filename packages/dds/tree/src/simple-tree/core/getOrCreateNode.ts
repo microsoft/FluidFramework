@@ -6,7 +6,11 @@
 import type { TreeValue } from "../../core/index.js";
 import type { FlexTreeNode } from "../../feature-libraries/index.js";
 import { fail } from "../../util/index.js";
-import { type InnerNode, mapTreeNodeToProxy, proxySlot } from "./treeNodeKernel.js";
+import {
+	type InnerNode,
+	unhydratedFlexTreeNodeToTreeNode,
+	proxySlot,
+} from "./treeNodeKernel.js";
 import { getSimpleNodeSchemaFromInnerNode } from "./schemaCaching.js";
 import type { TreeNode, InternalTreeNode } from "./types.js";
 import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
@@ -20,14 +24,15 @@ import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
 export function getOrCreateNodeFromInnerNode(flexNode: InnerNode): TreeNode | TreeValue {
 	const cached =
 		flexNode instanceof UnhydratedFlexTreeNode
-			? mapTreeNodeToProxy.get(flexNode)
+			? unhydratedFlexTreeNodeToTreeNode.get(flexNode)
 			: flexNode.anchorNode.slots.get(proxySlot);
 
 	if (cached !== undefined) {
 		return cached;
 	}
 
-	const classSchema = getSimpleNodeSchemaFromInnerNode(flexNode) ?? fail("Missing schema");
+	const classSchema =
+		getSimpleNodeSchemaFromInnerNode(flexNode) ?? fail(0xb3e /* Missing schema */);
 	const node = flexNode as unknown as InternalTreeNode;
 	// eslint-disable-next-line unicorn/prefer-ternary
 	if (typeof classSchema === "function") {

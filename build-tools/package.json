@@ -1,6 +1,6 @@
 {
 	"name": "build-tools-release-group-root",
-	"version": "0.52.0",
+	"version": "0.55.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -91,10 +91,10 @@
 		"inquirer": "^8.2.6",
 		"rimraf": "^4.4.1",
 		"run-script-os": "^1.1.6",
-		"syncpack": "^9.8.6",
+		"syncpack": "^13.0.2",
 		"typescript": "~5.4.5"
 	},
-	"packageManager": "pnpm@8.15.8+sha512.d1a029e1a447ad90bc96cd58b0fad486d2993d531856396f7babf2d83eb1823bb83c5a3d0fc18f675b2d10321d49eb161fece36fe8134aa5823ecd215feed392",
+	"packageManager": "pnpm@9.15.7+sha512.ed98f9c748442673c46964b70345bd2282c9b305e8eae539b34ab31d6ef24ef8dd59d8b55f27466f705500b009d9c113471cf87e544f3d5036b297330c26e996",
 	"engines": {
 		"node": ">=18.17.1"
 	},

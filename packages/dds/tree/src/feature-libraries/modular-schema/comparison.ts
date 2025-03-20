@@ -104,7 +104,8 @@ export function allowsTreeSuperset(
 			allowsFieldSuperset(
 				policy,
 				originalData,
-				original.objectNodeFields.get(originalField) ?? fail("missing expected field"),
+				original.objectNodeFields.get(originalField) ??
+					fail(0xb17 /* missing expected field */),
 				normalizeField(undefined),
 			),
 		bExtra: (supersetField) =>
@@ -112,14 +113,15 @@ export function allowsTreeSuperset(
 				policy,
 				originalData,
 				normalizeField(undefined),
-				superset.objectNodeFields.get(supersetField) ?? fail("missing expected field"),
+				superset.objectNodeFields.get(supersetField) ??
+					fail(0xb18 /* missing expected field */),
 			),
 		same: (sameField) =>
 			allowsFieldSuperset(
 				policy,
 				originalData,
-				original.objectNodeFields.get(sameField) ?? fail("missing expected field"),
-				superset.objectNodeFields.get(sameField) ?? fail("missing expected field"),
+				original.objectNodeFields.get(sameField) ?? fail(0xb19 /* missing expected field */),
+				superset.objectNodeFields.get(sameField) ?? fail(0xb1a /* missing expected field */),
 			),
 	});
 }
@@ -148,7 +150,7 @@ export function allowsFieldSuperset(
 	superset: TreeFieldStoredSchema,
 ): boolean {
 	return withEditor(
-		policy.fieldKinds.get(original.kind) ?? fail("missing kind"),
+		policy.fieldKinds.get(original.kind) ?? fail(0xb1b /* missing kind */),
 	).allowsFieldSuperset(policy, originalData, original.types, superset);
 }
 

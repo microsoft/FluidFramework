@@ -788,29 +788,6 @@ export class FluidDataStoreRuntime
 		}
 	}
 
-	/**
-	 * back-compat ADO 21575.
-	 * This is still here for back-compat purposes because it exists on IFluidDataStoreChannel. Once it is removed from
-	 * the interface, this method can be removed.
-	 */
-	public process(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	) {
-		this.processMessages({
-			envelope: message,
-			messagesContent: [
-				{
-					contents: message.contents,
-					localOpMetadata,
-					clientSequenceNumber: message.clientSequenceNumber,
-				},
-			],
-			local,
-		});
-	}
-
 	public processSignal(message: IInboundSignalMessage, local: boolean) {
 		this.emit("signal", message, local);
 	}

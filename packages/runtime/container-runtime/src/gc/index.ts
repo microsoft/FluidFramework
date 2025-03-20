@@ -4,6 +4,7 @@
  */
 
 export { GarbageCollector } from "./garbageCollection.js";
+export { computeTombstoneTimeout } from "./gcConfigs.js";
 export {
 	nextGCVersion,
 	defaultInactiveTimeoutMs,

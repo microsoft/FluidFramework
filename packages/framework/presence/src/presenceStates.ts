@@ -9,7 +9,7 @@ import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
 import { RequiredBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { ClientRecord } from "./internalTypes.js";
+import type { ClientRecord, PostUpdateAction } from "./internalTypes.js";
 import type { RecordEntryTypes } from "./internalUtils.js";
 import { getOrCreateRecord, objectEntries } from "./internalUtils.js";
 import type { ClientSessionId, ISessionClient } from "./presence.js";
@@ -133,7 +133,7 @@ export interface PresenceStatesInternal {
 		timeModifier: number,
 		remoteDatastore: ValueUpdateRecord,
 		senderConnectionId: ClientConnectionId,
-	): void;
+	): PostUpdateAction[];
 }
 
 function isValueDirectory<
@@ -280,8 +280,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 				nodes[key as keyof TSchema] = newNodeData.manager;
 				if ("initialData" in newNodeData) {
 					const { value, allowableUpdateLatencyMs } = newNodeData.initialData;
-					datastore[key] ??= {};
-					datastore[key][clientSessionId] = value;
+					(datastore[key] ??= {})[clientSessionId] = value;
 					newValues[key] = value;
 					if (allowableUpdateLatencyMs !== undefined) {
 						cumulativeAllowableUpdateLatencyMs =
@@ -315,7 +314,9 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 	} {
 		return {
 			self: this.runtime.clientSessionId,
-			states: this.datastore[key],
+			// Caller must only use `key`s that are part of `this.datastore`.
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			states: this.datastore[key]!,
 		};
 	}
 
@@ -364,13 +365,14 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		this.nodes[key] = nodeData.manager;
 		if ("initialData" in nodeData) {
 			const { value, allowableUpdateLatencyMs } = nodeData.initialData;
-			if (key in this.datastore) {
+			let datastoreValue = this.datastore[key];
+			if (datastoreValue === undefined) {
+				datastoreValue = this.datastore[key] = {};
+			} else {
 				// Already have received state from other clients. Kept in `all`.
 				// TODO: Send current `all` state to state manager.
-			} else {
-				this.datastore[key] = {};
 			}
-			this.datastore[key][this.runtime.clientSessionId] = value;
+			datastoreValue[this.runtime.clientSessionId] = value;
 			this.runtime.localUpdate(
 				{ [key]: value },
 				{
@@ -389,13 +391,14 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 			this.controls.allowableUpdateLatencyMs = controls.allowableUpdateLatencyMs;
 		}
 		for (const [key, nodeFactory] of Object.entries(content)) {
-			if (key in this.nodes) {
-				const node = unbrandIVM(this.nodes[key]);
+			const brandedIVM = this.nodes[key];
+			if (brandedIVM === undefined) {
+				this.add(key, nodeFactory);
+			} else {
+				const node = unbrandIVM(brandedIVM);
 				if (!(node instanceof nodeFactory.instanceBase)) {
 					throw new TypeError(`State "${key}" previously created by different value manager.`);
 				}
-			} else {
-				this.add(key, nodeFactory);
 			}
 		}
 		return this as PresenceStates<TSchema & TSchemaAdditional>;
@@ -405,19 +408,22 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		received: number,
 		timeModifier: number,
 		remoteDatastore: ValueUpdateRecord,
-	): void {
+	): PostUpdateAction[] {
+		const postUpdateActions: PostUpdateAction[] = [];
 		for (const [key, remoteAllKnownState] of Object.entries(remoteDatastore)) {
-			if (key in this.nodes) {
-				const node = unbrandIVM(this.nodes[key]);
-				for (const [clientSessionId, value] of objectEntries(remoteAllKnownState)) {
-					const client = this.runtime.lookupClient(clientSessionId);
-					node.update(client, received, value);
-				}
-			} else {
+			const brandedIVM = this.nodes[key];
+			if (brandedIVM === undefined) {
 				// Assume all broadcast state is meant to be kept even if not currently registered.
 				mergeUntrackedDatastore(key, remoteAllKnownState, this.datastore, timeModifier);
+			} else {
+				const node = unbrandIVM(brandedIVM);
+				for (const [clientSessionId, value] of objectEntries(remoteAllKnownState)) {
+					const client = this.runtime.lookupClient(clientSessionId);
+					postUpdateActions.push(...node.update(client, received, value));
+				}
 			}
 		}
+		return postUpdateActions;
 	}
 }
 

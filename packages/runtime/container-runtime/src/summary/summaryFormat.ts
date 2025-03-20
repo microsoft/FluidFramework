@@ -10,10 +10,7 @@ import {
 	ISnapshotTree,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	blobHeadersBlobName as blobNameForBlobHeaders,
-	readAndParse,
-} from "@fluidframework/driver-utils/internal";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
 import {
 	ISummaryTreeWithStats,
 	channelsTreeName,
@@ -70,7 +67,9 @@ export interface IFluidDataStoreAttributes1
  */
 export interface IFluidDataStoreAttributes2
 	extends OmitAttributesVersions<IFluidDataStoreAttributes1> {
-	/** Switch from snapshotFormatVersion to summaryFormatVersion */
+	/**
+	 * Switch from snapshotFormatVersion to summaryFormatVersion
+	 */
 	readonly snapshotFormatVersion?: undefined;
 	readonly summaryFormatVersion: 2;
 	/**
@@ -126,40 +125,52 @@ export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): b
 }
 
 /**
- * @legacy
- * @alpha
+ * @internal
  */
+
 export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
 	readonly summaryFormatVersion: 1;
-	/** @deprecated - used by old (prior to 2.0 RC3) runtimes */
+	/**
+	 * @deprecated - used by old (prior to 2.0 RC3) runtimes
+	 */
 	readonly message?: ISummaryMetadataMessage;
-	/** The last message processed at the time of summary. Only primitive property types are added to the summary. */
+	/**
+	 * The last message processed at the time of summary. Only primitive property types are added to the summary.
+	 */
 	readonly lastMessage?: ISummaryMetadataMessage;
-	/** True if channels are not isolated in .channels subtrees, otherwise isolated. */
+	/**
+	 * True if channels are not isolated in .channels subtrees, otherwise isolated.
+	 */
 	readonly disableIsolatedChannels?: true;
-	/** The summary number for a container's summary. Incremented on summaries throughout its lifetime. */
+	/**
+	 * The summary number for a container's summary. Incremented on summaries throughout its lifetime.
+	 */
 	readonly summaryNumber?: number;
-	/** GUID to identify a document in telemetry */
+	/**
+	 * GUID to identify a document in telemetry
+	 */
 	readonly telemetryDocumentId?: string;
 
 	readonly documentSchema?: IDocumentSchema;
 }
 
 /**
- * @legacy
- * @alpha
+ * @internal
  */
 export interface ICreateContainerMetadata {
-	/** Runtime version of the container when it was first created */
+	/**
+	 * Runtime version of the container when it was first created
+	 */
 	createContainerRuntimeVersion?: string;
-	/** Timestamp of the container when it was first created */
+	/**
+	 * Timestamp of the container when it was first created
+	 */
 	createContainerTimestamp?: number;
 }
 
 /**
  * The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary.
- * @legacy
- * @alpha
+ * @internal
  */
 export type ISummaryMetadataMessage = Pick<
 	ISequencedDocumentMessage,
@@ -211,7 +222,6 @@ export const chunksBlobName = ".chunks";
 export const recentBatchInfoBlobName = ".recentBatchInfo";
 export const electedSummarizerBlobName = ".electedSummarizer";
 export const idCompressorBlobName = ".idCompressor";
-export const blobHeadersBlobName = blobNameForBlobHeaders;
 
 export function rootHasIsolatedChannels(metadata?: IContainerRuntimeMetadata): boolean {
 	return !!metadata && !metadata.disableIsolatedChannels;
@@ -292,3 +302,5 @@ export async function getFluidDataStoreAttributes(
 	assert(formatVersion > 0, 0x1d5 /* Invalid snapshot format version */);
 	return attributes;
 }
+
+export { blobHeadersBlobName } from "@fluidframework/driver-utils/internal";

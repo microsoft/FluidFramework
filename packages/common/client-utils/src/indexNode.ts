@@ -14,12 +14,11 @@ export {
 	Uint8ArrayToString,
 } from "./bufferNode.js";
 export { gitHashFile, hashFile } from "./hashFileNode.js";
-export { performance } from "./performanceIsomorphic.js";
 
 export { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "./base64EncodingNode.js";
 export { Uint8ArrayToArrayBuffer } from "./bufferShared.js";
 export { EventEmitter } from "./eventEmitter.cjs";
-export type { IsomorphicPerformance } from "./performanceIsomorphic.js";
+export { performanceNow } from "./performanceIsomorphic.js";
 export { type ITraceEvent, Trace } from "./trace.js";
 export {
 	type EventEmitterEventType,
@@ -28,3 +27,11 @@ export {
 } from "./typedEventEmitter.js";
 
 export { createEmitter } from "./events/index.js";
+
+export {
+	checkLayerCompatibility,
+	type LayerCompatCheckResult,
+	type ILayerCompatDetails,
+	type IProvideLayerCompatDetails,
+	type ILayerCompatSupportRequirements,
+} from "./layerCompat.js";

@@ -277,7 +277,7 @@ export const combineSnapshotTreeAndSnapshotBlobs = (
 
 	// Process blobs in the current level
 	for (const [, id] of Object.entries(baseSnapshot.blobs)) {
-		if (snapshotBlobs[id]) {
+		if (snapshotBlobs[id] !== undefined) {
 			blobsContents[id] = stringToBuffer(snapshotBlobs[id], "utf8");
 		}
 	}

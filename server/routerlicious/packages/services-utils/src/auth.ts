@@ -19,10 +19,11 @@ import {
 	DocDeleteScopeType,
 	getGlobalTimeoutContext,
 } from "@fluidframework/server-services-client";
-import type {
-	ICache,
-	IRevokedTokenChecker,
-	ITenantManager,
+import {
+	requestWithRetry,
+	type ICache,
+	type IRevokedTokenChecker,
+	type ITenantManager,
 } from "@fluidframework/server-services-core";
 import type { RequestHandler, Request, Response } from "express";
 import type { Provider } from "nconf";
@@ -180,12 +181,46 @@ function getTokenFromRequest(request: Request): string {
 	if (!authorizationHeader) {
 		throw new NetworkError(403, "Missing Authorization header.");
 	}
+	return extractTokenFromHeader(authorizationHeader);
+}
+
+export function extractTokenFromHeader(authorizationHeader: string): string {
 	const tokenRegex = /Basic (.+)/;
 	const tokenMatch = tokenRegex.exec(authorizationHeader);
 	if (!tokenMatch?.[1]) {
 		throw new NetworkError(403, "Missing access token.");
 	}
 	return tokenMatch[1];
+}
+
+// Returns true if the token is valid for at least 5 minutes.
+export function isTokenValid(token: string): boolean {
+	const tokenClaims = decode(token) as ITokenClaims;
+	const lifeTimeMSec = tokenClaims.exp * 1000 - new Date().getTime();
+	return lifeTimeMSec > 5 * 60 * 1000; // 5 minutes
+}
+
+export async function getValidAccessToken(
+	currentAccessToken: string,
+	tenantManager: ITenantManager,
+	tenantId: string,
+	documentId: string,
+	scopes: ScopeType[],
+	lumberProperties: Record<string, any>,
+): Promise<string | undefined> {
+	// If the current token is still valid, return undefined
+	if (isTokenValid(currentAccessToken)) {
+		Lumberjack.verbose(`Token is still valid`, lumberProperties);
+		return undefined;
+	}
+	Lumberjack.info(`Refreshing token`, lumberProperties);
+
+	const newToken = await requestWithRetry(
+		async () => tenantManager.signToken(tenantId, documentId, scopes),
+		`getValidAccessToken_signToken` /* callName */,
+		lumberProperties /* telemetryProperties */,
+	);
+	return newToken;
 }
 
 const defaultMaxTokenLifetimeSec = 60 * 60; // 1 hour

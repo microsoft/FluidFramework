@@ -8,6 +8,7 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IAgentScheduler, TaskSubscription } from "@fluidframework/agent-scheduler/internal";
 import { IContainer } from "@fluidframework/container-definitions/internal";
+import { disabledCompressionConfig } from "@fluidframework/container-runtime/internal";
 import {
 	ITestObjectProvider,
 	createTestContainerRuntimeFactory,
@@ -42,7 +43,7 @@ describeCompat("AgentScheduler", "FullCompat", (getTestObjectProvider, apis) => 
 				// getVersionedTestObjectProviderFromApis() / getCompatVersionedTestObjectProviderFromApis(),
 				// but it's too cumbersome, so just disable all options that can screw up compat matrix
 				{
-					compressionOptions: undefined,
+					compressionOptions: disabledCompressionConfig,
 					enableGroupedBatching: false,
 					enableRuntimeIdCompressor: undefined,
 				},

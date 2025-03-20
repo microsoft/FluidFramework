@@ -18,12 +18,20 @@ export {
 	type ApiItemTransformationConfigurationBase,
 	type ApiItemTransformationOptions,
 	type ApiItemTransformations,
-	type DefaultDocumentationSuiteOptions,
+	type DefaultDocumentationSuiteConfiguration,
+	type DocumentationHierarchyConfiguration,
+	type DocumentationHierarchyConfigurationBase,
 	type DocumentationSuiteConfiguration,
-	type DocumentBoundaries,
+	type DocumentationSuiteOptions,
+	type DocumentHierarchyConfiguration,
+	FolderDocumentPlacement,
+	type FolderHierarchyConfiguration,
 	// TODO: remove this once utility APIs can be called with partial configs.
 	getApiItemTransformationConfigurationWithDefaults,
-	type HierarchyBoundaries,
+	HierarchyKind,
+	type HierarchyConfiguration,
+	type HierarchyOptions,
+	type SectionHierarchyConfiguration,
 	type TransformApiItemWithChildren,
 	type TransformApiItemWithoutChildren,
 	transformApiModel,
@@ -68,13 +76,14 @@ export {
 	type Logger,
 	verboseConsoleLogger,
 } from "./Logging.js";
-export {
-	type ApiFunctionLike,
-	type ApiMemberKind,
-	type ApiModifier,
-	type ApiModuleLike,
-	type ApiSignatureLike,
-	type ValidApiItemKind,
+export type {
+	ApiFunctionLike,
+	ApiMemberKind,
+	ApiModifier,
+	ApiModuleLike,
+	ApiSignatureLike,
+	ReleaseLevel,
+	ValidApiItemKind,
 } from "./utilities/index.js";
 
 // #region Scoped exports
