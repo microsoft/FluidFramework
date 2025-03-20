@@ -9,7 +9,6 @@ import {
 	AzureRemoteConnectionConfig,
 	ITelemetryBaseLogger,
 } from "@fluidframework/azure-client";
-import { type ScopeType } from "@fluidframework/azure-client/internal";
 import {
 	AzureClient as AzureClientLegacy,
 	AzureLocalConnectionConfig as AzureLocalConnectionConfigLegacy,
@@ -17,12 +16,20 @@ import {
 	ITelemetryBaseLogger as ITelemetryBaseLoggerLegacy,
 } from "@fluidframework/azure-client-legacy";
 import { IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils/internal";
+import { ScopeType } from "@fluidframework/driver-definitions/internal";
+import {
+	MockLogger,
+	createChildLogger,
+	createMultiSinkLogger,
+} from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { default as Axios, AxiosResponse, type AxiosRequestConfig } from "axios";
 import { v4 as uuid } from "uuid";
 
 import { createAzureTokenProvider } from "./AzureTokenFactory.js";
+
+// eslint-disable-next-line unicorn/prefer-export-from
+export { ScopeType };
 
 /**
  * This function will determine if local or remote mode is required (based on FLUID_CLIENT), and return a new
@@ -35,6 +42,16 @@ export function createAzureClient(
 	configProvider?: IConfigProviderBase,
 	scopes?: ScopeType[],
 ): AzureClient {
+	const args = process.argv.slice(2);
+
+	const driverIndex = args.indexOf("--driver");
+	const r11sEndpointNameIndex = args.indexOf("--r11sEndpointName");
+
+	// Get values associated with the flags
+	const driver = driverIndex === -1 ? undefined : args[driverIndex + 1];
+	const r11sEndpointName =
+		r11sEndpointNameIndex === -1 ? undefined : args[r11sEndpointNameIndex + 1];
+
 	const useAzure = process.env.FLUID_CLIENT === "azure";
 	const tenantId = useAzure
 		? (process.env.azure__fluid__relay__service__tenantId as string)
@@ -45,7 +62,7 @@ export function createAzureClient(
 	};
 	const endPoint = process.env.azure__fluid__relay__service__endpoint as string;
 	if (useAzure && endPoint === undefined) {
-		throw new Error("Azure FRS endpoint is missing");
+		throw new Error("Azure Fluid Relay service endpoint is missing");
 	}
 
 	// use AzureClient remote mode will run against live Azure Fluid Relay.
@@ -73,9 +90,19 @@ export function createAzureClient(
 		}
 		return logger ?? testLogger;
 	};
+
+	const createLogger = createChildLogger({
+		logger: getLogger(),
+		properties: {
+			all: {
+				driverType: useAzure ? r11sEndpointName : driver,
+				driverEndpointName: driver,
+			},
+		},
+	});
 	return new AzureClient({
 		connection: connectionProps,
-		logger: getLogger(),
+		logger: createLogger,
 		configProvider,
 	});
 }
@@ -98,7 +125,7 @@ export function createAzureClientLegacy(
 	};
 	const endPoint = process.env.azure__fluid__relay__service__endpoint as string;
 	if (useAzure && endPoint === undefined) {
-		throw new Error("Azure FRS endpoint is missing");
+		throw new Error("Azure Azure Fluid Relay service endpoint is missing");
 	}
 
 	// use AzureClient remote mode will run against live Azure Fluid Relay.
@@ -165,7 +192,7 @@ export async function createContainerFromPayload(
 		? (process.env.azure__fluid__relay__service__endpoint as string)
 		: "http://localhost:7071";
 	if (useAzure && endPoint === undefined) {
-		throw new Error("Azure FRS endpoint is missing");
+		throw new Error("Azure Fluid Relay service endpoint is missing");
 	}
 
 	const tokenProvider = useAzure

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import chalk from "chalk";
+import chalk from "picocolors";
 
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args.js";
 import { BaseCommand } from "../../library/index.js";
@@ -71,14 +71,16 @@ export class ReleasePrepareCommand extends BaseCommand<typeof ReleasePrepareComm
 			// eslint-disable-next-line no-await-in-loop -- the checks are supposed to run serially
 			const checkResult = await check(context, pkgOrReleaseGroup);
 			const checkPassed = checkResult === undefined;
-			const icon = checkPassed ? chalk.bgGreen.black(" ✔︎ ") : chalk.bgRed.white(" ✖︎ ");
+			const icon = checkPassed
+				? chalk.bgGreen(chalk.black(" ✔︎ "))
+				: chalk.bgRed(chalk.white(" ✖︎ "));
 
 			this.log(`${icon} ${checkPassed ? name : chalk.red(checkResult.message)}`);
 			if (!checkPassed) {
 				if (checkResult.fixCommand !== undefined) {
 					this.logIndent(
-						`${chalk.yellow(`Possible fix command:`)} ${chalk.yellow.bold(
-							checkResult.fixCommand,
+						`${chalk.yellow(`Possible fix command:`)} ${chalk.yellow(
+							chalk.bold(checkResult.fixCommand),
 						)}`,
 						6,
 					);

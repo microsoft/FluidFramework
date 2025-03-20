@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/tree",
-	"version": "2.5.0",
+	"version": "2.31.0",
 	"description": "Distributed tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -22,16 +22,6 @@
 				"types": "./dist/index.d.ts",
 				"default": "./dist/index.js"
 			}
-		},
-		"./test/EditLog": {
-			"import": {
-				"types": "./lib/EditLog.d.ts",
-				"default": "./lib/EditLog.js"
-			},
-			"require": {
-				"types": "./dist/EditLog.d.ts",
-				"default": "./dist/EditLog.js"
-			}
 		}
 	},
 	"main": "lib/index.js",
@@ -41,7 +31,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
-		"check:are-the-types-wrong": "attw --pack . --exclude-entrypoints ./test/EditLog",
+		"check:are-the-types-wrong": "attw --pack .",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
@@ -50,14 +40,12 @@
 		"check:exports:esm:EditLog": "echo AB#8147 skip api-extractor run --config api-extractor/api-extractor-lint-EditLog.esm.json",
 		"check:exports:esm:index": "api-extractor run --config api-extractor/api-extractor-lint-index.esm.json",
 		"check:format": "npm run check:biome",
-		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
-		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"postpack": "tar -cf ./experimental-tree.test-files.tar ./src/test ./dist/test ./lib/test",
@@ -91,18 +79,18 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.16.4",
+		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-private/test-drivers": "workspace:~",
 		"@fluid-tools/benchmark": "^0.50.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.49.0",
+		"@fluidframework/build-tools": "^0.54.0",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
@@ -110,7 +98,7 @@
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/chai": "^4.0.0",
 		"@types/lru-cache": "^5.1.0",
-		"@types/mocha": "^9.1.1",
+		"@types/mocha": "^10.0.10",
 		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
 		"chai": "^4.2.0",
@@ -121,10 +109,9 @@
 		"env-cmd": "^10.1.0",
 		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
-		"mocha": "^10.2.0",
+		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
-		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
 	},

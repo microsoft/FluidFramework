@@ -14,23 +14,19 @@ import {
 	IRevokedTokenChecker,
 	IDocumentManager,
 } from "@fluidframework/server-services-core";
-import {
-	IThrottleMiddlewareOptions,
-	throttle,
-	getParam,
-} from "@fluidframework/server-services-utils";
+import { IThrottleMiddlewareOptions, throttle } from "@fluidframework/server-services-utils";
 import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
-import { ICache, IDenyList, ITenantService } from "../../services";
+import { ICache, IDenyList, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
 import * as utils from "../utils";
 import { Constants } from "../../utils";
 
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
-	storageNameRetriever: IStorageNameRetriever,
+	storageNameRetriever: IStorageNameRetriever | undefined,
 	restTenantThrottlers: Map<string, IThrottler>,
 	restClusterThrottlers: Map<string, IThrottler>,
 	documentManager: IDocumentManager,
@@ -38,18 +34,22 @@ export function create(
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
 	ephemeralDocumentTTLSec?: number,
+	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 ): Router {
 	const router: Router = Router();
 
 	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
-		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
+		throttleIdPrefix: (req) => req.params.tenantId,
 		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
 	};
 	const restTenantGeneralThrottler = restTenantThrottlers.get(
 		Constants.generalRestCallThrottleIdPrefix,
 	);
 
-	async function getRefs(tenantId: string, authorization: string): Promise<git.IRef[]> {
+	async function getRefs(
+		tenantId: string,
+		authorization: string | undefined,
+	): Promise<git.IRef[]> {
 		const service = await utils.createGitService({
 			config,
 			tenantId,
@@ -64,7 +64,11 @@ export function create(
 		return service.getRefs();
 	}
 
-	async function getRef(tenantId: string, authorization: string, ref: string): Promise<git.IRef> {
+	async function getRef(
+		tenantId: string,
+		authorization: string | undefined,
+		ref: string,
+	): Promise<git.IRef> {
 		const service = await utils.createGitService({
 			config,
 			tenantId,
@@ -81,7 +85,7 @@ export function create(
 
 	async function createRef(
 		tenantId: string,
-		authorization: string,
+		authorization: string | undefined,
 		params: ICreateRefParamsExternal,
 	): Promise<git.IRef> {
 		const service = await utils.createGitService({
@@ -94,13 +98,14 @@ export function create(
 			cache,
 			denyList,
 			ephemeralDocumentTTLSec,
+			simplifiedCustomDataRetriever,
 		});
 		return service.createRef(params);
 	}
 
 	async function updateRef(
 		tenantId: string,
-		authorization: string,
+		authorization: string | undefined,
 		ref: string,
 		params: IPatchRefParamsExternal,
 	): Promise<git.IRef> {
@@ -114,11 +119,16 @@ export function create(
 			cache,
 			denyList,
 			ephemeralDocumentTTLSec,
+			simplifiedCustomDataRetriever,
 		});
 		return service.updateRef(ref, params);
 	}
 
-	async function deleteRef(tenantId: string, authorization: string, ref: string): Promise<void> {
+	async function deleteRef(
+		tenantId: string,
+		authorization: string | undefined,
+		ref: string,
+	): Promise<void> {
 		const service = await utils.createGitService({
 			config,
 			tenantId,

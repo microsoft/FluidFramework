@@ -7,10 +7,11 @@ import { mixinAttributor } from "@fluid-experimental/attributor";
 import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-private/test-drivers";
 import {
-	IContainerRuntimeOptions,
 	DefaultSummaryConfiguration,
 	CompressionAlgorithms,
+	disabledCompressionConfig,
 	ICompressionRuntimeOptions,
+	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 import { FluidObject, IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
 import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
@@ -63,7 +64,7 @@ export const TestDataObjectType = "@fluid-example/test-dataStore";
  */
 function filterRuntimeOptionsForVersion(
 	version: string,
-	optionsArg: IContainerRuntimeOptions = {
+	optionsArg: IContainerRuntimeOptionsInternal = {
 		summaryOptions: {
 			summaryConfigOverrides: {
 				...DefaultSummaryConfiguration,
@@ -88,10 +89,12 @@ function filterRuntimeOptionsForVersion(
 
 	// These is the "maximum" config.
 	const {
-		compressionOptions = {
-			minimumBatchSizeInBytes: 200,
-			compressionAlgorithm: CompressionAlgorithms.lz4,
-		},
+		compressionOptions = options.enableGroupedBatching === false
+			? disabledCompressionConfig
+			: {
+					minimumBatchSizeInBytes: 200,
+					compressionAlgorithm: CompressionAlgorithms.lz4,
+				},
 		enableGroupedBatching = true,
 		enableRuntimeIdCompressor = "on",
 		// Some t9s tests timeout with small settings. This is likely due to too many ops going through.
@@ -102,7 +105,7 @@ function filterRuntimeOptionsForVersion(
 	if (version.startsWith("1.")) {
 		options = {
 			// None of these features are supported by 1.3
-			compressionOptions: undefined,
+			compressionOptions: disabledCompressionConfig,
 			enableGroupedBatching: false,
 			enableRuntimeIdCompressor: undefined,
 			// Enable chunking.

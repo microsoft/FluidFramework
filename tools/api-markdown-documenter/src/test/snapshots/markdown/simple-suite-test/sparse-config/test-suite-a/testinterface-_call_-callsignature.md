@@ -2,12 +2,12 @@
 
 Test interface event call signature
 
-### Signature {#_call_-signature}
+### Signature {#\_call\_-signature}
 
 ```typescript
 (event: 'testCallSignature', listener: (input: unknown) => void): any;
 ```
 
-### Remarks {#_call_-remarks}
+### Remarks {#\_call\_-remarks}
 
 Here are some remarks about the event call signature

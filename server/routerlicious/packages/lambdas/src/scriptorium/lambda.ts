@@ -187,7 +187,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 		this.dbCircuitBreaker?.shutdown();
 	}
 
-	public pause(): void {
+	public pause(offset: number): void {
 		this.current.clear();
 		this.pending.clear();
 		this.pendingMetric = undefined;
@@ -200,9 +200,17 @@ export class ScriptoriumLambda implements IPartitionLambda {
 				error?.message?.toString()?.indexOf(errorFilter) >= 0 ||
 				error?.stack?.toString()?.indexOf(errorFilter) >= 0
 			) {
+				Lumberjack.info("Error filter checked, opening the circuit breaker", {
+					error,
+					errorFilter: this.circuitBreakerOptions.filterOnErrors,
+				});
 				return false; // circuit breaker will open and pause the lambda
 			}
 		}
+		Lumberjack.info("Error filter checked, not opening the circuit breaker", {
+			error,
+			errorFilter: this.circuitBreakerOptions.filterOnErrors,
+		});
 		return true; // do not open the circuit for other errors, and let scriptorium restart
 	}
 

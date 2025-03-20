@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
@@ -64,7 +64,7 @@ describe("valueUtilities", () => {
 	it("isTreeValue", () => {
 		assert(isTreeValue(0));
 		assert(isTreeValue(0.001));
-		assert(isTreeValue(NaN));
+		assert(isTreeValue(Number.NaN));
 		assert(isTreeValue(true));
 		assert(isTreeValue(false));
 		assert(isTreeValue(""));

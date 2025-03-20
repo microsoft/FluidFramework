@@ -44,11 +44,14 @@ if (runningAgainstInternalRouterliciousCluster) {
 	// https://nodejs.org/api/tls.html#x509-certificate-error-codes).
 	// The flag used to be passed in the npm script in package.json, but adding node-option to the
 	// base mocharc-common.cjs caused it to be ignored, so we need to append it here.
-	if (config["node-option"] === undefined) {
-		config["node-option"] = "use-openssl-ca";
-	} else {
-		config["node-option"] += ",use-openssl-ca";
-	}
+	const baseNodeOptions =
+		config["node-option"] !== undefined
+			? Array.isArray(config["node-option"])
+				? config["node-option"]
+				: [config["node-option"]] // If string, wrap with array
+			: []; // If undefined, use an empty array
+
+	config["node-option"] = [...baseNodeOptions, "use-openssl-ca"];
 }
 
 module.exports = config;

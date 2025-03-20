@@ -93,7 +93,7 @@ function increaseKeyspace(
 ) {
 	const newKeyspace = [...keySpace];
 	if (multiplier <= 0) {
-		throw Error("multiplier must be greater than 0");
+		throw new Error("multiplier must be greater than 0");
 	}
 	const adjustedLength = Math.max(1, Math.floor(keySpace.length * multiplier));
 	const difference = adjustedLength - keySpace.length;

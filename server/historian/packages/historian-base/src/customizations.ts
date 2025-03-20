@@ -9,6 +9,7 @@ import {
 	IReadinessCheck,
 } from "@fluidframework/server-services-core";
 import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
+import { ISimplifiedCustomDataRetriever } from "./services";
 
 export interface IHistorianResourcesCustomizations {
 	storageNameRetriever?: IStorageNameRetriever;
@@ -16,4 +17,5 @@ export interface IHistorianResourcesCustomizations {
 	redisClientConnectionManager?: IRedisClientConnectionManager;
 	redisClientConnectionManagerForThrottling?: IRedisClientConnectionManager;
 	readinessCheck?: IReadinessCheck;
+	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever;
 }

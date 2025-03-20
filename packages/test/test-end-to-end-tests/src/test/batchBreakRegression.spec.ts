@@ -11,7 +11,8 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import {
 	CompressionAlgorithms,
-	IContainerRuntimeOptions,
+	disabledCompressionConfig,
+	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import {
@@ -47,7 +48,7 @@ async function runAndValidateBatch(
 	provider: ITestObjectProvider,
 	proxyDsf: IDocumentServiceFactory,
 	timeout: number,
-	runtimeOptions?: IContainerRuntimeOptions,
+	runtimeOptions?: IContainerRuntimeOptionsInternal,
 ) {
 	let containerUrl: string | undefined;
 	{
@@ -416,6 +417,7 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 				try {
 					await runAndValidateBatch(provider, proxyDsf, this.timeout(), {
 						enableGroupedBatching: false,
+						compressionOptions: disabledCompressionConfig,
 					});
 					assert.fail("expected error");
 				} catch (e) {

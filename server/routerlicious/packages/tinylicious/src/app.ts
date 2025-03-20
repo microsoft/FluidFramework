@@ -34,7 +34,7 @@ export function create(
 	storage: IDocumentStorage,
 	mongoManager: MongoManager,
 	// eslint-disable-next-line import/no-deprecated
-	collaborationSessionEventEmitter: TypedEventEmitter<ICollaborationSessionEvents>,
+	collaborationSessionEventEmitter: TypedEventEmitter<ICollaborationSessionEvents> | undefined,
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");

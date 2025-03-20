@@ -10,7 +10,7 @@ const webpack = require("webpack");
 module.exports = (env) => {
 	return {
 		entry: {
-			app: "./tests/index.tsx",
+			app: "./tests/index.ts",
 		},
 		resolve: {
 			extensionAlias: {

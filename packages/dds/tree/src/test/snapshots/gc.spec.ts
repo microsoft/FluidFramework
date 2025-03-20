@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
@@ -15,12 +15,13 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { typeboxValidator } from "../../external-utilities/index.js";
-import { type ISharedTree, SharedTree, SharedTreeFactory } from "../../shared-tree/index.js";
+import { type ISharedTree, SharedTree } from "../../shared-tree/index.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
 	type TreeView,
 } from "../../simple-tree/index.js";
+import { TreeFactory } from "../../treeFactory.js";
 
 const builder = new SchemaFactory("test");
 class Bar extends builder.object("bar", {
@@ -39,7 +40,7 @@ function createConnectedTree(
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
 		idCompressor: createIdCompressor(),
 	});
-	const tree = new SharedTree(id, dataStoreRuntime, new SharedTreeFactory().attributes, {});
+	const tree = new SharedTree(id, dataStoreRuntime, new TreeFactory({}).attributes, {});
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
@@ -51,7 +52,7 @@ function createConnectedTree(
 }
 
 function createLocalTree(id: string): ISharedTree {
-	const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
+	const factory = new TreeFactory({ jsonValidator: typeboxValidator });
 	return factory.create(
 		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 		id,

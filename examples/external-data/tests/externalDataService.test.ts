@@ -5,10 +5,8 @@
 
 import type { Server } from "node:http";
 
-import { delay } from "@fluidframework/core-utils/internal";
 import cors from "cors";
 import express from "express";
-import fetch from "node-fetch";
 import request from "supertest";
 
 import {
@@ -19,7 +17,7 @@ import {
 import { externalDataServicePort } from "../src/mock-external-data-service-interface/index.js";
 import { ITaskData, assertValidTaskData } from "../src/model-interface/index.js";
 
-import { closeServer } from "./utilities.js";
+import { closeServer, delay } from "./utilities.js";
 
 const externalTaskListId = "task-list-1";
 
@@ -76,11 +74,8 @@ describe("mock-external-data-service", () => {
 
 	async function getCurrentExternalData(): Promise<ITaskData> {
 		const fetchResponse = await externalDataSource!.fetchData(externalTaskListId);
-		// eslint-disable-next-line @typescript-eslint/no-base-to-string
-		const responseBody = JSON.parse(fetchResponse.body.toString()) as Record<
-			string | number | symbol,
-			unknown
-		>;
+		const responseText = await fetchResponse.text();
+		const responseBody = JSON.parse(responseText) as Record<string | number | symbol, unknown>;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 		return assertValidTaskData((responseBody as any).taskList);
 	}

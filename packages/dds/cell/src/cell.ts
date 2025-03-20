@@ -205,8 +205,7 @@ export class SharedCell<T = any>
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const content = await readAndParse<ICellValue>(storage, snapshotFileName);
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		this.data = this.serializer.decode(content.value);
+		this.data = this.serializer.decode(content.value) as Serializable<T>;
 		this.attribution = content.attribution;
 	}
 

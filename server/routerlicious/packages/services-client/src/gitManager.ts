@@ -43,9 +43,10 @@ export class GitManager implements IGitManager {
 	}
 
 	public async getCommit(sha: string): Promise<resources.ICommit> {
-		if (this.commitCache.has(sha)) {
+		const cachedCommit = this.commitCache.get(sha);
+		if (cachedCommit !== undefined) {
 			debug(`Cache hit on ${sha}`);
-			return this.commitCache.get(sha);
+			return cachedCommit;
 		}
 
 		return this.historian.getCommit(sha);
@@ -58,9 +59,10 @@ export class GitManager implements IGitManager {
 		let sha = shaOrRef;
 
 		// See if the sha is really a ref and convert
-		if (this.refCache.has(shaOrRef)) {
+		const cachedRef = this.refCache.get(shaOrRef);
+		if (cachedRef !== undefined) {
 			debug(`Commit cache hit on ${shaOrRef}`);
-			sha = this.refCache.get(shaOrRef);
+			sha = cachedRef;
 
 			// Delete refcache after first use
 			this.refCache.delete(shaOrRef);
@@ -72,8 +74,10 @@ export class GitManager implements IGitManager {
 		}
 
 		// See if the commit sha is hashed and return it if so
-		if (this.commitCache.has(sha)) {
-			const commit = this.commitCache.get(sha);
+		const cachedCommit = this.commitCache.get(sha);
+		if (cachedCommit !== undefined) {
+			debug(`Commit cache hit on ${sha}`);
+			const commit = cachedCommit;
 			return [
 				{
 					commit: {
@@ -98,18 +102,20 @@ export class GitManager implements IGitManager {
 	 * Reads the object with the given ID. We defer to the client implementation to do the actual read.
 	 */
 	public async getTree(root: string, recursive = true): Promise<resources.ITree> {
-		if (this.treeCache.has(root)) {
+		const cachedTree = this.treeCache.get(root);
+		if (cachedTree !== undefined) {
 			debug(`Tree cache hit on ${root}`);
-			return this.treeCache.get(root);
+			return cachedTree;
 		}
 
 		return this.historian.getTree(root, recursive);
 	}
 
 	public async getBlob(sha: string): Promise<resources.IBlob> {
-		if (this.blobCache.has(sha)) {
+		const cachedBlob = this.blobCache.get(sha);
+		if (cachedBlob !== undefined) {
 			debug(`Blob cache hit on ${sha}`);
-			return this.blobCache.get(sha);
+			return cachedBlob;
 		}
 
 		return this.historian.getBlob(sha);
@@ -167,8 +173,8 @@ export class GitManager implements IGitManager {
 		return this.historian.getSummary(sha);
 	}
 
-	public async getRef(ref: string): Promise<resources.IRef> {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	// eslint-disable-next-line @rushstack/no-new-null
+	public async getRef(ref: string): Promise<resources.IRef | null> {
 		return this.historian.getRef(`heads/${ref}`).catch((error) => {
 			if (error === 400 || error === 404) {
 				return null;

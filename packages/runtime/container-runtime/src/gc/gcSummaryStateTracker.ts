@@ -50,18 +50,6 @@ export class GCSummaryStateTracker {
 	// to unreferenced or vice-versa.
 	public updatedDSCountSinceLastSummary: number = 0;
 
-	/** API for ensuring the correct auto-recovery mitigations */
-	public autoRecovery = {
-		requestFullGCOnNextRun: () => {
-			this.fullGCModeForAutoRecovery = true;
-		},
-		fullGCRequested: () => {
-			return this.fullGCModeForAutoRecovery;
-		},
-	};
-	/** If true, the next GC run will do fullGC mode to regenerate the GC data for each node */
-	private fullGCModeForAutoRecovery: boolean = false;
-
 	constructor(
 		// Tells whether GC should run or not.
 		private readonly configs: Pick<
@@ -73,7 +61,9 @@ export class GCSummaryStateTracker {
 	/**
 	 * Called during GC initialization. Initialize the latest summary data from the base snapshot data.
 	 */
-	public initializeBaseState(baseSnapshotData: IGarbageCollectionSnapshotData | undefined) {
+	public initializeBaseState(
+		baseSnapshotData: IGarbageCollectionSnapshotData | undefined,
+	): void {
 		if (baseSnapshotData === undefined) {
 			return;
 		}
@@ -108,7 +98,7 @@ export class GCSummaryStateTracker {
 		// Serialize and write deleted nodes, if any. This is done irrespective of whether sweep is enabled or not so
 		// to identify deleted nodes' usage.
 		const serializedDeletedNodes =
-			deletedNodes.size > 0 ? JSON.stringify(Array.from(deletedNodes).sort()) : undefined;
+			deletedNodes.size > 0 ? JSON.stringify([...deletedNodes].sort()) : undefined;
 		// Serialize and write tombstones, if any.
 		const serializedTombstones =
 			tombstones.length > 0 ? JSON.stringify(tombstones.sort()) : undefined;
@@ -235,13 +225,13 @@ export class GCSummaryStateTracker {
 		this.latestSummaryData = this.pendingSummaryData;
 		this.pendingSummaryData = undefined;
 		this.updatedDSCountSinceLastSummary = 0;
-		this.fullGCModeForAutoRecovery = false;
 	}
 
 	/**
 	 * Called to update the state from a GC run's stats. Used to update the count of data stores whose state updated.
 	 */
-	public updateStateFromGCRunStats(stats: IGCStats) {
+
+	public updateStateFromGCRunStats(stats: IGCStats): void {
 		this.updatedDSCountSinceLastSummary += stats.updatedDataStoreCount;
 	}
 }

@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { createLogger } from "@fluidframework/app-insights-logger/internal";
+import { createLogger } from "@fluidframework/app-insights-logger/beta";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import {
 	TinyliciousClient,
 	TinyliciousContainerServices,
-} from "@fluidframework/tinylicious-client/internal";
+} from "@fluidframework/tinylicious-client";
 import { ApplicationInsights } from "@microsoft/applicationinsights-web";
 
 /**

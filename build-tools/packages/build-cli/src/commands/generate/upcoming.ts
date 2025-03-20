@@ -24,6 +24,15 @@ export default class GenerateUpcomingCommand extends BaseCommand<
 	static readonly summary =
 		`Generates a summary of all changesets. This is used to generate an UPCOMING.md file that provides a single place where developers can see upcoming changes.`;
 
+	// This command is deprecated and will be removed in 0.53.0.
+	static readonly state = "deprecated";
+	static readonly deprecationOptions = {
+		// The version in which the deprecated command will be removed.
+		version: "0.53.0",
+		// The replacement command.
+		to: "generate releaseNotes",
+	};
+
 	// Enables the global JSON flag in oclif.
 	static readonly enableJsonFlag = true;
 

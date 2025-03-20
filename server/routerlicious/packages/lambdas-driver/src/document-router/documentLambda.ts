@@ -22,6 +22,7 @@ import {
 	ITicketedSignalMessage,
 	RawOperationType,
 	IRawOperationMessage,
+	isCompleteBoxcarMessage,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { DocumentContextManager } from "./contextManager";
@@ -44,6 +45,12 @@ export class DocumentLambda implements IPartitionLambda {
 				"Listening for errors in documentLambda, contextManager error event",
 			);
 			context.error(error, errorData);
+		});
+		this.contextManager.on("pause", (lowestOffset: number, reason?: any) => {
+			context.pause(lowestOffset, reason);
+		});
+		this.contextManager.on("resume", () => {
+			context.resume();
 		});
 		this.activityCheckTimer = setInterval(
 			this.inactivityCheck.bind(this),
@@ -86,10 +93,23 @@ export class DocumentLambda implements IPartitionLambda {
 		this.documents.clear();
 	}
 
+	public pause(offset: number): void {
+		for (const [, partition] of this.documents) {
+			partition.pause(offset);
+		}
+	}
+
+	public resume(): void {
+		for (const [, partition] of this.documents) {
+			partition.resume();
+		}
+	}
+
 	private handlerCore(message: IQueuedMessage): void {
 		const boxcar = extractBoxcar(message);
-		if (!boxcar.documentId || !boxcar.tenantId) {
-			return;
+		if (!isCompleteBoxcarMessage(boxcar)) {
+			// If the boxcar is not complete, it cannot be routed correctly.
+			return undefined;
 		}
 
 		// Stash the parsed value for down stream lambdas
@@ -114,9 +134,11 @@ export class DocumentLambda implements IPartitionLambda {
 			);
 			this.documents.set(routingKey, document);
 		} else {
-			// SetHead assumes it will always receive increasing offsets. So we need to split the creation case
+			// SetHead assumes it will always receive increasing offsets (except reprocessing during pause/resume). So we need to split the creation case
 			// from the update case.
-			document.context.setHead(message);
+			if (!document.context.setHead(message)) {
+				return; // if head not updated, it means it doesnt need to be processed, return early
+			}
 		}
 
 		// Forward the message to the document queue and then resolve the promise to begin processing more messages

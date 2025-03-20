@@ -26,6 +26,7 @@ const {
 	generatePackageScriptsSection,
 	generateSectionFromTemplate,
 	includeTransform,
+	includeCodeTransform,
 	installationInstructionsTransform,
 	importInstructionsTransform,
 	packageScopeNoticeTransform,
@@ -275,7 +276,10 @@ function libraryReadmeHeaderTransform(content, options, config) {
 		);
 	}
 
-	const includeImportInstructionsSection = parseBooleanOption(options.importInstructions, true);
+	const includeImportInstructionsSection = parseBooleanOption(
+		options.importInstructions,
+		true,
+	);
 	if (includeImportInstructionsSection) {
 		sections.push(generateImportInstructionsSection(packageMetadata, sectionHeadingOptions));
 	}
@@ -361,6 +365,17 @@ module.exports = {
 		 * ```
 		 */
 		INCLUDE: includeTransform,
+
+		/**
+		 * See {@link includeCodeTransform}.
+		 *
+		 * @example
+		 *
+		 * ```markdown
+		 * <!-- AUTO-GENERATED-CONTENT:START (INCLUDE_CODE:path=../file.js&start=1&end=-1&language=typescript) -->
+		 * ```
+		 */
+		INCLUDE_CODE: includeCodeTransform,
 
 		/**
 		 * See {@link libraryReadmeHeaderTransform}.

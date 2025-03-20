@@ -56,6 +56,7 @@ export {
 } from "./http";
 export {
 	extractBoxcar,
+	isCompleteBoxcarMessage,
 	IContext,
 	IContextErrorData,
 	ILogger,
@@ -137,7 +138,9 @@ export {
 } from "./taskMessages";
 export {
 	EncryptionKeyVersion,
+	IEncryptedPrivateTenantKeys,
 	IEncryptedTenantKeys,
+	IPlainTextAndEncryptedTenantKeys,
 	ITenant,
 	ITenantConfig,
 	ITenantConfigManager,
@@ -146,6 +149,7 @@ export {
 	ITenantManager,
 	ITenantOrderer,
 	ITenantStorage,
+	ITenantPrivateKeys,
 	KeyName,
 } from "./tenant";
 export {
@@ -177,3 +181,4 @@ export { IServiceMessageResourceManager } from "./serviceMessage";
 export { IClusterDrainingChecker, clusterDrainingRetryTimeInMs } from "./clusterDraining";
 export { IWebSocketTracker } from "./webSocketTracker";
 export { IReadinessCheck, IReadinessStatus, ICheck } from "./readinessCheck";
+export { IFluidAccessToken, IFluidAccessTokenGenerator } from "./fluidAccessTokenGenerator";

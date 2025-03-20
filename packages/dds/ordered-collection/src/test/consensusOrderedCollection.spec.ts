@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
@@ -24,7 +24,10 @@ import {
 import { ConsensusResult, IConsensusOrderedCollection } from "../interfaces.js";
 import { acquireAndComplete, waitAcquireAndComplete } from "../testUtils.js";
 
-function createConnectedCollection(id: string, runtimeFactory: MockContainerRuntimeFactory) {
+function createConnectedCollection(
+	id: string,
+	runtimeFactory: MockContainerRuntimeFactory,
+): ConsensusQueue {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services: IChannelServices = {
@@ -46,7 +49,10 @@ function createLocalCollection(id: string): ConsensusQueue {
 function createCollectionForReconnection(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactoryForReconnection,
-) {
+): {
+	collection: IConsensusOrderedCollection;
+	containerRuntime: MockContainerRuntimeForReconnection;
+} {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services: IChannelServices = {
@@ -62,21 +68,21 @@ function createCollectionForReconnection(
 
 describe("ConsensusOrderedCollection", () => {
 	function generate(
-		input: any[],
-		output: any[],
+		input: unknown[],
+		output: unknown[],
 		creator: () => ConsensusOrderedCollection,
 		processMessages: () => void,
-	) {
+	): void {
 		let testCollection: ConsensusOrderedCollection;
 
-		async function removeItem() {
+		async function removeItem(): Promise<unknown> {
 			const resP = acquireAndComplete(testCollection);
 			processMessages();
 			setImmediate(() => processMessages());
 			return resP;
 		}
 
-		async function waitAndRemoveItem() {
+		async function waitAndRemoveItem(): Promise<unknown> {
 			processMessages();
 			const resP = waitAcquireAndComplete(testCollection);
 			processMessages();
@@ -84,7 +90,7 @@ describe("ConsensusOrderedCollection", () => {
 			return resP;
 		}
 
-		async function addItem(item) {
+		async function addItem(item): Promise<void> {
 			const waitP = testCollection.add(item);
 			processMessages();
 			return waitP;
@@ -112,7 +118,8 @@ describe("ConsensusOrderedCollection", () => {
 				assert(handle, "Need an actual handle to test this case");
 				await addItem(handle);
 
-				const acquiredValue = await removeItem();
+				const acquiredValue = (await removeItem()) as IFluidHandleInternal;
+
 				assert.strictEqual(acquiredValue.absolutePath, handle.absolutePath);
 				const dataStore = (await handle.get()) as ConsensusQueue;
 				assert.strictEqual(dataStore.handle.absolutePath, testCollection.handle.absolutePath);
@@ -134,7 +141,7 @@ describe("ConsensusOrderedCollection", () => {
 
 			it("Can wait for data", async () => {
 				let added = false;
-				let res: any;
+				let res: unknown;
 				const p = testCollection.waitAndAcquire(async (value) => {
 					assert(added, "Wait resolved before value is added");
 					res = value;
@@ -170,13 +177,13 @@ describe("ConsensusOrderedCollection", () => {
 			it("Event", async () => {
 				let addCount = 0;
 				let removeCount = 0;
-				const addListener = (value) => {
+				const addListener = (value): void => {
 					assert.strictEqual(value, input[addCount], "Added event value not matched");
 					addCount += 1;
 				};
 				testCollection.on("add", addListener);
 
-				const acquireListener = (value) => {
+				const acquireListener = (value): void => {
 					assert.strictEqual(value, output[removeCount], "Remove event value not matched");
 					removeCount += 1;
 				};
@@ -209,7 +216,7 @@ describe("ConsensusOrderedCollection", () => {
 			it("can clone object value", async () => {
 				const obj = { x: 1 };
 				await addItem(obj);
-				const result = await removeItem();
+				const result = (await removeItem()) as { x: number };
 				assert.notStrictEqual(result, obj);
 				assert.strictEqual(result.x, 1);
 			});
@@ -279,7 +286,7 @@ describe("ConsensusOrderedCollection", () => {
 			// client.
 			let addedValue: string = "";
 			let newlyAdded: boolean = false;
-			testCollection2.on("add", (value: any, added: boolean) => {
+			testCollection2.on("add", (value: string, added: boolean) => {
 				addedValue = value;
 				newlyAdded = added;
 			});
@@ -308,13 +315,13 @@ describe("ConsensusOrderedCollection", () => {
 			// client.
 			let acquiredValue: string = "";
 			let acquiredClientId: string | undefined = "";
-			testCollection2.on("acquire", (value: any, clientId?: string) => {
+			testCollection2.on("acquire", (value: string, clientId?: string) => {
 				acquiredValue = value;
 				acquiredClientId = clientId;
 			});
 
 			// Acquire the previously added value.
-			let res: any;
+			let res: unknown;
 			const resultP = testCollection1.acquire(async (value) => {
 				res = value;
 				return ConsensusResult.Complete;
@@ -353,7 +360,7 @@ describe("ConsensusOrderedCollection", () => {
 			// remote client.
 			let addedValue: string = "";
 			let newlyAdded: boolean = false;
-			testCollection2.on("add", (value: any, added: boolean) => {
+			testCollection2.on("add", (value: string, added: boolean) => {
 				addedValue = value;
 				newlyAdded = added;
 			});
@@ -393,28 +400,28 @@ describe("ConsensusOrderedCollection", () => {
 				);
 			}
 
-			private async addItem(item: any) {
+			private async addItem(item: unknown): Promise<void> {
 				const waitP = this.collection.add(item);
 				this.containerRuntimeFactory.processAllMessages();
 				return waitP;
 			}
 
-			private async removeItem() {
+			private async removeItem(): Promise<unknown> {
 				const resP = acquireAndComplete(this.collection);
 				this.containerRuntimeFactory.processAllMessages();
 				setImmediate(() => this.containerRuntimeFactory.processAllMessages());
 				return resP;
 			}
 
-			public get sharedObject() {
+			public get sharedObject(): IConsensusOrderedCollection {
 				return this.collection;
 			}
 
-			public get expectedOutboundRoutes() {
+			public get expectedOutboundRoutes(): string[] {
 				return this._expectedRoutes;
 			}
 
-			public async addOutboundRoutes() {
+			public async addOutboundRoutes(): Promise<void> {
 				const subCollection = createLocalCollection(
 					`subCollection-${++this.subCollectionCount}`,
 				);
@@ -422,7 +429,7 @@ describe("ConsensusOrderedCollection", () => {
 				this._expectedRoutes.push(subCollection.handle.absolutePath);
 			}
 
-			public async deleteOutboundRoutes() {
+			public async deleteOutboundRoutes(): Promise<void> {
 				const deletedHandle = (await this.removeItem()) as IFluidHandleInternal;
 				assert(deletedHandle, "Route must be added before deleting");
 				// Remove deleted handle's route from expected routes.
@@ -431,7 +438,7 @@ describe("ConsensusOrderedCollection", () => {
 				);
 			}
 
-			public async addNestedHandles() {
+			public async addNestedHandles(): Promise<void> {
 				const subCollection1 = createLocalCollection(
 					`subCollection-${++this.subCollectionCount}`,
 				);

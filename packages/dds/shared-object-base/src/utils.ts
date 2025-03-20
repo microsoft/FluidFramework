@@ -4,6 +4,7 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
@@ -20,12 +21,11 @@ import { IFluidSerializer } from "./serializer.js";
  * @internal
  */
 export function serializeHandles(
-	value: any,
+	value: unknown,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
 ): string | undefined {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-	return value !== undefined ? serializer.stringify(value, bind) : value;
+	return value === undefined ? value : serializer.stringify(value, bind);
 }
 
 /**
@@ -43,11 +43,10 @@ export function serializeHandles(
  * @alpha
  */
 export function makeHandlesSerializable(
-	value: any,
+	value: unknown,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
-) {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+): unknown {
 	return serializer.encode(value, bind);
 }
 
@@ -62,8 +61,7 @@ export function makeHandlesSerializable(
  * @legacy
  * @alpha
  */
-export function parseHandles(value: any, serializer: IFluidSerializer) {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+export function parseHandles(value: unknown, serializer: IFluidSerializer): unknown {
 	return serializer.decode(value);
 }
 
@@ -89,7 +87,7 @@ export function createSingleBlobSummary(
  * @internal
  */
 export function bindHandles(
-	value: any,
+	value: unknown,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
 ): void {
@@ -99,3 +97,11 @@ export function bindHandles(
 	// handles and binds them, but sometimes we only wish to do the latter
 	serializer.encode(value, bind);
 }
+
+/**
+ * Information about a Fluid channel.
+ * @privateRemarks
+ * This is distinct from {@link IChannel} as it omits the APIs used by the runtime to manage the channel and instead only has things which are useful (and safe) to expose to users of the channel.
+ * @internal
+ */
+export type IChannelView = Pick<IChannel, "id" | "attributes" | "isAttached">;

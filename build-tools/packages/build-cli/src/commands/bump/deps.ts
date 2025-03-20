@@ -4,7 +4,7 @@
  */
 
 import { Flags } from "@oclif/core";
-import chalk from "chalk";
+import chalk from "picocolors";
 import prompts from "prompts";
 import stripAnsi from "strip-ansi";
 
@@ -137,7 +137,8 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 			this.error(`Package not found: ${args.package_or_release_group}`);
 		}
 
-		const branchName = await context.gitRepo.getCurrentBranchName();
+		const gitRepo = await context.getGitRepository();
+		const branchName = await gitRepo.getCurrentBranchName();
 
 		// eslint-disable-next-line import/no-deprecated
 		if (args.package_or_release_group === MonoRepoKind.Server && branchName !== "next") {
@@ -291,10 +292,10 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 					flags.releaseGroup,
 				);
 				this.log(`Creating branch ${bumpBranch}`);
-				await context.createBranch(bumpBranch);
-				await context.gitRepo.commit(commitMessage, "Error committing");
+				await gitRepo.createBranch(bumpBranch);
+				await gitRepo.gitClient.commit(commitMessage);
 				this.finalMessages.push(
-					`You can now create a PR for branch ${bumpBranch} targeting ${context.originalBranchName}`,
+					`You can now create a PR for branch ${bumpBranch} targeting ${gitRepo.originalBranchName}`,
 				);
 			} else {
 				this.warning(`Skipping commit. You'll need to manually commit changes.`);

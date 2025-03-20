@@ -26,16 +26,28 @@ import type { ClientSessionId, ISessionClient } from "./presence.js";
 /**
  * @internal
  */
+export interface LocalStateUpdateOptions {
+	allowableUpdateLatencyMs: number | undefined;
+
+	/**
+	 * Special option allowed for unicast notifications.
+	 */
+	targetClientId?: ClientConnectionId;
+}
+
+/**
+ * @internal
+ */
 export interface StateDatastore<
 	TKey extends string,
-	TValue extends InternalTypes.ValueDirectoryOrState<any> | undefined,
+	TValue extends InternalTypes.ValueDirectoryOrState<any>,
 > {
 	localUpdate(
 		key: TKey,
 		value: TValue & {
 			ignoreUnmonitored?: true;
 		},
-		forceBroadcast: boolean,
+		options: LocalStateUpdateOptions,
 	): void;
 	update(key: TKey, clientSessionId: ClientSessionId, value: TValue): void;
 	knownValues(key: TKey): {
@@ -55,7 +67,7 @@ export function handleFromDatastore<
 	// TSchema as `unknown` still provides some type safety.
 	// TSchema extends StateDatastoreSchema,
 	TKey extends string /* & keyof TSchema */,
-	TValue extends InternalTypes.ValueDirectoryOrState<unknown> | undefined,
+	TValue extends InternalTypes.ValueDirectoryOrState<unknown>,
 >(
 	datastore: StateDatastore<TKey, TValue>,
 ): InternalTypes.StateDatastoreHandle<TKey, Exclude<TValue, undefined>> {

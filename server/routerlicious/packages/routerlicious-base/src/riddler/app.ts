@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISecretManager, ICache } from "@fluidframework/server-services-core";
+import { ISecretManager, ICache, IReadinessCheck } from "@fluidframework/server-services-core";
 import { BaseTelemetryProperties } from "@fluidframework/server-services-telemetry";
 import * as bodyParser from "body-parser";
 import express from "express";
@@ -17,7 +17,6 @@ import { catch404, getTenantIdFromRequest, handleError } from "../utils";
 import * as api from "./api";
 import { ITenantRepository } from "./mongoTenantRepository";
 import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
-import { IReadinessCheck } from "@fluidframework/server-services-core";
 
 export function create(
 	tenantRepository: ITenantRepository,

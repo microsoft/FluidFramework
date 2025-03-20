@@ -35,7 +35,13 @@ describe("MergeTree.Client", () => {
 			const random = makeRandom(0xdeadbeef, 0xfeedbed, minLength, opsPerRollback);
 
 			// A: readonly, B: rollback, C: rollback + edit, D: edit
-			const clients = createClientsAtInitialState({ initialState: "" }, "A", "B", "C", "D");
+			const clients = createClientsAtInitialState(
+				{ initialState: "", options: { mergeTreeEnableAnnotateAdjust: true } },
+				"A",
+				"B",
+				"C",
+				"D",
+			);
 			let seq = 0;
 
 			for (let round = 0; round < defaultOptions.rounds; round++) {
@@ -72,7 +78,7 @@ describe("MergeTree.Client", () => {
 					// TODO: The type here is probably MergeTreeDeltaType but
 					// omitting GROUP, given the typing of the rollback method.
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-					clients[msg![0].clientId!].rollback?.(
+					clients[msg![0].clientId!].rollback(
 						{ type: (msg![0].contents as { type?: unknown }).type },
 						msg![1],
 					);

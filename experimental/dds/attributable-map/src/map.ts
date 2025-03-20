@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	IChannelFactory,
@@ -160,7 +161,7 @@ export class AttributableMapClass
 	 * @returns The iterator
 	 */
 	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 	public entries(): IterableIterator<[string, any]> {
 		return this.kernel.entries();
 	}
@@ -170,7 +171,7 @@ export class AttributableMapClass
 	 * @returns The iterator
 	 */
 	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 	public values(): IterableIterator<any> {
 		return this.kernel.values();
 	}
@@ -180,7 +181,7 @@ export class AttributableMapClass
 	 * @returns The iterator
 	 */
 	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 	public [Symbol.iterator](): IterableIterator<[string, any]> {
 		return this.kernel.entries();
 	}
@@ -197,9 +198,8 @@ export class AttributableMapClass
 	 * @param callbackFn - Callback function
 	 */
 	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 	public forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void {
-		// eslint-disable-next-line unicorn/no-array-for-each, unicorn/no-array-callback-reference
 		this.kernel.forEach(callbackFn);
 	}
 
@@ -207,7 +207,7 @@ export class AttributableMapClass
 	 * {@inheritDoc ISharedMap.get}
 	 */
 	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 	public get<T = any>(key: string): T | undefined {
 		return this.kernel.get<T>(key);
 	}
@@ -304,8 +304,7 @@ export class AttributableMapClass
 		//    and result in non-incremental snapshot.
 		//    This can be improved in the future, without being format breaking change, as loading sequence
 		//    loads all blobs at once and partitioning schema has no impact on that process.
-		for (const key of Object.keys(data)) {
-			const value = data[key];
+		for (const [key, value] of Object.entries(data)) {
 			if (
 				value.value &&
 				value.value.length + (value.attribution?.length ?? 0) >=
@@ -405,7 +404,10 @@ export class AttributableMapClass
 		localOpMetadata: unknown,
 	): void {
 		if (message.type === MessageType.Operation) {
-			this.kernel.tryProcessMessage(message, local, localOpMetadata);
+			assert(
+				this.kernel.tryProcessMessage(message, local, localOpMetadata),
+				0xab0 /* AttributableMap received an unrecognized op, possibly from a newer version */,
+			);
 		}
 	}
 

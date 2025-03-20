@@ -11,6 +11,7 @@ import {
 	SpanNode,
 	type TextFormatting,
 } from "../../../documentation-domain/index.js";
+
 import { testRender } from "./Utilities.js";
 
 describe("Span Markdown rendering tests", () => {

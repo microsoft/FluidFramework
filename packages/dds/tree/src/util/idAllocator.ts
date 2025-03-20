@@ -26,8 +26,6 @@ export interface IdAllocationState {
 	maxId: number;
 }
 
-/**
- */
 export function idAllocatorFromMaxId(maxId: number | undefined = undefined): IdAllocator {
 	return idAllocatorFromState({ maxId: maxId ?? -1 });
 }
@@ -46,6 +44,6 @@ export function idAllocatorFromState(state: IdAllocationState): IdAllocator {
 }
 
 export const fakeIdAllocator: IdAllocator = {
-	allocate: () => fail("Should not allocate IDs"),
+	allocate: () => fail(0xae6 /* Should not allocate IDs */),
 	getMaxId: () => 0,
 };

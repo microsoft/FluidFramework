@@ -5,14 +5,14 @@
 
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { IChannel, IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import { IChannel, IChannelFactory } from "@fluidframework/datastore-definitions/legacy";
 import { SessionId } from "@fluidframework/id-compressor";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { createIdCompressor } from "@fluidframework/id-compressor/legacy";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils/internal";
+} from "@fluidframework/test-runtime-utils/legacy";
 
 export function create<T>(factory: IChannelFactory<T>): {
 	channel: T & IChannel;

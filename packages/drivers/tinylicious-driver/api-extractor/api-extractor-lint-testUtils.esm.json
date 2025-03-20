@@ -1,0 +1,13 @@
+{
+	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+	"extends": "<projectFolder>/../../../common/build/build-common/api-extractor-lint.entrypoint.json",
+	"mainEntryPointFilePath": "<projectFolder>/lib/testUtils.d.ts",
+	"messages": {
+		"extractorMessageReporting": {
+			// No release tags are used for custom test utilities
+			"ae-missing-release-tag": {
+				"logLevel": "none"
+			}
+		}
+	}
+}

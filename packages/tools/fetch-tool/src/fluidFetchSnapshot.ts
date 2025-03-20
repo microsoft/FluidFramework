@@ -68,9 +68,8 @@ function fetchBlobs(
 	blobIdMap: Map<string, number>,
 ) {
 	const result: IFetchedBlob[] = [];
-	for (const item of Object.keys(tree.blobs)) {
+	for (const [item, blobId] of Object.entries(tree.blobs)) {
 		const treePath = `${prefix}${item}`;
-		const blobId = tree.blobs[item];
 		if (blobId !== null) {
 			let reused = true;
 			let blob = blobCachePrevious.get(blobId);
@@ -134,8 +133,7 @@ async function fetchBlobsFromSnapshotTree(
 	const blobIdMap = parentBlobIdMap ?? new Map<string, number>();
 	let result: IFetchedData[] = fetchBlobs(prefix, tree, storage, blobIdMap);
 
-	for (const subtreeId of Object.keys(tree.trees)) {
-		const subtree = tree.trees[subtreeId];
+	for (const [subtreeId, subtree] of Object.entries(tree.trees)) {
 		const dataStoreBlobs = await fetchBlobsFromSnapshotTree(
 			storage,
 			subtree,

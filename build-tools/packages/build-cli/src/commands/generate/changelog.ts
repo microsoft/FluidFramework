@@ -17,12 +17,7 @@ import { inc } from "semver";
 import { CleanOptions } from "simple-git";
 
 import { checkFlags, releaseGroupFlag, semverFlag } from "../../flags.js";
-import {
-	BaseCommand,
-	DEFAULT_CHANGESET_PATH,
-	Repository,
-	loadChangesets,
-} from "../../library/index.js";
+import { BaseCommand, DEFAULT_CHANGESET_PATH, loadChangesets } from "../../library/index.js";
 import { isReleaseGroup } from "../../releaseGroups.js";
 
 async function replaceInFile(
@@ -59,7 +54,6 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 		},
 	];
 
-	private repo?: Repository;
 	private bumpType?: VersionBumpType;
 
 	private async processPackage(pkg: Package): Promise<void> {
@@ -133,7 +127,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 	public async run(): Promise<void> {
 		const context = await this.getContext();
 
-		const gitRoot = context.gitRepo.resolvedRoot;
+		const gitRoot = context.root;
 
 		const { install, releaseGroup } = this.flags;
 
@@ -171,13 +165,13 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 			}
 		}
 
-		this.repo = new Repository({ baseDir: gitRoot });
+		const repo = await context.getGitRepository();
 
 		// git add the deleted changesets (`changeset version` deletes them)
-		await this.repo.gitClient.add(".changeset/**");
+		await repo.gitClient.add(".changeset/**");
 
 		// git restore the package.json files that were changed by `changeset version`
-		await this.repo.gitClient.raw("restore", "**package.json");
+		await repo.gitClient.raw("restore", "**package.json");
 
 		// Calls processPackage on all packages.
 		ux.action.start("Processing changelog updates");
@@ -197,13 +191,13 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 		}
 
 		// git add the changelog changes
-		await this.repo.gitClient.add("**CHANGELOG.md");
+		await repo.gitClient.add("**CHANGELOG.md");
 
 		// Cleanup: git restore any edits that aren't staged
-		await this.repo.gitClient.raw("restore", ".");
+		await repo.gitClient.raw("restore", ".");
 
 		// Cleanup: git clean any untracked files
-		await this.repo.gitClient.clean(CleanOptions.RECURSIVE + CleanOptions.FORCE);
+		await repo.gitClient.clean(CleanOptions.RECURSIVE + CleanOptions.FORCE);
 		ux.action.stop();
 
 		this.log("Commit and open a PR!");

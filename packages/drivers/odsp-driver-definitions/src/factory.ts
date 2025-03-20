@@ -83,6 +83,13 @@ export interface ICollabSessionOptions {
 	 * @deprecated Due to security reasons we will be passing the token via Authorization header only.
 	 */
 	forceAccessTokenViaAuthorizationHeader?: boolean;
+	/**
+	 * Value indicating the client display name for current session.
+	 * This name will be used in attribution associated with edits made during session.
+	 * This is optional and used only when collab session is being joined by client acting in app-only mode (i.e. without user context).
+	 * If not specified client display name is extracted from the access token that is used to join session.
+	 */
+	displayName?: string;
 }
 
 /**

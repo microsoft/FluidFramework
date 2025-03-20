@@ -14,19 +14,17 @@ import {
 	FluidDataStoreRuntime,
 	FluidObjectHandle,
 	mixinRequestHandler,
-} from "@fluidframework/datastore/internal";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
+} from "@fluidframework/datastore/legacy";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/legacy";
+import { ISharedMap, SharedMap } from "@fluidframework/map/legacy";
 import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions/internal";
-import { create404Response } from "@fluidframework/runtime-utils/internal";
-import {
-	ReferenceType,
-	SharedString,
-	reservedTileLabelsKey,
-} from "@fluidframework/sequence/internal";
+} from "@fluidframework/runtime-definitions/legacy";
+import { create404Response } from "@fluidframework/runtime-utils/legacy";
+// eslint-disable-next-line import/no-internal-modules -- #26904: `sequence` internals used in examples
+import { reservedTileLabelsKey } from "@fluidframework/sequence/internal";
+import { ReferenceType, SharedString } from "@fluidframework/sequence/legacy";
 
 import { PresenceManager } from "./presence.js";
 

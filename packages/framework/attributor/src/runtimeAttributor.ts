@@ -88,7 +88,7 @@ export class RuntimeAttributor implements IRuntimeAttributor {
 		if (baseSnapshotForAttributorTree === undefined) {
 			this.opAttributor = new OpStreamAttributor(deltaManager, quorum);
 		} else {
-			const id = baseSnapshotForAttributorTree.blobs[opBlobName];
+			const id: string | undefined = baseSnapshotForAttributorTree.blobs[opBlobName];
 			assert(
 				id !== undefined,
 				0x50a /* Attributor tree should have op attributor summary blob. */,

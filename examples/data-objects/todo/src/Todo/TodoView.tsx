@@ -4,7 +4,7 @@
  */
 
 import { CollaborativeInput } from "@fluid-example/example-utils";
-import { SharedString } from "@fluidframework/sequence/internal";
+import { SharedString } from "@fluidframework/sequence/legacy";
 import React, { useEffect, useRef, useState } from "react";
 
 import { TodoItem, TodoItemView } from "../TodoItem/index.js";

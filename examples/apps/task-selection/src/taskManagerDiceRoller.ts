@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
-import { TaskManager } from "@fluidframework/task-manager/internal";
+import { assert } from "@fluidframework/core-utils/legacy";
+import { TaskManager } from "@fluidframework/task-manager/legacy";
 
 import { IDiceRoller } from "./interface.js";
 

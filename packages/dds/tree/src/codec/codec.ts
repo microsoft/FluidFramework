@@ -203,7 +203,7 @@ export function makeCodecFamily<TDecoded, TContext>(
 	> = new Map();
 	for (const [formatVersion, codec] of registry) {
 		if (codecs.has(formatVersion)) {
-			fail("Duplicate codecs specified.");
+			fail(0xabf /* Duplicate codecs specified. */);
 		}
 		codecs.set(formatVersion, ensureBinaryEncoding(codec));
 	}
@@ -315,16 +315,41 @@ export function withSchemaValidation<
 		encode: (obj: TInMemoryFormat, context: TContext): TEncodedFormat => {
 			const encoded = codec.encode(obj, context);
 			if (!compiledFormat.check(encoded)) {
-				fail("Encoded schema should validate");
+				fail(0xac0 /* Encoded schema should validate */);
 			}
 			return encoded;
 		},
 		decode: (encoded: TValidate, context: TContext): TInMemoryFormat => {
 			if (!compiledFormat.check(encoded)) {
-				fail("Encoded schema should validate");
+				fail(0xac1 /* Encoded schema should validate */);
 			}
 			// TODO: would be nice to provide a more specific validate type to the inner codec than the outer one gets.
 			return codec.decode(encoded, context) as unknown as TInMemoryFormat;
 		},
 	};
+}
+
+/**
+ * Versions of Fluid Framework client packages.
+ * @remarks
+ * Used to express compatibility requirements by indicating the oldest version with which compatibility must be maintained.
+ * @privateRemarks
+ * This scheme assumes a single version will always be enough to communicate compatibility.
+ * For this to work, compatibility has to be strictly increasing.
+ * If this is violated (for example a subset of incompatible features from 3.x that are not in 3.0 are back ported to 2.x),
+ * a more complex scheme may be needed to allow safely opting into incompatible features in those cases:
+ * such a system can be added if/when its needed since it will be opt in and thus non-breaking.
+ *
+ * TODO: this should likely be defined higher in the stack and specified when creating the container, possibly as part of its schema.
+ * @alpha
+ */
+export enum FluidClientVersion {
+	/** Fluid Framework Client 2.0 and newer. */
+	v2_0 = "v2_0",
+	/** Fluid Framework Client 2.1 and newer. */
+	v2_1 = "v2_1",
+	/** Fluid Framework Client 2.2 and newer. */
+	v2_2 = "v2_2",
+	/** Fluid Framework Client 2.4 and newer. */
+	v2_3 = "v2_3",
 }

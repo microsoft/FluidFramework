@@ -9,7 +9,12 @@ import { LocalClientId } from "./constants.js";
 import { LocalReferenceCollection } from "./localReference.js";
 import { MergeTree } from "./mergeTree.js";
 import { NodeAction, depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
-import { IRemovalInfo, ISegment, ISegmentLeaf, type MergeBlock } from "./mergeTreeNodes.js";
+import { ISegment, type ISegmentLeaf, type MergeBlock } from "./mergeTreeNodes.js";
+import {
+	type IHasInsertionInfo,
+	type IHasRemovalInfo,
+	type IMergeNodeInfo,
+} from "./segmentInfos.js";
 
 /**
  * This is a special segment that is not bound or known by the merge tree itself,
@@ -32,7 +37,9 @@ import { IRemovalInfo, ISegment, ISegmentLeaf, type MergeBlock } from "./mergeTr
  * must be possible in some way to refer to a position before or after the tree
  * respectively. The endpoint segments allow us to support such behavior.
  */
-abstract class BaseEndpointSegment {
+abstract class BaseEndpointSegment
+	implements IMergeNodeInfo, IHasRemovalInfo, IHasInsertionInfo
+{
 	constructor(protected readonly mergeTree: MergeTree) {}
 	/*
 	 * segments must be of at least length one, but
@@ -40,16 +47,13 @@ abstract class BaseEndpointSegment {
 	 * of undefined/0. we leverage this to create
 	 * a 0 length segment for an endpoint of the tree
 	 */
-	removedSeq: number = 0;
-	removedClientIds: number[] = [LocalClientId];
+	removes = [{ type: "setRemove", seq: 0, clientId: LocalClientId } as const];
 	attribution: undefined;
 	propertyManager: undefined;
-	localSeq: undefined;
-	localRemovedSeq: undefined;
 	properties: undefined;
-	seq = 0;
-	clientId = LocalClientId;
 	cachedLength = 1;
+
+	insert = { type: "insert", seq: 0, clientId: LocalClientId } as const;
 
 	isLeaf(): this is ISegment {
 		return true;
@@ -99,7 +103,7 @@ const notSupported = (): never => {
 /**
  * The position immediately prior to the start of the tree
  */
-export class StartOfTreeSegment extends BaseEndpointSegment implements ISegment, IRemovalInfo {
+export class StartOfTreeSegment extends BaseEndpointSegment implements ISegment {
 	type: string = "StartOfTreeSegment";
 	readonly endpointType = "start";
 
@@ -149,7 +153,7 @@ export class StartOfTreeSegment extends BaseEndpointSegment implements ISegment,
 /**
  * The position immediately after the end of the tree
  */
-export class EndOfTreeSegment extends BaseEndpointSegment implements ISegment, IRemovalInfo {
+export class EndOfTreeSegment extends BaseEndpointSegment implements ISegment {
 	type: string = "EndOfTreeSegment";
 	readonly endpointType = "end";
 

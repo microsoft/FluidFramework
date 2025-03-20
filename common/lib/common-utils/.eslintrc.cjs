@@ -14,9 +14,6 @@ module.exports = {
 		],
 	},
 	rules: {
-		// TODO: Remove once this config extends `recommended` or `strict` above.
-		"@typescript-eslint/explicit-function-return-type": "error",
-
 		// This package is being deprecated, so it's okay to use deprecated APIs.
 		"import/no-deprecated": "off",
 
@@ -42,9 +39,6 @@ module.exports = {
 			rules: {
 				// It's fine for tests to use node.js modules.
 				"import/no-nodejs-modules": "off",
-
-				// It's fine for tests to use `__dirname`, etc.
-				"unicorn/prefer-module": "off",
 			},
 		},
 	],

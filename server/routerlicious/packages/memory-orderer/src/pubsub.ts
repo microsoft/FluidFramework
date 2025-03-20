@@ -70,25 +70,28 @@ export class PubSub implements IPubSub {
 		}
 
 		const subscriptions = this.topics.get(topic);
-		if (!subscriptions.has(subscriber.id)) {
-			subscriptions.set(subscriber.id, { subscriber, count: 0 });
+		if (!subscriptions?.has(subscriber.id)) {
+			subscriptions?.set(subscriber.id, { subscriber, count: 0 });
 		}
-
-		subscriptions.get(subscriber.id).count++;
+		const subscription = subscriptions?.get(subscriber.id);
+		if (subscription) {
+			subscription.count++;
+		}
 	}
 
 	public unsubscribe(topic: string, subscriber: ISubscriber): void {
 		assert(this.topics.has(topic));
 		const subscriptions = this.topics.get(topic);
 
-		assert(subscriptions.has(subscriber.id));
-		const details = subscriptions.get(subscriber.id);
-		details.count--;
-		if (details.count === 0) {
-			subscriptions.delete(subscriber.id);
+		assert(subscriptions?.has(subscriber.id));
+		const details = subscriptions?.get(subscriber.id);
+		if (details !== undefined) {
+			details.count--;
+			if (details.count === 0) {
+				subscriptions?.delete(subscriber.id);
+			}
 		}
-
-		if (subscriptions.size === 0) {
+		if (subscriptions?.size === 0) {
 			this.topics.delete(topic);
 		}
 	}

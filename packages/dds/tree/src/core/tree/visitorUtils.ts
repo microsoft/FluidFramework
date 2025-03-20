@@ -10,12 +10,13 @@ import { type IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
 import type { RevisionTag, RevisionTagCodec } from "../rebase/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
-import type { ProtoNodes, Root } from "./delta.js";
+import type { DetachedNodeId, Root } from "./delta.js";
 import { DetachedFieldIndex } from "./detachedFieldIndex.js";
 import type { ForestRootId } from "./detachedFieldIndexTypes.js";
 import type { PlaceIndex, Range } from "./pathTree.js";
 import { type DeltaVisitor, visitDelta } from "./visitDelta.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { ITreeCursorSynchronous } from "./cursor.js";
 
 export function makeDetachedFieldIndex(
 	prefix: string = "Temp",
@@ -86,21 +87,31 @@ export function combineVisitors(
 			announcedVisitors.forEach((v) => v.beforeAttach(source, count, destination));
 			visitors.forEach((v) => v.attach(source, count, destination));
 			announcedVisitors.forEach((v) =>
-				v.afterAttach(source, { start: destination, end: destination + count }),
+				v.afterAttach(source, {
+					start: destination,
+					end: destination + count,
+				}),
 			);
 		},
-		detach: (source: Range, destination: FieldKey) => {
+		detach: (source: Range, destination: FieldKey, id: DetachedNodeId) => {
 			announcedVisitors.forEach((v) => v.beforeDetach(source, destination));
-			visitors.forEach((v) => v.detach(source, destination));
+			visitors.forEach((v) => v.detach(source, destination, id));
 			announcedVisitors.forEach((v) =>
 				v.afterDetach(source.start, source.end - source.start, destination),
 			);
 		},
-		replace: (newContent: FieldKey, oldContent: Range, oldContentDestination: FieldKey) => {
+		replace: (
+			newContent: FieldKey,
+			oldContent: Range,
+			oldContentDestination: FieldKey,
+			oldContentId: DetachedNodeId,
+		) => {
 			announcedVisitors.forEach((v) =>
 				v.beforeReplace(newContent, oldContent, oldContentDestination),
 			);
-			visitors.forEach((v) => v.replace(newContent, oldContent, oldContentDestination));
+			visitors.forEach((v) =>
+				v.replace(newContent, oldContent, oldContentDestination, oldContentId),
+			);
 			announcedVisitors.forEach((v) =>
 				v.afterReplace(newContent, oldContent, oldContentDestination),
 			);
@@ -120,7 +131,7 @@ export interface AnnouncedVisitor extends DeltaVisitor {
 	/**
 	 * A hook that is called after all nodes have been created.
 	 */
-	afterCreate(content: ProtoNodes, destination: FieldKey): void;
+	afterCreate(content: readonly ITreeCursorSynchronous[], destination: FieldKey): void;
 	beforeDestroy(field: FieldKey, count: number): void;
 	beforeAttach(source: FieldKey, count: number, destination: PlaceIndex): void;
 	afterAttach(source: FieldKey, destination: Range): void;
@@ -132,4 +143,34 @@ export interface AnnouncedVisitor extends DeltaVisitor {
 		oldContentDestination: FieldKey,
 	): void;
 	afterReplace(newContentSource: FieldKey, newContent: Range, oldContent: FieldKey): void;
+}
+
+/**
+ * Creates an announced visitor with only the provided functions and uses a no op for the rest.
+ * This is provided to make some of the delta visitor definitions cleaner.
+ */
+export function createAnnouncedVisitor(
+	visitorFunctions: Partial<AnnouncedVisitor>,
+): AnnouncedVisitor {
+	const noOp = (): void => {};
+	return {
+		free: visitorFunctions.free ?? noOp,
+		create: visitorFunctions.create ?? noOp,
+		afterCreate: visitorFunctions.afterCreate ?? noOp,
+		beforeDestroy: visitorFunctions.beforeDestroy ?? noOp,
+		destroy: visitorFunctions.destroy ?? noOp,
+		beforeAttach: visitorFunctions.beforeAttach ?? noOp,
+		attach: visitorFunctions.attach ?? noOp,
+		afterAttach: visitorFunctions.afterAttach ?? noOp,
+		beforeDetach: visitorFunctions.beforeDetach ?? noOp,
+		detach: visitorFunctions.detach ?? noOp,
+		afterDetach: visitorFunctions.afterDetach ?? noOp,
+		beforeReplace: visitorFunctions.beforeReplace ?? noOp,
+		replace: visitorFunctions.replace ?? noOp,
+		afterReplace: visitorFunctions.afterReplace ?? noOp,
+		enterNode: visitorFunctions.enterNode ?? noOp,
+		exitNode: visitorFunctions.exitNode ?? noOp,
+		enterField: visitorFunctions.enterField ?? noOp,
+		exitField: visitorFunctions.exitField ?? noOp,
+	};
 }

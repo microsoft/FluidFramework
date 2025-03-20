@@ -21,11 +21,11 @@ import type {
 	WithType,
 	TreeNode,
 } from "../core/index.js";
-import type { FieldSchemaUnsafe, Unenforced } from "./typesUnsafe.js";
+import type { FieldSchemaUnsafe, ImplicitAllowedTypesUnsafe } from "./typesUnsafe.js";
 
 export function createFieldSchemaUnsafe<
 	Kind extends FieldKind,
-	Types extends Unenforced<ImplicitAllowedTypes>,
+	Types extends ImplicitAllowedTypesUnsafe,
 >(
 	kind: Kind,
 	allowedTypes: Types,
@@ -140,7 +140,7 @@ export type ValidateRecursiveSchema<
 				? Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>]>
 				: unknown;
 		}[T["kind"]],
-		// ImplicitlyConstructable: recursive types are not implicitly constructable.
+		// ImplicitlyConstructable: recursive types are currently not implicitly constructable.
 		false,
 		// Info: What's passed to the method to create the schema. Constraining these here should be about as effective as if the actual constraints existed on the actual method itself.
 		{
@@ -174,7 +174,7 @@ export type ValidateRecursiveSchema<
  * ```typescript
  *  // Workaround to avoid
  *  // `error TS2310: Type 'RecursiveArray' recursively references itself as a base type.` in the d.ts file.
- * export declare const _RecursiveArrayWorkaround: FixRecursiveArraySchema<typeof RecursiveArray>;
+ * export declare type _RecursiveArrayWorkaround = FixRecursiveArraySchema<typeof RecursiveArray>;
  * export class RecursiveArray extends schema.arrayRecursive("RA", [() => RecursiveArray]) {}
  * {
  * 	type _check = ValidateRecursiveSchema<typeof RecursiveArray>;

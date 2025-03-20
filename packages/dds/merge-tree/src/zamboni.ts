@@ -10,20 +10,25 @@ import { MergeTree } from "./mergeTree.js";
 import { MergeTreeMaintenanceType } from "./mergeTreeDeltaCallback.js";
 import {
 	type MergeBlock,
+	assignChild,
+	getMinSeqStamp,
 	IMergeNode,
-	ISegment,
+	ISegmentPrivate,
 	Marker,
 	MaxNodesInBlock,
-	seqLTE,
-	toMoveInfo,
-	toRemovalInfo,
 } from "./mergeTreeNodes.js";
 import { matchProperties } from "./properties.js";
+import { toRemovalInfo, removeMergeNodeInfo } from "./segmentInfos.js";
+import * as opstampUtils from "./stamps.js";
+import type { OperationStamp } from "./stamps.js";
 
 export const zamboniSegmentsMax = 2;
 function underflow(node: MergeBlock): boolean {
 	return node.childCount < MaxNodesInBlock / 2;
 }
+
+// blockUpdatePathLengths requires an OperationStamp but it is unused when passing `newStructure: true`.
+const dummyStamp: OperationStamp = { seq: UnassignedSequenceNumber, clientId: -1 };
 
 export function zamboniSegments(
 	mergeTree: MergeTree,
@@ -35,6 +40,9 @@ export function zamboniSegments(
 
 	for (let i = 0; i < zamboniSegmentsMaxCount; i++) {
 		let segmentToScour = mergeTree.segmentsToScour.peek()?.value;
+
+		segmentToScour?.segment?.propertyManager?.updateMsn(mergeTree.collabWindow.minSeq);
+
 		if (!segmentToScour || segmentToScour.maxSeq > mergeTree.collabWindow.minSeq) {
 			break;
 		}
@@ -57,14 +65,14 @@ export function zamboniSegments(
 				block.childCount = newChildCount;
 				block.children = childrenCopy;
 				for (let j = 0; j < newChildCount; j++) {
-					block.assignChild(childrenCopy[j], j, false);
+					assignChild(block, childrenCopy[j], j, false);
 				}
 
 				if (underflow(block) && block.parent) {
 					packParent(block.parent, mergeTree);
 				} else {
 					mergeTree.nodeUpdateOrdinals(block);
-					mergeTree.blockUpdatePathLengths(block, UnassignedSequenceNumber, -1, true);
+					mergeTree.blockUpdatePathLengths(block, dummyStamp, true);
 				}
 			}
 		}
@@ -107,7 +115,7 @@ export function packParent(parent: MergeBlock, mergeTree: MergeTree): void {
 			const packedBlock = mergeTree.makeBlock(nodeCount);
 			for (let packedNodeIndex = 0; packedNodeIndex < nodeCount; packedNodeIndex++) {
 				const nodeToPack = holdNodes[childrenPackedCount++];
-				packedBlock.assignChild(nodeToPack, packedNodeIndex, false);
+				assignChild(packedBlock, nodeToPack, packedNodeIndex, false);
 			}
 			packedBlock.parent = parent;
 			packedBlocks[nodeIndex] = packedBlock;
@@ -115,7 +123,7 @@ export function packParent(parent: MergeBlock, mergeTree: MergeTree): void {
 		}
 		parent.children = packedBlocks;
 		for (let j = 0; j < childCount; j++) {
-			parent.assignChild(packedBlocks[j], j, false);
+			assignChild(parent, packedBlocks[j], j, false);
 		}
 		parent.childCount = childCount;
 	} else {
@@ -126,14 +134,14 @@ export function packParent(parent: MergeBlock, mergeTree: MergeTree): void {
 		packParent(parent.parent, mergeTree);
 	} else {
 		mergeTree.nodeUpdateOrdinals(parent);
-		mergeTree.blockUpdatePathLengths(parent, UnassignedSequenceNumber, -1, true);
+		mergeTree.blockUpdatePathLengths(parent, dummyStamp, true);
 	}
 }
 
 function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTree): void {
 	// The previous segment is tracked while scouring for the purposes of merging adjacent segments
 	// when possible.
-	let prevSegment: ISegment | undefined;
+	let prevSegment: ISegmentPrivate | undefined;
 	for (let k = 0; k < node.childCount; k++) {
 		// TODO Non null asserting, why is this not null?
 		const childNode = node.children[k]!;
@@ -145,36 +153,10 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 
 		const segment = childNode;
 		const removalInfo = toRemovalInfo(segment);
-		const moveInfo = toMoveInfo(segment);
-		if (removalInfo !== undefined || moveInfo !== undefined) {
-			// If the segment's removal is below the MSN and it's not being held onto by a tracking group,
-			// it can be unlinked (i.e. removed from the merge-tree)
-			if (
-				((!!removalInfo && seqLTE(removalInfo.removedSeq, mergeTree.collabWindow.minSeq)) ||
-					(!!moveInfo && seqLTE(moveInfo.movedSeq, mergeTree.collabWindow.minSeq))) &&
-				segment.trackingCollection.empty
-			) {
-				mergeTree.mergeTreeMaintenanceCallback?.(
-					{
-						operation: MergeTreeMaintenanceType.UNLINK,
-						deltaSegments: [{ segment }],
-					},
-					undefined,
-				);
-
-				segment.parent = undefined;
-
-				if (Marker.is(segment)) {
-					mergeTree.unlinkMarker(segment);
-				}
-			} else {
-				holdNodes.push(segment);
-			}
-
-			prevSegment = undefined;
-		} else {
-			if (segment.seq! <= mergeTree.collabWindow.minSeq) {
-				const segmentHasPositiveLength = (mergeTree.localNetLength(segment) ?? 0) > 0;
+		const minSeqStamp = getMinSeqStamp(mergeTree.collabWindow);
+		if (removalInfo === undefined) {
+			if (opstampUtils.lte(segment.insert, minSeqStamp)) {
+				const segmentHasPositiveLength = (mergeTree.leafLength(segment) ?? 0) > 0;
 				const canAppend =
 					prevSegment?.canAppend(segment) &&
 					matchProperties(prevSegment.properties, segment.properties) &&
@@ -191,8 +173,8 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 						undefined,
 					);
 
-					segment.parent = undefined;
 					for (const tg of segment.trackingCollection.trackingGroups) tg.unlink(segment);
+					removeMergeNodeInfo(segment);
 				} else {
 					holdNodes.push(segment);
 					prevSegment = segmentHasPositiveLength ? segment : undefined;
@@ -201,6 +183,31 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 				holdNodes.push(segment);
 				prevSegment = undefined;
 			}
+		} else {
+			const firstRemove = removalInfo.removes[0];
+			// If the segment's removal is below the MSN and it's not being held onto by a tracking group,
+			// it can be unlinked (i.e. removed from the merge-tree)
+			if (
+				!!firstRemove &&
+				opstampUtils.lte(firstRemove, minSeqStamp) &&
+				segment.trackingCollection.empty
+			) {
+				mergeTree.mergeTreeMaintenanceCallback?.(
+					{
+						operation: MergeTreeMaintenanceType.UNLINK,
+						deltaSegments: [{ segment }],
+					},
+					undefined,
+				);
+				if (Marker.is(segment)) {
+					mergeTree.unlinkMarker(segment);
+				}
+				removeMergeNodeInfo(segment);
+			} else {
+				holdNodes.push(segment);
+			}
+
+			prevSegment = undefined;
 		}
 	}
 }

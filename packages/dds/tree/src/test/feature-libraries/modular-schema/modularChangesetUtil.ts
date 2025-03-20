@@ -17,12 +17,13 @@ import type {
 	ModularChangeset,
 	NodeId,
 } from "../../../feature-libraries/index.js";
-import type {
-	ChangeAtomIdBTree,
-	CrossFieldKeyTable,
-	FieldChange,
-	FieldId,
-	NodeChangeset,
+import {
+	newCrossFieldKeyTable,
+	type ChangeAtomIdBTree,
+	type CrossFieldKeyTable,
+	type FieldChange,
+	type FieldId,
+	type NodeChangeset,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
@@ -31,16 +32,15 @@ import {
 	brand,
 	fail,
 	idAllocatorFromMaxId,
+	newTupleBTree,
 } from "../../../util/index.js";
 import {
 	getChangeHandler,
-	getFieldsForCrossFieldKey,
 	getParentFieldId,
-	newCrossFieldKeyTable,
-	newTupleBTree,
+	normalizeFieldId,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { assertStructuralEquality } from "../../objMerge.js";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
@@ -178,8 +178,8 @@ function fieldChangeMapFromDescription(
 			field.changeset,
 		);
 
-		for (const key of changeHandler.getCrossFieldKeys(fieldChangeset)) {
-			crossFieldKeys.set(key, fieldId);
+		for (const { key, count } of changeHandler.getCrossFieldKeys(fieldChangeset)) {
+			crossFieldKeys.set(key, count, fieldId);
 		}
 
 		const fieldChange: FieldChange = {
@@ -222,7 +222,9 @@ function addNodeToField(
 	nodes.set([nodeId.revision, nodeId.localId], nodeChangeset);
 	nodeToParent.set([nodeId.revision, nodeId.localId], parentId);
 
-	const fieldWithChange = changeHandler.editor.buildChildChange(nodeDescription.index, nodeId);
+	const fieldWithChange = changeHandler.editor.buildChildChanges([
+		[nodeDescription.index, nodeId],
+	]);
 
 	return changeHandler.rebaser.compose(
 		fieldWithChange,
@@ -235,8 +237,9 @@ function addNodeToField(
 }
 
 const dummyCrossFieldManager: CrossFieldManager = {
-	get: (_target, _revision, _id, count, _addDependency) => ({
+	get: (_target, revision, id, count, _addDependency) => ({
 		value: undefined,
+		start: { revision, localId: id },
 		length: count,
 	}),
 	set: () => fail("Not supported"),
@@ -256,10 +259,12 @@ export function removeAliases(changeset: ModularChangeset): ModularChangeset {
 	);
 
 	const updatedCrossFieldKeys: CrossFieldKeyTable = newCrossFieldKeyTable();
-	for (const key of changeset.crossFieldKeys.keys()) {
-		const fields = getFieldsForCrossFieldKey(changeset, key);
-		assert(fields.length === 1);
-		updatedCrossFieldKeys.set(key, fields[0]);
+	for (const entry of changeset.crossFieldKeys.entries()) {
+		updatedCrossFieldKeys.set(
+			entry.start,
+			entry.length,
+			normalizeFieldId(entry.value, changeset.nodeAliases),
+		);
 	}
 
 	return {

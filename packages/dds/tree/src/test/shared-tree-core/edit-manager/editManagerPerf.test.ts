@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
 
@@ -261,12 +261,14 @@ export function testPerf() {
 						rebaser.rebasedCount = 0;
 						rebaser.invertedCount = 0;
 						rebaser.composedCount = 0;
-						manager.addSequencedChange(
-							{
-								change: TestChange.emptyChange,
-								revision: mintRevisionTag(),
-								sessionId: "peer" as SessionId,
-							},
+						manager.addSequencedChanges(
+							[
+								{
+									change: TestChange.emptyChange,
+									revision: mintRevisionTag(),
+								},
+							],
+							"peer" as SessionId,
 							brand(T + P + 1),
 							brand(T),
 						);
@@ -333,12 +335,14 @@ export function testPerf() {
 						rebaser.rebasedCount = 0;
 						rebaser.invertedCount = 0;
 						rebaser.composedCount = 0;
-						manager.addSequencedChange(
-							{
-								change: TestChange.emptyChange,
-								revision: mintRevisionTag(),
-								sessionId: "peer" as SessionId,
-							},
+						manager.addSequencedChanges(
+							[
+								{
+									change: TestChange.emptyChange,
+									revision: mintRevisionTag(),
+								},
+							],
+							"peer" as SessionId,
 							brand(T + P + 2),
 							brand(T),
 						);

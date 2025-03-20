@@ -20,12 +20,18 @@ import {
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
-// eslint-disable-next-line import/no-deprecated
 import { Client } from "./client.js";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
-import { ISegment } from "./mergeTreeNodes.js";
+import { ISegmentPrivate } from "./mergeTreeNodes.js";
 import { IJSONSegment } from "./ops.js";
+import { PriorPerspective } from "./perspective.js";
+import {
+	IHasRemovalInfo,
+	overwriteInfo,
+	type IHasInsertionInfo,
+	type SegmentWithInfo,
+} from "./segmentInfos.js";
 import {
 	IJSONSegmentWithMergeInfo,
 	MergeTreeChunkV1,
@@ -33,13 +39,15 @@ import {
 } from "./snapshotChunks.js";
 import { SnapshotV1 } from "./snapshotV1.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
+import type { RemoveOperationStamp } from "./stamps.js";
+import * as opstampUtils from "./stamps.js";
 
 export class SnapshotLoader {
 	private readonly logger: ITelemetryLoggerExt;
 
 	constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
-		// eslint-disable-next-line import/no-deprecated
+
 		private readonly client: Client,
 		private readonly mergeTree: MergeTree,
 		logger: ITelemetryLoggerExt,
@@ -96,60 +104,84 @@ export class SnapshotLoader {
 
 	private readonly specToSegment = (
 		spec: IJSONSegment | IJSONSegmentWithMergeInfo,
-	): ISegment => {
-		let seg: ISegment;
-
+	): SegmentWithInfo<IHasInsertionInfo> => {
 		if (hasMergeInfo(spec)) {
-			seg = this.client.specToSegment(spec.json);
+			const seg = overwriteInfo<IHasInsertionInfo>(this.client.specToSegment(spec.json), {
+				insert: {
+					type: "insert",
+					seq: spec.seq ?? UniversalSequenceNumber,
+					clientId:
+						spec.client === undefined
+							? NonCollabClient
+							: this.client.getOrAddShortClientId(spec.client),
+				},
+			});
 
-			// `specToSegment()` initializes `seg` with the LocalClientId.  Overwrite this with
-			// the `spec` client (if specified).  Otherwise overwrite with `NonCollabClient`.
-			seg.clientId =
-				spec.client === undefined
-					? NonCollabClient
-					: this.client.getOrAddShortClientId(spec.client);
-
-			seg.seq = spec.seq ?? UniversalSequenceNumber;
+			const removes: RemoveOperationStamp[] = [];
 
 			if (spec.removedSeq !== undefined) {
-				seg.removedSeq = spec.removedSeq;
+				// this format had a bug where it didn't store all the overlap clients
+				// this is for back compat, so we change the singular id to an array
+				// this will only cause problems if there is an overlapping delete
+				// spanning the snapshot, which should be rare
+				const specAsBuggyFormat: IJSONSegmentWithMergeInfo & { removedClient?: string } = spec;
+				if (specAsBuggyFormat.removedClient !== undefined) {
+					spec.removedClientIds ??= [specAsBuggyFormat.removedClient];
+				}
+				assert(spec.removedClientIds !== undefined, 0xaac /* must have removedClient ids */);
+				const firstRemovedSeq = spec.removedSeq;
+				// TODO:AB#32299: To correctly support perspectives from other clients which don't assume they have seen
+				// all ops, we need to actually record these in the summary. For now we use fake data, and it turns
+				// out ok since none of these values end up being used. (specifically, the 'firstRemovedSeq' is fake
+				// for all values other than the actual first remove).
+				// This issue only affects V1 summaries, as the strategy in snapshotlegacy avoids storing merge info directly.
+				removes.push(
+					...spec.removedClientIds.map(
+						(id) =>
+							({
+								type: "setRemove",
+								seq: firstRemovedSeq,
+								clientId: this.client.getOrAddShortClientId(id),
+							}) as const,
+					),
+				);
 			}
 			if (spec.movedSeq !== undefined) {
-				seg.movedSeq = spec.movedSeq;
-			}
-			if (spec.movedSeqs !== undefined) {
-				seg.movedSeqs = spec.movedSeqs;
-			}
-			// this format had a bug where it didn't store all the overlap clients
-			// this is for back compat, so we change the singular id to an array
-			// this will only cause problems if there is an overlapping delete
-			// spanning the snapshot, which should be rare
-			const specAsBuggyFormat: IJSONSegmentWithMergeInfo & { removedClient?: string } = spec;
-			if (specAsBuggyFormat.removedClient !== undefined) {
-				seg.removedClientIds = [
-					this.client.getOrAddShortClientId(specAsBuggyFormat.removedClient),
-				];
-			}
-			if (spec.removedClientIds !== undefined) {
-				seg.removedClientIds = spec.removedClientIds?.map((sid) =>
-					this.client.getOrAddShortClientId(sid),
+				assert(
+					spec.movedClientIds !== undefined && spec.movedSeqs !== undefined,
+					0xaa5 /* must have movedIds ids */,
 				);
-			}
-			if (spec.movedClientIds !== undefined) {
-				seg.movedClientIds = spec.movedClientIds?.map((sid) =>
-					this.client.getOrAddShortClientId(sid),
+				assert(
+					spec.movedClientIds.length === spec.movedSeqs.length,
+					"Expected same length for client ids and seqs",
 				);
-			}
-		} else {
-			seg = this.client.specToSegment(spec);
-			seg.seq = UniversalSequenceNumber;
 
-			// `specToSegment()` initializes `seg` with the LocalClientId.  We must overwrite this with
-			// `NonCollabClient`.
-			seg.clientId = NonCollabClient;
+				removes.push(
+					...spec.movedClientIds.map(
+						(id, i) =>
+							({
+								type: "sliceRemove",
+								seq: spec.movedSeqs![i],
+								clientId: this.client.getOrAddShortClientId(id),
+							}) as const,
+					),
+				);
+			}
+
+			if (removes.length > 0) {
+				removes.sort(opstampUtils.compare);
+				overwriteInfo<IHasRemovalInfo>(seg, { removes });
+			}
+
+			return seg;
 		}
-
-		return seg;
+		return overwriteInfo(this.client.specToSegment(spec), {
+			insert: {
+				type: "insert",
+				seq: UniversalSequenceNumber,
+				clientId: NonCollabClient,
+			},
+		});
 	};
 
 	private loadHeader(header: string): MergeTreeChunkV1 {
@@ -207,7 +239,7 @@ export class SnapshotLoader {
 		}
 
 		let chunksWithAttribution = chunk1.attribution === undefined ? 0 : 1;
-		const segs: ISegment[] = [];
+		const segs: SegmentWithInfo<IHasInsertionInfo>[] = [];
 		let lengthSofar = chunk1.length;
 		for (
 			let chunkIndex = 1;
@@ -244,19 +276,18 @@ export class SnapshotLoader {
 
 		// Helper to insert segments at the end of the MergeTree.
 		const mergeTree = this.mergeTree;
-		const append = (segments: ISegment[], cli: number, seq: number): void => {
+		const append = (segments: ISegmentPrivate[], clientId: number, seq: number): void => {
 			mergeTree.insertSegments(
 				mergeTree.root.cachedLength ?? 0,
 				segments,
-				/* refSeq: */ UniversalSequenceNumber,
-				cli,
-				seq,
+				new PriorPerspective(UniversalSequenceNumber, clientId),
+				{ seq, clientId },
 				undefined,
 			);
 		};
 
 		// Helpers to batch-insert segments that are below the min seq
-		const batch: ISegment[] = [];
+		const batch: SegmentWithInfo<IHasInsertionInfo>[] = [];
 		const flushBatch = (): void => {
 			if (batch.length > 0) {
 				append(batch, NonCollabClient, UniversalSequenceNumber);
@@ -264,23 +295,21 @@ export class SnapshotLoader {
 		};
 
 		for (const seg of segs) {
-			const cli = seg.clientId;
-			const seq = seg.seq;
-
+			const { clientId, seq } = seg.insert;
 			// If the segment can be batch inserted, add it to the 'batch' array.  Otherwise, flush
 			// any batched segments and then insert the current segment individually.
-			if (cli === NonCollabClient && seq === UniversalSequenceNumber) {
+			if (clientId === NonCollabClient && seq === UniversalSequenceNumber) {
 				batch.push(seg);
 			} else {
 				flushBatch();
-				append([seg], cli, seq!);
+				append([seg], clientId, seq);
 			}
 		}
 
 		flushBatch();
 	}
 
-	private extractAttribution(segments: ISegment[], chunk: MergeTreeChunkV1): void {
+	private extractAttribution(segments: ISegmentPrivate[], chunk: MergeTreeChunkV1): void {
 		if (chunk.attribution) {
 			const { attributionPolicy } = this.mergeTree;
 			if (attributionPolicy === undefined) {

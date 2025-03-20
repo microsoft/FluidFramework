@@ -106,6 +106,11 @@ export interface IContext {
 	 * Resumes the context
 	 */
 	resume(): void;
+
+	/**
+	 * Sets the last successfully processed offset.
+	 */
+	setLastSuccessfulOffset?(offset: number): void;
 }
 
 /**
@@ -133,7 +138,12 @@ export interface IPartitionLambda {
 	/**
 	 * Pauses the lambda. It should clear any pending work.
 	 */
-	pause?(): void;
+	pause?(offset: number): void;
+
+	/**
+	 * Resumes the lambda. This is relevant for documentLambda to resume the documentPartition queueus.
+	 */
+	resume?(): void;
 }
 
 /**
@@ -166,6 +176,16 @@ export interface IPartitionLambdaConfig {
 }
 
 /**
+ * Whether the boxcar message includes the optional Routing Key fields.
+ * @internal
+ */
+export function isCompleteBoxcarMessage(
+	boxcar: IBoxcarMessage,
+): boxcar is Required<IBoxcarMessage> {
+	return boxcar.documentId !== undefined && boxcar.tenantId !== undefined;
+}
+
+/**
  * @internal
  */
 export function extractBoxcar(message: IQueuedMessage): IBoxcarMessage {
@@ -182,8 +202,8 @@ export function extractBoxcar(message: IQueuedMessage): IBoxcarMessage {
 	if (!parsedMessage) {
 		return {
 			contents: [],
-			documentId: null,
-			tenantId: null,
+			documentId: undefined,
+			tenantId: undefined,
 			type: BoxcarType,
 		};
 	}

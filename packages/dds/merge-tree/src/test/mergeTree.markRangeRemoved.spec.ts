@@ -8,7 +8,9 @@
 import { strict as assert } from "node:assert";
 
 import { UnassignedSequenceNumber } from "../constants.js";
+import type { ISegmentPrivate } from "../mergeTreeNodes.js";
 import { createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder.js";
+import { assertRemoved } from "../segmentInfos.js";
 import { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
@@ -87,7 +89,7 @@ describe("MergeTree.markRangeRemoved", () => {
 			"remote",
 		);
 		const segmentExpectedRemovedSeq = seq;
-		const { segment } = client.getContainingSegment(0);
+		const { segment } = client.getContainingSegment<ISegmentPrivate>(0);
 		assert(segment !== undefined, "expected to find segment");
 		const localDeleteMessage = client.makeOpMessage(
 			client.removeRangeLocal(0, client.getLength()),
@@ -96,21 +98,25 @@ describe("MergeTree.markRangeRemoved", () => {
 		);
 
 		assert.equal(client.getText(), "");
-		assert.equal(segment.removedSeq, UnassignedSequenceNumber);
-		assert(segment.localRemovedSeq !== undefined);
-		const expectedLocalRemovedSeq = segment.localRemovedSeq;
+		assertRemoved(segment);
+		const localRemoveInfo = segment.removes[0];
+		assert.equal(localRemoveInfo.seq, UnassignedSequenceNumber);
+		assert(localRemoveInfo.localSeq !== undefined);
 
 		client.applyMsg(remoteDeleteMessage);
-		assert.equal(segment.removedSeq, segmentExpectedRemovedSeq);
-		assert.equal(segment.localRemovedSeq, expectedLocalRemovedSeq);
+		const remoteRemoveInfo = segment.removes[0];
+		assert.deepEqual(segment.removes[1], localRemoveInfo);
+		assert.equal(remoteRemoveInfo.seq, segmentExpectedRemovedSeq);
 		assert.equal(client.getText(), "");
 
 		// localRemovedSeq should remain on the segment until the local removal has been acked.
 		// This ensures there's enough information to determine segment length in the case of
 		// reconnect.
 		client.applyMsg(localDeleteMessage);
-		assert.equal(segment.removedSeq, segmentExpectedRemovedSeq);
-		assert.equal(segment.localRemovedSeq, undefined);
+		const finalRemoveInfo = segment.removes[0];
+		assert.equal(segment.removes.length, 2);
+		assert.equal(finalRemoveInfo.seq, segmentExpectedRemovedSeq);
+		assert.equal(finalRemoveInfo.localSeq, undefined);
 		assert.equal(client.getText(), "");
 	});
 

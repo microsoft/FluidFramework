@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert, debugAssert, oob } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
@@ -21,15 +21,16 @@ import {
 	mapCursorFields,
 	Multiplicity,
 	ValueSchema,
+	type TreeChunk,
+	tryGetChunk,
 } from "../../core/index.js";
 import { fail, getOrCreate } from "../../util/index.js";
 import type { FullSchemaPolicy } from "../modular-schema/index.js";
 
 import { BasicChunk } from "./basicChunk.js";
-import { type TreeChunk, tryGetChunk } from "./chunk.js";
 import { SequenceChunk } from "./sequenceChunk.js";
 import { type FieldShape, TreeShape, UniformChunk } from "./uniformChunk.js";
-import { isStableNodeKey } from "../node-key/index.js";
+import { isStableNodeIdentifier } from "../node-identifier/index.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 export interface Disposable {
@@ -134,7 +135,7 @@ export class Chunker implements IChunker {
 		if (cached !== undefined) {
 			return cached;
 		}
-		this.unregisterSchemaCallback = this.schema.on("afterSchemaChange", () =>
+		this.unregisterSchemaCallback = this.schema.events.on("afterSchemaChange", () =>
 			this.schemaChanged(),
 		);
 		return this.tryShapeFromSchema(this.schema, this.policy, schema, this.typeShapes);
@@ -174,7 +175,9 @@ export function chunkField(
 ): TreeChunk[] {
 	const length = cursor.getFieldLength();
 	const started = cursor.firstNode();
-	assert(started, 0x57c /* field to chunk should have at least one node */);
+	debugAssert(
+		() => started === (length !== 0) || "only 0 length fields should not have nodes",
+	);
 	return chunkRange(cursor, policy, length, false);
 }
 
@@ -246,7 +249,7 @@ export function tryShapeFromSchema(
 	shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
 ): ShapeInfo {
 	return getOrCreate(shapes, type, () => {
-		const treeSchema = schema.nodeSchema.get(type) ?? fail("missing schema");
+		const treeSchema = schema.nodeSchema.get(type) ?? fail(0xaf9 /* missing schema */);
 		if (treeSchema instanceof LeafNodeStoredSchema) {
 			// Allow all string values (but only string values) to be compressed by the id compressor.
 			// This allows compressing all compressible identifiers without requiring additional context to know which values could be identifiers.
@@ -283,7 +286,7 @@ export function tryShapeFromFieldSchema(
 	key: FieldKey,
 	shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
 ): FieldShape | undefined {
-	const kind = policy.fieldKinds.get(type.kind) ?? fail("missing FieldKind");
+	const kind = policy.fieldKinds.get(type.kind) ?? fail(0xafa /* missing FieldKind */);
 	if (kind.multiplicity !== Multiplicity.Single) {
 		return undefined;
 	}
@@ -372,10 +375,12 @@ function newBasicChunkTree(
 }
 
 /**
- * @param cursor - cursor in nodes mode
+ * Chunk a portion of a field.
+ *
+ * @param cursor - cursor at the starting node in the field.
  * @param policy - heuristics to impact chunking
- * @param length - how many nodes to process (at the top level)
- * @param skipLastNavigation - if true, leaves the cursor at the last node instead of moving off of it.
+ * @param length - how many nodes to process (at the top level). When 0, the cursor is not moved, and may be at the end of the field (and thus in Fields mode)
+ * @param skipLastNavigation - if true, leaves the cursor at the last node instead of moving off of it. Invalid if length is 0.
  */
 export function chunkRange(
 	cursor: ITreeCursorSynchronous,
@@ -383,7 +388,14 @@ export function chunkRange(
 	length: number,
 	skipLastNavigation: boolean,
 ): TreeChunk[] {
-	assert(cursor.mode === CursorLocationType.Nodes, 0x57e /* should be in nodes */);
+	assert(
+		!(skipLastNavigation && length === 0),
+		0xb58 /* Cannot skip last navigation if length is 0 and thus last navigation already occurred. */,
+	);
+	assert(
+		(cursor.mode === CursorLocationType.Nodes) === length > 0,
+		0xb59 /* Should be in nodes mode if not past end */,
+	);
 	let output: TreeChunk[] = [];
 	let remaining = length;
 	while (remaining > 0) {
@@ -497,7 +509,7 @@ export function insertValues(
 		if (
 			typeof cursor.value === "string" &&
 			idCompressor !== undefined &&
-			isStableNodeKey(cursor.value)
+			isStableNodeIdentifier(cursor.value)
 		) {
 			values.push(idCompressor.tryRecompress(cursor.value) ?? cursor.value);
 		} else {

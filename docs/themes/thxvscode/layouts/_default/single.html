@@ -1,7 +1,0 @@
-
-{{ define "content" }}
-    {{ $status := default "_default" .Params.status }}
-    {{ $partialPathTemplate := "placeholders/__LAYOUT__.html" }}
-    {{ $partialPath := replace $partialPathTemplate "__LAYOUT__" $status }}
-    {{ partial $partialPath . }}
-{{ end }}

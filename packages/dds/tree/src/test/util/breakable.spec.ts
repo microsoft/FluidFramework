@@ -16,7 +16,7 @@ import {
 import { validateUsageError } from "../utils.js";
 
 describe("Breakable", () => {
-	const breakError = Error("BreakFoo");
+	const breakError = new Error("BreakFoo");
 	class Foo implements WithBreakable {
 		public readonly breaker: Breakable = new Breakable("Foo");
 

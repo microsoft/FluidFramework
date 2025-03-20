@@ -63,6 +63,8 @@ export {
 	itExpectsSkipsFailureOnSpecificDrivers,
 	itSkipsFailureOnSpecificDrivers,
 	SkippedTestWithDriverType,
+	SkippedTestWithDriverBaseType,
 	SkippedErrorExpectingTestWithDriverType,
+	SkippedErrorExpectingTestWithDriverBaseType,
 } from "./itSkipsOnFailure.js";
 export { getRequestedVersion, versionToComparisonNumber } from "./versionUtils.js";

@@ -34,7 +34,6 @@ export type TypedEventTransform<TThis, TEvent> =
 	TransformedEvent<
 		TThis,
 		"newListener" | "removeListener",
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		Parameters<(event: string, listener: (...args: any[]) => void) => void>
 	> &
 		// Expose all the events provides by TEvent

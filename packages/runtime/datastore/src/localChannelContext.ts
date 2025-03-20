@@ -12,13 +12,14 @@ import {
 import {
 	IDocumentStorageService,
 	ISnapshotTree,
-	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	ITelemetryContext,
 	IFluidDataStoreContext,
 	IGarbageCollectionData,
 	ISummarizeResult,
+	type IPendingMessagesState,
+	type IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,
@@ -41,7 +42,11 @@ import { ISharedObjectRegistry } from "./dataStoreRuntime.js";
  */
 export abstract class LocalChannelContextBase implements IChannelContext {
 	private globallyVisible = false;
-	protected readonly pending: ISequencedDocumentMessage[] = [];
+	/** Tracks the messages for this channel that are sent while it's not loaded */
+	protected pendingMessagesState: IPendingMessagesState = {
+		messageCollections: [],
+		pendingCount: 0,
+	};
 	constructor(
 		protected readonly id: string,
 		protected readonly runtime: IFluidDataStoreRuntime,
@@ -74,11 +79,11 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		}
 	}
 
-	public processOp(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
+	/**
+	 * Process messages for this channel context. The messages here are contiguous messages for this context in a batch.
+	 * @param messageCollection - The collection of messages to process.
+	 */
+	processMessages(messageCollection: IRuntimeMessageCollection): void {
 		assert(
 			this.globallyVisible,
 			0x2d3 /* "Local channel must be globally visible when processing op" */,
@@ -88,13 +93,17 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		// delay loading. So after the container is attached and some other client joins which start generating
 		// ops for this channel. So not loaded local channel can still receive ops and we store them to process later.
 		if (this.isLoaded) {
-			this.services.value.deltaConnection.process(message, local, localOpMetadata);
+			this.services.value.deltaConnection.processMessages(messageCollection);
 		} else {
 			assert(
-				local === false,
+				!messageCollection.local,
 				0x189 /* "Should always be remote because a local dds shouldn't generate ops before loading" */,
 			);
-			this.pending.push(message);
+			const propsCopy = {
+				...messageCollection,
+				messagesContent: Array.from(messageCollection.messagesContent),
+			};
+			this.pendingMessagesState.messageCollections.push(propsCopy);
 		}
 	}
 
@@ -254,12 +263,8 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 						this.id,
 					);
 					// Send all pending messages to the channel
-					for (const message of this.pending) {
-						this.services.value.deltaConnection.process(
-							message,
-							false,
-							undefined /* localOpMetadata */,
-						);
+					for (const messageCollection of this.pendingMessagesState.messageCollections) {
+						this.services.value.deltaConnection.processMessages(messageCollection);
 					}
 					return channel;
 				} catch (err) {

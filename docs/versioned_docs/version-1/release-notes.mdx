@@ -1,0 +1,144 @@
+---
+title: Release Notes
+description: The 1.0 release is the first major release of the Fluid Framework.
+sidebar_position: 9
+sidebar_label: Release Notes
+---
+
+import { ApiLink } from "@site/src/components/shortLinks";
+
+# 1.3.0
+
+## @fluidframework/fluid-static
+
+We are now surfacing errors on FluidContainer "disposed" event, so the application can appropriately react to faulty conditions, if container was closed due to an error.
+
+## Notable bug fixes
+
+-   If a single AzureClient instance is used to open multiple documents/containers, the internal in-memory cache was not handling that scenario correctly, so the "latest" snapshots would be polluted by the first document loaded. The result of that would be container closing as "corrupted". This has been fixed.
+
+-   Fluid packages no longer require users of WebPack 5 and other modern bundlers to polyfill the node.js `assert`, `url` and `events` APIs. Note that the `buffer` API must still be polyfilled. This is tracked by [issue 8725](https://github.com/microsoft/FluidFramework/issues/8725).
+
+# 1.0.1
+
+## fluid-framework
+
+-   Add the missing <ApiLink packageName="container-loader" apiName="ConnectionState" apiType="enum" /> export to `fluid-framework`
+
+## @fluidframework/azure-client
+
+-   Fix <ApiLink packageName="azure-client" apiName="AzureClient" apiType="class" /> issue where the second user could not connect in `local` mode
+
+# 1.0.0
+
+## New Features
+
+### AzureClient supports corrupted container data recovery
+
+We've added two new methods to AzureClient that will enable developers to recover data from corrupted containers. The Fluid Framework automatically generates and saves snapshots of the operation stream that we use to load the latest container. `getContainerVersions` will allow developers to access previous versions of the container. `copyContainer` allows developers to generate a new detached container from another container.
+
+-   <ApiLink
+    	packageName="azure-client"
+    	apiName="AzureClient"
+    	apiType="class"
+    	headingId="getcontainerversions-method"
+    >
+    	`getContainerVersions(id, options)`
+    </ApiLink>
+-   <ApiLink
+    	packageName="azure-client"
+    	apiName="AzureClient"
+    	apiType="class"
+    	headingId="copycontainer-method"
+    >
+    	`copyContainer(id, containerSchema)`
+    </ApiLink>
+
+In an situation where a container will fail to load these two methods can be used together to load a document from a previous state in time.
+
+## Breaking changes
+
+### connected on FluidContainer is replaced with connectionState
+
+The `connected` boolean has been replaced with the `connectionState` property. Read more
+
+```js
+import { ConnectionState } from "fluid-framework";
+
+// Previous Syntax
+if (container.connected) {
+// New Syntax
+if (container.connectionState === ConnectionState.Connected) {
+  console.log("Container is connected");
+}
+```
+
+### AzureClient connection configuration has distinct local and remote connection strings
+
+The AzureClient connection config has been updated to have distinct types to differentiate between local and remote connections. There is now an `AzureRemoteConnectionConfig` and `AzureLocalConnectionConfig` type that is strongly typed to the requirements of each connection. You will notice that since the `tenantID` is not needed in the local case, it is no longer required on the config.
+
+```js
+// Previous Remote Syntax
+const connection = {
+  tenantId: "AZURE_TENANT_ID",
+  //...
+}
+// Previous Local Syntax
+import { LOCAL_MODE_TENANT_ID } from "@fluidframework/azure-client";
+const connection = {
+  tenantId: LOCAL_MODE_TENANT_ID,
+  //...
+}
+```
+
+```js
+// New Remote Syntax
+import { AzureRemoteConnectionConfig } from "@fluidframework/azure-client";
+const connection: AzureRemoteConnectionConfig = {
+  type= "remote",
+  tenantId= "AZURE_TENANT_ID",
+  //...
+}
+// New Local Syntax
+import { AzureLocalConnectionConfig } from "@fluidframework/azure-client";
+const connection: AzureLocalConnectionConfig = {
+  type= "local",
+  //...
+}
+```
+
+### AzureClient connection configuration has distinct unified endpoint
+
+The AzureClient connection config has been changed to have a single endpoint instead of the orderer and storage endpoints. This change is required to enable multiple region support, as well as Disaster Recovery (DR) for Azure Fluid Relay.
+
+If you're using the Public Preview of Azure Fluid Relay, use the following region dependent url as your new single endpoint url:
+
+-   West US 2 -> `https://us.fluidrelay.azure.com`
+-   West Europe -> `https://eu.fluidrelay.azure.com`
+-   Southeast Asia -> `https://global.fluidrelay.azure.com`
+
+```js
+// Previous Syntax
+const connection = {
+  orderer= "AZURE_ORDERER_ENDPOINT"
+  storage= "AZURE_STORAGE_ENDPOINT"
+  //...
+}
+```
+
+```js
+// New Syntax
+const connection = {
+  endpoint= "AZURE_ENDPOINT"
+}
+```
+
+## Other notable changes
+
+### AzureClient now supports `getContainerVersions`
+
+`getContainerVersions` on the AzureClient allows developers to view the previously generated snapshot versions of the Container.
+
+### AzureClient now supports `copyContainer`
+
+`copyContainer` on the AzureClient allows developers to create a new detached container based on an existing container.

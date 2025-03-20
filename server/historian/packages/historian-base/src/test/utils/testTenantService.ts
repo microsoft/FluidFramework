@@ -25,6 +25,8 @@ export class TestTenantService implements ITenantService {
 			storage: this.tenant.storage,
 			orderer: this.tenant.orderer,
 			customData: {},
+			enablePrivateKeyAccess: false,
+			enableSharedKeyAccess: true,
 		});
 	}
 

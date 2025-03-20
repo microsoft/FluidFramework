@@ -1,6 +1,6 @@
 # @fluid-example/ai-collab
 
-This is an example app that showcases the `@fluid-experimental/ai-collab` package to interact with an LLM (Large Language
+This is an example app that showcases the `@fluidframework/ai-collab` package to interact with an LLM (Large Language
 Model).
 
 By default it uses Tinylicious as the server, but you can also use SharePoint embedded.
@@ -28,7 +28,7 @@ You can run this example using the following steps:
     - For an even faster build, you can add the package name to the build command, like this:
       `pnpm run build:fast --nolint @fluid-example/ai-collab`
 1. Start a Tinylicious server by running `pnpm start:server` from this directory.
-1. In a separate terminal also from this directory, run `pnpm next:dev` and open http://localhost:3000/ in a
+1. In a separate terminal also from this directory, run `pnpm start` and open http://localhost:3000/ in a
     web browser to see the app running.
 
 ### Using SharePoint embedded instead of tinylicious

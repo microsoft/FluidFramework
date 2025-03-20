@@ -6,8 +6,8 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type {
 	IConnectionDetails,
-	IDeltaManager,
 	IDeltaManagerEvents,
+	IDeltaManagerFull,
 	IDeltaQueue,
 	IDeltaSender,
 	ReadOnlyInfo,
@@ -33,7 +33,7 @@ import { summarizerClientType } from "./summary/index.js";
  */
 export abstract class BaseDeltaManagerProxy
 	extends TypedEventEmitter<IDeltaManagerEvents>
-	implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>
+	implements IDeltaManagerFull
 {
 	public get IDeltaSender(): IDeltaSender {
 		return this;
@@ -59,11 +59,11 @@ export abstract class BaseDeltaManagerProxy
 		return this.deltaManager.lastSequenceNumber;
 	}
 
-	public get lastMessage() {
+	public get lastMessage(): ISequencedDocumentMessage | undefined {
 		return this.deltaManager.lastMessage;
 	}
 
-	public get lastKnownSeqNumber() {
+	public get lastKnownSeqNumber(): number {
 		return this.deltaManager.lastKnownSeqNumber;
 	}
 
@@ -71,7 +71,7 @@ export abstract class BaseDeltaManagerProxy
 		return this.deltaManager.initialSequenceNumber;
 	}
 
-	public get hasCheckpointSequenceNumber() {
+	public get hasCheckpointSequenceNumber(): boolean {
 		return this.deltaManager.hasCheckpointSequenceNumber;
 	}
 
@@ -99,12 +99,7 @@ export abstract class BaseDeltaManagerProxy
 		return this.deltaManager.readOnlyInfo;
 	}
 
-	constructor(
-		protected readonly deltaManager: IDeltaManager<
-			ISequencedDocumentMessage,
-			IDocumentMessage
-		>,
-	) {
+	constructor(protected readonly deltaManager: IDeltaManagerFull) {
 		super();
 
 		// We are expecting this class to have many listeners, so we suppress noisy "MaxListenersExceededWarning" logging.
@@ -137,7 +132,7 @@ export abstract class BaseDeltaManagerProxy
 		return this.deltaManager.flush();
 	}
 
-	private readonly onPrepareSend = (messageBuffer: any[]): void => {
+	private readonly onPrepareSend = (messageBuffer: unknown[]): void => {
 		this.emit("prepareSend", messageBuffer);
 	};
 	private readonly onSubmitOp = (message: IDocumentMessage): void => {
@@ -194,12 +189,7 @@ export class DeltaManagerSummarizerProxy extends BaseDeltaManagerProxy {
 
 	private readonly isSummarizerClient: boolean;
 
-	constructor(
-		protected readonly deltaManager: IDeltaManager<
-			ISequencedDocumentMessage,
-			IDocumentMessage
-		>,
-	) {
+	constructor(protected readonly deltaManager: IDeltaManagerFull) {
 		super(deltaManager);
 		this.isSummarizerClient = this.deltaManager.clientDetails.type === summarizerClientType;
 	}
@@ -228,7 +218,7 @@ export class DeltaManagerPendingOpsProxy extends BaseDeltaManagerProxy {
 		return this.deltaManager.minimumSequenceNumber;
 	}
 
-	public get lastMessage() {
+	public get lastMessage(): ISequencedDocumentMessage | undefined {
 		if (this.deltaManager.lastMessage === undefined) {
 			return this.deltaManager.lastMessage;
 		}
@@ -250,10 +240,7 @@ export class DeltaManagerPendingOpsProxy extends BaseDeltaManagerProxy {
 	};
 
 	constructor(
-		protected readonly deltaManager: IDeltaManager<
-			ISequencedDocumentMessage,
-			IDocumentMessage
-		>,
+		protected readonly deltaManager: IDeltaManagerFull,
 		private readonly pendingStateManager: Pick<
 			PendingStateManager,
 			"minimumPendingMessageSequenceNumber"

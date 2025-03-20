@@ -55,24 +55,6 @@ export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt
 // @alpha
 export type ITelemetryPropertiesExt = Record<string, TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>>;
 
-// @alpha @deprecated
-export class MockLogger implements ITelemetryBaseLogger {
-    constructor(minLogLevel?: LogLevel);
-    assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): void;
-    assertMatchAny(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): void;
-    assertMatchNone(disallowedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): void;
-    assertMatchStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): void;
-    clear(): void;
-    get events(): readonly ITelemetryBaseEvent[];
-    matchAnyEvent(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): boolean;
-    matchEvents(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): boolean;
-    matchEventStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): boolean;
-    readonly minLogLevel: LogLevel;
-    send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
-    // (undocumented)
-    toTelemetryLogger(): ITelemetryLoggerExt;
-}
-
 // @alpha
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 

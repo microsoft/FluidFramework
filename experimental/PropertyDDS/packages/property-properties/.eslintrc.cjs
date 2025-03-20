@@ -18,7 +18,6 @@ module.exports = {
 		"@typescript-eslint/dot-notation": "off",
 		"@typescript-eslint/no-dynamic-delete": "off",
 		"@typescript-eslint/no-extraneous-class": "off",
-		"@typescript-eslint/no-extraneous-dependencies": "off",
 		"@typescript-eslint/no-implied-eval": "off",
 		"@typescript-eslint/no-invalid-this": "off",
 		"@typescript-eslint/no-require-imports": "off",
@@ -42,6 +41,7 @@ module.exports = {
 		"@typescript-eslint/unbound-method": "off",
 		"guard-for-in": "off",
 		"import/no-duplicates": "off",
+		"import/no-extraneous-dependencies": "off",
 		"import/no-internal-modules": "off",
 		"max-len": "off",
 		"no-bitwise": "off",
@@ -60,5 +60,7 @@ module.exports = {
 		"quote-props": "off",
 		"tsdoc/syntax": "off",
 		"unicorn/better-regex": "off",
+
+		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},
 };

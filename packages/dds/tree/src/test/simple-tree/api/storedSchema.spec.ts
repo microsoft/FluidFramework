@@ -27,10 +27,9 @@ describe("simple-tree storedSchema", () => {
 			// but might as will give it a simple smoke test for the various test schema.
 			it(`comparePersistedSchema to self ${test.name}`, () => {
 				const persistedA = extractPersistedSchema(test.schema);
-				const persistedB = extractPersistedSchema(test.schema);
 				const status = comparePersistedSchema(
 					persistedA,
-					persistedB,
+					test.schema,
 					{
 						jsonValidator: typeboxValidator,
 					},

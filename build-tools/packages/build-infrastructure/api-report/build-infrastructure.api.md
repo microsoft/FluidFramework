@@ -6,11 +6,33 @@
 
 import type { Opaque } from 'type-fest';
 import type { PackageJson as PackageJson_2 } from 'type-fest';
+import { SemVer } from 'semver';
 import type { SetRequired } from 'type-fest';
 import { SimpleGit } from 'simple-git';
 
 // @public
 export type AdditionalPackageProps = Record<string, string> | undefined;
+
+// @public
+export const BUILDPROJECT_CONFIG_VERSION = 1;
+
+// @public
+export interface BuildProjectLayout {
+    buildProject?: {
+        workspaces: {
+            [name: string]: WorkspaceDefinition;
+        };
+    };
+    // @deprecated
+    repoPackages?: IFluidBuildDirs;
+    version: typeof BUILDPROJECT_CONFIG_VERSION;
+}
+
+// @public
+export function createPackageManager(name: PackageManagerName): IPackageManager;
+
+// @public
+export function findGitRootSync(cwd?: string): string;
 
 // @public
 export interface FluidPackageJsonFields {
@@ -20,13 +42,48 @@ export interface FluidPackageJsonFields {
 }
 
 // @public
-export const FLUIDREPO_CONFIG_VERSION = 1;
+export function getAllDependencies(repo: IBuildProject, packages: IPackage[]): {
+    packages: IPackage[];
+    releaseGroups: IReleaseGroup[];
+    workspaces: IWorkspace[];
+};
 
 // @public
-export function getFluidRepoLayout(searchPath: string, noCache?: boolean): {
-    config: IFluidRepoLayout;
+export function getBuildProjectConfig(searchPath: string, noCache?: boolean): {
+    config: BuildProjectLayout;
     configFilePath: string;
 };
+
+// @public
+export function getChangedSinceRef<P extends IPackage>(buildProject: IBuildProject<P>, ref: string, remote?: string): Promise<{
+    files: string[];
+    dirs: string[];
+    workspaces: IWorkspace[];
+    releaseGroups: IReleaseGroup[];
+    packages: P[];
+}>;
+
+// @public
+export function getFiles(git: SimpleGit, directory: string): Promise<string[]>;
+
+// @public
+export function getMergeBaseRemote(git: SimpleGit, branch: string, remote?: string, localRef?: string): Promise<string>;
+
+// @public
+export function getRemote(git: SimpleGit, partialUrl: string | undefined): Promise<string | undefined>;
+
+// @public
+export interface IBuildProject<P extends IPackage = IPackage> extends Reloadable {
+    configuration: BuildProjectLayout;
+    getGitRepository(): Promise<Readonly<SimpleGit>>;
+    getPackageReleaseGroup(pkg: Readonly<P>): Readonly<IReleaseGroup>;
+    packages: Map<PackageName, P>;
+    relativeToRepo(p: string): string;
+    releaseGroups: Map<ReleaseGroupName, IReleaseGroup>;
+    root: string;
+    upstreamRemotePartialUrl?: string;
+    workspaces: Map<WorkspaceName, IWorkspace>;
+}
 
 // @public @deprecated
 export interface IFluidBuildDir {
@@ -45,34 +102,8 @@ export interface IFluidBuildDirs {
 }
 
 // @public
-export interface IFluidRepo<P extends IPackage = IPackage> extends Reloadable {
-    configuration: IFluidRepoLayout;
-    getGitRepository(): Promise<Readonly<SimpleGit>>;
-    getPackageReleaseGroup(pkg: Readonly<P>): Readonly<IReleaseGroup>;
-    getPackageWorkspace(pkg: Readonly<P>): Readonly<IWorkspace>;
-    packages: Map<PackageName, P>;
-    relativeToRepo(p: string): string;
-    releaseGroups: Map<ReleaseGroupName, IReleaseGroup>;
-    root: string;
-    upstreamRemotePartialUrl?: string;
-    workspaces: Map<WorkspaceName, IWorkspace>;
-}
-
-// @public
-export interface IFluidRepoLayout {
-    repoLayout?: {
-        workspaces: {
-            [name: string]: WorkspaceDefinition;
-        };
-    };
-    // @deprecated
-    repoPackages?: IFluidBuildDirs;
-    version: typeof FLUIDREPO_CONFIG_VERSION;
-}
-
-// @public
 export interface Installable {
-    checkInstall(): Promise<boolean>;
+    checkInstall(): Promise<true | string[]>;
     install(updateLockfile: boolean): Promise<boolean>;
 }
 
@@ -99,7 +130,7 @@ export interface IPackage<J extends PackageJson = PackageJson> extends Installab
 
 // @public
 export interface IPackageManager {
-    installCommand(updateLockfile: boolean): string;
+    getInstallCommandWithArgs(updateLockfile: boolean): string[];
     readonly lockfileName: string;
     readonly name: PackageManagerName;
 }
@@ -125,6 +156,7 @@ export function isIReleaseGroup(toCheck: Exclude<any, string | number | ReleaseG
 
 // @public
 export interface IWorkspace extends Installable, Reloadable {
+    buildProject: IBuildProject;
     directory: string;
     name: WorkspaceName;
     packages: IPackage[];
@@ -135,10 +167,44 @@ export interface IWorkspace extends Installable, Reloadable {
 }
 
 // @public
+export function loadBuildProject<P extends IPackage>(searchPath: string, upstreamRemotePartialUrl?: string): IBuildProject<P>;
+
+// @public
 export class NotInGitRepository extends Error {
-    constructor(path: string);
-    // (undocumented)
+    constructor(
+    path: string);
     readonly path: string;
+}
+
+// @public
+export abstract class PackageBase<J extends PackageJson = PackageJson, TAddProps extends AdditionalPackageProps = undefined> implements IPackage<J> {
+    constructor(
+    packageJsonFilePath: string,
+    packageManager: IPackageManager,
+    workspace: IWorkspace,
+    isWorkspaceRoot: boolean,
+    releaseGroup: ReleaseGroupName,
+    isReleaseGroupRoot: boolean, additionalProperties?: TAddProps);
+    checkInstall(): Promise<true | string[]>;
+    get combinedDependencies(): Generator<PackageDependency, void>;
+    get directory(): string;
+    getScript(name: string): string | undefined;
+    install(updateLockfile: boolean): Promise<boolean>;
+    isReleaseGroupRoot: boolean;
+    readonly isWorkspaceRoot: boolean;
+    get name(): PackageName;
+    get nameColored(): string;
+    get packageJson(): J;
+    readonly packageJsonFilePath: string;
+    readonly packageManager: IPackageManager;
+    get private(): boolean;
+    readonly releaseGroup: ReleaseGroupName;
+    reload(): void;
+    savePackageJson(): Promise<void>;
+    // (undocumented)
+    toString(): string;
+    get version(): string;
+    readonly workspace: IWorkspace;
 }
 
 // @public
@@ -170,9 +236,17 @@ export type ReleaseGroupName = Opaque<string, IReleaseGroup>;
 
 // @public
 export interface Reloadable {
-    // (undocumented)
     reload(): void;
 }
+
+// @public
+export function setVersion<J extends PackageJson>(packages: IPackage<J>[], version: SemVer): Promise<void>;
+
+// @public
+export function updatePackageJsonFile<J extends PackageJson = PackageJson>(packagePath: string, packageTransformer: (json: J) => void): void;
+
+// @public
+export function updatePackageJsonFileAsync<J extends PackageJson = PackageJson>(packagePath: string, packageTransformer: (json: J) => Promise<void>): Promise<void>;
 
 // @public
 export interface WorkspaceDefinition {

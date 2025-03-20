@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase, oob } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import type { RevisionTag } from "../../core/index.js";
-import { type IdAllocator, type Mutable, fail } from "../../util/index.js";
+import { type IdAllocator, type Mutable, fail, hasSingle } from "../../util/index.js";
 import {
 	type CrossFieldManager,
 	CrossFieldTarget,
@@ -176,7 +176,7 @@ function invertMark(
 			}
 
 			const cellId = getDetachOutputCellId(mark) ?? {
-				revision: mark.revision ?? fail("Revision must be defined"),
+				revision: mark.revision ?? fail(0xb2a /* Revision must be defined */),
 				localId: mark.id,
 			};
 
@@ -257,11 +257,11 @@ function invertMark(
 			}
 
 			assert(
-				detachInverses.length === 1,
+				hasSingle(detachInverses),
 				0x80d /* Only expected MoveIn marks to be split when inverting */,
 			);
 
-			let detachInverse = detachInverses[0] ?? oob();
+			let detachInverse = detachInverses[0];
 			assert(isAttach(detachInverse), 0x80e /* Inverse of a detach should be an attach */);
 
 			const inverses: Mark[] = [];

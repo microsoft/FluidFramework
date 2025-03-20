@@ -389,3 +389,15 @@ export class DocumentPostCreateError extends Error {
 		return this.innerError.stack;
 	}
 }
+
+/**
+ * Creates factory for creating the routerlicious document service.
+ *
+ * @legacy
+ * @alpha
+ */
+export function createRouterliciousDocumentServiceFactory(
+	tokenProvider: ITokenProvider,
+): IDocumentServiceFactory {
+	return new RouterliciousDocumentServiceFactory(tokenProvider);
+}

@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/dot-notation */
-
 export const summaryTemplate = {
 	type: 1,
 	tree: {

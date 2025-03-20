@@ -25,7 +25,7 @@ export class TestTopic implements ITopic {
 			this.events.set(event, []);
 		}
 
-		this.events.get(event).push({ args, event });
+		this.events.get(event)?.push({ args, event });
 	}
 
 	public getEvents(key: string) {

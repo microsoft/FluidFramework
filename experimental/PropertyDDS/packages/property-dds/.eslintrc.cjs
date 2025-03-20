@@ -14,5 +14,6 @@ module.exports = {
 	rules: {
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"tsdoc/syntax": "off",
+		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},
 };

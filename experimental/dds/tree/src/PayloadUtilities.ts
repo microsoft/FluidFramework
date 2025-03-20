@@ -4,7 +4,7 @@
  */
 
 import { compareArrays } from '@fluidframework/core-utils/internal';
-import { isFluidHandle, toFluidHandleInternal } from '@fluidframework/runtime-utils/internal';
+import { compareFluidHandles, isFluidHandle } from '@fluidframework/runtime-utils';
 
 import { Payload } from './persisted-types/index.js';
 
@@ -67,7 +67,7 @@ export function comparePayloads(a: Payload, b: Payload): boolean {
 	// Special case IFluidHandles, comparing them only by their absolutePath
 	if (isFluidHandle(a)) {
 		if (isFluidHandle(b)) {
-			return toFluidHandleInternal(a).absolutePath === toFluidHandleInternal(b).absolutePath;
+			return compareFluidHandles(a, b);
 		}
 		return false;
 	}

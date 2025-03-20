@@ -13,12 +13,11 @@ import { Type } from "@sinclair/typebox";
 import {
 	type Brand,
 	type NestedMap,
-	type RangeMap,
+	RangeMap,
 	brand,
 	brandedNumberType,
 	brandedStringType,
 } from "../../util/index.js";
-import type { TaggedChange } from "./changeRebaser.js";
 
 /**
  * The identifier for a particular session/user/client that can generate `GraphCommit`s
@@ -69,10 +68,6 @@ export type EncodedChangeAtomId = [ChangesetLocalId, EncodedRevisionTag] | Chang
 /**
  */
 export type ChangeAtomIdMap<T> = NestedMap<RevisionTag | undefined, ChangesetLocalId, T>;
-
-/**
- */
-export type ChangeAtomIdRangeMap<T> = Map<RevisionTag | undefined, RangeMap<T>>;
 
 /**
  * @returns true iff `a` and `b` are the same.
@@ -154,8 +149,6 @@ export interface GraphCommit<TChange> {
 	readonly change: TChange;
 	/** The parent of this commit, on whose change this commit's change is based */
 	readonly parent?: GraphCommit<TChange>;
-	/** The rollback of this commit */
-	rollback?: TaggedChange<TChange, RevisionTag>;
 }
 
 /**
@@ -164,11 +157,11 @@ export interface GraphCommit<TChange> {
  * @public
  */
 export enum CommitKind {
-	/** A commit corresponding to a change that is not the result of an undo/redo. */
+	/** A commit corresponding to a change that is not the result of an undo/redo from this client. */
 	Default,
-	/** A commit that is the result of an undo. */
+	/** A commit that is the result of an undo from this client. */
 	Undo,
-	/** A commit that is the result of a redo. */
+	/** A commit that is the result of a redo from this client. */
 	Redo,
 }
 
@@ -208,11 +201,34 @@ export function mintCommit<TChange>(
 	};
 }
 
-export function replaceChange<TChange>(
-	commit: GraphCommit<TChange>,
-	change: TChange,
-): GraphCommit<TChange> {
-	const output = { ...commit, change };
-	delete output.rollback;
-	return output;
+export type ChangeAtomIdRangeMap<V> = RangeMap<ChangeAtomId, V>;
+
+export function newChangeAtomIdRangeMap<V>(): ChangeAtomIdRangeMap<V> {
+	return new RangeMap(offsetChangeAtomId, subtractChangeAtomIds);
+}
+
+export function subtractChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): number {
+	const cmp = compareRevisions(a.revision, b.revision);
+	if (cmp !== 0) {
+		return cmp * Number.POSITIVE_INFINITY;
+	}
+
+	return a.localId - b.localId;
+}
+
+export function compareRevisions(
+	a: RevisionTag | undefined,
+	b: RevisionTag | undefined,
+): number {
+	if (a === undefined) {
+		return b === undefined ? 0 : -1;
+	} else if (b === undefined) {
+		return 1;
+	} else if (a < b) {
+		return -1;
+	} else if (a > b) {
+		return 1;
+	}
+
+	return 0;
 }

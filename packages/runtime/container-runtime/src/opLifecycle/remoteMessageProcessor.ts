@@ -13,7 +13,6 @@ import {
 	ContainerMessageType,
 	type InboundContainerRuntimeMessage,
 	type InboundSequencedContainerRuntimeMessage,
-	type InboundSequencedRecentlyAddedContainerRuntimeMessage,
 } from "../messageTypes.js";
 import { asBatchMetadata } from "../metadata.js";
 
@@ -23,11 +22,17 @@ import { OpSplitter, isChunkedMessage } from "./opSplitter.js";
 // eslint-disable-next-line unused-imports/no-unused-imports -- Used by "@link" comment annotation below
 import { serializeOpContents } from "./outbox.js";
 
-/** Info about the batch we learn when we process the first message */
+/**
+ * Info about the batch we learn when we process the first message
+ */
 export interface BatchStartInfo {
-	/** Batch ID, if present */
+	/**
+	 * Batch ID, if present
+	 */
 	readonly batchId: string | undefined;
-	/** clientId that sent this batch. Used to compute Batch ID if needed */
+	/**
+	 * clientId that sent this batch. Used to compute Batch ID if needed
+	 */
 	readonly clientId: string;
 	/**
 	 * Client Sequence Number of the Grouped Batch message, or the first message in the ungrouped batch.
@@ -59,6 +64,7 @@ export type InboundMessageResult =
 			messages: InboundSequencedContainerRuntimeMessage[];
 			batchStart: BatchStartInfo;
 			length: number;
+			groupedBatch: boolean; // Messages in a grouped batches are sent to the runtime in bunches.
 	  }
 	| {
 			type: "batchStartingMessage";
@@ -101,7 +107,7 @@ export class RemoteMessageProcessor {
 		return this.opSplitter.chunks;
 	}
 
-	public clearPartialMessagesFor(clientId: string) {
+	public clearPartialMessagesFor(clientId: string): void {
 		this.opSplitter.clearPartialChunks(clientId);
 	}
 
@@ -159,7 +165,9 @@ export class RemoteMessageProcessor {
 			// We should be awaiting a new batch (batchInProgress false)
 			assert(!this.batchInProgress, 0x9d3 /* Grouped batch interrupting another batch */);
 			const batchId = asBatchMetadata(message.metadata)?.batchId;
-			const groupedMessages = this.opGroupingManager.ungroupOp(message).map(unpack);
+			const groupedMessages = this.opGroupingManager
+				.ungroupOp(message)
+				.map((innerMessage) => unpack(innerMessage));
 
 			return {
 				type: "fullBatch",
@@ -171,6 +179,7 @@ export class RemoteMessageProcessor {
 					keyMessage: groupedMessages[0] ?? message, // For an empty batch, this is the empty grouped batch message. Needed for sequence numbers for this batch
 				},
 				length: groupedMessages.length, // Will be 0 for an empty batch
+				groupedBatch: true,
 			};
 		}
 
@@ -220,6 +229,7 @@ export class RemoteMessageProcessor {
 					keyMessage: message,
 				},
 				length: 1,
+				groupedBatch: false,
 			};
 		}
 		assert(batchMetadataFlag !== true, 0x9d6 /* Unexpected batch start marker */);
@@ -256,7 +266,7 @@ export function ensureContentsDeserialized(mutableMessage: ISequencedDocumentMes
  *
  * The return type illustrates the assumption that the message param
  * becomes a InboundSequencedContainerRuntimeMessage by the time the function returns
- * (but there is no runtime validation of the 'type' or 'compatDetails' values).
+ * (but there is no runtime validation of the 'type').
  */
 function unpack(message: ISequencedDocumentMessage): InboundSequencedContainerRuntimeMessage {
 	// We assume the contents is an InboundContainerRuntimeMessage (the message is "packed")
@@ -267,10 +277,6 @@ function unpack(message: ISequencedDocumentMessage): InboundSequencedContainerRu
 
 	messageUnpacked.type = contents.type;
 	messageUnpacked.contents = contents.contents;
-	if ("compatDetails" in contents) {
-		(messageUnpacked as InboundSequencedRecentlyAddedContainerRuntimeMessage).compatDetails =
-			contents.compatDetails;
-	}
 	return messageUnpacked;
 }
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "assert";
+import { fail } from "node:assert";
 import type { NodeId } from "../feature-libraries/index.js";
 import {
 	type ChangeEncodingContext,

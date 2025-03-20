@@ -20,7 +20,7 @@ export {
 } from "./redisSocketIoAdapter";
 export { decodeHeader, RestLessServer } from "./restLessServer";
 export { run, runService } from "./runner";
-export { runnerHttpServerStop } from "./runnerUtils";
+export { runnerHttpServerStop, closeRedisClientConnections } from "./runnerUtils";
 export { SocketIoAdapterCreator } from "./socketIoServer";
 export { DocumentStorage } from "./storage";
 export {

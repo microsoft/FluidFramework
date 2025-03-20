@@ -4,9 +4,10 @@
  */
 
 import { IIntegerRange } from "./client.js";
+import { UniversalSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
-import { ISegment } from "./mergeTreeNodes.js";
-// eslint-disable-next-line import/no-deprecated
+import { ISegmentPrivate } from "./mergeTreeNodes.js";
+import { PriorPerspective, type Perspective } from "./perspective.js";
 import { IMergeTreeTextHelper, TextSegment } from "./textSegment.js";
 
 interface ITextAccumulator {
@@ -15,7 +16,6 @@ interface ITextAccumulator {
 	parallelArrays?: boolean;
 }
 
-// eslint-disable-next-line import/no-deprecated
 export class MergeTreeTextHelper implements IMergeTreeTextHelper {
 	constructor(private readonly mergeTree: MergeTree) {}
 
@@ -26,14 +26,17 @@ export class MergeTreeTextHelper implements IMergeTreeTextHelper {
 		start?: number,
 		end?: number,
 	): string {
-		const range = this.getValidRange(start, end, refSeq, clientId);
+		const perspective =
+			refSeq === UniversalSequenceNumber || clientId === this.mergeTree.collabWindow.clientId
+				? this.mergeTree.localPerspective
+				: new PriorPerspective(refSeq, clientId);
+		const range = this.getValidRange(start, end, perspective);
 
 		const accum: ITextAccumulator = { textSegment: new TextSegment(""), placeholder };
 
 		this.mergeTree.mapRange<ITextAccumulator>(
 			gatherText,
-			refSeq,
-			clientId,
+			perspective,
 			accum,
 			range.start,
 			range.end,
@@ -44,11 +47,10 @@ export class MergeTreeTextHelper implements IMergeTreeTextHelper {
 	private getValidRange(
 		start: number | undefined,
 		end: number | undefined,
-		refSeq: number,
-		clientId: number,
+		perspective: Perspective,
 	): IIntegerRange {
 		const range: IIntegerRange = {
-			end: end ?? this.mergeTree.getLength(refSeq, clientId),
+			end: end ?? this.mergeTree.getLength(perspective),
 			start: start ?? 0,
 		};
 		return range;
@@ -56,7 +58,7 @@ export class MergeTreeTextHelper implements IMergeTreeTextHelper {
 }
 
 function gatherText(
-	segment: ISegment,
+	segment: ISegmentPrivate,
 	pos: number,
 	refSeq: number,
 	clientId: number,

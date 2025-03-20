@@ -5,6 +5,7 @@
 
 import type { Nodes as HastNodes } from "hast";
 import { h } from "hastscript";
+
 import {
 	DocumentationNodeType,
 	type DocumentationNode,
@@ -23,6 +24,7 @@ import {
 	type TableRowNode,
 	type UnorderedListNode,
 } from "../../documentation-domain/index.js";
+import type { TransformationContext } from "../TransformationContext.js";
 import {
 	blockQuoteToHtml,
 	codeSpanToHtml,
@@ -39,7 +41,6 @@ import {
 	tableRowToHtml,
 	unorderedListToHtml,
 } from "../default-transformations/index.js";
-import type { TransformationContext } from "../TransformationContext.js";
 
 /**
  * Configuration for transforming {@link DocumentationNode}s to {@link https://github.com/syntax-tree/hast | hast},
@@ -60,7 +61,7 @@ export interface Transformations {
 	 * Maps from a {@link DocumentationNode}'s {@link DocumentationNode."type"} to a transformation implementation
 	 * for that kind of node.
 	 */
-	[documentationNodeKind: string]: Transformation;
+	readonly [documentationNodeKind: string]: Transformation;
 }
 
 /**
@@ -71,7 +72,10 @@ export interface Transformations {
  *
  * @public
  */
-export type Transformation = (node: DocumentationNode, context: TransformationContext) => HastNodes;
+export type Transformation = (
+	node: DocumentationNode,
+	context: TransformationContext,
+) => HastNodes;
 
 // Constants used in transformations below as an allocation optimization.
 const hastLineBreak = h("br");
@@ -87,10 +91,12 @@ export const defaultTransformations: Transformations = {
 		codeSpanToHtml(node as CodeSpanNode, context),
 	[DocumentationNodeType.FencedCode]: (node, context) =>
 		fencedCodeBlockToHtml(node as FencedCodeBlockNode, context),
-	[DocumentationNodeType.Heading]: (node, context) => headingToHtml(node as HeadingNode, context),
+	[DocumentationNodeType.Heading]: (node, context) =>
+		headingToHtml(node as HeadingNode, context),
 	[DocumentationNodeType.LineBreak]: () => hastLineBreak,
 	[DocumentationNodeType.Link]: (node, context) => linkToHtml(node as LinkNode, context),
-	[DocumentationNodeType.Section]: (node, context) => sectionToHtml(node as SectionNode, context),
+	[DocumentationNodeType.Section]: (node, context) =>
+		sectionToHtml(node as SectionNode, context),
 	[DocumentationNodeType.HorizontalRule]: () => hastHorizontalRule,
 	[DocumentationNodeType.OrderedList]: (node, context) =>
 		orderedListToHtml(node as OrderedListNode, context),

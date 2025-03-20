@@ -8,6 +8,9 @@ module.exports = {
 		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
 		"prettier",
 	],
+	parserOptions: {
+		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+	},
 	rules: {
 		"import/no-nodejs-modules": "off",
 		"promise/catch-or-return": ["error", { allowFinally: true }],

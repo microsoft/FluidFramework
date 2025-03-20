@@ -4,7 +4,7 @@
  */
 
 export type {
-	TransformationConfig,
+	TransformationConfiguration,
 	Transformation,
 	Transformations,
 } from "./configuration/index.js";

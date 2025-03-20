@@ -4,9 +4,14 @@
  */
 
 import { strict as assert } from "node:assert";
-import { VersionBumpType, detectVersionScheme } from "@fluid-tools/version-tools";
+import {
+	VersionBumpType,
+	bumpVersionScheme,
+	detectVersionScheme,
+} from "@fluid-tools/version-tools";
+import { rawlist } from "@inquirer/prompts";
 import { Config } from "@oclif/core";
-import chalk from "chalk";
+import chalk from "picocolors";
 
 import { findPackageOrReleaseGroup } from "../args.js";
 import {
@@ -23,7 +28,7 @@ import {
 } from "../handlers/index.js";
 import { PromptWriter } from "../instructionalPromptWriter.js";
 // eslint-disable-next-line import/no-deprecated
-import { MonoRepoKind } from "../library/index.js";
+import { MonoRepoKind, getDefaultBumpTypeForBranch } from "../library/index.js";
 import { FluidReleaseMachine } from "../machines/index.js";
 import { getRunPolicyCheckDefault } from "../repoConfig.js";
 import { StateMachineCommand } from "../stateMachineCommand.js";
@@ -36,7 +41,8 @@ import { StateMachineCommand } from "../stateMachineCommand.js";
 
 export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCommand> {
 	static readonly summary = "Releases a package or release group.";
-	static readonly description = `The release command ensures that a release branch is in good condition, then walks the user through releasing a package or release group.
+	static readonly description =
+		`The release command ensures that a release branch is in good condition, then walks the user through releasing a package or release group.
 
     The command runs a number of checks automatically to make sure the branch is in a good state for a release. If any of the dependencies are also in the repo, then they're checked for the latest release version. If the dependencies have not yet been released, then the command prompts to perform the release of the dependency, then run the release command again.
 
@@ -89,11 +95,14 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 		}
 		const releaseGroup = packageOrReleaseGroup.name;
 		const releaseVersion = packageOrReleaseGroup.version;
+		const gitRepo = await context.getGitRepository();
+		const currentBranch = await gitRepo.getCurrentBranchName();
+		const bumpType = await getBumpType(flags.bumpType, currentBranch, releaseVersion);
 
 		// eslint-disable-next-line no-warning-comments
 		// TODO: can be removed once server team owns server releases
 		// eslint-disable-next-line import/no-deprecated
-		if (flags.releaseGroup === MonoRepoKind.Server && flags.bumpType === "minor") {
+		if (flags.releaseGroup === MonoRepoKind.Server && bumpType === "minor") {
 			this.error(`Server release are always a ${chalk.bold("MAJOR")} release`);
 		}
 
@@ -107,7 +116,7 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 
 		const branchPolicyCheckDefault = getRunPolicyCheckDefault(
 			releaseGroup,
-			context.originalBranchName,
+			gitRepo.originalBranchName,
 		);
 
 		this.handler = new FluidReleaseStateHandler(machine, logger);
@@ -117,7 +126,7 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 			releaseVersion,
 			context,
 			promptWriter: new PromptWriter(logger),
-			bumpType: flags.bumpType as VersionBumpType,
+			bumpType,
 			versionScheme: detectVersionScheme(releaseVersion),
 			shouldSkipChecks: flags.skipChecks,
 			shouldCheckPolicy:
@@ -131,4 +140,47 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 			command: this,
 		};
 	}
+}
+
+/**
+ * Gets the bump type to use. If a bumpType was passed in, use it. Otherwise use the default for the branch. If
+ * there's no default for the branch, ask the user.
+ */
+async function getBumpType(
+	inputBumpType: VersionBumpType | undefined,
+	branch: string,
+	version: string,
+): Promise<VersionBumpType> {
+	const bumpedMajor = bumpVersionScheme(version, "major");
+	const bumpedMinor = bumpVersionScheme(version, "minor");
+	const bumpedPatch = bumpVersionScheme(version, "patch");
+
+	let bumpType = inputBumpType ?? getDefaultBumpTypeForBranch(branch);
+	if (bumpType === undefined) {
+		const selectedBumpType = await rawlist({
+			message: `The current branch is '${branch}'. There is no default bump type for this branch. What type of release are you doing?`,
+			choices: [
+				{
+					value: "major" as VersionBumpType,
+					name: `major (${version} => ${bumpedMajor.version})`,
+				},
+				{
+					value: "minor" as VersionBumpType,
+					name: `minor (${version} => ${bumpedMinor.version})`,
+				},
+				{
+					value: "patch" as VersionBumpType,
+					name: `patch  (${version} => ${bumpedPatch.version})`,
+				},
+			],
+		});
+
+		bumpType = selectedBumpType;
+	}
+
+	if (bumpType === undefined) {
+		throw new Error(`bumpType is undefined.`);
+	}
+
+	return bumpType;
 }

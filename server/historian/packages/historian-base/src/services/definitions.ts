@@ -12,7 +12,7 @@ export interface ICache {
 	/**
 	 * Retrieves the cached entry for the given key. Or null if it doesn't exist.
 	 */
-	get<T>(key: string): Promise<T>;
+	get<T>(key: string): Promise<T | null>;
 
 	/**
 	 * Sets a cache value
@@ -112,4 +112,13 @@ export interface IDenyList {
 	 * Checks if a given tenantId, documentId pair is denied.
 	 */
 	isDenied(tenantId: string, documentId: string): boolean;
+}
+
+/**
+ * Retrieves a subset of information from a Tenant's {@link ITenantCustomData}.
+ * The retrieved information is passed to the underlying storage service (e.g. Gitrest)
+ * in the "Simplified-Custom-Data" header.
+ */
+export interface ISimplifiedCustomDataRetriever {
+	get(customData: ITenantCustomData): string;
 }

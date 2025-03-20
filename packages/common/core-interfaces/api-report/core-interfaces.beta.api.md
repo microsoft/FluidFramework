@@ -287,6 +287,9 @@ export interface IResponse {
 }
 
 // @public
+export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
+
+// @public
 export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
     // (undocumented)
     category: string;
@@ -305,6 +308,17 @@ export interface ITelemetryBaseProperties {
     [index: string]: TelemetryBaseEventPropertyType | Tagged<TelemetryBaseEventPropertyType>;
 }
 
+// @public @sealed
+export interface Listenable<TListeners extends object> {
+    off<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): void;
+    on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
+}
+
+// @public
+export type Listeners<T extends object> = {
+    [P in (string | symbol) & keyof T as IsListener<T[P]> extends true ? P : never]: T[P];
+};
+
 // @public
 export const LogLevel: {
     readonly verbose: 10;
@@ -314,6 +328,9 @@ export const LogLevel: {
 
 // @public
 export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
+
+// @public
+export type Off = () => void;
 
 // @public
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {

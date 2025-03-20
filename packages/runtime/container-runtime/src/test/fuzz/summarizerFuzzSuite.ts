@@ -5,9 +5,8 @@
 
 /* eslint-disable import/no-nodejs-modules */
 
-import { strict as assert } from "assert";
-import { mkdirSync, readFileSync } from "fs";
-import path from "path";
+import { strict as assert } from "node:assert";
+import { mkdirSync, readFileSync } from "node:fs";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
@@ -18,6 +17,8 @@ import {
 	asyncGeneratorFromArray,
 	createFuzzDescribe,
 	defaultOptions,
+	getSaveDirectory,
+	getSaveInfo,
 	makeRandom,
 	performFuzzActionsAsync,
 } from "@fluid-private/stochastic-test-utils";
@@ -156,10 +157,11 @@ export function createSummarizerFuzzSuite(
 
 	const describeFuzz = createFuzzDescribe({ defaultTestCount: options.defaultTestCount });
 	describeFuzz(model.workloadName, ({ testCount }) => {
-		const directory = getSaveDirectory(model, options);
 		before(() => {
-			if (directory !== undefined) {
-				mkdirSync(directory, { recursive: true });
+			if (options.saveFailures !== undefined && options.saveFailures !== false) {
+				mkdirSync(getSaveDirectory(options.saveFailures.directory, model), {
+					recursive: true,
+				});
 			}
 		});
 
@@ -250,39 +252,6 @@ function runTest(
 		const inCi = !!process.env.TF_BUILD;
 		await runTestForSeed(model, options, seed, inCi ? undefined : saveInfo);
 	});
-}
-
-/**
- * @internal
- */
-interface HasWorkloadName {
-	workloadName: string;
-}
-
-function getSaveDirectory(
-	model: HasWorkloadName,
-	options: SummarizerFuzzSuiteOptions,
-): string | undefined {
-	if (!options.saveFailures) {
-		return undefined;
-	}
-	const workloadFriendly = model.workloadName.replace(/[\s_]+/g, "-").toLowerCase();
-	return path.join(options.saveFailures.directory, workloadFriendly);
-}
-
-function getSaveInfo(
-	model: HasWorkloadName,
-	options: SummarizerFuzzSuiteOptions,
-	seed: number,
-): SaveInfo {
-	const directory = getSaveDirectory(model, options);
-	if (!directory) {
-		return { saveOnFailure: false, saveOnSuccess: false };
-	}
-	return {
-		saveOnFailure: { path: path.join(directory, `${seed}.json`) },
-		saveOnSuccess: false,
-	};
 }
 
 type InternalOptions = Omit<SummarizerFuzzSuiteOptions, "only" | "skip"> & {

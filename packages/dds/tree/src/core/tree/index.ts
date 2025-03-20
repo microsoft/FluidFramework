@@ -33,7 +33,6 @@ export {
 export type {
 	ProtoNodes,
 	Root as DeltaRoot,
-	ProtoNode as DeltaProtoNode,
 	Mark as DeltaMark,
 	DetachedNodeId as DeltaDetachedNodeId,
 	FieldMap as DeltaFieldMap,
@@ -49,16 +48,18 @@ export {
 	topDownPath,
 	getDepth,
 	type UpPath,
+	type NormalizedUpPath,
+	type INormalizedUpPath,
+	type NormalizedFieldUpPath,
 	type FieldUpPath,
 	type Range,
 	type RangeUpPath,
 	type PlaceUpPath,
 	type PlaceIndex,
 	type NodeIndex,
-	type DetachedPlaceUpPath,
-	type DetachedRangeUpPath,
 	compareUpPaths,
 	compareFieldUpPaths,
+	isDetachedUpPathRoot as isDetachedUpPath,
 	getDetachedFieldContainingPath,
 	type UpPathDefault,
 } from "./pathTree.js";
@@ -94,21 +95,27 @@ export {
 	type AnnouncedVisitor,
 	announceDelta,
 	applyDelta,
+	createAnnouncedVisitor,
 	combineVisitors,
 	makeDetachedFieldIndex,
 } from "./visitorUtils.js";
-export type { PathVisitor } from "./visitPath.js";
 
 export { SparseNode, getDescendant } from "./sparseTree.js";
 
 export {
 	deltaForRootInitialization,
-	emptyFieldChanges,
-	isEmptyFieldChanges,
 	makeDetachedNodeId,
 	offsetDetachId,
 	emptyDelta,
 } from "./deltaUtil.js";
+
+export {
+	type TreeChunk,
+	dummyRoot,
+	cursorChunk,
+	tryGetChunk,
+	type ChunkedCursor,
+} from "./chunk.js";
 
 export { DetachedFieldIndex } from "./detachedFieldIndex.js";
 export { type ForestRootId } from "./detachedFieldIndexTypes.js";

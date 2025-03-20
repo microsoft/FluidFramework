@@ -5,7 +5,7 @@
 
 import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { strict } from "assert";
+import { strict } from "node:assert";
 
 import {
 	type ChangesetLocalId,

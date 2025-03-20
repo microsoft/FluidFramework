@@ -61,6 +61,7 @@ trigger:
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
+    - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
     - scripts/*
 
@@ -83,6 +84,7 @@ pr:
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
+    - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
     - scripts/*
 
@@ -91,7 +93,6 @@ variables:
     parameters:
       publishOverride: '${{ parameters.publishOverride }}'
       releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
-      buildNumberInPatch: ''
 
 extends:
   template: /tools/pipelines/templates/build-npm-package.yml@self
@@ -114,11 +115,8 @@ extends:
     - test:copyresults
     taskLint: true
     taskLintName: ci:eslint
-    poolBuild: NewLarge-linux-1ES
+    poolBuild: Large-eastus2
     checkoutSubmodules: true
     taskBundleAnalysis: false
     checks:
-    - syncpack:deps
-    - syncpack:versions
-    - generate:packageList
-    - check:format
+    - checks

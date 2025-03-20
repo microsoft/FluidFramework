@@ -17,6 +17,7 @@ import {
 	normalizeAllowedTypes,
 	type ImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type NodeSchemaMetadata,
 	type TreeNodeFromImplicitAllowedTypes,
 } from "./schemaTypes.js";
 import {
@@ -33,6 +34,7 @@ import {
 	type Context,
 	UnhydratedFlexTreeNode,
 	getOrCreateInnerNode,
+	type InternalTreeNode,
 } from "./core/index.js";
 import {
 	mapTreeFromNodeData,
@@ -142,6 +144,10 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 > {
 	public static readonly kind = NodeKind.Map;
 
+	public constructor(input?: InternalTreeNode | MapNodeInsertableData<T> | undefined) {
+		super(input ?? []);
+	}
+
 	public [Symbol.iterator](): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]> {
 		return this.entries();
 	}
@@ -230,11 +236,13 @@ export function mapSchema<
 	TName extends string,
 	const T extends ImplicitAllowedTypes,
 	const ImplicitlyConstructable extends boolean,
+	const TCustomMetadata = unknown,
 >(
 	identifier: TName,
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
 	useMapPrototype: boolean,
+	metadata?: NodeSchemaMetadata<TCustomMetadata>,
 ) {
 	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(info));
 
@@ -278,6 +286,8 @@ export function mapSchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> | undefined =
+			metadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {
@@ -293,7 +303,9 @@ export function mapSchema<
 		TreeMapNode<T> & WithType<TName, NodeKind.Map>,
 		MapNodeInsertableData<T>,
 		ImplicitlyConstructable,
-		T
+		T,
+		undefined,
+		TCustomMetadata
 	> = Schema;
 	return schemaErased;
 }

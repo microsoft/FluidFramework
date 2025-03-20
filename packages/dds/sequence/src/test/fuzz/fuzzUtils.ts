@@ -9,9 +9,10 @@ import * as path from "path";
 import {
 	AcceptanceCondition,
 	AsyncGenerator,
-	AsyncReducer,
-	combineReducersAsync,
+	Reducer,
+	combineReducers,
 	createWeightedAsyncGenerator,
+	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import {
 	DDSFuzzModel,
@@ -24,9 +25,14 @@ import {
 	type Serializable,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
-import { PropertySet, Side } from "@fluidframework/merge-tree/internal";
+import { PropertySet, Side, type AdjustParams } from "@fluidframework/merge-tree/internal";
 
-import type { SequenceInterval, SharedStringClass } from "../../index.js";
+import type {
+	InteriorSequencePlace,
+	MapLike,
+	SequenceInterval,
+	SharedStringClass,
+} from "../../index.js";
 import { type IIntervalCollection } from "../../intervalCollection.js";
 import { SharedStringRevertible, revertSharedStringRevertibles } from "../../revertibles.js";
 import { SharedStringFactory } from "../../sequenceFactory.js";
@@ -68,8 +74,15 @@ export interface AnnotateRange extends RangeSpec {
 	props: { key: string; value?: Serializable<any> }[];
 }
 
-export interface ObliterateRange extends RangeSpec {
+export interface AnnotateAdjustRange extends RangeSpec {
+	type: "annotateAdjustRange";
+	adjust: { key: string; value: AdjustParams }[];
+}
+
+export interface ObliterateRange {
 	type: "obliterateRange";
+	start: number | InteriorSequencePlace;
+	end: number | InteriorSequencePlace;
 }
 
 // For non-interval collection fuzzing, annotating text would also be useful.
@@ -115,7 +128,12 @@ export interface RevertibleWeights {
 
 export type IntervalOperation = AddInterval | ChangeInterval | DeleteInterval;
 export type OperationWithRevert = IntervalOperation | RevertSharedStringRevertibles;
-export type TextOperation = AddText | RemoveRange | AnnotateRange | ObliterateRange;
+export type TextOperation =
+	| AddText
+	| RemoveRange
+	| AnnotateRange
+	| AnnotateAdjustRange
+	| ObliterateRange;
 
 export type ClientOperation = IntervalOperation | TextOperation;
 
@@ -218,39 +236,43 @@ type ClientOpState = FuzzTestState;
 
 export function makeReducer(
 	loggingInfo?: LoggingInfo,
-): AsyncReducer<Operation | RevertOperation, ClientOpState> {
+): Reducer<Operation | RevertOperation, ClientOpState> {
 	const withLogging =
-		<T>(baseReducer: AsyncReducer<T, ClientOpState>): AsyncReducer<T, ClientOpState> =>
-		async (state, operation) => {
+		<T>(baseReducer: Reducer<T, ClientOpState>): Reducer<T, ClientOpState> =>
+		(state, operation) => {
 			if (loggingInfo !== undefined) {
 				logCurrentState(state, loggingInfo);
 				console.log("-".repeat(20));
 				console.log("Next operation:", JSON.stringify(operation, undefined, 4));
 			}
-			await baseReducer(state, operation);
+			baseReducer(state, operation);
 		};
 
-	const reducer = combineReducersAsync<Operation | RevertOperation, ClientOpState>({
-		addText: async ({ client }, { index, content }) => {
+	const reducer = combineReducers<Operation | RevertOperation, ClientOpState>({
+		addText: ({ client }, { index, content }) => {
 			client.channel.insertText(index, content);
 		},
-		removeRange: async ({ client }, { start, end }) => {
+		removeRange: ({ client }, { start, end }) => {
 			client.channel.removeRange(start, end);
 		},
-		annotateRange: async ({ client }, { start, end, props }) => {
+		annotateRange: ({ client }, { start, end, props }) => {
 			const propertySet: PropertySet = {};
 			for (const { key, value } of props) {
 				propertySet[key] = value;
 			}
 			client.channel.annotateRange(start, end, propertySet);
 		},
-		obliterateRange: async ({ client }, { start, end }) => {
+		annotateAdjustRange: ({ client }, { start, end, adjust }) => {
+			const adjustRange: MapLike<AdjustParams> = {};
+			for (const { key, value } of adjust) {
+				adjustRange[key] = value;
+			}
+			client.channel.annotateAdjustRange(start, end, adjustRange);
+		},
+		obliterateRange: ({ client }, { start, end }) => {
 			client.channel.obliterateRange(start, end);
 		},
-		addInterval: async (
-			{ client },
-			{ start, end, collectionName, id, startSide, endSide },
-		) => {
+		addInterval: ({ client }, { start, end, collectionName, id, startSide, endSide }) => {
 			const collection = client.channel.getIntervalCollection(collectionName);
 			collection.add({
 				start: { pos: start, side: startSide },
@@ -258,11 +280,11 @@ export function makeReducer(
 				props: { intervalId: id },
 			});
 		},
-		deleteInterval: async ({ client }, { id, collectionName }) => {
+		deleteInterval: ({ client }, { id, collectionName }) => {
 			const collection = client.channel.getIntervalCollection(collectionName);
 			collection.removeIntervalById(id);
 		},
-		changeInterval: async (
+		changeInterval: (
 			{ client },
 			{ id, start, end, collectionName, startSide, endSide, properties },
 		) => {
@@ -277,7 +299,7 @@ export function makeReducer(
 				collection.change(id, { props: properties });
 			}
 		},
-		revertSharedStringRevertibles: async ({ client }, { editsToRevert }) => {
+		revertSharedStringRevertibles: ({ client }, { editsToRevert }) => {
 			assert(isRevertibleSharedString(client.channel));
 			client.channel.isCurrentRevert = true;
 			const few = client.channel.revertibles.splice(-editsToRevert, editsToRevert);
@@ -321,9 +343,22 @@ export function createSharedStringGeneratorOperations(
 	}
 
 	async function obliterateRange(state: ClientOpState): Promise<ObliterateRange> {
+		if (state.client.channel.getLength() > 0 && state.random.bool(0.2)) {
+			return { type: "obliterateRange", ...exclusiveRange(state) };
+		}
+
+		const max = state.client.channel.getLength() - 1;
+		const num1 = state.random.integer(0, max);
+		const num2 = state.random.integer(0, max);
+		const start = Math.min(num1, num2);
+		const end = Math.max(num1, num2);
+		const startSide =
+			start === end ? Side.Before : state.random.pick([Side.Before, Side.After]);
+		const endSide = start === end ? Side.After : state.random.pick([Side.Before, Side.After]);
 		return {
 			type: "obliterateRange",
-			...exclusiveRange(state),
+			start: { pos: start, side: startSide },
+			end: { pos: end, side: endSide },
 		};
 	}
 
@@ -335,6 +370,23 @@ export function createSharedStringGeneratorOperations(
 			type: "annotateRange",
 			...exclusiveRange(state),
 			props: [{ key, value }],
+		};
+	}
+
+	async function annotateAdjustRange(state: ClientOpState): Promise<AnnotateAdjustRange> {
+		const { random } = state;
+		const key = random.pick(options.propertyNamePool);
+		const max = random.pick([undefined, random.integer(-10, 100)]);
+		const min = random.pick([undefined, random.integer(-100, 10)]);
+		const value: AdjustParams = {
+			delta: random.integer(-5, 5),
+			max,
+			min: (min ?? max ?? 0) > (max ?? 0) ? undefined : min,
+		};
+		return {
+			type: "annotateAdjustRange",
+			...exclusiveRange(state),
+			adjust: [{ key, value }],
 		};
 	}
 
@@ -360,6 +412,7 @@ export function createSharedStringGeneratorOperations(
 		addText,
 		obliterateRange,
 		annotateRange,
+		annotateAdjustRange,
 		removeRange,
 		removeRangeLeaveChar,
 		lengthSatisfies,
@@ -368,6 +421,12 @@ export function createSharedStringGeneratorOperations(
 	};
 }
 
+function setSharedStringRuntimeOptions(runtime: IFluidDataStoreRuntime) {
+	runtime.options.intervalStickinessEnabled = true;
+	runtime.options.mergeTreeEnableObliterate = true;
+	runtime.options.mergeTreeEnableAnnotateAdjust = true;
+	runtime.options.mergeTreeEnableSidedObliterate = true;
+}
 export class SharedStringFuzzFactory extends SharedStringFactory {
 	public async load(
 		runtime: IFluidDataStoreRuntime,
@@ -375,14 +434,12 @@ export class SharedStringFuzzFactory extends SharedStringFactory {
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<SharedStringClass> {
-		runtime.options.intervalStickinessEnabled = true;
-		runtime.options.mergeTreeEnableObliterate = true;
+		setSharedStringRuntimeOptions(runtime);
 		return super.load(runtime, id, services, attributes);
 	}
 
 	public create(document: IFluidDataStoreRuntime, id: string): SharedStringClass {
-		document.options.intervalStickinessEnabled = true;
-		document.options.mergeTreeEnableObliterate = true;
+		setSharedStringRuntimeOptions(document);
 		return super.create(document, id);
 	}
 }
@@ -610,3 +667,56 @@ export function makeIntervalOperationGenerator(
 		[changeInterval, usableWeights.changeInterval, all(hasAnInterval, hasNonzeroLength)],
 	]);
 }
+
+export const baseIntervalModel = {
+	...baseModel,
+	generatorFactory: () =>
+		takeAsync(100, makeIntervalOperationGenerator(defaultIntervalOperationGenerationConfig)),
+};
+
+export function makeSharedStringOperationGenerator(
+	optionsParam?: SharedStringOperationGenerationConfig,
+	alwaysLeaveChar: boolean = false,
+): AsyncGenerator<Operation, FuzzTestState> {
+	const {
+		addText,
+		removeRange,
+		annotateRange,
+		annotateAdjustRange,
+		removeRangeLeaveChar,
+		lengthSatisfies,
+		obliterateRange,
+		hasNonzeroLength,
+		isShorterThanMaxLength,
+	} = createSharedStringGeneratorOperations(optionsParam);
+
+	const usableWeights =
+		optionsParam?.weights ?? defaultIntervalOperationGenerationConfig.weights;
+	return createWeightedAsyncGenerator<Operation, FuzzTestState>([
+		[addText, usableWeights.addText, isShorterThanMaxLength],
+		[
+			alwaysLeaveChar ? removeRangeLeaveChar : removeRange,
+			usableWeights.removeRange,
+			alwaysLeaveChar
+				? lengthSatisfies((length) => {
+						return length > 1;
+					})
+				: hasNonzeroLength,
+		],
+		// TODO:AB#17785: Once sided obliterates support specifying the start/end of the sequence,
+		// we can drop the `hasNonzeroLength` condition here and adjust the obliterate generation logic
+		// to get coverage of that in fuzz testing.
+		[obliterateRange, usableWeights.obliterateRange, hasNonzeroLength],
+		[annotateRange, usableWeights.annotateRange, hasNonzeroLength],
+		[annotateAdjustRange, usableWeights.annotateRange, hasNonzeroLength],
+	]);
+}
+
+export const baseSharedStringModel = {
+	...baseModel,
+	generatorFactory: () =>
+		takeAsync(
+			100,
+			makeSharedStringOperationGenerator(defaultIntervalOperationGenerationConfig),
+		),
+};

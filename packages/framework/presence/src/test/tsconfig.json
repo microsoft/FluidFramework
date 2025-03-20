@@ -10,6 +10,7 @@
 		"noUnusedLocals": true,
 		"noImplicitOverride": true,
 		"exactOptionalPropertyTypes": true,
+		"noUncheckedIndexedAccess": false,
 	},
 	"references": [
 		{

@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { AxiosError } from "axios";
+
 /**
  * Represents the internal error code in NetworkError
  * @internal
@@ -76,7 +78,7 @@ export class NetworkError extends Error {
 	 * Value representing the time in seconds that should be waited before retrying.
 	 * TODO: remove in favor of retryAfterMs once driver supports retryAfterMs.
 	 */
-	public readonly retryAfter: number;
+	public readonly retryAfter?: number;
 
 	constructor(
 		/**
@@ -299,4 +301,25 @@ export function throwFluidServiceNetworkError(
 ): never {
 	const networkError = createFluidServiceNetworkError(statusCode, errorData);
 	throw networkError;
+}
+
+/**
+ * @internal
+ */
+export function convertAxiosErrorToNetorkError(error: AxiosError) {
+	const { response, request } = error ?? {};
+	if (response === undefined) {
+		if (request !== undefined) {
+			// Request was made but no response was received.
+			return new NetworkError(
+				502,
+				`Network Error: ${error?.message ?? "No response received."}`,
+			);
+		}
+	}
+	if (response !== undefined) {
+		// response.data can have potential sensitive information, so we do not return that.
+		return new NetworkError(response.status, response.statusText);
+	}
+	return new NetworkError(500, "Unknown error.");
 }

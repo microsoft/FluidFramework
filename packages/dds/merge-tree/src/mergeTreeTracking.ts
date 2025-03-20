@@ -5,7 +5,6 @@
 
 import { LocalReferencePosition } from "./localReference.js";
 import { ISegment } from "./mergeTreeNodes.js";
-// eslint-disable-next-line import/no-deprecated
 import { SortedSegmentSet } from "./sortedSegmentSet.js";
 
 /**
@@ -31,11 +30,9 @@ export interface ITrackingGroup {
  * @alpha
  */
 export class TrackingGroup implements ITrackingGroup {
-	// eslint-disable-next-line import/no-deprecated
 	private readonly trackedSet: SortedSegmentSet<Trackable>;
 
 	constructor() {
-		// eslint-disable-next-line import/no-deprecated
 		this.trackedSet = new SortedSegmentSet<Trackable>();
 	}
 

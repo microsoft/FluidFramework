@@ -8,6 +8,7 @@
  * Licensed under the MIT License.
  */
 import { h } from "hastscript";
+
 import {
 	TableBodyCellNode,
 	TableBodyRowNode,
@@ -15,6 +16,7 @@ import {
 	TableHeaderRowNode,
 	TableNode,
 } from "../../documentation-domain/index.js";
+
 import { assertTransformation } from "./Utilities.js";
 
 describe("Table HTML rendering tests", () => {

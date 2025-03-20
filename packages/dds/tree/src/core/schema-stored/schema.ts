@@ -17,7 +17,9 @@ import {
 import type { Multiplicity } from "./multiplicity.js";
 
 /**
- * Schema for what {@link TreeValue} is allowed on a Leaf node.
+ * Schema for what {@link TreeLeafValue} is allowed on a Leaf node.
+ * @privateRemarks
+ * See also {@link TreeValue}.
  * @internal
  */
 export enum ValueSchema {
@@ -51,7 +53,6 @@ export enum ValueSchema {
  * - Constrain the types allowed based on which types guarantee their data will always meet the constraints.
  *
  * Care would need to be taken to make sure this is sound for the schema updating mechanisms.
- * @internal
  */
 export type TreeTypeSet = ReadonlySet<TreeNodeSchemaIdentifier>;
 
@@ -91,12 +92,21 @@ export interface SchemaPolicy {
 	 * If true, new content inserted into the tree should be validated against the stored schema.
 	 */
 	readonly validateSchema: boolean;
+
+	/**
+	 * Whether to allow a document to be opened when a particular stored schema (identified by `identifier`)
+	 * contains optional fields that are not known to the view schema.
+	 *
+	 * @privateRemarks
+	 * Plumbing this in via `SchemaPolicy` avoids needing to walk the view schema representation repeatedly in places
+	 * that need it (schema validation, view vs stored compatibility checks).
+	 */
+	allowUnknownOptionalFields(identifier: TreeNodeSchemaIdentifier): boolean;
 }
 
 /**
  * Schema for a field.
  * Object implementing this interface should never be modified.
- * @internal
  */
 export interface TreeFieldStoredSchema {
 	readonly kind: FieldKindIdentifier;
@@ -136,7 +146,6 @@ export const identifierFieldKindIdentifier = "Identifier";
 
 /**
  * Opaque type erased handle to the encoded representation of the contents of a stored schema.
- * @internal
  */
 export interface ErasedTreeNodeSchemaDataFormat
 	extends ErasedType<"TreeNodeSchemaDataFormat"> {}
@@ -154,7 +163,6 @@ export function toTreeNodeSchemaDataFormat(
 }
 
 /**
- * @internal
  */
 export abstract class TreeNodeStoredSchema {
 	protected _typeCheck!: MakeNominal;
@@ -174,7 +182,6 @@ export abstract class TreeNodeStoredSchema {
 }
 
 /**
- * @internal
  */
 export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 	/**
@@ -200,7 +207,9 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 				enumerable: true,
 				configurable: true,
 				writable: true,
-				value: encodeFieldSchema(this.objectNodeFields.get(key) ?? fail("missing field")),
+				value: encodeFieldSchema(
+					this.objectNodeFields.get(key) ?? fail(0xae7 /* missing field */),
+				),
 			});
 		}
 		return toErasedTreeNodeSchemaDataFormat({
@@ -214,7 +223,6 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 }
 
 /**
- * @internal
  */
 export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 	/**
@@ -241,7 +249,6 @@ export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 }
 
 /**
- * @internal
  */
 export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
 	/**
@@ -300,11 +307,11 @@ const valueSchemaEncode = new Map([
 const valueSchemaDecode = invertMap(valueSchemaEncode);
 
 function encodeValueSchema(inMemory: ValueSchema): PersistedValueSchema {
-	return valueSchemaEncode.get(inMemory) ?? fail("missing PersistedValueSchema");
+	return valueSchemaEncode.get(inMemory) ?? fail(0xae8 /* missing PersistedValueSchema */);
 }
 
 function decodeValueSchema(inMemory: PersistedValueSchema): ValueSchema {
-	return valueSchemaDecode.get(inMemory) ?? fail("missing ValueSchema");
+	return valueSchemaDecode.get(inMemory) ?? fail(0xae9 /* missing ValueSchema */);
 }
 
 export function encodeFieldSchema(schema: TreeFieldStoredSchema): FieldSchemaFormat {
@@ -330,7 +337,6 @@ export function decodeFieldSchema(schema: FieldSchemaFormat): TreeFieldStoredSch
  * @remarks
  * Note: the owner of this may modify it over time:
  * thus if needing to hand onto a specific version, make a copy.
- * @internal
  */
 export interface TreeStoredSchema extends StoredSchemaCollection {
 	/**
@@ -345,7 +351,6 @@ export interface TreeStoredSchema extends StoredSchemaCollection {
  * @remarks
  * Note: the owner of this may modify it over time:
  * thus if needing to hang onto a specific version, make a copy.
- * @internal
  */
 export interface StoredSchemaCollection {
 	/**

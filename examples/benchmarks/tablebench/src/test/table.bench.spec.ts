@@ -9,10 +9,10 @@ import {
 	benchmarkCustom,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
-import { IChannel } from "@fluidframework/datastore-definitions/internal";
-import { SharedMatrix } from "@fluidframework/matrix/internal";
+import { IChannel } from "@fluidframework/datastore-definitions/legacy";
+import { SharedMatrix } from "@fluidframework/matrix/legacy";
 import { type ITree, NodeFromSchema, TreeViewConfiguration } from "@fluidframework/tree";
-import { SharedTree } from "@fluidframework/tree/internal";
+import { SharedTree } from "@fluidframework/tree/legacy";
 
 import { Table, generateTable } from "../index.js";
 

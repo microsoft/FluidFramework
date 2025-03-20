@@ -16,8 +16,6 @@ import {
 	StablePlace,
 	type TraitLabel,
 } from "@fluid-experimental/tree";
-// eslint-disable-next-line import/no-internal-modules
-import { type EditLog } from "@fluid-experimental/tree/test/EditLog";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { type IContainerExperimental } from "@fluidframework/container-loader/internal";
@@ -26,6 +24,7 @@ import { type ConfigTypes, type IConfigProviderBase } from "@fluidframework/core
 import { type IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
 	type ITestObjectProvider,
+	toIDeltaManagerFull,
 	createSummarizerFromFactory,
 	summarizeNow,
 	waitForContainerConnection,
@@ -157,7 +156,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		(legacyTree, newTree) => {
 			// Migration code that the customer writes
 			// Revert local edits - otherwise we will be eventually inconsistent
-			const edits = legacyTree.edits as EditLog;
+			const edits = legacyTree.edits;
 			const localEdits = [...edits.getLocalEdits()].reverse();
 			for (const edit of localEdits) {
 				legacyTree.revert(edit.id);
@@ -330,7 +329,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// generate stashed ops
 		await provider.opProcessingController.pauseProcessing(container1);
-		await container1.deltaManager.outbound.pause();
+		await toIDeltaManagerFull(container1.deltaManager).outbound.pause();
 		node1.quantity = 1;
 		node1.quantity = 2;
 		node1.quantity = 3;
@@ -392,7 +391,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// generate stashed ops
 		await provider.opProcessingController.pauseProcessing(container2);
-		await container2.deltaManager.outbound.pause();
+		await toIDeltaManagerFull(container2.deltaManager).outbound.pause();
 		node2.quantity = 1;
 		node2.quantity = 2;
 		node2.quantity = 3;
@@ -431,7 +430,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// generate stashed ops with a migration occurring
 		await provider.opProcessingController.pauseProcessing(container1);
-		await container1.deltaManager.outbound.pause();
+		await toIDeltaManagerFull(container1.deltaManager).outbound.pause();
 
 		shim1.submitMigrateOp();
 		updateQuantity(legacyTree1, 1);
@@ -499,7 +498,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// generate stashed ops with a migration occurring
 		await provider.opProcessingController.pauseProcessing(container1);
-		await container1.deltaManager.outbound.pause();
+		await toIDeltaManagerFull(container1.deltaManager).outbound.pause();
 
 		shim1.submitMigrateOp();
 		const pendingState = await container1.closeAndGetPendingLocalState?.();

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { LocalReferencePosition } from "@fluidframework/sequence/internal";
+import { LocalReferencePosition } from "@fluidframework/sequence/legacy";
 
 import { debug } from "../document/debug.js";
 import { FlowDocument } from "../document/index.js";

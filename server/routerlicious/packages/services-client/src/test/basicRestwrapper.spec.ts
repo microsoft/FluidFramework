@@ -9,6 +9,8 @@ import { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from "ax
 import AxiosMockAdapter from "axios-mock-adapter";
 import { CorrelationIdHeaderName } from "../constants";
 import { BasicRestWrapper } from "../restWrapper";
+import { KJUR as jsrsasign } from "jsrsasign";
+import { jwtDecode } from "jwt-decode";
 
 describe("BasicRestWrapper", () => {
 	const baseurl = "https://fake.microsoft.com";
@@ -891,6 +893,63 @@ describe("BasicRestWrapper", () => {
 				requestOptions.headers.h3 as string,
 				"Header2 value should be added",
 			);
+		});
+	});
+
+	describe("Token refresh", () => {
+		it("Token should be refreshed if callback is provided", async () => {
+			const key = "1234";
+			const expiredToken = jsrsasign.jws.JWS.sign(
+				null,
+				JSON.stringify({ alg: "HS256", typ: "JWT" }),
+				{ exp: Math.round(new Date().getTime() / 1000) - 100 },
+				key,
+			);
+			const getDefaultHeaders = () => {
+				return {
+					Authorization: `Basic ${expiredToken}`,
+				};
+			};
+			const newToken = jsrsasign.jws.JWS.sign(
+				null,
+				JSON.stringify({ alg: "HS256", typ: "JWT" }),
+				{ exp: Math.round(new Date().getTime() / 1000) + 10000 },
+				key,
+			);
+
+			const refreshTokenIfNeeded = async () => {
+				const tokenClaims = jwtDecode(expiredToken);
+				if (tokenClaims.exp < new Date().getTime() / 1000) {
+					return {
+						Authorization: `Basic ${newToken}`,
+					};
+				} else {
+					return undefined;
+				}
+			};
+
+			const rw = new BasicRestWrapper(
+				baseurl,
+				{},
+				maxBodyLength,
+				maxContentLength,
+				getDefaultHeaders(),
+				axiosMock as AxiosInstance,
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				refreshTokenIfNeeded,
+			);
+
+			//act
+			await rw.get(requestUrl).then(
+				// tslint:disable-next-line:no-void-expression
+				() => assert.ok(true),
+			);
+
+			assert.notEqual(rw["defaultHeaders"].Authorization, `Basic ${expiredToken}`);
+			assert.strictEqual(rw["defaultHeaders"].Authorization, `Basic ${newToken}`);
 		});
 	});
 });

@@ -7,6 +7,5 @@ module.exports = {
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
-	extends: ["@fluidframework/eslint-config-fluid/minimal-deprecated", "prettier"],
-	plugins: ["deprecation"],
+	extends: ["@fluidframework/eslint-config-fluid", "prettier"],
 };

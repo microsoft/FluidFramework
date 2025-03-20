@@ -24,6 +24,7 @@ module.exports = {
 		'no-shadow': 'off',
 		'@typescript-eslint/no-unsafe-return': 'off',
 		'import/no-deprecated': 'off',
+		'@fluid-internal/fluid/no-unchecked-record-access': 'off',
 	},
 	overrides: [
 		{

@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import type { DiscriminatedUnionDispatcher } from "../../../codec/index.js";
 import type { BrandedType } from "../../../util/index.js";
-import type { TreeChunk } from "../chunk.js";
+import type { TreeChunk } from "../../../core/index.js";
 
 import {
 	type ChunkDecoder,

@@ -7,7 +7,8 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { type Listenable, createEmitter } from "../../events/index.js";
+import type { Listenable } from "@fluidframework/core-interfaces/internal";
+import { createEmitter } from "@fluid-internal/client-utils";
 import {
 	type Brand,
 	type BrandedKey,
@@ -17,23 +18,24 @@ import {
 	brand,
 	brandedSlot,
 	fail,
+	getOrAddEmptyToMap,
+	getOrCreate,
 } from "../../util/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type * as Delta from "./delta.js";
-import type {
-	DetachedPlaceUpPath,
-	DetachedRangeUpPath,
-	PlaceIndex,
-	PlaceUpPath,
-	Range,
-	RangeUpPath,
-	UpPath,
+import {
+	isDetachedUpPathRoot,
+	type INormalizedUpPath,
+	type NormalizedUpPath,
+	type PlaceIndex,
+	type Range,
+	type UpPath,
 } from "./pathTree.js";
 import { EmptyKey } from "./types.js";
 import type { DeltaVisitor } from "./visitDelta.js";
-import type { PathVisitor } from "./visitPath.js";
-import type { AnnouncedVisitor } from "./visitorUtils.js";
+import { offsetDetachId } from "./deltaUtil.js";
+import type { ITreeCursorSynchronous } from "./cursor.js";
 
 /**
  * A way to refer to a particular tree location within an {@link AnchorSet}.
@@ -136,10 +138,9 @@ export interface AnchorEvents {
 	 * rooted at `anchor` _may_ be about to change due to updates from the batch.
 	 *
 	 * @remarks
-	 * The event can optionally return a {@link PathVisitor} to traverse the subtree.
 	 * Called on every parent (transitively) when a change is occurring.
 	 */
-	subtreeChanging(anchor: AnchorNode): PathVisitor | void;
+	subtreeChanging(anchor: AnchorNode): void;
 
 	/**
 	 * Emitted in the middle of applying a batch of changes (i.e. during a delta a visit), if something in the subtree
@@ -206,7 +207,12 @@ export interface AnchorSetRootEvents {
 /**
  * Node in a tree of anchors.
  */
-export interface AnchorNode extends UpPath<AnchorNode>, Listenable<AnchorEvents> {
+export interface AnchorNode extends INormalizedUpPath<AnchorNode> {
+	/**
+	 * Events for this anchor node.
+	 */
+	readonly events: Listenable<AnchorEvents>;
+
 	/**
 	 * Allows access to data stored on the Anchor in "slots".
 	 * Use {@link anchorSlot} to create slots.
@@ -277,8 +283,10 @@ export function anchorSlot<TContent>(): AnchorSlot<TContent> {
  *
  * @sealed
  */
-export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator {
-	private readonly events = createEmitter<AnchorSetRootEvents>();
+export class AnchorSet implements AnchorLocator {
+	readonly #events = createEmitter<AnchorSetRootEvents>();
+	public readonly events: Listenable<AnchorSetRootEvents> = this.#events;
+
 	/**
 	 * Incrementing counter to give each anchor in this set a unique index for its identifier.
 	 * "0" is reserved for the `NeverAnchor`.
@@ -312,7 +320,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 	private activeVisitor?: DeltaVisitor;
 
 	public constructor() {
-		this.on("treeChanging", () => {
+		this.events.on("treeChanging", () => {
 			this.generationNumber += 1;
 		});
 	}
@@ -342,13 +350,6 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			}
 			node = stack.pop();
 		}
-	}
-
-	public on<K extends keyof AnchorSetRootEvents>(
-		eventName: K,
-		listener: AnchorSetRootEvents[K],
-	): () => void {
-		return this.events.on(eventName, listener);
 	}
 
 	/**
@@ -484,7 +485,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			}
 		}
 
-		return path ?? fail("internalize path must be a path");
+		return path ?? fail(0xaea /* internalize path must be a path */);
 	}
 
 	/**
@@ -577,6 +578,13 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			node.parentIndex += destination.parentIndex - coupleInfo.startParentIndex;
 			node.parentPath = destinationPath;
 			node.parentField = destination.parentField;
+			// If the destination is a detached root, propagate its detachedNodeId, otherwise remove any existing one
+			node.detachedNodeId = isDetachedUpPathRoot(destination)
+				? offsetDetachId(
+						destination.detachedNodeId,
+						node.parentIndex - destination.parentIndex,
+					)
+				: undefined;
 		}
 
 		// Update new parent to add children
@@ -688,7 +696,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 	 * It is invalid to acquire a visitor without releasing the previous one,
 	 * and this method will throw an error if this is attempted.
 	 */
-	public acquireVisitor(): AnnouncedVisitor & DeltaVisitor {
+	public acquireVisitor(): DeltaVisitor {
 		assert(
 			this.activeVisitor === undefined,
 			0x767 /* Must release existing visitor before acquiring another */,
@@ -715,25 +723,13 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 					}
 				}
 			},
-			// Lookup table for path visitors collected from {@link AnchorEvents.visitSubtreeChanging} emitted events.
-			// The key is the path of the node that the visitor is registered on. The code ensures that the path visitor visits only the appropriate subtrees
-			// by maintaining the mapping only during time between the {@link DeltaVisitor.enterNode} and {@link DeltaVisitor.exitNode} calls for a given anchorNode.
-			pathVisitors: new Map<PathNode, Set<PathVisitor>>(),
 			parentField: undefined as FieldKey | undefined,
 			parent: undefined as UpPath | undefined,
 
 			/**
 			 * Events collected during the visit which get sent as a batch during "free".
 			 */
-			bufferedEvents: [] as {
-				node: PathNode;
-				event: keyof AnchorEvents;
-				/**
-				 * The key for the impacted field, if the event is associated with a key.
-				 * Some events, such as afterDestroy, do not involve a key, and thus leave this undefined.
-				 */
-				changedField?: FieldKey;
-			}[],
+			bufferedEvents: [] as BufferedEvent[],
 
 			// 'currentDepth' and 'depthThresholdForSubtreeChanged' serve to keep track of when do we need to emit
 			// subtreeChangedAfterBatch events.
@@ -765,25 +761,31 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 					node.removeRef();
 				}
 				this.anchorSet.activeVisitor = undefined;
-				const alreadyEmitted = new Map<PathNode, string[]>();
-				for (const { node, event } of this.bufferedEvents) {
-					if (!alreadyEmitted.has(node)) {
-						alreadyEmitted.set(node, []);
+
+				// Aggregate changedFields by node.
+				const eventsByNode: Map<PathNode, Set<FieldKey>> = new Map();
+				for (const { node, event, changedField } of this.bufferedEvents) {
+					if (event === "childrenChangedAfterBatch") {
+						const keys = getOrCreate(eventsByNode, node, () => new Set());
+						keys.add(
+							changedField ??
+								fail(0xb57 /* childrenChangedAfterBatch events should have a changedField */),
+						);
 					}
-					const emittedEvents = alreadyEmitted.get(node);
-					if (emittedEvents?.includes(event) ?? false) {
+				}
+
+				const alreadyEmitted = new Map<PathNode, (keyof AnchorEvents)[]>();
+				for (const { node, event } of this.bufferedEvents) {
+					const emittedEvents = getOrAddEmptyToMap(alreadyEmitted, node);
+					if (emittedEvents.includes(event)) {
 						continue;
 					}
-					emittedEvents?.push(event);
+					emittedEvents.push(event);
 					if (event === "childrenChangedAfterBatch") {
-						const fieldKeys: FieldKey[] = this.bufferedEvents
-							.filter((e) => e.node === node && e.event === event)
-							.map(
-								(e) =>
-									e.changedField ??
-									fail("childrenChangedAfterBatch events should have a changedField"),
-							);
-						node.events.emit(event, { changedFields: new Set(fieldKeys) });
+						const changedFields =
+							eventsByNode.get(node) ??
+							fail(0xaeb /* childrenChangedAfterBatch events should have changedFields */);
+						node.events.emit(event, { changedFields });
 					} else {
 						node.events.emit(event);
 					}
@@ -792,7 +794,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			notifyChildrenChanging(): void {
 				this.maybeWithNode(
 					(p) => p.events.emit("childrenChanging", p),
-					() => this.anchorSet.events.emit("childrenChanging", this.anchorSet),
+					() => this.anchorSet.#events.emit("childrenChanging", this.anchorSet),
 				);
 			},
 			notifyChildrenChanged(): void {
@@ -811,47 +813,6 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 					},
 					() => {},
 				);
-			},
-			beforeAttach(source: FieldKey, count: number, destination: PlaceIndex): void {
-				assert(
-					this.parentField !== undefined,
-					0x7a0 /* Must be in a field in order to attach */,
-				);
-				const destinationPath: PlaceUpPath = {
-					parent: this.parent,
-					field: this.parentField,
-					index: destination,
-				};
-				const sourcePath: DetachedRangeUpPath = brand({
-					field: source,
-					start: 0,
-					end: count,
-				});
-				for (const visitors of this.pathVisitors.values()) {
-					for (const pathVisitor of visitors) {
-						pathVisitor.beforeAttach(sourcePath, destinationPath);
-					}
-				}
-			},
-			afterAttach(source: FieldKey, destination: Range): void {
-				assert(
-					this.parentField !== undefined,
-					0x7a1 /* Must be in a field in order to attach */,
-				);
-				const sourcePath: DetachedPlaceUpPath = brand({
-					field: source,
-					index: 0,
-				});
-				const destinationPath: RangeUpPath = {
-					parent: this.parent,
-					field: this.parentField,
-					...destination,
-				};
-				for (const visitors of this.pathVisitors.values()) {
-					for (const pathVisitor of visitors) {
-						pathVisitor.afterAttach(sourcePath, destinationPath);
-					}
-				}
 			},
 			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
 				this.notifyChildrenChanging();
@@ -876,135 +837,46 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 				this.anchorSet.moveChildren(sourcePath, destinationPath, count);
 				this.depthThresholdForSubtreeChanged = this.currentDepth;
 			},
-			beforeDetach(source: Range, destination: FieldKey): void {
-				assert(
-					this.parentField !== undefined,
-					0x7a3 /* Must be in a field in order to attach */,
-				);
-				const sourcePath: RangeUpPath = {
-					parent: this.parent,
-					field: this.parentField,
-					...source,
-				};
-				const destinationPath: DetachedPlaceUpPath = brand({
-					field: destination,
-					index: 0,
-				});
-				for (const visitors of this.pathVisitors.values()) {
-					for (const pathVisitor of visitors) {
-						pathVisitor.beforeDetach(sourcePath, destinationPath);
-					}
-				}
-			},
-			afterDetach(source: PlaceIndex, count: number, destination: FieldKey): void {
-				assert(
-					this.parentField !== undefined,
-					0x7a4 /* Must be in a field in order to attach */,
-				);
-				const sourcePath: PlaceUpPath = {
-					parent: this.parent,
-					field: this.parentField,
-					index: source,
-				};
-				const destinationPath: DetachedRangeUpPath = brand({
-					field: destination,
-					start: 0,
-					end: count,
-				});
-				for (const visitors of this.pathVisitors.values()) {
-					for (const pathVisitor of visitors) {
-						pathVisitor.afterDetach(sourcePath, destinationPath);
-					}
-				}
-			},
-			detach(source: Range, destination: FieldKey): void {
+			detach(
+				source: Range,
+				destination: FieldKey,
+				detachedNodeId: Delta.DetachedNodeId,
+			): void {
 				this.notifyChildrenChanging();
-				this.detachEdit(source, destination);
+				this.detachEdit(source, destination, detachedNodeId);
 				this.notifyChildrenChanged();
 			},
-			detachEdit(source: Range, destination: FieldKey): void {
+			detachEdit(
+				source: Range,
+				destination: FieldKey,
+				detachedNodeId: Delta.DetachedNodeId,
+			): void {
 				assert(
 					this.parentField !== undefined,
 					0x7a5 /* Must be in a field in order to detach */,
 				);
-				const sourcePath = {
+				const sourcePath: UpPath = {
 					parent: this.parent,
 					parentField: this.parentField,
 					parentIndex: source.start,
 				};
-				const destinationPath = {
+				const destinationPath: NormalizedUpPath = {
 					parent: this.anchorSet.root,
 					parentField: destination,
 					parentIndex: 0,
+					detachedNodeId,
 				};
 				this.anchorSet.moveChildren(sourcePath, destinationPath, source.end - source.start);
 				this.depthThresholdForSubtreeChanged = this.currentDepth;
-			},
-			beforeReplace(newContent: FieldKey, oldContent: Range, destination: FieldKey): void {
-				assert(
-					this.parentField !== undefined,
-					0x7a6 /* Must be in a field in order to replace */,
-				);
-				const oldContentPath: RangeUpPath = {
-					parent: this.parent,
-					field: this.parentField,
-					...oldContent,
-				};
-				const newNodesSourcePath: DetachedRangeUpPath = brand({
-					field: newContent,
-					start: 0,
-					end: oldContent.end - oldContent.start,
-				});
-				const oldNodesDestinationPath: DetachedPlaceUpPath = brand({
-					field: destination,
-					index: 0,
-				});
-				for (const visitors of this.pathVisitors.values()) {
-					for (const pathVisitor of visitors) {
-						pathVisitor.beforeReplace(
-							newNodesSourcePath,
-							oldContentPath,
-							oldNodesDestinationPath,
-						);
-					}
-				}
-			},
-			afterReplace(newContentSource: FieldKey, newContent: Range, oldContent: FieldKey): void {
-				assert(
-					this.parentField !== undefined,
-					0x7a7 /* Must be in a field in order to replace */,
-				);
-				const newContentPath: RangeUpPath = {
-					parent: this.parent,
-					field: this.parentField,
-					...newContent,
-				};
-				const newNodesSourcePath: DetachedPlaceUpPath = brand({
-					field: newContentSource,
-					index: 0,
-				});
-				const oldNodesDestinationPath: DetachedRangeUpPath = brand({
-					field: oldContent,
-					start: 0,
-					end: newContent.end - newContent.start,
-				});
-				for (const visitors of this.pathVisitors.values()) {
-					for (const pathVisitor of visitors) {
-						pathVisitor.afterReplace(
-							newNodesSourcePath,
-							newContentPath,
-							oldNodesDestinationPath,
-						);
-					}
-				}
 			},
 			replace(
 				newContentSource: FieldKey,
 				range: Range,
 				oldContentDestination: FieldKey,
+				destinationDetachedNodeId: Delta.DetachedNodeId,
 			): void {
 				this.notifyChildrenChanging();
-				this.detachEdit(range, oldContentDestination);
+				this.detachEdit(range, oldContentDestination, destinationDetachedNodeId);
 				this.attachEdit(newContentSource, range.end - range.start, range.start);
 				this.notifyChildrenChanged();
 			},
@@ -1018,33 +890,9 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 					count,
 				);
 			},
-			beforeDestroy(detachedField: FieldKey, count: number): void {
-				const range: DetachedRangeUpPath = brand({
-					field: detachedField,
-					start: 0,
-					end: count,
-				});
-				for (const visitors of this.pathVisitors.values()) {
-					for (const pathVisitor of visitors) {
-						pathVisitor.beforeDestroy(range);
-					}
-				}
-			},
-			create(content: Delta.ProtoNodes, destination: FieldKey): void {
+			create(content: ITreeCursorSynchronous[], destination: FieldKey): void {
 				// Nothing to do since content can only be created in a new detached field,
 				// which cannot contain any anchors.
-			},
-			afterCreate(content: Delta.ProtoNodes, destination: FieldKey): void {
-				for (const visitors of this.pathVisitors.values()) {
-					for (const pathVisitor of visitors) {
-						const rangePath: DetachedRangeUpPath = brand({
-							field: destination,
-							start: 0,
-							end: content.length,
-						});
-						pathVisitor.afterCreate(rangePath);
-					}
-				}
 			},
 			enterNode(index: number): void {
 				assert(this.parentField !== undefined, 0x3ab /* Must be in a field to enter node */);
@@ -1056,19 +904,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 				};
 				this.parentField = undefined;
 				this.maybeWithNode((p) => {
-					// avoid multiple pass side-effects
-					if (!this.pathVisitors.has(p)) {
-						const visitors: (PathVisitor | void)[] = p.events.emitAndCollect(
-							"subtreeChanging",
-							p,
-						);
-						if (visitors.length > 0) {
-							this.pathVisitors.set(
-								p,
-								new Set(visitors.filter((v): v is PathVisitor => v !== undefined)),
-							);
-						}
-					}
+					p.events.emit("subtreeChanging", p);
 				});
 				this.currentDepth++;
 			},
@@ -1083,8 +919,6 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 						});
 						this.depthThresholdForSubtreeChanged--;
 					}
-					// Remove subtree path visitors added at this node if there are any
-					this.pathVisitors.delete(p);
 				});
 				const parent = this.parent;
 				this.parentField = parent.parentField;
@@ -1098,7 +932,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 				this.parentField = undefined;
 			},
 		};
-		this.events.emit("treeChanging", this);
+		this.#events.emit("treeChanging", this);
 		this.activeVisitor = visitor;
 		return visitor;
 	}
@@ -1161,7 +995,7 @@ enum Status {
  * 2. refcount is non-zero.
  * 3. events are registered.
  */
-class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorNode {
+class PathNode extends ReferenceCountedBase implements AnchorNode {
 	public status: Status = Status.Alive;
 	/**
 	 * Event emitter for this anchor.
@@ -1183,6 +1017,11 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 	// See note on BrandedKey.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public readonly slots: BrandedMapSubset<AnchorSlot<any>> = new Map();
+
+	/**
+	 * {@inheritdoc UpPath.detachedNodeId}
+	 */
+	public detachedNodeId: Delta.DetachedNodeId | undefined;
 
 	/**
 	 * Construct a PathNode with refcount 1.
@@ -1209,13 +1048,6 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 		super(1);
 	}
 
-	public on<K extends keyof AnchorEvents>(
-		eventName: K,
-		listener: AnchorEvents[K],
-	): () => void {
-		return this.events.on(eventName, listener);
-	}
-
 	public child(key: FieldKey, index: number): UpPath<AnchorNode> {
 		// Fast path: if child exists, return it.
 		return (
@@ -1230,7 +1062,8 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 	public getOrCreateChildRef(key: FieldKey, index: number): [Anchor, AnchorNode] {
 		const anchor = this.anchorSet.track(this.child(key, index));
 		const node =
-			this.anchorSet.locate(anchor) ?? fail("cannot reference child that does not exist");
+			this.anchorSet.locate(anchor) ??
+			fail(0xaec /* cannot reference child that does not exist */);
 		return [anchor, node];
 	}
 
@@ -1392,4 +1225,14 @@ function binaryFind(sorted: readonly PathNode[], index: number): PathNode | unde
 		}
 	}
 	return undefined; // If we reach here, target is not in array (or array was not sorted)
+}
+
+interface BufferedEvent {
+	node: PathNode;
+	event: keyof AnchorEvents;
+	/**
+	 * The key for the impacted field, if the event is associated with a key.
+	 * Some events, such as afterDestroy, do not involve a key, and thus leave this undefined.
+	 */
+	changedField?: FieldKey;
 }

@@ -9,7 +9,11 @@
 
 /* Constants and Variables */
 type IndexSignatureType = { [key: string]: string };
+interface ExtendedIndexSignatureType extends IndexSignatureType {
+	a: string;
+}
 const indexedRecordOfStrings: IndexSignatureType = { a: "hello", b: "goodbye" };
+const extendedIndexedRecordOfStrings: ExtendedIndexSignatureType = { a: "hello", b: "goodbye" };
 const a = "a";
 const b = "b";
 
@@ -87,3 +91,66 @@ aLetExpectingStringOrUndefinedAfterVariableDeclaration = indexedRecordOfStrings.
  */
 const aImplicitType = indexedRecordOfStrings.a; // defect: Assigning index property with inferred type without an explicit undefined type is not allowed
 aImplicitType.length; // ok: aImplicitType is the continuation of the inferred type case and should be caught in the variable initialization
+
+extendedIndexedRecordOfStrings.a.length; // ok: Accessing string property of extendedIndexedRecordOfStrings is allowed
+extendedIndexedRecordOfStrings.b.length; // defect: Accessing length of index property 'b', but 'b' might not be present
+
+interface NestedIndexSignatureType {
+	[FirstNestedKey: string]: {
+		[SecondNestedKey: string]: {
+			[ThirdNestedKey: string]: string;
+		};
+	};
+}
+
+/**
+ * Testing Nullish Coalescing Assignment (`??=`) Behavior
+ *
+ * Validates scenarios where:
+ * 1. Nullish coalescing assignment (`??=`) initializes index signature properties
+ * 2. Nested `??=` patterns safely initialize deep properties
+ * 3. Subsequent property accesses after `??=` are considered safe
+ *
+ * The rule should NOT report errors for these patterns, as `??=` ensures
+ * the property is initialized before access.
+ */
+function TestNullish(
+	base: NestedIndexSignatureType | undefined,
+	newData: NestedIndexSignatureType,
+): NestedIndexSignatureType {
+	const baseDatastore = base ?? {};
+	for (const [newDataKey, newDataValue] of Object.entries(newData)) {
+		const mergedData = baseDatastore[newDataKey] ?? {};
+		for (const valueManagerKey of Object.keys(newDataValue)) {
+			for (const [nestedDataKey, value] of Object.entries(newDataValue[valueManagerKey])) {
+				mergedData[valueManagerKey] ??= {};
+				const oldData = mergedData[valueManagerKey][nestedDataKey]; // ok: Accessing nested property nestedDataKey of mergedData[valueManagerKey] is allowed because it's accessed using ??=
+				mergedData[valueManagerKey][nestedDataKey] = "";
+			}
+		}
+		baseDatastore[newDataKey] = mergedData;
+	}
+	return baseDatastore;
+}
+
+// Test else case
+const key = "test";
+const datastore: NestedIndexSignatureType = {};
+if (key in datastore) {
+	// Nothing to do
+} else {
+	datastore[key] = {};
+}
+datastore[key][key] = {}; // ok: Accessing nested property key of datastore[key] is allowed because it is assigned in the else case
+
+if (indexedRecordOfStrings.a !== void(0)) {
+	indexedRecordOfStrings.a.length; // ok: Within a presence check, 'a' is guaranteed to be defined
+}
+
+if (indexedRecordOfStrings.a !== void(1)) {
+	indexedRecordOfStrings.a.length; // ok: Within a presence check, 'a' is guaranteed to be defined
+}
+
+if (indexedRecordOfStrings.a !== void 0) {
+	indexedRecordOfStrings.a.length; // ok: Within a presence check, 'a' is guaranteed to be defined
+}

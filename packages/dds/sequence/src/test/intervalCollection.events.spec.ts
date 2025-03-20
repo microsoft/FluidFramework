@@ -7,7 +7,7 @@ import { strict as assert, fail } from "assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { PropertySet, toRemovalInfo } from "@fluidframework/merge-tree/internal";
+import { PropertySet, segmentIsRemoved } from "@fluidframework/merge-tree/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -259,7 +259,9 @@ describe("SharedString interval collection event spec", () => {
 					const [{ interval, previousInterval, previousEndpoints, local, op, slide }] =
 						eventLog;
 					assert.deepEqual(interval, { start: 0, end: 1 });
-					assert(toRemovalInfo(previousInterval.end.getSegment()) !== undefined);
+					const segment = previousInterval.end.getSegment();
+					assert(segment !== undefined);
+					assert(segmentIsRemoved(segment) === true);
 					assert.deepEqual(previousEndpoints, { start: 0, end: 1 });
 					assert.equal(local, true);
 					assert.equal(op, undefined);
@@ -277,7 +279,9 @@ describe("SharedString interval collection event spec", () => {
 					const [{ interval, previousInterval, previousEndpoints, local, op, slide }] =
 						eventLog;
 					assert.deepEqual(interval, { start: 2, end: 2 });
-					assert(toRemovalInfo(previousInterval.start.getSegment()) !== undefined);
+					const segment = previousInterval.start.getSegment();
+					assert(segment !== undefined);
+					assert(segmentIsRemoved(segment) === true);
 					// Note: this isn't 4 because we're interpreting the segment+offset from the current view.
 					assert.deepEqual(previousEndpoints, { start: 3, end: 3 });
 					assert.equal(local, true);
@@ -296,7 +300,9 @@ describe("SharedString interval collection event spec", () => {
 					const { interval, previousInterval, previousEndpoints, local, op, slide } =
 						eventLog[1];
 					assert.deepEqual(interval, { start: 2, end: 2 });
-					assert(toRemovalInfo(previousInterval.start.getSegment()) !== undefined);
+					const segment = previousInterval.start.getSegment();
+					assert(segment !== undefined);
+					assert(segmentIsRemoved(segment) === true);
 					// Note: this isn't 4 because we're interpreting the segment+offset from the current view.
 					assert.deepEqual(previousEndpoints, { start: 3, end: 3 });
 					assert.equal(local, true);
@@ -480,7 +486,9 @@ describe("SharedString interval collection event spec", () => {
 					const [{ interval, previousInterval, previousEndpoints, local, slide }] = eventLog;
 					assert.deepEqual(interval, { start: 0, end: 1 });
 					assert(previousInterval !== undefined);
-					assert(toRemovalInfo(previousInterval.end.getSegment()) !== undefined);
+					const segment = previousInterval.end.getSegment();
+					assert(segment !== undefined);
+					assert(segmentIsRemoved(segment) === true);
 					assert.deepEqual(previousEndpoints, { start: 0, end: 1 });
 					assert.equal(local, true);
 					assert.equal(slide, true);
@@ -497,7 +505,9 @@ describe("SharedString interval collection event spec", () => {
 					const [{ interval, previousInterval, previousEndpoints, local, slide }] = eventLog;
 					assert.deepEqual(interval, { start: 2, end: 2 });
 					assert(previousInterval !== undefined);
-					assert(toRemovalInfo(previousInterval.start.getSegment()) !== undefined);
+					const segment = previousInterval.start.getSegment();
+					assert(segment !== undefined);
+					assert(segmentIsRemoved(segment) === true);
 					// Note: this isn't 4 because we're interpreting the segment+offset from the current view.
 					assert.deepEqual(previousEndpoints, { start: 3, end: 3 });
 					assert.equal(local, true);
@@ -515,7 +525,9 @@ describe("SharedString interval collection event spec", () => {
 					const { interval, previousInterval, previousEndpoints, local, slide } = eventLog[1];
 					assert.deepEqual(interval, { start: 2, end: 2 });
 					assert(previousInterval !== undefined);
-					assert(toRemovalInfo(previousInterval.start.getSegment()) !== undefined);
+					const segment = previousInterval.start.getSegment();
+					assert(segment !== undefined);
+					assert(segmentIsRemoved(segment) === true);
 					// Note: this isn't 4 because we're interpreting the segment+offset from the current view.
 					assert.deepEqual(previousEndpoints, { start: 3, end: 3 });
 					assert.equal(local, true);

@@ -5,7 +5,7 @@
 
 /* eslint-disable import/no-internal-modules */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
@@ -29,7 +29,7 @@ import {
 } from "../../../feature-libraries/flex-tree/lazyField.js";
 import {
 	FieldKinds,
-	MockNodeKeyManager,
+	MockNodeIdentifierManager,
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
 	getTreeContext,
@@ -51,8 +51,9 @@ import {
 	SchemaFactory,
 	stringSchema,
 } from "../../../simple-tree/index.js";
-import { getStoredSchema, toStoredSchema } from "../../../simple-tree/toFlexSchema.js";
-import { JsonObject, JsonUnion, singleJsonCursor } from "../../json/index.js";
+import { getStoredSchema, toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
+import { singleJsonCursor } from "../../json/index.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 
 const detachedField: FieldKey = brand("detached");
 const detachedFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: detachedField };
@@ -64,12 +65,12 @@ class TestLazyField extends LazyField {}
 
 describe("LazyField", () => {
 	it("LazyField implementations do not allow edits to detached trees", () => {
-		const schema = toStoredSchema(JsonObject);
+		const schema = toStoredSchema(JsonAsTree.JsonObject);
 		const forest = forestWithContent({
 			schema,
 			initialTree: singleJsonCursor({}),
 		});
-		const context = getReadonlyContext(forest, JsonObject);
+		const context = getReadonlyContext(forest, JsonAsTree.JsonObject);
 		const cursor = initializeCursor(context, detachedFieldAnchor);
 
 		const optionalField = new LazyOptionalField(
@@ -263,7 +264,7 @@ describe("LazyField", () => {
 
 		it("Non-Leaf", () => {
 			const { context, cursor } = readonlyTreeWithContent({
-				schema: JsonUnion,
+				schema: JsonAsTree.Tree,
 				initialTree: singleJsonCursor({}),
 			});
 			cursor.enterNode(0); // Root node field has 1 node; move into it
@@ -277,7 +278,7 @@ describe("LazyField", () => {
 
 		it("Non-Leaf - cached", () => {
 			const { context, cursor } = readonlyTreeWithContent({
-				schema: JsonUnion,
+				schema: JsonAsTree.Tree,
 				initialTree: singleJsonCursor({}),
 			});
 
@@ -464,7 +465,7 @@ describe("LazyField", () => {
 				new MockTreeCheckout(forest, {
 					schema: new TreeStoredSchemaRepository(schema),
 				}),
-				new MockNodeKeyManager(),
+				new MockNodeIdentifierManager(),
 			);
 			const cursor = initializeCursor(context, rootFieldAnchor);
 

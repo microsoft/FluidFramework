@@ -77,7 +77,7 @@ export type TypeOnly<T> = T extends number
 				};
 
 /**
- * Type preprocessing function selected with the `@type-test-minimal` tag.
+ * Type preprocessing function selected with the `@typeTestMinimal` tag.
  *
  * This throws away even more type information that the default {@link TypeOnly} option, resulting in only the most minimal of type compatibility testing.
  * Currently this minimal level of compatibility resting only includes existence of the type and does not preserve any details.
@@ -90,7 +90,7 @@ export type TypeOnly<T> = T extends number
 export type MinimalType<T> = 0;
 
 /**
- * Type preprocessing function selected with the `@type-test-full` tag.
+ * Type preprocessing function selected with the `@typeTestFull` tag.
  *
  * This allows opting into full type compatibility: two types will only be considered compatible if they are assignable unmodified.
  *
@@ -303,4 +303,15 @@ namespace Test_TypeOnly_Symbols {
 
 	type _check3 = requireAssignableTo<TypeOnly<B>, object>;
 	type _check4 = requireAssignableTo<object, TypeOnly<B>>;
+}
+
+namespace TestNeverParameter {
+	type FooNever<T extends never> = T;
+	type AnyNever<T extends never> = T;
+
+	// @ts-expect-error any not assignable to never
+	type _check1 = FooNever<any>;
+
+	// never is assignable to any
+	type _check2 = AnyNever<never>;
 }

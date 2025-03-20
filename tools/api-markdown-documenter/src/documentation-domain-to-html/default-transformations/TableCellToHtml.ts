@@ -8,9 +8,10 @@
  * Licensed under the MIT License.
  */
 import type { Element as HastElement } from "hast";
+
 import { TableCellKind, type TableCellNode } from "../../documentation-domain/index.js";
-import { transformChildrenUnderTag } from "../Utilities.js";
 import type { TransformationContext } from "../TransformationContext.js";
+import { transformChildrenUnderTag } from "../Utilities.js";
 
 /**
  * Transform a {@link TableCellNode} to HTML.
@@ -18,7 +19,10 @@ import type { TransformationContext } from "../TransformationContext.js";
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.
  */
-export function tableCellToHtml(node: TableCellNode, context: TransformationContext): HastElement {
+export function tableCellToHtml(
+	node: TableCellNode,
+	context: TransformationContext,
+): HastElement {
 	return transformChildrenUnderTag(
 		{ name: node.cellKind === TableCellKind.Header ? "th" : "td" },
 		node.children,

@@ -11,7 +11,6 @@ import {
 	type ChangesetLocalId,
 	type DeltaDetachedNodeChanges,
 	type DeltaDetachedNodeId,
-	type DeltaFieldChanges,
 	type DeltaMark,
 	type RevisionTag,
 	areEqualChangeAtomIds,
@@ -39,6 +38,8 @@ import {
 	type NodeId,
 	type RelevantRemovedRootsFromChild,
 	type ToDelta,
+	type NestedChangesIndices,
+	type FieldChangeDelta,
 } from "../modular-schema/index.js";
 
 import type {
@@ -536,6 +537,16 @@ function areEqualRegisterIds(id1: RegisterId, id2: RegisterId): boolean {
 	return id1 === "self" || id2 === "self" ? id1 === id2 : areEqualChangeAtomIds(id1, id2);
 }
 
+function areEqualRegisterIdsOpt(
+	id1: RegisterId | undefined,
+	id2: RegisterId | undefined,
+): boolean {
+	if (id1 === undefined || id2 === undefined) {
+		return id1 === id2;
+	}
+	return areEqualRegisterIds(id1, id2);
+}
+
 function getBidirectionalMaps(moves: OptionalChangeset["moves"]): {
 	srcToDst: ChangeAtomIdMap<ChangeAtomId>;
 	dstToSrc: ChangeAtomIdMap<ChangeAtomId>;
@@ -634,11 +645,18 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 		},
 	}),
 
-	buildChildChange: (index: number, childChange: NodeId): OptionalChangeset => {
-		assert(index === 0, 0x404 /* Optional fields only support a single child node */);
+	buildChildChanges: (changes: Iterable<[number, NodeId]>): OptionalChangeset => {
+		const childChanges: ChildChange[] = Array.from(changes, ([index, childChange]) => {
+			assert(index === 0, 0x404 /* Optional fields only support a single child node */);
+			return ["self", childChange];
+		});
+		assert(
+			childChanges.length <= 1,
+			0xabd /* Optional fields only support a single child node */,
+		);
 		return {
 			moves: [],
-			childChanges: [["self", childChange]],
+			childChanges,
 		};
 	},
 };
@@ -646,8 +664,8 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 export function optionalFieldIntoDelta(
 	change: OptionalChangeset,
 	deltaFromChild: ToDelta,
-): DeltaFieldChanges {
-	const delta: Mutable<DeltaFieldChanges> = {};
+): FieldChangeDelta {
+	const delta: Mutable<FieldChangeDelta> = {};
 
 	let markIsANoop = true;
 	const mark: Mutable<DeltaMark> = { count: 1 };
@@ -720,11 +738,29 @@ export const optionalChangeHandler: FieldChangeHandler<
 	getCrossFieldKeys: (_change) => [],
 };
 
-function getNestedChanges(change: OptionalChangeset): [NodeId, number | undefined][] {
-	return change.childChanges.map(([register, nodeId]) => [
-		nodeId,
-		register === "self" ? 0 : undefined,
-	]);
+function getNestedChanges(change: OptionalChangeset): NestedChangesIndices {
+	// True iff the content of the field changes in some way
+	const isFieldContentChanged =
+		change.valueReplace !== undefined && change.valueReplace.src !== "self";
+
+	// The node that is moved into the field (if any).
+	const nodeMovedIntoField = change.valueReplace?.src;
+
+	return change.childChanges.map(([register, nodeId]) => {
+		// The node is removed in the input context iif register is not self.
+		const inputIndex = register === "self" ? 0 : undefined;
+		const outputIndex =
+			register === "self"
+				? // If the node starts out as not-removed, it is removed in the output context iff the field content is changed
+					isFieldContentChanged
+					? undefined
+					: 0
+				: // If the node starts out as removed, then it remains removed in the output context iff it is not the node that is moved into the field
+					!areEqualRegisterIdsOpt(register, nodeMovedIntoField)
+					? undefined
+					: 0;
+		return [nodeId, inputIndex, outputIndex];
+	});
 }
 
 function* relevantRemovedRoots(

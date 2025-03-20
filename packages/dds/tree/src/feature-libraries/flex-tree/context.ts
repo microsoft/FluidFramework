@@ -12,9 +12,9 @@ import {
 	anchorSlot,
 	moveToDetachedField,
 } from "../../core/index.js";
-import type { Listenable } from "../../events/index.js";
+import type { Listenable } from "@fluidframework/core-interfaces";
 import { type IDisposable, disposeSymbol } from "../../util/index.js";
-import type { NodeKeyManager } from "../node-key/index.js";
+import type { NodeIdentifierManager } from "../node-identifier/index.js";
 
 import type { FlexTreeField } from "./flexTreeTypes.js";
 import { type LazyEntity, prepareForEditSymbol } from "./lazyEntity.js";
@@ -49,13 +49,14 @@ export interface FlexTreeContext {
  * A common context of a "forest" of FlexTrees.
  * It handles group operations like transforming cursors into anchors for edits.
  */
-export interface FlexTreeHydratedContext extends FlexTreeContext, Listenable<ForestEvents> {
+export interface FlexTreeHydratedContext extends FlexTreeContext {
+	readonly events: Listenable<ForestEvents>;
 	/**
 	 * Gets the root field of the tree.
 	 */
 	get root(): FlexTreeField;
 
-	readonly nodeKeyManager: NodeKeyManager;
+	readonly nodeKeyManager: NodeIdentifierManager;
 
 	/**
 	 * The checkout object associated with this context.
@@ -89,10 +90,10 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 	public constructor(
 		public readonly schemaPolicy: SchemaPolicy,
 		public readonly checkout: ITreeCheckout,
-		public readonly nodeKeyManager: NodeKeyManager,
+		public readonly nodeKeyManager: NodeIdentifierManager,
 	) {
 		this.eventUnregister = [
-			this.checkout.forest.on("beforeChange", () => {
+			this.checkout.forest.events.on("beforeChange", () => {
 				this.prepareForEdit();
 			}),
 		];
@@ -160,11 +161,8 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 		return field;
 	}
 
-	public on<K extends keyof ForestEvents>(
-		eventName: K,
-		listener: ForestEvents[K],
-	): () => void {
-		return this.checkout.forest.on(eventName, listener);
+	public get events(): Listenable<ForestEvents> {
+		return this.checkout.forest.events;
 	}
 }
 
@@ -180,7 +178,7 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 export function getTreeContext(
 	schema: SchemaPolicy,
 	checkout: ITreeCheckout,
-	nodeKeyManager: NodeKeyManager,
+	nodeKeyManager: NodeIdentifierManager,
 ): Context {
 	return new Context(schema, checkout, nodeKeyManager);
 }

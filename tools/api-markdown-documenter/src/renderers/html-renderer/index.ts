@@ -9,7 +9,7 @@
 
 export {
 	renderDocument,
-	type RenderDocumentConfig,
+	type RenderDocumentConfiguration,
 	renderHtml,
-	type RenderHtmlConfig,
+	type RenderHtmlConfiguration,
 } from "./Render.js";

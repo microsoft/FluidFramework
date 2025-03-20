@@ -3,20 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { test as oclifTest } from "@oclif/test";
+import path from "node:path";
+
+import { _dirname } from "./dirname.cjs";
 
 /**
- * Initializes the oclif command test environment. \@oclif/test cannot find the path to the project in some
- * circumstances, so as a workaround we configure it explicitly by passing in the URL to the test module itself.
- *
- * @param moduleUrl - The URL to the test module. In most cases you should pass the `import.meta.url` value for the test
- * module when calling this function.
- *
- * @returns A test function that can be used to test oclif commands.
+ * Absolute path to the test data.
  */
-export function initializeCommandTestFunction(
-	moduleUrl: string,
-): ReturnType<typeof oclifTest.loadConfig> {
-	// @oclif/test cannot find the path to the project, so as a workaround we configure it explicitly
-	return oclifTest.loadConfig({ root: moduleUrl });
-}
+const testDataPath = path.resolve(_dirname, "../../../build-infrastructure/src/test/data");
+/**
+ * Absolute path to the test repo.
+ */
+export const testRepoRoot = path.join(testDataPath, "testRepo");

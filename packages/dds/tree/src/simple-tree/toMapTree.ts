@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
@@ -19,9 +19,9 @@ import {
 import {
 	isTreeValue,
 	valueSchemaAllows,
-	type NodeKeyManager,
+	type NodeIdentifierManager,
 } from "../feature-libraries/index.js";
-import { brand, fail, isReadonlyArray, find } from "../util/index.js";
+import { brand, fail, isReadonlyArray, find, hasSome, hasSingle } from "../util/index.js";
 
 import { nullSchema } from "./leafNodeSchema.js";
 import {
@@ -104,19 +104,19 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 export function mapTreeFromNodeData(
 	data: InsertableContent,
 	allowedTypes: ImplicitAllowedTypes,
-	context?: NodeKeyManager,
+	context?: NodeIdentifierManager,
 	schemaValidationPolicy?: SchemaAndPolicy,
 ): ExclusiveMapTree;
 export function mapTreeFromNodeData(
 	data: InsertableContent | undefined,
 	allowedTypes: ImplicitFieldSchema,
-	context?: NodeKeyManager,
+	context?: NodeIdentifierManager,
 	schemaValidationPolicy?: SchemaAndPolicy,
 ): ExclusiveMapTree | undefined;
 export function mapTreeFromNodeData(
 	data: InsertableContent | undefined,
 	allowedTypes: ImplicitFieldSchema,
-	context?: NodeKeyManager,
+	context?: NodeIdentifierManager,
 	schemaValidationPolicy?: SchemaAndPolicy,
 ): ExclusiveMapTree | undefined {
 	const normalizedFieldSchema = normalizeFieldSchema(allowedTypes);
@@ -196,7 +196,7 @@ function nodeDataToMapTree(
 			result = objectToMapTree(data, schema);
 			break;
 		default:
-			fail(`Unrecognized schema kind: ${schema.kind}.`);
+			fail(0xae0 /* Unrecognized schema kind */);
 	}
 
 	return result;
@@ -465,10 +465,10 @@ function getType(
 		);
 	}
 	assert(
-		possibleTypes.length !== 0,
+		hasSome(possibleTypes),
 		0x84e /* data is incompatible with all types allowed by the schema */,
 	);
-	if (possibleTypes.length !== 1) {
+	if (!hasSingle(possibleTypes)) {
 		throw new UsageError(
 			`The provided data is compatible with more than one type allowed by the schema.
 The set of possible types is ${JSON.stringify([
@@ -478,7 +478,7 @@ Explicitly construct an unhydrated node of the desired type to disambiguate.
 For class-based schema, this can be done by replacing an expression like "{foo: 1}" with "new MySchema({foo: 1})".`,
 		);
 	}
-	return possibleTypes[0] ?? oob();
+	return possibleTypes[0];
 }
 
 /**
@@ -638,11 +638,11 @@ function allowsValue(schema: TreeNodeSchema, value: TreeValue): boolean {
 export function addDefaultsToMapTree(
 	mapTree: ExclusiveMapTree,
 	allowedTypes: ImplicitAllowedTypes,
-	context: NodeKeyManager | undefined,
+	context: NodeIdentifierManager | undefined,
 ): void {
 	const schema =
 		find(normalizeAllowedTypes(allowedTypes), (s) => s.identifier === mapTree.type) ??
-		fail("MapTree is incompatible with schema");
+		fail(0xae1 /* MapTree is incompatible with schema */);
 
 	if (isObjectNodeSchema(schema)) {
 		for (const [_key, fieldInfo] of schema.flexKeyMap) {
@@ -660,7 +660,7 @@ export function addDefaultsToMapTree(
 						setFieldValue(mapTree.fields, data, fieldInfo.schema, fieldInfo.storedKey);
 						// call addDefaultsToMapTree on newly inserted default values
 						for (const child of mapTree.fields.get(fieldInfo.storedKey) ??
-							fail("Expected field to be populated")) {
+							fail(0xae2 /* Expected field to be populated */)) {
 							addDefaultsToMapTree(child, fieldInfo.schema.allowedTypes, context);
 						}
 					}
@@ -695,7 +695,7 @@ export function addDefaultsToMapTree(
  */
 function provideDefault(
 	fieldProvider: FieldProvider,
-	context: NodeKeyManager | undefined,
+	context: NodeIdentifierManager | undefined,
 ): InsertableContent | undefined {
 	if (context !== undefined) {
 		return fieldProvider(context);

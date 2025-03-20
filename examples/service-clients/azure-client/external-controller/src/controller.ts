@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IValueChanged } from "@fluidframework/map/internal";
+import { IValueChanged } from "@fluidframework/map/legacy";
 import events_pkg from "events_pkg";
 
 export type DieValue = 1 | 2 | 3 | 4 | 5 | 6;

@@ -4,9 +4,9 @@
  */
 
 import { Flags } from "@oclif/core";
-import chalk from "chalk";
+import chalk from "picocolors";
 
-import { BaseCommand, Repository } from "../../library/index.js";
+import { BaseCommand } from "../../library/index.js";
 
 /**
  * An object containing merge status between two branches.
@@ -79,11 +79,11 @@ export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoComman
 		}
 
 		const context = await this.getContext();
-		const repo = new Repository({ baseDir: context.gitRepo.resolvedRoot });
-		const remote = await repo.getRemote(context.originRemotePartialUrl);
+		const repo = await context.getGitRepository();
+		const remote = await repo.getRemote(repo.upstreamRemotePartialUrl);
 
 		if (remote === undefined) {
-			this.error(`Can't find a remote with ${context.originRemotePartialUrl}`);
+			this.error(`Can't find a remote with ${repo.upstreamRemotePartialUrl}`);
 		}
 		this.verbose(`Remote is: ${remote}`);
 
@@ -100,7 +100,7 @@ export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoComman
 
 		const revs = rawRevs.split(/\r?\n/);
 
-		const [b1Log, b2Log] = [chalk.bold.blue(branch1), chalk.bold.blue(branch2)];
+		const [b1Log, b2Log] = [chalk.bold(chalk.blue(branch1)), chalk.bold(chalk.blue(branch2))];
 
 		this.logHr();
 		this.log(

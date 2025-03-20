@@ -81,3 +81,10 @@ export class InsecureTinyliciousTokenProvider implements ITokenProvider {
 		);
 	}
 }
+
+/**
+ * Creates an insecure Tinylicious token provider for testing purposes.
+ */
+export function createInsecureTinyliciousTestTokenProvider(): ITokenProvider {
+	return new InsecureTinyliciousTokenProvider();
+}

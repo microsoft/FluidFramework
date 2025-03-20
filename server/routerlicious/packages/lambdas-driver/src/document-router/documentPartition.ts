@@ -22,6 +22,7 @@ export class DocumentPartition {
 	private lambda: IPartitionLambda | undefined;
 	private corrupt = false;
 	private closed = false;
+	private paused = false;
 	private activityTimeoutTime: number | undefined;
 	private readonly restartOnErrorNames: string[] = [];
 
@@ -89,11 +90,15 @@ export class DocumentPartition {
 				this.q.resume();
 			})
 			.catch((error) => {
-				if (error.name && this.restartOnErrorNames.includes(error.name as string)) {
+				if (
+					(error.name && this.restartOnErrorNames.includes(error.name as string)) ||
+					error.shouldRestart
+				) {
 					this.context.error(error, {
 						restart: true,
 						tenantId: this.tenantId,
 						documentId: this.documentId,
+						errorLabel: "docPartition:lambdaFactory.create",
 					});
 				} else {
 					// There is no need to pass the message to be checkpointed to markAsCorrupt().
@@ -200,5 +205,52 @@ export class DocumentPartition {
 			Date.now() + (this.lambda?.activityTimeout ?? this.activityTimeout);
 		this.activityTimeoutTime =
 			activityTime !== undefined ? activityTime : cacluatedActivityTimeout;
+	}
+
+	public pause(offset: number) {
+		if (this.paused) {
+			Lumberjack.warning("Doc partition already paused, returning early.", {
+				...getLumberBaseProperties(this.documentId, this.tenantId),
+				offset,
+			});
+			return;
+		}
+		this.paused = true;
+
+		this.q.pause();
+		this.q.remove(() => true); // flush all the messages in the queue since kafka consumer will resume from last successful offset
+
+		if (this.lambda?.pause) {
+			this.lambda.pause(offset);
+		}
+
+		// Its possible that some other doc partition triggered the pause
+		// So we need to make sure to set the paused state for this doc partition's context in case its not already set
+		// This will allow its head to move backwards/reprocess ops as needed during resume
+		this.context.setStateToPause();
+
+		Lumberjack.info("Doc partition paused", {
+			...getLumberBaseProperties(this.documentId, this.tenantId),
+			offset,
+		});
+	}
+
+	public resume() {
+		if (!this.paused) {
+			Lumberjack.warning("Doc partition already resumed, returning early.", {
+				...getLumberBaseProperties(this.documentId, this.tenantId),
+			});
+			return;
+		}
+		this.paused = false;
+
+		this.q.resume();
+
+		if (this.lambda?.resume) {
+			this.lambda.resume();
+		}
+		Lumberjack.info("Doc partition resumed", {
+			...getLumberBaseProperties(this.documentId, this.tenantId),
+		});
 	}
 }

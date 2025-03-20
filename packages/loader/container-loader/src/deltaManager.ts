@@ -5,8 +5,8 @@
 
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
-	IDeltaManager,
 	IDeltaManagerEvents,
+	IDeltaManagerFull,
 	IDeltaQueue,
 	type IDeltaSender,
 	type ReadOnlyInfo,
@@ -151,9 +151,7 @@ function logIfFalse(
  */
 export class DeltaManager<TConnectionManager extends IConnectionManager>
 	extends EventEmitterWithErrorHandling<IDeltaManagerInternalEvents>
-	implements
-		IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-		IEventProvider<IDeltaManagerInternalEvents>
+	implements IDeltaManagerFull, IEventProvider<IDeltaManagerInternalEvents>
 {
 	public readonly connectionManager: TConnectionManager;
 

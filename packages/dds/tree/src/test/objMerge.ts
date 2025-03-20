@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { fail } from "../util/index.js";
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class

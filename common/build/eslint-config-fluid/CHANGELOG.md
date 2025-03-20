@@ -1,5 +1,97 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## [5.7.3](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.7.3)
+
+Added support for two new patterns in the no-unchecked-record-access ESLint rule:
+
+1. **Nullish Coalescing Assignment Recognition**
+
+    - The rule now recognizes nullish coalescing assignment (`??=`) as a valid safety check
+    - Properties accessed after a nullish coalescing assignment will not trigger warnings
+
+2. **Else Block Assignment Handling**
+    - Added detection for property assignments in else blocks of existence checks
+    - Example pattern now supported:
+        ```typescript
+        if ("key" in obj) {
+        	// use obj.key
+        } else {
+        	obj.key = defaultValue;
+        	// use obj.key
+        }
+        ```
+    - The rule understands that after the else block assignment, the property is safe to use
+    - Works with both direct property access and computed property access
+
+## [5.7.2](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.7.2)
+
+Disabled the [unicorn/no-array-push-push](https://github.com/sindresorhus/eslint-plugin-unicorn/blob/main/docs/rules/no-array-push-push.md) rule, which reports false positives for methods named "push" on non-array objects.
+
+## [5.6.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.6.0)
+
+### New config for use with Biome linter
+
+A new strict-biome config is available that disables all rules that Biome's recommended config includes.
+This config is intended to be used in projects that use both eslint and Biome for linting.
+This config is considered experimental.
+
+### Auto-fix behavior change for @typescript-eslint/consistent-type-exports
+
+Update auto-fix policy for `@typescript-eslint/consistent-type-exports` to prefer inline `type` annotations, rather than splitting exports into type-only and non-type-only groups.
+This makes it easier to tell at a glance how the auto-fix changes affect individual exports when a list of exports is large.
+It also makes it easier to detect issues in edge-cases where the the rule is applied incorrectly.
+
+E.g.:
+
+```typescript
+export { type Foo, Bar } from "./baz.js";
+```
+
+instead of:
+
+```typescript
+export type { Foo } from "./baz.js";
+export { Bar } from "./baz.js";
+```
+
+## [5.5.1](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.5.1)
+
+### Disabled rules
+
+The formatting-related rules below have been disabled in all configs because we use biome or prettier to enforce
+formatting conventions. In addition, most of these rules are now deprecated because linters are decreasing their focus
+on formatting-related rules in favor of dedicated formatting tools.
+
+#### typescript-eslint
+
+-   @typescript-eslint/comma-spacing
+-   @typescript-eslint/func-call-spacing
+-   @typescript-eslint/keyword-spacing
+-   @typescript-eslint/member-delimiter-style
+-   @typescript-eslint/object-curly-spacing
+-   @typescript-eslint/semi
+-   @typescript-eslint/space-before-function-paren
+-   @typescript-eslint/space-infix-ops
+-   @typescript-eslint/type-annotation-spacing
+
+#### eslint
+
+All rules below are deprecated. See <https://eslint.org/docs/latest/rules/#deprecated>
+
+-   array-bracket-spacing
+-   arrow-spacing
+-   block-spacing
+-   dot-location
+-   jsx-quotes
+-   key-spacing
+-   space-unary-ops
+-   switch-colon-spacing
+
+### Better test pattern support
+
+Update rule overrides for test code to better support patterns in the repo.
+Namely, adds the allowance to "\*\*/tests" directories.
+
 ## [5.4.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.4.0)
 
 ### New no-unchecked-record-access rule

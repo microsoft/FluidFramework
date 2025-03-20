@@ -8,6 +8,7 @@ import type { Nodes as HastTree } from "hast";
 import type { CodeSpanNode } from "../../index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import { transformChildrenUnderTag } from "../Utilities.js";
+
 import { applyFormatting } from "./Utilities.js";
 
 /**

@@ -18,6 +18,7 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
+	toIDeltaManagerFull,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
@@ -274,8 +275,9 @@ describeCompat(
 				runtimeOptions: {},
 			});
 
-			await container1.deltaManager.inbound.pause();
-			await container1.deltaManager.outbound.pause();
+			const container1DeltaManager = toIDeltaManagerFull(container1.deltaManager);
+			await container1DeltaManager.inbound.pause();
+			await container1DeltaManager.outbound.pause();
 
 			sharedMap1.on("valueChanged", (changed) => {
 				if (changed.key !== "key2") {
@@ -285,8 +287,8 @@ describeCompat(
 
 			sharedMap1.set("key1", "1");
 
-			container1.deltaManager.inbound.resume();
-			container1.deltaManager.outbound.resume();
+			container1DeltaManager.inbound.resume();
+			container1DeltaManager.outbound.resume();
 
 			await provider.ensureSynchronized();
 
@@ -356,8 +358,9 @@ describeCompat(
 
 					await setupContainers(testConfig.options, testConfig.featureGates);
 
-					await container1.deltaManager.inbound.pause();
-					await container1.deltaManager.outbound.pause();
+					const deltaManagerFull = toIDeltaManagerFull(container1.deltaManager);
+					await deltaManagerFull.inbound.pause();
+					await deltaManagerFull.outbound.pause();
 
 					sharedMap1.on("valueChanged", (changed) => {
 						if (changed.key !== "key2") {
@@ -372,8 +375,8 @@ describeCompat(
 
 					sharedMap1.set("key1", "1");
 
-					container1.deltaManager.inbound.resume();
-					container1.deltaManager.outbound.resume();
+					deltaManagerFull.inbound.resume();
+					deltaManagerFull.outbound.resume();
 					await provider.ensureSynchronized();
 
 					// The offending container is not closed

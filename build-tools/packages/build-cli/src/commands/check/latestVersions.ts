@@ -17,6 +17,9 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 	static readonly description =
 		"This command is used in CI to determine if a pipeline was triggered by a release branch with the latest minor version of a major version.";
 
+	static readonly deprecated =
+		"This command is deprecated and will be removed in a future release. Use vnext:check:latestVersions instead.";
+
 	static readonly args = {
 		version: semverArg({
 			required: true,
@@ -36,7 +39,8 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 			this.error(`Package not found: ${args.package_or_release_group}`);
 		}
 
-		const versions = await context.getAllVersions(rgOrPackage.name);
+		const gitRepo = await context.getGitRepository();
+		const versions = await gitRepo.getAllVersions(rgOrPackage.name);
 
 		if (!versions) {
 			this.error(`No versions found for ${rgOrPackage.name}`);
@@ -62,7 +66,10 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 					this.log(
 						`Version ${versionInput.version} is the latest version for major version ${majorVersion}`,
 					);
-					this.log(`##vso[task.setvariable variable=shouldDeploy;isOutput=true]true`);
+					this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]true`);
+					this.log(
+						`##vso[task.setvariable variable=majorVersion;isoutput=true]${majorVersion}`,
+					);
 					return;
 				}
 
@@ -70,7 +77,8 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 				this.log(
 					`##[warning]skipping deployment stage. input version ${versionInput.version} does not match the latest version ${v.version}`,
 				);
-				this.log(`##vso[task.setvariable variable=shouldDeploy;isOutput=true]false`);
+				this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]false`);
+				this.log(`##vso[task.setvariable variable=majorVersion;isoutput=true]${majorVersion}`);
 				return;
 			}
 		}
@@ -79,6 +87,9 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 		this.log(
 			`##[warning]No major version found corresponding to input version ${versionInput.version}`,
 		);
-		this.log(`##vso[task.setvariable variable=shouldDeploy;isOutput=true]false`);
+		this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]false`);
+		this.log(
+			`##vso[task.setvariable variable=majorVersion;isoutput=true]${inputMajorVersion}`,
+		);
 	}
 }

@@ -7,6 +7,8 @@ module.exports = {
 	extends: [
 		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
 		"prettier",
+		// There are a lot of internal APIs leveraged here.
+		// "../../.eslintrc.cjs",
 	],
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
@@ -16,5 +18,6 @@ module.exports = {
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"import/no-nodejs-modules": "off",
 		"no-case-declarations": "off",
+		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},
 };

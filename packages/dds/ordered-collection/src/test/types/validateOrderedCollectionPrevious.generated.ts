@@ -112,7 +112,7 @@ declare type current_as_old_for_Interface_IConsensusOrderedCollection = requireA
  * typeValidation.broken:
  * "Interface_IConsensusOrderedCollectionEvents": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IConsensusOrderedCollectionEvents = requireAssignableTo<TypeOnly<old.IConsensusOrderedCollectionEvents<any>>, TypeOnly<current.IConsensusOrderedCollectionEvents<any>>>
+declare type old_as_current_for_Interface_IConsensusOrderedCollectionEvents = requireAssignableTo<TypeOnly<old.IConsensusOrderedCollectionEvents<never>>, TypeOnly<current.IConsensusOrderedCollectionEvents<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -121,7 +121,7 @@ declare type old_as_current_for_Interface_IConsensusOrderedCollectionEvents = re
  * typeValidation.broken:
  * "Interface_IConsensusOrderedCollectionEvents": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IConsensusOrderedCollectionEvents = requireAssignableTo<TypeOnly<current.IConsensusOrderedCollectionEvents<any>>, TypeOnly<old.IConsensusOrderedCollectionEvents<any>>>
+declare type current_as_old_for_Interface_IConsensusOrderedCollectionEvents = requireAssignableTo<TypeOnly<current.IConsensusOrderedCollectionEvents<never>>, TypeOnly<old.IConsensusOrderedCollectionEvents<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -148,7 +148,7 @@ declare type current_as_old_for_Interface_IOrderedCollection = requireAssignable
  * typeValidation.broken:
  * "Interface_ISnapshotable": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISnapshotable = requireAssignableTo<TypeOnly<old.ISnapshotable<any>>, TypeOnly<current.ISnapshotable<any>>>
+declare type old_as_current_for_Interface_ISnapshotable = requireAssignableTo<TypeOnly<old.ISnapshotable<never>>, TypeOnly<current.ISnapshotable<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -157,7 +157,7 @@ declare type old_as_current_for_Interface_ISnapshotable = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Interface_ISnapshotable": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISnapshotable = requireAssignableTo<TypeOnly<current.ISnapshotable<any>>, TypeOnly<old.ISnapshotable<any>>>
+declare type current_as_old_for_Interface_ISnapshotable = requireAssignableTo<TypeOnly<current.ISnapshotable<never>>, TypeOnly<old.ISnapshotable<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -166,7 +166,7 @@ declare type current_as_old_for_Interface_ISnapshotable = requireAssignableTo<Ty
  * typeValidation.broken:
  * "TypeAlias_ConsensusCallback": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_ConsensusCallback = requireAssignableTo<TypeOnly<old.ConsensusCallback<any>>, TypeOnly<current.ConsensusCallback<any>>>
+declare type old_as_current_for_TypeAlias_ConsensusCallback = requireAssignableTo<TypeOnly<old.ConsensusCallback<never>>, TypeOnly<current.ConsensusCallback<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -175,7 +175,7 @@ declare type old_as_current_for_TypeAlias_ConsensusCallback = requireAssignableT
  * typeValidation.broken:
  * "TypeAlias_ConsensusCallback": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_ConsensusCallback = requireAssignableTo<TypeOnly<current.ConsensusCallback<any>>, TypeOnly<old.ConsensusCallback<any>>>
+declare type current_as_old_for_TypeAlias_ConsensusCallback = requireAssignableTo<TypeOnly<current.ConsensusCallback<never>>, TypeOnly<old.ConsensusCallback<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

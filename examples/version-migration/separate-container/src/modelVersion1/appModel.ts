@@ -3,12 +3,8 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
-import type { IMigratableModel } from "@fluid-example/migration-tools/internal";
-import { AttachState } from "@fluidframework/container-definitions";
-import { IContainer } from "@fluidframework/container-definitions/internal";
-
 import { parseStringDataVersionOne, readVersion } from "../dataTransform.js";
+import type { IMigratableModel } from "../migratableModel.js";
 import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces.js";
 
 // This type represents a stronger expectation than just any string - it needs to be in the right format.
@@ -24,10 +20,7 @@ export class InventoryListAppModel implements IInventoryListAppModel, IMigratabl
 	// To be used by the consumer of the model to pair with an appropriate view.
 	public readonly version = "one";
 
-	public constructor(
-		public readonly inventoryList: IInventoryList,
-		private readonly container: IContainer,
-	) {}
+	public constructor(public readonly inventoryList: IInventoryList) {}
 
 	public readonly supportsDataFormat = (
 		initialData: unknown,
@@ -35,12 +28,7 @@ export class InventoryListAppModel implements IInventoryListAppModel, IMigratabl
 		return typeof initialData === "string" && readVersion(initialData) === "one";
 	};
 
-	// Ideally, prevent this from being called after the container has been modified at all -- i.e. only support
-	// importing data into a completely untouched InventoryListAppModel.
 	public readonly importData = async (initialData: unknown): Promise<void> => {
-		if (this.container.attachState !== AttachState.Detached) {
-			throw new Error("Cannot set initial data after attach");
-		}
 		if (!this.supportsDataFormat(initialData)) {
 			throw new Error("Data format not supported");
 		}
@@ -60,8 +48,4 @@ export class InventoryListAppModel implements IInventoryListAppModel, IMigratabl
 		});
 		return `version:one\n${inventoryItemStrings.join("\n")}`;
 	};
-
-	public dispose(): void {
-		this.container.dispose();
-	}
 }

@@ -26,7 +26,7 @@ parameters:
 
 - name: poolBuild
   type: object
-  default: Large
+  default: Large-eastus2
 
 - name: checkoutSubmodules
   type: boolean
@@ -58,7 +58,6 @@ jobs:
     pool: ${{ parameters.poolBuild }}
     variables:
       testCoverage: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
-      releaseBuildVar: $[variables.releaseBuild]
     timeoutInMinutes: ${{ parameters.timeoutInMinutes }}
     steps:
     # Setup
@@ -79,7 +78,6 @@ jobs:
 
           echo "
           Pipeline Variables:
-            releaseBuild=$(releaseBuildVar)
 
           Tasks Parameters:
             BuildDir=${{ parameters.buildDirectory }}
@@ -90,15 +88,15 @@ jobs:
             TestCoverage=$(testCoverage)
           "
 
-    - template: include-use-node-version.yml
+    - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
-    - template: include-install.yml
+    - template: /tools/pipelines/templates/include-install.yml@self
       parameters:
         packageManager: ${{ parameters.packageManager }}
         buildDirectory: ${{ parameters.buildDirectory }}
         packageManagerInstallCommand: ${{ parameters.packageManagerInstallCommand }}
 
-    - template: include-build-lint.yml
+    - template: /tools/pipelines/templates/include-build-lint.yml@self
       parameters:
         taskBuild: ${{ parameters.taskBuild }}
         taskLint: ${{ parameters.taskLint }}
@@ -113,7 +111,7 @@ jobs:
         displayName: Start Test
 
       - ${{ each taskTestStep in parameters.taskTest }}:
-        - template: include-test-task.yml
+        - template: /tools/pipelines/templates/include-test-task.yml@self
           parameters:
             taskTestStep: ${{ taskTestStep }}
             buildDirectory: ${{ parameters.buildDirectory }}
@@ -141,6 +139,6 @@ jobs:
           continueOnError: true
 
       # Process test result, include publishing and logging
-      - template: include-process-test-results.yml
+      - template: /tools/pipelines/templates/include-process-test-results.yml@self
         parameters:
           buildDirectory: ${{ parameters.buildDirectory }}

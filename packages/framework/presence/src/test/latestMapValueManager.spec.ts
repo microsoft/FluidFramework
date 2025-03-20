@@ -3,9 +3,36 @@
  * Licensed under the MIT License.
  */
 
-import type { LatestMapItemValueClientData } from "../index.js";
-import { LatestMap } from "../index.js";
-import type { IPresence } from "../presence.js";
+import { strict as assert } from "node:assert";
+
+import { createPresenceManager } from "../presenceManager.js";
+
+import { addControlsTests } from "./broadcastControlsTests.js";
+import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
+
+import type {
+	BroadcastControlSettings,
+	IPresence,
+	LatestMapItemValueClientData,
+	LatestMapValueManager,
+} from "@fluidframework/presence/alpha";
+import { LatestMap } from "@fluidframework/presence/alpha";
+
+const testWorkspaceName = "name:testWorkspaceA";
+
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+function createLatestMapManager(
+	presence: IPresence,
+	valueControlSettings?: BroadcastControlSettings,
+) {
+	const states = presence.getStates(testWorkspaceName, {
+		fixedMap: LatestMap(
+			{ key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } },
+			valueControlSettings,
+		),
+	});
+	return states.props.fixedMap;
+}
 
 describe("Presence", () => {
 	describe("LatestMapValueManager", () => {
@@ -13,6 +40,53 @@ describe("Presence", () => {
 		 * See {@link checkCompiles} below
 		 */
 		it("API use compiles", () => {});
+
+		addControlsTests(createLatestMapManager);
+
+		function setupMapValueManager(): LatestMapValueManager<
+			{
+				x: number;
+				y: number;
+			},
+			string
+		> {
+			const presence = createPresenceManager(new MockEphemeralRuntime());
+			const states = presence.getStates(testWorkspaceName, {
+				fixedMap: LatestMap({ key1: { x: 0, y: 0 } }),
+			});
+			return states.props.fixedMap;
+		}
+
+		it("localItemUpdated event is fired with new value when local value is updated", () => {
+			// Setup
+			const mapVM = setupMapValueManager();
+
+			let localUpdateCount = 0;
+			mapVM.events.on("localItemUpdated", (update) => {
+				localUpdateCount++;
+				assert.strictEqual(update.key, "key1");
+				assert.deepStrictEqual(update.value, { x: 1, y: 2 });
+			});
+
+			// Act & Verify
+			mapVM.local.set("key1", { x: 1, y: 2 });
+			assert.strictEqual(localUpdateCount, 1);
+		});
+
+		it("localItemRemoved event is fired with new value when local value is deleted", () => {
+			// Setup
+			const mapVM = setupMapValueManager();
+
+			let localRemovalCount = 0;
+			mapVM.events.on("localItemRemoved", (update) => {
+				localRemovalCount++;
+				assert.strictEqual(update.key, "key1");
+			});
+
+			// Act & Verify
+			mapVM.local.delete("key1");
+			assert.strictEqual(localRemovalCount, 1);
+		});
 	});
 });
 
@@ -28,23 +102,24 @@ export function checkCompiles(): void {
 		fixedMap: LatestMap({ key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } }),
 	});
 	// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
-	const map: typeof statesWorkspace = statesWorkspace;
+	const workspace: typeof statesWorkspace = statesWorkspace;
+	const props = workspace.props;
 
-	map.fixedMap.local.get("key1");
+	props.fixedMap.local.get("key1");
 	// @ts-expect-error with inferred keys only those named it init are accessible
-	map.fixedMap.local.get("key3");
+	props.fixedMap.local.get("key3");
 
-	map.fixedMap.local.set("key2", { x: 0, y: 2 });
-	map.fixedMap.local.set("key2", { ref: "string", someId: -1 });
+	props.fixedMap.local.set("key2", { x: 0, y: 2 });
+	props.fixedMap.local.set("key2", { ref: "string", someId: -1 });
 	// @ts-expect-error with inferred type `undefined` optional values are errors
-	map.fixedMap.local.set("key2", { x: undefined, y: undefined, ref: "string", someId: -1 });
+	props.fixedMap.local.set("key2", { x: undefined, y: undefined, ref: "string", someId: -1 });
 	// @ts-expect-error with inferred type partial values are errors
-	map.fixedMap.local.set("key2", { x: 0 });
+	props.fixedMap.local.set("key2", { x: 0 });
 	// @ts-expect-error with inferred heterogenous type mixed type values are errors
-	map.fixedMap.local.set("key2", { x: 0, y: 2, ref: "a", someId: 3 });
+	props.fixedMap.local.set("key2", { x: 0, y: 2, ref: "a", someId: 3 });
 
-	for (const key of map.fixedMap.local.keys()) {
-		const value = map.fixedMap.local.get(key);
+	for (const key of props.fixedMap.local.keys()) {
+		const value = props.fixedMap.local.get(key);
 		console.log(key, value);
 	}
 
@@ -55,9 +130,9 @@ export function checkCompiles(): void {
 		tilt?: number;
 	}
 
-	map.add("pointers", LatestMap<PointerData>({}));
+	workspace.add("pointers", LatestMap<PointerData>({}));
 
-	const pointers = map.pointers;
+	const pointers = workspace.props.pointers;
 	const localPointers = pointers.local;
 
 	function logClientValue<T>({

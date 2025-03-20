@@ -22,7 +22,7 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Class_Deferred": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_Deferred = requireAssignableTo<TypeOnly<old.Deferred<any>>, TypeOnly<current.Deferred<any>>>
+declare type old_as_current_for_Class_Deferred = requireAssignableTo<TypeOnly<old.Deferred<never>>, TypeOnly<current.Deferred<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -31,7 +31,7 @@ declare type old_as_current_for_Class_Deferred = requireAssignableTo<TypeOnly<ol
  * typeValidation.broken:
  * "Class_Deferred": {"backCompat": false}
  */
-declare type current_as_old_for_Class_Deferred = requireAssignableTo<TypeOnly<current.Deferred<any>>, TypeOnly<old.Deferred<any>>>
+declare type current_as_old_for_Class_Deferred = requireAssignableTo<TypeOnly<current.Deferred<never>>, TypeOnly<old.Deferred<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -40,7 +40,7 @@ declare type current_as_old_for_Class_Deferred = requireAssignableTo<TypeOnly<cu
  * typeValidation.broken:
  * "Class_LazyPromise": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_LazyPromise = requireAssignableTo<TypeOnly<old.LazyPromise<any>>, TypeOnly<current.LazyPromise<any>>>
+declare type old_as_current_for_Class_LazyPromise = requireAssignableTo<TypeOnly<old.LazyPromise<never>>, TypeOnly<current.LazyPromise<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -49,7 +49,7 @@ declare type old_as_current_for_Class_LazyPromise = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Class_LazyPromise": {"backCompat": false}
  */
-declare type current_as_old_for_Class_LazyPromise = requireAssignableTo<TypeOnly<current.LazyPromise<any>>, TypeOnly<old.LazyPromise<any>>>
+declare type current_as_old_for_Class_LazyPromise = requireAssignableTo<TypeOnly<current.LazyPromise<never>>, TypeOnly<old.LazyPromise<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -58,7 +58,7 @@ declare type current_as_old_for_Class_LazyPromise = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Class_PromiseCache": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_PromiseCache = requireAssignableTo<TypeOnly<old.PromiseCache<any,any>>, TypeOnly<current.PromiseCache<any,any>>>
+declare type old_as_current_for_Class_PromiseCache = requireAssignableTo<TypeOnly<old.PromiseCache<never,never>>, TypeOnly<current.PromiseCache<never,never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -67,7 +67,7 @@ declare type old_as_current_for_Class_PromiseCache = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "Class_PromiseCache": {"backCompat": false}
  */
-declare type current_as_old_for_Class_PromiseCache = requireAssignableTo<TypeOnly<current.PromiseCache<any,any>>, TypeOnly<old.PromiseCache<any,any>>>
+declare type current_as_old_for_Class_PromiseCache = requireAssignableTo<TypeOnly<current.PromiseCache<never,never>>, TypeOnly<old.PromiseCache<never,never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.

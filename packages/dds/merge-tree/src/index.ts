@@ -42,10 +42,10 @@ export {
 	AttributionPolicy,
 	IMergeTreeAttributionOptions,
 	IMergeTreeOptions,
+	IMergeTreeOptionsInternal,
 	getSlideToSegoff,
 } from "./mergeTree.js";
 export {
-	IMergeTreeClientSequenceArgs,
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeDeltaOpArgs,
 	IMergeTreeMaintenanceCallbackArgs,
@@ -57,20 +57,13 @@ export {
 export {
 	BaseSegment,
 	CollaborationWindow,
-	debugMarkerToString,
 	IJSONMarkerSegment,
-	IMergeNodeCommon,
-	IMoveInfo,
-	IRemovalInfo,
+	segmentIsRemoved,
 	ISegment,
 	ISegmentAction,
 	Marker,
-	MergeNode,
 	reservedMarkerIdKey,
 	reservedMarkerSimpleTypeKey,
-	SegmentGroup,
-	toRemovalInfo,
-	ObliterateInfo,
 	ISegmentInternal,
 } from "./mergeTreeNodes.js";
 export {
@@ -88,6 +81,7 @@ export {
 	createObliterateRangeOp,
 } from "./opBuilder.js";
 export {
+	AdjustParams,
 	IJSONSegment,
 	IMarkerDef,
 	IMergeTreeAnnotateMsg,
@@ -97,6 +91,7 @@ export {
 	IMergeTreeInsertMsg,
 	IMergeTreeOp,
 	IMergeTreeRemoveMsg,
+	IMergeTreeAnnotateAdjustMsg,
 	IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
@@ -123,8 +118,11 @@ export {
 	reservedRangeLabelsKey,
 	reservedTileLabelsKey,
 } from "./referencePositions.js";
-export { SegmentGroupCollection } from "./segmentGroupCollection.js";
-export { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager.js";
+export {
+	PropsOrAdjust,
+	copyPropertiesAndManager,
+	PropertiesManager,
+} from "./segmentPropertiesManager.js";
 export {
 	InteriorSequencePlace,
 	Side,
@@ -142,3 +140,4 @@ export {
 	MergeTreeRevertibleDriver,
 	revertMergeTreeDeltaRevertibles,
 } from "./revertibles.js";
+export { OperationStamp } from "./stamps.js";

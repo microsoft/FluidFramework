@@ -65,6 +65,33 @@ declare type current_as_old_for_Enum_ConnectionState = requireAssignableTo<TypeO
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Function_createDetachedContainer": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_createDetachedContainer = requireAssignableTo<TypeOnly<typeof current.createDetachedContainer>, TypeOnly<typeof old.createDetachedContainer>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_loadExistingContainer": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_loadExistingContainer = requireAssignableTo<TypeOnly<typeof current.loadExistingContainer>, TypeOnly<typeof old.loadExistingContainer>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_rehydrateDetachedContainer": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_rehydrateDetachedContainer = requireAssignableTo<TypeOnly<typeof current.rehydrateDetachedContainer>, TypeOnly<typeof old.rehydrateDetachedContainer>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Function_resolveWithLocationRedirectionHandling": {"backCompat": false}
  */
 declare type current_as_old_for_Function_resolveWithLocationRedirectionHandling = requireAssignableTo<TypeOnly<typeof current.resolveWithLocationRedirectionHandling>, TypeOnly<typeof old.resolveWithLocationRedirectionHandling>>
@@ -128,6 +155,42 @@ declare type current_as_old_for_Interface_ICodeDetailsLoader = requireAssignable
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Interface_ICreateAndLoadContainerProps": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_ICreateAndLoadContainerProps = requireAssignableTo<TypeOnly<old.ICreateAndLoadContainerProps>, TypeOnly<current.ICreateAndLoadContainerProps>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ICreateAndLoadContainerProps": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_ICreateAndLoadContainerProps = requireAssignableTo<TypeOnly<current.ICreateAndLoadContainerProps>, TypeOnly<old.ICreateAndLoadContainerProps>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ICreateDetachedContainerProps": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_ICreateDetachedContainerProps = requireAssignableTo<TypeOnly<old.ICreateDetachedContainerProps>, TypeOnly<current.ICreateDetachedContainerProps>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ICreateDetachedContainerProps": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_ICreateDetachedContainerProps = requireAssignableTo<TypeOnly<current.ICreateDetachedContainerProps>, TypeOnly<old.ICreateDetachedContainerProps>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Interface_IFluidModuleWithDetails": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_IFluidModuleWithDetails = requireAssignableTo<TypeOnly<old.IFluidModuleWithDetails>, TypeOnly<current.IFluidModuleWithDetails>>
@@ -140,24 +203,6 @@ declare type old_as_current_for_Interface_IFluidModuleWithDetails = requireAssig
  * "Interface_IFluidModuleWithDetails": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_IFluidModuleWithDetails = requireAssignableTo<TypeOnly<current.IFluidModuleWithDetails>, TypeOnly<old.IFluidModuleWithDetails>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_ILoaderOptions": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_ILoaderOptions = requireAssignableTo<TypeOnly<old.ILoaderOptions>, TypeOnly<current.ILoaderOptions>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_ILoaderOptions": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_ILoaderOptions = requireAssignableTo<TypeOnly<current.ILoaderOptions>, TypeOnly<old.ILoaderOptions>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -194,6 +239,24 @@ declare type old_as_current_for_Interface_ILoaderServices = requireAssignableTo<
  * "Interface_ILoaderServices": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_ILoaderServices = requireAssignableTo<TypeOnly<current.ILoaderServices>, TypeOnly<old.ILoaderServices>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ILoadExistingContainerProps": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_ILoadExistingContainerProps = requireAssignableTo<TypeOnly<old.ILoadExistingContainerProps>, TypeOnly<current.ILoadExistingContainerProps>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ILoadExistingContainerProps": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_ILoadExistingContainerProps = requireAssignableTo<TypeOnly<current.ILoadExistingContainerProps>, TypeOnly<old.ILoadExistingContainerProps>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -248,6 +311,24 @@ declare type old_as_current_for_Interface_IQuorumSnapshot = requireAssignableTo<
  * "Interface_IQuorumSnapshot": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_IQuorumSnapshot = requireAssignableTo<TypeOnly<current.IQuorumSnapshot>, TypeOnly<old.IQuorumSnapshot>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IRehydrateDetachedContainerProps": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_IRehydrateDetachedContainerProps = requireAssignableTo<TypeOnly<old.IRehydrateDetachedContainerProps>, TypeOnly<current.IRehydrateDetachedContainerProps>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IRehydrateDetachedContainerProps": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_IRehydrateDetachedContainerProps = requireAssignableTo<TypeOnly<current.IRehydrateDetachedContainerProps>, TypeOnly<old.IRehydrateDetachedContainerProps>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

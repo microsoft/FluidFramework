@@ -40,7 +40,7 @@ import { v4 as uuid } from "uuid";
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public isLocalDataStore: boolean = true;
 	public packagePath: readonly string[] = undefined as any;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 	public options: Record<string | number, any> = {};
 	public clientId: string | undefined = uuid();
 	public clientDetails: IClientDetails;
@@ -94,11 +94,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 
 	off(event: string | symbol, listener: (...args: any[]) => void): this {
 		throw new Error("Method not implemented.");
-	}
-
-	// back-compat: to be removed in 2.0
-	public ensureNoDataModelChanges<T>(callback: () => T): T {
-		return callback();
 	}
 
 	public getQuorum(): IQuorumClients {

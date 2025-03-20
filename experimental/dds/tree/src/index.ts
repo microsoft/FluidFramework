@@ -145,6 +145,7 @@ export {
 	StashedLocalOpMetadata,
 } from './SharedTree.js';
 export { StringInterner } from './StringInterner.js';
+export { SharedTreeAttributes, SharedTreeFactoryType } from './publicContracts.js';
 
 /**
  * TODO:#61413: Publish test utilities from a separate test package
@@ -188,3 +189,5 @@ export {
 	SharedTreeShim,
 	SharedTreeShimFactory,
 } from './migration-shim/index.js';
+
+export { IRevertible, IUndoConsumer, SharedTreeUndoRedoHandler } from './UndoRedoHandler.js';

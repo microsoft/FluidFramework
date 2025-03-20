@@ -20,24 +20,6 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_ConnectionMode": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_ConnectionMode = requireAssignableTo<TypeOnly<old.ConnectionMode>, TypeOnly<current.ConnectionMode>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_ConnectionMode": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_ConnectionMode = requireAssignableTo<TypeOnly<current.ConnectionMode>, TypeOnly<old.ConnectionMode>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Enum_FileMode": {"forwardCompat": false}
  */
 declare type old_as_current_for_Enum_FileMode = requireAssignableTo<TypeOnly<old.FileMode>, TypeOnly<current.FileMode>>
@@ -56,6 +38,96 @@ declare type current_as_old_for_Enum_FileMode = requireAssignableTo<TypeOnly<cur
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Enum_MessageType": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Enum_MessageType = requireAssignableTo<TypeOnly<old.MessageType>, TypeOnly<current.MessageType>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Enum_MessageType": {"backCompat": false}
+ */
+declare type current_as_old_for_Enum_MessageType = requireAssignableTo<TypeOnly<current.MessageType>, TypeOnly<old.MessageType>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Enum_NackErrorType": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Enum_NackErrorType = requireAssignableTo<TypeOnly<old.NackErrorType>, TypeOnly<current.NackErrorType>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Enum_NackErrorType": {"backCompat": false}
+ */
+declare type current_as_old_for_Enum_NackErrorType = requireAssignableTo<TypeOnly<current.NackErrorType>, TypeOnly<old.NackErrorType>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Enum_ScopeType": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Enum_ScopeType = requireAssignableTo<TypeOnly<old.ScopeType>, TypeOnly<current.ScopeType>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Enum_ScopeType": {"backCompat": false}
+ */
+declare type current_as_old_for_Enum_ScopeType = requireAssignableTo<TypeOnly<current.ScopeType>, TypeOnly<old.ScopeType>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Enum_SignalType": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Enum_SignalType = requireAssignableTo<TypeOnly<old.SignalType>, TypeOnly<current.SignalType>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Enum_SignalType": {"backCompat": false}
+ */
+declare type current_as_old_for_Enum_SignalType = requireAssignableTo<TypeOnly<current.SignalType>, TypeOnly<old.SignalType>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Enum_TreeEntry": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Enum_TreeEntry = requireAssignableTo<TypeOnly<old.TreeEntry>, TypeOnly<current.TreeEntry>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Enum_TreeEntry": {"backCompat": false}
+ */
+declare type current_as_old_for_Enum_TreeEntry = requireAssignableTo<TypeOnly<current.TreeEntry>, TypeOnly<old.TreeEntry>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Interface_IActorClient": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_IActorClient = requireAssignableTo<TypeOnly<old.IActorClient>, TypeOnly<current.IActorClient>>
@@ -68,24 +140,6 @@ declare type old_as_current_for_Interface_IActorClient = requireAssignableTo<Typ
  * "Interface_IActorClient": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_IActorClient = requireAssignableTo<TypeOnly<current.IActorClient>, TypeOnly<old.IActorClient>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_IApprovedProposal": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_IApprovedProposal = requireAssignableTo<TypeOnly<old.IApprovedProposal>, TypeOnly<current.IApprovedProposal>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_IApprovedProposal": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_IApprovedProposal = requireAssignableTo<TypeOnly<current.IApprovedProposal>, TypeOnly<old.IApprovedProposal>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -230,24 +284,6 @@ declare type old_as_current_for_Interface_IClientJoin = requireAssignableTo<Type
  * "Interface_IClientJoin": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_IClientJoin = requireAssignableTo<TypeOnly<current.IClientJoin>, TypeOnly<old.IClientJoin>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_ICommittedProposal": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_ICommittedProposal = requireAssignableTo<TypeOnly<old.ICommittedProposal>, TypeOnly<current.ICommittedProposal>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_ICommittedProposal": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_ICommittedProposal = requireAssignableTo<TypeOnly<current.ICommittedProposal>, TypeOnly<old.ICommittedProposal>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -506,24 +542,6 @@ declare type current_as_old_for_Interface_IQuorumClientsEvents = requireAssignab
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_IQuorumEvents": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_IQuorumEvents = requireAssignableTo<TypeOnly<old.IQuorumEvents>, TypeOnly<current.IQuorumEvents>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_IQuorumEvents": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_IQuorumEvents = requireAssignableTo<TypeOnly<current.IQuorumEvents>, TypeOnly<old.IQuorumEvents>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_IQuorumProposals": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_IQuorumProposals = requireAssignableTo<TypeOnly<old.IQuorumProposals>, TypeOnly<current.IQuorumProposals>>
@@ -554,24 +572,6 @@ declare type old_as_current_for_Interface_IQuorumProposalsEvents = requireAssign
  * "Interface_IQuorumProposalsEvents": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_IQuorumProposalsEvents = requireAssignableTo<TypeOnly<current.IQuorumProposalsEvents>, TypeOnly<old.IQuorumProposalsEvents>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_ISentSignalMessage": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_ISentSignalMessage = requireAssignableTo<TypeOnly<old.ISentSignalMessage>, TypeOnly<current.ISentSignalMessage>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_ISentSignalMessage": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_ISentSignalMessage = requireAssignableTo<TypeOnly<current.ISentSignalMessage>, TypeOnly<old.ISentSignalMessage>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -632,24 +632,6 @@ declare type current_as_old_for_Interface_ISequencedDocumentMessage = requireAss
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_ISequencedDocumentMessageExperimental": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_ISequencedDocumentMessageExperimental = requireAssignableTo<TypeOnly<old.ISequencedDocumentMessageExperimental>, TypeOnly<current.ISequencedDocumentMessageExperimental>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_ISequencedDocumentMessageExperimental": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_ISequencedDocumentMessageExperimental = requireAssignableTo<TypeOnly<current.ISequencedDocumentMessageExperimental>, TypeOnly<old.ISequencedDocumentMessageExperimental>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_ISequencedDocumentSystemMessage": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_ISequencedDocumentSystemMessage = requireAssignableTo<TypeOnly<old.ISequencedDocumentSystemMessage>, TypeOnly<current.ISequencedDocumentSystemMessage>>
@@ -662,24 +644,6 @@ declare type old_as_current_for_Interface_ISequencedDocumentSystemMessage = requ
  * "Interface_ISequencedDocumentSystemMessage": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_ISequencedDocumentSystemMessage = requireAssignableTo<TypeOnly<current.ISequencedDocumentSystemMessage>, TypeOnly<old.ISequencedDocumentSystemMessage>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_ISequencedProposal": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_ISequencedProposal = requireAssignableTo<TypeOnly<old.ISequencedProposal>, TypeOnly<current.ISequencedProposal>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_ISequencedProposal": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_ISequencedProposal = requireAssignableTo<TypeOnly<current.ISequencedProposal>, TypeOnly<old.ISequencedProposal>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1046,24 +1010,6 @@ declare type current_as_old_for_Interface_ITree = requireAssignableTo<TypeOnly<c
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_ITreeEntry": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_ITreeEntry = requireAssignableTo<TypeOnly<old.ITreeEntry>, TypeOnly<current.ITreeEntry>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_ITreeEntry": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_ITreeEntry = requireAssignableTo<TypeOnly<current.ITreeEntry>, TypeOnly<old.ITreeEntry>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_IUploadedSummaryDetails": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_IUploadedSummaryDetails = requireAssignableTo<TypeOnly<old.IUploadedSummaryDetails>, TypeOnly<current.IUploadedSummaryDetails>>
@@ -1118,6 +1064,132 @@ declare type current_as_old_for_Interface_IVersion = requireAssignableTo<TypeOnl
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "TypeAlias_ConnectionMode": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_ConnectionMode = requireAssignableTo<TypeOnly<old.ConnectionMode>, TypeOnly<current.ConnectionMode>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_ConnectionMode": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_ConnectionMode = requireAssignableTo<TypeOnly<current.ConnectionMode>, TypeOnly<old.ConnectionMode>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_IApprovedProposal": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_IApprovedProposal = requireAssignableTo<TypeOnly<old.IApprovedProposal>, TypeOnly<current.IApprovedProposal>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_IApprovedProposal": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_IApprovedProposal = requireAssignableTo<TypeOnly<current.IApprovedProposal>, TypeOnly<old.IApprovedProposal>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_ICommittedProposal": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_ICommittedProposal = requireAssignableTo<TypeOnly<old.ICommittedProposal>, TypeOnly<current.ICommittedProposal>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_ICommittedProposal": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_ICommittedProposal = requireAssignableTo<TypeOnly<current.ICommittedProposal>, TypeOnly<old.ICommittedProposal>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_IQuorumEvents": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_IQuorumEvents = requireAssignableTo<TypeOnly<old.IQuorumEvents>, TypeOnly<current.IQuorumEvents>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_IQuorumEvents": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_IQuorumEvents = requireAssignableTo<TypeOnly<current.IQuorumEvents>, TypeOnly<old.IQuorumEvents>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_ISentSignalMessage": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_ISentSignalMessage = requireAssignableTo<TypeOnly<old.ISentSignalMessage>, TypeOnly<current.ISentSignalMessage>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_ISentSignalMessage": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_ISentSignalMessage = requireAssignableTo<TypeOnly<current.ISentSignalMessage>, TypeOnly<old.ISentSignalMessage>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_ISequencedDocumentMessageExperimental": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_ISequencedDocumentMessageExperimental = requireAssignableTo<TypeOnly<old.ISequencedDocumentMessageExperimental>, TypeOnly<current.ISequencedDocumentMessageExperimental>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_ISequencedDocumentMessageExperimental": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_ISequencedDocumentMessageExperimental = requireAssignableTo<TypeOnly<current.ISequencedDocumentMessageExperimental>, TypeOnly<old.ISequencedDocumentMessageExperimental>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_ISequencedProposal": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_ISequencedProposal = requireAssignableTo<TypeOnly<old.ISequencedProposal>, TypeOnly<current.ISequencedProposal>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_ISequencedProposal": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_ISequencedProposal = requireAssignableTo<TypeOnly<current.ISequencedProposal>, TypeOnly<old.ISequencedProposal>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "TypeAlias_IsoDate": {"forwardCompat": false}
  */
 declare type old_as_current_for_TypeAlias_IsoDate = requireAssignableTo<TypeOnly<old.IsoDate>, TypeOnly<current.IsoDate>>
@@ -1136,72 +1208,18 @@ declare type current_as_old_for_TypeAlias_IsoDate = requireAssignableTo<TypeOnly
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Enum_MessageType": {"forwardCompat": false}
+ * "TypeAlias_ITreeEntry": {"forwardCompat": false}
  */
-declare type old_as_current_for_Enum_MessageType = requireAssignableTo<TypeOnly<old.MessageType>, TypeOnly<current.MessageType>>
+declare type old_as_current_for_TypeAlias_ITreeEntry = requireAssignableTo<TypeOnly<old.ITreeEntry>, TypeOnly<current.ITreeEntry>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Enum_MessageType": {"backCompat": false}
+ * "TypeAlias_ITreeEntry": {"backCompat": false}
  */
-declare type current_as_old_for_Enum_MessageType = requireAssignableTo<TypeOnly<current.MessageType>, TypeOnly<old.MessageType>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Enum_NackErrorType": {"forwardCompat": false}
- */
-declare type old_as_current_for_Enum_NackErrorType = requireAssignableTo<TypeOnly<old.NackErrorType>, TypeOnly<current.NackErrorType>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Enum_NackErrorType": {"backCompat": false}
- */
-declare type current_as_old_for_Enum_NackErrorType = requireAssignableTo<TypeOnly<current.NackErrorType>, TypeOnly<old.NackErrorType>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Enum_ScopeType": {"forwardCompat": false}
- */
-declare type old_as_current_for_Enum_ScopeType = requireAssignableTo<TypeOnly<old.ScopeType>, TypeOnly<current.ScopeType>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Enum_ScopeType": {"backCompat": false}
- */
-declare type current_as_old_for_Enum_ScopeType = requireAssignableTo<TypeOnly<current.ScopeType>, TypeOnly<old.ScopeType>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Enum_SignalType": {"forwardCompat": false}
- */
-declare type old_as_current_for_Enum_SignalType = requireAssignableTo<TypeOnly<old.SignalType>, TypeOnly<current.SignalType>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Enum_SignalType": {"backCompat": false}
- */
-declare type current_as_old_for_Enum_SignalType = requireAssignableTo<TypeOnly<current.SignalType>, TypeOnly<old.SignalType>>
+declare type current_as_old_for_TypeAlias_ITreeEntry = requireAssignableTo<TypeOnly<current.ITreeEntry>, TypeOnly<old.ITreeEntry>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1274,21 +1292,3 @@ declare type old_as_current_for_TypeAlias_SummaryTypeNoHandle = requireAssignabl
  * "TypeAlias_SummaryTypeNoHandle": {"backCompat": false}
  */
 declare type current_as_old_for_TypeAlias_SummaryTypeNoHandle = requireAssignableTo<TypeOnly<current.SummaryTypeNoHandle>, TypeOnly<old.SummaryTypeNoHandle>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Enum_TreeEntry": {"forwardCompat": false}
- */
-declare type old_as_current_for_Enum_TreeEntry = requireAssignableTo<TypeOnly<old.TreeEntry>, TypeOnly<current.TreeEntry>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Enum_TreeEntry": {"backCompat": false}
- */
-declare type current_as_old_for_Enum_TreeEntry = requireAssignableTo<TypeOnly<current.TreeEntry>, TypeOnly<old.TreeEntry>>

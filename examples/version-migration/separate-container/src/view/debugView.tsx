@@ -3,54 +3,50 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	IMigratableModel,
-	IMigrationTool,
-	MigrationState,
-	// eslint-disable-next-line import/no-internal-modules
-} from "@fluid-example/migration-tools/internal";
+import type { IMigrator, MigrationState } from "@fluid-example/migration-tools/alpha";
 import React, { useEffect, useState } from "react";
 
+import type { IMigratableModel } from "../migratableModel.js";
 import type { IInventoryListAppModel } from "../modelInterfaces.js";
 
 export interface IDebugViewProps {
 	model: IInventoryListAppModel & IMigratableModel;
-	migrationTool: IMigrationTool;
+	migrator: IMigrator;
 	getUrlForContainerId?: (containerId: string) => string;
 }
 
 export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
-	const { model, migrationTool, getUrlForContainerId } = props;
+	const { model, migrator, getUrlForContainerId } = props;
 
 	const [disableControls, setDisableControls] = useState<boolean>(
-		migrationTool.migrationState !== "collaborating",
+		migrator.migrationState !== "collaborating",
 	);
 
 	useEffect(() => {
 		const migrationStateChangedHandler = (): void => {
-			setDisableControls(migrationTool.migrationState !== "collaborating");
+			setDisableControls(migrator.migrationState !== "collaborating");
 		};
-		migrationTool.events.on("stopping", migrationStateChangedHandler);
-		migrationTool.events.on("migrating", migrationStateChangedHandler);
-		migrationTool.events.on("migrated", migrationStateChangedHandler);
+		migrator.events.on("stopping", migrationStateChangedHandler);
+		migrator.events.on("migrating", migrationStateChangedHandler);
+		migrator.events.on("migrated", migrationStateChangedHandler);
 		migrationStateChangedHandler();
 		return () => {
-			migrationTool.events.off("stopping", migrationStateChangedHandler);
-			migrationTool.events.off("migrating", migrationStateChangedHandler);
-			migrationTool.events.off("migrated", migrationStateChangedHandler);
+			migrator.events.off("stopping", migrationStateChangedHandler);
+			migrator.events.off("migrating", migrationStateChangedHandler);
+			migrator.events.off("migrated", migrationStateChangedHandler);
 		};
-	}, [migrationTool]);
+	}, [migrator]);
 
 	return (
 		<div>
 			<h2 style={{ textDecoration: "underline" }}>Debug info</h2>
 			<MigrationStatusView
 				model={model}
-				migrationTool={migrationTool}
+				migrator={migrator}
 				getUrlForContainerId={getUrlForContainerId}
 			/>
 			<ControlsView
-				proposeVersion={migrationTool.proposeVersion}
+				proposeVersion={migrator.proposeVersion}
 				addItem={model.inventoryList.addItem}
 				disabled={disableControls}
 			/>
@@ -60,52 +56,53 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
 
 interface IMigrationStatusViewProps {
 	readonly model: IMigratableModel;
-	readonly migrationTool: IMigrationTool;
+	readonly migrator: IMigrator;
 	readonly getUrlForContainerId?: (containerId: string) => string;
 }
 
 const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (
 	props: IMigrationStatusViewProps,
 ) => {
-	const { model, migrationTool, getUrlForContainerId } = props;
+	const { model, migrator, getUrlForContainerId } = props;
 
 	const [migrationState, setMigrationState] = useState<MigrationState>(
-		migrationTool.migrationState,
+		migrator.migrationState,
 	);
 
 	useEffect(() => {
 		const migrationStateChangedHandler = (): void => {
-			setMigrationState(migrationTool.migrationState);
+			setMigrationState(migrator.migrationState);
 		};
-		migrationTool.events.on("stopping", migrationStateChangedHandler);
-		migrationTool.events.on("migrating", migrationStateChangedHandler);
-		migrationTool.events.on("migrated", migrationStateChangedHandler);
+		migrator.events.on("stopping", migrationStateChangedHandler);
+		migrator.events.on("migrating", migrationStateChangedHandler);
+		migrator.events.on("migrated", migrationStateChangedHandler);
 		migrationStateChangedHandler();
 		return () => {
-			migrationTool.events.off("stopping", migrationStateChangedHandler);
-			migrationTool.events.off("migrating", migrationStateChangedHandler);
-			migrationTool.events.off("migrated", migrationStateChangedHandler);
+			migrator.events.off("stopping", migrationStateChangedHandler);
+			migrator.events.off("migrating", migrationStateChangedHandler);
+			migrator.events.off("migrated", migrationStateChangedHandler);
 		};
-	}, [migrationTool]);
+	}, [migrator]);
 
 	const proposedVersionStatus =
-		migrationTool.proposedVersion === undefined
+		migrator.proposedVersion === undefined
 			? "No proposed version for migration yet"
-			: `Proposed version to migrate to: ${migrationTool.proposedVersion}`;
+			: `Proposed version to migrate to: ${migrator.proposedVersion}`;
 
 	const acceptedVersionStatus =
-		migrationTool.acceptedMigration === undefined
+		migrator.acceptedMigration === undefined
 			? "No accepted version for migration yet"
-			: `Accepted version to migrate to: ${migrationTool.acceptedMigration.newVersion} @ sequenceNumber: ${migrationTool.acceptedMigration.migrationSequenceNumber}`;
+			: `Accepted version to migrate to: ${migrator.acceptedMigration.newVersion} @ sequenceNumber: ${migrator.acceptedMigration.migrationSequenceNumber}`;
 
 	const migratedContainerStatus = ((): JSX.Element => {
-		if (migrationTool.newContainerId === undefined) {
+		const migrationResult = migrator.migrationResult as string;
+		if (migrationResult === undefined) {
 			return <>No migrated container yet</>;
 		}
 
 		const navToNewContainer = (): void => {
-			if (migrationTool.newContainerId !== undefined && getUrlForContainerId !== undefined) {
-				location.href = getUrlForContainerId(migrationTool.newContainerId);
+			if (migrationResult !== undefined && getUrlForContainerId !== undefined) {
+				location.href = getUrlForContainerId(migrationResult);
 				location.reload();
 			}
 		};
@@ -114,13 +111,10 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (
 		// Otherwise just use the string representation of the container id.
 		const migratedReference =
 			getUrlForContainerId === undefined ? (
-				migrationTool.newContainerId
+				migrationResult
 			) : (
-				<a
-					href={getUrlForContainerId(migrationTool.newContainerId)}
-					onClick={navToNewContainer}
-				>
-					{migrationTool.newContainerId}
+				<a href={getUrlForContainerId(migrationResult)} onClick={navToNewContainer}>
+					{migrationResult}
 				</a>
 			);
 

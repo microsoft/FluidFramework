@@ -4,7 +4,8 @@
  */
 
 /**
- * Primary entry-point to the Fluid Devtools.
+ * Used in conjunction with the Fluid Framework Developer Tools browser extension to allow visualization of
+ * and interaction with Fluid data.
  *
  * To initialize the Devtools alongside your application's {@link @fluidframework/fluid-static#IFluidContainer}, call
  * {@link initializeDevtools}.
@@ -12,8 +13,10 @@
  * The Devtools will automatically dispose of themselves upon Window unload, but if you would like to close them
  * earlier, call {@link IDevtools.dispose}.
  *
- * To enable visualization of Telemetry data, you may create a {@link @fluidframework/devtools-core#DevtoolsLogger} and
+ * To enable visualization of Telemetry data, you may create a {@link DevtoolsLogger} and
  * provide it during Devtools initialization.
+ *
+ * For more details and examples, see the {@link https://github.com/microsoft/FluidFramework/tree/main/packages/tools/devtools/devtools | package README}.
  *
  * @packageDocumentation
  */
@@ -31,6 +34,8 @@ import { isInternalFluidContainer } from "@fluidframework/fluid-static/internal"
 
 /**
  * Properties for configuring {@link IDevtools}.
+ *
+ * @sealed
  * @beta
  */
 export interface DevtoolsProps {
@@ -44,27 +49,29 @@ export interface DevtoolsProps {
 	 * This is provided to the Devtools instance strictly to enable communicating supported / desired functionality with
 	 * external listeners.
 	 */
-	logger?: IDevtoolsLogger;
+	readonly logger?: IDevtoolsLogger;
 
 	/**
 	 * (optional) List of Containers to initialize the devtools with.
 	 *
 	 * @remarks Additional Containers can be registered with the Devtools via {@link IDevtools.registerContainerDevtools}.
 	 */
-	initialContainers?: ContainerDevtoolsProps[];
+	readonly initialContainers?: ContainerDevtoolsProps[];
 
 	// TODO: Add ability for customers to specify custom data visualizer overrides
 }
 
 /**
  * Properties for configuring Devtools for an individual {@link @fluidframework/fluid-static#IFluidContainer}.
+ *
+ * @sealed
  * @beta
  */
 export interface ContainerDevtoolsProps extends HasContainerKey {
 	/**
 	 * The Container to register with the Devtools.
 	 */
-	container: IFluidContainer;
+	readonly container: IFluidContainer;
 
 	// TODO: Add ability for customers to specify custom data visualizer overrides
 }
@@ -81,6 +88,8 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
  * The lifetime of the associated singleton is bound by that of the Window (globalThis), and it will be automatically
  * disposed of on Window unload.
  * If you wish to dispose of it earlier, you may call its {@link @fluidframework/core-interfaces#IDisposable.dispose} method.
+ *
+ * @sealed
  * @beta
  */
 export interface IDevtools extends IDisposable {
@@ -142,6 +151,7 @@ class Devtools implements IDevtools {
  * Initializes the Devtools singleton and returns a handle to it.
  *
  * @see {@link @fluidframework/devtools-core#initializeDevtoolsBase}
+ *
  * @beta
  */
 export function initializeDevtools(props: DevtoolsProps): IDevtools {

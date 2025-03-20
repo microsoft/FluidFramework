@@ -4,11 +4,15 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { createEmitter } from "@fluid-internal/client-utils";
+import type { Listenable } from "@fluidframework/core-interfaces";
 
 import {
 	type Anchor,
 	AnchorSet,
+	type AnnouncedVisitor,
 	type CursorLocationType,
+	type DeltaDetachedNodeId,
 	type DeltaVisitor,
 	type DetachedField,
 	type FieldAnchor,
@@ -23,17 +27,17 @@ import {
 	type MapTree,
 	type PathRootPrefix,
 	type PlaceIndex,
-	type ProtoNodes,
 	type Range,
+	type TreeChunk,
 	TreeNavigationResult,
 	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchemaSubscription,
 	type UpPath,
 	type Value,
 	aboveRootPlaceholder,
+	combineVisitors,
 	deepCopyMapTree,
 } from "../../core/index.js";
-import { createEmitter } from "../../events/index.js";
 import {
 	assertNonNegativeSafeInteger,
 	assertValidIndex,
@@ -43,6 +47,7 @@ import {
 } from "../../util/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import { type CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
+import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/index.js";
 
 /** A `MapTree` with mutable fields */
 interface MutableMapTree extends MapTree {
@@ -72,8 +77,10 @@ export class ObjectForest implements IEditableForest {
 
 	// All cursors that are in the "Current" state. Must be empty when editing.
 	public readonly currentCursors: Set<Cursor> = new Set();
+	private readonly deltaVisitors: Set<() => AnnouncedVisitor> = new Set();
 
-	private readonly events = createEmitter<ForestEvents>();
+	readonly #events = createEmitter<ForestEvents>();
+	public readonly events: Listenable<ForestEvents> = this.#events;
 
 	readonly #roots: MutableMapTree;
 	public get roots(): MapTree {
@@ -98,15 +105,12 @@ export class ObjectForest implements IEditableForest {
 		return this.roots.fields.size === 0;
 	}
 
-	public on<K extends keyof ForestEvents>(
-		eventName: K,
-		listener: ForestEvents[K],
-	): () => void {
-		return this.events.on(eventName, listener);
-	}
-
 	public clone(_: TreeStoredSchemaSubscription, anchors: AnchorSet): ObjectForest {
 		return new ObjectForest(anchors, this.additionalAsserts, this.roots);
+	}
+
+	public chunkField(cursor: ITreeCursorSynchronous): TreeChunk {
+		return chunkFieldSingle(cursor, { idCompressor: undefined, policy: defaultChunkPolicy });
 	}
 
 	public forgetAnchor(anchor: Anchor): void {
@@ -133,7 +137,7 @@ export class ObjectForest implements IEditableForest {
 		 * This is required for each change since there may be app facing change event handlers which create cursors.
 		 */
 		const preEdit = (): void => {
-			this.events.emit("beforeChange");
+			this.#events.emit("beforeChange");
 			assert(
 				this.currentCursors.has(cursor),
 				0x995 /* missing visitor cursor while editing */,
@@ -165,16 +169,16 @@ export class ObjectForest implements IEditableForest {
 				preEdit();
 				this.forest.delete(detachedField);
 			}
-			public create(content: ProtoNodes, destination: FieldKey): void {
+			public create(content: readonly ITreeCursorSynchronous[], destination: FieldKey): void {
 				preEdit();
 				this.forest.add(content, destination);
-				this.forest.events.emit("afterRootFieldCreated", destination);
+				this.forest.#events.emit("afterRootFieldCreated", destination);
 			}
 			public attach(source: FieldKey, count: number, destination: PlaceIndex): void {
 				preEdit();
 				this.attachEdit(source, count, destination);
 			}
-			public detach(source: Range, destination: FieldKey): void {
+			public detach(source: Range, destination: FieldKey, id: DeltaDetachedNodeId): void {
 				preEdit();
 				this.detachEdit(source, destination);
 			}
@@ -237,6 +241,7 @@ export class ObjectForest implements IEditableForest {
 				newContentSource: FieldKey,
 				range: Range,
 				oldContentDestination: FieldKey,
+				oldContentId: DeltaDetachedNodeId,
 			): void {
 				preEdit();
 				assert(
@@ -260,9 +265,23 @@ export class ObjectForest implements IEditableForest {
 			}
 		}
 
-		const visitor = new Visitor(this);
-		this.activeVisitor = visitor;
-		return visitor;
+		const forestVisitor = new Visitor(this);
+		const announcedVisitors: AnnouncedVisitor[] = [];
+		this.deltaVisitors.forEach((getVisitor) => announcedVisitors.push(getVisitor()));
+		const combinedVisitor = combineVisitors(
+			[forestVisitor, ...announcedVisitors],
+			announcedVisitors,
+		);
+		this.activeVisitor = combinedVisitor;
+		return combinedVisitor;
+	}
+
+	public registerAnnouncedVisitor(visitor: () => AnnouncedVisitor): void {
+		this.deltaVisitors.add(visitor);
+	}
+
+	public deregisterAnnouncedVisitor(visitor: () => AnnouncedVisitor): void {
+		this.deltaVisitors.delete(visitor);
 	}
 
 	private nextRange = 0;
@@ -427,7 +446,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 	}
 	public getPath(prefix?: PathRootPrefix): UpPath {
 		assert(this.innerCursor !== undefined, 0x436 /* Cursor must be current to be used */);
-		return this.innerCursor.getPath(prefix) ?? fail("no path when at root");
+		return this.innerCursor.getPath(prefix) ?? fail(0xb27 /* no path when at root */);
 	}
 	public get fieldIndex(): number {
 		assert(this.innerCursor !== undefined, 0x437 /* Cursor must be current to be used */);

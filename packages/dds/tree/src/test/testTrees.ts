@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "assert";
+import { strict as assert, fail } from "node:assert";
 
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
@@ -46,6 +46,8 @@ import { jsonableTreesFromFieldCursor } from "./feature-libraries/chunked-forest
 import { fieldJsonCursor } from "./json/jsonCursor.js";
 import { brand } from "../util/index.js";
 import type { Partial } from "@sinclair/typebox";
+// eslint-disable-next-line import/no-internal-modules
+import { isLazy, type LazyItem } from "../simple-tree/flexList.js";
 
 interface TestSimpleTree {
 	readonly name: string;
@@ -53,7 +55,8 @@ interface TestSimpleTree {
 	/**
 	 * InsertableTreeFieldFromImplicitField<TSchema>
 	 */
-	readonly root: InsertableField<UnsafeUnknownSchema>;
+	root(): InsertableField<UnsafeUnknownSchema>;
+	readonly ambiguous: boolean;
 }
 
 interface TestTree {
@@ -63,16 +66,23 @@ interface TestTree {
 	readonly treeFactory: (idCompressor?: IIdCompressor) => JsonableTree[];
 }
 
-function testSimpleTree<TSchema extends ImplicitFieldSchema>(
+function testSimpleTree<const TSchema extends ImplicitFieldSchema>(
 	name: string,
 	schema: TSchema,
-	root: InsertableTreeFieldFromImplicitField<TSchema>,
+	root: LazyItem<InsertableTreeFieldFromImplicitField<TSchema>>,
+	ambiguous = false,
 ): TestSimpleTree {
-	return { name, schema, root: root as InsertableField<UnsafeUnknownSchema> };
+	const normalizedLazy = isLazy(root) ? root : () => root;
+	return {
+		name,
+		schema,
+		root: normalizedLazy as () => InsertableField<UnsafeUnknownSchema>,
+		ambiguous,
+	};
 }
 
 function convertSimpleTreeTest(data: TestSimpleTree): TestTree {
-	const cursor = cursorFromInsertable<UnsafeUnknownSchema>(data.schema, data.root);
+	const cursor = cursorFromInsertable<UnsafeUnknownSchema>(data.schema, data.root());
 	return test(
 		data.name,
 		toStoredSchema(data.schema),
@@ -115,8 +125,15 @@ export function treeContentFromTestTree(testData: TestTree): TreeStoredContent {
 
 const factory = new SchemaFactory("test");
 export class Minimal extends factory.object("minimal", {}) {}
+export class Minimal2 extends factory.object("minimal2", {}) {}
 export class HasMinimalValueField extends factory.object("hasMinimalValueField", {
 	field: Minimal,
+}) {}
+export class HasRenamedField extends factory.object("hasRenamedField", {
+	field: factory.required(Minimal, { key: "stored-name" }),
+}) {}
+export class HasAmbiguousField extends factory.object("hasAmbiguousField", {
+	field: [Minimal, Minimal2],
 }) {}
 export class HasNumericValueField extends factory.object("hasNumericValueField", {
 	field: factory.number,
@@ -186,6 +203,13 @@ export const testSimpleTrees: readonly TestSimpleTree[] = [
 	testSimpleTree("true boolean", factory.boolean, true),
 	testSimpleTree("false boolean", factory.boolean, false),
 	testSimpleTree("hasMinimalValueField", HasMinimalValueField, { field: {} }),
+	testSimpleTree("hasRenamedField", HasRenamedField, { field: {} }),
+	testSimpleTree(
+		"hasAmbiguousField",
+		HasAmbiguousField,
+		() => ({ field: new Minimal({}) }),
+		true,
+	),
 	testSimpleTree("hasNumericValueField", HasNumericValueField, { field: 5 }),
 	testSimpleTree("hasPolymorphicValueField", HasPolymorphicValueField, { field: 5 }),
 	testSimpleTree("hasOptionalField-empty", HasOptionalField, {}),

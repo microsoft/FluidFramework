@@ -203,9 +203,9 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 					rawValue: 1e9 * stats.arithmeticMean,
 					formattedValue: prettyNumber(1e9 * stats.arithmeticMean, 2),
 				},
-				"Margin of Error": {
+				"Margin of Error (ns)": {
 					rawValue: stats.marginOfError,
-					formattedValue: `±${prettyNumber(stats.marginOfError, 2)}%`,
+					formattedValue: `±${prettyNumber(1e9 * stats.marginOfError, 2)}`,
 				},
 				"Relative Margin of Error": {
 					rawValue: stats.marginOfErrorPercent,
@@ -214,6 +214,17 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 			},
 		};
 		return data;
+	}
+
+	public timeBatch(callback: () => void): boolean {
+		let counter = this.iterationsPerBatch;
+		const before = this.timer.now();
+		while (counter--) {
+			callback();
+		}
+		const after = this.timer.now();
+		const duration = this.timer.toSeconds(before, after);
+		return this.recordBatch(duration);
 	}
 }
 

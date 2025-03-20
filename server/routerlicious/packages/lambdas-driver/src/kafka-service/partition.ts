@@ -107,6 +107,13 @@ export class Partition extends EventEmitter {
 			return;
 		}
 
+		if (this.paused) {
+			Lumberjack.info("Partition is paused, skipping pushing message to queue", {
+				partitionId: this.id,
+				messageOffset: rawMessage.offset,
+			});
+			return;
+		}
 		this.q.push(rawMessage).catch((error) => {
 			Lumberjack.error("Error pushing raw message to queue in partition", undefined, error);
 		});
@@ -144,9 +151,12 @@ export class Partition extends EventEmitter {
 		this.removeAllListeners();
 	}
 
-	public pause(): void {
+	public pause(offset: number): void {
 		if (this.paused) {
-			Lumberjack.info(`Partition already paused, returning early.`, { partitionId: this.id });
+			Lumberjack.warning(`Partition already paused, returning early.`, {
+				partitionId: this.id,
+				offset,
+			});
 			return;
 		}
 		this.paused = true;
@@ -155,14 +165,14 @@ export class Partition extends EventEmitter {
 		this.q.remove(() => true); // flush all the messages in the queue since kafka consumer will resume from last successful offset
 
 		if (this.lambda?.pause) {
-			this.lambda.pause();
+			this.lambda.pause(offset);
 		}
-		Lumberjack.info(`Partition paused`, { partitionId: this.id });
+		Lumberjack.info(`Partition paused`, { partitionId: this.id, offset });
 	}
 
 	public resume(): void {
 		if (!this.paused) {
-			Lumberjack.info(`Partition already resumed, returning early.`, {
+			Lumberjack.warning(`Partition already resumed, returning early.`, {
 				partitionId: this.id,
 			});
 			return;
@@ -170,6 +180,11 @@ export class Partition extends EventEmitter {
 		this.paused = false;
 
 		this.q.resume();
+
+		if (this.lambda?.resume) {
+			// needed for documentLambdas
+			this.lambda.resume();
+		}
 		Lumberjack.info(`Partition resumed`, { partitionId: this.id });
 	}
 

@@ -19,12 +19,13 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { IAttributionCollection } from "./attributionCollection.js";
-import { UnassignedSequenceNumber } from "./constants.js";
+import { NonCollabClient } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
-import { ISegment } from "./mergeTreeNodes.js";
+import { ISegmentPrivate } from "./mergeTreeNodes.js";
 import type { IJSONSegment } from "./ops.js";
 import { PropertySet, matchProperties } from "./properties.js";
+import { assertInserted, isRemoved } from "./segmentInfos.js";
 import {
 	IJSONSegmentWithMergeInfo,
 	JsonSegmentSpecs,
@@ -35,6 +36,8 @@ import {
 	type VersionedMergeTreeChunk,
 } from "./snapshotChunks.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
+import type { OperationStamp } from "./stamps.js";
+import * as opstampUtils from "./stamps.js";
 
 export class SnapshotV1 {
 	// Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
@@ -189,6 +192,7 @@ export class SnapshotV1 {
 	extractSync(): JsonSegmentSpecs[] {
 		const mergeTree = this.mergeTree;
 		const minSeq = this.header.minSequenceNumber;
+		const minSeqStamp: OperationStamp = { seq: minSeq, clientId: NonCollabClient };
 
 		let originalSegments = 0;
 		let segmentsAfterCombine = 0;
@@ -208,7 +212,7 @@ export class SnapshotV1 {
 		};
 
 		// Helper to serialize the given `segment` and add it to the snapshot (if a segment is provided).
-		const pushSeg = (segment?: ISegment): void => {
+		const pushSeg = (segment?: ISegmentPrivate): void => {
 			if (segment) {
 				if (segment.properties !== undefined && Object.keys(segment.properties).length === 0) {
 					segment.properties = undefined;
@@ -221,8 +225,9 @@ export class SnapshotV1 {
 			}
 		};
 
-		let prev: ISegment | undefined;
-		const extractSegment = (segment: ISegment): boolean => {
+		let prev: ISegmentPrivate | undefined;
+		const extractSegment = (segment: ISegmentPrivate): boolean => {
+			assertInserted(segment);
 			// Elide segments that do not need to be included in the snapshot.  A segment may be elided if
 			// either condition is true:
 			//   a) The segment has not yet been ACKed.  We do not need to snapshot unACKed segments because
@@ -230,13 +235,10 @@ export class SnapshotV1 {
 			//   b) The segment was removed at or below the MSN.  Pending ops can no longer reference this
 			//      segment, and therefore we can discard it.
 			if (
-				segment.seq === UnassignedSequenceNumber ||
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				segment.removedSeq! <= minSeq ||
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				segment.movedSeq! <= minSeq
+				opstampUtils.isLocal(segment.insert) ||
+				(isRemoved(segment) && opstampUtils.lte(segment.removes[0], minSeqStamp))
 			) {
-				if (segment.seq !== UnassignedSequenceNumber) {
+				if (opstampUtils.isAcked(segment.insert)) {
 					originalSegments += 1;
 				}
 				return true;
@@ -248,11 +250,8 @@ export class SnapshotV1 {
 			// (seq, client, etc.)  This information is only needed if the segment is above the MSN (and doesn't
 			// have a pending remove.)
 			if (
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				segment.seq! <= minSeq && // Segment is below the MSN, and...
-				(segment.removedSeq === undefined || // .. Segment has not been removed, or...
-					segment.removedSeq === UnassignedSequenceNumber) && // .. Removal op to be delivered on reconnect
-				(segment.movedSeq === undefined || segment.movedSeq === UnassignedSequenceNumber)
+				opstampUtils.lte(segment.insert, minSeqStamp) && // Segment is below the MSN, and...
+				(!isRemoved(segment) || opstampUtils.isLocal(segment.removes[0]))
 			) {
 				// This segment is below the MSN, which means that future ops will not reference it.  Attempt to
 				// coalesce the new segment with the previous (if any).
@@ -286,39 +285,46 @@ export class SnapshotV1 {
 					json: segment.toJSONObject() as IJSONSegment,
 				};
 				// If the segment insertion is above the MSN, record the insertion merge info.
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				if (segment.seq! > minSeq) {
-					raw.seq = segment.seq;
-					raw.client = this.getLongClientId(segment.clientId);
+				if (opstampUtils.greaterThan(segment.insert, minSeqStamp)) {
+					raw.seq = segment.insert.seq;
+					raw.client = this.getLongClientId(segment.insert.clientId);
 				}
+
 				// We have already dispensed with removed segments below the MSN and removed segments with unassigned
 				// sequence numbers.  Any remaining removal info should be preserved.
-				if (segment.removedSeq !== undefined) {
+				if (isRemoved(segment) && segment.removes.some((r) => r.type === "setRemove")) {
+					const removes = segment.removes.filter((r) => r.type === "setRemove");
+					const firstRemove = removes[0];
 					assert(
-						segment.removedSeq !== UnassignedSequenceNumber && segment.removedSeq > minSeq,
+						opstampUtils.isAcked(firstRemove) &&
+							opstampUtils.greaterThan(firstRemove, minSeqStamp),
 						0x065 /* "On removal info preservation, segment has invalid removed sequence number!" */,
 					);
-					raw.removedSeq = segment.removedSeq;
+					// TODO:AB#32299 By not preserving sequence numbers other than the first move,
+					// We drop data here which will be necessary to allow perspectives of remote clients that
+					// don't include all of their ops. This should be remedied at some point.
+					raw.removedSeq = firstRemove.seq;
 
 					// back compat for when we split overlap and removed client
-					raw.removedClient =
-						segment.removedClientIds === undefined
-							? undefined
-							: this.getLongClientId(segment.removedClientIds[0]);
+					// This can be removed when we can safely assume no clients running Fluid packages <= 0.58 will ever
+					// load a document produced by a version beyond the removal. It is vestigial in the meantime.
+					raw.removedClient = this.getLongClientId(firstRemove.clientId);
 
-					raw.removedClientIds = segment.removedClientIds?.map((id) =>
-						this.getLongClientId(id),
-					);
+					raw.removedClientIds = removes.map(({ clientId }) => this.getLongClientId(clientId));
 				}
 
-				if (segment.movedSeq !== undefined) {
+				if (isRemoved(segment) && segment.removes.some((r) => r.type === "sliceRemove")) {
+					// In this format, we used the term "move" to refer to a sliceRemove/obliterate.
+					const moves = segment.removes.filter((r) => r.type === "sliceRemove");
+					const firstMove = moves[0];
 					assert(
-						segment.movedSeq !== UnassignedSequenceNumber && segment.movedSeq > minSeq,
+						opstampUtils.isAcked(firstMove) &&
+							opstampUtils.greaterThan(firstMove, minSeqStamp),
 						0x873 /* On move info preservation, segment has invalid moved sequence number! */,
 					);
-					raw.movedSeq = segment.movedSeq;
-					raw.movedSeqs = segment.movedSeqs;
-					raw.movedClientIds = segment.movedClientIds?.map((id) => this.getLongClientId(id));
+					raw.movedSeq = firstMove.seq;
+					raw.movedSeqs = moves.map(({ seq }) => seq);
+					raw.movedClientIds = moves.map(({ clientId }) => this.getLongClientId(clientId));
 				}
 
 				// Sanity check that we are preserving either the seq > minSeq or a (re)moved segment's info.

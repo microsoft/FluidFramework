@@ -10,6 +10,7 @@ import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator"
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
 import { createPropertyTrackingAndInsertionAttributionPolicyFactory } from "../attributionPolicy.js";
+import type { ISegmentPrivate } from "../mergeTreeNodes.js";
 
 import {
 	IConfigRange,
@@ -73,7 +74,7 @@ describeFuzz("MergeTree.Attribution", ({ testCount }) => {
 							[name: string]: AttributionKey | undefined;
 					  }
 					| undefined => {
-					const { segment, offset } = client.getContainingSegment(pos);
+					const { segment, offset } = client.getContainingSegment<ISegmentPrivate>(pos);
 					if (segment?.attribution === undefined || offset === undefined) {
 						return undefined;
 					}

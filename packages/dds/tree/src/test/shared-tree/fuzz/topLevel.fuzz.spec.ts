@@ -12,7 +12,7 @@ import {
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import { SharedTreeTestFactory, validateFuzzTreeConsistency } from "../../utils.js";
+import { validateFuzzTreeConsistency } from "../../utils.js";
 
 import { type EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
@@ -20,7 +20,8 @@ import {
 	createOnCreate,
 	deterministicIdCompressorFactory,
 	failureDirectory,
-	onCreate,
+	FuzzTestOnCreate,
+	SharedTreeFuzzTestFactory,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
 
@@ -61,6 +62,8 @@ describe("Fuzz - Top-Level", () => {
 		fieldSelection: { optional: 1, required: 1, sequence: 3, recurse: 3 },
 		schema: 0,
 		nodeConstraint: 3,
+		fork: 1,
+		merge: 1,
 	};
 	const generatorFactory = () => takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
 	/**
@@ -69,12 +72,12 @@ describe("Fuzz - Top-Level", () => {
 	 */
 	describe("Everything", () => {
 		const model: DDSFuzzModel<
-			SharedTreeTestFactory,
+			SharedTreeFuzzTestFactory,
 			Operation,
-			DDSFuzzTestState<SharedTreeTestFactory>
+			DDSFuzzTestState<SharedTreeFuzzTestFactory>
 		> = {
 			workloadName: "SharedTree",
-			factory: new SharedTreeTestFactory(createOnCreate(undefined)),
+			factory: new SharedTreeFuzzTestFactory(createOnCreate(undefined)),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: validateFuzzTreeConsistency,
@@ -104,12 +107,12 @@ describe("Fuzz - Top-Level", () => {
 
 	describe("Batch rebasing", () => {
 		const model: DDSFuzzModel<
-			SharedTreeTestFactory,
+			SharedTreeFuzzTestFactory,
 			Operation,
-			DDSFuzzTestState<SharedTreeTestFactory>
+			DDSFuzzTestState<SharedTreeFuzzTestFactory>
 		> = {
 			workloadName: "SharedTree rebasing",
-			factory: new SharedTreeTestFactory(onCreate),
+			factory: new SharedTreeFuzzTestFactory(FuzzTestOnCreate),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: validateFuzzTreeConsistency,

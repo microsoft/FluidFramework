@@ -15,23 +15,20 @@ parameters:
 - name: artifactBuildId
   type: string
 
-# URL for the "Dev feed" in our ADO project.
-# All Fluid packages will be resolved from here when installing the dependencies for telemetry generator and aria-logger.
-- name: devFeedUrl
-  type: string
-
-# URL for the "Office feed" in our ADO project.
-# Packages in the @microsoft scope will be resolved from here when installing the dependencies for telemetry generator and aria-logger.
-- name: officeFeedUrl
-  type: string
-
 # Path where the packages with perf tests will be installed.
-# The template will create it, setup an .npmrc file so Fluid packages can be resolved from our Dev Feed, and install aria-logger in it.
+# The template will create it, and install aria-logger in it.
 - name: testWorkspace
   type: string
 
 # Path to the folder where the test files artifact should be downloaded.
 - name: testFilesPath
+  type: string
+
+# Path where the telemetry-generator package should be installed.
+# It should be an empty directory so that it doesn't interfere with anything else.
+# The caller of this template will need to know this in order to point to the correct locations for the handlers,
+# which will be under <this path>/node_modules/@ff-internal/telemetry-generator/dist/handlers/.
+- name: pathForTelemetryGeneratorInstall
   type: string
 
 steps:
@@ -45,8 +42,6 @@ steps:
       Variables:
         artifactBuildId=${{ parameters.artifactBuildId }}
         artifactPipeline=${{ parameters.artifactPipeline }}
-        devFeedUrl=${{ parameters.devFeedUrl }}
-        officeFeedUrl=${{ parameters.officeFeedUrl }}
         testFilesPath=${{ parameters.testFilesPath }}
         testWorkspace=${{ parameters.testWorkspace }}
 
@@ -54,11 +49,11 @@ steps:
         SourceBranch=$(Build.SourceBranch)
       "
 
-- template: include-telemetry-setup.yml
+- template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
+
+- template: /tools/pipelines/templates/include-telemetry-setup.yml@self
   parameters:
-    devFeedUrl: ${{ parameters.devFeedUrl }}
-    officeFeedUrl: ${{ parameters.officeFeedUrl }}
-    isCheckoutNeeded: true
+    pathForTelemetryGeneratorInstall: ${{ parameters.pathForTelemetryGeneratorInstall }}
 
 # Download artifact with test files
 - task: DownloadPipelineArtifact@2
@@ -87,44 +82,11 @@ steps:
     script: |
       mkdir ${{ parameters.testWorkspace }}
 
-- task: Bash@3
-  displayName: Initialize npmrc
-  inputs:
-    targetType: 'inline'
-    workingDirectory: ${{ parameters.testWorkspace }}
-    script: |
-      set -eu -o pipefail
-
-      echo Initialize package
-      npm init --yes
-
-      echo Generating .npmrc
-      echo "registry=https://registry.npmjs.org" >> ./.npmrc
-      echo "always-auth=false" >> ./.npmrc
-
-      echo "@fluidframework:registry=${{ parameters.devFeedUrl }}" >> ./.npmrc
-      echo "@fluid-experimental:registry=${{ parameters.devFeedUrl }}" >> ./.npmrc
-      echo "@fluid-tools:registry=${{ parameters.devFeedUrl }}" >> ./.npmrc
-      echo "@fluid-internal:registry=${{ parameters.devFeedUrl }}" >> ./.npmrc
-      echo "@fluid-private:registry=${{ parameters.devFeedUrl }}" >> ./.npmrc
-      echo "@ff-internal:registry=${{ parameters.devFeedUrl }}" >> ./.npmrc
-      echo "@microsoft:registry=${{ parameters.officeFeedUrl }}" >> ./.npmrc
-      echo "always-auth=true" >> ./.npmrc
-      cat .npmrc
-
-# Auth to internal feed
-- task: npmAuthenticate@0
-  displayName: 'npm authenticate (internal feed)'
-  retryCountOnTaskFailure: 1
-  inputs:
-    workingFile: ${{ parameters.testWorkspace }}/.npmrc
-
 # Install aria-logger
-- task: Npm@1
+- task: Bash@3
   displayName: 'npm install aria logger'
-  retryCountOnTaskFailure: 1
+  retryCountOnTaskFailure: 4
   inputs:
-    workingDir: ${{ parameters.testWorkspace }}
-    command: 'custom'
-    customCommand: 'install @ff-internal/aria-logger'
-    customRegistry: 'useNpmrc'
+    workingDirectory: ${{ parameters.testWorkspace }}
+    targetType: 'inline'
+    script: 'npm install @ff-internal/aria-logger'

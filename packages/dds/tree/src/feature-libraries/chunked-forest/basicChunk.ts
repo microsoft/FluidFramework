@@ -15,11 +15,13 @@ import {
 	type TreeValue,
 	type UpPath,
 	type Value,
+	type ChunkedCursor,
+	type TreeChunk,
+	cursorChunk,
+	dummyRoot,
 } from "../../core/index.js";
 import { ReferenceCountedBase, fail } from "../../util/index.js";
 import { SynchronousCursor, prefixPath } from "../treeCursorUtils.js";
-
-import { type ChunkedCursor, type TreeChunk, cursorChunk, dummyRoot } from "./chunk.js";
 
 /**
  * General purpose one node chunk.
@@ -30,14 +32,22 @@ export class BasicChunk extends ReferenceCountedBase implements TreeChunk {
 	/**
 	 * Create a tree chunk with ref count 1.
 	 *
-	 * @param fields - provides exclusive deep ownership of this map to this object (which might mutate it in the future).
-	 * The caller must have already accounted for this reference to the children in this map (via `referenceAdded`),
-	 * and any edits to this must update child reference counts.
-	 * @param value - the value on this node, if any.
+	 * Caller must have already accounted for references via `fields` to the children in the fields map (via `referenceAdded`).
 	 */
 	public constructor(
 		public type: TreeNodeSchemaIdentifier,
+		/**
+		 * Fields of this node.
+		 * @remarks
+		 * This object has exclusive deep ownership of this map (which might mutate it in the future).
+		 * Any code editing this map must update child reference counts.
+		 *
+		 * Like with {@link MapTree}, fields with no nodes must be removed from the map.
+		 */
 		public fields: Map<FieldKey, TreeChunk[]>,
+		/**
+		 * The value on this node, if any.
+		 */
 		public value?: TreeValue,
 	) {
 		super();
@@ -74,7 +84,7 @@ export type SiblingsOrKey = readonly TreeChunk[] | readonly FieldKey[];
  * Cursor over basic chunks.
  *
  * @remarks This implementation is similar to StackCursor, however it is distinct because:
- * 1. The children are chunks, which might have a top level length that greater than 1.
+ * 1. The children are chunks, which might have a top level length that's greater than 1.
  * 2. It needs to be able to delegate to cursors of other chunk formats it does not natively understand (See TODO below).
  *
  * TODO:
@@ -224,7 +234,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		if (this.nestedCursor !== undefined) {
 			return (
 				this.nestedCursor.getPath(this.nestedPathPrefix(prefix)) ??
-				fail("nested cursors should not be root")
+				fail(0xaee /* nested cursors should not be root */)
 			);
 		}
 		assert(this.mode === CursorLocationType.Nodes, 0x524 /* must be in nodes mode */);
@@ -237,7 +247,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		// This uses index offset for actual node, when it should use offset for start of chunk.
 		// To compensate, subtract this.indexWithinChunk below.
 		const rootPath: UpPath =
-			this.getOffsetPath(0, prefix) ?? fail("nested cursors should not be root");
+			this.getOffsetPath(0, prefix) ?? fail(0xaef /* nested cursors should not be root */);
 		return {
 			indexOffset: rootPath.parentIndex - this.indexWithinChunk,
 			rootFieldOverride: rootPath.parentField,
@@ -473,8 +483,9 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 			this.mode === CursorLocationType.Fields,
 			0x52d /* can only navigate up from field when in field */,
 		);
-		this.siblings = this.siblingStack.pop() ?? fail("Unexpected siblingStack.length");
-		this.index = this.indexStack.pop() ?? fail("Unexpected indexStack.length");
+		this.siblings =
+			this.siblingStack.pop() ?? fail(0xaf0 /* Unexpected siblingStack.length */);
+		this.index = this.indexStack.pop() ?? fail(0xaf1 /* Unexpected indexStack.length */);
 	}
 
 	public exitNode(): void {
@@ -488,12 +499,14 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 			this.mode === CursorLocationType.Nodes,
 			0x52e /* can only navigate up from node when in node */,
 		);
-		this.siblings = this.siblingStack.pop() ?? fail("Unexpected siblingStack.length");
-		this.index = this.indexStack.pop() ?? fail("Unexpected indexStack.length");
+		this.siblings =
+			this.siblingStack.pop() ?? fail(0xaf2 /* Unexpected siblingStack.length */);
+		this.index = this.indexStack.pop() ?? fail(0xaf3 /* Unexpected indexStack.length */);
 		this.indexOfChunk =
-			this.indexOfChunkStack.pop() ?? fail("Unexpected indexOfChunkStack.length");
+			this.indexOfChunkStack.pop() ?? fail(0xaf4 /* Unexpected indexOfChunkStack.length */);
 		this.indexWithinChunk =
-			this.indexWithinChunkStack.pop() ?? fail("Unexpected indexWithinChunkStack.length");
+			this.indexWithinChunkStack.pop() ??
+			fail(0xaf5 /* Unexpected indexWithinChunkStack.length */);
 	}
 
 	private getNode(): BasicChunk {

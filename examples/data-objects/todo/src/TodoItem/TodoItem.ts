@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IValueChanged } from "@fluidframework/map/internal";
-import { SharedString } from "@fluidframework/sequence/internal";
+import { IValueChanged } from "@fluidframework/map/legacy";
+import { SharedString } from "@fluidframework/sequence/legacy";
 
 export interface ITodoItemInitialState {
 	startingText: string;

@@ -8,12 +8,12 @@ import { strict as assert } from "node:assert";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import {
-	SegmentGroup,
 	endpointPosAndSide,
 	type IMergeTreeOptions,
 	type InteriorSequencePlace,
 	type SequencePlace,
 } from "../index.js";
+import type { SegmentGroup } from "../mergeTreeNodes.js";
 import {
 	IMergeTreeDeltaOp,
 	type IMergeTreeInsertMsg,

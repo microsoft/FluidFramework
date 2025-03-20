@@ -1,0 +1,307 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# deploy-website pipeline
+# This pipeline builds the Fluid Framework documentation website and deploys it to Azure Static Web Apps.
+# The api-model artifacts are downloaded from the azure blob storage and used to generate the markdown files.
+# The site build artifacts are published as a pipeline artifact and then deployed to Azure Static Web Apps.
+
+name: $(Build.BuildId)
+
+parameters:
+  # override deployment condition to skip or force deployment
+  - name: deployOverride
+    displayName: Deployment Override (default = based on branch)
+    type: string
+    default: default
+    values:
+      - default
+      - skip
+      - force
+  # determines deployment token to be used for Azure Static Web Apps
+  - name: deployEnvironment
+    displayName: Static web app environment to deploy to
+    type: string
+    default: new
+    values:
+      - new
+      - old
+      - staging
+  # determines whether to retain guardian assets
+  - name: guardianAssetRetentionOverride
+    displayName: Guardian Asset Retention Override (default = based on branch)
+    type: string
+    default: default
+    values:
+      - default
+      - skip
+      - force
+  # determines whether to publish guardian baseline files
+  - name: publishGuardianBaselines
+    displayName: Publish Guardian Baseline Files
+    type: boolean
+    default: false
+
+variables:
+  - group: doc-versions
+  - group: storage-vars
+  - group: ado-feeds
+  - name: repoToTrigger
+    value: microsoft/FluidFramework
+  - name: shouldRetainGuardianAssets
+    value: ${{ eq(parameters.guardianAssetRetentionOverride, 'default') }}
+  - name: deploymentToken
+    ${{ if eq( parameters['deployEnvironment'], 'new' ) }}:
+      value: "$(FLUID_WEBSITE_TORUS_API_TOKEN)"
+    ${{ if eq( parameters['deployEnvironment'], 'old') }}:
+      value: "$(AZURE_STATIC_WEB_APPS_API_TOKEN)"
+    ${{ if eq(parameters['deployEnvironment'], 'staging') }}:
+      value: "$(AZURE_STATIC_WEB_APPS_STAGING_API_TOKEN)"
+  # skip injected CG detection as we manually trigger it in a parallel job
+  - name: skipComponentGovernanceDetection
+    value: true
+  - name: pnpmStorePath
+    value: $(Pipeline.Workspace)/.pnpm-store
+
+trigger:
+  branches:
+    include:
+    - main
+pr: none
+
+stages:
+- stage: build
+  displayName: 'Build website'
+  jobs:
+    - job: debug_variables
+      displayName: Show Variables
+      dependsOn: [] # run in parallel
+      pool: Small-eastus2
+      steps:
+        - checkout: none
+        - script: |
+            echo SourceBranchName: ${{ variables['Build.SourceBranchName'] }}
+            echo BASE_URL: $(BASE_URL)
+            echo RELEASE_VERSION: $(RELEASE_VERSION)
+            echo MAIN_BRANCH_VERSION: $(MAIN_BRANCH_VERSION)
+            echo N1_VERSION: $(N1_VERSION)
+            echo HUGO_PARAMS_APPINSIGHTKEY=$(HUGO_PARAMS_APPINSIGHTKEY)
+            echo repoToTrigger ${{ variables.repoToTrigger }}
+            echo shouldRetainGuardianAssets ${{ variables.shouldRetainGuardianAssets }}
+            echo publishGuardianBaselines ${{ variables.publishGuardianBaselines }}
+          displayName: Show Variables
+
+    - job: component_detection
+      displayName: Component Detection
+      dependsOn: [] # run in parallel
+      pool: Small-eastus2
+      steps:
+        - task: ComponentGovernanceComponentDetection@0
+          displayName: Component Detection
+          inputs:
+            sourceScanPath: docs
+            verbosity: Verbose
+            scanType: Register
+            alertWarningLevel: High
+
+    - job: build_site
+      displayName: 'Build website'
+      pool: Large-eastus2
+      steps:
+        - checkout: self
+          submodules: false
+          clean: true
+
+        - template: /tools/pipelines/templates/include-use-node-version.yml@self
+
+        - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+          parameters:
+            buildDirectory: $(Build.SourcesDirectory)/docs
+
+        - task: Bash@3
+          displayName: Install dependencies
+          retryCountOnTaskFailure: 4
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Build.SourcesDirectory)/docs
+            script: |
+              set -eu -o pipefail
+              pnpm i --frozen-lockfile
+
+        - task: Npm@1
+          displayName: npm run build
+          inputs:
+            command: 'custom'
+            workingDir: $(Build.SourcesDirectory)/docs
+            customCommand: 'run build'
+          env:
+            INSTRUMENTATION_KEY: $(INSTRUMENTATION_KEY)
+
+        # Run the tests
+        - task: Npm@1
+          displayName: Run tests
+          inputs:
+            command: 'custom'
+            workingDir: $(Build.SourcesDirectory)/docs
+            customCommand: 'run test'
+
+        - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
+          displayName: 'Generate SBOM'
+          inputs:
+            BuildDropPath: $(Build.SourcesDirectory)/docs/build
+            PackageName: 'fluidframework-docs'
+            PackageVersion: '$(Build.BuildId)'
+
+        - task: PublishPipelineArtifact@1
+          displayName: 'Publish site build artifact'
+          inputs:
+            targetPath: '$(Build.SourcesDirectory)/docs/build'
+            artifactName: 'fluidframework-docs'
+            publishLocation: 'pipeline'
+
+  # BEGIN Secure development tasks
+- stage: guardian
+  displayName: Guardian
+  dependsOn: [] # run in parallel
+  pool: Large-eastus2
+  jobs:
+    - job: guardian_tasks
+      displayName: Guardian tasks
+      steps:
+        - checkout: self
+          submodules: false
+          clean: true
+
+        - template: /tools/pipelines/templates/include-use-node-version.yml@self
+
+        - task: UseDotNet@2
+          displayName: 'Use .NET Core 3.x'
+          condition: succeededOrFailed()
+          inputs:
+            packageType: sdk
+            version: 3.x
+
+        - task: securedevelopmentteam.vss-secure-development-tools.build-task-eslint.ESLint@1
+          displayName: 'Run ESLint'
+          condition: succeededOrFailed()
+
+        - task: securedevelopmentteam.vss-secure-development-tools.build-task-publishsecurityanalysislogs.PublishSecurityAnalysisLogs@3
+          displayName: 'Publish Guardian Artifacts - All Tools'
+          condition: succeededOrFailed()
+          inputs:
+            ArtifactType: M365
+
+        - task: AssetRetention@5
+          displayName: Guardian Asset Retention
+          condition: and(succeeded(), eq(variables.shouldRetainGuardianAssets, true))
+          inputs:
+            ArrowServiceConnection: 'ff-internal-arrow-sc'
+            AssetGroupName: 'fluidframework_$(System.TeamProject)_$(Build.DefinitionName)'
+            AssetNumber: '$(Build.BuildId)'
+            IsShipped: false # based on value of arrow.releasedtoproduction variable
+            DropsToRetain: 'CodeAnalysisLogs'
+
+        - task: securedevelopmentteam.vss-secure-development-tools.build-task-postanalysis.PostAnalysis@2
+          displayName: 'Guardian Break'
+          condition: succeededOrFailed()
+          continueOnError: false
+          inputs:
+            GdnBreakPolicyMinSev: Warning
+            GdnBreakAllTools: true
+            GdnBreakBaselineFiles: '$(Build.SourcesDirectory)/docs/.gdnbaselines'
+            GdnBreakGdnToolESLint: true
+            GdnBreakGdnToolESLintSeverity: Warning
+            GdnBreakPolicy: M365
+            GdnBreakOutputBaselineFile: '$(Build.ArtifactStagingDirectory)/'
+
+        - task: PublishPipelineArtifact@1
+          displayName: 'Publish Baselines'
+          condition: eq('${{ parameters.publishGuardianBaselines }}', 'true')
+          inputs:
+            targetPath: '$(Build.ArtifactStagingDirectory)/.gdnbaselines'
+            artifactName: .gdn
+# END Secure development tasks
+
+# TODO: this redundantly builds the website.
+# This pipeline should be updated to publish a usable build artifact in the `build` stage,
+# and let subsequent stages download and work off of that.
+- stage: link_check
+  displayName: 'Website Link Check'
+  dependsOn: [] # run in parallel
+  pool: Large-eastus2
+  jobs:
+    - job: link_check
+      displayName: 'Website Link Check'
+      continueOnError: true
+      steps:
+        - checkout: self
+          submodules: false
+          clean: true
+
+        - template: /tools/pipelines/templates/include-use-node-version.yml@self
+
+        - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+          parameters:
+            buildDirectory: $(Build.SourcesDirectory)/docs
+
+        - task: Bash@3
+          displayName: Install dependencies
+          retryCountOnTaskFailure: 4
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Build.SourcesDirectory)/docs
+            script: |
+              set -eu -o pipefail
+              pnpm i --frozen-lockfile
+
+        - task: Npm@1
+          displayName: Build
+          inputs:
+            command: 'custom'
+            workingDir: $(Build.SourcesDirectory)/docs
+            customCommand: 'run build'
+
+        - task: Npm@1
+          displayName: Validate links
+          inputs:
+            command: 'custom'
+            workingDir: $(Build.SourcesDirectory)/docs
+            customCommand: 'run ci:check-links'
+
+- stage: deploy
+  displayName: 'Deploy website'
+  pool: Small-eastus2
+  dependsOn: ['build', 'guardian']
+  variables:
+    deployOverrideVar: ${{ parameters.deployOverride }}
+  condition: and(
+    not(eq(variables['deployOverrideVar'], 'skip')),
+    or(
+      eq(variables['deployOverrideVar'], 'default'),
+      eq(variables['deployOverrideVar'], 'force')
+    ))
+  jobs:
+    - job: deploy_site
+      displayName: 'Deploy website'
+      steps:
+        - checkout: self
+          submodules: false
+          clean: true
+
+        - task: DownloadPipelineArtifact@2
+          displayName: 'Copy fluidframework-docs to "build" folder'
+          inputs:
+            source: current
+            artifact: fluidframework-docs
+            path: '$(Build.SourcesDirectory)/docs/build'
+
+        - task: AzureStaticWebApp@0
+          displayName: 'Deploy website to ASWA'
+          inputs:
+            skip_app_build: true # site was built in previous stage
+            skip_api_build: true # api is written in js, no build needed
+            cwd: $(Build.SourcesDirectory)
+            app_location: 'docs/build'
+            api_location: 'docs/api'
+            output_location: ''
+            azure_static_web_apps_api_token: '${{ variables.deploymentToken }}'

@@ -112,7 +112,7 @@ async function computeSummaryTreeEntries(
 		);
 		return treeEntries;
 	} catch (error) {
-		Lumberjack.error("Failed to compute low-io summary tree entries.", error);
+		Lumberjack.error("Failed to compute low-io summary tree entries.", undefined, error);
 		throw error;
 	}
 }
@@ -153,7 +153,7 @@ async function writeSummaryTree(
 		writeSummaryTreeMetric.success("Successfully wrote summary tree as Git tree.");
 		return gitTree;
 	} catch (error) {
-		Lumberjack.error("Failed to write summary tree as Git tree.", error);
+		Lumberjack.error("Failed to write summary tree as Git tree.", undefined, error);
 		throw error;
 	}
 }
@@ -327,7 +327,8 @@ export async function writeContainerSummary(
 				id: treeId,
 				entries: fullSummaryTree.treeEntries,
 				// We don't store sequence numbers in git
-				sequenceNumber: undefined,
+				// This must be typecast to number currently because Gitrest is out of spec with the type definition.
+				sequenceNumber: undefined as unknown as number,
 			},
 		],
 		blobs: fullSummaryTree.blobs,

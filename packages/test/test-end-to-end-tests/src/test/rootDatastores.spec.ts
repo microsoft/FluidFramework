@@ -18,7 +18,7 @@ import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 	summarizeNow,
-	waitForContainerConnection,
+	timeoutAwait,
 } from "@fluidframework/test-utils/internal";
 
 import { TestPersistedCache } from "../testPersistedCache.js";
@@ -44,12 +44,12 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 	let provider: ITestObjectProvider;
 	const testPersistedCache = new TestPersistedCache();
 	beforeEach("getTestObjectProvider", async () => {
-		provider = getTestObjectProvider({ persistedCache: testPersistedCache });
+		provider = getTestObjectProvider({
+			persistedCache: testPersistedCache,
+			syncSummarizer: true,
+		});
 		container1 = await provider.makeTestContainer(testContainerConfig);
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
-		await waitForContainerConnection(container1);
-
-		await provider.ensureSynchronized();
 
 		container2 = await provider.loadTestContainer(testContainerConfig);
 		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
@@ -60,9 +60,6 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 
 	const runtimeOf = (dataObject: ITestFluidObject): IContainerRuntime =>
 		dataObject.context.containerRuntime as IContainerRuntime;
-
-	const createDataStoreWithProps = async (dataObject: ITestFluidObject, id: string) =>
-		runtimeOf(dataObject)._createDataStoreWithProps(packageName, {}, id);
 
 	/**
 	 * Gets an aliased data store with the given id. Throws an error if the data store cannot be retrieved.
@@ -77,14 +74,6 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 		}
 		return dataStore;
 	}
-
-	describe("Legacy APIs", () => {
-		it("Datastore creation with legacy API returns datastore which can be aliased", async () => {
-			const ds = await createDataStoreWithProps(dataObject1, "1");
-			const aliasResult = await ds.trySetAlias("2");
-			assert.equal(aliasResult, "Success");
-		});
-	});
 
 	describe("Aliasing", () => {
 		const alias = "alias";
@@ -281,12 +270,11 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 			assert.equal(aliasResult1, "Success");
 			assert.equal(aliasResult2, "Conflict");
 
-			await provider.ensureSynchronized();
 			const container3 = await provider.loadTestContainer(testContainerConfig);
 			const dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 
 			await provider.ensureSynchronized();
-			assert.ok(await getAliasedDataStoreEntryPoint(dataObject3, alias));
+			assert.ok(await timeoutAwait(getAliasedDataStoreEntryPoint(dataObject3, alias)));
 		});
 
 		it("getAliasedDataStoreEntryPoint only returns aliased data stores", async function () {
@@ -345,11 +333,10 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 				assert.equal(aliasResult1, "Success");
 				assert.equal(aliasResult2, "Conflict");
 
-				await provider.ensureSynchronized();
-
 				const { summarizer } = await createSummarizer(provider, container1, {
 					fluidDataObjectType: DataObjectFactoryType.Test,
 				});
+				await provider.ensureSynchronized();
 				const { summaryVersion } = await summarizeNow(summarizer);
 
 				// For the ODSP driver, we need to clear the cache to ensure we get the latest snapshot
@@ -366,7 +353,7 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 				const aliasResult3 = await ds3.trySetAlias(alias);
 
 				assert.equal(aliasResult3, "Conflict");
-				assert.ok(await getAliasedDataStoreEntryPoint(dataObject3, alias));
+				assert.ok(await timeoutAwait(getAliasedDataStoreEntryPoint(dataObject3, alias)));
 			},
 		);
 	});

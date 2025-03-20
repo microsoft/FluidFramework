@@ -4,6 +4,7 @@
  */
 
 export {
+	isIStorageRoutingId,
 	Constants,
 	GitObjectType,
 	IExternalWriterConfig,
@@ -11,6 +12,7 @@ export {
 	IFileSystemManagerFactories,
 	IFileSystemManagerFactory,
 	IFileSystemManagerParams,
+	IFileSystemMakeDirectoryOptions,
 	IFileSystemPromises,
 	IRepoManagerParams,
 	IRepositoryManager,
@@ -19,7 +21,12 @@ export {
 	IStorageRoutingId,
 } from "./definitions";
 export { FsPromisesBase } from "./fileSystemBase";
-export { SystemErrors } from "./fileSystemHelper";
+export {
+	SystemErrors,
+	isFilesystemError,
+	throwFileSystemErrorAsNetworkError,
+	filepathToString,
+} from "./fileSystemHelper";
 export { MemFsManagerFactory, NodeFsManagerFactory, RedisFsManagerFactory } from "./filesystems";
 export {
 	BaseGitRestTelemetryProperties,

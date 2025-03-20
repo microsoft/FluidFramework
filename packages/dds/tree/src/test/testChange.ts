@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "assert";
+import { strict as assert, fail } from "node:assert";
 
 import { type IJsonCodec, makeCodecFamily } from "../codec/index.js";
 import {
@@ -193,7 +193,7 @@ function toDelta({ change }: TaggedChange<TestChange>): DeltaFieldMap {
 				// We represent the intentions as a list if node offsets in some imaginary field "testIntentions".
 				// This is purely for the sake of testing.
 				brand("testIntentions"),
-				{ local: change.intentions.map((i) => ({ count: i })) },
+				change.intentions.map((i) => ({ count: i })),
 			],
 		]);
 	}
@@ -337,7 +337,7 @@ export function asDelta(intentions: number[]): DeltaRoot {
 	return intentions.length === 0
 		? emptyDelta
 		: {
-				fields: new Map([[rootKey, { local: intentions.map((i) => ({ count: i })) }]]),
+				fields: new Map([[rootKey, intentions.map((i) => ({ count: i }))]]),
 			};
 }
 

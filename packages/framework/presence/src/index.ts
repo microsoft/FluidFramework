@@ -4,26 +4,12 @@
  */
 
 /**
- * Experimental package for client presence within a connected session.
+ * Package for client presence within a connected session.
  *
  * See {@link https://github.com/microsoft/FluidFramework/tree/main/packages/framework/presence#readme | README.md } for an overview of the package.
  *
  * @packageDocumentation
  */
-
-// If desired these are the "required" types from core-interfaces.
-// export type {
-// 	InternalUtilityTypes,
-// 	JsonDeserialized,
-// 	JsonSerializable,
-// } from "@fluid-experimental/presence/internal/core-interfaces";
-
-// If desired these are the "required" types from events.
-// export type {
-// 	Events,
-// 	IsEvent,
-// 	ISubscribable,
-// } from "@fluid-experimental/presence/internal/events";
 
 export type { ClientConnectionId } from "./baseTypes.js";
 
@@ -32,18 +18,23 @@ export type {
 	PresenceNotificationsSchema,
 	PresenceStates,
 	PresenceStatesEntries,
-	PresenceStatesEntry,
-	PresenceStatesMethods,
 	PresenceStatesSchema,
 	PresenceWorkspaceAddress,
+	PresenceWorkspaceEntry,
 } from "./types.js";
 
-export type {
-	ClientSessionId,
-	IPresence,
-	ISessionClient,
-	PresenceEvents,
+export {
+	type ClientSessionId,
+	type IPresence,
+	type ISessionClient,
+	type PresenceEvents,
+	SessionClientStatus,
 } from "./presence.js";
+
+export type {
+	BroadcastControls,
+	BroadcastControlSettings,
+} from "./broadcastControls.js";
 
 export { acquirePresence } from "./experimentalAccess.js";
 
@@ -53,7 +44,6 @@ export {
 	ExperimentalPresenceManager,
 } from "./datastorePresenceManagerFactory.js";
 
-export type { LatestValueControls } from "./latestValueControls.js";
 export {
 	LatestMap,
 	type LatestMapItemRemovedClientData,
@@ -76,7 +66,7 @@ export type {
 
 export {
 	type NotificationEmitter,
-	type NotificationSubscribable,
+	type NotificationListenable,
 	type NotificationSubscriptions,
 	Notifications,
 	type NotificationsManager,

@@ -5,15 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { LocalClientId, UniversalSequenceNumber } from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { MergeBlock, ISegmentLeaf, MaxNodesInBlock } from "../mergeTreeNodes.js";
+import { MergeBlock, MaxNodesInBlock } from "../mergeTreeNodes.js";
 import { TextSegment } from "../textSegment.js";
-
-import { insertText } from "./testUtils.js";
-
-const localClientId = 17;
 
 describe("MergeTree walks", () => {
 	let mergeTree: MergeTree;
@@ -23,23 +18,19 @@ describe("MergeTree walks", () => {
 		mergeTree.insertSegments(
 			0,
 			[TextSegment.make(initialText)],
-			UniversalSequenceNumber,
-			LocalClientId,
-			UniversalSequenceNumber,
+			mergeTree.localPerspective,
+			mergeTree.collabWindow.mintNextLocalOperationStamp(),
 			undefined,
 		);
 		for (let i = 1; i < MaxNodesInBlock * MaxNodesInBlock; i++) {
 			const text = i.toString();
-			insertText({
-				mergeTree,
-				pos: mergeTree.getLength(UniversalSequenceNumber, localClientId),
-				refSeq: UniversalSequenceNumber,
-				clientId: localClientId,
-				seq: UniversalSequenceNumber,
-				text,
-				props: undefined,
-				opArgs: undefined,
-			});
+			mergeTree.insertSegments(
+				mergeTree.getLength(mergeTree.localPerspective),
+				[TextSegment.make(text)],
+				mergeTree.localPerspective,
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
+				undefined,
+			);
 			initialText += text;
 		}
 	});
@@ -58,9 +49,9 @@ describe("MergeTree walks", () => {
 		it("visits only descendants", () => {
 			for (const block of getAllDescendantBlocks(mergeTree.root)) {
 				let walkedAnySegments = false;
-				walkAllChildSegments(block, (seg: ISegmentLeaf) => {
+				walkAllChildSegments(block, (seg) => {
 					walkedAnySegments = true;
-					let current = seg.parent;
+					let current: MergeBlock | undefined = seg.parent;
 					while (current !== block && current !== undefined) {
 						current = current.parent;
 					}

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Package, updatePackageJsonFile } from "@fluidframework/build-tools";
+import { updatePackageJsonFile } from "@fluid-tools/build-infrastructure";
+import { Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
-
 import { PackageCommand } from "../BasePackageCommand.js";
 import type { PackageSelectionDefault } from "../flags.js";
 import {
@@ -19,7 +19,8 @@ import {
 export default class PrepareTypeTestsCommand extends PackageCommand<
 	typeof PrepareTypeTestsCommand
 > {
-	static readonly description = `Updates configuration for type tests in package.json files. If the previous version changes after running preparation, then npm install must be run before building.
+	static readonly description =
+		`Updates configuration for type tests in package.json files. If the previous version changes after running preparation, then npm install must be run before building.
 
     Optionally, any type tests that are marked "broken" in package.json can be reset using the --reset flag during configuration. This is useful when resetting the type tests to a clean state, such as after a release.
 

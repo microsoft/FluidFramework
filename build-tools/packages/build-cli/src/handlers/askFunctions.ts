@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import inquirer from "inquirer";
+import { type VersionBumpType, bumpVersionScheme } from "@fluid-tools/version-tools";
+import { rawlist } from "@inquirer/prompts";
 import { Machine } from "jssm";
-
-import { bumpVersionScheme } from "@fluid-tools/version-tools";
 
 import { getDefaultBumpTypeForBranch } from "../library/index.js";
 import { CommandLogger } from "../logging.js";
@@ -35,36 +34,28 @@ export const askForReleaseType: StateHandlerFunction = async (
 
 	const { bumpType: inputBumpType, context, releaseVersion } = data;
 
-	const currentBranch = await context.gitRepo.getCurrentBranchName();
+	const gitRepo = await context.getGitRepository();
+	const currentBranch = await gitRepo.getCurrentBranchName();
 	const currentVersion = releaseVersion;
 	const bumpedMajor = bumpVersionScheme(currentVersion, "major");
 	const bumpedMinor = bumpVersionScheme(currentVersion, "minor");
 	const bumpedPatch = bumpVersionScheme(currentVersion, "patch");
 
-	const questions: inquirer.Question[] = [];
-
 	// If an bumpType was set in the handler data, use it. Otherwise set it as the default for the branch. If there's
 	// no default for the branch, ask the user.
 	let bumpType = inputBumpType ?? getDefaultBumpTypeForBranch(currentBranch);
 	if (inputBumpType === undefined) {
-		const choices = [
-			{ value: "major", name: `major (${currentVersion} => ${bumpedMajor.version})` },
-			{ value: "minor", name: `minor (${currentVersion} => ${bumpedMinor.version})` },
-			{ value: "patch", name: `patch  (${currentVersion} => ${bumpedPatch.version})` },
-		];
-		const askBumpType: inquirer.ListQuestion = {
-			type: "list",
-			name: "bumpType",
-			choices,
-			default: bumpType,
+		const selectedBumpType: VersionBumpType = await rawlist({
+			choices: [
+				{ value: "major", name: `major (${currentVersion} => ${bumpedMajor.version})` },
+				{ value: "minor", name: `minor (${currentVersion} => ${bumpedMinor.version})` },
+				{ value: "patch", name: `patch  (${currentVersion} => ${bumpedPatch.version})` },
+			],
 			message: `The current branch is '${currentBranch}'. The default bump type for that branch is '${bumpType}', but you can change it now if needed.`,
-		};
-		questions.push(askBumpType);
-		const answers = await inquirer.prompt(questions);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		bumpType = answers.bumpType;
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, require-atomic-updates
-		data.bumpType = answers.bumpType;
+		});
+		bumpType = selectedBumpType;
+		// eslint-disable-next-line require-atomic-updates
+		data.bumpType = selectedBumpType;
 	}
 
 	if (bumpType === undefined) {

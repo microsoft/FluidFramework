@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	EmptyKey,
 	type FieldKey,
+	type NormalizedUpPath,
 	type UpPath,
 	moveToDetachedField,
 	rootFieldKey,
@@ -23,7 +24,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeStoredContent } from "../shared-tree/schematizeTree.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../simple-tree/toFlexSchema.js";
+import { toStoredSchema } from "../simple-tree/toStoredSchema.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 
@@ -212,9 +213,10 @@ export function readDeepCursorTree(tree: CheckoutFlexTreeView): {
  * Path to linked list node at provided depth.
  * Depth 1 points to the root node.
  */
-export function deepPath(depth: number): UpPath {
+export function deepPath(depth: number): NormalizedUpPath {
 	assert(depth > 0);
-	let path: UpPath = {
+	let path: NormalizedUpPath = {
+		detachedNodeId: undefined,
 		parent: undefined,
 		parentField: rootFieldKey,
 		parentIndex: 0,

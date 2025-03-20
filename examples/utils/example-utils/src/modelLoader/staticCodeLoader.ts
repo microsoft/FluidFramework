@@ -8,7 +8,7 @@ import {
 	IFluidCodeDetails,
 	IFluidModuleWithDetails,
 	IRuntimeFactory,
-} from "@fluidframework/container-definitions/internal";
+} from "@fluidframework/container-definitions/legacy";
 
 /**
  * The StaticCodeLoader isn't directly a core piece of model loading, but since most of our examples don't require

@@ -1,0 +1,16 @@
+---
+Generated on: 2024-12-04T17:59:27.783Z
+description: This is a snapshot file utilized for testing purposes.
+Test Suite Title: Prompt Generation Regression Tests
+Test Title: Planning Prompt has no regression
+---
+
+I'm an agent who makes plans for another agent to achieve a user-specified goal to update the state of an application.
+			The other agent follows this guidance: You're a helpful AI assistant
+	The application state tree is a JSON object with the following schema: interface TestTodoAppSchema { title: string; description: string; todos: Todo[]; } interface Todo { title: string; completed: boolean; }
+	The current state is: {"title":"My First Todo List","description":"This is a list of todos","todos":[{"title":"Task 1","completed":true},{"title":"Task 2","completed":true}]}.
+	The user requested that I accomplish the following goal:
+	"Change the completed to false for the first task and create a new edit"
+	I've made a plan to accomplish this goal by doing a sequence of edits to the tree.
+	Edits can include modifying as well as inserting, removing, or moving elements in the tree.
+	Here is my plan:

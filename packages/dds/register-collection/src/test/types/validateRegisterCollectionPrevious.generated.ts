@@ -22,7 +22,7 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Class_ConsensusRegisterCollectionClass": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_ConsensusRegisterCollectionClass = requireAssignableTo<TypeOnly<old.ConsensusRegisterCollectionClass<any>>, TypeOnly<current.ConsensusRegisterCollectionClass<any>>>
+declare type old_as_current_for_Class_ConsensusRegisterCollectionClass = requireAssignableTo<TypeOnly<old.ConsensusRegisterCollectionClass<never>>, TypeOnly<current.ConsensusRegisterCollectionClass<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -31,7 +31,7 @@ declare type old_as_current_for_Class_ConsensusRegisterCollectionClass = require
  * typeValidation.broken:
  * "Class_ConsensusRegisterCollectionClass": {"backCompat": false}
  */
-declare type current_as_old_for_Class_ConsensusRegisterCollectionClass = requireAssignableTo<TypeOnly<current.ConsensusRegisterCollectionClass<any>>, TypeOnly<old.ConsensusRegisterCollectionClass<any>>>
+declare type current_as_old_for_Class_ConsensusRegisterCollectionClass = requireAssignableTo<TypeOnly<current.ConsensusRegisterCollectionClass<never>>, TypeOnly<old.ConsensusRegisterCollectionClass<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -130,7 +130,7 @@ declare type current_as_old_for_Interface_IConsensusRegisterCollectionEvents = r
  * typeValidation.broken:
  * "TypeAlias_ConsensusRegisterCollection": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_ConsensusRegisterCollection = requireAssignableTo<TypeOnly<old.ConsensusRegisterCollection<any>>, TypeOnly<current.ConsensusRegisterCollection<any>>>
+declare type old_as_current_for_TypeAlias_ConsensusRegisterCollection = requireAssignableTo<TypeOnly<old.ConsensusRegisterCollection<never>>, TypeOnly<current.ConsensusRegisterCollection<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -139,7 +139,7 @@ declare type old_as_current_for_TypeAlias_ConsensusRegisterCollection = requireA
  * typeValidation.broken:
  * "TypeAlias_ConsensusRegisterCollection": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_ConsensusRegisterCollection = requireAssignableTo<TypeOnly<current.ConsensusRegisterCollection<any>>, TypeOnly<old.ConsensusRegisterCollection<any>>>
+declare type current_as_old_for_TypeAlias_ConsensusRegisterCollection = requireAssignableTo<TypeOnly<current.ConsensusRegisterCollection<never>>, TypeOnly<old.ConsensusRegisterCollection<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

@@ -10,7 +10,7 @@ import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
-	IContainerRuntimeOptions,
+	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
@@ -123,7 +123,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 	let dataObject2map2: ISharedMap;
 
 	async function setupContainers(
-		runtimeOptions?: IContainerRuntimeOptions,
+		runtimeOptions?: IContainerRuntimeOptionsInternal,
 		disableOfflineLoad = false,
 	) {
 		if (disableOfflineLoad) {
@@ -157,59 +157,6 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized();
 	}
 
-	it("[DEPRECATED] can send and receive a batch specifying compatDetails", async () => {
-		await setupContainers({
-			flushMode: FlushMode.TurnBased,
-			compressionOptions: {
-				minimumBatchSizeInBytes: 10,
-				compressionAlgorithm: CompressionAlgorithms.lz4,
-			},
-			enableGroupedBatching: true,
-			chunkSizeInBytes: 100,
-		});
-		const futureOpSubmitter2 = dataObject2.context.containerRuntime as unknown as {
-			submit: (containerRuntimeMessage: any) => void;
-		};
-		const dataObject1BatchMessages: ISequencedDocumentMessage[] = [];
-		const dataObject2BatchMessages: ISequencedDocumentMessage[] = [];
-		setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
-		setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
-
-		// Submit two ops: a FluidDataStoreOp and a GC op
-		dataObject2map1.set("key1", "value1");
-		futureOpSubmitter2.submit({
-			type: ContainerMessageType.GC,
-			contents: {
-				type: "TombstoneLoaded",
-				nodePath: "/",
-			},
-			compatDetails: { behavior: "Ignore" }, // This op should be ignored when processed
-		});
-
-		// Wait for the ops to get flushed and processed.
-		await provider.ensureSynchronized();
-
-		// Neither container should have closed
-		assert.equal(container1.closed, false, "Container1 should not have closed");
-		assert.equal(container2.closed, false, "Container2 should not have closed");
-
-		// Both ops should have reached both containers
-		assert.deepEqual(
-			dataObject1BatchMessages
-				.filter((m) => m.type !== ContainerMessageType.ChunkedOp) // Don't worry about ChunkedOps, not sure how many there will be
-				.map((m) => m.type),
-			[ContainerMessageType.FluidDataStoreOp, ContainerMessageType.GC],
-			"Unexpected op types received (dataObject1)",
-		);
-		assert.deepEqual(
-			dataObject2BatchMessages
-				.filter((m) => m.type !== ContainerMessageType.ChunkedOp) // Don't worry about ChunkedOps, not sure how many there will be
-				.map((m) => m.type),
-			[ContainerMessageType.FluidDataStoreOp, ContainerMessageType.GC],
-			"Unexpected op types received (dataObject2)",
-		);
-	});
-
 	it("Can't set up a container with Immediate Mode and Offline Load", async () => {
 		await assert.rejects(
 			setupContainers({ flushMode: FlushMode.Immediate }),
@@ -222,7 +169,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		let dataObject2BatchMessages: ISequencedDocumentMessage[] = [];
 
 		function testFlushingUsingOrderSequentially(
-			options: IContainerRuntimeOptions,
+			options: IContainerRuntimeOptionsInternal,
 			disableOfflineLoad,
 		) {
 			beforeEach("setupBatchMessageListeners", async () => {
@@ -603,7 +550,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 
 		function testAutomaticFlushingUsingOrderSequentially(
-			options: IContainerRuntimeOptions,
+			options: IContainerRuntimeOptionsInternal,
 			disableOfflineLoad,
 		) {
 			beforeEach("setupContainers", async () => {

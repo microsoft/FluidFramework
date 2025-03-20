@@ -26,7 +26,6 @@ import { ReplayDocumentDeltaConnection } from "./replayDocumentDeltaConnection.j
  */
 export class ReplayDocumentService
 	extends TypedEventEmitter<IDocumentServiceEvents>
-	// eslint-disable-next-line import/namespace
 	implements IDocumentService
 {
 	public static async create(

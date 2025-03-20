@@ -29,7 +29,7 @@ export class MockDocumentDeltaStorageService implements IDocumentDeltaStorageSer
 		return streamFromMessages(this.getCore(from, to));
 	}
 
-	private async getCore(from: number, to?: number) {
+	private async getCore(from: number, to?: number): Promise<ISequencedDocumentMessage[]> {
 		const messages: ISequencedDocumentMessage[] = [];
 		let index: number = 0;
 

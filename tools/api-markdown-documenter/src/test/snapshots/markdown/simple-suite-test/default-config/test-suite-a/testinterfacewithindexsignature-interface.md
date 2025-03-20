@@ -1,6 +1,6 @@
 # TestInterfaceWithIndexSignature
 
-[Packages](./) &gt; [test-suite-a](./test-suite-a) &gt; [TestInterfaceWithIndexSignature](./test-suite-a/testinterfacewithindexsignature-interface)
+[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestInterfaceWithIndexSignature](/test-suite-a/testinterfacewithindexsignature-interface)
 
 An interface with an index signature.
 
@@ -14,15 +14,15 @@ export interface TestInterfaceWithIndexSignature
 
 | IndexSignature | Description |
 | --- | --- |
-| [\[foo: number\]: { bar: string; }](./test-suite-a/testinterfacewithindexsignature-interface#_indexer_-indexsignature) | Test index signature. |
+| [\[foo: number\]: { bar: string; }](/test-suite-a/testinterfacewithindexsignature-interface#_indexer_-indexsignature) | Test index signature. |
 
 ## Index Signature Details
 
-### \[foo: number\]: { bar: string; } {#_indexer_-indexsignature}
+### \[foo: number\]: { bar: string; } {#\_indexer\_-indexsignature}
 
 Test index signature.
 
-#### Signature {#_indexer_-signature}
+#### Signature {#\_indexer\_-signature}
 
 ```typescript
 [foo: number]: {

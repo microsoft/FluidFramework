@@ -3,20 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	EmptyKey,
 	type ITreeCursor,
 	type ITreeCursorSynchronous,
 	type JsonableTree,
+	type ChunkedCursor,
 } from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
-import type {
-	ChunkedCursor,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/chunked-forest/chunk.js";
 import {
 	basicChunkTree,
 	basicOnlyChunkPolicy,
@@ -42,7 +39,7 @@ import {
 } from "../../cursorTestSuite.js";
 import { numberSequenceField, validateChunkCursor } from "./fieldCursorTestUtilities.js";
 import { emptyShape, testData } from "./uniformChunkTestData.js";
-import { JsonObject } from "../../json/index.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import { numberSchema } from "../../../simple-tree/index.js";
 
 const basicOnlyChunkCompressor: ChunkCompressor = {
@@ -99,11 +96,14 @@ describe("basic chunk", () => {
 			name: data.name,
 			dataFactory: () =>
 				new BasicChunk(
-					brand(JsonObject.identifier),
+					brand(JsonAsTree.JsonObject.identifier),
 					new Map([[EmptyKey, [data.dataFactory()]]]),
 				),
 			reference: [
-				{ type: brand(JsonObject.identifier), fields: { [EmptyKey]: data.reference } },
+				{
+					type: brand(JsonAsTree.JsonObject.identifier),
+					fields: { [EmptyKey]: data.reference },
+				},
 			],
 			path: data.path,
 		});
@@ -114,7 +114,7 @@ describe("basic chunk", () => {
 		builders: {
 			withKeys: (keys) => {
 				const withKeysShape = new BasicChunk(
-					brand(JsonObject.identifier),
+					brand(JsonAsTree.JsonObject.identifier),
 					new Map(
 						keys.map((key) => [key, [uniformChunk(emptyShape.withTopLevelLength(1), [])]]),
 					),

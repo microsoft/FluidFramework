@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { handler as assertShortCodeHandler } from "./assertShortCode.js";
 import { type Handler } from "./common.js";
 import { handlers as copyrightFileHeaderHandlers } from "./copyrightFileHeader.js";
 import { handler as dockerfilePackageHandler } from "./dockerfilePackages.js";
@@ -24,7 +23,6 @@ export const policyHandlers: Handler[] = [
 	dockerfilePackageHandler,
 	fluidCaseHandler,
 	...lockfileHandlers,
-	assertShortCodeHandler,
 	...pnpmHandlers,
 	...fluidBuildTasks,
 	noJsFileHandler,

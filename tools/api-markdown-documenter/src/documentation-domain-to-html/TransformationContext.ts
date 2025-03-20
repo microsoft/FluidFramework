@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { TextFormatting } from "../documentation-domain/index.js";
 import { defaultConsoleLogger, type Logger } from "../Logging.js";
+import type { TextFormatting } from "../documentation-domain/index.js";
+
 import {
 	defaultTransformations,
-	type TransformationConfig,
+	type TransformationConfiguration,
 	type Transformations,
 } from "./configuration/index.js";
 
@@ -43,7 +44,7 @@ export interface TransformationContext extends TextFormatting {
  * system defaults.
  */
 export function createTransformationContext(
-	config: TransformationConfig | undefined,
+	config: TransformationConfiguration | undefined,
 ): TransformationContext {
 	const headingLevel = config?.startingHeadingLevel ?? 1;
 	const transformations: Transformations = {

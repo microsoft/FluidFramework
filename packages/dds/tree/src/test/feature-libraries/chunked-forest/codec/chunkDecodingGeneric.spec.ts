@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "assert";
+import { strict as assert, fail } from "node:assert";
 
 import { type Static, Type } from "@sinclair/typebox";
 
 import { DiscriminatedUnionDispatcher, unionOptions } from "../../../../codec/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import type { ChunkedCursor } from "../../../../feature-libraries/chunked-forest/chunk.js";
+import type { ChunkedCursor } from "../../../../core/index.js";
 import {
 	type ChunkDecoder,
 	type StreamCursor,

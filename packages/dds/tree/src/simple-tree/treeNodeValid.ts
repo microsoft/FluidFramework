@@ -58,15 +58,17 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		instance: TreeNodeValid<T>,
 		input: T,
 	): UnhydratedFlexTreeNode {
-		return fail("Schema must override buildRawNode");
+		return fail(0xae4 /* Schema must override buildRawNode */);
 	}
 
 	/**
 	 * Schema classes can override to provide a callback that is called once when the first node is constructed.
 	 * This is a good place to perform extra validation and cache schema derived data needed for the implementation of the node.
+	 * @remarks
+	 * It is valid to dereference LazyItem schema references in this function (or anything that runs after it).
 	 */
 	protected static oneTimeSetup<T>(this: typeof TreeNodeValid<T>): Context {
-		fail("Missing oneTimeSetup");
+		fail(0xae5 /* Missing oneTimeSetup */);
 	}
 
 	/**
@@ -103,7 +105,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 			// would not see the stored `constructorCached`, and the validation above against multiple derived classes would not work.
 
 			// This is not just an alias of `this`, but a reference to the item in the prototype chain being walked, which happens to start at `this`.
-			// eslint-disable-next-line @typescript-eslint/no-this-alias
+			// eslint-disable-next-line @typescript-eslint/no-this-alias, unicorn/no-this-assignment
 			let schemaBase: typeof TreeNodeValid = this;
 			while (!Object.prototype.hasOwnProperty.call(schemaBase, "constructorCached")) {
 				schemaBase = Reflect.getPrototypeOf(schemaBase) as typeof TreeNodeValid;
@@ -119,6 +121,9 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 			return this.constructorCached;
 		}
 
+		// If users trying to diagnose the cause of this error becomes a common issue, more information could be captured.
+		// The call stack to when a schema is first marked most derived could be captured in debug builds and stored in the `MostDerivedData` object:
+		// This could then be included in the error to aid in debugging this error.
 		throw new UsageError(
 			`Two schema classes were used (${this.name} and ${
 				this.constructorCached.constructor.name
@@ -133,7 +138,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	 * @remarks
 	 * When used as TreeNodeSchemaNonClass and subclassed,
 	 * does not actually have the correct compile time type for the return value due to TypeScript limitations.
-	 * This is why this is not exposed as part of TreeNodeSchemaCLass where subclassing is allowed.
+	 * This is why this is not exposed as part of TreeNodeSchemaClass where subclassing is allowed.
 	 */
 	public static create<TInput, TOut, TThis extends new (args: TInput) => TOut>(
 		this: TThis,
@@ -142,13 +147,32 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		return new this(input);
 	}
 
+	/**
+	 * See {@link TreeNodeSchemaCore.createFromInsertable}.
+	 */
+	public static createFromInsertable<TInput, TOut, TThis extends new (args: TInput) => TOut>(
+		this: TThis,
+		input: TInput,
+	): TOut {
+		return new this(input);
+	}
+
+	/**
+	 * Idempotent initialization function that pre-caches data and can dereference lazy schema references.
+	 */
+	public static oneTimeInitialize(
+		this: typeof TreeNodeValid & TreeNodeSchema,
+	): Required<MostDerivedData> {
+		const cache = this.markMostDerived();
+		cache.oneTimeInitialized ??= this.oneTimeSetup();
+		// TypeScript fails to narrow the type of `oneTimeInitialized` to `Context` here, so use a cast:
+		return cache as MostDerivedData & { oneTimeInitialized: Context };
+	}
+
 	public constructor(input: TInput | InternalTreeNode) {
 		super(privateToken);
 		const schema = this.constructor as typeof TreeNodeValid & TreeNodeSchema;
-		const cache = schema.markMostDerived();
-		if (cache.oneTimeInitialized === undefined) {
-			cache.oneTimeInitialized = schema.oneTimeSetup();
-		}
+		const cache = schema.oneTimeInitialize();
 
 		if (isTreeNode(input)) {
 			// TODO: update this once we have better support for deep-copying and move operations.
@@ -290,7 +314,7 @@ function formattedReference(
 	object: unknown,
 	config?: DevtoolsFormatter.ObjectConfig,
 ): DevtoolsFormatter.Item {
-	if (typeof object === "undefined") {
+	if (object === undefined) {
 		return ["span", "undefined"];
 	} else if (object === "null") {
 		return ["span", "null"];

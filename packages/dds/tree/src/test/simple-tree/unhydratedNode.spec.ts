@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { Tree } from "../../shared-tree/index.js";
 import { rootFieldKey } from "../../core/index.js";

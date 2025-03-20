@@ -1,5 +1,121 @@
 # @fluidframework/container-loader
 
+## 2.30.0
+
+### Minor Changes
+
+-   Deprecated ILoaderOptions have been removed ([#24046](https://github.com/microsoft/FluidFramework/pull/24046)) [24b4c8cf09](https://github.com/microsoft/FluidFramework/commit/24b4c8cf098b499b9b7cd1ea94c2bf627e259956)
+
+    Previously `ILoaderOptions` exported from `container-loader` was extending the base `ILoaderOptions` defined in `container-definitions` to add an experimental `summarizeProtocolTree` property which was used to test single-commit summaries. The option is no longer required or in use, so the extended version of `ILoaderOptions` is not needed anymore. Use `@fluidframework/container-definitions#ILoaderOptions` instead.
+
+-   IContainer.getContainerPackageInfo() is now deprecated ([#23840](https://github.com/microsoft/FluidFramework/pull/23840)) [521be72619](https://github.com/microsoft/FluidFramework/commit/521be726198a1f88f4f8f06c0f273528a49d2957)
+
+    The `IContainer.getContainerPackageInfo()` function is now deprecated. This API will be removed in version 2.40.0.
+    Use `IFluidCodeDetails.package` returned by `IContainer.getLoadedCodeDetails()` instead.
+
+    See [issue #23898](https://github.com/microsoft/FluidFramework/issues/23898) for details.
+
+## 2.23.0
+
+Dependency updates only.
+
+## 2.22.0
+
+Dependency updates only.
+
+## 2.21.0
+
+Dependency updates only.
+
+## 2.20.0
+
+Dependency updates only.
+
+## 2.13.0
+
+Dependency updates only.
+
+## 2.12.0
+
+### Minor Changes
+
+-   New APIs to create and load containers without using the Loader object ([#22902](https://github.com/microsoft/FluidFramework/pull/22902)) [51a17289c6](https://github.com/microsoft/FluidFramework/commit/51a17289c683ff6666e496878cb6660d21759b16)
+
+    #### Overview
+
+    Provide standalone APIs to create and load containers instead of using the Loader object to do so. Earlier hosts were
+    supposed to create the Loader object first and then call methods on it to create and load containers. Now they can just
+    utilize these APIs directly and get rid of the Loader object.
+
+    ##### Use `createDetachedContainer` to create a detached container
+
+    ```typescript
+    export async function createDetachedContainer(
+    	createDetachedContainerProps: ICreateDetachedContainerProps,
+    ): Promise<IContainer> {}
+    ```
+
+    `ICreateDetachedContainerProps` are the properties that need to be supplied to the above API and include props like
+    URL Resolver, IDocumentServiceFactory, etc., which were previously used to create the `Loader` object.
+
+    ##### Use `loadExistingContainer` to load an existing container
+
+    ```typescript
+    export async function loadExistingContainer(
+    	loadExistingContainerProps: ILoadExistingContainerProps,
+    ): Promise<IContainer> {}
+    ```
+
+    `ILoadExistingContainerProps` are the properties that need to be supplied to the above API and include props like
+    URL Resolver, IDocumentServiceFactory, etc., which were earlier used to create the `Loader` object.
+
+    ##### Use `rehydrateDetachedContainer` to create a detached container from a serializedState of another container
+
+    ```typescript
+    export async function rehydrateDetachedContainer(
+    	rehydrateDetachedContainerProps: IRehydrateDetachedContainerProps,
+    ): Promise<IContainer> {}
+    ```
+
+    `IRehydrateDetachedContainerProps` are the properties that need to be supplied to the above API and include props like
+    URL Resolver, IDocumentServiceFactory, etc., which were earlier used to create the `Loader` object.
+
+    ##### Note on `ICreateAndLoadContainerProps`.
+
+    The props which were used to create the `Loader` object are now moved to the `ICreateAndLoadContainerProps` interface.
+    `ICreateDetachedContainerProps`, `ILoadExistingContainerProps` and `IRehydrateDetachedContainerProps` which extends
+    `ICreateAndLoadContainerProps` also contains some additional props which will be used to create and load containers like
+    `IFluidCodeDetails`, `IRequest`, etc. Previously these were directly passed when calling APIs like
+    `Loader.createDetachedContainer`, `Loader.resolve` and `Loader.rehydrateDetachedContainerFromSnapshot` on the `Loader`
+    object. Also, `ILoaderProps.ILoaderOptions` are not replaced with `ICreateAndLoadContainerProps.IContainerPolicies`
+    since there will be no concept of `Loader`.
+
+## 2.11.0
+
+Dependency updates only.
+
+## 2.10.0
+
+### Minor Changes
+
+-   The inbound and outbound properties have been removed from IDeltaManager ([#22282](https://github.com/microsoft/FluidFramework/pull/22282)) [45a57693f2](https://github.com/microsoft/FluidFramework/commit/45a57693f291e0dc5e91af7f29a9b9c8f82dfad5)
+
+    The inbound and outbound properties were [deprecated in version 2.0.0-rc.2.0.0](https://github.com/microsoft/FluidFramework/blob/main/RELEASE_NOTES/2.0.0-rc.2.0.0.md#container-definitions-deprecate-ideltamanagerinbound-and-ideltamanageroutbound) and have been removed from `IDeltaManager`.
+
+    `IDeltaManager.inbound` contained functionality that could break core runtime features such as summarization and processing batches if used improperly. Data loss or corruption could occur when `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` were called.
+
+    Similarly, `IDeltaManager.outbound` contained functionality that could break core runtime features such as generation of batches and chunking. Data loss or corruption could occur when `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` were called.
+
+    #### Alternatives
+
+    -   Alternatives to `IDeltaManager.inbound.on("op", ...)` are `IDeltaManager.on("op", ...)`
+    -   Alternatives to calling `IDeltaManager.inbound.pause`, `IDeltaManager.outbound.pause` for `IContainer` disconnect use `IContainer.disconnect`.
+    -   Alternatives to calling `IDeltaManager.inbound.resume`, `IDeltaManager.outbound.resume` for `IContainer` reconnect use `IContainer.connect`.
+
+## 2.5.0
+
+Dependency updates only.
+
 ## 2.4.0
 
 Dependency updates only.

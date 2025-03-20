@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "assert";
+import { strict as assert, fail } from "node:assert";
 
 import { makeAnonChange } from "../../../core/index.js";
 import {
@@ -239,8 +239,8 @@ describe("defaultFieldKinds", () => {
 				return arbitraryChildChange;
 			};
 
-			const baseChange = fieldHandler.editor.buildChildChange(0, nodeChange1);
-			const changeToRebase = fieldHandler.editor.buildChildChange(0, nodeChange2);
+			const baseChange = fieldHandler.editor.buildChildChanges([[0, nodeChange1]]);
+			const changeToRebase = fieldHandler.editor.buildChildChanges([[0, nodeChange2]]);
 
 			assert.deepEqual(
 				fieldHandler.rebaser.rebase(

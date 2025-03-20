@@ -4,7 +4,13 @@
  */
 
 import { h } from "hastscript";
-import { BlockQuoteNode, LineBreakNode, PlainTextNode } from "../../documentation-domain/index.js";
+
+import {
+	BlockQuoteNode,
+	LineBreakNode,
+	PlainTextNode,
+} from "../../documentation-domain/index.js";
+
 import { assertTransformation } from "./Utilities.js";
 
 describe("BlockQuote HTML rendering tests", () => {

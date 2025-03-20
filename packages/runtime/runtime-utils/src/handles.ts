@@ -65,6 +65,18 @@ export function isFluidHandle(value: unknown): value is IFluidHandle {
 }
 
 /**
+ * Compare two {@link @fluidframework/core-interfaces#IFluidHandle|IFluidHandles}.
+ * @remarks
+ * Returns true iff both handles have the same internal `absolutePath`.
+ * @public
+ */
+export function compareFluidHandles(a: IFluidHandle, b: IFluidHandle): boolean {
+	const aInternal = toFluidHandleInternal(a);
+	const bInternal = toFluidHandleInternal(b);
+	return aInternal.absolutePath === bInternal.absolutePath;
+}
+
+/**
  * Downcast an IFluidHandle to an IFluidHandleInternal.
  * @legacy
  * @alpha

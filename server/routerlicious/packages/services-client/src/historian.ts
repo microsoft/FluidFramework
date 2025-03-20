@@ -8,6 +8,8 @@ import * as git from "@fluidframework/gitresources";
 import { RestWrapper, BasicRestWrapper } from "./restWrapper";
 import { IHistorian } from "./storage";
 import { IWholeFlatSummary, IWholeSummaryPayload, IWriteSummaryResponse } from "./storageContracts";
+import { NetworkError } from "./error";
+import { debug } from "./debug";
 
 function endsWith(value: string, endings: string[]): boolean {
 	for (const ending of endings) {
@@ -34,18 +36,47 @@ export const getAuthorizationTokenFromCredentials = (credentials: ICredentials):
 	`Basic ${fromUtf8ToBase64(`${credentials.user}:${credentials.password}`)}`;
 
 /**
+ * @internal
+ */
+export function parseToken(
+	tenantId: string,
+	authorization: string | undefined,
+): string | undefined {
+	let token: string | undefined;
+	if (authorization) {
+		const base64TokenMatch = authorization.match(/Basic (.+)/);
+		if (!base64TokenMatch) {
+			debug("Invalid base64 token", { tenantId });
+			throw new NetworkError(403, "Malformed authorization token");
+		}
+		const encoded = Buffer.from(base64TokenMatch[1], "base64").toString();
+
+		const tokenMatch = encoded.match(/(.+):(.+)/);
+		if (!tokenMatch || tenantId !== tokenMatch[1]) {
+			debug("Tenant mismatch or invalid token format", { tenantId });
+			throw new NetworkError(403, "Malformed authorization token");
+		}
+
+		token = tokenMatch[2];
+	}
+
+	return token;
+}
+
+/**
  * Implementation of the IHistorian interface that calls out to a REST interface
  * @internal
  */
 export class Historian implements IHistorian {
 	private readonly defaultQueryString: Record<string, string | number | boolean> = {};
 	private readonly cacheBust: boolean;
+	private readonly restWrapper: RestWrapper;
 
 	constructor(
 		public endpoint: string,
 		private readonly historianApi: boolean,
 		disableCache: boolean,
-		private readonly restWrapper?: RestWrapper,
+		restWrapper?: RestWrapper,
 	) {
 		if (disableCache && this.historianApi) {
 			this.defaultQueryString.disableCache = disableCache;
@@ -54,9 +85,7 @@ export class Historian implements IHistorian {
 			this.cacheBust = disableCache;
 		}
 
-		if (this.restWrapper === undefined) {
-			this.restWrapper = new BasicRestWrapper(this.endpoint);
-		}
+		this.restWrapper = restWrapper ?? new BasicRestWrapper(this.endpoint);
 	}
 
 	public async getHeader(sha: string): Promise<any> {

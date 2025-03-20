@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { FluidReleaseMachine } from "../../machines/index.js";
-import { initializeCommandTestFunction } from "../init.js";
+import { runCommand } from "@oclif/test";
+import { expect } from "chai";
+import { describe, it } from "mocha";
 
-const test = initializeCommandTestFunction(import.meta.url);
+import { FluidReleaseMachine } from "../../machines/index.js";
+
 const knownUnhandledStates: Set<string> = new Set([
 	// Known unhandled states can be added here temporarily during development.
 ]);
@@ -17,22 +19,24 @@ const machineStates = FluidReleaseMachine.states()
 
 describe("release command handles all states", () => {
 	for (const state of machineStates) {
-		test
-			.stdout()
-			.command([
-				"release",
-				"--releaseGroup",
-				"build-tools",
-				"--bumpType",
-				"patch",
-				"--testMode",
-				"--state",
-				state,
-				"--verbose",
-			])
-			.exit(100)
-			.it(`Handles state: '${state}'`, (ctx) => {
-				// nothing
-			});
+		it(`Handles state: '${state}'`, async () => {
+			const { error } = await runCommand(
+				[
+					"release",
+					"--releaseGroup",
+					"build-tools",
+					"--bumpType",
+					"patch",
+					"--testMode",
+					"--state",
+					state,
+					"--verbose",
+				],
+				{
+					root: import.meta.url,
+				},
+			);
+			expect(error?.oclif?.exit).to.equal(100);
+		});
 	}
 });

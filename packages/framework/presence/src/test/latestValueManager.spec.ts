@@ -3,9 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import type { LatestValueClientData } from "../index.js";
-import { Latest } from "../index.js";
-import type { IPresence } from "../presence.js";
+import { strict as assert } from "node:assert";
+
+import { createPresenceManager } from "../presenceManager.js";
+
+import { addControlsTests } from "./broadcastControlsTests.js";
+import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
+
+import type {
+	BroadcastControlSettings,
+	IPresence,
+	LatestValueClientData,
+} from "@fluidframework/presence/alpha";
+import { Latest } from "@fluidframework/presence/alpha";
+
+const testWorkspaceName = "name:testWorkspaceA";
+
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+function createLatestManager(
+	presence: IPresence,
+	valueControlSettings?: BroadcastControlSettings,
+) {
+	const states = presence.getStates(testWorkspaceName, {
+		camera: Latest({ x: 0, y: 0, z: 0 }, valueControlSettings),
+	});
+	return states.props.camera;
+}
 
 describe("Presence", () => {
 	describe("LatestValueManager", () => {
@@ -13,6 +36,63 @@ describe("Presence", () => {
 		 * See {@link checkCompiles} below
 		 */
 		it("API use compiles", () => {});
+
+		describe("when initialized", () => {
+			let presence: IPresence;
+
+			beforeEach(() => {
+				presence = createPresenceManager(new MockEphemeralRuntime());
+			});
+
+			it("can set and get empty object as initial value", () => {
+				const states = presence.getStates(testWorkspaceName, {
+					obj: Latest({}),
+				});
+				assert.deepStrictEqual(states.props.obj.local, {});
+			});
+
+			it("can set and get object with properties as initial value", () => {
+				const states = presence.getStates(testWorkspaceName, {
+					obj: Latest({ x: 0, y: 0, z: 0 }),
+				});
+				assert.deepStrictEqual(states.props.obj.local, { x: 0, y: 0, z: 0 });
+			});
+
+			it("can set and get empty array as initial value", () => {
+				const states = presence.getStates(testWorkspaceName, {
+					arr: Latest([]),
+				});
+				assert.deepStrictEqual(states.props.arr.local, []);
+			});
+
+			it("can set and get array with elements as initial value", () => {
+				const states = presence.getStates(testWorkspaceName, {
+					arr: Latest([1, 2, 3]),
+				});
+				assert.deepStrictEqual(states.props.arr.local, [1, 2, 3]);
+			});
+		});
+
+		addControlsTests(createLatestManager);
+
+		it("localUpdate event is fired with new value when local value is updated", () => {
+			// Setup
+			const presence = createPresenceManager(new MockEphemeralRuntime());
+			const states = presence.getStates(testWorkspaceName, {
+				camera: Latest({ x: 0, y: 0, z: 0 }),
+			});
+			const camera = states.props.camera;
+
+			let localUpdateCount = 0;
+			camera.events.on("localUpdated", (update) => {
+				localUpdateCount++;
+				assert.deepStrictEqual(update.value, { x: 1, y: 2, z: 3 });
+			});
+
+			// Act & Verify
+			camera.local = { x: 1, y: 2, z: 3 };
+			assert.strictEqual(localUpdateCount, 1);
+		});
 	});
 });
 
@@ -29,15 +109,17 @@ export function checkCompiles(): void {
 		camera: Latest({ x: 0, y: 0, z: 0 }),
 	});
 	// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
-	const map: typeof statesWorkspace = statesWorkspace;
+	const workspace: typeof statesWorkspace = statesWorkspace;
+	const props = workspace.props;
 
-	map.add("caret", Latest({ id: "", pos: 0 }));
+	workspace.add("caret", Latest({ id: "", pos: 0 }));
 
-	const fakeAdd = map.caret.local.pos + map.camera.local.z + map.cursor.local.x;
+	const fakeAdd =
+		workspace.props.caret.local.pos + props.camera.local.z + props.cursor.local.x;
 	console.log(fakeAdd);
 
 	// @ts-expect-error local may be set wholly, but partially it is readonly
-	map.caret.local.pos = 0;
+	workspace.props.caret.local.pos = 0;
 
 	function logClientValue<
 		T /* following extends should not be required: */ extends Record<string, unknown>,
@@ -46,7 +128,7 @@ export function checkCompiles(): void {
 	}
 
 	// Create new cursor state
-	const cursor = map.cursor;
+	const cursor = props.cursor;
 
 	// Update our cursor position
 	cursor.local = { x: 1, y: 2 };

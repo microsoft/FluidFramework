@@ -20,10 +20,6 @@ import { FluidHandleBase, responseToException } from "@fluidframework/runtime-ut
  * IFluidHandle can be retrieved by calling `get` on it.
  */
 export class RemoteFluidObjectHandle extends FluidHandleBase<FluidObject> {
-	public get IFluidHandleContext() {
-		return this;
-	}
-
 	public readonly isAttached = true;
 	private objectP: Promise<FluidObject> | undefined;
 
@@ -52,7 +48,7 @@ export class RemoteFluidObjectHandle extends FluidHandleBase<FluidObject> {
 			};
 			this.objectP = this.routeContext.resolveHandle(request).then<FluidObject>((response) => {
 				if (response.mimeType === "fluid/object") {
-					const fluidObject: FluidObject = response.value;
+					const fluidObject: FluidObject = response.value as FluidObject;
 					return fluidObject;
 				}
 				throw responseToException(response, request);

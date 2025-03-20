@@ -157,7 +157,11 @@ export interface ISummaryAttachment {
 export interface ISummaryTree {
 	type: SummaryType.Tree;
 
-	// TODO type I can infer from SummaryObject. File mode I may want to directly specify so have symlink+exec access
+	/**
+	 * The object containing all the tree's {@link SummaryObject} children.
+	 *
+	 * @param path - The key to store the SummaryObject at in the current summary tree being generated. Should not contain any "/" characters and should not change when encodeURIComponent is called on it.
+	 */
 	tree: { [path: string]: SummaryObject };
 
 	/**

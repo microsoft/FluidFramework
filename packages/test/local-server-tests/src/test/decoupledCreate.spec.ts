@@ -5,6 +5,10 @@
 
 import { strict as assert } from "assert";
 
+import {
+	createDetachedContainer,
+	loadExistingContainer,
+} from "@fluidframework/container-loader/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
 import type { FluidObject } from "@fluidframework/core-interfaces/internal";
 import {
@@ -95,12 +99,12 @@ describe("Scenario Test", () => {
 				}),
 		});
 
-		const { loader, codeDetails, urlResolver } = createLoader({
+		const { loaderProps, codeDetails, urlResolver } = createLoader({
 			deltaConnectionServer,
 			documentServiceFactory,
 		});
 
-		const container = await loader.createDetachedContainer(codeDetails);
+		const container = await createDetachedContainer({ ...loaderProps, codeDetails });
 
 		{
 			// put a bit of data in the detached container so we can validate later
@@ -114,11 +118,11 @@ describe("Scenario Test", () => {
 
 		{
 			// just reuse the same server, nothing else from the initial create
-			const { loader: loader2 } = createLoader({ deltaConnectionServer });
+			const { loaderProps: loaderProps2 } = createLoader({ deltaConnectionServer });
 
 			// ensure and use the url we got from out of band create to load the container
 			assert(request !== undefined);
-			const container2 = await loader2.resolve(request);
+			const container2 = await loadExistingContainer({ ...loaderProps2, request });
 
 			// ensure the newly loaded container has the data we expect.
 			const entryPoint: FluidObject<ITestFluidObject> = await container2.getEntryPoint();

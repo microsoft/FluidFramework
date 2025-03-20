@@ -15,6 +15,6 @@
 		"@fluid-tools/build-infrastructure": "link:../../../../../build-infrastructure"
 	},
 	"devDependencies": {
-		"@changesets/cli": "^2.27.9"
+		"@changesets/cli": "^2.27.11"
 	}
 }

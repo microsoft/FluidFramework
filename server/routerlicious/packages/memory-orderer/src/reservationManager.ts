@@ -37,7 +37,7 @@ export class ReservationManager extends EventEmitter implements IReservationMana
 
 		// Reservation can be null (first time), expired, or existing and within the time window
 		if (reservation === null) {
-			await this.makeReservation(node, key, null, reservations);
+			await this.makeReservation(node, key, undefined, reservations);
 			return node;
 		} else {
 			const remoteNode = await this.nodeTracker.loadRemote(reservation.node);
@@ -53,12 +53,12 @@ export class ReservationManager extends EventEmitter implements IReservationMana
 	private async makeReservation(
 		node: IConcreteNode,
 		key: string,
-		existing: IReservation,
+		existing: IReservation | undefined,
 		collection: ICollection<IReservation>,
 	): Promise<any> {
 		const newReservation: IReservation = { _id: key, node: node.id };
 
-		await (existing
+		await (existing !== undefined
 			? collection.update({ _id: key, node: existing.node }, newReservation, null)
 			: collection.insertOne(newReservation));
 	}

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { LocalReferencePosition, ReferencePosition } from "@fluidframework/sequence/internal";
+import { LocalReferencePosition, ReferencePosition } from "@fluidframework/sequence/legacy";
 
 import { DocSegmentKind, getDocSegmentKind } from "../document/index.js";
 import { Dom, TagName, clamp, hasTagName } from "../util/index.js";

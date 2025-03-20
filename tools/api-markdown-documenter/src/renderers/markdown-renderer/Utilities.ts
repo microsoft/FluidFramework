@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { type DocumentationNode } from "../../documentation-domain/index.js";
-import { type DocumentWriter } from "../DocumentWriter.js";
-import { renderHtml } from "../html-renderer/index.js";
-import { type RenderContext as MarkdownRenderContext } from "./RenderContext.js";
+import type { DocumentationNode } from "../../documentation-domain/index.js";
 import { documentationNodeToHtml } from "../../documentation-domain-to-html/index.js";
+import type { DocumentWriter } from "../DocumentWriter.js";
+import { renderHtml } from "../html-renderer/index.js";
+
+import type { RenderContext as MarkdownRenderContext } from "./RenderContext.js";
 
 /**
  * Renders the provided {@link DocumentationNode} using HTML syntax.

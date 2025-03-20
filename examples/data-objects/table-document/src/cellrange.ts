@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
-import { ReferencePosition, SequenceInterval } from "@fluidframework/sequence/internal";
+import { assert } from "@fluidframework/core-utils/legacy";
+import { ReferencePosition, SequenceInterval } from "@fluidframework/sequence/legacy";
 
 const rangeExpr = /([A-Za-z]+)(\d+):([A-Za-z]+)(\d+)/;
 

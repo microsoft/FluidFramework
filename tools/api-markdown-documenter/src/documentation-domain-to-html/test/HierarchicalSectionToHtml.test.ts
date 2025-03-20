@@ -15,6 +15,7 @@ import {
 	ParagraphNode,
 	SectionNode,
 } from "../../documentation-domain/index.js";
+
 import { assertTransformation } from "./Utilities.js";
 
 describe("HierarchicalSection HTML rendering tests", () => {
@@ -59,10 +60,7 @@ describe("HierarchicalSection HTML rendering tests", () => {
 					/* heading: */ undefined,
 				),
 			],
-			/* heading: */ HeadingNode.createFromPlainText(
-				"Root Heading",
-				/* id: */ "root-heading",
-			),
+			/* heading: */ HeadingNode.createFromPlainText("Root Heading", /* id: */ "root-heading"),
 		);
 
 		const expected = h("section", [

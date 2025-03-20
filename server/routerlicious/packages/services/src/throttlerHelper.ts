@@ -30,17 +30,17 @@ export class ThrottlerHelper implements IThrottlerHelper {
 		usageData?: IUsageData,
 	): Promise<IThrottlerResponse> {
 		const now = Date.now();
-		let throttlingMetric = await this.throttleAndUsageStorageManager.getThrottlingMetric(id);
-		if (!throttlingMetric) {
-			// start a throttling metric with 1 operation burst limit's worth of tokens
-			throttlingMetric = {
-				count: this.operationBurstLimit,
-				lastCoolDownAt: now,
-				throttleStatus: false,
-				throttleReason: undefined,
-				retryAfterInMs: 0,
-			};
-		}
+		const defaultThrottlingMetric: IThrottlingMetrics = {
+			count: this.operationBurstLimit,
+			lastCoolDownAt: now,
+			throttleStatus: false,
+			throttleReason: "",
+			retryAfterInMs: 0,
+		};
+
+		const throttlingMetric: IThrottlingMetrics =
+			(await this.throttleAndUsageStorageManager.getThrottlingMetric(id)) ??
+			defaultThrottlingMetric;
 
 		// Exit early if already throttled and no chance of being unthrottled
 		const retryAfterInMs = this.getRetryAfterInMs(throttlingMetric, now);
@@ -95,8 +95,8 @@ export class ThrottlerHelper implements IThrottlerHelper {
 	private async setThrottlingMetricAndUsageData(
 		id: string,
 		throttlingMetric: IThrottlingMetrics,
-		usageStorageId: string,
-		usageData: IUsageData,
+		usageStorageId?: string,
+		usageData?: IUsageData,
 	) {
 		await (usageStorageId && usageData
 			? this.throttleAndUsageStorageManager.setThrottlingMetricAndUsageData(

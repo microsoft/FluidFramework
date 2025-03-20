@@ -28,15 +28,21 @@ export {
 	isNetworkError,
 	NetworkError,
 	throwFluidServiceNetworkError,
+	convertAxiosErrorToNetorkError,
 } from "./error";
 export { choose, getRandomName } from "./generateNames";
 export { GitManager } from "./gitManager";
 export { Heap, IHeapComparator } from "./heap";
-export { getAuthorizationTokenFromCredentials, Historian, ICredentials } from "./historian";
+export {
+	getAuthorizationTokenFromCredentials,
+	Historian,
+	ICredentials,
+	parseToken,
+} from "./historian";
 export { IAlfredTenant, ISession } from "./interfaces";
 export { promiseTimeout } from "./promiseTimeout";
 export { RestLessClient, RestLessFieldNames } from "./restLessClient";
-export { BasicRestWrapper, RestWrapper } from "./restWrapper";
+export { BasicRestWrapper, RestWrapper, IBasicRestWrapperMetricProps } from "./restWrapper";
 export { defaultHash, getNextHash } from "./rollingHash";
 export {
 	canRead,

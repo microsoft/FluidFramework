@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/fetch-tool",
-	"version": "2.5.0",
+	"version": "2.31.0",
 	"description": "Console tool to fetch Fluid data from relay service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -20,13 +20,11 @@
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
-		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" lib",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
-		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
@@ -51,15 +49,14 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
-		"@fluid-tools/build-cli": "^0.49.0",
-		"@fluid-tools/fetch-tool-previous": "npm:@fluid-tools/fetch-tool@~2.4.0",
+		"@fluid-tools/build-cli": "^0.54.0",
+		"@fluid-tools/fetch-tool-previous": "npm:@fluid-tools/fetch-tool@2.30.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.49.0",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
+		"@fluidframework/build-tools": "^0.54.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@types/node": "^18.19.0",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",
-		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
 	},

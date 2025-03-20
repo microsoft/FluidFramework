@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type Heading } from "../Heading.js";
+import type { Heading } from "../Heading.js";
+
 import {
 	DocumentationParentNodeBase,
 	type MultiLineDocumentationNode,

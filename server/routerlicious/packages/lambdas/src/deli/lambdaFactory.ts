@@ -68,6 +68,7 @@ export class DeliLambdaFactory
 		private readonly reverseProducer: IProducer,
 		private readonly serviceConfiguration: IServiceConfiguration,
 		private readonly clusterDrainingChecker?: IClusterDrainingChecker | undefined,
+		private readonly ephemeralDocumentTTLSec?: number,
 	) {
 		super();
 	}
@@ -86,15 +87,16 @@ export class DeliLambdaFactory
 		};
 
 		let gitManager: IGitManager;
-		let document: IDocument;
+		let document: IDocument | undefined;
 
 		try {
 			// Lookup the last sequence number stored
 			// TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
-			document = await this.documentRepository.readOne({ documentId, tenantId });
+			document =
+				(await this.documentRepository.readOne({ documentId, tenantId })) ?? undefined;
 
 			// Check if the document was deleted prior.
-			if (!isDocumentValid(document)) {
+			if (document === undefined || !isDocumentValid(document)) {
 				// (Old, from tanviraumi:) Temporary guard against failure until we figure out what causing this to trigger.
 				// Document sessions can be joined (via Alfred) after a document is functionally deleted.
 				const errorMessage = `Received attempt to connect to a missing/deleted document.`;
@@ -226,14 +228,27 @@ export class DeliLambdaFactory
 				) {
 					if (document?.isEphemeralContainer) {
 						if (this.serviceConfiguration.deli.enableEphemeralContainerSummaryCleanup) {
-							// Call to historian to delete summaries
-							await requestWithRetry(
-								async () => gitManager.deleteSummary(false),
-								"deliLambda_onClose" /* callName */,
-								baseLumberjackProperties /* telemetryProperties */,
-								(error) => true /* shouldRetry */,
-								3 /* maxRetries */,
-							);
+							if (this.isEphemeralDocumentWithinTtl(document)) {
+								// Call to historian to delete summaries
+								await requestWithRetry(
+									async () => gitManager.deleteSummary(false),
+									"deliLambda_onClose" /* callName */,
+									baseLumberjackProperties /* telemetryProperties */,
+									undefined /* shouldRetry */, // The default retry function will ensure NetworkErrors are retried only if canRetry is true and isFatal is false
+									3 /* maxRetries */,
+								);
+							} else {
+								Lumberjack.info(
+									"Ephemeral container TTL has expired, not calling deleteSummary",
+									{
+										...baseLumberjackProperties,
+										documentCreationTime: document.createTime,
+										documentExpirationTime:
+											document.createTime +
+											(this.ephemeralDocumentTTLSec ?? 0) * 1000,
+									},
+								);
+							}
 						}
 
 						// Delete the document metadata, soft or hard depending on the configuration
@@ -373,6 +388,8 @@ export class DeliLambdaFactory
 	}
 
 	public async dispose(): Promise<void> {
+		// Emit this event to close the broadcasterLambda and publisher
+		this.emit("dispose");
 		const mongoClosedP = this.operationsDbMongoManager.close();
 		const forwardProducerClosedP = this.forwardProducer.close();
 		const signalProducerClosedP = this.signalProducer?.close();
@@ -383,6 +400,19 @@ export class DeliLambdaFactory
 			signalProducerClosedP,
 			reverseProducerClosedP,
 		]);
+	}
+
+	private isEphemeralDocumentWithinTtl(document: IDocument): boolean {
+		if (this.ephemeralDocumentTTLSec === undefined) {
+			// If we do not have a TTL value available, then we assume that the document is within TTL
+			// to keep the behavior consistent with the existing implementation.
+			return true;
+		}
+
+		const currentTime = Date.now();
+		const documentExpirationTime = document.createTime + this.ephemeralDocumentTTLSec * 1000;
+
+		return currentTime <= documentExpirationTime;
 	}
 
 	// Fetches last durable deli state from summary. Returns undefined if not present.

@@ -4,13 +4,14 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { initializeForest, TreeStoredSchemaRepository } from "../../core/index.js";
+import { TreeStoredSchemaRepository } from "../../core/index.js";
 import {
 	buildForest,
-	cursorForMapTreeNode,
+	cursorForMapTreeField,
 	defaultSchemaPolicy,
 	getSchemaAndPolicy,
-	MockNodeKeyManager,
+	initializeForest,
+	MockNodeIdentifierManager,
 } from "../../feature-libraries/index.js";
 import {
 	HydratedContext,
@@ -36,7 +37,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/proxies.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../../simple-tree/toFlexSchema.js";
+import { toStoredSchema } from "../../simple-tree/toStoredSchema.js";
 import { mintRevisionTag, testIdCompressor, testRevisionTagCodec } from "../utils.js";
 import type { TreeCheckout } from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -126,7 +127,7 @@ export function hydrate<const TSchema extends ImplicitFieldSchema>(
 		forest,
 		schema: new TreeStoredSchemaRepository(toStoredSchema(schema)),
 	});
-	const manager = new MockNodeKeyManager();
+	const manager = new MockNodeIdentifierManager();
 	const checkout = new CheckoutFlexTreeView(branch, defaultSchemaPolicy, manager);
 	const field = checkout.flexTree;
 	branch.forest.anchors.slots.set(
@@ -142,8 +143,8 @@ export function hydrate<const TSchema extends ImplicitFieldSchema>(
 	);
 	prepareContentForHydration(mapTree, field.context.checkout.forest);
 	if (mapTree === undefined) return undefined as TreeFieldFromImplicitField<TSchema>;
-	const cursor = cursorForMapTreeNode(mapTree);
-	initializeForest(forest, [cursor], testRevisionTagCodec, testIdCompressor, true);
+	const cursor = cursorForMapTreeField([mapTree]);
+	initializeForest(forest, cursor, testRevisionTagCodec, testIdCompressor, true);
 	return getTreeNodeForField(field) as TreeFieldFromImplicitField<TSchema>;
 }
 
@@ -182,7 +183,7 @@ export function pretty(arg: unknown): number | string {
  * @returns A new tree view for a branch of the input tree view, and an {@link TreeCheckoutFork} object that can be
  * used to merge the branch back into the original view.
  */
-export function getViewForForkedBranch<TSchema extends ImplicitFieldSchema>(
+export function getViewForForkedBranch<const TSchema extends ImplicitFieldSchema>(
 	originalView: SchematizingSimpleTreeView<TSchema>,
 ): { forkView: SchematizingSimpleTreeView<TSchema>; forkCheckout: TreeCheckout } {
 	const forkCheckout = originalView.checkout.branch();

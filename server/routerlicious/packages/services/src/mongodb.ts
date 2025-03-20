@@ -9,6 +9,7 @@ import * as core from "@fluidframework/server-services-core";
 import {
 	AggregationCursor,
 	Collection,
+	Document,
 	FindOneAndUpdateOptions,
 	FindOptions,
 	MongoClient,
@@ -60,7 +61,7 @@ const errorResponseKeysAllowList = new Set([
 /**
  * @internal
  */
-export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable {
+export class MongoCollection<T extends Document> implements core.ICollection<T>, core.IRetryable {
 	private readonly apiCounter = new InMemoryApiCounters();
 	private readonly failedApiCounterSuffix = ".Failed";
 	private consecutiveFailedCount = 0;
@@ -110,8 +111,9 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		return this.requestWithRetry(req, "MongoCollection.find", query);
 	}
 
-	public async findOne(query: object, options?: FindOptions): Promise<T> {
-		const req: () => Promise<T> = async () => this.collection.findOne<T>(query, options);
+	// eslint-disable-next-line @rushstack/no-new-null
+	public async findOne(query: object, options?: FindOptions): Promise<T | null> {
+		const req: () => Promise<T | null> = async () => this.collection.findOne<T>(query, options);
 		return this.requestWithRetry(
 			req, // request
 			"MongoCollection.findOne", // callerName
@@ -564,7 +566,7 @@ export class MongoDb implements core.IDb {
 		this.client.on(event, listener);
 	}
 
-	public collection<T>(name: string, dbName = "admin"): core.ICollection<T> {
+	public collection<T extends Document>(name: string, dbName = "admin"): core.ICollection<T> {
 		const collection = this.client.db(dbName).collection<T>(name);
 		return new MongoCollection<T>(
 			collection,
@@ -763,7 +765,7 @@ export class MongoDbFactory implements core.IDbFactory {
 		}
 
 		const connection = await MongoClient.connect(
-			global ? this.globalDbEndpoint : this.operationsDbEndpoint,
+			global && this.globalDbEndpoint ? this.globalDbEndpoint : this.operationsDbEndpoint,
 			options,
 		);
 		for (const monitoringEvent of this.dbMonitoringEventsList) {

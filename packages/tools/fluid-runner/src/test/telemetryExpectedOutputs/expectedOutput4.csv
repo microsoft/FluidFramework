@@ -1,5 +1,5 @@
-"eventName","category","prop1","extraProp1","extraProp2","prop2"
-"event1","category1","value1","value1","value2",
-"event2","category1",,"value1","value2","value2"
-"event3","category2","value3","value1","value2",
-"event4","category2",,"value1","value2","value4"
+"eventName","category","prop1","prop2","extraProp1","extraProp2"
+"event1","category1","value1",,"value1","value2"
+"event2","category1",,"value2","value1","value2"
+"event3","category2","value3",,"value1","value2"
+"event4","category2",,"value4","value1","value2"

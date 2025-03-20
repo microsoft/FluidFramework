@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/legacy";
 
 import { FlowDocument } from "../document/index.js";
 import { hostType } from "../package.js";

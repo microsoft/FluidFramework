@@ -4,10 +4,10 @@
  */
 
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
+	IRuntimeMessageCollection,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
@@ -125,17 +125,10 @@ export interface IChannel extends IFluidLoadable {
  */
 export interface IDeltaHandler {
 	/**
-	 * Processes the op.
-	 * @param message - The message to process
-	 * @param local - Whether the message originated from the local client
-	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
-	 * For messages from a remote client, this will be undefined.
+	 * Process messages for this channel. The messages here are contiguous messages for this channel in a batch.
+	 * @param messageCollection - The collection of messages to process.
 	 */
-	process: (
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	) => void;
+	processMessages: (messageCollection: IRuntimeMessageCollection) => void;
 
 	/**
 	 * State change events to indicate changes to the delta connection

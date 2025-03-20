@@ -5,6 +5,7 @@
 
 import { expect } from "chai";
 import { h } from "hastscript";
+
 import {
 	DocumentNode,
 	HeadingNode,
@@ -29,9 +30,7 @@ describe("documentToHtml tests", () => {
 							[
 								new ParagraphNode([
 									new PlainTextNode("This is test inside of a paragraph. "),
-									new PlainTextNode(
-										"It is also inside of a hierarchical section node. ",
-									),
+									new PlainTextNode("It is also inside of a hierarchical section node. "),
 									SpanNode.createFromPlainText("That's real neat-o.", {
 										italic: true,
 									}),

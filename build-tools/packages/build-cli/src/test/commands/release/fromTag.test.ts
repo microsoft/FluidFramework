@@ -4,13 +4,13 @@
  */
 
 import { ReleaseVersion, VersionBumpType } from "@fluid-tools/version-tools";
+import { runCommand } from "@oclif/test";
 import chai, { expect } from "chai";
 import assertArrays from "chai-arrays";
+import { describe, it } from "mocha";
 
 import { ReleaseGroup, ReleasePackage } from "../../../releaseGroups.js";
-import { initializeCommandTestFunction } from "../../init.js";
 
-const test = initializeCommandTestFunction(import.meta.url);
 chai.use(assertArrays);
 
 interface jsonOutput {
@@ -36,12 +36,11 @@ describe("flub release fromTag", () => {
 		title: "build-tools v0.26.1 (patch)",
 	};
 
-	test
-		.stdout()
-		.command(["release:fromTag", "build-tools_v0.26.1", "--json"])
-		.it(`--json`, (ctx) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const output: jsonOutput = JSON.parse(ctx.stdout);
-			expect(output).to.deep.equal(expected);
+	it("--json", async () => {
+		const { stdout } = await runCommand(["release:fromTag", "build-tools_v0.26.1", "--json"], {
+			root: import.meta.url,
 		});
+		const output: jsonOutput = JSON.parse(stdout) as jsonOutput;
+		expect(output).to.deep.equal(expected);
+	});
 });

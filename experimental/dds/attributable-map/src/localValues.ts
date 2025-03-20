@@ -30,7 +30,7 @@ export interface ILocalValue {
 	 * The in-memory value stored within.
 	 */
 	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 	readonly value: any;
 
 	/**
@@ -65,7 +65,7 @@ export function makeSerializable(
 	const value = localValue.makeSerialized(serializer, bind);
 	return {
 		type: value.type,
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
 		value: value.value && JSON.parse(value.value),
 	};
 }

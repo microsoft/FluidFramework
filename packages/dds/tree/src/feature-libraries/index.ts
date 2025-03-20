@@ -16,7 +16,6 @@ export {
 	mapTreeFromCursor,
 	mapTreeFieldFromCursor,
 } from "./mapTreeCursor.js";
-export { MemoizedIdRangeAllocator, type IdRange } from "./memoizedIdRangeAllocator.js";
 export { buildForest } from "./object-forest/index.js";
 export { SchemaSummarizer, encodeTreeSchema, makeSchemaCodec } from "./schema-index/index.js";
 export {
@@ -74,9 +73,22 @@ export {
 	type FieldChangeEncodingContext,
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
-	getAllowedContentIncompatibilities,
+	getAllowedContentDiscrepancies,
 	isRepoSuperset,
+	type AllowedTypeDiscrepancy,
+	type FieldKindDiscrepancy,
+	type ValueSchemaDiscrepancy,
+	type FieldDiscrepancy,
+	type NodeDiscrepancy,
+	type NodeKindDiscrepancy,
+	type NodeFieldsDiscrepancy,
 	isNeverTree,
+	type LinearExtension,
+	type Realizer,
+	fieldRealizer,
+	PosetComparisonResult,
+	comparePosetElements,
+	posetLte,
 } from "./modular-schema/index.js";
 
 export { mapRootChanges } from "./deltaUtils.js";
@@ -95,15 +107,15 @@ export {
 } from "./chunked-forest/index.js";
 
 export {
-	compareLocalNodeKeys,
-	createNodeKeyManager,
-	isStableNodeKey,
-	type LocalNodeKey,
-	MockNodeKeyManager,
-	type NodeKeyManager,
+	compareLocalNodeIdentifiers,
+	createNodeIdentifierManager,
+	isStableNodeIdentifier,
+	type LocalNodeIdentifier,
+	MockNodeIdentifierManager,
+	type NodeIdentifierManager,
 	nodeKeyTreeIdentifier,
-	type StableNodeKey,
-} from "./node-key/index.js";
+	type StableNodeIdentifier,
+} from "./node-identifier/index.js";
 
 export {
 	FieldKinds,
@@ -172,3 +184,14 @@ export {
 } from "./schema-edits/index.js";
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";
+
+export {
+	type KeyFinder,
+	AnchorTreeIndex,
+	hasElement,
+	type TreeIndex,
+	type TreeIndexKey,
+	type TreeIndexNodes,
+} from "./indexing/index.js";
+
+export { initializeForest } from "./initializeForest.js";

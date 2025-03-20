@@ -16,12 +16,15 @@ import {
 } from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { type Context, getTreeContext } from "../../../feature-libraries/flex-tree/context.js";
-import { defaultSchemaPolicy, MockNodeKeyManager } from "../../../feature-libraries/index.js";
+import {
+	defaultSchemaPolicy,
+	MockNodeIdentifierManager,
+} from "../../../feature-libraries/index.js";
 import { MockTreeCheckout, forestWithContent } from "../../utils.js";
 import {
 	toStoredSchema,
 	type ImplicitFieldSchema,
-	type InsertableTreeFieldFromImplicitField,
+	type InsertableField,
 } from "../../../simple-tree/index.js";
 
 export function getReadonlyContext(
@@ -33,7 +36,7 @@ export function getReadonlyContext(
 		new MockTreeCheckout(forest, {
 			schema: new TreeStoredSchemaRepository(toStoredSchema(schema)),
 		}),
-		new MockNodeKeyManager(),
+		new MockNodeIdentifierManager(),
 	);
 }
 
@@ -70,7 +73,7 @@ export interface TreeSimpleContentTyped<T extends ImplicitFieldSchema> {
 	 * Default tree content to initialize the tree with iff the tree is uninitialized
 	 * (meaning it does not even have any schema set at all).
 	 */
-	readonly initialTree: InsertableTreeFieldFromImplicitField<T>;
+	readonly initialTree: InsertableField<T>;
 }
 
 /**
