@@ -789,14 +789,7 @@ async function loadClient(
 async function synchronizeClients(connectedClients: Client[]) {
 	return timeoutPromise((resolve, reject) => {
 		const handler = (error?) => {
-			if (
-				connectedClients.some(
-					(c) =>
-						c.container.closed ||
-						c.container.disposed === true ||
-						c.container.connectionState === ConnectionState.Disconnected,
-				)
-			) {
+			if (connectedClients.some((c) => c.container.closed || c.container.disposed === true)) {
 				reject(error);
 				off();
 				return;
@@ -823,7 +816,6 @@ async function synchronizeClients(connectedClients: Client[]) {
 			for (const c of connectedClients) {
 				c.container.off("closed", handler);
 				c.container.off("connected", handler);
-				c.container.off("disconnected", handler);
 				c.container.off("disposed", handler);
 				c.container.off("op", handler);
 				c.container.off("saved", handler);
@@ -832,7 +824,6 @@ async function synchronizeClients(connectedClients: Client[]) {
 		for (const c of connectedClients) {
 			c.container.on("closed", handler);
 			c.container.on("connected", handler);
-			c.container.on("disconnected", handler);
 			c.container.on("disposed", handler);
 			c.container.on("op", handler);
 			c.container.on("saved", handler);
