@@ -32,9 +32,9 @@ const orderSequentiallyReducer = async (
 		state.datastore.orderSequentially(() => {
 			for (const o of op.operations) {
 				baseModel.reducer(ddsState, convertToRealHandles(o, taggedHandles));
-				if (op.rollback) {
-					throw rollbackError;
-				}
+			}
+			if (op.rollback) {
+				throw rollbackError;
 			}
 		});
 	} catch (error) {

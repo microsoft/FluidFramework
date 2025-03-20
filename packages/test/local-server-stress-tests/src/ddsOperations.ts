@@ -116,10 +116,7 @@ export const loadAllHandles = async (state: LocalServerStressState) => {
 	assert(baseModel !== undefined, "must have base model");
 	const channels = await state.datastore.getChannels();
 	const globalObjects = await state.client.entryPoint.getContainerObjects();
-	// we always serialize and then deserialize withe a handle look
-	// up, as this ensure we all do the same thing, regardless of if
-	// we are replaying from a file with serialized generated operations, or
-	// running live with in-memory generated operations.
+
 	return {
 		baseModel,
 		taggedHandles: [
@@ -133,6 +130,10 @@ export const convertToRealHandles = (
 	op: DDSModelOp,
 	handles: { tag: string; handle: IFluidHandle }[],
 ): unknown => {
+	// we always serialize and then deserialize with a handle look
+	// up, as this ensure we always do the same thing, regardless of if
+	// we are replaying from a file with serialized generated operations, or
+	// running live with in-memory generated operations.
 	return JSON.parse(JSON.stringify(op.op), (key, value: unknown) => {
 		if (isObject(value) && "absolutePath" in value && "tag" in value) {
 			const entry = handles.find((h) => h.tag === value.tag);
