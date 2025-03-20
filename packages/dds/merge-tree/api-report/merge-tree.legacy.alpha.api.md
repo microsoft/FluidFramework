@@ -186,7 +186,6 @@ export type IMergeTreeDeltaOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMer
 export interface IMergeTreeDeltaOpArgs {
     readonly groupOp?: IMergeTreeGroupMsg;
     readonly op: IMergeTreeOp;
-    readonly rollback?: true;
     readonly sequencedMessage?: ISequencedDocumentMessage;
 }
 

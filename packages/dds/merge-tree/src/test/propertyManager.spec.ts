@@ -8,7 +8,11 @@ import { strict as assert } from "node:assert";
 import { UnassignedSequenceNumber } from "../constants.js";
 import type { ISegmentPrivate } from "../mergeTreeNodes.js";
 import { matchProperties } from "../properties.js";
-import { PropertiesManager, type PropsOrAdjust } from "../segmentPropertiesManager.js";
+import {
+	PropertiesManager,
+	PropertiesRollback,
+	type PropsOrAdjust,
+} from "../segmentPropertiesManager.js";
 
 describe("PropertiesManager", () => {
 	describe("handleProperties", () => {
@@ -54,7 +58,7 @@ describe("PropertiesManager", () => {
 				UnassignedSequenceNumber,
 				0,
 				true,
-				true,
+				PropertiesRollback.Rollback,
 			);
 			assert.deepEqual(deltas, { key: "newValue" });
 			assert.deepEqual(seg.properties, { key: "value" });

@@ -542,7 +542,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 		this.client.prependListener("delta", (opArgs, deltaArgs) => {
 			const event = new SequenceDeltaEventClass(opArgs, deltaArgs, this.client);
-			if (event.isLocal && event.opArgs.rollback !== true) {
+			if (event.isLocal) {
 				this.submitSequenceMessage(opArgs.op);
 			}
 			if (deltaArgs.deltaSegments.length > 0) {

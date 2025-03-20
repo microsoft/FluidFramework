@@ -520,7 +520,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	/**
 	 * Revert an op
 	 */
-	public rollback(op: unknown, localOpMetadata: unknown): void {
+	public rollback?(op: unknown, localOpMetadata: unknown): void {
 		this._mergeTree.rollback(op as IMergeTreeDeltaOp, localOpMetadata as SegmentGroup);
 	}
 
