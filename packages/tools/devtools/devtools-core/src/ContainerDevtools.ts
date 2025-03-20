@@ -145,7 +145,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	 *
 	 * This map is assumed to be immutable. The devtools will not make any modifications to its contents.
 	 */
-	public readonly containerData?: Record<string, IFluidLoadable>;
+	public containerData?: Record<string, IFluidLoadable>;
 
 	// #region Accumulated log state
 
