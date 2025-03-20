@@ -174,26 +174,22 @@ export class BatchManager {
 		const startPoint = this.pendingBatch.length;
 		return {
 			rollback: (process: (message: BatchMessage) => void) => {
-				const rollbackStart = this.pendingBatch.length;
-				for (let i = this.pendingBatch.length; i > startPoint; ) {
+				const rollbackOps = this.pendingBatch.splice(startPoint);
+				for (let i = rollbackOps.length; i > 0; ) {
 					i--;
-					const message = this.pendingBatch[i];
+					const message = rollbackOps[i];
 					this.batchContentSize -= message.contents?.length ?? 0;
 					process(message);
 				}
-				const count = this.pendingBatch.length - rollbackStart;
+				const count = this.pendingBatch.length - startPoint;
 				if (count !== 0) {
 					throw new LoggingError("Ops generated durning rollback", {
 						count,
 						...tagData(TelemetryDataTag.UserData, {
-							ops: JSON.stringify(
-								this.pendingBatch.slice(rollbackStart).map((b) => b.contents),
-							),
+							ops: JSON.stringify(this.pendingBatch.slice(startPoint).map((b) => b.contents)),
 						}),
 					});
 				}
-
-				this.pendingBatch.splice(startPoint);
 			},
 		};
 	}
