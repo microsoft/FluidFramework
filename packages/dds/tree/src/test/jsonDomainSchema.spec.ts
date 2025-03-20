@@ -46,7 +46,7 @@ describe("JsonDomainSchema", () => {
 	// They should also provide a starting place for attempts to further investigate and debug related problems.
 	// The compilation nondeterminism results in unstable ordering of the type unions in the iterators and
 	// may be related to incremental builds ordering of recursive types.
-	// Additionally of boolean schema in the same type expressions is failing to get simplified in the .d.ts:
+	// In the same type expressions in the .d.ts (but not IntelliSense), boolean schema is failing to get simplified:
 	// this is odd, but not causing issues beyond reduced clarity when inspecting the resulting types.
 	it("generated TypeScript type validation", () => {
 		// Intellisense shows the JsonObject iterator type like this, which is the desired behavior:
