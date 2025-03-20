@@ -27,17 +27,22 @@ import { createRoot } from "react-dom/client";
 import { v4 as uuid } from "uuid";
 
 import {
-	DiceRollerContainerRuntimeFactory,
-	type IDiceRoller,
+	BlobCollectionContainerRuntimeFactory,
+	type IBlobCollection,
 } from "../src/container/index.js";
-import { DiceRollerView } from "../src/view.js";
+import { BlobCollectionView, DebugView } from "../src/view.js";
+
+// To allow blob creation while the container is detached, we need the container to provide
+// us with memory blob storage.  This is currently controlled by a feature flag which we
+// can control by setting this value in sessionStorage.
+sessionStorage.setItem("Fluid.Container.MemoryBlobStorageEnabled", "true");
 
 const urlResolver = new LocalResolver();
 const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
 const codeLoader: ICodeDetailsLoader = {
 	load: async (details: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
 		return {
-			module: { fluidExport: new DiceRollerContainerRuntimeFactory() },
+			module: { fluidExport: new BlobCollectionContainerRuntimeFactory() },
 			details,
 		};
 	},
@@ -48,8 +53,8 @@ const codeLoader: ICodeDetailsLoader = {
  * requires making async calls.
  */
 async function createContainerAndRenderInElement(element: HTMLDivElement): Promise<void> {
-	let id: string;
 	let container: IContainer;
+	let attach: (() => void) | undefined;
 
 	if (location.hash.length === 0) {
 		container = await createDetachedContainer({
@@ -58,34 +63,49 @@ async function createContainerAndRenderInElement(element: HTMLDivElement): Promi
 			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
 			codeLoader,
 		});
-		const documentId = uuid();
-		await container.attach(createLocalResolverCreateNewRequest(documentId));
-		if (container.resolvedUrl === undefined) {
-			throw new Error("Resolved Url not available on attached container");
-		}
-		// Should be the same as the uuid we generated above.
-		id = container.resolvedUrl.id;
+		attach = () => {
+			const documentId = uuid();
+			container
+				.attach(createLocalResolverCreateNewRequest(documentId))
+				.then(() => {
+					if (container.resolvedUrl === undefined) {
+						throw new Error("Resolved Url unexpectedly missing!");
+					}
+					const id = container.resolvedUrl.id;
+					// Update url and tab title
+					location.hash = id;
+					document.title = id;
+				})
+				.catch(console.error);
+		};
 	} else {
-		id = location.hash.substring(1);
+		const id = location.hash.substring(1);
 		container = await loadExistingContainer({
 			request: { url: `${window.location.origin}/${id}` },
 			urlResolver,
 			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
 			codeLoader,
 		});
+		// Update url and tab title
+		location.hash = id;
+		document.title = id;
 	}
 
-	const diceRoller = (await container.getEntryPoint()) as IDiceRoller;
-	const render = (diceRoller: IDiceRoller) => {
-		const appRoot = createRoot(element);
-		appRoot.render(createElement(DiceRollerView, { diceRoller }));
+	const blobCollection = (await container.getEntryPoint()) as IBlobCollection;
+	const render = (blobCollection: IBlobCollection) => {
+		const appElement = document.createElement("div");
+		const debugElement = document.createElement("div");
+		element.append(debugElement, appElement);
+
+		const debugRoot = createRoot(debugElement);
+		debugRoot.render(createElement(DebugView, { attach }));
+
+		const appRoot = createRoot(appElement);
+		appRoot.render(createElement(BlobCollectionView, { blobCollection }));
 	};
 
-	// Update url and tab title
-	location.hash = id;
-	document.title = id;
 	// Render it
-	render(diceRoller);
+	render(blobCollection);
 }
 
 const leftElement = document.getElementById("sbs-left") as HTMLDivElement;
