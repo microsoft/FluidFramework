@@ -70,7 +70,6 @@
 		"format:changed": "npm run format:changed:main",
 		"format:changed:main": "biome check --write --changed --since=main",
 		"format:changed:next": "biome check --write --changed --since=next",
-		"format:prettier": "fluid-build --task format:prettier",
 		"format:repo": "biome check . --write",
 		"generate:packageList": "fluid-build --task generate:packageList",
 		"generate:packageList:internal-build": "flub list client --no-private --feed internal-build --outFile feeds/internal-build.txt",
@@ -86,12 +85,6 @@
 		"policy-check:asserts": "flub generate assertTags --all && npm run format",
 		"policy-check:fix": "flub check policy --fix",
 		"policy-check:fix-help": "echo Fix policy-check violations",
-		"prettier": "fluid-build --task prettier",
-		"prettier:fix": "fluid-build --task prettier:fix",
-		"prettier:repo": "prettier --check . --cache --ignore-path ./.prettierignore",
-		"prettier:repo:fix": "prettier --write . --cache --ignore-path ./.prettierignore",
-		"prettier:root": "prettier --check \"./*.*\" --cache --ignore-path .prettierignore --ignore-unknown",
-		"prettier:root:fix": "prettier --write \"./*.*\" --cache --ignore-path .prettierignore --ignore-unknown",
 		"restart": "cd server/routerlicious && npm run restart",
 		"start:docker": "docker-compose -f server/docker-compose.yml up",
 		"stop:docker": "docker-compose -f server/docker-compose.yml down",
@@ -187,8 +180,6 @@
 		"eslint": "~8.55.0",
 		"jest": "^29.6.2",
 		"mocha": "^10.8.2",
-		"prettier": "~3.0.3",
-		"pretty-quick": "^4.0.0",
 		"puppeteer": "^23.6.0",
 		"rimraf": "^4.4.0",
 		"run-script-os": "^1.1.6",
@@ -350,20 +341,6 @@
 			"lint:fix": {
 				"dependsOn": [
 					"checks:fix"
-				],
-				"script": false
-			},
-			"prettier": {
-				"dependsOn": [
-					"prettier:root",
-					"^prettier"
-				],
-				"script": false
-			},
-			"prettier:fix": {
-				"dependsOn": [
-					"prettier:root:fix",
-					"^prettier:fix"
 				],
 				"script": false
 			}
