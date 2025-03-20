@@ -970,6 +970,20 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 				client.container.dispose();
 			}
 
+			//* TODO: Pull this out, test it(?), write to file
+			const f = new LocalDocumentServiceFactory(finalState.localDeltaConnectionServer);
+			const s = await f.createDocumentService(
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				finalState.validationClient.container.resolvedUrl!,
+			);
+			const deltaStorage = await s.connectToDeltaStorage();
+			const ops = deltaStorage.fetchMessages(0, undefined);
+			const allOps: any[] = [];
+			for (let op = await ops.read(); !op?.done; op = await ops.read()) {
+				const nextBatch = op.value ?? [];
+				allOps.push(...nextBatch);
+			}
+
 			finalState.validationClient.container.dispose();
 			await finalState.localDeltaConnectionServer.close();
 		}
