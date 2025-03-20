@@ -3083,8 +3083,7 @@ export class ContainerRuntime
 					checkpoint.rollback((message: BatchMessage) =>
 						this.rollback(message.contents, message.localOpMetadata),
 					);
-					// If there are no more pending messages after processing a local message,
-					// the document is no longer dirty.
+					// reset the dirty state after rollback to what it was before to keep it consistent
 					if (this.dirtyContainer !== checkpointDirtyState) {
 						this.updateDocumentDirtyState(checkpointDirtyState);
 					}
