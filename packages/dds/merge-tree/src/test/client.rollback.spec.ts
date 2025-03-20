@@ -41,7 +41,7 @@ describe("client.rollback", () => {
 
 	it("Should rollback insert on empty string", () => {
 		client.insertTextLocal(0, "abcd");
-		client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
 
 		assert.equal(client.getText(), "");
 	});
@@ -50,7 +50,7 @@ describe("client.rollback", () => {
 		client.insertMarkerLocal(1, ReferenceType.Simple, {
 			[reservedMarkerIdKey]: "markerId",
 		});
-		client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
 
 		assert.equal(client.getText(), "abc");
 		const marker = client.getMarkerFromId("markerId");
@@ -61,12 +61,12 @@ describe("client.rollback", () => {
 		client.insertTextLocal(0, "def");
 		client.insertTextLocal(0, "abc");
 
-		client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
 
 		assert.equal(client.getText(), "defghi");
 		validatePartialLengths(client.getClientId(), client.mergeTree);
 
-		client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
 
 		assert.equal(client.getText(), "ghi");
 		validatePartialLengths(client.getClientId(), client.mergeTree);
@@ -75,8 +75,8 @@ describe("client.rollback", () => {
 		client.insertTextLocal(0, "aefg");
 		client.insertTextLocal(1, "bd");
 		client.insertTextLocal(2, "c");
-		client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
-		client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
 
 		assert.equal(client.getText(), "aefg");
 		validatePartialLengths(client.getClientId(), client.mergeTree);
@@ -86,7 +86,7 @@ describe("client.rollback", () => {
 		client.insertTextLocal(1, "bcd");
 		const segmentGroup = client.peekPendingSegmentGroups() as SegmentGroup;
 		const segment = segmentGroup.segments[0];
-		client.rollback?.({ type: MergeTreeDeltaType.INSERT }, segmentGroup);
+		client.rollback({ type: MergeTreeDeltaType.INSERT }, segmentGroup);
 
 		// do some work and move the client's min seq forward, so zamboni runs
 		for (const c of "hello world") {
@@ -109,10 +109,7 @@ describe("client.rollback", () => {
 		});
 		const marker = client.getMarkerFromId("markerId") as Marker;
 		client.annotateMarker(marker, { foo: "bar" });
-		client.rollback?.(
-			{ type: MergeTreeDeltaType.ANNOTATE },
-			client.peekPendingSegmentGroups(),
-		);
+		client.rollback({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
 
 		const properties = marker.getProperties();
 		assert.equal(properties?.foo, undefined);
@@ -124,10 +121,7 @@ describe("client.rollback", () => {
 		});
 		const marker = client.getMarkerFromId("markerId") as Marker;
 		client.annotateMarker(marker, { foo: "baz" });
-		client.rollback?.(
-			{ type: MergeTreeDeltaType.ANNOTATE },
-			client.peekPendingSegmentGroups(),
-		);
+		client.rollback({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
 
 		const properties = marker.getProperties();
 		assert.equal(properties?.foo, "bar");
@@ -140,10 +134,7 @@ describe("client.rollback", () => {
 		const marker = client.getMarkerFromId("markerId") as Marker;
 		// eslint-disable-next-line unicorn/no-null
 		client.annotateMarker(marker, { foo: null });
-		client.rollback?.(
-			{ type: MergeTreeDeltaType.ANNOTATE },
-			client.peekPendingSegmentGroups(),
-		);
+		client.rollback({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
 
 		const properties = marker.getProperties();
 		assert.equal(properties?.foo, "bar");
@@ -155,10 +146,7 @@ describe("client.rollback", () => {
 		});
 		const marker = client.getMarkerFromId("markerId") as Marker;
 		client.annotateMarker(marker, { [reservedMarkerIdKey]: "markerId", abc: "def" });
-		client.rollback?.(
-			{ type: MergeTreeDeltaType.ANNOTATE },
-			client.peekPendingSegmentGroups(),
-		);
+		client.rollback({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
 
 		const properties = marker.getProperties();
 		assert.equal(properties?.foo, "bar");
@@ -176,10 +164,7 @@ describe("client.rollback", () => {
 			// eslint-disable-next-line unicorn/no-null
 			foo: null,
 		});
-		client.rollback?.(
-			{ type: MergeTreeDeltaType.ANNOTATE },
-			client.peekPendingSegmentGroups(),
-		);
+		client.rollback({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
 
 		const properties = marker.getProperties();
 		assert.equal(properties?.foo, "bar");
@@ -188,10 +173,7 @@ describe("client.rollback", () => {
 	it("Should rollback annotate causes split string", () => {
 		client.insertTextLocal(0, "abcdefg");
 		client.annotateRangeLocal(1, 3, { foo: "bar" });
-		client.rollback?.(
-			{ type: MergeTreeDeltaType.ANNOTATE },
-			client.peekPendingSegmentGroups(),
-		);
+		client.rollback({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
 
 		for (let i = 0; i < 4; i++) {
 			const props = client.getPropertiesAtPosition(i);
@@ -202,10 +184,7 @@ describe("client.rollback", () => {
 		client.insertTextLocal(0, "abfg");
 		client.insertTextLocal(1, "cde");
 		client.annotateRangeLocal(1, 6, { foo: "bar" });
-		client.rollback?.(
-			{ type: MergeTreeDeltaType.ANNOTATE },
-			client.peekPendingSegmentGroups(),
-		);
+		client.rollback({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
 
 		for (let i = 0; i < 7; i++) {
 			const props = client.getPropertiesAtPosition(i);
@@ -216,11 +195,8 @@ describe("client.rollback", () => {
 		client.insertTextLocal(0, "abfg");
 		client.annotateRangeLocal(0, 4, { foo: "bar" });
 		client.insertTextLocal(1, "cde");
-		client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
-		client.rollback?.(
-			{ type: MergeTreeDeltaType.ANNOTATE },
-			client.peekPendingSegmentGroups(),
-		);
+		client.rollback({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
 
 		assert.equal(client.getText(), "abfg");
 		for (let i = 0; i < 4; i++) {
@@ -235,7 +211,7 @@ describe("client.rollback", () => {
 		client.annotateRangeLocal(0, 3, { foo: "three" });
 		client.insertTextLocal(1, "b");
 
-		client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
 		let props = client.getPropertiesAtPosition(3);
 		assert(props !== undefined && props.foo === "two");
 		for (let i = 0; i < 3; i++) {
@@ -243,10 +219,7 @@ describe("client.rollback", () => {
 			assert(props !== undefined && props.foo === "three");
 		}
 
-		client.rollback?.(
-			{ type: MergeTreeDeltaType.ANNOTATE },
-			client.peekPendingSegmentGroups(),
-		);
+		client.rollback({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
 		for (let i = 0; i < 2; i++) {
 			props = client.getPropertiesAtPosition(i);
 			assert(props !== undefined && props.foo === "one");
@@ -256,10 +229,7 @@ describe("client.rollback", () => {
 			assert(props !== undefined && props.foo === "two");
 		}
 
-		client.rollback?.(
-			{ type: MergeTreeDeltaType.ANNOTATE },
-			client.peekPendingSegmentGroups(),
-		);
+		client.rollback({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
 		props = client.getPropertiesAtPosition(3);
 		assert(props === undefined || props.foo === undefined);
 		for (let i = 0; i < 3; i++) {
@@ -267,10 +237,7 @@ describe("client.rollback", () => {
 			assert(props !== undefined && props.foo === "one");
 		}
 
-		client.rollback?.(
-			{ type: MergeTreeDeltaType.ANNOTATE },
-			client.peekPendingSegmentGroups(),
-		);
+		client.rollback({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
 		assert.equal(client.getText(), "acde");
 		for (let i = 0; i < 4; i++) {
 			props = client.getPropertiesAtPosition(i);
@@ -281,10 +248,7 @@ describe("client.rollback", () => {
 		client.insertTextLocal(0, "abcde");
 		client.annotateRangeLocal(2, 3, { foo: "bar" });
 		client.annotateRangeLocal(1, 4, { foo: "bar" });
-		client.rollback?.(
-			{ type: MergeTreeDeltaType.ANNOTATE },
-			client.peekPendingSegmentGroups(),
-		);
+		client.rollback({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
 
 		for (let i = 0; i < 5; i++) {
 			const props = client.getPropertiesAtPosition(i);
@@ -308,7 +272,7 @@ describe("client.rollback", () => {
 		client.annotateRangeLocal(2, 3, { foo: "bar" });
 		const segmentGroup = client.peekPendingSegmentGroups() as SegmentGroup;
 		const segment = segmentGroup.segments[0];
-		client.rollback?.({ type: MergeTreeDeltaType.ANNOTATE }, segmentGroup);
+		client.rollback({ type: MergeTreeDeltaType.ANNOTATE }, segmentGroup);
 
 		// do some work and move the client's min seq forward, so zamboni runs
 		for (const c of "hello world") {
@@ -328,7 +292,7 @@ describe("client.rollback", () => {
 	it("Should rollback delete on single segment", () => {
 		client.insertTextLocal(0, "abcd");
 		client.removeRangeLocal(0, 4);
-		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
 
 		assert.equal(client.getText(), "abcd");
 	});
@@ -340,7 +304,7 @@ describe("client.rollback", () => {
 			assert.equal(client.getText(), "abcde");
 			deltaEvent = true;
 		});
-		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
 
 		assert.equal(client.getText(), "abcde");
 		assert.equal(deltaEvent, true);
@@ -378,7 +342,7 @@ describe("client.rollback", () => {
 				}
 			}
 		});
-		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
 
 		assert.equal(client.getText(), "abcde");
 		assert.equal(deltaCount, 3);
@@ -392,7 +356,7 @@ describe("client.rollback", () => {
 			client.insertTextLocal(client.getLength(), c);
 		}
 		client.removeRangeLocal(1, 4);
-		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
 		// The insertion position calculation will be wrong if the blocks aren't updated correctly
 		client.insertTextLocal(text.length - 1, "+");
 
@@ -433,7 +397,7 @@ describe("client.rollback", () => {
 		);
 
 		client.removeRangeLocal(0, 7);
-		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
 
 		assert.equal(client.getText(), "abcdefg");
 		const segInfo1After = client.getContainingSegment<ISegmentPrivate>(2);
@@ -460,7 +424,7 @@ describe("client.rollback", () => {
 		client.removeRangeLocal(1, 4);
 		const segmentGroup = client.peekPendingSegmentGroups() as SegmentGroup;
 		const segment = segmentGroup.segments[0];
-		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, segmentGroup);
+		client.rollback({ type: MergeTreeDeltaType.REMOVE }, segmentGroup);
 
 		// do some work and move the client's min seq forward, so zamboni runs
 		for (const c of "hello world") {
@@ -483,7 +447,7 @@ describe("client.rollback", () => {
 		client.annotateRangeLocal(2, 5, { foo: "bar" });
 		client.removeRangeLocal(3, 7);
 
-		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
 		assert.equal(client.getText(), "abc123defg");
 		for (let i = 0; i < client.getText().length; i++) {
 			const props = client.getPropertiesAtPosition(i);
@@ -494,18 +458,15 @@ describe("client.rollback", () => {
 			}
 		}
 
-		client.rollback?.(
-			{ type: MergeTreeDeltaType.ANNOTATE },
-			client.peekPendingSegmentGroups(),
-		);
+		client.rollback({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
 		for (let i = 0; i < client.getText().length; i++) {
 			const props = client.getPropertiesAtPosition(i);
 			assert(props === undefined || props.foo === undefined);
 		}
 
-		client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
 		assert.equal(client.getText(), "abcdefg");
-		client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
 		assert.equal(client.getText(), "");
 	});
 	it("Should rollback multiple removes across split segments", () => {
@@ -516,17 +477,17 @@ describe("client.rollback", () => {
 		client.removeRangeLocal(3, 7);
 		client.removeRangeLocal(2, 4);
 
-		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
 		assert.equal(client.getText(), "abye");
-		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
 		assert.equal(client.getText(), "abyz23de");
-		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
 		assert.equal(client.getText(), "abc1xyz23de");
-		client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
 		assert.equal(client.getText(), "abc123de");
-		client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
 		assert.equal(client.getText(), "abcde");
-		client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
 		assert.equal(client.getText(), "");
 	});
 	it("Should annotate a previously removed range", () => {
@@ -534,7 +495,7 @@ describe("client.rollback", () => {
 		client.insertTextLocal(3, "123");
 		client.removeRangeLocal(2, 8);
 
-		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
 		assert.equal(client.getText(), "abc123defg");
 
 		client.annotateRangeLocal(2, 8, { foo: "bar" });
@@ -547,17 +508,14 @@ describe("client.rollback", () => {
 			}
 		}
 
-		client.rollback?.(
-			{ type: MergeTreeDeltaType.ANNOTATE },
-			client.peekPendingSegmentGroups(),
-		);
+		client.rollback({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
 		for (let i = 0; i < client.getText().length; i++) {
 			const props = client.getPropertiesAtPosition(i);
 			assert(props === undefined || props.foo === undefined);
 		}
-		client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
 		assert.equal(client.getText(), "abcdefg");
-		client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
 		assert.equal(client.getText(), "");
 	});
 	it("Should rollback overlapping annotates and remove", () => {
@@ -565,13 +523,10 @@ describe("client.rollback", () => {
 		client.annotateRangeLocal(0, 6, { foo: "one" });
 		client.annotateRangeLocal(5, 10, { foo: "two" });
 		client.removeRangeLocal(4, 8);
-		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
 		assert.equal(client.getPropertiesAtPosition(4)?.foo, "one");
 		assert.equal(client.getPropertiesAtPosition(5)?.foo, "two");
-		client.rollback?.(
-			{ type: MergeTreeDeltaType.ANNOTATE },
-			client.peekPendingSegmentGroups(),
-		);
+		client.rollback({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
 		for (let i = 0; i < client.getText().length; i++) {
 			const props = client.getPropertiesAtPosition(i);
 			if (i >= 0 && i < 6) {
@@ -580,22 +535,19 @@ describe("client.rollback", () => {
 				assert(props === undefined || props.foo === undefined);
 			}
 		}
-		client.rollback?.(
-			{ type: MergeTreeDeltaType.ANNOTATE },
-			client.peekPendingSegmentGroups(),
-		);
+		client.rollback({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
 		for (let i = 0; i < client.getText().length; i++) {
 			const props = client.getPropertiesAtPosition(i);
 			assert(props === undefined || props.foo === undefined);
 		}
-		client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
 		assert.equal(client.getText(), "");
 	});
 	it("Should function properly after rollback with local ops", () => {
 		client.insertTextLocal(0, "abcdefg");
 		client.removeRangeLocal(1, 5);
 
-		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
 
 		client.removeRangeLocal(2, 4);
 		assert.equal(client.getText(), "abefg");
@@ -626,7 +578,7 @@ describe("client.rollback", () => {
 		logger.validate({ baseText: "12345" });
 
 		client.removeRangeLocal(1, 4);
-		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
+		client.rollback({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
 
 		msg = remoteClient.makeOpMessage(remoteClient.removeRangeLocal(2, 3), ++seq);
 		for (const c of clients) {

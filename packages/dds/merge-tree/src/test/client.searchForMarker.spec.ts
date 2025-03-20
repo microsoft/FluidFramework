@@ -419,10 +419,7 @@ describe("TestClient", () => {
 
 			client.removeRangeLocal(0, 1);
 
-			client.rollback?.(
-				{ type: MergeTreeDeltaType.REMOVE },
-				client.peekPendingSegmentGroups(),
-			);
+			client.rollback({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
 
 			const marker = client.searchForMarker(0, "Eop", true);
 
@@ -444,10 +441,7 @@ describe("TestClient", () => {
 				[reservedTileLabelsKey]: ["Eop"],
 			});
 
-			client.rollback?.(
-				{ type: MergeTreeDeltaType.INSERT },
-				client.peekPendingSegmentGroups(),
-			);
+			client.rollback({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
 
 			const marker = client.searchForMarker(0, "Eop", true);
 
