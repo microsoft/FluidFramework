@@ -617,6 +617,37 @@ describe("SchemaFactory Recursive methods", () => {
 			}
 		});
 
+		it("co-recursive object with out of line non-lazy array", () => {
+			const factory = new SchemaFactory("");
+
+			const TheArray = sf.arrayRecursive("FooList", [() => Foo]);
+			{
+				type _check = ValidateRecursiveSchema<typeof TheArray>;
+			}
+
+			class Foo extends factory.objectRecursive("Foo", {
+				fooList: TheArray,
+			}) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof Foo>;
+			}
+		});
+
+		it("co-recursive object with out of line non-lazy subclassed array", () => {
+			const factory = new SchemaFactory("");
+
+			class TheArray extends sf.arrayRecursive("FooList", [() => Foo]) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof TheArray>;
+			}
+			class Foo extends factory.objectRecursive("Foo", {
+				fooList: TheArray,
+			}) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof Foo>;
+			}
+		});
+
 		it("co-recursive object with inline array", () => {
 			const factory = new SchemaFactory("");
 			class Foo extends factory.objectRecursive("Foo", {
