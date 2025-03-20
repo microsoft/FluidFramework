@@ -203,7 +203,6 @@ describe("Outbox", () => {
 		maxBatchSize?: number;
 		compressionOptions?: ICompressionRuntimeOptions;
 		enableChunking?: boolean;
-		disablePartialFlush?: boolean;
 		chunkSizeInBytes?: number;
 		opGroupingConfig?: OpGroupingManagerConfig;
 		immediateMode?: boolean;
@@ -225,7 +224,6 @@ describe("Outbox", () => {
 			config: {
 				maxBatchSizeInBytes: params.maxBatchSize ?? maxBatchSizeInBytes,
 				compressionOptions: params.compressionOptions ?? DefaultCompressionOptions,
-				disablePartialFlush: params.disablePartialFlush ?? false,
 			},
 			logger: mockLogger,
 			groupingManager: new OpGroupingManager(
@@ -862,10 +860,10 @@ describe("Outbox", () => {
 		});
 	}
 
-	it("Does not flush the batch when an out of order message is detected, if configured", () => {
+	//* REVISIT
+	it.skip("Does not flush the batch when an out of order message is detected, if configured", () => {
 		const outbox = getOutbox({
 			context: getMockContext(),
-			disablePartialFlush: true,
 		});
 		const messages: BatchMessage[] = [
 			{
