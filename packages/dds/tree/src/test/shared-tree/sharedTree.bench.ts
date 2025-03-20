@@ -454,8 +454,8 @@ describe("SharedTree benchmarks", () => {
 			);
 			const sender = provider.trees[0];
 			const receiver = provider.trees[1];
-			provider.pauseProcessing(sender.id);
-			provider.pauseProcessing(receiver.id);
+			provider.pauseProcessing(sender);
+			provider.pauseProcessing(receiver);
 			return { provider, sender, receiver };
 		}
 
@@ -478,14 +478,14 @@ describe("SharedTree benchmarks", () => {
 			provider: TestTreeProviderLite,
 		) {
 			sendLocalCommits(tree, count, commitPrefix);
-			provider.flushMessages(tree.id);
+			provider.flushMessages(tree);
 		}
 
 		/**
 		 * Helper function that processes all sequenced commits on a given tree.
 		 */
 		function receiveSequencedCommits(tree: ISharedTree, provider: TestTreeProviderLite) {
-			provider.resumeProcessing(tree.id);
+			provider.resumeProcessing(tree);
 			provider.processMessages(false /* flush */);
 		}
 
@@ -568,7 +568,7 @@ describe("SharedTree benchmarks", () => {
 							FlushMode.TurnBased,
 						);
 						const tree = provider.trees[0];
-						provider.setConnected(tree.id, true);
+						provider.setConnected(tree, true);
 						const view = provider.trees[0].viewWith(
 							new TreeViewConfiguration({
 								schema: StringArray,

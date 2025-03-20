@@ -1384,7 +1384,7 @@ describe("SharedTree", () => {
 					submitter.assertInnerListEquals(initialState);
 					resubmitter.assertInnerListEquals(initialState);
 
-					provider.setConnected(resubmitter.id, false);
+					provider.setConnected(resubmitter, false);
 
 					s2.revert();
 					s1.revert();
@@ -1402,7 +1402,7 @@ describe("SharedTree", () => {
 					}
 					resubmitter.assertOuterListEquals([["a", "s1", "s2"]]);
 
-					provider.setConnected(resubmitter.id, true);
+					provider.setConnected(resubmitter, true);
 					provider.processMessages();
 
 					const finalState = [["a"]];
@@ -1426,7 +1426,7 @@ describe("SharedTree", () => {
 					submitter.assertInnerListEquals(initialState);
 					resubmitter.assertInnerListEquals(initialState);
 
-					provider.setConnected(resubmitter.id, false);
+					provider.setConnected(resubmitter, false);
 
 					if (scenario === "restore and edit") {
 						sRemove.revert();
@@ -1444,7 +1444,7 @@ describe("SharedTree", () => {
 					resubmitter.assertOuterListEquals([]);
 					resubmitter.assertInnerListEquals(["a", "s"]);
 
-					provider.setConnected(resubmitter.id, true);
+					provider.setConnected(resubmitter, true);
 					provider.processMessages();
 
 					const finalState = [["a"]];
@@ -1456,7 +1456,7 @@ describe("SharedTree", () => {
 			it("the restore of a tree edited on a branch", () => {
 				const { provider, submitter, resubmitter } = setupResubmitTest();
 
-				provider.setConnected(resubmitter.id, false);
+				provider.setConnected(resubmitter, false);
 
 				// This is the edit that will be rebased over during the re-submit phase
 				undoableInsertInInnerList(submitter, "s");
@@ -1483,7 +1483,7 @@ describe("SharedTree", () => {
 				rRemove.revert();
 				resubmitter.assertOuterListEquals([["a", "f"]]);
 
-				provider.setConnected(resubmitter.id, true);
+				provider.setConnected(resubmitter, true);
 				provider.processMessages();
 
 				const finalState = [["a", "f", "s"]];
@@ -1838,7 +1838,7 @@ describe("SharedTree", () => {
 
 			provider.processMessages();
 
-			provider.setConnected(tree1.id, false);
+			provider.setConnected(tree1, false);
 
 			view1.root.insertAtEnd("43");
 			view1.dispose();
@@ -1850,7 +1850,7 @@ describe("SharedTree", () => {
 			// TODO:#8915: This should be able to insert the _number_ 44, not the string, but currently cannot - see bug #8915
 			view1Json.root.insertAtEnd("44");
 
-			provider.setConnected(tree1.id, true);
+			provider.setConnected(tree1, true);
 
 			provider.processMessages();
 

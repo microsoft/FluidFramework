@@ -434,11 +434,12 @@ export class TestTreeProviderLite {
 
 	/**
 	 * To be used in TurnBased mode where messages that are sent are not automatically flushed.
-	 * Flush the messages that have sent by a given tree.
-	 * @param treeId - The ID of the tree to flush messages for.
+	 * Flush the messages that have been sent by a given tree.
+	 * @param treeId - The id of the tree to flush messages for.
+	 * @remarks This will be a no-op if the tree's runtime is not connected.
 	 */
-	public flushMessages(treeId: string): void {
-		const containerRuntime = this.containerRuntimeMap.get(treeId);
+	public flushMessages(tree: Pick<ISharedTree, "id">): void {
+		const containerRuntime = this.containerRuntimeMap.get(tree.id);
 		assert(containerRuntime !== undefined, "No tree found to flush messages");
 		containerRuntime.flush();
 	}
@@ -450,7 +451,10 @@ export class TestTreeProviderLite {
 	 * disabled by setting the flush parameter to false. Then it is the responsibility of the test to flush the
 	 * messages before calling this method.
 	 * @param flush - Whether or not to flush the messages before processing them. Defaults to true.
-	 * @remarks Flushing does not preserve the order in which the messages were sent. To do so, tests should
+	 * @remarks
+	 * - Trees whose runtime is paused or not connected will queue these messages and not process them. They
+	 * will process the messages when their runtime is unpaused or connected respectively.
+	 * - Flushing does not preserve the order in which the messages were sent. To do so, tests should
 	 * call flushMessages on individual trees in the order messages were sent.
 	 */
 	public processMessages(flush: boolean = true): void {
@@ -464,6 +468,8 @@ export class TestTreeProviderLite {
 
 	/**
 	 * Process the given count of messages across all trees.
+	 * @remarks trees whose runtime is paused or not connected will queue these messages and not process them. They
+	 * will process the messages when their runtime is unpaused or connected respectively.
 	 */
 	public processSomeMessages(count: number): void {
 		this.runtimeFactory.processSomeMessages(count);
@@ -471,31 +477,31 @@ export class TestTreeProviderLite {
 
 	/**
 	 * Set the connection state of the given tree.
-	 * @param treeId - The ID of the tree to set the connection state for.
+	 * @param tree - The tree to set the connection state for.
 	 */
-	public setConnected(treeId: string, connectionState: boolean): void {
-		const containerRuntime = this.containerRuntimeMap.get(treeId);
+	public setConnected(tree: Pick<ISharedTree, "id">, connectionState: boolean): void {
+		const containerRuntime = this.containerRuntimeMap.get(tree.id);
 		assert(containerRuntime !== undefined, "No tree found to set connection state");
 		containerRuntime.connected = connectionState;
 	}
 
 	/**
 	 * Pauses the processing of messages for the given tree.
-	 * @param treeId - The ID of the tree to pause processing for.
+	 * @param tree - The tree to pause processing for.
 	 */
-	public pauseProcessing(treeId: string): void {
-		const containerRuntime = this.containerRuntimeMap.get(treeId);
+	public pauseProcessing(tree: Pick<ISharedTree, "id">): void {
+		const containerRuntime = this.containerRuntimeMap.get(tree.id);
 		assert(containerRuntime !== undefined, "No tree found to pause processing");
 		containerRuntime.pauseProcessing();
 	}
 
 	/**
 	 * Resumes the processing of messages for the given tree.
-	 * @param treeId - The ID of the tree to resume processing for.
+	 * @param tree - The tree to resume processing for.
 	 * @remarks This will process the messages that were received while the tree was paused.
 	 */
-	public resumeProcessing(treeId: string): void {
-		const containerRuntime = this.containerRuntimeMap.get(treeId);
+	public resumeProcessing(tree: Pick<ISharedTree, "id">): void {
+		const containerRuntime = this.containerRuntimeMap.get(tree.id);
 		assert(containerRuntime !== undefined, "No tree found to resume processing");
 		containerRuntime.resumeProcessing();
 	}
