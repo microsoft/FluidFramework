@@ -625,7 +625,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		 * in the snapshot.
 		 * So, return short ids only if explicitly enabled via feature flags. Else, return uuid();
 		 */
-		if (this.mc.config.getBoolean("Fluid.Runtime.UseShortIds") === true) {
+		if (this.mc.config.getBoolean("Fluid.Runtime.IsShortIdEnabled") === true) {
 			// We use three non-overlapping namespaces:
 			// - detached state: even numbers
 			// - attached state: odd numbers
