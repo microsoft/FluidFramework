@@ -7,22 +7,18 @@ import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 
 import { MergeTree } from "../mergeTree.js";
 import { MergeTreeDeltaType } from "../ops.js";
-
-import { insertText } from "./testUtils.js";
+import { TextSegment } from "../textSegment.js";
 
 function constructTree(numOfSegments: number): MergeTree {
 	const mergeTree = new MergeTree();
 	for (let i = 0; i < numOfSegments; i++) {
-		insertText({
-			mergeTree,
-			pos: 0,
-			refSeq: i,
-			clientId: 0,
-			seq: i,
-			text: "a",
-			props: undefined,
-			opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
-		});
+		mergeTree.insertSegments(
+			0,
+			[TextSegment.make("a")],
+			mergeTree.localPerspective,
+			{ seq: i, clientId: 0 },
+			{ op: { type: MergeTreeDeltaType.INSERT } },
+		);
 	}
 	return mergeTree;
 }
@@ -35,16 +31,13 @@ describe("MergeTree insertion", () => {
 		title: "insert into empty tree",
 		benchmarkFn: () => {
 			const emptyTree = new MergeTree();
-			insertText({
-				mergeTree: emptyTree,
-				pos: 0,
-				refSeq: 0,
-				clientId: 0,
-				seq: 0,
-				text: "a",
-				props: undefined,
-				opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
-			});
+			emptyTree.insertSegments(
+				0,
+				[TextSegment.make("a")],
+				emptyTree.localPerspective,
+				{ seq: 0, clientId: 0 },
+				{ op: { type: MergeTreeDeltaType.INSERT } },
+			);
 		},
 	});
 
@@ -54,16 +47,13 @@ describe("MergeTree insertion", () => {
 		title: "insert at start of large tree",
 		benchmarkFn: () => {
 			for (let i = TREE_SIZE; i < TREE_SIZE + 25; i++) {
-				insertText({
-					mergeTree: startTree,
-					pos: 0,
-					refSeq: i,
-					clientId: 0,
-					seq: i + 1,
-					text: "a",
-					props: undefined,
-					opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
-				});
+				startTree.insertSegments(
+					0,
+					[TextSegment.make("a")],
+					startTree.localPerspective,
+					{ seq: i + 1, clientId: 0 },
+					{ op: { type: MergeTreeDeltaType.INSERT } },
+				);
 			}
 		},
 		beforeEachBatch: () => {
@@ -77,16 +67,13 @@ describe("MergeTree insertion", () => {
 		title: "insert at middle of large tree",
 		benchmarkFn: () => {
 			for (let i = TREE_SIZE; i < TREE_SIZE + 25; i++) {
-				insertText({
-					mergeTree: middleTree,
-					pos: TREE_SIZE / 2,
-					refSeq: i,
-					clientId: 0,
-					seq: i + 1,
-					text: "a",
-					props: undefined,
-					opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
-				});
+				middleTree.insertSegments(
+					TREE_SIZE / 2,
+					[TextSegment.make("a")],
+					middleTree.localPerspective,
+					{ seq: i + 1, clientId: 0 },
+					{ op: { type: MergeTreeDeltaType.INSERT } },
+				);
 			}
 		},
 		beforeEachBatch: () => {
@@ -100,16 +87,13 @@ describe("MergeTree insertion", () => {
 		title: "insert at end of large tree",
 		benchmarkFn: () => {
 			for (let i = TREE_SIZE; i < TREE_SIZE + 25; i++) {
-				insertText({
-					mergeTree: endTree,
-					pos: i,
-					refSeq: i,
-					clientId: 0,
-					seq: i + 1,
-					text: "a",
-					props: undefined,
-					opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
-				});
+				endTree.insertSegments(
+					i,
+					[TextSegment.make("a")],
+					endTree.localPerspective,
+					{ seq: i + 1, clientId: 0 },
+					{ op: { type: MergeTreeDeltaType.INSERT } },
+				);
 			}
 		},
 		beforeEachBatch: () => {

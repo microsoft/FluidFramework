@@ -15,7 +15,6 @@ import { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
 import { createClientsAtInitialState } from "./testClientLogger.js";
-import { insertSegments } from "./testUtils.js";
 
 describe("TestClient", () => {
 	const localUserLongId = "localUser";
@@ -23,15 +22,13 @@ describe("TestClient", () => {
 
 	beforeEach(() => {
 		client = new TestClient();
-		insertSegments({
-			mergeTree: client.mergeTree,
-			pos: 0,
-			segments: [TextSegment.make("")],
-			refSeq: UniversalSequenceNumber,
-			clientId: client.getClientId(),
-			seq: UniversalSequenceNumber,
-			opArgs: undefined,
-		});
+		client.mergeTree.insertSegments(
+			0,
+			[TextSegment.make("")],
+			client.mergeTree.localPerspective,
+			client.mergeTree.collabWindow.mintNextLocalOperationStamp(),
+			undefined,
+		);
 		client.startOrUpdateCollaboration(localUserLongId);
 	});
 
@@ -620,15 +617,13 @@ describe("TestClient", () => {
 			let client2: TestClient;
 			beforeEach(() => {
 				client2 = new TestClient();
-				insertSegments({
-					mergeTree: client2.mergeTree,
-					pos: 0,
-					segments: [TextSegment.make("")],
-					refSeq: UniversalSequenceNumber,
-					clientId: client2.getClientId(),
-					seq: UniversalSequenceNumber,
-					opArgs: undefined,
-				});
+				client2.mergeTree.insertSegments(
+					0,
+					[TextSegment.make("")],
+					client2.mergeTree.localPerspective,
+					client2.mergeTree.collabWindow.mintNextLocalOperationStamp(),
+					undefined,
+				);
 				client2.startOrUpdateCollaboration(remoteUserLongId);
 			});
 
