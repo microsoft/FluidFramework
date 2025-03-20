@@ -11,7 +11,7 @@ export interface IInternalMockRuntimeMessage {
     // (undocumented)
     localOpMetadata?: unknown;
     // (undocumented)
-    referenceSequenceNumber: number;
+    referenceSequenceNumber?: number;
 }
 
 // @alpha
