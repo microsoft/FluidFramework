@@ -39,7 +39,7 @@ const uninitializedErrorString =
  * ```
  *
  * @privateRemarks
- * TODOBefore promoting this beyond internal, we should consider alternative API patterns that don't depend on
+ * TODO: Before promoting this beyond internal, we should consider alternative API patterns that don't depend on
  * sub-classing and don't leak Fluid concepts that should ideally be internal.
  * See `tree-react-api` for an example of a pattern that avoids unnecessary leakage of implementation details.
  *
@@ -72,7 +72,9 @@ export abstract class TreeDataObject<
 
 	/**
 	 * Gets the view of the underlying {@link @fluidframework/tree#ITree}.
-	 * @throws If the tree has not yet been initialized, this will throw an error.
+	 *
+	 * @throws
+	 * If the tree has not yet been initialized, this will throw an error.
 	 */
 	public get tree(): TreeView<TSchema> {
 		if (this.#treeView === undefined) {
