@@ -85,6 +85,9 @@ export abstract class TreeDataObject<
 		if (existing) {
 			// data store has a root tree so we just need to set it before calling initializingFromExisting
 			const channel = await this.runtime.getChannel(treeChannelId);
+
+			// TODO: Support using a Directory to Tree migration shim and DataObject's root channel ID
+			// to allow migrating from DataObject to TreeDataObject instead of just erroring in that case.
 			if (!SharedTree.is(channel)) {
 				throw new Error(
 					`Content with id ${channel.id} is not a SharedTree and cannot be loaded with treeDataObject.`,
