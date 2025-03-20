@@ -60,8 +60,6 @@ export abstract class TreeDataObject<
 	 * The only schema evolution that's currently possible is upgrading the schema to one that supports a superset of what the old schema allowed,
 	 * and collaborating between clients which have view schema that exactly correspond to that stored schema.
 	 * Future work on tree as well as these utilities should address this limitation.
-	 *
-	 * @virtual
 	 */
 	public abstract readonly config: TreeViewConfiguration<TSchema>;
 
