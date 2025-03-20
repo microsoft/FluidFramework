@@ -48,7 +48,7 @@ export abstract class TreeDataObject<TTreeView> extends PureDataObject {
 	 * Generates a view of the data object's {@link @fluidframework/tree#ITree | tree}.
 	 * @remarks Called once during initialization.
 	 */
-	public abstract generateView(tree: ITree): TTreeView;
+	protected abstract generateView(tree: ITree): TTreeView;
 
 	/**
 	 * View derived from the underlying tree.
