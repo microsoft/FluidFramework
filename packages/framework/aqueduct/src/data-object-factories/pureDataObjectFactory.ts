@@ -154,6 +154,7 @@ export class PureDataObjectFactory<
 		private readonly optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>,
 		registryEntries?: NamedFluidDataStoreRegistryEntries,
 		private readonly runtimeClass: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
+		public readonly convertDataFn?: (runtime: FluidDataStoreRuntime) => Promise<void>,
 	) {
 		if (this.type === "") {
 			throw new Error("undefined type member");

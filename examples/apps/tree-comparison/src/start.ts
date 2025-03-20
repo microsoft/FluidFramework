@@ -36,18 +36,20 @@ const render = (model: IInventoryListAppModel) => {
 };
 
 async function start(): Promise<void> {
-	const modelLoader = new TinyliciousModelLoader<IInventoryListAppModel>(
-		new StaticCodeLoader(new InventoryListContainerRuntimeFactory()),
-	);
-
 	let id: string;
 	let model: IInventoryListAppModel;
 
 	if (location.hash.length === 0) {
+		const modelLoader = new TinyliciousModelLoader<IInventoryListAppModel>(
+			new StaticCodeLoader(new InventoryListContainerRuntimeFactory(false)),
+		);
 		const createResponse = await modelLoader.createDetached("1.0");
 		model = createResponse.model;
 		id = await createResponse.attach();
 	} else {
+		const modelLoader = new TinyliciousModelLoader<IInventoryListAppModel>(
+			new StaticCodeLoader(new InventoryListContainerRuntimeFactory(true)),
+		);
 		id = location.hash.substring(1);
 		model = await modelLoader.loadExisting(id);
 	}

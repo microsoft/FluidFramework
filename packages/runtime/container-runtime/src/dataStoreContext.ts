@@ -464,7 +464,16 @@ export abstract class FluidDataStoreContext
 		);
 	}
 
+
 	public async realize(): Promise<IFluidDataStoreChannel> {
+		return this.realizeInternal().then(async (runtime) => {
+			const factory = await this.factoryFromPackagePath();
+			await factory.convertDataFn?.(runtime);
+			return runtime;
+		});
+	}
+
+	private async realizeInternal(): Promise<IFluidDataStoreChannel> {
 		assert(
 			!this.detachedRuntimeCreation,
 			0x13d /* "Detached runtime creation on realize()" */,
@@ -676,7 +685,7 @@ export abstract class FluidDataStoreContext
 		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeInternalResult> {
-		await this.realize();
+		await this.realizeInternal();
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const summarizeResult = await this.channel!.summarize(
@@ -732,7 +741,7 @@ export abstract class FluidDataStoreContext
 	 * @param fullGC - true to bypass optimizations and force full generation of GC data.
 	 */
 	private async getGCDataInternal(fullGC: boolean = false): Promise<IGarbageCollectionData> {
-		await this.realize();
+		await this.realizeInternal();
 		assert(
 			this.channel !== undefined,
 			0x143 /* "Channel should not be undefined when running GC" */,
@@ -788,7 +797,7 @@ export abstract class FluidDataStoreContext
 	 * @deprecated 0.18.Should call request on the runtime directly
 	 */
 	public async request(request: IRequest): Promise<IResponse> {
-		const runtime = await this.realize();
+		const runtime = await this.realizeInternal();
 		return runtime.request(request);
 	}
 
@@ -880,7 +889,8 @@ export abstract class FluidDataStoreContext
 		existing: boolean,
 	): Promise<void> {
 		if (this.channel) {
-			throw new Error("Runtime already bound");
+			return;
+			// throw new Error("Runtime already bound");
 		}
 
 		assert(
@@ -964,7 +974,7 @@ export abstract class FluidDataStoreContext
 
 	public async applyStashedOp(contents: unknown): Promise<unknown> {
 		if (!this.channel) {
-			await this.realize();
+			await this.realizeInternal();
 		}
 		assert(!!this.channel, 0x14c /* "Channel must exist when rebasing ops" */);
 		return this.channel.applyStashedOp(contents);

@@ -156,23 +156,26 @@ export const InventoryListView: FC<IInventoryListViewProps> = ({
 	});
 
 	return (
-		<table style={{ margin: "0 auto", textAlign: "left", borderCollapse: "collapse" }}>
-			<thead>
-				<tr>
-					<th>Inventory item</th>
-					<th>Quantity</th>
-				</tr>
-			</thead>
-			<tbody>
-				{inventoryItemViews.length > 0 ? (
-					inventoryItemViews
-				) : (
+		<div>
+			<h1>Using {inventoryList.isNewTree ? "new" : "legacy"} SharedTree</h1>
+			<table style={{ margin: "0 auto", textAlign: "left", borderCollapse: "collapse" }}>
+				<thead>
 					<tr>
-						<td colSpan={2}>No items in inventory</td>
+						<th>Inventory item</th>
+						<th>Quantity</th>
 					</tr>
-				)}
-				<AddItemView addItem={inventoryList.addItem} disabled={disabled} />
-			</tbody>
-		</table>
+				</thead>
+				<tbody>
+					{inventoryItemViews.length > 0 ? (
+						inventoryItemViews
+					) : (
+						<tr>
+							<td colSpan={2}>No items in inventory</td>
+						</tr>
+					)}
+					<AddItemView addItem={inventoryList.addItem} disabled={disabled} />
+				</tbody>
+			</table>
+		</div>
 	);
 };
