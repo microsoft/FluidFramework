@@ -74,5 +74,5 @@ export function makeGenerator<T extends BaseOperation>(
 
 	return async (state) => asyncGenerator(state);
 }
-export const saveFailures = { directory: path.join(_dirname, "./results") };
-export const saveSuccesses = { directory: path.join(_dirname, "./test/results") };
+export const saveFailures = { directory: path.join(_dirname, "../src/test/results") };
+export const saveSuccesses = { directory: path.join(_dirname, "../src/test/results") };
