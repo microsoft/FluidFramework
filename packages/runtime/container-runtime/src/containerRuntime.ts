@@ -3065,6 +3065,7 @@ export class ContainerRuntime
 	 */
 	public orderSequentially<T>(callback: () => T): T {
 		let checkpoint: IBatchCheckpoint | undefined;
+		const checkpointDirtyState = this.dirtyContainer;
 		let result: T;
 		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
 			// Note: we are not touching any batches other than mainBatch here, for two reasons:
@@ -3082,6 +3083,11 @@ export class ContainerRuntime
 					checkpoint.rollback((message: BatchMessage) =>
 						this.rollback(message.contents, message.localOpMetadata),
 					);
+					// If there are no more pending messages after processing a local message,
+					// the document is no longer dirty.
+					if (this.dirtyContainer !== checkpointDirtyState) {
+						this.updateDocumentDirtyState(checkpointDirtyState);
+					}
 				} catch (error_) {
 					const error2 = wrapError(error_, (message) => {
 						return DataProcessingError.create(

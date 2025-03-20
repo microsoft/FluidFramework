@@ -43,6 +43,7 @@ import {
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces";
+import type { ConfigTypes } from "@fluidframework/core-interfaces";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
 	createLocalResolverCreateNewRequest,
@@ -257,6 +258,8 @@ export interface LocalServerStressOptions {
 		numOpsBeforeAttach: number;
 	};
 
+	configurations?: Record<string, ConfigTypes> | undefined;
+
 	/**
 	 * Strategy for validating eventual consistency of DDSes.
 	 * In random mode, each generated operation has the specified probability to instead be a synchronization point
@@ -431,6 +434,7 @@ function mixinAddRemoveClient<TOperation extends BaseOperation>(
 				op.clientTag,
 				url,
 				state.seed,
+				options,
 			);
 			state.clients.push(newClient);
 			return state;
@@ -513,6 +517,7 @@ function mixinAttach<TOperation extends BaseOperation>(
 				"client-0",
 				url,
 				state.seed,
+				options,
 			);
 
 			return {
@@ -717,6 +722,7 @@ async function createDetachedClient(
 	codeDetails: IFluidCodeDetails,
 	tag: `client-${number}`,
 	seed: number,
+	options: LocalServerStressOptions,
 ): Promise<Client> {
 	const container = await createDetachedContainer({
 		codeLoader,
@@ -724,6 +730,9 @@ async function createDetachedClient(
 		urlResolver: new LocalResolver(),
 		codeDetails,
 		logger: createStressLogger(seed),
+		configProvider: {
+			getRawConfig: (name) => options.configurations?.[name],
+		},
 	});
 
 	const maybe: FluidObject<DefaultStressDataObject> | undefined =
@@ -744,6 +753,7 @@ async function loadClient(
 	tag: `client-${number}`,
 	url: string,
 	seed: number,
+	options: LocalServerStressOptions,
 ): Promise<Client> {
 	const container = await timeoutAwait(
 		loadExistingContainer({
@@ -752,6 +762,9 @@ async function loadClient(
 			urlResolver: new LocalResolver(),
 			codeLoader,
 			logger: createStressLogger(seed),
+			configProvider: {
+				getRawConfig: (name) => options.configurations?.[name],
+			},
 		}),
 		{
 			errorMsg: `Timed out waiting for client to load ${tag}`,
@@ -774,102 +787,58 @@ async function loadClient(
 }
 
 async function synchronizeClients(connectedClients: Client[]) {
-	const closeOrDispose = new Map<
-		Client,
-		{ error?: Error; rejects: ((reason?: any) => void)[] }
-	>();
-
-	const cleanUps: (() => void)[] = [];
-	for (const c of connectedClients) {
-		const rejector = (error) => {
-			const entry = closeOrDispose.get(c) ?? { rejects: [] };
-			entry.error ??= error;
-			closeOrDispose.set(c, entry);
-			entry.rejects.forEach((r) => r(entry.error));
-		};
-		c.container.once("closed", rejector);
-		c.container.once("disposed", rejector);
-		cleanUps.push(() => {
-			c.container.off("closed", rejector);
-			c.container.off("disposed", rejector);
-		});
-	}
-	try {
-		await Promise.all(
-			connectedClients.map(async (c) =>
-				timeoutPromise(
-					(resolve, reject) => {
-						const entry = closeOrDispose.get(c) ?? { rejects: [] };
-						closeOrDispose.set(c, entry);
-						if (entry.error) {
-							reject(entry.error);
-						} else if (c.container.connectionState !== ConnectionState.Connected) {
-							c.container.once("connected", () => resolve());
-							entry.rejects.push(reject);
-						} else {
-							resolve();
-						}
-					},
-					{
-						errorMsg: `Timed out waiting for client to connect ${c.tag}`,
-					},
-				),
-			),
-		);
-
-		await Promise.all(
-			connectedClients.map(async (c) =>
-				timeoutPromise(
-					(resolve, reject) => {
-						const entry = closeOrDispose.get(c) ?? { rejects: [] };
-						closeOrDispose.set(c, entry);
-						if (entry.error) {
-							reject(entry.error);
-						} else if (c.container.isDirty) {
-							c.container.once("saved", () => resolve());
-							entry.rejects.push(reject);
-						} else {
-							resolve();
-						}
-					},
-					{
-						errorMsg: `Timed out waiting for client to save ${c.tag}`,
-					},
-				),
-			),
-		);
-		const maxSeq = Math.max(
-			...connectedClients.map((c) => c.container.deltaManager.lastKnownSeqNumber),
-		);
-
-		const makeOpHandler = (c: Client, resolve: () => void, reject: (error) => void) => {
-			const entry = closeOrDispose.get(c) ?? { rejects: [] };
-			closeOrDispose.set(c, entry);
-			if (entry.error) {
-				reject(entry.error);
-			} else if (c.container.deltaManager.lastKnownSeqNumber < maxSeq) {
-				const handler = (msg) => {
-					if (msg.sequenceNumber >= maxSeq) {
-						c.container.off("op", handler);
-						resolve();
-					}
-				};
-				c.container.on("op", handler);
-				entry.rejects.push(reject);
-			} else {
+	return timeoutPromise((resolve, reject) => {
+		const handler = (error?) => {
+			if (
+				connectedClients.some(
+					(c) =>
+						c.container.closed ||
+						c.container.disposed === true ||
+						c.container.connectionState === ConnectionState.Disconnected,
+				)
+			) {
+				reject(error);
+				off();
+				return;
+			}
+			if (
+				connectedClients.every(
+					(c) =>
+						c.container.connectionState === ConnectionState.Connected &&
+						c.container.isDirty === false &&
+						c.container.deltaManager.lastSequenceNumber ===
+							connectedClients[0].container.deltaManager.lastSequenceNumber,
+				)
+			) {
 				resolve();
+				off();
 			}
 		};
-		await Promise.all(
-			connectedClients.map(async (c) =>
-				timeoutPromise((resolve, reject) => makeOpHandler(c, resolve, reject), {
-					errorMsg: `Timed out waiting for client to catch up: ${c.tag} seq: ${maxSeq}`,
-				}),
-			),
-		);
-	} finally {
-		cleanUps.forEach((f) => f());
-	}
+		const timeout = setInterval(() => {
+			// just an easy place to place a breakpoint
+			handler();
+		}, 1000);
+		const off = () => {
+			clearInterval(timeout);
+			for (const c of connectedClients) {
+				c.container.off("closed", handler);
+				c.container.off("connected", handler);
+				c.container.off("disconnected", handler);
+				c.container.off("disposed", handler);
+				c.container.off("op", handler);
+				c.container.off("saved", handler);
+			}
+		};
+		for (const c of connectedClients) {
+			c.container.on("closed", handler);
+			c.container.on("connected", handler);
+			c.container.on("disconnected", handler);
+			c.container.on("disposed", handler);
+			c.container.on("op", handler);
+			c.container.on("saved", handler);
+		}
+		handler();
+	});
 }
 
 /**
@@ -880,7 +849,8 @@ async function synchronizeClients(connectedClients: Client[]) {
 async function runTestForSeed<TOperation extends BaseOperation>(
 	model: LocalServerStressModel<TOperation>,
 	seed: number,
-	saveInfo?: SaveInfo,
+	options: LocalServerStressOptions,
+	saveInfo: SaveInfo | undefined,
 ): Promise<void> {
 	const random = makeRandom(seed);
 
@@ -901,6 +871,7 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 		// we use tagging here, and not zero, as we will create client 0 after attach.
 		tag("client"),
 		seed,
+		options,
 	);
 
 	const initialState: LocalServerStressState = {
@@ -1003,7 +974,7 @@ function runTest<TOperation extends BaseOperation>(
 
 		try {
 			// don't write to files in CI
-			await runTestForSeed(model, seed, inCi ? undefined : saveInfo);
+			await runTestForSeed(model, seed, options, inCi ? undefined : saveInfo);
 		} catch (error) {
 			if (!shouldMinimize || saveInfo === undefined) {
 				throw error;
@@ -1071,7 +1042,7 @@ export async function replayTest<TOperation extends BaseOperation>(
 		generatorFactory: () => generator,
 	};
 
-	await runTestForSeed(model, seed, saveInfo);
+	await runTestForSeed(model, seed, options, saveInfo);
 }
 
 /**
