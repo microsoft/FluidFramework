@@ -36,6 +36,7 @@ export interface AiCollabOptions {
 
 // @alpha
 export interface AiCollabSuccessResponse {
+    readonly diffs: Diff[];
     readonly status: "success";
     readonly tokensUsed: TokenUsage;
 }
@@ -110,6 +111,21 @@ export interface DebugEvent {
 export type DebugEventLogHandler = <T extends DebugEvent>(event: T) => unknown;
 
 // @alpha
+export type Diff = DiffInsert | DiffRemove | DiffChange | DiffMove;
+
+// @alpha
+export interface DiffChange {
+    // (undocumented)
+    field: string;
+    // (undocumented)
+    objectId?: string | number | undefined;
+    // (undocumented)
+    type: "CHANGE";
+    // (undocumented)
+    value: unknown;
+}
+
+// @alpha
 export type Difference = DifferenceCreate | DifferenceRemove | DifferenceChange | DifferenceMove;
 
 // @alpha
@@ -158,6 +174,36 @@ export interface DifferenceRemove {
     oldValue: unknown;
     // (undocumented)
     path: ObjectPath;
+    // (undocumented)
+    type: "REMOVE";
+}
+
+// @alpha
+export interface DiffInsert {
+    // (undocumented)
+    field: string;
+    // (undocumented)
+    objectId?: string | number | undefined;
+    // (undocumented)
+    type: "INSERT";
+    // (undocumented)
+    value: unknown;
+}
+
+// @alpha
+export interface DiffMove {
+    // (undocumented)
+    newIndex: number;
+    // (undocumented)
+    objectId?: string | number | undefined;
+    // (undocumented)
+    type: "MOVE";
+}
+
+// @alpha
+export interface DiffRemove {
+    // (undocumented)
+    objectId?: string | number | undefined;
     // (undocumented)
     type: "REMOVE";
 }
