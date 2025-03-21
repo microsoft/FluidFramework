@@ -228,25 +228,4 @@ describe("BatchManager", () => {
 		);
 		assert.equal(batchManager.popBatch().hasReentrantOps, false);
 	});
-
-	it("BUG: Popping the batch then rolling back behaves incorrectly", () => {
-		const batchManager = new BatchManager(defaultOptions);
-
-		batchManager.push(
-			{ ...smallMessage(), referenceSequenceNumber: 0 },
-			/* reentrant */ false,
-		);
-		const checkpoint = batchManager.checkpoint();
-		batchManager.popBatch();
-		checkpoint.rollback(() => {});
-
-		// Here's the bug - batchManager.pendingBatch.length is "restored" to 1, so it appears non-empty
-		const correctResult = batchManager.empty;
-		assert(
-			!correctResult,
-			"BatchManager would ideally be empty, but in this case we find it is not",
-		);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-		assert.equal((batchManager as any).pendingBatch[0], undefined);
-	});
 });

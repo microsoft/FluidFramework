@@ -9,7 +9,7 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { SharedDirectory, ISharedMap } from "@fluidframework/map/internal";
-import { IMergeTreeInsertMsg, TextSegment } from "@fluidframework/merge-tree/internal";
+import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import {
@@ -123,11 +123,7 @@ describeCompat(
 			assert.ok(mapsAreEqual(sharedMap1, sharedMap2));
 		});
 
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		[true].forEach((enableGroupedBatching) => {
+		[false, true].forEach((enableGroupedBatching) => {
 			it(`Eventual consistency with op reentry - ${
 				enableGroupedBatching ? "Grouped" : "Regular"
 			} batches`, async function () {
@@ -143,36 +139,51 @@ describeCompat(
 					},
 				});
 
-				sharedString1.insertText(0, "  HELLO WORLD");
+				sharedString1.insertText(0, "ad");
+				sharedString1.insertText(1, "c");
 				await provider.ensureSynchronized();
 
-				sharedString2.on("sequenceDelta", (e) => {
-					const firstSeg = e.first.segment;
-					if (TextSegment.is(firstSeg) && firstSeg.text.startsWith("5")) {
-						sharedString2.insertText(sharedString2.getLength(), "reentrant");
-						// sharedString2.insertText(sharedString2.getLength(), "another");
+				sharedString2.on("sequenceDelta", (sequenceDeltaEvent) => {
+					if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "b") {
+						sharedString2.insertText(3, "x");
+					}
+				});
+				sharedMap2.on("valueChanged", (changed1) => {
+					if (changed1.key !== "key2" && changed1.key !== "key3") {
+						sharedMap2.on("valueChanged", (changed2) => {
+							if (changed2.key !== "key3") {
+								sharedMap2.set("key3", `${sharedMap1.get("key1")} updated`);
+							}
+						});
+
+						sharedMap2.set("key2", "3");
 					}
 				});
 
-				for (let i = 0; i < 10; i++) {
-					sharedString1.insertText(0, i.toString());
-				}
+				sharedMap1.set("key1", "1");
 
+				sharedString1.insertText(1, "b");
+				sharedString2.insertText(0, "y");
 				await provider.ensureSynchronized();
 
+				// The offending container is still alive
+				sharedString2.insertText(0, "z");
+				await provider.ensureSynchronized();
+
+				assert.strictEqual(sharedString1.getText(), "zyabxcd");
 				assert.strictEqual(
 					sharedString1.getText(),
 					sharedString2.getText(),
 					"SharedString eventual consistency broken",
 				);
 
-				// assert.strictEqual(sharedMap1.get("key1"), "1");
-				// assert.strictEqual(sharedMap1.get("key2"), "3");
-				// assert.strictEqual(sharedMap1.get("key3"), "1 updated");
-				// assert.ok(
-				// 	mapsAreEqual(sharedMap1, sharedMap2),
-				// 	"SharedMap eventual consistency broken",
-				// );
+				assert.strictEqual(sharedMap1.get("key1"), "1");
+				assert.strictEqual(sharedMap1.get("key2"), "3");
+				assert.strictEqual(sharedMap1.get("key3"), "1 updated");
+				assert.ok(
+					mapsAreEqual(sharedMap1, sharedMap2),
+					"SharedMap eventual consistency broken",
+				);
 
 				// Both containers are alive at the end
 				assert.ok(!container1.closed, "Local container is closed");
