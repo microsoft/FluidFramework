@@ -4379,8 +4379,13 @@ export class ContainerRuntime
 		batchId: BatchId,
 		staged: boolean,
 	): void {
-		for (const message of batch) {
-			this.reSubmit(message);
+		try {
+			this._orderSequentiallyCalls++;
+			for (const message of batch) {
+				this.reSubmit(message);
+			}
+		} finally {
+			this._orderSequentiallyCalls--;
 		}
 
 		// Only include Batch ID if "Offline Load" feature is enabled
