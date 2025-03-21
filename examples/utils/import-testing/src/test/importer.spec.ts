@@ -6,10 +6,14 @@
 import { strict as assert } from "node:assert";
 
 import { JsonAsTree } from "@fluidframework/tree/alpha";
-// eslint-disable-next-line import/no-internal-modules
-import type { areSafelyAssignable, requireTrue } from "@fluidframework/tree/internal";
+import type {
+	areSafelyAssignable,
+	requireTrue,
+	requireAssignableTo,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/tree/internal";
 
-import { RecursiveMap } from "../testExports.js";
+import { BadArraySelf, GoodArraySelf, RecursiveMap } from "../testExports.js";
 
 describe("import tests", () => {
 	it("recursive map", () => {
@@ -51,5 +55,30 @@ describe("import tests", () => {
 		type _checkObject = requireTrue<
 			areSafelyAssignable<ImportedObjectNodeIterator, ObjectIterator>
 		>;
+	});
+
+	it("BadArraySelf", () => {
+		const b = new BadArraySelf([new BadArraySelf([new BadArraySelf([])])]);
+		const inner = b[0] ?? assert.fail();
+		const inner2 = inner[0];
+		type B = typeof b;
+		type Inner = typeof inner;
+		type Inner2 = typeof inner2;
+		type _check1 = requireAssignableTo<undefined, Inner2>;
+		// This undesired assignment is permitted due to schema aware types being mangled by `any` from d.ts file. See note on BadArraySelf.
+		// Intellisense thinks this is an error since its not using the d.ts files and instead using the actual source which has correct typing.
+		type _check2 = requireAssignableTo<number, Inner2>;
+	});
+
+	it("GoodArraySelf", () => {
+		const b = new GoodArraySelf([new GoodArraySelf([new GoodArraySelf([])])]);
+		const inner = b[0] ?? assert.fail();
+		const inner2 = inner[0];
+		type B = typeof b;
+		type Inner = typeof inner;
+		type Inner2 = typeof inner2;
+		type _check1 = requireAssignableTo<undefined, Inner2>;
+		// @ts-expect-error This fails, like it should, due to working schema aware types
+		type _check2 = requireAssignableTo<number, Inner2>;
 	});
 });
