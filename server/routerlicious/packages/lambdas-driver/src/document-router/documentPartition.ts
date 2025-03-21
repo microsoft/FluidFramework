@@ -215,6 +215,15 @@ export class DocumentPartition {
 			});
 			return;
 		}
+
+		if (this.closed) {
+			Lumberjack.warning("Skipping pause since doc partition id closed.", {
+				...getLumberBaseProperties(this.documentId, this.tenantId),
+				offset,
+			});
+			return;
+		}
+
 		this.paused = true;
 
 		this.q.pause();
@@ -236,6 +245,12 @@ export class DocumentPartition {
 	}
 
 	public resume() {
+		if (this.closed) {
+			Lumberjack.warning("Skipping resume since doc partition id closed.", {
+				...getLumberBaseProperties(this.documentId, this.tenantId),
+			});
+			return;
+		}
 		if (!this.paused) {
 			Lumberjack.warning("Doc partition already resumed, returning early.", {
 				...getLumberBaseProperties(this.documentId, this.tenantId),
