@@ -37,7 +37,10 @@ export function generateSchemaFromSimpleSchema(simple: SimpleTreeSchema): FieldS
 type Context = ReadonlyMap<string, () => TreeNodeSchema>;
 
 function generateFieldSchema(simple: SimpleFieldSchema, context: Context): FieldSchema {
-	return createFieldSchema(simple.kind, generateAllowedTypes(simple.allowedTypes, context));
+	return createFieldSchema(
+		simple.kind,
+		generateAllowedTypes(simple.allowedTypesIdentifiers, context),
+	);
 }
 
 function generateAllowedTypes(allowed: ReadonlySet<string>, context: Context): AllowedTypes {
@@ -54,9 +57,9 @@ function generateNode(id: string, schema: SimpleNodeSchema, context: Context): T
 			return factory.object(id, fields);
 		}
 		case NodeKind.Array:
-			return factory.array(id, generateAllowedTypes(schema.allowedTypes, context));
+			return factory.array(id, generateAllowedTypes(schema.allowedTypesIdentifiers, context));
 		case NodeKind.Map:
-			return factory.map(id, generateAllowedTypes(schema.allowedTypes, context));
+			return factory.map(id, generateAllowedTypes(schema.allowedTypesIdentifiers, context));
 		case NodeKind.Leaf:
 			return (
 				SchemaFactory.leaves.find((leaf) => leaf.identifier === id) ??

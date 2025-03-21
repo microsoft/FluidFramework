@@ -156,6 +156,7 @@ export {
 	type AllowedTypes,
 	FieldKind,
 	FieldSchema,
+	type FieldSchemaAlpha,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
 	type NodeBuilderData,

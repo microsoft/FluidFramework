@@ -83,7 +83,7 @@ export interface SimpleArrayNodeSchema extends SimpleNodeSchemaBase<NodeKind.Arr
 	 * @remarks Refers to the types by identifier.
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
-	readonly allowedTypes: ReadonlySet<string>;
+	readonly allowedTypesIdentifiers: ReadonlySet<string>;
 }
 
 /**
@@ -99,7 +99,7 @@ export interface SimpleMapNodeSchema extends SimpleNodeSchemaBase<NodeKind.Map> 
 	 * @remarks Refers to the types by identifier.
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
-	readonly allowedTypes: ReadonlySet<string>;
+	readonly allowedTypesIdentifiers: ReadonlySet<string>;
 }
 
 /**
@@ -133,11 +133,13 @@ export type SimpleNodeSchema =
 /**
  * A simple, shallow representation of a schema for a field.
  *
- * @remarks This definition is incomplete, and references child types by identifiers.
+ * @privateremarks This definition is incomplete, and references child types by identifiers.
  * To be useful, this generally needs to be used as a part of a complete {@link SimpleTreeSchema}, which
  * contains backing {@link SimpleTreeSchema.definitions} for each referenced identifier.
  *
- * @internal
+ * TODO: make these mack into normal `remarks` once SimpleTreeSchema is not internal.
+ *
+ * @alpha
  * @sealed
  */
 export interface SimpleFieldSchema {
@@ -150,9 +152,11 @@ export interface SimpleFieldSchema {
 	 * The types allowed under the field.
 	 *
 	 * @remarks Refers to the types by identifier.
+	 * @privateremarks
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
+	 * TODO: make these mack into normal `remarks` once SimpleTreeSchema is not internal.
 	 */
-	readonly allowedTypes: ReadonlySet<string>;
+	readonly allowedTypesIdentifiers: ReadonlySet<string>;
 
 	/**
 	 * {@inheritDoc FieldSchemaMetadata}
@@ -181,10 +185,10 @@ export interface SimpleTreeSchema extends SimpleFieldSchema {
 	 * @remarks Refers to the types by identifier.
 	 * Can be resolved via {@link SimpleTreeSchema.definitions}.
 	 */
-	readonly allowedTypes: ReadonlySet<string>;
+	readonly allowedTypesIdentifiers: ReadonlySet<string>;
 
 	/**
-	 * The complete set of node schema definitions recursively referenced by the tree's {@link SimpleTreeSchema.allowedTypes}.
+	 * The complete set of node schema definitions recursively referenced by the tree's {@link SimpleTreeSchema.allowedTypesIdentifiers}.
 	 *
 	 * @remarks the keys are the schemas' {@link TreeNodeSchemaCore.identifier | identifiers}.
 	 */
