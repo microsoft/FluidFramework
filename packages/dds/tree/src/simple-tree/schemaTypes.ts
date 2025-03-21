@@ -296,6 +296,9 @@ export let createFieldSchema: <
  * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
  * See {@link FieldSchemaMetadata.custom}.
  *
+ * @remarks
+ * All implementations of this are actually {@link FieldSchemaAlpha} which exposes some additional alpha APIs.
+ *
  * @sealed @public
  */
 export class FieldSchema<
@@ -331,6 +334,10 @@ export class FieldSchema<
 		return this.props?.metadata;
 	}
 
+	/**
+	 * This class is `@sealed`: protected members like this constructor are for internal use only.
+	 * Use {@link SchemaFactory} to create the FieldSchema instances.
+	 */
 	protected constructor(
 		/**
 		 * The {@link https://en.wikipedia.org/wiki/Kind_(type_theory) | kind } of this field.

@@ -133,7 +133,7 @@ export type SimpleNodeSchema =
 /**
  * A simple, shallow representation of a schema for a field.
  *
- * @privateremarks This definition is incomplete, and references child types by identifiers.
+ * @privateRemarks This definition is incomplete, and references child types by identifiers.
  * To be useful, this generally needs to be used as a part of a complete {@link SimpleTreeSchema}, which
  * contains backing {@link SimpleTreeSchema.definitions} for each referenced identifier.
  *
