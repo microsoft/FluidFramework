@@ -131,11 +131,15 @@ export interface IBatchMessage {
  * loader layer.
  * It gets passed into the {@link (IRuntimeFactory:interface).instantiateRuntime} call.
  *
- * @privateremarks
+ * @privateRemarks
  * Only include members on this interface if you intend them to be consumed/called from the runtime layer.
  *
- * TODO: once `@alpha` tag is removed, `unknown` should be removed from submitSignalFn.
- * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/7462}
+ * TODO: once `@internal` or `@system`, `submitSignalFn`'s `contents` `unknown` type should be replaced with
+ * {@link @fluidframework/core-interfaces#ISignalEnvelope}.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/7462}.
+ *
+ * To get `IContainerContext` internal, likely externally exposed uses will need
+ * to be replaced with a branded or otherwise erased type.
  *
  * @legacy
  * @alpha
@@ -173,6 +177,9 @@ export interface IContainerContext {
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
 	) => number;
+	/**
+	 * @param content - Expected to be of type {@link @fluidframework/core-interfaces/internal#ISignalEnvelope}.
+	 */
 	readonly submitSignalFn: (contents: unknown, targetClientId?: string) => void;
 	readonly disposeFn?: (error?: ICriticalContainerError) => void;
 	readonly closeFn: (error?: ICriticalContainerError) => void;
