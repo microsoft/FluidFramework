@@ -35,6 +35,7 @@ import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitio
 
 import { type ICodecOptions, noopValidator } from "../codec/index.js";
 import {
+	type FieldKey,
 	type GraphCommit,
 	type IEditableForest,
 	type ITreeCursor,
@@ -93,6 +94,7 @@ import {
 	type CustomTreeNode,
 	type CustomTreeValue,
 	type ITreeAlpha,
+	type SimpleObjectFieldSchema,
 } from "../simple-tree/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
@@ -774,7 +776,7 @@ function verboseFromCursor(
 	const nodeSchema =
 		schema.get(reader.type) ?? fail(0xac9 /* missing schema for type in cursor */);
 	if (nodeSchema instanceof LeafNodeStoredSchema) {
-		return fields as CustomTreeValue<IFluidHandle>;
+		return fields as CustomTreeValue;
 	}
 
 	return {
@@ -811,9 +813,9 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 		return { kind: NodeKind.Array, allowedTypes: arrayTypes };
 	}
 	if (schema instanceof ObjectNodeStoredSchema) {
-		const fields: Record<string, SimpleFieldSchema> = {};
-		for (const [key, field] of schema.objectNodeFields) {
-			fields[key] = exportSimpleFieldSchemaStored(field);
+		const fields = new Map<FieldKey, SimpleObjectFieldSchema>();
+		for (const [storedKey, field] of schema.objectNodeFields) {
+			fields.set(storedKey, { ...exportSimpleFieldSchemaStored(field), storedKey });
 		}
 		return { kind: NodeKind.Object, fields };
 	}

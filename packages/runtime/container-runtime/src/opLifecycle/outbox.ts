@@ -37,7 +37,6 @@ export interface IOutboxConfig {
 	readonly compressionOptions: ICompressionRuntimeOptions;
 	// The maximum size of a batch that we can send over the wire.
 	readonly maxBatchSizeInBytes: number;
-	readonly disablePartialFlush: boolean;
 }
 
 export interface IOutboxParameters {
@@ -185,9 +184,8 @@ export class Outbox {
 		const blobAttachSeqNums = this.blobAttachBatch.sequenceNumbers;
 		const idAllocSeqNums = this.idAllocationBatch.sequenceNumbers;
 		assert(
-			this.params.config.disablePartialFlush ||
-				(sequenceNumbersMatch(mainBatchSeqNums, blobAttachSeqNums) &&
-					sequenceNumbersMatch(mainBatchSeqNums, idAllocSeqNums)),
+			sequenceNumbersMatch(mainBatchSeqNums, blobAttachSeqNums) &&
+				sequenceNumbersMatch(mainBatchSeqNums, idAllocSeqNums),
 			0x58d /* Reference sequence numbers from both batches must be in sync */,
 		);
 
@@ -220,7 +218,7 @@ export class Outbox {
 		if (++this.mismatchedOpsReported <= this.maxMismatchedOpsToReport) {
 			this.logger.sendErrorEvent(
 				{
-					category: this.params.config.disablePartialFlush ? "error" : "generic",
+					category: "generic",
 					eventName: "ReferenceSequenceNumberMismatch",
 					mainReferenceSequenceNumber: mainBatchSeqNums.referenceSequenceNumber,
 					mainClientSequenceNumber: mainBatchSeqNums.clientSequenceNumber,
@@ -233,12 +231,9 @@ export class Outbox {
 			);
 		}
 
-		//* TODO: Update naming / comments
-		// We're reusing disablePartialFlush to cover this throw (it used to do flush, but should never happen now that we flush from process)
-		if (!this.params.config.disablePartialFlush) {
-			//* TODO: Close first?
-			throw error;
-		}
+		//* TODO: Add feature gate?
+		//* TODO: Close first?
+		throw error;
 
 		//* Delete (WIP comment)
 		// This will always result in rebase/resubmit, since the in-progress batch must have been reentrant

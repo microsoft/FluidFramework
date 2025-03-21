@@ -168,20 +168,11 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 	];
 
 	itExpects(
-		"Reference sequence number mismatch when doing op reentry - early flush enabled - submits two batches",
+		"Reference sequence number mismatch when doing op reentry submits two batches",
 		expectedErrors,
 		async () => {
 			// By default, we would flush a batch when we detect a reference sequence number mismatch
 			await processOutOfOrderOp({});
-			assert.strictEqual(capturedBatches.length, 2);
-		},
-	);
-
-	itExpects(
-		"Reference sequence number mismatch when doing op reentry - early flush disabled - Still submits two batches",
-		expectedErrors,
-		async () => {
-			await processOutOfOrderOp({ "Fluid.ContainerRuntime.DisablePartialFlush": true });
 			assert.strictEqual(capturedBatches.length, 2);
 		},
 	);

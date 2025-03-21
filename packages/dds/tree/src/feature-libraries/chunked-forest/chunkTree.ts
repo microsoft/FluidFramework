@@ -390,11 +390,11 @@ export function chunkRange(
 ): TreeChunk[] {
 	assert(
 		!(skipLastNavigation && length === 0),
-		"Cannot skip last navigation if length is 0 and thus last navigation already occurred.",
+		0xb58 /* Cannot skip last navigation if length is 0 and thus last navigation already occurred. */,
 	);
 	assert(
 		(cursor.mode === CursorLocationType.Nodes) === length > 0,
-		"Should be in nodes mode if not past end",
+		0xb59 /* Should be in nodes mode if not past end */,
 	);
 	let output: TreeChunk[] = [];
 	let remaining = length;
