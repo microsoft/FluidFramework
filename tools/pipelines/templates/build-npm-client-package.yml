@@ -513,11 +513,18 @@ extends:
               # this is used to inject telemetry key file and upload built devtools extension.
               - ${{ parameters.additionalBuildSteps }}
 
-              - script: |
-                  NESTED_LIB_DIST="nested_lib_dist-$(System.JobAttempt)"
-                  echo "##vso[task.setvariable variable=NESTED_LIB_DIST;isOutput=true]$NESTED_LIB_DIST"
-                name: setLibDistArtifactName  # This makes it accessible in dependent jobs
+              - task: Bash@3
                 displayName: "Generate Nested Lib Dist Artifact Name"
+                inputs:
+                  targetType: inline
+                  workingDirectory: '${{ parameters.buildDirectory }}'
+                  script: |
+                    set -eu -o pipefail
+                    # Generate a name for the artifact that will be published in the next step
+                    # and consumed by test jobs.
+                    NESTED_LIB_DIST="nested_lib_dist-$(System.JobAttempt)"
+                    echo "##vso[task.setvariable variable=NESTED_LIB_DIST;isOutput=true]$NESTED_LIB_DIST"
+                name: setLibDistArtifactName
 
             templateContext:
               outputParentDirectory: $(Build.ArtifactStagingDirectory)
@@ -525,7 +532,7 @@ extends:
                 - output: pipelineArtifact
                   displayName: Publish Artifact - nested_lib_dist
                   targetPath: $(Build.ArtifactStagingDirectory)/nested_lib_dist
-                  artifactName: $NESTED_LIB_DIST
+                  artifactName: $(NESTED_LIB_DIST)
                   publishLocation: pipeline
 
                 - ${{ if ne(parameters.taskPack, false) }}:
@@ -743,7 +750,7 @@ extends:
 
                 - task: DownloadPipelineArtifact@2
                   inputs:
-                    artifact: nested_lib_dist-$(System.JobAttempt)
+                    artifact: $[ dependencies.build.outputs['setLibDistArtifactName.NESTED_LIB_DIST'] ]
                     targetPath: $(Build.SourcesDirectory)
 
                 - script: |
