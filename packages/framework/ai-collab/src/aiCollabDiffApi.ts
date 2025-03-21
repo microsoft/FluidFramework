@@ -61,7 +61,6 @@ export interface ModifyDiff extends UiDiff {
 	 * The path from the root node to the ndoe being modified.
 	 */
 	path: NodePath;
-	modification: unknown;
 }
 
 /**

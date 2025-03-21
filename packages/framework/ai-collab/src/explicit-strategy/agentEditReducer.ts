@@ -32,7 +32,6 @@ import type {
 	NodePath,
 	RemoveFieldDiff,
 	UiDiff,
-	UiDiffNodeInfo,
 } from "../aiCollabDiffApi.js";
 
 import {
@@ -78,7 +77,10 @@ function populateDefaults(
 	}
 }
 
-function getSchemaIdentifier(content: TreeEditValue): string | undefined {
+/**
+ * Gets the schema identifier of the given content, including primitve values.
+ */
+export function getSchemaIdentifier(content: TreeEditValue): string | undefined {
 	switch (typeof content) {
 		case "boolean": {
 			return SchemaFactory.boolean.identifier;
@@ -153,8 +155,8 @@ export function applyAgentEdit(
 			fail("inserted node must be of an allowed type");
 		}
 		case "remove": {
-			const uiDiff = createRemoveUiDiff(treeEdit, idGenerator);
 			const source = treeEdit.source;
+			let uiDiff: RemoveFieldDiff | ArraySingleRemoveDiff | ArrayRangeRemoveDiff;
 			if (isObjectTarget(source)) {
 				const node = getNodeFromTarget(source, idGenerator);
 				const parentNode = Tree.parent(node);
@@ -166,6 +168,7 @@ export function applyAgentEdit(
 				} else if (Tree.schema(parentNode).kind === NodeKind.Array) {
 					const nodeIndex = Tree.key(node) as number;
 					const parentArrayNode = parentNode as TreeArrayNode;
+					uiDiff = createRemoveUiDiff(treeEdit, idGenerator);
 					parentArrayNode.removeAt(nodeIndex);
 				} else {
 					const fieldKey = Tree.key(node);
@@ -174,6 +177,7 @@ export function applyAgentEdit(
 						(parentSchema.info as Record<string, ImplicitFieldSchema>)[fieldKey] ??
 						fail("Expected field schema");
 					if (fieldSchema instanceof FieldSchema && fieldSchema.kind === FieldKind.Optional) {
+						uiDiff = createRemoveUiDiff(treeEdit, idGenerator);
 						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 						(parentNode as any)[fieldKey] = undefined;
 					} else {
@@ -184,6 +188,7 @@ export function applyAgentEdit(
 				}
 			} else if (isRange(source)) {
 				const { array, startIndex, endIndex } = getRangeInfo(source, idGenerator);
+				uiDiff = createRemoveUiDiff(treeEdit, idGenerator);
 				array.removeRange(startIndex, endIndex);
 			} else {
 				throw new UsageError("Invalid source for remove edit");
@@ -368,7 +373,10 @@ interface RangeInfo {
 	endIndex: number;
 }
 
-function getRangeInfo(range: Range, idGenerator: IdGenerator): RangeInfo {
+/**
+ * Gets information about the range of nodes being targeted by an {@link Range}
+ */
+export function getRangeInfo(range: Range, idGenerator: IdGenerator): RangeInfo {
 	const { array: arrayFrom, index: startIndex } = getPlaceInfo(range.from, idGenerator);
 	const { array: arrayTo, index: endIndex } = getPlaceInfo(range.to, idGenerator);
 
@@ -535,10 +543,6 @@ function createInsertUiDiff(treeEdit: Insert, idGenerator: IdGenerator): InsertD
 	const { array, index } = getPlaceInfo(treeEdit.destination, idGenerator);
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const newlyInsertedNode = array.at(index)!;
-	// let newNodeId: string | number | undefined;
-	// if (!isPrimitive(newlyInsertedNode)) {
-	// 	newNodeId = Tree.shortId(newlyInsertedNode as TreeNode);
-	// }
 
 	return {
 		type: "insert",
@@ -554,14 +558,24 @@ function createModifyUiDiff(treeEdit: Modify, idGenerator: IdGenerator): ModifyD
 	const targetNode = getNodeFromTarget(treeEdit.target, idGenerator);
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 	const targetNodeAtField: unknown = (targetNode as any)[treeEdit.field];
+
+	if (isPrimitive(targetNodeAtField)) {
+		return {
+			type: "modify",
+			path: createNodePathRecursive(targetNode, idGenerator, [
+				{
+					shortId: undefined,
+					parentField: treeEdit.field,
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					schemaIdentifier: getSchemaIdentifier(treeEdit.modification)!,
+				},
+			]),
+		};
+	}
+
 	return {
 		type: "modify",
-		path: createNodePathRecursive(
-			isPrimitive(targetNodeAtField) ? targetNode : (targetNodeAtField as TreeNode),
-			idGenerator,
-			[],
-		),
-		modification: treeEdit.modification,
+		path: createNodePathRecursive(targetNodeAtField as TreeNode, idGenerator, []),
 	};
 }
 
@@ -580,25 +594,32 @@ function createRemoveUiDiff(
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const targetRemovedNode = (parentNode as TreeArrayNode).at(nodeIndex)!;
 
+			if (isPrimitive(targetRemovedNode)) {
+				// Note that this cause should not be possible, still putting the error here in case things change so that this function is updated properly
+				throw new Error(
+					"Unexpectedly recieved a primitive node as the target of a remove edit",
+				);
+			}
+
 			return {
 				type: "remove-array-single",
-				path: createNodePathRecursive(
-					isPrimitive(targetRemovedNode) ? node : (targetRemovedNode as TreeNode),
-					idGenerator,
-					[],
-				),
+				path: createNodePathRecursive(targetRemovedNode as TreeNode, idGenerator, []),
 			};
 		} else {
 			const fieldKey = Tree.key(node);
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 			const targetNodeAtField: unknown = (parentNode as any)[fieldKey];
+
+			if (isPrimitive(targetNodeAtField)) {
+				// Note that this cause should not be possible, still putting the error here in case things change so that this function is updated properly
+				throw new Error(
+					"Unexpectedly recieved a primitive node as the target of a remove field edit",
+				);
+			}
+
 			return {
 				type: "remove-field",
-				path: createNodePathRecursive(
-					isPrimitive(targetNodeAtField) ? node : (targetNodeAtField as TreeNode),
-					idGenerator,
-					[],
-				),
+				path: createNodePathRecursive(targetNodeAtField as TreeNode, idGenerator, []),
 			};
 		}
 	} else if (isRange(source)) {
