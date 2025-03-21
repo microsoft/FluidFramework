@@ -28,7 +28,6 @@ extends:
       - nyc/examples
       - nyc/experimental
       - nyc/packages
-    taskWebpack: true
     taskPack: false
     taskBundleAnalysis: true
     taskPublishBundleSizeArtifacts: true
