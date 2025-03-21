@@ -17,7 +17,6 @@ class TestTimeout {
 	private timeout: number = 0;
 	private timer: NodeJS.Timeout | undefined;
 	private readonly deferred: Deferred<void>;
-	private rejected = false;
 
 	private static instance: TestTimeout = new TestTimeout();
 	public static reset(runnable: Mocha.Runnable) {
@@ -26,11 +25,8 @@ class TestTimeout {
 	}
 
 	public static clear() {
-		if (TestTimeout.instance.rejected) {
-			TestTimeout.instance = new TestTimeout();
-		} else {
-			TestTimeout.instance.clearTimer();
-		}
+		TestTimeout.instance.clearTimer();
+		TestTimeout.instance = new TestTimeout();
 	}
 
 	public static getInstance() {
@@ -67,7 +63,6 @@ class TestTimeout {
 		// Set up timer to reject near the test timeout.
 		this.timer = setTimeout(() => {
 			this.deferred.reject(this);
-			this.rejected = true;
 		}, this.timeout);
 	}
 	private clearTimer() {
