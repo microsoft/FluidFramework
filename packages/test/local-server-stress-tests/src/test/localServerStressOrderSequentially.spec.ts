@@ -34,6 +34,8 @@ const orderSequentiallyReducer = async (
 				baseModel.reducer(ddsState, convertToRealHandles(o, taggedHandles));
 			}
 			if (op.rollback) {
+				// Thowing any error during the orderSequentially callback will trigger a rollback attempt of all the ops we just played.
+				// Since it's not a real error, we'll suppress it later.
 				throw rollbackError;
 			}
 		});

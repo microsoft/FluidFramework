@@ -27,6 +27,7 @@ export interface DDSModelOp {
 export interface OrderSequentially {
 	type: "orderSequentially";
 	operations: DDSModelOp[];
+	/** Induce a rollback after playing all operations */
 	rollback: boolean;
 }
 
