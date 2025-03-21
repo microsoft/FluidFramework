@@ -1004,10 +1004,12 @@ export class Container
 		);
 
 		this.detachedBlobStorage =
-			detachedBlobStorage ??
-			(this.mc.config.getBoolean("Fluid.Container.MemoryBlobStorageEnabled") === false
+			this.attachState === AttachState.Attached
 				? undefined
-				: createMemoryDetachedBlobStorage());
+				: (detachedBlobStorage ??
+					(this.mc.config.getBoolean("Fluid.Container.MemoryBlobStorageEnabled") === false
+						? undefined
+						: createMemoryDetachedBlobStorage()));
 
 		this.storageAdapter = new ContainerStorageAdapter(
 			this.detachedBlobStorage,

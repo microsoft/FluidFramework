@@ -5,7 +5,7 @@
 
 import assert from "node:assert";
 
-import { type IProvideLayerCompatDetails } from "@fluid-internal/client-utils";
+import { stringToBuffer, type IProvideLayerCompatDetails } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
 	IRuntime,
@@ -35,7 +35,7 @@ import type { IPendingDetachedContainerState } from "../serializedStateManager.j
 
 import { failProxy, failSometimeProxy } from "./failProxy.js";
 
-const codeLoader: ICodeDetailsLoader = {
+const createCodeLoader = (props?: { createDetachedBlob?: boolean }): ICodeDetailsLoader => ({
 	load: async () => {
 		return {
 			details: {
@@ -48,6 +48,10 @@ const codeLoader: ICodeDetailsLoader = {
 							return this;
 						},
 						async instantiateRuntime(context, existing): Promise<IRuntime> {
+							if (existing === false && props?.createDetachedBlob === true) {
+								await context.storage.createBlob(stringToBuffer("whatever", "utf8"));
+							}
+
 							return failSometimeProxy<IRuntime & IProvideLayerCompatDetails>({
 								createSummary: () => ({
 									tree: {},
@@ -65,7 +69,7 @@ const codeLoader: ICodeDetailsLoader = {
 			},
 		};
 	},
-};
+});
 
 describe("loader unit test", () => {
 	it("rehydrateDetachedContainerFromSnapshot with invalid format", async () => {
@@ -90,7 +94,7 @@ describe("loader unit test", () => {
 
 	it("rehydrateDetachedContainerFromSnapshot with valid format", async () => {
 		const loader = new Loader({
-			codeLoader,
+			codeLoader: createCodeLoader(),
 			documentServiceFactory: failProxy(),
 			urlResolver: failProxy(),
 		});
@@ -106,7 +110,7 @@ describe("loader unit test", () => {
 
 	it("rehydrateDetachedContainerFromSnapshot with valid format and attachment blobs", async () => {
 		const loader = new Loader({
-			codeLoader,
+			codeLoader: createCodeLoader({ createDetachedBlob: true }),
 			documentServiceFactory: failProxy(),
 			urlResolver: failProxy(),
 		});
@@ -122,7 +126,7 @@ describe("loader unit test", () => {
 
 	it("serialize and rehydrateDetachedContainerFromSnapshot while attaching", async () => {
 		const loader = new Loader({
-			codeLoader,
+			codeLoader: createCodeLoader(),
 			documentServiceFactory: failProxy(),
 			urlResolver: failProxy(),
 			configProvider: {
@@ -158,7 +162,7 @@ describe("loader unit test", () => {
 			url: "none",
 		};
 		const loader = new Loader({
-			codeLoader,
+			codeLoader: createCodeLoader({ createDetachedBlob: true }),
 			documentServiceFactory: failSometimeProxy<IDocumentServiceFactory>({
 				createContainer: async () =>
 					failSometimeProxy<IDocumentService>({
@@ -223,7 +227,7 @@ describe("loader unit test", () => {
 		new Container({
 			urlResolver: failProxy(),
 			documentServiceFactory: failProxy(),
-			codeLoader,
+			codeLoader: createCodeLoader(),
 			options: {},
 			scope: {},
 			subLogger: logger.logger,
