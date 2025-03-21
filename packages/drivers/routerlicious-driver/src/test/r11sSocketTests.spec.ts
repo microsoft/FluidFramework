@@ -271,27 +271,23 @@ describe("R11s Socket Tests", () => {
 			documentService.connectToDeltaStream(client),
 		);
 
-		// Set up a promise that will resolve if abnormal_disconnect is called
-		const disconnectEventP = new Promise<{ clientId: string; errorType: string }>(
-			(resolve, reject) => {
-				assert(socket !== undefined, "Socket should be defined");
-				socket.on(
-					"abnormal_disconnect",
-					(clientId: string, _documentId: string, errorType: string) => {
-						resolve({ clientId, errorType });
-					},
-				);
+		// Set up a promise that will reject if abnormal_disconnect is called and resolve if no event is received
+		const noAbnormalDisconnectP = new Promise<void>((resolve, reject) => {
+			assert(socket !== undefined, "Socket should be defined");
+			socket.on(
+				"abnormal_disconnect",
+				(clientId: string, _documentId: string, errorType: string) => {
+					reject(new Error(`Received unexpected abnormal_disconnect event: ${errorType}`));
+				},
+			);
 
-				// Reject the promise to indicate no event was fired
-				setTimeout(() => reject(new Error("No abnormal_disconnect event was fired")), 300);
-			},
-		);
+			// After a short period, resolve the promise to indicate no event was fired (expected behavior)
+			setTimeout(resolve, 300);
+		});
 
 		(connection as any).disconnect();
 
-		// Verify that the promise is rejected, meaning no abnormal_disconnect event was fired
-		await assert.rejects(disconnectEventP, {
-			message: "No abnormal_disconnect event was fired",
-		});
+		// Promise should resolve, indicating no abnormal_disconnect event was fired
+		await noAbnormalDisconnectP;
 	});
 });
