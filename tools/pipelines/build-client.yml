@@ -195,6 +195,7 @@ extends:
     isReleaseGroup: true
     poolBuild: Large-eastus2
     checkoutSubmodules: true
+    taskBundleAnalysis: true
     taskLint: false # Linting is captured by `ci:build` via fluid-build
     taskBuildDocs: true
     publishDocs: true
