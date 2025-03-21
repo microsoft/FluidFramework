@@ -3069,7 +3069,12 @@ export class ContainerRuntime
 		let checkpoint: IBatchCheckpoint | undefined;
 		const checkpointDirtyState = this.dirtyContainer;
 		let result: T;
+		// eslint-disable-next-line import/no-deprecated
+		let stageControls: StageControlsExperimental | undefined;
 		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
+			if (this._orderSequentiallyCalls === 0 && !this.inStagingMode) {
+				stageControls = this.enterStagingMode();
+			}
 			// Note: we are not touching any batches other than mainBatch here, for two reasons:
 			// 1. It would not help, as other batches are flushed independently from main batch.
 			// 2. There is no way to undo process of data store creation, blob creation, ID compressor ops, or other things tracked by other batches.
@@ -3089,6 +3094,8 @@ export class ContainerRuntime
 					if (this.dirtyContainer !== checkpointDirtyState) {
 						this.updateDocumentDirtyState(checkpointDirtyState);
 					}
+					stageControls?.discardChanges();
+					stageControls = undefined;
 				} catch (error_) {
 					const error2 = wrapError(error_, (message) => {
 						return DataProcessingError.create(
@@ -3120,7 +3127,7 @@ export class ContainerRuntime
 		} finally {
 			this._orderSequentiallyCalls--;
 		}
-
+		stageControls?.commitChanges();
 		// We don't flush on TurnBased since we expect all messages in the same JS turn to be part of the same batch
 		if (this.flushMode !== FlushMode.TurnBased && this._orderSequentiallyCalls === 0) {
 			this.flush();
@@ -3143,7 +3150,6 @@ export class ContainerRuntime
 		// Make sure all BatchManagers are empty before entering staging mode,
 		// since we mark whole batches as "staged" or not to indicate whether to submit them.
 		this.outbox.flush();
-		const previousDirtyState = this.dirtyContainer;
 		const exitStagingMode = (discardOrCommit: () => void) => (): void => {
 			this.stageControls = undefined;
 
@@ -3159,8 +3165,8 @@ export class ContainerRuntime
 				this.pendingStateManager.popStagedBatches(({ content, localOpMetadata }) =>
 					this.rollback(content, localOpMetadata),
 				);
-				if (this.dirtyContainer !== previousDirtyState) {
-					this.updateDocumentDirtyState(previousDirtyState);
+				if (this.attachState === AttachState.Attached) {
+					this.updateDocumentDirtyState(this.pendingMessagesCount !== 0);
 				}
 			}),
 			commitChanges: exitStagingMode(() => {
@@ -4373,11 +4379,9 @@ export class ContainerRuntime
 		batchId: BatchId,
 		staged: boolean,
 	): void {
-		this.orderSequentially(() => {
-			for (const message of batch) {
-				this.reSubmit(message);
-			}
-		});
+		for (const message of batch) {
+			this.reSubmit(message);
+		}
 
 		// Only include Batch ID if "Offline Load" feature is enabled
 		// It's only needed to identify batches across container forks arising from misuse of offline load.
