@@ -1005,6 +1005,7 @@ export abstract class FluidDataStoreContext
 				callSite,
 				undefined /* sequencedMessage */,
 				safeTelemetryProps,
+				30 /* stackTraceLimit */,
 			);
 
 			this.mc.logger.sendTelemetryEvent(
