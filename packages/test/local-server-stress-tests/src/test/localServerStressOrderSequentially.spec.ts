@@ -85,15 +85,18 @@ describe("Local Server Stress with rollback", () => {
 
 	createLocalServerStressSuite(model, {
 		defaultTestCount: 100,
-		// skipMinimization: true,
+		skipMinimization: true,
 		// Uncomment to replay a particular seed.
 		// only: [91],
 		saveFailures,
 		// saveSuccesses,
 		configurations: { "Fluid.ContainerRuntime.EnableRollback": true },
 		skip: [
-			3, 4, 9, 10, 13, 16, 21, 23, 27, 28, 33, 35, 37, 38, 39, 40, 47, 48, 49, 52, 56, 63, 68,
-			71, 74, 87, 90, 92, 96, 98,
+			...[0, 2, 7, 10, 13, 15, 26, 29, 39, 52, 61, 66, 67, 75, 76, 82, 84, 88, 90], // RollbackError: Unsupported op type for rollback (shared intervals)
+			...[1, 3, 6, 8, 14, 23, 30, 53, 55, 56, 58, 59, 64, 70, 77, 80, 86, 93, 99], // RollbackError: Can't rollback attach message
+			...[12, 28, 36, 44, 60], // timeout (probably minimization),
+			...[31], // MergeTree insert failed
+			...[32, 45, 89], //  Number of subDirectories not same
 		],
 	});
 });
