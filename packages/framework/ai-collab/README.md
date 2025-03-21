@@ -254,7 +254,7 @@ import { aiCollab, DebugEvent, UiDiff } from "@fluidframework/ai-collab/alpha";
 const sf = new SchemaFactory("testApp");
 
 class TestVector extends sf.object("Vector", {
-	id: sf.identifier, // will be omitted from the generated JSON schema
+	id: sf.identifier,
 	x: sf.number,
 	y: sf.number,
 	z: sf.optional(sf.number),
@@ -325,7 +325,9 @@ As you can see, the object at the beginning of the `path` array directly points 
 
 Using the following ui diff, you can identify the modified node in a number of different ways.
 
-The simplest way is to use the `shortId` where you can use the following code to identify the newly inserted node within the SharedTree
+The simplest way is to use the `shortId` where you can use the following code to identify the newly inserted node within the SharedTree.
+
+**Note that the shortId field will only exist for objects that have a field defined as the `SchemaFactory.identifier` field.** See the above example app schema in this section to see the schema field defined as `sf.identifier`
 ```ts
 import { Tree } from "@fluidframework/tree/alpha"
 
