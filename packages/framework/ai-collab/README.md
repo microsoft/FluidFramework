@@ -242,6 +242,133 @@ Debug Events in ai-collab have two different types of trace id's:
 - `traceId`: This field exists on all debug events and can be used to correlate all debug events that happened in a single execution of `aiCollab()`. Sorting the events by timestamp will show the proper chronological order of the events. Note that the events should already be emitted in chronological order.
 - `eventFlowTraceId`: this field exists on all `EventFlowDebugEvents` and can be used to correlate all events from a particular event flow. Additionally all LLM api call events will contain the `eventFlowTraceId` field as well as a `triggeringEventFlowName` so you can link LLM API calls to a particular event flow.
 
+## Ui Visualizations
+ai-collab provides an array of `UiDiff` objects with its response.Each of these objects allows developers to identify tree nodes that have been modified as a result of ai collaboration and visualize them according to their needs.
+
+Every `UiDiff` will include either a single `NodePath` or multiple in the case of multiple nodes being targeted by a single edit created by the ai agent. A `NodePath` provides an array leading from the node targeted for modification (at the start of the array) all the way back to the root node passed to the ai-collab function call which will be at the end of the array, along with an explanation directly from the ai agent as to why is performed an edit.
+
+Lets take a look at some examples for the following SharedTree application schema
+```ts
+import { aiCollab, DebugEvent, UiDiff } from "@fluidframework/ai-collab/alpha";
+
+const sf = new SchemaFactory("testApp");
+
+class TestVector extends sf.object("Vector", {
+	id: sf.identifier, // will be omitted from the generated JSON schema
+	x: sf.number,
+	y: sf.number,
+	z: sf.optional(sf.number),
+}) {}
+
+class TestAppRootObject extends sf.object("TestAppRootObject", {
+	id: sf.identifier,
+	rootStr: sf.string,
+	rootVectors: sf.array([TestVector]),
+	rootStrings: sf.array(sf.string),
+	optionalFieldObject: sf.optional(TestVector),
+	innerObject: sf.object("InnerObject", {
+		nestedStr: sf.string,
+		nestedVectors: sf.array([TestVector]),
+	}),
+}) {}
+
+const response = aiCollab({
+	openAI: {
+		client: new OpenAI({
+			apiKey: OPENAI_API_KEY,
+		}),
+		modelName: "gpt-4o",
+	},
+	treeNode: view.root,
+	prompt: {
+		systemRoleContext:
+			"You are a manager that is helping out with a project management tool. You have been asked to edit a group of tasks.",
+		userAsk: userAsk,
+	},
+	limiters: {
+		maxModelCalls: 25
+	}
+	planningStep: true,
+	finalReviewStep: true,
+	debugEventLogHandler: (event: DebugEvent) => {console.log(event);}
+});
+
+const uiDiffs: UiDiff[] = response.uiDiffs
+```
+
+### The Insert Ui Diff
+The following `InsertDiff` is an example of a `UiDiff` that would result from if the ai agent inserts an object into index 1 of `TestAppRootObject.rootVectors`
+```json
+{
+  type: "insert",
+  path: [
+    {
+      shortId: -14,
+      schemaIdentifier: "testApp.TestVector",
+      parentField: 1,
+    },
+    {
+      shortId: undefined,
+      schemaIdentifier: "testApp.Array<[\"testApp.TestVector\"]>",
+      parentField: "rootVectors",
+    },
+    {
+      shortId: -1,
+      schemaIdentifier: "testApp.TestAppRootObject",
+      parentField: "rootFieldKey",
+    },
+  ],
+  aiExplanation: "I need to insert a vector within the rootVectors array",
+}
+```
+As you can see, the object at the beginning of the `path` array directly points to the newly inserted node while each next object points to the parent of the preceding node until you hit the root node passed to the ai-collab function call.
+
+Using the following ui diff, you can identify the modified node in a number of different ways.
+
+The simplest way is to use the `shortId` where you can use the following code to identify the newly inserted node within the SharedTree
+```ts
+import { Tree } from "@fluidframework/tree/alpha"
+
+const shortId = Tree.shortId(node);
+if (shortId === uiDiff.path[0].shortId) {
+	// Do some visualization of the edit
+}
+```
+You can also use the `type` and `schemaIdentifier` fields to group related `UiDiff`'s
+```ts
+
+const result = aiCollab({
+	openAI: {
+		client: new OpenAI({
+			apiKey: OPENAI_API_KEY,
+		}),
+		modelName: "gpt-4o",
+	},
+	treeNode: view.root,
+	prompt: {
+		systemRoleContext:
+			"You are a manager that is helping out with a project management tool. You have been asked to edit a group of tasks.",
+		userAsk: userAsk,
+	},
+	limiters: {
+		maxModelCalls: 25
+	}
+	planningStep: true,
+	finalReviewStep: true,
+	debugEventLogHandler: (event: DebugEvent) => {console.log(event);}
+});
+
+const uiDiffs: UiDiff[] = result.uiDiffs;
+
+const insertDiffs = result.uiDiffs.filter(diff => diff.type === 'insert');
+
+const insertedVectorsDiffs = insertDiffs.filter(diff => diff.path[0]?.schemaIdentifier === TestVector.identifier)
+
+```
+
+Other `UiDiff` types follow the same basic structure.
+Read the tsdoc [here](./src/aiCollabUiDiffApi.ts) for more info.
+
 
 ## Known Issues & limitations
 

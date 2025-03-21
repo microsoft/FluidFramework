@@ -1317,44 +1317,52 @@ describe("UiDiff Creation", () => {
 		idGenerator = new IdGenerator();
 	});
 
-	class RootObjectZ extends sf.object("RootObjectZ", {
+	class TestVector extends sf.object("TestVector", {
+		id: sf.identifier, // will be omitted from the generated JSON schema
+		x: sf.number,
+		y: sf.number,
+		z: sf.optional(sf.number),
+	}) {}
+
+	class TestAppRootObject extends sf.object("TestAppRootObject", {
 		id: sf.identifier,
 		rootStr: sf.string,
-		rootVectors: sf.array([Vector]),
+		rootVectors: sf.array([TestVector]),
 		rootStrings: sf.array(sf.string),
-		optionalFieldPrimitive: sf.optional(sf.string),
-		optionalFieldObject: sf.optional(Vector),
+		optionalFieldObject: sf.optional(TestVector),
 		innerObject: sf.object("InnerObject", {
 			nestedStr: sf.string,
-			nestedVectors: sf.array([Vector]),
+			nestedVectors: sf.array([TestVector]),
 		}),
 	}) {}
 
-	function initializeTree(): { view: TreeView<typeof RootObjectZ>; schema: SimpleTreeSchema } {
+	function initializeTree(): {
+		view: TreeView<typeof TestAppRootObject>;
+		schema: SimpleTreeSchema;
+	} {
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: RootObjectZ }));
+		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestAppRootObject }));
 		const simpleSchema = getSimpleSchema(view.schema);
 
 		view.initialize({
 			rootStr: "rootStrValue",
 			rootVectors: [
-				new Vector({ x: 1, y: 2, z: 3 }),
-				new Vector({ x: 4, y: 5, z: 6 }),
-				new Vector({ x: 7, y: 8, z: 9 }),
-				new Vector({ x: 10, y: 11, z: 12 }),
-				new Vector({ x: 13, y: 14, z: 15 }),
+				new TestVector({ x: 1, y: 2, z: 3 }),
+				new TestVector({ x: 4, y: 5, z: 6 }),
+				new TestVector({ x: 7, y: 8, z: 9 }),
+				new TestVector({ x: 10, y: 11, z: 12 }),
+				new TestVector({ x: 13, y: 14, z: 15 }),
 			],
 			rootStrings: ["str1", "str2", "str3"],
-			optionalFieldPrimitive: "optionalFieldPrimitiveValue",
-			optionalFieldObject: new Vector({ x: 10, y: 11, z: 12 }),
+			optionalFieldObject: new TestVector({ x: 10, y: 11, z: 12 }),
 			innerObject: {
 				nestedStr: "nestedStrValue",
 				nestedVectors: [
-					new Vector({ x: 100, y: 101, z: 102 }),
-					new Vector({ x: 103, y: 104, z: 105 }),
+					new TestVector({ x: 100, y: 101, z: 102 }),
+					new TestVector({ x: 103, y: 104, z: 105 }),
 				],
 			},
 		});
@@ -1374,7 +1382,7 @@ describe("UiDiff Creation", () => {
 			const insertEdit: TreeEdit = {
 				explanation: "Insert a vector",
 				type: "insert",
-				content: { [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
+				content: { [typeField]: TestVector.identifier, x: 2, y: 3, z: 4 },
 				destination: {
 					type: "objectPlace",
 					target: targetVectorId,
@@ -1418,7 +1426,7 @@ describe("UiDiff Creation", () => {
 			const insertEdit: Insert = {
 				explanation: "Insert a vector",
 				type: "insert",
-				content: { [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
+				content: { [typeField]: TestVector.identifier, x: 2, y: 3, z: 4 },
 				destination: {
 					type: "arrayPlace",
 					parentId: targetVectorArrayParentId,
@@ -1472,8 +1480,8 @@ describe("UiDiff Creation", () => {
 				target: { target: rootObjectId },
 				field: "rootVectors",
 				modification: [
-					{ [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
-					{ [typeField]: Vector.identifier, x: 3, y: 4, z: 5 },
+					{ [typeField]: TestVector.identifier, x: 2, y: 3, z: 4 },
+					{ [typeField]: TestVector.identifier, x: 3, y: 4, z: 5 },
 				],
 			};
 			const result = applyAgentEdit(modifyEdit, idGenerator, schema.definitions);
@@ -1555,7 +1563,7 @@ describe("UiDiff Creation", () => {
 				path: [
 					{
 						shortId: vectorShortId,
-						schemaIdentifier: Vector.identifier,
+						schemaIdentifier: TestVector.identifier,
 						parentField: 0,
 					},
 					{
@@ -1598,7 +1606,7 @@ describe("UiDiff Creation", () => {
 				path: [
 					{
 						shortId: optionaFieldObjectShortId,
-						schemaIdentifier: Vector.identifier,
+						schemaIdentifier: TestVector.identifier,
 						parentField: "optionalFieldObject",
 					},
 					{

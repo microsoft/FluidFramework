@@ -67,6 +67,21 @@ export interface ApplyEditSuccess extends EventFlowDebugEvent {
 }
 
 // @alpha
+export interface ArrayRangeRemoveDiff extends UiDiff {
+    paths: NodePath[];
+    // (undocumented)
+    type: "remove-array-range";
+}
+
+// @alpha
+export interface ArraySingleRemoveDiff extends UiDiff {
+    // (undocumented)
+    path: NodePath;
+    // (undocumented)
+    type: "remove-array-single";
+}
+
+// @alpha
 export interface CoreEventLoopCompleted extends EventFlowDebugEvent {
     // (undocumented)
     errorMessage?: string;
@@ -228,6 +243,13 @@ export interface GenerateTreeEditStarted extends EventFlowDebugEvent {
 }
 
 // @alpha
+export interface InsertDiff extends UiDiff {
+    path: NodePath;
+    // (undocumented)
+    type: "insert";
+}
+
+// @alpha
 export interface LlmApiCallDebugEvent extends DebugEvent {
     eventFlowTraceId: string;
     // (undocumented)
@@ -244,6 +266,32 @@ export interface LlmApiCallDebugEvent extends DebugEvent {
 
 // @alpha
 export type LlmTreeEdit = Record<string, unknown>;
+
+// @alpha
+export type MoveDiff = MoveSingleDiff | MoveRangeDiff;
+
+// @alpha
+export interface MoveRangeDiff extends UiDiff {
+    destinationPath: NodePath;
+    sourcePaths: NodePath[];
+    // (undocumented)
+    type: "move-range";
+}
+
+// @alpha
+export interface MoveSingleDiff extends UiDiff {
+    destinationPath: NodePath;
+    sourcePath: NodePath;
+    // (undocumented)
+    type: "move-single";
+}
+
+// @alpha
+export type NodePath = {
+    shortId: string | number | undefined;
+    schemaIdentifier: string;
+    parentField: string | number;
+}[];
 
 // @alpha
 export type ObjectPath = (string | number)[];
@@ -287,6 +335,16 @@ export interface PlanningPromptStarted extends EventFlowDebugEvent {
 }
 
 // @alpha
+export type RemoveDiff = RemoveFieldDiff | ArraySingleRemoveDiff | ArrayRangeRemoveDiff;
+
+// @alpha
+export interface RemoveFieldDiff extends UiDiff {
+    path: NodePath;
+    // (undocumented)
+    type: "remove-field";
+}
+
+// @alpha
 export class SharedTreeBranchManager {
     constructor(params?: {
         objectSchema?: z.Schema;
@@ -327,6 +385,13 @@ export interface TokenLimits {
 export interface TokenUsage {
     inputTokens: number;
     outputTokens: number;
+}
+
+// @alpha
+export interface UiDiff {
+    aiExplanation: string;
+    // (undocumented)
+    type: "modify" | "insert" | "remove-field" | "remove-array-single" | "remove-array-range" | "move-single" | "move-range";
 }
 
 ```
