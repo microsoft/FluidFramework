@@ -8,22 +8,13 @@
 import { strict as assert } from "node:assert";
 
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
-import {
-	LocalClientId,
-	UnassignedSequenceNumber,
-	UniversalSequenceNumber,
-} from "../constants.js";
+import { UniversalSequenceNumber } from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
 import { MergeBlock, MaxNodesInBlock, segmentIsRemoved } from "../mergeTreeNodes.js";
 import { TextSegment } from "../textSegment.js";
 
-import {
-	insertSegments,
-	insertText,
-	markRangeRemoved,
-	nodeOrdinalsHaveIntegrity,
-} from "./testUtils.js";
+import { makeRemoteClient, nodeOrdinalsHaveIntegrity } from "./testUtils.js";
 
 interface ITestTreeFactory {
 	readonly create: () => ITestData;
@@ -44,15 +35,14 @@ const treeFactories: ITestTreeFactory[] = [
 		create: (): ITestData => {
 			const initialText = "hello world";
 			const mergeTree = new MergeTree();
-			insertSegments({
-				mergeTree,
-				pos: 0,
-				segments: [TextSegment.make(initialText)],
-				refSeq: UniversalSequenceNumber,
-				clientId: LocalClientId,
-				seq: UniversalSequenceNumber,
-				opArgs: undefined,
-			});
+			mergeTree.insertSegments(
+				0,
+				[TextSegment.make(initialText)],
+				mergeTree.localPerspective,
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
+				undefined,
+			);
+
 			mergeTree.startCollaboration(
 				localClientId,
 				/* minSeq: */ UniversalSequenceNumber,
@@ -72,27 +62,22 @@ const treeFactories: ITestTreeFactory[] = [
 		create: (): ITestData => {
 			let initialText = "0";
 			const mergeTree = new MergeTree();
-			insertSegments({
-				mergeTree,
-				pos: 0,
-				segments: [TextSegment.make(initialText)],
-				refSeq: UniversalSequenceNumber,
-				clientId: LocalClientId,
-				seq: UniversalSequenceNumber,
-				opArgs: undefined,
-			});
+			mergeTree.insertSegments(
+				0,
+				[TextSegment.make(initialText)],
+				mergeTree.localPerspective,
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
+				undefined,
+			);
 			for (let i = 1; i < MaxNodesInBlock - 1; i++) {
 				const text = i.toString();
-				insertText({
-					mergeTree,
-					pos: mergeTree.getLength(UniversalSequenceNumber, localClientId),
-					refSeq: UniversalSequenceNumber,
-					clientId: localClientId,
-					seq: UniversalSequenceNumber,
-					text,
-					props: undefined,
-					opArgs: undefined,
-				});
+				mergeTree.insertSegments(
+					mergeTree.getLength(mergeTree.localPerspective),
+					[TextSegment.make(text)],
+					mergeTree.localPerspective,
+					mergeTree.collabWindow.mintNextLocalOperationStamp(),
+					undefined,
+				);
 				initialText += text;
 			}
 
@@ -128,27 +113,22 @@ const treeFactories: ITestTreeFactory[] = [
 		create: (): ITestData => {
 			let initialText = "0";
 			const mergeTree = new MergeTree();
-			insertSegments({
-				mergeTree,
-				pos: 0,
-				segments: [TextSegment.make(initialText)],
-				refSeq: UniversalSequenceNumber,
-				clientId: LocalClientId,
-				seq: UniversalSequenceNumber,
-				opArgs: undefined,
-			});
+			mergeTree.insertSegments(
+				0,
+				[TextSegment.make(initialText)],
+				mergeTree.localPerspective,
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
+				undefined,
+			);
 			for (let i = 1; i < MaxNodesInBlock * 4; i++) {
 				const text = i.toString();
-				insertText({
-					mergeTree,
-					pos: mergeTree.getLength(UniversalSequenceNumber, localClientId),
-					refSeq: UniversalSequenceNumber,
-					clientId: localClientId,
-					seq: UniversalSequenceNumber,
-					text,
-					props: undefined,
-					opArgs: undefined,
-				});
+				mergeTree.insertSegments(
+					mergeTree.getLength(mergeTree.localPerspective),
+					[TextSegment.make(text)],
+					mergeTree.localPerspective,
+					mergeTree.collabWindow.mintNextLocalOperationStamp(),
+					undefined,
+				);
 				initialText += text;
 			}
 
@@ -157,9 +137,8 @@ const treeFactories: ITestTreeFactory[] = [
 			mergeTree.markRangeRemoved(
 				0,
 				remove,
-				UniversalSequenceNumber,
-				localClientId,
-				UniversalSequenceNumber,
+				mergeTree.localPerspective,
+				{ clientId: localClientId, seq: UniversalSequenceNumber },
 				undefined as never,
 			);
 			initialText = initialText.slice(Math.max(0, remove));
@@ -168,9 +147,8 @@ const treeFactories: ITestTreeFactory[] = [
 			mergeTree.markRangeRemoved(
 				initialText.length - remove,
 				initialText.length,
-				UniversalSequenceNumber,
-				localClientId,
-				UniversalSequenceNumber,
+				mergeTree.localPerspective,
+				{ clientId: localClientId, seq: UniversalSequenceNumber },
 				undefined as never,
 			);
 			initialText = initialText.slice(0, Math.max(0, initialText.length - remove));
@@ -207,19 +185,16 @@ describe("MergeTree.insertingWalk", () => {
 			});
 			describe("insertText", () => {
 				it("at beginning", () => {
-					insertText({
-						mergeTree: testData.mergeTree,
-						pos: 0,
-						refSeq: testData.refSeq,
-						clientId: localClientId,
-						seq: UnassignedSequenceNumber,
-						text: "a",
-						props: undefined,
-						opArgs: undefined,
-					});
+					testData.mergeTree.insertSegments(
+						0,
+						[TextSegment.make("a")],
+						testData.mergeTree.localPerspective,
+						testData.mergeTree.collabWindow.mintNextLocalOperationStamp(),
+						undefined,
+					);
 
 					assert.equal(
-						testData.mergeTree.getLength(testData.refSeq, localClientId),
+						testData.mergeTree.getLength(testData.mergeTree.localPerspective),
 						testData.initialText.length + 1,
 					);
 					const currentValue = testData.textHelper.getText(testData.refSeq, localClientId);
@@ -228,19 +203,16 @@ describe("MergeTree.insertingWalk", () => {
 				});
 
 				it("at end", () => {
-					insertText({
-						mergeTree: testData.mergeTree,
-						pos: testData.initialText.length,
-						refSeq: testData.refSeq,
-						clientId: localClientId,
-						seq: UnassignedSequenceNumber,
-						text: "a",
-						props: undefined,
-						opArgs: undefined,
-					});
+					testData.mergeTree.insertSegments(
+						testData.initialText.length,
+						[TextSegment.make("a")],
+						testData.mergeTree.localPerspective,
+						testData.mergeTree.collabWindow.mintNextLocalOperationStamp(),
+						undefined,
+					);
 
 					assert.equal(
-						testData.mergeTree.getLength(testData.refSeq, localClientId),
+						testData.mergeTree.getLength(testData.mergeTree.localPerspective),
 						testData.initialText.length + 1,
 					);
 					const currentValue = testData.textHelper.getText(testData.refSeq, localClientId);
@@ -249,19 +221,16 @@ describe("MergeTree.insertingWalk", () => {
 				});
 
 				it("in middle", () => {
-					insertText({
-						mergeTree: testData.mergeTree,
-						pos: testData.middle,
-						refSeq: testData.refSeq,
-						clientId: localClientId,
-						seq: UnassignedSequenceNumber,
-						text: "a",
-						props: undefined,
-						opArgs: undefined,
-					});
+					testData.mergeTree.insertSegments(
+						testData.middle,
+						[TextSegment.make("a")],
+						testData.mergeTree.localPerspective,
+						testData.mergeTree.collabWindow.mintNextLocalOperationStamp(),
+						undefined,
+					);
 
 					assert.equal(
-						testData.mergeTree.getLength(testData.refSeq, localClientId),
+						testData.mergeTree.getLength(testData.mergeTree.localPerspective),
 						testData.initialText.length + 1,
 					);
 					const currentValue = testData.textHelper.getText(testData.refSeq, localClientId);
@@ -281,28 +250,23 @@ describe("MergeTree.insertingWalk", () => {
 		let initialText = "0";
 		let seq = 0;
 		const mergeTree = new MergeTree();
+		mergeTree.insertSegments(
+			0,
+			[TextSegment.make(initialText)],
+			mergeTree.localPerspective,
+			mergeTree.collabWindow.mintNextLocalOperationStamp(),
+			undefined,
+		);
 		mergeTree.startCollaboration(localClientId, 0, seq);
-		insertSegments({
-			mergeTree,
-			pos: 0,
-			segments: [TextSegment.make(initialText)],
-			refSeq: UniversalSequenceNumber,
-			clientId: localClientId,
-			seq: UniversalSequenceNumber,
-			opArgs: undefined,
-		});
 		for (let i = 1; i < MaxNodesInBlock; i++) {
 			const text = String.fromCodePoint(i + 64);
-			insertText({
-				mergeTree,
-				pos: 0,
-				refSeq: UniversalSequenceNumber,
-				clientId: localClientId,
-				seq: UnassignedSequenceNumber,
-				text,
-				props: undefined,
-				opArgs: undefined,
-			});
+			mergeTree.insertSegments(
+				0,
+				[TextSegment.make(text)],
+				mergeTree.localPerspective,
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
+				undefined,
+			);
 			initialText += text;
 		}
 
@@ -311,29 +275,26 @@ describe("MergeTree.insertingWalk", () => {
 		assert.equal(mergeTree.root.childCount, 2);
 		assert.equal(textHelper.getText(0, localClientId), "GFEDCBA0");
 		// Remove "DCBA"
-		markRangeRemoved({
-			mergeTree,
-			start: 3,
-			end: 7,
-			refSeq: UniversalSequenceNumber,
-			clientId: localClientId,
-			seq: UnassignedSequenceNumber,
-			overwrite: false,
-			opArgs: undefined as never,
-		});
+		mergeTree.markRangeRemoved(
+			3,
+			7,
+			mergeTree.localPerspective,
+			mergeTree.collabWindow.mintNextLocalOperationStamp(),
+			undefined as never,
+		);
 		assert.equal(textHelper.getText(0, localClientId), "GFE0");
 		// Simulate another client inserting concurrently with the above operations. Because
 		// all segments but the 0 are unacked, this insert should place the segment directly
 		// before the 0. Prior to this regression test, an issue with `rightExcursion` in the
 		// merge conflict logic instead caused the segment to be placed before the removed segments.
-		insertText({
-			mergeTree,
-			pos: 0,
-			refSeq: UniversalSequenceNumber,
-			clientId: localClientId + 1,
-			seq: ++seq,
-			text: "x",
-		});
+		const remoteClient = makeRemoteClient({ clientId: localClientId + 1 });
+		mergeTree.insertSegments(
+			0,
+			[TextSegment.make("x")],
+			remoteClient.perspectiveAt({ refSeq: 0 }),
+			remoteClient.stampAt({ seq: ++seq }),
+			undefined,
+		);
 
 		const segments: string[] = [];
 		walkAllChildSegments(mergeTree.root, (seg) => {
@@ -348,5 +309,66 @@ describe("MergeTree.insertingWalk", () => {
 		});
 
 		assert.deepStrictEqual(segments, ["G", "F", "E", "(D)", "(C)", "(B)", "(A)", "x", "0"]);
+	});
+
+	// Inserting walk previously unnecessarily called `blockUpdate` for blocks even when no segment changes happened (e.g.
+	// we called `ensureIntervalBoundary` but there was already a segment boundary at the position we wanted to ensure had one).
+	it("avoids calling blockUpdate excessively", () => {
+		const seq = 1;
+		const mergeTree = new MergeTree();
+		mergeTree.startCollaboration(localClientId, 0, seq);
+		for (const char of [..."hello world"]) {
+			mergeTree.insertSegments(
+				mergeTree.getLength(mergeTree.localPerspective),
+				[TextSegment.make(char)],
+				mergeTree.localPerspective,
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
+				undefined /* opArgs */,
+			);
+		}
+
+		const originalBlockUpdate: (block: MergeBlock) => void =
+			// eslint-disable-next-line @typescript-eslint/dot-notation
+			(mergeTree["blockUpdate"] as (block: MergeBlock) => void).bind(mergeTree);
+		const blockUpdateCallLog: string[] = [];
+		// eslint-disable-next-line @typescript-eslint/dot-notation
+		mergeTree["blockUpdate"] = (block: MergeBlock) => {
+			// This is called in the middle of updating lots of merge-tree bookkeeping, so we don't want to do too much
+			// advanced stuff here. However, walking the tree and concatenating all the text (ignoring other segment properties)
+			// should be safe.
+			let text = "";
+			walkAllChildSegments(block, (seg) => {
+				if (TextSegment.is(seg)) {
+					text += seg.text;
+				}
+				return true;
+			});
+
+			blockUpdateCallLog.push(text);
+			originalBlockUpdate(block);
+		};
+
+		mergeTree.insertSegments(
+			0,
+			[TextSegment.make("Ot")],
+			mergeTree.localPerspective,
+			mergeTree.collabWindow.mintNextLocalOperationStamp(),
+			undefined /* opArgs */,
+		);
+
+		assert.deepEqual(blockUpdateCallLog, ["Othell", "Othello world"]);
+
+		blockUpdateCallLog.length = 0;
+
+		mergeTree.markRangeRemoved(
+			0,
+			"Othello world".length,
+			mergeTree.localPerspective,
+			mergeTree.collabWindow.mintNextLocalOperationStamp(),
+			undefined as never,
+		);
+
+		// The log ignores presence of segments. The important thing is that we only have one entry per block here.
+		assert.deepEqual(blockUpdateCallLog, ["Othell", "o world", "Othello world"]);
 	});
 });

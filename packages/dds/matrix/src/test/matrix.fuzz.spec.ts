@@ -232,7 +232,7 @@ describe("Matrix fuzz tests", function () {
 	const model: Omit<DDSFuzzModel<SharedMatrixFactory, Operation>, "workloadName"> = {
 		factory: SharedMatrix.getFactory(),
 		generatorFactory: () => takeAsync(50, makeGenerator()),
-		reducer: async (state, operation) => reducer(state, operation),
+		reducer: (state, operation) => reducer(state, operation),
 		validateConsistency: async (a, b) => assertMatricesAreEquivalent(a.channel, b.channel),
 		minimizationTransforms: ["count", "start", "row", "col"].map((p) => (op) => {
 			if (p in op && typeof op[p] === "number" && op[p] > 0) {

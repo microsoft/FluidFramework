@@ -20,18 +20,18 @@ import {
 	type TreeTypeSet,
 } from "../core/index.js";
 import { FieldKinds, type FlexFieldKind } from "../feature-libraries/index.js";
-import { brand, fail, getOrCreate, isReadonlyArray } from "../util/index.js";
+import { brand, fail, getOrCreate } from "../util/index.js";
 import { NodeKind, type TreeNodeSchema } from "./core/index.js";
 import {
 	FieldKind,
 	FieldSchema,
+	normalizeAllowedTypes,
 	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
 } from "./schemaTypes.js";
 import { walkFieldSchema } from "./walkFieldSchema.js";
 import { LeafNodeSchema } from "./leafNodeSchema.js";
 import { isObjectNodeSchema } from "./objectNodeTypes.js";
-import { normalizeFlexListEager } from "./flexList.js";
 
 const viewToStoredCache = new WeakMap<ImplicitFieldSchema, TreeStoredSchema>();
 
@@ -92,10 +92,7 @@ const convertFieldKind = new Map<FieldKind, FlexFieldKind>([
  * Normalizes an {@link ImplicitAllowedTypes} into an {@link TreeTypeSet}.
  */
 export function convertAllowedTypes(schema: ImplicitAllowedTypes): TreeTypeSet {
-	if (isReadonlyArray(schema)) {
-		return new Set(normalizeFlexListEager(schema).map((item) => brand(item.identifier)));
-	}
-	return new Set([brand(schema.identifier)]);
+	return new Set([...normalizeAllowedTypes(schema)].map((item) => brand(item.identifier)));
 }
 
 /**

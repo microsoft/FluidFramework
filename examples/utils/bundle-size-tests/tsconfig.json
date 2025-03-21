@@ -5,4 +5,5 @@
 		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["src/**/*"],
+	"exclude": ["src/test/**/*"],
 }

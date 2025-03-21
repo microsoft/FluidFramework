@@ -138,6 +138,15 @@ module.exports = {
 			range: "~",
 		},
 
+		// Dev dependencies on <package>-previous (used for type tests) should use exact versions
+		{
+			label: "Type-tests 'previous' deps should use exact versions",
+			dependencies: ["**/*previous"], // Not sure why just "**previous" doesn't work
+			dependencyTypes: ["dev"],
+			packages: ["**"],
+			range: "",
+		},
+
 		// All deps should use caret ranges unless previously overridden
 		{
 			label: "Dependencies should use caret dependency ranges",

@@ -31,7 +31,6 @@ import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-ut
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 import sinon from "sinon";
 
-import { ISummaryConfiguration } from "../../containerRuntime.js";
 import {
 	IGeneratedSummaryStats,
 	ISummarizeHeuristicData,
@@ -44,6 +43,7 @@ import {
 	SummaryCollection,
 	getFailMessage,
 	neverCancelledSummaryToken,
+	type ISummaryConfiguration,
 } from "../../summary/index.js";
 import {
 	defaultMaxAttempts,

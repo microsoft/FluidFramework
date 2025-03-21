@@ -17,7 +17,7 @@ import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
 import { decode } from "./chunkDecoding.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import { EncodedFieldBatch, validVersions } from "./format.js";
-import { schemaCompressedEncode } from "./schemaBasedEncoding.js";
+import { schemaCompressedEncode } from "./schemaBasedEncode.js";
 import { uncompressedEncode } from "./uncompressedEncode.js";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 

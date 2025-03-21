@@ -78,7 +78,6 @@ import {
 	applyDelta,
 	clonePath,
 	compareUpPaths,
-	initializeForest,
 	makeDetachedFieldIndex,
 	mapCursorField,
 	moveToDetachedField,
@@ -93,20 +92,27 @@ import {
 	type RevertibleAlphaFactory,
 	type DeltaDetachedNodeChanges,
 	type DeltaDetachedNodeRename,
+	type NormalizedFieldUpPath,
+	type ExclusiveMapTree,
 } from "../core/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
-	type NodeKeyManager,
+	type NodeIdentifierManager,
 	buildForest,
-	cursorForMapTreeNode,
 	defaultSchemaPolicy,
 	jsonableTreeFromFieldCursor,
 	jsonableTreeFromForest,
 	mapRootChanges,
 	mapTreeFromCursor,
-	MockNodeKeyManager,
+	MockNodeIdentifierManager,
 	cursorForMapTreeField,
 	type IDefaultEditBuilder,
+	type TreeChunk,
+	mapTreeFieldFromCursor,
+	defaultChunkPolicy,
+	cursorForJsonableTreeField,
+	initializeForest,
+	chunkFieldSingle,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
@@ -154,7 +160,7 @@ import {
 } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
-import { cursorToJsonObject, singleJsonCursor } from "./json/index.js";
+import { cursorToJsonObject, fieldJsonCursor, singleJsonCursor } from "./json/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 import type { Transactor } from "../shared-tree-core/index.js";
@@ -167,6 +173,8 @@ import {
 	MockContainerRuntimeFactoryWithOpBunching,
 	type MockContainerRuntimeWithOpBunching,
 } from "./mocksForOpBunching.js";
+import { configureDebugAsserts } from "@fluidframework/core-utils/internal";
+import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 
 // Testing utilities
 
@@ -534,8 +542,8 @@ export function assertDeltaFieldMapEqual(a: DeltaFieldMap, b: DeltaFieldMap): vo
  * Assert two Delta are equal, handling cursors.
  */
 export function assertDeltaEqual(a: DeltaRoot, b: DeltaRoot): void {
-	const aTree = mapRootChanges(a, mapTreeFromCursor);
-	const bTree = mapRootChanges(b, mapTreeFromCursor);
+	const aTree = mapRootChanges(a, chunkToMapTreeField);
+	const bTree = mapRootChanges(b, chunkToMapTreeField);
 	assert.deepStrictEqual(aTree, bTree);
 }
 
@@ -773,7 +781,7 @@ export function flexTreeViewWithContent(
 		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
-		nodeKeyManager?: NodeKeyManager;
+		nodeKeyManager?: NodeIdentifierManager;
 	},
 ): CheckoutFlexTreeView {
 	const view = checkoutWithContent(
@@ -783,18 +791,14 @@ export function flexTreeViewWithContent(
 	return new CheckoutFlexTreeView(
 		view,
 		defaultSchemaPolicy,
-		args?.nodeKeyManager ?? new MockNodeKeyManager(),
+		args?.nodeKeyManager ?? new MockNodeIdentifierManager(),
 	);
 }
 
 export function forestWithContent(content: TreeStoredContent): IEditableForest {
 	const forest = buildForest();
 	const fieldCursor = normalizeNewFieldContent(content.initialTree);
-	// TODO:AB6712 Make the delta format accept a single cursor in Field mode.
-	const nodeCursors = mapCursorField(fieldCursor, (c) =>
-		cursorForMapTreeNode(mapTreeFromCursor(c)),
-	);
-	initializeForest(forest, nodeCursors, testRevisionTagCodec, testIdCompressor);
+	initializeForest(forest, fieldCursor, testRevisionTagCodec, testIdCompressor);
 	return forest;
 }
 
@@ -1194,7 +1198,7 @@ export function treeTestFactory(
  */
 export function getView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
-	nodeKeyManager?: NodeKeyManager,
+	nodeKeyManager?: NodeIdentifierManager,
 	logger?: ITelemetryLoggerExt,
 ): SchematizingSimpleTreeView<TSchema> {
 	const checkout = createTreeCheckout(
@@ -1210,7 +1214,7 @@ export function getView<const TSchema extends ImplicitFieldSchema>(
 	return new SchematizingSimpleTreeView<TSchema>(
 		checkout,
 		config,
-		nodeKeyManager ?? new MockNodeKeyManager(),
+		nodeKeyManager ?? new MockNodeIdentifierManager(),
 	);
 }
 
@@ -1221,7 +1225,11 @@ export function viewCheckout<const TSchema extends ImplicitFieldSchema>(
 	checkout: TreeCheckout,
 	config: TreeViewConfiguration<TSchema>,
 ): SchematizingSimpleTreeView<TSchema> {
-	return new SchematizingSimpleTreeView<TSchema>(checkout, config, new MockNodeKeyManager());
+	return new SchematizingSimpleTreeView<TSchema>(
+		checkout,
+		config,
+		new MockNodeIdentifierManager(),
+	);
 }
 
 /**
@@ -1324,10 +1332,48 @@ function normalizeNewFieldContent(
  */
 export function moveWithin(
 	editor: IDefaultEditBuilder,
-	field: FieldUpPath,
+	field: NormalizedFieldUpPath,
 	sourceIndex: number,
 	count: number,
 	destIndex: number,
 ) {
 	editor.move(field, sourceIndex, count, field, destIndex);
+}
+
+/**
+ * Invoke inside a describe block for benchmarks to add hooks that configure things for maximum performance if isInPerformanceTestingMode,
+ * and enable debug asserts otherwise.
+ */
+export function configureBenchmarkHooks(): void {
+	let debugBefore: boolean;
+	before(() => {
+		debugBefore = configureDebugAsserts(!isInPerformanceTestingMode);
+	});
+	after(() => {
+		assert.equal(configureDebugAsserts(debugBefore), !isInPerformanceTestingMode);
+	});
+}
+
+export function chunkFromJsonTrees(field: JsonCompatible[]): TreeChunk {
+	const cursor = fieldJsonCursor(field);
+	return chunkFieldSingle(cursor, {
+		idCompressor: testIdCompressor,
+		policy: defaultChunkPolicy,
+	});
+}
+
+export function chunkFromJsonableTrees(field: JsonableTree[]): TreeChunk {
+	const cursor = cursorForJsonableTreeField(field);
+	return chunkFieldSingle(cursor, {
+		idCompressor: testIdCompressor,
+		policy: defaultChunkPolicy,
+	});
+}
+
+export function chunkToMapTreeField(chunk: TreeChunk): ExclusiveMapTree[] {
+	return mapTreeFieldFromCursor(chunk.cursor());
+}
+
+export function nodeCursorsFromChunk(trees: TreeChunk): ITreeCursorSynchronous[] {
+	return mapCursorField(trees.cursor(), (c) => c.fork());
 }

@@ -60,6 +60,16 @@ const jsonSchemaCache = new WeakMap<TreeNodeSchema, JsonTreeSchema>();
  * @privateRemarks In the future, we may wish to move this to a more discoverable API location.
  * For now, while still an experimental API, it is surfaced as a free function.
  *
+ * TODO:
+ * This API should allow generating JSON schema for the whole matrix of combinations:
+ *
+ * 1. VerboseTree and ConciseTree
+ * 2. With and without requiring values with defaults (for insertion vs reading)
+ * 3. Using stored keys and property keys
+ *
+ * This current API seems to give ConciseTree with property keys and ignoring default values.
+ *
+ *
  * @alpha
  */
 export function getJsonSchema(schema: ImplicitFieldSchema): JsonTreeSchema {

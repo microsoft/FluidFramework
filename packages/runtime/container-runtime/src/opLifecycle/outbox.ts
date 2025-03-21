@@ -36,7 +36,6 @@ export interface IOutboxConfig {
 	readonly compressionOptions: ICompressionRuntimeOptions;
 	// The maximum size of a batch that we can send over the wire.
 	readonly maxBatchSizeInBytes: number;
-	readonly disablePartialFlush: boolean;
 }
 
 export interface IOutboxParameters {
@@ -183,9 +182,8 @@ export class Outbox {
 		const blobAttachSeqNums = this.blobAttachBatch.sequenceNumbers;
 		const idAllocSeqNums = this.idAllocationBatch.sequenceNumbers;
 		assert(
-			this.params.config.disablePartialFlush ||
-				(sequenceNumbersMatch(mainBatchSeqNums, blobAttachSeqNums) &&
-					sequenceNumbersMatch(mainBatchSeqNums, idAllocSeqNums)),
+			sequenceNumbersMatch(mainBatchSeqNums, blobAttachSeqNums) &&
+				sequenceNumbersMatch(mainBatchSeqNums, idAllocSeqNums),
 			0x58d /* Reference sequence numbers from both batches must be in sync */,
 		);
 
@@ -203,7 +201,7 @@ export class Outbox {
 		if (++this.mismatchedOpsReported <= this.maxMismatchedOpsToReport) {
 			this.logger.sendTelemetryEvent(
 				{
-					category: this.params.config.disablePartialFlush ? "error" : "generic",
+					category: "generic",
 					eventName: "ReferenceSequenceNumberMismatch",
 					mainReferenceSequenceNumber: mainBatchSeqNums.referenceSequenceNumber,
 					mainClientSequenceNumber: mainBatchSeqNums.clientSequenceNumber,
@@ -216,9 +214,7 @@ export class Outbox {
 			);
 		}
 
-		if (!this.params.config.disablePartialFlush) {
-			this.flushAll();
-		}
+		this.flushAll();
 	}
 
 	public submit(message: BatchMessage): void {

@@ -10,6 +10,7 @@ export type {
 	ChangeConnectionState,
 	ClientSpec,
 	DDSFuzzModel,
+	DDSFuzzHarnessModel,
 	DDSFuzzSuiteOptions,
 	DDSFuzzTestState,
 	DDSFuzzHarnessEvents,

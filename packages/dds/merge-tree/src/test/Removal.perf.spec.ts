@@ -7,13 +7,13 @@ import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 
 import { MergeTreeDeltaType } from "../ops.js";
+import { PriorPerspective } from "../perspective.js";
 import {
 	MergeTreeDeltaRevertible,
 	appendToMergeTreeDeltaRevertibles,
 } from "../revertibles.js";
 
 import { TestString, loadSnapshot } from "./snapshot.utils.js";
-import { markRangeRemoved } from "./testUtils.js";
 
 describe("MergeTree remove", () => {
 	let summary: ISummaryTree;
@@ -55,16 +55,15 @@ describe("MergeTree remove", () => {
 		benchmarkFnAsync: async () => {
 			const str = await loadSnapshot(summary);
 
-			markRangeRemoved({
-				mergeTree: str.mergeTree,
-				start: 0,
-				end: 1000,
-				refSeq: 1000,
-				clientId: 0,
-				seq: 1001,
-				opArgs: { op: { type: MergeTreeDeltaType.REMOVE } },
-				overwrite: false,
-			});
+			const refSeq = 1000;
+			const clientId = 0;
+			str.mergeTree.markRangeRemoved(
+				0,
+				1000,
+				new PriorPerspective(refSeq, clientId),
+				{ seq: 1001, clientId },
+				{ op: { type: MergeTreeDeltaType.REMOVE } },
+			);
 		},
 	});
 
@@ -121,16 +120,15 @@ describe("MergeTree remove", () => {
 		benchmarkFnAsync: async () => {
 			const str = await loadSnapshot(summary);
 
-			markRangeRemoved({
-				mergeTree: str.mergeTree,
-				start: 0,
-				end: 1,
-				refSeq: 1000,
-				clientId: 0,
-				seq: 1001,
-				opArgs: { op: { type: MergeTreeDeltaType.REMOVE } },
-				overwrite: false,
-			});
+			const refSeq = 1000;
+			const clientId = 0;
+			str.mergeTree.markRangeRemoved(
+				0,
+				1,
+				new PriorPerspective(refSeq, clientId),
+				{ seq: 1001, clientId },
+				{ op: { type: MergeTreeDeltaType.REMOVE } },
+			);
 		},
 	});
 
@@ -150,16 +148,15 @@ describe("MergeTree remove", () => {
 		benchmarkFnAsync: async () => {
 			const str = await loadSnapshot(summary);
 
-			markRangeRemoved({
-				mergeTree: str.mergeTree,
-				start: 499,
-				end: 501,
-				refSeq: 1000,
-				clientId: 0,
-				seq: 1001,
-				opArgs: { op: { type: MergeTreeDeltaType.REMOVE } },
-				overwrite: false,
-			});
+			const refSeq = 1000;
+			const clientId = 0;
+			str.mergeTree.markRangeRemoved(
+				499,
+				501,
+				new PriorPerspective(refSeq, clientId),
+				{ seq: 1001, clientId },
+				{ op: { type: MergeTreeDeltaType.REMOVE } },
+			);
 		},
 	});
 
@@ -179,16 +176,15 @@ describe("MergeTree remove", () => {
 		benchmarkFnAsync: async () => {
 			const str = await loadSnapshot(summary);
 
-			markRangeRemoved({
-				mergeTree: str.mergeTree,
-				start: 999,
-				end: 1000,
-				refSeq: 1000,
-				clientId: 0,
-				seq: 1001,
-				opArgs: { op: { type: MergeTreeDeltaType.REMOVE } },
-				overwrite: false,
-			});
+			const refSeq = 1000;
+			const clientId = 0;
+			str.mergeTree.markRangeRemoved(
+				999,
+				1000,
+				new PriorPerspective(refSeq, clientId),
+				{ seq: 1001, clientId },
+				{ op: { type: MergeTreeDeltaType.REMOVE } },
+			);
 		},
 	});
 });

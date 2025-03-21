@@ -9,7 +9,6 @@
  */
 
 export type {
-	ITreeDataObject,
 	IReactTreeDataObject,
 	TreeViewProps,
 	SchemaIncompatibleProps,

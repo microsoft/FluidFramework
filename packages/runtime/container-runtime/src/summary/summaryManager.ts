@@ -24,7 +24,6 @@ import {
 
 import { IThrottler } from "../throttler.js";
 
-// eslint-disable-next-line import/no-deprecated
 import { Summarizer } from "./summarizer.js";
 import { ISummarizerClientElection } from "./summarizerClientElection.js";
 import {
@@ -285,7 +284,6 @@ export class SummaryManager
 					// which would happen when we have a high enough number of unsummarized ops.
 					if (
 						startWithInitialDelay ||
-						// eslint-disable-next-line import/no-deprecated
 						!Summarizer.stopReasonCanRunLastSummary(shouldSummarizeState.stopReason)
 					) {
 						this.state = SummaryManagerState.Starting;

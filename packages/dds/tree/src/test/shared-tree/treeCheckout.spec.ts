@@ -12,15 +12,15 @@ import {
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	type FieldUpPath,
 	type Revertible,
 	rootFieldKey,
 	RevertibleStatus,
 	CommitKind,
 	EmptyKey,
 	type RevertibleFactory,
+	type NormalizedFieldUpPath,
 } from "../../core/index.js";
-import { FieldKinds, cursorForJsonableTreeField } from "../../feature-libraries/index.js";
+import { FieldKinds } from "../../feature-libraries/index.js";
 import {
 	getBranch,
 	Tree,
@@ -31,6 +31,7 @@ import {
 } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
+	chunkFromJsonableTrees,
 	createTestUndoRedoStacks,
 	expectSchemaEqual,
 	getView,
@@ -56,7 +57,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
 
-const rootField: FieldUpPath = {
+const rootField: NormalizedFieldUpPath = {
 	parent: undefined,
 	field: rootFieldKey,
 };
@@ -171,7 +172,7 @@ describe("sharedTreeView", () => {
 				checkout.editor
 					.optionalField(rootField)
 					.set(
-						cursorForJsonableTreeField([{ type: brand(stringSchema.identifier), value: "A" }]),
+						chunkFromJsonableTrees([{ type: brand(stringSchema.identifier), value: "A" }]),
 						true,
 					);
 
@@ -198,7 +199,7 @@ describe("sharedTreeView", () => {
 				checkout.editor
 					.optionalField(rootField)
 					.set(
-						cursorForJsonableTreeField([{ type: brand(stringSchema.identifier), value: "A" }]),
+						chunkFromJsonableTrees([{ type: brand(stringSchema.identifier), value: "A" }]),
 						true,
 					);
 				checkout.updateSchema(toStoredSchema(OptionalString));

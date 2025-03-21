@@ -58,9 +58,7 @@ export interface IDeltaConnection {
 // @alpha
 export interface IDeltaHandler {
     applyStashedOp(message: any): void;
-    // @deprecated
-    process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => void;
-    processMessages?: (messageCollection: IRuntimeMessageCollection) => void;
+    processMessages: (messageCollection: IRuntimeMessageCollection) => void;
     reSubmit(message: any, localOpMetadata: unknown): void;
     rollback?(message: any, localOpMetadata: unknown): void;
     setConnectionState(connected: boolean): void;

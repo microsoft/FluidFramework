@@ -115,6 +115,9 @@ export async function performFuzzActionsAsync<
 			operation = await generator(state)
 		) {
 			operations.push(operation);
+			if ("debug" in operation && operation.debug === true) {
+				debugger;
+			}
 			state = (await applyOperation(operation)) ?? state;
 		}
 	} catch (err) {

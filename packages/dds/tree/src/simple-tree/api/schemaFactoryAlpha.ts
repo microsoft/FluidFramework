@@ -28,6 +28,7 @@ import type {
 	TreeArrayNodeUnsafe,
 	TreeMapNodeUnsafe,
 	Unenforced,
+	ImplicitAllowedTypesUnsafe,
 } from "./typesUnsafe.js";
 import { mapSchema, type MapNodeInsertableData, type TreeMapNode } from "../mapNode.js";
 import { arraySchema, type TreeArrayNode } from "../arrayNode.js";
@@ -165,7 +166,7 @@ export class SchemaFactoryAlpha<
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public override mapRecursive<
 		Name extends TName,
-		const T extends Unenforced<ImplicitAllowedTypes>,
+		const T extends ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
 	>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>) {
 		return this.mapAlpha(
@@ -200,7 +201,7 @@ export class SchemaFactoryAlpha<
 	 *
 	 * @example
 	 * ```typescript
-	 * class NamedArray extends factory.array("name", factory.number) {}
+	 * class NamedArray extends factory.arrayAlpha("name", factory.number) {}
 	 * ```
 	 */
 	public arrayAlpha<
@@ -230,7 +231,7 @@ export class SchemaFactoryAlpha<
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public override arrayRecursive<
 		const Name extends TName,
-		const T extends Unenforced<ImplicitAllowedTypes>,
+		const T extends ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
 	>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>) {
 		return this.arrayAlpha(
@@ -249,5 +250,17 @@ export class SchemaFactoryAlpha<
 			undefined,
 			TCustomMetadata
 		>;
+	}
+
+	/**
+	 * Create a {@link SchemaFactory} with a {@link SchemaFactory.scope|scope} which is a combination of this factory's scope and the provided name.
+	 * @remarks
+	 * The main use-case for this is when creating a collection of related schema (for example using a function that creates multiple schema).
+	 * Creating such related schema using a sub-scope helps ensure they won't collide with other schema in the parent scope.
+	 */
+	public scopedFactory<const T extends TName, TNameInner extends number | string = string>(
+		name: T,
+	): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>, TNameInner> {
+		return new SchemaFactoryAlpha(this.scoped2(name));
 	}
 }

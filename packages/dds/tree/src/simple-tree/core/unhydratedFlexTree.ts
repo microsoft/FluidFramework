@@ -15,10 +15,10 @@ import {
 	type ExclusiveMapTree,
 	type FieldKey,
 	type FieldKindIdentifier,
-	type FieldUpPath,
 	forbiddenFieldKindIdentifier,
 	type ITreeCursorSynchronous,
 	type MapTree,
+	type NormalizedFieldUpPath,
 	type SchemaPolicy,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
@@ -394,7 +394,7 @@ class UnhydratedFlexTreeField implements FlexTreeField {
 		this.onEdit?.();
 	}
 
-	public getFieldPath(): FieldUpPath {
+	public getFieldPath(): NormalizedFieldUpPath {
 		throw unsupportedUsageError("Editing an array");
 	}
 

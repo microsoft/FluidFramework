@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/changelog-generator-wrapper",
-	"version": "2.30.0",
+	"version": "2.31.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -31,8 +31,6 @@
 		"format:biome": "biome check . --write",
 		"lint": "npm run eslint",
 		"lint:fix": "npm run format && npm run eslint:fix",
-		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
-		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
 		"tsc": "echo \"No build required.\""
 	},
 	"dependencies": {
@@ -47,7 +45,6 @@
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.55.0",
-		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0"
 	},
 	"typeValidation": {
