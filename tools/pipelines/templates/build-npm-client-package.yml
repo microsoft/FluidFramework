@@ -513,13 +513,19 @@ extends:
               # this is used to inject telemetry key file and upload built devtools extension.
               - ${{ parameters.additionalBuildSteps }}
 
+              - script: |
+                  NESTED_LIB_DIST="nested_lib_dist-$(System.JobAttempt)"
+                  echo "##vso[task.setvariable variable=NESTED_LIB_DIST;isOutput=true]$NESTED_LIB_DIST"
+                name: setLibDistArtifactName  # This makes it accessible in dependent jobs
+                displayName: "Generate Nested Lib Dist Artifact Name"
+
             templateContext:
               outputParentDirectory: $(Build.ArtifactStagingDirectory)
               outputs:
                 - output: pipelineArtifact
                   displayName: Publish Artifact - nested_lib_dist
                   targetPath: $(Build.ArtifactStagingDirectory)/nested_lib_dist
-                  artifactName: nested_lib_dist-$(System.JobAttempt)
+                  artifactName: $NESTED_LIB_DIST
                   publishLocation: pipeline
 
                 - ${{ if ne(parameters.taskPack, false) }}:
@@ -593,7 +599,7 @@ extends:
 
               - task: DownloadPipelineArtifact@2
                 inputs:
-                  artifact: nested_lib_dist-$(System.JobAttempt)
+                  artifact: $[ dependencies.build.outputs['setLibDistArtifactName.NESTED_LIB_DIST'] ]
                   targetPath: $(Build.SourcesDirectory)
 
               - script: |
