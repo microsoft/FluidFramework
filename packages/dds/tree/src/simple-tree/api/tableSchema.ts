@@ -6,12 +6,43 @@
 import { oob } from "@fluidframework/core-utils/internal";
 import { Tree } from "../../shared-tree/index.js";
 import { TreeArrayNode } from "../arrayNode.js";
-import type { TreeNodeSchema } from "../core/index.js";
+import {
+	// TODO: create and export SystemTypes to replace "InternalExports"
+	// eslint-disable-next-line import/no-deprecated, @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
+	typeNameSymbol,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
+	typeSchemaSymbol,
+	type TreeNodeSchema,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
+	type TreeNodeSchemaClass,
+} from "../core/index.js";
 import type { InsertableTreeNodeFromImplicitAllowedTypes, TreeNodeFromImplicitAllowedTypes } from "../schemaTypes.js";
 import type { SchemaFactory } from "./schemaFactory.js";
 
+
 // Schema is defined using a factory object that generates classes for objects as well
 // as list and map nodes.
+
+
+export interface IColumn<TCell> {
+	cells: Map<string, TCell>;
+	// TODO
+}
+
+export interface IRow<TCell, TColumn extends IColumn<TCell>> {
+	// TODO: map instead?
+	cells: Record<string, TCell | undefined>;
+	getCell(column: TColumn): TCell | undefined;
+	// TODO
+}
+
+
+export interface ITable<TCell, TColumn extends IColumn<TCell>, TRow extends IRow<TCell, TColumn>> {
+	getRow(id: string): TRow | undefined;
+	getColumn(id: string): TColumn | undefined;
+	// TODO
+};
+
 
 /**
  * TODO
@@ -19,10 +50,10 @@ import type { SchemaFactory } from "./schemaFactory.js";
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 export function createTableSchema<
-	TCell extends readonly TreeNodeSchema[],
-	TColumnProps extends readonly TreeNodeSchema[],
-	TRowProps extends readonly TreeNodeSchema[],
-	Scope extends string | undefined,
+	const TCell extends readonly TreeNodeSchema[],
+	const TColumnProps extends readonly TreeNodeSchema[],
+	const TRowProps extends readonly TreeNodeSchema[],
+	const Scope extends string | undefined,
 >({ sf, schemaTypes, columnProps, rowProps }: {
 	sf: SchemaFactory<Scope>;
 	schemaTypes: TCell;
@@ -44,7 +75,7 @@ export function createTableSchema<
 		id: sf.identifier,
 		_cells: sf.map(schemaTypes), // The keys of this map are the column ids - this would ideally be private
 		props: rowProps ?? sf.null,
-	}) {
+	}) implements IRow<CellValueType, Column> {
 		/**
 		 * Property getter to get the cells in the row
 		 * @returns The cells in the row as an object where the keys are the column ids
@@ -154,21 +185,21 @@ export function createTableSchema<
 			return `${rowId}_${columnId}`;
 		}
 	}
+
 	/**
 	 * The Column schema - this can include more properties as needed *
 	 */
-
 	class Column extends sf.object("Column", {
 		id: sf.identifier,
 		name: sf.string,
 		defaultValue: sf.optional(schemaTypes),
 		hint: sf.optional(sf.string),
 		props: columnProps ?? sf.null,
-	}) {
+	}) implements IColumn<CellValueType>{
 		/**
 		 * Get the parent Table
 		 */
-		public get table(): Table {
+		private get table(): Table {
 			const parent = Tree.parent(this);
 			if (parent !== undefined) {
 				const grandparent = Tree.parent(parent);
@@ -249,7 +280,7 @@ export function createTableSchema<
 	class Table extends sf.object("Table", {
 		rows: sf.array(Row),
 		columns: sf.array(Column),
-	}) {
+	}) implements ITable<CellValueType, Column, Row> {
 		public static readonly Row = Row;
 		public static readonly Column = Column;
 
