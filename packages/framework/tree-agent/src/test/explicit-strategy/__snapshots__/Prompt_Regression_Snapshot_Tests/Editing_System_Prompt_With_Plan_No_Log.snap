@@ -1,5 +1,5 @@
 ---
-Generated on: 2025-03-20T20:23:13.144Z
+Generated on: 2025-03-21T17:48:37.382Z
 description: This is a snapshot file utilized for testing purposes.
 Test Suite Title: Prompt Generation Regression Tests
 Test Title: Editing System Prompt with plan and empty edit log has no regression
@@ -21,12 +21,12 @@ The schema definitions for an edit are:
 // Points to an object in the tree via its ID. ObjectPointer should always be preferred to point to an object, though PathPointer allows pointing to an array or primitive when needed.
 type ObjectPointer = string;
 
-// Set a field on an object to a specified value. Can be used set optional fields to undefined.
+// Set a field on an object to a specified value. Can be used to remove optional properties.
 interface SetField {
     type: "setField";
     object: ObjectPointer; // The parent object
     field: string; // The field name to set
-    value: unknown; // New content to set the field to. Must adhere to domain-specific schema.
+    value?: unknown; // New content to set the property to. Must adhere to domain-specific schema. Omit to indicate that the property should be removed.
 }
 
 // Points to an object in the tree via a path. The path starts either at an object (via ID) or the root of the tree (via null). When possible, paths should always be relative to an object ID.

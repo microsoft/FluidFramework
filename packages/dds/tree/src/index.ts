@@ -225,6 +225,7 @@ export {
 	replaceVerboseTreeHandles,
 	type HandleConverter,
 	ObjectNodeSchema,
+	type LeafSchema,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
@@ -243,6 +244,15 @@ export { noopValidator } from "./codec/index.js";
 export { typeboxValidator } from "./external-utilities/index.js";
 
 export type {
+	// Type Testing
+	requireTrue,
+	requireFalse,
+	requireAssignableTo,
+	areSafelyAssignable,
+	isAssignableTo,
+	isAny,
+	eitherIsAny,
+	// Other
 	RestrictiveReadonlyRecord,
 	RestrictiveStringRecord,
 	MakeNominal,
