@@ -43,6 +43,7 @@ import {
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
 import type { ConfigTypes, FluidObject } from "@fluidframework/core-interfaces";
+import type { IErrorBase } from "@fluidframework/core-interfaces";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
 	createLocalResolverCreateNewRequest,
@@ -53,7 +54,11 @@ import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	createChildLogger,
+	LoggingError,
+	wrapError,
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	LocalCodeLoader,
 	timeoutPromise,
@@ -787,12 +792,21 @@ async function loadClient(
 
 async function synchronizeClients(connectedClients: Client[]) {
 	return timeoutPromise((resolve, reject) => {
-		const handler = (error?) => {
-			if (connectedClients.some((c) => c.container.closed || c.container.disposed === true)) {
-				reject(error);
+		const rejectHandler = (error?: IErrorBase | undefined) => {
+			const client = connectedClients.find(
+				(c) => c.container.closed || c.container.disposed === true,
+			);
+			if (client !== undefined) {
+				reject(
+					wrapError(
+						error,
+						(message) => new LoggingError(`${client.tag} closed or disposed: ${message}`),
+					),
+				);
 				off();
-				return;
 			}
+		};
+		const resolveHandler = () => {
 			if (
 				connectedClients.every(
 					(c) =>
@@ -806,28 +820,34 @@ async function synchronizeClients(connectedClients: Client[]) {
 				off();
 			}
 		};
-		const timeout = setInterval(() => {
-			// just an easy place to place a breakpoint
-			handler();
-		}, 1000);
+		// if you hit timeout issues in the
+		// stress tests, this can help to diagnose
+		// if the error is in synchronization, as it
+		// provides a place to break into the hung
+		// process by setting a breakpoint on
+		// resolveHandler
+		//
+		// const timeout = setInterval(() => {
+		// resolveHandler();
+		// }, 1000);
 		const off = () => {
-			clearInterval(timeout);
+			// clearInterval(timeout);
 			for (const c of connectedClients) {
-				c.container.off("closed", handler);
-				c.container.off("connected", handler);
-				c.container.off("disposed", handler);
-				c.container.off("op", handler);
-				c.container.off("saved", handler);
+				c.container.off("closed", rejectHandler);
+				c.container.off("disposed", rejectHandler);
+				c.container.off("connected", resolveHandler);
+				c.container.off("op", resolveHandler);
+				c.container.off("saved", resolveHandler);
 			}
 		};
 		for (const c of connectedClients) {
-			c.container.on("closed", handler);
-			c.container.on("connected", handler);
-			c.container.on("disposed", handler);
-			c.container.on("op", handler);
-			c.container.on("saved", handler);
+			c.container.on("closed", rejectHandler);
+			c.container.on("disposed", rejectHandler);
+			c.container.on("connected", resolveHandler);
+			c.container.on("op", resolveHandler);
+			c.container.on("saved", resolveHandler);
 		}
-		handler();
+		resolveHandler();
 	});
 }
 
