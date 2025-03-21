@@ -8,7 +8,11 @@ import { fail } from "../../util/index.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import { createFieldSchema, type FieldSchema, type AllowedTypes } from "../schemaTypes.js";
 import { SchemaFactory } from "./schemaFactory.js";
-import type { SimpleFieldSchema, SimpleNodeSchema, SimpleTreeSchema } from "./simpleSchema.js";
+import type {
+	SimpleFieldSchema,
+	SimpleNodeSchema,
+	SimpleTreeSchema,
+} from "../simpleSchema.js";
 
 const factory = new SchemaFactory(undefined);
 

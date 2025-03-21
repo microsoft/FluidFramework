@@ -20,7 +20,7 @@ import type {
 	SimpleObjectFieldSchema,
 	SimpleObjectNodeSchema,
 	SimpleTreeSchema,
-} from "./simpleSchema.js";
+} from "../simpleSchema.js";
 import type { ValueSchema } from "../../core/index.js";
 import { copyProperty, getOrCreate, type Mutable } from "../../util/index.js";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "../objectNodeTypes.js";

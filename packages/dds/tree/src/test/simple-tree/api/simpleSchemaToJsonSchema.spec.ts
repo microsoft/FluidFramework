@@ -16,7 +16,7 @@ import type {
 	SimpleObjectNodeSchema,
 	SimpleTreeSchema,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../simple-tree/api/simpleSchema.js";
+} from "../../../simple-tree/simpleSchema.js";
 
 import {
 	convertObjectNodeSchema,

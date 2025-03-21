@@ -27,7 +27,7 @@ import type {
 	SimpleNodeSchema,
 	SimpleObjectNodeSchema,
 	SimpleTreeSchema,
-} from "./simpleSchema.js";
+} from "../simpleSchema.js";
 import { NodeKind } from "../core/index.js";
 
 /**

@@ -33,7 +33,7 @@ import type { InsertableContent } from "./toMapTree.js";
 import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
 import { LeafNodeSchema } from "./leafNodeSchema.js";
 import { TreeNodeValid } from "./treeNodeValid.js";
-import type { SimpleFieldSchema } from "./api/index.js";
+import type { SimpleFieldSchema } from "./simpleSchema.js";
 
 /**
  * Returns true if the given schema is a {@link TreeNodeSchemaClass}, or otherwise false if it is a {@link TreeNodeSchemaNonClass}.

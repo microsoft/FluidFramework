@@ -57,15 +57,6 @@ export {
 	type IdentifierIndex,
 	createSimpleTreeIndex,
 	createIdentifierIndex,
-	type SimpleNodeSchemaBase,
-	type SimpleTreeSchema,
-	type SimpleNodeSchema,
-	type SimpleFieldSchema,
-	type SimpleLeafNodeSchema,
-	type SimpleMapNodeSchema,
-	type SimpleArrayNodeSchema,
-	type SimpleObjectNodeSchema,
-	type SimpleObjectFieldSchema,
 	type JsonSchemaId,
 	type JsonSchemaType,
 	type JsonObjectNodeSchema,
@@ -144,6 +135,17 @@ export {
 	replaceVerboseTreeHandles,
 	type HandleConverter,
 } from "./api/index.js";
+export type {
+	SimpleTreeSchema,
+	SimpleNodeSchema,
+	SimpleFieldSchema,
+	SimpleLeafNodeSchema,
+	SimpleMapNodeSchema,
+	SimpleArrayNodeSchema,
+	SimpleObjectNodeSchema,
+	SimpleNodeSchemaBase,
+	SimpleObjectFieldSchema,
+} from "./simpleSchema.js";
 export {
 	type NodeFromSchema,
 	isTreeNodeSchemaClass,
