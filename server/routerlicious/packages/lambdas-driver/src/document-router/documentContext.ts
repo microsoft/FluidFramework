@@ -100,12 +100,13 @@ export class DocumentContext extends EventEmitter implements IContext {
 		// If head is moving backwards
 		if (head.offset <= this.head.offset) {
 			if (head.offset <= this.tail.offset) {
-				Lumberjack.info(
+				Lumberjack.verbose(
 					"Not updating documentContext head since new head's offset is <= last checkpoint offset (tail), returning early",
 					{
 						newHeadOffset: head.offset,
 						currentHeadOffset: this.head.offset,
 						currentTailOffset: this.tail.offset,
+						lastSuccessfulOffset: this.lastSuccessfulOffset,
 						documentId: this.routingKey.documentId,
 					},
 				);
@@ -119,6 +120,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 					newHeadOffset: head.offset,
 					currentHeadOffset: this.head.offset,
 					currentTailOffset: this.tail.offset,
+					lastSuccessfulOffset: this.lastSuccessfulOffset,
 					headPaused: this.headPaused,
 					documentId: this.routingKey.documentId,
 				},
@@ -136,6 +138,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 				newHeadOffset: head.offset,
 				currentHeadOffset: this.head.offset,
 				currentTailOffset: this.tail.offset,
+				lastSuccessfulOffset: this.lastSuccessfulOffset,
 				documentId: this.routingKey.documentId,
 			});
 			this.headPaused = false;
