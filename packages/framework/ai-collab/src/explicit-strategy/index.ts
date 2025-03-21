@@ -113,7 +113,7 @@ interface GenerateTreeEditsErrorResponse {
 		| "aborted"
 		| "unexpectedError";
 	tokensUsed: TokenUsage;
-	uiDiffs?: UiDiff[];
+	uiDiffs: UiDiff[];
 }
 
 /**
