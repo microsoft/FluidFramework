@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/driver-utils",
-	"version": "2.30.0",
+	"version": "2.31.0",
 	"description": "Collection of utility functions for Fluid drivers",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -71,7 +71,6 @@
 		"check:exports:esm:legacy": "api-extractor run --config api-extractor/api-extractor-lint-legacy.esm.json",
 		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
 		"check:format": "npm run check:biome",
-		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"ci:build:api-reports": "concurrently \"npm:ci:build:api-reports:*\"",
 		"ci:build:api-reports:current": "api-extractor run --config api-extractor/api-extractor.current.json",
 		"ci:build:api-reports:legacy": "api-extractor run --config api-extractor/api-extractor.legacy.json",
@@ -81,7 +80,6 @@
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
-		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",
@@ -133,7 +131,7 @@
 		"@fluid-tools/build-cli": "^0.54.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.54.0",
-		"@fluidframework/driver-utils-previous": "npm:@fluidframework/driver-utils@2.23.0",
+		"@fluidframework/driver-utils-previous": "npm:@fluidframework/driver-utils@2.30.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/mocha": "^10.0.10",
@@ -148,7 +146,6 @@
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
-		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"sinon": "^18.0.1",
 		"typescript": "~5.4.5"

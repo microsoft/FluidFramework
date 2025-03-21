@@ -11,9 +11,9 @@ import {
 
 import { type NormalizedUpPath, rootFieldKey } from "../../../core/index.js";
 import {
-	MockNodeKeyManager,
+	MockNodeIdentifierManager,
 	TreeStatus,
-	type StableNodeKey,
+	type StableNodeIdentifier,
 } from "../../../feature-libraries/index.js";
 import {
 	isTreeNode,
@@ -217,13 +217,15 @@ describe("treeNodeApi", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				identifier: schema.identifier,
 			});
-			const nodeKeyManager = new MockNodeKeyManager();
-			const id = nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
+			const nodeKeyManager = new MockNodeIdentifierManager();
+			const id = nodeKeyManager.stabilizeNodeIdentifier(
+				nodeKeyManager.generateLocalNodeIdentifier(),
+			);
 			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
 			const view = getView(config, nodeKeyManager);
 			view.initialize({ identifier: id });
 
-			assert.equal(Tree.shortId(view.root), nodeKeyManager.localizeNodeKey(id));
+			assert.equal(Tree.shortId(view.root), nodeKeyManager.localizeNodeIdentifier(id));
 		});
 		it("returns undefined when an identifier fieldkind does not exist.", () => {
 			const schemaWithIdentifier = schema.object("parent", {
@@ -250,9 +252,9 @@ describe("treeNodeApi", () => {
 				identifier: schema.identifier,
 			});
 			// Create a valid stableNodeKey which is not known by the tree's idCompressor.
-			const nodeKeyManager = new MockNodeKeyManager();
-			const stableNodeKey = nodeKeyManager.stabilizeNodeKey(
-				nodeKeyManager.generateLocalNodeKey(),
+			const nodeKeyManager = new MockNodeIdentifierManager();
+			const stableNodeKey = nodeKeyManager.stabilizeNodeIdentifier(
+				nodeKeyManager.generateLocalNodeIdentifier(),
 			);
 
 			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
@@ -313,13 +315,16 @@ describe("treeNodeApi", () => {
 
 			// TODO: this policy seems questionable, but its whats implemented, and is documented in TreeStatus.new
 			it("returns string when unhydrated then local id when hydrated", () => {
-				const nodeKeyManager = new MockNodeKeyManager();
+				const nodeKeyManager = new MockNodeIdentifierManager();
 				const config = new TreeViewConfiguration({ schema: HasIdentifier });
 				const view = getView(config, nodeKeyManager);
 				view.initialize({});
 				const identifier = view.root.identifier;
 				const shortId = Tree.shortId(view.root);
-				assert.equal(shortId, nodeKeyManager.localizeNodeKey(identifier as StableNodeKey));
+				assert.equal(
+					shortId,
+					nodeKeyManager.localizeNodeIdentifier(identifier as StableNodeIdentifier),
+				);
 
 				const node = new HasIdentifier({ identifier });
 				assert.equal(Tree.shortId(node), identifier);

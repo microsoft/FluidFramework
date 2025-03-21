@@ -7,7 +7,7 @@ import type { ErasedType, IFluidHandle } from "@fluidframework/core-interfaces";
 import { Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { NodeKeyManager } from "../feature-libraries/index.js";
+import type { NodeIdentifierManager } from "../feature-libraries/index.js";
 import {
 	type MakeNominal,
 	brand,
@@ -208,7 +208,7 @@ export interface FieldProps<TCustomMetadata = unknown> {
  * A {@link FieldProvider} which requires additional context in order to produce its content
  */
 export type ContextualFieldProvider = (
-	context: NodeKeyManager,
+	context: NodeIdentifierManager,
 ) => InsertableContent | undefined;
 /**
  * A {@link FieldProvider} which can produce its content in a vacuum

@@ -7,15 +7,11 @@
 // @alpha
 export function createAndAttachContainer(source: IFluidCodeDetails, loader: IHostLoader, attachRequest: IRequest): Promise<IContainer>;
 
-// @alpha (undocumented)
+// @alpha
 export interface IOpProcessingController {
-    // (undocumented)
     pauseProcessing(...containers: IContainer[]): Promise<void>;
-    // (undocumented)
     processIncoming(...containers: IContainer[]): Promise<void>;
-    // (undocumented)
     processOutgoing(...containers: IContainer[]): Promise<void>;
-    // (undocumented)
     resumeProcessing(...containers: IContainer[]): void;
 }
 
