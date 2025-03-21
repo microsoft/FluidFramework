@@ -71,8 +71,8 @@ const firstChanceAssertionHandler = new Set<(error: Error) => void>();
  * @param handler - Called when an assertion occurs before the exception is thrown.
  * @returns a function to remove the handler.
  * @remarks
- * The callback runs just before the exception is thrown which makes it a better place to report telemetry for Fluid Framework bugs than a catch block or an event like `window.onerror`.
- * Using this API to report telemetry is preferred over over those approaches since it eliminates the risk of the exception being swallowed or obfuscated by an intermediate stack frame's catch block
+ * The callback runs just before the exception is thrown, which makes it a better place to report telemetry for Fluid Framework bugs than a catch block or an event like `window.onerror`.
+ * Using this API to report telemetry is preferred over those approaches since it eliminates the risk of the exception being swallowed or obfuscated by an intermediate stack frame's catch block
  * or missed due to not having the right catch block or event handler.
  *
  * This does not replace the need for error handling elsewhere since errors (even bugs in Fluid) can cause other kinds of exceptions which this cannot run the callback for.
