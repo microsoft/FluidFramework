@@ -1197,7 +1197,7 @@ export class ContainerRuntime
 	 */
 	private delayConnectClientId?: string;
 
-	private ensureNoDataModelChangesCalls = 0;
+	private readonly ensureNoDataModelChangesRunner = new RunCounter();
 
 	/**
 	 * Invokes the given callback and expects that no ops are submitted
@@ -1208,12 +1208,7 @@ export class ContainerRuntime
 	 * @param callback - the callback to be invoked
 	 */
 	public ensureNoDataModelChanges<T>(callback: () => T): T {
-		this.ensureNoDataModelChangesCalls++;
-		try {
-			return callback();
-		} finally {
-			this.ensureNoDataModelChangesCalls--;
-		}
+		return this.ensureNoDataModelChangesRunner.run(callback);
 	}
 
 	public get connected(): boolean {
@@ -1750,7 +1745,7 @@ export class ContainerRuntime
 				clientSequenceNumber: this._processedClientSequenceNumber,
 			}),
 			reSubmit: this.reSubmit.bind(this),
-			opReentrancy: () => this.ensureNoDataModelChangesCalls > 0,
+			opReentrancy: () => this.ensureNoDataModelChangesRunner.running,
 			closeContainer: this.closeFn,
 		});
 
