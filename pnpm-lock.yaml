@@ -12130,6 +12130,9 @@ importers:
       lz4js:
         specifier: ^0.2.0
         version: 0.2.0
+      semver:
+        specifier: ^7.7.1
+        version: 7.7.1
       uuid:
         specifier: ^9.0.0
         version: 9.0.1
@@ -12185,6 +12188,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/semver':
+        specifier: ^7.5.0
+        version: 7.5.8
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
@@ -27963,7 +27969,7 @@ snapshots:
       cjs-module-lexer: 1.4.1
       fflate: 0.8.2
       lru-cache: 10.4.3
-      semver: 7.6.3
+      semver: 7.7.1
       typescript: 5.6.1-rc
       validate-npm-package-name: 5.0.1
 
@@ -28369,7 +28375,7 @@ snapshots:
       package-manager-detector: 0.2.7
       picocolors: 1.1.1
       resolve-from: 5.0.0
-      semver: 7.6.3
+      semver: 7.7.1
       spawndamnit: 3.0.1
       term-size: 2.2.1
 
@@ -31287,7 +31293,7 @@ snapshots:
       json-stringify-safe: 5.0.1
       lodash: 4.17.21
       nconf: 0.12.1
-      semver: 7.6.3
+      semver: 7.7.1
       sha.js: 2.4.11
       uuid: 9.0.1
     transitivePeerDependencies:
@@ -35086,7 +35092,7 @@ snapshots:
       import-cwd: 3.0.0
       node-fetch: 2.7.0(encoding@0.1.13)
       parse-github-url: 1.0.3
-      semver: 7.6.3
+      semver: 7.7.1
     transitivePeerDependencies:
       - encoding
 
@@ -42112,7 +42118,7 @@ snapshots:
 
   rechoir@0.8.0:
     dependencies:
-      resolve: 1.22.8
+      resolve: 1.22.10
 
   redent@3.0.0:
     dependencies:

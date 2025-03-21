@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
+import * as semver from "semver";
 
 import { pkgVersion } from "../packageVersion.js";
 
@@ -215,7 +216,21 @@ class CheckVersions implements IProperty<string[] | undefined> {
 	}
 
 	public validate(t: unknown): boolean {
-		return t === undefined || (Array.isArray(t) && !t.includes(pkgVersion));
+		if (t === undefined) {
+			return true;
+		}
+		if (Array.isArray(t)) {
+			for (const range of t) {
+				if (typeof range !== "string") {
+					return false;
+				}
+				if (semver.satisfies(pkgVersion, range)) {
+					// If the package version satisfies the range, then it *is* a disallowed versions, and we consider it invalid.
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 }
 

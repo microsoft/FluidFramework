@@ -17,8 +17,8 @@ export {
 	ICompressionRuntimeOptions,
 	CompressionAlgorithms,
 	RuntimeHeaderData,
-	disabledCompressionConfig,
 } from "./containerRuntime.js";
+export { disabledCompressionConfig } from "./compatUtils.js";
 export {
 	ContainerMessageType,
 	UnknownContainerRuntimeMessage,
