@@ -755,8 +755,28 @@ describe("Outbox", () => {
 		);
 	});
 
-	it.skip("Throws when an out of order message is detected", () => {
+	it("Throws when an out of order message is detected", () => {
 		const outbox = getOutbox({ context: getMockContext() });
+		const messages = [
+			{
+				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
+				referenceSequenceNumber: 0,
+			},
+			{
+				...createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
+				referenceSequenceNumber: 1,
+			},
+		];
+
+		currentSeqNumbers.referenceSequenceNumber = 1;
+
+		outbox.submit(messages[0]);
+
+		assert.throws(() => outbox.submit(messages[1]), "Since we incremented referenceSequenceNumber to 1, this should throw");
+	});
+
+	it("Splits the batch when an out of order message is detected (if assert is disabled)", () => {
+		const outbox = getOutbox({ context: getMockContext(), disableSequenceNumberCoherencyAssert: true });
 		const messages = [
 			{
 				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
@@ -835,8 +855,8 @@ describe("Outbox", () => {
 			},
 		],
 	]) {
-		it.skip("Flushes all batches when an out of order message is detected in either flows", () => {
-			const outbox = getOutbox({ context: getMockContext() });
+		it("Flushes all batches when an out of order message is detected in either flow (assert is disabled)", () => {
+			const outbox = getOutbox({ context: getMockContext(), disableSequenceNumberCoherencyAssert: true });
 			for (const op of ops) {
 				currentSeqNumbers.referenceSequenceNumber = op.referenceSequenceNumber;
 				if (typeFromBatchedOp(op) === ContainerMessageType.IdAllocation) {
