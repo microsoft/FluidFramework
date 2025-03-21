@@ -31,7 +31,7 @@ import type {
 	NodePath,
 	RemoveFieldDiff,
 	// RemoveFieldDiff,
-} from "../../aiCollabDiffApi.js";
+} from "../../aiCollabUiDiffApi.js";
 import {
 	applyAgentEdit,
 	getRangeInfo,

@@ -32,7 +32,7 @@ import type {
 	NodePath,
 	RemoveFieldDiff,
 	UiDiff,
-} from "../aiCollabDiffApi.js";
+} from "../aiCollabUiDiffApi.js";
 
 import {
 	type TreeEdit,

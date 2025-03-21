@@ -25,7 +25,7 @@ import type {
 	TokenLimits,
 	TokenUsage,
 } from "../aiCollabApi.js";
-import type { UiDiff } from "../aiCollabDiffApi.js";
+import type { UiDiff } from "../aiCollabUiDiffApi.js";
 
 import { applyAgentEdit } from "./agentEditReducer.js";
 import type { EditWrapper, TreeEdit } from "./agentEditTypes.js";
