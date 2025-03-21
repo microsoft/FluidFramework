@@ -100,6 +100,7 @@ export interface ICompressionRuntimeOptions {
 // @alpha
 export interface IContainerRuntimeOptions {
     readonly chunkSizeInBytes?: number;
+    readonly compatibilityMode?: "1" | "2";
     readonly compressionOptions?: ICompressionRuntimeOptions;
     // @deprecated
     readonly enableGroupedBatching?: boolean;
