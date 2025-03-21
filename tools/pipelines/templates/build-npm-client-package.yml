@@ -230,6 +230,11 @@ extends:
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
 
+              - script: |
+                  echo "##vso[task.setvariable variable=COMMIT_SHA;isOutput=true]$(git rev-parse HEAD)"
+                displayName: "Capture Commit SHA"
+                name: setCommitSHA
+
               - task: Bash@3
                 displayName: Parameters
                 inputs:
@@ -569,12 +574,19 @@ extends:
               # Note that we need to disable it in the right way for 1ES pipeline templates, vs manual CodeQL tasks.
               - name: ONEES_ENFORCED_CODEQL_ENABLED
                 value: 'false'
+              - name: COMMIT_SHA
+                value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
             steps:
               # Setup
               - checkout: self
                 clean: true
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
+
+              - script: |
+                  git fetch origin $COMMIT_SHA
+                  git checkout $COMMIT_SHA
+                displayName: "Ensure Same Commit"
 
               - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
