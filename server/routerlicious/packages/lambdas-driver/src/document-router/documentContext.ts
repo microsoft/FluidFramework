@@ -65,6 +65,10 @@ export class DocumentContext extends EventEmitter implements IContext {
 		return this.lastSuccessfulOffsetInternal;
 	}
 
+	public get documentId(): string {
+		return this.routingKey.documentId;
+	}
+
 	/**
 	 * Returns whether or not there is pending work in flight - i.e. the head and tail are not equal
 	 */

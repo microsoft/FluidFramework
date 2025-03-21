@@ -100,7 +100,7 @@ scriptorium:
   logSavedOpsTimeIntervalMs: 60000
   opsCountTelemetryEnabled: false
   circuitBreakerEnabled: false
-  circuitBreakerOptions:
+  circuitBreakerOptionsDb:
     errorThresholdPercentage: 0.001
     resetTimeout: 30000
     timeout: false
