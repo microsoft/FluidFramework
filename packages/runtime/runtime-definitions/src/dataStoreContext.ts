@@ -301,6 +301,30 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 }
 
 /**
+ * @experimental
+ * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
+ * @legacy
+ * @alpha
+ * @sealed
+ */
+export interface StageControlsExperimental {
+	readonly commitChanges: () => void;
+	readonly discardChanges: () => void;
+}
+
+/**
+ * @experimental
+ * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
+ * @legacy
+ * @alpha
+ * @sealed
+ */
+export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase {
+	enterStagingMode?(): StageControlsExperimental;
+	readonly inStagingMode?: boolean;
+}
+
+/**
  * Minimal interface a data store runtime needs to provide for IFluidDataStoreContext to bind to control.
  *
  * Functionality include attach, snapshot, op/signal processing, request routes, expose an entryPoint,

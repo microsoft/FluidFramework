@@ -122,6 +122,12 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
     (event: "connected", listener: (clientId: string) => void): any;
 }
 
+// @alpha @sealed @deprecated (undocumented)
+export interface IFluidDataStoreRuntimeExperimental extends IFluidDataStoreRuntime {
+    // (undocumented)
+    readonly inStagingMode?: boolean;
+}
+
 // @alpha (undocumented)
 export interface Internal_InterfaceOfJsonableTypesWith<T> {
     // (undocumented)

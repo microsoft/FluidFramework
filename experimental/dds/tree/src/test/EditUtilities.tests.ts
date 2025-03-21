@@ -478,7 +478,7 @@ describe('EditUtilities', () => {
 	}
 
 	describe('comparePayloads', () => {
-		const serializer: FluidSerializer = new FluidSerializer(new MockFluidDataStoreRuntime().IFluidHandleContext);
+		const serializer: FluidSerializer = new FluidSerializer(new MockFluidDataStoreRuntime());
 		const binder: IFluidHandle = {
 			bind: noop,
 			get [fluidHandleSymbol]() {

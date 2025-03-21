@@ -24,6 +24,13 @@ import type {
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
+// eslint-disable-next-line import/no-deprecated
+import type {
+	// eslint-disable-next-line import/no-deprecated
+	IContainerRuntimeBaseExperimental,
+	// eslint-disable-next-line import/no-deprecated
+	StageControlsExperimental,
+} from "@fluidframework/runtime-definitions/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { timeoutAwait } from "@fluidframework/test-utils/internal";
 
@@ -46,7 +53,20 @@ export interface CreateChannel {
 	tag: `channel-${number}`;
 }
 
-export type StressDataObjectOperations = UploadBlob | CreateDataStore | CreateChannel;
+export interface EnterStagingMode {
+	type: "enterStagingMode";
+}
+export interface ExitStagingMode {
+	type: "exitStagingMode";
+	commit: boolean;
+}
+
+export type StressDataObjectOperations =
+	| UploadBlob
+	| CreateDataStore
+	| CreateChannel
+	| EnterStagingMode
+	| ExitStagingMode;
 
 export class StressDataObject extends DataObject {
 	public static readonly factory: DataObjectFactory<StressDataObject> = new DataObjectFactory(
@@ -267,6 +287,38 @@ export class DefaultStressDataObject extends StressDataObject {
 			}
 		}
 		this._locallyCreatedObjects.push(obj);
+	}
+
+	// eslint-disable-next-line import/no-deprecated
+	private stageControls: StageControlsExperimental | undefined;
+	// eslint-disable-next-line import/no-deprecated
+	private readonly containerRuntimeExp: IContainerRuntimeBaseExperimental =
+		// eslint-disable-next-line import/no-deprecated
+		this.context.containerRuntime satisfies IContainerRuntimeBaseExperimental;
+	public enterStagingMode() {
+		assert(
+			this.containerRuntimeExp.enterStagingMode !== undefined,
+			"enterStagingMode must be defined",
+		);
+		this.stageControls = this.containerRuntimeExp.enterStagingMode();
+	}
+
+	public inStagingMode(): boolean {
+		assert(
+			this.containerRuntimeExp.inStagingMode !== undefined,
+			"inStagingMode must be defined",
+		);
+		return this.containerRuntimeExp.inStagingMode;
+	}
+
+	public exitStagingMode(commit: boolean) {
+		assert(this.stageControls !== undefined, "must have staging mode handle");
+		if (commit) {
+			this.stageControls.commitChanges();
+		} else {
+			this.stageControls.discardChanges();
+		}
+		this.stageControls = undefined;
 	}
 }
 

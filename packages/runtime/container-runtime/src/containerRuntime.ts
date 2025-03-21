@@ -89,6 +89,10 @@ import type {
 	IInboundSignalMessage,
 	IRuntimeMessagesContent,
 	ISummarizerNodeWithGC,
+	// eslint-disable-next-line import/no-deprecated
+	StageControlsExperimental,
+	// eslint-disable-next-line import/no-deprecated
+	IContainerRuntimeBaseExperimental,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	FlushMode,
@@ -711,6 +715,8 @@ export class ContainerRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents>
 	implements
 		IContainerRuntime,
+		// eslint-disable-next-line import/no-deprecated
+		IContainerRuntimeBaseExperimental,
 		IRuntime,
 		ISummarizerRuntime,
 		ISummarizerInternalsProvider,
@@ -3043,14 +3049,16 @@ export class ContainerRuntime
 	 * This method is expected to be called at the end of a batch.
 	 * @param resubmittingBatchId - If defined, indicates this is a resubmission of a batch
 	 * with the given Batch ID, which must be preserved
+	 * @param resubmittingStagedBatch - If defined, indicates this is a resubmission of a batch that is staged,
+	 * meaning it should not be sent to the ordering service yet.
 	 */
-	private flush(resubmittingBatchId?: BatchId): void {
+	private flush(resubmittingBatchId?: BatchId, resubmittingStagedBatch?: boolean): void {
 		assert(
 			this._orderSequentiallyCalls === 0,
 			0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */,
 		);
 
-		this.outbox.flush(resubmittingBatchId);
+		this.outbox.flush(resubmittingBatchId, resubmittingStagedBatch);
 		assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
 	}
 
@@ -3119,6 +3127,52 @@ export class ContainerRuntime
 		}
 		return result;
 	}
+
+	// eslint-disable-next-line import/no-deprecated
+	private stageControls: StageControlsExperimental | undefined;
+	public get inStagingMode(): boolean {
+		return this.stageControls !== undefined;
+	}
+
+	// eslint-disable-next-line import/no-deprecated
+	enterStagingMode = (): StageControlsExperimental => {
+		if (this.stageControls !== undefined) {
+			throw new Error("already in staging mode");
+		}
+
+		// Make sure all BatchManagers are empty before entering staging mode,
+		// since we mark whole batches as "staged" or not to indicate whether to submit them.
+		this.outbox.flush();
+
+		const exitStagingMode = (discardOrCommit: () => void) => (): void => {
+			this.stageControls = undefined;
+
+			// Final flush of any last staged changes
+			this.outbox.flush(undefined, true /* staged */);
+
+			discardOrCommit();
+		};
+
+		const stageControls = {
+			discardChanges: exitStagingMode(() => {
+				// Pop all staged batches from the PSM and roll them back in LIFO order
+				this.pendingStateManager.popStagedBatches(({ content, localOpMetadata }) =>
+					this.rollback(content, localOpMetadata),
+				);
+			}),
+			commitChanges: exitStagingMode(() => {
+				// All staged changes are in the PSM, so just replay them (ignore pre-staging batches)
+				// FUTURE: Have this do squash-rebase instead of resubmitting all intermediate changes
+				if (this.connected) {
+					this.pendingStateManager.replayPendingStates(true /* onlyStagedBatched */);
+				} else {
+					this.pendingStateManager.clearStagingFlags();
+				}
+			}),
+		};
+
+		return (this.stageControls = stageControls);
+	};
 
 	/**
 	 * Returns the aliased data store's entryPoint, given the alias.
@@ -4130,6 +4184,9 @@ export class ContainerRuntime
 				const idAllocationBatchMessage: BatchMessage = {
 					contents: serializeOpContents(idAllocationMessage),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+					// Note: For now, we will never stage ID Allocation messages.
+					// They won't contain personal info and no harm in extra allocations in case of discarding the staged changes
+					staged: false,
 				};
 				this.outbox.submitIdAllocation(idAllocationBatchMessage);
 			}
@@ -4193,6 +4250,7 @@ export class ContainerRuntime
 				this.outbox.submit({
 					contents: serializeOpContents(msg),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+					staged: this.inStagingMode,
 				});
 			}
 
@@ -4201,6 +4259,7 @@ export class ContainerRuntime
 				metadata,
 				localOpMetadata,
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+				staged: this.inStagingMode,
 			};
 			if (type === ContainerMessageType.BlobAttach) {
 				// BlobAttach ops must have their metadata visible and cannot be grouped (see opGroupingManager.ts)
@@ -4214,6 +4273,8 @@ export class ContainerRuntime
 			if (flushImmediatelyOnSubmit) {
 				this.flush();
 			} else {
+				// Note: We don't pass 'inStagingMode', since exiting Staging Mode would flush the outbox,
+				// and whenever this scheduled flush runs it should check the current state as of then.
 				this.scheduleFlush();
 			}
 		} catch (error) {
@@ -4304,7 +4365,11 @@ export class ContainerRuntime
 	 * @remarks - If the "Offline Load" feature is enabled, the batchId is included in the resubmitted messages,
 	 * for correlation to detect container forking.
 	 */
-	private reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId): void {
+	private reSubmitBatch(
+		batch: PendingMessageResubmitData[],
+		batchId: BatchId,
+		staged: boolean,
+	): void {
 		this.orderSequentially(() => {
 			for (const message of batch) {
 				this.reSubmit(message);
@@ -4313,7 +4378,7 @@ export class ContainerRuntime
 
 		// Only include Batch ID if "Offline Load" feature is enabled
 		// It's only needed to identify batches across container forks arising from misuse of offline load.
-		this.flush(this.offlineEnabled ? batchId : undefined);
+		this.flush(this.offlineEnabled ? batchId : undefined, staged);
 	}
 
 	private reSubmit(message: PendingMessageResubmitData): void {
