@@ -51,21 +51,41 @@ jobs:
   variables:
     version: $[ stageDependencies.build.build.outputs['SetVersion.version']]
     isLatest: $[ stageDependencies.build.build.outputs['SetVersion.isLatest']]
+  templateContext:
+    type: releaseJob
+    # in() returns true if the first parameter is equal to any of the others
+    isProduction: ${{ in(variables['release'], 'release', 'prerelease')  }}
+
+    # This 'inputs' section downloads initial required artifacts/data for this job.
+    inputs:
+      - input: pipelineArtifact
+        pipeline: buildTools-resource
+        artifactName: pack
+        targetPath: $(Pipeline.Workspace)/buildTools-zip
+
+      - input: pipelineArtifact
+        artifactName: pack
+        buildType: current
+        targetPath: $(Pipeline.Workspace)/pack
   strategy:
     runOnce:
         deploy:
           steps:
-          - checkout: self
-            clean: true
-            persistCredentials: true # Necessary for creation of git tags to work
-          - download: current
-            artifact: pack
           - template: /tools/pipelines/templates/include-use-node-version.yml@self
-          - template: /tools/pipelines/templates/include-install-build-tools.yml@self
-            parameters:
-              buildDirectory: ${{ parameters.buildDirectory }}
-              buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
-              pnpmStorePath: ${{ parameters.pnpmStorePath }}
+
+          - task: Bash@3
+            name: InstallBuildToolsFromTarball
+            displayName: Install Fluid Build Tools from artifact tarball
+            inputs:
+              targetType: 'inline'
+              workingDirectory: '$(Pipeline.Workspace)/buildTools-zip/tarballs'
+              script: |
+                set -eu -o pipefail
+                echo "Listing files in directory: $(pwd)"
+                ls -la
+                echo "Attempting install of build tools from build tools pipeline artifact tarball"
+                npm i -g ./*.tgz
+
           - template: /tools/pipelines/templates/include-publish-npm-package-steps.yml@self
             parameters:
               artifactPath: tarballs
