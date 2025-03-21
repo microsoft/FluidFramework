@@ -125,7 +125,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 		dataProcessingCodepath: string,
 		sequencedMessage?: ISequencedDocumentMessage,
 		props: ITelemetryPropertiesExt = {},
-		stackTraceLimit?: number
+		stackTraceLimit?: number,
 	): IFluidErrorBase {
 		const ErrorConfig = Error as unknown as { stackTraceLimit: number };
 		const originalStackTraceLimit = ErrorConfig.stackTraceLimit;
@@ -142,14 +142,12 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 			dataProcessingError.addTelemetryProperties(props);
 
 			return dataProcessingError;
-		}
-		finally {
+		} finally {
 			// Reset the stack trace limit to the original value
 			if (stackTraceLimit !== undefined) {
 				ErrorConfig.stackTraceLimit = originalStackTraceLimit;
 			}
 		}
-
 	}
 
 	/**
