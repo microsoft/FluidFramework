@@ -47,9 +47,10 @@ interface UnitTestAckStep {
 	seq: number;
 }
 /**
- * The intention property represents the change associated with the step. The ack step will have the intention value for
- * the push-ack pair. Note that in cases where there are more than one step with the same sequence number, the intention
- * value will be unique.
+ * The intention property represents the change associated with the commit for this step. The ack step and its
+ * corresponding push step represent the same commit and then intention value for this commit is assigned to the ack
+ * step. Note that in cases where there are more than one step with the same sequence number, the intention value
+ * will be unique.
  */
 type UnitTestAckStepWithIntention = UnitTestAckStep & { intention: number };
 
@@ -79,8 +80,8 @@ interface UnitTestPullStep {
 	expectedDelta?: number[];
 }
 /**
- * The intention property represents the change associated with the step. Note that in cases where there are more
- * than one step with the same sequence number, the intention value will be unique.
+ * The intention property represents the change associated with the commit for this step. Note that in cases where there
+ * are more than one step with the same sequence number, the intention value will be unique.
  */
 type UnitTestPullStepWithIntention = UnitTestPullStep & { intention: number };
 
@@ -120,19 +121,6 @@ type TestCommit = Commit<TestChange> & {
 };
 
 const localSessionId: SessionId = "0" as SessionId;
-
-/**
- * Get the first push step that for which an ack step has not been generated.
- * @param scenario - The scenario with all the steps.
- * @param inflight - The number of steps that are inflight, i.e., have not been acked yet.
- * @returns the first push step that for which an ack step has not been generated.
- */
-function getFirstUnackedStep(scenario: readonly UnitTestScenarioStep[], inflight: number) {
-	const pushes = scenario.filter((step) => step.type === "Push");
-	const nextUnackedPushIndex = pushes.length - inflight;
-	assert(nextUnackedPushIndex >= 0, "No unacked step found");
-	return pushes[nextUnackedPushIndex];
-}
 
 export function* buildScenario(
 	scenario: UnitTestScenarioStep[],
@@ -220,31 +208,6 @@ export function runUnitTestScenario(
 		 * Used to check that summarization works properly.
 		 */
 		const joiners: TestEditManager[] = [];
-		/**
-		 * Local helper to update all the state that is dependent on the sequencing of new edits.
-		 * Note that all commits are part of the same bunch and have the same session ID, sequence number
-		 * and reference sequence number.
-		 */
-		const recordSequencedEdits = (commits: TestCommit[]): void => {
-			commits.forEach((commit) => {
-				trunk.push({ intention: commit.intention, seq: commit.seqNumber });
-			});
-			summarizer.addSequencedChanges(
-				commits,
-				commits[0].sessionId,
-				commits[0].seqNumber,
-				commits[0].refNumber,
-			);
-			for (const j of joiners) {
-				j.addSequencedChanges(
-					commits,
-					commits[0].sessionId,
-					commits[0].seqNumber,
-					commits[0].refNumber,
-				);
-			}
-		};
-
 		/**
 		 * Ordered list of local commits that have not yet been sequenced (i.e., `pushed - acked`)
 		 */
@@ -410,7 +373,8 @@ export function runUnitTestScenario(
 							...steps.filter(peerTrunkChangesFilter),
 							...steps.filter(peerLocalChangesFilter),
 						].map(
-							(s) => s.intention ?? fail("Sequenced changes must all have a change property"),
+							(s) =>
+								s.intention ?? fail("Sequenced changes must all have an intention property"),
 						);
 						const commit: TestCommit = {
 							revision: mintRevisionTag(),
@@ -429,16 +393,36 @@ export function runUnitTestScenario(
 			}
 
 			if (commits.length > 0) {
-				// Note that all the commits are part of the same bunch and have the same session ID, sequence number
-				// and reference sequence number.
-				addSequencedChanges(
-					manager,
+				// Note that all the commits must be part of the same bunch and have the same session ID, sequence number
+				// and reference sequence number (validated below).
+				const bunchSessionId = commits[0].sessionId;
+				const bunchSeqNumber = commits[0].seqNumber;
+				const bunchRefNumber = commits[0].refNumber;
+				addSequencedChanges(manager, commits, bunchSessionId, bunchSeqNumber, bunchRefNumber);
+				commits.forEach((commit) => {
+					assert(
+						commit.sessionId === bunchSessionId &&
+							commit.seqNumber === bunchSeqNumber &&
+							commit.refNumber === bunchRefNumber,
+						"All commits must be part of the same bunch",
+					);
+					trunk.push({ intention: commit.intention, seq: commit.seqNumber });
+				});
+				summarizer.addSequencedChanges(
 					commits,
 					commits[0].sessionId,
 					commits[0].seqNumber,
 					commits[0].refNumber,
 				);
-				recordSequencedEdits(commits);
+				for (const j of joiners) {
+					j.addSequencedChanges(
+						commits,
+						commits[0].sessionId,
+						commits[0].seqNumber,
+						commits[0].refNumber,
+					);
+				}
+
 				if (bunchOfSteps[0].type === "Pull") {
 					knownToLocal = [
 						...trunk,
@@ -521,7 +505,7 @@ export function runUnitTestScenario(
 			}
 			bunch.push(step);
 		}
-		// Process the last bunch, if any.
+		// Process the last bunch. Note that there will at least be one step in this bunch.
 		processBunchOfSteps(bunch);
 	};
 

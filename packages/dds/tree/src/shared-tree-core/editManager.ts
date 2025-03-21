@@ -703,13 +703,12 @@ export class EditManager<
 			return;
 		}
 
-		/* Remote changes, i.e., changes from remote clients are applied in three steps. */
-
+		// Remote changes, i.e., changes from remote clients are applied in three steps.
 		// Step 1 - Recreate the peer remote client's local environment.
-		// Get the revision that the remote change is based on
+		// Get the revision that the remote change is based on and rebase that peer local branch over the part of the
+		// trunk up to the base revision. This will be a no-op if the sending client has not advanced since the last
+		// time we received an edit from it
 		const [, baseRevisionInTrunk] = this.getClosestTrunkCommit(referenceSequenceNumber);
-		// Rebase that peer local branch over the part of the trunk up to the base revision
-		// This will be a no-op if the sending client has not advanced since the last time we received an edit from it
 		const peerLocalBranch = getOrCreate(
 			this.peerLocalBranches,
 			sessionId,
@@ -720,12 +719,12 @@ export class EditManager<
 		// Step 2 - Append the changes to the peer branch and rebase the changes to the tip of the trunk.
 		if (peerLocalBranch.getHead() === this.trunk.getHead()) {
 			// If the peer local branch is fully caught up and empty (no changes relative to the trunk) after being
-			// rebased, then push to changes the trunk directly and update the peer branch to the trunk's head.
+			// rebased, then push changes to the trunk directly and update the peer branch to the trunk's head.
 			for (const newCommit of newCommits) {
 				this.pushCommitToTrunk(nextSequenceId, { ...newCommit, sessionId });
-				peerLocalBranch.setHead(this.trunk.getHead());
 				nextSequenceId = getNextSequenceId(nextSequenceId);
 			}
+			peerLocalBranch.setHead(this.trunk.getHead());
 		} else {
 			// Otherwise, push the changes to the peer local branch and merge the branch over the trunk.
 			for (const newCommit of newCommits) {
