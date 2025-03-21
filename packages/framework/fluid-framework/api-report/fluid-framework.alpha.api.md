@@ -920,6 +920,9 @@ type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveStringRecord<I
 export type Off = () => void;
 
 // @alpha
+export function onAssertionFailure(handler: (error: Error) => void): () => void;
+
+// @alpha
 export interface ParseOptions {
     readonly useStoredKeys?: boolean;
 }
