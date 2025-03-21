@@ -137,7 +137,7 @@ export type SimpleNodeSchema =
  * To be useful, this generally needs to be used as a part of a complete {@link SimpleTreeSchema}, which
  * contains backing {@link SimpleTreeSchema.definitions} for each referenced identifier.
  *
- * TODO: make these mack into normal `remarks` once SimpleTreeSchema is not internal.
+ * TODO: make these back into normal `remarks` once SimpleTreeSchema is not internal.
  *
  * @alpha
  * @sealed
