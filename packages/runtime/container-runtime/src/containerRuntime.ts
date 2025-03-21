@@ -3285,6 +3285,13 @@ export class ContainerRuntime
 		}
 
 		if (attachState === AttachState.Attached && !this.hasPendingMessages()) {
+			// Only emit telemetry if we can anticipate this triggering a "saved" event
+			if (this.dirtyContainer && this.emitDirtyDocumentEvent) {
+				this.mc.logger.sendTelemetryEvent({
+					eventName: "SetAttachStateTriggeredSaved",
+					attachState,
+				});
+			}
 			this.updateDocumentDirtyState(false);
 		}
 		this.channelCollection.setAttachState(attachState);
