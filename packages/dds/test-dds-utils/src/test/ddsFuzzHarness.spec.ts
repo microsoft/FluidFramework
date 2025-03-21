@@ -882,7 +882,10 @@ describe("DDS Fuzz Harness", () => {
 				],
 				{
 					env: {
+						// These flags help ensure nothing extraneous is logged to the console in the child test process,
+						// ensuring the output is valid JSON.
 						FLUID_TEST_VERBOSE: undefined,
+						SILENT_TEST_OUTPUT: "1",
 					},
 					encoding: "utf8",
 					reject: false,
