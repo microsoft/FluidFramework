@@ -13,7 +13,7 @@ import {
 } from "../localServerStressHarness";
 
 for (let i = 0; i < 200; i++) {
-	describe.only("Local Server Stress", () => {
+	describe("Local Server Stress", () => {
 		const model: LocalServerStressModel<StressOperations> = {
 			workloadName: `default_${i}`,
 			generatorFactory: () => takeAsync(100, makeGenerator()),
