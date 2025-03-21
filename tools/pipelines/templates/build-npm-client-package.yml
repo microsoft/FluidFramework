@@ -523,6 +523,7 @@ extends:
                     # Generate a name for the artifact that will be published in the next step
                     # and consumed by test jobs.
                     NESTED_LIB_DIST="nested_lib_dist-$(System.JobAttempt)"
+                    echo "Generated artifact name: $NESTED_LIB_DIST"
                     echo "##vso[task.setvariable variable=NESTED_LIB_DIST;isOutput=true]$NESTED_LIB_DIST"
                 name: setLibDistArtifactName
 
@@ -532,7 +533,7 @@ extends:
                 - output: pipelineArtifact
                   displayName: Publish Artifact - nested_lib_dist
                   targetPath: $(Build.ArtifactStagingDirectory)/nested_lib_dist
-                  artifactName: $(NESTED_LIB_DIST)
+                  artifactName: $[ dependencies.build.outputs['setLibDistArtifactName.NESTED_LIB_DIST'] ]
                   publishLocation: pipeline
 
                 - ${{ if ne(parameters.taskPack, false) }}:
