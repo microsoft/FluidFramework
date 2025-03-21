@@ -168,6 +168,10 @@ export class StressDataObject extends DataObject {
 			stressDataObject: maybe.StressDataObject,
 		});
 	}
+
+	public orderSequentially(act: () => void) {
+		this.context.containerRuntime.orderSequentially(act);
+	}
 }
 export type ContainerObjects =
 	| { type: "newBlob"; handle: IFluidHandle; tag: `blob-${number}` }

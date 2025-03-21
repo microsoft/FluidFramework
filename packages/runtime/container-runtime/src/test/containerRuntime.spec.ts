@@ -1526,7 +1526,6 @@ describe("Runtime", () => {
 			it("Container load stats with feature gate overrides", async () => {
 				const featureGates = {
 					"Fluid.ContainerRuntime.IdCompressorEnabled": true,
-					"Fluid.ContainerRuntime.DisablePartialFlush": true,
 				};
 				await ContainerRuntime.loadRuntime({
 					context: localGetMockContext(featureGates) as IContainerContext,
@@ -1542,9 +1541,6 @@ describe("Runtime", () => {
 						category: "generic",
 						options: JSON.stringify(mergedRuntimeOptions),
 						idCompressorMode: "on",
-						featureGates: JSON.stringify({
-							disablePartialFlush: true,
-						}),
 						groupedBatchingEnabled: true,
 					},
 				]);
