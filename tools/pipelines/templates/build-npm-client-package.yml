@@ -533,7 +533,7 @@ extends:
                 - output: pipelineArtifact
                   displayName: Publish Artifact - nested_lib_dist
                   targetPath: $(Build.ArtifactStagingDirectory)/nested_lib_dist
-                  artifactName: $[ dependencies.build.outputs['setLibDistArtifactName.NESTED_LIB_DIST'] ]
+                  artifactName: $(NESTED_LIB_DIST)
                   publishLocation: pipeline
 
                 - ${{ if ne(parameters.taskPack, false) }}:
@@ -583,6 +583,8 @@ extends:
               # Note that we need to disable it in the right way for 1ES pipeline templates, vs manual CodeQL tasks.
               - name: ONEES_ENFORCED_CODEQL_ENABLED
                 value: 'false'
+              - name: NESTED_LIB_DIST
+                value: $[ dependencies.build.outputs['setLibDistArtifactName.NESTED_LIB_DIST']
             steps:
               # Setup
               - checkout: self
@@ -607,7 +609,7 @@ extends:
 
               - task: DownloadPipelineArtifact@2
                 inputs:
-                  artifact: $[ dependencies.build.outputs['setLibDistArtifactName.NESTED_LIB_DIST'] ]
+                  artifact: $(NESTED_LIB_DIST)
                   targetPath: $(Build.SourcesDirectory)
 
               - script: |
@@ -734,6 +736,8 @@ extends:
                 # Note that we need to disable it in the right way for 1ES pipeline templates, vs manual CodeQL tasks.
                 - name: ONEES_ENFORCED_CODEQL_ENABLED
                   value: 'false'
+                - name: NESTED_LIB_DIST
+                  value: $[ dependencies.build.outputs['setLibDistArtifactName.NESTED_LIB_DIST']
               steps:
                 # Setup
                 - checkout: self
@@ -751,7 +755,7 @@ extends:
 
                 - task: DownloadPipelineArtifact@2
                   inputs:
-                    artifact: $[ dependencies.build.outputs['setLibDistArtifactName.NESTED_LIB_DIST'] ]
+                    artifact: $(NESTED_LIB_DIST)
                     targetPath: $(Build.SourcesDirectory)
 
                 - script: |
