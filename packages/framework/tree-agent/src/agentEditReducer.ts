@@ -11,7 +11,6 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	type ImplicitFieldSchema,
 	type InsertableContent,
-	type UnsafeUnknownSchema,
 	type TreeArrayNode,
 	type TreeNode,
 	type TreeNodeSchema,
@@ -20,7 +19,6 @@ import {
 	type ImplicitAllowedTypes,
 	Tree,
 	NodeKind,
-	TreeAlpha,
 	FieldKind,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/alpha";
@@ -305,7 +303,7 @@ function constructTree(
 	allowedTypes: ImplicitAllowedTypes,
 	value: TreeContent,
 	idGenerator: IdGenerator,
-): TreeNode | TreeArrayNode | TreeLeafValue {
+): TreeNode | TreeLeafValue {
 	if (typeof value === "object" && value !== null) {
 		const normalizedAllowedTypes = [...normalizeAllowedTypes(allowedTypes)];
 		const zodAllowedTypes = normalizedAllowedTypes.map((s) =>
@@ -337,7 +335,7 @@ function constructTreeHelper(
 	allowedTypes: ImplicitAllowedTypes,
 	value: TreeContent,
 	idGenerator: IdGenerator,
-): TreeNode | TreeArrayNode | TreeLeafValue {
+): TreeNode | TreeLeafValue {
 	const normalizedAllowedTypes = [...normalizeAllowedTypes(allowedTypes)];
 	if (typeof value === "object" && value !== null) {
 		if (Array.isArray(value)) {
@@ -355,10 +353,7 @@ function constructTreeHelper(
 				return constructTreeHelper(childAllowedTypes, val, idGenerator);
 			});
 
-			return (
-				TreeAlpha.create<UnsafeUnknownSchema>(schema, transformed) ??
-				fail("Expected array node to be created")
-			);
+			return constructNode(schema, transformed);
 		} else {
 			assert(typeof value[typeField] === "string", "Expected type property in parsed object");
 			const schema = normalizedAllowedTypes.find((s) => s.identifier === value[typeField]);
@@ -398,10 +393,7 @@ function constructTreeHelper(
 					}),
 			);
 
-			const constructed =
-				TreeAlpha.create<UnsafeUnknownSchema>(schema, transformed) ??
-				fail("Expected object node to be created");
-
+			const constructed = constructNode(schema, transformed);
 			if (id !== undefined) {
 				// TODO: properly assert is TreeNode
 				idGenerator.getOrCreateId(constructed as TreeNode, id);
@@ -412,6 +404,20 @@ function constructTreeHelper(
 	}
 
 	return value;
+}
+
+function constructNode(
+	schema: TreeNodeSchema,
+	value: InsertableContent,
+): TreeNode | TreeLeafValue {
+	// TODO:#34138: Until this bug is fixed, we need to use the constructor kludge.
+	// TODO:#34139: Until this bug is fixed, we need to use the constructor kludge.
+	// return (
+	// 	TreeAlpha.create<UnsafeUnknownSchema>(schema, value) ?? fail("Expected node to be created")
+	// );
+
+	const constructorKludge = schema as unknown as new (content: InsertableContent) => TreeNode;
+	return new constructorKludge(value);
 }
 
 function resolvePointer(
@@ -431,7 +437,7 @@ function resolvePointer(
 	pointer: Pointer,
 	idGenerator: IdGenerator,
 	expectedTyped: "object | array",
-): TreeNode | TreeArrayNode;
+): TreeNode;
 function resolvePointer(
 	view: TreeView<ImplicitFieldSchema>,
 	pointer: Pointer,
@@ -443,13 +449,13 @@ function resolvePointer(
 	pointer: Pointer,
 	idGenerator: IdGenerator,
 	expectedTyped?: "object" | "array" | "object | array" | "primitive",
-): TreeNode | TreeArrayNode | TreeLeafValue;
+): TreeNode | TreeLeafValue;
 function resolvePointer(
 	view: TreeView<ImplicitFieldSchema>,
 	pointer: Pointer,
 	idGenerator: IdGenerator,
 	expectedTyped?: "object" | "array" | "object | array" | "primitive",
-): TreeNode | TreeArrayNode | TreeLeafValue {
+): TreeNode | TreeLeafValue {
 	const result =
 		typeof pointer === "string"
 			? findObject(pointer, idGenerator)
@@ -495,7 +501,7 @@ function resolvePathPointer(
 	view: TreeView<ImplicitFieldSchema>,
 	pointer: PathPointer,
 	idGenerator: IdGenerator,
-): TreeNode | TreeArrayNode | TreeLeafValue {
+): TreeNode | TreeLeafValue {
 	const nodeId = pointer[0];
 	if (nodeId === undefined) {
 		throw new UsageError("Pointer should not be an empty array.");
@@ -514,9 +520,7 @@ function resolvePathPointer(
 			if (schema.kind !== NodeKind.Object) {
 				throw new UsageError("Expected node to be an object.");
 			}
-			const child = (
-				node as unknown as Record<string, TreeNode | TreeArrayNode | TreeLeafValue>
-			)[p];
+			const child = (node as unknown as Record<string, TreeNode | TreeLeafValue>)[p];
 			ensurePointable(child);
 			node = child;
 		} else {
@@ -534,8 +538,8 @@ function resolvePathPointer(
 
 // We don't currently allow pointers to point to primitives, but we could.
 function ensurePointable(
-	node: TreeNode | TreeArrayNode | TreeLeafValue | undefined,
-): asserts node is TreeNode | TreeArrayNode {
+	node: TreeNode | TreeLeafValue | undefined,
+): asserts node is TreeNode {
 	if (typeof node !== "object" || node === null || isFluidHandle(node)) {
 		throw new UsageError(
 			`Pointer could not be resolved to a node in the tree (note that primitives and Fluid handles are not supported).`,
