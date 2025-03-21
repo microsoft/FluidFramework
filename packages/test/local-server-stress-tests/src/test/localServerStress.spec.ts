@@ -83,9 +83,7 @@ function makeGenerator(): AsyncGenerator<StressOperations, LocalServerStressStat
 export const saveFailures = { directory: path.join(_dirname, "../../src/test/results") };
 export const saveSuccesses = { directory: path.join(_dirname, "../../src/test/results") };
 
-// TODO (AB#33713): these tests are a bit flaky; in the pipeline we've seen seeds 43 and 44 fail with
-// errors that might represent bugs in the underlying DDSes. Disabling for now.
-describe.skip("Local Server Stress", () => {
+describe("Local Server Stress", () => {
 	const model: LocalServerStressModel<StressOperations> = {
 		workloadName: "default",
 		generatorFactory: () => takeAsync(100, makeGenerator()),
@@ -101,6 +99,8 @@ describe.skip("Local Server Stress", () => {
 		// only: [28],
 		saveFailures,
 		// saveSuccesses,
-		skip: [28],
+		// TODO (AB#33713): we've seen seeds 43 and 44 fail in the pipeline with errors that might
+		// represent bugs in the underlying DDSes. Skipping for now.
+		skip: [28, 43, 44],
 	});
 });
