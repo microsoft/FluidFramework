@@ -174,8 +174,8 @@ export class BatchManager {
 		const startPoint = this.pendingBatch.length;
 		return {
 			rollback: (process: (message: BatchMessage) => void) => {
-				const rollbackOps = this.pendingBatch.splice(startPoint).reverse();
-				for (const message of rollbackOps) {
+				const rollbackOpsLifo = this.pendingBatch.splice(startPoint).reverse();
+				for (const message of rollbackOpsLifo) {
 					this.batchContentSize -= message.contents?.length ?? 0;
 					process(message);
 				}
