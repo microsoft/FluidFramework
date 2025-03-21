@@ -4,7 +4,7 @@
  */
 
 /**
- * tbd
+ * An object that provides relevant information to visualize a single edit performed by an ai agent on a SharedTree
  */
 export interface UiDiff {
 	type:
