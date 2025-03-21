@@ -206,6 +206,7 @@ import {
 	IPendingLocalState,
 	PendingStateManager,
 } from "./pendingStateManager.js";
+import { RunCounter } from "./runCounter.js";
 import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
 import {
 	DocumentsSchemaController,
@@ -1181,7 +1182,7 @@ export class ContainerRuntime
 
 	private readonly maxConsecutiveReconnects: number;
 
-	private _orderSequentiallyCalls: number = 0;
+	private readonly batchRunner = new RunCounter();
 	private readonly _flushMode: FlushMode;
 	private readonly offlineEnabled: boolean;
 	private flushTaskExists = false;
@@ -3054,7 +3055,7 @@ export class ContainerRuntime
 	 */
 	private flush(resubmittingBatchId?: BatchId, resubmittingStagedBatch?: boolean): void {
 		assert(
-			this._orderSequentiallyCalls === 0,
+			!this.batchRunner.running,
 			0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */,
 		);
 
@@ -3068,11 +3069,10 @@ export class ContainerRuntime
 	public orderSequentially<T>(callback: () => T): T {
 		let checkpoint: IBatchCheckpoint | undefined;
 		const checkpointDirtyState = this.dirtyContainer;
-		let result: T;
 		// eslint-disable-next-line import/no-deprecated
 		let stageControls: StageControlsExperimental | undefined;
 		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
-			if (this._orderSequentiallyCalls === 0 && !this.inStagingMode) {
+			if (!this.batchRunner.running && !this.inStagingMode) {
 				stageControls = this.enterStagingMode();
 			}
 			// Note: we are not touching any batches other than mainBatch here, for two reasons:
@@ -3080,56 +3080,55 @@ export class ContainerRuntime
 			// 2. There is no way to undo process of data store creation, blob creation, ID compressor ops, or other things tracked by other batches.
 			checkpoint = this.outbox.getBatchCheckpoints().mainBatch;
 		}
-		try {
-			this._orderSequentiallyCalls++;
-			result = callback();
-		} catch (error) {
-			if (checkpoint) {
-				// This will throw and close the container if rollback fails
-				try {
-					checkpoint.rollback((message: BatchMessage) =>
-						this.rollback(message.contents, message.localOpMetadata),
-					);
-					// reset the dirty state after rollback to what it was before to keep it consistent
-					if (this.dirtyContainer !== checkpointDirtyState) {
-						this.updateDocumentDirtyState(checkpointDirtyState);
+		const result = this.batchRunner.run(() => {
+			try {
+				return callback();
+			} catch (error) {
+				if (checkpoint) {
+					// This will throw and close the container if rollback fails
+					try {
+						checkpoint.rollback((message: BatchMessage) =>
+							this.rollback(message.contents, message.localOpMetadata),
+						);
+						// reset the dirty state after rollback to what it was before to keep it consistent
+						if (this.dirtyContainer !== checkpointDirtyState) {
+							this.updateDocumentDirtyState(checkpointDirtyState);
+						}
+						stageControls?.discardChanges();
+						stageControls = undefined;
+					} catch (error_) {
+						const error2 = wrapError(error_, (message) => {
+							return DataProcessingError.create(
+								`RollbackError: ${message}`,
+								"checkpointRollback",
+								undefined,
+							) as DataProcessingError;
+						});
+						this.closeFn(error2);
+						throw error2;
 					}
-					stageControls?.discardChanges();
-					stageControls = undefined;
-				} catch (error_) {
-					const error2 = wrapError(error_, (message) => {
-						return DataProcessingError.create(
-							`RollbackError: ${message}`,
-							"checkpointRollback",
-							undefined,
-						) as DataProcessingError;
-					});
-					this.closeFn(error2);
-					throw error2;
+				} else {
+					this.closeFn(
+						wrapError(
+							error,
+							(errorMessage) =>
+								new GenericError(
+									`orderSequentially callback exception: ${errorMessage}`,
+									error,
+									{
+										orderSequentiallyCalls: this.batchRunner.runs,
+									},
+								),
+						),
+					);
 				}
-			} else {
-				this.closeFn(
-					wrapError(
-						error,
-						(errorMessage) =>
-							new GenericError(
-								`orderSequentially callback exception: ${errorMessage}`,
-								error,
-								{
-									orderSequentiallyCalls: this._orderSequentiallyCalls,
-								},
-							),
-					),
-				);
-			}
 
-			throw error; // throw the original error for the consumer of the runtime
-		} finally {
-			this._orderSequentiallyCalls--;
-		}
+				throw error; // throw the original error for the consumer of the runtime
+			}
+		});
 		stageControls?.commitChanges();
 		// We don't flush on TurnBased since we expect all messages in the same JS turn to be part of the same batch
-		if (this.flushMode !== FlushMode.TurnBased && this._orderSequentiallyCalls === 0) {
+		if (this.flushMode !== FlushMode.TurnBased && !this.batchRunner.running) {
 			this.flush();
 		}
 		return result;
@@ -3258,7 +3257,7 @@ export class ContainerRuntime
 	 * Typically ops are batched and later flushed together, but in some cases we want to flush immediately.
 	 */
 	private currentlyBatching(): boolean {
-		return this.flushMode !== FlushMode.Immediate || this._orderSequentiallyCalls !== 0;
+		return this.flushMode !== FlushMode.Immediate || this.batchRunner.running;
 	}
 
 	private readonly _quorum: IQuorumClients;
@@ -4334,7 +4333,7 @@ export class ContainerRuntime
 
 			default: {
 				assert(
-					this._orderSequentiallyCalls > 0,
+					this.batchRunner.running,
 					0x587 /* Unreachable unless running under orderSequentially */,
 				);
 				break;
@@ -4379,14 +4378,11 @@ export class ContainerRuntime
 		batchId: BatchId,
 		staged: boolean,
 	): void {
-		try {
-			this._orderSequentiallyCalls++;
+		this.batchRunner.run(() => {
 			for (const message of batch) {
 				this.reSubmit(message);
 			}
-		} finally {
-			this._orderSequentiallyCalls--;
-		}
+		});
 
 		// Only include Batch ID if "Offline Load" feature is enabled
 		// It's only needed to identify batches across container forks arising from misuse of offline load.
@@ -4630,7 +4626,7 @@ export class ContainerRuntime
 	public getPendingLocalState(props?: IGetPendingLocalStateProps): unknown {
 		this.verifyNotClosed();
 
-		if (this._orderSequentiallyCalls !== 0) {
+		if (this.batchRunner.running) {
 			throw new UsageError("can't get state during orderSequentially");
 		}
 		this.imminentClosure ||= props?.notifyImminentClosure ?? false;
