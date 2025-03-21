@@ -11,7 +11,7 @@ import {
 	type IContainerRuntimeOptionsInternal,
 } from "./containerRuntime.js";
 
-// TODO: CompressionAlgorithms and disabledCompressionConfig are here to avoid circular dependency issue
+// TODO: CompressionAlgorithms and disabledCompressionConfig are copied here to avoid weird circular dependency issue
 
 /**
  * Available compression algorithms for op compression.
@@ -45,6 +45,8 @@ const defaultFlushMode = FlushMode.TurnBased;
  * - minVersionRequired: The minimum version of the container runtime that supports this option being enabled
  * - disabledConfig: The default config of the option when it is disabled
  * - enabledConfig: he default config of the option when it is disabled
+ *
+ * TODO: Get the exact versions that each option was added in.
  */
 const runtimeOptionConfigs: {
 	[K in keyof IContainerRuntimeOptionsInternal]?: {
@@ -86,7 +88,7 @@ const runtimeOptionConfigs: {
 };
 
 /**
- * Returns the default configs for a given compatilibity mode.
+ * Returns the default configs for a given compatibility mode.
  */
 export function getConfigsForCompatMode(
 	compatibilityMode: IContainerRuntimeOptionsInternal["compatibilityMode"],
@@ -110,4 +112,14 @@ export function getConfigsForCompatMode(
 		};
 	}
 	return defaultConfigs;
+}
+
+/**
+ * Returns the disallowed versions for a given compatibility mode.
+ */
+export function getDisallowedVersions(
+	compatibilityMode: IContainerRuntimeOptionsInternal["compatibilityMode"],
+): string[] {
+	assert(compatibilityMode !== undefined, "compatibilityMode should be defined");
+	return compatibilityMode === "1" ? [] : [`<${compatibilityMode}.0.0`];
 }

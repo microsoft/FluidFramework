@@ -149,11 +149,11 @@ import {
 	getSummaryForDatastores,
 	wrapContext,
 } from "./channelCollection.js";
-import { getDisallowedVersions } from "./compatConfig.js";
 import {
 	disabledCompressionConfig,
 	enabledCompressionConfig,
 	getConfigsForCompatMode,
+	getDisallowedVersions,
 } from "./compatUtils.js";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry.js";
 import { ContainerFluidHandleContext } from "./containerHandleContext.js";
