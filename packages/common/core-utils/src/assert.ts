@@ -72,7 +72,7 @@ const firstChanceAssertionHandler = new Set<(error: Error) => void>();
  * @returns a function to remove the handler.
  * @remarks
  * This is mainly useful for triggering a `debugger;` statement and/or reporting telemetry to aid Fluid with diagnosing and fixing the bugs which cause asserts.
- * It can also be used to record that an fatal error has occurred to help avoid complicating the diagnosis by doing more work after the error which might error again in a different way.
+ * It can also be used to record that a fatal error has occurred to help avoid complicating the diagnosis by doing more work after the error which might error again in a different way.
  * @alpha
  */
 export function onAssertionFailure(handler: (error: Error) => void): () => void {
