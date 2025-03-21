@@ -44,6 +44,10 @@ parameters:
   type: boolean
   default: false
 
+- name: taskPublishBundleSizeArtifacts
+  type: boolean
+  default: false
+
 - name: taskPack
   type: boolean
   default: true
@@ -324,14 +328,19 @@ extends:
                   buildDirectory: '${{ parameters.buildDirectory }}'
                   packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
 
-              - template: /tools/pipelines/templates/include-set-package-version.yml@self
-                parameters:
-                  buildDirectory: '${{ parameters.buildDirectory }}'
-                  buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-                  buildToolsVersionToInstall: '${{ parameters.buildToolsVersionToInstall }}'
-                  tagName: '${{ parameters.tagName }}'
-                  interdependencyRange: '${{ parameters.interdependencyRange }}'
-                  packageTypesOverride: '${{ parameters.packageTypesOverride }}'
+              # This check is a workaround. We don't want to set versions for the build-bundle-size-and-code-coverage-artifacts
+              # pipeline because it is special - it runs a client build but doesn't publish anything. Working around this properly is
+              # challenging and would create a much bigger change. Since this is the only pipeline that sets these variables to
+              # true, we use that to determine whether to set versions.
+              - ${{ if eq(parameters.taskPublishBundleSizeArtifacts, false) }}:
+                  - template: /tools/pipelines/templates/include-set-package-version.yml@self
+                    parameters:
+                      buildDirectory: '${{ parameters.buildDirectory }}'
+                      buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+                      buildToolsVersionToInstall: '${{ parameters.buildToolsVersionToInstall }}'
+                      tagName: '${{ parameters.tagName }}'
+                      interdependencyRange: '${{ parameters.interdependencyRange }}'
+                      packageTypesOverride: '${{ parameters.packageTypesOverride }}'
 
               # Build and Lint
               - template: /tools/pipelines/templates/include-build-lint.yml@self
@@ -527,13 +536,13 @@ extends:
                       sbomEnabled: false
 
                 - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
-                  - output: pipelineArtifact
-                    displayName: Publish Artifacts - bundle-analysis
-                    condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true) )
-                    targetPath: $(Build.ArtifactStagingDirectory)/bundleAnalysis
-                    artifactName: bundleAnalysis
-                    sbomEnabled: false
-                    publishLocation: pipeline
+                    - output: pipelineArtifact
+                      displayName: Publish Artifacts - bundle-analysis
+                      condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true) )
+                      targetPath: $(Build.ArtifactStagingDirectory)/bundleAnalysis
+                      artifactName: bundleAnalysis
+                      sbomEnabled: false
+                      publishLocation: pipeline
 
                 - ${{ if or(eq(parameters.publishDocs, true), eq(parameters.taskBuildDocs, true)) }}:
                     - output: pipelineArtifact
