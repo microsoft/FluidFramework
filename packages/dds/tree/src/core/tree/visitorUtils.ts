@@ -10,7 +10,7 @@ import { type IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
 import type { RevisionTag, RevisionTagCodec } from "../rebase/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
-import type { Root } from "./delta.js";
+import type { DetachedNodeId, Root } from "./delta.js";
 import { DetachedFieldIndex } from "./detachedFieldIndex.js";
 import type { ForestRootId } from "./detachedFieldIndexTypes.js";
 import type { PlaceIndex, Range } from "./pathTree.js";
@@ -87,21 +87,31 @@ export function combineVisitors(
 			announcedVisitors.forEach((v) => v.beforeAttach(source, count, destination));
 			visitors.forEach((v) => v.attach(source, count, destination));
 			announcedVisitors.forEach((v) =>
-				v.afterAttach(source, { start: destination, end: destination + count }),
+				v.afterAttach(source, {
+					start: destination,
+					end: destination + count,
+				}),
 			);
 		},
-		detach: (source: Range, destination: FieldKey) => {
+		detach: (source: Range, destination: FieldKey, id: DetachedNodeId) => {
 			announcedVisitors.forEach((v) => v.beforeDetach(source, destination));
-			visitors.forEach((v) => v.detach(source, destination));
+			visitors.forEach((v) => v.detach(source, destination, id));
 			announcedVisitors.forEach((v) =>
 				v.afterDetach(source.start, source.end - source.start, destination),
 			);
 		},
-		replace: (newContent: FieldKey, oldContent: Range, oldContentDestination: FieldKey) => {
+		replace: (
+			newContent: FieldKey,
+			oldContent: Range,
+			oldContentDestination: FieldKey,
+			oldContentId: DetachedNodeId,
+		) => {
 			announcedVisitors.forEach((v) =>
 				v.beforeReplace(newContent, oldContent, oldContentDestination),
 			);
-			visitors.forEach((v) => v.replace(newContent, oldContent, oldContentDestination));
+			visitors.forEach((v) =>
+				v.replace(newContent, oldContent, oldContentDestination, oldContentId),
+			);
 			announcedVisitors.forEach((v) =>
 				v.afterReplace(newContent, oldContent, oldContentDestination),
 			);

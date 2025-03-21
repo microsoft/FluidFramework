@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { isFluidError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	Tree,
 	NodeKind,
@@ -21,6 +21,7 @@ import {
 	type IterableTreeArrayContent,
 	SchemaFactory,
 } from "@fluidframework/tree/internal";
+import { closest } from "fastest-levenshtein";
 
 import type {
 	ArrayRangeRemoveDiff,
@@ -200,9 +201,19 @@ export function applyAgentEdit(
 			const node = getNodeFromTarget(treeEdit.target, idGenerator);
 			const { treeNodeSchema } = getSimpleNodeSchema(node);
 
-			const fieldSchema =
-				(treeNodeSchema.info as Record<string, ImplicitFieldSchema>)[treeEdit.field] ??
-				fail("Expected field schema");
+			const nodeFieldSchemas = treeNodeSchema.info as Record<string, ImplicitFieldSchema>;
+
+			const fieldSchema = nodeFieldSchemas[treeEdit.field];
+
+			// If the LLM attempts to modify a field that does not exist in the target schema we generate a useful error message that can be used as part of the feedback loop.
+			if (fieldSchema === undefined) {
+				const errorMessage = createInvalidModifyFeedbackMsg(
+					treeEdit,
+					node,
+					"NONEXISTENT_FIELD",
+				);
+				throw new UsageError(errorMessage);
+			}
 
 			const modification = treeEdit.modification;
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
@@ -211,8 +222,29 @@ export function applyAgentEdit(
 			let insertedObject: TreeNode | undefined;
 			// if fieldSchema is a LeafnodeSchema, we can check that it's a valid type and set the field.
 			if (isPrimitive(modification)) {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-				(node as any)[treeEdit.field] = modification;
+				try {
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+					(node as any)[treeEdit.field] = modification;
+				} catch (error) {
+					if (!isFluidError(error)) {
+						throw error;
+					}
+					// If the LLM attempts to use the wrong type for a field, we generate a useful error message that can be used as part of the feedback loop.
+					const isInvalidTypeError =
+						error.message.match(
+							/The provided data is incompatible with all of the types allowed by the schema./,
+						) !== null;
+					if (isInvalidTypeError === true) {
+						const errorMessage = createInvalidModifyFeedbackMsg(
+							treeEdit,
+							node,
+							"INVALID_TYPE",
+						);
+						throw new UsageError(errorMessage);
+					}
+
+					throw error;
+				}
 			}
 			// If the fieldSchema is a function we can grab the constructor and make an instance of that node.
 			else if (typeof fieldSchema === "function") {
@@ -338,6 +370,43 @@ export function applyAgentEdit(
 			fail("invalid tree edit");
 		}
 	}
+}
+
+/**
+ * Produces a useful, context-rich error message to give as a response to the LLM when it has produced an {@link ModifyEdit} that either references a nonexistant field or an invalid type for the selected field.
+ * @param errorType - The type of error message to produce. You must determine the error type before calling this function.
+ * - `'NONEXISTENT_FIELD'` is used when the field does not exist in the node's schema.
+ * - `'INVALID_TYPE'` is used when the field exists but the type of the modification is invalid.
+ */
+function createInvalidModifyFeedbackMsg(
+	modifyEdit: Modify,
+	treeNode: TreeNode,
+	errorType: "NONEXISTENT_FIELD" | "INVALID_TYPE",
+): string {
+	const { treeNodeSchema } = getSimpleNodeSchema(treeNode);
+	const nodeFieldSchemas = treeNodeSchema.info as Record<string, ImplicitFieldSchema>;
+	const messagePrefix = `You attempted an invalid modify edit on the node with id '${modifyEdit.target.target}' and schema '${treeNodeSchema.identifier}'.`;
+	let messageSuffix = "";
+	const getAllowedTypeIdentifiers = (fieldName: string): string[] => {
+		const targetFieldNodeSchema = nodeFieldSchemas[fieldName];
+		return targetFieldNodeSchema instanceof FieldSchema
+			? [...targetFieldNodeSchema.allowedTypeSet.values()].map((schema) => schema.identifier)
+			: [(targetFieldNodeSchema as TreeNodeSchema).identifier];
+	};
+
+	if (errorType === "NONEXISTENT_FIELD") {
+		const nodeFieldNames = Object.keys(nodeFieldSchemas);
+		const closestPossibleFieldMatch = closest(modifyEdit.field, nodeFieldNames);
+		const allowedTypeIdentifiers = getAllowedTypeIdentifiers(closestPossibleFieldMatch);
+		const closestPossibleMatchForFieldMessage = ` If you are sure you are trying to modify this node, did you mean to use the field \`${closestPossibleFieldMatch}\` which has the following set of allowed types: \`[${allowedTypeIdentifiers.map((id) => `'${id}'`).join(", ")}]\`?`;
+		messageSuffix = ` The node's field you selected for modification \`${modifyEdit.field}\` does not exist in this node's schema. The set of available fields for this node are: \`[${nodeFieldNames.map((field) => `'${field}'`).join(", ")}]\`.${closestPossibleMatchForFieldMessage}`;
+	} else if (errorType === "INVALID_TYPE") {
+		const allowedTypeIdentifiers = getAllowedTypeIdentifiers(modifyEdit.field);
+		// TODO: If the invalid modification is a new object, it won't be clear what part of the object is invalid for the given type. If we could give some more detailed guidance on what was wrong with the object it would be ideal.
+		messageSuffix = ` You cannot set the node's field \`${modifyEdit.field}\` to the value \`${modifyEdit.modification}\` with type \`${typeof modifyEdit.modification}\` because this type is incompatible with all of the types allowed by the field's schema. The set of allowed types are \`[${allowedTypeIdentifiers.map((id) => `'${id}'`).join(", ")}]\`.`;
+	}
+
+	return messagePrefix + messageSuffix;
 }
 
 function isNodeAllowedType(node: TreeNode, allowedTypes: TreeNodeSchema[]): boolean {
