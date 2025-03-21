@@ -3258,7 +3258,11 @@ export class ContainerRuntime
 	 * Typically ops are batched and later flushed together, but in some cases we want to flush immediately.
 	 */
 	private currentlyBatching(): boolean {
-		return this.flushMode !== FlushMode.Immediate || this._orderSequentiallyCalls !== 0;
+		return (
+			this.flushMode !== FlushMode.Immediate ||
+			this.reSubmitingBatch ||
+			this._orderSequentiallyCalls !== 0
+		);
 	}
 
 	private readonly _quorum: IQuorumClients;
@@ -4368,6 +4372,7 @@ export class ContainerRuntime
 		}
 	}
 
+	private reSubmitingBatch: boolean = false;
 	/**
 	 * Resubmits each message in the batch, and then flushes the outbox.
 	 *
@@ -4380,12 +4385,12 @@ export class ContainerRuntime
 		staged: boolean,
 	): void {
 		try {
-			this._orderSequentiallyCalls++;
+			this.reSubmitingBatch = true;
 			for (const message of batch) {
 				this.reSubmit(message);
 			}
 		} finally {
-			this._orderSequentiallyCalls--;
+			this.reSubmitingBatch = false;
 		}
 
 		// Only include Batch ID if "Offline Load" feature is enabled
