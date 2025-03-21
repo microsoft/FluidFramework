@@ -50,6 +50,5 @@ class Foo extends sf.objectRecursive("Foo", {
 This change will also result in much nicer IntelliSense and type errors while fixing the typing if the schema is exported.
 
 There are still several cases which still compile but violate this policy regarding recursive schema and can cause issues when exporting schema:
-the should be migrated to the above pattern as well.
-
+they should be migrated to the above pattern as well.
 It is still valid to use non-recursive structurally named array and map schema inline: this change does not impact them.
