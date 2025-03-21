@@ -129,9 +129,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     makeVisibleAndAttachGraph(): void;
-    // @deprecated
-    process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    processMessages?(messageCollection: IRuntimeMessageCollection): void;
+    processMessages(messageCollection: IRuntimeMessageCollection): void;
     processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;

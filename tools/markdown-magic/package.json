@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/markdown-magic",
-	"version": "2.30.0",
+	"version": "2.31.0",
 	"private": true,
 	"description": "Contains shared utilities for Markdown content generation and embedding using markdown-magic.",
 	"homepage": "https://fluidframework.com",
@@ -18,11 +18,10 @@
 	"scripts": {
 		"build": "npm run build:docs",
 		"build:docs": "node src/index.cjs --files README.md",
-		"format": "npm run prettier:fix",
-		"lint": "npm run prettier",
-		"lint:fix": "npm run prettier:fix",
-		"prettier": "prettier --check . --cache",
-		"prettier:fix": "prettier --write . --cache",
+		"check:biome": "biome check .",
+		"check:format": "npm run check:biome",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --write",
 		"test": "node src/index.cjs --files \"test/**/*.md\" !test/README.md"
 	},
 	"dependencies": {
@@ -33,8 +32,8 @@
 		"yargs": "17.7.2"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^2.0.3",
-		"prettier": "~3.0.3"
+		"@biomejs/biome": "~1.9.3",
+		"@fluidframework/build-common": "^2.0.3"
 	},
 	"dependencyComments": [
 		"chalk is left at version 4 (not 5) to keep CommonJS support."

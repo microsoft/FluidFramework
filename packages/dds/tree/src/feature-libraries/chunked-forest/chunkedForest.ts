@@ -21,7 +21,6 @@ import {
 	type ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
 	type PlaceIndex,
-	type ProtoNodes,
 	type Range,
 	TreeNavigationResult,
 	type TreeStoredSchemaSubscription,
@@ -33,6 +32,7 @@ import {
 	rootFieldKey,
 	type ChunkedCursor,
 	type TreeChunk,
+	type DeltaDetachedNodeId,
 } from "../../core/index.js";
 import {
 	assertValidRange,
@@ -44,7 +44,7 @@ import {
 } from "../../util/index.js";
 
 import { BasicChunk, BasicChunkCursor, type SiblingsOrKey } from "./basicChunk.js";
-import { type IChunker, basicChunkTree, chunkTree } from "./chunkTree.js";
+import { type IChunker, basicChunkTree, chunkFieldSingle, chunkTree } from "./chunkTree.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 function makeRoot(): BasicChunk {
@@ -89,6 +89,10 @@ export class ChunkedForest implements IEditableForest {
 	public clone(schema: TreeStoredSchemaSubscription, anchors: AnchorSet): ChunkedForest {
 		this.roots.referenceAdded();
 		return new ChunkedForest(this.roots, schema, this.chunker.clone(schema), anchors);
+	}
+
+	public chunkField(cursor: ITreeCursorSynchronous): TreeChunk {
+		return chunkFieldSingle(cursor, { idCompressor: this.idCompressor, policy: this.chunker });
 	}
 
 	public forgetAnchor(anchor: Anchor): void {
@@ -136,7 +140,7 @@ export class ChunkedForest implements IEditableForest {
 				this.forest.#events.emit("beforeChange");
 				this.forest.roots.fields.delete(detachedField);
 			},
-			create(content: ProtoNodes, destination: FieldKey): void {
+			create(content: readonly ITreeCursorSynchronous[], destination: FieldKey): void {
 				this.forest.#events.emit("beforeChange");
 				const chunks: TreeChunk[] = content.map((c) =>
 					chunkTree(c, {
@@ -150,7 +154,7 @@ export class ChunkedForest implements IEditableForest {
 			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
 				this.attachEdit(source, count, destination);
 			},
-			detach(source: Range, destination: FieldKey): void {
+			detach(source: Range, destination: FieldKey, id: DeltaDetachedNodeId): void {
 				this.detachEdit(source, destination);
 			},
 			/**
@@ -210,6 +214,7 @@ export class ChunkedForest implements IEditableForest {
 				newContentSource: FieldKey,
 				range: Range,
 				oldContentDestination: FieldKey,
+				oldContentId: DeltaDetachedNodeId,
 			): void {
 				assert(
 					newContentSource !== oldContentDestination,

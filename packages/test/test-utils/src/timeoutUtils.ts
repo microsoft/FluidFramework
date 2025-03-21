@@ -16,8 +16,7 @@ const timeBuffer = 15; // leave 15 ms leeway for finish processing
 class TestTimeout {
 	private timeout: number = 0;
 	private timer: NodeJS.Timeout | undefined;
-	private readonly deferred: Deferred<void>;
-	private rejected = false;
+	private deferred: Deferred<void> = new Deferred<void>();
 
 	private static instance: TestTimeout = new TestTimeout();
 	public static reset(runnable: Mocha.Runnable) {
@@ -26,7 +25,7 @@ class TestTimeout {
 	}
 
 	public static clear() {
-		if (TestTimeout.instance.rejected) {
+		if (TestTimeout.instance.deferred.isCompleted) {
 			TestTimeout.instance = new TestTimeout();
 		} else {
 			TestTimeout.instance.clearTimer();
@@ -45,11 +44,7 @@ class TestTimeout {
 		return this.timeout;
 	}
 
-	private constructor() {
-		this.deferred = new Deferred();
-		// Ignore rejection for timeout promise if no one is waiting for it.
-		this.deferred.promise.catch(() => {});
-	}
+	private constructor() {}
 
 	private resetTimer(runnable: Mocha.Runnable) {
 		assert(!this.timer, "clearTimer should have been called before reset");
@@ -67,11 +62,11 @@ class TestTimeout {
 		// Set up timer to reject near the test timeout.
 		this.timer = setTimeout(() => {
 			this.deferred.reject(this);
-			this.rejected = true;
 		}, this.timeout);
 	}
 	private clearTimer() {
 		if (this.timer) {
+			this.deferred = new Deferred();
 			clearTimeout(this.timer);
 			this.timer = undefined;
 		}
