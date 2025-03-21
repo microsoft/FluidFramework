@@ -1723,10 +1723,6 @@ export class ContainerRuntime
 			createChildLogger({ logger: this.baseLogger, namespace: "InboundBatchAggregator" }),
 		);
 
-		const disablePartialFlush = this.mc.config.getBoolean(
-			"Fluid.ContainerRuntime.DisablePartialFlush",
-		);
-
 		const legacySendBatchFn = makeLegacySendBatchFn(submitFn, this.innerDeltaManager);
 
 		this.outbox = new Outbox({
@@ -1739,7 +1735,6 @@ export class ContainerRuntime
 			config: {
 				compressionOptions,
 				maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
-				disablePartialFlush: disablePartialFlush === true,
 			},
 			logger: this.mc.logger,
 			groupingManager: opGroupingManager,
@@ -1918,7 +1913,6 @@ export class ContainerRuntime
 			sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
 			featureGates: JSON.stringify({
 				...featureGatesForTelemetry,
-				disablePartialFlush,
 				closeSummarizerDelayOverride,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
@@ -3065,6 +3059,7 @@ export class ContainerRuntime
 	 */
 	public orderSequentially<T>(callback: () => T): T {
 		let checkpoint: IBatchCheckpoint | undefined;
+		const checkpointDirtyState = this.dirtyContainer;
 		let result: T;
 		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
 			// Note: we are not touching any batches other than mainBatch here, for two reasons:
@@ -3082,6 +3077,10 @@ export class ContainerRuntime
 					checkpoint.rollback((message: BatchMessage) =>
 						this.rollback(message.contents, message.localOpMetadata),
 					);
+					// reset the dirty state after rollback to what it was before to keep it consistent
+					if (this.dirtyContainer !== checkpointDirtyState) {
+						this.updateDocumentDirtyState(checkpointDirtyState);
+					}
 				} catch (error_) {
 					const error2 = wrapError(error_, (message) => {
 						return DataProcessingError.create(
