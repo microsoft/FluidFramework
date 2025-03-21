@@ -206,6 +206,7 @@ describe("Outbox", () => {
 		chunkSizeInBytes?: number;
 		opGroupingConfig?: OpGroupingManagerConfig;
 		immediateMode?: boolean;
+		disableSequenceNumberCoherencyAssert?: boolean;
 	}) => {
 		const { submitFn, submitBatchFn, deltaManager } = params.context;
 
@@ -224,6 +225,7 @@ describe("Outbox", () => {
 			config: {
 				maxBatchSizeInBytes: params.maxBatchSize ?? maxBatchSizeInBytes,
 				compressionOptions: params.compressionOptions ?? DefaultCompressionOptions,
+				disableSequenceNumberCoherencyAssert: params.disableSequenceNumberCoherencyAssert ?? false,
 			},
 			logger: mockLogger,
 			groupingManager: new OpGroupingManager(
@@ -860,8 +862,37 @@ describe("Outbox", () => {
 		});
 	}
 
+	it("Does not flush the batch when an out of order message is detected, if configured", () => {
+		const outbox = getOutbox({
+			context: getMockContext(),
+			disableSequenceNumberCoherencyAssert: true,
+		});
+		const messages: BatchMessage[] = [
+			{
+				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
+				referenceSequenceNumber: 0,
+			},
+			{
+				...createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
+				referenceSequenceNumber: 1,
+			},
+			{
+				...createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
+				referenceSequenceNumber: 2,
+			},
+		];
+
+		assert.doesNotThrow(() => {
+			for (const message of messages) {
+				currentSeqNumbers.referenceSequenceNumber = message.referenceSequenceNumber;
+				outbox.submit(message);
+			}
+		}, "Shouldn't throw if assert is disabled");
+	});
+
 	it("Log at most 3 reference sequence number mismatch events", () => {
-		const outbox = getOutbox({ context: getMockContext() });
+		state.isReentrant = true; // This avoids the error being thrown - but it will still log
+		const outbox = getOutbox({ maxBatchSize: Number.POSITIVE_INFINITY, context: getMockContext() });
 
 		for (let i = 0; i < 10; i++) {
 			currentSeqNumbers.referenceSequenceNumber = 0;

@@ -35,8 +35,16 @@ import { ensureContentsDeserialized } from "./remoteMessageProcessor.js";
 
 export interface IOutboxConfig {
 	readonly compressionOptions: ICompressionRuntimeOptions;
-	// The maximum size of a batch that we can send over the wire.
+	/**
+	 * The maximum size of a batch that we can send over the wire.
+	 */
 	readonly maxBatchSizeInBytes: number;
+	/**
+	 * By default, we throw an error if we detect a sequence number mismatch, since it shouldn't happen.
+	 * Set this to true to avoid throwing. It will revert to the old behavior, which is to flush the partial batch.
+	 * We don't expect this to be needed, but adding it here as a safety net.
+	 */
+	readonly disableSequenceNumberCoherencyAssert: boolean;
 }
 
 export interface IOutboxParameters {
@@ -168,13 +176,15 @@ export class Outbox {
 		return this.messageCount === 0;
 	}
 
-	//* Comment
 	/**
-	 * Detect whether batching has been interrupted by an incoming message being processed. In this case,
-	 * we will flush the accumulated messages to account for that and create a new batch with the new
-	 * message as the first message.
+	 * Confirm that batching has not been interrupted by an incoming message being processed, unless
+	 * we're under a reentrant context.
 	 *
-	 * @remarks - To detect batch interruption, we compare both the reference sequence number
+	 * @remarks - The Outbox assumes that the base for submitted ops (referenceSequenceNumber and index-within-batch for Grouped Batches)
+	 * does not change during batch accumulation, apart from reentrant ops. i.e. any code block that would advance that baseline must
+	 * flush beforehand and consider any ops submitted during it must be considered reentrant. e.g. see ContainerRuntime.process
+	 *
+	 * @privateRemarks - To detect batch interruption, we compare both the reference sequence number
 	 * (i.e. last message processed by DeltaManager) and the client sequence number of the
 	 * last message processed by the ContainerRuntime. In the absence of op reentrancy, this
 	 * pair will remain stable during a single JS turn during which the batch is being built up.
@@ -200,16 +210,12 @@ export class Outbox {
 			return;
 		}
 
-		if (this.isContextReentrant()) {
-			// Reference and/or Client sequence number will be advancing while processing this batch,
-			// so we can't use this check to detect wrongdoing.
-			// This is rare, and the reentrancy will be handled during Flush, so just return.
-			return;
-		}
+		// Reference and/or Client sequence number will be advancing while processing this batch,
+		// so we can't use this check to detect wrongdoing. But we will still log via telemetry.
+		// This is rare, and the reentrancy will be handled during Flush.
+		const expectedDueToReentrancy = this.isContextReentrant();
 
-		// Basically an assert, but we'll keep it this way to get lots of data in case it gets hit
 		const error = getLongStack(() =>
-			//* TODO: Could pass DM last processed message here, but we don't have it in this context
 			DataProcessingError.create(
 				"Sequence numbers advanced as if ops were processed while a batch is accumulating",
 				"outboxSequenceNumberCoherencyCheck",
@@ -218,26 +224,34 @@ export class Outbox {
 		if (++this.mismatchedOpsReported <= this.maxMismatchedOpsToReport) {
 			this.logger.sendErrorEvent(
 				{
-					category: "generic",
+					category: expectedDueToReentrancy ? "generic" : "error",
 					eventName: "ReferenceSequenceNumberMismatch",
-					mainReferenceSequenceNumber: mainBatchSeqNums.referenceSequenceNumber,
-					mainClientSequenceNumber: mainBatchSeqNums.clientSequenceNumber,
-					blobAttachReferenceSequenceNumber: blobAttachSeqNums.referenceSequenceNumber,
-					blobAttachClientSequenceNumber: blobAttachSeqNums.clientSequenceNumber,
-					currentReferenceSequenceNumber: currentSequenceNumbers.referenceSequenceNumber,
-					currentClientSequenceNumber: currentSequenceNumbers.clientSequenceNumber,
+					Data_details: {
+						expectedDueToReentrancy,
+						mainReferenceSequenceNumber: mainBatchSeqNums.referenceSequenceNumber,
+						mainClientSequenceNumber: mainBatchSeqNums.clientSequenceNumber,
+						blobAttachReferenceSequenceNumber: blobAttachSeqNums.referenceSequenceNumber,
+						blobAttachClientSequenceNumber: blobAttachSeqNums.clientSequenceNumber,
+						currentReferenceSequenceNumber: currentSequenceNumbers.referenceSequenceNumber,
+						currentClientSequenceNumber: currentSequenceNumbers.clientSequenceNumber,
+					},
 				},
 				error,
 			);
 		}
 
-		//* TODO: Add feature gate?
-		//* TODO: Close first?
-		throw error;
+		// If we disable the assert, just flush like we used to - don't throw.
+		if (this.params.config.disableSequenceNumberCoherencyAssert) {
+			this.flushAll();
+			return
+		}
 
-		//* Delete (WIP comment)
-		// This will always result in rebase/resubmit, since the in-progress batch must have been reentrant
-		// in order for sequence numbers to be changing while it's accumulating.
+		// If we are in a reentrant context, we know this can happen without causing any harm.
+		if (expectedDueToReentrancy) {
+			return;
+		}
+
+		throw error;
 	}
 
 	public submit(message: BatchMessage): void {

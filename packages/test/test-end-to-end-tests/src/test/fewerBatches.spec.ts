@@ -168,10 +168,9 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 	];
 
 	itExpects(
-		"Reference sequence number mismatch when doing op reentry submits two batches",
+		"Op reentry submits two batches due to flush before processing",
 		expectedErrors,
 		async () => {
-			// By default, we would flush a batch when we detect a reference sequence number mismatch
 			await processOutOfOrderOp({});
 			assert.strictEqual(capturedBatches.length, 2);
 		},
@@ -180,7 +179,7 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 	/**
 	 * With `FlushMode.TurnBased`, the container will schedule a flush at the end of the JS turn.
 	 * There is a possibility that the DeltaManager's inbound queue to schedule processing in-between the op getting
-	 * create and the flush being scheduled. This function attempts to recreate that scenario artificially.
+	 * created and the flush being scheduled. This function attempts to recreate that scenario artificially.
 	 *
 	 * @param containerConfig - the test container configuration
 	 */

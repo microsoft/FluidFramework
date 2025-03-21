@@ -3,12 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable require-atomic-updates */
-/* eslint-disable @fluid-internal/fluid/no-unchecked-record-access */
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
-/* eslint-disable unicorn/consistent-function-scoping */
-//* REMOVE (they muddy up the minimap)
-
 import { strict as assert } from "node:assert";
 
 import {
@@ -1532,6 +1526,8 @@ describe("Runtime", () => {
 			it("Container load stats with feature gate overrides", async () => {
 				const featureGates = {
 					"Fluid.ContainerRuntime.IdCompressorEnabled": true,
+					"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs": 1337,
+					"Fluid.ContainerRuntime.DisableSequenceNumberCoherencyAssert": true,
 				};
 				await ContainerRuntime.loadRuntime({
 					context: localGetMockContext(featureGates) as IContainerContext,
@@ -1547,6 +1543,10 @@ describe("Runtime", () => {
 						category: "generic",
 						options: JSON.stringify(mergedRuntimeOptions),
 						idCompressorMode: "on",
+						featureGates: JSON.stringify({
+							closeSummarizerDelayOverride: 1337,
+							disableSequenceNumberCoherencyAssert: true,
+						}),
 						groupedBatchingEnabled: true,
 					},
 				]);
