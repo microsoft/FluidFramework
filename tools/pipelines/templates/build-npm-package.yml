@@ -11,6 +11,11 @@ parameters:
   type: string
   default: ci:build
 
+# If true, this template will run `npm run webpack` after running the task indicated by the taskBuild parameter
+- name: taskWebpack
+  type: boolean
+  default: false
+
 - name: taskBuildDocs
   type: boolean
   default: true
@@ -347,6 +352,14 @@ extends:
                   taskLint: '${{ parameters.taskLint }}'
                   taskLintName: '${{ parameters.taskLintName }}'
                   buildDirectory: '${{ parameters.buildDirectory }}'
+
+              - ${{ if parameters.taskWebpack }}:
+                - task: Npm@1
+                  displayName: 'npm run webpack'
+                  inputs:
+                    command: custom
+                    workingDir: '${{ parameters.buildDirectory }}'
+                    customCommand: 'run webpack'
 
               # Test
               - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
