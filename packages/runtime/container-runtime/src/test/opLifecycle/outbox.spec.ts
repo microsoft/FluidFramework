@@ -860,54 +860,6 @@ describe("Outbox", () => {
 		});
 	}
 
-	//* REVISIT
-	it.skip("Does not flush the batch when an out of order message is detected, if configured", () => {
-		const outbox = getOutbox({
-			context: getMockContext(),
-		});
-		const messages: BatchMessage[] = [
-			{
-				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-				referenceSequenceNumber: 0,
-			},
-			{
-				...createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-				referenceSequenceNumber: 1,
-			},
-			{
-				...createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-				referenceSequenceNumber: 2,
-			},
-			{
-				...createMessage(ContainerMessageType.IdAllocation, "1"),
-				referenceSequenceNumber: 3,
-			},
-			{
-				...createMessage(ContainerMessageType.IdAllocation, "1"),
-				referenceSequenceNumber: 3,
-			},
-		];
-
-		for (const message of messages) {
-			currentSeqNumbers.referenceSequenceNumber = message.referenceSequenceNumber;
-			if (typeFromBatchedOp(message) === ContainerMessageType.IdAllocation) {
-				outbox.submitIdAllocation(message);
-			} else {
-				outbox.submit(message);
-			}
-		}
-
-		assert.equal(state.opsSubmitted, 0);
-		assert.equal(state.individualOpsSubmitted.length, 0);
-		assert.equal(state.batchesSubmitted.length, 0);
-
-		mockLogger.assertMatch([
-			{
-				eventName: "Outbox:ReferenceSequenceNumberMismatch",
-			},
-		]);
-	});
-
 	it("Log at most 3 reference sequence number mismatch events", () => {
 		const outbox = getOutbox({ context: getMockContext() });
 
