@@ -261,4 +261,37 @@ describe("R11s Socket Tests", () => {
 		}),
 		FluidErrorTypes.dataProcessingError,
 	);
+
+	it("should not fire abnormal_disconnect event when disconnection happens without an error", async () => {
+		const socketEventName = "connect_document_success";
+		socket = new ClientSocketMock({
+			connect_document: { eventToEmit: socketEventName },
+		});
+		const connection = await mockSocket(socket as unknown as Socket, async () =>
+			documentService.connectToDeltaStream(client),
+		);
+
+		// Set up a promise that will resolve if abnormal_disconnect is called
+		const disconnectEventP = new Promise<{ clientId: string; errorType: string }>(
+			(resolve, reject) => {
+				assert(socket !== undefined, "Socket should be defined");
+				socket.on(
+					"abnormal_disconnect",
+					(clientId: string, _documentId: string, errorType: string) => {
+						resolve({ clientId, errorType });
+					},
+				);
+
+				// Reject the promise to indicate no event was fired
+				setTimeout(() => reject(new Error("No abnormal_disconnect event was fired")), 300);
+			},
+		);
+
+		(connection as any).disconnect();
+
+		// Verify that the promise is rejected, meaning no abnormal_disconnect event was fired
+		await assert.rejects(disconnectEventP, {
+			message: "No abnormal_disconnect event was fired",
+		});
+	});
 });
