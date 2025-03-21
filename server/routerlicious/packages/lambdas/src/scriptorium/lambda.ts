@@ -74,7 +74,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 		// setup circuit breaker
 		if (this.circuitBreakerEnabled) {
 			try {
-				const circuitBreakerOptionsDb: circuitBreakerOptions = {
+				const circuitBreakerOptions_Db: circuitBreakerOptions = {
 					errorThresholdPercentage:
 						this.circuitBreakerOptionsDb.errorThresholdPercentage ?? 0.001, // Percentage of errors before opening the circuit
 					resetTimeout: this.circuitBreakerOptionsDb.resetTimeout ?? 30000, // Time in milliseconds before attempting to close the circuit after it has been opened
@@ -87,7 +87,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 				};
 
 				this.dbCircuitBreaker = new LambdaCircuitBreaker(
-					circuitBreakerOptionsDb,
+					circuitBreakerOptions_Db,
 					this.context,
 					"MongoDB",
 					runWithRetry,
