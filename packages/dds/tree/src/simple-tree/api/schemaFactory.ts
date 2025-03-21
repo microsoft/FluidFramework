@@ -384,7 +384,8 @@ export const schemaStatics = {
  *
  * 8. IntelliSense: Shows internal type generation logic: `object & TreeNode & ObjectFromSchemaRecord<{}> & WithType<"test.x">`.
  *
- * 9. Recursion: Unsupported: Generated `.d.ts` files replace recursive references with `any`, breaking the use of recursive schema across compilation boundaries.
+ * 9. Recursion: Unsupported: [Generated `.d.ts` files replace recursive references with `any`](https://github.com/microsoft/TypeScript/issues/55832),
+ * breaking the use of recursive schema across compilation boundaries.
  *
  * Note that while "POJO Emulation" nodes act a lot like POJO objects, they are not true POJO objects:
  *
