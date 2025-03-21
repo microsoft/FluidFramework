@@ -45,6 +45,8 @@ const defaultFlushMode = FlushMode.TurnBased;
  * - minVersionRequired: The minimum version of the container runtime that supports this option being enabled
  * - disabledConfig: The default config of the option when it is disabled
  * - enabledConfig: he default config of the option when it is disabled
+ *
+ * TODO: Get the exact versions that each option was added in.
  */
 const runtimeOptionConfigs: {
 	[K in keyof IContainerRuntimeOptionsInternal]?: {
