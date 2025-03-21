@@ -877,7 +877,8 @@ describe("DDS Fuzz Harness", () => {
 					"test:mocha:base",
 					"--silent",
 					"--",
-					"--reporter=json",
+					"--config",
+					path.join(_dirname, "../../.mocharc.harnessTests.cjs"),
 					path.join(_dirname, `./ddsSuiteCases/${name}.js`),
 				],
 				{
@@ -891,6 +892,7 @@ describe("DDS Fuzz Harness", () => {
 					reject: false,
 				},
 			);
+
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const testResults: MochaReport = JSON.parse(result.stdout);
 			return testResults;
