@@ -24,6 +24,7 @@ import type {
 	ChangeConnectionState,
 	ClientSpec,
 	DDSFuzzHarnessEvents,
+	DDSFuzzHarnessModel,
 	DDSFuzzModel,
 	DDSFuzzSuiteOptions,
 	DDSFuzzTestState,
@@ -64,9 +65,9 @@ function mixinSpying<
 	TOperation extends BaseOperation,
 	TState extends DDSFuzzTestState<TChannelFactory>,
 >(
-	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
+	model: DDSFuzzHarnessModel<TChannelFactory, TOperation, TState>,
 ): {
-	model: DDSFuzzModel<TChannelFactory, TOperation, TState>;
+	model: DDSFuzzHarnessModel<TChannelFactory, TOperation, TState>;
 	generatedOperations: (TOperation | typeof done)[];
 	processedOperations: TOperation[];
 } {
@@ -208,7 +209,7 @@ describe("DDS Fuzz Harness", () => {
 			it("processes outstanding messages on synchronize ops", async () => {
 				const noValidateModel: Model = {
 					...baseModel,
-					reducer: async ({ clients }, operation) => {
+					reducer: ({ clients }, operation) => {
 						assert(isNoopOp(operation));
 						clients[0].channel.noop();
 					},

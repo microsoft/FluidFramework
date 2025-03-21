@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { type AsyncReducer, combineReducers } from "@fluid-private/stochastic-test-utils";
+import { type Reducer, combineReducers } from "@fluid-private/stochastic-test-utils";
 import type { DDSFuzzTestState, Client } from "@fluid-private/test-dds-utils";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -97,7 +97,7 @@ const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<TreeFactory>
 		applyForkMergeOperation(state, operation);
 	},
 });
-export const fuzzReducer: AsyncReducer<Operation, DDSFuzzTestState<TreeFactory>> = async (
+export const fuzzReducer: Reducer<Operation, DDSFuzzTestState<TreeFactory>> = (
 	state,
 	operation,
 ) => syncFuzzReducer(state, operation);

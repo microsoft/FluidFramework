@@ -21,11 +21,11 @@ import type {
 	WithType,
 	TreeNode,
 } from "../core/index.js";
-import type { FieldSchemaUnsafe, Unenforced } from "./typesUnsafe.js";
+import type { FieldSchemaUnsafe, ImplicitAllowedTypesUnsafe } from "./typesUnsafe.js";
 
 export function createFieldSchemaUnsafe<
 	Kind extends FieldKind,
-	Types extends Unenforced<ImplicitAllowedTypes>,
+	Types extends ImplicitAllowedTypesUnsafe,
 >(
 	kind: Kind,
 	allowedTypes: Types,

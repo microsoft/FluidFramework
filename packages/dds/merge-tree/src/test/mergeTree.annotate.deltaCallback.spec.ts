@@ -5,17 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	LocalClientId,
-	UnassignedSequenceNumber,
-	UniversalSequenceNumber,
-} from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
 import { MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback.js";
 import { MergeTreeDeltaType } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
 
-import { countOperations, insertSegments, insertText, markRangeRemoved } from "./testUtils.js";
+import { countOperations, makeRemoteClient } from "./testUtils.js";
 
 describe("MergeTree", () => {
 	let mergeTree: MergeTree;
@@ -23,15 +18,13 @@ describe("MergeTree", () => {
 	let currentSequenceNumber: number;
 	beforeEach(() => {
 		mergeTree = new MergeTree();
-		insertSegments({
-			mergeTree,
-			pos: 0,
-			segments: [TextSegment.make("hello world")],
-			refSeq: UniversalSequenceNumber,
-			clientId: LocalClientId,
-			seq: UniversalSequenceNumber,
-			opArgs: undefined,
-		});
+		mergeTree.insertSegments(
+			0,
+			[TextSegment.make("hello world")],
+			mergeTree.localPerspective,
+			mergeTree.collabWindow.mintNextLocalOperationStamp(),
+			undefined,
+		);
 
 		currentSequenceNumber = 0;
 		mergeTree.startCollaboration(
@@ -51,9 +44,8 @@ describe("MergeTree", () => {
 				{
 					props: { foo: "bar" },
 				},
-				currentSequenceNumber,
-				localClientId,
-				UnassignedSequenceNumber,
+				mergeTree.localPerspective,
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
 				undefined as never,
 			);
 
@@ -71,9 +63,8 @@ describe("MergeTree", () => {
 				{
 					props: { foo: "bar" },
 				},
-				currentSequenceNumber,
-				localClientId,
-				++currentSequenceNumber,
+				mergeTree.localPerspective,
+				{ seq: ++currentSequenceNumber, clientId: localClientId },
 				undefined as never,
 			);
 
@@ -83,16 +74,13 @@ describe("MergeTree", () => {
 		});
 
 		it("Annotate over local insertion", () => {
-			insertText({
-				mergeTree,
-				pos: 4,
-				refSeq: currentSequenceNumber,
-				clientId: localClientId,
-				seq: UnassignedSequenceNumber,
-				text: "a",
-				props: undefined,
-				opArgs: undefined,
-			});
+			mergeTree.insertSegments(
+				4,
+				[TextSegment.make("a")],
+				mergeTree.localPerspective,
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
+				undefined,
+			);
 
 			const count = countOperations(mergeTree);
 
@@ -102,9 +90,8 @@ describe("MergeTree", () => {
 				{
 					props: { foo: "bar" },
 				},
-				currentSequenceNumber,
-				localClientId,
-				UnassignedSequenceNumber,
+				mergeTree.localPerspective,
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
 				undefined as never,
 			);
 
@@ -115,19 +102,16 @@ describe("MergeTree", () => {
 		});
 
 		it("Annotate over remote insertion", () => {
-			const remoteClientId: number = 35;
+			const remoteClient = makeRemoteClient({ clientId: 35 });
 			let remoteSequenceNumber = currentSequenceNumber;
 
-			insertText({
-				mergeTree,
-				pos: 4,
-				refSeq: remoteSequenceNumber,
-				clientId: remoteClientId,
-				seq: ++remoteSequenceNumber,
-				text: "a",
-				props: undefined,
-				opArgs: undefined,
-			});
+			mergeTree.insertSegments(
+				4,
+				[TextSegment.make("a")],
+				remoteClient.perspectiveAt({ refSeq: remoteSequenceNumber }),
+				remoteClient.stampAt({ seq: ++remoteSequenceNumber }),
+				undefined as never,
+			);
 
 			const count = countOperations(mergeTree);
 
@@ -137,9 +121,8 @@ describe("MergeTree", () => {
 				{
 					props: { foo: "bar" },
 				},
-				currentSequenceNumber,
-				localClientId,
-				UnassignedSequenceNumber,
+				mergeTree.localPerspective,
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
 				undefined as never,
 			);
 
@@ -150,19 +133,16 @@ describe("MergeTree", () => {
 		});
 
 		it("Annotate over remote deletion", () => {
-			const remoteClientId: number = 35;
+			const remoteClient = makeRemoteClient({ clientId: 35 });
 			let remoteSequenceNumber = currentSequenceNumber;
 
-			markRangeRemoved({
-				mergeTree,
-				start: 4,
-				end: 6,
-				refSeq: remoteSequenceNumber,
-				clientId: remoteClientId,
-				seq: ++remoteSequenceNumber,
-				overwrite: false,
-				opArgs: undefined as never,
-			});
+			mergeTree.markRangeRemoved(
+				4,
+				6,
+				remoteClient.perspectiveAt({ refSeq: remoteSequenceNumber }),
+				remoteClient.stampAt({ seq: ++remoteSequenceNumber }),
+				undefined as never,
+			);
 
 			const count = countOperations(mergeTree);
 
@@ -172,9 +152,8 @@ describe("MergeTree", () => {
 				{
 					props: { foo: "bar" },
 				},
-				currentSequenceNumber,
-				localClientId,
-				UnassignedSequenceNumber,
+				mergeTree.localPerspective,
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
 				undefined as never,
 			);
 
@@ -185,19 +164,16 @@ describe("MergeTree", () => {
 		});
 
 		it("Remote annotate within local deletion", () => {
-			const remoteClientId: number = 35;
+			const remoteClient = makeRemoteClient({ clientId: 35 });
 			let remoteSequenceNumber = currentSequenceNumber;
 
-			markRangeRemoved({
-				mergeTree,
-				start: 3,
-				end: 8,
-				refSeq: currentSequenceNumber,
-				clientId: localClientId,
-				seq: UnassignedSequenceNumber,
-				overwrite: false,
-				opArgs: undefined as never,
-			});
+			mergeTree.markRangeRemoved(
+				3,
+				8,
+				mergeTree.localPerspective,
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
+				undefined as never,
+			);
 
 			const count = countOperations(mergeTree);
 
@@ -207,9 +183,8 @@ describe("MergeTree", () => {
 				{
 					props: { foo: "bar" },
 				},
-				remoteSequenceNumber,
-				remoteClientId,
-				++remoteSequenceNumber,
+				remoteClient.perspectiveAt({ refSeq: remoteSequenceNumber }),
+				remoteClient.stampAt({ seq: ++remoteSequenceNumber }),
 				undefined as never,
 			);
 

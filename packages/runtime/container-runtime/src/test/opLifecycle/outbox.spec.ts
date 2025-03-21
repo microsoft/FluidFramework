@@ -203,7 +203,6 @@ describe("Outbox", () => {
 		maxBatchSize?: number;
 		compressionOptions?: ICompressionRuntimeOptions;
 		enableChunking?: boolean;
-		disablePartialFlush?: boolean;
 		chunkSizeInBytes?: number;
 		opGroupingConfig?: OpGroupingManagerConfig;
 		immediateMode?: boolean;
@@ -225,7 +224,6 @@ describe("Outbox", () => {
 			config: {
 				maxBatchSizeInBytes: params.maxBatchSize ?? maxBatchSizeInBytes,
 				compressionOptions: params.compressionOptions ?? DefaultCompressionOptions,
-				disablePartialFlush: params.disablePartialFlush ?? false,
 			},
 			logger: mockLogger,
 			groupingManager: new OpGroupingManager(
@@ -861,54 +859,6 @@ describe("Outbox", () => {
 			]);
 		});
 	}
-
-	it("Does not flush the batch when an out of order message is detected, if configured", () => {
-		const outbox = getOutbox({
-			context: getMockContext(),
-			disablePartialFlush: true,
-		});
-		const messages: BatchMessage[] = [
-			{
-				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-				referenceSequenceNumber: 0,
-			},
-			{
-				...createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-				referenceSequenceNumber: 1,
-			},
-			{
-				...createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-				referenceSequenceNumber: 2,
-			},
-			{
-				...createMessage(ContainerMessageType.IdAllocation, "1"),
-				referenceSequenceNumber: 3,
-			},
-			{
-				...createMessage(ContainerMessageType.IdAllocation, "1"),
-				referenceSequenceNumber: 3,
-			},
-		];
-
-		for (const message of messages) {
-			currentSeqNumbers.referenceSequenceNumber = message.referenceSequenceNumber;
-			if (typeFromBatchedOp(message) === ContainerMessageType.IdAllocation) {
-				outbox.submitIdAllocation(message);
-			} else {
-				outbox.submit(message);
-			}
-		}
-
-		assert.equal(state.opsSubmitted, 0);
-		assert.equal(state.individualOpsSubmitted.length, 0);
-		assert.equal(state.batchesSubmitted.length, 0);
-
-		mockLogger.assertMatch([
-			{
-				eventName: "Outbox:ReferenceSequenceNumberMismatch",
-			},
-		]);
-	});
 
 	it("Log at most 3 reference sequence number mismatch events", () => {
 		const outbox = getOutbox({ context: getMockContext() });
