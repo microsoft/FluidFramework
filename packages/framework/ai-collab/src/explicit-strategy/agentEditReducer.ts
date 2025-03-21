@@ -551,6 +551,7 @@ function createInsertUiDiff(treeEdit: Insert, idGenerator: IdGenerator): InsertD
 			idGenerator,
 			[],
 		),
+		aiExplanation: treeEdit.explanation,
 	};
 }
 
@@ -570,12 +571,14 @@ function createModifyUiDiff(treeEdit: Modify, idGenerator: IdGenerator): ModifyD
 					schemaIdentifier: getSchemaIdentifier(treeEdit.modification)!,
 				},
 			]),
+			aiExplanation: treeEdit.explanation,
 		};
 	}
 
 	return {
 		type: "modify",
 		path: createNodePathRecursive(targetNodeAtField as TreeNode, idGenerator, []),
+		aiExplanation: treeEdit.explanation,
 	};
 }
 
@@ -604,6 +607,7 @@ function createRemoveUiDiff(
 			return {
 				type: "remove-array-single",
 				path: createNodePathRecursive(targetRemovedNode as TreeNode, idGenerator, []),
+				aiExplanation: treeEdit.explanation,
 			};
 		} else {
 			const fieldKey = Tree.key(node);
@@ -620,6 +624,7 @@ function createRemoveUiDiff(
 			return {
 				type: "remove-field",
 				path: createNodePathRecursive(targetNodeAtField as TreeNode, idGenerator, []),
+				aiExplanation: treeEdit.explanation,
 			};
 		}
 	} else if (isRange(source)) {
@@ -637,6 +642,7 @@ function createRemoveUiDiff(
 		return {
 			type: "remove-array-range",
 			paths: removedNodePaths,
+			aiExplanation: treeEdit.explanation,
 		};
 	} else {
 		throw new Error("Invalid source encounted when trying to create ui diff for remove edit");
@@ -657,6 +663,7 @@ function createMoveDiff(
 			type: "move-single",
 			sourcePath: createNodePathRecursive(node, idGenerator, []),
 			destinationPath: createNodePathRecursive(destinationArrayNode, idGenerator, []),
+			aiExplanation: treeEdit.explanation,
 		};
 	} else if (isRange(source)) {
 		const {
@@ -677,6 +684,7 @@ function createMoveDiff(
 			type: "move-range",
 			sourcePaths: movedNodePaths,
 			destinationPath: createNodePathRecursive(destinationArrayNode, idGenerator, []),
+			aiExplanation: treeEdit.explanation,
 		};
 	} else {
 		throw new Error("Invalid source for move edit");

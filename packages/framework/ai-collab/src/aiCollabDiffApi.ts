@@ -15,6 +15,10 @@ export interface UiDiff {
 		| "remove-array-range"
 		| "move-single"
 		| "move-range";
+	/**
+	 * An explanation from the ai as to why the edit is being made.
+	 */
+	aiExplanation: string;
 }
 
 /**

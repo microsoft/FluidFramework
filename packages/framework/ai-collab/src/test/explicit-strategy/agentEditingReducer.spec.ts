@@ -1406,6 +1406,7 @@ describe("UiDiff Creation", () => {
 						parentField: "rootFieldKey",
 					},
 				],
+				aiExplanation: insertEdit.explanation,
 			};
 			assert.deepEqual(result.uiDiff, expectedUDiff);
 		});
@@ -1450,6 +1451,7 @@ describe("UiDiff Creation", () => {
 						parentField: "rootFieldKey",
 					},
 				],
+				aiExplanation: insertEdit.explanation,
 			};
 			assert.deepEqual(result.uiDiff, expectedUDiff);
 		});
@@ -1489,6 +1491,7 @@ describe("UiDiff Creation", () => {
 						parentField: "rootFieldKey",
 					},
 				],
+				aiExplanation: modifyEdit.explanation,
 			};
 			assert.deepEqual(result.uiDiff, expectedUIDiff);
 		});
@@ -1526,6 +1529,7 @@ describe("UiDiff Creation", () => {
 						parentField: "rootFieldKey",
 					},
 				],
+				aiExplanation: modifyEdit.explanation,
 			};
 			assert.deepEqual(result.uiDiff, expectedUIDiff);
 		});
@@ -1565,6 +1569,7 @@ describe("UiDiff Creation", () => {
 						parentField: "rootFieldKey",
 					},
 				],
+				aiExplanation: removeEdit.explanation,
 			};
 			assert.deepEqual(result.uiDiff, expectedUIDiff);
 		});
@@ -1602,6 +1607,7 @@ describe("UiDiff Creation", () => {
 						parentField: "rootFieldKey",
 					},
 				],
+				aiExplanation: removeEdit.explanation,
 			};
 			assert.deepEqual(result.uiDiff, expectedUiDiff);
 		});
@@ -1665,6 +1671,7 @@ describe("UiDiff Creation", () => {
 			const expectedUiDiff: ArrayRangeRemoveDiff = {
 				type: "remove-array-range",
 				paths: expectedSourceNodePaths,
+				aiExplanation: removeEdit.explanation,
 			};
 			assert.deepEqual(result.uiDiff, expectedUiDiff);
 		});
@@ -1697,7 +1704,7 @@ describe("UiDiff Creation", () => {
 				},
 			};
 			const result = applyAgentEdit(moveEdit, idGenerator, schema.definitions);
-			const expectedUiDiff = {
+			const expectedUiDiff: MoveSingleDiff = {
 				type: "move-single",
 				sourcePath: [
 					{
@@ -1733,6 +1740,7 @@ describe("UiDiff Creation", () => {
 						parentField: "rootFieldKey",
 					},
 				],
+				aiExplanation: moveEdit.explanation,
 			};
 			assert.deepEqual(result.uiDiff, expectedUiDiff);
 		});
@@ -1797,6 +1805,7 @@ describe("UiDiff Creation", () => {
 						parentField: "rootFieldKey",
 					},
 				],
+				aiExplanation: moveEdit.explanation,
 			};
 			assert.deepEqual(result.uiDiff, expectedUiDiff);
 		});
@@ -1889,6 +1898,7 @@ describe("UiDiff Creation", () => {
 						parentField: "rootFieldKey",
 					},
 				],
+				aiExplanation: moveEdit.explanation,
 			};
 			assert.deepEqual(result.uiDiff, expectedUiDiff);
 		});
@@ -1977,6 +1987,7 @@ describe("UiDiff Creation", () => {
 						parentField: "rootFieldKey",
 					},
 				],
+				aiExplanation: moveEdit.explanation,
 			};
 			assert.deepEqual(result.uiDiff, expectedUiDiff);
 		});
