@@ -7,13 +7,10 @@ import { strict as assert } from "node:assert";
 
 import { NonCollabClient } from "../constants.js";
 import { MergeTreeDeltaType } from "../ops.js";
+import { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
-import {
-	insertText,
-	useStrictPartialLengthChecks,
-	validatePartialLengths,
-} from "./testUtils.js";
+import { useStrictPartialLengthChecks, validatePartialLengths } from "./testUtils.js";
 
 describe("obliterate partial lengths", () => {
 	let client: TestClient;
@@ -109,16 +106,13 @@ describe("obliterate partial lengths", () => {
 		client.startOrUpdateCollaboration("local");
 
 		for (let i = 0; i < 100; i++) {
-			insertText({
-				mergeTree: client.mergeTree,
-				pos: 0,
-				refSeq: i,
-				clientId: localClientId,
-				seq: i + 1,
-				text: "a",
-				props: undefined,
-				opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
-			});
+			client.mergeTree.insertSegments(
+				0,
+				[TextSegment.make("a")],
+				client.mergeTree.localPerspective,
+				{ seq: i + 1, clientId: localClientId },
+				{ op: { type: MergeTreeDeltaType.INSERT } },
+			);
 
 			validatePartialLengths(localClientId, client.mergeTree, [{ seq: i + 1, len: i + 1 }]);
 			validatePartialLengths(remoteClientId, client.mergeTree, [{ seq: i + 1, len: i + 1 }]);
