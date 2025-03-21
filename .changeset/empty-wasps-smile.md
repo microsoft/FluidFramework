@@ -10,12 +10,12 @@ Improved Type Checking for Recursive Object Schema Fields
 
 Most ways to provide incorrectly typed data for fields of [recursive object schema](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#objectrecursive-method) now produce simpler type errors without relying on [ValidateRecursiveSchema](https://fluidframework.com/docs/api/fluid-framework/validaterecursiveschema-typealias).
 
-As a sideeffect of this work some schema which violated the documented allowed patterns specified by [SchemaFactory](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#schemafactory-remarks) but used to work (as long as they were not package exported) no longer compile.
+As a side effect of this work some schema which violated the documented allowed patterns specified by [SchemaFactory](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#schemafactory-remarks) but used to work (as long as they were not package exported) no longer compile.
 
 The specific case known to break is when:
 
 1. An Object node schema is co-recursive with an Array node schema.
-2. The Array does not declared a named subclass.
+2. The Array does not declare a named subclass.
 3. The schema reference from the Object to the Array is not using the [lazy syntax](https://fluidframework.com/docs/api/fluid-framework/lazyitem-typealias).
 
 For example:
@@ -30,7 +30,7 @@ class Foo extends sf.objectRecursive("Foo", {
 ```
 
 Such a schema is disallowed according to the documentation [recursive schema must explicitly declare a named class]((https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#schemafactory-remarks)).
-This restriction is necessary avoid [Generated `.d.ts` files replacing recursive references with `any`](https://github.com/microsoft/TypeScript/issues/55832).
+This restriction is necessary to avoid [generated `.d.ts` files replacing recursive references with `any`](https://github.com/microsoft/TypeScript/issues/55832).
 Fixing this code is now also necessary to avoid a compile error.
 
 ```typescript
