@@ -3143,7 +3143,7 @@ export class ContainerRuntime
 		// Make sure all BatchManagers are empty before entering staging mode,
 		// since we mark whole batches as "staged" or not to indicate whether to submit them.
 		this.outbox.flush();
-
+		const previousDirtyState = this.dirtyContainer;
 		const exitStagingMode = (discardOrCommit: () => void) => (): void => {
 			this.stageControls = undefined;
 
@@ -3159,6 +3159,9 @@ export class ContainerRuntime
 				this.pendingStateManager.popStagedBatches(({ content, localOpMetadata }) =>
 					this.rollback(content, localOpMetadata),
 				);
+				if (this.dirtyContainer !== previousDirtyState) {
+					this.updateDocumentDirtyState(previousDirtyState);
+				}
 			}),
 			commitChanges: exitStagingMode(() => {
 				// All staged changes are in the PSM, so just replay them (ignore pre-staging batches)
