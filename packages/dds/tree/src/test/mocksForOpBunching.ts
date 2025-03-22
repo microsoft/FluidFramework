@@ -77,6 +77,10 @@ export class MockContainerRuntimeFactoryWithOpBunching extends MockContainerRunt
 		}
 		this.lastProcessedMessage = undefined;
 	}
+
+	public override processAllMessages() {
+		this.processSomeMessages(this.messages.length);
+	}
 }
 
 /**
@@ -88,9 +92,40 @@ export class MockContainerRuntimeWithOpBunching extends MockContainerRuntimeForR
 		this.processMessages(pendingMessages);
 	}
 
+	private paused: boolean = false;
+	private pendingMessagesWhenPaused: ISequencedDocumentMessage[] = [];
+
 	/**
-	 * Processes a list of messages. It sends bunch of messages in the same batch to the data store
-	 * runtimes together.
+	 * Pause processing of messages. Messages will be queued up until resumeProcessing is called.
+	 */
+	public pauseProcessing() {
+		this.paused = true;
+	}
+
+	/**
+	 * Resume processing of messages. Messages that were queued up while paused will now be processed.
+	 */
+	public resumeProcessing() {
+		if (!this.paused) {
+			return;
+		}
+		this.paused = false;
+		this.processMessages(this.pendingMessagesWhenPaused);
+		this.pendingMessagesWhenPaused = [];
+	}
+
+	public override process(message: ISequencedDocumentMessage): void {
+		if (this.paused) {
+			this.pendingMessagesWhenPaused.push(message);
+		} else {
+			super.process(message);
+		}
+	}
+
+	/**
+	 * Processes a list of messages.
+	 * In turn based mode, it sends bunch of messages in the same batch to the data store runtimes together.
+	 * In immediate mode, it sends each message to the data store runtime one at a time.
 	 */
 	public processMessages(messages: ISequencedDocumentMessage[]): void {
 		if (messages.length === 0) {
@@ -99,6 +134,18 @@ export class MockContainerRuntimeWithOpBunching extends MockContainerRuntimeForR
 
 		if (!this.connected) {
 			this.pendingRemoteMessages.push(...messages);
+			return;
+		}
+
+		if (this.paused) {
+			this.pendingMessagesWhenPaused.push(...messages);
+			return;
+		}
+
+		if (this.runtimeOptions.flushMode === FlushMode.Immediate) {
+			for (const message of messages) {
+				super.process(message);
+			}
 			return;
 		}
 
