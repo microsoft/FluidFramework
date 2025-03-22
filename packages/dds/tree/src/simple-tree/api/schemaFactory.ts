@@ -71,8 +71,8 @@ import type {
 	TreeArrayNodeUnsafe,
 	TreeMapNodeUnsafe,
 	TreeObjectNodeUnsafe,
-	Unenforced,
 	ImplicitAllowedTypesUnsafe,
+	ImplicitFieldSchemaUnsafe,
 } from "./typesUnsafe.js";
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
 import { isLazy } from "../flexList.js";
@@ -935,7 +935,7 @@ export class SchemaFactory<
 	 */
 	public objectRecursive<
 		const Name extends TName,
-		const T extends RestrictiveStringRecord<Unenforced<ImplicitFieldSchema>>,
+		const T extends RestrictiveStringRecord<ImplicitFieldSchemaUnsafe>,
 	>(
 		name: Name,
 		t: T,

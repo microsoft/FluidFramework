@@ -27,8 +27,8 @@ import type {
 	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
 	TreeArrayNodeUnsafe,
 	TreeMapNodeUnsafe,
-	Unenforced,
 	ImplicitAllowedTypesUnsafe,
+	ImplicitFieldSchemaUnsafe,
 } from "./typesUnsafe.js";
 import { mapSchema, type MapNodeInsertableData, type TreeMapNode } from "../mapNode.js";
 import { arraySchema, type TreeArrayNode } from "../arrayNode.js";
@@ -92,7 +92,7 @@ export class SchemaFactoryAlpha<
 	 */
 	public override objectRecursive<
 		const Name extends TName,
-		const T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>,
+		const T extends RestrictiveStringRecord<ImplicitFieldSchemaUnsafe>,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,

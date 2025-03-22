@@ -779,24 +779,30 @@ describe("SchemaFactory Recursive methods", () => {
 		});
 
 		it("co-recursive object with out of line non-lazy array", () => {
+			// @ts-expect-error co-recursive arrays without named subclass cause "referenced directly or indirectly in its own base expression" errors.
 			const TheArray = sf.arrayRecursive("FooList", [() => Foo]);
 			{
 				type _check = ValidateRecursiveSchema<typeof TheArray>;
 			}
 
+			// @ts-expect-error due to error above
 			class Foo extends sf.objectRecursive("Foo", {
 				fooList: TheArray,
 			}) {}
 			{
+				// @ts-expect-error due to error above
 				type _check = ValidateRecursiveSchema<typeof Foo>;
 			}
 		});
 
 		it("co-recursive object with inline array", () => {
+			// @ts-expect-error Inline co-recursive arrays without named subclass cause "referenced directly or indirectly in its own base expression" errors.
 			class Foo extends sf.objectRecursive("Foo", {
+				// @ts-expect-error due to error above
 				fooList: sf.arrayRecursive("FooList", [() => Foo]),
 			}) {}
 			{
+				// @ts-expect-error due to error above
 				type _check = ValidateRecursiveSchema<typeof Foo>;
 			}
 		});
