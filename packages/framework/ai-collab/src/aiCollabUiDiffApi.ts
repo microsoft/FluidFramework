@@ -10,14 +10,7 @@
  * @alpha
  */
 export interface UiDiff {
-	type:
-		| "modify"
-		| "insert"
-		| "remove-field"
-		| "remove-array-single"
-		| "remove-array-range"
-		| "move-single"
-		| "move-range";
+	type: string;
 	/**
 	 * An explanation from the ai as to why the edit is being made.
 	 */
@@ -57,7 +50,11 @@ export interface InsertDiff extends UiDiff {
 	 * The last value in the path will be the newly inserted node.
 	 * If the newly inserted node is a primitive value, the last value in the path will be the parent array node.
 	 */
-	path: NodePath;
+	nodePath: NodePath;
+	/**
+	 * The content of the newly inserted node.
+	 */
+	insertedNodeContent: unknown;
 }
 
 /**
@@ -70,7 +67,15 @@ export interface ModifyDiff extends UiDiff {
 	/**
 	 * The path from the root node to the ndoe being modified.
 	 */
-	path: NodePath;
+	nodePath: NodePath;
+	/**
+	 * The new value of the node.
+	 */
+	newValue: unknown;
+	/**
+	 * The old value of the node.
+	 */
+	oldValue: unknown;
 }
 
 /**
@@ -84,11 +89,16 @@ export type RemoveDiff = RemoveFieldDiff | ArraySingleRemoveDiff | ArrayRangeRem
  * @alpha
  */
 export interface RemoveFieldDiff extends UiDiff {
-	type: "remove-field";
+	type: "remove";
+	subType: "remove-field";
 	/**
 	 * The path from the root of the tree to the node being removed.
 	 */
-	path: NodePath;
+	nodePath: NodePath;
+	/**
+	 * The content of the node being removed.
+	 */
+	removedNodeContent: unknown;
 }
 
 /**
@@ -96,8 +106,16 @@ export interface RemoveFieldDiff extends UiDiff {
  * @alpha
  */
 export interface ArraySingleRemoveDiff extends UiDiff {
-	type: "remove-array-single";
-	path: NodePath;
+	type: "remove";
+	subType: "remove-array-single";
+	/**
+	 * The path from the root of the tree to the node being removed from the array node.
+	 */
+	nodePath: NodePath;
+	/**
+	 * The content of the node being removed from the array node.
+	 */
+	removedNodeContent: unknown;
 }
 
 /**
@@ -105,11 +123,16 @@ export interface ArraySingleRemoveDiff extends UiDiff {
  * @alpha
  */
 export interface ArrayRangeRemoveDiff extends UiDiff {
-	type: "remove-array-range";
+	type: "remove";
+	subType: "remove-array-range";
 	/**
 	 * The paths to each node being removed from the array node.
 	 */
-	paths: NodePath[];
+	nodePaths: NodePath[];
+	/**
+	 * The content of the nodes being removed from the array node.
+	 */
+	removedNodesContents: unknown[];
 }
 
 /**
@@ -123,16 +146,21 @@ export type MoveDiff = MoveSingleDiff | MoveRangeDiff;
  * @alpha
  */
 export interface MoveSingleDiff extends UiDiff {
-	type: "move-single";
+	type: "move";
+	subType: "move-single";
 	/**
 	 * The path from the root of the tree to the source node.
 	 * The last value in the path will be the node being moved
 	 */
-	sourcePath: NodePath;
+	sourceNodePath: NodePath;
 	/**
 	 * The path from the root of the tree to the destination array node.
 	 */
-	destinationPath: NodePath;
+	destinationNodePath: NodePath;
+	/**
+	 * The content of the node being moved from the source array node to the destination array node.
+	 */
+	movedNodeContent: unknown;
 }
 
 /**
@@ -140,13 +168,18 @@ export interface MoveSingleDiff extends UiDiff {
  * @alpha
  */
 export interface MoveRangeDiff extends UiDiff {
-	type: "move-range";
+	type: "move";
+	subType: "move-range";
 	/**
 	 * The paths to each node being moved from the source array node.
 	 */
-	sourcePaths: NodePath[];
+	sourceNodePaths: NodePath[];
 	/**
 	 * The path from the root of the tree to the destination array node.
 	 */
-	destinationPath: NodePath;
+	destinationNodePath: NodePath;
+	/**
+	 * The content of the nodes being moved from the source array node to the destination array node.
+	 */
+	movedNodesContents: unknown[];
 }

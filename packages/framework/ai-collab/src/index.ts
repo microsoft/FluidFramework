@@ -60,6 +60,7 @@ export {
 	type UiDiff,
 	type NodePath,
 	type InsertDiff,
+	type ModifyDiff,
 	type RemoveDiff,
 	type RemoveFieldDiff,
 	type ArraySingleRemoveDiff,

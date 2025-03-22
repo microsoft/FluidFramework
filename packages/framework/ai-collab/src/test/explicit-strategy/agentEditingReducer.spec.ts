@@ -35,6 +35,7 @@ import type {
 } from "../../aiCollabUiDiffApi.js";
 import {
 	applyAgentEdit,
+	contentWithIds,
 	getRangeInfo,
 	getSchemaIdentifier,
 	// eslint-disable-next-line import/no-internal-modules
@@ -1580,6 +1581,7 @@ describe("UiDiff Creation", () => {
 						parentField: "rootFieldKey",
 					},
 				],
+				insertedNode: contentWithIds(newlyInsertedNode, idGenerator),
 				aiExplanation: insertEdit.explanation,
 			};
 			assert.deepEqual(result.uiDiff, expectedUDiff);

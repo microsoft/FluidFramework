@@ -12,6 +12,7 @@ export interface AiCollabErrorResponse {
     readonly errorMessage: "tokenLimitExceeded" | "tooManyErrors" | "tooManyModelCalls" | "aborted" | "unexpectedError";
     readonly status: "failure" | "partial-failure";
     readonly tokensUsed: TokenUsage;
+    readonly uiDiffs: UiDiff[];
 }
 
 // @alpha
@@ -38,6 +39,7 @@ export interface AiCollabOptions {
 export interface AiCollabSuccessResponse {
     readonly status: "success";
     readonly tokensUsed: TokenUsage;
+    readonly uiDiffs: UiDiff[];
 }
 
 // @alpha
@@ -68,17 +70,22 @@ export interface ApplyEditSuccess extends EventFlowDebugEvent {
 
 // @alpha
 export interface ArrayRangeRemoveDiff extends UiDiff {
-    paths: NodePath[];
+    nodePaths: NodePath[];
+    removedNodesContents: unknown[];
     // (undocumented)
-    type: "remove-array-range";
+    subType: "remove-array-range";
+    // (undocumented)
+    type: "remove";
 }
 
 // @alpha
 export interface ArraySingleRemoveDiff extends UiDiff {
+    nodePath: NodePath;
+    removedNodeContent: unknown;
     // (undocumented)
-    path: NodePath;
+    subType: "remove-array-single";
     // (undocumented)
-    type: "remove-array-single";
+    type: "remove";
 }
 
 // @alpha
@@ -244,7 +251,8 @@ export interface GenerateTreeEditStarted extends EventFlowDebugEvent {
 
 // @alpha
 export interface InsertDiff extends UiDiff {
-    path: NodePath;
+    insertedNodeContent: unknown;
+    nodePath: NodePath;
     // (undocumented)
     type: "insert";
 }
@@ -268,22 +276,37 @@ export interface LlmApiCallDebugEvent extends DebugEvent {
 export type LlmTreeEdit = Record<string, unknown>;
 
 // @alpha
+export interface ModifyDiff extends UiDiff {
+    newValue: unknown;
+    nodePath: NodePath;
+    oldValue: unknown;
+    // (undocumented)
+    type: "modify";
+}
+
+// @alpha
 export type MoveDiff = MoveSingleDiff | MoveRangeDiff;
 
 // @alpha
 export interface MoveRangeDiff extends UiDiff {
-    destinationPath: NodePath;
-    sourcePaths: NodePath[];
+    destinationNodePath: NodePath;
+    movedNodesContents: unknown[];
+    sourceNodePaths: NodePath[];
     // (undocumented)
-    type: "move-range";
+    subType: "move-range";
+    // (undocumented)
+    type: "move";
 }
 
 // @alpha
 export interface MoveSingleDiff extends UiDiff {
-    destinationPath: NodePath;
-    sourcePath: NodePath;
+    destinationNodePath: NodePath;
+    movedNodeContent: unknown;
+    sourceNodePath: NodePath;
     // (undocumented)
-    type: "move-single";
+    subType: "move-single";
+    // (undocumented)
+    type: "move";
 }
 
 // @alpha
@@ -339,9 +362,12 @@ export type RemoveDiff = RemoveFieldDiff | ArraySingleRemoveDiff | ArrayRangeRem
 
 // @alpha
 export interface RemoveFieldDiff extends UiDiff {
-    path: NodePath;
+    nodePath: NodePath;
+    removedNodeContent: unknown;
     // (undocumented)
-    type: "remove-field";
+    subType: "remove-field";
+    // (undocumented)
+    type: "remove";
 }
 
 // @alpha
@@ -391,7 +417,7 @@ export interface TokenUsage {
 export interface UiDiff {
     aiExplanation: string;
     // (undocumented)
-    type: "modify" | "insert" | "remove-field" | "remove-array-single" | "remove-array-range" | "move-single" | "move-range";
+    type: string;
 }
 
 ```
