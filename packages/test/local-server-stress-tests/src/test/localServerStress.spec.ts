@@ -12,7 +12,7 @@ import {
 	LocalServerStressModel,
 } from "../localServerStressHarness";
 
-for (let i = 0; i < 100; i++) {
+for (let i = 0; i < 150; i++) {
 	describe("Local Server Stress", () => {
 		const model: LocalServerStressModel<StressOperations> = {
 			workloadName: `default_${i}`,
