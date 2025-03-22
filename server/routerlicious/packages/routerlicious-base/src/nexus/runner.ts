@@ -33,6 +33,7 @@ import {
 } from "@fluidframework/server-lambdas";
 import * as app from "./app";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
+import { Constants } from "../utils";
 
 export class NexusRunner implements IRunner {
 	private server?: IWebServer;
@@ -71,7 +72,17 @@ export class NexusRunner implements IRunner {
 		this.runningDeferred = new Deferred<void>();
 
 		// Create an HTTP server with a request listener for health endpoints.
-		const nexus = app.create(this.config, this.startupCheck, this.readinessCheck);
+		const throttler = new Map<string, IThrottler>();
+		throttler.set(Constants.generalRestCallThrottleIdPrefix, this.socketSubmitSignalThrottler);
+		const nexus = app.create(
+			this.config,
+			this.startupCheck,
+			this.tenantManager,
+			throttler,
+			this.storage,
+			this.readinessCheck,
+			this.collaborationSessionEventEmitter,
+		);
 		nexus.set("port", this.port);
 		this.server = this.serverFactory.create(nexus);
 
