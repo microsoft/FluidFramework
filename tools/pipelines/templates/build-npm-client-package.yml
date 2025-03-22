@@ -527,6 +527,12 @@ extends:
                     echo "##vso[task.setvariable variable=NESTED_LIB_DIST;isOutput=true]$NESTED_LIB_DIST"
                 name: setLibDistArtifactName
 
+              - task: PublishPipelineArtifact@1
+                displayName: "Publish Nested Lib Dist Artifact"
+                inputs:
+                targetPath: $(Build.ArtifactStagingDirectory)/nested_lib_dist
+                artifact: $(NESTED_LIB_DIST)
+
             templateContext:
               outputParentDirectory: $(Build.ArtifactStagingDirectory)
               outputs:
