@@ -14,8 +14,8 @@ import {
 	reviveBigInt,
 } from "./testUtils.js";
 import type {
+	ObjectWithOptionalRecursion,
 	ObjectWithSymbolOrRecursion,
-	SimpleObjectWithOptionalRecursion,
 } from "./testValues.js";
 import {
 	boolean,
@@ -54,9 +54,12 @@ import {
 	arrayOfFunctions,
 	arrayOfFunctionsWithProperties,
 	arrayOfObjectAndFunctions,
-	arrayOfBigintAndObjects,
-	arrayOfSymbolsAndObjects,
+	arrayOfBigintOrObjects,
+	arrayOfSymbolOrObjects,
+	arrayOfBigintOrSymbols,
+	arrayOfNumberBigintOrSymbols,
 	readonlyArrayOfNumbers,
+	readonlyArrayOfObjects,
 	object,
 	emptyObject,
 	objectWithBoolean,
@@ -79,6 +82,7 @@ import {
 	objectWithOptionalBigint,
 	objectWithNumberKey,
 	objectWithSymbolKey,
+	objectWithUniqueSymbolKey,
 	objectWithArrayOfNumbers,
 	objectWithArrayOfNumbersSparse,
 	objectWithArrayOfNumbersOrUndefined,
@@ -88,8 +92,8 @@ import {
 	objectWithArrayOfFunctions,
 	objectWithArrayOfFunctionsWithProperties,
 	objectWithArrayOfObjectAndFunctions,
-	objectWithArrayOfBigintAndObjects,
-	objectWithArrayOfSymbolsAndObjects,
+	objectWithArrayOfBigintOrObjects,
+	objectWithArrayOfSymbolsOrObjects,
 	objectWithReadonlyArrayOfNumbers,
 	objectWithOptionalNumberNotPresent,
 	objectWithOptionalNumberUndefined,
@@ -140,6 +144,7 @@ import {
 	selfRecursiveObjectAndFunction,
 	objectInheritingOptionalRecursionAndWithNestedSymbol,
 	simpleJson,
+	jsonObject,
 	classInstanceWithPrivateData,
 	classInstanceWithPrivateMethod,
 	classInstanceWithPrivateGetter,
@@ -187,7 +192,7 @@ import type {
  * @returns the round-tripped value cast to the filter result type
  */
 export function passThru<
-	T,
+	const T,
 	TExpected,
 	// eslint-disable-next-line @typescript-eslint/ban-types
 	Options extends JsonSerializableOptions = {},
@@ -225,7 +230,7 @@ export function passThru<
  * @param error - error expected during serialization round-trip
  * @returns dummy result to allow further type checking
  */
-function passThruThrows<T>(
+function passThruThrows<const T>(
 	filteredIn: JsonSerializable<T>,
 	expectedThrow: Error,
 ): { filteredIn: JsonSerializable<T> } {
@@ -236,7 +241,7 @@ function passThruThrows<T>(
 /**
  * Similar to {@link passThru} but ignores hidden (private/protected) members.
  */
-function passThruIgnoreInaccessibleMembers<T, TExpected>(
+function passThruIgnoreInaccessibleMembers<const T, TExpected>(
 	filteredIn: JsonSerializable<
 		T,
 		{ IgnoreInaccessibleMembers: "ignore-inaccessible-members" }
@@ -258,7 +263,7 @@ function passThruIgnoreInaccessibleMembers<T, TExpected>(
 /**
  * Similar to {@link passThru} but specifically handles `bigint` values.
  */
-function passThruHandlingBigint<T, TExpected>(
+function passThruHandlingBigint<const T, TExpected>(
 	filteredIn: JsonSerializable<T, { AllowExactly: [bigint] }>,
 	expectedDeserialization?: JsonDeserialized<TExpected, { AllowExactly: [bigint] }>,
 ): {
@@ -289,7 +294,7 @@ function passThruHandlingBigint<T, TExpected>(
 /**
  * Similar to {@link passThruThrows} but specifically handles `bigint` values.
  */
-function passThruHandlingBigintThrows<T>(
+function passThruHandlingBigintThrows<const T>(
 	filteredIn: JsonSerializable<T, { AllowExactly: [bigint] }>,
 	expectedThrow: Error,
 ): { filteredIn: JsonSerializable<T, { AllowExactly: [bigint] }> } {
@@ -300,7 +305,7 @@ function passThruHandlingBigintThrows<T>(
 /**
  * Similar to {@link passThru} but specifically handles certain function signatures.
  */
-function passThruHandlingSpecificFunction<T>(
+function passThruHandlingSpecificFunction<const T>(
 	filteredIn: JsonSerializable<T, { AllowExactly: [(_: string) => number] }>,
 ): {
 	filteredIn: JsonSerializable<T, { AllowExactly: [(_: string) => number] }>;
@@ -318,7 +323,7 @@ function passThruHandlingSpecificFunction<T>(
 /**
  * Similar to {@link passThru} but specifically handles any Fluid handle.
  */
-function passThruHandlingFluidHandle<T>(
+function passThruHandlingFluidHandle<const T>(
 	filteredIn: JsonSerializable<T, { AllowExtensionOf: IFluidHandle }>,
 ): {
 	filteredIn: JsonSerializable<T, { AllowExtensionOf: IFluidHandle }>;
@@ -333,7 +338,7 @@ function passThruHandlingFluidHandle<T>(
 /**
  * Similar to {@link passThru} but allows `unknown` rather than requiring `JsonTypeWith`.
  */
-function passThruAllowingUnknown<T>(
+function passThruAllowingUnknown<const T>(
 	filteredIn: JsonSerializable<T, { AllowExactly: [unknown] }>,
 ): {
 	filteredIn: JsonSerializable<T, { AllowExactly: [unknown] }>;
@@ -446,6 +451,10 @@ describe("JsonSerializable", () => {
 				const { filteredIn } = passThru(readonlyArrayOfNumbers);
 				assertIdenticalTypes(filteredIn, readonlyArrayOfNumbers);
 			});
+			it("readonly array of simple objects", () => {
+				const { filteredIn } = passThru(readonlyArrayOfObjects);
+				assertIdenticalTypes(filteredIn, readonlyArrayOfObjects);
+			});
 		});
 
 		describe("supported object types", () => {
@@ -534,9 +543,9 @@ describe("JsonSerializable", () => {
 				assertIdenticalTypes(filteredIn, objectWithAlternatingRecursion);
 			});
 
-			it("simple json (JsonTypeWith<never>)", () => {
-				const { filteredIn } = passThru(simpleJson);
-				assertIdenticalTypes(filteredIn, simpleJson);
+			it("simple non-null object json (NonNullJsonObjectWith<never>)", () => {
+				const { filteredIn } = passThru(jsonObject);
+				assertIdenticalTypes(filteredIn, jsonObject);
 			});
 
 			it("non-const enums", () => {
@@ -588,9 +597,12 @@ describe("JsonSerializable", () => {
 								public: "public",
 							},
 						);
-						assertIdenticalTypes(filteredIn, {
-							public: "public",
-						});
+						assertIdenticalTypes(
+							filteredIn,
+							createInstanceOf<{
+								public: string;
+							}>(),
+						);
 						// @ts-expect-error getSecret is missing, but required
 						filteredIn satisfies typeof classInstanceWithPrivateMethod;
 					});
@@ -601,9 +613,12 @@ describe("JsonSerializable", () => {
 								public: "public",
 							},
 						);
-						assertIdenticalTypes(filteredIn, {
-							public: "public",
-						});
+						assertIdenticalTypes(
+							filteredIn,
+							createInstanceOf<{
+								public: string;
+							}>(),
+						);
 						// @ts-expect-error secret is missing, but required
 						filteredIn satisfies typeof classInstanceWithPrivateGetter;
 					});
@@ -614,9 +629,12 @@ describe("JsonSerializable", () => {
 								public: "public",
 							},
 						);
-						assertIdenticalTypes(filteredIn, {
-							public: "public",
-						});
+						assertIdenticalTypes(
+							filteredIn,
+							createInstanceOf<{
+								public: string;
+							}>(),
+						);
 						// @ts-expect-error secret is missing, but required
 						filteredIn satisfies typeof classInstanceWithPrivateSetter;
 					});
@@ -636,6 +654,13 @@ describe("JsonSerializable", () => {
 					const { filteredIn } = passThru(objectWithOptionalNumberDefined);
 					assertIdenticalTypes(filteredIn, objectWithOptionalNumberDefined);
 				});
+			});
+		});
+
+		describe("supported union types", () => {
+			it("simple json (JsonTypeWith<never>)", () => {
+				const { filteredIn } = passThru(simpleJson);
+				assertIdenticalTypes(filteredIn, simpleJson);
 			});
 		});
 
@@ -691,9 +716,12 @@ describe("JsonSerializable", () => {
 									secret: 0,
 								},
 							);
-							assertIdenticalTypes(filteredIn, {
-								public: "public",
-							});
+							assertIdenticalTypes(
+								filteredIn,
+								createInstanceOf<{
+									public: string;
+								}>(),
+							);
 							// @ts-expect-error secret is missing, but required
 							filteredIn satisfies typeof classInstanceWithPrivateData;
 						});
@@ -1029,7 +1057,7 @@ describe("JsonSerializable", () => {
 				it("array of `bigint` or basic object", () => {
 					const { filteredIn } = passThruThrows(
 						// @ts-expect-error 'bigint' is not supported (becomes 'never')
-						arrayOfBigintAndObjects,
+						arrayOfBigintOrObjects,
 						new TypeError("Do not know how to serialize a BigInt"),
 					);
 					assertIdenticalTypes(filteredIn, createInstanceOf<{ property: string }[]>());
@@ -1037,7 +1065,7 @@ describe("JsonSerializable", () => {
 				it("array of `symbol` or basic object", () => {
 					const { filteredIn } = passThru(
 						// @ts-expect-error 'symbol' is not supported (becomes 'never')
-						arrayOfSymbolsAndObjects,
+						arrayOfSymbolOrObjects,
 						[null],
 					);
 					assertIdenticalTypes(filteredIn, createInstanceOf<{ property: string }[]>());
@@ -1045,7 +1073,7 @@ describe("JsonSerializable", () => {
 				it("array of `bigint | symbol`s", () => {
 					const { filteredIn } = passThru(
 						// @ts-expect-error 'bigint | symbol' is not assignable to 'never'
-						[bigintOrSymbol],
+						arrayOfBigintOrSymbols,
 						[null],
 					);
 					assertIdenticalTypes(filteredIn, createInstanceOf<never[]>());
@@ -1053,7 +1081,7 @@ describe("JsonSerializable", () => {
 				it("array of `number | bigint | symbol`s", () => {
 					const { filteredIn } = passThru(
 						// @ts-expect-error 'number | bigint | symbol' is not assignable to 'number'
-						[numberOrBigintOrSymbol],
+						arrayOfNumberBigintOrSymbols,
 						[7],
 					);
 					assertIdenticalTypes(filteredIn, createInstanceOf<number[]>());
@@ -1220,29 +1248,32 @@ describe("JsonSerializable", () => {
 				it("object with array of `bigint` or basic object", () => {
 					const { filteredIn } = passThruThrows(
 						// @ts-expect-error 'bigint' is not supported (becomes 'never')
-						objectWithArrayOfBigintAndObjects,
+						objectWithArrayOfBigintOrObjects,
 						new TypeError("Do not know how to serialize a BigInt"),
 					);
 					assertIdenticalTypes(
 						filteredIn,
-						createInstanceOf<{ arrayOfBigintAndObjects: { property: string }[] }>(),
+						createInstanceOf<{ arrayOfBigintOrObjects: { property: string }[] }>(),
 					);
 				});
 				it("object with array of `symbol` or basic object", () => {
 					const { filteredIn } = passThru(
 						// @ts-expect-error 'symbol' is not supported (becomes 'never')
-						objectWithArrayOfSymbolsAndObjects,
-						{ arrayOfSymbolsAndObjects: [null] },
+						objectWithArrayOfSymbolsOrObjects,
+						{ arrayOfSymbolOrObjects: [null] },
 					);
 					assertIdenticalTypes(
 						filteredIn,
-						createInstanceOf<{ arrayOfSymbolsAndObjects: { property: string }[] }>(),
+						createInstanceOf<{ arrayOfSymbolOrObjects: { property: string }[] }>(),
 					);
 				});
 				it("object with array of `bigint | symbol`s", () => {
+					const objectWithArrayOfBigintOrSymbols = {
+						arrayOfBigintOrSymbols: [bigintOrSymbol],
+					};
 					const { filteredIn } = passThru(
 						// @ts-expect-error 'bigint | symbol' is not assignable to 'never'
-						{ arrayOfBigintOrSymbols: [bigintOrSymbol] },
+						objectWithArrayOfBigintOrSymbols,
 						{ arrayOfBigintOrSymbols: [null] },
 					);
 					assertIdenticalTypes(
@@ -1251,13 +1282,23 @@ describe("JsonSerializable", () => {
 					);
 				});
 
-				it("object with symbol key", () => {
+				it("object with `symbol` key", () => {
 					const { filteredIn } = passThru(
 						// @ts-expect-error `symbol` key is not supported (property type becomes `never`)
 						objectWithSymbolKey,
 						{},
 					);
-					assertIdenticalTypes(filteredIn, createInstanceOf<{ [symbol]: never }>());
+					const expected = { [symbol]: undefined as never };
+					assertIdenticalTypes(filteredIn, expected);
+				});
+				it("object with [unique] symbol key", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error symbol key is not supported (property type becomes `never`)
+						objectWithUniqueSymbolKey,
+						{},
+					);
+					const expected = { [uniqueSymbol]: undefined as never };
+					assertIdenticalTypes(filteredIn, expected);
 				});
 
 				it("`string` indexed record of `unknown`", () => {
@@ -1358,17 +1399,23 @@ describe("JsonSerializable", () => {
 				});
 
 				it("nested function object with recursion", () => {
+					const objectWithNestedFunctionWithPropertiesAndRecursion = {
+						outerFnOjb: selfRecursiveFunctionWithProperties,
+					};
 					const { filteredIn } = passThru(
 						// @ts-expect-error 'SelfRecursiveFunctionWithProperties' is not assignable to parameter of type 'never' (function even with properties becomes `never`)
-						{ outerFnOjb: selfRecursiveFunctionWithProperties },
+						objectWithNestedFunctionWithPropertiesAndRecursion,
 						{},
 					);
 					assertIdenticalTypes(filteredIn, createInstanceOf<{ outerFnOjb: never }>());
 				});
 				it("nested object and function with recursion", () => {
+					const objectWithNestedObjectAndFunctionWithRecursion = {
+						outerFnOjb: selfRecursiveObjectAndFunction,
+					};
 					const { filteredIn } = passThru(
 						// @ts-expect-error 'SelfRecursiveObjectAndFunction' is not assignable to parameter of type 'never' (function even with properties becomes `never`)
-						{ outerFnOjb: selfRecursiveObjectAndFunction },
+						objectWithNestedObjectAndFunctionWithRecursion,
 						{ outerFnOjb: { recurse: {} } },
 					);
 					assertIdenticalTypes(filteredIn, createInstanceOf<{ outerFnOjb: never }>());
@@ -1386,7 +1433,7 @@ describe("JsonSerializable", () => {
 					assertIdenticalTypes(
 						filteredIn,
 						createInstanceOf<{
-							recursive?: SimpleObjectWithOptionalRecursion;
+							recursive?: ObjectWithOptionalRecursion;
 							complex: { number: number; symbol: never };
 						}>(),
 					);
@@ -1778,19 +1825,15 @@ describe("JsonSerializable", () => {
 					assertIdenticalTypes(filteredIn, arrayOfBigints);
 				});
 				it("array of `bigint` or basic object", () => {
-					const { filteredIn } = passThruHandlingBigint(arrayOfBigintAndObjects);
-					assertIdenticalTypes(filteredIn, arrayOfBigintAndObjects);
+					const { filteredIn } = passThruHandlingBigint(arrayOfBigintOrObjects);
+					assertIdenticalTypes(filteredIn, arrayOfBigintOrObjects);
 				});
 				it("object with specific alternately allowed function", () => {
-					const { filteredIn } = passThruHandlingSpecificFunction({
+					const objectWithSpecificFn = {
 						specificFn: (v: string) => v.length,
-					});
-					assertIdenticalTypes(
-						filteredIn,
-						createInstanceOf<{
-							specificFn: (_: string) => number;
-						}>(),
-					);
+					};
+					const { filteredIn } = passThruHandlingSpecificFunction(objectWithSpecificFn);
+					assertIdenticalTypes(filteredIn, objectWithSpecificFn);
 				});
 				it("`IFluidHandle`", () => {
 					const { filteredIn } = passThruHandlingFluidHandle(fluidHandleToNumber);
@@ -1911,10 +1954,13 @@ describe("JsonSerializable", () => {
 					assertIdenticalTypes(filteredIn, createInstanceOf<NonNullJsonObjectWith<bigint>>());
 				});
 				it("object with non-alternately allowed too generic function", () => {
-					const { filteredIn } = passThruHandlingSpecificFunction({
-						// @ts-expect-error '() => unknown' is not assignable to type 'never'
+					const objectWithGenericFn = {
 						genericFn: () => undefined as unknown,
-					});
+					};
+					const { filteredIn } = passThruHandlingSpecificFunction(
+						// @ts-expect-error '() => unknown' is not assignable to type 'never'
+						objectWithGenericFn,
+					);
 					assertIdenticalTypes(
 						filteredIn,
 						createInstanceOf<{
@@ -1923,10 +1969,13 @@ describe("JsonSerializable", () => {
 					);
 				});
 				it("object with non-alternately allowed too input permissive function", () => {
-					const { filteredIn } = passThruHandlingSpecificFunction({
-						// @ts-expect-error '() => number' is not assignable to type 'never'
+					const objectWithLessRequirementsFn = {
 						lessRequirementsFn: () => 0,
-					});
+					};
+					const { filteredIn } = passThruHandlingSpecificFunction(
+						// @ts-expect-error '() => number' is not assignable to type 'never'
+						objectWithLessRequirementsFn,
+					);
 					assertIdenticalTypes(
 						filteredIn,
 						createInstanceOf<{
@@ -1935,10 +1984,13 @@ describe("JsonSerializable", () => {
 					);
 				});
 				it("object with non-alternately allowed more restrictive output function", () => {
-					const { filteredIn } = passThruHandlingSpecificFunction({
-						// @ts-expect-error '(_v: string) => 0' is not assignable to type 'never'
+					const objectWithStricterOutputFn = {
 						stricterOutputFn: (_v: string) => 0 as const,
-					});
+					};
+					const { filteredIn } = passThruHandlingSpecificFunction(
+						// @ts-expect-error '(_v: string) => 0' is not assignable to type 'never'
+						objectWithStricterOutputFn,
+					);
 					assertIdenticalTypes(
 						filteredIn,
 						createInstanceOf<{
@@ -1947,12 +1999,15 @@ describe("JsonSerializable", () => {
 					);
 				});
 				it("object with supported or non-supported function union", () => {
-					const { filteredIn } = passThruHandlingSpecificFunction({
-						// @ts-expect-error '((v: string) => number) | ((n: number) => string)' is not assignable to type '(v: string) => number'
+					const objectWithSpecificFnOrAnother = {
 						specificFnOrAnother: ((v: string) => v.length) as
 							| ((v: string) => number)
 							| ((n: number) => string),
-					});
+					};
+					const { filteredIn } = passThruHandlingSpecificFunction(
+						// @ts-expect-error '((v: string) => number) | ((n: number) => string)' is not assignable to type '(v: string) => number'
+						objectWithSpecificFnOrAnother,
+					);
 					assertIdenticalTypes(
 						filteredIn,
 						createInstanceOf<{
