@@ -33,7 +33,7 @@ import {
 	SchemaFactory,
 	stringSchema,
 } from "../simple-tree/index.js";
-import { JsonArray, JsonObject } from "./json/index.js";
+import { JsonAsTree } from "../jsonDomainSchema.js";
 
 const sf = new SchemaFactory("Cursor Test Suite");
 
@@ -50,7 +50,7 @@ export const testTreeSchema = [
 	EmptyObject2,
 	EmptyObject3,
 	IdentifierSchema,
-	JsonArray,
+	JsonAsTree.Array,
 ];
 
 export const testTrees: readonly (readonly [string, JsonableTree])[] = [
@@ -67,7 +67,7 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	[
 		"field",
 		{
-			type: brand(JsonObject.identifier),
+			type: brand(JsonAsTree.JsonObject.identifier),
 			fields: {
 				x: [
 					{ type: emptyObjectIdentifier },
@@ -79,7 +79,7 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	[
 		"multiple fields",
 		{
-			type: brand(JsonObject.identifier),
+			type: brand(JsonAsTree.JsonObject.identifier),
 			fields: {
 				a: [{ type: emptyObjectIdentifier }],
 				b: [{ type: emptyObjectIdentifier2 }],
@@ -89,11 +89,11 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	[
 		"double nested",
 		{
-			type: brand(JsonObject.identifier),
+			type: brand(JsonAsTree.JsonObject.identifier),
 			fields: {
 				a: [
 					{
-						type: brand(JsonObject.identifier),
+						type: brand(JsonAsTree.JsonObject.identifier),
 						fields: { b: [{ type: emptyObjectIdentifier }] },
 					},
 				],
@@ -103,12 +103,12 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	[
 		"complex",
 		{
-			type: brand(JsonObject.identifier),
+			type: brand(JsonAsTree.JsonObject.identifier),
 			fields: {
-				a: [{ type: brand(JsonObject.identifier) }],
+				a: [{ type: brand(JsonAsTree.JsonObject.identifier) }],
 				b: [
 					{
-						type: brand(JsonObject.identifier),
+						type: brand(JsonAsTree.JsonObject.identifier),
 						fields: {
 							c: [{ type: brand(numberSchema.identifier), value: 6 }],
 						},
@@ -120,11 +120,11 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	[
 		"siblings restored on up",
 		{
-			type: brand(JsonObject.identifier),
+			type: brand(JsonAsTree.JsonObject.identifier),
 			fields: {
 				X: [
 					{
-						type: brand(JsonObject.identifier),
+						type: brand(JsonAsTree.JsonObject.identifier),
 						// Inner node so that when navigating up from it,
 						// The cursor's siblings value needs to be restored.
 						fields: { q: [{ type: emptyObjectIdentifier2 }] },
@@ -137,7 +137,7 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	[
 		"fixed shape object",
 		{
-			type: brand(JsonObject.identifier),
+			type: brand(JsonAsTree.JsonObject.identifier),
 			fields: {
 				child: [
 					{
@@ -151,12 +151,12 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	[
 		"nested object",
 		{
-			type: brand(JsonObject.identifier),
+			type: brand(JsonAsTree.JsonObject.identifier),
 			fields: {
 				X: [
 					{ type: emptyObjectIdentifier2 },
 					{
-						type: brand(JsonObject.identifier),
+						type: brand(JsonAsTree.JsonObject.identifier),
 						fields: {
 							child: [
 								{
@@ -174,7 +174,7 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	[
 		"longer sequence",
 		{
-			type: brand(JsonObject.identifier),
+			type: brand(JsonAsTree.JsonObject.identifier),
 			fields: {
 				X: [
 					{ type: emptyObjectIdentifier3 },
@@ -418,7 +418,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 				: builder.withKeys.bind(builder.withKeys)
 			: (keys: FieldKey[]) => {
 					const root: JsonableTree = {
-						type: brand(JsonObject.identifier),
+						type: brand(JsonAsTree.JsonObject.identifier),
 					};
 					for (const key of keys) {
 						const child: JsonableTree = {
@@ -528,7 +528,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 
 				it("first node in a root field", () => {
 					const cursor = factory({
-						type: brand(JsonObject.identifier),
+						type: brand(JsonAsTree.JsonObject.identifier),
 						fields: { key: [{ type: brand(numberSchema.identifier), value: 0 }] },
 					});
 					cursor.enterField(brand("key"));
@@ -542,7 +542,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 
 				it("node in a root field", () => {
 					const cursor = factory({
-						type: brand(JsonObject.identifier),
+						type: brand(JsonAsTree.JsonObject.identifier),
 						fields: {
 							key: [
 								{ type: brand(numberSchema.identifier), value: 0 },
@@ -561,15 +561,15 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 
 				it("in a nested field", () => {
 					const cursor = factory({
-						type: brand(JsonObject.identifier),
+						type: brand(JsonAsTree.JsonObject.identifier),
 						fields: {
 							a: [
 								{
-									type: brand(JsonObject.identifier),
+									type: brand(JsonAsTree.JsonObject.identifier),
 									fields: { [EmptyKey]: [{ type: emptyObjectIdentifier }] },
 								},
 								{
-									type: brand(JsonObject.identifier),
+									type: brand(JsonAsTree.JsonObject.identifier),
 									fields: { [EmptyKey]: [{ type: emptyObjectIdentifier }] },
 								},
 							],

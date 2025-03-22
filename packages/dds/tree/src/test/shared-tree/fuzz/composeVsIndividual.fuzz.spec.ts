@@ -8,7 +8,7 @@ import { strict as assert, fail } from "node:assert";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	type AsyncGenerator,
-	combineReducersAsync,
+	combineReducers,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import {
@@ -18,12 +18,7 @@ import {
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 
-import {
-	SharedTreeTestFactory,
-	toJsonableTree,
-	validateTree,
-	viewCheckout,
-} from "../../utils.js";
+import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils.js";
 
 import {
 	type EditGeneratorOpWeights,
@@ -32,9 +27,9 @@ import {
 	type FuzzView,
 	makeOpGenerator,
 	viewFromState,
-	simpleSchemaFromStoredSchema,
 } from "./fuzzEditGenerators.js";
 import {
+	applyForkMergeOperation,
 	applyConstraint,
 	applyFieldEdit,
 	applySynchronizationOp,
@@ -44,10 +39,8 @@ import {
 	createOnCreate,
 	deterministicIdCompressorFactory,
 	isRevertibleSharedTreeView,
-	nodeSchemaFromTreeSchema,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
-import { TreeViewConfiguration } from "../../../simple-tree/index.js";
 
 /**
  * This interface is meant to be used for tests that require you to store a branch of a tree
@@ -57,11 +50,8 @@ interface BranchedTreeFuzzTestState extends FuzzTestState {
 	branch?: FuzzTransactionView;
 }
 
-const fuzzComposedVsIndividualReducer = combineReducersAsync<
-	Operation,
-	BranchedTreeFuzzTestState
->({
-	treeEdit: async (state, { edit }) => {
+const fuzzComposedVsIndividualReducer = combineReducers<Operation, BranchedTreeFuzzTestState>({
+	treeEdit: (state, { edit }) => {
 		switch (edit.type) {
 			case "fieldEdit": {
 				const tree = state.branch;
@@ -74,26 +64,29 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<
 		}
 		return state;
 	},
-	transactionBoundary: async (state, operation) => {
+	transactionBoundary: (state, operation) => {
 		assert.fail(
 			"Transactions are simulated manually in these tests and should not be generated.",
 		);
 	},
-	undoRedo: async (state, { operation }) => {
+	undoRedo: (state, { operation }) => {
 		const tree = state.main ?? assert.fail();
 		assert(isRevertibleSharedTreeView(tree.checkout));
 		applyUndoRedoEdit(tree.checkout.undoStack, tree.checkout.redoStack, operation);
 		return state;
 	},
-	synchronizeTrees: async (state) => {
+	synchronizeTrees: (state) => {
 		applySynchronizationOp(state);
 		return state;
 	},
-	schemaChange: async (state, operation) => {
+	schemaChange: (state, operation) => {
 		return state;
 	},
-	constraint: async (state, operation) => {
+	constraint: (state, operation) => {
 		applyConstraint(state, operation);
+	},
+	forkMergeOperation: (state, operation) => {
+		return applyForkMergeOperation(state, operation);
 	},
 });
 
@@ -147,18 +140,12 @@ describe("Fuzz - composed vs individual changes", () => {
 		emitter.on("testStart", (initialState: BranchedTreeFuzzTestState) => {
 			initialState.main = viewFromState(initialState, initialState.clients[0]);
 
-			const branchCheckout = initialState.main.checkout.branch();
-			const treeSchema = simpleSchemaFromStoredSchema(initialState.main.checkout.storedSchema);
-			const branchView = viewCheckout(
-				branchCheckout,
-				new TreeViewConfiguration({ schema: treeSchema }),
-			) as FuzzTransactionView;
+			const forkedView = initialState.main.fork() as unknown as FuzzTransactionView;
+			const treeSchema = initialState.main.currentSchema;
 
-			const nodeSchema = nodeSchemaFromTreeSchema(treeSchema);
-
-			branchView.currentSchema =
-				nodeSchema ?? assert.fail("nodeSchema should not be undefined");
-			initialState.branch = branchView;
+			forkedView.currentSchema =
+				treeSchema ?? assert.fail("nodeSchema should not be undefined");
+			initialState.branch = forkedView;
 			initialState.branch.checkout.transaction.start();
 			initialState.transactionViews?.delete(initialState.clients[0].channel);
 			const transactionViews = new Map();

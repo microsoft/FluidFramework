@@ -100,6 +100,15 @@ export interface LatestMapValueManagerEvents<T, K extends string | number> {
     // @eventProperty
     itemUpdated: (updatedItem: LatestMapItemValueClientData<T, K>) => void;
     // @eventProperty
+    localItemRemoved: (removedItem: {
+        key: K;
+    }) => void;
+    // @eventProperty
+    localItemUpdated: (updatedItem: {
+        value: InternalUtilityTypes.FullyReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+        key: K;
+    }) => void;
+    // @eventProperty
     updated: (updates: LatestMapValueClientData<T, K>) => void;
 }
 
@@ -130,6 +139,10 @@ export interface LatestValueManager<T> {
 
 // @alpha @sealed (undocumented)
 export interface LatestValueManagerEvents<T> {
+    // @eventProperty
+    localUpdated: (update: {
+        value: InternalUtilityTypes.FullyReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+    }) => void;
     // @eventProperty
     updated: (update: LatestValueClientData<T>) => void;
 }

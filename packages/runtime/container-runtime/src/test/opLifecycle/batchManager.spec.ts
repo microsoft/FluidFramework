@@ -228,4 +228,68 @@ describe("BatchManager", () => {
 		);
 		assert.equal(batchManager.popBatch().hasReentrantOps, false);
 	});
+
+	it("should rollback to checkpoint correctly", () => {
+		const batchManager = new BatchManager(defaultOptions);
+
+		// Push initial messages
+		batchManager.push(smallMessage(), /* reentrant */ false);
+		batchManager.push(smallMessage(), /* reentrant */ false);
+
+		// Create checkpoint
+		const checkpoint = batchManager.checkpoint();
+
+		// Push more messages
+		batchManager.push(smallMessage(), /* reentrant */ false);
+		batchManager.push(smallMessage(), /* reentrant */ false);
+
+		// Rollback to checkpoint
+		checkpoint.rollback((message) => {
+			// Process rollback message (no-op in this test)
+		});
+
+		// Verify state after rollback
+		assert.equal(batchManager.length, 2);
+		assert.equal(batchManager.contentSizeInBytes, smallMessageSize * 2);
+	});
+
+	it("should handle rollback with no additional messages", () => {
+		const batchManager = new BatchManager(defaultOptions);
+
+		// Push initial messages
+		batchManager.push(smallMessage(), /* reentrant */ false);
+
+		// Create checkpoint
+		const checkpoint = batchManager.checkpoint();
+
+		// Rollback to checkpoint without pushing more messages
+		checkpoint.rollback((message) => {
+			// Process rollback message (no-op in this test)
+		});
+
+		// Verify state after rollback
+		assert.equal(batchManager.length, 1);
+		assert.equal(batchManager.contentSizeInBytes, smallMessageSize);
+	});
+
+	it("should throw error if ops are generated during rollback", () => {
+		const batchManager = new BatchManager(defaultOptions);
+
+		// Push initial messages
+		batchManager.push(smallMessage(), /* reentrant */ false);
+
+		// Create checkpoint
+		const checkpoint = batchManager.checkpoint();
+
+		// Push more messages
+		batchManager.push(smallMessage(), /* reentrant */ false);
+
+		// Attempt rollback and generate ops during rollback
+		assert.throws(() => {
+			checkpoint.rollback((message) => {
+				// Generate ops during rollback
+				batchManager.push(smallMessage(), /* reentrant */ false);
+			});
+		}, /Error: Ops generated durning rollback/);
+	});
 });

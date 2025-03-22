@@ -33,7 +33,6 @@ export {
 export type {
 	ProtoNodes,
 	Root as DeltaRoot,
-	ProtoNode as DeltaProtoNode,
 	Mark as DeltaMark,
 	DetachedNodeId as DeltaDetachedNodeId,
 	FieldMap as DeltaFieldMap,
@@ -49,6 +48,9 @@ export {
 	topDownPath,
 	getDepth,
 	type UpPath,
+	type NormalizedUpPath,
+	type INormalizedUpPath,
+	type NormalizedFieldUpPath,
 	type FieldUpPath,
 	type Range,
 	type RangeUpPath,
@@ -57,6 +59,7 @@ export {
 	type NodeIndex,
 	compareUpPaths,
 	compareFieldUpPaths,
+	isDetachedUpPathRoot as isDetachedUpPath,
 	getDetachedFieldContainingPath,
 	type UpPathDefault,
 } from "./pathTree.js";

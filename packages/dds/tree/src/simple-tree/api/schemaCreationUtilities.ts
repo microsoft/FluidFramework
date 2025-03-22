@@ -138,7 +138,7 @@ export function adaptEnum<
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	const factoryOut = <TValue extends Values>(value: TValue) => {
 		return new out[
-			inverse.get(value) ?? fail("missing enum value")
+			inverse.get(value) ?? fail(0xb31 /* missing enum value */)
 			// "extends unknown" is required here to handle when TValue is an union: each member of the union should be processed independently.
 		]() as TValue extends unknown
 			? NodeFromSchema<ReturnType<typeof singletonSchema<TScope, TValue>>>

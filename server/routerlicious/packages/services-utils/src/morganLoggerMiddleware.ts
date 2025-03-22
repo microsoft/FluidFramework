@@ -173,6 +173,7 @@ export function jsonMorganLoggerMiddleware(
 				[HttpProperties.responseTime]: tokens["response-time"](req, res),
 				[HttpProperties.httpVersion]: tokens["http-version"](req, res),
 				[HttpProperties.scheme]: tokens.scheme(req, res),
+				[HttpProperties.hostName]: req.hostname ?? "HOSTNAME_UNAVAILABLE",
 				[BaseTelemetryProperties.correlationId]: getTelemetryContextPropertiesWithHttpInfo(
 					req,
 					res,

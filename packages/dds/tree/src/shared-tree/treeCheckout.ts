@@ -47,7 +47,7 @@ import {
 	type FieldBatchCodec,
 	type TreeCompressionStrategy,
 	buildForest,
-	createNodeKeyManager,
+	createNodeIdentifierManager,
 	intoDelta,
 	jsonableTreeFromCursor,
 	makeFieldBatchCodec,
@@ -524,7 +524,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					// original (reinstated) schema.
 					this.storedSchema.apply(change.innerChange.schema.new);
 				} else {
-					fail("Unknown Shared Tree change type.");
+					fail(0xad1 /* Unknown Shared Tree change type. */);
 				}
 			}
 		}
@@ -662,7 +662,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		const view = new SchematizingSimpleTreeView(
 			this,
 			config,
-			createNodeKeyManager(this.idCompressor),
+			createNodeIdentifierManager(this.idCompressor),
 			() => {
 				this.views.delete(view);
 			},

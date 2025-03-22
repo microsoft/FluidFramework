@@ -31,19 +31,18 @@
 		"build:examples": "tsc -p examples/tsconfig.json",
 		"build:readme": "markdown-magic --files \"**/*.md\"",
 		"build:tsc": "npm run tsc",
+		"check:biome": "biome check .",
+		"check:format": "npm run check:biome",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../_api-extractor-temp/",
 		"clean": "rimraf --glob _api-extractor-temp nyc dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
-		"format": "npm run prettier:fix",
+		"format": "npm run format:biome",
 		"format-and-build": "npm run format && npm run build",
-		"good-fences": "gf",
-		"lint": "npm run prettier && npm run good-fences && npm run eslint",
-		"lint:fences": "npm run good-fences",
-		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
-		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
+		"format:biome": "biome check . --write",
+		"lint": "npm run eslint",
+		"lint:fix": "npm run eslint:fix",
 		"rebuild": "npm run clean && npm run build",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test:mocha",
@@ -85,10 +84,11 @@
 		"unist-util-remove-position": "^5.0.0"
 	},
 	"devDependencies": {
-		"@fluid-internal/mocha-test-setup": "~2.0.0-rc.3.0.3",
+		"@biomejs/biome": "^1.7.3",
+		"@fluid-internal/mocha-test-setup": "~2.23.0",
 		"@fluid-tools/markdown-magic": "file:../markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.44.0",
+		"@fluidframework/build-tools": "^0.54.0",
 		"@fluidframework/eslint-config-fluid": "^5.5.1",
 		"@microsoft/api-extractor": "^7.45.1",
 		"@types/chai": "^4.3.4",
@@ -105,29 +105,19 @@
 		"eslint": "~8.55.0",
 		"eslint-plugin-chai-expect": "^3.0.0",
 		"eslint-plugin-chai-friendly": "^0.7.2",
-		"good-fences": "^1.2.0",
-		"mocha": "^10.2.0",
+		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
-		"moment": "^2.29.4",
 		"prettier": "~3.0.3",
 		"rimraf": "^5.0.0",
 		"typescript": "~5.1.6"
 	},
-	"packageManager": "pnpm@9.15.3+sha512.1f79bc245a66eb0b07c5d4d83131240774642caaa86ef7d0434ab47c0d16f66b04e21e0c086eb61e62c77efc4d7f7ec071afad3796af64892fae66509173893a",
+	"packageManager": "pnpm@9.15.7+sha512.ed98f9c748442673c46964b70345bd2282c9b305e8eae539b34ab31d6ef24ef8dd59d8b55f27466f705500b009d9c113471cf87e544f3d5036b297330c26e996",
 	"fluidBuild": {
 		"tasks": {
 			"tsc": [
 				"^build:esnext",
 				"^tsc"
 			]
-		}
-	},
-	"pnpm": {
-		"comments": [
-			"nodegit is replaced with an empty package here because it's currently only used by good-fences for features we do not need, and has issues building when changing node versions. See https://github.com/smikula/good-fences/issues/105 for details."
-		],
-		"overrides": {
-			"nodegit": "npm:empty-npm-package@1.0.0"
 		}
 	}
 }

@@ -70,12 +70,6 @@ export interface IFluidModuleWithDetails {
     module: IFluidModule;
 }
 
-// @alpha @deprecated (undocumented)
-export interface ILoaderOptions extends ILoaderOptions_2 {
-    // @deprecated (undocumented)
-    summarizeProtocolTree?: boolean;
-}
-
 // @alpha
 export interface ILoaderProps {
     readonly codeLoader: ICodeDetailsLoader;

@@ -15,13 +15,15 @@ import {
 import {
 	customFromCursor,
 	customFromCursorStored,
+	replaceHandles,
 	tryStoredSchemaAsArray,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/customTree.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
-import { JsonUnion, singleJsonCursor } from "../../json/index.js";
+import { singleJsonCursor } from "../../json/index.js";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 
 const schemaFactory = new SchemaFactory("Test");
 
@@ -29,8 +31,8 @@ describe("simple-tree customTree", () => {
 	const handle = new MockHandle(1);
 	describe("customFromCursor", () => {
 		it("leaf", () => {
-			const schema = getUnhydratedContext(JsonUnion).schema;
-			const leaf_options = { useStoredKeys: true, valueConverter: () => fail("unused") };
+			const schema = getUnhydratedContext(JsonAsTree.Tree).schema;
+			const leaf_options = { useStoredKeys: true };
 			assert.equal(
 				customFromCursor(singleJsonCursor(null), leaf_options, schema, () => fail()),
 				null,
@@ -39,23 +41,6 @@ describe("simple-tree customTree", () => {
 				customFromCursor(singleJsonCursor(5), leaf_options, schema, () => fail()),
 				5,
 			);
-			const log: unknown[] = [];
-			assert.equal(
-				customFromCursor(
-					cursorFromInsertable(schemaFactory.handle, handle),
-					{
-						useStoredKeys: true,
-						valueConverter: (h) => {
-							log.push(h);
-							return "replaced";
-						},
-					},
-					getUnhydratedContext(schemaFactory.handle).schema,
-					() => fail(),
-				),
-				"replaced",
-			);
-			assert.deepEqual(log, [handle]);
 		});
 
 		it("useStoredKeys", () => {
@@ -70,7 +55,6 @@ describe("simple-tree customTree", () => {
 					cursorFromInsertable(A, { a: 1, b: 2 }),
 					{
 						useStoredKeys: true,
-						valueConverter: () => fail(),
 					},
 					schema,
 					(cursor) => ({ child: cursor.value }),
@@ -83,7 +67,6 @@ describe("simple-tree customTree", () => {
 					cursorFromInsertable(A, { a: 1, b: 2 }),
 					{
 						useStoredKeys: false,
-						valueConverter: () => fail(),
 					},
 					schema,
 					(cursor) => ({ child: cursor.value }),
@@ -111,7 +94,7 @@ describe("simple-tree customTree", () => {
 	});
 
 	it("customFromCursorStored", () => {
-		const schema = toStoredSchema(JsonUnion).nodeSchema;
+		const schema = toStoredSchema(JsonAsTree.Tree).nodeSchema;
 		assert.equal(
 			customFromCursorStored(singleJsonCursor(null), schema, () => fail()),
 			null,
@@ -120,5 +103,22 @@ describe("simple-tree customTree", () => {
 			customFromCursorStored(singleJsonCursor(5), schema, () => fail()),
 			5,
 		);
+	});
+
+	describe("replaceHandles", () => {
+		it("no handles", () => {
+			const tree = { x: { b: 1 } };
+			const clone = replaceHandles(tree, () => {
+				fail();
+			});
+			assert.notEqual(clone, tree);
+			assert.deepEqual(clone, tree);
+		});
+
+		it("handles", () => {
+			const tree = { x: { b: new MockHandle(1) } };
+			const clone = replaceHandles(tree, () => "handle");
+			assert.deepEqual(clone, { x: { b: "handle" } });
+		});
 	});
 });

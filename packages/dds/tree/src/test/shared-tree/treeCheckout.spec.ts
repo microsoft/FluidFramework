@@ -12,15 +12,15 @@ import {
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	type FieldUpPath,
 	type Revertible,
 	rootFieldKey,
 	RevertibleStatus,
 	CommitKind,
 	EmptyKey,
 	type RevertibleFactory,
+	type NormalizedFieldUpPath,
 } from "../../core/index.js";
-import { FieldKinds, cursorForJsonableTreeField } from "../../feature-libraries/index.js";
+import { FieldKinds } from "../../feature-libraries/index.js";
 import {
 	getBranch,
 	Tree,
@@ -31,6 +31,7 @@ import {
 } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
+	chunkFromJsonableTrees,
 	createTestUndoRedoStacks,
 	expectSchemaEqual,
 	getView,
@@ -56,7 +57,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
 
-const rootField: FieldUpPath = {
+const rootField: NormalizedFieldUpPath = {
 	parent: undefined,
 	field: rootFieldKey,
 };
@@ -157,7 +158,7 @@ describe("sharedTreeView", () => {
 
 			it("is fired for data and schema changes", () => {
 				const provider = new TestTreeProviderLite(1);
-				const checkout = provider.trees[0].checkout;
+				const checkout = provider.trees[0].kernel.checkout;
 
 				const log: string[] = [];
 				const unsubscribe = checkout.events.on("changed", () => log.push("changed"));
@@ -171,7 +172,7 @@ describe("sharedTreeView", () => {
 				checkout.editor
 					.optionalField(rootField)
 					.set(
-						cursorForJsonableTreeField([{ type: brand(stringSchema.identifier), value: "A" }]),
+						chunkFromJsonableTrees([{ type: brand(stringSchema.identifier), value: "A" }]),
 						true,
 					);
 
@@ -185,7 +186,7 @@ describe("sharedTreeView", () => {
 
 			it("does not allow schema changes to be reverted", () => {
 				const provider = new TestTreeProviderLite(1);
-				const checkout = provider.trees[0].checkout;
+				const checkout = provider.trees[0].kernel.checkout;
 
 				const log: string[] = [];
 				const unsubscribe = checkout.events.on("changed", (data, getRevertible) =>
@@ -198,7 +199,7 @@ describe("sharedTreeView", () => {
 				checkout.editor
 					.optionalField(rootField)
 					.set(
-						cursorForJsonableTreeField([{ type: brand(stringSchema.identifier), value: "A" }]),
+						chunkFromJsonableTrees([{ type: brand(stringSchema.identifier), value: "A" }]),
 						true,
 					);
 				checkout.updateSchema(toStoredSchema(OptionalString));
@@ -507,7 +508,7 @@ describe("sharedTreeView", () => {
 			const sf = new SchemaFactory("edits submitted schema");
 			const provider = new TestTreeProviderLite(2);
 			const branch1 = getBranch(provider.trees[0]);
-			const view1 = provider.trees[0].viewWith(
+			const view1 = provider.trees[0].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: sf.array(sf.string),
 					enableSchemaValidation,
@@ -515,7 +516,7 @@ describe("sharedTreeView", () => {
 			);
 			view1.initialize([]);
 			provider.processMessages();
-			const tree2 = provider.trees[1].viewWith(
+			const tree2 = provider.trees[1].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: sf.array(sf.string),
 					enableSchemaValidation,
@@ -541,7 +542,7 @@ describe("sharedTreeView", () => {
 			const provider = new TestTreeProviderLite(2);
 			const tree1 = provider.trees[0];
 			const branch1 = getBranch(tree1);
-			const view1 = tree1.viewWith(
+			const view1 = tree1.kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: sf.array(sf.string),
 					enableSchemaValidation,
@@ -565,7 +566,7 @@ describe("sharedTreeView", () => {
 		it("cannot create a second view from an uninitialized simple tree view's checkout", () => {
 			const sf = new SchemaFactory("schema1");
 			const provider = new TestTreeProviderLite(1);
-			const view1 = provider.trees[0].viewWith(
+			const view1 = provider.trees[0].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: sf.array(sf.string),
 					enableSchemaValidation,
@@ -576,7 +577,7 @@ describe("sharedTreeView", () => {
 			// created yet which has its own validation.
 			assert.throws(
 				() =>
-					provider.trees[0].viewWith(
+					provider.trees[0].kernel.viewWith(
 						new TreeViewConfiguration({
 							schema: sf.array(sf.string),
 							enableSchemaValidation,
@@ -589,7 +590,7 @@ describe("sharedTreeView", () => {
 		it("cannot create a second view from an initialized simple tree view's checkout", () => {
 			const sf = new SchemaFactory("schema1");
 			const provider = new TestTreeProviderLite(1);
-			const view1 = provider.trees[0].viewWith(
+			const view1 = provider.trees[0].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: sf.array(sf.string),
 					enableSchemaValidation,
@@ -600,7 +601,7 @@ describe("sharedTreeView", () => {
 
 			assert.throws(
 				() =>
-					provider.trees[0].viewWith(
+					provider.trees[0].kernel.viewWith(
 						new TreeViewConfiguration({
 							schema: sf.array(sf.string),
 							enableSchemaValidation,
@@ -859,7 +860,7 @@ describe("sharedTreeView", () => {
 			// Create and initialize a view.
 			const sf1 = new SchemaFactory("schema1");
 			const schema1 = sf1.array(sf1.string);
-			const view1 = provider.trees[0].viewWith(
+			const view1 = provider.trees[0].kernel.viewWith(
 				new TreeViewConfiguration({ schema: schema1, enableSchemaValidation }),
 			);
 			view1.initialize(["A", "B"]);
@@ -885,10 +886,10 @@ describe("sharedTreeView", () => {
 		const schema1 = sf1.array([sf1.string, sf1.number]);
 
 		const provider = new TestTreeProviderLite(2);
-		const view1 = provider.trees[0].viewWith(
+		const view1 = provider.trees[0].kernel.viewWith(
 			new TreeViewConfiguration({ schema: schema1, enableSchemaValidation }),
 		);
-		const view2 = provider.trees[1].viewWith(
+		const view2 = provider.trees[1].kernel.viewWith(
 			new TreeViewConfiguration({ schema: schema1, enableSchemaValidation }),
 		);
 
@@ -923,19 +924,19 @@ describe("sharedTreeView", () => {
 		assert.equal(view2.checkout.getRemovedRoots().length, 2);
 
 		const sf2 = new SchemaFactory("schema2");
-		provider.trees[0].checkout.updateSchema(toStoredSchema(sf2.array(sf1.number)));
+		provider.trees[0].kernel.checkout.updateSchema(toStoredSchema(sf2.array(sf1.number)));
 
 		// The undo stack contains the removal of A but not the schema change
 		assert.equal(checkout1Revertibles.undoStack.length, 1);
 		assert.equal(checkout1Revertibles.redoStack.length, 1);
-		assert.deepEqual(provider.trees[0].checkout.getRemovedRoots().length, 2);
+		assert.deepEqual(provider.trees[0].kernel.checkout.getRemovedRoots().length, 2);
 
 		provider.processMessages();
 
 		assert.equal(checkout2Revertibles.undoStack.length, 1);
 		assert.equal(checkout2Revertibles.redoStack.length, 1);
 		// trunk trimming causes a removed root to be garbage collected
-		assert.deepEqual(provider.trees[1].checkout.getRemovedRoots().length, 1);
+		assert.deepEqual(provider.trees[1].kernel.checkout.getRemovedRoots().length, 1);
 
 		checkout1Revertibles.unsubscribe();
 		checkout2Revertibles.unsubscribe();
@@ -951,7 +952,7 @@ describe("sharedTreeView", () => {
 			const oldSchemaConfig = { schema: oldSchema, enableSchemaValidation };
 			const tree1 = provider.trees[0];
 			const branch1 = getBranch(tree1);
-			const view1 = tree1.viewWith(new TreeViewConfiguration(oldSchemaConfig));
+			const view1 = tree1.kernel.viewWith(new TreeViewConfiguration(oldSchemaConfig));
 			view1.initialize(["A", "B", "C"]);
 
 			// Fork the main branch with new schema.
@@ -990,7 +991,7 @@ describe("sharedTreeView", () => {
 			// Create the main branch with old schema.
 			const sf1 = new SchemaFactory("schema1");
 			const oldSchema = sf1.array(sf1.string);
-			const view1 = provider.trees[0].viewWith(
+			const view1 = provider.trees[0].kernel.viewWith(
 				new TreeViewConfiguration({ schema: oldSchema, enableSchemaValidation }),
 			);
 			view1.initialize(["A", "B", "C"]);
@@ -1469,7 +1470,7 @@ function itView<
 		const [tree] = provider.trees;
 		const branch = getBranch(tree);
 		callWithView(fn, (config) => ({
-			view: tree.viewWith(config),
+			view: tree.kernel.viewWith(config),
 			tree: branch,
 			logger: provider.logger,
 		}));

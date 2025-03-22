@@ -8,6 +8,55 @@ import type { TreeNode } from "@fluidframework/tree";
 import type OpenAI from "openai";
 
 /**
+ * Core Debug event type for the ai-collab
+ * @alpha
+ */
+export interface DebugEvent {
+	/**
+	 * The unique id of the debug event.
+	 */
+	id: string;
+	/**
+	 * An id that will be shared across all debug events that originate from the same single execution of ai-collab.
+	 * @remarks This is intended to be used to correlate all debug events that originate from the same execution
+	 */
+	traceId: string;
+	/**
+	 * The name of the debug event.
+	 */
+	eventName: string;
+	/**
+	 * The date and time at which the debug event was created.
+	 */
+	timestamp: string;
+}
+
+/**
+ * A Debug event that marks the start or end of a single core logic flow, such as generated tree edits, planning prompt, etc.
+ * @alpha
+ */
+export interface EventFlowDebugEvent extends DebugEvent {
+	/**
+	 * The name of the particular event flow.
+	 */
+	eventFlowName: string;
+	/**
+	 * The status of the particular event flow.
+	 */
+	eventFlowStatus: "STARTED" | "COMPLETED" | "IN_PROGRESS";
+	/**
+	 * A unique id that will be shared across all debug events that are part of the same event flow.
+	 */
+	eventFlowTraceId: string;
+}
+
+/**
+ * A callback function that can be used to handle debug events that occur during the AI collaboration process.
+ * @alpha
+ */
+export type DebugEventLogHandler = <T extends DebugEvent>(event: T) => unknown;
+
+/**
  * OpenAI client options for the {@link AiCollabOptions} interface.
  *
  * @alpha
@@ -99,9 +148,9 @@ export interface AiCollabOptions {
 	 */
 	readonly validator?: (newContent: TreeNode) => void;
 	/**
-	 * When enabled, the library will console.log information useful for debugging the AI collaboration.
+	 * An optional handler for debug events that occur during the AI collaboration.
 	 */
-	readonly dumpDebugLog?: boolean;
+	readonly debugEventLogHandler?: DebugEventLogHandler;
 }
 
 /**
@@ -139,12 +188,14 @@ export interface AiCollabErrorResponse {
 	 * - 'tooManyErrors' indicates that the LLM made too many errors in a row
 	 * - 'tooManyModelCalls' indicates that the LLM made too many model calls
 	 * - 'aborted' indicates that the AI collaboration was aborted by the user or a limiter
+	 * - 'unexpectedError' indicates that an unexpected error occured
 	 */
 	readonly errorMessage:
 		| "tokenLimitExceeded"
 		| "tooManyErrors"
 		| "tooManyModelCalls"
-		| "aborted";
+		| "aborted"
+		| "unexpectedError";
 	/**
 	 * {@inheritDoc TokenUsage}
 	 */

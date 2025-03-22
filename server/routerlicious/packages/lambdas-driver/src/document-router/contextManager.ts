@@ -121,7 +121,7 @@ export class DocumentContextManager extends EventEmitter {
 			// If head is moving backwards
 			if (head.offset <= this.head.offset) {
 				if (head.offset <= this.lastCheckpoint.offset) {
-					Lumberjack.info(
+					Lumberjack.verbose(
 						"Not updating contextManager head since new head's offset is <= last checkpoint, returning early",
 						{
 							newHeadOffset: head.offset,

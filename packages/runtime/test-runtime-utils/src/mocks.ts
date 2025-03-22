@@ -59,6 +59,7 @@ import {
 	VisibilityState,
 	type ITelemetryContext,
 	type IRuntimeMessageCollection,
+	type IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	getNormalizedObjectStoragePathParts,
@@ -109,17 +110,6 @@ export class MockDeltaConnection implements IDeltaConnection {
 		this.handler?.setConnectionState(connected);
 	}
 
-	/**
-	 * @deprecated - This has been replaced by processMessages
-	 */
-	public process(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	) {
-		this.handler?.process(message, local, localOpMetadata);
-	}
-
 	public processMessages(messageCollection: IRuntimeMessageCollection) {
 		this.handler?.processMessages?.(messageCollection);
 	}
@@ -144,10 +134,6 @@ export interface IMockContainerRuntimePendingMessage {
 	clientSequenceNumber: number;
 	localOpMetadata: unknown;
 }
-
-type IMockContainerRuntimeSequencedIdAllocationMessage = ISequencedDocumentMessage & {
-	contents: IMockContainerRuntimeIdAllocationMessage;
-};
 
 export interface IMockContainerRuntimeIdAllocationMessage {
 	type: "idAllocation";
@@ -196,6 +182,7 @@ const makeContainerRuntimeOptions = (
 export interface IInternalMockRuntimeMessage {
 	content: any;
 	localOpMetadata?: unknown;
+	referenceSequenceNumber?: number;
 }
 
 /**
@@ -218,7 +205,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	/**
 	 * The runtime options this instance is using. See {@link IMockContainerRuntimeOptions}.
 	 */
-	private readonly runtimeOptions: Required<IMockContainerRuntimeOptions>;
+	protected readonly runtimeOptions: Required<IMockContainerRuntimeOptions>;
 
 	constructor(
 		protected readonly dataStoreRuntime: MockFluidDataStoreRuntime,
@@ -274,6 +261,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		const message: IInternalMockRuntimeMessage = {
 			content: messageContent,
 			localOpMetadata,
+			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 		};
 
 		const isAllocationMessage = this.isAllocationMessage(message.content);
@@ -307,10 +295,16 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		return clientSequenceNumber;
 	}
 
-	private isSequencedAllocationMessage(
-		message: ISequencedDocumentMessage,
-	): message is IMockContainerRuntimeSequencedIdAllocationMessage {
-		return this.isAllocationMessage(message.contents);
+	/**
+	 * If the message is an idAllocation message, it will finalize the id range and return true.
+	 * Otherwise, it will return false.
+	 */
+	protected maybeProcessIdAllocationMessage(message: ISequencedDocumentMessage): boolean {
+		if (this.isAllocationMessage(message.contents)) {
+			this.finalizeIdRange(message.contents.contents);
+			return true;
+		}
+		return false;
 	}
 
 	private isAllocationMessage(
@@ -417,6 +411,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			};
 			return {
 				content: allocationOp,
+				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 			};
 		}
 		return undefined;
@@ -428,7 +423,8 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			{
 				clientSequenceNumber,
 				contents: message.content,
-				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+				referenceSequenceNumber:
+					message.referenceSequenceNumber ?? this.deltaManager.lastSequenceNumber,
 				type: MessageType.Operation,
 			},
 		]);
@@ -439,10 +435,17 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		this.deltaManager.process(message);
 		const [local, localOpMetadata] = this.processInternal(message);
 
-		if (this.isSequencedAllocationMessage(message)) {
+		if (this.isAllocationMessage(message.contents)) {
 			this.finalizeIdRange(message.contents.contents);
 		} else {
-			this.dataStoreRuntime.process(message, local, localOpMetadata);
+			const messagesContent: IRuntimeMessagesContent[] = [
+				{
+					contents: message.contents,
+					clientSequenceNumber: message.clientSequenceNumber,
+					localOpMetadata,
+				},
+			];
+			this.dataStoreRuntime.processMessages({ envelope: message, local, messagesContent });
 		}
 	}
 
@@ -460,7 +463,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		this.pendingMessages.push(pendingMessage);
 	}
 
-	private processInternal(message: ISequencedDocumentMessage): [boolean, unknown] {
+	protected processInternal(message: ISequencedDocumentMessage): [boolean, unknown] {
 		let localOpMetadata: unknown;
 		const local = this.clientId === message.clientId;
 		if (local) {
@@ -571,8 +574,8 @@ export class MockContainerRuntimeFactory {
 		this.messages.push(msg as ISequencedDocumentMessage);
 	}
 
-	private lastProcessedMessage: ISequencedDocumentMessage | undefined;
-	private processFirstMessage() {
+	protected lastProcessedMessage: ISequencedDocumentMessage | undefined;
+	protected getFirstMessageToProcess() {
 		assert(this.messages.length > 0, "The message queue should not be empty");
 
 		// Explicitly JSON clone the value to match the behavior of going thru the wire.
@@ -591,6 +594,11 @@ export class MockContainerRuntimeFactory {
 		message.sequenceNumber = this.sequenceNumber;
 		message.minimumSequenceNumber = this.getMinSeq();
 		this.lastProcessedMessage = message;
+		return message;
+	}
+
+	private processFirstMessage() {
+		const message = this.getFirstMessageToProcess();
 		for (const runtime of this.runtimes) {
 			runtime.process(message);
 		}
@@ -1001,31 +1009,10 @@ export class MockFluidDataStoreRuntime
 		return null;
 	}
 
-	/**
-	 * @deprecated - This has been replaced by processMessages
-	 */
-	public process(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	) {
-		this.deltaConnections.forEach((dc) => {
-			dc.process(message, local, localOpMetadata);
-		});
-	}
-
 	public processMessages(messageCollection: IRuntimeMessageCollection) {
-		for (const {
-			contents,
-			localOpMetadata,
-			clientSequenceNumber,
-		} of messageCollection.messagesContent) {
-			this.process(
-				{ ...messageCollection.envelope, contents, clientSequenceNumber },
-				messageCollection.local,
-				localOpMetadata,
-			);
-		}
+		this.deltaConnections.forEach((dc) => {
+			dc.processMessages(messageCollection);
+		});
 	}
 
 	public processSignal(message: any, local: boolean) {

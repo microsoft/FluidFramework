@@ -20,15 +20,15 @@ import { type EncodingTestData, makeEncodingTestSuite } from "../../utils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
 import { SchemaFactory } from "../../../simple-tree/index.js";
-import { jsonPrimitiveSchema, JsonUnion } from "../../json/index.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 
 const codec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
-const schema2 = toStoredSchema(SchemaFactory.optional(jsonPrimitiveSchema));
+const schema2 = toStoredSchema(SchemaFactory.optional(JsonAsTree.Primitive));
 
 const testCases: EncodingTestData<TreeStoredSchema, Format> = {
 	successes: [
-		["json", toStoredSchema(JsonUnion)],
+		["json", toStoredSchema(JsonAsTree.Tree)],
 		["testSchemas", schema2],
 	],
 };

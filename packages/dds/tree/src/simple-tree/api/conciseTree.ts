@@ -8,7 +8,12 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ITreeCursor } from "../../core/index.js";
 import type { TreeLeafValue, ImplicitAllowedTypes } from "../schemaTypes.js";
 import type { TreeNodeSchema } from "../core/index.js";
-import { customFromCursor, type EncodeOptions } from "./customTree.js";
+import {
+	customFromCursor,
+	replaceHandles,
+	type EncodeOptions,
+	type HandleConverter,
+} from "./customTree.js";
 import { getUnhydratedContext } from "../createContext.js";
 
 /**
@@ -36,12 +41,12 @@ export type ConciseTree<THandle = IFluidHandle> =
 /**
  * Used to read a node cursor as a ConciseTree.
  */
-export function conciseFromCursor<TCustom>(
+export function conciseFromCursor(
 	reader: ITreeCursor,
 	rootSchema: ImplicitAllowedTypes,
-	options: EncodeOptions<TCustom>,
-): ConciseTree<TCustom> {
-	const config: Required<EncodeOptions<TCustom>> = {
+	options: EncodeOptions,
+): ConciseTree {
+	const config: Required<EncodeOptions> = {
 		useStoredKeys: false,
 		...options,
 	};
@@ -50,10 +55,22 @@ export function conciseFromCursor<TCustom>(
 	return conciseFromCursorInner(reader, config, schemaMap);
 }
 
-function conciseFromCursorInner<TCustom>(
+function conciseFromCursorInner(
 	reader: ITreeCursor,
-	options: Required<EncodeOptions<TCustom>>,
+	options: Required<EncodeOptions>,
 	schema: ReadonlyMap<string, TreeNodeSchema>,
-): ConciseTree<TCustom> {
+): ConciseTree {
 	return customFromCursor(reader, options, schema, conciseFromCursorInner);
+}
+
+/**
+ * Clones tree, replacing any handles.
+ * @remarks A strongly typed version of {@link replaceHandles}.
+ * @alpha
+ */
+export function replaceConciseTreeHandles<T>(
+	tree: ConciseTree,
+	replacer: HandleConverter<T>,
+): ConciseTree<T> {
+	return replaceHandles(tree, replacer) as ConciseTree<T>;
 }

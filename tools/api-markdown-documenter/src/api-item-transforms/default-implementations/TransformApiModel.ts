@@ -30,7 +30,9 @@ export function transformApiModel(
 	}
 
 	// Filter out packages not wanted per user config
-	const filteredPackages = apiModel.packages.filter((apiPackage) => !config.exclude(apiPackage));
+	const filteredPackages = apiModel.packages.filter(
+		(apiPackage) => !config.exclude(apiPackage),
+	);
 
 	// Render packages table
 	const packagesTableSection = createTableWithHeading(

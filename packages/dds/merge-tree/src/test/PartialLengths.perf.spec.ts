@@ -7,8 +7,9 @@ import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 
 import { MergeTree } from "../mergeTree.js";
 import { MergeTreeDeltaType } from "../ops.js";
-
-import { insertText, markRangeRemoved } from "./testUtils.js";
+import { PriorPerspective } from "../perspective.js";
+import type { OperationStamp } from "../stamps.js";
+import { TextSegment } from "../textSegment.js";
 
 describe("MergeTree partial lengths", () => {
 	const originalIncrementalUpdate: boolean = MergeTree.options.incrementalUpdate;
@@ -24,44 +25,54 @@ describe("MergeTree partial lengths", () => {
 			benchmarkFn: () => {
 				const mergeTree = new MergeTree();
 
+				const clientId = 0;
 				let i = 1;
 				for (; i < 1001; i++) {
-					insertText({
-						mergeTree,
-						pos: 0,
-						refSeq: i,
-						clientId: 0,
+					const stamp: OperationStamp = {
 						seq: i,
-						text: "a",
-						props: undefined,
-						opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
-					});
+						clientId,
+					};
+					mergeTree.insertSegments(
+						0,
+						[TextSegment.make("a")],
+						new PriorPerspective(i, clientId),
+						stamp,
+						{
+							op: { type: MergeTreeDeltaType.INSERT },
+						},
+					);
 				}
 
 				for (; i < 2001; i++) {
-					markRangeRemoved({
-						mergeTree,
-						start: i - 1001,
-						end: i - 1000,
-						refSeq: i,
-						clientId: 0,
+					const stamp: OperationStamp = {
 						seq: i,
-						opArgs: { op: { type: MergeTreeDeltaType.REMOVE } },
-						overwrite: false,
-					});
+						clientId,
+					};
+					mergeTree.markRangeRemoved(
+						i - 1001,
+						i - 1000,
+						new PriorPerspective(i, clientId),
+						stamp,
+						{
+							op: { type: MergeTreeDeltaType.REMOVE },
+						},
+					);
 				}
 
 				for (; i < 3001; i++) {
-					insertText({
-						mergeTree,
-						pos: 0,
-						refSeq: i,
-						clientId: 0,
+					const stamp: OperationStamp = {
 						seq: i,
-						text: "a",
-						props: undefined,
-						opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
-					});
+						clientId,
+					};
+					mergeTree.insertSegments(
+						0,
+						[TextSegment.make("a")],
+						new PriorPerspective(i, clientId),
+						stamp,
+						{
+							op: { type: MergeTreeDeltaType.INSERT },
+						},
+					);
 				}
 			},
 			after: () => {

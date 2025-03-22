@@ -313,7 +313,7 @@ describe("simple-tree types", () => {
 
 				protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
 					log.push(this.name);
-					return getUnhydratedContext(A);
+					return getUnhydratedContext(this as typeof A);
 				}
 			}
 

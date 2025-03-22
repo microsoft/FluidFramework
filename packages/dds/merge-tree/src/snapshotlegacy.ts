@@ -16,11 +16,11 @@ import {
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { NonCollabClient, UnassignedSequenceNumber } from "./constants.js";
+import { NonCollabClient } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
-import { type ISegmentPrivate } from "./mergeTreeNodes.js";
+import { isSegmentLeaf, type ISegmentPrivate } from "./mergeTreeNodes.js";
+import { PriorPerspective } from "./perspective.js";
 import { matchProperties } from "./properties.js";
-import { isInserted, isRemoved } from "./segmentInfos.js";
 import {
 	JsonSegmentSpecs,
 	MergeTreeChunkLegacy,
@@ -195,11 +195,9 @@ export class SnapshotLegacy {
 	extractSync(): ISegmentPrivate[] {
 		const collabWindow = this.mergeTree.collabWindow;
 		const seq = (this.seq = collabWindow.minSeq);
+		const minSeqPerspective = new PriorPerspective(this.seq, NonCollabClient);
 		this.header = {
-			segmentsTotalLength: this.mergeTree.getLength(
-				this.mergeTree.collabWindow.minSeq,
-				NonCollabClient,
-			),
+			segmentsTotalLength: this.mergeTree.getLength(minSeqPerspective),
 			seq: this.mergeTree.collabWindow.minSeq,
 		};
 
@@ -208,14 +206,7 @@ export class SnapshotLegacy {
 		const segs: ISegmentPrivate[] = [];
 		let prev: ISegmentPrivate | undefined;
 		const extractSegment = (segment: ISegmentPrivate): boolean => {
-			if (
-				isInserted(segment) &&
-				segment.seq !== UnassignedSequenceNumber &&
-				segment.seq <= seq &&
-				(!isRemoved(segment) ||
-					segment.removedSeq === UnassignedSequenceNumber ||
-					segment.removedSeq > seq)
-			) {
+			if (isSegmentLeaf(segment) && minSeqPerspective.isSegmentPresent(segment)) {
 				originalSegments += 1;
 				const properties =
 					segment.propertyManager?.getAtSeq(segment.properties, seq) ?? segment.properties;
@@ -230,7 +221,7 @@ export class SnapshotLegacy {
 			return true;
 		};
 
-		this.mergeTree.mapRange(extractSegment, this.seq, NonCollabClient, undefined);
+		this.mergeTree.mapRange(extractSegment, minSeqPerspective, undefined);
 
 		this.segments = [];
 		let totalLength: number = 0;

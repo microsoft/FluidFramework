@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/platform-dependent",
-	"version": "2.22.0",
+	"version": "2.31.0",
 	"private": true,
 	"description": "Helper package that separates code for browser and server.",
 	"homepage": "https://fluidframework.com",
@@ -13,6 +13,15 @@
 	"author": "Microsoft and contributors",
 	"main": "server.js",
 	"browser": "browser.js",
+	"scripts": {
+		"check:biome": "biome check .",
+		"check:format": "npm run check:biome",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --write"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "~1.9.3"
+	},
 	"typeValidation": {
 		"disabled": true,
 		"broken": {},

@@ -496,6 +496,7 @@ export interface OrderedEditSet<TChange = unknown> {
     getIdAtIndex(index: number): EditId;
     // (undocumented)
     getIndexOfId(editId: EditId): number;
+    getLocalEdits(): Iterable<Edit<TChange>>;
     readonly length: number;
     // @deprecated (undocumented)
     tryGetEdit(editId: EditId): Promise<Edit<TChange> | undefined>;

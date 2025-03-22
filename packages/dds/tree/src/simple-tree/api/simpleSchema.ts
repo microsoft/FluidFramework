@@ -7,6 +7,13 @@ import type { ValueSchema } from "../../core/index.js";
 import type { NodeKind } from "../core/index.js";
 import type { FieldKind, FieldSchemaMetadata, NodeSchemaMetadata } from "../schemaTypes.js";
 
+/*
+ * TODO:
+ * - Make TreeNodeSchema implement these interfaces directly.
+ * - Customize their JSON serialization to use these formats or provide some other serialization scheme.
+ * - Promote these to alpha
+ */
+
 /**
  * Base interface for all {@link SimpleNodeSchema} implementations.
  *
@@ -37,9 +44,30 @@ export interface SimpleObjectNodeSchema extends SimpleNodeSchemaBase<NodeKind.Ob
 	/**
 	 * Schemas for each of the object's fields, keyed off of schema's keys.
 	 * @remarks
-	 * Depending on how this schema was exported, the string keys may be either the property keys or the stored keys.
+	 * The keys are the property keys if known, otherwise they are the stored keys.
+	 * @privateRemarks
+	 * TODO: Provide and link a way to translate between the stored keys and the property keys.
+	 * TODO: Consider adding `storedKeysToFields` or something similar to reduce confusion,
+	 * especially if/when TreeNodeSchema for objects implement this and likely provide more maps.
 	 */
-	readonly fields: Record<string, SimpleFieldSchema>;
+	readonly fields: ReadonlyMap<string, SimpleObjectFieldSchema>;
+}
+
+/**
+ * A {@link SimpleNodeSchema} for an object node.
+ * @remarks
+ * The only other case fields are uses in the root schema.
+ *
+ * @internal
+ * @sealed
+ */
+export interface SimpleObjectFieldSchema extends SimpleFieldSchema {
+	/**
+	 * The stored key of the field.
+	 * @remarks
+	 * See {@link FieldProps.key} for more information.
+	 */
+	readonly storedKey: string;
 }
 
 /**

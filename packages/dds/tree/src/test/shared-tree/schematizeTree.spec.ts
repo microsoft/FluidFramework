@@ -15,7 +15,7 @@ import {
 	TreeStoredSchemaRepository,
 	type AnchorSetRootEvents,
 } from "../../core/index.js";
-import { JsonUnion, singleJsonCursor } from "../json/index.js";
+import { singleJsonCursor } from "../json/index.js";
 import {
 	FieldKinds,
 	allowsRepoSuperset,
@@ -49,6 +49,7 @@ import {
 import { toStoredSchema } from "../../simple-tree/toStoredSchema.js";
 import type { Transactor } from "../../shared-tree-core/index.js";
 import { Breakable } from "../../util/index.js";
+import { JsonAsTree } from "../../jsonDomainSchema.js";
 
 const builder = new SchemaFactory("test");
 const root = builder.number;
@@ -200,8 +201,8 @@ describe("schematizeTree", () => {
 				["basic-optional-empty", schema, true],
 				["basic-optional", schema, false],
 				["basic-value", schemaValueRoot, false],
-				["complex-empty", JsonUnion, true],
-				["complex", builder.arrayRecursive("root", JsonUnion), false],
+				["complex-empty", JsonAsTree.Tree, true],
+				["complex", builder.arrayRecursive("root", JsonAsTree.Tree), false],
 			];
 			for (const [name, data, isEmpty] of testCases) {
 				it(name, () => {

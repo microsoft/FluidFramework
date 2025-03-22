@@ -83,10 +83,7 @@ async function start() {
 	const controlPanelDiv = document.getElementById("control-panel") as HTMLDivElement;
 	renderControlPanel(mouseTracker, controlPanelDiv);
 
-	// Setting "fluid*" is just for our test automation
-	/* eslint-disable @typescript-eslint/dot-notation */
-	window["fluidContainerId"] = id;
-	window["fluidSessionId"] = presence.getMyself().sessionId;
+	// Setting "fluid*" and these helpers are just for our test automation
 	const buildAttendeeMap = () => {
 		return [...presence.getAttendees()].reduce((map, a) => {
 			map[a.sessionId] = a.getConnectionStatus();
@@ -107,6 +104,7 @@ async function start() {
 		}
 		return true;
 	};
+	/* eslint-disable @typescript-eslint/dot-notation */
 	window["fluidSessionAttendeeCheck"] = checkAttendees;
 	window["fluidSessionAttendees"] = buildAttendeeMap();
 	window["fluidSessionAttendeeCount"] = presence.getAttendees().size;
@@ -122,6 +120,9 @@ async function start() {
 		window["fluidSessionAttendeeCount"] = presence.getAttendees().size;
 		window["fluidAttendeeDisconnectedCalled"] = true;
 	});
+	window["fluidSessionId"] = presence.getMyself().sessionId;
+	// Always set last as it is used as fence for load completion
+	window["fluidContainerId"] = id;
 	/* eslint-enable @typescript-eslint/dot-notation */
 }
 
