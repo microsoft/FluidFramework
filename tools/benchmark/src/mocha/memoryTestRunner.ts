@@ -116,6 +116,11 @@ export interface MemoryTestObjectProps extends MochaExclusiveOptions, Titled, Be
 	 * Use a lower number to drop the highest/lowest measurements.
 	 */
 	samplePercentageToUse?: number;
+
+	/**
+	 * The baseline memory usage to compare against for the test, which is used to determine if the test regressed.
+	 */
+	baselineMemoryUsage?: number;
 }
 
 /**
@@ -195,10 +200,13 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 		maxRelativeMarginOfError: testObject.maxRelativeMarginOfError ?? 2.5,
 		only: testObject.only ?? false,
 		title: testObject.title,
+		baselineMemoryUsage: testObject.baselineMemoryUsage ?? 0,
 		type: testObject.type ?? BenchmarkType.Measurement,
 		samplePercentageToUse: testObject.samplePercentageToUse ?? 0.95,
 		category: testObject.category ?? "",
 	};
+
+	const ALLOWED_DEVIATION = 5;
 
 	return supportParentProcess({
 		title: qualifiedTitle({ ...testObject, testType: TestType.MemoryUsage }),
@@ -295,6 +303,16 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 						runs < args.minSampleCount ||
 						heapUsedStats.marginOfErrorPercent > args.maxRelativeMarginOfError
 					);
+
+					const avgHeapUsed = heapUsedStats.arithmeticMean;
+					const allowedMemoryUsage =
+						args.baselineMemoryUsage * (1 + ALLOWED_DEVIATION / 100);
+
+					if (avgHeapUsed > allowedMemoryUsage) {
+						throw new Error(
+							`Memory Regression detected for ${testObject.title}: Used ${avgHeapUsed} bytes, exceeding the baseline of ${allowedMemoryUsage} bytes.`,
+						);
+					}
 
 					benchmarkStats.customData["Heap Used Avg"] = {
 						rawValue: heapUsedStats.arithmeticMean,
