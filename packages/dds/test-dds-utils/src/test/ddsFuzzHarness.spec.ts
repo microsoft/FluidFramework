@@ -877,17 +877,22 @@ describe("DDS Fuzz Harness", () => {
 					"test:mocha:base",
 					"--silent",
 					"--",
-					"--reporter=json",
+					"--config",
+					path.join(_dirname, "../../.mocharc.harnessTests.cjs"),
 					path.join(_dirname, `./ddsSuiteCases/${name}.js`),
 				],
 				{
 					env: {
+						// These flags help ensure nothing extraneous is logged to the console in the child test process,
+						// ensuring the output is valid JSON.
 						FLUID_TEST_VERBOSE: undefined,
+						SILENT_TEST_OUTPUT: "1",
 					},
 					encoding: "utf8",
 					reject: false,
 				},
 			);
+
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const testResults: MochaReport = JSON.parse(result.stdout);
 			return testResults;
