@@ -8,7 +8,11 @@ import { fail } from "../../util/index.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import { createFieldSchema, type FieldSchema, type AllowedTypes } from "../schemaTypes.js";
 import { SchemaFactory } from "./schemaFactory.js";
-import type { SimpleFieldSchema, SimpleNodeSchema, SimpleTreeSchema } from "./simpleSchema.js";
+import type {
+	SimpleFieldSchema,
+	SimpleNodeSchema,
+	SimpleTreeSchema,
+} from "../simpleSchema.js";
 
 const factory = new SchemaFactory(undefined);
 
@@ -37,7 +41,10 @@ export function generateSchemaFromSimpleSchema(simple: SimpleTreeSchema): FieldS
 type Context = ReadonlyMap<string, () => TreeNodeSchema>;
 
 function generateFieldSchema(simple: SimpleFieldSchema, context: Context): FieldSchema {
-	return createFieldSchema(simple.kind, generateAllowedTypes(simple.allowedTypes, context));
+	return createFieldSchema(
+		simple.kind,
+		generateAllowedTypes(simple.allowedTypesIdentifiers, context),
+	);
 }
 
 function generateAllowedTypes(allowed: ReadonlySet<string>, context: Context): AllowedTypes {
@@ -54,9 +61,9 @@ function generateNode(id: string, schema: SimpleNodeSchema, context: Context): T
 			return factory.object(id, fields);
 		}
 		case NodeKind.Array:
-			return factory.array(id, generateAllowedTypes(schema.allowedTypes, context));
+			return factory.array(id, generateAllowedTypes(schema.allowedTypesIdentifiers, context));
 		case NodeKind.Map:
-			return factory.map(id, generateAllowedTypes(schema.allowedTypes, context));
+			return factory.map(id, generateAllowedTypes(schema.allowedTypesIdentifiers, context));
 		case NodeKind.Leaf:
 			return (
 				SchemaFactory.leaves.find((leaf) => leaf.identifier === id) ??
