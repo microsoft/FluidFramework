@@ -1010,6 +1010,9 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public processMessages(messageCollection: IRuntimeMessageCollection) {
+		if (this.disposed) {
+			return;
+		}
 		this.deltaConnections.forEach((dc) => {
 			dc.processMessages(messageCollection);
 		});
