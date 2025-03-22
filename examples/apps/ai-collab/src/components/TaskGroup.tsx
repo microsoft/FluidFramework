@@ -10,10 +10,14 @@ import {
 	type ApplyEditSuccess,
 	type Difference,
 	SharedTreeBranchManager,
+	type UiDiff,
+	type ModifyDiff,
+	type InsertDiff,
 } from "@fluidframework/ai-collab/alpha";
 import {
 	CommitKind,
 	RevertibleStatus,
+	Tree,
 	TreeAlpha,
 	type CommitMetadata,
 	type Revertible,
@@ -54,6 +58,7 @@ import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 export function TaskGroup(props: {
 	treeView: TreeView<typeof SharedTreeAppState>;
 	branchDifferences?: Difference[];
+	uiDiffs?: UiDiff[];
 	sharedTreeTaskGroup: SharedTreeTaskGroup;
 }): JSX.Element {
 	const { enqueueSnackbar } = useSnackbar();
@@ -66,6 +71,7 @@ export function TaskGroup(props: {
 	const [isAiTaskRunning, setIsAiTaskRunning] = useState<boolean>(false);
 	const [llmBranchData, setLlmBranchData] = useState<{
 		differences: Difference[];
+		uiDiffs: UiDiff[];
 		originalBranch: TreeViewAlpha<typeof SharedTreeAppState>;
 		aiCollabBranch: TreeViewAlpha<typeof SharedTreeAppState>;
 		newBranchTargetNode: SharedTreeTaskGroup;
@@ -269,8 +275,11 @@ export function TaskGroup(props: {
 			console.log("ai-collab Branch Task Group AFTER:", { ...newBranchTaskGroup });
 			console.log("ai-collab Branch Task Group differences:", taskGroupDifferences);
 
+			console.log("ai-collab Branch Task Group UI diffs V2:", response.uiDiffs);
+
 			setLlmBranchData({
 				differences: taskGroupDifferences,
+				uiDiffs: response.uiDiffs,
 				originalBranch: currentBranch,
 				aiCollabBranch: newBranchTree,
 				newBranchTargetNode: newBranchTaskGroup,
@@ -362,6 +371,7 @@ export function TaskGroup(props: {
 						}}
 						treeView={llmBranchData.aiCollabBranch}
 						differences={llmBranchData.differences}
+						uiDiffs={llmBranchData.uiDiffs}
 						newBranchTargetNode={llmBranchData.newBranchTargetNode}
 					/>
 				)}
@@ -510,6 +520,7 @@ export function TaskGroup(props: {
 			<Stack direction="row" spacing={{ xs: 1, sm: 2 }} useFlexGap sx={{ flexWrap: "wrap" }}>
 				{props.sharedTreeTaskGroup.tasks.map((task) => {
 					const taskDiffs: Difference[] = [];
+
 					for (const diff of props.branchDifferences ?? []) {
 						if (diff.path[0] === "tasks") {
 							if (diff.type !== "CREATE" && diff.objectId === task.id) {
@@ -524,6 +535,39 @@ export function TaskGroup(props: {
 							}
 						}
 					}
+
+					const taskDiffsV2: UiDiff[] = [];
+					const modifyOrInsertDiffs =
+						props.uiDiffs?.filter(
+							(diff) => diff.type === "modify" || diff.type === "insert",
+						) ?? [];
+					for (const diff of modifyOrInsertDiffs.filter((diffz) => {
+						if (
+							diffz.type === "insert" &&
+							(diffz as InsertDiff).path[0]?.shortId === Tree.shortId(task)
+						) {
+							return true;
+						}
+
+						if (
+							diffz.type === "modify" &&
+							(diffz as ModifyDiff).path.length > 1 &&
+							(diffz as ModifyDiff).path[1]?.shortId === Tree.shortId(task)
+						) {
+							return true;
+						}
+						return false;
+					})) {
+						taskDiffsV2.push(diff);
+					}
+
+					if (taskDiffsV2.length > 0) {
+						console.log(
+							`found the following ui diffs targeting task with shortId ${Tree.shortId(task)} and title ${task.title}`,
+							taskDiffsV2,
+						);
+					}
+
 					return (
 						<TaskCard
 							key={task.id}
@@ -594,10 +638,19 @@ function TaskGroupDiffModal(props: {
 	onDecline: () => void;
 	treeView: TreeView<typeof SharedTreeAppState>;
 	differences: Difference[];
+	uiDiffs: UiDiff[];
 	newBranchTargetNode: SharedTreeTaskGroup;
 }): JSX.Element {
-	const { isOpen, onClose, onAccept, onDecline, treeView, differences, newBranchTargetNode } =
-		props;
+	const {
+		isOpen,
+		onClose,
+		onAccept,
+		onDecline,
+		treeView,
+		differences,
+		newBranchTargetNode,
+		uiDiffs,
+	} = props;
 
 	return (
 		<Dialog
@@ -664,6 +717,7 @@ function TaskGroupDiffModal(props: {
 					treeView={treeView}
 					sharedTreeTaskGroup={newBranchTargetNode}
 					branchDifferences={differences}
+					uiDiffs={uiDiffs}
 				/>
 			</Box>
 		</Dialog>

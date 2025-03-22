@@ -12,6 +12,7 @@ export interface AiCollabErrorResponse {
     readonly errorMessage: "tokenLimitExceeded" | "tooManyErrors" | "tooManyModelCalls" | "aborted" | "unexpectedError";
     readonly status: "failure" | "partial-failure";
     readonly tokensUsed: TokenUsage;
+    readonly uiDiffs: UiDiff[];
 }
 
 // @alpha
@@ -38,6 +39,7 @@ export interface AiCollabOptions {
 export interface AiCollabSuccessResponse {
     readonly status: "success";
     readonly tokensUsed: TokenUsage;
+    readonly uiDiffs: UiDiff[];
 }
 
 // @alpha
@@ -64,6 +66,26 @@ export interface ApplyEditSuccess extends EventFlowDebugEvent {
     eventFlowTraceId: string;
     // (undocumented)
     eventName: "APPLIED_EDIT_SUCCESS";
+}
+
+// @alpha
+export interface ArrayRangeRemoveDiff extends UiDiff {
+    nodePaths: NodePath[];
+    removedNodesContents: unknown[];
+    // (undocumented)
+    subType: "remove-array-range";
+    // (undocumented)
+    type: "remove";
+}
+
+// @alpha
+export interface ArraySingleRemoveDiff extends UiDiff {
+    nodePath: NodePath;
+    removedNodeContent: unknown;
+    // (undocumented)
+    subType: "remove-array-single";
+    // (undocumented)
+    type: "remove";
 }
 
 // @alpha
@@ -228,6 +250,14 @@ export interface GenerateTreeEditStarted extends EventFlowDebugEvent {
 }
 
 // @alpha
+export interface InsertDiff extends UiDiff {
+    insertedNodeContent: unknown;
+    nodePath: NodePath;
+    // (undocumented)
+    type: "insert";
+}
+
+// @alpha
 export interface LlmApiCallDebugEvent extends DebugEvent {
     eventFlowTraceId: string;
     // (undocumented)
@@ -244,6 +274,47 @@ export interface LlmApiCallDebugEvent extends DebugEvent {
 
 // @alpha
 export type LlmTreeEdit = Record<string, unknown>;
+
+// @alpha
+export interface ModifyDiff extends UiDiff {
+    newValue: unknown;
+    nodePath: NodePath;
+    oldValue: unknown;
+    // (undocumented)
+    type: "modify";
+}
+
+// @alpha
+export type MoveDiff = MoveSingleDiff | MoveRangeDiff;
+
+// @alpha
+export interface MoveRangeDiff extends UiDiff {
+    destinationNodePath: NodePath;
+    movedNodesContents: unknown[];
+    sourceNodePaths: NodePath[];
+    // (undocumented)
+    subType: "move-range";
+    // (undocumented)
+    type: "move";
+}
+
+// @alpha
+export interface MoveSingleDiff extends UiDiff {
+    destinationNodePath: NodePath;
+    movedNodeContent: unknown;
+    sourceNodePath: NodePath;
+    // (undocumented)
+    subType: "move-single";
+    // (undocumented)
+    type: "move";
+}
+
+// @alpha
+export type NodePath = {
+    shortId: string | number | undefined;
+    schemaIdentifier: string;
+    parentField: string | number;
+}[];
 
 // @alpha
 export type ObjectPath = (string | number)[];
@@ -287,6 +358,19 @@ export interface PlanningPromptStarted extends EventFlowDebugEvent {
 }
 
 // @alpha
+export type RemoveDiff = RemoveFieldDiff | ArraySingleRemoveDiff | ArrayRangeRemoveDiff;
+
+// @alpha
+export interface RemoveFieldDiff extends UiDiff {
+    nodePath: NodePath;
+    removedNodeContent: unknown;
+    // (undocumented)
+    subType: "remove-field";
+    // (undocumented)
+    type: "remove";
+}
+
+// @alpha
 export class SharedTreeBranchManager {
     constructor(params?: {
         objectSchema?: z.Schema;
@@ -327,6 +411,13 @@ export interface TokenLimits {
 export interface TokenUsage {
     inputTokens: number;
     outputTokens: number;
+}
+
+// @alpha
+export interface UiDiff {
+    aiExplanation: string;
+    // (undocumented)
+    type: string;
 }
 
 ```
