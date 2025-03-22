@@ -135,7 +135,7 @@ export const CheckHasRemoteBranchUpToDate: CheckFunction = async (
 		return {
 			message: `Error when checking remote branch. Does the remote branch exist? Full error message:\n${
 				(error as Error).message
-			}`,
+			}\n${(error as Error).stack}`,
 		};
 	}
 
