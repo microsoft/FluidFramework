@@ -584,7 +584,7 @@ extends:
               - name: ONEES_ENFORCED_CODEQL_ENABLED
                 value: 'false'
               - name: NESTED_LIB_DIST
-                value: $[ dependencies.build.outputs['setLibDistArtifactName.NESTED_LIB_DIST']
+                value: $[ dependencies.build.outputs['setLibDistArtifactName.NESTED_LIB_DIST' ]
             steps:
               # Setup
               - checkout: self
@@ -737,7 +737,7 @@ extends:
                 - name: ONEES_ENFORCED_CODEQL_ENABLED
                   value: 'false'
                 - name: NESTED_LIB_DIST
-                  value: $[ dependencies.build.outputs['setLibDistArtifactName.NESTED_LIB_DIST']
+                  value: $[ dependencies.build.outputs['setLibDistArtifactName.NESTED_LIB_DIST' ]
               steps:
                 # Setup
                 - checkout: self
