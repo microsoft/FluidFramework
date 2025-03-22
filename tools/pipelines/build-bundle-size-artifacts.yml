@@ -14,25 +14,20 @@ trigger:
     - lts
     - release/*
 
+variables:
+  - template: /tools/pipelines/templates/include-vars.yml@self
+
 extends:
   template: /tools/pipelines/templates/build-npm-package.yml@self
   parameters:
     publish: false
     taskLint: false
-    taskTest:
-      - ci:test:mocha
-      - ci:test:jest
-      - ci:test:realsvc:local
-      - test:copyresults
-    testResultDirs:
-      - nyc/examples
-      - nyc/experimental
-      - nyc/packages
+    taskTest: [] # No need to run tests in this pipeline
     taskPack: false
     taskBundleAnalysis: true
     taskPublishBundleSizeArtifacts: true
     taskBuildDocs: false
-    testCoverage: true
+    testCoverage: false
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
     buildDirectory: .
