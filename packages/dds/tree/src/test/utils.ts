@@ -452,8 +452,8 @@ export class TestTreeProviderLite {
 	 * messages before calling this method.
 	 * @param flush - Whether or not to flush the messages before processing them. Defaults to true.
 	 * @remarks
-	 * - Trees whose runtime is paused or not connected will queue these messages and not process them. They
-	 * will process the messages when their runtime is unpaused or connected respectively.
+	 * - For trees whose runtime is paused and / or not connected, these messages will not be processed but queued in
+	 * the runtime. Any queued messages will be processed when the runtime is unpaused and connected.
 	 * - Flushing does not preserve the order in which the messages were sent. To do so, tests should
 	 * call flushMessages on individual trees in the order messages were sent.
 	 */
@@ -478,6 +478,8 @@ export class TestTreeProviderLite {
 	/**
 	 * Set the connection state of the given tree.
 	 * @param tree - The tree to set the connection state for.
+	 * @remarks Any messages that are submitted while the tree is disconnected will be resubmitted when it reconnects
+	 * by calling the resubmit function on the tree. Also, the clientId of the runtime changes on reconnection.
 	 */
 	public setConnected(tree: Pick<ISharedTree, "id">, connectionState: boolean): void {
 		const containerRuntime = this.containerRuntimeMap.get(tree.id);
@@ -488,6 +490,8 @@ export class TestTreeProviderLite {
 	/**
 	 * Pauses the processing of messages for the given tree.
 	 * @param tree - The tree to pause processing for.
+	 * @remarks Unlike during reconnection, messages that are submitted while the tree is paused will not be
+	 * resubmitted when it unpauses.
 	 */
 	public pauseProcessing(tree: Pick<ISharedTree, "id">): void {
 		const containerRuntime = this.containerRuntimeMap.get(tree.id);
@@ -498,7 +502,10 @@ export class TestTreeProviderLite {
 	/**
 	 * Resumes the processing of messages for the given tree.
 	 * @param tree - The tree to resume processing for.
-	 * @remarks This will process the messages that were received while the tree was paused.
+	 * @remarks This will process the messages that were received while the tree was paused. Note that if the tree is
+	 * not connected, then messages will not be processed - See `setConnected` function.
+	 * Unlike during reconnection, messages that were submitted while the tree was paused will not be resubmitted
+	 * when it unpauses.
 	 */
 	public resumeProcessing(tree: Pick<ISharedTree, "id">): void {
 		const containerRuntime = this.containerRuntimeMap.get(tree.id);
