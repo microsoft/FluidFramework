@@ -20,7 +20,7 @@ import {
 	TreeCompressionStrategy,
 	jsonableTreeFromCursor,
 } from "../../feature-libraries/index.js";
-import { Tree, type CheckoutFlexTreeView } from "../../shared-tree/index.js";
+import { Tree, type CheckoutFlexTreeView, type ISharedTree } from "../../shared-tree/index.js";
 import {
 	type JSDeepTree,
 	type JSWideTree,
@@ -401,7 +401,7 @@ describe("SharedTree benchmarks", () => {
 							// This block generates commits that are all out of date to the same degree
 							for (let iCommit = 0; iCommit < commitCount; iCommit++) {
 								for (let iPeer = 0; iPeer < peerCount; iPeer++) {
-									provider.processMessages(opsPerCommit);
+									provider.processSomeMessages(opsPerCommit);
 									const peer = provider.trees[iPeer];
 									insert(peer.kernel.checkout, 0, `p${iPeer}c${iCommit}`);
 								}
@@ -414,7 +414,7 @@ describe("SharedTree benchmarks", () => {
 							for (let iCommit = 0; iCommit < sampleSize; iCommit++) {
 								for (let iPeer = 0; iPeer < peerCount; iPeer++) {
 									const before = state.timer.now();
-									provider.processMessages(opsPerCommit);
+									provider.processSomeMessages(opsPerCommit);
 									const after = state.timer.now();
 									timeSum += state.timer.toSeconds(before, after);
 									// We still generate commits because it affects local branch rebasing
@@ -440,11 +440,12 @@ describe("SharedTree benchmarks", () => {
 
 	// In this context "op bunch" refers to a group of ops for the same DDS that are sent by a peer in a single message.
 	describe("Op Bunching", () => {
-		function setup(
-			receiverCommitCount: number,
-			senderCommitCount: number,
-			disconnectReceiver: boolean = false,
-		) {
+		/**
+		 * Helper function to setup the sender and receiver trees for the op bunching benchmarks.
+		 * @remarks It pauses the processing of both sender and receiver to enable the test to control when the
+		 * messages are processed.
+		 */
+		function setupSenderAndReceiver() {
 			const provider = new TestTreeProviderLite(
 				2,
 				factory,
@@ -453,19 +454,49 @@ describe("SharedTree benchmarks", () => {
 			);
 			const sender = provider.trees[0];
 			const receiver = provider.trees[1];
-			if (disconnectReceiver) {
-				receiver.setConnected(false);
-			}
-			for (let iCommit = 0; iCommit < receiverCommitCount; iCommit++) {
-				insert(receiver.kernel.checkout, 0, `r${iCommit}`);
-			}
-			// These are the commits that should be bunched together
-			for (let iCommit = 0; iCommit < senderCommitCount; iCommit++) {
-				insert(sender.kernel.checkout, 0, `s${iCommit}`);
-			}
-
+			provider.pauseProcessing(sender);
+			provider.pauseProcessing(receiver);
 			return { provider, sender, receiver };
 		}
+
+		/**
+		 * Helper function to send local commits from a given tree.
+		 */
+		function sendLocalCommits(tree: ISharedTree, count: number, commitPrefix: string) {
+			for (let iCommit = 0; iCommit < count; iCommit++) {
+				insert(tree.kernel.checkout, 0, `${commitPrefix}${iCommit}`);
+			}
+		}
+
+		/**
+		 * Helper function to sequence all the existing commits on the given tree, i.e., commits that
+		 * were sent but not sequenced.
+		 */
+		function sequenceExistingCommits(tree: ISharedTree, provider: TestTreeProviderLite) {
+			provider.flushMessages(tree);
+		}
+
+		/**
+		 * Helper function that sends and sequences local commits from a given tree.
+		 */
+		function sequenceLocalCommits(
+			tree: ISharedTree,
+			count: number,
+			commitPrefix: string,
+			provider: TestTreeProviderLite,
+		) {
+			sendLocalCommits(tree, count, commitPrefix);
+			provider.flushMessages(tree);
+		}
+
+		/**
+		 * Helper function that processes all sequenced commits on a given tree.
+		 */
+		function receiveSequencedCommits(tree: ISharedTree, provider: TestTreeProviderLite) {
+			provider.resumeProcessing(tree);
+			provider.processMessages(false /* flush */);
+		}
+
 		describe("Rebasing inbound bunch over local changes", () => {
 			// The number of commits in a bunch for a given run of this test suite.
 			const bunchSizes = isInPerformanceTestingMode ? [1, 10, 100] : [2];
@@ -498,23 +529,20 @@ describe("SharedTree benchmarks", () => {
 						benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
 							let duration: number;
 							do {
-								// Since this setup one collects data from one iteration, assert that this is what is expected.
+								// Since this setup collects data from one iteration, assert that this is what is expected.
 								assert.equal(state.iterationsPerBatch, 1);
-								// Add commits to the receiver's local branch but prevent them from being sent in order to ensure they remain on the local branch
-								const { provider, sender, receiver } = setup(
-									localBranchSize,
-									bunchSize,
-									true /* disconnectReceiver */,
-								);
 
-								// Ensure the sender has sent the ops
-								provider.processMessages();
-								// Prevent the sender from receiving anything else since we only want to measure the rebase on the receiver
-								sender.setConnected(false);
+								const { provider, sender, receiver } = setupSenderAndReceiver();
+								// Send local commits from the receiver but don't sequence them because we want them to be
+								// in the local branch.
+								sendLocalCommits(receiver, localBranchSize, "r");
+								// These are the commits that should be bunched together
+								sequenceLocalCommits(sender, bunchSize, "s", provider);
+
 								const before = state.timer.now();
-								// Allow the receiver to receive the bunched commits.
-								// This should force the local branch to be rebased over the bunch.
-								receiver.setConnected(true);
+								// Resume the receiver to process the bunched commits. This should force the local branch to be rebased over the bunch.
+								// The receiver will not process its local commits since they are never flushed.
+								receiveSequencedCommits(receiver, provider);
 								const after = state.timer.now();
 								duration = state.timer.toSeconds(before, after);
 							} while (state.recordBatch(duration));
@@ -542,15 +570,27 @@ describe("SharedTree benchmarks", () => {
 						benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
 							let duration: number;
 							do {
-								// Since this setup one collects data from one iteration, assert that this is what is expected.
+								// Since this setup collects data from one iteration, assert that this is what is expected.
 								assert.equal(state.iterationsPerBatch, 1);
-								const { provider, receiver } = setup(localTrunkSize, bunchSize);
-								// Dispose the receiver so that it doesn't process the messages since we only want to measure the
-								// rebase on the sender
-								receiver.dispose();
+
+								const { provider, sender, receiver } = setupSenderAndReceiver();
+								// These are the commits that will be in the trunk.
+								sequenceLocalCommits(receiver, localTrunkSize, "r", provider);
+								// Send local commits from the sender but don't sequence them yet. We want them to be
+								// sequenced after the receiver has received its local commits and they are in its trunk.
+								// These are sent before the receiver's commits are processed so that their reference
+								// sequence number is older the receiver's commits.
+								sendLocalCommits(sender, bunchSize, "s");
+
+								// Process the receiver's local commits to ensure that they are in the trunk.
+								receiveSequencedCommits(receiver, provider);
+
+								// Sequence the sender's local commits now. These will be rebased by the receiver over
+								// its trunk when it receives them.
+								sequenceExistingCommits(sender, provider);
 
 								const before = state.timer.now();
-								provider.processMessages();
+								receiveSequencedCommits(receiver, provider);
 								const after = state.timer.now();
 								duration = state.timer.toSeconds(before, after);
 							} while (state.recordBatch(duration));
@@ -567,23 +607,38 @@ describe("SharedTree benchmarks", () => {
 
 		describe("Rebasing inbound bunch over local and trunk changes", () => {
 			// The number of commits in a bunch for a given run of this test suite.
-			const bunchSizes = isInPerformanceTestingMode ? [1, 10, 100] : [2];
+			const bunchSizes = isInPerformanceTestingMode ? [10, 100] : [2];
 			// Number of local commits to rebase over the inbound bunch
-			const localTrunkSizes = isInPerformanceTestingMode ? [1, 10, 100] : [2];
+			const localCommitSizes = isInPerformanceTestingMode ? [1, 10, 100] : [2];
 			for (const bunchSize of bunchSizes) {
-				for (const localTrunkSize of localTrunkSizes) {
+				for (const localCommitSize of localCommitSizes) {
 					const test = benchmark({
 						type: BenchmarkType.Measurement,
-						title: `Apply ${bunchSize} inbound commits over ${localTrunkSize} local commits`,
+						title: `Apply ${bunchSize} inbound commits over ${localCommitSize} local commits and ${localCommitSize} trunk commits`,
 						benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
 							let duration: number;
 							do {
-								// Since this setup one collects data from one iteration, assert that this is what is expected.
+								// Since this setup collects data from one iteration, assert that this is what is expected.
 								assert.equal(state.iterationsPerBatch, 1);
-								const { provider } = setup(localTrunkSize, bunchSize);
+								const { provider, sender, receiver } = setupSenderAndReceiver();
+								// These are the commits that will be in the trunk.
+								sequenceLocalCommits(receiver, localCommitSize, "r", provider);
+								sendLocalCommits(receiver, localCommitSize, "rLocal");
+								// Send local commits from the sender but don't sequence them yet. We want them to be
+								// sequenced after the receiver has received its local commits and they are in its trunk.
+								// These are sent before the receiver's commits are processed so that their reference
+								// sequence number is older the receiver's commits.
+								sendLocalCommits(sender, bunchSize, "s");
+
+								// Process the receiver's local commits to ensure that they are in the trunk.
+								receiveSequencedCommits(receiver, provider);
+
+								// Sequence the sender's local commits now. These will be rebased by the receiver over
+								// its trunk when it receives them.
+								sequenceExistingCommits(sender, provider);
 
 								const before = state.timer.now();
-								provider.processMessages();
+								receiveSequencedCommits(receiver, provider);
 								const after = state.timer.now();
 								duration = state.timer.toSeconds(before, after);
 							} while (state.recordBatch(duration));
@@ -617,7 +672,7 @@ describe("SharedTree benchmarks", () => {
 							FlushMode.TurnBased,
 						);
 						const tree = provider.trees[0];
-						tree.setConnected(false);
+						provider.setConnected(tree, true);
 						const view = provider.trees[0].viewWith(
 							new TreeViewConfiguration({
 								schema: StringArray,
