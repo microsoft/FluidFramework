@@ -244,10 +244,9 @@ export function TaskGroup(props: {
 						event.eventName === "APPLIED_EDIT_FAILURE"
 					) {
 						console.log(
-							`${
-								event.eventName === "APPLIED_EDIT_SUCCESS"
-									? "Succesfully applied"
-									: "Failed to appply"
+							`${event.eventName === "APPLIED_EDIT_SUCCESS"
+								? "Succesfully applied"
+								: "Failed to appply"
 							} tree edit: ${JSON.stringify(
 								(event as unknown as ApplyEditSuccess).edit,
 								undefined,
@@ -525,11 +524,12 @@ export function TaskGroup(props: {
 							diff.nodePath[0]?.shortId === Tree.shortId(task),
 					);
 
+
+					const removeDiffs =
+						props.uiDiffs?.filter((diff): diff is RemoveDiff => diff.type === "remove") ?? [];
 					// TODO - Since the Target node has been deleted, this will never match to a remove diff.
 					// One possible correct way to handle this case, is to take deleted node ui diffs, take the `RemoveDiff.nodeContent / RemoveDiff.nodeContents` and use that
 					// to render a special 'removed' task card that cannot be interacted with and is not a part of the tree.
-					const removeDiffs =
-						props.uiDiffs?.filter((diff): diff is RemoveDiff => diff.type === "remove") ?? [];
 					const matchingRemoveDiffs = removeDiffs.filter((diff: RemoveDiff) => {
 						if (diff.subType === "remove-array-single") {
 							return diff.nodePath[0]?.shortId === Tree.shortId(task);
