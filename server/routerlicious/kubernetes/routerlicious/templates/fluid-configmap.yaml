@@ -260,15 +260,15 @@ data:
             "circuitBreakerEnabled": {{ .Values.scriptorium.circuitBreakerEnabled }},
             "circuitBreakerOptions": {
                 "database": {
-                    "errorThresholdPercentage": {{ .Values.scriptorium.circuitBreakerOptionsDb.errorThresholdPercentage }},
-                    "resetTimeout": {{ .Values.scriptorium.circuitBreakerOptionsDb.resetTimeout }},
-                    "timeout": {{ .Values.scriptorium.circuitBreakerOptionsDb.timeout }},
-                    "rollingCountTimeout": {{ .Values.scriptorium.circuitBreakerOptionsDb.rollingCountTimeout }},
-                    "rollingCountBuckets": {{ .Values.scriptorium.circuitBreakerOptionsDb.rollingCountBuckets }},
-                    "fallbackToRestartTimeoutMs": {{ .Values.scriptorium.circuitBreakerOptionsDb.fallbackToRestartTimeoutMs }},
+                    "errorThresholdPercentage": {{ .Values.scriptorium.circuitBreakerOptions.database.errorThresholdPercentage }},
+                    "resetTimeout": {{ .Values.scriptorium.circuitBreakerOptions.database.resetTimeout }},
+                    "timeout": {{ .Values.scriptorium.circuitBreakerOptions.database.timeout }},
+                    "rollingCountTimeout": {{ .Values.scriptorium.circuitBreakerOptions.database.rollingCountTimeout }},
+                    "rollingCountBuckets": {{ .Values.scriptorium.circuitBreakerOptions.database.rollingCountBuckets }},
+                    "fallbackToRestartTimeoutMs": {{ .Values.scriptorium.circuitBreakerOptions.database.fallbackToRestartTimeoutMs }},
                     "filterOnErrors": [
-                        {{- $lastIndex := sub (len .Values.scriptorium.circuitBreakerOptionsDb.filterOnErrors) 1}}
-                        {{- range $i, $error := .Values.scriptorium.circuitBreakerOptionsDb.filterOnErrors }}
+                        {{- $lastIndex := sub (len .Values.scriptorium.circuitBreakerOptions.database.filterOnErrors) 1}}
+                        {{- range $i, $error := .Values.scriptorium.circuitBreakerOptions.database.filterOnErrors }}
                         {{ toJson . }}{{- if ne $i $lastIndex -}}, {{ end }}
                         {{- end }}
                     ]
