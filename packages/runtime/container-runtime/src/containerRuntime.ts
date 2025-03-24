@@ -3164,6 +3164,9 @@ export class ContainerRuntime
 				this.pendingStateManager.popStagedBatches(({ content, localOpMetadata }) =>
 					this.rollback(content, localOpMetadata),
 				);
+				if (this.attachState === AttachState.Attached) {
+					this.updateDocumentDirtyState(this.pendingMessagesCount !== 0);
+				}
 			}),
 			commitChanges: exitStagingMode(() => {
 				// All staged changes are in the PSM, so just replay them (ignore pre-staging batches)
