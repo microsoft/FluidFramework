@@ -3043,7 +3043,7 @@ export class ContainerRuntime
 	private flush(resubmittingBatchId?: BatchId): void {
 		assert(
 			!this.batchRunner.running,
-			0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */,
+			0x24c /* "Cannot call `flush()` while manually accumulating a batch (e.g. under orderSequentially) */,
 		);
 
 		this.outbox.flush(resubmittingBatchId);
@@ -4259,7 +4259,7 @@ export class ContainerRuntime
 			default: {
 				assert(
 					this.batchRunner.running,
-					0x587 /* Unreachable unless running under orderSequentially */,
+					0x587 /* Unreachable unless manually accumulating a batch */,
 				);
 				break;
 			}
@@ -4548,7 +4548,7 @@ export class ContainerRuntime
 		this.verifyNotClosed();
 
 		if (this.batchRunner.running) {
-			throw new UsageError("can't get state during orderSequentially");
+			throw new UsageError("can't get state while manually accumulating a batch");
 		}
 		this.imminentClosure ||= props?.notifyImminentClosure ?? false;
 
