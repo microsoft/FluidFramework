@@ -104,6 +104,18 @@ export interface ITable<
 	// TODO: would cell insertion at this level be useful?
 }
 
+export interface TableSchemaProps<
+	TCell extends readonly TreeNodeSchema[],
+	TColumnProps extends readonly TreeNodeSchema[],
+	TRowProps extends readonly TreeNodeSchema[],
+	Scope extends string | undefined,
+> {
+	readonly sf: SchemaFactory<Scope>;
+	readonly schemaTypes: TCell;
+	readonly columnProps?: TColumnProps;
+	readonly rowProps?: TRowProps;
+}
+
 /**
  * TODO
  * @alpha
@@ -114,21 +126,8 @@ export function createTableSchema<
 	const TColumnProps extends readonly TreeNodeSchema[],
 	const TRowProps extends readonly TreeNodeSchema[],
 	const Scope extends string | undefined,
->({
-	sf,
-	schemaTypes,
-	columnProps,
-	rowProps,
-}: {
-	sf: SchemaFactory<Scope>;
-	schemaTypes: TCell;
-	columnProps?: TColumnProps;
-	rowProps?: TRowProps;
-}) {
-	// Create a new table based on the SharedTree schema in this file
-	// The table will be empty and will have no columns
-	// The types allowed in the table are defined in the schemaTypes array
-	// The table will be initialized with the types allowed in the table
+>(props: TableSchemaProps<TCell, TColumnProps, TRowProps, Scope>) {
+	const { sf, schemaTypes, columnProps, rowProps } = props;
 
 	type CellValueType = TreeNodeFromImplicitAllowedTypes<TCell>;
 	type CellInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TCell>;
