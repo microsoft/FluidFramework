@@ -101,12 +101,14 @@ export class FluidObjectHandle<
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#IFluidHandle.bind}
 	 */
-	public bind(handle: IFluidHandleInternal) {
+	public bind(handle: IFluidHandleInternal, staged?: boolean): void {
 		// If this handle is visible, attach the graph of the incoming handle as well.
+		// Otherwise, we'll make it visible later when this handle becomes visible.
 		if (this.visible) {
+			// (This is idempotent)
 			handle.attachGraph();
-			return;
+		} else {
+			this.pendingHandlesToMakeVisible.add(handle);
 		}
-		this.pendingHandlesToMakeVisible.add(handle);
 	}
 }

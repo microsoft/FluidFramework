@@ -97,8 +97,10 @@ export interface IFluidHandleInternal<
 	/**
 	 * Binds the given handle to this one or attach the given handle if this handle is attached.
 	 * A bound handle will also be attached once this handle is attached.
+	 * @param handle - The target handle to bind.
+	 * @param staged - Optional flag to indicate if the binding is staged.
 	 */
-	bind(handle: IFluidHandleInternal): void;
+	bind(handle: IFluidHandleInternal): void; //* , staged?: boolean): void;
 }
 
 /**

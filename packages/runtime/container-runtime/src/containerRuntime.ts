@@ -170,6 +170,7 @@ import {
 	IGarbageCollector,
 	gcGenerationOptionName,
 	type GarbageCollectionMessage,
+	type IGarbageCollectionRuntime,
 } from "./gc/index.js";
 import { InboundBatchAggregator } from "./inboundBatchAggregator.js";
 import { RuntimeCompatDetails, validateLoaderCompatibility } from "./layerCompatState.js";
@@ -720,6 +721,7 @@ export class ContainerRuntime
 		IRuntime,
 		ISummarizerRuntime,
 		ISummarizerInternalsProvider,
+		IGarbageCollectionRuntime,
 		IProvideFluidHandleContext,
 		IProvideLayerCompatDetails
 {
@@ -3145,9 +3147,12 @@ export class ContainerRuntime
 		this.outbox.flush();
 
 		const exitStagingMode = (discardOrCommit: () => void) => (): void => {
+			// Signal to the rest of the system that we are no longer in staging mode
 			this.stageControls = undefined;
 
 			// Final flush of any last staged changes
+			//* TODO: Make sure this code path doesn't depend on runtime inStagingMode - It will be false!
+			//* Or flip the order of these two...
 			this.outbox.flush(undefined, true /* staged */);
 
 			discardOrCommit();
