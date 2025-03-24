@@ -8,7 +8,7 @@
 	},
 	"docModel": {
 		"enabled": true,
-		// Note: `tree.api.md` is the file used for the public tree DDS's API report.
+		// Note: `tree..api.json` is the file used for the public tree DDS's API report.
 		"apiJsonFilePath": "<projectFolder>/_api-extractor-temp/doc-models/experimental-<unscopedPackageName>.api.json"
 	}
 }
