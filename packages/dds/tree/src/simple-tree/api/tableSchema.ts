@@ -30,18 +30,23 @@ export interface CellKey {
 	readonly rowId: string;
 }
 
-export interface IColumn<TCell> {
-	readonly cells: Map<string, TCell>;
+export interface IColumn<TCell extends readonly TreeNodeSchema[]> {
+	readonly cells: Map<string, TreeNodeFromImplicitAllowedTypes<TCell>>;
 	readonly index: number;
 	readonly moveTo: (index: number) => void;
 }
 
-export interface IRow<TCell, TColumn extends IColumn<TCell>> {
-	// TODO: map instead?
-	readonly cells: Record<string, TCell | undefined>;
+export interface IRow<
+	TCell extends readonly TreeNodeSchema[],
+	TColumn extends IColumn<TCell>,
+> {
+	readonly cells: Record<string, TreeNodeFromImplicitAllowedTypes<TCell> | undefined>;
 	readonly index: number;
-	readonly getCell: (column: TColumn) => TCell | undefined;
-	readonly setCell: (column: TColumn, value: TCell | undefined) => void;
+	readonly getCell: (column: TColumn) => TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
+	readonly setCell: (
+		column: TColumn,
+		value: InsertableTreeNodeFromImplicitAllowedTypes<TCell> | undefined,
+	) => void;
 	readonly deleteCell: (column: TColumn) => void;
 	readonly moveTo: (index: number) => void;
 }
@@ -50,7 +55,7 @@ export interface IRow<TCell, TColumn extends IColumn<TCell>> {
  * @system
  */
 export interface InsertRowsParameters<
-	TCell,
+	TCell extends readonly TreeNodeSchema[],
 	TColumn extends IColumn<TCell>,
 	TRow extends IRow<TCell, TColumn>,
 > {
@@ -64,7 +69,10 @@ export interface InsertRowsParameters<
 	readonly rows: TRow[];
 }
 
-export interface InsertColumnParameters<TCell, TColumn extends IColumn<TCell>> {
+export interface InsertColumnParameters<
+	TCell extends readonly TreeNodeSchema[],
+	TColumn extends IColumn<TCell>,
+> {
 	/**
 	 * The index at which to insert the new column.
 	 * @remarks If not provided, the column will be appended to the end of the table.
@@ -76,13 +84,13 @@ export interface InsertColumnParameters<TCell, TColumn extends IColumn<TCell>> {
 }
 
 export interface ITable<
-	TCell,
+	TCell extends readonly TreeNodeSchema[],
 	TColumn extends IColumn<TCell>,
 	TRow extends IRow<TCell, TColumn>,
 > {
 	readonly getRow: (id: string) => TRow | undefined;
 	readonly getColumn: (id: string) => TColumn | undefined;
-	readonly getCell: (key: CellKey) => TCell | undefined;
+	readonly getCell: (key: CellKey) => TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 
 	readonly insertRows: (parameters: InsertRowsParameters<TCell, TColumn, TRow>) => TRow[];
 	readonly deleteRows: (rows: readonly TRow[]) => void;
@@ -92,6 +100,8 @@ export interface ITable<
 	readonly insertColumn: (parameters: InsertColumnParameters<TCell, TColumn>) => TColumn;
 	// TODO: currently does not delete cells - can it? should it?
 	readonly removeColumn: (column: TColumn) => void;
+
+	// TODO: would cell insertion at this level be useful?
 }
 
 /**
