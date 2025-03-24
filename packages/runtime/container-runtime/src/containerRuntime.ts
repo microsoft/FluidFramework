@@ -1197,7 +1197,7 @@ export class ContainerRuntime
 	 */
 	private delayConnectClientId?: string;
 
-	private readonly ensureNoDataModelChangesRunner = new RunCounter();
+	private readonly dataModelChangeRunner = new RunCounter();
 
 	/**
 	 * Invokes the given callback and expects that no ops are submitted
@@ -1208,7 +1208,7 @@ export class ContainerRuntime
 	 * @param callback - the callback to be invoked
 	 */
 	public ensureNoDataModelChanges<T>(callback: () => T): T {
-		return this.ensureNoDataModelChangesRunner.run(callback);
+		return this.dataModelChangeRunner.run(callback);
 	}
 
 	public get connected(): boolean {
@@ -1745,7 +1745,7 @@ export class ContainerRuntime
 				clientSequenceNumber: this._processedClientSequenceNumber,
 			}),
 			reSubmit: this.reSubmit.bind(this),
-			opReentrancy: () => this.ensureNoDataModelChangesRunner.running,
+			opReentrancy: () => this.dataModelChangeRunner.running,
 			closeContainer: this.closeFn,
 		});
 
@@ -3051,7 +3051,7 @@ export class ContainerRuntime
 	private flush(resubmittingBatchId?: BatchId, resubmittingStagedBatch?: boolean): void {
 		assert(
 			!this.batchRunner.running,
-			0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */,
+			0x24c /* "Cannot call `flush()` while manually accumulating a batch (e.g. under orderSequentially) */,
 		);
 
 		this.outbox.flush(resubmittingBatchId, resubmittingStagedBatch);
@@ -3122,6 +3122,7 @@ export class ContainerRuntime
 			}
 		});
 		stageControls?.commitChanges();
+
 		// We don't flush on TurnBased since we expect all messages in the same JS turn to be part of the same batch
 		if (this.flushMode !== FlushMode.TurnBased && !this.batchRunner.running) {
 			this.flush();
@@ -4329,7 +4330,7 @@ export class ContainerRuntime
 			default: {
 				assert(
 					this.batchRunner.running,
-					0x587 /* Unreachable unless running under orderSequentially */,
+					0x587 /* Unreachable unless manually accumulating a batch */,
 				);
 				break;
 			}
@@ -4622,7 +4623,7 @@ export class ContainerRuntime
 		this.verifyNotClosed();
 
 		if (this.batchRunner.running) {
-			throw new UsageError("can't get state during orderSequentially");
+			throw new UsageError("can't get state while manually accumulating a batch");
 		}
 		this.imminentClosure ||= props?.notifyImminentClosure ?? false;
 
