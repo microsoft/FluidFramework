@@ -94,6 +94,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
+    // (undocumented)
+    uploadBlobExperiment(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
     protected validateChannelId(id: string): void;
     // (undocumented)
     visibilityState: VisibilityState;

@@ -188,6 +188,9 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 		uploadBlob: async (...args) => {
 			return context.uploadBlob(...args);
 		},
+		uploadBlobExperiment: async (...args) => {
+			return context.uploadBlobExperiment(...args);
+		},
 		addedGCOutboundRoute: (...args) => {
 			return context.addedGCOutboundRoute(...args);
 		},

@@ -141,6 +141,12 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		throw new Error("Method not implemented.");
 	}
 
+	public async uploadBlobExperiment(
+		blob: ArrayBufferLike,
+	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
+		throw new Error("Method not implemented.");
+	}
+
 	public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
 		throw new Error("Method not implemented.");
 	}

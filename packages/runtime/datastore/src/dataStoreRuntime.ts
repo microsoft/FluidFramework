@@ -638,6 +638,14 @@ export class FluidDataStoreRuntime
 		return this.dataStoreContext.uploadBlob(blob, signal);
 	}
 
+	public async uploadBlobExperiment(
+		blob: ArrayBufferLike,
+	): Promise<IFluidHandle<ArrayBufferLike>> {
+		this.verifyNotClosed();
+
+		return this.dataStoreContext.uploadBlobExperiment(blob);
+	}
+
 	private createRemoteChannelContext(
 		attachMessage: IAttachMessage,
 		summarizerNodeParams: CreateChildSummarizerNodeParam,

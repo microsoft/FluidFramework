@@ -475,6 +475,27 @@ export class BlobManager {
 		});
 	}
 
+	public createBlobExperiment(blob: ArrayBufferLike): IFluidHandleInternal<ArrayBufferLike> {
+		const localId = this.localBlobIdGenerator();
+
+		return new BlobHandle(
+			getGCNodePathFromBlobId(localId),
+			this.routeContext,
+			async () => blob,
+			() => {
+				const pendingEntry: PendingBlob = {
+					blob,
+					handleP: new Deferred(),
+					uploadP: this.uploadBlob(localId, blob),
+					attached: false,
+					acked: false,
+					opsent: false,
+				};
+				this.pendingBlobs.set(localId, pendingEntry);
+			},
+		);
+	}
+
 	private async uploadBlob(
 		localId: string,
 		blob: ArrayBufferLike,

@@ -4116,6 +4116,13 @@ export class ContainerRuntime
 		return this.blobManager.createBlob(blob, signal);
 	}
 
+	public async uploadBlobExperiment(
+		blob: ArrayBufferLike,
+	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
+		this.verifyNotClosed();
+		return this.blobManager.createBlobExperiment(blob);
+	}
+
 	private submitIdAllocationOpIfNeeded(resubmitOutstandingRanges: boolean): void {
 		if (this._idCompressor) {
 			const idRange = resubmitOutstandingRanges

@@ -101,6 +101,8 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     readonly rootRoutingContext: IFluidHandleContext;
     submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
+    // (undocumented)
+    uploadBlobExperiment(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
     waitAttached(): Promise<void>;
 }
 
