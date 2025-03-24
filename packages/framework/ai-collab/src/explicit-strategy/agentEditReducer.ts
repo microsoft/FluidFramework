@@ -145,7 +145,15 @@ export function applyAgentEdit(
 				if (allowedType.identifier === schemaIdentifier && typeof allowedType === "function") {
 					const simpleNodeSchema = allowedType as unknown as new (dummy: unknown) => TreeNode;
 					const insertNode = new simpleNodeSchema(treeEdit.content);
-					validator?.(insertNode);
+					try {
+						validator?.(insertNode);
+					} catch (error) {
+						if (error instanceof Error) {
+							throw new UsageError(error.message);
+						}
+						throw new Error("The node provided for insertion is not valid");
+					}
+
 					array.insertAt(index, insertNode as unknown as IterableTreeArrayContent<never>);
 					return {
 						edit: {
@@ -257,7 +265,14 @@ export function applyAgentEdit(
 				const simpleSchema = fieldSchema as unknown as new (dummy: unknown) => TreeNode;
 				populateDefaults(modification, definitionMap);
 				const constructedModification = new simpleSchema(modification);
-				validator?.(constructedModification);
+				try {
+					validator?.(constructedModification);
+				} catch (error) {
+					if (error instanceof Error) {
+						throw new UsageError(error.message);
+					}
+					throw new Error("The node provided for insertion is not valid");
+				}
 				insertedObject = constructedModification;
 
 				if (Array.isArray(modification)) {
