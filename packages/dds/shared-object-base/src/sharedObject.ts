@@ -20,6 +20,8 @@ import {
 	type IChannelFactory,
 	IFluidDataStoreRuntime,
 	type IDeltaHandler,
+	// eslint-disable-next-line import/no-deprecated
+	type IFluidDataStoreRuntimeExperimental,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	type IDocumentMessage,
@@ -127,6 +129,12 @@ export abstract class SharedObjectCore<
 	public get connected(): boolean {
 		return this._connected;
 	}
+
+	/* eslint-disable import/no-deprecated */
+	private get experimentalRuntime(): IFluidDataStoreRuntimeExperimental {
+		return this.runtime as IFluidDataStoreRuntimeExperimental;
+	}
+	/* eslint-enable import/no-deprecated */
 
 	/**
 	 * @param id - The id of the shared object
@@ -463,14 +471,28 @@ export abstract class SharedObjectCore<
 				makeHandlesSerializable(content, this.serializer, this.handle),
 				localOpMetadata,
 			);
-			this.pendingLocalMessages.push({
+
+			(this.experimentalRuntime.inStagingMode === true
+				? this.stagedLocalMessages
+				: this.submittedLocalMessages
+			).push({
 				content, // Hydrated content (not serialized)
 				localOpMetadata,
 			});
 		}
 	}
 
-	private readonly pendingLocalMessages: { content: unknown; localOpMetadata: unknown }[] = [];
+	private readonly submittedLocalMessages: { content: unknown; localOpMetadata: unknown }[] =
+		[];
+	private readonly stagedLocalMessages: { content: unknown; localOpMetadata: unknown }[] = [];
+
+	//* Optimize
+	private get pendingLocalMessages(): readonly {
+		content: unknown;
+		localOpMetadata: unknown;
+	}[] {
+		return [...this.submittedLocalMessages, ...this.stagedLocalMessages];
+	}
 
 	public get isDirty(): boolean {
 		return this.pendingLocalMessages.length > 0;
@@ -555,7 +577,10 @@ export abstract class SharedObjectCore<
 				this.setConnectionState(connected);
 			},
 			reSubmit: (content: unknown, localOpMetadata: unknown) => {
-				this.reSubmit(content, localOpMetadata);
+				this.reSubmit(
+					content,
+					localOpMetadata as { localOpMetadata: unknown; onlyStagedOps: boolean },
+				);
 			},
 			applyStashedOp: (content: unknown): void => {
 				this.applyStashedOp(parseHandles(content, this.serializer));
@@ -600,8 +625,11 @@ export abstract class SharedObjectCore<
 	private matchNextPendingLocalMessage(
 		roundtrippedContents: unknown, //* Roundtripped through string, not necessarily to ordering service (e.g. resubmit)
 		localOpMetadata: unknown,
-	): unknown {
-		const pending = this.pendingLocalMessages.shift();
+		onlyStagedOps: boolean,
+	): { content: unknown; localOpMetadata: unknown } {
+		const pending = (
+			onlyStagedOps ? this.stagedLocalMessages : this.submittedLocalMessages
+		).shift();
 		assert(pending !== undefined, "Pending message not found");
 
 		//* TODO: Compare roundtrippedContents with pending contents.
@@ -673,7 +701,11 @@ export abstract class SharedObjectCore<
 			};
 			decodedMessagesContent.push(decodedMessageContent);
 			if (messagesCollection.local) {
-				this.matchNextPendingLocalMessage(decodedMessageContent, localOpMetadata);
+				this.matchNextPendingLocalMessage(
+					decodedMessageContent,
+					localOpMetadata,
+					false /* onlyStagedOps */,
+				);
 			}
 		}
 
@@ -690,10 +722,17 @@ export abstract class SharedObjectCore<
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
-	private reSubmit(content: unknown, localOpMetadata: unknown): void {
+	private reSubmit(
+		content: unknown,
+		{ localOpMetadata, onlyStagedOps }: { localOpMetadata: unknown; onlyStagedOps: boolean },
+	): void {
 		// This has the original viable handles, not the serialized ones.
-		const viableContent = this.matchNextPendingLocalMessage(content, localOpMetadata);
-		this.reSubmitCore(viableContent, localOpMetadata);
+		const viableContent = this.matchNextPendingLocalMessage(
+			content,
+			localOpMetadata,
+			onlyStagedOps,
+		);
+		this.reSubmitCore(viableContent.content, localOpMetadata);
 	}
 
 	/**
