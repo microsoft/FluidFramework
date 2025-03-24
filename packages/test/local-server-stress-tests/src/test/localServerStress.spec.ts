@@ -28,8 +28,6 @@ describe("Local Server Stress", () => {
 		// only: [28],
 		saveFailures,
 		// saveSuccesses,
-		// TODO (AB#33713): we've seen seeds 43 and 44 fail in the pipeline with errors that might
-		// represent bugs in the underlying DDSes. Skipping for now.
-		skip: [28, 43, 44],
+		skip: [28],
 	});
 });
