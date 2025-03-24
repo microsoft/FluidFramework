@@ -14,6 +14,7 @@ import {
 	IBroadcastSignalEventPayload,
 	IRoom,
 	IRuntimeSignalEnvelope,
+	type ICollaborationSessionEvents,
 } from "@fluidframework/server-lambdas";
 import { Router, type Request, type Response } from "express";
 import winston from "winston";
@@ -21,14 +22,15 @@ import { Provider } from "nconf";
 import { Constants } from "../../utils";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { NetworkError } from "@fluidframework/server-services-client";
-import type { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
+import type { TypedEventEmitter } from "@fluidframework/common-utils";
+import { RedisEventEmitter } from "../redisEventEmitter";
 
 export function create(
 	config: Provider,
 	tenantManager: core.ITenantManager,
 	tenantThrottlers: Map<string, core.IThrottler>,
 	storage: core.IDocumentStorage,
-	emitter?: RedisEmitter,
+	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 ): Router {
 	const router: Router = Router();
 
@@ -50,7 +52,7 @@ export function create(
 				response,
 				config,
 				storage,
-				emitter,
+				collaborationSessionEventEmitter,
 			);
 			handleResponse(
 				handleBroadcastSignalP,
@@ -80,7 +82,7 @@ async function handleBroadcastSignal(
 	response: Response,
 	config: Provider,
 	storage: core.IDocumentStorage,
-	emitter?: RedisEmitter,
+	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 ): Promise<void> {
 	const tenantId = request.params.tenantId;
 	const documentId = request.params.id;
@@ -95,7 +97,7 @@ async function handleBroadcastSignal(
 			`signalContent should contain 'contents.content' and 'contents.type' keys`,
 		);
 	}
-	if (!emitter) {
+	if (!collaborationSessionEventEmitter) {
 		Lumberjack.error("No emitter configured for the broadcast-signal endpoint", {
 			tenantId,
 			documentId,
@@ -126,7 +128,17 @@ async function handleBroadcastSignal(
 	const signalRoom: IRoom = { tenantId, documentId };
 	const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
 	Lumberjack.info("Broadcasting signal to socket", { tenantId, documentId });
-	emitter.to(getRoomId(signalRoom)).emit("signal", payload);
+
+	if (collaborationSessionEventEmitter instanceof RedisEventEmitter) {
+		Lumberjack.info("Emitting signal to room", { tenantId, documentId });
+		await collaborationSessionEventEmitter.emitToRoom(
+			"broadcastSignal",
+			getRoomId(signalRoom),
+			payload,
+		);
+	} else {
+		collaborationSessionEventEmitter.emit("broadcastSignal", payload);
+	}
 }
 
 const getRoomId = (room: IRoom): string => `${room.tenantId}/${room.documentId}`;

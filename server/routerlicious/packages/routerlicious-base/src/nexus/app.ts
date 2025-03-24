@@ -22,7 +22,8 @@ import {
 	ITenantManager,
 	// type IWebSocketServer,
 } from "@fluidframework/server-services-core";
-import type { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
+import type { TypedEventEmitter } from "@fluidframework/common-utils";
+import type { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 
 export function create(
 	config: Provider,
@@ -64,10 +65,16 @@ export function bindNexusRoutes(
 	tenantManager: ITenantManager,
 	restThrottler: Map<string, IThrottler>,
 	storage: IDocumentStorage,
-	redisEmitter?: RedisEmitter,
+	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 ) {
 	if (config.get("nexus:notificationsApi:enabled")) {
-		const routes = api.create(config, tenantManager, restThrottler, storage, redisEmitter);
+		const routes = api.create(
+			config,
+			tenantManager,
+			restThrottler,
+			storage,
+			collaborationSessionEventEmitter,
+		);
 		app.use(routes);
 	}
 

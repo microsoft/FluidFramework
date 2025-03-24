@@ -8,18 +8,25 @@ import cors from "cors";
 import { Router } from "express";
 import { Provider } from "nconf";
 import * as api from "./api";
-import type { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
+import type { TypedEventEmitter } from "@fluidframework/common-utils";
+import type { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 
 export function create(
 	config: Provider,
 	tenantManager: core.ITenantManager,
 	tenantThrottlers: Map<string, core.IThrottler>,
 	storage: core.IDocumentStorage,
-	redisEmitter?: RedisEmitter,
+	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 ): Router {
 	const router = Router();
 
-	const apiRoute = api.create(config, tenantManager, tenantThrottlers, storage, redisEmitter);
+	const apiRoute = api.create(
+		config,
+		tenantManager,
+		tenantThrottlers,
+		storage,
+		collaborationSessionEventEmitter,
+	);
 
 	router.use(cors());
 	router.use("/api/v1", apiRoute);
