@@ -6,16 +6,25 @@
 // The following interfaces are intended to be used to visualize the changes made to a SharedTree (as a result of using ai-collab) on a UI.
 
 /**
- * An object that provides relevant information to visualize a single edit performed by an ai agent on a SharedTree
+ * A base interface to enforce consisntencty between all UiDiff objects.
+ * @remarks This object is not intended to be used directly.
+ * The union type UiDiff provides a better typescript experience
+ *
  * @alpha
  */
-export interface UiDiff {
+export interface UiDiffBase {
 	type: string;
 	/**
 	 * An explanation from the ai as to why the edit is being made.
 	 */
 	aiExplanation: string;
 }
+
+/**
+ * An object that provides relevant information to visualize a single edit performed by an ai agent on a SharedTree
+ * @alpha
+ */
+export type UiDiff = InsertDiff | ModifyDiff | RemoveDiff | MoveDiff;
 
 /**
  * A path from the root of the tree node passed to ai-collab to a specific node within the tree.
@@ -43,7 +52,7 @@ export type NodePath = {
  * @remarks This object is intended to be used to visualize the changes made to a tree on a UI.
  * @alpha
  */
-export interface InsertDiff extends UiDiff {
+export interface InsertDiff extends UiDiffBase {
 	type: "insert";
 	/**
 	 * The path from the root node to the newly inserted node.
@@ -62,7 +71,7 @@ export interface InsertDiff extends UiDiff {
  * @remarks This object is intended to be used to visualize the changes made to a tree on a UI.
  * @alpha
  */
-export interface ModifyDiff extends UiDiff {
+export interface ModifyDiff extends UiDiffBase {
 	type: "modify";
 	/**
 	 * The path from the root node to the ndoe being modified.
@@ -88,7 +97,7 @@ export type RemoveDiff = RemoveFieldDiff | ArraySingleRemoveDiff | ArrayRangeRem
  * An object that describes a field being removed from a SharedTree.
  * @alpha
  */
-export interface RemoveFieldDiff extends UiDiff {
+export interface RemoveFieldDiff extends UiDiffBase {
 	type: "remove";
 	subType: "remove-field";
 	/**
@@ -105,7 +114,7 @@ export interface RemoveFieldDiff extends UiDiff {
  * An object that describes the removal of a single node from an array node.
  * @alpha
  */
-export interface ArraySingleRemoveDiff extends UiDiff {
+export interface ArraySingleRemoveDiff extends UiDiffBase {
 	type: "remove";
 	subType: "remove-array-single";
 	/**
@@ -122,7 +131,7 @@ export interface ArraySingleRemoveDiff extends UiDiff {
  * An object that describes the removal of a range of nodes from an array node.
  * @alpha
  */
-export interface ArrayRangeRemoveDiff extends UiDiff {
+export interface ArrayRangeRemoveDiff extends UiDiffBase {
 	type: "remove";
 	subType: "remove-array-range";
 	/**
@@ -145,7 +154,7 @@ export type MoveDiff = MoveSingleDiff | MoveRangeDiff;
  * An object that describes the movement of a single node from one array node to another array node.
  * @alpha
  */
-export interface MoveSingleDiff extends UiDiff {
+export interface MoveSingleDiff extends UiDiffBase {
 	type: "move";
 	subType: "move-single";
 	/**
@@ -167,7 +176,7 @@ export interface MoveSingleDiff extends UiDiff {
  * An object that describes the movement of a range of nodes from one array node to another array node.
  * @alpha
  */
-export interface MoveRangeDiff extends UiDiff {
+export interface MoveRangeDiff extends UiDiffBase {
 	type: "move";
 	subType: "move-range";
 	/**

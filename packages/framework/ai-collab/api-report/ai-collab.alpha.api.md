@@ -69,7 +69,7 @@ export interface ApplyEditSuccess extends EventFlowDebugEvent {
 }
 
 // @alpha
-export interface ArrayRangeRemoveDiff extends UiDiff {
+export interface ArrayRangeRemoveDiff extends UiDiffBase {
     nodeContents: unknown[];
     nodePaths: NodePath[];
     // (undocumented)
@@ -79,7 +79,7 @@ export interface ArrayRangeRemoveDiff extends UiDiff {
 }
 
 // @alpha
-export interface ArraySingleRemoveDiff extends UiDiff {
+export interface ArraySingleRemoveDiff extends UiDiffBase {
     nodeContent: unknown;
     nodePath: NodePath;
     // (undocumented)
@@ -250,7 +250,7 @@ export interface GenerateTreeEditStarted extends EventFlowDebugEvent {
 }
 
 // @alpha
-export interface InsertDiff extends UiDiff {
+export interface InsertDiff extends UiDiffBase {
     nodeContent: unknown;
     nodePath: NodePath;
     // (undocumented)
@@ -276,7 +276,7 @@ export interface LlmApiCallDebugEvent extends DebugEvent {
 export type LlmTreeEdit = Record<string, unknown>;
 
 // @alpha
-export interface ModifyDiff extends UiDiff {
+export interface ModifyDiff extends UiDiffBase {
     newValue: unknown;
     nodePath: NodePath;
     oldValue: unknown;
@@ -288,7 +288,7 @@ export interface ModifyDiff extends UiDiff {
 export type MoveDiff = MoveSingleDiff | MoveRangeDiff;
 
 // @alpha
-export interface MoveRangeDiff extends UiDiff {
+export interface MoveRangeDiff extends UiDiffBase {
     destinationNodePath: NodePath;
     nodeContents: unknown[];
     sourceNodePaths: NodePath[];
@@ -299,7 +299,7 @@ export interface MoveRangeDiff extends UiDiff {
 }
 
 // @alpha
-export interface MoveSingleDiff extends UiDiff {
+export interface MoveSingleDiff extends UiDiffBase {
     destinationNodePath: NodePath;
     nodeContent: unknown;
     sourceNodePath: NodePath;
@@ -361,7 +361,7 @@ export interface PlanningPromptStarted extends EventFlowDebugEvent {
 export type RemoveDiff = RemoveFieldDiff | ArraySingleRemoveDiff | ArrayRangeRemoveDiff;
 
 // @alpha
-export interface RemoveFieldDiff extends UiDiff {
+export interface RemoveFieldDiff extends UiDiffBase {
     nodeContent: unknown;
     nodePath: NodePath;
     // (undocumented)
@@ -414,7 +414,10 @@ export interface TokenUsage {
 }
 
 // @alpha
-export interface UiDiff {
+export type UiDiff = InsertDiff | ModifyDiff | RemoveDiff | MoveDiff;
+
+// @alpha
+export interface UiDiffBase {
     aiExplanation: string;
     // (undocumented)
     type: string;
