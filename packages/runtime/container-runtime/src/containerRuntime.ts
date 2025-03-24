@@ -3064,7 +3064,12 @@ export class ContainerRuntime
 	public orderSequentially<T>(callback: () => T): T {
 		let checkpoint: IBatchCheckpoint | undefined;
 		const checkpointDirtyState = this.dirtyContainer;
+		// eslint-disable-next-line import/no-deprecated
+		let stageControls: StageControlsExperimental | undefined;
 		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
+			if (!this.batchRunner.running && !this.inStagingMode) {
+				stageControls = this.enterStagingMode();
+			}
 			// Note: we are not touching any batches other than mainBatch here, for two reasons:
 			// 1. It would not help, as other batches are flushed independently from main batch.
 			// 2. There is no way to undo process of data store creation, blob creation, ID compressor ops, or other things tracked by other batches.
@@ -3084,6 +3089,8 @@ export class ContainerRuntime
 						if (this.dirtyContainer !== checkpointDirtyState) {
 							this.updateDocumentDirtyState(checkpointDirtyState);
 						}
+						stageControls?.discardChanges();
+						stageControls = undefined;
 					} catch (error_) {
 						const error2 = wrapError(error_, (message) => {
 							return DataProcessingError.create(
@@ -3114,6 +3121,7 @@ export class ContainerRuntime
 				throw error; // throw the original error for the consumer of the runtime
 			}
 		});
+		stageControls?.commitChanges();
 
 		// We don't flush on TurnBased since we expect all messages in the same JS turn to be part of the same batch
 		if (this.flushMode !== FlushMode.TurnBased && !this.batchRunner.running) {
@@ -3137,7 +3145,6 @@ export class ContainerRuntime
 		// Make sure all BatchManagers are empty before entering staging mode,
 		// since we mark whole batches as "staged" or not to indicate whether to submit them.
 		this.outbox.flush();
-
 		const exitStagingMode = (discardOrCommit: () => void) => (): void => {
 			this.stageControls = undefined;
 
@@ -3153,6 +3160,9 @@ export class ContainerRuntime
 				this.pendingStateManager.popStagedBatches(({ content, localOpMetadata }) =>
 					this.rollback(content, localOpMetadata),
 				);
+				if (this.attachState === AttachState.Attached) {
+					this.updateDocumentDirtyState(this.pendingMessagesCount !== 0);
+				}
 			}),
 			commitChanges: exitStagingMode(() => {
 				// All staged changes are in the PSM, so just replay them (ignore pre-staging batches)
