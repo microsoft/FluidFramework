@@ -16,35 +16,83 @@ import {
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
 	type TreeNodeSchemaClass,
 } from "../core/index.js";
-import type { InsertableTreeNodeFromImplicitAllowedTypes, TreeNodeFromImplicitAllowedTypes } from "../schemaTypes.js";
+import type {
+	InsertableTreeNodeFromImplicitAllowedTypes,
+	TreeNodeFromImplicitAllowedTypes,
+} from "../schemaTypes.js";
 import type { SchemaFactory } from "./schemaFactory.js";
-
 
 // Schema is defined using a factory object that generates classes for objects as well
 // as list and map nodes.
 
+export interface CellKey {
+	readonly columnId: string;
+	readonly rowId: string;
+}
 
 export interface IColumn<TCell> {
-	cells: Map<string, TCell>;
-	// TODO
+	readonly cells: Map<string, TCell>;
+	readonly index: number;
+	readonly moveTo: (index: number) => void;
 }
 
 export interface IRow<TCell, TColumn extends IColumn<TCell>> {
 	// TODO: map instead?
-	cells: Record<string, TCell | undefined>;
-	getCell(column: TColumn): TCell | undefined;
-	setCell(column: TColumn, value: TCell | undefined): void;
-	deleteCell(column: TColumn): void;
-
+	readonly cells: Record<string, TCell | undefined>;
+	readonly index: number;
+	readonly getCell: (column: TColumn) => TCell | undefined;
+	readonly setCell: (column: TColumn, value: TCell | undefined) => void;
+	readonly deleteCell: (column: TColumn) => void;
+	readonly moveTo: (index: number) => void;
 }
 
+/**
+ * @system
+ */
+export interface InsertRowsParameters<
+	TCell,
+	TColumn extends IColumn<TCell>,
+	TRow extends IRow<TCell, TColumn>,
+> {
+	/**
+	 * The index at which to insert the new rows.
+	 * @remarks If not provided, the rows will be appended to the end of the table.
+	 */
+	// TODO: document bounds policy
+	readonly index?: number | undefined;
+	// TODO: insertable type
+	readonly rows: TRow[];
+}
 
-export interface ITable<TCell, TColumn extends IColumn<TCell>, TRow extends IRow<TCell, TColumn>> {
-	getRow(id: string): TRow | undefined;
-	getColumn(id: string): TColumn | undefined;
-	// TODO
-};
+export interface InsertColumnParameters<TCell, TColumn extends IColumn<TCell>> {
+	/**
+	 * The index at which to insert the new column.
+	 * @remarks If not provided, the column will be appended to the end of the table.
+	 */
+	// TODO: document bounds policy
+	readonly index: number;
+	// TODO: insertable type
+	readonly column: TColumn;
+}
 
+export interface ITable<
+	TCell,
+	TColumn extends IColumn<TCell>,
+	TRow extends IRow<TCell, TColumn>,
+> {
+	readonly getRow: (id: string) => TRow | undefined;
+	readonly getColumn: (id: string) => TColumn | undefined;
+	readonly getCell: (key: CellKey) => TCell | undefined;
+
+	readonly insertRows: (parameters: InsertRowsParameters<TCell, TColumn, TRow>) => TRow[];
+	readonly deleteRows: (rows: readonly TRow[]) => void;
+	// TODO: is this needed?
+	readonly deleteAllRows: () => void;
+
+	readonly insertColumn: (parameters: InsertColumnParameters<TCell, TColumn>) => TColumn;
+	// TODO: currently does not delete cells - can it? should it?
+	readonly removeColumn: (column: TColumn) => void;
+}
 
 /**
  * TODO
@@ -56,7 +104,12 @@ export function createTableSchema<
 	const TColumnProps extends readonly TreeNodeSchema[],
 	const TRowProps extends readonly TreeNodeSchema[],
 	const Scope extends string | undefined,
->({ sf, schemaTypes, columnProps, rowProps }: {
+>({
+	sf,
+	schemaTypes,
+	columnProps,
+	rowProps,
+}: {
 	sf: SchemaFactory<Scope>;
 	schemaTypes: TCell;
 	columnProps?: TColumnProps;
@@ -73,11 +126,14 @@ export function createTableSchema<
 	/**
 	 * The Row schema - this is a map of Cells where the key is the column id
 	 */
-	class Row extends sf.object("Row", {
-		id: sf.identifier,
-		_cells: sf.map(schemaTypes), // The keys of this map are the column ids - this would ideally be private
-		props: rowProps ?? sf.null,
-	}) implements IRow<CellValueType, Column> {
+	class Row
+		extends sf.object("Row", {
+			id: sf.identifier,
+			_cells: sf.map(schemaTypes), // The keys of this map are the column ids - this would ideally be private
+			props: rowProps ?? sf.null,
+		})
+		implements IRow<TCell, Column>
+	{
 		/**
 		 * Property getter to get the cells in the row
 		 * @returns The cells in the row as an object where the keys are the column ids
@@ -151,7 +207,7 @@ export function createTableSchema<
 		/**
 		 * Get the parent Table
 		 */
-		public get table(): Table {
+		private get table(): Table {
 			const parent = Tree.parent(this);
 			if (parent) {
 				const grandparent = Tree.parent(parent);
@@ -173,31 +229,21 @@ export function createTableSchema<
 			}
 			throw new Error("Row is not in a table");
 		}
-
-		/**
-		 * Get the synthetic id of a cell in the row by the column.
-		 * This is the id of the column that the cell is in combined
-		 * with the id of the row that the cell is in in the format of rowId_columnId
-		 * This is used to identify the cell in the table
-		 * @param column - The column
-		 */
-		public getCellId(column: Column): `${string}_${string}` {
-			const columnId = column.id;
-			const rowId = this.id;
-			return `${rowId}_${columnId}`;
-		}
 	}
 
 	/**
 	 * The Column schema - this can include more properties as needed *
 	 */
-	class Column extends sf.object("Column", {
-		id: sf.identifier,
-		name: sf.string,
-		defaultValue: sf.optional(schemaTypes),
-		hint: sf.optional(sf.string),
-		props: columnProps ?? sf.null,
-	}) implements IColumn<CellValueType>{
+	class Column
+		extends sf.object("Column", {
+			id: sf.identifier,
+			name: sf.string,
+			defaultValue: sf.optional(schemaTypes),
+			hint: sf.optional(sf.string),
+			props: columnProps ?? sf.null,
+		})
+		implements IColumn<TCell>
+	{
 		/**
 		 * Get the parent Table
 		 */
@@ -279,10 +325,13 @@ export function createTableSchema<
 	/**
 	 * The Table schema
 	 */
-	class Table extends sf.object("Table", {
-		rows: sf.array(Row),
-		columns: sf.array(Column),
-	}) implements ITable<CellValueType, Column, Row> {
+	class Table
+		extends sf.object("Table", {
+			rows: sf.array(Row),
+			columns: sf.array(Column),
+		})
+		implements ITable<TCell, Column, Row>
+	{
 		public static readonly Row = Row;
 		public static readonly Column = Column;
 
@@ -295,10 +344,11 @@ export function createTableSchema<
 		}
 
 		/**
-		 * Get a cell by the synthetic id
-		 * @param id - The synthetic id of the cell
+		 * Get a cell by its "key" in the table.
+		 * @param key - A key that uniquely distinguishes a cell in the table, represented as a combination of the column ID and row ID.
 		 */
-		public getCell({columnId, rowId}: {readonly columnId: string; readonly rowId: string}): CellValueType | undefined {
+		public getCell(key: CellKey): CellValueType | undefined {
+			const { columnId, rowId } = key;
 			const row = this.getRow(rowId);
 			if (row !== undefined) {
 				const column = this.getColumn(columnId);
@@ -316,10 +366,7 @@ export function createTableSchema<
 		 * @param rows - The rows to insert
 		 * If no rows are provided, a new row will be created.
 		 */
-		public insertRows({ index, rows }: {
-			index?: number;
-			rows: InsertableTreeNodeFromImplicitAllowedTypes<typeof Row>[];
-		}): Row[] {
+		public insertRows({ index, rows }: InsertRowsParameters<TCell, Column, Row>): Row[] {
 			if (index === undefined) {
 				this.rows.insertAtEnd(TreeArrayNode.spread(rows));
 			} else {
@@ -332,7 +379,7 @@ export function createTableSchema<
 		 * Delete a row from the table
 		 * @param rows - The rows to delete
 		 */
-		public deleteRows(rows: Row[]): void {
+		public deleteRows(rows: readonly Row[]): void {
 			// If there are no rows to delete, do nothing
 			if (rows.length === 0) return;
 			// If there is only one row to delete, delete it
@@ -364,15 +411,7 @@ export function createTableSchema<
 		 * @param index - The index to insert the column at
 		 * @param name - The name of the column
 		 */
-		public insertColumn({ index, name, defaultValue, hint, props }: {
-			index: number;
-			name: string;
-			defaultValue?: CellInsertableType;
-			hint?: string;
-			// TODO
-			// eslint-disable-next-line @rushstack/no-new-null
-			props: TColumnProps | null;
-		}): Column {
+		public insertColumn({ index, column }: InsertColumnParameters<TCell, Column>): Column {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const column = new Column({ name, defaultValue, hint, props } as any);
 			this.columns.insertAt(index, column);
