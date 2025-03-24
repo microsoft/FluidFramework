@@ -69,9 +69,11 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 	config["reporter"] = `mocha-multi-reporters`;
 	// See https://www.npmjs.com/package/mocha-multi-reporters#cmroutput-option
 	const outputFilePrefix = testReportPrefix !== undefined ? `${testReportPrefix}-` : "";
-	console.log(
-		`Writing test results relative to package to nyc/${outputFilePrefix}junit-report.xml`,
-	);
+	if (!process.env.SILENT_TEST_OUTPUT) {
+		console.log(
+			`Writing test results relative to package to nyc/${outputFilePrefix}junit-report.xml`,
+		);
+	}
 	const suiteName =
 		testReportPrefix !== undefined
 			? `${packageJson.name} - ${testReportPrefix}`

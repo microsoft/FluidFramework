@@ -33,6 +33,7 @@ import type { InsertableContent } from "./toMapTree.js";
 import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
 import { LeafNodeSchema } from "./leafNodeSchema.js";
 import { TreeNodeValid } from "./treeNodeValid.js";
+import type { SimpleFieldSchema } from "./simpleSchema.js";
 
 /**
  * Returns true if the given schema is a {@link TreeNodeSchemaClass}, or otherwise false if it is a {@link TreeNodeSchemaNonClass}.
@@ -295,6 +296,9 @@ export let createFieldSchema: <
  * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
  * See {@link FieldSchemaMetadata.custom}.
  *
+ * @remarks
+ * All implementations of this are actually {@link FieldSchemaAlpha} which exposes some additional alpha APIs.
+ *
  * @sealed @public
  */
 export class FieldSchema<
@@ -302,17 +306,6 @@ export class FieldSchema<
 	out Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	out TCustomMetadata = unknown,
 > {
-	static {
-		createFieldSchema = <
-			Kind2 extends FieldKind = FieldKind,
-			Types2 extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-			TCustomMetadata2 = unknown,
-		>(
-			kind: Kind2,
-			allowedTypes: Types2,
-			props?: FieldProps<TCustomMetadata2>,
-		) => new FieldSchema(kind, allowedTypes, props);
-	}
 	/**
 	 * This class is used with instanceof, and therefore should have nominal typing.
 	 * This field enforces that.
@@ -341,7 +334,11 @@ export class FieldSchema<
 		return this.props?.metadata;
 	}
 
-	private constructor(
+	/**
+	 * This class is `@sealed`: protected members like this constructor are for internal use only.
+	 * Use {@link SchemaFactory} to create the FieldSchema instances.
+	 */
+	protected constructor(
 		/**
 		 * The {@link https://en.wikipedia.org/wiki/Kind_(type_theory) | kind } of this field.
 		 * Determines the multiplicity, viewing and editing APIs as well as the merge resolution policy.
@@ -356,10 +353,54 @@ export class FieldSchema<
 		 */
 		public readonly props?: FieldProps<TCustomMetadata>,
 	) {
+		if (!(this instanceof FieldSchemaAlpha)) {
+			throw new UsageError("FieldSchema is @sealed: sub-classing is not allowed.");
+		}
+
 		this.lazyTypes = new Lazy(() => normalizeAllowedTypes(this.allowedTypes));
 		// TODO: optional fields should (by default) get a default provider that returns undefined, removing the need to special case them here:
 		this.requiresValue =
 			this.props?.defaultProvider === undefined && this.kind !== FieldKind.Optional;
+	}
+}
+
+/**
+ * {@link FieldSchema} including alpha APIs (currently {@link SimpleFieldSchema}).
+ * @remarks
+ * This class will go away once the alpha APIs are stable and implemented by {@link FieldSchema}.
+ * @sealed @alpha
+ */
+export class FieldSchemaAlpha<
+		Kind extends FieldKind = FieldKind,
+		Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+		TCustomMetadata = unknown,
+	>
+	extends FieldSchema<Kind, Types, TCustomMetadata>
+	implements SimpleFieldSchema
+{
+	private readonly lazyIdentifiers: Lazy<ReadonlySet<string>>;
+
+	static {
+		createFieldSchema = <
+			Kind2 extends FieldKind = FieldKind,
+			Types2 extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+			TCustomMetadata2 = unknown,
+		>(
+			kind: Kind2,
+			allowedTypes: Types2,
+			props?: FieldProps<TCustomMetadata2>,
+		) => new FieldSchemaAlpha(kind, allowedTypes, props);
+	}
+
+	private constructor(kind: Kind, allowedTypes: Types, props?: FieldProps<TCustomMetadata>) {
+		super(kind, allowedTypes, props);
+		this.lazyIdentifiers = new Lazy(
+			() => new Set([...this.allowedTypeSet].map((t) => t.identifier)),
+		);
+	}
+
+	public get allowedTypesIdentifiers(): ReadonlySet<string> {
+		return this.lazyIdentifiers.value;
 	}
 }
 
