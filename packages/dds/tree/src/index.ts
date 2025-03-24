@@ -230,9 +230,8 @@ export {
 export {
 	SharedTree,
 	configuredSharedTree,
-	SharedTreeAttributes,
-	SharedTreeFactoryType,
 } from "./treeFactory.js";
+export { SharedTreeAttributes, SharedTreeFactoryType } from "./sharedTreeAttributes.js";
 
 export {
 	type ICodecOptions,
