@@ -461,6 +461,10 @@ describe("SharedTree benchmarks", () => {
 
 		/**
 		 * Helper function to send local commits from a given tree.
+		 * In turn based flush mode, the messages won't be sequenced until flush is called explicitly
+		 * on the tree's container runtime.
+		 * In Immediate flush mode, the messages will be flushed and sequenced immediately. So, this
+		 * function will behave similar to 'sequenceLocalCommits'.
 		 */
 		function sendLocalCommits(tree: ISharedTree, count: number, commitPrefix: string) {
 			for (let iCommit = 0; iCommit < count; iCommit++) {
