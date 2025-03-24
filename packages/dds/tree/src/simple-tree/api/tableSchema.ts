@@ -33,7 +33,9 @@ export interface IRow<TCell, TColumn extends IColumn<TCell>> {
 	// TODO: map instead?
 	cells: Record<string, TCell | undefined>;
 	getCell(column: TColumn): TCell | undefined;
-	// TODO
+	setCell(column: TColumn, value: TCell | undefined): void;
+	deleteCell(column: TColumn): void;
+
 }
 
 
