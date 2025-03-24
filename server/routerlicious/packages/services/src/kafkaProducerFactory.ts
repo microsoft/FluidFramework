@@ -14,7 +14,7 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
 // Runtime has a client-imposed limit of 768kb.
 // Set our enforced limit at 900kb to give space for any
 // mysterious overhead.
-const MaxKafkaMessageSize = 900 * 1024;
+const MaxKafkaMessageSize = 199999;
 
 /**
  * @internal
