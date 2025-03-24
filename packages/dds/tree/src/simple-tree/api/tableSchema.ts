@@ -125,8 +125,10 @@ export function createTableSchema<
 	const TCell extends readonly TreeNodeSchema[],
 	const TColumnProps extends readonly TreeNodeSchema[],
 	const TRowProps extends readonly TreeNodeSchema[],
-	const Scope extends string | undefined,
->(props: TableSchemaProps<TCell, TColumnProps, TRowProps, Scope>) {
+	const TScope extends string | undefined,
+>(
+	props: TableSchemaProps<TCell, TColumnProps, TRowProps, TScope>,
+) {
 	const { sf, schemaTypes, columnProps, rowProps } = props;
 
 	type CellValueType = TreeNodeFromImplicitAllowedTypes<TCell>;
@@ -341,9 +343,6 @@ export function createTableSchema<
 		})
 		implements ITable<TCell, Column, Row>
 	{
-		public static readonly Row = Row;
-		public static readonly Column = Column;
-
 		/**
 		 * Get a row by the id
 		 * @param id - The id of the row
