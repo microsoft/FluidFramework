@@ -89,12 +89,6 @@ importers:
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
-      pretty-quick:
-        specifier: ^4.0.0
-        version: 4.0.0(prettier@3.0.3)
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -141,9 +135,6 @@ importers:
       pm2:
         specifier: ^5.4.2
         version: 5.4.3
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -208,9 +199,6 @@ importers:
       eslint-config-prettier:
         specifier: ~9.0.0
         version: 9.0.0(eslint@8.55.0)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -392,15 +380,163 @@ importers:
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.97.1)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       process:
         specifier: ^0.11.10
         version: 0.11.10
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
+      ts-loader:
+        specifier: ^9.5.1
+        version: 9.5.1(typescript@5.4.5)(webpack@5.97.1)
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
+      webpack:
+        specifier: ^5.94.0
+        version: 5.97.1(webpack-cli@5.1.4)
+      webpack-cli:
+        specifier: ^5.1.4
+        version: 5.1.4(webpack-dev-server@4.15.2)(webpack@5.97.1)
+      webpack-dev-server:
+        specifier: ~4.15.2
+        version: 4.15.2(webpack-cli@5.1.4)(webpack@5.97.1)
+      webpack-merge:
+        specifier: ^6.0.1
+        version: 6.0.1
+
+  examples/apps/blobs:
+    dependencies:
+      '@fluid-internal/client-utils':
+        specifier: workspace:~
+        version: link:../../../packages/common/client-utils
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/common/container-definitions
+      '@fluidframework/container-loader':
+        specifier: workspace:~
+        version: link:../../../packages/loader/container-loader
+      '@fluidframework/container-runtime':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/container-runtime
+      '@fluidframework/container-runtime-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/container-runtime-definitions
+      '@fluidframework/core-interfaces':
+        specifier: workspace:~
+        version: link:../../../packages/common/core-interfaces
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../../packages/common/core-utils
+      '@fluidframework/datastore':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/datastore
+      '@fluidframework/datastore-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/datastore-definitions
+      '@fluidframework/local-driver':
+        specifier: workspace:~
+        version: link:../../../packages/drivers/local-driver
+      '@fluidframework/map':
+        specifier: workspace:~
+        version: link:../../../packages/dds/map
+      '@fluidframework/routerlicious-driver':
+        specifier: workspace:~
+        version: link:../../../packages/drivers/routerlicious-driver
+      '@fluidframework/runtime-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/runtime-definitions
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/runtime-utils
+      '@fluidframework/server-local-server':
+        specifier: ^5.0.0
+        version: 5.0.0
+      '@fluidframework/tinylicious-driver':
+        specifier: workspace:~
+        version: link:../../../packages/drivers/tinylicious-driver
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
+      uuid:
+        specifier: ^9.0.0
+        version: 9.0.1
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ~1.9.3
+        version: 1.9.4
+      '@fluid-tools/build-cli':
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.67)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^5.7.3
+        version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
+      '@fluidframework/test-tools':
+        specifier: ^1.0.195075
+        version: 1.0.195075
+      '@types/jest':
+        specifier: 29.5.3
+        version: 29.5.3
+      '@types/jest-environment-puppeteer':
+        specifier: workspace:~
+        version: link:../../../packages/test/types_jest-environment-puppeteer
+      '@types/node':
+        specifier: ^18.19.0
+        version: 18.19.67
+      '@types/react':
+        specifier: ^18.3.11
+        version: 18.3.15
+      '@types/react-dom':
+        specifier: ^18.3.0
+        version: 18.3.3(@types/react@18.3.15)
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      eslint:
+        specifier: ~8.55.0
+        version: 8.55.0
+      expect-puppeteer:
+        specifier: ^9.0.2
+        version: 9.0.2
+      html-webpack-plugin:
+        specifier: ^5.6.0
+        version: 5.6.3(webpack@5.97.1)
+      jest:
+        specifier: ^29.6.2
+        version: 29.7.0(@types/node@18.19.67)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@18.19.67)(typescript@5.4.5))
+      jest-environment-puppeteer:
+        specifier: ^10.1.3
+        version: 10.1.4(typescript@5.4.5)
+      jest-junit:
+        specifier: ^16.0.0
+        version: 16.0.0
+      jest-puppeteer:
+        specifier: ^10.1.3
+        version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      prettier:
+        specifier: ~3.0.3
+        version: 3.0.3
+      process:
+        specifier: ^0.11.10
+        version: 0.11.10
+      puppeteer:
+        specifier: ^23.6.0
+        version: 23.10.3(typescript@5.4.5)
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.1
+      ts-jest:
+        specifier: ^29.1.1
+        version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@18.19.67)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@18.19.67)(typescript@5.4.5)))(typescript@5.4.5)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.97.1)
@@ -516,9 +652,6 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -646,9 +779,6 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -824,9 +954,6 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -960,9 +1087,6 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -1123,9 +1247,6 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -1250,9 +1371,6 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -1465,9 +1583,6 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -1577,9 +1692,6 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -1668,9 +1780,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -1759,9 +1868,6 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -1874,9 +1980,6 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -1980,9 +2083,6 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -2086,9 +2186,6 @@ importers:
       fs-extra:
         specifier: ^9.1.0
         version: 9.1.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -2189,9 +2286,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -2325,9 +2419,6 @@ importers:
       jest-junit:
         specifier: ^16.0.0
         version: 16.0.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -2440,9 +2531,6 @@ importers:
       less-loader:
         specifier: ^4.1.0
         version: 4.1.0(less@3.12.2)(webpack@5.97.1)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -2552,9 +2640,6 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -2664,9 +2749,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -2758,9 +2840,6 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -2864,9 +2943,6 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -2958,9 +3034,6 @@ importers:
       monaco-editor-webpack-plugin:
         specifier: ^6.0.0
         version: 6.0.0(monaco-editor@0.30.1)(webpack@5.97.1)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -3031,9 +3104,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -3074,9 +3144,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -3189,9 +3256,6 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -3250,9 +3314,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -3284,9 +3345,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -3324,9 +3382,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -3364,9 +3419,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -3404,9 +3456,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -3537,9 +3586,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -3636,9 +3682,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -3769,9 +3812,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -3875,9 +3915,6 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -4029,9 +4066,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -4228,9 +4262,6 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -4376,9 +4407,6 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -4476,9 +4504,6 @@ importers:
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.97.1)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -4585,9 +4610,6 @@ importers:
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -4739,9 +4761,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -4897,9 +4916,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -5048,9 +5064,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -5163,9 +5176,6 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -5332,9 +5342,6 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -5516,9 +5523,6 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -5676,9 +5680,6 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -5809,9 +5810,6 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -5957,9 +5955,6 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -6081,9 +6076,6 @@ importers:
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -6196,9 +6188,6 @@ importers:
       nock:
         specifier: ^13.3.3
         version: 13.5.6
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -6302,9 +6291,6 @@ importers:
       nock:
         specifier: ^13.3.3
         version: 13.5.6
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -6315,7 +6301,11 @@ importers:
         specifier: ~5.4.5
         version: 5.4.5
 
-  experimental/PropertyDDS/packages/property-common/platform-dependent: {}
+  experimental/PropertyDDS/packages/property-common/platform-dependent:
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ~1.9.3
+        version: 1.9.4
 
   experimental/PropertyDDS/packages/property-dds:
     dependencies:
@@ -6461,9 +6451,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -6543,9 +6530,6 @@ importers:
       nock:
         specifier: ^13.3.3
         version: 13.5.6
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -6664,9 +6648,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -6761,9 +6742,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       quill-delta:
         specifier: ^4.2.2
         version: 4.2.2
@@ -6858,9 +6836,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -6955,9 +6930,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -7112,9 +7084,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -7185,9 +7154,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -7252,9 +7218,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -7352,9 +7315,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -7476,9 +7436,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -7543,9 +7500,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -7606,9 +7560,6 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.8.2)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -7684,9 +7635,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -7736,9 +7684,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -7836,9 +7781,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       replace-in-file:
         specifier: ^6.3.5
         version: 6.3.5
@@ -7936,9 +7878,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       replace-in-file:
         specifier: ^6.3.5
         version: 6.3.5
@@ -8036,9 +7975,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       replace-in-file:
         specifier: ^6.3.5
         version: 6.3.5
@@ -8163,9 +8099,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       replace-in-file:
         specifier: ^6.3.5
         version: 6.3.5
@@ -8305,9 +8238,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       replace-in-file:
         specifier: ^6.3.5
         version: 6.3.5
@@ -8429,9 +8359,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       replace-in-file:
         specifier: ^6.3.5
         version: 6.3.5
@@ -8541,9 +8468,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       replace-in-file:
         specifier: ^6.3.5
         version: 6.3.5
@@ -8641,9 +8565,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       replace-in-file:
         specifier: ^6.3.5
         version: 6.3.5
@@ -8744,9 +8665,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       replace-in-file:
         specifier: ^6.3.5
         version: 6.3.5
@@ -8880,9 +8798,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       random-js:
         specifier: ^2.1.0
         version: 2.1.0
@@ -9007,9 +8922,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       replace-in-file:
         specifier: ^6.3.5
         version: 6.3.5
@@ -9113,9 +9025,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       replace-in-file:
         specifier: ^6.3.5
         version: 6.3.5
@@ -9225,9 +9134,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       replace-in-file:
         specifier: ^6.3.5
         version: 6.3.5
@@ -9337,9 +9243,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -9506,9 +9409,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -9570,9 +9470,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -9658,9 +9555,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -9734,9 +9628,6 @@ importers:
       jest:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.67)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@18.19.67)(typescript@5.4.5))
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -9801,9 +9692,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -9922,9 +9810,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -10034,9 +9919,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -10089,9 +9971,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -10174,9 +10053,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -10247,9 +10123,6 @@ importers:
       nock:
         specifier: ^13.3.3
         version: 13.5.6
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -10368,9 +10241,6 @@ importers:
       nock:
         specifier: ^13.3.3
         version: 13.5.6
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -10456,9 +10326,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -10541,9 +10408,6 @@ importers:
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -10629,9 +10493,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -10653,6 +10514,9 @@ importers:
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../dds/tree
+      fastest-levenshtein:
+        specifier: ^1.0.16
+        version: 1.0.16
       openai:
         specifier: ^4.67.3
         version: 4.76.1(encoding@0.1.13)(zod@3.24.0)
@@ -10729,9 +10593,6 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.8.2)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -10783,6 +10644,12 @@ importers:
       '@fluidframework/synthesize':
         specifier: workspace:~
         version: link:../synthesize
+      '@fluidframework/telemetry-utils':
+        specifier: workspace:~
+        version: link:../../utils/telemetry-utils
+      '@fluidframework/tree':
+        specifier: workspace:~
+        version: link:../../dds/tree
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -10841,9 +10708,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -10959,9 +10823,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -11044,9 +10905,6 @@ importers:
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -11135,9 +10993,6 @@ importers:
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -11229,9 +11084,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -11320,9 +11172,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -11341,6 +11190,9 @@ importers:
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../common/core-utils
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../common/driver-definitions
@@ -11396,9 +11248,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -11514,9 +11363,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -11581,9 +11427,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -11696,9 +11539,6 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.8.2)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -11790,9 +11630,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -11872,9 +11709,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -11966,9 +11800,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -12093,9 +11924,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -12196,9 +12024,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -12254,9 +12079,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -12396,9 +12218,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -12457,9 +12276,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -12572,9 +12388,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -12633,9 +12446,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -12730,9 +12540,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -12791,9 +12598,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -12894,9 +12698,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -13018,9 +12819,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -13121,9 +12919,6 @@ importers:
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -13275,9 +13070,6 @@ importers:
       nock:
         specifier: ^13.3.3
         version: 13.5.6
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -13390,9 +13182,6 @@ importers:
       nock:
         specifier: ^13.3.3
         version: 13.5.6
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -13493,9 +13282,6 @@ importers:
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -13596,9 +13382,6 @@ importers:
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -13728,9 +13511,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -13870,9 +13650,6 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.8.2)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -13987,9 +13764,6 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.8.2)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -14051,9 +13825,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -14172,9 +13943,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -14254,9 +14022,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       random-js:
         specifier: ^2.1.0
         version: 2.1.0
@@ -14306,9 +14071,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -14415,9 +14177,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -14626,9 +14385,6 @@ importers:
       nock:
         specifier: ^13.3.3
         version: 13.5.6
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -14690,9 +14446,6 @@ importers:
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -14820,9 +14573,6 @@ importers:
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -14968,9 +14718,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -15140,9 +14887,6 @@ importers:
       nock:
         specifier: ^13.3.3
         version: 13.5.6
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -15173,9 +14917,6 @@ importers:
       jest-environment-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -15210,9 +14951,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -15298,9 +15036,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -15485,9 +15220,6 @@ importers:
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -15633,9 +15365,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -15805,9 +15534,6 @@ importers:
       jest-junit:
         specifier: ^16.0.0
         version: 16.0.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -16019,9 +15745,6 @@ importers:
       playwright:
         specifier: ^1.36.0
         version: 1.49.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       prop-types:
         specifier: ^15.8.1
         version: 15.8.1
@@ -16119,9 +15842,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -16222,9 +15942,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -16346,9 +16063,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -16440,9 +16154,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -16537,9 +16248,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -16640,9 +16348,6 @@ importers:
       moment:
         specifier: ^2.21.0
         version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -16668,12 +16373,12 @@ importers:
         specifier: 17.7.2
         version: 17.7.2
     devDependencies:
+      '@biomejs/biome':
+        specifier: ~1.9.3
+        version: 1.9.4
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
 
 packages:
 
@@ -25471,10 +25176,6 @@ packages:
     resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
     engines: {node: '>=8.6'}
 
-  picomatch@3.0.1:
-    resolution: {integrity: sha512-I3EurrIQMlRc9IaAZnqRR044Phh2DXY+55o7uJ0V+hYZAcQYSuFWsc9q5PvyDHUSCe1Qxn/iBz+78s86zWnGag==}
-    engines: {node: '>=10'}
-
   picomatch@4.0.2:
     resolution: {integrity: sha512-M7BAV6Rlcy5u+m6oPhAPFgJTzAioX/6B0DxyvDlo9l8+T3nLKbrczg2WLUyzd45L8RqfUMyGPzekbMvX2Ldkwg==}
     engines: {node: '>=12'}
@@ -25688,13 +25389,6 @@ packages:
   pretty-format@29.7.0:
     resolution: {integrity: sha512-Pdlw/oPxN+aXdmM9R00JVC9WVFoCLTKJvDVLgmJ+qAffBMxsV85l/Lu7sNx4zSzPyoL2euImuEwHhOXdEgNFZQ==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
-
-  pretty-quick@4.0.0:
-    resolution: {integrity: sha512-M+2MmeufXb/M7Xw3Afh1gxcYpj+sK0AxEfnfF958ktFeAyi5MsKY5brymVURQLgPLV1QaF5P4pb2oFJ54H3yzQ==}
-    engines: {node: '>=14'}
-    hasBin: true
-    peerDependencies:
-      prettier: ^3.0.0
 
   prettyjson@1.2.5:
     resolution: {integrity: sha512-rksPWtoZb2ZpT5OVgtmy0KHVM+Dca3iVwWY9ifwhcexfjebtgjg3wmrUt9PvJ59XIYBcknQeYHD8IAnVlh9lAw==}
@@ -28636,7 +28330,7 @@ snapshots:
       outdent: 0.5.0
       prettier: 2.8.8
       resolve-from: 5.0.0
-      semver: 7.6.3
+      semver: 7.7.1
 
   '@changesets/assemble-release-plan@6.0.5':
     dependencies:
@@ -28645,7 +28339,7 @@ snapshots:
       '@changesets/should-skip-package': 0.1.1
       '@changesets/types': 6.0.0
       '@manypkg/get-packages': 1.1.3
-      semver: 7.6.3
+      semver: 7.7.1
 
   '@changesets/changelog-git@0.2.0':
     dependencies:
@@ -28701,7 +28395,7 @@ snapshots:
       '@changesets/types': 6.0.0
       '@manypkg/get-packages': 1.1.3
       picocolors: 1.1.1
-      semver: 7.6.3
+      semver: 7.7.1
 
   '@changesets/get-release-plan@4.0.5':
     dependencies:
@@ -30418,7 +30112,7 @@ snapshots:
       oclif: 4.16.2(@types/node@18.19.67)
       picocolors: 1.1.1
       read-pkg-up: 7.0.1
-      semver: 7.6.3
+      semver: 7.7.1
       simple-git: 3.27.0
       sort-package-json: 1.57.0
       type-fest: 2.19.0
@@ -30444,7 +30138,7 @@ snapshots:
       oclif: 4.16.2(@types/node@22.10.1)
       picocolors: 1.1.1
       read-pkg-up: 7.0.1
-      semver: 7.6.3
+      semver: 7.7.1
       simple-git: 3.27.0
       sort-package-json: 1.57.0
       type-fest: 2.19.0
@@ -31095,9 +30789,9 @@ snapshots:
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.4.5)
       eslint-config-biome: 1.9.4
       eslint-config-prettier: 9.0.0(eslint@8.55.0)
-      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0)
       eslint-plugin-eslint-comments: 3.2.0(eslint@8.55.0)
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
       eslint-plugin-jsdoc: 46.8.2(eslint@8.55.0)
       eslint-plugin-promise: 6.1.1(eslint@8.55.0)
       eslint-plugin-react: 7.33.2(eslint@8.55.0)
@@ -32868,7 +32562,7 @@ snapshots:
       '@rushstack/ts-command-line': 4.23.1(@types/node@18.19.67)
       lodash: 4.17.21
       minimatch: 3.0.8
-      resolve: 1.22.8
+      resolve: 1.22.10
       semver: 7.5.4
       source-map: 0.6.1
       typescript: 5.4.2
@@ -32886,7 +32580,7 @@ snapshots:
       '@rushstack/ts-command-line': 4.23.1(@types/node@22.10.1)
       lodash: 4.17.21
       minimatch: 3.0.8
-      resolve: 1.22.8
+      resolve: 1.22.10
       semver: 7.5.4
       source-map: 0.6.1
       typescript: 5.4.2
@@ -33242,7 +32936,7 @@ snapshots:
       is-wsl: 2.2.0
       lilconfig: 3.1.3
       minimatch: 9.0.5
-      semver: 7.6.3
+      semver: 7.7.1
       string-width: 4.2.3
       supports-color: 8.1.1
       widest-line: 3.1.0
@@ -33829,7 +33523,7 @@ snapshots:
       fs-extra: 7.0.1
       import-lazy: 4.0.0
       jju: 1.4.0
-      resolve: 1.22.8
+      resolve: 1.22.10
       semver: 7.5.4
     optionalDependencies:
       '@types/node': 18.19.67
@@ -33842,7 +33536,7 @@ snapshots:
       fs-extra: 7.0.1
       import-lazy: 4.0.0
       jju: 1.4.0
-      resolve: 1.22.8
+      resolve: 1.22.10
       semver: 7.5.4
     optionalDependencies:
       '@types/node': 22.10.1
@@ -34850,7 +34544,7 @@ snapshots:
       '@typescript-eslint/typescript-estree': 5.62.0(typescript@5.4.5)
       eslint: 8.55.0
       eslint-scope: 5.1.1
-      semver: 7.6.3
+      semver: 7.7.1
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -36305,7 +35999,7 @@ snapshots:
 
   create-esm-loader@0.2.5:
     dependencies:
-      semver: 7.6.3
+      semver: 7.7.1
 
   create-jest@29.7.0(@types/node@18.19.67)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@18.19.67)(typescript@5.4.5)):
     dependencies:
@@ -37174,33 +36868,33 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1)(eslint@8.55.0):
+  eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0):
     dependencies:
       '@nolyfill/is-core-module': 1.0.39
       debug: 4.4.0(supports-color@8.1.1)
       enhanced-resolve: 5.17.1
       eslint: 8.55.0
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
       fast-glob: 3.3.2
       get-tsconfig: 4.8.1
       is-bun-module: 1.3.0
       is-glob: 4.0.3
     optionalDependencies:
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
     transitivePeerDependencies:
       - '@typescript-eslint/parser'
       - eslint-import-resolver-node
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-module-utils@2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0):
+  eslint-module-utils@2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.4.5)
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -37214,13 +36908,13 @@ snapshots:
       eslint: 8.55.0
       ignore: 5.3.2
 
-  eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0):
+  eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0):
     dependencies:
       debug: 4.4.0(supports-color@8.1.1)
       doctrine: 3.0.0
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
       get-tsconfig: 4.10.0
       is-glob: 4.0.3
       minimatch: 3.1.2
@@ -38675,7 +38369,7 @@ snapshots:
       fengari: 0.1.4
       fengari-interop: 0.1.3(fengari@0.1.4)
       ioredis: 5.4.1
-      semver: 7.6.3
+      semver: 7.7.1
 
   ioredis@5.4.1:
     dependencies:
@@ -41071,7 +40765,7 @@ snapshots:
       rc-config-loader: 4.1.3
       remote-git-tags: 3.0.0
       rimraf: 5.0.10
-      semver: 7.6.3
+      semver: 7.7.1
       semver-utils: 1.1.4
       source-map-support: 0.5.21
       spawn-please: 2.0.2
@@ -41231,7 +40925,7 @@ snapshots:
       got: 13.0.0
       lodash: 4.17.21
       normalize-package-data: 6.0.2
-      semver: 7.6.3
+      semver: 7.7.1
       sort-package-json: 2.12.0
       tiny-jsonc: 1.0.1
       validate-npm-package-name: 5.0.1
@@ -41261,7 +40955,7 @@ snapshots:
       got: 13.0.0
       lodash: 4.17.21
       normalize-package-data: 6.0.2
-      semver: 7.6.3
+      semver: 7.7.1
       sort-package-json: 2.12.0
       tiny-jsonc: 1.0.1
       validate-npm-package-name: 5.0.1
@@ -41627,8 +41321,6 @@ snapshots:
 
   picomatch@2.3.1: {}
 
-  picomatch@3.0.1: {}
-
   picomatch@4.0.2: {}
 
   picospinner@2.0.0: {}
@@ -41788,7 +41480,7 @@ snapshots:
       postcss: 8.4.49
       postcss-value-parser: 4.2.0
       read-cache: 1.0.0
-      resolve: 1.22.8
+      resolve: 1.22.10
 
   postcss-js@4.0.1(postcss@8.4.49):
     dependencies:
@@ -41894,17 +41586,6 @@ snapshots:
       '@jest/schemas': 29.6.3
       ansi-styles: 5.2.0
       react-is: 18.3.1
-
-  pretty-quick@4.0.0(prettier@3.0.3):
-    dependencies:
-      execa: 5.1.1
-      find-up: 5.0.0
-      ignore: 5.3.2
-      mri: 1.2.0
-      picocolors: 1.1.1
-      picomatch: 3.0.1
-      prettier: 3.0.3
-      tslib: 2.8.1
 
   prettyjson@1.2.5:
     dependencies:
@@ -42599,7 +42280,7 @@ snapshots:
     dependencies:
       debug: 4.4.0(supports-color@8.1.1)
       module-details-from-path: 1.0.3
-      resolve: 1.22.8
+      resolve: 1.22.10
     transitivePeerDependencies:
       - supports-color
 
@@ -42645,7 +42326,7 @@ snapshots:
 
   resolve@2.0.0-next.5:
     dependencies:
-      is-core-module: 2.15.1
+      is-core-module: 2.16.1
       path-parse: 1.0.7
       supports-preserve-symlinks-flag: 1.0.0
 
@@ -42846,7 +42527,7 @@ snapshots:
 
   semver-try-require@6.2.3:
     dependencies:
-      semver: 7.6.3
+      semver: 7.7.1
 
   semver-utils@1.1.4: {}
 

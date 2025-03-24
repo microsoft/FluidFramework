@@ -100,6 +100,7 @@ export {
 	type TreeLeafValue,
 	FieldKind,
 	FieldSchema,
+	type FieldSchemaAlpha,
 	type FieldSchemaMetadata,
 	type ImplicitAllowedTypes,
 	type InsertableTreeFieldFromImplicitField,
@@ -224,6 +225,7 @@ export {
 	replaceHandles,
 	replaceVerboseTreeHandles,
 	type HandleConverter,
+	type LeafSchema,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
@@ -242,6 +244,15 @@ export { noopValidator } from "./codec/index.js";
 export { typeboxValidator } from "./external-utilities/index.js";
 
 export type {
+	// Type Testing
+	requireTrue,
+	requireFalse,
+	requireAssignableTo,
+	areSafelyAssignable,
+	isAssignableTo,
+	isAny,
+	eitherIsAny,
+	// Other
 	RestrictiveReadonlyRecord,
 	RestrictiveStringRecord,
 	MakeNominal,
