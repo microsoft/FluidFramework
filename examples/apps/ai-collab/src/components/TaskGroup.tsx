@@ -244,9 +244,10 @@ export function TaskGroup(props: {
 						event.eventName === "APPLIED_EDIT_FAILURE"
 					) {
 						console.log(
-							`${event.eventName === "APPLIED_EDIT_SUCCESS"
-								? "Succesfully applied"
-								: "Failed to appply"
+							`${
+								event.eventName === "APPLIED_EDIT_SUCCESS"
+									? "Succesfully applied"
+									: "Failed to appply"
 							} tree edit: ${JSON.stringify(
 								(event as unknown as ApplyEditSuccess).edit,
 								undefined,
@@ -508,40 +509,57 @@ export function TaskGroup(props: {
 			{/* Render Task Card list */}
 			<Stack direction="row" spacing={{ xs: 1, sm: 2 }} useFlexGap sx={{ flexWrap: "wrap" }}>
 				{props.sharedTreeTaskGroup.tasks.map((task) => {
-					const modifyDiffs: ModifyDiff[] = props.uiDiffs?.filter((diff) => diff.type === "modify") ?? [];
-					const matchingModifyDiffs = modifyDiffs.filter((diff) =>
-						// Modify diffs are a field level edit, so the first path will be the field and the second will be the node.
-						diff.nodePath.length > 1 && diff.nodePath[1]?.shortId === Tree.shortId(task)
-					)
+					const modifyDiffs =
+						props.uiDiffs?.filter((diff): diff is ModifyDiff => diff.type === "modify") ?? [];
+					const matchingModifyDiffs = modifyDiffs.filter(
+						(diff: ModifyDiff) =>
+							// Modify diffs are a field level edit, so the first path will be the field and the second will be the node.
+							diff.nodePath.length > 1 && diff.nodePath[1]?.shortId === Tree.shortId(task),
+					);
 
-					const insertDiffs: InsertDiff[] = props.uiDiffs?.filter((diff) => diff.type === "insert") ?? [];
-					const matchingInsertDiffs = insertDiffs.filter((diff) =>
-						// Insert diffs are a node level edit, so the first path will be the node.
-						diff.nodePath[0]?.shortId === Tree.shortId(task)
-					)
+					const insertDiffs =
+						props.uiDiffs?.filter((diff): diff is InsertDiff => diff.type === "insert") ?? [];
+					const matchingInsertDiffs = insertDiffs.filter(
+						(diff: InsertDiff) =>
+							// Insert diffs are a node level edit, so the first path will be the node.
+							diff.nodePath[0]?.shortId === Tree.shortId(task),
+					);
 
 					// TODO - Since the Target node has been deleted, this will never match to a remove diff.
 					// One possible correct way to handle this case, is to take deleted node ui diffs, take the `RemoveDiff.nodeContent / RemoveDiff.nodeContents` and use that
 					// to render a special 'removed' task card that cannot be interacted with and is not a part of the tree.
-					const removeDiffs: RemoveDiff[] = props.uiDiffs?.filter((diff) => diff.type === "remove") ?? [];
-					const matchingRemoveDiffs = removeDiffs.filter((diff) => {
-						if (diff.subType === 'remove-array-single') {
-							return diff.nodePath[0]?.shortId === Tree.shortId(task)
-						} else if (diff.subType === 'remove-array-range') {
-							return diff.nodePaths.some((nodePath) => nodePath[0]?.shortId === Tree.shortId(task))
+					const removeDiffs =
+						props.uiDiffs?.filter((diff): diff is RemoveDiff => diff.type === "remove") ?? [];
+					const matchingRemoveDiffs = removeDiffs.filter((diff: RemoveDiff) => {
+						if (diff.subType === "remove-array-single") {
+							return diff.nodePath[0]?.shortId === Tree.shortId(task);
+						} else if (diff.subType === "remove-array-range") {
+							return diff.nodePaths.some(
+								(nodePath) => nodePath[0]?.shortId === Tree.shortId(task),
+							);
 						}
-					})
+						return false;
+					});
 
-					const moveDiffs: MoveDiff[] = props.uiDiffs?.filter((diff) => diff.type === "move") ?? [];
-					const matchingMoveDiffs = moveDiffs.filter((diff) => {
-						if (diff.subType === 'move-single') {
-							return diff.sourceNodePath[0]?.shortId === Tree.shortId(task)
-						} else if (diff.subType === 'move-range') {
-							return diff.sourceNodePaths.some((nodePath) => nodePath[0]?.shortId === Tree.shortId(task))
+					const moveDiffs =
+						props.uiDiffs?.filter((diff): diff is MoveDiff => diff.type === "move") ?? [];
+					const matchingMoveDiffs = moveDiffs.filter((diff: MoveDiff) => {
+						if (diff.subType === "move-single") {
+							return diff.sourceNodePath[0]?.shortId === Tree.shortId(task);
+						} else if (diff.subType === "move-range") {
+							return diff.sourceNodePaths.some(
+								(nodePath) => nodePath[0]?.shortId === Tree.shortId(task),
+							);
 						}
-					})
+						return false;
+					});
 
-					const matchingUiDiffs = [...matchingModifyDiffs, ...matchingInsertDiffs, ...matchingRemoveDiffs, ...matchingMoveDiffs]
+					const matchingUiDiffs = [
+						...matchingModifyDiffs,
+						...matchingInsertDiffs,
+						...matchingRemoveDiffs,
+						...matchingMoveDiffs,
+					];
 					if (matchingUiDiffs.length > 0) {
 						console.log(
 							`found the following ui diffs targeting task with shortId ${Tree.shortId(task)} and title ${task.title}`,
@@ -621,15 +639,8 @@ function TaskGroupDiffModal(props: {
 	uiDiffs: UiDiff[];
 	newBranchTargetNode: SharedTreeTaskGroup;
 }): JSX.Element {
-	const {
-		isOpen,
-		onClose,
-		onAccept,
-		onDecline,
-		treeView,
-		newBranchTargetNode,
-		uiDiffs,
-	} = props;
+	const { isOpen, onClose, onAccept, onDecline, treeView, newBranchTargetNode, uiDiffs } =
+		props;
 
 	return (
 		<Dialog

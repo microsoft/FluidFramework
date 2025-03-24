@@ -79,8 +79,8 @@ export function TaskCard(props: {
 		isNewCreation: boolean;
 		changes: Record<string, ModifyDiff>;
 		moved?: {
-			uiDiff: MoveDiff,
-			originalIndex: number,
+			uiDiff: MoveDiff;
+			originalIndex: number;
 		};
 	} = {
 		isNewCreation: false,
@@ -88,21 +88,21 @@ export function TaskCard(props: {
 	};
 
 	for (const uiDiff of uiDiffs ?? []) {
-		if (uiDiff.type === 'insert') {
+		if (uiDiff.type === "insert") {
 			fieldDifferences.isNewCreation = true;
 		}
-		if (uiDiff.type === 'modify') {
+		if (uiDiff.type === "modify") {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			const targetField = uiDiff.nodePath[0]?.parentField as string
+			const targetField = uiDiff.nodePath[0]?.parentField as string;
 			if (targetField === undefined) {
-				console.error('Recieved modify ui diff but could not identify target field');
+				console.error("Recieved modify ui diff but could not identify target field");
 				continue;
 			}
 
 			fieldDifferences.changes[targetField] = uiDiff;
 		}
 
-		if (uiDiff.type === 'move' && uiDiff.subType === 'move-single') {
+		if (uiDiff.type === "move" && uiDiff.subType === "move-single") {
 			fieldDifferences.moved = {
 				uiDiff,
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -198,9 +198,10 @@ export function TaskCard(props: {
 						event.eventName === "APPLIED_EDIT_FAILURE"
 					) {
 						console.log(
-							`${event.eventName === "APPLIED_EDIT_SUCCESS"
-								? "Succesfully applied"
-								: "Failed to appply"
+							`${
+								event.eventName === "APPLIED_EDIT_SUCCESS"
+									? "Succesfully applied"
+									: "Failed to appply"
 							} tree edit: ${JSON.stringify(
 								(event as unknown as ApplyEditSuccess).edit,
 								undefined,
