@@ -463,8 +463,19 @@ export abstract class SharedObjectCore<
 				makeHandlesSerializable(content, this.serializer, this.handle),
 				localOpMetadata,
 			);
+			this.pendingLocalMessages.push({
+				content, // Hydrated content (not serialized)
+				localOpMetadata,
+			});
 		}
 	}
+
+	private readonly pendingLocalMessages: { content: unknown; localOpMetadata: unknown }[] = [];
+
+	public get isDirty(): boolean {
+		return this.pendingLocalMessages.length > 0;
+	}
+	//* TODO: Also add dirty/saved events...?
 
 	/**
 	 * Marks this object as dirty so that it is part of the next summary. It is called by a SharedSummaryBlock
@@ -585,6 +596,20 @@ export abstract class SharedObjectCore<
 		}
 	}
 
+	//* TODO: Name
+	private matchNextPendingLocalMessage(
+		roundtrippedContents: unknown, //* Roundtripped through string, not necessarily to ordering service (e.g. resubmit)
+		localOpMetadata: unknown,
+	): unknown {
+		const pending = this.pendingLocalMessages.shift();
+		assert(pending !== undefined, "Pending message not found");
+
+		//* TODO: Compare roundtrippedContents with pending contents.
+		//* Options: Serialize both (but avoid binding handles?), or have LOM include a comparison function.
+
+		return pending;
+	}
+
 	/**
 	 * Handles a message being received from the remote delta server.
 	 * @param message - The message to process
@@ -647,6 +672,9 @@ export abstract class SharedObjectCore<
 				clientSequenceNumber,
 			};
 			decodedMessagesContent.push(decodedMessageContent);
+			if (messagesCollection.local) {
+				this.matchNextPendingLocalMessage(decodedMessageContent, localOpMetadata);
+			}
 		}
 
 		const decodedMessagesCollection: IRuntimeMessageCollection = {
@@ -663,13 +691,17 @@ export abstract class SharedObjectCore<
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
 	private reSubmit(content: unknown, localOpMetadata: unknown): void {
-		this.reSubmitCore(content, localOpMetadata);
+		// This has the original viable handles, not the serialized ones.
+		const viableContent = this.matchNextPendingLocalMessage(content, localOpMetadata);
+		this.reSubmitCore(viableContent, localOpMetadata);
 	}
 
 	/**
 	 * Revert an op
 	 */
 	protected rollback(content: unknown, localOpMetadata: unknown): void {
+		//* TODO: This should pop off the last message in the pendingLocalMessages array.
+		//* Probabl need a rollbackCore kind of model...
 		throw new Error("rollback not supported");
 	}
 
@@ -690,6 +722,7 @@ export abstract class SharedObjectCore<
 	 *
 	 * @param content - Contents of a stashed op.
 	 */
+	//* TODO: Need to think through intersection of stashed ops and deferred attach
 	protected abstract applyStashedOp(content: unknown): void;
 
 	/**
