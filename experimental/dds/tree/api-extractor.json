@@ -3,7 +3,12 @@
 	"extends": "../../../common/build/build-common/api-extractor-base.esm.no-legacy.json",
 	"apiReport": {
 		"enabled": true,
-		// Note: `tree.api.md` is the file used for the upcoming tree DDS's API report.
+		// Note: `tree.api.md` is the file used for the public tree DDS's API report.
 		"reportFileName": "experimental-<unscopedPackageName>.api.md"
+	},
+	"docModel": {
+		"enabled": true,
+		// Note: `tree.api.md` is the file used for the public tree DDS's API report.
+		"apiJsonFilePath": "<projectFolder>/_api-extractor-temp/doc-models/experimental-<unscopedPackageName>.api.json"
 	}
 }
