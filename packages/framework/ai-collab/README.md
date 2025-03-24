@@ -253,22 +253,17 @@ import { aiCollab, DebugEvent, UiDiff } from "@fluidframework/ai-collab/alpha";
 
 const sf = new SchemaFactory("testApp");
 
-class TestVector extends sf.object("Vector", {
+class Todo extends sf.object("Todo", {
 	id: sf.identifier,
-	x: sf.number,
-	y: sf.number,
-	z: sf.optional(sf.number),
+	title: string
+	description: string
 }) {}
 
 class TestAppRootObject extends sf.object("TestAppRootObject", {
 	id: sf.identifier,
-	rootStr: sf.string,
-	rootVectors: sf.array([TestVector]),
-	rootStrings: sf.array(sf.string),
-	optionalFieldObject: sf.optional(TestVector),
+	todos: sf.array([Todo]),
 	innerObject: sf.object("InnerObject", {
-		nestedStr: sf.string,
-		nestedVectors: sf.array([TestVector]),
+		nestedTodos: sf.array([Todo]),
 	}),
 }) {}
 
@@ -296,45 +291,75 @@ const response = aiCollab({
 const uiDiffs: UiDiff[] = response.uiDiffs
 ```
 
-### The Insert Ui Diff
+Each UiDiff will contain one or more `NodePath`'s. Each `NodePath` provides an array of objects that detail the path from the root node passed to ai-collab, down to the node targeted for editing. The first index in the `NodePath` is an object pointing to the target node and the last index is always the root node.
+
+
+Lets look at an example of the Insert Ui Diff
 The following `InsertDiff` is an example of a `UiDiff` that would result from if the ai agent inserts an object into index 1 of `TestAppRootObject.rootVectors`
+### Example Insert Ui Diff
 ```json
-{
-  type: "insert",
-  path: [
-    {
-      shortId: -14,
-      schemaIdentifier: "testApp.TestVector",
-      parentField: 1,
-    },
-    {
-      shortId: undefined,
-      schemaIdentifier: "testApp.Array<[\"testApp.TestVector\"]>",
-      parentField: "rootVectors",
-    },
-    {
-      shortId: -1,
-      schemaIdentifier: "testApp.TestAppRootObject",
-      parentField: "rootFieldKey",
-    },
-  ],
-  aiExplanation: "I need to insert a vector within the rootVectors array",
-}
+type: "insert",
+nodePath: [
+		{
+			shortId: -14,
+			schemaIdentifier: "testApp.Todo",
+			parentField: 1,
+		},
+		{
+			shortId: undefined,
+			schemaIdentifier: "testApp.Array<[\"testApp.Todo\"]>",
+			parentField: "todos",
+		},
+		{
+			shortId: -1,
+			schemaIdentifier: "testApp.TestAppRootObject",
+			parentField: "rootFieldKey",
+		},
+	],
+  	aiExplanation: "I need to insert a todo within the todos array",
+  	nodeContent: {
+		id: "f75951b0-df9d-4daa-aaf2-c322f2f462a8",
+		title: "Example Todo Title",
+		description: "Example Todo Description"
+	},
 ```
-As you can see, the object at the beginning of the `path` array directly points to the newly inserted node while each next object points to the parent of the preceding node until you hit the root node passed to the ai-collab function call.
+As you can see, the object at the beginning of the `nodePath` array directly points to the newly inserted node while each next object is the parent of the preceding node until you hit the root node passed to the ai-collab function call.
 
 Using the following ui diff, you can identify the modified node in a number of different ways.
 
 The simplest way is to use the `shortId` where you can use the following code to identify the newly inserted node within the SharedTree.
 
 **Note that the shortId field will only exist for objects that have a field defined as the `SchemaFactory.identifier` field.** See the above example app schema in this section to see the schema field defined as `sf.identifier`
+
+Lets take a look at another UI example of using an array of UiDiffs to render changes
 ```ts
 import { Tree } from "@fluidframework/tree/alpha"
 
-const shortId = Tree.shortId(node);
-if (shortId === uiDiff.path[0].shortId) {
-	// Do some visualization of the edit
+function renderTodoWithUiDiffs(todo: Todo, uiDiffs: UiDiff[]) {
+const modifyDiffs = uiDiffs.filter((diff): diff is ModifyDiff => diff.type === "modify") ?? [];
+const matchingModifyDiffs = modifyDiffs.filter(
+	(diff: ModifyDiff) =>
+		// Modify diffs are a field level edit, so the first path will be the field on the target node and the second will be the node itself.
+		diff.nodePath.length > 1 && diff.nodePath[1]?.shortId === Tree.shortId(task),
+);
+
+const insertDiffs = uiDiffs.filter((diff): diff is InsertDiff => diff.type === "insert") ?? [];
+const matchingInsertDiffs = insertDiffs.filter(
+	(diff: InsertDiff) =>
+		// Insert diffs are a node level edit, so the first path will be the node.
+		diff.nodePath[0]?.shortId === Tree.shortId(task),
+);
 }
+
+if (insertDiffs.length > 0) {
+	renderNewlyInsertedTodo(todo)
+} else if (modifyDiffs.length > 0) {
+	const modifiedFields: [] = matchingModifyDiffs.map(diff => diff.nodePath[0].parentField);
+	renderModifiedTodo(todo, modifiedFields)
+} else {
+	renderTodo(todo)
+}
+
 ```
 You can also use the `type` and `schemaIdentifier` fields to group related `UiDiff`'s
 ```ts

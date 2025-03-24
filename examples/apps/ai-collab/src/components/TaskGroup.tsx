@@ -244,9 +244,10 @@ export function TaskGroup(props: {
 						event.eventName === "APPLIED_EDIT_FAILURE"
 					) {
 						console.log(
-							`${event.eventName === "APPLIED_EDIT_SUCCESS"
-								? "Succesfully applied"
-								: "Failed to appply"
+							`${
+								event.eventName === "APPLIED_EDIT_SUCCESS"
+									? "Succesfully applied"
+									: "Failed to appply"
 							} tree edit: ${JSON.stringify(
 								(event as unknown as ApplyEditSuccess).edit,
 								undefined,
@@ -523,7 +524,6 @@ export function TaskGroup(props: {
 							// Insert diffs are a node level edit, so the first path will be the node.
 							diff.nodePath[0]?.shortId === Tree.shortId(task),
 					);
-
 
 					const removeDiffs =
 						props.uiDiffs?.filter((diff): diff is RemoveDiff => diff.type === "remove") ?? [];

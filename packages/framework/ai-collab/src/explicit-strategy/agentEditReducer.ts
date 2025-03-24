@@ -79,7 +79,7 @@ function populateDefaults(
 }
 
 /**
- * Gets the schema identifier of the given content, including primitve values.
+ * Gets the schema identifier of the given content, including primitive values.
  */
 export function getSchemaIdentifier(content: TreeEditValue): string | undefined {
 	switch (typeof content) {
@@ -699,7 +699,7 @@ function createRemoveUiDiff(
 		const node = getNodeFromTarget(source, idGenerator);
 		const parentNode = Tree.parent(node);
 		if (parentNode === undefined) {
-			throw new Error("Unexpectedly recieved a root node as the target of a remove edit");
+			throw new Error("Unexpectedly received a root node as the target of a remove edit");
 		} else if (Tree.schema(parentNode).kind === NodeKind.Array) {
 			const nodeIndex = Tree.key(node) as number;
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -763,7 +763,9 @@ function createRemoveUiDiff(
 			),
 		};
 	} else {
-		throw new Error("Invalid source encounted when trying to create ui diff for remove edit");
+		throw new Error(
+			"Invalid source encountered when trying to create ui diff for remove edit",
+		);
 	}
 }
 
