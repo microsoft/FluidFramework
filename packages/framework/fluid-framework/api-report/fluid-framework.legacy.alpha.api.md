@@ -108,6 +108,10 @@ export interface FieldProps<TCustomMetadata = unknown> {
 
 // @public @sealed
 export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types extends ImplicitAllowedTypes = ImplicitAllowedTypes, out TCustomMetadata = unknown> {
+    protected constructor(
+    kind: Kind,
+    allowedTypes: Types,
+    props?: FieldProps<TCustomMetadata> | undefined);
     readonly allowedTypes: Types;
     get allowedTypeSet(): ReadonlySet<TreeNodeSchema>;
     readonly kind: Kind;
