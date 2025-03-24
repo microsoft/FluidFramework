@@ -132,8 +132,8 @@ async function handleBroadcastSignal(
 	if (collaborationSessionEventEmitter instanceof RedisEventEmitter) {
 		Lumberjack.info("Emitting signal to room", { tenantId, documentId });
 		await collaborationSessionEventEmitter.emitToRoom(
-			"broadcastSignal",
 			getRoomId(signalRoom),
+			"broadcastSignal",
 			payload,
 		);
 	} else {
