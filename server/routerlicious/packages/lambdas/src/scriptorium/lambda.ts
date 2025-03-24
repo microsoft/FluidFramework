@@ -69,7 +69,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 		this.logSavedOpsTimeIntervalMs = this.providerConfig?.logSavedOpsTimeIntervalMs ?? 60000;
 		this.opsCountTelemetryEnabled = this.providerConfig?.opsCountTelemetryEnabled;
 		this.circuitBreakerEnabled = this.providerConfig?.circuitBreakerEnabled;
-		this.circuitBreakerOptionsDb = this.providerConfig?.circuitBreakerOptionsDb;
+		this.circuitBreakerOptionsDb = this.providerConfig?.circuitBreakerOptions?.database ?? {};
 
 		// setup circuit breaker
 		if (this.circuitBreakerEnabled) {

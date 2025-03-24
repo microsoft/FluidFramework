@@ -258,19 +258,21 @@ data:
             "logSavedOpsTimeIntervalMs": {{ .Values.scriptorium.logSavedOpsTimeIntervalMs }},
             "opsCountTelemetryEnabled": {{ .Values.scriptorium.opsCountTelemetryEnabled }},
             "circuitBreakerEnabled": {{ .Values.scriptorium.circuitBreakerEnabled }},
-            "circuitBreakerOptionsDb": {
-                "errorThresholdPercentage": {{ .Values.scriptorium.circuitBreakerOptionsDb.errorThresholdPercentage }},
-                "resetTimeout": {{ .Values.scriptorium.circuitBreakerOptionsDb.resetTimeout }},
-                "timeout": {{ .Values.scriptorium.circuitBreakerOptionsDb.timeout }},
-                "rollingCountTimeout": {{ .Values.scriptorium.circuitBreakerOptionsDb.rollingCountTimeout }},
-                "rollingCountBuckets": {{ .Values.scriptorium.circuitBreakerOptionsDb.rollingCountBuckets }},
-                "fallbackToRestartTimeoutMs": {{ .Values.scriptorium.circuitBreakerOptionsDb.fallbackToRestartTimeoutMs }},
-                "filterOnErrors": [
-                    {{- $lastIndex := sub (len .Values.scriptorium.circuitBreakerOptionsDb.filterOnErrors) 1}}
-                    {{- range $i, $error := .Values.scriptorium.circuitBreakerOptionsDb.filterOnErrors }}
-                    {{ toJson . }}{{- if ne $i $lastIndex -}}, {{ end }}
-                    {{- end }}
-                ]
+            "circuitBreakerOptions": {
+                "database": {
+                    "errorThresholdPercentage": {{ .Values.scriptorium.circuitBreakerOptionsDb.errorThresholdPercentage }},
+                    "resetTimeout": {{ .Values.scriptorium.circuitBreakerOptionsDb.resetTimeout }},
+                    "timeout": {{ .Values.scriptorium.circuitBreakerOptionsDb.timeout }},
+                    "rollingCountTimeout": {{ .Values.scriptorium.circuitBreakerOptionsDb.rollingCountTimeout }},
+                    "rollingCountBuckets": {{ .Values.scriptorium.circuitBreakerOptionsDb.rollingCountBuckets }},
+                    "fallbackToRestartTimeoutMs": {{ .Values.scriptorium.circuitBreakerOptionsDb.fallbackToRestartTimeoutMs }},
+                    "filterOnErrors": [
+                        {{- $lastIndex := sub (len .Values.scriptorium.circuitBreakerOptionsDb.filterOnErrors) 1}}
+                        {{- range $i, $error := .Values.scriptorium.circuitBreakerOptionsDb.filterOnErrors }}
+                        {{ toJson . }}{{- if ne $i $lastIndex -}}, {{ end }}
+                        {{- end }}
+                    ]
+                }
             }
         },
         "riddler": {

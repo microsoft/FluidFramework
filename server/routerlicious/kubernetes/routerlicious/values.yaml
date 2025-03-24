@@ -100,14 +100,15 @@ scriptorium:
   logSavedOpsTimeIntervalMs: 60000
   opsCountTelemetryEnabled: false
   circuitBreakerEnabled: false
-  circuitBreakerOptionsDb:
-    errorThresholdPercentage: 0.001
-    resetTimeout: 30000
-    timeout: false
-    rollingCountTimeout: 1000
-    rollingCountBuckets: 1000
-    fallbackToRestartTimeoutMs: 180000
-    filterOnErrors: []
+  circuitBreakerOptions:
+    database:
+      errorThresholdPercentage: 0.001
+      resetTimeout: 30000
+      timeout: false
+      rollingCountTimeout: 1000
+      rollingCountBuckets: 1000
+      fallbackToRestartTimeoutMs: 180000
+      filterOnErrors: []
 
 scribe:
   name: scribe
