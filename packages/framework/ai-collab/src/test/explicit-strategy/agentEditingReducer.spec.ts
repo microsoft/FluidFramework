@@ -35,7 +35,6 @@ import type {
 } from "../../aiCollabUiDiffApi.js";
 import {
 	applyAgentEdit,
-	contentWithIds,
 	getRangeInfo,
 	getSchemaIdentifier,
 	// eslint-disable-next-line import/no-internal-modules
@@ -1519,7 +1518,7 @@ describe("UiDiff Creation", () => {
 
 			const expectedUDiff: InsertDiff = {
 				type: "insert",
-				path: [
+				nodePath: [
 					{
 						shortId: Tree.shortId(newlyInsertedNode),
 						schemaIdentifier: Tree.schema(newlyInsertedNode).identifier,
@@ -1537,6 +1536,7 @@ describe("UiDiff Creation", () => {
 					},
 				],
 				aiExplanation: insertEdit.explanation,
+				nodeContent: JSON.parse(JSON.stringify(newlyInsertedNode)) as unknown,
 			};
 			assert.deepEqual(result.uiDiff, expectedUDiff);
 		});
@@ -1564,7 +1564,7 @@ describe("UiDiff Creation", () => {
 
 			const expectedUDiff: InsertDiff = {
 				type: "insert",
-				path: [
+				nodePath: [
 					{
 						shortId: Tree.shortId(newlyInsertedNode),
 						schemaIdentifier: Tree.schema(newlyInsertedNode).identifier,
@@ -1581,8 +1581,8 @@ describe("UiDiff Creation", () => {
 						parentField: "rootFieldKey",
 					},
 				],
-				insertedNode: contentWithIds(newlyInsertedNode, idGenerator),
 				aiExplanation: insertEdit.explanation,
+				nodeContent: JSON.parse(JSON.stringify(newlyInsertedNode)) as unknown,
 			};
 			assert.deepEqual(result.uiDiff, expectedUDiff);
 		});
@@ -1607,10 +1607,11 @@ describe("UiDiff Creation", () => {
 					{ [typeField]: TestVector.identifier, x: 3, y: 4, z: 5 },
 				],
 			};
+			const expectedOldValue: unknown = JSON.parse(JSON.stringify(view.root.rootVectors));
 			const result = applyAgentEdit(modifyEdit, idGenerator, schema.definitions);
 			const expectedUIDiff: ModifyDiff = {
 				type: "modify",
-				path: [
+				nodePath: [
 					{
 						shortId: Tree.shortId(view.root.rootVectors),
 						schemaIdentifier: Tree.schema(view.root.rootVectors).identifier,
@@ -1623,6 +1624,8 @@ describe("UiDiff Creation", () => {
 					},
 				],
 				aiExplanation: modifyEdit.explanation,
+				oldValue: expectedOldValue,
+				newValue: modifyEdit.modification,
 			};
 			assert.deepEqual(result.uiDiff, expectedUIDiff);
 		});
@@ -1638,11 +1641,11 @@ describe("UiDiff Creation", () => {
 				field: "nestedStr",
 				modification: "modifiedNestedStrValue",
 			};
-
+			const expectedOldValue: unknown = view.root.innerObject.nestedStr;
 			const result = applyAgentEdit(modifyEdit, idGenerator, schema.definitions);
 			const expectedUIDiff: ModifyDiff = {
 				type: "modify",
-				path: [
+				nodePath: [
 					{
 						shortId: undefined,
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -1661,6 +1664,8 @@ describe("UiDiff Creation", () => {
 					},
 				],
 				aiExplanation: modifyEdit.explanation,
+				oldValue: expectedOldValue,
+				newValue: modifyEdit.modification,
 			};
 			assert.deepEqual(result.uiDiff, expectedUIDiff);
 		});
@@ -1680,10 +1685,12 @@ describe("UiDiff Creation", () => {
 				type: "remove",
 				source: { target: vectorId1 },
 			};
+			const expectedNodeContent: unknown = JSON.parse(JSON.stringify(targetVector));
 			const result = applyAgentEdit(removeEdit, idGenerator, schema.definitions);
 			const expectedUIDiff: ArraySingleRemoveDiff = {
-				type: "remove-array-single",
-				path: [
+				type: "remove",
+				subType: "remove-array-single",
+				nodePath: [
 					{
 						shortId: vectorShortId,
 						schemaIdentifier: TestVector.identifier,
@@ -1700,6 +1707,7 @@ describe("UiDiff Creation", () => {
 						parentField: "rootFieldKey",
 					},
 				],
+				nodeContent: expectedNodeContent,
 				aiExplanation: removeEdit.explanation,
 			};
 			assert.deepEqual(result.uiDiff, expectedUIDiff);
@@ -1723,10 +1731,12 @@ describe("UiDiff Creation", () => {
 				type: "remove",
 				source: { target: optionalFieldObjectId },
 			};
+			const expectedNodeContent: unknown = JSON.parse(JSON.stringify(optionalFieldObject));
 			const result = applyAgentEdit(removeEdit, idGenerator, schema.definitions);
 			const expectedUiDiff: RemoveFieldDiff = {
-				type: "remove-field",
-				path: [
+				type: "remove",
+				subType: "remove-field",
+				nodePath: [
 					{
 						shortId: optionaFieldObjectShortId,
 						schemaIdentifier: TestVector.identifier,
@@ -1738,6 +1748,7 @@ describe("UiDiff Creation", () => {
 						parentField: "rootFieldKey",
 					},
 				],
+				nodeContent: expectedNodeContent,
 				aiExplanation: removeEdit.explanation,
 			};
 			assert.deepEqual(result.uiDiff, expectedUiDiff);
@@ -1777,6 +1788,7 @@ describe("UiDiff Creation", () => {
 				endIndex: sourceEndIndex,
 			} = getRangeInfo(removeEdit.source as Range, idGenerator);
 			const expectedSourceNodePaths: NodePath[] = [];
+			const expectedSourceNodes: TreeNode[] = [];
 			for (let i = sourceStartIndex; i < sourceEndIndex; i++) {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const targetNodeToMove = array.at(i)! as TreeNode;
@@ -1797,12 +1809,17 @@ describe("UiDiff Creation", () => {
 						parentField: "rootFieldKey",
 					},
 				]);
+				expectedSourceNodes.push(targetNodeToMove);
 			}
 			const result = applyAgentEdit(removeEdit, idGenerator, schema.definitions);
 			const expectedUiDiff: ArrayRangeRemoveDiff = {
-				type: "remove-array-range",
-				paths: expectedSourceNodePaths,
+				type: "remove",
+				subType: "remove-array-range",
+				nodePaths: expectedSourceNodePaths,
 				aiExplanation: removeEdit.explanation,
+				nodeContents: expectedSourceNodes.map(
+					(node) => JSON.parse(JSON.stringify(node)) as unknown,
+				),
 			};
 			assert.deepEqual(result.uiDiff, expectedUiDiff);
 		});
@@ -1836,8 +1853,9 @@ describe("UiDiff Creation", () => {
 			};
 			const result = applyAgentEdit(moveEdit, idGenerator, schema.definitions);
 			const expectedUiDiff: MoveSingleDiff = {
-				type: "move-single",
-				sourcePath: [
+				type: "move",
+				subType: "move-single",
+				sourceNodePath: [
 					{
 						shortId: sourceVectorShortId,
 						schemaIdentifier: sourceVectorSchema,
@@ -1854,7 +1872,7 @@ describe("UiDiff Creation", () => {
 						parentField: "rootFieldKey",
 					},
 				],
-				destinationPath: [
+				destinationNodePath: [
 					{
 						shortId: undefined,
 						parentField: "nestedVectors",
@@ -1871,6 +1889,7 @@ describe("UiDiff Creation", () => {
 						parentField: "rootFieldKey",
 					},
 				],
+				nodeContent: JSON.parse(JSON.stringify(sourceVector)) as unknown,
 				aiExplanation: moveEdit.explanation,
 			};
 			assert.deepEqual(result.uiDiff, expectedUiDiff);
@@ -1901,8 +1920,9 @@ describe("UiDiff Creation", () => {
 			};
 			const result = applyAgentEdit(moveEdit, idGenerator, schema.definitions);
 			const expectedUiDiff: MoveSingleDiff = {
-				type: "move-single",
-				sourcePath: [
+				type: "move",
+				subType: "move-single",
+				sourceNodePath: [
 					{
 						shortId: sourceVectorShortId,
 						schemaIdentifier: sourceVectorSchema,
@@ -1919,7 +1939,7 @@ describe("UiDiff Creation", () => {
 						parentField: "rootFieldKey",
 					},
 				],
-				destinationPath: [
+				destinationNodePath: [
 					{
 						shortId: undefined,
 						parentField: "nestedVectors",
@@ -1936,6 +1956,7 @@ describe("UiDiff Creation", () => {
 						parentField: "rootFieldKey",
 					},
 				],
+				nodeContent: JSON.parse(JSON.stringify(sourceVector)) as unknown,
 				aiExplanation: moveEdit.explanation,
 			};
 			assert.deepEqual(result.uiDiff, expectedUiDiff);
@@ -1985,6 +2006,7 @@ describe("UiDiff Creation", () => {
 			} = getRangeInfo(moveEdit.source as Range, idGenerator);
 
 			const expectedSourceNodePaths: NodePath[] = [];
+			const expectedSourceNodes: TreeNode[] = [];
 			for (let i = sourceStartIndex; i < sourceEndIndex; i++) {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const targetNodeToMove = array.at(i)! as TreeNode;
@@ -2005,14 +2027,16 @@ describe("UiDiff Creation", () => {
 						parentField: "rootFieldKey",
 					},
 				]);
+				expectedSourceNodes.push(targetNodeToMove);
 			}
 
 			const result = applyAgentEdit(moveEdit, idGenerator, schema.definitions);
 
 			const expectedUiDiff: MoveRangeDiff = {
-				type: "move-range",
-				sourcePaths: expectedSourceNodePaths,
-				destinationPath: [
+				type: "move",
+				subType: "move-range",
+				sourceNodePaths: expectedSourceNodePaths,
+				destinationNodePath: [
 					{
 						shortId: undefined,
 						parentField: "nestedVectors",
@@ -2029,6 +2053,9 @@ describe("UiDiff Creation", () => {
 						parentField: "rootFieldKey",
 					},
 				],
+				nodeContents: expectedSourceNodes.map(
+					(node) => JSON.parse(JSON.stringify(node)) as unknown,
+				),
 				aiExplanation: moveEdit.explanation,
 			};
 			assert.deepEqual(result.uiDiff, expectedUiDiff);
@@ -2074,6 +2101,7 @@ describe("UiDiff Creation", () => {
 			} = getRangeInfo(moveEdit.source as Range, idGenerator);
 
 			const expectedSourceNodePaths: NodePath[] = [];
+			const expectedSourceNodes: TreeNode[] = [];
 			for (let i = sourceStartIndex; i < sourceEndIndex; i++) {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const targetNodeToMove = array.at(i)! as TreeNode;
@@ -2094,14 +2122,16 @@ describe("UiDiff Creation", () => {
 						parentField: "rootFieldKey",
 					},
 				]);
+				expectedSourceNodes.push(targetNodeToMove);
 			}
 
 			const result = applyAgentEdit(moveEdit, idGenerator, schema.definitions);
 
 			const expectedUiDiff: MoveRangeDiff = {
-				type: "move-range",
-				sourcePaths: expectedSourceNodePaths,
-				destinationPath: [
+				type: "move",
+				subType: "move-range",
+				sourceNodePaths: expectedSourceNodePaths,
+				destinationNodePath: [
 					{
 						shortId: undefined,
 						parentField: "nestedVectors",
@@ -2118,6 +2148,9 @@ describe("UiDiff Creation", () => {
 						parentField: "rootFieldKey",
 					},
 				],
+				nodeContents: expectedSourceNodes.map(
+					(node) => JSON.parse(JSON.stringify(node)) as unknown,
+				),
 				aiExplanation: moveEdit.explanation,
 			};
 			assert.deepEqual(result.uiDiff, expectedUiDiff);

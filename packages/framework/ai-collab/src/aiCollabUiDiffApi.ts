@@ -54,7 +54,7 @@ export interface InsertDiff extends UiDiff {
 	/**
 	 * The content of the newly inserted node.
 	 */
-	insertedNodeContent: unknown;
+	nodeContent: unknown;
 }
 
 /**
@@ -98,7 +98,7 @@ export interface RemoveFieldDiff extends UiDiff {
 	/**
 	 * The content of the node being removed.
 	 */
-	removedNodeContent: unknown;
+	nodeContent: unknown;
 }
 
 /**
@@ -115,7 +115,7 @@ export interface ArraySingleRemoveDiff extends UiDiff {
 	/**
 	 * The content of the node being removed from the array node.
 	 */
-	removedNodeContent: unknown;
+	nodeContent: unknown;
 }
 
 /**
@@ -130,9 +130,9 @@ export interface ArrayRangeRemoveDiff extends UiDiff {
 	 */
 	nodePaths: NodePath[];
 	/**
-	 * The content of the nodes being removed from the array node.
+	 * The content of each of the nodes being removed from the array node.
 	 */
-	removedNodesContents: unknown[];
+	nodeContents: unknown[];
 }
 
 /**
@@ -160,7 +160,7 @@ export interface MoveSingleDiff extends UiDiff {
 	/**
 	 * The content of the node being moved from the source array node to the destination array node.
 	 */
-	movedNodeContent: unknown;
+	nodeContent: unknown;
 }
 
 /**
@@ -179,7 +179,7 @@ export interface MoveRangeDiff extends UiDiff {
 	 */
 	destinationNodePath: NodePath;
 	/**
-	 * The content of the nodes being moved from the source array node to the destination array node.
+	 * The content of each of the nodes being moved from the source array node to the destination array node.
 	 */
-	movedNodesContents: unknown[];
+	nodeContents: unknown[];
 }

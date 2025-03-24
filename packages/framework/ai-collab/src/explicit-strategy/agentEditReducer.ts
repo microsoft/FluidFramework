@@ -48,6 +48,7 @@ import {
 	type Modify,
 	type Remove,
 	type Move,
+	objectIdKey,
 } from "./agentEditTypes.js";
 import type { IdGenerator } from "./idGenerator.js";
 import type { JsonValue } from "./jsonTypes.js";
@@ -222,8 +223,9 @@ export function applyAgentEdit(
 			const schemaIdentifier = (modification as any)[typeField];
 
 			let insertedObject: TreeNode | undefined;
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-			const oldValue: unknown = (node as any)[treeEdit.field];
+			// // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+			// const targetNode = (node as any)[treeEdit.field] as TreeNode | TreeLeafValue;
+			const uiDiff = createModifyUiDiff(treeEdit, idGenerator);
 			// if fieldSchema is a LeafnodeSchema, we can check that it's a valid type and set the field.
 			if (isPrimitive(modification)) {
 				try {
@@ -299,21 +301,14 @@ export function applyAgentEdit(
 				}
 			}
 
-			const oldValueAsTreeEditValue = isPrimitive(oldValue)
-				? (oldValue as TreeEditValue)
-				: contentWithIds(oldValue as TreeNode, idGenerator);
-
 			return insertedObject === undefined
-				? {
-						edit: treeEdit,
-						uiDiff: createModifyUiDiff(treeEdit, oldValueAsTreeEditValue, idGenerator),
-					}
+				? { edit: treeEdit, uiDiff }
 				: {
 						edit: {
 							...treeEdit,
 							modification: contentWithIds(insertedObject, idGenerator),
 						},
-						uiDiff: createModifyUiDiff(treeEdit, oldValueAsTreeEditValue, idGenerator),
+						uiDiff,
 					};
 		}
 		case "move": {
@@ -630,16 +625,26 @@ function createInsertUiDiff(
 	return {
 		type: "insert",
 		nodePath: createNodePathRecursive(newlyInsertedNode, idGenerator, []),
-		insertedNodeContent: JSON.parse(JSON.stringify(newlyInsertedNode)),
+		nodeContent: JSON.parse(JSON.stringify(newlyInsertedNode)),
 		aiExplanation,
 	};
 }
 
-function createModifyUiDiff(
-	treeEdit: Modify,
-	oldValue: TreeEditValue,
-	idGenerator: IdGenerator,
-): ModifyDiff {
+/**
+ * Removes the special objectIdKey field only intended for use by the LLM agent from the given object.
+ */
+function removeAgentObjectIdField(oldValue: unknown): unknown {
+	if (typeof oldValue === "object" && oldValue !== null && !Array.isArray(oldValue)) {
+		const { [objectIdKey]: _, ...rest } = oldValue as Record<string, unknown>;
+		return rest;
+	}
+	return oldValue;
+}
+
+/**
+ * This function should be executed BEFORE a modify edit is applied.
+ */
+function createModifyUiDiff(treeEdit: Modify, idGenerator: IdGenerator): ModifyDiff {
 	const targetNode = getNodeFromTarget(treeEdit.target, idGenerator);
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 	const targetNodeAtField: unknown = (targetNode as any)[treeEdit.field];
@@ -656,7 +661,7 @@ function createModifyUiDiff(
 				},
 			]),
 			newValue: treeEdit.modification,
-			oldValue,
+			oldValue: targetNodeAtField,
 			aiExplanation: treeEdit.explanation,
 		};
 	}
@@ -665,7 +670,7 @@ function createModifyUiDiff(
 		type: "modify",
 		nodePath: createNodePathRecursive(targetNodeAtField as TreeNode, idGenerator, []),
 		newValue: treeEdit.modification,
-		oldValue,
+		oldValue: removeAgentObjectIdField(JSON.parse(JSON.stringify(targetNodeAtField))),
 		aiExplanation: treeEdit.explanation,
 	};
 }
@@ -697,7 +702,7 @@ function createRemoveUiDiff(
 				subType: "remove-array-single",
 				nodePath: createNodePathRecursive(targetRemovedNode as TreeNode, idGenerator, []),
 				aiExplanation: treeEdit.explanation,
-				removedNodeContent: JSON.parse(JSON.stringify(targetRemovedNode)),
+				nodeContent: removeAgentObjectIdField(JSON.parse(JSON.stringify(targetRemovedNode))),
 			};
 		} else {
 			const fieldKey = Tree.key(node);
@@ -716,7 +721,7 @@ function createRemoveUiDiff(
 				subType: "remove-field",
 				nodePath: createNodePathRecursive(targetNodeAtField as TreeNode, idGenerator, []),
 				aiExplanation: treeEdit.explanation,
-				removedNodeContent: JSON.parse(JSON.stringify(targetNodeAtField)),
+				nodeContent: removeAgentObjectIdField(JSON.parse(JSON.stringify(targetNodeAtField))),
 			};
 		}
 	} else if (isRange(source)) {
@@ -738,8 +743,8 @@ function createRemoveUiDiff(
 			subType: "remove-array-range",
 			nodePaths: removedNodePaths,
 			aiExplanation: treeEdit.explanation,
-			removedNodesContents: removedNodes.map(
-				(node) => JSON.parse(JSON.stringify(node)) as unknown,
+			nodeContents: removedNodes.map((node) =>
+				removeAgentObjectIdField(JSON.parse(JSON.stringify(node))),
 			),
 		};
 	} else {
@@ -763,7 +768,7 @@ function createMoveDiff(
 			sourceNodePath: createNodePathRecursive(node, idGenerator, []),
 			destinationNodePath: createNodePathRecursive(destinationArrayNode, idGenerator, []),
 			aiExplanation: treeEdit.explanation,
-			movedNodeContent: contentWithIds(node, idGenerator),
+			nodeContent: removeAgentObjectIdField(JSON.parse(JSON.stringify(node))),
 		};
 	} else if (isRange(source)) {
 		const {
@@ -788,7 +793,9 @@ function createMoveDiff(
 			sourceNodePaths: movedNodePaths,
 			destinationNodePath: createNodePathRecursive(destinationArrayNode, idGenerator, []),
 			aiExplanation: treeEdit.explanation,
-			movedNodesContents: movedNodes.map((node) => contentWithIds(node, idGenerator)),
+			nodeContents: movedNodes.map((node) =>
+				removeAgentObjectIdField(JSON.parse(JSON.stringify(node))),
+			),
 		};
 	} else {
 		throw new Error("Invalid source for move edit");

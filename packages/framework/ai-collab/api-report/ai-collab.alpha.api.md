@@ -70,8 +70,8 @@ export interface ApplyEditSuccess extends EventFlowDebugEvent {
 
 // @alpha
 export interface ArrayRangeRemoveDiff extends UiDiff {
+    nodeContents: unknown[];
     nodePaths: NodePath[];
-    removedNodesContents: unknown[];
     // (undocumented)
     subType: "remove-array-range";
     // (undocumented)
@@ -80,8 +80,8 @@ export interface ArrayRangeRemoveDiff extends UiDiff {
 
 // @alpha
 export interface ArraySingleRemoveDiff extends UiDiff {
+    nodeContent: unknown;
     nodePath: NodePath;
-    removedNodeContent: unknown;
     // (undocumented)
     subType: "remove-array-single";
     // (undocumented)
@@ -251,7 +251,7 @@ export interface GenerateTreeEditStarted extends EventFlowDebugEvent {
 
 // @alpha
 export interface InsertDiff extends UiDiff {
-    insertedNodeContent: unknown;
+    nodeContent: unknown;
     nodePath: NodePath;
     // (undocumented)
     type: "insert";
@@ -290,7 +290,7 @@ export type MoveDiff = MoveSingleDiff | MoveRangeDiff;
 // @alpha
 export interface MoveRangeDiff extends UiDiff {
     destinationNodePath: NodePath;
-    movedNodesContents: unknown[];
+    nodeContents: unknown[];
     sourceNodePaths: NodePath[];
     // (undocumented)
     subType: "move-range";
@@ -301,7 +301,7 @@ export interface MoveRangeDiff extends UiDiff {
 // @alpha
 export interface MoveSingleDiff extends UiDiff {
     destinationNodePath: NodePath;
-    movedNodeContent: unknown;
+    nodeContent: unknown;
     sourceNodePath: NodePath;
     // (undocumented)
     subType: "move-single";
@@ -362,8 +362,8 @@ export type RemoveDiff = RemoveFieldDiff | ArraySingleRemoveDiff | ArrayRangeRem
 
 // @alpha
 export interface RemoveFieldDiff extends UiDiff {
+    nodeContent: unknown;
     nodePath: NodePath;
-    removedNodeContent: unknown;
     // (undocumented)
     subType: "remove-field";
     // (undocumented)
