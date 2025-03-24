@@ -41,6 +41,7 @@ import {
 	LoggingError,
 	MonitoringContext,
 	PerformanceEvent,
+	UsageError,
 	createChildMonitoringContext,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
@@ -134,6 +135,7 @@ export interface IBlobManagerEvents extends IEvent {
 
 interface IBlobManagerInternalEvents extends IEvent {
 	(event: "blobAttached", listener: (pending: PendingBlob) => void);
+	(event: "processedBlobAttach", listener: (localId: string, storageId: string) => void);
 }
 
 const stashedPendingBlobOverrides: Pick<
@@ -374,8 +376,19 @@ export class BlobManager {
 			storageId = blobId;
 		} else {
 			const attachedStorageId = this.redirectTable.get(blobId);
-			assert(!!attachedStorageId, 0x11f /* "requesting unknown blobs" */);
-			storageId = attachedStorageId;
+			// If we didn't find it in the redirectTable, assume it's a blob placeholder. In that case,
+			// just assume the attach op is coming eventually and wait.
+			storageId =
+				attachedStorageId ??
+				(await new Promise<string>((resolve) => {
+					const onProcessBlobAttach = (localId: string, _storageId: string): void => {
+						if (localId === blobId) {
+							this.internalEvents.off("processedBlobAttach", onProcessBlobAttach);
+							resolve(_storageId);
+						}
+					};
+					this.internalEvents.on("processedBlobAttach", onProcessBlobAttach);
+				}));
 		}
 
 		return PerformanceEvent.timedExecAsync(
@@ -476,6 +489,10 @@ export class BlobManager {
 	}
 
 	public createBlobExperiment(blob: ArrayBufferLike): IFluidHandleInternal<ArrayBufferLike> {
+		if (this.runtime.attachState === AttachState.Detached) {
+			throw new UsageError("createBlobExperiment() not supported in detached state");
+		}
+
 		const localId = this.localBlobIdGenerator();
 
 		return new BlobHandle(
@@ -698,6 +715,8 @@ export class BlobManager {
 				this.deletePendingBlobMaybe(localId);
 			}
 		}
+
+		this.internalEvents.emit("processedBlobAttach", localId, blobId);
 	}
 
 	public summarize(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
