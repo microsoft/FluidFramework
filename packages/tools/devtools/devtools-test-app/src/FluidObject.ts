@@ -11,6 +11,61 @@ import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import { type ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
+
+/**
+ * Additional Data Object added to the {@link AppData}.
+ */
+export class AppDataTwo extends DataObject {
+	/**
+	 * Key in the app's `rootMap` under which the SharedString object is stored.
+	 */
+	private readonly sharedTextKey = "shared-text";
+
+	/**
+	 * Key in the app's `rootMapTwo` under which the SharedDirectory object is stored.
+	 */
+	private readonly initialObjectsDirKey = "rootMapTwo";
+
+	public static readonly Name = "@devtools-example/test-app-2";
+
+	private _text: SharedString | undefined;
+
+	public get text(): SharedString {
+		if (this._text === undefined) {
+			throw new Error("The SharedString was not initialized correctly");
+		}
+		return this._text;
+	}
+
+	private static readonly factory = new DataObjectFactory(
+		AppDataTwo.Name,
+		AppDataTwo,
+		[SharedString.getFactory()],
+		{},
+	);
+
+	public static getFactory(): DataObjectFactory<AppDataTwo> {
+		return this.factory;
+	}
+
+	protected async initializingFirstTime(): Promise<void> {
+		// Create the shared objects and store their handles in the root SharedDirectory
+		const text = SharedString.create(this.runtime, this.sharedTextKey);
+
+		this.root.createSubDirectory(this.initialObjectsDirKey);
+		this.root.set(this.sharedTextKey, text.handle);
+		this.root.set("test-object", {
+			a: 1,
+			b: "2",
+			c: true,
+		});
+	}
+
+	protected async hasInitialized(): Promise<void> {
+		this._text = await this.root.get<IFluidHandle<SharedString>>(this.sharedTextKey)?.get();
+	}
+}
+
 /**
  * AppData uses the React CollaborativeTextArea to load a collaborative HTML <textarea>
  */
@@ -39,6 +94,11 @@ export class AppData extends DataObject {
 	 * Key in the app's `rootMap` under which the SharedDirectory object is stored.
 	 */
 	private readonly initialObjectsDirKey = "rootMap";
+
+	/**
+	 * Key in the app's `rootMap` under which the RootDataObject object is stored.
+	 */
+	private readonly dataObjectKey = "shared-data-object";
 
 	// previous app's `rootMap`
 	private readonly _initialObjects: Record<string, IFluidLoadable> = {};
@@ -92,6 +152,7 @@ export class AppData extends DataObject {
 			SharedTree.getFactory(),
 		],
 		{},
+		new Map([AppDataTwo.getFactory().registryEntry]),
 	);
 
 	public static getFactory(): DataObjectFactory<AppData> {
@@ -116,11 +177,14 @@ export class AppData extends DataObject {
 		}
 		this.populateSharedTree(sharedTree);
 
+		const appDataTwo = await AppDataTwo.getFactory().createChildInstance(this.context);
+
 		this.root.createSubDirectory(this.initialObjectsDirKey);
 		this.root.set(this.sharedTextKey, text.handle);
 		this.root.set(this.sharedCounterKey, counter.handle);
 		this.root.set(this.emojiMatrixKey, emojiMatrix.handle);
 		this.root.set(this.sharedTreeKey, sharedTree.handle);
+		this.root.set(this.dataObjectKey, appDataTwo.handle); // TODO: Always store handle of the data object.
 
 		// Also set a couple of primitives for testing the debug view
 		this.root.set("numeric-value", 42);

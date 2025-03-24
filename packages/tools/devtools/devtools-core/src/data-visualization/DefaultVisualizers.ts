@@ -7,7 +7,6 @@
  * This module contains default {@link VisualizeSharedObject | visualization}
  * implementations for our DDSs.
  */
-
 import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import {
@@ -153,6 +152,8 @@ async function visualizeDirectory(
 		const renderedChild = await visualizeChildData(value);
 		children[key] = renderedChild;
 	}
+
+	console.log("renderedChild", directory, children);
 
 	// Generate child entries for sub-directory
 	const subDirectories = directory.subdirectories();
@@ -345,5 +346,6 @@ export const defaultVisualizers: Record<string, VisualizeSharedObject> = {
 	[SharedMatrix.getFactory().type]: visualizeSharedMatrix,
 	[SharedString.getFactory().type]: visualizeSharedString,
 	[SharedTree.getFactory().type]: visualizeSharedTree,
+	// Hardcode for DataObject
 	// TODO: the others
 };

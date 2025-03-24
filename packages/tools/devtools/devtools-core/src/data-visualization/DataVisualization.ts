@@ -7,6 +7,7 @@
 /* eslint-disable @typescript-eslint/consistent-indexed-object-style */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { DataObject, type PureDataObject } from "@fluidframework/aqueduct/internal";
 import type {
 	IDisposable,
 	IEvent,
@@ -15,6 +16,7 @@ import type {
 } from "@fluidframework/core-interfaces";
 // eslint-disable-next-line import/no-deprecated
 import type { IProvideFluidHandle } from "@fluidframework/core-interfaces/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 import type { FluidObjectId } from "../CommonInterfaces.js";
@@ -114,6 +116,15 @@ export interface DataVisualizerEvents extends IEvent {
 }
 
 /**
+ * TODO
+ */
+class VisualDataObject extends DataObject {
+	public override get root(): ISharedDirectory {
+		return super.root;
+	}
+}
+
+/**
  * Manages {@link VisualizerNode | visualizers} for shared objects reachable by
  * the provided {@link DataVisualizerGraph.rootData}.
  *
@@ -187,6 +198,8 @@ export class DataVisualizerGraph
 	 * {@link DataVisualizerGraph.rootData | root shared objects}.
 	 */
 	public async renderRootHandles(): Promise<Record<string, RootHandleNode>> {
+		// TODO: Now with Loop Scenarios, should we be able to visualize root data that is a `DataObject`?
+
 		// Rendering the root entries amounts to initializing visualizer nodes for each of them, and returning
 		// a list of handle nodes. Consumers can request data for each of these handles as needed.
 		const rootDataEntries = Object.entries(this.rootData);
@@ -224,11 +237,19 @@ export class DataVisualizerGraph
 	 * Adds a visualizer node to the collection for the specified
 	 * {@link @fluidframework/shared-object-base#ISharedObject} if one does not already exist.
 	 */
-	private registerVisualizerForSharedObject(sharedObject: ISharedObject): FluidObjectId {
-		if (!this.visualizerNodes.has(sharedObject.id)) {
+	private registerVisualizerForSharedObject(
+		sharedObject: ISharedObject,
+		identifier?: string,
+	): FluidObjectId {
+		const uniqueId = identifier === undefined ? sharedObject.id : sharedObject.id + identifier;
+
+		if (!this.visualizerNodes.has(uniqueId)) {
+			// Before: is this a data object? (type not available)
 			// Create visualizer node for the shared object
 			const visualizationFunction =
 				this.visualizers[sharedObject.attributes.type] ?? visualizeUnknownSharedObject;
+
+			console.log("registerVisualizerForSharedObject", sharedObject, visualizationFunction);
 
 			const visualizerNode = new VisualizerNode(
 				sharedObject,
@@ -240,9 +261,9 @@ export class DataVisualizerGraph
 			visualizerNode.on("update", this.onVisualUpdateHandler);
 
 			// Add the visualizer node to our collection
-			this.visualizerNodes.set(sharedObject.id, visualizerNode);
+			this.visualizerNodes.set(uniqueId, visualizerNode);
 		}
-		return sharedObject.id;
+		return uniqueId;
 	}
 
 	/**
@@ -261,9 +282,15 @@ export class DataVisualizerGraph
 	): Promise<FluidObjectId | undefined> {
 		const resolvedObject = await handle.get();
 
+		if (isDataObject(resolvedObject)) {
+			const rootSharedObject = (resolvedObject as VisualDataObject).root; // ISharedDirectory
+			return this.registerVisualizerForSharedObject(rootSharedObject, "2");
+		}
+
 		// TODO: is this the right type check for this?
-		const sharedObject = resolvedObject as Partial<ISharedObject>;
+		const sharedObject = resolvedObject as Partial<ISharedObject>; // TODO: Switch to unknonw in isSharedObject
 		if (isSharedObject(sharedObject)) {
+			console.log("Shared Object:", sharedObject);
 			return this.registerVisualizerForSharedObject(sharedObject);
 		} else {
 			// Unknown data.
@@ -485,5 +512,18 @@ export async function visualizeChildData(
 function isSharedObject(value: Partial<ISharedObject>): value is ISharedObject {
 	return (
 		value.id !== undefined && value.attributes?.type !== undefined && value.on !== undefined
+	);
+}
+
+/**
+ * TODO: Improve the type guard.
+ */
+function isDataObject(value: unknown): value is DataObject {
+	return (
+		typeof value === "object" &&
+		value !== null &&
+		"id" in value &&
+		"context" in value &&
+		"handle" in value
 	);
 }
