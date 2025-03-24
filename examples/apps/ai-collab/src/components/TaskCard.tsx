@@ -10,10 +10,9 @@ import {
 	type AiCollabErrorResponse,
 	type AiCollabSuccessResponse,
 	type ApplyEditSuccess,
-	type Difference,
-	type DifferenceChange,
-	type DifferenceMove,
-	SharedTreeBranchManager,
+	type ModifyDiff,
+	type MoveDiff,
+	type UiDiff,
 } from "@fluidframework/ai-collab/alpha";
 import { TreeAlpha, type TreeBranch, type TreeViewAlpha } from "@fluidframework/tree/alpha";
 import { Icon } from "@iconify/react";
@@ -52,7 +51,7 @@ import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 
 export function TaskCard(props: {
 	sharedTreeBranch: TreeView<typeof SharedTreeAppState>;
-	branchDifferences?: Difference[];
+	uiDiffs?: UiDiff[];
 	sharedTreeTaskGroup: SharedTreeTaskGroup;
 	sharedTreeTask: SharedTreeTask;
 }): JSX.Element {
@@ -69,7 +68,7 @@ export function TaskCard(props: {
 
 	useSharedTreeRerender({ sharedTreeNode: props.sharedTreeTask, logId: "TaskCard" });
 
-	const [branchDifferences, setBranchDifferences] = useState(props.branchDifferences);
+	const [uiDiffs, setUiDiffs] = useState(props.uiDiffs);
 
 	const deleteTask = (): void => {
 		const taskIndex = props.sharedTreeTaskGroup.tasks.indexOf(props.sharedTreeTask);
@@ -78,26 +77,37 @@ export function TaskCard(props: {
 
 	const fieldDifferences: {
 		isNewCreation: boolean;
-		changes: Record<string, DifferenceChange>;
-		moved?: DifferenceMove;
+		changes: Record<string, ModifyDiff>;
+		moved?: {
+			uiDiff: MoveDiff,
+			originalIndex: number,
+		};
 	} = {
 		isNewCreation: false,
-		changes: {} satisfies Record<string, DifferenceChange>,
+		changes: {} satisfies Record<string, ModifyDiff>,
 	};
 
-	for (const diff of branchDifferences ?? []) {
-		if (diff.type === "CHANGE") {
-			const path = diff.path[diff.path.length - 1];
-			if (path === undefined) {
-				throw new Error(`List of paths in CHANGE diff is empty`);
-			}
-			fieldDifferences.changes[path] = diff;
-		}
-		if (diff.type === "CREATE") {
+	for (const uiDiff of uiDiffs ?? []) {
+		if (uiDiff.type === 'insert') {
 			fieldDifferences.isNewCreation = true;
 		}
-		if (diff.type === "MOVE") {
-			fieldDifferences.moved = diff;
+		if (uiDiff.type === 'modify') {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			const targetField = uiDiff.nodePath[0]?.parentField as string
+			if (targetField === undefined) {
+				console.error('Recieved modify ui diff but could not identify target field');
+				continue;
+			}
+
+			fieldDifferences.changes[targetField] = uiDiff;
+		}
+
+		if (uiDiff.type === 'move' && uiDiff.subType === 'move-single') {
+			fieldDifferences.moved = {
+				uiDiff,
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				originalIndex: uiDiff.sourceNodePath[0]?.parentField as number,
+			};
 		}
 	}
 
@@ -188,10 +198,9 @@ export function TaskCard(props: {
 						event.eventName === "APPLIED_EDIT_FAILURE"
 					) {
 						console.log(
-							`${
-								event.eventName === "APPLIED_EDIT_SUCCESS"
-									? "Succesfully applied"
-									: "Failed to appply"
+							`${event.eventName === "APPLIED_EDIT_SUCCESS"
+								? "Succesfully applied"
+								: "Failed to appply"
 							} tree edit: ${JSON.stringify(
 								(event as unknown as ApplyEditSuccess).edit,
 								undefined,
@@ -206,22 +215,14 @@ export function TaskCard(props: {
 				throw new Error(response.errorMessage);
 			}
 
-			// 3. Handle the response from the ai collaboration
-			const taskDifferences = new SharedTreeBranchManager({
-				nodeIdAttributeName: "id",
-			}).compare(
-				props.sharedTreeTask as unknown as Record<string, unknown>,
-				newBranchTask as unknown as Record<string, unknown>,
-			);
-
 			enqueueSnackbar(`Copilot: I've completed your request - "${userRequest}"`, {
 				variant: "success",
 				autoHideDuration: 5000,
 			});
 			console.log("ai-collab Branch Task AFTER:", { ...newBranchTask });
-			console.log("ai-collab Branch Task differences:", taskDifferences);
+			console.log("ai-collab Branch Task differences:", response.uiDiffs);
 
-			setBranchDifferences(taskDifferences);
+			setUiDiffs(response.uiDiffs);
 			// Note that we don't ask for user approval before merging changes at a task level for simplicites sake.
 			currentBranch.merge(newBranchTree);
 		} catch (error) {
@@ -260,7 +261,7 @@ export function TaskCard(props: {
 			{fieldDifferences.moved !== undefined && (
 				<Box component="span" sx={{ position: "absolute", top: 5, left: 5 }}>
 					<Tooltip
-						title={`This was moved from index: ${fieldDifferences.moved.path[fieldDifferences.moved.path.length - 1]}`}
+						title={`This was moved from index: ${fieldDifferences.moved.originalIndex}`}
 					>
 						<Icon icon="material-symbols:move-down" width={30} height={30} color="blue" />
 					</Tooltip>
