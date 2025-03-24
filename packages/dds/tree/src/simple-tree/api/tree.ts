@@ -38,7 +38,7 @@ import { fail, getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
 import type { VerboseTree } from "./verboseTree.js";
-import type { SimpleTreeSchema } from "./simpleSchema.js";
+import type { SimpleTreeSchema } from "../simpleSchema.js";
 import type {
 	RunTransactionParams,
 	TransactionCallbackStatus,

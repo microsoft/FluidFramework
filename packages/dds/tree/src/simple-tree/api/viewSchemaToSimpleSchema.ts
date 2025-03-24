@@ -20,7 +20,7 @@ import type {
 	SimpleObjectFieldSchema,
 	SimpleObjectNodeSchema,
 	SimpleTreeSchema,
-} from "./simpleSchema.js";
+} from "../simpleSchema.js";
 import type { ValueSchema } from "../../core/index.js";
 import { copyProperty, getOrCreate, type Mutable } from "../../util/index.js";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "../objectNodeTypes.js";
@@ -39,7 +39,7 @@ export function toSimpleTreeSchema(schema: ImplicitFieldSchema): SimpleTreeSchem
 
 	const output: Mutable<SimpleTreeSchema> = {
 		kind: normalizedSchema.kind,
-		allowedTypes,
+		allowedTypesIdentifiers: allowedTypes,
 		definitions,
 	};
 
@@ -95,7 +95,7 @@ function arraySchemaToSimpleSchema(schema: TreeNodeSchema): SimpleArrayNodeSchem
 	const allowedTypes = allowedTypesFromFieldSchema(fieldSchema);
 	const output: Mutable<SimpleArrayNodeSchema> = {
 		kind: NodeKind.Array,
-		allowedTypes,
+		allowedTypesIdentifiers: allowedTypes,
 	};
 
 	copyProperty(schema, "metadata", output);
@@ -109,7 +109,7 @@ function mapSchemaToSimpleSchema(schema: TreeNodeSchema): SimpleMapNodeSchema {
 	const allowedTypes = allowedTypesFromFieldSchema(fieldSchema);
 	const output: Mutable<SimpleMapNodeSchema> = {
 		kind: NodeKind.Map,
-		allowedTypes,
+		allowedTypesIdentifiers: allowedTypes,
 	};
 
 	copyProperty(schema, "metadata", output);
@@ -151,7 +151,7 @@ function fieldSchemaToSimpleSchema(schema: FieldSchema): SimpleFieldSchema {
 	const allowedTypes = allowedTypesFromFieldSchema(schema);
 	const result: Mutable<SimpleFieldSchema> = {
 		kind: schema.kind,
-		allowedTypes,
+		allowedTypesIdentifiers: allowedTypes,
 	};
 
 	copyProperty(schema, "metadata", result);
