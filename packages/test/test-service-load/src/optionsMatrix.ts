@@ -99,7 +99,7 @@ export function generateRuntimeOptions(
 	);
 
 	const runtimeOptionsMatrix: OptionsMatrix<IContainerRuntimeOptionsInternal> = {
-		compatibilityMode: [undefined, "1", "2"],
+		compatibilityMode: [undefined],  // TODO: check what we should do here
 		gcOptions: [undefined, ...gcOptions],
 		summaryOptions: [undefined, ...summaryOptions],
 		loadSequenceNumberVerification: [undefined],
