@@ -202,6 +202,7 @@ import {
 	IPendingLocalState,
 	PendingStateManager,
 } from "./pendingStateManager.js";
+import { RunCounter } from "./runCounter.js";
 import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
 import {
 	DocumentsSchemaController,
@@ -825,7 +826,7 @@ export class ContainerRuntime
 		]);
 
 		// read snapshot blobs needed for BlobManager to load
-		const blobManagerSnapshot = await loadBlobManagerLoadInfo(context);
+		const blobManagerLoadInfo = await loadBlobManagerLoadInfo(context);
 
 		const messageAtLastSummary = lastMessageFromMetadata(metadata);
 
@@ -1002,7 +1003,7 @@ export class ContainerRuntime
 			containerScope,
 			logger,
 			existing,
-			blobManagerSnapshot,
+			blobManagerLoadInfo,
 			context.storage,
 			createIdCompressorFn,
 			documentSchemaController,
@@ -1175,7 +1176,7 @@ export class ContainerRuntime
 
 	private readonly maxConsecutiveReconnects: number;
 
-	private _orderSequentiallyCalls: number = 0;
+	private readonly batchRunner = new RunCounter();
 	private readonly _flushMode: FlushMode;
 	private readonly offlineEnabled: boolean;
 	private flushTaskExists = false;
@@ -1190,7 +1191,7 @@ export class ContainerRuntime
 	 */
 	private delayConnectClientId?: string;
 
-	private ensureNoDataModelChangesCalls = 0;
+	private readonly dataModelChangeRunner = new RunCounter();
 
 	/**
 	 * Invokes the given callback and expects that no ops are submitted
@@ -1201,12 +1202,7 @@ export class ContainerRuntime
 	 * @param callback - the callback to be invoked
 	 */
 	public ensureNoDataModelChanges<T>(callback: () => T): T {
-		this.ensureNoDataModelChangesCalls++;
-		try {
-			return callback();
-		} finally {
-			this.ensureNoDataModelChangesCalls--;
-		}
+		return this.dataModelChangeRunner.run(callback);
 	}
 
 	public get connected(): boolean {
@@ -1329,7 +1325,7 @@ export class ContainerRuntime
 		public readonly baseLogger: ITelemetryBaseLogger,
 		existing: boolean,
 
-		blobManagerSnapshot: IBlobManagerLoadInfo,
+		blobManagerLoadInfo: IBlobManagerLoadInfo,
 		private readonly _storage: IDocumentStorageService,
 		private readonly createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>,
 
@@ -1686,8 +1682,8 @@ export class ContainerRuntime
 
 		this.blobManager = new BlobManager({
 			routeContext: this.handleContext,
-			snapshot: blobManagerSnapshot,
-			getStorage: () => this.storage,
+			blobManagerLoadInfo,
+			storage: this.storage,
 			sendBlobAttachOp: (localId: string, blobId?: string) => {
 				if (!this.disposed) {
 					this.submit(
@@ -1723,10 +1719,6 @@ export class ContainerRuntime
 			createChildLogger({ logger: this.baseLogger, namespace: "InboundBatchAggregator" }),
 		);
 
-		const disablePartialFlush = this.mc.config.getBoolean(
-			"Fluid.ContainerRuntime.DisablePartialFlush",
-		);
-
 		const legacySendBatchFn = makeLegacySendBatchFn(submitFn, this.innerDeltaManager);
 
 		this.outbox = new Outbox({
@@ -1739,7 +1731,6 @@ export class ContainerRuntime
 			config: {
 				compressionOptions,
 				maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
-				disablePartialFlush: disablePartialFlush === true,
 			},
 			logger: this.mc.logger,
 			groupingManager: opGroupingManager,
@@ -1748,7 +1739,7 @@ export class ContainerRuntime
 				clientSequenceNumber: this._processedClientSequenceNumber,
 			}),
 			reSubmit: this.reSubmit.bind(this),
-			opReentrancy: () => this.ensureNoDataModelChangesCalls > 0,
+			opReentrancy: () => this.dataModelChangeRunner.running,
 			closeContainer: this.closeFn,
 		});
 
@@ -1918,7 +1909,6 @@ export class ContainerRuntime
 			sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
 			featureGates: JSON.stringify({
 				...featureGatesForTelemetry,
-				disablePartialFlush,
 				closeSummarizerDelayOverride,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
@@ -2218,13 +2208,11 @@ export class ContainerRuntime
 
 			if (id === blobManagerBasePath && requestParser.isLeaf(2)) {
 				const blob = await this.blobManager.getBlob(requestParser.pathParts[1]);
-				return blob
-					? {
-							status: 200,
-							mimeType: "fluid/object",
-							value: blob,
-						}
-					: create404Response(request);
+				return {
+					status: 200,
+					mimeType: "fluid/object",
+					value: blob,
+				};
 			} else if (requestParser.pathParts.length > 0) {
 				return await this.channelCollection.request(request);
 			}
@@ -3054,8 +3042,8 @@ export class ContainerRuntime
 	 */
 	private flush(resubmittingBatchId?: BatchId): void {
 		assert(
-			this._orderSequentiallyCalls === 0,
-			0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */,
+			!this.batchRunner.running,
+			0x24c /* "Cannot call `flush()` while manually accumulating a batch (e.g. under orderSequentially) */,
 		);
 
 		this.outbox.flush(resubmittingBatchId);
@@ -3067,57 +3055,60 @@ export class ContainerRuntime
 	 */
 	public orderSequentially<T>(callback: () => T): T {
 		let checkpoint: IBatchCheckpoint | undefined;
-		let result: T;
+		const checkpointDirtyState = this.dirtyContainer;
 		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
 			// Note: we are not touching any batches other than mainBatch here, for two reasons:
 			// 1. It would not help, as other batches are flushed independently from main batch.
 			// 2. There is no way to undo process of data store creation, blob creation, ID compressor ops, or other things tracked by other batches.
 			checkpoint = this.outbox.getBatchCheckpoints().mainBatch;
 		}
-		try {
-			this._orderSequentiallyCalls++;
-			result = callback();
-		} catch (error) {
-			if (checkpoint) {
-				// This will throw and close the container if rollback fails
-				try {
-					checkpoint.rollback((message: BatchMessage) =>
-						this.rollback(message.contents, message.localOpMetadata),
+		const result = this.batchRunner.run(() => {
+			try {
+				return callback();
+			} catch (error) {
+				if (checkpoint) {
+					// This will throw and close the container if rollback fails
+					try {
+						checkpoint.rollback((message: BatchMessage) =>
+							this.rollback(message.contents, message.localOpMetadata),
+						);
+						// reset the dirty state after rollback to what it was before to keep it consistent
+						if (this.dirtyContainer !== checkpointDirtyState) {
+							this.updateDocumentDirtyState(checkpointDirtyState);
+						}
+					} catch (error_) {
+						const error2 = wrapError(error_, (message) => {
+							return DataProcessingError.create(
+								`RollbackError: ${message}`,
+								"checkpointRollback",
+								undefined,
+							) as DataProcessingError;
+						});
+						this.closeFn(error2);
+						throw error2;
+					}
+				} else {
+					this.closeFn(
+						wrapError(
+							error,
+							(errorMessage) =>
+								new GenericError(
+									`orderSequentially callback exception: ${errorMessage}`,
+									error,
+									{
+										orderSequentiallyCalls: this.batchRunner.runs,
+									},
+								),
+						),
 					);
-				} catch (error_) {
-					const error2 = wrapError(error_, (message) => {
-						return DataProcessingError.create(
-							`RollbackError: ${message}`,
-							"checkpointRollback",
-							undefined,
-						) as DataProcessingError;
-					});
-					this.closeFn(error2);
-					throw error2;
 				}
-			} else {
-				this.closeFn(
-					wrapError(
-						error,
-						(errorMessage) =>
-							new GenericError(
-								`orderSequentially callback exception: ${errorMessage}`,
-								error,
-								{
-									orderSequentiallyCalls: this._orderSequentiallyCalls,
-								},
-							),
-					),
-				);
-			}
 
-			throw error; // throw the original error for the consumer of the runtime
-		} finally {
-			this._orderSequentiallyCalls--;
-		}
+				throw error; // throw the original error for the consumer of the runtime
+			}
+		});
 
 		// We don't flush on TurnBased since we expect all messages in the same JS turn to be part of the same batch
-		if (this.flushMode !== FlushMode.TurnBased && this._orderSequentiallyCalls === 0) {
+		if (this.flushMode !== FlushMode.TurnBased && !this.batchRunner.running) {
 			this.flush();
 		}
 		return result;
@@ -3198,7 +3189,7 @@ export class ContainerRuntime
 	 * Typically ops are batched and later flushed together, but in some cases we want to flush immediately.
 	 */
 	private currentlyBatching(): boolean {
-		return this.flushMode !== FlushMode.Immediate || this._orderSequentiallyCalls !== 0;
+		return this.flushMode !== FlushMode.Immediate || this.batchRunner.running;
 	}
 
 	private readonly _quorum: IQuorumClients;
@@ -4267,8 +4258,8 @@ export class ContainerRuntime
 
 			default: {
 				assert(
-					this._orderSequentiallyCalls > 0,
-					0x587 /* Unreachable unless running under orderSequentially */,
+					this.batchRunner.running,
+					0x587 /* Unreachable unless manually accumulating a batch */,
 				);
 				break;
 			}
@@ -4308,7 +4299,7 @@ export class ContainerRuntime
 	 * for correlation to detect container forking.
 	 */
 	private reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId): void {
-		this.orderSequentially(() => {
+		this.batchRunner.run(() => {
 			for (const message of batch) {
 				this.reSubmit(message);
 			}
@@ -4556,8 +4547,8 @@ export class ContainerRuntime
 	public getPendingLocalState(props?: IGetPendingLocalStateProps): unknown {
 		this.verifyNotClosed();
 
-		if (this._orderSequentiallyCalls !== 0) {
-			throw new UsageError("can't get state during orderSequentially");
+		if (this.batchRunner.running) {
+			throw new UsageError("can't get state while manually accumulating a batch");
 		}
 		this.imminentClosure ||= props?.notifyImminentClosure ?? false;
 

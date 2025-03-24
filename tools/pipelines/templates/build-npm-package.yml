@@ -146,6 +146,13 @@ resources:
       type: git
       name: 1ESPipelineTemplates/M365GPT
       ref: refs/tags/release
+  # Listing a pipeline as a resource makes its artifacts available for download in any job
+  pipelines:
+    # Access to this pipelines artifacts allows 1ES deployment jobs to install build tools without checking out out a repo.
+    - pipeline: buildTools-resource
+      project: internal
+      source: Build - build-tools
+      branch: main
 
 extends:
   # The pipeline extends the 1ES pipeline template which will inject different SDL and compliance tasks.
@@ -346,7 +353,6 @@ extends:
                   # Set variable startTest if the build succeed so that we can run all the test tasks whether they are failed or not
                   - script: |
                       echo "##vso[task.setvariable variable=startTest]true"
-                      echo "##vso[task.setvariable variable=startTestCoverage]true"
                     displayName: Start Test
 
                   - ${{ each taskTestStep in parameters.taskTest }}:
@@ -468,7 +474,7 @@ extends:
               # Collect/publish/run bundle analysis
               - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
                   - task: Npm@1
-                    displayName: 'npm run bundle-analysis:collect'
+                    displayName: 'Calculate bundle sizes'
                     inputs:
                       command: custom
                       workingDir: '${{ parameters.buildDirectory }}'
@@ -477,17 +483,16 @@ extends:
                   # Copy files so all artifacts we publish end up under the same parent folder.
                   # The sourceFolder should be wherever the 'npm run bundle-analysis:collect' task places its output.
                   - task: CopyFiles@2
-                    displayName: Copy bundleAnalysis files to artifact staging directory
+                    displayName: Copy bundle size files to artifact staging directory
                     inputs:
                       sourceFolder: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
                       targetFolder: $(Build.ArtifactStagingDirectory)/bundleAnalysis
-
 
                   # At this point we want to publish the artifact with the bundle size analysis,
                   # but as part of 1ES migration that's now part of templateContext.outputs below.
 
                   - task: Npm@1
-                    displayName: run bundle size comparison
+                    displayName: (PR only) Compare bundle sizes against baseline
                     condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
                     continueOnError: true
                     env:

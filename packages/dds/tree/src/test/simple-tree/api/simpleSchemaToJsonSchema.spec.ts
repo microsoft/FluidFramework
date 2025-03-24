@@ -4,15 +4,25 @@
  */
 
 import { strict as assert } from "node:assert";
-import { FieldKind, NodeKind, type JsonTreeSchema } from "../../../simple-tree/index.js";
+import {
+	FieldKind,
+	NodeKind,
+	type JsonObjectNodeSchema,
+	type JsonTreeSchema,
+} from "../../../simple-tree/index.js";
 import { getJsonValidator } from "./jsonSchemaUtilities.js";
 import type {
 	SimpleNodeSchema,
+	SimpleObjectNodeSchema,
 	SimpleTreeSchema,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../simple-tree/api/simpleSchema.js";
-// eslint-disable-next-line import/no-internal-modules
-import { toJsonSchema } from "../../../simple-tree/api/simpleSchemaToJsonSchema.js";
+} from "../../../simple-tree/simpleSchema.js";
+
+import {
+	convertObjectNodeSchema,
+	toJsonSchema,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../simple-tree/api/simpleSchemaToJsonSchema.js";
 import { ValueSchema } from "../../../core/index.js";
 
 describe("simpleSchemaToJsonSchema", () => {
@@ -22,7 +32,7 @@ describe("simpleSchemaToJsonSchema", () => {
 			definitions: new Map<string, SimpleNodeSchema>([
 				["test.string", { leafKind: ValueSchema.String, kind: NodeKind.Leaf }],
 			]),
-			allowedTypes: new Set<string>(["test.string"]),
+			allowedTypesIdentifiers: new Set<string>(["test.string"]),
 		};
 
 		const actual = toJsonSchema(input);
@@ -55,7 +65,7 @@ describe("simpleSchemaToJsonSchema", () => {
 			definitions: new Map<string, SimpleNodeSchema>([
 				["test.handle", { leafKind: ValueSchema.FluidHandle, kind: NodeKind.Leaf }],
 			]),
-			allowedTypes: new Set<string>(["test.handle"]),
+			allowedTypesIdentifiers: new Set<string>(["test.handle"]),
 		};
 
 		assert.throws(() => toJsonSchema(input));
@@ -67,11 +77,11 @@ describe("simpleSchemaToJsonSchema", () => {
 			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"test.array",
-					{ kind: NodeKind.Array, allowedTypes: new Set<string>(["test.string"]) },
+					{ kind: NodeKind.Array, allowedTypesIdentifiers: new Set<string>(["test.string"]) },
 				],
 				["test.string", { leafKind: ValueSchema.String, kind: NodeKind.Leaf }],
 			]),
-			allowedTypes: new Set<string>(["test.array"]),
+			allowedTypesIdentifiers: new Set<string>(["test.array"]),
 		};
 
 		const actual = toJsonSchema(input);
@@ -110,10 +120,13 @@ describe("simpleSchemaToJsonSchema", () => {
 		const input: SimpleTreeSchema = {
 			kind: FieldKind.Required,
 			definitions: new Map<string, SimpleNodeSchema>([
-				["test.map", { kind: NodeKind.Map, allowedTypes: new Set<string>(["test.string"]) }],
+				[
+					"test.map",
+					{ kind: NodeKind.Map, allowedTypesIdentifiers: new Set<string>(["test.string"]) },
+				],
 				["test.string", { leafKind: ValueSchema.String, kind: NodeKind.Leaf }],
 			]),
-			allowedTypes: new Set<string>(["test.map"]),
+			allowedTypesIdentifiers: new Set<string>(["test.map"]),
 		};
 
 		const actual = toJsonSchema(input);
@@ -160,6 +173,55 @@ describe("simpleSchemaToJsonSchema", () => {
 		);
 	});
 
+	describe("convertObjectNodeSchema", () => {
+		it("empty", () => {
+			const empty: SimpleObjectNodeSchema = {
+				kind: NodeKind.Object,
+				fields: new Map(),
+			};
+			const emptyJson = convertObjectNodeSchema(empty);
+			const expectedEmpty: JsonObjectNodeSchema = {
+				type: "object",
+				_treeNodeSchemaKind: NodeKind.Object,
+				properties: {},
+				required: [],
+				additionalProperties: false,
+			};
+			assert.deepEqual(emptyJson, expectedEmpty);
+		});
+
+		it("withField", () => {
+			const withField: SimpleObjectNodeSchema = {
+				kind: NodeKind.Object,
+				fields: new Map([
+					[
+						"prop",
+						{
+							kind: FieldKind.Optional,
+							allowedTypesIdentifiers: new Set<string>(["test.number"]),
+							metadata: { description: "The description" },
+							storedKey: "stored",
+						},
+					],
+				]),
+			};
+			const withFieldJson = convertObjectNodeSchema(withField);
+			const expectedWithField: JsonObjectNodeSchema = {
+				type: "object",
+				_treeNodeSchemaKind: NodeKind.Object,
+				properties: {
+					prop: {
+						$ref: "#/$defs/test.number",
+						description: "The description",
+					},
+				},
+				required: [],
+				additionalProperties: false,
+			};
+			assert.deepEqual(withFieldJson, expectedWithField);
+		});
+	});
+
 	it("Object schema", () => {
 		const input: SimpleTreeSchema = {
 			kind: FieldKind.Required,
@@ -168,31 +230,43 @@ describe("simpleSchemaToJsonSchema", () => {
 					"test.object",
 					{
 						kind: NodeKind.Object,
-						fields: {
-							"foo": {
-								kind: FieldKind.Optional,
-								allowedTypes: new Set<string>(["test.number"]),
-								metadata: { description: "A number representing the concept of Foo." },
-							},
-							"bar": {
-								kind: FieldKind.Required,
-								allowedTypes: new Set<string>(["test.string"]),
-								metadata: { description: "A string representing the concept of Bar." },
-							},
-							"id": {
-								kind: FieldKind.Identifier,
-								allowedTypes: new Set<string>(["test.string"]),
-								metadata: {
-									description: "Unique identifier for the test object.",
+						fields: new Map([
+							[
+								"foo",
+								{
+									kind: FieldKind.Optional,
+									allowedTypesIdentifiers: new Set<string>(["test.number"]),
+									metadata: { description: "A number representing the concept of Foo." },
+									storedKey: "foo",
 								},
-							},
-						},
+							],
+							[
+								"bar",
+								{
+									kind: FieldKind.Required,
+									allowedTypesIdentifiers: new Set<string>(["test.string"]),
+									metadata: { description: "A string representing the concept of Bar." },
+									storedKey: "bar",
+								},
+							],
+							[
+								"id",
+								{
+									kind: FieldKind.Identifier,
+									allowedTypesIdentifiers: new Set<string>(["test.string"]),
+									metadata: {
+										description: "Unique identifier for the test object.",
+									},
+									storedKey: "id",
+								},
+							],
+						]),
 					},
 				],
 				["test.string", { leafKind: ValueSchema.String, kind: NodeKind.Leaf }],
 				["test.number", { leafKind: ValueSchema.Number, kind: NodeKind.Leaf }],
 			]),
-			allowedTypes: new Set<string>(["test.object"]),
+			allowedTypesIdentifiers: new Set<string>(["test.object"]),
 		};
 
 		const actual = toJsonSchema(input);
@@ -276,17 +350,21 @@ describe("simpleSchemaToJsonSchema", () => {
 					"test.object",
 					{
 						kind: NodeKind.Object,
-						fields: {
-							"id": {
-								kind: FieldKind.Identifier,
-								allowedTypes: new Set<string>(["test.identifier"]),
-							},
-						},
+						fields: new Map([
+							[
+								"id",
+								{
+									kind: FieldKind.Identifier,
+									allowedTypesIdentifiers: new Set<string>(["test.identifier"]),
+									storedKey: "id",
+								},
+							],
+						]),
 					},
 				],
 				["test.identifier", { leafKind: ValueSchema.String, kind: NodeKind.Leaf }],
 			]),
-			allowedTypes: new Set<string>(["test.object"]),
+			allowedTypesIdentifiers: new Set<string>(["test.object"]),
 		};
 
 		const actual = toJsonSchema(input);
@@ -320,18 +398,22 @@ describe("simpleSchemaToJsonSchema", () => {
 					"test.object",
 					{
 						kind: NodeKind.Object,
-						fields: {
-							"foo": {
-								kind: FieldKind.Required,
-								allowedTypes: new Set<string>(["test.number", "test.string"]),
-							},
-						},
+						fields: new Map([
+							[
+								"foo",
+								{
+									kind: FieldKind.Required,
+									allowedTypesIdentifiers: new Set<string>(["test.number", "test.string"]),
+									storedKey: "foo",
+								},
+							],
+						]),
 					},
 				],
 				["test.number", { leafKind: ValueSchema.Number, kind: NodeKind.Leaf }],
 				["test.string", { leafKind: ValueSchema.String, kind: NodeKind.Leaf }],
 			]),
-			allowedTypes: new Set<string>(["test.object"]),
+			allowedTypesIdentifiers: new Set<string>(["test.object"]),
 		};
 
 		const actual = toJsonSchema(input);
@@ -371,17 +453,24 @@ describe("simpleSchemaToJsonSchema", () => {
 					"test.recursive-object",
 					{
 						kind: NodeKind.Object,
-						fields: {
-							"foo": {
-								kind: FieldKind.Optional,
-								allowedTypes: new Set<string>(["test.string", "test.recursive-object"]),
-							},
-						},
+						fields: new Map([
+							[
+								"foo",
+								{
+									kind: FieldKind.Optional,
+									allowedTypesIdentifiers: new Set<string>([
+										"test.string",
+										"test.recursive-object",
+									]),
+									storedKey: "foo",
+								},
+							],
+						]),
 					},
 				],
 				["test.string", { leafKind: ValueSchema.String, kind: NodeKind.Leaf }],
 			]),
-			allowedTypes: new Set<string>(["test.recursive-object"]),
+			allowedTypesIdentifiers: new Set<string>(["test.recursive-object"]),
 		};
 		const actual = toJsonSchema(input);
 

@@ -19,7 +19,7 @@ import {
 import {
 	isTreeValue,
 	valueSchemaAllows,
-	type NodeKeyManager,
+	type NodeIdentifierManager,
 } from "../feature-libraries/index.js";
 import { brand, fail, isReadonlyArray, find, hasSome, hasSingle } from "../util/index.js";
 
@@ -104,19 +104,19 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 export function mapTreeFromNodeData(
 	data: InsertableContent,
 	allowedTypes: ImplicitAllowedTypes,
-	context?: NodeKeyManager,
+	context?: NodeIdentifierManager,
 	schemaValidationPolicy?: SchemaAndPolicy,
 ): ExclusiveMapTree;
 export function mapTreeFromNodeData(
 	data: InsertableContent | undefined,
 	allowedTypes: ImplicitFieldSchema,
-	context?: NodeKeyManager,
+	context?: NodeIdentifierManager,
 	schemaValidationPolicy?: SchemaAndPolicy,
 ): ExclusiveMapTree | undefined;
 export function mapTreeFromNodeData(
 	data: InsertableContent | undefined,
 	allowedTypes: ImplicitFieldSchema,
-	context?: NodeKeyManager,
+	context?: NodeIdentifierManager,
 	schemaValidationPolicy?: SchemaAndPolicy,
 ): ExclusiveMapTree | undefined {
 	const normalizedFieldSchema = normalizeFieldSchema(allowedTypes);
@@ -638,7 +638,7 @@ function allowsValue(schema: TreeNodeSchema, value: TreeValue): boolean {
 export function addDefaultsToMapTree(
 	mapTree: ExclusiveMapTree,
 	allowedTypes: ImplicitAllowedTypes,
-	context: NodeKeyManager | undefined,
+	context: NodeIdentifierManager | undefined,
 ): void {
 	const schema =
 		find(normalizeAllowedTypes(allowedTypes), (s) => s.identifier === mapTree.type) ??
@@ -695,7 +695,7 @@ export function addDefaultsToMapTree(
  */
 function provideDefault(
 	fieldProvider: FieldProvider,
-	context: NodeKeyManager | undefined,
+	context: NodeIdentifierManager | undefined,
 ): InsertableContent | undefined {
 	if (context !== undefined) {
 		return fieldProvider(context);

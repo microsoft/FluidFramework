@@ -13,9 +13,9 @@ import {
 	type FieldAnchor,
 	type FieldKey,
 	type FieldKindIdentifier,
-	type FieldUpPath,
 	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
+	type NormalizedFieldUpPath,
 	type TreeNavigationResult,
 	inCursorNode,
 	iterateCursorField,
@@ -226,15 +226,15 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 		);
 	}
 
-	public getFieldPath(): FieldUpPath {
-		return this[cursorSymbol].getFieldPath();
+	public getFieldPath(): NormalizedFieldUpPath {
+		return { parent: this.parent?.anchorNode, field: this.key };
 	}
 
 	/**
 	 * Returns the path to this field to use for editing. Throws iff this path is not {@link TreeStatus#InDocument}.
 	 * This path is not valid to hold onto across edits: this must be recalled for each edit.
 	 */
-	public getFieldPathForEditing(): FieldUpPath {
+	public getFieldPathForEditing(): NormalizedFieldUpPath {
 		if (!this[isFreedSymbol]()) {
 			if (
 				// Only allow editing if we are the root document field...

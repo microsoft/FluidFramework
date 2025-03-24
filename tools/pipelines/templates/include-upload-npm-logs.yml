@@ -1,0 +1,31 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# Template to upload logs from npm (not pnpm!) invocations during a job run.
+# These can be useful for debugging npm-related issues
+
+parameters:
+  # Path to npm logs directory.
+  # Defaults to the path that npm ends up using in Azure Pipelines if there are no overrides to its config.
+  # Files that include this template generally shouldn't need to change this.
+  - name: npmLogsDirectory
+    type: string
+    default: '/home/cloudtest/.npm/_logs'
+
+steps:
+- task: Bash@3
+  displayName: Upload npm logs
+  condition: succeededOrFailed()
+  continueOnError: true
+  inputs:
+    targetType: 'inline'
+    workingDirectory: '${{ parameters.npmLogsDirectory }}'
+    script: |
+      set -eu -o pipefail
+      TARFILE_FULLPATH=$(Agent.TempDirectory)/npm-logs.tar
+      # Put all files in a tarball, in case there's more than one
+      echo "Adding logs to tarball"
+      tar -cvf $TARFILE_FULLPATH .
+      echo "Uploading tarball to pipeline logs"
+      # Note: task.uploadFile requires an absolute path to be provided
+      echo "##vso[task.uploadfile]$TARFILE_FULLPATH";
