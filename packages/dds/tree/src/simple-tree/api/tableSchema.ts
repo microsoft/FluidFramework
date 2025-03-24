@@ -382,7 +382,7 @@ export function createTableSchema<
 			} else {
 				this.rows.insertAt(index, TreeArrayNode.spread(rows));
 			}
-			return rows as Row[];
+			return rows;
 		}
 
 		/**
@@ -422,8 +422,6 @@ export function createTableSchema<
 		 * @param name - The name of the column
 		 */
 		public insertColumn({ index, column }: InsertColumnParameters<TCell, Column>): Column {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			const column = new Column({ name, defaultValue, hint, props } as any);
 			this.columns.insertAt(index, column);
 			return column;
 		}
