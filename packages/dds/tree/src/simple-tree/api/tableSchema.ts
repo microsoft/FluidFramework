@@ -30,17 +30,15 @@ export interface CellKey {
 	readonly rowId: string;
 }
 
-export interface IColumn<TCell extends readonly TreeNodeSchema[]> {
-	readonly cells: Map<string, TreeNodeFromImplicitAllowedTypes<TCell>>;
+export interface IColumn {
 	readonly index: number;
 	readonly moveTo: (index: number) => void;
 }
 
 export interface IRow<
 	TCell extends readonly TreeNodeSchema[],
-	TColumn extends IColumn<TCell>,
+	TColumn extends IColumn,
 > {
-	readonly cells: Record<string, TreeNodeFromImplicitAllowedTypes<TCell> | undefined>;
 	readonly index: number;
 	readonly getCell: (column: TColumn) => TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 	readonly setCell: (
@@ -56,7 +54,7 @@ export interface IRow<
  */
 export interface InsertRowsParameters<
 	TCell extends readonly TreeNodeSchema[],
-	TColumn extends IColumn<TCell>,
+	TColumn extends IColumn,
 	TRow extends IRow<TCell, TColumn>,
 > {
 	/**
@@ -70,8 +68,7 @@ export interface InsertRowsParameters<
 }
 
 export interface InsertColumnParameters<
-	TCell extends readonly TreeNodeSchema[],
-	TColumn extends IColumn<TCell>,
+	TColumn extends IColumn,
 > {
 	/**
 	 * The index at which to insert the new column.
@@ -85,7 +82,7 @@ export interface InsertColumnParameters<
 
 export interface ITable<
 	TCell extends readonly TreeNodeSchema[],
-	TColumn extends IColumn<TCell>,
+	TColumn extends IColumn,
 	TRow extends IRow<TCell, TColumn>,
 > {
 	readonly getRow: (id: string) => TRow | undefined;
@@ -97,7 +94,7 @@ export interface ITable<
 	// TODO: is this needed?
 	readonly deleteAllRows: () => void;
 
-	readonly insertColumn: (parameters: InsertColumnParameters<TCell, TColumn>) => TColumn;
+	readonly insertColumn: (parameters: InsertColumnParameters<TColumn>) => TColumn;
 	// TODO: currently does not delete cells - can it? should it?
 	readonly removeColumn: (column: TColumn) => void;
 
@@ -135,6 +132,21 @@ export function createTableSchema<
 	type CellInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TCell>;
 
 	/**
+	 * Get the parent table of the provided row.
+	 * @throws Throws an error if the row is not in a table.
+	 */
+	function getTableParentOfRow(row: Row): Table {
+		const parent = Tree.parent(row);
+		if (parent) {
+			const grandparent = Tree.parent(parent);
+			if (grandparent instanceof Table) {
+				return grandparent as Table;
+			}
+		}
+		throw new Error("Row is not in a table");
+	}
+
+	/**
 	 * The Row schema - this is a map of Cells where the key is the column id
 	 */
 	class Row
@@ -145,25 +157,6 @@ export function createTableSchema<
 		})
 		implements IRow<TCell, Column>
 	{
-		/**
-		 * Property getter to get the cells in the row
-		 * @returns The cells in the row as an object where the keys are the column ids
-		 * and the values are the cell values - includes the default value of the column if the cell is undefined
-		 * This is used to get the cells in the row for the table view
-		 */
-		public get cells(): Record<string, CellValueType | undefined> {
-			const cells: Record<string, CellValueType | undefined> = {};
-			// Iterate over the columns in the table and get the cell values
-			for (const column of this.table.columns) {
-				// Get the cell value from the row
-				const cellValue = this.getCell(column);
-				// If the cell value is undefined, set it to the default value of the column
-				cells[column.id] = cellValue ?? column.defaultValue;
-			}
-			// Return the cells
-			return cells;
-		}
-
 		/** Get a cell by the column
 		 * @param column - The column
 		 * @returns The cell if it exists, otherwise undefined
@@ -195,7 +188,7 @@ export function createTableSchema<
 		 * @param index - The index to move the row to
 		 */
 		public moveTo(index: number): void {
-			const rows = this.table.rows;
+			const rows = getTableParentOfRow(this).rows;
 
 			// If the index is greater than the current index, move it to the right
 			const adjustedIndex = index > this.index ? index + 1 : index;
@@ -216,30 +209,28 @@ export function createTableSchema<
 		}
 
 		/**
-		 * Get the parent Table
-		 */
-		private get table(): Table {
-			const parent = Tree.parent(this);
-			if (parent) {
-				const grandparent = Tree.parent(parent);
-				if (grandparent instanceof Table) {
-					return grandparent;
-				}
-			}
-			throw new Error("Row is not in a table");
-		}
-
-		/**
 		 * Get the index of the row in the table
 		 * @returns The index of the row in the table
 		 */
 		public get index(): number {
-			const rows = this.table?.rows;
-			if (rows !== undefined) {
-				return rows.indexOf(this);
-			}
-			throw new Error("Row is not in a table");
+			const rows = getTableParentOfRow(this).rows;
+			return rows.indexOf(this);
 		}
+	}
+
+	/**
+	 * Get the parent table of the provided column.
+	 * @throws Throws an error if the column is not in a table.
+	 */
+	function getTableParentOfColumn(column: Column): Table {
+		const parent = Tree.parent(column);
+		if (parent !== undefined) {
+			const grandparent = Tree.parent(parent);
+			if (grandparent instanceof Table) {
+				return grandparent as Table;
+			}
+		}
+		throw new Error("Column is not in a table");
 	}
 
 	/**
@@ -249,57 +240,17 @@ export function createTableSchema<
 		extends sf.object("Column", {
 			id: sf.identifier,
 			name: sf.string,
-			defaultValue: sf.optional(schemaTypes),
 			hint: sf.optional(sf.string),
 			props: columnProps ?? sf.null,
 		})
-		implements IColumn<TCell>
+		implements IColumn
 	{
-		/**
-		 * Get the parent Table
-		 */
-		private get table(): Table {
-			const parent = Tree.parent(this);
-			if (parent !== undefined) {
-				const grandparent = Tree.parent(parent);
-				if (grandparent instanceof Table) {
-					return grandparent;
-				}
-			}
-			throw new Error("Column is not in a table");
-		}
-
-		/**
-		 * Get all the hydrated cells in this column and return them as a map of rowId to cell value
-		 * @returns The cells in the column as a map of rowId to cell value
-		 */
-		public get cells(): Map<string, CellValueType> {
-			const cells: Map<string, CellValueType> = new Map();
-
-			// If the table has no rows, return an empty map
-			if (this.table.rows.length === 0) {
-				return cells;
-			}
-			// Get the rows that contain data for this column
-			const rows = this.table.rows.filter((row) => row.getCell(this) !== undefined);
-			// If there are rows with data for this column, put them in the map
-			for (const row of rows) {
-				// Get the cell value from the row
-				const cellValue = row.getCell(this);
-				if (cellValue !== undefined) {
-					cells.set(row.id, cellValue);
-				}
-			}
-			// Return the cells
-			return cells;
-		}
-
 		/**
 		 * Get the index of the column in the table
 		 * @returns The index of the column in the table
 		 */
 		public get index(): number {
-			const columns = this.table?.columns;
+			const columns = getTableParentOfColumn(this).columns;
 			if (columns !== undefined) {
 				return columns.indexOf(this);
 			}
@@ -311,7 +262,7 @@ export function createTableSchema<
 		 * @param index - The index to move the column to
 		 */
 		public moveTo(index: number): void {
-			const columns = this.table.columns;
+			const columns = getTableParentOfColumn(this).columns;
 
 			// If the index is greater than the current index, move it to the right
 			const adjustedIndex = index > this.index ? index + 1 : index;
@@ -419,7 +370,7 @@ export function createTableSchema<
 		 * @param index - The index to insert the column at
 		 * @param name - The name of the column
 		 */
-		public insertColumn({ index, column }: InsertColumnParameters<TCell, Column>): Column {
+		public insertColumn({ index, column }: InsertColumnParameters<Column>): Column {
 			this.columns.insertAt(index, column);
 			return column;
 		}
