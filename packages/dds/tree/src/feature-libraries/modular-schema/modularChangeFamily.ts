@@ -981,13 +981,13 @@ export class ModularChangeFamily
 		const revertConstraintState = newConstraintState(
 			change.constraintViolationCountOnRevert ?? 0,
 		);
-		this.updateConstraintsForFields(
+
+		this.updateConstraints(
 			rebasedFields,
-			NodeAttachState.Attached,
-			NodeAttachState.Attached,
+			rebasedNodes,
+			rebasedRootNodes,
 			constraintState,
 			revertConstraintState,
-			rebasedNodes,
 		);
 
 		const rebased = makeModularChangeset({
@@ -1451,6 +1451,36 @@ export class ModularChangeFamily
 		return rebasedChange;
 	}
 
+	private updateConstraints(
+		rebasedFields: FieldChangeMap,
+		rebasedNodes: ChangeAtomIdBTree<NodeChangeset>,
+		rebasedRoots: RootNodeTable,
+		constraintState: ConstraintState,
+		revertConstraintState: ConstraintState,
+	): void {
+		this.updateConstraintsForFields(
+			rebasedFields,
+			NodeAttachState.Attached,
+			NodeAttachState.Attached,
+			constraintState,
+			revertConstraintState,
+			rebasedNodes,
+		);
+
+		for (const [detachId, nodeId] of rebasedRoots.nodeChanges.entries()) {
+			// XXX
+			const detachedInOutput = true;
+			this.updateConstraintsForNode(
+				nodeId,
+				NodeAttachState.Detached,
+				detachedInOutput ? NodeAttachState.Detached : NodeAttachState.Attached,
+				rebasedNodes,
+				constraintState,
+				revertConstraintState,
+			);
+		}
+	}
+
 	private updateConstraintsForFields(
 		fields: FieldChangeMap,
 		parentInputAttachState: NodeAttachState,
@@ -1459,7 +1489,27 @@ export class ModularChangeFamily
 		revertConstraintState: ConstraintState,
 		nodes: ChangeAtomIdBTree<NodeChangeset>,
 	): void {
-		// XXX
+		for (const field of fields.values()) {
+			const handler = getChangeHandler(this.fieldKinds, field.fieldKind);
+			for (const [nodeId] of handler.getNestedChanges(field.change)) {
+				// XXX: MCS doesn't have an inversion to efficiently look up whether there's a detach for this node
+				// Instead of output index, field should give us detach ID or undefined?
+				const isOutputDetached = false;
+				const outputAttachState =
+					parentOutputAttachState === NodeAttachState.Detached || isOutputDetached
+						? NodeAttachState.Detached
+						: NodeAttachState.Attached;
+
+				this.updateConstraintsForNode(
+					nodeId,
+					parentInputAttachState,
+					outputAttachState,
+					nodes,
+					constraintState,
+					revertConstraintState,
+				);
+			}
+		}
 	}
 
 	private updateConstraintsForNode(
@@ -1474,6 +1524,7 @@ export class ModularChangeFamily
 		if (node.nodeExistsConstraint !== undefined) {
 			const isNowViolated = inputAttachState === NodeAttachState.Detached;
 			if (node.nodeExistsConstraint.violated !== isNowViolated) {
+				// XXX: This can mutate the input changeset
 				node.nodeExistsConstraint = {
 					...node.nodeExistsConstraint,
 					violated: isNowViolated,
@@ -2416,13 +2467,25 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		baseAttachId: ChangeAtomId,
 		count: number,
 	): RangeQueryResult<ChangeAtomId, DetachedNodeEntry> {
-		// XXX: This should return the deleted node
-		// XXX: The delete should also be postponed in case this function is rerun due to inval.
+		const baseRenameEntry = firstDetachIdFromAttachId(
+			this.table.baseChange.rootNodes,
+			baseAttachId,
+			count,
+		);
+
+		assert(baseRenameEntry.length === count, "XXX");
+
 		// XXX: This should do a range query on nodeChanges.
 		this.table.rebasedRootNodes.nodeChanges.delete([
-			baseAttachId.revision,
-			baseAttachId.localId,
+			baseRenameEntry.value.revision,
+			baseRenameEntry.value.localId,
 		]);
+
+		// XXX: This should do a range query.
+		const newNodeId = getFromChangeAtomIdMap(
+			this.table.newChange.rootNodes.nodeChanges,
+			baseRenameEntry.value,
+		);
 
 		const detachEntry = firstDetachIdFromAttachId(
 			this.table.baseChange.rootNodes,
@@ -2431,14 +2494,16 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		);
 
 		assert(detachEntry.length === count, "XXX");
-		const renameEntry = this.table.newChange.rootNodes.oldToNewId.getFirst(
+		const newRenameEntry = this.table.newChange.rootNodes.oldToNewId.getFirst(
 			detachEntry.value,
 			count,
 		);
 
-		if (renameEntry.value !== undefined) {
-			// XXX: Also include any node change change.
-			return { ...renameEntry, value: { detachId: renameEntry.value } };
+		if (newNodeId !== undefined || newRenameEntry.value !== undefined) {
+			return {
+				...newRenameEntry,
+				value: { detachId: newRenameEntry.value, nodeChange: newNodeId },
+			};
 		}
 
 		// This handles the case where the base changeset has moved these nodes,

@@ -23,12 +23,7 @@ import type {
 import type { CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
 import type { EncodedNodeChangeset } from "./modularChangeFormat.js";
 
-export type NestedChangesIndices = [
-	NodeId,
-	number | undefined /* inputIndex */,
-	// XXX: This should not be needed
-	number | undefined /* outputIndex */,
-][];
+export type NestedChangesIndices = [NodeId, number /* inputIndex */][];
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to

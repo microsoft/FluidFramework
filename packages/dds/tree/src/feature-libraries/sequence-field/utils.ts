@@ -61,11 +61,7 @@ export function getNestedChanges(change: Changeset): NestedChangesIndices {
 	for (const mark of change) {
 		const { changes, count } = mark;
 		if (changes !== undefined) {
-			output.push([
-				changes,
-				!areInputCellsEmpty(mark) ? inputIndex : undefined /* inputIndex */,
-				!areOutputCellsEmpty(mark) ? outputIndex : undefined /* outputIndex */,
-			]);
+			output.push([changes, inputIndex]);
 		}
 		if (!areInputCellsEmpty(mark)) {
 			inputIndex += count;

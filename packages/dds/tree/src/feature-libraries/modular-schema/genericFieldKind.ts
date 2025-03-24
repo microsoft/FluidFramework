@@ -82,7 +82,7 @@ function compose(
 
 function getNestedChanges(change: GenericChangeset): NestedChangesIndices {
 	// For generic changeset, the indices in the input and output contexts are the same.
-	return change.toArray().map(([index, nodeChange]) => [nodeChange, index, index]);
+	return change.toArray().map(([index, nodeChange]) => [nodeChange, index]);
 }
 
 function rebaseGenericChange(

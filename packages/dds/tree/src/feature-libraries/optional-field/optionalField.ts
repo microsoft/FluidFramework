@@ -554,7 +554,7 @@ function getNestedChanges(change: OptionalChangeset): NestedChangesIndices {
 		return [];
 	}
 
-	return [[change.childChange, 0, 0]];
+	return [[change.childChange, 0]];
 }
 
 /**
