@@ -2378,8 +2378,11 @@ class InvertNodeManagerI implements InvertNodeManager {
 	public invertAttach(
 		attachId: ChangeAtomId,
 		count: number,
+		invertRenames: boolean,
 	): RangeQueryResult<ChangeAtomId, DetachedNodeEntry> {
-		deleteNodeRename(this.table.invertedRoots, attachId, count);
+		if (!invertRenames) {
+			deleteNodeRename(this.table.invertedRoots, attachId, count);
+		}
 
 		const detachEntry = firstDetachIdFromAttachId(
 			this.table.change.rootNodes,

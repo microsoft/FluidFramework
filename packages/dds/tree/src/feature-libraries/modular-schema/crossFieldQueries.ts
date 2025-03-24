@@ -36,6 +36,7 @@ export interface InvertNodeManager {
 	invertAttach(
 		attachId: ChangeAtomId,
 		count: number,
+		invertRenames: boolean,
 	): RangeQueryResult<ChangeAtomId, DetachedNodeEntry>;
 }
 

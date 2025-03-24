@@ -239,7 +239,9 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				}
 
 				if (change.valueReplace.src !== undefined) {
-					childChange = nodeManager.invertAttach(change.valueReplace.src, 1).value?.nodeChange;
+					// XXX: If we use a new detach ID, need to update the `invertRenames` flag.
+					childChange = nodeManager.invertAttach(change.valueReplace.src, 1, true).value
+						?.nodeChange;
 				}
 
 				inverted.valueReplace = replace;

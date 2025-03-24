@@ -148,7 +148,7 @@ function invertMark(
 			// XXX: Do we always need an override?
 			removeMark.idOverride = isRollback ? inputId : { revision, localId: mark.id };
 
-			return applyMovedChanges(removeMark, mark.revision, crossFieldManager);
+			return applyMovedChanges(removeMark, mark.revision, crossFieldManager, isRollback);
 		}
 		default:
 			unreachableCase(type);
@@ -159,8 +159,9 @@ function applyMovedChanges(
 	mark: CellMark<Detach>,
 	revision: RevisionTag | undefined,
 	manager: InvertNodeManager,
+	isRollback: boolean,
 ): Mark[] {
-	const entry = manager.invertAttach({ revision, localId: mark.id }, mark.count);
+	const entry = manager.invertAttach({ revision, localId: mark.id }, mark.count, isRollback);
 
 	if (entry.length < mark.count) {
 		const [mark1, mark2] = splitMark(mark, entry.length);
@@ -169,7 +170,7 @@ function applyMovedChanges(
 				? withNodeChange<CellMark<Detach>, Detach>(mark1, entry.value.nodeChange)
 				: mark1;
 
-		return [mark1WithChanges, ...applyMovedChanges(mark2, revision, manager)];
+		return [mark1WithChanges, ...applyMovedChanges(mark2, revision, manager, isRollback)];
 	}
 
 	if (entry.value?.nodeChange !== undefined) {
