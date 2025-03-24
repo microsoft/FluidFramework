@@ -415,14 +415,14 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		it("clones movedClientIds array during insert", () => {
+		it("clones removes array during insert", () => {
 			const helper = new ReconnectTestHelper();
 
 			// the bug found here:
 			// the X was skipped over by client `A` because it had already been
 			// deleted, so its length at refSeq was 0
 			//
-			// this was due to the movedClientIds array not being properly cloned
+			// this was due to the removes array not being properly cloned
 			// when marking obliterated during insert
 
 			helper.insertText("C", 0, "ABCD");
@@ -691,7 +691,7 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		it("ignores segments where movedSeq < seq for partial len calculations", () => {
+		it("ignores segments obliterated at insertion time for partial len calculations", () => {
 			const helper = new ReconnectTestHelper();
 
 			helper.insertText("B", 0, "ABC");
@@ -777,9 +777,8 @@ for (const incremental of [true, false]) {
 			helper.processAllOps();
 			helper.logger.validate();
 			helper.obliterateRange("B", 1, 2);
-			// bug here: because segment A has already been obliterated, we wouldn't
-			// mark it obliterated by this op as well, meaning that segments in
-			// this range would look to the right and not find a matching move seq
+			// bug here: because segment A has already been obliterated, we previously wouldn't
+			// mark it obliterated by this op as well
 			helper.obliterateRange("A", 0, 2);
 			helper.insertText("B", 1, "C");
 			helper.processAllOps();
@@ -868,7 +867,7 @@ for (const incremental of [true, false]) {
 			helper.processAllOps();
 			helper.logger.validate();
 			// bug here: when the op is acked by client C, it would incorrectly give
-			// segment B the same movedSeq despite coming from a different op
+			// segment B the same obliterate information despite coming from a different op
 			helper.obliterateRange("C", 0, 2);
 			helper.insertText("B", 2, "D");
 			helper.obliterateRange("C", 0, 1);
@@ -928,7 +927,7 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		it("applies correct movedSeq when right segment has multiple movedSeqs", () => {
+		it("applies correct obliterate when right segment has multiple obliterates", () => {
 			const helper = new ReconnectTestHelper();
 
 			// AB
@@ -939,10 +938,8 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 			helper.obliterateRange("A", 1, 2);
 			helper.obliterateRange("B", 0, 2);
-			// bug here: for client B, segment B had multiple movedSeqs, and when
-			// traversal went to the right and found a matching movedSeq in the movedSeqs
-			// array, it selected the lowest seq in the array, which differed from
-			// the correct and matching movedSeq
+			// bug here: for client B, segment B had multiple obliterates and
+			// the wrong one was selected
 			helper.insertText("A", 1, "C");
 			helper.insertText("A", 2, "D");
 			helper.processAllOps();
@@ -954,7 +951,7 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		it("takes the correct moved client id when multiple clientIds for right segment", () => {
+		it("takes the correct remove clientId/stamp when multiple obliterates apply", () => {
 			const helper = new ReconnectTestHelper();
 
 			// AB
@@ -965,8 +962,7 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 			helper.obliterateRange("A", 1, 2);
 			// bug here: we would incorrectly take the client id of the first element
-			// in the movedClientIds array because we did not take into account the
-			// length of _both_ the local and non-local movedSeqs arrays
+			// in the removes array
 			helper.insertText("A", 1, "C");
 			helper.obliterateRange("C", 0, 2);
 			helper.insertText("A", 2, "D");
@@ -1036,7 +1032,7 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		it("tracks length at seq of lower move/remove seq when overlapping", () => {
+		it("tracks length at seq of lower remove seq when overlapping", () => {
 			const helper = new ReconnectTestHelper();
 
 			// H-FG-A-CDE-B
@@ -1052,8 +1048,8 @@ for (const incremental of [true, false]) {
 			helper.removeRange("B", 2, 6);
 			// bug here: this insert triggers a new chunk to be created. when the
 			// partial lengths of the new chunk were calculated, it incorrectly
-			// used the removedSeq instead of the moveSeq, despite the latter having
-			// occurred prior to the remove
+			// used a removal seq other than the earliest removal, causing its computed length
+			// to be incorrect
 			helper.insertText("A", 1, "I");
 			helper.processAllOps();
 
@@ -1115,8 +1111,7 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 			helper.removeRange("C", 6, 7);
 			helper.insertText("A", 7, "2");
-			// obliterate at seq 5 isn't getting acked because it stops traversal
-			// at the removed segment, which doesn't have move info
+			// Bug was here: obliterate at seq 5 wasn't getting acked correctly
 			helper.obliterateRange("C", 5, 7);
 			helper.processAllOps();
 			helper.logger.validate();
@@ -1199,7 +1194,7 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		it("wasMovedOnInsert remains after leaf node is split", () => {
+		it("wasRemovedOnInsert computation remains accurate after leaf node is split", () => {
 			const helper = new ReconnectTestHelper();
 
 			// CD-B-A
@@ -1291,7 +1286,7 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		it("partial len isLocal when seq is -1 but moveSeq > -1", () => {
+		it("partial len isLocal when seq is local but a non-local obliterate affects the segment", () => {
 			const helper = new ReconnectTestHelper();
 
 			// CDEFG-AB
@@ -1461,7 +1456,7 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		it("obliterate ack traversal is not stopped by moved segment", () => {
+		it("obliterate ack traversal is not stopped by obliterated segment", () => {
 			const helper = new ReconnectTestHelper();
 
 			// ABCD
@@ -1910,6 +1905,86 @@ for (const incremental of [true, false]) {
 				helper.processAllOps();
 
 				helper.logger.validate({ baseText: "8m" });
+			});
+
+			// See 'Local obliterate wins post-insertion of segment previously thought to have won' (below) for a simpler
+			// to understand version of this test. This test is the original partial synchronization fuzz variant which
+			// demonstrated that issue, and has been preserved for now in case it catches additional related problems.
+			// Once fuzz testing more meaninfully leverages ops being sent to different clients at different types (partial
+			// synchronization), it's probably fine to remove this.
+			it("fuzz regression: Local obliterate wins post-insertion of segment previously thought to have won", () => {
+				const helper = new PartialSyncTestHelper();
+
+				helper.insertText("A", 0, "Hx15J");
+				helper.processAllOps();
+				helper.insertText("A", 0, "9T");
+				helper.insertText("B", 0, "c8v");
+				helper.advanceClients("A", "C");
+				helper.removeRange("A", 2, 5);
+				helper.removeRange("A", 0, 1);
+				helper.obliterateRange("A", 0, 3);
+				helper.obliterateRange(
+					"C",
+					{ pos: 1, side: Side.After },
+					{ pos: 4, side: Side.Before },
+				);
+				helper.insertText("B", 0, "4qpo");
+				helper.insertText("C", 2, "fP");
+				helper.insertText("A", 0, "hn");
+				helper.advanceClients("A", "C");
+				helper.obliterateRange(
+					"A",
+					{ pos: 5, side: Side.After },
+					{ pos: 9, side: Side.After },
+				);
+				helper.obliterateRange(
+					"B",
+					{ pos: 3, side: Side.Before },
+					{ pos: 9, side: Side.After },
+				);
+				// At the time of the original bug, this would hit 0xa3f.
+				helper.processAllOps();
+
+				helper.logger.validate({ baseText: "hn4qpJ" });
+			});
+
+			// Simpler version of the above test which has the same root cause but reproduces a slightly different failure mode.
+			it("Local obliterate wins post-insertion of segment previously thought to have won", () => {
+				const helper = new PartialSyncTestHelper();
+				helper.insertText("A", 0, "1xx2");
+				helper.processAllOps();
+				// A and B both obliterate the 'xx' segment with an expanding obliterate, then try to insert
+				// into the gap that it leaves.
+				helper.obliterateRange(
+					"A",
+					{ pos: 0, side: Side.After },
+					{ pos: 3, side: Side.Before },
+				);
+				helper.insertText("A", 1, "aaaa");
+				helper.obliterateRange(
+					"B",
+					{ pos: 0, side: Side.After },
+					{ pos: 3, side: Side.Before },
+				);
+				helper.insertText("B", 1, "bbb");
+				helper.advanceClients("A", "B");
+				// Meanwhile, C attempts the same thing without seeing A or B's obliterate & insertions
+				helper.obliterateRange(
+					"C",
+					{ pos: 0, side: Side.After },
+					{ pos: 3, side: Side.Before },
+				);
+				helper.insertText("C", 1, "ccc");
+				// Before seeing C's ops, B attempts to insert more content. Since B hasn't yet seen C's obliterate,
+				// A and B are under the impression that B's obliterate has won and the string contents are '1bbb2'.
+				helper.insertText("B", 5, "B");
+				helper.insertText("A", 5, "A");
+				helper.processAllOps();
+				// By now, all clients realize C actually won the obliterate and should have additionally applied B's
+				// op correctly as it was outside of the obliterated range.
+				// At the time this test was written, client C had trouble recognizing that A and B think that B has won
+				// and merged incorrectly, hitting 'MergeTree insert failed'.
+				helper.logger.validate({ baseText: "1ccc2AB" });
 			});
 		});
 	});

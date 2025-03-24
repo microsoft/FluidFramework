@@ -537,17 +537,6 @@ export abstract class SharedObjectCore<
 		);
 		// attachDeltaHandler is only called after services is assigned
 		this.services.deltaConnection.attach({
-			process: (
-				message: ISequencedDocumentMessage,
-				local: boolean,
-				localOpMetadata: unknown,
-			) => {
-				this.process(
-					{ ...message, contents: parseHandles(message.contents, this.serializer) },
-					local,
-					localOpMetadata,
-				);
-			},
 			processMessages: (messagesCollection: IRuntimeMessageCollection) => {
 				this.processMessages(messagesCollection);
 			},

@@ -10,7 +10,7 @@ const webpack = require("webpack");
 module.exports = (env) => {
 	return {
 		entry: {
-			app: "./tests/index.ts",
+			app: "./tests/app.ts",
 		},
 		resolve: {
 			extensionAlias: {
@@ -32,7 +32,7 @@ module.exports = (env) => {
 			library: "[name]",
 			// https://github.com/webpack/webpack/issues/5767
 			// https://github.com/webpack/webpack/issues/7939
-			devtoolNamespace: "fluid-example/draft-js",
+			devtoolNamespace: "fluid-example/external-views",
 			libraryTarget: "umd",
 		},
 		devServer: {

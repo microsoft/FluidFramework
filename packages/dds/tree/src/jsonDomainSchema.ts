@@ -3,12 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import {
-	SchemaFactory,
-	type AllowedTypes,
-	type FixRecursiveArraySchema,
-	type TreeNodeFromImplicitAllowedTypes,
-	type ValidateRecursiveSchema,
+import { SchemaFactory } from "./simple-tree/index.js";
+
+import type {
+	AllowedTypes,
+	FixRecursiveArraySchema,
+	TreeNodeFromImplicitAllowedTypes,
+	ValidateRecursiveSchema,
+	// #region Unused imports to make d.ts cleaner
+	/* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
+	InsertableTypedNodeUnsafe,
+	TreeNodeSchemaNonClass,
+	TreeNodeSchemaClass,
+	TreeMapNodeUnsafe,
+	NodeKind,
+	TreeNodeSchemaCore,
+	WithType,
+	TreeArrayNodeUnsafe,
+	LeafSchema,
+	/* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
+	// #endregion
 } from "./simple-tree/index.js";
 
 const sf = new SchemaFactory("com.fluidframework.json");
@@ -16,7 +30,7 @@ const sf = new SchemaFactory("com.fluidframework.json");
 /**
  * Utilities for storing JSON data in {@link TreeNode}s.
  * @remarks
- * Schema which replicates the JSON data model with {@link TreeNode}s.
+ * Schema which replicate the JSON data model with {@link TreeNode}s.
  *
  * This allows JSON to be losslessly round-tripped through a tree with the following limitations:
  *
@@ -34,10 +48,10 @@ export namespace JsonAsTree {
 	 * @alpha
 	 */
 	export const Primitive = [
-		sf.null,
-		sf.boolean,
-		sf.number,
-		sf.string,
+		SchemaFactory.null,
+		SchemaFactory.number,
+		SchemaFactory.string,
+		SchemaFactory.boolean,
 	] as const satisfies AllowedTypes;
 
 	/**
@@ -51,9 +65,14 @@ export namespace JsonAsTree {
 	 * ```typescript
 	 * const tree = TreeAlpha.importConcise(JsonAsTree.Union, { example: { nested: true }, value: 5 });
 	 * ```
+	 * @privateRemarks
+	 * The order here should not matter for any functionality related reasons.
+	 * In an attempt to improve readability of derived types (in errors, api-reports, IntelliSense etc.)
+	 * and possibly reduce incremental build related order dependence issues,
+	 * the simpler non-recursive types are listed first, followed by the recursive types.
 	 * @alpha
 	 */
-	export const Tree = [() => JsonObject, () => Array, ...Primitive] as const;
+	export const Tree = [...Primitive, () => JsonObject, () => Array] as const;
 
 	/**
 	 * @alpha
@@ -106,9 +125,9 @@ export namespace JsonAsTree {
 	export const _APIExtractorWorkaroundArrayBase = sf.arrayRecursive("array", Tree);
 
 	/**
-	 * Arbitrary JSON object as a {@link TreeNode}.
+	 * Arbitrary JSON array as a {@link TreeNode}.
 	 * @remarks
-	 * This can be worked around by using {@link TreeAlpha.importConcise}.
+	 * This can be imported using {@link TreeAlpha.importConcise}.
 	 * @example
 	 * ```typescript
 	 * // Due to TypeScript restrictions on recursive types, the constructor can be somewhat limiting.
@@ -116,7 +135,7 @@ export namespace JsonAsTree {
 	 * // Using `importConcise` can work better for JSON data:
 	 * const imported = TreeAlpha.importConcise(JsonAsTree.Array, ["a", 0, [1]]);
 	 * // Node API is like an Array:
-	 * const inner: JsonUnion = imported[2];
+	 * const inner: JsonAsTree.Tree = imported[2];
 	 * assert(Tree.is(inner, JsonAsTree.Array));
 	 * const leaf = inner[0];
 	 * ```

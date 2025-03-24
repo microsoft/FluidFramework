@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/multiview-triangle-view",
-	"version": "2.23.0",
+	"version": "2.31.0",
 	"private": true,
 	"description": "View for multiview sample",
 	"homepage": "https://fluidframework.com",
@@ -29,13 +29,11 @@
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
-		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
-		"format:prettier": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format"
 	},
@@ -46,12 +44,11 @@
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.53.0",
+		"@fluidframework/build-tools": "^0.54.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@types/react": "^18.3.11",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",
-		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
 	},
