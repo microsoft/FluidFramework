@@ -714,10 +714,7 @@ export class PendingStateManager implements IDisposable {
 					[
 						{
 							content: pendingMessage.content,
-							localOpMetadata: {
-								localOpMetadata: pendingMessage.localOpMetadata,
-								onlyStagedOps: onlyStagedBatches,
-							},
+							localOpMetadata: pendingMessage.localOpMetadata,
 							opMetadata: pendingMessage.opMetadata,
 						},
 					],
@@ -739,10 +736,7 @@ export class PendingStateManager implements IDisposable {
 			while (remainingPendingMessagesCount >= 0) {
 				batch.push({
 					content: pendingMessage.content,
-					localOpMetadata: {
-						localOpMetadata: pendingMessage.localOpMetadata,
-						onlyStagedOps: onlyStagedBatches,
-					},
+					localOpMetadata: pendingMessage.localOpMetadata,
 					opMetadata: pendingMessage.opMetadata,
 				});
 
