@@ -5,7 +5,11 @@
 
 import { inspect } from "util";
 import winston from "winston";
-import { IContextErrorData, IProducer, MaxKafkaMessageSize } from "@fluidframework/server-services-core";
+import {
+	IContextErrorData,
+	IProducer,
+	MaxKafkaMessageSize,
+} from "@fluidframework/server-services-core";
 import { KafkaNodeProducer } from "@fluidframework/server-services-ordering-kafkanode";
 import { RdkafkaProducer } from "@fluidframework/server-services-ordering-rdkafka";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
