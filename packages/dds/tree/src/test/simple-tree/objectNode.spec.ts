@@ -475,7 +475,7 @@ describeHydration(
 
 			assert.deepEqual(
 				Note.fields.get("f")?.allowedTypesIdentifiers,
-				new Set([SchemaFactory.null]),
+				new Set([SchemaFactory.null.identifier]),
 			);
 		});
 
