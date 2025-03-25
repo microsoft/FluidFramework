@@ -94,7 +94,6 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			reconnectOnNonFatalErrors: options?.reconnectOnNonFatalErrors ?? false,
 			enableIdempotence: options?.enableIdempotence ?? false,
 			pollIntervalMs: options?.pollIntervalMs ?? 10,
-			// Kafka has an internal limit of 1Mb. Set the enforced limit as 900kb.
 			maxMessageSize: options?.maxMessageSize ?? MaxKafkaMessageSize,
 		};
 	}
