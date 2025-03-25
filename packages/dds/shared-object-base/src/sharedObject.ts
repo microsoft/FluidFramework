@@ -648,12 +648,9 @@ export abstract class SharedObjectCore<
 		const decodedMessagesContent: IRuntimeMessagesContent[] = [];
 		for (const {
 			contents,
-			localOpMetadata: wrappedLOM,
+			localOpMetadata,
 			clientSequenceNumber,
 		} of messagesCollection.messagesContent) {
-			// We wrapped localOpMetadata during submit, unwrap it here
-			const { localOpMetadata } = wrappedLOM as { localOpMetadata: unknown };
-
 			const decodedMessageContent: IRuntimeMessagesContent = {
 				contents: parseHandles(contents, this.serializer),
 				localOpMetadata,
