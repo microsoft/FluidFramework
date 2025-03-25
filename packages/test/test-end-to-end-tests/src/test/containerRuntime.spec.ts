@@ -14,31 +14,6 @@ import {
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
-describeCompat.only(
-	"ContainerRuntime CompatibilityMode",
-	"FullCompat",
-	(getTestObjectProvider) => {
-		let provider: ITestObjectProvider;
-		beforeEach("getTestObjectProvider", async () => {
-			provider = getTestObjectProvider();
-		});
-		it("can apply compat mode options correctly", async () => {
-			const config1: ITestContainerConfig = {
-				runtimeOptions: {
-					compatibilityMode: "2",
-				},
-			};
-			const config2: ITestContainerConfig = {
-				runtimeOptions: {
-					compatibilityMode: "1", // default
-				},
-			};
-			await provider.makeTestContainer(config1);
-			await provider.loadTestContainer(config2);
-		});
-	},
-);
-
 describeCompat(
 	"ContainerRuntime Document Schema",
 	"FullCompat",
