@@ -6,7 +6,9 @@
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
 
-// Since bundle size reporter is broken, and doesn't block merges, do a sanity check here
+// Since bundle size analysis doesn't block regressions, do a sanity check here.
+// This bundle should remain its current tiny size for the foreseeable future so putting a hard limit on its size should be ok.
+// Additionally, this specific bundling scenario is regressed in the past, so protecting it with a regression test is known to have some value.
 describe("checkSizes", () => {
 	it("sharedTreeAttributes", () => {
 		// This test must be run after webpack.
