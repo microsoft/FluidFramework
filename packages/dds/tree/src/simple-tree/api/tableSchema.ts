@@ -35,10 +35,7 @@ export interface IColumn {
 	readonly moveTo: (index: number) => void;
 }
 
-export interface IRow<
-	TCell extends readonly TreeNodeSchema[],
-	TColumn extends IColumn,
-> {
+export interface IRow<TCell extends readonly TreeNodeSchema[], TColumn extends IColumn> {
 	readonly index: number;
 	readonly getCell: (column: TColumn) => TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 	readonly setCell: (
@@ -67,9 +64,7 @@ export interface InsertRowsParameters<
 	readonly rows: TRow[];
 }
 
-export interface InsertColumnParameters<
-	TColumn extends IColumn,
-> {
+export interface InsertColumnParameters<TColumn extends IColumn> {
 	/**
 	 * The index at which to insert the new column.
 	 * @remarks If not provided, the column will be appended to the end of the table.
@@ -123,9 +118,7 @@ export function createTableSchema<
 	const TColumnProps extends readonly TreeNodeSchema[],
 	const TRowProps extends readonly TreeNodeSchema[],
 	const TScope extends string | undefined,
->(
-	props: TableSchemaProps<TCell, TColumnProps, TRowProps, TScope>,
-) {
+>(props: TableSchemaProps<TCell, TColumnProps, TRowProps, TScope>) {
 	const { sf, schemaTypes, columnProps, rowProps } = props;
 
 	type CellValueType = TreeNodeFromImplicitAllowedTypes<TCell>;
@@ -239,8 +232,6 @@ export function createTableSchema<
 	class Column
 		extends sf.object("Column", {
 			id: sf.identifier,
-			name: sf.string,
-			hint: sf.optional(sf.string),
 			props: columnProps ?? sf.null,
 		})
 		implements IColumn
