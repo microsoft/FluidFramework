@@ -40,6 +40,19 @@ export const enabledCompressionConfig = {
 const defaultFlushMode = FlushMode.TurnBased;
 
 /**
+ * Subset of IContainerRuntimeOptionsInternal that are version-dependent.
+ */
+type IContainerRuntimeOptionsVersionDependent = Pick<
+	IContainerRuntimeOptionsInternal,
+	| "flushMode"
+	| "enableGroupedBatching"
+	| "explicitSchemaControl"
+	| "enableRuntimeIdCompressor"
+	| "compressionOptions"
+	| "gcOptions"
+>;
+
+/**
  * Map of IContainerRuntimeOptionsInternal to compat related information.
  * The key is the option name, and the value is an object containing:
  * - minVersionRequired: The minimum version of the container runtime that supports this option being enabled
@@ -49,10 +62,10 @@ const defaultFlushMode = FlushMode.TurnBased;
  * TODO: Get the exact versions that each option was added in.
  */
 const runtimeOptionConfigs: {
-	[K in keyof IContainerRuntimeOptionsInternal]?: {
+	[K in keyof IContainerRuntimeOptionsVersionDependent]: {
 		minVersionRequired: string;
-		disabledConfig: IContainerRuntimeOptionsInternal[K];
-		enabledConfig: IContainerRuntimeOptionsInternal[K];
+		disabledConfig: IContainerRuntimeOptionsVersionDependent[K];
+		enabledConfig: IContainerRuntimeOptionsVersionDependent[K];
 	};
 } = {
 	flushMode: {
@@ -91,25 +104,19 @@ const runtimeOptionConfigs: {
  * Returns the default configs for a given compatibility mode.
  */
 export function getConfigsForCompatMode(
-	compatibilityMode: IContainerRuntimeOptionsInternal["compatibilityMode"],
-): {
-	[K in keyof IContainerRuntimeOptionsInternal]: IContainerRuntimeOptionsInternal[K];
-} {
-	assert(compatibilityMode !== undefined, "compatibilityMode should be defined");
-	let defaultConfigs: {
-		[K in keyof IContainerRuntimeOptionsInternal]: IContainerRuntimeOptionsInternal[K];
+	compatibilityMode: Required<IContainerRuntimeOptionsInternal>["compatibilityMode"],
+): IContainerRuntimeOptionsInternal {
+	const defaultConfigs: {
+		[K in keyof IContainerRuntimeOptionsVersionDependent]: IContainerRuntimeOptionsVersionDependent[K];
 	} = {};
 	for (const key of Object.keys(runtimeOptionConfigs)) {
-		const config = runtimeOptionConfigs[key as keyof IContainerRuntimeOptionsInternal];
+		const config = runtimeOptionConfigs[key as keyof IContainerRuntimeOptionsVersionDependent];
 		assert(config !== undefined, "config should be defined");
 		// If the compatibility mode is greater than or equal to the minimum version
 		// required for this option, use the "enabled" value, otherwise use the "disabled" value
 		// TODO: Hack for now, use regex or semver later
 		const isEnabled = config.minVersionRequired.startsWith(compatibilityMode);
-		defaultConfigs = {
-			...defaultConfigs,
-			[key]: isEnabled ? config.enabledConfig : config.disabledConfig,
-		};
+		defaultConfigs[key] = isEnabled ? config.enabledConfig : config.disabledConfig;
 	}
 	return defaultConfigs;
 }
