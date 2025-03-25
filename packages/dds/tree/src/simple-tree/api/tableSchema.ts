@@ -47,6 +47,7 @@ export interface IRow<TCell extends readonly TreeNodeSchema[], TColumn extends I
 }
 
 /**
+ * @sealed
  * @system
  */
 export interface InsertRowsParameters<
@@ -64,6 +65,10 @@ export interface InsertRowsParameters<
 	readonly rows: TRow[];
 }
 
+/**
+ * @sealed
+ * @system
+ */
 export interface InsertColumnParameters<TColumn extends IColumn> {
 	/**
 	 * The index at which to insert the new column.
