@@ -107,6 +107,7 @@ export {
 	type InsertableTypedNode,
 	NodeKind,
 	type TreeObjectNode,
+	ObjectNodeSchema,
 	type TreeNodeFromImplicitAllowedTypes,
 	type TreeNodeSchemaClass,
 	type SchemaCompatibilityStatus,

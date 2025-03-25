@@ -386,7 +386,8 @@ export type InsertableTreeFieldFromImplicitFieldUnsafe<
 export interface FieldSchemaUnsafe<
 	out Kind extends FieldKind,
 	out Types extends ImplicitAllowedTypesUnsafe,
-> extends FieldSchema<Kind, any> {
+	out TCustomMetadata = unknown,
+> extends FieldSchema<Kind, any, TCustomMetadata> {
 	/**
 	 * {@inheritDoc FieldSchema.kind}
 	 */
