@@ -158,6 +158,7 @@ export class TenantManager {
 		ver: string = "1.0",
 		jti: string = uuid(),
 		includeDisabledTenant = false,
+		forceGenerateTokenWithPrivateKey = false,
 	): Promise<IFluidAccessToken> {
 		const lumberProperties = {
 			[BaseTelemetryProperties.tenantId]: tenantId,
@@ -180,6 +181,16 @@ export class TenantManager {
 		// If the tenant is a keyless tenant, always use the private keys to sign the token
 		const isTenantPrivateKeyAccessEnabled =
 			this.isTenantPrivateKeyAccessEnabled(tenantDocument);
+
+		// If private keys access is not enabled, and the requester is trying to generate a token with private keys, throw an error.
+		// The forceGenerateTokenWithPrivateKey flag is not used anywhere ahead as private keys are given preference to sign tokens over shared keys if both are enabled.
+		if (!isTenantPrivateKeyAccessEnabled && forceGenerateTokenWithPrivateKey) {
+			Lumberjack.error(
+				`Tenant ${tenantId} does not have private key access enabled. Cannot sign token with private key.`,
+				lumberProperties,
+			);
+			throw new NetworkError(400, `Tenant ${tenantId} does not have private key access enabled.`);
+		}
 
 		const keys = this.decryptKeys(
 			tenantDocument,

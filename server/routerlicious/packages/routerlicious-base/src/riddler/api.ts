@@ -82,6 +82,7 @@ export function create(
 			ver,
 			jti,
 			getIncludeDisabledFlag(request),
+			getForceGenerateTokenWithPrivateKeyFlag(request),
 		);
 		handleResponse(accessTokenP, response);
 	});
@@ -208,6 +209,11 @@ export function create(
 	function getIncludeDisabledFlag(request): boolean {
 		const includeDisabledRaw = request.query.includeDisabledTenant as string;
 		return includeDisabledRaw?.toLowerCase() === "true";
+	}
+
+	function getForceGenerateTokenWithPrivateKeyFlag(request): boolean {
+		const forceGenerateTokenWithPrivateKey = request.query.forceGenerateTokenWithPrivateKey as string;
+		return forceGenerateTokenWithPrivateKey?.toLowerCase() === "true";
 	}
 
 	return router;
