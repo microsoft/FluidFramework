@@ -44,7 +44,8 @@ export class KafkaNodeProducer implements IProducer {
 	) {
 		clientOptions.clientId = clientId;
 		this.maxBatchSize = maxBatchSize ?? MaxBatchSize;
-		this.maxMessageSize = maxMessageSize ?? Number.MAX_SAFE_INTEGER;
+		// Kafka has an internal limit of 1Mb. Set the enforced limit as 900kb.
+		this.maxMessageSize = maxMessageSize ?? 900 * 1024;
 		this.connect();
 	}
 

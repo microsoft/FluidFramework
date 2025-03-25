@@ -11,7 +11,7 @@ import { RdkafkaProducer } from "@fluidframework/server-services-ordering-rdkafk
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 // Kafka has an internal limit of 1Mb.
-// Runtime has a client-imposed limit of 768kb.
+// Runtime has a client-imposed limit of 700kb.
 // Set our enforced limit at 900kb to give space for any
 // mysterious overhead.
 const MaxKafkaMessageSize = 900 * 1024;
