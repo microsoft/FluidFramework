@@ -11,6 +11,7 @@ import {
 	IProducer,
 	PendingBoxcar,
 	IContextErrorData,
+	MaxKafkaMessageSize,
 } from "@fluidframework/server-services-core";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
@@ -94,7 +95,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			enableIdempotence: options?.enableIdempotence ?? false,
 			pollIntervalMs: options?.pollIntervalMs ?? 10,
 			// Kafka has an internal limit of 1Mb. Set the enforced limit as 900kb.
-			maxMessageSize: options?.maxMessageSize ?? 900 * 1024,
+			maxMessageSize: options?.maxMessageSize ?? MaxKafkaMessageSize,
 		};
 	}
 

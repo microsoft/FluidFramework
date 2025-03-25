@@ -13,6 +13,7 @@ import {
 	IProducer,
 	PendingBoxcar,
 	MaxBatchSize,
+	MaxKafkaMessageSize,
 } from "@fluidframework/server-services-core";
 import { NetworkError } from "@fluidframework/server-services-client";
 import * as kafka from "kafka-node";
@@ -45,7 +46,7 @@ export class KafkaNodeProducer implements IProducer {
 		clientOptions.clientId = clientId;
 		this.maxBatchSize = maxBatchSize ?? MaxBatchSize;
 		// Kafka has an internal limit of 1Mb. Set the enforced limit as 900kb.
-		this.maxMessageSize = maxMessageSize ?? 900 * 1024;
+		this.maxMessageSize = maxMessageSize ?? MaxKafkaMessageSize;
 		this.connect();
 	}
 

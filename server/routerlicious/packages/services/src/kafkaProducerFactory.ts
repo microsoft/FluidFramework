@@ -5,16 +5,13 @@
 
 import { inspect } from "util";
 import winston from "winston";
-import { IContextErrorData, IProducer } from "@fluidframework/server-services-core";
+import { IContextErrorData, IProducer, MaxKafkaMessageSize } from "@fluidframework/server-services-core";
 import { KafkaNodeProducer } from "@fluidframework/server-services-ordering-kafkanode";
 import { RdkafkaProducer } from "@fluidframework/server-services-ordering-rdkafka";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
-// Kafka has an internal limit of 1Mb.
-// Runtime has a client-imposed limit of 700kb.
-// Set our enforced limit at 900kb to give space for any
-// mysterious overhead.
-const MaxKafkaMessageSize = 900 * 1024;
+// set the max kafka message size to 900kb
+const maxKafkaMessageSize = MaxKafkaMessageSize;
 
 /**
  * @internal
@@ -42,7 +39,7 @@ export function createProducer(
 			pollIntervalMs,
 			numberOfPartitions,
 			replicationFactor,
-			maxMessageSize: MaxKafkaMessageSize,
+			maxMessageSize: maxKafkaMessageSize,
 			sslCACertFilePath,
 			eventHubConnString,
 			additionalOptions,
@@ -77,7 +74,7 @@ export function createProducer(
 			numberOfPartitions,
 			replicationFactor,
 			maxBatchSize,
-			MaxKafkaMessageSize,
+			maxKafkaMessageSize,
 		);
 		producer.on("error", (error) => {
 			winston.error(error);
