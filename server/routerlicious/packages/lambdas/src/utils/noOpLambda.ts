@@ -27,6 +27,9 @@ export class NoOpLambda implements IPartitionLambda {
 		// default
 		if (!this.checkpointConfiguration?.enabled) {
 			this.context.checkpoint(message);
+			if (this.context.setLastSuccessfulOffset) {
+				this.context.setLastSuccessfulOffset(message.offset);
+			}
 			return undefined;
 		}
 
