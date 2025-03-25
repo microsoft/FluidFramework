@@ -4113,7 +4113,7 @@ export class ContainerRuntime
 		signal?: AbortSignal,
 	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		this.verifyNotClosed();
-		return this.blobManager.createBlob(blob, signal);
+		return this.blobManager.createBlobExperiment(blob);
 	}
 
 	public async uploadBlobExperiment(
