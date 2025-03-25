@@ -18,7 +18,7 @@ These sections speak of a "referenced DDS" which refers to a DDS that is created
 
 There are 2 ways to reference a data store:
 
--   Store the data stores's handle (see [IFluidHandle](../../../../../packages/common/core-interfaces/src/handles.ts)) in a referenced DDS that supports handle in its data.
+-   Store the data store's handle (see [IFluidHandle](../../../../../packages/common/core-interfaces/src/handles.ts)) in a referenced DDS that supports handles in its data.
 For example, a data store's handle can be stored in a referenced `SharedMap` DDS.
 
     Storing a handle of any of a data store's DDS will also mark the data store as referenced.
