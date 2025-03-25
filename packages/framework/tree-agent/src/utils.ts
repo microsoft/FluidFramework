@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { ImplicitFieldSchema } from "@fluidframework/tree";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeViewAlpha } from "@fluidframework/tree/alpha";
@@ -106,3 +107,10 @@ export function hasAtLeastTwo<T>(array: T[]): array is [T, T, ...T[]] {
  * @alpha
  */
 export const llmDefault = Symbol("tree-agent/llmDefault");
+
+/**
+ * Usage fail
+ */
+export function failUsage(message: string): never {
+	throw new UsageError(message);
+}

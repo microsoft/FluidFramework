@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { writeFileSync } from "node:fs";
+
 import { Anthropic } from "@anthropic-ai/sdk";
 // eslint-disable-next-line import/no-internal-modules
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
@@ -78,7 +80,7 @@ export class Conference extends sf.object("Conference", {
 
 const factory = SharedTree.getFactory();
 
-describe.skip("Agent Editing Integration", () => {
+describe("Agent Editing Integration 1", () => {
 	it("Roblox Test", async () => {
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
@@ -160,12 +162,15 @@ describe.skip("Agent Editing Integration", () => {
 		});
 
 		const agent = new SharedTreeSemanticAgent(client, asTreeViewAlpha(view));
-
-		await agent.applyPrompt(
-			"Please organize the sessions so that the ones for adults are on the first day, and the ones that kids would find enjoyable are on the second day. Also make sure the sessions are in alphabetical order within the day.",
+		const log = await agent.applyCodingPrompt(
+			"Please organize the sessions so that the ones for adults are on the first day, and the ones that kids would find enjoyable are on the second day. If one day has more sesions than the other, please add a new session (that fits the theme of the day) to balance them out.",
 		);
 
-		const stringified = JSON.stringify(view.root, undefined, 2);
-		console.log(stringified);
+		if (log === undefined) {
+			console.error("No log returned from clod");
+			throw new Error("No log returned from clod");
+		} else {
+			writeFileSync("llm_log.md", log, { encoding: "utf8" });
+		}
 	});
 });

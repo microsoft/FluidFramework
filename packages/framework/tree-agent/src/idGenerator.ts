@@ -12,6 +12,8 @@ import type {
 	TreeFieldFromImplicitField,
 } from "@fluidframework/tree/internal";
 
+import { failUsage } from "./utils.js";
+
 /**
  * Given a tree, generates a set of LLM-friendly, unique IDs for each node in the tree.
  * @remarks The ability to uniquely and stably in the tree is important for the LLM and this library to create and distinguish between different types certain {@link TreeEdit}s.
@@ -39,6 +41,15 @@ export class IdGenerator {
 		this.idToNodeMap.set(id, node);
 
 		return id;
+	}
+
+	public get(id: string): TreeNode {
+		return (
+			this.getNode(id) ??
+			failUsage(
+				`No node found with ID ${id}. Either the node doesn't exist or it has been removed from the tree.`,
+			)
+		);
 	}
 
 	public getNode(id: string): TreeNode | undefined {

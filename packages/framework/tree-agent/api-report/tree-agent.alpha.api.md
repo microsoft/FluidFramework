@@ -14,6 +14,8 @@ export class SharedTreeSemanticAgent<TRoot extends ImplicitFieldSchema> {
         toString?: ((root: ReadableField<TRoot>) => string) | undefined;
     } | undefined);
     // (undocumented)
+    applyCodingPrompt(prompt: string): Promise<string | undefined>;
+    // (undocumented)
     applyPrompt(prompt: string): Promise<string | undefined>;
     // (undocumented)
     readonly client: Anthropic;

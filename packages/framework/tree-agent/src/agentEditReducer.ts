@@ -49,7 +49,7 @@ import {
 } from "./agentEditTypes.js";
 import type { IdGenerator } from "./idGenerator.js";
 import { getOrCreateTypeForInsertion } from "./typeGeneration.js";
-import { fail, hasAtLeastTwo, type TreeView } from "./utils.js";
+import { fail, failUsage, hasAtLeastTwo, type TreeView } from "./utils.js";
 
 function resolveArrayElementPointer(
 	view: TreeView<ImplicitFieldSchema>,
@@ -116,10 +116,6 @@ function resolveRelativeArrayElementPointer(
 	throw new UsageError(
 		`Invalid relative array position "${pointer}". Expected an object with a valid "before" or "after" ObjectPointer.`,
 	);
-}
-
-function failUsage(message: string): never {
-	throw new UsageError(message);
 }
 
 function getRangeIndices(
