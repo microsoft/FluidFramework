@@ -8,7 +8,7 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	Client,
@@ -41,6 +41,7 @@ import {
 	IMapMessageLocalMetadata,
 	IValueOpEmitter,
 	SequenceOptions,
+	type IIntervalCollectionTypeOperationValue,
 } from "./intervalCollectionMapInterfaces.js";
 import {
 	EndpointIndex,
@@ -1567,6 +1568,40 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				this.emit("propertyChanged", interval, deltaProps, local, op);
 				this.emit("changed", interval, deltaProps, undefined, local, false);
 			}
+		}
+	}
+
+	public rollback(
+		op: IIntervalCollectionTypeOperationValue,
+		localOpMetadata: IMapMessageLocalMetadata,
+	): void {
+		const { [reservedIntervalIdKey]: id } = op.value.properties ?? {};
+		switch (op.opName) {
+			case "add": {
+				this.removeIntervalById(id, true);
+				break;
+			}
+			case "change": {
+				this.change(id, {
+					rollback: true,
+					props: localOpMetadata.previousValues,
+				});
+				break;
+			}
+			case "delete": {
+				this.add({
+					// Todo: we should improve typing so we know add ops always have start and end
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					start: toSequencePlace(op.value.start!, op.value.startSide),
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					end: toSequencePlace(op.value.end!, op.value.endSide),
+					props: op.value.properties,
+					rollback: true,
+				});
+				break;
+			}
+			default:
+				unreachableCase(op.opName);
 		}
 	}
 
