@@ -103,10 +103,12 @@ export class FluidObjectHandle<
 	 */
 	public bind(handle: IFluidHandleInternal) {
 		// If this handle is visible, attach the graph of the incoming handle as well.
+		// Otherwise, we'll make it visible later when this handle becomes visible.
 		if (this.visible) {
+			// (This is idempotent)
 			handle.attachGraph();
-			return;
+		} else {
+			this.pendingHandlesToMakeVisible.add(handle);
 		}
-		this.pendingHandlesToMakeVisible.add(handle);
 	}
 }

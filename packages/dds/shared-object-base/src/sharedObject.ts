@@ -458,10 +458,11 @@ export abstract class SharedObjectCore<
 	protected submitLocalMessage(content: unknown, localOpMetadata: unknown = undefined): void {
 		this.verifyNotClosed();
 		if (this.isAttached()) {
+			const wrappedLOM = { localOpMetadata, viableContent: content };
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			this.services!.deltaConnection.submit(
 				makeHandlesSerializable(content, this.serializer, this.handle),
-				localOpMetadata,
+				wrappedLOM,
 			);
 		}
 	}
@@ -535,21 +536,45 @@ export abstract class SharedObjectCore<
 			this.services !== undefined,
 			0x07a /* "Services should be there to attach delta handler" */,
 		);
-		// attachDeltaHandler is only called after services is assigned
+
+		// NOTE: We wrapped localOpMetadata during submit, unwrap it in these handlers before passing on to the DDS
 		this.services.deltaConnection.attach({
 			processMessages: (messagesCollection: IRuntimeMessageCollection) => {
-				this.processMessages(messagesCollection);
+				// (Shallow copy the messagesContent and messagesCollection when unwrapping localOpMetadata)
+				const messagesContent = messagesCollection.messagesContent.map(
+					({ contents, localOpMetadata: wrappedLOM = {}, clientSequenceNumber }) => {
+						const { localOpMetadata } = wrappedLOM as {
+							localOpMetadata: unknown;
+						};
+						return {
+							contents,
+							localOpMetadata,
+							clientSequenceNumber,
+						};
+					},
+				);
+				this.processMessages({
+					...messagesCollection,
+					messagesContent,
+				});
 			},
 			setConnectionState: (connected: boolean) => {
 				this.setConnectionState(connected);
 			},
-			reSubmit: (content: unknown, localOpMetadata: unknown) => {
-				this.reSubmit(content, localOpMetadata);
+			reSubmit: (content: unknown, wrappedLOM: unknown = {}) => {
+				const { localOpMetadata, viableContent } = wrappedLOM as {
+					localOpMetadata: unknown;
+					viableContent: unknown;
+				};
+				this.reSubmit(content, localOpMetadata, viableContent);
 			},
 			applyStashedOp: (content: unknown): void => {
 				this.applyStashedOp(parseHandles(content, this.serializer));
 			},
-			rollback: (content: unknown, localOpMetadata: unknown) => {
+			rollback: (content: unknown, wrappedLOM: unknown = {}) => {
+				const { localOpMetadata } = wrappedLOM as {
+					localOpMetadata: unknown;
+				};
 				this.rollback(content, localOpMetadata);
 			},
 		} satisfies IDeltaHandler);
@@ -659,11 +684,13 @@ export abstract class SharedObjectCore<
 	/**
 	 * Called when a message has to be resubmitted. This typically happens for unacked messages after a
 	 * reconnection.
-	 * @param content - The content of the original message.
+	 * @param _content - The content after being roundtripped through string. Ignored (we have the original viable content in localOpMetadata)
 	 * @param localOpMetadata - The local metadata associated with the original message.
+	 * @param viableContent - The original content of the message, including viable handles we can bind
 	 */
-	private reSubmit(content: unknown, localOpMetadata: unknown): void {
-		this.reSubmitCore(content, localOpMetadata);
+	private reSubmit(_content: unknown, localOpMetadata: unknown, viableContent: unknown): void {
+		// viableContent has the original viable handles, not the serialized ones.
+		this.reSubmitCore(viableContent, localOpMetadata);
 	}
 
 	/**
@@ -690,6 +717,7 @@ export abstract class SharedObjectCore<
 	 *
 	 * @param content - Contents of a stashed op.
 	 */
+	//* TODO: Need to think through intersection of stashed ops and deferred attach
 	protected abstract applyStashedOp(content: unknown): void;
 
 	/**
