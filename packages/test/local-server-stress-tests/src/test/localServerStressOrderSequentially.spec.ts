@@ -91,9 +91,10 @@ describe("Local Server Stress with rollback", () => {
 		saveFailures,
 		// saveSuccesses,
 		configurations: { "Fluid.ContainerRuntime.EnableRollback": true },
+		only: [28, 52],
 		skip: [
-			3, 4, 9, 10, 13, 16, 21, 23, 27, 28, 33, 35, 37, 38, 39, 40, 47, 48, 49, 52, 56, 63, 68,
-			71, 74, 87, 90, 92, 96, 98,
+			3, 4, 9, 10, 13, 16, 21, 27, 33, 35, 37, 38, 39, 40, 47, 48, 49, 56, 63, 68, 71, 74, 87,
+			90, 92, 96, 98,
 		],
 	});
 });

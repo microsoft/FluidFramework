@@ -5,7 +5,7 @@
 
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import type { IMergeTreeOptions } from "@fluidframework/merge-tree/internal";
+import type { IMergeTreeOptions, PropertySet } from "@fluidframework/merge-tree/internal";
 import { ISharedObjectEvents } from "@fluidframework/shared-object-base/internal";
 
 import type { IntervalCollection } from "./intervalCollection.js";
@@ -57,6 +57,8 @@ export interface IValueOpEmitter {
  */
 export interface IMapMessageLocalMetadata {
 	localSeq: number;
+	previousValues: PropertySet | undefined;
+	interval: ISerializableInterval;
 }
 
 /**

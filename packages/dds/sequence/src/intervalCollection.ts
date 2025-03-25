@@ -1193,10 +1193,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		start,
 		end,
 		props,
+		rollback,
 	}: {
 		start: SequencePlace;
 		end: SequencePlace;
 		props?: PropertySet;
+		rollback?: boolean;
 	}): TInterval {
 		if (!this.localCollection) {
 			throw new LoggingError("attach must be called prior to adding intervals");
@@ -1243,7 +1245,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
 			}
 			// Local ops get submitted to the server. Remote ops have the deserializer run.
-			this.emitter.emit("add", undefined, serializedInterval, { localSeq });
+			if (rollback !== true) {
+				this.emitter.emit("add", undefined, serializedInterval, {
+					localSeq,
+					interval,
+					previousValues: undefined,
+				});
+			}
 		}
 
 		this.emit("addInterval", interval, true, undefined);
@@ -1255,6 +1263,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		interval: TInterval,
 		local: boolean,
 		op?: ISequencedDocumentMessage,
+		rollback?: boolean,
 	) {
 		if (!this.localCollection) {
 			throw new LoggingError("Attach must be called before accessing intervals");
@@ -1265,9 +1274,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		if (interval) {
 			// Local ops get submitted to the server. Remote ops have the deserializer run.
 			if (local) {
-				this.emitter.emit("delete", undefined, interval.serialize(), {
-					localSeq: this.getNextLocalSeq(),
-				});
+				if (rollback !== true) {
+					this.emitter.emit("delete", undefined, interval.serialize(), {
+						localSeq: this.getNextLocalSeq(),
+						interval,
+						previousValues: undefined,
+					});
+				}
 			} else {
 				if (this.onDeserialize) {
 					this.onDeserialize(interval);
@@ -1281,13 +1294,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	/**
 	 * {@inheritdoc IIntervalCollection.removeIntervalById}
 	 */
-	public removeIntervalById(id: string): TInterval | undefined {
+	public removeIntervalById(id: string, rollback?: boolean): TInterval | undefined {
 		if (!this.localCollection) {
 			throw new LoggingError("Attach must be called before accessing intervals");
 		}
 		const interval = this.localCollection.idIntervalIndex.getIntervalById(id);
 		if (interval) {
-			this.deleteExistingInterval(interval, true, undefined);
+			this.deleteExistingInterval(interval, true, undefined, rollback);
 		}
 		return interval;
 	}
@@ -1296,7 +1309,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	 */
 	public change(
 		id: string,
-		{ start, end, props }: { start?: SequencePlace; end?: SequencePlace; props?: PropertySet },
+		{
+			start,
+			end,
+			props,
+			rollback,
+		}: { start?: SequencePlace; end?: SequencePlace; props?: PropertySet; rollback?: boolean },
 	): TInterval | undefined {
 		if (!this.localCollection) {
 			throw new LoggingError("Attach must be called before accessing intervals");
@@ -1361,7 +1379,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
 			}
 
-			this.emitter.emit("change", undefined, serializedInterval, { localSeq });
+			if (rollback !== true) {
+				this.emitter.emit("change", undefined, serializedInterval, {
+					localSeq,
+					interval,
+					previousValues: deltaProps,
+				});
+			}
 			if (deltaProps !== undefined) {
 				this.emit("propertyChanged", interval, deltaProps, true, undefined);
 				this.emit(

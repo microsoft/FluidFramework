@@ -5,7 +5,7 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { ValueType, IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 
@@ -234,6 +234,43 @@ export class IntervalCollectionMap<T extends ISerializableInterval> {
 	public tryResubmitMessage(op: unknown, localOpMetadata: IMapMessageLocalMetadata): boolean {
 		if (isMapOperation(op)) {
 			this.messageHandler.resubmit(op, localOpMetadata);
+			return true;
+		}
+		return false;
+	}
+
+	public tryRollbackMessage(op: unknown, localOpMetadata: IMapMessageLocalMetadata): boolean {
+		if (isMapOperation(op)) {
+			const { value, key } = op;
+			const map = this.get(key);
+			const { [reservedIntervalIdKey]: id } = value.value.properties ?? {};
+			switch (value.opName) {
+				case "add": {
+					map.removeIntervalById(id, true);
+					break;
+				}
+				case "change": {
+					map.change(id, {
+						rollback: true,
+						props: localOpMetadata.previousValues,
+					});
+					break;
+				}
+				case "delete": {
+					map.add({
+						// Todo: we should improve typing so we know add ops always have start and end
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						start: toSequencePlace(value.value.start!, value.value.startSide),
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						end: toSequencePlace(value.value.end!, value.value.endSide),
+						props: value.value.properties,
+						rollback: true,
+					});
+					break;
+				}
+				default:
+					unreachableCase(value.opName);
+			}
 			return true;
 		}
 		return false;
