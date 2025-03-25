@@ -77,21 +77,11 @@
 	],
 	"fluidBuild": {
 		"tasks": {
-			"webpack": {
-				"dependsOn": [
-					"build"
-				]
-			},
-			"test:mocha": {
-				"dependsOn": [
-					"...",
-					"webpack"
-				]
-			},
 			"build:test": {
 				"dependsOn": [
 					"...",
-					"build:esnext"
+					"build:esnext",
+					"webpack"
 				]
 			}
 		}
