@@ -520,4 +520,3 @@ export function testPerf() {
 		});
 	});
 }
-testPerf();
