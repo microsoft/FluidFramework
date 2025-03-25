@@ -134,6 +134,7 @@ export {
 	type FieldSchemaUnsafe,
 	type TreeNodeSchemaClassUnsafe,
 	type InsertableTreeNodeFromAllowedTypesUnsafe,
+	type FieldSchemaAlphaUnsafe,
 	// System types (not in Internal types for various reasons, like doc links or cannot be named errors).
 	type typeSchemaSymbol,
 	type TreeNodeSchemaNonClass,

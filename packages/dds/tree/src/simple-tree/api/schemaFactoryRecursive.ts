@@ -31,7 +31,7 @@ export function createFieldSchemaUnsafe<
 	kind: Kind,
 	allowedTypes: Types,
 	props?: FieldProps<TCustomMetadata>,
-): FieldSchemaUnsafe<Kind, Types> {
+): FieldSchemaUnsafe<Kind, Types, TCustomMetadata> {
 	// At runtime, we still want this to be a FieldSchema instance, but we can't satisfy its extends clause, so just return it as an FieldSchemaUnsafe
 	return createFieldSchema(kind, allowedTypes as ImplicitAllowedTypes & Types, props);
 }

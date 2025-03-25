@@ -24,7 +24,7 @@ export interface ObjectNodeSchema<
 	in out T extends
 		RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>,
 	ImplicitlyConstructable extends boolean = boolean,
-	TCustomMetadata = unknown,
+	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaClass<
 			TName,
 			NodeKind.Object,

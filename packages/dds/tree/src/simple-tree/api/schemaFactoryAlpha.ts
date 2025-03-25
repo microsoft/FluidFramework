@@ -14,11 +14,13 @@ import {
 	type SchemaFactoryObjectOptions,
 } from "./schemaFactory.js";
 import type {
+	FieldProps,
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	NodeSchemaOptions,
 } from "../schemaTypes.js";
+import { FieldKind } from "../schemaTypes.js";
 import { objectSchema } from "../objectNode.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
 import type { NodeKind, TreeNodeSchemaClass, WithType } from "../core/index.js";
@@ -28,10 +30,13 @@ import type {
 	TreeMapNodeUnsafe,
 	Unenforced,
 	ImplicitAllowedTypesUnsafe,
+	FieldSchemaAlphaUnsafe,
 } from "./typesUnsafe.js";
 import { mapSchema, type MapNodeInsertableData, type TreeMapNode } from "../mapNode.js";
 import { arraySchema, type TreeArrayNode } from "../arrayNode.js";
 import type { ObjectNodeSchema } from "../objectNodeTypes.js";
+import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
+import type { SimpleObjectNodeSchema } from "../simpleSchema.js";
 
 /**
  * {@link SchemaFactory} with additional alpha APIs.
@@ -99,7 +104,18 @@ export class SchemaFactoryAlpha<
 		never,
 		TCustomMetadata
 	> &
+		SimpleObjectNodeSchema<TCustomMetadata> &
+		// We can't just use non generic `ObjectNodeSchema` here since "Base constructors must all have the same return type".
+		// We also can't just use generic `ObjectNodeSchema` here and not `TreeNodeSchemaClass` since that doesn't work with unsafe recursive types.
+		// ObjectNodeSchema<
+		// 	ScopedSchemaName<TScope, Name>,
+		// 	//  T & RestrictiveStringRecord<ImplicitFieldSchema> would be nice to use here, but it breaks the recursive type self references.
+		// 	RestrictiveStringRecord<ImplicitFieldSchema>,
+		// 	false,
+		// 	TCustomMetadata
+		// >
 		Pick<ObjectNodeSchema, "fields"> {
+		// TODO: syntax highting is vs code is broken here. Don't trust it. Use the compiler instead.
 		type TScopedName = ScopedSchemaName<TScope, Name>;
 		return this.object(
 			name,
@@ -115,8 +131,33 @@ export class SchemaFactoryAlpha<
 			never,
 			TCustomMetadata
 		> &
-			Pick<ObjectNodeSchema, "fields">;
+			ObjectNodeSchema<
+				ScopedSchemaName<TScope, Name>,
+				RestrictiveStringRecord<ImplicitFieldSchema>,
+				false,
+				TCustomMetadata
+			>;
 	}
+
+	/**
+	 * {@inheritdoc schemaStatics.optionalRecursive}
+	 * @privateRemarks
+	 * The is only one of the many possible overrides for producing FieldSchemaAlpha.
+	 * If others are needed they can be desired.
+	 */
+	public override readonly optionalRecursive = <
+		const T extends ImplicitAllowedTypesUnsafe,
+		const TCustomMetadata = unknown,
+	>(
+		t: T,
+		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	): FieldSchemaAlphaUnsafe<FieldKind.Optional, T, TCustomMetadata> => {
+		return createFieldSchemaUnsafe(FieldKind.Optional, t, props) as FieldSchemaAlphaUnsafe<
+			FieldKind.Optional,
+			T,
+			TCustomMetadata
+		>;
+	};
 
 	/**
 	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.

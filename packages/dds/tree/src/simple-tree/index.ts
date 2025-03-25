@@ -134,6 +134,7 @@ export {
 	replaceHandles,
 	replaceVerboseTreeHandles,
 	type HandleConverter,
+	type FieldSchemaAlphaUnsafe,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,

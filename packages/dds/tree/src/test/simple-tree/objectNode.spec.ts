@@ -14,6 +14,8 @@ import {
 	typeSchemaSymbol,
 	type NodeBuilderData,
 	type ObjectNodeSchema,
+	type TreeNodeSchema,
+	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
 import type {
 	InsertableObjectFromSchemaRecord,
@@ -477,6 +479,44 @@ describeHydration(
 				Note.fields.get("f")?.allowedTypesIdentifiers,
 				new Set([SchemaFactory.null.identifier]),
 			);
+
+			// Explicit field
+			{
+				class RecursiveTest extends sf.object("RecursiveTest", {
+					f: sf.optional([() => SchemaFactory.null]),
+				}) {}
+
+				type Info = (typeof RecursiveTest)["info"];
+				const _check1: TreeNodeSchema = RecursiveTest;
+				const _check2: ObjectNodeSchema = RecursiveTest;
+			}
+
+			// Non implicitly constructable
+			{
+				type TestObject = ObjectNodeSchema<
+					"x",
+					RestrictiveStringRecord<ImplicitFieldSchema>,
+					false
+				>;
+				type _check1 = requireAssignableTo<TestObject, TreeNodeSchema>;
+				type _check2 = requireAssignableTo<TestObject, ObjectNodeSchema>;
+			}
+
+			// Recursive
+			{
+				class RecursiveTest extends sf.objectRecursive("RecursiveTest", {
+					f: sf.optionalRecursive([() => RecursiveTest]),
+				}) {}
+				{
+					type _check = ValidateRecursiveSchema<typeof RecursiveTest>;
+				}
+
+				type Info = (typeof RecursiveTest)["info"];
+				type Info2 = ObjectNodeSchema["info"];
+				type _check2 = requireAssignableTo<Info, Info2>;
+				const _check1: TreeNodeSchema = RecursiveTest;
+				const _check2: ObjectNodeSchema = RecursiveTest;
+			}
 		});
 
 		describe("shadowing", () => {
