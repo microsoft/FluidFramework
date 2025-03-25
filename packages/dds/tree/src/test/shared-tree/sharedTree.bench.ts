@@ -20,7 +20,7 @@ import {
 	TreeCompressionStrategy,
 	jsonableTreeFromCursor,
 } from "../../feature-libraries/index.js";
-import { Tree, type CheckoutFlexTreeView, type ISharedTree } from "../../shared-tree/index.js";
+import { Tree, type CheckoutFlexTreeView } from "../../shared-tree/index.js";
 import {
 	type JSDeepTree,
 	type JSWideTree,
@@ -49,6 +49,7 @@ import {
 	chunkFromJsonTrees,
 	flexTreeViewWithContent,
 	toJsonableTree,
+	type SharedTreeWithContainerRuntime,
 } from "../utils.js";
 import { insert } from "../sequenceRootUtils.js";
 import { cursorFromInsertable, TreeViewConfiguration } from "../../simple-tree/index.js";
@@ -454,8 +455,8 @@ describe("SharedTree benchmarks", () => {
 			);
 			const sender = provider.trees[0];
 			const receiver = provider.trees[1];
-			provider.pauseProcessing(sender);
-			provider.pauseProcessing(receiver);
+			sender.containerRuntime.pauseProcessing();
+			receiver.containerRuntime.pauseProcessing();
 			return { provider, sender, receiver };
 		}
 
@@ -466,7 +467,11 @@ describe("SharedTree benchmarks", () => {
 		 * In Immediate flush mode, the messages will be flushed and sequenced immediately. So, this
 		 * function will behave similar to 'sequenceLocalCommits'.
 		 */
-		function sendLocalCommits(tree: ISharedTree, count: number, commitPrefix: string) {
+		function sendLocalCommits(
+			tree: SharedTreeWithContainerRuntime,
+			count: number,
+			commitPrefix: string,
+		) {
 			for (let iCommit = 0; iCommit < count; iCommit++) {
 				insert(tree.kernel.checkout, 0, `${commitPrefix}${iCommit}`);
 			}
@@ -476,20 +481,22 @@ describe("SharedTree benchmarks", () => {
 		 * Helper function that sends and sequences local commits from a given tree.
 		 */
 		function sequenceLocalCommits(
-			tree: ISharedTree,
+			tree: SharedTreeWithContainerRuntime,
 			count: number,
 			commitPrefix: string,
-			provider: TestTreeProviderLite,
 		) {
 			sendLocalCommits(tree, count, commitPrefix);
-			provider.flushMessages(tree);
+			tree.containerRuntime.flush();
 		}
 
 		/**
 		 * Helper function that processes all sequenced commits on a given tree.
 		 */
-		function receiveSequencedCommits(tree: ISharedTree, provider: TestTreeProviderLite) {
-			provider.resumeProcessing(tree);
+		function receiveSequencedCommits(
+			tree: SharedTreeWithContainerRuntime,
+			provider: TestTreeProviderLite,
+		) {
+			tree.containerRuntime.resumeProcessing();
 			provider.processMessages(false /* flush */);
 		}
 
@@ -533,7 +540,7 @@ describe("SharedTree benchmarks", () => {
 								// in the local branch.
 								sendLocalCommits(receiver, localBranchSize, "r");
 								// These are the commits that should be bunched together
-								sequenceLocalCommits(sender, bunchSize, "s", provider);
+								sequenceLocalCommits(sender, bunchSize, "s");
 
 								const before = state.timer.now();
 								// Resume the receiver to process the bunched commits. This should force the local branch to be rebased over the bunch.
@@ -572,8 +579,8 @@ describe("SharedTree benchmarks", () => {
 							FlushMode.TurnBased,
 						);
 						const tree = provider.trees[0];
-						provider.setConnected(tree, true);
-						const view = provider.trees[0].viewWith(
+						tree.containerRuntime.connected = true;
+						const view = tree.viewWith(
 							new TreeViewConfiguration({
 								schema: StringArray,
 							}),

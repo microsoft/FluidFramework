@@ -48,7 +48,6 @@ import {
 	ForestTypeOptimized,
 	ForestTypeReference,
 	getBranch,
-	type ISharedTree,
 	type ITreePrivate,
 	type SharedTree,
 	Tree,
@@ -86,6 +85,8 @@ import {
 	validateViewConsistency,
 	chunkFromJsonableTrees,
 	expectEqualPaths,
+	type TreeMockContainerRuntime,
+	type SharedTreeWithContainerRuntime,
 } from "../utils.js";
 import { configuredSharedTree, TreeFactory } from "../../treeFactory.js";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
@@ -1285,7 +1286,7 @@ describe("SharedTree", () => {
 			const schema = sf.array(innerListSchema);
 
 			interface Peer {
-				readonly id: string;
+				readonly containerRuntime: TreeMockContainerRuntime;
 				readonly checkout: TreeCheckout;
 				readonly view: TreeViewAlpha<typeof schema>;
 				readonly outerList: TreeFieldFromImplicitField<typeof schema>;
@@ -1320,7 +1321,7 @@ describe("SharedTree", () => {
 				});
 			}
 
-			function peerFromSharedTree(tree: ISharedTree): Peer {
+			function peerFromSharedTree(tree: SharedTreeWithContainerRuntime): Peer {
 				const view = tree.kernel.viewWith(
 					new TreeViewConfiguration({ schema, enableSchemaValidation }),
 				);
@@ -1328,7 +1329,7 @@ describe("SharedTree", () => {
 					view.initialize([["a"]]);
 				}
 				return {
-					id: tree.id,
+					containerRuntime: tree.containerRuntime,
 					checkout: tree.kernel.checkout,
 					view,
 					outerList: view.root,
@@ -1384,7 +1385,7 @@ describe("SharedTree", () => {
 					submitter.assertInnerListEquals(initialState);
 					resubmitter.assertInnerListEquals(initialState);
 
-					provider.setConnected(resubmitter, false);
+					resubmitter.containerRuntime.connected = false;
 
 					s2.revert();
 					s1.revert();
@@ -1402,7 +1403,7 @@ describe("SharedTree", () => {
 					}
 					resubmitter.assertOuterListEquals([["a", "s1", "s2"]]);
 
-					provider.setConnected(resubmitter, true);
+					resubmitter.containerRuntime.connected = true;
 					provider.processMessages();
 
 					const finalState = [["a"]];
@@ -1426,7 +1427,7 @@ describe("SharedTree", () => {
 					submitter.assertInnerListEquals(initialState);
 					resubmitter.assertInnerListEquals(initialState);
 
-					provider.setConnected(resubmitter, false);
+					resubmitter.containerRuntime.connected = false;
 
 					if (scenario === "restore and edit") {
 						sRemove.revert();
@@ -1444,7 +1445,7 @@ describe("SharedTree", () => {
 					resubmitter.assertOuterListEquals([]);
 					resubmitter.assertInnerListEquals(["a", "s"]);
 
-					provider.setConnected(resubmitter, true);
+					resubmitter.containerRuntime.connected = true;
 					provider.processMessages();
 
 					const finalState = [["a"]];
@@ -1456,7 +1457,7 @@ describe("SharedTree", () => {
 			it("the restore of a tree edited on a branch", () => {
 				const { provider, submitter, resubmitter } = setupResubmitTest();
 
-				provider.setConnected(resubmitter, false);
+				resubmitter.containerRuntime.connected = false;
 
 				// This is the edit that will be rebased over during the re-submit phase
 				undoableInsertInInnerList(submitter, "s");
@@ -1483,7 +1484,7 @@ describe("SharedTree", () => {
 				rRemove.revert();
 				resubmitter.assertOuterListEquals([["a", "f"]]);
 
-				provider.setConnected(resubmitter, true);
+				resubmitter.containerRuntime.connected = true;
 				provider.processMessages();
 
 				const finalState = [["a", "f", "s"]];
@@ -1838,7 +1839,7 @@ describe("SharedTree", () => {
 
 			provider.processMessages();
 
-			provider.setConnected(tree1, false);
+			tree1.containerRuntime.connected = false;
 
 			view1.root.insertAtEnd("43");
 			view1.dispose();
@@ -1850,7 +1851,7 @@ describe("SharedTree", () => {
 			// TODO:#8915: This should be able to insert the _number_ 44, not the string, but currently cannot - see bug #8915
 			view1Json.root.insertAtEnd("44");
 
-			provider.setConnected(tree1, true);
+			tree1.containerRuntime.connected = true;
 
 			provider.processMessages();
 

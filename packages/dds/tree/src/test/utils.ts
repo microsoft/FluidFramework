@@ -373,11 +373,38 @@ export class TestTreeProvider {
 }
 
 /**
+ * A type with subset of functionalities of mock container runtime that can help tests control
+ * the processing of messages and the connection state of the runtime.
+ *
+ * - "connected": Set the connection state of a given tree. Any messages that are submitted while the tree is
+ * disconnected will be resubmitted when it reconnects by calling the resubmit function on the tree. Also, the
+ * clientId of the runtime changes on reconnection.
+ *
+ * - "pauseProcessing":  Pauses the processing of messages for a tree. Unlike during reconnection, messages that
+ * are submitted while the tree is paused will not be resubmitted when it unpauses.
+ *
+ * - "resumeProcessing": Resumes the processing of messages for a tree. This will process the messages received while
+ * the tree was paused. Note that if the tree is not connected, then messages will not be processed - See "connected"
+ * for details. Unlike during reconnection, messages that were submitted while the tree was paused will not be resubmitted
+ * when it unpauses.
+ *
+ * - "flush": To be used in TurnBased mode where messages that are sent are not automatically flushed. It flushes the
+ * messages that have been sent by a tree. This will be a no-op if the tree's runtime is not connected.
+ */
+export type TreeMockContainerRuntime = Pick<
+	MockContainerRuntimeWithOpBunching,
+	"connected" | "pauseProcessing" | "resumeProcessing" | "flush"
+>;
+export type SharedTreeWithContainerRuntime = ISharedTree & {
+	containerRuntime: TreeMockContainerRuntime;
+};
+
+/**
  * A test helper class that creates one or more SharedTrees connected to mock services.
  */
 export class TestTreeProviderLite {
 	private readonly runtimeFactory: MockContainerRuntimeFactoryWithOpBunching;
-	public readonly trees: readonly ISharedTree[];
+	public readonly trees: readonly SharedTreeWithContainerRuntime[];
 	public readonly logger: IMockLoggerExt = createMockLoggerExt();
 	private readonly containerRuntimeMap: Map<string, MockContainerRuntimeWithOpBunching> =
 		new Map();
@@ -410,7 +437,7 @@ export class TestTreeProviderLite {
 			flushMode,
 		});
 		assert(trees >= 1, "Must initialize provider with at least one tree");
-		const t: ISharedTree[] = [];
+		const t: SharedTreeWithContainerRuntime[] = [];
 		const random = useDeterministicSessionIds ? makeRandom(0xdeadbeef) : makeRandom();
 		for (let i = 0; i < trees; i++) {
 			const sessionId = random.uuid4() as SessionId;
@@ -427,21 +454,10 @@ export class TestTreeProviderLite {
 				deltaConnection: runtime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			});
-			t.push(tree);
+			(tree as Mutable<SharedTreeWithContainerRuntime>).containerRuntime = containerRuntime;
+			t.push(tree as SharedTreeWithContainerRuntime);
 		}
 		this.trees = t;
-	}
-
-	/**
-	 * To be used in TurnBased mode where messages that are sent are not automatically flushed.
-	 * Flush the messages that have been sent by a given tree.
-	 * @param treeId - The id of the tree to flush messages for.
-	 * @remarks This will be a no-op if the tree's runtime is not connected.
-	 */
-	public flushMessages(tree: Pick<ISharedTree, "id">): void {
-		const containerRuntime = this.containerRuntimeMap.get(tree.id);
-		assert(containerRuntime !== undefined, "No tree found to flush messages");
-		containerRuntime.flush();
 	}
 
 	/**
@@ -473,44 +489,6 @@ export class TestTreeProviderLite {
 	 */
 	public processSomeMessages(count: number): void {
 		this.runtimeFactory.processSomeMessages(count);
-	}
-
-	/**
-	 * Set the connection state of the given tree.
-	 * @param tree - The tree to set the connection state for.
-	 * @remarks Any messages that are submitted while the tree is disconnected will be resubmitted when it reconnects
-	 * by calling the resubmit function on the tree. Also, the clientId of the runtime changes on reconnection.
-	 */
-	public setConnected(tree: Pick<ISharedTree, "id">, connectionState: boolean): void {
-		const containerRuntime = this.containerRuntimeMap.get(tree.id);
-		assert(containerRuntime !== undefined, "No tree found to set connection state");
-		containerRuntime.connected = connectionState;
-	}
-
-	/**
-	 * Pauses the processing of messages for the given tree.
-	 * @param tree - The tree to pause processing for.
-	 * @remarks Unlike during reconnection, messages that are submitted while the tree is paused will not be
-	 * resubmitted when it unpauses.
-	 */
-	public pauseProcessing(tree: Pick<ISharedTree, "id">): void {
-		const containerRuntime = this.containerRuntimeMap.get(tree.id);
-		assert(containerRuntime !== undefined, "No tree found to pause processing");
-		containerRuntime.pauseProcessing();
-	}
-
-	/**
-	 * Resumes the processing of messages for the given tree.
-	 * @param tree - The tree to resume processing for.
-	 * @remarks This will process the messages that were received while the tree was paused. Note that if the tree is
-	 * not connected, then messages will not be processed - See `setConnected` function.
-	 * Unlike during reconnection, messages that were submitted while the tree was paused will not be resubmitted
-	 * when it unpauses.
-	 */
-	public resumeProcessing(tree: Pick<ISharedTree, "id">): void {
-		const containerRuntime = this.containerRuntimeMap.get(tree.id);
-		assert(containerRuntime !== undefined, "No tree found to resume processing");
-		containerRuntime.resumeProcessing();
 	}
 
 	public get minimumSequenceNumber(): number {
