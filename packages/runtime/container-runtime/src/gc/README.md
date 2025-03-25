@@ -1,28 +1,30 @@
 # Garbage Collection
 
-Garbage collection (GC) is the process by which Fluid Framework safely delete objects that are not used. The only responsibility of the users of Fluid Framework is to add and remove references to Fluid objects correctly.
+Garbage collection (GC) is the process by which Fluid Framework safely deletes objects that are not used.
+GC reduces the size of the Fluid file at rest, the in-memory content and the summary that is uploaded to / downloaded from the server.
+It saves COGS on the server and it makes containers load faster as there is less data to download and process.
 
-## Why have Garbage Collection?
+All Fluid objects that are in use must be properly referenced so that they are not deleted by GC. Similarly, references to all unused Fluid objects should be removed so that they can be deleted by GC.
 
-GC reduces the size of the Fluid file at rest, the in-memory content and the summary that is uploaded to / downloaded from the server. It saves COGS on the server and it makes containers load faster as there is less data to download and process.
+It is the responsibility of the users of Fluid Framework to correctly add and remove references to Fluid objects.
 
-## What do I need to do?
+## Referencing / unreferencing Fluid objects
 
-All Fluid objects that are in use must be properly referenced so that they are not deleted by GC. Similarly, references to all unused Fluid objects should be removed so that they can be deleted by GC. It is the responsibility of the users of Fluid Framework to correctly add and remove references to Fluid objects.
+Currently, the only Fluid objects that are eligible for GC are data stores and attachment blobs. The following sections describe how you can mark them as referenced or unreferenced.
 
-## How do I reference / unreference Fluid objects?
-
-Currently, the only Fluid objects that are eligible for GC are data stores and attachment blobs. The following sections describe how you can mark them as referenced or unreferenced. These sections speak of a "referenced DDS" which refers to a DDS that is created by a referenced data store.
+These sections speak of a "referenced DDS" which refers to a DDS that is created by a referenced data store.
 
 ### Data stores
 
 There are 2 ways to reference a data store:
 
--   Store the data stores's handle (see [IFluidHandle](../../../../../packages/common/core-interfaces/src/handles.ts) in a referenced DDS that supports handle in its data. For example, a data store's handle can be stored in a referenced `SharedMap` DDS.
+-   Store the data stores's handle (see [IFluidHandle](../../../../../packages/common/core-interfaces/src/handles.ts)) in a referenced DDS that supports handle in its data.
+For example, a data store's handle can be stored in a referenced `SharedMap` DDS.
 
-    Note that storing a handle of any of a data store's DDS will also mark the data store as referenced.
+    Storing a handle of any of a data store's DDS will also mark the data store as referenced.
 
--   Alias the data store. Aliased data stores are rooted in the container, i.e., they are always referenced and cannot be unreferenced later. Aliased data stores can never be deleted so only do so if you want them to live forever.
+-   Alias the data store by calling [trySetAlias](../../../runtime-definitions/src/dataStoreContext.ts) on a data store during creation. Aliased data stores are rooted in the container, i.e., they are always referenced and cannot be unreferenced later.
+Aliased data stores can never be deleted so only do so if you want them to live forever.
 
 Once there are no more referenced DDSes in the container containing a handle to a particular data store, that data store is unreferenced and is eligible for GC.
 
@@ -30,7 +32,7 @@ Once there are no more referenced DDSes in the container containing a handle to 
 
 ### Attachment blobs
 
-The only way to reference an attachment blob is to store its IFluidHandle in a referenced DDS similar to data stores.
+The only way to reference an attachment blob is to store its [IFluidHandle](../../../../../packages/common/core-interfaces/src/handles.ts) in a referenced DDS similar to data stores.
 
 Once there are no more referenced DDSes in the container containing a handle to a particular attachment blob, that attachment blob is unreferenced and is eligible for GC.
 
@@ -59,8 +61,9 @@ GC sweep phase runs in two stages:
 
 -   The first stage is the "Tombstone" stage, where objects are marked as Tombstones, meaning GC believes they will
     never be referenced again and are safe to delete. They are not yet deleted at this point, but any attempt to
-    load them will fail. This way, there's a chance to recover a Tombstoned object in case we detect it's still being used.
--   The second stage is the "Sweep" or "Delete" stage, where the objects are fully deleted.
+    load them will fail. Loading them will trigger "auto recovery" where the timestamp of when this object is unreferenced will be reset to now, thereby extending its lifetime.
+    This way, there's a chance to recover a Tombstoned object in case we detect it's still being used.
+-   The second stage is the "Sweep" stage, where the objects are fully deleted.
     This occurs after a configurable delay called the "Sweep Grace Period", to give time for application teams
     to monitor for Tombstone-related errors and react before delete occurs.
 
@@ -91,8 +94,3 @@ and then later update the passed-in GC Options to finalize the configuration in 
 ### Enabling Sweep Phase
 
 To enable the Sweep Phase for new documents, you must set the `enableGCSweep` GC Option to true.
-
-### More Advanced Configuration
-
-For additional behaviors that can be configured (e.g. for testing), please see these
-[Advanced Configuration](./gcEarlyAdoption.md#more-advanced-configurations) docs.
