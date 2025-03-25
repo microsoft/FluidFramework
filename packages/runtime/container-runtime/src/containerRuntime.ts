@@ -3146,10 +3146,10 @@ export class ContainerRuntime
 		// since we mark whole batches as "staged" or not to indicate whether to submit them.
 		this.outbox.flush();
 		const exitStagingMode = (discardOrCommit: () => void) => (): void => {
-			this.stageControls = undefined;
-
 			// Final flush of any last staged changes
 			this.outbox.flush(undefined, true /* staged */);
+
+			this.stageControls = undefined;
 
 			discardOrCommit();
 		};
