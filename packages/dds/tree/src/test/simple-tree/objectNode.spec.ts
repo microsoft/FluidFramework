@@ -110,8 +110,6 @@ describeHydration(
 			describe("constructor", () => {
 				it("empty", () => {
 					class Schema extends schemaFactory.object("x", {}) {}
-					type xxx = typeof Schema.info;
-					const xs = new Schema({});
 					const n = init(Schema, {});
 					// constructor is a special case, since one is built in on the derived type.
 					// Check that it is exposed as expected based on type:
@@ -471,7 +469,7 @@ describeHydration(
 			const schemaEmpty: ObjectNodeSchema = EmptyObject;
 
 			// @ts-expect-error Cannot call constructor with unknown schema
-			const x = new schema({ f: null });
+			const note = new schema({ f: null });
 			// @ts-expect-error Cannot call constructor with unknown schema
 			const empty = new schemaEmpty({});
 
