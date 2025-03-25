@@ -150,6 +150,7 @@ import {
 	wrapContext,
 } from "./channelCollection.js";
 import {
+	CompressionAlgorithms,
 	disabledCompressionConfig,
 	enabledCompressionConfig,
 	getConfigsForCompatMode,
@@ -471,15 +472,6 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 	viaHandle: false,
 	allowTombstone: false,
 };
-
-/**
- * Available compression algorithms for op compression.
- * @legacy
- * @alpha
- */
-export enum CompressionAlgorithms {
-	lz4 = "lz4",
-}
 
 /**
  * @deprecated

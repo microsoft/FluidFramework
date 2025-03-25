@@ -18,7 +18,7 @@ import {
  * @legacy
  * @alpha
  */
-enum CompressionAlgorithms {
+export enum CompressionAlgorithms {
 	lz4 = "lz4",
 }
 
