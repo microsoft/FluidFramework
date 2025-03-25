@@ -799,7 +799,7 @@ describe("TenantManager", () => {
 			await assert.doesNotReject(validationPKey1);
 		});
 
-		it("Should throw an error when private keys are not enabled for a tenant and forceGenerateTokenWithPrvateKeys is true", async () => {
+		it("Should throw an error when private keys are not enabled for a tenant and forceGenerateTokenWithPrivateKey is true", async () => {
 			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithoutPrivateKeys);
 			const tokenKey1 = tenantManager.signToken(
 				"cordflasher-dolphin",
