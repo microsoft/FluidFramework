@@ -74,7 +74,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 					headOffset: this.head.offset,
 					tailOffset: this.tail.offset,
 					lastSuccessfulOffset: this.lastSuccessfulOffset,
-				}
+				},
 			);
 		}
 	}
