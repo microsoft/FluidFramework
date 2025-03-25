@@ -212,7 +212,8 @@ export function create(
 	}
 
 	function getForceGenerateTokenWithPrivateKeyFlag(request): boolean {
-		const forceGenerateTokenWithPrivateKey = request.query.forceGenerateTokenWithPrivateKey as string;
+		const forceGenerateTokenWithPrivateKey = request.query
+			.forceGenerateTokenWithPrivateKey as string;
 		return forceGenerateTokenWithPrivateKey?.toLowerCase() === "true";
 	}
 

@@ -189,7 +189,10 @@ export class TenantManager {
 				`Tenant ${tenantId} does not have private key access enabled. Cannot sign token with private key.`,
 				lumberProperties,
 			);
-			throw new NetworkError(400, `Tenant ${tenantId} does not have private key access enabled.`);
+			throw new NetworkError(
+				400,
+				`Tenant ${tenantId} does not have private key access enabled.`,
+			);
 		}
 
 		const keys = this.decryptKeys(

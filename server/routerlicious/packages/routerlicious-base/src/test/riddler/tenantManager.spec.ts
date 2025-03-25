@@ -810,14 +810,17 @@ describe("TenantManager", () => {
 				keylessAccessTokenClaims.ver,
 				undefined,
 				false,
-				true, /* forceGenerateTokenWithPrivateKey */
+				true /* forceGenerateTokenWithPrivateKey */,
 			);
 			await assert.rejects(tokenKey1, (err) => {
 				assert(err instanceof NetworkError);
 				assert.strictEqual(err.code, 400);
-				assert.strictEqual(err.message, `Tenant ${tenantWithoutPrivateKeys._id} does not have private key access enabled.`);
+				assert.strictEqual(
+					err.message,
+					`Tenant ${tenantWithoutPrivateKeys._id} does not have private key access enabled.`,
+				);
 				return true;
-			})
+			});
 		});
 	});
 });
