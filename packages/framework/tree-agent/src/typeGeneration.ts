@@ -237,7 +237,7 @@ function generateEditTypes(
 	editTypeRecord.EditArray = editWrapper;
 
 	let domainRoot: string | undefined;
-	const domainRootTypes = Array.from(schema.allowedTypes, (t) => {
+	const domainRootTypes = Array.from(schema.allowedTypesIdentifiers, (t) => {
 		domainRoot = t;
 		return getOrCreateType(
 			schema.definitions,
@@ -295,7 +295,7 @@ function getOrCreateType(
 			case NodeKind.Object: {
 				for (const [key, field] of nodeSchema.fields) {
 					modifyFieldSet.add(key);
-					for (const type of field.allowedTypes) {
+					for (const type of field.allowedTypesIdentifiers) {
 						modifyTypeSet.add(type);
 					}
 				}
@@ -342,7 +342,7 @@ function getOrCreateType(
 			}
 			case NodeKind.Array: {
 				for (const [name] of Array.from(
-					nodeSchema.allowedTypes,
+					nodeSchema.allowedTypesIdentifiers,
 					(n): [string, SimpleNodeSchema] => [
 						n,
 						definitionMap.get(n) ?? fail("Unknown definition"),
@@ -359,7 +359,7 @@ function getOrCreateType(
 						insertSet,
 						modifyFieldSet,
 						modifyTypeSet,
-						nodeSchema.allowedTypes,
+						nodeSchema.allowedTypesIdentifiers,
 						transformForParsing,
 						objectCache,
 					),
@@ -423,7 +423,7 @@ function getOrCreateTypeForField(
 		insertSet,
 		modifyFieldSet,
 		modifyTypeSet,
-		fieldSchema.allowedTypes,
+		fieldSchema.allowedTypesIdentifiers,
 		transformForParsing,
 		objectCache,
 	).describe(

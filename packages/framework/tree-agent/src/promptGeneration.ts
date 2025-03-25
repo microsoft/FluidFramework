@@ -129,7 +129,7 @@ export function getEditingSystemPrompt(
 		? `is one of the following interfaces: \`${setFieldType}\` for editing objects or one of \`${insertIntoArrayType}\`, \`${"RemoveFromArray" satisfies Capitalize<RemoveFromArray["type"]>}\`, \`${"MoveArrayElement" satisfies Capitalize<MoveArrayElement["type"]>}\` for editing arrays`
 		: `is the interface \`${setFieldType}\``;
 
-	const rootTypes = [...schema.allowedTypes];
+	const rootTypes = [...schema.allowedTypesIdentifiers];
 	// TODO: security: user prompt in system prompt
 	const systemPrompt = `${role}
 
