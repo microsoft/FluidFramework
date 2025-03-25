@@ -3145,10 +3145,10 @@ export class ContainerRuntime
 		this.outbox.flush();
 
 		const exitStagingMode = (discardOrCommit: () => void) => (): void => {
-			this.stageControls = undefined;
-
 			// Final flush of any last staged changes
 			this.outbox.flush(undefined, true /* staged */);
+
+			this.stageControls = undefined;
 
 			discardOrCommit();
 		};
