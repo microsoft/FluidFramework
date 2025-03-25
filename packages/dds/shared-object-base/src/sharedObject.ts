@@ -11,7 +11,7 @@ import {
 	type IFluidHandleInternal,
 	type IFluidLoadable,
 } from "@fluidframework/core-interfaces/internal";
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelServices,
 	IChannelStorageService,
@@ -542,7 +542,7 @@ export abstract class SharedObjectCore<
 			processMessages: (messagesCollection: IRuntimeMessageCollection) => {
 				// (Shallow copy the messagesContent and messagesCollection when unwrapping localOpMetadata)
 				const messagesContent = messagesCollection.messagesContent.map(
-					({ contents, localOpMetadata: wrappedLOM, clientSequenceNumber }) => {
+					({ contents, localOpMetadata: wrappedLOM = {}, clientSequenceNumber }) => {
 						const { localOpMetadata } = wrappedLOM as {
 							localOpMetadata: unknown;
 						};
@@ -561,7 +561,7 @@ export abstract class SharedObjectCore<
 			setConnectionState: (connected: boolean) => {
 				this.setConnectionState(connected);
 			},
-			reSubmit: (content: unknown, wrappedLOM: unknown) => {
+			reSubmit: (content: unknown, wrappedLOM: unknown = {}) => {
 				const { localOpMetadata, viableContent } = wrappedLOM as {
 					localOpMetadata: unknown;
 					viableContent: unknown;
@@ -571,7 +571,7 @@ export abstract class SharedObjectCore<
 			applyStashedOp: (content: unknown): void => {
 				this.applyStashedOp(parseHandles(content, this.serializer));
 			},
-			rollback: (content: unknown, wrappedLOM: unknown) => {
+			rollback: (content: unknown, wrappedLOM: unknown = {}) => {
 				const { localOpMetadata } = wrappedLOM as {
 					localOpMetadata: unknown;
 				};
@@ -624,8 +624,23 @@ export abstract class SharedObjectCore<
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
-		//* TODO: Remove this in main
-		fail("Deprecated path not supported anymore");
+		this.verifyNotClosed(); // This will result in container closure.
+		this.emitInternal("pre-op", message, local, this);
+
+		this.opProcessingHelper.measure(
+			(): ICustomData<ProcessTelemetryProperties> => {
+				this.processCore(message, local, localOpMetadata);
+				const telemetryProperties: ProcessTelemetryProperties = {
+					sequenceDifference: message.sequenceNumber - message.referenceSequenceNumber,
+				};
+				return {
+					customData: telemetryProperties,
+				};
+			},
+			local ? "local" : "remote",
+		);
+
+		this.emitInternal("op", message, local, this);
 	}
 
 	/* eslint-disable jsdoc/check-indentation */
