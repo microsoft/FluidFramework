@@ -16,7 +16,7 @@ import type {
 	SimpleObjectNodeSchema,
 	SimpleTreeSchema,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../simple-tree/api/simpleSchema.js";
+} from "../../../simple-tree/simpleSchema.js";
 
 import {
 	convertObjectNodeSchema,
@@ -32,7 +32,7 @@ describe("simpleSchemaToJsonSchema", () => {
 			definitions: new Map<string, SimpleNodeSchema>([
 				["test.string", { leafKind: ValueSchema.String, kind: NodeKind.Leaf }],
 			]),
-			allowedTypes: new Set<string>(["test.string"]),
+			allowedTypesIdentifiers: new Set<string>(["test.string"]),
 		};
 
 		const actual = toJsonSchema(input);
@@ -65,7 +65,7 @@ describe("simpleSchemaToJsonSchema", () => {
 			definitions: new Map<string, SimpleNodeSchema>([
 				["test.handle", { leafKind: ValueSchema.FluidHandle, kind: NodeKind.Leaf }],
 			]),
-			allowedTypes: new Set<string>(["test.handle"]),
+			allowedTypesIdentifiers: new Set<string>(["test.handle"]),
 		};
 
 		assert.throws(() => toJsonSchema(input));
@@ -77,11 +77,11 @@ describe("simpleSchemaToJsonSchema", () => {
 			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"test.array",
-					{ kind: NodeKind.Array, allowedTypes: new Set<string>(["test.string"]) },
+					{ kind: NodeKind.Array, allowedTypesIdentifiers: new Set<string>(["test.string"]) },
 				],
 				["test.string", { leafKind: ValueSchema.String, kind: NodeKind.Leaf }],
 			]),
-			allowedTypes: new Set<string>(["test.array"]),
+			allowedTypesIdentifiers: new Set<string>(["test.array"]),
 		};
 
 		const actual = toJsonSchema(input);
@@ -120,10 +120,13 @@ describe("simpleSchemaToJsonSchema", () => {
 		const input: SimpleTreeSchema = {
 			kind: FieldKind.Required,
 			definitions: new Map<string, SimpleNodeSchema>([
-				["test.map", { kind: NodeKind.Map, allowedTypes: new Set<string>(["test.string"]) }],
+				[
+					"test.map",
+					{ kind: NodeKind.Map, allowedTypesIdentifiers: new Set<string>(["test.string"]) },
+				],
 				["test.string", { leafKind: ValueSchema.String, kind: NodeKind.Leaf }],
 			]),
-			allowedTypes: new Set<string>(["test.map"]),
+			allowedTypesIdentifiers: new Set<string>(["test.map"]),
 		};
 
 		const actual = toJsonSchema(input);
@@ -195,7 +198,7 @@ describe("simpleSchemaToJsonSchema", () => {
 						"prop",
 						{
 							kind: FieldKind.Optional,
-							allowedTypes: new Set<string>(["test.number"]),
+							allowedTypesIdentifiers: new Set<string>(["test.number"]),
 							metadata: { description: "The description" },
 							storedKey: "stored",
 						},
@@ -232,7 +235,7 @@ describe("simpleSchemaToJsonSchema", () => {
 								"foo",
 								{
 									kind: FieldKind.Optional,
-									allowedTypes: new Set<string>(["test.number"]),
+									allowedTypesIdentifiers: new Set<string>(["test.number"]),
 									metadata: { description: "A number representing the concept of Foo." },
 									storedKey: "foo",
 								},
@@ -241,7 +244,7 @@ describe("simpleSchemaToJsonSchema", () => {
 								"bar",
 								{
 									kind: FieldKind.Required,
-									allowedTypes: new Set<string>(["test.string"]),
+									allowedTypesIdentifiers: new Set<string>(["test.string"]),
 									metadata: { description: "A string representing the concept of Bar." },
 									storedKey: "bar",
 								},
@@ -250,7 +253,7 @@ describe("simpleSchemaToJsonSchema", () => {
 								"id",
 								{
 									kind: FieldKind.Identifier,
-									allowedTypes: new Set<string>(["test.string"]),
+									allowedTypesIdentifiers: new Set<string>(["test.string"]),
 									metadata: {
 										description: "Unique identifier for the test object.",
 									},
@@ -263,7 +266,7 @@ describe("simpleSchemaToJsonSchema", () => {
 				["test.string", { leafKind: ValueSchema.String, kind: NodeKind.Leaf }],
 				["test.number", { leafKind: ValueSchema.Number, kind: NodeKind.Leaf }],
 			]),
-			allowedTypes: new Set<string>(["test.object"]),
+			allowedTypesIdentifiers: new Set<string>(["test.object"]),
 		};
 
 		const actual = toJsonSchema(input);
@@ -352,7 +355,7 @@ describe("simpleSchemaToJsonSchema", () => {
 								"id",
 								{
 									kind: FieldKind.Identifier,
-									allowedTypes: new Set<string>(["test.identifier"]),
+									allowedTypesIdentifiers: new Set<string>(["test.identifier"]),
 									storedKey: "id",
 								},
 							],
@@ -361,7 +364,7 @@ describe("simpleSchemaToJsonSchema", () => {
 				],
 				["test.identifier", { leafKind: ValueSchema.String, kind: NodeKind.Leaf }],
 			]),
-			allowedTypes: new Set<string>(["test.object"]),
+			allowedTypesIdentifiers: new Set<string>(["test.object"]),
 		};
 
 		const actual = toJsonSchema(input);
@@ -400,7 +403,7 @@ describe("simpleSchemaToJsonSchema", () => {
 								"foo",
 								{
 									kind: FieldKind.Required,
-									allowedTypes: new Set<string>(["test.number", "test.string"]),
+									allowedTypesIdentifiers: new Set<string>(["test.number", "test.string"]),
 									storedKey: "foo",
 								},
 							],
@@ -410,7 +413,7 @@ describe("simpleSchemaToJsonSchema", () => {
 				["test.number", { leafKind: ValueSchema.Number, kind: NodeKind.Leaf }],
 				["test.string", { leafKind: ValueSchema.String, kind: NodeKind.Leaf }],
 			]),
-			allowedTypes: new Set<string>(["test.object"]),
+			allowedTypesIdentifiers: new Set<string>(["test.object"]),
 		};
 
 		const actual = toJsonSchema(input);
@@ -455,7 +458,10 @@ describe("simpleSchemaToJsonSchema", () => {
 								"foo",
 								{
 									kind: FieldKind.Optional,
-									allowedTypes: new Set<string>(["test.string", "test.recursive-object"]),
+									allowedTypesIdentifiers: new Set<string>([
+										"test.string",
+										"test.recursive-object",
+									]),
 									storedKey: "foo",
 								},
 							],
@@ -464,7 +470,7 @@ describe("simpleSchemaToJsonSchema", () => {
 				],
 				["test.string", { leafKind: ValueSchema.String, kind: NodeKind.Leaf }],
 			]),
-			allowedTypes: new Set<string>(["test.recursive-object"]),
+			allowedTypesIdentifiers: new Set<string>(["test.recursive-object"]),
 		};
 		const actual = toJsonSchema(input);
 

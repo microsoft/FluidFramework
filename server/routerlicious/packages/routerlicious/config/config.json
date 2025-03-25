@@ -283,13 +283,15 @@
 		"opsCountTelemetryEnabled": true,
 		"circuitBreakerEnabled": false,
 		"circuitBreakerOptions": {
-			"errorThresholdPercentage": 0.001,
-			"resetTimeout": 30000,
-			"timeout": false,
-			"rollingCountTimeout": 1000,
-			"rollingCountBuckets": 1000,
-			"fallbackToRestartTimeoutMs": 180000,
-			"filterOnErrors": []
+			"database": {
+				"errorThresholdPercentage": 0.001,
+				"resetTimeout": 10000,
+				"timeout": false,
+				"rollingCountTimeout": 1000,
+				"rollingCountBuckets": 1000,
+				"fallbackToRestartTimeoutMs": 60000,
+				"filterOnErrors": []
+			}
 		}
 	},
 	"copier": {
