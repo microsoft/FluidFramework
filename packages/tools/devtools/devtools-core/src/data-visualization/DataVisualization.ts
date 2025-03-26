@@ -16,6 +16,7 @@ import type {
 } from "@fluidframework/core-interfaces";
 // eslint-disable-next-line import/no-deprecated
 import type { IProvideFluidHandle } from "@fluidframework/core-interfaces/internal";
+import { DirectoryFactory } from "@fluidframework/map/internal";
 import type { ISharedObject, SharedObject } from "@fluidframework/shared-object-base/internal";
 
 import type { FluidObjectId } from "../CommonInterfaces.js";
@@ -256,7 +257,9 @@ export class DataVisualizerGraph
 				: (this.visualizers[sharedObject.attributes.type] ?? visualizeUnknownSharedObject);
 
 			const visualizerNode = new VisualizerNode(
-				isDataObject(sharedObject) ? (sharedObject as VisualDataObject).root : sharedObject,
+				// Typecasting `sharedObject` to `any` is necessary for `DataObject` visualization`, because the `root` property is inaccessbile (private).
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+				isDataObject(sharedObject) ? (sharedObject as any).root : sharedObject,
 				visualizationFunction as VisualizeSharedObject,
 				async (handle) => this.registerVisualizerForHandle(handle),
 			);
@@ -529,6 +532,7 @@ function isDataObject(value: unknown): value is DataObject {
 		(value as DataObject).id !== undefined &&
 		(value as DataObject).IFluidLoadable !== undefined &&
 		(value as DataObject).IFluidHandle !== undefined &&
-		(value as DataObject).handle !== undefined
+		(value as DataObject).handle !== undefined &&
+		(value as VisualDataObject).root.attributes.type === DirectoryFactory.Type
 	);
 }
