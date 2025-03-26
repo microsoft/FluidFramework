@@ -59,9 +59,9 @@ export function createFieldSchemaUnsafe<
  * are not required for correct runtime behavior: they exist entirely to mitigate TypeScript type checking limitations and bugs.
  * Ideally TypeScript's type checker would be able to handle all of these cases and more, removing the need for recursive type specific guidance, rules and APIs.
  * Currently however there are open issues preventing this:
- * [1](https://github.com/microsoft/TypeScript/issues/59550),
- * [2](https://github.com/microsoft/TypeScript/issues/55832),
- * [3](https://github.com/microsoft/TypeScript/issues/55758).
+ * {@link https://github.com/microsoft/TypeScript/issues/59550 | 1},
+ * {@link https://github.com/microsoft/TypeScript/issues/55832 | 2},
+ * {@link https://github.com/microsoft/TypeScript/issues/55758 | 3}.
  * Note that the proposed resolution to some of these issues is for the compiler to error rather than allow the case,
  * so even if these are all resolved the recursive type workarounds may still be needed.
  *
