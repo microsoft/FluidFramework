@@ -116,7 +116,7 @@ stages:
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
-        ${{ if eq(parameters.useR11sPpeEnvironment, 'true') }}:
+        ${{ if eq(parameters.useR11sPpeEnvironment, true) }}:
           fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s-ppe)
         ${{ else }}:
           fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s)
