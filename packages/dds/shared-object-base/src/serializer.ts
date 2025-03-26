@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	IFluidHandleContext,
+	type IAttachableNode,
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, shallowCloneObject } from "@fluidframework/core-utils/internal";
@@ -31,7 +31,7 @@ export interface IFluidSerializer {
 	 * The original `input` object is not mutated.  This method will shallowly clones all objects in the path from
 	 * the root to any replaced handles.  (If no handles are found, returns the original object.)
 	 */
-	encode(value: unknown, bind: IFluidHandle): unknown;
+	encode(value: unknown, bind: IAttachableNode): unknown;
 
 	/**
 	 * Given a fully-jsonable object tree that may have encoded handle objects embedded within, will return an
@@ -47,7 +47,7 @@ export interface IFluidSerializer {
 	/**
 	 * Stringifies a given value. Converts any IFluidHandle to its stringified equivalent.
 	 */
-	stringify(value: unknown, bind: IFluidHandle): string;
+	stringify(value: unknown, bind: IAttachableNode): string;
 
 	/**
 	 * Parses the given JSON input string and returns the JavaScript object defined by it. Any Fluid
@@ -83,7 +83,7 @@ export class FluidSerializer implements IFluidSerializer {
 	 *
 	 * Any unbound handles encountered are bound to the provided IFluidHandle.
 	 */
-	public encode(input: unknown, bind: IFluidHandleInternal): unknown {
+	public encode(input: unknown, bind: IAttachableNode): unknown {
 		// If the given 'input' cannot contain handles, return it immediately.  Otherwise,
 		// return the result of 'recursivelyReplace()'.
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -110,9 +110,8 @@ export class FluidSerializer implements IFluidSerializer {
 			: input;
 	}
 
-	public stringify(input: unknown, bind: IFluidHandle): string {
-		const bindInternal = toFluidHandleInternal(bind);
-		return JSON.stringify(input, (key, value) => this.encodeValue(value, bindInternal));
+	public stringify(input: unknown, bind: IAttachableNode): string {
+		return JSON.stringify(input, (key, value) => this.encodeValue(value, bind));
 	}
 
 	// Parses the serialized data - context must match the context with which the JSON was stringified
@@ -122,7 +121,7 @@ export class FluidSerializer implements IFluidSerializer {
 
 	// If the given 'value' is an IFluidHandle, returns the encoded IFluidHandle.
 	// Otherwise returns the original 'value'.  Used by 'encode()' and 'stringify()'.
-	private readonly encodeValue = (value: unknown, bind?: IFluidHandleInternal): unknown => {
+	private readonly encodeValue = (value: unknown, bind?: IAttachableNode): unknown => {
 		// If 'value' is an IFluidHandle return its encoded form.
 		if (isFluidHandle(value)) {
 			assert(bind !== undefined, 0xa93 /* Cannot encode a handle without a bind context */);
@@ -197,7 +196,7 @@ export class FluidSerializer implements IFluidSerializer {
 
 	protected serializeHandle(
 		handle: IFluidHandleInternal,
-		bind: IFluidHandleInternal,
+		bind: IAttachableNode,
 	): ISerializedHandle {
 		bind.bind(handle);
 		return {

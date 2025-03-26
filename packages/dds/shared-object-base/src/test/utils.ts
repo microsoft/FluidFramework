@@ -27,6 +27,10 @@ export class MockHandleContext implements IFluidHandleContext {
 		throw new Error("Method not implemented.");
 	}
 
+	public bind(): void {
+		throw new Error("Method not implemented.");
+	}
+
 	public async resolveHandle(request: IRequest): Promise<IResponse> {
 		return create404Response(request);
 	}

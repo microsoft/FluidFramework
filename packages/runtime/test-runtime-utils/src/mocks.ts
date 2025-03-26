@@ -21,6 +21,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
 	IFluidHandleContext,
+	type IAttachableNode,
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
@@ -957,7 +958,7 @@ export class MockFluidDataStoreRuntime
 		return;
 	}
 
-	public bind(handle: IFluidHandle): void {
+	public bind(node: IAttachableNode): void {
 		return;
 	}
 
