@@ -222,7 +222,9 @@ function addNodeToField(
 	nodes.set([nodeId.revision, nodeId.localId], nodeChangeset);
 	nodeToParent.set([nodeId.revision, nodeId.localId], parentId);
 
-	const fieldWithChange = changeHandler.editor.buildChildChange(nodeDescription.index, nodeId);
+	const fieldWithChange = changeHandler.editor.buildChildChanges([
+		[nodeDescription.index, nodeId],
+	]);
 
 	return changeHandler.rebaser.compose(
 		fieldWithChange,

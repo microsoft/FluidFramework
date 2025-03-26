@@ -40,4 +40,7 @@ export interface IFluidDevtools extends IDisposable {
 // @alpha
 export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools;
 
+// @alpha
+export function tryGetFluidDevtools(): IFluidDevtools | undefined;
+
 ```

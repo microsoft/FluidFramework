@@ -31,10 +31,81 @@
  */
 export function assert(condition: boolean, message: string | number): asserts condition {
 	if (!condition) {
-		throw new Error(
-			typeof message === "number" ? `0x${message.toString(16).padStart(3, "0")}` : message,
-		);
+		fail(message);
 	}
+}
+
+/**
+ * Throw an error with a constant message.
+ * @remarks
+ * Works like {@link assert}, but errors unconditionally instead of taking in a condition.
+ *
+ * Unlike `assert`, this `fail` is not "tagged" by the assert tagging too by default.
+ * Use a `assertTagging.config.mjs` file to enable this and any other assert tagging customizations as needed.
+ *
+ * Returns `never` so it can be used inline as part of an expression, or as a return value.
+ * @example
+ * ```ts
+ *  const x: number = numbersMap.get("foo") ?? fail("foo missing from map");
+ * ```
+ * @internal
+ */
+export function fail(message: string | number): never {
+	const error = new Error(
+		typeof message === "number" ? `0x${message.toString(16).padStart(3, "0")}` : message,
+	);
+	onAssertionError(error);
+	throw error;
+}
+
+function onAssertionError(error: Error): void {
+	for (const handler of firstChanceAssertionHandler) {
+		handler(error);
+	}
+}
+
+const firstChanceAssertionHandler = new Set<(error: Error) => void>();
+
+/**
+ * Add a callback which can be used to report an assertion before it is thrown.
+ * @param handler - Called when an assertion occurs before the exception is thrown.
+ * @returns a function to remove the handler.
+ * @remarks
+ * The callback runs just before the exception is thrown, which makes it a better place to report telemetry for Fluid Framework bugs than a catch block or an event like `window.onerror`.
+ * Using this API to report telemetry is preferred over those approaches since it eliminates the risk of the exception being swallowed or obfuscated by an intermediate stack frame's catch block
+ * or missed due to not having the right catch block or event handler.
+ *
+ * This does not replace the need for error handling elsewhere since errors (even bugs in Fluid) can cause other kinds of exceptions which this cannot run the callback for.
+ * @example
+ * ```ts
+ * import { onAssertionFailure } from "fluid-framework/alpha";
+ *
+ * let firstAssertion: Error | undefined;
+ *
+ * onAssertionFailure((error: Error) => {
+ * 	const priorErrorNote =
+ * 		firstAssertion === undefined
+ * 			? "Please report this bug."
+ * 			: `Might be caused due to prior error ${JSON.stringify(firstAssertion.message)} which should be investigated first.`;
+ * 	const message = `Encountered Bug in Fluid Framework: ${error.message}\n${priorErrorNote}\n${error.stack}`;
+ * 	console.error(message);
+ *
+ * 	debugger;
+ * 	firstAssertion ??= error;
+ * });
+ * ```
+ * @alpha
+ */
+export function onAssertionFailure(handler: (error: Error) => void): () => void {
+	// To avoid issues if the same callback is registered twice (mainly it not triggering twice and the first unregister removing it),
+	// generate a wrapper around the handler.
+	const wrapper = (error: Error): void => {
+		handler(error);
+	};
+	firstChanceAssertionHandler.add(wrapper);
+	return () => {
+		firstChanceAssertionHandler.delete(wrapper);
+	};
 }
 
 /**
@@ -78,7 +149,9 @@ export function debugAssert(predicate: () => true | { toString(): string }): voi
 			const result = predicate();
 			if (result !== true) {
 				debugger;
-				throw new Error(`Debug assert failed: ${result.toString()}`);
+				const error = new Error(`Debug assert failed: ${result.toString()}`);
+				onAssertionError(error);
+				throw error;
 			}
 		}
 	});
@@ -96,7 +169,7 @@ let debugAssertsEnabled = false;
 export function configureDebugAsserts(enabled: boolean): boolean {
 	assert(
 		nonProductionConditionalsIncluded(),
-		"Debug asserts cannot be configured since they have been optimized out.",
+		0xab1 /* Debug asserts cannot be configured since they have been optimized out. */,
 	);
 	const old = debugAssertsEnabled;
 	debugAssertsEnabled = enabled;

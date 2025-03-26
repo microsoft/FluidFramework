@@ -50,6 +50,7 @@ USAGE
 * [`flub report`](docs/report.md) - Report analysis about the codebase, like code coverage and bundle size measurements.
 * [`flub transform`](docs/transform.md) - Transform commands are used to transform code, docs, etc. into alternative forms.
 * [`flub typetests`](docs/typetests.md) - Updates configuration for type tests in package.json files. If the previous version changes after running preparation, then npm install must be run before building.
+* [`flub vnext`](docs/vnext.md) - Vnext commands are new implementations of standard flub commands using new infrastructure.
 
 <!-- commandsstop -->
 <!-- prettier-ignore-stop -->

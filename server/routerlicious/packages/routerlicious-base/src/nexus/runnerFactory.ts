@@ -170,6 +170,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 					redisConfig2.enableClustering,
 					redisConfig2.slotsRefreshTimeout,
 					retryDelays,
+					redisConfig2.enableVerboseErrorLogging,
 			  );
 		redisClientConnectionManagers.push(redisClientConnectionManager);
 
@@ -213,9 +214,17 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			enableCollaborationSessionPruning === true &&
 			collaborationSessionTracker !== undefined
 		) {
+			const intervalMs =
+				core.DefaultServiceConfiguration.documentLambda.partitionActivityCheckInterval;
 			setInterval(() => {
-				collaborationSessionTracker.pruneInactiveSessions();
-			}, core.DefaultServiceConfiguration.documentLambda.partitionActivityCheckInterval);
+				collaborationSessionTracker.pruneInactiveSessions().catch((error) => {
+					Lumberjack.error(
+						"Failed to prune inactive sessions on an interval",
+						{ intervalMs },
+						error,
+					);
+				});
+			}, intervalMs);
 		}
 
 		const redisClientConnectionManagerForJwtCache =
@@ -226,6 +235,8 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 						redisConfig2,
 						redisConfig2.enableClustering,
 						redisConfig2.slotsRefreshTimeout,
+						undefined /* retryDelays */,
+						redisConfig2.enableVerboseErrorLogging,
 				  );
 		redisClientConnectionManagers.push(redisClientConnectionManagerForJwtCache);
 		const redisJwtCache = new services.RedisCache(redisClientConnectionManagerForJwtCache);
@@ -317,6 +328,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 						redisConfigForThrottling.enableClustering,
 						redisConfigForThrottling.slotsRefreshTimeout,
 						retryDelays,
+						redisConfigForThrottling.enableVerboseErrorLogging,
 				  );
 		redisClientConnectionManagers.push(redisClientConnectionManagerForThrottling);
 
@@ -439,6 +451,8 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 							redisConfig,
 							redisConfig.enableClustering,
 							redisConfig.slotsRefreshTimeout,
+							undefined /* retryDelays */,
+							redisConfig.enableVerboseErrorLogging,
 					  );
 			redisClientConnectionManagers.push(redisClientConnectionManagerForLogging);
 
@@ -526,6 +540,8 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 						redisConfig,
 						redisConfig.enableClustering,
 						redisConfig.slotsRefreshTimeout,
+						undefined /* retryDelays */,
+						redisConfig.enableVerboseErrorLogging,
 				  );
 
 		const redisClientConnectionManagerForSub =
@@ -536,6 +552,8 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 						redisConfig,
 						redisConfig.enableClustering,
 						redisConfig.slotsRefreshTimeout,
+						undefined /* retryDelays */,
+						redisConfig.enableVerboseErrorLogging,
 				  );
 
 		const socketIoAdapterConfig = config.get("nexus:socketIoAdapter");

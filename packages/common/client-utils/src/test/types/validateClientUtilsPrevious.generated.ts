@@ -128,6 +128,15 @@ declare type current_as_old_for_ClassStatics_TypedEventEmitter = requireAssignab
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Function_checkLayerCompatibility": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_checkLayerCompatibility = requireAssignableTo<TypeOnly<typeof current.checkLayerCompatibility>, TypeOnly<typeof old.checkLayerCompatibility>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Function_createEmitter": {"backCompat": false}
  */
 declare type current_as_old_for_Function_createEmitter = requireAssignableTo<TypeOnly<typeof current.createEmitter>, TypeOnly<typeof old.createEmitter>>
@@ -176,6 +185,60 @@ declare type current_as_old_for_Function_Uint8ArrayToArrayBuffer = requireAssign
  * "Function_Uint8ArrayToString": {"backCompat": false}
  */
 declare type current_as_old_for_Function_Uint8ArrayToString = requireAssignableTo<TypeOnly<typeof current.Uint8ArrayToString>, TypeOnly<typeof old.Uint8ArrayToString>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ILayerCompatDetails": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_ILayerCompatDetails = requireAssignableTo<TypeOnly<old.ILayerCompatDetails>, TypeOnly<current.ILayerCompatDetails>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ILayerCompatDetails": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_ILayerCompatDetails = requireAssignableTo<TypeOnly<current.ILayerCompatDetails>, TypeOnly<old.ILayerCompatDetails>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ILayerCompatSupportRequirements": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_ILayerCompatSupportRequirements = requireAssignableTo<TypeOnly<old.ILayerCompatSupportRequirements>, TypeOnly<current.ILayerCompatSupportRequirements>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ILayerCompatSupportRequirements": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_ILayerCompatSupportRequirements = requireAssignableTo<TypeOnly<current.ILayerCompatSupportRequirements>, TypeOnly<old.ILayerCompatSupportRequirements>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IProvideLayerCompatDetails": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_IProvideLayerCompatDetails = requireAssignableTo<TypeOnly<old.IProvideLayerCompatDetails>, TypeOnly<current.IProvideLayerCompatDetails>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IProvideLayerCompatDetails": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_IProvideLayerCompatDetails = requireAssignableTo<TypeOnly<current.IProvideLayerCompatDetails>, TypeOnly<old.IProvideLayerCompatDetails>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -236,18 +299,18 @@ declare type current_as_old_for_TypeAlias_IsoBuffer = requireAssignableTo<TypeOn
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_IsomorphicPerformance": {"forwardCompat": false}
+ * "TypeAlias_LayerCompatCheckResult": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_IsomorphicPerformance = requireAssignableTo<TypeOnly<old.IsomorphicPerformance>, TypeOnly<current.IsomorphicPerformance>>
+declare type old_as_current_for_TypeAlias_LayerCompatCheckResult = requireAssignableTo<TypeOnly<old.LayerCompatCheckResult>, TypeOnly<current.LayerCompatCheckResult>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_IsomorphicPerformance": {"backCompat": false}
+ * "TypeAlias_LayerCompatCheckResult": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_IsomorphicPerformance = requireAssignableTo<TypeOnly<current.IsomorphicPerformance>, TypeOnly<old.IsomorphicPerformance>>
+declare type current_as_old_for_TypeAlias_LayerCompatCheckResult = requireAssignableTo<TypeOnly<current.LayerCompatCheckResult>, TypeOnly<old.LayerCompatCheckResult>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -299,6 +362,15 @@ declare type current_as_old_for_Variable_fromUtf8ToBase64 = requireAssignableTo<
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Variable_ILayerCompatDetails": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_ILayerCompatDetails = requireAssignableTo<TypeOnly<typeof current.ILayerCompatDetails>, TypeOnly<typeof old.ILayerCompatDetails>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Variable_IsoBuffer": {"backCompat": false}
  */
 declare type current_as_old_for_Variable_IsoBuffer = requireAssignableTo<TypeOnly<typeof current.IsoBuffer>, TypeOnly<typeof old.IsoBuffer>>
@@ -308,9 +380,9 @@ declare type current_as_old_for_Variable_IsoBuffer = requireAssignableTo<TypeOnl
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Variable_performance": {"backCompat": false}
+ * "Variable_performanceNow": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_performance = requireAssignableTo<TypeOnly<typeof current.performance>, TypeOnly<typeof old.performance>>
+declare type current_as_old_for_Variable_performanceNow = requireAssignableTo<TypeOnly<typeof current.performanceNow>, TypeOnly<typeof old.performanceNow>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.

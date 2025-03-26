@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "@fluid-internal/client-utils";
+import { performanceNow } from "@fluid-internal/client-utils";
 import { IDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
@@ -92,7 +92,7 @@ class OpPerfTelemetry {
 
 	private firstConnection = true;
 	private connectionOpSeqNumber: number | undefined;
-	private readonly bootTime = performance.now();
+	private readonly bootTime = performanceNow();
 	private connectionStartTime = 0;
 	private gap = 0;
 
@@ -204,7 +204,7 @@ class OpPerfTelemetry {
 			if (opsBehind !== undefined) {
 				this.connectionOpSeqNumber = this.deltaManager.lastKnownSeqNumber;
 				this.gap = opsBehind;
-				this.connectionStartTime = performance.now();
+				this.connectionStartTime = performanceNow();
 
 				// We might be already up-today. If so, report it right away.
 				if (this.gap <= 0) {
@@ -306,7 +306,7 @@ class OpPerfTelemetry {
 		this.connectionOpSeqNumber = undefined;
 		this.logger.sendPerformanceEvent({
 			eventName: "ConnectionSpeed",
-			duration: performance.now() - this.connectionStartTime,
+			duration: performanceNow() - this.connectionStartTime,
 			ops: this.gap,
 			// track time to connect only for first connection.
 			timeToConnect: this.firstConnection
@@ -456,57 +456,6 @@ class OpPerfTelemetry {
 			});
 		}
 	}
-}
-export interface IPerfSignalReport {
-	/**
-	 * Identifier to track broadcast signals being submitted in order to
-	 * allow collection of data around the roundtrip of signal messages.
-	 */
-	broadcastSignalSequenceNumber: number;
-
-	/**
-	 * Accumulates the total number of broadcast signals sent during the current signal latency measurement window.
-	 * This value represents the total number of signals sent since the latency measurement began and is used
-	 * logged in telemetry when the latency measurement completes.
-	 */
-	totalSignalsSentInLatencyWindow: number;
-
-	/**
-	 * Counts the number of broadcast signals sent since the last latency measurement was initiated.
-	 * This counter increments with each broadcast signal sent. When a new latency measurement starts,
-	 * this counter is added to `totalSignalsSentInLatencyWindow` and then reset to zero.
-	 */
-	signalsSentSinceLastLatencyMeasurement: number;
-
-	/**
-	 * Number of signals that were expected but not received.
-	 */
-	signalsLost: number;
-
-	/**
-	 * Number of signals received out of order/non-sequentially.
-	 */
-	signalsOutOfOrder: number;
-
-	/**
-	 * Timestamp before submitting the signal we will trace.
-	 */
-	signalTimestamp: number;
-
-	/**
-	 * Signal we will trace for roundtrip latency.
-	 */
-	roundTripSignalSequenceNumber: number | undefined;
-
-	/**
-	 * Next expected signal sequence number to be received.
-	 */
-	trackingSignalSequenceNumber: number | undefined;
-
-	/**
-	 * Inclusive lower bound of signal monitoring window.
-	 */
-	minimumTrackingSignalSequenceNumber: number | undefined;
 }
 
 /**

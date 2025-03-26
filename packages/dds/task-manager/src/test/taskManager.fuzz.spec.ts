@@ -8,8 +8,8 @@ import * as path from "path";
 
 import {
 	AsyncGenerator as Generator,
-	AsyncReducer as Reducer,
-	combineReducersAsync as combineReducers,
+	Reducer,
+	combineReducers,
 	createWeightedAsyncGenerator as createWeightedGenerator,
 	makeRandom,
 	takeAsync as take,
@@ -171,17 +171,17 @@ function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
 function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, FuzzTestState> {
 	const withLogging =
 		<T>(baseReducer: Reducer<T, FuzzTestState>): Reducer<T, FuzzTestState> =>
-		async (state, operation) => {
+		(state, operation) => {
 			if (loggingInfo !== undefined && (operation as any).taskId === loggingInfo.taskId) {
 				logCurrentState(state, loggingInfo);
 				console.log("-".repeat(20));
 				console.log("Next operation:", JSON.stringify(operation, undefined, 4));
 			}
-			await baseReducer(state, operation);
+			baseReducer(state, operation);
 		};
 
 	const reducer = combineReducers<Operation, FuzzTestState>({
-		volunteer: async ({ client }, { taskId }) => {
+		volunteer: ({ client }, { taskId }) => {
 			// Note: this is fire-and-forget as `volunteerForTask` resolves/rejects its returned
 			// promise based on server responses, which will occur on later operations (and
 			// processing those operations will raise the error directly)
@@ -196,13 +196,13 @@ function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, FuzzTestStat
 				}
 			});
 		},
-		abandon: async ({ client }, { taskId }) => {
+		abandon: ({ client }, { taskId }) => {
 			client.channel.abandon(taskId);
 		},
-		subscribe: async ({ client }, { taskId }) => {
+		subscribe: ({ client }, { taskId }) => {
 			client.channel.subscribeToTask(taskId);
 		},
-		complete: async ({ client }, { taskId }) => {
+		complete: ({ client }, { taskId }) => {
 			client.channel.complete(taskId);
 		},
 	});

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { BaseCommand } from "./base.js";
+export { BaseCommand, BaseCommandWithBuildProject } from "./base.js";
 export { unscopedPackageNameString } from "./constants.js";
 export {
 	GenerateEntrypointsCommand,

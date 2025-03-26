@@ -71,6 +71,9 @@ export enum HttpProperties {
 	status = "status",
 	url = "url",
 	retryCount = "retryCount",
+	scheme = "scheme",
+	httpVersion = "httpVersion",
+	hostName = "hostName",
 }
 
 /**

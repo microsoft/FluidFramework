@@ -47,7 +47,7 @@ export class Breakable {
 	 * @privateRemarks
 	 * If there is a use-case, this should be made public.
 	 */
-	private rethrowCaught(brokenBy: unknown): never {
+	public rethrowCaught(brokenBy: unknown): never {
 		if (brokenBy instanceof Error) {
 			this.break(brokenBy);
 		}

@@ -19,8 +19,6 @@ import {
 	DataVisualizerGraph,
 	type FluidObjectNode,
 	type RootHandleNode,
-	type SharedObjectEdit,
-	defaultEditors,
 	defaultVisualizers,
 } from "./data-visualization/index.js";
 import {
@@ -30,7 +28,6 @@ import {
 	ContainerDevtoolsFeatures,
 	ContainerStateChange,
 	ContainerStateHistory,
-	DataEdit,
 	DataVisualization,
 	DisconnectContainer,
 	GetAudienceSummary,
@@ -333,15 +330,6 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 			}
 			return false;
 		},
-
-		[DataEdit.MessageType]: async (untypedMessage) => {
-			const message = untypedMessage as DataEdit.Message;
-			if (message.data.containerKey === this.containerKey) {
-				await this.editData(message.data.edit);
-				return true;
-			}
-			return false;
-		},
 	};
 
 	/**
@@ -468,7 +456,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		this.dataVisualizer =
 			props.containerData === undefined
 				? undefined
-				: new DataVisualizerGraph(props.containerData, defaultVisualizers, defaultEditors);
+				: new DataVisualizerGraph(props.containerData, defaultVisualizers);
 
 		this.dataVisualizer?.on("update", this.dataUpdateHandler);
 
@@ -545,9 +533,6 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		return {
 			// If no container data was provided to the devtools, we cannot support data visualization.
 			containerDataVisualization: this.containerData !== undefined,
-
-			// TODO: When ready to enable feature set it to this.containerData !== undefined
-			containerDataEditing: false,
 		};
 	}
 
@@ -576,12 +561,5 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		fluidObjectId: FluidObjectId,
 	): Promise<FluidObjectNode | undefined> {
 		return this.dataVisualizer?.render(fluidObjectId) ?? undefined;
-	}
-
-	/**
-	 * Applies an {@link Edit} to a {@link SharedObject}
-	 */
-	private async editData(edit: SharedObjectEdit): Promise<void> {
-		return this.dataVisualizer?.applyEdit(edit);
 	}
 }

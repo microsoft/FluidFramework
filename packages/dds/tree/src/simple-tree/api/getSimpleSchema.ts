@@ -6,7 +6,7 @@
 import { getOrCreate } from "../../util/index.js";
 import type { TreeNodeSchema } from "../core/index.js";
 import type { ImplicitFieldSchema } from "../schemaTypes.js";
-import type { SimpleTreeSchema } from "./simpleSchema.js";
+import type { SimpleTreeSchema } from "../simpleSchema.js";
 import { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
 
 /**

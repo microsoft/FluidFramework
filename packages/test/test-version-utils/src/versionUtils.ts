@@ -369,7 +369,7 @@ export const loadPackage = async (modulePath: string, pkg: string): Promise<any>
 		if (typeof pkgJson.exports === "string") {
 			primaryExport = pkgJson.exports;
 		} else {
-			const exp = pkgJson.exports["."];
+			const exp: any | undefined = pkgJson.exports["."];
 			primaryExport =
 				typeof exp === "string"
 					? exp

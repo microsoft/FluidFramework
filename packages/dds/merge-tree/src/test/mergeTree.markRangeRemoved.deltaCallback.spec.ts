@@ -7,17 +7,12 @@ import { strict as assert } from "node:assert";
 
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
-import {
-	LocalClientId,
-	UnassignedSequenceNumber,
-	UniversalSequenceNumber,
-} from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
 import { MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback.js";
 import { MergeTreeDeltaType } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
 
-import { countOperations, insertSegments, markRangeRemoved } from "./testUtils.js";
+import { countOperations, makeRemoteClient } from "./testUtils.js";
 
 describe("MergeTree", () => {
 	let mergeTree: MergeTree;
@@ -25,15 +20,14 @@ describe("MergeTree", () => {
 	let currentSequenceNumber: number;
 	beforeEach(() => {
 		mergeTree = new MergeTree();
-		insertSegments({
-			mergeTree,
-			pos: 0,
-			segments: [TextSegment.make("hello world!")],
-			refSeq: UniversalSequenceNumber,
-			clientId: LocalClientId,
-			seq: UniversalSequenceNumber,
-			opArgs: undefined,
-		});
+		mergeTree.insertSegments(
+			0,
+			[TextSegment.make("hello world!")],
+			mergeTree.localPerspective,
+			mergeTree.collabWindow.mintNextLocalOperationStamp(),
+			undefined,
+		);
+
 		currentSequenceNumber = 0;
 		mergeTree.startCollaboration(
 			localClientId,
@@ -46,16 +40,13 @@ describe("MergeTree", () => {
 		it("Event on Removal", () => {
 			const count = countOperations(mergeTree);
 
-			markRangeRemoved({
-				mergeTree,
-				start: 4,
-				end: 6,
-				refSeq: currentSequenceNumber,
-				clientId: localClientId,
-				seq: UnassignedSequenceNumber,
-				overwrite: false,
-				opArgs: undefined as never,
-			});
+			mergeTree.markRangeRemoved(
+				4,
+				6,
+				mergeTree.localPerspective,
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
+				undefined as never,
+			);
 
 			assert.deepStrictEqual(count, {
 				[MergeTreeDeltaType.REMOVE]: 1,
@@ -70,16 +61,13 @@ describe("MergeTree", () => {
 			const start = 4;
 			const end = 6;
 
-			markRangeRemoved({
-				mergeTree,
+			mergeTree.markRangeRemoved(
 				start,
 				end,
-				refSeq: currentSequenceNumber,
-				clientId: localClientId,
-				seq: UnassignedSequenceNumber,
-				overwrite: false,
-				opArgs: undefined as never,
-			});
+				mergeTree.localPerspective,
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
+				undefined as never,
+			);
 
 			// In order for the removed segment to unlinked by zamboni, we need to ACK the segment
 			// and advance the collaboration window's minSeq past the removedSeq.
@@ -107,32 +95,26 @@ describe("MergeTree", () => {
 		});
 
 		it("Remote Before Local", () => {
-			const remoteClientId: number = 35;
+			const remoteClient = makeRemoteClient({ clientId: 35 });
 			let remoteSequenceNumber = currentSequenceNumber;
 
-			markRangeRemoved({
-				mergeTree,
-				start: 4,
-				end: 6,
-				refSeq: remoteSequenceNumber,
-				clientId: remoteClientId,
-				seq: ++remoteSequenceNumber,
-				overwrite: false,
-				opArgs: undefined as never,
-			});
+			mergeTree.markRangeRemoved(
+				4,
+				6,
+				remoteClient.perspectiveAt({ refSeq: remoteSequenceNumber }),
+				remoteClient.stampAt({ seq: ++remoteSequenceNumber }),
+				undefined as never,
+			);
 
 			const count = countOperations(mergeTree);
 
-			markRangeRemoved({
-				mergeTree,
-				start: 3,
-				end: 5,
-				refSeq: currentSequenceNumber,
-				clientId: localClientId,
-				seq: UnassignedSequenceNumber,
-				overwrite: false,
-				opArgs: undefined as never,
-			});
+			mergeTree.markRangeRemoved(
+				3,
+				5,
+				mergeTree.localPerspective,
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
+				undefined as never,
+			);
 
 			assert.deepStrictEqual(count, {
 				[MergeTreeDeltaType.REMOVE]: 1,
@@ -141,32 +123,26 @@ describe("MergeTree", () => {
 		});
 
 		it("Local Before Remote", () => {
-			const remoteClientId: number = 35;
+			const remoteClient = makeRemoteClient({ clientId: 35 });
 			let remoteSequenceNumber = currentSequenceNumber;
 
-			markRangeRemoved({
-				mergeTree,
-				start: 4,
-				end: 6,
-				refSeq: currentSequenceNumber,
-				clientId: localClientId,
-				seq: UnassignedSequenceNumber,
-				overwrite: false,
-				opArgs: undefined as never,
-			});
+			mergeTree.markRangeRemoved(
+				4,
+				6,
+				mergeTree.localPerspective,
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
+				undefined as never,
+			);
 
 			const count = countOperations(mergeTree);
 
-			markRangeRemoved({
-				mergeTree,
-				start: 3,
-				end: 5,
-				refSeq: remoteSequenceNumber,
-				clientId: remoteClientId,
-				seq: ++remoteSequenceNumber,
-				overwrite: false,
-				opArgs: undefined as never,
-			});
+			mergeTree.markRangeRemoved(
+				3,
+				5,
+				remoteClient.perspectiveAt({ refSeq: remoteSequenceNumber }),
+				remoteClient.stampAt({ seq: ++remoteSequenceNumber }),
+				undefined as never,
+			);
 
 			assert.deepStrictEqual(count, {
 				[MergeTreeDeltaType.REMOVE]: 1,
@@ -175,32 +151,26 @@ describe("MergeTree", () => {
 		});
 
 		it("Local delete shadows remote", () => {
-			const remoteClientId: number = 35;
+			const remoteClient = makeRemoteClient({ clientId: 35 });
 			let remoteSequenceNumber = currentSequenceNumber;
 
-			markRangeRemoved({
-				mergeTree,
-				start: 3,
-				end: 6,
-				refSeq: currentSequenceNumber,
-				clientId: localClientId,
-				seq: UnassignedSequenceNumber,
-				overwrite: false,
-				opArgs: undefined as never,
-			});
+			mergeTree.markRangeRemoved(
+				3,
+				6,
+				mergeTree.localPerspective,
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
+				undefined as never,
+			);
 
 			const count = countOperations(mergeTree);
 
-			markRangeRemoved({
-				mergeTree,
-				start: 4,
-				end: 5,
-				refSeq: remoteSequenceNumber,
-				clientId: remoteClientId,
-				seq: ++remoteSequenceNumber,
-				overwrite: false,
-				opArgs: undefined as never,
-			});
+			mergeTree.markRangeRemoved(
+				4,
+				5,
+				remoteClient.perspectiveAt({ refSeq: remoteSequenceNumber }),
+				remoteClient.stampAt({ seq: ++remoteSequenceNumber }),
+				undefined as never,
+			);
 
 			assert.deepStrictEqual(count, {
 				/* MergeTreeDeltaType.REMOVE is absent as it should not be fired. */

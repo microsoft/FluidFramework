@@ -11,11 +11,13 @@ import {
 	type getDataRuntimeApi,
 	type getLoaderApi,
 } from "@fluid-private/test-version-utils";
-import type { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
-import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
+	IContainer,
+	type IRuntimeFactory,
+} from "@fluidframework/container-definitions/internal";
+import type {
 	IContainerRuntimeOptions,
-	type ISummaryRuntimeOptions,
+	ISummaryRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
@@ -74,7 +76,7 @@ describeCompat(
 		async function createRuntimeFactory(
 			apis: LayerApis,
 			type: "interactive" | "summarizer",
-		): Promise<ContainerRuntimeFactoryWithDefaultDataStore> {
+		): Promise<IRuntimeFactory> {
 			const dataObjectFactory = new apis.dataRuntime.TestFluidObjectFactory([]);
 			dataObjectType = dataObjectFactory.type;
 			const runtimeOptions: IContainerRuntimeOptions = {

@@ -86,10 +86,11 @@ const foo = bar;
 
 ## Namespaces
 
-| Namespace | Description |
-| --- | --- |
-| [TestModule](/test-suite-a/testmodule-namespace/) |  |
-| [TestNamespace](/test-suite-a/testnamespace-namespace/) | Test Namespace |
+| Namespace | Alerts | Description |
+| --- | --- | --- |
+| [TestBetaNamespace](/test-suite-a/testbetanamespace-namespace/) | `Beta` | A namespace tagged as `@beta`. |
+| [TestModule](/test-suite-a/testmodule-namespace/) |  |  |
+| [TestNamespace](/test-suite-a/testnamespace-namespace/) |  | Test Namespace |
 
 ## Function Details
 

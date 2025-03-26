@@ -17,6 +17,7 @@ import {
 	ResponseSizeMiddleware,
 } from "@fluidframework/server-services-utils";
 import { json, urlencoded } from "body-parser";
+import compression from "compression";
 import cors from "cors";
 import express, { Express } from "express";
 import nconf from "nconf";
@@ -50,6 +51,7 @@ export function create(
 	if (loggerFormat === "json") {
 		const enableResponseCloseLatencyMetric =
 			store.get("enableResponseCloseLatencyMetric") ?? false;
+		const enableEventLoopLagMetric = store.get("enableEventLoopLagMetric") ?? false;
 		app.use(
 			jsonMorganLoggerMiddleware(
 				"gitrest",
@@ -75,6 +77,7 @@ export function create(
 					return additionalProperties;
 				},
 				enableResponseCloseLatencyMetric,
+				enableEventLoopLagMetric,
 			),
 		);
 	} else {
@@ -82,6 +85,7 @@ export function create(
 	}
 
 	const requestSize = store.get("requestSizeLimit");
+	app.use(compression());
 	app.use(json({ limit: requestSize }));
 	app.use(urlencoded({ limit: requestSize, extended: false }));
 

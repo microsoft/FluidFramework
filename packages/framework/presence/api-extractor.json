@@ -4,9 +4,9 @@
 	"messages": {
 		"extractorMessageReporting": {
 			// api-extractor does not appear able to resolve self references such as
-			// @fluidframework/presence/internal/core-interfaces without using
-			// the corresponding .ts file. Suppress until core-interfaces section is
-			// properly homed.
+			// @fluidframework/presence/internal/exposedInternalTypes without using
+			// the corresponding .ts file. Suppress until there is better mechanism
+			// to fully hide internal types.
 			"ae-wrong-input-file-type": {
 				"logLevel": "none"
 			}

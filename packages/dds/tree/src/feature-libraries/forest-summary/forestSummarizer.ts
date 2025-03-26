@@ -7,7 +7,6 @@ import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type {
-	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
@@ -26,7 +25,6 @@ import {
 	applyDelta,
 	forEachField,
 	makeDetachedFieldIndex,
-	mapCursorField,
 } from "../../core/index.js";
 import type {
 	Summarizable,
@@ -35,7 +33,7 @@ import type {
 } from "../../shared-tree-core/index.js";
 import { idAllocatorFromMaxId } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { chunkField, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
+import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
 import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
 
 import { type ForestCodec, makeForestSummarizerCodec } from "./codec.js";
@@ -114,16 +112,6 @@ export class ForestSummarizer implements Summarizable {
 		return createSingleBlobSummary(treeBlobKey, this.getTreeString(stringify));
 	}
 
-	public getGCData(fullGC?: boolean): IGarbageCollectionData {
-		// TODO: Properly implement garbage collection. Right now, garbage collection is performed automatically
-		// by the code in SharedObject (from which SharedTreeCore extends). The `runtime.uploadBlob` API delegates
-		// to the `BlobManager`, which automatically populates the summary with ISummaryAttachment entries for each
-		// blob.
-		return {
-			gcNodes: {},
-		};
-	}
-
 	public async load(
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
@@ -138,19 +126,16 @@ export class ForestSummarizer implements Summarizable {
 			const fieldChanges: [FieldKey, DeltaFieldChanges][] = [];
 			const build: DeltaDetachedNodeBuild[] = [];
 			for (const [fieldKey, field] of fields) {
-				const chunked = chunkField(field, {
+				const chunked = chunkFieldSingle(field, {
 					policy: defaultChunkPolicy,
 					idCompressor: this.idCompressor,
 				});
-				const nodeCursors = chunked.flatMap((chunk) =>
-					mapCursorField(chunk.cursor(), (cursor) => cursor.fork()),
-				);
-				const buildId = { minor: allocator.allocate(nodeCursors.length) };
+				const buildId = { minor: allocator.allocate(chunked.topLevelLength) };
 				build.push({
 					id: buildId,
-					trees: nodeCursors,
+					trees: chunked,
 				});
-				fieldChanges.push([fieldKey, [{ count: nodeCursors.length, attach: buildId }]]);
+				fieldChanges.push([fieldKey, [{ count: chunked.topLevelLength, attach: buildId }]]);
 			}
 
 			assert(this.forest.isEmpty, 0x797 /* forest must be empty */);

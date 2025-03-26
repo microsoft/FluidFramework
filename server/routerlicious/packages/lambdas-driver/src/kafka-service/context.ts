@@ -49,6 +49,10 @@ export class Context extends EventEmitter implements IContext {
 	 * @param errorData - Additional information about the error
 	 */
 	public error(error: any, errorData: IContextErrorData) {
+		if (this.closed) {
+			Lumberjack.info("Context already closed, not emitting error");
+			return;
+		}
 		Lumberjack.verbose("Emitting error from context");
 		this.emit("error", error, errorData);
 	}

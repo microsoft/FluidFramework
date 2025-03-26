@@ -201,9 +201,13 @@ export function isolatedFieldChangeRebaser<TChangeset>(data: {
 
 export interface FieldEditor<TChangeset> {
 	/**
-	 * Creates a changeset which represents the given `change` to the child at `childIndex` of this editor's field.
+	 * Creates a changeset which represents the given changes to the children of this editor's field.
+	 * For each element in the given iterable
+	 * - The number represents the index of the child node in the field.
+	 * - The `NodeId` represents the nested changes for that child node.
+	 * Note: The indices in the iterable must be ordered from smallest to largest (with no duplicates).
 	 */
-	buildChildChange(childIndex: number, change: NodeId): TChangeset;
+	buildChildChanges(changes: Iterable<[index: number, change: NodeId]>): TChangeset;
 }
 
 /**

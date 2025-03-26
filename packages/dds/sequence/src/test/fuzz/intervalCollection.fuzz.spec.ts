@@ -3,22 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import { createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import {
-	baseModel,
-	defaultFuzzOptions,
-	defaultIntervalOperationGenerationConfig,
-	makeIntervalOperationGenerator,
-} from "./fuzzUtils.js";
-
-const baseIntervalModel = {
-	...baseModel,
-	generatorFactory: () =>
-		takeAsync(100, makeIntervalOperationGenerator(defaultIntervalOperationGenerationConfig)),
-};
+import { defaultFuzzOptions, baseIntervalModel } from "./fuzzUtils.js";
 
 describe("IntervalCollection fuzz testing", () => {
 	const model = {

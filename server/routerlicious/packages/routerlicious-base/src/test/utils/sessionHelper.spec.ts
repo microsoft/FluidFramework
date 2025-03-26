@@ -22,7 +22,7 @@ describe("sessionHelper", () => {
 				sinon.createStubInstance<IDocumentRepository>(MongoDocumentRepository);
 		});
 
-		it("should retry on initial failure and succeed on subsequent calls", async () => {
+		it("should retry on transilient replication sync and succeed on subsequent calls", async () => {
 			const ordererUrl = "ordererUrl";
 			const historianUrl = "historianUrl";
 			const deltaStreamUrl = "deltaStreamUrl";
@@ -61,7 +61,7 @@ describe("sessionHelper", () => {
 			assert.ok(session);
 		});
 
-		it("should throw an error if all retries fail", async () => {
+		it("should throw an error if documents not found after retry", async () => {
 			const ordererUrl = "ordererUrl";
 			const historianUrl = "historianUrl";
 			const deltaStreamUrl = "deltaStreamUrl";

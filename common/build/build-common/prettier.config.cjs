@@ -16,13 +16,6 @@ module.exports = {
 	useTabs: true,
 	overrides: [
 		{
-			files: "lerna.json",
-			options: {
-				printWidth: 50,
-				tabWidth: 2,
-			},
-		},
-		{
 			// Some JSON files are only ever used by JSON5-aware tools
 			files: ["tsconfig*.json", ".vscode/*.json"],
 			options: {

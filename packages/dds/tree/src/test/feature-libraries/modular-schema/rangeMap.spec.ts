@@ -5,10 +5,18 @@
 
 import { strict as assert } from "node:assert";
 
-import { newIntegerRangeMap, type RangeMap } from "../../../util/index.js";
+import { newIntegerRangeMap, RangeMap } from "../../../util/index.js";
 
 function newRangeMap(): RangeMap<number, string> {
 	return newIntegerRangeMap<string>();
+}
+
+function newValueOffsetRangeMap(): RangeMap<number, number> {
+	return new RangeMap(
+		(key, offset) => key + offset,
+		(a, b) => a - b,
+		(value: number, offset: number) => value + offset,
+	);
 }
 
 describe("RangeMap", () => {
@@ -237,5 +245,24 @@ describe("RangeMap", () => {
 				{ start: 7, length: 1, value: "a" },
 			]);
 		});
+	});
+
+	it("read with value offsets", () => {
+		const map = newValueOffsetRangeMap();
+		map.set(3, 8, 13);
+
+		{
+			const { value, length } = map.getFirst(8, 4);
+			assert.equal(value, 18);
+			assert.equal(length, 3);
+		}
+
+		map.delete(5, 2);
+
+		{
+			const { value, length } = map.getFirst(7, 5);
+			assert.equal(value, 17);
+			assert.equal(length, 4);
+		}
 	});
 });

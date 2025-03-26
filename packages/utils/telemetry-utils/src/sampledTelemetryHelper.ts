@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "@fluid-internal/client-utils";
+import { performanceNow } from "@fluid-internal/client-utils";
 import type { IDisposable, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
@@ -192,9 +192,9 @@ export class SampledTelemetryHelper<
 		codeToMeasure: () => MeasureReturnType<TMeasureReturn, TCustomMetrics>,
 		bucket: string = "",
 	): MeasureReturnType<TMeasureReturn, TCustomMetrics> {
-		const start = performance.now();
+		const start = performanceNow();
 		const returnValue = codeToMeasure();
-		const duration = performance.now() - start;
+		const duration = performanceNow() - start;
 
 		let loggerData = this.measurementsMap.get(bucket);
 		if (loggerData === undefined) {

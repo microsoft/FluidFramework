@@ -14,7 +14,8 @@ import { stub } from "sinon";
 import { SharingLinkHeader } from "../contractsPublic.js";
 import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest.js";
 import { createOdspUrl } from "../createOdspUrl.js";
-import * as fileLinkImport from "../getFileLink.js";
+import { getFileLink } from "../getFileLink.js";
+import { mockify } from "../mockify.js";
 import { OdspDriverUrlResolverForShareLink } from "../odspDriverUrlResolverForShareLink.js";
 import {
 	getLocatorFromOdspUrl,
@@ -80,7 +81,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 		response: Promise<string>,
 		callback: () => Promise<T>,
 	): Promise<T> {
-		const getFileLinkStub = stub(fileLinkImport, "getFileLink");
+		const getFileLinkStub = stub(getFileLink, mockify.key);
 		getFileLinkStub.returns(response);
 		try {
 			return await callback();

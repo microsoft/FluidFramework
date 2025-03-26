@@ -24,7 +24,6 @@ import {
 
 import { IThrottler } from "../throttler.js";
 
-// eslint-disable-next-line import/no-deprecated
 import { Summarizer } from "./summarizer.js";
 import { ISummarizerClientElection } from "./summarizerClientElection.js";
 import {
@@ -285,7 +284,6 @@ export class SummaryManager
 					// which would happen when we have a high enough number of unsummarized ops.
 					if (
 						startWithInitialDelay ||
-						// eslint-disable-next-line import/no-deprecated
 						!Summarizer.stopReasonCanRunLastSummary(shouldSummarizeState.stopReason)
 					) {
 						this.state = SummaryManagerState.Starting;
@@ -408,7 +406,7 @@ export class SummaryManager
 		}
 
 		if (delayMs > 0) {
-			let timer;
+			let timer: number | undefined;
 			let resolveOpPromiseFn: (value: void | PromiseLike<void>) => void;
 			// Create a listener that will break the delay if we've exceeded the initial delay ops count.
 			const opsListenerFn = (): void => {
@@ -466,11 +464,11 @@ export class SummaryManager
 			"summarizerStart",
 			"summarizerStartupFailed",
 		]) {
-			const listener = (...args: any[]): void => {
+			const listener = (...args: unknown[]): void => {
 				this.emit(event, ...args);
 			};
 			// TODO: better typing here
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
 			this.summarizer?.on(event as any, listener);
 			this.forwardedEvents.set(event, listener);
 		}
@@ -478,7 +476,7 @@ export class SummaryManager
 
 	private cleanupForwardedEvents(): void {
 		for (const [event, listener] of this.forwardedEvents.entries()) {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
 			this.summarizer?.off(event as any, listener);
 		}
 		this.forwardedEvents.clear();

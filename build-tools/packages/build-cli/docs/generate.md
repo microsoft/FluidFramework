@@ -77,7 +77,7 @@ _See code: [src/commands/generate/assertTags.ts](https://github.com/microsoft/Fl
 
 ## `flub generate buildVersion`
 
-This command is used to compute the version number of Fluid packages. The release version number is based on what's in the lerna.json/package.json. The CI pipeline will supply the build number and branch to determine the prerelease suffix if it is not a tagged build
+This command is used to compute the version number of Fluid packages. The release version number is based on what's in the release group root package.json. The CI pipeline will supply the build number and branch to determine the prerelease suffix if it is not a tagged build.
 
 ```
 USAGE
@@ -86,8 +86,7 @@ USAGE
 
 FLAGS
   -i, --includeInternalVersions=<value>  Include Fluid internal versions.
-      --base=<value>                     The base version. This will be read from lerna.json/package.json if not
-                                         provided.
+      --base=<value>                     The base version. This will be read from package.json if not provided.
       --build=<value>                    (required) The CI build number.
       --packageTypes=<option>            [default: none] If provided, the version generated will include extra strings
                                          based on the TypeScript types that are expected to be used. This flag should
@@ -106,8 +105,8 @@ LOGGING FLAGS
 
 DESCRIPTION
   This command is used to compute the version number of Fluid packages. The release version number is based on what's in
-  the lerna.json/package.json. The CI pipeline will supply the build number and branch to determine the prerelease
-  suffix if it is not a tagged build
+  the release group root package.json. The CI pipeline will supply the build number and branch to determine the
+  prerelease suffix if it is not a tagged build.
 
 EXAMPLES
   $ flub generate buildVersion

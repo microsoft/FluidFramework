@@ -17,7 +17,6 @@ import { BuildGraph } from "./buildGraph";
 import { FluidRepo } from "./fluidRepo";
 import { getFluidBuildConfig } from "./fluidUtils";
 import { NpmDepChecker } from "./npmDepChecker";
-import { ISymlinkOptions, symlinkPackage } from "./symlinkUtils";
 import { globFn } from "./tasks/taskUtils";
 
 const traceInit = registerDebug("fluid-build:init");
@@ -117,22 +116,7 @@ export class FluidRepoBuild extends FluidRepo {
 		}
 	}
 
-	/**
-	 * @deprecated symlink-related functionality will be removed in an upcoming release.
-	 */
-	public async symlink(options: ISymlinkOptions) {
-		// Only do parallel if we are checking only
-		const result = await this.packages.forEachAsync(
-			(pkg) => symlinkPackage(this, pkg, this.createPackageMap(), options),
-			!options.symlink,
-		);
-		return Packages.clean(
-			result.filter((entry) => entry.count).map((entry) => entry.pkg),
-			true,
-		);
-	}
-
-	public createBuildGraph(options: ISymlinkOptions, buildTargetNames: string[]) {
+	public createBuildGraph(buildTargetNames: string[]) {
 		return new BuildGraph(
 			this.createPackageMap(),
 			this.getReleaseGroupPackages(),
@@ -141,7 +125,7 @@ export class FluidRepoBuild extends FluidRepo {
 			getFluidBuildConfig(this.resolvedRoot)?.tasks,
 			(pkg: Package) => {
 				return (dep: Package) => {
-					return options.fullSymlink || MonoRepo.isSame(pkg.monoRepo, dep.monoRepo);
+					return MonoRepo.isSame(pkg.monoRepo, dep.monoRepo);
 				};
 			},
 		);

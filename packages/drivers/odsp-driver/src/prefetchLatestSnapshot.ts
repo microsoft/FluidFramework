@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "@fluid-internal/client-utils";
+import { performanceNow } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
@@ -127,7 +127,7 @@ export async function prefetchLatestSnapshot(
 		odspLogger,
 		{ eventName: "PrefetchLatestSnapshot" },
 		async () => {
-			const prefetchStartTime = performance.now();
+			const prefetchStartTime = performanceNow();
 			// Add the deferred promise to the cache, so that it can be leveraged while loading the container.
 			const snapshotContentsWithEpochP = new Deferred<IPrefetchSnapshotContents>();
 			const nonPersistentCacheKey = getKeyForCacheEntry(snapshotKey);

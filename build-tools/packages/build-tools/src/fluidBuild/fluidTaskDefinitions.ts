@@ -4,13 +4,28 @@
  */
 
 import { PackageJson } from "../common/npmPackage";
+import { isConcurrentlyCommand, parseConcurrentlyCommand } from "./parseCommands";
 
 /**
  * Task definitions (type `TaskDefinitions`) is an object describing build tasks for fluid-build.
  * Task names are represented as property name on the object and the value the task configuration
  * (type `TaskConfig`). Task configuration can a plain array of string, presenting the task's
  * dependencies or a full description (type `TaskConfigFull`).
- *
+ */
+export interface TaskDefinitions {
+	readonly [name: string]: TaskConfig;
+}
+
+/**
+ * Task Name is a simple string that is normally a script name in the package.json.
+ */
+type TaskName = string;
+
+type AnyTaskName = "*";
+
+type PackageName = string;
+
+/**
  * Task Dependencies Expansion:
  * When specify task dependencies, the following syntax is supported:
  * - "<name>": another task within the package
@@ -22,14 +37,21 @@ import { PackageJson } from "../common/npmPackage";
  * - "<package>#<name>": specific dependent package's task
  * - "...": expand to the dependencies in global fluidBuild config (default is override)
  */
+type TaskDependency =
+	| TaskName
+	| AnyTaskName
+	| `^${TaskName | AnyTaskName}`
+	| `${PackageName}#${TaskName | AnyTaskName}`
+	| "...";
 
-export type TaskDependencies = string[];
+export type TaskDependencies = readonly TaskDependency[];
+
 export interface TaskConfig {
 	/**
 	 * Task dependencies as a plain string array. Matched task will be scheduled to run before the current task.
 	 * The strings specify dependencies for the task. See Task Dependencies Expansion above for details.
 	 */
-	dependsOn: TaskDependencies;
+	readonly dependsOn: TaskDependencies;
 
 	/**
 	 * Tasks that needs to run before the current task (example clean). See Task Dependencies Expansion above for
@@ -39,7 +61,17 @@ export interface TaskConfig {
 	 * Notes 'before' is disallowed for non-script tasks since it has no effect on non-script tasks as they has no
 	 * action to perform.
 	 */
-	before: TaskDependencies;
+	readonly before: TaskDependencies;
+
+	/**
+	 * Tasks that this task includes. The children tasks will be scheduled to
+	 * run under the current task. Thus any tasks that depend on this will
+	 * satisfy a requirement of dependency on the children tasks.
+	 *
+	 * This should not be custom specified but derived from definition.
+	 */
+	readonly children: readonly TaskName[];
+
 	/**
 	 * Tasks that needs to run after the current task (example copy tasks). See Task Dependencies Expansion above for
 	 * details. As compared to "dependsOn", "after" is a weak dependency. It will only affect ordering if matched task is already
@@ -48,7 +80,7 @@ export interface TaskConfig {
 	 * Notes 'after' is disallowed for non-script tasks since it has no effect on non-script tasks as they has no
 	 * action to perform.
 	 */
-	after: TaskDependencies;
+	readonly after: TaskDependencies;
 
 	/**
 	 * Specify whether this is a script task or not. Default to true when this is omitted
@@ -60,33 +92,47 @@ export interface TaskConfig {
 	 * If false, the task will only trigger the dependencies (and not look for the script in package.json).
 	 * It can be used as an alias to a group of tasks.
 	 */
-	script: boolean;
+	readonly script: boolean;
 }
 
-export interface TaskDefinitions {
-	[name: string]: TaskConfig;
+/**
+ * Inverse of Readonly, make all fields mutable.
+ */
+type Mutable<T> = { -readonly [P in keyof T]: T[P] };
+
+type MutableTaskConfig = Mutable<TaskConfig>;
+interface MutableTaskDefinitions {
+	[name: TaskName]: MutableTaskConfig;
 }
 
 // On file versions that allow fields to be omitted
-export type TaskConfigOnDisk = TaskDependencies | Partial<TaskConfig>;
+export type TaskConfigOnDisk = TaskDependencies | Omit<Partial<TaskConfig>, "children">;
 export interface TaskDefinitionsOnDisk {
-	[name: string]: TaskConfigOnDisk;
+	readonly [name: TaskName]: TaskConfigOnDisk;
 }
+
+const isTaskDependencies = (value: TaskConfigOnDisk): value is TaskDependencies => {
+	return Array.isArray(value);
+};
+
+const makeClonedOrEmptyArray = <T>(value: readonly T[] | undefined): T[] =>
+	value ? [...value] : [];
 
 /**
  * Convert and fill out default values from TaskConfigOnDisk to TaskConfig in memory
  * @param config TaskConfig info loaded from a file
  * @returns TaskConfig filled out with default values
  */
-function getFullTaskConfig(config: TaskConfigOnDisk): TaskConfig {
-	if (Array.isArray(config)) {
-		return { dependsOn: config, script: true, before: [], after: [] };
+function getFullTaskConfig(config: TaskConfigOnDisk): MutableTaskConfig {
+	if (isTaskDependencies(config)) {
+		return { dependsOn: [...config], script: true, before: [], children: [], after: [] };
 	} else {
 		return {
-			dependsOn: config.dependsOn ?? [],
+			dependsOn: makeClonedOrEmptyArray(config.dependsOn),
 			script: config.script ?? true,
-			before: config.before ?? [],
-			after: config.after ?? [],
+			before: makeClonedOrEmptyArray(config.before),
+			children: [],
+			after: makeClonedOrEmptyArray(config.after),
 		};
 	}
 }
@@ -107,14 +153,14 @@ export const defaultCleanTaskName = "clean";
 //   subtasks that has no name inherit the dependency. (where as normally, all subtask does)
 //	 (i.e. isDefault: true)
 
-export type TaskDefinition = TaskConfig & { isDefault?: boolean };
+export type TaskDefinition = TaskConfig & { readonly isDefault?: boolean };
 
 /**
  * Get the default task definition for the given task name
  * @param taskName task name
  * @returns default task definition
  */
-export function getDefaultTaskDefinition(taskName: string) {
+export function getDefaultTaskDefinition(taskName: string): TaskDefinition {
 	return taskName === defaultCleanTaskName
 		? defaultCleanTaskDefinition
 		: defaultTaskDefinition;
@@ -124,18 +170,20 @@ const defaultTaskDefinition = {
 	dependsOn: [],
 	script: true,
 	before: [],
+	children: [],
 	after: ["^*"], // TODO: include "*" so the user configured task will run first, but we need to make sure it doesn't cause circular dependency first
 	isDefault: true, // only propagate to unnamed sub tasks if it is a group task
-};
+} as const satisfies TaskDefinition;
 const defaultCleanTaskDefinition = {
 	dependsOn: [],
 	script: true,
 	before: ["*"], // clean are ran before all the tasks, add a week dependency.
+	children: [],
 	after: [],
-};
+} as const satisfies TaskDefinition;
 
 const detectInvalid = (
-	config: string[],
+	config: readonly string[],
 	isInvalid: (value: string) => boolean,
 	name: string,
 	kind: string,
@@ -155,7 +203,7 @@ export function normalizeGlobalTaskDefinitions(
 	globalTaskDefinitionsOnDisk: TaskDefinitionsOnDisk | undefined,
 ): TaskDefinitions {
 	// Normalize all on disk config to full config and validate
-	const taskDefinitions: TaskDefinitions = {};
+	const taskDefinitions: MutableTaskDefinitions = {};
 	if (globalTaskDefinitionsOnDisk) {
 		for (const name in globalTaskDefinitionsOnDisk) {
 			const full = getFullTaskConfig(globalTaskDefinitionsOnDisk[name]);
@@ -193,7 +241,7 @@ export function normalizeGlobalTaskDefinitions(
 	return taskDefinitions;
 }
 
-function expandDotDotDot(config: string[], inherited: string[]) {
+function expandDotDotDot(config: readonly string[], inherited: readonly string[]) {
 	const expanded = config.filter((value) => value !== "...");
 	if (inherited !== undefined && expanded.length !== config.length) {
 		return expanded.concat(inherited);
@@ -202,39 +250,84 @@ function expandDotDotDot(config: string[], inherited: string[]) {
 }
 
 /**
+ * Extracts the all of the directly called scripts from a command line.
+ * @param script - command line to parse
+ * @param allScriptNames - all the script names in the package.json
+ * @returns elements of script that are other scripts
+ */
+function getDirectlyCalledScripts(script: string, allScriptNames: string[]): string[] {
+	const directlyCalledScripts: string[] = [];
+	const commands = script.split("&&");
+	for (const step of commands) {
+		const commandLine = step.trim();
+		if (isConcurrentlyCommand(commandLine)) {
+			parseConcurrentlyCommand(
+				commandLine,
+				allScriptNames,
+				(scriptName) => {
+					directlyCalledScripts.push(scriptName);
+				},
+				() => {},
+			);
+		} else if (commandLine.startsWith("npm run ")) {
+			const scriptName = commandLine.substring("npm run ".length);
+			if (scriptName.includes(" ")) {
+				// If the "script name" has a space, it is a "direct" call, but probably
+				// has additional arguments that change exact execution of the script
+				// and therefore is excluded as a "direct" call.
+			} else if (allScriptNames.includes(scriptName)) {
+				directlyCalledScripts.push(scriptName);
+			} else {
+				// This may not be relevant to the calling context, but there aren't
+				// any known reasons why this should be preserved; so raise as an error.
+				throw new Error(
+					`Script '${scriptName}' not found processing command line: '${script}'`,
+				);
+			}
+		}
+	}
+	return directlyCalledScripts;
+}
+
+/**
  * Combine and fill in default values for task definitions for a package.
- * @param json package.json content for the package
- * @param root root for the Fluid repo
+ * @param json - package.json content for the package
+ * @param globalTaskDefinitions - global task definitions
+ * @param isReleaseGroupRoot - whether the package is the root of a release group
  * @returns full task definitions for the package.
  */
 export function getTaskDefinitions(
 	json: PackageJson,
 	globalTaskDefinitions: TaskDefinitions,
-	isReleaseGroupRoot: boolean,
-) {
+	{ isReleaseGroupRoot }: { isReleaseGroupRoot: boolean },
+): TaskDefinitions {
+	const packageScripts = json.scripts ?? {};
 	const packageTaskDefinitions = json.fluidBuild?.tasks;
-	const taskDefinitions: TaskDefinitions = {};
+	const taskDefinitions: MutableTaskDefinitions = {};
+
+	const globalAllow = (value) =>
+		value.startsWith("^") ||
+		(globalTaskDefinitions[value] !== undefined && !globalTaskDefinitions[value].script) ||
+		packageScripts[value] !== undefined;
+	const globalAllowExpansionsStar = (value) => value === "*" || globalAllow(value);
 
 	// Initialize from global TaskDefinition, and filter out script tasks if the package doesn't have the script
 	for (const name in globalTaskDefinitions) {
 		const globalTaskDefinition = globalTaskDefinitions[name];
-		if (globalTaskDefinition.script && json.scripts?.[name] === undefined) {
+		if (globalTaskDefinition.script && packageScripts[name] === undefined) {
 			// Skip script tasks if the package doesn't have the script
 			continue;
 		}
-		taskDefinitions[name] = { ...globalTaskDefinition };
-	}
-	const globalAllow = (value) =>
-		value.startsWith("^") ||
-		taskDefinitions[value] !== undefined ||
-		json.scripts?.[value] !== undefined;
-	const globalAllowExpansionsStar = (value) => value === "*" || globalAllow(value);
-	// Only keep task or script references that exists
-	for (const name in taskDefinitions) {
-		const taskDefinition = taskDefinitions[name];
-		taskDefinition.dependsOn = taskDefinition.dependsOn.filter(globalAllow);
-		taskDefinition.before = taskDefinition.before.filter(globalAllowExpansionsStar);
-		taskDefinition.after = taskDefinition.after.filter(globalAllowExpansionsStar);
+		// Only keep task or script references that exist
+		// and make array clones in the process.
+		taskDefinitions[name] = {
+			dependsOn: globalTaskDefinition.dependsOn.filter(globalAllow),
+			script: globalTaskDefinition.script,
+			before: globalTaskDefinition.before.filter(globalAllowExpansionsStar),
+			// `children` are not inherited from the global task definitions (which should always be empty anyway)
+			children: [],
+			after: globalTaskDefinition.after.filter(globalAllowExpansionsStar),
+		};
 	}
 
 	// Override from the package.json, and resolve "..." to the global dependencies if any
@@ -243,7 +336,7 @@ export function getTaskDefinitions(
 			const packageTaskDefinition = packageTaskDefinitions[name];
 			const full = getFullTaskConfig(packageTaskDefinition);
 			if (full.script) {
-				const script = json.scripts?.[name];
+				const script = packageScripts[name];
 				if (script === undefined) {
 					throw new Error(`Script not found for task definition '${name}'`);
 				} else if (script.startsWith("fluid-build ")) {
@@ -265,7 +358,7 @@ export function getTaskDefinitions(
 		}
 	}
 
-	// Check to make sure all the dependencies either is an target or script
+	// Check to make sure all the dependencies either is a target or script.
 	// For release group root, the default for any task is to run all the tasks in the group
 	// even if there is not task definition or script for it.
 	if (!isReleaseGroupRoot) {
@@ -284,5 +377,38 @@ export function getTaskDefinitions(
 			detectInvalid(taskDefinition.after, invalidAfter, name, "after", false);
 		}
 	}
+
+	// Add `children` task definitions for the package.json scripts
+	const allScriptNames = Object.keys(packageScripts);
+	for (const [name, script] of Object.entries(packageScripts)) {
+		const directlyCalledScripts = getDirectlyCalledScripts(
+			// `undefined` is not a possible JSON result.
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			script!,
+			allScriptNames,
+		);
+		if (directlyCalledScripts.length > 0) {
+			// Add a task definition for the script if there isn't one already.
+			const taskDefinition = taskDefinitions[name];
+			if (taskDefinition === undefined) {
+				taskDefinitions[name] = {
+					dependsOn: [],
+					before: [],
+					children: directlyCalledScripts,
+					after: [],
+					script: true,
+				};
+			} else {
+				// Confirm `children` is not specified in the manual task specifications
+				if (taskDefinition.children.length > 0) {
+					throw new Error(
+						`'children' is not expected in manual task definition for '${name}'`,
+					);
+				}
+				taskDefinition.children = directlyCalledScripts;
+			}
+		}
+	}
+
 	return taskDefinitions;
 }

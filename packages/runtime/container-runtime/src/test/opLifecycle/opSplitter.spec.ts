@@ -358,7 +358,10 @@ describe("OpSplitter", () => {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				const lastChunk = JSON.parse(result.messages[0].contents!).contents as IChunkedOp;
 				assert.equal(lastChunk.chunkId, lastChunk.totalChunks);
-				assert.deepStrictEqual(result.messages.slice(1), new Array(3).fill(emptyMessage));
+				assert.deepStrictEqual(
+					result.messages.slice(1),
+					Array.from({ length: 3 }).fill(emptyMessage),
+				);
 				assert.equal(
 					!extraOp ||
 						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access

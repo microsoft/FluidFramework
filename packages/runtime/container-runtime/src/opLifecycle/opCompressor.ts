@@ -34,13 +34,14 @@ export class OpCompressor {
 	 * Combines the contents of the batch into a single JSON string and compresses it, putting
 	 * the resulting string as the first message of the batch. The rest of the messages are
 	 * empty placeholders to reserve sequence numbers.
+	 * This should only take a single message batch and compress it.
 	 * @param batch - The batch to compress
 	 * @returns A batch of the same length as the input batch, containing a single compressed message followed by empty placeholders
 	 */
-	public compressBatch(batch: IBatch): IBatch {
+	public compressBatch(batch: IBatch): IBatch<[BatchMessage]> {
 		assert(
-			batch.contentSizeInBytes > 0 && batch.messages.length > 0,
-			0x5a4 /* Batch should not be empty */,
+			batch.contentSizeInBytes > 0 && batch.messages.length === 1,
+			0x5a4 /* Batch should not be empty and should contain a single message */,
 		);
 
 		const compressionStart = Date.now();
@@ -49,24 +50,16 @@ export class OpCompressor {
 		const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
 		const duration = Date.now() - compressionStart;
 
-		const messages: BatchMessage[] = [];
-		messages.push({
-			...batch.messages[0],
-			contents: JSON.stringify({ packedContents: compressedContent }),
-			metadata: batch.messages[0].metadata,
-			compression: CompressionAlgorithms.lz4,
-		});
+		const messages: [BatchMessage] = [
+			{
+				...batch.messages[0],
+				contents: JSON.stringify({ packedContents: compressedContent }),
+				metadata: batch.messages[0].metadata,
+				compression: CompressionAlgorithms.lz4,
+			},
+		];
 
-		// Add empty placeholder messages to reserve the sequence numbers
-		for (const message of batch.messages.slice(1)) {
-			messages.push({
-				localOpMetadata: message.localOpMetadata,
-				metadata: message.metadata,
-				referenceSequenceNumber: message.referenceSequenceNumber,
-			});
-		}
-
-		const compressedBatch: IBatch = {
+		const compressedBatch = {
 			contentSizeInBytes: compressedContent.length,
 			messages,
 			referenceSequenceNumber: batch.referenceSequenceNumber,

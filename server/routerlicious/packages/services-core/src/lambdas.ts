@@ -106,6 +106,11 @@ export interface IContext {
 	 * Resumes the context
 	 */
 	resume(): void;
+
+	/**
+	 * Sets the last successfully processed offset.
+	 */
+	setLastSuccessfulOffset?(offset: number): void;
 }
 
 /**

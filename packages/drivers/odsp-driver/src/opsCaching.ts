@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "@fluid-internal/client-utils";
+import { performanceNow } from "@fluid-internal/client-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 // ISequencedDocumentMessage
@@ -183,11 +183,11 @@ export class OpsCache {
 	 * @returns ops retrieved
 	 */
 	public async get(from: number, to?: number): Promise<IMessage[]> {
-		const start = performance.now();
+		const start = performanceNow();
 
 		const messages = await this.getCore(from, to);
 
-		const duration = performance.now() - start;
+		const duration = performanceNow() - start;
 		if (messages.length > 0 || duration > 1000) {
 			this.logger.sendPerformanceEvent({
 				eventName: "CacheOpsUsed",

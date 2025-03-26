@@ -496,6 +496,7 @@ export interface OrderedEditSet<TChange = unknown> {
     getIdAtIndex(index: number): EditId;
     // (undocumented)
     getIndexOfId(editId: EditId): number;
+    getLocalEdits(): Iterable<Edit<TChange>>;
     readonly length: number;
     // @deprecated (undocumented)
     tryGetEdit(editId: EditId): Promise<Edit<TChange> | undefined>;
@@ -689,6 +690,9 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 export type SharedTreeArgs<WF extends WriteFormat = WriteFormat> = [writeFormat: WF, options?: SharedTreeOptions<WF>];
 
 // @alpha
+export const SharedTreeAttributes: IChannelAttributes;
+
+// @alpha
 export interface SharedTreeBaseOptions {
     editEvictionFrequency?: number;
     inMemoryHistorySize?: number;
@@ -710,6 +714,9 @@ export class SharedTreeFactory implements IChannelFactory {
     static Type: string;
     get type(): string;
 }
+
+// @alpha
+export const SharedTreeFactoryType = "SharedTree";
 
 // @alpha
 export type SharedTreeOptions<WF extends WriteFormat, HistoryCompatibility extends 'Forwards' | 'None' = 'Forwards'> = SharedTreeBaseOptions & Omit<WF extends WriteFormat.v0_0_2 ? SharedTreeOptions_0_0_2 : WF extends WriteFormat.v0_1_1 ? SharedTreeOptions_0_1_1 : never, HistoryCompatibility extends 'Forwards' ? 'summarizeHistory' : never>;

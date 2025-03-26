@@ -61,7 +61,13 @@
 			"rdkafkaMaxConsumerCommitRetries": 10
 		},
 		"customRestartOnKafkaErrorCodes": [-195, -192, -187, -185, -181, 14],
-		"seekTimeoutAfterPause": 1000
+		"seekTimeoutAfterPause": 1000,
+		"apiCounterEnabled": false,
+		"apiCounterIntervalMS": 60000,
+		"apiFailureRateTerminationThreshold": 2,
+		"apiMinimumCountToEnableTermination": 20,
+		"consecutiveFailedThresholdForLowerTotalRequests": 3,
+		"ignoreAndSkipCheckpointOnKafkaErrorCodes": [-185]
 	},
 	"zookeeper": {
 		"endpoint": "zookeeper:2181"
@@ -123,7 +129,8 @@
 		},
 		"getDeltasRequestMaxOpsRange": 2000,
 		"useNodeCluster": false,
-		"enableLatencyMetric": false
+		"enableLatencyMetric": false,
+		"enableEventLoopLagMetric": false
 	},
 	"riddler": {
 		"useNodeCluster": false
@@ -165,7 +172,8 @@
 		"socketIo": {
 			"perMessageDeflate": false,
 			"gracefulShutdownEnabled": false,
-			"pingPongLatencyTrackingEnabled": false
+			"pingPongLatencyTrackingEnabled": false,
+			"pingPongLatencyTrackingAggregationThreshold": 3
 		},
 		"jwtTokenCache": {
 			"enable": true
@@ -275,13 +283,15 @@
 		"opsCountTelemetryEnabled": true,
 		"circuitBreakerEnabled": false,
 		"circuitBreakerOptions": {
-			"errorThresholdPercentage": 0.001,
-			"resetTimeout": 30000,
-			"timeout": false,
-			"rollingCountTimeout": 1000,
-			"rollingCountBuckets": 1000,
-			"fallbackToRestartTimeoutMs": 180000,
-			"filterOnErrors": []
+			"database": {
+				"errorThresholdPercentage": 0.001,
+				"resetTimeout": 10000,
+				"timeout": false,
+				"rollingCountTimeout": 1000,
+				"rollingCountBuckets": 1000,
+				"fallbackToRestartTimeoutMs": 60000,
+				"filterOnErrors": []
+			}
 		}
 	},
 	"copier": {

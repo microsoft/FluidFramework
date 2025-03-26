@@ -8,16 +8,18 @@ import {
 	bufferToString,
 	stringToBuffer,
 } from "@fluid-internal/client-utils";
-import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions/internal";
-import {
+import type {
+	IEvent,
+	IEventProvider,
 	IFluidHandleContext,
-	type IFluidHandleInternal,
+	IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
-import { assert, Deferred, LazyPromise } from "@fluidframework/core-utils/internal";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentStorageService,
 	ICreateBlobResponse,
@@ -36,7 +38,6 @@ import {
 	responseToException,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	GenericError,
 	LoggingError,
 	MonitoringContext,
 	PerformanceEvent,
@@ -51,7 +52,6 @@ import {
 	getStorageIds,
 	summarizeBlobManagerState,
 	toRedirectTable,
-	// eslint-disable-next-line import/no-deprecated
 	type IBlobManagerLoadInfo,
 } from "./blobManagerSnapSum.js";
 
@@ -119,7 +119,7 @@ interface PendingBlob {
 }
 
 export interface IPendingBlobs {
-	[id: string]: {
+	[localId: string]: {
 		blob: string;
 		storageId?: string;
 		uploadTime?: number;
@@ -128,8 +128,12 @@ export interface IPendingBlobs {
 	};
 }
 
-export interface IBlobManagerEvents {
+export interface IBlobManagerEvents extends IEvent {
 	(event: "noPendingBlobs", listener: () => void);
+}
+
+interface IBlobManagerInternalEvents extends IEvent {
+	(event: "blobAttached", listener: (pending: PendingBlob) => void);
 }
 
 const stashedPendingBlobOverrides: Pick<
@@ -144,11 +148,17 @@ const stashedPendingBlobOverrides: Pick<
 
 export const blobManagerBasePath = "_blobs" as const;
 
-export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
+export class BlobManager {
 	private readonly mc: MonitoringContext;
 
+	private readonly publicEvents = new TypedEventEmitter<IBlobManagerEvents>();
+	public get events(): IEventProvider<IBlobManagerEvents> {
+		return this.publicEvents;
+	}
+	private readonly internalEvents = new TypedEventEmitter<IBlobManagerInternalEvents>();
+
 	/**
-	 * Map of local IDs to storage IDs. Contains identity entries (id → id) for storage IDs. All requested IDs should
+	 * Map of local IDs to storage IDs. Contains identity entries (storageId → storageId) for storage IDs. All requested IDs should
 	 * be a key in this map. Blobs created while the container is detached are stored in IDetachedBlobStorage which
 	 * gives local IDs; the storage IDs are filled in at attach time.
 	 * Note: It contains mappings from all clients, i.e., from remote clients as well. local ID comes from the client
@@ -172,7 +182,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private stopAttaching: boolean = false;
 
 	private readonly routeContext: IFluidHandleContext;
-	private readonly getStorage: () => IDocumentStorageService;
+	private readonly storage: IDocumentStorageService;
 	// Called when a blob node is requested. blobPath is the path of the blob's node in GC's graph.
 	// blobPath's format - `/<basePath>/<blobId>`.
 	private readonly blobRequested: (blobPath: string) => void;
@@ -180,7 +190,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	// blobPath's format - `/<basePath>/<blobId>`.
 	private readonly isBlobDeleted: (blobPath: string) => boolean;
 	private readonly runtime: IBlobManagerRuntime;
-	private readonly closeContainer: (error?: ICriticalContainerError) => void;
 	private readonly localBlobIdGenerator: () => string;
 	private readonly pendingStashedBlobs: Map<string, Promise<ICreateBlobResponse | void>> =
 		new Map();
@@ -188,9 +197,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	constructor(props: {
 		readonly routeContext: IFluidHandleContext;
-		// eslint-disable-next-line import/no-deprecated
-		snapshot: IBlobManagerLoadInfo;
-		readonly getStorage: () => IDocumentStorageService;
+
+		blobManagerLoadInfo: IBlobManagerLoadInfo;
+		readonly storage: IDocumentStorageService;
 		/**
 		 * Submit a BlobAttach op. When a blob is uploaded, there is a short grace period before which the blob is
 		 * deleted. The BlobAttach op notifies the server that blob is in use. The server will then not delete the
@@ -210,28 +219,24 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		readonly isBlobDeleted: (blobPath: string) => boolean;
 		readonly runtime: IBlobManagerRuntime;
 		stashedBlobs: IPendingBlobs | undefined;
-		readonly closeContainer: (error?: ICriticalContainerError) => void;
 		readonly localBlobIdGenerator?: (() => string) | undefined;
 	}) {
-		super();
 		const {
 			routeContext,
-			snapshot,
-			getStorage,
+			blobManagerLoadInfo,
+			storage,
 			sendBlobAttachOp,
 			blobRequested,
 			isBlobDeleted,
 			runtime,
 			stashedBlobs,
-			closeContainer,
 			localBlobIdGenerator,
 		} = props;
 		this.routeContext = routeContext;
-		this.getStorage = getStorage;
+		this.storage = storage;
 		this.blobRequested = blobRequested;
 		this.isBlobDeleted = isBlobDeleted;
 		this.runtime = runtime;
-		this.closeContainer = closeContainer;
 		this.localBlobIdGenerator = localBlobIdGenerator ?? uuid;
 
 		this.mc = createChildMonitoringContext({
@@ -239,7 +244,11 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			namespace: "BlobManager",
 		});
 
-		this.redirectTable = toRedirectTable(snapshot, this.mc.logger, this.runtime.attachState);
+		this.redirectTable = toRedirectTable(
+			blobManagerLoadInfo,
+			this.mc.logger,
+			this.runtime.attachState,
+		);
 
 		// Begin uploading stashed blobs from previous container instance
 		for (const [localId, entry] of Object.entries(stashedBlobs ?? {})) {
@@ -273,13 +282,11 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			});
 		}
 
-		this.stashedBlobsUploadP = new LazyPromise(async () =>
-			PerformanceEvent.timedExecAsync(
-				this.mc.logger,
-				{ eventName: "BlobUploadProcessStashedChanges", count: this.pendingStashedBlobs.size },
-				async () => Promise.all(this.pendingStashedBlobs.values()),
-				{ start: true, end: true },
-			),
+		this.stashedBlobsUploadP = PerformanceEvent.timedExecAsync(
+			this.mc.logger,
+			{ eventName: "BlobUploadProcessStashedChanges", count: this.pendingStashedBlobs.size },
+			async () => Promise.all(this.pendingStashedBlobs.values()),
+			{ start: true, end: true },
 		).finally(() => {
 			this.pendingStashedBlobs.clear();
 		});
@@ -300,23 +307,25 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					expired,
 				});
 				if (expired) {
-					// we want to avoid submitting ops with broken handles
-					this.closeContainer(
-						new GenericError("Trying to submit a BlobAttach for expired blob", undefined, {
-							localId,
-							blobId,
-							secondsSinceUpload,
-						}),
-					);
+					// reupload blob and reset previous fields
+					this.pendingBlobs.set(localId, {
+						...pendingEntry,
+						storageId: undefined,
+						uploadTime: undefined,
+						minTTLInSeconds: undefined,
+						opsent: false,
+						uploadP: this.uploadBlob(localId, pendingEntry.blob),
+					});
+					return;
 				}
 			}
 			pendingEntry.opsent = true;
-			return sendBlobAttachOp(localId, blobId);
+			sendBlobAttachOp(localId, blobId);
 		};
 	}
 
 	public get allBlobsAttached(): boolean {
-		for (const [, entry] of this.pendingBlobs) {
+		for (const entry of this.pendingBlobs.values()) {
 			if (entry.attached === false) {
 				return false;
 			}
@@ -373,40 +382,38 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			this.mc.logger,
 			{ eventName: "AttachmentReadBlob", id: storageId },
 			async (event) => {
-				return this.getStorage()
-					.readBlob(storageId)
-					.catch((error) => {
-						if (this.runtime.disposed) {
-							// If the runtime is disposed, this is not an error we care to track, it's expected behavior.
-							event.cancel({ category: "generic" });
-						}
+				return this.storage.readBlob(storageId).catch((error) => {
+					if (this.runtime.disposed) {
+						// If the runtime is disposed, this is not an error we care to track, it's expected behavior.
+						event.cancel({ category: "generic" });
+					}
 
-						throw error;
-					});
+					throw error;
+				});
 			},
 			{ end: true, cancel: "error" },
 		);
 	}
 
-	private getBlobHandle(id: string): BlobHandle {
+	private getBlobHandle(localId: string): BlobHandle {
 		assert(
-			this.redirectTable.has(id) || this.pendingBlobs.has(id),
+			this.redirectTable.has(localId) || this.pendingBlobs.has(localId),
 			0x384 /* requesting handle for unknown blob */,
 		);
-		const pending = this.pendingBlobs.get(id);
+		const pending = this.pendingBlobs.get(localId);
 		// Create a callback function for once the blob has been attached
 		const callback = pending
 			? () => {
 					pending.attached = true;
 					// Notify listeners (e.g. serialization process) that blob has been attached
-					this.emit("blobAttached", pending);
-					this.deletePendingBlobMaybe(id);
+					this.internalEvents.emit("blobAttached", pending);
+					this.deletePendingBlobMaybe(localId);
 				}
 			: undefined;
 		return new BlobHandle(
-			getGCNodePathFromBlobId(id),
+			getGCNodePathFromBlobId(localId),
 			this.routeContext,
-			async () => this.getBlob(id),
+			async () => this.getBlob(localId),
 			callback,
 		);
 	}
@@ -416,7 +423,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		// Blobs created while the container is detached are stored in IDetachedBlobStorage.
 		// The 'IDocumentStorageService.createBlob()' call below will respond with a localId.
-		const response = await this.getStorage().createBlob(blob);
+		const response = await this.storage.createBlob(blob);
 		this.setRedirection(response.id, undefined);
 		return this.getBlobHandle(response.id);
 	}
@@ -475,7 +482,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		return runWithRetry(
 			async () => {
 				try {
-					return await this.getStorage().createBlob(blob);
+					return await this.storage.createBlob(blob);
 				} catch (error) {
 					const entry = this.pendingBlobs.get(localId);
 					assert(
@@ -523,18 +530,18 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		this.redirectTable.set(fromId, toId);
 	}
 
-	private deletePendingBlobMaybe(id: string): void {
-		if (this.pendingBlobs.has(id)) {
-			const entry = this.pendingBlobs.get(id);
+	private deletePendingBlobMaybe(localId: string): void {
+		if (this.pendingBlobs.has(localId)) {
+			const entry = this.pendingBlobs.get(localId);
 			if (entry?.attached && entry?.acked) {
-				this.deletePendingBlob(id);
+				this.deletePendingBlob(localId);
 			}
 		}
 	}
 
 	private deletePendingBlob(id: string): void {
 		if (this.pendingBlobs.delete(id) && !this.hasPendingBlobs) {
-			this.emit("noPendingBlobs");
+			this.publicEvents.emit("noPendingBlobs");
 		}
 	}
 
@@ -836,7 +843,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				// This while is used to stash blobs created while attaching and getting blobs
 				while (localBlobs.size < this.pendingBlobs.size) {
 					const attachBlobsP: Promise<void>[] = [];
-					for (const [id, entry] of this.pendingBlobs) {
+					for (const [localId, entry] of this.pendingBlobs) {
 						if (!localBlobs.has(entry)) {
 							localBlobs.add(entry);
 							// In order to follow natural blob creation flow we need to:
@@ -844,12 +851,12 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 							// 2 resolve the blob handle
 							// 3 wait for op referencing the blob
 							if (!entry.opsent) {
-								this.sendBlobAttachOp(id, entry.storageId);
+								this.sendBlobAttachOp(localId, entry.storageId);
 							}
 							// Resolving the blob handle to let hosts continue with their operations (it will resolve
 							// original createBlob call) and let them attach the blob. This is a lie we told since the upload
 							// hasn't finished yet, but it's fine since we will retry on rehydration.
-							entry.handleP.resolve(this.getBlobHandle(id));
+							entry.handleP.resolve(this.getBlobHandle(localId));
 							// Array of promises that will resolve when blobs get attached.
 							attachBlobsP.push(
 								new Promise<void>((resolve, reject) => {
@@ -861,16 +868,16 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 										},
 										{ once: true },
 									);
-									const onBlobAttached = (attachedEntry): void => {
+									const onBlobAttached = (attachedEntry: PendingBlob): void => {
 										if (attachedEntry === entry) {
-											this.off("blobAttached", onBlobAttached);
+											this.internalEvents.off("blobAttached", onBlobAttached);
 											resolve();
 										}
 									};
-									if (!entry.attached) {
-										this.on("blobAttached", onBlobAttached);
-									} else {
+									if (entry.attached) {
 										resolve();
+									} else {
+										this.internalEvents.on("blobAttached", onBlobAttached);
 									}
 								}),
 							);
@@ -878,21 +885,19 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					}
 					// Wait for all blobs to be attached. This is important, otherwise serialized container
 					// could send the blobAttach op without any op that references the blob, making it useless.
-					await Promise.allSettled(attachBlobsP).catch(() => {
-						return undefined;
-					});
+					await Promise.allSettled(attachBlobsP);
 				}
 
-				for (const [id, entry] of this.pendingBlobs) {
+				for (const [localId, entry] of this.pendingBlobs) {
 					if (stopBlobAttachingSignal?.aborted && !entry.attached) {
 						this.mc.logger.sendTelemetryEvent({
 							eventName: "UnableToStashBlob",
-							id,
+							id: localId,
 						});
 						continue;
 					}
 					assert(entry.attached === true, 0x790 /* stashed blob should be attached */);
-					blobs[id] = {
+					blobs[localId] = {
 						blob: bufferToString(entry.blob, "base64"),
 						storageId: entry.storageId,
 						acked: entry.acked,
@@ -929,7 +934,7 @@ const getBlobIdFromGCNodePath = (nodePath: string): string => {
 export const isBlobPath = (path: string): path is `/${typeof blobManagerBasePath}/${string}` =>
 	areBlobPathParts(path.split("/"));
 
-export const areBlobPathParts = (
+const areBlobPathParts = (
 	pathParts: string[],
 ): pathParts is ["", typeof blobManagerBasePath, string] =>
 	pathParts.length === 3 && pathParts[1] === blobManagerBasePath;

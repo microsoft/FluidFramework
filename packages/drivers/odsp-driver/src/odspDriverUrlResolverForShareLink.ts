@@ -73,6 +73,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 	 * navigates directly to the link.
 	 * @param getContext - callback function which is used to get context for given resolved url. If context
 	 * is returned then it will be embedded into url returned by getAbsoluteUrl() method.
+	 * @param containerPackageInfo - container package information which will be used to extract the container package name.
 	 */
 	public constructor(
 		shareLinkFetcherProps?: ShareLinkFetcherProps | undefined,
@@ -82,6 +83,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 			resolvedUrl: IOdspResolvedUrl,
 			dataStorePath: string,
 		) => Promise<string | undefined>,
+		private readonly containerPackageInfo?: IContainerPackageInfo,
 	) {
 		this.logger = createOdspLogger(logger);
 		if (shareLinkFetcherProps) {
@@ -154,6 +156,10 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 		);
 
 		odspResolvedUrl.appName = this.appName;
+
+		odspResolvedUrl.codeHint = odspResolvedUrl.codeHint?.containerPackageName
+			? odspResolvedUrl.codeHint
+			: { containerPackageName: getContainerPackageName(this.containerPackageInfo) };
 
 		if (isSharingLinkToRedeem) {
 			// We need to remove the nav param if set by host when setting the sharelink as otherwise the shareLinkId
@@ -255,9 +261,16 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 
 		odspResolvedUrl.context = await this.getContext?.(odspResolvedUrl, actualDataStorePath);
 
+		/**
+		 * containerPackageName can be provided by various ways, in the order of priority:
+		 * 1. packageInfoSource - passed by the call of appendLocatorParams
+		 * 2. odspResolvedUrl.codeHint?.containerPackageName - passed by the odsp-driver's resolvedURL object
+		 * 3. this.containerPackageInfo - passed by the constructor of OdspDrvierUrlResolverForShareLink
+		 * */
 		const containerPackageName: string | undefined =
 			getContainerPackageName(packageInfoSource) ??
-			odspResolvedUrl.codeHint?.containerPackageName;
+			odspResolvedUrl.codeHint?.containerPackageName ??
+			getContainerPackageName(this.containerPackageInfo);
 
 		odspResolvedUrl.appName = this.appName;
 

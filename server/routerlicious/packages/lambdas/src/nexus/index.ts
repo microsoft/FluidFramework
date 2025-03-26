@@ -418,6 +418,11 @@ export function configureWebSocketServices(
 									const maxMessageSize =
 										connection.serviceConfiguration.maxMessageSize;
 									if (messageSize > maxMessageSize) {
+										Lumberjack.error("Op size too large", {
+											...lumberjackProperties,
+											messageSize,
+											maxMessageSize,
+										});
 										// Exit early from processing message batch
 										throw new NetworkError(413, "Op size too large");
 									}

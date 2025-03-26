@@ -14,6 +14,7 @@ import {
 import { getRequestErrorTranslator, getTokenLifetimeInSec } from "../utils";
 import { ITenantService } from "./definitions";
 import { RedisTenantCache } from "./redisTenantCache";
+import { logHttpMetrics } from "@fluidframework/server-services-utils";
 
 export class RiddlerService implements ITenantService, ITenantConfigManager {
 	private readonly restWrapper: RestWrapper;
@@ -37,6 +38,8 @@ export class RiddlerService implements ITenantService, ITenantConfigManager {
 				getGlobalTelemetryContext().getProperties().correlationId ??
 				uuid() /* getCorrelationId */,
 			() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
+			undefined /* refreshTokenIfNeeded */,
+			logHttpMetrics,
 		);
 	}
 

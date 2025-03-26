@@ -306,8 +306,18 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 				});
 			} catch (e: any) {
 				if (e === E_TIMEOUT) {
+					Lumberjack.error(
+						"Mutex timeout when trying to run action",
+						lumberjackBaseProperties,
+						e,
+					);
 					throw new NetworkError(500, "Could not complete action due to mutex timeout.");
 				}
+				Lumberjack.error(
+					"Unknown error when trying to run action",
+					lumberjackBaseProperties,
+					e,
+				);
 				throw new NetworkError(
 					500,
 					`Unknown error when trying to run action:  ${e?.message}`,

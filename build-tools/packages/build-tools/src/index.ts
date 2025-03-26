@@ -12,8 +12,6 @@ export { MonoRepo } from "./common/monoRepo";
 export {
 	Package,
 	type PackageJson,
-	updatePackageJsonFile,
-	updatePackageJsonFileAsync,
 } from "./common/npmPackage";
 
 // For repo policy check

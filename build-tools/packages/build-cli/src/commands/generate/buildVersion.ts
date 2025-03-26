@@ -13,14 +13,14 @@ import { BaseCommand } from "../../library/index.js";
 
 /**
  * This command class is used to compute the version number of Fluid packages. The release version number is based on
- * what's in the lerna.json/package.json. The CI pipeline will supply the build number and branch to determine the
- * prerelease suffix if it is not a tagged build.
+ * what's in the release group root package.json. The CI pipeline will supply the build number and branch to determine
+ * the prerelease suffix if it is not a tagged build.
  */
 export default class GenerateBuildVersionCommand extends BaseCommand<
 	typeof GenerateBuildVersionCommand
 > {
 	static readonly description =
-		`This command is used to compute the version number of Fluid packages. The release version number is based on what's in the lerna.json/package.json. The CI pipeline will supply the build number and branch to determine the prerelease suffix if it is not a tagged build`;
+		`This command is used to compute the version number of Fluid packages. The release version number is based on what's in the release group root package.json. The CI pipeline will supply the build number and branch to determine the prerelease suffix if it is not a tagged build.`;
 
 	static readonly examples = ["<%= config.bin %> <%= command.id %>"];
 
@@ -44,8 +44,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 			env: "VERSION_PATCH",
 		}),
 		base: Flags.string({
-			description:
-				"The base version. This will be read from lerna.json/package.json if not provided.",
+			description: "The base version. This will be read from package.json if not provided.",
 		}),
 		tag: Flags.string({
 			description: "The tag name to use.",
@@ -65,7 +64,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 		}),
 		fileVersion: semverFlag({
 			description:
-				"Will be used as the version instead of reading from package.json/lerna.json. Used for testing.",
+				"Will be used as the version instead of reading from package.json. Used for testing.",
 			hidden: true,
 		}),
 		tags: Flags.string({
@@ -93,7 +92,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 		if (flags.base === undefined) {
 			fileVersion = flags.fileVersion?.version ?? this.getFileVersion();
 			if (!fileVersion) {
-				this.error("Missing version in lerna.json/package.json");
+				this.error("Missing version in package.json");
 			}
 		}
 
@@ -168,13 +167,6 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 	}
 
 	private getFileVersion(): string {
-		if (fs.existsSync("./lerna.json")) {
-			return (
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				JSON.parse(fs.readFileSync("./lerna.json", { encoding: "utf8" })).version as string
-			);
-		}
-
 		if (fs.existsSync("./package.json")) {
 			return (
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -182,6 +174,6 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 			);
 		}
 
-		this.error(`lerna.json or package.json not found`);
+		this.error(`package.json not found`);
 	}
 }

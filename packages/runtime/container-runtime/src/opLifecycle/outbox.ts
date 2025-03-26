@@ -36,7 +36,6 @@ export interface IOutboxConfig {
 	readonly compressionOptions: ICompressionRuntimeOptions;
 	// The maximum size of a batch that we can send over the wire.
 	readonly maxBatchSizeInBytes: number;
-	readonly disablePartialFlush: boolean;
 }
 
 export interface IOutboxParameters {
@@ -183,9 +182,8 @@ export class Outbox {
 		const blobAttachSeqNums = this.blobAttachBatch.sequenceNumbers;
 		const idAllocSeqNums = this.idAllocationBatch.sequenceNumbers;
 		assert(
-			this.params.config.disablePartialFlush ||
-				(sequenceNumbersMatch(mainBatchSeqNums, blobAttachSeqNums) &&
-					sequenceNumbersMatch(mainBatchSeqNums, idAllocSeqNums)),
+			sequenceNumbersMatch(mainBatchSeqNums, blobAttachSeqNums) &&
+				sequenceNumbersMatch(mainBatchSeqNums, idAllocSeqNums),
 			0x58d /* Reference sequence numbers from both batches must be in sync */,
 		);
 
@@ -203,7 +201,7 @@ export class Outbox {
 		if (++this.mismatchedOpsReported <= this.maxMismatchedOpsToReport) {
 			this.logger.sendTelemetryEvent(
 				{
-					category: this.params.config.disablePartialFlush ? "error" : "generic",
+					category: "generic",
 					eventName: "ReferenceSequenceNumberMismatch",
 					mainReferenceSequenceNumber: mainBatchSeqNums.referenceSequenceNumber,
 					mainClientSequenceNumber: mainBatchSeqNums.clientSequenceNumber,
@@ -216,9 +214,7 @@ export class Outbox {
 			);
 		}
 
-		if (!this.params.config.disablePartialFlush) {
-			this.flushAll();
-		}
+		this.flushAll();
 	}
 
 	public submit(message: BatchMessage): void {
@@ -231,18 +227,6 @@ export class Outbox {
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.blobAttachBatch, message);
-
-		// If compression is enabled, we will always successfully receive
-		// blobAttach ops and compress then send them at the next JS turn, regardless
-		// of the overall size of the accumulated ops in the batch.
-		// However, it is more efficient to flush these ops faster, preferably
-		// after they reach a size which would benefit from compression.
-		if (
-			this.blobAttachBatch.contentSizeInBytes >=
-			this.params.config.compressionOptions.minimumBatchSizeInBytes
-		) {
-			this.flushInternal(this.blobAttachBatch);
-		}
 	}
 
 	public submitIdAllocation(message: BatchMessage): void {
@@ -359,9 +343,11 @@ export class Outbox {
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
 		if (this.params.shouldSend()) {
-			const processedBatch = this.compressBatch(
-				shouldGroup ? this.params.groupingManager.groupBatch(rawBatch) : rawBatch,
-			);
+			const processedBatch = disableGroupedBatching
+				? rawBatch
+				: this.compressAndChunkBatch(
+						shouldGroup ? this.params.groupingManager.groupBatch(rawBatch) : rawBatch,
+					);
 			clientSequenceNumber = this.sendBatch(processedBatch);
 			assert(
 				clientSequenceNumber === undefined || clientSequenceNumber >= 0,
@@ -422,16 +408,17 @@ export class Outbox {
 	 * @remarks - If chunking happens, a side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.
 	 *
 	 * @param batch - Raw or Grouped batch to consider for compression/chunking
-	 * @returns Either (A) the original batch, (B) a compressed batch (same length as original),
-	 * or (C) a batch containing the last chunk (plus empty placeholders from compression if applicable).
+	 * @returns Either (A) the original batch, (B) a compressed batch (same length as original)
+	 * or (C) a batch containing the last chunk.
 	 */
-	private compressBatch(batch: IBatch): IBatch {
+	private compressAndChunkBatch(batch: IBatch): IBatch {
 		if (
 			batch.messages.length === 0 ||
 			this.params.config.compressionOptions === undefined ||
 			this.params.config.compressionOptions.minimumBatchSizeInBytes >
 				batch.contentSizeInBytes ||
-			this.params.submitBatchFn === undefined
+			this.params.submitBatchFn === undefined ||
+			!this.params.groupingManager.groupedBatchingEnabled()
 		) {
 			// Nothing to do if the batch is empty or if compression is disabled or not supported, or if we don't need to compress
 			return batch;

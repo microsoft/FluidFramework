@@ -14,9 +14,9 @@ export interface TestInterface
 
 Here are some remarks about the interface
 
-## Construct Signatures
+## Constructors
 
-| ConstructSignature | Return Type | Description |
+| Constructor | Return Type | Description |
 | --- | --- | --- |
 | [new (): TestInterface](/test-suite-a/testinterface-interface#_new_-constructsignature) | [TestInterface](/test-suite-a/testinterface-interface) | Test construct signature. |
 
@@ -49,7 +49,7 @@ Here are some remarks about the interface
 | [(event: 'testCallSignature', listener: (input: unknown) =&gt; void): any](/test-suite-a/testinterface-interface#_call_-callsignature) | Test interface event call signature |
 | [(event: 'anotherTestCallSignature', listener: (input: number) =&gt; string): number](/test-suite-a/testinterface-interface#_call__1-callsignature) | Another example call signature |
 
-## Construct Signature Details
+## Constructor Details
 
 ### new (): TestInterface {#\_new\_-constructsignature}
 

@@ -13,6 +13,7 @@ import {
 } from "./gitrestTelemetryDefinitions";
 import sizeof from "object-sizeof";
 import { NetworkError } from "@fluidframework/server-services-client";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export interface IRepositoryManagerBaseOptions {
 	/**
@@ -194,6 +195,11 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
 			this.maxBlobSizeBytes > 0 &&
 			sizeof(createBlobParams.content) > this.maxBlobSizeBytes
 		) {
+			Lumberjack.error("Blob size exceeds the limit.", {
+				...this.lumberjackBaseProperties,
+				maxBlobSizeBytes: this.maxBlobSizeBytes,
+				contentSize: sizeof(createBlobParams.content),
+			});
 			throw new NetworkError(413, "Blob size exceeds the limit.");
 		}
 		return executeApiWithMetric(

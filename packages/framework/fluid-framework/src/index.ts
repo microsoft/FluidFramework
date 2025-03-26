@@ -61,6 +61,8 @@ export type {
 	Off,
 	/* eslint-enable import/export */
 } from "@fluidframework/core-interfaces";
+// This is an alpha API, but this package doesn't have an alpha entry point so its imported from "internal".
+export { onAssertionFailure } from "@fluidframework/core-utils/internal";
 
 export type { isFluidHandle } from "@fluidframework/runtime-utils";
 

@@ -24,7 +24,6 @@ import { cloneGCData, unpackChildNodesGCDetails } from "../../gc/index.js";
 
 import { SummarizerNode } from "./summarizerNode.js";
 import {
-	EscapedPath,
 	ICreateChildDetails,
 	IStartSummaryResult,
 	ISummarizerNodeRootContract,
@@ -93,7 +92,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		logger: ITelemetryBaseLogger,
 		summarizeInternalFn: SummarizeInternalFn,
 		config: ISummarizerNodeConfigWithGC,
-		_summaryHandleId: EscapedPath,
+		_summaryHandleId: string,
 		changeSequenceNumber: number,
 		/**
 		 * Summary reference sequence number, i.e. last sequence number seen when it was created
@@ -427,7 +426,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			const pendingSummaryWithGC = pendingSummary as PendingSummaryInfoWithGC;
 			if (pendingSummaryWithGC.serializedUsedRoutes !== undefined) {
 				const childNodeUsedRoutes = unpackChildNodesUsedRoutes(
-					JSON.parse(pendingSummaryWithGC.serializedUsedRoutes),
+					JSON.parse(pendingSummaryWithGC.serializedUsedRoutes) as string[],
 				);
 				const newSerializedRoutes = childNodeUsedRoutes.get(id) ?? [""];
 				const childPendingSummaryInfo = {
@@ -525,7 +524,7 @@ export const createRootSummarizerNodeWithGC = (
 		logger,
 		summarizeInternalFn,
 		config,
-		EscapedPath.create("") /* summaryHandleId */,
+		"" /* summaryHandleId */,
 		changeSequenceNumber,
 		referenceSequenceNumber,
 		undefined /* wipSummaryLogger */,

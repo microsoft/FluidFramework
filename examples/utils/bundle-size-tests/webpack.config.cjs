@@ -71,7 +71,7 @@ module.exports = {
 		aqueduct: "./src/aqueduct",
 		azureClient: "./src/azureClient",
 		connectionState: "./src/connectionState",
-		containerRuntime: "./src/containerRuntime",
+		containerRuntime: "./src/containerRuntimeBundle",
 		debugAssert: "./src/debugAssert",
 		fluidFramework: "./src/fluidFramework",
 		loader: "./src/loader",
@@ -82,6 +82,7 @@ module.exports = {
 		odspPrefetchSnapshot: "./src/odspPrefetchSnapshot",
 		sharedString: "./src/sharedString",
 		sharedTree: "./src/sharedTree",
+		sharedTreeAttributes: "./src/sharedTreeAttributes",
 	},
 	mode: "production",
 	module: {

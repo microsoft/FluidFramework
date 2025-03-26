@@ -231,24 +231,24 @@ function getOrCreateType(
 		const nodeSchema = definitionMap.get(definition) ?? fail("Unexpected definition");
 		switch (nodeSchema.kind) {
 			case NodeKind.Object: {
-				for (const [key, field] of Object.entries(nodeSchema.fields)) {
+				for (const [key, field] of nodeSchema.fields) {
 					// TODO: Remove when AI better
 					if (
 						Array.from(
-							field.allowedTypes,
+							field.allowedTypesIdentifiers,
 							(n) => definitionMap.get(n) ?? fail("Unknown definition"),
 						).some((n) => n.kind === NodeKind.Array)
 					) {
 						continue;
 					}
 					modifyFieldSet.add(key);
-					for (const type of field.allowedTypes) {
+					for (const type of field.allowedTypesIdentifiers) {
 						modifyTypeSet.add(type);
 					}
 				}
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				const properties = Object.fromEntries(
-					Object.entries(nodeSchema.fields)
+					[...nodeSchema.fields]
 						.map(([key, field]) => {
 							return [
 								key,
@@ -270,7 +270,7 @@ function getOrCreateType(
 			}
 			case NodeKind.Array: {
 				for (const [name] of Array.from(
-					nodeSchema.allowedTypes,
+					nodeSchema.allowedTypesIdentifiers,
 					(n): [string, SimpleNodeSchema] => [
 						n,
 						definitionMap.get(n) ?? fail("Unknown definition"),
@@ -287,7 +287,7 @@ function getOrCreateType(
 						insertSet,
 						modifyFieldSet,
 						modifyTypeSet,
-						nodeSchema.allowedTypes,
+						nodeSchema.allowedTypesIdentifiers,
 					),
 				);
 			}
@@ -332,7 +332,7 @@ function getOrCreateTypeForField(
 				insertSet,
 				modifyFieldSet,
 				modifyTypeSet,
-				fieldSchema.allowedTypes,
+				fieldSchema.allowedTypesIdentifiers,
 			);
 		}
 		case FieldKind.Optional: {
@@ -344,7 +344,7 @@ function getOrCreateTypeForField(
 					insertSet,
 					modifyFieldSet,
 					modifyTypeSet,
-					fieldSchema.allowedTypes,
+					fieldSchema.allowedTypesIdentifiers,
 				),
 			]);
 		}

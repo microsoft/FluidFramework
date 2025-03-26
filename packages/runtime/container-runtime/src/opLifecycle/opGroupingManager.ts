@@ -40,7 +40,6 @@ export function isGroupedBatch(op: ISequencedDocumentMessage): boolean {
 
 export interface OpGroupingManagerConfig {
 	readonly groupedBatchingEnabled: boolean;
-	readonly opCountThreshold: number;
 }
 
 export class OpGroupingManager {
@@ -102,7 +101,6 @@ export class OpGroupingManager {
 			this.logger.sendTelemetryEvent({
 				eventName: "GroupLargeBatch",
 				length: batch.messages.length,
-				threshold: this.config.opCountThreshold,
 				reentrant: batch.hasReentrantOps,
 				referenceSequenceNumber: batch.messages[0].referenceSequenceNumber,
 			});
@@ -159,10 +157,13 @@ export class OpGroupingManager {
 		return (
 			// Grouped batching must be enabled
 			this.config.groupedBatchingEnabled &&
-			// The number of ops in the batch must surpass the configured threshold
+			// The number of ops in the batch must be 2 or more
 			// or be empty (to allow for empty batches to be grouped)
-			(batch.messages.length === 0 || batch.messages.length >= this.config.opCountThreshold)
+			batch.messages.length !== 1
 			// Support for reentrant batches will be on by default
 		);
+	}
+	public groupedBatchingEnabled(): boolean {
+		return this.config.groupedBatchingEnabled;
 	}
 }

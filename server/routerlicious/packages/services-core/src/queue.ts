@@ -76,6 +76,12 @@ export interface IConsumer {
 	getLatestMessageOffset(partitionId: number): number | undefined;
 
 	/**
+	 * Returns the error codes that should be ignored and the checkpoint should be skipped
+	 * We increment counter for such errors and restart when they reach a threshold
+	 */
+	getIgnoreAndSkipCheckpointOnKafkaErrorCodes?(): number[];
+
+	/**
 	 * Event handlers
 	 */
 	on(

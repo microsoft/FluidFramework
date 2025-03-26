@@ -8,7 +8,7 @@ import {
 	IFluidHandleContext,
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, shallowCloneObject } from "@fluidframework/core-utils/internal";
 import {
 	generateHandleContextPath,
 	isSerializedHandle,
@@ -185,8 +185,7 @@ export class FluidSerializer implements IFluidSerializer {
 				// current property is replaced by the `replaced` value.
 				if (replaced !== value) {
 					// Lazily create a shallow clone of the `input` object if we haven't done so already.
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- TODO: not sure if there's a good solution
-					clone = clone ?? (Array.isArray(input) ? [...input] : { ...input });
+					clone ??= shallowCloneObject(input);
 
 					// Overwrite the current property `key` in the clone with the `replaced` value.
 					clone[key] = replaced;

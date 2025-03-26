@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "@fluid-internal/client-utils";
+import { performanceNow } from "@fluid-internal/client-utils";
 import { delay } from "@fluidframework/core-utils/internal";
 import {
 	canRetryOnError,
@@ -24,7 +24,7 @@ export async function runWithRetry<T>(
 	checkDisposed?: () => void,
 ): Promise<T> {
 	let retryAfter = 1000;
-	const start = performance.now();
+	const start = performanceNow();
 	let lastError: unknown;
 	for (let attempts = 1; ; attempts++) {
 		if (checkDisposed !== undefined) {
@@ -38,7 +38,7 @@ export async function runWithRetry<T>(
 						eventName: "MultipleRetries",
 						callName,
 						attempts,
-						duration: performance.now() - start,
+						duration: performanceNow() - start,
 					},
 					lastError,
 				);
@@ -62,7 +62,7 @@ export async function runWithRetry<T>(
 						eventName: `${callName}_firstFailed`,
 						callName,
 						attempts,
-						duration: performance.now() - start, // record total wait time.
+						duration: performanceNow() - start, // record total wait time.
 					},
 					error,
 				);
@@ -86,7 +86,7 @@ export async function runWithRetry<T>(
 							: "ServiceReadonlyErrorTooManyRetries",
 						callName,
 						attempts,
-						duration: performance.now() - start, // record total wait time.
+						duration: performanceNow() - start, // record total wait time.
 					},
 					error,
 				);

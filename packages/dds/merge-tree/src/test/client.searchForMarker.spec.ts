@@ -15,7 +15,6 @@ import { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
 import { createClientsAtInitialState } from "./testClientLogger.js";
-import { insertSegments } from "./testUtils.js";
 
 describe("TestClient", () => {
 	const localUserLongId = "localUser";
@@ -23,15 +22,13 @@ describe("TestClient", () => {
 
 	beforeEach(() => {
 		client = new TestClient();
-		insertSegments({
-			mergeTree: client.mergeTree,
-			pos: 0,
-			segments: [TextSegment.make("")],
-			refSeq: UniversalSequenceNumber,
-			clientId: client.getClientId(),
-			seq: UniversalSequenceNumber,
-			opArgs: undefined,
-		});
+		client.mergeTree.insertSegments(
+			0,
+			[TextSegment.make("")],
+			client.mergeTree.localPerspective,
+			client.mergeTree.collabWindow.mintNextLocalOperationStamp(),
+			undefined,
+		);
 		client.startOrUpdateCollaboration(localUserLongId);
 	});
 
@@ -419,10 +416,7 @@ describe("TestClient", () => {
 
 			client.removeRangeLocal(0, 1);
 
-			client.rollback?.(
-				{ type: MergeTreeDeltaType.REMOVE },
-				client.peekPendingSegmentGroups(),
-			);
+			client.rollback({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
 
 			const marker = client.searchForMarker(0, "Eop", true);
 
@@ -444,10 +438,7 @@ describe("TestClient", () => {
 				[reservedTileLabelsKey]: ["Eop"],
 			});
 
-			client.rollback?.(
-				{ type: MergeTreeDeltaType.INSERT },
-				client.peekPendingSegmentGroups(),
-			);
+			client.rollback({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
 
 			const marker = client.searchForMarker(0, "Eop", true);
 
@@ -626,15 +617,13 @@ describe("TestClient", () => {
 			let client2: TestClient;
 			beforeEach(() => {
 				client2 = new TestClient();
-				insertSegments({
-					mergeTree: client2.mergeTree,
-					pos: 0,
-					segments: [TextSegment.make("")],
-					refSeq: UniversalSequenceNumber,
-					clientId: client2.getClientId(),
-					seq: UniversalSequenceNumber,
-					opArgs: undefined,
-				});
+				client2.mergeTree.insertSegments(
+					0,
+					[TextSegment.make("")],
+					client2.mergeTree.localPerspective,
+					client2.mergeTree.collabWindow.mintNextLocalOperationStamp(),
+					undefined,
+				);
 				client2.startOrUpdateCollaboration(remoteUserLongId);
 			});
 
@@ -677,7 +666,7 @@ describe("TestClient", () => {
 						[reservedMarkerIdKey]: "marker",
 						[reservedTileLabelsKey]: ["Eop"],
 					}),
-					seq,
+					++seq,
 				);
 				client.applyMsg(textMsg);
 				client2.applyMsg(textMsg);
@@ -687,7 +676,7 @@ describe("TestClient", () => {
 				assert.equal(client.getLength(), 4, "length not expected - client");
 				assert.equal(client2.getLength(), 4, "length not expected - client 2");
 
-				const mRemoveMsg = client2.makeOpMessage(client2.removeRangeLocal(0, 1), seq);
+				const mRemoveMsg = client2.makeOpMessage(client2.removeRangeLocal(0, 1), ++seq);
 				client.applyMsg(mRemoveMsg);
 				client2.applyMsg(mRemoveMsg);
 

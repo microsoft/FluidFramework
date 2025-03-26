@@ -231,13 +231,25 @@ describe("GenericField", () => {
 		);
 	});
 
-	it("build child change", () => {
-		const change0 = genericChangeHandler.editor.buildChildChange(0, nodeId1);
-		const change1 = genericChangeHandler.editor.buildChildChange(1, nodeId2);
-		const change2 = genericChangeHandler.editor.buildChildChange(2, nodeId3);
-		assert.deepEqual(change0, newGenericChangeset([[0, nodeId1]]));
-		assert.deepEqual(change1, newGenericChangeset([[1, nodeId2]]));
-		assert.deepEqual(change2, newGenericChangeset([[2, nodeId3]]));
+	it("build empty child change", () => {
+		const change0 = genericChangeHandler.editor.buildChildChanges([]);
+		assert.deepEqual(change0, newGenericChangeset([]));
+	});
+
+	it("build child changes", () => {
+		const change0 = genericChangeHandler.editor.buildChildChanges([
+			[0, nodeId1],
+			[1, nodeId2],
+			[2, nodeId3],
+		]);
+		assert.deepEqual(
+			change0,
+			newGenericChangeset([
+				[0, nodeId1],
+				[1, nodeId2],
+				[2, nodeId3],
+			]),
+		);
 	});
 
 	it("relevantRemovedRoots", () => {

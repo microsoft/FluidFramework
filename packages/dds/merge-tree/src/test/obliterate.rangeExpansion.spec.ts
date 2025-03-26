@@ -9,16 +9,8 @@ import { Side } from "../sequencePlace.js";
 
 import { ReconnectTestHelper } from "./reconnectHelper.js";
 
-function itCorrectlyObliterates({
-	title,
-	action,
-	expectedText,
-}: {
-	title: string;
-	action: (helper: ReconnectTestHelper) => void;
-	expectedText: string;
-}): Mocha.Test {
-	return it(title, () => {
+function createObliterateTestBody({ action, expectedText }: ObliterateTestArgs): () => void {
+	return () => {
 		const events: number[] = [];
 
 		const helper = new ReconnectTestHelper({
@@ -31,19 +23,26 @@ function itCorrectlyObliterates({
 		helper.processAllOps();
 
 		helper.logger.validate({ baseText: expectedText });
-	});
+	};
 }
-itCorrectlyObliterates.skip = ({
-	title,
-}: {
+
+interface ObliterateTestArgs {
 	title: string;
 	action: (helper: ReconnectTestHelper) => void;
 	expectedText: string;
-}) => it.skip(title, () => {});
+}
+
+function itCorrectlyObliterates(args: ObliterateTestArgs): Mocha.Test {
+	return it(args.title, createObliterateTestBody(args));
+}
+itCorrectlyObliterates.skip = (args: ObliterateTestArgs) =>
+	it.skip(args.title, createObliterateTestBody(args));
+itCorrectlyObliterates.only = (args: ObliterateTestArgs) =>
+	it.only(args.title, createObliterateTestBody(args));
 
 describe("obliterate", () => {
 	itCorrectlyObliterates({
-		title: "obliterate adjacent insert",
+		title: "Obliterate adjacent insert",
 		action: (helper) => {
 			helper.insertText("A", 0, "|ABC>");
 			helper.processAllOps();
@@ -57,6 +56,23 @@ describe("obliterate", () => {
 		expectedText: "|BBB>",
 	});
 	itCorrectlyObliterates({
+		title: "Obliterate adjacent insert followed by obliterate",
+		action: (helper) => {
+			helper.insertText("A", 0, "0xx12345678");
+			helper.processAllOps();
+			helper.obliterateRange("A", { pos: 0, side: Side.After }, { pos: 2, side: Side.After });
+			helper.obliterateRange("B", { pos: 0, side: Side.After }, { pos: 2, side: Side.After });
+			// B won the obliterate, so this segment should be obliterated on insertion
+			helper.insertText("A", 1, "AAAAAAAAAA");
+			// Nonetheless, all clients should recognize that subsequent ops from A won't have realized this (until A's refSeq advances beyond
+			// acking B's obliterate). At one point this caused 0xa3f because other clients didn't realize that the positions here still assume
+			// existence of the 'AAAAAAAAAA' segment.
+			helper.obliterateRange("A", { pos: 6, side: Side.After }, { pos: 15, side: Side.After });
+			helper.processAllOps();
+		},
+		expectedText: "0678",
+	});
+	itCorrectlyObliterates({
 		title: "does not obliterate non-adjacent insert",
 		action: (helper) => {
 			helper.insertText("A", 0, "hello world");
@@ -67,6 +83,64 @@ describe("obliterate", () => {
 		},
 		expectedText: "XYZhe world",
 	});
+	describe("removes prior insert from same client", () => {
+		itCorrectlyObliterates({
+			title: "when the insert is unacked",
+			action: (helper) => {
+				helper.insertText("A", 0, "ABC");
+				helper.obliterateRange(
+					"A",
+					{ pos: 0, side: Side.After },
+					{ pos: 2, side: Side.Before },
+				);
+			},
+			expectedText: "AC",
+		});
+		itCorrectlyObliterates({
+			title: "when the insert is acked",
+			action: (helper) => {
+				helper.insertText("A", 0, "ABC");
+				helper.processAllOps();
+				helper.obliterateRange(
+					"A",
+					{ pos: 0, side: Side.After },
+					{ pos: 2, side: Side.Before },
+				);
+			},
+			expectedText: "AC",
+		});
+	});
+
+	describe("does not remove subsequent insert from the same client", () => {
+		itCorrectlyObliterates({
+			title: "when the obliterate is unacked",
+			action: (helper) => {
+				helper.insertText("A", 0, "ABC");
+				helper.obliterateRange(
+					"A",
+					{ pos: 0, side: Side.After },
+					{ pos: 2, side: Side.Before },
+				);
+				helper.insertText("A", 1, "D");
+			},
+			expectedText: "ADC",
+		});
+		itCorrectlyObliterates({
+			title: "when the obliterate is unacked",
+			action: (helper) => {
+				helper.insertText("A", 0, "ABC");
+				helper.obliterateRange(
+					"A",
+					{ pos: 0, side: Side.After },
+					{ pos: 2, side: Side.Before },
+				);
+				helper.processAllOps();
+				helper.insertText("A", 1, "D");
+			},
+			expectedText: "ADC",
+		});
+	});
+
 	itCorrectlyObliterates({
 		title: "obliterate, then insert at the end of the string",
 		action: (helper) => {
@@ -258,6 +332,22 @@ describe("overlapping edits", () => {
 			helper.obliterateRange("B", { pos: 3, side: Side.After }, { pos: 6, side: Side.After });
 		},
 		expectedText: "heorld",
+	});
+
+	// This test is somewhat arbitrary: it's a minimized fuzz test failure that ended up root-causing to an issue
+	// in SortedSegmentSet (local references were not compared correctly when put at various offsets). We also have
+	// more direct unit tests for that, but this is a good sanity check and adds some extra verification for concurrent obliterates.
+	itCorrectlyObliterates({
+		title: "overlapping obliterates with third client inserting",
+		action: (helper) => {
+			helper.insertText("A", 0, "0123456789");
+			helper.processAllOps();
+			helper.obliterateRange("A", { pos: 7, side: Side.After }, { pos: 8, side: Side.After });
+			helper.obliterateRange("C", { pos: 1, side: Side.Before }, { pos: 8, side: Side.After });
+			helper.insertText("B", 5, "V");
+			helper.processAllOps();
+		},
+		expectedText: "09",
 	});
 });
 

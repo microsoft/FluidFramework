@@ -149,6 +149,10 @@ export class GitWholeSummaryManager {
 				);
 				return writeSummaryInfo;
 			}
+			Lumberjack.error("Unknown summary type encountered", {
+				...lumberjackProperties,
+				summaryType: payload.type,
+			});
 			throw new NetworkError(400, `Unknown Summary Type: ${payload.type}`);
 		} catch (error: any) {
 			writeSummaryMetric.error("GitWholeSummaryManager failed to write summary", error);

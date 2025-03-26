@@ -105,7 +105,9 @@ const change2PreChange1: TaggedChange<OptionalChangeset> = tagChangeInline(
 );
 
 const change4: TaggedChange<OptionalChangeset> = tagChangeInline(
-	optionalFieldEditor.buildChildChange(0, TestNodeId.create(nodeId2, TestChange.mint([1], 2))),
+	optionalFieldEditor.buildChildChanges([
+		[0, TestNodeId.create(nodeId2, TestChange.mint([1], 2))],
+	]),
 	mintRevisionTag(),
 );
 
@@ -513,7 +515,7 @@ describe("optionalField", () => {
 			it("can rebase a child change over a remove and revive of target node", () => {
 				const tag1 = mintRevisionTag();
 				const tag2 = mintRevisionTag();
-				const changeToRebase = optionalFieldEditor.buildChildChange(0, nodeId1);
+				const changeToRebase = optionalFieldEditor.buildChildChanges([[0, nodeId1]]);
 				const deletion = tagChange(
 					optionalFieldEditor.clear(false, { localId: brand(1), revision: tag1 }),
 					tag1,
@@ -565,7 +567,7 @@ describe("optionalField", () => {
 			});
 
 			it("can rebase a child change over a reserved detach on empty field", () => {
-				const changeToRebase = optionalFieldEditor.buildChildChange(0, nodeId1);
+				const changeToRebase = optionalFieldEditor.buildChildChanges([[0, nodeId1]]);
 				deepFreeze(changeToRebase);
 				const clear = tagChange(
 					optionalFieldEditor.clear(true, { localId: brand(42), revision: tag }),
@@ -596,7 +598,7 @@ describe("optionalField", () => {
 			});
 
 			it("can rebase a child change over a reserved detach on field with a pinned node", () => {
-				const changeToRebase = optionalFieldEditor.buildChildChange(0, nodeId1);
+				const changeToRebase = optionalFieldEditor.buildChildChanges([[0, nodeId1]]);
 				deepFreeze(changeToRebase);
 				const pin = tagChangeInline(Change.pin(brand(42)), tag);
 
@@ -734,7 +736,7 @@ describe("optionalField", () => {
 		);
 		const childChangeTag = mintRevisionTag();
 		const hasChildChanges = tagChange(
-			optionalFieldEditor.buildChildChange(0, { ...nodeId1, revision: childChangeTag }),
+			optionalFieldEditor.buildChildChanges([[0, { ...nodeId1, revision: childChangeTag }]]),
 			childChangeTag,
 		);
 		const relevantNestedTree = { minor: 4242 };

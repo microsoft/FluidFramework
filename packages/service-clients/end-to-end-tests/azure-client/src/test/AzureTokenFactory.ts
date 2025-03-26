@@ -4,7 +4,7 @@
  */
 
 import { ITokenProvider } from "@fluidframework/azure-client";
-import { type ScopeType } from "@fluidframework/azure-client/internal";
+import type { ScopeType } from "@fluidframework/driver-definitions/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 
 export function createAzureTokenProvider(

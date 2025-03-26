@@ -27,7 +27,10 @@ import {
 import type { DocumentNode, SectionNode } from "../documentation-domain/index.js";
 import { getApiItemKind } from "../utilities/index.js";
 
-import { doesItemRequireOwnDocument, shouldItemBeIncluded } from "./ApiItemTransformUtilities.js";
+import {
+	doesItemRequireOwnDocument,
+	shouldItemBeIncluded,
+} from "./ApiItemTransformUtilities.js";
 import { createDocument } from "./Utilities.js";
 import type { ApiItemTransformationConfiguration } from "./configuration/index.js";
 import { createBreadcrumbParagraph, wrapInSection } from "./helpers/index.js";
@@ -239,7 +242,11 @@ export function apiItemToSections(
 		}
 
 		case ApiItemKind.TypeAlias: {
-			sections = transformations[ApiItemKind.TypeAlias](apiItem as ApiTypeAlias, config);
+			sections = transformations[ApiItemKind.TypeAlias](
+				apiItem as ApiTypeAlias,
+				config,
+				transformChildren,
+			);
 			break;
 		}
 

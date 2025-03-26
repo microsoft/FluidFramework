@@ -33,7 +33,8 @@ function includeTransform(content, options, config) {
 	const { path: relativeFilePath, start: startLineString, end: endLineString } = options;
 	const { originalPath: documentFilePath } = config;
 
-	const startLine = startLineString === undefined ? undefined : Number.parseInt(startLineString);
+	const startLine =
+		startLineString === undefined ? undefined : Number.parseInt(startLineString);
 	const endLine = endLineString === undefined ? undefined : Number.parseInt(endLineString);
 
 	if (!relativeFilePath) {

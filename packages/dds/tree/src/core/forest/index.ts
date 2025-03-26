@@ -9,7 +9,6 @@ export {
 	type TreeLocation,
 	isFieldLocation,
 	type ForestLocation,
-	initializeForest,
 } from "./editableForest.js";
 export {
 	type IForestSubscription,

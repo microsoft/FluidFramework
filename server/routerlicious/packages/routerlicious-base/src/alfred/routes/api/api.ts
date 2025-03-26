@@ -21,6 +21,7 @@ import {
 	getBooleanFromConfig,
 	verifyToken,
 	verifyStorageToken,
+	logHttpMetrics,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import {
@@ -152,12 +153,12 @@ export function create(
 			// TODO: why is this contacting external blob storage?
 			const externalHistorianUrl = config.get("worker:blobStorageUrl") as string;
 			const requestToken = fromUtf8ToBase64(tenantId);
-			const uri = `${externalHistorianUrl}/repos/${tenantId}/git/blobs?token=${requestToken}`;
+			const uri = `/repos/${tenantId}/git/blobs?token=${requestToken}`;
 			const requestBody: git.ICreateBlobParams = {
 				content: blobData.content,
 				encoding: "base64",
 			};
-			uploadBlob(uri, requestBody)
+			uploadBlob(externalHistorianUrl, uri, requestBody)
 				.then((data: git.ICreateBlobResponse) => {
 					response.status(200).json(data);
 				})
@@ -368,11 +369,12 @@ async function checkDocumentExistence(
 }
 
 const uploadBlob = async (
+	baseUrl: string,
 	uri: string,
 	blobData: git.ICreateBlobParams,
 ): Promise<git.ICreateBlobResponse> => {
 	const restWrapper = new BasicRestWrapper(
-		undefined,
+		baseUrl,
 		undefined,
 		undefined,
 		undefined,
@@ -384,6 +386,8 @@ const uploadBlob = async (
 			getGlobalTelemetryContext().getProperties().correlationId ??
 			uuid() /* getCorrelationId */,
 		() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
+		undefined /* refreshTokenIfNeeded */,
+		logHttpMetrics /* logHttpMetrics */,
 	);
 	return restWrapper.post(uri, blobData, undefined, {
 		"Content-Type": "application/json",

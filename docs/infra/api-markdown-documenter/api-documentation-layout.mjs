@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
+//@ts-check
+/** @typedef {import("@fluid-tools/api-markdown-documenter").ApiItem} ApiItem */
+/** @typedef {import("@fluid-tools/api-markdown-documenter").ApiItemTransformationConfiguration} ApiItemTransformationConfiguration */
+/** @typedef {import("@fluid-tools/api-markdown-documenter").DocumentationNode} DocumentationNode */
+
 import {
+	ApiItemKind,
 	ApiItemUtilities,
 	CodeSpanNode,
 	HeadingNode,
@@ -33,52 +39,71 @@ const supportDocsLinkSpan = new SpanNode([
 ]);
 
 /**
- * Creates a special import notice for the provided API item, if one is appropriate.
+ * Creates a special support notice for the provided API item, if one is appropriate.
  *
- * If the item is tagged as "@legacy", displays a legacy notice with import instructions.
- * Otherwise, if the item is `@alpha` or `@beta`, displays the appropriate warning and import instructions.
+ * If the item is tagged as "@legacy", displays a legacy notice.
+ * Otherwise, if the item is `@alpha` or `@beta`, displays the appropriate warning.
+ *
+ * In either case, import instructions will also be created, but only if the item is importable by the end-user (`isImportable`).
  *
  * @privateRemarks
  * If we later wish to differentiate between release tags of `@legacy` items, this function will need
  * to be updated.
+ *
+ * @param {ApiItem} apiItem - The API item for which the import notice is being created.
+ * @param {boolean} isImportable - Whether or not the item can be imported by the end user.
+ *
  */
-function createImportNotice(apiItem) {
-	const packageName = apiItem.getAssociatedPackage().displayName;
+function createSupportNotice(apiItem, isImportable) {
+	const containingPackage = apiItem.getAssociatedPackage();
+	if (containingPackage === undefined) {
+		throw new Error("API item does not have an associated package.");
+	}
+	const packageName = containingPackage.displayName;
 
-	function createImportAdmonition(importSubpath, admonitionTitle) {
-		return new AdmonitionNode(
-			[
+	/**
+	 * @param {string} importSubpath - Subpath beneath the item's package through which the item can be imported.
+	 * @param {string} admonitionTitle - Title to display for the admonition.
+	 */
+	function createAdmonition(importSubpath, admonitionTitle) {
+		/** @type {DocumentationNode[]} */
+		const admonitionChildren = [];
+		if (isImportable) {
+			admonitionChildren.push(
 				new SpanNode([
 					new PlainTextNode("To use, import via "),
 					CodeSpanNode.createFromPlainText(`${packageName}/${importSubpath}`),
 					new PlainTextNode("."),
 				]),
 				LineBreakNode.Singleton,
-				supportDocsLinkSpan,
-			],
+			);
+		}
+		admonitionChildren.push(supportDocsLinkSpan);
+		return new AdmonitionNode(
+			admonitionChildren,
 			/* admonitionKind: */ "warning",
 			admonitionTitle,
 		);
 	}
 
-	if (ApiItemUtilities.hasModifierTag(apiItem, "@legacy")) {
-		return createImportAdmonition(
+	if (ApiItemUtilities.ancestryHasModifierTag(apiItem, "@legacy")) {
+		return createAdmonition(
 			"legacy",
 			"This API is provided for existing users, but is not recommended for new users.",
 		);
 	}
 
-	const releaseTag = ApiItemUtilities.getReleaseTag(apiItem);
+	const releaseLevel = ApiItemUtilities.getEffectiveReleaseLevel(apiItem);
 
-	if (releaseTag === ReleaseTag.Alpha) {
-		return createImportAdmonition(
+	if (releaseLevel === ReleaseTag.Alpha) {
+		return createAdmonition(
 			"alpha",
 			"This API is provided as an alpha preview and may change without notice.",
 		);
 	}
 
-	if (releaseTag === ReleaseTag.Beta) {
-		return createImportAdmonition(
+	if (releaseLevel === ReleaseTag.Beta) {
+		return createAdmonition(
 			"beta",
 			"This API is provided as a beta preview and may change without notice.",
 		);
@@ -91,6 +116,8 @@ function createImportNotice(apiItem) {
  * Creates a special use notice for the provided API item, if one is appropriate.
  *
  * If the item is tagged as "@system", displays an internal notice with use notes.
+ *
+ * @param {ApiItem} apiItem - The API item for which the system notice is being created.
  */
 function createSystemNotice(apiItem) {
 	if (ApiItemUtilities.ancestryHasModifierTag(apiItem, "@system")) {
@@ -129,13 +156,28 @@ function createSystemNotice(apiItem) {
  *
  * 1. See (if any)
  *
- * @param {@microsoft/api-extractor-model#ApiItem} apiItem - The API item being rendered.
- * @param {@fluid-tools/api-markdown-documenter#SectionNode[] | undefined} itemSpecificContent - API item-specific details to be included in the default layout.
- * @param {@fluid-tools/api-markdown-documenter#ApiItemTransformationConfiguration} config - Transformation configuration.
+ * @param {ApiItem} apiItem - The API item being rendered.
+ * @param {SectionNode[] | undefined} itemSpecificContent - API item-specific details to be included in the default layout.
+ * @param {ApiItemTransformationConfiguration} config - Transformation configuration.
  *
  * @returns An array of sections describing the layout. See {@link @fluid-tools/api-markdown-documenter#ApiItemTransformationConfiguration.createDefaultLayout}.
  */
 export function layoutContent(apiItem, itemSpecificContent, config) {
+	if (apiItem.kind === ApiItemKind.None) {
+		throw new Error("Invalid API item kind.");
+	}
+
+	// Whether or not this item is being transformed into its own document (vs being transformed into a subsection
+	// of some parent document).
+	// TODO: it would probably be better to have the library pass this information in, rather than re-deriving it here.
+	const isDocumentItem = ["Document", "Folder"].includes(config.hierarchy[apiItem.kind].kind);
+
+	// Whether or not this item can be imported by the end user.
+	// For example, a function or interface belonging to a package's exports (entry-point) can be directly imported by the end user.
+	// Whereas, the method of an interface cannot.
+	// For such members where the end-user can't directly import, we won't display import instructions.
+	const isImportable = apiItem.parent?.kind === ApiItemKind.EntryPoint;
+
 	const sections = [];
 
 	// Render summary comment (if any)
@@ -144,7 +186,7 @@ export function layoutContent(apiItem, itemSpecificContent, config) {
 		sections.push(new SectionNode([summary]));
 	}
 
-	// Render system notice (if any) that supercedes deprecation and import notices
+	// Render system notice (if any) that supersedes deprecation and import notices
 	const systemNotice = createSystemNotice(apiItem);
 	if (systemNotice !== undefined) {
 		sections.push(new SectionNode([systemNotice]));
@@ -156,7 +198,7 @@ export function layoutContent(apiItem, itemSpecificContent, config) {
 		}
 
 		// Render the appropriate API notice (with import instructions), if applicable.
-		const importNotice = createImportNotice(apiItem);
+		const importNotice = createSupportNotice(apiItem, isImportable);
 		if (importNotice !== undefined) {
 			sections.push(new SectionNode([importNotice]));
 		}
@@ -208,7 +250,7 @@ export function layoutContent(apiItem, itemSpecificContent, config) {
 
 	// Add heading to top of section only if this is being rendered to a parent item.
 	// Document items have their headings handled specially.
-	return ApiItemUtilities.doesItemRequireOwnDocument(apiItem, config.documentBoundaries)
+	return isDocumentItem
 		? sections
 		: [
 				new SectionNode(
@@ -226,8 +268,8 @@ export function layoutContent(apiItem, itemSpecificContent, config) {
  *
  * @remarks Displayed as a Docusaurus admonition. See {@link AdmonitionNode} and {@link renderAdmonitionNode}.
  *
- * @param {@microsoft/api-extractor-model#ApiItem} apiItem - The API item being rendered.
- * @param {@fluid-tools/api-markdown-documenter#ApiItemTransformationConfiguration} config - Transformation configuration.
+ * @param {ApiItem} apiItem - The API item being rendered.
+ * @param {ApiItemTransformationConfiguration} config - Transformation configuration.
  *
  * @returns The doc section if the API item had a `@remarks` comment, otherwise `undefined`.
  */
@@ -238,6 +280,9 @@ function createDeprecationNoticeSection(apiItem, config) {
 	}
 
 	const transformedDeprecatedBlock = transformTsdocNode(deprecatedBlock, apiItem, config);
+	if (transformedDeprecatedBlock === undefined) {
+		throw new Error("Failed to transform deprecated block.");
+	}
 
 	return new AdmonitionNode(
 		[transformedDeprecatedBlock],

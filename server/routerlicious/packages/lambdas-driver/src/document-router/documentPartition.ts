@@ -90,7 +90,10 @@ export class DocumentPartition {
 				this.q.resume();
 			})
 			.catch((error) => {
-				if (error.name && this.restartOnErrorNames.includes(error.name as string)) {
+				if (
+					(error.name && this.restartOnErrorNames.includes(error.name as string)) ||
+					error.shouldRestart
+				) {
 					this.context.error(error, {
 						restart: true,
 						tenantId: this.tenantId,
@@ -205,6 +208,13 @@ export class DocumentPartition {
 	}
 
 	public pause(offset: number) {
+		if (this.closed) {
+			Lumberjack.warning("Skipping pause since doc partition is closed.", {
+				...getLumberBaseProperties(this.documentId, this.tenantId),
+				offset,
+			});
+			return;
+		}
 		if (this.paused) {
 			Lumberjack.warning("Doc partition already paused, returning early.", {
 				...getLumberBaseProperties(this.documentId, this.tenantId),
@@ -212,6 +222,7 @@ export class DocumentPartition {
 			});
 			return;
 		}
+
 		this.paused = true;
 
 		this.q.pause();
@@ -220,6 +231,12 @@ export class DocumentPartition {
 		if (this.lambda?.pause) {
 			this.lambda.pause(offset);
 		}
+
+		// Its possible that some other doc partition triggered the pause
+		// So we need to make sure to set the paused state for this doc partition's context in case its not already set
+		// This will allow its head to move backwards/reprocess ops as needed during resume
+		this.context.setStateToPause();
+
 		Lumberjack.info("Doc partition paused", {
 			...getLumberBaseProperties(this.documentId, this.tenantId),
 			offset,
@@ -227,6 +244,12 @@ export class DocumentPartition {
 	}
 
 	public resume() {
+		if (this.closed) {
+			Lumberjack.warning("Skipping resume since doc partition is closed.", {
+				...getLumberBaseProperties(this.documentId, this.tenantId),
+			});
+			return;
+		}
 		if (!this.paused) {
 			Lumberjack.warning("Doc partition already resumed, returning early.", {
 				...getLumberBaseProperties(this.documentId, this.tenantId),

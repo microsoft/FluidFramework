@@ -14,9 +14,9 @@ export interface TestInterface
 
 Here are some remarks about the interface
 
-## Construct Signatures
+## Constructors
 
-| ConstructSignature | Return Type | Description |
+| Constructor | Return Type | Description |
 | --- | --- | --- |
 | [new (): TestInterface](/test-suite-a/testinterface-interface/_new_-constructsignature) | [TestInterface](/test-suite-a/testinterface-interface/) | Test construct signature. |
 

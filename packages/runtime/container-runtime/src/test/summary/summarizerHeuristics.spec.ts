@@ -9,12 +9,10 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import sinon from "sinon";
 
 import {
-	ISummaryConfiguration,
-	ISummaryConfigurationHeuristics,
-} from "../../containerRuntime.js";
-import {
 	ISummarizeAttempt,
 	ISummarizeHeuristicData,
+	ISummaryConfiguration,
+	ISummaryConfigurationHeuristics,
 	SummarizeHeuristicData,
 	SummarizeHeuristicRunner,
 	SummarizeReason,
