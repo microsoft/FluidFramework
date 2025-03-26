@@ -32,6 +32,7 @@ import { LocalReferencePosition, SlidingPreference } from "./localReference.js";
 import {
 	MergeTree,
 	errorIfOptionNotTrue,
+	getSlideToSegoff,
 	isRemovedAndAcked,
 	type IMergeTreeOptionsInternal,
 } from "./mergeTree.js";
@@ -50,6 +51,7 @@ import {
 	SegmentGroup,
 	compareStrings,
 	isSegmentLeaf,
+	type ObliterateInfo,
 } from "./mergeTreeNodes.js";
 import {
 	createAdjustRangeOp,
@@ -854,20 +856,283 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			segmentGroup === NACKedSegmentGroup,
 			0x034 /* "Segment group not at head of pending rebase queue" */,
 		);
+		assert(
+			segmentGroup.localSeq !== undefined,
+			0x867 /* expected segment group localSeq to be defined */,
+		);
 		if (this.pendingRebase?.empty) {
 			this.pendingRebase = undefined;
 		}
 
-		// if this is an obliterate op, keep all segments in same segment group
+		if (
+			resetOp.type === MergeTreeDeltaType.OBLITERATE ||
+			resetOp.type === MergeTreeDeltaType.OBLITERATE_SIDED
+		) {
+			errorIfOptionNotTrue(this._mergeTree.options, "mergeTreeEnableObliterateReconnect");
 
-		const obliterateSegmentGroup: SegmentGroup = {
-			segments: [],
-			localSeq: segmentGroup.localSeq,
-			refSeq: this.getCollabWindow().currentSeq,
-			obliterateInfo: {
-				...segmentGroup.obliterateInfo!,
-			},
-		};
+			// sliceRemove reconnect logic is characteristically different from other ops (which can only apply to segments they originally saw).
+			// This is because the ranges that other ops apply to can be broken up by concurrent insertions, so even though setRemoves are originally
+			// applied to a contiguous set of segments, at resubmission time they may no longer be.
+			// On the other hand, the closest analog to a `sliceRemove` that we can submit is obtained by resolving the "closest" start and end points
+			// for that slice, updating the local obliterate metadata to reflect that slice, and submitting a single op.
+
+			const obliterateInfo: ObliterateInfo | undefined = segmentGroup.obliterateInfo;
+			assert(
+				obliterateInfo !== undefined,
+				"Resubmitting obliterate op without obliterate info in segment group",
+			);
+
+			const { currentSeq, clientId } = this.getCollabWindow();
+			const reconnectingPerspective = new LocalReconnectingPerspective(
+				currentSeq,
+				clientId,
+				segmentGroup.localSeq - 1, // -1 because we don't want to include any effects from the current op. TODO: This isn't right w.r.t grouped batching
+			);
+
+			// const createRefFromSequencePlace = (
+			// 	place: InteriorSequencePlace,
+			// 	perspective: Perspective,
+			// ): LocalReferencePosition => {
+			// 	const { segment: placeSeg, offset: placeOffset } =
+			// 		this._mergeTree.getContainingSegment(place.pos, perspective);
+			// 	assert(
+			// 		isSegmentLeaf(placeSeg) && placeOffset !== undefined,
+			// 		0xa3f /* segments cannot be undefined */,
+			// 	);
+			// 	return this.createLocalReferencePosition(
+			// 		placeSeg,
+			// 		placeOffset,
+			// 		ReferenceType.StayOnRemove,
+			// 		{
+			// 			obliterate: newObliterate,
+			// 			side: place.side,
+			// 		},
+			// 	);
+			// };
+
+			// // Step 1: find the correct start point for the new op
+			// const startRef = obliterateInfo.start;
+			// const startSegment = startRef.getSegment();
+			// const startOffset = startRef.getOffset();
+			// assert(
+			// 	startSegment !== undefined && startOffset !== undefined,
+			// 	"Invalid start reference",
+			// );
+			// const startSegmentPos = this.findReconnectionPosition(
+			// 	startSegment,
+			// 	segmentGroup.localSeq,
+			// );
+
+			// const startSide = startRef.properties!.side;
+			// assert(startSide !== undefined, "Side should have been set on reference");
+			// const { segment: newStartSeg, offset: newStartOffset } =
+			// 	this._mergeTree.getContainingSegment(
+			// 		startSegmentPos + startOffset,
+			// 		reconnectingPerspective,
+			// 	);
+			// assert(
+			// 	newStartSeg !== undefined && newStartOffset !== undefined,
+			// 	"Invalid start segment",
+			// );
+			// // TODO: Settle on policy. The policy implemented here means we tend to 'shrink' obliterates when upon reconnecting we've found that
+			// // their original "after" endpoint no longer exists.
+			// const newPos = reconnectingPerspective.isSegmentPresent(newStartSeg)
+			// 	? startSegmentPos + newStartOffset
+			// 	: startSegmentPos;
+			// const newStartSide =
+			// 	startSide === Side.After && newStartSeg !== startSegment ? Side.Before : startSide;
+			// const newStartPlace: InteriorSequencePlace = {
+			// 	pos: newPos,
+			// 	side: newStartSide,
+			// };
+
+			// const endRef = obliterateInfo.end;
+			// const endSegment = endRef.getSegment();
+			// const endOffset = endRef.getOffset();
+			// assert(endSegment !== undefined && endOffset !== undefined, "Invalid end reference");
+			// const endSegmentPos = this.findReconnectionPosition(endSegment, segmentGroup.localSeq);
+
+			// const endSide = endRef.properties!.side;
+			// assert(endSide !== undefined, "Side should have been set on reference");
+			// const { segment: newEndSeg, offset: newEndOffset } =
+			// 	this._mergeTree.getContainingSegment(
+			// 		endSegmentPos + endOffset,
+			// 		reconnectingPerspective,
+			// 	);
+			// if (newEndSeg !== endSegment && )
+			// assert(newEndSeg !== undefined && newEndOffset !== undefined, "Invalid end segment");
+			// // TODO: Settle on policy. The policy implemented here means we tend to 'shrink' obliterates when upon reconnecting we've found that
+			// // their original "before" endpoint no longer exists.
+			// const newEndSide =
+			// 	endSide === Side.Before && newEndSeg !== endSegment ? Side.After : endSide;
+			// const newEndPlace: InteriorSequencePlace = {
+			// 	pos: endSegmentPos + newEndOffset!,
+			// 	side: newEndSide,
+			// };
+
+			const createLocalRef = (
+				seg: ISegmentPrivate,
+				offset: number,
+				side: Side,
+			): LocalReferencePosition => {
+				return this._mergeTree.createLocalReferencePosition(
+					seg,
+					offset,
+					ReferenceType.StayOnRemove,
+					{
+						side,
+					},
+				);
+			};
+
+			const startRef = obliterateInfo.start;
+			const useNewSlidingBehavior = true;
+			// TODO: It seems plausible we could use findReconnectionPosition to accelerate this rather than getSlideToSegoff.
+			// TODO: Do we need to plumb perspectives through here? Plausibly either way on quick inspection.
+			const oldStartSegment = startRef.getSegment();
+			const oldStartOffset = startRef.getOffset();
+			assert(
+				oldStartSegment !== undefined && oldStartOffset !== undefined,
+				"Invalid old start reference",
+			);
+			let { segment: newStartSegment, offset: newStartOffset } = getSlideToSegoff(
+				{ segment: oldStartSegment, offset: oldStartOffset },
+				SlidingPreference.FORWARD,
+				useNewSlidingBehavior,
+			);
+
+			newStartSegment ??= this._mergeTree.endOfTree;
+
+			assert(
+				isSegmentLeaf(newStartSegment) && newStartOffset !== undefined,
+				"Invalid new start segment",
+			);
+
+			assert(
+				startRef.properties!.side !== undefined,
+				"Side should have been set on reference",
+			);
+
+			const newStartSide =
+				newStartSegment !== oldStartSegment ? Side.Before : startRef.properties!.side;
+
+			const endRef = obliterateInfo.end;
+			// TODO: It seems plausible we could use findReconnectionPosition to accelerate this rather than getSlideToSegoff.
+			// TODO: Do we need to plumb perspectives through here? Plausibly either way on quick inspection.
+			const oldEndSegment = endRef.getSegment();
+			const oldEndOffset = endRef.getOffset();
+			assert(
+				oldEndSegment !== undefined && oldEndOffset !== undefined,
+				"Invalid old start reference",
+			);
+			let { segment: newEndSegment, offset: newEndOffset } = getSlideToSegoff(
+				{ segment: oldEndSegment, offset: oldEndOffset },
+				SlidingPreference.BACKWARD,
+				useNewSlidingBehavior,
+			);
+
+			newEndSegment ??= this._mergeTree.startOfTree;
+			assert(
+				isSegmentLeaf(newEndSegment) && newEndOffset !== undefined,
+				"Invalid new start segment",
+			);
+
+			assert(endRef.properties!.side !== undefined, "Side should have been set on reference");
+			const newEndSide =
+				newEndSegment !== oldEndSegment ? Side.After : endRef.properties!.side;
+
+			if (newEndSegment.ordinal < newStartSegment.ordinal) {
+				for (const segment of segmentGroup.segments) {
+					assert(
+						isRemovedAndAcked(segment),
+						"On reconnect, obliterate applied to new segments even though original ones were not removed.",
+					);
+					const lastRemove = segment.removes[segment.removes.length - 1];
+					assert(
+						lastRemove.type === "sliceRemove" && lastRemove.localSeq === segmentGroup.localSeq,
+						"Last remove should be the obliterate that is being resubmitted.",
+					);
+					// The original obliterate affected this segment, but it has since been removed and it's impossible to apply the
+					// local obliterate so that is so. We adjust the metadata on that segment now.
+					segment.removes.pop();
+				}
+
+				this._mergeTree.removeObliterate(obliterateInfo);
+				return [];
+			}
+
+			const newObliterate: ObliterateInfo = {
+				// Recreate the start position using the perspective that other clients will see.
+				// This may not be at the same position as the original reference, since the segment the original reference was on could have been removed.
+				start: createLocalRef(newStartSegment, newStartOffset, newStartSide),
+				end: createLocalRef(newEndSegment, newEndOffset, newEndSide),
+				refSeq: currentSeq,
+				// We reuse the localSeq from the original obliterate.
+				stamp: obliterateInfo.stamp,
+				segmentGroup: undefined,
+			};
+			newObliterate.start.addProperties({ obliterate: newObliterate });
+			newObliterate.end.addProperties({ obliterate: newObliterate });
+			newObliterate.segmentGroup = {
+				segments: [],
+				localSeq: segmentGroup.localSeq,
+				refSeq: this.getCollabWindow().currentSeq,
+				obliterateInfo: newObliterate,
+			};
+
+			for (const segment of segmentGroup.segments) {
+				assert(
+					segment.segmentGroups?.remove(segmentGroup) === true,
+					0x035 /* "Segment group not in segment pending queue" */,
+				);
+				if (
+					(segment.ordinal > newStartSegment.ordinal &&
+						segment.ordinal < newEndSegment.ordinal) ||
+					(segment === newStartSegment && newStartSide === Side.Before) ||
+					(segment === newEndSegment && newEndSide === Side.After)
+				) {
+					segment.segmentGroups.enqueue(newObliterate.segmentGroup);
+				} else {
+					assert(
+						isRemovedAndAcked(segment),
+						"On reconnect, obliterate applied to new segments even though original ones were not removed.",
+					);
+					const lastRemove = segment.removes[segment.removes.length - 1];
+					assert(
+						lastRemove.type === "sliceRemove" && lastRemove.localSeq === segmentGroup.localSeq,
+						"Last remove should be the obliterate that is being resubmitted.",
+					);
+					// The original obliterate affected this segment, but it has since been removed and it's impossible to apply the
+					// local obliterate so that is so. We adjust the metadata on that segment now.
+					segment.removes.pop();
+				}
+			}
+
+			this._mergeTree.remapObliterate(obliterateInfo, newObliterate);
+			// TODO: Maybe this:
+			// if (newObliterate.segmentGroup.segments.length > 0) {
+			this._mergeTree.pendingSegments.push(newObliterate.segmentGroup);
+			// }
+
+			// TODO: Use non-sided obliterate op when possible. Right now we can convert a non-sided op to a sided one on reconnect,
+			// which may cause errors due to merge-tree settings if the right feature flags aren't enabled.
+			return [
+				createObliterateRangeOpSided(
+					{
+						pos:
+							this._mergeTree.getPosition(newStartSegment, reconnectingPerspective) +
+							newStartOffset,
+						side: newStartSide,
+					},
+					{
+						pos:
+							this._mergeTree.getPosition(newEndSegment, reconnectingPerspective) +
+							newEndOffset,
+						side: newEndSide,
+					},
+				),
+			];
+		}
 
 		const opList: IMergeTreeDeltaOp[] = [];
 		// We need to sort the segments by ordinal, as the segments are not sorted in the segment group.
@@ -881,10 +1146,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			assert(
 				segment.segmentGroups?.remove(segmentGroup) === true,
 				0x035 /* "Segment group not in segment pending queue" */,
-			);
-			assert(
-				segmentGroup.localSeq !== undefined,
-				0x867 /* expected segment group localSeq to be defined */,
 			);
 			const segmentPosition = this.findReconnectionPosition(segment, segmentGroup.localSeq);
 			let newOp: IMergeTreeDeltaOp | undefined;
@@ -967,57 +1228,41 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					}
 					break;
 				}
-				case MergeTreeDeltaType.OBLITERATE: {
-					errorIfOptionNotTrue(this._mergeTree.options, "mergeTreeEnableObliterateReconnect");
-					// Only bother resubmitting if nobody else has removed it in the meantime.
-					// When that happens, the first removal will have been acked.
-					if (isRemoved(segment) && opstampUtils.isLocal(segment.removes[0])) {
-						newOp = createObliterateRangeOp(
-							segmentPosition,
-							segmentPosition + segment.cachedLength,
-						);
-					}
-					break;
-				}
 				default: {
 					throw new Error(`Invalid op type`);
 				}
 			}
 
-			if (newOp && resetOp.type === MergeTreeDeltaType.OBLITERATE) {
-				segment.segmentGroups.enqueue(obliterateSegmentGroup);
-
-				const first = opList[0];
-
-				if (
-					!!first &&
-					first.pos2 !== undefined &&
-					first.type !== MergeTreeDeltaType.OBLITERATE_SIDED &&
-					newOp.type !== MergeTreeDeltaType.OBLITERATE_SIDED
-				) {
-					first.pos2 += newOp.pos2! - newOp.pos1!;
-				} else {
-					opList.push(newOp);
-				}
-			} else if (newOp) {
+			// TODO: Obliterate handling is generally wrong here.
+			// We potentially need to adjust the metadata in the tree about the obliterate to account for removals between the original submission and now.
+			// Ex: in the string 'ABCDEFGH' with an original sided obliterate like this:
+			// A - B - C - D - E - F - G - H
+			//          ^         ^
+			// it's possible by the time we reconnect, someone has removed 'BCD' and we now have:
+			// A - D - E - F - G - H
+			// Question is: where do we put the reference? We can no longer cause other clients to place it on 'C' like we did originally.
+			// Our only options are these spaces:
+			// A - E - F - G - H
+			// Effectively, we can either expand the sided obliterate to retain the same start side (after 'A' rather than after 'C') or we can shrink it but will need to swap the side (before 'E').
+			//
+			// TODO: Come up with convincing argument, but erring on the side of shrinking seems like the right choice. This probably won't affect clients that aim to use the 'LWW'-ness of the obliterate,
+			// since even in that case, removals beyond the adjacent obliterate probably indicate that the context which should be slice removed has changed since the obliterate was originally submitted.
+			//
+			// In the same scenario, another problem is that other clients will also not think that we removed the 'D' segment, so we will need to remove the pending local removal mark.
+			// TODO: Is that accounted for already?
+			if (newOp) {
 				const newSegmentGroup: SegmentGroup = {
 					segments: [],
 					localSeq: segmentGroup.localSeq,
 					refSeq: this.getCollabWindow().currentSeq,
 				};
+
 				segment.segmentGroups.enqueue(newSegmentGroup);
 
 				this._mergeTree.pendingSegments.push(newSegmentGroup);
 
 				opList.push(newOp);
 			}
-		}
-
-		if (
-			resetOp.type === MergeTreeDeltaType.OBLITERATE &&
-			obliterateSegmentGroup.segments.length > 0
-		) {
-			this._mergeTree.pendingSegments.push(obliterateSegmentGroup);
 		}
 
 		return opList;

@@ -24,7 +24,6 @@ import {
 	LocalReferencePosition,
 	SlidingPreference,
 	anyLocalReferencePosition,
-	createDetachedLocalReferencePosition,
 	filterLocalReferencePositions,
 } from "./localReference.js";
 import {
@@ -564,6 +563,18 @@ class Obliterates {
 		}
 		return overlapping;
 	}
+
+	public remove(obliterateInfo: ObliterateInfo) {
+		if (obliterateInfo.stamp.seq !== UnassignedSequenceNumber) {
+			// TODO: Asymptotics are not good and could be improved with a tree instead. OTOH it doesn't really
+			// matter since we only use this for reconnect right now and we don't put unacked ones in here (which is
+			// weird, but it is indeed technically unnecessary...).
+			const listNode = this.seqOrdered.find((node) => node.data === obliterateInfo);
+			assert(listNode !== undefined, "obliterateInfo not found");
+			this.seqOrdered.remove(listNode);
+		}
+		this.startOrdered.remove(obliterateInfo.start);
+	}
 }
 
 interface InsertResult {
@@ -626,6 +637,15 @@ export class MergeTree {
 		this._root = this.makeBlock(0);
 		this._root.mergeTree = this;
 		this.attributionPolicy = options?.attribution?.policyFactory?.();
+	}
+
+	public remapObliterate(existing: ObliterateInfo, newObliterate: ObliterateInfo): void {
+		this.obliterates.remove(existing);
+		this.obliterates.addOrUpdate(newObliterate);
+	}
+
+	public removeObliterate(existing: ObliterateInfo): void {
+		this.obliterates.remove(existing);
 	}
 
 	private _root: IRootMergeBlock;
@@ -1968,50 +1988,50 @@ export class MergeTree {
 		const localOverlapWithRefs: ISegmentLeaf[] = [];
 		const removedSegments: SegmentWithInfo<IHasRemovalInfo, ISegmentLeaf>[] = [];
 
+		const createRefFromSequencePlace = (
+			place: InteriorSequencePlace,
+		): LocalReferencePosition => {
+			const { segment: placeSeg, offset: placeOffset } = this.getContainingSegment(
+				place.pos,
+				perspective,
+			);
+			assert(
+				isSegmentLeaf(placeSeg) && placeOffset !== undefined,
+				0xa3f /* segments cannot be undefined */,
+			);
+			return this.createLocalReferencePosition(
+				placeSeg,
+				placeOffset,
+				ReferenceType.StayOnRemove,
+				{
+					side: place.side,
+				},
+			);
+		};
+
 		const obliterate: ObliterateInfo = {
-			start: createDetachedLocalReferencePosition(undefined),
-			end: createDetachedLocalReferencePosition(undefined),
+			start: createRefFromSequencePlace(start),
+
+			end: createRefFromSequencePlace(end),
 			refSeq: perspective.refSeq,
 			stamp,
 			segmentGroup: undefined,
 		};
+		// Link references back to this obliterate info
+		obliterate.start.addProperties({ obliterate });
+		obliterate.end.addProperties({ obliterate });
 
-		const { segment: startSeg } = this.getContainingSegment(start.pos, perspective);
-		const { segment: endSeg } = this.getContainingSegment(end.pos, perspective);
-		assert(
-			isSegmentLeaf(startSeg) && isSegmentLeaf(endSeg),
-			0xa3f /* segments cannot be undefined */,
-		);
-
-		obliterate.start = this.createLocalReferencePosition(
-			startSeg,
-			start.side === Side.Before ? 0 : Math.max(startSeg.cachedLength - 1, 0),
-			ReferenceType.StayOnRemove,
-			{
-				obliterate,
-			},
-		);
-
-		obliterate.end = this.createLocalReferencePosition(
-			endSeg,
-			end.side === Side.Before ? 0 : Math.max(endSeg.cachedLength - 1, 0),
-			ReferenceType.StayOnRemove,
-			{
-				obliterate,
-			},
-		);
-
-		// Always create a segment group for obliterate,
-		// even if there are no segments currently in the obliteration range.
-		// Segments may be concurrently inserted into the obliteration range,
-		// at which point they are added to the segment group.
-		obliterate.segmentGroup = {
-			segments: [],
-			localSeq: stamp.localSeq,
-			refSeq: this.collabWindow.currentSeq,
-			obliterateInfo: obliterate,
-		};
 		if (this.collabWindow.collaborating && stamp.clientId === this.collabWindow.clientId) {
+			// Always create a segment group for local obliterates,
+			// even if there are no segments currently in the obliteration range.
+			// Segments may be concurrently inserted into the obliteration range,
+			// at which point they are added to the segment group.
+			obliterate.segmentGroup = {
+				segments: [],
+				localSeq: stamp.localSeq,
+				refSeq: this.collabWindow.currentSeq,
+				obliterateInfo: obliterate,
+			};
 			this.pendingSegments.push(obliterate.segmentGroup);
 		}
 		this.obliterates.addOrUpdate(obliterate);
@@ -2463,9 +2483,9 @@ export class MergeTree {
 			ordinal: seg.ordinal,
 		}));
 
-		// Last segment which was not affected locally.
+		// Last segment which was not removed.
 		let lastLocalSegment = affectedSegments.last;
-		while (lastLocalSegment !== undefined && isRemovedAndAcked(lastLocalSegment.data)) {
+		while (lastLocalSegment !== undefined && isRemoved(lastLocalSegment.data)) {
 			lastLocalSegment = lastLocalSegment.prev;
 		}
 
