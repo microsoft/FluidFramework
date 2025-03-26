@@ -224,7 +224,20 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_FieldSchemaUnsafe": {
+				"forwardCompat": false
+			},
+			"Interface_ITreeViewConfiguration": {
+				"forwardCompat": false
+			},
+			"TypeAlias_ImplicitAllowedTypes": {
+				"forwardCompat": false
+			},
+			"TypeAlias_ImplicitFieldSchema": {
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "public"
 	}
 }
