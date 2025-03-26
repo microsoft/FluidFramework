@@ -134,7 +134,7 @@ export function createFieldSchemaUnsafe<
  *
  * ## Object Schema
  *
- * When defining fields, if the fields is part of the recursive cycle, use the `recursive` {@link SchemaFactory} methods for defining the {@link FieldSchema}.
+ * When defining fields, if the fields is part of the recursive cycle, use the `*Recursive` {@link SchemaFactory} methods for defining the {@link FieldSchema}.
  *
  * ## Array Schema
  *
