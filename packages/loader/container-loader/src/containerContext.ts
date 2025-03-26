@@ -34,7 +34,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import { LoaderCompatDetails } from "./layerCompatState.js";
+import { LoaderCompatDetails } from "./loaderLayerCompatState.js";
 
 /**
  * {@inheritDoc @fluidframework/container-definitions#IContainerContext}

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { TypedEventEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
 import { AttachState, IAudience } from "@fluidframework/container-definitions";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import {
@@ -88,6 +88,11 @@ import {
 import { v4 as uuid } from "uuid";
 
 import { IChannelContext, summarizeChannel } from "./channelContext.js";
+import {
+	DataStoreCompatDetailsForRuntime,
+	// DataStoreCompatDetailsForRuntime,
+	validateRuntimeCompatibility,
+} from "./dataStoreLayerCompatState.js";
 import { FluidObjectHandle } from "./fluidHandle.js";
 import {
 	LocalChannelContext,
@@ -215,6 +220,8 @@ export class FluidDataStoreRuntime
 	 */
 	private localChangesTelemetryCount: number;
 
+	public readonly ILayerCompatDetails?: unknown = DataStoreCompatDetailsForRuntime;
+
 	/**
 	 * Create an instance of a DataStore runtime.
 	 *
@@ -237,6 +244,13 @@ export class FluidDataStoreRuntime
 		assert(
 			!dataStoreContext.id.includes("/"),
 			0x30e /* Id cannot contain slashes. DataStoreContext should have validated this. */,
+		);
+
+		// Validate that the Runtime is compatible with this DataStore.
+		const maybeRuntimeCompatDetails = dataStoreContext as FluidObject<ILayerCompatDetails>;
+		validateRuntimeCompatibility(
+			maybeRuntimeCompatDetails.ILayerCompatDetails,
+			this.dispose.bind(this),
 		);
 
 		this.mc = createChildMonitoringContext({

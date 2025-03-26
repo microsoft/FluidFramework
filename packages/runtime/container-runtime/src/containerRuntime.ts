@@ -168,7 +168,6 @@ import {
 	type GarbageCollectionMessage,
 } from "./gc/index.js";
 import { InboundBatchAggregator } from "./inboundBatchAggregator.js";
-import { RuntimeCompatDetails, validateLoaderCompatibility } from "./layerCompatState.js";
 import {
 	ContainerMessageType,
 	type ContainerRuntimeDocumentSchemaMessage,
@@ -203,6 +202,10 @@ import {
 	PendingStateManager,
 } from "./pendingStateManager.js";
 import { RunCounter } from "./runCounter.js";
+import {
+	RuntimeCompatDetailsForLoader,
+	validateLoaderCompatibility,
+} from "./runtimeLayerCompatState.js";
 import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
 import {
 	DocumentsSchemaController,
@@ -1306,7 +1309,7 @@ export class ContainerRuntime
 	});
 
 	public get ILayerCompatDetails(): ILayerCompatDetails {
-		return RuntimeCompatDetails;
+		return RuntimeCompatDetailsForLoader;
 	}
 
 	/***/
@@ -1370,6 +1373,7 @@ export class ContainerRuntime
 		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
 		this.disposeFn = disposeFn ?? closeFn;
 
+		// Validate that the Loader is compatible with this Runtime.
 		const maybeLoaderCompatDetails = context as FluidObject<ILayerCompatDetails>;
 		validateLoaderCompatibility(maybeLoaderCompatDetails.ILayerCompatDetails, this.disposeFn);
 

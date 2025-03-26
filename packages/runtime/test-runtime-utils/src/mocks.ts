@@ -930,6 +930,8 @@ export class MockFluidDataStoreRuntime
 		return factory.create(this, id ?? uuid());
 	}
 
+	public ILayerCompatDetails?: unknown;
+
 	public addChannel(channel: IChannel): void {}
 
 	public get isAttached(): boolean {

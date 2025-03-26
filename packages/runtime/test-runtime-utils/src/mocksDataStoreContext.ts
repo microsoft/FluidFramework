@@ -56,6 +56,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public readonly gcThrowOnTombstoneUsage = false;
 	public readonly gcTombstoneEnforcementAllowed = false;
 
+	public ILayerCompatDetails?: unknown;
+
 	/**
 	 * Indicates the attachment state of the data store to a host service.
 	 */
