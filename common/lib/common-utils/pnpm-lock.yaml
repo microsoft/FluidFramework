@@ -9,7 +9,7 @@ overrides:
 
 patchedDependencies:
   '@microsoft/api-extractor@7.45.1':
-    hash: tos6v6doskwck2kr7bbxweswri
+    hash: dk67ukw5u2z3nfy4xhgayztjuq
     path: ../../../patches/@microsoft__api-extractor@7.45.1.patch
 
 importers:
@@ -52,7 +52,7 @@ importers:
         version: 5.5.1(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
-        version: 7.45.1(patch_hash=tos6v6doskwck2kr7bbxweswri)(@types/node@18.19.39)
+        version: 7.45.1(patch_hash=dk67ukw5u2z3nfy4xhgayztjuq)(@types/node@18.19.39)
       '@types/base64-js':
         specifier: ^1.3.0
         version: 1.3.0
@@ -7025,7 +7025,7 @@ snapshots:
       '@fluid-tools/version-tools': 0.49.0
       '@fluidframework/build-tools': 0.49.0
       '@fluidframework/bundle-size-tools': 0.49.0
-      '@microsoft/api-extractor': 7.45.1(patch_hash=tos6v6doskwck2kr7bbxweswri)(@types/node@18.19.39)
+      '@microsoft/api-extractor': 7.45.1(patch_hash=dk67ukw5u2z3nfy4xhgayztjuq)(@types/node@18.19.39)
       '@oclif/core': 4.0.20
       '@oclif/plugin-autocomplete': 3.2.2
       '@oclif/plugin-commands': 4.0.13
@@ -7535,7 +7535,7 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@microsoft/api-extractor@7.45.1(patch_hash=tos6v6doskwck2kr7bbxweswri)(@types/node@18.19.39)':
+  '@microsoft/api-extractor@7.45.1(patch_hash=dk67ukw5u2z3nfy4xhgayztjuq)(@types/node@18.19.39)':
     dependencies:
       '@microsoft/api-extractor-model': 7.28.21(@types/node@18.19.39)
       '@microsoft/tsdoc': 0.14.2
