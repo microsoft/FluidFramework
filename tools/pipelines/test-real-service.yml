@@ -97,7 +97,7 @@ stages:
       artifactBuildId: $(resources.pipeline.client.runID)
       testCommand: test:realsvc:routerlicious:report
       continueOnError: true
-      ${{ if eq(parameters.useR11sPpeEnvironment, 'true') }}:
+      ${{ if eq(parameters.useR11sPpeEnvironment, true) }}:
         r11sSelfSignedCertSecureFile: wu2-ppe-tls-certificate.pem
       ${{ else }}:
         r11sSelfSignedCertSecureFile: wu2-tls-certificate.pem
