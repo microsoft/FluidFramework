@@ -369,6 +369,7 @@ export const visualizeUnknownSharedObject: VisualizeSharedObject = async (
 
 /**
  * List of default visualizers included in the library.
+ * @remarks {@link DataObject} does not have type information, thus not included in the list.
  */
 export const defaultVisualizers: Record<string, VisualizeSharedObject> = {
 	[SharedCell.getFactory().type]: visualizeSharedCell,
@@ -378,6 +379,5 @@ export const defaultVisualizers: Record<string, VisualizeSharedObject> = {
 	[SharedMatrix.getFactory().type]: visualizeSharedMatrix,
 	[SharedString.getFactory().type]: visualizeSharedString,
 	[SharedTree.getFactory().type]: visualizeSharedTree,
-	// Hardcode for DataObject
 	// TODO: the others
 };
