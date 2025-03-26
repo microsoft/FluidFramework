@@ -96,14 +96,22 @@ export class MockContainerRuntimeWithOpBunching extends MockContainerRuntimeForR
 	private pendingMessagesWhenPaused: ISequencedDocumentMessage[] = [];
 
 	/**
-	 * Pause processing of messages. Messages will be queued up until resumeProcessing is called.
+	 * Pause the processing of messages. Messages that are received while paused will be queued. These messages
+	 * will be processed and sent to the data store runtime and DDSes when resumeProcessing is called.
+	 * @remarks The pausing and resuming of processing messages can also be achieved via setting the connected
+	 * state. However, any messages that were submitted while disconnected will go through the resubmit flow first
+	 * and then processed during reconnection which can give different results than pausing and resuming processing.
 	 */
 	public pauseProcessing() {
 		this.paused = true;
 	}
 
 	/**
-	 * Resume processing of messages. Messages that were queued up while paused will now be processed.
+	 * Resume processing of messages. Messages that were received while paused will now be processed and sent to the
+	 * data store runtime and DDSes.
+	 * @remarks The pausing and resuming of processing messages can also be achieved via setting the connected
+	 * state. However, any messages that were submitted while disconnected will go through the resubmit flow first
+	 * and then processed during reconnection which can give different results than pausing and resuming processing.
 	 */
 	public resumeProcessing() {
 		if (!this.paused) {

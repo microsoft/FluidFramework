@@ -375,21 +375,6 @@ export class TestTreeProvider {
 /**
  * A type with subset of functionalities of mock container runtime that can help tests control
  * the processing of messages and the connection state of the runtime.
- *
- * - "connected": Set the connection state of a given tree. Any messages that are submitted while the tree is
- * disconnected will be resubmitted when it reconnects by calling the resubmit function on the tree. Also, the
- * clientId of the runtime changes on reconnection.
- *
- * - "pauseProcessing":  Pauses the processing of messages for a tree. Unlike during reconnection, messages that
- * are submitted while the tree is paused will not be resubmitted when it unpauses.
- *
- * - "resumeProcessing": Resumes the processing of messages for a tree. This will process the messages received while
- * the tree was paused. Note that if the tree is not connected, then messages will not be processed - See "connected"
- * for details. Unlike during reconnection, messages that were submitted while the tree was paused will not be resubmitted
- * when it unpauses.
- *
- * - "flush": To be used in TurnBased mode where messages that are sent are not automatically flushed. It flushes the
- * messages that have been sent by a tree. This will be a no-op if the tree's runtime is not connected.
  */
 export type TreeMockContainerRuntime = Pick<
 	MockContainerRuntimeWithOpBunching,
