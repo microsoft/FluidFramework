@@ -173,7 +173,6 @@ export class AppData extends DataObject {
 
 		const appDataTwo = await AppDataTwo.getFactory().createChildInstance(this.context);
 
-		this.root.createSubDirectory(this.initialObjectsDirKey);
 		this.root.set(this.sharedTextKey, text.handle);
 		this.root.set(this.sharedCounterKey, counter.handle);
 		this.root.set(this.emojiMatrixKey, emojiMatrix.handle);
@@ -209,26 +208,6 @@ export class AppData extends DataObject {
 			throw new Error("SharedTree was not initialized");
 		} else {
 			this._sharedTree = sharedTree;
-
-			// We will always load the initial objects so they are available to the developer
-			const loadInitialObjectsP: Promise<void>[] = [];
-			const dir = this.root.getSubDirectory(this.initialObjectsDirKey);
-			if (dir === undefined) {
-				throw new Error("InitialObjects sub-directory was not initialized");
-			}
-
-			for (const [key, value] of dir.entries()) {
-				// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-				const loadDir = async () => {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-					const obj = await value.get();
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-					Object.assign(this._initialObjects, { [key]: obj });
-				};
-				loadInitialObjectsP.push(loadDir());
-			}
-
-			await Promise.all(loadInitialObjectsP);
 		}
 	}
 
