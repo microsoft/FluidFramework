@@ -147,6 +147,7 @@ import {
 import {
 	ChannelCollection,
 	getSummaryForDatastores,
+	RuntimeHeaders,
 	wrapContext,
 } from "./channelCollection.js";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry.js";
@@ -2211,7 +2212,15 @@ export class ContainerRuntime
 			}
 
 			if (id === blobManagerBasePath && requestParser.isLeaf(2)) {
+				if (
+					!this.blobManager.hasBlob(requestParser.pathParts[1]) &&
+					requestParser.headers?.[RuntimeHeaders.wait] === false
+				) {
+					return create404Response(request);
+				}
+
 				const blob = await this.blobManager.getBlob(requestParser.pathParts[1]);
+
 				return {
 					status: 200,
 					mimeType: "fluid/object",

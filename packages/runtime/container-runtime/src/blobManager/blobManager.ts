@@ -353,6 +353,10 @@ export class BlobManager {
 		return [...this.pendingBlobs.values()].some((e) => e.stashedUpload === true);
 	}
 
+	public hasBlob(blobId: string): boolean {
+		return this.redirectTable.get(blobId) !== undefined;
+	}
+
 	public async getBlob(blobId: string): Promise<ArrayBufferLike> {
 		// Verify that the blob is not deleted, i.e., it has not been garbage collected. If it is, this will throw
 		// an error, failing the call.
