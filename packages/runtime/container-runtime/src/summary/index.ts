@@ -12,22 +12,21 @@ export {
 	OrderedClientElection,
 } from "./orderedClientElection.js";
 export {
-	defaultMaxAttemptsForSubmitFailures,
-	RunningSummarizer,
-} from "./runningSummarizer.js";
-export {
 	ICancellableSummarizerController,
 	neverCancelledSummaryToken,
 	RunWhileConnectedCoordinator,
 } from "./runWhileConnectedCoordinator.js";
-export { Summarizer } from "./summarizer.js";
+export { defaultMaxAttemptsForSubmitFailures, Summarizer } from "./summarizer.js";
 export {
 	ISummarizerClientElection,
 	ISummarizerClientElectionEvents,
 	SummarizerClientElection,
 	summarizerClientType,
 } from "./summarizerClientElection.js";
-export { SummarizeHeuristicData, SummarizeHeuristicRunner } from "./summarizerHeuristics.js";
+export {
+	SummarizeHeuristicData,
+	SummarizeHeuristicRunner,
+} from "./summarizerDelayLoadedModule/index.js";
 export {
 	createRootSummarizerNode,
 	createRootSummarizerNodeWithGC,
@@ -125,7 +124,11 @@ export {
 	IDocumentSchemaChangeMessage,
 	IDocumentSchemaFeatures,
 } from "./documentSchema.js";
-export { getFailMessage, RetriableSummaryError, SummarizeReason } from "./summaryGenerator.js";
+export {
+	getFailMessage,
+	RetriableSummaryError,
+	SummarizeReason,
+} from "./summaryResultBuilder.js";
 export {
 	IConnectedEvents,
 	IConnectedState,

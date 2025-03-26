@@ -31,7 +31,6 @@ import {
 	ISummarizerRuntime,
 	ISummaryManagerConfig,
 	ISummaryOpMessage,
-	RunningSummarizer,
 	SummarizeHeuristicData,
 	Summarizer,
 	SummaryCollection,
@@ -40,6 +39,8 @@ import {
 	neverCancelledSummaryToken,
 	DefaultSummaryConfiguration,
 } from "../../summary/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { RunningSummarizer } from "../../summary/summarizerDelayLoadedModule/index.js";
 
 class MockRuntime {
 	constructor(

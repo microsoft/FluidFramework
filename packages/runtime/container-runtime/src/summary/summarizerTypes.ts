@@ -32,7 +32,7 @@ import {
 	ISummaryNackMessage,
 	ISummaryOpMessage,
 } from "./summaryCollection.js";
-import { SummarizeReason } from "./summaryGenerator.js";
+import { SummarizeReason } from "./summaryResultBuilder.js";
 
 /**
  * Similar to AbortSignal, but using promise instead of events

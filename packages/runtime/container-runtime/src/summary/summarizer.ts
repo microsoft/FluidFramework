@@ -20,8 +20,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator.js";
-import { RunningSummarizer } from "./runningSummarizer.js";
-import { SummarizeHeuristicData } from "./summarizerHeuristics.js";
+import type { RunningSummarizer } from "./summarizerDelayLoadedModule/index.js";
 import {
 	EnqueueSummarizeResult,
 	IConnectableRuntime,
@@ -37,7 +36,18 @@ import {
 	type ISummaryConfiguration,
 } from "./summarizerTypes.js";
 import { SummaryCollection } from "./summaryCollection.js";
-import { SummarizeResultBuilder } from "./summaryGenerator.js";
+import { SummarizeResultBuilder } from "./summaryResultBuilder.js";
+
+/**
+ * The maximum number of summarization attempts that will be done by default in case of failures
+ * that can be retried.
+ */
+export const defaultMaxAttempts = 2;
+/**
+ * The default value for maximum number of summarization attempts that will be done for summarization failures where
+ * submit fails and the failure can be retried.
+ */
+export const defaultMaxAttemptsForSubmitFailures = 5;
 
 export class SummarizingWarning
 	extends LoggingError
@@ -266,7 +276,10 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 			throw new UsageError("clientId should be defined if connected.");
 		}
 
-		this._heuristicData = new SummarizeHeuristicData(
+		const module = await import(
+			/* webpackChunkName: "summarizerDelayLoadedModule" */ "./summarizerDelayLoadedModule/index.js"
+		);
+		this._heuristicData = new module.SummarizeHeuristicData(
 			this.runtime.deltaManager.lastSequenceNumber,
 			{
 				/**
@@ -277,7 +290,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 			} as const,
 		);
 
-		const runningSummarizer = await RunningSummarizer.start(
+		const runningSummarizer = await module.RunningSummarizer.start(
 			this.logger,
 			this.summaryCollection.createWatcher(clientId),
 			this.configurationGetter(),
