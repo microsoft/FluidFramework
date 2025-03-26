@@ -70,7 +70,14 @@ export type VisualizeSharedObject = (
 ) => Promise<FluidObjectNode>;
 
 /**
- * TODO
+ * Generates a visual description of the provided {@link DataObject}'s current state.
+ *
+ * @param dataObject - The object whose data will be rendered.
+ * @param visualizeChildData - Callback to render child content of the shared object.
+ *
+ * @returns A visual tree representation of the provided `dataObject`.
+ *
+ * @internal
  */
 export type VisualizeDataObject = (
 	dataObject: DataObject,
@@ -241,11 +248,8 @@ export class DataVisualizerGraph
 	 */
 	private registerVisualizerForSharedObject(
 		sharedObject: ISharedObject | DataObject,
-		identifier?: string,
 	): FluidObjectId {
-		const uniqueId = identifier === undefined ? sharedObject.id : sharedObject.id + identifier;
-
-		if (!this.visualizerNodes.has(uniqueId)) {
+		if (!this.visualizerNodes.has(sharedObject.id)) {
 			// Before: is this a data object? (type not available)
 			// Create visualizer node for the shared object
 			const visualizationFunction = isDataObject(sharedObject)
@@ -262,9 +266,9 @@ export class DataVisualizerGraph
 			visualizerNode.on("update", this.onVisualUpdateHandler);
 
 			// Add the visualizer node to our collection
-			this.visualizerNodes.set(uniqueId, visualizerNode);
+			this.visualizerNodes.set(sharedObject.id, visualizerNode);
 		}
-		return uniqueId;
+		return sharedObject.id;
 	}
 
 	/**

@@ -125,13 +125,13 @@ export const visualizeDataObject: VisualizeDataObject = async (
 	dataObject: DataObject,
 	visualizeChildData: VisualizeChildData,
 ): Promise<FluidObjectTreeNode> => {
-	const sharedDirectory = (dataObject as VisualDataObject).root;
-	const renderedChildData = await visualizeDirectory(sharedDirectory, visualizeChildData);
+	const dataObjectRoot = (dataObject as VisualDataObject).root;
+	const renderedChildData = await visualizeDirectory(dataObjectRoot, visualizeChildData);
 	return {
-		fluidObjectId: sharedDirectory.id,
+		fluidObjectId: dataObjectRoot.id,
 		children: renderedChildData.children,
 		metadata: renderedChildData.metadata,
-		typeMetadata: "SharedDirectory",
+		typeMetadata: "DataObject",
 		nodeKind: VisualNodeKind.FluidTreeNode,
 	};
 };
