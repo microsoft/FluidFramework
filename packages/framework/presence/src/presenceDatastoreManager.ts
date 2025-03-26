@@ -65,6 +65,7 @@ const internalWorkspaceTypes: Readonly<Record<string, "States" | "Notifications"
 	s: "States",
 	n: "Notifications",
 } as const;
+
 interface DatastoreUpdateMessage extends IInboundSignalMessage {
 	type: typeof datastoreUpdateMessageType;
 	content: {

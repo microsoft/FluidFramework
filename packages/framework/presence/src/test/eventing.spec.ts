@@ -669,8 +669,8 @@ describe("Presence", () => {
 						);
 					},
 				);
-				presence.events.on("workspaceActivated", (workspaceAddress, _) => {
-					if (workspaceAddress === "name:testWorkspace") {
+				presence.events.on("workspaceActivated", (workspaceAddress, type) => {
+					if (workspaceAddress === "name:testWorkspace" && type === "Notifications") {
 						workspaceActivatedEventSpy(workspaceAddress);
 					}
 				});
