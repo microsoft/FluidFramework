@@ -623,7 +623,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		/**
 		 * Return uuid if short-ids are explicitly disabled via feature flags.
 		 */
-		if (this.mc.config.getBoolean("Fluid.Runtime.IsShortIdDisabled") === true) {
+		if (this.mc.config.getBoolean("Fluid.Runtime.DisableShortIds") === true) {
 			return uuid();
 		} else {
 			// We use three non-overlapping namespaces:
