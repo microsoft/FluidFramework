@@ -53,7 +53,7 @@ export function createFieldSchemaUnsafe<
  *
  * TypeScript puts a lot of limitations on the typing of recursive schema.
  * To help avoid running into these limitations and thus getting schema that do not type check (or only type checks sometimes!),
- * {@link SchemaFactory} provides APIs (postfixed with `recursive`) for writing recursive schema.
+ * {@link SchemaFactory} provides APIs (postfixed with `Recursive`) for writing recursive schema.
  * These APIs when combined with the patterns documented below should ensure that the schema provide robust type checking.
  * These special patterns (other than {@link LazyItem} forward references which are not recursion specific)
  * are not required for correct runtime behavior: they exist entirely to mitigate TypeScript type checking limitations and bugs.
@@ -71,7 +71,7 @@ export function createFieldSchemaUnsafe<
  *
  * ## General Patterns
  *
- * When defining a recursive {@link TreeNodeSchema}, use the `recursive` {@link SchemaFactory} methods.
+ * When defining a recursive {@link TreeNodeSchema}, use the `*Recursive` {@link SchemaFactory} methods.
  * The returned class should be used as the base class for the recursive schema, which should then be passed to {@link ValidateRecursiveSchema}.
  *
  * Using {@link ValidateRecursiveSchema} will provide compile error for some of the cases of malformed schema.
