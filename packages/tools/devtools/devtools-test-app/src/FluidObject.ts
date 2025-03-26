@@ -21,11 +21,6 @@ export class AppDataTwo extends DataObject {
 	 */
 	private readonly sharedTextKey = "shared-text";
 
-	/**
-	 * Key in the app's `rootMapTwo` under which the SharedDirectory object is stored.
-	 */
-	private readonly initialObjectsDirKey = "rootMapTwo";
-
 	public static readonly Name = "@devtools-example/test-app-2";
 
 	private _text: SharedString | undefined;
@@ -52,7 +47,6 @@ export class AppDataTwo extends DataObject {
 		// Create the shared objects and store their handles in the root SharedDirectory
 		const text = SharedString.create(this.runtime, this.sharedTextKey);
 
-		this.root.createSubDirectory(this.initialObjectsDirKey);
 		this.root.set(this.sharedTextKey, text.handle);
 		this.root.set("test-object-two", {
 			a: true,
