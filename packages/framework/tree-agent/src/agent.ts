@@ -4,12 +4,14 @@
  */
 
 import type { Anthropic } from "@anthropic-ai/sdk";
+import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	getSimpleSchema,
 	Tree,
 	type ImplicitFieldSchema,
 	type ReadableField,
+	type TreeViewAlpha,
 } from "@fluidframework/tree/internal";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
@@ -22,15 +24,16 @@ import { generateEditTypesForInsertion } from "./typeGeneration.js";
 import { fail, type TreeView } from "./utils.js";
 
 interface RetryState {
-	readonly thinking:
-		| Anthropic.Beta.BetaThinkingBlock
-		| Anthropic.Beta.BetaRedactedThinkingBlock;
 	readonly errors: {
 		readonly error: UsageError;
-		readonly editIndex: number;
 		readonly toolUse: Anthropic.Beta.BetaToolUseBlock;
 	}[];
 }
+
+/**
+ * @alpha
+ */
+export type Log = (message: string) => void;
 
 /**
  * @alpha
@@ -45,329 +48,258 @@ export class SharedTreeSemanticAgent<TRoot extends ImplicitFieldSchema> {
 		},
 	) {}
 
-	public async applyCodingPrompt(prompt: string): Promise<string | undefined> {
-		const idGenerator = new IdGenerator();
-		const root = this.treeView.root;
-		if (typeof root !== "object" || root === null) {
-			throw new UsageError("Primitive root nodes are not yet supported.");
-		}
+	async #queryLlm(
+		systemPrompt: string,
+		tool: Anthropic.Beta.Messages.BetaToolUnion,
+		messages: Anthropic.Beta.Messages.BetaMessageParam[] = [],
+	): Promise<Anthropic.Beta.Messages.BetaMessage> {
+		return this.client.beta.messages.create({
+			betas: ["token-efficient-tools-2025-02-19"],
+			model: "claude-3-7-sonnet-latest",
+			thinking: { type: "enabled", budget_tokens: maxTokens / 2 },
+			stream: false,
+			max_tokens: maxTokens,
+			tools: [tool],
+			tool_choice: { type: "auto" },
+			messages,
+			system: `${systemPrompt} You must use the ${tool.name} tool to respond.`,
+		});
+	}
+
+	#makeTool(
+		name: string,
+		description: string,
+		wrapper: z.ZodObject<z.ZodRawShape>,
+	): Anthropic.Beta.BetaTool {
+		return {
+			name,
+			description,
+			input_schema: zodToJsonSchema(wrapper, { name: "foo" }).definitions
+				?.foo as Anthropic.Tool.InputSchema,
+		};
+	}
+
+	public async runCodeFromPrompt(prompt: string, logger?: Log): Promise<void> {
 		const editFunctionName = "editTree";
-		const systemPrompt = getFunctioningSystemPrompt(
-			this.treeView,
-			editFunctionName,
-			idGenerator,
-			this.domain?.hints,
-		);
+		const systemPrompt = getFunctioningSystemPrompt(this.treeView, editFunctionName);
 
 		const toolWrapper = z.object({
 			functionBody: z
 				.string()
 				.describe(`The body of the \`${editFunctionName}\` JavaScript function`),
 		});
-		const input_schema = zodToJsonSchema(toolWrapper, { name: "foo" }).definitions
-			?.foo as Anthropic.Tool.InputSchema;
+		const tool = this.#makeTool(
+			"GenerateTreeEditingCode",
+			`A JavaScript function \`${editFunctionName}\` to edit a user's tree`,
+			toolWrapper,
+		);
 
-		let log = "";
-		if (this.domain?.toString !== undefined) {
-			log += `# Initial Tree State\n\n`;
-			log += `${
-				this.domain.toString(root) ??
-				`\`\`\`JSON\n${JSON.stringify(root, undefined, 2)}\n\`\`\``
-			}\n\n`;
-		}
-		log += `# System Prompt\n\n${systemPrompt}\n\n`;
-		log += `# User Prompt\n\n"${prompt}"\n\n`;
+		await this.#applyPrompt(
+			systemPrompt,
+			prompt,
+			tool,
+			(toolInput, branch, idGenerator2) => {
+				const parseResult = toolWrapper.safeParse(toolInput);
+				if (!parseResult.success) {
+					return parseResult.error.message;
+				}
 
-		const queryLlm = async (
-			messages2: Anthropic.Beta.Messages.BetaMessageParam[],
-		): Promise<Anthropic.Beta.Messages.BetaMessage> => {
-			const message = await this.client.beta.messages.create({
-				betas: ["token-efficient-tools-2025-02-19"],
-				model: "claude-3-7-sonnet-latest",
-				thinking: { type: "enabled", budget_tokens: maxTokens / 2 },
-				stream: false,
-				max_tokens: maxTokens,
-				tools: [
-					{
-						name: "GenerateTreeEditingCode",
-						description: `A JavaScript function \`${editFunctionName}\` to edit a user's tree`,
-						input_schema,
-					},
-				],
-				tool_choice: { type: "auto" },
-				messages: messages2,
-				system: `${systemPrompt}\n\nYou must use the GenerateTreeEditingCode tool to respond.`,
-			});
-
-			return message;
-		};
-
-		const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [
-			{ role: "user", content: prompt },
-		];
-		let response = await queryLlm(messages);
-
-		const thinking =
-			response.content.find(
-				(c): c is Anthropic.Beta.BetaThinkingBlock => c.type === "thinking",
-			) ?? fail("Expected thinking block");
-
-		log += `# Chain of Thought\n\n${thinking.type === "thinking" ? thinking.thinking : "-- Redacted by LLM --"}\n\n`;
-
-		const retryState: RetryState = {
-			thinking,
-			errors: [],
-		};
-
-		log += `# Results\n\n`;
-
-		while (retryState.errors.length <= maxErrorRetries) {
-			const toolUse =
-				response.content.find(
-					(v): v is Anthropic.Beta.BetaToolUseBlock => v.type === "tool_use",
-				) ?? fail("Expected tool use block");
-
-			const branch = this.treeView.fork();
-			const idGenerator2 = new IdGenerator();
-			idGenerator2.assignIds(branch.root);
-			const parse = toolWrapper.safeParse(toolUse.input);
-			if (parse.success) {
-				log += `## Result${retryState.errors.length > 0 ? ` Attempt ${retryState.errors.length + 1}` : ""}\n\n\`\`\`JavaScript\n${parse.data.functionBody}\n\`\`\`\n\n`;
-
-				const editCode = parse.data.functionBody;
+				const editCode = parseResult.data.functionBody;
 				// eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
 				const fn = new Function("tree", "idMap", `${editCode}\n\neditTree(tree, idMap);`) as (
 					tree: typeof branch,
 					idMap: IdGenerator,
 				) => void;
 
-				try {
-					fn(branch, idGenerator2);
-					log += `### Applied Edit\n\n`;
-					log += `The new state of the tree is:\n\n`;
-					log += `${
+				fn(branch, idGenerator2);
+				logger?.(`### Applied Edit\n\n`);
+				logger?.(`The new state of the tree is:\n\n`);
+				logger?.(
+					`${
 						this.domain?.toString?.(branch.root) ??
 						`\`\`\`JSON\n${JSON.stringify(branch.root, undefined, 2)}\n\`\`\``
-					}\n\n`;
-
-					this.treeView.merge(branch);
-					return log;
-				} catch (error: unknown) {
-					log += `### Error Applying Edit\n\n`;
-					log += `\`${(error as Error)?.message}\`\n\n`;
-					branch.dispose();
-					if (error instanceof UsageError) {
-						log += `LLM will be queried again.\n\n`;
-						retryState.errors.push({
-							editIndex: 0,
-							error,
-							toolUse,
-						});
-					} else {
-						throw error;
-					}
-				}
-			} else {
-				log += `### Error Parsing Result\n\n`;
-				log += `\`${parse.error.message}\`\n\n`;
-				log += `LLM will be queried again.\n\n`;
-				retryState.errors.push({
-					error: new UsageError(parse.error.message),
-					editIndex: -1,
-					toolUse,
-				});
-				branch.dispose();
-			}
-
-			const retryMessages: Anthropic.Beta.Messages.BetaMessageParam[] = [...messages];
-			for (const retry of retryState.errors) {
-				retryMessages.push(
-					{ role: "assistant", content: [retryState.thinking, retry.toolUse] },
-					{
-						role: "user",
-						content: [
-							{
-								type: "tool_result",
-								tool_use_id: retry.toolUse.id,
-								content:
-									retry.editIndex >= 0
-										? `Error: "${retry.error.message}" when editing tree.`
-										: `Error: "${retry.error.message}" when attempting to parse edit code.`,
-							},
-						],
-					},
+					}\n\n`,
 				);
-			}
-
-			response = await queryLlm(retryMessages);
-		}
-
-		log += `# Exceeded Maximum Error Count`;
-		return log;
+			},
+			logger,
+		);
 	}
 
-	public async applyPrompt(prompt: string): Promise<string | undefined> {
-		const idGenerator = new IdGenerator();
+	public async applyEditsFromPrompt(prompt: string, logger?: Log): Promise<void> {
 		const root = this.treeView.root;
 		if (typeof root !== "object" || root === null) {
 			throw new UsageError("Primitive root nodes are not yet supported.");
 		}
 		const simpleSchema = getSimpleSchema(Tree.schema(root));
-		const systemPrompt = getEditingSystemPrompt(
-			this.treeView,
-			idGenerator,
-			this.domain?.hints,
+		const systemPrompt = getEditingSystemPrompt(this.treeView);
+		const tool = this.#makeTool(
+			"EditJsonTree",
+			"An array of edits to a user's SharedTree domain",
+			z.object({
+				edits: z.array(z.unknown()).describe(`An array of well-formed TreeEdits`),
+			}),
 		);
-
-		// TODO: use langchain library to get this for free
-		// TODO: respect description, tokensUsed, and debugOptions
-		const toolWrapper = z.object({
-			edits: z.array(z.unknown()).describe(`An array of well-formed TreeEdits`),
-		});
-		const input_schema = zodToJsonSchema(toolWrapper, { name: "foo" }).definitions
-			?.foo as Anthropic.Tool.InputSchema;
-
-		let log = "";
-		if (this.domain?.toString !== undefined) {
-			log += `# Initial Tree State\n\n`;
-			log += `${
-				this.domain.toString(root) ??
-				`\`\`\`JSON\n${JSON.stringify(root, undefined, 2)}\n\`\`\``
-			}\n\n`;
-		}
-		log += `# System Prompt\n\n${systemPrompt}\n\n`;
-		log += `# User Prompt\n\n"${prompt}"\n\n`;
-
-		const queryLlm = async (
-			messages2: Anthropic.Beta.Messages.BetaMessageParam[],
-		): Promise<Anthropic.Beta.Messages.BetaMessage> => {
-			const message = await this.client.beta.messages.create({
-				betas: ["token-efficient-tools-2025-02-19"],
-				model: "claude-3-7-sonnet-latest",
-				thinking: { type: "enabled", budget_tokens: maxTokens / 2 },
-				stream: false,
-				max_tokens: maxTokens,
-				tools: [
-					{
-						name: "EditJsonTree",
-						description: "An array of edits to a user's SharedTree domain",
-						input_schema,
-					},
-				],
-				tool_choice: { type: "auto" },
-				messages: messages2,
-				system: `${systemPrompt} You must use the EditJsonTree tool to respond.`,
-			});
-
-			return message;
-		};
-
-		const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [
-			{ role: "user", content: prompt },
-		];
-		let response = await queryLlm(messages);
-
-		const thinking =
-			response.content.find(
-				(c): c is Anthropic.Beta.BetaThinkingBlock => c.type === "thinking",
-			) ?? fail("Expected thinking block");
-
-		log += `# Chain of Thought\n\n${thinking.type === "thinking" ? thinking.thinking : "-- Redacted by LLM --"}\n\n`;
-
-		const retryState: RetryState = {
-			thinking,
-			errors: [],
-		};
 
 		const wrapper = z.object({
 			edits: generateEditTypesForInsertion(simpleSchema),
 		});
 
-		log += `# Results\n\n`;
+		await this.#applyPrompt(
+			systemPrompt,
+			prompt,
+			tool,
+			(toolInput, branch, idGenerator2) => {
+				const parseResult = wrapper.safeParse(toolInput);
+				if (!parseResult.success) {
+					return parseResult.error.message;
+				}
 
-		while (retryState.errors.length <= maxErrorRetries) {
-			const toolUse =
-				response.content.find(
-					(v): v is Anthropic.Beta.BetaToolUseBlock => v.type === "tool_use",
-				) ?? fail("Expected tool use block");
-
-			log += `## Result${retryState.errors.length > 0 ? ` Attempt ${retryState.errors.length + 1}` : ""}\n\n\`\`\`JSON\n${JSON.stringify(toolUse.input, undefined, 2)}\n\`\`\`\n\n`;
-
-			const branch = this.treeView.fork();
-			const idGenerator2 = new IdGenerator();
-			idGenerator2.assignIds(branch.root);
-			const parse = wrapper.safeParse(toolUse.input);
-			if (parse.success) {
-				const edits = parse.data.edits as TreeEdit[];
-
+				const edits = parseResult.data.edits as TreeEdit[];
 				let editIndex = 0;
-				try {
-					while (editIndex < edits.length) {
-						const edit = edits[editIndex] ?? fail("Expected edit");
+				while (editIndex < edits.length) {
+					const edit = edits[editIndex] ?? fail("Expected edit");
+					try {
 						applyAgentEdit(simpleSchema, branch, edit, idGenerator2);
-						log += `### Applied Edit ${editIndex + 1}\n\n`;
-						log += `The new state of the tree is:\n\n`;
-						log += `${
-							this.domain?.toString?.(branch.root) ??
-							`\`\`\`JSON\n${JSON.stringify(branch.root, undefined, 2)}\n\`\`\``
-						}\n\n`;
-						editIndex += 1;
-					}
-
-					this.treeView.merge(branch);
-					return log;
-				} catch (error: unknown) {
-					log += `### Error Applying Edit ${editIndex + 1}\n\n`;
-					log += `\`${(error as Error)?.message}\`\n\n`;
-					branch.dispose();
-					if (error instanceof UsageError) {
-						log += `LLM will be queried again.\n\n`;
-						retryState.errors.push({
-							editIndex,
-							error,
-							toolUse,
-						});
-					} else {
+					} catch (error: unknown) {
+						if (error instanceof UsageError) {
+							return `Error when applying edit at index ${editIndex}: ${error.message}`;
+						}
 						throw error;
 					}
+					logger?.(`### Applied Edit ${editIndex + 1}\n\n`);
+					logger?.(`The new state of the tree is:\n\n`);
+					logger?.(
+						`${
+							this.domain?.toString?.(branch.root) ??
+							`\`\`\`JSON\n${JSON.stringify(branch.root, undefined, 2)}\n\`\`\``
+						}\n\n`,
+					);
+					editIndex += 1;
 				}
-			} else {
-				log += `### Error Parsing Result\n\n`;
-				log += `\`${parse.error.message}\`\n\n`;
-				log += `LLM will be queried again.\n\n`;
-				retryState.errors.push({
-					error: new UsageError(parse.error.message),
-					editIndex: -1,
-					toolUse,
-				});
-				branch.dispose();
-			}
+			},
+			logger,
+		);
+	}
 
-			const retryMessages: Anthropic.Beta.Messages.BetaMessageParam[] = [...messages];
+	async #applyPrompt(
+		systemPrompt: string,
+		userPrompt: string,
+		tool: Anthropic.Beta.Messages.BetaToolUnion,
+		parseAndApply: (
+			toolInput: unknown,
+			branch: TreeViewAlpha<TRoot>,
+			idGenerator: IdGenerator,
+		) => void | string,
+		logger: Log | undefined,
+	): Promise<void> {
+		const retryState: RetryState = {
+			errors: [],
+		};
+
+		const initialMessages: Anthropic.Beta.Messages.BetaMessageParam[] = [];
+		if (this.domain?.hints !== undefined) {
+			initialMessages.push({
+				role: "user",
+				content: `Here is some information about the application domain: ${this.domain.hints}`,
+			});
+		}
+		initialMessages.push({ role: "user", content: userPrompt });
+
+		let thinking: Anthropic.Beta.BetaThinkingBlock | undefined;
+
+		logger?.(`# Initial Tree State\n\n`);
+		logger?.(
+			`${
+				this.domain?.toString?.(this.treeView.root) ??
+				`\`\`\`JSON\n${JSON.stringify(this.treeView.root, undefined, 2)}\n\`\`\``
+			}\n\n`,
+		);
+
+		logger?.(`# System Prompt\n\n${systemPrompt}\n\n`);
+		logger?.(`# User Prompt\n\n`);
+		if (this.domain?.hints === undefined) {
+			logger?.(`"${userPrompt}"\n\n`);
+		} else {
+			logger?.(`## Domain Hints\n\n"${this.domain.hints}"\n\n`);
+			logger?.(`## Prompt\n\n"${userPrompt}"\n\n`);
+		}
+		logger?.(`# Results\n\n`);
+
+		while (retryState.errors.length <= maxErrorRetries) {
+			const messages = [...initialMessages];
 			for (const retry of retryState.errors) {
-				retryMessages.push(
-					{ role: "assistant", content: [retryState.thinking, retry.toolUse] },
+				assert(thinking !== undefined, "Thinking block should be defined");
+				messages.push(
+					{ role: "assistant", content: [thinking, retry.toolUse] },
 					{
 						role: "user",
 						content: [
 							{
 								type: "tool_result",
 								tool_use_id: retry.toolUse.id,
-								content:
-									retry.editIndex >= 0
-										? `Error: "${retry.error.message}" when applying TreeEdit at index ${retry.editIndex}.`
-										: `Error: "${retry.error.message}" when attempting to parse edits.`,
+								content: `Error: "${retry.error.message}" when attempting to edit tree.`,
 							},
 						],
 					},
 				);
 			}
 
-			response = await queryLlm(retryMessages);
-		}
+			const response = await this.#queryLlm(systemPrompt, tool, messages);
 
-		log += `# Exceeded Maximum Error Count`;
-		return log;
+			if (thinking === undefined) {
+				thinking =
+					response.content.find(
+						(c): c is Anthropic.Beta.BetaThinkingBlock => c.type === "thinking",
+					) ?? fail("Expected thinking block");
+
+				logger?.(
+					`# Chain of Thought\n\n${thinking.type === "thinking" ? thinking.thinking : "-- Redacted by LLM --"}\n\n`,
+				);
+			}
+
+			const toolUse =
+				response.content.find(
+					(v): v is Anthropic.Beta.BetaToolUseBlock => v.type === "tool_use",
+				) ?? fail("Expected tool use block");
+
+			logger?.(
+				`## Result${retryState.errors.length > 0 ? ` Attempt ${retryState.errors.length + 1}` : ""}\n\n\`\`\`JSON\n${JSON.stringify(toolUse.input, undefined, 2)}\n\`\`\`\n\n`,
+			);
+
+			const branch = this.treeView.fork();
+			const idGenerator2 = new IdGenerator();
+			idGenerator2.assignIds(branch.root);
+
+			try {
+				const error = parseAndApply(toolUse.input, branch, idGenerator2);
+				if (error === undefined) {
+					this.treeView.merge(branch);
+					return;
+				} else {
+					logger?.(`### Error Parsing Response from LLM\n\n`);
+					logger?.(`\`${error}\`\n\n`);
+					logger?.(`LLM will be queried again.\n\n`);
+					retryState.errors.push({
+						error: new UsageError(error),
+						toolUse,
+					});
+					branch.dispose();
+				}
+			} catch (error: unknown) {
+				logger?.(`### Error When Editing Tree\n\n`);
+				logger?.(`\`${(error as Error)?.message}\`\n\n`);
+				branch.dispose();
+				if (error instanceof UsageError) {
+					logger?.(`LLM will be queried again.\n\n`);
+					retryState.errors.push({
+						error,
+						toolUse,
+					});
+				} else {
+					throw error;
+				}
+			}
+		}
 	}
 }
 

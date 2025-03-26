@@ -88,7 +88,7 @@ export class Page extends sf.object(
 
 const factory = SharedTree.getFactory();
 
-describe("Agent Editing Integration", () => {
+describe("Agent Editing Integration 2", () => {
 	it("Duck Test", async () => {
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
@@ -199,8 +199,10 @@ describe("Agent Editing Integration", () => {
 			toString,
 		});
 
-		const log = await agent.applyCodingPrompt(
+		let log = "";
+		await agent.runCodeFromPrompt(
 			"Please add a comment to the word 'treat' that says 'Makes me think of Halloween :)'",
+			(l) => (log += l),
 		);
 
 		if (log === undefined) {

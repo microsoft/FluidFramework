@@ -162,8 +162,10 @@ describe("Agent Editing Integration 1", () => {
 		});
 
 		const agent = new SharedTreeSemanticAgent(client, asTreeViewAlpha(view));
-		const log = await agent.applyCodingPrompt(
-			"Please organize the sessions so that the ones for adults are on the first day, and the ones that kids would find enjoyable are on the second day. If one day has more sesions than the other, please add a new session (that fits the theme of the day) to balance them out.",
+		let log = "";
+		await agent.runCodeFromPrompt(
+			"Please organize the sessions so that the ones for adults are on the first day, and the ones that kids would find enjoyable are on the second day. If one day has more sessions than the other, please add a new session (that fits the theme of the day) to balance them out.",
+			(l) => (log += l),
 		);
 
 		if (log === undefined) {

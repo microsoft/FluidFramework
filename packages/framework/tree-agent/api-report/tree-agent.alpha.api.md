@@ -8,15 +8,16 @@
 export const llmDefault: unique symbol;
 
 // @alpha (undocumented)
+export type Log = (message: string) => void;
+
+// @alpha (undocumented)
 export class SharedTreeSemanticAgent<TRoot extends ImplicitFieldSchema> {
     constructor(client: Anthropic, treeView: TreeView<TRoot>, domain?: {
         hints?: string | undefined;
         toString?: ((root: ReadableField<TRoot>) => string) | undefined;
     } | undefined);
     // (undocumented)
-    applyCodingPrompt(prompt: string): Promise<string | undefined>;
-    // (undocumented)
-    applyPrompt(prompt: string): Promise<string | undefined>;
+    applyEditsFromPrompt(prompt: string, logger?: Log): Promise<void>;
     // (undocumented)
     readonly client: Anthropic;
     // (undocumented)
@@ -24,6 +25,8 @@ export class SharedTreeSemanticAgent<TRoot extends ImplicitFieldSchema> {
         hints?: string | undefined;
         toString?: ((root: ReadableField<TRoot>) => string) | undefined;
     } | undefined;
+    // (undocumented)
+    runCodeFromPrompt(prompt: string, logger?: Log): Promise<void>;
     // (undocumented)
     readonly treeView: TreeView<TRoot>;
 }

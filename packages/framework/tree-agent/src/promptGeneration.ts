@@ -22,7 +22,7 @@ import {
 	type SetField,
 	type TreeEdit,
 } from "./agentEditTypes.js";
-import type { IdGenerator } from "./idGenerator.js";
+import { IdGenerator } from "./idGenerator.js";
 import { doesNodeContainArraySchema, generateEditTypesForPrompt } from "./typeGeneration.js";
 import { fail, type TreeView } from "./utils.js";
 
@@ -91,8 +91,6 @@ export function createEditListHistoryPrompt(edits: EditLog): string {
  */
 export function getEditingSystemPrompt(
 	view: Omit<TreeView<ImplicitFieldSchema>, "fork" | "merge">,
-	idGenerator: IdGenerator,
-	appGuidance?: string,
 ): string {
 	// TODO: Support for non-object roots
 	assert(typeof view.root === "object" && view.root !== null && !isFluidHandle(view.root), "");
@@ -113,16 +111,8 @@ export function getEditingSystemPrompt(
 	}
 	const domainSchema = createZodJsonValidator(domainTypes, domainRoot);
 	const domainSchemaString = domainSchema.getSchemaText();
-	const decoratedTreeJson = toDecoratedJson(idGenerator, view.root);
-
-	const role = `You are a collaborative agent who interacts with a JSON tree by performing edits to achieve a user-specified goal.${
-		appGuidance === undefined
-			? ""
-			: `\n\nThe application that owns the JSON tree has the following guidance about your role: \n\n${appGuidance}`
-	}`;
-
+	const decoratedTreeJson = toDecoratedJson(new IdGenerator(), view.root);
 	const treeSchemaString = createZodJsonValidator(editTypes, editRoot).getSchemaText();
-
 	const setFieldType = "SetField" satisfies Capitalize<SetField["type"]>;
 	const insertIntoArrayType = "InsertIntoArray" satisfies Capitalize<InsertIntoArray["type"]>;
 	const topLevelEditWrapperDescription = doesNodeContainArraySchema(view.root)
@@ -131,8 +121,7 @@ export function getEditingSystemPrompt(
 
 	const rootTypes = [...schema.allowedTypesIdentifiers];
 	// TODO: security: user prompt in system prompt
-	const systemPrompt = `${role}
-
+	const systemPrompt = `You are a collaborative agent who interacts with a JSON tree by performing edits to achieve a user-specified goal.
 Edits are JSON objects that conform to the schema described below. You produce an array of edits where each edit ${topLevelEditWrapperDescription}.
 When creating new objects for \`${insertIntoArrayType}\` or \`${setFieldType}\`,
 you may create an ID and put it in the \`${objectIdKey}\` property if you want to refer to the object in a later edit.
@@ -175,8 +164,6 @@ Finally, double check that the edits would accomplish the user's request (if it 
 export function getFunctioningSystemPrompt(
 	view: Omit<TreeView<ImplicitFieldSchema>, "fork" | "merge">,
 	editFunctionName: string,
-	idGenerator: IdGenerator,
-	appGuidance?: string,
 ): string {
 	// TODO: Support for non-object roots
 	assert(typeof view.root === "object" && view.root !== null && !isFluidHandle(view.root), "");
@@ -197,18 +184,10 @@ export function getFunctioningSystemPrompt(
 	}
 	const domainSchema = createZodJsonValidator(domainTypes, domainRoot);
 	const domainSchemaString = domainSchema.getSchemaText();
-	const decoratedTreeJson = toDecoratedJson(idGenerator, view.root);
-
-	const role = `You are a collaborative agent who interacts with a JSON tree by performing edits to achieve a user-specified goal.${
-		appGuidance === undefined
-			? ""
-			: `\n\nThe application that owns the JSON tree has the following guidance about your role: \n\n${appGuidance}`
-	}`;
-
+	const decoratedTreeJson = toDecoratedJson(new IdGenerator(), view.root);
 	const rootTypes = [...schema.allowedTypesIdentifiers];
 	// TODO: security: user prompt in system prompt
-	const systemPrompt = `${role}
-
+	const systemPrompt = `You are a collaborative agent who interacts with a JSON tree by performing edits to achieve a user-specified goal.
 The tree is a JSON object with the following Typescript schema:
 
 \`\`\`typescript
