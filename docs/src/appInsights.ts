@@ -20,7 +20,7 @@ if (typeof window !== "undefined" && window.location.hostname !== "localhost") {
 	} else {
 		appInsights = new ApplicationInsights({
 			config: {
-				connectionString: `InstrumentationKey=${siteConfig?.customFields?.INSTRUMENTATION_KEY}`,
+				connectionString: `InstrumentationKey=${instrumentationKey}`,
 				enableAutoRouteTracking: true,
 				enableDebug: true,
 				extensions: [reactPlugin],
