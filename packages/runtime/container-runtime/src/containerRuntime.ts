@@ -4200,6 +4200,8 @@ export class ContainerRuntime
 				});
 			}
 
+			//* NEXT: Stop stringifying here and throughout op lifecycle,
+			//* so we can keep the viable contents all the way through to resubmit
 			const message: BatchMessage = {
 				contents: serializeOpContents(containerRuntimeMessage),
 				metadata,
