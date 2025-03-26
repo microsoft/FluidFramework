@@ -282,10 +282,13 @@ export const schemaStatics = {
 	 * This version of {@link schemaStatics.optional} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
 	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
 	 */
-	optionalRecursive: <const T extends ImplicitAllowedTypesUnsafe>(
+	optionalRecursive: <
+		const T extends ImplicitAllowedTypesUnsafe,
+		const TCustomMetadata = unknown,
+	>(
 		t: T,
-		props?: Omit<FieldProps, "defaultProvider">,
-	): FieldSchemaUnsafe<FieldKind.Optional, T> => {
+		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	): FieldSchemaUnsafe<FieldKind.Optional, T, TCustomMetadata> => {
 		return createFieldSchemaUnsafe(FieldKind.Optional, t, props);
 	},
 
@@ -296,10 +299,13 @@ export const schemaStatics = {
 	 * This version of {@link schemaStatics.required} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
 	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
 	 */
-	requiredRecursive: <const T extends ImplicitAllowedTypesUnsafe>(
+	requiredRecursive: <
+		const T extends ImplicitAllowedTypesUnsafe,
+		const TCustomMetadata = unknown,
+	>(
 		t: T,
-		props?: Omit<FieldProps, "defaultProvider">,
-	): FieldSchemaUnsafe<FieldKind.Required, T> => {
+		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	): FieldSchemaUnsafe<FieldKind.Required, T, TCustomMetadata> => {
 		return createFieldSchemaUnsafe(FieldKind.Required, t, props);
 	},
 } as const;
@@ -384,7 +390,8 @@ export const schemaStatics = {
  *
  * 8. IntelliSense: Shows internal type generation logic: `object & TreeNode & ObjectFromSchemaRecord<{}> & WithType<"test.x">`.
  *
- * 9. Recursion: Unsupported: Generated `.d.ts` files replace recursive references with `any`, breaking the use of recursive schema across compilation boundaries.
+ * 9. Recursion: Unsupported: [Generated `.d.ts` files replace recursive references with `any`](https://github.com/microsoft/TypeScript/issues/55832),
+ * breaking the use of recursive schema across compilation boundaries.
  *
  * Note that while "POJO Emulation" nodes act a lot like POJO objects, they are not true POJO objects:
  *

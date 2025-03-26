@@ -36,17 +36,6 @@ export {
 } from "./schemaCreationUtilities.js";
 export { treeNodeApi, type TreeNodeApi, tryGetSchema } from "./treeNodeApi.js";
 export { createFromInsertable, cursorFromInsertable, createFromCursor } from "./create.js";
-export type {
-	SimpleTreeSchema,
-	SimpleNodeSchema,
-	SimpleFieldSchema,
-	SimpleLeafNodeSchema,
-	SimpleMapNodeSchema,
-	SimpleArrayNodeSchema,
-	SimpleObjectNodeSchema,
-	SimpleNodeSchemaBase,
-	SimpleObjectFieldSchema,
-} from "./simpleSchema.js";
 export {
 	type JsonSchemaId,
 	type JsonSchemaType,
@@ -88,6 +77,7 @@ export type {
 	ImplicitAllowedTypesUnsafe,
 	TreeNodeSchemaNonClassUnsafe,
 	InsertableTreeNodeFromAllowedTypesUnsafe,
+	FieldSchemaAlphaUnsafe,
 } from "./typesUnsafe.js";
 
 export {
