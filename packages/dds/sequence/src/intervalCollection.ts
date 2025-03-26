@@ -1231,26 +1231,26 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				setSlideOnRemove(interval.start);
 				setSlideOnRemove(interval.end);
 			}
-			const serializedInterval: ISerializedInterval = {
-				start: startPos,
-				end: endPos,
-				intervalType: IntervalType.SlideOnRemove,
-				properties: { ...interval.properties },
-				sequenceNumber: this.client?.getCurrentSeq() ?? 0,
-				stickiness,
-				startSide,
-				endSide,
-			};
-			const localSeq = this.getNextLocalSeq();
-			if (this.isCollaborating) {
-				this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
-			}
-			// Local ops get submitted to the server. Remote ops have the deserializer run.
 			if (rollback !== true) {
+				const serializedInterval: ISerializedInterval = {
+					start: startPos,
+					end: endPos,
+					intervalType: IntervalType.SlideOnRemove,
+					properties: { ...interval.properties },
+					sequenceNumber: this.client?.getCurrentSeq() ?? 0,
+					stickiness,
+					startSide,
+					endSide,
+				};
+				const localSeq = this.getNextLocalSeq();
+				if (this.isCollaborating) {
+					this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
+				}
+				// Local ops get submitted to the server. Remote ops have the deserializer run.
+
 				this.emitter.emit("add", undefined, serializedInterval, {
 					localSeq,
-					interval,
-					previousValues: undefined,
+					original: interval,
 				});
 			}
 		}
@@ -1278,8 +1278,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				if (rollback !== true) {
 					this.emitter.emit("delete", undefined, interval.serialize(), {
 						localSeq: this.getNextLocalSeq(),
-						interval,
-						previousValues: undefined,
+						clone: interval.clone() as ISerializableInterval,
 					});
 				}
 			} else {
@@ -1343,6 +1342,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 		const interval = this.getIntervalById(id);
 		if (interval) {
+			const clone = interval.clone() as TInterval;
+
 			let deltaProps: PropertySet | undefined;
 			let newInterval: TInterval | undefined;
 			if (props !== undefined) {
@@ -1381,10 +1382,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			}
 
 			if (rollback !== true) {
+				const original = newInterval ?? interval;
 				this.emitter.emit("change", undefined, serializedInterval, {
 					localSeq,
-					interval,
-					previousValues: deltaProps,
+					original,
+					clone,
 				});
 			}
 			if (deltaProps !== undefined) {
@@ -1575,6 +1577,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		op: IIntervalCollectionTypeOperationValue,
 		localOpMetadata: IMapMessageLocalMetadata,
 	): void {
+		const { clone, original } = localOpMetadata;
 		const { [reservedIntervalIdKey]: id } = op.value.properties ?? {};
 		switch (op.opName) {
 			case "add": {
@@ -1582,22 +1585,14 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				break;
 			}
 			case "change": {
-				this.change(id, {
-					rollback: true,
-					props: localOpMetadata.previousValues,
-				});
+				this.localCollection?.removeExistingInterval(original as TInterval);
+				this.localCollection?.add(clone as TInterval);
 				break;
 			}
 			case "delete": {
-				this.add({
-					// Todo: we should improve typing so we know add ops always have start and end
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					start: toSequencePlace(op.value.start!, op.value.startSide),
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					end: toSequencePlace(op.value.end!, op.value.endSide),
-					props: op.value.properties,
-					rollback: true,
-				});
+				this.localCollection?.add(clone as TInterval);
+				this.emit("addInterval", clone, true, undefined);
+
 				break;
 			}
 			default:
