@@ -122,14 +122,14 @@ export type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSche
  * Additionally when T is exactly `RestrictiveStringRecord<ImplicitFieldSchema>` produce just `never` so that it is assignable to the insertable for any given object type.
  *
  * Separating `{}` from `RestrictiveStringRecord<ImplicitFieldSchema>` is a bit messy since both extend each-other despite them being very different types.
- * A third dummy type `{ x: "x" }` is used to resolve this.
+ * A third dummy type `{ arbitraryKey: "arbitraryValue" }` is used to resolve this.
  *
  * @system @public
  */
 export type InsertableObjectFromSchemaRecord<
 	T extends RestrictiveStringRecord<ImplicitFieldSchema>,
 > = RestrictiveStringRecord<ImplicitFieldSchema> extends T
-	? { x: "x" } extends T
+	? { arbitraryKey: "arbitraryValue" } extends T
 		? // {} case
 			Record<string, never>
 		: // RestrictiveStringRecord<ImplicitFieldSchema> case
