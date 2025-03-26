@@ -9,23 +9,32 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 
 import {
 	SchemaFactory,
+	SchemaFactoryAlpha,
 	typeNameSymbol,
 	typeSchemaSymbol,
 	type NodeBuilderData,
+	type ObjectNodeSchema,
+	type TreeNodeSchema,
+	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
 import type {
 	InsertableObjectFromSchemaRecord,
+	ObjectFromSchemaRecord,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/objectNode.js";
 import { describeHydration, hydrate, pretty } from "./utils.js";
 import type {
 	areSafelyAssignable,
+	isAssignableTo,
 	requireAssignableTo,
+	requireFalse,
 	requireTrue,
+	RestrictiveStringRecord,
 } from "../../util/index.js";
 import { validateUsageError } from "../utils.js";
 import { Tree } from "../../shared-tree/index.js";
 import type {
+	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
 	InsertableTreeNodeFromAllowedTypes,
 	InsertableTypedNode,
@@ -53,6 +62,44 @@ const schemaFactory = new SchemaFactory("Test");
 	{
 		type result = InsertableTreeFieldFromImplicitField<Info["stuff"]>;
 		type _check = requireTrue<areSafelyAssignable<result, Desired>>;
+	}
+
+	// Generic case
+	{
+		type result = InsertableObjectFromSchemaRecord<
+			RestrictiveStringRecord<ImplicitFieldSchema>
+		>;
+		type _check = requireAssignableTo<result, never>;
+	}
+
+	// Empty case
+	{
+		// eslint-disable-next-line @typescript-eslint/ban-types
+		type result = InsertableObjectFromSchemaRecord<{}>;
+		type _check = requireAssignableTo<result, Record<string, never>>;
+	}
+}
+
+// ObjectFromSchemaRecord
+{
+	// Generic case
+	{
+		type result = ObjectFromSchemaRecord<RestrictiveStringRecord<ImplicitFieldSchema>>;
+		// eslint-disable-next-line @typescript-eslint/ban-types
+		type _check = requireTrue<areSafelyAssignable<{}, result>>;
+
+		type _check3 = requireTrue<isAssignableTo<{ x: unknown }, result>>;
+	}
+
+	// Empty case
+	{
+		// eslint-disable-next-line @typescript-eslint/ban-types
+		type result = ObjectFromSchemaRecord<{}>;
+		// eslint-disable-next-line @typescript-eslint/ban-types
+		type _check = requireTrue<areSafelyAssignable<{}, result>>;
+		type _check2 = requireFalse<isAssignableTo<result, { x: unknown }>>;
+
+		type _check3 = requireTrue<isAssignableTo<{ x: unknown }, result>>;
 	}
 }
 
@@ -410,6 +457,63 @@ describeHydration(
 			{
 				type X = InsertableTreeNodeFromAllowedTypes<typeof allowed>;
 				const test: X = {};
+			}
+		});
+
+		it("ObjectNodeSchema", () => {
+			const sf = new SchemaFactoryAlpha("Test");
+			class Note extends sf.object("Note", { f: SchemaFactory.null }) {}
+			class EmptyObject extends sf.object("Note", {}) {}
+
+			const schema: ObjectNodeSchema = Note;
+			const schemaEmpty: ObjectNodeSchema = EmptyObject;
+
+			// @ts-expect-error Cannot call constructor with unknown schema
+			const note = new schema({ f: null });
+			// @ts-expect-error Cannot call constructor with unknown schema
+			const empty = new schemaEmpty({});
+
+			assert.deepEqual(
+				Note.fields.get("f")?.allowedTypesIdentifiers,
+				new Set([SchemaFactory.null.identifier]),
+			);
+
+			// Explicit field
+			{
+				class RecursiveTest extends sf.object("RecursiveTest", {
+					f: sf.optional([() => SchemaFactory.null]),
+				}) {}
+
+				type Info = (typeof RecursiveTest)["info"];
+				const _check1: TreeNodeSchema = RecursiveTest;
+				const _check2: ObjectNodeSchema = RecursiveTest;
+			}
+
+			// Non implicitly constructable
+			{
+				type TestObject = ObjectNodeSchema<
+					"x",
+					RestrictiveStringRecord<ImplicitFieldSchema>,
+					false
+				>;
+				type _check1 = requireAssignableTo<TestObject, TreeNodeSchema>;
+				type _check2 = requireAssignableTo<TestObject, ObjectNodeSchema>;
+			}
+
+			// Recursive
+			{
+				class RecursiveTest extends sf.objectRecursive("RecursiveTest", {
+					f: sf.optionalRecursive([() => RecursiveTest]),
+				}) {}
+				{
+					type _check = ValidateRecursiveSchema<typeof RecursiveTest>;
+				}
+
+				type Info = (typeof RecursiveTest)["info"];
+				type Info2 = ObjectNodeSchema["info"];
+				type _check2 = requireAssignableTo<Info, Info2>;
+				const _check1: TreeNodeSchema = RecursiveTest;
+				const _check2: ObjectNodeSchema = RecursiveTest;
 			}
 		});
 

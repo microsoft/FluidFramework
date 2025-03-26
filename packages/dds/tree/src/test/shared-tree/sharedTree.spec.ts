@@ -22,7 +22,6 @@ import {
 	CommitKind,
 	type Revertible,
 	type UpPath,
-	compareUpPaths,
 	moveToDetachedField,
 	rootFieldKey,
 	storedEmptyFieldSchema,
@@ -36,10 +35,9 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
-	MockNodeKeyManager,
+	MockNodeIdentifierManager,
 	TreeCompressionStrategy,
 	TreeStatus,
-	cursorForJsonableTreeNode,
 } from "../../feature-libraries/index.js";
 import {
 	ObjectForest,
@@ -87,6 +85,8 @@ import {
 	StringArray,
 	NumberArray,
 	validateViewConsistency,
+	chunkFromJsonableTrees,
+	expectEqualPaths,
 } from "../utils.js";
 import { configuredSharedTree, TreeFactory } from "../../treeFactory.js";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
@@ -235,10 +235,12 @@ describe("SharedTree", () => {
 			field: rootFieldKey,
 		});
 		field.set(
-			cursorForJsonableTreeNode({
-				type: brand(handleSchema.identifier),
-				value: provider.trees[0].handle,
-			}),
+			chunkFromJsonableTrees([
+				{
+					type: brand(handleSchema.identifier),
+					value: provider.trees[0].handle,
+				},
+			]),
 			true,
 		);
 	});
@@ -1467,7 +1469,7 @@ describe("SharedTree", () => {
 				const branchView = new SchematizingSimpleTreeView(
 					branch,
 					new TreeViewConfiguration({ schema, enableSchemaValidation }),
-					new MockNodeKeyManager(),
+					new MockNodeIdentifierManager(),
 				);
 				const outerList = branchView.root;
 				const innerList = outerList.at(0) ?? assert.fail();
@@ -1645,7 +1647,7 @@ describe("SharedTree", () => {
 				parentField: EmptyKey,
 				parentIndex: 1,
 			};
-			assert(compareUpPaths(childPath, expected));
+			expectEqualPaths(childPath, expected);
 		});
 	});
 
@@ -1751,7 +1753,7 @@ describe("SharedTree", () => {
 					schema: StringArray,
 					enableSchemaValidation,
 				}),
-				new MockNodeKeyManager(),
+				new MockNodeIdentifierManager(),
 			);
 			Tree.runTransaction(childView, () => {
 				childView.root.insertAtStart("C");
