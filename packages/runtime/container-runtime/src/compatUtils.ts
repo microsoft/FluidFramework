@@ -40,7 +40,7 @@ export const enabledCompressionConfig = {
 const defaultFlushMode = FlushMode.TurnBased;
 
 /**
- * Subset of IContainerRuntimeOptionsInternal that are version-dependent.
+ * Subset of the IContainerRuntimeOptionsInternal properties which are version-dependent.
  */
 type IContainerRuntimeOptionsVersionDependent = Pick<
 	IContainerRuntimeOptionsInternal,
@@ -55,48 +55,48 @@ type IContainerRuntimeOptionsVersionDependent = Pick<
 /**
  * Map of IContainerRuntimeOptionsInternal to compat related information.
  * The key is the option name, and the value is an object containing:
- * - minVersionRequired: The minimum version of the container runtime that supports this option being enabled
- * - disabledConfig: The default config of the option when it is disabled
- * - enabledConfig: he default config of the option when it is disabled
+ * - minVersionRequired: The minimum version of the container runtime that supports the version-dependent option
+ * - backwardsCompatConfig: The default config of the option when the runtime does not meets the min version requirement
+ * - modernConfig: The default config of the option when the runtime meets the min version requirement
  *
  * TODO: Get the exact versions that each option was added in.
  */
 const runtimeOptionConfigs: {
 	[K in keyof IContainerRuntimeOptionsVersionDependent]: {
 		minVersionRequired: string;
-		disabledConfig: IContainerRuntimeOptionsVersionDependent[K];
-		enabledConfig: IContainerRuntimeOptionsVersionDependent[K];
+		backwardsCompatConfig: IContainerRuntimeOptionsVersionDependent[K];
+		modernConfig: IContainerRuntimeOptionsVersionDependent[K];
 	};
 } = {
 	flushMode: {
 		minVersionRequired: "2.0.0",
-		disabledConfig: FlushMode.Immediate,
-		enabledConfig: defaultFlushMode,
+		backwardsCompatConfig: FlushMode.Immediate,
+		modernConfig: defaultFlushMode,
 	},
 	enableGroupedBatching: {
 		minVersionRequired: "2.0.0",
-		disabledConfig: false,
-		enabledConfig: true,
+		backwardsCompatConfig: false,
+		modernConfig: true,
 	},
 	explicitSchemaControl: {
 		minVersionRequired: "2.0.0",
-		disabledConfig: false,
-		enabledConfig: true,
+		backwardsCompatConfig: false,
+		modernConfig: true,
 	},
 	enableRuntimeIdCompressor: {
 		minVersionRequired: "2.0.0",
-		disabledConfig: undefined,
-		enabledConfig: "on",
+		backwardsCompatConfig: undefined,
+		modernConfig: "on",
 	},
 	compressionOptions: {
 		minVersionRequired: "2.0.0",
-		disabledConfig: disabledCompressionConfig,
-		enabledConfig: enabledCompressionConfig,
+		backwardsCompatConfig: disabledCompressionConfig,
+		modernConfig: enabledCompressionConfig,
 	},
 	gcOptions: {
 		minVersionRequired: "2.0.0",
-		disabledConfig: { gcSweep: undefined },
-		enabledConfig: { gcSweep: true },
+		backwardsCompatConfig: { gcSweep: undefined },
+		modernConfig: { gcSweep: true },
 	},
 };
 
@@ -115,8 +115,8 @@ export function getConfigsForCompatMode(
 		// If the compatibility mode is greater than or equal to the minimum version
 		// required for this option, use the "enabled" value, otherwise use the "disabled" value
 		// TODO: Hack for now, use regex or semver later
-		const isEnabled = config.minVersionRequired.startsWith(compatibilityMode);
-		defaultConfigs[key] = isEnabled ? config.enabledConfig : config.disabledConfig;
+		const isModernConfig = config.minVersionRequired.startsWith(compatibilityMode);
+		defaultConfigs[key] = isModernConfig ? config.modernConfig : config.backwardsCompatConfig;
 	}
 	return defaultConfigs;
 }
