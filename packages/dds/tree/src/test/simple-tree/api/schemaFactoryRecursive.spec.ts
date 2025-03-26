@@ -538,6 +538,14 @@ describe("SchemaFactory Recursive methods", () => {
 				type _check = ValidateRecursiveSchema<typeof MapRecursive>;
 			}
 		});
+
+		it("Invalid undetected case ", () => {
+			// Any should be rejected to help ensure builds which allow implicit any allowed error on schema which implicitly produce `any`.
+			{
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				type _check = ValidateRecursiveSchema<any>;
+			}
+		});
 	});
 
 	describe("arrayRecursive", () => {
@@ -782,6 +790,10 @@ describe("SchemaFactory Recursive methods", () => {
 			// @ts-expect-error co-recursive arrays without named subclass cause "referenced directly or indirectly in its own base expression" errors.
 			const TheArray = sf.arrayRecursive("FooList", [() => Foo]);
 			{
+				// In this case the error above does not cause ValidateRecursiveSchema to fail to compile.
+				// It's interesting that is not consistent with the other cases below,
+				// but doesn't seem to matter from a customer perspective since they already have a compile error, and other than that error,
+				// nothing else is wrong (the schema would work fine at runtime).
 				type _check = ValidateRecursiveSchema<typeof TheArray>;
 			}
 

@@ -116,6 +116,8 @@ export function createFieldSchemaUnsafe<
  *
  * This check duplicates logic that ideally would be entirely decided by the actual schema building methods.
  * Therefore changes to those methods may require updating `ValidateRecursiveSchema`.
+ *
+ * TODO: this currently does not reject `any`, but ideally should.
  * @public
  */
 export type ValidateRecursiveSchema<
