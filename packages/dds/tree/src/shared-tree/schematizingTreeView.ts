@@ -14,7 +14,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { AllowedUpdateType, anchorSlot, type SchemaPolicy } from "../core/index.js";
 import {
-	type NodeKeyManager,
+	type NodeIdentifierManager,
 	defaultSchemaPolicy,
 	ContextSlot,
 	cursorForMapTreeNode,
@@ -57,7 +57,12 @@ import {
 	areImplicitFieldSchemaEqual,
 	createUnknownOptionalFieldPolicy,
 } from "../simple-tree/index.js";
-import { Breakable, breakingClass, disposeSymbol, type WithBreakable } from "../util/index.js";
+import {
+	type Breakable,
+	breakingClass,
+	disposeSymbol,
+	type WithBreakable,
+} from "../util/index.js";
 
 import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
 import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
@@ -107,14 +112,15 @@ export class SchematizingSimpleTreeView<
 	private midUpgrade = false;
 
 	private readonly rootFieldSchema: FieldSchema;
+	public readonly breaker: Breakable;
 
 	public constructor(
 		public readonly checkout: TreeCheckout,
 		public readonly config: TreeViewConfiguration<ReadSchema<TRootSchema>>,
-		public readonly nodeKeyManager: NodeKeyManager,
-		public readonly breaker: Breakable = new Breakable("SchematizingSimpleTreeView"),
+		public readonly nodeKeyManager: NodeIdentifierManager,
 		private readonly onDispose?: () => void,
 	) {
+		this.breaker = checkout.breaker;
 		if (checkout.forest.anchors.slots.has(ViewSlot)) {
 			throw new UsageError("Cannot create a second tree view from the same checkout");
 		}
@@ -503,7 +509,7 @@ export function requireSchema(
 	checkout: ITreeCheckout,
 	viewSchema: ViewSchema,
 	onDispose: () => void,
-	nodeKeyManager: NodeKeyManager,
+	nodeKeyManager: NodeIdentifierManager,
 	schemaPolicy: FullSchemaPolicy,
 ): CheckoutFlexTreeView {
 	const slots = checkout.forest.anchors.slots;

@@ -115,9 +115,9 @@ export interface TestInterface
 
 Here are some remarks about the interface
 
-### Construct Signatures
+### Constructors
 
-| ConstructSignature | Return Type | Description |
+| Constructor | Return Type | Description |
 | --- | --- | --- |
 | [new (): TestInterface](docs/test-suite-a#testinterface-_new_-constructsignature) | [TestInterface](docs/test-suite-a#testinterface-interface) | Test construct signature. |
 
@@ -150,7 +150,7 @@ Here are some remarks about the interface
 | [(event: 'testCallSignature', listener: (input: unknown) =&gt; void): any](docs/test-suite-a#testinterface-_call_-callsignature) | Test interface event call signature |
 | [(event: 'anotherTestCallSignature', listener: (input: number) =&gt; string): number](docs/test-suite-a#testinterface-_call__1-callsignature) | Another example call signature |
 
-### Construct Signature Details
+### Constructor Details
 
 #### new (): TestInterface {#testinterface-\_new\_-constructsignature}
 

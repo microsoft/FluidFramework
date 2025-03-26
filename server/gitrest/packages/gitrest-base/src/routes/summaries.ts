@@ -231,14 +231,15 @@ async function deleteSummary(
 	repoPerDocEnabled: boolean,
 	externalWriterConfig?: IExternalWriterConfig,
 ): Promise<void> {
-	if (!repoPerDocEnabled) {
-		throw new NetworkError(501, "Not Implemented");
-	}
 	const lumberjackProperties: Record<string, any> = {
 		...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
 		[BaseGitRestTelemetryProperties.repoPerDocEnabled]: repoPerDocEnabled,
 		[BaseGitRestTelemetryProperties.softDelete]: softDelete,
 	};
+	if (!repoPerDocEnabled) {
+		Lumberjack.error("Repo per doc is not implemented", lumberjackProperties);
+		throw new NetworkError(501, "Not Implemented");
+	}
 
 	const wholeSummaryManager = new GitWholeSummaryManager(
 		repoManagerParams.storageRoutingId.documentId,

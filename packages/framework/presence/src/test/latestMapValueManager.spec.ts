@@ -3,21 +3,29 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
+import { createPresenceManager } from "../presenceManager.js";
+
 import { addControlsTests } from "./broadcastControlsTests.js";
+import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
 import type {
 	BroadcastControlSettings,
 	IPresence,
 	LatestMapItemValueClientData,
+	LatestMapValueManager,
 } from "@fluidframework/presence/alpha";
 import { LatestMap } from "@fluidframework/presence/alpha";
+
+const testWorkspaceName = "name:testWorkspaceA";
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function createLatestMapManager(
 	presence: IPresence,
 	valueControlSettings?: BroadcastControlSettings,
 ) {
-	const states = presence.getStates("name:testWorkspaceA", {
+	const states = presence.getStates(testWorkspaceName, {
 		fixedMap: LatestMap(
 			{ key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } },
 			valueControlSettings,
@@ -34,6 +42,51 @@ describe("Presence", () => {
 		it("API use compiles", () => {});
 
 		addControlsTests(createLatestMapManager);
+
+		function setupMapValueManager(): LatestMapValueManager<
+			{
+				x: number;
+				y: number;
+			},
+			string
+		> {
+			const presence = createPresenceManager(new MockEphemeralRuntime());
+			const states = presence.getStates(testWorkspaceName, {
+				fixedMap: LatestMap({ key1: { x: 0, y: 0 } }),
+			});
+			return states.props.fixedMap;
+		}
+
+		it("localItemUpdated event is fired with new value when local value is updated", () => {
+			// Setup
+			const mapVM = setupMapValueManager();
+
+			let localUpdateCount = 0;
+			mapVM.events.on("localItemUpdated", (update) => {
+				localUpdateCount++;
+				assert.strictEqual(update.key, "key1");
+				assert.deepStrictEqual(update.value, { x: 1, y: 2 });
+			});
+
+			// Act & Verify
+			mapVM.local.set("key1", { x: 1, y: 2 });
+			assert.strictEqual(localUpdateCount, 1);
+		});
+
+		it("localItemRemoved event is fired with new value when local value is deleted", () => {
+			// Setup
+			const mapVM = setupMapValueManager();
+
+			let localRemovalCount = 0;
+			mapVM.events.on("localItemRemoved", (update) => {
+				localRemovalCount++;
+				assert.strictEqual(update.key, "key1");
+			});
+
+			// Act & Verify
+			mapVM.local.delete("key1");
+			assert.strictEqual(localRemovalCount, 1);
+		});
 	});
 });
 

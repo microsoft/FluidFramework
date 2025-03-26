@@ -19,7 +19,7 @@ import { TestChange, type TestChangeFamily, asDelta } from "../../testChange.js"
 import { mintRevisionTag } from "../../utils.js";
 
 import {
-	addSequencedChange,
+	addSequencedChanges,
 	checkChangeList,
 	testChangeEditManagerFactory,
 } from "./editManagerTestUtils.js";
@@ -180,9 +180,14 @@ export function runUnitTestScenario(
 		 */
 		const recordSequencedEdit = (commit: TestCommit): void => {
 			trunk.push(commit.seqNumber);
-			summarizer.addSequencedChange(commit, commit.seqNumber, commit.refNumber);
+			summarizer.addSequencedChanges(
+				[commit],
+				commit.sessionId,
+				commit.seqNumber,
+				commit.refNumber,
+			);
 			for (const j of joiners) {
-				j.addSequencedChange(commit, commit.seqNumber, commit.refNumber);
+				j.addSequencedChanges([commit], commit.sessionId, commit.seqNumber, commit.refNumber);
 			}
 		};
 		/**
@@ -287,9 +292,10 @@ export function runUnitTestScenario(
 							"Invalid test scenario: acknowledged commit does not mach oldest local change",
 						);
 					}
-					const delta = addSequencedChange(
+					const delta = addSequencedChanges(
 						manager,
-						commit,
+						[commit],
+						commit.sessionId,
 						commit.seqNumber,
 						commit.refNumber,
 					);
@@ -338,9 +344,10 @@ export function runUnitTestScenario(
 						seq,
 						...localIntentions,
 					];
-					const delta = addSequencedChange(
+					const delta = addSequencedChanges(
 						manager,
-						commit,
+						[commit],
+						commit.sessionId,
 						commit.seqNumber,
 						commit.refNumber,
 					);

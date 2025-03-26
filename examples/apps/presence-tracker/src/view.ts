@@ -3,39 +3,23 @@
  * Licensed under the MIT License.
  */
 
+import { Picker } from "emoji-picker-element";
+
 import { FocusTracker, type IFocusState } from "./FocusTracker.js";
 import { MouseTracker } from "./MouseTracker.js";
 
 export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElement) {
 	const wrapperDiv = document.createElement("div");
 	wrapperDiv.style.textAlign = "left";
-	wrapperDiv.style.margin = "70px";
+	wrapperDiv.style.margin = "10px";
 	div.appendChild(wrapperDiv);
 
 	const focusDiv = document.createElement("div");
 	focusDiv.id = "focus-div";
 	focusDiv.style.fontSize = "14px";
 
-	const focusMessageDiv = document.createElement("div");
-	focusMessageDiv.id = "message-div";
-	focusMessageDiv.textContent = "Click to focus";
-	focusMessageDiv.style.position = "absolute";
-	focusMessageDiv.style.top = "50px";
-	focusMessageDiv.style.left = "10px";
-	focusMessageDiv.style.color = "red";
-	focusMessageDiv.style.fontWeight = "bold";
-	focusMessageDiv.style.fontSize = "18px";
-	focusMessageDiv.style.border = "2px solid red";
-	focusMessageDiv.style.padding = "10px";
-	focusMessageDiv.style.display = "none";
-	wrapperDiv.appendChild(focusMessageDiv);
-
 	const onFocusChanged = (focusState: IFocusState) => {
 		focusDiv.innerHTML = getFocusPresencesString("<br>", focusTracker);
-		const { hasFocus } = focusState;
-
-		// hasFocus === true should hide the message
-		focusMessageDiv.style.display = hasFocus ? "none" : "";
 	};
 
 	onFocusChanged({ hasFocus: window.document.hasFocus() });
@@ -106,4 +90,30 @@ export function renderControlPanel(mouseTracker: MouseTracker, controlPanel: HTM
 		const target = e.target as HTMLInputElement;
 		mouseTracker.setAllowableLatency(parseInt(target.value, 10));
 	});
+
+	const reactionsConfigDiv = document.createElement("div");
+	reactionsConfigDiv.id = "reactions-config";
+	const reactionLabelDiv = document.createElement("div");
+	reactionLabelDiv.style.marginTop = "10px";
+	reactionLabelDiv.style.marginBottom = "10px";
+	reactionLabelDiv.textContent = "Selected reaction:";
+	reactionsConfigDiv.appendChild(reactionLabelDiv);
+
+	// This span element contains the selected emoji
+	const selectedSpan = document.createElement("span");
+	selectedSpan.id = "selected-reaction";
+	selectedSpan.textContent = "❤️";
+	reactionLabelDiv.appendChild(selectedSpan);
+
+	// Create the emoji-picker element and add it to the panel
+	const picker = new Picker();
+	reactionsConfigDiv.appendChild(picker);
+	controlPanel.appendChild(reactionsConfigDiv);
+
+	// Update the selected reaction emoji when the picker is clicked
+	controlPanel
+		.querySelector("emoji-picker")
+		?.addEventListener("emoji-click", (event: Event & { detail?: any }) => {
+			selectedSpan.textContent = event.detail?.unicode;
+		});
 }

@@ -1,0 +1,11 @@
+{
+	"extends": "../../../common/build/build-common/tsconfig.node16.json",
+	"include": ["src/**/*"],
+	"exclude": ["src/experimentalAccess.ts", "src/index.ts", "src/test/**/*"],
+	"compilerOptions": {
+		"rootDir": "./src",
+		"outDir": "./lib",
+		"noImplicitAny": true,
+		"noImplicitOverride": true,
+	},
+}

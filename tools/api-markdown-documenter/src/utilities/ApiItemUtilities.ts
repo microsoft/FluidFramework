@@ -5,12 +5,14 @@
 
 import {
 	type ApiCallSignature,
+	type ApiClass,
 	type ApiConstructSignature,
 	type ApiConstructor,
 	ApiDocumentedItem,
 	type ApiEntryPoint,
 	type ApiFunction,
 	type ApiIndexSignature,
+	type ApiInterface,
 	type ApiItem,
 	ApiItemKind,
 	type ApiMethod,
@@ -23,6 +25,7 @@ import {
 	ApiReadonlyMixin,
 	type ApiReleaseTagMixin,
 	ApiStaticMixin,
+	type ApiTypeAlias,
 	type Excerpt,
 	type IResolveDeclarationReferenceResult,
 	ReleaseTag,
@@ -97,6 +100,11 @@ export type ApiFunctionLike =
 	| ApiFunction
 	| ApiMethod
 	| ApiMethodSignature;
+
+/**
+ * `ApiItem` union type representing type-like API kinds.
+ */
+export type ApiTypeLike = ApiInterface | ApiClass | ApiTypeAlias;
 
 /**
  * `ApiItem` union type representing call-signature-like API kinds.
@@ -357,7 +365,10 @@ export function getCustomBlockComments(
 	apiItem: ApiItem,
 ): ReadonlyMap<string, readonly DocSection[]> {
 	const customBlockComments = new Map<string, DocSection[]>();
-	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.customBlocks !== undefined) {
+	if (
+		apiItem instanceof ApiDocumentedItem &&
+		apiItem.tsdocComment?.customBlocks !== undefined
+	) {
 		for (const block of apiItem.tsdocComment.customBlocks) {
 			let sections = customBlockComments.get(block.blockTag.tagName);
 			if (sections === undefined) {
@@ -480,7 +491,10 @@ export function getThrowsBlocks(apiItem: ApiItem): readonly DocSection[] | undef
  *
  * @public
  */
-export function getDefaultValueBlock(apiItem: ApiItem, logger?: Logger): DocSection | undefined {
+export function getDefaultValueBlock(
+	apiItem: ApiItem,
+	logger?: Logger,
+): DocSection | undefined {
 	return getCustomBlockSectionForSingleInstanceTag(
 		apiItem,
 		StandardTags.defaultValue.tagName,
@@ -498,7 +512,10 @@ export function getDefaultValueBlock(apiItem: ApiItem, logger?: Logger): DocSect
  * @public
  */
 export function getReturnsBlock(apiItem: ApiItem): DocSection | undefined {
-	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.returnsBlock !== undefined) {
+	if (
+		apiItem instanceof ApiDocumentedItem &&
+		apiItem.tsdocComment?.returnsBlock !== undefined
+	) {
 		return apiItem.tsdocComment.returnsBlock.content;
 	}
 	return undefined;
@@ -579,7 +596,10 @@ export function isStatic(apiItem: ApiItem): boolean {
  *
  * @public
  */
-export function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiModifier[] {
+export function getModifiers(
+	apiItem: ApiItem,
+	modifiersToOmit?: ApiModifier[],
+): ApiModifier[] {
 	const modifiers: ApiModifier[] = [];
 
 	if (isOptional(apiItem) && !(modifiersToOmit?.includes(ApiModifier.Optional) ?? false)) {
@@ -693,5 +713,5 @@ export function getScopedMemberNameForDiagnostics(apiItem: ApiItem): string {
 		? (apiItem as ApiPackage).displayName
 		: `${
 				apiItem.getAssociatedPackage()?.displayName ?? "<NO-PACKAGE>"
-		  }#${apiItem.getScopedNameWithinPackage()}`;
+			}#${apiItem.getScopedNameWithinPackage()}`;
 }

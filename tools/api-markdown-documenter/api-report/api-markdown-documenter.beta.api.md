@@ -100,7 +100,7 @@ export interface ApiItemTransformations {
     // (undocumented)
     readonly [ApiItemKind.PropertySignature]: TransformApiItemWithoutChildren<ApiPropertySignature>;
     // (undocumented)
-    readonly [ApiItemKind.TypeAlias]: TransformApiItemWithoutChildren<ApiTypeAlias>;
+    readonly [ApiItemKind.TypeAlias]: TransformApiItemWithChildren<ApiTypeAlias>;
     // (undocumented)
     readonly [ApiItemKind.Variable]: TransformApiItemWithoutChildren<ApiVariable>;
 }
