@@ -54,10 +54,10 @@ export class AppDataTwo extends DataObject {
 
 		this.root.createSubDirectory(this.initialObjectsDirKey);
 		this.root.set(this.sharedTextKey, text.handle);
-		this.root.set("test-object", {
-			a: 1,
-			b: "2",
-			c: true,
+		this.root.set("test-object-two", {
+			a: true,
+			b: "hello world",
+			c: 1,
 		});
 	}
 
@@ -184,7 +184,7 @@ export class AppData extends DataObject {
 		this.root.set(this.sharedCounterKey, counter.handle);
 		this.root.set(this.emojiMatrixKey, emojiMatrix.handle);
 		this.root.set(this.sharedTreeKey, sharedTree.handle);
-		this.root.set(this.dataObjectKey, appDataTwo.handle); // TODO: Always store handle of the data object.
+		this.root.set(this.dataObjectKey, appDataTwo.handle);
 
 		// Also set a couple of primitives for testing the debug view
 		this.root.set("numeric-value", 42);
