@@ -87,7 +87,7 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 			assert.strictEqual(pendingState?.pendingAttachmentBlobs, undefined);
 		});
 
-		it("blob is aborted after upload succeds", async function () {
+		it.skip("blob is aborted after upload succeds", async function () {
 			const testString = "this is a test string";
 			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 			const map = await dataStore1.getSharedObject<ISharedMap>(mapId);

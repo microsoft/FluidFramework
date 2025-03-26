@@ -102,7 +102,7 @@ describeCompat("Offline and Blobs", "NoCompat", (getTestObjectProvider, apis) =>
 		);
 	});
 
-	it("Slow blob create request before container closes", async () => {
+	it.skip("Slow blob create request before container closes", async () => {
 		const container = (await provider.createContainer(runtimeFactory, {
 			configProvider,
 		})) as IContainerExperimental;

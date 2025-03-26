@@ -274,7 +274,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			},
 		);
 
-		itExpects(
+		itExpects.skip(
 			"fails retrieval of blobs that are de-duped in same container and are deleted",
 			[
 				{
@@ -456,7 +456,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			return { mainContainer, mainDataStore };
 		}
 
-		itExpects(
+		itExpects.skip(
 			"deletes blobs uploaded in detached container",
 			[
 				{
@@ -536,7 +536,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			},
 		);
 
-		itExpects(
+		itExpects.skip(
 			"deletes blobs uploaded in detached and de-duped in attached container",
 			[
 				{

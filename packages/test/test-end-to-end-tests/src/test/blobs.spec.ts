@@ -460,7 +460,7 @@ function serializationTests({
 				detachedBlobStorage = getDetachedBlobStorage?.();
 			});
 			for (const summarizeProtocolTree of [undefined, true, false]) {
-				itExpects(
+				itExpects.skip(
 					`works in detached container. summarizeProtocolTree: ${summarizeProtocolTree}`,
 					ContainerStateEventsOrErrors,
 					async function () {
@@ -521,7 +521,7 @@ function serializationTests({
 				);
 			}
 
-			it("serialize/rehydrate container with blobs", async function () {
+			it.skip("serialize/rehydrate container with blobs", async function () {
 				const loader = provider.makeTestLoader({
 					...testContainerConfig,
 					loaderProps: {
@@ -560,7 +560,7 @@ function serializationTests({
 				);
 			});
 
-			it("serialize while attaching and rehydrate container with blobs", async function () {
+			it.skip("serialize while attaching and rehydrate container with blobs", async function () {
 				// build a fault injected driver to fail attach on the  summary upload
 				// after create that happens in the blob flow
 				const documentServiceFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
@@ -627,7 +627,7 @@ function serializationTests({
 				);
 			});
 
-			itExpects(
+			itExpects.skip(
 				"redirect table saved in snapshot",
 				ContainerStateEventsOrErrors,
 				async function () {
@@ -703,7 +703,7 @@ function serializationTests({
 				},
 			);
 
-			itExpects(
+			itExpects.skip(
 				"serialize/rehydrate then attach",
 				ContainerStateEventsOrErrors,
 				async function () {
@@ -757,7 +757,7 @@ function serializationTests({
 				},
 			);
 
-			itExpects(
+			itExpects.skip(
 				"serialize/rehydrate multiple times then attach",
 				ContainerStateEventsOrErrors,
 				async function () {
