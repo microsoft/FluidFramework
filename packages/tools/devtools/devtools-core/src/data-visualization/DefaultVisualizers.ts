@@ -187,8 +187,6 @@ async function visualizeDirectory(
 		children[key] = renderedChild;
 	}
 
-	console.log("renderedChild", directory, children);
-
 	// Generate child entries for sub-directory
 	const subDirectories = directory.subdirectories();
 	for (const [path, subDirectory] of subDirectories) {
