@@ -7,6 +7,8 @@
  * This module contains default {@link VisualizeSharedObject | visualization}
  * implementations for our DDSs.
  */
+
+import { DataObject } from "@fluidframework/aqueduct/internal";
 import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import {
@@ -24,7 +26,11 @@ import { FieldKind, SharedTree } from "@fluidframework/tree/internal";
 
 import { EditType } from "../CommonInterfaces.js";
 
-import type { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization.js";
+import type {
+	VisualizeChildData,
+	VisualizeDataObject,
+	VisualizeSharedObject,
+} from "./DataVisualization.js";
 import {
 	concatenateTypes,
 	determineNodeKind,
@@ -100,6 +106,34 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
 			throw new Error("Unrecognized node kind.");
 		}
 	}
+};
+
+/**
+ * Wrapper class for {@link DataObject} to provide a {@link ISharedDirectory} root.
+ * @remarks Intended for devtools internal use only.
+ */
+export class VisualDataObject extends DataObject {
+	public override get root(): ISharedDirectory {
+		return super.root;
+	}
+}
+
+/**
+ * Default {@link VisualizeSharedObject} for {@link DataObject}.
+ */
+export const visualizeDataObject: VisualizeDataObject = async (
+	dataObject: DataObject,
+	visualizeChildData: VisualizeChildData,
+): Promise<FluidObjectTreeNode> => {
+	const sharedDirectory = (dataObject as VisualDataObject).root;
+	const renderedChildData = await visualizeDirectory(sharedDirectory, visualizeChildData);
+	return {
+		fluidObjectId: sharedDirectory.id,
+		children: renderedChildData.children,
+		metadata: renderedChildData.metadata,
+		typeMetadata: "SharedDirectory",
+		nodeKind: VisualNodeKind.FluidTreeNode,
+	};
 };
 
 /**
