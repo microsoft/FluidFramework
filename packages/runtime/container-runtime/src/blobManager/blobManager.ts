@@ -41,7 +41,7 @@ import {
 	LoggingError,
 	MonitoringContext,
 	PerformanceEvent,
-	UsageError,
+	// UsageError,
 	createChildMonitoringContext,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
@@ -489,9 +489,9 @@ export class BlobManager {
 	}
 
 	public createBlobExperiment(blob: ArrayBufferLike): IFluidHandleInternal<ArrayBufferLike> {
-		if (this.runtime.attachState === AttachState.Detached) {
-			throw new UsageError("createBlobExperiment() not supported in detached state");
-		}
+		// if (this.runtime.attachState === AttachState.Detached) {
+		// 	throw new UsageError("createBlobExperiment() not supported in detached state");
+		// }
 
 		const localId = this.localBlobIdGenerator();
 
