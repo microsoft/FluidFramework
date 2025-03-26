@@ -52,8 +52,8 @@ export function createFieldSchemaUnsafe<
  * Schema referencing the recursive schema and schema they reference that are not part of a cycle are not considered recursive.
  *
  * TypeScript puts a lot of limitations on the typing of recursive schema.
- * To help avoid running into these limitations and getting schema does not type check (or only type checks sometimes!)
- * {@link SchemaFactory} provides some specific APIs for writing write recursive.
+ * To help avoid running into these limitations and thus getting schema that do not type check (or only type checks sometimes!),
+ * {@link SchemaFactory} provides APIs (postfixed with `recursive`) for writing recursive schema.
  * These APIs when combined with the patterns documented below should ensure that the schema provide robust type checking.
  * These special patterns (other than {@link LazyItem} forward references which are not recursion specific)
  * are not required for correct runtime behavior: they exist entirely to mitigate TypeScript type checking limitations and bugs.
