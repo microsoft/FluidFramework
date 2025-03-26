@@ -52,7 +52,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 	private lastSuccessfulOffset: number | undefined;
 	private readonly dbCircuitBreaker: LambdaCircuitBreaker | undefined;
 	private readonly circuitBreakerEnabled: boolean;
-	private readonly circuitBreakerOptions: Record<string, any>;
+	private readonly circuitBreakerOptionsDb: Record<string, any>;
 
 	constructor(
 		private readonly opCollection: ICollection<any>,
@@ -69,25 +69,25 @@ export class ScriptoriumLambda implements IPartitionLambda {
 		this.logSavedOpsTimeIntervalMs = this.providerConfig?.logSavedOpsTimeIntervalMs ?? 60000;
 		this.opsCountTelemetryEnabled = this.providerConfig?.opsCountTelemetryEnabled;
 		this.circuitBreakerEnabled = this.providerConfig?.circuitBreakerEnabled;
-		this.circuitBreakerOptions = this.providerConfig?.circuitBreakerOptions;
+		this.circuitBreakerOptionsDb = this.providerConfig?.circuitBreakerOptions?.database ?? {};
 
 		// setup circuit breaker
 		if (this.circuitBreakerEnabled) {
 			try {
-				const dbCircuitBreakerOptions: circuitBreakerOptions = {
+				const circuitBreakerOptions_Db: circuitBreakerOptions = {
 					errorThresholdPercentage:
-						this.circuitBreakerOptions.errorThresholdPercentage ?? 0.001, // Percentage of errors before opening the circuit
-					resetTimeout: this.circuitBreakerOptions.resetTimeout ?? 30000, // Time in milliseconds before attempting to close the circuit after it has been opened
-					timeout: this.circuitBreakerOptions.timeout ?? false, // Time in milliseconds before a request is considered timed out
-					rollingCountTimeout: this.circuitBreakerOptions.rollingCountTimeout ?? 1000, // Time in milliseconds before the rolling window resets
-					rollingCountBuckets: this.circuitBreakerOptions.rollingCountBuckets ?? 1000, // Number of buckets in the rolling window
+						this.circuitBreakerOptionsDb.errorThresholdPercentage ?? 0.001, // Percentage of errors before opening the circuit
+					resetTimeout: this.circuitBreakerOptionsDb.resetTimeout ?? 30000, // Time in milliseconds before attempting to close the circuit after it has been opened
+					timeout: this.circuitBreakerOptionsDb.timeout ?? false, // Time in milliseconds before a request is considered timed out
+					rollingCountTimeout: this.circuitBreakerOptionsDb.rollingCountTimeout ?? 1000, // Time in milliseconds before the rolling window resets
+					rollingCountBuckets: this.circuitBreakerOptionsDb.rollingCountBuckets ?? 1000, // Number of buckets in the rolling window
 					errorFilter: this.errorFilterForCircuitBreaker.bind(this), // Function to filter errors - if it returns true for certain errors, they will not open the circuit
 					fallbackToRestartTimeoutMs:
-						this.circuitBreakerOptions.fallbackToRestartTimeoutMs ?? 180000,
+						this.circuitBreakerOptionsDb.fallbackToRestartTimeoutMs ?? 180000,
 				};
 
 				this.dbCircuitBreaker = new LambdaCircuitBreaker(
-					dbCircuitBreakerOptions,
+					circuitBreakerOptions_Db,
 					this.context,
 					"MongoDB",
 					runWithRetry,
@@ -195,23 +195,23 @@ export class ScriptoriumLambda implements IPartitionLambda {
 	}
 
 	private errorFilterForCircuitBreaker(error: any): boolean {
-		for (const errorFilter of this.circuitBreakerOptions.filterOnErrors ?? []) {
+		for (const errorFilter of this.circuitBreakerOptionsDb.filterOnErrors ?? []) {
 			if (
 				error?.message?.toString()?.indexOf(errorFilter) >= 0 ||
 				error?.stack?.toString()?.indexOf(errorFilter) >= 0
 			) {
-				Lumberjack.info("Error filter checked, opening the circuit breaker", {
+				Lumberjack.info("Error filter checked, not opening the circuit breaker", {
 					error,
-					errorFilter: this.circuitBreakerOptions.filterOnErrors,
+					errorFilter: this.circuitBreakerOptionsDb.filterOnErrors,
 				});
-				return false; // circuit breaker will open and pause the lambda
+				return true; // do not open the circuit for filtered errors, and let scriptorium restart
 			}
 		}
-		Lumberjack.info("Error filter checked, not opening the circuit breaker", {
+		Lumberjack.info("Error filter checked, opening the circuit breaker", {
 			error,
-			errorFilter: this.circuitBreakerOptions.filterOnErrors,
+			errorFilter: this.circuitBreakerOptionsDb.filterOnErrors,
 		});
-		return true; // do not open the circuit for other errors, and let scriptorium restart
+		return false; // circuit breaker will open and pause the lambda
 	}
 
 	private sendPending(): void {
