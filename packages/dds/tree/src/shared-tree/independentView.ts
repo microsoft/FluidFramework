@@ -16,7 +16,7 @@ import {
 	TreeStoredSchemaRepository,
 } from "../core/index.js";
 import {
-	createNodeKeyManager,
+	createNodeIdentifierManager,
 	makeFieldBatchCodec,
 	makeSchemaCodec,
 	type FieldBatchEncodingContext,
@@ -69,7 +69,7 @@ export function independentView<const TSchema extends ImplicitFieldSchema>(
 	const out: TreeViewAlpha<TSchema> = new SchematizingSimpleTreeView<TSchema>(
 		checkout,
 		config,
-		createNodeKeyManager(idCompressor),
+		createNodeIdentifierManager(idCompressor),
 	);
 	return out;
 }
@@ -121,7 +121,7 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
 	const out: TreeViewAlpha<TSchema> = new SchematizingSimpleTreeView<TSchema>(
 		checkout,
 		config,
-		createNodeKeyManager(idCompressor),
+		createNodeIdentifierManager(idCompressor),
 	);
 	return out;
 }

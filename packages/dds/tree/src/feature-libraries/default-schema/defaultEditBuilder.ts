@@ -16,6 +16,8 @@ import {
 	type DeltaDetachedNodeId,
 	type DeltaRoot,
 	type FieldUpPath,
+	type NormalizedFieldUpPath,
+	type NormalizedUpPath,
 	type RevisionTag,
 	type TaggedChange,
 	type TreeChunk,
@@ -125,7 +127,7 @@ export interface IDefaultEditBuilder<TContent = TreeChunk> {
 	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
 	 * is bounded by the lifetime of this edit builder.
 	 */
-	valueField(field: FieldUpPath): ValueFieldEditBuilder<TContent>;
+	valueField(field: NormalizedFieldUpPath): ValueFieldEditBuilder<TContent>;
 
 	/**
 	 * @param field - the optional field which is being edited under the parent node
@@ -133,7 +135,7 @@ export interface IDefaultEditBuilder<TContent = TreeChunk> {
 	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
 	 * is bounded by the lifetime of this edit builder.
 	 */
-	optionalField(field: FieldUpPath): OptionalFieldEditBuilder<TContent>;
+	optionalField(field: NormalizedFieldUpPath): OptionalFieldEditBuilder<TContent>;
 
 	/**
 	 * @param field - the sequence field which is being edited under the parent node
@@ -142,7 +144,7 @@ export interface IDefaultEditBuilder<TContent = TreeChunk> {
 	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
 	 * is bounded by the lifetime of this edit builder.
 	 */
-	sequenceField(field: FieldUpPath): SequenceFieldEditBuilder<TContent>;
+	sequenceField(field: NormalizedFieldUpPath): SequenceFieldEditBuilder<TContent>;
 
 	/**
 	 * Moves a subsequence from one sequence field to another sequence field.
@@ -151,10 +153,10 @@ export interface IDefaultEditBuilder<TContent = TreeChunk> {
 	 * For example, `move(field, 0, 1, field, 2)` changes `[A, B, C]` to `[B, A, C]`.
 	 */
 	move(
-		sourceField: FieldUpPath,
+		sourceField: NormalizedFieldUpPath,
 		sourceIndex: number,
 		count: number,
-		destinationField: FieldUpPath,
+		destinationField: NormalizedFieldUpPath,
 		destinationIndex: number,
 	): void;
 
@@ -162,13 +164,13 @@ export interface IDefaultEditBuilder<TContent = TreeChunk> {
 	 * Add a constraint that the node at the given path must exist.
 	 * @param path - The path to the node that must exist.
 	 */
-	addNodeExistsConstraint(path: UpPath): void;
+	addNodeExistsConstraint(path: NormalizedUpPath): void;
 
 	/**
 	 * Add a constraint that the node at the given path must exist when reverting a change.
 	 * @param path - The path to the node that must exist when reverting a change.
 	 */
-	addNodeExistsConstraintOnRevert(path: UpPath): void;
+	addNodeExistsConstraintOnRevert(path: NormalizedUpPath): void;
 }
 
 /**
