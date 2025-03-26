@@ -250,7 +250,6 @@ export class DataVisualizerGraph
 		sharedObject: ISharedObject | DataObject,
 	): FluidObjectId {
 		if (!this.visualizerNodes.has(sharedObject.id)) {
-			// Before: is this a data object? (type not available)
 			// Create visualizer node for the shared object
 			const visualizationFunction = isDataObject(sharedObject)
 				? visualizeDataObject
