@@ -200,7 +200,7 @@ export class DataVisualizerGraph
 	 * {@link DataVisualizerGraph.rootData | root shared objects}.
 	 */
 	public async renderRootHandles(): Promise<Record<string, RootHandleNode>> {
-		// TODO: Now with Loop Scenarios, should we be able to visualize root data that is a `DataObject`?
+		// TODO: We should be rendering the DataObject from the root, but this requires change in the devtools package in general.
 
 		// Rendering the root entries amounts to initializing visualizer nodes for each of them, and returning
 		// a list of handle nodes. Consumers can request data for each of these handles as needed.
