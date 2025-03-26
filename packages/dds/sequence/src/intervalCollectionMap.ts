@@ -83,41 +83,6 @@ export class IntervalCollectionMap<T extends ISerializableInterval> {
 	}
 
 	/**
-	 * Mapping of op types to message handlers.
-	 */
-	private readonly messageHandler = {
-		process: (
-			op: IMapOperation,
-			local: boolean,
-			message: ISequencedDocumentMessage,
-			localOpMetadata: IMapMessageLocalMetadata,
-		) => {
-			const localValue = this.data.get(op.key) ?? this.createCore(op.key, local);
-			const handler = localValue.getOpHandler(op.value.opName);
-			const previousValue = localValue.value;
-			const translatedValue = op.value.value as any;
-			handler.process(previousValue, translatedValue, local, message, localOpMetadata);
-			const event: IValueChanged = { key: op.key, previousValue };
-			this.eventEmitter.emit("valueChanged", event, local, message, this.eventEmitter);
-		},
-		submit: (op: IMapOperation, localOpMetadata: IMapMessageLocalMetadata) => {
-			this.submitMessage(op, localOpMetadata);
-		},
-		resubmit: (op: IMapOperation, localOpMetadata: IMapMessageLocalMetadata) => {
-			const localValue = this.data.get(op.key);
-
-			assert(localValue !== undefined, 0x3f8 /* Local value expected on resubmission */);
-
-			const handler = localValue.getOpHandler(op.value.opName);
-			const rebased = handler.rebase(localValue.value, op.value, localOpMetadata);
-			if (rebased !== undefined) {
-				const { rebasedOp, rebasedLocalOpMetadata } = rebased;
-				this.submitMessage({ ...op, value: rebasedOp }, rebasedLocalOpMetadata);
-			}
-		},
-	};
-
-	/**
 	 * The in-memory data the map is storing.
 	 */
 	private readonly data = new Map<string, IntervalCollectionTypeLocalValue<T>>();
@@ -233,7 +198,16 @@ export class IntervalCollectionMap<T extends ISerializableInterval> {
 	 */
 	public tryResubmitMessage(op: unknown, localOpMetadata: IMapMessageLocalMetadata): boolean {
 		if (isMapOperation(op)) {
-			this.messageHandler.resubmit(op, localOpMetadata);
+			const localValue = this.data.get(op.key);
+
+			assert(localValue !== undefined, 0x3f8 /* Local value expected on resubmission */);
+
+			const handler = localValue.getOpHandler(op.value.opName);
+			const rebased = handler.rebase(localValue.value, op.value, localOpMetadata);
+			if (rebased !== undefined) {
+				const { rebasedOp, rebasedLocalOpMetadata } = rebased;
+				this.submitMessage({ ...op, value: rebasedOp }, rebasedLocalOpMetadata);
+			}
 			return true;
 		}
 		return false;
@@ -299,12 +273,19 @@ export class IntervalCollectionMap<T extends ISerializableInterval> {
 		localOpMetadata: unknown,
 	): boolean {
 		if (isMapOperation(op)) {
-			this.messageHandler.process(
-				op,
+			const localValue = this.data.get(op.key) ?? this.createCore(op.key, local);
+			const handler = localValue.getOpHandler(op.value.opName);
+			const previousValue = localValue.value;
+			const translatedValue = op.value.value as any;
+			handler.process(
+				previousValue,
+				translatedValue,
 				local,
 				message,
 				localOpMetadata as IMapMessageLocalMetadata,
 			);
+			const event: IValueChanged = { key: op.key, previousValue };
+			this.eventEmitter.emit("valueChanged", event, local, message, this.eventEmitter);
 			return true;
 		}
 		return false;
