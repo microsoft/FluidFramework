@@ -9,6 +9,8 @@ import { ISerializableInterval } from "./intervals/index.js";
 /**
  * @legacy
  * @alpha
+ *
+ * @deprecated - This interface is no longer necessary
  */
 export interface ISharedIntervalCollection<TInterval extends ISerializableInterval> {
 	getIntervalCollection(label: string): IIntervalCollection<TInterval>;

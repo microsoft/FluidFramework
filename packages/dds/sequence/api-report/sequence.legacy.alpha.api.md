@@ -203,7 +203,7 @@ export interface ISerializedInterval {
     stickiness?: IntervalStickiness;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export interface ISharedIntervalCollection<TInterval extends ISerializableInterval> {
     // (undocumented)
     getIntervalCollection(label: string): IIntervalCollection<TInterval>;

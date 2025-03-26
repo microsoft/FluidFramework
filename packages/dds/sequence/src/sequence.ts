@@ -86,7 +86,6 @@ import {
 	SequenceMaintenanceEvent,
 	SequenceMaintenanceEventClass,
 } from "./sequenceDeltaEvent.js";
-import { ISharedIntervalCollection } from "./sharedIntervalCollection.js";
 
 const snapshotFileName = "header";
 const contentPath = "content";
@@ -147,7 +146,6 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
  */
 export interface ISharedSegmentSequence<T extends ISegment>
 	extends ISharedObject<ISharedSegmentSequenceEvents>,
-		ISharedIntervalCollection<SequenceInterval>,
 		MergeTreeRevertibleDriver {
 	/**
 	 * Creates a `LocalReferencePosition` on this SharedString. If the refType does not include
