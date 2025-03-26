@@ -1114,20 +1114,33 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			this._mergeTree.pendingSegments.push(newObliterate.segmentGroup);
 			// }
 
-			// TODO: Use non-sided obliterate op when possible. Right now we can convert a non-sided op to a sided one on reconnect,
-			// which may cause errors due to merge-tree settings if the right feature flags aren't enabled.
+			const newStartPos =
+				this._mergeTree.getPosition(newStartSegment, reconnectingPerspective) + newStartOffset;
+			const newEndPos =
+				this._mergeTree.getPosition(newEndSegment, reconnectingPerspective) + newEndOffset;
+			if (resetOp.type === MergeTreeDeltaType.OBLITERATE) {
+				assert(
+					newStartSide === Side.Before && newEndSide === Side.After,
+					"Non-sided obliterate should have start side before and end side after",
+				);
+				// Use a non-sided obliterate op if the original op was non-sided. Some combinations of feature flags disallow sided obliterate ops
+				// but allow non-sided ones, and if we convert a non-sided op to a sided one on reconnect, we may cause errors.
+				return [
+					createObliterateRangeOp(
+						newStartPos,
+						newEndPos +
+							1 /* to make the end exclusive, see corresponding -1 in `createObliterateRangeOpSided` on converting non-sided to sided. */,
+					),
+				];
+			}
 			return [
 				createObliterateRangeOpSided(
 					{
-						pos:
-							this._mergeTree.getPosition(newStartSegment, reconnectingPerspective) +
-							newStartOffset,
+						pos: newStartPos,
 						side: newStartSide,
 					},
 					{
-						pos:
-							this._mergeTree.getPosition(newEndSegment, reconnectingPerspective) +
-							newEndOffset,
+						pos: newEndPos,
 						side: newEndSide,
 					},
 				),
