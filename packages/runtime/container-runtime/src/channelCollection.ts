@@ -625,7 +625,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		 * in the snapshot.
 		 * So, return short ids only if explicitly enabled via feature flags. Else, return uuid();
 		 */
-		if (this.mc.config.getBoolean("Fluid.Runtime.UseShortIds") === true) {
+		if (this.mc.config.getBoolean("Fluid.Runtime.IsShortIdEnabled") === true) {
 			// We use three non-overlapping namespaces:
 			// - detached state: even numbers
 			// - attached state: odd numbers
@@ -855,29 +855,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				assert(false, 0x8e9 /* unreached */);
 			}
 		}
-	}
-
-	/**
-	 * This is still here for back-compat purposes because channel collection implements
-	 * IFluidDataStoreChannel. Once it is removed from the interface, this method can be removed.
-	 * Container runtime calls `processMessages` instead.
-	 */
-	public process(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
-		this.processMessages({
-			envelope: message,
-			messagesContent: [
-				{
-					contents: message.contents,
-					localOpMetadata,
-					clientSequenceNumber: message.clientSequenceNumber,
-				},
-			],
-			local,
-		});
 	}
 
 	/**

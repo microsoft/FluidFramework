@@ -47,7 +47,7 @@ import {
 	type FieldBatchCodec,
 	type TreeCompressionStrategy,
 	buildForest,
-	createNodeKeyManager,
+	createNodeIdentifierManager,
 	intoDelta,
 	jsonableTreeFromCursor,
 	makeFieldBatchCodec,
@@ -662,7 +662,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		const view = new SchematizingSimpleTreeView(
 			this,
 			config,
-			createNodeKeyManager(this.idCompressor),
+			createNodeIdentifierManager(this.idCompressor),
 			() => {
 				this.views.delete(view);
 			},

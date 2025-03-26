@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { FieldUpPath, UpPath } from "../../core/index.js";
+import type { NormalizedFieldUpPath, NormalizedUpPath } from "../../core/index.js";
 import type {
 	IDefaultEditBuilder,
 	OptionalFieldEditBuilder,
@@ -19,7 +19,7 @@ export class MappedEditBuilder<TBase, TAdapted> implements IDefaultEditBuilder<T
 		private readonly baseBuilder: IDefaultEditBuilder<TBase>,
 		private readonly mapDelegate: (input: TAdapted) => TBase,
 	) {}
-	public valueField(field: FieldUpPath): ValueFieldEditBuilder<TAdapted> {
+	public valueField(field: NormalizedFieldUpPath): ValueFieldEditBuilder<TAdapted> {
 		const baseField = this.baseBuilder.valueField(field);
 		return {
 			set: (newContent: TAdapted): void => {
@@ -28,7 +28,7 @@ export class MappedEditBuilder<TBase, TAdapted> implements IDefaultEditBuilder<T
 			},
 		};
 	}
-	public optionalField(field: FieldUpPath): OptionalFieldEditBuilder<TAdapted> {
+	public optionalField(field: NormalizedFieldUpPath): OptionalFieldEditBuilder<TAdapted> {
 		const baseField = this.baseBuilder.optionalField(field);
 		return {
 			set: (newContent: TAdapted | undefined, wasEmpty: boolean): void => {
@@ -38,7 +38,7 @@ export class MappedEditBuilder<TBase, TAdapted> implements IDefaultEditBuilder<T
 			},
 		};
 	}
-	public sequenceField(field: FieldUpPath): SequenceFieldEditBuilder<TAdapted> {
+	public sequenceField(field: NormalizedFieldUpPath): SequenceFieldEditBuilder<TAdapted> {
 		const baseField = this.baseBuilder.sequenceField(field);
 		return {
 			insert: (index: number, content: TAdapted): void => {
@@ -51,18 +51,18 @@ export class MappedEditBuilder<TBase, TAdapted> implements IDefaultEditBuilder<T
 		};
 	}
 	public move(
-		sourceField: FieldUpPath,
+		sourceField: NormalizedFieldUpPath,
 		sourceIndex: number,
 		count: number,
-		destinationField: FieldUpPath,
+		destinationField: NormalizedFieldUpPath,
 		destinationIndex: number,
 	): void {
 		this.baseBuilder.move(sourceField, sourceIndex, count, destinationField, destinationIndex);
 	}
-	public addNodeExistsConstraint(path: UpPath): void {
+	public addNodeExistsConstraint(path: NormalizedUpPath): void {
 		this.baseBuilder.addNodeExistsConstraint(path);
 	}
-	public addNodeExistsConstraintOnRevert(path: UpPath): void {
+	public addNodeExistsConstraintOnRevert(path: NormalizedUpPath): void {
 		this.baseBuilder.addNodeExistsConstraintOnRevert(path);
 	}
 }
