@@ -134,6 +134,7 @@ export {
 	replaceHandles,
 	replaceVerboseTreeHandles,
 	type HandleConverter,
+	type FieldSchemaAlphaUnsafe,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,
@@ -199,6 +200,7 @@ export {
 	setField,
 	createUnknownOptionalFieldPolicy,
 } from "./objectNode.js";
+export { ObjectNodeSchema } from "./objectNodeTypes.js";
 export type { TreeMapNode, MapNodeInsertableData } from "./mapNode.js";
 export {
 	mapTreeFromNodeData,

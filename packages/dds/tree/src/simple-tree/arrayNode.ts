@@ -1083,6 +1083,9 @@ export function arraySchema<
 	>;
 
 	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(info));
+	const lazyAllowedTypesIdentifiers = new Lazy(
+		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
+	);
 
 	let unhydratedContext: Context;
 
@@ -1118,6 +1121,10 @@ export function arraySchema<
 				unhydratedContext,
 				mapTreeFromNodeData(input as object, this as unknown as ImplicitAllowedTypes),
 			);
+		}
+
+		public static get allowedTypesIdentifiers(): ReadonlySet<string> {
+			return lazyAllowedTypesIdentifiers.value;
 		}
 
 		protected static override constructorCached: MostDerivedData | undefined = undefined;
@@ -1161,8 +1168,7 @@ export function arraySchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
-		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> | undefined =
-			metadata;
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {
