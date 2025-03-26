@@ -107,6 +107,7 @@ export {
 	type InsertableTypedNode,
 	NodeKind,
 	type TreeObjectNode,
+	ObjectNodeSchema,
 	type TreeNodeFromImplicitAllowedTypes,
 	type TreeNodeSchemaClass,
 	type SchemaCompatibilityStatus,
@@ -134,6 +135,7 @@ export {
 	type FieldSchemaUnsafe,
 	type TreeNodeSchemaClassUnsafe,
 	type InsertableTreeNodeFromAllowedTypesUnsafe,
+	type FieldSchemaAlphaUnsafe,
 	// System types (not in Internal types for various reasons, like doc links or cannot be named errors).
 	type typeSchemaSymbol,
 	type TreeNodeSchemaNonClass,
@@ -231,9 +233,8 @@ export {
 export {
 	SharedTree,
 	configuredSharedTree,
-	SharedTreeAttributes,
-	SharedTreeFactoryType,
 } from "./treeFactory.js";
+export { SharedTreeAttributes, SharedTreeFactoryType } from "./sharedTreeAttributes.js";
 
 export {
 	type ICodecOptions,

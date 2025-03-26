@@ -78,6 +78,7 @@ export type {
 	ImplicitFieldSchemaUnsafe,
 	TreeNodeSchemaNonClassUnsafe,
 	InsertableTreeNodeFromAllowedTypesUnsafe,
+	FieldSchemaAlphaUnsafe,
 } from "./typesUnsafe.js";
 
 export {

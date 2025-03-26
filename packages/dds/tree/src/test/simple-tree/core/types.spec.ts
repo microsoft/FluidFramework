@@ -133,6 +133,7 @@ describe("simple-tree types", () => {
 			class Subclass extends TreeNodeValid<number> {
 				public static readonly kind = NodeKind.Array;
 				public static readonly identifier = "Subclass";
+				public static readonly metadata = {};
 				public static readonly info = numberSchema;
 				public static readonly implicitlyConstructable: false;
 
@@ -232,6 +233,7 @@ describe("simple-tree types", () => {
 			class Subclass extends TreeNodeValid<number> {
 				public static readonly kind = NodeKind.Array;
 				public static readonly identifier = "Subclass";
+				public static readonly metadata = {};
 				public static readonly info = numberSchema;
 				public static readonly implicitlyConstructable: false;
 				public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
@@ -285,6 +287,7 @@ describe("simple-tree types", () => {
 			class Subclass extends TreeNodeValid<number> {
 				public static readonly kind = NodeKind.Array;
 				public static readonly identifier = "Subclass";
+				public static readonly metadata = {};
 				public static readonly info = numberSchema;
 				public static readonly implicitlyConstructable: false;
 				public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();

@@ -10,6 +10,7 @@ import type {
 	ApplyKindInput,
 	FieldKind,
 	FieldSchema,
+	FieldSchemaAlpha,
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
 	TreeLeafValue,
@@ -127,7 +128,7 @@ export interface TreeNodeSchemaNonClassUnsafe<
 export type TreeObjectNodeUnsafe<
 	T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>,
 	TypeName extends string = string,
-> = TreeNode & ObjectFromSchemaRecordUnsafe<T> & WithType<TypeName, NodeKind.Object>;
+> = TreeNode & ObjectFromSchemaRecordUnsafe<T> & WithType<TypeName, NodeKind.Object, T>;
 
 /**
  * {@link Unenforced} version of {@link TreeFieldFromImplicitField}.
@@ -400,7 +401,8 @@ export type InsertableTreeFieldFromImplicitFieldUnsafe<
 export interface FieldSchemaUnsafe<
 	out Kind extends FieldKind,
 	out Types extends ImplicitAllowedTypesUnsafe,
-> extends FieldSchema<Kind, any> {
+	out TCustomMetadata = unknown,
+> extends FieldSchema<Kind, any, TCustomMetadata> {
 	/**
 	 * {@inheritDoc FieldSchema.kind}
 	 */
@@ -413,6 +415,24 @@ export interface FieldSchemaUnsafe<
 	 * {@inheritDoc FieldSchema.allowedTypeSet}
 	 */
 	readonly allowedTypeSet: ReadonlySet<TreeNodeSchema>;
+}
+
+/**
+ * {@link Unenforced} version of {@link FieldSchemaAlpha}.
+ * @remarks
+ * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @system @sealed @alpha
+ */
+export interface FieldSchemaAlphaUnsafe<
+	out Kind extends FieldKind,
+	out Types extends ImplicitAllowedTypesUnsafe,
+	out TCustomMetadata = unknown,
+> extends FieldSchemaAlpha<Kind, any, TCustomMetadata>,
+		FieldSchemaUnsafe<Kind, Types, TCustomMetadata> {
+	/**
+	 * {@inheritDoc FieldSchema.allowedTypes}
+	 */
+	readonly allowedTypes: Types;
 }
 
 /* eslint-enable @typescript-eslint/no-explicit-any */
