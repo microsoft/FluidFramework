@@ -21,24 +21,3 @@ index cdb0b22ed2e06592ea1c5f9dd3d18ae2c51b2484..202d2f0b44dad1206fff946e0275bba1
                  const entryPointFilename = path.basename(collector.workingPackage.entryPointSourceFile.fileName);
                  if (!alreadyWarnedEntities.has(referencedEntity)) {
                      alreadyWarnedEntities.add(referencedEntity);
-diff --git a/lib/generators/ApiReportGenerator.js b/lib/generators/ApiReportGenerator.js
-index c12b2665102901f971a4e2b5067dbe556a74c04f..7fece8d5f7b63b08b5f0de7941bcc4712d4d9ff5 100644
---- a/lib/generators/ApiReportGenerator.js
-+++ b/lib/generators/ApiReportGenerator.js
-@@ -85,13 +85,9 @@ class ApiReportGenerator {
-             writer.writeLine(`/// <reference lib="${libDirectiveReference}" />`);
-         }
-         writer.ensureSkippedLine();
--        // Emit the imports
--        for (const entity of collector.entities) {
--            if (entity.astEntity instanceof AstImport_1.AstImport) {
--                DtsEmitHelpers_1.DtsEmitHelpers.emitImport(writer, entity, entity.astEntity);
--            }
--        }
--        writer.ensureSkippedLine();
-+
-+        // PATCH: Don't emit imports
-+
-         // Emit the regular declarations
-         for (const entity of collector.entities) {
-             const astEntity = entity.astEntity;
