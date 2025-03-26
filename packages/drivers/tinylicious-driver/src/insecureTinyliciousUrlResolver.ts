@@ -32,7 +32,7 @@ export const defaultTinyliciousEndpoint = "http://localhost";
 export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 	private readonly tinyliciousEndpoint: string;
 	public constructor(port = defaultTinyliciousPort, endpoint = defaultTinyliciousEndpoint) {
-		this.tinyliciousEndpoint = `${endpoint}:${port}`;
+		this.tinyliciousEndpoint = `${endpoint}${port === 80 ? "" : `:${port}`}`;
 	}
 
 	public async resolve(request: IRequest): Promise<IResolvedUrl> {
