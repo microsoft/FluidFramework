@@ -13,9 +13,7 @@ import { pkgVersion } from "../packageVersion.js";
  * Please note that for all property types we should use undefined to indicate that particular capability is off.
  * Using false, or some string value (like "off") will result in clients who do not understand that property failing, whereas
  * we want them to continue to collaborate alongside clients who support that capability, but such capability is shipping dark for now.
- * @legacy
- * @alpha
- * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 export type DocumentSchemaValueType = string | string[] | true | number | undefined;
 
@@ -58,9 +56,7 @@ export type IdCompressorMode = "on" | "delayed" | undefined;
  *
  * For now we are limiting it to just plain properties, and only really simple types, but that can be changed in the future.
  *
- * @legacy
- * @alpha
- * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 export interface IDocumentSchema {
 	// version that describes how data is stored in this structure.
@@ -80,9 +76,7 @@ export interface IDocumentSchema {
  * ContainerMessageType.DocumentSchemaChange messages use CAS (Compare-and-swap) semantics, and convey
  * regSeq of last known schema change (known to a client proposing schema change).
  * @see ContainerRuntimeDocumentSchemaMessage
- * @legacy
- * @alpha
- * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 export type IDocumentSchemaChangeMessage = IDocumentSchema;
 
@@ -92,9 +86,7 @@ export type IDocumentSchemaChangeMessage = IDocumentSchema;
  * WARNING: This type is used to infer IDocumentSchemaCurrent type!
  * Any changes here (including renaming of properties) are potentially changing document format and should be considered carefully!
  *
- * @legacy
- * @alpha
- * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 export interface IDocumentSchemaFeatures {
 	// Tells if client uses legacy behavior of changing schema.
@@ -123,17 +115,13 @@ export interface IDocumentSchemaFeatures {
  * This must be bumped whenever the format of document schema or protocol for changing the current document schema changes.
  * Ex: adding a new configuration property (under IDocumentSchema.runtime) does not require changing this version.
  * Ex: Changing the 'document schema acceptance' mechanism from convert-and-swap to one requiring consensus does require changing this version.
- * @legacy
- * @alpha
- * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 export const currentDocumentVersionSchema = 1;
 
 /**
  * Current document schema.
- * @legacy
- * @alpha
- * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type IDocumentSchemaCurrent = {
@@ -441,9 +429,7 @@ function arrayToProp(arr: string[]): string[] | undefined {
  * Clients can retry, but current implementation is simply - they will not (and will rely on next session / reload to do
  * recalc and decide if schema needs to be changed or not).
  *
- * @legacy
- * @alpha
- * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  * @sealed
  */
 export class DocumentsSchemaController {
@@ -612,23 +598,6 @@ export class DocumentsSchemaController {
 				},
 			);
 		}
-	}
-
-	/**
-	 * Process document schema change message
-	 * Called by ContainerRuntime whenever it sees document schema messages.
-	 * @param content - content of the message
-	 * @param local - whether op is local
-	 * @param sequenceNumber - sequence number of the op
-	 * @returns - true if schema was accepted, otherwise false (rejected due to failed CAS)
-	 * @deprecated It has been replaced by processDocumentSchemaMessages instead.
-	 */
-	public processDocumentSchemaOp(
-		content: IDocumentSchemaChangeMessage,
-		local: boolean,
-		sequenceNumber: number,
-	): boolean {
-		return this.processDocumentSchemaMessages([content], local, sequenceNumber);
 	}
 
 	/**

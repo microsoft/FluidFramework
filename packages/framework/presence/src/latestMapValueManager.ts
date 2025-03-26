@@ -6,6 +6,10 @@
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
 import type { IEmitter } from "@fluidframework/core-interfaces/internal";
+import type {
+	JsonDeserialized,
+	JsonSerializable,
+} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
@@ -20,10 +24,6 @@ import type { ClientSessionId, ISessionClient, SpecificSessionClient } from "./p
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
-import type {
-	JsonDeserialized,
-	JsonSerializable,
-} from "@fluidframework/presence/internal/core-interfaces";
 import type { InternalTypes } from "@fluidframework/presence/internal/exposedInternalTypes";
 import type { InternalUtilityTypes } from "@fluidframework/presence/internal/exposedUtilityTypes";
 
