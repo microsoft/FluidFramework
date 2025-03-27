@@ -351,7 +351,7 @@ describe("SharedTree benchmarks", () => {
 
 						// Measure
 						const before = state.timer.now();
-						provider.processMessages();
+						provider.synchronizeMessages();
 						const after = state.timer.now();
 						duration = state.timer.toSeconds(before, after);
 						// Collect data
@@ -402,7 +402,7 @@ describe("SharedTree benchmarks", () => {
 							// This block generates commits that are all out of date to the same degree
 							for (let iCommit = 0; iCommit < commitCount; iCommit++) {
 								for (let iPeer = 0; iPeer < peerCount; iPeer++) {
-									provider.processSomeMessages(opsPerCommit);
+									provider.synchronizeMessages({ count: opsPerCommit });
 									const peer = provider.trees[iPeer];
 									insert(peer.kernel.checkout, 0, `p${iPeer}c${iCommit}`);
 								}
@@ -415,7 +415,7 @@ describe("SharedTree benchmarks", () => {
 							for (let iCommit = 0; iCommit < sampleSize; iCommit++) {
 								for (let iPeer = 0; iPeer < peerCount; iPeer++) {
 									const before = state.timer.now();
-									provider.processSomeMessages(opsPerCommit);
+									provider.synchronizeMessages({ count: opsPerCommit });
 									const after = state.timer.now();
 									timeSum += state.timer.toSeconds(before, after);
 									// We still generate commits because it affects local branch rebasing
@@ -455,8 +455,8 @@ describe("SharedTree benchmarks", () => {
 			);
 			const sender = provider.trees[0];
 			const receiver = provider.trees[1];
-			sender.containerRuntime.pauseProcessing();
-			receiver.containerRuntime.pauseProcessing();
+			sender.containerRuntime.pauseInboundProcessing();
+			receiver.containerRuntime.pauseInboundProcessing();
 			return { provider, sender, receiver };
 		}
 
@@ -525,8 +525,8 @@ describe("SharedTree benchmarks", () => {
 								// Resume the receiver and process the bunched commits. This should force the local branch
 								// to be rebased over the bunch.
 								// The receiver will not process its local commits since they were never flushed.
-								receiver.containerRuntime.resumeProcessing();
-								provider.processMessages(false /* flush */);
+								receiver.containerRuntime.resumeInboundProcessing();
+								provider.synchronizeMessages({ flush: false });
 								const after = state.timer.now();
 								duration = state.timer.toSeconds(before, after);
 							} while (state.recordBatch(duration));

@@ -96,24 +96,31 @@ export class MockContainerRuntimeWithOpBunching extends MockContainerRuntimeForR
 	private pendingMessagesWhenPaused: ISequencedDocumentMessage[] = [];
 
 	/**
-	 * Pause the processing of messages. Messages that are received while paused will be queued. These messages
-	 * will be processed and sent to the data store runtime and DDSes when resumeProcessing is called.
-	 * @remarks The pausing and resuming of processing messages can also be achieved via setting the connected
-	 * state. However, any messages that were submitted while disconnected will go through the resubmit flow first
-	 * and then processed during reconnection which can give different results than pausing and resuming processing.
+	 * Pause the processing of inbound messages. Messages that are received while paused will be queued. These messages
+	 * will be processed and sent to the data store runtime and DDSes when resumeInboundProcessing is called.
+	 * @remarks Pausing and resuming does not affect outbound messages like disconnection and reconnection does. Pausing
+	 * and resuming inbound message processing can also be achieved via setting the connected state. However, any
+	 * outbound messages that were submitted while disconnected will go through the resubmit flow on reconnection which
+	 * can result in changes to the outbound messages such as its referenced sequence number.
+	 * For example, consider the following scenario:
+	 * 1. Client 1 disconnects to stop processing messages.
+	 * 2. Client 1 submits a message when its last processed seq# is 1. The message will have ref seq# 1.
+	 * 3. Client 2 submits a message which gets seq# 2. Client 1 doesn't process the message from client 2 because it's
+	 * not connected.
+	 * 4. Client 1 reconnects. It will process the message from client 2 first and its last processed seq# will be 2.
+	 * 5. Client 1 resubmits its message which will now have ref seq# 2 instead of 1. This is an unintended consequence
+	 * of using connected state which may be fine for some tests but not for others.
 	 */
-	public pauseProcessing() {
+	public pauseInboundProcessing() {
 		this.paused = true;
 	}
 
 	/**
 	 * Resume processing of messages. Messages that were received while paused will now be processed and sent to the
 	 * data store runtime and DDSes.
-	 * @remarks The pausing and resuming of processing messages can also be achieved via setting the connected
-	 * state. However, any messages that were submitted while disconnected will go through the resubmit flow first
-	 * and then processed during reconnection which can give different results than pausing and resuming processing.
+	 * @remarks See pauseInboundProcessing for more details.
 	 */
-	public resumeProcessing() {
+	public resumeInboundProcessing() {
 		if (!this.paused) {
 			return;
 		}

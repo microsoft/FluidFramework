@@ -378,7 +378,7 @@ export class TestTreeProvider {
  */
 export type TreeMockContainerRuntime = Pick<
 	MockContainerRuntimeWithOpBunching,
-	"connected" | "pauseProcessing" | "resumeProcessing" | "flush"
+	"connected" | "pauseInboundProcessing" | "resumeInboundProcessing" | "flush"
 >;
 export type SharedTreeWithContainerRuntime = ISharedTree & {
 	containerRuntime: TreeMockContainerRuntime;
@@ -446,34 +446,36 @@ export class TestTreeProviderLite {
 	}
 
 	/**
-	 * Process the messages across all trees.
-	 * By default, this method also flushes the messages from all trees before processing them. In TurnBased mode,
-	 * messages are not automatically flushed so this ensures that all messages are processed. Flushing can be
-	 * disabled by setting the flush parameter to false. Then it is the responsibility of the test to flush the
-	 * messages before calling this method.
-	 * @param flush - Whether or not to flush the messages before processing them. Defaults to true.
+	 * Synchronize messages across all trees. This involves optionally flushing any messages sent by the trees so
+	 * that they are sequenced. Then, the runtime processes the messages. Flushing is needed in TurnBased mode only
+	 * where messages are not automatically flushed. In Immediate mode, each message is flushed immediately.
+	 * @param options - The options to use when synchronizing messages.
+	 * - count: The number of messages to synchronize. If not provided, all messages are synchronize.
+	 * - flush: Whether or not to flush the messages before processing them. Defaults to true. In TurnBased mode,
+	 * messages are not automatically flushed so this should either be set to true or the test should manually
+	 * flush the messages before calling this method.
 	 * @remarks
-	 * - For trees whose runtime is paused and / or not connected, these messages will not be processed but queued in
-	 * the runtime. Any queued messages will be processed when the runtime is unpaused and connected.
-	 * - Flushing does not preserve the order in which the messages were sent. To do so, tests should
-	 * call flushMessages on individual trees in the order messages were sent.
+	 * - Trees that are not connected will not flush outbound messages or process inbound messages. They will be queued
+	 * and will be processed when they are reconnected (unless their inbound processing is paused. See below).
+	 * - Trees whose inbound processing is paused will not process inbound messages but will queue them. Any queued
+	 * messages will be processed when inbound processing is resumed (unless they are not connected. See above).
+	 * - Flushing does not preserve the order in which the messages were sent. To do so, tests should flush the messages
+	 * from the trees in the order they were sent.
 	 */
-	public processMessages(flush: boolean = true): void {
+	public synchronizeMessages(options?: { count?: number; flush?: boolean }): void {
+		const flush = options?.flush ?? true;
 		if (flush) {
 			this.containerRuntimeMap.forEach((containerRuntime) => {
 				containerRuntime.flush();
 			});
 		}
-		this.runtimeFactory.processAllMessages();
-	}
 
-	/**
-	 * Process the given count of messages across all trees.
-	 * @remarks trees whose runtime is paused or not connected will queue these messages and not process them. They
-	 * will process the messages when their runtime is unpaused or connected respectively.
-	 */
-	public processSomeMessages(count: number): void {
-		this.runtimeFactory.processSomeMessages(count);
+		const count = options?.count;
+		if (count !== undefined) {
+			this.runtimeFactory.processSomeMessages(count);
+		} else {
+			this.runtimeFactory.processAllMessages();
+		}
 	}
 
 	public get minimumSequenceNumber(): number {
