@@ -11,7 +11,6 @@ export {
 	nonProductionConditionalsIncluded,
 	emulateProductionBuild,
 	onAssertionFailure,
-	onAssertionFailure,
 } from "./assert.js";
 export { compareArrays } from "./compare.js";
 export { delay } from "./delay.js";
