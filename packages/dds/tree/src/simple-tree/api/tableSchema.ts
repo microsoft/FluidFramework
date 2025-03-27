@@ -133,6 +133,8 @@ export function createTableSchema<
 	type CellValueType = TreeNodeFromImplicitAllowedTypes<TCell>;
 	type CellInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TCell>;
 
+	// #region Column type
+
 	/**
 	 * Get the parent table of the provided column.
 	 * @throws Throws an error if the column is not in a table.
@@ -216,6 +218,10 @@ export function createTableSchema<
 		/* ImplicitlyConstructable */ true,
 		/* Info */ typeof columnFields
 	> = Column;
+
+	// #endregion
+
+	// #region Row type
 
 	/**
 	 * Get the parent table of the provided row.
@@ -303,6 +309,8 @@ export function createTableSchema<
 			return rows.indexOf(this);
 		}
 	}
+
+	// #endregion
 
 	/**
 	 * {@link Table} fields.
