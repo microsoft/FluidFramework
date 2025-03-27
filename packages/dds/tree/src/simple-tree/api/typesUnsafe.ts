@@ -26,7 +26,7 @@ import type {
 } from "../core/index.js";
 import type { TreeArrayNode } from "../arrayNode.js";
 import type { FlexListToUnion, LazyItem } from "../flexList.js";
-import type { SimpleArrayNodeSchema } from "../simpleSchema.js";
+import type { SimpleArrayNodeSchema, SimpleMapNodeSchema } from "../simpleSchema.js";
 
 /*
  * TODO:
@@ -474,3 +474,34 @@ export interface ArrayNodeCustomizableSchemaUnsafe<
 			TCustomMetadata
 		>,
 		SimpleArrayNodeSchema<TCustomMetadata> {}
+
+/**
+ * {@link Unenforced} version of {@link MapNodeCustomizableSchema}s.
+ * @remarks
+ * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @sealed
+ * @alpha
+ * @system
+ */
+export interface MapNodeCustomizableSchemaUnsafe<
+	out TName extends string,
+	in out T extends ImplicitAllowedTypesUnsafe,
+	out TCustomMetadata,
+> extends TreeNodeSchemaClass<
+			TName,
+			NodeKind.Map,
+			TreeMapNodeUnsafe<T> & WithType<TName, NodeKind.Map, T>,
+			| {
+					[Symbol.iterator](): Iterator<
+						[string, InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>]
+					>;
+			  }
+			| {
+					readonly [P in string]: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>;
+			  },
+			false,
+			T,
+			undefined,
+			TCustomMetadata
+		>,
+		SimpleMapNodeSchema<TCustomMetadata> {}

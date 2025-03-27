@@ -22,21 +22,21 @@ import type {
 import { FieldKind } from "../schemaTypes.js";
 import { objectSchema } from "../objectNode.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
-import type { NodeKind, TreeNodeSchemaClass, WithType } from "../core/index.js";
+import type { NodeKind, TreeNodeSchemaClass } from "../core/index.js";
 import type {
-	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
-	TreeMapNodeUnsafe,
 	ImplicitAllowedTypesUnsafe,
 	ImplicitFieldSchemaUnsafe,
 	FieldSchemaAlphaUnsafe,
 	ArrayNodeCustomizableSchemaUnsafe,
+	MapNodeCustomizableSchemaUnsafe,
 } from "./typesUnsafe.js";
-import { mapSchema, type MapNodeInsertableData, type TreeMapNode } from "../mapNode.js";
+import { mapSchema } from "../mapNode.js";
 import { arraySchema } from "../arrayNode.js";
 import type { ObjectNodeSchema } from "../objectNodeTypes.js";
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
 import type { SimpleObjectNodeSchema } from "../simpleSchema.js";
 import type { ArrayNodeCustomizableSchema } from "../arrayNodeTypes.js";
+import type { MapNodeCustomizableSchema } from "../mapNodeTypes.js";
 
 /**
  * {@link SchemaFactory} with additional alpha APIs.
@@ -181,16 +181,7 @@ export class SchemaFactoryAlpha<
 		name: Name,
 		allowedTypes: T,
 		options?: NodeSchemaOptions<TCustomMetadata>,
-	): TreeNodeSchemaClass<
-		ScopedSchemaName<TScope, Name>,
-		NodeKind.Map,
-		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
-		MapNodeInsertableData<T>,
-		true,
-		T,
-		undefined,
-		TCustomMetadata
-	> {
+	): MapNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
 		return mapSchema(this.scoped2(name), allowedTypes, true, true, options?.metadata);
 	}
 
@@ -207,21 +198,9 @@ export class SchemaFactoryAlpha<
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
 			options,
-		) as unknown as TreeNodeSchemaClass<
+		) as unknown as MapNodeCustomizableSchemaUnsafe<
 			ScopedSchemaName<TScope, Name>,
-			NodeKind.Map,
-			TreeMapNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
-			| {
-					[Symbol.iterator](): Iterator<
-						[string, InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>]
-					>;
-			  }
-			| {
-					readonly [P in string]: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>;
-			  },
-			false,
 			T,
-			undefined,
 			TCustomMetadata
 		>;
 	}
