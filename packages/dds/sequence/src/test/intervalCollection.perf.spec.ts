@@ -6,7 +6,7 @@
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import { IIntervalCollection } from "../intervalCollection.js";
+import { type ISequenceIntervalCollection } from "../intervalCollection.js";
 import {
 	IOverlappingIntervalsIndex,
 	createOverlappingIntervalsIndex,
@@ -33,7 +33,7 @@ function runFindOverlappingIntervalsBenchmark({
 	type: BenchmarkType;
 }) {
 	let sharedString: SharedString;
-	let intervalCollection: IIntervalCollection<SequenceInterval>;
+	let intervalCollection: ISequenceIntervalCollection;
 	let overlappingIntervalsIndex: IOverlappingIntervalsIndex<SequenceInterval>;
 
 	const setupSharedString = () => {

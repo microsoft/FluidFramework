@@ -70,8 +70,8 @@ import {
 import Deque from "double-ended-queue";
 
 import {
-	IIntervalCollection,
 	SequenceIntervalCollectionValueType,
+	type ISequenceIntervalCollection,
 } from "./intervalCollection.js";
 import { IMapOperation, IntervalCollectionMap } from "./intervalCollectionMap.js";
 import {
@@ -252,7 +252,7 @@ export interface ISharedSegmentSequence<T extends ISegment>
 	 * Retrieves the interval collection keyed on `label`. If no such interval collection exists,
 	 * creates one.
 	 */
-	getIntervalCollection(label: string): IIntervalCollection<SequenceInterval>;
+	getIntervalCollection(label: string): ISequenceIntervalCollection;
 
 	/**
 	 * Obliterate is similar to remove, but differs in that segments concurrently
@@ -703,7 +703,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
 	}
 
-	public getIntervalCollection(label: string): IIntervalCollection<SequenceInterval> {
+	public getIntervalCollection(label: string): ISequenceIntervalCollection {
 		return this.intervalCollections.get(label);
 	}
 
