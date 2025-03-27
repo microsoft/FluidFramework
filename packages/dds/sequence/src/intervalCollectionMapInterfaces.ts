@@ -89,6 +89,9 @@ export interface SequenceOptions
 	 */
 	intervalStickinessEnabled: boolean;
 
+	/**
+	 * This is for testing, and allows us to output intervals in the older formats.
+	 */
 	intervalSerializationFormat: "1" | "2";
 }
 
