@@ -13,6 +13,7 @@ import {
 	ISerializedInterval,
 	IntervalDeltaOpType,
 	IntervalOpType,
+	type SequenceInterval,
 	SerializedIntervalDelta,
 } from "./intervals/index.js";
 
@@ -56,6 +57,8 @@ export interface IValueOpEmitter {
  */
 export interface IMapMessageLocalMetadata {
 	localSeq: number;
+	original?: SequenceInterval;
+	clone?: SequenceInterval;
 }
 
 /**

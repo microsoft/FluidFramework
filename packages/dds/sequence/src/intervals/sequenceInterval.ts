@@ -293,12 +293,32 @@ export class SequenceIntervalClass implements SequenceInterval {
 	 * {@inheritDoc IInterval.clone}
 	 */
 	public clone(): SequenceInterval {
+		const start = this.client.createLocalReferencePosition(
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			this.start.getSegment()!,
+			this.start.getOffset(),
+			this.start.refType,
+			{ ...this.start.properties },
+			this.start.slidingPreference,
+			this.start.canSlideToEndpoint,
+		);
+
+		const end = this.client.createLocalReferencePosition(
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			this.end.getSegment()!,
+			this.end.getOffset(),
+			this.end.refType,
+			{ ...this.end.properties },
+			this.end.slidingPreference,
+			this.end.canSlideToEndpoint,
+		);
+
 		return new SequenceIntervalClass(
 			this.client,
-			this.start,
-			this.end,
+			start,
+			end,
 			this.intervalType,
-			this.properties,
+			{ ...this.properties },
 			this.startSide,
 			this.endSide,
 		);

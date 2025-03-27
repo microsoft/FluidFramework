@@ -235,6 +235,16 @@ export class IntervalCollectionMap {
 		return false;
 	}
 
+	public tryRollbackMessage(op: unknown, localOpMetadata: IMapMessageLocalMetadata): boolean {
+		if (isMapOperation(op)) {
+			const { value, key } = op;
+			const map = this.get(key);
+			map.rollback(value, localOpMetadata);
+			return true;
+		}
+		return false;
+	}
+
 	public tryApplyStashedOp(op: unknown): boolean {
 		if (isMapOperation(op)) {
 			const { value, key } = op;

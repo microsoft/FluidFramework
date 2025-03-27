@@ -8,7 +8,7 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	Client,
@@ -41,6 +41,7 @@ import {
 	IMapMessageLocalMetadata,
 	IValueOpEmitter,
 	SequenceOptions,
+	type IIntervalCollectionTypeOperationValue,
 } from "./intervalCollectionMapInterfaces.js";
 import {
 	createIdIntervalIndex,
@@ -1423,10 +1424,12 @@ export class IntervalCollection
 		start,
 		end,
 		props,
+		rollback,
 	}: {
 		start: SequencePlace;
 		end: SequencePlace;
 		props?: PropertySet;
+		rollback?: boolean;
 	}): SequenceInterval {
 		if (!this.localCollection) {
 			throw new LoggingError("attach must be called prior to adding intervals");
@@ -1458,22 +1461,28 @@ export class IntervalCollection
 				setSlideOnRemove(interval.start);
 				setSlideOnRemove(interval.end);
 			}
-			const serializedInterval: ISerializedInterval = {
-				start: startPos,
-				end: endPos,
-				intervalType: IntervalType.SlideOnRemove,
-				properties: { ...interval.properties },
-				sequenceNumber: this.client?.getCurrentSeq() ?? 0,
-				stickiness,
-				startSide,
-				endSide,
-			};
-			const localSeq = this.getNextLocalSeq();
-			if (this.isCollaborating) {
-				this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
+			if (rollback !== true) {
+				const serializedInterval: ISerializedInterval = {
+					start: startPos,
+					end: endPos,
+					intervalType: IntervalType.SlideOnRemove,
+					properties: { ...interval.properties },
+					sequenceNumber: this.client?.getCurrentSeq() ?? 0,
+					stickiness,
+					startSide,
+					endSide,
+				};
+				const localSeq = this.getNextLocalSeq();
+				if (this.isCollaborating) {
+					this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
+				}
+				// Local ops get submitted to the server. Remote ops have the deserializer run.
+
+				this.emitter.emit("add", undefined, serializedInterval, {
+					localSeq,
+					original: interval,
+				});
 			}
-			// Local ops get submitted to the server. Remote ops have the deserializer run.
-			this.emitter.emit("add", undefined, serializedInterval, { localSeq });
 		}
 
 		this.emit("addInterval", interval, true, undefined);
@@ -1485,6 +1494,7 @@ export class IntervalCollection
 		interval: SequenceInterval,
 		local: boolean,
 		op?: ISequencedDocumentMessage,
+		rollback?: boolean,
 	) {
 		if (!this.localCollection) {
 			throw new LoggingError("Attach must be called before accessing intervals");
@@ -1495,9 +1505,12 @@ export class IntervalCollection
 		if (interval) {
 			// Local ops get submitted to the server. Remote ops have the deserializer run.
 			if (local) {
-				this.emitter.emit("delete", undefined, interval.serialize(), {
-					localSeq: this.getNextLocalSeq(),
-				});
+				if (rollback !== true) {
+					this.emitter.emit("delete", undefined, interval.serialize(), {
+						localSeq: this.getNextLocalSeq(),
+						clone: interval.clone(),
+					});
+				}
 			} else {
 				if (this.onDeserialize) {
 					this.onDeserialize(interval);
@@ -1511,13 +1524,13 @@ export class IntervalCollection
 	/**
 	 * {@inheritdoc IIntervalCollection.removeIntervalById}
 	 */
-	public removeIntervalById(id: string): SequenceInterval | undefined {
+	public removeIntervalById(id: string, rollback?: boolean): SequenceInterval | undefined {
 		if (!this.localCollection) {
 			throw new LoggingError("Attach must be called before accessing intervals");
 		}
 		const interval = this.localCollection.idIntervalIndex.getIntervalById(id);
 		if (interval) {
-			this.deleteExistingInterval(interval, true, undefined);
+			this.deleteExistingInterval(interval, true, undefined, rollback);
 		}
 		return interval;
 	}
@@ -1526,7 +1539,12 @@ export class IntervalCollection
 	 */
 	public change(
 		id: string,
-		{ start, end, props }: { start?: SequencePlace; end?: SequencePlace; props?: PropertySet },
+		{
+			start,
+			end,
+			props,
+			rollback,
+		}: { start?: SequencePlace; end?: SequencePlace; props?: PropertySet; rollback?: boolean },
 	): SequenceInterval | undefined {
 		if (!this.localCollection) {
 			throw new LoggingError("Attach must be called before accessing intervals");
@@ -1554,6 +1572,8 @@ export class IntervalCollection
 
 		const interval = this.getIntervalById(id);
 		if (interval) {
+			const clone = interval.clone();
+
 			let deltaProps: PropertySet | undefined;
 			let newInterval: SequenceInterval | undefined;
 			if (props !== undefined) {
@@ -1591,7 +1611,14 @@ export class IntervalCollection
 				this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
 			}
 
-			this.emitter.emit("change", undefined, serializedInterval, { localSeq });
+			if (rollback !== true) {
+				const original = newInterval ?? interval;
+				this.emitter.emit("change", undefined, serializedInterval, {
+					localSeq,
+					original,
+					clone,
+				});
+			}
 			if (deltaProps !== undefined) {
 				this.emit("propertyChanged", interval, deltaProps, true, undefined);
 				this.emit(
@@ -1772,6 +1799,36 @@ export class IntervalCollection
 				this.emit("propertyChanged", interval, deltaProps, local, op);
 				this.emit("changed", interval, deltaProps, undefined, local, false);
 			}
+		}
+	}
+
+	public rollback(
+		op: IIntervalCollectionTypeOperationValue,
+		localOpMetadata: IMapMessageLocalMetadata,
+	): void {
+		const { clone, original } = localOpMetadata;
+		const { [reservedIntervalIdKey]: id } = op.value.properties ?? {};
+		switch (op.opName) {
+			case "add": {
+				this.removeIntervalById(id, true);
+				break;
+			}
+			case "change": {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				this.localCollection?.removeExistingInterval(original!);
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				this.localCollection?.add(clone!);
+				break;
+			}
+			case "delete": {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				this.localCollection?.add(clone!);
+				this.emit("addInterval", clone, true, undefined);
+
+				break;
+			}
+			default:
+				unreachableCase(op.opName);
 		}
 	}
 

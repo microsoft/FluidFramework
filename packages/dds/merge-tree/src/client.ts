@@ -28,7 +28,11 @@ import {
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
 import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants.js";
-import { LocalReferencePosition, SlidingPreference } from "./localReference.js";
+import {
+	createDetachedLocalReferencePosition,
+	LocalReferencePosition,
+	SlidingPreference,
+} from "./localReference.js";
 import {
 	MergeTree,
 	errorIfOptionNotTrue,
@@ -470,6 +474,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		slidingPreference?: SlidingPreference,
 		canSlideToEndpoint?: boolean,
 	): LocalReferencePosition {
+		if (segment === undefined) {
+			return createDetachedLocalReferencePosition(slidingPreference, refType);
+		}
 		if (!isSegmentLeaf(segment) && typeof segment !== "string") {
 			throw new UsageError(UNBOUND_SEGMENT_ERROR);
 		}
