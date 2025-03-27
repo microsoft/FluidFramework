@@ -4,7 +4,6 @@
  */
 
 /* eslint-disable no-bitwise */
-/* eslint-disable import/no-deprecated */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
@@ -35,7 +34,6 @@ import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/intern
 import { v4 as uuid } from "uuid";
 
 import {
-	IIntervalCollectionFactory,
 	IIntervalCollectionOperation,
 	IMapMessageLocalMetadata,
 	IValueOpEmitter,
@@ -47,6 +45,7 @@ import {
 	OverlappingIntervalsIndex,
 	type IEndpointIndex,
 	type IIdIntervalIndex,
+	// eslint-disable-next-line import/no-deprecated
 	type IntervalIndex,
 	type ISequenceOverlappingIntervalsIndex,
 	type SequenceIntervalIndex,
@@ -63,7 +62,6 @@ import {
 	SerializedIntervalDelta,
 	createPositionReferenceFromSegoff,
 	endReferenceSlidingPreference,
-	sequenceIntervalHelpers,
 	startReferenceSlidingPreference,
 	type ISerializableInterval,
 	type ISerializableIntervalPrivate,
@@ -407,30 +405,6 @@ export class LocalIntervalCollection {
 	}
 }
 
-class SequenceIntervalCollectionFactory {
-	public load(
-		emitter: IValueOpEmitter,
-		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
-		options?: Partial<SequenceOptions>,
-	): IntervalCollection {
-		return new IntervalCollection(sequenceIntervalHelpers, true, emitter, raw, options);
-	}
-
-	public store(
-		value: IntervalCollection,
-	): ISerializedInterval[] | ISerializedIntervalCollectionV2 {
-		return value.serializeInternal();
-	}
-}
-
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
-export class SequenceIntervalCollectionValueType {
-	public static readonly Name = "sharedStringIntervalCollection";
-
-	public static readonly factory: IIntervalCollectionFactory =
-		new SequenceIntervalCollectionFactory();
-}
-
 const rebase: IIntervalCollectionOperation["rebase"] = (collection, op, localOpMetadata) => {
 	const { localSeq } = localOpMetadata;
 	const rebasedValue = collection.rebaseLocalInterval(op.opName, op.value, localSeq);
@@ -705,6 +679,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * @remarks After attaching an index to an interval collection, applications should typically store this
 	 * index somewhere in their in-memory data model for future reference and querying.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	attachIndex(index: IntervalIndex<TInterval>): void;
 	/**
 	 * Detaches an index from this collection.
@@ -713,6 +688,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 *
 	 * @returns `false` if the target index cannot be found in the indexes, otherwise remove all intervals in the index and return `true`.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	detachIndex(index: IntervalIndex<TInterval>): boolean;
 	/**
 	 * @returns the interval in this collection that has the provided `id`.

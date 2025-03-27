@@ -180,7 +180,7 @@ export interface ISerializableIntervalCollection {
 	/**
 	 * A type annotation to help indicate how the value serializes.
 	 */
-	type: string;
+	type: "sharedStringIntervalCollection";
 
 	/**
 	 * The JSONable representation of the value.

@@ -11,10 +11,9 @@ import { ValueType, IFluidSerializer } from "@fluidframework/shared-object-base/
 
 import { makeSerializable } from "./IntervalCollectionValues.js";
 import {
-	type IntervalCollection,
+	IntervalCollection,
 	opsMap,
 	reservedIntervalIdKey,
-	SequenceIntervalCollectionValueType,
 	toOptionalSequencePlace,
 	toSequencePlace,
 } from "./intervalCollection.js";
@@ -24,11 +23,14 @@ import {
 	ISerializableIntervalCollection,
 	ISharedDefaultMapEvents,
 	IValueChanged,
-	// eslint-disable-next-line import/no-deprecated
 	IValueOpEmitter,
 	SequenceOptions,
 } from "./intervalCollectionMapInterfaces.js";
-import { IntervalDeltaOpType, SerializedIntervalDelta } from "./intervals/index.js";
+import {
+	IntervalDeltaOpType,
+	sequenceIntervalHelpers,
+	SerializedIntervalDelta,
+} from "./intervals/index.js";
 
 function isMapOperation(op: unknown): op is IMapOperation {
 	return typeof op === "object" && op !== null && "type" in op && op.type === "act";
@@ -287,9 +289,11 @@ export class IntervalCollectionMap {
 	 * @param local - Whether the message originated from the local client
 	 */
 	private createCore(key: string, local: boolean): IntervalCollection {
-		const localValue = SequenceIntervalCollectionValueType.factory.load(
+		const localValue = new IntervalCollection(
+			sequenceIntervalHelpers,
+			true,
 			this.makeMapValueOpEmitter(key),
-			undefined,
+			[],
 			this.options,
 		);
 		const previousValue = this.data.get(key);
@@ -319,11 +323,14 @@ export class IntervalCollectionMap {
 			0x2e1 /* "Support for plain value types removed." */,
 		);
 
-		const localValue = SequenceIntervalCollectionValueType.factory.load(
+		const localValue = new IntervalCollection(
+			sequenceIntervalHelpers,
+			true,
 			this.makeMapValueOpEmitter(key),
 			serializable.value,
 			this.options,
 		);
+
 		return localValue;
 	}
 
@@ -332,9 +339,7 @@ export class IntervalCollectionMap {
 	 * @param key - The key of the map that the value type will be stored on
 	 * @returns A value op emitter for the given key
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	private makeMapValueOpEmitter(key: string): IValueOpEmitter {
-		// eslint-disable-next-line import/no-deprecated
 		const emit: IValueOpEmitter["emit"] = (
 			opName: IntervalDeltaOpType,
 			previousValue: unknown,

@@ -9,10 +9,7 @@ import {
 	IFluidSerializer,
 } from "@fluidframework/shared-object-base/internal";
 
-import {
-	SequenceIntervalCollectionValueType,
-	type IntervalCollection,
-} from "./intervalCollection.js";
+import { type IntervalCollection } from "./intervalCollection.js";
 import { ISerializableIntervalCollection } from "./intervalCollectionMapInterfaces.js";
 
 export function makeSerializable(
@@ -20,11 +17,11 @@ export function makeSerializable(
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
 ): ISerializableIntervalCollection {
-	const storedValueType = SequenceIntervalCollectionValueType.factory.store(localValue);
+	const storedValueType = localValue.serializeInternal();
 
 	const value = serializeHandles(storedValueType, serializer, bind);
 	return {
-		type: SequenceIntervalCollectionValueType.Name,
+		type: "sharedStringIntervalCollection",
 		value: value && JSON.parse(value),
 	};
 }
