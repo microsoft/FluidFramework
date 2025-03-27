@@ -4,6 +4,37 @@
 
 ```ts
 
+import type { ErasedType } from '@fluidframework/core-interfaces';
+import type { ErasedType as ErasedType_2 } from '@fluidframework/core-interfaces/internal';
+import { FieldHasDefault as FieldHasDefault_2 } from '../objectNode.js';
+import { FieldKind as FieldKind_2 } from '../schemaTypes.js';
+import { FieldSchema as FieldSchema_2 } from '../schemaTypes.js';
+import type { IDisposable } from '@fluidframework/core-interfaces';
+import type { IFluidHandle } from '@fluidframework/core-interfaces';
+import type { IFluidLoadable } from '@fluidframework/core-interfaces';
+import type { IIdCompressor } from '@fluidframework/id-compressor';
+import { IIdCompressor as IIdCompressor_2 } from '@fluidframework/id-compressor/internal';
+import { ImplicitFieldSchema as ImplicitFieldSchema_2 } from '../schemaTypes.js';
+import { InsertableTreeFieldFromImplicitField as InsertableTreeFieldFromImplicitField_2 } from '../schemaTypes.js';
+import { InsertableTypedNode as InsertableTypedNode_2 } from '../schemaTypes.js';
+import { InternalTreeNode as InternalTreeNode_2 } from '../core/types.js';
+import type { IsListener as IsListener_2 } from '@fluidframework/core-interfaces';
+import { LeafSchema as LeafSchema_2 } from '../leafNodeSchema.js';
+import type { Listenable as Listenable_2 } from '@fluidframework/core-interfaces';
+import type { Listeners as Listeners_2 } from '@fluidframework/core-interfaces';
+import { MapNodeInsertableData as MapNodeInsertableData_2 } from '../mapNode.js';
+import type { Off as Off_2 } from '@fluidframework/core-interfaces';
+import { ReadonlyArrayNode as ReadonlyArrayNode_2 } from '../arrayNode.js';
+import { RestrictiveStringRecord as RestrictiveStringRecord_2 } from '../../index.js';
+import type { Static } from '@sinclair/typebox';
+import { TreeLeafValue as TreeLeafValue_2 } from '../schemaTypes.js';
+import { TreeMapNode as TreeMapNode_2 } from '../mapNode.js';
+import { TreeNodeSchemaCore as TreeNodeSchemaCore_2 } from '../core/treeNodeSchema.js';
+import { TreeNodeSchemaNonClass as TreeNodeSchemaNonClass_2 } from '../core/treeNodeSchema.js';
+import type { TSchema } from '@sinclair/typebox';
+import { UnionToIntersection as UnionToIntersection_2 } from '../../index.js';
+import { WithType as WithType_2 } from '../core/withType.js';
+
 // @alpha
 export function adaptEnum<TScope extends string, const TEnum extends Record<string, string | number>>(factory: SchemaFactory<TScope>, members: TEnum): (<TValue extends TEnum[keyof TEnum]>(value: TValue) => TValue extends unknown ? TreeNode & {
     readonly value: TValue;
@@ -85,6 +116,4353 @@ export function createSimpleTreeIndex<TFieldSchema extends ImplicitFieldSchema, 
 
 // @alpha
 export function createSimpleTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue, TSchema extends TreeNodeSchema>(view: TreeView<TFieldSchema>, indexer: Map<TreeNodeSchema, string>, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey, indexableSchema: readonly TSchema[]): SimpleTreeIndex<TKey, TValue>;
+
+// @alpha
+export function createTableSchema<const TCell extends readonly TreeNodeSchema[], const TColumnProps extends readonly TreeNodeSchema[], const TRowProps extends readonly TreeNodeSchema[], const TScope extends string | undefined>(props: TableSchemaProps<TCell, TColumnProps, TRowProps, TScope>): TreeNodeSchemaClass<ScopedSchemaName<TScope, "Table">, NodeKind.Object, TreeNode & ITable<TCell, TreeNode & IColumn, TreeNode & IRow<TCell, TreeNode & IColumn>>, object & {
+    readonly rows: (InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array, true, TreeNodeSchemaClass<ScopedSchemaName<TScope, "Row">, NodeKind.Object, TreeNode & IRow<TCell, TreeNode & IColumn>, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_2 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_2 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T ? { [Property in keyof T]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_1 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_1 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }>, Iterable<InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Row">, NodeKind.Object, TreeNode & IRow<TCell, TreeNode & IColumn>, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_5 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_5 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_3 ? { [Property in keyof T_3]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_4 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_4 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }>, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, "Row">, NodeKind.Object, true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_8 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_8 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_6 ? { [Property in keyof T_6]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_7 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_7 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), unknown> & (new (data: InternalTreeNode_2 | (object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_11 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_11 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_9 ? { [Property in keyof T_9]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_10 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_10 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never))) => TreeNode & IRow<TCell, TreeNode & IColumn>)>>, unknown> & {
+    create(data?: Iterable<InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Row">, NodeKind.Object, TreeNode & IRow<TCell, TreeNode & IColumn>, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_14 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_14 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_12 ? { [Property in keyof T_12]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_13 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_13 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }>, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, "Row">, NodeKind.Object, true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_17 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_17 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_15 ? { [Property in keyof T_15]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_16 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_16 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), unknown> & (new (data: InternalTreeNode_2 | (object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_20 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_20 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_18 ? { [Property in keyof T_18]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_19 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_19 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never))) => TreeNode & IRow<TCell, TreeNode & IColumn>)>> | undefined): TreeArrayNode<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Row">, NodeKind.Object, TreeNode & IRow<TCell, TreeNode & IColumn>, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_23 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_23 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_21 ? { [Property in keyof T_21]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_22 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_22 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }>, TreeNode & IRow<TCell, TreeNode & IColumn>, InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Row">, NodeKind.Object, TreeNode & IRow<TCell, TreeNode & IColumn>, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_26 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_26 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_24 ? { [Property in keyof T_24]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_25 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_25 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }>, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, "Row">, NodeKind.Object, true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_29 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_29 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_27 ? { [Property in keyof T_27]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_28 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_28 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), unknown> & (new (data: InternalTreeNode_2 | (object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_32 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_32 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_30 ? { [Property in keyof T_30]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_31 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_31 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never))) => TreeNode & IRow<TCell, TreeNode & IColumn>)>, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType_2<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array, true, TreeNodeSchemaClass<ScopedSchemaName<TScope, "Row">, NodeKind.Object, TreeNode & IRow<TCell, TreeNode & IColumn>, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_35 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_35 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_33 ? { [Property in keyof T_33]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_34 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_34 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }>, Iterable<InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Row">, NodeKind.Object, TreeNode & IRow<TCell, TreeNode & IColumn>, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_38 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_38 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_36 ? { [Property in keyof T_36]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_37 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_37 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }>, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, "Row">, NodeKind.Object, true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_41 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_41 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_39 ? { [Property in keyof T_39]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_40 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_40 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), unknown> & (new (data: InternalTreeNode_2 | (object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_44 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_44 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_42 ? { [Property in keyof T_42]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_43 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_43 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never))) => TreeNode & IRow<TCell, TreeNode & IColumn>)>>, unknown> & {
+    create(data?: Iterable<InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Row">, NodeKind.Object, TreeNode & IRow<TCell, TreeNode & IColumn>, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_47 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_47 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_45 ? { [Property in keyof T_45]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_46 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_46 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }>, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, "Row">, NodeKind.Object, true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_50 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_50 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_48 ? { [Property in keyof T_48]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_49 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_49 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), unknown> & (new (data: InternalTreeNode_2 | (object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_53 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_53 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_51 ? { [Property in keyof T_51]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_52 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_52 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never))) => TreeNode & IRow<TCell, TreeNode & IColumn>)>> | undefined): TreeArrayNode<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Row">, NodeKind.Object, TreeNode & IRow<TCell, TreeNode & IColumn>, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_56 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_56 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_54 ? { [Property in keyof T_54]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_55 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_55 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }>, TreeNode & IRow<TCell, TreeNode & IColumn>, InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Row">, NodeKind.Object, TreeNode & IRow<TCell, TreeNode & IColumn>, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_59 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_59 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_57 ? { [Property in keyof T_57]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_58 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_58 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }>, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, "Row">, NodeKind.Object, true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_62 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_62 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_60 ? { [Property in keyof T_60]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_61 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_61 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), unknown> & (new (data: InternalTreeNode_2 | (object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_65 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_65 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_63 ? { [Property in keyof T_63]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_64 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_64 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never))) => TreeNode & IRow<TCell, TreeNode & IColumn>)>, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType_2<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array, unknown>;
+    }> | undefined) & InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array, true, TreeNodeSchemaClass<ScopedSchemaName<TScope, "Row">, NodeKind.Object, TreeNode & IRow<TCell, TreeNode & IColumn>, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_68 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_68 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_66 ? { [Property in keyof T_66]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_67 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_67 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }>, Iterable<InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Row">, NodeKind.Object, TreeNode & IRow<TCell, TreeNode & IColumn>, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_71 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_71 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_69 ? { [Property in keyof T_69]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_70 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_70 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }>, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, "Row">, NodeKind.Object, true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_74 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_74 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_72 ? { [Property in keyof T_72]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_73 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_73 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), unknown> & (new (data: InternalTreeNode_2 | (object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_77 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_77 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_75 ? { [Property in keyof T_75]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_76 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_76 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never))) => TreeNode & IRow<TCell, TreeNode & IColumn>)>>, unknown> & {
+    create(data?: Iterable<InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Row">, NodeKind.Object, TreeNode & IRow<TCell, TreeNode & IColumn>, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_80 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_80 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_78 ? { [Property in keyof T_78]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_79 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_79 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }>, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, "Row">, NodeKind.Object, true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_83 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_83 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_81 ? { [Property in keyof T_81]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_82 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_82 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), unknown> & (new (data: InternalTreeNode_2 | (object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_86 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_86 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_84 ? { [Property in keyof T_84]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_85 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_85 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never))) => TreeNode & IRow<TCell, TreeNode & IColumn>)>> | undefined): TreeArrayNode<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Row">, NodeKind.Object, TreeNode & IRow<TCell, TreeNode & IColumn>, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_89 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_89 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_87 ? { [Property in keyof T_87]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_88 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_88 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }>, TreeNode & IRow<TCell, TreeNode & IColumn>, InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Row">, NodeKind.Object, TreeNode & IRow<TCell, TreeNode & IColumn>, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_92 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_92 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_90 ? { [Property in keyof T_90]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_91 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_91 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }>, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, "Row">, NodeKind.Object, true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_95 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_95 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_93 ? { [Property in keyof T_93]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_94 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_94 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), unknown> & (new (data: InternalTreeNode_2 | (object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_98 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_98 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_96 ? { [Property in keyof T_96]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_97 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_97 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never))) => TreeNode & IRow<TCell, TreeNode & IColumn>)>, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType_2<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array, true, TreeNodeSchemaClass<ScopedSchemaName<TScope, "Row">, NodeKind.Object, TreeNode & IRow<TCell, TreeNode & IColumn>, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_101 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_101 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_99 ? { [Property in keyof T_99]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_100 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_100 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }>, Iterable<InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Row">, NodeKind.Object, TreeNode & IRow<TCell, TreeNode & IColumn>, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_104 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_104 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_102 ? { [Property in keyof T_102]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_103 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_103 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }>, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, "Row">, NodeKind.Object, true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_107 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_107 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_105 ? { [Property in keyof T_105]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_106 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_106 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), unknown> & (new (data: InternalTreeNode_2 | (object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_110 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_110 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_108 ? { [Property in keyof T_108]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_109 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_109 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never))) => TreeNode & IRow<TCell, TreeNode & IColumn>)>>, unknown> & {
+    create(data?: Iterable<InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Row">, NodeKind.Object, TreeNode & IRow<TCell, TreeNode & IColumn>, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_113 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_113 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_111 ? { [Property in keyof T_111]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_112 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_112 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }>, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, "Row">, NodeKind.Object, true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_116 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_116 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_114 ? { [Property in keyof T_114]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_115 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_115 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), unknown> & (new (data: InternalTreeNode_2 | (object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_119 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_119 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_117 ? { [Property in keyof T_117]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_118 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_118 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never))) => TreeNode & IRow<TCell, TreeNode & IColumn>)>> | undefined): TreeArrayNode<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Row">, NodeKind.Object, TreeNode & IRow<TCell, TreeNode & IColumn>, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_122 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_122 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_120 ? { [Property in keyof T_120]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_121 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_121 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }>, TreeNode & IRow<TCell, TreeNode & IColumn>, InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Row">, NodeKind.Object, TreeNode & IRow<TCell, TreeNode & IColumn>, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_125 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_125 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_123 ? { [Property in keyof T_123]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_124 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_124 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }>, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, "Row">, NodeKind.Object, true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_128 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_128 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_126 ? { [Property in keyof T_126]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_127 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_127 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), unknown> & (new (data: InternalTreeNode_2 | (object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_131 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_131 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_129 ? { [Property in keyof T_129]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_130 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_130 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never))) => TreeNode & IRow<TCell, TreeNode & IColumn>)>, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType_2<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array, unknown>;
+    }>;
+    readonly columns: (InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array, true, TreeNodeSchemaClass<ScopedSchemaName<TScope, "Column">, NodeKind.Object, TreeNode & IColumn, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_134 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_134 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_132 ? { [Property_2 in keyof T_132]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_133 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_133 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }>, Iterable<InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Column">, NodeKind.Object, TreeNode & IColumn, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_137 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_137 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_135 ? { [Property_2 in keyof T_135]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_136 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_136 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }>, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, "Column">, NodeKind.Object, true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_140 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_140 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_138 ? { [Property_2 in keyof T_138]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_139 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_139 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), unknown> & (new (data: InternalTreeNode_2 | (object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_143 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_143 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_141 ? { [Property_2 in keyof T_141]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_142 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_142 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never))) => TreeNode & IColumn)>>, unknown> & {
+    create(data?: Iterable<InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Column">, NodeKind.Object, TreeNode & IColumn, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_146 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_146 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_144 ? { [Property_2 in keyof T_144]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_145 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_145 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }>, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, "Column">, NodeKind.Object, true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_149 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_149 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_147 ? { [Property_2 in keyof T_147]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_148 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_148 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), unknown> & (new (data: InternalTreeNode_2 | (object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_152 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_152 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_150 ? { [Property_2 in keyof T_150]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_151 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_151 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never))) => TreeNode & IColumn)>> | undefined): TreeArrayNode<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Column">, NodeKind.Object, TreeNode & IColumn, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_155 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_155 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_153 ? { [Property_2 in keyof T_153]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_154 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_154 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }>, TreeNode & IColumn, InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Column">, NodeKind.Object, TreeNode & IColumn, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_158 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_158 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_156 ? { [Property_2 in keyof T_156]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_157 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_157 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }>, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, "Column">, NodeKind.Object, true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_161 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_161 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_159 ? { [Property_2 in keyof T_159]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_160 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_160 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), unknown> & (new (data: InternalTreeNode_2 | (object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_164 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_164 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_162 ? { [Property_2 in keyof T_162]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_163 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_163 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never))) => TreeNode & IColumn)>, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType_2<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array, true, TreeNodeSchemaClass<ScopedSchemaName<TScope, "Column">, NodeKind.Object, TreeNode & IColumn, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_167 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_167 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_165 ? { [Property_2 in keyof T_165]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_166 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_166 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }>, Iterable<InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Column">, NodeKind.Object, TreeNode & IColumn, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_170 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_170 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_168 ? { [Property_2 in keyof T_168]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_169 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_169 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }>, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, "Column">, NodeKind.Object, true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_173 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_173 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_171 ? { [Property_2 in keyof T_171]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_172 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_172 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), unknown> & (new (data: InternalTreeNode_2 | (object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_176 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_176 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_174 ? { [Property_2 in keyof T_174]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_175 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_175 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never))) => TreeNode & IColumn)>>, unknown> & {
+    create(data?: Iterable<InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Column">, NodeKind.Object, TreeNode & IColumn, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_179 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_179 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_177 ? { [Property_2 in keyof T_177]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_178 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_178 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }>, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, "Column">, NodeKind.Object, true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_182 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_182 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_180 ? { [Property_2 in keyof T_180]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_181 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_181 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), unknown> & (new (data: InternalTreeNode_2 | (object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_185 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_185 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_183 ? { [Property_2 in keyof T_183]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_184 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_184 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never))) => TreeNode & IColumn)>> | undefined): TreeArrayNode<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Column">, NodeKind.Object, TreeNode & IColumn, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_188 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_188 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_186 ? { [Property_2 in keyof T_186]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_187 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_187 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }>, TreeNode & IColumn, InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Column">, NodeKind.Object, TreeNode & IColumn, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_191 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_191 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_189 ? { [Property_2 in keyof T_189]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_190 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_190 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }>, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, "Column">, NodeKind.Object, true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_194 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_194 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_192 ? { [Property_2 in keyof T_192]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_193 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_193 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), unknown> & (new (data: InternalTreeNode_2 | (object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_197 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_197 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_195 ? { [Property_2 in keyof T_195]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_196 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_196 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never))) => TreeNode & IColumn)>, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType_2<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array, unknown>;
+    }> | undefined) & InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array, true, TreeNodeSchemaClass<ScopedSchemaName<TScope, "Column">, NodeKind.Object, TreeNode & IColumn, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_200 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_200 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_198 ? { [Property_2 in keyof T_198]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_199 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_199 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }>, Iterable<InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Column">, NodeKind.Object, TreeNode & IColumn, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_203 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_203 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_201 ? { [Property_2 in keyof T_201]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_202 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_202 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }>, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, "Column">, NodeKind.Object, true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_206 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_206 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_204 ? { [Property_2 in keyof T_204]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_205 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_205 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), unknown> & (new (data: InternalTreeNode_2 | (object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_209 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_209 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_207 ? { [Property_2 in keyof T_207]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_208 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_208 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never))) => TreeNode & IColumn)>>, unknown> & {
+    create(data?: Iterable<InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Column">, NodeKind.Object, TreeNode & IColumn, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_212 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_212 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_210 ? { [Property_2 in keyof T_210]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_211 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_211 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }>, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, "Column">, NodeKind.Object, true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_215 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_215 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_213 ? { [Property_2 in keyof T_213]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_214 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_214 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), unknown> & (new (data: InternalTreeNode_2 | (object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_218 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_218 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_216 ? { [Property_2 in keyof T_216]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_217 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_217 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never))) => TreeNode & IColumn)>> | undefined): TreeArrayNode<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Column">, NodeKind.Object, TreeNode & IColumn, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_221 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_221 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_219 ? { [Property_2 in keyof T_219]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_220 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_220 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }>, TreeNode & IColumn, InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Column">, NodeKind.Object, TreeNode & IColumn, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_224 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_224 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_222 ? { [Property_2 in keyof T_222]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_223 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_223 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }>, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, "Column">, NodeKind.Object, true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_227 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_227 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_225 ? { [Property_2 in keyof T_225]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_226 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_226 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), unknown> & (new (data: InternalTreeNode_2 | (object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_230 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_230 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_228 ? { [Property_2 in keyof T_228]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_229 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_229 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never))) => TreeNode & IColumn)>, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType_2<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array, true, TreeNodeSchemaClass<ScopedSchemaName<TScope, "Column">, NodeKind.Object, TreeNode & IColumn, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_233 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_233 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_231 ? { [Property_2 in keyof T_231]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_232 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_232 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }>, Iterable<InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Column">, NodeKind.Object, TreeNode & IColumn, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_236 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_236 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_234 ? { [Property_2 in keyof T_234]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_235 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_235 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }>, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, "Column">, NodeKind.Object, true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_239 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_239 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_237 ? { [Property_2 in keyof T_237]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_238 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_238 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), unknown> & (new (data: InternalTreeNode_2 | (object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_242 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_242 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_240 ? { [Property_2 in keyof T_240]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_241 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_241 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never))) => TreeNode & IColumn)>>, unknown> & {
+    create(data?: Iterable<InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Column">, NodeKind.Object, TreeNode & IColumn, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_245 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_245 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_243 ? { [Property_2 in keyof T_243]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_244 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_244 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }>, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, "Column">, NodeKind.Object, true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_248 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_248 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_246 ? { [Property_2 in keyof T_246]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_247 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_247 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), unknown> & (new (data: InternalTreeNode_2 | (object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_251 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_251 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_249 ? { [Property_2 in keyof T_249]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_250 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_250 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never))) => TreeNode & IColumn)>> | undefined): TreeArrayNode<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Column">, NodeKind.Object, TreeNode & IColumn, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_254 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_254 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_252 ? { [Property_2 in keyof T_252]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_253 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_253 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }>, TreeNode & IColumn, InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Column">, NodeKind.Object, TreeNode & IColumn, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_257 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_257 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_255 ? { [Property_2 in keyof T_255]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_256 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_256 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }>, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, "Column">, NodeKind.Object, true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_260 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_260 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_258 ? { [Property_2 in keyof T_258]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_259 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_259 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), unknown> & (new (data: InternalTreeNode_2 | (object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_263 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_263 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_261 ? { [Property_2 in keyof T_261]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_262 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_262 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never))) => TreeNode & IColumn)>, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType_2<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array, unknown>;
+    }>;
+}, true, {
+    rows: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array, TreeArrayNode<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Row">, NodeKind.Object, TreeNode & IRow<TCell, TreeNode & IColumn>, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_266 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_266 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_264 ? { [Property in keyof T_264]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_265 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_265 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }>, TreeNode & IRow<TCell, TreeNode & IColumn>, InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Row">, NodeKind.Object, TreeNode & IRow<TCell, TreeNode & IColumn>, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_269 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_269 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_267 ? { [Property in keyof T_267]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_268 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_268 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }>, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, "Row">, NodeKind.Object, true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_272 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_272 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_270 ? { [Property in keyof T_270]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_271 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_271 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), unknown> & (new (data: InternalTreeNode_2 | (object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_275 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_275 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_273 ? { [Property in keyof T_273]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_274 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_274 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never))) => TreeNode & IRow<TCell, TreeNode & IColumn>)>, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType_2<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array, unknown>, Iterable<InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Row">, NodeKind.Object, TreeNode & IRow<TCell, TreeNode & IColumn>, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_278 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_278 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_276 ? { [Property in keyof T_276]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_277 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_277 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }>, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, "Row">, NodeKind.Object, true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_281 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_281 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_279 ? { [Property in keyof T_279]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_280 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_280 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), unknown> & (new (data: InternalTreeNode_2 | (object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_284 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_284 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_282 ? { [Property in keyof T_282]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_283 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_283 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never))) => TreeNode & IRow<TCell, TreeNode & IColumn>)>>, true, TreeNodeSchemaClass<ScopedSchemaName<TScope, "Row">, NodeKind.Object, TreeNode & IRow<TCell, TreeNode & IColumn>, object & ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_287 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_287 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never) extends infer T_285 ? { [Property in keyof T_285]: ({
+    readonly id?: string | undefined;
+    readonly _cells?: InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, true, TCell, MapNodeInsertableData_2<TCell>, unknown> & {
+    create(data?: MapNodeInsertableData_2<TCell> | undefined): TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>;
+    }> | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TRowProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TRowProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    } extends infer T_286 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_1 in keyof T_286 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]> extends false ? Property_1 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }[Property_1]>>; } : never))[Property]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    _cells: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode_2<TCell> & WithType_2<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCell>, true, TCell, undefined>;
+    props: TRowProps | LeafSchema_2<"null", null>;
+    }>, undefined>;
+    columns: TreeNodeSchemaNonClass_2<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array, TreeArrayNode<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Column">, NodeKind.Object, TreeNode & IColumn, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_290 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_290 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_288 ? { [Property_2 in keyof T_288]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_289 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_289 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }>, TreeNode & IColumn, InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Column">, NodeKind.Object, TreeNode & IColumn, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_293 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_293 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_291 ? { [Property_2 in keyof T_291]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_292 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_292 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }>, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, "Column">, NodeKind.Object, true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_296 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_296 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_294 ? { [Property_2 in keyof T_294]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_295 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_295 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), unknown> & (new (data: InternalTreeNode_2 | (object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_299 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_299 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_297 ? { [Property_2 in keyof T_297]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_298 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_298 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never))) => TreeNode & IColumn)>, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType_2<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array, unknown>, Iterable<InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<TScope, "Column">, NodeKind.Object, TreeNode & IColumn, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_302 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_302 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_300 ? { [Property_2 in keyof T_300]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_301 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_301 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }>, TreeNodeSchemaCore_2<ScopedSchemaName<TScope, "Column">, NodeKind.Object, true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_305 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_305 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_303 ? { [Property_2 in keyof T_303]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_304 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_304 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), unknown> & (new (data: InternalTreeNode_2 | (object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_308 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_308 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_306 ? { [Property_2 in keyof T_306]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_307 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_307 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never))) => TreeNode & IColumn)>>, true, TreeNodeSchemaClass<ScopedSchemaName<TScope, "Column">, NodeKind.Object, TreeNode & IColumn, object & ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_311 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_311 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never) extends infer T_309 ? { [Property_2 in keyof T_309]: ({
+    readonly id?: string | undefined;
+    readonly props?: InsertableTreeFieldFromImplicitField_2<TColumnProps | LeafSchema_2<"null", null>, UnionToIntersection_2<TColumnProps | LeafSchema_2<"null", null>>> | undefined;
+    } & ({
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    } extends infer T_310 extends RestrictiveStringRecord_2<ImplicitFieldSchema_2> ? { readonly [Property_3 in keyof T_310 as FieldHasDefault_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]> extends false ? Property_3 : never]: InsertableTreeFieldFromImplicitField_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3], UnionToIntersection_2<    {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }[Property_3]>>; } : never))[Property_2]; } : never), true, {
+    id: FieldSchema_2<FieldKind_2.Identifier, LeafSchema_2<"string", string>, unknown>;
+    props: TColumnProps | LeafSchema_2<"null", null>;
+    }>, undefined>;
+}>;
 
 // @public @sealed
 interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {

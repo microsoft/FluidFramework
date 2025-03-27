@@ -228,6 +228,7 @@ export {
 	replaceVerboseTreeHandles,
 	type HandleConverter,
 	type LeafSchema,
+	createTableSchema,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

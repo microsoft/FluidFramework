@@ -34,6 +34,7 @@ export {
 	enumFromStrings,
 	singletonSchema,
 } from "./schemaCreationUtilities.js";
+export { createTableSchema } from "./tableSchema.js";
 export { treeNodeApi, type TreeNodeApi, tryGetSchema } from "./treeNodeApi.js";
 export { createFromInsertable, cursorFromInsertable, createFromCursor } from "./create.js";
 export {

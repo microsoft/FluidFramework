@@ -4,6 +4,19 @@
 
 ```ts
 
+import type { ErasedType } from '@fluidframework/core-interfaces';
+import type { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
+import type { IDisposable } from '@fluidframework/core-interfaces';
+import type { IFluidHandle } from '@fluidframework/core-interfaces';
+import type { IFluidLoadable } from '@fluidframework/core-interfaces';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
+import type { IsListener as IsListener_2 } from '@fluidframework/core-interfaces';
+import { LeafSchema as LeafSchema_2 } from '../leafNodeSchema.js';
+import type { Listenable as Listenable_2 } from '@fluidframework/core-interfaces';
+import type { Listeners as Listeners_2 } from '@fluidframework/core-interfaces';
+import type { Off as Off_2 } from '@fluidframework/core-interfaces';
+import type { SharedObjectKind } from '@fluidframework/shared-object-base';
+
 // @public
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
