@@ -37,17 +37,17 @@ function isResponseException(err: unknown): err is IResponseException {
  * Converts an error object into an {@link @fluidframework/core-interfaces#IResponse}.
  * @internal
  */
-export function exceptionToResponse(err: unknown): IResponse {
+export function exceptionToResponse(error: unknown): IResponse {
 	const status = 500;
-	if (isResponseException(err)) {
+	if (isResponseException(error)) {
 		return {
 			mimeType: "text/plain",
-			status: err.code,
-			value: err.message,
+			status: error.code,
+			value: error.message,
 			get stack() {
-				return err.stack;
+				return error.stack;
 			},
-			headers: err.underlyingResponseHeaders,
+			headers: error.underlyingResponseHeaders,
 		};
 	}
 
@@ -57,12 +57,12 @@ export function exceptionToResponse(err: unknown): IResponse {
 	return {
 		mimeType: "text/plain",
 		status,
-		value: `${err}`,
+		value: `${error}`,
 		get stack() {
-			// Use type assertion after checking if err is an object with stack
+			// Use type assertion after checking if error is an object with stack
 			return (
-				(typeof err === "object" && err !== null && "stack" in err
-					? (err.stack as string | undefined)
+				(typeof error === "object" && error !== null && "stack" in error
+					? (error.stack as string | undefined)
 					: undefined) ?? errWithStack.stack
 			);
 		},
