@@ -167,6 +167,20 @@ export type ImplicitAllowedTypesUnsafe =
 	| readonly LazyItem<Unenforced<TreeNodeSchema>>[];
 
 /**
+ * {@link Unenforced} version of {@link ImplicitFieldSchema}.
+ * @remarks
+ * Do not use this type directly: it is only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @privateRemarks
+ * This is similar to `Unenforced<ImplicitFieldSchema>` in that it avoids constraining the schema
+ * (which is necessary to avoid breaking recursive types),
+ * but is superior from a safety perspective because it constrains the structure containing the schema.
+ * @system @public
+ */
+export type ImplicitFieldSchemaUnsafe =
+	| FieldSchemaUnsafe<FieldKind, ImplicitAllowedTypesUnsafe>
+	| ImplicitAllowedTypesUnsafe;
+
+/**
  * {@link Unenforced} version of {@link TreeNodeFromImplicitAllowedTypes}.
  * @remarks
  * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
@@ -382,7 +396,7 @@ export type InsertableTreeFieldFromImplicitFieldUnsafe<
  * {@link Unenforced} version of {@link FieldSchema}.
  * @remarks
  * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
- * @public
+ * @system @sealed @public
  */
 export interface FieldSchemaUnsafe<
 	out Kind extends FieldKind,
