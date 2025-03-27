@@ -247,7 +247,7 @@ export function createTableSchema<
 		}
 	}
 
-	type ColumnNodeType = TreeNode & IColumn & WithType<ScopedSchemaName<TScope, "Column">>;
+	type ColumnValueType = TreeNode & IColumn & WithType<ScopedSchemaName<TScope, "Column">>;
 	type ColumnInsertableType = InsertableObjectFromSchemaRecord<typeof columnFields>;
 
 	// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
@@ -258,7 +258,7 @@ export function createTableSchema<
 	const ColumnSchemaType: TreeNodeSchemaClass<
 		/* Name */ ScopedSchemaName<TScope, "Column">,
 		/* Kind */ NodeKind.Object,
-		/* TNode */ ColumnNodeType,
+		/* TNode */ ColumnValueType,
 		/* TInsertable */ object & ColumnInsertableType,
 		/* ImplicitlyConstructable */ true,
 		/* Info */ typeof columnFields
@@ -300,13 +300,13 @@ export function createTableSchema<
 	 */
 	class Row
 		extends sf.object("Row", rowFields)
-		implements IRow<CellValueType, CellInsertableType, ColumnNodeType>
+		implements IRow<CellValueType, CellInsertableType, ColumnValueType>
 	{
 		/** Get a cell by the column
 		 * @param column - The column
 		 * @returns The cell if it exists, otherwise undefined
 		 */
-		public getCell(column: ColumnNodeType): CellValueType | undefined {
+		public getCell(column: ColumnValueType): CellValueType | undefined {
 			return this._cells.get(column.id) as CellValueType | undefined;
 		}
 
@@ -315,7 +315,7 @@ export function createTableSchema<
 		 * @param column - The column
 		 * @param value - The value to set
 		 */
-		public setCell(column: ColumnNodeType, value: CellInsertableType | undefined): void {
+		public setCell(column: ColumnValueType, value: CellInsertableType | undefined): void {
 			this._cells.set(column.id, value);
 		}
 
@@ -323,7 +323,7 @@ export function createTableSchema<
 		 * Delete a cell from the row
 		 * @param column - The column
 		 */
-		public deleteCell(column: ColumnNodeType): void {
+		public deleteCell(column: ColumnValueType): void {
 			if (!this._cells.has(column.id)) return;
 			this._cells.delete(column.id);
 		}
@@ -363,8 +363,8 @@ export function createTableSchema<
 		}
 	}
 
-	type RowNodeType = TreeNode &
-		IRow<CellValueType, CellInsertableType, ColumnNodeType> &
+	type RowValueType = TreeNode &
+		IRow<CellValueType, CellInsertableType, ColumnValueType> &
 		WithType<ScopedSchemaName<TScope, "Row">>;
 	// TODO: hide cells?
 	type RowInsertableType = InsertableObjectFromSchemaRecord<typeof rowFields>;
@@ -377,7 +377,7 @@ export function createTableSchema<
 	const RowSchemaType: TreeNodeSchemaClass<
 		/* Name */ ScopedSchemaName<TScope, "Row">,
 		/* Kind */ NodeKind.Object,
-		/* TNode */ RowNodeType,
+		/* TNode */ RowValueType,
 		/* TInsertable */ object & RowInsertableType,
 		/* ImplicitlyConstructable */ true,
 		/* Info */ typeof rowFields
@@ -404,9 +404,9 @@ export function createTableSchema<
 			ITable<
 				CellValueType,
 				CellInsertableType,
-				ColumnNodeType,
+				ColumnValueType,
 				ColumnInsertableType,
-				RowNodeType,
+				RowValueType,
 				RowInsertableType
 			>
 	{
@@ -414,7 +414,7 @@ export function createTableSchema<
 		 * Get a row by the id
 		 * @param id - The id of the row
 		 */
-		public getRow(id: string): RowNodeType | undefined {
+		public getRow(id: string): RowValueType | undefined {
 			return this.rows.find((_row) => _row.id === id);
 		}
 
@@ -444,7 +444,7 @@ export function createTableSchema<
 		public insertRows({
 			index,
 			rows,
-		}: InsertRowsParameters<RowInsertableType>): RowNodeType[] {
+		}: InsertRowsParameters<RowInsertableType>): RowValueType[] {
 			if (index === undefined) {
 				this.rows.insertAtEnd(TreeArrayNode.spread(rows));
 			} else {
@@ -453,14 +453,14 @@ export function createTableSchema<
 
 			// TODO: verify this
 			// Inserting the input nodes into the tree hydrates them, making them usable as nodes.
-			return rows as RowNodeType[];
+			return rows as RowValueType[];
 		}
 
 		/**
 		 * Delete a row from the table
 		 * @param rows - The rows to delete
 		 */
-		public deleteRows(rows: readonly RowNodeType[]): void {
+		public deleteRows(rows: readonly RowValueType[]): void {
 			// If there are no rows to delete, do nothing
 			if (rows.length === 0) {
 				return;
@@ -496,7 +496,7 @@ export function createTableSchema<
 		public insertColumn({
 			column,
 			index,
-		}: InsertColumnParameters<ColumnInsertableType>): ColumnNodeType {
+		}: InsertColumnParameters<ColumnInsertableType>): ColumnValueType {
 			if (index === undefined) {
 				this.columns.insertAtEnd(column);
 			} else {
@@ -505,14 +505,14 @@ export function createTableSchema<
 
 			// TODO: verify this
 			// Inserting the input node into the tree hydrates it, making it usable as a node.
-			return column as ColumnNodeType;
+			return column as ColumnValueType;
 		}
 
 		/**
 		 * Get a column by the id
 		 * @param id - The id of the column
 		 */
-		public getColumn(id: string): ColumnNodeType | undefined {
+		public getColumn(id: string): ColumnValueType | undefined {
 			return this.columns.find((column) => column.id === id);
 		}
 
@@ -521,7 +521,7 @@ export function createTableSchema<
 		 * DOES NOT DELETE THE CELLS IN THE ROWS
 		 * @param column - The column to delete
 		 */
-		public removeColumn(column: ColumnNodeType): void {
+		public removeColumn(column: ColumnValueType): void {
 			const index = this.columns.indexOf(column);
 			// If the column is not in the table, do nothing
 			if (index === -1) return;
@@ -529,13 +529,13 @@ export function createTableSchema<
 		}
 	}
 
-	type TableNodeType = TreeNode &
+	type TableValueType = TreeNode &
 		ITable<
 			CellValueType,
 			CellInsertableType,
-			ColumnNodeType,
+			ColumnValueType,
 			ColumnInsertableType,
-			RowNodeType,
+			RowValueType,
 			RowInsertableType
 		> &
 		WithType<ScopedSchemaName<TScope, "Table">>;
@@ -550,7 +550,7 @@ export function createTableSchema<
 	const TableSchemaType: TreeNodeSchemaClass<
 		/* Name */ ScopedSchemaName<TScope, "Table">,
 		/* Kind */ NodeKind.Object,
-		/* TNode */ TableNodeType,
+		/* TNode */ TableValueType,
 		/* TInsertable */ object & TableInsertableType,
 		/* ImplicitlyConstructable */ true,
 		/* Info */ typeof tableFields
