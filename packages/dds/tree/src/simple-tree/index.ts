@@ -104,6 +104,7 @@ export {
 	type ImplicitFieldSchemaUnsafe,
 	type TreeNodeSchemaNonClassUnsafe,
 	type InsertableTreeNodeFromAllowedTypesUnsafe,
+	type ArrayNodeCustomizableSchemaUnsafe,
 	type TreeViewAlpha,
 	type TreeBranch,
 	type TreeBranchEvents,
@@ -193,6 +194,12 @@ export {
 	IterableTreeArrayContent,
 	type ReadonlyArrayNode,
 } from "./arrayNode.js";
+export type {
+	ArrayNodeCustomizableSchema,
+	ArrayNodePojoEmulationSchema,
+	ArrayNodeSchema,
+} from "./arrayNodeTypes.js";
+export type { isArrayNodeSchema } from "./arrayNodeTypes.js";
 export {
 	type FieldHasDefault,
 	type InsertableObjectFromSchemaRecord,
