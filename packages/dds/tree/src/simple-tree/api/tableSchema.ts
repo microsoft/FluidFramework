@@ -315,6 +315,22 @@ export function createTableSchema<
 		}
 	}
 
+	type RowNodeType = TreeNode & IRow<TCell, ColumnNodeType>;
+
+	// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
+	// for the private brand field of TreeNode.
+	// This numeric id doesn't seem to be stable over incremental builds, and thus causes diffs in the API extractor reports.
+	// This is avoided by doing this type conversion.
+	// The conversion is done via assignment instead of `as` to get stronger type safety.
+	const RowSchemaType: TreeNodeSchemaClass<
+		/* Name */ ScopedSchemaName<TScope, "Row">,
+		/* Kind */ NodeKind.Object,
+		/* TNode */ RowNodeType,
+		/* TInsertable */ object & InsertableObjectFromSchemaRecord<typeof rowFields>,
+		/* ImplicitlyConstructable */ true,
+		/* Info */ typeof rowFields
+	> = Row;
+
 	// #endregion
 
 	/**
@@ -323,7 +339,7 @@ export function createTableSchema<
 	 * The implicit typing is intentional.
 	 */
 	const tableFields = {
-		rows: sf.array(Row),
+		rows: sf.array(RowSchemaType),
 		columns: sf.array(ColumnSchemaType),
 	};
 
@@ -332,13 +348,13 @@ export function createTableSchema<
 	 */
 	class Table
 		extends sf.object("Table", tableFields)
-		implements ITable<TCell, ColumnNodeType, Row>
+		implements ITable<TCell, ColumnNodeType, RowNodeType>
 	{
 		/**
 		 * Get a row by the id
 		 * @param id - The id of the row
 		 */
-		public getRow(id: string): Row | undefined {
+		public getRow(id: string): RowNodeType | undefined {
 			return this.rows.find((_row) => _row.id === id);
 		}
 
@@ -365,7 +381,10 @@ export function createTableSchema<
 		 * @param rows - The rows to insert
 		 * If no rows are provided, a new row will be created.
 		 */
-		public insertRows({ index, rows }: InsertRowsParameters<TCell, Column, Row>): Row[] {
+		public insertRows({
+			index,
+			rows,
+		}: InsertRowsParameters<TCell, ColumnNodeType, RowNodeType>): RowNodeType[] {
 			if (index === undefined) {
 				this.rows.insertAtEnd(TreeArrayNode.spread(rows));
 			} else {
@@ -378,7 +397,7 @@ export function createTableSchema<
 		 * Delete a row from the table
 		 * @param rows - The rows to delete
 		 */
-		public deleteRows(rows: readonly Row[]): void {
+		public deleteRows(rows: readonly RowNodeType[]): void {
 			// If there are no rows to delete, do nothing
 			if (rows.length === 0) return;
 			// If there is only one row to delete, delete it
@@ -439,7 +458,7 @@ export function createTableSchema<
 		}
 	}
 
-	type TableNodeType = TreeNode & ITable<TCell, ColumnNodeType, Row>;
+	type TableNodeType = TreeNode & ITable<TCell, ColumnNodeType, RowNodeType>;
 
 	// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
 	// for the private brand field of TreeNode.
