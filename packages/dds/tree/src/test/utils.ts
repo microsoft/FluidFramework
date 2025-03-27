@@ -450,7 +450,7 @@ export class TestTreeProviderLite {
 	 * that they are sequenced. Then, the runtime processes the messages. Flushing is needed in TurnBased mode only
 	 * where messages are not automatically flushed. In Immediate mode, each message is flushed immediately.
 	 * @param options - The options to use when synchronizing messages.
-	 * - count: The number of messages to synchronize. If not provided, all messages are synchronize.
+	 * - count: The number of messages to synchronize. If not provided, all messages are synchronized.
 	 * - flush: Whether or not to flush the messages before processing them. Defaults to true. In TurnBased mode,
 	 * messages are not automatically flushed so this should either be set to true or the test should manually
 	 * flush the messages before calling this method.
