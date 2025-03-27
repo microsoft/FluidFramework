@@ -460,6 +460,60 @@ function getSlideToSegment(
 	return [result.seg, maybeEndpoint];
 }
 
+function getSlideToSegment2(
+	segment: ISegmentLeaf | undefined,
+	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
+	perspective: Perspective,
+	cache?: Map<ISegmentLeaf, { seg?: ISegmentLeaf }>,
+): [ISegmentLeaf | undefined, "start" | "end" | undefined] {
+	if (
+		!segment ||
+		perspective.isSegmentPresent(segment) ||
+		segment.endpointType !== undefined
+	) {
+		return [segment, undefined];
+	}
+
+	const cachedSegment = cache?.get(segment);
+	if (cachedSegment !== undefined) {
+		return [cachedSegment.seg, undefined];
+	}
+	const result: { seg?: ISegmentLeaf } = {};
+	cache?.set(segment, result);
+	const goFurtherToFindSlideToSegment = (seg: ISegmentLeaf): boolean => {
+		if (perspective.isSegmentPresent(seg)) {
+			result.seg = seg;
+			return false;
+		}
+		if (
+			cache !== undefined &&
+			toRemovalInfo(seg)?.removes[0].seq === toRemovalInfo(segment)?.removes[0].seq
+		) {
+			cache.set(seg, result);
+		}
+		return true;
+	};
+
+	if (slidingPreference === SlidingPreference.BACKWARD) {
+		backwardExcursion(segment, goFurtherToFindSlideToSegment);
+	} else {
+		forwardExcursion(segment, goFurtherToFindSlideToSegment);
+	}
+	if (result.seg !== undefined) {
+		return [result.seg, undefined];
+	}
+
+	let maybeEndpoint: "start" | "end" | undefined;
+
+	if (slidingPreference === SlidingPreference.BACKWARD) {
+		maybeEndpoint = "start";
+	} else if (slidingPreference === SlidingPreference.FORWARD) {
+		maybeEndpoint = "end";
+	}
+
+	return [result.seg, maybeEndpoint];
+}
+
 /**
  * Returns the position to slide a reference to if a slide is required.
  * @param segoff - The segment and offset to slide from
@@ -482,6 +536,34 @@ export function getSlideToSegoff(
 		slidingPreference,
 		undefined,
 		useNewSlidingBehavior,
+	);
+	if (segment === segoff.segment) {
+		return segoff;
+	}
+	const offset =
+		segment && segment.ordinal < segoff.segment.ordinal ? segment.cachedLength - 1 : 0;
+	return {
+		segment,
+		offset,
+	};
+}
+
+export function getSlideToSegoff2(
+	segoff: { segment: ISegmentInternal | undefined; offset: number | undefined },
+	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
+	perspective: Perspective,
+): {
+	segment: ISegmentInternal | undefined;
+	offset: number | undefined;
+} {
+	if (!isSegmentLeaf(segoff.segment)) {
+		return segoff;
+	}
+	const [segment, _] = getSlideToSegment2(
+		segoff.segment,
+		slidingPreference,
+		perspective,
+		undefined,
 	);
 	if (segment === segoff.segment) {
 		return segoff;
@@ -529,6 +611,10 @@ class Obliterates {
 			this.mergeTree.removeLocalReferencePosition(ob.data.start);
 			this.mergeTree.removeLocalReferencePosition(ob.data.end);
 		}
+	}
+
+	public onNormalize(): void {
+		this.startOrdered.onItemsShuffled();
 	}
 
 	public addOrUpdate(obliterateInfo: ObliterateInfo): void {
@@ -2629,6 +2715,7 @@ export class MergeTree {
 		});
 
 		normalize();
+		this.obliterates.onNormalize();
 	}
 	private blockUpdate(block: MergeBlock): void {
 		let len: number | undefined;

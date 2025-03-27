@@ -57,6 +57,10 @@ export class SortedSegmentSet<
 		return 0;
 	}
 
+	public onItemsShuffled(): void {
+		this.sortedItems.sort((a, b) => this.compare(a, b));
+	}
+
 	protected compare(a: T, b: T): number {
 		const aOrdinal = this.getOrdinal(a);
 		const bOrdinal = this.getOrdinal(b);
