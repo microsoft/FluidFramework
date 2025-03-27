@@ -263,7 +263,7 @@ export function create(
 			if (
 				clusterDrainingChecker &&
 				(await clusterDrainingChecker
-					.isClusterDraining(undefined, {
+					.isClusterDraining({
 						tenantId,
 					})
 					.catch((error) => {
@@ -411,7 +411,7 @@ export function create(
 			if (
 				clusterDrainingChecker &&
 				(await clusterDrainingChecker
-					.isClusterDraining(undefined, {
+					.isClusterDraining({
 						tenantId,
 					})
 					.catch((error) => {

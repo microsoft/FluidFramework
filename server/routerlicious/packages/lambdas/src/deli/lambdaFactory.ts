@@ -298,7 +298,7 @@ export class DeliLambdaFactory
 					if (this.clusterDrainingChecker) {
 						try {
 							const isClusterDraining =
-								await this.clusterDrainingChecker.isClusterDraining(undefined, {
+								await this.clusterDrainingChecker.isClusterDraining({
 									tenantId,
 								});
 							if (isClusterDraining) {
@@ -337,12 +337,9 @@ export class DeliLambdaFactory
 			const handler = async (): Promise<void> => {
 				// Set activity timer to reduce session grace period for ephemeral containers if cluster is in draining
 				if (document?.isEphemeralContainer && this.clusterDrainingChecker) {
-					const isClusterDraining = await this.clusterDrainingChecker.isClusterDraining(
-						undefined,
-						{
-							tenantId,
-						},
-					);
+					const isClusterDraining = await this.clusterDrainingChecker.isClusterDraining({
+						tenantId,
+					});
 					if (isClusterDraining) {
 						Lumberjack.info(
 							"Cluster is under draining and NoClient event is received",

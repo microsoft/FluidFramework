@@ -10,10 +10,9 @@
 export interface IClusterDrainingChecker {
 	/**
 	 * Check if cluster is draining
-	 * @param cluster - Optional. By default it is the current cluster name if undefined
 	 * @param options - Optional.
 	 */
-	isClusterDraining(cluster?: string, options?: any): Promise<boolean>;
+	isClusterDraining(options?: any): Promise<boolean>;
 }
 
 /**

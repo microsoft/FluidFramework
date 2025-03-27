@@ -406,7 +406,7 @@ async function checkClusterDraining(
 	}
 	let clusterInDraining = false;
 	try {
-		clusterInDraining = await clusterDrainingChecker.isClusterDraining(undefined, {
+		clusterInDraining = await clusterDrainingChecker.isClusterDraining({
 			tenantId: message.tenantId,
 		});
 	} catch (error) {
