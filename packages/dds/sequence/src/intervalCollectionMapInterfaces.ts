@@ -91,7 +91,6 @@ export interface SequenceOptions
  * @legacy
  * @alpha
  *
- * @deprecated foo;
  */
 export interface IIntervalCollectionFactory {
 	/**
@@ -121,7 +120,6 @@ export interface IIntervalCollectionFactory {
  * @legacy
  * @alpha
  *
- * @deprecated foo
  */
 export interface IIntervalCollectionOperation {
 	/**
@@ -158,26 +156,6 @@ export interface IIntervalCollectionOperation {
 				rebasedLocalOpMetadata: IMapMessageLocalMetadata;
 		  }
 		| undefined;
-}
-
-/**
- * Defines a value type that can be registered on a container type.
- */
-export interface IIntervalCollectionType {
-	/**
-	 * Name of the value type.
-	 */
-	name: string;
-
-	/**
-	 * Factory method used to convert to/from a JSON form of the type.
-	 */
-	factory: IIntervalCollectionFactory;
-
-	/**
-	 * Operations that can be applied to the value type.
-	 */
-	ops: Map<IntervalOpType, IIntervalCollectionOperation>;
 }
 
 export interface ISharedDefaultMapEvents extends ISharedObjectEvents {
