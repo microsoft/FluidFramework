@@ -72,7 +72,7 @@ export function exceptionToResponse(err: unknown): IResponse {
 /**
  * Converts an {@link @fluidframework/core-interfaces#IResponse } object back into an Error object that can be thrown
  * @param response - The {@link @fluidframework/core-interfaces#IResponse} to convert.
- * @param request - The original {@link @fluidframework/core-interfaces#IRequest } object
+ * @param request - The original {@link @fluidframework/core-interfaces#IRequest}.
  * @returns An Error object with additional properties from the response
  * @internal
  */
