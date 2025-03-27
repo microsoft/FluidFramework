@@ -582,13 +582,6 @@ export abstract class FluidDataStoreContext
 		const channel = await factory.instantiateDataStore(this, existing);
 		assert(channel !== undefined, 0x140 /* "undefined channel on datastore context" */);
 
-		// Validate that the DataStore is compatible with this Runtime.
-		const maybeDataStoreCompatDetails = channel as FluidObject<ILayerCompatDetails>;
-		validateDatastoreCompatibility(
-			maybeDataStoreCompatDetails.ILayerCompatDetails,
-			this.dispose.bind(this),
-		);
-
 		await this.bindRuntime(channel, existing);
 		// This data store may have been disposed before the channel is created during realization. If so,
 		// dispose the channel now.
@@ -876,6 +869,13 @@ export abstract class FluidDataStoreContext
 	}
 
 	protected completeBindingRuntime(channel: IFluidDataStoreChannel): void {
+		// Validate that the DataStore is compatible with this Runtime.
+		const maybeDataStoreCompatDetails = channel as FluidObject<ILayerCompatDetails>;
+		validateDatastoreCompatibility(
+			maybeDataStoreCompatDetails.ILayerCompatDetails,
+			this.dispose.bind(this),
+		);
+
 		// And now mark the runtime active
 		this.loaded = true;
 		this.channel = channel;
