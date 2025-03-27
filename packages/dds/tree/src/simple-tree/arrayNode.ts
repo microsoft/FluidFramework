@@ -33,7 +33,6 @@ import {
 	typeSchemaSymbol,
 	type Context,
 	getOrCreateNodeFromInnerNode,
-	type TreeNodeSchemaBoth,
 	getSimpleNodeSchemaFromInnerNode,
 	getOrCreateInnerNode,
 	type TreeNodeSchemaClass,
@@ -48,6 +47,10 @@ import {
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import { getUnhydratedContext } from "./createContext.js";
 import type { ImplicitAllowedTypesUnsafe } from "./api/index.js";
+import type {
+	ArrayNodeCustomizableSchema,
+	ArrayNodePojoEmulationSchema,
+} from "./arrayNodeTypes.js";
 
 /**
  * A covariant base type for {@link (TreeArrayNode:interface)}.
@@ -668,6 +671,7 @@ export function asIndex(key: string | symbol, exclusiveMax: number): number | un
 }
 
 /**
+ * Create a proxy which implements the {@link TreeArrayNode} API.
  * @param allowAdditionalProperties - If true, setting of unexpected properties will be forwarded to the target object.
  * Otherwise setting of unexpected properties will error.
  * @param proxyTarget - Target object of the proxy. Must provide an own `length` value property
@@ -1071,16 +1075,13 @@ export function arraySchema<
 	customizable: boolean,
 	metadata?: NodeSchemaMetadata<TCustomMetadata>,
 ) {
-	type Output = TreeNodeSchemaBoth<
+	type Output = ArrayNodeCustomizableSchema<
 		TName,
-		NodeKind.Array,
-		TreeArrayNode<T> & WithType<TName, NodeKind.Array>,
-		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		ImplicitlyConstructable,
 		T,
-		undefined,
+		ImplicitlyConstructable,
 		TCustomMetadata
-	>;
+	> &
+		ArrayNodePojoEmulationSchema<TName, T, ImplicitlyConstructable, TCustomMetadata>;
 
 	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(info));
 	const lazyAllowedTypesIdentifiers = new Lazy(

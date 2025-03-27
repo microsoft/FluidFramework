@@ -978,7 +978,7 @@ export type TreeNodeSchemaClass<Name extends string = string, Kind extends NodeK
 });
 
 // @public
-export interface TreeNodeSchemaClassUnsafe<out Name extends string, out Kind extends NodeKind, out TNode extends Unenforced<TreeNode>, in TInsertable, out ImplicitlyConstructable extends boolean, out Info> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
+export interface TreeNodeSchemaClassUnsafe<out Name extends string, out Kind extends NodeKind, out TNode extends Unenforced<TreeNode>, in TInsertable, out ImplicitlyConstructable extends boolean, out Info, out TCustomMetadata = unknown> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info, never, TCustomMetadata> {
     // @sealed
     new (data: TInsertable | InternalTreeNode): Unhydrated<TNode>;
 }
