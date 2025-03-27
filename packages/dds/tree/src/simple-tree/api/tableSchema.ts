@@ -106,7 +106,7 @@ export interface ITable<
 	// TODO: would cell insertion at this level be useful?
 }
 
-export interface TableSchemaProps<
+export interface CreateTableSchemaParameters<
 	TCell extends readonly TreeNodeSchema[],
 	TColumnProps extends readonly TreeNodeSchema[],
 	TRowProps extends readonly TreeNodeSchema[],
@@ -131,7 +131,7 @@ export function createTableSchema<
 	const TColumnProps extends readonly TreeNodeSchema[],
 	const TRowProps extends readonly TreeNodeSchema[],
 	const TScope extends string | undefined,
->(props: TableSchemaProps<TCell, TColumnProps, TRowProps, TScope>) {
+>(props: CreateTableSchemaParameters<TCell, TColumnProps, TRowProps, TScope>) {
 	const { sf, schemaTypes, columnProps, rowProps } = props;
 
 	type CellValueType = TreeNodeFromImplicitAllowedTypes<TCell>;
@@ -208,6 +208,7 @@ export function createTableSchema<
 	}
 
 	type ColumnNodeType = TreeNode & IColumn & WithType<ScopedSchemaName<TScope, "Column">>;
+	type ColumnInsertableType = InsertableObjectFromSchemaRecord<typeof columnFields>;
 
 	// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
 	// for the private brand field of TreeNode.
@@ -218,7 +219,7 @@ export function createTableSchema<
 		/* Name */ ScopedSchemaName<TScope, "Column">,
 		/* Kind */ NodeKind.Object,
 		/* TNode */ ColumnNodeType,
-		/* TInsertable */ object & InsertableObjectFromSchemaRecord<typeof columnFields>,
+		/* TInsertable */ object & ColumnInsertableType,
 		/* ImplicitlyConstructable */ true,
 		/* Info */ typeof columnFields
 	> = Column;
@@ -322,6 +323,8 @@ export function createTableSchema<
 	type RowNodeType = TreeNode &
 		IRow<TCell, ColumnNodeType> &
 		WithType<ScopedSchemaName<TScope, "Row">>;
+	// TODO: hide cells?
+	type RowInsertableType = InsertableObjectFromSchemaRecord<typeof rowFields>;
 
 	// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
 	// for the private brand field of TreeNode.
@@ -332,7 +335,7 @@ export function createTableSchema<
 		/* Name */ ScopedSchemaName<TScope, "Row">,
 		/* Kind */ NodeKind.Object,
 		/* TNode */ RowNodeType,
-		/* TInsertable */ object & InsertableObjectFromSchemaRecord<typeof rowFields>,
+		/* TInsertable */ object & RowInsertableType,
 		/* ImplicitlyConstructable */ true,
 		/* Info */ typeof rowFields
 	> = Row;
@@ -405,7 +408,10 @@ export function createTableSchema<
 		 */
 		public deleteRows(rows: readonly RowNodeType[]): void {
 			// If there are no rows to delete, do nothing
-			if (rows.length === 0) return;
+			if (rows.length === 0){
+				return;
+			}
+
 			// If there is only one row to delete, delete it
 			if (rows.length === 1) {
 				const index = this.rows.indexOf(rows[0] ?? oob());
@@ -467,6 +473,8 @@ export function createTableSchema<
 	type TableNodeType = TreeNode &
 		ITable<TCell, ColumnNodeType, RowNodeType> &
 		WithType<ScopedSchemaName<TScope, "Table">>;
+	// TODO: hide rows and columns?
+	type TableInsertableType = InsertableObjectFromSchemaRecord<typeof tableFields>;
 
 	// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
 	// for the private brand field of TreeNode.
@@ -477,7 +485,7 @@ export function createTableSchema<
 		/* Name */ ScopedSchemaName<TScope, "Table">,
 		/* Kind */ NodeKind.Object,
 		/* TNode */ TableNodeType,
-		/* TInsertable */ object & InsertableObjectFromSchemaRecord<typeof tableFields>,
+		/* TInsertable */ object & TableInsertableType,
 		/* ImplicitlyConstructable */ true,
 		/* Info */ typeof tableFields
 	> = Table;
