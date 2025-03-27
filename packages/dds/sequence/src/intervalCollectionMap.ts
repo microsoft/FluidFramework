@@ -172,7 +172,7 @@ export class IntervalCollectionMap<T extends ISerializableInterval> {
 	/**
 	 * {@inheritDoc ISharedMap.get}
 	 */
-	public get(key: string): IntervalCollection<T> {
+	public get(key: string): IntervalCollection {
 		const localValue = this.data.get(key) ?? this.createCore(key, true);
 
 		return localValue.value;
