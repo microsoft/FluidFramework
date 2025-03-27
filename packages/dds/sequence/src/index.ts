@@ -32,13 +32,17 @@ export {
 	DeserializeCallback,
 	IIntervalCollectionEvent,
 	IIntervalCollection,
+	ISequenceIntervalCollection,
+	ISequenceIntervalCollectionEvents,
 	IntervalLocator,
 	intervalLocatorFromEndpoint,
 } from "./intervalCollection.js";
 export {
 	IntervalIndex,
+	SequenceIntervalIndex,
 	SequenceIntervalIndexes,
 	IOverlappingIntervalsIndex,
+	ISequenceOverlappingIntervalsIndex,
 	createOverlappingIntervalsIndex,
 	createOverlappingSequenceIntervalsIndex,
 	IEndpointInRangeIndex,

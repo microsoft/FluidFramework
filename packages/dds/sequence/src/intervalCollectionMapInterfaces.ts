@@ -10,11 +10,10 @@ import { ISharedObjectEvents } from "@fluidframework/shared-object-base/internal
 
 import type { IntervalCollection } from "./intervalCollection.js";
 import {
-	type IInterval,
-	type ISerializableInterval,
 	ISerializedInterval,
 	IntervalDeltaOpType,
 	IntervalOpType,
+	type SequenceInterval,
 	SerializedIntervalDelta,
 } from "./intervals/index.js";
 
@@ -58,8 +57,8 @@ export interface IValueOpEmitter {
  */
 export interface IMapMessageLocalMetadata {
 	localSeq: number;
-	original?: IInterval & ISerializableInterval;
-	clone?: IInterval & ISerializableInterval;
+	original?: SequenceInterval;
+	clone?: SequenceInterval;
 }
 
 /**
@@ -95,7 +94,7 @@ export interface SequenceOptions
  * @legacy
  * @alpha
  */
-export interface IIntervalCollectionFactory<T extends ISerializableInterval> {
+export interface IIntervalCollectionFactory {
 	/**
 	 * Create a new value type.  Used both in creation of new value types, as well as in loading existing ones
 	 * from remote.
@@ -107,7 +106,7 @@ export interface IIntervalCollectionFactory<T extends ISerializableInterval> {
 		emitter: IValueOpEmitter,
 		raw: any,
 		options?: Partial<SequenceOptions>,
-	): IntervalCollection<T>;
+	): IntervalCollection;
 
 	/**
 	 * Given a value type, provides a JSONable form of its data to be used for snapshotting.  This data must be
@@ -115,7 +114,7 @@ export interface IIntervalCollectionFactory<T extends ISerializableInterval> {
 	 * @param value - The value type to serialize
 	 * @returns The JSONable form of the value type
 	 */
-	store(value: IntervalCollection<T>): any;
+	store(value: IntervalCollection): any;
 }
 
 /**
@@ -123,7 +122,7 @@ export interface IIntervalCollectionFactory<T extends ISerializableInterval> {
  * @legacy
  * @alpha
  */
-export interface IIntervalCollectionOperation<T extends ISerializableInterval> {
+export interface IIntervalCollectionOperation {
 	/**
 	 * Performs the actual processing on the incoming operation.
 	 * @param value - The current value stored at the given key, which should be the value type
@@ -133,7 +132,7 @@ export interface IIntervalCollectionOperation<T extends ISerializableInterval> {
 	 * @param localOpMetadata - any local metadata submitted by `IValueOpEmitter.emit`.
 	 */
 	process(
-		value: IntervalCollection<T>,
+		value: IntervalCollection,
 		params: ISerializedInterval,
 		local: boolean,
 		message: ISequencedDocumentMessage | undefined,
@@ -149,7 +148,7 @@ export interface IIntervalCollectionOperation<T extends ISerializableInterval> {
 	 * @returns A rebased version of the op and any local metadata that should be submitted with it.
 	 */
 	rebase(
-		value: IntervalCollection<T>,
+		value: IntervalCollection,
 		op: IIntervalCollectionTypeOperationValue,
 		localOpMetadata: IMapMessageLocalMetadata,
 	):
@@ -163,7 +162,7 @@ export interface IIntervalCollectionOperation<T extends ISerializableInterval> {
 /**
  * Defines a value type that can be registered on a container type.
  */
-export interface IIntervalCollectionType<T extends ISerializableInterval> {
+export interface IIntervalCollectionType {
 	/**
 	 * Name of the value type.
 	 */
@@ -172,12 +171,12 @@ export interface IIntervalCollectionType<T extends ISerializableInterval> {
 	/**
 	 * Factory method used to convert to/from a JSON form of the type.
 	 */
-	factory: IIntervalCollectionFactory<T>;
+	factory: IIntervalCollectionFactory;
 
 	/**
 	 * Operations that can be applied to the value type.
 	 */
-	ops: Map<IntervalOpType, IIntervalCollectionOperation<T>>;
+	ops: Map<IntervalOpType, IIntervalCollectionOperation>;
 }
 
 export interface ISharedDefaultMapEvents extends ISharedObjectEvents {
