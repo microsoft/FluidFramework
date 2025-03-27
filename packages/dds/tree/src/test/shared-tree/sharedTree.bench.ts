@@ -477,29 +477,6 @@ describe("SharedTree benchmarks", () => {
 			}
 		}
 
-		/**
-		 * Helper function that sends and sequences local commits from a given tree.
-		 */
-		function sequenceLocalCommits(
-			tree: SharedTreeWithContainerRuntime,
-			count: number,
-			commitPrefix: string,
-		) {
-			sendLocalCommits(tree, count, commitPrefix);
-			tree.containerRuntime.flush();
-		}
-
-		/**
-		 * Helper function that processes all sequenced commits on a given tree.
-		 */
-		function receiveSequencedCommits(
-			tree: SharedTreeWithContainerRuntime,
-			provider: TestTreeProviderLite,
-		) {
-			tree.containerRuntime.resumeProcessing();
-			provider.processMessages(false /* flush */);
-		}
-
 		describe("Rebasing inbound bunch over local changes", () => {
 			// The number of commits in a bunch for a given run of this test suite.
 			const bunchSizes = isInPerformanceTestingMode ? [1, 10, 100] : [2];
@@ -539,13 +516,17 @@ describe("SharedTree benchmarks", () => {
 								// Send local commits from the receiver but don't sequence them because we want them to be
 								// in the local branch.
 								sendLocalCommits(receiver, localBranchSize, "r");
-								// These are the commits that should be bunched together
-								sequenceLocalCommits(sender, bunchSize, "s");
+								// Send and sequence local commits from the sender. These are the commits that should be
+								// bunched together.
+								sendLocalCommits(sender, bunchSize, "s");
+								sender.containerRuntime.flush();
 
 								const before = state.timer.now();
-								// Resume the receiver to process the bunched commits. This should force the local branch to be rebased over the bunch.
-								// The receiver will not process its local commits since they are never flushed.
-								receiveSequencedCommits(receiver, provider);
+								// Resume the receiver and process the bunched commits. This should force the local branch
+								// to be rebased over the bunch.
+								// The receiver will not process its local commits since they were never flushed.
+								receiver.containerRuntime.resumeProcessing();
+								provider.processMessages(false /* flush */);
 								const after = state.timer.now();
 								duration = state.timer.toSeconds(before, after);
 							} while (state.recordBatch(duration));

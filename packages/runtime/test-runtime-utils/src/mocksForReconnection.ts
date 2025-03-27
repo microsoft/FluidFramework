@@ -31,8 +31,8 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 
 	/**
 	 * Returns the connection state of the container runtime.
-	 * Any messages that are submitted while not connected will be resubmitted when it reconnects via the resubmit flow.
-	 * Any messages received while disconnected will be processed when it reconnects.
+	 * Any messages that are submitted while not connected will be resubmitted via the resubmit flow on reconnection.
+	 * Any messages received while disconnected will be processed on reconnection.
 	 * Also, the clientId of the runtime will change on reconnection.
 	 */
 	public get connected(): boolean {
