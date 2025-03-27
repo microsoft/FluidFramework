@@ -100,9 +100,9 @@ export interface SimpleArrayNodeSchema<out TCustomMetadata = unknown>
 }
 
 /**
- * A schema for an map node.
+ * A schema for a map node.
  * @privateRemarks
- * A {@link SimpleNodeSchema} for an map node.
+ * A {@link SimpleNodeSchema} for a map node.
  *
  * @alpha
  * @sealed
