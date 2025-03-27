@@ -107,6 +107,7 @@ export {
 	type InsertableTypedNode,
 	NodeKind,
 	type TreeObjectNode,
+	ObjectNodeSchema,
 	type TreeNodeFromImplicitAllowedTypes,
 	type TreeNodeSchemaClass,
 	type SchemaCompatibilityStatus,
@@ -124,6 +125,7 @@ export {
 	// error TS2742: The inferred type of 'Inventory' cannot be named without a reference to '../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.
 	type AllowedTypes,
 	type ImplicitAllowedTypesUnsafe,
+	type ImplicitFieldSchemaUnsafe,
 	type TreeObjectNodeUnsafe,
 	type InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
 	type TreeArrayNodeUnsafe,
@@ -133,6 +135,7 @@ export {
 	type FieldSchemaUnsafe,
 	type TreeNodeSchemaClassUnsafe,
 	type InsertableTreeNodeFromAllowedTypesUnsafe,
+	type FieldSchemaAlphaUnsafe,
 	// System types (not in Internal types for various reasons, like doc links or cannot be named errors).
 	type typeSchemaSymbol,
 	type TreeNodeSchemaNonClass,
@@ -230,9 +233,8 @@ export {
 export {
 	SharedTree,
 	configuredSharedTree,
-	SharedTreeAttributes,
-	SharedTreeFactoryType,
 } from "./treeFactory.js";
+export { SharedTreeAttributes, SharedTreeFactoryType } from "./sharedTreeAttributes.js";
 
 export {
 	type ICodecOptions,

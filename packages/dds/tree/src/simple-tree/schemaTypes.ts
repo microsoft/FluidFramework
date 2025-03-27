@@ -33,7 +33,7 @@ import type { InsertableContent } from "./toMapTree.js";
 import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
 import { LeafNodeSchema } from "./leafNodeSchema.js";
 import { TreeNodeValid } from "./treeNodeValid.js";
-import type { SimpleFieldSchema } from "./simpleSchema.js";
+import type { SimpleFieldSchema, SimpleObjectFieldSchema } from "./simpleSchema.js";
 
 /**
  * Returns true if the given schema is a {@link TreeNodeSchemaClass}, or otherwise false if it is a {@link TreeNodeSchemaNonClass}.
@@ -281,7 +281,7 @@ export let createFieldSchema: <
 	kind: Kind,
 	allowedTypes: Types,
 	props?: FieldProps<TCustomMetadata>,
-) => FieldSchema<Kind, Types, TCustomMetadata>;
+) => FieldSchemaAlpha<Kind, Types, TCustomMetadata>;
 
 /**
  * All policy for a specific field,
@@ -330,8 +330,8 @@ export class FieldSchema<
 	/**
 	 * {@inheritDoc FieldProps.metadata}
 	 */
-	public get metadata(): FieldSchemaMetadata<TCustomMetadata> | undefined {
-		return this.props?.metadata;
+	public get metadata(): FieldSchemaMetadata<TCustomMetadata> {
+		return this.props?.metadata ?? {};
 	}
 
 	/**
@@ -392,7 +392,7 @@ export class FieldSchemaAlpha<
 		) => new FieldSchemaAlpha(kind, allowedTypes, props);
 	}
 
-	private constructor(kind: Kind, allowedTypes: Types, props?: FieldProps<TCustomMetadata>) {
+	protected constructor(kind: Kind, allowedTypes: Types, props?: FieldProps<TCustomMetadata>) {
 		super(kind, allowedTypes, props);
 		this.lazyIdentifiers = new Lazy(
 			() => new Set([...this.allowedTypeSet].map((t) => t.identifier)),
@@ -405,11 +405,34 @@ export class FieldSchemaAlpha<
 }
 
 /**
+ * {@link FieldSchemaAlpha} including {@link SimpleObjectFieldSchema}.
+ */
+export class ObjectFieldSchema<
+		Kind extends FieldKind = FieldKind,
+		Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+		TCustomMetadata = unknown,
+	>
+	extends FieldSchemaAlpha<Kind, Types, TCustomMetadata>
+	implements SimpleObjectFieldSchema
+{
+	public readonly storedKey: string;
+
+	public constructor(
+		kind: Kind,
+		allowedTypes: Types,
+		props: FieldProps<TCustomMetadata> & { readonly key: string },
+	) {
+		super(kind, allowedTypes, props);
+		this.storedKey = props.key;
+	}
+}
+
+/**
  * Normalizes a {@link ImplicitFieldSchema} to a {@link FieldSchema}.
  */
-export function normalizeFieldSchema(schema: ImplicitFieldSchema): FieldSchema {
+export function normalizeFieldSchema(schema: ImplicitFieldSchema): FieldSchemaAlpha {
 	return schema instanceof FieldSchema
-		? schema
+		? (schema as FieldSchemaAlpha)
 		: createFieldSchema(FieldKind.Required, schema);
 }
 /**
