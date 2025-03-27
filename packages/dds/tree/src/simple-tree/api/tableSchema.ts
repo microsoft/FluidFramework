@@ -19,6 +19,8 @@ import type {
 	WithType,
 } from "../core/index.js";
 import type {
+	ImplicitAllowedTypes,
+	ImplicitFieldSchema,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	TreeNodeFromImplicitAllowedTypes,
 } from "../schemaTypes.js";
@@ -26,8 +28,10 @@ import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
 import type { InsertableObjectFromSchemaRecord } from "../objectNode.js";
 
 // TODOs
+// - Move this to package root
 // - Explore options for hiding various system types below.
 //   Most likely need to be exported, but we can probably hide them in a namespace.
+// - Take SchemaFactoryAlpha and use scoping helper
 
 /**
  * A key to uniquely identify a cell in a {@link ITable}.
@@ -145,7 +149,7 @@ export interface ITable<
  * @alpha @sealed
  */
 export interface CreateTableSchemaParameters<
-	TCell extends readonly TreeNodeSchema[],
+	TCell extends ImplicitAllowedTypes,
 	TColumnProps extends readonly TreeNodeSchema[],
 	TRowProps extends readonly TreeNodeSchema[],
 	Scope extends string | undefined,
@@ -167,7 +171,7 @@ export interface CreateTableSchemaParameters<
 // TODO: record-like type parameters
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 export function createTableSchema<
-	const TCell extends readonly TreeNodeSchema[],
+	const TCell extends ImplicitAllowedTypes,
 	const TColumnProps extends readonly TreeNodeSchema[],
 	const TRowProps extends readonly TreeNodeSchema[],
 	const TScope extends string | undefined,
@@ -202,7 +206,7 @@ export function createTableSchema<
 	const columnFields = {
 		id: sf.identifier,
 		props: columnProps,
-	};
+	} as const satisfies Record<string, ImplicitFieldSchema>;
 
 	/**
 	 * The Column schema - this can include more properties as needed *
@@ -290,10 +294,9 @@ export function createTableSchema<
 	 */
 	const rowFields = {
 		id: sf.identifier,
-		// The keys of this map are the column ids - this would ideally be private
-		_cells: sf.map(schemaTypes),
+		cells: sf.map("Row.cells", schemaTypes),
 		props: rowProps,
-	};
+	} as const satisfies Record<string, ImplicitFieldSchema>;
 
 	/**
 	 * The Row schema - this is a map of Cells where the key is the column id
@@ -307,7 +310,7 @@ export function createTableSchema<
 		 * @returns The cell if it exists, otherwise undefined
 		 */
 		public getCell(column: ColumnValueType): CellValueType | undefined {
-			return this._cells.get(column.id) as CellValueType | undefined;
+			return this.cells.get(column.id) as CellValueType | undefined;
 		}
 
 		/**
@@ -316,7 +319,7 @@ export function createTableSchema<
 		 * @param value - The value to set
 		 */
 		public setCell(column: ColumnValueType, value: CellInsertableType | undefined): void {
-			this._cells.set(column.id, value);
+			this.cells.set(column.id, value);
 		}
 
 		/**
@@ -324,8 +327,8 @@ export function createTableSchema<
 		 * @param column - The column
 		 */
 		public deleteCell(column: ColumnValueType): void {
-			if (!this._cells.has(column.id)) return;
-			this._cells.delete(column.id);
+			if (!this.cells.has(column.id)) return;
+			this.cells.delete(column.id);
 		}
 
 		/**
@@ -393,7 +396,7 @@ export function createTableSchema<
 	const tableFields = {
 		rows: sf.array(RowSchemaType),
 		columns: sf.array(ColumnSchemaType),
-	};
+	} as const satisfies Record<string, ImplicitFieldSchema>;
 
 	/**
 	 * The Table schema

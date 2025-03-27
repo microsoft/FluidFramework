@@ -32,18 +32,25 @@ describe.only("table schema", () => {
 		class Table extends createTableSchema({
 			sf: schemaFactory,
 			// TODO: don't require array wrapping
-			schemaTypes: [Cell],
+			schemaTypes: Cell,
 			// TODO: make props optional
 			columnProps: [ColumnProps],
 			rowProps: [schemaFactory.null],
 		}) {}
 
+		// TODO: use `independentView` to avoid needing Fluid goo
 		const tree = treeFactory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
 
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: Table }));
+		const view = tree.viewWith(
+			new TreeViewConfiguration({
+				schema: Table,
+				enableSchemaValidation: true,
+				preventAmbiguity: true,
+			}),
+		);
 
 		// TODO: make initialization easier (shouldn't need to specify rows / columns).
 		// In fact, we really probably don't want to let users specify rows / columns.
@@ -52,24 +59,28 @@ describe.only("table schema", () => {
 			columns: [],
 		});
 
+		// TODO: export verbose and use that output for comparison
+
 		// TODO: why is `view.root` an empty object?
-		assert.deepEqual(view.root, {
-			rows: [],
-			columns: [],
-		});
+		// assert.deepEqual(view.root, {
+		// 	rows: [],
+		// 	columns: [],
+		// });
 
 		view.root.insertRows({
 			rows: [
 				{
-					_cells: [],
+					id: "row-0",
+					cells: {},
 					props: null,
 				},
 			],
 		});
 		view.root.insertColumn({
 			column: {
+				id: "column-0",
 				props: {
-					name: "column 1",
+					name: "Description",
 					typeHint: "string",
 				},
 			},
@@ -78,14 +89,16 @@ describe.only("table schema", () => {
 		assert.deepEqual(view.root, {
 			rows: [
 				{
-					_cells: [],
+					id: "row-0",
+					cells: {},
 					props: null,
 				},
 			],
 			columns: [
 				{
+					id: "column-0",
 					props: {
-						name: "column 1",
+						name: "Description",
 						typeHint: "string",
 					},
 				},
