@@ -34,7 +34,7 @@ function isResponseException(err: unknown): err is IResponseException {
 }
 
 /**
- * Converts an error object into an {@link @fluidframework/core-interfaces#IResponse}
+ * Converts an error object into an {@link @fluidframework/core-interfaces#IResponse}.
  * @internal
  */
 export function exceptionToResponse(err: unknown): IResponse {
