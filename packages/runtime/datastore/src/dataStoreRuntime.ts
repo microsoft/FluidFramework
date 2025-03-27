@@ -558,7 +558,7 @@ export class FluidDataStoreRuntime
 			return;
 		}
 
-		this.bind(channel.handle);
+		this.bind(toFluidHandleInternal(channel.handle));
 
 		// If our data store is local then add the channel to the queue
 		if (!this.localChannelContextQueue.has(channel.id)) {
@@ -600,7 +600,7 @@ export class FluidDataStoreRuntime
 		this.makeVisibleAndAttachGraph();
 	}
 
-	public bind(handle: IFluidHandle): void {
+	public bind(handle: IFluidHandleInternal): void {
 		// If visible, attach the incoming handle's graph. Else, this will be done when we become visible.
 		if (this.visibilityState !== VisibilityState.NotVisible) {
 			toFluidHandleInternal(handle).attachGraph();
