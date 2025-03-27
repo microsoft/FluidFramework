@@ -64,8 +64,8 @@ export interface ArrayNodePojoEmulationSchema<
  * A schema for {@link (TreeArrayNode:interface)}s.
  * @privateRemarks
  * This could have generic arguments added and forwarded.
- * The expected use-cases for this don't need them however, and if they did want an argument it would probably be the allowed types:
- * perhaps if moving to an order independent wat to pass generic arguments, adding support for them here would make sense.
+ * The expected use-cases for this don't need them however, and if they did want an argument it would probably be the allowed types;
+ * perhaps if moving to an order independent way to pass generic arguments, adding support for them here would make sense.
  * @alpha
  */
 export type ArrayNodeSchema = ArrayNodeCustomizableSchema | ArrayNodePojoEmulationSchema;
