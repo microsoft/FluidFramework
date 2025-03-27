@@ -39,7 +39,7 @@ export class EndpointIndex implements IEndpointIndex {
 
 	constructor(
 		private readonly client: Client,
-		private readonly helpers: IIntervalHelpers<SequenceInterval>,
+		private readonly helpers: IIntervalHelpers,
 	) {
 		this.endIntervalTree = new RedBlackTree<SequenceInterval, SequenceInterval>((a, b) =>
 			a.compareEnd(b),

@@ -72,9 +72,9 @@ export interface ISequenceOverlappingIntervalsIndex extends SequenceIntervalInde
 export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsIndex {
 	protected readonly intervalTree = new IntervalTree<SequenceInterval>();
 	protected readonly client: Client;
-	protected readonly helpers: IIntervalHelpers<SequenceInterval>;
+	protected readonly helpers: IIntervalHelpers;
 
-	constructor(client: Client, helpers: IIntervalHelpers<SequenceInterval>) {
+	constructor(client: Client, helpers: IIntervalHelpers) {
 		this.client = client;
 		this.helpers = helpers;
 	}
@@ -109,7 +109,7 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 				});
 			}
 		} else {
-			const transientInterval: SequenceInterval = this.helpers.create(
+			const transienSequenceInterval: SequenceInterval = this.helpers.create(
 				"transient",
 				start ?? "start",
 				end ?? "end",
@@ -122,13 +122,13 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 				// walk the whole tree in the specified order, gathering intervals that match the end.
 				if (iteratesForward) {
 					this.intervalTree.map((interval: SequenceInterval) => {
-						if (transientInterval.compareEnd(interval) === 0) {
+						if (transienSequenceInterval.compareEnd(interval) === 0) {
 							results.push(interval);
 						}
 					});
 				} else {
 					this.intervalTree.mapBackward((interval: SequenceInterval) => {
-						if (transientInterval.compareEnd(interval) === 0) {
+						if (transienSequenceInterval.compareEnd(interval) === 0) {
 							results.push(interval);
 						}
 					});
@@ -139,10 +139,10 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 				const compareFn =
 					end === undefined
 						? (node: IntervalNode<SequenceInterval>) => {
-								return transientInterval.compareStart(node.key);
+								return transienSequenceInterval.compareStart(node.key);
 							}
 						: (node: IntervalNode<SequenceInterval>) => {
-								return transientInterval.compare(node.key);
+								return transienSequenceInterval.compare(node.key);
 							};
 				const continueLeftFn = (cmpResult: number) => cmpResult <= 0;
 				const continueRightFn = (cmpResult: number) => cmpResult >= 0;
@@ -185,7 +185,7 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 		) {
 			return [];
 		}
-		const transientInterval = this.helpers.create(
+		const transienSequenceInterval = this.helpers.create(
 			"transient",
 			start,
 			end,
@@ -193,7 +193,7 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 			IntervalType.Transient,
 		);
 
-		const overlappingIntervalNodes = this.intervalTree.match(transientInterval);
+		const overlappingIntervalNodes = this.intervalTree.match(transienSequenceInterval);
 		return overlappingIntervalNodes.map((node) => node.key);
 	}
 
