@@ -6,6 +6,7 @@
 import { AttachState } from "@fluidframework/container-definitions";
 import { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import { fail } from "@fluidframework/core-utils/internal";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils/internal";
 
 export interface IContainerHandleContextRuntime {
@@ -33,12 +34,16 @@ export class ContainerFluidHandleContext implements IFluidHandleContext {
 		this.absolutePath = generateHandleContextPath(path, this.routeContext);
 	}
 
-	public attachGraph(): void {
-		throw new Error("can't attach container runtime form within container!");
-	}
-
 	public get isAttached(): boolean {
 		return this.runtime.attachState !== AttachState.Detached;
+	}
+
+	public attachGraph(): void {
+		fail("Can't attach container runtime from within container!");
+	}
+
+	public bind(): void {
+		fail("Use alias instead of binding to the ContainerRuntime");
 	}
 
 	public async resolveHandle(request: IRequest): Promise<IResponse> {
