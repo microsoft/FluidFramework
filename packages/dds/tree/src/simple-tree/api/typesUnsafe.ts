@@ -22,9 +22,11 @@ import type {
 	InternalTreeNode,
 	TreeNodeSchema,
 	TreeNodeSchemaCore,
+	TreeNodeSchemaClass,
 } from "../core/index.js";
 import type { TreeArrayNode } from "../arrayNode.js";
 import type { FlexListToUnion, LazyItem } from "../flexList.js";
+import type { SimpleArrayNodeSchema } from "../simpleSchema.js";
 
 /*
  * TODO:
@@ -94,7 +96,15 @@ export interface TreeNodeSchemaClassUnsafe<
 	in TInsertable,
 	out ImplicitlyConstructable extends boolean,
 	out Info,
-> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
+	out TCustomMetadata = unknown,
+> extends TreeNodeSchemaCore<
+		Name,
+		Kind,
+		ImplicitlyConstructable,
+		Info,
+		never,
+		TCustomMetadata
+	> {
 	/**
 	 * Constructs an {@link Unhydrated} node with this schema.
 	 * @remarks
@@ -438,3 +448,29 @@ export interface FieldSchemaAlphaUnsafe<
 }
 
 /* eslint-enable @typescript-eslint/no-explicit-any */
+
+/**
+ * {@link Unenforced} version of {@link ArrayNodeCustomizableSchema}s.
+ * @remarks
+ * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @sealed
+ * @alpha
+ * @system
+ */
+export interface ArrayNodeCustomizableSchemaUnsafe<
+	out TName extends string,
+	in out T extends ImplicitAllowedTypesUnsafe,
+	out TCustomMetadata,
+> extends TreeNodeSchemaClass<
+			TName,
+			NodeKind.Array,
+			TreeArrayNodeUnsafe<T> & WithType<TName, NodeKind.Array, T>,
+			{
+				[Symbol.iterator](): Iterator<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>;
+			},
+			false,
+			T,
+			undefined,
+			TCustomMetadata
+		>,
+		SimpleArrayNodeSchema<TCustomMetadata> {}
