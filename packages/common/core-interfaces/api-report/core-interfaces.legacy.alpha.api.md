@@ -42,6 +42,13 @@ export type FluidObjectKeys<T> = keyof FluidObject<T>;
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
+// @alpha
+export interface IAttachableNode {
+    attachGraph(): void;
+    bind(node: IAttachableNode): void;
+    readonly isAttached: boolean;
+}
+
 // @public
 export interface IConfigProviderBase {
     getRawConfig(name: string): ConfigTypes;
@@ -253,9 +260,10 @@ export interface IFluidHandle<out T = unknown> {
 export const IFluidHandleContext: keyof IProvideFluidHandleContext;
 
 // @alpha
-export interface IFluidHandleContext extends IProvideFluidHandleContext {
+export interface IFluidHandleContext extends IProvideFluidHandleContext, Partial<IAttachableNode> {
     readonly absolutePath: string;
     attachGraph(): void;
+    bind?: IAttachableNode["bind"];
     readonly isAttached: boolean;
     // (undocumented)
     resolveHandle(request: IRequest): Promise<IResponse>;
@@ -267,10 +275,11 @@ export interface IFluidHandleErased<T> extends ErasedType<readonly ["IFluidHandl
 }
 
 // @alpha
-export interface IFluidHandleInternal<out T = unknown> extends IFluidHandle<T>, IProvideFluidHandle {
+export interface IFluidHandleInternal<out T = unknown> extends IFluidHandle<T>, IAttachableNode, IProvideFluidHandle {
     readonly absolutePath: string;
-    attachGraph(): void;
+    // @deprecated
     bind(handle: IFluidHandleInternal): void;
+    bind(node: IAttachableNode): void;
 }
 
 // @public (undocumented)
