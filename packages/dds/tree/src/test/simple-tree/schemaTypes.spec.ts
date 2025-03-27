@@ -478,10 +478,10 @@ describe("schemaTypes", () => {
 		it("Normalizes recursive schemas", () => {
 			const schemaFactory = new SchemaFactory("test");
 			class Foo extends schemaFactory.objectRecursive("Foo", {
-				x: () => Bar,
+				x: [() => Bar],
 			}) {}
 			class Bar extends schemaFactory.objectRecursive("Bar", {
-				y: () => Foo,
+				y: [() => Foo],
 			}) {}
 			const result = normalizeAllowedTypes([Foo, Bar]);
 			assert.equal(result.size, 2);
@@ -493,8 +493,15 @@ describe("schemaTypes", () => {
 			const schemaFactory = new SchemaFactory("test");
 
 			let Bar: TreeNodeSchema;
+
+			// eslint-disable-next-line no-constant-condition
+			if (false) {
+				// Make the compiler think that Bar might be initialized.
+				Bar = assert.fail();
+			}
+
 			class Foo extends schemaFactory.objectRecursive("Foo", {
-				x: () => Bar,
+				x: [() => Bar],
 			}) {}
 
 			assert.throws(
@@ -647,7 +654,8 @@ describe("schemaTypes", () => {
 				const _createdEmpty = TreeAlpha.create(GenericContainer, { content: undefined });
 				// @ts-expect-error Compiler limitation, see comment above.
 				const _created = TreeAlpha.create(GenericContainer, { content });
-				const _constructedEmpty = new GenericContainer({ content: undefined }); // This one works.
+				// @ts-expect-error Compiler limitation, see comment above.
+				const _constructedEmpty = new GenericContainer({ content: undefined });
 				// @ts-expect-error Compiler limitation, see comment above.
 				return new GenericContainer({ content });
 			}

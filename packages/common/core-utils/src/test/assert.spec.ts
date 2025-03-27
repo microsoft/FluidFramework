@@ -106,4 +106,23 @@ describe("assert", () => {
 
 		strict.deepEqual(log, ["A\nDebug Message:Extra", "B", "B", "C"]);
 	});
+
+	it("onAssertionFailure", () => {
+		const log: string[] = [];
+		const handler = (error: Error): void => {
+			log.push(error.message);
+		};
+		const removeListener = onAssertionFailure(handler);
+		strict.throws(() => assert(false, "A"));
+
+		const removeListener2 = onAssertionFailure(handler);
+
+		strict.throws(() => assert(false, "B"));
+		removeListener();
+		strict.throws(() => assert(false, "C"));
+		removeListener2();
+		strict.throws(() => assert(false, "D"));
+
+		strict.deepEqual(log, ["A", "B", "B", "C"]);
+	});
 });

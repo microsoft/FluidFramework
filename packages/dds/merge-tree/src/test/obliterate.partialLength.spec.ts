@@ -7,13 +7,10 @@ import { strict as assert } from "node:assert";
 
 import { NonCollabClient } from "../constants.js";
 import { MergeTreeDeltaType } from "../ops.js";
+import { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
-import {
-	insertText,
-	useStrictPartialLengthChecks,
-	validatePartialLengths,
-} from "./testUtils.js";
+import { useStrictPartialLengthChecks, validatePartialLengths } from "./testUtils.js";
 
 describe("obliterate partial lengths", () => {
 	let client: TestClient;
@@ -109,16 +106,13 @@ describe("obliterate partial lengths", () => {
 		client.startOrUpdateCollaboration("local");
 
 		for (let i = 0; i < 100; i++) {
-			insertText({
-				mergeTree: client.mergeTree,
-				pos: 0,
-				refSeq: i,
-				clientId: localClientId,
-				seq: i + 1,
-				text: "a",
-				props: undefined,
-				opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
-			});
+			client.mergeTree.insertSegments(
+				0,
+				[TextSegment.make("a")],
+				client.mergeTree.localPerspective,
+				{ seq: i + 1, clientId: localClientId },
+				{ op: { type: MergeTreeDeltaType.INSERT } },
+			);
 
 			validatePartialLengths(localClientId, client.mergeTree, [{ seq: i + 1, len: i + 1 }]);
 			validatePartialLengths(remoteClientId, client.mergeTree, [{ seq: i + 1, len: i + 1 }]);
@@ -309,19 +303,14 @@ describe("obliterate partial lengths", () => {
 
 			const minRefSeqForLocalSeq = new Map<number, number>([
 				[initialLocalSeq, refSeq],
-				// TODO:AB#32300: We should be able to enable this or have a solid explanation on why it returns negative lengths.
-				// This particular test case should not be exercised in production, since the perspective here is actually the local default one
-				// so we'll avoid going through partial lengths, but it still suggests we may have reconnect bugs in obliterate related to partial lengths
-				// not reflecting an unacked obliterate's dependency on the insertion of each segment it affects.
-				// [initialLocalSeq + 1, refSeq],
+				[initialLocalSeq + 1, refSeq],
 			]);
 			validatePartialLengths(
 				localClientId,
 				client.mergeTree,
 				[
 					{ seq: refSeq, len: "hello world".length, localSeq: initialLocalSeq },
-					// See comment above and enable this line once this bug is fixed.
-					// { seq: refSeq, len: "".length, localSeq: initialLocalSeq + 1 },
+					{ seq: refSeq, len: "".length, localSeq: initialLocalSeq + 1 },
 					{ seq: refSeq + 1, len: "hellomore  world".length, localSeq: initialLocalSeq },
 					{ seq: refSeq + 1, len: "".length, localSeq: initialLocalSeq + 1 },
 				],

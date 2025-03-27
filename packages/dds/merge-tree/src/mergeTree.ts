@@ -35,6 +35,7 @@ import {
 	MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback.js";
 import {
+	LeafAction,
 	NodeAction,
 	backwardExcursion,
 	depthFirstNodeWalk,
@@ -106,7 +107,6 @@ import {
 import {
 	copyPropertiesAndManager,
 	PropertiesManager,
-	PropertiesRollback,
 	type PropsOrAdjust,
 } from "./segmentPropertiesManager.js";
 import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
@@ -566,6 +566,17 @@ class Obliterates {
 	}
 }
 
+interface InsertResult {
+	/**
+	 * If the insertion necessitated rebalancing, this field contains a `MergeBlock` that should be inserted after the block that `insertRecursive` was called on.
+	 */
+	remainder: MergeBlock | undefined;
+	/**
+	 * Whether the insert changed anything (including recursive changes) in the subtree of the block that `insertRecursive` was called on.
+	 */
+	hadChanges: boolean;
+}
+
 /**
  * @internal
  */
@@ -576,6 +587,11 @@ export class MergeTree {
 		zamboniSegments: true,
 	};
 
+	/**
+	 * A sentinel value that indicates an inserting walk should continue to the next block sibling.
+	 * This can occur for example when tie-break forces insertion of a segment past an entire block (and
+	 * the inserting walk first recurses into the block before realizing that).
+	 */
 	private static readonly theUnfinishedNode = { childCount: -1 } as unknown as MergeBlock;
 
 	public readonly collabWindow = new CollaborationWindow();
@@ -1129,7 +1145,7 @@ export class MergeTree {
 								firstRemove.localSeq,
 							);
 
-				const slidSegment = slidePerspective.nextSegment(this, seg, forward);
+				const slidSegment = this.nextSegment(slidePerspective, seg, forward);
 				return (
 					this.getPosition(slidSegment, perspective) +
 					(forward ? 0 : slidSegment.cachedLength === 0 ? 0 : slidSegment.cachedLength - 1)
@@ -1138,6 +1154,31 @@ export class MergeTree {
 			return this.getPosition(seg, perspective) + refPos.getOffset();
 		}
 		return DetachedReferencePosition;
+	}
+
+	/**
+	 * Returns the immediately adjacent segment in the specified direction from this perspective.
+	 * There may actually be multiple segments between the given segment and the returned segment,
+	 * but they were either inserted after this perspective, or have been removed before this perspective.
+	 *
+	 * @param segment - The segment to start from.
+	 * @param forward - The direction to search.
+	 * @returns the next segment in the specified direction, or the start or end of the tree if there is no next segment.
+	 */
+	private nextSegment(
+		perspective: Perspective,
+		segment: ISegmentLeaf,
+		forward: boolean = true,
+	): ISegmentLeaf {
+		let next: ISegmentLeaf | undefined;
+		const action = (seg: ISegmentLeaf): boolean | undefined => {
+			if (perspective.isSegmentPresent(seg)) {
+				next = seg;
+				return LeafAction.Exit;
+			}
+		};
+		(forward ? forwardExcursion : backwardExcursion)(segment, action);
+		return next ?? (forward ? this.endOfTree : this.startOfTree);
 	}
 
 	/**
@@ -1194,15 +1235,13 @@ export class MergeTree {
 		return foundMarker;
 	}
 
-	private updateRoot(splitNode: MergeBlock | undefined): void {
-		if (splitNode !== undefined) {
-			const newRoot = this.makeBlock(2);
-			assignChild(newRoot, this.root, 0, false);
-			assignChild(newRoot, splitNode, 1, false);
-			this.root = newRoot;
-			this.nodeUpdateOrdinals(this.root);
-			this.nodeUpdateLengthNewStructure(this.root);
-		}
+	private updateRoot(splitNode: MergeBlock): void {
+		const newRoot = this.makeBlock(2);
+		assignChild(newRoot, this.root, 0, false);
+		assignChild(newRoot, splitNode, 1, false);
+		this.root = newRoot;
+		this.nodeUpdateOrdinals(this.root);
+		this.nodeUpdateLengthNewStructure(this.root);
 	}
 
 	/**
@@ -1484,7 +1523,7 @@ export class MergeTree {
 				}
 			}
 
-			const splitNode = this.insertingWalk(this.root, insertPos, perspective, stamp, {
+			this.insertingWalk(insertPos, perspective, stamp, {
 				leaf: onLeaf,
 				candidateSegment: newSegment,
 				continuePredicate: continueFrom,
@@ -1500,8 +1539,6 @@ export class MergeTree {
 					segSeq: stamp.seq,
 				});
 			}
-
-			this.updateRoot(splitNode);
 
 			insertPos += newSegment.cachedLength;
 
@@ -1638,14 +1675,15 @@ export class MergeTree {
 	};
 
 	private ensureIntervalBoundary(pos: number, perspective: Perspective): void {
-		const splitNode = this.insertingWalk(
-			this.root,
+		this.insertingWalk(
 			pos,
 			perspective,
-			{ seq: TreeMaintenanceSequenceNumber, clientId: perspective.clientId },
+			{
+				seq: TreeMaintenanceSequenceNumber,
+				clientId: perspective.clientId,
+			},
 			{ leaf: this.splitLeafSegment },
 		);
-		this.updateRoot(splitNode);
 	}
 
 	// Assume called only when pos == len
@@ -1665,15 +1703,26 @@ export class MergeTree {
 			return true;
 		}
 	}
-
 	private insertingWalk(
+		pos: number,
+		perspective: Perspective,
+		stamp: OperationStamp,
+		context: InsertContext,
+	): void {
+		const { remainder } = this.insertRecursive(this.root, pos, perspective, stamp, context);
+		if (remainder !== undefined) {
+			this.updateRoot(remainder);
+		}
+	}
+
+	private insertRecursive(
 		block: MergeBlock,
 		pos: number,
 		perspective: Perspective,
 		stamp: OperationStamp,
 		context: InsertContext,
 		isLastChildBlock: boolean = true,
-	): MergeBlock | undefined {
+	): InsertResult {
 		let _pos: number = pos;
 
 		const children = block.children;
@@ -1681,6 +1730,7 @@ export class MergeTree {
 		let child: IMergeNode;
 		let newNode: IMergeNodeBuilder | undefined;
 		let fromSplit: MergeBlock | undefined;
+		let hadChanges = false;
 		for (childIndex = 0; childIndex < block.childCount; childIndex++) {
 			child = children[childIndex];
 			// ensure we walk down the far edge of the tree, even if all sub-tree is eligible for zamboni
@@ -1702,20 +1752,21 @@ export class MergeTree {
 					const segment = child;
 					const segmentChanges = context.leaf(segment, _pos, context);
 					if (segmentChanges.replaceCurrent) {
+						hadChanges = true;
 						assignChild(block, segmentChanges.replaceCurrent, childIndex, false);
 						segmentChanges.replaceCurrent.ordinal = child.ordinal;
 					}
 					if (segmentChanges.next) {
+						hadChanges = true;
 						newNode = segmentChanges.next;
 						childIndex++; // Insert after
 					} else {
-						// No change
-						return undefined;
+						return { remainder: undefined, hadChanges };
 					}
 				} else {
 					const childBlock = child;
 					// Internal node
-					const splitNode = this.insertingWalk(
+					const insertResult = this.insertRecursive(
 						childBlock,
 						_pos,
 						perspective,
@@ -1723,15 +1774,18 @@ export class MergeTree {
 						context,
 						isLastNonLeafBlock,
 					);
-					if (splitNode === undefined) {
-						this.blockUpdateLength(block, stamp);
-						return undefined;
-					} else if (splitNode === MergeTree.theUnfinishedNode) {
+					hadChanges ||= insertResult.hadChanges;
+					if (insertResult.remainder === undefined) {
+						if (insertResult.hadChanges) {
+							this.blockUpdateLength(block, stamp);
+						}
+						return insertResult;
+					} else if (insertResult.remainder === MergeTree.theUnfinishedNode) {
 						_pos -= len; // Act as if shifted segment
 						continue;
 					} else {
-						newNode = splitNode;
-						fromSplit = splitNode;
+						newNode = insertResult.remainder;
+						fromSplit = insertResult.remainder;
 						childIndex++; // Insert after
 					}
 				}
@@ -1742,7 +1796,7 @@ export class MergeTree {
 		}
 		if (!newNode && _pos === 0) {
 			if (context.continuePredicate?.(block)) {
-				return MergeTree.theUnfinishedNode;
+				return { remainder: MergeTree.theUnfinishedNode, hadChanges };
 			} else {
 				const segmentChanges = context.leaf(undefined, _pos, context);
 				newNode = segmentChanges.next;
@@ -1750,6 +1804,7 @@ export class MergeTree {
 			}
 		}
 		if (newNode) {
+			hadChanges = true;
 			for (let i = block.childCount; i > childIndex; i--) {
 				block.children[i] = block.children[i - 1];
 				block.children[i].index = i;
@@ -1762,7 +1817,7 @@ export class MergeTree {
 					this.nodeUpdateOrdinals(fromSplit);
 				}
 				this.blockUpdateLength(block, stamp);
-				return undefined;
+				return { remainder: undefined, hadChanges };
 			} else {
 				// Don't update ordinals because higher block will do it
 				const newNodeFromSplit = this.split(block);
@@ -1780,10 +1835,10 @@ export class MergeTree {
 					stamp.clientId,
 				);
 
-				return newNodeFromSplit;
+				return { remainder: newNodeFromSplit, hadChanges };
 			}
 		} else {
-			return undefined;
+			return { remainder: undefined, hadChanges };
 		}
 	}
 
@@ -1821,7 +1876,6 @@ export class MergeTree {
 	 * @param clientId - The id of the client making the annotate
 	 * @param seq - The sequence number of the annotate operation
 	 * @param opArgs - The op args for the annotate op. this is passed to the merge tree callback if there is one
-	 * @param rollback - Whether this is for a local rollback and what kind
 	 */
 	public annotateRange(
 		start: number,
@@ -1830,7 +1884,6 @@ export class MergeTree {
 		perspective: Perspective,
 		stamp: OperationStamp,
 		opArgs: IMergeTreeDeltaOpArgs,
-		rollback: PropertiesRollback = PropertiesRollback.None,
 	): void {
 		if (propsOrAdjust.adjust !== undefined) {
 			errorIfOptionNotTrue(this.options, "mergeTreeEnableAnnotateAdjust");
@@ -1857,7 +1910,7 @@ export class MergeTree {
 				stamp.seq,
 				this.collabWindow.minSeq,
 				this.collabWindow.collaborating,
-				rollback,
+				opArgs?.rollback === true,
 			);
 
 			if (!isRemoved(segment)) {
@@ -2242,7 +2295,10 @@ export class MergeTree {
 				// Note: optional chaining short-circuits:
 				// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining#short-circuiting
 				this.mergeTreeDeltaCallback?.(
-					{ op: createInsertSegmentOp(this.findRollbackPosition(segment), segment) },
+					{
+						op: createInsertSegmentOp(this.findRollbackPosition(segment), segment),
+						rollback: true,
+					},
 					{
 						operation: MergeTreeDeltaType.INSERT,
 						deltaSegments: [{ segment }],
@@ -2287,7 +2343,7 @@ export class MergeTree {
 						start + segment.cachedLength,
 						this.localPerspective,
 						removeStamp,
-						{ op: removeOp },
+						{ op: removeOp, rollback: true },
 					);
 				} /* op.type === MergeTreeDeltaType.ANNOTATE */ else {
 					const props = pendingSegmentGroup.previousProps![i];
@@ -2302,8 +2358,7 @@ export class MergeTree {
 						{ props },
 						this.localPerspective,
 						annotateStamp,
-						{ op: annotateOp },
-						PropertiesRollback.Rollback,
+						{ op: annotateOp, rollback: true },
 					);
 					i++;
 				}
