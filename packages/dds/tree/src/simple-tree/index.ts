@@ -197,9 +197,8 @@ export {
 export type {
 	ArrayNodeCustomizableSchema,
 	ArrayNodePojoEmulationSchema,
-	ArrayNodeSchema,
 } from "./arrayNodeTypes.js";
-export type { isArrayNodeSchema } from "./arrayNodeTypes.js";
+export type { ArrayNodeSchema, isArrayNodeSchema } from "./arrayNodeTypes.js";
 export {
 	type FieldHasDefault,
 	type InsertableObjectFromSchemaRecord,

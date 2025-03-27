@@ -20,8 +20,7 @@ import type { SimpleArrayNodeSchema } from "./simpleSchema.js";
 
 /**
  * A schema for customizable {@link (TreeArrayNode:interface)}s.
- * @sealed
- * @alpha
+ * @system @sealed @alpha
  */
 export interface ArrayNodeCustomizableSchema<
 	out TName extends string = string,
@@ -42,8 +41,7 @@ export interface ArrayNodeCustomizableSchema<
 
 /**
  * A schema for POJO emulation mode {@link (TreeArrayNode:interface)}s.
- * @sealed
- * @alpha
+ * @system @sealed @alpha
  */
 export interface ArrayNodePojoEmulationSchema<
 	out TName extends string = string,
@@ -63,21 +61,33 @@ export interface ArrayNodePojoEmulationSchema<
 		SimpleArrayNodeSchema<TCustomMetadata> {}
 
 /**
+ * A schema for {@link (TreeArrayNode:interface)}s.
+ * @privateRemarks
+ * This could have generic arguments added and forwarded.
+ * The expected use-cases for this don't need them however, and if they did want an argument it would probably be the allowed types:
+ * perhaps if moving to an order independent wat to pass generic arguments, adding support for them here would make sense.
+ * @alpha
+ */
+export type ArrayNodeSchema = ArrayNodeCustomizableSchema | ArrayNodePojoEmulationSchema;
+
+/**
  * @alpha
  */
 export const ArrayNodeSchema = {
 	/**
 	 * instanceof-based narrowing support for ArrayNodeSchema in Javascript and TypeScript 5.3 or newer.
 	 */
-	[Symbol.hasInstance](
-		value: TreeNodeSchema,
-	): value is ArrayNodeCustomizableSchema | ArrayNodePojoEmulationSchema {
+	[Symbol.hasInstance](value: TreeNodeSchema): value is ArrayNodeSchema {
 		return isArrayNodeSchema(value);
 	},
 } as const;
 
-export function isArrayNodeSchema(
-	schema: TreeNodeSchema,
-): schema is ArrayNodeCustomizableSchema | ArrayNodePojoEmulationSchema {
+/**
+ * Narrows a {@link (TreeNodeSchema:interface)} to an {@link (ArrayNodeSchema:interface)}.
+ * @privateRemarks
+ * If at some point we want to have internal only APIs for ArrayNodeSchema (like done for objects),
+ * this can include those since its not the public facing API.
+ */
+export function isArrayNodeSchema(schema: TreeNodeSchema): schema is ArrayNodeSchema {
 	return schema.kind === NodeKind.Array;
 }

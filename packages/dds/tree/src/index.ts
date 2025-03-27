@@ -232,6 +232,7 @@ export {
 	type LeafSchema,
 	type ArrayNodeCustomizableSchema,
 	type ArrayNodePojoEmulationSchema,
+	ArrayNodeSchema,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
