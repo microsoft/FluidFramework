@@ -388,7 +388,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     get attachState(): AttachState;
     // (undocumented)
-    bind(handle: IFluidHandle): void;
+    bind(handle: IFluidHandleInternal): void;
     // (undocumented)
     bindChannel(channel: IChannel): void;
     // (undocumented)
