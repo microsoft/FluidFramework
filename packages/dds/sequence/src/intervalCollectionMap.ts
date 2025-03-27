@@ -9,18 +9,16 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { ValueType, IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 
-import {
-	IntervalCollectionTypeLocalValue,
-	makeSerializable,
-} from "./IntervalCollectionValues.js";
+import { makeSerializable } from "./IntervalCollectionValues.js";
 import {
 	type IntervalCollection,
+	opsMap,
 	reservedIntervalIdKey,
+	SequenceIntervalCollectionValueType,
 	toOptionalSequencePlace,
 	toSequencePlace,
 } from "./intervalCollection.js";
 import {
-	IIntervalCollectionType,
 	IIntervalCollectionTypeOperationValue,
 	IMapMessageLocalMetadata,
 	ISerializableIntervalCollection,
@@ -81,7 +79,7 @@ export class IntervalCollectionMap {
 	/**
 	 * The in-memory data the map is storing.
 	 */
-	private readonly data = new Map<string, IntervalCollectionTypeLocalValue>();
+	private readonly data = new Map<string, IntervalCollection>();
 
 	/**
 	 * Create a new default map.
@@ -98,7 +96,6 @@ export class IntervalCollectionMap {
 			op: IMapOperation,
 			localOpMetadata: IMapMessageLocalMetadata,
 		) => void,
-		private readonly type: IIntervalCollectionType,
 		private readonly options?: Partial<SequenceOptions>,
 		public readonly eventEmitter = new TypedEventEmitter<ISharedDefaultMapEvents>(),
 	) {}
@@ -122,7 +119,7 @@ export class IntervalCollectionMap {
 				const nextVal = localValuesIterator.next();
 				return nextVal.done
 					? { value: undefined, done: true }
-					: { value: nextVal.value.value, done: false }; // Unpack the stored value
+					: { value: nextVal.value, done: false }; // Unpack the stored value
 			},
 			[Symbol.iterator]() {
 				return this;
@@ -136,7 +133,7 @@ export class IntervalCollectionMap {
 	public get(key: string): IntervalCollection {
 		const localValue = this.data.get(key) ?? this.createCore(key, true);
 
-		return localValue.value;
+		return localValue;
 	}
 
 	public getSerializableStorage(serializer: IFluidSerializer): IMapDataObjectSerializable {
@@ -175,12 +172,7 @@ export class IntervalCollectionMap {
 			// collection. See https://github.com/microsoft/FluidFramework/issues/10557 for more context.
 			const normalizedKey = key.startsWith("intervalCollections/") ? key.substring(20) : key;
 
-			const localValue = {
-				key: normalizedKey,
-				value: this.makeLocal(key, serializable),
-			};
-
-			this.data.set(localValue.key, localValue.value);
+			this.data.set(normalizedKey, this.makeLocal(key, serializable));
 		}
 	}
 
@@ -198,8 +190,9 @@ export class IntervalCollectionMap {
 
 			assert(localValue !== undefined, 0x3f8 /* Local value expected on resubmission */);
 
-			const handler = localValue.getOpHandler(op.value.opName);
-			const rebased = handler.rebase(localValue.value, op.value, localOpMetadata);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const handler = opsMap[op.value.opName];
+			const rebased = handler.rebase(localValue, op.value, localOpMetadata);
 			if (rebased !== undefined) {
 				const { rebasedOp, rebasedLocalOpMetadata } = rebased;
 				this.submitMessage({ ...op, value: rebasedOp }, rebasedLocalOpMetadata);
@@ -270,8 +263,8 @@ export class IntervalCollectionMap {
 	): boolean {
 		if (isMapOperation(op)) {
 			const localValue = this.data.get(op.key) ?? this.createCore(op.key, local);
-			const handler = localValue.getOpHandler(op.value.opName);
-			const previousValue = localValue.value;
+			const handler = opsMap[op.value.opName];
+			const previousValue = localValue;
 			const translatedValue = op.value.value as any;
 			handler.process(
 				previousValue,
@@ -293,10 +286,11 @@ export class IntervalCollectionMap {
 	 * @param key - The key being initialized
 	 * @param local - Whether the message originated from the local client
 	 */
-	private createCore(key: string, local: boolean): IntervalCollectionTypeLocalValue {
-		const localValue = new IntervalCollectionTypeLocalValue(
-			this.type.factory.load(this.makeMapValueOpEmitter(key), undefined, this.options),
-			this.type,
+	private createCore(key: string, local: boolean): IntervalCollection {
+		const localValue = SequenceIntervalCollectionValueType.factory.load(
+			this.makeMapValueOpEmitter(key),
+			undefined,
+			this.options,
 		);
 		const previousValue = this.data.get(key);
 		this.data.set(key, localValue);
@@ -318,19 +312,19 @@ export class IntervalCollectionMap {
 	private makeLocal(
 		key: string,
 		serializable: ISerializableIntervalCollection,
-	): IntervalCollectionTypeLocalValue {
+	): IntervalCollection {
 		assert(
 			serializable.type !== ValueType[ValueType.Plain] &&
 				serializable.type !== ValueType[ValueType.Shared],
 			0x2e1 /* "Support for plain value types removed." */,
 		);
 
-		const localValue = this.type.factory.load(
+		const localValue = SequenceIntervalCollectionValueType.factory.load(
 			this.makeMapValueOpEmitter(key),
 			serializable.value,
 			this.options,
 		);
-		return new IntervalCollectionTypeLocalValue(localValue, this.type);
+		return localValue;
 	}
 
 	/**

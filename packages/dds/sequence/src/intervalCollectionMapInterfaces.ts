@@ -90,6 +90,8 @@ export interface SequenceOptions
  * A value factory is used to serialize/deserialize value types to a map
  * @legacy
  * @alpha
+ *
+ * @deprecated foo;
  */
 export interface IIntervalCollectionFactory {
 	/**
@@ -118,6 +120,8 @@ export interface IIntervalCollectionFactory {
  * Defines an operation that a value type is able to handle.
  * @legacy
  * @alpha
+ *
+ * @deprecated foo
  */
 export interface IIntervalCollectionOperation {
 	/**

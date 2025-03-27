@@ -37,7 +37,6 @@ import { v4 as uuid } from "uuid";
 import {
 	IIntervalCollectionFactory,
 	IIntervalCollectionOperation,
-	IIntervalCollectionType,
 	IMapMessageLocalMetadata,
 	IValueOpEmitter,
 	SequenceOptions,
@@ -56,7 +55,7 @@ import {
 	CompressedSerializedInterval,
 	IIntervalHelpers,
 	ISerializedInterval,
-	IntervalOpType,
+	IntervalDeltaOpType,
 	IntervalStickiness,
 	IntervalType,
 	SequenceInterval,
@@ -408,7 +407,7 @@ export class LocalIntervalCollection {
 	}
 }
 
-class SequenceIntervalCollectionFactory implements IIntervalCollectionFactory {
+class SequenceIntervalCollectionFactory {
 	public load(
 		emitter: IValueOpEmitter,
 		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
@@ -424,84 +423,62 @@ class SequenceIntervalCollectionFactory implements IIntervalCollectionFactory {
 	}
 }
 
-export class SequenceIntervalCollectionValueType implements IIntervalCollectionType {
-	public static Name = "sharedStringIntervalCollection";
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+export class SequenceIntervalCollectionValueType {
+	public static readonly Name = "sharedStringIntervalCollection";
 
-	public get name(): string {
-		return SequenceIntervalCollectionValueType.Name;
-	}
-
-	public get factory(): IIntervalCollectionFactory {
-		return SequenceIntervalCollectionValueType._factory;
-	}
-
-	public get ops(): Map<IntervalOpType, IIntervalCollectionOperation> {
-		return SequenceIntervalCollectionValueType._ops;
-	}
-
-	private static readonly _factory: IIntervalCollectionFactory =
+	public static readonly factory: IIntervalCollectionFactory =
 		new SequenceIntervalCollectionFactory();
-
-	private static readonly _ops = makeOpsMap();
 }
 
-export function makeOpsMap(): Map<IntervalOpType, IIntervalCollectionOperation> {
-	const rebase: IIntervalCollectionOperation["rebase"] = (collection, op, localOpMetadata) => {
-		const { localSeq } = localOpMetadata;
-		const rebasedValue = collection.rebaseLocalInterval(op.opName, op.value, localSeq);
-		if (rebasedValue === undefined) {
-			return undefined;
-		}
-		const rebasedOp = { ...op, value: rebasedValue };
-		return { rebasedOp, rebasedLocalOpMetadata: localOpMetadata };
-	};
+const rebase: IIntervalCollectionOperation["rebase"] = (collection, op, localOpMetadata) => {
+	const { localSeq } = localOpMetadata;
+	const rebasedValue = collection.rebaseLocalInterval(op.opName, op.value, localSeq);
+	if (rebasedValue === undefined) {
+		return undefined;
+	}
+	const rebasedOp = { ...op, value: rebasedValue };
+	return { rebasedOp, rebasedLocalOpMetadata: localOpMetadata };
+};
 
-	return new Map<IntervalOpType, IIntervalCollectionOperation>([
-		[
-			IntervalOpType.ADD,
-			{
-				process: (collection, params, local, op, localOpMetadata) => {
-					// if params is undefined, the interval was deleted during
-					// rebasing
-					if (!params) {
-						return;
-					}
-					assert(op !== undefined, 0x3fb /* op should exist here */);
-					collection.ackAdd(params, local, op, localOpMetadata);
-				},
-				rebase,
-			},
-		],
-		[
-			IntervalOpType.DELETE,
-			{
-				process: (collection, params, local, op) => {
-					assert(op !== undefined, 0x3fc /* op should exist here */);
-					collection.ackDelete(params, local, op);
-				},
-				rebase: (collection, op, localOpMetadata) => {
-					// Deletion of intervals is based on id, so requires no rebasing.
-					return { rebasedOp: op, rebasedLocalOpMetadata: localOpMetadata };
-				},
-			},
-		],
-		[
-			IntervalOpType.CHANGE,
-			{
-				process: (collection, params, local, op, localOpMetadata) => {
-					// if params is undefined, the interval was deleted during
-					// rebasing
-					if (!params) {
-						return;
-					}
-					assert(op !== undefined, 0x3fd /* op should exist here */);
-					collection.ackChange(params, local, op, localOpMetadata);
-				},
-				rebase,
-			},
-		],
-	]);
-}
+export const opsMap: Record<IntervalDeltaOpType, IIntervalCollectionOperation> = {
+	[IntervalDeltaOpType.ADD]: {
+		process: (collection, params, local, op, localOpMetadata) => {
+			// if params is undefined, the interval was deleted during
+			// rebasing
+			if (!params) {
+				return;
+			}
+			assert(op !== undefined, 0x3fb /* op should exist here */);
+			collection.ackAdd(params, local, op, localOpMetadata);
+		},
+		rebase,
+	},
+
+	[IntervalDeltaOpType.DELETE]: {
+		process: (collection, params, local, op) => {
+			assert(op !== undefined, 0x3fc /* op should exist here */);
+			collection.ackDelete(params, local, op);
+		},
+		rebase: (collection, op, localOpMetadata) => {
+			// Deletion of intervals is based on id, so requires no rebasing.
+			return { rebasedOp: op, rebasedLocalOpMetadata: localOpMetadata };
+		},
+	},
+
+	[IntervalDeltaOpType.CHANGE]: {
+		process: (collection, params, local, op, localOpMetadata) => {
+			// if params is undefined, the interval was deleted during
+			// rebasing
+			if (!params) {
+				return;
+			}
+			assert(op !== undefined, 0x3fd /* op should exist here */);
+			collection.ackChange(params, local, op, localOpMetadata);
+		},
+		rebase,
+	},
+};
 
 /**
  * @legacy
