@@ -446,7 +446,7 @@ export function createTableSchema<
 	// This numeric id doesn't seem to be stable over incremental builds, and thus causes diffs in the API extractor reports.
 	// This is avoided by doing this type conversion.
 	// The conversion is done via assignment instead of `as` to get stronger type safety.
-	const tableReturnType: TreeNodeSchemaClass<
+	const TableSchemaType: TreeNodeSchemaClass<
 		/* Name */ ScopedSchemaName<TScope, "Table">,
 		/* Kind */ NodeKind.Object,
 		/* TNode */ TableNodeType,
@@ -456,5 +456,5 @@ export function createTableSchema<
 	> = Table;
 
 	// Return the table schema
-	return tableReturnType;
+	return TableSchemaType;
 }
