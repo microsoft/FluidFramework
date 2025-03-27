@@ -6,7 +6,7 @@
 "section": deprecation
 ---
 
-Replace generic types for IntervalCollections non-generic types
+Replace generic types for IntervalCollections with non-generic types
 
 This change deprecates the following generic types and provides non-generic alternatives where necessary:
 

@@ -125,6 +125,7 @@ export {
 	// error TS2742: The inferred type of 'Inventory' cannot be named without a reference to '../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.
 	type AllowedTypes,
 	type ImplicitAllowedTypesUnsafe,
+	type ImplicitFieldSchemaUnsafe,
 	type TreeObjectNodeUnsafe,
 	type InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
 	type TreeArrayNodeUnsafe,

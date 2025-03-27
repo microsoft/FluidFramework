@@ -75,6 +75,7 @@ export type {
 	TreeNodeSchemaUnsafe,
 	AllowedTypesUnsafe,
 	ImplicitAllowedTypesUnsafe,
+	ImplicitFieldSchemaUnsafe,
 	TreeNodeSchemaNonClassUnsafe,
 	InsertableTreeNodeFromAllowedTypesUnsafe,
 	FieldSchemaAlphaUnsafe,
