@@ -30,9 +30,9 @@ describe.only("table schema", () => {
 		}) {}
 
 		class Table extends createTableSchema({
-			sf: schemaFactory,
+			schemaFactory,
 			// TODO: don't require array wrapping
-			schemaTypes: Cell,
+			cellSchema: Cell,
 			// TODO: make props optional
 			columnProps: [ColumnProps],
 			rowProps: [schemaFactory.null],

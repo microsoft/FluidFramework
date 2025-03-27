@@ -154,10 +154,8 @@ export interface CreateTableSchemaParameters<
 	TRowProps extends readonly TreeNodeSchema[],
 	Scope extends string | undefined,
 > {
-	// TODO: rename: "schemaFactory"
-	readonly sf: SchemaFactory<Scope>;
-	// TODO: rename: "cellTypes"
-	readonly schemaTypes: TCell;
+	readonly schemaFactory: SchemaFactory<Scope>;
+	readonly cellSchema: TCell;
 
 	// TODO: make props optional
 	readonly columnProps: TColumnProps;
@@ -176,7 +174,7 @@ export function createTableSchema<
 	const TRowProps extends readonly TreeNodeSchema[],
 	const TScope extends string | undefined,
 >(props: CreateTableSchemaParameters<TCell, TColumnProps, TRowProps, TScope>) {
-	const { sf, schemaTypes, columnProps, rowProps } = props;
+	const { schemaFactory, cellSchema, columnProps, rowProps } = props;
 
 	type CellValueType = TreeNodeFromImplicitAllowedTypes<TCell>;
 	type CellInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TCell>;
@@ -204,14 +202,14 @@ export function createTableSchema<
 	 * The implicit typing is intentional.
 	 */
 	const columnFields = {
-		id: sf.identifier,
+		id: schemaFactory.identifier,
 		props: columnProps,
 	} as const satisfies Record<string, ImplicitFieldSchema>;
 
 	/**
 	 * The Column schema - this can include more properties as needed *
 	 */
-	class Column extends sf.object("Column", columnFields) implements IColumn {
+	class Column extends schemaFactory.object("Column", columnFields) implements IColumn {
 		/**
 		 * Get the index of the column in the table
 		 * @returns The index of the column in the table
@@ -293,8 +291,8 @@ export function createTableSchema<
 	 * The implicit typing is intentional.
 	 */
 	const rowFields = {
-		id: sf.identifier,
-		cells: sf.map("Row.cells", schemaTypes),
+		id: schemaFactory.identifier,
+		cells: schemaFactory.map("Row.cells", cellSchema),
 		props: rowProps,
 	} as const satisfies Record<string, ImplicitFieldSchema>;
 
@@ -302,7 +300,7 @@ export function createTableSchema<
 	 * The Row schema - this is a map of Cells where the key is the column id
 	 */
 	class Row
-		extends sf.object("Row", rowFields)
+		extends schemaFactory.object("Row", rowFields)
 		implements IRow<CellValueType, CellInsertableType, ColumnValueType>
 	{
 		/** Get a cell by the column
@@ -394,15 +392,15 @@ export function createTableSchema<
 	 * The implicit typing is intentional.
 	 */
 	const tableFields = {
-		rows: sf.array(RowSchemaType),
-		columns: sf.array(ColumnSchemaType),
+		rows: schemaFactory.array(RowSchemaType),
+		columns: schemaFactory.array(ColumnSchemaType),
 	} as const satisfies Record<string, ImplicitFieldSchema>;
 
 	/**
 	 * The Table schema
 	 */
 	class Table
-		extends sf.object("Table", tableFields)
+		extends schemaFactory.object("Table", tableFields)
 		implements
 			ITable<
 				CellValueType,
