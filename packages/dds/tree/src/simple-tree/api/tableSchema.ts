@@ -12,15 +12,17 @@ import {
 	typeNameSymbol,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
 	typeSchemaSymbol,
+	type NodeKind,
+	type TreeNode,
 	type TreeNodeSchema,
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
 	type TreeNodeSchemaClass,
 } from "../core/index.js";
 import type {
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	TreeNodeFromImplicitAllowedTypes,
 } from "../schemaTypes.js";
-import type { SchemaFactory } from "./schemaFactory.js";
+import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
+import type { InsertableObjectFromSchemaRecord } from "../objectNode.js";
 
 // Schema is defined using a factory object that generates classes for objects as well
 // as list and map nodes.
@@ -280,14 +282,16 @@ export function createTableSchema<
 		}
 	}
 
+	const tableFields = {
+		rows: sf.array(Row),
+		columns: sf.array(Column),
+	};
+
 	/**
 	 * The Table schema
 	 */
 	class Table
-		extends sf.object("Table", {
-			rows: sf.array(Row),
-			columns: sf.array(Column),
-		})
+		extends sf.object("Table", tableFields)
 		implements ITable<TCell, Column, Row>
 	{
 		/**
@@ -392,6 +396,23 @@ export function createTableSchema<
 		}
 	}
 
+		type TableNodeType = TreeNode & ITable<TCell, Column, Row>;
+
+		// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
+		// for the private brand field of TreeNode.
+		// This numeric id doesn't seem to be stable over incremental builds, and thus causes diffs in the API extractor reports.
+		// This is avoided by doing this type conversion.
+		// The conversion is done via assignment instead of `as` to get stronger type safety.
+		const tableReturnType: TreeNodeSchemaClass<
+			/* Name */ ScopedSchemaName<TScope, "Table">, // TODO
+			/* Kind */ NodeKind.Object,
+			/* TNode */ TableNodeType,
+			/* TInsertable */ object & InsertableObjectFromSchemaRecord<typeof tableFields>,
+			/* ImplicitlyConstructable */ true,
+			/* Info */ typeof tableFields // TODO
+			/* TConstructorExtra */ // never
+		> = Table;
+
 	// Return the table schema
-	return Table;
+	return tableReturnType;
 }
