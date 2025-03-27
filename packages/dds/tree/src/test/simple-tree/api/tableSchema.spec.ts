@@ -12,7 +12,6 @@ import {
 	createTableSchema,
 	SchemaFactory,
 	TreeViewConfiguration,
-	type TreeView,
 } from "../../../simple-tree/index.js";
 import { TreeFactory } from "../../../treeFactory.js";
 
@@ -22,12 +21,21 @@ describe.only("table schema", () => {
 	it("Smoke test", () => {
 		const schemaFactory = new SchemaFactory("test");
 		class Cell extends schemaFactory.object("table-cell", {
-			foo: schemaFactory.string,
+			value: schemaFactory.string,
+		}) {}
+
+		class ColumnProps extends schemaFactory.object("table-column-props", {
+			name: schemaFactory.string,
+			typeHint: schemaFactory.string,
 		}) {}
 
 		class Table extends createTableSchema({
 			sf: schemaFactory,
+			// TODO: don't require array wrapping
 			schemaTypes: [Cell],
+			// TODO: make props optional
+			columnProps: [ColumnProps],
+			rowProps: [schemaFactory.null],
 		}) {}
 
 		const tree = treeFactory.create(
@@ -52,8 +60,36 @@ describe.only("table schema", () => {
 
 		view.root.insertRows({
 			rows: [
-				{}
-			]
-		})
+				{
+					_cells: [],
+					props: null,
+				},
+			],
+		});
+		view.root.insertColumn({
+			column: {
+				props: {
+					name: "column 1",
+					typeHint: "string",
+				},
+			},
+		});
+
+		assert.deepEqual(view.root, {
+			rows: [
+				{
+					_cells: [],
+					props: null,
+				},
+			],
+			columns: [
+				{
+					props: {
+						name: "column 1",
+						typeHint: "string",
+					},
+				},
+			],
+		});
 	});
 });
