@@ -1394,6 +1394,9 @@ importers:
       '@fluidframework/server-services-telemetry':
         specifier: workspace:~
         version: link:../services-telemetry
+      '@fluidframework/server-services-utils':
+        specifier: workspace:~
+        version: link:../services-utils
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
@@ -12020,7 +12023,7 @@ snapshots:
       debug: 4.4.0(supports-color@8.1.1)
       globby: 11.1.0
       is-glob: 4.0.3
-      semver: 7.6.0
+      semver: 7.6.3
       ts-api-utils: 1.0.3(typescript@5.1.6)
     optionalDependencies:
       typescript: 5.1.6
@@ -12051,7 +12054,7 @@ snapshots:
       '@typescript-eslint/types': 6.7.5
       '@typescript-eslint/typescript-estree': 6.7.5(typescript@5.1.6)
       eslint: 8.55.0
-      semver: 7.6.0
+      semver: 7.6.3
     transitivePeerDependencies:
       - supports-color
       - typescript

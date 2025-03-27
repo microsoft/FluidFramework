@@ -35,15 +35,26 @@ export async function seqFromTree(
 }
 
 /**
+ * The following characters emulates the UTF-16 code sequence from 65 - 123, except for the `[` and `{`
+ * positioned at 91 and 123 respectively - which are changed to '(' and ')'. Used in the `encodeCompactIdToString` utility below.
+ * NOTE: The character set must never be changed - since it could result in collisions with existing ids.
+ * If changing, make sure to choose new characters that have never been
+ * used before, and the characters must not change their encoding with 'encodeURIComponent'.
+ * @internal
+ */
+export const charSetForEncodingIds =
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ(abcdefghijklmnopqrstuvwxyz)0123456789";
+
+/**
  * Encode compact ID (returned by IContainerRuntime.generateDocumentUniqueId()) to a compact string representation.
  * While this is the main usage pattern, it works with any non-negative integer or a string.
- * Strings are retured as is, and assumed to be UUIDs, i.e. unique enough to never overlap with
+ * Strings are returned as is, and assumed to be UUIDs, i.e. unique enough to never overlap with
  * numbers encoded as strings by this function. Any other strings are likely to run into collisions and should not be used!
  * This function is useful in places where we serialize resulting ID as string and use them as strings, thus we are not
  * gaining any efficiency from having a number type.
- * We do not provide a decode function, so this API is only useful only result is stored and there is no need to go back to origianl form.
+ * We do not provide a decode function, so this API is only useful only result is stored and there is no need to go back to original form.
  * @param idArg - input - either a non-negative integer or a string. Strings are returned as is, while numbers are encoded in compat form
- * @param prefix - optinal string prefix
+ * @param prefix - optional string prefix
  * @returns A string - representation of an input
  * @internal
  */
@@ -51,6 +62,7 @@ export function encodeCompactIdToString(idArg: number | string, prefix = ""): st
 	if (typeof idArg === "string") {
 		return idArg;
 	}
+
 	// WARNING: result of this function are stored in storage!
 	// If you ever need to change this function, you will need to ensure that
 	// for any inputs N1 & N2, old(N1) !== new(N2), where old() - is the old implementation,
@@ -63,9 +75,6 @@ export function encodeCompactIdToString(idArg: number | string, prefix = ""): st
 	let id = "";
 	let num = idArg;
 	do {
-		// 48-57 -> 0-9
-		// 65-91 > A-Z[
-		// 97-123 -> a-z}
 		// Here are some examples of the input & output:
 		// 0 -> 'A'
 		// 1 -> 'B'
@@ -74,8 +83,7 @@ export function encodeCompactIdToString(idArg: number | string, prefix = ""): st
 		// 10000 -> 'BaQ'
 		// 100000 -> 'XZf'
 		const encode = num % 64;
-		const base = encode < 27 ? 65 : encode < 54 ? 97 - 27 : 48 - 54;
-		id = String.fromCodePoint(base + encode) + id;
+		id = charSetForEncodingIds[encode] + id;
 		num = Math.floor(num / 64) - 1;
 	} while (num !== -1);
 	return prefix + id;

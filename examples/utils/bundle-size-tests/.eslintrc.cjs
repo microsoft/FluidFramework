@@ -11,4 +11,12 @@ module.exports = {
 		// "../../.eslintrc.cjs",
 	],
 	rules: {},
+	overrides: [
+		{
+			files: ["src/test/**/*"],
+			parserOptions: {
+				project: ["./src/test/tsconfig.json"],
+			},
+		},
+	],
 };

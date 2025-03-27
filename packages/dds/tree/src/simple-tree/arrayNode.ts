@@ -47,7 +47,7 @@ import {
 } from "./core/index.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import { getUnhydratedContext } from "./createContext.js";
-import type { Unenforced } from "./api/index.js";
+import type { ImplicitAllowedTypesUnsafe } from "./api/index.js";
 
 /**
  * A covariant base type for {@link (TreeArrayNode:interface)}.
@@ -73,7 +73,7 @@ export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue>
  * @sealed @public
  */
 export interface TreeArrayNode<
-	TAllowedTypes extends Unenforced<ImplicitAllowedTypes> = ImplicitAllowedTypes,
+	TAllowedTypes extends ImplicitAllowedTypesUnsafe = ImplicitAllowedTypes,
 	out T = [TAllowedTypes] extends [ImplicitAllowedTypes]
 		? TreeNodeFromImplicitAllowedTypes<TAllowedTypes>
 		: TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>,
@@ -1083,6 +1083,9 @@ export function arraySchema<
 	>;
 
 	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(info));
+	const lazyAllowedTypesIdentifiers = new Lazy(
+		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
+	);
 
 	let unhydratedContext: Context;
 
@@ -1118,6 +1121,10 @@ export function arraySchema<
 				unhydratedContext,
 				mapTreeFromNodeData(input as object, this as unknown as ImplicitAllowedTypes),
 			);
+		}
+
+		public static get allowedTypesIdentifiers(): ReadonlySet<string> {
+			return lazyAllowedTypesIdentifiers.value;
 		}
 
 		protected static override constructorCached: MostDerivedData | undefined = undefined;
@@ -1161,8 +1168,7 @@ export function arraySchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
-		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> | undefined =
-			metadata;
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {

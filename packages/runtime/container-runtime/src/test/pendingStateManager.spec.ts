@@ -552,6 +552,7 @@ describe("Pending State Manager", () => {
 			});
 
 			it("findFirstCharacterMismatched", () => {
+				const nonAsciiChar = String.fromCodePoint(0x80);
 				const testCases = [
 					{ input: ["", ""], expected: [-1] },
 					{ input: ["", "b"], expected: [0, undefined, "b"] },
@@ -560,6 +561,7 @@ describe("Pending State Manager", () => {
 					{ input: ["xyz", "xy"], expected: [2, "z", undefined] },
 					{ input: ["xy", "xxx"], expected: [1, "y", "x"] },
 					{ input: ["xyz", "xyz"], expected: [-1] },
+					{ input: ["QQ", `Q${nonAsciiChar}`], expected: [1, "Q", "[non-ASCII]"] },
 				];
 				for (const {
 					input: [a, b],
