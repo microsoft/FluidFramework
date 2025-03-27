@@ -239,16 +239,21 @@ export function createTableSchema<
 	}
 
 	/**
+	 * {@link Row} fields.
+	 * @remarks Extracted for re-use in returned type signature defined later in this function.
+	 * The implicit typing is intentional.
+	 */
+	const rowFields = {
+		id: sf.identifier,
+		// The keys of this map are the column ids - this would ideally be private
+		_cells: sf.map(schemaTypes),
+		props: rowProps ?? sf.null,
+	};
+
+	/**
 	 * The Row schema - this is a map of Cells where the key is the column id
 	 */
-	class Row
-		extends sf.object("Row", {
-			id: sf.identifier,
-			_cells: sf.map(schemaTypes), // The keys of this map are the column ids - this would ideally be private
-			props: rowProps ?? sf.null,
-		})
-		implements IRow<TCell, ColumnNodeType>
-	{
+	class Row extends sf.object("Row", rowFields) implements IRow<TCell, ColumnNodeType> {
 		/** Get a cell by the column
 		 * @param column - The column
 		 * @returns The cell if it exists, otherwise undefined
