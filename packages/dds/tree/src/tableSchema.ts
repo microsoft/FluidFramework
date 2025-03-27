@@ -4,28 +4,27 @@
  */
 
 import { oob } from "@fluidframework/core-utils/internal";
-import { Tree } from "../../shared-tree/index.js";
-import { TreeArrayNode } from "../arrayNode.js";
-import type {
+import { Tree } from "./shared-tree/index.js";
+import {
 	// TODO: create and export SystemTypes to replace "InternalExports"
 	// eslint-disable-next-line import/no-deprecated, @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
-	typeNameSymbol,
+	type typeNameSymbol,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
-	typeSchemaSymbol,
-	NodeKind,
-	TreeNode,
-	TreeNodeSchema,
-	TreeNodeSchemaClass,
-	WithType,
-} from "../core/index.js";
-import type {
-	ImplicitAllowedTypes,
-	ImplicitFieldSchema,
-	InsertableTreeNodeFromImplicitAllowedTypes,
-	TreeNodeFromImplicitAllowedTypes,
-} from "../schemaTypes.js";
-import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
-import type { InsertableObjectFromSchemaRecord } from "../objectNode.js";
+	type typeSchemaSymbol,
+	type ImplicitAllowedTypes,
+	type ImplicitFieldSchema,
+	type InsertableObjectFromSchemaRecord,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type NodeKind,
+	type SchemaFactory,
+	type ScopedSchemaName,
+	TreeArrayNode,
+	type TreeNode,
+	type TreeNodeFromImplicitAllowedTypes,
+	type TreeNodeSchema,
+	type TreeNodeSchemaClass,
+	type WithType,
+} from "./simple-tree/index.js";
 
 // TODOs
 // - Move this to package root

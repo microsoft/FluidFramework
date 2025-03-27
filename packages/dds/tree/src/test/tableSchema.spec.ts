@@ -8,12 +8,9 @@ import { strict as assert } from "node:assert";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import {
-	createTableSchema,
-	SchemaFactory,
-	TreeViewConfiguration,
-} from "../../../simple-tree/index.js";
-import { TreeFactory } from "../../../treeFactory.js";
+import { SchemaFactory, TreeViewConfiguration } from "../simple-tree/index.js";
+import { TreeFactory } from "../treeFactory.js";
+import { createTableSchema } from "../tableSchema.js";
 
 const treeFactory = new TreeFactory({});
 

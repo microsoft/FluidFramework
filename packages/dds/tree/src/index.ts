@@ -228,7 +228,6 @@ export {
 	replaceVerboseTreeHandles,
 	type HandleConverter,
 	type LeafSchema,
-	createTableSchema,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
@@ -283,3 +282,4 @@ export type { MapNodeInsertableData } from "./simple-tree/index.js";
 
 export { JsonAsTree } from "./jsonDomainSchema.js";
 export { FluidSerializableAsTree } from "./serializableDomainSchema.js";
+export { createTableSchema } from "./tableSchema.js";
