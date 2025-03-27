@@ -220,6 +220,8 @@ export class FluidDataStoreRuntime
 	 */
 	private localChangesTelemetryCount: number;
 
+	// The type of this should be ILayerCompatDetails. However, ILayerCompatDetails is internal and this class
+	// is currently marked as legacy alpha. So, we are using unknown here.
 	public readonly ILayerCompatDetails?: unknown = DataStoreCompatDetailsForRuntime;
 
 	/**
