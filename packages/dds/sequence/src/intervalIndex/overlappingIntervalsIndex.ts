@@ -185,7 +185,7 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 		) {
 			return [];
 		}
-		const transienSequenceInterval = this.helpers.create(
+		const transientInterval = this.helpers.create(
 			"transient",
 			start,
 			end,
@@ -193,7 +193,7 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 			IntervalType.Transient,
 		);
 
-		const overlappingIntervalNodes = this.intervalTree.match(transienSequenceInterval);
+		const overlappingIntervalNodes = this.intervalTree.match(transientInterval);
 		return overlappingIntervalNodes.map((node) => node.key);
 	}
 
