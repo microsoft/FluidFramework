@@ -81,8 +81,29 @@ const firstChanceAssertionHandler = new Set<(error: Error) => void>();
  * @param handler - Called when an assertion occurs before the exception is thrown.
  * @returns a function to remove the handler.
  * @remarks
- * This is mainly useful for triggering a `debugger;` statement and/or reporting telemetry to aid Fluid with diagnosing and fixing the bugs which cause asserts.
- * It can also be used to record that an fatal error has occurred to help avoid complicating the diagnosis by doing more work after the error which might error again in a different way.
+ * The callback runs just before the exception is thrown, which makes it a better place to report telemetry for Fluid Framework bugs than a catch block or an event like `window.onerror`.
+ * Using this API to report telemetry is preferred over those approaches since it eliminates the risk of the exception being swallowed or obfuscated by an intermediate stack frame's catch block
+ * or missed due to not having the right catch block or event handler.
+ *
+ * This does not replace the need for error handling elsewhere since errors (even bugs in Fluid) can cause other kinds of exceptions which this cannot run the callback for.
+ * @example
+ * ```ts
+ * import { onAssertionFailure } from "fluid-framework/alpha";
+ *
+ * let firstAssertion: Error | undefined;
+ *
+ * onAssertionFailure((error: Error) => {
+ * 	const priorErrorNote =
+ * 		firstAssertion === undefined
+ * 			? "Please report this bug."
+ * 			: `Might be caused due to prior error ${JSON.stringify(firstAssertion.message)} which should be investigated first.`;
+ * 	const message = `Encountered Bug in Fluid Framework: ${error.message}\n${priorErrorNote}\n${error.stack}`;
+ * 	console.error(message);
+ *
+ * 	debugger;
+ * 	firstAssertion ??= error;
+ * });
+ * ```
  * @alpha
  */
 export function onAssertionFailure(handler: (error: Error) => void): () => void {
