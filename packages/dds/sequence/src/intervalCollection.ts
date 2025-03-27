@@ -69,6 +69,8 @@ import {
 
 export const reservedIntervalIdKey = "intervalId";
 
+export type ISerializedIntervalCollectionV1 = ISerializedInterval[];
+
 export interface ISerializedIntervalCollectionV2 {
 	label: string;
 	version: 2;
@@ -339,7 +341,12 @@ export class LocalIntervalCollection {
 		return newInterval;
 	}
 
-	public serialize(): ISerializedIntervalCollectionV2 {
+	public serialize(
+		version: "1" | "2",
+	): ISerializedIntervalCollectionV1 | ISerializedIntervalCollectionV2 {
+		if (version === "1") {
+			return Array.from(this.idIntervalIndex, (interval) => interval.serialize());
+		}
 		return {
 			label: this.label,
 			intervals: Array.from(this.idIntervalIndex, (interval) =>
@@ -2018,12 +2025,14 @@ export class IntervalCollection
 		}
 	}
 
-	public serializeInternal(): ISerializedIntervalCollectionV2 {
+	public serializeInternal(
+		version: "1" | "2",
+	): ISerializedIntervalCollectionV1 | ISerializedIntervalCollectionV2 {
 		if (!this.localCollection) {
 			throw new LoggingError("attachSequence must be called");
 		}
 
-		return this.localCollection.serialize();
+		return this.localCollection.serialize(version);
 	}
 
 	/**

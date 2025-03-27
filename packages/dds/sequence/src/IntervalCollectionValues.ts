@@ -16,8 +16,9 @@ export function makeSerializable(
 	localValue: IntervalCollection,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
+	version: "1" | "2",
 ): ISerializableIntervalCollection {
-	const storedValueType = localValue.serializeInternal();
+	const storedValueType = localValue.serializeInternal(version);
 
 	const value = serializeHandles(storedValueType, serializer, bind);
 	return {

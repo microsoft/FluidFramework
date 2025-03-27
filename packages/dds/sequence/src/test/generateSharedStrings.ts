@@ -20,6 +20,7 @@ export const supportedVersions = new Map<string, any>([
 	["legacy", { catchUpBlobName: "randomNameForCatchUpOps" }],
 	["legacyWithCatchUp", {}],
 	["v1", { newMergeTreeSnapshotFormat: true }],
+	["v1Intervals", { intervalSerializationFormat: "1" }],
 ]);
 
 function createIntervals(sharedString) {
@@ -52,6 +53,8 @@ export function* generateStrings(): Generator<{
 			return string;
 		};
 
+		const normalized = version !== "v1Intervals";
+
 		for (const key of Object.keys(options)) {
 			dataStoreRuntime.options[key] = options[key];
 		}
@@ -66,7 +69,7 @@ export function* generateStrings(): Generator<{
 		yield {
 			snapshotPath: `${version}/headerOnly`,
 			expected: sharedString,
-			snapshotIsNormalized: true,
+			snapshotIsNormalized: normalized,
 		};
 
 		sharedString = createNewSharedString();
@@ -78,7 +81,7 @@ export function* generateStrings(): Generator<{
 		yield {
 			snapshotPath: `${version}/headerAndBody`,
 			expected: sharedString,
-			snapshotIsNormalized: true,
+			snapshotIsNormalized: normalized,
 		};
 
 		sharedString = createNewSharedString();
@@ -90,7 +93,7 @@ export function* generateStrings(): Generator<{
 		yield {
 			snapshotPath: `${version}/largeBody`,
 			expected: sharedString,
-			snapshotIsNormalized: true,
+			snapshotIsNormalized: normalized,
 		};
 
 		sharedString = createNewSharedString();
@@ -110,7 +113,7 @@ export function* generateStrings(): Generator<{
 		yield {
 			snapshotPath: `${version}/withMarkers`,
 			expected: sharedString,
-			snapshotIsNormalized: true,
+			snapshotIsNormalized: normalized,
 		};
 
 		sharedString = createNewSharedString();
@@ -125,7 +128,7 @@ export function* generateStrings(): Generator<{
 		yield {
 			snapshotPath: `${version}/withAnnotations`,
 			expected: sharedString,
-			snapshotIsNormalized: true,
+			snapshotIsNormalized: normalized,
 		};
 
 		sharedString = createNewSharedString();
@@ -139,7 +142,22 @@ export function* generateStrings(): Generator<{
 		yield {
 			snapshotPath: `${version}/withIntervals`,
 			expected: sharedString,
-			snapshotIsNormalized: true,
+			snapshotIsNormalized: normalized,
 		};
+
+		if (version === "v1Intervals") {
+			sharedString = createNewSharedString();
+			// SharedString with V1 intervals
+			for (let i = 0; i < Snapshot.sizeOfFirstChunk / insertText.length / 2; i++) {
+				sharedString.insertText(0, `${insertText}${i}`);
+			}
+			createIntervals(sharedString);
+
+			yield {
+				snapshotPath: `${version}/withV1Intervals`,
+				expected: sharedString,
+				snapshotIsNormalized: normalized,
+			};
+		}
 	}
 }

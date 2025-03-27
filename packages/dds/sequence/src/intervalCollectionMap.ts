@@ -138,16 +138,17 @@ export class IntervalCollectionMap {
 		return localValue;
 	}
 
-	public getSerializableStorage(serializer: IFluidSerializer): IMapDataObjectSerializable {
+	public serialize(serializer: IFluidSerializer): string {
 		const serializableMapData: IMapDataObjectSerializable = {};
 		this.data.forEach((localValue, key) => {
-			serializableMapData[key] = makeSerializable(localValue, serializer, this.handle);
+			serializableMapData[key] = makeSerializable(
+				localValue,
+				serializer,
+				this.handle,
+				this.options?.intervalSerializationFormat ?? "2",
+			);
 		});
-		return serializableMapData;
-	}
-
-	public serialize(serializer: IFluidSerializer): string {
-		return JSON.stringify(this.getSerializableStorage(serializer));
+		return JSON.stringify(serializableMapData);
 	}
 
 	/**

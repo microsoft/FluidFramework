@@ -8,7 +8,11 @@ import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/in
 import type { IMergeTreeOptions } from "@fluidframework/merge-tree/internal";
 import { ISharedObjectEvents } from "@fluidframework/shared-object-base/internal";
 
-import type { IntervalCollection } from "./intervalCollection.js";
+import type {
+	IntervalCollection,
+	ISerializedIntervalCollectionV1,
+	ISerializedIntervalCollectionV2,
+} from "./intervalCollection.js";
 import {
 	ISerializedInterval,
 	IntervalDeltaOpType,
@@ -84,6 +88,8 @@ export interface SequenceOptions
 	 * The default value is false.
 	 */
 	intervalStickinessEnabled: boolean;
+
+	intervalSerializationFormat: "1" | "2";
 }
 
 /**
@@ -185,7 +191,7 @@ export interface ISerializableIntervalCollection {
 	/**
 	 * The JSONable representation of the value.
 	 */
-	value: any;
+	value: ISerializedIntervalCollectionV1 | ISerializedIntervalCollectionV2;
 }
 
 export interface ISerializedIntervalCollection {
