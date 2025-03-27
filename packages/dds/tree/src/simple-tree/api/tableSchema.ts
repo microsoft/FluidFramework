@@ -33,11 +33,13 @@ export interface CellKey {
 }
 
 export interface IColumn {
+	readonly id: string;
 	readonly index: number;
 	readonly moveTo: (index: number) => void;
 }
 
 export interface IRow<TCell extends readonly TreeNodeSchema[], TColumn extends IColumn> {
+	readonly id: string;
 	readonly index: number;
 	readonly getCell: (column: TColumn) => TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 	readonly setCell: (
@@ -132,6 +134,90 @@ export function createTableSchema<
 	type CellInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TCell>;
 
 	/**
+	 * Get the parent table of the provided column.
+	 * @throws Throws an error if the column is not in a table.
+	 */
+	function getTableParentOfColumn(column: Column): Table {
+		const parent = Tree.parent(column);
+		if (parent !== undefined) {
+			const grandparent = Tree.parent(parent);
+			if (grandparent instanceof Table) {
+				return grandparent as Table;
+			}
+		}
+		throw new Error("Column is not in a table");
+	}
+
+	/**
+	 * {@link Column} fields.
+	 * @remarks Extracted for re-use in returned type signature defined later in this function.
+	 * The implicit typing is intentional.
+	 */
+	const columnFields = {
+		id: sf.identifier,
+		props: columnProps ?? sf.null,
+	};
+
+	/**
+	 * The Column schema - this can include more properties as needed *
+	 */
+	class Column extends sf.object("Column", columnFields) implements IColumn {
+		/**
+		 * Get the index of the column in the table
+		 * @returns The index of the column in the table
+		 */
+		public get index(): number {
+			const columns = getTableParentOfColumn(this).columns;
+			if (columns !== undefined) {
+				return columns.indexOf(this);
+			}
+			throw new Error("Column is not in a table");
+		}
+
+		/**
+		 * Move a column to a new location
+		 * @param index - The index to move the column to
+		 */
+		public moveTo(index: number): void {
+			const columns = getTableParentOfColumn(this).columns;
+
+			// If the index is greater than the current index, move it to the right
+			const adjustedIndex = index > this.index ? index + 1 : index;
+
+			// Make sure the index is within the bounds of the table
+			if (adjustedIndex < 0 && this.index > 0) {
+				columns.moveToStart(this.index);
+				return;
+			}
+			if (adjustedIndex > columns.length - 1 && this.index < columns.length - 1) {
+				columns.moveToEnd(this.index);
+				return;
+			}
+			if (adjustedIndex < 0 || adjustedIndex >= columns.length) {
+				// TODO: what do array nodes do in this case? We should probably do the same here.
+				return; // If the index is out of bounds, do nothing
+			}
+			columns.moveToIndex(adjustedIndex, this.index);
+		}
+	}
+
+	type ColumnNodeType = TreeNode & IColumn;
+
+	// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
+	// for the private brand field of TreeNode.
+	// This numeric id doesn't seem to be stable over incremental builds, and thus causes diffs in the API extractor reports.
+	// This is avoided by doing this type conversion.
+	// The conversion is done via assignment instead of `as` to get stronger type safety.
+	const ColumnSchemaType: TreeNodeSchemaClass<
+		/* Name */ ScopedSchemaName<TScope, "Column">,
+		/* Kind */ NodeKind.Object,
+		/* TNode */ ColumnNodeType,
+		/* TInsertable */ object & InsertableObjectFromSchemaRecord<typeof columnFields>,
+		/* ImplicitlyConstructable */ true,
+		/* Info */ typeof columnFields
+	> = Column;
+
+	/**
 	 * Get the parent table of the provided row.
 	 * @throws Throws an error if the row is not in a table.
 	 */
@@ -155,13 +241,13 @@ export function createTableSchema<
 			_cells: sf.map(schemaTypes), // The keys of this map are the column ids - this would ideally be private
 			props: rowProps ?? sf.null,
 		})
-		implements IRow<TCell, Column>
+		implements IRow<TCell, ColumnNodeType>
 	{
 		/** Get a cell by the column
 		 * @param column - The column
 		 * @returns The cell if it exists, otherwise undefined
 		 */
-		public getCell(column: Column): CellValueType | undefined {
+		public getCell(column: ColumnNodeType): CellValueType | undefined {
 			return this._cells.get(column.id) as CellValueType | undefined;
 		}
 
@@ -170,7 +256,7 @@ export function createTableSchema<
 		 * @param column - The column
 		 * @param value - The value to set
 		 */
-		public setCell(column: Column, value: CellInsertableType | undefined): void {
+		public setCell(column: ColumnNodeType, value: CellInsertableType | undefined): void {
 			this._cells.set(column.id, value);
 		}
 
@@ -178,7 +264,7 @@ export function createTableSchema<
 		 * Delete a cell from the row
 		 * @param column - The column
 		 */
-		public deleteCell(column: Column): void {
+		public deleteCell(column: ColumnNodeType): void {
 			if (!this._cells.has(column.id)) return;
 			this._cells.delete(column.id);
 		}
@@ -219,72 +305,13 @@ export function createTableSchema<
 	}
 
 	/**
-	 * Get the parent table of the provided column.
-	 * @throws Throws an error if the column is not in a table.
+	 * {@link Table} fields.
+	 * @remarks Extracted for re-use in returned type signature defined later in this function.
+	 * The implicit typing is intentional.
 	 */
-	function getTableParentOfColumn(column: Column): Table {
-		const parent = Tree.parent(column);
-		if (parent !== undefined) {
-			const grandparent = Tree.parent(parent);
-			if (grandparent instanceof Table) {
-				return grandparent as Table;
-			}
-		}
-		throw new Error("Column is not in a table");
-	}
-
-	/**
-	 * The Column schema - this can include more properties as needed *
-	 */
-	class Column
-		extends sf.object("Column", {
-			id: sf.identifier,
-			props: columnProps ?? sf.null,
-		})
-		implements IColumn
-	{
-		/**
-		 * Get the index of the column in the table
-		 * @returns The index of the column in the table
-		 */
-		public get index(): number {
-			const columns = getTableParentOfColumn(this).columns;
-			if (columns !== undefined) {
-				return columns.indexOf(this);
-			}
-			throw new Error("Column is not in a table");
-		}
-
-		/**
-		 * Move a column to a new location
-		 * @param index - The index to move the column to
-		 */
-		public moveTo(index: number): void {
-			const columns = getTableParentOfColumn(this).columns;
-
-			// If the index is greater than the current index, move it to the right
-			const adjustedIndex = index > this.index ? index + 1 : index;
-
-			// Make sure the index is within the bounds of the table
-			if (adjustedIndex < 0 && this.index > 0) {
-				columns.moveToStart(this.index);
-				return;
-			}
-			if (adjustedIndex > columns.length - 1 && this.index < columns.length - 1) {
-				columns.moveToEnd(this.index);
-				return;
-			}
-			if (adjustedIndex < 0 || adjustedIndex >= columns.length) {
-				// TODO: what do array nodes do in this case? We should probably do the same here.
-				return; // If the index is out of bounds, do nothing
-			}
-			columns.moveToIndex(adjustedIndex, this.index);
-		}
-	}
-
 	const tableFields = {
 		rows: sf.array(Row),
-		columns: sf.array(Column),
+		columns: sf.array(ColumnSchemaType),
 	};
 
 	/**
@@ -292,7 +319,7 @@ export function createTableSchema<
 	 */
 	class Table
 		extends sf.object("Table", tableFields)
-		implements ITable<TCell, Column, Row>
+		implements ITable<TCell, ColumnNodeType, Row>
 	{
 		/**
 		 * Get a row by the id
@@ -370,7 +397,10 @@ export function createTableSchema<
 		 * @param index - The index to insert the column at
 		 * @param name - The name of the column
 		 */
-		public insertColumn({ index, column }: InsertColumnParameters<Column>): Column {
+		public insertColumn({
+			index,
+			column,
+		}: InsertColumnParameters<ColumnNodeType>): ColumnNodeType {
 			this.columns.insertAt(index, column);
 			return column;
 		}
@@ -379,7 +409,7 @@ export function createTableSchema<
 		 * Get a column by the id
 		 * @param id - The id of the column
 		 */
-		public getColumn(id: string): Column | undefined {
+		public getColumn(id: string): ColumnNodeType | undefined {
 			return this.columns.find((column) => column.id === id);
 		}
 
@@ -388,7 +418,7 @@ export function createTableSchema<
 		 * DOES NOT DELETE THE CELLS IN THE ROWS
 		 * @param column - The column to delete
 		 */
-		public removeColumn(column: Column): void {
+		public removeColumn(column: ColumnNodeType): void {
 			const index = this.columns.indexOf(column);
 			// If the column is not in the table, do nothing
 			if (index === -1) return;
@@ -396,22 +426,21 @@ export function createTableSchema<
 		}
 	}
 
-		type TableNodeType = TreeNode & ITable<TCell, Column, Row>;
+	type TableNodeType = TreeNode & ITable<TCell, ColumnNodeType, Row>;
 
-		// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
-		// for the private brand field of TreeNode.
-		// This numeric id doesn't seem to be stable over incremental builds, and thus causes diffs in the API extractor reports.
-		// This is avoided by doing this type conversion.
-		// The conversion is done via assignment instead of `as` to get stronger type safety.
-		const tableReturnType: TreeNodeSchemaClass<
-			/* Name */ ScopedSchemaName<TScope, "Table">, // TODO
-			/* Kind */ NodeKind.Object,
-			/* TNode */ TableNodeType,
-			/* TInsertable */ object & InsertableObjectFromSchemaRecord<typeof tableFields>,
-			/* ImplicitlyConstructable */ true,
-			/* Info */ typeof tableFields // TODO
-			/* TConstructorExtra */ // never
-		> = Table;
+	// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
+	// for the private brand field of TreeNode.
+	// This numeric id doesn't seem to be stable over incremental builds, and thus causes diffs in the API extractor reports.
+	// This is avoided by doing this type conversion.
+	// The conversion is done via assignment instead of `as` to get stronger type safety.
+	const tableReturnType: TreeNodeSchemaClass<
+		/* Name */ ScopedSchemaName<TScope, "Table">,
+		/* Kind */ NodeKind.Object,
+		/* TNode */ TableNodeType,
+		/* TInsertable */ object & InsertableObjectFromSchemaRecord<typeof tableFields>,
+		/* ImplicitlyConstructable */ true,
+		/* Info */ typeof tableFields
+	> = Table;
 
 	// Return the table schema
 	return tableReturnType;
