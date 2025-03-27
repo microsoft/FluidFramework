@@ -29,16 +29,16 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 	 */
 	protected readonly pendingRemoteMessages: ISequencedDocumentMessage[] = [];
 
+	/**
+	 * Returns the connection state of the container runtime.
+	 * Any messages that are submitted while not connected will be resubmitted when it reconnects via the resubmit flow.
+	 * Any messages received while disconnected will be processed when it reconnects.
+	 * Also, the clientId of the runtime will change on reconnection.
+	 */
 	public get connected(): boolean {
 		return this._connected;
 	}
 
-	/**
-	 * Sets the connection state of the container runtime.
-	 * Any messages that are submitted while disconnected will be resubmitted when it reconnects via the resubmit flow.
-	 * Any messages received while disconnected will be processed when it reconnects.
-	 * Also, the clientId of the runtime will change on reconnection.
-	 */
 	public set connected(connected: boolean) {
 		this.setConnectedState(connected);
 	}
