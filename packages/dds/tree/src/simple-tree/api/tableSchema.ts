@@ -6,16 +6,17 @@
 import { oob } from "@fluidframework/core-utils/internal";
 import { Tree } from "../../shared-tree/index.js";
 import { TreeArrayNode } from "../arrayNode.js";
-import {
+import type {
 	// TODO: create and export SystemTypes to replace "InternalExports"
 	// eslint-disable-next-line import/no-deprecated, @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
 	typeNameSymbol,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
 	typeSchemaSymbol,
-	type NodeKind,
-	type TreeNode,
-	type TreeNodeSchema,
-	type TreeNodeSchemaClass,
+	NodeKind,
+	TreeNode,
+	TreeNodeSchema,
+	TreeNodeSchemaClass,
+	WithType,
 } from "../core/index.js";
 import type {
 	InsertableTreeNodeFromImplicitAllowedTypes,
@@ -111,7 +112,9 @@ export interface TableSchemaProps<
 	TRowProps extends readonly TreeNodeSchema[],
 	Scope extends string | undefined,
 > {
+	// TODO: rename: "schemaFactory"
 	readonly sf: SchemaFactory<Scope>;
+	// TODO: rename: "cellTypes"
 	readonly schemaTypes: TCell;
 	readonly columnProps?: TColumnProps;
 	readonly rowProps?: TRowProps;
@@ -121,6 +124,7 @@ export interface TableSchemaProps<
  * TODO
  * @alpha
  */
+// TODO: record-like type parameters
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 export function createTableSchema<
 	const TCell extends readonly TreeNodeSchema[],
@@ -203,7 +207,7 @@ export function createTableSchema<
 		}
 	}
 
-	type ColumnNodeType = TreeNode & IColumn;
+	type ColumnNodeType = TreeNode & IColumn & WithType<ScopedSchemaName<TScope, "Column">>;
 
 	// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
 	// for the private brand field of TreeNode.
@@ -315,7 +319,9 @@ export function createTableSchema<
 		}
 	}
 
-	type RowNodeType = TreeNode & IRow<TCell, ColumnNodeType>;
+	type RowNodeType = TreeNode &
+		IRow<TCell, ColumnNodeType> &
+		WithType<ScopedSchemaName<TScope, "Row">>;
 
 	// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
 	// for the private brand field of TreeNode.
@@ -458,7 +464,9 @@ export function createTableSchema<
 		}
 	}
 
-	type TableNodeType = TreeNode & ITable<TCell, ColumnNodeType, RowNodeType>;
+	type TableNodeType = TreeNode &
+		ITable<TCell, ColumnNodeType, RowNodeType> &
+		WithType<ScopedSchemaName<TScope, "Table">>;
 
 	// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
 	// for the private brand field of TreeNode.
