@@ -364,8 +364,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     submitSignal(type: string, content: any): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandleInternal<ArrayBufferLike>>;
-    // (undocumented)
-    uploadBlobExperiment(blob: ArrayBufferLike): Promise<IFluidHandleInternal<ArrayBufferLike>>;
 }
 
 // @alpha
@@ -496,8 +494,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
-    // (undocumented)
-    uploadBlobExperiment(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
     // (undocumented)
     get visibilityState(): VisibilityState;
     // (undocumented)

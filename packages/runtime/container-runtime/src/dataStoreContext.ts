@@ -1071,12 +1071,6 @@ export abstract class FluidDataStoreContext
 	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		return this.parentContext.uploadBlob(blob, signal);
 	}
-
-	public async uploadBlobExperiment(
-		blob: ArrayBufferLike,
-	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
-		return this.parentContext.uploadBlobExperiment(blob);
-	}
 }
 
 /**

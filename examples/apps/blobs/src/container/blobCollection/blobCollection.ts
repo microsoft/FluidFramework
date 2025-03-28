@@ -104,15 +104,9 @@ export class BlobCollectionFactory implements IFluidDataStoreFactory {
 	): Promise<IFluidDataStoreChannel> {
 		const provideEntryPoint = async (entryPointRuntime: IFluidDataStoreRuntime) => {
 			const map = (await entryPointRuntime.getChannel(mapId)) as ISharedMap;
-			return new BlobCollection(map, async (arrayBuffer: ArrayBufferLike) => {
-				if (Math.random() < 0.5) {
-					console.log("Normal");
-					return entryPointRuntime.uploadBlob(arrayBuffer);
-				} else {
-					console.log("Experimental");
-					return entryPointRuntime.uploadBlobExperiment(arrayBuffer);
-				}
-			});
+			return new BlobCollection(map, async (arrayBuffer: ArrayBufferLike) =>
+				entryPointRuntime.uploadBlob(arrayBuffer),
+			);
 		};
 
 		const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(

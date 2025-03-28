@@ -41,7 +41,6 @@ import {
 	LoggingError,
 	MonitoringContext,
 	PerformanceEvent,
-	// UsageError,
 	createChildMonitoringContext,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";

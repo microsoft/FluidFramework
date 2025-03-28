@@ -4116,14 +4116,7 @@ export class ContainerRuntime
 		signal?: AbortSignal,
 	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		this.verifyNotClosed();
-		return this.blobManager.createBlobExperiment(blob);
-	}
-
-	public async uploadBlobExperiment(
-		blob: ArrayBufferLike,
-	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
-		this.verifyNotClosed();
-		return this.blobManager.createBlobExperiment(blob);
+		return this.blobManager.createBlob(blob, signal);
 	}
 
 	private submitIdAllocationOpIfNeeded(resubmitOutstandingRanges: boolean): void {
