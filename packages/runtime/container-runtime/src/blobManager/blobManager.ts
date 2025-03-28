@@ -381,7 +381,8 @@ export class BlobManager {
 		} else {
 			const attachedStorageId = this.redirectTable.get(blobId);
 			// If we didn't find it in the redirectTable, assume it's a blob placeholder. In that case,
-			// just assume the attach op is coming eventually and wait.
+			// just assume the attach op is coming eventually and wait. We do this even if the local client
+			// doesn't have the blob placeholder flag enabled, in case a remote client does have it enabled.
 			storageId =
 				attachedStorageId ??
 				(await new Promise<string>((resolve) => {
@@ -449,6 +450,15 @@ export class BlobManager {
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
 	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
+		return this.mc.config.getBoolean("Fluid.Runtime.UploadBlobPlaceholders") === true
+			? this.createBlobPlaceholder(blob)
+			: this.createBlobLegacy(blob, signal);
+	}
+
+	private async createBlobLegacy(
+		blob: ArrayBufferLike,
+		signal?: AbortSignal,
+	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		if (this.runtime.attachState === AttachState.Detached) {
 			return this.createBlobDetached(blob);
 		}
@@ -492,11 +502,7 @@ export class BlobManager {
 		});
 	}
 
-	public createBlobExperiment(blob: ArrayBufferLike): IFluidHandleInternal<ArrayBufferLike> {
-		// if (this.runtime.attachState === AttachState.Detached) {
-		// 	throw new UsageError("createBlobExperiment() not supported in detached state");
-		// }
-
+	private createBlobPlaceholder(blob: ArrayBufferLike): IFluidHandleInternal<ArrayBufferLike> {
 		const localId = this.localBlobIdGenerator();
 
 		return new BlobHandle(
