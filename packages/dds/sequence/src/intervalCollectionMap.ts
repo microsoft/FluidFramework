@@ -136,7 +136,7 @@ export class IntervalCollectionMap {
 	 * {@inheritDoc ISharedMap.get}
 	 */
 	public get(key: string): IntervalCollection {
-		const localValue = this.data.get(key) ?? this.createCore(key, undefined);
+		const localValue = this.data.get(key) ?? this.createCore(key, true);
 
 		return localValue;
 	}
@@ -184,7 +184,7 @@ export class IntervalCollectionMap {
 				0x2e1 /* "Support for plain value types removed." */,
 			);
 
-			this.createCore(normalizedKey, serializable.value);
+			this.createCore(normalizedKey, false, serializable.value);
 		}
 	}
 
@@ -273,7 +273,7 @@ export class IntervalCollectionMap {
 		localOpMetadata: unknown,
 	): boolean {
 		if (isMapOperation(op)) {
-			const localValue = this.data.get(op.key) ?? this.createCore(op.key, []);
+			const localValue = this.data.get(op.key) ?? this.createCore(op.key, local);
 			const handler = opsMap[op.value.opName];
 			const previousValue = localValue;
 			const translatedValue = op.value.value as any;
@@ -293,14 +293,11 @@ export class IntervalCollectionMap {
 	 * Initializes a default ValueType at the provided key.
 	 * Should be used when a map operation incurs creation.
 	 * @param key - The key being initialized
-	 * @param local - Whether the message originated from the local client
 	 */
 	private createCore(
 		key: string,
-		serializedIntervals:
-			| ISerializedIntervalCollectionV1
-			| ISerializedIntervalCollectionV2
-			| undefined,
+		local: boolean,
+		serializedIntervals?: ISerializedIntervalCollectionV1 | ISerializedIntervalCollectionV2,
 	): IntervalCollection {
 		const localValue = new IntervalCollection(
 			(op, md) => {
@@ -319,12 +316,7 @@ export class IntervalCollectionMap {
 			this.options,
 		);
 		this.data.set(key, localValue);
-		this.eventEmitter.emit(
-			"createIntervalCollection",
-			key,
-			serializedIntervals === undefined,
-			this.eventEmitter,
-		);
+		this.eventEmitter.emit("createIntervalCollection", key, local, this.eventEmitter);
 		return localValue;
 	}
 }
