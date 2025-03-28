@@ -71,8 +71,8 @@ import type {
 	TreeArrayNodeUnsafe,
 	TreeMapNodeUnsafe,
 	TreeObjectNodeUnsafe,
-	Unenforced,
 	ImplicitAllowedTypesUnsafe,
+	ImplicitFieldSchemaUnsafe,
 } from "./typesUnsafe.js";
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
 import { isLazy } from "../flexList.js";
@@ -282,10 +282,13 @@ export const schemaStatics = {
 	 * This version of {@link schemaStatics.optional} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
 	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
 	 */
-	optionalRecursive: <const T extends ImplicitAllowedTypesUnsafe>(
+	optionalRecursive: <
+		const T extends ImplicitAllowedTypesUnsafe,
+		const TCustomMetadata = unknown,
+	>(
 		t: T,
-		props?: Omit<FieldProps, "defaultProvider">,
-	): FieldSchemaUnsafe<FieldKind.Optional, T> => {
+		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	): FieldSchemaUnsafe<FieldKind.Optional, T, TCustomMetadata> => {
 		return createFieldSchemaUnsafe(FieldKind.Optional, t, props);
 	},
 
@@ -296,10 +299,13 @@ export const schemaStatics = {
 	 * This version of {@link schemaStatics.required} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
 	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
 	 */
-	requiredRecursive: <const T extends ImplicitAllowedTypesUnsafe>(
+	requiredRecursive: <
+		const T extends ImplicitAllowedTypesUnsafe,
+		const TCustomMetadata = unknown,
+	>(
 		t: T,
-		props?: Omit<FieldProps, "defaultProvider">,
-	): FieldSchemaUnsafe<FieldKind.Required, T> => {
+		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	): FieldSchemaUnsafe<FieldKind.Required, T, TCustomMetadata> => {
 		return createFieldSchemaUnsafe(FieldKind.Required, t, props);
 	},
 } as const;
@@ -935,7 +941,7 @@ export class SchemaFactory<
 	 */
 	public objectRecursive<
 		const Name extends TName,
-		const T extends RestrictiveStringRecord<Unenforced<ImplicitFieldSchema>>,
+		const T extends RestrictiveStringRecord<ImplicitFieldSchemaUnsafe>,
 	>(
 		name: Name,
 		t: T,
