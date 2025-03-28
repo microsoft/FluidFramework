@@ -24,11 +24,13 @@ import { ISharedString } from "../sharedString.js";
 import { IntervalIndex, type SequenceIntervalIndex } from "./intervalIndex.js";
 
 /**
+ * The generic version of this interface is deprecated and will be removed in a future release.
+ * Use {@link ISequenceOverlappingIntervalsIndex} instead.
  * @legacy
  * @alpha
  * @privateremarks
- * TODO AB#34436 - This should be deprecated but we need to wait until the Pages codebase is already using
- * the alternative ({@link ISequenceOverlappingIntervalsIndex}) so the integration pipeline doesn't break.
+ * TODO AB#34436 - Can't add a deprecated tag until the Pages codebase is already using
+ * the alternative so the integration pipeline doesn't break.
  */
 export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 	extends IntervalIndex<TInterval> {
