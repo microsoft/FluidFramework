@@ -203,7 +203,7 @@ describe("Agent Editing Integration 2", () => {
 		const fd = openSync(`llm_log_${timestamp}.md`, "w");
 		await agent.runCodeFromPrompt(
 			"Please add a comment to the word 'treat' that says 'Makes me think of Halloween :)'",
-			{ logger: (l) => appendFileSync(fd, l, { encoding: "utf8" }) },
+			{ log: (l) => appendFileSync(fd, l, { encoding: "utf8" }) },
 		);
 
 		closeSync(fd);

@@ -164,11 +164,19 @@ describe("Agent Editing Integration 1", () => {
 		const agent = new SharedTreeSemanticAgent(client, asTreeViewAlpha(view));
 		const timestamp = new Date().toISOString().replace(/[.:]/g, "-");
 		const fd = openSync(`llm_log_${timestamp}.md`, "w");
-		await agent.runCodeFromPrompt(
-			"Please organize the sessions so that the ones for adults are on the first day, and the ones that kids would find enjoyable are on the second day. If one day has more sessions than the other, please add new sessions (that fit the theme of the day) until they are balanced.",
-			{ logger: (l) => appendFileSync(fd, l, { encoding: "utf8" }) },
-		);
+		await agent.runCodeFromPrompt(prompts.complicated, {
+			log: (l) => appendFileSync(fd, l, { encoding: "utf8" }),
+		});
 
 		closeSync(fd);
 	});
 });
+
+const prompts = {
+	unrelated: "What is the cultural impact of SpongeBob SquarePants?",
+	question: "What do you think about Roblox? Is it a good game?",
+	organize:
+		"Please organize the sessions so that the ones for adults are on the first day, and the ones that kids would find enjoyable are on the second day. If one day has more sessions than the other, please add new sessions (that fit the theme of the day) until they are balanced.",
+	complicated:
+		"Overhaul the entire conference. It needs to be longer, enough to fill up the whole week. Make sure there are at least three sessions per day - you may re-use the existing sessions in addition to adding more. We need some sessions for executives (revenue reports, quarterly planning, etc.) - the current ones are either technical, or for kids. Keep the sessions for executives on the same day or within two adjacent days. Finally, the conference is going to be in Chicago, so weave some Chicago references into three or four of the sessions. When you're done with that, please let me know - do you think this conference will be successful? Will people want to attend it, and why?",
+};

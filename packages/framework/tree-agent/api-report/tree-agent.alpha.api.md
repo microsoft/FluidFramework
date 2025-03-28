@@ -28,7 +28,7 @@ export class SharedTreeSemanticAgent<TRoot extends ImplicitFieldSchema> {
     // (undocumented)
     runCodeFromPrompt(prompt: string, args?: {
         validator?: (js: string) => boolean;
-        logger?: Log;
+        log?: Log;
     }): Promise<void>;
     // (undocumented)
     readonly treeView: TreeView<TRoot>;

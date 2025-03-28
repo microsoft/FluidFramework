@@ -108,6 +108,8 @@ export function createEditListHistoryPrompt(edits: EditLog): string {
  */
 export function getEditingSystemPrompt(
 	view: Omit<TreeView<ImplicitFieldSchema>, "fork" | "merge">,
+	editingTool: string,
+	thinkingTool: string,
 ): string {
 	// TODO: Support for non-object roots
 	assert(typeof view.root === "object" && view.root !== null && !isFluidHandle(view.root), "");
@@ -138,8 +140,9 @@ export function getEditingSystemPrompt(
 
 	const rootTypes = [...schema.allowedTypesIdentifiers];
 	// TODO: security: user prompt in system prompt
-	const systemPrompt = `You are a collaborative agent who interacts with a JSON tree by performing edits to achieve a user-specified goal.
-Edits are JSON objects that conform to the schema described below. You produce an array of edits where each edit ${topLevelEditWrapperDescription}.
+	const systemPrompt = `${getPreamble(domainSchemaString, editingTool, thinkingTool)}
+	
+If the user asks you to edit the data, you will use the ${editingTool} tool to produce an array of edits where each edit ${topLevelEditWrapperDescription}.
 When creating new objects for \`${insertIntoArrayType}\` or \`${setFieldType}\`, you may create an ${objectIdType} and put it in the \`${objectIdKey}\` property if you want to refer to the object in a later edit.
 For example, if you want to insert a new object into an array and (in a subsequent edit) move another piece of content to after the newly inserted one, you can use the ${objectIdType} of the newly inserted object in the \`${"MoveArrayElement" satisfies Capitalize<MoveArrayElement["type"]>}\` edit.
 New ${objectIdType}s must be unique, i.e. a new object cannot have the same ${objectIdType} as any object that has existed before.
@@ -180,6 +183,8 @@ Finally, double check that the edits would accomplish the user's request (if it 
  */
 export function getFunctioningSystemPrompt(
 	view: Omit<TreeView<ImplicitFieldSchema>, "fork" | "merge">,
+	editingTool: string,
+	thinkingTool: string,
 	editFunctionName: string,
 ): string {
 	const arrayInterfaceName = "TreeArray";
@@ -208,14 +213,14 @@ export function getFunctioningSystemPrompt(
 	const objectIdExplanation =
 		objectsWithIds[0] === undefined
 			? ""
-			: `All objects within the initial tree above have a unique ${objectIdType} in the \`${objectIdKey}\` property.
-You never supply the ${objectIdKey} property when making a new object yourself because the ${objectIdKey} property is only used to refer to objects that exist in the initial tree, not objects that are created later.
-You can use the ${objectIdType} as the lookup key in the readonly JavaScript Map<${objectIdKey}, object>, which is provided via the "idMap" property to the first argument of the ${editFunctionName} function.
+			: `All objects within the initial tree above have a unique \`${objectIdType}\` in the \`${objectIdKey}\` property.
+You never supply the \`${objectIdKey}\` property when making a new object yourself because the \`${objectIdKey}\` property is only used to refer to objects that exist in the initial tree, not objects that are created later.
+You can use the \`${objectIdType}\` as the lookup key in the readonly JavaScript Map<${objectIdKey}, object>, which is provided via the "idMap" property to the first argument of the \`${editFunctionName}\` function.
 For example:
 
 \`\`\`javascript
 function ${editFunctionName}({ root, idMap, create }) {
-	// This retrieves the ${objectsWithIds[0].type} object with the ${objectIdKey} "${objectsWithIds[0].id}" in the initial tree.
+	// This retrieves the ${objectsWithIds[0].type} object with the \`${objectIdKey}\` "${objectsWithIds[0].id}" in the initial tree.
 	const ${uncapitalize(objectsWithIds[0].type)} = idMap.get("${objectsWithIds[0].id}");
 	// ...
 }
@@ -225,7 +230,7 @@ function ${editFunctionName}({ root, idMap, create }) {
 		objectsWithIds[0] === undefined
 			? ""
 			: `When constructing new objects, you should wrap them in the appropriate builder function rather than simply making a javascript object.
-The builders are available on the "create" property on the first argument of the ${editFunctionName} function and are named according to the type that they create.
+The builders are available on the "create" property on the first argument of the \`${editFunctionName}\` function and are named according to the type that they create.
 For example:
 
 \`\`\`javascript
@@ -239,14 +244,9 @@ function ${editFunctionName}({ root, idMap, create }) {
 
 	const rootTypes = [...schema.allowedTypesIdentifiers];
 	// TODO: security: user prompt in system prompt
-	const prompt = `You are a collaborative agent who interacts with a JSON tree by performing edits to achieve a user-specified goal.
-The tree is a JSON object with the following Typescript schema:
+	const prompt = `${getPreamble(domainSchemaString, editingTool, thinkingTool)}
 
-\`\`\`typescript
-${domainSchemaString}
-\`\`\`
-
-Your job is to write a JavaScript function that mutates this object in-place to achieve a user-specified goal.
+If the user asks you to edit the data, you will use the ${editingTool} tool to write a JavaScript function that mutates the data in-place to achieve the user's goal.
 The function must be named "${editFunctionName}".
 The ${editFunctionName} function must have a first parameter which has a \`root\` property that is the JSON object you are to mutate.
 The current state of the \`root\` object is:
@@ -275,6 +275,23 @@ Once data has been removed from the tree (e.g. replaced via assignment, or remov
 ${builderExplanation}Finally, double check that the edits would accomplish the user's request (if it is possible).`;
 
 	return prompt;
+}
+
+function getPreamble(
+	domainSchemaString: string,
+	editingTool: string,
+	thinkingTool: string,
+): string {
+	return `You are a collaborative agent who assists a user with editing and analyzing a JSON tree.
+The tree is a JSON object with the following Typescript schema:
+
+\`\`\`typescript
+${domainSchemaString}
+\`\`\`
+
+If the user asks you a question about the tree, you should inspect the state of the tree and answer the question.
+If the user asks you to edit the tree, you should use the ${editingTool} tool to accomplish the user-specified goal.
+You may also use the ${thinkingTool} tool to help you reason through complex data manipulation tasks before finally invoking the ${editingTool} tool.`;
 }
 
 /**
