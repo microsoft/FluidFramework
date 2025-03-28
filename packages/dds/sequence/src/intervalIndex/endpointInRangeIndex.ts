@@ -28,12 +28,12 @@ import {
  * Provide additional APIs to support efficiently querying a collection of intervals whose endpoints fall within a specified range.
  * @internal
  */
-export interface IEndpointInRangeIndex<SequenceInterval extends ISerializableInterval>
-	extends IntervalIndex<SequenceInterval> {
+export interface IEndpointInRangeIndex<TInterval extends ISerializableInterval>
+	extends IntervalIndex<TInterval> {
 	/**
 	 * @returns an array of all intervals contained in this collection whose endpoints locate in the range [start, end] (includes both ends)
 	 */
-	findIntervalsWithEndpointInRange(start: number, end: number): SequenceInterval[];
+	findIntervalsWithEndpointInRange(start: number, end: number): TInterval[];
 }
 
 export class EndpointInRangeIndex implements IEndpointInRangeIndex<SequenceInterval> {
