@@ -521,11 +521,12 @@ describe("SharedTree benchmarks", () => {
 								sendLocalCommits(sender, bunchSize, "s");
 								sender.containerRuntime.flush();
 
-								const before = state.timer.now();
-								// Resume the receiver and process the bunched commits. This should force the local branch
-								// to be rebased over the bunch.
-								// The receiver will not process its local commits since they were never flushed.
+								// Resume the receiver so it can process the bunched commits from the sender.
 								receiver.containerRuntime.resumeInboundProcessing();
+
+								const before = state.timer.now();
+								// Process the bunched commits. This should force the local branch to be rebased over the bunch.
+								// The receiver will not process its local commits since they were never flushed.
 								provider.synchronizeMessages({ flush: false });
 								const after = state.timer.now();
 								duration = state.timer.toSeconds(before, after);
