@@ -16,7 +16,7 @@ import { ISerializableInterval, type SequenceInterval } from "../intervals/index
  * @legacy
  * @alpha
  *
- * @deprecated The generic version of this interface is no longer used and will be removed. Use {@link SequenceIntervalIndex} instead.
+ * @remarks The generic version of this interface is no longer used and will be removed. Use {@link SequenceIntervalIndex} instead.
  */
 export interface IntervalIndex<TInterval extends ISerializableInterval> {
 	/**

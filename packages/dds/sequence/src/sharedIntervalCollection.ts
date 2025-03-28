@@ -10,7 +10,7 @@ import { ISerializableInterval } from "./intervals/index.js";
 /**
  * @legacy
  * @alpha
- * @deprecated This interface is no longer used and will be removed.
+ * @remarks This interface is no longer used and will be removed.
  */
 export interface ISharedIntervalCollection<TInterval extends ISerializableInterval> {
 	// eslint-disable-next-line import/no-deprecated
