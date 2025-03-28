@@ -589,8 +589,6 @@ describe("Document Dirty", () => {
 			loaderContainerTracker.reset();
 		});
 
-
-
 		it("clears the dirty flag after container is attached", async () => {
 			checkDirtyState("before attach", true, 0);
 
