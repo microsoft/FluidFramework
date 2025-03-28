@@ -15,15 +15,15 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { type ISequenceIntervalCollection } from "../intervalCollection.js";
+import { IIntervalCollection } from "../intervalCollection.js";
 import type { IMapOperation } from "../intervalCollectionMap.js";
-import { IntervalOpType } from "../intervals/index.js";
+import { IntervalOpType, SequenceInterval } from "../intervals/index.js";
 import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
 import { SharedStringClass } from "../sharedString.js";
 
 const assertIntervals = (
 	sharedString: SharedString,
-	intervalCollection: ISequenceIntervalCollection,
+	intervalCollection: IIntervalCollection<SequenceInterval>,
 	expected: readonly { start: number; end: number }[],
 	validateOverlapping: boolean = true,
 ) => {
@@ -75,7 +75,7 @@ describe("Interval Stashed Ops on client ", () => {
 	});
 
 	describe("applyStashedOp", () => {
-		let collection: ISequenceIntervalCollection;
+		let collection: IIntervalCollection<SequenceInterval>;
 		let intervalId: string;
 		const label = "test";
 		let startingInterval;

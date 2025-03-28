@@ -448,7 +448,7 @@ export interface IInterval {
     union(b: IInterval): IInterval;
 }
 
-// @alpha @deprecated
+// @alpha
 export interface IIntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
     // (undocumented)
     [Symbol.iterator](): Iterator<TInterval>;
@@ -489,7 +489,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval> ex
     removeIntervalById(id: string): TInterval | undefined;
 }
 
-// @alpha @deprecated
+// @alpha
 export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
     (event: "changeInterval", listener: (interval: TInterval, previousInterval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined, slide: boolean) => void): void;
     (event: "addInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): void;
@@ -618,7 +618,7 @@ declare namespace InternalTypes {
 }
 export { InternalTypes }
 
-// @alpha @deprecated
+// @alpha
 export interface IntervalIndex<TInterval extends ISerializableInterval> {
     add(interval: TInterval): void;
     remove(interval: TInterval): void;
@@ -675,55 +675,6 @@ export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationT
     position: number;
     propertyDeltas: PropertySet;
     segment: ISegment;
-}
-
-// @alpha
-export interface ISequenceIntervalCollection extends TypedEventEmitter<ISequenceIntervalCollectionEvents> {
-    // (undocumented)
-    [Symbol.iterator](): Iterator<SequenceInterval>;
-    add({ start, end, props, }: {
-        start: SequencePlace;
-        end: SequencePlace;
-        props?: PropertySet;
-    }): SequenceInterval;
-    // (undocumented)
-    attachDeserializer(onDeserialize: DeserializeCallback): void;
-    // (undocumented)
-    readonly attached: boolean;
-    attachIndex(index: SequenceIntervalIndex): void;
-    change(id: string, { start, end, props }: {
-        start?: SequencePlace;
-        end?: SequencePlace;
-        props?: PropertySet;
-    }): SequenceInterval | undefined;
-    // (undocumented)
-    CreateBackwardIteratorWithEndPosition(endPosition: number): Iterator<SequenceInterval>;
-    // (undocumented)
-    CreateBackwardIteratorWithStartPosition(startPosition: number): Iterator<SequenceInterval>;
-    // (undocumented)
-    CreateForwardIteratorWithEndPosition(endPosition: number): Iterator<SequenceInterval>;
-    // (undocumented)
-    CreateForwardIteratorWithStartPosition(startPosition: number): Iterator<SequenceInterval>;
-    detachIndex(index: SequenceIntervalIndex): boolean;
-    // @deprecated (undocumented)
-    findOverlappingIntervals(startPosition: number, endPosition: number): SequenceInterval[];
-    gatherIterationResults(results: SequenceInterval[], iteratesForward: boolean, start?: number, end?: number): void;
-    // (undocumented)
-    getIntervalById(id: string): SequenceInterval | undefined;
-    map(fn: (interval: SequenceInterval) => void): void;
-    // @deprecated (undocumented)
-    nextInterval(pos: number): SequenceInterval | undefined;
-    // @deprecated (undocumented)
-    previousInterval(pos: number): SequenceInterval | undefined;
-    removeIntervalById(id: string): SequenceInterval | undefined;
-}
-
-// @alpha
-export interface ISequenceIntervalCollectionEvents extends IEvent {
-    (event: "changeInterval", listener: (interval: SequenceInterval, previousInterval: SequenceInterval, local: boolean, op: ISequencedDocumentMessage | undefined, slide: boolean) => void): void;
-    (event: "addInterval" | "deleteInterval", listener: (interval: SequenceInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): void;
-    (event: "propertyChanged", listener: (interval: SequenceInterval, propertyDeltas: PropertySet, local: boolean, op: ISequencedDocumentMessage | undefined) => void): void;
-    (event: "changed", listener: (interval: SequenceInterval, propertyDeltas: PropertySet, previousInterval: SequenceInterval | undefined, local: boolean, slide: boolean) => void): void;
 }
 
 // @alpha (undocumented)
@@ -783,7 +734,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
-// @alpha @deprecated (undocumented)
+// @alpha (undocumented)
 export interface ISharedIntervalCollection<TInterval extends ISerializableInterval> {
     // (undocumented)
     getIntervalCollection(label: string): IIntervalCollection<TInterval>;
@@ -815,7 +766,7 @@ export interface ISharedObjectEvents extends IErrorEvent {
 }
 
 // @alpha (undocumented)
-export interface ISharedSegmentSequence<T extends ISegment> extends ISharedObject<ISharedSegmentSequenceEvents>, MergeTreeRevertibleDriver {
+export interface ISharedSegmentSequence<T extends ISegment> extends ISharedObject<ISharedSegmentSequenceEvents>, ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver {
     annotateAdjustRange(start: number, end: number, adjust: MapLike<AdjustParams>): void;
     annotateRange(start: number, end: number, props: PropertySet): void;
     createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
@@ -825,7 +776,7 @@ export interface ISharedSegmentSequence<T extends ISegment> extends ISharedObjec
     };
     // (undocumented)
     getCurrentSeq(): number;
-    getIntervalCollection(label: string): ISequenceIntervalCollection;
+    getIntervalCollection(label: string): IIntervalCollection<SequenceInterval>;
     // (undocumented)
     getIntervalCollectionLabels(): IterableIterator<string>;
     getLength(): number;
@@ -1194,12 +1145,6 @@ export interface SequenceInterval extends ISerializableInterval {
     // (undocumented)
     readonly stickiness: IntervalStickiness;
     union(b: SequenceInterval): SequenceInterval;
-}
-
-// @alpha
-export interface SequenceIntervalIndex {
-    add(interval: SequenceInterval): void;
-    remove(interval: SequenceInterval): void;
 }
 
 // @alpha

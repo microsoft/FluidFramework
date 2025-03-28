@@ -42,7 +42,8 @@ import {
 } from "@fluidframework/merge-tree/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import type {
-	ISequenceIntervalCollection,
+	IIntervalCollection,
+	SequenceInterval,
 	SharedString,
 } from "@fluidframework/sequence/internal";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
@@ -86,7 +87,7 @@ const testEnd = 3;
 
 const assertIntervals = (
 	sharedString: SharedString,
-	intervalCollection: ISequenceIntervalCollection,
+	intervalCollection: IIntervalCollection<SequenceInterval>,
 	expected: readonly { start: number; end: number }[],
 	validateOverlapping: boolean = true,
 ) => {
@@ -196,7 +197,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	let cell1: ISharedCell;
 	let counter1: SharedCounter;
 	let directory1: ISharedDirectory;
-	let collection1: ISequenceIntervalCollection;
+	let collection1: IIntervalCollection<SequenceInterval>;
 
 	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();

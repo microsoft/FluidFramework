@@ -9,8 +9,9 @@ import { isObject } from "@fluidframework/core-utils/internal";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils/internal";
 
-import { ISequenceIntervalCollection } from "../intervalCollection.js";
+import { IIntervalCollection } from "../intervalCollection.js";
 import { createOverlappingIntervalsIndex } from "../intervalIndex/index.js";
+import { SequenceInterval } from "../intervals/index.js";
 import { SharedString } from "../sequenceFactory.js";
 
 export interface Client {
@@ -149,7 +150,7 @@ async function assertPropertiesEqual(a: SharedString, b: SharedString): Promise<
 
 export const assertSequenceIntervals = (
 	sharedString: SharedString,
-	intervalCollection: ISequenceIntervalCollection,
+	intervalCollection: IIntervalCollection<SequenceInterval>,
 	expected: readonly { start: number; end: number }[],
 	validateOverlapping: boolean = true,
 ) => {

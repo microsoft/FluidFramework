@@ -162,9 +162,6 @@ export type {
 	SharedStringSegment,
 	Side,
 	ISharedSegmentSequence,
-	ISequenceIntervalCollection,
-	ISequenceIntervalCollectionEvents,
-	SequenceIntervalIndex,
 } from "@fluidframework/sequence/internal";
 
 export type {

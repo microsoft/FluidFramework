@@ -26,7 +26,7 @@ import { OverlappingIntervalsIndex } from "./overlappingIntervalsIndex.js";
 import { SequenceIntervalIndexes } from "./sequenceIntervalIndexes.js";
 
 class OverlappingSequenceIntervalsIndex
-	extends OverlappingIntervalsIndex
+	extends OverlappingIntervalsIndex<SequenceInterval>
 	implements SequenceIntervalIndexes.Overlapping
 {
 	constructor(client: Client) {

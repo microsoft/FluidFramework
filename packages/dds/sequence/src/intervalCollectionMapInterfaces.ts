@@ -104,7 +104,7 @@ export interface IIntervalCollectionFactory<T extends ISerializableInterval> {
 		emitter: IValueOpEmitter,
 		raw: any,
 		options?: Partial<SequenceOptions>,
-	): IntervalCollection;
+	): IntervalCollection<T>;
 
 	/**
 	 * Given a value type, provides a JSONable form of its data to be used for snapshotting.  This data must be
@@ -112,7 +112,7 @@ export interface IIntervalCollectionFactory<T extends ISerializableInterval> {
 	 * @param value - The value type to serialize
 	 * @returns The JSONable form of the value type
 	 */
-	store(value: IntervalCollection): any;
+	store(value: IntervalCollection<T>): any;
 }
 
 /**
@@ -130,7 +130,7 @@ export interface IIntervalCollectionOperation<T extends ISerializableInterval> {
 	 * @param localOpMetadata - any local metadata submitted by `IValueOpEmitter.emit`.
 	 */
 	process(
-		value: IntervalCollection,
+		value: IntervalCollection<T>,
 		params: ISerializedInterval,
 		local: boolean,
 		message: ISequencedDocumentMessage | undefined,
@@ -146,7 +146,7 @@ export interface IIntervalCollectionOperation<T extends ISerializableInterval> {
 	 * @returns A rebased version of the op and any local metadata that should be submitted with it.
 	 */
 	rebase(
-		value: IntervalCollection,
+		value: IntervalCollection<T>,
 		op: IIntervalCollectionTypeOperationValue,
 		localOpMetadata: IMapMessageLocalMetadata,
 	):

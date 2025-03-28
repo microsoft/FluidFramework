@@ -6,22 +6,26 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { reservedIntervalIdKey } from "../intervalCollection.js";
-import { type SequenceInterval } from "../intervals/index.js";
+import { ISerializableInterval } from "../intervals/index.js";
 
-import { type SequenceIntervalIndex } from "./intervalIndex.js";
+import { IntervalIndex } from "./intervalIndex.js";
 
 /**
  * @internal
  */
-export interface IIdIntervalIndex extends SequenceIntervalIndex, Iterable<SequenceInterval> {
-	getIntervalById(id: string): SequenceInterval | undefined;
+export interface IIdIntervalIndex<TInterval extends ISerializableInterval>
+	extends IntervalIndex<TInterval>,
+		Iterable<TInterval> {
+	getIntervalById(id: string): TInterval | undefined;
 
-	[Symbol.iterator](): Iterator<SequenceInterval>;
+	[Symbol.iterator](): Iterator<TInterval>;
 }
-class IdIntervalIndex implements IIdIntervalIndex, Iterable<SequenceInterval> {
-	private readonly intervalIdMap = new Map<string, SequenceInterval>();
+class IdIntervalIndex<TInterval extends ISerializableInterval>
+	implements IIdIntervalIndex<TInterval>, Iterable<TInterval>
+{
+	private readonly intervalIdMap = new Map<string, TInterval>();
 
-	public add(interval: SequenceInterval) {
+	public add(interval: TInterval) {
 		const id = interval.getIntervalId();
 		assert(
 			id !== undefined,
@@ -36,17 +40,17 @@ class IdIntervalIndex implements IIdIntervalIndex, Iterable<SequenceInterval> {
 		this.intervalIdMap.set(id, interval);
 	}
 
-	public remove(interval: SequenceInterval) {
+	public remove(interval: TInterval) {
 		const id = interval.getIntervalId();
 		assert(id !== undefined, 0x311 /* expected id to exist on interval */);
 		this.intervalIdMap.delete(id);
 	}
 
-	public getIntervalById(id: string): SequenceInterval | undefined {
+	public getIntervalById(id: string): TInterval | undefined {
 		return this.intervalIdMap.get(id);
 	}
 
-	public [Symbol.iterator](): IterableIterator<SequenceInterval> {
+	public [Symbol.iterator](): IterableIterator<TInterval> {
 		return this.intervalIdMap.values();
 	}
 }
@@ -54,6 +58,8 @@ class IdIntervalIndex implements IIdIntervalIndex, Iterable<SequenceInterval> {
 /**
  * @internal
  */
-export function createIdIntervalIndex(): IIdIntervalIndex {
-	return new IdIntervalIndex();
+export function createIdIntervalIndex<
+	TInterval extends ISerializableInterval,
+>(): IIdIntervalIndex<TInterval> {
+	return new IdIntervalIndex<TInterval>();
 }

@@ -14,11 +14,8 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import {
-	intervalLocatorFromEndpoint,
-	type ISequenceIntervalCollection,
-} from "../intervalCollection.js";
-import { IntervalStickiness } from "../intervals/index.js";
+import { IIntervalCollection, intervalLocatorFromEndpoint } from "../intervalCollection.js";
+import { IntervalStickiness, SequenceInterval } from "../intervals/index.js";
 import { SharedStringFactory } from "../sequenceFactory.js";
 import { SharedStringClass, type ISharedString } from "../sharedString.js";
 
@@ -155,8 +152,8 @@ describe("IntervalCollection snapshotting", () => {
 	describe("enables operations on reload", () => {
 		let sharedString: ISharedString;
 		let sharedString2: ISharedString;
-		let collection: ISequenceIntervalCollection;
-		let collection2: ISequenceIntervalCollection;
+		let collection: IIntervalCollection<SequenceInterval>;
+		let collection2: IIntervalCollection<SequenceInterval>;
 		let id: string;
 		beforeEach(async () => {
 			sharedString = await loadSharedString(containerRuntimeFactory, "1", summary);

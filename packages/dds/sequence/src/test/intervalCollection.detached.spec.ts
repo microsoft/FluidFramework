@@ -12,7 +12,8 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { type ISequenceIntervalCollection } from "../intervalCollection.js";
+import { IIntervalCollection } from "../intervalCollection.js";
+import { SequenceInterval } from "../intervals/index.js";
 import { SharedString } from "../sequenceFactory.js";
 
 import { assertEquivalentSharedStrings } from "./intervalTestUtils.js";
@@ -21,7 +22,7 @@ describe("IntervalCollection detached", () => {
 	const factory = SharedString.getFactory();
 	let dataStoreRuntime: MockFluidDataStoreRuntime;
 	let sharedString: SharedString;
-	let collection: ISequenceIntervalCollection;
+	let collection: IIntervalCollection<SequenceInterval>;
 	beforeEach(() => {
 		dataStoreRuntime = new MockFluidDataStoreRuntime();
 		sharedString = factory.create(dataStoreRuntime, "A");

@@ -26,6 +26,7 @@ import {
 } from "../intervalCollectionMapInterfaces.js";
 import {
 	IIntervalHelpers,
+	ISerializableInterval,
 	ISerializedInterval,
 	IntervalOpType,
 	SequenceInterval,
@@ -34,15 +35,17 @@ import {
 import { pkgVersion } from "../packageVersion.js";
 import { SharedStringClass } from "../sharedString.js";
 
-export interface IntervalCollectionInternals {
+export interface IntervalCollectionInternals<TInterval extends ISerializableInterval> {
 	client: Client;
 	savedSerializedIntervals?: ISerializedInterval[];
-	localCollection: LocalIntervalCollection;
+	localCollection: LocalIntervalCollection<SequenceInterval>;
 	getNextLocalSeq(): number;
 }
 
-export class V1IntervalCollection extends IntervalCollection {
-	casted = this as unknown as IntervalCollectionInternals;
+export class V1IntervalCollection<
+	TInterval extends ISerializableInterval,
+> extends IntervalCollection<SequenceInterval> {
+	casted = this as unknown as IntervalCollectionInternals<SequenceInterval>;
 }
 
 class V1SequenceIntervalCollectionFactory
@@ -51,14 +54,14 @@ class V1SequenceIntervalCollectionFactory
 	public load(
 		emitter: IValueOpEmitter,
 		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
-	): V1IntervalCollection {
+	): V1IntervalCollection<SequenceInterval> {
 		const helpers: IIntervalHelpers<SequenceInterval> = {
 			create: createSequenceInterval,
 		};
 		return new V1IntervalCollection(helpers, true, emitter, raw, {});
 	}
 	public store(
-		value: V1IntervalCollection,
+		value: V1IntervalCollection<SequenceInterval>,
 	): ISerializedInterval[] | ISerializedIntervalCollectionV2 {
 		return Array.from(value, (interval) =>
 			interval?.serialize(),
