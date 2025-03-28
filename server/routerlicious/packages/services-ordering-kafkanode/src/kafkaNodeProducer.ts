@@ -153,30 +153,22 @@ export class KafkaNodeProducer implements IProducer {
 
 	private sendBoxcars(boxcars: IPendingBoxcar[]) {
 		for (const boxcar of boxcars) {
-			const boxcarContents = {
+			const boxcarMessage: IBoxcarMessage = {
 				contents: boxcar.messages,
 				documentId: boxcar.documentId,
 				tenantId: boxcar.tenantId,
-			};
-
-			if (boxcarContents) {
-				const boxcarContentMessage = Buffer.from(JSON.stringify(boxcarContents));
-				if (boxcarContentMessage && boxcarContentMessage.byteLength > this.maxMessageSize) {
-					const error = new NetworkError(
-						413,
-						`Boxcar message size (${boxcarContentMessage.byteLength}) exceeded max message size (${this.maxMessageSize})`,
-					);
-					boxcar.deferred.reject(error);
-					continue;
-				}
-			}
-
-			const boxcarMessage: IBoxcarMessage = {
-				...boxcarContents,
 				type: BoxcarType,
 			};
-			const stringifiedMessage = Buffer.from(JSON.stringify(boxcarMessage));
 
+			const stringifiedMessage = Buffer.from(JSON.stringify(boxcarMessage));
+			if (stringifiedMessage.byteLength > this.maxMessageSize) {
+				const error = new NetworkError(
+					413,
+					`Boxcar message size (${stringifiedMessage.byteLength}) exceeded max message size (${this.maxMessageSize})`,
+				);
+				boxcar.deferred.reject(error);
+				continue;
+			}
 			this.producer.send(
 				[{ key: boxcar.documentId, messages: stringifiedMessage, topic: this.topic }],
 				(error, data) => {

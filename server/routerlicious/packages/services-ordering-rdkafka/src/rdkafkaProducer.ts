@@ -326,28 +326,19 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 		const lumberjackProperties = {
 			...getLumberBaseProperties(boxcar.documentId, boxcar.tenantId),
 		};
-		const boxcarContents = {
+		const boxcarMessage: IBoxcarMessage = {
 			contents: boxcar.messages,
 			documentId: boxcar.documentId,
 			tenantId: boxcar.tenantId,
-		};
-		if (boxcarContents) {
-			const boxcarContentMessage = Buffer.from(JSON.stringify(boxcarContents));
-			if (
-				boxcarContentMessage &&
-				boxcarContentMessage.byteLength > this.producerOptions.maxMessageSize
-			) {
-				const error = this.createMessageSizeTooLargeError(boxcar, boxcarContentMessage);
-				boxcar.deferred.reject(error);
-				return;
-			}
-		}
-
-		const boxcarMessage: IBoxcarMessage = {
-			...boxcarContents,
 			type: BoxcarType,
 		};
+
 		const message = Buffer.from(JSON.stringify(boxcarMessage));
+		if (message.byteLength > this.producerOptions.maxMessageSize) {
+			const error = this.createMessageSizeTooLargeError(boxcar, message);
+			boxcar.deferred.reject(error);
+			return;
+		}
 
 		const producer = this.connectedProducer;
 		if (!producer) {
