@@ -157,7 +157,7 @@ describeCompat("Garbage collection of blobs", "NoCompat", (getTestObjectProvider
 			}
 		});
 
-		it.skip("collects blobs uploaded in detached container", async () => {
+		it("collects blobs uploaded in detached container", async () => {
 			// Upload an attachment blob and mark it referenced by storing its handle in a DDS.
 			const blobContents = "Blob contents";
 			const blobHandle = await defaultDataStore._context.uploadBlob(
@@ -215,7 +215,7 @@ describeCompat("Garbage collection of blobs", "NoCompat", (getTestObjectProvider
 			}
 		});
 
-		it.skip("collects blobs uploaded in detached and de-duped in attached container", async () => {
+		it("collects blobs uploaded in detached and de-duped in attached container", async () => {
 			// Upload an attachment blob. We should get a handle with a localId for the blob. Mark it referenced by
 			// storing its handle in a DDS.
 			const blobContents = "Blob contents";
