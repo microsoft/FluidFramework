@@ -128,8 +128,8 @@ export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBase<NodeKind.Leaf
  * To be useful, this generally needs to be used as a part of a complete {@link SimpleTreeSchema}, which
  * contains backing {@link SimpleTreeSchema.definitions} for each referenced identifier.
  *
- * Note that as documented on {@link NodeKind}, more kinds of nodes may be added,
- * and therefor code should not assuming switching over all these cases can be done exhaustively.
+ * Note that, as documented on {@link NodeKind}, more kinds of nodes may be added,
+ * and therefore code should not assume that switching over all these cases can be done exhaustively.
  * @privateRemarks
  * Because of the above mentioned extensibility of node kinds, does it make sense to stabilize this?
  *
