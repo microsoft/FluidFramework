@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { compress } from "lz4js";
 
-import { CompressionAlgorithms } from "../containerRuntime.js";
+import { CompressionAlgorithms } from "../compatUtils.js";
 
 import { estimateSocketSize } from "./batchManager.js";
 import { BatchMessage, IBatch } from "./definitions.js";

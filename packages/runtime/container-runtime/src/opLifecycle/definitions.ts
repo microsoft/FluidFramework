@@ -5,7 +5,7 @@
 
 import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 
-import { CompressionAlgorithms } from "../containerRuntime.js";
+import { CompressionAlgorithms } from "../compatUtils.js";
 
 /**
  * Batch message type used internally by the runtime

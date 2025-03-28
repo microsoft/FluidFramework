@@ -149,6 +149,13 @@ import {
 	getSummaryForDatastores,
 	wrapContext,
 } from "./channelCollection.js";
+import {
+	CompressionAlgorithms,
+	disabledCompressionConfig,
+	getConfigsForCompatMode,
+	getDisallowedVersions,
+	isValidCompatMode,
+} from "./compatUtils.js";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry.js";
 import { ContainerFluidHandleContext } from "./containerHandleContext.js";
 import { channelToDataStore } from "./dataStore.js";
@@ -329,6 +336,11 @@ export interface ICompressionRuntimeOptions {
  * @alpha
  */
 export interface IContainerRuntimeOptions {
+	/**
+	 * TODO: TSDoc
+	 */
+	readonly compatibilityMode?: string;
+
 	readonly summaryOptions?: ISummaryRuntimeOptions;
 	readonly gcOptions?: IGCRuntimeOptions;
 	/**
@@ -463,24 +475,6 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 };
 
 /**
- * Available compression algorithms for op compression.
- * @legacy
- * @alpha
- */
-export enum CompressionAlgorithms {
-	lz4 = "lz4",
-}
-
-/**
- * @legacy
- * @alpha
- */
-export const disabledCompressionConfig: ICompressionRuntimeOptions = {
-	minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
-	compressionAlgorithm: CompressionAlgorithms.lz4,
-};
-
-/**
  * @deprecated
  * Untagged logger is unsupported going forward. There are old loaders with old ContainerContexts that only
  * have the untagged logger, so to accommodate that scenario the below interface is used. It can be removed once
@@ -518,19 +512,11 @@ export interface IPendingRuntimeState {
 
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
 
-const defaultFlushMode = FlushMode.TurnBased;
-
 // The actual limit is 1Mb (socket.io and Kafka limits)
 // We can't estimate it fully, as we
 // - do not know what properties relay service will add
 // - we do not stringify final op, thus we do not know how much escaping will be added.
 const defaultMaxBatchSizeInBytes = 700 * 1024;
-
-const defaultCompressionConfig = {
-	// Batches with content size exceeding this value will be compressed
-	minimumBatchSizeInBytes: 614400,
-	compressionAlgorithm: CompressionAlgorithms.lz4,
-};
 
 const defaultChunkSizeInBytes = 204800;
 
@@ -775,20 +761,50 @@ export class ContainerRuntime
 
 		const mc = loggerToMonitoringContext(logger);
 
+		// Some options require a minimum version of the FF runtime to operate, so the default configs will be generated
+		// based on the compatibility mode.
+		// For example, if compatibility mode is set to "1", the default configs will ensure compatibility with FF runtime
+		// 1.x  or later. If the compatibility mode is set to "2", the default values will be generated to ensure compatibility
+		// with FF runtime 2.x or later.
+		// Our policy is to support N/N-1 compatibility by default, where N is the most recent public major release of the runtime.
+		// Therefore, if the customer does not provide a compatibility mode, we will default to use N-1.
+		// ----------------------------------------------------------------------------------------------------
+		// However, this is not consistent with today's behavior. Some options (i.e. batching, compression) are enabled by default
+		// despite not being compatible with 1.x clients. This goes against our new policy of maintaining compat between N/N-1 by default.
+		// That said, tests (and customers?) expect these options to be on by default, so we may need to consider these options
+		// "grandfathered in".
+		// TODO: Confirm if this is our policy for 2.x, and if so, update policy docs to clarify this.
+		const defaultCompatibilityMode = "2.0.0";
+		const compatibilityMode = runtimeOptions.compatibilityMode ?? defaultCompatibilityMode;
+		if (!isValidCompatMode(compatibilityMode)) {
+			throw new UsageError(
+				`Invalid compatibility mode: ${compatibilityMode}. It must be an existing FF version (i.e. 2.22.1).`,
+			);
+		}
+		const defaultConfigs = getConfigsForCompatMode(compatibilityMode);
+
+		// Here we assign each container runtime option to the value provided in `runtimeOptions`.
+		// We also will assign the default values generated above if the user does not provide a value.
 		const {
 			summaryOptions = {},
-			gcOptions = {},
+			gcOptions = defaultConfigs.gcOptions,
 			loadSequenceNumberVerification = "close",
-			flushMode = defaultFlushMode,
+			maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
+			enableRuntimeIdCompressor = defaultConfigs.enableRuntimeIdCompressor,
+			chunkSizeInBytes = defaultChunkSizeInBytes,
+			explicitSchemaControl = defaultConfigs.explicitSchemaControl,
+			enableGroupedBatching = defaultConfigs.enableGroupedBatching,
+			flushMode = defaultConfigs.flushMode,
 			compressionOptions = runtimeOptions.enableGroupedBatching === false
 				? disabledCompressionConfig // Compression must be disabled if Grouping is disabled
-				: defaultCompressionConfig,
-			maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
-			enableRuntimeIdCompressor,
-			chunkSizeInBytes = defaultChunkSizeInBytes,
-			enableGroupedBatching = true,
-			explicitSchemaControl = false,
+				: defaultConfigs.compressionOptions,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
+
+		assert(gcOptions !== undefined, "gcOptions should be defined");
+		assert(explicitSchemaControl !== undefined, "explicitSchemaControl should be defined");
+		assert(flushMode !== undefined, "flushMode should be defined");
+		assert(compressionOptions !== undefined, "compressionOptions should be defined");
+		assert(enableGroupedBatching !== undefined, "enableGroupedBatching should be defined");
 
 		const registry = new FluidDataStoreRegistry(registryEntries);
 
@@ -955,6 +971,8 @@ export class ContainerRuntime
 			compressionOptions.minimumBatchSizeInBytes !== Number.POSITIVE_INFINITY &&
 			compressionOptions.compressionAlgorithm === "lz4";
 
+		const disallowedVersions = getDisallowedVersions(compatibilityMode);
+
 		const documentSchemaController = new DocumentsSchemaController(
 			existing,
 			protocolSequenceNumber,
@@ -964,7 +982,7 @@ export class ContainerRuntime
 				compressionLz4,
 				idCompressorMode,
 				opGroupingEnabled: enableGroupedBatching,
-				disallowedVersions: [],
+				disallowedVersions,
 			},
 			(schema) => {
 				runtime.onSchemaChange(schema);
@@ -979,6 +997,7 @@ export class ContainerRuntime
 
 		// Make sure we've got all the options including internal ones
 		const internalRuntimeOptions: Readonly<Required<IContainerRuntimeOptionsInternal>> = {
+			compatibilityMode,
 			summaryOptions,
 			gcOptions,
 			loadSequenceNumberVerification,
