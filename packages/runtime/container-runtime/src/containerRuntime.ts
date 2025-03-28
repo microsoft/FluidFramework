@@ -1530,18 +1530,6 @@ export class ContainerRuntime
 		}
 
 		this.summariesDisabled = isSummariesDisabled(this.summaryConfiguration);
-		// const { maxOpsSinceLastSummary = 0, initialSummarizerDelayMs = 0 } = isSummariesDisabled(
-		// 	this.summaryConfiguration,
-		// )
-		// 	? {}
-		// 	: {
-		// 			...this.summaryConfiguration,
-		// 			initialSummarizerDelayMs:
-		// 				// back-compat: initialSummarizerDelayMs was moved from ISummaryRuntimeOptions
-		// 				//   to ISummaryConfiguration in 0.60.
-		// 				runtimeOptions.summaryOptions.initialSummarizerDelayMs ??
-		// 				this.summaryConfiguration.initialSummarizerDelayMs,
-		// 		};
 
 		this.maxConsecutiveReconnects =
 			this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? defaultMaxConsecutiveReconnects;
