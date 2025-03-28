@@ -304,13 +304,11 @@ export interface SchemaStatics {
 }
 
 /**
- * Stateless APIs exposed via {@link SchemaFactory} as both instance properties and as statics.
- * @privateRemarks
- * We have no way to make linkable members which exist both as statics and instance properties since API-Extractor does not support this.
- * As a workaround, we have this type as a third place which can be linked.
- * @system @sealed @alpha
+ * Unstable extensions to SchemaStaticsAlpha.
+ * @remarks
+ * Only items missing in schemaStatics are added here: items which simply have more specific types in alpha are instead just included in {@link schemaStatics} directly.
  */
-export interface SchemaStaticsAlpha {
+export interface SchemaStaticsAlpha extends SchemaStatics {
 	readonly identifier: <const TCustomMetadata = unknown>(
 		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
 	) => FieldSchemaAlpha<FieldKind.Identifier, typeof stringSchema, TCustomMetadata>;
@@ -321,10 +319,9 @@ const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => {
 });
 
 /**
- * Stateless APIs exposed via {@link SchemaFactory} as both instance properties and as statics.
- * @privateRemarks
- * We have no way to make linkable members which exist both as statics and instance properties since API-Extractor does not support this.
- * As a workaround, we have this type as a third place which can be linked.
+ * Implementation of {@link SchemaStaticsAlpha}.
+ * @remarks
+ * This can choose to use more specific types the interface requires to be more useful for internal consumers.
  */
 export const schemaStatics = {
 	string: stringSchema,
