@@ -24,12 +24,12 @@ import { MapNodeSchema } from "../mapNodeTypes.js";
 /**
  * Converts an {@link ImplicitFieldSchema} to a "simple" schema representation.
  *
- * @param schema - Schema to convert
- * @param copySchemaObjects - If true, TreeNodeSchema and FieldSchema are copied into plain JavaScript objects. Either way custom metadata is referenced not copied.
+ * @param schema - The schema to convert
+ * @param copySchemaObjects - If true, TreeNodeSchema and FieldSchema are copied into plain JavaScript objects. Either way, custom metadata is referenced and not copied.
  *
  * @remarks
  * Given that the Schema types used in {@link ImplicitFieldSchema} already implement the {@link SimpleNodeSchema} interfaces, there are limited use-cases for this function.
- * On possible use-case is converting schema to a more serialization friendly format.
+ * One possible use-case is converting schema to a more serialization friendly format.
  * This format however is not JSON compatible due to use of Maps and Sets,
  * but it it does not rely on cyclic object references for handling recursive schema and instead uses the `definitions` map.
  *
