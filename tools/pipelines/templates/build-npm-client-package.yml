@@ -608,11 +608,11 @@ extends:
               - task: DownloadPipelineArtifact@2
                 inputs:
                   artifact: build_output_archive
-                  targetPath: $(Build.SourcesDirectory)
+                  targetPath: $(Build.StagingDirectory)
 
               - script: |
                   echo "Extracting build output archive contents..."
-                  tar --extract --gzip --file $(Build.SourcesDirectory)/build_output_archive.tar.gz --directory $(Build.SourcesDirectory)
+                  tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Build.SourcesDirectory)
                 displayName: Extract Build Output Contents
 
               # Set variable startTest if everything is good so far and we'll start running tests,
@@ -760,11 +760,11 @@ extends:
                 - task: DownloadPipelineArtifact@2
                   inputs:
                     artifact: build_output_archive
-                    targetPath: $(Build.SourcesDirectory)
+                    targetPath: $(Build.StagingDirectory)
 
                 - script: |
                     echo "Extracting build output archive contents..."
-                    tar --extract --gzip --file $(Build.SourcesDirectory)/build_output_archive.tar.gz --directory $(Build.SourcesDirectory)
+                    tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Build.SourcesDirectory)
                   displayName: Extract Build Output Contents
 
                 # Test
