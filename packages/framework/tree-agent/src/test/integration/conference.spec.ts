@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { writeFileSync } from "node:fs";
+import { appendFileSync, closeSync, openSync } from "node:fs";
 
 import { Anthropic } from "@anthropic-ai/sdk";
 // eslint-disable-next-line import/no-internal-modules
@@ -162,17 +162,13 @@ describe("Agent Editing Integration 1", () => {
 		});
 
 		const agent = new SharedTreeSemanticAgent(client, asTreeViewAlpha(view));
-		let log = "";
+		const timestamp = new Date().toISOString().replace(/[.:]/g, "-");
+		const fd = openSync(`llm_log_${timestamp}.md`, "w");
 		await agent.runCodeFromPrompt(
-			"Please organize the sessions so that the ones for adults are on the first day, and the ones that kids would find enjoyable are on the second day. If one day has more sessions than the other, please add a new session (that fits the theme of the day) to balance them out.",
-			(l) => (log += l),
+			"Please organize the sessions so that the ones for adults are on the first day, and the ones that kids would find enjoyable are on the second day. If one day has more sessions than the other, please add new sessions (that fit the theme of the day) until they are balanced.",
+			{ logger: (l) => appendFileSync(fd, l, { encoding: "utf8" }) },
 		);
 
-		if (log === undefined) {
-			console.error("No log returned from clod");
-			throw new Error("No log returned from clod");
-		} else {
-			writeFileSync("llm_log.md", log, { encoding: "utf8" });
-		}
+		closeSync(fd);
 	});
 });

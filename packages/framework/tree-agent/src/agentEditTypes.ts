@@ -44,7 +44,12 @@ export const typeField = "__schemaType";
 /**
  * A field that is  auto-generated and injected into nodes before passing data to the LLM to ensure the LLM can refer to nodes in a stable way.
  */
-export const objectIdKey = "__tempObjectId";
+export const objectIdKey = "__objectId";
+
+/**
+ * TODO
+ */
+export const objectIdType = "ObjectId";
 
 /**
  * An object being inserted (via an insertion or modification edit) into a tree.

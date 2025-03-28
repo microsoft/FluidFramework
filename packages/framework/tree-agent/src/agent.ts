@@ -10,8 +10,15 @@ import {
 	getSimpleSchema,
 	Tree,
 	type ImplicitFieldSchema,
+	type InsertableField,
 	type ReadableField,
+	type TreeFieldFromImplicitField,
 	type TreeViewAlpha,
+	type TreeNode,
+	NodeKind,
+	type InsertableContent,
+	type ObjectNodeSchema,
+	normalizeFieldSchema,
 } from "@fluidframework/tree/internal";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
@@ -19,9 +26,13 @@ import { zodToJsonSchema } from "zod-to-json-schema";
 import { applyAgentEdit } from "./agentEditReducer.js";
 import type { TreeEdit } from "./agentEditTypes.js";
 import { IdGenerator } from "./idGenerator.js";
-import { getEditingSystemPrompt, getFunctioningSystemPrompt } from "./promptGeneration.js";
+import {
+	getEditingSystemPrompt,
+	getFriendlySchemaName,
+	getFunctioningSystemPrompt,
+} from "./promptGeneration.js";
 import { generateEditTypesForInsertion } from "./typeGeneration.js";
-import { fail, type TreeView } from "./utils.js";
+import { constructNode, fail, type TreeView } from "./utils.js";
 
 interface RetryState {
 	readonly errors: {
@@ -79,7 +90,10 @@ export class SharedTreeSemanticAgent<TRoot extends ImplicitFieldSchema> {
 		};
 	}
 
-	public async runCodeFromPrompt(prompt: string, logger?: Log): Promise<void> {
+	public async runCodeFromPrompt(
+		prompt: string,
+		args?: { validator?: (js: string) => boolean; logger?: Log },
+	): Promise<void> {
 		const editFunctionName = "editTree";
 		const systemPrompt = getFunctioningSystemPrompt(this.treeView, editFunctionName);
 
@@ -93,6 +107,14 @@ export class SharedTreeSemanticAgent<TRoot extends ImplicitFieldSchema> {
 			`A JavaScript function \`${editFunctionName}\` to edit a user's tree`,
 			toolWrapper,
 		);
+		const create: Record<string, (input: InsertableContent) => TreeNode> = {};
+		visitObjectNodeSchema(this.treeView.schema, (schema) => {
+			const name =
+				getFriendlySchemaName(schema.identifier) ??
+				fail("Expected friendly name for object node schema");
+
+			create[name] = (input: InsertableContent) => constructNode(schema, input);
+		});
 
 		await this.#applyPrompt(
 			systemPrompt,
@@ -104,24 +126,34 @@ export class SharedTreeSemanticAgent<TRoot extends ImplicitFieldSchema> {
 					return parseResult.error.message;
 				}
 
-				const editCode = parseResult.data.functionBody;
+				const functionCode = parseResult.data.functionBody;
+				if (args?.validator?.(functionCode) === false) {
+					return "Code validation failed";
+				}
+				const params = {
+					get root(): TreeFieldFromImplicitField<TRoot> {
+						return branch.root;
+					},
+					set root(value: InsertableField<TRoot>) {
+						branch.root = value;
+					},
+					idMap: idGenerator2,
+					create,
+				};
+				const code = `${functionCode}\n\neditTree(params);`;
 				// eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
-				const fn = new Function("tree", "idMap", `${editCode}\n\neditTree(tree, idMap);`) as (
-					tree: typeof branch,
-					idMap: IdGenerator,
-				) => void;
-
-				fn(branch, idGenerator2);
-				logger?.(`### Applied Edit\n\n`);
-				logger?.(`The new state of the tree is:\n\n`);
-				logger?.(
+				const fn = new Function("params", code) as (p: typeof params) => void;
+				fn(params);
+				args?.logger?.(`### Applied Edit\n\n`);
+				args?.logger?.(`The new state of the tree is:\n\n`);
+				args?.logger?.(
 					`${
 						this.domain?.toString?.(branch.root) ??
 						`\`\`\`JSON\n${JSON.stringify(branch.root, undefined, 2)}\n\`\`\``
 					}\n\n`,
 				);
 			},
-			logger,
+			args?.logger,
 		);
 	}
 
@@ -305,3 +337,16 @@ export class SharedTreeSemanticAgent<TRoot extends ImplicitFieldSchema> {
 
 const maxTokens = 20000; // TODO: Allow caller to provide this
 const maxErrorRetries = 3; // TODO: Allow caller to provide this
+
+function visitObjectNodeSchema(
+	schema: ImplicitFieldSchema,
+	visitor: (schema: ObjectNodeSchema) => void,
+): void {
+	const normalizedSchema = normalizeFieldSchema(schema);
+	for (const nodeSchema of normalizedSchema.allowedTypeSet) {
+		if (nodeSchema.kind === NodeKind.Object) {
+			visitor(nodeSchema as ObjectNodeSchema);
+		}
+		visitObjectNodeSchema([...nodeSchema.childTypes], visitor);
+	}
+}

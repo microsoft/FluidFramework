@@ -227,6 +227,7 @@ export {
 	type HandleConverter,
 	ObjectNodeSchema,
 	type LeafSchema,
+	normalizeFieldSchema,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

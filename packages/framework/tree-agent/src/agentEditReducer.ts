@@ -49,7 +49,7 @@ import {
 } from "./agentEditTypes.js";
 import type { IdGenerator } from "./idGenerator.js";
 import { getOrCreateTypeForInsertion } from "./typeGeneration.js";
-import { fail, failUsage, hasAtLeastTwo, type TreeView } from "./utils.js";
+import { constructNode, fail, failUsage, hasAtLeastTwo, type TreeView } from "./utils.js";
 
 function resolveArrayElementPointer(
 	view: TreeView<ImplicitFieldSchema>,
@@ -392,7 +392,7 @@ function constructTreeHelper(
 			const constructed = constructNode(schema, transformed);
 			if (id !== undefined) {
 				// TODO: properly assert is TreeNode
-				idGenerator.getOrCreateId(constructed as TreeNode, id);
+				idGenerator.getOrCreateId(constructed, id);
 			}
 
 			return constructed;
@@ -400,20 +400,6 @@ function constructTreeHelper(
 	}
 
 	return value;
-}
-
-function constructNode(
-	schema: TreeNodeSchema,
-	value: InsertableContent,
-): TreeNode | TreeLeafValue {
-	// TODO:#34138: Until this bug is fixed, we need to use the constructor kludge.
-	// TODO:#34139: Until this bug is fixed, we need to use the constructor kludge.
-	// return (
-	// 	TreeAlpha.create<UnsafeUnknownSchema>(schema, value) ?? fail("Expected node to be created")
-	// );
-
-	const constructorKludge = schema as unknown as new (content: InsertableContent) => TreeNode;
-	return new constructorKludge(value);
 }
 
 function resolvePointer(

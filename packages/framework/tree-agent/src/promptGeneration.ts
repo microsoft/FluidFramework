@@ -7,7 +7,9 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 import {
 	type ImplicitFieldSchema,
+	Tree,
 	type TreeFieldFromImplicitField,
+	type TreeNode,
 	getSimpleSchema,
 } from "@fluidframework/tree/internal";
 // eslint-disable-next-line import/no-internal-modules
@@ -15,6 +17,7 @@ import { createZodJsonValidator } from "typechat/zod";
 
 import {
 	objectIdKey,
+	objectIdType,
 	typeField,
 	type InsertIntoArray,
 	type MoveArrayElement,
@@ -38,11 +41,18 @@ export type EditLog = {
 /**
  * TBD
  */
-export function toDecoratedJson(
+export function stringifyWithIds(
 	idGenerator: IdGenerator,
 	root: TreeFieldFromImplicitField<ImplicitFieldSchema>,
-): string {
+): {
+	stringified: string;
+	objectsWithIds: {
+		type: string;
+		id: string;
+	}[];
+} {
 	idGenerator.assignIds(root);
+	const objectsWithIds: ReturnType<typeof stringifyWithIds>["objectsWithIds"] = [];
 	const stringified: string = JSON.stringify(
 		root,
 		(_, value) => {
@@ -50,15 +60,19 @@ export function toDecoratedJson(
 				// TODO: SharedTree Team needs to either publish TreeNode as a class to use .instanceof() or a typeguard.
 				// Uncomment this assertion back once we have a typeguard ready.
 				// assert(isTreeNode(node), "Non-TreeNode value in tree.");
-				const objId =
+				const id =
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 					idGenerator.getId(value) ?? fail("ID of new node should have been assigned.");
 				assert(
 					!Object.prototype.hasOwnProperty.call(value, objectIdKey),
 					0xa7b /* Collision of object id property. */,
 				);
+				const type =
+					getFriendlySchemaName(Tree.schema(value as TreeNode).identifier) ??
+					fail("Expected object schema to have a friendly name.");
+				objectsWithIds.push({ id, type });
 				return {
-					[objectIdKey]: objId,
+					[objectIdKey]: id,
 					...value,
 				} as unknown;
 			}
@@ -66,7 +80,10 @@ export function toDecoratedJson(
 		},
 		2,
 	);
-	return stringified;
+	return {
+		stringified,
+		objectsWithIds,
+	};
 }
 
 /**
@@ -111,7 +128,7 @@ export function getEditingSystemPrompt(
 	}
 	const domainSchema = createZodJsonValidator(domainTypes, domainRoot);
 	const domainSchemaString = domainSchema.getSchemaText();
-	const decoratedTreeJson = toDecoratedJson(new IdGenerator(), view.root);
+	const { stringified } = stringifyWithIds(new IdGenerator(), view.root);
 	const treeSchemaString = createZodJsonValidator(editTypes, editRoot).getSchemaText();
 	const setFieldType = "SetField" satisfies Capitalize<SetField["type"]>;
 	const insertIntoArrayType = "InsertIntoArray" satisfies Capitalize<InsertIntoArray["type"]>;
@@ -123,10 +140,10 @@ export function getEditingSystemPrompt(
 	// TODO: security: user prompt in system prompt
 	const systemPrompt = `You are a collaborative agent who interacts with a JSON tree by performing edits to achieve a user-specified goal.
 Edits are JSON objects that conform to the schema described below. You produce an array of edits where each edit ${topLevelEditWrapperDescription}.
-When creating new objects for \`${insertIntoArrayType}\` or \`${setFieldType}\`,
-you may create an ID and put it in the \`${objectIdKey}\` property if you want to refer to the object in a later edit.
-For example, if you want to insert a new object into an array and (in a subsequent edit) move another piece of content to after the newly inserted one, you can use the ID of the newly inserted object in the \`${"MoveArrayElement" satisfies Capitalize<MoveArrayElement["type"]>}\` edit.
-New IDs must be unique, i.e. a new object cannot have the same ID as any object that has existed before.
+When creating new objects for \`${insertIntoArrayType}\` or \`${setFieldType}\`, you may create an ${objectIdType} and put it in the \`${objectIdKey}\` property if you want to refer to the object in a later edit.
+For example, if you want to insert a new object into an array and (in a subsequent edit) move another piece of content to after the newly inserted one, you can use the ${objectIdType} of the newly inserted object in the \`${"MoveArrayElement" satisfies Capitalize<MoveArrayElement["type"]>}\` edit.
+New ${objectIdType}s must be unique, i.e. a new object cannot have the same ${objectIdType} as any object that has existed before.
+${objectIdType}s are optional; do not supply them unless you need to refer to the object in a later edit.
 For a \`${setFieldType}\` or \`${insertIntoArrayType}\` edit, you might insert an object into a location where it is ambiguous what the type of the object is from the data alone.
 In that case, supply the type in the \`${typeField}\` property of the object with a value that is the typescript type name of that object.
 
@@ -146,7 +163,7 @@ The type${rootTypes.length > 1 ? "s" : ""} allowable at the root of the tree ${r
 The current state of the tree is
 
 \`\`\`JSON
-${decoratedTreeJson}.
+${stringified}
 \`\`\`
 
 Your final output should be an array of one or more edits that accomplishes the goal, or an empty array if the task can't be accomplished.
@@ -165,9 +182,11 @@ export function getFunctioningSystemPrompt(
 	view: Omit<TreeView<ImplicitFieldSchema>, "fork" | "merge">,
 	editFunctionName: string,
 ): string {
+	const arrayInterfaceName = "TreeArray";
 	// TODO: Support for non-object roots
 	assert(typeof view.root === "object" && view.root !== null && !isFluidHandle(view.root), "");
 	const schema = getSimpleSchema(view.schema);
+
 	const { domainTypes, domainRoot } = generateEditTypesForPrompt(schema);
 	for (const [key, value] of Object.entries(domainTypes)) {
 		const friendlyKey = getFriendlySchemaName(key);
@@ -184,10 +203,43 @@ export function getFunctioningSystemPrompt(
 	}
 	const domainSchema = createZodJsonValidator(domainTypes, domainRoot);
 	const domainSchemaString = domainSchema.getSchemaText();
-	const decoratedTreeJson = toDecoratedJson(new IdGenerator(), view.root);
+	const { stringified, objectsWithIds } = stringifyWithIds(new IdGenerator(), view.root);
+
+	const objectIdExplanation =
+		objectsWithIds[0] === undefined
+			? ""
+			: `All objects within the initial tree above have a unique ${objectIdType} in the \`${objectIdKey}\` property.
+You never supply the ${objectIdKey} property when making a new object yourself because the ${objectIdKey} property is only used to refer to objects that exist in the initial tree, not objects that are created later.
+You can use the ${objectIdType} as the lookup key in the readonly JavaScript Map<${objectIdKey}, object>, which is provided via the "idMap" property to the first argument of the ${editFunctionName} function.
+For example:
+
+\`\`\`javascript
+function ${editFunctionName}({ root, idMap, create }) {
+	// This retrieves the ${objectsWithIds[0].type} object with the ${objectIdKey} "${objectsWithIds[0].id}" in the initial tree.
+	const ${uncapitalize(objectsWithIds[0].type)} = idMap.get("${objectsWithIds[0].id}");
+	// ...
+}
+\`\`\`\n\n`;
+
+	const builderExplanation =
+		objectsWithIds[0] === undefined
+			? ""
+			: `When constructing new objects, you should wrap them in the appropriate builder function rather than simply making a javascript object.
+The builders are available on the "create" property on the first argument of the ${editFunctionName} function and are named according to the type that they create.
+For example:
+
+\`\`\`javascript
+function ${editFunctionName}({ root, idMap, create }) {
+	// This creates a new ${objectsWithIds[0].type} object:
+	const ${uncapitalize(objectsWithIds[0].type)} = create.${objectsWithIds[0].type}({ /* ...properties... */ });
+	// Don't do this:
+	// const ${uncapitalize(objectsWithIds[0].type)} = { /* ...properties... */ };
+}
+\`\`\`\n\n`;
+
 	const rootTypes = [...schema.allowedTypesIdentifiers];
 	// TODO: security: user prompt in system prompt
-	const systemPrompt = `You are a collaborative agent who interacts with a JSON tree by performing edits to achieve a user-specified goal.
+	const prompt = `You are a collaborative agent who interacts with a JSON tree by performing edits to achieve a user-specified goal.
 The tree is a JSON object with the following Typescript schema:
 
 \`\`\`typescript
@@ -200,29 +252,29 @@ The ${editFunctionName} function must have a first parameter which has a \`root\
 The current state of the \`root\` object is:
 
 \`\`\`JSON
-${decoratedTreeJson}.
+${stringified}
 \`\`\`
 
-You may replace the \`root\` property with a new object if necessary, but you must ensure that the new object is one of the types allowed at the root of the tree (\`${rootTypes.map((t) => getFriendlySchemaName(t)).join(" | ")}\`).
+You may set the \`root\` property to be a new root object if necessary, but you must ensure that the new object is one of the types allowed at the root of the tree (\`${rootTypes.map((t) => getFriendlySchemaName(t)).join(" | ")}\`).
 
-It may be useful to be able to directly retrieve any of the objects within the initial tree shown above.
-To do so, you can use the value of the \`${objectIdKey}\` property on a given object to retrieve it from the readonly JavaScript Map that is provided as the second argument to the ${editFunctionName} function.
-However, note that the objects do not actually have the \`${objectIdKey}\` property on them at runtime.
-
-There is a notable restriction: the arrays in the tree are not standard JavaScript arrays.
-Instead, they are a special type of object that implements the following TypeScript interface:
+${objectIdExplanation}There is a notable restriction: the arrays in the tree cannot be mutated in the normal way.
+Instead, they must be mutated via methods on the following TypeScript interface:
 
 \`\`\`typescript
-${getTreeArrayNodeDocumentation()}
+${getTreeArrayNodeDocumentation(arrayInterfaceName)}
 \`\`\`
 
-So, you may read from the arrays as you would a normal array, and you may create them as you would a normal array, but you must use the methods of the above interface to modify them.
+Outside of mutation, they behave like normal JavaScript arrays - you can create them, read from them, and call non-mutating methods on them (e.g. \`concat\`, \`map\`, \`filter\`, \`find\`, \`forEach\`, \`indexOf\`, \`slice\`, \`join\`, etc.).
 
 Before outputting the ${editFunctionName} function, you should check that it is valid according to both the application tree's schema and the restrictions of the editing language (e.g. the array methods you are allowed to use).
-When possible, ensure that the edits preserve the identity of objects already in the tree (for example, prefer \`array.moveToIndex\` or \`array.moveRange\` over \`array.removeAt\` + \`array.insertAt\`).
-Finally, double check that the edits would accomplish the user's request (if it is possible).`;
 
-	return systemPrompt;
+When possible, ensure that the edits preserve the identity of objects already in the tree (for example, prefer \`array.moveToIndex\` or \`array.moveRange\` over \`array.removeAt\` + \`array.insertAt\`).
+
+Once data has been removed from the tree (e.g. replaced via assignment, or removed from an array), that data cannot be re-inserted into the tree - instead, it must be deep cloned and recreated.
+
+${builderExplanation}Finally, double check that the edits would accomplish the user's request (if it is possible).`;
+
+	return prompt;
 }
 
 /**
@@ -249,8 +301,8 @@ export function getFriendlySchemaName(schemaName: string): string | undefined {
  * @remarks The documentation has been simplified in various ways to make it easier for the LLM to understand.
  * @privateRemarks TODO: How do we keep this in sync with the actual `TreeArrayNode` docs if/when those docs change?
  */
-function getTreeArrayNodeDocumentation(typeName = "TreeArray"): string {
-	return `/** A {@link TreeNode} which implements 'readonly T[]' and provides custom array mutation APIs. */
+function getTreeArrayNodeDocumentation(typeName: string): string {
+	return `/** A special array which implements 'readonly T[]' and provides custom array mutation APIs. */
 export interface ${typeName}<T> extends ReadonlyArray<T> {
 	/**
 	 * Inserts new item(s) at a specified location.
@@ -550,4 +602,8 @@ export interface ${typeName}<T> extends ReadonlyArray<T> {
 	 */
 	values(): IterableIterator<T>;
 }`;
+}
+
+function uncapitalize(str: string): string {
+	return str.charAt(0).toLowerCase() + str.slice(1);
 }

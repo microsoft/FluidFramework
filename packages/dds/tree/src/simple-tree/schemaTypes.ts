@@ -406,6 +406,7 @@ export class FieldSchemaAlpha<
 
 /**
  * Normalizes a {@link ImplicitFieldSchema} to a {@link FieldSchema}.
+ * @internal
  */
 export function normalizeFieldSchema(schema: ImplicitFieldSchema): FieldSchema {
 	return schema instanceof FieldSchema

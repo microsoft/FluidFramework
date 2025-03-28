@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { writeFileSync } from "node:fs";
+import { appendFileSync, closeSync, openSync } from "node:fs";
 
 import { Anthropic } from "@anthropic-ai/sdk";
 // eslint-disable-next-line import/no-internal-modules
@@ -199,18 +199,14 @@ describe("Agent Editing Integration 2", () => {
 			toString,
 		});
 
-		let log = "";
+		const timestamp = new Date().toISOString().replace(/[.:]/g, "-");
+		const fd = openSync(`llm_log_${timestamp}.md`, "w");
 		await agent.runCodeFromPrompt(
 			"Please add a comment to the word 'treat' that says 'Makes me think of Halloween :)'",
-			(l) => (log += l),
+			{ logger: (l) => appendFileSync(fd, l, { encoding: "utf8" }) },
 		);
 
-		if (log === undefined) {
-			console.error("No log returned from clod");
-			throw new Error("No log returned from clod");
-		} else {
-			writeFileSync("llm_log.md", log, { encoding: "utf8" });
-		}
+		closeSync(fd);
 	});
 
 	/**

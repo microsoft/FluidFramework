@@ -5,8 +5,14 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { ImplicitFieldSchema } from "@fluidframework/tree";
-// eslint-disable-next-line import/no-internal-modules
-import type { TreeViewAlpha } from "@fluidframework/tree/alpha";
+import type {
+	InsertableContent,
+	InternalTreeNode,
+	TreeNode,
+	TreeNodeSchema,
+	TreeViewAlpha,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/tree/alpha";
 
 /**
  * Subset of Map interface.
@@ -113,4 +119,19 @@ export const llmDefault = Symbol("tree-agent/llmDefault");
  */
 export function failUsage(message: string): never {
 	throw new UsageError(message);
+}
+
+/**
+ * Construct an object node from a schema and value.
+ */
+export function constructNode(schema: TreeNodeSchema, value: InsertableContent): TreeNode {
+	// TODO:#34138: Until this bug is fixed, we need to use the constructor kludge.
+	// TODO:#34139: Until this bug is fixed, we need to use the constructor kludge.
+	// return (
+	// 	TreeAlpha.create<UnsafeUnknownSchema>(schema, value) ?? fail("Expected node to be created")
+	// );
+
+	return typeof schema === "function"
+		? new schema(value as unknown as InternalTreeNode)
+		: (schema as { create(data: InsertableContent): TreeNode }).create(value);
 }
