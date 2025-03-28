@@ -1,8 +1,0 @@
-# This file is a workaround. pnpm does not support nesting packages under a workspace that is not managed by the
-# workspace. That is, if there's a pnpm-workspace.yaml file anywhere in the parent hierarchy, pnpm doesn't install the
-# package individually like one might expect.
-#
-# Because we have the client release group at the root of the repo, there's a pnpm-workspace.yaml file in the hierarchy
-# for our independent packages as well. This file makes pnpm treat the project as a one-package workspace.
-packages:
-  - "."
