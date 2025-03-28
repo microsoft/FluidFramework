@@ -176,8 +176,8 @@ const config: Config = {
 			typesenseServerConfig: {
 			  nodes: [
 				{
-				  host: '20.64.178.109',
-				  port: 8108,
+				  host: 'typesense.fluidframework.com',
+				  port: 443,
 				  protocol: 'https',
 				},
 			  ],
