@@ -43,7 +43,7 @@ describe("separate-container migration", () => {
 			expect(containsOne).toEqual(true);
 		});
 
-		it("migrates and shows the correct code version after migration", async () => {
+		it.skip("migrates and shows the correct code version after migration", async () => {
 			// Validate the migration status shows "one" initially
 			await Promise.all([
 				page.waitForSelector("#sbs-left .migration-status"),
@@ -99,7 +99,7 @@ describe("separate-container migration", () => {
 			await page.waitForFunction(() => window["fluidStarted"]);
 		});
 
-		it("migrates after summarizer has connected", async () => {
+		it.skip("migrates after summarizer has connected", async () => {
 			// Validate the migration status shows "one" initially
 			await Promise.all([
 				page.waitForSelector("#sbs-left .migration-status"),

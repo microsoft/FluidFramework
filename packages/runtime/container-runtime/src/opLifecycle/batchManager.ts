@@ -152,11 +152,13 @@ export class BatchManager {
 	 * Gets the pending batch and clears state for the next batch.
 	 */
 	public popBatch(batchId?: BatchId): IBatch {
+		assert(this.pendingBatch[0] !== undefined, "expected non-empty batch");
 		const batch: IBatch = {
 			messages: this.pendingBatch,
 			contentSizeInBytes: this.batchContentSize,
 			referenceSequenceNumber: this.referenceSequenceNumber,
 			hasReentrantOps: this.hasReentrantOps,
+			staged: this.pendingBatch[0].staged,
 		};
 
 		this.pendingBatch = [];
