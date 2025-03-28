@@ -12,15 +12,15 @@ import {
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	type FieldUpPath,
 	type Revertible,
 	rootFieldKey,
 	RevertibleStatus,
 	CommitKind,
 	EmptyKey,
 	type RevertibleFactory,
+	type NormalizedFieldUpPath,
 } from "../../core/index.js";
-import { FieldKinds, cursorForJsonableTreeField } from "../../feature-libraries/index.js";
+import { FieldKinds } from "../../feature-libraries/index.js";
 import {
 	getBranch,
 	Tree,
@@ -31,6 +31,7 @@ import {
 } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
+	chunkFromJsonableTrees,
 	createTestUndoRedoStacks,
 	expectSchemaEqual,
 	getView,
@@ -56,7 +57,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
 
-const rootField: FieldUpPath = {
+const rootField: NormalizedFieldUpPath = {
 	parent: undefined,
 	field: rootFieldKey,
 };
@@ -171,7 +172,7 @@ describe("sharedTreeView", () => {
 				checkout.editor
 					.optionalField(rootField)
 					.set(
-						cursorForJsonableTreeField([{ type: brand(stringSchema.identifier), value: "A" }]),
+						chunkFromJsonableTrees([{ type: brand(stringSchema.identifier), value: "A" }]),
 						true,
 					);
 
@@ -198,7 +199,7 @@ describe("sharedTreeView", () => {
 				checkout.editor
 					.optionalField(rootField)
 					.set(
-						cursorForJsonableTreeField([{ type: brand(stringSchema.identifier), value: "A" }]),
+						chunkFromJsonableTrees([{ type: brand(stringSchema.identifier), value: "A" }]),
 						true,
 					);
 				checkout.updateSchema(toStoredSchema(OptionalString));
@@ -514,7 +515,7 @@ describe("sharedTreeView", () => {
 				}),
 			);
 			view1.initialize([]);
-			provider.processMessages();
+			provider.synchronizeMessages();
 			const tree2 = provider.trees[1].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: sf.array(sf.string),
@@ -526,13 +527,13 @@ describe("sharedTreeView", () => {
 			const view = tree.viewWith(view1.config);
 			// Modify the view, but tree2 should remain unchanged until the edit merges all the way up
 			view.root.insertAtStart("42");
-			provider.processMessages();
+			provider.synchronizeMessages();
 			assert.equal(tree2.root[0], undefined);
 			baseTree.merge(tree);
-			provider.processMessages();
+			provider.synchronizeMessages();
 			assert.equal(tree2.root[0], undefined);
 			branch1.merge(baseTree);
-			provider.processMessages();
+			provider.synchronizeMessages();
 			assert.equal(tree2.root[0], "42");
 		});
 
@@ -548,7 +549,7 @@ describe("sharedTreeView", () => {
 				}),
 			);
 			view1.initialize([]);
-			provider.processMessages();
+			provider.synchronizeMessages();
 			let opsReceived = 0;
 			provider.trees[1].on("op", () => (opsReceived += 1));
 			const baseBranch = branch1.branch();
@@ -558,7 +559,7 @@ describe("sharedTreeView", () => {
 			view.root.insertAtStart("B");
 			baseBranch.merge(tree);
 			branch1.merge(baseBranch);
-			provider.processMessages();
+			provider.synchronizeMessages();
 			assert.equal(opsReceived, 2);
 		});
 
@@ -894,20 +895,20 @@ describe("sharedTreeView", () => {
 
 		view1.initialize(["A", 1, "B", 2]);
 		const storedSchema1 = toStoredSchema(schema1);
-		provider.processMessages();
+		provider.synchronizeMessages();
 
 		const checkout1Revertibles = createTestUndoRedoStacks(view1.checkout.events);
 
 		view1.root.removeAt(0); // Remove "A"
 		view1.root.removeAt(0); // Remove 1
 		checkout1Revertibles.undoStack.pop()?.revert(); // Restore 1
-		provider.processMessages();
+		provider.synchronizeMessages();
 
 		const checkout2Revertibles = createTestUndoRedoStacks(view2.checkout.events);
 		view2.root.removeAt(1); // Remove "B"
 		view2.root.removeAt(1); // Remove 2
 		checkout2Revertibles.undoStack.pop()?.revert(); // Restore 2
-		provider.processMessages();
+		provider.synchronizeMessages();
 
 		expectSchemaEqual(storedSchema1, view1.checkout.storedSchema);
 		expectSchemaEqual(storedSchema1, view2.checkout.storedSchema);
@@ -930,7 +931,7 @@ describe("sharedTreeView", () => {
 		assert.equal(checkout1Revertibles.redoStack.length, 1);
 		assert.deepEqual(provider.trees[0].kernel.checkout.getRemovedRoots().length, 2);
 
-		provider.processMessages();
+		provider.synchronizeMessages();
 
 		assert.equal(checkout2Revertibles.undoStack.length, 1);
 		assert.equal(checkout2Revertibles.redoStack.length, 1);

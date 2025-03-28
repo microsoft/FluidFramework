@@ -1,5 +1,9 @@
 # @fluidframework/fluid-telemetry
 
+## 2.30.0
+
+Dependency updates only.
+
 ## 2.23.0
 
 Dependency updates only.

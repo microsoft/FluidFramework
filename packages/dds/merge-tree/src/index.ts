@@ -46,7 +46,6 @@ export {
 	getSlideToSegoff,
 } from "./mergeTree.js";
 export {
-	IMergeTreeClientSequenceArgs,
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeDeltaOpArgs,
 	IMergeTreeMaintenanceCallbackArgs,
@@ -123,7 +122,6 @@ export {
 	PropsOrAdjust,
 	copyPropertiesAndManager,
 	PropertiesManager,
-	PropertiesRollback,
 } from "./segmentPropertiesManager.js";
 export {
 	InteriorSequencePlace,
@@ -133,7 +131,7 @@ export {
 } from "./sequencePlace.js";
 export { SortedSet } from "./sortedSet.js";
 export { SortedSegmentSet, SortedSegmentSetItem } from "./sortedSegmentSet.js";
-export { IJSONTextSegment, IMergeTreeTextHelper, TextSegment } from "./textSegment.js";
+export { IJSONTextSegment, TextSegment } from "./textSegment.js";
 export {
 	appendToMergeTreeDeltaRevertibles,
 	discardMergeTreeDeltaRevertible,
@@ -142,3 +140,6 @@ export {
 	MergeTreeRevertibleDriver,
 	revertMergeTreeDeltaRevertibles,
 } from "./revertibles.js";
+export type { OperationStamp } from "./stamps.js";
+export type { Perspective } from "./perspective.js";
+export type { IMergeTreeTextHelper } from "./MergeTreeTextHelper.js";

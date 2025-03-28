@@ -5,13 +5,13 @@
 
 import type {
 	ScopedSchemaName,
-	InsertableObjectFromSchemaRecord,
 	TreeObjectNodeUnsafe,
 	InsertableObjectFromSchemaRecordUnsafe,
 } from "../../internalTypes.js";
 import {
 	defaultSchemaFactoryObjectOptions,
 	SchemaFactory,
+	schemaStatics,
 	type SchemaFactoryObjectOptions,
 } from "./schemaFactory.js";
 import {
@@ -20,20 +20,23 @@ import {
 	type AnnotatedAllowedType,
 	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeSchemaOptions,
 } from "../schemaTypes.js";
-import { type TreeObjectNode, objectSchema } from "../objectNode.js";
+import { objectSchema } from "../objectNode.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
-import type { NodeKind, TreeNodeSchemaClass, WithType } from "../core/index.js";
+import type { NodeKind, TreeNodeSchemaClass } from "../core/index.js";
 import type {
-	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
-	TreeArrayNodeUnsafe,
-	TreeMapNodeUnsafe,
-	Unenforced,
+	ImplicitAllowedTypesUnsafe,
+	ImplicitFieldSchemaUnsafe,
+	ArrayNodeCustomizableSchemaUnsafe,
+	MapNodeCustomizableSchemaUnsafe,
 } from "./typesUnsafe.js";
-import { mapSchema, type MapNodeInsertableData, type TreeMapNode } from "../mapNode.js";
-import { arraySchema, type TreeArrayNode } from "../arrayNode.js";
+import { mapSchema } from "../mapNode.js";
+import { arraySchema } from "../arrayNode.js";
+import type { ObjectNodeSchema } from "../objectNodeTypes.js";
+import type { SimpleObjectNodeSchema } from "../simpleSchema.js";
+import type { ArrayNodeCustomizableSchema } from "../arrayNodeTypes.js";
+import type { MapNodeCustomizableSchema } from "../mapNodeTypes.js";
 
 /**
  * {@link SchemaFactory} with additional alpha APIs.
@@ -100,16 +103,7 @@ export class SchemaFactoryAlpha<
 		name: Name,
 		fields: T,
 		options?: SchemaFactoryObjectOptions<TCustomMetadata>,
-	): TreeNodeSchemaClass<
-		ScopedSchemaName<TScope, Name>,
-		NodeKind.Object,
-		TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
-		object & InsertableObjectFromSchemaRecord<T>,
-		true,
-		T,
-		never,
-		TCustomMetadata
-	> {
+	): ObjectNodeSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
 		return objectSchema(
 			this.scoped2(name),
 			fields,
@@ -125,7 +119,7 @@ export class SchemaFactoryAlpha<
 	 */
 	public override objectRecursive<
 		const Name extends TName,
-		const T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>,
+		const T extends RestrictiveStringRecord<ImplicitFieldSchemaUnsafe>,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
@@ -140,7 +134,19 @@ export class SchemaFactoryAlpha<
 		T,
 		never,
 		TCustomMetadata
-	> {
+	> &
+		SimpleObjectNodeSchema<TCustomMetadata> &
+		// We can't just use non generic `ObjectNodeSchema` here since "Base constructors must all have the same return type".
+		// We also can't just use generic `ObjectNodeSchema` here and not `TreeNodeSchemaClass` since that doesn't work with unsafe recursive types.
+		// ObjectNodeSchema<
+		// 	ScopedSchemaName<TScope, Name>,
+		// 	//  T & RestrictiveStringRecord<ImplicitFieldSchema> would be nice to use here, but it breaks the recursive type self references.
+		// 	RestrictiveStringRecord<ImplicitFieldSchema>,
+		// 	false,
+		// 	TCustomMetadata
+		// >
+		Pick<ObjectNodeSchema, "fields"> {
+		// TODO: syntax highting is vs code is broken here. Don't trust it. Use the compiler instead.
 		type TScopedName = ScopedSchemaName<TScope, Name>;
 		return this.object(
 			name,
@@ -155,8 +161,34 @@ export class SchemaFactoryAlpha<
 			T,
 			never,
 			TCustomMetadata
-		>;
+		> &
+			ObjectNodeSchema<
+				ScopedSchemaName<TScope, Name>,
+				RestrictiveStringRecord<ImplicitFieldSchema>,
+				false,
+				TCustomMetadata
+			>;
 	}
+
+	/**
+	 * {@inheritDoc SchemaStatics.optional}
+	 */
+	public static override readonly optional = schemaStatics.optional;
+
+	/**
+	 * {@inheritDoc SchemaStatics.required}
+	 */
+	public static override readonly required = schemaStatics.required;
+
+	/**
+	 * {@inheritDoc SchemaStatics.optionalRecursive}
+	 */
+	public static override readonly optionalRecursive = schemaStatics.optionalRecursive;
+
+	/**
+	 * Like {@link SchemaFactory.identifier} but static and a factory function that can be provided {@link FieldProps}.
+	 */
+	public static readonly identifier = schemaStatics.identifier;
 
 	/**
 	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.
@@ -180,16 +212,7 @@ export class SchemaFactoryAlpha<
 		name: Name,
 		allowedTypes: T,
 		options?: NodeSchemaOptions<TCustomMetadata>,
-	): TreeNodeSchemaClass<
-		ScopedSchemaName<TScope, Name>,
-		NodeKind.Map,
-		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
-		MapNodeInsertableData<T>,
-		true,
-		T,
-		undefined,
-		TCustomMetadata
-	> {
+	): MapNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
 		return mapSchema(this.scoped2(name), allowedTypes, true, true, options?.metadata);
 	}
 
@@ -199,28 +222,16 @@ export class SchemaFactoryAlpha<
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public override mapRecursive<
 		Name extends TName,
-		const T extends Unenforced<ImplicitAllowedTypes>,
+		const T extends ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
 	>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>) {
 		return this.mapAlpha(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
 			options,
-		) as unknown as TreeNodeSchemaClass<
+		) as unknown as MapNodeCustomizableSchemaUnsafe<
 			ScopedSchemaName<TScope, Name>,
-			NodeKind.Map,
-			TreeMapNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
-			| {
-					[Symbol.iterator](): Iterator<
-						[string, InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>]
-					>;
-			  }
-			| {
-					readonly [P in string]: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>;
-			  },
-			false,
 			T,
-			undefined,
 			TCustomMetadata
 		>;
 	}
@@ -234,7 +245,7 @@ export class SchemaFactoryAlpha<
 	 *
 	 * @example
 	 * ```typescript
-	 * class NamedArray extends factory.array("name", factory.number) {}
+	 * class NamedArray extends factory.arrayAlpha("name", factory.number) {}
 	 * ```
 	 */
 	public arrayAlpha<
@@ -245,16 +256,7 @@ export class SchemaFactoryAlpha<
 		name: Name,
 		allowedTypes: T,
 		options?: NodeSchemaOptions<TCustomMetadata>,
-	): TreeNodeSchemaClass<
-		ScopedSchemaName<TScope, Name>,
-		NodeKind.Array,
-		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Array>,
-		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		true,
-		T,
-		undefined,
-		TCustomMetadata
-	> {
+	): ArrayNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
 		return arraySchema(this.scoped2(name), allowedTypes, true, true, options?.metadata);
 	}
 
@@ -264,24 +266,29 @@ export class SchemaFactoryAlpha<
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public override arrayRecursive<
 		const Name extends TName,
-		const T extends Unenforced<ImplicitAllowedTypes>,
+		const T extends ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
 	>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>) {
 		return this.arrayAlpha(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
 			options,
-		) as unknown as TreeNodeSchemaClass<
+		) as unknown as ArrayNodeCustomizableSchemaUnsafe<
 			ScopedSchemaName<TScope, Name>,
-			NodeKind.Array,
-			TreeArrayNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Array>,
-			{
-				[Symbol.iterator](): Iterator<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>;
-			},
-			false,
 			T,
-			undefined,
 			TCustomMetadata
 		>;
+	}
+
+	/**
+	 * Create a {@link SchemaFactory} with a {@link SchemaFactory.scope|scope} which is a combination of this factory's scope and the provided name.
+	 * @remarks
+	 * The main use-case for this is when creating a collection of related schema (for example using a function that creates multiple schema).
+	 * Creating such related schema using a sub-scope helps ensure they won't collide with other schema in the parent scope.
+	 */
+	public scopedFactory<const T extends TName, TNameInner extends number | string = string>(
+		name: T,
+	): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>, TNameInner> {
+		return new SchemaFactoryAlpha(this.scoped2(name));
 	}
 }

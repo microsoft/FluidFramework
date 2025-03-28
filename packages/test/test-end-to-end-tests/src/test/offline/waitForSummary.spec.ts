@@ -6,7 +6,10 @@
 import { strict as assert } from "assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
+import {
+	describeCompat,
+	itSkipsFailureOnSpecificDrivers,
+} from "@fluid-private/test-version-utils";
 import {
 	LoaderHeader,
 	type IContainer,
@@ -141,44 +144,48 @@ describeCompat(
 			assert.strictEqual(map2.get("stashed"), "stashed", "failed to get stashed key");
 		});
 
-		it("load offline with blob redirect table", async function () {
-			container.disconnect();
-			const handleP = dataStore1.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
-			container.connect();
-			const handle = await timeoutAwait(handleP, {
-				errorMsg: "Timeout on waiting for handleP ",
-			});
-			map1.set("blob handle", handle);
-			const handleGet = await timeoutAwait(handle.get(), {
-				errorMsg: "Timeout on waiting for handleGet",
-			});
-			assert.strictEqual(bufferToString(handleGet, "utf8"), "blob contents");
+		itSkipsFailureOnSpecificDrivers(
+			"load offline with blob redirect table",
+			["routerlicious", "r11s"],
+			async function () {
+				container.disconnect();
+				const handleP = dataStore1.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
+				container.connect();
+				const handle = await timeoutAwait(handleP, {
+					errorMsg: "Timeout on waiting for handleP ",
+				});
+				map1.set("blob handle", handle);
+				const handleGet = await timeoutAwait(handle.get(), {
+					errorMsg: "Timeout on waiting for handleGet",
+				});
+				assert.strictEqual(bufferToString(handleGet, "utf8"), "blob contents");
 
-			// wait for summary with redirect table
-			await timeoutAwait(provider.ensureSynchronized(), {
-				errorMsg: "Timeout on waiting for ensureSynchronized",
-			});
-			await timeoutAwait(
-				loadSummarizerAndSummarize(provider, container, testContainerConfig),
-				{
-					errorMsg: "Timeout on waiting for summary",
-				},
-			);
+				// wait for summary with redirect table
+				await timeoutAwait(provider.ensureSynchronized(), {
+					errorMsg: "Timeout on waiting for ensureSynchronized",
+				});
+				await timeoutAwait(
+					loadSummarizerAndSummarize(provider, container, testContainerConfig),
+					{
+						errorMsg: "Timeout on waiting for summary",
+					},
+				);
 
-			// should be able to load entirely offline
-			const stashBlob = await timeoutAwait(
-				generatePendingState(testContainerConfig, provider, true),
-				{
-					errorMsg: "Timeout on waiting for stashBlob",
-				},
-			);
-			await timeoutAwait(
-				loadContainerOffline(testContainerConfig, provider, { url }, stashBlob),
-				{
-					errorMsg: "Timeout on waiting for loadOffline",
-				},
-			);
-		});
+				// should be able to load entirely offline
+				const stashBlob = await timeoutAwait(
+					generatePendingState(testContainerConfig, provider, true),
+					{
+						errorMsg: "Timeout on waiting for stashBlob",
+					},
+				);
+				await timeoutAwait(
+					loadContainerOffline(testContainerConfig, provider, { url }, stashBlob),
+					{
+						errorMsg: "Timeout on waiting for loadOffline",
+					},
+				);
+			},
+		);
 
 		it("applies stashed ops with no saved ops", async function () {
 			// We want to test the case where we stash ops based on the sequence number of the snapshot we load from

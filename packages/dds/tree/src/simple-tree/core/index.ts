@@ -13,6 +13,7 @@ export {
 	unhydratedFlexTreeNodeToTreeNode,
 	getOrCreateInnerNode,
 	treeNodeFromAnchor,
+	getSimpleNodeSchemaFromInnerNode,
 } from "./treeNodeKernel.js";
 export { type WithType, typeNameSymbol, typeSchemaSymbol } from "./withType.js";
 export {
@@ -31,7 +32,6 @@ export {
 	type TreeNodeSchemaCore,
 	type TreeNodeSchemaBoth,
 } from "./treeNodeSchema.js";
-export { getSimpleNodeSchemaFromInnerNode } from "./schemaCaching.js";
 export { walkAllowedTypes, type SchemaVisitor } from "./walkSchema.js";
 export { Context, HydratedContext, SimpleContextSlot } from "./context.js";
 export { getOrCreateNodeFromInnerNode } from "./getOrCreateNode.js";
