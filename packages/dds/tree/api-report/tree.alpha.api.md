@@ -964,6 +964,7 @@ export const TreeAlpha: {
     importConcise<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: ConciseTree | undefined): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
     importVerbose<const TSchema extends ImplicitFieldSchema>(schema: TSchema, data: VerboseTree | undefined, options?: Partial<ParseOptions>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
     exportConcise(node: TreeNode | TreeLeafValue, options?: EncodeOptions): ConciseTree;
+    exportConcise(node: TreeNode | TreeLeafValue | undefined, options?: EncodeOptions): ConciseTree | undefined;
     exportVerbose(node: TreeNode | TreeLeafValue, options?: EncodeOptions): VerboseTree;
     exportCompressed(tree: TreeNode | TreeLeafValue, options: {
         oldestCompatibleClient: FluidClientVersion;
