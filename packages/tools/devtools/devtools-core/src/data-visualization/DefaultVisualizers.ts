@@ -125,6 +125,9 @@ export const visualizeDataObject: VisualizeDataObject = async (
 	dataObject: DataObject,
 	visualizeChildData: VisualizeChildData,
 ): Promise<FluidObjectTreeNode> => {
+	/**
+	 * @remarks Typcasted to {@link VisualDataObject} without additional check to avoid redundancy as multiple type checks are done prior to assigning the corresponding visualizer.
+	 */
 	const dataObjectRoot = (dataObject as VisualDataObject).root;
 	const renderedChildData = await visualizeDirectory(dataObjectRoot, visualizeChildData);
 	return {

@@ -257,7 +257,7 @@ export class DataVisualizerGraph
 				: (this.visualizers[sharedObject.attributes.type] ?? visualizeUnknownSharedObject);
 
 			const visualizerNode = new VisualizerNode(
-				// Typecasting `sharedObject` to `any` is necessary for `DataObject` visualization`, because the `root` property is inaccessbile (private).
+				// Typecasting `sharedObject` to `VisualDataObject` is necessary for `DataObject` visualization`, because the `root` property is inaccessbile (private).
 				isDataObject(sharedObject) ? (sharedObject as VisualDataObject).root : sharedObject,
 				visualizationFunction as VisualizeSharedObject,
 				async (handle) => this.registerVisualizerForHandle(handle),
