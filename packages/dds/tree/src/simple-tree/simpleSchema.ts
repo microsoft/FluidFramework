@@ -9,9 +9,9 @@ import type { FieldKind, FieldSchemaMetadata, NodeSchemaMetadata } from "./schem
 
 /*
  * TODO:
- * - Make TreeNodeSchema implement these interfaces directly.
+ * - Make TreeNodeSchema implement these interfaces directly (In progress).
  * - Customize their JSON serialization to use these formats or provide some other serialization scheme.
- * - Promote these to alpha
+ * - Promote these to alpha (In progress).
  */
 
 /**
@@ -80,9 +80,11 @@ export interface SimpleObjectFieldSchema extends SimpleFieldSchema {
 }
 
 /**
+ * A schema for an array node.
+ * @privateRemarks
  * A {@link SimpleNodeSchema} for an array node.
  *
- * @internal
+ * @alpha
  * @sealed
  */
 export interface SimpleArrayNodeSchema<out TCustomMetadata = unknown>
@@ -91,15 +93,18 @@ export interface SimpleArrayNodeSchema<out TCustomMetadata = unknown>
 	 * The types allowed in the array.
 	 *
 	 * @remarks Refers to the types by identifier.
+	 * @privateRemarks
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
 	readonly allowedTypesIdentifiers: ReadonlySet<string>;
 }
 
 /**
+ * A schema for a map node.
+ * @privateRemarks
  * A {@link SimpleNodeSchema} for a map node.
  *
- * @internal
+ * @alpha
  * @sealed
  */
 export interface SimpleMapNodeSchema<out TCustomMetadata = unknown>
@@ -108,6 +113,7 @@ export interface SimpleMapNodeSchema<out TCustomMetadata = unknown>
 	 * The types allowed as values in the map.
 	 *
 	 * @remarks Refers to the types by identifier.
+	 * @privateRemarks
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
 	readonly allowedTypesIdentifiers: ReadonlySet<string>;

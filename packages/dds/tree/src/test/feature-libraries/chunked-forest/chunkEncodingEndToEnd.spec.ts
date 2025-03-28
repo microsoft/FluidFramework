@@ -52,6 +52,7 @@ import {
 	type ISharedTreeEditor,
 	Tree,
 	ForestTypeOptimized,
+	type ISharedTree,
 } from "../../../shared-tree/index.js";
 import {
 	MockTreeCheckout,
@@ -59,7 +60,6 @@ import {
 	forestWithContent,
 	mintRevisionTag,
 	testIdCompressor,
-	type SharedTreeWithConnectionStateSetter,
 } from "../../utils.js";
 import {
 	cursorFromInsertable,
@@ -402,10 +402,7 @@ describe("End to end chunked encoding", () => {
 				id: "test",
 				idCompressor: testIdCompressor,
 			});
-			const tree = factory.create(
-				runtime,
-				"TestSharedTree",
-			) as SharedTreeWithConnectionStateSetter;
+			const tree = factory.create(runtime, "TestSharedTree") as ISharedTree;
 
 			const stableId = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
 

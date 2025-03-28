@@ -38,6 +38,7 @@ export function createFieldSchemaUnsafe<
 
 /**
  * Compile time check for validity of a recursive schema.
+ * This type also serves as a central location for documenting the requirements and issues related to recursive schema.
  *
  * @example
  * ```typescript
@@ -47,12 +48,36 @@ export function createFieldSchemaUnsafe<
  * }
  * ```
  * @remarks
- * The type of a recursive schema can be passed to this, and a compile error will be produced for some of the cases of malformed schema.
+ * In this context recursive schema are defined as all {@link FieldSchema} and {@link TreeNodeSchema} schema which are part of a cycle such that walking down through each {@link TreeNodeSchemaCore.childTypes} the given starting schema can be reached again.
+ * Schema referencing the recursive schema and schema they reference that are not part of a cycle are not considered recursive.
+ *
+ * TypeScript puts a lot of limitations on the typing of recursive schema.
+ * To help avoid running into these limitations and thus getting schema that do not type check (or only type checks sometimes!),
+ * {@link SchemaFactory} provides APIs (postfixed with `Recursive`) for writing recursive schema.
+ * These APIs when combined with the patterns documented below should ensure that the schema provide robust type checking.
+ * These special patterns (other than {@link LazyItem} forward references which are not recursion specific)
+ * are not required for correct runtime behavior: they exist entirely to mitigate TypeScript type checking limitations and bugs.
+ * Ideally TypeScript's type checker would be able to handle all of these cases and more, removing the need for recursive type specific guidance, rules and APIs.
+ * Currently however there are open issues preventing this:
+ * {@link https://github.com/microsoft/TypeScript/issues/59550 | 1},
+ * {@link https://github.com/microsoft/TypeScript/issues/55832 | 2},
+ * {@link https://github.com/microsoft/TypeScript/issues/55758 | 3}.
+ * Note that the proposed resolution to some of these issues is for the compiler to error rather than allow the case,
+ * so even if these are all resolved the recursive type workarounds may still be needed.
+ *
+ * # Patterns
+ *
+ * Below are patterns for how to use recursive schema.
+ *
+ * ## General Patterns
+ *
+ * When defining a recursive {@link TreeNodeSchema}, use the `*Recursive` {@link SchemaFactory} methods.
+ * The returned class should be used as the base class for the recursive schema, which should then be passed to {@link ValidateRecursiveSchema}.
+ *
+ * Using {@link ValidateRecursiveSchema} will provide compile error for some of the cases of malformed schema.
  * This can be used to help mitigate the issue that recursive schema definitions are {@link Unenforced}.
  * If an issue is encountered where a mistake in a recursive schema is made which produces an invalid schema but is not rejected by this checker,
  * it should be considered a bug and this should be updated to handle that case (or have a disclaimer added to these docs that it misses that case).
- *
- * # Recursive Schema
  *
  * The non-recursive versions of the schema building methods will run into several issues when used recursively.
  * Consider the following example:
@@ -107,12 +132,22 @@ export function createFieldSchemaUnsafe<
  * }
  * ```
  *
+ * ## Object Schema
+ *
+ * When defining fields, if the fields is part of the recursive cycle, use the `*Recursive` {@link SchemaFactory} methods for defining the {@link FieldSchema}.
+ *
+ * ## Array Schema
+ *
+ * See {@link FixRecursiveArraySchema} for array specific details.
+ *
  * @privateRemarks
  * There are probably mistakes this misses: it's hard to guess all the wrong things people will accidentally do and defend against them.
  * Hopefully over time this can grow toward being robust, at least for common mistakes.
  *
  * This check duplicates logic that ideally would be entirely decided by the actual schema building methods.
  * Therefore changes to those methods may require updating `ValidateRecursiveSchema`.
+ *
+ * TODO: this currently does not reject `any`, but ideally should.
  * @public
  */
 export type ValidateRecursiveSchema<

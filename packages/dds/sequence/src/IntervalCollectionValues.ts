@@ -16,12 +16,12 @@ import {
 	ISerializableIntervalCollection,
 	ISerializedIntervalCollection,
 } from "./intervalCollectionMapInterfaces.js";
-import { type ISerializableInterval, IntervalOpType } from "./intervals/index.js";
+import { IntervalOpType } from "./intervals/index.js";
 
 /**
  * A local value to be stored in a container type DDS.
  */
-export interface ILocalIntervalCollection<T extends ISerializableInterval> {
+export interface ILocalIntervalCollection {
 	/**
 	 * Type indicator of the value stored within.
 	 */
@@ -30,7 +30,7 @@ export interface ILocalIntervalCollection<T extends ISerializableInterval> {
 	/**
 	 * The in-memory value stored within.
 	 */
-	readonly value: IntervalCollection<T>;
+	readonly value: IntervalCollection;
 
 	/**
 	 * Retrieve the serialized form of the value stored within.
@@ -44,8 +44,8 @@ export interface ILocalIntervalCollection<T extends ISerializableInterval> {
 	): ISerializedIntervalCollection;
 }
 
-export function makeSerializable<T extends ISerializableInterval>(
-	localValue: ILocalIntervalCollection<T>,
+export function makeSerializable(
+	localValue: ILocalIntervalCollection,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
 ): ISerializableIntervalCollection {
@@ -59,17 +59,15 @@ export function makeSerializable<T extends ISerializableInterval>(
 /**
  * Manages a contained value type.
  */
-export class IntervalCollectionTypeLocalValue<T extends ISerializableInterval>
-	implements ILocalIntervalCollection<T>
-{
+export class IntervalCollectionTypeLocalValue implements ILocalIntervalCollection {
 	/**
 	 * Create a new ValueTypeLocalValue.
 	 * @param value - The instance of the value type stored within
 	 * @param valueType - The type object of the value type stored within
 	 */
 	constructor(
-		public readonly value: IntervalCollection<T>,
-		private readonly valueType: IIntervalCollectionType<T>,
+		public readonly value: IntervalCollection,
+		private readonly valueType: IIntervalCollectionType,
 	) {}
 
 	/**
@@ -100,7 +98,7 @@ export class IntervalCollectionTypeLocalValue<T extends ISerializableInterval>
 	 * @param opName - The name of the operation that needs processing
 	 * @returns The object which can process the given op
 	 */
-	public getOpHandler(opName: IntervalOpType): IIntervalCollectionOperation<T> {
+	public getOpHandler(opName: IntervalOpType): IIntervalCollectionOperation {
 		const handler = this.valueType.ops.get(opName);
 		if (!handler) {
 			throw new Error("Unknown type message");
