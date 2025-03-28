@@ -140,30 +140,28 @@ export function testPerf() {
 						//     - the rebased version of each local edit before it
 						//   This adds up to 1 rebase for the Ith edit.
 						//   Summing over all L edits gives us: L
-						// Summing over all T branch rebases gives us: TL
-						// Which simplifies to:
+						// Summing over all T trunk edits gives us: TL
 						rebased: T * L,
 						// As part of rebasing the local branch over the trunk edits,
 						//   the Ith local edit on the branch is inverted once
-						//   Summing over all L edits gives us L
-						// Summing over all T branch rebases gives us: TL
+						//   Summing over all L edits gives us: L
+						// Summing over all T trunk edits gives us: TL
 						inverted: T * L,
 						// As part of rebasing the local branch over the trunk edits,
-						//   we compose the new trunk edit: 1
+						//   for every trunk edit we compose...
+						//     - the new trunk edit: 1
 						//   then for the Ith local edit on the branch we compose...
 						//     - the inverse of the local edit: 1
 						//     - the previous composition: 1
 						//     - the rebased version of the local edit: 1
-						//   This adds up to 3L + 1 changes composed per branch rebase.
-						// Summing over all T branch rebases gives us:
+						//   This adds up to 3L + 1 changes composed per trunk edit.
+						// Summing over all T trunk edits gives us: T(3L + 1)
 						composed: T * (3 * L + 1),
 					};
 					assert.deepEqual(actual, expected);
 				});
 			}
-		});
 
-		describe("Local commit rebasing with op bunching", () => {
 			for (const { rebasedEditCount: L, trunkEditCount: T } of scenarios) {
 				// This test simulates the following inputs to the EditManager:
 				//   - Add local edit L1 with a ref seq# pointing to edit 0
@@ -212,11 +210,10 @@ export function testPerf() {
 						//     - the rebased version of each local edit before it
 						//   This adds up to 1 rebase for the Ith edit.
 						//   Summing over all L edits gives us: L
-						// Which simplifies to:
 						rebased: L,
 						// As part of rebasing the local branch over the trunk edits,
 						//   the Ith local edit on the branch is inverted once
-						//   Summing over all L edits gives us L
+						//   Summing over all L edits gives us: L
 						inverted: L,
 						// As part of rebasing the local branch over the trunk edits,
 						//   we compose the trunk edits: T
@@ -224,7 +221,7 @@ export function testPerf() {
 						//     - the inverse of the local edit: 1
 						//     - the previous composition: 1
 						//     - the rebased version of the local edit: 1
-						//   This adds up to T + 3L changes composed per branch rebase.
+						//   This adds up to T + 3L changes composed.
 						composed: T + 3 * L,
 					};
 					assert.deepEqual(actual, expected);
@@ -234,10 +231,10 @@ export function testPerf() {
 
 		describe("Peer commit rebasing for peer with fixed seq ref#", () => {
 			for (const { rebasedEditCount: P, trunkEditCount: T } of scenarios) {
-				// When bunchCommits is true, it simulates the behavior of op bunching feature where
-				// the commits are processed by the EditManager in a together.
-				const bunchCommits = [true, false];
-				for (const bunchCommit of bunchCommits) {
+				// When bunchConfig is true, it simulates the behavior of op bunching feature where
+				// the commits are processed by the EditManager together.
+				const bunchConfigs = [true, false];
+				for (const bunchConfig of bunchConfigs) {
 					// This test simulates the following inputs to the EditManager:
 					//   - Add trunk edit T1 with a ref seq# pointing to edit 0
 					//   ...(incrementing the ref seq# for each T)
@@ -255,7 +252,7 @@ export function testPerf() {
 					// By the end of the test, the EditManager has the following structure:
 					//   (0)─(T1)─...─(Tc)─(P1)─...─(Pc)  -> Trunk
 					//     └───────────────(P1)─...─(Pc)  -> Peer branch
-					it(`Rebase ${P} peer commits over ${T} trunk commits ${bunchCommit ? "with op bunching" : ""}`, () => {
+					it(`Rebase ${P} peer commits over ${T} trunk commits ${bunchConfig ? "with op bunching" : ""}`, () => {
 						const rebaser = new NoOpChangeRebaser();
 						const manager = testChangeEditManagerFactory({ rebaser }).manager;
 						const run = rebasePeerEditsOverTrunkEdits(
@@ -264,7 +261,7 @@ export function testPerf() {
 							manager,
 							() => TestChange.emptyChange,
 							true /* defer */,
-							bunchCommit,
+							bunchConfig /* bunchCommits */,
 						);
 						rebaser.rebasedCount = 0;
 						rebaser.invertedCount = 0;
@@ -275,21 +272,19 @@ export function testPerf() {
 							inverted: rebaser.invertedCount,
 							composed: rebaser.composedCount,
 						};
-						const expectedComposed = bunchCommit
+						const expectedComposed = bunchConfig
 							? // With op bunching, all the peer commits are processed together. They are added
-								// to the peer branch and the peer branch is then merged with the trunk.
-								// As part of rebasing the new peer edits to the trip of the trunk, we compose...
+								// to the peer branch which is then merged into the trunk.
+								// As part of rebasing the new peer edits to the tip of the trunk, we compose...
 								//   - the trunk edits: T
-								//   then for the Ith local edit on the branch we compose...
-								//     - the inverse of the local edit: 1
+								//   then for the Ith peer edit on the peer branch, we compose...
+								//     - the inverse of the peer edit: 1
 								//     - the previous composition: 1
-								//     - the rebased version of the local edit: 1
-								//   This adds up to 3 edits composed per edit on the branch, except for the last one which is not needed.
-								// Summing for all P edit, this gives us: T + 3P - 3.
-								// As part of rebasing the local onto the tip of the trunk,
-								//   For the Ith peer edit, we compose...
-								//     - the peer edit to generate the changeset: 1
-								//   Summing over all P edits transforms it into P.
+								//     - the rebased version of the peer edit: 1
+								//   This adds up to 3 changes composed per edit on the branch, except for the last one which is not needed.
+								// Summing for all P peer edit gives us: T + 3P - 3.
+								// As part of rebasing the local branch onto the tip of the trunk,
+								//   we compose all P edits
 								// Adding both terms above gives us: T + 3P - 3 + P
 								// Which simplifies to: T + 4P - 3
 								T + 4 * P - 3
@@ -502,7 +497,7 @@ export function testPerf() {
 							// As part of rebasing P+ to the tip of the trunk,
 							//   we compose...
 							//     - the inverse of the peer edits on the peer branch: P
-							//     - the phase-2 peer edit P+: 1
+							//     - the phase-2 trunk edit T+: 1
 							//     - the the rebased version of the peer edits (now on the trunk): P
 							//   This adds up to 2P + 1.
 							// As part of rebasing the local branch,

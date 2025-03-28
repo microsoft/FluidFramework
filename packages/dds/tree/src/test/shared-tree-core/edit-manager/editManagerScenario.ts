@@ -48,7 +48,7 @@ interface UnitTestAckStep {
 }
 /**
  * The intention property represents the change associated with the commit for this step. The ack step and its
- * corresponding push step represent the same commit and then intention value for this commit is assigned to the ack
+ * corresponding push step represent the same commit and the intention value for this commit is assigned to the ack
  * step. Note that in cases where there are more than one step with the same sequence number, the intention value
  * will be unique.
  */

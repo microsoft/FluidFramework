@@ -726,7 +726,7 @@ export class EditManager<
 			}
 			peerLocalBranch.setHead(this.trunk.getHead());
 		} else {
-			// Otherwise, push the changes to the peer local branch and merge the branch over the trunk.
+			// Otherwise, push the changes to the peer local branch and merge the branch into the trunk.
 			for (const newCommit of newCommits) {
 				peerLocalBranch.apply(tagChange(newCommit.change, newCommit.revision));
 			}
