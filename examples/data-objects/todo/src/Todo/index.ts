@@ -3,5 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { Todo, TodoFactory, TodoName } from "./Todo.js";
-export { TodoView } from "./TodoView.js";
+export { TodoView, useTree } from "./TodoListView.js";
+export { TodoListDataObject } from "./TodoList.js";
+export { TodoList, TodoItem } from "./schema.js";
