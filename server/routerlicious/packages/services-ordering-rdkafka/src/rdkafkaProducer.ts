@@ -333,7 +333,10 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 		};
 		if (boxcarContents) {
 			const boxcarContentMessage = Buffer.from(JSON.stringify(boxcarContents));
-			if (boxcarContentMessage && boxcarContentMessage.byteLength > this.producerOptions.maxMessageSize) {
+			if (
+				boxcarContentMessage &&
+				boxcarContentMessage.byteLength > this.producerOptions.maxMessageSize
+			) {
 				const error = this.createMessageSizeTooLargeError(boxcar, boxcarContentMessage);
 				boxcar.deferred.reject(error);
 				return;
