@@ -1197,8 +1197,6 @@ export class ContainerRuntime
 	 * Invokes the given callback and expects that no ops are submitted
 	 * until execution finishes. If an op is submitted, an error will be raised.
 	 *
-	 * Can be disabled by feature gate `Fluid.ContainerRuntime.DisableOpReentryCheck`
-	 *
 	 * @param callback - the callback to be invoked
 	 */
 	public ensureNoDataModelChanges<T>(callback: () => T): T {
@@ -1721,6 +1719,10 @@ export class ContainerRuntime
 
 		const legacySendBatchFn = makeLegacySendBatchFn(submitFn, this.innerDeltaManager);
 
+		const disableSequenceNumberCoherencyAssert = this.mc.config.getBoolean(
+			"Fluid.ContainerRuntime.DisableSequenceNumberCoherencyAssert",
+		);
+
 		this.outbox = new Outbox({
 			shouldSend: () => this.canSendOps(),
 			pendingStateManager: this.pendingStateManager,
@@ -1731,10 +1733,12 @@ export class ContainerRuntime
 			config: {
 				compressionOptions,
 				maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
+				disableSequenceNumberCoherencyAssert: disableSequenceNumberCoherencyAssert === true,
 			},
 			logger: this.mc.logger,
 			groupingManager: opGroupingManager,
 			getCurrentSequenceNumbers: () => ({
+				// Note: These sequence numbers only change when DeltaManager processes an incoming op
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				clientSequenceNumber: this._processedClientSequenceNumber,
 			}),
@@ -1910,6 +1914,7 @@ export class ContainerRuntime
 			featureGates: JSON.stringify({
 				...featureGatesForTelemetry,
 				closeSummarizerDelayOverride,
+				disableSequenceNumberCoherencyAssert,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
@@ -2597,6 +2602,19 @@ export class ContainerRuntime
 
 		this.verifyNotClosed();
 
+		// Reference Sequence Number may be about to change, and it must be consistent across a batch, so flush now
+		this.outbox.flush();
+
+		this.ensureNoDataModelChanges(() => {
+			this.processImpl(messageCopy, local);
+		});
+	}
+
+	/**
+	 * Implementation of core logic for {@link ContainerRuntime.process}, once preconditions are established
+	 * @param messageCopy - Shallow copy of the sequenced message
+	 */
+	private processImpl(messageCopy: ISequencedDocumentMessage, local: boolean): void {
 		// Whether or not the message appears to be a runtime message from an up-to-date client.
 		// It may be a legacy runtime message (ie already unpacked and ContainerMessageType)
 		// or something different, like a system message.
@@ -2758,9 +2776,7 @@ export class ContainerRuntime
 		try {
 			if (!runtimeBatch) {
 				for (const { message } of messagesWithMetadata) {
-					this.ensureNoDataModelChanges(() => {
-						this.observeNonRuntimeMessage(message);
-					});
+					this.observeNonRuntimeMessage(message);
 				}
 				return;
 			}
@@ -2784,21 +2800,19 @@ export class ContainerRuntime
 			if (!groupedBatch) {
 				for (const { message, localOpMetadata } of messagesWithMetadata) {
 					updateSequenceNumbers(message);
-					this.ensureNoDataModelChanges(() => {
-						this.validateAndProcessRuntimeMessages(
-							message as InboundSequencedContainerRuntimeMessage,
-							[
-								{
-									contents: message.contents,
-									localOpMetadata,
-									clientSequenceNumber: message.clientSequenceNumber,
-								},
-							],
-							local,
-							savedOp,
-						);
-						this.emit("op", message, true /* runtimeMessage */);
-					});
+					this.validateAndProcessRuntimeMessages(
+						message as InboundSequencedContainerRuntimeMessage,
+						[
+							{
+								contents: message.contents,
+								localOpMetadata,
+								clientSequenceNumber: message.clientSequenceNumber,
+							},
+						],
+						local,
+						savedOp,
+					);
+					this.emit("op", message, true /* runtimeMessage */);
 				}
 				return;
 			}
@@ -2809,15 +2823,12 @@ export class ContainerRuntime
 			// Process the previous bunch of messages.
 			const sendBunchedMessages = (): void => {
 				assert(previousMessage !== undefined, 0xa67 /* previous message must exist */);
-				this.ensureNoDataModelChanges(() => {
-					this.validateAndProcessRuntimeMessages(
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						previousMessage!,
-						bunchedMessagesContent,
-						local,
-						savedOp,
-					);
-				});
+				this.validateAndProcessRuntimeMessages(
+					previousMessage,
+					bunchedMessagesContent,
+					local,
+					savedOp,
+				);
 				bunchedMessagesContent = [];
 			};
 
