@@ -66,7 +66,6 @@ export const TodoTreeView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
 			startingText: newItemTextInputRef.current.value,
 		});
 		newItemTextInputRef.current.value = "";
-		Tree.on(todoModel.treeView.root.items, "treeChanged", () => {});
 	};
 
 	// Using the list of TodoItem objects, make a list of TodoItemViews.
