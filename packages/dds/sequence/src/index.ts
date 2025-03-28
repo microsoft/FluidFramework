@@ -15,11 +15,7 @@
  *
  * @packageDocumentation
  */
-export {
-	IMapMessageLocalMetadata,
-	IValueOpEmitter,
-	SequenceOptions,
-} from "./intervalCollectionMapInterfaces.js";
+export { SequenceOptions } from "./intervalCollectionMapInterfaces.js";
 export {
 	IInterval,
 	Interval,
