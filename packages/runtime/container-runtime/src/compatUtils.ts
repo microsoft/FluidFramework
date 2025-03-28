@@ -187,7 +187,6 @@ export function getDisallowedVersions(
 	if (semver.lte(compatibilityMode, "2.0.0")) {
 		return [];
 	}
-	console.log("hello!");
 
 	// If the compatibility mode is greater than "2.0.0", then we need to start disallowing 2.x versions.
 	// However, this is a bit tricky since some 2.x versions's implementation of disallowedVersions uses exact version
