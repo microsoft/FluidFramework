@@ -26,7 +26,9 @@ import { IntervalIndex, type SequenceIntervalIndex } from "./intervalIndex.js";
 /**
  * @legacy
  * @alpha
- * @deprecated The generic version of this interface is no longer used and will be removed. Use {@link ISequenceOverlappingIntervalsIndex} instead.
+ * @privateremarks
+ * TODO AB#34436 - This should be deprecated but we need to wait until the Pages codebase is already using
+ * the alternative ({@link ISequenceOverlappingIntervalsIndex}) so the integration pipeline doesn't break.
  */
 export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 	extends IntervalIndex<TInterval> {
