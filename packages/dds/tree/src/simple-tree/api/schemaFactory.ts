@@ -304,7 +304,7 @@ export interface SchemaStatics {
 }
 
 /**
- * Unstable extensions to SchemaStaticsAlpha.
+ * Unstable extensions to {@link SchemaStatics}.
  * @remarks
  * Only items missing in schemaStatics are added here: items which simply have more specific types in alpha are instead just included in {@link schemaStatics} directly.
  */
