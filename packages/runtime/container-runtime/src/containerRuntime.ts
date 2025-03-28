@@ -152,7 +152,6 @@ import {
 import {
 	CompressionAlgorithms,
 	disabledCompressionConfig,
-	enabledCompressionConfig,
 	getConfigsForCompatMode,
 	getDisallowedVersions,
 	isValidCompatMode,
@@ -768,7 +767,13 @@ export class ContainerRuntime
 		// with FF runtime 2.x or later.
 		// Our policy is to support N/N-1 compatibility by default, where N is the most recent public major release of the runtime.
 		// Therefore, if the customer does not provide a compatibility mode, we will default to use N-1.
-		const defaultCompatibilityMode = "1.0.0"; // TODO: Automatically set to be N-1.
+		// ----------------------------------------------------------------------------------------------------
+		// However, this is not consistent with today's behavior. Some options (i.e. batching, compression) are enabled by default
+		// despite not being compatible with 1.x clients. This goes against our new policy of maintaining compat between N/N-1 by default.
+		// That said, tests (and customers?) expect these options to be on by default, so we may need to consider these options
+		// "grandfathered in".
+		// TODO: Confirm if this is our policy for 2.x, and if so, update policy docs to clarify this.
+		const defaultCompatibilityMode = "2.0.0";
 		const compatibilityMode = runtimeOptions.compatibilityMode ?? defaultCompatibilityMode;
 		if (!isValidCompatMode(compatibilityMode)) {
 			throw new UsageError(
@@ -787,30 +792,18 @@ export class ContainerRuntime
 			enableRuntimeIdCompressor = defaultConfigs.enableRuntimeIdCompressor,
 			chunkSizeInBytes = defaultChunkSizeInBytes,
 			explicitSchemaControl = defaultConfigs.explicitSchemaControl,
-
-			// TODO: Both `enabledGroupedBatching` and `flushMode` *should* be set to `defaultConfigs.enableGroupedBatching`
-			// and `defaultConfigs.flushMode` respectively.
-			// However, this is not consistent with today's behavior (both are enabled by default). This goes against our new
-			// policy of maintaining compat between N/N-1 by default.
-			// That said, tests (and customers?) expect these options to be on by default, so we may need to consider these options
-			// "grandfathered in".
-			enableGroupedBatching = true,
-			flushMode = FlushMode.TurnBased,
-
-			// This one is a bit tricky, since it needs to match the grouping config
+			enableGroupedBatching = defaultConfigs.enableGroupedBatching,
+			flushMode = defaultConfigs.flushMode,
 			compressionOptions = runtimeOptions.enableGroupedBatching === false
 				? disabledCompressionConfig // Compression must be disabled if Grouping is disabled
-				: // TODO: Similarly, to the comment above, this would ideally be set to `defaultConfigs.compressionOptions`.
-					// But since we are enabling grouped batching by default, compression will also need to be enabled by default.
-					enabledCompressionConfig,
+				: defaultConfigs.compressionOptions,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
 
 		assert(gcOptions !== undefined, "gcOptions should be defined");
 		assert(explicitSchemaControl !== undefined, "explicitSchemaControl should be defined");
-		// TODO: Uncomment below if we use defaultConfigs for these options, delete otherwise.
-		// assert(flushMode !== undefined, "flushMode should be defined");
-		// assert(compressionOptions !== undefined, "compressionOptions should be defined");
-		// assert(enableGroupedBatching !== undefined, "enableGroupedBatching should be defined");
+		assert(flushMode !== undefined, "flushMode should be defined");
+		assert(compressionOptions !== undefined, "compressionOptions should be defined");
+		assert(enableGroupedBatching !== undefined, "enableGroupedBatching should be defined");
 
 		const registry = new FluidDataStoreRegistry(registryEntries);
 
