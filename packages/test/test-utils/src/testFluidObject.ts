@@ -31,7 +31,7 @@ import type { ISharedObject } from "@fluidframework/shared-object-base/internal"
 import { ITestFluidObject } from "./interfaces.js";
 
 /**
- * A test Fluid object that will create a shared object for each key-value pair in the factoryEntries passed to load.
+ * A test Fluid object that will create a shared object for each key-value pair in the initialSharedObjectsFactories passed to load.
  * The shared objects can be retrieved by passing the key of the entry to getSharedObject.
  * It exposes the IFluidDataStoreContext and IFluidDataStoreRuntime.
  * @privateRemarks
@@ -58,14 +58,17 @@ export class TestFluidObject implements ITestFluidObject {
 	 * Creates a new TestFluidObject.
 	 * @param runtime - The data store runtime.
 	 * @param context - The data store context.
-	 * @param factoryEntries - A list of id to IChannelFactory mapping. For each item in the list,
+	 * @param initialSharedObjectsFactories - A list of id to IChannelFactory mapping. For each item in the list,
 	 * a shared object is created which can be retrieved by calling getSharedObject() with the id;
 	 */
 	constructor(
 		public readonly runtime: IFluidDataStoreRuntime,
 		public readonly channel: IFluidDataStoreChannel,
 		public readonly context: IFluidDataStoreContext,
-		private readonly factoryEntriesMap: ReadonlyMap<string, IChannelFactory<ISharedObject>>,
+		private readonly initialSharedObjectsFactories: ReadonlyMap<
+			string,
+			IChannelFactory<ISharedObject>
+		>,
 	) {
 		this.handle = new FluidObjectHandle(this, "", runtime.objectsRoutingContext);
 	}
@@ -75,15 +78,15 @@ export class TestFluidObject implements ITestFluidObject {
 	 * @param id - The id of the shared object to retrieve.
 	 */
 	public async getSharedObject<T = any>(id: string): Promise<T> {
-		if (this.factoryEntriesMap === undefined) {
+		if (this.initialSharedObjectsFactories === undefined) {
 			throw new Error("Shared objects were not provided during creation.");
 		}
 
-		if (this.factoryEntriesMap.has(id)) {
+		if (this.initialSharedObjectsFactories.has(id)) {
 			const handle = this.root.get<IFluidHandle<T>>(id);
 			if (handle === undefined) {
 				throw new Error(
-					`Shared object with id '${id}' is in factoryEntriesMap but not found under root.`,
+					`Shared object with id '${id}' is in initialSharedObjectsFactories but not found under root.`,
 				);
 			}
 			return handle.get();
@@ -103,10 +106,12 @@ export class TestFluidObject implements ITestFluidObject {
 			if (!existing) {
 				this.root = SharedMap.create(this.runtime, "root");
 
-				this.factoryEntriesMap.forEach((sharedObjectFactory: IChannelFactory, key: string) => {
-					const sharedObject = this.runtime.createChannel(key, sharedObjectFactory.type);
-					this.root.set(key, sharedObject.handle);
-				});
+				this.initialSharedObjectsFactories.forEach(
+					(sharedObjectFactory: IChannelFactory, key: string) => {
+						const sharedObject = this.runtime.createChannel(key, sharedObjectFactory.type);
+						this.root.set(key, sharedObject.handle);
+					},
+				);
 
 				this.root.bindToContext();
 			}
@@ -133,7 +138,7 @@ export type TestDataObjectKind = new (
 	runtime: IFluidDataStoreRuntime,
 	channel: IFluidDataStoreChannel,
 	context: IFluidDataStoreContext,
-	factoryEntriesMap: ReadonlyMap<string, IChannelFactory<ISharedObject>>,
+	initialSharedObjectsFactories: ReadonlyMap<string, IChannelFactory<ISharedObject>>,
 ) => IFluidLoadable & {
 	request(request: IRequest): Promise<IResponse>;
 	initialize(existing: boolean): Promise<void>;
@@ -177,12 +182,12 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 
 	/**
 	 * Creates a new TestFluidObjectFactory.
-	 * @param factoryEntries - A list of id to IChannelFactory mapping. It creates a data store runtime with each
+	 * @param initialSharedObjectsFactories - A list of id to IChannelFactory mapping. It creates a data store runtime with each
 	 * IChannelFactory. Entries with string ids are passed to the Fluid object so that it can create a shared object
 	 * for it.
 	 */
 	constructor(
-		private readonly factoryEntries: ChannelFactoryRegistry,
+		private readonly initialSharedObjectsFactories: ChannelFactoryRegistry,
 		public readonly type = "TestFluidObjectFactory",
 		private readonly dataObjectKind: TestDataObjectKind = TestFluidObject,
 	) {}
@@ -198,14 +203,14 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 		dataTypes.set(sharedMapFactory.type, sharedMapFactory);
 
 		// Add the object factories to the list to be sent to data store runtime.
-		for (const [, factory] of this.factoryEntries) {
+		for (const [, factory] of this.initialSharedObjectsFactories) {
 			dataTypes.set(factory.type, factory);
 		}
 
 		// Create a map from the factory entries with entries that don't have the id as undefined. This will be
 		// passed to the Fluid object.
 		const factoryEntriesMapForObject = new Map<string, IChannelFactory<ISharedObject>>();
-		for (const [id, factory] of this.factoryEntries) {
+		for (const [id, factory] of this.initialSharedObjectsFactories) {
 			if (id !== undefined) {
 				// Here we assume the factory produces an ISharedObject.
 				factoryEntriesMapForObject.set(id, factory as IChannelFactory<ISharedObject>);
