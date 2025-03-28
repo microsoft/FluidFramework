@@ -3,5 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { ITodoItemInitialState, TodoItemFactory } from "./TodoItem.js";
 export { TodoItemView } from "./TodoItemView.js";

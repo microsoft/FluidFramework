@@ -4,9 +4,8 @@
  */
 
 import { CollaborativeInput } from "@fluid-example/example-utils";
-import { useTree } from "@fluid-experimental/tree-react-api";
 import { SharedString, type ISharedString } from "@fluidframework/sequence/legacy";
-import { Tree } from "@fluidframework/tree/legacy";
+import { Tree, type TreeNode } from "@fluidframework/tree/legacy";
 import React, { useEffect, useRef, useState } from "react";
 
 import { TodoItemView } from "../TodoItem/index.js";
@@ -14,16 +13,31 @@ import { TodoItemView } from "../TodoItem/index.js";
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.css";
 
-import type { TodoTreeDataObject, TodoTreeItem } from "./index.js";
+import { type TodoListDataObject } from "./index.js";
 
 export interface TodoViewProps {
-	readonly todoModel: TodoTreeDataObject;
+	readonly todoModel: TodoListDataObject;
 	readonly getDirectLink: (itemId: string) => string;
 }
 
-export const TodoTreeView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
+// TODO: This was copied over from the "@fluid-experimental/tree-react-api" package.
+// This should be imported from that package, once it is no longer experimental.
+export function useTree(subtreeRoot: TreeNode): void {
+	// Use a React effect hook to invalidate this component when the subtreeRoot changes.
+	// We do this by incrementing a counter, which is passed as a dependency to the effect hook.
+	const [invalidations, setInvalidations] = useState(0);
+
+	// React effect hook that increments the 'invalidation' counter whenever subtreeRoot or any of its children change.
+	useEffect(() => {
+		// Returns the cleanup function to be invoked when the component unmounts.
+		return Tree.on(subtreeRoot, "treeChanged", () => {
+			setInvalidations((i) => i + 1);
+		});
+	}, [invalidations, subtreeRoot]);
+}
+
+export const TodoView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
 	const { todoModel, getDirectLink } = props;
-	const [todoItems, setTodoItems] = useState<[string, TodoTreeItem][]>([]);
 	const [titleString, setTitleString] = useState<SharedString | undefined>();
 
 	const newItemTextInputRef = useRef<HTMLInputElement>(null);
@@ -40,17 +54,6 @@ export const TodoTreeView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
 				console.log(todoModel);
 				console.error(error);
 			});
-		const refreshTodoItemListFromModel = () => {
-			try {
-				const items = Array.from(todoModel.treeView.root.items.entries());
-				setTodoItems(items);
-			} catch (error) {
-				console.error(error);
-			}
-		};
-		Tree.on(todoModel.treeView.root.items, "treeChanged", refreshTodoItemListFromModel);
-		refreshTodoItemListFromModel();
-
 		return () => {};
 	}, [todoModel]);
 
@@ -69,28 +72,30 @@ export const TodoTreeView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
 	};
 
 	// Using the list of TodoItem objects, make a list of TodoItemViews.
-	const todoItemViews = todoItems.map(([id, todoItem]) => (
-		<div className="item-wrap" key={id}>
-			<TodoItemView todoItemModel={todoItem} className="todo-item-view" />
-			<button
-				name="OpenInNewTab"
-				id={id}
-				className="action-button"
-				onClick={() => window.open(getDirectLink(id), "_blank")}
-			>
-				↗
-			</button>
-			<button
-				className="action-button"
-				onClick={() => {
-					todoModel.treeView.root.items.delete(id);
-					Tree.on(todoModel.treeView.root.items, "treeChanged", () => {});
-				}}
-			>
-				X
-			</button>
-		</div>
-	));
+	const todoItemViews = Array.from(todoModel.treeView.root.items.entries()).map(
+		([id, todoItem]) => (
+			<div className="item-wrap" key={id}>
+				<TodoItemView todoItemModel={todoItem} className="todo-item-view" />
+				<button
+					name="OpenInNewTab"
+					id={id}
+					className="action-button"
+					onClick={() => window.open(getDirectLink(id), "_blank")}
+				>
+					↗
+				</button>
+				<button
+					className="action-button"
+					onClick={() => {
+						todoModel.treeView.root.items.delete(id);
+						Tree.on(todoModel.treeView.root.items, "treeChanged", () => {});
+					}}
+				>
+					X
+				</button>
+			</div>
+		),
+	);
 
 	// TodoView is made up of an editable title input, an input/button for submitting new items, and the list
 	// of TodoItemViews.
