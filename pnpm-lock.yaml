@@ -3824,9 +3824,6 @@ importers:
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../utils/example-utils
-      '@fluid-experimental/tree-react-api':
-        specifier: workspace:~
-        version: link:../../../experimental/framework/tree-react-api
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../packages/framework/aqueduct
