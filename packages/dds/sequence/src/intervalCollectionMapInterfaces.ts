@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IMergeTreeOptions } from "@fluidframework/merge-tree/internal";
-import { ISharedObjectEvents } from "@fluidframework/shared-object-base/internal";
 
 import type {
 	IntervalCollection,
@@ -16,48 +14,9 @@ import type {
 import {
 	ISerializedInterval,
 	IntervalDeltaOpType,
-	IntervalOpType,
 	SerializedIntervalDelta,
 } from "./intervals/index.js";
 
-/**
- * Type of "valueChanged" event parameter.
- */
-export interface IValueChanged {
-	/**
-	 * The key storing the value that changed.
-	 */
-	key: string;
-
-	/**
-	 * The value that was stored at the key prior to the change.
-	 */
-	previousValue: any;
-}
-
-/**
- * Value types are given an IValueOpEmitter to emit their ops through the container type that holds them.
- * @internal
- */
-export interface IValueOpEmitter {
-	/**
-	 * Called by the value type to emit a value type operation through the container type holding it.
-	 * @param opName - Name of the emitted operation
-	 * @param previousValue - JSONable previous value as defined by the value type @deprecated unused
-	 * @param params - JSONable params for the operation as defined by the value type
-	 * @param localOpMetadata - JSONable local metadata which should be submitted with the op
-	 */
-	emit(
-		opName: IntervalOpType,
-		previousValue: undefined,
-		params: SerializedIntervalDelta,
-		localOpMetadata: IMapMessageLocalMetadata,
-	): void;
-}
-
-/**
- * @internal
- */
 export interface IMapMessageLocalMetadata {
 	localSeq: number;
 }
@@ -96,38 +55,7 @@ export interface SequenceOptions
 }
 
 /**
- * A value factory is used to serialize/deserialize value types to a map
- * @legacy
- * @alpha
- *
- */
-export interface IIntervalCollectionFactory {
-	/**
-	 * Create a new value type.  Used both in creation of new value types, as well as in loading existing ones
-	 * from remote.
-	 * @param emitter - Emitter object that the created value type will use to emit operations
-	 * @param raw - Initialization parameters as defined by the value type
-	 * @returns The new value type
-	 */
-	load(
-		emitter: IValueOpEmitter,
-		raw: any,
-		options?: Partial<SequenceOptions>,
-	): IntervalCollection;
-
-	/**
-	 * Given a value type, provides a JSONable form of its data to be used for snapshotting.  This data must be
-	 * loadable using the load method of its factory.
-	 * @param value - The value type to serialize
-	 * @returns The JSONable form of the value type
-	 */
-	store(value: IntervalCollection): any;
-}
-
-/**
  * Defines an operation that a value type is able to handle.
- * @legacy
- * @alpha
  *
  */
 export interface IIntervalCollectionOperation {
@@ -165,13 +93,6 @@ export interface IIntervalCollectionOperation {
 				rebasedLocalOpMetadata: IMapMessageLocalMetadata;
 		  }
 		| undefined;
-}
-
-export interface ISharedDefaultMapEvents extends ISharedObjectEvents {
-	(
-		event: "valueChanged" | "create",
-		listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void,
-	): void;
 }
 
 /**
@@ -216,8 +137,6 @@ export interface ISerializedIntervalCollection {
  * value is whatever params the ValueType needs to complete that operation.  Similar to ISerializableValue, it is
  * serializable via JSON.stringify/parse but differs in that it has no equivalency with an in-memory value - rather
  * it just describes an operation to be applied to an already-in-memory value.
- * @legacy
- * @alpha
  */
 export interface IIntervalCollectionTypeOperationValue {
 	/**

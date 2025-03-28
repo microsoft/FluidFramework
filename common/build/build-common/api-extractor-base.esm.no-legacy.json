@@ -1,7 +1,4 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "./api-extractor-base.esm.json",
-	"apiReport": {
-		"reportVariants": ["public", "beta", "alpha"] // TODO: add "complete"?
-	}
+	"extends": "./api-extractor-base.esm.json"
 }

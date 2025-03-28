@@ -36,8 +36,8 @@ import { v4 as uuid } from "uuid";
 import {
 	IIntervalCollectionOperation,
 	IMapMessageLocalMetadata,
-	IValueOpEmitter,
 	SequenceOptions,
+	type IIntervalCollectionTypeOperationValue,
 } from "./intervalCollectionMapInterfaces.js";
 import {
 	createIdIntervalIndex,
@@ -1109,7 +1109,7 @@ export class IntervalCollection
 	extends TypedEventEmitter<ISequenceIntervalCollectionEvents>
 	implements ISequenceIntervalCollection
 {
-	private savedSerializedIntervals?: ISerializedInterval[];
+	private savedSerializedIntervals?: ISerializedIntervalCollectionV1;
 	private localCollection: LocalIntervalCollection | undefined;
 	private onDeserialize: DeserializeCallback | undefined;
 	private client: Client | undefined;
@@ -1121,13 +1121,13 @@ export class IntervalCollection
 		number,
 		ISerializedInterval | SerializedIntervalDelta
 	>();
-	private readonly pendingChangesStart: Map<string, ISerializedInterval[]> = new Map<
+	private readonly pendingChangesStart: Map<string, ISerializedIntervalCollectionV1> = new Map<
 		string,
-		ISerializedInterval[]
+		ISerializedIntervalCollectionV1
 	>();
-	private readonly pendingChangesEnd: Map<string, ISerializedInterval[]> = new Map<
+	private readonly pendingChangesEnd: Map<string, ISerializedIntervalCollectionV1> = new Map<
 		string,
-		ISerializedInterval[]
+		ISerializedIntervalCollectionV1
 	>();
 
 	public get attached(): boolean {
@@ -1135,9 +1135,11 @@ export class IntervalCollection
 	}
 
 	constructor(
-		private readonly requiresClient: boolean,
-		private readonly emitter: IValueOpEmitter,
-		serializedIntervals: ISerializedInterval[] | ISerializedIntervalCollectionV2,
+		private readonly submitDelta: (
+			op: IIntervalCollectionTypeOperationValue,
+			md: IMapMessageLocalMetadata,
+		) => void,
+		serializedIntervals: ISerializedIntervalCollectionV1 | ISerializedIntervalCollectionV2,
 		private readonly options: Partial<SequenceOptions> = {},
 	) {
 		super();
@@ -1256,7 +1258,7 @@ export class IntervalCollection
 			throw new LoggingError("Only supports one Sequence attach");
 		}
 
-		if (client === undefined && this.requiresClient) {
+		if (client === undefined) {
 			throw new LoggingError("Client required for this collection");
 		}
 
@@ -1429,8 +1431,16 @@ export class IntervalCollection
 			if (this.isCollaborating) {
 				this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
 			}
-			// Local ops get submitted to the server. Remote ops have the deserializer run.
-			this.emitter.emit("add", undefined, serializedInterval, { localSeq });
+
+			this.submitDelta(
+				{
+					opName: "add",
+					value: serializedInterval,
+				},
+				{
+					localSeq,
+				},
+			);
 		}
 
 		this.emit("addInterval", interval, true, undefined);
@@ -1452,9 +1462,15 @@ export class IntervalCollection
 		if (interval) {
 			// Local ops get submitted to the server. Remote ops have the deserializer run.
 			if (local) {
-				this.emitter.emit("delete", undefined, interval.serialize(), {
-					localSeq: this.getNextLocalSeq(),
-				});
+				this.submitDelta(
+					{
+						opName: "delete",
+						value: interval.serialize(),
+					},
+					{
+						localSeq: this.getNextLocalSeq(),
+					},
+				);
 			} else {
 				if (this.onDeserialize) {
 					this.onDeserialize(interval);
@@ -1548,7 +1564,15 @@ export class IntervalCollection
 				this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
 			}
 
-			this.emitter.emit("change", undefined, serializedInterval, { localSeq });
+			this.submitDelta(
+				{
+					opName: "change",
+					value: serializedInterval,
+				},
+				{
+					localSeq,
+				},
+			);
 			if (deltaProps !== undefined) {
 				this.emit("propertyChanged", interval, deltaProps, true, undefined);
 				this.emit(
