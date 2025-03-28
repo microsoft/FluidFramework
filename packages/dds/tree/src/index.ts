@@ -212,7 +212,7 @@ export {
 	asTreeViewAlpha,
 	type NodeSchemaOptions,
 	type NodeSchemaMetadata,
-	type schemaStatics,
+	type SchemaStatics,
 	type ITreeAlpha,
 	type TransactionConstraint,
 	type NodeInDocumentConstraint,
