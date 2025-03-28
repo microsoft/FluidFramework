@@ -138,11 +138,19 @@ export const TreeAlpha: {
 	exportConcise(node: TreeNode | TreeLeafValue, options?: EncodeOptions): ConciseTree;
 
 	/**
+	 * Copy a snapshot of the current version of a TreeNode into a {@link ConciseTree}, allowing undefined.
+	 */
+	exportConcise(
+		node: TreeNode | TreeLeafValue | undefined,
+		options?: EncodeOptions,
+	): ConciseTree | undefined;
+
+	/**
 	 * Copy a snapshot of the current version of a TreeNode into a JSON compatible plain old JavaScript Object (except for {@link @fluidframework/core-interfaces#IFluidHandle|IFluidHandles}).
 	 * Uses the {@link VerboseTree} format, with an explicit type on every node.
 	 *
 	 * @remarks
-	 * There are several cases this may be preferred to {@link TreeAlpha.exportConcise}:
+	 * There are several cases this may be preferred to {@link TreeAlpha.(exportConcise:1)}:
 	 *
 	 * 1. When not using {@link ITreeConfigurationOptions.preventAmbiguity} (or when using `useStableFieldKeys`), `exportConcise` can produce ambiguous data (the type may be unclear on some nodes).
 	 * `exportVerbose` will always be unambiguous and thus lossless.
@@ -251,16 +259,7 @@ export const TreeAlpha: {
 		return createFromCursor(schema, cursor);
 	},
 
-	exportConcise(node: TreeNode | TreeLeafValue, options?: EncodeOptions): ConciseTree {
-		const config: EncodeOptions = { ...options };
-
-		const cursor = borrowCursorFromTreeNodeOrValue(node);
-		return conciseFromCursor(
-			cursor,
-			tryGetSchema(node) ?? fail(0xacd /* invalid input */),
-			config,
-		);
-	},
+	exportConcise,
 
 	exportVerbose(node: TreeNode | TreeLeafValue, options?: EncodeOptions): VerboseTree {
 		const config: EncodeOptions = { ...options };
@@ -314,6 +313,30 @@ export const TreeAlpha: {
 		return TreeBeta.clone<TSchema>(view.root);
 	},
 };
+
+function exportConcise(node: TreeNode | TreeLeafValue, options?: EncodeOptions): ConciseTree;
+
+function exportConcise(
+	node: TreeNode | TreeLeafValue | undefined,
+	options?: EncodeOptions,
+): ConciseTree | undefined;
+
+function exportConcise(
+	node: TreeNode | TreeLeafValue | undefined,
+	options?: EncodeOptions,
+): ConciseTree | undefined {
+	if (node === undefined) {
+		return undefined;
+	}
+	const config: EncodeOptions = { ...options };
+
+	const cursor = borrowCursorFromTreeNodeOrValue(node);
+	return conciseFromCursor(
+		cursor,
+		tryGetSchema(node) ?? fail(0xacd /* invalid input */),
+		config,
+	);
+}
 
 function borrowCursorFromTreeNodeOrValue(
 	node: TreeNode | TreeLeafValue,

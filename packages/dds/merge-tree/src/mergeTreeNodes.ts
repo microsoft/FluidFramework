@@ -18,7 +18,7 @@ import { TrackingGroupCollection } from "./mergeTreeTracking.js";
 import { IJSONSegment, IMarkerDef, ReferenceType } from "./ops.js";
 import { computeHierarchicalOrdinal } from "./ordinal.js";
 import type { PartialSequenceLengths } from "./partialLengths.js";
-import { PriorPerspective, type Perspective } from "./perspective.js";
+import { LocalDefaultPerspective, PriorPerspective, type Perspective } from "./perspective.js";
 import { PropertySet, clone, createMap, type MapLike } from "./properties.js";
 import { ReferencePosition } from "./referencePositions.js";
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
@@ -673,6 +673,8 @@ export class CollaborationWindow {
 	 * from a given (seq, localSeq) perspective.
 	 */
 	localSeq = 0;
+
+	public localPerspective: Perspective = new LocalDefaultPerspective(this.clientId);
 
 	public loadFrom(a: CollaborationWindow): void {
 		this.clientId = a.clientId;
