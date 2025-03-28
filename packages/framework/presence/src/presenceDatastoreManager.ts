@@ -431,6 +431,9 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 					),
 				);
 			} else {
+				// All broadcast state is kept even if not currently registered, unless a value
+				// notes itself to be ignored.
+
 				// Ensure there is a datastore at this address and get it.
 				const workspaceDatastore = (this.datastore[workspaceAddress] ??= {});
 				for (const [key, remoteAllKnownState] of Object.entries(remoteDatastore)) {
