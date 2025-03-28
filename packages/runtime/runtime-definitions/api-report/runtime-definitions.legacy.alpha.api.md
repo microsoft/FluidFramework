@@ -226,8 +226,6 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandleInternal<ArrayBufferLike>>;
-    // (undocumented)
-    uploadBlobExperiment(blob: ArrayBufferLike): Promise<IFluidHandleInternal<ArrayBufferLike>>;
 }
 
 // @alpha

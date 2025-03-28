@@ -121,8 +121,6 @@ export interface IFluidDataStoreRuntime
 		signal?: AbortSignal,
 	): Promise<IFluidHandle<ArrayBufferLike>>;
 
-	uploadBlobExperiment(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
-
 	/**
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.

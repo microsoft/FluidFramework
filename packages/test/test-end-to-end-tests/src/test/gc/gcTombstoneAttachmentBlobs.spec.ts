@@ -468,7 +468,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 			return { mainContainer, mainDataStore };
 		}
 
-		itExpects.skip(
+		itExpects(
 			"tombstones blobs uploaded in detached container",
 			[
 				{
@@ -539,7 +539,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 			},
 		);
 
-		itExpects.skip(
+		itExpects(
 			"tombstones blobs uploaded in detached and de-duped in attached container",
 			[
 				{

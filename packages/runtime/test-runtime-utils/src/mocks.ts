@@ -981,12 +981,6 @@ export class MockFluidDataStoreRuntime
 		return null as any as IFluidHandle<ArrayBufferLike>;
 	}
 
-	public async uploadBlobExperiment(
-		blob: ArrayBufferLike,
-	): Promise<IFluidHandle<ArrayBufferLike>> {
-		return null as any as IFluidHandle<ArrayBufferLike>;
-	}
-
 	public async getBlob(blobId: string): Promise<any> {
 		return null;
 	}

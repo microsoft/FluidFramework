@@ -456,7 +456,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			return { mainContainer, mainDataStore };
 		}
 
-		itExpects.skip(
+		itExpects(
 			"deletes blobs uploaded in detached container",
 			[
 				{
@@ -536,7 +536,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			},
 		);
 
-		itExpects.skip(
+		itExpects(
 			"deletes blobs uploaded in detached and de-duped in attached container",
 			[
 				{

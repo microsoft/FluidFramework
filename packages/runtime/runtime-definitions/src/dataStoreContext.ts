@@ -535,8 +535,6 @@ export interface IFluidParentContext
 		signal?: AbortSignal,
 	): Promise<IFluidHandleInternal<ArrayBufferLike>>;
 
-	uploadBlobExperiment(blob: ArrayBufferLike): Promise<IFluidHandleInternal<ArrayBufferLike>>;
-
 	/**
 	 * Called by IFluidDataStoreChannel, indicates that a channel is dirty and needs to be part of the summary.
 	 * @param address - The address of the channel that is dirty.
