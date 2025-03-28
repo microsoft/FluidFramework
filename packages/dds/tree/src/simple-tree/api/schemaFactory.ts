@@ -323,7 +323,7 @@ const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => {
  * @remarks
  * This can choose to use more specific types the interface requires to be more useful for internal consumers.
  */
-export const schemaStatics = {
+export const schemaStaticsPublic = {
 	string: stringSchema,
 	number: numberSchema,
 	boolean: booleanSchema,
@@ -370,7 +370,10 @@ export const schemaStatics = {
 	): FieldSchemaAlphaUnsafe<FieldKind.Required, T, TCustomMetadata> => {
 		return createFieldSchemaUnsafe(FieldKind.Required, t, props);
 	},
+} as const satisfies SchemaStatics;
 
+export const schemaStatics = {
+	...schemaStaticsPublic,
 	identifier: <const TCustomMetadata = unknown>(
 		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
 	): FieldSchemaAlpha<FieldKind.Identifier, typeof stringSchema, TCustomMetadata> => {
@@ -491,7 +494,8 @@ const schemaStaticPublic: SchemaStatics = schemaStatics;
 export class SchemaFactory<
 	out TScope extends string | undefined = string | undefined,
 	TName extends number | string = string,
-> {
+> implements SchemaStatics
+{
 	/**
 	 * TODO:
 	 * If users of this generate the same name because two different schema with the same identifier were used,

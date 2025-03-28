@@ -37,7 +37,8 @@ import type { ObjectNodeSchema } from "../../../simple-tree/objectNodeTypes.js";
 import {
 	SchemaFactory,
 	schemaFromValue,
-	schemaStatics,
+	schemaStaticsPublic,
+	type SchemaStatics,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/schemaFactory.js";
 import type {
@@ -905,10 +906,12 @@ describe("schemaFactory", () => {
 
 	it("statics", () => {
 		const f = new SchemaFactory("");
-		for (const [key, value] of Object.entries(schemaStatics)) {
+		for (const [key, value] of Object.entries(schemaStaticsPublic)) {
 			assert.equal((SchemaFactory as unknown as Record<string, unknown>)[key], value);
 			assert.equal((f as unknown as Record<string, unknown>)[key], value);
 		}
+
+		const _static: SchemaStatics = SchemaFactory;
 	});
 
 	it("extra fields in object constructor", () => {
