@@ -89,6 +89,8 @@ export type TreeNodeSchemaNonClass<
 		? {
 				/**
 				 * Constructs an {@link Unhydrated} node with this schema.
+				 * @privateRemarks
+				 * Also allows InternalTreeNode.
 				 * @sealed
 				 */
 				create(data?: TInsertable | TConstructorExtra): TNode;
@@ -96,6 +98,8 @@ export type TreeNodeSchemaNonClass<
 		: {
 				/**
 				 * Constructs an {@link Unhydrated} node with this schema.
+				 * @privateRemarks
+				 * Also allows InternalTreeNode.
 				 * @sealed
 				 */
 				create(data: TInsertable | TConstructorExtra): TNode;
