@@ -532,6 +532,6 @@ function isDataObject(value: unknown): value is DataObject {
 		(value as DataObject).IFluidLoadable !== undefined &&
 		(value as DataObject).IFluidHandle !== undefined &&
 		(value as DataObject).handle !== undefined &&
-		(value as VisualDataObject).root.attributes.type === DirectoryFactory.Type
+		(value as VisualDataObject).root?.attributes?.type === DirectoryFactory.Type
 	);
 }
