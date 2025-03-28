@@ -1089,6 +1089,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				return [];
 			}
 
+			assert(
+				obliterateInfo.tiebreakTrackingGroup !== undefined,
+				"Tiebreak tracking group missing",
+			);
 			const newObliterate: ObliterateInfo = {
 				// Recreate the start position using the perspective that other clients will see.
 				// This may not be at the same position as the original reference, since the segment the original reference was on could have been removed.
@@ -1098,6 +1102,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				// We reuse the localSeq from the original obliterate.
 				stamp: obliterateInfo.stamp,
 				segmentGroup: undefined,
+				tiebreakTrackingGroup: obliterateInfo.tiebreakTrackingGroup,
 			};
 			newObliterate.start.addProperties({ obliterate: newObliterate });
 			newObliterate.end.addProperties({ obliterate: newObliterate });

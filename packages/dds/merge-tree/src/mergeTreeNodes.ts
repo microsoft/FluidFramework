@@ -14,7 +14,7 @@ import {
 	UniversalSequenceNumber,
 } from "./constants.js";
 import { LocalReferenceCollection, type LocalReferencePosition } from "./localReference.js";
-import { TrackingGroupCollection } from "./mergeTreeTracking.js";
+import { TrackingGroupCollection, type ITrackingGroup } from "./mergeTreeTracking.js";
 import { IJSONSegment, IMarkerDef, ReferenceType } from "./ops.js";
 import { computeHierarchicalOrdinal } from "./ordinal.js";
 import type { PartialSequenceLengths } from "./partialLengths.js";
@@ -94,6 +94,7 @@ export interface ISegmentPrivate extends ISegmentInternal {
 	 * TODO:AB#29553: This property is not persisted in the summary, but it should be.
 	 */
 	obliteratePrecedingInsertion?: ObliterateInfo;
+	insertionRefSeqStamp?: OperationStamp;
 }
 /**
  * Segment leafs are segments that have both IMergeNodeInfo and IHasInsertionInfo. This means they
@@ -232,6 +233,121 @@ export interface ObliterateInfo {
 	refSeq: number;
 	stamp: SliceRemoveOperationStamp;
 	segmentGroup: SegmentGroup | undefined;
+	/**
+	 * Contains all segments inserted into the range this obliterate affects where at the time of insertion,
+	 * this obliterate was the newest. (this information is relevant for the tiebreak policy of allowing last-obliterater to insert)
+	 *
+	 * Defined iff this is a local obliterate (TODO: Maybe need for more?)
+	 *
+	 * We need to keep this around because on reconnect, outstanding local obliterates may have set `obliteratePrecedingInsertion` (tiebreak) on segments they no longer apply to,
+	 * since the reissued obliterate may affect a smaller range than the original one when content near the obliterate's endpoints
+	 * was removed by another client between the time of the original obliterate and reissuing.
+	 */
+	tiebreakTrackingGroup: ITrackingGroup | undefined;
+	// [
+	// 	{
+	// 		"type": "addText",
+	// 		"index": 0,
+	// 		"content": "ABCDEFGHIJKLMNOPQ",
+	// 		"clientId": "A"
+	// 	},
+	// 	{
+	// 		"type": "attach"
+	// 	},
+	// 	{
+	// 		"type": "addClient",
+	// 		"addedClientId": "D",
+	// 		"canBeStashed": false
+	// 	},
+	// 	{
+	// 		"type": "synchronize"
+	// 	},
+	// 	{
+	// 		"type": "changeConnectionState",
+	// 		"connected": false,
+	// 		"clientId": "B"
+	// 	},
+	// 	{
+	// 		"type": "obliterateRange",
+	// 		"start": {
+	// 			"pos": 3,
+	// 			"side": 1
+	// 		},
+	// 		"end": {
+	// 			"pos": 4,
+	// 			"side": 1
+	// 		},
+	// 		"clientId": "B"
+	// 	},
+	// 	{
+	// 		"type": "obliterateRange",
+	// 		"start": {
+	// 			"pos": 0,
+	// 			"side": 0
+	// 		},
+	// 		"end": {
+	// 			"pos": 6,
+	// 			"side": 1
+	// 		},
+	// 		"clientId": "D"
+	// 	},
+	// 	{
+	// 		"type": "obliterateRange",
+	// 		"start": {
+	// 			"pos": 2,
+	// 			"side": 0
+	// 		},
+	// 		"end": {
+	// 			"pos": 8,
+	// 			"side": 1
+	// 		},
+	// 		"clientId": "C"
+	// 	},
+	// 	{
+	// 		"type": "synchronize"
+	// 	},
+	// 	{
+	// 		"type": "removeRange",
+	// 		"start": 0,
+	// 		"end": 1,
+	// 		"clientId": "C"
+	// 	},
+	// 	{
+	// 		"type": "addText",
+	// 		"index": 0,
+	// 		"content": "01234567",
+	// 		"clientId": "C"
+	// 	},
+	// 	{
+	// 		"type": "synchronize"
+	// 	},
+	// 	{
+	// 		"type": "addText",
+	// 		"index": 4,
+	// 		"content": "should this go away",
+	// 		"clientId": "B"
+	// 	},
+	// 	{
+	// 		"type": "obliterateRange",
+	// 		"start": {
+	// 			"pos": 7,
+	// 			"side": 1
+	// 		},
+	// 		"end": {
+	// 			"pos": 9,
+	// 			"side": 0
+	// 		},
+	// 		"clientId": "A"
+	// 	},
+	// 	{
+	// 		"type": "changeConnectionState",
+	// 		"connected": true,
+	// 		"clientId": "B"
+	// 	},
+	// 	{
+	// 		"type": "synchronize"
+	// 	}
+	// ]
 }
 
 export interface SegmentGroup {
@@ -417,6 +533,7 @@ export abstract class BaseSegment implements ISegment {
 
 		if (isInserted(this)) {
 			overwriteInfo<IHasInsertionInfo>(leafSegment, { insert: this.insert });
+			leafSegment.insertionRefSeqStamp = (this as any).insertionRefSeqStamp;
 		}
 		if (isRemoved(this)) {
 			overwriteInfo<IHasRemovalInfo>(leafSegment, {
