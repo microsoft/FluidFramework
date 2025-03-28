@@ -8,11 +8,9 @@ import type {
 	JsonSerializable,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
-import type { IPresence } from "../presence.js";
-
 import { addControlsTests } from "./broadcastControlsTests.js";
-
-import type { InternalTypes } from "@fluidframework/presence/internal/exposedInternalTypes";
+import type { InternalTypes } from "../exposedInternalTypes.js";
+import type { IPresence } from "../presence.js";
 
 describe("Presence", () => {
 	describe("PresenceStates", () => {
