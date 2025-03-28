@@ -16,7 +16,7 @@ import { pkgVersion } from "./packageVersion.js";
  * The core compatibility details of the DataStore layer that is the same across all layer boundaries.
  * @internal
  */
-export const DataStoreCoreCompatDetails = {
+export const dataStoreCoreCompatDetails = {
 	/**
 	 * The package version of the Runtime layer.
 	 */
@@ -31,8 +31,8 @@ export const DataStoreCoreCompatDetails = {
  * DataStore's compatibility details that is exposed to the Runtime layer.
  * @internal
  */
-export const DataStoreCompatDetailsForRuntime: ILayerCompatDetails = {
-	...DataStoreCoreCompatDetails,
+export const dataStoreCompatDetailsForRuntime: ILayerCompatDetails = {
+	...dataStoreCoreCompatDetails,
 	/**
 	 * The features supported by the DataStore layer across the DataStore / Runtime boundary.
 	 */
@@ -43,7 +43,7 @@ export const DataStoreCompatDetailsForRuntime: ILayerCompatDetails = {
  * The requirements that the Runtime layer must meet to be compatible with this DataStore.
  * @internal
  */
-export const RuntimeSupportRequirements: ILayerCompatSupportRequirements = {
+export const runtimeSupportRequirements: ILayerCompatSupportRequirements = {
 	/**
 	 * Minimum generation that Runtime must be at to be compatible with DataStore. Note that 0 is used here so
 	 * that Runtime layers before the introduction of the layer compatibility enforcement are compatible.
@@ -64,17 +64,17 @@ export function validateRuntimeCompatibility(
 	disposeFn: () => void,
 ): void {
 	const layerCheckResult = checkLayerCompatibility(
-		RuntimeSupportRequirements,
+		runtimeSupportRequirements,
 		maybeRuntimeCompatDetails,
 	);
 	if (!layerCheckResult.isCompatible) {
 		const error = new UsageError("DataStore is not compatible with Runtime", {
 			errorDetails: JSON.stringify({
-				dataStoreVersion: DataStoreCoreCompatDetails.pkgVersion,
+				dataStoreVersion: dataStoreCoreCompatDetails.pkgVersion,
 				runtimeVersion: maybeRuntimeCompatDetails?.pkgVersion,
-				dataStoreGeneration: DataStoreCoreCompatDetails.generation,
+				dataStoreGeneration: dataStoreCoreCompatDetails.generation,
 				runtimeGeneration: maybeRuntimeCompatDetails?.generation,
-				minSupportedGeneration: RuntimeSupportRequirements.minSupportedGeneration,
+				minSupportedGeneration: runtimeSupportRequirements.minSupportedGeneration,
 				isGenerationCompatible: layerCheckResult.isGenerationCompatible,
 				unsupportedFeatures: layerCheckResult.unsupportedFeatures,
 			}),

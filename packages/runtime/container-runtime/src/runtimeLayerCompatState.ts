@@ -17,7 +17,7 @@ import { pkgVersion } from "./packageVersion.js";
  * The core compatibility details of the Runtime layer that is the same across all layer boundaries.
  * @internal
  */
-export const RuntimeCoreCompatDetails = {
+export const runtimeCoreCompatDetails = {
 	/**
 	 * The package version of the Runtime layer.
 	 */
@@ -32,8 +32,8 @@ export const RuntimeCoreCompatDetails = {
  * Runtime's compatibility details that is exposed to the Loader layer.
  * @internal
  */
-export const RuntimeCompatDetailsForLoader: ILayerCompatDetails = {
-	...RuntimeCoreCompatDetails,
+export const runtimeCompatDetailsForLoader: ILayerCompatDetails = {
+	...runtimeCoreCompatDetails,
 	/**
 	 * The features supported by the Runtime layer across the Runtime / Loader boundary.
 	 */
@@ -44,7 +44,7 @@ export const RuntimeCompatDetailsForLoader: ILayerCompatDetails = {
  * The requirements that the Loader layer must meet to be compatible with this Runtime.
  * @internal
  */
-export const LoaderSupportRequirements: ILayerCompatSupportRequirements = {
+export const loaderSupportRequirements: ILayerCompatSupportRequirements = {
 	/**
 	 * Minimum generation that Loader must be at to be compatible with Runtime. Note that 0 is used here so
 	 * that Loader layers before the introduction of the layer compatibility enforcement are compatible.
@@ -60,8 +60,8 @@ export const LoaderSupportRequirements: ILayerCompatSupportRequirements = {
  * Runtime's compatibility details that is exposed to the DataStore layer.
  * @internal
  */
-export const RuntimeCompatDetailsForDataStore: ILayerCompatDetails = {
-	...RuntimeCoreCompatDetails,
+export const runtimeCompatDetailsForDataStore: ILayerCompatDetails = {
+	...runtimeCoreCompatDetails,
 	/**
 	 * The features supported by the Runtime layer across the Runtime / Loader boundary.
 	 */
@@ -72,7 +72,7 @@ export const RuntimeCompatDetailsForDataStore: ILayerCompatDetails = {
  * The requirements that the DataStore layer must meet to be compatible with this Runtime.
  * @internal
  */
-export const DataStoreSupportRequirements: ILayerCompatSupportRequirements = {
+export const dataStoreSupportRequirements: ILayerCompatSupportRequirements = {
 	/**
 	 * Minimum generation that DataStore must be at to be compatible with Runtime. Note that 0 is used here so
 	 * that DataStore layers before the introduction of the layer compatibility enforcement are compatible.
@@ -89,21 +89,21 @@ export const DataStoreSupportRequirements: ILayerCompatSupportRequirements = {
  * @internal
  */
 export function validateLoaderCompatibility(
-	maybeLoaderCompatDetails: ILayerCompatDetails | undefined,
+	maybeloaderCompatDetailsForRuntime: ILayerCompatDetails | undefined,
 	disposeFn: (error?: ICriticalContainerError) => void,
 ): void {
 	const layerCheckResult = checkLayerCompatibility(
-		LoaderSupportRequirements,
-		maybeLoaderCompatDetails,
+		loaderSupportRequirements,
+		maybeloaderCompatDetailsForRuntime,
 	);
 	if (!layerCheckResult.isCompatible) {
 		const error = new UsageError("Runtime is not compatible with Loader", {
 			errorDetails: JSON.stringify({
-				runtimeVersion: RuntimeCoreCompatDetails.pkgVersion,
-				loaderVersion: maybeLoaderCompatDetails?.pkgVersion,
-				runtimeGeneration: RuntimeCoreCompatDetails.generation,
-				loaderGeneration: maybeLoaderCompatDetails?.generation,
-				minSupportedGeneration: LoaderSupportRequirements.minSupportedGeneration,
+				runtimeVersion: runtimeCoreCompatDetails.pkgVersion,
+				loaderVersion: maybeloaderCompatDetailsForRuntime?.pkgVersion,
+				runtimeGeneration: runtimeCoreCompatDetails.generation,
+				loaderGeneration: maybeloaderCompatDetailsForRuntime?.generation,
+				minSupportedGeneration: loaderSupportRequirements.minSupportedGeneration,
 				isGenerationCompatible: layerCheckResult.isGenerationCompatible,
 				unsupportedFeatures: layerCheckResult.unsupportedFeatures,
 			}),
@@ -122,17 +122,17 @@ export function validateDatastoreCompatibility(
 	disposeFn: () => void,
 ): void {
 	const layerCheckResult = checkLayerCompatibility(
-		DataStoreSupportRequirements,
+		dataStoreSupportRequirements,
 		maybeDataStoreCompatDetails,
 	);
 	if (!layerCheckResult.isCompatible) {
 		const error = new UsageError("Runtime is not compatible with DataStore", {
 			errorDetails: JSON.stringify({
-				runtimeVersion: RuntimeCoreCompatDetails.pkgVersion,
+				runtimeVersion: runtimeCoreCompatDetails.pkgVersion,
 				dataStoreVersion: maybeDataStoreCompatDetails?.pkgVersion,
-				runtimeGeneration: RuntimeCoreCompatDetails.generation,
+				runtimeGeneration: runtimeCoreCompatDetails.generation,
 				dataStoreGeneration: maybeDataStoreCompatDetails?.generation,
-				minSupportedGeneration: DataStoreSupportRequirements.minSupportedGeneration,
+				minSupportedGeneration: dataStoreSupportRequirements.minSupportedGeneration,
 				isGenerationCompatible: layerCheckResult.isGenerationCompatible,
 				unsupportedFeatures: layerCheckResult.unsupportedFeatures,
 			}),

@@ -89,8 +89,8 @@ import { v4 as uuid } from "uuid";
 
 import { IChannelContext, summarizeChannel } from "./channelContext.js";
 import {
-	DataStoreCompatDetailsForRuntime,
-	// DataStoreCompatDetailsForRuntime,
+	dataStoreCompatDetailsForRuntime,
+	// dataStoreCompatDetailsForRuntime,
 	validateRuntimeCompatibility,
 } from "./dataStoreLayerCompatState.js";
 import { FluidObjectHandle } from "./fluidHandle.js";
@@ -220,9 +220,13 @@ export class FluidDataStoreRuntime
 	 */
 	private localChangesTelemetryCount: number;
 
-	// The type of this should be ILayerCompatDetails. However, ILayerCompatDetails is internal and this class
-	// is currently marked as legacy alpha. So, we are using unknown here.
-	public readonly ILayerCompatDetails?: unknown = DataStoreCompatDetailsForRuntime;
+	/**
+	 * The compatibility details of the DataStore layer that is exposed to the Runtime layer
+	 * for validating Runtime-DataStore compatibility.
+	 * @remarks The type of this should be ILayerCompatDetails. However, ILayerCompatDetails is internal and this class
+	 * is currently marked as legacy alpha. So, using unknown here.
+	 */
+	public readonly ILayerCompatDetails?: unknown = dataStoreCompatDetailsForRuntime;
 
 	/**
 	 * Create an instance of a DataStore runtime.

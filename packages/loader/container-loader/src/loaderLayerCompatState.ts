@@ -17,7 +17,7 @@ import { pkgVersion } from "./packageVersion.js";
  * The core compatibility details of the Loader layer that is the same across all layer boundaries.
  * @internal
  */
-export const LoaderCoreCompatDetails = {
+export const loaderCoreCompatDetails = {
 	/**
 	 * The package version of the Loader layer.
 	 */
@@ -32,8 +32,8 @@ export const LoaderCoreCompatDetails = {
  * Loader's compatibility details that is exposed to the Runtime layer.
  * @internal
  */
-export const LoaderCompatDetails: ILayerCompatDetails = {
-	...LoaderCoreCompatDetails,
+export const loaderCompatDetailsForRuntime: ILayerCompatDetails = {
+	...loaderCoreCompatDetails,
 	/**
 	 * The features supported by the Loader layer across the Loader / Runtime boundary.
 	 */
@@ -44,7 +44,7 @@ export const LoaderCompatDetails: ILayerCompatDetails = {
  * The requirements that the Runtime layer must meet to be compatible with this Loader.
  * @internal
  */
-export const RuntimeSupportRequirements: ILayerCompatSupportRequirements = {
+export const runtimeSupportRequirements: ILayerCompatSupportRequirements = {
 	/**
 	 * Minimum generation that Runtime must be at to be compatible with Loader. Note that 0 is used here for
 	 * Runtime layers before the introduction of the layer compatibility enforcement.
@@ -65,17 +65,17 @@ export function validateRuntimeCompatibility(
 	disposeFn: (error?: ICriticalContainerError) => void,
 ): void {
 	const layerCheckResult = checkLayerCompatibility(
-		RuntimeSupportRequirements,
+		runtimeSupportRequirements,
 		maybeRuntimeCompatDetails,
 	);
 	if (!layerCheckResult.isCompatible) {
 		const error = new UsageError("Loader is not compatible with Runtime", {
 			errorDetails: JSON.stringify({
-				loaderVersion: LoaderCompatDetails.pkgVersion,
+				loaderVersion: loaderCompatDetailsForRuntime.pkgVersion,
 				runtimeVersion: maybeRuntimeCompatDetails?.pkgVersion,
-				loaderGeneration: LoaderCompatDetails.generation,
+				loaderGeneration: loaderCompatDetailsForRuntime.generation,
 				runtimeGeneration: maybeRuntimeCompatDetails?.generation,
-				minSupportedGeneration: RuntimeSupportRequirements.minSupportedGeneration,
+				minSupportedGeneration: runtimeSupportRequirements.minSupportedGeneration,
 				isGenerationCompatible: layerCheckResult.isGenerationCompatible,
 				unsupportedFeatures: layerCheckResult.unsupportedFeatures,
 			}),

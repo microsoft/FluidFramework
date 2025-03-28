@@ -203,7 +203,7 @@ import {
 } from "./pendingStateManager.js";
 import { RunCounter } from "./runCounter.js";
 import {
-	RuntimeCompatDetailsForLoader,
+	runtimeCompatDetailsForLoader,
 	validateLoaderCompatibility,
 } from "./runtimeLayerCompatState.js";
 import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
@@ -1308,8 +1308,12 @@ export class ContainerRuntime
 		expiry: { policy: "absolute", durationMs: 60000 },
 	});
 
+	/**
+	 * The compatibility details of the Runtime layer that is exposed to the Loader layer
+	 * for validating Loader-Runtime compatibility.
+	 */
 	public get ILayerCompatDetails(): ILayerCompatDetails {
-		return RuntimeCompatDetailsForLoader;
+		return runtimeCompatDetailsForLoader;
 	}
 
 	/***/
@@ -1374,8 +1378,11 @@ export class ContainerRuntime
 		this.disposeFn = disposeFn ?? closeFn;
 
 		// Validate that the Loader is compatible with this Runtime.
-		const maybeLoaderCompatDetails = context as FluidObject<ILayerCompatDetails>;
-		validateLoaderCompatibility(maybeLoaderCompatDetails.ILayerCompatDetails, this.disposeFn);
+		const maybeloaderCompatDetailsForRuntime = context as FluidObject<ILayerCompatDetails>;
+		validateLoaderCompatibility(
+			maybeloaderCompatDetailsForRuntime.ILayerCompatDetails,
+			this.disposeFn,
+		);
 
 		this.mc = createChildMonitoringContext({
 			logger: this.baseLogger,
@@ -1551,7 +1558,7 @@ export class ContainerRuntime
 		// If the context has ILayerCompatDetails, it supports referenceSequenceNumbers since that features
 		// predates ILayerCompatDetails.
 		const referenceSequenceNumbersSupported =
-			maybeLoaderCompatDetails.ILayerCompatDetails === undefined
+			maybeloaderCompatDetailsForRuntime.ILayerCompatDetails === undefined
 				? supportedFeatures?.get("referenceSequenceNumbers") === true
 				: true;
 		if (

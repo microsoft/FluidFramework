@@ -78,7 +78,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	RuntimeCompatDetailsForDataStore,
+	runtimeCompatDetailsForDataStore,
 	validateDatastoreCompatibility,
 } from "./runtimeLayerCompatState.js";
 import {
@@ -282,8 +282,12 @@ export abstract class FluidDataStoreContext
 		return this.registry;
 	}
 
+	/**
+	 * The compatibility details of the Runtime layer that is exposed to the DataStore layer
+	 * for validating DataStore-Runtime compatibility.
+	 */
 	public get ILayerCompatDetails(): ILayerCompatDetails {
-		return RuntimeCompatDetailsForDataStore;
+		return runtimeCompatDetailsForDataStore;
 	}
 
 	private baseSnapshotSequenceNumber: number | undefined;

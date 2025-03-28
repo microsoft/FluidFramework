@@ -19,8 +19,8 @@ import { MockFluidDataStoreContext } from "@fluidframework/test-runtime-utils/in
 import Sinon from "sinon";
 
 import {
-	DataStoreCompatDetailsForRuntime,
-	RuntimeSupportRequirements,
+	dataStoreCompatDetailsForRuntime,
+	runtimeSupportRequirements,
 	validateRuntimeCompatibility,
 } from "../dataStoreLayerCompatState.js";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime.js";
@@ -36,11 +36,11 @@ type ILayerCompatSupportRequirementsOverride = Omit<
 describe("DataStore Layer compatibility", () => {
 	let originalRequiredFeatures: readonly string[];
 	beforeEach(() => {
-		originalRequiredFeatures = RuntimeSupportRequirements.requiredFeatures;
+		originalRequiredFeatures = runtimeSupportRequirements.requiredFeatures;
 	});
 
 	afterEach(() => {
-		(RuntimeSupportRequirements as ILayerCompatSupportRequirementsOverride).requiredFeatures =
+		(runtimeSupportRequirements as ILayerCompatSupportRequirementsOverride).requiredFeatures =
 			[...originalRequiredFeatures];
 	});
 
@@ -76,7 +76,7 @@ describe("DataStore Layer compatibility", () => {
 		);
 		assert.strictEqual(
 			properties.dataStoreGeneration,
-			DataStoreCompatDetailsForRuntime.generation,
+			dataStoreCompatDetailsForRuntime.generation,
 			"DataStore generation not as expected",
 		);
 		assert.strictEqual(
@@ -86,7 +86,7 @@ describe("DataStore Layer compatibility", () => {
 		);
 		assert.strictEqual(
 			properties.minSupportedGeneration,
-			RuntimeSupportRequirements.minSupportedGeneration,
+			runtimeSupportRequirements.minSupportedGeneration,
 			"Min supported generation not as expected",
 		);
 		assert.deepStrictEqual(
@@ -115,12 +115,12 @@ describe("DataStore Layer compatibility", () => {
 
 		it("DataStore generation and features are compatible with Runtime", () => {
 			(
-				RuntimeSupportRequirements as ILayerCompatSupportRequirementsOverride
+				runtimeSupportRequirements as ILayerCompatSupportRequirementsOverride
 			).requiredFeatures = ["feature1", "feature2"];
 			const runtimeCompatDetails: ILayerCompatDetails = {
 				pkgVersion,
-				generation: RuntimeSupportRequirements.minSupportedGeneration,
-				supportedFeatures: new Set(RuntimeSupportRequirements.requiredFeatures),
+				generation: runtimeSupportRequirements.minSupportedGeneration,
+				supportedFeatures: new Set(runtimeSupportRequirements.requiredFeatures),
 			};
 			assert.doesNotThrow(
 				() =>
@@ -134,13 +134,13 @@ describe("DataStore Layer compatibility", () => {
 		it("DataStore generation is incompatible with Runtime", () => {
 			const disposeFn = Sinon.fake();
 			(
-				RuntimeSupportRequirements as ILayerCompatSupportRequirementsOverride
+				runtimeSupportRequirements as ILayerCompatSupportRequirementsOverride
 			).requiredFeatures = ["feature1", "feature2"];
-			const runtimeGeneration = RuntimeSupportRequirements.minSupportedGeneration - 1;
+			const runtimeGeneration = runtimeSupportRequirements.minSupportedGeneration - 1;
 			const runtimeCompatDetails: ILayerCompatDetails = {
 				pkgVersion,
 				generation: runtimeGeneration,
-				supportedFeatures: new Set(RuntimeSupportRequirements.requiredFeatures),
+				supportedFeatures: new Set(runtimeSupportRequirements.requiredFeatures),
 			};
 			assert.throws(
 				() => validateRuntimeCompatibility(runtimeCompatDetails, disposeFn),
@@ -155,12 +155,12 @@ describe("DataStore Layer compatibility", () => {
 			const disposeFn = Sinon.fake();
 			const requiredFeatures = ["feature2", "feature3"];
 			(
-				RuntimeSupportRequirements as ILayerCompatSupportRequirementsOverride
+				runtimeSupportRequirements as ILayerCompatSupportRequirementsOverride
 			).requiredFeatures = requiredFeatures;
 
 			const runtimeCompatDetails: ILayerCompatDetails = {
 				pkgVersion,
-				generation: RuntimeSupportRequirements.minSupportedGeneration,
+				generation: runtimeSupportRequirements.minSupportedGeneration,
 				supportedFeatures: new Set(),
 			};
 
@@ -170,7 +170,7 @@ describe("DataStore Layer compatibility", () => {
 					validateFailureProperties(
 						e,
 						true /* isGenerationCompatible */,
-						RuntimeSupportRequirements.minSupportedGeneration,
+						runtimeSupportRequirements.minSupportedGeneration,
 						requiredFeatures,
 					),
 				"DataStore should be incompatible with Runtime layer",
@@ -180,10 +180,10 @@ describe("DataStore Layer compatibility", () => {
 
 		it("DataStore generation and features are both incompatible with Runtime", () => {
 			const disposeFn = Sinon.fake();
-			const runtimeGeneration = RuntimeSupportRequirements.minSupportedGeneration - 1;
+			const runtimeGeneration = runtimeSupportRequirements.minSupportedGeneration - 1;
 			const requiredFeatures = ["feature2"];
 			(
-				RuntimeSupportRequirements as ILayerCompatSupportRequirementsOverride
+				runtimeSupportRequirements as ILayerCompatSupportRequirementsOverride
 			).requiredFeatures = requiredFeatures;
 
 			const runtimeCompatDetails: ILayerCompatDetails = {
@@ -251,7 +251,7 @@ describe("DataStore Layer compatibility", () => {
 		it("Runtime with generation >= minSupportedGeneration is compatible", async () => {
 			const runtimeCompatDetails: ILayerCompatDetails = {
 				pkgVersion,
-				generation: RuntimeSupportRequirements.minSupportedGeneration,
+				generation: runtimeSupportRequirements.minSupportedGeneration,
 				supportedFeatures: new Set(),
 			};
 
@@ -262,7 +262,7 @@ describe("DataStore Layer compatibility", () => {
 		});
 
 		it("Runtime with generation < minSupportedGeneration is not compatible", async () => {
-			const runtimeGeneration = RuntimeSupportRequirements.minSupportedGeneration - 1;
+			const runtimeGeneration = runtimeSupportRequirements.minSupportedGeneration - 1;
 			const runtimeCompatDetails: ILayerCompatDetails = {
 				pkgVersion,
 				generation: runtimeGeneration,
