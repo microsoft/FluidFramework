@@ -28,6 +28,7 @@ export { IFluidLoadable, IFluidRunnable } from "./fluidLoadable.js";
 export type { IRequest, IRequestHeader, IResponse } from "./fluidRouter.js";
 
 export type {
+	IAttachableNode,
 	IProvideFluidHandleContext,
 	IProvideFluidHandle,
 	IFluidHandleInternal,
