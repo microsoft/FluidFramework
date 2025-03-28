@@ -100,9 +100,11 @@ export interface SimpleArrayNodeSchema<out TCustomMetadata = unknown>
 }
 
 /**
+ * A schema for a map node.
+ * @privateRemarks
  * A {@link SimpleNodeSchema} for a map node.
  *
- * @internal
+ * @alpha
  * @sealed
  */
 export interface SimpleMapNodeSchema<out TCustomMetadata = unknown>
@@ -111,6 +113,7 @@ export interface SimpleMapNodeSchema<out TCustomMetadata = unknown>
 	 * The types allowed as values in the map.
 	 *
 	 * @remarks Refers to the types by identifier.
+	 * @privateRemarks
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
 	readonly allowedTypesIdentifiers: ReadonlySet<string>;
