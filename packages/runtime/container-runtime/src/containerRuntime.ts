@@ -1429,7 +1429,12 @@ export class ContainerRuntime
 		this.on("dirty", () => context.updateDirtyContainerState(true));
 		this.on("saved", () => context.updateDirtyContainerState(false));
 		// Log first "saved" event to telemetry
-		this.once("saved", () => this.mc.logger.sendTelemetryEvent({ eventName: "Saved" }));
+		this.once("saved", () =>
+			this.mc.logger.sendTelemetryEvent({
+				eventName: "Saved",
+				details: { attachState: this.attachState },
+			}),
+		);
 
 		// In cases of summarizer, we want to dispose instead since consumer doesn't interact with this container
 		this.closeFn = isSummarizerClient ? this.disposeFn : closeFn;
