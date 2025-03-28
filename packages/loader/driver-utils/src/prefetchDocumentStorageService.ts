@@ -82,8 +82,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 	}
 
 	private prefetchTreeCore(tree: ISnapshotTree, secondary: string[]) {
-		for (const blobKey of Object.keys(tree.blobs)) {
-			const blob = tree.blobs[blobKey];
+		for (const [blobKey, blob] of Object.entries(tree.blobs)) {
 			if (blobKey.startsWith(".") || blobKey === "header" || blobKey.startsWith("quorum")) {
 				if (blob !== null) {
 					// We don't care if the prefetch succeeds
@@ -96,8 +95,8 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 			}
 		}
 
-		for (const subTree of Object.keys(tree.trees)) {
-			this.prefetchTreeCore(tree.trees[subTree], secondary);
+		for (const subTree of Object.values(tree.trees)) {
+			this.prefetchTreeCore(subTree, secondary);
 		}
 	}
 }

@@ -8,8 +8,8 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { AsyncGenerator } from "@fluid-private/stochastic-test-utils";
-import { chainAsync, done, StressMode, takeAsync } from "@fluid-private/stochastic-test-utils";
+import type { AsyncGenerator, BaseOperation } from "@fluid-private/stochastic-test-utils";
+import { chainAsync, done, takeAsync } from "@fluid-private/stochastic-test-utils";
 // eslint-disable-next-line import/no-internal-modules
 import { Counter } from "@fluid-private/stochastic-test-utils/internal/test/utils";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
@@ -21,10 +21,10 @@ import execa from "execa";
 
 import { type Client, hasStashData } from "../clientLoading.js";
 import type {
-	BaseOperation,
 	ChangeConnectionState,
 	ClientSpec,
 	DDSFuzzHarnessEvents,
+	DDSFuzzHarnessModel,
 	DDSFuzzModel,
 	DDSFuzzSuiteOptions,
 	DDSFuzzTestState,
@@ -33,7 +33,6 @@ import type {
 } from "../ddsFuzzHarness.js";
 import {
 	defaultDDSFuzzSuiteOptions,
-	generateTestSeeds,
 	mixinAttach,
 	mixinClientSelection,
 	mixinNewClient,
@@ -66,9 +65,9 @@ function mixinSpying<
 	TOperation extends BaseOperation,
 	TState extends DDSFuzzTestState<TChannelFactory>,
 >(
-	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
+	model: DDSFuzzHarnessModel<TChannelFactory, TOperation, TState>,
 ): {
-	model: DDSFuzzModel<TChannelFactory, TOperation, TState>;
+	model: DDSFuzzHarnessModel<TChannelFactory, TOperation, TState>;
 	generatedOperations: (TOperation | typeof done)[];
 	processedOperations: TOperation[];
 } {
@@ -210,7 +209,7 @@ describe("DDS Fuzz Harness", () => {
 			it("processes outstanding messages on synchronize ops", async () => {
 				const noValidateModel: Model = {
 					...baseModel,
-					reducer: async ({ clients }, operation) => {
+					reducer: ({ clients }, operation) => {
 						assert(isNoopOp(operation));
 						clients[0].channel.noop();
 					},
@@ -258,9 +257,9 @@ describe("DDS Fuzz Harness", () => {
 				assert.deepEqual(
 					[...perPairCallCounts.entries()],
 					[
-						["summarizer vs A", 2],
-						["summarizer vs B", 2],
-						["summarizer vs C", 2],
+						["A vs summarizer", 2],
+						["B vs summarizer", 2],
+						["C vs summarizer", 2],
 					],
 				);
 			});
@@ -304,9 +303,9 @@ describe("DDS Fuzz Harness", () => {
 				assert.deepEqual(
 					[...perPairCallCounts.entries()],
 					[
-						["summarizer vs A", 1],
-						["summarizer vs B", 2],
-						["summarizer vs C", 2],
+						["A vs summarizer", 1],
+						["B vs summarizer", 2],
+						["C vs summarizer", 2],
 					],
 				);
 			});
@@ -878,17 +877,22 @@ describe("DDS Fuzz Harness", () => {
 					"test:mocha:base",
 					"--silent",
 					"--",
-					"--reporter=json",
+					"--config",
+					path.join(_dirname, "../../.mocharc.harnessTests.cjs"),
 					path.join(_dirname, `./ddsSuiteCases/${name}.js`),
 				],
 				{
 					env: {
+						// These flags help ensure nothing extraneous is logged to the console in the child test process,
+						// ensuring the output is valid JSON.
 						FLUID_TEST_VERBOSE: undefined,
+						SILENT_TEST_OUTPUT: "1",
 					},
 					encoding: "utf8",
 					reject: false,
 				},
 			);
+
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const testResults: MochaReport = JSON.parse(result.stdout);
 			return testResults;
@@ -1055,51 +1059,6 @@ describe("DDS Fuzz Harness", () => {
 			it("successfully references the replay file", () => {
 				assert.equal(runResults.stats.passes, 1);
 				assert.equal(runResults.stats.failures, 0);
-			});
-		});
-
-		describe("generateTestSeeds", () => {
-			const testCount = 100;
-
-			it("should generate seeds for short stress mode", () => {
-				const seeds = generateTestSeeds(testCount, StressMode.Short);
-				assert.strictEqual(seeds.length, testCount);
-				assert.deepStrictEqual(
-					seeds,
-					Array.from({ length: testCount }, (_, i) => i),
-				);
-			});
-
-			it("should generate seeds for normal stress mode", () => {
-				const seeds = generateTestSeeds(testCount, StressMode.Normal);
-				assert.strictEqual(seeds.length, testCount);
-				assert.deepStrictEqual(
-					seeds,
-					Array.from({ length: testCount }, (_, i) => i),
-				);
-			});
-
-			it("should generate seeds for long stress mode", () => {
-				const seeds = generateTestSeeds(testCount, StressMode.Long);
-				assert.strictEqual(seeds.length, testCount * 2);
-				// Check that seeds are incrementing
-				for (let i = 1; i < seeds.length; i++) {
-					assert.strictEqual(seeds[i], seeds[i - 1] + 1);
-				}
-			});
-
-			it("should generate different seeds for different runs of long stress mode", () => {
-				const seeds1 = generateTestSeeds(testCount, StressMode.Long);
-				const seeds2 = generateTestSeeds(testCount, StressMode.Long);
-				// If this test is ever flaky, consider running multiple trials (as the starting seed is random, sometimes they could be legitimately the same)
-				assert.notDeepStrictEqual(seeds1, seeds2);
-			});
-
-			it("should have all seeds within valid range for long stress mode", () => {
-				const seeds = generateTestSeeds(testCount, StressMode.Long);
-				for (const seed of seeds) {
-					assert.ok(seed >= 0 && seed <= Number.MAX_SAFE_INTEGER);
-				}
 			});
 		});
 	});

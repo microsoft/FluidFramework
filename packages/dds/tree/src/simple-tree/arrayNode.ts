@@ -33,7 +33,6 @@ import {
 	typeSchemaSymbol,
 	type Context,
 	getOrCreateNodeFromInnerNode,
-	type TreeNodeSchemaBoth,
 	getSimpleNodeSchemaFromInnerNode,
 	getOrCreateInnerNode,
 	type TreeNodeSchemaClass,
@@ -47,7 +46,11 @@ import {
 } from "./core/index.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import { getUnhydratedContext } from "./createContext.js";
-import type { Unenforced } from "./api/index.js";
+import type { ImplicitAllowedTypesUnsafe } from "./api/index.js";
+import type {
+	ArrayNodeCustomizableSchema,
+	ArrayNodePojoEmulationSchema,
+} from "./arrayNodeTypes.js";
 
 /**
  * A covariant base type for {@link (TreeArrayNode:interface)}.
@@ -73,7 +76,7 @@ export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue>
  * @sealed @public
  */
 export interface TreeArrayNode<
-	TAllowedTypes extends Unenforced<ImplicitAllowedTypes> = ImplicitAllowedTypes,
+	TAllowedTypes extends ImplicitAllowedTypesUnsafe = ImplicitAllowedTypes,
 	out T = [TAllowedTypes] extends [ImplicitAllowedTypes]
 		? TreeNodeFromImplicitAllowedTypes<TAllowedTypes>
 		: TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>,
@@ -668,6 +671,7 @@ export function asIndex(key: string | symbol, exclusiveMax: number): number | un
 }
 
 /**
+ * Create a proxy which implements the {@link TreeArrayNode} API.
  * @param allowAdditionalProperties - If true, setting of unexpected properties will be forwarded to the target object.
  * Otherwise setting of unexpected properties will error.
  * @param proxyTarget - Target object of the proxy. Must provide an own `length` value property
@@ -858,7 +862,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	// Therefore it must include `length`,
 	// even though this "length" is never invoked (due to being shadowed by the proxy provided own property).
 	public get length(): number {
-		return fail("Proxy should intercept length");
+		return fail(0xadb /* Proxy should intercept length */);
 	}
 
 	public [Symbol.iterator](): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
@@ -1045,7 +1049,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			throw new UsageError(`Concurrent editing and iteration is not allowed.`);
 		}
 		for (let i = 0; i < this.length; i++) {
-			yield this.at(i) ?? fail("Index is out of bounds");
+			yield this.at(i) ?? fail(0xadc /* Index is out of bounds */);
 			if (initialLastUpdatedStamp !== kernel.generationNumber) {
 				throw new UsageError(`Concurrent editing and iteration is not allowed.`);
 			}
@@ -1071,18 +1075,18 @@ export function arraySchema<
 	customizable: boolean,
 	metadata?: NodeSchemaMetadata<TCustomMetadata>,
 ) {
-	type Output = TreeNodeSchemaBoth<
+	type Output = ArrayNodeCustomizableSchema<
 		TName,
-		NodeKind.Array,
-		TreeArrayNode<T> & WithType<TName, NodeKind.Array>,
-		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		ImplicitlyConstructable,
 		T,
-		undefined,
+		ImplicitlyConstructable,
 		TCustomMetadata
-	>;
+	> &
+		ArrayNodePojoEmulationSchema<TName, T, ImplicitlyConstructable, TCustomMetadata>;
 
 	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(info));
+	const lazyAllowedTypesIdentifiers = new Lazy(
+		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
+	);
 
 	let unhydratedContext: Context;
 
@@ -1118,6 +1122,10 @@ export function arraySchema<
 				unhydratedContext,
 				mapTreeFromNodeData(input as object, this as unknown as ImplicitAllowedTypes),
 			);
+		}
+
+		public static get allowedTypesIdentifiers(): ReadonlySet<string> {
+			return lazyAllowedTypesIdentifiers.value;
 		}
 
 		protected static override constructorCached: MostDerivedData | undefined = undefined;
@@ -1161,8 +1169,7 @@ export function arraySchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
-		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> | undefined =
-			metadata;
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {

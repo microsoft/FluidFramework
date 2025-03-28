@@ -106,6 +106,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 							redisConfig.enableClustering,
 							redisConfig.slotsRefreshTimeout,
 							retryDelays,
+							redisConfig.enableVerboseErrorLogging,
 					  );
 			redisClientConnectionManagers.push(redisClientConnectionManagerForTenantCache);
 			cache = new RedisCache(redisClientConnectionManagerForTenantCache, redisParams);

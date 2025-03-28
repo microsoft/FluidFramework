@@ -184,7 +184,7 @@ export class TreeNodeKernel {
 			// This can't be cached on this.#hydrated during hydration since initial tree is hydrated before the context is cached on the anchorSet.
 			return (
 				this.#hydrationState?.anchorNode.anchorSet.slots.get(SimpleContextSlot) ??
-				fail("missing simple-tree context")
+				fail(0xb40 /* missing simple-tree context */)
 			);
 		}
 		return this.initialContext;
@@ -303,7 +303,8 @@ export class TreeNodeKernel {
 			this.#hydrationState.innerNode = flexNode;
 		} else {
 			// ...otherwise, the flex node must be created
-			const context = anchorNode.anchorSet.slots.get(ContextSlot) ?? fail("missing context");
+			const context =
+				anchorNode.anchorSet.slots.get(ContextSlot) ?? fail(0xb41 /* missing context */);
 			const cursor = context.checkout.forest.allocateCursor("getFlexNode");
 			context.checkout.forest.moveCursorToPath(anchorNode, cursor);
 			this.#hydrationState.innerNode = makeTree(context, cursor);
@@ -332,7 +333,8 @@ export class TreeNodeKernel {
 	public anchorProxy(anchors: AnchorSet, path: UpPath): AnchorNode {
 		assert(!anchorForgetters.has(this.node), 0x91c /* Proxy anchor should not be set twice */);
 		const anchor = anchors.track(path);
-		const anchorNode = anchors.locate(anchor) ?? fail("Expected anchor node to be present");
+		const anchorNode =
+			anchors.locate(anchor) ?? fail(0xb42 /* Expected anchor node to be present */);
 		this.hydrate(anchorNode);
 		const forget = (): void => {
 			if (anchors.locate(anchor)) {
@@ -421,22 +423,25 @@ export function tryDisposeTreeNode(anchorNode: AnchorNode): void {
 }
 
 /**
- * Lookup a TreeNodeSchema from a Hydrated FlexTreeNode.
- * @privateRemarks
- * This provides a way to access simple tree schema from the flex tree without depending on {@link FlexTreeSchema} which is in the process of being removed.
- * This is currently limited to hydrated nodes: this limitation will have to be fixed before {@link FlexTreeSchema} can be fully removed.
+ * Gets the {@link TreeNodeSchema} for the {@link InnerNode}.
  */
-export function getTreeNodeSchemaFromHydratedFlexNode(flexNode: FlexTreeNode): TreeNodeSchema {
-	assert(
-		flexNode.context.isHydrated(),
-		0xa56 /* getTreeNodeSchemaFromHydratedFlexNode only allows hydrated flex tree nodes */,
-	);
+export function getSimpleNodeSchemaFromInnerNode(innerNode: InnerNode): TreeNodeSchema {
+	const context: Context = getSimpleContextFromInnerNode(innerNode);
+	return context.schema.get(innerNode.schema) ?? fail(0xb3f /* missing schema from context */);
+}
 
-	const context =
-		flexNode.anchorNode.anchorSet.slots.get(SimpleContextSlot) ??
-		fail("Missing SimpleContextSlot");
+/**
+ * Gets the {@link Context} for the {@link InnerNode}.
+ */
+export function getSimpleContextFromInnerNode(innerNode: InnerNode): Context {
+	if (innerNode instanceof UnhydratedFlexTreeNode) {
+		return innerNode.simpleContext;
+	}
 
-	return context.schema.get(flexNode.schema) ?? fail("Missing schema");
+	const context = innerNode.anchorNode.anchorSet.slots.get(SimpleContextSlot);
+	assert(context !== undefined, 0xa55 /* missing simple tree context */);
+
+	return context;
 }
 
 /**
@@ -461,7 +466,8 @@ function flexNodeFromAnchor(anchorNode: AnchorNode): FlexTreeNode {
 	if (flexNode !== undefined) {
 		return flexNode; // If it does have a flex node, return it...
 	} // ...otherwise, the flex node must be created
-	const context = anchorNode.anchorSet.slots.get(ContextSlot) ?? fail("missing context");
+	const context =
+		anchorNode.anchorSet.slots.get(ContextSlot) ?? fail(0xb45 /* missing context */);
 	const cursor = context.checkout.forest.allocateCursor("getFlexNode");
 	context.checkout.forest.moveCursorToPath(anchorNode, cursor);
 	const newFlexNode = makeTree(context, cursor);
@@ -479,8 +485,20 @@ export function treeNodeFromAnchor(anchorNode: AnchorNode): TreeNode | TreeValue
 	}
 
 	const flexNode = flexNodeFromAnchor(anchorNode);
-	const classSchema = getTreeNodeSchemaFromHydratedFlexNode(flexNode);
+	return createTreeNodeFromInner(flexNode);
+}
+
+/**
+ * Constructs a TreeNode from an InnerNode.
+ * @remarks
+ * This does not do caching or validation: caller must ensure duplicate nodes for a given inner node are not created, and that the inner node is valid.
+ */
+export function createTreeNodeFromInner(innerNode: InnerNode): TreeNode | TreeValue {
+	const classSchema = getSimpleNodeSchemaFromInnerNode(innerNode);
+	const internal = innerNode as unknown as InternalTreeNode;
 	return typeof classSchema === "function"
-		? new classSchema(flexNode as unknown as InternalTreeNode)
-		: (classSchema as { create(data: FlexTreeNode): TreeValue }).create(flexNode);
+		? new classSchema(internal)
+		: (classSchema as { create(data: InternalTreeNode): TreeNode | TreeValue }).create(
+				internal,
+			);
 }

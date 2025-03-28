@@ -5,9 +5,11 @@
 
 export {
 	assert,
+	fail,
 	debugAssert,
 	configureDebugAsserts,
 	nonProductionConditionalsIncluded,
+	onAssertionFailure,
 } from "./assert.js";
 export { compareArrays } from "./compare.js";
 export { delay } from "./delay.js";

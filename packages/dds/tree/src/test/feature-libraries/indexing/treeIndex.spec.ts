@@ -483,7 +483,7 @@ describe("tree indexes", () => {
 	it("completely removes nodes when they are garbage collected", () => {
 		const provider = new TestTreeProviderLite(1);
 		const tree = provider.trees[0];
-		const view = tree.viewWith(
+		const view = tree.kernel.viewWith(
 			new TreeViewConfiguration({ schema: IndexableParent, enableSchemaValidation: true }),
 		);
 		view.initialize(
@@ -492,13 +492,13 @@ describe("tree indexes", () => {
 				child: new IndexableChild({ childKey: childId }),
 			}),
 		);
-		provider.processMessages();
+		provider.synchronizeMessages();
 		const { index } = createIndex(view);
 		const parent = view.root;
 		const child = parent.child;
 		assert(child !== undefined);
 		parent.child = undefined;
-		provider.processMessages();
+		provider.synchronizeMessages();
 		// check that the detached child still exists on the index
 		assert.deepEqual(Array.from(index.allEntries()), [
 			[parentId, [0]],
@@ -506,7 +506,7 @@ describe("tree indexes", () => {
 		]);
 		// send an edit so that the detached node is garbage collected
 		parent.child = new IndexableChild({ childKey: parentId });
-		provider.processMessages();
+		provider.synchronizeMessages();
 		// check that the detached child is removed from the index
 		assert.deepEqual(Array.from(index.allEntries()), [[parentId, [0, 2]]]);
 	});

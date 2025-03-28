@@ -9,7 +9,7 @@ import { strict as assert } from "node:assert";
 
 import type { IRandom } from "@fluid-private/stochastic-test-utils";
 
-import { createGroupOp } from "../opBuilder.js";
+// import { createGroupOp } from "../opBuilder.js";
 import type { IMergeTreeInsertMsg, IMergeTreeOp } from "../ops.js";
 import { InteriorSequencePlace, Side } from "../sequencePlace.js";
 
@@ -20,35 +20,39 @@ const posInField = (
 	client: TestClient,
 	pos: number,
 ): { startPos: number; endPos: number } | undefined => {
-	if (
-		pos >= client.getLength() ||
-		(!Number.isInteger(Number(client.getText(pos, pos + 1))) &&
-			client.getText(pos, pos + 1) !== "{" &&
-			client.getText(pos, pos + 1) !== "}")
-	) {
+	const isFieldCharacter = (char: string): boolean =>
+		Number.isInteger(Number(char)) || char === "{" || char === "}";
+	if (pos >= client.getLength() || !isFieldCharacter(client.getText(pos, pos + 1))) {
+		// pos is not within a field.
 		return undefined;
 	}
 
 	let startPos = pos;
 	let endPos = pos;
 	// To find the start and end separators, walk backwards and forwards until the desired character is found.
-	while (
-		startPos > 0 &&
-		client.getText(startPos, startPos + 1) !== "{" &&
-		(client.getText(startPos, startPos + 1) === "}" ||
-			Number.isInteger(Number(client.getText(startPos, startPos + 1))))
-	) {
+	while (startPos > 0 && client.getText(startPos, startPos + 1) !== "{") {
+		const text = client.getText(endPos, endPos + 1);
+		assert(
+			Number.isInteger(Number(text)) || text === "}",
+			"Non-integer character found within a field",
+		);
 		startPos--;
 	}
 
-	while (
-		endPos < client.getLength() &&
-		client.getText(endPos, endPos + 1) !== "}" &&
-		(client.getText(endPos, endPos + 1) === "{" ||
-			Number.isInteger(Number(client.getText(endPos, endPos + 1))))
-	) {
+	while (endPos < client.getLength() && client.getText(endPos, endPos + 1) !== "}") {
+		const text = client.getText(endPos, endPos + 1);
+		assert(
+			Number.isInteger(Number(text)) || text === "{",
+			"Non-integer character found within a field",
+		);
 		endPos++;
 	}
+
+	assert(client.getText(startPos, startPos + 1) === "{", "Start separator not found");
+	assert(
+		endPos < client.getLength() && client.getText(endPos, endPos + 1) === "}",
+		"End separator not found",
+	);
 
 	return { startPos, endPos };
 };
@@ -93,36 +97,92 @@ export const insertField: TestOperation = (
 	}
 };
 
+const obliterateHelper = (
+	client: TestClient,
+	startPos: number,
+	endPos: number,
+	random: IRandom,
+): IMergeTreeOp[] => {
+	const obliterateOp = client.obliterateRangeLocal(
+		{ pos: startPos, side: Side.After },
+		{ pos: endPos, side: Side.Before },
+	);
+	const insertOp = insertFieldText(client, startPos + 1, random);
+	assert(insertOp !== undefined, "Insert op should not be undefined");
+	// TODO: AB#31001: We should be able to sometimes use group ops here rather than submit two separate ops,
+	// but this causes failures which likely indicate there are bugs with the intersection of obliterate and grouped batching.
+	// const op = createGroupOp(obliterateOp, insertOp);
+	return [obliterateOp, insertOp];
+};
+
 export const obliterateField: TestOperation = (
 	client: TestClient,
 	opStart: number,
 	opEnd: number,
 	random: IRandom,
 ) => {
-	const fieldEndpoints = getFieldEndpoints(client, opStart, opEnd);
+	const fieldEndpoints = getFieldEndpoints(
+		client,
+		opStart,
+		// the operation runner generates endpoints with client length, but this model only supports up to client length - 1.
+		Math.min(opEnd, client.getLength() - 1),
+	);
 
 	let endISP: InteriorSequencePlace | undefined;
 	if (fieldEndpoints !== undefined) {
 		const { startPos, endPos } = fieldEndpoints;
-		// Obliterate text bewteen the separators, but avoid the case where the obliterate range is zero length.
-		if (endPos - startPos > 1) {
-			const obliterateOp = client.obliterateRangeLocal(
-				{ pos: startPos, side: Side.After },
-				{ pos: endPos, side: Side.Before },
-			);
-			const insertOp = insertFieldText(client, startPos + 1, random);
-			assert(insertOp !== undefined, "Insert op should not be undefined");
-			const op = createGroupOp(obliterateOp, insertOp);
-			return op;
-		}
+		// Obliterate text between the separators, but avoid the case where the obliterate range is zero length.
+		return endPos - startPos > 1
+			? obliterateHelper(client, startPos, endPos, random)
+			: undefined;
 	}
 	if (opEnd >= client.getLength()) {
 		endISP = { pos: client.getLength() - 1, side: Side.After };
 	}
-	return client.obliterateRangeLocal(
-		{ pos: opStart, side: Side.Before },
-		endISP ?? { pos: opEnd, side: Side.After },
+	if (!client.getText(opStart, opEnd).includes("{")) {
+		// Avoid issuing obliterates that might contain multiple fields.
+		// Otherwise we may end up with field characters that look like they're outside of the field,
+		// since one of these obliterates can wipe out the field including the `{}` delimiters, but
+		// a "field replace" obliterate + insert can win and insert the numerical characters.
+		return client.obliterateRangeLocal(
+			{ pos: opStart, side: Side.Before },
+			endISP ?? { pos: opEnd, side: Side.After },
+		);
+	}
+};
+
+export const obliterateFieldZeroLength: TestOperation = (
+	client: TestClient,
+	opStart: number,
+	opEnd: number,
+	random: IRandom,
+) => {
+	const fieldEndpoints = getFieldEndpoints(
+		client,
+		opStart,
+		// the operation runner generates endpoints with client length, but this model only supports up to client length - 1.
+		Math.min(opEnd, client.getLength() - 1),
 	);
+
+	let endISP: InteriorSequencePlace | undefined;
+	if (fieldEndpoints !== undefined) {
+		const { startPos, endPos } = fieldEndpoints;
+		// Obliterate text between the separators, including the case where the obliterate range is zero length.
+		return obliterateHelper(client, startPos, endPos, random);
+	}
+	if (opEnd >= client.getLength()) {
+		endISP = { pos: client.getLength() - 1, side: Side.After };
+	}
+	if (!client.getText(opStart, opEnd).includes("{")) {
+		// Avoid issuing obliterates that might contain multiple fields.
+		// Otherwise we may end up with field characters that look like they're outside of the field,
+		// since one of these obliterates can wipe out the field including the `{}` delimiters, but
+		// a "field replace" obliterate + insert can win and insert the numerical characters.
+		return client.obliterateRangeLocal(
+			{ pos: opStart, side: Side.Before },
+			endISP ?? { pos: opEnd, side: Side.After },
+		);
+	}
 };
 
 export const insertAvoidField: TestOperation = (

@@ -329,13 +329,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * Process messages for this channel. The messages here are contiguous messages in a batch.
 	 * @param messageCollection - The collection of messages to process.
 	 */
-	processMessages?(messageCollection: IRuntimeMessageCollection): void;
-
-	/**
-	 * Processes the op.
-	 * @deprecated processMessages should be used instead to process messages for a channel.
-	 */
-	process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+	processMessages(messageCollection: IRuntimeMessageCollection): void;
 
 	/**
 	 * Processes the signal.
@@ -501,7 +495,8 @@ export interface IFluidParentContext
 	/**
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
-	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
+	 * @param content - Content of the signal. Should be an {@link IEnvelope} with `contents` that is a JSON
+	 * serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
 	submitSignal: (type: string, content: unknown, targetClientId?: string) => void;

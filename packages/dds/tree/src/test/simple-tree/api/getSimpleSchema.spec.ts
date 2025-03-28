@@ -9,9 +9,25 @@ import {
 	getSimpleSchema,
 	NodeKind,
 	SchemaFactory,
+	type SimpleLeafNodeSchema,
+	type SimpleNodeSchema,
+	type SimpleObjectFieldSchema,
+	type SimpleObjectNodeSchema,
 	type SimpleTreeSchema,
 } from "../../../simple-tree/index.js";
 import { ValueSchema } from "../../../core/index.js";
+
+const simpleString: SimpleLeafNodeSchema = {
+	leafKind: ValueSchema.String,
+	kind: NodeKind.Leaf,
+	metadata: {},
+};
+
+const simpleNumber: SimpleLeafNodeSchema = {
+	leafKind: ValueSchema.Number,
+	kind: NodeKind.Leaf,
+	metadata: {},
+};
 
 describe("getSimpleSchema", () => {
 	it("Field Schema", async () => {
@@ -24,17 +40,9 @@ describe("getSimpleSchema", () => {
 
 		const expected: SimpleTreeSchema = {
 			kind: FieldKind.Optional,
-			definitions: new Map([
-				[
-					"com.fluidframework.leaf.string",
-					{
-						leafKind: ValueSchema.String,
-						kind: NodeKind.Leaf,
-					},
-				],
-			]),
+			definitions: new Map([["com.fluidframework.leaf.string", simpleString]]),
 			metadata: { description: "An optional string." },
-			allowedTypes: new Set(["com.fluidframework.leaf.string"]),
+			allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
 		};
 		assert.deepEqual(actual, expected);
 	});
@@ -47,16 +55,9 @@ describe("getSimpleSchema", () => {
 
 		const expected: SimpleTreeSchema = {
 			kind: FieldKind.Required,
-			definitions: new Map([
-				[
-					"com.fluidframework.leaf.string",
-					{
-						leafKind: ValueSchema.String,
-						kind: NodeKind.Leaf,
-					},
-				],
-			]),
-			allowedTypes: new Set(["com.fluidframework.leaf.string"]),
+			metadata: {},
+			definitions: new Map([["com.fluidframework.leaf.string", simpleString]]),
+			allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
 		};
 		assert.deepEqual(actual, expected);
 	});
@@ -69,23 +70,12 @@ describe("getSimpleSchema", () => {
 
 		const expected: SimpleTreeSchema = {
 			kind: FieldKind.Required,
+			metadata: {},
 			definitions: new Map([
-				[
-					"com.fluidframework.leaf.number",
-					{
-						leafKind: ValueSchema.Number,
-						kind: NodeKind.Leaf,
-					},
-				],
-				[
-					"com.fluidframework.leaf.string",
-					{
-						leafKind: ValueSchema.String,
-						kind: NodeKind.Leaf,
-					},
-				],
+				["com.fluidframework.leaf.number", simpleNumber],
+				["com.fluidframework.leaf.string", simpleString],
 			]),
-			allowedTypes: new Set([
+			allowedTypesIdentifiers: new Set([
 				"com.fluidframework.leaf.number",
 				"com.fluidframework.leaf.string",
 			]),
@@ -101,23 +91,19 @@ describe("getSimpleSchema", () => {
 
 		const expected: SimpleTreeSchema = {
 			kind: FieldKind.Required,
-			definitions: new Map([
+			metadata: {},
+			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"test.array",
 					{
 						kind: NodeKind.Array,
-						allowedTypes: new Set(["com.fluidframework.leaf.string"]),
+						allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+						metadata: {},
 					},
 				],
-				[
-					"com.fluidframework.leaf.string",
-					{
-						leafKind: ValueSchema.String,
-						kind: NodeKind.Leaf,
-					},
-				],
+				["com.fluidframework.leaf.string", simpleString],
 			]),
-			allowedTypes: new Set(["test.array"]),
+			allowedTypesIdentifiers: new Set(["test.array"]),
 		};
 		assert.deepEqual(actual, expected);
 	});
@@ -129,23 +115,19 @@ describe("getSimpleSchema", () => {
 		const actual = getSimpleSchema(Schema);
 		const expected: SimpleTreeSchema = {
 			kind: FieldKind.Required,
-			definitions: new Map([
+			metadata: {},
+			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"test.map",
 					{
 						kind: NodeKind.Map,
-						allowedTypes: new Set(["com.fluidframework.leaf.string"]),
+						metadata: {},
+						allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
 					},
 				],
-				[
-					"com.fluidframework.leaf.string",
-					{
-						leafKind: ValueSchema.String,
-						kind: NodeKind.Leaf,
-					},
-				],
+				["com.fluidframework.leaf.string", simpleString],
 			]),
-			allowedTypes: new Set(["test.map"]),
+			allowedTypesIdentifiers: new Set(["test.map"]),
 		};
 		assert.deepEqual(actual, expected);
 	});
@@ -161,39 +143,39 @@ describe("getSimpleSchema", () => {
 
 		const expected: SimpleTreeSchema = {
 			kind: FieldKind.Required,
-			definitions: new Map([
+			metadata: {},
+			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"test.object",
 					{
 						kind: NodeKind.Object,
-						fields: {
-							foo: {
-								kind: FieldKind.Optional,
-								allowedTypes: new Set(["com.fluidframework.leaf.number"]),
-							},
-							bar: {
-								kind: FieldKind.Required,
-								allowedTypes: new Set(["com.fluidframework.leaf.string"]),
-							},
-						},
-					},
+						metadata: {},
+						fields: new Map<string, SimpleObjectFieldSchema>([
+							[
+								"foo",
+								{
+									kind: FieldKind.Optional,
+									metadata: {},
+									allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.number"]),
+									storedKey: "foo",
+								},
+							],
+							[
+								"bar",
+								{
+									kind: FieldKind.Required,
+									metadata: {},
+									allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+									storedKey: "bar",
+								},
+							],
+						]),
+					} satisfies SimpleObjectNodeSchema,
 				],
-				[
-					"com.fluidframework.leaf.number",
-					{
-						leafKind: ValueSchema.Number,
-						kind: NodeKind.Leaf,
-					},
-				],
-				[
-					"com.fluidframework.leaf.string",
-					{
-						leafKind: ValueSchema.String,
-						kind: NodeKind.Leaf,
-					},
-				],
+				["com.fluidframework.leaf.number", simpleNumber],
+				["com.fluidframework.leaf.string", simpleString],
 			]),
-			allowedTypes: new Set(["test.object"]),
+			allowedTypesIdentifiers: new Set(["test.object"]),
 		};
 		assert.deepEqual(actual, expected);
 	});
@@ -208,28 +190,29 @@ describe("getSimpleSchema", () => {
 
 		const expected: SimpleTreeSchema = {
 			kind: FieldKind.Required,
-			definitions: new Map([
+			metadata: {},
+			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"test.object",
 					{
 						kind: NodeKind.Object,
-						fields: {
-							id: {
-								kind: FieldKind.Identifier,
-								allowedTypes: new Set(["com.fluidframework.leaf.string"]),
-							},
-						},
+						metadata: {},
+						fields: new Map([
+							[
+								"id",
+								{
+									kind: FieldKind.Identifier,
+									metadata: {},
+									allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+									storedKey: "id",
+								},
+							],
+						]),
 					},
 				],
-				[
-					"com.fluidframework.leaf.string",
-					{
-						leafKind: ValueSchema.String,
-						kind: NodeKind.Leaf,
-					},
-				],
+				["com.fluidframework.leaf.string", simpleString],
 			]),
-			allowedTypes: new Set(["test.object"]),
+			allowedTypesIdentifiers: new Set(["test.object"]),
 		};
 		assert.deepEqual(actual, expected);
 	});
@@ -244,38 +227,33 @@ describe("getSimpleSchema", () => {
 
 		const expected: SimpleTreeSchema = {
 			kind: FieldKind.Required,
-			definitions: new Map([
+			metadata: {},
+			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"test.object",
 					{
 						kind: NodeKind.Object,
-						fields: {
-							foo: {
-								kind: FieldKind.Required,
-								allowedTypes: new Set([
-									"com.fluidframework.leaf.number",
-									"com.fluidframework.leaf.string",
-								]),
-							},
-						},
+						metadata: {},
+						fields: new Map([
+							[
+								"foo",
+								{
+									kind: FieldKind.Required,
+									metadata: {},
+									allowedTypesIdentifiers: new Set([
+										"com.fluidframework.leaf.number",
+										"com.fluidframework.leaf.string",
+									]),
+									storedKey: "foo",
+								},
+							],
+						]),
 					},
 				],
-				[
-					"com.fluidframework.leaf.number",
-					{
-						leafKind: ValueSchema.Number,
-						kind: NodeKind.Leaf,
-					},
-				],
-				[
-					"com.fluidframework.leaf.string",
-					{
-						leafKind: ValueSchema.String,
-						kind: NodeKind.Leaf,
-					},
-				],
+				["com.fluidframework.leaf.number", simpleNumber],
+				["com.fluidframework.leaf.string", simpleString],
 			]),
-			allowedTypes: new Set(["test.object"]),
+			allowedTypesIdentifiers: new Set(["test.object"]),
 		};
 		assert.deepEqual(actual, expected);
 	});
@@ -290,31 +268,32 @@ describe("getSimpleSchema", () => {
 
 		const expected: SimpleTreeSchema = {
 			kind: FieldKind.Required,
-			definitions: new Map([
+			metadata: {},
+			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"test.recursive-object",
 					{
 						kind: NodeKind.Object,
-						fields: {
-							foo: {
-								kind: FieldKind.Optional,
-								allowedTypes: new Set([
-									"com.fluidframework.leaf.string",
-									"test.recursive-object",
-								]),
-							},
-						},
+						metadata: {},
+						fields: new Map([
+							[
+								"foo",
+								{
+									kind: FieldKind.Optional,
+									metadata: {},
+									allowedTypesIdentifiers: new Set([
+										"com.fluidframework.leaf.string",
+										"test.recursive-object",
+									]),
+									storedKey: "foo",
+								},
+							],
+						]),
 					},
 				],
-				[
-					"com.fluidframework.leaf.string",
-					{
-						leafKind: ValueSchema.String,
-						kind: NodeKind.Leaf,
-					},
-				],
+				["com.fluidframework.leaf.string", simpleString],
 			]),
-			allowedTypes: new Set(["test.recursive-object"]),
+			allowedTypesIdentifiers: new Set(["test.recursive-object"]),
 		};
 		assert.deepEqual(actual, expected);
 	});
