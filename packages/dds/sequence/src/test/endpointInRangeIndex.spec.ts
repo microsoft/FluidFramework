@@ -9,12 +9,12 @@ import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { Client } from "@fluidframework/merge-tree/internal";
 
 import { EndpointInRangeIndex, IEndpointInRangeIndex } from "../intervalIndex/index.js";
-import { Interval, intervalHelpers } from "../intervals/index.js";
 
 import {
 	assertPlainNumberIntervals,
 	createTestInterval,
 	generateRandomIntervals,
+	type Interval,
 } from "./intervalIndexTestUtils.js";
 
 class TestEndpointInRangeIndex implements IEndpointInRangeIndex<Interval> {
@@ -41,7 +41,6 @@ class TestEndpointInRangeIndex implements IEndpointInRangeIndex<Interval> {
 }
 
 describe("findIntervalsWithEndpointInRange", () => {
-	const helpers = intervalHelpers;
 	// sort the query result by the interval endpoint value
 	const compareFn = (a: Interval, b: Interval) => {
 		if (a.end === b.end) {
@@ -53,7 +52,7 @@ describe("findIntervalsWithEndpointInRange", () => {
 	let results;
 
 	beforeEach(() => {
-		endpointInRangeIndex = new EndpointInRangeIndex(undefined as any as Client, helpers);
+		endpointInRangeIndex = new EndpointInRangeIndex(undefined as any as Client);
 	});
 
 	describe("finds no intervals", () => {

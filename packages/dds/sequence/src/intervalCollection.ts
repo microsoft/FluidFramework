@@ -52,7 +52,6 @@ import {
 } from "./intervalIndex/index.js";
 import {
 	CompressedSerializedInterval,
-	IIntervalHelpers,
 	ISerializedInterval,
 	IntervalDeltaOpType,
 	IntervalStickiness,
@@ -61,6 +60,7 @@ import {
 	SequenceIntervalClass,
 	SerializedIntervalDelta,
 	createPositionReferenceFromSegoff,
+	createSequenceInterval,
 	endReferenceSlidingPreference,
 	startReferenceSlidingPreference,
 	type ISerializableInterval,
@@ -174,7 +174,6 @@ export class LocalIntervalCollection {
 	constructor(
 		private readonly client: Client,
 		private readonly label: string,
-		private readonly helpers: IIntervalHelpers,
 		private readonly options: Partial<SequenceOptions>,
 		/** Callback invoked each time one of the endpoints of an interval slides. */
 		private readonly onPositionChange?: (
@@ -182,9 +181,9 @@ export class LocalIntervalCollection {
 			previousInterval: SequenceInterval,
 		) => void,
 	) {
-		this.overlappingIntervalsIndex = new OverlappingIntervalsIndex(client, helpers);
+		this.overlappingIntervalsIndex = new OverlappingIntervalsIndex(client);
 		this.idIntervalIndex = createIdIntervalIndex();
-		this.endIntervalIndex = new EndpointIndex(client, helpers);
+		this.endIntervalIndex = new EndpointIndex(client);
 		this.indexes = new Set([
 			this.overlappingIntervalsIndex,
 			this.idIntervalIndex,
@@ -255,7 +254,7 @@ export class LocalIntervalCollection {
 		intervalType: IntervalType,
 		op?: ISequencedDocumentMessage,
 	): SequenceInterval {
-		return this.helpers.create(
+		return createSequenceInterval(
 			this.label,
 			start,
 			end,
@@ -1136,7 +1135,6 @@ export class IntervalCollection
 	}
 
 	constructor(
-		private readonly helpers: IIntervalHelpers,
 		private readonly requiresClient: boolean,
 		private readonly emitter: IValueOpEmitter,
 		serializedIntervals: ISerializedInterval[] | ISerializedIntervalCollectionV2,
@@ -1275,7 +1273,6 @@ export class IntervalCollection
 		this.localCollection = new LocalIntervalCollection(
 			client,
 			label,
-			this.helpers,
 			this.options,
 			(interval, previousInterval) => this.emitChange(interval, previousInterval, true, true),
 		);
@@ -1298,7 +1295,7 @@ export class IntervalCollection
 					typeof endPos === "number" && endSide !== undefined
 						? { pos: endPos, side: endSide }
 						: endPos;
-				const interval = this.helpers.create(
+				const interval = createSequenceInterval(
 					label,
 					start,
 					end,

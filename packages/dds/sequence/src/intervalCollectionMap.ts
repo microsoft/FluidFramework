@@ -26,11 +26,7 @@ import {
 	IValueOpEmitter,
 	SequenceOptions,
 } from "./intervalCollectionMapInterfaces.js";
-import {
-	IntervalDeltaOpType,
-	sequenceIntervalHelpers,
-	SerializedIntervalDelta,
-} from "./intervals/index.js";
+import { IntervalDeltaOpType, SerializedIntervalDelta } from "./intervals/index.js";
 
 function isMapOperation(op: unknown): op is IMapOperation {
 	return typeof op === "object" && op !== null && "type" in op && op.type === "act";
@@ -291,7 +287,6 @@ export class IntervalCollectionMap {
 	 */
 	private createCore(key: string, local: boolean): IntervalCollection {
 		const localValue = new IntervalCollection(
-			sequenceIntervalHelpers,
 			true,
 			this.makeMapValueOpEmitter(key),
 			[],
@@ -325,7 +320,6 @@ export class IntervalCollectionMap {
 		);
 
 		const localValue = new IntervalCollection(
-			sequenceIntervalHelpers,
 			true,
 			this.makeMapValueOpEmitter(key),
 			serializable.value,
