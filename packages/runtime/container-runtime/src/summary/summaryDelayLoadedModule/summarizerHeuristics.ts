@@ -6,14 +6,14 @@
 import { Timer } from "@fluidframework/core-utils/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import type { ISummaryConfigurationHeuristics } from "./summarizerTypes.js";
+import type { ISummaryConfigurationHeuristics } from "../summarizerTypes.js";
 import {
 	ISummarizeAttempt,
 	ISummarizeHeuristicData,
 	ISummarizeHeuristicRunner,
 	ISummaryHeuristicStrategy,
-} from "./summarizerTypes.js";
-import { SummarizeReason } from "./summaryGenerator.js";
+} from "../summarizerTypes.js";
+import { SummarizeReason } from "../summarizerUtils.js";
 
 /**
  * Simple implementation of class for tracking summarize heuristic data.
