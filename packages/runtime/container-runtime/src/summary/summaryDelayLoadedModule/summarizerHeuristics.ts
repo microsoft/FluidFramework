@@ -13,7 +13,7 @@ import {
 	ISummarizeHeuristicRunner,
 	ISummaryHeuristicStrategy,
 } from "../summarizerTypes.js";
-import { SummarizeReason } from "../summaryResultBuilder.js";
+import { SummarizeReason } from "../summarizerUtils.js";
 
 /**
  * Simple implementation of class for tracking summarize heuristic data.

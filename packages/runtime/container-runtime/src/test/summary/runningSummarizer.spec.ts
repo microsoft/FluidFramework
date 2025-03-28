@@ -47,10 +47,8 @@ import {
 import {
 	defaultMaxAttempts,
 	defaultMaxAttemptsForSubmitFailures,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../summary/summarizer.js";
-// eslint-disable-next-line import/no-internal-modules
-import { RunningSummarizer } from "../../summary/summarizerDelayLoadedModule/index.js";
+	RunningSummarizer,
+} from "../../summary/index.js";
 
 class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {
 	disposed = false;

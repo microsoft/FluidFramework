@@ -27,10 +27,8 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { opSize } from "../../opProperties.js";
-import { defaultMaxAttempts, defaultMaxAttemptsForSubmitFailures } from "../summarizer.js";
 import type {
 	ISummaryConfiguration,
-	EnqueueSummarizeResult,
 	IEnqueueSummarizeOptions,
 	IOnDemandSummarizeOptions,
 	IRefreshSummaryAckOptions,
@@ -38,7 +36,6 @@ import type {
 	ISummarizeHeuristicData,
 	ISummarizeHeuristicRunner,
 	ISummarizeOptions,
-	ISummarizeResults,
 	ISummarizeRunnerTelemetry,
 	ISummarizeTelemetryProperties,
 	ISummarizerRuntime,
@@ -46,20 +43,21 @@ import type {
 	SubmitSummaryResult,
 	IRetriableFailureError,
 } from "../summarizerTypes.js";
+import { raceTimer, RetriableSummaryError, SummarizeReason } from "../summarizerUtils.js";
+
+import { defaultMaxAttempts, defaultMaxAttemptsForSubmitFailures } from "./summarizer.js";
+import { SummarizeHeuristicRunner } from "./summarizerHeuristics.js";
 import {
 	IAckedSummary,
 	IClientSummaryWatcher,
 	SummaryCollection,
-} from "../summaryCollection.js";
-import {
-	RetriableSummaryError,
-	SummarizeReason,
-	SummarizeResultBuilder,
-	raceTimer,
-} from "../summaryResultBuilder.js";
-
-import { SummarizeHeuristicRunner } from "./summarizerHeuristics.js";
+} from "./summaryCollection.js";
 import { SummaryGenerator } from "./summaryGenerator.js";
+import {
+	ISummarizeResults,
+	SummarizeResultBuilder,
+	type EnqueueSummarizeResult,
+} from "./summaryResultBuilder.js";
 
 const maxSummarizeAckWaitTime = 10 * 60 * 1000; // 10 minutes
 

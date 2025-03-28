@@ -19,24 +19,28 @@ import {
 	wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator.js";
-import type { RunningSummarizer } from "./summarizerDelayLoadedModule/index.js";
 import {
-	EnqueueSummarizeResult,
 	IConnectableRuntime,
 	IEnqueueSummarizeOptions,
 	IOnDemandSummarizeOptions,
 	ISummarizeHeuristicData,
-	ISummarizeResults,
 	ISummarizer,
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
 	ISummarizingWarning,
 	type IRetriableFailureError,
 	type ISummaryConfiguration,
-} from "./summarizerTypes.js";
+} from "../summarizerTypes.js";
+
+import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator.js";
+import { RunningSummarizer } from "./runningSummarizer.js";
+import { SummarizeHeuristicData } from "./summarizerHeuristics.js";
 import { SummaryCollection } from "./summaryCollection.js";
-import { SummarizeResultBuilder } from "./summaryResultBuilder.js";
+import {
+	SummarizeResultBuilder,
+	type EnqueueSummarizeResult,
+	type ISummarizeResults,
+} from "./summaryResultBuilder.js";
 
 /**
  * The maximum number of summarization attempts that will be done by default in case of failures
@@ -276,10 +280,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 			throw new UsageError("clientId should be defined if connected.");
 		}
 
-		const module = await import(
-			/* webpackChunkName: "summarizerDelayLoadedModule" */ "./summarizerDelayLoadedModule/index.js"
-		);
-		this._heuristicData = new module.SummarizeHeuristicData(
+		this._heuristicData = new SummarizeHeuristicData(
 			this.runtime.deltaManager.lastSequenceNumber,
 			{
 				/**
@@ -290,7 +291,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 			} as const,
 		);
 
-		const runningSummarizer = await module.RunningSummarizer.start(
+		const runningSummarizer = await RunningSummarizer.start(
 			this.logger,
 			this.summaryCollection.createWatcher(clientId),
 			this.configurationGetter(),

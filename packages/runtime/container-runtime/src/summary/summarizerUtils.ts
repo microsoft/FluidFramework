@@ -4,20 +4,10 @@
  */
 
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { assert, Deferred, IPromiseTimerResult } from "@fluidframework/core-utils/internal";
+import { IPromiseTimerResult } from "@fluidframework/core-utils/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	IAckSummaryResult,
-	IBroadcastSummaryResult,
-	INackSummaryResult,
-	ISummarizeResults,
-	ISummaryCancellationToken,
-	SubmitSummaryFailureData,
-	SubmitSummaryResult,
-	SummarizeResultPart,
-	type IRetriableFailureError,
-} from "./summarizerTypes.js";
+import { ISummaryCancellationToken, type IRetriableFailureError } from "./summarizerTypes.js";
 
 export type raceTimerResult<T> =
 	| { result: "done"; value: T }
@@ -127,55 +117,5 @@ export class RetriableSummaryError extends LoggingError implements IRetriableFai
 		props?: ITelemetryBaseProperties,
 	) {
 		super(message, props);
-	}
-}
-
-export class SummarizeResultBuilder {
-	public readonly summarySubmitted = new Deferred<
-		SummarizeResultPart<SubmitSummaryResult, SubmitSummaryFailureData>
-	>();
-	public readonly summaryOpBroadcasted = new Deferred<
-		SummarizeResultPart<IBroadcastSummaryResult>
-	>();
-	public readonly receivedSummaryAckOrNack = new Deferred<
-		SummarizeResultPart<IAckSummaryResult, INackSummaryResult>
-	>();
-
-	/**
-	 * Fails one or more of the three results as per the passed params.
-	 * If submit fails, all three results fail.
-	 * If op broadcast fails, only op broadcast result and ack nack result fails.
-	 * If ack nack fails, only ack nack result fails.
-	 */
-	public fail(
-		message: string,
-		error: IRetriableFailureError,
-		submitFailureResult?: SubmitSummaryFailureData,
-		nackSummaryResult?: INackSummaryResult,
-	): void {
-		assert(
-			!this.receivedSummaryAckOrNack.isCompleted,
-			0x25e /* "no reason to call fail if all promises have been completed" */,
-		);
-
-		const result: SummarizeResultPart<undefined> = {
-			success: false,
-			message,
-			data: undefined,
-			error,
-		} as const;
-
-		// Note that if any of these are already resolved, it will be a no-op. For example, if ack nack failed but
-		// submit summary and op broadcast has already been resolved as passed, only ack nack result will get modified.
-		this.summarySubmitted.resolve({ ...result, data: submitFailureResult });
-		this.summaryOpBroadcasted.resolve(result);
-		this.receivedSummaryAckOrNack.resolve({ ...result, data: nackSummaryResult });
-	}
-	public build(): ISummarizeResults {
-		return {
-			summarySubmitted: this.summarySubmitted.promise,
-			summaryOpBroadcasted: this.summaryOpBroadcasted.promise,
-			receivedSummaryAckOrNack: this.receivedSummaryAckOrNack.promise,
-		} as const;
 	}
 }

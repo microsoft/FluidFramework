@@ -14,24 +14,28 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	INackSummaryResult,
 	IRefreshSummaryAckOptions,
 	ISubmitSummaryOptions,
 	ISummarizeHeuristicData,
-	ISummarizeResults,
 	SubmitSummaryFailureData,
 	SubmitSummaryResult,
 	SummaryGeneratorTelemetry,
 	type IRetriableFailureError,
 } from "../summarizerTypes.js";
-import { IClientSummaryWatcher } from "../summaryCollection.js";
 import {
 	getFailMessage,
 	raceTimer,
 	RetriableSummaryError,
-	SummarizeResultBuilder,
 	type SummarizeErrorCode,
-} from "../summaryResultBuilder.js";
+} from "../summarizerUtils.js";
+
+import {
+	SummarizeResultBuilder,
+	type INackSummaryResult,
+	type ISummarizeResults,
+} from "./summaryResultBuilder.js";
+
+import { IClientSummaryWatcher } from "./index.js";
 
 // Send some telemetry if generate summary takes too long
 const maxSummarizeTimeoutTime = 20000; // 20 sec

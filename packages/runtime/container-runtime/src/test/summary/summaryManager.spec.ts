@@ -38,9 +38,8 @@ import {
 	SummaryManagerState,
 	neverCancelledSummaryToken,
 	DefaultSummaryConfiguration,
+	RunningSummarizer,
 } from "../../summary/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { RunningSummarizer } from "../../summary/summarizerDelayLoadedModule/index.js";
 
 class MockRuntime {
 	constructor(

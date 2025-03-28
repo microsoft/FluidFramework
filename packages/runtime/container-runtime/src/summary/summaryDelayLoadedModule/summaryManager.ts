@@ -22,18 +22,17 @@ import {
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { IThrottler } from "../throttler.js";
+import { IThrottler } from "../../throttler.js";
+import {
+	IEnqueueSummarizeOptions,
+	IOnDemandSummarizeOptions,
+	ISummarizer,
+} from "../summarizerTypes.js";
 
 import { Summarizer } from "./summarizer.js";
 import { ISummarizerClientElection } from "./summarizerClientElection.js";
-import {
-	EnqueueSummarizeResult,
-	IEnqueueSummarizeOptions,
-	IOnDemandSummarizeOptions,
-	ISummarizeResults,
-	ISummarizer,
-} from "./summarizerTypes.js";
 import { SummaryCollection } from "./summaryCollection.js";
+import type { EnqueueSummarizeResult, ISummarizeResults } from "./summaryResultBuilder.js";
 
 const defaultInitialDelayMs = 5000;
 const defaultOpsToBypassInitialDelay = 4000;
