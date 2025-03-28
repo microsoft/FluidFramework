@@ -4,12 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import {
-	normalizeAllowedTypes,
-	normalizeFieldSchema,
-	type ImplicitAllowedTypes,
-	type ImplicitFieldSchema,
-} from "../schemaTypes.js";
+import { normalizeFieldSchema, type ImplicitFieldSchema } from "../schemaTypes.js";
 import type {
 	SimpleArrayNodeSchema,
 	SimpleLeafNodeSchema,
@@ -19,23 +14,47 @@ import type {
 	SimpleObjectNodeSchema,
 	SimpleTreeSchema,
 } from "../simpleSchema.js";
-import type { ValueSchema } from "../../core/index.js";
-import { getOrCreate } from "../../util/index.js";
-import { isObjectNodeSchema, type ObjectNodeSchema } from "../objectNodeTypes.js";
-import { NodeKind, type TreeNodeSchema } from "../core/index.js";
+import { ObjectNodeSchema } from "../objectNodeTypes.js";
+import { NodeKind } from "../core/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
+import { ArrayNodeSchema } from "../arrayNodeTypes.js";
+import { LeafNodeSchema } from "../leafNodeSchema.js";
+import { MapNodeSchema } from "../mapNodeTypes.js";
 
 /**
- * Converts a "view" schema to a "simple" schema representation.
+ * Converts an {@link ImplicitFieldSchema} to a "simple" schema representation.
+ *
+ * @param schema - The schema to convert
+ * @param copySchemaObjects - If true, TreeNodeSchema and FieldSchema are copied into plain JavaScript objects. Either way, custom metadata is referenced and not copied.
+ *
  * @remarks
- * Even when the TreeNodeSchema types implements the simple schema interfaces, this copies out the minimal data to implement SimpleTreeSchema in plain objects.
+ * Given that the Schema types used in {@link ImplicitFieldSchema} already implement the {@link SimpleNodeSchema} interfaces, there are limited use-cases for this function.
+ * One possible use-case is converting schema to a more serialization friendly format.
+ * This format however is not JSON compatible due to use of Maps and Sets,
+ * but it it does not rely on cyclic object references for handling recursive schema and instead uses the `definitions` map.
+ *
+ * @privateRemarks
+ * TODO: once SimpleTreeSchema is stable, {@link TreeViewConfiguration} could implement {@link SimpleTreeSchema} directly.
+ * That would provide the non-copying alternative that could expose the value type of the definitions map as {@link TreeNodeSchema}.
  */
-export function toSimpleTreeSchema(schema: ImplicitFieldSchema): SimpleTreeSchema {
+export function toSimpleTreeSchema(
+	schema: ImplicitFieldSchema,
+	copySchemaObjects: boolean,
+): SimpleTreeSchema {
 	const normalizedSchema = normalizeFieldSchema(schema);
 	const definitions = new Map<string, SimpleNodeSchema>();
 	walkFieldSchema(normalizedSchema, {
 		node: (nodeSchema) => {
-			definitions.set(nodeSchema.identifier, toSimpleNodeSchema(nodeSchema));
+			// The set of node kinds is extensible, but the typing of SimpleNodeSchema is not, so we need to check that the schema is one of the known kinds.
+			assert(
+				nodeSchema instanceof ArrayNodeSchema ||
+					nodeSchema instanceof MapNodeSchema ||
+					nodeSchema instanceof LeafNodeSchema ||
+					nodeSchema instanceof ObjectNodeSchema,
+				"Invalid schema",
+			);
+			const outSchema = copySchemaObjects ? copySimpleNodeSchema(nodeSchema) : nodeSchema;
+			definitions.set(nodeSchema.identifier, outSchema);
 		},
 	});
 
@@ -48,67 +67,44 @@ export function toSimpleTreeSchema(schema: ImplicitFieldSchema): SimpleTreeSchem
 }
 
 /**
- * Cache in which the results of {@link toSimpleNodeSchema} are saved.
- */
-const simpleNodeSchemaCache = new WeakMap<TreeNodeSchema, SimpleNodeSchema>();
-
-/**
- * Creates a {@link SimpleNodeSchema} from a {@link TreeNodeSchema}.
+ * Copies a {@link SimpleNodeSchema} into a new plain JavaScript object.
  *
  * @remarks Caches the result on the input schema for future calls.
  */
-function toSimpleNodeSchema(schema: TreeNodeSchema): SimpleNodeSchema {
-	return getOrCreate(simpleNodeSchemaCache, schema, () => {
-		const kind = schema.kind;
-		switch (kind) {
-			case NodeKind.Leaf: {
-				return leafSchemaToSimpleSchema(schema);
-			}
-			case NodeKind.Map: {
-				return mapSchemaToSimpleSchema(schema);
-			}
-			case NodeKind.Array: {
-				return arraySchemaToSimpleSchema(schema);
-			}
-			case NodeKind.Object: {
-				assert(isObjectNodeSchema(schema), 0xa06 /* Expected object schema */);
-				return objectSchemaToSimpleSchema(schema);
-			}
-			default: {
-				unreachableCase(kind);
-			}
-		}
-	});
+function copySimpleNodeSchema(schema: SimpleNodeSchema): SimpleNodeSchema {
+	const kind = schema.kind;
+	switch (kind) {
+		case NodeKind.Leaf:
+			return copySimpleLeafSchema(schema);
+		case NodeKind.Array:
+		case NodeKind.Map:
+			return copySimpleMapOrArraySchema(schema);
+		case NodeKind.Object:
+			return copySimpleObjectSchema(schema);
+		default:
+			unreachableCase(kind);
+	}
 }
 
-// TODO: Use a stronger type for leaf schemas once one is available (see object schema handler for an example).
-function leafSchemaToSimpleSchema(schema: TreeNodeSchema): SimpleLeafNodeSchema {
+function copySimpleLeafSchema(schema: SimpleLeafNodeSchema): SimpleLeafNodeSchema {
 	return {
 		kind: NodeKind.Leaf,
-		leafKind: schema.info as ValueSchema,
+		leafKind: schema.leafKind,
 		metadata: schema.metadata,
 	};
 }
 
-// TODO: Use a stronger type for array schemas once one is available (see object schema handler for an example).
-function arraySchemaToSimpleSchema(schema: TreeNodeSchema): SimpleArrayNodeSchema {
+function copySimpleMapOrArraySchema(
+	schema: SimpleMapNodeSchema | SimpleArrayNodeSchema,
+): SimpleMapNodeSchema | SimpleArrayNodeSchema {
 	return {
-		kind: NodeKind.Array,
-		allowedTypesIdentifiers: identifiersFromAllowedTypes(schema.info as ImplicitAllowedTypes),
+		kind: schema.kind,
+		allowedTypesIdentifiers: schema.allowedTypesIdentifiers,
 		metadata: schema.metadata,
 	};
 }
 
-// TODO: Use a stronger type for map schemas once one is available (see object schema handler for an example).
-function mapSchemaToSimpleSchema(schema: TreeNodeSchema): SimpleMapNodeSchema {
-	return {
-		kind: NodeKind.Map,
-		allowedTypesIdentifiers: identifiersFromAllowedTypes(schema.info as ImplicitAllowedTypes),
-		metadata: schema.metadata,
-	};
-}
-
-function objectSchemaToSimpleSchema(schema: ObjectNodeSchema): SimpleObjectNodeSchema {
+function copySimpleObjectSchema(schema: SimpleObjectNodeSchema): SimpleObjectNodeSchema {
 	const fields: Map<string, SimpleObjectFieldSchema> = new Map();
 	for (const [propertyKey, field] of schema.fields) {
 		// field already is a SimpleObjectFieldSchema, but copy the subset of the properties needed by this interface to get a clean simple object.
@@ -125,9 +121,4 @@ function objectSchemaToSimpleSchema(schema: ObjectNodeSchema): SimpleObjectNodeS
 		fields,
 		metadata: schema.metadata,
 	};
-}
-
-function identifiersFromAllowedTypes(schema: ImplicitAllowedTypes): ReadonlySet<string> {
-	const allowed = normalizeAllowedTypes(schema);
-	return new Set([...allowed].map((type) => type.identifier));
 }
