@@ -26,42 +26,36 @@ import {
 } from "../intervalCollectionMapInterfaces.js";
 import {
 	IIntervalHelpers,
-	ISerializableInterval,
 	ISerializedInterval,
 	IntervalOpType,
-	SequenceInterval,
 	createSequenceInterval,
 } from "../intervals/index.js";
 import { pkgVersion } from "../packageVersion.js";
 import { SharedStringClass } from "../sharedString.js";
 
-export interface IntervalCollectionInternals<TInterval extends ISerializableInterval> {
+export interface IntervalCollectionInternals {
 	client: Client;
 	savedSerializedIntervals?: ISerializedInterval[];
-	localCollection: LocalIntervalCollection<SequenceInterval>;
+	localCollection: LocalIntervalCollection;
 	getNextLocalSeq(): number;
 }
 
-export class V1IntervalCollection<
-	TInterval extends ISerializableInterval,
-> extends IntervalCollection<SequenceInterval> {
-	casted = this as unknown as IntervalCollectionInternals<SequenceInterval>;
+export class V1IntervalCollection extends IntervalCollection {
+	casted = this as unknown as IntervalCollectionInternals;
 }
 
-class V1SequenceIntervalCollectionFactory
-	implements IIntervalCollectionFactory<SequenceInterval>
-{
+class V1SequenceIntervalCollectionFactory implements IIntervalCollectionFactory {
 	public load(
 		emitter: IValueOpEmitter,
 		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
-	): V1IntervalCollection<SequenceInterval> {
-		const helpers: IIntervalHelpers<SequenceInterval> = {
+	): V1IntervalCollection {
+		const helpers: IIntervalHelpers = {
 			create: createSequenceInterval,
 		};
 		return new V1IntervalCollection(helpers, true, emitter, raw, {});
 	}
 	public store(
-		value: V1IntervalCollection<SequenceInterval>,
+		value: V1IntervalCollection,
 	): ISerializedInterval[] | ISerializedIntervalCollectionV2 {
 		return Array.from(value, (interval) =>
 			interval?.serialize(),
@@ -69,31 +63,29 @@ class V1SequenceIntervalCollectionFactory
 	}
 }
 
-export class V1SequenceIntervalCollectionValueType
-	implements IIntervalCollectionType<SequenceInterval>
-{
+export class V1SequenceIntervalCollectionValueType implements IIntervalCollectionType {
 	public static Name = "sharedStringIntervalCollection";
 
 	public get name(): string {
 		return V1SequenceIntervalCollectionValueType.Name;
 	}
 
-	public get factory(): IIntervalCollectionFactory<SequenceInterval> {
+	public get factory(): IIntervalCollectionFactory {
 		return V1SequenceIntervalCollectionValueType._factory;
 	}
 
-	public get ops(): Map<IntervalOpType, IIntervalCollectionOperation<SequenceInterval>> {
+	public get ops(): Map<IntervalOpType, IIntervalCollectionOperation> {
 		return V1SequenceIntervalCollectionValueType._ops;
 	}
 
-	private static readonly _factory: IIntervalCollectionFactory<SequenceInterval> =
+	private static readonly _factory: IIntervalCollectionFactory =
 		new V1SequenceIntervalCollectionFactory();
 
-	private static readonly _ops = makeOpsMap<SequenceInterval>();
+	private static readonly _ops = makeOpsMap();
 }
 
 interface SharedStringInternals {
-	intervalCollections: IntervalCollectionMap<SequenceInterval>;
+	intervalCollections: IntervalCollectionMap;
 }
 
 export class SharedStringWithV1IntervalCollection extends SharedStringClass {

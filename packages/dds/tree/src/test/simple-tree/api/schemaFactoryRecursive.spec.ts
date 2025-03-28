@@ -538,6 +538,14 @@ describe("SchemaFactory Recursive methods", () => {
 				type _check = ValidateRecursiveSchema<typeof MapRecursive>;
 			}
 		});
+
+		it("Invalid undetected case ", () => {
+			// Any should be rejected to help ensure builds which allow implicit any allowed error on schema which implicitly produce `any`.
+			{
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				type _check = ValidateRecursiveSchema<any>;
+			}
+		});
 	});
 
 	describe("arrayRecursive", () => {
@@ -758,20 +766,27 @@ describe("SchemaFactory Recursive methods", () => {
 	});
 
 	/**
-	 * These cases are anti-patterns which are documented not to work, but still might get used by someone.
-	 * SchemaFactory documents the non explicit sub-classing pattern (POJO mode) is not supported for recursive schema.
-	 * Additionally it documents this pattern is not supported for explicitly named Maps and Arrays.
+	 * {@link ValidateRecursiveSchema} documents some specific patterns for how to write recursive schema.
+	 * These patterns are not required for correct runtime behavior: they exist entirely to mitigate compiler limitations and bugs.
 	 *
-	 * These tests violate both of these statements, seeing which versions currently compile and which ones do not.
-	 * Having these tests in place will help discover when/if further changes break cases like these to aid in writing helpful changesets for impacted customers using these unsupported patterns on accident.
+	 * This collection of tests, which violate these patterns, exists to help keep an eye on how these bugs are interacting with our schema.
+	 *
+	 * They help detect when changes (code, tooling or configuration) impact what compiles.
+	 * This serves a few main purposes:
+	 * 1. Changes to these tests can indicate when it might be worth making extra checks for similar supported cases to ensure they still compile.
+	 * 2. Make it easier to communicate to customers which might have accidentally used these unsupported patterns when and how they might need to adjust their code.
+	 * 3. Detect if/when the TypeScript compiler changes and starts to support these patterns to possibly enable out schema to explicitly allow them.
+	 *
+	 * Currently this collection of test cases covers one specific edge case: schema which do not use explicit sub-classing.
+	 * Our current guidance says this pattern is not supported for recursive schema.
 	 *
 	 * These patterns also [break type safety in .d.ts generation](https://github.com/microsoft/TypeScript/issues/55832):
 	 * this is one of the reasons they are not supported.
 	 * The import-testing package has test coverage for this aspect.
-	 * They also have poorer error quality and IntelliSense, and tend to fail to compile in some cases.
+	 * They also have poorer error quality and IntelliSense (for example the compiler and IntelliSense disagree on which are valid).
 	 *
 	 * These tests are all about the typing.
-	 * Specifically they check which cases TypeScript gives "referenced directly or indirectly in its own base expression" errors.
+	 * They mostly check which cases TypeScript gives "referenced directly or indirectly in its own base expression" errors.
 	 */
 	describe("Use of recursive schema without explicit sub-classing", () => {
 		it("recursive with non-subclassed array", () => {
@@ -779,24 +794,34 @@ describe("SchemaFactory Recursive methods", () => {
 		});
 
 		it("co-recursive object with out of line non-lazy array", () => {
+			// @ts-expect-error co-recursive arrays without named subclass cause "referenced directly or indirectly in its own base expression" errors.
 			const TheArray = sf.arrayRecursive("FooList", [() => Foo]);
 			{
+				// In this case the error above does not cause ValidateRecursiveSchema to fail to compile.
+				// It's interesting that is not consistent with the other cases below,
+				// but doesn't seem to matter from a customer perspective since they already have a compile error, and other than that error,
+				// nothing else is wrong (the schema would work fine at runtime).
 				type _check = ValidateRecursiveSchema<typeof TheArray>;
 			}
 
+			// @ts-expect-error due to error above
 			class Foo extends sf.objectRecursive("Foo", {
 				fooList: TheArray,
 			}) {}
 			{
+				// @ts-expect-error due to error above
 				type _check = ValidateRecursiveSchema<typeof Foo>;
 			}
 		});
 
 		it("co-recursive object with inline array", () => {
+			// @ts-expect-error Inline co-recursive arrays without named subclass cause "referenced directly or indirectly in its own base expression" errors.
 			class Foo extends sf.objectRecursive("Foo", {
+				// @ts-expect-error due to error above
 				fooList: sf.arrayRecursive("FooList", [() => Foo]),
 			}) {}
 			{
+				// @ts-expect-error due to error above
 				type _check = ValidateRecursiveSchema<typeof Foo>;
 			}
 		});

@@ -90,7 +90,7 @@ type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? 
 type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<FieldKind.Optional | FieldKind.Identifier> ? true : false;
 
 // @public @sealed
-type FieldHasDefaultUnsafe<T extends Unenforced<ImplicitFieldSchema>> = T extends FieldSchemaUnsafe<FieldKind.Optional | FieldKind.Identifier, ImplicitAllowedTypesUnsafe> ? true : false;
+type FieldHasDefaultUnsafe<T extends ImplicitFieldSchemaUnsafe> = T extends FieldSchemaUnsafe<FieldKind.Optional | FieldKind.Identifier, ImplicitAllowedTypesUnsafe> ? true : false;
 
 // @public
 export enum FieldKind {
@@ -115,7 +115,7 @@ export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types exten
     readonly allowedTypes: Types;
     get allowedTypeSet(): ReadonlySet<TreeNodeSchema>;
     readonly kind: Kind;
-    get metadata(): FieldSchemaMetadata<TCustomMetadata> | undefined;
+    get metadata(): FieldSchemaMetadata<TCustomMetadata>;
     readonly props?: FieldProps<TCustomMetadata> | undefined;
     readonly requiresValue: boolean;
     protected _typeCheck: MakeNominal;
@@ -127,8 +127,8 @@ export interface FieldSchemaMetadata<TCustomMetadata = unknown> {
     readonly description?: string | undefined;
 }
 
-// @public
-export interface FieldSchemaUnsafe<out Kind extends FieldKind, out Types extends ImplicitAllowedTypesUnsafe> extends FieldSchema<Kind, any> {
+// @public @sealed
+export interface FieldSchemaUnsafe<out Kind extends FieldKind, out Types extends ImplicitAllowedTypesUnsafe, out TCustomMetadata = unknown> extends FieldSchema<Kind, any, TCustomMetadata> {
     readonly allowedTypes: Types;
     readonly allowedTypeSet: ReadonlySet<TreeNodeSchema>;
     readonly kind: Kind;
@@ -448,7 +448,7 @@ export interface IInterval {
     union(b: IInterval): IInterval;
 }
 
-// @alpha
+// @alpha @deprecated
 export interface IIntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
     // (undocumented)
     [Symbol.iterator](): Iterator<TInterval>;
@@ -489,7 +489,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval> ex
     removeIntervalById(id: string): TInterval | undefined;
 }
 
-// @alpha
+// @alpha @deprecated
 export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
     (event: "changeInterval", listener: (interval: TInterval, previousInterval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined, slide: boolean) => void): void;
     (event: "addInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): void;
@@ -513,6 +513,9 @@ export type ImplicitAllowedTypesUnsafe = TreeNodeSchemaUnsafe | readonly LazyIte
 export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 
 // @public
+export type ImplicitFieldSchemaUnsafe = FieldSchemaUnsafe<FieldKind, ImplicitAllowedTypesUnsafe> | ImplicitAllowedTypesUnsafe;
+
+// @public
 export type InitialObjects<T extends ContainerSchema> = {
     [K in keyof T["initialObjects"]]: T["initialObjects"][K] extends SharedObjectKind<infer TChannel> ? TChannel : never;
 };
@@ -524,24 +527,26 @@ type _InlineTrick = 0;
 export type Input<T extends never> = T;
 
 // @public
-type InsertableObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = Record<string, never> extends T ? Record<string, never> : FlattenKeys<{
+type InsertableObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = RestrictiveStringRecord<ImplicitFieldSchema> extends T ? {
+    arbitraryKey: "arbitraryValue";
+} extends T ? Record<string, never> : never : FlattenKeys<{
     readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<T[Property & string]>;
 } & {
     readonly [Property in keyof T as FieldHasDefault<T[Property & string]> extends false ? Property : never]: InsertableTreeFieldFromImplicitField<T[Property & string]>;
 }>;
 
 // @public
-export type InsertableObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>> = {
-    readonly [Property in keyof T as FieldHasDefaultUnsafe<T[Property]> extends false ? Property : never]: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>;
+export type InsertableObjectFromSchemaRecordUnsafe<T extends RestrictiveStringRecord<ImplicitFieldSchemaUnsafe>> = {
+    readonly [Property in keyof T as FieldHasDefaultUnsafe<T[Property & string]> extends false ? Property : never]: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property & string]>;
 } & {
-    readonly [Property in keyof T as FieldHasDefaultUnsafe<T[Property]> extends true ? Property : never]?: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>;
+    readonly [Property in keyof T as FieldHasDefaultUnsafe<T[Property & string]> extends true ? Property : never]?: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property & string]>;
 };
 
 // @public
 export type InsertableTreeFieldFromImplicitField<TSchemaInput extends ImplicitFieldSchema, TSchema = UnionToIntersection<TSchemaInput>> = [TSchema] extends [FieldSchema<infer Kind, infer Types>] ? ApplyKindInput<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind, true> : [TSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TSchema> : never;
 
 // @public
-export type InsertableTreeFieldFromImplicitFieldUnsafe<TSchemaInput extends Unenforced<ImplicitFieldSchema>, TSchema = UnionToIntersection<TSchemaInput>> = [TSchema] extends [FieldSchemaUnsafe<infer Kind, infer Types>] ? ApplyKindInput<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind, true> : [TSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema> : never;
+export type InsertableTreeFieldFromImplicitFieldUnsafe<TSchemaInput extends ImplicitFieldSchemaUnsafe, TSchema = UnionToIntersection<TSchemaInput>> = [TSchema] extends [FieldSchemaUnsafe<infer Kind, infer Types>] ? ApplyKindInput<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind, true> : [TSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema> : never;
 
 // @public
 export type InsertableTreeNodeFromAllowedTypes<TList extends AllowedTypes> = TList extends readonly [
@@ -550,7 +555,7 @@ LazyItem<infer TSchema extends TreeNodeSchema>,
 ] ? InsertableTypedNode<TSchema> | InsertableTreeNodeFromAllowedTypes<Rest> : never;
 
 // @public
-export type InsertableTreeNodeFromAllowedTypesUnsafe<TList extends Unenforced<AllowedTypesUnsafe>> = TList extends readonly [
+export type InsertableTreeNodeFromAllowedTypesUnsafe<TList extends AllowedTypesUnsafe> = TList extends readonly [
 LazyItem<infer TSchema extends TreeNodeSchemaUnsafe>,
 ...infer Rest extends AllowedTypesUnsafe
 ] ? InsertableTypedNodeUnsafe<TSchema> | InsertableTreeNodeFromAllowedTypesUnsafe<Rest> : never;
@@ -567,7 +572,7 @@ export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema extends Imp
 export type InsertableTypedNode<TSchema extends TreeNodeSchema, T = UnionToIntersection<TSchema>> = (T extends TreeNodeSchema<string, NodeKind, TreeNode | TreeLeafValue, never, true> ? NodeBuilderData<T> : never) | (T extends TreeNodeSchema ? Unhydrated<TreeNode extends NodeFromSchema<T> ? never : NodeFromSchema<T>> : never);
 
 // @public
-type InsertableTypedNodeUnsafe<TSchema extends Unenforced<TreeNodeSchemaUnsafe>, T = UnionToIntersection<TSchema>> = (T extends TreeNodeSchemaUnsafe<string, NodeKind, TreeNode | TreeLeafValue, never, true> ? NodeBuilderDataUnsafe<T> : never) | (T extends TreeNodeSchemaUnsafe ? NodeFromSchemaUnsafe<T> : never);
+type InsertableTypedNodeUnsafe<TSchema extends TreeNodeSchemaUnsafe, T = UnionToIntersection<TSchema>> = (T extends TreeNodeSchemaUnsafe<string, NodeKind, TreeNode | TreeLeafValue, never, true> ? NodeBuilderDataUnsafe<T> : never) | (T extends TreeNodeSchemaUnsafe ? NodeFromSchemaUnsafe<T> : never);
 
 export { InteriorSequencePlace }
 
@@ -613,7 +618,7 @@ declare namespace InternalTypes {
 }
 export { InternalTypes }
 
-// @alpha
+// @alpha @deprecated
 export interface IntervalIndex<TInterval extends ISerializableInterval> {
     add(interval: TInterval): void;
     remove(interval: TInterval): void;
@@ -670,6 +675,55 @@ export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationT
     position: number;
     propertyDeltas: PropertySet;
     segment: ISegment;
+}
+
+// @alpha
+export interface ISequenceIntervalCollection extends TypedEventEmitter<ISequenceIntervalCollectionEvents> {
+    // (undocumented)
+    [Symbol.iterator](): Iterator<SequenceInterval>;
+    add({ start, end, props, }: {
+        start: SequencePlace;
+        end: SequencePlace;
+        props?: PropertySet;
+    }): SequenceInterval;
+    // (undocumented)
+    attachDeserializer(onDeserialize: DeserializeCallback): void;
+    // (undocumented)
+    readonly attached: boolean;
+    attachIndex(index: SequenceIntervalIndex): void;
+    change(id: string, { start, end, props }: {
+        start?: SequencePlace;
+        end?: SequencePlace;
+        props?: PropertySet;
+    }): SequenceInterval | undefined;
+    // (undocumented)
+    CreateBackwardIteratorWithEndPosition(endPosition: number): Iterator<SequenceInterval>;
+    // (undocumented)
+    CreateBackwardIteratorWithStartPosition(startPosition: number): Iterator<SequenceInterval>;
+    // (undocumented)
+    CreateForwardIteratorWithEndPosition(endPosition: number): Iterator<SequenceInterval>;
+    // (undocumented)
+    CreateForwardIteratorWithStartPosition(startPosition: number): Iterator<SequenceInterval>;
+    detachIndex(index: SequenceIntervalIndex): boolean;
+    // @deprecated (undocumented)
+    findOverlappingIntervals(startPosition: number, endPosition: number): SequenceInterval[];
+    gatherIterationResults(results: SequenceInterval[], iteratesForward: boolean, start?: number, end?: number): void;
+    // (undocumented)
+    getIntervalById(id: string): SequenceInterval | undefined;
+    map(fn: (interval: SequenceInterval) => void): void;
+    // @deprecated (undocumented)
+    nextInterval(pos: number): SequenceInterval | undefined;
+    // @deprecated (undocumented)
+    previousInterval(pos: number): SequenceInterval | undefined;
+    removeIntervalById(id: string): SequenceInterval | undefined;
+}
+
+// @alpha
+export interface ISequenceIntervalCollectionEvents extends IEvent {
+    (event: "changeInterval", listener: (interval: SequenceInterval, previousInterval: SequenceInterval, local: boolean, op: ISequencedDocumentMessage | undefined, slide: boolean) => void): void;
+    (event: "addInterval" | "deleteInterval", listener: (interval: SequenceInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): void;
+    (event: "propertyChanged", listener: (interval: SequenceInterval, propertyDeltas: PropertySet, local: boolean, op: ISequencedDocumentMessage | undefined) => void): void;
+    (event: "changed", listener: (interval: SequenceInterval, propertyDeltas: PropertySet, previousInterval: SequenceInterval | undefined, local: boolean, slide: boolean) => void): void;
 }
 
 // @alpha (undocumented)
@@ -729,7 +783,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export interface ISharedIntervalCollection<TInterval extends ISerializableInterval> {
     // (undocumented)
     getIntervalCollection(label: string): IIntervalCollection<TInterval>;
@@ -761,7 +815,7 @@ export interface ISharedObjectEvents extends IErrorEvent {
 }
 
 // @alpha (undocumented)
-export interface ISharedSegmentSequence<T extends ISegment> extends ISharedObject<ISharedSegmentSequenceEvents>, ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver {
+export interface ISharedSegmentSequence<T extends ISegment> extends ISharedObject<ISharedSegmentSequenceEvents>, MergeTreeRevertibleDriver {
     annotateAdjustRange(start: number, end: number, adjust: MapLike<AdjustParams>): void;
     annotateRange(start: number, end: number, props: PropertySet): void;
     createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
@@ -771,7 +825,7 @@ export interface ISharedSegmentSequence<T extends ISegment> extends ISharedObjec
     };
     // (undocumented)
     getCurrentSeq(): number;
-    getIntervalCollection(label: string): IIntervalCollection<SequenceInterval>;
+    getIntervalCollection(label: string): ISequenceIntervalCollection;
     // (undocumented)
     getIntervalCollectionLabels(): IterableIterator<string>;
     getLength(): number;
@@ -939,13 +993,13 @@ export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
 }
 
 // @public
-type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = {
+type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = RestrictiveStringRecord<ImplicitFieldSchema> extends T ? {} : {
     -readonly [Property in keyof T]: Property extends string ? TreeFieldFromImplicitField<T[Property]> : unknown;
 };
 
 // @public
-type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>> = {
-    -readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
+type ObjectFromSchemaRecordUnsafe<T extends RestrictiveStringRecord<ImplicitFieldSchemaUnsafe>> = {
+    -readonly [Property in keyof T]: Property extends string ? TreeFieldFromImplicitFieldUnsafe<T[Property]> : unknown;
 };
 
 // @public
@@ -1064,15 +1118,15 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     readonly number: LeafSchema_2<"number", number>;
     static readonly number: LeafSchema_2<"number", number>;
     object<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchema>>(name: Name, fields: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T>;
-    objectRecursive<const Name extends TName, const T extends RestrictiveStringRecord<Unenforced<ImplicitFieldSchema>>>(name: Name, t: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecordUnsafe<T>, false, T>;
+    objectRecursive<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchemaUnsafe>>(name: Name, t: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecordUnsafe<T>, false, T>;
     readonly optional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchema<FieldKind.Optional, T, TCustomMetadata>;
     static readonly optional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchema<FieldKind.Optional, T, TCustomMetadata>;
-    readonly optionalRecursive: <const T extends ImplicitAllowedTypesUnsafe>(t: T, props?: Omit<FieldProps<unknown>, "defaultProvider"> | undefined) => FieldSchemaUnsafe<FieldKind.Optional, T>;
-    static readonly optionalRecursive: <const T extends ImplicitAllowedTypesUnsafe>(t: T, props?: Omit<FieldProps<unknown>, "defaultProvider"> | undefined) => FieldSchemaUnsafe<FieldKind.Optional, T>;
+    readonly optionalRecursive: <const T extends ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaUnsafe<FieldKind.Optional, T, TCustomMetadata>;
+    static readonly optionalRecursive: <const T extends ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaUnsafe<FieldKind.Optional, T, TCustomMetadata>;
     readonly required: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchema<FieldKind.Required, T, TCustomMetadata>;
     static readonly required: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchema<FieldKind.Required, T, TCustomMetadata>;
-    readonly requiredRecursive: <const T extends ImplicitAllowedTypesUnsafe>(t: T, props?: Omit<FieldProps<unknown>, "defaultProvider"> | undefined) => FieldSchemaUnsafe<FieldKind.Required, T>;
-    static readonly requiredRecursive: <const T extends ImplicitAllowedTypesUnsafe>(t: T, props?: Omit<FieldProps<unknown>, "defaultProvider"> | undefined) => FieldSchemaUnsafe<FieldKind.Required, T>;
+    readonly requiredRecursive: <const T extends ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaUnsafe<FieldKind.Required, T, TCustomMetadata>;
+    static readonly requiredRecursive: <const T extends ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaUnsafe<FieldKind.Required, T, TCustomMetadata>;
     readonly scope: TScope;
     readonly string: LeafSchema_2<"string", string>;
     static readonly string: LeafSchema_2<"string", string>;
@@ -1088,8 +1142,8 @@ export const schemaStatics: {
     readonly leaves: readonly [LeafSchema_2<"string", string>, LeafSchema_2<"number", number>, LeafSchema_2<"boolean", boolean>, LeafSchema_2<"null", null>, LeafSchema_2<"handle", IFluidHandle<unknown>>];
     readonly optional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">) => FieldSchema<FieldKind.Optional, T, TCustomMetadata>;
     readonly required: <const T_1 extends ImplicitAllowedTypes, const TCustomMetadata_1 = unknown>(t: T_1, props?: Omit<FieldProps<TCustomMetadata_1>, "defaultProvider"> | undefined) => FieldSchema<FieldKind.Required, T_1, TCustomMetadata_1>;
-    readonly optionalRecursive: <const T_2 extends ImplicitAllowedTypesUnsafe>(t: T_2, props?: Omit<FieldProps, "defaultProvider">) => FieldSchemaUnsafe<FieldKind.Optional, T_2>;
-    readonly requiredRecursive: <const T_3 extends ImplicitAllowedTypesUnsafe>(t: T_3, props?: Omit<FieldProps, "defaultProvider">) => FieldSchemaUnsafe<FieldKind.Required, T_3>;
+    readonly optionalRecursive: <const T_2 extends ImplicitAllowedTypesUnsafe, const TCustomMetadata_2 = unknown>(t: T_2, props?: Omit<FieldProps<TCustomMetadata_2>, "defaultProvider"> | undefined) => FieldSchemaUnsafe<FieldKind.Optional, T_2, TCustomMetadata_2>;
+    readonly requiredRecursive: <const T_3 extends ImplicitAllowedTypesUnsafe, const TCustomMetadata_3 = unknown>(t: T_3, props?: Omit<FieldProps<TCustomMetadata_3>, "defaultProvider"> | undefined) => FieldSchemaUnsafe<FieldKind.Required, T_3, TCustomMetadata_3>;
 };
 
 // @public
@@ -1143,6 +1197,12 @@ export interface SequenceInterval extends ISerializableInterval {
 }
 
 // @alpha
+export interface SequenceIntervalIndex {
+    add(interval: SequenceInterval): void;
+    remove(interval: SequenceInterval): void;
+}
+
+// @alpha
 export interface SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
     // (undocumented)
     readonly opArgs: IMergeTreeDeltaOpArgs | undefined;
@@ -1180,6 +1240,12 @@ export type SharedStringSegment = TextSegment | Marker;
 export const SharedTree: SharedObjectKind<ITree>;
 
 export { Side }
+
+// @public @sealed
+export interface SimpleNodeSchemaBase<out TNodeKind extends NodeKind, out TCustomMetadata = unknown> {
+    readonly kind: TNodeKind;
+    readonly metadata: NodeSchemaMetadata<TCustomMetadata>;
+}
 
 // @public
 export interface Tagged<V, T extends string = string> {
@@ -1248,7 +1314,7 @@ export interface TreeChangeEvents {
 export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> = TSchema extends FieldSchema<infer Kind, infer Types> ? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind> : TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypes<TSchema> : TreeNode | TreeLeafValue | undefined;
 
 // @public
-type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types> ? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind> : TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypesUnsafe<TSchema> : unknown;
+type TreeFieldFromImplicitFieldUnsafe<TSchema extends ImplicitFieldSchemaUnsafe> = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types> ? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind> : TSchema extends ImplicitAllowedTypesUnsafe ? TreeNodeFromImplicitAllowedTypesUnsafe<TSchema> : unknown;
 
 // @public
 export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
@@ -1307,22 +1373,19 @@ export type TreeNodeSchemaClass<Name extends string = string, Kind extends NodeK
 });
 
 // @public
-export interface TreeNodeSchemaClassUnsafe<out Name extends string, out Kind extends NodeKind, out TNode extends Unenforced<TreeNode>, in TInsertable, out ImplicitlyConstructable extends boolean, out Info> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
+export interface TreeNodeSchemaClassUnsafe<out Name extends string, out Kind extends NodeKind, out TNode extends Unenforced<TreeNode>, in TInsertable, out ImplicitlyConstructable extends boolean, out Info, out TCustomMetadata = unknown> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info, never, TCustomMetadata> {
     // @sealed
     new (data: TInsertable | InternalTreeNode): Unhydrated<TNode>;
 }
 
 // @public @sealed
-export interface TreeNodeSchemaCore<out Name extends string, out Kind extends NodeKind, out ImplicitlyConstructable extends boolean, out Info = unknown, out TInsertable = never, out TCustomMetadata = unknown> {
+export interface TreeNodeSchemaCore<out Name extends string, out Kind extends NodeKind, out ImplicitlyConstructable extends boolean, out Info = unknown, out TInsertable = never, out TCustomMetadata = unknown> extends SimpleNodeSchemaBase<Kind, TCustomMetadata> {
     readonly childTypes: ReadonlySet<TreeNodeSchema>;
     // @sealed
     createFromInsertable(data: TInsertable): Unhydrated<TreeNode | TreeLeafValue>;
     readonly identifier: Name;
     readonly implicitlyConstructable: ImplicitlyConstructable;
     readonly info: Info;
-    // (undocumented)
-    readonly kind: Kind;
-    readonly metadata?: NodeSchemaMetadata<TCustomMetadata> | undefined;
 }
 
 // @public @sealed
@@ -1345,7 +1408,7 @@ type TreeNodeSchemaUnsafe<Name extends string = string, Kind extends NodeKind = 
 export type TreeObjectNode<T extends RestrictiveStringRecord<ImplicitFieldSchema>, TypeName extends string = string> = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName, NodeKind.Object, T>;
 
 // @public
-export type TreeObjectNodeUnsafe<T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>, TypeName extends string = string> = TreeNode & ObjectFromSchemaRecordUnsafe<T> & WithType<TypeName, NodeKind.Object>;
+export type TreeObjectNodeUnsafe<T extends RestrictiveStringRecord<ImplicitFieldSchemaUnsafe>, TypeName extends string = string> = TreeNode & ObjectFromSchemaRecordUnsafe<T> & WithType<TypeName, NodeKind.Object, T>;
 
 // @public
 export enum TreeStatus {
