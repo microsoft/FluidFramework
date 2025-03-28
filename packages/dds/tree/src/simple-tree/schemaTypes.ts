@@ -73,6 +73,49 @@ export function isTreeNodeSchemaClass<
  */
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
+export type AllowedType = LazyItem<TreeNodeSchema> | AnnotatedAllowedType;
+
+/**
+ * TODO
+ */
+export interface AnnotatedAllowedTypes {
+	metadata: AllowedTypesMetadata;
+	type: readonly AnnotatedAllowedType[];
+}
+
+/**
+ * TODO does it make sense to define this while empty? prob fine
+ */
+interface AllowedTypesMetadata {}
+
+/**
+ * TODO
+ */
+
+export interface AnnotatedAllowedType {
+	metadata: AllowedTypeMetadata;
+	type: AllowedType;
+}
+
+/**
+ * TODO
+ */
+export function isAnnotatedAllowedType(
+	allowedType: AllowedType,
+): allowedType is AnnotatedAllowedType {
+	return "metadata" in allowedType && "type" in allowedType;
+}
+
+/**
+ * TODO
+ */
+export interface AllowedTypeMetadata {
+	// see section on using AllowedTypeMetadata for schema upgrades below
+	enabledUponSchemaUpgrade?: SchemaUpgradeToken;
+}
+
+type SchemaUpgradeToken = string;
+
 /**
  * Kind of a field on a node.
  * @remarks
@@ -511,6 +554,14 @@ function evaluateLazySchema(value: LazyItem<TreeNodeSchema>): TreeNodeSchema {
  * @public
  */
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
+
+/**
+ * TODO
+ */
+export type ImplicitAnnotatedAllowedTypes =
+	| AnnotatedAllowedTypes
+	| AllowedTypes
+	| readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[];
 
 /**
  * Schema for a field of a tree node.

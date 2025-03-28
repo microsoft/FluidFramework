@@ -14,11 +14,14 @@ import {
 	SchemaFactory,
 	type SchemaFactoryObjectOptions,
 } from "./schemaFactory.js";
-import type {
-	ImplicitAllowedTypes,
-	ImplicitFieldSchema,
-	InsertableTreeNodeFromImplicitAllowedTypes,
-	NodeSchemaOptions,
+import {
+	isAnnotatedAllowedType,
+	type AllowedType,
+	type AnnotatedAllowedType,
+	type ImplicitAllowedTypes,
+	type ImplicitFieldSchema,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type NodeSchemaOptions,
 } from "../schemaTypes.js";
 import { type TreeObjectNode, objectSchema } from "../objectNode.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
@@ -49,6 +52,37 @@ export class SchemaFactoryAlpha<
 		return (
 			this.scope === undefined ? `${name}` : `${this.scope}.${name}`
 		) as ScopedSchemaName<TScope, Name>;
+	}
+
+	/**
+	 * Declares a type enablable in a set of {@link AllowedTypes}.
+	 */
+	public enablable<const T extends AllowedType>(t: T): AnnotatedAllowedType {
+		const enablableType: AnnotatedAllowedType = isAnnotatedAllowedType(t)
+			? {
+					type: t.type,
+					metadata: {
+						...t.metadata,
+						enabledUponSchemaUpgrade: "TODO generate upgrade token",
+					},
+				}
+			: {
+					type: t,
+					metadata: {
+						enabledUponSchemaUpgrade: "TODO generate upgrade token",
+					},
+				};
+
+		// TODO would we prefer code conciseness over fewer calls to the type guard?
+		// const enablableType: AnnotatedAllowedType = {
+		// 	type: isAnnotatedAllowedType(t) ? t.type : t,
+		// 	metadata: {
+		// 		...(isAnnotatedAllowedType(t) ? t.metadata : {}),
+		// 		enabledUponSchemaUpgrade: "TODO",
+		// 	},
+		// };
+
+		return enablableType;
 	}
 
 	/**
