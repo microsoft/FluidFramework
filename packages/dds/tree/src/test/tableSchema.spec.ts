@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import { SchemaFactory, TreeViewConfiguration } from "../simple-tree/index.js";
+import { SchemaFactoryAlpha, TreeViewConfiguration } from "../simple-tree/index.js";
 import { TreeFactory } from "../treeFactory.js";
 import { createTableSchema } from "../tableSchema.js";
 
@@ -16,7 +16,7 @@ const treeFactory = new TreeFactory({});
 
 describe.only("table schema", () => {
 	it("Smoke test", () => {
-		const schemaFactory = new SchemaFactory("test");
+		const schemaFactory = new SchemaFactoryAlpha("test");
 		class Cell extends schemaFactory.object("table-cell", {
 			value: schemaFactory.string,
 		}) {}
@@ -45,7 +45,6 @@ describe.only("table schema", () => {
 			new TreeViewConfiguration({
 				schema: Table,
 				enableSchemaValidation: true,
-				preventAmbiguity: true,
 			}),
 		);
 
@@ -59,10 +58,10 @@ describe.only("table schema", () => {
 		// TODO: export verbose and use that output for comparison
 
 		// TODO: why is `view.root` an empty object?
-		// assert.deepEqual(view.root, {
-		// 	rows: [],
-		// 	columns: [],
-		// });
+		assert.deepEqual(view.root, {
+			rows: [],
+			columns: [],
+		});
 
 		view.root.insertRows({
 			rows: [

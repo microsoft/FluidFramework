@@ -4,6 +4,7 @@
  */
 
 import { oob } from "@fluidframework/core-utils/internal";
+
 import { Tree } from "./shared-tree/index.js";
 import {
 	// TODO: create and export SystemTypes to replace "InternalExports"
@@ -16,7 +17,7 @@ import {
 	type InsertableObjectFromSchemaRecord,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeKind,
-	type SchemaFactory,
+	type SchemaFactoryAlpha,
 	type ScopedSchemaName,
 	TreeArrayNode,
 	type TreeNode,
@@ -30,7 +31,6 @@ import {
 // - Move this to package root
 // - Explore options for hiding various system types below.
 //   Most likely need to be exported, but we can probably hide them in a namespace.
-// - Take SchemaFactoryAlpha and use scoping helper
 
 /**
  * A key to uniquely identify a cell in a {@link ITable}.
@@ -153,7 +153,7 @@ export interface CreateTableSchemaParameters<
 	TRowProps extends readonly TreeNodeSchema[],
 	Scope extends string | undefined,
 > {
-	readonly schemaFactory: SchemaFactory<Scope>;
+	readonly schemaFactory: SchemaFactoryAlpha<Scope>;
 	readonly cellSchema: TCell;
 
 	// TODO: make props optional
@@ -171,9 +171,13 @@ export function createTableSchema<
 	const TCell extends ImplicitAllowedTypes,
 	const TColumnProps extends readonly TreeNodeSchema[],
 	const TRowProps extends readonly TreeNodeSchema[],
-	const TScope extends string | undefined,
->(props: CreateTableSchemaParameters<TCell, TColumnProps, TRowProps, TScope>) {
-	const { schemaFactory, cellSchema, columnProps, rowProps } = props;
+	const TInputScope extends string | undefined,
+>(props: CreateTableSchemaParameters<TCell, TColumnProps, TRowProps, TInputScope>) {
+	const { schemaFactory: inputSchemaFactory, cellSchema, columnProps, rowProps } = props;
+
+	const tableScope = "table";
+	const schemaFactory = inputSchemaFactory.scopedFactory(tableScope);
+	type Scope = ScopedSchemaName<TInputScope, typeof tableScope>;
 
 	type CellValueType = TreeNodeFromImplicitAllowedTypes<TCell>;
 	type CellInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TCell>;
@@ -248,7 +252,7 @@ export function createTableSchema<
 		}
 	}
 
-	type ColumnValueType = TreeNode & IColumn & WithType<ScopedSchemaName<TScope, "Column">>;
+	type ColumnValueType = TreeNode & IColumn & WithType<ScopedSchemaName<Scope, "Column">>;
 	type ColumnInsertableType = InsertableObjectFromSchemaRecord<typeof columnFields>;
 
 	// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
@@ -257,7 +261,7 @@ export function createTableSchema<
 	// This is avoided by doing this type conversion.
 	// The conversion is done via assignment instead of `as` to get stronger type safety.
 	const ColumnSchemaType: TreeNodeSchemaClass<
-		/* Name */ ScopedSchemaName<TScope, "Column">,
+		/* Name */ ScopedSchemaName<Scope, "Column">,
 		/* Kind */ NodeKind.Object,
 		/* TNode */ ColumnValueType,
 		/* TInsertable */ object & ColumnInsertableType,
@@ -365,7 +369,7 @@ export function createTableSchema<
 
 	type RowValueType = TreeNode &
 		IRow<CellValueType, CellInsertableType, ColumnValueType> &
-		WithType<ScopedSchemaName<TScope, "Row">>;
+		WithType<ScopedSchemaName<Scope, "Row">>;
 	// TODO: hide cells?
 	type RowInsertableType = InsertableObjectFromSchemaRecord<typeof rowFields>;
 
@@ -375,7 +379,7 @@ export function createTableSchema<
 	// This is avoided by doing this type conversion.
 	// The conversion is done via assignment instead of `as` to get stronger type safety.
 	const RowSchemaType: TreeNodeSchemaClass<
-		/* Name */ ScopedSchemaName<TScope, "Row">,
+		/* Name */ ScopedSchemaName<Scope, "Row">,
 		/* Kind */ NodeKind.Object,
 		/* TNode */ RowValueType,
 		/* TInsertable */ object & RowInsertableType,
@@ -410,6 +414,13 @@ export function createTableSchema<
 				RowInsertableType
 			>
 	{
+		public static create(): TableValueType {
+			return new Table({
+				rows: [],
+				columns: [],
+			});
+		}
+
 		/**
 		 * Get a row by the id
 		 * @param id - The id of the row
@@ -538,7 +549,7 @@ export function createTableSchema<
 			RowValueType,
 			RowInsertableType
 		> &
-		WithType<ScopedSchemaName<TScope, "Table">>;
+		WithType<ScopedSchemaName<Scope, "Table">>;
 	// TODO: hide rows and columns?
 	type TableInsertableType = InsertableObjectFromSchemaRecord<typeof tableFields>;
 
@@ -548,7 +559,7 @@ export function createTableSchema<
 	// This is avoided by doing this type conversion.
 	// The conversion is done via assignment instead of `as` to get stronger type safety.
 	const TableSchemaType: TreeNodeSchemaClass<
-		/* Name */ ScopedSchemaName<TScope, "Table">,
+		/* Name */ ScopedSchemaName<Scope, "Table">,
 		/* Kind */ NodeKind.Object,
 		/* TNode */ TableValueType,
 		/* TInsertable */ object & TableInsertableType,
