@@ -395,8 +395,8 @@ export function createTableSchema<
 	 * The implicit typing is intentional.
 	 */
 	const tableFields = {
-		rows: schemaFactory.array(RowSchemaType),
-		columns: schemaFactory.array(ColumnSchemaType),
+		rows: schemaFactory.array("Table.rows", RowSchemaType),
+		columns: schemaFactory.array("Table.columns", ColumnSchemaType),
 	} as const satisfies Record<string, ImplicitFieldSchema>;
 
 	/**
