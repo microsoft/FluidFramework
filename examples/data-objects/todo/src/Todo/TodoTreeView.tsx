@@ -4,47 +4,60 @@
  */
 
 import { CollaborativeInput } from "@fluid-example/example-utils";
-import { SharedString } from "@fluidframework/sequence/legacy";
+import { useTree } from "@fluid-experimental/tree-react-api";
+import { SharedString, type ISharedString } from "@fluidframework/sequence/legacy";
+import { Tree } from "@fluidframework/tree/legacy";
 import React, { useEffect, useRef, useState } from "react";
 
-import { TodoItem, TodoItemView } from "../TodoItem/index.js";
-
-import { Todo } from "./Todo.js";
+import { TodoItemView } from "../TodoItem/index.js";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.css";
+import type { TodoTreeItem } from "./schema.js";
 
-interface TodoViewProps {
-	readonly todoModel: Todo;
+import type { TodoTreeDataObject } from "./index.js";
+
+export interface TodoViewProps {
+	readonly todoModel: TodoTreeDataObject;
 	readonly getDirectLink: (itemId: string) => string;
 }
 
-export const TodoView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
+export const TodoTreeView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
 	const { todoModel, getDirectLink } = props;
-
-	const [todoItems, setTodoItems] = useState<[string, TodoItem][]>([]);
+	const [todoItems, setTodoItems] = useState<[string, TodoTreeItem][]>([]);
 	const [titleString, setTitleString] = useState<SharedString | undefined>();
 
 	const newItemTextInputRef = useRef<HTMLInputElement>(null);
 
-	useEffect(() => {
-		todoModel.getTodoTitleString().then(setTitleString).catch(console.error);
+	useTree(todoModel.treeView.root);
 
+	useEffect(() => {
+		Promise.resolve(todoModel.treeView.root.title.get())
+			.then((title) => {
+				setTitleString(title as ISharedString);
+			})
+			.catch((error) => {
+				console.log("todomodel");
+				console.log(todoModel);
+				console.error(error);
+			});
 		const refreshTodoItemListFromModel = () => {
-			todoModel.getTodoItems().then(setTodoItems).catch(console.error);
+			try {
+				const items = Array.from(todoModel.treeView.root.items.entries());
+				setTodoItems(items);
+			} catch (error) {
+				console.error(error);
+			}
 		};
-		todoModel.on("todoItemsChanged", refreshTodoItemListFromModel);
+		Tree.on(todoModel.treeView.root.items, "treeChanged", refreshTodoItemListFromModel);
 		refreshTodoItemListFromModel();
 
-		return () => {
-			todoModel.off("todoItemsChanged", refreshTodoItemListFromModel);
-		};
+		return () => {};
 	}, [todoModel]);
 
 	if (titleString === undefined) {
 		return <div>Loading...</div>;
 	}
-
 	const handleCreateClick = async (ev: React.FormEvent<HTMLFormElement>): Promise<void> => {
 		ev.preventDefault();
 		if (newItemTextInputRef.current === null) {
@@ -54,6 +67,7 @@ export const TodoView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
 			startingText: newItemTextInputRef.current.value,
 		});
 		newItemTextInputRef.current.value = "";
+		Tree.on(todoModel.treeView.root.items, "treeChanged", () => {});
 	};
 
 	// Using the list of TodoItem objects, make a list of TodoItemViews.
@@ -68,7 +82,13 @@ export const TodoView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
 			>
 				↗
 			</button>
-			<button className="action-button" onClick={() => todoModel.deleteTodoItem(id)}>
+			<button
+				className="action-button"
+				onClick={() => {
+					todoModel.treeView.root.items.delete(id);
+					Tree.on(todoModel.treeView.root.items, "treeChanged", () => {});
+				}}
+			>
 				X
 			</button>
 		</div>

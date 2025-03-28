@@ -40,12 +40,15 @@
 	},
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",
+		"@fluid-experimental/tree-react-api": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
+		"@fluidframework/test-utils": "workspace:~",
+		"@fluidframework/tree": "workspace:~",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1",
 		"uuid": "^9.0.0"
