@@ -26,14 +26,6 @@
 		"./internal/container-definitions/internal": {
 			"import": "./lib/container-definitions/index.js",
 			"require": "./dist/container-definitions/index.js"
-		},
-		"./internal/exposedInternalTypes": {
-			"import": "./lib/exposedInternalTypes.js",
-			"require": "./dist/exposedInternalTypes.js"
-		},
-		"./internal/exposedUtilityTypes": {
-			"import": "./lib/exposedUtilityTypes.js",
-			"require": "./dist/exposedUtilityTypes.js"
 		}
 	},
 	"files": [
