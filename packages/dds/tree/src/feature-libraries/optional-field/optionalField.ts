@@ -144,6 +144,12 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		const composed: Mutable<OptionalChangeset> = {};
 		let composedReplace: Mutable<Replace> | undefined;
 		if (isReplaceEffectful(change1.valueReplace)) {
+			const baseAttachId = change1.valueReplace?.src;
+			if (baseAttachId !== undefined) {
+				const newDetachId = getEffectfulDst(change2.valueReplace);
+				nodeManager.composeBaseAttach(baseAttachId, newDetachId, 1, change2.childChange);
+			}
+
 			if (isReplaceEffectful(change2.valueReplace)) {
 				composedReplace = {
 					isEmpty: change1.valueReplace.isEmpty,
@@ -176,12 +182,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		if (composedReplace !== undefined) {
 			composed.valueReplace = composedReplace;
-		}
-
-		const baseAttachId = change1.valueReplace?.src;
-		if (baseAttachId !== undefined && baseAttachId !== "self") {
-			const newDetachId = getEffectfulDst(change2.valueReplace);
-			nodeManager.composeBaseAttach(baseAttachId, newDetachId, 1, change2.childChange);
 		}
 
 		let newChild: NodeId | undefined;
@@ -234,14 +234,18 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					replace.src = change.valueReplace.dst;
 
 					// XXX: We should use a new attach ID
-					nodeManager.invertDetach(change.valueReplace.dst, 1, change.childChange, undefined);
+					nodeManager.invertDetach(
+						change.valueReplace.dst,
+						1,
+						change.childChange,
+						change.valueReplace.dst,
+					);
 					childChange = undefined;
 				}
 
 				if (change.valueReplace.src !== undefined) {
 					// XXX: If we use a new detach ID, need to update the `invertRenames` flag.
-					childChange = nodeManager.invertAttach(change.valueReplace.src, 1, true).value
-						?.nodeChange;
+					childChange = nodeManager.invertAttach(change.valueReplace.src, 1, true).value;
 				}
 
 				inverted.valueReplace = replace;

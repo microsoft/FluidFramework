@@ -26,18 +26,28 @@ export enum CrossFieldTarget {
 }
 
 export interface InvertNodeManager {
+	/**
+	 * Transfers the given node changes from the input context of the field changeset being inverted to the input context of the detached space (from which it may be further moved).
+	 *
+	 * This must be called for each detach in the field kind when rolling or undoing an detach.
+	 * This implies that all detaches in the field must be inverted.
+	 * @param detachId - The ID of the detach to invert.
+	 * @param count - The number of nodes being detached.
+	 * @param nodeChanges - The node changes to transfer.
+	 * @param newAttachId - The ID that the nodes will be attached with in the inverted changeset of this field.
+	 */
 	invertDetach(
 		detachId: ChangeAtomId,
 		count: number,
 		nodeChanges: NodeId | undefined,
-		newAttachId: ChangeAtomId | undefined,
+		newAttachId: ChangeAtomId,
 	): void;
 
 	invertAttach(
 		attachId: ChangeAtomId,
 		count: number,
 		invertRenames: boolean,
-	): RangeQueryResult<ChangeAtomId, DetachedNodeEntry>;
+	): RangeQueryResult<ChangeAtomId, NodeId>;
 }
 
 export interface ComposeNodeManager {

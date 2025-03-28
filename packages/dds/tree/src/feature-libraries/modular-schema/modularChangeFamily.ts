@@ -2245,7 +2245,7 @@ interface InvertTable extends CrossFieldTable<FieldChange> {
 	change: ModularChangeset;
 
 	// Entries are keyed on attach ID
-	entries: CrossFieldMap<DetachedNodeEntry>;
+	entries: CrossFieldMap<NodeId>;
 	originalFieldToContext: Map<FieldChange, InvertContext>;
 	invertedRoots: RootNodeTable;
 	invertedNodeToParent: ChangeAtomIdBTree<FieldId>;
@@ -2395,9 +2395,9 @@ class InvertNodeManagerI implements InvertNodeManager {
 		detachId: ChangeAtomId,
 		count: number,
 		nodeChange: NodeId | undefined,
-		newAttachId: ChangeAtomId | undefined,
+		newAttachId: ChangeAtomId,
 	): void {
-		if (newAttachId !== undefined && !areEqualChangeAtomIds(detachId, newAttachId)) {
+		if (!areEqualChangeAtomIds(detachId, newAttachId)) {
 			// XXX: Consider renames
 			const attachEntry = this.table.change.crossFieldKeys.getFirst(
 				{
@@ -2420,9 +2420,7 @@ class InvertNodeManagerI implements InvertNodeManager {
 			// XXX: If there is no inverted attach for this entry we should put the node changes in a root entry
 			// XXX: Need to account for renames
 			// XXX: Add inval
-			setInCrossFieldMap(this.table.entries, detachId, count, {
-				nodeChange,
-			});
+			setInCrossFieldMap(this.table.entries, detachId, count, nodeChange);
 		}
 	}
 
@@ -2430,7 +2428,7 @@ class InvertNodeManagerI implements InvertNodeManager {
 		attachId: ChangeAtomId,
 		count: number,
 		invertRenames: boolean,
-	): RangeQueryResult<ChangeAtomId, DetachedNodeEntry> {
+	): RangeQueryResult<ChangeAtomId, NodeId> {
 		if (!invertRenames) {
 			deleteNodeRename(this.table.invertedRoots, attachId, count);
 		}
@@ -2450,7 +2448,7 @@ class InvertNodeManagerI implements InvertNodeManager {
 		);
 
 		if (nodeId !== undefined) {
-			return { start: attachId, value: { nodeChange: nodeId }, length: 1 };
+			return { start: attachId, value: nodeId, length: 1 };
 		}
 
 		return this.table.entries.getFirst(attachId, count);
