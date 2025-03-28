@@ -155,6 +155,7 @@ import {
 	enabledCompressionConfig,
 	getConfigsForCompatMode,
 	getDisallowedVersions,
+	isValidCompatMode,
 } from "./compatUtils.js";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry.js";
 import { ContainerFluidHandleContext } from "./containerHandleContext.js";
@@ -338,7 +339,7 @@ export interface IContainerRuntimeOptions {
 	/**
 	 * TODO: TSDoc
 	 */
-	readonly compatibilityMode?: "1" | "2";
+	readonly compatibilityMode?: string;
 
 	readonly summaryOptions?: ISummaryRuntimeOptions;
 	readonly gcOptions?: IGCRuntimeOptions;
@@ -767,8 +768,13 @@ export class ContainerRuntime
 		// with FF runtime 2.x or later.
 		// Our policy is to support N/N-1 compatibility by default, where N is the most recent public major release of the runtime.
 		// Therefore, if the customer does not provide a compatibility mode, we will default to use N-1.
-		const defaultCompatibilityMode = "1"; // TODO: Automatically set to be N-1.
+		const defaultCompatibilityMode = "1.0.0"; // TODO: Automatically set to be N-1.
 		const compatibilityMode = runtimeOptions.compatibilityMode ?? defaultCompatibilityMode;
+		if (!isValidCompatMode(compatibilityMode)) {
+			throw new UsageError(
+				`Invalid compatibility mode: ${compatibilityMode}. It must be an existing FF version (i.e. 2.22.1).`,
+			);
+		}
 		const defaultConfigs = getConfigsForCompatMode(compatibilityMode);
 
 		// Here we assign each container runtime option to the value provided in `runtimeOptions`.

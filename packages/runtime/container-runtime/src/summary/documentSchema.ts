@@ -220,12 +220,13 @@ class CheckVersions implements IProperty<string[] | undefined> {
 			return true;
 		}
 		if (Array.isArray(t)) {
-			for (const range of t) {
-				if (typeof range !== "string") {
+			for (const version of t) {
+				if (typeof version !== "string") {
 					return false;
 				}
-				if (semver.satisfies(pkgVersion, range)) {
-					// If the package version satisfies the range, then it *is* a disallowed versions, and we consider it invalid.
+				if (semver.lt(pkgVersion, version)) {
+					// If the package version is less than the disallowedVersion, then we consider this to be a invalid version
+					// and is disallowed from the session.
 					return false;
 				}
 			}
