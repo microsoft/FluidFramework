@@ -682,6 +682,6 @@ export function createSequenceInterval(
  * @deprecated The methods within have substitutions
  * @internal
  */
-export const sequenceIntervalHelpers: IIntervalHelpers = {
+export const sequenceIntervalHelpers: IIntervalHelpers<SequenceInterval> = {
 	create: createSequenceInterval,
 };

@@ -8,9 +8,10 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 
 import { type ISequenceIntervalCollection } from "../intervalCollection.js";
 import {
+	IOverlappingIntervalsIndex,
 	createOverlappingIntervalsIndex,
-	type ISequenceOverlappingIntervalsIndex,
 } from "../intervalIndex/index.js";
+import { SequenceInterval } from "../intervals/index.js";
 import { SharedString, SharedStringFactory } from "../sequenceFactory.js";
 
 /**
@@ -33,7 +34,7 @@ function runFindOverlappingIntervalsBenchmark({
 }) {
 	let sharedString: SharedString;
 	let intervalCollection: ISequenceIntervalCollection;
-	let overlappingIntervalsIndex: ISequenceOverlappingIntervalsIndex;
+	let overlappingIntervalsIndex: IOverlappingIntervalsIndex<SequenceInterval>;
 
 	const setupSharedString = () => {
 		sharedString = new SharedStringFactory().create(new MockFluidDataStoreRuntime(), "id");

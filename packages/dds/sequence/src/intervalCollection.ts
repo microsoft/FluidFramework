@@ -49,7 +49,7 @@ import {
 	type IEndpointIndex,
 	type IIdIntervalIndex,
 	type IntervalIndex,
-	type ISequenceOverlappingIntervalsIndex,
+	type IOverlappingIntervalsIndex,
 	type SequenceIntervalIndex,
 } from "./intervalIndex/index.js";
 import {
@@ -167,7 +167,7 @@ export function computeStickinessFromSide(
 
 export class LocalIntervalCollection {
 	private static readonly legacyIdPrefix = "legacy";
-	public readonly overlappingIntervalsIndex: ISequenceOverlappingIntervalsIndex;
+	public readonly overlappingIntervalsIndex: IOverlappingIntervalsIndex<SequenceInterval>;
 	public readonly idIntervalIndex: IIdIntervalIndex;
 	public readonly endIntervalIndex: IEndpointIndex;
 	private readonly indexes: Set<SequenceIntervalIndex>;
@@ -175,7 +175,7 @@ export class LocalIntervalCollection {
 	constructor(
 		private readonly client: Client,
 		private readonly label: string,
-		private readonly helpers: IIntervalHelpers,
+		private readonly helpers: IIntervalHelpers<SequenceInterval>,
 		private readonly options: Partial<SequenceOptions>,
 		/** Callback invoked each time one of the endpoints of an interval slides. */
 		private readonly onPositionChange?: (
@@ -237,11 +237,11 @@ export class LocalIntervalCollection {
 		}
 	}
 
-	public appendIndex(index: SequenceIntervalIndex) {
+	public appendIndex(index: IntervalIndex<SequenceInterval>) {
 		this.indexes.add(index);
 	}
 
-	public removeIndex(index: SequenceIntervalIndex): boolean {
+	public removeIndex(index: IntervalIndex<SequenceInterval>): boolean {
 		return this.indexes.delete(index);
 	}
 
@@ -408,7 +408,9 @@ export class LocalIntervalCollection {
 	}
 }
 
-class SequenceIntervalCollectionFactory implements IIntervalCollectionFactory {
+class SequenceIntervalCollectionFactory
+	implements IIntervalCollectionFactory<SequenceInterval>
+{
 	public load(
 		emitter: IValueOpEmitter,
 		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
@@ -424,29 +426,38 @@ class SequenceIntervalCollectionFactory implements IIntervalCollectionFactory {
 	}
 }
 
-export class SequenceIntervalCollectionValueType implements IIntervalCollectionType {
+export class SequenceIntervalCollectionValueType
+	implements IIntervalCollectionType<SequenceInterval>
+{
 	public static Name = "sharedStringIntervalCollection";
 
 	public get name(): string {
 		return SequenceIntervalCollectionValueType.Name;
 	}
 
-	public get factory(): IIntervalCollectionFactory {
+	public get factory(): IIntervalCollectionFactory<SequenceInterval> {
 		return SequenceIntervalCollectionValueType._factory;
 	}
 
-	public get ops(): Map<IntervalOpType, IIntervalCollectionOperation> {
+	public get ops(): Map<IntervalOpType, IIntervalCollectionOperation<SequenceInterval>> {
 		return SequenceIntervalCollectionValueType._ops;
 	}
 
-	private static readonly _factory: IIntervalCollectionFactory =
+	private static readonly _factory: IIntervalCollectionFactory<SequenceInterval> =
 		new SequenceIntervalCollectionFactory();
 
-	private static readonly _ops = makeOpsMap();
+	private static readonly _ops = makeOpsMap<SequenceInterval>();
 }
 
-export function makeOpsMap(): Map<IntervalOpType, IIntervalCollectionOperation> {
-	const rebase: IIntervalCollectionOperation["rebase"] = (collection, op, localOpMetadata) => {
+export function makeOpsMap<T extends ISerializableInterval>(): Map<
+	IntervalOpType,
+	IIntervalCollectionOperation<T>
+> {
+	const rebase: IIntervalCollectionOperation<T>["rebase"] = (
+		collection,
+		op,
+		localOpMetadata,
+	) => {
 		const { localSeq } = localOpMetadata;
 		const rebasedValue = collection.rebaseLocalInterval(op.opName, op.value, localSeq);
 		if (rebasedValue === undefined) {
@@ -456,7 +467,7 @@ export function makeOpsMap(): Map<IntervalOpType, IIntervalCollectionOperation> 
 		return { rebasedOp, rebasedLocalOpMetadata: localOpMetadata };
 	};
 
-	return new Map<IntervalOpType, IIntervalCollectionOperation>([
+	return new Map<IntervalOpType, IIntervalCollectionOperation<T>>([
 		[
 			IntervalOpType.ADD,
 			{
@@ -1176,7 +1187,7 @@ export class IntervalCollection
 	}
 
 	constructor(
-		private readonly helpers: IIntervalHelpers,
+		private readonly helpers: IIntervalHelpers<SequenceInterval>,
 		private readonly requiresClient: boolean,
 		private readonly emitter: IValueOpEmitter,
 		serializedIntervals: ISerializedInterval[] | ISerializedIntervalCollectionV2,
@@ -1398,7 +1409,9 @@ export class IntervalCollection
 	/**
 	 * {@inheritdoc IIntervalCollection.getIntervalById}
 	 */
-	public getIntervalById(id: string): ISerializableIntervalPrivate | undefined {
+	public getIntervalById(
+		id: string,
+	): ISerializableIntervalPrivate<SequenceInterval> | undefined {
 		if (!this.localCollection) {
 			throw new LoggingError("attach must be called before accessing intervals");
 		}
@@ -1712,7 +1725,8 @@ export class IntervalCollection
 		// strip it out of the properties here.
 		const { [reservedIntervalIdKey]: id, ...newProps } = serializedInterval.properties ?? {};
 		assert(id !== undefined, 0x3fe /* id must exist on the interval */);
-		const interval: ISerializableIntervalPrivate | undefined = this.getIntervalById(id);
+		const interval: ISerializableIntervalPrivate<SequenceInterval> | undefined =
+			this.getIntervalById(id);
 		if (!interval) {
 			// The interval has been removed locally; no-op.
 			return;

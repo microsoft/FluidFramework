@@ -79,6 +79,7 @@ import {
 	IValueChanged,
 	type SequenceOptions,
 } from "./intervalCollectionMapInterfaces.js";
+import { SequenceInterval } from "./intervals/index.js";
 import {
 	SequenceDeltaEvent,
 	SequenceDeltaEventClass,
@@ -491,7 +492,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 	protected client: Client;
 	private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
-	private readonly intervalCollections: IntervalCollectionMap;
+	private readonly intervalCollections: IntervalCollectionMap<SequenceInterval>;
 	constructor(
 		dataStoreRuntime: IFluidDataStoreRuntime,
 		public id: string,

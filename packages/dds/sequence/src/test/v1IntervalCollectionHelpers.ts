@@ -28,6 +28,7 @@ import {
 	IIntervalHelpers,
 	ISerializedInterval,
 	IntervalOpType,
+	SequenceInterval,
 	createSequenceInterval,
 } from "../intervals/index.js";
 import { pkgVersion } from "../packageVersion.js";
@@ -44,12 +45,14 @@ export class V1IntervalCollection extends IntervalCollection {
 	casted = this as unknown as IntervalCollectionInternals;
 }
 
-class V1SequenceIntervalCollectionFactory implements IIntervalCollectionFactory {
+class V1SequenceIntervalCollectionFactory
+	implements IIntervalCollectionFactory<SequenceInterval>
+{
 	public load(
 		emitter: IValueOpEmitter,
 		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
 	): V1IntervalCollection {
-		const helpers: IIntervalHelpers = {
+		const helpers: IIntervalHelpers<SequenceInterval> = {
 			create: createSequenceInterval,
 		};
 		return new V1IntervalCollection(helpers, true, emitter, raw, {});
@@ -63,29 +66,31 @@ class V1SequenceIntervalCollectionFactory implements IIntervalCollectionFactory 
 	}
 }
 
-export class V1SequenceIntervalCollectionValueType implements IIntervalCollectionType {
+export class V1SequenceIntervalCollectionValueType
+	implements IIntervalCollectionType<SequenceInterval>
+{
 	public static Name = "sharedStringIntervalCollection";
 
 	public get name(): string {
 		return V1SequenceIntervalCollectionValueType.Name;
 	}
 
-	public get factory(): IIntervalCollectionFactory {
+	public get factory(): IIntervalCollectionFactory<SequenceInterval> {
 		return V1SequenceIntervalCollectionValueType._factory;
 	}
 
-	public get ops(): Map<IntervalOpType, IIntervalCollectionOperation> {
+	public get ops(): Map<IntervalOpType, IIntervalCollectionOperation<SequenceInterval>> {
 		return V1SequenceIntervalCollectionValueType._ops;
 	}
 
-	private static readonly _factory: IIntervalCollectionFactory =
+	private static readonly _factory: IIntervalCollectionFactory<SequenceInterval> =
 		new V1SequenceIntervalCollectionFactory();
 
-	private static readonly _ops = makeOpsMap();
+	private static readonly _ops = makeOpsMap<SequenceInterval>();
 }
 
 interface SharedStringInternals {
-	intervalCollections: IntervalCollectionMap;
+	intervalCollections: IntervalCollectionMap<SequenceInterval>;
 }
 
 export class SharedStringWithV1IntervalCollection extends SharedStringClass {

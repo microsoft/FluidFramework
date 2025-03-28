@@ -10,6 +10,7 @@ import { ISharedObjectEvents } from "@fluidframework/shared-object-base/internal
 
 import type { IntervalCollection } from "./intervalCollection.js";
 import {
+	type ISerializableInterval,
 	ISerializedInterval,
 	IntervalDeltaOpType,
 	IntervalOpType,
@@ -91,7 +92,7 @@ export interface SequenceOptions
  * @legacy
  * @alpha
  */
-export interface IIntervalCollectionFactory {
+export interface IIntervalCollectionFactory<T extends ISerializableInterval> {
 	/**
 	 * Create a new value type.  Used both in creation of new value types, as well as in loading existing ones
 	 * from remote.
@@ -119,7 +120,7 @@ export interface IIntervalCollectionFactory {
  * @legacy
  * @alpha
  */
-export interface IIntervalCollectionOperation {
+export interface IIntervalCollectionOperation<T extends ISerializableInterval> {
 	/**
 	 * Performs the actual processing on the incoming operation.
 	 * @param value - The current value stored at the given key, which should be the value type
@@ -159,7 +160,7 @@ export interface IIntervalCollectionOperation {
 /**
  * Defines a value type that can be registered on a container type.
  */
-export interface IIntervalCollectionType {
+export interface IIntervalCollectionType<T extends ISerializableInterval> {
 	/**
 	 * Name of the value type.
 	 */
@@ -168,12 +169,12 @@ export interface IIntervalCollectionType {
 	/**
 	 * Factory method used to convert to/from a JSON form of the type.
 	 */
-	factory: IIntervalCollectionFactory;
+	factory: IIntervalCollectionFactory<T>;
 
 	/**
 	 * Operations that can be applied to the value type.
 	 */
-	ops: Map<IntervalOpType, IIntervalCollectionOperation>;
+	ops: Map<IntervalOpType, IIntervalCollectionOperation<T>>;
 }
 
 export interface ISharedDefaultMapEvents extends ISharedObjectEvents {

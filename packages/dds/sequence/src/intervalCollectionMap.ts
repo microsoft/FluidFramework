@@ -30,7 +30,11 @@ import {
 	IValueOpEmitter,
 	SequenceOptions,
 } from "./intervalCollectionMapInterfaces.js";
-import { IntervalDeltaOpType, SerializedIntervalDelta } from "./intervals/index.js";
+import {
+	type ISerializableInterval,
+	IntervalDeltaOpType,
+	SerializedIntervalDelta,
+} from "./intervals/index.js";
 
 function isMapOperation(op: unknown): op is IMapOperation {
 	return typeof op === "object" && op !== null && "type" in op && op.type === "act";
@@ -70,7 +74,7 @@ export interface IMapDataObjectSerializable {
  * Creation of values is implicit on access (either via `get` or a remote op application referring to
  * a collection that wasn't previously known)
  */
-export class IntervalCollectionMap {
+export class IntervalCollectionMap<T extends ISerializableInterval> {
 	/**
 	 * The number of key/value pairs stored in the map.
 	 */
@@ -116,7 +120,7 @@ export class IntervalCollectionMap {
 	/**
 	 * The in-memory data the map is storing.
 	 */
-	private readonly data = new Map<string, IntervalCollectionTypeLocalValue>();
+	private readonly data = new Map<string, IntervalCollectionTypeLocalValue<T>>();
 
 	/**
 	 * Create a new default map.
@@ -133,7 +137,7 @@ export class IntervalCollectionMap {
 			op: IMapOperation,
 			localOpMetadata: IMapMessageLocalMetadata,
 		) => void,
-		private readonly type: IIntervalCollectionType,
+		private readonly type: IIntervalCollectionType<T>,
 		private readonly options?: Partial<SequenceOptions>,
 		public readonly eventEmitter = new TypedEventEmitter<ISharedDefaultMapEvents>(),
 	) {}
@@ -312,7 +316,7 @@ export class IntervalCollectionMap {
 	 * @param key - The key being initialized
 	 * @param local - Whether the message originated from the local client
 	 */
-	private createCore(key: string, local: boolean): IntervalCollectionTypeLocalValue {
+	private createCore(key: string, local: boolean): IntervalCollectionTypeLocalValue<T> {
 		const localValue = new IntervalCollectionTypeLocalValue(
 			this.type.factory.load(this.makeMapValueOpEmitter(key), undefined, this.options),
 			this.type,
@@ -337,7 +341,7 @@ export class IntervalCollectionMap {
 	private makeLocal(
 		key: string,
 		serializable: ISerializableIntervalCollection,
-	): IntervalCollectionTypeLocalValue {
+	): IntervalCollectionTypeLocalValue<T> {
 		assert(
 			serializable.type !== ValueType[ValueType.Plain] &&
 				serializable.type !== ValueType[ValueType.Shared],
