@@ -164,7 +164,7 @@ export enum IntervalType {
     SlideOnRemove = 2,// SlideOnRemove is default behavior - all intervals are SlideOnRemove
 }
 
-// @alpha @deprecated (undocumented)
+// @alpha
 export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval> extends IntervalIndex<TInterval> {
     // (undocumented)
     findOverlappingIntervals(start: SequencePlace, end: SequencePlace): TInterval[];
