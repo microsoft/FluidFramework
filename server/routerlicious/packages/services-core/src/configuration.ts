@@ -307,11 +307,11 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
 	},
 };
 
-// Kafka has an internal limit of 1Mb.
-// Runtime has a client-imposed limit of 700kb.
-// Set our enforced limit at 900kb to give space for any
-// mysterious overhead.
+// Kafka has an internal limit of 1MB.
+// Runtime has a client-imposed limit of 700KB.
+// Set our enforced limit at 750KB = client-imposed limit of 700KB + buffer 50KB to account for any
+// potential overhead.
 /**
  * @internal
  */
-export const MaxKafkaMessageSize = 900 * 1024;
+export const MaxKafkaMessageSize = 750 * 1024;
