@@ -589,6 +589,8 @@ describe("Document Dirty", () => {
 			loaderContainerTracker.reset();
 		});
 
+
+
 		it("clears the dirty flag after container is attached", async () => {
 			checkDirtyState("before attach", true, 0);
 
@@ -600,6 +602,27 @@ describe("Document Dirty", () => {
 			await loaderContainerTracker.ensureSynchronized();
 
 			checkDirtyState("after attach", false, 1);
+		});
+
+		it("remains dirty when changes are made during attach", async () => {
+			// Make change while attaching
+			container.on("attaching", () => {
+				sharedMap.set("key", "value");
+			});
+
+			checkDirtyState("before attach", true, 0);
+
+			const urlResolver = new LocalResolver();
+			const request = urlResolver.createCreateNewRequest(documentId);
+			await container.attach(request);
+
+			// Document should still be dirty after attach
+			checkDirtyState("after attach", true, 0);
+
+			// Wait for the ops to get processed which should mark the document clean after processing
+			await loaderContainerTracker.ensureSynchronized();
+
+			checkDirtyState("after op processing", false, 1);
 		});
 
 		it("toggles the dirty flag on shared object update", async () => {
