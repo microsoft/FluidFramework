@@ -258,8 +258,7 @@ export class DataVisualizerGraph
 
 			const visualizerNode = new VisualizerNode(
 				// Typecasting `sharedObject` to `any` is necessary for `DataObject` visualization`, because the `root` property is inaccessbile (private).
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-				isDataObject(sharedObject) ? (sharedObject as any).root : sharedObject,
+				isDataObject(sharedObject) ? (sharedObject as VisualDataObject).root : sharedObject,
 				visualizationFunction as VisualizeSharedObject,
 				async (handle) => this.registerVisualizerForHandle(handle),
 			);
