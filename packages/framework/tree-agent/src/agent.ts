@@ -34,6 +34,9 @@ import {
 import { generateEditTypesForInsertion } from "./typeGeneration.js";
 import { constructNode, fail, type TreeView } from "./utils.js";
 
+const functionName = "editTree";
+const paramsName = "params";
+
 interface RetryState {
 	readonly errors: {
 		readonly error: UsageError;
@@ -94,17 +97,16 @@ export class SharedTreeSemanticAgent<TRoot extends ImplicitFieldSchema> {
 		prompt: string,
 		args?: { validator?: (js: string) => boolean; logger?: Log },
 	): Promise<void> {
-		const editFunctionName = "editTree";
-		const systemPrompt = getFunctioningSystemPrompt(this.treeView, editFunctionName);
+		const systemPrompt = getFunctioningSystemPrompt(this.treeView, functionName);
 
 		const toolWrapper = z.object({
 			functionBody: z
 				.string()
-				.describe(`The body of the \`${editFunctionName}\` JavaScript function`),
+				.describe(`The body of the \`${functionName}\` JavaScript function`),
 		});
 		const tool = this.#makeTool(
 			"GenerateTreeEditingCode",
-			`A JavaScript function \`${editFunctionName}\` to edit a user's tree`,
+			`A JavaScript function \`${functionName}\` to edit a user's tree`,
 			toolWrapper,
 		);
 		const create: Record<string, (input: InsertableContent) => TreeNode> = {};
@@ -140,9 +142,9 @@ export class SharedTreeSemanticAgent<TRoot extends ImplicitFieldSchema> {
 					idMap: idGenerator2,
 					create,
 				};
-				const code = `${functionCode}\n\neditTree(params);`;
+				const code = processLlmCode(functionCode);
 				// eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
-				const fn = new Function("params", code) as (p: typeof params) => void;
+				const fn = new Function(paramsName, code) as (p: typeof params) => void;
 				fn(params);
 				args?.logger?.(`### Applied Edit\n\n`);
 				args?.logger?.(`The new state of the tree is:\n\n`);
@@ -349,4 +351,14 @@ function visitObjectNodeSchema(
 		}
 		visitObjectNodeSchema([...nodeSchema.childTypes], visitor);
 	}
+}
+
+function processLlmCode(code: string): string {
+	// TODO: use a library like Acorn to analyze the code more robustly
+	const regex = new RegExp(`function\\s+${functionName}\\s*\\(`);
+	if (!regex.test(code)) {
+		throw new Error(`Generated code does not contain a function named \`${functionName}\``);
+	}
+
+	return `${code}\n\n${functionName}(${paramsName});`;
 }
