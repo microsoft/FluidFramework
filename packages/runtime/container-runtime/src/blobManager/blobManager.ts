@@ -449,6 +449,9 @@ export class BlobManager {
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
 	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
+		if (this.runtime.attachState === AttachState.Detached) {
+			return this.createBlobDetached(blob);
+		}
 		return this.mc.config.getBoolean("Fluid.Runtime.UploadBlobPlaceholders") === true
 			? this.createBlobPlaceholder(blob)
 			: this.createBlobLegacy(blob, signal);
@@ -458,9 +461,6 @@ export class BlobManager {
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
 	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
-		if (this.runtime.attachState === AttachState.Detached) {
-			return this.createBlobDetached(blob);
-		}
 		if (this.runtime.attachState === AttachState.Attaching) {
 			// blob upload is not supported in "Attaching" state
 			this.mc.logger.sendTelemetryEvent({ eventName: "CreateBlobWhileAttaching" });
