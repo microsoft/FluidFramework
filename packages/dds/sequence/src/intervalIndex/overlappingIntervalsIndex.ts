@@ -24,6 +24,8 @@ import { ISharedString } from "../sharedString.js";
 import { IntervalIndex, type SequenceIntervalIndex } from "./intervalIndex.js";
 
 /**
+ * The generic version of this interface is deprecated and will be removed in a future release.
+ * Use {@link ISequenceOverlappingIntervalsIndex} instead.
  * @legacy
  * @alpha
  * @remarks The generic version of this interface is no longer used and will be removed. Use {@link ISequenceOverlappingIntervalsIndex} instead.
