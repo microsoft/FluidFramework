@@ -10,11 +10,11 @@ export function checkUrl(documentUrl: URL): DriverPreCheckInfo | undefined;
 // @alpha
 export function createLocalOdspDocumentServiceFactory(localSnapshot: Uint8Array | string): IDocumentServiceFactory;
 
-// @alpha @deprecated
-export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string, createShareLinkType: ISharingLinkKind | undefined, containerPackageInfo?: IContainerPackageInfo | undefined): IRequest;
-
 // @alpha
 export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string, createShareLinkType?: ISharingLinkKind): IRequest;
+
+// @alpha @deprecated
+export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string, createShareLinkType: ISharingLinkKind | undefined, containerPackageInfo?: IContainerPackageInfo | undefined): IRequest;
 
 // @alpha
 export function createOdspUrl(l: OdspFluidDataStoreLocator): string;
