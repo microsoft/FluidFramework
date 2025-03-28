@@ -60,7 +60,6 @@ import {
 import type { EditManager } from "../../shared-tree-core/index.js";
 import {
 	cursorFromInsertable,
-	getSimpleSchema,
 	SchemaFactory,
 	toStoredSchema,
 	type TreeFieldFromImplicitField,
@@ -96,6 +95,8 @@ import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/leaf
 import { singleJsonCursor } from "../json/index.js";
 import { AttachState } from "@fluidframework/container-definitions";
 import { JsonAsTree } from "../../jsonDomainSchema.js";
+// eslint-disable-next-line import/no-internal-modules
+import { toSimpleTreeSchema } from "../../simple-tree/api/index.js";
 
 const enableSchemaValidation = true;
 
@@ -2211,7 +2212,10 @@ describe("SharedTree", () => {
 	it("exportVerbose & exportSimpleSchema", () => {
 		const tree = treeTestFactory();
 		assert.deepEqual(tree.exportVerbose(), undefined);
-		assert.deepEqual(tree.exportSimpleSchema(), getSimpleSchema(SchemaFactory.optional([])));
+		assert.deepEqual(
+			tree.exportSimpleSchema(),
+			toSimpleTreeSchema(SchemaFactory.optional([]), true),
+		);
 
 		const config = new TreeViewConfiguration({
 			schema: numberSchema,
@@ -2220,6 +2224,6 @@ describe("SharedTree", () => {
 		view.initialize(10);
 
 		assert.deepEqual(tree.exportVerbose(), 10);
-		assert.deepEqual(tree.exportSimpleSchema(), getSimpleSchema(numberSchema));
+		assert.deepEqual(tree.exportSimpleSchema(), toSimpleTreeSchema(numberSchema, true));
 	});
 });
