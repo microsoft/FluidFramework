@@ -303,27 +303,17 @@ export interface SchemaStatics {
 	) => FieldSchemaUnsafe<FieldKind.Required, T, TCustomMetadata>;
 }
 
-/**
- * Unstable extensions to {@link SchemaStatics}.
- * @remarks
- * Only items missing in schemaStatics are added here: items which simply have more specific types in alpha are instead just included in {@link schemaStatics} directly.
- */
-export interface SchemaStaticsAlpha extends SchemaStatics {
-	readonly identifier: <const TCustomMetadata = unknown>(
-		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
-	) => FieldSchemaAlpha<FieldKind.Identifier, typeof stringSchema, TCustomMetadata>;
-}
-
 const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => {
 	return undefined;
 });
 
 /**
- * Implementation of {@link SchemaStaticsAlpha}.
+ * Implementation of {@link SchemaStatics}.
  * @remarks
- * This can choose to use more specific types the interface requires to be more useful for internal consumers.
+ * Entries can use more specific types than {@link SchemaStatics} requires to be more useful for non-public consumers.
+ * Additional non-public members are in {@link schemaStatics}.
  */
-export const schemaStaticsPublic = {
+export const schemaStaticsBase = {
 	string: stringSchema,
 	number: numberSchema,
 	boolean: booleanSchema,
@@ -372,16 +362,19 @@ export const schemaStaticsPublic = {
 	},
 } as const satisfies SchemaStatics;
 
+/**
+ * Unstable extensions to {@link schemaStaticsBase}.
+ */
 export const schemaStatics = {
-	...schemaStaticsPublic,
+	...schemaStaticsBase,
 	identifier: <const TCustomMetadata = unknown>(
 		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
 	): FieldSchemaAlpha<FieldKind.Identifier, typeof stringSchema, TCustomMetadata> => {
 		return createFieldSchema(FieldKind.Identifier, stringSchema, props);
 	},
-} as const satisfies SchemaStatics & SchemaStaticsAlpha;
+} as const;
 
-const schemaStaticPublic: SchemaStatics = schemaStatics;
+const schemaStaticsPublic: SchemaStatics = schemaStatics;
 
 // TODO:
 // SchemaFactory.array references should link to the correct overloads, however the syntax for this does not seems to work currently for methods unless the they are not qualified with the class.
@@ -555,62 +548,62 @@ export class SchemaFactory<
 	/**
 	 * {@inheritDoc SchemaStatics.string}
 	 */
-	public readonly string = schemaStaticPublic.string;
+	public readonly string = schemaStaticsPublic.string;
 
 	/**
 	 * {@inheritDoc SchemaStatics.number}
 	 */
-	public readonly number = schemaStaticPublic.number;
+	public readonly number = schemaStaticsPublic.number;
 
 	/**
 	 * {@inheritDoc SchemaStatics.boolean}
 	 */
-	public readonly boolean = schemaStaticPublic.boolean;
+	public readonly boolean = schemaStaticsPublic.boolean;
 
 	/**
 	 * {@inheritDoc SchemaStatics.null}
 	 */
-	public readonly null = schemaStaticPublic.null;
+	public readonly null = schemaStaticsPublic.null;
 
 	/**
 	 * {@inheritDoc SchemaStatics.handle}
 	 */
-	public readonly handle = schemaStaticPublic.handle;
+	public readonly handle = schemaStaticsPublic.handle;
 
 	/**
 	 * {@inheritDoc SchemaStatics.leaves}
 	 */
-	public readonly leaves = schemaStaticPublic.leaves;
+	public readonly leaves = schemaStaticsPublic.leaves;
 
 	/**
 	 * {@inheritDoc SchemaStatics.string}
 	 */
-	public static readonly string = schemaStaticPublic.string;
+	public static readonly string = schemaStaticsPublic.string;
 
 	/**
 	 * {@inheritDoc SchemaStatics.number}
 	 */
-	public static readonly number = schemaStaticPublic.number;
+	public static readonly number = schemaStaticsPublic.number;
 
 	/**
 	 * {@inheritDoc SchemaStatics.boolean}
 	 */
-	public static readonly boolean = schemaStaticPublic.boolean;
+	public static readonly boolean = schemaStaticsPublic.boolean;
 
 	/**
 	 * {@inheritDoc SchemaStatics.null}
 	 */
-	public static readonly null = schemaStaticPublic.null;
+	public static readonly null = schemaStaticsPublic.null;
 
 	/**
 	 * {@inheritDoc SchemaStatics.handle}
 	 */
-	public static readonly handle = schemaStaticPublic.handle;
+	public static readonly handle = schemaStaticsPublic.handle;
 
 	/**
 	 * {@inheritDoc SchemaStatics.leaves}
 	 */
-	public static readonly leaves = schemaStaticPublic.leaves;
+	public static readonly leaves = schemaStaticsPublic.leaves;
 
 	/**
 	 * Define a {@link TreeNodeSchemaClass} for a {@link TreeObjectNode}.
@@ -932,42 +925,42 @@ export class SchemaFactory<
 	/**
 	 * {@inheritDoc SchemaStatics.optional}
 	 */
-	public readonly optional = schemaStaticPublic.optional;
+	public readonly optional = schemaStaticsPublic.optional;
 
 	/**
 	 * {@inheritDoc SchemaStatics.required}
 	 */
-	public readonly required = schemaStaticPublic.required;
+	public readonly required = schemaStaticsPublic.required;
 
 	/**
 	 * {@inheritDoc SchemaStatics.optionalRecursive}
 	 */
-	public readonly optionalRecursive = schemaStaticPublic.optionalRecursive;
+	public readonly optionalRecursive = schemaStaticsPublic.optionalRecursive;
 
 	/**
 	 * {@inheritDoc SchemaStatics.requiredRecursive}
 	 */
-	public readonly requiredRecursive = schemaStaticPublic.requiredRecursive;
+	public readonly requiredRecursive = schemaStaticsPublic.requiredRecursive;
 
 	/**
 	 * {@inheritDoc SchemaStatics.optional}
 	 */
-	public static readonly optional = schemaStaticPublic.optional;
+	public static readonly optional = schemaStaticsPublic.optional;
 
 	/**
 	 * {@inheritDoc SchemaStatics.required}
 	 */
-	public static readonly required = schemaStaticPublic.required;
+	public static readonly required = schemaStaticsPublic.required;
 
 	/**
 	 * {@inheritDoc SchemaStatics.optionalRecursive}
 	 */
-	public static readonly optionalRecursive = schemaStaticPublic.optionalRecursive;
+	public static readonly optionalRecursive = schemaStaticsPublic.optionalRecursive;
 
 	/**
 	 * {@inheritDoc SchemaStatics.requiredRecursive}
 	 */
-	public static readonly requiredRecursive = schemaStaticPublic.requiredRecursive;
+	public static readonly requiredRecursive = schemaStaticsPublic.requiredRecursive;
 
 	/**
 	 * A special field which holds a unique identifier for an object node.
