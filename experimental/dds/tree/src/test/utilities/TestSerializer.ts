@@ -39,7 +39,7 @@ export class TestFluidHandle extends FluidHandleBase<unknown> {
 		throw new Error('Method not implemented.');
 	}
 
-	public bind(handle: IFluidHandle): void {
+	public bind(): void {
 		throw new Error('Method not implemented.');
 	}
 
