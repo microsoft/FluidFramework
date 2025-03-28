@@ -8,7 +8,11 @@ import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/in
 import type { IMergeTreeOptions } from "@fluidframework/merge-tree/internal";
 import { ISharedObjectEvents } from "@fluidframework/shared-object-base/internal";
 
-import type { IntervalCollection } from "./intervalCollection.js";
+import type {
+	IntervalCollection,
+	ISerializedIntervalCollectionV1,
+	ISerializedIntervalCollectionV2,
+} from "./intervalCollection.js";
 import {
 	ISerializedInterval,
 	IntervalDeltaOpType,
@@ -84,12 +88,18 @@ export interface SequenceOptions
 	 * The default value is false.
 	 */
 	intervalStickinessEnabled: boolean;
+
+	/**
+	 * This is for testing, and allows us to output intervals in the older formats.
+	 */
+	intervalSerializationFormat: "1" | "2";
 }
 
 /**
  * A value factory is used to serialize/deserialize value types to a map
  * @legacy
  * @alpha
+ *
  */
 export interface IIntervalCollectionFactory {
 	/**
@@ -118,6 +128,7 @@ export interface IIntervalCollectionFactory {
  * Defines an operation that a value type is able to handle.
  * @legacy
  * @alpha
+ *
  */
 export interface IIntervalCollectionOperation {
 	/**
@@ -156,26 +167,6 @@ export interface IIntervalCollectionOperation {
 		| undefined;
 }
 
-/**
- * Defines a value type that can be registered on a container type.
- */
-export interface IIntervalCollectionType {
-	/**
-	 * Name of the value type.
-	 */
-	name: string;
-
-	/**
-	 * Factory method used to convert to/from a JSON form of the type.
-	 */
-	factory: IIntervalCollectionFactory;
-
-	/**
-	 * Operations that can be applied to the value type.
-	 */
-	ops: Map<IntervalOpType, IIntervalCollectionOperation>;
-}
-
 export interface ISharedDefaultMapEvents extends ISharedObjectEvents {
 	(
 		event: "valueChanged" | "create",
@@ -198,12 +189,12 @@ export interface ISerializableIntervalCollection {
 	/**
 	 * A type annotation to help indicate how the value serializes.
 	 */
-	type: string;
+	type: "sharedStringIntervalCollection";
 
 	/**
 	 * The JSONable representation of the value.
 	 */
-	value: any;
+	value: ISerializedIntervalCollectionV1 | ISerializedIntervalCollectionV2;
 }
 
 export interface ISerializedIntervalCollection {

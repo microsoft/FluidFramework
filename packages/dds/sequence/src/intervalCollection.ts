@@ -4,7 +4,6 @@
  */
 
 /* eslint-disable no-bitwise */
-/* eslint-disable import/no-deprecated */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
@@ -35,9 +34,7 @@ import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/intern
 import { v4 as uuid } from "uuid";
 
 import {
-	IIntervalCollectionFactory,
 	IIntervalCollectionOperation,
-	IIntervalCollectionType,
 	IMapMessageLocalMetadata,
 	IValueOpEmitter,
 	SequenceOptions,
@@ -48,6 +45,7 @@ import {
 	OverlappingIntervalsIndex,
 	type IEndpointIndex,
 	type IIdIntervalIndex,
+	// eslint-disable-next-line import/no-deprecated
 	type IntervalIndex,
 	type ISequenceOverlappingIntervalsIndex,
 	type SequenceIntervalIndex,
@@ -55,9 +53,8 @@ import {
 import {
 	CompressedSerializedInterval,
 	IIntervalHelpers,
-	ISerializableInterval,
 	ISerializedInterval,
-	IntervalOpType,
+	IntervalDeltaOpType,
 	IntervalStickiness,
 	IntervalType,
 	SequenceInterval,
@@ -65,12 +62,14 @@ import {
 	SerializedIntervalDelta,
 	createPositionReferenceFromSegoff,
 	endReferenceSlidingPreference,
-	sequenceIntervalHelpers,
 	startReferenceSlidingPreference,
+	type ISerializableInterval,
 	type ISerializableIntervalPrivate,
 } from "./intervals/index.js";
 
 export const reservedIntervalIdKey = "intervalId";
+
+export type ISerializedIntervalCollectionV1 = ISerializedInterval[];
 
 export interface ISerializedIntervalCollectionV2 {
 	label: string;
@@ -342,7 +341,12 @@ export class LocalIntervalCollection {
 		return newInterval;
 	}
 
-	public serialize(): ISerializedIntervalCollectionV2 {
+	public serialize(
+		version: "1" | "2",
+	): ISerializedIntervalCollectionV1 | ISerializedIntervalCollectionV2 {
+		if (version === "1") {
+			return Array.from(this.idIntervalIndex, (interval) => interval.serialize());
+		}
 		return {
 			label: this.label,
 			intervals: Array.from(this.idIntervalIndex, (interval) =>
@@ -408,100 +412,54 @@ export class LocalIntervalCollection {
 	}
 }
 
-class SequenceIntervalCollectionFactory implements IIntervalCollectionFactory {
-	public load(
-		emitter: IValueOpEmitter,
-		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
-		options?: Partial<SequenceOptions>,
-	): IntervalCollection {
-		return new IntervalCollection(sequenceIntervalHelpers, true, emitter, raw, options);
+const rebase: IIntervalCollectionOperation["rebase"] = (collection, op, localOpMetadata) => {
+	const { localSeq } = localOpMetadata;
+	const rebasedValue = collection.rebaseLocalInterval(op.opName, op.value, localSeq);
+	if (rebasedValue === undefined) {
+		return undefined;
 	}
+	const rebasedOp = { ...op, value: rebasedValue };
+	return { rebasedOp, rebasedLocalOpMetadata: localOpMetadata };
+};
 
-	public store(
-		value: IntervalCollection,
-	): ISerializedInterval[] | ISerializedIntervalCollectionV2 {
-		return value.serializeInternal();
-	}
-}
+export const opsMap: Record<IntervalDeltaOpType, IIntervalCollectionOperation> = {
+	[IntervalDeltaOpType.ADD]: {
+		process: (collection, params, local, op, localOpMetadata) => {
+			// if params is undefined, the interval was deleted during
+			// rebasing
+			if (!params) {
+				return;
+			}
+			assert(op !== undefined, 0x3fb /* op should exist here */);
+			collection.ackAdd(params, local, op, localOpMetadata);
+		},
+		rebase,
+	},
 
-export class SequenceIntervalCollectionValueType implements IIntervalCollectionType {
-	public static Name = "sharedStringIntervalCollection";
+	[IntervalDeltaOpType.DELETE]: {
+		process: (collection, params, local, op) => {
+			assert(op !== undefined, 0x3fc /* op should exist here */);
+			collection.ackDelete(params, local, op);
+		},
+		rebase: (collection, op, localOpMetadata) => {
+			// Deletion of intervals is based on id, so requires no rebasing.
+			return { rebasedOp: op, rebasedLocalOpMetadata: localOpMetadata };
+		},
+	},
 
-	public get name(): string {
-		return SequenceIntervalCollectionValueType.Name;
-	}
-
-	public get factory(): IIntervalCollectionFactory {
-		return SequenceIntervalCollectionValueType._factory;
-	}
-
-	public get ops(): Map<IntervalOpType, IIntervalCollectionOperation> {
-		return SequenceIntervalCollectionValueType._ops;
-	}
-
-	private static readonly _factory: IIntervalCollectionFactory =
-		new SequenceIntervalCollectionFactory();
-
-	private static readonly _ops = makeOpsMap();
-}
-
-export function makeOpsMap(): Map<IntervalOpType, IIntervalCollectionOperation> {
-	const rebase: IIntervalCollectionOperation["rebase"] = (collection, op, localOpMetadata) => {
-		const { localSeq } = localOpMetadata;
-		const rebasedValue = collection.rebaseLocalInterval(op.opName, op.value, localSeq);
-		if (rebasedValue === undefined) {
-			return undefined;
-		}
-		const rebasedOp = { ...op, value: rebasedValue };
-		return { rebasedOp, rebasedLocalOpMetadata: localOpMetadata };
-	};
-
-	return new Map<IntervalOpType, IIntervalCollectionOperation>([
-		[
-			IntervalOpType.ADD,
-			{
-				process: (collection, params, local, op, localOpMetadata) => {
-					// if params is undefined, the interval was deleted during
-					// rebasing
-					if (!params) {
-						return;
-					}
-					assert(op !== undefined, 0x3fb /* op should exist here */);
-					collection.ackAdd(params, local, op, localOpMetadata);
-				},
-				rebase,
-			},
-		],
-		[
-			IntervalOpType.DELETE,
-			{
-				process: (collection, params, local, op) => {
-					assert(op !== undefined, 0x3fc /* op should exist here */);
-					collection.ackDelete(params, local, op);
-				},
-				rebase: (collection, op, localOpMetadata) => {
-					// Deletion of intervals is based on id, so requires no rebasing.
-					return { rebasedOp: op, rebasedLocalOpMetadata: localOpMetadata };
-				},
-			},
-		],
-		[
-			IntervalOpType.CHANGE,
-			{
-				process: (collection, params, local, op, localOpMetadata) => {
-					// if params is undefined, the interval was deleted during
-					// rebasing
-					if (!params) {
-						return;
-					}
-					assert(op !== undefined, 0x3fd /* op should exist here */);
-					collection.ackChange(params, local, op, localOpMetadata);
-				},
-				rebase,
-			},
-		],
-	]);
-}
+	[IntervalDeltaOpType.CHANGE]: {
+		process: (collection, params, local, op, localOpMetadata) => {
+			// if params is undefined, the interval was deleted during
+			// rebasing
+			if (!params) {
+				return;
+			}
+			assert(op !== undefined, 0x3fd /* op should exist here */);
+			collection.ackChange(params, local, op, localOpMetadata);
+		},
+		rebase,
+	},
+};
 
 /**
  * @legacy
@@ -728,6 +686,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * @remarks After attaching an index to an interval collection, applications should typically store this
 	 * index somewhere in their in-memory data model for future reference and querying.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	attachIndex(index: IntervalIndex<TInterval>): void;
 	/**
 	 * Detaches an index from this collection.
@@ -736,6 +695,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 *
 	 * @returns `false` if the target index cannot be found in the indexes, otherwise remove all intervals in the index and return `true`.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	detachIndex(index: IntervalIndex<TInterval>): boolean;
 	/**
 	 * @returns the interval in this collection that has the provided `id`.
@@ -2065,12 +2025,14 @@ export class IntervalCollection
 		}
 	}
 
-	public serializeInternal(): ISerializedIntervalCollectionV2 {
+	public serializeInternal(
+		version: "1" | "2",
+	): ISerializedIntervalCollectionV1 | ISerializedIntervalCollectionV2 {
 		if (!this.localCollection) {
 			throw new LoggingError("attachSequence must be called");
 		}
 
-		return this.localCollection.serialize();
+		return this.localCollection.serialize(version);
 	}
 
 	/**

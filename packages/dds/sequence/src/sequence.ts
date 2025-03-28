@@ -69,10 +69,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
-import {
-	SequenceIntervalCollectionValueType,
-	type ISequenceIntervalCollection,
-} from "./intervalCollection.js";
+import { type ISequenceIntervalCollection } from "./intervalCollection.js";
 import { IMapOperation, IntervalCollectionMap } from "./intervalCollectionMap.js";
 import {
 	IMapMessageLocalMetadata,
@@ -566,7 +563,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				this.inFlightRefSeqs.push(this.currentRefSeq);
 				this.submitLocalMessage(op, localOpMetadata);
 			},
-			new SequenceIntervalCollectionValueType(),
 			options,
 		);
 	}

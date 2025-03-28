@@ -18,7 +18,7 @@ export {
 	endReferenceSlidingPreference,
 	startReferenceSlidingPreference,
 } from "./intervalUtils.js";
-export { Interval, createInterval, intervalHelpers } from "./interval.js";
+export { Interval, intervalHelpers } from "./interval.js";
 export {
 	SequenceInterval,
 	SequenceIntervalClass,
