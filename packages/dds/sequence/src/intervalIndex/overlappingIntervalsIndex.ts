@@ -72,9 +72,9 @@ export interface ISequenceOverlappingIntervalsIndex extends SequenceIntervalInde
 export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsIndex {
 	protected readonly intervalTree = new IntervalTree<SequenceInterval>();
 	protected readonly client: Client;
-	protected readonly helpers: IIntervalHelpers<SequenceInterval>;
+	protected readonly helpers: IIntervalHelpers;
 
-	constructor(client: Client, helpers: IIntervalHelpers<SequenceInterval>) {
+	constructor(client: Client, helpers: IIntervalHelpers) {
 		this.client = client;
 		this.helpers = helpers;
 	}

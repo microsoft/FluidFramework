@@ -136,6 +136,8 @@ export {
 	type TreeNodeSchemaClassUnsafe,
 	type InsertableTreeNodeFromAllowedTypesUnsafe,
 	type FieldSchemaAlphaUnsafe,
+	type ArrayNodeCustomizableSchemaUnsafe,
+	type MapNodeCustomizableSchemaUnsafe,
 	// System types (not in Internal types for various reasons, like doc links or cannot be named errors).
 	type typeSchemaSymbol,
 	type TreeNodeSchemaNonClass,
@@ -229,6 +231,12 @@ export {
 	replaceVerboseTreeHandles,
 	type HandleConverter,
 	type LeafSchema,
+	type ArrayNodeCustomizableSchema,
+	type ArrayNodePojoEmulationSchema,
+	ArrayNodeSchema,
+	type MapNodeCustomizableSchema,
+	type MapNodePojoEmulationSchema,
+	MapNodeSchema,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

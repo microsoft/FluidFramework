@@ -33,6 +33,28 @@ type ApplyKindInput<T, Kind extends FieldKind, DefaultsAreOptional extends boole
 Kind
 ] extends [FieldKind.Required] ? T : [Kind] extends [FieldKind.Optional] ? T | undefined : [Kind] extends [FieldKind.Identifier] ? DefaultsAreOptional extends true ? T | undefined : T : never;
 
+// @alpha @sealed
+export interface ArrayNodeCustomizableSchema<out TName extends string = string, in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaClass<TName, NodeKind.Array, TreeArrayNode<T> & WithType<TName, NodeKind.Array, T>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, ImplicitlyConstructable, T, undefined, TCustomMetadata>, SimpleArrayNodeSchema<TCustomMetadata> {
+}
+
+// @alpha @sealed
+export interface ArrayNodeCustomizableSchemaUnsafe<out TName extends string, in out T extends ImplicitAllowedTypesUnsafe, out TCustomMetadata> extends TreeNodeSchemaClass<TName, NodeKind.Array, TreeArrayNodeUnsafe<T> & WithType<TName, NodeKind.Array, T>, {
+    [Symbol.iterator](): Iterator<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>;
+}, false, T, undefined, TCustomMetadata>, SimpleArrayNodeSchema<TCustomMetadata> {
+}
+
+// @alpha @sealed
+export interface ArrayNodePojoEmulationSchema<out TName extends string = string, in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaNonClass<TName, NodeKind.Array, TreeArrayNode<T> & WithType<TName, NodeKind.Array, T>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, ImplicitlyConstructable, T, undefined, TCustomMetadata>, SimpleArrayNodeSchema<TCustomMetadata> {
+}
+
+// @alpha
+export type ArrayNodeSchema = ArrayNodeCustomizableSchema | ArrayNodePojoEmulationSchema;
+
+// @alpha (undocumented)
+export const ArrayNodeSchema: {
+    readonly [Symbol.hasInstance]: (value: TreeNodeSchema) => value is ArrayNodeSchema;
+};
+
 // @alpha
 export function asTreeViewAlpha<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewAlpha<TSchema>;
 
@@ -514,8 +536,35 @@ export type Listeners<T extends object> = Listeners_2<T>;
 export interface MakeNominal {
 }
 
+// @alpha @sealed
+export interface MapNodeCustomizableSchema<out TName extends string = string, in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaClass<TName, NodeKind.Map, TreeMapNode<T> & WithType<TName, NodeKind.Map, T>, MapNodeInsertableData<T>, ImplicitlyConstructable, T, undefined, TCustomMetadata>, SimpleMapNodeSchema<TCustomMetadata> {
+}
+
+// @alpha @sealed
+export interface MapNodeCustomizableSchemaUnsafe<out TName extends string, in out T extends ImplicitAllowedTypesUnsafe, out TCustomMetadata> extends TreeNodeSchemaClass<TName, NodeKind.Map, TreeMapNodeUnsafe<T> & WithType<TName, NodeKind.Map, T>, {
+    [Symbol.iterator](): Iterator<[
+    string,
+    InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>
+    ]>;
+} | {
+    readonly [P in string]: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>;
+}, false, T, undefined, TCustomMetadata>, SimpleMapNodeSchema<TCustomMetadata> {
+}
+
 // @public
 export type MapNodeInsertableData<T extends ImplicitAllowedTypes> = Iterable<readonly [string, InsertableTreeNodeFromImplicitAllowedTypes<T>]> | RestrictiveStringRecord<InsertableTreeNodeFromImplicitAllowedTypes<T>>;
+
+// @alpha @sealed
+export interface MapNodePojoEmulationSchema<out TName extends string = string, in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaNonClass<TName, NodeKind.Map, TreeMapNode<T> & WithType<TName, NodeKind.Map, T>, MapNodeInsertableData<T>, ImplicitlyConstructable, T, undefined, TCustomMetadata>, SimpleMapNodeSchema<TCustomMetadata> {
+}
+
+// @alpha
+export type MapNodeSchema = MapNodeCustomizableSchema | MapNodePojoEmulationSchema;
+
+// @alpha (undocumented)
+export const MapNodeSchema: {
+    readonly [Symbol.hasInstance]: (value: TreeNodeSchema) => value is MapNodeSchema;
+};
 
 // @public
 type NodeBuilderData<T extends TreeNodeSchemaCore<string, NodeKind, boolean>> = T extends TreeNodeSchemaCore<string, NodeKind, boolean, unknown, infer TBuild> ? TBuild : never;
@@ -749,19 +798,10 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
 
 // @alpha
 export class SchemaFactoryAlpha<out TScope extends string | undefined = string | undefined, TName extends number | string = string> extends SchemaFactory<TScope, TName> {
-    arrayAlpha<const Name extends TName, const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Array, TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Array>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, true, T, undefined, TCustomMetadata>;
-    arrayRecursive<const Name extends TName, const T extends ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Array, TreeArrayNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Array, unknown>, {
-        [Symbol.iterator](): Iterator<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>;
-    }, false, T, undefined, TCustomMetadata>;
-    mapAlpha<Name extends TName, const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>, MapNodeInsertableData<T>, true, T, undefined, TCustomMetadata>;
-    mapRecursive<Name extends TName, const T extends ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map, unknown>, {
-        [Symbol.iterator](): Iterator<[
-        string,
-        InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>
-        ]>;
-    } | {
-        readonly [x: string]: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>;
-    }, false, T, undefined, TCustomMetadata>;
+    arrayAlpha<const Name extends TName, const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): ArrayNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata>;
+    arrayRecursive<const Name extends TName, const T extends ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): ArrayNodeCustomizableSchemaUnsafe<ScopedSchemaName<TScope, Name>, T, TCustomMetadata>;
+    mapAlpha<Name extends TName, const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): MapNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata>;
+    mapRecursive<Name extends TName, const T extends ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): MapNodeCustomizableSchemaUnsafe<ScopedSchemaName<TScope, Name>, T, TCustomMetadata>;
     object<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchema>, const TCustomMetadata = unknown>(name: Name, fields: T, options?: SchemaFactoryObjectOptions<TCustomMetadata>): ObjectNodeSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata>;
     objectRecursive<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchemaUnsafe>, const TCustomMetadata = unknown>(name: Name, t: T, options?: SchemaFactoryObjectOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecordUnsafe<T>, false, T, never, TCustomMetadata> & SimpleObjectNodeSchema<TCustomMetadata> & Pick<ObjectNodeSchema, "fields">;
     readonly optionalRecursive: <const T extends ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">) => FieldSchemaAlphaUnsafe<FieldKind.Optional, T, TCustomMetadata>;
@@ -815,10 +855,20 @@ export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
 export type SharedTreeOptions = Partial<ICodecOptions> & Partial<SharedTreeFormatOptions> & ForestOptions;
 
 // @alpha @sealed
+export interface SimpleArrayNodeSchema<out TCustomMetadata = unknown> extends SimpleNodeSchemaBase<NodeKind.Array, TCustomMetadata> {
+    readonly allowedTypesIdentifiers: ReadonlySet<string>;
+}
+
+// @alpha @sealed
 export interface SimpleFieldSchema {
     readonly allowedTypesIdentifiers: ReadonlySet<string>;
     readonly kind: FieldKind;
     readonly metadata: FieldSchemaMetadata;
+}
+
+// @alpha @sealed
+export interface SimpleMapNodeSchema<out TCustomMetadata = unknown> extends SimpleNodeSchemaBase<NodeKind.Map, TCustomMetadata> {
+    readonly allowedTypesIdentifiers: ReadonlySet<string>;
 }
 
 // @public @sealed
@@ -1052,7 +1102,7 @@ export type TreeNodeSchemaClass<Name extends string = string, Kind extends NodeK
 });
 
 // @public
-export interface TreeNodeSchemaClassUnsafe<out Name extends string, out Kind extends NodeKind, out TNode extends Unenforced<TreeNode>, in TInsertable, out ImplicitlyConstructable extends boolean, out Info> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
+export interface TreeNodeSchemaClassUnsafe<out Name extends string, out Kind extends NodeKind, out TNode extends Unenforced<TreeNode>, in TInsertable, out ImplicitlyConstructable extends boolean, out Info, out TCustomMetadata = unknown> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info, never, TCustomMetadata> {
     // @sealed
     new (data: TInsertable | InternalTreeNode): Unhydrated<TNode>;
 }

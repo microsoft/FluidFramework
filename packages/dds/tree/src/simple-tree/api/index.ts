@@ -79,6 +79,8 @@ export type {
 	TreeNodeSchemaNonClassUnsafe,
 	InsertableTreeNodeFromAllowedTypesUnsafe,
 	FieldSchemaAlphaUnsafe,
+	ArrayNodeCustomizableSchemaUnsafe,
+	MapNodeCustomizableSchemaUnsafe,
 } from "./typesUnsafe.js";
 
 export {
