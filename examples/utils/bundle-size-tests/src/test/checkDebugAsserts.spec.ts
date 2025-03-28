@@ -9,7 +9,7 @@ import { readFileSync } from "node:fs";
 describe("checkDebugAsserts", () => {
 	it("examples", () => {
 		// This file must be run after webpack.
-		const bundle = readFileSync("./dist/debugAssert.js", "utf-8");
+		const bundle = readFileSync("./build/debugAssert.js", "utf-8");
 
 		assert.match(bundle, /kept 1/);
 		assert.match(bundle, /kept 2/);
