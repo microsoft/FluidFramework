@@ -4,12 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import {
-	normalizeAllowedTypes,
-	normalizeFieldSchema,
-	type ImplicitAllowedTypes,
-	type ImplicitFieldSchema,
-} from "../schemaTypes.js";
+import { normalizeFieldSchema, type ImplicitFieldSchema } from "../schemaTypes.js";
 import type {
 	SimpleArrayNodeSchema,
 	SimpleLeafNodeSchema,
@@ -19,11 +14,13 @@ import type {
 	SimpleObjectNodeSchema,
 	SimpleTreeSchema,
 } from "../simpleSchema.js";
-import type { ValueSchema } from "../../core/index.js";
 import { getOrCreate } from "../../util/index.js";
-import { isObjectNodeSchema, type ObjectNodeSchema } from "../objectNodeTypes.js";
+import { isObjectNodeSchema } from "../objectNodeTypes.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
+import { ArrayNodeSchema } from "../arrayNodeTypes.js";
+import { LeafNodeSchema } from "../leafNodeSchema.js";
+import { MapNodeSchema } from "../mapNodeTypes.js";
 
 /**
  * Converts a "view" schema to a "simple" schema representation.
@@ -62,13 +59,16 @@ function toSimpleNodeSchema(schema: TreeNodeSchema): SimpleNodeSchema {
 		const kind = schema.kind;
 		switch (kind) {
 			case NodeKind.Leaf: {
-				return leafSchemaToSimpleSchema(schema);
+				assert(schema instanceof LeafNodeSchema, "Invalid schema");
+				return copySimpleLeafSchema(schema);
 			}
+			case NodeKind.Array:
 			case NodeKind.Map: {
-				return mapSchemaToSimpleSchema(schema);
-			}
-			case NodeKind.Array: {
-				return arraySchemaToSimpleSchema(schema);
+				assert(
+					schema instanceof ArrayNodeSchema || schema instanceof MapNodeSchema,
+					"Invalid schema",
+				);
+				return copySimpleMapOrArraySchema(schema);
 			}
 			case NodeKind.Object: {
 				assert(isObjectNodeSchema(schema), 0xa06 /* Expected object schema */);
@@ -81,34 +81,25 @@ function toSimpleNodeSchema(schema: TreeNodeSchema): SimpleNodeSchema {
 	});
 }
 
-// TODO: Use a stronger type for leaf schemas once one is available (see object schema handler for an example).
-function leafSchemaToSimpleSchema(schema: TreeNodeSchema): SimpleLeafNodeSchema {
+function copySimpleLeafSchema(schema: SimpleLeafNodeSchema): SimpleLeafNodeSchema {
 	return {
 		kind: NodeKind.Leaf,
-		leafKind: schema.info as ValueSchema,
+		leafKind: schema.leafKind,
 		metadata: schema.metadata,
 	};
 }
 
-// TODO: Use a stronger type for array schemas once one is available (see object schema handler for an example).
-function arraySchemaToSimpleSchema(schema: TreeNodeSchema): SimpleArrayNodeSchema {
+function copySimpleMapOrArraySchema(
+	schema: SimpleMapNodeSchema | SimpleArrayNodeSchema,
+): SimpleMapNodeSchema | SimpleArrayNodeSchema {
 	return {
-		kind: NodeKind.Array,
-		allowedTypesIdentifiers: identifiersFromAllowedTypes(schema.info as ImplicitAllowedTypes),
+		kind: schema.kind,
+		allowedTypesIdentifiers: schema.allowedTypesIdentifiers,
 		metadata: schema.metadata,
 	};
 }
 
-// TODO: Use a stronger type for map schemas once one is available (see object schema handler for an example).
-function mapSchemaToSimpleSchema(schema: TreeNodeSchema): SimpleMapNodeSchema {
-	return {
-		kind: NodeKind.Map,
-		allowedTypesIdentifiers: identifiersFromAllowedTypes(schema.info as ImplicitAllowedTypes),
-		metadata: schema.metadata,
-	};
-}
-
-function objectSchemaToSimpleSchema(schema: ObjectNodeSchema): SimpleObjectNodeSchema {
+function objectSchemaToSimpleSchema(schema: SimpleObjectNodeSchema): SimpleObjectNodeSchema {
 	const fields: Map<string, SimpleObjectFieldSchema> = new Map();
 	for (const [propertyKey, field] of schema.fields) {
 		// field already is a SimpleObjectFieldSchema, but copy the subset of the properties needed by this interface to get a clean simple object.
@@ -125,9 +116,4 @@ function objectSchemaToSimpleSchema(schema: ObjectNodeSchema): SimpleObjectNodeS
 		fields,
 		metadata: schema.metadata,
 	};
-}
-
-function identifiersFromAllowedTypes(schema: ImplicitAllowedTypes): ReadonlySet<string> {
-	const allowed = normalizeAllowedTypes(schema);
-	return new Set([...allowed].map((type) => type.identifier));
 }
