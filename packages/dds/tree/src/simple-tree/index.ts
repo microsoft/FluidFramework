@@ -105,6 +105,7 @@ export {
 	type TreeNodeSchemaNonClassUnsafe,
 	type InsertableTreeNodeFromAllowedTypesUnsafe,
 	type ArrayNodeCustomizableSchemaUnsafe,
+	type MapNodeCustomizableSchemaUnsafe,
 	type TreeViewAlpha,
 	type TreeBranch,
 	type TreeBranchEvents,
@@ -198,7 +199,12 @@ export type {
 	ArrayNodeCustomizableSchema,
 	ArrayNodePojoEmulationSchema,
 } from "./arrayNodeTypes.js";
-export type { ArrayNodeSchema, isArrayNodeSchema } from "./arrayNodeTypes.js";
+export { ArrayNodeSchema, isArrayNodeSchema } from "./arrayNodeTypes.js";
+export type {
+	MapNodeCustomizableSchema,
+	MapNodePojoEmulationSchema,
+} from "./mapNodeTypes.js";
+export { MapNodeSchema, isMapNodeSchema } from "./mapNodeTypes.js";
 export {
 	type FieldHasDefault,
 	type InsertableObjectFromSchemaRecord,
