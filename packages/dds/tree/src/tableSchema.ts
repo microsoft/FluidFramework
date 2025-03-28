@@ -32,6 +32,8 @@ import {
 // - Explore options for hiding various system types below.
 //   Most likely need to be exported, but we can probably hide them in a namespace.
 
+const tableSchemaFactorySubScope = "table";
+
 /**
  * A key to uniquely identify a cell in a {@link ITable}.
  * @alpha @sealed
@@ -151,9 +153,9 @@ export interface CreateTableSchemaParameters<
 	TCell extends ImplicitAllowedTypes,
 	TColumnProps extends readonly TreeNodeSchema[],
 	TRowProps extends readonly TreeNodeSchema[],
-	Scope extends string | undefined,
+	TInputScope extends string | undefined,
 > {
-	readonly schemaFactory: SchemaFactoryAlpha<Scope>;
+	readonly schemaFactory: SchemaFactoryAlpha<TInputScope>;
 	readonly cellSchema: TCell;
 
 	// TODO: make props optional
@@ -175,9 +177,8 @@ export function createTableSchema<
 >(props: CreateTableSchemaParameters<TCell, TColumnProps, TRowProps, TInputScope>) {
 	const { schemaFactory: inputSchemaFactory, cellSchema, columnProps, rowProps } = props;
 
-	const tableScope = "table";
-	const schemaFactory = inputSchemaFactory.scopedFactory(tableScope);
-	type Scope = ScopedSchemaName<TInputScope, typeof tableScope>;
+	const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
+	type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
 
 	type CellValueType = TreeNodeFromImplicitAllowedTypes<TCell>;
 	type CellInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TCell>;
