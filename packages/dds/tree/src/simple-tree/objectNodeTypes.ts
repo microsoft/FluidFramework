@@ -9,37 +9,37 @@ import type {
 	InsertableObjectFromSchemaRecord,
 	SimpleKeyMap,
 } from "./objectNode.js";
-import type { ImplicitFieldSchema, FieldSchema } from "./schemaTypes.js";
+import type { ImplicitFieldSchema, FieldSchemaAlpha } from "./schemaTypes.js";
 import { NodeKind, type TreeNodeSchemaClass, type TreeNodeSchema } from "./core/index.js";
 import type { FieldKey } from "../core/index.js";
+import type { SimpleObjectFieldSchema, SimpleObjectNodeSchema } from "./simpleSchema.js";
 
 /**
  * A schema for {@link TreeObjectNode}s.
- * @internal
  * @sealed
- * @privateRemarks
- * This is a candidate for being promoted to the public package API.
+ * @alpha
  */
 export interface ObjectNodeSchema<
-	TName extends string = string,
-	T extends
+	out TName extends string = string,
+	in out T extends
 		RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>,
 	ImplicitlyConstructable extends boolean = boolean,
-	TCustomMetadata = unknown,
+	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaClass<
-		TName,
-		NodeKind.Object,
-		TreeObjectNode<T, TName>,
-		object & InsertableObjectFromSchemaRecord<T>,
-		ImplicitlyConstructable,
-		T,
-		never,
-		TCustomMetadata
-	> {
+			TName,
+			NodeKind.Object,
+			TreeObjectNode<T, TName>,
+			InsertableObjectFromSchemaRecord<T>,
+			ImplicitlyConstructable,
+			T,
+			never,
+			TCustomMetadata
+		>,
+		SimpleObjectNodeSchema<TCustomMetadata> {
 	/**
 	 * From property keys to the associated schema.
 	 */
-	readonly fields: ReadonlyMap<string, FieldSchema>;
+	readonly fields: ReadonlyMap<string, FieldSchemaAlpha & SimpleObjectFieldSchema>;
 }
 
 /**
@@ -68,7 +68,7 @@ export interface ObjectNodeSchemaInternalData {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export const ObjectNodeSchema = {
 	/**

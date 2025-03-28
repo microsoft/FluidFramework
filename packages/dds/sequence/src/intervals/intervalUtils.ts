@@ -7,15 +7,15 @@
 
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	// eslint-disable-next-line import/no-deprecated
 	Client,
-	// eslint-disable-next-line import/no-deprecated
 	PropertiesManager,
 	PropertySet,
 	SlidingPreference,
 	SequencePlace,
 	Side,
 } from "@fluidframework/merge-tree/internal";
+
+import type { SequenceInterval } from "./sequenceInterval.js";
 
 /**
  * Basic interval abstraction
@@ -172,7 +172,7 @@ export interface ISerializableInterval extends IInterval {
 	getIntervalId(): string;
 }
 
-export type ISerializableIntervalPrivate<T extends ISerializableInterval> = T & {
+export type ISerializableIntervalPrivate = SequenceInterval & {
 	propertyManager?: PropertiesManager;
 };
 
@@ -217,10 +217,9 @@ export type CompressedSerializedInterval =
 
 /**
  * @sealed
- * @deprecated The methods within have substitutions
  * @internal
  */
-export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
+export interface IIntervalHelpers<TInterval extends ISerializableInterval = SequenceInterval> {
 	/**
 	 *
 	 * @param label - label of the interval collection this interval is being added to. This parameter is
@@ -240,7 +239,6 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 		label: string,
 		start: SequencePlace | undefined,
 		end: SequencePlace | undefined,
-		// eslint-disable-next-line import/no-deprecated
 		client: Client | undefined,
 		intervalType: IntervalType,
 		op?: ISequencedDocumentMessage,

@@ -129,6 +129,7 @@ export class SharedTreeSemanticAgent<TRoot extends ImplicitFieldSchema> {
 					create,
 				};
 				const code = processLlmCode(functionCode);
+				args?.log?.(`### Generated Code\n\n\`\`\`js\n${code}\n\`\`\`\n\n`);
 				// eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
 				const fn = new Function(paramsName, code) as (p: typeof params) => void;
 				fn(params);
