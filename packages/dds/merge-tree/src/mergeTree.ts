@@ -602,9 +602,9 @@ export class MergeTree {
 
 	public readonly attributionPolicy: AttributionPolicy | undefined;
 
-	public localPerspective: Perspective = new LocalDefaultPerspective(
-		this.collabWindow.clientId,
-	);
+	public get localPerspective(): Perspective {
+		return this.collabWindow.localPerspective;
+	}
 
 	/**
 	 * Whether or not all blocks in the mergeTree currently have information about local partial lengths computed.
@@ -737,7 +737,7 @@ export class MergeTree {
 		this.collabWindow.minSeq = minSeq;
 		this.collabWindow.collaborating = true;
 		this.collabWindow.currentSeq = currentSeq;
-		this.localPerspective = new LocalDefaultPerspective(localClientId);
+		this.collabWindow.localPerspective = new LocalDefaultPerspective(localClientId);
 		this.nodeUpdateLengthNewStructure(this.root, true);
 	}
 
