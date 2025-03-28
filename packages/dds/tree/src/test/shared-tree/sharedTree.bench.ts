@@ -49,6 +49,7 @@ import {
 	chunkFromJsonTrees,
 	flexTreeViewWithContent,
 	toJsonableTree,
+	type SharedTreeWithContainerRuntime,
 } from "../utils.js";
 import { insert } from "../sequenceRootUtils.js";
 import { cursorFromInsertable, TreeViewConfiguration } from "../../simple-tree/index.js";
@@ -350,7 +351,7 @@ describe("SharedTree benchmarks", () => {
 
 						// Measure
 						const before = state.timer.now();
-						provider.processMessages();
+						provider.synchronizeMessages();
 						const after = state.timer.now();
 						duration = state.timer.toSeconds(before, after);
 						// Collect data
@@ -401,7 +402,15 @@ describe("SharedTree benchmarks", () => {
 							// This block generates commits that are all out of date to the same degree
 							for (let iCommit = 0; iCommit < commitCount; iCommit++) {
 								for (let iPeer = 0; iPeer < peerCount; iPeer++) {
-									provider.processSomeMessages(opsPerCommit);
+									<<<<<<< HEAD
+									provider.processSomeMessages(opsPerCommit)
+									=======
+									provider.synchronizeMessages(
+									{
+										count: opsPerCommit;
+									}
+									)
+									>>>>>>> main
 									const peer = provider.trees[iPeer];
 									insert(peer.kernel.checkout, 0, `p${iPeer}c${iCommit}`);
 								}
@@ -414,7 +423,15 @@ describe("SharedTree benchmarks", () => {
 							for (let iCommit = 0; iCommit < sampleSize; iCommit++) {
 								for (let iPeer = 0; iPeer < peerCount; iPeer++) {
 									const before = state.timer.now();
-									provider.processSomeMessages(opsPerCommit);
+									<<<<<<< HEAD
+									provider.processSomeMessages(opsPerCommit)
+									=======
+									provider.synchronizeMessages(
+									{
+										count: opsPerCommit;
+									}
+									)
+									>>>>>>> main
 									const after = state.timer.now();
 									timeSum += state.timer.toSeconds(before, after);
 									// We still generate commits because it affects local branch rebasing
@@ -454,47 +471,26 @@ describe("SharedTree benchmarks", () => {
 			);
 			const sender = provider.trees[0];
 			const receiver = provider.trees[1];
-			provider.pauseProcessing(sender);
-			provider.pauseProcessing(receiver);
+			sender.containerRuntime.pauseInboundProcessing();
+			receiver.containerRuntime.pauseInboundProcessing();
 			return { provider, sender, receiver };
 		}
 
 		/**
 		 * Helper function to send local commits from a given tree.
+		 * In turn based flush mode, the messages won't be sequenced until flush is called explicitly
+		 * on the tree's container runtime.
+		 * In Immediate flush mode, the messages will be flushed and sequenced immediately. So, this
+		 * function will behave similar to 'sequenceLocalCommits'.
 		 */
-		function sendLocalCommits(tree: ISharedTree, count: number, commitPrefix: string) {
+		function sendLocalCommits(
+			tree: SharedTreeWithContainerRuntime,
+			count: number,
+			commitPrefix: string,
+		) {
 			for (let iCommit = 0; iCommit < count; iCommit++) {
 				insert(tree.kernel.checkout, 0, `${commitPrefix}${iCommit}`);
 			}
-		}
-
-		/**
-		 * Helper function to sequence all the existing commits on the given tree, i.e., commits that
-		 * were sent but not sequenced.
-		 */
-		function sequenceExistingCommits(tree: ISharedTree, provider: TestTreeProviderLite) {
-			provider.flushMessages(tree);
-		}
-
-		/**
-		 * Helper function that sends and sequences local commits from a given tree.
-		 */
-		function sequenceLocalCommits(
-			tree: ISharedTree,
-			count: number,
-			commitPrefix: string,
-			provider: TestTreeProviderLite,
-		) {
-			sendLocalCommits(tree, count, commitPrefix);
-			provider.flushMessages(tree);
-		}
-
-		/**
-		 * Helper function that processes all sequenced commits on a given tree.
-		 */
-		function receiveSequencedCommits(tree: ISharedTree, provider: TestTreeProviderLite) {
-			provider.resumeProcessing(tree);
-			provider.processMessages(false /* flush */);
 		}
 
 		describe("Rebasing inbound bunch over local changes", () => {
@@ -672,8 +668,13 @@ describe("SharedTree benchmarks", () => {
 							FlushMode.TurnBased,
 						);
 						const tree = provider.trees[0];
-						provider.setConnected(tree, true);
+						<<<<<<< HEAD
+						provider.setConnected(tree, true)
 						const view = provider.trees[0].viewWith(
+=======
+						tree.containerRuntime.connected = true;
+						const view = tree.viewWith(
+>>>>>>> main
 							new TreeViewConfiguration({
 								schema: StringArray,
 							}),

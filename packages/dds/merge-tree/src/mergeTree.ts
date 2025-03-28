@@ -35,6 +35,7 @@ import {
 	MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback.js";
 import {
+	LeafAction,
 	NodeAction,
 	backwardExcursion,
 	depthFirstNodeWalk,
@@ -106,7 +107,6 @@ import {
 import {
 	copyPropertiesAndManager,
 	PropertiesManager,
-	PropertiesRollback,
 	type PropsOrAdjust,
 } from "./segmentPropertiesManager.js";
 import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
@@ -602,9 +602,9 @@ export class MergeTree {
 
 	public readonly attributionPolicy: AttributionPolicy | undefined;
 
-	public localPerspective: Perspective = new LocalDefaultPerspective(
-		this.collabWindow.clientId,
-	);
+	public get localPerspective(): Perspective {
+		return this.collabWindow.localPerspective;
+	}
 
 	/**
 	 * Whether or not all blocks in the mergeTree currently have information about local partial lengths computed.
@@ -737,7 +737,7 @@ export class MergeTree {
 		this.collabWindow.minSeq = minSeq;
 		this.collabWindow.collaborating = true;
 		this.collabWindow.currentSeq = currentSeq;
-		this.localPerspective = new LocalDefaultPerspective(localClientId);
+		this.collabWindow.localPerspective = new LocalDefaultPerspective(localClientId);
 		this.nodeUpdateLengthNewStructure(this.root, true);
 	}
 
@@ -1145,7 +1145,7 @@ export class MergeTree {
 								firstRemove.localSeq,
 							);
 
-				const slidSegment = slidePerspective.nextSegment(this, seg, forward);
+				const slidSegment = this.nextSegment(slidePerspective, seg, forward);
 				return (
 					this.getPosition(slidSegment, perspective) +
 					(forward ? 0 : slidSegment.cachedLength === 0 ? 0 : slidSegment.cachedLength - 1)
@@ -1154,6 +1154,31 @@ export class MergeTree {
 			return this.getPosition(seg, perspective) + refPos.getOffset();
 		}
 		return DetachedReferencePosition;
+	}
+
+	/**
+	 * Returns the immediately adjacent segment in the specified direction from this perspective.
+	 * There may actually be multiple segments between the given segment and the returned segment,
+	 * but they were either inserted after this perspective, or have been removed before this perspective.
+	 *
+	 * @param segment - The segment to start from.
+	 * @param forward - The direction to search.
+	 * @returns the next segment in the specified direction, or the start or end of the tree if there is no next segment.
+	 */
+	private nextSegment(
+		perspective: Perspective,
+		segment: ISegmentLeaf,
+		forward: boolean = true,
+	): ISegmentLeaf {
+		let next: ISegmentLeaf | undefined;
+		const action = (seg: ISegmentLeaf): boolean | undefined => {
+			if (perspective.isSegmentPresent(seg)) {
+				next = seg;
+				return LeafAction.Exit;
+			}
+		};
+		(forward ? forwardExcursion : backwardExcursion)(segment, action);
+		return next ?? (forward ? this.endOfTree : this.startOfTree);
 	}
 
 	/**
@@ -1851,7 +1876,6 @@ export class MergeTree {
 	 * @param clientId - The id of the client making the annotate
 	 * @param seq - The sequence number of the annotate operation
 	 * @param opArgs - The op args for the annotate op. this is passed to the merge tree callback if there is one
-	 * @param rollback - Whether this is for a local rollback and what kind
 	 */
 	public annotateRange(
 		start: number,
@@ -1860,7 +1884,6 @@ export class MergeTree {
 		perspective: Perspective,
 		stamp: OperationStamp,
 		opArgs: IMergeTreeDeltaOpArgs,
-		rollback: PropertiesRollback = PropertiesRollback.None,
 	): void {
 		if (propsOrAdjust.adjust !== undefined) {
 			errorIfOptionNotTrue(this.options, "mergeTreeEnableAnnotateAdjust");
@@ -1887,7 +1910,7 @@ export class MergeTree {
 				stamp.seq,
 				this.collabWindow.minSeq,
 				this.collabWindow.collaborating,
-				rollback,
+				opArgs?.rollback === true,
 			);
 
 			if (!isRemoved(segment)) {
@@ -2272,7 +2295,10 @@ export class MergeTree {
 				// Note: optional chaining short-circuits:
 				// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining#short-circuiting
 				this.mergeTreeDeltaCallback?.(
-					{ op: createInsertSegmentOp(this.findRollbackPosition(segment), segment) },
+					{
+						op: createInsertSegmentOp(this.findRollbackPosition(segment), segment),
+						rollback: true,
+					},
 					{
 						operation: MergeTreeDeltaType.INSERT,
 						deltaSegments: [{ segment }],
@@ -2317,7 +2343,7 @@ export class MergeTree {
 						start + segment.cachedLength,
 						this.localPerspective,
 						removeStamp,
-						{ op: removeOp },
+						{ op: removeOp, rollback: true },
 					);
 				} /* op.type === MergeTreeDeltaType.ANNOTATE */ else {
 					const props = pendingSegmentGroup.previousProps![i];
@@ -2332,8 +2358,7 @@ export class MergeTree {
 						{ props },
 						this.localPerspective,
 						annotateStamp,
-						{ op: annotateOp },
-						PropertiesRollback.Rollback,
+						{ op: annotateOp, rollback: true },
 					);
 					i++;
 				}

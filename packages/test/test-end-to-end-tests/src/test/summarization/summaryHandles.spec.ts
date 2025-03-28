@@ -62,8 +62,6 @@ describeCompat.skip(
 		});
 
 		it("A data store id with special character `[` works properly with summary handles", async () => {
-			// Enable short ids for this test to create a data store with special character.
-			configProvider.set("Fluid.Runtime.UseShortIds", true);
 			// Enable single-commit summaries so that when the test runs with old odsp driver, it doesn't fail with summary nacks.
 			configProvider.set("Fluid.Container.summarizeProtocolTree2", true);
 			const container = await provider.createDetachedContainer(runtimeFactory, {
