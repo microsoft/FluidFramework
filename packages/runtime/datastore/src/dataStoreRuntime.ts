@@ -223,7 +223,8 @@ export class FluidDataStoreRuntime
 	/**
 	 * The compatibility details of the DataStore layer that is exposed to the Runtime layer
 	 * for validating Runtime-DataStore compatibility.
-	 * @remarks The type of this should be ILayerCompatDetails. However, ILayerCompatDetails is internal and this class
+	 * @remarks This is for internal use only.
+	 * The type of this should be ILayerCompatDetails. However, ILayerCompatDetails is internal and this class
 	 * is currently marked as legacy alpha. So, using unknown here.
 	 */
 	public readonly ILayerCompatDetails?: unknown = dataStoreCompatDetailsForRuntime;

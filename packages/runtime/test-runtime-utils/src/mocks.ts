@@ -930,6 +930,9 @@ export class MockFluidDataStoreRuntime
 		return factory.create(this, id ?? uuid());
 	}
 
+	/**
+	 * @remarks This is for internal use only.
+	 */
 	public ILayerCompatDetails?: unknown;
 
 	public addChannel(channel: IChannel): void {}
