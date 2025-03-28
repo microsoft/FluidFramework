@@ -482,8 +482,17 @@ export function treeNodeFromAnchor(anchorNode: AnchorNode): TreeNode | TreeValue
 	}
 
 	const flexNode = flexNodeFromAnchor(anchorNode);
-	const classSchema = getTreeNodeSchemaFromHydratedFlexNode(flexNode);
+	return createTreeNodeFromInner(flexNode);
+}
+
+/**
+ * Constructs a TreeNode from an InnerNode.
+ * @remarks
+ * This does not do caching or validation: caller must ensure duplicate nodes for a given inner node are not created, and that the inner node is valid.
+ */
+export function createTreeNodeFromInner(innerNode: InnerNode): TreeNode | TreeValue {
+	const classSchema = getTreeNodeSchemaFromHydratedFlexNode(innerNode);
 	return typeof classSchema === "function"
-		? new classSchema(flexNode as unknown as InternalTreeNode)
-		: (classSchema as { create(data: FlexTreeNode): TreeValue }).create(flexNode);
+		? new classSchema(innerNode as unknown as InternalTreeNode)
+		: (classSchema as { create(data: InnerNode): TreeValue }).create(innerNode);
 }
