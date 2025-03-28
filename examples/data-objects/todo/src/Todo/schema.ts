@@ -11,7 +11,6 @@ import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 
 const builder = new SchemaFactory("com.app.todo");
 
-// TODO: not sure if this is needed if we generate ids with date.
 export class TodoTreeItem extends builder.object("TodoTreeItem", {
 	text: builder.handle,
 	detailedText: builder.handle,

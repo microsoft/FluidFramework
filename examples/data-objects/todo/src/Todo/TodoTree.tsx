@@ -11,16 +11,11 @@ import { SharedTree, type ITree, type TreeView } from "@fluidframework/tree/lega
 import React from "react";
 import { v4 as uuid } from "uuid";
 
-// eslint-disable-next-line import/no-internal-modules
-import type { ITodoItemInitialState } from "../TodoItem/TodoItem.js";
+import type { ITodoItemInitialState } from "../TodoItem/index.js";
 
-import { TodoTreeView } from "./TodoTreeView.js";
-import { TodoTreeItem, TodoTree, treeConfiguration } from "./schema.js";
+import { TodoTreeItem, treeConfiguration, TodoTree, TodoTreeView } from "./index.js";
 
 export const todoTreeName = "TodoTree";
-
-// const todoItemsKey = "todoTree-items";
-// const todoTitleKey = "todoTree-title";
 
 export const getDirectLink = (itemId: string) => {
 	const pathParts = window.location.pathname.split("/");
@@ -63,7 +58,6 @@ export class TodoTreeDataObject extends TreeDataObject<TreeView<typeof TodoTree>
 		text.insertText(0, newItemText);
 		const detailedText = SharedString.create(this.runtime);
 
-		// Create a new todo item
 		const todoItem = new TodoTreeItem({
 			text: text.handle,
 			detailedText: detailedText.handle,
@@ -71,7 +65,6 @@ export class TodoTreeDataObject extends TreeDataObject<TreeView<typeof TodoTree>
 		});
 
 		// Generate an ID that we can sort on later, and store the handle.
-		// TODO: if we use built in id generator in tree, we will not be able to sort by date.
 		const id = `${Date.now()}-${uuid()}`;
 
 		this.treeView.root.items.set(id, todoItem);

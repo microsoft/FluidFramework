@@ -13,9 +13,8 @@ import { TodoItemView } from "../TodoItem/index.js";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.css";
-import type { TodoTreeItem } from "./schema.js";
 
-import type { TodoTreeDataObject } from "./index.js";
+import type { TodoTreeDataObject, TodoTreeItem } from "./index.js";
 
 export interface TodoViewProps {
 	readonly todoModel: TodoTreeDataObject;

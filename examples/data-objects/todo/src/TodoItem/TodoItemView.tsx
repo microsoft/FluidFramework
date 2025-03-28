@@ -14,8 +14,7 @@ import React, { useEffect, useState } from "react";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.css";
-// eslint-disable-next-line import/no-internal-modules
-import type { TodoTreeItem } from "../Todo/schema.js";
+import type { TodoTreeItem } from "../Todo/index.js";
 
 interface TodoItemViewProps {
 	readonly todoItemModel: TodoTreeItem;
@@ -31,14 +30,12 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
 	const [detailsVisible, setDetailsVisible] = useState<boolean>(false);
 
 	useEffect(() => {
-		// Resolve itemText (in case it's async)
 		void Promise.resolve(todoItemModel.text.get()).then((text) => {
 			setItemText(text as SharedString); // cast if necessary
 		});
 	}, [todoItemModel]);
 
 	useEffect(() => {
-		// Resolve itemText (in case it's async)
 		void Promise.resolve(todoItemModel.detailedText.get()).then((text) => {
 			setDetailedText(text as SharedString); // cast if necessary
 		});
@@ -49,7 +46,6 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
 			setChecked(todoItemModel.getCheckedState());
 		};
 
-		// TODO: connect listeners if needed
 		Tree.on(todoItemModel, "treeChanged", refreshCheckedStateFromModel);
 		refreshCheckedStateFromModel();
 
