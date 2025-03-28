@@ -305,7 +305,7 @@ export class TestTreeProvider {
 	private static async getTree(container: IContainer): Promise<SharedTree> {
 		const dataObject = await container.getEntryPoint();
 		assert(dataObject instanceof TestFluidObjectInternal);
-		const tree = await dataObject.getSharedObject(TestTreeProvider.treeId);
+		const tree = await dataObject.getInitialSharedObject(TestTreeProvider.treeId);
 		return tree as SharedTree;
 	}
 

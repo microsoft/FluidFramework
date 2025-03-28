@@ -65,7 +65,7 @@ export class TestFluidObject implements ITestFluidObject {
 		public readonly runtime: IFluidDataStoreRuntime,
 		public readonly channel: IFluidDataStoreChannel,
 		public readonly context: IFluidDataStoreContext,
-		private readonly factoryEntriesMap: Map<string, IChannelFactory<ISharedObject>>,
+		private readonly factoryEntriesMap: ReadonlyMap<string, IChannelFactory<ISharedObject>>,
 	) {
 		this.handle = new FluidObjectHandle(this, "", runtime.objectsRoutingContext);
 	}
@@ -126,6 +126,20 @@ export class TestFluidObject implements ITestFluidObject {
 export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFactory]>;
 
 /**
+ * Kind of test data object which {@link TestFluidObjectFactory} can create.
+ * @internal
+ */
+export type TestDataObjectKind = new (
+	runtime: IFluidDataStoreRuntime,
+	channel: IFluidDataStoreChannel,
+	context: IFluidDataStoreContext,
+	factoryEntriesMap: ReadonlyMap<string, IChannelFactory<ISharedObject>>,
+) => IFluidLoadable & {
+	request(request: IRequest): Promise<IResponse>;
+	initialize(existing: boolean): Promise<void>;
+};
+
+/**
  * Creates a factory for a TestFluidObject with the given object factory entries. It creates a data store runtime
  * with the object factories in the entry list. All the entries with an id other than undefined are passed to the
  * Fluid object so that it can create a shared object for each.
@@ -170,15 +184,7 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 	constructor(
 		private readonly factoryEntries: ChannelFactoryRegistry,
 		public readonly type = "TestFluidObjectFactory",
-		private readonly dataObjectKind: new (
-			runtime: IFluidDataStoreRuntime,
-			channel: IFluidDataStoreChannel,
-			context: IFluidDataStoreContext,
-			factoryEntriesMap: Map<string, IChannelFactory<ISharedObject>>,
-		) => IFluidLoadable & {
-			request(request: IRequest): Promise<IResponse>;
-			initialize(existing: boolean): Promise<void>;
-		} = TestFluidObject,
+		private readonly dataObjectKind: TestDataObjectKind = TestFluidObject,
 	) {}
 
 	public async instantiateDataStore(

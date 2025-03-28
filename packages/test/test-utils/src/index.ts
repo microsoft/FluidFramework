@@ -26,6 +26,7 @@ export {
 	ChannelFactoryRegistry,
 	TestFluidObject,
 	TestFluidObjectFactory,
+	TestDataObjectKind,
 } from "./testFluidObject.js";
 export {
 	createDocumentId,
