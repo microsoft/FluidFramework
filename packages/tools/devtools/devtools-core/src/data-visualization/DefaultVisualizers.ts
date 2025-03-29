@@ -8,6 +8,7 @@
  * implementations for our DDSs.
  */
 
+import { DataObject } from "@fluidframework/aqueduct/internal";
 import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import {
@@ -25,7 +26,11 @@ import { FieldKind, SharedTree } from "@fluidframework/tree/internal";
 
 import { EditType } from "../CommonInterfaces.js";
 
-import type { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization.js";
+import type {
+	VisualizeChildData,
+	VisualizeDataObject,
+	VisualizeSharedObject,
+} from "./DataVisualization.js";
 import {
 	concatenateTypes,
 	determineNodeKind,
@@ -101,6 +106,37 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
 			throw new Error("Unrecognized node kind.");
 		}
 	}
+};
+
+/**
+ * Wrapper class for {@link DataObject} to provide a {@link ISharedDirectory} root.
+ * @remarks Intended for devtools internal use only.
+ */
+export class VisualDataObject extends DataObject {
+	public override get root(): ISharedDirectory {
+		return super.root;
+	}
+}
+
+/**
+ * Default {@link VisualizeSharedObject} for {@link DataObject}.
+ */
+export const visualizeDataObject: VisualizeDataObject = async (
+	dataObject: DataObject,
+	visualizeChildData: VisualizeChildData,
+): Promise<FluidObjectTreeNode> => {
+	/**
+	 * @remarks Typcasted to {@link VisualDataObject} without additional check to avoid redundancy as multiple type checks are done prior to assigning the corresponding visualizer.
+	 */
+	const dataObjectRoot = (dataObject as VisualDataObject).root;
+	const renderedChildData = await visualizeDirectory(dataObjectRoot, visualizeChildData);
+	return {
+		fluidObjectId: dataObjectRoot.id,
+		children: renderedChildData.children,
+		metadata: renderedChildData.metadata,
+		typeMetadata: "DataObject",
+		nodeKind: VisualNodeKind.FluidTreeNode,
+	};
 };
 
 /**
@@ -336,6 +372,7 @@ export const visualizeUnknownSharedObject: VisualizeSharedObject = async (
 
 /**
  * List of default visualizers included in the library.
+ * @remarks {@link @fluidframework/aqueduct#DataObject} does not have type information, thus not included in the list.
  */
 export const defaultVisualizers: Record<string, VisualizeSharedObject> = {
 	[SharedCell.getFactory().type]: visualizeSharedCell,
