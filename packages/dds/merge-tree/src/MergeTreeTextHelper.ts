@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IIntegerRange } from "./client.js";
-import { MergeTree } from "./mergeTree.js";
-import { ISegmentPrivate } from "./mergeTreeNodes.js";
-import { IMergeTreeTextHelper, TextSegment } from "./textSegment.js";
+import type { IIntegerRange } from "./client.js";
+import type { MergeTree } from "./mergeTree.js";
+import type { ISegmentPrivate } from "./mergeTreeNodes.js";
+import type { Perspective } from "./perspective.js";
+import { TextSegment } from "./textSegment.js";
 
 interface ITextAccumulator {
 	textSegment: TextSegment;
@@ -14,24 +15,29 @@ interface ITextAccumulator {
 	parallelArrays?: boolean;
 }
 
+/**
+ * @internal
+ */
+export interface IMergeTreeTextHelper {
+	getText(perspective: Perspective, placeholder: string, start?: number, end?: number): string;
+}
+
 export class MergeTreeTextHelper implements IMergeTreeTextHelper {
 	constructor(private readonly mergeTree: MergeTree) {}
 
 	public getText(
-		refSeq: number,
-		clientId: number,
+		perspective: Perspective,
 		placeholder = "",
 		start?: number,
 		end?: number,
 	): string {
-		const range = this.getValidRange(start, end, refSeq, clientId);
+		const range = this.getValidRange(start, end, perspective);
 
 		const accum: ITextAccumulator = { textSegment: new TextSegment(""), placeholder };
 
 		this.mergeTree.mapRange<ITextAccumulator>(
 			gatherText,
-			refSeq,
-			clientId,
+			perspective,
 			accum,
 			range.start,
 			range.end,
@@ -42,11 +48,10 @@ export class MergeTreeTextHelper implements IMergeTreeTextHelper {
 	private getValidRange(
 		start: number | undefined,
 		end: number | undefined,
-		refSeq: number,
-		clientId: number,
+		perspective: Perspective,
 	): IIntegerRange {
 		const range: IIntegerRange = {
-			end: end ?? this.mergeTree.getLength(refSeq, clientId),
+			end: end ?? this.mergeTree.getLength(perspective),
 			start: start ?? 0,
 		};
 		return range;

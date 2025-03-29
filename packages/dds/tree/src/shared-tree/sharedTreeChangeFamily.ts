@@ -87,7 +87,6 @@ export class SharedTreeChangeFamily
 			this.modularChangeFamily,
 			mintRevisionTag,
 			changeReceiver,
-			this.idCompressor,
 		);
 	}
 

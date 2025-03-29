@@ -34,11 +34,10 @@ import {
 	type GraphCommit,
 	rootFieldKey,
 } from "../../core/index.js";
-import {
-	type DefaultChangeset,
-	type DefaultEditBuilder,
-	type ModularChangeset,
-	cursorForJsonableTreeNode,
+import type {
+	DefaultChangeset,
+	DefaultEditBuilder,
+	ModularChangeset,
 } from "../../feature-libraries/index.js";
 import { Tree } from "../../shared-tree/index.js";
 import type {
@@ -51,7 +50,12 @@ import type {
 	SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
 import { brand, disposeSymbol } from "../../util/index.js";
-import { SharedTreeTestFactory, StringArray, TestTreeProviderLite } from "../utils.js";
+import {
+	chunkFromJsonableTrees,
+	SharedTreeTestFactory,
+	StringArray,
+	TestTreeProviderLite,
+} from "../utils.js";
 
 import { createTree, createTreeSharedObject, TestSharedTreeCore } from "./utils.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
@@ -290,7 +294,7 @@ describe("SharedTreeCore", () => {
 			}),
 		);
 		view1.initialize(["A", "B"]);
-		provider.processMessages();
+		provider.synchronizeMessages();
 		const view2 = provider.trees[1].viewWith(
 			new TreeViewConfiguration({
 				schema: StringArray,
@@ -311,7 +315,7 @@ describe("SharedTreeCore", () => {
 			return Tree.runTransaction.rollback;
 		});
 
-		provider.processMessages();
+		provider.synchronizeMessages();
 		assert.deepEqual([...root1], ["A", "B"]);
 		assert.deepEqual([...root2], ["A", "B"]);
 
@@ -320,7 +324,7 @@ describe("SharedTreeCore", () => {
 			root1.insertAtEnd("C");
 		});
 
-		provider.processMessages();
+		provider.synchronizeMessages();
 		assert.deepEqual([...root1], ["A", "B", "C"]);
 		assert.deepEqual([...root2], ["A", "B", "C"]);
 	});
@@ -334,7 +338,7 @@ describe("SharedTreeCore", () => {
 			}),
 		);
 		view1.initialize(["A", "B"]);
-		provider.processMessages();
+		provider.synchronizeMessages();
 		const view2 = provider.trees[1].viewWith(
 			new TreeViewConfiguration({
 				schema: StringArray,
@@ -358,7 +362,7 @@ describe("SharedTreeCore", () => {
 		assert.deepEqual([...root1], ["B"]);
 		assert.deepEqual([...root2], ["A", "B"]);
 
-		provider.processMessages();
+		provider.synchronizeMessages();
 
 		assert.deepEqual([...root1], ["B"]);
 		assert.deepEqual([...root2], ["B"]);
@@ -368,7 +372,7 @@ describe("SharedTreeCore", () => {
 			root1.insertAtEnd("C");
 		});
 
-		provider.processMessages();
+		provider.synchronizeMessages();
 		assert.deepEqual([...root2], ["B", "C"]);
 		assert.deepEqual([...root2], ["B", "C"]);
 	});
@@ -649,7 +653,7 @@ function changeTree<TChange, TEditor extends DefaultEditBuilder>(
 	tree: SharedTreeCore<TEditor, TChange>,
 ): void {
 	const field = tree.getEditor().sequenceField({ parent: undefined, field: rootFieldKey });
-	field.insert(0, cursorForJsonableTreeNode({ type: brand("Node"), value: 42 }));
+	field.insert(0, chunkFromJsonableTrees([{ type: brand("Node"), value: 42 }]));
 }
 
 /** Returns the length of the trunk branch in the given tree. Acquired via unholy cast; use for glass-box tests only. */

@@ -25,21 +25,17 @@ import {
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
+import { MergeTreeTextHelper, type IMergeTreeTextHelper } from "./MergeTreeTextHelper.js";
 import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";
-import {
-	NonCollabClient,
-	UnassignedSequenceNumber,
-	UniversalSequenceNumber,
-} from "./constants.js";
+import { NonCollabClient, UniversalSequenceNumber } from "./constants.js";
 import { LocalReferencePosition, SlidingPreference } from "./localReference.js";
 import {
 	MergeTree,
 	errorIfOptionNotTrue,
+	isRemovedAndAcked,
 	type IMergeTreeOptionsInternal,
 } from "./mergeTree.js";
 import type {
-	IMergeTreeClientSequenceArgs,
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeDeltaOpArgs,
 	IMergeTreeMaintenanceCallbackArgs,
@@ -59,7 +55,6 @@ import {
 	createAdjustRangeOp,
 	createAnnotateMarkerOp,
 	createAnnotateRangeOp,
-	// eslint-disable-next-line import/no-deprecated
 	createGroupOp,
 	createInsertSegmentOp,
 	createObliterateRangeOp,
@@ -84,21 +79,26 @@ import {
 	type IMergeTreeAnnotateAdjustMsg,
 	type IMergeTreeObliterateSidedMsg,
 } from "./ops.js";
+import {
+	LocalReconnectingPerspective,
+	PriorPerspective,
+	type Perspective,
+} from "./perspective.js";
 import { PropertySet, type MapLike } from "./properties.js";
 import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
 import {
 	isInserted,
-	isMoved,
 	isRemoved,
 	overwriteInfo,
-	toMoveInfo,
-	type IInsertionInfo,
+	toRemovalInfo,
+	type IHasInsertionInfo,
 } from "./segmentInfos.js";
 import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
 import { SnapshotLoader } from "./snapshotLoader.js";
 import { SnapshotV1 } from "./snapshotV1.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
-import { IMergeTreeTextHelper } from "./textSegment.js";
+import type { OperationStamp } from "./stamps.js";
+import * as opstampUtils from "./stamps.js";
 
 type IMergeTreeDeltaRemoteOpArgs = Omit<IMergeTreeDeltaOpArgs, "sequencedMessage"> &
 	Required<Pick<IMergeTreeDeltaOpArgs, "sequencedMessage">>;
@@ -371,8 +371,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	): void {
 		this._mergeTree.mapRange(
 			handler,
-			this.getCurrentSeq(),
-			this.getClientId(),
+			this._mergeTree.localPerspective,
 			accum,
 			start,
 			end,
@@ -401,12 +400,17 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	): void {
 		let localInserts = 0;
 		let localRemoves = 0;
+		let localObliterates = 0;
 		walkAllChildSegments(this._mergeTree.root, (seg: ISegmentPrivate) => {
-			if (isInserted(seg) && seg.seq === UnassignedSequenceNumber) {
+			if (isInserted(seg) && opstampUtils.isLocal(seg.insert)) {
 				localInserts++;
 			}
-			if (isRemoved(seg) && seg.removedSeq === UnassignedSequenceNumber) {
-				localRemoves++;
+			if (isRemoved(seg) && opstampUtils.isLocal(seg.removes[seg.removes.length - 1])) {
+				if (seg.removes[seg.removes.length - 1].type === "setRemove") {
+					localRemoves++;
+				} else {
+					localObliterates++;
+				}
 			}
 			// Only serialize segments that have not been removed.
 			if (!isRemoved(seg)) {
@@ -420,6 +424,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				eventName: "LocalEditsInProcessGCData",
 				localInserts,
 				localRemoves,
+				localObliterates,
 			});
 		}
 	}
@@ -437,12 +442,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		if (!isSegmentLeaf(segment)) {
 			return -1;
 		}
-		return this._mergeTree.getPosition(
-			segment,
-			this.getCurrentSeq(),
-			this.getClientId(),
-			localSeq,
-		);
+
+		const perspective =
+			localSeq === undefined
+				? this._mergeTree.localPerspective
+				: new LocalReconnectingPerspective(this.getCurrentSeq(), this.getClientId(), localSeq);
+		return this._mergeTree.getPosition(segment, perspective);
 	}
 
 	/**
@@ -504,7 +509,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param relativePos - Id of marker (may be indirect) and whether position is before or after marker.
 	 */
 	public posFromRelativePos(relativePos: IRelativePosition): number {
-		return this._mergeTree.posFromRelativePos(relativePos);
+		return this._mergeTree.posFromRelativePos(relativePos, this._mergeTree.localPerspective);
 	}
 
 	public getMarkerFromId(id: string): ISegment | undefined {
@@ -514,43 +519,61 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	/**
 	 * Revert an op
 	 */
-	public rollback?(op: unknown, localOpMetadata: unknown): void {
+	public rollback(op: unknown, localOpMetadata: unknown): void {
 		this._mergeTree.rollback(op as IMergeTreeDeltaOp, localOpMetadata as SegmentGroup);
 	}
 
 	private applyObliterateRangeOp(opArgs: IMergeTreeDeltaOpArgs): void {
+		const { op, sequencedMessage } = opArgs;
 		assert(
-			opArgs.op.type === MergeTreeDeltaType.OBLITERATE ||
-				opArgs.op.type === MergeTreeDeltaType.OBLITERATE_SIDED,
+			op.type === MergeTreeDeltaType.OBLITERATE ||
+				op.type === MergeTreeDeltaType.OBLITERATE_SIDED,
 			0x866 /* Unexpected op type on range obliterate! */,
 		);
-		const op = opArgs.op;
-		const clientArgs = this.getClientSequenceArgs(opArgs);
+		const perspective = this.getOperationPerspective(sequencedMessage);
+		const stamp = this.getOperationStamp(sequencedMessage);
+
 		if (this._mergeTree.options?.mergeTreeEnableSidedObliterate) {
-			const { start, end } = this.getValidSidedRange(op, clientArgs);
-			this._mergeTree.obliterateRange(
-				start,
-				end,
-				clientArgs.referenceSequenceNumber,
-				clientArgs.clientId,
-				clientArgs.sequenceNumber,
-				opArgs,
-			);
+			const { start, end } = this.getValidSidedRange(op, perspective);
+			this._mergeTree.obliterateRange(start, end, perspective, stamp, opArgs);
 		} else {
 			assert(
 				op.type === MergeTreeDeltaType.OBLITERATE,
 				0xa43 /* Unexpected sided obliterate while mergeTreeEnableSidedObliterate is disabled */,
 			);
-			const range = this.getValidOpRange(op, clientArgs);
-			this._mergeTree.obliterateRange(
-				range.start,
-				range.end,
-				clientArgs.referenceSequenceNumber,
-				clientArgs.clientId,
-				clientArgs.sequenceNumber,
-				opArgs,
-			);
+			const { start, end } = this.getValidOpRange(op, perspective);
+			this._mergeTree.obliterateRange(start, end, perspective, stamp, opArgs);
 		}
+	}
+
+	private getOperationPerspective(
+		sequencedMessage: ISequencedDocumentMessage | undefined,
+	): Perspective {
+		if (!sequencedMessage) {
+			return this._mergeTree.localPerspective;
+		}
+
+		const clientId = this.getOrAddShortClientIdFromMessage(sequencedMessage);
+		const { referenceSequenceNumber: refSeq } = sequencedMessage;
+		return new PriorPerspective(refSeq, clientId);
+	}
+
+	/**
+	 * Returns the operation stamp to apply for a change, minting a new one local one if necessary.
+	 */
+	private getOperationStamp(
+		sequencedMessage: ISequencedDocumentMessage | undefined,
+	): OperationStamp {
+		if (!sequencedMessage) {
+			return this.getCollabWindow().mintNextLocalOperationStamp();
+		}
+
+		const { sequenceNumber: seq } = sequencedMessage;
+		const clientId = this.getOrAddShortClientIdFromMessage(sequencedMessage);
+		return {
+			seq,
+			clientId,
+		};
 	}
 
 	/**
@@ -558,22 +581,16 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param opArgs - The ops args for the op
 	 */
 	private applyRemoveRangeOp(opArgs: IMergeTreeDeltaOpArgs): void {
+		const { op, sequencedMessage } = opArgs;
 		assert(
-			opArgs.op.type === MergeTreeDeltaType.REMOVE,
+			op.type === MergeTreeDeltaType.REMOVE,
 			0x02d /* "Unexpected op type on range remove!" */,
 		);
-		const op = opArgs.op;
-		const clientArgs = this.getClientSequenceArgs(opArgs);
-		const range = this.getValidOpRange(op, clientArgs);
+		const perspective = this.getOperationPerspective(sequencedMessage);
+		const stamp = this.getOperationStamp(sequencedMessage);
+		const range = this.getValidOpRange(op, perspective);
 
-		this._mergeTree.markRangeRemoved(
-			range.start,
-			range.end,
-			clientArgs.referenceSequenceNumber,
-			clientArgs.clientId,
-			clientArgs.sequenceNumber,
-			opArgs,
-		);
+		this._mergeTree.markRangeRemoved(range.start, range.end, perspective, stamp, opArgs);
 	}
 
 	/**
@@ -581,23 +598,16 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param opArgs - The ops args for the op
 	 */
 	private applyAnnotateRangeOp(opArgs: IMergeTreeDeltaOpArgs): void {
+		const { op, sequencedMessage } = opArgs;
 		assert(
-			opArgs.op.type === MergeTreeDeltaType.ANNOTATE,
+			op.type === MergeTreeDeltaType.ANNOTATE,
 			0x02e /* "Unexpected op type on range annotate!" */,
 		);
-		const op = opArgs.op;
-		const clientArgs = this.getClientSequenceArgs(opArgs);
-		const range = this.getValidOpRange(op, clientArgs);
+		const perspective = this.getOperationPerspective(sequencedMessage);
+		const stamp = this.getOperationStamp(sequencedMessage);
+		const range = this.getValidOpRange(op, perspective);
 
-		this._mergeTree.annotateRange(
-			range.start,
-			range.end,
-			op,
-			clientArgs.referenceSequenceNumber,
-			clientArgs.clientId,
-			clientArgs.sequenceNumber,
-			opArgs,
-		);
+		this._mergeTree.annotateRange(range.start, range.end, op, perspective, stamp, opArgs);
 	}
 
 	/**
@@ -606,25 +616,19 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @returns True if the insert was applied. False if it could not be.
 	 */
 	private applyInsertOp(opArgs: IMergeTreeDeltaOpArgs): void {
+		const { op, sequencedMessage } = opArgs;
 		assert(
-			opArgs.op.type === MergeTreeDeltaType.INSERT,
+			op.type === MergeTreeDeltaType.INSERT,
 			0x02f /* "Unexpected op type on range insert!" */,
 		);
-		const op = opArgs.op;
-		const clientArgs = this.getClientSequenceArgs(opArgs);
-		const range = this.getValidOpRange(op, clientArgs);
+		const perspective = this.getOperationPerspective(sequencedMessage);
+		const stamp = this.getOperationStamp(sequencedMessage);
+		const range = this.getValidOpRange(op, perspective);
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		const segments = [this.specToSegment(op.seg)];
 
-		this._mergeTree.insertSegments(
-			range.start,
-			segments,
-			clientArgs.referenceSequenceNumber,
-			clientArgs.clientId,
-			clientArgs.sequenceNumber,
-			opArgs,
-		);
+		this._mergeTree.insertSegments(range.start, segments, perspective, stamp, opArgs);
 	}
 
 	/**
@@ -636,7 +640,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	private getValidSidedRange(
 		// eslint-disable-next-line import/no-deprecated
 		op: IMergeTreeObliterateSidedMsg | IMergeTreeObliterateMsg,
-		clientArgs: IMergeTreeClientSequenceArgs,
+		perspective: Perspective,
 	): {
 		start: InteriorSequencePlace;
 		end: InteriorSequencePlace;
@@ -662,11 +666,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 
 		// Validate if local op
-		if (clientArgs.clientId === this.getClientId()) {
-			const length = this._mergeTree.getLength(
-				this.getCollabWindow().currentSeq,
-				this.getClientId(),
-			);
+		if (perspective.clientId === this.getClientId()) {
+			const length = this._mergeTree.getLength(this._mergeTree.localPerspective);
 			if (start !== undefined && (start.pos >= length || start.pos < 0)) {
 				// start out of bounds
 				invalidPositions.push("start");
@@ -719,28 +720,20 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			| IMergeTreeRemoveMsg
 			// eslint-disable-next-line import/no-deprecated
 			| IMergeTreeObliterateMsg,
-		clientArgs: IMergeTreeClientSequenceArgs,
+		perspective: Perspective,
 	): IIntegerRange {
 		let start: number | undefined = op.pos1;
 		if (start === undefined && op.relativePos1) {
-			start = this._mergeTree.posFromRelativePos(
-				op.relativePos1,
-				clientArgs.referenceSequenceNumber,
-				clientArgs.clientId,
-			);
+			start = this._mergeTree.posFromRelativePos(op.relativePos1, perspective);
 		}
 
 		let end: number | undefined = op.pos2;
 		if (end === undefined && op.relativePos2) {
-			end = this._mergeTree.posFromRelativePos(
-				op.relativePos2,
-				clientArgs.referenceSequenceNumber,
-				clientArgs.clientId,
-			);
+			end = this._mergeTree.posFromRelativePos(op.relativePos2, perspective);
 		}
 
 		// Validate if local op
-		if (clientArgs.clientId === this.getClientId()) {
+		if (perspective.clientId === this.getClientId()) {
 			const length = this.getLength();
 
 			const invalidPositions: string[] = [];
@@ -785,45 +778,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 		// start and end are guaranteed to be non-null here, otherwise we throw above.
 		return { start: start!, end: end! };
-	}
-
-	/**
-	 * Gets the client args from the op if remote, otherwise uses the local clients info
-	 * @param sequencedMessage - The sequencedMessage to get the client sequence args for
-	 */
-	private getClientSequenceArgsForMessage(
-		sequencedMessage:
-			| ISequencedDocumentMessage
-			| Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">
-			| undefined,
-	): IMergeTreeClientSequenceArgs {
-		// If there this no sequenced message, then the op is local
-		// and unacked, so use this clients sequenced args
-		//
-		if (sequencedMessage) {
-			return {
-				clientId: this.getOrAddShortClientIdFromMessage(sequencedMessage),
-				referenceSequenceNumber: sequencedMessage.referenceSequenceNumber,
-				// Note: return value satisfies overload signatures despite the cast, as if input argument doesn't contain sequenceNumber,
-				// return value isn't expected to have it either.
-				sequenceNumber: (sequencedMessage as ISequencedDocumentMessage).sequenceNumber,
-			};
-		} else {
-			const segWindow = this.getCollabWindow();
-			return {
-				clientId: segWindow.clientId,
-				referenceSequenceNumber: segWindow.currentSeq,
-				sequenceNumber: this.getLocalSequenceNumber(),
-			};
-		}
-	}
-
-	/**
-	 * Gets the client args from the op if remote, otherwise uses the local clients info
-	 * @param opArgs - The op arg to get the client sequence args for
-	 */
-	private getClientSequenceArgs(opArgs: IMergeTreeDeltaOpArgs): IMergeTreeClientSequenceArgs {
-		return this.getClientSequenceArgsForMessage(opArgs.sequencedMessage);
 	}
 
 	private ackPendingSegment(opArgs: IMergeTreeDeltaRemoteOpArgs): void {
@@ -884,7 +838,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		if (!isSegmentLeaf(segment)) {
 			throw new UsageError(UNBOUND_SEGMENT_ERROR);
 		}
-		return this._mergeTree.getPosition(segment, currentSeq, clientId, localSeq);
+		const perspective = new LocalReconnectingPerspective(currentSeq, clientId, localSeq);
+		return this._mergeTree.getPosition(segment, perspective);
 	}
 
 	private resetPendingDeltaToOps(
@@ -942,14 +897,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					// if the segment has been removed or obliterated, there's no need to send the annotate op
 					// unless the remove was local, in which case the annotate must have come
 					// before the remove
-					if (
-						(!isRemoved(segment) ||
-							(segment.localRemovedSeq !== undefined &&
-								segment.removedSeq === UnassignedSequenceNumber)) &&
-						(!isMoved(segment) ||
-							(segment.localMovedSeq !== undefined &&
-								segment.movedSeq === UnassignedSequenceNumber))
-					) {
+					if (!isRemovedAndAcked(segment)) {
 						newOp =
 							resetOp.props === undefined
 								? createAdjustRangeOp(
@@ -968,28 +916,33 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 				case MergeTreeDeltaType.INSERT: {
 					assert(
-						isInserted(segment) && segment.seq === UnassignedSequenceNumber,
+						isInserted(segment) && opstampUtils.isLocal(segment.insert),
 						0x037 /* "Segment already has assigned sequence number" */,
 					);
-					const moveInfo = toMoveInfo(segment);
+					const removeInfo = toRemovalInfo(segment);
 
-					if (moveInfo !== undefined) {
+					if (removeInfo !== undefined && opstampUtils.isAcked(removeInfo.removes[0])) {
+						assert(
+							removeInfo.removes[0].type === "sliceRemove",
+							"Remove on insertion must be caused by obliterate.",
+						);
 						errorIfOptionNotTrue(
 							this._mergeTree.options,
 							"mergeTreeEnableObliterateReconnect",
 						);
-						if (moveInfo.movedSeq !== UnassignedSequenceNumber) {
-							// the segment was remotely obliterated, so is considered removed
-							// we set the seq to the universal seq and remove the local seq,
-							// so its length is not considered for subsequent local changes
-							// this allows us to not send the op as even the local client will ignore the segment
-							overwriteInfo<IInsertionInfo>(segment, {
+						// the segment was remotely obliterated, so is considered removed
+						// we set the seq to the universal seq and remove the local seq,
+						// so its length is not considered for subsequent local changes
+						// this allows us to not send the op as even the local client will ignore the segment
+						overwriteInfo<IHasInsertionInfo>(segment, {
+							insert: {
+								type: "insert",
 								seq: UniversalSequenceNumber,
 								localSeq: undefined,
 								clientId: NonCollabClient,
-							});
-							break;
-						}
+							},
+						});
+						break;
 					}
 
 					const segInsertOp: ISegment = segment.clone();
@@ -1003,14 +956,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				}
 
 				case MergeTreeDeltaType.REMOVE: {
-					if (
-						isRemoved(segment) &&
-						segment.localRemovedSeq !== undefined &&
-						segment.removedSeq === UnassignedSequenceNumber &&
-						(!isMoved(segment) ||
-							(segment.localMovedSeq !== undefined &&
-								segment.movedSeq === UnassignedSequenceNumber))
-					) {
+					// Only bother resubmitting if nobody else has removed it in the meantime.
+					// When that happens, the first removal will have been acked.
+					if (isRemoved(segment) && opstampUtils.isLocal(segment.removes[0])) {
 						newOp = createRemoveRangeOp(
 							segmentPosition,
 							segmentPosition + segment.cachedLength,
@@ -1020,14 +968,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				}
 				case MergeTreeDeltaType.OBLITERATE: {
 					errorIfOptionNotTrue(this._mergeTree.options, "mergeTreeEnableObliterateReconnect");
-					if (
-						isMoved(segment) &&
-						segment.localMovedSeq !== undefined &&
-						segment.movedSeq === UnassignedSequenceNumber &&
-						(!isRemoved(segment) ||
-							(segment.localRemovedSeq !== undefined &&
-								segment.removedSeq === UnassignedSequenceNumber))
-					) {
+					// Only bother resubmitting if nobody else has removed it in the meantime.
+					// When that happens, the first removal will have been acked.
+					if (isRemoved(segment) && opstampUtils.isLocal(segment.removes[0])) {
 						newOp = createObliterateRangeOp(
 							segmentPosition,
 							segmentPosition + segment.cachedLength,
@@ -1219,7 +1162,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			if (Array.isArray(segmentGroup)) {
 				if (segmentGroup.length === 0) {
 					// sometimes we rebase to an empty op
-					// eslint-disable-next-line import/no-deprecated
+
 					return createGroupOp();
 				}
 				firstGroup = segmentGroup[0];
@@ -1274,7 +1217,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			);
 			opList.push(...this.resetPendingDeltaToOps(resetOp, segmentGroup));
 		}
-		// eslint-disable-next-line import/no-deprecated
+
 		return opList.length === 1 ? opList[0] : createGroupOp(...opList);
 	}
 
@@ -1333,11 +1276,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return loader.initialize(storage);
 	}
 
-	private getLocalSequenceNumber(): number {
-		const segWindow = this.getCollabWindow();
-		return segWindow.collaborating ? UnassignedSequenceNumber : UniversalSequenceNumber;
-	}
-
 	// eslint-disable-next-line import/no-deprecated
 	localTransaction(groupOp: IMergeTreeGroupMsg): void {
 		for (const op of groupOp.ops) {
@@ -1382,14 +1320,21 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		segment: T | undefined;
 		offset: number | undefined;
 	} {
-		const { referenceSequenceNumber, clientId } =
-			this.getClientSequenceArgsForMessage(sequenceArgs);
-		return this._mergeTree.getContainingSegment(
-			pos,
-			referenceSequenceNumber,
-			clientId,
-			localSeq,
-		) as {
+		let perspective: Perspective;
+		const clientId =
+			sequenceArgs === undefined
+				? this.getClientId()
+				: this.getOrAddShortClientIdFromMessage(sequenceArgs);
+		const refSeq = sequenceArgs?.referenceSequenceNumber ?? this.getCollabWindow().currentSeq;
+		if (localSeq !== undefined) {
+			perspective = new LocalReconnectingPerspective(refSeq, clientId, localSeq);
+		} else if (sequenceArgs === undefined) {
+			perspective = this._mergeTree.localPerspective;
+		} else {
+			perspective = new PriorPerspective(refSeq, clientId);
+		}
+
+		return this._mergeTree.getContainingSegment(pos, perspective) as {
 			segment: T | undefined;
 			offset: number | undefined;
 		};
@@ -1472,7 +1417,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param forwards - Whether the desired marker comes before (false) or after (true) `startPos`
 	 */
 	searchForMarker(startPos: number, markerLabel: string, forwards = true): Marker | undefined {
-		const clientId = this.getClientId();
-		return this._mergeTree.searchForMarker(startPos, clientId, markerLabel, forwards);
+		return this._mergeTree.searchForMarker(startPos, markerLabel, forwards);
 	}
 }

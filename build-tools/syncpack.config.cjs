@@ -63,6 +63,14 @@ module.exports = {
 		},
 
 		{
+			label: "Ignore unsupported pnpm override entries",
+			dependencyTypes: ["pnpmOverrides"],
+			dependencies: ["json5@<1.0.2", "json5@>=2.0.0 <2.2.2", "oclif>@aws-sdk/client*"],
+			packages: ["build-tools-release-group-root"],
+			isIgnored: true,
+		},
+
+		{
 			label: "Deps in pnpm overrides should use caret dependency ranges",
 			dependencyTypes: ["pnpmOverrides"],
 			dependencies: ["**"],
@@ -105,6 +113,7 @@ module.exports = {
 				"@fluid-tools/version-tools",
 				"@fluidframework/build-tools",
 				"@fluidframework/bundle-size-tools",
+				"@fluidframework/build-tools-bin",
 			],
 			packages: ["**"],
 			range: "~",
