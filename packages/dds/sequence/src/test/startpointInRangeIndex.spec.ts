@@ -6,55 +6,67 @@
 import { strict as assert } from "assert";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { Client } from "@fluidframework/merge-tree/internal";
+import { TestClient } from "@fluidframework/merge-tree/internal/test";
 
 import { IStartpointInRangeIndex, StartpointInRangeIndex } from "../intervalIndex/index.js";
+import { type SequenceInterval } from "../intervals/index.js";
 
 import {
-	assertPlainNumberIntervals,
-	createTestInterval,
+	assertOrderedSequenceIntervals,
+	createTestSequenceInterval,
 	generateRandomIntervals,
-	type Interval,
 } from "./intervalIndexTestUtils.js";
 
-class TestStartpointInRangeIndex implements IStartpointInRangeIndex<Interval> {
-	private readonly intervals: Interval[];
+class TestStartpointInRangeIndex implements IStartpointInRangeIndex<SequenceInterval> {
+	private readonly intervals: SequenceInterval[];
 
-	constructor() {
+	constructor(private readonly client: TestClient) {
 		this.intervals = [];
 	}
 
-	add(interval: Interval) {
+	add(interval: SequenceInterval) {
 		this.intervals.push(interval);
 	}
 
-	remove(interval: Interval) {
+	remove(interval: SequenceInterval) {
 		const index = this.intervals.findIndex((i) => i === interval);
 		if (index !== -1) {
 			this.intervals.splice(index, 1);
 		}
 	}
 
-	findIntervalsWithStartpointInRange(start: number, end: number): Interval[] {
+	findIntervalsWithStartpointInRange(start: number, end: number): SequenceInterval[] {
 		return this.intervals.filter(
-			(interval) => interval.start >= start && interval.start <= end,
+			(interval) =>
+				this.client.localReferencePositionToPosition(interval.start) >= start &&
+				this.client.localReferencePositionToPosition(interval.start) <= end,
 		);
 	}
 }
 
 describe("findIntervalsWithStartpointInRange", () => {
 	// sort the query result by the interval startpoint value
-	const compareFn = (a: Interval, b: Interval) => {
-		if (a.start === b.start) {
-			return a.end - b.end;
+	const compareFn = (a: SequenceInterval, b: SequenceInterval) => {
+		const aEnd = client.localReferencePositionToPosition(a.end);
+		const bEnd = client.localReferencePositionToPosition(b.end);
+		const aStart = client.localReferencePositionToPosition(a.start);
+		const bStart = client.localReferencePositionToPosition(b.start);
+		if (aStart === bStart) {
+			return aEnd - bEnd;
 		}
-		return a.start - b.start;
+		return aStart - bStart;
 	};
-	let startpointInRangeIndex;
+	let startpointInRangeIndex: StartpointInRangeIndex;
+	let client: TestClient;
 	let results;
+	let createTestInterval: (p1, p2) => SequenceInterval;
 
 	beforeEach(() => {
-		startpointInRangeIndex = new StartpointInRangeIndex(undefined as any as Client);
+		client = new TestClient();
+		Array.from({ length: 100 }).forEach(() => client.insertTextLocal(0, "0123456789"));
+		startpointInRangeIndex = new StartpointInRangeIndex(client);
+		createTestInterval = (p1: number, p2: number) =>
+			createTestSequenceInterval(client, p1, p2);
 	});
 
 	describe("finds no intervals", () => {
@@ -106,9 +118,9 @@ describe("findIntervalsWithStartpointInRange", () => {
 
 		it("when quering the intervals which the startpoints exactly fall on the range boundary", () => {
 			results = startpointInRangeIndex.findIntervalsWithStartpointInRange(1, 1);
-			assertPlainNumberIntervals(results, [{ start: 1, end: 3 }]);
+			assertOrderedSequenceIntervals(client, results, [{ start: 1, end: 3 }]);
 			results = startpointInRangeIndex.findIntervalsWithStartpointInRange(1, 2);
-			assertPlainNumberIntervals(results, [
+			assertOrderedSequenceIntervals(client, results, [
 				{ start: 1, end: 3 },
 				{ start: 2, end: 3 },
 			]);
@@ -122,7 +134,7 @@ describe("findIntervalsWithStartpointInRange", () => {
 
 			results = startpointInRangeIndex.findIntervalsWithStartpointInRange(2, 4);
 			results.sort(compareFn);
-			assertPlainNumberIntervals(results, [
+			assertOrderedSequenceIntervals(client, results, [
 				{ start: 2, end: 3 },
 				{ start: 2, end: 4 },
 				{ start: 3, end: 4 },
@@ -150,14 +162,14 @@ describe("findIntervalsWithStartpointInRange", () => {
 
 			results = startpointInRangeIndex.findIntervalsWithStartpointInRange(1, 2);
 			results.sort(compareFn);
-			assertPlainNumberIntervals(results, [
+			assertOrderedSequenceIntervals(client, results, [
 				{ start: 1, end: 3 },
 				{ start: 2, end: 3 },
 			]);
 
 			startpointInRangeIndex.remove(interval3);
 			results = startpointInRangeIndex.findIntervalsWithStartpointInRange(1, 2);
-			assertPlainNumberIntervals(results, [{ start: 2, end: 3 }]);
+			assertOrderedSequenceIntervals(client, results, [{ start: 2, end: 3 }]);
 		});
 
 		it("when removing the interval does not exist in the index", () => {
@@ -166,7 +178,7 @@ describe("findIntervalsWithStartpointInRange", () => {
 
 			results = startpointInRangeIndex.findIntervalsWithStartpointInRange(1, 2);
 			results.sort(compareFn);
-			assertPlainNumberIntervals(results, [
+			assertOrderedSequenceIntervals(client, results, [
 				{ start: 1, end: 3 },
 				{ start: 2, end: 3 },
 			]);
@@ -176,7 +188,7 @@ describe("findIntervalsWithStartpointInRange", () => {
 			startpointInRangeIndex.remove(interval2);
 
 			results = startpointInRangeIndex.findIntervalsWithStartpointInRange(1, 2);
-			assertPlainNumberIntervals(results, [{ start: 1, end: 3 }]);
+			assertOrderedSequenceIntervals(client, results, [{ start: 1, end: 3 }]);
 
 			const interval3 = createTestInterval(2, 4);
 			startpointInRangeIndex.add(interval3);
@@ -188,7 +200,7 @@ describe("findIntervalsWithStartpointInRange", () => {
 
 			results = startpointInRangeIndex.findIntervalsWithStartpointInRange(1, 4);
 			results.sort(compareFn);
-			assertPlainNumberIntervals(results, [
+			assertOrderedSequenceIntervals(client, results, [
 				{ start: 1, end: 3 },
 				{ start: 3, end: 4 },
 			]);
@@ -197,14 +209,14 @@ describe("findIntervalsWithStartpointInRange", () => {
 
 	describe("find exactly the same intervals as those obtained by `brute-force` method", () => {
 		it("when given massive random inputs", () => {
-			const testIndex = new TestStartpointInRangeIndex();
+			const testIndex = new TestStartpointInRangeIndex(client);
 			const random = makeRandom(0);
 			const count = 800;
 			const min = 1;
-			const max = 1500;
+			const max = client.getLength() - 1;
 
 			// Generate intervals randomly and add them to both index
-			const intervals = generateRandomIntervals({ random, count, min, max });
+			const intervals = generateRandomIntervals(client, { random, count, min, max });
 			for (const interval of intervals) {
 				testIndex.add(interval);
 				startpointInRangeIndex.add(interval);
@@ -220,7 +232,7 @@ describe("findIntervalsWithStartpointInRange", () => {
 				results.sort(compareFn);
 				expected.sort(compareFn);
 
-				assertPlainNumberIntervals(results, expected);
+				assertOrderedSequenceIntervals(client, results, expected);
 			}
 		});
 	});

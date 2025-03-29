@@ -6,198 +6,17 @@
 import { strict as assert } from "assert";
 
 import { IRandom } from "@fluid-private/stochastic-test-utils";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import {
-	addProperties,
-	copyPropertiesAndManager,
-	createMap,
-	type PropertiesManager,
-	PropertySet,
-	type SequencePlace,
-	Side,
-} from "@fluidframework/merge-tree/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { type SequencePlace, Side } from "@fluidframework/merge-tree/internal";
+import type { TestClient } from "@fluidframework/merge-tree/internal/test";
 import { v4 as uuid } from "uuid";
 
 import {
+	createSequenceInterval,
 	IntervalStickiness,
-	type ISerializableInterval,
-	type ISerializedInterval,
+	IntervalType,
 	type SequenceInterval,
 } from "../intervals/index.js";
 import type { ISharedString } from "../sharedString.js";
-
-/**
- * Serializable interval whose endpoints are plain-old numbers.
- * @internal
- */
-export class Interval implements ISerializableInterval {
-	/**
-	 * {@inheritDoc ISerializableInterval.properties}
-	 */
-	public properties: PropertySet = createMap<any>();
-
-	/***/
-	public auxProps: PropertySet[] | undefined;
-
-	public propertyManager?: PropertiesManager;
-
-	constructor(
-		public start: number,
-		public end: number,
-		props?: PropertySet,
-	) {
-		if (props) {
-			this.properties = addProperties(this.properties, props);
-		}
-	}
-
-	/**
-	 * {@inheritDoc ISerializableInterval.getIntervalId}
-	 */
-	public getIntervalId(): string {
-		const id = this.properties?.[reservedIntervalIdKey];
-		assert(id !== undefined, "interval ID should not be undefined");
-		return `${id}`;
-	}
-
-	/**
-	 * @returns an array containing any auxiliary property sets added with `addPropertySet`.
-	 */
-	public getAdditionalPropertySets(): PropertySet[] {
-		return this.auxProps ?? [];
-	}
-
-	/**
-	 * Adds an auxiliary set of properties to this interval.
-	 * These properties can be recovered using `getAdditionalPropertySets`
-	 * @param props - set of properties to add
-	 * @remarks This gets called as part of the default conflict resolver for `IIntervalCollection<Interval>`
-	 * (i.e. non-sequence-based interval collections). However, the additional properties don't get serialized.
-	 * This functionality seems half-baked.
-	 */
-	public addPropertySet(props: PropertySet) {
-		if (this.auxProps === undefined) {
-			this.auxProps = [];
-		}
-		this.auxProps.push(props);
-	}
-
-	/**
-	 * {@inheritDoc ISerializableInterval.serialize}
-	 */
-	public serialize(): ISerializedInterval {
-		const serializedInterval: ISerializedInterval = {
-			end: this.end,
-			intervalType: 0,
-			sequenceNumber: 0,
-			start: this.start,
-		};
-		if (this.properties) {
-			serializedInterval.properties = addProperties(
-				serializedInterval.properties,
-				this.properties,
-			);
-		}
-		return serializedInterval;
-	}
-
-	/**
-	 * {@inheritDoc IInterval.clone}
-	 */
-	public clone() {
-		return new Interval(this.start, this.end, this.properties);
-	}
-
-	/**
-	 * {@inheritDoc IInterval.compare}
-	 */
-	public compare(b: Interval) {
-		const startResult = this.compareStart(b);
-		if (startResult === 0) {
-			const endResult = this.compareEnd(b);
-			if (endResult === 0) {
-				const thisId = this.getIntervalId();
-				if (thisId) {
-					const bId = b.getIntervalId();
-					if (bId) {
-						return thisId > bId ? 1 : thisId < bId ? -1 : 0;
-					}
-					return 0;
-				}
-				return 0;
-			} else {
-				return endResult;
-			}
-		} else {
-			return startResult;
-		}
-	}
-
-	/**
-	 * {@inheritDoc IInterval.compareStart}
-	 */
-	public compareStart(b: Interval) {
-		return this.start - b.start;
-	}
-
-	/**
-	 * {@inheritDoc IInterval.compareEnd}
-	 */
-	public compareEnd(b: Interval) {
-		return this.end - b.end;
-	}
-
-	/**
-	 * {@inheritDoc IInterval.overlaps}
-	 */
-	public overlaps(b: Interval) {
-		const result = this.start <= b.end && this.end >= b.start;
-		return result;
-	}
-
-	/**
-	 * {@inheritDoc IInterval.union}
-	 */
-	public union(b: Interval) {
-		return new Interval(
-			Math.min(this.start, b.start),
-			Math.max(this.end, b.end),
-			this.properties,
-		);
-	}
-
-	public getProperties() {
-		return this.properties;
-	}
-
-	/**
-	 * {@inheritDoc IInterval.modify}
-	 */
-	public modify(
-		label: string,
-		start?: SequencePlace,
-		end?: SequencePlace,
-		op?: ISequencedDocumentMessage,
-	) {
-		if (typeof start === "string" || typeof end === "string") {
-			throw new UsageError(
-				"The start and end positions of a plain interval may not be on the special endpoint segments.",
-			);
-		}
-
-		const startPos = typeof start === "number" ? start : (start?.pos ?? this.start);
-		const endPos = typeof end === "number" ? end : (end?.pos ?? this.end);
-
-		if (this.start === startPos && this.end === endPos) {
-			// Return undefined to indicate that no change is necessary.
-			return;
-		}
-		const newInterval = new Interval(startPos, endPos);
-		copyPropertiesAndManager(this, newInterval);
-		return newInterval;
-	}
-}
 
 const reservedIntervalIdKey = "intervalId";
 
@@ -213,15 +32,25 @@ export interface RandomIntervalOptions {
  * @param results - The generated intervals to compare.
  * @param expectedEndpoints - The expected start and end points or intervals.
  */
-export function assertPlainNumberIntervals(
-	results: Interval[],
-	expectedEndpoints: { start: number; end: number }[] | Interval[],
+export function assertOrderedSequenceIntervals(
+	client: TestClient,
+	results: SequenceInterval[],
+	expectedEndpoints: { start: number; end: number }[] | SequenceInterval[],
 ): void {
 	assert.equal(results.length, expectedEndpoints.length, "Mismatched result count");
 	for (let i = 0; i < results.length; ++i) {
 		assert(results[i]);
-		assert.equal(results[i].start, expectedEndpoints[i].start, "mismatched start");
-		assert.equal(results[i].end, expectedEndpoints[i].end, "mismatched end");
+		const { start, end } = expectedEndpoints[i];
+		assert.equal(
+			client.localReferencePositionToPosition(results[i].start),
+			typeof start === "number" ? start : client.localReferencePositionToPosition(start),
+			"mismatched start",
+		);
+		assert.equal(
+			client.localReferencePositionToPosition(results[i].end),
+			typeof end === "number" ? end : client.localReferencePositionToPosition(end),
+			"mismatched end",
+		);
 	}
 }
 
@@ -231,11 +60,11 @@ export function assertPlainNumberIntervals(
  * @param end - The end value of the interval.
  * @returns The created Interval object.
  */
-export function createTestInterval(start: number, end: number): Interval {
-	const props: PropertySet = {};
-	props[reservedIntervalIdKey] = [uuid()];
-
-	return new Interval(start, end, props);
+export function createTestSequenceInterval(client: TestClient, p1: number, p2: number) {
+	const id = uuid();
+	const interval = createSequenceInterval(id, p1, p2, client, IntervalType.SlideOnRemove);
+	interval.properties[reservedIntervalIdKey] = id;
+	return interval;
 }
 
 /**
@@ -243,14 +72,14 @@ export function createTestInterval(start: number, end: number): Interval {
  * @param options - The options for generating random intervals.
  * @returns An array of generated Interval objects.
  */
-export function generateRandomIntervals(options: RandomIntervalOptions) {
-	const intervals: Interval[] = [];
+export function generateRandomIntervals(client: TestClient, options: RandomIntervalOptions) {
+	const intervals: SequenceInterval[] = [];
 	const { random, count, min, max } = options;
 
 	for (let i = 0; i < count; ++i) {
-		const start = random.integer(min, max);
-		const end = random.integer(start, max);
-		const interval = createTestInterval(start, end);
+		const start = random.integer(Math.max(min, 0), Math.min(max, client.getLength() - 1));
+		const end = random.integer(start, Math.min(max, client.getLength() - 1));
+		const interval = createTestSequenceInterval(client, start, end);
 		intervals.push(interval);
 	}
 
