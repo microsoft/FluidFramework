@@ -18,7 +18,6 @@
 export { SequenceOptions } from "./intervalCollectionMapInterfaces.js";
 export {
 	IInterval,
-	Interval,
 	IntervalOpType,
 	IntervalType,
 	ISerializableInterval,
@@ -26,8 +25,6 @@ export {
 	SequenceInterval,
 	SerializedIntervalDelta,
 	IntervalStickiness,
-	IIntervalHelpers,
-	sequenceIntervalHelpers,
 } from "./intervals/index.js";
 export {
 	DeserializeCallback,

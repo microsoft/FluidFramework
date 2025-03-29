@@ -18,7 +18,6 @@ import {
 	SequenceInterval,
 	SequenceIntervalClass,
 	createPositionReferenceFromSegoff,
-	sequenceIntervalHelpers,
 } from "../intervals/index.js";
 import { ISharedString } from "../sharedString.js";
 
@@ -30,7 +29,7 @@ class OverlappingSequenceIntervalsIndex
 	implements SequenceIntervalIndexes.Overlapping
 {
 	constructor(client: Client) {
-		super(client, sequenceIntervalHelpers);
+		super(client);
 	}
 
 	public findOverlappingIntervalsBySegoff(

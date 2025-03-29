@@ -45,7 +45,6 @@ import {
 	IntervalType,
 	endReferenceSlidingPreference,
 	startReferenceSlidingPreference,
-	type IIntervalHelpers,
 } from "./intervalUtils.js";
 
 function compareSides(sideA: Side, sideB: Side): number {
@@ -676,10 +675,3 @@ export function createSequenceInterval(
 	);
 	return ival;
 }
-
-/**
- * @internal
- */
-export const sequenceIntervalHelpers: IIntervalHelpers = {
-	create: createSequenceInterval,
-};
