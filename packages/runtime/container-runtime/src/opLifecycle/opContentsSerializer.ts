@@ -10,7 +10,6 @@ import {
 } from "@fluidframework/core-interfaces/internal";
 import { assert, shallowCloneObject } from "@fluidframework/core-utils/internal";
 import {
-	generateHandleContextPath,
 	isSerializedHandle,
 	isFluidHandle,
 	toFluidHandleInternal,
@@ -61,13 +60,8 @@ export interface IFluidSerializer {
  * @internal
  */
 export class FluidSerializer implements IFluidSerializer {
-	private readonly root: IFluidHandleContext;
-
-	public constructor(private readonly context: IFluidHandleContext) {
-		this.root = this.context;
-		while (this.root.routeContext !== undefined) {
-			this.root = this.root.routeContext;
-		}
+	public constructor(private readonly root: IFluidHandleContext) {
+		assert(this.root.routeContext === undefined, "Context provided should have been the root");
 	}
 
 	public get IFluidSerializer(): IFluidSerializer {
@@ -136,13 +130,16 @@ export class FluidSerializer implements IFluidSerializer {
 	private readonly decodeValue = (value: unknown): unknown => {
 		// If 'value' is a serialized IFluidHandle return the deserialized result.
 		if (isSerializedHandle(value)) {
-			// Old documents may have handles with relative path in their summaries. Convert these to absolute
-			// paths. This will ensure that future summaries will have absolute paths for these handles.
-			const absolutePath = value.url.startsWith("/")
-				? value.url
-				: generateHandleContextPath(value.url, this.context);
+			// Old documents may have handles with relative path in their summaries.
+			// We don't have enough context at this scope to resolve the relative path,
+			// so leave it encoded and it will be decoded down in the DDS.
+			// This is a back-compat case that should be more and more rare as time goes on.
+			if (!value.url.startsWith("/")) {
+				//* Log?
+				return value;
+			}
 
-			return new RemoteFluidObjectHandle(absolutePath, this.root);
+			return new RemoteFluidObjectHandle(value.url, this.root);
 		} else {
 			return value;
 		}

@@ -195,6 +195,7 @@ import {
 	RemoteMessageProcessor,
 	serializeOpContents,
 } from "./opLifecycle/index.js";
+import { FluidSerializer } from "./opLifecycle/opContentsSerializer.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
 	PendingMessageResubmitData,
@@ -4245,10 +4246,26 @@ export class ContainerRuntime
 				});
 			}
 
+			//* TODO: Decode / pop LOM on the flip side
+
+			//* Move this to ctor
+			const serializer = new FluidSerializer(this.IFluidHandleContext);
+			// We already bound the handles in the DataStore Runtime layer, so skip bind up here.
+			//* TODO: Actually fork the serializer and this does not bind...?
+			const dummyBind: Partial<IFluidHandleInternal> = {
+				bind() {
+					// noop
+				},
+			};
+			//* Rationalize with fn serializeOpContents
+			const serializedMessage = serializer.stringify(
+				containerRuntimeMessage,
+				dummyBind as IFluidHandleInternal,
+			);
 			const message: BatchMessage = {
-				contents: serializeOpContents(containerRuntimeMessage),
+				contents: serializedMessage,
 				metadata,
-				localOpMetadata,
+				localOpMetadata: { localOpMetadata, viableContent: containerRuntimeMessage },
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 			};
 			if (type === ContainerMessageType.BlobAttach) {
