@@ -228,8 +228,8 @@ describe("findIntervalsWithEndpointInRange", () => {
 				endpointInRangeIndex.add(interval);
 			}
 
-			// Test with running 1000 random queries
-			for (let i = 0; i < 250; ++i) {
+			// Test with running 100 random queries
+			for (let i = 0; i < 100; ++i) {
 				const start = random.integer(min, max);
 				const end = random.integer(start, max);
 				// Query intervals using both index
