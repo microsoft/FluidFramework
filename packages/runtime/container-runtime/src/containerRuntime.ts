@@ -89,6 +89,7 @@ import type {
 	IInboundSignalMessage,
 	IRuntimeMessagesContent,
 	ISummarizerNodeWithGC,
+	IFluidParentContext,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	FlushMode,
@@ -166,6 +167,7 @@ import {
 	IGarbageCollector,
 	gcGenerationOptionName,
 	type GarbageCollectionMessage,
+	type IGarbageCollectionRuntime,
 } from "./gc/index.js";
 import { InboundBatchAggregator } from "./inboundBatchAggregator.js";
 import { RuntimeCompatDetails, validateLoaderCompatibility } from "./layerCompatState.js";
@@ -713,8 +715,10 @@ export class ContainerRuntime
 	implements
 		IContainerRuntime,
 		IRuntime,
+		IGarbageCollectionRuntime,
 		ISummarizerRuntime,
 		ISummarizerInternalsProvider,
+		IFluidParentContext,
 		IProvideFluidHandleContext,
 		IProvideLayerCompatDetails
 {
@@ -4190,6 +4194,8 @@ export class ContainerRuntime
 				});
 			}
 
+			//* NEXT: Stop stringifying here and throughout op lifecycle,
+			//* so we can keep the viable contents all the way through to resubmit
 			const message: BatchMessage = {
 				contents: serializeOpContents(containerRuntimeMessage),
 				metadata,
