@@ -41,14 +41,18 @@ export function assertOrderedSequenceIntervals(
 	for (let i = 0; i < results.length; ++i) {
 		assert(results[i]);
 		const { start, end } = expectedEndpoints[i];
-		assert.equal(
-			client.localReferencePositionToPosition(results[i].start),
-			typeof start === "number" ? start : client.localReferencePositionToPosition(start),
+		assert.strictEqual(
+			typeof start === "number"
+				? client.localReferencePositionToPosition(results[i].start)
+				: results[i].start,
+			start,
 			"mismatched start",
 		);
-		assert.equal(
-			client.localReferencePositionToPosition(results[i].end),
-			typeof end === "number" ? end : client.localReferencePositionToPosition(end),
+		assert.strictEqual(
+			typeof end === "number"
+				? client.localReferencePositionToPosition(results[i].end)
+				: results[i].end,
+			end,
 			"mismatched end",
 		);
 	}

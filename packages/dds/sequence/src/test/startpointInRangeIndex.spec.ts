@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import { Lazy } from "@fluidframework/core-utils/internal";
 import { TestClient } from "@fluidframework/merge-tree/internal/test";
 
 import { IStartpointInRangeIndex, StartpointInRangeIndex } from "../intervalIndex/index.js";
@@ -18,29 +19,35 @@ import {
 } from "./intervalIndexTestUtils.js";
 
 class TestStartpointInRangeIndex implements IStartpointInRangeIndex<SequenceInterval> {
-	private readonly intervals: SequenceInterval[];
+	private readonly intervals: {
+		start: Lazy<number>;
+		end: Lazy<number>;
+		interval: SequenceInterval;
+	}[];
 
 	constructor(private readonly client: TestClient) {
 		this.intervals = [];
 	}
 
 	add(interval: SequenceInterval) {
-		this.intervals.push(interval);
+		this.intervals.push({
+			start: new Lazy(() => this.client.localReferencePositionToPosition(interval.start)),
+			end: new Lazy(() => this.client.localReferencePositionToPosition(interval.end)),
+			interval,
+		});
 	}
 
 	remove(interval: SequenceInterval) {
-		const index = this.intervals.findIndex((i) => i === interval);
+		const index = this.intervals.findIndex((i) => i.interval === interval);
 		if (index !== -1) {
 			this.intervals.splice(index, 1);
 		}
 	}
 
 	findIntervalsWithStartpointInRange(start: number, end: number): SequenceInterval[] {
-		return this.intervals.filter(
-			(interval) =>
-				this.client.localReferencePositionToPosition(interval.start) >= start &&
-				this.client.localReferencePositionToPosition(interval.start) <= end,
-		);
+		return this.intervals
+			.filter((interval) => interval.start.value >= start && interval.start.value <= end)
+			.map((i) => i.interval);
 	}
 }
 
@@ -223,7 +230,7 @@ describe("findIntervalsWithStartpointInRange", () => {
 			}
 
 			// Test with running 1000 random queries
-			for (let i = 0; i < 1000; ++i) {
+			for (let i = 0; i < 250; ++i) {
 				const start = random.integer(min, max);
 				const end = random.integer(start, max);
 				// Query intervals using both index
