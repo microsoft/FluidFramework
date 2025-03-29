@@ -33,6 +33,8 @@ import { BlobCollectionView, DebugView } from "./view.js";
 // us with memory blob storage.  This is currently controlled by a feature flag which we
 // can control by setting this value in sessionStorage.
 sessionStorage.setItem("Fluid.Container.MemoryBlobStorageEnabled", "true");
+// To use the new experimental blob placeholders features, we need to set this flag too.
+sessionStorage.setItem("Fluid.Runtime.UploadBlobPlaceholders", "true");
 
 const urlResolver = createInsecureTinyliciousTestUrlResolver();
 const tokenProvider = createInsecureTinyliciousTestTokenProvider();

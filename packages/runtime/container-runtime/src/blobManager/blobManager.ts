@@ -134,6 +134,7 @@ export interface IBlobManagerEvents extends IEvent {
 
 interface IBlobManagerInternalEvents extends IEvent {
 	(event: "blobAttached", listener: (pending: PendingBlob) => void);
+	(event: "processedBlobAttach", listener: (localId: string, storageId: string) => void);
 }
 
 const stashedPendingBlobOverrides: Pick<
@@ -351,6 +352,10 @@ export class BlobManager {
 		return [...this.pendingBlobs.values()].some((e) => e.stashedUpload === true);
 	}
 
+	public hasBlob(blobId: string): boolean {
+		return this.redirectTable.get(blobId) !== undefined;
+	}
+
 	public async getBlob(blobId: string): Promise<ArrayBufferLike> {
 		// Verify that the blob is not deleted, i.e., it has not been garbage collected. If it is, this will throw
 		// an error, failing the call.
@@ -374,8 +379,20 @@ export class BlobManager {
 			storageId = blobId;
 		} else {
 			const attachedStorageId = this.redirectTable.get(blobId);
-			assert(!!attachedStorageId, 0x11f /* "requesting unknown blobs" */);
-			storageId = attachedStorageId;
+			// If we didn't find it in the redirectTable, assume it's a blob placeholder. In that case,
+			// just assume the attach op is coming eventually and wait. We do this even if the local client
+			// doesn't have the blob placeholder flag enabled, in case a remote client does have it enabled.
+			storageId =
+				attachedStorageId ??
+				(await new Promise<string>((resolve) => {
+					const onProcessBlobAttach = (localId: string, _storageId: string): void => {
+						if (localId === blobId) {
+							this.internalEvents.off("processedBlobAttach", onProcessBlobAttach);
+							resolve(_storageId);
+						}
+					};
+					this.internalEvents.on("processedBlobAttach", onProcessBlobAttach);
+				}));
 		}
 
 		return PerformanceEvent.timedExecAsync(
@@ -435,6 +452,7 @@ export class BlobManager {
 		if (this.runtime.attachState === AttachState.Detached) {
 			return this.createBlobDetached(blob);
 		}
+
 		if (this.runtime.attachState === AttachState.Attaching) {
 			// blob upload is not supported in "Attaching" state
 			this.mc.logger.sendTelemetryEvent({ eventName: "CreateBlobWhileAttaching" });
@@ -445,6 +463,15 @@ export class BlobManager {
 			0x385 /* For clarity and paranoid defense against adding future attachment states */,
 		);
 
+		return this.mc.config.getBoolean("Fluid.Runtime.UploadBlobPlaceholders") === true
+			? this.createBlobPlaceholder(blob)
+			: this.createBlobLegacy(blob, signal);
+	}
+
+	private async createBlobLegacy(
+		blob: ArrayBufferLike,
+		signal?: AbortSignal,
+	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		if (signal?.aborted) {
 			throw this.createAbortError();
 		}
@@ -473,6 +500,27 @@ export class BlobManager {
 		return pendingEntry.handleP.promise.finally(() => {
 			signal?.removeEventListener("abort", abortListener);
 		});
+	}
+
+	private createBlobPlaceholder(blob: ArrayBufferLike): IFluidHandleInternal<ArrayBufferLike> {
+		const localId = this.localBlobIdGenerator();
+
+		return new BlobHandle(
+			getGCNodePathFromBlobId(localId),
+			this.routeContext,
+			async () => blob,
+			() => {
+				const pendingEntry: PendingBlob = {
+					blob,
+					handleP: new Deferred(),
+					uploadP: this.uploadBlob(localId, blob),
+					attached: false,
+					acked: false,
+					opsent: false,
+				};
+				this.pendingBlobs.set(localId, pendingEntry);
+			},
+		);
 	}
 
 	private async uploadBlob(
@@ -677,6 +725,8 @@ export class BlobManager {
 				this.deletePendingBlobMaybe(localId);
 			}
 		}
+
+		this.internalEvents.emit("processedBlobAttach", localId, blobId);
 	}
 
 	public summarize(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
