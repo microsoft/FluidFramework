@@ -7,7 +7,7 @@
 /* eslint-disable @typescript-eslint/consistent-indexed-object-style */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { DataObject } from "@fluidframework/aqueduct/internal";
+import type { DataObject, PureDataObject } from "@fluidframework/aqueduct/internal";
 import type {
 	IDisposable,
 	IEvent,
@@ -102,6 +102,11 @@ export type VisualizeDataObject = (
  * @internal
  */
 export type VisualizeChildData = (data: unknown) => Promise<VisualChildNode>;
+
+/**
+ * A visual representation of {@link @fluidframework/shared-object-base#ISharedObject} & {@link DataObject} data.
+ */
+export type VisualObject = ISharedObject | PureDataObject;
 
 /**
  * Specifies renderers for different {@link @fluidframework/shared-object-base#ISharedObject} types.
@@ -247,18 +252,18 @@ export class DataVisualizerGraph
 	 * Adds a visualizer node to the collection for the specified
 	 * {@link @fluidframework/shared-object-base#ISharedObject} if one does not already exist.
 	 */
-	private registerVisualizerForSharedObject(
-		sharedObject: ISharedObject | DataObject,
-	): FluidObjectId {
-		if (!this.visualizerNodes.has(sharedObject.id)) {
+	private registerVisualizerForVisualObject(visualObject: VisualObject): FluidObjectId {
+		if (!this.visualizerNodes.has(visualObject.id)) {
 			// Create visualizer node for the shared object
-			const visualizationFunction = isDataObject(sharedObject)
+			const visualizationFunction = isPureDataObject(visualObject)
 				? visualizeDataObject
-				: (this.visualizers[sharedObject.attributes.type] ?? visualizeUnknownSharedObject);
+				: (this.visualizers[visualObject.attributes.type] ?? visualizeUnknownSharedObject);
 
 			const visualizerNode = new VisualizerNode(
 				// Typecasting `sharedObject` to `VisualDataObject` is necessary for `DataObject` visualization`, because the `root` property is inaccessbile (private).
-				isDataObject(sharedObject) ? (sharedObject as VisualDataObject).root : sharedObject,
+				isPureDataObject(visualObject)
+					? (visualObject as VisualDataObject).root
+					: visualObject,
 				visualizationFunction as VisualizeSharedObject,
 				async (handle) => this.registerVisualizerForHandle(handle),
 			);
@@ -267,9 +272,9 @@ export class DataVisualizerGraph
 			visualizerNode.on("update", this.onVisualUpdateHandler);
 
 			// Add the visualizer node to our collection
-			this.visualizerNodes.set(sharedObject.id, visualizerNode);
+			this.visualizerNodes.set(visualObject.id, visualizerNode);
 		}
-		return sharedObject.id;
+		return visualObject.id;
 	}
 
 	/**
@@ -288,14 +293,14 @@ export class DataVisualizerGraph
 	): Promise<FluidObjectId | undefined> {
 		const resolvedObject = await handle.get();
 
-		if (isDataObject(resolvedObject)) {
-			return this.registerVisualizerForSharedObject(resolvedObject);
+		if (isPureDataObject(resolvedObject)) {
+			return this.registerVisualizerForVisualObject(resolvedObject);
 		}
 
 		// TODO: is this the right type check for this?
 		const sharedObject = resolvedObject as Partial<ISharedObject>;
 		if (isSharedObject(sharedObject)) {
-			return this.registerVisualizerForSharedObject(sharedObject);
+			return this.registerVisualizerForVisualObject(sharedObject);
 		} else {
 			// Unknown data.
 			console.warn("Fluid Handle resolved to data that is not a Shared Object.");
@@ -525,7 +530,7 @@ function isSharedObject(value: unknown): value is ISharedObject {
  * Determines whether or not the provided value is an {@link DataObject}, for the purposes of this library.
  * @remarks Implemented by checking for the particular properties / methods we use in this module
  */
-function isDataObject(value: unknown): value is DataObject {
+function isPureDataObject(value: unknown): value is PureDataObject {
 	return (
 		(value as DataObject).initializeInternal !== undefined &&
 		(value as DataObject).id !== undefined &&
