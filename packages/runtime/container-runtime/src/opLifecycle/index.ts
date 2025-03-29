@@ -30,3 +30,4 @@ export {
 	OpGroupingManagerConfig,
 	isGroupedBatch,
 } from "./opGroupingManager.js";
+export { Inbox } from "./inbox.js";

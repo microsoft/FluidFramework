@@ -63,13 +63,13 @@ import type {
 	ISnapshotTree,
 	ISummaryContent,
 	ISummaryContext,
+	IDocumentAttributes,
 } from "@fluidframework/driver-definitions/internal";
 import { FetchSource, MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IIdCompressorCore,
-	IdCreationRange,
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
 } from "@fluidframework/id-compressor/internal";
@@ -87,7 +87,6 @@ import type {
 	NamedFluidDataStoreRegistryEntries,
 	SummarizeInternalFn,
 	IInboundSignalMessage,
-	IRuntimeMessagesContent,
 	ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -117,7 +116,6 @@ import type {
 import {
 	DataCorruptionError,
 	DataProcessingError,
-	extractSafePropertiesFromMessage,
 	GenericError,
 	LoggingError,
 	PerformanceEvent,
@@ -165,7 +163,6 @@ import {
 	IGCStats,
 	IGarbageCollector,
 	gcGenerationOptionName,
-	type GarbageCollectionMessage,
 } from "./gc/index.js";
 import { InboundBatchAggregator } from "./inboundBatchAggregator.js";
 import { RuntimeCompatDetails, validateLoaderCompatibility } from "./layerCompatState.js";
@@ -174,18 +171,14 @@ import {
 	type ContainerRuntimeDocumentSchemaMessage,
 	ContainerRuntimeGCMessage,
 	type ContainerRuntimeIdAllocationMessage,
-	type InboundSequencedContainerRuntimeMessage,
 	type LocalContainerRuntimeMessage,
 	type OutboundContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
-import { ISavedOpMetadata } from "./metadata.js";
 import {
 	BatchId,
 	BatchMessage,
-	BatchStartInfo,
 	DuplicateBatchDetector,
-	ensureContentsDeserialized,
 	IBatch,
 	IBatchCheckpoint,
 	OpCompressor,
@@ -195,6 +188,7 @@ import {
 	Outbox,
 	RemoteMessageProcessor,
 	serializeOpContents,
+	Inbox,
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
@@ -211,7 +205,6 @@ import {
 	IConnectableRuntime,
 	IContainerRuntimeMetadata,
 	ICreateContainerMetadata,
-	type IDocumentSchemaChangeMessage,
 	type IDocumentSchemaCurrent,
 	IEnqueueSummarizeOptions,
 	IGenerateSummaryTreeResult,
@@ -268,7 +261,7 @@ import { Throttler, formExponentialFn } from "./throttler.js";
  * @param sequencedMessage - The sequenced message that contained the unexpected message type.
  *
  */
-function getUnknownMessageTypeError(
+export function getUnknownMessageTypeError(
 	unknownContainerRuntimeMessageType: UnknownContainerRuntimeMessage["type"],
 	codePath: string,
 	sequencedMessage?: ISequencedDocumentMessage,
@@ -1012,6 +1005,7 @@ export class ContainerRuntime
 			requestHandler,
 			undefined, // summaryConfiguration
 			recentBatchInfo,
+			await getDocumentAttributes(context.storage, context.baseSnapshot),
 		);
 
 		runtime.blobManager.stashedBlobsUploadP.then(
@@ -1100,16 +1094,6 @@ export class ContainerRuntime
 	}
 
 	private _idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
-
-	// We accumulate Id compressor Ops while Id compressor is not loaded yet (only for "delayed" mode)
-	// Once it loads, it will process all such ops and we will stop accumulating further ops - ops will be processes as they come in.
-	private pendingIdCompressorOps: IdCreationRange[] = [];
-
-	// Id Compressor serializes final state (see getPendingLocalState()). As result, it needs to skip all ops that preceeded that state
-	// (such ops will be marked by Loader layer as savedOp === true)
-	// That said, in "delayed" mode it's possible that Id Compressor was never initialized before getPendingLocalState() is called.
-	// In such case we have to process all ops, including those marked with savedOp === true.
-	private readonly skipSavedCompressorOps: boolean;
 
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.idCompressor}
@@ -1241,6 +1225,7 @@ export class ContainerRuntime
 	private readonly pendingStateManager: PendingStateManager;
 	private readonly duplicateBatchDetector: DuplicateBatchDetector | undefined;
 	private readonly outbox: Outbox;
+	private readonly inbox: Inbox;
 	private readonly garbageCollector: IGarbageCollector;
 
 	private readonly channelCollection: ChannelCollection;
@@ -1344,6 +1329,7 @@ export class ContainerRuntime
 			...runtimeOptions.summaryOptions?.summaryConfigOverrides,
 		},
 		recentBatchInfo?: [number, string][],
+		documentAttributes?: IDocumentAttributes,
 	) {
 		super();
 
@@ -1721,6 +1707,42 @@ export class ContainerRuntime
 
 		const legacySendBatchFn = makeLegacySendBatchFn(submitFn, this.innerDeltaManager);
 
+		const attributes = documentAttributes ?? {
+			sequenceNumber: 0,
+			minimumSequenceNumber: 0,
+		};
+		const lastProcessedSequenceNumber =
+			pendingRuntimeState?.pending?.pendingStates[
+				pendingRuntimeState?.pending?.pendingStates.length - 1
+			].sequenceNumber ?? attributes.sequenceNumber;
+
+		this.inbox = new Inbox({
+			remoteMessageProcessor: this.remoteMessageProcessor,
+			duplicateBatchDetector: this.duplicateBatchDetector,
+			pendingStateManager: this.pendingStateManager,
+			logger: this.mc.logger,
+			resetReconnectCount: this.resetReconnectCount.bind(this),
+			ensureNoDataModelChanges: this.ensureNoDataModelChanges.bind(this),
+			updateDocumentDirtyState: this.updateDocumentDirtyState.bind(this),
+			hasPendingMessages: this.hasPendingMessages.bind(this),
+			channelCollection: this.channelCollection,
+			garbageCollector: this.garbageCollector,
+			blobManager: this.blobManager,
+			documentsSchemaController: this.documentsSchemaController,
+			// If we loaded from pending state, then we need to skip any ops that are already accounted in such
+			// saved state, i.e. all the ops marked by Loader layer sa savedOp === true.
+			skipSavedCompressorOps: pendingRuntimeState?.pendingIdCompressorState !== undefined,
+			getIdCompressor: () => this._idCompressor,
+			getSessionSchema: () => this.sessionSchema,
+			closeFn: this.closeFn.bind(this),
+			usePendingStateMSN: this.useDeltaManagerOpsProxy,
+			initialSequenceNumbers: {
+				snapshotSequenceNumber: attributes.sequenceNumber,
+				minimumSequenceNumber: attributes.minimumSequenceNumber,
+				lastProcessedSequenceNumber,
+			},
+		});
+
 		this.outbox = new Outbox({
 			shouldSend: () => this.canSendOps(),
 			pendingStateManager: this.pendingStateManager,
@@ -1736,7 +1758,7 @@ export class ContainerRuntime
 			groupingManager: opGroupingManager,
 			getCurrentSequenceNumbers: () => ({
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-				clientSequenceNumber: this._processedClientSequenceNumber,
+				clientSequenceNumber: this.inbox.processedClientSequenceNumber,
 			}),
 			reSubmit: this.reSubmit.bind(this),
 			opReentrancy: () => this.dataModelChangeRunner.running,
@@ -1925,10 +1947,6 @@ export class ContainerRuntime
 			}
 			return provideEntryPoint(this);
 		});
-
-		// If we loaded from pending state, then we need to skip any ops that are already accounted in such
-		// saved state, i.e. all the ops marked by Loader layer sa savedOp === true.
-		this.skipSavedCompressorOps = pendingRuntimeState?.pendingIdCompressorState !== undefined;
 	}
 
 	public onSchemaChange(schema: IDocumentSchemaCurrent): void {
@@ -1949,6 +1967,26 @@ export class ContainerRuntime
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.loadIdCompressor();
 		}
+	}
+
+	public get initialSequenceNumber(): number {
+		return this.inbox.initialSequenceNumber;
+	}
+
+	public get lastProcessedSequenceNumber(): number {
+		return this.inbox.lastProcessedSequenceNumber;
+	}
+
+	public get lastProcessedMessage(): ISequencedDocumentMessage | undefined {
+		return this.inbox.lastProcessedMessage;
+	}
+
+	public get minimumSequenceNumber(): number {
+		return this.inbox.minimumSequenceNumber;
+	}
+
+	public get lastKnownSeqNumber(): number {
+		return this.inbox.lastKnownSeqNumber;
 	}
 
 	public getCreateChildSummarizerNodeFn(
@@ -1994,7 +2032,7 @@ export class ContainerRuntime
 		) {
 			this._idCompressor = await this.createIdCompressor();
 			// This is called from loadRuntime(), long before we process any ops, so there should be no ops accumulated yet.
-			assert(this.pendingIdCompressorOps.length === 0, 0x8ec /* no pending ops */);
+			assert(this.inbox.pendingIdCompressorOps.length === 0, 0x8ec /* no pending ops */);
 		}
 
 		await this.garbageCollector.initializeBaseState();
@@ -2462,12 +2500,12 @@ export class ContainerRuntime
 			this._loadIdCompressor = this.createIdCompressor()
 				.then((compressor) => {
 					// Finalize any ranges we received while the compressor was turned off.
-					const ops = this.pendingIdCompressorOps;
-					this.pendingIdCompressorOps = [];
+					const ops = this.inbox.pendingIdCompressorOps;
+					this.inbox.pendingIdCompressorOps = [];
 					for (const range of ops) {
 						compressor.finalizeCreationRange(range);
 					}
-					assert(this.pendingIdCompressorOps.length === 0, 0x976 /* No new ops added */);
+					assert(this.inbox.pendingIdCompressorOps.length === 0, 0x976 /* No new ops added */);
 					this._idCompressor = compressor;
 				})
 				.catch((error) => {
@@ -2594,408 +2632,8 @@ export class ContainerRuntime
 	public process({ ...messageCopy }: ISequencedDocumentMessage, local: boolean): void {
 		// spread operator above ensure we make a shallow copy of message, as the processing flow will modify it.
 		// There might be multiple container instances receiving the same message.
-
 		this.verifyNotClosed();
-
-		// Whether or not the message appears to be a runtime message from an up-to-date client.
-		// It may be a legacy runtime message (ie already unpacked and ContainerMessageType)
-		// or something different, like a system message.
-		const hasModernRuntimeMessageEnvelope = messageCopy.type === MessageType.Operation;
-		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
-		const logLegacyCase = getSingleUseLegacyLogCallback(this.mc.logger, messageCopy.type);
-
-		let runtimeBatch: boolean =
-			hasModernRuntimeMessageEnvelope || isUnpackedRuntimeMessage(messageCopy);
-		if (runtimeBatch) {
-			// We expect runtime messages to have JSON contents - deserialize it in place.
-			ensureContentsDeserialized(messageCopy);
-		}
-
-		if (hasModernRuntimeMessageEnvelope) {
-			// If the message has the modern message envelope, then process it here.
-			// Here we unpack the message (decompress, unchunk, and/or ungroup) into a batch of messages with ContainerMessageType
-			const inboundResult = this.remoteMessageProcessor.process(messageCopy, logLegacyCase);
-			if (inboundResult === undefined) {
-				// This means the incoming message is an incomplete part of a message or batch
-				// and we need to process more messages before the rest of the system can understand it.
-				return;
-			}
-
-			if ("batchStart" in inboundResult) {
-				const batchStart: BatchStartInfo = inboundResult.batchStart;
-				const result = this.duplicateBatchDetector?.processInboundBatch(batchStart);
-				if (result?.duplicate) {
-					const error = new DataCorruptionError(
-						"Duplicate batch - The same batch was sequenced twice",
-						{ batchId: batchStart.batchId },
-					);
-
-					this.mc.logger.sendTelemetryEvent(
-						{
-							eventName: "DuplicateBatch",
-							details: {
-								batchId: batchStart.batchId,
-								clientId: batchStart.clientId,
-								batchStartCsn: batchStart.batchStartCsn,
-								size: inboundResult.length,
-								duplicateBatchSequenceNumber: result.otherSequenceNumber,
-								...extractSafePropertiesFromMessage(batchStart.keyMessage),
-							},
-						},
-						error,
-					);
-					throw error;
-				}
-			}
-
-			// Reach out to PendingStateManager, either to zip localOpMetadata into the *local* message list,
-			// or to check to ensure the *remote* messages don't match the batchId of a pending local batch.
-			// This latter case would indicate that the container has forked - two copies are trying to persist the same local changes.
-			let messagesWithPendingState: {
-				message: ISequencedDocumentMessage;
-				localOpMetadata?: unknown;
-			}[] = this.pendingStateManager.processInboundMessages(inboundResult, local);
-
-			if (inboundResult.type !== "fullBatch") {
-				assert(
-					messagesWithPendingState.length === 1,
-					0xa3d /* Partial batch should have exactly one message */,
-				);
-			}
-
-			if (messagesWithPendingState.length === 0) {
-				assert(
-					inboundResult.type === "fullBatch",
-					0xa3e /* Empty batch is always considered a full batch */,
-				);
-				/**
-				 * We need to process an empty batch, which will execute expected actions while processing even if there
-				 * are no inner runtime messages.
-				 *
-				 * Empty batches are produced by the outbox on resubmit when the resubmit flow resulted in no runtime
-				 * messages.
-				 * This can happen if changes from a remote client "cancel out" the pending changes being resubmitted by
-				 * this client.  We submit an empty batch if "offline load" (aka rehydrating from stashed state) is
-				 * enabled, to ensure we account for this batch when comparing batchIds, checking for a forked container.
-				 * Otherwise, we would not realize this container has forked in the case where it did fork, and a batch
-				 * became empty but wasn't submitted as such.
-				 */
-				messagesWithPendingState = [
-					{
-						message: inboundResult.batchStart.keyMessage,
-						localOpMetadata: undefined,
-					},
-				];
-				// Empty batch message is a non-runtime message as it was generated by the op grouping manager.
-				runtimeBatch = false;
-			}
-
-			const locationInBatch: { batchStart: boolean; batchEnd: boolean } =
-				inboundResult.type === "fullBatch"
-					? { batchStart: true, batchEnd: true }
-					: inboundResult.type === "batchStartingMessage"
-						? { batchStart: true, batchEnd: false }
-						: { batchStart: false, batchEnd: inboundResult.batchEnd === true };
-
-			this.processInboundMessages(
-				messagesWithPendingState,
-				locationInBatch,
-				local,
-				savedOp,
-				runtimeBatch,
-				inboundResult.type === "fullBatch"
-					? inboundResult.groupedBatch
-					: false /* groupedBatch */,
-			);
-		} else {
-			this.processInboundMessages(
-				[{ message: messageCopy, localOpMetadata: undefined }],
-				{ batchStart: true, batchEnd: true }, // Single message
-				local,
-				savedOp,
-				runtimeBatch,
-				false /* groupedBatch */,
-			);
-		}
-
-		if (local) {
-			// If we have processed a local op, this means that the container is
-			// making progress and we can reset the counter for how many times
-			// we have consecutively replayed the pending states
-			this.resetReconnectCount();
-		}
-	}
-
-	private _processedClientSequenceNumber: number | undefined;
-
-	/**
-	 * Processes inbound message(s). It calls delta scheduler according to the messages' location in the batch.
-	 * @param messagesWithMetadata - messages to process along with their metadata.
-	 * @param locationInBatch - Are we processing the start and/or end of a batch?
-	 * @param local - true if the messages were originally generated by the client receiving it.
-	 * @param savedOp - true if the message is a replayed saved op.
-	 * @param runtimeBatch - true if these are runtime messages.
-	 * @param groupedBatch - true if these messages are part of a grouped op batch.
-	 */
-	private processInboundMessages(
-		messagesWithMetadata: {
-			message: ISequencedDocumentMessage;
-			localOpMetadata?: unknown;
-		}[],
-		locationInBatch: { batchStart: boolean; batchEnd: boolean },
-		local: boolean,
-		savedOp: boolean | undefined,
-		runtimeBatch: boolean,
-		groupedBatch: boolean,
-	): void {
-		if (locationInBatch.batchStart) {
-			const firstMessage = messagesWithMetadata[0]?.message;
-			assert(firstMessage !== undefined, 0xa31 /* Batch must have at least one message */);
-			this.emit("batchBegin", firstMessage);
-		}
-
-		let error: unknown;
-		try {
-			if (!runtimeBatch) {
-				for (const { message } of messagesWithMetadata) {
-					this.ensureNoDataModelChanges(() => {
-						this.observeNonRuntimeMessage(message);
-					});
-				}
-				return;
-			}
-
-			// Updates a message's minimum sequence number to the minimum sequence number that container
-			// runtime is tracking and sets _processedClientSequenceNumber. It returns the updated message.
-			const updateSequenceNumbers = (
-				message: ISequencedDocumentMessage,
-			): InboundSequencedContainerRuntimeMessage => {
-				// Set the minimum sequence number to the containerRuntime's understanding of minimum sequence number.
-				message.minimumSequenceNumber =
-					this.useDeltaManagerOpsProxy &&
-					this.deltaManager.minimumSequenceNumber < message.minimumSequenceNumber
-						? this.deltaManager.minimumSequenceNumber
-						: message.minimumSequenceNumber;
-				this._processedClientSequenceNumber = message.clientSequenceNumber;
-				return message as InboundSequencedContainerRuntimeMessage;
-			};
-
-			// Non-grouped batch messages are processed one at a time.
-			if (!groupedBatch) {
-				for (const { message, localOpMetadata } of messagesWithMetadata) {
-					updateSequenceNumbers(message);
-					this.ensureNoDataModelChanges(() => {
-						this.validateAndProcessRuntimeMessages(
-							message as InboundSequencedContainerRuntimeMessage,
-							[
-								{
-									contents: message.contents,
-									localOpMetadata,
-									clientSequenceNumber: message.clientSequenceNumber,
-								},
-							],
-							local,
-							savedOp,
-						);
-						this.emit("op", message, true /* runtimeMessage */);
-					});
-				}
-				return;
-			}
-
-			let bunchedMessagesContent: IRuntimeMessagesContent[] = [];
-			let previousMessage: InboundSequencedContainerRuntimeMessage | undefined;
-
-			// Process the previous bunch of messages.
-			const sendBunchedMessages = (): void => {
-				assert(previousMessage !== undefined, 0xa67 /* previous message must exist */);
-				this.ensureNoDataModelChanges(() => {
-					this.validateAndProcessRuntimeMessages(
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						previousMessage!,
-						bunchedMessagesContent,
-						local,
-						savedOp,
-					);
-				});
-				bunchedMessagesContent = [];
-			};
-
-			/**
-			 * For grouped batch messages, bunch contiguous messages of the same type and process them together.
-			 * This is an optimization mainly for DDSes, where it can process a bunch of ops together. DDSes
-			 * like merge tree or shared tree can process ops more efficiently when they are bunched together.
-			 */
-			for (const { message, localOpMetadata } of messagesWithMetadata) {
-				const currentMessage = updateSequenceNumbers(message);
-				if (previousMessage && previousMessage.type !== currentMessage.type) {
-					sendBunchedMessages();
-				}
-				previousMessage = currentMessage;
-				bunchedMessagesContent.push({
-					contents: message.contents,
-					localOpMetadata,
-					clientSequenceNumber: message.clientSequenceNumber,
-				});
-			}
-
-			// Process the last bunch of messages.
-			sendBunchedMessages();
-
-			// Send the "op" events for the messages now that the ops have been processed.
-			for (const { message } of messagesWithMetadata) {
-				this.emit("op", message, true /* runtimeMessage */);
-			}
-		} catch (error_) {
-			error = error_;
-			throw error;
-		} finally {
-			if (locationInBatch.batchEnd) {
-				const lastMessage = messagesWithMetadata[messagesWithMetadata.length - 1]?.message;
-				assert(lastMessage !== undefined, 0xa32 /* Batch must have at least one message */);
-				this.emit("batchEnd", error, lastMessage);
-			}
-		}
-	}
-
-	/**
-	 * Observes messages that are not intended for the runtime layer, updating/notifying Runtime systems as needed.
-	 * @param message - non-runtime message to process.
-	 */
-	private observeNonRuntimeMessage(message: ISequencedDocumentMessage): void {
-		// Set the minimum sequence number to the containerRuntime's understanding of minimum sequence number.
-		if (this.deltaManager.minimumSequenceNumber < message.minimumSequenceNumber) {
-			message.minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
-		}
-
-		this._processedClientSequenceNumber = message.clientSequenceNumber;
-
-		// If there are no more pending messages after processing a local message,
-		// the document is no longer dirty.
-		if (!this.hasPendingMessages()) {
-			this.updateDocumentDirtyState(false);
-		}
-
-		// The DeltaManager used to do this, but doesn't anymore as of Loader v2.4
-		// Anyone listening to our "op" event would expect the contents to be parsed per this same logic
-		if (
-			typeof message.contents === "string" &&
-			message.contents !== "" &&
-			message.type !== MessageType.ClientLeave
-		) {
-			message.contents = JSON.parse(message.contents);
-		}
-
-		this.emit("op", message, false /* runtimeMessage */);
-	}
-
-	/**
-	 * Process runtime messages. The messages here are contiguous messages in a batch.
-	 * Assuming the messages in the given bunch are also a TypedContainerRuntimeMessage, checks its type and dispatch
-	 * the messages to the appropriate handler in the runtime.
-	 * Throws a DataProcessingError if the message looks like but doesn't conform to a known TypedContainerRuntimeMessage type.
-	 * @param message - The core message with common properties for all the messages.
-	 * @param messageContents - The contents, local metadata and clientSequenceNumbers of the messages.
-	 * @param local - true if the messages were originally generated by the client receiving it.
-	 * @param savedOp - true if the message is a replayed saved op.
-	 *
-	 */
-	private validateAndProcessRuntimeMessages(
-		message: Omit<InboundSequencedContainerRuntimeMessage, "contents">,
-		messagesContent: IRuntimeMessagesContent[],
-		local: boolean,
-		savedOp?: boolean,
-	): void {
-		// If there are no more pending messages after processing a local message,
-		// the document is no longer dirty.
-		if (!this.hasPendingMessages()) {
-			this.updateDocumentDirtyState(false);
-		}
-
-		// Get the contents without the localOpMetadata because not all message types know about localOpMetadata.
-		const contents = messagesContent.map((c) => c.contents);
-
-		switch (message.type) {
-			case ContainerMessageType.FluidDataStoreOp:
-			case ContainerMessageType.Attach:
-			case ContainerMessageType.Alias: {
-				// Remove the metadata from the message before sending it to the channel collection. The metadata
-				// is added by the container runtime and is not part of the message that the channel collection and
-				// layers below it expect.
-				this.channelCollection.processMessages({ envelope: message, messagesContent, local });
-				break;
-			}
-			case ContainerMessageType.BlobAttach: {
-				this.blobManager.processBlobAttachMessage(message, local);
-				break;
-			}
-			case ContainerMessageType.IdAllocation: {
-				this.processIdCompressorMessages(contents as IdCreationRange[], savedOp);
-				break;
-			}
-			case ContainerMessageType.GC: {
-				this.garbageCollector.processMessages(
-					contents as GarbageCollectionMessage[],
-					message.timestamp,
-					local,
-				);
-				break;
-			}
-			case ContainerMessageType.ChunkedOp: {
-				// From observability POV, we should not expose the rest of the system (including "op" events on object) to these messages.
-				// Also resetReconnectCount() would be wrong - see comment that was there before this change was made.
-				assert(false, 0x93d /* should not even get here */);
-			}
-			case ContainerMessageType.Rejoin: {
-				break;
-			}
-			case ContainerMessageType.DocumentSchemaChange: {
-				this.documentsSchemaController.processDocumentSchemaMessages(
-					contents as IDocumentSchemaChangeMessage[],
-					local,
-					message.sequenceNumber,
-				);
-				break;
-			}
-			default: {
-				const error = getUnknownMessageTypeError(
-					message.type,
-					"validateAndProcessRuntimeMessage" /* codePath */,
-					message as ISequencedDocumentMessage,
-				);
-				this.closeFn(error);
-				throw error;
-			}
-		}
-	}
-
-	private processIdCompressorMessages(
-		messageContents: IdCreationRange[],
-		savedOp?: boolean,
-	): void {
-		for (const range of messageContents) {
-			// Don't re-finalize the range if we're processing a "savedOp" in
-			// stashed ops flow. The compressor is stashed with these ops already processed.
-			// That said, in idCompressorMode === "delayed", we might not serialize ID compressor, and
-			// thus we need to process all the ops.
-			if (!(this.skipSavedCompressorOps && savedOp === true)) {
-				// Some other client turned on the id compressor. If we have not turned it on,
-				// put it in a pending queue and delay finalization.
-				if (this._idCompressor === undefined) {
-					assert(
-						this.sessionSchema.idCompressorMode !== undefined,
-						0x93c /* id compressor should be enabled */,
-					);
-					this.pendingIdCompressorOps.push(range);
-				} else {
-					assert(
-						this.pendingIdCompressorOps.length === 0,
-						0x979 /* there should be no pending ops! */,
-					);
-					this._idCompressor.finalizeCreationRange(range);
-				}
-			}
-		}
+		this.inbox.process(messageCopy, local);
 	}
 
 	public processSignal(message: ISignalMessage, local: boolean): void {
@@ -4644,4 +4282,24 @@ export function createNewSignalEnvelope(
 	};
 
 	return newEnvelope;
+}
+
+async function getDocumentAttributes(
+	storage: Pick<IDocumentStorageService, "readBlob">,
+	tree: ISnapshotTree | undefined,
+): Promise<IDocumentAttributes> {
+	if (tree === undefined) {
+		return {
+			minimumSequenceNumber: 0,
+			sequenceNumber: 0,
+		};
+	}
+
+	// Backward compatibility: old docs would have ".attributes" instead of "attributes"
+	const attributesHash =
+		".protocol" in tree.trees
+			? tree.trees[".protocol"].blobs.attributes
+			: tree.blobs[".attributes"];
+
+	return readAndParse<IDocumentAttributes>(storage, attributesHash);
 }
