@@ -557,27 +557,6 @@ export class PartialSequenceLengths {
 				localSeq,
 				seglen: -cachedLength,
 			});
-
-			const lastRemove = removeInfo.removes[removeInfo.removes.length - 1];
-			if (opstampUtils.isLocal(lastRemove)) {
-				// In addition to a remote sliceRemove causing this segment to be removed as soon as its insertion is acked,
-				// the local client has also removed it before its insertion was acked.
-				// It will therefore not be visible for a local reconnecting perspective beyond the removed localSeq.
-				partials.addOrUpdate({
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					seq: lastRemove.localSeq!,
-					len: 0,
-					seglen: -cachedLength,
-					clientId,
-				});
-
-				combinedPartialLengths.addLocalAdjustment({
-					refSeq: firstRemove.seq,
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					localSeq: lastRemove.localSeq!,
-					seglen: cachedLength,
-				});
-			}
 		} else {
 			// Segment was obliterated on insert. Generally this means it should be visible only to the
 			// inserting client (in which case we add an adjustment to only that client's perspective),
@@ -747,50 +726,12 @@ export class PartialSequenceLengths {
 						0xaba /* Local client was in removed client ids but segment has no local seq for either */,
 					);
 
-					// Here...
-					// - The segment was removed locally at `localSeq`
-					// - The segment was also removed remotely at `seqOrLocalSeq`
-					// - We're ensuring that partial lengths works for arbitrary `LocalReconnectingPerspective`s.
-					//
-					// Visualize an arbitrary local reconnecting perspective in 2d space, where the x-axis is `seq` and the y-axis is `localSeq`.
-					// The events that have occurred to this segment divide the space into up to 6 regions:
-					//
-					//         (localSeq)
-					//              |       |           |
-					//              |   1   |     2     |    3
-					// local remove |-----------------------------
-					//              |       |           |
-					//              |   4   |     5     |    6
-					//              |----------------------------- (seq)
-					//                    insert      remove
-					// In all regions but region 5, the segment has length 0 (it was not inserted yet in regions 1 or 4, and removed locally and/or remotely
-					// in regions 2, 3, and 6).
-					// `accountForInsertion` already added a partial lengths adjustment of +segment.cachedLength for regions 2, 3, 5, and 6.
-					// Above in this function, we've added a partial lengths adjustment of -segment.cachedLength for regions 3 and 6.
-					//
-					// Note that in this picture:
-					// - Adding entries to `unsequencedRecords.partialLengths` is like adding adjustments that affect anything above a given Y value
-					// - Adding entries to `combinedPartialLengths.partialLengths` is like adding adjustments that affect anything above a given X value
-					// - Adding entries with `addLocalAdjustment` is like adding adjustments that affect anything above a given X *and* Y value
-					// The remainder this block adds the necessary adjustments to make the length appear 0 in region 2 as well, keeping in mind that
-					// region 1 may or may not exist depending on if the insertion is in the collab window.
-					if (
-						opstampUtils.isAcked(segment.insert) &&
-						opstampUtils.greaterThan(segment.insert, minSeqStamp)
-					) {
-						combinedPartialLengths.addLocalAdjustment({
-							refSeq: segment.insert.seq,
-							localSeq,
-							seglen: lenDelta,
-						});
-					} else {
-						unsequencedRecords.partialLengths.addOrUpdate({
-							seq: localSeq,
-							clientId: collabWindow.clientId,
-							seglen: lenDelta,
-							len: 0,
-						});
-					}
+					unsequencedRecords.partialLengths.addOrUpdate({
+						seq: localSeq,
+						clientId: collabWindow.clientId,
+						seglen: lenDelta,
+						len: 0,
+					});
 
 					// Because we've included deltas which take effect when either of localSeq or refSeq are high enough,
 					// we need to offset this with an adjustment that takes effect when both are high enough.
@@ -810,7 +751,7 @@ export class PartialSequenceLengths {
 					combinedPartialLengths.addClientAdjustment(id, seqOrLocalSeq, lenDelta);
 
 					// Also ensure that all these clients have seen the segment as inserted before being removed
-					// This is technically not necessary for setRemoves (we never ask for the length of this block with
+					// This is technically not necessary for removes (we never ask for the length of this block with
 					// respect to a refSeq which this entry would affect), but it's simpler to just add it here.
 					// We already add this entry as part of the accountForInsertion codepath for the client that
 					// actually did insert the segment, hence not doing so [again] here.
@@ -1197,12 +1138,6 @@ export function verifyExpectedPartialLengths(
 
 	let expected = 0;
 	const nodesToVisit: IMergeNode[] = [node];
-	const perspective =
-		clientId === mergeTree.collabWindow.clientId
-			? localSeq === undefined
-				? new LocalDefaultPerspective(clientId)
-				: new LocalReconnectingPerspective(refSeq, clientId, localSeq)
-			: new PriorPerspective(refSeq, clientId);
 
 	while (nodesToVisit.length > 0) {
 		const thisNode = nodesToVisit.pop();
@@ -1210,6 +1145,12 @@ export function verifyExpectedPartialLengths(
 			continue;
 		}
 		if (thisNode.isLeaf()) {
+			const perspective =
+				clientId === mergeTree.collabWindow.clientId
+					? localSeq === undefined
+						? new LocalDefaultPerspective(clientId)
+						: new LocalReconnectingPerspective(refSeq, clientId, localSeq)
+					: new PriorPerspective(refSeq, clientId);
 			expected += mergeTree["nodeLength"](thisNode, perspective) ?? 0;
 		} else {
 			nodesToVisit.push(...thisNode.children.slice(0, thisNode.childCount));
