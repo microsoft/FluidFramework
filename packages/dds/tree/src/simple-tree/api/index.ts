@@ -22,7 +22,7 @@ export {
 	SchemaFactory,
 	type ScopedSchemaName,
 	type SchemaFactoryObjectOptions,
-	type schemaStatics,
+	type SchemaStatics,
 } from "./schemaFactory.js";
 export { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
 export type {
@@ -75,9 +75,12 @@ export type {
 	TreeNodeSchemaUnsafe,
 	AllowedTypesUnsafe,
 	ImplicitAllowedTypesUnsafe,
+	ImplicitFieldSchemaUnsafe,
 	TreeNodeSchemaNonClassUnsafe,
 	InsertableTreeNodeFromAllowedTypesUnsafe,
 	FieldSchemaAlphaUnsafe,
+	ArrayNodeCustomizableSchemaUnsafe,
+	MapNodeCustomizableSchemaUnsafe,
 } from "./typesUnsafe.js";
 
 export {
