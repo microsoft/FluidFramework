@@ -13,7 +13,7 @@ import type { ISharedMap } from "@fluidframework/map/internal";
 import { DetachedReferencePosition, PropertySet } from "@fluidframework/merge-tree/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import type {
-	IIntervalCollection,
+	ISequenceIntervalCollection,
 	IOverlappingIntervalsIndex,
 	SequenceInterval,
 	SharedString,
@@ -31,7 +31,7 @@ import {
 
 const assertSequenceIntervals = (
 	sharedString: SharedString,
-	intervalCollection: IIntervalCollection<SequenceInterval>,
+	intervalCollection: ISequenceIntervalCollection,
 	overlappingIntervalsIndex: IOverlappingIntervalsIndex<SequenceInterval>,
 	expected: readonly { start: number; end: number }[],
 	validateOverlapping: boolean = true,
@@ -59,7 +59,7 @@ const assertSequenceIntervals = (
 	assert.deepEqual(actualPos, expected, "intervals are not as expected");
 };
 
-function testIntervalOperations(intervalCollection: IIntervalCollection<SequenceInterval>) {
+function testIntervalOperations(intervalCollection: ISequenceIntervalCollection) {
 	const intervalArray: SequenceInterval[] = [];
 	let interval: SequenceInterval | undefined;
 	let id;
@@ -258,7 +258,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 		const stringId = "stringKey";
 
 		let sharedString: SharedString;
-		let intervals: IIntervalCollection<SequenceInterval>;
+		let intervals: ISequenceIntervalCollection;
 		let overlappingIntervalsIndex: IOverlappingIntervalsIndex<SequenceInterval>;
 		let dataObject: ITestFluidObject & IFluidLoadable;
 
