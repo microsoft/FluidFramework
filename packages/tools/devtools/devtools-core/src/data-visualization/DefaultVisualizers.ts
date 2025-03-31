@@ -8,7 +8,7 @@
  * implementations for our DDSs.
  */
 
-import { DataObject } from "@fluidframework/aqueduct/internal";
+import type { DataObject } from "@fluidframework/aqueduct/internal";
 import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import {
@@ -109,16 +109,6 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
 };
 
 /**
- * Wrapper class for {@link DataObject} to provide a {@link ISharedDirectory} root.
- * @remarks Intended for devtools internal use only.
- */
-export class VisualDataObject extends DataObject {
-	public override get root(): ISharedDirectory {
-		return super.root;
-	}
-}
-
-/**
  * Default {@link VisualizeSharedObject} for {@link DataObject}.
  */
 export const visualizeDataObject: VisualizeDataObject = async (
@@ -126,9 +116,9 @@ export const visualizeDataObject: VisualizeDataObject = async (
 	visualizeChildData: VisualizeChildData,
 ): Promise<FluidObjectTreeNode> => {
 	/**
-	 * @remarks Typcasted to {@link VisualDataObject} without additional check to avoid redundancy as multiple type checks are done prior to assigning the corresponding visualizer.
+	 * @remarks Double-casted without additional check to avoid redundancy as multiple type checks are done prior to assigning the corresponding visualizer.
 	 */
-	const dataObjectRoot = (dataObject as VisualDataObject).root;
+	const dataObjectRoot = (dataObject as unknown as { readonly root: ISharedDirectory }).root;
 	const renderedChildData = await visualizeDirectory(dataObjectRoot, visualizeChildData);
 	return {
 		fluidObjectId: dataObjectRoot.id,

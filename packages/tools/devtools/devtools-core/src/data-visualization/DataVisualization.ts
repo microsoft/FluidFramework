@@ -16,16 +16,12 @@ import type {
 } from "@fluidframework/core-interfaces";
 // eslint-disable-next-line import/no-deprecated
 import type { IProvideFluidHandle } from "@fluidframework/core-interfaces/internal";
-import { DirectoryFactory } from "@fluidframework/map/internal";
+import { DirectoryFactory, type ISharedDirectory } from "@fluidframework/map/internal";
 import type { ISharedObject, SharedObject } from "@fluidframework/shared-object-base/internal";
 
 import type { FluidObjectId } from "../CommonInterfaces.js";
 
-import {
-	visualizeDataObject,
-	visualizeUnknownSharedObject,
-	type VisualDataObject,
-} from "./DefaultVisualizers.js";
+import { visualizeDataObject, visualizeUnknownSharedObject } from "./DefaultVisualizers.js";
 import {
 	type FluidObjectNode,
 	type Primitive,
@@ -260,9 +256,9 @@ export class DataVisualizerGraph
 				: (this.visualizers[visualObject.attributes.type] ?? visualizeUnknownSharedObject);
 
 			const visualizerNode = new VisualizerNode(
-				// Typecasting `sharedObject` to `VisualDataObject` is necessary for `DataObject` visualization`, because the `root` property is inaccessbile (private).
+				// Double-casting `sharedObject` is necessary for `DataObject` visualization, because the `root` property is inaccessbile in `DataObject` (private).
 				isPureDataObject(visualObject)
-					? (visualObject as VisualDataObject).root
+					? (visualObject as unknown as { readonly root: ISharedDirectory }).root
 					: visualObject,
 				visualizationFunction as VisualizeSharedObject,
 				async (handle) => this.registerVisualizerForHandle(handle),
@@ -528,7 +524,8 @@ function isSharedObject(value: unknown): value is ISharedObject {
 
 /**
  * Determines whether or not the provided value is an {@link DataObject}, for the purposes of this library.
- * @remarks Implemented by checking for the particular properties / methods we use in this module
+ * @remarks Implemented by checking for the particular properties / methods we use in this module.
+ * @remarks `value` is type casted as a workaround to access the `root` property of the {@link DataObject} (private).
  */
 function isPureDataObject(value: unknown): value is PureDataObject {
 	return (
@@ -537,6 +534,7 @@ function isPureDataObject(value: unknown): value is PureDataObject {
 		(value as DataObject).IFluidLoadable !== undefined &&
 		(value as DataObject).IFluidHandle !== undefined &&
 		(value as DataObject).handle !== undefined &&
-		(value as VisualDataObject).root?.attributes?.type === DirectoryFactory.Type
+		(value as { readonly root: ISharedDirectory }).root?.attributes?.type ===
+			DirectoryFactory.Type
 	);
 }
