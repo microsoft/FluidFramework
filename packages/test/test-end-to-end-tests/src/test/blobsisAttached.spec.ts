@@ -72,13 +72,17 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 			const ac = new AbortController();
 			ac.abort("abort test");
+			let surprisingSuccess = false;
 			try {
 				await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"), ac.signal);
-				assert.fail("Should not succeed");
+				surprisingSuccess = true;
 			} catch (error: any) {
 				assert.strictEqual(error.status, undefined);
 				assert.strictEqual(error.uploadTime, undefined);
 				assert.strictEqual(error.acked, undefined);
+			}
+			if (surprisingSuccess) {
+				assert.fail("Should not succeed");
 			}
 
 			const pendingState = (await runtimeOf(dataStore1).getPendingLocalState()) as

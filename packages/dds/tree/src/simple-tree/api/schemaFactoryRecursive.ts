@@ -21,7 +21,7 @@ import type {
 	WithType,
 	TreeNode,
 } from "../core/index.js";
-import type { FieldSchemaUnsafe, ImplicitAllowedTypesUnsafe } from "./typesUnsafe.js";
+import type { FieldSchemaAlphaUnsafe, ImplicitAllowedTypesUnsafe } from "./typesUnsafe.js";
 
 export function createFieldSchemaUnsafe<
 	Kind extends FieldKind,
@@ -31,7 +31,7 @@ export function createFieldSchemaUnsafe<
 	kind: Kind,
 	allowedTypes: Types,
 	props?: FieldProps<TCustomMetadata>,
-): FieldSchemaUnsafe<Kind, Types, TCustomMetadata> {
+): FieldSchemaAlphaUnsafe<Kind, Types, TCustomMetadata> {
 	// At runtime, we still want this to be a FieldSchema instance, but we can't satisfy its extends clause, so just return it as an FieldSchemaUnsafe
 	return createFieldSchema(kind, allowedTypes as ImplicitAllowedTypes & Types, props);
 }
