@@ -18,7 +18,14 @@ import { v4 as uuid } from "uuid";
 
 import { TodoItem, TodoList } from "./index.js";
 
+/**
+ * Props used when creating a new todo item.
+ */
 export interface TodoItemProps {
+	/**
+	 * The initial text to populate the todo item's title with.
+	 * This value will be inserted into the shared string at index 0.
+	 */
 	readonly startingText: string;
 }
 /**
