@@ -73,7 +73,6 @@ import { type ISequenceIntervalCollection } from "./intervalCollection.js";
 import { IMapOperation, IntervalCollectionMap } from "./intervalCollectionMap.js";
 import {
 	IMapMessageLocalMetadata,
-	IValueChanged,
 	type SequenceOptions,
 } from "./intervalCollectionMapInterfaces.js";
 import {
@@ -992,17 +991,13 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 	private initializeIntervalCollections() {
 		// Listen and initialize new SharedIntervalCollections
-		this.intervalCollections.eventEmitter.on(
-			"create",
-			({ key, previousValue }: IValueChanged, local: boolean) => {
+		this.intervalCollections.events.on(
+			"createIntervalCollection",
+			(key: string, local: boolean) => {
 				const intervalCollection = this.intervalCollections.get(key);
 				if (!intervalCollection.attached) {
 					intervalCollection.attachGraph(this.client, key);
 				}
-				assert(
-					previousValue === undefined,
-					0x2c1 /* "Creating an interval collection that already exists?" */,
-				);
 				this.emit("createIntervalCollection", key, local, this);
 			},
 		);
