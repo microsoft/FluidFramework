@@ -11,7 +11,7 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"scripts": {
-		"build": "npm run policy-check && npm run layer-check && pnpm run generate:packageList && fluid-build -g server --task build",
+		"build": "fluid-build -g server --task build",
 		"build:compile": "fluid-build -g server --task compile",
 		"build:docker": "docker build . --build-context root=../..",
 		"build:docs": "fluid-build -g server --task build:docs",
@@ -20,6 +20,7 @@
 		"build:genver": "pnpm run -r --no-sort --stream build:genver",
 		"changeset": "flub changeset add --releaseGroup server",
 		"check:versions": "flub check buildVersion -g server --path .",
+		"checks": "fluid-build --task checks",
 		"ci:build": "npm run build:genver && pnpm run -r --stream build:compile",
 		"ci:build:docs": "pnpm run -r --no-sort --stream ci:build:docs",
 		"ci:eslint": "pnpm run -r --no-sort --stream --no-bail eslint",
@@ -39,12 +40,14 @@
 		"generate:packageList:internal-test": "flub list server --no-private --feed internal-test --outFile feeds/internal-test.txt",
 		"generate:packageList:public": "flub list server --no-private --feed public --outFile feeds/public.txt",
 		"preinstall": "node scripts/only-pnpm.cjs",
-		"layer-check": "cd ../.. && npm run layer-check",
+		"layer-check": "flub check layers --info ../../layerInfo.json",
 		"lint": "npm run prettier && npm run ci:eslint",
 		"lint:fix": "npm run prettier:fix && pnpm run -r --no-sort --stream lint:fix",
-		"policy-check": "cd ../.. && npm run policy-check",
-		"policy-check:asserts": "cd ../.. && npm run policy-check:asserts",
-		"policy-check:fix": "cd ../.. && npm run policy-check:fix",
+		"policy-check": "flub check policy",
+		"policy-check-help": "echo Detect (and error on) policy-check violations, like package.json sorting, copyright headers etc. Run the check or \"pnpm flub check policy --listHandlers\" for a full list.",
+		"policy-check:asserts": "flub generate assertTags --all && npm run format",
+		"policy-check:fix": "flub check policy --fix",
+		"policy-check:fix-help": "echo Fix policy-check violations",
 		"prettier": "prettier --check . --cache --ignore-path ./.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ./.prettierignore",
 		"restart": "docker compose restart alfred && docker-compose restart deli && docker-compose restart scriptorium",
@@ -136,6 +139,26 @@
 		},
 		"patchedDependencies": {
 			"@microsoft/api-extractor@7.45.1": "patches/@microsoft__api-extractor@7.45.1.patch"
+		}
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build": {
+				"dependsOn": [
+					"^build",
+					"build:docs",
+					"checks"
+				],
+				"script": false
+			},
+			"checks": {
+				"dependsOn": [
+					"prettier",
+					"generate:packageList",
+					"check:versions"
+				],
+				"script": false
+			}
 		}
 	}
 }
