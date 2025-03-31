@@ -60,8 +60,8 @@ import {
 	SequenceIntervalClass,
 	SerializedIntervalDelta,
 	createPositionReferenceFromSegoff,
+	createSequenceInterval,
 	endReferenceSlidingPreference,
-	sequenceIntervalHelpers,
 	startReferenceSlidingPreference,
 	type ISerializableInterval,
 	type ISerializableIntervalPrivate,
@@ -181,12 +181,9 @@ export class LocalIntervalCollection {
 			previousInterval: SequenceInterval,
 		) => void,
 	) {
-		this.overlappingIntervalsIndex = new OverlappingIntervalsIndex(
-			client,
-			sequenceIntervalHelpers,
-		);
+		this.overlappingIntervalsIndex = new OverlappingIntervalsIndex(client);
 		this.idIntervalIndex = createIdIntervalIndex();
-		this.endIntervalIndex = new EndpointIndex(client, sequenceIntervalHelpers);
+		this.endIntervalIndex = new EndpointIndex(client);
 		this.indexes = new Set([
 			this.overlappingIntervalsIndex,
 			this.idIntervalIndex,
@@ -257,7 +254,7 @@ export class LocalIntervalCollection {
 		intervalType: IntervalType,
 		op?: ISequencedDocumentMessage,
 	): SequenceInterval {
-		return sequenceIntervalHelpers.create(
+		return createSequenceInterval(
 			this.label,
 			start,
 			end,
@@ -1300,7 +1297,7 @@ export class IntervalCollection
 					typeof endPos === "number" && endSide !== undefined
 						? { pos: endPos, side: endSide }
 						: endPos;
-				const interval = sequenceIntervalHelpers.create(
+				const interval = createSequenceInterval(
 					label,
 					start,
 					end,
