@@ -112,13 +112,6 @@ export class TaskManagerClass
 	}
 
 	/**
-	 * Returns a ReadOnlyInfo object to determine current read/write permissions.
-	 */
-	private get readOnlyInfo(): ReadOnlyInfo {
-		return this.deltaManager.readOnlyInfo;
-	}
-
-	/**
 	 * Constructs a new task manager. If the object is non-local an id and service interfaces will
 	 * be provided
 	 *
@@ -297,11 +290,8 @@ export class TaskManagerClass
 			return true;
 		}
 
-		if (this.readOnlyInfo.readonly === true) {
-			const error =
-				this.readOnlyInfo.permissions === true
-					? new Error("Attempted to volunteer with read-only permissions")
-					: new Error("Attempted to volunteer in read-only state");
+		if (this.runtime.readonly === true) {
+			const error = new Error("Attempted to volunteer in read-only state");
 			throw error;
 		}
 
@@ -387,8 +377,8 @@ export class TaskManagerClass
 			return;
 		}
 
-		if (this.readOnlyInfo.readonly === true && this.readOnlyInfo.permissions === true) {
-			throw new Error("Attempted to subscribe with read-only permissions");
+		if (this.runtime.readonly === true) {
+			throw new Error("Attempted to subscribe with read-only");
 		}
 
 		const submitVolunteerOp = () => {

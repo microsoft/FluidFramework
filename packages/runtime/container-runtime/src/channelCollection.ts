@@ -150,6 +150,9 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 		get connected() {
 			return context.connected;
 		},
+		get readonly() {
+			return context.readonly;
+		},
 		deltaManager: context.deltaManager,
 		storage: context.storage,
 		baseLogger: context.baseLogger,
@@ -1123,6 +1126,28 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 						details: JSON.stringify({
 							runtimeConnected: this.parentContext.connected,
 							connected,
+						}),
+					},
+					error,
+				);
+			}
+		}
+	}
+
+	public setReadOnlyState(readonly: boolean): void {
+		for (const [fluidDataStoreId, context] of this.contexts) {
+			try {
+				context.setReadOnlyState(readonly);
+			} catch (error) {
+				this.mc.logger.sendErrorEvent(
+					{
+						eventName: "SetReadOnlyStateError",
+						...tagCodeArtifacts({
+							fluidDataStoreId,
+						}),
+						details: JSON.stringify({
+							runtimeReadonly: this.parentContext.readonly,
+							readonly,
 						}),
 					},
 					error,

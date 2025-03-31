@@ -219,6 +219,10 @@ export abstract class FluidDataStoreContext
 		return this.parentContext.deltaManager;
 	}
 
+	public get readonly(): boolean {
+		return this.parentContext.readonly;
+	}
+
 	public get connected(): boolean {
 		return this.parentContext.connected;
 	}
@@ -602,6 +606,14 @@ export abstract class FluidDataStoreContext
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		this.channel!.setConnectionState(connected, clientId);
+	}
+
+	public setReadOnlyState(readonly: boolean): void {
+		this.verifyNotClosed("setReadOnlyState", false /* checkTombstone */);
+
+		assert(this.readonly === readonly, "Unexpected readonly state");
+
+		this.channel?.setReadOnlyState?.(readonly);
 	}
 
 	/**

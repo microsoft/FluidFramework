@@ -1081,6 +1081,10 @@ export class ContainerRuntime
 		return this._getAttachState();
 	}
 
+	public get readonly(): boolean {
+		return this.deltaManager.readOnlyInfo.readonly ?? false;
+	}
+
 	/**
 	 * Current session schema - defines what options are on & off.
 	 * It's overlap of document schema (controlled by summary & ops) and options controlling this session.
@@ -1391,6 +1395,8 @@ export class ContainerRuntime
 
 		assert(isIDeltaManagerFull(deltaManager), 0xa80 /* Invalid delta manager */);
 		this.innerDeltaManager = deltaManager;
+
+		this.innerDeltaManager.on("readonly", (readonly) => this.setReadOnlyState(readonly));
 
 		// Here we could wrap/intercept on these functions to block/modify outgoing messages if needed.
 		// This makes ContainerRuntime the final gatekeeper for outgoing messages.
@@ -2478,6 +2484,10 @@ export class ContainerRuntime
 		return this._loadIdCompressor;
 	}
 
+	public setReadOnlyState(readonly: boolean): void {
+		this.channelCollection.setReadOnlyState(readonly);
+	}
+
 	public setConnectionState(connected: boolean, clientId?: string): void {
 		// Validate we have consistent state
 		const currentClientId = this._audience.getSelf()?.clientId;
@@ -3180,9 +3190,7 @@ export class ContainerRuntime
 	private canSendOps(): boolean {
 		// Note that the real (non-proxy) delta manager is needed here to get the readonly info. This is because
 		// container runtime's ability to send ops depend on the actual readonly state of the delta manager.
-		return (
-			this.connected && !this.innerDeltaManager.readOnlyInfo.readonly && !this.imminentClosure
-		);
+		return this.connected && !this.readonly && !this.imminentClosure;
 	}
 
 	/**

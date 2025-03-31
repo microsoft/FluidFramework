@@ -135,6 +135,10 @@ export class FluidDataStoreRuntime
 		return this.dataStoreContext.connected;
 	}
 
+	public get readonly(): boolean {
+		return this.dataStoreContext.readonly;
+	}
+
 	public get clientId(): string | undefined {
 		return this.dataStoreContext.clientId;
 	}
@@ -619,6 +623,13 @@ export class FluidDataStoreRuntime
 		}
 
 		raiseConnectedEvent(this.logger, this, connected, clientId);
+	}
+
+	public setReadOnlyState(readonly: boolean) {
+		this.verifyNotClosed();
+		if (readonly !== this.readonly) {
+			this.emit("readonly", readonly);
+		}
 	}
 
 	public getQuorum(): IQuorumClients {

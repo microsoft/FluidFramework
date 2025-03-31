@@ -98,6 +98,8 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     // (undocumented)
     readonly options: Record<string | number, any>;
     // (undocumented)
+    readonly readonly: boolean;
+    // (undocumented)
     readonly rootRoutingContext: IFluidHandleContext;
     submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
@@ -120,6 +122,8 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
     // (undocumented)
     (event: "connected", listener: (clientId: string) => void): any;
+    // (undocumented)
+    (event: "readonly", listener: (isReadOnly: boolean) => void): any;
 }
 
 // @alpha (undocumented)
