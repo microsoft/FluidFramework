@@ -200,6 +200,7 @@ export function convertGenericChange<TChange>(
 const invalidFunc = (): never => fail("Should not be called when converting generic changes");
 const invalidComposeManager: ComposeNodeManager = {
 	getNewChangesForBaseDetach: invalidFunc,
-	composeBaseAttach: invalidFunc,
+	sendNewChangesToBaseSourceLocation: invalidFunc,
+	composeAttachDetach: invalidFunc,
 	composeDetachAttach: invalidFunc,
 };

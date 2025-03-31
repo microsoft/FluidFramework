@@ -249,8 +249,9 @@ const dummyComposeManager: ComposeNodeManager = {
 		return { start: baseDetachId, value: undefined, length: count };
 	},
 
-	composeBaseAttach: unsupportedFunc,
+	composeAttachDetach: unsupportedFunc,
 	composeDetachAttach: unsupportedFunc,
+	sendNewChangesToBaseSourceLocation: unsupportedFunc,
 };
 
 const dummyRevisionMetadata: RevisionMetadataSource = {

@@ -147,7 +147,12 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			const baseAttachId = change1.valueReplace?.src;
 			if (baseAttachId !== undefined) {
 				const newDetachId = getEffectfulDst(change2.valueReplace);
-				nodeManager.composeBaseAttach(baseAttachId, newDetachId, 1, change2.childChange);
+				if (newDetachId !== undefined) {
+					nodeManager.composeAttachDetach(baseAttachId, newDetachId, 1);
+				}
+				if (change2.childChange !== undefined) {
+					nodeManager.sendNewChangesToBaseSourceLocation(baseAttachId, change2.childChange);
+				}
 			}
 
 			if (isReplaceEffectful(change2.valueReplace)) {

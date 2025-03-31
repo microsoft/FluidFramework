@@ -33,7 +33,6 @@ import {
 	compareCellPositionsUsingTombstones,
 	extractMarkEffect,
 	getAttachedNodeId,
-	getDetachOutputCellId,
 	getDetachedNodeId,
 	getInputCellId,
 	getOutputCellId,
@@ -195,12 +194,10 @@ function composeMarksIgnoreChild(
 		const attach = extractMarkEffect(baseMark);
 		const detach = extractMarkEffect(newMark);
 
-		// XXX: Is it a problem that we can call this twice? (see handleNodeChanges)
-		moveEffects.composeBaseAttach(
+		moveEffects.composeAttachDetach(
 			getAttachedNodeId(baseMark),
 			getDetachedNodeId(newMark),
 			baseMark.count,
-			newMark.changes,
 		);
 
 		if (areEqualCellIds(getOutputCellId(newMark), baseMark.cellId)) {
@@ -245,12 +242,10 @@ function handleNodeChanges(
 ): NodeId | undefined {
 	if (newMark.changes !== undefined) {
 		if (baseMark.type === "Insert" && baseMark.cellId !== undefined) {
-			let newId: ChangeAtomId | undefined;
-			if (newMark.type === "Remove") {
-				newId = getDetachOutputCellId(newMark);
-			}
-
-			moveEffects.composeBaseAttach(getAttachedNodeId(baseMark), newId, 1, newMark.changes);
+			moveEffects.sendNewChangesToBaseSourceLocation(
+				getAttachedNodeId(baseMark),
+				newMark.changes,
+			);
 			return undefined;
 		}
 	}

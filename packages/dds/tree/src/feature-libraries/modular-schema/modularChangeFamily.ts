@@ -2461,6 +2461,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		private readonly allowInval: boolean = true,
 	) {}
 
+	// XXX: Support moving cross field keys
 	public getNewChangesForBaseAttach(
 		baseAttachId: ChangeAtomId,
 		count: number,
@@ -2509,6 +2510,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		return this.table.entries.getFirst(baseAttachId, count);
 	}
 
+	// XXX: Support moving/deleting cross field keys
 	public rebaseOverDetach(
 		baseDetachId: ChangeAtomId,
 		count: number,
@@ -2618,40 +2620,57 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		return { ...result, value: result.value?.nodeChange };
 	}
 
-	public composeBaseAttach(
+	public composeAttachDetach(
 		baseAttachId: ChangeAtomId,
-		newDetachId: ChangeAtomId | undefined,
+		newDetachId: ChangeAtomId,
 		count: number,
-		newChanges: NodeId | undefined,
 	): void {
-		if (newDetachId !== undefined) {
-			renameNodes(
-				this.table.composedRootNodes,
-				baseAttachId,
-				newDetachId,
-				count,
-				this.table.baseChange.rootNodes.newToOldId,
-				this.table.newChange.rootNodes.oldToNewId,
-			);
-
-			this.table.composedCrossFieldKeys.delete(
-				{ ...baseAttachId, target: CrossFieldTarget.Destination },
-				count,
-			);
-
-			this.table.composedCrossFieldKeys.delete(
-				{ ...newDetachId, target: CrossFieldTarget.Source },
-				count,
-			);
-		}
-
-		const { value: baseDetachId, length } = firstDetachIdFromAttachId(
-			this.table.baseChange.rootNodes,
+		renameNodes(
+			this.table.composedRootNodes,
 			baseAttachId,
+			newDetachId,
+			count,
+			this.table.baseChange.rootNodes.newToOldId,
+			this.table.newChange.rootNodes.oldToNewId,
+		);
+
+		this.table.composedCrossFieldKeys.delete(
+			{ ...baseAttachId, target: CrossFieldTarget.Destination },
 			count,
 		);
 
-		assert(length === count, "XXX");
+		this.table.composedCrossFieldKeys.delete(
+			{ ...newDetachId, target: CrossFieldTarget.Source },
+			count,
+		);
+
+		const { value: baseDetachId } = firstDetachIdFromAttachId(
+			this.table.baseChange.rootNodes,
+			baseAttachId,
+			1,
+		);
+		const detachFields = getFieldsForCrossFieldKey(
+			this.table.baseChange,
+			{
+				...baseDetachId,
+				target: CrossFieldTarget.Source,
+			},
+			1,
+		);
+		// We invalidate the detach location even if there are no new changes because adding the rename entry
+		// may affect the result of `composeDetachAttach` at that location.
+		this.invalidateBaseFields(detachFields);
+	}
+
+	public sendNewChangesToBaseSourceLocation(
+		baseAttachId: ChangeAtomId,
+		newChanges: NodeId,
+	): void {
+		const { value: baseDetachId } = firstDetachIdFromAttachId(
+			this.table.baseChange.rootNodes,
+			baseAttachId,
+			1,
+		);
 
 		const detachFields = getFieldsForCrossFieldKey(
 			this.table.baseChange,
@@ -2659,14 +2678,14 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 				...baseDetachId,
 				target: CrossFieldTarget.Source,
 			},
-			count,
+			1,
 		);
 
 		if (newChanges !== undefined) {
 			if (detachFields.length > 0) {
 				// XXX: Handle the case where some of the IDs in the range have a detach and some do not.
 				// The base attach is part of a move in the base changeset.
-				setInCrossFieldMap(this.table.entries, baseDetachId, count, {
+				setInCrossFieldMap(this.table.entries, baseDetachId, 1, {
 					nodeChange: newChanges,
 				});
 			} else {
@@ -2686,7 +2705,6 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 				}
 			}
 		}
-
 		// We invalidate the detach location even if there are no new changes because adding the rename entry
 		// may affect the result of `composeDetachAttach` at that location.
 		this.invalidateBaseFields(detachFields);

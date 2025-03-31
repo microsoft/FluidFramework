@@ -132,6 +132,31 @@ describe("Editing", () => {
 			expectJsonTree([tree1, tree2], expected);
 		});
 
+		it("can apply a composition of [move + undo]", () => {
+			const tree1 = makeTreeFromJsonSequence(["a"]);
+			const tree2 = tree1.branch();
+
+			const { undoStack } = createTestUndoRedoStacks(tree2.events);
+
+			tree2.editor.move(
+				rootField,
+				0,
+				1,
+				{
+					parent: undefined,
+					field: brand("foo"),
+				},
+				0,
+			);
+			undoStack.pop()?.revert();
+
+			expectJsonTree(tree2, ["a"]);
+
+			tree1.merge(tree2);
+
+			expectJsonTree(tree1, ["a"]);
+		});
+
 		it("can rebase intra-field move over inter-field move of same node and its parent", () => {
 			const tree1 = makeTreeFromJsonSequence([[], ["X", "Y"]]);
 			const tree2 = tree1.branch();

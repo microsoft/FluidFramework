@@ -815,13 +815,14 @@ function newComposeManager(): TestComposeManager {
 			return this.nodeChangeTable.getFirst(baseDetachId, count);
 		},
 
-		composeBaseAttach(
+		composeAttachDetach(
 			baseAttachId: ChangeAtomId,
 			newDetachId: ChangeAtomId | undefined,
 			count: number,
-			newChanges: NodeId,
-		): void {
-			setInCrossFieldMap(this.nodeChangeTable, baseAttachId, count, newChanges);
+		): void {},
+
+		sendNewChangesToBaseSourceLocation(baseAttachId: ChangeAtomId, newChanges: NodeId): void {
+			setInCrossFieldMap(this.nodeChangeTable, baseAttachId, 1, newChanges);
 			this.isInvalidated = true;
 		},
 
