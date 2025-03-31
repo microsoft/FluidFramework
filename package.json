@@ -1,6 +1,6 @@
 {
 	"name": "client-release-group-root",
-	"version": "2.30.0",
+	"version": "2.31.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -27,6 +27,16 @@
 		"build:gendocs:server": "concurrently \"npm:build:gendocs:server:*\"",
 		"build:gendocs:server:routerlicious": "copyfiles \"server/routerlicious/**/*.api.json\" ./_api-extractor-temp/doc-models/ -e \"**/node_modules/**\" -f -V",
 		"build:readme": "markdown-magic --files \"**/*.md\" !docs",
+		"build-and-test": "fluid-build --task test --worker",
+		"build-and-test:cjs": "fluid-build --task test:cjs --worker",
+		"build-and-test:esm": "fluid-build --task test:esm --worker",
+		"build-and-test:jest": "fluid-build --task test:jest --worker",
+		"build-and-test:mocha": "fluid-build --task test:mocha --worker",
+		"build-and-test:mocha:cjs": "fluid-build --task test:mocha:cjs --worker",
+		"build-and-test:mocha:esm": "fluid-build --task test:mocha:esm --worker",
+		"build-and-test:unit": "fluid-build --task test:unit --worker",
+		"build-and-test:unit:cjs": "fluid-build --task test:unit:cjs --worker",
+		"build-and-test:unit:esm": "fluid-build --task test:unit:esm --worker",
 		"bundle-analysis:collect": "npm run webpack:profile && flub generate bundleStats",
 		"bundle-analysis:run": "flub run bundleStats --dangerfile build-tools/packages/build-cli/lib/library/dangerfile.cjs",
 		"changeset": "flub changeset add --releaseGroup client",
@@ -60,7 +70,6 @@
 		"format:changed": "npm run format:changed:main",
 		"format:changed:main": "biome check --write --changed --since=main",
 		"format:changed:next": "biome check --write --changed --since=next",
-		"format:prettier": "fluid-build --task format:prettier",
 		"format:repo": "biome check . --write",
 		"generate:packageList": "fluid-build --task generate:packageList",
 		"generate:packageList:internal-build": "flub list client --no-private --feed internal-build --outFile feeds/internal-build.txt",
@@ -76,12 +85,6 @@
 		"policy-check:asserts": "flub generate assertTags --all && npm run format",
 		"policy-check:fix": "flub check policy --fix",
 		"policy-check:fix-help": "echo Fix policy-check violations",
-		"prettier": "fluid-build --task prettier",
-		"prettier:fix": "fluid-build --task prettier:fix",
-		"prettier:repo": "prettier --check . --cache --ignore-path ./.prettierignore",
-		"prettier:repo:fix": "prettier --write . --cache --ignore-path ./.prettierignore",
-		"prettier:root": "prettier --check \"./*.*\" --cache --ignore-path .prettierignore --ignore-unknown",
-		"prettier:root:fix": "prettier --write \"./*.*\" --cache --ignore-path .prettierignore --ignore-unknown",
 		"restart": "cd server/routerlicious && npm run restart",
 		"start:docker": "docker-compose -f server/docker-compose.yml up",
 		"stop:docker": "docker-compose -f server/docker-compose.yml down",
@@ -167,7 +170,7 @@
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@microsoft/api-documenter": "^7.21.6",
-		"@microsoft/api-extractor": "7.47.8",
+		"@microsoft/api-extractor": "7.50.1",
 		"auto-changelog": "^2.4.0",
 		"c8": "^8.0.1",
 		"changesets-format-with-issue-links": "^0.3.0",
@@ -177,8 +180,6 @@
 		"eslint": "~8.55.0",
 		"jest": "^29.6.2",
 		"mocha": "^10.8.2",
-		"prettier": "~3.0.3",
-		"pretty-quick": "^4.0.0",
 		"puppeteer": "^23.6.0",
 		"rimraf": "^4.4.0",
 		"run-script-os": "^1.1.6",
@@ -188,7 +189,7 @@
 	},
 	"packageManager": "pnpm@9.15.7+sha512.ed98f9c748442673c46964b70345bd2282c9b305e8eae539b34ab31d6ef24ef8dd59d8b55f27466f705500b009d9c113471cf87e544f3d5036b297330c26e996",
 	"engines": {
-		"node": ">=18.17.1",
+		"node": ">=20.15.1",
 		"pnpm": "9"
 	},
 	"fluidBuild": {
@@ -342,20 +343,6 @@
 					"checks:fix"
 				],
 				"script": false
-			},
-			"prettier": {
-				"dependsOn": [
-					"prettier:root",
-					"^prettier"
-				],
-				"script": false
-			},
-			"prettier:fix": {
-				"dependsOn": [
-					"prettier:root:fix",
-					"^prettier:fix"
-				],
-				"script": false
 			}
 		}
 	},
@@ -404,7 +391,7 @@
 			]
 		},
 		"patchedDependencies": {
-			"@microsoft/api-extractor@7.47.8": "patches/@microsoft__api-extractor@7.47.8.patch"
+			"@microsoft/api-extractor@7.50.1": "patches/@microsoft__api-extractor@7.50.1.patch"
 		}
 	}
 }

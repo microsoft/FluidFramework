@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { NodeSchemaMetadata, TreeLeafValue } from "../schemaTypes.js";
+import type { TreeLeafValue } from "../schemaTypes.js";
+import type { SimpleNodeSchemaBase } from "../simpleSchema.js";
 import type { InternalTreeNode, TreeNode, Unhydrated } from "./types.js";
 
 /**
@@ -18,6 +19,13 @@ import type { InternalTreeNode, TreeNode, Unhydrated } from "./types.js";
  * Captures the schema both as runtime data and compile time type information.
  * Use {@link SchemaFactory} to define schema.
  * Use `Tree.schema(value)` to lookup the schema for a {@link TreeNode} or {@link TreeLeafValue}.
+ * @privateRemarks
+ * TODO:
+ * The long lists of type parameters here are awkward to deal with.
+ * Switching to (or adding an option to use)
+ * an interface based pattern with unordered named parameters for types like this would be a good idea.
+ * The related `@system` types should be simple to port to the new pattern, but stable public one like this will need to support both:
+ * the new one could either be added as a system type, or be recommended to replace this one (deprecating it).
  * @sealed @public
  */
 export type TreeNodeSchema<
@@ -81,6 +89,8 @@ export type TreeNodeSchemaNonClass<
 		? {
 				/**
 				 * Constructs an {@link Unhydrated} node with this schema.
+				 * @privateRemarks
+				 * Also allows InternalTreeNode.
 				 * @sealed
 				 */
 				create(data?: TInsertable | TConstructorExtra): TNode;
@@ -88,6 +98,8 @@ export type TreeNodeSchemaNonClass<
 		: {
 				/**
 				 * Constructs an {@link Unhydrated} node with this schema.
+				 * @privateRemarks
+				 * Also allows InternalTreeNode.
 				 * @sealed
 				 */
 				create(data: TInsertable | TConstructorExtra): TNode;
@@ -227,7 +239,7 @@ export interface TreeNodeSchemaCore<
 	out Info = unknown,
 	out TInsertable = never,
 	out TCustomMetadata = unknown,
-> {
+> extends SimpleNodeSchemaBase<Kind, TCustomMetadata> {
 	/**
 	 * Unique (within a document's schema) identifier used to associate nodes with their schema.
 	 * @remarks
@@ -239,7 +251,6 @@ export interface TreeNodeSchemaCore<
 	 * it is best practice to pick a new identifier.
 	 */
 	readonly identifier: Name;
-	readonly kind: Kind;
 
 	/**
 	 * Data used to define this schema.
@@ -282,11 +293,6 @@ export interface TreeNodeSchemaCore<
 	 * @system
 	 */
 	readonly childTypes: ReadonlySet<TreeNodeSchema>;
-
-	/**
-	 * User-provided {@link NodeSchemaMetadata} for this schema.
-	 */
-	readonly metadata?: NodeSchemaMetadata<TCustomMetadata> | undefined;
 
 	/**
 	 * Constructs an instance of this node type.

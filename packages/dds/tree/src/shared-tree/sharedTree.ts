@@ -35,6 +35,7 @@ import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitio
 
 import { type ICodecOptions, noopValidator } from "../codec/index.js";
 import {
+	type FieldKey,
 	type GraphCommit,
 	type IEditableForest,
 	type ITreeCursor,
@@ -93,6 +94,7 @@ import {
 	type CustomTreeNode,
 	type CustomTreeValue,
 	type ITreeAlpha,
+	type SimpleObjectFieldSchema,
 } from "../simple-tree/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
@@ -774,7 +776,7 @@ function verboseFromCursor(
 	const nodeSchema =
 		schema.get(reader.type) ?? fail(0xac9 /* missing schema for type in cursor */);
 	if (nodeSchema instanceof LeafNodeStoredSchema) {
-		return fields as CustomTreeValue<IFluidHandle>;
+		return fields as CustomTreeValue;
 	}
 
 	return {
@@ -802,30 +804,34 @@ function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFie
 		default:
 			fail(0xaca /* invalid field kind */);
 	}
-	return { kind, allowedTypes: schema.types };
+	return { kind, allowedTypesIdentifiers: schema.types, metadata: {} };
 }
 
 function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeSchema {
 	const arrayTypes = tryStoredSchemaAsArray(schema);
 	if (arrayTypes !== undefined) {
-		return { kind: NodeKind.Array, allowedTypes: arrayTypes };
+		return { kind: NodeKind.Array, allowedTypesIdentifiers: arrayTypes, metadata: {} };
 	}
 	if (schema instanceof ObjectNodeStoredSchema) {
-		const fields: Record<string, SimpleFieldSchema> = {};
-		for (const [key, field] of schema.objectNodeFields) {
-			fields[key] = exportSimpleFieldSchemaStored(field);
+		const fields = new Map<FieldKey, SimpleObjectFieldSchema>();
+		for (const [storedKey, field] of schema.objectNodeFields) {
+			fields.set(storedKey, { ...exportSimpleFieldSchemaStored(field), storedKey });
 		}
-		return { kind: NodeKind.Object, fields };
+		return { kind: NodeKind.Object, fields, metadata: {} };
 	}
 	if (schema instanceof MapNodeStoredSchema) {
 		assert(
 			schema.mapFields.kind === FieldKinds.optional.identifier,
 			0xa95 /* Invalid map schema */,
 		);
-		return { kind: NodeKind.Map, allowedTypes: schema.mapFields.types };
+		return {
+			kind: NodeKind.Map,
+			allowedTypesIdentifiers: schema.mapFields.types,
+			metadata: {},
+		};
 	}
 	if (schema instanceof LeafNodeStoredSchema) {
-		return { kind: NodeKind.Leaf, leafKind: schema.leafValue };
+		return { kind: NodeKind.Leaf, leafKind: schema.leafValue, metadata: {} };
 	}
 	fail(0xacb /* invalid schema kind */);
 }

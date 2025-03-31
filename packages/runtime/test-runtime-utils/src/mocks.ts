@@ -182,6 +182,7 @@ const makeContainerRuntimeOptions = (
 export interface IInternalMockRuntimeMessage {
 	content: any;
 	localOpMetadata?: unknown;
+	referenceSequenceNumber?: number;
 }
 
 /**
@@ -260,6 +261,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		const message: IInternalMockRuntimeMessage = {
 			content: messageContent,
 			localOpMetadata,
+			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 		};
 
 		const isAllocationMessage = this.isAllocationMessage(message.content);
@@ -409,6 +411,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			};
 			return {
 				content: allocationOp,
+				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 			};
 		}
 		return undefined;
@@ -420,7 +423,8 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			{
 				clientSequenceNumber,
 				contents: message.content,
-				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+				referenceSequenceNumber:
+					message.referenceSequenceNumber ?? this.deltaManager.lastSequenceNumber,
 				type: MessageType.Operation,
 			},
 		]);
@@ -1006,6 +1010,9 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public processMessages(messageCollection: IRuntimeMessageCollection) {
+		if (this.disposed) {
+			return;
+		}
 		this.deltaConnections.forEach((dc) => {
 			dc.processMessages(messageCollection);
 		});

@@ -10,6 +10,8 @@ export interface IInternalMockRuntimeMessage {
     content: any;
     // (undocumented)
     localOpMetadata?: unknown;
+    // (undocumented)
+    referenceSequenceNumber?: number;
 }
 
 // @alpha
@@ -148,7 +150,6 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
         minimumSequenceNumber?: number;
         trackRemoteOps?: boolean;
     });
-    // (undocumented)
     get connected(): boolean;
     set connected(connected: boolean);
     // (undocumented)

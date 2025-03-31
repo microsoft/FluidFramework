@@ -22,7 +22,7 @@ export {
 	SchemaFactory,
 	type ScopedSchemaName,
 	type SchemaFactoryObjectOptions,
-	type schemaStatics,
+	type SchemaStatics,
 } from "./schemaFactory.js";
 export { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
 export type {
@@ -36,16 +36,6 @@ export {
 } from "./schemaCreationUtilities.js";
 export { treeNodeApi, type TreeNodeApi, tryGetSchema } from "./treeNodeApi.js";
 export { createFromInsertable, cursorFromInsertable, createFromCursor } from "./create.js";
-export type {
-	SimpleTreeSchema,
-	SimpleNodeSchema,
-	SimpleFieldSchema,
-	SimpleLeafNodeSchema,
-	SimpleMapNodeSchema,
-	SimpleArrayNodeSchema,
-	SimpleObjectNodeSchema,
-	SimpleNodeSchemaBase,
-} from "./simpleSchema.js";
 export {
 	type JsonSchemaId,
 	type JsonSchemaType,
@@ -84,8 +74,13 @@ export type {
 	TreeNodeSchemaClassUnsafe,
 	TreeNodeSchemaUnsafe,
 	AllowedTypesUnsafe,
+	ImplicitAllowedTypesUnsafe,
+	ImplicitFieldSchemaUnsafe,
 	TreeNodeSchemaNonClassUnsafe,
 	InsertableTreeNodeFromAllowedTypesUnsafe,
+	FieldSchemaAlphaUnsafe,
+	ArrayNodeCustomizableSchemaUnsafe,
+	MapNodeCustomizableSchemaUnsafe,
 } from "./typesUnsafe.js";
 
 export {
@@ -95,6 +90,7 @@ export {
 	applySchemaToParserOptions,
 	cursorFromVerbose,
 	verboseFromCursor,
+	replaceVerboseTreeHandles,
 } from "./verboseTree.js";
 
 export {
@@ -103,9 +99,15 @@ export {
 	type CustomTreeNode,
 	type CustomTreeValue,
 	tryStoredSchemaAsArray,
+	replaceHandles,
+	type HandleConverter,
 } from "./customTree.js";
 
-export { type ConciseTree, conciseFromCursor } from "./conciseTree.js";
+export {
+	type ConciseTree,
+	conciseFromCursor,
+	replaceConciseTreeHandles,
+} from "./conciseTree.js";
 
 export { TreeBeta, type NodeChangedData, type TreeChangeEventsBeta } from "./treeApiBeta.js";
 export { createSimpleTreeIndex, type SimpleTreeIndex } from "./simpleTreeIndex.js";
@@ -134,6 +136,7 @@ export {
 } from "./transactionTypes.js";
 
 export { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
+export { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
 
 // Exporting the schema (RecursiveObject) to test that recursive types are working correctly.
 // These are `@internal` so they can't be included in the `InternalClassTreeTypes` due to https://github.com/microsoft/rushstack/issues/3639

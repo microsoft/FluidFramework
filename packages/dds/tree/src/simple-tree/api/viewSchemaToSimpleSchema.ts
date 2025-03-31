@@ -4,226 +4,121 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import {
-	normalizeFieldSchema,
-	type FieldSchema,
-	type ImplicitAllowedTypes,
-	type ImplicitFieldSchema,
-} from "../schemaTypes.js";
+import { normalizeFieldSchema, type ImplicitFieldSchema } from "../schemaTypes.js";
 import type {
 	SimpleArrayNodeSchema,
-	SimpleFieldSchema,
 	SimpleLeafNodeSchema,
 	SimpleMapNodeSchema,
 	SimpleNodeSchema,
+	SimpleObjectFieldSchema,
 	SimpleObjectNodeSchema,
 	SimpleTreeSchema,
-} from "./simpleSchema.js";
-import type { ValueSchema } from "../../core/index.js";
-import { copyProperty, getOrCreate, type Mutable } from "../../util/index.js";
-import { isObjectNodeSchema, type ObjectNodeSchema } from "../objectNodeTypes.js";
-import { NodeKind, type TreeNodeSchema } from "../core/index.js";
+} from "../simpleSchema.js";
+import { ObjectNodeSchema } from "../objectNodeTypes.js";
+import { NodeKind } from "../core/index.js";
+import { walkFieldSchema } from "../walkFieldSchema.js";
+import { ArrayNodeSchema } from "../arrayNodeTypes.js";
+import { LeafNodeSchema } from "../leafNodeSchema.js";
+import { MapNodeSchema } from "../mapNodeTypes.js";
 
 /**
- * Converts a "view" schema to a "simple" schema representation.
+ * Converts an {@link ImplicitFieldSchema} to a "simple" schema representation.
+ *
+ * @param schema - The schema to convert
+ * @param copySchemaObjects - If true, TreeNodeSchema and FieldSchema are copied into plain JavaScript objects. Either way, custom metadata is referenced and not copied.
+ *
+ * @remarks
+ * Given that the Schema types used in {@link ImplicitFieldSchema} already implement the {@link SimpleNodeSchema} interfaces, there are limited use-cases for this function.
+ * One possible use-case is converting schema to a more serialization friendly format.
+ * This format however is not JSON compatible due to use of Maps and Sets,
+ * but it it does not rely on cyclic object references for handling recursive schema and instead uses the `definitions` map.
+ *
+ * @privateRemarks
+ * TODO: once SimpleTreeSchema is stable, {@link TreeViewConfiguration} could implement {@link SimpleTreeSchema} directly.
+ * That would provide the non-copying alternative that could expose the value type of the definitions map as {@link TreeNodeSchema}.
  */
-export function toSimpleTreeSchema(schema: ImplicitFieldSchema): SimpleTreeSchema {
+export function toSimpleTreeSchema(
+	schema: ImplicitFieldSchema,
+	copySchemaObjects: boolean,
+): SimpleTreeSchema {
 	const normalizedSchema = normalizeFieldSchema(schema);
-
-	const allowedTypes = allowedTypesFromFieldSchema(normalizedSchema);
-
 	const definitions = new Map<string, SimpleNodeSchema>();
-	populateSchemaDefinitionsForField(normalizedSchema, definitions);
+	walkFieldSchema(normalizedSchema, {
+		node: (nodeSchema) => {
+			// The set of node kinds is extensible, but the typing of SimpleNodeSchema is not, so we need to check that the schema is one of the known kinds.
+			assert(
+				nodeSchema instanceof ArrayNodeSchema ||
+					nodeSchema instanceof MapNodeSchema ||
+					nodeSchema instanceof LeafNodeSchema ||
+					nodeSchema instanceof ObjectNodeSchema,
+				"Invalid schema",
+			);
+			const outSchema = copySchemaObjects ? copySimpleNodeSchema(nodeSchema) : nodeSchema;
+			definitions.set(nodeSchema.identifier, outSchema);
+		},
+	});
 
-	const output: Mutable<SimpleTreeSchema> = {
+	return {
 		kind: normalizedSchema.kind,
-		allowedTypes,
+		allowedTypesIdentifiers: normalizedSchema.allowedTypesIdentifiers,
 		definitions,
+		metadata: normalizedSchema.metadata,
 	};
-
-	copyProperty(normalizedSchema, "metadata", output);
-	return output;
 }
 
 /**
- * Cache in which the results of {@link toSimpleNodeSchema} are saved.
- */
-const simpleNodeSchemaCache = new WeakMap<TreeNodeSchema, SimpleNodeSchema>();
-
-/**
- * Creates a {@link SimpleNodeSchema} from a {@link TreeNodeSchema}.
+ * Copies a {@link SimpleNodeSchema} into a new plain JavaScript object.
  *
  * @remarks Caches the result on the input schema for future calls.
  */
-function toSimpleNodeSchema(schema: TreeNodeSchema): SimpleNodeSchema {
-	return getOrCreate(simpleNodeSchemaCache, schema, () => {
-		const kind = schema.kind;
-		switch (kind) {
-			case NodeKind.Leaf: {
-				return leafSchemaToSimpleSchema(schema);
-			}
-			case NodeKind.Map: {
-				return mapSchemaToSimpleSchema(schema);
-			}
-			case NodeKind.Array: {
-				return arraySchemaToSimpleSchema(schema);
-			}
-			case NodeKind.Object: {
-				assert(isObjectNodeSchema(schema), 0xa06 /* Expected object schema */);
-				return objectSchemaToSimpleSchema(schema);
-			}
-			default: {
-				unreachableCase(kind);
-			}
-		}
-	});
-}
-
-// TODO: Use a stronger type for leaf schemas once one is available (see object schema handler for an example).
-function leafSchemaToSimpleSchema(schema: TreeNodeSchema): SimpleLeafNodeSchema {
-	return {
-		kind: NodeKind.Leaf,
-		leafKind: schema.info as ValueSchema,
-	};
-}
-
-// TODO: Use a stronger type for array schemas once one is available (see object schema handler for an example).
-function arraySchemaToSimpleSchema(schema: TreeNodeSchema): SimpleArrayNodeSchema {
-	const fieldSchema = normalizeFieldSchema(schema.info as ImplicitAllowedTypes);
-	const allowedTypes = allowedTypesFromFieldSchema(fieldSchema);
-	const output: Mutable<SimpleArrayNodeSchema> = {
-		kind: NodeKind.Array,
-		allowedTypes,
-	};
-
-	copyProperty(schema, "metadata", output);
-
-	return output;
-}
-
-// TODO: Use a stronger type for map schemas once one is available (see object schema handler for an example).
-function mapSchemaToSimpleSchema(schema: TreeNodeSchema): SimpleMapNodeSchema {
-	const fieldSchema = normalizeFieldSchema(schema.info as ImplicitAllowedTypes);
-	const allowedTypes = allowedTypesFromFieldSchema(fieldSchema);
-	const output: Mutable<SimpleMapNodeSchema> = {
-		kind: NodeKind.Map,
-		allowedTypes,
-	};
-
-	copyProperty(schema, "metadata", output);
-
-	return output;
-}
-
-function objectSchemaToSimpleSchema(schema: ObjectNodeSchema): SimpleObjectNodeSchema {
-	const fields: Record<string, SimpleFieldSchema> = {};
-	for (const [key, field] of schema.fields) {
-		fields[key] = fieldSchemaToSimpleSchema(field);
-	}
-
-	const output: Mutable<SimpleObjectNodeSchema> = {
-		kind: NodeKind.Object,
-		fields,
-	};
-
-	copyProperty(schema, "metadata", output);
-
-	return output;
-}
-
-/**
- * Private symbol under which the results of {@link toSimpleNodeSchema} are cached on an input {@link TreeNodeSchema}.
- */
-const simpleFieldSchemaCacheSymbol = Symbol("simpleFieldSchemaCache");
-
-function fieldSchemaToSimpleSchema(schema: FieldSchema): SimpleFieldSchema {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	if ((schema as any)[simpleFieldSchemaCacheSymbol] !== undefined) {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		return (schema as any)[simpleFieldSchemaCacheSymbol] as SimpleFieldSchema;
-	}
-
-	const allowedTypes = allowedTypesFromFieldSchema(schema);
-	const result: Mutable<SimpleFieldSchema> = {
-		kind: schema.kind,
-		allowedTypes,
-	};
-
-	copyProperty(schema, "metadata", result);
-
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	(schema as any)[simpleFieldSchemaCacheSymbol] = result;
-
-	return result;
-}
-
-function allowedTypesFromFieldSchema(schema: FieldSchema): Set<string> {
-	const allowedTypes = new Set<string>();
-	for (const type of schema.allowedTypeSet) {
-		allowedTypes.add(type.identifier);
-	}
-	return allowedTypes;
-}
-
-/**
- * Recursively populates `definitions` by walking the input field schema tree.
- */
-function populateSchemaDefinitionsForField(
-	schema: FieldSchema,
-	definitions: Map<string, SimpleNodeSchema>,
-): void {
-	for (const child of schema.allowedTypeSet) {
-		populateSchemaDefinitionsForNode(child, definitions);
-	}
-}
-
-/**
- * Recursively populates `definitions` by walking the input node schema tree.
- */
-function populateSchemaDefinitionsForNode(
-	schema: TreeNodeSchema,
-	definitions: Map<string, SimpleNodeSchema>,
-): void {
-	if (definitions.has(schema.identifier)) {
-		// If the definition has already been populated, no need to recurse.
-		return;
-	}
-
-	// Populate definition for this schema
-	definitions.set(schema.identifier, toSimpleNodeSchema(schema));
-
-	// Recurse into children to populate definitions for them
+function copySimpleNodeSchema(schema: SimpleNodeSchema): SimpleNodeSchema {
 	const kind = schema.kind;
 	switch (kind) {
-		case NodeKind.Leaf: {
-			// Leaf node, so no need to recurse
-			break;
-		}
-		case NodeKind.Map: {
-			// TODO: Utilize a map schema type-guard once one exists (see object case for an example).
-
-			// Recursively populate definitions for allowed map children
-			const fieldSchema = normalizeFieldSchema(schema.info as ImplicitAllowedTypes);
-			populateSchemaDefinitionsForField(fieldSchema, definitions);
-			break;
-		}
-		case NodeKind.Array: {
-			// TODO: Utilize an array schema type-guard once one exists (see object case for an example).
-
-			// Recursively populate definitions for allowed map children
-			const fieldSchema = normalizeFieldSchema(schema.info as ImplicitAllowedTypes);
-			populateSchemaDefinitionsForField(fieldSchema, definitions);
-			break;
-		}
-		case NodeKind.Object: {
-			assert(isObjectNodeSchema(schema), 0xa07 /* Expected object schema */);
-			for (const [, field] of schema.fields) {
-				populateSchemaDefinitionsForField(field, definitions);
-			}
-			break;
-		}
-		default: {
+		case NodeKind.Leaf:
+			return copySimpleLeafSchema(schema);
+		case NodeKind.Array:
+		case NodeKind.Map:
+			return copySimpleMapOrArraySchema(schema);
+		case NodeKind.Object:
+			return copySimpleObjectSchema(schema);
+		default:
 			unreachableCase(kind);
-		}
 	}
+}
+
+function copySimpleLeafSchema(schema: SimpleLeafNodeSchema): SimpleLeafNodeSchema {
+	return {
+		kind: NodeKind.Leaf,
+		leafKind: schema.leafKind,
+		metadata: schema.metadata,
+	};
+}
+
+function copySimpleMapOrArraySchema(
+	schema: SimpleMapNodeSchema | SimpleArrayNodeSchema,
+): SimpleMapNodeSchema | SimpleArrayNodeSchema {
+	return {
+		kind: schema.kind,
+		allowedTypesIdentifiers: schema.allowedTypesIdentifiers,
+		metadata: schema.metadata,
+	};
+}
+
+function copySimpleObjectSchema(schema: SimpleObjectNodeSchema): SimpleObjectNodeSchema {
+	const fields: Map<string, SimpleObjectFieldSchema> = new Map();
+	for (const [propertyKey, field] of schema.fields) {
+		// field already is a SimpleObjectFieldSchema, but copy the subset of the properties needed by this interface to get a clean simple object.
+		fields.set(propertyKey, {
+			kind: field.kind,
+			allowedTypesIdentifiers: field.allowedTypesIdentifiers,
+			metadata: field.metadata,
+			storedKey: field.storedKey,
+		});
+	}
+
+	return {
+		kind: NodeKind.Object,
+		fields,
+		metadata: schema.metadata,
+	};
 }
