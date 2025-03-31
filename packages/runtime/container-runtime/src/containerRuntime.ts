@@ -1430,6 +1430,25 @@ export class ContainerRuntime
 		this.on("dirty", () => context.updateDirtyContainerState(true));
 		this.on("saved", () => context.updateDirtyContainerState(false));
 
+		// Telemetry for when the container is attached and subsequently saved for the first time.
+		// These events are useful for investigating the validity of container "saved" eventing upon attach.
+		// See this.setAttachState() and this.updateDocumentDirtyState() for more details on "attached" and "saved" events.
+		this.once("attached", () => {
+			this.mc.logger.sendTelemetryEvent({
+				eventName: "Attached",
+				details: {
+					dirtyContainer: this.dirtyContainer,
+					hasPendingMessages: this.hasPendingMessages(),
+				},
+			});
+		});
+		this.once("saved", () =>
+			this.mc.logger.sendTelemetryEvent({
+				eventName: "Saved",
+				details: { attachState: this.attachState },
+			}),
+		);
+
 		// In cases of summarizer, we want to dispose instead since consumer doesn't interact with this container
 		this.closeFn = isSummarizerClient ? this.disposeFn : closeFn;
 
