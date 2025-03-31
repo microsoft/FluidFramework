@@ -12,11 +12,13 @@ import {
 	getAuthorizationTokenFromCredentials,
 	IGitManager,
 	parseToken,
+	isNetworkError,
 } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import {
 	extractTokenFromHeader,
+	getJtiClaimFromAccessToken,
 	getValidAccessToken,
 	logHttpMetrics,
 } from "@fluidframework/server-services-utils";
@@ -260,7 +262,25 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			undefined /* refreshTokenIfNeeded */,
 			logHttpMetrics,
 		);
-		await restWrapper.post(`/api/tenants/${encodeURIComponent(tenantId)}/validate`, { token });
+		try {
+			await restWrapper.post(`/api/tenants/${encodeURIComponent(tenantId)}/validate`, {
+				token,
+			});
+		} catch (error: unknown) {
+			if (isNetworkError(error)) {
+				if (error.code === 401 || error.code === 403) {
+					const jtiClaim = getJtiClaimFromAccessToken(token);
+					if (jtiClaim) {
+						Lumberjack.error("Token is invalid", {
+							tenantId,
+							jtiClaim,
+							status: error.code,
+						});
+					}
+				}
+			}
+			throw error;
+		}
 	}
 
 	public async getKey(tenantId: string, includeDisabledTenant = false): Promise<string> {
