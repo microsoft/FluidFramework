@@ -6,7 +6,7 @@
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
 	DataProcessingError,
 	GenericError,
@@ -176,6 +176,8 @@ export class Outbox {
 		return this.messageCount === 0;
 	}
 
+	//* Revisit
+
 	/**
 	 * Confirm that batching has not been interrupted by an incoming message being processed, unless
 	 * we're under a reentrant context.
@@ -189,7 +191,7 @@ export class Outbox {
 	 * last message processed by the ContainerRuntime. In the absence of op reentrancy, this
 	 * pair will remain stable during a single JS turn during which the batch is being built up.
 	 */
-	private assertSequenceNumberCoherency(): void {
+	private maybeFlushPartialBatch(): void {
 		const mainBatchSeqNums = this.mainBatch.sequenceNumbers;
 		const blobAttachSeqNums = this.blobAttachBatch.sequenceNumbers;
 		const idAllocSeqNums = this.idAllocationBatch.sequenceNumbers;
@@ -215,10 +217,12 @@ export class Outbox {
 		// This is rare, and the reentrancy will be handled during Flush.
 		const expectedDueToReentrancy = this.isContextReentrant();
 
-		const error = getLongStack(() =>
-			DataProcessingError.create(
-				"Sequence numbers advanced as if ops were processed while a batch is accumulating",
-				"outboxSequenceNumberCoherencyCheck",
+		const errorWrapper = new Lazy(() =>
+			getLongStack(() =>
+				DataProcessingError.create(
+					"Sequence numbers advanced as if ops were processed while a batch is accumulating",
+					"outboxSequenceNumberCoherencyCheck",
+				),
 			),
 		);
 		if (++this.mismatchedOpsReported <= this.maxMismatchedOpsToReport) {
@@ -236,7 +240,7 @@ export class Outbox {
 						currentClientSequenceNumber: currentSequenceNumbers.clientSequenceNumber,
 					},
 				},
-				error,
+				errorWrapper.value,
 			);
 		}
 
@@ -251,23 +255,23 @@ export class Outbox {
 			return;
 		}
 
-		throw error;
+		throw errorWrapper.value;
 	}
 
 	public submit(message: BatchMessage): void {
-		this.assertSequenceNumberCoherency();
+		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.mainBatch, message);
 	}
 
 	public submitBlobAttach(message: BatchMessage): void {
-		this.assertSequenceNumberCoherency();
+		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.blobAttachBatch, message);
 	}
 
 	public submitIdAllocation(message: BatchMessage): void {
-		this.assertSequenceNumberCoherency();
+		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.idAllocationBatch, message);
 	}

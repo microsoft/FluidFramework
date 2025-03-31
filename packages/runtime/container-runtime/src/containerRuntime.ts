@@ -2606,15 +2606,20 @@ export class ContainerRuntime
 		this.outbox.flush();
 
 		this.ensureNoDataModelChanges(() => {
-			this.processImpl(messageCopy, local);
+			this.processInboundMessageOrBatch(messageCopy, local);
 		});
 	}
 
 	/**
 	 * Implementation of core logic for {@link ContainerRuntime.process}, once preconditions are established
-	 * @param messageCopy - Shallow copy of the sequenced message
+	 *
+	 * @param messageCopy - Shallow copy of the sequenced message. If it's a virtualized batch, we'll process
+	 * all messages in the batch here.
 	 */
-	private processImpl(messageCopy: ISequencedDocumentMessage, local: boolean): void {
+	private processInboundMessageOrBatch(
+		messageCopy: ISequencedDocumentMessage,
+		local: boolean,
+	): void {
 		// Whether or not the message appears to be a runtime message from an up-to-date client.
 		// It may be a legacy runtime message (ie already unpacked and ContainerMessageType)
 		// or something different, like a system message.
@@ -2821,7 +2826,7 @@ export class ContainerRuntime
 			let previousMessage: InboundSequencedContainerRuntimeMessage | undefined;
 
 			// Process the previous bunch of messages.
-			const sendBunchedMessages = (): void => {
+			const processBunchedMessages = (): void => {
 				assert(previousMessage !== undefined, 0xa67 /* previous message must exist */);
 				this.validateAndProcessRuntimeMessages(
 					previousMessage,
@@ -2840,7 +2845,7 @@ export class ContainerRuntime
 			for (const { message, localOpMetadata } of messagesWithMetadata) {
 				const currentMessage = updateSequenceNumbers(message);
 				if (previousMessage && previousMessage.type !== currentMessage.type) {
-					sendBunchedMessages();
+					processBunchedMessages();
 				}
 				previousMessage = currentMessage;
 				bunchedMessagesContent.push({
@@ -2851,7 +2856,7 @@ export class ContainerRuntime
 			}
 
 			// Process the last bunch of messages.
-			sendBunchedMessages();
+			processBunchedMessages();
 
 			// Send the "op" events for the messages now that the ops have been processed.
 			for (const { message } of messagesWithMetadata) {
