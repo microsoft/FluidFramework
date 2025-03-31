@@ -59,6 +59,9 @@ describe("findIntervalsWithStartpointInRange", () => {
 		const aStart = client.localReferencePositionToPosition(a.start);
 		const bStart = client.localReferencePositionToPosition(b.start);
 		if (aStart === bStart) {
+			if (aEnd === bEnd) {
+				return a.getIntervalId().localeCompare(b.getIntervalId());
+			}
 			return aEnd - bEnd;
 		}
 		return aStart - bStart;
