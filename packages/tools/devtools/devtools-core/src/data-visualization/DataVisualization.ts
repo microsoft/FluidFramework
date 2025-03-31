@@ -253,15 +253,16 @@ export class DataVisualizerGraph
 	): FluidObjectId {
 		if (!this.visualizerNodes.has(visualObject.id)) {
 			// Create visualizer node for the shared object
-			const visualizationFunction = isPureDataObject(visualObject)
+			const visualizationFunction = isDataObject(visualObject)
 				? visualizeDataObject
-				: (this.visualizers[visualObject.attributes.type] ?? visualizeUnknownSharedObject);
+				: (this.visualizers[(visualObject as ISharedObject).attributes.type] ??
+					visualizeUnknownSharedObject);
 
 			const visualizerNode = new VisualizerNode(
 				// Double-casting `sharedObject` is necessary for `DataObject` visualization, because the `root` property is inaccessbile in `DataObject` (private).
-				isPureDataObject(visualObject)
+				isDataObject(visualObject)
 					? (visualObject as unknown as { readonly root: ISharedDirectory }).root
-					: visualObject,
+					: (visualObject as ISharedObject),
 				visualizationFunction as VisualizeSharedObject,
 				async (handle) => this.registerVisualizerForHandle(handle),
 			);
@@ -291,7 +292,7 @@ export class DataVisualizerGraph
 	): Promise<FluidObjectId | undefined> {
 		const resolvedObject = await handle.get();
 
-		if (isPureDataObject(resolvedObject)) {
+		if (isDataObject(resolvedObject)) {
 			return this.registerVisualizerForVisualizableObject(resolvedObject);
 		}
 
@@ -529,7 +530,7 @@ function isSharedObject(value: unknown): value is ISharedObject {
  * @remarks Implemented by checking for the particular properties / methods we use in this module.
  * @remarks `value` is type casted as a workaround to access the `root` property of the {@link DataObject} (private).
  */
-function isPureDataObject(value: unknown): value is PureDataObject {
+function isDataObject(value: unknown): value is DataObject {
 	return (
 		(value as DataObject).initializeInternal !== undefined &&
 		(value as DataObject).id !== undefined &&
