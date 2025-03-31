@@ -1082,7 +1082,7 @@ export class ContainerRuntime
 	}
 
 	public get readonly(): boolean {
-		return this.deltaManager.readOnlyInfo.readonly ?? false;
+		return this.innerDeltaManager.readOnlyInfo.readonly ?? false;
 	}
 
 	/**

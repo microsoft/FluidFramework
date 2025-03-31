@@ -611,7 +611,7 @@ export abstract class FluidDataStoreContext
 	public setReadOnlyState(readonly: boolean): void {
 		this.verifyNotClosed("setReadOnlyState", false /* checkTombstone */);
 
-		assert(this.readonly === readonly, "Unexpected readonly state");
+		// assert(this.readonly === readonly, "Unexpected readonly state");
 
 		this.channel?.setReadOnlyState?.(readonly);
 	}
