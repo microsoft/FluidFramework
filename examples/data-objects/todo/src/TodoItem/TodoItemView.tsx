@@ -13,7 +13,8 @@ import React, { useEffect, useState } from "react";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.css";
-import { useTree, type TodoItem } from "../Todo/index.js";
+import { type TodoItem } from "../Todo/index.js";
+import { useTree } from "../Utils/index.js";
 
 interface TodoItemViewProps {
 	readonly todoItemModel: TodoItem;
@@ -33,13 +34,13 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
 		void Promise.resolve(todoItemModel.title.get()).then((text) => {
 			setItemTitle(text as SharedString);
 		});
-	}, [todoItemModel]);
+	}, [todoItemModel.title]);
 
 	useEffect(() => {
 		void Promise.resolve(todoItemModel.description.get()).then((text) => {
 			setItemDescription(text as SharedString);
 		});
-	}, [todoItemModel]);
+	}, [todoItemModel.description]);
 
 	const checkChangedHandler = (e: React.ChangeEvent<HTMLInputElement>): void => {
 		todoItemModel.completed = e.target.checked;

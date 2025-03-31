@@ -5,35 +5,20 @@
 
 import { CollaborativeInput } from "@fluid-example/example-utils";
 import { SharedString, type ISharedString } from "@fluidframework/sequence/legacy";
-import { Tree, type TreeNode } from "@fluidframework/tree/legacy";
+import { Tree } from "@fluidframework/tree/legacy";
 import React, { useEffect, useRef, useState } from "react";
-
-import { TodoItemView } from "../TodoItem/index.js";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.css";
+
+import { TodoItemView } from "../TodoItem/index.js";
+import { useTree } from "../Utils/index.js";
 
 import { type TodoListDataObject } from "./index.js";
 
 export interface TodoViewProps {
 	readonly todoModel: TodoListDataObject;
 	readonly getDirectLink: (itemId: string) => string;
-}
-
-// TODO: This was copied over from the "@fluid-experimental/tree-react-api" package.
-// This should be imported from that package, once it is no longer experimental.
-export function useTree(subtreeRoot: TreeNode): void {
-	// Use a React effect hook to invalidate this component when the subtreeRoot changes.
-	// We do this by incrementing a counter, which is passed as a dependency to the effect hook.
-	const [invalidations, setInvalidations] = useState(0);
-
-	// React effect hook that increments the 'invalidation' counter whenever subtreeRoot or any of its children change.
-	useEffect(() => {
-		// Returns the cleanup function to be invoked when the component unmounts.
-		return Tree.on(subtreeRoot, "treeChanged", () => {
-			setInvalidations((i) => i + 1);
-		});
-	}, [invalidations, subtreeRoot]);
 }
 
 export const TodoView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
@@ -60,15 +45,22 @@ export const TodoView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
 	if (titleString === undefined) {
 		return <div>Loading...</div>;
 	}
-	const handleCreateClick = async (ev: React.FormEvent<HTMLFormElement>): Promise<void> => {
+	const handleCreateClick = (ev: React.FormEvent<HTMLFormElement>): void => {
 		ev.preventDefault();
-		if (newItemTextInputRef.current === null) {
+
+		const input = newItemTextInputRef.current;
+		if (!input) {
 			throw new Error("New item text field missing");
 		}
-		await todoModel.addTodoItem({
-			startingText: newItemTextInputRef.current.value,
-		});
-		newItemTextInputRef.current.value = "";
+
+		todoModel
+			.addTodoItem({ startingText: input.value })
+			.then(() => {
+				input.value = "";
+			})
+			.catch((error) => {
+				console.error("Failed to create todo item:", error);
+			});
 	};
 
 	// Using the list of TodoItem objects, make a list of TodoItemViews.

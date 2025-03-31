@@ -19,7 +19,7 @@ import { v4 as uuid } from "uuid";
 import { TodoItem, TodoList } from "./index.js";
 
 export interface ITodoItemInitialState {
-	startingText: string;
+	readonly startingText: string;
 }
 
 export class TodoListDataObject extends TreeDataObject<TreeView<typeof TodoList>> {
