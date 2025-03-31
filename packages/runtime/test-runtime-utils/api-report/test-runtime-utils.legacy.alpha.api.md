@@ -150,7 +150,6 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
         minimumSequenceNumber?: number;
         trackRemoteOps?: boolean;
     });
-    // (undocumented)
     get connected(): boolean;
     set connected(connected: boolean);
     // (undocumented)

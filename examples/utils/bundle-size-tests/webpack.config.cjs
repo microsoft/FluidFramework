@@ -82,6 +82,7 @@ module.exports = {
 		odspPrefetchSnapshot: "./src/odspPrefetchSnapshot",
 		sharedString: "./src/sharedString",
 		sharedTree: "./src/sharedTree",
+		sharedTreeAttributes: "./src/sharedTreeAttributes",
 	},
 	mode: "production",
 	module: {

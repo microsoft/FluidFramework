@@ -9,46 +9,44 @@ import { Client, RedBlackTree } from "@fluidframework/merge-tree/internal";
 
 import {
 	IIntervalHelpers,
-	ISerializableInterval,
 	IntervalType,
 	SequenceInterval,
 	sequenceIntervalHelpers,
 } from "../intervals/index.js";
 import { ISharedString } from "../sharedString.js";
 
-import { IntervalIndex } from "./intervalIndex.js";
+import { type SequenceIntervalIndex } from "./intervalIndex.js";
 
 /**
  * @internal
  */
-export interface IEndpointIndex<TInterval extends ISerializableInterval>
-	extends IntervalIndex<TInterval> {
+export interface IEndpointIndex extends SequenceIntervalIndex {
 	/**
 	 * @returns the previous interval based on the given position number.
 	 * If no such interval exists in this index, returns `undefined`
 	 */
-	previousInterval(pos: number): TInterval | undefined;
+	previousInterval(pos: number): SequenceInterval | undefined;
 
 	/**
 	 * @returns the next interval based on the given position number.
 	 * If no such interval exists in this index, returns `undefined`
 	 */
-	nextInterval(pos: number): TInterval | undefined;
+	nextInterval(pos: number): SequenceInterval | undefined;
 }
 
-export class EndpointIndex<TInterval extends ISerializableInterval>
-	implements IEndpointIndex<TInterval>
-{
-	private readonly endIntervalTree: RedBlackTree<TInterval, TInterval>;
+export class EndpointIndex implements IEndpointIndex {
+	private readonly endIntervalTree: RedBlackTree<SequenceInterval, SequenceInterval>;
 
 	constructor(
 		private readonly client: Client,
-		private readonly helpers: IIntervalHelpers<TInterval>,
+		private readonly helpers: IIntervalHelpers,
 	) {
-		this.endIntervalTree = new RedBlackTree<TInterval, TInterval>((a, b) => a.compareEnd(b));
+		this.endIntervalTree = new RedBlackTree<SequenceInterval, SequenceInterval>((a, b) =>
+			a.compareEnd(b),
+		);
 	}
 
-	public previousInterval(pos: number): TInterval | undefined {
+	public previousInterval(pos: number): SequenceInterval | undefined {
 		const transientInterval = this.helpers.create(
 			"transient",
 			pos,
@@ -62,7 +60,7 @@ export class EndpointIndex<TInterval extends ISerializableInterval>
 		}
 	}
 
-	public nextInterval(pos: number): TInterval | undefined {
+	public nextInterval(pos: number): SequenceInterval | undefined {
 		const transientInterval = this.helpers.create(
 			"transient",
 			pos,
@@ -76,11 +74,11 @@ export class EndpointIndex<TInterval extends ISerializableInterval>
 		}
 	}
 
-	public add(interval: TInterval): void {
+	public add(interval: SequenceInterval): void {
 		this.endIntervalTree.put(interval, interval);
 	}
 
-	public remove(interval: TInterval): void {
+	public remove(interval: SequenceInterval): void {
 		this.endIntervalTree.remove(interval);
 	}
 }
@@ -88,9 +86,7 @@ export class EndpointIndex<TInterval extends ISerializableInterval>
 /**
  * @internal
  */
-export function createEndpointIndex(
-	sharedString: ISharedString,
-): IEndpointIndex<SequenceInterval> {
+export function createEndpointIndex(sharedString: ISharedString): IEndpointIndex {
 	const client = (sharedString as unknown as { client: Client }).client;
-	return new EndpointIndex<SequenceInterval>(client, sequenceIntervalHelpers);
+	return new EndpointIndex(client, sequenceIntervalHelpers);
 }
