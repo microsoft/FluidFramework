@@ -27,7 +27,7 @@ export class TodoItem extends builder.object("TodoItem", {
 }) {}
 
 /**
- * Represents the todo list container, which holds multiple todo items.
+ * Represents the todo list schema, which holds multiple todo items.
  *
  * Properties:
  * - `title`: A handle to a shared string representing the list's title.
