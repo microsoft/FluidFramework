@@ -1428,7 +1428,19 @@ export class ContainerRuntime
 		// customer should observe dirty state on the runtime (the owner of dirty state) directly, rather than on the IContainer.
 		this.on("dirty", () => context.updateDirtyContainerState(true));
 		this.on("saved", () => context.updateDirtyContainerState(false));
-		// Log first "saved" event to telemetry
+
+		// Telemetry for when the container is attached and subsequently saved for the first time.
+		// These events are useful for investigating the validity of container "saved" eventing upon attach.
+		// See this.setAttachState() and this.updateDocumentDirtyState() for more details on "attached" and "saved" events.
+		this.once("attached", () => {
+			this.mc.logger.sendTelemetryEvent({
+				eventName: "Attached",
+				details: {
+					dirtyContainer: this.dirtyContainer,
+					hasPendingMessages: this.hasPendingMessages(),
+				},
+			});
+		});
 		this.once("saved", () =>
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "Saved",
@@ -3290,13 +3302,6 @@ export class ContainerRuntime
 				0x12e /* "Container Context should already be in attached state" */,
 			);
 			this.emit("attached");
-			this.mc.logger.sendTelemetryEvent({
-				eventName: "Attached",
-				details: {
-					dirtyContainer: this.dirtyContainer,
-					hasPendingMessages: this.hasPendingMessages(),
-				},
-			});
 		}
 
 		if (attachState === AttachState.Attached && !this.hasPendingMessages()) {
