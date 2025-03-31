@@ -16,12 +16,12 @@ import { useTree } from "../Utils/index.js";
 
 import { type TodoListDataObject } from "./index.js";
 
-export interface TodoViewProps {
+export interface TodoListProps {
 	readonly todoModel: TodoListDataObject;
 	readonly getDirectLink: (itemId: string) => string;
 }
 
-export const TodoView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
+export const TodoListView: React.FC<TodoListProps> = (props: TodoListProps) => {
 	const { todoModel, getDirectLink } = props;
 	const [titleString, setTitleString] = useState<SharedString | undefined>();
 

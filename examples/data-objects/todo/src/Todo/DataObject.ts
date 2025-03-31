@@ -18,10 +18,15 @@ import { v4 as uuid } from "uuid";
 
 import { TodoItem, TodoList } from "./index.js";
 
-export interface ITodoItemInitialState {
+export interface TodoItemProps {
 	readonly startingText: string;
 }
-
+/**
+ * A data object for managing a shared todo list using `SharedTree`.
+ *
+ * This class is responsible for initializing the tree with a predefined schema (`TodoList`)
+ * and provides utility methods to interact with the tree data structure at runtime.
+ */
 export class TodoListDataObject extends TreeDataObject<TreeView<typeof TodoList>> {
 	public readonly config = new TreeViewConfiguration({ schema: TodoList });
 	public static readonly factory = new PureDataObjectFactory<
@@ -33,17 +38,33 @@ export class TodoListDataObject extends TreeDataObject<TreeView<typeof TodoList>
 		{},
 	);
 
+	/**
+	 * Converts the underlying ITree into a typed TreeView using the provided schema configuration.
+	 *
+	 * @param tree - The ITree instance to view.
+	 * @returns A typed TreeView using the TodoList schema.
+	 */
 	public override generateView(tree: ITree): TreeView<typeof TodoList> {
 		return tree.viewWith(this.config) as unknown as TreeView<typeof TodoList>;
 	}
 
+	/**
+	 * Called during the initial creation of the data object.
+	 * Initializes the tree with a default title and empty todo item list.
+	 */
 	public override async initializingFirstTime(): Promise<void> {
 		const title = SharedString.create(this.runtime);
 		title.insertText(0, "Title");
 		this.treeView.initialize(new TodoList({ title: title.handle, items: [] }));
 	}
 
-	public async addTodoItem(props?: ITodoItemInitialState) {
+	/**
+	 * Adds a new todo item to the list.
+	 *
+	 * @param props
+	 * -`startingText`: The text to prefill into the item's title.
+	 */
+	public async addTodoItem(props?: TodoItemProps) {
 		const title = SharedString.create(this.runtime);
 		const newItemText = props?.startingText ?? "New Item";
 		title.insertText(0, newItemText);

@@ -6,7 +6,7 @@
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import React from "react";
 
-import { TodoListDataObject, TodoView } from "./Todo/index.js";
+import { TodoListDataObject, TodoListView } from "./Todo/index.js";
 
 const getDirectLink = (itemId: string) => {
 	const pathParts = window.location.pathname.split("/");
@@ -24,5 +24,7 @@ const getDirectLink = (itemId: string) => {
 
 export const fluidExport = new ContainerViewRuntimeFactory<TodoListDataObject>(
 	TodoListDataObject.factory,
-	(root: TodoListDataObject) => <TodoView todoModel={root} getDirectLink={getDirectLink} />,
+	(root: TodoListDataObject) => (
+		<TodoListView todoModel={root} getDirectLink={getDirectLink} />
+	),
 );

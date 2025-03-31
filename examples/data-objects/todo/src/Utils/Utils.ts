@@ -7,6 +7,9 @@ import { Tree, type TreeNode } from "@fluidframework/tree/legacy";
 import { useState, useEffect } from "react";
 
 /**
+ * TODO: This was copied over from "fluid-experimental/tree-react-api".
+ * Once the API has stabilized, this local copy should be removed and import from that package.
+ *
  * Custom hook which invalidates a React Component when there is a change in the subtree defined by `subtreeRoot`.
  * This includes changes to the tree's content, but not changes to its parentage.
  * See {@link @fluidframework/tree#TreeChangeEvents.treeChanged} for details.
