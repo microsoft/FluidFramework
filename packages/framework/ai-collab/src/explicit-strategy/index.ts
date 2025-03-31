@@ -25,7 +25,7 @@ import type {
 	TokenLimits,
 	TokenUsage,
 } from "../aiCollabApi.js";
-import type { UiDiff } from "../aiCollabUiDiffApi.js";
+import type { Diff } from "../aiCollabUiDiffApi.js";
 
 import { applyAgentEdit } from "./agentEditReducer.js";
 import type { EditWrapper, TreeEdit } from "./agentEditTypes.js";
@@ -101,7 +101,7 @@ export interface GenerateTreeEditsOptions {
 interface GenerateTreeEditsSuccessResponse {
 	status: "success";
 	tokensUsed: TokenUsage;
-	uiDiffs: UiDiff[];
+	uiDiffs: Diff[];
 }
 
 interface GenerateTreeEditsErrorResponse {
@@ -113,7 +113,7 @@ interface GenerateTreeEditsErrorResponse {
 		| "aborted"
 		| "unexpectedError";
 	tokensUsed: TokenUsage;
-	uiDiffs: UiDiff[];
+	uiDiffs: Diff[];
 }
 
 /**
@@ -131,7 +131,7 @@ export async function generateTreeEdits(
 ): Promise<GenerateTreeEditsSuccessResponse | GenerateTreeEditsErrorResponse> {
 	const idGenerator = new IdGenerator();
 	const editLog: EditLog = [];
-	const uiDiffs: UiDiff[] = [];
+	const uiDiffs: Diff[] = [];
 
 	let editCount = 0;
 	let sequentialErrorCount = 0;

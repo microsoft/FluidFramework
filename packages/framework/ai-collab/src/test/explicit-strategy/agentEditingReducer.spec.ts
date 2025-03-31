@@ -1432,7 +1432,7 @@ describe("applyAgentEdit", () => {
 	});
 });
 
-describe("UiDiff Creation", () => {
+describe("Diff Creation", () => {
 	let idGenerator: IdGenerator;
 	beforeEach(() => {
 		idGenerator = new IdGenerator();

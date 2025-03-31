@@ -12,7 +12,7 @@ import {
 	type ApplyEditSuccess,
 	type ModifyDiff,
 	type MoveDiff,
-	type UiDiff,
+	type Diff,
 } from "@fluidframework/ai-collab/alpha";
 import { TreeAlpha, type TreeBranch, type TreeViewAlpha } from "@fluidframework/tree/alpha";
 import { Icon } from "@iconify/react";
@@ -51,7 +51,7 @@ import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 
 export function TaskCard(props: {
 	sharedTreeBranch: TreeView<typeof SharedTreeAppState>;
-	uiDiffs?: UiDiff[];
+	uiDiffs?: Diff[];
 	sharedTreeTaskGroup: SharedTreeTaskGroup;
 	sharedTreeTask: SharedTreeTask;
 }): JSX.Element {

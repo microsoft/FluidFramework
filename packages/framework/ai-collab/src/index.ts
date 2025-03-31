@@ -57,8 +57,8 @@ export {
 } from "./aiCollabApi.js";
 
 export {
-	type UiDiffBase,
-	type UiDiff,
+	type DiffBase,
+	type Diff,
 	type NodePath,
 	type InsertDiff,
 	type ModifyDiff,

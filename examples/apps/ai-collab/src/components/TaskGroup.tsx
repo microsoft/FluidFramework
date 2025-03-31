@@ -9,7 +9,7 @@ import {
 	type AiCollabSuccessResponse,
 	type ApplyEditSuccess,
 	type Difference,
-	type UiDiff,
+	type Diff,
 	type ModifyDiff,
 	type InsertDiff,
 	type RemoveDiff,
@@ -59,7 +59,7 @@ import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 export function TaskGroup(props: {
 	treeView: TreeView<typeof SharedTreeAppState>;
 	branchDifferences?: Difference[];
-	uiDiffs?: UiDiff[];
+	readonly uiDiffs?: Diff[];
 	sharedTreeTaskGroup: SharedTreeTaskGroup;
 }): JSX.Element {
 	const { enqueueSnackbar } = useSnackbar();
@@ -71,7 +71,7 @@ export function TaskGroup(props: {
 	const [popoverAnchor, setPopoverAnchor] = useState<HTMLButtonElement | undefined>(undefined);
 	const [isAiTaskRunning, setIsAiTaskRunning] = useState<boolean>(false);
 	const [llmBranchData, setLlmBranchData] = useState<{
-		uiDiffs: UiDiff[];
+		uiDiffs: Diff[];
 		originalBranch: TreeViewAlpha<typeof SharedTreeAppState>;
 		aiCollabBranch: TreeViewAlpha<typeof SharedTreeAppState>;
 		newBranchTargetNode: SharedTreeTaskGroup;
@@ -636,7 +636,7 @@ function TaskGroupDiffModal(props: {
 	onAccept: () => void;
 	onDecline: () => void;
 	treeView: TreeView<typeof SharedTreeAppState>;
-	uiDiffs: UiDiff[];
+	uiDiffs: Diff[];
 	newBranchTargetNode: SharedTreeTaskGroup;
 }): JSX.Element {
 	const { isOpen, onClose, onAccept, onDecline, treeView, newBranchTargetNode, uiDiffs } =

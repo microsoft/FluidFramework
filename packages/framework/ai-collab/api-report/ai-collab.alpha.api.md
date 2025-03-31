@@ -12,7 +12,7 @@ export interface AiCollabErrorResponse {
     readonly errorMessage: "tokenLimitExceeded" | "tooManyErrors" | "tooManyModelCalls" | "aborted" | "unexpectedError";
     readonly status: "failure" | "partial-failure";
     readonly tokensUsed: TokenUsage;
-    readonly uiDiffs: UiDiff[];
+    readonly uiDiffs: Diff[];
 }
 
 // @alpha
@@ -39,7 +39,7 @@ export interface AiCollabOptions {
 export interface AiCollabSuccessResponse {
     readonly status: "success";
     readonly tokensUsed: TokenUsage;
-    readonly uiDiffs: UiDiff[];
+    readonly uiDiffs: Diff[];
 }
 
 // @alpha
@@ -69,7 +69,7 @@ export interface ApplyEditSuccess extends EventFlowDebugEvent {
 }
 
 // @alpha
-export interface ArrayRangeRemoveDiff extends UiDiffBase {
+export interface ArrayRangeRemoveDiff extends DiffBase {
     nodeContents: unknown[];
     nodePaths: NodePath[];
     // (undocumented)
@@ -79,7 +79,7 @@ export interface ArrayRangeRemoveDiff extends UiDiffBase {
 }
 
 // @alpha
-export interface ArraySingleRemoveDiff extends UiDiffBase {
+export interface ArraySingleRemoveDiff extends DiffBase {
     nodeContent: unknown;
     nodePath: NodePath;
     // (undocumented)
@@ -130,6 +130,15 @@ export interface DebugEvent {
 
 // @alpha
 export type DebugEventLogHandler = <T extends DebugEvent>(event: T) => unknown;
+
+// @alpha
+export type Diff = InsertDiff | ModifyDiff | RemoveDiff | MoveDiff;
+
+// @alpha
+export interface DiffBase {
+    readonly aiExplanation: string;
+    readonly type: string;
+}
 
 // @alpha
 export type Difference = DifferenceCreate | DifferenceRemove | DifferenceChange | DifferenceMove;
@@ -250,7 +259,7 @@ export interface GenerateTreeEditStarted extends EventFlowDebugEvent {
 }
 
 // @alpha
-export interface InsertDiff extends UiDiffBase {
+export interface InsertDiff extends DiffBase {
     nodeContent: unknown;
     nodePath: NodePath;
     // (undocumented)
@@ -276,7 +285,7 @@ export interface LlmApiCallDebugEvent extends DebugEvent {
 export type LlmTreeEdit = Record<string, unknown>;
 
 // @alpha
-export interface ModifyDiff extends UiDiffBase {
+export interface ModifyDiff extends DiffBase {
     newValue: unknown;
     nodePath: NodePath;
     oldValue: unknown;
@@ -288,7 +297,7 @@ export interface ModifyDiff extends UiDiffBase {
 export type MoveDiff = MoveSingleDiff | MoveRangeDiff;
 
 // @alpha
-export interface MoveRangeDiff extends UiDiffBase {
+export interface MoveRangeDiff extends DiffBase {
     destinationNodePath: NodePath;
     nodeContents: unknown[];
     sourceNodePaths: NodePath[];
@@ -299,7 +308,7 @@ export interface MoveRangeDiff extends UiDiffBase {
 }
 
 // @alpha
-export interface MoveSingleDiff extends UiDiffBase {
+export interface MoveSingleDiff extends DiffBase {
     destinationNodePath: NodePath;
     nodeContent: unknown;
     sourceNodePath: NodePath;
@@ -361,7 +370,7 @@ export interface PlanningPromptStarted extends EventFlowDebugEvent {
 export type RemoveDiff = RemoveFieldDiff | ArraySingleRemoveDiff | ArrayRangeRemoveDiff;
 
 // @alpha
-export interface RemoveFieldDiff extends UiDiffBase {
+export interface RemoveFieldDiff extends DiffBase {
     nodeContent: unknown;
     nodePath: NodePath;
     // (undocumented)
@@ -411,16 +420,6 @@ export interface TokenLimits {
 export interface TokenUsage {
     inputTokens: number;
     outputTokens: number;
-}
-
-// @alpha
-export type UiDiff = InsertDiff | ModifyDiff | RemoveDiff | MoveDiff;
-
-// @alpha
-export interface UiDiffBase {
-    aiExplanation: string;
-    // (undocumented)
-    type: string;
 }
 
 ```

@@ -32,7 +32,7 @@ import type {
 	MoveSingleDiff,
 	NodePath,
 	RemoveFieldDiff,
-	UiDiff,
+	Diff,
 } from "../aiCollabUiDiffApi.js";
 
 import {
@@ -81,7 +81,7 @@ function populateDefaults(
 /**
  * Gets the schema identifier of the given content, including primitive values.
  */
-export function getSchemaIdentifier(content: TreeEditValue): string | undefined {
+export function getSchemaIdentifier(content: TreeEditValue): string {
 	switch (typeof content) {
 		case "boolean": {
 			return SchemaFactory.boolean.identifier;
@@ -125,7 +125,7 @@ export function applyAgentEdit(
 	idGenerator: IdGenerator,
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
 	validator?: (edit: TreeNode) => void,
-): { edit: TreeEdit; uiDiff: UiDiff } {
+): { edit: TreeEdit; uiDiff: Diff } {
 	assertObjectIdsExist(treeEdit, idGenerator);
 	switch (treeEdit.type) {
 		case "insert": {
@@ -232,7 +232,6 @@ export function applyAgentEdit(
 
 			let insertedObject: TreeNode | undefined;
 			// // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-			// const targetNode = (node as any)[treeEdit.field] as TreeNode | TreeLeafValue;
 			const uiDiff = createModifyUiDiff(treeEdit, idGenerator);
 			// if fieldSchema is a LeafnodeSchema, we can check that it's a valid type and set the field.
 			if (isPrimitive(modification)) {
