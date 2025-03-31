@@ -91,7 +91,6 @@ export const TodoView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
 
 	// TodoView is made up of an editable title input, an input/button for submitting new items, and the list
 	// of TodoItemViews.
-	/* eslint-disable @typescript-eslint/no-misused-promises */
 	return (
 		<div className="todo-view">
 			<CollaborativeInput className="todo-title" sharedString={titleString} />
@@ -110,5 +109,4 @@ export const TodoView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
 			<div className="todo-item-list">{todoItemViews}</div>
 		</div>
 	);
-	/* eslint-enable @typescript-eslint/no-misused-promises */
 };
