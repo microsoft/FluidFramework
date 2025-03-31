@@ -40,11 +40,11 @@ export interface IOutboxConfig {
 	 */
 	readonly maxBatchSizeInBytes: number;
 	/**
-	 * By default, we throw an error if we detect a sequence number mismatch, since it shouldn't happen.
-	 * Set this to true to avoid throwing. It will revert to the old behavior, which is to flush the partial batch.
-	 * We don't expect this to be needed, but adding it here as a safety net.
+	 * If true, maybeFlushPartialBatch will flush the batch if the reference sequence number changed
+	 * since the batch started. Otherwise, it will throw in this case (apart from reentrancy which is handled elsewhere).
+	 * Once the new throw-based flow is proved in a production environment, this option will be removed.
 	 */
-	readonly disableSequenceNumberCoherencyAssert: boolean;
+	readonly flushPartialBatches: boolean;
 }
 
 export interface IOutboxParameters {
@@ -176,17 +176,13 @@ export class Outbox {
 		return this.messageCount === 0;
 	}
 
-	//* Revisit
-
 	/**
-	 * Confirm that batching has not been interrupted by an incoming message being processed, unless
-	 * we're under a reentrant context.
+	 * Detect whether batching has been interrupted by an incoming message being processed. In this case,
+	 * we will flush the accumulated messages to account for that (if allowed) and create a new batch with the new
+	 * message as the first message. If flushing partial batch is not enabled, we will throw (except for reentrant ops).
+	 * This would indicate we expected this case to be precluded by logic elsewhere.
 	 *
-	 * @remarks - The Outbox assumes that the base for submitted ops (referenceSequenceNumber and index-within-batch for Grouped Batches)
-	 * does not change during batch accumulation, apart from reentrant ops. i.e. any code block that would advance that baseline must
-	 * flush beforehand and consider any ops submitted during it must be considered reentrant. e.g. see ContainerRuntime.process
-	 *
-	 * @privateRemarks - To detect batch interruption, we compare both the reference sequence number
+	 * @remarks - To detect batch interruption, we compare both the reference sequence number
 	 * (i.e. last message processed by DeltaManager) and the client sequence number of the
 	 * last message processed by the ContainerRuntime. In the absence of op reentrancy, this
 	 * pair will remain stable during a single JS turn during which the batch is being built up.
@@ -226,9 +222,13 @@ export class Outbox {
 			),
 		);
 		if (++this.mismatchedOpsReported <= this.maxMismatchedOpsToReport) {
-			this.logger.sendErrorEvent(
+			this.logger.sendTelemetryEvent(
 				{
-					category: expectedDueToReentrancy ? "generic" : "error",
+					// Only log error if this is truly unexpected
+					category:
+						expectedDueToReentrancy || this.params.config.flushPartialBatches
+							? "generic"
+							: "error",
 					eventName: "ReferenceSequenceNumberMismatch",
 					Data_details: {
 						expectedDueToReentrancy,
@@ -244,8 +244,8 @@ export class Outbox {
 			);
 		}
 
-		// If we disable the assert, just flush like we used to - don't throw.
-		if (this.params.config.disableSequenceNumberCoherencyAssert) {
+		// If we're configured to flush partial batches, do that now and return (don't throw)
+		if (this.params.config.flushPartialBatches) {
 			this.flushAll();
 			return;
 		}

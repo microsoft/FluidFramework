@@ -1527,7 +1527,7 @@ describe("Runtime", () => {
 				const featureGates = {
 					"Fluid.ContainerRuntime.IdCompressorEnabled": true,
 					"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs": 1337,
-					"Fluid.ContainerRuntime.DisableSequenceNumberCoherencyAssert": true,
+					"Fluid.ContainerRuntime.DisableFlushBeforeProcess": true,
 				};
 				await ContainerRuntime.loadRuntime({
 					context: localGetMockContext(featureGates) as IContainerContext,
@@ -1545,7 +1545,7 @@ describe("Runtime", () => {
 						idCompressorMode: "on",
 						featureGates: JSON.stringify({
 							closeSummarizerDelayOverride: 1337,
-							disableSequenceNumberCoherencyAssert: true,
+							disableFlushBeforeProcess: true,
 						}),
 						groupedBatchingEnabled: true,
 					},

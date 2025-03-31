@@ -1307,6 +1307,13 @@ export class ContainerRuntime
 		return RuntimeCompatDetails;
 	}
 
+	/**
+	 * If true, will skip Outbox flushing before processing an incoming message,
+	 * and instead the Outbox will check for a split batch on every submit.
+	 * This is a kill-bit switch for this simplification of logic, in case it causes unexpected issues.
+	 */
+	private readonly disableFlushBeforeProcess: boolean;
+
 	/***/
 	protected constructor(
 		context: IContainerContext,
@@ -1719,9 +1726,8 @@ export class ContainerRuntime
 
 		const legacySendBatchFn = makeLegacySendBatchFn(submitFn, this.innerDeltaManager);
 
-		const disableSequenceNumberCoherencyAssert = this.mc.config.getBoolean(
-			"Fluid.ContainerRuntime.DisableSequenceNumberCoherencyAssert",
-		);
+		this.disableFlushBeforeProcess =
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableFlushBeforeProcess") === true;
 
 		this.outbox = new Outbox({
 			shouldSend: () => this.canSendOps(),
@@ -1733,7 +1739,8 @@ export class ContainerRuntime
 			config: {
 				compressionOptions,
 				maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
-				disableSequenceNumberCoherencyAssert: disableSequenceNumberCoherencyAssert === true,
+				// If we disable flush before process, we must be ready to flush partial batches
+				flushPartialBatches: this.disableFlushBeforeProcess,
 			},
 			logger: this.mc.logger,
 			groupingManager: opGroupingManager,
@@ -1914,7 +1921,7 @@ export class ContainerRuntime
 			featureGates: JSON.stringify({
 				...featureGatesForTelemetry,
 				closeSummarizerDelayOverride,
-				disableSequenceNumberCoherencyAssert,
+				disableFlushBeforeProcess: this.disableFlushBeforeProcess,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
@@ -2602,8 +2609,10 @@ export class ContainerRuntime
 
 		this.verifyNotClosed();
 
-		// Reference Sequence Number may be about to change, and it must be consistent across a batch, so flush now
-		this.outbox.flush();
+		if (!this.disableFlushBeforeProcess) {
+			// Reference Sequence Number may be about to change, and it must be consistent across a batch, so flush now
+			this.outbox.flush();
+		}
 
 		this.ensureNoDataModelChanges(() => {
 			this.processInboundMessageOrBatch(messageCopy, local);

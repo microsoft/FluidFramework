@@ -206,7 +206,7 @@ describe("Outbox", () => {
 		chunkSizeInBytes?: number;
 		opGroupingConfig?: OpGroupingManagerConfig;
 		immediateMode?: boolean;
-		disableSequenceNumberCoherencyAssert?: boolean;
+		flushPartialBatches?: boolean;
 	}) => {
 		const { submitFn, submitBatchFn, deltaManager } = params.context;
 
@@ -225,8 +225,7 @@ describe("Outbox", () => {
 			config: {
 				maxBatchSizeInBytes: params.maxBatchSize ?? maxBatchSizeInBytes,
 				compressionOptions: params.compressionOptions ?? DefaultCompressionOptions,
-				disableSequenceNumberCoherencyAssert:
-					params.disableSequenceNumberCoherencyAssert ?? false,
+				flushPartialBatches: params.flushPartialBatches ?? false,
 			},
 			logger: mockLogger,
 			groupingManager: new OpGroupingManager(
@@ -779,10 +778,10 @@ describe("Outbox", () => {
 		);
 	});
 
-	it("Splits the batch when an out of order message is detected (if assert is disabled)", () => {
+	it("Splits the batch when an out of order message is detected (if partial flushing is enabled)", () => {
 		const outbox = getOutbox({
 			context: getMockContext(),
-			disableSequenceNumberCoherencyAssert: true,
+			flushPartialBatches: true,
 		});
 		const messages = [
 			{
@@ -862,10 +861,10 @@ describe("Outbox", () => {
 			},
 		],
 	]) {
-		it("Flushes all batches when an out of order message is detected in either flow (assert is disabled)", () => {
+		it("Flushes all batches when an out of order message is detected in either flow (if partial flushing is enabled)", () => {
 			const outbox = getOutbox({
 				context: getMockContext(),
-				disableSequenceNumberCoherencyAssert: true,
+				flushPartialBatches: true,
 			});
 			for (const op of ops) {
 				currentSeqNumbers.referenceSequenceNumber = op.referenceSequenceNumber;
@@ -892,10 +891,10 @@ describe("Outbox", () => {
 		});
 	}
 
-	it("Does not flush the batch when an out of order message is detected, if configured", () => {
+	it("Does not throw when an out of order message is detected (if partial flushing is enabled)", () => {
 		const outbox = getOutbox({
 			context: getMockContext(),
-			disableSequenceNumberCoherencyAssert: true,
+			flushPartialBatches: true,
 		});
 		const messages: BatchMessage[] = [
 			{
@@ -917,7 +916,7 @@ describe("Outbox", () => {
 				currentSeqNumbers.referenceSequenceNumber = message.referenceSequenceNumber;
 				outbox.submit(message);
 			}
-		}, "Shouldn't throw if assert is disabled");
+		}, "Shouldn't throw if partial flushing is enabled");
 	});
 
 	it("Log at most 3 reference sequence number mismatch events", () => {
