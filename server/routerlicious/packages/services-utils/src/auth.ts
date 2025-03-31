@@ -470,7 +470,7 @@ export function getParam(params: Params, key: string) {
 
 export function getJtiClaimFromAccessToken(token: string): string | undefined {
 	const claims = decode(token) as ITokenClaims;
-	if (claims && claims.jti && validate(claims.jti)) {
+	if (claims?.jti && validate(claims.jti)) {
 		return claims.jti;
 	}
 	return undefined;
