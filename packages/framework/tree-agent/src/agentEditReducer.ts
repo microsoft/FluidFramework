@@ -262,7 +262,7 @@ export function applyAgentEdit(
 			{
 				const movedSourceTypes = new Set<string>();
 				for (let i = sourceStartIndex; i < sourceEndIndex; i++) {
-					const node = sourceArray.at(i) ?? fail("Expected element in array");
+					const node = sourceArray[i] ?? fail("Expected element in array");
 					const schemaIdentifier = Tree.schema(node).identifier;
 					movedSourceTypes.add(schemaIdentifier);
 				}
@@ -509,7 +509,7 @@ function resolvePathPointer(
 			if (schema.kind !== NodeKind.Array) {
 				throw new UsageError("Expected node to be an array.");
 			}
-			const child = (node as TreeArrayNode).at(p);
+			const child = (node as TreeArrayNode)[p];
 			ensurePointable(child);
 			node = child;
 		}

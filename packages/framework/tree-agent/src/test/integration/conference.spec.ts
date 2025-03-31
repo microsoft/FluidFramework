@@ -5,7 +5,6 @@
 
 import { appendFileSync, closeSync, openSync } from "node:fs";
 
-import { Anthropic } from "@anthropic-ai/sdk";
 // eslint-disable-next-line import/no-internal-modules
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 // eslint-disable-next-line import/no-internal-modules
@@ -17,8 +16,9 @@ import {
 	asTreeViewAlpha,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/internal";
+import { ChatAnthropic } from "@langchain/anthropic";
 
-import { SharedTreeSemanticAgent } from "../../agent.js";
+import { SharedTreeSemanticCodingAgent } from "../../agent.js";
 
 const sf = new SchemaFactory("Planner");
 
@@ -157,16 +157,19 @@ describe("Agent Editing Integration 1", () => {
 				},
 			],
 		});
-		const client = new Anthropic({
+		const client = new ChatAnthropic({
+			model: "claude-3-7-sonnet-20250219",
 			apiKey: "TODO",
+			thinking: { type: "enabled", budget_tokens: 10000 },
+			maxTokens: 20000,
 		});
 
-		const agent = new SharedTreeSemanticAgent(client, asTreeViewAlpha(view));
-		const timestamp = new Date().toISOString().replace(/[.:]/g, "-");
-		const fd = openSync(`llm_log_${timestamp}.md`, "w");
-		await agent.runCodeFromPrompt(prompts.complicated, {
+		const agent = new SharedTreeSemanticCodingAgent(client, asTreeViewAlpha(view), {
 			log: (l) => appendFileSync(fd, l, { encoding: "utf8" }),
 		});
+		const timestamp = new Date().toISOString().replace(/[.:]/g, "-");
+		const fd = openSync(`llm_log_${timestamp}.md`, "w");
+		await agent.runCodeFromPrompt(prompts.simple);
 
 		closeSync(fd);
 	});
@@ -175,6 +178,7 @@ describe("Agent Editing Integration 1", () => {
 const prompts = {
 	unrelated: "What is the cultural impact of SpongeBob SquarePants?",
 	question: "What do you think about Roblox? Is it a good game?",
+	simple: "Please add a new session to the second day.",
 	organize:
 		"Please organize the sessions so that the ones for adults are on the first day, and the ones that kids would find enjoyable are on the second day. If one day has more sessions than the other, please add new sessions (that fit the theme of the day) until they are balanced.",
 	complicated:

@@ -11,27 +11,57 @@ export const llmDefault: unique symbol;
 export type Log = (message: string) => void;
 
 // @alpha (undocumented)
-export class SharedTreeSemanticAgent<TRoot extends ImplicitFieldSchema> {
-    constructor(client: Anthropic, treeView: TreeView<TRoot>, domain?: {
-        hints?: string | undefined;
-        toString?: ((root: ReadableField<TRoot>) => string) | undefined;
+export abstract class SharedTreeSemanticAgent<TRoot extends ImplicitFieldSchema> {
+    protected constructor(client: BaseChatModel, treeView: TreeView<TRoot>, editingTool: StructuredTool, options: {
+        readonly domainHints?: string;
+        readonly treeToString?: (root: ReadableField<TRoot>) => string;
+        readonly log?: Log;
     } | undefined);
     // (undocumented)
-    applyEditsFromPrompt(prompt: string, logger?: Log): Promise<void>;
+    protected applyPrompt(systemPrompt: string, userPrompt: string): Promise<string | undefined>;
     // (undocumented)
-    readonly client: Anthropic;
+    readonly client: BaseChatModel;
     // (undocumented)
-    readonly domain?: {
-        hints?: string | undefined;
-        toString?: ((root: ReadableField<TRoot>) => string) | undefined;
+    protected readonly editingTool: StructuredTool;
+    // (undocumented)
+    protected readonly options: {
+        readonly domainHints?: string;
+        readonly treeToString?: (root: ReadableField<TRoot>) => string;
+        readonly log?: Log;
     } | undefined;
     // (undocumented)
-    runCodeFromPrompt(prompt: string, args?: {
-        validator?: (js: string) => boolean;
-        log?: Log;
-    }): Promise<void>;
+    protected thinkingTool: DynamicStructuredTool<z.ZodObject<{
+    thoughts: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+    thoughts: string;
+    }, {
+    thoughts: string;
+    }>>;
     // (undocumented)
     readonly treeView: TreeView<TRoot>;
+}
+
+// @alpha
+export class SharedTreeSemanticCodingAgent<TRoot extends ImplicitFieldSchema> extends SharedTreeSemanticAgent<TRoot> {
+    constructor(client: BaseChatModel, treeView: TreeView<TRoot>, options?: {
+        readonly domainHints?: string;
+        readonly treeToString?: (root: ReadableField<TRoot>) => string;
+        readonly validator?: (js: string) => boolean;
+        readonly log?: Log;
+    });
+    // (undocumented)
+    runCodeFromPrompt(prompt: string): Promise<void>;
+}
+
+// @alpha
+export class SharedTreeSemanticEditingAgent<TRoot extends ImplicitFieldSchema> extends SharedTreeSemanticAgent<TRoot> {
+    constructor(client: BaseChatModel, treeView: TreeView<TRoot>, options?: {
+        readonly domainHints?: string;
+        readonly treeToString?: (root: ReadableField<TRoot>) => string;
+        readonly log?: Log;
+    });
+    // (undocumented)
+    applyEditsFromPrompt(prompt: string): Promise<void>;
 }
 
 // @alpha

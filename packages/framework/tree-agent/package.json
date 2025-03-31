@@ -115,10 +115,12 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
+		"@langchain/anthropic": "^0.3.15",
+		"@langchain/core": "^0.3.43",
+		"langchain": "^0.3.19",
 		"typechat": "^0.1.1",
 		"uuid": "^9.0.0",
-		"zod": "^3.23.8",
-		"zod-to-json-schema": "^3.24.3"
+		"zod": "^3.23.8"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",

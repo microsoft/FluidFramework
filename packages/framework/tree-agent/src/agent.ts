@@ -3,25 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import type { Anthropic } from "@anthropic-ai/sdk";
-import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	getSimpleSchema,
-	Tree,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type ReadableField,
 	type TreeFieldFromImplicitField,
-	type TreeViewAlpha,
 	type TreeNode,
 	NodeKind,
 	type InsertableContent,
 	type ObjectNodeSchema,
 	normalizeFieldSchema,
 } from "@fluidframework/tree/internal";
+// eslint-disable-next-line import/no-internal-modules
+import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
+// eslint-disable-next-line import/no-internal-modules
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+// eslint-disable-next-line import/no-internal-modules
+import type { ToolMessage, AIMessage } from "@langchain/core/messages";
+// eslint-disable-next-line import/no-internal-modules
+import { tool, type StructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
-import { zodToJsonSchema } from "zod-to-json-schema";
 
 import { applyAgentEdit } from "./agentEditReducer.js";
 import type { TreeEdit } from "./agentEditTypes.js";
@@ -32,7 +35,7 @@ import {
 	getFunctioningSystemPrompt,
 } from "./promptGeneration.js";
 import { generateEditTypesForInsertion } from "./typeGeneration.js";
-import { constructNode, fail, type TreeView } from "./utils.js";
+import { constructNode, fail, failUsage, type TreeView } from "./utils.js";
 
 const functionName = "editTree";
 const paramsName = "params";
@@ -45,77 +48,128 @@ export type Log = (message: string) => void;
 /**
  * @alpha
  */
-export class SharedTreeSemanticAgent<TRoot extends ImplicitFieldSchema> {
-	public constructor(
-		public readonly client: Anthropic,
+export abstract class SharedTreeSemanticAgent<TRoot extends ImplicitFieldSchema> {
+	protected constructor(
+		public readonly client: BaseChatModel,
 		public readonly treeView: TreeView<TRoot>,
-		public readonly domain?: {
-			hints?: string;
-			toString?: (root: ReadableField<TRoot>) => string;
-		},
+		protected readonly editingTool: StructuredTool,
+		protected readonly options:
+			| {
+					readonly domainHints?: string;
+					readonly treeToString?: (root: ReadableField<TRoot>) => string;
+					readonly log?: Log;
+			  }
+			| undefined,
 	) {}
 
-	async #queryLlm(
+	protected thinkingTool = tool(
+		// eslint-disable-next-line unicorn/consistent-function-scoping
+		({ thoughts }) => thoughts,
+		{
+			name: "think",
+			description:
+				"Use the tool to think about something. It will not obtain new information or change any data, but just append the thought to the log. Use it when complex reasoning or some cache memory is needed.",
+
+			schema: z.object({
+				thoughts: z.string().describe("A thought to think about."),
+			}),
+		},
+	);
+
+	protected async applyPrompt(
 		systemPrompt: string,
-		tool: Anthropic.Beta.Messages.BetaToolUnion,
-		messages: Anthropic.Beta.Messages.BetaMessageParam[] = [],
-	): Promise<Anthropic.Beta.Messages.BetaMessage> {
-		return this.client.beta.messages.create({
-			betas: ["token-efficient-tools-2025-02-19"],
-			model: "claude-3-7-sonnet-latest",
-			thinking: { type: "enabled", budget_tokens: maxTokens / 2 },
-			stream: false,
-			max_tokens: maxTokens,
-			tools: [tool, this.#thinkingTool],
-			tool_choice: { type: "auto" },
-			messages,
-			system: systemPrompt,
-		});
-	}
-
-	public async runCodeFromPrompt(
-		prompt: string,
-		args?: { validator?: (js: string) => boolean; log?: Log },
-	): Promise<void> {
-		const editingToolName = "GenerateTreeEditingCode";
-		const systemPrompt = getFunctioningSystemPrompt(
-			this.treeView,
-			editingToolName,
-			this.#thinkingTool.name,
-			functionName,
+		userPrompt: string,
+	): Promise<string | undefined> {
+		const messages: (HumanMessage | AIMessage | ToolMessage)[] = [];
+		messages.push(new SystemMessage(systemPrompt));
+		messages.push(
+			new HumanMessage(
+				`${
+					this.options?.domainHints === undefined
+						? ""
+						: `Here is some information about my application domain: ${this.options?.domainHints}\n\n`
+				}${userPrompt}`,
+			),
 		);
 
-		const toolWrapper = z.object({
-			functionBody: z
-				.string()
-				.describe(`The body of the \`${functionName}\` JavaScript function`),
-		});
-		const tool = this.#makeTool(
-			editingToolName,
-			`A JavaScript function \`${functionName}\` to edit a user's tree`,
-			toolWrapper,
-		);
-		const create: Record<string, (input: InsertableContent) => TreeNode> = {};
-		visitObjectNodeSchema(this.treeView.schema, (schema) => {
-			const name =
-				getFriendlySchemaName(schema.identifier) ??
-				fail("Expected friendly name for object node schema");
+		this.options?.log?.(`# System Prompt\n\n${systemPrompt}\n\n`);
+		this.options?.log?.(`# User Prompt\n\n`);
+		if (this.options?.domainHints === undefined) {
+			this.options?.log?.(`"${quote(userPrompt)}"\n\n`);
+		} else {
+			this.options?.log?.(`## Domain Hints\n\n"${this.options?.domainHints}"\n\n`);
+			this.options?.log?.(`## Prompt\n\n"${quote(userPrompt)}"\n\n`);
+		}
 
-			create[name] = (input: InsertableContent) => constructNode(schema, input);
-		});
+		let responseMessage: AIMessage;
+		do {
+			responseMessage =
+				(await this.client
+					.bindTools?.([this.editingTool, this.thinkingTool], { tool_choice: "auto" })
+					?.invoke(messages)) ??
+				failUsage("LLM client must support function calling or tool use.");
 
-		await this.#applyPrompt(
-			systemPrompt,
-			prompt,
-			tool,
-			(toolInput, branch, idGenerator2) => {
-				const parseResult = toolWrapper.safeParse(toolInput);
-				if (!parseResult.success) {
-					return parseResult.error.message;
+			messages.push(responseMessage);
+			// We start with one message, and then add two more for each subsequent correspondence
+			this.options?.log?.(`# LLM Response ${Math.ceil(messages.length / 2)}\n\n`);
+			this.options?.log?.(`${responseMessage.text}\n\n`);
+			if (responseMessage.tool_calls !== undefined && responseMessage.tool_calls.length > 0) {
+				for (const toolCall of responseMessage.tool_calls) {
+					switch (toolCall.name) {
+						case this.thinkingTool.name: {
+							const result = (await this.thinkingTool.invoke(toolCall)) as ToolMessage;
+							this.options?.log?.(`## Thinking Tool Invoked\n\n${result.text}\n\n`);
+							break;
+						}
+						case "EditJsonTree":
+						case "GenerateTreeEditingCode": {
+							const result = (await this.editingTool.invoke(toolCall)) as ToolMessage;
+							messages.push(result);
+							break;
+						}
+						default: {
+							messages.push(new HumanMessage(`Unrecognized tool call: ${toolCall.name}`));
+						}
+					}
 				}
+			} else {
+				return responseMessage.text;
+			}
+		} while (messages.length < maxMessages + 1);
+	}
+}
 
-				const functionCode = parseResult.data.functionBody;
-				if (args?.validator?.(functionCode) === false) {
+/**
+ * TODO doc
+ * @alpha
+ */
+export class SharedTreeSemanticCodingAgent<
+	TRoot extends ImplicitFieldSchema,
+> extends SharedTreeSemanticAgent<TRoot> {
+	public constructor(
+		client: BaseChatModel,
+		treeView: TreeView<TRoot>,
+		options?: {
+			readonly domainHints?: string;
+			readonly treeToString?: (root: ReadableField<TRoot>) => string;
+			readonly validator?: (js: string) => boolean;
+			readonly log?: Log;
+		},
+	) {
+		const editingTool = tool(
+			({ functionCode }) => {
+				const create: Record<string, (input: InsertableContent) => TreeNode> = {};
+				visitObjectNodeSchema(this.treeView.schema, (schema) => {
+					const name =
+						getFriendlySchemaName(schema.identifier) ??
+						fail("Expected friendly name for object node schema");
+
+					create[name] = (input: InsertableContent) => constructNode(schema, input);
+				});
+				const branch = this.treeView.fork();
+				const idGenerator2 = new IdGenerator();
+				idGenerator2.assignIds(branch.root);
+				if (options?.validator?.(functionCode) === false) {
 					return "Code validation failed";
 				}
 				const params = {
@@ -129,56 +183,79 @@ export class SharedTreeSemanticAgent<TRoot extends ImplicitFieldSchema> {
 					create,
 				};
 				const code = processLlmCode(functionCode);
-				args?.log?.(`### Generated Code\n\n\`\`\`js\n${code}\n\`\`\`\n\n`);
+				this.options?.log?.(`### Generated Code\n\n\`\`\`js\n${code}\n\`\`\`\n\n`);
 				// eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
 				const fn = new Function(paramsName, code) as (p: typeof params) => void;
 				fn(params);
-				args?.log?.(`The new state of the tree is:\n\n`);
-				args?.log?.(
+				this.options?.log?.(`The new state of the tree is:\n\n`);
+				this.options?.log?.(
 					`${
-						this.domain?.toString?.(branch.root) ??
+						this.options?.treeToString?.(branch.root) ??
 						`\`\`\`JSON\n${JSON.stringify(branch.root, undefined, 2)}\n\`\`\``
 					}\n\n`,
 				);
+				// TODO: Return the current tree state here instead, but make sure to preserve IDs correctly
+				return "The tree has been edited.";
 			},
-			args?.log,
+			{
+				name: "GenerateTreeEditingCode",
+				description: `Invokes a JavaScript function \`${functionName}\` to edit a user's tree`,
+				schema: z.object({
+					functionCode: z
+						.string()
+						.describe(`The body of the \`${functionName}\` JavaScript function`),
+				}),
+			},
 		);
+		super(client, treeView, editingTool, options);
 	}
 
-	public async applyEditsFromPrompt(prompt: string, logger?: Log): Promise<void> {
-		const editingToolName = "EditJsonTree";
-		const root = this.treeView.root;
+	public async runCodeFromPrompt(prompt: string): Promise<void> {
+		const systemPrompt = getFunctioningSystemPrompt(
+			this.treeView,
+			this.editingTool.name,
+			this.thinkingTool.name,
+			functionName,
+		);
+
+		await this.applyPrompt(systemPrompt, prompt);
+	}
+}
+
+/**
+ * TODO doc
+ * @alpha
+ */
+export class SharedTreeSemanticEditingAgent<
+	TRoot extends ImplicitFieldSchema,
+> extends SharedTreeSemanticAgent<TRoot> {
+	public constructor(
+		client: BaseChatModel,
+		treeView: TreeView<TRoot>,
+		options?: {
+			readonly domainHints?: string;
+			readonly treeToString?: (root: ReadableField<TRoot>) => string;
+			readonly log?: Log;
+		},
+	) {
+		const root = treeView.root;
 		if (typeof root !== "object" || root === null) {
 			throw new UsageError("Primitive root nodes are not yet supported.");
 		}
-		const simpleSchema = getSimpleSchema(Tree.schema(root));
-		const systemPrompt = getEditingSystemPrompt(
-			this.treeView,
-			editingToolName,
-			this.#thinkingTool.name,
-		);
-		const tool = this.#makeTool(
-			editingToolName,
-			"An array of edits to a user's SharedTree domain",
-			z.object({
-				edits: z.array(z.unknown()).describe(`An array of well-formed TreeEdits`),
-			}),
-		);
-
+		const simpleSchema = getSimpleSchema(treeView.schema);
 		const wrapper = z.object({
 			edits: generateEditTypesForInsertion(simpleSchema),
 		});
-
-		await this.#applyPrompt(
-			systemPrompt,
-			prompt,
-			tool,
-			(toolInput, branch, idGenerator2) => {
-				const parseResult = wrapper.safeParse(toolInput);
+		const editingTool = tool(
+			(args) => {
+				const parseResult = wrapper.safeParse({ edits: args.edits });
 				if (!parseResult.success) {
-					return parseResult.error.message;
+					throw parseResult.error;
 				}
 
+				const branch = this.treeView.fork();
+				const idGenerator2 = new IdGenerator();
+				idGenerator2.assignIds(branch.root);
 				const edits = parseResult.data.edits as TreeEdit[];
 				let editIndex = 0;
 				while (editIndex < edits.length) {
@@ -186,213 +263,51 @@ export class SharedTreeSemanticAgent<TRoot extends ImplicitFieldSchema> {
 					try {
 						applyAgentEdit(simpleSchema, branch, edit, idGenerator2);
 					} catch (error: unknown) {
+						branch.dispose();
 						if (error instanceof UsageError) {
 							return `Error when applying edit at index ${editIndex}: ${error.message}`;
 						}
 						throw error;
 					}
-					logger?.(`### Applied Edit ${editIndex + 1}\n\n`);
-					logger?.(`The new state of the tree is:\n\n`);
-					logger?.(
+					this.options?.log?.(`### Applied Edit ${editIndex + 1}\n\n`);
+					this.options?.log?.(`The new state of the tree is:\n\n`);
+					this.options?.log?.(
 						`${
-							this.domain?.toString?.(branch.root) ??
+							this.options.treeToString?.(branch.root) ??
 							`\`\`\`JSON\n${JSON.stringify(branch.root, undefined, 2)}\n\`\`\``
 						}\n\n`,
 					);
 					editIndex += 1;
 				}
+				this.treeView.merge(branch);
+				// TODO: Return the current tree state here instead, but make sure to preserve IDs correctly
+				return "The tree has been edited.";
 			},
-			logger,
+			{
+				name: "EditJsonTree",
+				description: "An array of edits to a user's SharedTree domain",
+				schema: z.object({
+					edits: z.array(z.unknown()).describe(`An array of well-formed TreeEdits`),
+				}),
+			},
 		);
+
+		super(client, treeView, editingTool, options);
 	}
 
-	async #applyPrompt(
-		systemPrompt: string,
-		userPrompt: string,
-		tool: Anthropic.Beta.Messages.BetaToolUnion,
-		parseAndApply: (
-			toolInput: unknown,
-			branch: TreeViewAlpha<TRoot>,
-			idGenerator: IdGenerator,
-		) => void | string,
-		log: Log | undefined,
-	): Promise<string | undefined> {
-		const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [];
-		const hintMessage =
-			this.domain?.hints === undefined
-				? ""
-				: `Here is some information about the application domain: ${this.domain.hints}\n\n`;
+	public async applyEditsFromPrompt(prompt: string): Promise<void> {
+		const editingToolName = "EditJsonTree";
 
-		messages.push({
-			role: "user",
-			content: `${hintMessage}Here is the message from the user: ${userPrompt}`,
-		});
+		const systemPrompt = getEditingSystemPrompt(
+			this.treeView,
+			editingToolName,
+			this.thinkingTool.name,
+		);
 
-		log?.(`# System Prompt\n\n${systemPrompt}\n\n`);
-		log?.(`# User Prompt\n\n`);
-		if (this.domain?.hints === undefined) {
-			log?.(`"${quote(userPrompt)}"\n\n`);
-		} else {
-			log?.(`## Domain Hints\n\n"${this.domain.hints}"\n\n`);
-			log?.(`## Prompt\n\n"${quote(userPrompt)}"\n\n`);
-		}
-
-		// TODO change this condition
-		let responseMessage: Anthropic.Beta.Messages.BetaMessage;
-		do {
-			responseMessage = await this.#queryLlm(systemPrompt, tool, messages);
-			// We start with one message, and then add two more for each subsequent correspondence
-			log?.(`# LLM Response ${Math.ceil(messages.length / 2)}\n\n`);
-			for (const block of responseMessage.content) {
-				switch (block.type) {
-					case "thinking": {
-						log?.(`${block.thinking}\n\n`);
-						break;
-					}
-					case "redacted_thinking": {
-						log?.(
-							`> _The LLM did some thinking, but it was redacted for safety reasons._\n\n`,
-						);
-						break;
-					}
-					case "text": {
-						log?.(`${quote(block.text)}\n\n`);
-						break;
-					}
-					default: {
-						break;
-					}
-				}
-			}
-			messages.push({ role: responseMessage.role, content: responseMessage.content });
-			const latestBlock = responseMessage.content.at(-1) ?? fail("Expected a message block");
-			switch (latestBlock.type) {
-				case "text": {
-					return latestBlock.text;
-				}
-				case "thinking":
-				case "redacted_thinking": {
-					return fail("Expected a thinking block to be followed by a tool use or text block");
-				}
-				case "tool_use": {
-					switch (latestBlock.name) {
-						case this.#thinkingTool.name: {
-							const parse = thinkingToolSchema.safeParse(latestBlock.input);
-							const content = parse.success ? parse.data.thought : parse.error.message;
-							messages.push({
-								role: "user",
-								content: [
-									{
-										tool_use_id: latestBlock.id,
-										type: "tool_result",
-										content,
-									},
-								],
-							});
-							log?.(`## Thinking Tool Invoked\n\n${content}\n\n`);
-							break;
-						}
-						case "EditJsonTree":
-						case "GenerateTreeEditingCode": {
-							const branch = this.treeView.fork();
-							const idGenerator2 = new IdGenerator();
-							idGenerator2.assignIds(branch.root);
-							try {
-								log?.(`## Editing Tool Invoked\n\n`);
-								const parseError = parseAndApply(latestBlock.input, branch, idGenerator2);
-								if (parseError === undefined) {
-									this.treeView.merge(branch);
-									messages.push({
-										role: "user",
-										content: [
-											{
-												tool_use_id: latestBlock.id,
-												type: "tool_result",
-												content: `Successfully applied edits to the tree.`, // TODO: send back the stringified tree here
-											},
-										],
-									});
-								} else {
-									log?.(`### Error Parsing Response from LLM\n\n\`${parseError}\`\n\n`);
-									messages.push({
-										role: "user",
-										content: [
-											{
-												tool_use_id: latestBlock.id,
-												type: "tool_result",
-												content: `Failed to parse response: ${parseError}`,
-											},
-										],
-									});
-									branch.dispose();
-								}
-							} catch (error: unknown) {
-								log?.(`### Error When Editing Tree\n\n\`${(error as Error)?.message}\`\n\n`);
-								branch.dispose();
-								if (error instanceof UsageError) {
-									messages.push({
-										role: "user",
-										content: [
-											{
-												tool_use_id: latestBlock.id,
-												type: "tool_result",
-												content: `Error: "${(error as Error)?.message ?? ""}" when attempting to edit tree.`,
-											},
-										],
-									});
-								} else {
-									throw error;
-								}
-							}
-							break;
-						}
-						default: {
-							messages.push({
-								role: "user",
-								content: [
-									{
-										tool_use_id: latestBlock.id,
-										type: "tool_result",
-										content: `Unrecognized tool: ${latestBlock.name}`,
-									},
-								],
-							});
-						}
-					}
-					break;
-				}
-
-				default: {
-					return unreachableCase(latestBlock);
-				}
-			}
-		} while (responseMessage.stop_reason === "tool_use" && messages.length < maxMessages + 1);
-	}
-
-	#thinkingTool = this.#makeTool(
-		"think",
-		"Use the tool to think about something. It will not obtain new information or change any data, but just append the thought to the log. Use it when complex reasoning or some cache memory is needed.",
-		thinkingToolSchema,
-	);
-
-	#makeTool(
-		name: string,
-		description: string,
-		wrapper: z.ZodObject<z.ZodRawShape>,
-	): Anthropic.Beta.BetaTool {
-		return {
-			name,
-			description,
-			input_schema: zodToJsonSchema(wrapper, { name: "foo" }).definitions
-				?.foo as Anthropic.Tool.InputSchema,
-		};
+		await this.applyPrompt(systemPrompt, prompt);
 	}
 }
 
-const thinkingToolSchema = z.object({
-	thought: z.string().describe("A thought to think about."),
-});
-const maxTokens = 20000; // TODO: Allow caller to provide this
 const maxMessages = 5; // TODO: Allow caller to provide this
 
 function visitObjectNodeSchema(

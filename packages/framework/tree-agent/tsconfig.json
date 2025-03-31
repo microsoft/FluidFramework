@@ -8,5 +8,7 @@
 		// SharedTree seems to have issues with exactOptionalPropertyTypes: true. It has it set to false itself, and if it's
 		// not set to false here the build fails complaining about types in SharedTree's .d.ts files.
 		"exactOptionalPropertyTypes": false,
+		"lib": ["ES2020", "DOM", "DOM.Iterable"],
+		"skipLibCheck": true,
 	},
 }

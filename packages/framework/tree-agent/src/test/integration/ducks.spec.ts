@@ -5,7 +5,6 @@
 
 import { appendFileSync, closeSync, openSync } from "node:fs";
 
-import { Anthropic } from "@anthropic-ai/sdk";
 // eslint-disable-next-line import/no-internal-modules
 import { fail } from "@fluidframework/core-utils/internal";
 // eslint-disable-next-line import/no-internal-modules
@@ -19,8 +18,9 @@ import {
 	asTreeViewAlpha,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/internal";
+import { ChatAnthropic } from "@langchain/anthropic";
 
-import { SharedTreeSemanticAgent } from "../../agent.js";
+import { SharedTreeSemanticCodingAgent } from "../../agent.js";
 import { llmDefault } from "../../utils.js";
 
 // eslint-disable-next-line eslint-comments/disable-enable-pair
@@ -190,20 +190,23 @@ describe("Agent Editing Integration 2", () => {
 			],
 		});
 
-		const client = new Anthropic({
+		const client = new ChatAnthropic({
+			model: "claude-3-7-sonnet-20250219",
 			apiKey: "TODO",
+			thinking: { type: "enabled", budget_tokens: 10000 },
+			maxTokens: 20000,
 		});
 
-		const agent = new SharedTreeSemanticAgent(client, asTreeViewAlpha(view), {
-			hints: `You are an assistant that helps people create and edit pages of text. When adding new text, each word (e.g. "the", "cat", "lemonade", etc.) should go in its own Word object. Do not add comments or style the text (i.e. do not use Spans) unless the user specifically asked you to. If the user asks you to style a particular word or phrase that is already included in a larger span, you may split the span into smaller spans in order to apply the style at the granularity requested. Likewise, if two or more adjacent spans have the exact same styling, merge them together.`,
-			toString,
+		const agent = new SharedTreeSemanticCodingAgent(client, asTreeViewAlpha(view), {
+			domainHints: `You are an assistant that helps people create and edit pages of text. When adding new text, each word (e.g. "the", "cat", "lemonade", etc.) should go in its own Word object. Do not add comments or style the text (i.e. do not use Spans) unless the user specifically asked you to. If the user asks you to style a particular word or phrase that is already included in a larger span, you may split the span into smaller spans in order to apply the style at the granularity requested. Likewise, if two or more adjacent spans have the exact same styling, merge them together.`,
+			treeToString,
+			log: (l) => appendFileSync(fd, l, { encoding: "utf8" }),
 		});
 
 		const timestamp = new Date().toISOString().replace(/[.:]/g, "-");
 		const fd = openSync(`llm_log_${timestamp}.md`, "w");
 		await agent.runCodeFromPrompt(
 			"Please add a comment to the word 'treat' that says 'Makes me think of Halloween :)'",
-			{ log: (l) => appendFileSync(fd, l, { encoding: "utf8" }) },
 		);
 
 		closeSync(fd);
@@ -217,7 +220,7 @@ describe("Agent Editing Integration 2", () => {
 	 * 5. tree state after each edit
 	 */
 
-	function toString(page: Page): string {
+	function treeToString(page: Page): string {
 		let result = "";
 		if (page.comments.length > 0) {
 			for (let i = 0; i < page.comments.length; i++) {
