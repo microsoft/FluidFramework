@@ -15,6 +15,7 @@ import {
 	IRoom,
 	IRuntimeSignalEnvelope,
 	type ICollaborationSessionEvents,
+	RedisEventEmitter,
 } from "@fluidframework/server-lambdas";
 import { Router, type Request, type Response } from "express";
 import winston from "winston";
@@ -23,7 +24,6 @@ import { Constants } from "../../utils";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { NetworkError } from "@fluidframework/server-services-client";
 import type { TypedEventEmitter } from "@fluidframework/common-utils";
-import { RedisEventEmitter } from "../redisEventEmitter";
 
 export function create(
 	config: Provider,
@@ -131,7 +131,7 @@ async function handleBroadcastSignal(
 
 	if (collaborationSessionEventEmitter instanceof RedisEventEmitter) {
 		Lumberjack.info("Emitting signal to room", { tenantId, documentId });
-		await collaborationSessionEventEmitter.emitToRoom(
+		await collaborationSessionEventEmitter.publishToRoom(
 			getRoomId(signalRoom),
 			"broadcastSignal",
 			payload,

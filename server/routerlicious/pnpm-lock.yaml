@@ -177,6 +177,9 @@ importers:
       '@fluidframework/server-services-telemetry':
         specifier: workspace:~
         version: link:../services-telemetry
+      '@fluidframework/server-services-utils':
+        specifier: workspace:~
+        version: link:../services-utils
       '@types/semver':
         specifier: ^7.5.0
         version: 7.5.0
@@ -237,7 +240,7 @@ importers:
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-lambdas-previous':
         specifier: npm:@fluidframework/server-lambdas@5.0.0
-        version: '@fluidframework/server-lambdas@5.0.0(debug@4.3.4)'
+        version: '@fluidframework/server-lambdas@5.0.0'
       '@fluidframework/server-test-utils':
         specifier: workspace:~
         version: link:../test-utils
@@ -297,7 +300,7 @@ importers:
         version: 5.1.6
       webpack:
         specifier: ^5.94.0
-        version: 5.94.0(webpack-cli@5.1.4)
+        version: 5.94.0
 
   packages/lambdas-driver:
     dependencies:
@@ -10004,6 +10007,33 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@fluidframework/server-lambdas@5.0.0':
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      '@fluidframework/gitresources': 5.0.0
+      '@fluidframework/protocol-base': 5.0.0
+      '@fluidframework/protocol-definitions': 3.2.0
+      '@fluidframework/server-lambdas-driver': 5.0.0
+      '@fluidframework/server-services-client': 5.0.0
+      '@fluidframework/server-services-core': 5.0.0
+      '@fluidframework/server-services-telemetry': 5.0.0
+      '@types/semver': 7.5.6
+      assert: 2.1.0
+      async: 3.2.5
+      axios: 1.7.7(debug@4.3.4)
+      buffer: 6.0.3
+      double-ended-queue: 2.1.0-0
+      events: 3.3.0
+      json-stringify-safe: 5.0.1
+      lodash: 4.17.21
+      nconf: 0.12.1
+      semver: 7.6.0
+      sha.js: 2.4.11
+      uuid: 9.0.1
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
   '@fluidframework/server-lambdas@5.0.0(debug@4.3.4)':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
@@ -10180,7 +10210,7 @@ snapshots:
       '@fluidframework/gitresources': 5.0.0
       '@fluidframework/protocol-base': 5.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      axios: 1.7.7(debug@4.4.0)
+      axios: 1.7.7(debug@4.3.4)
       crc-32: 1.2.0
       debug: 4.3.4
       json-stringify-safe: 5.0.1
@@ -17367,7 +17397,7 @@ snapshots:
     dependencies:
       iconv-lite: 0.6.3
       source-map-js: 1.2.0
-      webpack: 5.94.0(webpack-cli@5.1.4)
+      webpack: 5.94.0
 
   source-map-support@0.5.21:
     dependencies:
@@ -17638,7 +17668,7 @@ snapshots:
       schema-utils: 3.3.0
       serialize-javascript: 6.0.1
       terser: 5.31.6
-      webpack: 5.94.0(webpack-cli@5.1.4)
+      webpack: 5.94.0
 
   terser-webpack-plugin@5.3.10(webpack@5.97.1(webpack-cli@5.1.4)):
     dependencies:
@@ -17740,7 +17770,7 @@ snapshots:
       semver: 7.6.0
       source-map: 0.7.4
       typescript: 5.1.6
-      webpack: 5.94.0(webpack-cli@5.1.4)
+      webpack: 5.94.0
 
   ts-morph@20.0.0:
     dependencies:
@@ -18086,6 +18116,36 @@ snapshots:
       wildcard: 2.0.1
 
   webpack-sources@3.2.3: {}
+
+  webpack@5.94.0:
+    dependencies:
+      '@types/estree': 1.0.5
+      '@webassemblyjs/ast': 1.12.1
+      '@webassemblyjs/wasm-edit': 1.12.1
+      '@webassemblyjs/wasm-parser': 1.12.1
+      acorn: 8.11.2
+      acorn-import-attributes: 1.9.5(acorn@8.11.2)
+      browserslist: 4.22.2
+      chrome-trace-event: 1.0.3
+      enhanced-resolve: 5.17.1
+      es-module-lexer: 1.4.1
+      eslint-scope: 5.1.1
+      events: 3.3.0
+      glob-to-regexp: 0.4.1
+      graceful-fs: 4.2.11
+      json-parse-even-better-errors: 2.3.1
+      loader-runner: 4.3.0
+      mime-types: 2.1.35
+      neo-async: 2.6.2
+      schema-utils: 3.3.0
+      tapable: 2.2.1
+      terser-webpack-plugin: 5.3.10(webpack@5.94.0)
+      watchpack: 2.4.2
+      webpack-sources: 3.2.3
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
+      - uglify-js
 
   webpack@5.94.0(webpack-cli@5.1.4):
     dependencies:

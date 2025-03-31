@@ -4,9 +4,9 @@
  */
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import type { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import type { IBroadcastSignalEventPayload, ICollaborationSessionEvents } from "./interfaces";
 
 export class RedisEventEmitter extends TypedEventEmitter<ICollaborationSessionEvents> {
 	private readonly activeSubscriptions: Set<string> = new Set();
@@ -35,20 +35,20 @@ export class RedisEventEmitter extends TypedEventEmitter<ICollaborationSessionEv
 		);
 	}
 
-	public async subscribe<K extends keyof ICollaborationSessionEvents>(
-		event: K,
-		callback: (err?: Error | undefined, result?: any) => void,
-	): Promise<void> {
+	public async subscribe(event: string, callback: (...args: any[]) => void): Promise<void> {
 		await this.redisClientConnectionForSub
 			.getRedisClient()
 			.subscribe(event, (error, message) => {
 				if (error) {
-					callback(error);
+					// TODO: Add error handling if testing succeeds
+					Lumberjack.error(`Error subscribing to event`, { event }, error);
 					return;
 				}
+				// TODO: Add error handling if parsing fails
 				const stringMessage = JSON.stringify(message);
-				const data: ICollaborationSessionEvents[K] = JSON.parse(stringMessage);
-				this.emit(event, data);
+				const data: IBroadcastSignalEventPayload = JSON.parse(stringMessage);
+				callback(data);
+				// this.emit(event, data);
 			});
 		this.activeSubscriptions.add(event);
 		Lumberjack.info(`Subscribed to event`, { event });
@@ -70,6 +70,7 @@ export class RedisEventEmitter extends TypedEventEmitter<ICollaborationSessionEv
 	public async dispose(): Promise<void> {
 		const redisSub = this.redisClientConnectionForSub.getRedisClient();
 		for (const event of this.activeSubscriptions) {
+			// TODO: Add error handling if testing succeeds
 			await redisSub.unsubscribe(event);
 		}
 		this.activeSubscriptions.clear();

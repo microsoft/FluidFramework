@@ -54,6 +54,7 @@ import type {
 	IRoom,
 } from "./interfaces";
 import { checkThrottleAndUsage, getSocketConnectThrottleId } from "./throttleAndUsage";
+import { RedisEventEmitter } from "./redisEventEmitter";
 
 /**
  * Trace stages for the connect flow.
@@ -597,12 +598,12 @@ async function addMessageClientToClientManager(
  * @param lambdaDependencies - Lambda dependencies including collaborationSessionEventEmitter and logger
  * @returns Dispose function to remove the added listener
  */
-function setUpSignalListenerForRoomBroadcasting(
+async function setUpSignalListenerForRoomBroadcasting(
 	socket: IWebSocket,
 	room: IRoom,
 	{ collaborationSessionEventEmitter, logger }: INexusLambdaDependencies,
 	clientId: string,
-): () => void {
+): Promise<() => void> {
 	const broadCastSignalListener = (broadcastSignal: IBroadcastSignalEventPayload): void => {
 		const { signalRoom, signalContent } = broadcastSignal;
 
@@ -639,9 +640,25 @@ function setUpSignalListenerForRoomBroadcasting(
 			}
 		}
 	};
+	// TODO: See if we can wrap the on and subscribe functions
+	if (collaborationSessionEventEmitter instanceof RedisEventEmitter) {
+		await collaborationSessionEventEmitter.subscribe(
+			"broadcastSignal",
+			broadCastSignalListener,
+		);
+	}
 	collaborationSessionEventEmitter?.on("broadcastSignal", broadCastSignalListener);
 	const disposeBroadcastSignalListener = (): void => {
 		collaborationSessionEventEmitter?.off("broadcastSignal", broadCastSignalListener);
+		if (collaborationSessionEventEmitter instanceof RedisEventEmitter) {
+			collaborationSessionEventEmitter.dispose().catch((error) => {
+				Lumberjack.error(
+					"Failed to dispose RedisEventEmitter",
+					getLumberBaseProperties(room.documentId, room.tenantId),
+					error,
+				);
+			});
+		}
 	};
 	return disposeBroadcastSignalListener;
 }
@@ -781,12 +798,13 @@ export async function connectDocument(
 			lambdaDependencies,
 		);
 
-		const disposeSignalListenerForRoomBroadcasting = setUpSignalListenerForRoomBroadcasting(
-			socket,
-			room,
-			lambdaDependencies,
-			clientId,
-		);
+		const disposeSignalListenerForRoomBroadcasting =
+			await setUpSignalListenerForRoomBroadcasting(
+				socket,
+				room,
+				lambdaDependencies,
+				clientId,
+			);
 		connectionTrace.stampStage(ConnectDocumentStage.SignalListenerSetUp);
 
 		const result = {

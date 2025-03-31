@@ -6,7 +6,7 @@
 import * as os from "os";
 import cluster from "cluster";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
+import { ICollaborationSessionEvents, RedisEventEmitter } from "@fluidframework/server-lambdas";
 import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
 import {
 	LocalNodeFactory,
@@ -29,7 +29,6 @@ import { INexusResourcesCustomizations } from "./customizations";
 import { OrdererManager, type IOrdererManagerOptions } from "./ordererManager";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
 import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
-import { RedisEventEmitter } from "./redisEventEmitter";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
 	private readonly webSocketServer: ws.Server;
@@ -586,6 +585,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 
 		const collaborationSessionEventEmitter = new RedisEventEmitter(
 			redisClientConnectionManagerForPub,
+			redisClientConnectionManagerForSub,
 		);
 
 		return new NexusResources(

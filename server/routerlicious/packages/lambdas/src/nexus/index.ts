@@ -49,6 +49,7 @@ import { disconnectDocument } from "./disconnect";
 import { isValidConnectionMessage } from "./protocol";
 
 export { IBroadcastSignalEventPayload, ICollaborationSessionEvents, IRoom } from "./interfaces";
+export { RedisEventEmitter } from "./redisEventEmitter";
 
 // Sanitize the received op before sending.
 function sanitizeMessage(message: any): IDocumentMessage {

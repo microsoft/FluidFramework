@@ -8,6 +8,7 @@ export {
 	IBroadcastSignalEventPayload,
 	ICollaborationSessionEvents,
 	IRoom,
+	RedisEventEmitter,
 } from "./nexus";
 export { BroadcasterLambda, BroadcasterLambdaFactory } from "./broadcaster";
 export { CopierLambda, CopierLambdaFactory } from "./copier";
