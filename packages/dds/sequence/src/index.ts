@@ -39,6 +39,7 @@ export {
 	SequenceIntervalIndexes,
 	IOverlappingIntervalsIndex,
 	ISequenceOverlappingIntervalsIndex,
+	IEndpointIndex,
 	createOverlappingIntervalsIndex,
 	createOverlappingSequenceIntervalsIndex,
 	createEndpointIndex,
