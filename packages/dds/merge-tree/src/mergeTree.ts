@@ -181,11 +181,14 @@ function ackSegment(
 		case MergeTreeDeltaType.OBLITERATE_SIDED: {
 			assertRemoved(segment);
 			const latestRemove = segment.removes[segment.removes.length - 1];
-			assert(opstampUtils.isLocal(latestRemove), "Expected last remove to be unacked");
+			assert(
+				opstampUtils.isLocal(latestRemove),
+				0xb5d /* Expected last remove to be unacked */,
+			);
 			assert(
 				segment.removes.length === 1 ||
 					opstampUtils.isAcked(segment.removes[segment.removes.length - 2]),
-				"Expected prior remove to be acked",
+				0xb5e /* Expected prior remove to be acked */,
 			);
 
 			allowIncrementalPartialLengthsUpdate = segment.removes.length === 1;
@@ -602,9 +605,9 @@ export class MergeTree {
 
 	public readonly attributionPolicy: AttributionPolicy | undefined;
 
-	public localPerspective: Perspective = new LocalDefaultPerspective(
-		this.collabWindow.clientId,
-	);
+	public get localPerspective(): Perspective {
+		return this.collabWindow.localPerspective;
+	}
 
 	/**
 	 * Whether or not all blocks in the mergeTree currently have information about local partial lengths computed.
@@ -737,7 +740,7 @@ export class MergeTree {
 		this.collabWindow.minSeq = minSeq;
 		this.collabWindow.collaborating = true;
 		this.collabWindow.currentSeq = currentSeq;
-		this.localPerspective = new LocalDefaultPerspective(localClientId);
+		this.collabWindow.localPerspective = new LocalDefaultPerspective(localClientId);
 		this.nodeUpdateLengthNewStructure(this.root, true);
 	}
 

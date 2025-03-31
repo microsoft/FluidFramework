@@ -245,42 +245,24 @@ export class SharedStringClass
 	 * {@inheritDoc ISharedString.getText}
 	 */
 	public getText(start?: number, end?: number) {
-		const segmentWindow = this.client.getCollabWindow();
-		return this.mergeTreeTextHelper.getText(
-			segmentWindow.currentSeq,
-			segmentWindow.clientId,
-			"",
-			start,
-			end,
-		);
+		const collabWindow = this.client.getCollabWindow();
+		return this.mergeTreeTextHelper.getText(collabWindow.localPerspective, "", start, end);
 	}
 
 	/**
 	 * {@inheritDoc ISharedString.getTextWithPlaceholders}
 	 */
 	public getTextWithPlaceholders(start?: number, end?: number) {
-		const segmentWindow = this.client.getCollabWindow();
-		return this.mergeTreeTextHelper.getText(
-			segmentWindow.currentSeq,
-			segmentWindow.clientId,
-			" ",
-			start,
-			end,
-		);
+		const collabWindow = this.client.getCollabWindow();
+		return this.mergeTreeTextHelper.getText(collabWindow.localPerspective, " ", start, end);
 	}
 
 	/**
 	 * {@inheritDoc ISharedString.getTextRangeWithMarkers}
 	 */
 	public getTextRangeWithMarkers(start: number, end: number) {
-		const segmentWindow = this.client.getCollabWindow();
-		return this.mergeTreeTextHelper.getText(
-			segmentWindow.currentSeq,
-			segmentWindow.clientId,
-			"*",
-			start,
-			end,
-		);
+		const collabWindow = this.client.getCollabWindow();
+		return this.mergeTreeTextHelper.getText(collabWindow.localPerspective, "*", start, end);
 	}
 
 	/**

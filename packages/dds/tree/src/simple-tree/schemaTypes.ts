@@ -288,7 +288,7 @@ export let createFieldSchema: <
  * including functionality that does not have to be kept consistent across versions or deterministic.
  *
  * This can include policy for how to use this schema for "view" purposes, and well as how to expose editing APIs.
- * Use {@link SchemaFactory} to create the FieldSchema instances, for example {@link schemaStatics.optional}.
+ * Use {@link SchemaFactory} to create the FieldSchema instances, for example {@link SchemaStatics.optional}.
  * @privateRemarks
  * Public access to the constructor is removed to prevent creating expressible but unsupported (or not stable) configurations.
  * {@link createFieldSchema} can be used internally to create instances.
@@ -952,7 +952,7 @@ export type NodeBuilderData<T extends TreeNodeSchemaCore<string, NodeKind, boole
 /**
  * Value that may be stored as a leaf node.
  * @remarks
- * Some limitations apply, see the documentation for {@link schemaStatics.number} and {@link schemaStatics.string} for those restrictions.
+ * Some limitations apply, see the documentation for {@link SchemaStatics.number} and {@link SchemaStatics.string} for those restrictions.
  * @public
  */
 // eslint-disable-next-line @rushstack/no-new-null

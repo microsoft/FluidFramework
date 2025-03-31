@@ -4,7 +4,6 @@
  */
 
 /* eslint-disable no-bitwise */
-/* eslint-disable import/no-deprecated */
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
@@ -46,7 +45,6 @@ import {
 	IntervalType,
 	endReferenceSlidingPreference,
 	startReferenceSlidingPreference,
-	type IIntervalHelpers,
 } from "./intervalUtils.js";
 
 function compareSides(sideA: Side, sideB: Side): number {
@@ -697,11 +695,3 @@ export function createSequenceInterval(
 	);
 	return ival;
 }
-
-/**
- * @deprecated The methods within have substitutions
- * @internal
- */
-export const sequenceIntervalHelpers: IIntervalHelpers = {
-	create: createSequenceInterval,
-};

@@ -11,29 +11,26 @@ import type {
 import {
 	defaultSchemaFactoryObjectOptions,
 	SchemaFactory,
+	schemaStatics,
 	type SchemaFactoryObjectOptions,
 } from "./schemaFactory.js";
 import type {
-	FieldProps,
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
 	NodeSchemaOptions,
 } from "../schemaTypes.js";
-import { FieldKind } from "../schemaTypes.js";
 import { objectSchema } from "../objectNode.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
 import type { NodeKind, TreeNodeSchemaClass } from "../core/index.js";
 import type {
 	ImplicitAllowedTypesUnsafe,
 	ImplicitFieldSchemaUnsafe,
-	FieldSchemaAlphaUnsafe,
 	ArrayNodeCustomizableSchemaUnsafe,
 	MapNodeCustomizableSchemaUnsafe,
 } from "./typesUnsafe.js";
 import { mapSchema } from "../mapNode.js";
 import { arraySchema } from "../arrayNode.js";
 import type { ObjectNodeSchema } from "../objectNodeTypes.js";
-import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
 import type { SimpleObjectNodeSchema } from "../simpleSchema.js";
 import type { ArrayNodeCustomizableSchema } from "../arrayNodeTypes.js";
 import type { MapNodeCustomizableSchema } from "../mapNodeTypes.js";
@@ -140,24 +137,24 @@ export class SchemaFactoryAlpha<
 	}
 
 	/**
-	 * {@inheritdoc schemaStatics.optionalRecursive}
-	 * @privateRemarks
-	 * The is only one of the many possible overrides for producing FieldSchemaAlpha.
-	 * If others are needed they can be desired.
+	 * {@inheritDoc SchemaStatics.optional}
 	 */
-	public override readonly optionalRecursive = <
-		const T extends ImplicitAllowedTypesUnsafe,
-		const TCustomMetadata = unknown,
-	>(
-		t: T,
-		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
-	): FieldSchemaAlphaUnsafe<FieldKind.Optional, T, TCustomMetadata> => {
-		return createFieldSchemaUnsafe(FieldKind.Optional, t, props) as FieldSchemaAlphaUnsafe<
-			FieldKind.Optional,
-			T,
-			TCustomMetadata
-		>;
-	};
+	public static override readonly optional = schemaStatics.optional;
+
+	/**
+	 * {@inheritDoc SchemaStatics.required}
+	 */
+	public static override readonly required = schemaStatics.required;
+
+	/**
+	 * {@inheritDoc SchemaStatics.optionalRecursive}
+	 */
+	public static override readonly optionalRecursive = schemaStatics.optionalRecursive;
+
+	/**
+	 * Like {@link SchemaFactory.identifier} but static and a factory function that can be provided {@link FieldProps}.
+	 */
+	public static readonly identifier = schemaStatics.identifier;
 
 	/**
 	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.
