@@ -41,6 +41,7 @@ export {
 	ISequenceOverlappingIntervalsIndex,
 	createOverlappingIntervalsIndex,
 	createOverlappingSequenceIntervalsIndex,
+	createEndpointIndex,
 } from "./intervalIndex/index.js";
 export {
 	appendAddIntervalToRevertibles,
