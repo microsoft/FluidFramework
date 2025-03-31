@@ -11,7 +11,7 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"scripts": {
-		"build": "pnpm run generate:packageList && fluid-build --task build:packlist",
+		"build": "pnpm run generate:packageList && fluid-build --task build --task build:packlist",
 		"build:compile": "fluid-build --task compile",
 		"build:docs": "fluid-build --task build:docs",
 		"build:fast": "fluid-build --worker",
