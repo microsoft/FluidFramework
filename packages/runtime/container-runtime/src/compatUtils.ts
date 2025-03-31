@@ -98,7 +98,7 @@ type IContainerRuntimeOptionsVersionDependent = Pick<
  * - legacyConfig: The default config of the option when the runtime does not meets the min version requirement
  * - modernConfig: The default config of the option when the runtime meets the min version requirement
  *
- * TODO: Get the exact versions that each option was added in.
+ * TODO: Double check that all minVersionRequired are correct.
  */
 const runtimeOptionConfigs: {
 	[K in keyof IContainerRuntimeOptionsVersionDependent]: {
@@ -107,35 +107,41 @@ const runtimeOptionConfigs: {
 		modernConfig: IContainerRuntimeOptionsVersionDependent[K];
 	};
 } = {
-	flushMode: {
-		minVersionRequired: "2.0.0",
-		legacyConfig: FlushMode.Immediate,
-		modernConfig: defaultFlushMode,
-	},
-	enableGroupedBatching: {
-		minVersionRequired: "2.0.0",
-		legacyConfig: false,
-		modernConfig: true,
-	},
-	explicitSchemaControl: {
-		minVersionRequired: "2.0.0",
-		legacyConfig: false,
-		modernConfig: true,
-	},
-	enableRuntimeIdCompressor: {
-		minVersionRequired: "2.0.0",
-		legacyConfig: undefined,
-		modernConfig: "on",
-	},
 	compressionOptions: {
-		minVersionRequired: "2.0.0",
+		minVersionRequired: "2.0.0-internal.2.3.0",
 		legacyConfig: disabledCompressionConfig,
 		modernConfig: enabledCompressionConfig,
 	},
+	enableGroupedBatching: {
+		minVersionRequired: "2.0.0-internal.4.1.0",
+		legacyConfig: false,
+		modernConfig: true,
+	},
 	gcOptions: {
-		minVersionRequired: "2.0.0",
+		minVersionRequired: "2.0.0-internal.7.4.0",
 		legacyConfig: { gcSweep: undefined },
 		modernConfig: { gcSweep: true },
+	},
+	enableRuntimeIdCompressor: {
+		minVersionRequired: "2.0.0-rc.2.0.0",
+		legacyConfig: undefined,
+		modernConfig: "on",
+	},
+	explicitSchemaControl: {
+		// This option is unique since it was actually introduced before 2.0.0, but its purpose is to prevent 1.x clients from
+		// joining a session. Therefore, we will have it be `true` when the compatibility mode is set to >=2.0.0 and we do not
+		// want any 1.x clients to join.
+		minVersionRequired: "2.0.0",
+		legacyConfig: false,
+		modernConfig: true,
+	},
+	flushMode: {
+		// Note: 1.x clients are compatible with TurnBased flushing, but here we elect to remain on Immediate flush mode
+		// as a work-around for inability to send batches larger than 1Mb. Immediate flushing keeps batches smaller as
+		// fewer messages will be included per flush.
+		minVersionRequired: "2.0.0",
+		legacyConfig: FlushMode.Immediate,
+		modernConfig: defaultFlushMode,
 	},
 };
 
