@@ -1082,7 +1082,10 @@ export class ContainerRuntime
 	}
 
 	public get readonly(): boolean {
-		return this.innerDeltaManager.readOnlyInfo.readonly ?? false;
+		return (
+			(this.innerDeltaManager.readOnlyInfo.readonly ?? false) ||
+			this.deltaManager.clientDetails.type === summarizerClientType
+		);
 	}
 
 	/**
@@ -1400,8 +1403,6 @@ export class ContainerRuntime
 
 		assert(isIDeltaManagerFull(deltaManager), 0xa80 /* Invalid delta manager */);
 		this.innerDeltaManager = deltaManager;
-
-		this.innerDeltaManager.on("readonly", (readonly) => this.setReadOnlyState(readonly));
 
 		// Here we could wrap/intercept on these functions to block/modify outgoing messages if needed.
 		// This makes ContainerRuntime the final gatekeeper for outgoing messages.
@@ -1966,6 +1967,7 @@ export class ContainerRuntime
 		// If we loaded from pending state, then we need to skip any ops that are already accounted in such
 		// saved state, i.e. all the ops marked by Loader layer sa savedOp === true.
 		this.skipSavedCompressorOps = pendingRuntimeState?.pendingIdCompressorState !== undefined;
+		this.innerDeltaManager.on("readonly", (readonly) => this.setReadOnlyState(readonly));
 	}
 
 	public onSchemaChange(schema: IDocumentSchemaCurrent): void {
@@ -4203,7 +4205,7 @@ export class ContainerRuntime
 
 		// Note that the real (non-proxy) delta manager is used here to get the readonly info. This is because
 		// container runtime's ability to submit ops depend on the actual readonly state of the delta manager.
-		if (this.innerDeltaManager.readOnlyInfo.readonly) {
+		if (this.readonly) {
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "SubmitOpInReadonly",
 				connected: this.connected,
