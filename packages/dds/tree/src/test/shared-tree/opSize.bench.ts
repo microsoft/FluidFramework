@@ -21,7 +21,7 @@ import {
 import type { Value } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import { TreeCompressionStrategy } from "../../feature-libraries/index.js";
-import { Tree, type ISharedTree, type SharedTree } from "../../shared-tree/index.js";
+import { Tree, type ITreePrivate } from "../../shared-tree/index.js";
 import { type JsonCompatibleReadOnly, getOrAddEmptyToMap } from "../../util/index.js";
 import { treeTestFactory } from "../utils.js";
 import {
@@ -52,7 +52,7 @@ class Parent extends schemaFactory.array("Test:Opsize-Bench-Root", Child) {}
 /**
  * Create a default attached tree for op submission
  */
-function createConnectedTree(): SharedTree {
+function createConnectedTree(): ITreePrivate {
 	const containerRuntimeFactory = new MockContainerRuntimeFactory();
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
 		idCompressor: createIdCompressor(),
@@ -299,7 +299,7 @@ describe("Op Size", () => {
 	const currentTestOps: ISequencedDocumentMessage[] = [];
 
 	function registerOpListener(
-		tree: ISharedTree,
+		tree: ITreePrivate,
 		resultArray: ISequencedDocumentMessage[],
 	): void {
 		// TODO: better way to hook this up. Needs to detect local ops exactly once.
@@ -332,7 +332,7 @@ describe("Op Size", () => {
 		};
 	};
 
-	const initializeOpDataCollection = (tree: ISharedTree) => {
+	const initializeOpDataCollection = (tree: ITreePrivate) => {
 		currentTestOps.length = 0;
 		registerOpListener(tree, currentTestOps);
 	};

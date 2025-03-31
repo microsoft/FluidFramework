@@ -34,6 +34,7 @@ export class DataStoreContexts
 	 */
 	private readonly deferredContexts = new Map<string, Deferred<FluidDataStoreContext>>();
 
+	// eslint-disable-next-line unicorn/consistent-function-scoping -- Property is defined once; no need to extract inner lambda
 	private readonly disposeOnce = new Lazy<void>(() => {
 		// close/stop all store contexts
 		for (const [fluidDataStoreId, contextD] of this.deferredContexts) {

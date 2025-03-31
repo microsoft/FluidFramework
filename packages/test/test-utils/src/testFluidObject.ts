@@ -45,7 +45,7 @@ export class TestFluidObject implements ITestFluidObject {
 
 	public root!: ISharedMap;
 	private readonly innerHandle: IFluidHandle<this>;
-	private initializeP: Promise<void> | undefined;
+	private initializationPromise: Promise<void> | undefined;
 
 	/**
 	 * Creates a new TestFluidObject.
@@ -72,11 +72,14 @@ export class TestFluidObject implements ITestFluidObject {
 			throw new Error("Shared objects were not provided during creation.");
 		}
 
-		for (const key of this.factoryEntriesMap.keys()) {
-			if (key === id) {
-				const handle = this.root.get<IFluidHandle>(id);
-				return handle?.get() as Promise<T>;
+		if (this.factoryEntriesMap.has(id)) {
+			const handle = this.root.get<IFluidHandle<T>>(id);
+			if (handle === undefined) {
+				throw new Error(
+					`Shared object with id '${id}' is in factoryEntriesMap but not found under root.`,
+				);
 			}
+			return handle.get();
 		}
 
 		throw new Error(`Shared object with id ${id} not found.`);
@@ -104,15 +107,13 @@ export class TestFluidObject implements ITestFluidObject {
 			this.root = (await this.runtime.getChannel("root")) as ISharedMap;
 		};
 
-		if (this.initializeP === undefined) {
-			this.initializeP = doInitialization();
-		}
-
-		return this.initializeP;
+		this.initializationPromise ??= doInitialization();
+		return this.initializationPromise;
 	}
 }
 
 /**
+ * Iterable\<[ChannelId, IChannelFactory]\>.
  * @internal
  */
 export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFactory]>;

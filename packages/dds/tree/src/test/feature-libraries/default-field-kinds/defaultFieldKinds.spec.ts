@@ -239,8 +239,8 @@ describe("defaultFieldKinds", () => {
 				return arbitraryChildChange;
 			};
 
-			const baseChange = fieldHandler.editor.buildChildChange(0, nodeChange1);
-			const changeToRebase = fieldHandler.editor.buildChildChange(0, nodeChange2);
+			const baseChange = fieldHandler.editor.buildChildChanges([[0, nodeChange1]]);
+			const changeToRebase = fieldHandler.editor.buildChildChanges([[0, nodeChange2]]);
 
 			assert.deepEqual(
 				fieldHandler.rebaser.rebase(

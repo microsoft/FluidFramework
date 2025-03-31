@@ -18,7 +18,11 @@ import { renderNodeWithHtmlSyntax } from "../Utilities.js";
  *
  * @remarks Will render as HTML when content is multi-line while in a table context.
  */
-export function renderSpan(node: SpanNode, writer: DocumentWriter, context: RenderContext): void {
+export function renderSpan(
+	node: SpanNode,
+	writer: DocumentWriter,
+	context: RenderContext,
+): void {
 	// Markdown tables do not support multi-line Markdown content.
 	// If we encounter a multi-line span in a table context, we will render using HTML syntax.
 	if (!node.singleLine && context.insideTable === true) {

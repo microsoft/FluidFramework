@@ -300,7 +300,8 @@ export abstract class FluidDataStoreContext
 			return aliasedDataStores.has(this.id);
 		}
 
-		return (await this.getInitialSnapshotDetails()).isRootDataStore;
+		const snapshotDetails = await this.getInitialSnapshotDetails();
+		return snapshotDetails.isRootDataStore;
 	}
 
 	/**
@@ -383,15 +384,9 @@ export abstract class FluidDataStoreContext
 				? this.parentContext.attachState
 				: AttachState.Detached;
 
-		const thisSummarizeInternal = async (
-			fullTree: boolean,
-			trackState: boolean,
-			telemetryContext?: ITelemetryContext,
-		): Promise<ISummarizeInternalResult> =>
-			this.summarizeInternal(fullTree, trackState, telemetryContext);
-
 		this.summarizerNode = props.createSummarizerNodeFn(
-			thisSummarizeInternal,
+			async (fullTree, trackState, telemetryContext) =>
+				this.summarizeInternal(fullTree, trackState, telemetryContext),
 			async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
 		);
 
@@ -610,30 +605,6 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
-	 * back-compat ADO 21575: This is temporary and will be removed once the compat requirement across Runtime and
-	 * Datastore boundary is satisfied.
-	 * Process the messages to maintain backwards compatibility. The `processMessages` function is added to
-	 * IFluidDataStoreChannel in 2.5.0. For channels before that, call `process` for each message.
-	 */
-	private processMessagesCompat(
-		channel: IFluidDataStoreChannel,
-		messageCollection: IRuntimeMessageCollection,
-	): void {
-		if (channel.processMessages !== undefined) {
-			channel.processMessages(messageCollection);
-		} else {
-			const { envelope, messagesContent, local } = messageCollection;
-			for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
-				channel.process(
-					{ ...envelope, contents, clientSequenceNumber },
-					local,
-					localOpMetadata,
-				);
-			}
-		}
-	}
-
-	/**
 	 * Process messages for this data store. The messages here are contiguous messages for this data store in a batch.
 	 * @param messageCollection - The collection of messages to process.
 	 */
@@ -648,7 +619,7 @@ export abstract class FluidDataStoreContext
 
 		if (this.loaded) {
 			assert(this.channel !== undefined, 0xa68 /* Channel is not loaded */);
-			this.processMessagesCompat(this.channel, messageCollection);
+			this.channel.processMessages(messageCollection);
 		} else {
 			assert(!local, 0x142 /* "local store channel is not loaded" */);
 			assert(
@@ -854,12 +825,6 @@ export abstract class FluidDataStoreContext
 		}
 	}
 
-	/**
-	 * Submits the signal to be sent to other clients.
-	 * @param type - Type of the signal.
-	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
-	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
-	 */
 	public submitSignal(type: string, content: unknown, targetClientId?: string): void {
 		this.verifyNotClosed("submitSignal");
 
@@ -886,7 +851,7 @@ export abstract class FluidDataStoreContext
 		for (const messageCollection of this.pendingMessagesState.messageCollections) {
 			// Only process ops whose seq number is greater than snapshot sequence number from which it loaded.
 			if (messageCollection.envelope.sequenceNumber > baseSequenceNumber) {
-				this.processMessagesCompat(channel, messageCollection);
+				channel.processMessages(messageCollection);
 			}
 		}
 
@@ -1040,6 +1005,7 @@ export abstract class FluidDataStoreContext
 				callSite,
 				undefined /* sequencedMessage */,
 				safeTelemetryProps,
+				30 /* stackTraceLimit */,
 			);
 
 			this.mc.logger.sendTelemetryEvent(
@@ -1149,6 +1115,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	 */
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {}
 
+	// eslint-disable-next-line unicorn/consistent-function-scoping -- Property is defined once; no need to extract inner lambda
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
 		// Sequence number of the snapshot.
 		let sequenceNumber: number | undefined;
@@ -1367,6 +1334,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		return this.channel.getAttachGCData(telemetryContext);
 	}
 
+	// eslint-disable-next-line unicorn/consistent-function-scoping -- Property is defined once; no need to extract inner lambda
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
 		let snapshot = this.snapshotTree;
 		// eslint-disable-next-line import/no-deprecated

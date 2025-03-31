@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64, performance } from "@fluid-internal/client-utils";
+import { fromUtf8ToBase64, performanceNow } from "@fluid-internal/client-utils";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
@@ -172,7 +172,7 @@ class RouterliciousRestWrapper extends RestWrapper {
 		const fetchRequestConfig = axiosBuildRequestInitConfig(translatedConfig);
 
 		const res = await this.rateLimiter.schedule(async () => {
-			const perfStart = performance.now();
+			const perfStart = performanceNow();
 			const result = await fetch(completeRequestUrl, fetchRequestConfig).catch(
 				async (error) => {
 					// on failure, add the request entry into the retryCounter map to count the subsequent retries, if any
@@ -211,25 +211,25 @@ class RouterliciousRestWrapper extends RestWrapper {
 			);
 			return {
 				response: result,
-				duration: performance.now() - perfStart,
+				duration: performanceNow() - perfStart,
 			};
 		});
 
 		const response = res.response;
 		const headers = headersToMap(response.headers);
 
-		let start = performance.now();
+		let start = performanceNow();
 		const text = await response.text();
-		const receiveContentTime = performance.now() - start;
+		const receiveContentTime = performanceNow() - start;
 
 		const bodySize = text.length;
-		start = performance.now();
+		start = performanceNow();
 		const responseBody: any = response.headers
 			.get("content-type")
 			?.includes("application/json")
 			? JSON.parse(text)
 			: text;
-		const parseTime = performance.now() - start;
+		const parseTime = performanceNow() - start;
 
 		// Success
 		if (response.ok || response.status === statusCode) {

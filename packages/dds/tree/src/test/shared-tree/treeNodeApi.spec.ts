@@ -7,13 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
-import {
-	CheckoutFlexTreeView,
-	type TransactionConstraint,
-	Tree,
-	TreeAlpha,
-	type rollback,
-} from "../../shared-tree/index.js";
+import { CheckoutFlexTreeView, Tree, TreeAlpha } from "../../shared-tree/index.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -24,6 +18,8 @@ import {
 	type NodeFromSchema,
 	asTreeViewAlpha,
 	type TreeViewAlpha,
+	type TransactionConstraint,
+	type rollback,
 } from "../../simple-tree/index.js";
 import {
 	TestTreeProviderLite,
@@ -162,7 +158,7 @@ describe("treeApi", () => {
 						content: 42,
 						child: {},
 					});
-					provider.processMessages();
+					provider.synchronizeMessages();
 
 					// Tree A removes the child node (this will be sequenced before anything else because the provider sequences ops in the order of submission).
 					viewA.root.child = undefined;
@@ -180,7 +176,7 @@ describe("treeApi", () => {
 					assert.equal(viewA.root.content, 42);
 					assert.equal(viewB.root.content, 43);
 					// ...but then is rolled back after sequencing because the child node was removed by Tree A.
-					provider.processMessages();
+					provider.synchronizeMessages();
 					assert.equal(viewB.root.content, 42);
 					assert.equal(viewB.root.content, 42);
 				});

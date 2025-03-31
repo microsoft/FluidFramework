@@ -24,10 +24,19 @@ export class RangeMap<K, V> {
 	 * Offsetting `b` by this difference should return `a`.
 	 * The difference can be infinite if `a` cannot be reached from `b` by offsetting,
 	 * but the difference should still be positive if `a` is larger than `b` and negative if smaller.
+	 *
+	 * @param offsetValue - Function used to associate a range of values with a range of keys.
+	 * When writing to a range of keys starting with `start`, the value of the nth key is interpreted to be
+	 * `offsetValue(firstValue, n - 1)`.
+	 * The same logic should be used when interpreting the values for keys after the first in a
+	 * `RangeQueryResult` or `RangeQueryEntry`.
+	 *
+	 * If `offsetValue` is left unspecified, all keys in a block will be given the same value.
 	 */
 	public constructor(
 		private readonly offsetKey: (key: K, offset: number) => K,
 		private readonly subtractKeys: (a: K, b: K) => number,
+		public readonly offsetValue: (value: V, offset: number) => V = defaultValueOffsetFn,
 	) {
 		this.tree = new BTree(undefined, subtractKeys);
 	}
@@ -52,7 +61,7 @@ export class RangeMap<K, V> {
 	 * Retrieves the values for all keys in the query range.
 	 *
 	 * @param start - The first key in the range being queried
-	 * @param length  - The length of the query range
+	 * @param length - The length of the query range
 	 * @returns A list of entries, each describing the value for some subrange of the query.
 	 * The entries are in the same order as the keys, and there is an entry for every key with a non `undefined` value.
 	 */
@@ -65,7 +74,11 @@ export class RangeMap<K, V> {
 		const firstEntry = entries[0] ?? oob();
 		const lengthBefore = this.subtractKeys(start, firstEntry.start);
 		if (lengthBefore > 0) {
-			entries[0] = { ...firstEntry, start, length: firstEntry.length - lengthBefore };
+			entries[0] = {
+				start,
+				length: firstEntry.length - lengthBefore,
+				value: this.offsetValue(firstEntry.value, lengthBefore),
+			};
 		}
 
 		const lastEntry = entries[entries.length - 1] ?? oob();
@@ -96,9 +109,14 @@ export class RangeMap<K, V> {
 				const { value, length: entryLength } = entry[1];
 
 				const entryLastKey = this.offsetKey(entryKey, entryLength - 1);
+				const lengthBeforeQuery = this.subtractKeys(start, entryKey);
 				const overlappingLength = Math.min(this.subtractKeys(entryLastKey, start) + 1, length);
 				if (overlappingLength > 0) {
-					return { value, start, length: overlappingLength };
+					return {
+						value: this.offsetValue(value, lengthBeforeQuery),
+						start,
+						length: overlappingLength,
+					};
 				}
 			}
 		}
@@ -171,13 +189,18 @@ export class RangeMap<K, V> {
 			const lengthAfter = this.subtractKeys(lastEntryKey, lastDeleteKey);
 			if (lengthAfter > 0) {
 				// A portion of this entry comes after the deletion range, so we reinsert that portion.
-				this.tree.set(this.offsetKey(lastDeleteKey, 1), { length: lengthAfter, value });
+				const newKey = this.offsetKey(lastDeleteKey, 1);
+				const difference = this.subtractKeys(newKey, key);
+				this.tree.set(newKey, {
+					length: lengthAfter,
+					value: this.offsetValue(value, difference),
+				});
 			}
 		}
 	}
 
 	public clone(): RangeMap<K, V> {
-		const cloned = new RangeMap<K, V>(this.offsetKey, this.subtractKeys);
+		const cloned = new RangeMap<K, V>(this.offsetKey, this.subtractKeys, this.offsetValue);
 		cloned.tree = this.tree.clone();
 		return cloned;
 	}
@@ -187,11 +210,13 @@ export class RangeMap<K, V> {
 	 */
 	public static union<K, V>(a: RangeMap<K, V>, b: RangeMap<K, V>): RangeMap<K, V> {
 		assert(
-			a.offsetKey === b.offsetKey && a.subtractKeys === b.subtractKeys,
+			a.offsetKey === b.offsetKey &&
+				a.subtractKeys === b.subtractKeys &&
+				a.offsetValue === b.offsetValue,
 			0xaae /* Maps should have the same behavior */,
 		);
 
-		const merged = new RangeMap<K, V>(a.offsetKey, a.subtractKeys);
+		const merged = new RangeMap<K, V>(a.offsetKey, a.subtractKeys, a.offsetValue);
 
 		// TODO: Is there a good pattern that lets us make `tree` readonly?
 		merged.tree = a.tree.clone();
@@ -306,4 +331,8 @@ function offsetInteger(key: number, offset: number): number {
 
 function subtractIntegers(a: number, b: number): number {
 	return a - b;
+}
+
+function defaultValueOffsetFn<T>(value: T, offset: number): T {
+	return value;
 }

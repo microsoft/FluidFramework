@@ -385,10 +385,10 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 			case MessageType.SummaryAck:
 			case MessageType.SummaryNack: {
 				// Old files (prior to PR #10077) may not contain this info
-				if (op.data !== undefined) {
-					op.contents = JSON.parse(op.data);
-				} else {
+				if (op.data === undefined) {
 					this.parseContent(op);
+				} else {
+					op.contents = JSON.parse(op.data);
 				}
 				return op.type === MessageType.SummaryAck
 					? this.handleSummaryAck(op as ISummaryAckMessage)

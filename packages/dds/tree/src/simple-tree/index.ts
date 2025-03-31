@@ -57,14 +57,6 @@ export {
 	type IdentifierIndex,
 	createSimpleTreeIndex,
 	createIdentifierIndex,
-	type SimpleNodeSchemaBase,
-	type SimpleTreeSchema,
-	type SimpleNodeSchema,
-	type SimpleFieldSchema,
-	type SimpleLeafNodeSchema,
-	type SimpleMapNodeSchema,
-	type SimpleArrayNodeSchema,
-	type SimpleObjectNodeSchema,
 	type JsonSchemaId,
 	type JsonSchemaType,
 	type JsonObjectNodeSchema,
@@ -108,8 +100,12 @@ export {
 	type TreeNodeSchemaClassUnsafe,
 	type TreeNodeSchemaUnsafe,
 	type AllowedTypesUnsafe,
+	type ImplicitAllowedTypesUnsafe,
+	type ImplicitFieldSchemaUnsafe,
 	type TreeNodeSchemaNonClassUnsafe,
 	type InsertableTreeNodeFromAllowedTypesUnsafe,
+	type ArrayNodeCustomizableSchemaUnsafe,
+	type MapNodeCustomizableSchemaUnsafe,
 	type TreeViewAlpha,
 	type TreeBranch,
 	type TreeBranchEvents,
@@ -124,7 +120,36 @@ export {
 	type CustomTreeNode,
 	type CustomTreeValue,
 	tryStoredSchemaAsArray,
+	type SchemaStatics,
+	type ITreeAlpha,
+	type TransactionConstraint,
+	type NodeInDocumentConstraint,
+	type RunTransactionParams,
+	type VoidTransactionCallbackStatus,
+	type TransactionCallbackStatus,
+	type TransactionResult,
+	type TransactionResultExt,
+	type TransactionResultSuccess,
+	type TransactionResultFailed,
+	rollback,
+	generateSchemaFromSimpleSchema,
+	replaceConciseTreeHandles,
+	replaceHandles,
+	replaceVerboseTreeHandles,
+	type HandleConverter,
+	type FieldSchemaAlphaUnsafe,
 } from "./api/index.js";
+export type {
+	SimpleTreeSchema,
+	SimpleNodeSchema,
+	SimpleFieldSchema,
+	SimpleLeafNodeSchema,
+	SimpleMapNodeSchema,
+	SimpleArrayNodeSchema,
+	SimpleObjectNodeSchema,
+	SimpleNodeSchemaBase,
+	SimpleObjectFieldSchema,
+} from "./simpleSchema.js";
 export {
 	type NodeFromSchema,
 	isTreeNodeSchemaClass,
@@ -137,6 +162,7 @@ export {
 	type AllowedTypes,
 	FieldKind,
 	FieldSchema,
+	type FieldSchemaAlpha,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
 	type NodeBuilderData,
@@ -158,6 +184,7 @@ export {
 	type ReadSchema,
 	type NodeSchemaOptions,
 	type NodeSchemaMetadata,
+	evaluateLazySchema,
 } from "./schemaTypes.js";
 export {
 	getTreeNodeForField,
@@ -168,6 +195,16 @@ export {
 	IterableTreeArrayContent,
 	type ReadonlyArrayNode,
 } from "./arrayNode.js";
+export type {
+	ArrayNodeCustomizableSchema,
+	ArrayNodePojoEmulationSchema,
+} from "./arrayNodeTypes.js";
+export { ArrayNodeSchema, isArrayNodeSchema } from "./arrayNodeTypes.js";
+export type {
+	MapNodeCustomizableSchema,
+	MapNodePojoEmulationSchema,
+} from "./mapNodeTypes.js";
+export { MapNodeSchema, isMapNodeSchema } from "./mapNodeTypes.js";
 export {
 	type FieldHasDefault,
 	type InsertableObjectFromSchemaRecord,
@@ -176,6 +213,7 @@ export {
 	setField,
 	createUnknownOptionalFieldPolicy,
 } from "./objectNode.js";
+export { ObjectNodeSchema } from "./objectNodeTypes.js";
 export type { TreeMapNode, MapNodeInsertableData } from "./mapNode.js";
 export {
 	mapTreeFromNodeData,
@@ -191,4 +229,5 @@ export {
 	handleSchema,
 	nullSchema,
 } from "./leafNodeSchema.js";
+export type { LeafSchema } from "./leafNodeSchema.js";
 export type { LazyItem, FlexList, FlexListToUnion, ExtractItemType } from "./flexList.js";

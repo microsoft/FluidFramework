@@ -11,6 +11,7 @@ import {
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
+	channelsTreeName,
 	IExperimentalIncrementalSummaryContext,
 	ITelemetryContext,
 	CreateChildSummarizerNodeParam,
@@ -32,7 +33,6 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	EscapedPath,
 	ICreateChildDetails,
 	IRefreshSummaryResult,
 	IStartSummaryResult,
@@ -70,7 +70,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * (this getter is primarily only used in the test code)
 	 */
 	public get summaryHandleId(): string {
-		return this._summaryHandleId.toString();
+		return this._summaryHandleId;
 	}
 
 	protected readonly children = new Map<string, SummarizerNode>();
@@ -101,7 +101,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		/**
 		 * Encoded handle or path to the node
 		 */
-		private readonly _summaryHandleId: EscapedPath,
+		private readonly _summaryHandleId: string,
 		private _changeSequenceNumber: number,
 		/**
 		 * Summary reference sequence number, i.e. last sequence number seen when last successful summary was created
@@ -198,20 +198,23 @@ export class SummarizerNode implements IRootSummarizerNode {
 		this.wipSummarizeCalled = true;
 
 		// Try to reuse the tree if unchanged
-		if (this.canReuseHandle && !fullTree && !this.hasChanged()) {
-			if (this._lastSummaryReferenceSequenceNumber !== undefined) {
-				this.wipSkipRecursion = true;
-				const stats = mergeStats();
-				stats.handleNodeCount++;
-				return {
-					summary: {
-						type: SummaryType.Handle,
-						handle: this.summaryHandleId,
-						handleType: SummaryType.Tree,
-					},
-					stats,
-				};
-			}
+		if (
+			this.canReuseHandle &&
+			!fullTree &&
+			!this.hasChanged() &&
+			this._lastSummaryReferenceSequenceNumber !== undefined
+		) {
+			this.wipSkipRecursion = true;
+			const stats = mergeStats();
+			stats.handleNodeCount++;
+			return {
+				summary: {
+					type: SummaryType.Handle,
+					handle: this.summaryHandleId,
+					handleType: SummaryType.Tree,
+				},
+				stats,
+			};
 		}
 
 		let incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined;
@@ -221,14 +224,14 @@ export class SummarizerNode implements IRootSummarizerNode {
 				0x5df /* Summarize should not be called when not tracking the summary */,
 			);
 			incrementalSummaryContext =
-				this._lastSummaryReferenceSequenceNumber !== undefined
-					? {
+				this._lastSummaryReferenceSequenceNumber === undefined
+					? undefined
+					: {
 							summarySequenceNumber: this.wipReferenceSequenceNumber,
 							latestSummarySequenceNumber: this._lastSummaryReferenceSequenceNumber,
 							// TODO: remove summaryPath.
 							summaryPath: this.summaryHandleId,
-						}
-					: undefined;
+						};
 		}
 
 		const result = await this.summarizeInternalFn(
@@ -340,17 +343,15 @@ export class SummarizerNode implements IRootSummarizerNode {
 			this.wipReferenceSequenceNumber !== undefined,
 			0x1a4 /* "Not tracking a summary" */,
 		);
-		if (parentSkipRecursion) {
-			if (this._lastSummaryReferenceSequenceNumber === undefined) {
-				// This case the child is added after the latest non-failure summary.
-				// This node and all children should consider themselves as still not
-				// having a successful summary yet.
-				// We cannot "reuse" this node if unchanged since that summary, because
-				// handles will be unable to point to that node. It never made it to the
-				// tree itself, and only exists as an attach op in the _outstandingOps.
-				this.clearSummary();
-				return;
-			}
+		if (parentSkipRecursion && this._lastSummaryReferenceSequenceNumber === undefined) {
+			// This case the child is added after the latest non-failure summary.
+			// This node and all children should consider themselves as still not
+			// having a successful summary yet.
+			// We cannot "reuse" this node if unchanged since that summary, because
+			// handles will be unable to point to that node. It never made it to the
+			// tree itself, and only exists as an attach op in the _outstandingOps.
+			this.clearSummary();
+			return;
 		}
 
 		for (const child of this.children.values()) {
@@ -590,7 +591,8 @@ export class SummarizerNode implements IRootSummarizerNode {
 		}
 
 		const childTelemetryNodeId = `${this.telemetryNodeId ?? ""}/${id}`;
-		const childSummaryHandleId = this._summaryHandleId.createChildPath(EscapedPath.create(id));
+		// parentHandleId/.channels/childId
+		const childSummaryHandleId = `${this._summaryHandleId}/${channelsTreeName}/${id}`;
 
 		return {
 			changeSequenceNumber,
@@ -670,7 +672,7 @@ export const createRootSummarizerNode = (
 		logger,
 		summarizeInternalFn,
 		config,
-		EscapedPath.create("") /* summaryHandleId */,
+		"" /* summaryHandleId */,
 		changeSequenceNumber,
 		referenceSequenceNumber,
 		undefined /* wipSummaryLogger */,
