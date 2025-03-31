@@ -4,14 +4,15 @@
 ---
 ---
 "section": legacy
+includeInReleaseNotes: false
 ---
 
-Added ILayerCompatDetails property to FluidDataStoreRuntime, MockFluidDataStoreContext and MockFluidDataStoreRuntime
+New ILayerCompatDetails property on FluidDataStoreRuntime, MockFluidDataStoreContext and MockFluidDataStoreRuntime
 
-An optional property called `ILayerCompatDetails` is added to `FluidDataStoreRuntime`. This is queried by
-`FluidDataStoreContext` in the `Runtime` layer to validate that the `Runtime` and `DataStore` layers are compatible.
+A new optional property, `ILayerCompatDetails`, has been added to `FluidDataStoreRuntime`. This property is used by
+`FluidDataStoreContext` in the Runtime layer to validate that the Runtime and DataStore layers are compatible.
 
-`ILayerCompatDetails` is also added to `MockFluidDataStoreRuntime` and `MockFluidDataStoreContext` which are used for
-testing because these mock classes are exported as legacy alpha.
+`ILayerCompatDetails` has also been added to `MockFluidDataStoreRuntime` and `MockFluidDataStoreContext` which are used for
+testing.
 
-Note that this property is for internal use only.
+Important: this property is intended for use by Fluid Framework code only. No code outside the Fluid Framework should use or depend on this property in any way.
