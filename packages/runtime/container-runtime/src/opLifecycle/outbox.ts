@@ -243,7 +243,7 @@ export class Outbox {
 		// If we disable the assert, just flush like we used to - don't throw.
 		if (this.params.config.disableSequenceNumberCoherencyAssert) {
 			this.flushAll();
-			return
+			return;
 		}
 
 		// If we are in a reentrant context, we know this can happen without causing any harm.

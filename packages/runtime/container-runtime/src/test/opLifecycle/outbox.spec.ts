@@ -225,7 +225,8 @@ describe("Outbox", () => {
 			config: {
 				maxBatchSizeInBytes: params.maxBatchSize ?? maxBatchSizeInBytes,
 				compressionOptions: params.compressionOptions ?? DefaultCompressionOptions,
-				disableSequenceNumberCoherencyAssert: params.disableSequenceNumberCoherencyAssert ?? false,
+				disableSequenceNumberCoherencyAssert:
+					params.disableSequenceNumberCoherencyAssert ?? false,
 			},
 			logger: mockLogger,
 			groupingManager: new OpGroupingManager(
@@ -772,11 +773,17 @@ describe("Outbox", () => {
 
 		outbox.submit(messages[0]);
 
-		assert.throws(() => outbox.submit(messages[1]), "Since we incremented referenceSequenceNumber to 1, this should throw");
+		assert.throws(
+			() => outbox.submit(messages[1]),
+			"Since we incremented referenceSequenceNumber to 1, this should throw",
+		);
 	});
 
 	it("Splits the batch when an out of order message is detected (if assert is disabled)", () => {
-		const outbox = getOutbox({ context: getMockContext(), disableSequenceNumberCoherencyAssert: true });
+		const outbox = getOutbox({
+			context: getMockContext(),
+			disableSequenceNumberCoherencyAssert: true,
+		});
 		const messages = [
 			{
 				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
@@ -856,7 +863,10 @@ describe("Outbox", () => {
 		],
 	]) {
 		it("Flushes all batches when an out of order message is detected in either flow (assert is disabled)", () => {
-			const outbox = getOutbox({ context: getMockContext(), disableSequenceNumberCoherencyAssert: true });
+			const outbox = getOutbox({
+				context: getMockContext(),
+				disableSequenceNumberCoherencyAssert: true,
+			});
 			for (const op of ops) {
 				currentSeqNumbers.referenceSequenceNumber = op.referenceSequenceNumber;
 				if (typeFromBatchedOp(op) === ContainerMessageType.IdAllocation) {
@@ -912,7 +922,10 @@ describe("Outbox", () => {
 
 	it("Log at most 3 reference sequence number mismatch events", () => {
 		state.isReentrant = true; // This avoids the error being thrown - but it will still log
-		const outbox = getOutbox({ maxBatchSize: Number.POSITIVE_INFINITY, context: getMockContext() });
+		const outbox = getOutbox({
+			maxBatchSize: Number.POSITIVE_INFINITY,
+			context: getMockContext(),
+		});
 
 		for (let i = 0; i < 10; i++) {
 			currentSeqNumbers.referenceSequenceNumber = 0;
