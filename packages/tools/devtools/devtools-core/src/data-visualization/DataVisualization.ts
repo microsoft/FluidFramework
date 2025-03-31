@@ -102,7 +102,7 @@ export type VisualizeChildData = (data: unknown) => Promise<VisualChildNode>;
 /**
  * A visual representation of {@link @fluidframework/shared-object-base#ISharedObject} & {@link DataObject} data.
  */
-export type VisualObject = ISharedObject | PureDataObject;
+export type VisualizableFluidObject = ISharedObject | PureDataObject;
 
 /**
  * Specifies renderers for different {@link @fluidframework/shared-object-base#ISharedObject} types.
@@ -246,9 +246,11 @@ export class DataVisualizerGraph
 
 	/**
 	 * Adds a visualizer node to the collection for the specified
-	 * {@link @fluidframework/shared-object-base#ISharedObject} if one does not already exist.
+	 * {@link VisualizableFluidObject} if one does not already exist.
 	 */
-	private registerVisualizerForVisualObject(visualObject: VisualObject): FluidObjectId {
+	private registerVisualizerForVisualizableObject(
+		visualObject: VisualizableFluidObject,
+	): FluidObjectId {
 		if (!this.visualizerNodes.has(visualObject.id)) {
 			// Create visualizer node for the shared object
 			const visualizationFunction = isPureDataObject(visualObject)
@@ -290,13 +292,13 @@ export class DataVisualizerGraph
 		const resolvedObject = await handle.get();
 
 		if (isPureDataObject(resolvedObject)) {
-			return this.registerVisualizerForVisualObject(resolvedObject);
+			return this.registerVisualizerForVisualizableObject(resolvedObject);
 		}
 
 		// TODO: is this the right type check for this?
 		const sharedObject = resolvedObject as Partial<ISharedObject>;
 		if (isSharedObject(sharedObject)) {
-			return this.registerVisualizerForVisualObject(sharedObject);
+			return this.registerVisualizerForVisualizableObject(sharedObject);
 		} else {
 			// Unknown data.
 			console.warn("Fluid Handle resolved to data that is not a Shared Object.");
