@@ -51,7 +51,7 @@ export function toSimpleTreeSchema(
 					nodeSchema instanceof MapNodeSchema ||
 					nodeSchema instanceof LeafNodeSchema ||
 					nodeSchema instanceof ObjectNodeSchema,
-				"Invalid schema",
+				0xb60 /* Invalid schema */,
 			);
 			const outSchema = copySchemaObjects ? copySimpleNodeSchema(nodeSchema) : nodeSchema;
 			definitions.set(nodeSchema.identifier, outSchema);
