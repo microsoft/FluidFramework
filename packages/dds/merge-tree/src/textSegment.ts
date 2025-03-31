@@ -104,16 +104,3 @@ export class TextSegment extends BaseSegment {
 		}
 	}
 }
-
-/**
- * @internal
- */
-export interface IMergeTreeTextHelper {
-	getText(
-		refSeq: number,
-		clientId: number,
-		placeholder: string,
-		start?: number,
-		end?: number,
-	): string;
-}

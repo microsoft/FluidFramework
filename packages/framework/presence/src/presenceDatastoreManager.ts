@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { IEmitter } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
@@ -11,7 +12,7 @@ import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type { IEphemeralRuntime, PostUpdateAction } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
-import type { ClientSessionId, ISessionClient } from "./presence.js";
+import type { ClientSessionId, ISessionClient, PresenceEvents } from "./presence.js";
 import type {
 	ClientUpdateEntry,
 	RuntimeLocalUpdateOptions,
@@ -59,6 +60,12 @@ interface GeneralDatastoreMessageContent {
 type DatastoreMessageContent = SystemDatastore & GeneralDatastoreMessageContent;
 
 const datastoreUpdateMessageType = "Pres:DatastoreUpdate";
+
+const internalWorkspaceTypes: Readonly<Record<string, "States" | "Notifications">> = {
+	s: "States",
+	n: "Notifications",
+} as const;
+
 interface DatastoreUpdateMessage extends IInboundSignalMessage {
 	type: typeof datastoreUpdateMessageType;
 	content: {
@@ -85,7 +92,6 @@ function isPresenceMessage(
 ): message is DatastoreUpdateMessage | ClientJoinMessage {
 	return message.type.startsWith("Pres:");
 }
-
 /**
  * @internal
  */
@@ -153,6 +159,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		private readonly runtime: IEphemeralRuntime,
 		private readonly lookupClient: (clientId: ClientSessionId) => ISessionClient,
 		private readonly logger: ITelemetryLoggerExt | undefined,
+		private readonly events: IEmitter<Pick<PresenceEvents, "workspaceActivated">>,
 		systemWorkspaceDatastore: SystemWorkspaceDatastore,
 		systemWorkspace: PresenceWorkspaceEntry<PresenceStatesSchema>,
 	) {
@@ -383,6 +390,33 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				this.refreshBroadcastRequested = false;
 			}
 		}
+
+		// Handle activation of unregistered workspaces before processing updates.
+		for (const [workspaceAddress] of Object.entries(message.content.data)) {
+			// The first part of OR condition checks if workspace is already registered.
+			// The second part checks if the workspace has already been seen before.
+			// In either case we can skip emitting 'workspaceActivated' event.
+			if (this.workspaces.has(workspaceAddress) || this.datastore[workspaceAddress]) {
+				continue;
+			}
+
+			// Separate internal type prefix from public workspace address
+			const match = workspaceAddress.match(/^([^:]):([^:]+:.+)$/) as
+				| null
+				| [string, string, PresenceWorkspaceAddress];
+
+			if (match === null) {
+				continue;
+			}
+
+			const prefix = match[1];
+			const publicWorkspaceAddress = match[2];
+
+			const internalWorkspaceType = internalWorkspaceTypes[prefix] ?? "Unknown";
+
+			this.events.emit("workspaceActivated", publicWorkspaceAddress, internalWorkspaceType);
+		}
+
 		const postUpdateActions: PostUpdateAction[] = [];
 		for (const [workspaceAddress, remoteDatastore] of Object.entries(message.content.data)) {
 			// Direct to the appropriate Presence Workspace, if present.
@@ -399,18 +433,15 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			} else {
 				// All broadcast state is kept even if not currently registered, unless a value
 				// notes itself to be ignored.
-				let workspaceDatastore = this.datastore[workspaceAddress];
-				if (workspaceDatastore === undefined) {
-					workspaceDatastore = this.datastore[workspaceAddress] = {};
-					if (!workspaceAddress.startsWith("system:")) {
-						// TODO: Emit workspaceActivated event for PresenceEvents
-					}
-				}
+
+				// Ensure there is a datastore at this address and get it.
+				const workspaceDatastore = (this.datastore[workspaceAddress] ??= {});
 				for (const [key, remoteAllKnownState] of Object.entries(remoteDatastore)) {
 					mergeUntrackedDatastore(key, remoteAllKnownState, workspaceDatastore, timeModifier);
 				}
 			}
 		}
+
 		for (const action of postUpdateActions) {
 			action();
 		}

@@ -14,12 +14,8 @@ export {
 export { checkTextMatchRelative, TestServer } from "./testServer.js";
 export {
 	countOperations,
-	insertMarker,
-	insertSegments,
-	insertText,
 	loadTextFromFile,
 	loadTextFromFileWithMarkers,
-	markRangeRemoved,
 	nodeOrdinalsHaveIntegrity,
 	validatePartialLengths,
 	useStrictPartialLengthChecks,

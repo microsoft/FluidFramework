@@ -279,7 +279,7 @@ export class GCTelemetryTracker {
 				const event = {
 					eventName: `${state}Object_${usageType}`,
 					...tagCodeArtifacts({ pkg: packagePath?.join("/") }),
-					stack: generateStack(),
+					stack: generateStack(30),
 					id,
 					fromId,
 					headers: { ...headers },
@@ -314,7 +314,7 @@ export class GCTelemetryTracker {
 		const event = {
 			eventName: `GC_Tombstone_${nodeType}_${eventUsageName}`,
 			...tagCodeArtifacts({ pkg: packagePath?.join("/") }),
-			stack: generateStack(),
+			stack: generateStack(30),
 			id,
 			fromId,
 			headers: { ...headers },

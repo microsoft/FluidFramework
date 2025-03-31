@@ -7,16 +7,15 @@ import { strict as assert } from "node:assert";
 
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
-import { LocalClientId, UniversalSequenceNumber } from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
 import { Marker, type ISegmentPrivate } from "../mergeTreeNodes.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
-import { LocalDefaultPerspective, PriorPerspective } from "../perspective.js";
+import { LocalDefaultPerspective } from "../perspective.js";
 import { assertMergeNode } from "../segmentInfos.js";
 import type { PropsOrAdjust } from "../segmentPropertiesManager.js";
 import { TextSegment } from "../textSegment.js";
 
-import { insertSegments } from "./testUtils.js";
+import { makeRemoteClient } from "./testUtils.js";
 
 function splitAt(mergeTree: MergeTree, pos: number): ISegmentPrivate | undefined {
 	let segment: ISegmentPrivate | undefined;
@@ -36,7 +35,7 @@ function splitAt(mergeTree: MergeTree, pos: number): ISegmentPrivate | undefined
 
 describe("MergeTree", () => {
 	let mergeTree: MergeTree;
-	const remoteClientId = 35;
+	const remoteClient = makeRemoteClient({ clientId: 35 });
 	const localClientId = 17;
 	let currentSequenceNumber: number;
 
@@ -47,26 +46,22 @@ describe("MergeTree", () => {
 
 	beforeEach(() => {
 		mergeTree = new MergeTree();
-		insertSegments({
-			mergeTree,
-			pos: 0,
-			segments: [TextSegment.make("hello world!")],
-			refSeq: UniversalSequenceNumber,
-			clientId: LocalClientId,
-			seq: UniversalSequenceNumber,
-			opArgs: undefined as never,
-		});
+		mergeTree.insertSegments(
+			0,
+			[TextSegment.make("hello world!")],
+			mergeTree.localPerspective,
+			mergeTree.collabWindow.mintNextLocalOperationStamp(),
+			undefined,
+		);
 
 		currentSequenceNumber = 0;
-		insertSegments({
-			mergeTree,
-			pos: markerPosition,
-			segments: [Marker.make(ReferenceType.Tile)],
-			refSeq: currentSequenceNumber,
-			clientId: remoteClientId,
-			seq: ++currentSequenceNumber,
-			opArgs: undefined as never,
-		});
+		mergeTree.insertSegments(
+			markerPosition,
+			[Marker.make(ReferenceType.Tile)],
+			remoteClient.perspectiveAt({ refSeq: currentSequenceNumber }),
+			remoteClient.stampAt({ seq: ++currentSequenceNumber }),
+			undefined,
+		);
 	});
 
 	describe("annotateRange", () => {
@@ -78,8 +73,8 @@ describe("MergeTree", () => {
 					{
 						props: { propertySource: "remote" },
 					},
-					new PriorPerspective(currentSequenceNumber, remoteClientId),
-					{ seq: currentSequenceNumber + 1, clientId: remoteClientId },
+					remoteClient.perspectiveAt({ refSeq: currentSequenceNumber }),
+					remoteClient.stampAt({ seq: currentSequenceNumber + 1 }),
 					undefined as never,
 				);
 
@@ -301,8 +296,8 @@ describe("MergeTree", () => {
 						{
 							props: { propertySource: "remote", remoteProperty: 1 },
 						},
-						new PriorPerspective(currentSequenceNumber, remoteClientId),
-						{ seq: ++currentSequenceNumber, clientId: remoteClientId },
+						remoteClient.perspectiveAt({ refSeq: currentSequenceNumber }),
+						remoteClient.stampAt({ seq: ++currentSequenceNumber }),
 						undefined as never,
 					);
 
@@ -358,8 +353,8 @@ describe("MergeTree", () => {
 						{
 							props: { propertySource: "remote", remoteProperty: 1 },
 						},
-						new PriorPerspective(currentSequenceNumber, remoteClientId),
-						{ seq: ++currentSequenceNumber, clientId: remoteClientId },
+						remoteClient.perspectiveAt({ refSeq: currentSequenceNumber }),
+						remoteClient.stampAt({ seq: ++currentSequenceNumber }),
 						undefined as never,
 					);
 
@@ -495,8 +490,8 @@ describe("MergeTree", () => {
 						{
 							props: { propertySource: "remote", remoteOnly: 1, secondSource: "remote" },
 						},
-						new PriorPerspective(currentSequenceNumber, remoteClientId),
-						{ seq: ++currentSequenceNumber, clientId: remoteClientId },
+						remoteClient.perspectiveAt({ refSeq: currentSequenceNumber }),
+						remoteClient.stampAt({ seq: ++currentSequenceNumber }),
 						undefined as never,
 					);
 
@@ -519,8 +514,8 @@ describe("MergeTree", () => {
 						{
 							props: { propertySource: "remote", remoteProperty: 1 },
 						},
-						new PriorPerspective(currentSequenceNumber, remoteClientId),
-						{ seq: ++currentSequenceNumber, clientId: remoteClientId },
+						remoteClient.perspectiveAt({ refSeq: currentSequenceNumber }),
+						remoteClient.stampAt({ seq: ++currentSequenceNumber }),
 						undefined as never,
 					);
 
@@ -657,8 +652,8 @@ describe("MergeTree", () => {
 						{
 							props: { propertySource: "remote", remoteProperty: 1 },
 						},
-						new PriorPerspective(currentSequenceNumber, remoteClientId),
-						{ seq: ++currentSequenceNumber, clientId: remoteClientId },
+						remoteClient.perspectiveAt({ refSeq: currentSequenceNumber }),
+						remoteClient.stampAt({ seq: ++currentSequenceNumber }),
 						undefined as never,
 					);
 
@@ -692,8 +687,8 @@ describe("MergeTree", () => {
 						{
 							props: { propertySource: "remote", remoteProperty: 1 },
 						},
-						new PriorPerspective(currentSequenceNumber, remoteClientId),
-						{ seq: ++currentSequenceNumber, clientId: remoteClientId },
+						remoteClient.perspectiveAt({ refSeq: currentSequenceNumber }),
+						remoteClient.stampAt({ seq: ++currentSequenceNumber }),
 						undefined as never,
 					);
 
@@ -738,8 +733,8 @@ describe("MergeTree", () => {
 						{
 							props: { propertySource: "remote", remoteOnly: 1, secondSource: "remote" },
 						},
-						new PriorPerspective(currentSequenceNumber, remoteClientId),
-						{ seq: ++currentSequenceNumber, clientId: remoteClientId },
+						remoteClient.perspectiveAt({ refSeq: currentSequenceNumber }),
+						remoteClient.stampAt({ seq: ++currentSequenceNumber }),
 						undefined as never,
 					);
 

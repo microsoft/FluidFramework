@@ -85,16 +85,23 @@ export class DocumentContextManager extends EventEmitter {
 		context.addListener("pause", (offset?: number, reason?: any) => {
 			// Find the lowest offset of all doc contexts' lastSuccessfulOffset and emit pause at that offset to ensure we dont miss any messages during resume (reprocessing)
 			let lowestOffset = offset ?? Number.MAX_SAFE_INTEGER;
+			let lowestOffsetDocumentId = "";
 			for (const docContext of this.contexts) {
 				if (docContext.lastSuccessfulOffset < lowestOffset) {
 					lowestOffset = docContext.lastSuccessfulOffset;
+					lowestOffsetDocumentId = docContext.documentId;
 				}
 			}
 			lowestOffset =
 				lowestOffset > -1 && lowestOffset < Number.MAX_SAFE_INTEGER ? lowestOffset : 0;
 			this.headPaused = true;
 			this.tailPaused = true;
-			Lumberjack.info("Emitting pause from contextManager", { lowestOffset, offset, reason });
+			Lumberjack.info("Emitting pause from contextManager", {
+				lowestOffset,
+				lowestOffsetDocumentId,
+				offset,
+				reason,
+			});
 			this.emit("pause", lowestOffset, reason);
 		});
 		context.addListener("resume", () => {

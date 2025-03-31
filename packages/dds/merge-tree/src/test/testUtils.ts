@@ -6,25 +6,25 @@
 import { strict as assert } from "node:assert";
 import fs from "node:fs";
 
-import { UnassignedSequenceNumber } from "../constants.js";
 import { LocalReferenceCollection } from "../localReference.js";
 import { MergeTree } from "../mergeTree.js";
-import {
-	IMergeTreeDeltaOpArgs,
-	type IMergeTreeDeltaCallbackArgs,
-	type IMergeTreeMaintenanceCallbackArgs,
+import type {
+	IMergeTreeDeltaCallbackArgs,
+	IMergeTreeMaintenanceCallbackArgs,
 } from "../mergeTreeDeltaCallback.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { MergeBlock, ISegmentPrivate, Marker } from "../mergeTreeNodes.js";
-import { ReferenceType } from "../ops.js";
+import { MergeBlock } from "../mergeTreeNodes.js";
 import {
 	PartialSequenceLengths,
 	verifyExpectedPartialLengths,
 	verifyPartialLengths,
 } from "../partialLengths.js";
-import { LocalReconnectingPerspective, PriorPerspective } from "../perspective.js";
-import { PropertySet } from "../properties.js";
-import { TextSegment } from "../textSegment.js";
+import {
+	LocalReconnectingPerspective,
+	PriorPerspective,
+	type Perspective,
+} from "../perspective.js";
+import type { OperationStamp } from "../stamps.js";
 
 import { loadText } from "./text.js";
 
@@ -46,165 +46,44 @@ export function loadTextFromFileWithMarkers(
 	return loadText(content, mergeTree, segLimit, true);
 }
 
-interface InsertMarkerArgs {
-	mergeTree: MergeTree;
-	pos: number;
-	refSeq: number;
-	clientId: number;
-	seq: number;
-	behaviors: ReferenceType;
-	props: PropertySet | undefined;
-	opArgs: IMergeTreeDeltaOpArgs;
+export interface MockRemoteClient {
+	perspectiveAt(args: { refSeq: number }): Perspective;
+	stampAt(args: { seq: number }): OperationStamp;
+	/**
+	 * Short client id for this client.
+	 */
+	id: number;
 }
 
-export function insertMarker({
-	mergeTree,
-	pos,
-	refSeq,
-	clientId,
-	seq,
-	behaviors,
-	props,
-	opArgs,
-}: InsertMarkerArgs): void {
-	const localSeq =
-		seq === UnassignedSequenceNumber ? ++mergeTree.collabWindow.localSeq : undefined;
-
-	const perspective =
-		seq === UnassignedSequenceNumber || clientId === mergeTree.collabWindow.clientId
-			? mergeTree.localPerspective
-			: new PriorPerspective(refSeq, clientId);
-	mergeTree.insertSegments(
-		pos,
-		[Marker.make(behaviors, props)],
-		perspective,
-		{ clientId, seq, localSeq },
-		opArgs,
-	);
-}
-
-interface InsertTextArgs {
-	mergeTree: MergeTree;
-	pos: number;
-	refSeq: number;
-	clientId: number;
-	seq: number;
-	text: string;
-	props?: PropertySet;
-	opArgs?: IMergeTreeDeltaOpArgs;
-}
-
-export function insertText({
-	mergeTree,
-	pos,
-	refSeq,
-	clientId,
-	seq,
-	text,
-	props,
-	opArgs,
-}: InsertTextArgs): void {
-	const localSeq =
-		seq === UnassignedSequenceNumber ? ++mergeTree.collabWindow.localSeq : undefined;
-	const perspective =
-		seq === UnassignedSequenceNumber || clientId === mergeTree.collabWindow.clientId
-			? mergeTree.localPerspective
-			: new PriorPerspective(refSeq, clientId);
-	mergeTree.insertSegments(
-		pos,
-		[TextSegment.make(text, props)],
-		perspective,
-		{ clientId, seq, localSeq },
-		opArgs,
-	);
-}
-
-interface InsertSegmentsArgs {
-	mergeTree: MergeTree;
-	pos: number;
-	segments: ISegmentPrivate[];
-	refSeq: number;
-	clientId: number;
-	seq: number;
-	opArgs: IMergeTreeDeltaOpArgs | undefined;
-}
-
-export function insertSegments({
-	mergeTree,
-	pos,
-	segments,
-	refSeq,
-	clientId,
-	seq,
-	opArgs,
-}: InsertSegmentsArgs): void {
-	const localSeq =
-		seq === UnassignedSequenceNumber ? ++mergeTree.collabWindow.localSeq : undefined;
-
-	const perspective =
-		seq === UnassignedSequenceNumber || clientId === mergeTree.collabWindow.clientId
-			? mergeTree.localPerspective
-			: new PriorPerspective(refSeq, clientId);
-	mergeTree.insertSegments(pos, segments, perspective, { clientId, seq, localSeq }, opArgs);
-}
-
-interface MarkRangeRemovedArgs {
-	mergeTree: MergeTree;
-	start: number;
-	end: number;
-	refSeq: number;
-	clientId: number;
-	seq: number;
-	overwrite: boolean;
-	opArgs: IMergeTreeDeltaOpArgs;
-}
-
-export function markRangeRemoved({
-	mergeTree,
-	start,
-	end,
-	refSeq,
-	clientId,
-	seq,
-	opArgs,
-}: MarkRangeRemovedArgs): void {
-	const localSeq =
-		seq === UnassignedSequenceNumber ? ++mergeTree.collabWindow.localSeq : undefined;
-
-	const perspective =
-		seq === UnassignedSequenceNumber || clientId === mergeTree.collabWindow.clientId
-			? mergeTree.localPerspective
-			: new PriorPerspective(refSeq, clientId);
-
-	mergeTree.markRangeRemoved(start, end, perspective, { clientId, seq, localSeq }, opArgs);
-}
-
-export function obliterateRange({
-	mergeTree,
-	start,
-	end,
-	refSeq,
-	clientId,
-	seq,
-	opArgs,
-}: {
-	mergeTree: MergeTree;
-	start: number;
-	end: number;
-	refSeq: number;
-	clientId: number;
-	seq: number;
-	opArgs: IMergeTreeDeltaOpArgs;
-}): void {
-	const localSeq =
-		seq === UnassignedSequenceNumber ? ++mergeTree.collabWindow.localSeq : undefined;
-
-	const perspective =
-		seq === UnassignedSequenceNumber || clientId === mergeTree.collabWindow.clientId
-			? mergeTree.localPerspective
-			: new PriorPerspective(refSeq, clientId);
-
-	mergeTree.obliterateRange(start, end, perspective, { clientId, seq, localSeq }, opArgs);
+/**
+ * Creates a "mock remote client" which allows ergonomically generating {@link Perspective}s and {@link OperationStamp}s
+ * for use in tests that interact directly with a {@link MergeTree}.
+ *
+ * Example:
+ *
+ * ```typescript
+ * let seq = 0;
+ * const remoteClient = makeRemoteClient({ clientId: 18 });
+ *
+ * mergeTree.insertSegments(
+ * 0,
+ * [TextSegment.make("some text")],
+ * remoteClient.perspectiveAt({ refSeq: seq }),
+ * remoteClient.stampAt({ seq: ++seq }),
+ * undefined
+ * );
+ * ```
+ */
+export function makeRemoteClient({ clientId }: { clientId: number }): MockRemoteClient {
+	return {
+		perspectiveAt({ refSeq }: { refSeq: number }): Perspective {
+			return new PriorPerspective(refSeq, clientId);
+		},
+		stampAt({ seq }: { seq: number }): OperationStamp {
+			return { seq, clientId };
+		},
+		id: clientId,
+	};
 }
 
 export function nodeOrdinalsHaveIntegrity(block: MergeBlock): boolean {

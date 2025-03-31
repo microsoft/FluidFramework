@@ -104,3 +104,36 @@ export class RecursiveArray extends schema.arrayRecursive("RA", [() => Recursive
 {
 	type _check = ValidateRecursiveSchema<typeof RecursiveArray>;
 }
+
+/**
+ * This is an anti-pattern: not creating a named class for schema that are part of the recursive path causes generated .d.ts files to get type `any`.
+ * This happens (without errors!) even if NoImplicitAny is enabled.
+ * See the [TypeScript Issue](https://github.com/microsoft/TypeScript/issues/55832) for more details.
+ */
+export const BadArraySelf = schema.arrayRecursive("BadArraySelf", [() => BadArraySelf]);
+{
+	type _check = ValidateRecursiveSchema<typeof BadArraySelf>;
+}
+
+export class GoodArraySelf extends schema.arrayRecursive("GoodArraySelf", [
+	() => GoodArraySelf,
+]) {}
+{
+	type _check = ValidateRecursiveSchema<typeof GoodArraySelf>;
+}
+
+/**
+ * {@link BadArraySelf} except co-recursive.
+ */
+export const BadArray = schema.arrayRecursive("FooList", [() => Foo]);
+{
+	type _check = ValidateRecursiveSchema<typeof BadArray>;
+}
+
+export class Foo extends schema.objectRecursive("Foo", {
+	// This can be a direct or lazy reference
+	fooList: [() => BadArray],
+}) {}
+{
+	type _check = ValidateRecursiveSchema<typeof Foo>;
+}

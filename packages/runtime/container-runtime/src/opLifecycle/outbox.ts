@@ -6,8 +6,9 @@
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
+	DataProcessingError,
 	GenericError,
 	UsageError,
 	createChildLogger,
@@ -34,9 +35,16 @@ import { ensureContentsDeserialized } from "./remoteMessageProcessor.js";
 
 export interface IOutboxConfig {
 	readonly compressionOptions: ICompressionRuntimeOptions;
-	// The maximum size of a batch that we can send over the wire.
+	/**
+	 * The maximum size of a batch that we can send over the wire.
+	 */
 	readonly maxBatchSizeInBytes: number;
-	readonly disablePartialFlush: boolean;
+	/**
+	 * If true, maybeFlushPartialBatch will flush the batch if the reference sequence number changed
+	 * since the batch started. Otherwise, it will throw in this case (apart from reentrancy which is handled elsewhere).
+	 * Once the new throw-based flow is proved in a production environment, this option will be removed.
+	 */
+	readonly flushPartialBatches: boolean;
 }
 
 export interface IOutboxParameters {
@@ -170,8 +178,9 @@ export class Outbox {
 
 	/**
 	 * Detect whether batching has been interrupted by an incoming message being processed. In this case,
-	 * we will flush the accumulated messages to account for that and create a new batch with the new
-	 * message as the first message.
+	 * we will flush the accumulated messages to account for that (if allowed) and create a new batch with the new
+	 * message as the first message. If flushing partial batch is not enabled, we will throw (except for reentrant ops).
+	 * This would indicate we expected this case to be precluded by logic elsewhere.
 	 *
 	 * @remarks - To detect batch interruption, we compare both the reference sequence number
 	 * (i.e. last message processed by DeltaManager) and the client sequence number of the
@@ -183,9 +192,8 @@ export class Outbox {
 		const blobAttachSeqNums = this.blobAttachBatch.sequenceNumbers;
 		const idAllocSeqNums = this.idAllocationBatch.sequenceNumbers;
 		assert(
-			this.params.config.disablePartialFlush ||
-				(sequenceNumbersMatch(mainBatchSeqNums, blobAttachSeqNums) &&
-					sequenceNumbersMatch(mainBatchSeqNums, idAllocSeqNums)),
+			sequenceNumbersMatch(mainBatchSeqNums, blobAttachSeqNums) &&
+				sequenceNumbersMatch(mainBatchSeqNums, idAllocSeqNums),
 			0x58d /* Reference sequence numbers from both batches must be in sync */,
 		);
 
@@ -200,25 +208,54 @@ export class Outbox {
 			return;
 		}
 
+		// Reference and/or Client sequence number will be advancing while processing this batch,
+		// so we can't use this check to detect wrongdoing. But we will still log via telemetry.
+		// This is rare, and the reentrancy will be handled during Flush.
+		const expectedDueToReentrancy = this.isContextReentrant();
+
+		const errorWrapper = new Lazy(() =>
+			getLongStack(() =>
+				DataProcessingError.create(
+					"Sequence numbers advanced as if ops were processed while a batch is accumulating",
+					"outboxSequenceNumberCoherencyCheck",
+				),
+			),
+		);
 		if (++this.mismatchedOpsReported <= this.maxMismatchedOpsToReport) {
 			this.logger.sendTelemetryEvent(
 				{
-					category: this.params.config.disablePartialFlush ? "error" : "generic",
+					// Only log error if this is truly unexpected
+					category:
+						expectedDueToReentrancy || this.params.config.flushPartialBatches
+							? "generic"
+							: "error",
 					eventName: "ReferenceSequenceNumberMismatch",
-					mainReferenceSequenceNumber: mainBatchSeqNums.referenceSequenceNumber,
-					mainClientSequenceNumber: mainBatchSeqNums.clientSequenceNumber,
-					blobAttachReferenceSequenceNumber: blobAttachSeqNums.referenceSequenceNumber,
-					blobAttachClientSequenceNumber: blobAttachSeqNums.clientSequenceNumber,
-					currentReferenceSequenceNumber: currentSequenceNumbers.referenceSequenceNumber,
-					currentClientSequenceNumber: currentSequenceNumbers.clientSequenceNumber,
+					Data_details: {
+						expectedDueToReentrancy,
+						mainReferenceSequenceNumber: mainBatchSeqNums.referenceSequenceNumber,
+						mainClientSequenceNumber: mainBatchSeqNums.clientSequenceNumber,
+						blobAttachReferenceSequenceNumber: blobAttachSeqNums.referenceSequenceNumber,
+						blobAttachClientSequenceNumber: blobAttachSeqNums.clientSequenceNumber,
+						currentReferenceSequenceNumber: currentSequenceNumbers.referenceSequenceNumber,
+						currentClientSequenceNumber: currentSequenceNumbers.clientSequenceNumber,
+					},
 				},
-				getLongStack(() => new UsageError("Submission of an out of order message")),
+				errorWrapper.value,
 			);
 		}
 
-		if (!this.params.config.disablePartialFlush) {
+		// If we're configured to flush partial batches, do that now and return (don't throw)
+		if (this.params.config.flushPartialBatches) {
 			this.flushAll();
+			return;
 		}
+
+		// If we are in a reentrant context, we know this can happen without causing any harm.
+		if (expectedDueToReentrancy) {
+			return;
+		}
+
+		throw errorWrapper.value;
 	}
 
 	public submit(message: BatchMessage): void {
@@ -273,17 +310,20 @@ export class Outbox {
 	}
 
 	private flushAll(resubmittingBatchId?: BatchId): void {
-		// If we're resubmitting and all batches are empty, we need to flush an empty batch.
-		// Note that we currently resubmit one batch at a time, so on resubmit, 2 of the 3 batches will *always* be empty.
-		// It's theoretically possible that we don't *need* to resubmit this empty batch, and in those cases, it'll safely be ignored
-		// by the rest of the system, including remote clients.
-		// In some cases we *must* resubmit the empty batch (to match up with a non-empty version tracked locally by a container fork), so we do it always.
 		const allBatchesEmpty =
 			this.idAllocationBatch.empty && this.blobAttachBatch.empty && this.mainBatch.empty;
-		if (resubmittingBatchId && allBatchesEmpty) {
-			this.flushEmptyBatch(resubmittingBatchId);
+		if (allBatchesEmpty) {
+			// If we're resubmitting and all batches are empty, we need to flush an empty batch.
+			// Note that we currently resubmit one batch at a time, so on resubmit, 2 of the 3 batches will *always* be empty.
+			// It's theoretically possible that we don't *need* to resubmit this empty batch, and in those cases, it'll safely be ignored
+			// by the rest of the system, including remote clients.
+			// In some cases we *must* resubmit the empty batch (to match up with a non-empty version tracked locally by a container fork), so we do it always.
+			if (resubmittingBatchId) {
+				this.flushEmptyBatch(resubmittingBatchId);
+			}
 			return;
 		}
+
 		// Don't use resubmittingBatchId for idAllocationBatch.
 		// ID Allocation messages are not directly resubmitted so we don't want to reuse the batch ID.
 		this.flushInternal(this.idAllocationBatch);

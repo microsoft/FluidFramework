@@ -1270,6 +1270,10 @@ describe("treeNodeApi", () => {
 				}
 			}
 		});
+
+		it("export-undefined", () => {
+			assert.equal(TreeAlpha.exportConcise(undefined), undefined);
+		});
 	});
 
 	describe("verbose", () => {

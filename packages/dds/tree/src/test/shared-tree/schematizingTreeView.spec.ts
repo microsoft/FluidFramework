@@ -780,7 +780,7 @@ describe("SchematizingSimpleTreeView", () => {
 					content: 42,
 					child: { content: 42 },
 				});
-				provider.processMessages();
+				provider.synchronizeMessages();
 
 				// Tree A removes the child node (this will be sequenced before anything else because the provider sequences ops in the order of submission).
 				viewA.root.child = undefined;
@@ -806,7 +806,7 @@ describe("SchematizingSimpleTreeView", () => {
 				assert.equal(viewA.root.content, 42);
 				assert.equal(viewB.root.content, 43);
 				// ...but then is rolled back after sequencing because the child node was removed by Tree A.
-				provider.processMessages();
+				provider.synchronizeMessages();
 				assert.equal(viewB.root.content, 42);
 				assert.equal(viewB.root.content, 42);
 			});

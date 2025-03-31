@@ -257,13 +257,19 @@ export function create(
 		}),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
+			// Tenant and document
+			const tenantId = request.params.tenantId;
 			// Reject create document request if cluster is in draining process.
 			if (
 				clusterDrainingChecker &&
-				(await clusterDrainingChecker.isClusterDraining().catch((error) => {
-					Lumberjack.error("Failed to get cluster draining status", undefined, error);
-					return false;
-				}))
+				(await clusterDrainingChecker
+					.isClusterDraining({
+						tenantId,
+					})
+					.catch((error) => {
+						Lumberjack.error("Failed to get cluster draining status", undefined, error);
+						return false;
+					}))
 			) {
 				Lumberjack.info("Cluster is in draining process. Reject create document request.");
 				const error = createFluidServiceNetworkError(503, {
@@ -272,8 +278,6 @@ export function create(
 				});
 				return handleResponse(Promise.reject(error), response);
 			}
-			// Tenant and document
-			const tenantId = request.params.tenantId;
 			// If enforcing server generated document id, ignore id parameter
 			const id = enforceServerGeneratedDocumentId
 				? uuid()
@@ -406,10 +410,14 @@ export function create(
 			// Reject get session request on existing, inactive sessions if cluster is in draining process.
 			if (
 				clusterDrainingChecker &&
-				(await clusterDrainingChecker.isClusterDraining().catch((error) => {
-					Lumberjack.error("Failed to get cluster draining status", undefined, error);
-					return false;
-				}))
+				(await clusterDrainingChecker
+					.isClusterDraining({
+						tenantId,
+					})
+					.catch((error) => {
+						Lumberjack.error("Failed to get cluster draining status", undefined, error);
+						return false;
+					}))
 			) {
 				Lumberjack.info("Cluster is in draining process. Reject get session request.");
 				connectionTrace?.stampStage("ClusterIsDraining");

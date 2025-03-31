@@ -13,6 +13,7 @@ import {
 	IProducer,
 	PendingBoxcar,
 	MaxBatchSize,
+	MaxKafkaMessageSize,
 } from "@fluidframework/server-services-core";
 import { NetworkError } from "@fluidframework/server-services-client";
 import * as kafka from "kafka-node";
@@ -44,7 +45,7 @@ export class KafkaNodeProducer implements IProducer {
 	) {
 		clientOptions.clientId = clientId;
 		this.maxBatchSize = maxBatchSize ?? MaxBatchSize;
-		this.maxMessageSize = maxMessageSize ?? Number.MAX_SAFE_INTEGER;
+		this.maxMessageSize = maxMessageSize ?? MaxKafkaMessageSize;
 		this.connect();
 	}
 

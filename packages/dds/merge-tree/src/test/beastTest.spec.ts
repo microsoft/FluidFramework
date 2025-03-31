@@ -51,7 +51,7 @@ import { IJSONTextSegment, TextSegment } from "../textSegment.js";
 import { _dirname } from "./dirname.cjs";
 import { TestClient, getStats, specToSegment } from "./testClient.js";
 import { TestServer } from "./testServer.js";
-import { insertText, loadTextFromFile, nodeOrdinalsHaveIntegrity } from "./testUtils.js";
+import { loadTextFromFile, nodeOrdinalsHaveIntegrity } from "./testUtils.js";
 
 function LinearDictionary<TKey, TData>(
 	compareKeys: KeyComparer<TKey>,
@@ -306,27 +306,18 @@ function checkInsertMergeTree(
 	textSegment: TextSegment,
 	verbose = false,
 ): boolean {
-	let checkText = new MergeTreeTextHelper(mergeTree).getText(
-		UniversalSequenceNumber,
-		LocalClientId,
-	);
+	let checkText = new MergeTreeTextHelper(mergeTree).getText(mergeTree.localPerspective);
 	checkText = editFlat(checkText, pos, 0, textSegment.text);
 	const clockStart = clock();
-	insertText({
-		mergeTree,
+	mergeTree.insertSegments(
 		pos,
-		refSeq: UniversalSequenceNumber,
-		clientId: LocalClientId,
-		seq: UniversalSequenceNumber,
-		text: textSegment.text,
-		props: undefined,
-		opArgs: undefined,
-	});
-	accumTime += elapsedMicroseconds(clockStart);
-	const updatedText = new MergeTreeTextHelper(mergeTree).getText(
-		UniversalSequenceNumber,
-		LocalClientId,
+		[textSegment],
+		mergeTree.localPerspective,
+		{ clientId: LocalClientId, seq: UniversalSequenceNumber },
+		undefined,
 	);
+	accumTime += elapsedMicroseconds(clockStart);
+	const updatedText = new MergeTreeTextHelper(mergeTree).getText(mergeTree.localPerspective);
 	const result = checkText === updatedText;
 	if (!result && verbose) {
 		log(`mismatch(o): ${checkText}`);
@@ -342,7 +333,7 @@ function checkMarkRemoveMergeTree(
 	verbose = false,
 ): boolean {
 	const helper = new MergeTreeTextHelper(mergeTree);
-	const origText = helper.getText(UniversalSequenceNumber, LocalClientId);
+	const origText = helper.getText(mergeTree.localPerspective);
 	const checkText = editFlat(origText, start, end - start);
 	const clockStart = clock();
 	mergeTree.markRangeRemoved(
@@ -353,7 +344,7 @@ function checkMarkRemoveMergeTree(
 		{ op: createRemoveRangeOp(start, end) },
 	);
 	accumTime += elapsedMicroseconds(clockStart);
-	const updatedText = helper.getText(UniversalSequenceNumber, LocalClientId);
+	const updatedText = helper.getText(mergeTree.localPerspective);
 	const result = checkText === updatedText;
 	if (!result && verbose) {
 		log(`mismatch(o): ${origText}`);
@@ -369,7 +360,7 @@ export function mergeTreeTest1(): void {
 		0,
 		[TextSegment.make("the cat is on the mat")],
 		mergeTree.localPerspective,
-		{ seq: UniversalSequenceNumber, clientId: LocalClientId },
+		mergeTree.collabWindow.mintNextLocalOperationStamp(),
 		undefined,
 	);
 	const localPerspective = new LocalDefaultPerspective(mergeTree.collabWindow.clientId);
@@ -384,7 +375,7 @@ export function mergeTreeTest1(): void {
 	mergeTree.mapRange(printTextSegment, localPerspective, undefined);
 	const segoff = mergeTree.getContainingSegment(4, mergeTree.localPerspective);
 	log(mergeTree.getPosition(segoff.segment!, mergeTree.localPerspective));
-	log(new MergeTreeTextHelper(mergeTree).getText(UniversalSequenceNumber, LocalClientId));
+	log(new MergeTreeTextHelper(mergeTree).getText(mergeTree.localPerspective));
 	log(mergeTree.toString());
 	TestPack().firstTest();
 }
@@ -395,7 +386,7 @@ export function mergeTreeLargeTest(): void {
 		0,
 		[TextSegment.make("the cat is on the mat")],
 		mergeTree.localPerspective,
-		{ seq: UniversalSequenceNumber, clientId: LocalClientId },
+		mergeTree.collabWindow.mintNextLocalOperationStamp(),
 		undefined,
 	);
 	const insertCount = 1000000;
@@ -420,16 +411,13 @@ export function mergeTreeLargeTest(): void {
 		const preLen = mergeTree.getLength(mergeTree.localPerspective);
 		const pos = random.integer(0, preLen);
 		const clockStart = clock();
-		insertText({
-			mergeTree,
+		mergeTree.insertSegments(
 			pos,
-			refSeq: UniversalSequenceNumber,
-			clientId: LocalClientId,
-			seq: UniversalSequenceNumber,
-			text: s,
-			props: undefined,
-			opArgs: undefined,
-		});
+			[TextSegment.make(s)],
+			mergeTree.localPerspective,
+			{ clientId: LocalClientId, seq: UniversalSequenceNumber },
+			undefined,
+		);
 		accumTime += elapsedMicroseconds(clockStart);
 		if (i > 0 && 0 === i % 50000) {
 			const perIter = (accumTime / (i + 1)).toFixed(3);
@@ -478,7 +466,7 @@ export function mergeTreeCheckedTest(): number {
 		0,
 		[TextSegment.make("the cat is on the mat")],
 		mergeTree.localPerspective,
-		{ seq: UniversalSequenceNumber, clientId: LocalClientId },
+		mergeTree.collabWindow.mintNextLocalOperationStamp(),
 		undefined,
 	);
 	const insertCount = 2000;
@@ -1527,16 +1515,13 @@ function findReplacePerf(filename: string): void {
 					{ clientId: client.getClientId(), seq: 1 },
 					undefined as never,
 				);
-				insertText({
-					mergeTree: client.mergeTree,
-					pos: pos + i,
-					refSeq: UniversalSequenceNumber,
-					clientId: client.getClientId(),
-					seq: 1,
-					text: "teh",
-					props: undefined,
-					opArgs: undefined,
-				});
+				client.mergeTree.insertSegments(
+					pos + i,
+					[TextSegment.make("teh")],
+					client.mergeTree.localPerspective,
+					{ seq: 1, clientId: client.getClientId() },
+					undefined,
+				);
 				pos = pos + i + 3;
 				cReplaces++;
 			} else {

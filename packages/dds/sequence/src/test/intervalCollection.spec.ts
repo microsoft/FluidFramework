@@ -24,7 +24,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { IIntervalCollection } from "../intervalCollection.js";
+import { ISequenceIntervalCollection } from "../intervalCollection.js";
 import { IntervalIndex } from "../intervalIndex/index.js";
 import {
 	ISerializableInterval,
@@ -315,8 +315,8 @@ describe("SharedString interval collections", () => {
 		});
 
 		describe("remain consistent on double-delete", () => {
-			let collection: IIntervalCollection<SequenceInterval>;
-			let collection2: IIntervalCollection<SequenceInterval>;
+			let collection: ISequenceIntervalCollection;
+			let collection2: ISequenceIntervalCollection;
 			beforeEach(() => {
 				sharedString.insertText(0, "01234");
 				collection = sharedString.getIntervalCollection("test");
@@ -969,7 +969,7 @@ describe("SharedString interval collections", () => {
 			// references to now equal ones can cause issues.
 			// The immediate way this manifests is that attempting to remove the interval fails
 			// in red-black tree code, since the key isn't at the expected location.
-			let collection: IIntervalCollection<SequenceInterval>;
+			let collection: ISequenceIntervalCollection;
 			beforeEach(() => {
 				sharedString.insertText(0, "ABCDEFG");
 				collection = sharedString.getIntervalCollection("test");
@@ -1145,21 +1145,21 @@ describe("SharedString interval collections", () => {
 			sharedString.insertText(0, "hello world");
 			containerRuntimeFactory.processAllMessages();
 
-			const collection1: IIntervalCollection<SequenceInterval> =
+			const collection1: ISequenceIntervalCollection =
 				sharedString.getIntervalCollection("test1");
 			const interval1 = collection1.add({ start: 0, end: 1 });
 			const intervalId1 = interval1.getIntervalId();
 			assert(intervalId1);
 			collection1.change(intervalId1, { start: 1, end: 4 });
 
-			const collection2: IIntervalCollection<SequenceInterval> =
+			const collection2: ISequenceIntervalCollection =
 				sharedString2.getIntervalCollection("test2");
 			const interval2 = collection2.add({ start: 0, end: 2 });
 			const intervalId2 = interval2.getIntervalId();
 			assert(intervalId2);
 			collection2.removeIntervalById(intervalId2);
 
-			const collection3: IIntervalCollection<SequenceInterval> =
+			const collection3: ISequenceIntervalCollection =
 				sharedString2.getIntervalCollection("test3");
 			collection3.add({ start: 0, end: 3 });
 
@@ -1260,8 +1260,8 @@ describe("SharedString interval collections", () => {
 		let containerRuntime1: MockContainerRuntimeForReconnection;
 		let sharedString2: ISharedString;
 
-		let collection1: IIntervalCollection<SequenceInterval>;
-		let collection2: IIntervalCollection<SequenceInterval>;
+		let collection1: ISequenceIntervalCollection;
+		let collection2: ISequenceIntervalCollection;
 		let interval: SequenceInterval;
 
 		beforeEach(async () => {

@@ -4,6 +4,11 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import {
+	LoggingError,
+	tagData,
+	TelemetryDataTag,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
 import { asBatchMetadata, type IBatchMetadata } from "../metadata.js";
@@ -99,7 +104,8 @@ export class BatchManager {
 	private get referenceSequenceNumber(): number | undefined {
 		return this.pendingBatch.length === 0
 			? undefined
-			: this.pendingBatch[this.pendingBatch.length - 1].referenceSequenceNumber;
+			: // NOTE: In case of reentrant ops, there could be multiple reference sequence numbers, but we will rebase before submitting.
+				this.pendingBatch[this.pendingBatch.length - 1].referenceSequenceNumber;
 	}
 
 	/**
@@ -166,17 +172,25 @@ export class BatchManager {
 	 * Capture the pending state at this point
 	 */
 	public checkpoint(): IBatchCheckpoint {
+		const startSequenceNumber = this.clientSequenceNumber;
 		const startPoint = this.pendingBatch.length;
 		return {
 			rollback: (process: (message: BatchMessage) => void) => {
-				for (let i = this.pendingBatch.length; i > startPoint; ) {
-					i--;
-					const message = this.pendingBatch[i];
+				this.clientSequenceNumber = startSequenceNumber;
+				const rollbackOpsLifo = this.pendingBatch.splice(startPoint).reverse();
+				for (const message of rollbackOpsLifo) {
 					this.batchContentSize -= message.contents?.length ?? 0;
 					process(message);
 				}
-
-				this.pendingBatch.length = startPoint;
+				const count = this.pendingBatch.length - startPoint;
+				if (count !== 0) {
+					throw new LoggingError("Ops generated durning rollback", {
+						count,
+						...tagData(TelemetryDataTag.UserData, {
+							ops: JSON.stringify(this.pendingBatch.slice(startPoint).map((b) => b.contents)),
+						}),
+					});
+				}
 			},
 		};
 	}

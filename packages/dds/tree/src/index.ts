@@ -100,12 +100,14 @@ export {
 	type TreeLeafValue,
 	FieldKind,
 	FieldSchema,
+	type FieldSchemaAlpha,
 	type FieldSchemaMetadata,
 	type ImplicitAllowedTypes,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
 	NodeKind,
 	type TreeObjectNode,
+	ObjectNodeSchema,
 	type TreeNodeFromImplicitAllowedTypes,
 	type TreeNodeSchemaClass,
 	type SchemaCompatibilityStatus,
@@ -123,6 +125,7 @@ export {
 	// error TS2742: The inferred type of 'Inventory' cannot be named without a reference to '../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.
 	type AllowedTypes,
 	type ImplicitAllowedTypesUnsafe,
+	type ImplicitFieldSchemaUnsafe,
 	type TreeObjectNodeUnsafe,
 	type InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
 	type TreeArrayNodeUnsafe,
@@ -132,6 +135,9 @@ export {
 	type FieldSchemaUnsafe,
 	type TreeNodeSchemaClassUnsafe,
 	type InsertableTreeNodeFromAllowedTypesUnsafe,
+	type FieldSchemaAlphaUnsafe,
+	type ArrayNodeCustomizableSchemaUnsafe,
+	type MapNodeCustomizableSchemaUnsafe,
 	// System types (not in Internal types for various reasons, like doc links or cannot be named errors).
 	type typeSchemaSymbol,
 	type TreeNodeSchemaNonClass,
@@ -206,7 +212,7 @@ export {
 	asTreeViewAlpha,
 	type NodeSchemaOptions,
 	type NodeSchemaMetadata,
-	type schemaStatics,
+	type SchemaStatics,
 	type ITreeAlpha,
 	type TransactionConstraint,
 	type NodeInDocumentConstraint,
@@ -224,13 +230,19 @@ export {
 	replaceHandles,
 	replaceVerboseTreeHandles,
 	type HandleConverter,
+	type LeafSchema,
+	type ArrayNodeCustomizableSchema,
+	type ArrayNodePojoEmulationSchema,
+	ArrayNodeSchema,
+	type MapNodeCustomizableSchema,
+	type MapNodePojoEmulationSchema,
+	MapNodeSchema,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
 	configuredSharedTree,
-	SharedTreeAttributes,
-	SharedTreeFactoryType,
 } from "./treeFactory.js";
+export { SharedTreeAttributes, SharedTreeFactoryType } from "./sharedTreeAttributes.js";
 
 export {
 	type ICodecOptions,
@@ -242,6 +254,15 @@ export { noopValidator } from "./codec/index.js";
 export { typeboxValidator } from "./external-utilities/index.js";
 
 export type {
+	// Type Testing
+	requireTrue,
+	requireFalse,
+	requireAssignableTo,
+	areSafelyAssignable,
+	isAssignableTo,
+	isAny,
+	eitherIsAny,
+	// Other
 	RestrictiveReadonlyRecord,
 	RestrictiveStringRecord,
 	MakeNominal,
