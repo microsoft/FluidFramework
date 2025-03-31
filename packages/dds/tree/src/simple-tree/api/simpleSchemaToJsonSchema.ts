@@ -27,7 +27,7 @@ import type {
 	SimpleNodeSchema,
 	SimpleObjectNodeSchema,
 	SimpleTreeSchema,
-} from "./simpleSchema.js";
+} from "../simpleSchema.js";
 import { NodeKind } from "../core/index.js";
 
 /**
@@ -38,7 +38,7 @@ export function toJsonSchema(schema: SimpleTreeSchema): JsonTreeSchema {
 	const definitions = convertDefinitions(schema.definitions);
 
 	const allowedTypes: JsonSchemaRef[] = [];
-	for (const allowedType of schema.allowedTypes) {
+	for (const allowedType of schema.allowedTypesIdentifiers) {
 		allowedTypes.push(createSchemaRef(allowedType));
 	}
 
@@ -92,7 +92,7 @@ function convertNodeSchema(schema: SimpleNodeSchema): JsonNodeSchema {
 
 function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): JsonArrayNodeSchema {
 	const allowedTypes: JsonSchemaRef[] = [];
-	schema.allowedTypes.forEach((type) => {
+	schema.allowedTypesIdentifiers.forEach((type) => {
 		allowedTypes.push(createSchemaRef(type));
 	});
 
@@ -143,7 +143,7 @@ export function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObj
 	const required: string[] = [];
 	for (const [key, fieldSchema] of schema.fields) {
 		const allowedTypes: JsonSchemaRef[] = [];
-		for (const allowedType of fieldSchema.allowedTypes) {
+		for (const allowedType of fieldSchema.allowedTypesIdentifiers) {
 			allowedTypes.push(createSchemaRef(allowedType));
 		}
 
@@ -176,7 +176,7 @@ export function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObj
 
 function convertMapNodeSchema(schema: SimpleMapNodeSchema): JsonMapNodeSchema {
 	const allowedTypes: JsonSchemaRef[] = [];
-	schema.allowedTypes.forEach((type) => {
+	schema.allowedTypesIdentifiers.forEach((type) => {
 		allowedTypes.push(createSchemaRef(type));
 	});
 
