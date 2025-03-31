@@ -924,7 +924,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					if (removeInfo !== undefined && opstampUtils.isAcked(removeInfo.removes[0])) {
 						assert(
 							removeInfo.removes[0].type === "sliceRemove",
-							"Remove on insertion must be caused by obliterate.",
+							0xb5c /* Remove on insertion must be caused by obliterate. */,
 						);
 						errorIfOptionNotTrue(
 							this._mergeTree.options,
