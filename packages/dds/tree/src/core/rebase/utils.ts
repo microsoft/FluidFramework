@@ -294,7 +294,7 @@ export function rebaseBranch<TChange>(
 	const revisionMetadata = revisionMetadataSourceFromInfo(revInfos);
 	let editsToCompose: TaggedChange<TChange>[] = targetRebasePath.slice();
 	for (const c of sourcePath) {
-		const rollback = rollbackFromCommit(changeRebaser, c, mintRevisionTag, false);
+		const rollback = rollbackFromCommit(changeRebaser, c, mintRevisionTag, true /* cache */);
 		if (sourceSet.has(c.revision)) {
 			const currentComposedEdit = makeAnonChange(changeRebaser.compose(editsToCompose));
 			editsToCompose = [currentComposedEdit];
