@@ -3465,6 +3465,16 @@ export class ContainerRuntime
 		return result;
 	}
 
+	private _maintainOnlyLocalCalls = 0;
+	public async maintainOnlyLocal(callback: () => Promise<void>): Promise<void> {
+		try {
+			this._maintainOnlyLocalCalls++;
+			await callback();
+		} finally {
+			this._maintainOnlyLocalCalls--;
+		}
+	}
+
 	/**
 	 * Returns the aliased data store's entryPoint, given the alias.
 	 * @param alias - The alias for the data store.
@@ -3532,7 +3542,10 @@ export class ContainerRuntime
 		// Note that the real (non-proxy) delta manager is needed here to get the readonly info. This is because
 		// container runtime's ability to send ops depend on the actual readonly state of the delta manager.
 		return (
-			this.connected && !this.innerDeltaManager.readOnlyInfo.readonly && !this.imminentClosure
+			this.connected &&
+			!this.innerDeltaManager.readOnlyInfo.readonly &&
+			!this.imminentClosure &&
+			this._maintainOnlyLocalCalls === 0
 		);
 	}
 

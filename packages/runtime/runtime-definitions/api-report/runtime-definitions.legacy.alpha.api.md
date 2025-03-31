@@ -84,6 +84,8 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
         snapshotTree: ISnapshotTree;
         sequenceNumber: number;
     }>;
+    // (undocumented)
+    maintainOnlyLocal?: (callback: () => Promise<void>) => Promise<void>;
     orderSequentially(callback: () => void): void;
     submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
     // (undocumented)

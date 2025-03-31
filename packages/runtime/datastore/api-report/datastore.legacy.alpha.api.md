@@ -65,6 +65,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get isAttached(): boolean;
     // (undocumented)
     get logger(): ITelemetryLoggerExt;
+    // (undocumented)
+    maintainOnlyLocal?(callback: () => Promise<void>): Promise<void>;
     makeVisibleAndAttachGraph(): void;
     // (undocumented)
     get objectsRoutingContext(): this;

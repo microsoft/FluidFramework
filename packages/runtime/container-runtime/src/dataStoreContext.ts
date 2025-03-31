@@ -464,7 +464,6 @@ export abstract class FluidDataStoreContext
 		);
 	}
 
-
 	public async realize(): Promise<IFluidDataStoreChannel> {
 		return this.realizeInternal().then(async (runtime) => {
 			const factory = await this.factoryFromPackagePath();

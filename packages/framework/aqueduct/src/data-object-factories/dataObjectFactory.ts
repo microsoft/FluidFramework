@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "@fluidframework/core-utils/internal";
 import {
 	DataStoreMessageType,
 	FluidDataStoreRuntime,
@@ -47,6 +46,8 @@ export class DataObjectFactory<
 	TObj extends DataObject<I>,
 	I extends DataObjectTypes = DataObjectTypes,
 > extends PureDataObjectFactory<TObj, I> {
+	private converted = false;
+
 	public constructor(
 		type: string,
 		ctor: new (props: IDataObjectProps<I>) => TObj,
@@ -70,22 +71,20 @@ export class DataObjectFactory<
 			mergedObjects.push(SharedMap.getFactory());
 		}
 
-		let converted = false;
-		const convertRoundTripP = new Deferred<void>();
-
 		const fullConvertDataFn =
 			convertDataFn === undefined
 				? undefined
 				: async (runtime: FluidDataStoreRuntime) => {
-						if (!converted) {
-							converted = true;
-							submitConversionOp(runtime);
-							await convertRoundTripP.promise;
+						if (!this.converted) {
+							this.converted = true;
+							await runtime.maintainOnlyLocal?.(async () => {
+								submitConversionOp(runtime);
 
-							const root = (await runtime.getChannel(
-								dataObjectRootDirectoryId,
-							)) as ISharedDirectory;
-							await convertDataFn(runtime, root);
+								const root = (await runtime.getChannel(
+									dataObjectRootDirectoryId,
+								)) as ISharedDirectory;
+								await convertDataFn(runtime, root);
+							});
 						}
 					};
 
@@ -108,14 +107,15 @@ export class DataObjectFactory<
 						// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 						messageCollection.envelope.type === DataStoreMessageType.ChannelOp
 					) {
+						// ! TODO: extra validation on if this is our "conversion" op (close/reload Container if coming from elsewhere)
 						if (
 							messageCollection.messagesContent.some((val) => val.contents === "conversion")
 						) {
-							convertRoundTripP.resolve();
+							// ! TODO: complete conversion (i.e. send new SharedTree ops)
 						}
 
 						contents = messageCollection.messagesContent.filter(
-							(val) => typeof val.contents !== "string" || val.contents !== "conversion",
+							(val) => val.contents !== "conversion",
 						);
 					} else {
 						contents = [...messageCollection.messagesContent];

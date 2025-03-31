@@ -43,7 +43,7 @@ export class InventorySchema extends builder.object("Contoso:Inventory-1.0.0", {
 
 export const treeConfiguration = new TreeViewConfiguration({ schema: InventorySchema });
 
-export const sharedTreeKey = "sharedTree";
+export const newSharedTreeKey = "sharedTree";
 
 /**
  * NewTreeInventoryItem is the local object with a friendly interface for the view to use.
@@ -140,12 +140,12 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 			}),
 		);
 		view.dispose();
-		this.root.set(sharedTreeKey, this._sharedTree.handle);
+		this.root.set(newSharedTreeKey, this._sharedTree.handle);
 	}
 
 	protected async hasInitialized(): Promise<void> {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this._sharedTree = await this.root.get<IFluidHandle<ITree>>(sharedTreeKey)!.get();
+		this._sharedTree = await this.root.get<IFluidHandle<ITree>>(newSharedTreeKey)!.get();
 		const view = this.sharedTree.viewWith(treeConfiguration);
 		this._inventoryItemList = view.root.inventoryItemList;
 		// "treeChanged" will fire for any change of any type anywhere in the subtree. In this application we expect

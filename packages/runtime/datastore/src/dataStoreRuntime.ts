@@ -1321,6 +1321,10 @@ export class FluidDataStoreRuntime
 				unreachableCase(attachState, "unreached");
 		}
 	}
+
+	public async maintainOnlyLocal?(callback: () => Promise<void>): Promise<void> {
+		return this.dataStoreContext.containerRuntime.maintainOnlyLocal?.(callback);
+	}
 }
 
 /**

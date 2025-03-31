@@ -17,10 +17,8 @@ import {
 	LegacyTreeInventoryListFactory,
 	LegacyTreeInventoryListFactoryNew,
 } from "./legacyTreeInventoryList.js";
-// import { NewTreeInventoryListFactory } from "./newTreeInventoryList.js";
 
 export const legacyTreeInventoryListId = "legacy-tree-inventory-list";
-// export const newTreeInventoryListId = "new-tree-inventory-list";
 
 /**
  * @internal
@@ -32,7 +30,6 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 				useNew
 					? LegacyTreeInventoryListFactoryNew.registryEntry
 					: LegacyTreeInventoryListFactory.registryEntry,
-				// NewTreeInventoryListFactory.registryEntry,
 			]), // registryEntries
 			{
 				enableRuntimeIdCompressor: "on",
@@ -49,10 +46,6 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 			LegacyTreeInventoryListFactory.type,
 		);
 		await legacyTreeInventoryList.trySetAlias(legacyTreeInventoryListId);
-		// const newTreeInventoryList = await runtime.createDataStore(
-		// 	NewTreeInventoryListFactory.type,
-		// );
-		// await newTreeInventoryList.trySetAlias(newTreeInventoryListId);
 	}
 
 	/**
@@ -63,10 +56,6 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 			runtime,
 			legacyTreeInventoryListId,
 		);
-		// const newTreeInventoryList = await getDataStoreEntryPoint<IInventoryList>(
-		// 	runtime,
-		// 	newTreeInventoryListId,
-		// );
 		return new InventoryListAppModel(legacyTreeInventoryList);
 	}
 }

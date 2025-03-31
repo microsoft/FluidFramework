@@ -8,7 +8,6 @@ import {
 	Change,
 	EagerCheckout,
 	SharedTree as LegacySharedTree,
-	SharedTreeFactory,
 	StablePlace,
 	StableRange,
 	TraitLabel,
@@ -30,11 +29,11 @@ import type {
 import {
 	InventorySchema,
 	NewTreeInventoryList,
-	sharedTreeKey,
+	newSharedTreeKey,
 	treeConfiguration,
 } from "./newTreeInventoryList.js";
 
-const legacySharedTreeKey = sharedTreeKey;
+const legacySharedTreeKey = "legacySharedTree";
 
 /**
  * LegacyTreeInventoryItem is the local object with a friendly interface for the view to use.
@@ -331,26 +330,23 @@ export const LegacyTreeInventoryListFactoryNew = new DataObjectFactory<NewTreeIn
 	undefined,
 	undefined,
 	async (runtime, root) => {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const tree = await root
-			.get<IFluidHandle<LegacySharedTree>>(legacySharedTreeKey)! // ! it's actually "LegacySharedTree | SharedTree"
-			.get();
+		const legacyTreeHandle = root.get<IFluidHandle<LegacySharedTree>>(legacySharedTreeKey);
 
-		// ! Future TODO: If we loaded legacy shared tree factory, we can assume we'll need converter code
-		if (tree.attributes.type === SharedTreeFactory.Type) {
+		if (legacyTreeHandle !== undefined) {
+			// ! Cleanup in case past conversion failed
+			root.delete(newSharedTreeKey);
+
+			const tree = await legacyTreeHandle.get();
 			const rootNode = tree.currentView.getViewNode(tree.currentView.root);
 			const inventoryItemsNodeIds = tree.currentView
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				.getViewNode(rootNode.traits.get("inventory" as TraitLabel)![0])
 				.traits.get("inventoryItems" as TraitLabel);
+			const inventoryItems =
+				inventoryItemsNodeIds?.map((val) =>
+					makeInventoryItemFromInventoryItemNode(tree, tree.currentView.getViewNode(val)),
+				) ?? [];
 
-			const inventoryItems: LegacyTreeInventoryItem[] = [];
-			if (inventoryItemsNodeIds !== undefined) {
-				for (const inventoryItemNodeId of inventoryItemsNodeIds) {
-					const inventoryItemNode = tree.currentView.getViewNode(inventoryItemNodeId);
-					inventoryItems.push(makeInventoryItemFromInventoryItemNode(tree, inventoryItemNode));
-				}
-			}
 			const newSharedTree = SharedTree.create(runtime);
 			const view = newSharedTree.viewWith(treeConfiguration);
 			view.initialize(
@@ -363,7 +359,8 @@ export const LegacyTreeInventoryListFactoryNew = new DataObjectFactory<NewTreeIn
 				}),
 			);
 			view.dispose();
-			root.set(legacySharedTreeKey, newSharedTree.handle);
+			root.set(newSharedTreeKey, newSharedTree.handle);
+			root.delete(legacySharedTreeKey);
 		}
 	},
 );
