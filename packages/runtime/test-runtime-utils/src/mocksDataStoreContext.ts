@@ -45,7 +45,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public clientId: string | undefined = uuid();
 	public clientDetails: IClientDetails;
 	public connected: boolean = true;
-	public readonly: boolean = true;
+	public readonly: boolean = false;
 	public baseSnapshot: ISnapshotTree | undefined;
 	public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> =
 		undefined as any;
