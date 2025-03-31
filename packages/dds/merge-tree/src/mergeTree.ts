@@ -181,11 +181,14 @@ function ackSegment(
 		case MergeTreeDeltaType.OBLITERATE_SIDED: {
 			assertRemoved(segment);
 			const latestRemove = segment.removes[segment.removes.length - 1];
-			assert(opstampUtils.isLocal(latestRemove), "Expected last remove to be unacked");
+			assert(
+				opstampUtils.isLocal(latestRemove),
+				0xb5d /* Expected last remove to be unacked */,
+			);
 			assert(
 				segment.removes.length === 1 ||
 					opstampUtils.isAcked(segment.removes[segment.removes.length - 2]),
-				"Expected prior remove to be acked",
+				0xb5e /* Expected prior remove to be acked */,
 			);
 
 			allowIncrementalPartialLengthsUpdate = segment.removes.length === 1;
