@@ -35,6 +35,7 @@ import {
 	MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback.js";
 import {
+	LeafAction,
 	NodeAction,
 	backwardExcursion,
 	depthFirstNodeWalk,
@@ -180,11 +181,14 @@ function ackSegment(
 		case MergeTreeDeltaType.OBLITERATE_SIDED: {
 			assertRemoved(segment);
 			const latestRemove = segment.removes[segment.removes.length - 1];
-			assert(opstampUtils.isLocal(latestRemove), "Expected last remove to be unacked");
+			assert(
+				opstampUtils.isLocal(latestRemove),
+				0xb5d /* Expected last remove to be unacked */,
+			);
 			assert(
 				segment.removes.length === 1 ||
 					opstampUtils.isAcked(segment.removes[segment.removes.length - 2]),
-				"Expected prior remove to be acked",
+				0xb5e /* Expected prior remove to be acked */,
 			);
 
 			allowIncrementalPartialLengthsUpdate = segment.removes.length === 1;
@@ -601,9 +605,9 @@ export class MergeTree {
 
 	public readonly attributionPolicy: AttributionPolicy | undefined;
 
-	public localPerspective: Perspective = new LocalDefaultPerspective(
-		this.collabWindow.clientId,
-	);
+	public get localPerspective(): Perspective {
+		return this.collabWindow.localPerspective;
+	}
 
 	/**
 	 * Whether or not all blocks in the mergeTree currently have information about local partial lengths computed.
@@ -736,7 +740,7 @@ export class MergeTree {
 		this.collabWindow.minSeq = minSeq;
 		this.collabWindow.collaborating = true;
 		this.collabWindow.currentSeq = currentSeq;
-		this.localPerspective = new LocalDefaultPerspective(localClientId);
+		this.collabWindow.localPerspective = new LocalDefaultPerspective(localClientId);
 		this.nodeUpdateLengthNewStructure(this.root, true);
 	}
 
@@ -1144,7 +1148,7 @@ export class MergeTree {
 								firstRemove.localSeq,
 							);
 
-				const slidSegment = slidePerspective.nextSegment(this, seg, forward);
+				const slidSegment = this.nextSegment(slidePerspective, seg, forward);
 				return (
 					this.getPosition(slidSegment, perspective) +
 					(forward ? 0 : slidSegment.cachedLength === 0 ? 0 : slidSegment.cachedLength - 1)
@@ -1153,6 +1157,31 @@ export class MergeTree {
 			return this.getPosition(seg, perspective) + refPos.getOffset();
 		}
 		return DetachedReferencePosition;
+	}
+
+	/**
+	 * Returns the immediately adjacent segment in the specified direction from this perspective.
+	 * There may actually be multiple segments between the given segment and the returned segment,
+	 * but they were either inserted after this perspective, or have been removed before this perspective.
+	 *
+	 * @param segment - The segment to start from.
+	 * @param forward - The direction to search.
+	 * @returns the next segment in the specified direction, or the start or end of the tree if there is no next segment.
+	 */
+	private nextSegment(
+		perspective: Perspective,
+		segment: ISegmentLeaf,
+		forward: boolean = true,
+	): ISegmentLeaf {
+		let next: ISegmentLeaf | undefined;
+		const action = (seg: ISegmentLeaf): boolean | undefined => {
+			if (perspective.isSegmentPresent(seg)) {
+				next = seg;
+				return LeafAction.Exit;
+			}
+		};
+		(forward ? forwardExcursion : backwardExcursion)(segment, action);
+		return next ?? (forward ? this.endOfTree : this.startOfTree);
 	}
 
 	/**
