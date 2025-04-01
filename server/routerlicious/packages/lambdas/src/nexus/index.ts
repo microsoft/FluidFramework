@@ -116,6 +116,7 @@ export function configureWebSocketServices(
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: core.IClusterDrainingChecker,
 	collaborationSessionTracker?: core.ICollaborationSessionTracker,
+	useSocketIoRedisEmitter: boolean = false, // TODO: remove after test
 ): void {
 	const lambdaDependencies: INexusLambdaDependencies = {
 		ordererManager,
@@ -261,6 +262,7 @@ export function configureWebSocketServices(
 						lambdaConnectionStateTrackers,
 						connectionMessage,
 						properties,
+						useSocketIoRedisEmitter, // TODO: remove after test
 					)
 						.then((message) => {
 							socket.emit("connect_document_success", message.connection);

@@ -603,6 +603,7 @@ async function setUpSignalListenerForRoomBroadcasting(
 	room: IRoom,
 	{ collaborationSessionEventEmitter, logger }: INexusLambdaDependencies,
 	clientId: string,
+	useSocketIoRedisEmitter: boolean, // TODO: Remove this after testing
 ): Promise<() => void> {
 	const broadCastSignalListener = (broadcastSignal: IBroadcastSignalEventPayload): void => {
 		const { signalRoom, signalContent } = broadcastSignal;
@@ -647,11 +648,16 @@ async function setUpSignalListenerForRoomBroadcasting(
 			broadCastSignalListener,
 		);
 	}
+	// TODO: Modify this if this works. this is just a test to see if redis emitter works
+	// without the need to rebuild r11s, FRS and redeploy.
+	if (useSocketIoRedisEmitter) {
+		socket.on("broadcastSignal", broadCastSignalListener);
+	}
 	collaborationSessionEventEmitter?.on("broadcastSignal", broadCastSignalListener);
 	const disposeBroadcastSignalListener = (): void => {
 		collaborationSessionEventEmitter?.off("broadcastSignal", broadCastSignalListener);
 		if (collaborationSessionEventEmitter instanceof RedisEventEmitter) {
-			collaborationSessionEventEmitter.dispose().catch((error) => {
+			collaborationSessionEventEmitter.dispose(broadCastSignalListener).catch((error) => {
 				Lumberjack.error(
 					"Failed to dispose RedisEventEmitter",
 					getLumberBaseProperties(room.documentId, room.tenantId),
@@ -660,6 +666,7 @@ async function setUpSignalListenerForRoomBroadcasting(
 			});
 		}
 	};
+
 	return disposeBroadcastSignalListener;
 }
 
@@ -670,6 +677,7 @@ export async function connectDocument(
 	lambdaConnectionStateTrackers: INexusLambdaConnectionStateTrackers,
 	message: IConnect,
 	properties: Record<string, any>,
+	useSocketIoRedisEmitter: boolean = false, // TODO: Remove this after testing
 ): Promise<IConnectedClient> {
 	const { isTokenExpiryEnabled, maxTokenLifetimeSec } = lambdaSettings;
 	const { expirationTimer } = lambdaConnectionStateTrackers;
@@ -804,6 +812,7 @@ export async function connectDocument(
 				room,
 				lambdaDependencies,
 				clientId,
+				useSocketIoRedisEmitter,
 			);
 		connectionTrace.stampStage(ConnectDocumentStage.SignalListenerSetUp);
 

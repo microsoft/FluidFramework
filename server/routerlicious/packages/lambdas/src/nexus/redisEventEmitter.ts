@@ -36,43 +36,53 @@ export class RedisEventEmitter extends TypedEventEmitter<ICollaborationSessionEv
 	}
 
 	public async subscribe(event: string, callback: (...args: any[]) => void): Promise<void> {
-		await this.redisClientConnectionForSub
+		this.redisClientConnectionForSub
 			.getRedisClient()
-			.subscribe(event, (error, message) => {
-				if (error) {
-					// TODO: Add error handling if testing succeeds
-					Lumberjack.error(`Error subscribing to event`, { event }, error);
-					return;
+			.on("message", (channel: string, message: string) => {
+				if (channel === event) {
+					const data: IBroadcastSignalEventPayload = JSON.parse(message);
+					callback(data);
 				}
-				// TODO: Add error handling if parsing fails
-				const stringMessage = JSON.stringify(message);
-				const data: IBroadcastSignalEventPayload = JSON.parse(stringMessage);
-				callback(data);
-				// this.emit(event, data);
 			});
-		this.activeSubscriptions.add(event);
-		Lumberjack.info(`Subscribed to event`, { event });
-	}
-
-	public async publishToRoom(room: string, event: string, ...args: any[]): Promise<void> {
 		try {
-			Lumberjack.info(`Emitting to all nexus isntances`, { event, room });
-			await this.redisClientConnectionForPub
+			await this.redisClientConnectionForSub
 				.getRedisClient()
-				.publish(room, JSON.stringify({ event, args }));
-			Lumberjack.info(`Notification bradcasting complete`, { event, room });
+				.subscribe(event, (error, count) => {
+					// TODO: Add error handling if parsing fails
+					if (error) {
+						Lumberjack.error(`Error subscribing to event`, { event, count }, error);
+						return;
+					}
+				});
+			this.activeSubscriptions.add(event);
+			Lumberjack.info(`Subscribed to event`, { event });
 		} catch (error) {
-			Lumberjack.error(`Error emitting to room`, { room, event }, error);
+			Lumberjack.error(`Error subscribing to event`, { event }, error);
 			throw error;
 		}
 	}
 
-	public async dispose(): Promise<void> {
+	public async publish(event: string, ...args: any[]): Promise<void> {
+		try {
+			const payload = args[0] as IBroadcastSignalEventPayload;
+			Lumberjack.info(`Emitting to all nexus isntances`, { event });
+			await this.redisClientConnectionForPub
+				.getRedisClient()
+				.publish(event, JSON.stringify(payload));
+			Lumberjack.info(`Notification bradcasting complete`, { event });
+		} catch (error) {
+			Lumberjack.error(`Error emitting to room`, { event }, error);
+			throw error;
+		}
+	}
+
+	public async dispose(listener: (...args: any[]) => void): Promise<void> {
 		const redisSub = this.redisClientConnectionForSub.getRedisClient();
 		for (const event of this.activeSubscriptions) {
 			// TODO: Add error handling if testing succeeds
 			await redisSub.unsubscribe(event);
 		}
+		redisSub.off("message", listener);
 		this.activeSubscriptions.clear();
 
 		Lumberjack.info(`RedisEventEmitter disposed, all subscriptions removed`);

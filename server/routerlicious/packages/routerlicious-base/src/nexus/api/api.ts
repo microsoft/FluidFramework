@@ -8,6 +8,7 @@ import {
 	throttle,
 	IThrottleMiddlewareOptions,
 	verifyStorageToken,
+	RedisClientConnectionManager,
 } from "@fluidframework/server-services-utils";
 import * as core from "@fluidframework/server-services-core";
 import {
@@ -24,6 +25,7 @@ import { Constants } from "../../utils";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { NetworkError } from "@fluidframework/server-services-client";
 import type { TypedEventEmitter } from "@fluidframework/common-utils";
+import { Emitter } from "@socket.io/redis-emitter";
 
 export function create(
 	config: Provider,
@@ -66,7 +68,7 @@ export function create(
 						"Error handling broadcast-signal",
 						{
 							tenantId: request.params.tenantId,
-							documentId: request.params.documentId,
+							documentId: request.params.id,
 						},
 						error,
 					),
@@ -129,13 +131,27 @@ async function handleBroadcastSignal(
 	const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
 	Lumberjack.info("Broadcasting signal to socket", { tenantId, documentId });
 
+	// TODO: Modify this if this works. this is just a test to see if redis emitter works
+	// without the need to rebuild r11s, FRS and redeploy.
+	const useSocketIoRedisEmitter = config.get("nexus:notificationsApi:useSocketIoRedisEmitter");
+	if (useSocketIoRedisEmitter) {
+		const redisConfig = config.get("redis");
+		const redisClientConnectionManager = new RedisClientConnectionManager(
+			undefined,
+			redisConfig,
+			redisConfig.enableClustering,
+			redisConfig.slotsRefreshTimeout,
+			undefined /* retryDelays */,
+			redisConfig.enableVerboseErrorLogging,
+		);
+		const redisEmitter = new Emitter(redisClientConnectionManager.getRedisClient());
+		redisEmitter.to(getRoomId(signalRoom)).emit("broadcastSignal", payload);
+		return;
+	}
+
 	if (collaborationSessionEventEmitter instanceof RedisEventEmitter) {
 		Lumberjack.info("Emitting signal to room", { tenantId, documentId });
-		await collaborationSessionEventEmitter.publishToRoom(
-			getRoomId(signalRoom),
-			"broadcastSignal",
-			payload,
-		);
+		await collaborationSessionEventEmitter.publish("broadcastSignal", payload);
 	} else {
 		collaborationSessionEventEmitter.emit("broadcastSignal", payload);
 	}

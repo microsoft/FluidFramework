@@ -137,6 +137,7 @@ export class NexusRunner implements IRunner {
 				this.collaborationSessionEventEmitter,
 				this.clusterDrainingChecker,
 				this.collaborationSessionTracker,
+				this.config.get("nexus:notificationsApi:useSocketIoRedisEmitter") ?? false, // TODO Remove
 			);
 
 			if (this.tokenRevocationManager) {
