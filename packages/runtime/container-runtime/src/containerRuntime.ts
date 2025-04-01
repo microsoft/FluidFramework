@@ -153,10 +153,7 @@ import { ReportOpPerfTelemetry } from "./connectionTelemetry.js";
 import { ContainerFluidHandleContext } from "./containerHandleContext.js";
 import { channelToDataStore } from "./dataStore.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
-import {
-	DeltaManagerPendingOpsProxy,
-	DeltaManagerSummarizerProxy,
-} from "./deltaManagerProxies.js";
+import { DeltaManagerPendingOpsProxy } from "./deltaManagerProxies.js";
 import { DeltaScheduler } from "./deltaScheduler.js";
 import {
 	GCNodeType,
@@ -1531,20 +1528,15 @@ export class ContainerRuntime
 			this.baseLogger,
 		);
 
-		let outerDeltaManager: IDeltaManagerFull;
+		let outerDeltaManager: IDeltaManagerFull = this.innerDeltaManager;
 		this.useDeltaManagerOpsProxy =
 			this.mc.config.getBoolean("Fluid.ContainerRuntime.DeltaManagerOpsProxy") === true;
-		// The summarizerDeltaManager Proxy is used to lie to the summarizer to convince it is in the right state as a summarizer client.
-		const summarizerDeltaManagerProxy = new DeltaManagerSummarizerProxy(
-			this.innerDeltaManager,
-		);
-		outerDeltaManager = summarizerDeltaManagerProxy;
 
 		// The DeltaManagerPendingOpsProxy is used to control the minimum sequence number
 		// It allows us to lie to the layers below so that they can maintain enough local state for rebasing ops.
 		if (this.useDeltaManagerOpsProxy) {
 			const pendingOpsDeltaManagerProxy = new DeltaManagerPendingOpsProxy(
-				summarizerDeltaManagerProxy,
+				this.innerDeltaManager,
 				this.pendingStateManager,
 			);
 			outerDeltaManager = pendingOpsDeltaManagerProxy;
