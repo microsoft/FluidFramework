@@ -355,6 +355,7 @@ stages:
             command: 'custom'
             workingDir: ${{ parameters.testWorkspace }}
             customCommand: 'install ${{ parameters.tenantSetup }}'
+            customFeed: '@fluidframework'
 
         # Retrieve a tenant from the TRIPS tenant pool
         - task: AzureCLI@2
