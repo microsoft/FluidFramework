@@ -165,11 +165,9 @@ export class Repository implements GitContext {
 	public async getShaForBranch(branch: string, remote?: string): Promise<string> {
 		const refspec =
 			remote === undefined ? `refs/heads/${branch}` : `refs/remotes/${remote}/${branch}`;
-		// result is a string of the form '64adcdba56deb16e0641c91ca825401a9f7a01f9 refs/heads/release/client/2.23'
 		const result = await this.git.raw(`show-ref`, refspec);
 
-		const [sha] = result.split(" ");
-		return sha;
+		return result;
 	}
 
 	/**
@@ -467,7 +465,7 @@ export class Repository implements GitContext {
 	 * Fetch branch
 	 */
 	public async fetchBranch(remote: string, branchName: string): Promise<void> {
-		await this.gitClient.fetch(remote, branchName);
+		await this.gitClient.fetch(remote, [branchName]);
 	}
 }
 
