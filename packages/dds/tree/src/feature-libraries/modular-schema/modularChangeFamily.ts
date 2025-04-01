@@ -3398,6 +3398,7 @@ function rebaseRoots(
 	}
 
 	// XXX: Delete renames for nodes which are attached by `base`.
+	// XXX: Rebase root node changes
 	return rebasedRoots;
 }
 
