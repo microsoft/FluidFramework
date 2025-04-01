@@ -4,16 +4,25 @@
  */
 
 import type { JsonTreeSchema } from "./jsonSchema.js";
-import type { ImplicitFieldSchema } from "../schemaTypes.js";
+import type { ImplicitAllowedTypes } from "../schemaTypes.js";
 import { toJsonSchema } from "./simpleSchemaToJsonSchema.js";
-import { getSimpleSchema } from "./getSimpleSchema.js";
-import { getOrCreate } from "../../util/index.js";
-import type { TreeNodeSchema } from "../core/index.js";
+import type { TreeEncodingOptions } from "./customTree.js";
+import { TreeViewConfigurationAlpha } from "./tree.js";
 
 /**
- * Cache in which the results of {@link getJsonSchema} are saved.
+ * Options for how to interpret or encode a tree when schema information is available.
+ * @alpha
  */
-const jsonSchemaCache = new WeakMap<TreeNodeSchema, JsonTreeSchema>();
+export interface TreeSchemaEncodingOptions extends TreeEncodingOptions {
+	/**
+	 * If true, use the stored keys of object nodes.
+	 * If false, use the property keys.
+	 * @remarks
+	 * Has no effect on {@link NodeKind}s other than {@link NodeKind.Object}.
+	 * @defaultValue false.
+	 */
+	readonly requireFieldWithDefaults?: boolean;
+}
 
 /**
  * Creates a {@link https://json-schema.org/ | JSON Schema} representation of the provided {@link TreeNodeSchema}.
@@ -64,17 +73,17 @@ const jsonSchemaCache = new WeakMap<TreeNodeSchema, JsonTreeSchema>();
  * This API should allow generating JSON schema for the whole matrix of combinations:
  *
  * 1. VerboseTree and ConciseTree
- * 2. With and without requiring values with defaults (for insertion vs reading)
- * 3. Using stored keys and property keys
+ * 2. (Done) With and without requiring values with defaults (for insertion vs reading)
+ * 3. (Done) Using stored keys and property keys.
  *
- * This current API seems to give ConciseTree with property keys and ignoring default values.
- *
+ * This takes in `ImplicitAllowedTypes` since underlying `toJsonSchema` can't handle optional roots.
  *
  * @alpha
  */
-export function getJsonSchema(schema: ImplicitFieldSchema): JsonTreeSchema {
-	return getOrCreate(jsonSchemaCache, schema, () => {
-		const simpleSchema = getSimpleSchema(schema);
-		return toJsonSchema(simpleSchema);
-	});
+export function getJsonSchema(
+	schema: ImplicitAllowedTypes,
+	options: Required<TreeSchemaEncodingOptions>,
+): JsonTreeSchema {
+	const treeSchema = new TreeViewConfigurationAlpha({ schema });
+	return toJsonSchema(treeSchema, options);
 }

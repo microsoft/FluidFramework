@@ -19,6 +19,7 @@ import type {
 } from "../../shared-tree/index.js";
 
 import {
+	type FieldSchemaAlpha,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
@@ -28,6 +29,7 @@ import {
 	type UnsafeUnknownSchema,
 	FieldKind,
 	markSchemaMostDerived,
+	normalizeFieldSchema,
 } from "../schemaTypes.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import { toStoredSchema } from "../toStoredSchema.js";
@@ -38,7 +40,7 @@ import { fail, getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
 import type { VerboseTree } from "./verboseTree.js";
-import type { SimpleTreeSchema } from "../simpleSchema.js";
+import type { SimpleNodeSchema, SimpleTreeSchema } from "../simpleSchema.js";
 import type {
 	RunTransactionParams,
 	TransactionCallbackStatus,
@@ -106,9 +108,7 @@ export interface ITree extends ViewableTree, IFluidLoadable {}
 
 /**
  * {@link ITree} extended with some alpha APIs.
- * @privateRemarks
- * TODO: Promote this to alpha.
- * @internal
+ * @alpha
  */
 export interface ITreeAlpha extends ITree {
 	/**
@@ -307,6 +307,53 @@ export class TreeViewConfiguration<
 		// Eagerly perform this conversion to surface errors sooner.
 		toStoredSchema(config.schema);
 	}
+}
+
+/**
+ * {@link TreeViewConfiguration} extended with some alpha APIs.
+ * @sealed @alpha
+ */
+export class TreeViewConfigurationAlpha<
+		const TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
+	>
+	extends TreeViewConfiguration<TSchema>
+	implements TreeSchema
+{
+	/**
+	 * {@inheritDoc TreeSchema.root}
+	 */
+	public readonly root: FieldSchemaAlpha;
+	/**
+	 * {@inheritDoc TreeSchema.definitions}
+	 */
+	public readonly definitions: ReadonlyMap<string, SimpleNodeSchema & TreeNodeSchema>;
+
+	public constructor(props: ITreeViewConfiguration<TSchema>) {
+		super(props);
+		this.root = normalizeFieldSchema(props.schema);
+		const definitions = new Map<string, SimpleNodeSchema & TreeNodeSchema>();
+		walkFieldSchema(props.schema, {
+			node: (schema) =>
+				definitions.set(schema.identifier, schema as SimpleNodeSchema & TreeNodeSchema),
+		});
+		this.definitions = definitions;
+	}
+}
+
+/**
+ * {@link TreeViewConfigurationAlpha}
+ * @sealed @alpha
+ */
+export interface TreeSchema extends SimpleTreeSchema {
+	/**
+	 * {@inheritDoc SimpleTreeSchema.root}
+	 */
+	readonly root: FieldSchemaAlpha;
+
+	/**
+	 * {@inheritDoc SimpleTreeSchema.definitions}
+	 */
+	readonly definitions: ReadonlyMap<string, SimpleNodeSchema & TreeNodeSchema>;
 }
 
 /**

@@ -9,14 +9,13 @@ import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 import { testSpecializedCursor, type TestTree } from "../../cursorTestSuite.js";
 
-import { SchemaFactory, type EncodeOptions } from "../../../simple-tree/index.js";
+import { SchemaFactory, type TreeEncodingOptions } from "../../../simple-tree/index.js";
 
 import {
 	applySchemaToParserOptions,
 	cursorFromVerbose,
 	replaceVerboseTreeHandles,
 	verboseFromCursor,
-	type ParseOptions,
 	type VerboseTree,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/verboseTree.js";
@@ -65,7 +64,7 @@ describe("simple-tree verboseTree", () => {
 
 	describe("verboseFromCursor", () => {
 		it("minimal", () => {
-			const encodeOptions: EncodeOptions = {};
+			const encodeOptions: TreeEncodingOptions = {};
 			class TestObject extends schema.object("T", {}) {}
 			const cursor = cursorForJsonableTreeNode({ type: brand("Test.T") });
 			const verbose = verboseFromCursor(cursor, TestObject, encodeOptions);
@@ -126,10 +125,10 @@ describe("simple-tree verboseTree", () => {
 					});
 				}
 
-				const options: ParseOptions = {
+				const options: TreeEncodingOptions = {
 					useStoredKeys,
 				};
-				const encodeOptions: EncodeOptions = {
+				const encodeOptions: TreeEncodingOptions = {
 					useStoredKeys,
 				};
 

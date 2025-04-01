@@ -15,43 +15,18 @@ import {
 import { hydrate } from "../utils.js";
 import { getJsonValidator } from "./jsonSchemaUtilities.js";
 
+// TODO: consolidate these tests with those in getJsonSchema.spec.ts
+// TODO: Add testing for requireFieldWithDefaults = false.
+
 describe("getJsonSchema", () => {
-	it("Field Schema", async () => {
-		const schemaFactory = new SchemaFactory("test");
-		const Schema = schemaFactory.optional(schemaFactory.string, {
-			metadata: { description: "An optional string." },
-		});
-
-		const actual = getJsonSchema(Schema);
-
-		const expected: JsonTreeSchema = {
-			$defs: {
-				"com.fluidframework.leaf.string": {
-					type: "string",
-					_treeNodeSchemaKind: NodeKind.Leaf,
-				},
-			},
-			$ref: "#/$defs/com.fluidframework.leaf.string",
-		};
-		assert.deepEqual(actual, expected);
-
-		// Verify that the generated schema is valid.
-		const validator = getJsonValidator(actual);
-
-		// Verify expected data validation behavior.
-		validator(hydrate(Schema, "Hello world"), true);
-		validator("Hello world", true);
-		validator(42, false);
-		validator({}, false);
-		validator([], false);
-		validator(null, false);
-	});
-
-	it("Leaf node", async () => {
+	it("Leaf node", () => {
 		const schemaFactory = new SchemaFactory("test");
 		const Schema = schemaFactory.string;
 
-		const actual = getJsonSchema(Schema);
+		const actual = getJsonSchema(Schema, {
+			useStoredKeys: false,
+			requireFieldWithDefaults: true,
+		});
 
 		const expected: JsonTreeSchema = {
 			$defs: {
@@ -75,11 +50,14 @@ describe("getJsonSchema", () => {
 		validator([], false);
 	});
 
-	it("Union root", async () => {
+	it("Union root", () => {
 		const schemaFactory = new SchemaFactory("test");
 		const Schema = [schemaFactory.number, schemaFactory.string] as const;
 
-		const actual = getJsonSchema(Schema);
+		const actual = getJsonSchema(Schema, {
+			useStoredKeys: false,
+			requireFieldWithDefaults: true,
+		});
 
 		const expected: JsonTreeSchema = {
 			$defs: {
@@ -118,11 +96,16 @@ describe("getJsonSchema", () => {
 
 	// Fluid Handles are not supported in JSON Schema export.
 	// Ensure the code throws if a handle is encountered.
-	it("Leaf node (Fluid Handle)", async () => {
+	it("Leaf node (Fluid Handle)", () => {
 		const schemaFactory = new SchemaFactory("test");
 		const Schema = schemaFactory.handle;
 
-		assert.throws(() => getJsonSchema(Schema));
+		assert.throws(() =>
+			getJsonSchema(Schema, {
+				useStoredKeys: false,
+				requireFieldWithDefaults: true,
+			}),
+		);
 	});
 
 	it("Array schema", () => {
@@ -133,7 +116,10 @@ describe("getJsonSchema", () => {
 			},
 		});
 
-		const actual = getJsonSchema(Schema);
+		const actual = getJsonSchema(Schema, {
+			useStoredKeys: false,
+			requireFieldWithDefaults: true,
+		});
 
 		const expected: JsonTreeSchema = {
 			$defs: {
@@ -176,7 +162,10 @@ describe("getJsonSchema", () => {
 			},
 		});
 
-		const actual = getJsonSchema(Schema);
+		const actual = getJsonSchema(Schema, {
+			useStoredKeys: false,
+			requireFieldWithDefaults: true,
+		});
 		const expected: JsonTreeSchema = {
 			$defs: {
 				"test.map": {
@@ -245,7 +234,10 @@ describe("getJsonSchema", () => {
 			{ metadata: { description: "An object with Foo and Bar." } },
 		);
 
-		const actual = getJsonSchema(Schema);
+		const actual = getJsonSchema(Schema, {
+			useStoredKeys: false,
+			requireFieldWithDefaults: true,
+		});
 
 		const expected: JsonTreeSchema = {
 			$defs: {
@@ -330,7 +322,10 @@ describe("getJsonSchema", () => {
 			id: schemaFactory.identifier,
 		});
 
-		const actual = getJsonSchema(Schema);
+		const actual = getJsonSchema(Schema, {
+			useStoredKeys: false,
+			requireFieldWithDefaults: true,
+		});
 
 		const expected: JsonTreeSchema = {
 			$defs: {
@@ -361,7 +356,10 @@ describe("getJsonSchema", () => {
 			foo: schemaFactory.required([schemaFactory.number, schemaFactory.string]),
 		});
 
-		const actual = getJsonSchema(Schema);
+		const actual = getJsonSchema(Schema, {
+			useStoredKeys: false,
+			requireFieldWithDefaults: true,
+		});
 
 		const expected: JsonTreeSchema = {
 			$defs: {
@@ -395,11 +393,14 @@ describe("getJsonSchema", () => {
 
 	it("Recursive object schema", () => {
 		const schemaFactory = new SchemaFactory("test");
-		const Schema = schemaFactory.objectRecursive("recursive-object", {
+		class Schema extends schemaFactory.objectRecursive("recursive-object", {
 			foo: schemaFactory.optionalRecursive([schemaFactory.string, () => Schema]),
-		});
+		}) {}
 
-		const actual = getJsonSchema(Schema);
+		const actual = getJsonSchema(Schema, {
+			useStoredKeys: false,
+			requireFieldWithDefaults: true,
+		});
 
 		const expected: JsonTreeSchema = {
 			$defs: {
@@ -448,8 +449,14 @@ describe("getJsonSchema", () => {
 		const schemaFactory = new SchemaFactory("test");
 		const Schema = schemaFactory.string;
 
-		const firstQuery = getJsonSchema(Schema);
-		const secondQuery = getJsonSchema(Schema);
+		const firstQuery = getJsonSchema(Schema, {
+			useStoredKeys: false,
+			requireFieldWithDefaults: true,
+		});
+		const secondQuery = getJsonSchema(Schema, {
+			useStoredKeys: false,
+			requireFieldWithDefaults: true,
+		});
 
 		// Object equality to ensure the same object is returned by subsequent calls.
 		return assert.equal(firstQuery, secondQuery);

@@ -139,6 +139,11 @@ export class SchemaFactoryAlpha<
 	/**
 	 * {@inheritDoc SchemaStatics.optional}
 	 */
+	public static override readonly leaves = schemaStatics.leaves;
+
+	/**
+	 * {@inheritDoc SchemaStatics.optional}
+	 */
 	public static override readonly optional = schemaStatics.optional;
 
 	/**

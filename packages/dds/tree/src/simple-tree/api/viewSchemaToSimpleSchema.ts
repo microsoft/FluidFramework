@@ -59,10 +59,8 @@ export function toSimpleTreeSchema(
 	});
 
 	return {
-		kind: normalizedSchema.kind,
-		allowedTypesIdentifiers: normalizedSchema.allowedTypesIdentifiers,
+		root: normalizedSchema,
 		definitions,
-		metadata: normalizedSchema.metadata,
 	};
 }
 
