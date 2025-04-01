@@ -202,9 +202,11 @@ export function getDisallowedVersions(
 	// Then we add the compatibilityMode version itself to disallowedVersions array, to ensure that clients that use
 	// semver comparison will disallow themselves if their version is less than the compatibilityMode version.
 	return [
+		// We want `compatibilityMode` to be the first element in the array, so that clients that use semver comparison
+		// can short circuit and avoid comparing with the rest of the array.
+		compatibilityMode,
 		...packages2x.filter((version: string) => {
 			return semver.lt(version, compatibilityMode);
 		}),
-		compatibilityMode,
 	];
 }
