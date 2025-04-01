@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import type { ICodecFamily, ICodecOptions } from "../codec/index.js";
 import {
@@ -31,7 +31,6 @@ import {
 	type Mutable,
 	type NestedSet,
 	addToNestedSet,
-	fail,
 	hasSingle,
 	nestedSetContains,
 } from "../util/index.js";
