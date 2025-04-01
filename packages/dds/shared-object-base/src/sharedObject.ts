@@ -458,6 +458,7 @@ export abstract class SharedObjectCore<
 	protected submitLocalMessage(content: unknown, localOpMetadata: unknown = undefined): void {
 		this.verifyNotClosed();
 		if (this.isAttached()) {
+			//* TODO: More efficient impl without cloning
 			// Bind the handles, but don't encode them yet.
 			bindHandles(content, this.serializer, this.handle);
 
