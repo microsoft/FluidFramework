@@ -230,6 +230,12 @@ extends:
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
 
+              - script: |
+                  echo "commit sha: $(Build.SourceVersion)"
+                  echo "##vso[task.setvariable variable=COMMIT_SHA;isOutput=true]$(Build.SourceVersion)"
+                displayName: "Capture Commit SHA"
+                name: setCommitSHA
+
               - task: Bash@3
                 displayName: Parameters
                 inputs:
@@ -358,19 +364,19 @@ extends:
                   customCommand: 'run webpack'
 
               - task: Bash@3
-                displayName: Archive Nested Lib/Dist Directories and Their Contents
+                displayName: Archive Build Output Content
                 env:
                   WORKING_DIRECTORY: '${{ parameters.buildDirectory }}'
                 inputs:
                   targetType: filePath
                   workingDirectory: '${{ parameters.buildDirectory }}'
-                  filePath: $(Build.SourcesDirectory)/scripts/pack-distlib.sh
+                  filePath: $(Build.SourcesDirectory)/scripts/pack-build-output.sh
 
               - task: CopyFiles@2
-                displayName: Copy nested_lib_dist to artifact staging directory
+                displayName: Copy build_output_archive to artifact staging directory
                 inputs:
-                  sourceFolder: ${{ parameters.buildDirectory }}/nested_lib_dist
-                  targetFolder: $(Build.ArtifactStagingDirectory)/nested_lib_dist
+                  sourceFolder: ${{ parameters.buildDirectory }}/build_output_archive
+                  targetFolder: $(Build.ArtifactStagingDirectory)/build_output_archive
 
               # Pack
               - ${{ if ne(parameters.taskPack, false) }}:
@@ -391,7 +397,7 @@ extends:
               # Collect/publish/run bundle analysis
               - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
                   - task: Npm@1
-                    displayName: 'npm run bundle-analysis:collect'
+                    displayName: 'Calculate bundle sizes'
                     inputs:
                       command: custom
                       workingDir: '${{ parameters.buildDirectory }}'
@@ -400,17 +406,16 @@ extends:
                   # Copy files so all artifacts we publish end up under the same parent folder.
                   # The sourceFolder should be wherever the 'npm run bundle-analysis:collect' task places its output.
                   - task: CopyFiles@2
-                    displayName: Copy bundleAnalysis files to artifact staging directory
+                    displayName: Copy bundle size files to artifact staging directory
                     inputs:
                       sourceFolder: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
                       targetFolder: $(Build.ArtifactStagingDirectory)/bundleAnalysis
-
 
                   # At this point we want to publish the artifact with the bundle size analysis,
                   # but as part of 1ES migration that's now part of templateContext.outputs below.
 
                   - task: Npm@1
-                    displayName: run bundle size comparison
+                    displayName: (PR only) Compare bundle sizes against baseline
                     condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
                     continueOnError: true
                     env:
@@ -517,9 +522,9 @@ extends:
               outputParentDirectory: $(Build.ArtifactStagingDirectory)
               outputs:
                 - output: pipelineArtifact
-                  displayName: Publish Artifact - nested_lib_dist
-                  targetPath: $(Build.ArtifactStagingDirectory)/nested_lib_dist
-                  artifactName: nested_lib_dist
+                  displayName: Publish Artifact - build_output_archive
+                  targetPath: $(Build.ArtifactStagingDirectory)/build_output_archive
+                  artifactName: build_output_archive
                   publishLocation: pipeline
 
                 - ${{ if ne(parameters.taskPack, false) }}:
@@ -569,12 +574,21 @@ extends:
               # Note that we need to disable it in the right way for 1ES pipeline templates, vs manual CodeQL tasks.
               - name: ONEES_ENFORCED_CODEQL_ENABLED
                 value: 'false'
+              - name: COMMIT_SHA
+                value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
+
             steps:
               # Setup
               - checkout: self
                 clean: true
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
+
+              - script: |
+                  echo "commit: $(COMMIT_SHA)"
+                  git fetch origin $(COMMIT_SHA)
+                  git checkout $(COMMIT_SHA)
+                displayName: "Checkout build commit"
 
               - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
@@ -593,13 +607,13 @@ extends:
 
               - task: DownloadPipelineArtifact@2
                 inputs:
-                  artifact: nested_lib_dist
-                  targetPath: $(Build.SourcesDirectory)
+                  artifact: build_output_archive
+                  targetPath: $(Build.StagingDirectory)
 
               - script: |
-                  echo "Extracting nested lib/dist directories and their contents..."
-                  tar --extract --gzip --file $(Build.SourcesDirectory)/nested_lib_dist.tar.gz --directory $(Build.SourcesDirectory)
-                displayName: Extract Nested Lib/Dist Directories and Their Contents
+                  echo "Extracting build output archive contents..."
+                  tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Build.SourcesDirectory)
+                displayName: Extract Build Output Contents
 
               # Set variable startTest if everything is good so far and we'll start running tests,
               # so that the steps to process/upload test coverage results only run if we got to the point of actually running tests.
@@ -720,12 +734,20 @@ extends:
                 # Note that we need to disable it in the right way for 1ES pipeline templates, vs manual CodeQL tasks.
                 - name: ONEES_ENFORCED_CODEQL_ENABLED
                   value: 'false'
+                - name: COMMIT_SHA
+                  value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
               steps:
                 # Setup
                 - checkout: self
                   clean: true
                   lfs: '${{ parameters.checkoutSubmodules }}'
                   submodules: '${{ parameters.checkoutSubmodules }}'
+
+                - script: |
+                    echo "commit: $(COMMIT_SHA)"
+                    git fetch origin $(COMMIT_SHA)
+                    git checkout $(COMMIT_SHA)
+                  displayName: "Checkout build commit"
 
                 - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
@@ -737,13 +759,13 @@ extends:
 
                 - task: DownloadPipelineArtifact@2
                   inputs:
-                    artifact: nested_lib_dist
-                    targetPath: $(Build.SourcesDirectory)
+                    artifact: build_output_archive
+                    targetPath: $(Build.StagingDirectory)
 
                 - script: |
-                    echo "Extracting nested lib/dist directories and their contents..."
-                    tar --extract --gzip --file $(Build.SourcesDirectory)/nested_lib_dist.tar.gz --directory $(Build.SourcesDirectory)
-                  displayName: Extract Nested Lib/Dist Directories and Their Contents
+                    echo "Extracting build output archive contents..."
+                    tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Build.SourcesDirectory)
+                  displayName: Extract Build Output Contents
 
                 # Test
 
