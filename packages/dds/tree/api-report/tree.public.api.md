@@ -4,37 +4,6 @@
 
 ```ts
 
-import type { ErasedType } from '@fluidframework/core-interfaces';
-import type { ErasedType as ErasedType_2 } from '@fluidframework/core-interfaces/internal';
-import { FieldHasDefault as FieldHasDefault_2 } from '../objectNode.js';
-import { FieldKind as FieldKind_2 } from '../schemaTypes.js';
-import { FieldSchema as FieldSchema_2 } from '../schemaTypes.js';
-import type { IDisposable } from '@fluidframework/core-interfaces';
-import type { IFluidHandle } from '@fluidframework/core-interfaces';
-import type { IFluidLoadable } from '@fluidframework/core-interfaces';
-import type { IIdCompressor } from '@fluidframework/id-compressor';
-import { IIdCompressor as IIdCompressor_2 } from '@fluidframework/id-compressor/internal';
-import { ImplicitFieldSchema as ImplicitFieldSchema_2 } from '../schemaTypes.js';
-import { InsertableTreeFieldFromImplicitField as InsertableTreeFieldFromImplicitField_2 } from '../schemaTypes.js';
-import { InsertableTypedNode as InsertableTypedNode_2 } from '../schemaTypes.js';
-import { InternalTreeNode as InternalTreeNode_2 } from '../core/types.js';
-import type { IsListener as IsListener_2 } from '@fluidframework/core-interfaces';
-import { LeafSchema as LeafSchema_2 } from '../leafNodeSchema.js';
-import type { Listenable as Listenable_2 } from '@fluidframework/core-interfaces';
-import type { Listeners as Listeners_2 } from '@fluidframework/core-interfaces';
-import { MapNodeInsertableData as MapNodeInsertableData_2 } from '../mapNode.js';
-import type { Off as Off_2 } from '@fluidframework/core-interfaces';
-import { ReadonlyArrayNode as ReadonlyArrayNode_2 } from '../arrayNode.js';
-import { RestrictiveStringRecord as RestrictiveStringRecord_2 } from '../../index.js';
-import type { Static } from '@sinclair/typebox';
-import { TreeLeafValue as TreeLeafValue_2 } from '../schemaTypes.js';
-import { TreeMapNode as TreeMapNode_2 } from '../mapNode.js';
-import { TreeNodeSchemaCore as TreeNodeSchemaCore_2 } from '../core/treeNodeSchema.js';
-import { TreeNodeSchemaNonClass as TreeNodeSchemaNonClass_2 } from '../core/treeNodeSchema.js';
-import type { TSchema } from '@sinclair/typebox';
-import { UnionToIntersection as UnionToIntersection_2 } from '../../index.js';
-import { WithType as WithType_2 } from '../core/withType.js';
-
 // @public
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
