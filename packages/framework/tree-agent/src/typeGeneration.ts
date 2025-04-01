@@ -21,7 +21,7 @@ import type {
 import { z } from "zod";
 
 import { objectIdKey, objectIdType, typeField } from "./agentEditTypes.js";
-import { getFriendlySchemaName } from "./promptGeneration.js";
+import { getFriendlySchemaName } from "./utils.js";
 import {
 	fail,
 	getOrCreate,

@@ -18,7 +18,7 @@ import {
 } from "@fluidframework/tree/internal";
 import { ChatAnthropic } from "@langchain/anthropic";
 
-import { SharedTreeSemanticCodingAgent } from "../../agent.js";
+import { createFunctioningAgent } from "../../functioningAgent.js";
 
 const sf = new SchemaFactory("Planner");
 
@@ -164,12 +164,12 @@ describe("Agent Editing Integration 1", () => {
 			maxTokens: 20000,
 		});
 
-		const agent = new SharedTreeSemanticCodingAgent(client, asTreeViewAlpha(view), {
+		const agent = createFunctioningAgent(client, asTreeViewAlpha(view), {
 			log: (l) => appendFileSync(fd, l, { encoding: "utf8" }),
 		});
 		const timestamp = new Date().toISOString().replace(/[.:]/g, "-");
 		const fd = openSync(`llm_log_${timestamp}.md`, "w");
-		await agent.runCodeFromPrompt(prompts.simple);
+		await agent.query(prompts.simple);
 
 		closeSync(fd);
 	});

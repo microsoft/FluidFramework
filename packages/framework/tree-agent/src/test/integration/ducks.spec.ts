@@ -20,7 +20,7 @@ import {
 } from "@fluidframework/tree/internal";
 import { ChatAnthropic } from "@langchain/anthropic";
 
-import { SharedTreeSemanticCodingAgent } from "../../agent.js";
+import { createFunctioningAgent } from "../../functioningAgent.js";
 import { llmDefault } from "../../utils.js";
 
 // eslint-disable-next-line eslint-comments/disable-enable-pair
@@ -197,7 +197,7 @@ describe("Agent Editing Integration 2", () => {
 			maxTokens: 20000,
 		});
 
-		const agent = new SharedTreeSemanticCodingAgent(client, asTreeViewAlpha(view), {
+		const agent = createFunctioningAgent(client, asTreeViewAlpha(view), {
 			domainHints: `You are an assistant that helps people create and edit pages of text. When adding new text, each word (e.g. "the", "cat", "lemonade", etc.) should go in its own Word object. Do not add comments or style the text (i.e. do not use Spans) unless the user specifically asked you to. If the user asks you to style a particular word or phrase that is already included in a larger span, you may split the span into smaller spans in order to apply the style at the granularity requested. Likewise, if two or more adjacent spans have the exact same styling, merge them together.`,
 			treeToString,
 			log: (l) => appendFileSync(fd, l, { encoding: "utf8" }),
@@ -205,7 +205,7 @@ describe("Agent Editing Integration 2", () => {
 
 		const timestamp = new Date().toISOString().replace(/[.:]/g, "-");
 		const fd = openSync(`llm_log_${timestamp}.md`, "w");
-		await agent.runCodeFromPrompt(
+		await agent.query(
 			"Please add a comment to the word 'treat' that says 'Makes me think of Halloween :)'",
 		);
 

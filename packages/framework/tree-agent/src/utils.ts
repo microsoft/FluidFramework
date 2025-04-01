@@ -3,8 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { ImplicitFieldSchema } from "@fluidframework/tree";
+import {
+	Tree,
+	type ImplicitFieldSchema,
+	type TreeFieldFromImplicitField,
+} from "@fluidframework/tree";
 import type {
 	InsertableContent,
 	InternalTreeNode,
@@ -13,6 +18,9 @@ import type {
 	TreeViewAlpha,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/alpha";
+
+import { objectIdKey } from "./agentEditTypes.js";
+import type { IdGenerator } from "./idGenerator.js";
 
 /**
  * Subset of Map interface.
@@ -134,4 +142,71 @@ export function constructNode(schema: TreeNodeSchema, value: InsertableContent):
 	return typeof schema === "function"
 		? new schema(value as unknown as InternalTreeNode)
 		: (schema as { create(data: InsertableContent): TreeNode }).create(value);
+}
+
+/**
+ * TODO
+ */
+export function stringifyWithIds(
+	root: TreeFieldFromImplicitField<ImplicitFieldSchema>,
+	idGenerator: IdGenerator,
+): {
+	stringified: string;
+	objectsWithIds: {
+		type: string;
+		id: string;
+	}[];
+} {
+	idGenerator.assignIds(root);
+	const objectsWithIds: ReturnType<typeof stringifyWithIds>["objectsWithIds"] = [];
+	const stringified: string = JSON.stringify(
+		root,
+		(_, value) => {
+			if (typeof value === "object" && !Array.isArray(value) && value !== null) {
+				// TODO: SharedTree Team needs to either publish TreeNode as a class to use .instanceof() or a typeguard.
+				// Uncomment this assertion back once we have a typeguard ready.
+				// assert(isTreeNode(node), "Non-TreeNode value in tree.");
+				const id =
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+					idGenerator.getId(value) ?? fail("ID of new node should have been assigned.");
+				assert(
+					!Object.prototype.hasOwnProperty.call(value, objectIdKey),
+					0xa7b /* Collision of object id property. */,
+				);
+				const type =
+					getFriendlySchemaName(Tree.schema(value as TreeNode).identifier) ??
+					fail("Expected object schema to have a friendly name.");
+				objectsWithIds.push({ id, type });
+				return {
+					[objectIdKey]: id,
+					...value,
+				} as unknown;
+			}
+			return value as unknown;
+		},
+		2,
+	);
+	return {
+		stringified,
+		objectsWithIds,
+	};
+}
+
+/**
+ * TODO
+ * @remarks Returns undefined if the schema should not be included in the prompt (and therefore should not ever be seen by the LLM).
+ */
+export function getFriendlySchemaName(schemaName: string): string | undefined {
+	// TODO: Kludge
+	const arrayTypes = schemaName.match(/Array<\["(.*)"]>/);
+	if (arrayTypes?.[1] !== undefined) {
+		return undefined;
+	}
+
+	const matches = schemaName.match(/[^.]+$/);
+	if (matches === null) {
+		// empty scope
+		return schemaName;
+	}
+	return matches[0];
 }

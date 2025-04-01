@@ -27,8 +27,7 @@ import { applyAgentEdit } from "../agentEditReducer.js";
 import { objectIdKey, typeField } from "../agentEditTypes.js";
 import type { TreeEdit } from "../agentEditTypes.js";
 import { IdGenerator } from "../idGenerator.js";
-import { getFriendlySchemaName } from "../promptGeneration.js";
-import { llmDefault } from "../utils.js";
+import { getFriendlySchemaName, llmDefault } from "../utils.js";
 
 import { validateUsageError } from "./utils.js";
 

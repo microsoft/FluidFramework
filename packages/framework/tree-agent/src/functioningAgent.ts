@@ -7,234 +7,176 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 import {
 	type ImplicitFieldSchema,
-	Tree,
+	type InsertableField,
+	type ReadableField,
 	type TreeFieldFromImplicitField,
 	type TreeNode,
+	type InsertableContent,
+	normalizeFieldSchema,
+	type ObjectNodeSchema,
+	NodeKind,
 	getSimpleSchema,
 } from "@fluidframework/tree/internal";
 // eslint-disable-next-line import/no-internal-modules
-import { createZodJsonValidator } from "typechat/zod";
+import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
+// eslint-disable-next-line import/no-internal-modules
+import { tool } from "@langchain/core/tools";
+import { z } from "zod";
 
 import {
-	objectIdKey,
-	objectIdType,
-	typeField,
-	type InsertIntoArray,
-	type MoveArrayElement,
-	type RemoveFromArray,
-	type SetField,
-	type TreeEdit,
-} from "./agentEditTypes.js";
+	SharedTreeSemanticAgentBase,
+	type Log,
+	type SharedTreeSemanticAgent,
+} from "./agent.js";
+import { objectIdType, objectIdKey } from "./agentEditTypes.js";
 import { IdGenerator } from "./idGenerator.js";
-import { doesNodeContainArraySchema, generateEditTypesForPrompt } from "./typeGeneration.js";
-import { fail, type TreeView } from "./utils.js";
+import { generateEditTypesForPrompt } from "./typeGeneration.js";
+import {
+	constructNode,
+	fail,
+	getFriendlySchemaName,
+	stringifyWithIds,
+	type TreeView,
+} from "./utils.js";
+
+const functionName = "editTree";
+const paramsName = "params";
 
 /**
- * A log of edits that have been made to a tree.
- * @remarks This is primarily used to help an LLM keep track of the active changes it has made.
+ * TODO doc
+ * @alpha
  */
-export type EditLog = {
-	edit: TreeEdit;
-	error?: string;
-}[];
+export function createFunctioningAgent<TRoot extends ImplicitFieldSchema>(
+	client: BaseChatModel,
+	treeView: TreeView<TRoot>,
+	options?: {
+		readonly domainHints?: string;
+		readonly treeToString?: (root: ReadableField<TRoot>) => string;
+		readonly validator?: (js: string) => boolean;
+		readonly log?: Log;
+	},
+): SharedTreeSemanticAgent {
+	return new SharedTreeSemanticFunctioningAgent(client, treeView, options);
+}
 
 /**
- * TBD
+ * TODO doc
  */
-export function stringifyWithIds(
-	idGenerator: IdGenerator,
-	root: TreeFieldFromImplicitField<ImplicitFieldSchema>,
-): {
-	stringified: string;
-	objectsWithIds: {
-		type: string;
-		id: string;
-	}[];
-} {
-	idGenerator.assignIds(root);
-	const objectsWithIds: ReturnType<typeof stringifyWithIds>["objectsWithIds"] = [];
-	const stringified: string = JSON.stringify(
-		root,
-		(_, value) => {
-			if (typeof value === "object" && !Array.isArray(value) && value !== null) {
-				// TODO: SharedTree Team needs to either publish TreeNode as a class to use .instanceof() or a typeguard.
-				// Uncomment this assertion back once we have a typeguard ready.
-				// assert(isTreeNode(node), "Non-TreeNode value in tree.");
-				const id =
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-					idGenerator.getId(value) ?? fail("ID of new node should have been assigned.");
-				assert(
-					!Object.prototype.hasOwnProperty.call(value, objectIdKey),
-					0xa7b /* Collision of object id property. */,
-				);
-				const type =
-					getFriendlySchemaName(Tree.schema(value as TreeNode).identifier) ??
-					fail("Expected object schema to have a friendly name.");
-				objectsWithIds.push({ id, type });
-				return {
-					[objectIdKey]: id,
-					...value,
-				} as unknown;
-			}
-			return value as unknown;
+export class SharedTreeSemanticFunctioningAgent<
+	TRoot extends ImplicitFieldSchema,
+> extends SharedTreeSemanticAgentBase<TRoot> {
+	public constructor(
+		client: BaseChatModel,
+		treeView: TreeView<TRoot>,
+		options?: {
+			readonly domainHints?: string;
+			readonly treeToString?: (root: ReadableField<TRoot>) => string;
+			readonly validator?: (js: string) => boolean;
+			readonly log?: Log;
 		},
-		2,
-	);
-	return {
-		stringified,
-		objectsWithIds,
-	};
-}
+	) {
+		const editingTool = tool(
+			({ functionCode }) => {
+				const { branch, idGenerator } = this.prompting;
+				const create: Record<string, (input: InsertableContent) => TreeNode> = {};
+				visitObjectNodeSchema(this.treeView.schema, (schema) => {
+					const name =
+						getFriendlySchemaName(schema.identifier) ??
+						fail("Expected friendly name for object node schema");
 
-/**
- * Generates a prompt that provides a history of the edits an LLM has made to a SharedTree as well as any errors that occured from attemping to apply each respsecitve edit to the tree.
- */
-export function createEditListHistoryPrompt(edits: EditLog): string {
-	return edits
-		.map((edit, index) => {
-			const error =
-				edit.error === undefined
-					? ""
-					: ` This edit produced an error, and was discarded. The error message was: "${edit.error}"`;
-			return `${index + 1}. ${JSON.stringify(edit.edit)}${error}`;
-		})
-		.join("\n");
-}
-
-/**
- * Generates the main prompt of this explicit strategy.
- * This prompt is designed to give an LLM instructions on how it can modify a SharedTree using specific types of {@link TreeEdit}'s
- * and provides with both a serialized version of the current state of the provided tree node as well as  the interfaces that compromise said tree nodes data.
- */
-export function getEditingSystemPrompt(
-	view: Omit<TreeView<ImplicitFieldSchema>, "fork" | "merge">,
-	editingTool: string,
-	thinkingTool: string,
-): string {
-	// TODO: Support for non-object roots
-	assert(typeof view.root === "object" && view.root !== null && !isFluidHandle(view.root), "");
-	const schema = getSimpleSchema(view.schema);
-	const { editTypes, editRoot, domainTypes, domainRoot } = generateEditTypesForPrompt(schema);
-	for (const [key, value] of Object.entries(domainTypes)) {
-		const friendlyKey = getFriendlySchemaName(key);
-		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-		delete domainTypes[key];
-		if (
-			friendlyKey !== undefined &&
-			friendlyKey !== "string" &&
-			friendlyKey !== "number" &&
-			friendlyKey !== "boolean"
-		) {
-			domainTypes[friendlyKey] = value;
-		}
+					create[name] = (input: InsertableContent) => constructNode(schema, input);
+				});
+				if (options?.validator?.(functionCode) === false) {
+					return "Code validation failed";
+				}
+				const params = {
+					get root(): TreeFieldFromImplicitField<TRoot> {
+						return branch.root;
+					},
+					set root(value: InsertableField<TRoot>) {
+						branch.root = value;
+					},
+					idMap: idGenerator,
+					create,
+				};
+				const code = processLlmCode(functionCode);
+				this.options?.log?.(`### Generated Code\n\n\`\`\`js\n${code}\n\`\`\`\n\n`);
+				// eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
+				const fn = new Function(paramsName, code) as (p: typeof params) => void;
+				fn(params);
+				this.options?.log?.(`The new state of the tree is:\n\n`);
+				this.options?.log?.(
+					`${
+						this.options?.treeToString?.(branch.root) ??
+						`\`\`\`JSON\n${JSON.stringify(branch.root, undefined, 2)}\n\`\`\``
+					}\n\n`,
+				);
+				return `After running your function, the new state of the tree is:\n\n\`\`\`JSON\n${stringifyWithIds(branch.root, idGenerator).stringified}\`\`\``;
+			},
+			{
+				name: "GenerateTreeEditingCode",
+				description: `Invokes a JavaScript function \`${functionName}\` to edit a user's tree`,
+				schema: z.object({
+					functionCode: z
+						.string()
+						.describe(`The body of the \`${functionName}\` JavaScript function`),
+				}),
+			},
+		);
+		super(client, treeView, editingTool, options);
 	}
-	const domainSchema = createZodJsonValidator(domainTypes, domainRoot);
-	const domainSchemaString = domainSchema.getSchemaText();
-	const { stringified } = stringifyWithIds(new IdGenerator(), view.root);
-	const treeSchemaString = createZodJsonValidator(editTypes, editRoot).getSchemaText();
-	const setFieldType = "SetField" satisfies Capitalize<SetField["type"]>;
-	const insertIntoArrayType = "InsertIntoArray" satisfies Capitalize<InsertIntoArray["type"]>;
-	const topLevelEditWrapperDescription = doesNodeContainArraySchema(view.root)
-		? `is one of the following interfaces: \`${setFieldType}\` for editing objects or one of \`${insertIntoArrayType}\`, \`${"RemoveFromArray" satisfies Capitalize<RemoveFromArray["type"]>}\`, \`${"MoveArrayElement" satisfies Capitalize<MoveArrayElement["type"]>}\` for editing arrays`
-		: `is the interface \`${setFieldType}\``;
 
-	const rootTypes = [...schema.allowedTypesIdentifiers];
-	// TODO: security: user prompt in system prompt
-	const systemPrompt = `${getPreamble(domainSchemaString, editingTool, thinkingTool)}
-	
-If the user asks you to edit the data, you will use the ${editingTool} tool to produce an array of edits where each edit ${topLevelEditWrapperDescription}.
-When creating new objects for \`${insertIntoArrayType}\` or \`${setFieldType}\`, you may create an ${objectIdType} and put it in the \`${objectIdKey}\` property if you want to refer to the object in a later edit.
-For example, if you want to insert a new object into an array and (in a subsequent edit) move another piece of content to after the newly inserted one, you can use the ${objectIdType} of the newly inserted object in the \`${"MoveArrayElement" satisfies Capitalize<MoveArrayElement["type"]>}\` edit.
-New ${objectIdType}s must be unique, i.e. a new object cannot have the same ${objectIdType} as any object that has existed before.
-${objectIdType}s are optional; do not supply them unless you need to refer to the object in a later edit.
-For a \`${setFieldType}\` or \`${insertIntoArrayType}\` edit, you might insert an object into a location where it is ambiguous what the type of the object is from the data alone.
-In that case, supply the type in the \`${typeField}\` property of the object with a value that is the typescript type name of that object.
+	protected override getSystemPrompt(view: Omit<TreeView<TRoot>, "fork" | "merge">): string {
+		const arrayInterfaceName = "TreeArray";
+		// TODO: Support for non-object roots
+		assert(
+			typeof view.root === "object" && view.root !== null && !isFluidHandle(view.root),
+			"",
+		);
+		const schema = getSimpleSchema(view.schema);
 
-The schema definitions for an edit are:
-
-\`\`\`typescript
-${treeSchemaString}
-\`\`\`
-
-The tree is a JSON object with the following schema:
-
-\`\`\`typescript
-${domainSchemaString}
-\`\`\`
-
-The type${rootTypes.length > 1 ? "s" : ""} allowable at the root of the tree ${rootTypes.length > 1 ? "are" : "is"} \`${rootTypes.map((t) => getFriendlySchemaName(t)).join(" | ")}\`.
-The current state of the tree is
-
-\`\`\`JSON
-${stringified}
-\`\`\`
-
-Your final output should be an array of one or more edits that accomplishes the goal, or an empty array if the task can't be accomplished.
-Before returning the edits, you should check that they are valid according to both the application schema and the editing language schema.
-When possible, ensure that the edits preserve the identity of objects already in the tree (for example, prefer move operations over removal and reinsertion).
-Do not put \`${objectIdKey}\` properties on new objects that you create unless you are going to refer to them in a later edit.
-Finally, double check that the edits would accomplish the user's request (if it is possible).`;
-
-	return systemPrompt;
-}
-
-/**
- * TODO
- */
-export function getFunctioningSystemPrompt(
-	view: Omit<TreeView<ImplicitFieldSchema>, "fork" | "merge">,
-	editingTool: string,
-	thinkingTool: string,
-	editFunctionName: string,
-): string {
-	const arrayInterfaceName = "TreeArray";
-	// TODO: Support for non-object roots
-	assert(typeof view.root === "object" && view.root !== null && !isFluidHandle(view.root), "");
-	const schema = getSimpleSchema(view.schema);
-
-	const { domainTypes, domainRoot } = generateEditTypesForPrompt(schema);
-	for (const [key, value] of Object.entries(domainTypes)) {
-		const friendlyKey = getFriendlySchemaName(key);
-		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-		delete domainTypes[key];
-		if (
-			friendlyKey !== undefined &&
-			friendlyKey !== "string" &&
-			friendlyKey !== "number" &&
-			friendlyKey !== "boolean"
-		) {
-			domainTypes[friendlyKey] = value;
+		const { domainTypes, domainRoot } = generateEditTypesForPrompt(schema);
+		for (const [key, value] of Object.entries(domainTypes)) {
+			const friendlyKey = getFriendlySchemaName(key);
+			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+			delete domainTypes[key];
+			if (
+				friendlyKey !== undefined &&
+				friendlyKey !== "string" &&
+				friendlyKey !== "number" &&
+				friendlyKey !== "boolean"
+			) {
+				domainTypes[friendlyKey] = value;
+			}
 		}
-	}
-	const domainSchema = createZodJsonValidator(domainTypes, domainRoot);
-	const domainSchemaString = domainSchema.getSchemaText();
-	const { stringified, objectsWithIds } = stringifyWithIds(new IdGenerator(), view.root);
 
-	const objectIdExplanation =
-		objectsWithIds[0] === undefined
-			? ""
-			: `All objects within the initial tree above have a unique \`${objectIdType}\` in the \`${objectIdKey}\` property.
+		const { stringified, objectsWithIds } = stringifyWithIds(view.root, new IdGenerator());
+
+		const objectIdExplanation =
+			objectsWithIds[0] === undefined
+				? ""
+				: `All objects within the initial tree above have a unique \`${objectIdType}\` in the \`${objectIdKey}\` property.
 You never supply the \`${objectIdKey}\` property when making a new object yourself because the \`${objectIdKey}\` property is only used to refer to objects that exist in the initial tree, not objects that are created later.
-You can use the \`${objectIdType}\` as the lookup key in the readonly JavaScript Map<${objectIdKey}, object>, which is provided via the "idMap" property to the first argument of the \`${editFunctionName}\` function.
+You can use the \`${objectIdType}\` as the lookup key in the readonly JavaScript Map<${objectIdKey}, object>, which is provided via the "idMap" property to the first argument of the \`${functionName}\` function.
 For example:
 
 \`\`\`javascript
-function ${editFunctionName}({ root, idMap, create }) {
+function ${functionName}({ root, idMap, create }) {
 	// This retrieves the ${objectsWithIds[0].type} object with the \`${objectIdKey}\` "${objectsWithIds[0].id}" in the initial tree.
 	const ${uncapitalize(objectsWithIds[0].type)} = idMap.get("${objectsWithIds[0].id}");
 	// ...
 }
 \`\`\`\n\n`;
 
-	const builderExplanation =
-		objectsWithIds[0] === undefined
-			? ""
-			: `When constructing new objects, you should wrap them in the appropriate builder function rather than simply making a javascript object.
-The builders are available on the "create" property on the first argument of the \`${editFunctionName}\` function and are named according to the type that they create.
+		const builderExplanation =
+			objectsWithIds[0] === undefined
+				? ""
+				: `When constructing new objects, you should wrap them in the appropriate builder function rather than simply making a javascript object.
+The builders are available on the "create" property on the first argument of the \`${functionName}\` function and are named according to the type that they create.
 For example:
 
 \`\`\`javascript
-function ${editFunctionName}({ root, idMap, create }) {
+function ${functionName}({ root, idMap, create }) {
 	// This creates a new ${objectsWithIds[0].type} object:
 	const ${uncapitalize(objectsWithIds[0].type)} = create.${objectsWithIds[0].type}({ /* ...properties... */ });
 	// Don't do this:
@@ -242,13 +184,13 @@ function ${editFunctionName}({ root, idMap, create }) {
 }
 \`\`\`\n\n`;
 
-	const rootTypes = [...schema.allowedTypesIdentifiers];
-	// TODO: security: user prompt in system prompt
-	const prompt = `${getPreamble(domainSchemaString, editingTool, thinkingTool)}
+		const rootTypes = [...schema.allowedTypesIdentifiers];
+		// TODO: security: user prompt in system prompt
+		const prompt = `${this.getSystemPromptPreamble(domainTypes, domainRoot)}
 
-If the user asks you to edit the data, you will use the ${editingTool} tool to write a JavaScript function that mutates the data in-place to achieve the user's goal.
-The function must be named "${editFunctionName}".
-The ${editFunctionName} function must have a first parameter which has a \`root\` property that is the JSON object you are to mutate.
+If the user asks you to edit the data, you will use the ${this.editingTool.name} tool to write a JavaScript function that mutates the data in-place to achieve the user's goal.
+The function must be named "${functionName}".
+The ${functionName} function must have a first parameter which has a \`root\` property that is the JSON object you are to mutate.
 The current state of the \`root\` object is:
 
 \`\`\`JSON
@@ -266,7 +208,7 @@ ${getTreeArrayNodeDocumentation(arrayInterfaceName)}
 
 Outside of mutation, they behave like normal JavaScript arrays - you can create them, read from them, and call non-mutating methods on them (e.g. \`concat\`, \`map\`, \`filter\`, \`find\`, \`forEach\`, \`indexOf\`, \`slice\`, \`join\`, etc.).
 
-Before outputting the ${editFunctionName} function, you should check that it is valid according to both the application tree's schema and the restrictions of the editing language (e.g. the array methods you are allowed to use).
+Before outputting the ${functionName} function, you should check that it is valid according to both the application tree's schema and the restrictions of the editing language (e.g. the array methods you are allowed to use).
 
 When possible, ensure that the edits preserve the identity of objects already in the tree (for example, prefer \`array.moveToIndex\` or \`array.moveRange\` over \`array.removeAt\` + \`array.insertAt\`).
 
@@ -274,43 +216,31 @@ Once data has been removed from the tree (e.g. replaced via assignment, or remov
 
 ${builderExplanation}Finally, double check that the edits would accomplish the user's request (if it is possible).`;
 
-	return prompt;
+		return prompt;
+	}
 }
 
-function getPreamble(
-	domainSchemaString: string,
-	editingTool: string,
-	thinkingTool: string,
-): string {
-	return `You are a collaborative agent who assists a user with editing and analyzing a JSON tree.
-The tree is a JSON object with the following Typescript schema:
-
-\`\`\`typescript
-${domainSchemaString}
-\`\`\`
-
-If the user asks you a question about the tree, you should inspect the state of the tree and answer the question.
-If the user asks you to edit the tree, you should use the ${editingTool} tool to accomplish the user-specified goal.
-You may also use the ${thinkingTool} tool to help you reason through complex data manipulation tasks before finally invoking the ${editingTool} tool.`;
+function visitObjectNodeSchema(
+	schema: ImplicitFieldSchema,
+	visitor: (schema: ObjectNodeSchema) => void,
+): void {
+	const normalizedSchema = normalizeFieldSchema(schema);
+	for (const nodeSchema of normalizedSchema.allowedTypeSet) {
+		if (nodeSchema.kind === NodeKind.Object) {
+			visitor(nodeSchema as ObjectNodeSchema);
+		}
+		visitObjectNodeSchema([...nodeSchema.childTypes], visitor);
+	}
 }
 
-/**
- * TODO
- * @remarks Returns undefined if the schema should not be included in the prompt (and therefore should not ever be seen by the LLM).
- */
-export function getFriendlySchemaName(schemaName: string): string | undefined {
-	// TODO: Kludge
-	const arrayTypes = schemaName.match(/Array<\["(.*)"]>/);
-	if (arrayTypes?.[1] !== undefined) {
-		return undefined;
+function processLlmCode(code: string): string {
+	// TODO: use a library like Acorn to analyze the code more robustly
+	const regex = new RegExp(`function\\s+${functionName}\\s*\\(`);
+	if (!regex.test(code)) {
+		throw new Error(`Generated code does not contain a function named \`${functionName}\``);
 	}
 
-	const matches = schemaName.match(/[^.]+$/);
-	if (matches === null) {
-		// empty scope
-		return schemaName;
-	}
-	return matches[0];
+	return `${code}\n\n${functionName}(${paramsName});`;
 }
 
 /**
