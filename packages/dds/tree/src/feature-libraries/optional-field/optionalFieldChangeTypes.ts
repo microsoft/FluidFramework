@@ -29,25 +29,10 @@ export type ChildChange = readonly [register: RegisterId, childChange: NodeId];
  */
 export interface OptionalChangeset {
 	/**
-	 * Each entry signifies the intent to move a node from `src` to `dst`.
-	 * Moves to or from the "self" register are represented in {@link valueReplace}.
-	 *
-	 * These entries should not be interpreted as "applied one after the other", but rather as "applied simultaneously".
-	 * As such, changesets should not contain duplicated src or dst entries.
-	 */
-	readonly moves: readonly Move[];
-
-	/**
-	 * Nested changes to nodes that occupy registers.
-	 *
-	 * Nodes are identified by the register they occupy in the *input* context of the changeset.
-	 */
-	readonly childChanges: readonly ChildChange[];
-
-	/**
 	 * An optional description of how to replace the current value of the field.
 	 */
 	readonly valueReplace?: Replace;
+	readonly childChange?: NodeId;
 }
 
 export interface Replace {

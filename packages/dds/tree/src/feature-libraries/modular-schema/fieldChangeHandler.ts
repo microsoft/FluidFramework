@@ -6,9 +6,7 @@
 import type { ICodecFamily, IJsonCodec } from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
-	DeltaDetachedNodeChanges,
 	DeltaDetachedNodeId,
-	DeltaDetachedNodeRename,
 	DeltaFieldChanges,
 	DeltaFieldMap,
 	EncodedRevisionTag,
@@ -17,33 +15,15 @@ import type {
 } from "../../core/index.js";
 import type { IdAllocator, Invariant } from "../../util/index.js";
 
-import type { CrossFieldManager } from "./crossFieldQueries.js";
+import type {
+	ComposeNodeManager,
+	InvertNodeManager,
+	RebaseNodeManager,
+} from "./crossFieldQueries.js";
 import type { CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
 import type { EncodedNodeChangeset } from "./modularChangeFormat.js";
 
-export type NestedChangesIndices = [
-	NodeId,
-	number | undefined /* inputIndex */,
-	number | undefined /* outputIndex */,
-][];
-
-/**
- * The return value of calling {@link FieldChangeHandler.intoDelta}.
- */
-export interface FieldChangeDelta {
-	/**
-	 * {@inheritdoc DeltaFieldChanges}
-	 */
-	readonly local?: DeltaFieldChanges;
-	/**
-	 * {@inheritdoc DeltaRoot.global}
-	 */
-	readonly global?: readonly DeltaDetachedNodeChanges[];
-	/**
-	 * {@inheritdoc DeltaRoot.rename}
-	 */
-	readonly rename?: readonly DeltaDetachedNodeRename[];
-}
+export type NestedChangesIndices = [NodeId, number /* inputIndex */][];
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
@@ -64,27 +44,7 @@ export interface FieldChangeHandler<
 		>,
 	) => ICodecFamily<TChangeset, FieldChangeEncodingContext>;
 	readonly editor: TEditor;
-	intoDelta(change: TChangeset, deltaFromChild: ToDelta): FieldChangeDelta;
-	/**
-	 * Returns the set of removed roots that should be in memory for the given change to be applied.
-	 * A removed root is relevant if any of the following is true:
-	 * - It is being inserted
-	 * - It is being restored
-	 * - It is being edited
-	 * - The ID it is associated with is being changed
-	 *
-	 * Implementations are allowed to be conservative by returning more removed roots than strictly necessary
-	 * (though they should, for the sake of performance, try to avoid doing so).
-	 *
-	 * Implementations are not allowed to return IDs for non-root trees, even if they are removed.
-	 *
-	 * @param change - The change to be applied.
-	 * @param relevantRemovedRootsFromChild - Delegate for collecting relevant removed roots from child changes.
-	 */
-	readonly relevantRemovedRoots: (
-		change: TChangeset,
-		relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
-	) => Iterable<DeltaDetachedNodeId>;
+	intoDelta(change: TChangeset, deltaFromChild: ToDelta): DeltaFieldChanges;
 
 	/**
 	 * Returns whether this change is empty, meaning that it represents no modifications to the field
@@ -129,7 +89,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		change2: TChangeset,
 		composeChild: NodeChangeComposer,
 		genId: IdAllocator,
-		crossFieldManager: CrossFieldManager,
+		nodeManager: ComposeNodeManager,
 		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
 
@@ -142,7 +102,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		isRollback: boolean,
 		genId: IdAllocator,
 		revision: RevisionTag | undefined,
-		crossFieldManager: CrossFieldManager,
+		nodeManager: InvertNodeManager,
 		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
 
@@ -155,7 +115,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		over: TChangeset,
 		rebaseChild: NodeChangeRebaser,
 		genId: IdAllocator,
-		crossFieldManager: CrossFieldManager,
+		nodeManager: RebaseNodeManager,
 		revisionMetadata: RebaseRevisionMetadata,
 	): TChangeset;
 
@@ -249,11 +209,6 @@ export type NodeChangeComposer = (
 /**
  */
 export type NodeChangePruner = (change: NodeId) => NodeId | undefined;
-
-/**
- * A function that returns the set of removed roots that should be in memory for a given node changeset to be applied.
- */
-export type RelevantRemovedRootsFromChild = (child: NodeId) => Iterable<DeltaDetachedNodeId>;
 
 export interface RebaseRevisionMetadata extends RevisionMetadataSource {
 	readonly getRevisionToRebase: () => RevisionTag | undefined;

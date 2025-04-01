@@ -4,13 +4,14 @@
  */
 
 import type {
+	ChangeAtomId,
 	FieldKey,
 	FieldKindIdentifier,
 	RevisionInfo,
 	RevisionMetadataSource,
 } from "../../../core/index.js";
 import type {
-	CrossFieldManager,
+	ComposeNodeManager,
 	FieldChangeHandler,
 	FieldChangeMap,
 	ModularChangeFamily,
@@ -18,7 +19,7 @@ import type {
 	NodeId,
 } from "../../../feature-libraries/index.js";
 import {
-	newCrossFieldKeyTable,
+	newCrossFieldRangeTable,
 	type ChangeAtomIdBTree,
 	type CrossFieldKeyTable,
 	type FieldChange,
@@ -29,6 +30,7 @@ import {
 import {
 	type IdAllocator,
 	type Mutable,
+	type RangeQueryResult,
 	brand,
 	fail,
 	idAllocatorFromMaxId,
@@ -37,6 +39,7 @@ import {
 import {
 	getChangeHandler,
 	getParentFieldId,
+	newRootTable,
 	normalizeFieldId,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
@@ -75,9 +78,10 @@ function empty(): ModularChangeset {
 	return {
 		fieldChanges: new Map(),
 		nodeChanges: newTupleBTree(),
+		rootNodes: newRootTable(),
 		nodeToParent: newTupleBTree(),
 		nodeAliases: newTupleBTree(),
-		crossFieldKeys: newCrossFieldKeyTable(),
+		crossFieldKeys: newCrossFieldRangeTable(),
 	};
 }
 
@@ -114,7 +118,7 @@ interface BuildArgs {
 function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): ModularChangeset {
 	const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = newTupleBTree();
 	const nodeToParent: ChangeAtomIdBTree<FieldId> = newTupleBTree();
-	const crossFieldKeys: CrossFieldKeyTable = newCrossFieldKeyTable();
+	const crossFieldKeys: CrossFieldKeyTable = newCrossFieldRangeTable();
 
 	const idAllocator = idAllocatorFromMaxId();
 	const fieldChanges = fieldChangeMapFromDescription(
@@ -131,6 +135,7 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 	const result: Mutable<ModularChangeset> = {
 		nodeChanges,
 		fieldChanges,
+		rootNodes: newRootTable(), // XXX
 		nodeToParent,
 		crossFieldKeys,
 		nodeAliases: newTupleBTree(),
@@ -231,26 +236,30 @@ function addNodeToField(
 		fieldChangeset,
 		(node1, node2) => node1 ?? node2 ?? fail("Should not compose two undefined nodes"),
 		idAllocator,
-		dummyCrossFieldManager,
+		dummyComposeManager,
 		dummyRevisionMetadata,
 	);
 }
 
-const dummyCrossFieldManager: CrossFieldManager = {
-	get: (_target, revision, id, count, _addDependency) => ({
-		value: undefined,
-		start: { revision, localId: id },
-		length: count,
-	}),
-	set: () => fail("Not supported"),
-	onMoveIn: () => fail("Not supported"),
-	moveKey: () => fail("Not supported"),
+const unsupportedFunc = () => fail("Not supported");
+
+const dummyComposeManager: ComposeNodeManager = {
+	getNewChangesForBaseDetach(
+		baseDetachId: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<ChangeAtomId, NodeId> {
+		return { start: baseDetachId, value: undefined, length: count };
+	},
+
+	composeAttachDetach: unsupportedFunc,
+	composeDetachAttach: unsupportedFunc,
+	sendNewChangesToBaseSourceLocation: unsupportedFunc,
 };
 
 const dummyRevisionMetadata: RevisionMetadataSource = {
-	getIndex: () => fail("Not supported"),
-	tryGetInfo: () => fail("Not supported"),
-	hasRollback: () => fail("Not supported"),
+	getIndex: unsupportedFunc,
+	tryGetInfo: unsupportedFunc,
+	hasRollback: unsupportedFunc,
 };
 
 export function removeAliases(changeset: ModularChangeset): ModularChangeset {
@@ -258,7 +267,7 @@ export function removeAliases(changeset: ModularChangeset): ModularChangeset {
 		getParentFieldId(changeset, { revision, localId }),
 	);
 
-	const updatedCrossFieldKeys: CrossFieldKeyTable = newCrossFieldKeyTable();
+	const updatedCrossFieldKeys: CrossFieldKeyTable = newCrossFieldRangeTable();
 	for (const entry of changeset.crossFieldKeys.entries()) {
 		updatedCrossFieldKeys.set(
 			entry.start,

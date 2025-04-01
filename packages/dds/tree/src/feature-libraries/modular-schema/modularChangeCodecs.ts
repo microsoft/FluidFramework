@@ -57,7 +57,7 @@ import {
 	type EncodedRevisionInfo,
 } from "./modularChangeFormat.js";
 import {
-	newCrossFieldKeyTable,
+	newCrossFieldRangeTable,
 	type ChangeAtomIdBTree,
 	type FieldChangeMap,
 	type FieldChangeset,
@@ -67,6 +67,7 @@ import {
 	type NodeId,
 } from "./modularChangeTypes.js";
 import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
+import { newRootTable } from "./modularChangeFamily.js";
 
 export function makeModularChangeCodecFamily(
 	fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration>,
@@ -485,9 +486,10 @@ function makeModularChangeCodec(
 			const decoded: Mutable<ModularChangeset> = {
 				fieldChanges: new Map(),
 				nodeChanges: newTupleBTree(),
+				rootNodes: newRootTable(), // XXX
 				nodeToParent: newTupleBTree(),
 				nodeAliases: newTupleBTree(),
-				crossFieldKeys: newCrossFieldKeyTable(),
+				crossFieldKeys: newCrossFieldRangeTable(),
 			};
 
 			decoded.fieldChanges = decodeFieldChangesFromJson(

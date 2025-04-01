@@ -92,6 +92,33 @@ export class RangeMap<K, V> {
 		return entries;
 	}
 
+	// XXX: Merge with getAll
+	/**
+	 * Like getAll, but includes entries where the value is undefined.
+	 */
+	public getAll2(start: K, length: number): RangeQueryResult<K, V>[] {
+		let nextKey = start;
+		let lengthRemaining = length;
+		const result: RangeQueryResult<K, V>[] = [];
+		for (const entry of this.getAll(start, length)) {
+			const lengthBefore = this.subtractKeys(entry.start, nextKey);
+			if (lengthBefore > 0) {
+				result.push({ start: nextKey, length: lengthBefore, value: undefined });
+				lengthRemaining -= lengthBefore;
+			}
+
+			result.push(entry);
+			nextKey = this.offsetKey(entry.start, entry.length);
+			lengthRemaining -= entry.length;
+		}
+
+		if (lengthRemaining > 0) {
+			result.push({ start: nextKey, length: lengthRemaining, value: undefined });
+		}
+
+		return result;
+	}
+
 	/**
 	 * Retrieves the value for some prefix of the query range.
 	 *
@@ -203,6 +230,14 @@ export class RangeMap<K, V> {
 		const cloned = new RangeMap<K, V>(this.offsetKey, this.subtractKeys, this.offsetValue);
 		cloned.tree = this.tree.clone();
 		return cloned;
+	}
+
+	public mapEntries(mapKey: (key: K) => K, mapValue: (value: V) => V): RangeMap<K, V> {
+		const result = new RangeMap<K, V>(this.offsetKey, this.subtractKeys, this.offsetValue);
+		for (const entry of this.entries()) {
+			result.set(mapKey(entry.start), entry.length, mapValue(entry.value));
+		}
+		return result;
 	}
 
 	/**

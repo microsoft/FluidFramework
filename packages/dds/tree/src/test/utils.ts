@@ -164,8 +164,6 @@ import { cursorToJsonObject, fieldJsonCursor, singleJsonCursor } from "./json/in
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 import type { Transactor } from "../shared-tree-core/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { FieldChangeDelta } from "../feature-libraries/modular-schema/fieldChangeHandler.js";
 import { TreeFactory, configuredSharedTree } from "../treeFactory.js";
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { JsonAsTree } from "../jsonDomainSchema.js";
@@ -538,7 +536,7 @@ export function isDeltaVisible(fieldChanges: DeltaFieldChanges | undefined): boo
 /**
  * Assert two MarkList are equal, handling cursors.
  */
-export function assertFieldChangesEqual(a: FieldChangeDelta, b: FieldChangeDelta): void {
+export function assertFieldChangesEqual(a: DeltaFieldChanges, b: DeltaFieldChanges): void {
 	assert.deepStrictEqual(a, b);
 }
 

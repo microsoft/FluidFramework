@@ -34,8 +34,8 @@ export function testGetNestedChanges() {
 			];
 			const actual = sequenceFieldChangeHandler.getNestedChanges(change);
 			const expected: NestedChangesIndices = [
-				[nodeId1, 0, undefined],
-				[nodeId2, 43, 42],
+				[nodeId1, 0],
+				[nodeId2, 43],
 			];
 			assert.deepEqual(actual, expected);
 		});
@@ -45,10 +45,7 @@ export function testGetNestedChanges() {
 				Mark.modify(nodeId2, { revision: tag1, localId: brand(43) }),
 			];
 			const actual = sequenceFieldChangeHandler.getNestedChanges(change);
-			const expected: NestedChangesIndices = [
-				[nodeId1, undefined, 0],
-				[nodeId2, undefined, undefined],
-			];
+			const expected: NestedChangesIndices = [];
 			assert.deepEqual(actual, expected);
 		});
 	});

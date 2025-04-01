@@ -4,21 +4,19 @@
  */
 
 import {
-	type DeltaDetachedNodeId,
 	type DeltaMark,
 	Multiplicity,
 	type RevisionTag,
 	replaceAtomRevisions,
+	type DeltaFieldChanges,
 } from "../../core/index.js";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
-	FieldChangeDelta,
 	FieldChangeHandler,
 	NestedChangesIndices,
 	NodeChangeComposer,
 	NodeChangePruner,
 	NodeChangeRebaser,
-	RelevantRemovedRootsFromChild,
 	ToDelta,
 } from "./fieldChangeHandler.js";
 import { FieldKindWithEditor } from "./fieldKindWithEditor.js";
@@ -26,6 +24,7 @@ import { makeGenericChangeCodec } from "./genericFieldKindCodecs.js";
 import { newGenericChangeset, type GenericChangeset } from "./genericFieldKindTypes.js";
 import type { NodeId } from "./modularChangeTypes.js";
 import { BTree } from "@tylerbu/sorted-btree-es6";
+import type { ComposeNodeManager } from "./crossFieldQueries.js";
 
 /**
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.
@@ -44,7 +43,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			return newGenericChangeset(Array.from(changes));
 		},
 	},
-	intoDelta: (change: GenericChangeset, deltaFromChild: ToDelta): FieldChangeDelta => {
+	intoDelta: (change: GenericChangeset, deltaFromChild: ToDelta): DeltaFieldChanges => {
 		let nodeIndex = 0;
 		const markList: DeltaMark[] = [];
 		for (const [index, nodeChange] of change.entries()) {
@@ -56,9 +55,8 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			markList.push({ count: 1, fields: deltaFromChild(nodeChange) });
 			nodeIndex += 1;
 		}
-		return { local: markList };
+		return markList;
 	},
-	relevantRemovedRoots,
 	isEmpty: (change: GenericChangeset): boolean => change.length === 0,
 	getNestedChanges,
 	createEmpty: newGenericChangeset,
@@ -82,7 +80,7 @@ function compose(
 
 function getNestedChanges(change: GenericChangeset): NestedChangesIndices {
 	// For generic changeset, the indices in the input and output contexts are the same.
-	return change.toArray().map(([index, nodeChange]) => [nodeChange, index, index]);
+	return change.toArray().map(([index, nodeChange]) => [nodeChange, index]);
 }
 
 function rebaseGenericChange(
@@ -181,13 +179,4 @@ export function convertGenericChange<TChange>(
 	target: FieldChangeHandler<TChange>,
 ): TChange {
 	return target.editor.buildChildChanges(changeset.entries());
-}
-
-function* relevantRemovedRoots(
-	change: GenericChangeset,
-	relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
-): Iterable<DeltaDetachedNodeId> {
-	for (const nodeChange of change.values()) {
-		yield* relevantRemovedRootsFromChild(nodeChange);
-	}
 }

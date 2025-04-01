@@ -4,7 +4,7 @@
  */
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
-import { type MoveEffectTable, splitMarkForMoveEffects } from "./moveEffectTable.js";
+import { splitMarkForMoveEffects, type NodeRangeQueryFunc } from "./moveEffectTable.js";
 import type { Mark } from "./types.js";
 import { splitMark } from "./utils.js";
 
@@ -14,7 +14,7 @@ export class MarkQueue {
 
 	public constructor(
 		private readonly list: readonly Mark[],
-		private readonly moveEffects: MoveEffectTable,
+		private readonly moveEffects: NodeRangeQueryFunc,
 	) {
 		this.list = list;
 	}

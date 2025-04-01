@@ -90,27 +90,11 @@ export function makeOptionalFieldCodec(
 				}
 			}
 
-			for (const [src, dst] of change.moves) {
-				encoded.m.push([
-					registerIdCodec.encode(src, context.baseContext),
-					registerIdCodec.encode(dst, context.baseContext),
-					true,
-				]);
-			}
-
 			if (encoded.m.length === 0) {
 				delete encoded.m;
 			}
 
-			if (change.childChanges.length > 0) {
-				encoded.c = [];
-				for (const [id, childChange] of change.childChanges) {
-					encoded.c.push([
-						registerIdCodec.encode(id, context.baseContext),
-						context.encodeNode(childChange),
-					]);
-				}
-			}
+			// XXX
 
 			return encoded;
 		},
@@ -143,12 +127,7 @@ export function makeOptionalFieldCodec(
 				}
 			}
 			const decoded: Mutable<OptionalChangeset> = {
-				moves,
-				childChanges:
-					encoded.c?.map(([id, encodedChange]) => [
-						registerIdCodec.decode(id, context.baseContext),
-						context.decodeNode(encodedChange),
-					]) ?? [],
+				// XXX
 			};
 
 			if (detached !== undefined && attached !== undefined) {

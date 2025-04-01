@@ -11,8 +11,9 @@ export {
 } from "./comparison.js";
 export { isNeverField, isNeverTree } from "./isNeverTree.js";
 export {
-	addCrossFieldQuery,
-	type CrossFieldManager,
+	type InvertNodeManager,
+	type RebaseNodeManager,
+	type ComposeNodeManager,
 	type CrossFieldMap,
 	type CrossFieldQuerySet,
 	CrossFieldTarget,
@@ -29,7 +30,6 @@ export { FlexFieldKind, type FullSchemaPolicy } from "./fieldKind.js";
 export { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 export {
 	type FieldChangeHandler,
-	type FieldChangeDelta,
 	type FieldChangeRebaser,
 	type FieldEditor,
 	type NodeChangeComposer,
@@ -38,7 +38,6 @@ export {
 	type NodeChangePruner,
 	referenceFreeFieldChangeRebaser,
 	type RebaseRevisionMetadata,
-	type RelevantRemovedRootsFromChild,
 	type ToDelta,
 	NodeAttachState,
 	type FieldChangeEncodingContext,
