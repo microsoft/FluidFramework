@@ -29,6 +29,7 @@ export {
 export { RemoteFluidObjectHandle } from "./remoteFluidObjectHandle.js";
 export { RequestParser } from "./requestParser.js";
 export { RuntimeFactoryHelper } from "./runtimeFactoryHelper.js";
+export { FluidSerializerBase } from "./fluidSerializerBase.js";
 export {
 	addBlobToSummary,
 	addSummarizeResultToSummary,
