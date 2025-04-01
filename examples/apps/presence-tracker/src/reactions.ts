@@ -6,7 +6,8 @@
 import { Notifications } from "@fluidframework/presence/alpha";
 import type { IPresence, ISessionClient } from "@fluidframework/presence/alpha";
 
-import type { IMousePosition, MouseTracker } from "./MouseTracker.js";
+import type { MouseTracker } from "./MouseTracker.js";
+import type { IMousePosition } from "./types.js";
 
 /**
  * Initializes reactions support for the app. Initialization will create a presence Notifications workspace and connect
