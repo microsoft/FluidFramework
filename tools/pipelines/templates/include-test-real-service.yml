@@ -354,8 +354,7 @@ stages:
           inputs:
             command: 'custom'
             workingDir: ${{ parameters.testWorkspace }}
-            customCommand: 'install ${{ parameters.tenantSetup }}'
-            customFeed: '@fluidframework'
+            customCommand: 'install ${{ parameters.tenantSetup }} --registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/'
 
         # Retrieve a tenant from the TRIPS tenant pool
         - task: AzureCLI@2
