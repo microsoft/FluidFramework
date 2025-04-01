@@ -168,7 +168,6 @@ import {
 	type GarbageCollectionMessage,
 } from "./gc/index.js";
 import { InboundBatchAggregator } from "./inboundBatchAggregator.js";
-import { RuntimeCompatDetails, validateLoaderCompatibility } from "./layerCompatState.js";
 import {
 	ContainerMessageType,
 	type ContainerRuntimeDocumentSchemaMessage,
@@ -203,6 +202,10 @@ import {
 	PendingStateManager,
 } from "./pendingStateManager.js";
 import { RunCounter } from "./runCounter.js";
+import {
+	runtimeCompatDetailsForLoader,
+	validateLoaderCompatibility,
+} from "./runtimeLayerCompatState.js";
 import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
 import {
 	DocumentsSchemaController,
@@ -1303,8 +1306,12 @@ export class ContainerRuntime
 		expiry: { policy: "absolute", durationMs: 60000 },
 	});
 
+	/**
+	 * The compatibility details of the Runtime layer that is exposed to the Loader layer
+	 * for validating Loader-Runtime compatibility.
+	 */
 	public get ILayerCompatDetails(): ILayerCompatDetails {
-		return RuntimeCompatDetails;
+		return runtimeCompatDetailsForLoader;
 	}
 
 	/**
@@ -1375,8 +1382,12 @@ export class ContainerRuntime
 		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
 		this.disposeFn = disposeFn ?? closeFn;
 
-		const maybeLoaderCompatDetails = context as FluidObject<ILayerCompatDetails>;
-		validateLoaderCompatibility(maybeLoaderCompatDetails.ILayerCompatDetails, this.disposeFn);
+		// Validate that the Loader is compatible with this Runtime.
+		const maybeloaderCompatDetailsForRuntime = context as FluidObject<ILayerCompatDetails>;
+		validateLoaderCompatibility(
+			maybeloaderCompatDetailsForRuntime.ILayerCompatDetails,
+			this.disposeFn,
+		);
 
 		this.mc = createChildMonitoringContext({
 			logger: this.baseLogger,
@@ -1571,7 +1582,7 @@ export class ContainerRuntime
 		// If the context has ILayerCompatDetails, it supports referenceSequenceNumbers since that features
 		// predates ILayerCompatDetails.
 		const referenceSequenceNumbersSupported =
-			maybeLoaderCompatDetails.ILayerCompatDetails === undefined
+			maybeloaderCompatDetailsForRuntime.ILayerCompatDetails === undefined
 				? supportedFeatures?.get("referenceSequenceNumbers") === true
 				: true;
 		if (
