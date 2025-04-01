@@ -255,8 +255,9 @@ export class DataVisualizerGraph
 			// Create visualizer node for the shared object
 			const visualizationFunction = isDataObject(visualObject)
 				? visualizeDataObject
-				: (this.visualizers[(visualObject as ISharedObject).attributes.type] ??
-					visualizeUnknownSharedObject);
+				: isPureDataObject(visualObject)
+					? visualizeUnknownSharedObject
+					: (this.visualizers[visualObject.attributes.type] ?? visualizeUnknownSharedObject);
 
 			const visualizerNode = new VisualizerNode(
 				// Double-casting `sharedObject` is necessary for `DataObject` visualization, because the `root` property is inaccessbile in `DataObject` (private).
@@ -292,7 +293,7 @@ export class DataVisualizerGraph
 	): Promise<FluidObjectId | undefined> {
 		const resolvedObject = await handle.get();
 
-		if (isDataObject(resolvedObject)) {
+		if (isPureDataObject(resolvedObject)) {
 			return this.registerVisualizerForVisualizableObject(resolvedObject);
 		}
 
@@ -533,11 +534,22 @@ function isSharedObject(value: unknown): value is ISharedObject {
 function isDataObject(value: unknown): value is DataObject {
 	return (
 		(value as DataObject).initializeInternal !== undefined &&
-		(value as DataObject).id !== undefined &&
-		(value as DataObject).IFluidLoadable !== undefined &&
-		(value as DataObject).IFluidHandle !== undefined &&
-		(value as DataObject).handle !== undefined &&
+		(value as { getUninitializedErrorString(): string }).getUninitializedErrorString !==
+			undefined &&
 		(value as { readonly root: ISharedDirectory }).root?.attributes?.type ===
 			DirectoryFactory.Type
+	);
+}
+
+/**
+ * Determines whether or not the provided value is a {@link PureDataObject}, for the purposes of this library.
+ * @remarks Implemented by checking for the particular properties / methods we use in this module.
+ */
+function isPureDataObject(value: unknown): value is PureDataObject {
+	return (
+		(value as PureDataObject).id !== undefined &&
+		(value as PureDataObject).IFluidLoadable !== undefined &&
+		(value as PureDataObject).IFluidHandle !== undefined &&
+		(value as PureDataObject).handle !== undefined
 	);
 }
