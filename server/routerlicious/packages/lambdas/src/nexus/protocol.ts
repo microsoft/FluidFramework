@@ -6,6 +6,7 @@
 import { NetworkError } from "@fluidframework/server-services-client";
 import { IClient, IClientDetails, IConnect, IUser } from "@fluidframework/protocol-definitions";
 import * as semver from "semver";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export const ProtocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 
@@ -25,6 +26,10 @@ export function checkProtocolVersion(versions: string[]): [string[], string] {
 	const connectVersions = versions || ["^0.1.0"];
 	const version = selectProtocolVersion(connectVersions);
 	if (!version) {
+		Lumberjack.error(`Unsupported client protocol.`, {
+			server: ProtocolVersions,
+			client: connectVersions,
+		});
 		throw new NetworkError(
 			400,
 			`Unsupported client protocol. Server: ${ProtocolVersions}. Client: ${connectVersions}`,

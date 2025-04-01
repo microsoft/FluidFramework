@@ -20,7 +20,10 @@ import type { Multiplicity } from "./multiplicity.js";
  * Schema for what {@link TreeLeafValue} is allowed on a Leaf node.
  * @privateRemarks
  * See also {@link TreeValue}.
- * @internal
+ * If further stabilizing this,
+ * consider the implications of how this might prevent adding of new leaf types in the future.
+ * Maybe add a disclaimer that it might be extended like on {@link NodeKind}?
+ * @alpha
  */
 export enum ValueSchema {
 	Number,
@@ -207,7 +210,9 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 				enumerable: true,
 				configurable: true,
 				writable: true,
-				value: encodeFieldSchema(this.objectNodeFields.get(key) ?? fail("missing field")),
+				value: encodeFieldSchema(
+					this.objectNodeFields.get(key) ?? fail(0xae7 /* missing field */),
+				),
 			});
 		}
 		return toErasedTreeNodeSchemaDataFormat({
@@ -305,11 +310,11 @@ const valueSchemaEncode = new Map([
 const valueSchemaDecode = invertMap(valueSchemaEncode);
 
 function encodeValueSchema(inMemory: ValueSchema): PersistedValueSchema {
-	return valueSchemaEncode.get(inMemory) ?? fail("missing PersistedValueSchema");
+	return valueSchemaEncode.get(inMemory) ?? fail(0xae8 /* missing PersistedValueSchema */);
 }
 
 function decodeValueSchema(inMemory: PersistedValueSchema): ValueSchema {
-	return valueSchemaDecode.get(inMemory) ?? fail("missing ValueSchema");
+	return valueSchemaDecode.get(inMemory) ?? fail(0xae9 /* missing ValueSchema */);
 }
 
 export function encodeFieldSchema(schema: TreeFieldStoredSchema): FieldSchemaFormat {

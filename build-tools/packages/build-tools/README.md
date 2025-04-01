@@ -27,11 +27,8 @@ Then either:
 -   Direct invocation: Use `node bin/<tool-name>` in this directory or `node build-tools/packages/build-tools/bin/<tool-name>`
     from the Fluid repo root.
 -   Symlink package: Use [npm link](https://docs.npmjs.com/cli/v10/commands/npm-link) with this package to override the
-    version of it used in the root package (which is the `client` lerna package, but often used to build other as well).
+    version of it used in the root package (which is the `client` release group, but often used to build other as well).
     This will make scripts like `build:fast` use the linked version.
-
-NOTE: Using `fluid-build`'s `--symlink:full` does **NOT** symlink the version of build tools in the repo into the root package:
-the root package will still use the published build-tools package.
 
 ## `fluid-build`
 
@@ -45,22 +42,24 @@ detection for a range of tools and multiple workspace (a.k.a. release group) in 
 Usage: fluid-build <options> [(<package regexp>|<path>) ...]
     [<package regexp> ...] Regexp to match the package name (default: all packages)
 Options:
-     --all            Operate on all packages/monorepo (default: client monorepo). See also "--server".
-  -c --clean          Same as running build script 'clean' on matched packages (all if package regexp is not specified)
-  -d --dep            Apply actions (clean/force/rebuild) to matched packages and their dependent packages
-     --fix            Auto fix warning from package check if possible
-  -f --force          Force build and ignore dependency check on matched packages (all if package regexp is not specified)
-  -? --help           Print this message
-     --install        Run npm install for all packages/monorepo. This skips a package if node_modules already exists: it can not be used to update in response to changes to the package.json.
-  -r --rebuild        Clean and build on matched packages (all if package regexp is not specified)
-     --reinstall      Same as --uninstall --install.
-  -g --releaseGroup   Release group to operate on
-     --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_ if exist, auto detect otherwise)
-  -t --task <name>    target to execute (default:build)
-     --symlink        Fix symlink between packages within monorepo (isolate mode). This configures the symlinks to only connect within each lerna managed group of packages. This is the configuration tested by CI and should be kept working.
-     --symlink:full   Fix symlink between packages across monorepo (full mode). This symlinks everything in the repo together. CI does not ensure this configuration is functional, so it may or may not work.
-     --uninstall      Clean all node_modules. This errors if some node-nodules folders do not exists: if hitting this limitation you can do an install first to work around it.
-     --vscode         Output error message to work with default problem matcher in vscode
+     --all                  Operate on all packages/monorepo (default: client monorepo). See also "-g" or "--releaseGroup".
+  -c --clean                Same as running build script 'clean' on matched packages (all if package regexp is not specified)
+  -d --dep                  Apply actions (clean/force/rebuild) to matched packages and their dependent packages
+     --fix                  Auto fix warning from package check if possible
+  -f --force                Force build and ignore dependency check on matched packages (all if package regexp is not specified)
+  -? --help                 Print this message
+     --install              Run npm install for all packages/monorepo. This skips a package if node_modules already exists: it can not be used to update in response to changes to the package.json.
+     --workerMemoryLimitMB  Memory limit for worker threads in MiB
+  -r --rebuild              Clean and build on matched packages (all if package regexp is not specified)
+     --reinstall            Same as --uninstall --install.
+  -g --releaseGroup         Release group to operate on
+     --root <path>          Root directory of the Fluid repo (default: env _FLUID_ROOT_)
+  -t --task <name>          target to execute (default:build)
+     --symlink              Deprecated. Fix symlink between packages within monorepo (isolate mode). This configures the symlinks to only connect within each lerna managed group of packages. This is the configuration tested by CI and should be kept working.
+     --symlink:full         Deprecated. Fix symlink between packages across monorepo (full mode). This symlinks everything in the repo together. CI does not ensure this configuration is functional, so it may or may not work.
+     --uninstall            Clean all node_modules. This errors if some node_modules folder do not exist. If hitting this limitation, you can do an install first to work around it.
+     --vscode               Output error message to work with default problem matcher in vscode
+     --worker               Reuse worker threads for some tasks, increasing memory use but lowering overhead.
      --defroot <path> Default root directory of the Fluid repo if auto detect failed (default: env _FLUID_DEFAULT_ROOT_)
      --timer          Measure elapsed time of each step
      --logtime        Display the current time on every status message for logging
@@ -104,20 +103,6 @@ Clean and rebuild:
 fluid-build --rebuild merge     # clean and build packages matching 'merge' in any repo
 fluid-build --clean common      # cleaning packages containing 'common' in any repo
 ```
-
-Symlink commands to change the symlink to either limit to single monorepo (collection of packages managed by lerna), or cross monorepo
-
-```sh
-fluid-build --symlink:full    # switch to full link mode (cross monorepos)
-fluid-build                   # build
-```
-
-```sh
-fluid-build --symlink         # switch to isolate link mode (within monorepo)
-fluid-build                   # build
-```
-
-Note that --symlink\* changes any symlink, the tool will run the clean script for all the packages to make sure everything rebuilt every the next time.
 
 ### Task and dependency definition
 
@@ -268,4 +253,3 @@ These traces show the execution flow of the task, to show the task invocation in
 ### Other fluid-build:\* traces
 
 -   `fluid-build:task:error` - Trace of detailed error messages on any operation in a task
--   `fluid-build:symlink` - Trace the action of the `--symlink` switch

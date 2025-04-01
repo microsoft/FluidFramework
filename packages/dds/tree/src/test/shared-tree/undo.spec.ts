@@ -4,16 +4,17 @@
  */
 
 import {
-	type FieldUpPath,
+	type NormalizedFieldUpPath,
+	type NormalizedUpPath,
 	type Revertible,
 	RevertibleStatus,
-	type UpPath,
 	rootFieldKey,
 } from "../../core/index.js";
 import { singleJsonCursor } from "../json/index.js";
-import { SharedTreeFactory, type ITreeCheckout } from "../../shared-tree/index.js";
+import type { ITreeCheckout } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand } from "../../util/index.js";
 import {
+	chunkFromJsonTrees,
 	createTestUndoRedoStacks,
 	expectJsonTree,
 	moveWithin,
@@ -34,14 +35,16 @@ import {
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { initialize } from "../../shared-tree/schematizeTree.js";
+import { TreeFactory } from "../../treeFactory.js";
 
-const rootPath: UpPath = {
+const rootPath: NormalizedUpPath = {
+	detachedNodeId: undefined,
 	parent: undefined,
 	parentField: rootFieldKey,
 	parentIndex: 0,
 };
 
-const rootField: FieldUpPath = {
+const rootField: NormalizedFieldUpPath = {
 	parent: undefined,
 	field: rootFieldKey,
 };
@@ -91,7 +94,7 @@ const testCases: {
 	{
 		name: "nested removes",
 		edit: (actedOn) => {
-			const listNode: UpPath = {
+			const listNode: NormalizedUpPath = {
 				parent: rootPath,
 				parentField: brand("foo"),
 				parentIndex: 0,
@@ -112,7 +115,7 @@ const testCases: {
 	{
 		name: "move out under remove",
 		edit: (actedOn) => {
-			const listNode: UpPath = {
+			const listNode: NormalizedUpPath = {
 				parent: rootPath,
 				parentField: brand("foo"),
 				parentIndex: 0,
@@ -361,9 +364,9 @@ describe("Undo and redo", () => {
 			const tree2 = tree1.branch();
 
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2.events);
-			tree1.editor.sequenceField(rootField).insert(3, singleJsonCursor(1));
-			tree2.editor.sequenceField(rootField).insert(0, singleJsonCursor(2));
-			tree2.editor.sequenceField(rootField).insert(0, singleJsonCursor(3));
+			tree1.editor.sequenceField(rootField).insert(3, chunkFromJsonTrees([1]));
+			tree2.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees([2]));
+			tree2.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees([3]));
 			undoStack.pop()?.revert();
 			expectJsonTree(tree2, [2, 0, 0, 0]);
 			tree2.rebaseOnto(tree1);
@@ -403,8 +406,8 @@ describe("Undo and redo", () => {
 			const { undoStack: undoStack1, unsubscribe: unsubscribe1 } = createTestUndoRedoStacks(
 				tree1.events,
 			);
-			tree1.editor.sequenceField(rootField).insert(0, singleJsonCursor("A"));
-			tree1.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
+			tree1.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees(["A"]));
+			tree1.editor.sequenceField(rootField).insert(2, chunkFromJsonTrees(["C"]));
 			undoStack1.pop()?.revert();
 			undoStack1.pop()?.revert();
 
@@ -426,7 +429,7 @@ describe("Undo and redo", () => {
 
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 			tree.transaction.start();
-			tree.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
+			tree.editor.sequenceField(rootField).insert(2, chunkFromJsonTrees(["C"]));
 			tree.editor.sequenceField(rootField).remove(0, 1);
 			tree.transaction.commit();
 
@@ -443,7 +446,7 @@ describe("Undo and redo", () => {
 
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 			const branch = tree.branch();
-			branch.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
+			branch.editor.sequenceField(rootField).insert(2, chunkFromJsonTrees(["C"]));
 			branch.editor.sequenceField(rootField).remove(0, 1);
 			tree.merge(branch);
 
@@ -466,13 +469,13 @@ describe("Undo and redo", () => {
 
 			const branch = tree.branch();
 
-			branch.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
+			branch.editor.sequenceField(rootField).insert(2, chunkFromJsonTrees(["C"]));
 			tree.merge(branch, false);
 			expectJsonTree(tree, ["A", "B", "C"]);
 			undoStack.pop()?.revert();
 			expectJsonTree(tree, ["A", "B"]);
 
-			branch.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
+			branch.editor.sequenceField(rootField).insert(2, chunkFromJsonTrees(["C"]));
 			tree.merge(branch);
 			expectJsonTree(tree, ["A", "B", "C"]);
 			undoStack.pop()?.revert();
@@ -485,7 +488,7 @@ describe("Undo and redo", () => {
 	it("can undo while detached", () => {
 		const sf = new SchemaFactory(undefined);
 		class Schema extends sf.object("Object", { foo: sf.number }) {}
-		const sharedTreeFactory = new SharedTreeFactory();
+		const sharedTreeFactory = new TreeFactory({});
 		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
 		const tree = sharedTreeFactory.create(runtime, "tree");
 		const view = tree.viewWith(new TreeViewConfiguration({ schema: Schema }));
@@ -683,12 +686,12 @@ describe("Undo and redo", () => {
  * @param attachTree - whether or not the SharedTree should be attached to the Fluid runtime
  */
 export function createCheckout(json: JsonCompatible[], attachTree: boolean): ITreeCheckout {
-	const sharedTreeFactory = new SharedTreeFactory();
+	const sharedTreeFactory = new TreeFactory({});
 	const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
 	const tree = sharedTreeFactory.create(runtime, "tree");
 	const runtimeFactory = new MockContainerRuntimeFactory();
 	runtimeFactory.createContainerRuntime(runtime);
-	initialize(tree.checkout, {
+	initialize(tree.kernel.checkout, {
 		schema: jsonSequenceRootSchema,
 		initialTree: json.map(singleJsonCursor),
 	});
@@ -701,7 +704,7 @@ export function createCheckout(json: JsonCompatible[], attachTree: boolean): ITr
 	}
 
 	temp = tree;
-	return tree.checkout;
+	return tree.kernel.checkout;
 }
 
 let temp: unknown;

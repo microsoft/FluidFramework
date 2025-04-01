@@ -16,7 +16,10 @@
 
 export { BlockQuoteNode } from "./BlockQuoteNode.js";
 export { CodeSpanNode } from "./CodeSpanNode.js";
-export { DocumentNode, type DocumentNodeProperties as DocumentNodeProps } from "./DocumentNode.js";
+export {
+	DocumentNode,
+	type DocumentNodeProperties as DocumentNodeProps,
+} from "./DocumentNode.js";
 export {
 	type DocumentationNode,
 	type DocumentationLiteralNode,

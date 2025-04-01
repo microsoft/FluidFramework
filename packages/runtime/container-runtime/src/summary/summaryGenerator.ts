@@ -25,13 +25,10 @@ import {
 	IAckSummaryResult,
 	IBroadcastSummaryResult,
 	INackSummaryResult,
-	// eslint-disable-next-line import/no-deprecated
 	IRefreshSummaryAckOptions,
-	// eslint-disable-next-line import/no-deprecated
 	ISubmitSummaryOptions,
 	ISummarizeHeuristicData,
 	ISummarizeResults,
-	// eslint-disable-next-line import/no-deprecated
 	ISummaryCancellationToken,
 	SubmitSummaryFailureData,
 	SubmitSummaryResult,
@@ -52,7 +49,7 @@ export type raceTimerResult<T> =
 export async function raceTimer<T>(
 	promise: Promise<T>,
 	timer: Promise<IPromiseTimerResult>,
-	// eslint-disable-next-line import/no-deprecated
+
 	cancellationToken?: ISummaryCancellationToken,
 ): Promise<raceTimerResult<T>> {
 	const promises: Promise<raceTimerResult<T>>[] = [
@@ -215,12 +212,10 @@ export class SummaryGenerator {
 		private readonly pendingAckTimer: IPromiseTimer,
 		private readonly heuristicData: ISummarizeHeuristicData,
 		private readonly submitSummaryCallback: (
-			// eslint-disable-next-line import/no-deprecated
 			options: ISubmitSummaryOptions,
 		) => Promise<SubmitSummaryResult>,
 		private readonly successfulSummaryCallback: () => void,
 		private readonly refreshLatestSummaryCallback: (
-			// eslint-disable-next-line import/no-deprecated
 			options: IRefreshSummaryAckOptions,
 		) => Promise<void>,
 		private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
@@ -238,21 +233,21 @@ export class SummaryGenerator {
 	 * @param resultsBuilder - optional, result builder to use to build pass or fail result.
 	 */
 	public summarize(
-		// eslint-disable-next-line import/no-deprecated
 		summaryOptions: ISubmitSummaryOptions,
 		resultsBuilder = new SummarizeResultBuilder(),
 	): ISummarizeResults {
-		this.summarizeCore(summaryOptions, resultsBuilder).catch((error) => {
-			const message = "UnexpectedSummarizeError";
-			summaryOptions.summaryLogger.sendErrorEvent({ eventName: message }, error);
-			resultsBuilder.fail(message, error);
-		});
+		this.summarizeCore(summaryOptions, resultsBuilder).catch(
+			(error: IRetriableFailureError) => {
+				const message = "UnexpectedSummarizeError";
+				summaryOptions.summaryLogger.sendErrorEvent({ eventName: message }, error);
+				resultsBuilder.fail(message, error);
+			},
+		);
 
 		return resultsBuilder.build();
 	}
 
 	private async summarizeCore(
-		// eslint-disable-next-line import/no-deprecated
 		submitSummaryOptions: ISubmitSummaryOptions,
 		resultsBuilder: SummarizeResultBuilder,
 	): Promise<void> {

@@ -16,6 +16,7 @@ import {
 import { v4 as uuid } from "uuid";
 
 import { EpochTracker } from "./epochTracker.js";
+import { mockify } from "./mockify.js";
 import { getApiRoot } from "./odspUrlHelper.js";
 import { TokenFetchOptionsEx } from "./odspUtils.js";
 import { runWithRetry } from "./retryUtils.js";
@@ -42,100 +43,102 @@ interface IJoinSessionBody {
  * This is optional and used only when collab session is being joined by client acting in app-only mode (i.e. without user context).
  * If not specified client display name is extracted from the access token that is used to join session.
  */
-export async function fetchJoinSession(
-	urlParts: IOdspUrlParts,
-	path: string,
-	method: "GET" | "POST",
-	logger: ITelemetryLoggerExt,
-	getAuthHeader: InstrumentedStorageTokenFetcher,
-	epochTracker: EpochTracker,
-	requestSocketToken: boolean,
-	options: TokenFetchOptionsEx,
-	disableJoinSessionRefresh: boolean | undefined,
-	isRefreshingJoinSession: boolean,
-	displayName: string | undefined,
-): Promise<ISocketStorageDiscovery> {
-	const apiRoot = getApiRoot(new URL(urlParts.siteUrl));
-	const url = `${apiRoot}/drives/${urlParts.driveId}/items/${urlParts.itemId}/${path}?ump=1`;
-	const authHeader = await getAuthHeader(
-		{ ...options, request: { url, method } },
-		"JoinSession",
-	);
+export const fetchJoinSession = mockify(
+	async (
+		urlParts: IOdspUrlParts,
+		path: string,
+		method: "GET" | "POST",
+		logger: ITelemetryLoggerExt,
+		getAuthHeader: InstrumentedStorageTokenFetcher,
+		epochTracker: EpochTracker,
+		requestSocketToken: boolean,
+		options: TokenFetchOptionsEx,
+		disableJoinSessionRefresh: boolean | undefined,
+		isRefreshingJoinSession: boolean,
+		displayName: string | undefined,
+	): Promise<ISocketStorageDiscovery> => {
+		const apiRoot = getApiRoot(new URL(urlParts.siteUrl));
+		const url = `${apiRoot}/drives/${urlParts.driveId}/items/${urlParts.itemId}/${path}?ump=1`;
+		const authHeader = await getAuthHeader(
+			{ ...options, request: { url, method } },
+			"JoinSession",
+		);
 
-	const tokenRefreshProps = options.refresh
-		? { hasClaims: !!options.claims, hasTenantId: !!options.tenantId }
-		: {};
-	const details: ITelemetryBaseProperties = {
-		refreshedToken: options.refresh,
-		requestSocketToken,
-		...tokenRefreshProps,
-		refreshingSession: isRefreshingJoinSession,
-	};
-
-	return PerformanceEvent.timedExecAsync(
-		logger,
-		{
-			eventName: "JoinSession",
-			attempts: options.refresh ? 2 : 1,
-			details: JSON.stringify(details),
+		const tokenRefreshProps = options.refresh
+			? { hasClaims: !!options.claims, hasTenantId: !!options.tenantId }
+			: {};
+		const details: ITelemetryBaseProperties = {
+			refreshedToken: options.refresh,
+			requestSocketToken,
 			...tokenRefreshProps,
-		},
-		async (event) => {
-			const formBoundary = uuid();
-			let postBody = `--${formBoundary}\r\n`;
-			postBody += `Authorization: ${authHeader}\r\n`;
-			postBody += `X-HTTP-Method-Override: POST\r\n`;
-			postBody += `Content-Type: application/json\r\n`;
-			if (!disableJoinSessionRefresh) {
-				postBody += `prefer: FluidRemoveCheckAccess\r\n`;
-			}
-			postBody += `_post: 1\r\n`;
+			refreshingSession: isRefreshingJoinSession,
+		};
 
-			let requestBody: IJoinSessionBody | undefined;
-			if (requestSocketToken) {
-				requestBody = { ...requestBody, requestSocketToken: true };
-			}
-			if (displayName) {
-				requestBody = { ...requestBody, displayName };
-			}
-			if (requestBody) {
-				postBody += `\r\n${JSON.stringify(requestBody)}\r\n`;
-			}
-			postBody += `\r\n--${formBoundary}--`;
-			const headers: { [index: string]: string } = {
-				"Content-Type": `multipart/form-data;boundary=${formBoundary}`,
-			};
+		return PerformanceEvent.timedExecAsync(
+			logger,
+			{
+				eventName: "JoinSession",
+				attempts: options.refresh ? 2 : 1,
+				details: JSON.stringify(details),
+				...tokenRefreshProps,
+			},
+			async (event) => {
+				const formBoundary = uuid();
+				let postBody = `--${formBoundary}\r\n`;
+				postBody += `Authorization: ${authHeader}\r\n`;
+				postBody += `X-HTTP-Method-Override: POST\r\n`;
+				postBody += `Content-Type: application/json\r\n`;
+				if (!disableJoinSessionRefresh) {
+					postBody += `prefer: FluidRemoveCheckAccess\r\n`;
+				}
+				postBody += `_post: 1\r\n`;
 
-			const response = await runWithRetry(
-				async () =>
-					epochTracker.fetchAndParseAsJSON<ISocketStorageDiscovery>(
-						url,
-						{ method, headers, body: postBody },
-						"joinSession",
-						true,
-					),
-				"joinSession",
-				logger,
-			);
+				let requestBody: IJoinSessionBody | undefined;
+				if (requestSocketToken) {
+					requestBody = { ...requestBody, requestSocketToken: true };
+				}
+				if (displayName) {
+					requestBody = { ...requestBody, displayName };
+				}
+				if (requestBody) {
+					postBody += `\r\n${JSON.stringify(requestBody)}\r\n`;
+				}
+				postBody += `\r\n--${formBoundary}--`;
+				const headers: { [index: string]: string } = {
+					"Content-Type": `multipart/form-data;boundary=${formBoundary}`,
+				};
 
-			const socketUrl = response.content.deltaStreamSocketUrl;
-			// expecting socketUrl to be something like https://{hostName}/...
-			const webSocketHostName = socketUrl.split("/")[2];
+				const response = await runWithRetry(
+					async () =>
+						epochTracker.fetchAndParseAsJSON<ISocketStorageDiscovery>(
+							url,
+							{ method, headers, body: postBody },
+							"joinSession",
+							true,
+						),
+					"joinSession",
+					logger,
+				);
 
-			// TODO SPO-specific telemetry
-			event.end({
-				...response.propsToLog,
-				// pushV2 websocket urls will contain pushf
-				pushv2: socketUrl.includes("pushf"),
-				webSocketHostName,
-				refreshSessionDurationSeconds: response.content.refreshSessionDurationSeconds,
-			});
+				const socketUrl = response.content.deltaStreamSocketUrl;
+				// expecting socketUrl to be something like https://{hostName}/...
+				const webSocketHostName = socketUrl.split("/")[2];
 
-			if (response.content.runtimeTenantId && !response.content.tenantId) {
-				response.content.tenantId = response.content.runtimeTenantId;
-			}
+				// TODO SPO-specific telemetry
+				event.end({
+					...response.propsToLog,
+					// pushV2 websocket urls will contain pushf
+					pushv2: socketUrl.includes("pushf"),
+					webSocketHostName,
+					refreshSessionDurationSeconds: response.content.refreshSessionDurationSeconds,
+				});
 
-			return response.content;
-		},
-	);
-}
+				if (response.content.runtimeTenantId && !response.content.tenantId) {
+					response.content.tenantId = response.content.runtimeTenantId;
+				}
+
+				return response.content;
+			},
+		);
+	},
+);

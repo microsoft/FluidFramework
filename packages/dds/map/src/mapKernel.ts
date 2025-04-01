@@ -614,7 +614,7 @@ export class MapKernel {
 		local: boolean,
 		localOpMetadata: MapLocalOpMetadata,
 	): boolean {
-		if (this.pendingClearMessageIds.length > 0) {
+		if (this.pendingClearMessageIds[0] !== undefined) {
 			if (local) {
 				assert(
 					localOpMetadata !== undefined &&

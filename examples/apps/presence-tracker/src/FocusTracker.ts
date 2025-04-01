@@ -74,12 +74,24 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 			this.focus.local = {
 				hasFocus: true,
 			};
+
+			const cover = document.querySelector<HTMLDivElement>("#cover");
+			if (cover !== null) {
+				cover.setAttribute("style", "opacity: 0; z-index: auto");
+			}
+
 			this.emit("focusChanged", this.focus.local);
 		});
 		window.addEventListener("blur", () => {
 			this.focus.local = {
 				hasFocus: false,
 			};
+
+			const cover = document.querySelector<HTMLDivElement>("#cover");
+			if (cover !== null) {
+				cover.setAttribute("style", "opacity: 0.7; z-index: 100");
+			}
+
 			this.emit("focusChanged", this.focus.local);
 		});
 	}

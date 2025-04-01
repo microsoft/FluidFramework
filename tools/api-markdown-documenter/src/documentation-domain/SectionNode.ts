@@ -36,7 +36,10 @@ import type { HeadingNode } from "./HeadingNode.js";
  *
  * @public
  */
-export class SectionNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
+export class SectionNode
+	extends DocumentationParentNodeBase
+	implements MultiLineDocumentationNode
+{
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */

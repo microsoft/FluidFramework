@@ -6,27 +6,29 @@
 import {
 	BaseContainerRuntimeFactory,
 	DataObject,
+	type DataObjectKind,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject, IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { IDirectory } from "@fluidframework/map/internal";
-import type { SharedObjectKind } from "@fluidframework/shared-object-base";
-import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import type {
+	ISharedObjectKind,
+	SharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
 
 import { compatibilityModeRuntimeOptions } from "./compatibilityConfiguration.js";
 import type {
 	CompatibilityMode,
 	ContainerSchema,
-	DataObjectClass,
 	IRootDataObject,
-	LoadableObjectClass,
-	LoadableObjectClassRecord,
+	LoadableObjectKind,
+	LoadableObjectKindRecord,
 	LoadableObjectRecord,
 } from "./types.js";
 import {
-	isDataObjectClass,
+	isDataObjectKind,
 	isSharedObjectKind,
 	parseDataObjectsFromSharedObjects,
 } from "./utils.js";
@@ -40,7 +42,7 @@ export interface RootDataObjectProps {
 	 *
 	 * @see {@link RootDataObject.initializingFirstTime}
 	 */
-	readonly initialObjects: LoadableObjectClassRecord;
+	readonly initialObjects: LoadableObjectKindRecord;
 }
 
 /**
@@ -125,8 +127,8 @@ class RootDataObject
 	 * {@inheritDoc IRootDataObject.create}
 	 */
 	public async create<T>(objectClass: SharedObjectKind<T>): Promise<T> {
-		const internal = objectClass as unknown as LoadableObjectClass<T & IFluidLoadable>;
-		if (isDataObjectClass(internal)) {
+		const internal = objectClass as unknown as LoadableObjectKind<T & IFluidLoadable>;
+		if (isDataObjectKind(internal)) {
 			return this.createDataObject(internal);
 		} else if (isSharedObjectKind(internal)) {
 			return this.createSharedObject(internal);
@@ -135,7 +137,7 @@ class RootDataObject
 	}
 
 	private async createDataObject<T extends IFluidLoadable>(
-		dataObjectClass: DataObjectClass<T>,
+		dataObjectClass: DataObjectKind<T>,
 	): Promise<T> {
 		const factory = dataObjectClass.factory;
 		const packagePath = [...this.context.packagePath, factory.type];
@@ -186,7 +188,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		}
 	>;
 
-	private readonly initialObjects: LoadableObjectClassRecord;
+	private readonly initialObjects: LoadableObjectKindRecord;
 
 	public constructor(schema: ContainerSchema, compatibilityMode: CompatibilityMode) {
 		const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);

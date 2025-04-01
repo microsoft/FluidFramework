@@ -10,10 +10,7 @@ import {
 	ISnapshotTree,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	blobHeadersBlobName as blobNameForBlobHeaders,
-	readAndParse,
-} from "@fluidframework/driver-utils/internal";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
 import {
 	ISummaryTreeWithStats,
 	channelsTreeName,
@@ -21,10 +18,8 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 
 import { blobsTreeName } from "../blobManager/index.js";
-// eslint-disable-next-line import/no-deprecated
 import { IGCMetadata } from "../gc/index.js";
 
-// eslint-disable-next-line import/no-deprecated
 import { IDocumentSchema } from "./documentSchema.js";
 
 /**
@@ -130,11 +125,9 @@ export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): b
 }
 
 /**
- * @legacy
- * @alpha
- * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
-// eslint-disable-next-line import/no-deprecated
+
 export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
 	readonly summaryFormatVersion: 1;
 	/**
@@ -158,14 +151,11 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 	 */
 	readonly telemetryDocumentId?: string;
 
-	// eslint-disable-next-line import/no-deprecated
 	readonly documentSchema?: IDocumentSchema;
 }
 
 /**
- * @legacy
- * @alpha
- * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 export interface ICreateContainerMetadata {
 	/**
@@ -180,9 +170,7 @@ export interface ICreateContainerMetadata {
 
 /**
  * The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary.
- * @legacy
- * @alpha
- * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 export type ISummaryMetadataMessage = Pick<
 	ISequencedDocumentMessage,
@@ -234,7 +222,6 @@ export const chunksBlobName = ".chunks";
 export const recentBatchInfoBlobName = ".recentBatchInfo";
 export const electedSummarizerBlobName = ".electedSummarizer";
 export const idCompressorBlobName = ".idCompressor";
-export const blobHeadersBlobName = blobNameForBlobHeaders;
 
 export function rootHasIsolatedChannels(metadata?: IContainerRuntimeMetadata): boolean {
 	return !!metadata && !metadata.disableIsolatedChannels;
@@ -315,3 +302,5 @@ export async function getFluidDataStoreAttributes(
 	assert(formatVersion > 0, 0x1d5 /* Invalid snapshot format version */);
 	return attributes;
 }
+
+export { blobHeadersBlobName } from "@fluidframework/driver-utils/internal";

@@ -56,7 +56,7 @@ export function getTreeNodeForField(field: FlexTreeField): TreeNode | TreeValue 
 		}
 
 		default:
-			fail("invalid field kind");
+			fail(0xadf /* invalid field kind */);
 	}
 }
 

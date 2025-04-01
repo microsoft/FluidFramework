@@ -264,9 +264,11 @@ ${JSON.stringify(actualEvents)}`);
 	): number {
 		let iExpectedEvent = 0;
 		for (const event of this._events) {
+			const expectedEvent = expectedEvents[iExpectedEvent];
 			if (
 				iExpectedEvent < expectedEvents.length &&
-				MockLogger.eventsMatch(event, expectedEvents[iExpectedEvent], inlineDetailsProp)
+				expectedEvent !== undefined &&
+				MockLogger.eventsMatch(event, expectedEvent, inlineDetailsProp)
 			) {
 				// We found the next expected event; increment
 				++iExpectedEvent;
@@ -376,9 +378,8 @@ export interface IMockLoggerExt extends ITelemetryLoggerExt {
 export function createMockLoggerExt(minLogLevel?: LogLevel): IMockLoggerExt {
 	const mockLogger = new MockLogger(minLogLevel);
 	const childLogger = createChildLogger({ logger: mockLogger });
-	Object.assign(childLogger, {
+	return Object.assign(childLogger, {
 		events: (): readonly ITelemetryEventExt[] =>
 			mockLogger.events.map((e) => e as ITelemetryEventExt),
 	});
-	return childLogger as IMockLoggerExt;
 }

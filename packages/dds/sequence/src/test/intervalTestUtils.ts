@@ -6,12 +6,11 @@
 import { strict as assert } from "assert";
 
 import { isObject } from "@fluidframework/core-utils/internal";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils/internal";
 
-import { IIntervalCollection } from "../intervalCollection.js";
+import { ISequenceIntervalCollection } from "../intervalCollection.js";
 import { createOverlappingIntervalsIndex } from "../intervalIndex/index.js";
-import { SequenceInterval } from "../intervals/index.js";
 import { SharedString } from "../sequenceFactory.js";
 
 export interface Client {
@@ -129,8 +128,14 @@ async function assertPropertiesEqual(a: SharedString, b: SharedString): Promise<
 		for (const key of aKeys.concat(bKeys)) {
 			const aVal: unknown = aProps[key];
 			const bVal: unknown = bProps[key];
-			const aHandle = isObject(aVal) && isFluidHandle(aVal) ? await aVal.get() : aVal;
-			const bHandle = isObject(bVal) && isFluidHandle(bVal) ? await bVal.get() : bVal;
+			const aHandle =
+				isObject(aVal) && isFluidHandle(aVal)
+					? toFluidHandleInternal(aVal).absolutePath
+					: aVal;
+			const bHandle =
+				isObject(bVal) && isFluidHandle(bVal)
+					? toFluidHandleInternal(bVal).absolutePath
+					: bVal;
 			assert.deepEqual(
 				aHandle,
 				bHandle,
@@ -144,7 +149,7 @@ async function assertPropertiesEqual(a: SharedString, b: SharedString): Promise<
 
 export const assertSequenceIntervals = (
 	sharedString: SharedString,
-	intervalCollection: IIntervalCollection<SequenceInterval>,
+	intervalCollection: ISequenceIntervalCollection,
 	expected: readonly { start: number; end: number }[],
 	validateOverlapping: boolean = true,
 ) => {

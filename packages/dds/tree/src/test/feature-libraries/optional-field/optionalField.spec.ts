@@ -1,4 +1,3 @@
-// XXX
 // /*!
 //  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 //  * Licensed under the MIT License.
@@ -8,13 +7,13 @@
 
 // import {
 // 	type ChangeAtomId,
-// 	type DeltaFieldChanges,
 // 	type TaggedChange,
 // 	makeAnonChange,
 // 	makeDetachedNodeId,
 // 	tagChange,
 // } from "../../../core/index.js";
 // import type {
+// 	CrossFieldManager,
 // 	NodeId,
 // 	RelevantRemovedRootsFromChild,
 // } from "../../../feature-libraries/index.js";
@@ -43,16 +42,11 @@
 // import { testCodecs } from "./optionalFieldChangeCodecs.test.js";
 // import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 // import { testReplaceRevisions } from "./replaceRevisions.test.js";
-// import {
-// 	failComposeManager,
-// 	failInvertManager,
-// 	failRebaseManager,
-// 	// eslint-disable-next-line import/no-internal-modules
-// } from "../modular-schema/nodeQueryUtils.js";
 // import type {
+// 	FieldChangeDelta,
 // 	NestedChangesIndices,
 // 	// eslint-disable-next-line import/no-internal-modules
-// } from "../../../feature-libraries/modular-schema/index.js";
+// } from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
 
 // /**
 //  * A change to a child encoding as a simple placeholder string.
@@ -65,6 +59,15 @@
 
 // const nodeChange1 = TestNodeId.create(nodeId1, TestChange.mint([], 1));
 // const nodeChange2 = TestNodeId.create(nodeId2, TestChange.mint([], 2));
+
+// const failCrossFieldManager: CrossFieldManager = {
+// 	get: () => assert.fail("Should query CrossFieldManager"),
+// 	set: () => assert.fail("Should not modify CrossFieldManager"),
+// 	onMoveIn: () => assert.fail("Should not modify CrossFieldManager"),
+// 	moveKey: () => assert.fail("Should not modify CrossFieldManager"),
+// };
+
+// const failingDelegate = (): never => assert.fail("Should not be called");
 
 // const tag = mintRevisionTag();
 // const change1 = tagChangeInline(
@@ -102,7 +105,9 @@
 // );
 
 // const change4: TaggedChange<OptionalChangeset> = tagChangeInline(
-// 	optionalFieldEditor.buildChildChange(0, TestNodeId.create(nodeId2, TestChange.mint([1], 2))),
+// 	optionalFieldEditor.buildChildChanges([
+// 		[0, TestNodeId.create(nodeId2, TestChange.mint([1], 2))],
+// 	]),
 // 	mintRevisionTag(),
 // );
 
@@ -136,7 +141,7 @@
 // 					change2.change,
 // 					TestNodeId.composeChild,
 // 					fakeIdAllocator,
-// 					failComposeManager,
+// 					failCrossFieldManager,
 // 					defaultRevisionMetadataFromChanges([change1, change2]),
 // 				);
 
@@ -176,7 +181,7 @@
 // 					changeB.change,
 // 					TestNodeId.composeChild,
 // 					fakeIdAllocator,
-// 					failComposeManager,
+// 					failCrossFieldManager,
 // 					defaultRevisionMetadataFromChanges([changeA, changeB]),
 // 				);
 
@@ -206,7 +211,7 @@
 // 						return fst ?? snd ?? fail("At least one node should be defined");
 // 					},
 // 					fakeIdAllocator,
-// 					failComposeManager,
+// 					failCrossFieldManager,
 // 					defaultRevisionMetadataFromChanges([changeA, changeB]),
 // 				);
 
@@ -236,7 +241,7 @@
 // 						return fst ?? snd ?? fail("At least one node should be defined");
 // 					},
 // 					fakeIdAllocator,
-// 					failComposeManager,
+// 					failCrossFieldManager,
 // 					defaultRevisionMetadataFromChanges([changeA, changeB]),
 // 				);
 
@@ -260,7 +265,7 @@
 // 				withChild,
 // 				TestNodeId.composeChild,
 // 				fakeIdAllocator,
-// 				failComposeManager,
+// 				failCrossFieldManager,
 // 				defaultRevisionMetadataFromChanges([]),
 // 			);
 
@@ -287,7 +292,7 @@
 // 				change4.change,
 // 				TestNodeId.composeChild,
 // 				fakeIdAllocator,
-// 				failComposeManager,
+// 				failCrossFieldManager,
 // 				defaultRevisionMetadataFromChanges([change1, change4]),
 // 			);
 
@@ -309,7 +314,7 @@
 // 				changeB.change,
 // 				TestNodeId.composeChild,
 // 				fakeIdAllocator,
-// 				failComposeManager,
+// 				failCrossFieldManager,
 // 				defaultRevisionMetadataFromChanges([changeA, changeB]),
 // 			);
 
@@ -330,7 +335,7 @@
 // 					false,
 // 					idAllocatorFromMaxId(),
 // 					mintRevisionTag(),
-// 					failInvertManager,
+// 					failCrossFieldManager,
 // 					defaultRevisionMetadataFromChanges([change]),
 // 				);
 // 			}
@@ -339,9 +344,8 @@
 // 					change.change,
 // 					true,
 // 					idAllocatorFromMaxId(),
-
 // 					mintRevisionTag(),
-// 					failInvertManager,
+// 					failCrossFieldManager,
 // 					defaultRevisionMetadataFromChanges([change]),
 // 				);
 // 			}
@@ -424,7 +428,7 @@
 // 						change1.change,
 // 						TestNodeId.rebaseChild,
 // 						fakeIdAllocator,
-// 						failRebaseManager,
+// 						failCrossFieldManager,
 // 						rebaseRevisionMetadataFromInfo(
 // 							defaultRevInfosFromChanges([change1]),
 // 							change2PreChange1.revision,
@@ -448,7 +452,7 @@
 // 						baseChange,
 // 						TestNodeId.rebaseChild,
 // 						fakeIdAllocator,
-// 						failRebaseManager,
+// 						failCrossFieldManager,
 // 						rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([]), undefined, []),
 // 					),
 // 					expected,
@@ -471,7 +475,7 @@
 // 							return curr ?? base;
 // 						},
 // 						fakeIdAllocator,
-// 						failRebaseManager,
+// 						failCrossFieldManager,
 // 						rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([]), undefined, []),
 // 					),
 // 					expected,
@@ -499,7 +503,7 @@
 // 							return curr ?? base;
 // 						},
 // 						fakeIdAllocator,
-// 						failRebaseManager,
+// 						failCrossFieldManager,
 // 						rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([]), undefined, []),
 // 					),
 // 					expected,
@@ -511,7 +515,7 @@
 // 			it("can rebase a child change over a remove and revive of target node", () => {
 // 				const tag1 = mintRevisionTag();
 // 				const tag2 = mintRevisionTag();
-// 				const changeToRebase = optionalFieldEditor.buildChildChange(0, nodeId1);
+// 				const changeToRebase = optionalFieldEditor.buildChildChanges([[0, nodeId1]]);
 // 				const deletion = tagChange(
 // 					optionalFieldEditor.clear(false, { localId: brand(1), revision: tag1 }),
 // 					tag1,
@@ -522,7 +526,7 @@
 // 						false,
 // 						idAllocatorFromMaxId(),
 // 						tag2,
-// 						failInvertManager,
+// 						failCrossFieldManager,
 // 						defaultRevisionMetadataFromChanges([deletion]),
 // 					),
 // 					tag2,
@@ -542,7 +546,7 @@
 // 					deletion.change,
 // 					childRebaser,
 // 					fakeIdAllocator,
-// 					failRebaseManager,
+// 					failCrossFieldManager,
 // 					rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([deletion]), undefined, [
 // 						deletion.revision,
 // 					]),
@@ -553,7 +557,7 @@
 // 					revive.change,
 // 					childRebaser,
 // 					fakeIdAllocator,
-// 					failRebaseManager,
+// 					failCrossFieldManager,
 // 					rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([revive]), undefined, [
 // 						revive.revision,
 // 					]),
@@ -563,7 +567,7 @@
 // 			});
 
 // 			it("can rebase a child change over a reserved detach on empty field", () => {
-// 				const changeToRebase = optionalFieldEditor.buildChildChange(0, nodeId1);
+// 				const changeToRebase = optionalFieldEditor.buildChildChanges([[0, nodeId1]]);
 // 				deepFreeze(changeToRebase);
 // 				const clear = tagChange(
 // 					optionalFieldEditor.clear(true, { localId: brand(42), revision: tag }),
@@ -584,7 +588,7 @@
 // 					clear.change,
 // 					childRebaser,
 // 					fakeIdAllocator,
-// 					failRebaseManager,
+// 					failCrossFieldManager,
 // 					rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([clear]), undefined, [
 // 						clear.revision,
 // 					]),
@@ -594,7 +598,7 @@
 // 			});
 
 // 			it("can rebase a child change over a reserved detach on field with a pinned node", () => {
-// 				const changeToRebase = optionalFieldEditor.buildChildChange(0, nodeId1);
+// 				const changeToRebase = optionalFieldEditor.buildChildChanges([[0, nodeId1]]);
 // 				deepFreeze(changeToRebase);
 // 				const pin = tagChangeInline(Change.pin(brand(42)), tag);
 
@@ -612,7 +616,7 @@
 // 					pin.change,
 // 					childRebaser,
 // 					fakeIdAllocator,
-// 					failRebaseManager,
+// 					failCrossFieldManager,
 // 					rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([pin]), undefined, [
 // 						pin.revision,
 // 					]),
@@ -656,7 +660,7 @@
 // 					taggedBaseChange.change,
 // 					childRebaser,
 // 					fakeIdAllocator,
-// 					failRebaseManager,
+// 					failCrossFieldManager,
 // 					rebaseRevisionMetadataFromInfo(
 // 						defaultRevInfosFromChanges([taggedBaseChange]),
 // 						undefined,
@@ -671,32 +675,44 @@
 // 	describe("IntoDelta", () => {
 // 		it("can be converted to a delta when field was empty", () => {
 // 			const outerNodeId = makeDetachedNodeId(tag, 41);
-// 			const expected: DeltaFieldChanges = [{ count: 1, attach: outerNodeId }];
+// 			const expected: FieldChangeDelta = {
+// 				global: [
+// 					{
+// 						id: outerNodeId,
+// 						fields: TestNodeId.deltaFromChild(nodeChange1),
+// 					},
+// 				],
+// 				local: [{ count: 1, attach: outerNodeId }],
+// 			};
 
 // 			const actual = optionalFieldIntoDelta(change1.change, TestNodeId.deltaFromChild);
 // 			assertFieldChangesEqual(actual, expected);
 // 		});
 
 // 		it("can be converted to a delta when restoring content", () => {
-// 			const expected: DeltaFieldChanges = [
-// 				{
-// 					count: 1,
-// 					attach: { major: revertChange2.revision, minor: 2 },
-// 					detach: { major: revertChange2.revision, minor: 42 },
-// 				},
-// 			];
+// 			const expected: FieldChangeDelta = {
+// 				local: [
+// 					{
+// 						count: 1,
+// 						attach: { major: revertChange2.revision, minor: 2 },
+// 						detach: { major: revertChange2.revision, minor: 42 },
+// 					},
+// 				],
+// 			};
 
 // 			const actual = optionalFieldIntoDelta(revertChange2.change, TestNodeId.deltaFromChild);
 // 			assertFieldChangesEqual(actual, expected);
 // 		});
 
 // 		it("can be converted to a delta with only child changes", () => {
-// 			const expected: DeltaFieldChanges = [
-// 				{
-// 					count: 1,
-// 					fields: TestNodeId.deltaFromChild(nodeChange2),
-// 				},
-// 			];
+// 			const expected: FieldChangeDelta = {
+// 				local: [
+// 					{
+// 						count: 1,
+// 						fields: TestNodeId.deltaFromChild(nodeChange2),
+// 					},
+// 				],
+// 			};
 // 			assertFieldChangesEqual(
 // 				optionalFieldIntoDelta(change4.change, TestNodeId.deltaFromChild),
 // 				expected,
@@ -720,7 +736,7 @@
 // 		);
 // 		const childChangeTag = mintRevisionTag();
 // 		const hasChildChanges = tagChange(
-// 			optionalFieldEditor.buildChildChange(0, { ...nodeId1, revision: childChangeTag }),
+// 			optionalFieldEditor.buildChildChanges([[0, { ...nodeId1, revision: childChangeTag }]]),
 // 			childChangeTag,
 // 		);
 // 		const relevantNestedTree = { minor: 4242 };
@@ -743,7 +759,7 @@
 // 					clear.change,
 // 					(): NodeId => nodeId1,
 // 					fakeIdAllocator,
-// 					failComposeManager,
+// 					failCrossFieldManager,
 // 					defaultRevisionMetadataFromChanges(changes),
 // 				);
 // 				const actual = Array.from(
@@ -777,13 +793,11 @@
 // 					false,
 // 					idAllocatorFromMaxId(),
 // 					mintRevisionTag(),
-// 					failInvertManager,
+// 					failCrossFieldManager,
 // 					defaultRevisionMetadataFromChanges([clear]),
 // 				);
 // 				const actual = Array.from(
-// 					optionalChangeHandler.relevantRemovedRoots(restore, () =>
-// 						assert.fail("Should not be called"),
-// 					),
+// 					optionalChangeHandler.relevantRemovedRoots(restore, failingDelegate),
 // 				);
 // 				const expected = [makeDetachedNodeId(clear.revision, 1)];
 // 				assert.deepEqual(actual, expected);
@@ -794,7 +808,7 @@
 // 					clear.change,
 // 					() => nodeId1,
 // 					fakeIdAllocator,
-// 					failRebaseManager,
+// 					failCrossFieldManager,
 // 					rebaseRevisionMetadataFromInfo(
 // 						defaultRevInfosFromChanges([clear, hasChildChanges]),
 // 						undefined,
@@ -814,7 +828,7 @@
 // 					hasChildChanges.change,
 // 					(id1, id2): NodeId => id1 ?? id2 ?? fail("Expected child change"),
 // 					fakeIdAllocator,
-// 					failComposeManager,
+// 					failCrossFieldManager,
 // 					defaultRevisionMetadataFromChanges(changes),
 // 				);
 
@@ -830,7 +844,7 @@
 // 					clear.change,
 // 					(id1, id2): NodeId => id1 ?? id2 ?? fail("Expected child change"),
 // 					fakeIdAllocator,
-// 					failComposeManager,
+// 					failCrossFieldManager,
 // 					defaultRevisionMetadataFromChanges(changes),
 // 				);
 // 				const actual = Array.from(
@@ -845,7 +859,7 @@
 // 						false,
 // 						idAllocatorFromMaxId(),
 // 						mintRevisionTag(),
-// 						failInvertManager,
+// 						failCrossFieldManager,
 // 						defaultRevisionMetadataFromChanges([clear]),
 // 					),
 // 					mintRevisionTag(),
@@ -856,7 +870,7 @@
 // 					hasChildChanges.change,
 // 					(id1, id2): NodeId => id1 ?? id2 ?? fail("Expected child change"),
 // 					fakeIdAllocator,
-// 					failComposeManager,
+// 					failCrossFieldManager,
 // 					defaultRevisionMetadataFromChanges(changes),
 // 				);
 // 				const actual = Array.from(
@@ -871,7 +885,7 @@
 // 					clear.change,
 // 					(id1, id2): NodeId => id1 ?? id2 ?? fail("Expected child change"),
 // 					fakeIdAllocator,
-// 					failRebaseManager,
+// 					failCrossFieldManager,
 // 					rebaseRevisionMetadataFromInfo(
 // 						defaultRevInfosFromChanges([clear, hasChildChanges]),
 // 						undefined,

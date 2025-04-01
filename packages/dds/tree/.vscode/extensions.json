@@ -3,5 +3,6 @@
 		"hbenl.vscode-mocha-test-adapter",
 		"streetsidesoftware.code-spell-checker",
 		"bierner.markdown-mermaid",
+		"yoavbls.pretty-ts-errors",
 	],
 }

@@ -487,11 +487,18 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 		},
 	}),
 
-	buildChildChange: (index: number, childChange: NodeId): OptionalChangeset => {
-		assert(index === 0, 0x404 /* Optional fields only support a single child node */);
-		return {
-			childChange,
-		};
+	buildChildChanges: (changes: Iterable<[number, NodeId]>): OptionalChangeset => {
+		const childChanges: NodeId[] = Array.from(changes, ([index, child]) => {
+			assert(index === 0, 0x404 /* Optional fields only support a single child node */);
+			return child;
+		});
+		assert(
+			childChanges.length <= 1,
+			0xabd /* Optional fields only support a single child node */,
+		);
+
+		const childChange = childChanges[0];
+		return childChange !== undefined ? { childChange } : {};
 	},
 };
 

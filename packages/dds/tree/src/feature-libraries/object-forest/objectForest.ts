@@ -12,6 +12,7 @@ import {
 	AnchorSet,
 	type AnnouncedVisitor,
 	type CursorLocationType,
+	type DeltaDetachedNodeId,
 	type DeltaVisitor,
 	type DetachedField,
 	type FieldAnchor,
@@ -26,8 +27,8 @@ import {
 	type MapTree,
 	type PathRootPrefix,
 	type PlaceIndex,
-	type ProtoNodes,
 	type Range,
+	type TreeChunk,
 	TreeNavigationResult,
 	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchemaSubscription,
@@ -46,6 +47,7 @@ import {
 } from "../../util/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import { type CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
+import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/index.js";
 
 /** A `MapTree` with mutable fields */
 interface MutableMapTree extends MapTree {
@@ -107,6 +109,10 @@ export class ObjectForest implements IEditableForest {
 		return new ObjectForest(anchors, this.additionalAsserts, this.roots);
 	}
 
+	public chunkField(cursor: ITreeCursorSynchronous): TreeChunk {
+		return chunkFieldSingle(cursor, { idCompressor: undefined, policy: defaultChunkPolicy });
+	}
+
 	public forgetAnchor(anchor: Anchor): void {
 		this.anchors.forget(anchor);
 	}
@@ -163,7 +169,7 @@ export class ObjectForest implements IEditableForest {
 				preEdit();
 				this.forest.delete(detachedField);
 			}
-			public create(content: ProtoNodes, destination: FieldKey): void {
+			public create(content: readonly ITreeCursorSynchronous[], destination: FieldKey): void {
 				preEdit();
 				this.forest.add(content, destination);
 				this.forest.#events.emit("afterRootFieldCreated", destination);
@@ -172,7 +178,7 @@ export class ObjectForest implements IEditableForest {
 				preEdit();
 				this.attachEdit(source, count, destination);
 			}
-			public detach(source: Range, destination: FieldKey): void {
+			public detach(source: Range, destination: FieldKey, id: DeltaDetachedNodeId): void {
 				preEdit();
 				this.detachEdit(source, destination);
 			}
@@ -235,6 +241,7 @@ export class ObjectForest implements IEditableForest {
 				newContentSource: FieldKey,
 				range: Range,
 				oldContentDestination: FieldKey,
+				oldContentId: DeltaDetachedNodeId,
 			): void {
 				preEdit();
 				assert(
@@ -439,7 +446,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 	}
 	public getPath(prefix?: PathRootPrefix): UpPath {
 		assert(this.innerCursor !== undefined, 0x436 /* Cursor must be current to be used */);
-		return this.innerCursor.getPath(prefix) ?? fail("no path when at root");
+		return this.innerCursor.getPath(prefix) ?? fail(0xb27 /* no path when at root */);
 	}
 	public get fieldIndex(): number {
 		assert(this.innerCursor !== undefined, 0x437 /* Cursor must be current to be used */);

@@ -8,6 +8,16 @@ name: $(Build.BuildId)
 trigger: none
 pr: none
 
+parameters:
+# If true, the routerlicious tests will run against the PPE (aka non-prod) environment.
+# This can be useful when we need to make changes to the routerlicious cluster
+# and we can make them in the PPE environment first before making them in the "prod" environment
+# that the tests normally target.
+- name: useR11sPpeEnvironment
+  displayName: Use PPE Routerlicious environment?
+  type: boolean
+  default: false
+
 resources:
   pipelines:
   - pipeline: client   # Name of the pipeline resource
@@ -38,7 +48,7 @@ variables:
 lockBehavior: sequential
 stages:
 
-  - template: templates/include-test-real-service.yml
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: e2e_local_server
       stageDisplayName: e2e - local server
@@ -55,7 +65,7 @@ stages:
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
   # end-to-end tests tinylicious
-  - template: templates/include-test-real-service.yml
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: e2e_tinylicious
       stageDisplayName: e2e - tinylicious
@@ -77,7 +87,7 @@ stages:
         logger__morganFormat: tiny
 
   # end-to-end tests routerlicious
-  - template: templates/include-test-real-service.yml
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: e2e_routerlicious
       stageDisplayName: e2e - routerlicious
@@ -87,7 +97,10 @@ stages:
       artifactBuildId: $(resources.pipeline.client.runID)
       testCommand: test:realsvc:routerlicious:report
       continueOnError: true
-      r11sSelfSignedCertSecureFile: wu2-tls-certificate.pem
+      ${{ if eq(parameters.useR11sPpeEnvironment, true) }}:
+        r11sSelfSignedCertSecureFile: wu2-ppe-tls-certificate.pem
+      ${{ else }}:
+        r11sSelfSignedCertSecureFile: wu2-tls-certificate.pem
       stageVariables:
         - group: e2e-r11s-lock
       splitTestVariants:
@@ -103,12 +116,15 @@ stages:
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
-        fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s)
+        ${{ if eq(parameters.useR11sPpeEnvironment, true) }}:
+          fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s-ppe)
+        ${{ else }}:
+          fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s)
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
   # end-to-end tests AFR
-  - template: templates/include-test-real-service.yml
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: e2e_frs
       stageDisplayName: e2e - AFR
@@ -140,7 +156,7 @@ stages:
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
   # end-to-end tests odsp
-  - template: templates/include-test-real-service.yml
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: e2e_odsp
       stageDisplayName: e2e - odsp

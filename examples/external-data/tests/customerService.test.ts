@@ -7,7 +7,6 @@ import type { Server } from "node:http";
 
 import cors from "cors";
 import express from "express";
-import fetch, { Response } from "node-fetch";
 
 import { initializeCustomerService } from "../src/mock-customer-service/index.js";
 import { customerServicePort } from "../src/mock-customer-service-interface/index.js";

@@ -123,6 +123,14 @@ resources:
     type: git
     name: 1ESPipelineTemplates/M365GPT
     ref: refs/tags/release
+  # Listing a pipeline as a resource makes its artifacts available for download in any job
+  pipelines:
+    # Access to this pipelines artifacts allows 1ES deployment jobs to install build tools without checking out out a repo.
+    - pipeline: buildTools-resource
+      project: internal
+      source: Build - build-tools
+      branch: main
+
 extends:
   # The pipeline extends the 1ES pipeline template which will inject different SDL and compliance tasks.
   # Read more: https://eng.ms/docs/cloud-ai-platform/devdiv/one-engineering-system-1es/1es-docs/1es-pipeline-templates/onboarding/overview
@@ -241,7 +249,7 @@ extends:
                   exit -1;
                 fi
 
-                if [ -f "lerna.json" ]; then
+                if [ -f ".releaseGroup" ]; then
                   grep -e fluid.*[0-9]-[0-9] `find packages -name 'package.json'`
                 else
                   grep -e fluid.*[0-9]-[0-9] `find . -name 'package.json'`
@@ -291,6 +299,7 @@ extends:
         - ${{ if eq(parameters.setVersion, true) }}:
           - task: Bash@3
             displayName: Install dependencies
+            retryCountOnTaskFailure: 4
             inputs:
               targetType: 'inline'
               workingDirectory: ${{ parameters.buildDirectory }}

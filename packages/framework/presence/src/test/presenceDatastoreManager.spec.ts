@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import type { SinonFakeTimers } from "sinon";
-import { useFakeTimers } from "sinon";
+import { useFakeTimers, spy } from "sinon";
 
 import { createPresenceManager } from "../presenceManager.js";
 
@@ -169,6 +171,271 @@ describe("Presence", () => {
 				// Verify
 				assertFinalExpectations(runtime, logger);
 				// #endregion
+			});
+		});
+
+		describe("receiving DatastoreUpdate", () => {
+			let presence: ReturnType<typeof createPresenceManager>;
+
+			const systemWorkspaceUpdate = {
+				"clientToSessionId": {
+					"client1": {
+						"rev": 0,
+						"timestamp": 0,
+						"value": "sessionId-1",
+					},
+				},
+			};
+
+			const statesWorkspaceUpdate = {
+				"latest": {
+					"sessionId-1": {
+						"rev": 1,
+						"timestamp": 0,
+						"value": {},
+					},
+				},
+			};
+
+			const notificationsWorkspaceUpdate = {
+				"testEvents": {
+					"sessionId-1": {
+						"rev": 0,
+						"timestamp": 0,
+						"value": {},
+						"ignoreUnmonitored": true,
+					},
+				},
+			};
+
+			beforeEach(() => {
+				presence = prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
+
+				// Pass a little time (to mimic reality)
+				clock.tick(10);
+			});
+
+			it("with unregistered States workspace emits 'workspaceActivated'", () => {
+				// Setup
+				const listener = spy();
+				presence.events.on("workspaceActivated", listener);
+
+				// Act
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							sendTimestamp: clock.now - 10,
+							avgLatency: 20,
+							data: {
+								"system:presence": systemWorkspaceUpdate,
+								"s:name:testStateWorkspace": statesWorkspaceUpdate,
+							},
+						},
+						clientId: "client1",
+					},
+					false,
+				);
+
+				// Verify
+				assert.strictEqual(listener.calledOnce, true);
+				assert.strictEqual(listener.calledWith("name:testStateWorkspace", "States"), true);
+			});
+
+			it("with unregistered Notifications workspace 'workspaceActivated'", () => {
+				// Setup
+				const listener = spy();
+				presence.events.on("workspaceActivated", listener);
+
+				// Act
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							sendTimestamp: clock.now - 10,
+							avgLatency: 20,
+							data: {
+								"system:presence": systemWorkspaceUpdate,
+								"n:name:testNotificationWorkspace": notificationsWorkspaceUpdate,
+							},
+						},
+						clientId: "client1",
+					},
+					false,
+				);
+
+				// Verify
+				assert.strictEqual(listener.calledOnce, true);
+				assert.strictEqual(
+					listener.calledWith("name:testNotificationWorkspace", "Notifications"),
+					true,
+				);
+			});
+
+			it("with unregistered workspace of unknown type emits 'workspaceActivated'", () => {
+				// Setup
+				const listener = spy();
+				presence.events.on("workspaceActivated", listener);
+
+				// Act
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							sendTimestamp: clock.now - 10,
+							avgLatency: 20,
+							data: {
+								"system:presence": systemWorkspaceUpdate,
+								"u:name:testUnknownWorkspace": {
+									"latest": {
+										"sessionId-1": {
+											"rev": 1,
+											"timestamp": 0,
+											"value": { x: 1, y: 1, z: 1 },
+										},
+									},
+								},
+							},
+						},
+						clientId: "client1",
+					},
+					false,
+				);
+
+				// Verify
+				assert.strictEqual(listener.calledOnce, true);
+				assert.strictEqual(listener.calledWith("name:testUnknownWorkspace", "Unknown"), true);
+			});
+
+			it("with registered workspace does NOT emit 'workspaceActivated'", () => {
+				// Setup
+				const listener = spy();
+				presence.events.on("workspaceActivated", listener);
+				presence.getStates("name:testStateWorkspace", {});
+				presence.getNotifications("name:testNotificationWorkspace", {});
+
+				// Act
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							sendTimestamp: clock.now - 10,
+							avgLatency: 20,
+							data: {
+								"system:presence": systemWorkspaceUpdate,
+								"s:name:testStateWorkspace": statesWorkspaceUpdate,
+								"n:name:testNotificationWorkspace": notificationsWorkspaceUpdate,
+							},
+						},
+						clientId: "client1",
+					},
+					false,
+				);
+
+				// Verify
+				assert.strictEqual(listener.called, false);
+			});
+
+			it("with workspace that has an unrecognized internal address does NOT emit 'workspaceActivated'", () => {
+				// Setup
+				const listener = spy();
+				presence.events.on("workspaceActivated", listener);
+
+				// Act
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							sendTimestamp: clock.now - 10,
+							avgLatency: 20,
+							data: {
+								"system:presence": systemWorkspaceUpdate,
+								// Unrecognized internal address
+								"sn:name:testStateWorkspace": statesWorkspaceUpdate,
+							},
+						},
+						clientId: "client1",
+					},
+					false,
+				);
+
+				// Verify
+				assert.strictEqual(listener.called, false);
+			});
+
+			it("with workspace that has an invalid public address does NOT emit 'workspaceActivated'", () => {
+				// Setup
+				const listener = spy();
+				presence.events.on("workspaceActivated", listener);
+
+				// Act
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							sendTimestamp: clock.now - 10,
+							avgLatency: 20,
+							data: {
+								"system:presence": systemWorkspaceUpdate,
+								// Invalid public address (must be `${string}:${string}`)
+								"s:testStateWorkspace": statesWorkspaceUpdate,
+							},
+						},
+						clientId: "client1",
+					},
+					false,
+				);
+
+				// Verify
+				assert.strictEqual(listener.called, false);
+			});
+
+			it("with workspace that has already been seen does NOT emit 'workspaceActivated'", () => {
+				// Setup
+				const listener = spy();
+				presence.events.on("workspaceActivated", listener);
+
+				// Act
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							sendTimestamp: clock.now - 20,
+							avgLatency: 20,
+							data: {
+								"system:presence": systemWorkspaceUpdate,
+								"s:name:testStateWorkspace": statesWorkspaceUpdate,
+							},
+						},
+						clientId: "client1",
+					},
+					false,
+				);
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							sendTimestamp: clock.now - 10,
+							avgLatency: 20,
+							data: {
+								"system:presence": systemWorkspaceUpdate,
+								"s:name:testStateWorkspace": statesWorkspaceUpdate,
+							},
+						},
+						clientId: "client1",
+					},
+					false,
+				);
+				// Verify
+				assert.strictEqual(listener.callCount, 1);
 			});
 		});
 	});

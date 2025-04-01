@@ -24,6 +24,7 @@ import {
 	VisibilityState,
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,
+	type IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,
@@ -135,13 +136,9 @@ export class RuntimeAttributorDataStoreChannel
 	}
 
 	/**
-	 * {@inheritdoc IFluidDataStoreChannel.process}
+	 * {@inheritdoc IFluidDataStoreChannel.processMessages}
 	 */
-	public process(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
+	public processMessages(messageCollection: IRuntimeMessageCollection): void {
 		throw new Error("Attributor should not receive messages yet");
 	}
 

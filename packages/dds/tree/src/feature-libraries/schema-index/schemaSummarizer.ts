@@ -5,14 +5,10 @@
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import type {
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-} from "@fluidframework/datastore-definitions/internal";
+import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
 	IExperimentalIncrementalSummaryContext,
-	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
@@ -46,7 +42,6 @@ export class SchemaSummarizer implements Summarizable {
 	private schemaIndexLastChangedSeq: number | undefined;
 
 	public constructor(
-		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly schema: MutableTreeStoredSchema,
 		options: ICodecOptions,
 		collabWindow: CollabWindow,
@@ -92,16 +87,6 @@ export class SchemaSummarizer implements Summarizable {
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
 	): Promise<ISummaryTreeWithStats> {
 		throw new Error("Method not implemented.");
-	}
-
-	public getGCData(fullGC?: boolean): IGarbageCollectionData {
-		// TODO: Properly implement garbage collection. Right now, garbage collection is performed automatically
-		// by the code in SharedObject (from which SharedTreeCore extends). The `runtime.uploadBlob` API delegates
-		// to the `BlobManager`, which automatically populates the summary with ISummaryAttachment entries for each
-		// blob.
-		return {
-			gcNodes: {},
-		};
 	}
 
 	public async load(

@@ -6,7 +6,6 @@
 import { bufferToString } from "@fluid-internal/client-utils";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type {
-	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
@@ -50,16 +49,6 @@ export class DetachedFieldIndexSummarizer implements Summarizable {
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats> {
 		return this.getAttachSummary(stringify, fullTree, trackState, telemetryContext);
-	}
-
-	public getGCData(fullGC?: boolean): IGarbageCollectionData {
-		// TODO: Properly implement garbage collection. Right now, garbage collection is performed automatically
-		// by the code in SharedObject (from which SharedTreeCore extends). The `runtime.uploadBlob` API delegates
-		// to the `BlobManager`, which automatically populates the summary with ISummaryAttachment entries for each
-		// blob.
-		return {
-			gcNodes: {},
-		};
 	}
 
 	public async load(

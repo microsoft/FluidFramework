@@ -9,7 +9,6 @@ import {
 	AzureRemoteConnectionConfig,
 	ITelemetryBaseLogger,
 } from "@fluidframework/azure-client";
-import { type ScopeType } from "@fluidframework/azure-client/internal";
 import {
 	AzureClient as AzureClientLegacy,
 	AzureLocalConnectionConfig as AzureLocalConnectionConfigLegacy,
@@ -17,6 +16,7 @@ import {
 	ITelemetryBaseLogger as ITelemetryBaseLoggerLegacy,
 } from "@fluidframework/azure-client-legacy";
 import { IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { ScopeType } from "@fluidframework/driver-definitions/internal";
 import {
 	MockLogger,
 	createChildLogger,
@@ -27,6 +27,9 @@ import { default as Axios, AxiosResponse, type AxiosRequestConfig } from "axios"
 import { v4 as uuid } from "uuid";
 
 import { createAzureTokenProvider } from "./AzureTokenFactory.js";
+
+// eslint-disable-next-line unicorn/prefer-export-from
+export { ScopeType };
 
 /**
  * This function will determine if local or remote mode is required (based on FLUID_CLIENT), and return a new

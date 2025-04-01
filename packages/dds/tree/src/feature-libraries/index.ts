@@ -108,15 +108,15 @@ export {
 } from "./chunked-forest/index.js";
 
 export {
-	compareLocalNodeKeys,
-	createNodeKeyManager,
-	isStableNodeKey,
-	type LocalNodeKey,
-	MockNodeKeyManager,
-	type NodeKeyManager,
+	compareLocalNodeIdentifiers,
+	createNodeIdentifierManager,
+	isStableNodeIdentifier,
+	type LocalNodeIdentifier,
+	MockNodeIdentifierManager,
+	type NodeIdentifierManager,
 	nodeKeyTreeIdentifier,
-	type StableNodeKey,
-} from "./node-key/index.js";
+	type StableNodeIdentifier,
+} from "./node-identifier/index.js";
 
 export {
 	FieldKinds,
@@ -194,3 +194,5 @@ export {
 	type TreeIndexKey,
 	type TreeIndexNodes,
 } from "./indexing/index.js";
+
+export { initializeForest } from "./initializeForest.js";

@@ -5,13 +5,11 @@
 
 import {
 	type DeltaMark,
-	type RevisionMetadataSource,
 	Multiplicity,
 	type RevisionTag,
 	replaceAtomRevisions,
 	type DeltaFieldChanges,
 } from "../../core/index.js";
-import { type IdAllocator, fail } from "../../util/index.js";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	FieldChangeHandler,
@@ -41,8 +39,8 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 	},
 	codecsFactory: makeGenericChangeCodec,
 	editor: {
-		buildChildChange(index, change): GenericChangeset {
-			return newGenericChangeset([[index, change]]);
+		buildChildChanges(changes: Iterable<[number, NodeId]>): GenericChangeset {
+			return newGenericChangeset(Array.from(changes));
 		},
 	},
 	intoDelta: (change: GenericChangeset, deltaFromChild: ToDelta): DeltaFieldChanges => {
@@ -179,28 +177,6 @@ export const genericFieldKind: FieldKindWithEditor = new FieldKindWithEditor(
 export function convertGenericChange<TChange>(
 	changeset: GenericChangeset,
 	target: FieldChangeHandler<TChange>,
-	composeChild: NodeChangeComposer,
-	genId: IdAllocator,
-	revisionMetadata: RevisionMetadataSource,
 ): TChange {
-	const perIndex: TChange[] = [];
-	for (const [index, nodeChange] of changeset.entries()) {
-		perIndex.push(target.editor.buildChildChange(index, nodeChange));
-	}
-
-	if (perIndex.length === 0) {
-		return target.createEmpty();
-	}
-
-	return perIndex.reduce((a, b) =>
-		target.rebaser.compose(a, b, composeChild, genId, invalidComposeManager, revisionMetadata),
-	);
+	return target.editor.buildChildChanges(changeset.entries());
 }
-
-const invalidFunc = (): never => fail("Should not be called when converting generic changes");
-const invalidComposeManager: ComposeNodeManager = {
-	getNewChangesForBaseDetach: invalidFunc,
-	sendNewChangesToBaseSourceLocation: invalidFunc,
-	composeAttachDetach: invalidFunc,
-	composeDetachAttach: invalidFunc,
-};

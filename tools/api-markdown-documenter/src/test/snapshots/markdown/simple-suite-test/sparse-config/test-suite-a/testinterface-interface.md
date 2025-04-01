@@ -12,9 +12,9 @@ export interface TestInterface
 
 Here are some remarks about the interface
 
-### Construct Signatures
+### Constructors
 
-| ConstructSignature | Return Type | Description |
+| Constructor | Return Type | Description |
 | --- | --- | --- |
 | [new (): TestInterface](docs/test-suite-a/testinterface-_new_-constructsignature) | [TestInterface](docs/test-suite-a/testinterface-interface) | Test construct signature. |
 

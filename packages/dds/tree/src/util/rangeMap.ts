@@ -61,7 +61,7 @@ export class RangeMap<K, V> {
 	 * Retrieves the values for all keys in the query range.
 	 *
 	 * @param start - The first key in the range being queried
-	 * @param length  - The length of the query range
+	 * @param length - The length of the query range
 	 * @returns A list of entries, each describing the value for some subrange of the query.
 	 * The entries are in the same order as the keys, and there is an entry for every key with a non `undefined` value.
 	 */
