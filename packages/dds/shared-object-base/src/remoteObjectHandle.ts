@@ -31,6 +31,7 @@ export class RemoteFluidObjectHandle extends FluidHandleBase<FluidObject> {
 	constructor(
 		public readonly absolutePath: string,
 		public readonly routeContext: IFluidHandleContext,
+		public readonly metadata?: Readonly<Record<string, string | number | boolean>> | undefined,
 	) {
 		super();
 		assert(
@@ -44,7 +45,10 @@ export class RemoteFluidObjectHandle extends FluidHandleBase<FluidObject> {
 			// Add `viaHandle` header to distinguish from requests from non-handle paths.
 			const request: IRequest = {
 				url: this.absolutePath,
-				headers: { [RuntimeHeaders.viaHandle]: true },
+				headers: {
+					[RuntimeHeaders.viaHandle]: true,
+					[RuntimeHeaders.metadata]: this.metadata,
+				},
 			};
 			this.objectP = this.routeContext.resolveHandle(request).then<FluidObject>((response) => {
 				if (response.mimeType === "fluid/object") {

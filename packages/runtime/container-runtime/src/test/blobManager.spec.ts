@@ -160,7 +160,7 @@ export class MockRuntime
 	): Promise<ArrayBufferLike> {
 		const pathParts = blobHandle.absolutePath.split("/");
 		const blobId = pathParts[2];
-		return this.blobManager.getBlob(blobId);
+		return this.blobManager.getBlob(blobId, blobHandle.metadata);
 	}
 
 	public async getPendingLocalState(): Promise<(unknown[] | IPendingBlobs | undefined)[]> {

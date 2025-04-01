@@ -90,6 +90,15 @@ export interface IFluidHandleInternal<
 	readonly absolutePath: string;
 
 	/**
+	 * The handle may contain metadata, generated and interpreted by the subsystem that the handle
+	 * relates to.  For instance, the BlobManager uses this to distinguish blob handles which may
+	 * not yet have an attached blob yet.
+	 *
+	 * @privateRemarks Should become non-optional in accordance with breaking change policy.
+	 */
+	readonly metadata?: Readonly<Record<string, number | boolean | string>> | undefined;
+
+	/**
 	 * Runs through the graph and attach the bounded handles.
 	 */
 	attachGraph(): void;

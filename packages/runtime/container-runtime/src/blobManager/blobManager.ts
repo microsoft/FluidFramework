@@ -56,6 +56,25 @@ import {
 } from "./blobManagerSnapSum.js";
 
 /**
+ * The BlobManager produces BlobHandles during operation. In older versions of Fluid, these
+ * handles were assumed to only exist if their respective blob was attached and available to
+ * remote clients - these handles are NOT annotated with metadata. Now, the handle may exist
+ * prior to remote availability while the source client completes the upload/attach of the
+ * blob - these handles ARE annotated with metadata.
+ */
+interface IBlobManagerHandleMetadata {
+	readonly type: "blob";
+}
+
+const isBlobManagerHandleMetadata = (
+	metadata: unknown,
+): metadata is IBlobManagerHandleMetadata =>
+	typeof metadata === "object" &&
+	metadata !== null &&
+	"type" in metadata &&
+	metadata.type === "blob";
+
+/**
  * This class represents blob (long string)
  * This object is used only when creating (writing) new blob and serialization purposes.
  * De-serialization process goes through FluidObjectHandle and request flow:
@@ -70,6 +89,8 @@ export class BlobHandle extends FluidHandleBase<ArrayBufferLike> {
 	}
 
 	public readonly absolutePath: string;
+
+	public readonly metadata = { type: "blob" } satisfies IBlobManagerHandleMetadata;
 
 	constructor(
 		public readonly path: string,
@@ -356,7 +377,17 @@ export class BlobManager {
 		return this.redirectTable.get(blobId) !== undefined;
 	}
 
-	public async getBlob(blobId: string): Promise<ArrayBufferLike> {
+	/**
+	 * Retrieve the blob with the given local blob id.
+	 * @param blobId - The local blob id.  Likely coming from a handle.
+	 * @param handleMetadata - The metadata from the handle used to retrieve the blob.  Lets us know whether
+	 * the handle is expected to exist prior to the blob's attach and general availability to remote clients.
+	 * @returns A promise which resolves to the blob contents
+	 */
+	public async getBlob(
+		blobId: string,
+		handleMetadata?: Readonly<Record<string, string | number | boolean>> | undefined,
+	): Promise<ArrayBufferLike> {
 		// Verify that the blob is not deleted, i.e., it has not been garbage collected. If it is, this will throw
 		// an error, failing the call.
 		this.verifyBlobNotDeleted(blobId);
@@ -379,9 +410,15 @@ export class BlobManager {
 			storageId = blobId;
 		} else {
 			const attachedStorageId = this.redirectTable.get(blobId);
-			// If we didn't find it in the redirectTable, assume it's a blob placeholder. In that case,
-			// just assume the attach op is coming eventually and wait. We do this even if the local client
-			// doesn't have the blob placeholder flag enabled, in case a remote client does have it enabled.
+			if (!isBlobManagerHandleMetadata(handleMetadata)) {
+				// Only new blob handles (which are annotated with metadata) are permitted to exist without
+				// yet knowing their storage id. Old handles must already be associated with a storage id.
+				assert(attachedStorageId !== undefined, 0x11f /* "requesting unknown blobs" */);
+			}
+			// If we didn't find it in the redirectTable, assume the attach op is coming eventually and wait.
+			// We do this even if the local client doesn't have the blob placeholder flag enabled, in case a
+			// remote client does have it enabled. This wait may be infinite if the uploading client failed
+			// the upload and doesn't exist anymore.
 			storageId =
 				attachedStorageId ??
 				(await new Promise<string>((resolve) => {

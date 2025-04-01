@@ -142,7 +142,7 @@ export class FluidSerializer implements IFluidSerializer {
 				? value.url
 				: generateHandleContextPath(value.url, this.context);
 
-			return new RemoteFluidObjectHandle(absolutePath, this.root);
+			return new RemoteFluidObjectHandle(absolutePath, this.root, value.metadata);
 		} else {
 			return value;
 		}
@@ -203,6 +203,7 @@ export class FluidSerializer implements IFluidSerializer {
 		return {
 			type: "__fluid_handle__",
 			url: handle.absolutePath,
+			metadata: handle.metadata,
 		};
 	}
 }

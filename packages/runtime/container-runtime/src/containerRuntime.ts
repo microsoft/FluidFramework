@@ -2246,7 +2246,12 @@ export class ContainerRuntime
 					return create404Response(request);
 				}
 
-				const blob = await this.blobManager.getBlob(requestParser.pathParts[1]);
+				const blob = await this.blobManager.getBlob(
+					requestParser.pathParts[1],
+					requestParser.headers?.[RuntimeHeaders.metadata] as
+						| Readonly<Record<string, string | number | boolean>>
+						| undefined,
+				);
 
 				return {
 					status: 200,
