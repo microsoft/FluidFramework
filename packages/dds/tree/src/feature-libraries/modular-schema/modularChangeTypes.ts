@@ -4,10 +4,8 @@
  */
 
 import {
-	replaceAtomRevisions,
 	subtractChangeAtomIds,
 	type ChangeAtomId,
-	type ChangeAtomIdMap,
 	type ChangeAtomIdRangeMap,
 	type ChangesetLocalId,
 	type FieldKey,

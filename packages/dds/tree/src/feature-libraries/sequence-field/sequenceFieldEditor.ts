@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../core/index.js";
+import type { ChangesetLocalId, RevisionTag } from "../../core/index.js";
 import type { FieldEditor, NodeId } from "../modular-schema/index.js";
 
 import { MarkListFactory } from "./markListFactory.js";

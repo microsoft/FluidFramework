@@ -66,14 +66,7 @@ export function rebase(
 	manager: RebaseNodeManager,
 	revisionMetadata: RebaseRevisionMetadata,
 ): Changeset {
-	return rebaseMarkList(
-		change,
-		base,
-		revisionMetadata,
-		rebaseChild,
-		genId,
-		manager as SequenceRebaseNodeManager,
-	);
+	return rebaseMarkList(change, base, revisionMetadata, rebaseChild, genId, manager);
 }
 
 function rebaseMarkList(
@@ -82,7 +75,7 @@ function rebaseMarkList(
 	metadata: RebaseRevisionMetadata,
 	rebaseChild: NodeChangeRebaser,
 	genId: IdAllocator,
-	moveEffects: SequenceRebaseNodeManager,
+	moveEffects: RebaseNodeManager,
 ): MarkList {
 	const factory = new MarkListFactory();
 	const queue = new RebaseQueue(baseMarkList, currMarkList, metadata, moveEffects);
@@ -118,7 +111,7 @@ class RebaseQueue {
 		baseMarks: Changeset,
 		newMarks: Changeset,
 		private readonly metadata: RevisionMetadataSource,
-		private readonly moveEffects: SequenceRebaseNodeManager,
+		private readonly moveEffects: RebaseNodeManager,
 	) {
 		const queryFunc: NodeRangeQueryFunc = (id, count) =>
 			moveEffects.getNewChangesForBaseAttach(id, count).length;
@@ -254,7 +247,7 @@ function rebaseMark(
 	currMark: Mark,
 	baseMark: Mark,
 	rebaseChild: NodeChangeRebaser,
-	moveEffects: SequenceRebaseNodeManager,
+	moveEffects: RebaseNodeManager,
 ): Mark {
 	const rebasedMark = rebaseNodeChange(cloneMark(currMark), baseMark, rebaseChild);
 	const movedNodeChanges = getMovedChangesFromBaseMark(moveEffects, baseMark);
@@ -275,7 +268,7 @@ function rebaseMark(
 function rebaseMarkIgnoreChild(
 	currMark: Mark,
 	baseMark: Mark,
-	moveEffects: SequenceRebaseNodeManager,
+	moveEffects: RebaseNodeManager,
 ): Mark {
 	let rebasedMark: Mark;
 	if (isDetach(baseMark)) {
@@ -347,7 +340,7 @@ function separateEffectsForMove(mark: MarkEffect): {
 }
 
 function moveRebasedChanges(
-	moveEffects: SequenceRebaseNodeManager,
+	moveEffects: RebaseNodeManager,
 	baseId: ChangeAtomId,
 	count: number,
 	nodeChange: NodeId | undefined,
@@ -397,7 +390,7 @@ function withCellId<TMark extends Mark>(mark: TMark, cellId: CellId | undefined)
 }
 
 function getMovedEffectFromBaseMark(
-	moveEffects: SequenceRebaseNodeManager,
+	moveEffects: RebaseNodeManager,
 	baseMark: Mark,
 ): Detach | undefined {
 	return isAttach(baseMark)
@@ -410,7 +403,7 @@ function getMovedEffectFromBaseMark(
 // to match the ranges in `moveEffects`.
 // TODO: Reduce the duplication between this and other MoveEffect helpers
 function getMovedEffect(
-	moveEffects: SequenceRebaseNodeManager,
+	moveEffects: RebaseNodeManager,
 	revision: RevisionTag | undefined,
 	localId: MoveId,
 	count: number,
@@ -430,7 +423,7 @@ function getMovedEffect(
 }
 
 function getMovedChangesFromBaseMark(
-	moveEffects: SequenceRebaseNodeManager,
+	moveEffects: RebaseNodeManager,
 	baseMark: Mark,
 ): NodeId | undefined {
 	return isAttach(baseMark)
@@ -439,11 +432,9 @@ function getMovedChangesFromBaseMark(
 }
 
 function getMovedNodeChanges(
-	moveEffects: SequenceRebaseNodeManager,
+	moveEffects: RebaseNodeManager,
 	revision: RevisionTag | undefined,
 	localId: MoveId,
 ): NodeId | undefined {
 	return moveEffects.getNewChangesForBaseAttach({ revision, localId }, 1).value?.nodeChange;
 }
-
-type SequenceRebaseNodeManager = RebaseNodeManager;

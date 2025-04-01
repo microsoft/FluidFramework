@@ -769,7 +769,7 @@ export class ModularChangeFamily
 					context !== undefined,
 					0x851 /* Should have context for every invalidated field */,
 				);
-				const { invertedField, fieldId } = context;
+				const { invertedField } = context;
 
 				const amendedChange = getChangeHandler(
 					this.fieldKinds,
@@ -1428,7 +1428,7 @@ export class ModularChangeFamily
 			rebasedNodes,
 		);
 
-		for (const [detachId, nodeId] of rebasedRoots.nodeChanges.entries()) {
+		for (const [_detachId, nodeId] of rebasedRoots.nodeChanges.entries()) {
 			// XXX
 			const detachedInOutput = true;
 			this.updateConstraintsForNode(
@@ -3079,7 +3079,6 @@ export interface RenameDescription {
 
 function renameTableFromRenameDescriptions(renames: RenameDescription[]): RootNodeTable {
 	const table = newRootTable();
-	const emptyMap = newChangeAtomIdRangeMap<ChangeAtomId>();
 	for (const rename of renames) {
 		renameNodes(table, rename.oldId, rename.newId, rename.count);
 	}
@@ -3363,7 +3362,6 @@ function composeRootTables(
 	pendingCompositions: PendingCompositions,
 ): RootNodeTable {
 	const mergedTable = cloneRootTable(change1.rootNodes);
-	const emptyMap = newChangeAtomIdRangeMap<ChangeAtomId>();
 	for (const entry of change2.rootNodes.oldToNewId.entries()) {
 		renameNodes(
 			mergedTable,
@@ -3371,7 +3369,6 @@ function composeRootTables(
 			entry.value,
 			entry.length,
 			change1.rootNodes.newToOldId,
-			emptyMap,
 		);
 	}
 

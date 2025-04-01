@@ -32,7 +32,6 @@ import {
 } from "../../../feature-libraries/index.js";
 import {
 	makeAnonChange,
-	makeDetachedNodeId,
 	type RevisionTag,
 	tagChange,
 	type TaggedChange,
@@ -87,7 +86,6 @@ import {
 	getFieldKind,
 	intoDelta,
 	updateRefreshers,
-	relevantRemovedRoots as relevantDetachedTreesImplementation,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import type {

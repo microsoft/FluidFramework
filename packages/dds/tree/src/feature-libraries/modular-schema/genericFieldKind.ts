@@ -24,7 +24,6 @@ import { makeGenericChangeCodec } from "./genericFieldKindCodecs.js";
 import { newGenericChangeset, type GenericChangeset } from "./genericFieldKindTypes.js";
 import type { NodeId } from "./modularChangeTypes.js";
 import { BTree } from "@tylerbu/sorted-btree-es6";
-import type { ComposeNodeManager } from "./crossFieldQueries.js";
 
 /**
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.

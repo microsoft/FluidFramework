@@ -6,7 +6,6 @@
 import type { ICodecFamily, IJsonCodec } from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
-	DeltaDetachedNodeId,
 	DeltaFieldChanges,
 	DeltaFieldMap,
 	EncodedRevisionTag,
