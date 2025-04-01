@@ -2528,6 +2528,7 @@ declare type current_as_old_for_Interface_IWebServerFactory = requireAssignableT
  * typeValidation.broken:
  * "Interface_IWebSocket": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IWebSocket = requireAssignableTo<TypeOnly<old.IWebSocket>, TypeOnly<current.IWebSocket>>
 
 /*

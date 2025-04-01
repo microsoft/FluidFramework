@@ -11,6 +11,7 @@ export {
 	handleResponse,
 	IsEphemeralContainer,
 	validateRequestParams,
+	validatePrivateLink,
 } from "./http";
 export {
 	ISocketIoRedisConnection,
