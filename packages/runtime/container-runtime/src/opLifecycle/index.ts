@@ -14,6 +14,7 @@ export {
 } from "./batchManager.js";
 export { BatchMessage, IBatch, IBatchCheckpoint, IChunkedOp } from "./definitions.js";
 export { DuplicateBatchDetector } from "./duplicateBatchDetector.js";
+export { OpContentsSerializer } from "./opContentsSerializer.js";
 export {
 	serializeOpContents,
 	ensureContentsDeserialized,

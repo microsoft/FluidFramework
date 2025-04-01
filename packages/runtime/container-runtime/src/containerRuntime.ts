@@ -194,8 +194,8 @@ import {
 	Outbox,
 	RemoteMessageProcessor,
 	serializeOpContents,
+	OpContentsSerializer,
 } from "./opLifecycle/index.js";
-import { FluidSerializer } from "./opLifecycle/opContentsSerializer.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
 	PendingMessageResubmitData,
@@ -4249,7 +4249,7 @@ export class ContainerRuntime
 			//* TODO: Decode / pop LOM on the flip side
 
 			//* Move this to ctor
-			const serializer = new FluidSerializer(this.IFluidHandleContext);
+			const serializer = new OpContentsSerializer(this.IFluidHandleContext);
 			// We already bound the handles in the DataStore Runtime layer, so skip bind up here.
 			//* TODO: Actually fork the serializer and this does not bind...?
 			const dummyBind: Partial<IFluidHandleInternal> = {
