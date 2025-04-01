@@ -532,13 +532,21 @@ function isSharedObject(value: unknown): value is ISharedObject {
  * @remarks `value` is type casted as a workaround to access the `root` property of the {@link DataObject} (private).
  */
 function isDataObject(value: unknown): value is DataObject {
-	return (
-		(value as DataObject).initializeInternal !== undefined &&
-		(value as { getUninitializedErrorString(): string }).getUninitializedErrorString !==
-			undefined &&
-		(value as { readonly root: ISharedDirectory }).root?.attributes?.type ===
-			DirectoryFactory.Type
-	);
+	if (
+		(value as DataObject).initializeInternal === undefined ||
+		(value as { getUninitializedErrorString(): string }).getUninitializedErrorString ===
+			undefined
+	) {
+		return false;
+	}
+
+	// If root is missing, throw an error instead of returning false
+	const root = (value as { readonly root?: ISharedDirectory }).root;
+	if (!root) {
+		throw new Error("DataObject must have a `root` property, but it was undefined.");
+	}
+
+	return root.attributes?.type === DirectoryFactory.Type;
 }
 
 /**
