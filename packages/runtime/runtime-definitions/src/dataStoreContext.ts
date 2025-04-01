@@ -210,6 +210,10 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 
 	maintainOnlyLocal?: (callback: () => Promise<void>) => Promise<void>;
 
+	pauseResubmit?: () => void;
+
+	resumeResubmit?: () => void;
+
 	/**
 	 * Submits a container runtime level signal to be sent to other clients.
 	 * @param type - Type of the signal.

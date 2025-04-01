@@ -78,7 +78,10 @@ export class DataObjectFactory<
 						if (!this.converted) {
 							this.converted = true;
 							await runtime.maintainOnlyLocal?.(async () => {
-								submitConversionOp(runtime);
+								// this op MUST be in its own batch if we pause replaying pending states to maintain batch semantics
+								runtime.orderSequentially?.(() => {
+									submitConversionOp(runtime);
+								});
 
 								const root = (await runtime.getChannel(
 									dataObjectRootDirectoryId,
@@ -111,7 +114,8 @@ export class DataObjectFactory<
 						if (
 							messageCollection.messagesContent.some((val) => val.contents === "conversion")
 						) {
-							// ! TODO: complete conversion (i.e. send new SharedTree ops)
+							// complete conversion (i.e. send new SharedTree ops)
+							this.resumeResubmit?.();
 						}
 
 						contents = messageCollection.messagesContent.filter(
@@ -143,6 +147,7 @@ export class DataObjectFactory<
 						content === "conversion"
 					) {
 						submitConversionOp(this);
+						this.pauseResubmit?.();
 						return;
 					}
 					super.reSubmit(type2, content, localOpMetadata);

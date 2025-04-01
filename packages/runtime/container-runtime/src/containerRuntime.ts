@@ -3458,8 +3458,7 @@ export class ContainerRuntime
 			this._orderSequentiallyCalls--;
 		}
 
-		// We don't flush on TurnBased since we expect all messages in the same JS turn to be part of the same batch
-		if (this.flushMode !== FlushMode.TurnBased && this._orderSequentiallyCalls === 0) {
+		if (this._orderSequentiallyCalls === 0) {
 			this.flush();
 		}
 		return result;
@@ -3473,6 +3472,14 @@ export class ContainerRuntime
 		} finally {
 			this._maintainOnlyLocalCalls--;
 		}
+	}
+
+	public pauseResubmit(): void {
+		this.pendingStateManager.pauseReplayPendingStates();
+	}
+
+	public resumeResubmit(): void {
+		this.pendingStateManager.resumeReplayPendingStates();
 	}
 
 	/**
@@ -3545,7 +3552,8 @@ export class ContainerRuntime
 			this.connected &&
 			!this.innerDeltaManager.readOnlyInfo.readonly &&
 			!this.imminentClosure &&
-			this._maintainOnlyLocalCalls === 0
+			this._maintainOnlyLocalCalls === 0 &&
+			!this.pendingStateManager.pauseSubmittingOps
 		);
 	}
 

@@ -1325,6 +1325,18 @@ export class FluidDataStoreRuntime
 	public async maintainOnlyLocal?(callback: () => Promise<void>): Promise<void> {
 		return this.dataStoreContext.containerRuntime.maintainOnlyLocal?.(callback);
 	}
+
+	public pauseResubmit?(): void {
+		return this.dataStoreContext.containerRuntime.pauseResubmit?.();
+	}
+
+	public resumeResubmit?(): void {
+		return this.dataStoreContext.containerRuntime.resumeResubmit?.();
+	}
+
+	public orderSequentially?(callback: () => void): void {
+		return this.dataStoreContext.containerRuntime.orderSequentially(callback);
+	}
 }
 
 /**

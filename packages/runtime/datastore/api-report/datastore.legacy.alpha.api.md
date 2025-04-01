@@ -72,6 +72,10 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get objectsRoutingContext(): this;
     // (undocumented)
     readonly options: Record<string | number, any>;
+    // (undocumented)
+    orderSequentially?(callback: () => void): void;
+    // (undocumented)
+    pauseResubmit?(): void;
     // @deprecated
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     processMessages(messageCollection: IRuntimeMessageCollection): void;
@@ -82,6 +86,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     resolveHandle(request: IRequest): Promise<IResponse>;
     reSubmit(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
+    // (undocumented)
+    resumeResubmit?(): void;
     rollback?(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
     // (undocumented)
     get rootRoutingContext(): this;

@@ -87,6 +87,10 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     // (undocumented)
     maintainOnlyLocal?: (callback: () => Promise<void>) => Promise<void>;
     orderSequentially(callback: () => void): void;
+    // (undocumented)
+    pauseResubmit?: () => void;
+    // (undocumented)
+    resumeResubmit?: () => void;
     submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
