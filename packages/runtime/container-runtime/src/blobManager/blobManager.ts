@@ -63,7 +63,17 @@ import {
  * blob - these handles ARE annotated with metadata.
  */
 interface IBlobManagerHandleMetadata {
+	/**
+	 * Notes that this is a blob handle, and also signifies that it was created after the change
+	 * to permit the handle's existence before the blob attach completes.
+	 */
 	readonly type: "blob";
+	/**
+	 * If present, we expect this handle's blob to already be blob-attached (the BlobAttach op
+	 * has been ack'd and we should be able to find it in the redirect table). Used in the
+	 * createBlobLegacy() flow.
+	 */
+	readonly attached?: true;
 }
 
 const isBlobManagerHandleMetadata = (
@@ -90,15 +100,19 @@ export class BlobHandle extends FluidHandleBase<ArrayBufferLike> {
 
 	public readonly absolutePath: string;
 
-	public readonly metadata = { type: "blob" } satisfies IBlobManagerHandleMetadata;
+	public readonly metadata: Readonly<Record<string, string | number | boolean>>;
 
 	constructor(
 		public readonly path: string,
 		public readonly routeContext: IFluidHandleContext,
 		public get: () => Promise<ArrayBufferLike>,
+		attached: boolean,
 		private readonly onAttachGraph?: () => void,
 	) {
 		super();
+		this.metadata = (
+			attached ? { type: "blob", attached } : { type: "blob" }
+		) satisfies IBlobManagerHandleMetadata;
 		this.absolutePath = generateHandleContextPath(path, this.routeContext);
 	}
 
@@ -154,7 +168,7 @@ export interface IBlobManagerEvents extends IEvent {
 }
 
 interface IBlobManagerInternalEvents extends IEvent {
-	(event: "blobAttached", listener: (pending: PendingBlob) => void);
+	(event: "handleAttached", listener: (pending: PendingBlob) => void);
 	(event: "processedBlobAttach", listener: (localId: string, storageId: string) => void);
 }
 
@@ -410,9 +424,10 @@ export class BlobManager {
 			storageId = blobId;
 		} else {
 			const attachedStorageId = this.redirectTable.get(blobId);
-			if (!isBlobManagerHandleMetadata(handleMetadata)) {
-				// Only new blob handles (which are annotated with metadata) are permitted to exist without
-				// yet knowing their storage id. Old handles must already be associated with a storage id.
+			if (!isBlobManagerHandleMetadata(handleMetadata) || handleMetadata.attached) {
+				// Only new blob handles NOT explicitly declared as attached (as annotated with metadata)
+				// are permitted to exist without yet knowing their storage id. Old handles and handles without
+				// this explicit annotation must already be associated with a storage id.
 				assert(attachedStorageId !== undefined, 0x11f /* "requesting unknown blobs" */);
 			}
 			// If we didn't find it in the redirectTable, assume the attach op is coming eventually and wait.
@@ -455,12 +470,12 @@ export class BlobManager {
 			0x384 /* requesting handle for unknown blob */,
 		);
 		const pending = this.pendingBlobs.get(localId);
-		// Create a callback function for once the blob has been attached
+		// Create a callback function for once the handle has been attached
 		const callback = pending
 			? () => {
 					pending.attached = true;
-					// Notify listeners (e.g. serialization process) that blob has been attached
-					this.internalEvents.emit("blobAttached", pending);
+					// Notify listeners (e.g. serialization process) that handle has been attached
+					this.internalEvents.emit("handleAttached", pending);
 					this.deletePendingBlobMaybe(localId);
 				}
 			: undefined;
@@ -468,6 +483,7 @@ export class BlobManager {
 			getGCNodePathFromBlobId(localId),
 			this.routeContext,
 			async () => this.getBlob(localId),
+			true, // attached
 			callback,
 		);
 	}
@@ -546,6 +562,7 @@ export class BlobManager {
 			getGCNodePathFromBlobId(localId),
 			this.routeContext,
 			async () => blob,
+			false, // attached
 			() => {
 				const pendingEntry: PendingBlob = {
 					blob,
@@ -955,16 +972,16 @@ export class BlobManager {
 										},
 										{ once: true },
 									);
-									const onBlobAttached = (attachedEntry: PendingBlob): void => {
+									const onHandleAttached = (attachedEntry: PendingBlob): void => {
 										if (attachedEntry === entry) {
-											this.internalEvents.off("blobAttached", onBlobAttached);
+											this.internalEvents.off("handleAttached", onHandleAttached);
 											resolve();
 										}
 									};
 									if (entry.attached) {
 										resolve();
 									} else {
-										this.internalEvents.on("blobAttached", onBlobAttached);
+										this.internalEvents.on("handleAttached", onHandleAttached);
 									}
 								}),
 							);
