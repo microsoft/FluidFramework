@@ -10,6 +10,8 @@ export interface IInternalMockRuntimeMessage {
     content: any;
     // (undocumented)
     localOpMetadata?: unknown;
+    // (undocumented)
+    referenceSequenceNumber?: number;
 }
 
 // @alpha
@@ -148,7 +150,6 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
         minimumSequenceNumber?: number;
         trackRemoteOps?: boolean;
     });
-    // (undocumented)
     get connected(): boolean;
     set connected(connected: boolean);
     // (undocumented)
@@ -183,8 +184,6 @@ export class MockDeltaConnection implements IDeltaConnection {
     dirty(): void;
     // (undocumented)
     handler: IDeltaHandler | undefined;
-    // @deprecated (undocumented)
-    process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // (undocumented)
     processMessages(messageCollection: IRuntimeMessageCollection): void;
     // (undocumented)
@@ -339,6 +338,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     IFluidHandleContext: IFluidHandleContext;
     // (undocumented)
+    ILayerCompatDetails?: unknown;
+    // (undocumented)
     isLocalDataStore: boolean;
     // (undocumented)
     makeLocallyVisible(): void;
@@ -442,6 +443,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
     // (undocumented)
+    ILayerCompatDetails?: unknown;
+    // (undocumented)
     get isAttached(): boolean;
     // (undocumented)
     readonly loader: ILoader;
@@ -458,8 +461,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     options: Record<string | number, any>;
     // (undocumented)
     readonly path = "";
-    // @deprecated (undocumented)
-    process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // (undocumented)
     processMessages(messageCollection: IRuntimeMessageCollection): void;
     // (undocumented)

@@ -134,7 +134,7 @@ export class AppData extends DataObject {
 			},
 		});
 
-		this._initialObjects[this.initialObjectsDirKey] = this.root.IFluidLoadable;
+		this._initialObjects[this.initialObjectsDirKey] = this.root;
 	}
 
 	protected async hasInitialized(): Promise<void> {

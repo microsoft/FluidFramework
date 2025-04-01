@@ -13,7 +13,10 @@ import {
 
 import type { DocumentNode, SectionNode } from "../documentation-domain/index.js";
 
-import { doesItemRequireOwnDocument, shouldItemBeIncluded } from "./ApiItemTransformUtilities.js";
+import {
+	doesItemRequireOwnDocument,
+	shouldItemBeIncluded,
+} from "./ApiItemTransformUtilities.js";
 import { apiItemToDocument, apiItemToSections } from "./TransformApiItem.js";
 import { checkForDuplicateDocumentPaths, createDocument } from "./Utilities.js";
 import {
@@ -21,7 +24,11 @@ import {
 	type ApiItemTransformationOptions,
 	getApiItemTransformationConfigurationWithDefaults,
 } from "./configuration/index.js";
-import { createBreadcrumbParagraph, createEntryPointList, wrapInSection } from "./helpers/index.js";
+import {
+	createBreadcrumbParagraph,
+	createEntryPointList,
+	wrapInSection,
+} from "./helpers/index.js";
 
 /**
  * Renders the provided model and its contents to a series of {@link DocumentNode}s.
@@ -126,7 +133,10 @@ export function transformApiModel(options: ApiItemTransformationOptions): Docume
  * @param apiItem - The API item in question.
  * @param config - See {@link ApiItemTransformationConfiguration}
  */
-function getDocumentItems(apiItem: ApiItem, config: ApiItemTransformationConfiguration): ApiItem[] {
+function getDocumentItems(
+	apiItem: ApiItem,
+	config: ApiItemTransformationConfiguration,
+): ApiItem[] {
 	const { hierarchy } = config;
 
 	const result: ApiItem[] = [];

@@ -24,10 +24,11 @@ export interface IBasicRestWrapperMetricProps {
 	axiosError: AxiosError<any>;
 	status: number | string;
 	method: string;
+	baseUrl: string;
 	url: string;
 	correlationId: string;
 	durationInMs: number;
-	timoutInMs: number | string;
+	timeoutInMs: number | string;
 }
 
 /**
@@ -322,11 +323,18 @@ export class BasicRestWrapper extends RestWrapper {
 						const requestProps: IBasicRestWrapperMetricProps = {
 							axiosError,
 							status,
+							baseUrl:
+								options.baseURL ??
+								axiosError?.config?.baseURL ??
+								"BASE_URL_UNAVAILABLE",
 							method: options.method ?? "METHOD_UNAVAILABLE",
 							url: options.url ?? "URL_UNAVAILABLE",
 							correlationId,
 							durationInMs: performance.now() - startTime,
-							timoutInMs: options.timeout ?? "TIMEOUT_UNAVAILABLE",
+							timeoutInMs:
+								options.timeout ??
+								this.axios.defaults.timeout ??
+								"TIMEOUT_UNAVAILABLE",
 						};
 						this.logHttpMetrics(requestProps);
 					}

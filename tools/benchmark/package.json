@@ -47,7 +47,7 @@
 		"@fluid-internal/mocha-test-setup": "^2.12.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
-		"@microsoft/api-extractor": "^7.48.1",
+		"@microsoft/api-extractor": "^7.50.1",
 		"@types/chai": "^4.3.4",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
@@ -59,5 +59,10 @@
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
 	},
-	"packageManager": "pnpm@9.15.3+sha512.1f79bc245a66eb0b07c5d4d83131240774642caaa86ef7d0434ab47c0d16f66b04e21e0c086eb61e62c77efc4d7f7ec071afad3796af64892fae66509173893a"
+	"packageManager": "pnpm@9.15.3+sha512.1f79bc245a66eb0b07c5d4d83131240774642caaa86ef7d0434ab47c0d16f66b04e21e0c086eb61e62c77efc4d7f7ec071afad3796af64892fae66509173893a",
+	"pnpm": {
+		"overrides": {
+			"nanoid": "^3.3.9"
+		}
+	}
 }

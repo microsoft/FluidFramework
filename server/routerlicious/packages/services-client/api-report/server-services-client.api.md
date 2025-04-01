@@ -241,6 +241,8 @@ export interface IBasicRestWrapperMetricProps {
     // (undocumented)
     axiosError: AxiosError<any>;
     // (undocumented)
+    baseUrl: string;
+    // (undocumented)
     correlationId: string;
     // (undocumented)
     durationInMs: number;
@@ -249,7 +251,7 @@ export interface IBasicRestWrapperMetricProps {
     // (undocumented)
     status: number | string;
     // (undocumented)
-    timoutInMs: number | string;
+    timeoutInMs: number | string;
     // (undocumented)
     url: string;
 }

@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import type { IPresence } from "../presence.js";
-
-import { addControlsTests } from "./broadcastControlsTests.js";
-
 import type {
 	JsonDeserialized,
 	JsonSerializable,
-} from "@fluidframework/presence/internal/core-interfaces";
-import type { InternalTypes } from "@fluidframework/presence/internal/exposedInternalTypes";
+} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+
+import type { InternalTypes } from "../exposedInternalTypes.js";
+import type { IPresence } from "../presence.js";
+
+import { addControlsTests } from "./broadcastControlsTests.js";
 
 describe("Presence", () => {
 	describe("PresenceStates", () => {
