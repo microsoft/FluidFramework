@@ -354,8 +354,7 @@ stages:
           inputs:
             command: 'custom'
             workingDir: ${{ parameters.testWorkspace }}
-            customCommand: 'install $(Initialize.testPackageTgz) ${{ parameters.tenantSetup }}'
-            customRegistry: 'useNpmrc'
+            customCommand: 'install ${{ parameters.tenantSetup }}'
 
         # Retrieve a tenant from the TRIPS tenant pool
         - task: AzureCLI@2
