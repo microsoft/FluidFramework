@@ -29,7 +29,6 @@ import {
 } from "./simple-tree/index.js";
 
 // TODOs
-// - Move this to package root
 // - Explore options for hiding various system types below.
 //   Most likely need to be exported, but we can probably hide them in a namespace.
 
