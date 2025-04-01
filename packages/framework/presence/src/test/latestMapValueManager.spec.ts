@@ -9,6 +9,7 @@ import { createPresenceManager } from "../presenceManager.js";
 
 import { addControlsTests } from "./broadcastControlsTests.js";
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
+import { createNullValidator } from "./testUtils.js";
 
 import type {
 	BroadcastControlSettings,
@@ -27,6 +28,7 @@ function createLatestMapManager(
 ) {
 	const states = presence.getStates(testWorkspaceName, {
 		fixedMap: LatestMap(
+			createNullValidator,
 			{ key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } },
 			valueControlSettings,
 		),
@@ -99,7 +101,10 @@ export function checkCompiles(): void {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	const presence = {} as IPresence;
 	const statesWorkspace = presence.getStates("name:testStatesWorkspaceWithLatestMap", {
-		fixedMap: LatestMap({ key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } }),
+		fixedMap: LatestMap(createNullValidator, {
+			key1: { x: 0, y: 0 },
+			key2: { ref: "default", someId: 0 },
+		}),
 	});
 	// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
 	const workspace: typeof statesWorkspace = statesWorkspace;
@@ -130,7 +135,7 @@ export function checkCompiles(): void {
 		tilt?: number;
 	}
 
-	workspace.add("pointers", LatestMap<PointerData>({}));
+	workspace.add("pointers", LatestMap<PointerData>(createNullValidator, {}));
 
 	const pointers = workspace.props.pointers;
 	const localPointers = pointers.local;
