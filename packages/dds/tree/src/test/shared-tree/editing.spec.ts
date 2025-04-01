@@ -301,12 +301,9 @@ describe("Editing", () => {
 			const tree1 = makeTreeFromJsonSequence([]);
 			const tree2 = tree1.branch();
 			tree2.transaction.start();
-			tree2.editor.sequenceField(rootField).insert(0, singleJsonCursor({}));
+			tree2.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees([{}]));
 			const aEditor = tree2.editor.sequenceField({ parent: rootNode, field: brand("foo") });
-			aEditor.insert(
-				0,
-				cursorForJsonableTreeNode({ type: brand(stringSchema.identifier), value: "a" }),
-			);
+			aEditor.insert(0, chunkFromJsonTrees(["a"]));
 
 			tree2.transaction.commit();
 
