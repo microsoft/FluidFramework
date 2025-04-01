@@ -21,18 +21,10 @@ describe.only("table schema", () => {
 			value: schemaFactory.string,
 		}) {}
 
-		class ColumnProps extends schemaFactory.object("table-column-props", {
-			name: schemaFactory.string,
-			typeHint: schemaFactory.string,
-		}) {}
-
 		class Table extends createTableSchema({
 			schemaFactory,
 			// TODO: don't require array wrapping
 			cellSchema: Cell,
-			// TODO: make props optional
-			columnProps: [ColumnProps],
-			rowProps: [schemaFactory.null],
 		}) {}
 
 		// TODO: use `independentView` to avoid needing Fluid goo
@@ -68,17 +60,12 @@ describe.only("table schema", () => {
 				{
 					id: "row-0",
 					cells: {},
-					props: null,
 				},
 			],
 		});
 		view.root.insertColumn({
 			column: {
 				id: "column-0",
-				props: {
-					name: "Description",
-					typeHint: "string",
-				},
 			},
 		});
 
@@ -87,16 +74,11 @@ describe.only("table schema", () => {
 				{
 					id: "row-0",
 					cells: {},
-					props: null,
 				},
 			],
 			columns: [
 				{
 					id: "column-0",
-					props: {
-						name: "Description",
-						typeHint: "string",
-					},
 				},
 			],
 		});

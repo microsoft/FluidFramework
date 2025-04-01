@@ -22,13 +22,12 @@ import {
 	TreeArrayNode,
 	type TreeNode,
 	type TreeNodeFromImplicitAllowedTypes,
-	type TreeNodeSchema,
 	type TreeNodeSchemaClass,
 	type WithType,
-	type TreeFieldFromImplicitField,
 } from "./simple-tree/index.js";
 
 // TODOs
+// - Move this to package root
 // - Explore options for hiding various system types below.
 //   Most likely need to be exported, but we can probably hide them in a namespace.
 
@@ -40,12 +39,12 @@ const tableSchemaFactorySubScope = "table";
  */
 export interface CellKey {
 	/**
-	 * {@link IColumn.id} of the containing {@link IColumn}.
+	 * {@link IColumnData.id} of the containing {@link IColumn}.
 	 */
 	readonly columnId: string;
 
 	/**
-	 * {@link IColumn.id} of the containing {@link IColumn}.
+	 * {@link IRowData.id} of the containing {@link IRow}.
 	 */
 	readonly rowId: string;
 }
@@ -54,17 +53,16 @@ export interface CellKey {
  * {@link IColumn} data.
  * @alpha @sealed @system
  */
-export interface IColumnData<TProps> {
+export interface IColumnData {
 	readonly id: string;
 	readonly index: number;
-	readonly props: TProps;
 }
 
 /**
- * A column in a {@link Table}.
+ * A column in a {@link ITable}.
  * @alpha @sealed @system
  */
-export interface IColumn<TProps> extends IColumnData<TProps> {
+export interface IColumn extends IColumnData {
 	readonly moveTo: (index: number) => void;
 }
 
@@ -72,24 +70,18 @@ export interface IColumn<TProps> extends IColumnData<TProps> {
  * {@link IRow} data.
  * @alpha @sealed @system
  */
-export interface IRowData<TCell, TProps> {
+export interface IRowData<TCell> {
 	readonly id: string;
 	readonly index: number;
 	readonly cells: ReadonlyMap<string, TCell>;
-	readonly props: TProps;
 }
 
 /**
- * A row in a {@link Table}.
+ * A row in a {@link ITable}.
  * @alpha @sealed @system
  */
-export interface IRow<
-	TCellValue,
-	TCellInsertable,
-	TColumnProps,
-	TColumn extends IColumn<TColumnProps>,
-	TRowProps,
-> extends IRowData<TCellValue, TRowProps> {
+export interface IRow<TCellValue, TCellInsertable, TColumn extends IColumn>
+	extends IRowData<TCellValue> {
 	// TODO: also allow column ID
 	readonly getCell: (column: TColumn) => TCellValue | undefined;
 
@@ -102,8 +94,8 @@ export interface IRow<
 }
 
 /**
- *
- * @alpha @sealed @system
+ * {@link ITable.insertRows} parameters.
+ * @alpha @sealed
  */
 export interface InsertRowsParameters<TInsertableRow> {
 	/**
@@ -120,8 +112,8 @@ export interface InsertRowsParameters<TInsertableRow> {
 }
 
 /**
- * @sealed
- * @system
+ * {@link ITable.insertColumn} parameters.
+ * @alpha @sealed
  */
 export interface InsertColumnParameters<TInsertableColumn> {
 	/**
@@ -144,11 +136,9 @@ export interface InsertColumnParameters<TInsertableColumn> {
 export interface ITable<
 	TCellValue,
 	TCellInsertable,
-	TColumnProps,
-	TColumnValue extends IColumn<TColumnProps>,
+	TColumnValue extends IColumn,
 	TColumnInsertable,
-	TRowProps,
-	TRowValue extends IRow<TCellValue, TCellInsertable, TColumnProps, TColumnValue, TRowProps>,
+	TRowValue extends IRow<TCellValue, TCellInsertable, TColumnValue>,
 	TRowInsertable,
 > {
 	readonly getRow: (id: string) => TRowValue | undefined;
@@ -175,16 +165,10 @@ export interface ITable<
  */
 export interface CreateTableSchemaParameters<
 	TCell extends ImplicitAllowedTypes,
-	TColumnProps extends readonly TreeNodeSchema[],
-	TRowProps extends readonly TreeNodeSchema[],
 	TInputScope extends string | undefined,
 > {
 	readonly schemaFactory: SchemaFactoryAlpha<TInputScope>;
 	readonly cellSchema: TCell;
-
-	// TODO: make props optional
-	readonly columnProps: TColumnProps;
-	readonly rowProps: TRowProps;
 }
 
 /**
@@ -195,11 +179,9 @@ export interface CreateTableSchemaParameters<
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 export function createTableSchema<
 	const TCell extends ImplicitAllowedTypes,
-	const TColumnProps extends readonly TreeNodeSchema[],
-	const TRowProps extends readonly TreeNodeSchema[],
 	const TInputScope extends string | undefined,
->(props: CreateTableSchemaParameters<TCell, TColumnProps, TRowProps, TInputScope>) {
-	const { schemaFactory: inputSchemaFactory, cellSchema, columnProps, rowProps } = props;
+>(props: CreateTableSchemaParameters<TCell, TInputScope>) {
+	const { schemaFactory: inputSchemaFactory, cellSchema } = props;
 
 	const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
 	type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
@@ -231,16 +213,12 @@ export function createTableSchema<
 	 */
 	const columnFields = {
 		id: schemaFactory.identifier,
-		props: columnProps,
 	} as const satisfies Record<string, ImplicitFieldSchema>;
 
 	/**
 	 * The Column schema - this can include more properties as needed *
 	 */
-	class Column
-		extends schemaFactory.object("Column", columnFields)
-		implements IColumn<TreeFieldFromImplicitField<TColumnProps>>
-	{
+	class Column extends schemaFactory.object("Column", columnFields) implements IColumn {
 		/**
 		 * Get the index of the column in the table
 		 * @returns The index of the column in the table
@@ -280,9 +258,7 @@ export function createTableSchema<
 		}
 	}
 
-	type ColumnValueType = TreeNode &
-		IColumn<TreeFieldFromImplicitField<TColumnProps>> &
-		WithType<ScopedSchemaName<Scope, "Column">>;
+	type ColumnValueType = TreeNode & IColumn & WithType<ScopedSchemaName<Scope, "Column">>;
 	type ColumnInsertableType = InsertableObjectFromSchemaRecord<typeof columnFields>;
 
 	// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
@@ -326,7 +302,6 @@ export function createTableSchema<
 	const rowFields = {
 		id: schemaFactory.identifier,
 		cells: schemaFactory.map("Row.cells", cellSchema),
-		props: rowProps,
 	} as const satisfies Record<string, ImplicitFieldSchema>;
 
 	/**
@@ -334,14 +309,7 @@ export function createTableSchema<
 	 */
 	class Row
 		extends schemaFactory.object("Row", rowFields)
-		implements
-			IRow<
-				CellValueType,
-				CellInsertableType,
-				TreeFieldFromImplicitField<TColumnProps>,
-				ColumnValueType,
-				TreeFieldFromImplicitField<TRowProps>
-			>
+		implements IRow<CellValueType, CellInsertableType, ColumnValueType>
 	{
 		/** Get a cell by the column
 		 * @param column - The column
@@ -405,13 +373,7 @@ export function createTableSchema<
 	}
 
 	type RowValueType = TreeNode &
-		IRow<
-			CellValueType,
-			CellInsertableType,
-			TreeFieldFromImplicitField<TColumnProps>,
-			ColumnValueType,
-			TreeFieldFromImplicitField<TRowProps>
-		> &
+		IRow<CellValueType, CellInsertableType, ColumnValueType> &
 		WithType<ScopedSchemaName<Scope, "Row">>;
 	// TODO: hide cells?
 	type RowInsertableType = InsertableObjectFromSchemaRecord<typeof rowFields>;
@@ -451,10 +413,8 @@ export function createTableSchema<
 			ITable<
 				CellValueType,
 				CellInsertableType,
-				TreeFieldFromImplicitField<TColumnProps>,
 				ColumnValueType,
 				ColumnInsertableType,
-				TreeFieldFromImplicitField<TRowProps>,
 				RowValueType,
 				RowInsertableType
 			>
@@ -589,10 +549,8 @@ export function createTableSchema<
 		ITable<
 			CellValueType,
 			CellInsertableType,
-			TreeFieldFromImplicitField<TColumnProps>,
 			ColumnValueType,
 			ColumnInsertableType,
-			TreeFieldFromImplicitField<TRowProps>,
 			RowValueType,
 			RowInsertableType
 		> &
