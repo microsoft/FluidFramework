@@ -179,6 +179,20 @@ export function testCorrectness() {
 				],
 			);
 
+			runUnitTestScenario("can handle changes that are bunched and have same seq", [
+				{ seq: 1, type: "Push" },
+				{ seq: 1, type: "Ack" },
+				{ seq: 2, type: "Push" },
+				{ seq: 2, type: "Ack" },
+				{ seq: 3, type: "Pull", ref: 1, from: peer1 },
+				{ seq: 4, type: "Push" },
+				{ seq: 4, type: "Push" },
+				{ seq: 4, type: "Ack" },
+				{ seq: 4, type: "Ack" },
+				{ seq: 6, type: "Pull", ref: 2, from: peer1 },
+				{ seq: 6, type: "Pull", ref: 2, from: peer1 },
+			]);
+
 			describe("Trunk eviction", () => {
 				it("Evicts trunk commits according to a provided minimum sequence number", () => {
 					const { manager } = testChangeEditManagerFactory({});

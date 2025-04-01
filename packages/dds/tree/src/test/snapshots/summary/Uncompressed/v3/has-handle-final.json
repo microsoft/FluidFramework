@@ -78,7 +78,7 @@
                                       true,
                                       {
                                         "type": "__fluid_handle__",
-                                        "url": "/test/TestSharedTree"
+                                        "url": "/test/tree-0"
                                       },
                                       []
                                     ]
@@ -177,7 +177,7 @@
                               true,
                               {
                                 "type": "__fluid_handle__",
-                                "url": "/test/TestSharedTree"
+                                "url": "/test/tree-0"
                               },
                               []
                             ]

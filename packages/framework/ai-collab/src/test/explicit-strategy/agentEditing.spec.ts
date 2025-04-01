@@ -153,7 +153,7 @@ describe("Makes TS type strings from schema", () => {
 		}) {}
 		assert.equal(
 			getPromptFriendlyTreeSchema(getJsonSchema(Foo)),
-			"interface Foo { y: number | string | Bar; } interface Bar { z: number; }",
+			"interface Bar { z: number; } interface Foo { y: number | string | Bar; }",
 		);
 	});
 
@@ -185,7 +185,7 @@ describe("Makes TS type strings from schema", () => {
 	it("for objects in the demo schema", () => {
 		assert.equal(
 			getPromptFriendlyTreeSchema(getJsonSchema(RootObject)),
-			"interface RootObject { str: string; vectors: Vector[]; bools: boolean[]; } interface Vector { x: number; y: number; z: number | undefined; }",
+			"interface Vector { x: number; y: number; z: number | undefined; } interface RootObject { str: string; vectors: Vector[]; bools: boolean[]; }",
 		);
 	});
 });

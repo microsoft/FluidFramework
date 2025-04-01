@@ -407,7 +407,9 @@ async function checkClusterDraining(
 	}
 	let clusterInDraining = false;
 	try {
-		clusterInDraining = await clusterDrainingChecker.isClusterDraining();
+		clusterInDraining = await clusterDrainingChecker.isClusterDraining({
+			tenantId: message.tenantId,
+		});
 	} catch (error) {
 		Lumberjack.error(
 			"Failed to get cluster draining status. Will allow requests to proceed.",
@@ -418,7 +420,6 @@ async function checkClusterDraining(
 	}
 
 	if (clusterInDraining) {
-		// TODO: add a new error class
 		Lumberjack.info("Reject connect document request because cluster is draining.", {
 			...properties,
 			tenantId: message.tenantId,

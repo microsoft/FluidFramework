@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	LeafNodeStoredSchema,
@@ -16,7 +16,6 @@ import {
 	Multiplicity,
 	identifierFieldKindIdentifier,
 } from "../../../core/index.js";
-import { fail } from "../../../util/index.js";
 import type { FullSchemaPolicy } from "../../modular-schema/index.js";
 
 import {

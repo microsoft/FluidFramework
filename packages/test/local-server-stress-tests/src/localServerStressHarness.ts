@@ -592,7 +592,7 @@ function mixinSynchronization<TOperation extends BaseOperation>(
 				await synchronizeClients([validationClient, ...connectedClients]);
 				for (const client of connectedClients) {
 					try {
-						await model.validateConsistency(validationClient, client);
+						await model.validateConsistency(client, validationClient);
 					} catch (error: unknown) {
 						if (error instanceof Error) {
 							error.message = `Comparing client ${validationClient.tag} vs client ${client.tag}\n${error.message}`;

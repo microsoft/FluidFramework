@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Lazy, oob } from "@fluidframework/core-utils/internal";
+import { Lazy, oob, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyKey, type ExclusiveMapTree } from "../core/index.js";
@@ -33,13 +33,11 @@ import {
 	typeSchemaSymbol,
 	type Context,
 	getOrCreateNodeFromInnerNode,
-	type TreeNodeSchemaBoth,
 	getSimpleNodeSchemaFromInnerNode,
 	getOrCreateInnerNode,
 	type TreeNodeSchemaClass,
 } from "./core/index.js";
 import { type InsertableContent, mapTreeFromNodeData } from "./toMapTree.js";
-import { fail } from "../util/index.js";
 import {
 	getKernel,
 	UnhydratedFlexTreeNode,
@@ -48,6 +46,10 @@ import {
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import { getUnhydratedContext } from "./createContext.js";
 import type { ImplicitAllowedTypesUnsafe } from "./api/index.js";
+import type {
+	ArrayNodeCustomizableSchema,
+	ArrayNodePojoEmulationSchema,
+} from "./arrayNodeTypes.js";
 
 /**
  * A covariant base type for {@link (TreeArrayNode:interface)}.
@@ -668,6 +670,7 @@ export function asIndex(key: string | symbol, exclusiveMax: number): number | un
 }
 
 /**
+ * Create a proxy which implements the {@link TreeArrayNode} API.
  * @param allowAdditionalProperties - If true, setting of unexpected properties will be forwarded to the target object.
  * Otherwise setting of unexpected properties will error.
  * @param proxyTarget - Target object of the proxy. Must provide an own `length` value property
@@ -1071,18 +1074,18 @@ export function arraySchema<
 	customizable: boolean,
 	metadata?: NodeSchemaMetadata<TCustomMetadata>,
 ) {
-	type Output = TreeNodeSchemaBoth<
+	type Output = ArrayNodeCustomizableSchema<
 		TName,
-		NodeKind.Array,
-		TreeArrayNode<T> & WithType<TName, NodeKind.Array>,
-		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		ImplicitlyConstructable,
 		T,
-		undefined,
+		ImplicitlyConstructable,
 		TCustomMetadata
-	>;
+	> &
+		ArrayNodePojoEmulationSchema<TName, T, ImplicitlyConstructable, TCustomMetadata>;
 
 	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(info));
+	const lazyAllowedTypesIdentifiers = new Lazy(
+		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
+	);
 
 	let unhydratedContext: Context;
 
@@ -1118,6 +1121,10 @@ export function arraySchema<
 				unhydratedContext,
 				mapTreeFromNodeData(input as object, this as unknown as ImplicitAllowedTypes),
 			);
+		}
+
+		public static get allowedTypesIdentifiers(): ReadonlySet<string> {
+			return lazyAllowedTypesIdentifiers.value;
 		}
 
 		protected static override constructorCached: MostDerivedData | undefined = undefined;
@@ -1161,8 +1168,7 @@ export function arraySchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
-		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> | undefined =
-			metadata;
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {

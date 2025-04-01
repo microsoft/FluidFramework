@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert, oob, fail } from "@fluidframework/core-utils/internal";
 
 import { EmptyKey, rootFieldKey } from "../../core/index.js";
 import { type TreeStatus, isTreeValue, FieldKinds } from "../../feature-libraries/index.js";
-import { fail, extractFromOpaque } from "../../util/index.js";
+import { extractFromOpaque } from "../../util/index.js";
 import {
 	type TreeLeafValue,
 	type ImplicitFieldSchema,

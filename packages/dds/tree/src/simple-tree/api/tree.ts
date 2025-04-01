@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { IFluidLoadable, IDisposable, Listenable } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -32,13 +33,12 @@ import {
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import { toStoredSchema } from "../toStoredSchema.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
-import { assert } from "@fluidframework/core-utils/internal";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "../objectNodeTypes.js";
-import { fail, getOrCreate } from "../../util/index.js";
+import { getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
 import type { VerboseTree } from "./verboseTree.js";
-import type { SimpleTreeSchema } from "./simpleSchema.js";
+import type { SimpleTreeSchema } from "../simpleSchema.js";
 import type {
 	RunTransactionParams,
 	TransactionCallbackStatus,

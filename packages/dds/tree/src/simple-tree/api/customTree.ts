@@ -5,7 +5,7 @@
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	EmptyKey,
@@ -19,7 +19,7 @@ import {
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 } from "../../core/index.js";
-import { fail, cloneWithReplacements } from "../../util/index.js";
+import { cloneWithReplacements } from "../../util/index.js";
 import type { TreeLeafValue } from "../schemaTypes.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import {

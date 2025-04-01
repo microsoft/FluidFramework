@@ -4,9 +4,8 @@
  */
 
 import type { BroadcastControls } from "./broadcastControls.js";
+import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { NotificationsManager } from "./notificationsManager.js";
-
-import type { InternalTypes } from "@fluidframework/presence/internal/exposedInternalTypes";
 
 /**
  * Unique address within a session.

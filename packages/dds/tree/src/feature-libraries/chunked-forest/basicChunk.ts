@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert, oob, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
@@ -20,7 +20,7 @@ import {
 	cursorChunk,
 	dummyRoot,
 } from "../../core/index.js";
-import { ReferenceCountedBase, fail } from "../../util/index.js";
+import { ReferenceCountedBase } from "../../util/index.js";
 import { SynchronousCursor, prefixPath } from "../treeCursorUtils.js";
 
 /**

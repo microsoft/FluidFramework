@@ -6,6 +6,7 @@
 		"rootDir": "./src",
 		"outDir": "./lib",
 		"exactOptionalPropertyTypes": false,
+		// TODO: AB#34163 Enable noUncheckedIndexedAccess for packages/drivers/odsp-driver
 		"noUncheckedIndexedAccess": false,
 	},
 }

@@ -7,16 +7,10 @@
 
 import { Client, PropertyAction, RedBlackTree } from "@fluidframework/merge-tree/internal";
 
-import {
-	IIntervalHelpers,
-	ISerializableInterval,
-	IntervalType,
-	SequenceInterval,
-	sequenceIntervalHelpers,
-} from "../intervals/index.js";
+import { IntervalType, SequenceInterval, createSequenceInterval } from "../intervals/index.js";
 import { ISharedString } from "../sharedString.js";
 
-import { IntervalIndex } from "./intervalIndex.js";
+import { type SequenceIntervalIndex } from "./intervalIndex.js";
 import {
 	HasComparisonOverride,
 	compareOverrideables,
@@ -29,25 +23,19 @@ import {
  * Provide additional APIs to support efficiently querying a collection of intervals whose startpoints fall within a specified range.
  * @internal
  */
-export interface IStartpointInRangeIndex<TInterval extends ISerializableInterval>
-	extends IntervalIndex<TInterval> {
+export interface IStartpointInRangeIndex extends SequenceIntervalIndex {
 	/**
 	 * @returns an array of all intervals contained in this collection whose startpoints locate in the range [start, end] (includes both ends)
 	 */
-	findIntervalsWithStartpointInRange(start: number, end: number): TInterval[];
+	findIntervalsWithStartpointInRange(start: number, end: number): SequenceInterval[];
 }
 
-export class StartpointInRangeIndex<TInterval extends ISerializableInterval>
-	implements IStartpointInRangeIndex<TInterval>
-{
+export class StartpointInRangeIndex implements IStartpointInRangeIndex {
 	private readonly intervalTree;
 
-	constructor(
-		private readonly client: Client,
-		private readonly helpers: IIntervalHelpers<TInterval>,
-	) {
-		this.intervalTree = new RedBlackTree<TInterval, TInterval>(
-			(a: TInterval, b: TInterval) => {
+	constructor(private readonly client: Client) {
+		this.intervalTree = new RedBlackTree<SequenceInterval, SequenceInterval>(
+			(a: SequenceInterval, b: SequenceInterval) => {
 				const compareStartsResult = a.compareStart(b);
 				if (compareStartsResult !== 0) {
 					return compareStartsResult;
@@ -70,25 +58,25 @@ export class StartpointInRangeIndex<TInterval extends ISerializableInterval>
 		);
 	}
 
-	public add(interval: TInterval): void {
+	public add(interval: SequenceInterval): void {
 		this.intervalTree.put(interval, interval);
 	}
 
-	public remove(interval: TInterval): void {
+	public remove(interval: SequenceInterval): void {
 		this.intervalTree.remove(interval);
 	}
 
-	public findIntervalsWithStartpointInRange(start: number, end: number): TInterval[] {
+	public findIntervalsWithStartpointInRange(start: number, end: number): SequenceInterval[] {
 		if (start <= 0 || start > end || this.intervalTree.isEmpty()) {
 			return [];
 		}
-		const results: TInterval[] = [];
-		const action: PropertyAction<TInterval, TInterval> = (node) => {
+		const results: SequenceInterval[] = [];
+		const action: PropertyAction<SequenceInterval, SequenceInterval> = (node) => {
 			results.push(node.data);
 			return true;
 		};
 
-		const transientStartInterval = this.helpers.create(
+		const transientStartInterval = createSequenceInterval(
 			"transient",
 			start,
 			start,
@@ -96,7 +84,7 @@ export class StartpointInRangeIndex<TInterval extends ISerializableInterval>
 			IntervalType.Transient,
 		);
 
-		const transientEndInterval = this.helpers.create(
+		const transientEndInterval = createSequenceInterval(
 			"transient",
 			end,
 			end,
@@ -117,7 +105,7 @@ export class StartpointInRangeIndex<TInterval extends ISerializableInterval>
  */
 export function createStartpointInRangeIndex(
 	sharedString: ISharedString,
-): IStartpointInRangeIndex<SequenceInterval> {
+): IStartpointInRangeIndex {
 	const client = (sharedString as unknown as { client: Client }).client;
-	return new StartpointInRangeIndex<SequenceInterval>(client, sequenceIntervalHelpers);
+	return new StartpointInRangeIndex(client);
 }

@@ -292,4 +292,23 @@ describe("BatchManager", () => {
 			});
 		}, /Error: Ops generated durning rollback/);
 	});
+
+	it("Popping the batch then rolling is not allowed", () => {
+		const batchManager = new BatchManager(defaultOptions);
+
+		batchManager.push(
+			{ ...smallMessage(), referenceSequenceNumber: 0 },
+			/* reentrant */ false,
+		);
+		const checkpoint = batchManager.checkpoint();
+		batchManager.popBatch();
+
+		// Attempt rollback and generate ops during rollback
+		assert.throws(() => {
+			checkpoint.rollback((message) => {
+				// Generate ops during rollback
+				batchManager.push(smallMessage(), /* reentrant */ false);
+			});
+		}, /Error: Ops generated durning rollback/);
+	});
 });

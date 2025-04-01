@@ -5,7 +5,7 @@
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	aboveRootPlaceholder,
@@ -16,7 +16,7 @@ import {
 	type ITreeCursorSynchronous,
 	type TreeNodeSchemaIdentifier,
 } from "../../core/index.js";
-import { brand, fail } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 import type {
 	TreeLeafValue,
 	ImplicitFieldSchema,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -38,7 +38,7 @@ import {
 	TreeViewConfiguration,
 	type TreeBranch,
 } from "../simple-tree/index.js";
-import { fail, type JsonCompatible } from "../util/index.js";
+import type { JsonCompatible } from "../util/index.js";
 import { noopValidator, type FluidClientVersion, type ICodecOptions } from "../codec/index.js";
 import type { ITreeCursorSynchronous } from "../core/index.js";
 import {
@@ -138,11 +138,19 @@ export const TreeAlpha: {
 	exportConcise(node: TreeNode | TreeLeafValue, options?: EncodeOptions): ConciseTree;
 
 	/**
+	 * Copy a snapshot of the current version of a TreeNode into a {@link ConciseTree}, allowing undefined.
+	 */
+	exportConcise(
+		node: TreeNode | TreeLeafValue | undefined,
+		options?: EncodeOptions,
+	): ConciseTree | undefined;
+
+	/**
 	 * Copy a snapshot of the current version of a TreeNode into a JSON compatible plain old JavaScript Object (except for {@link @fluidframework/core-interfaces#IFluidHandle|IFluidHandles}).
 	 * Uses the {@link VerboseTree} format, with an explicit type on every node.
 	 *
 	 * @remarks
-	 * There are several cases this may be preferred to {@link TreeAlpha.exportConcise}:
+	 * There are several cases this may be preferred to {@link TreeAlpha.(exportConcise:1)}:
 	 *
 	 * 1. When not using {@link ITreeConfigurationOptions.preventAmbiguity} (or when using `useStableFieldKeys`), `exportConcise` can produce ambiguous data (the type may be unclear on some nodes).
 	 * `exportVerbose` will always be unambiguous and thus lossless.
@@ -251,16 +259,7 @@ export const TreeAlpha: {
 		return createFromCursor(schema, cursor);
 	},
 
-	exportConcise(node: TreeNode | TreeLeafValue, options?: EncodeOptions): ConciseTree {
-		const config: EncodeOptions = { ...options };
-
-		const cursor = borrowCursorFromTreeNodeOrValue(node);
-		return conciseFromCursor(
-			cursor,
-			tryGetSchema(node) ?? fail(0xacd /* invalid input */),
-			config,
-		);
-	},
+	exportConcise,
 
 	exportVerbose(node: TreeNode | TreeLeafValue, options?: EncodeOptions): VerboseTree {
 		const config: EncodeOptions = { ...options };
@@ -314,6 +313,30 @@ export const TreeAlpha: {
 		return TreeBeta.clone<TSchema>(view.root);
 	},
 };
+
+function exportConcise(node: TreeNode | TreeLeafValue, options?: EncodeOptions): ConciseTree;
+
+function exportConcise(
+	node: TreeNode | TreeLeafValue | undefined,
+	options?: EncodeOptions,
+): ConciseTree | undefined;
+
+function exportConcise(
+	node: TreeNode | TreeLeafValue | undefined,
+	options?: EncodeOptions,
+): ConciseTree | undefined {
+	if (node === undefined) {
+		return undefined;
+	}
+	const config: EncodeOptions = { ...options };
+
+	const cursor = borrowCursorFromTreeNodeOrValue(node);
+	return conciseFromCursor(
+		cursor,
+		tryGetSchema(node) ?? fail(0xacd /* invalid input */),
+		config,
+	);
+}
 
 function borrowCursorFromTreeNodeOrValue(
 	node: TreeNode | TreeLeafValue,

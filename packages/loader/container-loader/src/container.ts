@@ -128,10 +128,10 @@ import {
 	getPackageName,
 } from "./contracts.js";
 import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
-import { validateRuntimeCompatibility } from "./layerCompatState.js";
 // eslint-disable-next-line import/no-deprecated
 import { IDetachedBlobStorage } from "./loader.js";
 import { RelativeLoader } from "./loader.js";
+import { validateRuntimeCompatibility } from "./loaderLayerCompatState.js";
 import {
 	serializeMemoryDetachedBlobStorage,
 	createMemoryDetachedBlobStorage,
@@ -2476,6 +2476,7 @@ export class Container
 			async () => runtimeFactory.instantiateRuntime(context, existing),
 		);
 
+		// Validate that the Runtime is compatible with this Loader.
 		const maybeRuntimeCompatDetails = runtime as FluidObject<ILayerCompatDetails>;
 		validateRuntimeCompatibility(maybeRuntimeCompatDetails.ILayerCompatDetails, (error) =>
 			this.dispose(error),

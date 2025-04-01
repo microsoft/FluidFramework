@@ -26,14 +26,6 @@
 		"./internal/container-definitions/internal": {
 			"import": "./lib/container-definitions/index.js",
 			"require": "./dist/container-definitions/index.js"
-		},
-		"./internal/exposedInternalTypes": {
-			"import": "./lib/exposedInternalTypes.js",
-			"require": "./dist/exposedInternalTypes.js"
-		},
-		"./internal/exposedUtilityTypes": {
-			"import": "./lib/exposedUtilityTypes.js",
-			"require": "./dist/exposedUtilityTypes.js"
 		}
 	},
 	"files": [
@@ -131,7 +123,7 @@
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@microsoft/api-extractor": "7.47.8",
+		"@microsoft/api-extractor": "7.50.1",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"@types/sinon": "^17.0.3",

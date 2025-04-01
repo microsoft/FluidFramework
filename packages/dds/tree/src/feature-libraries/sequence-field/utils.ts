@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	type ChangeAtomId,
@@ -14,7 +14,7 @@ import {
 	areEqualChangeAtomIds,
 	makeChangeAtomId,
 } from "../../core/index.js";
-import { type Mutable, brand, fail } from "../../util/index.js";
+import { type Mutable, brand } from "../../util/index.js";
 import {
 	CrossFieldTarget,
 	type NodeId,

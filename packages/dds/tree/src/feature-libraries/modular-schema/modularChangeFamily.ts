@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
 import type { ICodecFamily } from "../../codec/index.js";
@@ -45,7 +45,6 @@ import {
 	type IdAllocator,
 	type Mutable,
 	brand,
-	fail,
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
 	type RangeQueryResult,

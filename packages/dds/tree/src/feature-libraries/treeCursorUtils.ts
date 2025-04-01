@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob, debugAssert } from "@fluidframework/core-utils/internal";
+import { assert, oob, debugAssert, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
@@ -19,7 +19,6 @@ import {
 	detachedFieldAsKey,
 	rootField,
 } from "../core/index.js";
-import { fail } from "../util/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**

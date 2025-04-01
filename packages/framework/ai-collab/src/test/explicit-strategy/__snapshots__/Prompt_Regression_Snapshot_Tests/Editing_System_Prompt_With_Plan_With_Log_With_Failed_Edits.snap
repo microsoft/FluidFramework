@@ -1,5 +1,5 @@
 ---
-Generated on: 2025-01-28T18:19:54.937Z
+Generated on: 2025-03-26T17:03:01.515Z
 description: This is a snapshot file utilized for testing purposes.
 Test Suite Title: Prompt Generation Regression Tests
 Test Title: Editing System Prompt with plan and edit log with invalid `modify` has no regression
@@ -20,7 +20,7 @@ interface Modify {
     type: "modify";
     explanation: string; // A description of what this edit is meant to accomplish in human readable English
     target: ObjectTarget; // A pointer to a specific object node in the tree, identified by the target object's Id.
-    field: "title" | "description" | "completed";
+    field: "title" | "completed" | "description";
     modification: any; // Domain-specific content here
 }
 
@@ -73,7 +73,7 @@ interface EditWrapper {
 }
 
 
-	The tree is a JSON object with the following schema: interface TestTodoAppSchema { title: string; description: string; todos: Todo[]; } interface Todo { title: string; completed: boolean; }
+	The tree is a JSON object with the following schema: interface Todo { title: string; completed: boolean; } interface TestTodoAppSchema { title: string; description: string; todos: Todo[]; }
 	You have made a plan to accomplish the user's goal. The plan is: "Change the completed field to false for the todo at index 0 in the list of todos". You will perform one or more edits that correspond to that plan to accomplish the goal.
 	You have already performed the following edits:
 			1. {"type":"modify","explanation":"Change the completed field to false for the todo at index 0 in the list of todos","target":{"target":"Todo1"},"field":"complete","modification":false} This edit produced an error, and was discarded. The error message was: "You attempted an invalid modify edit on the node with id 'Todo1' and schema 'test.Todo'. The node's field you selected for modification `complete` does not exist in this node's schema. The set of available fields for this node are: `['title', 'completed']`. If you are sure you are trying to modify this node, did you mean to use the field `completed` which has the following set of allowed types: `['com.fluidframework.leaf.boolean']`?"

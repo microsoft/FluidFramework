@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { fail } from "@fluidframework/core-utils/internal";
 import {
 	type ICodecOptions,
 	type IJsonCodec,
@@ -18,7 +19,7 @@ import {
 	storedSchemaDecodeDispatcher,
 	toTreeNodeSchemaDataFormat,
 } from "../../core/index.js";
-import { brand, fail } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 
 import { Format } from "./format.js";
 

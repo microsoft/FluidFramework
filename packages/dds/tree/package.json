@@ -185,7 +185,7 @@
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@fluidframework/tree-previous": "npm:@fluidframework/tree@2.30.0",
-		"@microsoft/api-extractor": "7.47.8",
+		"@microsoft/api-extractor": "7.50.1",
 		"@types/diff": "^3.5.1",
 		"@types/easy-table": "^0.0.32",
 		"@types/mocha": "^10.0.10",
@@ -224,7 +224,20 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_FieldSchemaUnsafe": {
+				"forwardCompat": false
+			},
+			"Interface_ITreeViewConfiguration": {
+				"forwardCompat": false
+			},
+			"TypeAlias_ImplicitAllowedTypes": {
+				"forwardCompat": false
+			},
+			"TypeAlias_ImplicitFieldSchema": {
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "public"
 	}
 }

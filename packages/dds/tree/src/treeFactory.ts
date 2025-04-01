@@ -22,25 +22,7 @@ import {
 } from "./shared-tree/index.js";
 import type { ITree } from "./simple-tree/index.js";
 
-import { pkgVersion } from "./packageVersion.js";
-
-/**
- * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
- * @alpha
- * @legacy
- */
-export const SharedTreeFactoryType = "https://graph.microsoft.com/types/tree";
-
-/**
- * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
- * @alpha
- * @legacy
- */
-export const SharedTreeAttributes: IChannelAttributes = {
-	type: SharedTreeFactoryType,
-	snapshotFormatVersion: "0.0.0",
-	packageVersion: pkgVersion,
-};
+import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
 
 /**
  * A channel factory that creates an {@link ITree}.

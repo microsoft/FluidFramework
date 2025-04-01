@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
@@ -21,7 +21,7 @@ import {
 	valueSchemaAllows,
 	type NodeIdentifierManager,
 } from "../feature-libraries/index.js";
-import { brand, fail, isReadonlyArray, find, hasSome, hasSingle } from "../util/index.js";
+import { brand, isReadonlyArray, find, hasSome, hasSingle } from "../util/index.js";
 
 import { nullSchema } from "./leafNodeSchema.js";
 import {

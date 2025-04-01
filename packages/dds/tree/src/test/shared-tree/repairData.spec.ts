@@ -29,7 +29,7 @@ describe("Repair Data", () => {
 			// make sure that revertibles are created
 			const { unsubscribe } = createTestUndoRedoStacks(view1.checkout.events);
 
-			provider.processMessages();
+			provider.synchronizeMessages();
 			const view2 = provider.trees[1].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
@@ -44,7 +44,7 @@ describe("Repair Data", () => {
 			// remove in first tree
 			view1.root.removeRange(0, 2);
 
-			provider.processMessages();
+			provider.synchronizeMessages();
 			const removeSequenceNumber = provider.sequenceNumber;
 			assert.deepEqual([...view1.root], ["C", "D"]);
 			assert.deepEqual([...view2.root], ["C", "D"]);
@@ -78,7 +78,7 @@ describe("Repair Data", () => {
 			);
 			view1.initialize(["A", "B", "C", "D"]);
 
-			provider.processMessages();
+			provider.synchronizeMessages();
 			const view2 = provider.trees[1].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
@@ -96,7 +96,7 @@ describe("Repair Data", () => {
 			assert.deepEqual([...view2.root], ["A", "B", "D"]);
 
 			// Syncing will cause view2 to rebase its local changes
-			provider.processMessages();
+			provider.synchronizeMessages();
 
 			const removeSequenceNumber = provider.sequenceNumber;
 			assert.deepEqual([...view1.root], ["A", "x", "B", "D"]);
@@ -134,7 +134,7 @@ describe("Repair Data", () => {
 
 			// remove in first tree
 			view1.root.removeRange(0, 2);
-			provider.processMessages();
+			provider.synchronizeMessages();
 			const removeSequenceNumber = provider.sequenceNumber;
 
 			assert.deepEqual([...view1.root], ["C", "D"]);
@@ -182,7 +182,7 @@ describe("Repair Data", () => {
 			// remove in first tree
 			view1.root.removeRange(0, 1);
 
-			provider.processMessages();
+			provider.synchronizeMessages();
 			const removeSequenceNumber = provider.sequenceNumber;
 
 			assert.deepEqual([...view1.root], ["B"]);
@@ -231,7 +231,7 @@ describe("Repair Data", () => {
 			assert.equal(anchorA.treeStatus, TreeStatus.Removed);
 			assert.equal(anchorB.treeStatus, TreeStatus.InDocument);
 
-			provider.processMessages();
+			provider.synchronizeMessages();
 			const removeSequenceNumber = provider.sequenceNumber;
 			assert.deepEqual([...view1.root], ["B", "C", "D"]);
 			assert.equal(view1.checkout.getRemovedRoots().length, 1);
@@ -257,7 +257,7 @@ describe("Repair Data", () => {
 			);
 			view1.initialize(["A", "B", "C", "D"]);
 
-			provider.processMessages();
+			provider.synchronizeMessages();
 			const view2 = provider.trees[1].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
@@ -274,7 +274,7 @@ describe("Repair Data", () => {
 			// remove in first tree
 			view1.root.removeAt(0);
 
-			provider.processMessages();
+			provider.synchronizeMessages();
 			const removeSequenceNumber = provider.sequenceNumber;
 			assert.deepEqual([...view1.root], ["B", "C", "D"]);
 			assert.deepEqual([...view2.root], ["B", "C", "D"]);
@@ -306,7 +306,7 @@ describe("Repair Data", () => {
 			// make sure that revertibles are created
 			const { unsubscribe } = createTestUndoRedoStacks(view1.checkout.events);
 
-			provider.processMessages();
+			provider.synchronizeMessages();
 			const view2 = provider.trees[1].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
@@ -323,7 +323,7 @@ describe("Repair Data", () => {
 			// remove in first tree
 			view1.root.removeAt(0);
 
-			provider.processMessages();
+			provider.synchronizeMessages();
 			const removeSequenceNumber = provider.sequenceNumber;
 			assert.deepEqual([...view1.root], ["B", "C", "D"]);
 			assert.deepEqual([...view2.root], ["B", "C", "D"]);
@@ -351,7 +351,7 @@ describe("Repair Data", () => {
 });
 
 function advanceCollabWindow(provider: TestTreeProviderLite, removeSequenceNumber: number) {
-	provider.processMessages();
+	provider.synchronizeMessages();
 	while (provider.minimumSequenceNumber <= removeSequenceNumber) {
 		for (const tree of provider.trees) {
 			tree.kernel.getEditor().enterTransaction();
@@ -361,7 +361,7 @@ function advanceCollabWindow(provider: TestTreeProviderLite, removeSequenceNumbe
 				parentIndex: 0,
 			});
 			tree.kernel.getEditor().exitTransaction();
-			provider.processMessages();
+			provider.synchronizeMessages();
 		}
 	}
 }

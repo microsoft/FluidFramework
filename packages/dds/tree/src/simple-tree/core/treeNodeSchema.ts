@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { NodeSchemaMetadata, TreeLeafValue } from "../schemaTypes.js";
+import type { TreeLeafValue } from "../schemaTypes.js";
+import type { SimpleNodeSchemaBase } from "../simpleSchema.js";
 import type { InternalTreeNode, TreeNode, Unhydrated } from "./types.js";
 
 /**
@@ -88,6 +89,8 @@ export type TreeNodeSchemaNonClass<
 		? {
 				/**
 				 * Constructs an {@link Unhydrated} node with this schema.
+				 * @privateRemarks
+				 * Also allows InternalTreeNode.
 				 * @sealed
 				 */
 				create(data?: TInsertable | TConstructorExtra): TNode;
@@ -95,6 +98,8 @@ export type TreeNodeSchemaNonClass<
 		: {
 				/**
 				 * Constructs an {@link Unhydrated} node with this schema.
+				 * @privateRemarks
+				 * Also allows InternalTreeNode.
 				 * @sealed
 				 */
 				create(data: TInsertable | TConstructorExtra): TNode;
@@ -234,7 +239,7 @@ export interface TreeNodeSchemaCore<
 	out Info = unknown,
 	out TInsertable = never,
 	out TCustomMetadata = unknown,
-> {
+> extends SimpleNodeSchemaBase<Kind, TCustomMetadata> {
 	/**
 	 * Unique (within a document's schema) identifier used to associate nodes with their schema.
 	 * @remarks
@@ -246,7 +251,6 @@ export interface TreeNodeSchemaCore<
 	 * it is best practice to pick a new identifier.
 	 */
 	readonly identifier: Name;
-	readonly kind: Kind;
 
 	/**
 	 * Data used to define this schema.
@@ -289,11 +293,6 @@ export interface TreeNodeSchemaCore<
 	 * @system
 	 */
 	readonly childTypes: ReadonlySet<TreeNodeSchema>;
-
-	/**
-	 * User-provided {@link NodeSchemaMetadata} for this schema.
-	 */
-	readonly metadata?: NodeSchemaMetadata<TCustomMetadata> | undefined;
 
 	/**
 	 * Constructs an instance of this node type.

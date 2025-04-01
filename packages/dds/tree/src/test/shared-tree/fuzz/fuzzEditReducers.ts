@@ -13,7 +13,6 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { Revertible } from "../../../core/index.js";
 import type { DownPath } from "../../../feature-libraries/index.js";
 import { Tree, type SharedTree } from "../../../shared-tree/index.js";
-import { fail } from "../../../util/index.js";
 import { validateFuzzTreeConsistency } from "../../utils.js";
 
 import {
@@ -181,7 +180,7 @@ export function applySchemaOp(state: FuzzTestState, operation: SchemaChange) {
 	newView.upgradeSchema();
 
 	newView.currentSchema =
-		nodeSchemaFromTreeSchema(newSchema) ?? fail("nodeSchema should not be undefined.");
+		nodeSchemaFromTreeSchema(newSchema) ?? assert.fail("nodeSchema should not be undefined.");
 
 	const transactionViews = state.transactionViews ?? new Map();
 	transactionViews.set(state.client.channel, newView);
@@ -263,7 +262,7 @@ export function applyFieldEdit(tree: FuzzView, fieldEdit: FieldEdit): void {
 				break;
 			}
 			default:
-				fail("Invalid edit.");
+				assert.fail("Invalid edit.");
 		}
 		return;
 	}
@@ -324,7 +323,7 @@ function applySequenceFieldEdit(
 			break;
 		}
 		default:
-			fail("Invalid edit.");
+			assert.fail("Invalid edit.");
 	}
 }
 
@@ -335,7 +334,7 @@ function applyRequiredFieldEdit(tree: FuzzView, parentNode: FuzzNode, change: Se
 			break;
 		}
 		default:
-			fail("Invalid edit.");
+			assert.fail("Invalid edit.");
 	}
 }
 
@@ -354,7 +353,7 @@ function applyOptionalFieldEdit(
 			break;
 		}
 		default:
-			fail("Invalid edit.");
+			assert.fail("Invalid edit.");
 	}
 }
 
@@ -456,7 +455,7 @@ function navigateToNode(tree: FuzzView, path: DownPath): TreeNode {
 			case "arrayChildren": {
 				const arrayChildren =
 					(currentNode as FuzzNode).arrayChildren ??
-					fail(`Unexpected field type: ${pathStep.field}`);
+					assert.fail(`Unexpected field type: ${pathStep.field}`);
 
 				currentNode = arrayChildren;
 				break;
@@ -465,19 +464,19 @@ function navigateToNode(tree: FuzzView, path: DownPath): TreeNode {
 			case "optionalChild": {
 				const optionalChild =
 					(currentNode as FuzzNode).optionalChild ??
-					fail(`Unexpected field type: ${pathStep.field}`);
+					assert.fail(`Unexpected field type: ${pathStep.field}`);
 				currentNode = optionalChild as FuzzNode;
 				break;
 			}
 			case "requiredChild": {
 				const requiredChild =
 					(currentNode as FuzzNode).requiredChild ??
-					fail(`Unexpected field type: ${pathStep.field}`);
+					assert.fail(`Unexpected field type: ${pathStep.field}`);
 				currentNode = requiredChild as FuzzNode;
 				break;
 			}
 			default:
-				fail(`Unexpected field type: ${pathStep.field}`);
+				assert.fail(`Unexpected field type: ${pathStep.field}`);
 		}
 	}
 

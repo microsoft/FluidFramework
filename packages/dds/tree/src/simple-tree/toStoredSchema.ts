@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -20,7 +20,7 @@ import {
 	type TreeTypeSet,
 } from "../core/index.js";
 import { FieldKinds, type FlexFieldKind } from "../feature-libraries/index.js";
-import { brand, fail, getOrCreate } from "../util/index.js";
+import { brand, getOrCreate } from "../util/index.js";
 import { NodeKind, type TreeNodeSchema } from "./core/index.js";
 import {
 	FieldKind,
