@@ -15,9 +15,8 @@ import {
 	isFluidHandle,
 	toFluidHandleInternal,
 	type ISerializedHandle,
+	RemoteFluidObjectHandle,
 } from "@fluidframework/runtime-utils/internal";
-
-import { RemoteFluidObjectHandle } from "./remoteObjectHandle.js";
 
 /**
  * @legacy
