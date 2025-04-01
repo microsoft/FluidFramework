@@ -123,6 +123,8 @@ export interface TreeNodeApi {
 	 * The same node's identifier may, for example, be different across multiple sessions for the same client and document, or different across two clients in the same session.
 	 */
 	shortId(node: TreeNode): number | string | undefined;
+
+	uncompressedId(node: TreeNode): string | undefined;
 }
 
 /**
@@ -217,6 +219,31 @@ export const treeNodeApi: TreeNodeApi = {
 		return tryGetSchema(node) ?? fail(0xb37 /* Not a tree node */);
 	},
 	shortId(node: TreeNode): number | string | undefined {
+		// TODO: We are currently retrieving the uncompressed identifier, and then recompressing again.
+		// A fast track for accessing the in-memory compressed identifiers should be made.
+		const identifierValue = this.uncompressedId(node);
+
+		const schema = node[typeSchemaSymbol];
+		if (!isObjectNodeSchema(schema) || identifierValue === undefined) {
+			return undefined;
+		}
+		const flexNode = getOrCreateInnerNode(node);
+		const identifierFieldKeys = schema.identifierFieldKeys;
+		const identifier = flexNode.tryGetField(identifierFieldKeys[0] ?? oob())?.boxedAt(0);
+		if (flexNode instanceof UnhydratedFlexTreeNode){
+			return identifierValue
+		}
+		assert(
+			identifier?.context.isHydrated() === true,
+			0xa27 /* Expected hydrated identifier */,
+		);
+
+		const localNodeKey =
+			identifier.context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
+		return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : identifierValue;
+
+	},
+	uncompressedId(node: TreeNode): string | undefined {
 		const schema = node[typeSchemaSymbol];
 		if (!isObjectNodeSchema(schema)) {
 			return undefined;
@@ -243,10 +270,7 @@ export const treeNodeApi: TreeNodeApi = {
 					0xa27 /* Expected hydrated identifier */,
 				);
 				const identifierValue = identifier.value as string;
-
-				const localNodeKey =
-					identifier.context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
-				return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : identifierValue;
+				return identifierValue
 			}
 			default:
 				throw new UsageError(

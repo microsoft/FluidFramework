@@ -367,3 +367,19 @@ const versionToFormat = {
 	v2_2: 1,
 	v2_3: 1,
 };
+
+/**
+ * Function which returns the idCompressor from a TreeView.
+ * 
+ * @param branch - TreeView for which you want to get the idCompressor from.
+ * @returns the idCompressor associated with the treeView.
+ * 
+ * @remarks
+ * We currently do not have any apis that support converting identifiers between uncompressed and compressed state.
+ * This function can be used for use cases involving identifiers that our api does not support.
+ * 
+ * @alpha
+ */
+export function getIdCompressorFromView(branch: TreeBranch): void{
+	
+}
