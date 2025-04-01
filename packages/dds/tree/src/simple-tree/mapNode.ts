@@ -24,9 +24,7 @@ import {
 	getKernel,
 	type InnerNode,
 	NodeKind,
-	type TreeNodeSchemaBoth,
 	type TreeNodeSchema,
-	type WithType,
 	// eslint-disable-next-line import/no-deprecated
 	typeNameSymbol,
 	type TreeNode,
@@ -45,6 +43,7 @@ import { brand, count, type RestrictiveStringRecord } from "../util/index.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import type { ExclusiveMapTree } from "../core/index.js";
 import { getUnhydratedContext } from "./createContext.js";
+import type { MapNodeCustomizableSchema, MapNodePojoEmulationSchema } from "./mapNodeTypes.js";
 
 /**
  * A map of string keys to tree objects.
@@ -303,16 +302,13 @@ export function mapSchema<
 			return Schema.constructorCached?.constructor as unknown as typeof schemaErased;
 		}
 	}
-	const schemaErased: TreeNodeSchemaBoth<
+	const schemaErased: MapNodeCustomizableSchema<
 		TName,
-		NodeKind.Map,
-		TreeMapNode<T> & WithType<TName, NodeKind.Map>,
-		MapNodeInsertableData<T>,
-		ImplicitlyConstructable,
 		T,
-		undefined,
+		ImplicitlyConstructable,
 		TCustomMetadata
-	> = Schema;
+	> &
+		MapNodePojoEmulationSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> = Schema;
 	return schemaErased;
 }
 
