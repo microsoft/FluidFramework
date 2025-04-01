@@ -91,6 +91,33 @@
 	"files.trimFinalNewlines": true,
 	"files.trimTrailingWhitespace": true,
 
+	// Disable file watching for these files and folders to reduce likelihood of hitting the ENOSPC error.
+	// See https://code.visualstudio.com/docs/setup/linux#_visual-studio-code-is-unable-to-watch-for-file-changes-in-this-large-workspace-error-enospc
+	"files.watcherExclude": {
+		//These are the defaults if not overridden
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+
+		// Custom entries
+		"**/*.js.map": true,
+		"**/*build.log": true,
+		"**/*.tsbuildinfo": true,
+		"**/_api-extractor-temp": true,
+		// exclude built `dist` folders
+		"**/dist/*": true,
+		// exclude built `.next` folders (from NextJS' local dev server)
+		"**/.next/*": true,
+		// exclude built `lib` folders but preserve ./common/lib
+		//   paths with packages container
+		"**/packages/**/lib/*": true,
+		//   other sets known to build `lib`
+		"{common/lib,examples,experimental}/**/lib/*": true,
+		"**/nyc/*": true,
+		"**/*.log": true,
+		"**/DS_Store": true,
+  },
+
 	// Don't search for the biome executable in the path, as it's not a globally installed tool.
 	"biome.searchInPath": false,
 
