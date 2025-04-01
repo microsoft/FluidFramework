@@ -469,9 +469,13 @@ export function getParam(params: Params, key: string) {
 }
 
 export function getJtiClaimFromAccessToken(token: string): string | undefined {
-	const claims = decode(token) as ITokenClaims;
-	if (claims?.jti && validate(claims.jti)) {
-		return claims.jti;
+	try {
+		const claims = decode(token) as ITokenClaims;
+		if (claims?.jti && validate(claims.jti)) {
+			return claims.jti;
+		}
+	} catch (error) {
+		Lumberjack.error("Error decoding token", undefined, error);
 	}
 	return undefined;
 }
