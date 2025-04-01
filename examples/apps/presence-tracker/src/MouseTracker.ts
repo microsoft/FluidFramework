@@ -8,18 +8,12 @@ import type { IEvent } from "@fluidframework/core-interfaces";
 import type {
 	Presence,
 	Attendee,
-	LatestRaw,
 	StatesWorkspace,
+	Latest,
 } from "@fluidframework/presence/alpha";
 import { AttendeeStatus, StateFactory } from "@fluidframework/presence/alpha";
 
-/**
- * IMousePosition is the data that individual session clients share via presence.
- */
-export interface IMousePosition {
-	readonly x: number;
-	readonly y: number;
-}
+import { IMousePositionValidator, type IMousePosition } from "./types.js";
 
 /**
  * Definitions of the events that the MouseTracker raises.
@@ -41,7 +35,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	/**
 	 * State that tracks the latest mouse position  of connected session clients.
 	 */
-	private readonly cursor: LatestRaw<IMousePosition>;
+	private readonly cursor: Latest<IMousePosition>;
 
 	constructor(
 		private readonly presence: Presence,
@@ -57,7 +51,10 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 		// Create a Latest state object to track the mouse position.
 		statesWorkspace.add(
 			"cursor",
-			StateFactory.latest<IMousePosition>({ local: { x: 0, y: 0 } }),
+			StateFactory.latest<IMousePosition>({
+				local: { x: 0, y: 0 },
+				validator: IMousePositionValidator,
+			}),
 		);
 
 		// Save a reference to the cursor state for easy access within the MouseTracker.
@@ -78,8 +75,8 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 		window.addEventListener("mousemove", (e) => {
 			// Alert all connected clients that there has been a change to this client's mouse position
 			this.cursor.local = {
-				x: e.clientX,
-				y: e.clientY,
+				x: { value: `${e.clientX}` } as unknown as number,
+				y: { value: `${e.clientY}` } as unknown as number,
 			};
 			this.emit("mousePositionChanged");
 		});
