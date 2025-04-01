@@ -101,7 +101,7 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/tool-utils": "workspace:~",
-		"axios": "^1.7.7",
+		"axios": "^1.8.4",
 		"buffer": "^6.0.3",
 		"express": "^4.21.2",
 		"isomorphic-fetch": "^3.0.0",
