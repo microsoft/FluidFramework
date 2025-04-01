@@ -50,8 +50,6 @@ const packages2x = [
 	"2.30.0",
 ];
 
-// TODO: CompressionAlgorithms and disabledCompressionConfig are copied here to avoid weird circular dependency issue
-
 /**
  * Available compression algorithms for op compression.
  * @legacy
