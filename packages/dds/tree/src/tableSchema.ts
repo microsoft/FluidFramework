@@ -25,6 +25,7 @@ import {
 	type TreeNodeSchema,
 	type TreeNodeSchemaClass,
 	type WithType,
+	type TreeFieldFromImplicitField,
 } from "./simple-tree/index.js";
 
 // TODOs
@@ -51,23 +52,45 @@ export interface CellKey {
 }
 
 /**
+ * {@link IColumn} data.
+ * @alpha @sealed @system
+ */
+export interface IColumnData<TProps> {
+	readonly id: string;
+	readonly index: number;
+	readonly props: TProps;
+}
+
+/**
  * A column in a {@link Table}.
  * @alpha @sealed @system
  */
-export interface IColumn {
+export interface IColumn<TProps> extends IColumnData<TProps> {
+	readonly moveTo: (index: number) => void;
+}
+
+/**
+ * {@link IRow} data.
+ * @alpha @sealed @system
+ */
+export interface IRowData<TCell, TProps> {
 	readonly id: string;
 	readonly index: number;
-	readonly moveTo: (index: number) => void;
+	readonly cells: ReadonlyMap<string, TCell>;
+	readonly props: TProps;
 }
 
 /**
  * A row in a {@link Table}.
  * @alpha @sealed @system
  */
-export interface IRow<TCellValue, TCellInsertable, TColumn extends IColumn> {
-	readonly id: string;
-	readonly index: number;
-
+export interface IRow<
+	TCellValue,
+	TCellInsertable,
+	TColumnProps,
+	TColumn extends IColumn<TColumnProps>,
+	TRowProps,
+> extends IRowData<TCellValue, TRowProps> {
 	// TODO: also allow column ID
 	readonly getCell: (column: TColumn) => TCellValue | undefined;
 
@@ -122,9 +145,11 @@ export interface InsertColumnParameters<TInsertableColumn> {
 export interface ITable<
 	TCellValue,
 	TCellInsertable,
-	TColumnValue extends IColumn,
+	TColumnProps,
+	TColumnValue extends IColumn<TColumnProps>,
 	TColumnInsertable,
-	TRowValue extends IRow<TCellValue, TCellInsertable, TColumnValue>,
+	TRowProps,
+	TRowValue extends IRow<TCellValue, TCellInsertable, TColumnProps, TColumnValue, TRowProps>,
 	TRowInsertable,
 > {
 	readonly getRow: (id: string) => TRowValue | undefined;
@@ -213,7 +238,10 @@ export function createTableSchema<
 	/**
 	 * The Column schema - this can include more properties as needed *
 	 */
-	class Column extends schemaFactory.object("Column", columnFields) implements IColumn {
+	class Column
+		extends schemaFactory.object("Column", columnFields)
+		implements IColumn<TreeFieldFromImplicitField<TColumnProps>>
+	{
 		/**
 		 * Get the index of the column in the table
 		 * @returns The index of the column in the table
@@ -253,7 +281,9 @@ export function createTableSchema<
 		}
 	}
 
-	type ColumnValueType = TreeNode & IColumn & WithType<ScopedSchemaName<Scope, "Column">>;
+	type ColumnValueType = TreeNode &
+		IColumn<TreeFieldFromImplicitField<TColumnProps>> &
+		WithType<ScopedSchemaName<Scope, "Column">>;
 	type ColumnInsertableType = InsertableObjectFromSchemaRecord<typeof columnFields>;
 
 	// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
@@ -305,7 +335,14 @@ export function createTableSchema<
 	 */
 	class Row
 		extends schemaFactory.object("Row", rowFields)
-		implements IRow<CellValueType, CellInsertableType, ColumnValueType>
+		implements
+			IRow<
+				CellValueType,
+				CellInsertableType,
+				TreeFieldFromImplicitField<TColumnProps>,
+				ColumnValueType,
+				TreeFieldFromImplicitField<TRowProps>
+			>
 	{
 		/** Get a cell by the column
 		 * @param column - The column
@@ -369,7 +406,13 @@ export function createTableSchema<
 	}
 
 	type RowValueType = TreeNode &
-		IRow<CellValueType, CellInsertableType, ColumnValueType> &
+		IRow<
+			CellValueType,
+			CellInsertableType,
+			TreeFieldFromImplicitField<TColumnProps>,
+			ColumnValueType,
+			TreeFieldFromImplicitField<TRowProps>
+		> &
 		WithType<ScopedSchemaName<Scope, "Row">>;
 	// TODO: hide cells?
 	type RowInsertableType = InsertableObjectFromSchemaRecord<typeof rowFields>;
@@ -409,8 +452,10 @@ export function createTableSchema<
 			ITable<
 				CellValueType,
 				CellInsertableType,
+				TreeFieldFromImplicitField<TColumnProps>,
 				ColumnValueType,
 				ColumnInsertableType,
+				TreeFieldFromImplicitField<TRowProps>,
 				RowValueType,
 				RowInsertableType
 			>
@@ -545,8 +590,10 @@ export function createTableSchema<
 		ITable<
 			CellValueType,
 			CellInsertableType,
+			TreeFieldFromImplicitField<TColumnProps>,
 			ColumnValueType,
 			ColumnInsertableType,
+			TreeFieldFromImplicitField<TRowProps>,
 			RowValueType,
 			RowInsertableType
 		> &
