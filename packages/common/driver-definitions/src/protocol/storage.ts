@@ -46,7 +46,7 @@ export interface IBlob {
 	/**
 	 * The encoding of the contents string
 	 */
-	// eslint-disable-next-line unicorn/text-encoding-identifier-case
+	// eslint-disable-next-line unicorn/text-encoding-identifier-case -- Not removing this rule as it would require a breaking change in driver-definitions; this isn't a lint rule we're actively trying to remove
 	encoding: "utf-8" | "base64";
 }
 
