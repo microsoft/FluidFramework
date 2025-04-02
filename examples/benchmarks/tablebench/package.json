@@ -34,7 +34,7 @@
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"prepack": "npm run webpack",
-		"postpack": "tar -cf ./tablebench.test-files.tar ./src/test ./lib/test",
+		"pack:tests": "tar -cf ./tablebench.test-files.tar ./src/test ./lib/test",
 		"start": "start-server-and-test tinylicious 7070 start:webpack",
 		"start:t9s": "tinylicious",
 		"start:webpack": "webpack serve --config webpack.config.cjs --env mode=tinylicious",

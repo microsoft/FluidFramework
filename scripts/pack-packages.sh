@@ -14,12 +14,19 @@ mkdir $STAGING_PATH/test-files/
 
 # Runs pack on all packages in the release group and moves the tarballs to the staging folder.
 # If test files are found, they are moved to the test-files folder.
+# Note: use of package's pack:tests is only supported for pnpm as PACKAGE_MANAGER.
 if [ -f ".releaseGroup" ]; then
+  if [ "$PACKAGE_MANAGER" == "pnpm" ]; then
+    pnpm -r --if-present pack:tests
+  fi
   flub exec --no-private --concurrency=1 --releaseGroup $RELEASE_GROUP -- "$PACKAGE_MANAGER pack" && \
   flub exec --no-private --concurrency=1 --releaseGroup $RELEASE_GROUP -- "mv -t $STAGING_PATH/pack/tarballs/ ./*.tgz" && \
   flub exec --no-private --releaseGroup $RELEASE_GROUP -- "[ ! -f ./*test-files.tar ] || (echo 'test files found' && mv -t $STAGING_PATH/test-files/ ./*test-files.tar)"
 
 else
+  if [ "$PACKAGE_MANAGER" == "pnpm" ]; then
+    pnpm --if-present pack:tests
+  fi
   $PACKAGE_MANAGER pack && mv -t $STAGING_PATH/pack/tarballs/ ./*.tgz
 fi
 
