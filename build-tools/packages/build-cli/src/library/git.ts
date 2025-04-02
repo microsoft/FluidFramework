@@ -465,7 +465,7 @@ export class Repository implements GitContext {
 	 * Fetch branch
 	 */
 	public async fetchBranch(remote: string, branchName: string): Promise<void> {
-		await this.gitClient.fetch(remote, [branchName]);
+		await this.gitClient.fetch(remote, branchName);
 	}
 }
 
