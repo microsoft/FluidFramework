@@ -100,7 +100,7 @@
 		"mocha": "^10.1.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^5.0.0",
-		"sinon": "^19.0.2",
+		"sinon": "^20.0.0",
 		"supertest": "^3.3.0",
 		"typescript": "~5.1.6"
 	}

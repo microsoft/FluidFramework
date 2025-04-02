@@ -91,7 +91,7 @@
 		"nock": "^13.3.3",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"sinon": "^18.0.1",
+		"sinon": "^20.0.0",
 		"ts-loader": "^9.5.1",
 		"typescript": "~5.1.6",
 		"webpack": "^5.94.0",

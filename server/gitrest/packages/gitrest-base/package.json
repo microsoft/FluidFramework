@@ -106,7 +106,7 @@
 		"mocha": "^10.1.0",
 		"rimraf": "^3.0.2",
 		"sillyname": "^0.1.0",
-		"sinon": "^19.0.2",
+		"sinon": "^20.0.0",
 		"supertest": "^3.4.2",
 		"typescript": "~5.1.6"
 	}

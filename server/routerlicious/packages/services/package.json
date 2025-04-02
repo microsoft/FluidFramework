@@ -97,7 +97,7 @@
 		"prettier": "~3.0.3",
 		"redis-commands": "^1.7.0",
 		"rimraf": "^4.4.0",
-		"sinon": "^18.0.1",
+		"sinon": "^20.0.0",
 		"typescript": "~5.1.6"
 	},
 	"fluidBuild": {
