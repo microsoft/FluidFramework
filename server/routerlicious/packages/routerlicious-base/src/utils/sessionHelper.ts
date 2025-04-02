@@ -315,7 +315,7 @@ function getEphemeralContainerTtlInSeconds(documentExpirationTime: number): numb
  * Set the session to cache. If the session is "404", set it as "404" to indicate that the document is deleted.
  * @internal
  */
-async function setGetSessionResultInCache(
+export async function setGetSessionResultInCache(
 	tenantId: string,
 	documentId: string,
 	session: ISession | string,
@@ -328,7 +328,7 @@ async function setGetSessionResultInCache(
 		await redisCacheForGetSession.set(
 			cacheKey,
 			typeof session === "string" && session === "404" ? session : JSON.stringify(session),
-			typeof session === "string" && session === "404" ? 24 * 60 * 60 : cacheTTLInSeconds,
+			typeof session === "string" && session === "404" ? 20 * 60 : cacheTTLInSeconds,
 		);
 	} catch (error) {
 		Lumberjack.error("Error setting session to cache", { tenantId, documentId }, error);
@@ -452,12 +452,9 @@ export async function getSession(
 			throw docDeletedError;
 		}
 	}
-	// Handle the case where the document is ephemeral, has not expired yet but might expire within the next 5 minutes. In this case, we set the cache TTL to the time remaining until expiration.
+	// Handle the case where the document is ephemeral. Set the TTL to the time remaining before expiration.
 	const cacheTTLInSeconds = documentExpirationTime
-		? Math.min(
-				getEphemeralContainerTtlInSeconds(documentExpirationTime),
-				defaultGetSessionCacheTtlInSeconds,
-		  )
+		? getEphemeralContainerTtlInSeconds(documentExpirationTime)
 		: defaultGetSessionCacheTtlInSeconds;
 	connectionTrace?.stampStage("EphemeralExipiryChecked");
 
