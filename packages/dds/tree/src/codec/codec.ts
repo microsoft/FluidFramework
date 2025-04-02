@@ -80,6 +80,17 @@ export interface ICodecOptions {
 	 * which reduces the risk of unrecoverable data corruption.
 	 */
 	readonly jsonValidator: JsonValidator;
+
+	/**
+	 * The minimum version of the Fluid Framework client output must be encoded to be compatible with.
+	 * @remarks
+	 * This is used to ensure that the the output from this codec can be used with older versions of the Fluid Framework client.
+	 * This includes both concurrent collaboration, and an older version opening the document later.
+	 *
+	 * Note that versions older than this should not result in data corruption if they access the data:
+	 * if they can't handle the format they should error.
+	 */
+	readonly minimumSupportedVersion: FluidClientVersion;
 }
 
 /**

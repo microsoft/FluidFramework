@@ -5,6 +5,7 @@
 
 import { fail } from "@fluidframework/core-utils/internal";
 import {
+	type FluidClientVersion,
 	type ICodecOptions,
 	type IJsonCodec,
 	makeVersionedValidatedCodec,
@@ -23,7 +24,10 @@ import { brand } from "../../util/index.js";
 
 import { Format } from "./format.js";
 
-export function encodeRepo(repo: TreeStoredSchema): Format {
+export function encodeRepo(
+	repo: TreeStoredSchema,
+	minimumSupportedVersion: FluidClientVersion,
+): Format {
 	const nodeSchema: Record<string, schemaFormat.TreeNodeSchemaDataFormat> =
 		Object.create(null);
 	const rootFieldSchema = encodeFieldSchema(repo.rootFieldSchema);
@@ -59,7 +63,7 @@ function decode(f: Format): TreeStoredSchema {
  */
 export function makeSchemaCodec(options: ICodecOptions): IJsonCodec<TreeStoredSchema, Format> {
 	return makeVersionedValidatedCodec(options, new Set([schemaFormat.version]), Format, {
-		encode: (data: TreeStoredSchema) => encodeRepo(data),
+		encode: (data: TreeStoredSchema) => encodeRepo(data, options.minimumSupportedVersion),
 		decode: (data: Format) => decode(data),
 	});
 }
