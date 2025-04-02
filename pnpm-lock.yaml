@@ -12364,6 +12364,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/sinon':
+        specifier: ^17.0.3
+        version: 17.0.3
       '@types/uuid':
         specifier: ^9.0.2
         version: 9.0.8
@@ -12394,6 +12397,9 @@ importers:
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
+      sinon:
+        specifier: ^18.0.1
+        version: 18.0.1
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
