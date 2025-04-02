@@ -3,162 +3,50 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import {
-	IFluidHandleContext,
-	type IFluidHandleInternal,
-} from "@fluidframework/core-interfaces/internal";
-import { assert, shallowCloneObject } from "@fluidframework/core-utils/internal";
-import {
-	isSerializedHandle,
-	isFluidHandle,
-	toFluidHandleInternal,
-	type ISerializedHandle,
-	RemoteFluidObjectHandle,
-} from "@fluidframework/runtime-utils/internal";
-
-//* THIS IS GOING AWAY
+import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import { FluidSerializerBase } from "@fluidframework/runtime-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
+ * For serializing op contents during submit. Will encode handles before serializing.
+ *
  * @internal
  */
-export class OpContentsSerializer {
-	public constructor(private readonly root: IFluidHandleContext) {
-		assert(this.root.routeContext === undefined, "Context provided should have been the root");
-	}
-
+export class OpContentsSerializer extends FluidSerializerBase {
 	/**
-	 * Given a mostly-jsonable object tree that may have handle objects embedded within, will return a
-	 * fully-jsonable object tree where any embedded IFluidHandles have been replaced with a serializable form.
-	 *
-	 * The original `input` object is not mutated.  This method will shallowly clone all objects in the path from
-	 * the root to any replaced handles.  (If no handles are found, returns the original object.)
-	 *
-	 * Any unbound handles encountered are bound to the provided IFluidHandle.
+	 * @param root - ContainerRuntime's root handle routing context.
 	 */
-	public encode(input: unknown, bind: IFluidHandleInternal): unknown {
-		// If the given 'input' cannot contain handles, return it immediately.  Otherwise,
-		// return the result of 'recursivelyReplace()'.
-		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-		return !!input && typeof input === "object"
-			? this.recursivelyReplace(input, this.encodeValue, bind)
-			: input;
+	public constructor(root: IFluidHandleContext) {
+		assert(root.routeContext === undefined, "Context provided should have been the root");
+		super(root);
 	}
 
 	/**
-	 * Given a fully-jsonable object tree that may have encoded handle objects embedded within, will return an
-	 * equivalent object tree where any encoded IFluidHandles have been replaced with their decoded form.
+	 * See {@link FluidSerializerBase.parse}
 	 *
-	 * The original `input` object is not mutated.  This method will shallowly clone all objects in the path from
-	 * the root to any replaced handles.  (If no handles are found, returns the original object.)
+	 * @deprecated Not supported at this time
+	 */
+	public parse(input: string): unknown {
+		// In general, we would be fine to parse serialized ops here, decoding the handles along the way,
+		// However, there is a forever-back-compat case we cannot handle trivially: handles with a datastore-relative path.
+		// These relative paths must be converted to absolute paths before creating the RemoteFluidObjectHandle,
+		// and we don't have the context to do that here.
+		// So for now, we will not parse ops in ContainerRuntime layer, but rather let the DDS do it still.
+		throw new UsageError("parse is not supported in OpContentsSerializer");
+	}
+
+	/**
+	 * See {@link FluidSerializerBase.decode}
 	 *
-	 * The decoded handles are implicitly bound to the handle context of this serializer.
+	 * @deprecated Not supported at this time
 	 */
 	public decode(input: unknown): unknown {
-		// If the given 'input' cannot contain handles, return it immediately.  Otherwise,
-		// return the result of 'recursivelyReplace()'.
-		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-		return !!input && typeof input === "object"
-			? this.recursivelyReplace(input, this.decodeValue)
-			: input;
-	}
-
-	public stringify(input: unknown, bind: IFluidHandle): string {
-		const bindInternal = toFluidHandleInternal(bind);
-		return JSON.stringify(input, (key, value) => this.encodeValue(value, bindInternal));
-	}
-
-	// Parses the serialized data - context must match the context with which the JSON was stringified
-	public parse(input: string): unknown {
-		return JSON.parse(input, (key, value) => this.decodeValue(value));
-	}
-
-	// If the given 'value' is an IFluidHandle, returns the encoded IFluidHandle.
-	// Otherwise returns the original 'value'.  Used by 'encode()' and 'stringify()'.
-	private readonly encodeValue = (value: unknown, bind?: IFluidHandleInternal): unknown => {
-		// If 'value' is an IFluidHandle return its encoded form.
-		if (isFluidHandle(value)) {
-			assert(bind !== undefined, 0xa93 /* Cannot encode a handle without a bind context */);
-			return this.serializeHandle(toFluidHandleInternal(value), bind);
-		}
-		return value;
-	};
-
-	// If the given 'value' is an encoded IFluidHandle, returns the decoded IFluidHandle.
-	// Otherwise returns the original 'value'.  Used by 'decode()' and 'parse()'.
-	private readonly decodeValue = (value: unknown): unknown => {
-		// If 'value' is a serialized IFluidHandle return the deserialized result.
-		if (isSerializedHandle(value)) {
-			// Old documents may have handles with relative path in their summaries.
-			// We don't have enough context at this scope to resolve the relative path,
-			// so leave it encoded and it will be decoded down in the DDS.
-			// This is a back-compat case that should be more and more rare as time goes on.
-			if (!value.url.startsWith("/")) {
-				//* Log?
-				return value;
-			}
-
-			return new RemoteFluidObjectHandle(value.url, this.root);
-		} else {
-			return value;
-		}
-	};
-
-	// Invoked for non-null objects to recursively replace references to IFluidHandles.
-	// Clones as-needed to avoid mutating the `input` object.  If no IFluidHandes are present,
-	// returns the original `input`.
-	private recursivelyReplace<TContext = unknown>(
-		input: object,
-		replacer: (input: unknown, context?: TContext) => unknown,
-		context?: TContext,
-	): unknown {
-		// Note: Caller is responsible for ensuring that `input` is defined / non-null.
-		//       (Required for Object.keys() below.)
-
-		// Execute the `replace` on the current input.  Note that Caller is responsible for ensuring that `input`
-		// is a non-null object.
-		const maybeReplaced = replacer(input, context);
-
-		// If either input or the replaced result is a Fluid Handle, there is no need to descend further.
-		// IFluidHandles are always leaves in the object graph, and the code below cannot deal with IFluidHandle's structure.
-		if (isFluidHandle(input) || isFluidHandle(maybeReplaced)) {
-			return maybeReplaced;
-		}
-
-		// Otherwise descend into the object graph looking for IFluidHandle instances.
-		let clone: object | undefined;
-		for (const key of Object.keys(input)) {
-			const value: unknown = input[key];
-			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-			if (!!value && typeof value === "object") {
-				// Note: Except for IFluidHandle, `input` must not contain circular references (as object must
-				//       be JSON serializable.)  Therefore, guarding against infinite recursion here would only
-				//       lead to a later error when attempting to stringify().
-				const replaced = this.recursivelyReplace(value, replacer, context);
-
-				// If the `replaced` object is different than the original `value` then the subgraph contained one
-				// or more handles.  If this happens, we need to return a clone of the `input` object where the
-				// current property is replaced by the `replaced` value.
-				if (replaced !== value) {
-					// Lazily create a shallow clone of the `input` object if we haven't done so already.
-					clone ??= shallowCloneObject(input);
-
-					// Overwrite the current property `key` in the clone with the `replaced` value.
-					clone[key] = replaced;
-				}
-			}
-		}
-		return clone ?? input;
-	}
-
-	protected serializeHandle(
-		handle: IFluidHandleInternal,
-		bind: IFluidHandleInternal,
-	): ISerializedHandle {
-		bind.bind(handle);
-		return {
-			type: "__fluid_handle__",
-			url: handle.absolutePath,
-		};
+		// In general, we would be fine to decode the handles here.
+		// However, there is a forever-back-compat case we cannot handle trivially: handles with a datastore-relative path.
+		// These relative paths must be converted to absolute paths before creating the RemoteFluidObjectHandle,
+		// and we don't have the context to do that here.
+		// So for now, we will not try to decode handles in the ContainerRuntime layer, but rather let the DDS do it still.
+		throw new UsageError("decode is not supported in OpContentsSerializer");
 	}
 }
