@@ -50,7 +50,7 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
-import { Constants, getSession, StageTrace } from "../../../utils";
+import { Constants, generateCacheKey, getSession, StageTrace } from "../../../utils";
 import { IDocumentDeleteService } from "../../services";
 import type { RequestHandler } from "express-serve-static-core";
 
@@ -142,6 +142,7 @@ export function create(
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	clusterDrainingChecker?: IClusterDrainingChecker,
+	redisCacheForGetSession?: ICache,
 ): Router {
 	const router: Router = Router();
 	const externalOrdererUrl: string = config.get("worker:serverUrl");
@@ -445,6 +446,7 @@ export function create(
 				connectionTrace,
 				readDocumentRetryDelay,
 				readDocumentMaxRetries,
+				redisCacheForGetSession,
 			);
 
 			const onSuccess = (result: ISession): void => {
@@ -484,8 +486,30 @@ export function create(
 			const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 			Lumberjack.info(`Received document delete request.`, lumberjackProperties);
 
+			let deleteGetSessionP: Promise<boolean> | undefined;
+			if (redisCacheForGetSession?.delete) {
+				deleteGetSessionP = redisCacheForGetSession
+					.delete(generateCacheKey(tenantId, documentId))
+					.catch((error) => {
+						// Log error but don't fail the request
+						Lumberjack.error(
+							"Failed to delete getSession cache",
+							lumberjackProperties,
+							error,
+						);
+						return true;
+					});
+			}
 			const deleteP = documentDeleteService.deleteDocument(tenantId, documentId);
-			return handleResponse(deleteP, response, undefined, undefined, 204);
+			return handleResponse(
+				Promise.all([deleteP, deleteGetSessionP]).then(
+					([deletePResponse]) => deletePResponse,
+				),
+				response,
+				undefined,
+				undefined,
+				204,
+			);
 		},
 	);
 
