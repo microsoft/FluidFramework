@@ -4537,6 +4537,9 @@ importers:
 
   examples/utils/bundle-size-tests:
     dependencies:
+      '@fluid-experimental/tree':
+        specifier: workspace:~
+        version: link:../../../experimental/dds/tree
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../packages/framework/aqueduct
