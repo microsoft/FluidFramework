@@ -165,7 +165,7 @@ describe("Agent Editing Integration 1", () => {
 		});
 		const timestamp = new Date().toISOString().replace(/[.:]/g, "-");
 		const fd = openSync(`llm_log_${timestamp}.md`, "w");
-		await agent.query(prompts.question);
+		await agent.query(prompts.simple);
 
 		closeSync(fd);
 	});
@@ -173,7 +173,7 @@ describe("Agent Editing Integration 1", () => {
 
 const prompts = {
 	unrelated: "What is the cultural impact of SpongeBob SquarePants?",
-	question: "What do you think about Roblox? Is it a good game?",
+	question: "How many sessions are there in each day?",
 	simple: "Please add a new session to the second day.",
 	organize:
 		"Please organize the sessions so that the ones for adults are on the first day, and the ones that kids would find enjoyable are on the second day. If one day has more sessions than the other, please add new sessions (that fit the theme of the day) until they are balanced.",

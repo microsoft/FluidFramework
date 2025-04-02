@@ -20,6 +20,7 @@ import {
 	type RestrictiveStringRecord,
 	type TreeObjectNode,
 	Tree,
+	type FactoryContentObject,
 } from "@fluidframework/tree/internal";
 // eslint-disable-next-line import/no-internal-modules
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
@@ -35,7 +36,13 @@ import {
 import { objectIdType, objectIdKey } from "./agentEditTypes.js";
 import { IdGenerator } from "./idGenerator.js";
 import { generateEditTypesForPrompt } from "./typeGeneration.js";
-import { constructNode, fail, getFriendlySchemaName, type TreeView } from "./utils.js";
+import {
+	constructNode,
+	fail,
+	getFriendlySchemaName,
+	llmDefault,
+	type TreeView,
+} from "./utils.js";
 
 const functionName = "editTree";
 const paramsName = "params";
@@ -77,13 +84,13 @@ class SharedTreeFunctioningAgent<
 					`### Generated Code\n\n\`\`\`javascript\n${functionCode}\n\`\`\`\n\n`,
 				);
 				const { branch, idGenerator } = this.prompting;
-				const create: Record<string, (input: InsertableContent) => TreeNode> = {};
+				const create: Record<string, (input: FactoryContentObject) => TreeNode> = {};
 				visitObjectNodeSchema(this.treeView.schema, (schema) => {
 					const name =
 						getFriendlySchemaName(schema.identifier) ??
 						fail("Expected friendly name for object node schema");
 
-					create[name] = (input: InsertableContent) => constructNode(schema, input);
+					create[name] = (input: FactoryContentObject) => constructObjectNode(schema, input);
 				});
 				if (options?.validator?.(functionCode) === false) {
 					this.options?.log?.(`### Code Validation Failed\n\n`);
@@ -584,4 +591,36 @@ export interface ${typeName}<T> extends ReadonlyArray<T> {
 
 function uncapitalize(str: string): string {
 	return str.charAt(0).toLowerCase() + str.slice(1);
+}
+
+/**
+ * Creates an unhydrated object node and populates it with `llmDefault` values if they exist.
+ */
+function constructObjectNode(
+	schema: ObjectNodeSchema,
+	input: FactoryContentObject,
+): TreeObjectNode<RestrictiveStringRecord<ImplicitFieldSchema>> {
+	const inputWithDefaults: Record<string, InsertableContent | undefined> = {};
+	for (const [key, field] of schema.fields) {
+		if (input[key] === undefined) {
+			if (
+				typeof field.metadata.custom === "object" &&
+				field.metadata.custom !== null &&
+				llmDefault in field.metadata.custom
+			) {
+				const defaulter = field.metadata.custom[llmDefault];
+				if (typeof defaulter === "function") {
+					const defaultValue: unknown = defaulter();
+					if (defaultValue !== undefined) {
+						inputWithDefaults[key] = defaultValue;
+					}
+				}
+			}
+		} else {
+			inputWithDefaults[key] = input[key];
+		}
+	}
+	return constructNode(schema, inputWithDefaults) as TreeObjectNode<
+		RestrictiveStringRecord<ImplicitFieldSchema>
+	>;
 }

@@ -17,6 +17,7 @@
 			"**/node_modules/**/@fluid*/*-previous/*"
 		],
 		"typescript.preferences.importModuleSpecifier": "project-relative",
-		"typescript.preferences.preferTypeOnlyAutoImports": true
+		"typescript.preferences.preferTypeOnlyAutoImports": true,
+		"typescript.tsdk": "FluidFramework\\node_modules\\typescript\\lib"
 	}
 }
