@@ -586,60 +586,30 @@ describeHydration(
 
 			// ObjectNodeSchema assignability bug minimization
 			{
-				interface ObjectNodeSchemaX1<
-					out TName extends string = string,
-					in out T extends
-						RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>,
-					ImplicitlyConstructable extends boolean = boolean,
-					out TCustomMetadata = unknown,
-				> extends TreeNodeSchemaClass<
-							TName,
-							NodeKind.Object,
-							TreeObjectNode<T, TName>,
-							InsertableObjectFromSchemaRecord<T>,
-							ImplicitlyConstructable,
-							T,
-							never,
-							TCustomMetadata
-						>,
-						SimpleObjectNodeSchema<TCustomMetadata> {
-					/**
-					 * From property keys to the associated schema.
-					 */
-					readonly fields: ReadonlyMap<string, FieldSchemaAlpha & SimpleObjectFieldSchema>;
+				type RecordX<T = unknown> = Record<string, T>;
+
+				interface TreeNodeSchemaCoreX<TInsertable> {
+					createFromInsertable(data: TInsertable): unknown;
 				}
 
-				interface ObjectNodeSchemaX2<
-					out TName extends string = string,
-					in out T extends
-						RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>,
-					ImplicitlyConstructable extends boolean = boolean,
-					out TCustomMetadata = unknown,
-				> extends TreeNodeSchemaClass<
-							TName,
-							NodeKind.Object,
-							TreeObjectNode<T, TName>,
-							InsertableObjectFromSchemaRecord<T>,
-							ImplicitlyConstructable,
-							T,
-							never,
-							TCustomMetadata
-						>,
-						SimpleObjectNodeSchema<TCustomMetadata> {
-					/**
-					 * From property keys to the associated schema.
-					 */
-					readonly fields: ReadonlyMap<string, FieldSchemaAlpha & SimpleObjectFieldSchema>;
-				}
+				type InsertableObjectFromSchemaRecordX<T extends RecordX> = RecordX extends T
+					? never
+					: {
+							readonly [Property in keyof T]?: null;
+						};
 
-				type SchemaType1 = ObjectNodeSchemaX1<
-					string,
-					{ readonly f: LeafSchema<"null", null> }
-				>;
-				type SchemaType2 = ObjectNodeSchemaX2<
-					string,
-					{ readonly f: LeafSchema<"null", null> }
-				>;
+				// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+				type Fields = { readonly f: object };
+				type Insertable = InsertableObjectFromSchemaRecordX<Fields>;
+
+				interface ObjectNodeSchemaX1<T extends RecordX = RecordX>
+					extends TreeNodeSchemaCoreX<InsertableObjectFromSchemaRecordX<T>> {}
+
+				interface ObjectNodeSchemaX2<T extends RecordX = RecordX>
+					extends TreeNodeSchemaCoreX<InsertableObjectFromSchemaRecordX<T>> {}
+
+				type SchemaType1 = ObjectNodeSchemaX1<Fields>;
+				type SchemaType2 = ObjectNodeSchemaX2<Fields>;
 
 				type _check9 = requireAssignableTo<SchemaType1, ObjectNodeSchemaX2>;
 				type _check10 = requireAssignableTo<SchemaType1, ObjectNodeSchemaX1>;
