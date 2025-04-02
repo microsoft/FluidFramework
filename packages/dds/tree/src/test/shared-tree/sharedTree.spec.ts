@@ -66,7 +66,7 @@ import {
 	type TreeViewAlpha,
 	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
-import { brand, fail } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 import {
 	type ITestTreeProvider,
 	SharedTreeTestFactory,
@@ -1589,7 +1589,7 @@ describe("SharedTree", () => {
 			await provider.ensureSynchronized();
 
 			const pausedContainer: IContainerExperimental = provider.containers[0];
-			const url = (await pausedContainer.getAbsoluteUrl("")) ?? fail("didn't get url");
+			const url = (await pausedContainer.getAbsoluteUrl("")) ?? assert.fail("didn't get url");
 			const pausedTree = view1;
 			await provider.opProcessingController.pauseProcessing(pausedContainer);
 			pausedTree.root.insertAt(1, "b");
@@ -1895,7 +1895,7 @@ describe("SharedTree", () => {
 			const provider = await TestTreeProvider.create(2);
 
 			const pausedContainer: IContainerExperimental = provider.containers[0];
-			const url = (await pausedContainer.getAbsoluteUrl("")) ?? fail("didn't get url");
+			const url = (await pausedContainer.getAbsoluteUrl("")) ?? assert.fail("didn't get url");
 			const pausedTree = provider.trees[0];
 			await provider.opProcessingController.pauseProcessing(pausedContainer);
 			const pausedView = pausedTree.viewWith(

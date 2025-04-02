@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert, oob, fail } from "@fluidframework/core-utils/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -25,7 +25,7 @@ import {
 	type TreeStoredSchema,
 	type Value,
 } from "../../core/index.js";
-import { brand, fail, getOrCreate, mapIterable } from "../../util/index.js";
+import { brand, getOrCreate, mapIterable } from "../../util/index.js";
 import {
 	type FlexTreeContext,
 	FlexTreeEntityKind,
