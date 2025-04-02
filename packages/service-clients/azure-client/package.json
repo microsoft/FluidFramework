@@ -81,7 +81,7 @@
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"postpack": "tar -cf ./azure-client.test-files.tar ./dist/test ./lib/test",
+		"pack:tests": "tar -cf ./azure-client.test-files.tar ./dist/test ./lib/test",
 		"start:tinylicious:test": "npx @fluidframework/azure-local-service > tinylicious.log 2>&1",
 		"test": "npm run test:realsvc",
 		"test:realsvc": "npm run test:realsvc:tinylicious",
