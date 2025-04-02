@@ -465,14 +465,7 @@ export class Repository implements GitContext {
 	 * Fetch branch
 	 */
 	public async fetchBranch(remote: string, branchName: string): Promise<void> {
-		const fetchResult = await this.gitClient.fetch(remote, branchName);
-		if (!fetchResult.branches.map((b) => b.name).includes(branchName)) {
-			throw new Error(`Branch was not fetched: ${branchName}`);
-		}
-
-		if (!fetchResult.updated.map((b) => b.name).includes(branchName)) {
-			throw new Error(`Branch was not updated: ${branchName}`);
-		}
+		await this.gitClient.fetch(remote, branchName);
 	}
 }
 
