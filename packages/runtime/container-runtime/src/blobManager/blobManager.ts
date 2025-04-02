@@ -18,6 +18,7 @@ import type {
 	IEventProvider,
 	IFluidHandleContext,
 	IFluidHandleInternal,
+	IFluidHandleInternalWithMetadata,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
@@ -91,7 +92,10 @@ const isBlobManagerHandleMetadata = (
  * DataObject.request() recognizes requests in the form of `/blobs/<id>`
  * and loads blob.
  */
-export class BlobHandle extends FluidHandleBase<ArrayBufferLike> {
+export class BlobHandle
+	extends FluidHandleBase<ArrayBufferLike>
+	implements IFluidHandleInternalWithMetadata<ArrayBufferLike>
+{
 	private attached: boolean = false;
 
 	public get isAttached(): boolean {
@@ -426,7 +430,7 @@ export class BlobManager {
 			const attachedStorageId = this.redirectTable.get(blobId);
 			if (!isBlobManagerHandleMetadata(handleMetadata) || handleMetadata.attached) {
 				// Only new blob handles NOT explicitly declared as attached (as annotated with metadata)
-				// are permitted to exist without yet knowing their storage id. Old handles and handles without
+				// are permitted to exist without yet knowing their storage id. Old handles and handles with
 				// this explicit annotation must already be associated with a storage id.
 				assert(attachedStorageId !== undefined, 0x11f /* "requesting unknown blobs" */);
 			}
@@ -490,7 +494,7 @@ export class BlobManager {
 
 	private async createBlobDetached(
 		blob: ArrayBufferLike,
-	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
+	): Promise<IFluidHandleInternalWithMetadata<ArrayBufferLike>> {
 		// Blobs created while the container is detached are stored in IDetachedBlobStorage.
 		// The 'IDocumentStorageService.createBlob()' call below will respond with a localId.
 		const response = await this.storage.createBlob(blob);
@@ -501,7 +505,7 @@ export class BlobManager {
 	public async createBlob(
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
-	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
+	): Promise<IFluidHandleInternalWithMetadata<ArrayBufferLike>> {
 		if (this.runtime.attachState === AttachState.Detached) {
 			return this.createBlobDetached(blob);
 		}
@@ -524,7 +528,7 @@ export class BlobManager {
 	private async createBlobLegacy(
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
-	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
+	): Promise<IFluidHandleInternalWithMetadata<ArrayBufferLike>> {
 		if (signal?.aborted) {
 			throw this.createAbortError();
 		}
@@ -555,7 +559,9 @@ export class BlobManager {
 		});
 	}
 
-	private createBlobPlaceholder(blob: ArrayBufferLike): IFluidHandleInternal<ArrayBufferLike> {
+	private createBlobPlaceholder(
+		blob: ArrayBufferLike,
+	): IFluidHandleInternalWithMetadata<ArrayBufferLike> {
 		const localId = this.localBlobIdGenerator();
 
 		return new BlobHandle(

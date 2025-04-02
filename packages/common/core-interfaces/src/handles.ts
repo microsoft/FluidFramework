@@ -90,15 +90,6 @@ export interface IFluidHandleInternal<
 	readonly absolutePath: string;
 
 	/**
-	 * The handle may contain metadata, generated and interpreted by the subsystem that the handle
-	 * relates to.  For instance, the BlobManager uses this to distinguish blob handles which may
-	 * not yet have an attached blob yet.
-	 *
-	 * @privateRemarks Should become non-optional in accordance with breaking change policy.
-	 */
-	readonly metadata?: Readonly<Record<string, number | boolean | string>> | undefined;
-
-	/**
 	 * Runs through the graph and attach the bounded handles.
 	 */
 	attachGraph(): void;
@@ -108,6 +99,21 @@ export interface IFluidHandleInternal<
 	 * A bound handle will also be attached once this handle is attached.
 	 */
 	bind(handle: IFluidHandleInternal): void;
+}
+
+/**
+ * @internal
+ */
+export interface IFluidHandleInternalWithMetadata<
+	// REVIEW: Constrain `T` to something? How do we support dds and datastores safely?
+	out T = unknown, // FluidObject & IFluidLoadable,
+> extends IFluidHandleInternal<T> {
+	/**
+	 * The handle may contain metadata, generated and interpreted by the subsystem that the handle
+	 * relates to.  For instance, the BlobManager uses this to distinguish blob handles which may
+	 * not yet have an attached blob yet.
+	 */
+	readonly metadata: Readonly<Record<string, number | boolean | string>> | undefined;
 }
 
 /**

@@ -271,7 +271,6 @@ export interface IFluidHandleInternal<out T = unknown> extends IFluidHandle<T>, 
     readonly absolutePath: string;
     attachGraph(): void;
     bind(handle: IFluidHandleInternal): void;
-    readonly metadata?: Readonly<Record<string, number | boolean | string>> | undefined;
 }
 
 // @public (undocumented)
