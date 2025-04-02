@@ -345,16 +345,16 @@ stages:
               path: ${{ parameters.testWorkspace }}/node_modules/@fluid-private/test-version-utils/node_modules/.legacy/
 
         # Install TRIPS tenant management package
-        - task: Npm@1
+        - task: Bash@3
           displayName: 'npm install'
           # ADO feeds have latency on the order of minutes before packages are available downstream. See:
           # https://learn.microsoft.com/en-us/azure/devops/artifacts/concepts/upstream-sources?view=azure-devops#upstream-sources-health-status
           # This pipeline installs packages which were published very recently relative to its runtime, hence the rather high retry count here.
           retryCountOnTaskFailure: 10
           inputs:
-            command: 'custom'
-            workingDir: ${{ parameters.testWorkspace }}
-            customCommand: 'install ${{ parameters.tenantSetup }} --registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/'
+            workingDirectory: ${{ parameters.testWorkspace }}
+            targetType: 'inline'
+            script: 'install ${{ parameters.tenantSetup }} --registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/ --always-auth=true'
 
         # Retrieve a tenant from the TRIPS tenant pool
         - task: AzureCLI@2
