@@ -17,7 +17,7 @@ mkdir $STAGING_PATH/test-files/
 # Note: use of package's pack:tests is only supported for pnpm as PACKAGE_MANAGER.
 if [ -f ".releaseGroup" ]; then
   if [ "$PACKAGE_MANAGER" == "pnpm" ]; then
-    pnpm -r --if-present pack:tests
+    flub exec --no-private --concurrency=1 --releaseGroup $RELEASE_GROUP -- "pnpm --if-present pack:tests"
   fi
   flub exec --no-private --concurrency=1 --releaseGroup $RELEASE_GROUP -- "$PACKAGE_MANAGER pack" && \
   flub exec --no-private --concurrency=1 --releaseGroup $RELEASE_GROUP -- "mv -t $STAGING_PATH/pack/tarballs/ ./*.tgz" && \
