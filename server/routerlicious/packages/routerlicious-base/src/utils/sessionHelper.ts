@@ -454,7 +454,7 @@ export async function getSession(
 	}
 	// Handle the case where the document is ephemeral. Set the TTL to the time remaining before expiration.
 	const cacheTTLInSeconds = documentExpirationTime
-		? getEphemeralContainerTtlInSeconds(documentExpirationTime)
+		? Math.floor(0.95 * getEphemeralContainerTtlInSeconds(documentExpirationTime))
 		: defaultGetSessionCacheTtlInSeconds;
 	connectionTrace?.stampStage("EphemeralExipiryChecked");
 
