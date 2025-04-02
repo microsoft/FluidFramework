@@ -16,7 +16,7 @@ import type {
 } from "@fluidframework/core-interfaces";
 // eslint-disable-next-line import/no-deprecated
 import type { IProvideFluidHandle } from "@fluidframework/core-interfaces/internal";
-import { DirectoryFactory, type ISharedDirectory } from "@fluidframework/map/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
 import type { ISharedObject, SharedObject } from "@fluidframework/shared-object-base/internal";
 
 import type { FluidObjectId } from "../CommonInterfaces.js";
