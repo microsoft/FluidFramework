@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	AllowedUpdateType,
@@ -20,7 +20,7 @@ import {
 	defaultSchemaPolicy,
 	mapTreeFromCursor,
 } from "../feature-libraries/index.js";
-import { fail, isReadonlyArray } from "../util/index.js";
+import { isReadonlyArray } from "../util/index.js";
 
 import type { ITreeCheckout } from "./treeCheckout.js";
 import { toStoredSchema, type ViewSchema } from "../simple-tree/index.js";

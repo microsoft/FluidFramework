@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert, oob, fail } from "@fluidframework/core-utils/internal";
 import type { Listenable } from "@fluidframework/core-interfaces";
 import { createEmitter } from "@fluid-internal/client-utils";
 
@@ -37,7 +37,6 @@ import {
 import {
 	assertValidRange,
 	brand,
-	fail,
 	getLast,
 	getOrAddEmptyToMap,
 	hasSome,

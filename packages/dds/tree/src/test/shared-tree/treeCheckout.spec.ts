@@ -38,7 +38,7 @@ import {
 	validateUsageError,
 	viewCheckout,
 } from "../utils.js";
-import { brand, fail } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -485,7 +485,7 @@ describe("sharedTreeView", () => {
 						? "schemaA"
 						: t.storedSchema.rootFieldSchema.kind === FieldKinds.optional.identifier
 							? "schemaB"
-							: fail("Unexpected schema");
+							: assert.fail("Unexpected schema");
 				}
 
 				assert.equal(getSchema(parentView.checkout), "schemaA");
