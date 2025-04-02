@@ -364,19 +364,19 @@ extends:
                   customCommand: 'run webpack'
 
               - task: Bash@3
-                displayName: Archive Nested Lib/Dist Directories and Their Contents
+                displayName: Archive Build Output Content
                 env:
                   WORKING_DIRECTORY: '${{ parameters.buildDirectory }}'
                 inputs:
                   targetType: filePath
                   workingDirectory: '${{ parameters.buildDirectory }}'
-                  filePath: $(Build.SourcesDirectory)/scripts/pack-distlib.sh
+                  filePath: $(Build.SourcesDirectory)/scripts/pack-build-output.sh
 
               - task: CopyFiles@2
-                displayName: Copy nested_lib_dist to artifact staging directory
+                displayName: Copy build_output_archive to artifact staging directory
                 inputs:
-                  sourceFolder: ${{ parameters.buildDirectory }}/nested_lib_dist
-                  targetFolder: $(Build.ArtifactStagingDirectory)/nested_lib_dist
+                  sourceFolder: ${{ parameters.buildDirectory }}/build_output_archive
+                  targetFolder: $(Build.ArtifactStagingDirectory)/build_output_archive
 
               # Pack
               - ${{ if ne(parameters.taskPack, false) }}:
@@ -522,9 +522,9 @@ extends:
               outputParentDirectory: $(Build.ArtifactStagingDirectory)
               outputs:
                 - output: pipelineArtifact
-                  displayName: Publish Artifact - nested_lib_dist
-                  targetPath: $(Build.ArtifactStagingDirectory)/nested_lib_dist
-                  artifactName: nested_lib_dist
+                  displayName: Publish Artifact - build_output_archive
+                  targetPath: $(Build.ArtifactStagingDirectory)/build_output_archive
+                  artifactName: build_output_archive
                   publishLocation: pipeline
 
                 - ${{ if ne(parameters.taskPack, false) }}:
@@ -607,13 +607,13 @@ extends:
 
               - task: DownloadPipelineArtifact@2
                 inputs:
-                  artifact: nested_lib_dist
-                  targetPath: $(Build.SourcesDirectory)
+                  artifact: build_output_archive
+                  targetPath: $(Build.StagingDirectory)
 
               - script: |
-                  echo "Extracting nested lib/dist directories and their contents..."
-                  tar --extract --gzip --file $(Build.SourcesDirectory)/nested_lib_dist.tar.gz --directory $(Build.SourcesDirectory)
-                displayName: Extract Nested Lib/Dist Directories and Their Contents
+                  echo "Extracting build output archive contents..."
+                  tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Build.SourcesDirectory)
+                displayName: Extract Build Output Contents
 
               # Set variable startTest if everything is good so far and we'll start running tests,
               # so that the steps to process/upload test coverage results only run if we got to the point of actually running tests.
@@ -759,13 +759,13 @@ extends:
 
                 - task: DownloadPipelineArtifact@2
                   inputs:
-                    artifact: nested_lib_dist
-                    targetPath: $(Build.SourcesDirectory)
+                    artifact: build_output_archive
+                    targetPath: $(Build.StagingDirectory)
 
                 - script: |
-                    echo "Extracting nested lib/dist directories and their contents..."
-                    tar --extract --gzip --file $(Build.SourcesDirectory)/nested_lib_dist.tar.gz --directory $(Build.SourcesDirectory)
-                  displayName: Extract Nested Lib/Dist Directories and Their Contents
+                    echo "Extracting build output archive contents..."
+                    tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Build.SourcesDirectory)
+                  displayName: Extract Build Output Contents
 
                 # Test
 

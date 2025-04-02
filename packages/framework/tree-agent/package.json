@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tree-agent",
-	"version": "2.31.0",
+	"version": "2.32.0",
 	"description": "Experimental package to simplify integrating AI into Fluid-based applications",
 	"homepage": "https://fluidframework.com",
 	"repository": {

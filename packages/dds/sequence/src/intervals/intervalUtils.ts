@@ -14,7 +14,7 @@ import {
 	Side,
 } from "@fluidframework/merge-tree/internal";
 
-import type { SequenceInterval } from "./sequenceInterval.js";
+import type { SequenceIntervalClass } from "./sequenceInterval.js";
 
 /**
  * Basic interval abstraction
@@ -171,7 +171,7 @@ export interface ISerializableInterval extends IInterval {
 	getIntervalId(): string;
 }
 
-export type ISerializableIntervalPrivate = SequenceInterval & {
+export type ISerializableIntervalPrivate = SequenceIntervalClass & {
 	propertyManager?: PropertiesManager;
 };
 
