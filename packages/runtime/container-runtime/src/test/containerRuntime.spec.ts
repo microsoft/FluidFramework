@@ -84,7 +84,7 @@ import {
 import {
 	ContainerMessageType,
 	type InboundSequencedContainerRuntimeMessage,
-	type OutboundContainerRuntimeMessage,
+	type LocalContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
 import type { BatchMessage, InboundMessageResult } from "../opLifecycle/index.js";
@@ -1770,7 +1770,7 @@ describe("Runtime", () => {
 				// processing requires creation of data store context and runtime as well.
 				type ContainerRuntimeWithSubmit = Omit<ContainerRuntime, "submit"> & {
 					submit(
-						containerRuntimeMessage: OutboundContainerRuntimeMessage,
+						containerRuntimeMessage: LocalContainerRuntimeMessage,
 						localOpMetadata: unknown,
 						metadata: Record<string, unknown> | undefined,
 					): void;

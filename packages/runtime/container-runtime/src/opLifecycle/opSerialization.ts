@@ -5,7 +5,7 @@
 
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
-import type { OutboundContainerRuntimeMessage } from "../messageTypes.js";
+import type { LocalContainerRuntimeMessage } from "../messageTypes.js";
 
 import type { OpContentsSerializer } from "./opContentsSerializer.js";
 
@@ -14,7 +14,7 @@ import type { OpContentsSerializer } from "./opContentsSerializer.js";
  * @remarks - The deserialization on process happens via the function {@link ensureContentsDeserialized}.
  */
 export function serializeOpContents(
-	contents: OutboundContainerRuntimeMessage,
+	contents: LocalContainerRuntimeMessage,
 	serializer?: OpContentsSerializer,
 ): string {
 	return serializer ? serializer.stringify(contents) : JSON.stringify(contents);
@@ -29,7 +29,7 @@ export function serializeOpContents(
  * @remarks - The deserialization on process happens via the function {@link ensureContentsDeserialized}.
  */
 export function prepareOpPayloadForSubmit(
-	contents: OutboundContainerRuntimeMessage,
+	contents: LocalContainerRuntimeMessage,
 	localOpMetadata: unknown,
 	serializer: OpContentsSerializer,
 ): {
