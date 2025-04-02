@@ -545,7 +545,7 @@ describeHydration(
 				type SchemaType = ObjectNodeSchema<string, { readonly f: LeafSchema<"null", null> }>;
 				// @ts-expect-error Missing workaround for https://github.com/microsoft/TypeScript/issues/59049#issuecomment-2773459693 so this fails.
 				type _check4 = requireAssignableTo<SchemaType, ObjectNodeSchema>;
-				// It does work for the different tyopes that make up ObjectNodeSchema however:
+				// It does work for the different types that make up ObjectNodeSchema however:
 				type _check5 = requireAssignableTo<SchemaType, SimpleObjectNodeSchema>;
 			}
 
