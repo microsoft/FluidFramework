@@ -7,7 +7,7 @@
 /* eslint-disable @typescript-eslint/consistent-indexed-object-style */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { DataObject, PureDataObject } from "@fluidframework/aqueduct/internal";
+import { DataObject } from "@fluidframework/aqueduct/internal";
 import type {
 	IDisposable,
 	IEvent,
@@ -102,7 +102,7 @@ export type VisualizeChildData = (data: unknown) => Promise<VisualChildNode>;
 /**
  * A visual representation of {@link @fluidframework/shared-object-base#ISharedObject} & {@link DataObject} data.
  */
-export type VisualizableFluidObject = ISharedObject | PureDataObject;
+export type VisualizableFluidObject = ISharedObject | DataObject;
 
 /**
  * Specifies renderers for different {@link @fluidframework/shared-object-base#ISharedObject} types.
@@ -255,15 +255,13 @@ export class DataVisualizerGraph
 			// Create visualizer node for the shared object
 			const visualizationFunction = isDataObject(visualObject)
 				? visualizeDataObject
-				: isPureDataObject(visualObject)
-					? visualizeUnknownSharedObject
-					: (this.visualizers[visualObject.attributes.type] ?? visualizeUnknownSharedObject);
+				: (this.visualizers[visualObject.attributes.type] ?? visualizeUnknownSharedObject);
 
 			const visualizerNode = new VisualizerNode(
 				// Double-casting `sharedObject` is necessary for `DataObject` visualization, because the `root` property is inaccessbile in `DataObject` (private).
 				isDataObject(visualObject)
 					? (visualObject as unknown as { readonly root: ISharedDirectory }).root
-					: (visualObject as ISharedObject),
+					: visualObject,
 				visualizationFunction as VisualizeSharedObject,
 				async (handle) => this.registerVisualizerForHandle(handle),
 			);
@@ -293,7 +291,7 @@ export class DataVisualizerGraph
 	): Promise<FluidObjectId | undefined> {
 		const resolvedObject = await handle.get();
 
-		if (isPureDataObject(resolvedObject)) {
+		if (isDataObject(resolvedObject)) {
 			return this.registerVisualizerForVisualizableObject(resolvedObject);
 		}
 
@@ -303,7 +301,9 @@ export class DataVisualizerGraph
 			return this.registerVisualizerForVisualizableObject(sharedObject);
 		} else {
 			// Unknown data.
-			console.warn("Fluid Handle resolved to data that is not a Shared Object.");
+			console.warn(
+				"Fluid Handle resolved to data that is not a SharedObject or a DataObject.",
+			);
 			return undefined;
 		}
 	}
@@ -527,37 +527,21 @@ function isSharedObject(value: unknown): value is ISharedObject {
 }
 
 /**
- * Determines whether or not the provided value is an {@link DataObject}, for the purposes of this library.
- * @remarks Implemented by checking for the particular properties / methods we use in this module.
+ * Determines whether or not the provided value is an {@link DataObject} using `instanceof`, for the purposes of this library.
+ * @remarks `instanceof` is preferred over checking specific properties or methods, because a version mix-up with
+ * @remarks {@link @fluidframework/aqueduct#} is unlikely in devtools and end-user applications.
  * @remarks `value` is type casted as a workaround to access the `root` property of the {@link DataObject} (private).
  */
 function isDataObject(value: unknown): value is DataObject {
-	if (
-		(value as DataObject).initializeInternal === undefined ||
-		(value as { getUninitializedErrorString(): string }).getUninitializedErrorString ===
-			undefined
-	) {
+	if (value instanceof DataObject === false) {
 		return false;
 	}
 
 	// If root is missing, throw an error instead of returning false
-	const root = (value as { readonly root?: ISharedDirectory }).root;
+	const root = (value as unknown as { readonly root?: ISharedDirectory }).root;
 	if (!root) {
 		throw new Error("DataObject must have a `root` property, but it was undefined.");
 	}
 
-	return root.attributes?.type === DirectoryFactory.Type;
-}
-
-/**
- * Determines whether or not the provided value is a {@link PureDataObject}, for the purposes of this library.
- * @remarks Implemented by checking for the particular properties / methods we use in this module.
- */
-function isPureDataObject(value: unknown): value is PureDataObject {
-	return (
-		(value as PureDataObject).id !== undefined &&
-		(value as PureDataObject).IFluidLoadable !== undefined &&
-		(value as PureDataObject).IFluidHandle !== undefined &&
-		(value as PureDataObject).handle !== undefined
-	);
+	return true;
 }
