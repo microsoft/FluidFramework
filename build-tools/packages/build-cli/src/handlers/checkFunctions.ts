@@ -336,6 +336,7 @@ export const checkOnReleaseBranch: StateHandlerFunction = async (
 		if (currentBranch === releaseBranch) {
 			BaseStateHandler.signalSuccess(machine, state);
 		} else {
+			log.errorLog(`Expected release branch to be ${releaseBranch}`);
 			BaseStateHandler.signalFailure(machine, state);
 		}
 	} else {
