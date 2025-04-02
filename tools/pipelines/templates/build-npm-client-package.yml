@@ -769,14 +769,6 @@ extends:
 
                 # Test
 
-                - ${{ if contains(test.name, 'jest') }}:
-                  - task: Npm@1
-                    displayName: 'Run build for jest tests'
-                    inputs:
-                      command: custom
-                      workingDir: '${{ parameters.buildDirectory }}'
-                      customCommand: 'run ci:build'
-
                 # Set variable startTest if everything is good so far and we'll start running tests,
                 # so that the steps to process/upload test coverage results only run if we got to the point of actually running tests.
                 - script: |
