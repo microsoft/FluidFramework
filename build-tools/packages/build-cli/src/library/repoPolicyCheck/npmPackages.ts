@@ -808,10 +808,7 @@ export const handlers: Handler[] = [
 					ret.push(
 						`repository.directory: "${json.repository.directory}" field is present but should be omitted from root package`,
 					);
-				} else if (
-					json.repository?.directory !== undefined &&
-					json.repository.directory !== relativePkgDir
-				) {
+				} else if (relativePkgDir !== "." && json.repository?.directory !== relativePkgDir) {
 					ret.push(
 						`repository.directory: "${json.repository.directory}" !== "${relativePkgDir}"`,
 					);
