@@ -583,6 +583,69 @@ describeHydration(
 					{ readonly fields: ReadonlyMap<string, FieldSchemaAlpha & SimpleObjectFieldSchema> }
 				>;
 			}
+
+			// ObjectNodeSchema assignability bug minimization
+			{
+				interface ObjectNodeSchemaX1<
+					out TName extends string = string,
+					in out T extends
+						RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>,
+					ImplicitlyConstructable extends boolean = boolean,
+					out TCustomMetadata = unknown,
+				> extends TreeNodeSchemaClass<
+							TName,
+							NodeKind.Object,
+							TreeObjectNode<T, TName>,
+							InsertableObjectFromSchemaRecord<T>,
+							ImplicitlyConstructable,
+							T,
+							never,
+							TCustomMetadata
+						>,
+						SimpleObjectNodeSchema<TCustomMetadata> {
+					/**
+					 * From property keys to the associated schema.
+					 */
+					readonly fields: ReadonlyMap<string, FieldSchemaAlpha & SimpleObjectFieldSchema>;
+				}
+
+				interface ObjectNodeSchemaX2<
+					out TName extends string = string,
+					in out T extends
+						RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>,
+					ImplicitlyConstructable extends boolean = boolean,
+					out TCustomMetadata = unknown,
+				> extends TreeNodeSchemaClass<
+							TName,
+							NodeKind.Object,
+							TreeObjectNode<T, TName>,
+							InsertableObjectFromSchemaRecord<T>,
+							ImplicitlyConstructable,
+							T,
+							never,
+							TCustomMetadata
+						>,
+						SimpleObjectNodeSchema<TCustomMetadata> {
+					/**
+					 * From property keys to the associated schema.
+					 */
+					readonly fields: ReadonlyMap<string, FieldSchemaAlpha & SimpleObjectFieldSchema>;
+				}
+
+				type SchemaType1 = ObjectNodeSchemaX1<
+					string,
+					{ readonly f: LeafSchema<"null", null> }
+				>;
+				type SchemaType2 = ObjectNodeSchemaX2<
+					string,
+					{ readonly f: LeafSchema<"null", null> }
+				>;
+
+				type _check9 = requireAssignableTo<SchemaType1, ObjectNodeSchemaX2>;
+				type _check10 = requireAssignableTo<SchemaType1, ObjectNodeSchemaX1>;
+				type _check11 = requireAssignableTo<SchemaType2, ObjectNodeSchemaX2>;
+				type _check12 = requireAssignableTo<SchemaType2, ObjectNodeSchemaX1>;
+			}
 		});
 
 		describe("shadowing", () => {
