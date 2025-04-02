@@ -672,7 +672,10 @@ export class CollaborationWindow {
 	 * Nonetheless, this simple scenario is enough to understand why it's useful to be able to determine if a segment should be visible
 	 * from a given (seq, localSeq) perspective.
 	 */
-	localSeq = 0;
+	#localSeq = 0;
+	get localSeq(): number {
+		return this.#localSeq;
+	}
 
 	public localPerspective: Perspective = new LocalDefaultPerspective(this.clientId);
 
@@ -683,9 +686,9 @@ export class CollaborationWindow {
 		this.currentSeq = a.currentSeq;
 	}
 
-	public mintNextLocalOperationStamp(): OperationStamp {
+	public mintNextLocalOperationStamp(): Required<OperationStamp> {
 		if (this.collaborating) {
-			this.localSeq++;
+			this.#localSeq++;
 		}
 
 		return {

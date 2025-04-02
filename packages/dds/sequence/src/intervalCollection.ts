@@ -245,25 +245,7 @@ export class LocalIntervalCollection {
 
 	public removeExistingInterval(interval: SequenceIntervalClass) {
 		this.removeIntervalFromIndexes(interval);
-		this.removeIntervalListeners(interval);
-	}
-
-	public createInterval(
-		start: SequencePlace,
-		end: SequencePlace,
-		intervalType: IntervalType,
-		op?: ISequencedDocumentMessage,
-	): SequenceIntervalClass {
-		return createSequenceInterval(
-			this.label,
-			start,
-			end,
-			this.client,
-			intervalType,
-			op,
-			undefined,
-			this.options.mergeTreeReferencesCanSlideToEndpoint,
-		);
+		interval.removePositionChangeListeners();
 	}
 
 	public addInterval(
@@ -273,7 +255,16 @@ export class LocalIntervalCollection {
 		props?: PropertySet,
 		op?: ISequencedDocumentMessage,
 	) {
-		const interval: SequenceIntervalClass = this.createInterval(start, end, intervalType, op);
+		const interval: SequenceIntervalClass = createSequenceInterval(
+			this.label,
+			start,
+			end,
+			this.client,
+			intervalType,
+			op,
+			undefined,
+			this.options.mergeTreeReferencesCanSlideToEndpoint,
+		);
 		if (interval) {
 			if (!interval.properties) {
 				interval.properties = createMap<any>();
@@ -299,11 +290,6 @@ export class LocalIntervalCollection {
 		return interval;
 	}
 
-	private linkEndpointsToInterval(interval: SequenceIntervalClass): void {
-		interval.start.addProperties({ interval });
-		interval.end.addProperties({ interval });
-	}
-
 	private addIntervalToIndexes(interval: SequenceIntervalClass) {
 		for (const index of this.indexes) {
 			index.add(interval);
@@ -311,7 +297,8 @@ export class LocalIntervalCollection {
 	}
 
 	public add(interval: SequenceIntervalClass): void {
-		this.linkEndpointsToInterval(interval);
+		interval.start.addProperties({ interval });
+		interval.end.addProperties({ interval });
 		this.addIntervalToIndexes(interval);
 		this.addIntervalListeners(interval);
 	}
@@ -398,10 +385,6 @@ export class LocalIntervalCollection {
 				}
 			},
 		);
-	}
-
-	private removeIntervalListeners(interval: SequenceIntervalClass) {
-		interval.removePositionChangeListeners();
 	}
 }
 
@@ -1315,7 +1298,7 @@ export class IntervalCollection
 	 */
 	private getNextLocalSeq(): number {
 		if (this.client) {
-			return ++this.client.getCollabWindow().localSeq;
+			return this.client.getCollabWindow().mintNextLocalOperationStamp().localSeq;
 		}
 
 		return 0;
