@@ -5,17 +5,13 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	isFluidHandle,
-	RemoteFluidObjectHandle,
-} from "@fluidframework/runtime-utils/internal";
+import { FluidSerializerBase } from "../fluidSerializerBase.js";
+import { isFluidHandle } from "../handles.js";
+import { RemoteFluidObjectHandle } from "../remoteFluidObjectHandle.js";
 
-import { FluidSerializer } from "../serializer.js";
-import { makeHandlesSerializable, parseHandles } from "../utils.js";
+import { makeJson, MockHandleContext } from "./testUtils.js";
 
-import { MockHandleContext, makeJson } from "./utils.js";
-
-describe("FluidSerializer", () => {
+describe("FluidSerializerBase", () => {
 	function printHandle(target: unknown): string {
 		return JSON.stringify(target, (key, value) => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -26,7 +22,7 @@ describe("FluidSerializer", () => {
 	function createNestedCases(testCases: unknown[]): unknown[] {
 		testCases.push(
 			// Add an object where each field references one of the JSON serializable types.
-			// eslint-disable-next-line unicorn/no-array-reduce -- Not sure how to refactor this correctly
+
 			testCases.reduce<object>((o, value, index) => {
 				o[`f${index}`] = value;
 				return o;
@@ -40,17 +36,17 @@ describe("FluidSerializer", () => {
 
 	describe("vanilla JSON", () => {
 		const context = new MockHandleContext();
-		const serializer = new FluidSerializer(context);
+		const serializer = new FluidSerializerBase(context);
 		const handle = new RemoteFluidObjectHandle("/root", context);
 
 		// Start with the various JSON-serializable types.  A mix of "truthy" and "falsy" values
 		// are of particular interest.
-		// eslint-disable-next-line unicorn/no-null -- Explicitly testing null.
+
 		const simple = createNestedCases([false, true, 0, 1, "", "x", null, [], {}]);
 
 		simple.push(
 			// Add an object where each field references one of the JSON serializable types.
-			// eslint-disable-next-line unicorn/no-array-reduce -- Not sure how to refactor this correctly
+
 			simple.reduce<object>((o, value, index) => {
 				o[`f${index}`] = value;
 				return o;
@@ -166,7 +162,7 @@ describe("FluidSerializer", () => {
 
 	describe("JSON w/embedded handles", () => {
 		const context = new MockHandleContext();
-		const serializer = new FluidSerializer(context);
+		const serializer = new FluidSerializerBase(context);
 		const handle = new RemoteFluidObjectHandle("/root", context);
 		const serializedHandle = {
 			type: "__fluid_handle__",
@@ -228,7 +224,6 @@ describe("FluidSerializer", () => {
 		);
 
 		it(`sizable json tree`, () => {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any -- The test works on funky objects
 			const input: any = makeJson(
 				/* breadth: */ 4,
 				/* depth: */ 4,
@@ -242,8 +237,8 @@ describe("FluidSerializer", () => {
 			);
 
 			// Add some handles to intermediate objects.
-			input.h = handle; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
-			input.o1.h = handle; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+			input.h = handle;
+			input.o1.h = handle;
 
 			const replaced = serializer.encode(input, handle);
 			assert.notStrictEqual(
@@ -278,7 +273,7 @@ describe("FluidSerializer", () => {
 		const rootContext = new MockHandleContext("");
 		const dsContext = new MockHandleContext("/default", rootContext);
 		// Create serialized with a handle context whose parent is a root handle context.
-		const serializer = new FluidSerializer(dsContext);
+		const serializer = new FluidSerializerBase(dsContext);
 
 		it("can parse handles with absolute path", () => {
 			const serializedHandle = JSON.stringify({
@@ -326,20 +321,20 @@ describe("FluidSerializer", () => {
 		});
 	});
 
-	describe("Utils", () => {
-		const serializer = new FluidSerializer(new MockHandleContext());
-		it("makeSerializable is idempotent", () => {
+	describe("Idempotent", () => {
+		const serializer = new FluidSerializerBase(new MockHandleContext());
+		it("serializer.encode is idempotent", () => {
 			const bind = new RemoteFluidObjectHandle("/", new MockHandleContext());
 			const handle = new RemoteFluidObjectHandle("/okay", new MockHandleContext());
 			const input = { x: handle, y: 123 };
-			const serializedOnce = makeHandlesSerializable(input, serializer, bind) as {
+			const serializedOnce = serializer.encode(input, bind) as {
 				x: { type: "__fluid_handle__" };
 			};
 			assert(
 				serializedOnce.x.type === "__fluid_handle__",
 				"Serialized handle should be a handle",
 			);
-			const serializedTwice = makeHandlesSerializable(serializedOnce, serializer, bind) as {
+			const serializedTwice = serializer.encode(serializedOnce, bind) as {
 				x: { type: "__fluid_handle__" };
 			};
 			assert(
@@ -347,18 +342,18 @@ describe("FluidSerializer", () => {
 				"Twice-Serialized handle should be a handle",
 			);
 		});
-		it("parseHandles is idempotent", () => {
+		it("serializer.decode is idempotent", () => {
 			const serializedHandle = {
 				type: "__fluid_handle__",
 				url: "/root",
 			};
 			const input = { x: serializedHandle, y: 123 };
-			const parsedOnce = parseHandles(input, serializer) as { x: RemoteFluidObjectHandle };
+			const parsedOnce = serializer.decode(input) as { x: RemoteFluidObjectHandle };
 			assert(
 				parsedOnce.x instanceof RemoteFluidObjectHandle,
 				"Parsed handle should be an instance of RemoteFluidObjectHandle",
 			);
-			const parsedTwice = parseHandles(parsedOnce, serializer) as {
+			const parsedTwice = serializer.decode(parsedOnce) as {
 				x: RemoteFluidObjectHandle;
 			};
 			assert(
