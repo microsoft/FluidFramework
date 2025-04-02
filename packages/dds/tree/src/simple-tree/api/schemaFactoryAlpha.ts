@@ -30,7 +30,7 @@ import type {
 } from "./typesUnsafe.js";
 import { mapSchema } from "../mapNode.js";
 import { arraySchema } from "../arrayNode.js";
-import type { ObjectNodeSchema } from "../objectNodeTypes.js";
+import type { ObjectNodeSchema, ObjectNodeSchema2 } from "../objectNodeTypes.js";
 import type { SimpleObjectNodeSchema } from "../simpleSchema.js";
 import type { ArrayNodeCustomizableSchema } from "../arrayNodeTypes.js";
 import type { MapNodeCustomizableSchema } from "../mapNodeTypes.js";
@@ -60,6 +60,9 @@ export class SchemaFactoryAlpha<
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 * @param fields - Schema for fields of the object node's schema. Defines what children can be placed under each key.
 	 * @param options - Additional options for the schema.
+	 * @privateRemarks
+	 * To work around an issue in TypeScript where the type analysis optimizes non-empty POJO mode object schema resulting in unexpected lack of assignability to ObjectNodeSchema,
+	 * ObjectNodeSchema with no type parameters is redundantly included here. See {@link https://github.com/microsoft/TypeScript/issues/59049#issuecomment-2773459693} for details.
 	 */
 	public override object<
 		const Name extends TName,
@@ -69,7 +72,8 @@ export class SchemaFactoryAlpha<
 		name: Name,
 		fields: T,
 		options?: SchemaFactoryObjectOptions<TCustomMetadata>,
-	): ObjectNodeSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
+	): ObjectNodeSchema2 &
+		ObjectNodeSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
 		return objectSchema(
 			this.scoped2(name),
 			fields,

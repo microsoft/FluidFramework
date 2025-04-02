@@ -14,18 +14,14 @@ import {
 	typeSchemaSymbol,
 	type LeafSchema,
 	type NodeBuilderData,
-	type NodeKind,
 	type ObjectNodeSchema,
-	type SimpleObjectFieldSchema,
 	type SimpleObjectNodeSchema,
 	type TreeNodeSchema,
-	type TreeNodeSchemaClass,
 	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
 import type {
 	InsertableObjectFromSchemaRecord,
 	ObjectFromSchemaRecord,
-	TreeObjectNode,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/objectNode.js";
 import { describeHydration, hydrate, pretty } from "./utils.js";
@@ -40,7 +36,6 @@ import type {
 import { validateUsageError } from "../utils.js";
 import { Tree } from "../../shared-tree/index.js";
 import type {
-	FieldSchemaAlpha,
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
 	InsertableTreeNodeFromAllowedTypes,
@@ -532,18 +527,7 @@ describeHydration(
 				const _check2: ObjectNodeSchema = Empty;
 			}
 
-			// Explicit field POJO mode
-			{
-				const ExplicitField = sf.object("WithField", {
-					f: sf.optional([() => SchemaFactory.null]),
-				});
-
-				type Info = (typeof ExplicitField)["info"];
-				const _check1: TreeNodeSchema = ExplicitField;
-				const _check2: ObjectNodeSchema = ExplicitField;
-			}
-
-			// Implicit field POJO mode
+			// POJO mode with field
 			{
 				const ExplicitField = sf.object("WithField", {
 					f: SchemaFactory.null,
@@ -551,37 +535,18 @@ describeHydration(
 
 				type Info = (typeof ExplicitField)["info"];
 				const _check1: TreeNodeSchema = ExplicitField;
+				// This tests the workaround in SchemaFactoryAlpha.object.
+				// This line fails to compile without the workaround.
 				const _check2: ObjectNodeSchema = ExplicitField;
+			}
 
-				type SchemaType = ObjectNodeSchema<
-					"Test.WithField",
-					{ readonly f: LeafSchema<"null", null> },
-					true
-				>;
-
-				type _check3 = requireAssignableTo<SchemaType, ObjectNodeSchema>;
-
-				type SchemaType2 = ObjectNodeSchema<string, { readonly f: LeafSchema<"null", null> }>;
-				type _check4 = requireAssignableTo<SchemaType2, ObjectNodeSchema>;
-				type _check5 = requireAssignableTo<SchemaType2, SimpleObjectNodeSchema>;
-				type _check6 = requireAssignableTo<SchemaType2, ObjectNodeSchema>;
-
-				type _check7 = requireAssignableTo<
-					SchemaType2,
-					TreeNodeSchemaClass<
-						string,
-						NodeKind.Object,
-						TreeObjectNode<RestrictiveStringRecord<ImplicitFieldSchema>>,
-						InsertableObjectFromSchemaRecord<RestrictiveStringRecord<ImplicitFieldSchema>>,
-						boolean,
-						RestrictiveStringRecord<ImplicitFieldSchema>
-					>
-				>;
-
-				type _check8 = requireAssignableTo<
-					SchemaType2,
-					{ readonly fields: ReadonlyMap<string, FieldSchemaAlpha & SimpleObjectFieldSchema> }
-				>;
+			// Explicit field POJO mode typing unit tests
+			{
+				type SchemaType = ObjectNodeSchema<string, { readonly f: LeafSchema<"null", null> }>;
+				// @ts-expect-error Missing workaround for https://github.com/microsoft/TypeScript/issues/59049#issuecomment-2773459693 so this fails.
+				type _check4 = requireAssignableTo<SchemaType, ObjectNodeSchema>;
+				// It does work for the different tyopes that make up ObjectNodeSchema however:
+				type _check5 = requireAssignableTo<SchemaType, SimpleObjectNodeSchema>;
 			}
 
 			// ObjectNodeSchema assignability bug minimization
@@ -603,7 +568,9 @@ describeHydration(
 
 				// The identical types are not equal, nor are the identical interfaces.
 				type _check12 = requireAssignableTo<Result1, X2>;
+				// @ts-expect-error Missing workaround for https://github.com/microsoft/TypeScript/issues/59049#issuecomment-2773459693 so this fails.
 				type _check11 = requireAssignableTo<Result1, X1>; // Result from X1 is not assignable to X1, only X2
+				// @ts-expect-error Missing workaround for https://github.com/microsoft/TypeScript/issues/59049#issuecomment-2773459693 so this fails.
 				type _check22 = requireAssignableTo<Result2, X2>; // Result from X2 is not assignable to X2, only X1
 				type _check21 = requireAssignableTo<Result2, X1>;
 			}
