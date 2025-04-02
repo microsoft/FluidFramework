@@ -11,7 +11,10 @@ import {
 	IResponse,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import type {
+	IFluidHandleInternal,
+	ISignalEnvelope,
+} from "@fluidframework/core-interfaces/internal";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
@@ -24,6 +27,7 @@ import {
 	getSnapshotTree,
 	isInstanceOfISnapshot,
 } from "@fluidframework/driver-utils/internal";
+import type { OutboundFluidDataStoreMessage } from "@fluidframework/runtime-definitions/internal";
 import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -98,6 +102,11 @@ import {
 import { DataStoreContexts } from "./dataStoreContexts.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
 import { GCNodeType, IGCNodeUpdatedProps, urlToGCNodePath } from "./gc/index.js";
+import type {
+	ContainerRuntimeAliasMessage,
+	ContainerRuntimeDataStoreOpMessage,
+	OutboundContainerRuntimeAttachMessage,
+} from "./messageTypes.js";
 import { ContainerMessageType, LocalContainerRuntimeMessage } from "./messageTypes.js";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs.js";
 import {
@@ -121,9 +130,48 @@ interface FluidDataStoreMessage {
 }
 
 /**
- * Creates a shallow wrapper of {@link IFluidParentContext}. The wrapper can then have its methods overwritten as needed
+ * Envelope for signals not intended for the container.
+ *
+ * @privateRemarks
+ * `clientBroadcastSignalSequenceNumber` might be added to the envelope by the container runtime.
+ * But it should not be provided to start with.
+ *
+ * @internal
  */
-export function wrapContext(context: IFluidParentContext): IFluidParentContext {
+export type AddressedSignalEnvelope = Required<
+	Omit<ISignalEnvelope, "clientBroadcastSignalSequenceNumber">
+>;
+
+/**
+ * Kin of {@link @fluidframework/runtime-definitions#IFluidParentContext} with alternate
+ * submitMessage and submitSignal methods.
+ *
+ * @internal
+ * @privateRemarks Exposed per ChannelCollection testing and API extractor request
+ */
+export interface IFluidRootParentContext
+	extends Omit<IFluidParentContext, "submitMessage" | "submitSignal"> {
+	readonly submitMessage: (
+		containerRuntimeMessage:
+			| ContainerRuntimeDataStoreOpMessage
+			| OutboundContainerRuntimeAttachMessage
+			| ContainerRuntimeAliasMessage,
+		localOpMetadata: unknown,
+	) => void;
+	readonly submitSignal: (envelope: AddressedSignalEnvelope, targetClientId?: string) => void;
+}
+
+type SubmitKeys = "submitMessage" | "submitSignal";
+
+/**
+ * Creates a shallow wrapper of {@link IFluidParentContext} or
+ * {@link IFluidRootParentContext} with `submitMessage` and `submitSignal`
+ * methods replaced with the provided overrides.
+ */
+export function formParentContext<T extends IFluidParentContext | IFluidRootParentContext>(
+	context: Omit<IFluidParentContext & IFluidRootParentContext, SubmitKeys>,
+	overrides: Pick<T, SubmitKeys>,
+): Omit<IFluidParentContext & IFluidRootParentContext, SubmitKeys> & Pick<T, SubmitKeys> {
 	return {
 		get IFluidDataStoreRegistry() {
 			return context.IFluidDataStoreRegistry;
@@ -162,12 +210,8 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 		getAudience: (...args) => {
 			return context.getAudience(...args);
 		},
-		submitMessage: (...args) => {
-			return context.submitMessage(...args);
-		},
-		submitSignal: (...args) => {
-			return context.submitSignal(...args);
-		},
+		submitMessage: overrides.submitMessage.bind(overrides),
+		submitSignal: overrides.submitSignal,
 		makeLocallyVisible: (...args) => {
 			return context.makeLocallyVisible(...args);
 		},
@@ -194,38 +238,43 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
  * The wrapper will have the submit methods overwritten with the appropriate id as the destination address.
  *
  * @param id - the id of the channel
- * @param parentContext - the {@link IFluidParentContext} to wrap
+ * @param parentContext - the {@link IFluidRootParentContext} to wrap
  * @returns A wrapped {@link IFluidParentContext}
  */
 function wrapContextForInnerChannel(
 	id: string,
-	parentContext: IFluidParentContext,
+	parentContext: IFluidRootParentContext,
 ): IFluidParentContext {
-	const context = wrapContext(parentContext);
-
-	context.submitMessage = (type: string, content: unknown, localOpMetadata: unknown) => {
-		const fluidDataStoreContent: FluidDataStoreMessage = {
-			content,
-			type,
-		};
-		const envelope: IEnvelope = {
-			address: id,
-			contents: fluidDataStoreContent,
-		};
-		parentContext.submitMessage(
-			ContainerMessageType.FluidDataStoreOp,
-			envelope,
-			localOpMetadata,
-		);
-	};
-
-	context.submitSignal = (type: string, contents: unknown, targetClientId?: string) => {
-		const envelope: IEnvelope = {
-			address: id,
-			contents,
-		};
-		parentContext.submitSignal(type, envelope, targetClientId);
-	};
+	const context = formParentContext<IFluidParentContext>(parentContext, {
+		submitMessage: (
+			messageOrType: OutboundFluidDataStoreMessage | string,
+			localOpMetadataOrContent: unknown,
+			undefinedOrLocalOpMetadata?: unknown,
+		) => {
+			const preferredForm = typeof messageOrType === "object";
+			const message = preferredForm
+				? messageOrType
+				: // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+					({
+						type: messageOrType,
+						content: localOpMetadataOrContent,
+					} as OutboundFluidDataStoreMessage);
+			const localOpMetadata = preferredForm
+				? localOpMetadataOrContent
+				: undefinedOrLocalOpMetadata;
+			const envelope: IEnvelope = {
+				address: id,
+				contents: message,
+			};
+			parentContext.submitMessage(
+				{ type: ContainerMessageType.FluidDataStoreOp, contents: envelope },
+				localOpMetadata,
+			);
+		},
+		submitSignal: (type: string, content: unknown, targetClientId?: string) => {
+			parentContext.submitSignal({ address: id, contents: { type, content } }, targetClientId);
+		},
+	});
 
 	return context;
 }
@@ -272,7 +321,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 	constructor(
 		protected readonly baseSnapshot: ISnapshotTree | ISnapshot | undefined,
-		public readonly parentContext: IFluidParentContext,
+		public readonly parentContext: IFluidRootParentContext,
 		baseLogger: ITelemetryBaseLogger,
 		private readonly gcNodeUpdated: (props: IGCNodeUpdatedProps) => void,
 		private readonly isDataStoreDeleted: (nodePath: string) => boolean,
@@ -585,7 +634,10 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	protected submitAttachChannelOp(localContext: LocalFluidDataStoreContext): void {
 		const message = this.generateAttachMessage(localContext);
 		this.pendingAttach.set(localContext.id, message);
-		this.parentContext.submitMessage(ContainerMessageType.Attach, message, undefined);
+		this.parentContext.submitMessage(
+			{ type: ContainerMessageType.Attach, contents: message },
+			undefined,
+		);
 		this.attachOpFiredForDataStore.add(localContext.id);
 	}
 
@@ -691,15 +743,39 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	}
 	public readonly dispose = (): void => this.disposeOnce.value;
 
-	public reSubmit(type: string, content: unknown, localOpMetadata: unknown): void {
-		switch (type) {
+	public reSubmit(
+		messageOrType:
+			| ContainerRuntimeDataStoreOpMessage
+			| OutboundContainerRuntimeAttachMessage
+			| ContainerRuntimeAliasMessage
+			| OutboundFluidDataStoreMessage
+			| string,
+		localOpMetadataOrContent: unknown,
+		undefinedOrLocalOpMetadata?: unknown,
+	): void {
+		const preferredForm = typeof messageOrType === "object";
+		const message = (
+			preferredForm
+				? messageOrType
+				: {
+						type: messageOrType,
+						contents: localOpMetadataOrContent,
+					}
+		) as
+			| ContainerRuntimeDataStoreOpMessage
+			| OutboundContainerRuntimeAttachMessage
+			| ContainerRuntimeAliasMessage;
+		const localOpMetadata = preferredForm
+			? localOpMetadataOrContent
+			: undefinedOrLocalOpMetadata;
+		switch (message.type) {
 			case ContainerMessageType.Attach:
 			case ContainerMessageType.Alias: {
-				this.parentContext.submitMessage(type, content, localOpMetadata);
+				this.parentContext.submitMessage(message, localOpMetadata);
 				return;
 			}
 			case ContainerMessageType.FluidDataStoreOp: {
-				return this.reSubmitChannelOp(type, content, localOpMetadata);
+				return this.reSubmitChannelOp(message, localOpMetadata);
 			}
 			default: {
 				assert(false, 0x907 /* unknown op type */);
@@ -707,8 +783,11 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		}
 	}
 
-	protected reSubmitChannelOp(type: string, content: unknown, localOpMetadata: unknown): void {
-		const envelope = content as IEnvelope;
+	protected reSubmitChannelOp(
+		containerRuntimeMessage: ContainerRuntimeDataStoreOpMessage,
+		localOpMetadata: unknown,
+	): void {
+		const envelope = containerRuntimeMessage.contents;
 		const context = this.contexts.get(envelope.address);
 		// If the data store has been deleted, log an error and throw an error. If there are local changes for a
 		// deleted data store, it can otherwise lead to inconsistent state when compared to other clients.
@@ -721,7 +800,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			});
 		}
 		assert(!!context, 0x160 /* "There should be a store context for the op" */);
-		const innerContents = envelope.contents as FluidDataStoreMessage;
+		const innerContents = envelope.contents as OutboundFluidDataStoreMessage;
 		context.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
 	}
 
@@ -1594,6 +1673,8 @@ export function detectOutboundReferences(
 }
 
 /**
+ * @privateRemarks This factory is only used for testing.
+ *
  * @internal
  */
 export class ChannelCollectionFactory<T extends ChannelCollection = ChannelCollection>
@@ -1619,7 +1700,7 @@ export class ChannelCollectionFactory<T extends ChannelCollection = ChannelColle
 	}
 
 	public async instantiateDataStore(
-		context: IFluidDataStoreContext,
+		context: IFluidDataStoreContext & IFluidRootParentContext,
 		_existing: boolean,
 	): Promise<IFluidDataStoreChannel> {
 		const runtime = this.ctor(

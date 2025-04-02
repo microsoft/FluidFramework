@@ -56,6 +56,7 @@ import {
 	IInboundSignalMessage,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
+	type OutboundFluidDataStoreMessage,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -1049,8 +1050,12 @@ export class FluidDataStoreRuntime
 		}
 	}
 
-	public submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
-		this.submit(type, content, localOpMetadata);
+	/**
+	 * @deprecated No implementation required and will be removed in 2.50.
+	 */
+	public submitMessage(type: string, content: any, localOpMetadata: unknown) {
+		this.verifyNotClosed();
+		this.dataStoreContext.submitMessage(type, content, localOpMetadata);
 	}
 
 	/**
@@ -1112,7 +1117,10 @@ export class FluidDataStoreRuntime
 			type: channel.attributes.type,
 		};
 		this.pendingAttach.add(channel.id);
-		this.submit(DataStoreMessageType.Attach, message);
+		this.dataStoreContext.submitMessage(
+			{ type: DataStoreMessageType.Attach, content: message },
+			undefined,
+		);
 
 		const context = this.contexts.get(channel.id) as LocalChannelContextBase;
 		context.makeVisible();
@@ -1120,16 +1128,11 @@ export class FluidDataStoreRuntime
 
 	private submitChannelOp(address: string, contents: any, localOpMetadata: unknown) {
 		const envelope: IEnvelope = { address, contents };
-		this.submit(DataStoreMessageType.ChannelOp, envelope, localOpMetadata);
-	}
-
-	private submit(
-		type: DataStoreMessageType,
-		content: any,
-		localOpMetadata: unknown = undefined,
-	): void {
 		this.verifyNotClosed();
-		this.dataStoreContext.submitMessage(type, content, localOpMetadata);
+		this.dataStoreContext.submitMessage(
+			{ type: DataStoreMessageType.ChannelOp, content: envelope },
+			localOpMetadata,
+		);
 	}
 
 	/**
@@ -1138,25 +1141,51 @@ export class FluidDataStoreRuntime
 	 * This typically happens when we reconnect and there are unacked messages.
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
+	 * @deprecated - Use the overload that takes an OutboundFluidDataStoreMessage instead.
 	 */
-	public reSubmit(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
+	public reSubmit(type: string, content: any, localOpMetadata: unknown): void;
+	/**
+	 * For messages of type MessageType.Operation, finds the right channel and asks it to resubmit the message.
+	 * For all other messages, just submit it again.
+	 * This typically happens when we reconnect and there are unacked messages.
+	 * @param mesage - The original message.
+	 * @param localOpMetadata - The local metadata associated with the original message.
+	 */
+	public reSubmit(message: OutboundFluidDataStoreMessage, localOpMetadata: unknown): void;
+
+	public reSubmit(
+		messageOrType: OutboundFluidDataStoreMessage | string,
+		localOpMetadataOrContent: any,
+		undefinedOrLocalOpMetadata?: unknown,
+	) {
 		this.verifyNotClosed();
 
-		switch (type) {
-			case DataStoreMessageType.ChannelOp: {
+		const preferredForm = typeof messageOrType === "object";
+		const message = preferredForm
+			? messageOrType
+			: // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+				({
+					type: messageOrType,
+					content: localOpMetadataOrContent,
+				} as OutboundFluidDataStoreMessage);
+		const localOpMetadata = preferredForm
+			? localOpMetadataOrContent
+			: undefinedOrLocalOpMetadata;
+		switch (message.type) {
+			case "op" /* DataStoreMessageType.ChannelOp */: {
 				// For Operations, find the right channel and trigger resubmission on it.
-				const envelope = content as IEnvelope;
+				const envelope = message.content;
 				const channelContext = this.contexts.get(envelope.address);
 				assert(!!channelContext, 0x183 /* "There should be a channel context for the op" */);
 				channelContext.reSubmit(envelope.contents, localOpMetadata);
 				break;
 			}
-			case DataStoreMessageType.Attach:
+			case "attach" /* DataStoreMessageType.Attach */:
 				// For Attach messages, just submit them again.
-				this.submit(type, content, localOpMetadata);
+				this.dataStoreContext.submitMessage(message, localOpMetadata);
 				break;
 			default:
-				unreachableCase(type);
+				unreachableCase(message);
 		}
 	}
 

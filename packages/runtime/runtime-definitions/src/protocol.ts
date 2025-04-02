@@ -10,6 +10,19 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 
 /**
+ * @legacy
+ * @alpha
+ *
+ * @privateRemarks
+ * This type and/or const structure is preferred replacement for {@link @fluidframework/datastore#DataStoreMessageType}.
+ */
+export interface DataStoreMessageType {
+	// Creates a new channel
+	Attach: "attach";
+	ChannelOp: "op";
+}
+
+/**
  * An envelope wraps the contents with the intended target
  * @legacy
  * @alpha
@@ -126,3 +139,14 @@ export interface IRuntimeMessageCollection {
 	 */
 	readonly messagesContent: readonly IRuntimeMessagesContent[];
 }
+
+/**
+ * Outgoing {@link IFluidDataStoreChannel} message structures.
+ * @legacy
+ * @alpha
+ *
+ * @privateRemarks The types here are required to satisfy `FluidDataStoreMessage` interface.
+ */
+export type OutboundFluidDataStoreMessage =
+	| { type: DataStoreMessageType["ChannelOp"]; content: IEnvelope }
+	| { type: DataStoreMessageType["Attach"]; content: IAttachMessage };

@@ -186,7 +186,7 @@ export class RuntimeAttributorDataStoreChannel
 	/**
 	 * {@inheritdoc IFluidDataStoreChannel.reSubmit}
 	 */
-	public reSubmit(type: string, content: unknown, localOpMetadata: unknown): void {
+	public reSubmit(): void {
 		// Should not resubmit anything from the attributor as the attributor does not send ops yet.
 		throw new Error("Should not resubmit anything from the attributor");
 	}

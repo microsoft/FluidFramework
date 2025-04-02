@@ -21,12 +21,19 @@ export {
 } from "./containerRuntime.js";
 export {
 	ContainerMessageType,
+	ContainerRuntimeAliasMessage,
+	ContainerRuntimeDataStoreOpMessage,
+	InternalUtilityTypes,
+	OutboundContainerRuntimeAttachMessage,
 	UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
 export { IBlobManagerLoadInfo } from "./blobManager/index.js";
+export type { IDataStoreAliasMessage } from "./dataStore.js";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
 export {
 	detectOutboundReferences,
+	type AddressedSignalEnvelope,
+	type IFluidRootParentContext,
 	ChannelCollectionFactory,
 	AllowTombstoneRequestHeaderKey,
 } from "./channelCollection.js";

@@ -37,7 +37,11 @@ import type {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 } from "./garbageCollectionDefinitions.js";
-import type { IInboundSignalMessage, IRuntimeMessageCollection } from "./protocol.js";
+import type {
+	IInboundSignalMessage,
+	OutboundFluidDataStoreMessage,
+	IRuntimeMessageCollection,
+} from "./protocol.js";
 import type {
 	CreateChildSummarizerNodeParam,
 	ISummarizerNodeWithGC,
@@ -375,9 +379,18 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * @param type - The type of the original message.
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
+	 *
+	 * @deprecated Use `reSubmit` with {@link OutboundFluidDataStoreMessage}.
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
-	reSubmit(type: string, content: any, localOpMetadata: unknown);
+	reSubmit(type: string, contents: any, localOpMetadata: unknown): void;
+
+	/**
+	 * Ask the DDS to resubmit a message. This could be because we reconnected and this message was not acked.
+	 * @param message - The original message.
+	 * @param localOpMetadata - The local metadata associated with the original message.
+	 */
+	reSubmit(message: OutboundFluidDataStoreMessage, localOpMetadata: unknown): void;
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	applyStashedOp(content: any): Promise<unknown>;
@@ -488,9 +501,19 @@ export interface IFluidParentContext
 	 * @param localOpMetadata - The local metadata associated with the message. This is kept locally and not sent to
 	 * the server. This will be sent back when this message is received back from the server. This is also sent if
 	 * we are asked to resubmit the message.
+	 *
+	 * @deprecated Use `submitMessage` with {@link OutboundFluidDataStoreMessage}.
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	submitMessage(type: string, content: any, localOpMetadata: unknown): void;
+	/**
+	 * Submits the message to be sent to other clients.
+	 * @param message - Record with type and content of the message.
+	 * @param localOpMetadata - The local metadata associated with the message. This is kept locally and not sent to
+	 * the server. This will be sent back when this message is received back from the server. This is also sent if
+	 * we are asked to resubmit the message.
+	 */
+	submitMessage(message: OutboundFluidDataStoreMessage, localOpMetadata: unknown): void;
 
 	/**
 	 * Submits the signal to be sent to other clients.

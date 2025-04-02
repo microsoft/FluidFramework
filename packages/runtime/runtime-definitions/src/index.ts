@@ -45,6 +45,7 @@ export {
 	gcTreeKey,
 } from "./garbageCollectionDefinitions.js";
 export type {
+	DataStoreMessageType,
 	IAttachMessage,
 	IEnvelope,
 	IInboundSignalMessage,
@@ -52,6 +53,7 @@ export type {
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
+	OutboundFluidDataStoreMessage,
 } from "./protocol.js";
 export { encodeHandlesInContainerRuntime } from "./runtimeLayerCompatFeatureNames.js";
 export type {

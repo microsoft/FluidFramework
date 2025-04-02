@@ -35,6 +35,7 @@ import {
 	readAndParse,
 } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { OutboundFluidDataStoreMessage } from "@fluidframework/runtime-definitions/internal";
 import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -805,13 +806,31 @@ export abstract class FluidDataStoreContext
 		return runtime.request(request);
 	}
 
-	public submitMessage(type: string, content: unknown, localOpMetadata: unknown): void {
+	public submitMessage(
+		messageOrType: OutboundFluidDataStoreMessage | string,
+		localOpMetadataOrContent: unknown,
+		undefinedOrLocalOpMetadata?: unknown,
+	): void {
 		this.verifyNotClosed("submitMessage");
 		assert(!!this.channel, 0x146 /* "Channel must exist when submitting message" */);
+		const preferredForm = typeof messageOrType === "object";
+		const message = preferredForm
+			? messageOrType
+			: // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+				({
+					type: messageOrType,
+					content: localOpMetadataOrContent,
+				} as OutboundFluidDataStoreMessage);
+		const localOpMetadata = preferredForm
+			? localOpMetadataOrContent
+			: undefinedOrLocalOpMetadata;
 		// Summarizer clients should not submit messages.
-		this.identifyLocalChangeInSummarizer("DataStoreMessageSubmittedInSummarizer", type);
+		this.identifyLocalChangeInSummarizer(
+			"DataStoreMessageSubmittedInSummarizer",
+			message.type,
+		);
 
-		this.parentContext.submitMessage(type, content, localOpMetadata);
+		this.parentContext.submitMessage(message, localOpMetadata);
 	}
 
 	/**
@@ -967,7 +986,7 @@ export abstract class FluidDataStoreContext
 		return {};
 	}
 
-	public reSubmit(type: string, contents: unknown, localOpMetadata: unknown): void {
+	public reSubmit(type: "op" | "attach", contents: unknown, localOpMetadata: unknown): void {
 		assert(!!this.channel, 0x14b /* "Channel must exist when resubmitting ops" */);
 		this.channel.reSubmit(type, contents, localOpMetadata);
 	}

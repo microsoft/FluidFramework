@@ -107,10 +107,12 @@ function submitDataStoreOp(
 	localOpMetadata?: unknown,
 ) {
 	runtime.submitMessage(
-		ContainerMessageType.FluidDataStoreOp,
 		{
-			address: id,
-			contents,
+			type: ContainerMessageType.FluidDataStoreOp,
+			contents: {
+				address: id,
+				contents,
+			},
 		},
 		localOpMetadata,
 	);
