@@ -11,6 +11,7 @@ import { CompressionAlgorithms } from "../containerRuntime.js";
  * Batch message type used internally by the runtime
  */
 export type BatchMessage = IBatchMessage & {
+	//* TODO: Update name / type to wrappedLOM?  Or... don't even use LOM, add a prop here (and in PSM)?
 	localOpMetadata?: unknown;
 	referenceSequenceNumber: number;
 	compression?: CompressionAlgorithms;

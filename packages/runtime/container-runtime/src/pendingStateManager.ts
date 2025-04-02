@@ -327,6 +327,7 @@ export class PendingStateManager implements IDisposable {
 			const {
 				contents: content = "",
 				referenceSequenceNumber,
+				//* This is wrappedLOM
 				localOpMetadata,
 				metadata: opMetadata,
 			} = message;

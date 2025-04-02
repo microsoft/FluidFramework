@@ -2453,7 +2453,7 @@ export class ContainerRuntime
 	}
 
 	private async applyStashedOp(serializedOpContent: string): Promise<unknown> {
-		// Need to parse from string for back-compat
+		// Pending State contains serialized contents, so parse it here.
 		const opContents = this.parseLocalOpContent(serializedOpContent);
 		switch (opContents.type) {
 			case ContainerMessageType.FluidDataStoreOp:
@@ -4253,6 +4253,7 @@ export class ContainerRuntime
 
 			//* TODO: Decode / pop LOM on the flip side
 
+			//* Naming?  Contents v. Message v. Op
 			const { serializedContents, wrappedLocalOpMetadata } = prepareOpPayloadForSubmit(
 				containerRuntimeMessage,
 				localOpMetadata,
@@ -4379,8 +4380,9 @@ export class ContainerRuntime
 	}
 
 	private reSubmit(message: PendingMessageResubmitData): void {
-		// Need to parse from string for back-compat
-		const containerRuntimeMessage = this.parseLocalOpContent(message.content);
+		const containerRuntimeMessage = (
+			message.localOpMetadata as { viableContent: LocalContainerRuntimeMessage }
+		).viableContent;
 		this.reSubmitCore(containerRuntimeMessage, message.localOpMetadata, message.opMetadata);
 	}
 
@@ -4446,8 +4448,12 @@ export class ContainerRuntime
 	}
 
 	private rollback(content: string | undefined, localOpMetadata: unknown): void {
+		const containerRuntimeMessage = (
+			localOpMetadata as { viableContent: LocalContainerRuntimeMessage }
+		).viableContent;
+
 		// Need to parse from string for back-compat
-		const { type, contents } = this.parseLocalOpContent(content);
+		const { type, contents } = containerRuntimeMessage;
 		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp: {
 				// For operations, call rollbackDataStoreOp which will find the right store

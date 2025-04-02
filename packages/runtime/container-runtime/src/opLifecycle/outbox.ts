@@ -359,6 +359,7 @@ export class Outbox {
 			return;
 		}
 
+		//* NOTE: This has wrappedLOM
 		const rawBatch = batchManager.popBatch(resubmittingBatchId);
 		const shouldGroup =
 			!disableGroupedBatching && this.params.groupingManager.shouldGroup(rawBatch);
@@ -408,8 +409,8 @@ export class Outbox {
 		this.rebasing = true;
 		for (const message of rawBatch.messages) {
 			this.params.reSubmit({
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				content: message.contents!,
+				//* Clean up
+				content: "IGNORED - VIABLE CONTENT PULLED FROM WRAPPED LOM",
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 			});
