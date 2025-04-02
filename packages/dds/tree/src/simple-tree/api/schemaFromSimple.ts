@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils/internal";
-import { fail } from "../../util/index.js";
+import { unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import {
 	type FieldSchema,

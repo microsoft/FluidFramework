@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -37,7 +37,7 @@ import {
 	TreeViewConfiguration,
 	type TreeBranch,
 } from "../simple-tree/index.js";
-import { fail, type JsonCompatible } from "../util/index.js";
+import type { JsonCompatible } from "../util/index.js";
 import { noopValidator, type FluidClientVersion, type ICodecOptions } from "../codec/index.js";
 import type { ITreeCursorSynchronous } from "../core/index.js";
 import {

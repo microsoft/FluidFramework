@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { fail } from "@fluidframework/core-utils/internal";
 import type { ErasedType } from "@fluidframework/core-interfaces";
 import { DiscriminatedUnionDispatcher } from "../../codec/index.js";
-import { type MakeNominal, brand, fail, invertMap } from "../../util/index.js";
+import { type MakeNominal, brand, invertMap } from "../../util/index.js";
 import {
 	type FieldKey,
 	type FieldKindIdentifier,

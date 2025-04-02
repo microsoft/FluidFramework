@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	type FieldKey,
@@ -12,7 +12,7 @@ import {
 	forEachField,
 	type Value,
 } from "../../../core/index.js";
-import { brand, fail } from "../../../util/index.js";
+import { brand } from "../../../util/index.js";
 
 import type { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
 import { type BufferFormat, IdentifierToken, Shape } from "./chunkEncodingGeneric.js";

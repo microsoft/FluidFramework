@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/azure-client",
-	"version": "2.31.0",
+	"version": "2.32.0",
 	"description": "A tool to enable creation and loading of Fluid containers using the Azure Fluid Relay service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -81,7 +81,7 @@
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"postpack": "tar -cf ./azure-client.test-files.tar ./dist/test ./lib/test",
+		"pack:tests": "tar -cf ./azure-client.test-files.tar ./dist/test ./lib/test",
 		"start:tinylicious:test": "npx @fluidframework/azure-local-service > tinylicious.log 2>&1",
 		"test": "npm run test:realsvc",
 		"test:realsvc": "npm run test:realsvc:tinylicious",

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/container-runtime",
-	"version": "2.31.0",
+	"version": "2.32.0",
 	"description": "Fluid container runtime",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -132,7 +132,7 @@
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"postpack": "tar -cf ./container-runtime.test-files.tar ./src/test ./dist/test ./lib/test",
+		"pack:tests": "tar -cf ./container-runtime.test-files.tar ./src/test ./dist/test ./lib/test",
 		"place:cjs:package-stub": "copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"test": "npm run test:mocha",
 		"test:benchmark:report": "mocha --timeout 10s --perfMode --parentProcess --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js \"./dist/**/*.perf.spec.*js\"",
