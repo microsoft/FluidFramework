@@ -5,7 +5,7 @@
 
 # Use a direct sha256 hash to ensure we are always using the same version of the base image.
 # This avoids throttling issues with Docker Hub by using an image baked into the pipeline build image.
-FROM node:18.20.5-bookworm-slim@sha256:c4a278056a0f79abf472d912bbf5af6c874126ae450faad9df52069e9ad78335 AS runnerbase
+FROM node:20.19.0-bookworm-slim@sha256:d6e4ec9eaf2390129b5d23904d07ae03ef744818386bcab3fc45fe63405b5eb2 AS runnerbase
 
 ARG SETVERSION_VERSION=dev
 ENV SETVERSION_VERSION=$SETVERSION_VERSION
