@@ -199,6 +199,8 @@ function ${functionName}({ root, idMap, create }) {
 		const rootTypes = [...schema.allowedTypesIdentifiers];
 		const prompt = `${this.getSystemPromptPreamble(domainTypes, domainRoot)}
 
+## Editing
+
 If the user asks you to edit the data, you will use the ${this.editingTool.name} tool to write a JavaScript function that mutates the data in-place to achieve the user's goal.
 The function must be named "${functionName}".
 The ${functionName} function must have a first parameter which has a \`root\` property that is the JSON object you are to mutate.

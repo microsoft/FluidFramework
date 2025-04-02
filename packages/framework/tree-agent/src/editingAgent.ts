@@ -181,6 +181,8 @@ class SharedTreeEditingAgent<
 		// TODO: security: user prompt in system prompt
 		const systemPrompt = `${this.getSystemPromptPreamble(domainTypes, domainRoot)}
 	
+## Editing
+		
 If the user asks you to edit the data, you will use the ${this.editingTool.name} tool to produce an array of edits where each edit ${topLevelEditWrapperDescription}.
 When creating new objects for \`${insertIntoArrayType}\` or \`${setFieldType}\`, you may create an ${objectIdType} and put it in the \`${objectIdKey}\` property if you want to refer to the object in a later edit.
 For example, if you want to insert a new object into an array and (in a subsequent edit) move another piece of content to after the newly inserted one, you can use the ${objectIdType} of the newly inserted object in the \`${"MoveArrayElement" satisfies Capitalize<MoveArrayElement["type"]>}\` edit.

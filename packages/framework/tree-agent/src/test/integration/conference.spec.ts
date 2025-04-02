@@ -16,10 +16,10 @@ import {
 	asTreeViewAlpha,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/internal";
-import { ChatAnthropic } from "@langchain/anthropic";
 
 import { createFunctioningAgent } from "../../functioningAgent.js";
 import { llmDefault } from "../../utils.js";
+import { createLlmClient } from "../utils.js";
 
 const sf = new SchemaFactoryAlpha("Planner");
 
@@ -158,19 +158,14 @@ describe("Agent Editing Integration 1", () => {
 				},
 			],
 		});
-		const client = new ChatAnthropic({
-			model: "claude-3-7-sonnet-20250219",
-			apiKey: "TODO",
-			thinking: { type: "enabled", budget_tokens: 10000 },
-			maxTokens: 20000,
-		});
 
+		const client = createLlmClient("openai");
 		const agent = createFunctioningAgent(client, asTreeViewAlpha(view), {
 			log: (l) => appendFileSync(fd, l, { encoding: "utf8" }),
 		});
 		const timestamp = new Date().toISOString().replace(/[.:]/g, "-");
 		const fd = openSync(`llm_log_${timestamp}.md`, "w");
-		await agent.query(prompts.simple);
+		await agent.query(prompts.question);
 
 		closeSync(fd);
 	});

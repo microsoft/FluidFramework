@@ -237,7 +237,8 @@ ${domainSchemaString}
 
 If the user asks you a question about the tree, you should inspect the state of the tree and answer the question.
 If the user asks you to edit the tree, you should use the ${this.editingTool.name} tool to accomplish the user-specified goal.
-You may also use the ${this.thinkingTool.name} tool to help you reason through complex data manipulation tasks before finally invoking the ${this.editingTool.name} tool.`;
+If you have already edited the tree, review the latest state of the tree to see if it satisfies the user's request.
+If necessary, edit it again, otherwise inform the user that the request has been satisfied.`;
 	}
 }
 
