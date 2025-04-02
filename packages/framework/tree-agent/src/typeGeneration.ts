@@ -94,14 +94,17 @@ const insertionObjectCache = new WeakMap<SimpleNodeSchema, Zod.ZodTypeAny>();
 /**
  * TODO
  */
-export function generateEditTypesForPrompt(schema: SimpleTreeSchema): {
+export function generateEditTypesForPrompt(
+	schema: SimpleTreeSchema,
+	includeObjectIdKey: boolean, // TODO: If this changes, we will get a false cache hit because it's not part of the cache key
+): {
 	editTypes: Record<string, Zod.ZodTypeAny>;
 	editRoot: string;
 	domainTypes: Record<string, Zod.ZodTypeAny>;
 	domainRoot: string;
 } {
 	return getOrCreate(promptSchemaCache, schema, () =>
-		generateEditTypes(schema, false, new Map()),
+		generateEditTypes(schema, false, new Map(), includeObjectIdKey),
 	);
 }
 
@@ -112,7 +115,7 @@ export function generateEditTypesForInsertion(
 	schema: SimpleTreeSchema,
 ): Zod.ZodArray<Zod.ZodTypeAny> {
 	const { editTypes, editRoot } = getOrCreate(insertionSchemaCache, schema, () =>
-		generateEditTypes(schema, true, insertionObjectCache),
+		generateEditTypes(schema, true, insertionObjectCache, true),
 	);
 	return editTypes[editRoot] as Zod.ZodArray<Zod.ZodTypeAny>;
 }
@@ -129,6 +132,7 @@ function generateEditTypes(
 	schema: SimpleTreeSchema,
 	transformForParsing: boolean,
 	objectCache: MapGetSet<SimpleNodeSchema, Zod.ZodTypeAny>,
+	includeObjectIdKey: boolean,
 ): {
 	editTypes: Record<string, Zod.ZodTypeAny>;
 	editRoot: string;
@@ -149,6 +153,7 @@ function generateEditTypes(
 			name,
 			transformForParsing,
 			objectCache,
+			includeObjectIdKey,
 		);
 	}
 
@@ -250,6 +255,7 @@ function generateEditTypes(
 			t,
 			transformForParsing,
 			objectCache,
+			includeObjectIdKey,
 		);
 	});
 
@@ -281,6 +287,7 @@ export function getOrCreateTypeForInsertion(
 		definition,
 		true,
 		insertionObjectCache,
+		true,
 	);
 }
 function getOrCreateType(
@@ -291,6 +298,7 @@ function getOrCreateType(
 	definition: string,
 	transformForParsing: boolean,
 	objectCache: MapGetSet<SimpleNodeSchema, Zod.ZodTypeAny>,
+	includeObjectIdKey: boolean,
 ): Zod.ZodTypeAny {
 	const nodeSchema = definitionMap.get(definition) ?? fail("Unexpected definition");
 	return getOrCreate(objectCache, nodeSchema, () => {
@@ -316,6 +324,7 @@ function getOrCreateType(
 									field,
 									transformForParsing,
 									objectCache,
+									includeObjectIdKey,
 								),
 							];
 						})
@@ -325,8 +334,10 @@ function getOrCreateType(
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					properties[typeField] = z.literal(getFriendlySchemaName(definition)).optional();
 				}
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				properties[objectIdKey] = z.optional(objectId);
+				if (includeObjectIdKey) {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+					properties[objectIdKey] = z.optional(objectId);
+				}
 				const obj = z.object(properties).describe(nodeSchema.metadata?.description ?? "");
 				return transformForParsing
 					? obj.transform((value) => {
@@ -359,6 +370,7 @@ function getOrCreateType(
 						nodeSchema.allowedTypesIdentifiers,
 						transformForParsing,
 						objectCache,
+						includeObjectIdKey,
 					),
 				);
 				return transformForParsing
@@ -399,6 +411,7 @@ function getOrCreateTypeForField(
 	fieldSchema: SimpleFieldSchema,
 	transformForParsing: boolean,
 	objectCache: MapGetSet<SimpleNodeSchema, Zod.ZodTypeAny>,
+	includeObjectIdKey: boolean,
 ): Zod.ZodTypeAny | undefined {
 	const getDefault: unknown = fieldSchema.metadata?.custom?.[llmDefault];
 	if (getDefault !== undefined) {
@@ -423,6 +436,7 @@ function getOrCreateTypeForField(
 		fieldSchema.allowedTypesIdentifiers,
 		transformForParsing,
 		objectCache,
+		includeObjectIdKey,
 	).describe(
 		getDefault === undefined
 			? (fieldSchema.metadata?.description ?? "")
@@ -461,6 +475,7 @@ function getTypeForAllowedTypes(
 	allowedTypes: ReadonlySet<string>,
 	transformForParsing: boolean,
 	cache: MapGetSet<SimpleNodeSchema, Zod.ZodTypeAny>,
+	includeObjectIdKey: boolean,
 ): Zod.ZodTypeAny {
 	const single = tryGetSingleton(allowedTypes);
 	if (single === undefined) {
@@ -474,6 +489,7 @@ function getTypeForAllowedTypes(
 					name,
 					transformForParsing,
 					cache,
+					includeObjectIdKey,
 				);
 			}),
 		];
@@ -488,6 +504,7 @@ function getTypeForAllowedTypes(
 			single,
 			transformForParsing,
 			cache,
+			includeObjectIdKey,
 		);
 	}
 }

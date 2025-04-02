@@ -10,6 +10,10 @@ import {
 	getSimpleSchema,
 	type ImplicitFieldSchema,
 	type ReadableField,
+	type ReadSchema,
+	type RestrictiveStringRecord,
+	type TreeFieldFromImplicitField,
+	type TreeObjectNode,
 } from "@fluidframework/tree/internal";
 // eslint-disable-next-line import/no-internal-modules
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
@@ -41,7 +45,7 @@ import {
 	generateEditTypesForInsertion,
 	generateEditTypesForPrompt,
 } from "./typeGeneration.js";
-import { fail, getFriendlySchemaName, stringifyWithIds, type TreeView } from "./utils.js";
+import { fail, getFriendlySchemaName, type TreeView } from "./utils.js";
 
 /**
  * TODO
@@ -56,13 +60,10 @@ export function createEditingAgent<TRoot extends ImplicitFieldSchema>(
 		readonly log?: Log;
 	},
 ): SharedTreeSemanticAgent {
-	return new SharedTreeSemanticEditingAgent(client, treeView, options);
+	return new SharedTreeEditingAgent(client, treeView, options);
 }
 
-/**
- * TODO doc
- */
-export class SharedTreeSemanticEditingAgent<
+class SharedTreeEditingAgent<
 	TRoot extends ImplicitFieldSchema,
 > extends SharedTreeSemanticAgentBase<TRoot> {
 	public constructor(
@@ -84,6 +85,7 @@ export class SharedTreeSemanticEditingAgent<
 		});
 		const editingTool = tool(
 			(args) => {
+				this.options?.log?.(`## Editing Tool Invoked\n\n`);
 				const parseResult = wrapper.safeParse({ edits: args.edits });
 				if (!parseResult.success) {
 					throw parseResult.error;
@@ -103,23 +105,30 @@ export class SharedTreeSemanticEditingAgent<
 					} catch (error: unknown) {
 						if (error instanceof UsageError) {
 							this.prompting.branch.dispose();
+							this.options?.log?.(`### Edit ${editIndex + 1} Error\n\n`);
+							this.options?.log?.(
+								`\`\`\`JSON\n${JSON.stringify(edits[editIndex])}\n\`\`\`\n\n`,
+							);
+							this.options?.log?.(`#### Error\n\n`);
+							this.options?.log?.(`\`\`\`JSON\n${error.message}\n\`\`\`\n\n`);
+
 							return `Error when applying edit at index ${editIndex}: ${error.message}`;
 						}
 						throw error;
 					}
 					this.options?.log?.(`### Applied Edit ${editIndex + 1}\n\n`);
-					this.options?.log?.(`The new state of the tree is:\n\n`);
+					this.options?.log?.(`\`\`\`JSON\n${JSON.stringify(edits[editIndex])}\n\`\`\`\n\n`);
+					this.options?.log?.(`#### New Tree State\n\n`);
 					this.options?.log?.(
 						`${
 							this.options.treeToString?.(this.prompting.branch.root) ??
-							`\`\`\`JSON\n${JSON.stringify(this.prompting.branch.root, undefined, 2)}\n\`\`\``
+							`\`\`\`JSON\n${this.stringifyTree(this.prompting.branch.root, this.prompting.idGenerator)}\n\`\`\``
 						}\n\n`,
 					);
 					editIndex += 1;
 				}
 				this.treeView.merge(this.prompting.branch);
-				// TODO: Return the current tree state here instead, but make sure to preserve IDs correctly
-				return "The tree has been edited.";
+				return `After running your function, the new state of the tree is:\n\n\`\`\`JSON\n${this.stringifyTree(this.prompting.branch.root, this.prompting.idGenerator)}\n\`\`\``;
 			},
 			{
 				name: "EditJsonTree",
@@ -140,8 +149,10 @@ export class SharedTreeSemanticEditingAgent<
 			"",
 		);
 		const schema = getSimpleSchema(view.schema);
-		const { editTypes, editRoot, domainTypes, domainRoot } =
-			generateEditTypesForPrompt(schema);
+		const { editTypes, editRoot, domainTypes, domainRoot } = generateEditTypesForPrompt(
+			schema,
+			true,
+		);
 		for (const [key, value] of Object.entries(domainTypes)) {
 			const friendlyKey = getFriendlySchemaName(key);
 			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
@@ -157,7 +168,6 @@ export class SharedTreeSemanticEditingAgent<
 		}
 		const domainSchema = createZodJsonValidator(domainTypes, domainRoot);
 		const domainSchemaString = domainSchema.getSchemaText();
-		const { stringified } = stringifyWithIds(view.root, new IdGenerator());
 		const treeSchemaString = createZodJsonValidator(editTypes, editRoot).getSchemaText();
 		const setFieldType = "SetField" satisfies Capitalize<SetField["type"]>;
 		const insertIntoArrayType = "InsertIntoArray" satisfies Capitalize<
@@ -192,10 +202,10 @@ ${domainSchemaString}
 \`\`\`
 
 The type${rootTypes.length > 1 ? "s" : ""} allowable at the root of the tree ${rootTypes.length > 1 ? "are" : "is"} \`${rootTypes.map((t) => getFriendlySchemaName(t)).join(" | ")}\`.
-The current state of the tree is
+The current state of the tree is:
 
 \`\`\`JSON
-${stringified}
+${this.stringifyTree(view.root, new IdGenerator())}
 \`\`\`
 
 Your final output should be an array of one or more edits that accomplishes the goal, or an empty array if the task can't be accomplished.
@@ -205,5 +215,21 @@ Do not put \`${objectIdKey}\` properties on new objects that you create unless y
 Finally, double check that the edits would accomplish the user's request (if it is possible).`;
 
 		return systemPrompt;
+	}
+
+	protected override stringifyTree(
+		root: TreeFieldFromImplicitField<ReadSchema<TRoot>>,
+		idGenerator: IdGenerator,
+		visitObject?: (
+			object: TreeObjectNode<RestrictiveStringRecord<ImplicitFieldSchema>>,
+			id: string,
+		) => object | void,
+	): string {
+		return super.stringifyTree(root, idGenerator, (object, id) => {
+			return {
+				[objectIdKey]: id,
+				...(visitObject?.(object, id) ?? object),
+			};
+		});
 	}
 }

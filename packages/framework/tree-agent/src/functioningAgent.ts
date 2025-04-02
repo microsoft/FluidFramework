@@ -16,6 +16,10 @@ import {
 	type ObjectNodeSchema,
 	NodeKind,
 	getSimpleSchema,
+	type ReadSchema,
+	type RestrictiveStringRecord,
+	type TreeObjectNode,
+	Tree,
 } from "@fluidframework/tree/internal";
 // eslint-disable-next-line import/no-internal-modules
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
@@ -31,13 +35,7 @@ import {
 import { objectIdType, objectIdKey } from "./agentEditTypes.js";
 import { IdGenerator } from "./idGenerator.js";
 import { generateEditTypesForPrompt } from "./typeGeneration.js";
-import {
-	constructNode,
-	fail,
-	getFriendlySchemaName,
-	stringifyWithIds,
-	type TreeView,
-} from "./utils.js";
+import { constructNode, fail, getFriendlySchemaName, type TreeView } from "./utils.js";
 
 const functionName = "editTree";
 const paramsName = "params";
@@ -56,13 +54,10 @@ export function createFunctioningAgent<TRoot extends ImplicitFieldSchema>(
 		readonly log?: Log;
 	},
 ): SharedTreeSemanticAgent {
-	return new SharedTreeSemanticFunctioningAgent(client, treeView, options);
+	return new SharedTreeFunctioningAgent(client, treeView, options);
 }
 
-/**
- * TODO doc
- */
-export class SharedTreeSemanticFunctioningAgent<
+class SharedTreeFunctioningAgent<
 	TRoot extends ImplicitFieldSchema,
 > extends SharedTreeSemanticAgentBase<TRoot> {
 	public constructor(
@@ -77,6 +72,10 @@ export class SharedTreeSemanticFunctioningAgent<
 	) {
 		const editingTool = tool(
 			({ functionCode }) => {
+				this.options?.log?.(`## Editing Tool Invoked\n\n`);
+				this.options?.log?.(
+					`### Generated Code\n\n\`\`\`javascript\n${functionCode}\n\`\`\`\n\n`,
+				);
 				const { branch, idGenerator } = this.prompting;
 				const create: Record<string, (input: InsertableContent) => TreeNode> = {};
 				visitObjectNodeSchema(this.treeView.schema, (schema) => {
@@ -87,6 +86,7 @@ export class SharedTreeSemanticFunctioningAgent<
 					create[name] = (input: InsertableContent) => constructNode(schema, input);
 				});
 				if (options?.validator?.(functionCode) === false) {
+					this.options?.log?.(`### Code Validation Failed\n\n`);
 					return "Code validation failed";
 				}
 				const params = {
@@ -100,18 +100,24 @@ export class SharedTreeSemanticFunctioningAgent<
 					create,
 				};
 				const code = processLlmCode(functionCode);
-				this.options?.log?.(`### Generated Code\n\n\`\`\`js\n${code}\n\`\`\`\n\n`);
 				// eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
 				const fn = new Function(paramsName, code) as (p: typeof params) => void;
-				fn(params);
-				this.options?.log?.(`The new state of the tree is:\n\n`);
+				try {
+					fn(params);
+				} catch (error: unknown) {
+					this.options?.log?.(`### Error\n\n`);
+					const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+					this.options?.log?.(`\`\`\`JSON\n${errorMessage}\n\`\`\`\n\n`);
+					return `Running the function produced an error: ${errorMessage}`;
+				}
+				this.options?.log?.(`### New Tree State\n\n`);
 				this.options?.log?.(
 					`${
-						this.options?.treeToString?.(branch.root) ??
-						`\`\`\`JSON\n${JSON.stringify(branch.root, undefined, 2)}\n\`\`\``
+						this.options.treeToString?.(branch.root) ??
+						`\`\`\`JSON\n${this.stringifyTree(branch.root, idGenerator)}\n\`\`\``
 					}\n\n`,
 				);
-				return `After running your function, the new state of the tree is:\n\n\`\`\`JSON\n${stringifyWithIds(branch.root, idGenerator).stringified}\`\`\``;
+				return `After running the function, the new state of the tree is:\n\n\`\`\`JSON\n${this.stringifyTree(branch.root, idGenerator)}\n\`\`\``;
 			},
 			{
 				name: "GenerateTreeEditingCode",
@@ -135,7 +141,7 @@ export class SharedTreeSemanticFunctioningAgent<
 		);
 		const schema = getSimpleSchema(view.schema);
 
-		const { domainTypes, domainRoot } = generateEditTypesForPrompt(schema);
+		const { domainTypes, domainRoot } = generateEditTypesForPrompt(schema, false);
 		for (const [key, value] of Object.entries(domainTypes)) {
 			const friendlyKey = getFriendlySchemaName(key);
 			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
@@ -150,26 +156,32 @@ export class SharedTreeSemanticFunctioningAgent<
 			}
 		}
 
-		const { stringified, objectsWithIds } = stringifyWithIds(view.root, new IdGenerator());
+		const treeObjects: { type: string; id: string }[] = [];
+		const stringified = this.stringifyTree(view.root, new IdGenerator(), (object, id) => {
+			const type =
+				getFriendlySchemaName(Tree.schema(object).identifier) ??
+				fail("Expected object schema to have a friendly name.");
+
+			treeObjects.push({ type, id });
+		});
 
 		const objectIdExplanation =
-			objectsWithIds[0] === undefined
+			treeObjects[0] === undefined
 				? ""
-				: `All objects within the initial tree above have a unique \`${objectIdType}\` in the \`${objectIdKey}\` property.
-You never supply the \`${objectIdKey}\` property when making a new object yourself because the \`${objectIdKey}\` property is only used to refer to objects that exist in the initial tree, not objects that are created later.
-You can use the \`${objectIdType}\` as the lookup key in the readonly JavaScript Map<${objectIdKey}, object>, which is provided via the "idMap" property to the first argument of the \`${functionName}\` function.
+				: `All objects within the initial tree above have a unique \`${objectIdType}\`, which is printed as a comment in the JSON.
+You can use the \`${objectIdType}\` as the lookup key in the readonly JavaScript Map<${objectIdType}, object>, which is provided via the "idMap" property to the first argument of the \`${functionName}\` function.
 For example:
 
 \`\`\`javascript
 function ${functionName}({ root, idMap, create }) {
-	// This retrieves the ${objectsWithIds[0].type} object with the \`${objectIdKey}\` "${objectsWithIds[0].id}" in the initial tree.
-	const ${uncapitalize(objectsWithIds[0].type)} = idMap.get("${objectsWithIds[0].id}");
+	// This retrieves the ${treeObjects[0].type} object with the ${objectIdType} "${treeObjects[0].id}" in the initial tree.
+	const ${uncapitalize(treeObjects[0].type)} = idMap.get("${treeObjects[0].id}");
 	// ...
 }
 \`\`\`\n\n`;
 
 		const builderExplanation =
-			objectsWithIds[0] === undefined
+			treeObjects[0] === undefined
 				? ""
 				: `When constructing new objects, you should wrap them in the appropriate builder function rather than simply making a javascript object.
 The builders are available on the "create" property on the first argument of the \`${functionName}\` function and are named according to the type that they create.
@@ -177,15 +189,14 @@ For example:
 
 \`\`\`javascript
 function ${functionName}({ root, idMap, create }) {
-	// This creates a new ${objectsWithIds[0].type} object:
-	const ${uncapitalize(objectsWithIds[0].type)} = create.${objectsWithIds[0].type}({ /* ...properties... */ });
+	// This creates a new ${treeObjects[0].type} object:
+	const ${uncapitalize(treeObjects[0].type)} = create.${treeObjects[0].type}({ /* ...properties... */ });
 	// Don't do this:
-	// const ${uncapitalize(objectsWithIds[0].type)} = { /* ...properties... */ };
+	// const ${uncapitalize(treeObjects[0].type)} = { /* ...properties... */ };
 }
 \`\`\`\n\n`;
 
 		const rootTypes = [...schema.allowedTypesIdentifiers];
-		// TODO: security: user prompt in system prompt
 		const prompt = `${this.getSystemPromptPreamble(domainTypes, domainRoot)}
 
 If the user asks you to edit the data, you will use the ${this.editingTool.name} tool to write a JavaScript function that mutates the data in-place to achieve the user's goal.
@@ -217,6 +228,24 @@ Once data has been removed from the tree (e.g. replaced via assignment, or remov
 ${builderExplanation}Finally, double check that the edits would accomplish the user's request (if it is possible).`;
 
 		return prompt;
+	}
+
+	protected override stringifyTree(
+		root: TreeFieldFromImplicitField<ReadSchema<TRoot>>,
+		idGenerator: IdGenerator,
+		visitObject?: (
+			object: TreeObjectNode<RestrictiveStringRecord<ImplicitFieldSchema>>,
+			id: string,
+		) => object | void,
+	): string {
+		const stringified = super.stringifyTree(root, idGenerator, (object, id) => {
+			return {
+				[objectIdKey]: id,
+				...(visitObject?.(object, id) ?? object),
+			};
+		});
+
+		return stringified.replace(new RegExp(`"${objectIdKey}":`, "g"), `// ${objectIdType}:`);
 	}
 }
 

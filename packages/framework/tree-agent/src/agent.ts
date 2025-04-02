@@ -7,7 +7,9 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type {
 	ImplicitFieldSchema,
 	ReadableField,
+	RestrictiveStringRecord,
 	TreeBranch,
+	TreeObjectNode,
 	TreeViewAlpha,
 } from "@fluidframework/tree/internal";
 // eslint-disable-next-line import/no-internal-modules
@@ -22,8 +24,9 @@ import { tool, type StructuredTool } from "@langchain/core/tools";
 import { createZodJsonValidator } from "typechat/zod";
 import { z } from "zod";
 
+import { objectIdKey } from "./agentEditTypes.js";
 import { IdGenerator } from "./idGenerator.js";
-import { fail, failUsage, stringifyWithIds, type TreeView } from "./utils.js";
+import { fail, failUsage, type TreeView } from "./utils.js";
 
 /**
  * @alpha
@@ -73,7 +76,10 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 
 	protected thinkingTool = tool(
 		// eslint-disable-next-line unicorn/consistent-function-scoping
-		({ thoughts }) => thoughts,
+		({ thoughts }) => {
+			this.options?.log?.(`## Thinking Tool Invoked\n\n${thoughts}\n\n`);
+			return thoughts;
+		},
 		{
 			name: "think",
 			description:
@@ -87,7 +93,19 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 
 	protected getTreeTool = tool(
 		// eslint-disable-next-line unicorn/consistent-function-scoping
-		() => stringifyWithIds(this.prompting.branch.root, this.prompting.idGenerator),
+		() => {
+			const stringified = this.stringifyTree(
+				this.prompting?.branch.root,
+				this.prompting.idGenerator,
+			);
+			this.options?.log?.(
+				`${
+					this.options?.treeToString?.(this.prompting.branch.root) ??
+					`\`\`\`JSON\n${stringified}\n\`\`\``
+				}\n\n`,
+			);
+			return stringified;
+		},
 		{
 			name: "getData",
 			description:
@@ -120,7 +138,7 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 		this.options?.log?.(`# System Prompt\n\n${systemPrompt}\n\n`);
 		this.options?.log?.(`# User Prompt\n\n`);
 		if (this.options?.domainHints === undefined) {
-			this.options?.log?.(`"userPrompt"\n\n`);
+			this.options?.log?.(`"${userPrompt}"\n\n`);
 		} else {
 			this.options?.log?.(`## Domain Hints\n\n"${this.options?.domainHints}"\n\n`);
 			this.options?.log?.(`## Prompt\n\n"${userPrompt}"\n\n`);
@@ -136,19 +154,21 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 
 			messages.push(responseMessage);
 			// We start with one message, and then add two more for each subsequent correspondence
-			this.options?.log?.(`# LLM Response ${Math.ceil(messages.length / 2)}\n\n`);
+			this.options?.log?.(`# LLM Response ${(messages.length - 1) / 2}\n\n`);
 			this.options?.log?.(`${responseMessage.text}\n\n`);
 			if (responseMessage.tool_calls !== undefined && responseMessage.tool_calls.length > 0) {
 				for (const toolCall of responseMessage.tool_calls) {
 					switch (toolCall.name) {
 						case this.thinkingTool.name: {
-							const result = (await this.thinkingTool.invoke(toolCall)) as ToolMessage;
-							this.options?.log?.(`## Thinking Tool Invoked\n\n${result.text}\n\n`);
+							messages.push((await this.thinkingTool.invoke(toolCall)) as ToolMessage);
+							break;
+						}
+						case this.getTreeTool.name: {
+							messages.push((await this.getTreeTool.invoke(toolCall)) as ToolMessage);
 							break;
 						}
 						case this.editingTool.name: {
-							const result = (await this.editingTool.invoke(toolCall)) as ToolMessage;
-							messages.push(result);
+							messages.push((await this.editingTool.invoke(toolCall)) as ToolMessage);
 							break;
 						}
 						default: {
@@ -170,6 +190,37 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 
 	protected abstract getSystemPrompt(view: Omit<TreeView<TRoot>, "fork" | "merge">): string;
 
+	protected stringifyTree(
+		root: ReadableField<TRoot>,
+		idGenerator: IdGenerator,
+		visitObject?: (
+			object: TreeObjectNode<RestrictiveStringRecord<ImplicitFieldSchema>>,
+			id: string,
+		) => object | void,
+	): string {
+		idGenerator.assignIds(root);
+		return JSON.stringify(
+			root,
+			(_, value: unknown) => {
+				if (typeof value === "object" && !Array.isArray(value) && value !== null) {
+					const objectNode = value as TreeObjectNode<
+						RestrictiveStringRecord<ImplicitFieldSchema>
+					>;
+					if (objectIdKey in objectNode) {
+						throw new UsageError("Object ID property should not be present in the tree.");
+					}
+					const id =
+						idGenerator.getId(objectNode) ??
+						fail("Expected all object nodes in tree to have an ID.");
+
+					return visitObject?.(objectNode, id) ?? objectNode;
+				}
+				return value;
+			},
+			2,
+		);
+	}
+
 	protected getSystemPromptPreamble(
 		domainTypes: Record<string, z.ZodTypeAny>,
 		domainRoot: string,
@@ -178,15 +229,15 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 		const domainSchemaString = domainSchema.getSchemaText();
 
 		return `You are a collaborative agent who assists a user with editing and analyzing a JSON tree.
-		The tree is a JSON object with the following Typescript schema:
-		
-		\`\`\`typescript
-		${domainSchemaString}
-		\`\`\`
-		
-		If the user asks you a question about the tree, you should inspect the state of the tree and answer the question.
-		If the user asks you to edit the tree, you should use the ${this.editingTool.name} tool to accomplish the user-specified goal.
-		You may also use the ${this.thinkingTool.name} tool to help you reason through complex data manipulation tasks before finally invoking the ${this.editingTool.name} tool.`;
+The tree is a JSON object with the following Typescript schema:
+
+\`\`\`typescript
+${domainSchemaString}
+\`\`\`
+
+If the user asks you a question about the tree, you should inspect the state of the tree and answer the question.
+If the user asks you to edit the tree, you should use the ${this.editingTool.name} tool to accomplish the user-specified goal.
+You may also use the ${this.thinkingTool.name} tool to help you reason through complex data manipulation tasks before finally invoking the ${this.editingTool.name} tool.`;
 	}
 }
 

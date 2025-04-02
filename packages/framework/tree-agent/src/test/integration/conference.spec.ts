@@ -10,7 +10,7 @@ import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import {
-	SchemaFactory,
+	SchemaFactoryAlpha,
 	SharedTree,
 	TreeViewConfiguration,
 	asTreeViewAlpha,
@@ -19,8 +19,9 @@ import {
 import { ChatAnthropic } from "@langchain/anthropic";
 
 import { createFunctioningAgent } from "../../functioningAgent.js";
+import { llmDefault } from "../../utils.js";
 
-const sf = new SchemaFactory("Planner");
+const sf = new SchemaFactoryAlpha("Planner");
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 export class Session extends sf.object("Session", {
@@ -33,14 +34,14 @@ export class Session extends sf.object("Session", {
 				"This is one of four possible strings: 'Session', 'Workshop', 'Panel', or 'Keynote'",
 		},
 	}),
-	created: sf.required(sf.number, {
+	created: sf.optional(sf.number, {
 		metadata: {
-			// llmDefault: () => Date.now(), TODO: Add this back when we have a defaulting value solution
+			custom: { [llmDefault]: () => Date.now() },
 		},
 	}),
-	lastChanged: sf.required(sf.number, {
+	lastChanged: sf.optional(sf.number, {
 		metadata: {
-			// llmDefault: () => Date.now(), TODO: Add this back when we have a defaulting value solution
+			custom: { [llmDefault]: () => Date.now() },
 		},
 	}),
 }) {}
