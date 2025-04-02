@@ -12,14 +12,20 @@ import {
 	SchemaFactoryAlpha,
 	typeNameSymbol,
 	typeSchemaSymbol,
+	type LeafSchema,
 	type NodeBuilderData,
+	type NodeKind,
 	type ObjectNodeSchema,
+	type SimpleObjectFieldSchema,
+	type SimpleObjectNodeSchema,
 	type TreeNodeSchema,
+	type TreeNodeSchemaClass,
 	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
 import type {
 	InsertableObjectFromSchemaRecord,
 	ObjectFromSchemaRecord,
+	TreeObjectNode,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/objectNode.js";
 import { describeHydration, hydrate, pretty } from "./utils.js";
@@ -34,6 +40,7 @@ import type {
 import { validateUsageError } from "../utils.js";
 import { Tree } from "../../shared-tree/index.js";
 import type {
+	FieldSchemaAlpha,
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
 	InsertableTreeNodeFromAllowedTypes,
@@ -480,13 +487,13 @@ describeHydration(
 
 			// Explicit field
 			{
-				class RecursiveTest extends sf.object("RecursiveTest", {
+				class ExplicitField extends sf.object("WithField", {
 					f: sf.optional([() => SchemaFactory.null]),
 				}) {}
 
-				type Info = (typeof RecursiveTest)["info"];
-				const _check1: TreeNodeSchema = RecursiveTest;
-				const _check2: ObjectNodeSchema = RecursiveTest;
+				type Info = (typeof ExplicitField)["info"];
+				const _check1: TreeNodeSchema = ExplicitField;
+				const _check2: ObjectNodeSchema = ExplicitField;
 			}
 
 			// Non implicitly constructable
@@ -514,6 +521,67 @@ describeHydration(
 				type _check2 = requireAssignableTo<Info, Info2>;
 				const _check1: TreeNodeSchema = RecursiveTest;
 				const _check2: ObjectNodeSchema = RecursiveTest;
+			}
+
+			// Empty POJO mode
+			{
+				const Empty = sf.object("Empty", {});
+
+				type Info = (typeof Empty)["info"];
+				const _check1: TreeNodeSchema = Empty;
+				const _check2: ObjectNodeSchema = Empty;
+			}
+
+			// Explicit field POJO mode
+			{
+				const ExplicitField = sf.object("WithField", {
+					f: sf.optional([() => SchemaFactory.null]),
+				});
+
+				type Info = (typeof ExplicitField)["info"];
+				const _check1: TreeNodeSchema = ExplicitField;
+				const _check2: ObjectNodeSchema = ExplicitField;
+			}
+
+			// Implicit field POJO mode
+			{
+				const ExplicitField = sf.object("WithField", {
+					f: SchemaFactory.null,
+				});
+
+				type Info = (typeof ExplicitField)["info"];
+				const _check1: TreeNodeSchema = ExplicitField;
+				const _check2: ObjectNodeSchema = ExplicitField;
+
+				type SchemaType = ObjectNodeSchema<
+					"Test.WithField",
+					{ readonly f: LeafSchema<"null", null> },
+					true
+				>;
+
+				type _check3 = requireAssignableTo<SchemaType, ObjectNodeSchema>;
+
+				type SchemaType2 = ObjectNodeSchema<string, { readonly f: LeafSchema<"null", null> }>;
+				type _check4 = requireAssignableTo<SchemaType2, ObjectNodeSchema>;
+				type _check5 = requireAssignableTo<SchemaType2, SimpleObjectNodeSchema>;
+				type _check6 = requireAssignableTo<SchemaType2, ObjectNodeSchema>;
+
+				type _check7 = requireAssignableTo<
+					SchemaType2,
+					TreeNodeSchemaClass<
+						string,
+						NodeKind.Object,
+						TreeObjectNode<RestrictiveStringRecord<ImplicitFieldSchema>>,
+						InsertableObjectFromSchemaRecord<RestrictiveStringRecord<ImplicitFieldSchema>>,
+						boolean,
+						RestrictiveStringRecord<ImplicitFieldSchema>
+					>
+				>;
+
+				type _check8 = requireAssignableTo<
+					SchemaType2,
+					{ readonly fields: ReadonlyMap<string, FieldSchemaAlpha & SimpleObjectFieldSchema> }
+				>;
 			}
 		});
 
