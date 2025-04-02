@@ -34,7 +34,7 @@ import {
 	SessionSpaceCompressedId,
 	StableId,
 } from "@fluidframework/id-compressor";
-import { ISharedMap, type ISharedDirectory } from "@fluidframework/map/internal";
+import { ISharedMap } from "@fluidframework/map/internal";
 import {
 	DataObjectFactoryType,
 	ITestContainerConfig,
@@ -42,7 +42,6 @@ import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizer,
-	createTestConfigProvider,
 	getContainerEntryPointBackCompat,
 	summarizeNow,
 	waitForContainerConnection,
