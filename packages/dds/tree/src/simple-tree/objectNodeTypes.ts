@@ -10,12 +10,7 @@ import type {
 	SimpleKeyMap,
 } from "./objectNode.js";
 import type { ImplicitFieldSchema, FieldSchemaAlpha } from "./schemaTypes.js";
-import {
-	NodeKind,
-	type TreeNodeSchemaClass,
-	type TreeNodeSchema,
-	type TreeNodeSchemaCore,
-} from "./core/index.js";
+import { NodeKind, type TreeNodeSchemaClass, type TreeNodeSchema } from "./core/index.js";
 import type { FieldKey } from "../core/index.js";
 import type { SimpleObjectFieldSchema, SimpleObjectNodeSchema } from "./simpleSchema.js";
 
@@ -46,26 +41,6 @@ export interface ObjectNodeSchema<
 	 */
 	readonly fields: ReadonlyMap<string, FieldSchemaAlpha & SimpleObjectFieldSchema>;
 }
-
-/**
- * A schema for {@link TreeObjectNode}s.
- * @sealed
- * @alpha
- */
-export interface ObjectNodeSchema2<
-	out TName extends string = string,
-	in out T extends
-		RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>,
-	ImplicitlyConstructable extends boolean = boolean,
-	out TCustomMetadata = unknown,
-> extends TreeNodeSchemaCore<
-		TName,
-		NodeKind.Object,
-		ImplicitlyConstructable,
-		T,
-		never,
-		TCustomMetadata
-	> {}
 
 /**
  * Extra data provided on all {@link ObjectNodeSchema} that is not included in the (soon possibly public) ObjectNodeSchema type.

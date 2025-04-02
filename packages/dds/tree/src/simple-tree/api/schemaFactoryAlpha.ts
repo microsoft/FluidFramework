@@ -30,7 +30,7 @@ import type {
 } from "./typesUnsafe.js";
 import { mapSchema } from "../mapNode.js";
 import { arraySchema } from "../arrayNode.js";
-import type { ObjectNodeSchema, ObjectNodeSchema2 } from "../objectNodeTypes.js";
+import type { ObjectNodeSchema } from "../objectNodeTypes.js";
 import type { SimpleObjectNodeSchema } from "../simpleSchema.js";
 import type { ArrayNodeCustomizableSchema } from "../arrayNodeTypes.js";
 import type { MapNodeCustomizableSchema } from "../mapNodeTypes.js";
@@ -60,9 +60,6 @@ export class SchemaFactoryAlpha<
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 * @param fields - Schema for fields of the object node's schema. Defines what children can be placed under each key.
 	 * @param options - Additional options for the schema.
-	 * @privateRemarks
-	 * To work around an issue in TypeScript where the type analysis optimizes non-empty POJO mode object schema resulting in unexpected lack of assignability to ObjectNodeSchema,
-	 * ObjectNodeSchema with no type parameters is redundantly included here. See {@link https://github.com/microsoft/TypeScript/issues/59049#issuecomment-2773459693} for details.
 	 */
 	public override object<
 		const Name extends TName,
@@ -72,8 +69,19 @@ export class SchemaFactoryAlpha<
 		name: Name,
 		fields: T,
 		options?: SchemaFactoryObjectOptions<TCustomMetadata>,
-	): ObjectNodeSchema2 &
-		ObjectNodeSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
+	): ObjectNodeSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> & {
+		/**
+		 * Typing checking workaround: not for for actual use.
+		 * @remarks
+		 * This API collides with {@link TreeNodeSchemaCore.createFromInsertable} to disable a type checking optimization which produces different and undesired results.
+		 * See {@link https://github.com/microsoft/TypeScript/issues/59049#issuecomment-2773459693} for more details.
+		 * @privateRemarks
+		 * The specific issue here is non-empty POJO mode object schema not being assignable to `ObjectNodeSchema`,
+		 * See the above link and the tests in objectNode.spec.ts which reference it.
+		 * @system
+		 */
+		readonly createFromInsertable: unknown;
+	} {
 		return objectSchema(
 			this.scoped2(name),
 			fields,
