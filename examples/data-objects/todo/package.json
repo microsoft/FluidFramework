@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/todo",
-	"version": "2.31.0",
+	"version": "2.32.0",
 	"private": true,
 	"description": "Simple todo canvas.",
 	"homepage": "https://fluidframework.com",
@@ -46,6 +46,7 @@
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
+		"@fluidframework/tree": "workspace:~",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1",
 		"uuid": "^9.0.0"

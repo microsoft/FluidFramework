@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	type Anchor,
@@ -21,7 +21,7 @@ import {
 	mapCursorFields,
 	rootFieldKey,
 } from "../../core/index.js";
-import { disposeSymbol, fail } from "../../util/index.js";
+import { disposeSymbol } from "../../util/index.js";
 import { FieldKinds } from "../default-schema/index.js";
 
 import type { Context } from "./context.js";

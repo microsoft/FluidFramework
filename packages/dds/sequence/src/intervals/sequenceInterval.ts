@@ -290,7 +290,7 @@ export class SequenceIntervalClass implements SequenceInterval {
 	/**
 	 * {@inheritDoc IInterval.clone}
 	 */
-	public clone(): SequenceInterval {
+	public clone(): SequenceIntervalClass {
 		const start = this.client.createLocalReferencePosition(
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			this.start.getSegment()!,
@@ -623,7 +623,7 @@ export function createSequenceInterval(
 	op?: ISequencedDocumentMessage,
 	fromSnapshot?: boolean,
 	useNewSlidingBehavior: boolean = false,
-): SequenceInterval {
+): SequenceIntervalClass {
 	const { startPos, startSide, endPos, endSide } = endpointPosAndSide(
 		start ?? "start",
 		end ?? "end",
