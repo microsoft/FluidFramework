@@ -7,17 +7,15 @@ import { oob } from "@fluidframework/core-utils/internal";
 
 import { Tree } from "./shared-tree/index.js";
 import {
-	// TODO: create and export SystemTypes to replace "InternalExports"
-	// eslint-disable-next-line import/no-deprecated, @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
-	type typeNameSymbol,
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
-	type typeSchemaSymbol,
 	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type SchemaFactoryAlpha,
 	TreeArrayNode,
 	type TreeNodeFromImplicitAllowedTypes,
+	// eslint-disable-next-line import/no-deprecated
+	typeNameSymbol,
+	typeSchemaSymbol,
 } from "./simple-tree/index.js";
 
 // TODOs
@@ -28,7 +26,7 @@ const tableSchemaFactorySubScope = "table";
 const tableSchemaSymbol: unique symbol = Symbol("Table Schema");
 
 /**
- * A key to uniquely identify a cell in a {@link ITable}.
+ * A key to uniquely identify a cell in a table.
  * @alpha @sealed
  */
 export interface CellKey {
@@ -169,6 +167,19 @@ export function createColumnSchema<const TInputScope extends string | undefined>
 			}
 			columns.moveToIndex(adjustedIndex, this.index);
 		}
+
+		// #region HACKS
+
+		// eslint-disable-next-line import/no-deprecated, @typescript-eslint/explicit-function-return-type
+		public override get [typeNameSymbol]() {
+			return super[typeNameSymbol];
+		}
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+		public get [typeSchemaSymbol]() {
+			return super[typeSchemaSymbol];
+		}
+
+		// #endregion
 	}
 
 	return Column;
@@ -325,6 +336,19 @@ export function createRowSchema<
 			const rows = getRowList(this);
 			return rows.indexOf(this);
 		}
+
+		// #region HACKS
+
+		// eslint-disable-next-line import/no-deprecated, @typescript-eslint/explicit-function-return-type
+		public override get [typeNameSymbol]() {
+			return super[typeNameSymbol];
+		}
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+		public get [typeSchemaSymbol]() {
+			return super[typeSchemaSymbol];
+		}
+
+		// #endregion
 	}
 
 	return Row;
@@ -549,6 +573,19 @@ export function createTableSchema<
 
 		// TODO: verify this works
 		public static readonly [tableSchemaSymbol] = true;
+
+		// #region HACKS
+
+		// eslint-disable-next-line import/no-deprecated, @typescript-eslint/explicit-function-return-type
+		public override get [typeNameSymbol]() {
+			return super[typeNameSymbol];
+		}
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+		public get [typeSchemaSymbol]() {
+			return super[typeSchemaSymbol];
+		}
+
+		// #endregion
 	}
 
 	return Table;
