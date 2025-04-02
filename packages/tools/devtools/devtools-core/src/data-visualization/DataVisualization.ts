@@ -258,7 +258,7 @@ export class DataVisualizerGraph
 				: (this.visualizers[visualObject.attributes.type] ?? visualizeUnknownSharedObject);
 
 			const visualizerNode = new VisualizerNode(
-				// Double-casting `sharedObject` is necessary for `DataObject` visualization, because the `root` property is inaccessbile in `DataObject` (private).
+				// Double-casting `sharedObject` is necessary for `DataObject` visualization, because the `root` property is inaccessible in `DataObject` (private).
 				isDataObject(visualObject)
 					? (visualObject as unknown as { readonly root: ISharedDirectory }).root
 					: visualObject,
