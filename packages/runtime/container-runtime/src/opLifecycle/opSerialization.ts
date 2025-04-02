@@ -7,12 +7,41 @@ import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitio
 
 import type { OutboundContainerRuntimeMessage } from "../messageTypes.js";
 
+import type { OpContentsSerializer } from "./opContentsSerializer.js";
+
 /**
  * Before submitting an op to the Outbox, its contents must be serialized using this function.
  * @remarks - The deserialization on process happens via the function {@link ensureContentsDeserialized}.
  */
-export function serializeOpContents(contents: OutboundContainerRuntimeMessage): string {
-	return JSON.stringify(contents);
+export function serializeOpContents(
+	contents: OutboundContainerRuntimeMessage,
+	serializer?: OpContentsSerializer,
+): string {
+	return serializer ? serializer.stringify(contents) : JSON.stringify(contents);
+}
+
+//* TODO: Better encapsulation of this logic with OpContentsSerializer?
+
+/**
+ * Before submitting an op to the Outbox, its contents must be serialized using this function.
+ * At the same time, we stash the "viable" contents (with real handles pointing to loaded objects in this runtime)
+ * in the wrappedLocalOpMetadata, so that we can use it for resubmit, process, etc.
+ * @remarks - The deserialization on process happens via the function {@link ensureContentsDeserialized}.
+ */
+export function prepareOpPayloadForSubmit(
+	contents: OutboundContainerRuntimeMessage,
+	localOpMetadata: unknown,
+	serializer: OpContentsSerializer,
+): {
+	serializedContents: string;
+	wrappedLocalOpMetadata: { localOpMetadata: unknown; viableContents: unknown };
+} {
+	const serializedContents = serializer.stringify(contents);
+	const wrappedLocalOpMetadata = {
+		localOpMetadata,
+		viableContents: contents,
+	};
+	return { serializedContents, wrappedLocalOpMetadata };
 }
 
 /**

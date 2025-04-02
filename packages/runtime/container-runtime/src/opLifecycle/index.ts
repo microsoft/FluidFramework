@@ -18,6 +18,7 @@ export { OpContentsSerializer } from "./opContentsSerializer.js";
 export {
 	serializeOpContents,
 	ensureContentsDeserialized,
+	prepareOpPayloadForSubmit,
 } from "./opSerialization.js";
 export { Outbox, getLongStack } from "./outbox.js";
 export { OpCompressor } from "./opCompressor.js";

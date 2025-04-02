@@ -192,6 +192,7 @@ import {
 	OpGroupingManager,
 	OpSplitter,
 	Outbox,
+	prepareOpPayloadForSubmit,
 	RemoteMessageProcessor,
 	serializeOpContents,
 	OpContentsSerializer,
@@ -1148,6 +1149,11 @@ export class ContainerRuntime
 	private readonly handleContext: ContainerFluidHandleContext;
 
 	/**
+	 * For serializing ops - including encoding handles - during submit.
+	 */
+	private readonly opContentsSerializer: OpContentsSerializer;
+
+	/**
 	 * This is a proxy to the delta manager provided by the container context (innerDeltaManager). It restricts certain
 	 * accesses such as sets "read-only" mode for the summarizer client. This is the default delta manager that should
 	 * be used unless the innerDeltaManager is required.
@@ -1558,6 +1564,7 @@ export class ContainerRuntime
 		this._deltaManager = outerDeltaManager;
 
 		this.handleContext = new ContainerFluidHandleContext("", this);
+		this.opContentsSerializer = new OpContentsSerializer(this.IFluidHandleContext);
 
 		if (summaryConfiguration.state === "enabled") {
 			validateSummaryHeuristicConfiguration(summaryConfiguration);
@@ -4248,24 +4255,15 @@ export class ContainerRuntime
 
 			//* TODO: Decode / pop LOM on the flip side
 
-			//* Move this to ctor
-			const serializer = new OpContentsSerializer(this.IFluidHandleContext);
-			// We already bound the handles in the DataStore Runtime layer, so skip bind up here.
-			//* TODO: Actually fork the serializer and this does not bind...?
-			const dummyBind: Partial<IFluidHandleInternal> = {
-				bind() {
-					// noop
-				},
-			};
-			//* Rationalize with fn serializeOpContents
-			const serializedMessage = serializer.stringify(
+			const { serializedContents, wrappedLocalOpMetadata } = prepareOpPayloadForSubmit(
 				containerRuntimeMessage,
-				dummyBind as IFluidHandleInternal,
+				localOpMetadata,
+				this.opContentsSerializer,
 			);
 			const message: BatchMessage = {
-				contents: serializedMessage,
+				contents: serializedContents,
 				metadata,
-				localOpMetadata: { localOpMetadata, viableContent: containerRuntimeMessage },
+				localOpMetadata: wrappedLocalOpMetadata,
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 			};
 			if (type === ContainerMessageType.BlobAttach) {
