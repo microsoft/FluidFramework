@@ -586,35 +586,26 @@ describeHydration(
 
 			// ObjectNodeSchema assignability bug minimization
 			{
-				type RecordX<T = unknown> = Record<string, T>;
+				type RecordX = Record<string, unknown>;
 
-				interface TreeNodeSchemaCoreX<TInsertable> {
-					createFromInsertable(data: TInsertable): unknown;
-				}
+				// A type with complicated variance.
+				type Create<T extends RecordX> = (data: RecordX extends T ? never : T) => unknown;
 
-				type InsertableObjectFromSchemaRecordX<T extends RecordX> = RecordX extends T
-					? never
-					: {
-							readonly [Property in keyof T]?: null;
-						};
+				// Two identical interfaces
+				interface X1<T extends RecordX = RecordX> extends Create<T> {}
+				interface X2<T extends RecordX = RecordX> extends Create<T> {}
 
 				// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-				type Fields = { readonly f: object };
-				type Insertable = InsertableObjectFromSchemaRecordX<Fields>;
+				type Input = { f: object };
+				// Compute two identical types using X1 and X2
+				type Result1 = X1<Input>;
+				type Result2 = X2<Input>;
 
-				interface ObjectNodeSchemaX1<T extends RecordX = RecordX>
-					extends TreeNodeSchemaCoreX<InsertableObjectFromSchemaRecordX<T>> {}
-
-				interface ObjectNodeSchemaX2<T extends RecordX = RecordX>
-					extends TreeNodeSchemaCoreX<InsertableObjectFromSchemaRecordX<T>> {}
-
-				type SchemaType1 = ObjectNodeSchemaX1<Fields>;
-				type SchemaType2 = ObjectNodeSchemaX2<Fields>;
-
-				type _check9 = requireAssignableTo<SchemaType1, ObjectNodeSchemaX2>;
-				type _check10 = requireAssignableTo<SchemaType1, ObjectNodeSchemaX1>;
-				type _check11 = requireAssignableTo<SchemaType2, ObjectNodeSchemaX2>;
-				type _check12 = requireAssignableTo<SchemaType2, ObjectNodeSchemaX1>;
+				// The identical types are not equal, nor are the identical interfaces.
+				type _check12 = requireAssignableTo<Result1, X2>;
+				type _check11 = requireAssignableTo<Result1, X1>; // Result from X1 is not assignable to X1, only X2
+				type _check22 = requireAssignableTo<Result2, X2>; // Result from X2 is not assignable to X2, only X1
+				type _check21 = requireAssignableTo<Result2, X1>;
 			}
 		});
 
