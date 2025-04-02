@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 # DisableDockerDetector "No feasible secure solution for OSS repos yet"
 
-FROM node:20.19.0-bookworm-slim@sha256:d6e4ec9eaf2390129b5d23904d07ae03ef744818386bcab3fc45fe63405b5eb2 AS runnerbase
+FROM node:20.19.0-bookworm-slim@sha256:990084211ea3d72132f286a038bf27e0f79b8cad532ae623b090f3486490e62e AS runnerbase
 
 ARG SETVERSION_VERSION=dev
 ENV SETVERSION_VERSION=$SETVERSION_VERSION
