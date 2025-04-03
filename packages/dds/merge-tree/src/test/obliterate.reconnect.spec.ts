@@ -11,7 +11,7 @@ import { ClientTestHelper } from "./partialSyncHelper.js";
 import { useStrictPartialLengthChecks } from "./testUtils.js";
 
 for (const incremental of [true, false]) {
-	describe.only(`obliterate partial lengths incremental = ${incremental}`, () => {
+	describe(`obliterate partial lengths incremental = ${incremental}`, () => {
 		useStrictPartialLengthChecks();
 
 		beforeEach(() => {

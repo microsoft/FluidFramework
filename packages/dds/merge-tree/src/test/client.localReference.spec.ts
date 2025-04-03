@@ -46,7 +46,7 @@ function getSlideOnRemoveReferencePosition(
 	return segoff;
 }
 
-describe.only("MergeTree.Client", () => {
+describe("MergeTree.Client", () => {
 	beforeEach(() => {
 		setValidateRefCount(validateRefCount);
 	});

@@ -11,7 +11,7 @@ import { MergeTreeDeltaType } from "../ops.js";
 import { ClientTestHelper } from "./partialSyncHelper.js";
 import { useStrictPartialLengthChecks } from "./testUtils.js";
 
-describe.only("obliterate delta callback", () => {
+describe("obliterate delta callback", () => {
 	useStrictPartialLengthChecks();
 
 	let length: number;
