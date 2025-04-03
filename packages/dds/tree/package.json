@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tree",
-	"version": "2.31.0",
+	"version": "2.31.1",
 	"description": "Distributed tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -184,7 +184,7 @@
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@fluidframework/tree-previous": "npm:@fluidframework/tree@2.30.0",
+		"@fluidframework/tree-previous": "npm:@fluidframework/tree@2.31.0",
 		"@microsoft/api-extractor": "7.50.1",
 		"@types/diff": "^3.5.1",
 		"@types/easy-table": "^0.0.32",
@@ -224,20 +224,7 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"Interface_FieldSchemaUnsafe": {
-				"forwardCompat": false
-			},
-			"Interface_ITreeViewConfiguration": {
-				"forwardCompat": false
-			},
-			"TypeAlias_ImplicitAllowedTypes": {
-				"forwardCompat": false
-			},
-			"TypeAlias_ImplicitFieldSchema": {
-				"forwardCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "public"
 	}
 }
