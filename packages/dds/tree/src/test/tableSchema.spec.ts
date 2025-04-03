@@ -13,7 +13,6 @@ import {
 	TreeViewConfiguration,
 	type ConciseTree,
 	type TreeNode,
-	type VerboseTree,
 } from "../simple-tree/index.js";
 import { TreeFactory } from "../treeFactory.js";
 import { TableFactory } from "../tableSchema.js";
