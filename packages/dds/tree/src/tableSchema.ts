@@ -38,39 +38,7 @@ export namespace TableFactory {
 
 	const tableSchemaSymbol: unique symbol = Symbol("Table Schema");
 
-	/**
-	 * A key to uniquely identify a cell in a table.
-	 * @sealed @internal
-	 */
-	export interface CellKey {
-		/**
-		 * {@link TableFactory.IColumn.id} of the containing {@link TableFactory.IColumn}.
-		 */
-		readonly columnId: string;
-
-		/**
-		 * {@link TableFactory.IRow.id} of the containing {@link TableFactory.IRow}.
-		 */
-		readonly rowId: string;
-	}
-
-	/**
-	 * {@link TableFactory.ITable.insertRows} parameters.
-	 * @sealed @internal
-	 */
-	export interface InsertRowsParameters<TInsertableRow> {
-		/**
-		 * The index at which to insert the new rows.
-		 * @remarks If not provided, the rows will be appended to the end of the table.
-		 */
-		// TODO: document bounds policy
-		readonly index?: number | undefined;
-
-		/**
-		 * The rows to insert.
-		 */
-		readonly rows: TInsertableRow[];
-	}
+	// #region Column
 
 	/**
 	 * {@link TableFactory.ITable.insertColumn} parameters.
@@ -244,6 +212,10 @@ export namespace TableFactory {
 	export type ColumnSchemaBase<TScope extends string | undefined> = ReturnType<
 		typeof createColumnSchema<TScope>
 	>;
+
+	// #endregion
+
+	// #region Row
 
 	/**
 	 * A row in a table.
@@ -449,6 +421,44 @@ export namespace TableFactory {
 		TCell extends ImplicitAllowedTypes,
 		TColumn extends ColumnSchemaBase<TScope> = ColumnSchemaBase<TScope>,
 	> = ReturnType<typeof createRowSchema<TScope, TCell, TColumn>>;
+
+	// #endregion
+
+	// #region Table
+
+	/**
+	 * A key to uniquely identify a cell in a table.
+	 * @sealed @internal
+	 */
+	export interface CellKey {
+		/**
+		 * {@link TableFactory.IColumn.id} of the containing {@link TableFactory.IColumn}.
+		 */
+		readonly columnId: string;
+
+		/**
+		 * {@link TableFactory.IRow.id} of the containing {@link TableFactory.IRow}.
+		 */
+		readonly rowId: string;
+	}
+
+	/**
+	 * {@link TableFactory.ITable.insertRows} parameters.
+	 * @sealed @internal
+	 */
+	export interface InsertRowsParameters<TInsertableRow> {
+		/**
+		 * The index at which to insert the new rows.
+		 * @remarks If not provided, the rows will be appended to the end of the table.
+		 */
+		// TODO: document bounds policy
+		readonly index?: number | undefined;
+
+		/**
+		 * The rows to insert.
+		 */
+		readonly rows: TInsertableRow[];
+	}
 
 	/**
 	 * A table.
@@ -736,4 +746,6 @@ export namespace TableFactory {
 		TColumn extends ColumnSchemaBase<TScope> = ColumnSchemaBase<TScope>,
 		TRow extends RowSchemaBase<TScope, TCell, TColumn> = RowSchemaBase<TScope, TCell, TColumn>,
 	> = ReturnType<typeof createTableSchema<TScope, TCell, TColumn, TRow>>;
+
+	// #endregion
 }
