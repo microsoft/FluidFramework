@@ -149,8 +149,6 @@ export namespace TableFactory {
 			}
 		}
 
-		// return Column;
-
 		type ColumnValueType = TreeNode & IColumn & WithType<ScopedSchemaName<Scope, "Column">>;
 		type ColumnInsertableType = InsertableObjectFromSchemaRecord<typeof columnFields>;
 
@@ -343,7 +341,6 @@ export namespace TableFactory {
 			}
 		}
 
-		// return Row;
 		type RowValueType = TreeNode &
 			IRow<CellInsertableType, CellValueType, ColumnValueType> &
 			WithType<ScopedSchemaName<Scope, "Row">>;
@@ -725,8 +722,6 @@ export namespace TableFactory {
 			// TODO: verify this works
 			public static readonly [tableSchemaSymbol] = true;
 		}
-
-		// return Table;
 
 		type TableValueType = TreeNode &
 			ITable<TCell, TColumn, TRow> &
