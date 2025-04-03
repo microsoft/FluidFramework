@@ -93,7 +93,7 @@
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"postpack": "tar -cvf ./merge-tree.test-files.tar ./src/test ./dist/test ./lib/test",
+		"pack:tests": "tar -cvf ./merge-tree.test-files.tar ./src/test ./dist/test ./lib/test",
 		"perf": "cross-env FLUID_TEST_VERBOSE=1 mocha \"dist/**/*.spec.*js\" --node-option unhandled-rejections=strict,expose-gc --exit --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 30000",
 		"perf:measure": "npm run perf -- --fgrep @Measurement",
 		"perf:profile": "node --inspect-brk ./node_modules/mocha/bin/mocha.js \"dist/**/*.spec.*js\" --node-option unhandled-rejections=strict,expose-gc --exit --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 30000",

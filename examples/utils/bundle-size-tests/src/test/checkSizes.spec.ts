@@ -12,7 +12,7 @@ import { readFileSync } from "node:fs";
 describe("checkSizes", () => {
 	it("sharedTreeAttributes", () => {
 		// This test must be run after webpack.
-		const bundle = readFileSync("./dist/sharedTreeAttributes.js", "utf-8");
+		const bundle = readFileSync("./build/sharedTreeAttributes.js", "utf-8");
 
 		// Make sure it contains something
 		assert(bundle.length > 10);
