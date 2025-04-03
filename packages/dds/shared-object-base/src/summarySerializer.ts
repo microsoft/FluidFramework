@@ -18,11 +18,11 @@ export class SummarySerializer extends FluidSerializer {
 		return [...this.serializedRoutes];
 	}
 
-	protected encodeAndBindHandle(
+	protected bindAndEncodeHandle(
 		handle: IFluidHandleInternal,
 		bind: IFluidHandleInternal,
 	): ISerializedHandle {
 		this.serializedRoutes.add(handle.absolutePath);
-		return super.encodeAndBindHandle(handle, bind);
+		return super.bindAndEncodeHandle(handle, bind);
 	}
 }
