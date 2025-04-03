@@ -536,6 +536,15 @@ function isDataObject(value: unknown): value is DataObject {
 		return false;
 	}
 
+	if (
+		value.initializeInternal === undefined ||
+		(
+			value as unknown as { getUninitializedErrorString(): string }
+		).getUninitializedErrorString() === undefined
+	) {
+		return false;
+	}
+
 	// If root is missing, throw an error instead of returning false
 	const root = (value as unknown as { readonly root?: ISharedDirectory }).root;
 	if (!root) {
