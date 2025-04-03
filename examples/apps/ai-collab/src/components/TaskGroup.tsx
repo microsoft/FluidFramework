@@ -267,7 +267,7 @@ export function TaskGroup(props: {
 
 			console.log("ai-collab Branch Task Group AFTER:", { ...newBranchTaskGroup });
 
-			console.log("ai-collab Branch Task Group UI diffs V2:", response.uiDiffs);
+			console.log("ai-collab Branch Task Group UI diffs:", response.uiDiffs);
 
 			setLlmBranchData({
 				uiDiffs: response.uiDiffs,
