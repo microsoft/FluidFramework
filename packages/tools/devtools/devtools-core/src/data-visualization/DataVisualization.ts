@@ -73,8 +73,6 @@ export type VisualizeSharedObject = (
  * @param visualizeChildData - Callback to render child content of the shared object.
  *
  * @returns A visual tree representation of the provided `dataObject`.
- *
- * @internal
  */
 export type VisualizeDataObject = (
 	dataObject: DataObject,
