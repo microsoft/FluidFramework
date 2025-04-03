@@ -14,7 +14,11 @@ import {
 	TreeView,
 	TreeViewNode,
 } from "@fluid-experimental/tree";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
+import {
+	DataObject,
+	DataObjectFactory,
+	ConverterDataObjectFactory,
+} from "@fluidframework/aqueduct/legacy";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedTree } from "@fluidframework/tree/legacy";
 import { TypedEmitter } from "tiny-typed-emitter";
@@ -322,45 +326,45 @@ export const LegacyTreeInventoryListFactory = new DataObjectFactory<LegacyTreeIn
 	{},
 );
 
-export const LegacyTreeInventoryListFactoryNew = new DataObjectFactory<NewTreeInventoryList>(
+export const LegacyTreeInventoryListFactoryNew = new ConverterDataObjectFactory<
+	NewTreeInventoryList,
+	LegacySharedTree
+>(
 	"legacy-tree-inventory-list",
 	NewTreeInventoryList,
 	[LegacySharedTree.getFactory(), SharedTree.getFactory()],
 	{},
-	undefined,
-	undefined,
-	async (runtime, root) => {
-		const legacyTreeHandle = root.get<IFluidHandle<LegacySharedTree>>(legacySharedTreeKey);
+	async (root) => {
+		return root.get<IFluidHandle<LegacySharedTree>>(legacySharedTreeKey) !== undefined;
+	} /* isConversionNeeded */,
+	async (root) => {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return root.get<IFluidHandle<LegacySharedTree>>(legacySharedTreeKey)!.get();
+	} /* asyncGetDataForConversion */,
+	(runtime, root, tree) => {
+		const rootNode = tree.currentView.getViewNode(tree.currentView.root);
+		const inventoryItemsNodeIds = tree.currentView
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			.getViewNode(rootNode.traits.get("inventory" as TraitLabel)![0])
+			.traits.get("inventoryItems" as TraitLabel);
+		const inventoryItems =
+			inventoryItemsNodeIds?.map((val) =>
+				makeInventoryItemFromInventoryItemNode(tree, tree.currentView.getViewNode(val)),
+			) ?? [];
 
-		if (legacyTreeHandle !== undefined) {
-			// ! Cleanup in case past conversion failed
-			root.delete(newSharedTreeKey);
-
-			const tree = await legacyTreeHandle.get();
-			const rootNode = tree.currentView.getViewNode(tree.currentView.root);
-			const inventoryItemsNodeIds = tree.currentView
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				.getViewNode(rootNode.traits.get("inventory" as TraitLabel)![0])
-				.traits.get("inventoryItems" as TraitLabel);
-			const inventoryItems =
-				inventoryItemsNodeIds?.map((val) =>
-					makeInventoryItemFromInventoryItemNode(tree, tree.currentView.getViewNode(val)),
-				) ?? [];
-
-			const newSharedTree = SharedTree.create(runtime);
-			const view = newSharedTree.viewWith(treeConfiguration);
-			view.initialize(
-				new InventorySchema({
-					inventoryItemList: inventoryItems.map((val) => ({
-						id: val.id,
-						name: val.name,
-						quantity: val.quantity,
-					})),
-				}),
-			);
-			view.dispose();
-			root.set(newSharedTreeKey, newSharedTree.handle);
-			root.delete(legacySharedTreeKey);
-		}
-	},
+		const newSharedTree = SharedTree.create(runtime);
+		const view = newSharedTree.viewWith(treeConfiguration);
+		view.initialize(
+			new InventorySchema({
+				inventoryItemList: inventoryItems.map((val) => ({
+					id: val.id,
+					name: val.name,
+					quantity: val.quantity,
+				})),
+			}),
+		);
+		view.dispose();
+		root.set(newSharedTreeKey, newSharedTree.handle);
+		root.delete(legacySharedTreeKey);
+	} /* convertDataStore */,
 );

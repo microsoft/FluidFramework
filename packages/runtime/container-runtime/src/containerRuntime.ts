@@ -3465,21 +3465,13 @@ export class ContainerRuntime
 	}
 
 	private _maintainOnlyLocalCalls = 0;
-	public async maintainOnlyLocal(callback: () => Promise<void>): Promise<void> {
+	public maintainOnlyLocal(callback: () => void): void {
 		try {
 			this._maintainOnlyLocalCalls++;
-			await callback();
+			callback();
 		} finally {
 			this._maintainOnlyLocalCalls--;
 		}
-	}
-
-	public pauseResubmit(): void {
-		this.pendingStateManager.pauseReplayPendingStates();
-	}
-
-	public resumeResubmit(): void {
-		this.pendingStateManager.resumeReplayPendingStates();
 	}
 
 	/**
@@ -3552,8 +3544,7 @@ export class ContainerRuntime
 			this.connected &&
 			!this.innerDeltaManager.readOnlyInfo.readonly &&
 			!this.imminentClosure &&
-			this._maintainOnlyLocalCalls === 0 &&
-			!this.pendingStateManager.pauseSubmittingOps
+			this._maintainOnlyLocalCalls === 0
 		);
 	}
 

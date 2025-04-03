@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	DataStoreMessageType,
-	FluidDataStoreRuntime,
-} from "@fluidframework/datastore/internal";
+import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
 	SharedMap,
@@ -14,21 +11,11 @@ import {
 	MapFactory,
 	// eslint-disable-next-line import/no-deprecated
 	SharedDirectory,
-	type ISharedDirectory,
 } from "@fluidframework/map/internal";
-import type {
-	IRuntimeMessageCollection,
-	IRuntimeMessagesContent,
-	NamedFluidDataStoreRegistryEntries,
-} from "@fluidframework/runtime-definitions/internal";
+import type { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
 import type { FluidObjectSymbolProvider } from "@fluidframework/synthesize/internal";
 
-import {
-	type DataObject,
-	type DataObjectTypes,
-	type IDataObjectProps,
-	dataObjectRootDirectoryId,
-} from "../data-objects/index.js";
+import type { DataObject, DataObjectTypes, IDataObjectProps } from "../data-objects/index.js";
 
 import { PureDataObjectFactory } from "./pureDataObjectFactory.js";
 
@@ -46,8 +33,6 @@ export class DataObjectFactory<
 	TObj extends DataObject<I>,
 	I extends DataObjectTypes = DataObjectTypes,
 > extends PureDataObjectFactory<TObj, I> {
-	private converted = false;
-
 	public constructor(
 		type: string,
 		ctor: new (props: IDataObjectProps<I>) => TObj,
@@ -55,7 +40,7 @@ export class DataObjectFactory<
 		optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>,
 		registryEntries?: NamedFluidDataStoreRegistryEntries,
 		runtimeFactory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
-		convertDataFn?: (runtime: FluidDataStoreRuntime, root: ISharedDirectory) => Promise<void>,
+		convertDataStore?: (runtime: FluidDataStoreRuntime) => Promise<void>,
 	) {
 		const mergedObjects = [...sharedObjects];
 
@@ -71,89 +56,14 @@ export class DataObjectFactory<
 			mergedObjects.push(SharedMap.getFactory());
 		}
 
-		const fullConvertDataFn =
-			convertDataFn === undefined
-				? undefined
-				: async (runtime: FluidDataStoreRuntime) => {
-						if (!this.converted) {
-							this.converted = true;
-							await runtime.maintainOnlyLocal?.(async () => {
-								// this op MUST be in its own batch if we pause replaying pending states to maintain batch semantics
-								runtime.orderSequentially?.(() => {
-									submitConversionOp(runtime);
-								});
-
-								const root = (await runtime.getChannel(
-									dataObjectRootDirectoryId,
-								)) as ISharedDirectory;
-								await convertDataFn(runtime, root);
-							});
-						}
-					};
-
-		const submitConversionOp = (runtime: FluidDataStoreRuntime): void => {
-			runtime.submitMessage(DataStoreMessageType.ChannelOp, "conversion", undefined);
-		};
-
 		super(
 			type,
 			ctor,
 			mergedObjects,
 			optionalProviders,
 			registryEntries,
-			class ConverterDataStoreRuntime extends runtimeFactory {
-				public processMessages(messageCollection: IRuntimeMessageCollection): void {
-					let contents: IRuntimeMessagesContent[] = [];
-					// eslint-disable-next-line unicorn/prefer-ternary
-					if (
-						fullConvertDataFn !== undefined &&
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-						messageCollection.envelope.type === DataStoreMessageType.ChannelOp
-					) {
-						// ! TODO: extra validation on if this is our "conversion" op (close/reload Container if coming from elsewhere)
-						if (
-							messageCollection.messagesContent.some((val) => val.contents === "conversion")
-						) {
-							// complete conversion (i.e. send new SharedTree ops)
-							this.resumeResubmit?.();
-						}
-
-						contents = messageCollection.messagesContent.filter(
-							(val) => val.contents !== "conversion",
-						);
-					} else {
-						contents = [...messageCollection.messagesContent];
-					}
-
-					if (contents.length === 0) {
-						return;
-					}
-					super.processMessages({
-						...messageCollection,
-						messagesContent: contents,
-					});
-				}
-
-				public reSubmit(
-					type2: DataStoreMessageType,
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					content: any,
-					localOpMetadata: unknown,
-				): void {
-					if (
-						fullConvertDataFn !== undefined &&
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-						type2 === DataStoreMessageType.ChannelOp &&
-						content === "conversion"
-					) {
-						submitConversionOp(this);
-						this.pauseResubmit?.();
-						return;
-					}
-					super.reSubmit(type2, content, localOpMetadata);
-				}
-			},
-			fullConvertDataFn,
+			runtimeFactory,
+			convertDataStore,
 		);
 	}
 }

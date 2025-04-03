@@ -18,7 +18,11 @@
  * @packageDocumentation
  */
 
-export { DataObjectFactory, PureDataObjectFactory } from "./data-object-factories/index.js";
+export {
+	DataObjectFactory,
+	PureDataObjectFactory,
+	ConverterDataObjectFactory,
+} from "./data-object-factories/index.js";
 export {
 	DataObject,
 	type DataObjectTypes,

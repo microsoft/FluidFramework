@@ -50,6 +50,11 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 }
 
 // @alpha
+export class ConverterDataObjectFactory<TObj extends DataObject<I>, U, I extends DataObjectTypes = DataObjectTypes> extends DataObjectFactory<TObj, I> {
+    constructor(type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects: readonly IChannelFactory<unknown>[] | undefined, optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>, isConversionNeeded: (root: ISharedDirectory) => Promise<boolean>, asyncGetDataForConversion: (root: ISharedDirectory) => Promise<U>, convertDataStore: (runtime: FluidDataStoreRuntime, root: ISharedDirectory, data: U) => void, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeFactory?: typeof FluidDataStoreRuntime);
+}
+
+// @alpha
 export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> {
     protected getUninitializedErrorString(item: string): string;
     initializeInternal(existing: boolean): Promise<void>;
@@ -58,7 +63,7 @@ export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> ex
 
 // @alpha
 export class DataObjectFactory<TObj extends DataObject<I>, I extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TObj, I> {
-    constructor(type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects: readonly IChannelFactory<unknown>[] | undefined, optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeFactory?: typeof FluidDataStoreRuntime, convertDataFn?: (runtime: FluidDataStoreRuntime, root: ISharedDirectory) => Promise<void>);
+    constructor(type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects: readonly IChannelFactory<unknown>[] | undefined, optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeFactory?: typeof FluidDataStoreRuntime, convertDataStore?: (runtime: FluidDataStoreRuntime) => Promise<void>);
 }
 
 // @alpha
@@ -108,9 +113,9 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 // @alpha
 export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends DataObjectTypes = DataObjectTypes> implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry> {
     constructor(
-    type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects: readonly IChannelFactory[], optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeClass?: typeof FluidDataStoreRuntime, convertDataFn?: ((runtime: FluidDataStoreRuntime) => Promise<void>) | undefined);
+    type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects: readonly IChannelFactory[], optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeClass?: typeof FluidDataStoreRuntime, convertDataStore?: ((runtime: FluidDataStoreRuntime) => Promise<void>) | undefined);
     // (undocumented)
-    readonly convertDataFn?: ((runtime: FluidDataStoreRuntime) => Promise<void>) | undefined;
+    readonly convertDataStore?: ((runtime: FluidDataStoreRuntime) => Promise<void>) | undefined;
     createChildInstance(parentContext: IFluidDataStoreContext, initialState?: I["InitialState"], loadingGroupId?: string): Promise<TObj>;
     createInstance(runtime: IContainerRuntimeBase, initialState?: I["InitialState"], loadingGroupId?: string): Promise<TObj>;
     // (undocumented)

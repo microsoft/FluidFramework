@@ -615,7 +615,7 @@ export class PendingStateManager implements IDisposable {
 	 * states in its queue. This includes triggering resubmission of unacked ops.
 	 * ! Note: successfully resubmitting an op that has been successfully sequenced is not possible due to checks in the ConnectionStateHandler (Loader layer)
 	 */
-	public replayPendingStates(ignoreClientIdCheck: boolean = false): void {
+	public replayPendingStates(): void {
 		assert(
 			this.stateHandler.connected(),
 			0x172 /* "The connection state is not consistent with the runtime" */,
@@ -623,7 +623,7 @@ export class PendingStateManager implements IDisposable {
 
 		// This assert suggests we are about to send same ops twice, which will result in data loss.
 		assert(
-			this.clientIdFromLastReplay !== this.stateHandler.clientId() || ignoreClientIdCheck,
+			this.clientIdFromLastReplay !== this.stateHandler.clientId(),
 			0x173 /* "replayPendingStates called twice for same clientId!" */,
 		);
 		this.clientIdFromLastReplay = this.stateHandler.clientId();
@@ -639,7 +639,7 @@ export class PendingStateManager implements IDisposable {
 		// Process exactly `pendingMessagesCount` items in the queue as it represents the number of messages that were
 		// pending when we connected. This is important because the `reSubmitFn` might add more items in the queue
 		// which must not be replayed.
-		while (remainingPendingMessagesCount > 0 && !this._replayPaused) {
+		while (remainingPendingMessagesCount > 0) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			let pendingMessage = this.pendingMessages.shift()!;
 			remainingPendingMessagesCount--;
@@ -686,7 +686,7 @@ export class PendingStateManager implements IDisposable {
 			const batch: PendingMessageResubmitData[] = [];
 
 			// check is >= because batch end may be last pending message
-			while (remainingPendingMessagesCount >= 0 && !this._replayPaused) {
+			while (remainingPendingMessagesCount >= 0) {
 				batch.push({
 					content: pendingMessage.content,
 					localOpMetadata: pendingMessage.localOpMetadata,
@@ -710,18 +710,6 @@ export class PendingStateManager implements IDisposable {
 			this.stateHandler.reSubmitBatch(batch, batchId);
 		}
 
-		if (this._replayPaused) {
-			// We pause after "reSubmit" so we can prevent further messages from being sent, but allow that last message to get through
-			this._pauseSendingForRuntime = true;
-			// Move remaining items to the end of the pendingMessages to preserve order
-			while (remainingPendingMessagesCount > 0) {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				this.pendingMessages.push(this.pendingMessages.shift()!);
-				remainingPendingMessagesCount--;
-			}
-			return;
-		}
-
 		// pending ops should no longer depend on previous sequenced local ops after resubmit
 		this.savedOps = [];
 
@@ -735,29 +723,6 @@ export class PendingStateManager implements IDisposable {
 				clientId: this.stateHandler.clientId(),
 			});
 		}
-	}
-
-	private _replayPaused = false;
-	private _pauseSendingForRuntime = false;
-	public get pauseSubmittingOps(): boolean {
-		return this._pauseSendingForRuntime;
-	}
-
-	public pauseReplayPendingStates(): void {
-		this._replayPaused = true;
-	}
-
-	public resumeReplayPendingStates(): void {
-		// ! This needs to be in Promise.resolve since outbox will detect a flush from within processing the "conversion" op
-		// eslint-disable-next-line @typescript-eslint/no-floating-promises
-		Promise.resolve().then(() => {
-			const oldState = this._replayPaused;
-			this._replayPaused = false;
-			this._pauseSendingForRuntime = false;
-			if (oldState) {
-				this.replayPendingStates(true /* ignoreClientIdCheck */);
-			}
-		});
 	}
 }
 

@@ -85,12 +85,8 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
         sequenceNumber: number;
     }>;
     // (undocumented)
-    maintainOnlyLocal?: (callback: () => Promise<void>) => Promise<void>;
+    maintainOnlyLocal?: (callback: () => void) => void;
     orderSequentially(callback: () => void): void;
-    // (undocumented)
-    pauseResubmit?: () => void;
-    // (undocumented)
-    resumeResubmit?: () => void;
     submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
@@ -176,7 +172,7 @@ export const IFluidDataStoreFactory: keyof IProvideFluidDataStoreFactory;
 // @alpha
 export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
     // (undocumented)
-    convertDataFn?(runtime: IFluidDataStoreChannel): Promise<void>;
+    convertDataStore?(runtime: IFluidDataStoreChannel): Promise<void>;
     createDataStore?(context: IFluidDataStoreContext): {
         readonly runtime: IFluidDataStoreChannel;
     };

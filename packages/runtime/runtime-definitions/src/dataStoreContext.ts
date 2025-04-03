@@ -208,11 +208,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 */
 	orderSequentially(callback: () => void): void;
 
-	maintainOnlyLocal?: (callback: () => Promise<void>) => Promise<void>;
-
-	pauseResubmit?: () => void;
-
-	resumeResubmit?: () => void;
+	maintainOnlyLocal?: (callback: () => void) => void;
 
 	/**
 	 * Submits a container runtime level signal to be sent to other clients.
