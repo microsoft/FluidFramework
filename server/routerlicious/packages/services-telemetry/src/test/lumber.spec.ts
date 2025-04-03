@@ -5,7 +5,6 @@
 
 import assert from "assert";
 import Sinon from "sinon";
-import { performance } from "@fluidframework/common-utils";
 import { Lumber } from "../lumber";
 import { LumberEventName } from "../lumberEventNames";
 import * as resources from "../resources";
@@ -15,7 +14,6 @@ describe("Lumber", () => {
 	beforeEach(() => {
 		// use fake timers to have full control over the passage of time
 		Sinon.useFakeTimers();
-		Sinon.stub(performance, "now").callsFake(() => globalThis.performance.now());
 	});
 
 	afterEach(() => {
