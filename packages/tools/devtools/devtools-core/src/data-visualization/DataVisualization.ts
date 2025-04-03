@@ -249,17 +249,18 @@ export class DataVisualizerGraph
 	private registerVisualizerForVisualizableObject(
 		visualizableObject: VisualizableFluidObject,
 	): FluidObjectId {
-		if (!this.visualizerNodes.has(visualObject.id)) {
+		if (!this.visualizerNodes.has(visualizableObject.id)) {
 			// Create visualizer node for the shared object
-			const visualizationFunction = isDataObject(visualObject)
+			const visualizationFunction = isDataObject(visualizableObject)
 				? visualizeDataObject
-				: (this.visualizers[visualObject.attributes.type] ?? visualizeUnknownSharedObject);
+				: (this.visualizers[visualizableObject.attributes.type] ??
+					visualizeUnknownSharedObject);
 
 			const visualizerNode = new VisualizerNode(
 				// Double-casting `sharedObject` is necessary for `DataObject` visualization, because the `root` property is inaccessible in `DataObject` (private).
-				isDataObject(visualObject)
-					? (visualObject as unknown as { readonly root: ISharedDirectory }).root
-					: visualObject,
+				isDataObject(visualizableObject)
+					? (visualizableObject as unknown as { readonly root: ISharedDirectory }).root
+					: visualizableObject,
 				visualizationFunction as VisualizeSharedObject,
 				async (handle) => this.registerVisualizerForHandle(handle),
 			);
@@ -268,9 +269,9 @@ export class DataVisualizerGraph
 			visualizerNode.on("update", this.onVisualUpdateHandler);
 
 			// Add the visualizer node to our collection
-			this.visualizerNodes.set(visualObject.id, visualizerNode);
+			this.visualizerNodes.set(visualizableObject.id, visualizerNode);
 		}
-		return visualObject.id;
+		return visualizableObject.id;
 	}
 
 	/**
