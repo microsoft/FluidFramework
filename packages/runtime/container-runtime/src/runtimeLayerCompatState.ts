@@ -63,11 +63,11 @@ export const loaderSupportRequirements: ILayerCompatSupportRequirements = {
 export const runtimeCompatDetailsForDataStore: ILayerCompatDetails = {
 	...runtimeCoreCompatDetails,
 	/**
-	 * The features supported by the Runtime layer across the ContainerRuntime / DataStoreRuntime boundary.
+	 * The features supported by the Runtime layer across the Runtime / DataStore boundary.
 	 */
 	supportedFeatures: new Set<string>([
 		// The ContainerRuntime encodes handles now.  Eventually DataStore layer can require this feature and stop encoding on its side.
-		"encodeHandles",
+		"encodeHandlesInOps",
 	]),
 };
 
