@@ -100,7 +100,7 @@ export type VisualizeDataObject = (
 export type VisualizeChildData = (data: unknown) => Promise<VisualChildNode>;
 
 /**
- * A visual representation of {@link @fluidframework/shared-object-base#ISharedObject} & {@link DataObject} data.
+ * Utility type for a union of things that can be visualized.
  */
 export type VisualizableFluidObject = ISharedObject | DataObject;
 
