@@ -429,7 +429,7 @@ export class TestClient extends Client {
 		});
 
 		assert(segment !== undefined, "No segment found");
-		const segoff = getSlideToSegoff({ segment, offset }) ?? segment;
+		const segoff = getSlideToSegoff({ segment, offset }, undefined, perspective) ?? segment;
 		if (segoff.segment === undefined || segoff.offset === undefined) {
 			return DetachedReferencePosition;
 		}

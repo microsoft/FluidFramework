@@ -106,6 +106,10 @@ export {
 	PropertySet,
 } from "./properties.js";
 export {
+	createLocalReconnectingPerspective,
+	Perspective,
+} from "./perspective.js";
+export {
 	compareReferencePositions,
 	DetachedReferencePosition,
 	maxReferencePosition,

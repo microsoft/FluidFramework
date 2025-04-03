@@ -32,7 +32,7 @@ import { LocalReferencePosition, SlidingPreference } from "./localReference.js";
 import {
 	MergeTree,
 	errorIfOptionNotTrue,
-	getSlideToSegoff2,
+	getSlideToSegoff,
 	isRemovedAndAcked,
 	type IMergeTreeOptionsInternal,
 } from "./mergeTree.js";
@@ -950,10 +950,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			oldStartSegment !== undefined && oldStartOffset !== undefined,
 			"Invalid old start reference",
 		);
-		let { segment: newStartSegment, offset: newStartOffset } = getSlideToSegoff2(
+		let { segment: newStartSegment, offset: newStartOffset } = getSlideToSegoff(
 			{ segment: oldStartSegment, offset: oldStartOffset },
 			SlidingPreference.FORWARD,
 			reconnectingPerspective,
+			true, // useNewSlidingBehavior
 		);
 
 		newStartSegment ??= this._mergeTree.endOfTree;
@@ -977,10 +978,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			oldEndSegment !== undefined && oldEndOffset !== undefined,
 			"Invalid old start reference",
 		);
-		let { segment: newEndSegment, offset: newEndOffset } = getSlideToSegoff2(
+		let { segment: newEndSegment, offset: newEndOffset } = getSlideToSegoff(
 			{ segment: oldEndSegment, offset: oldEndOffset },
 			SlidingPreference.BACKWARD,
 			reconnectingPerspective,
+			true, // useNewSlidingBehavior
 		);
 
 		newEndSegment ??= this._mergeTree.startOfTree;
