@@ -92,6 +92,7 @@ export namespace TableFactory {
 
 	/**
 	 * A column in a table.
+	 * @remarks Implemented by the schema class returned from {@link TableFactory.createColumnSchema}.
 	 * @sealed @internal
 	 */
 	export interface IColumn {
@@ -113,8 +114,6 @@ export namespace TableFactory {
 		 * @throws Throws an error if the column is not in a table.
 		 */
 		readonly moveTo: (index: number) => void;
-
-		// TODO
 	}
 
 	/**
