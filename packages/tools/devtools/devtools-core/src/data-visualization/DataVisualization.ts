@@ -261,7 +261,7 @@ export class DataVisualizerGraph
 				isDataObject(visualizableObject)
 					? (visualizableObject as unknown as { readonly root: ISharedDirectory }).root
 					: visualizableObject,
-				visualizationFunction as VisualizeSharedObject,
+				visualizationFunction,
 				async (handle) => this.registerVisualizerForHandle(handle),
 			);
 

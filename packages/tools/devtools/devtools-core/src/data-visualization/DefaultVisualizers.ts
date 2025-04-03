@@ -8,7 +8,6 @@
  * implementations for our DDSs.
  */
 
-import type { DataObject } from "@fluidframework/aqueduct/internal";
 import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import {
@@ -26,11 +25,7 @@ import { FieldKind, SharedTree } from "@fluidframework/tree/internal";
 
 import { EditType } from "../CommonInterfaces.js";
 
-import type {
-	VisualizeChildData,
-	VisualizeDataObject,
-	VisualizeSharedObject,
-} from "./DataVisualization.js";
+import type { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization.js";
 import {
 	concatenateTypes,
 	determineNodeKind,
@@ -110,14 +105,17 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
 
 /**
  * Default {@link VisualizeSharedObject} for {@link DataObject}.
+ * @remarks This takes in a `root` of type {@link ISharedDirectory} from {@link DataObject} and visualizes its children.
  */
-export const visualizeDataObject: VisualizeDataObject = async (
-	dataObject: DataObject,
+export const visualizeDataObject: VisualizeSharedObject = async (
+	dataObjectRoot: ISharedObject,
 	visualizeChildData: VisualizeChildData,
 ): Promise<FluidObjectTreeNode> => {
-	// Double-casted without additional check to avoid redundancy as multiple type checks are done prior to assigning the corresponding visualizer.
-	const dataObjectRoot = (dataObject as unknown as { readonly root: ISharedDirectory }).root;
-	const renderedChildData = await visualizeDirectory(dataObjectRoot, visualizeChildData);
+	const renderedChildData = (await visualizeSharedDirectory(
+		dataObjectRoot,
+		visualizeChildData,
+	)) as FluidObjectTreeNode; // TODO: Refactor the visualizer to accept generic type to avoid type casting.
+
 	return {
 		fluidObjectId: dataObjectRoot.id,
 		children: renderedChildData.children,
@@ -144,7 +142,7 @@ export const visualizeSharedCounter: VisualizeSharedObject = async (
 };
 
 /**
- * Default {@link VisualizeSharedObject} for {@link SharedCounter}.
+ * Default {@link VisualizeSharedObject} for {@link SharedDirectory}.
  */
 export const visualizeSharedDirectory: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
