@@ -1,0 +1,5 @@
+.eslintrc.cjs
+CHANGELOG.md
+README.md
+package.json
+tsconfig.lint.json
