@@ -19,9 +19,6 @@ import {
 	type TreeNode,
 	type TreeNodeFromImplicitAllowedTypes,
 	type TreeNodeSchemaClass,
-	// eslint-disable-next-line import/no-deprecated
-	typeNameSymbol,
-	typeSchemaSymbol,
 	type WithType,
 } from "./simple-tree/index.js";
 
@@ -150,19 +147,6 @@ export namespace TableFactory {
 				}
 				columns.moveToIndex(adjustedIndex, this.index);
 			}
-
-			// #region HACKS
-
-			// eslint-disable-next-line import/no-deprecated, @typescript-eslint/explicit-function-return-type
-			public override get [typeNameSymbol]() {
-				return super[typeNameSymbol];
-			}
-			// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-			public get [typeSchemaSymbol]() {
-				return super[typeSchemaSymbol];
-			}
-
-			// #endregion
 		}
 
 		// return Column;
@@ -357,19 +341,6 @@ export namespace TableFactory {
 				const rows = getRowList(this);
 				return rows.indexOf(this);
 			}
-
-			// #region HACKS
-
-			// eslint-disable-next-line import/no-deprecated, @typescript-eslint/explicit-function-return-type
-			public override get [typeNameSymbol]() {
-				return super[typeNameSymbol];
-			}
-			// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-			public get [typeSchemaSymbol]() {
-				return super[typeSchemaSymbol];
-			}
-
-			// #endregion
 		}
 
 		// return Row;
@@ -753,19 +724,6 @@ export namespace TableFactory {
 
 			// TODO: verify this works
 			public static readonly [tableSchemaSymbol] = true;
-
-			// #region HACKS
-
-			// eslint-disable-next-line import/no-deprecated, @typescript-eslint/explicit-function-return-type
-			public override get [typeNameSymbol]() {
-				return super[typeNameSymbol];
-			}
-			// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-			public get [typeSchemaSymbol]() {
-				return super[typeSchemaSymbol];
-			}
-
-			// #endregion
 		}
 
 		// return Table;
