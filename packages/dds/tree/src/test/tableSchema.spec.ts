@@ -20,7 +20,7 @@ import { TreeAlpha } from "../shared-tree/index.js";
 
 const treeFactory = new TreeFactory({});
 
-describe.only("table schema", () => {
+describe.only("TableFactory unit tests", () => {
 	function createTableTree() {
 		const schemaFactory = new SchemaFactoryAlpha("test");
 		class Cell extends schemaFactory.object("table-cell", {
@@ -115,16 +115,63 @@ describe.only("table schema", () => {
 		});
 	});
 
-	// Test TODOs:
-	// - insert rows
-	// - insert columns
-	// - insert cells
-	// - remove rows
-	// - remove columns
-	// - remove cells
-	// - move rows
-	// - move columns
+	describe("Insert column", () => {
+		// Test TODOs:
+		// - Success case: insert new column.
+		// - Failure case: insert column that already exist in the tree.
+	});
 
+	describe("Insert rows", () => {
+		// Test TODOs:
+		// - Success case: insert empty list.
+		// - Success case: insert single row.
+		// - Success case: insert multiple rows.
+		// - Failure case: insert row(s) that already exist in the tree.
+	});
+
+	describe("Set cell", () => {
+		// Test TODOs:
+		// - Success case: insert new cell.
+		// - Failure case: insert cell that already exist in the tree.
+		// - Failure case: Insert cell with invalid row/column id.
+	});
+
+	describe("Remove column", () => {
+		// Test TODOs:
+		// - Success case: remove existing column.
+		// - Failure case: specified column does not exist in the table.
+	});
+
+	describe("Delete rows", () => {
+		// Test TODOs:
+		// - Success case: delete empty list (no-op).
+		// - Success case: delete single row.
+		// - Success case: delete multiple rows.
+		// - Failure case: 1 or more specified rows do not exist in the table.
+	});
+
+	describe("Delete cell", () => {
+		// Test TODOs:
+		// - Success case: valid key with existing data.
+		// - Success case: valid key with no data.
+		// - Failure case: invalid key
+	});
+
+	describe("Move column", () => {
+		// Test TODOs:
+		// - Success case: move existing column to valid index.
+		// - Failure case: move existing column to invalid index.
+		// - Failure case: move non-existing column.
+	});
+
+	describe("Move row", () => {
+		// Test TODOs:
+		// - Success case: move existing row to valid index.
+		// - Failure case: move existing row to invalid index.
+		// - Failure case: move non-existing row.
+	});
+
+	// TODO: remove me
 	it("Smoke test", () => {
 		const { treeView } = createTableTree();
 
