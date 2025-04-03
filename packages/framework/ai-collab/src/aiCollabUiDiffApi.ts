@@ -46,7 +46,9 @@ export type NodePath = {
 	schemaIdentifier: string;
 	/**
 	 * The field within the parent node that the node is located at.
-	 * The root node will have a parentField name of 'rootFieldKey'
+	 * @remarks
+	 * The root node will have a parentField name of 'rootFieldKey'.
+	 * Nodes in an array use numbers to represent their index within the array.
 	 */
 	parentField: string | number;
 }[];
