@@ -4,7 +4,6 @@
 	"mainEntryPointFilePath": "<projectFolder>/lib/alpha.d.ts",
 	"bundledPackages": ["@fluidframework/*"],
 	"apiReport": {
-		"enabled": true,
 		// The base config omits alpha. Explicitly opt into alpha reports (in addition to public/beta) for this package.
 		"reportVariants": ["public", "beta", "alpha"]
 	}
