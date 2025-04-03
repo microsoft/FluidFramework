@@ -101,6 +101,7 @@ async function generateCreateDocumentResponseBody(
 	isEphemeral: boolean,
 	redisCacheForGetSession?: ICache,
 	ephemeralDocumentTTLSec?: number,
+	sessionCacheTTLSec?: number,
 ): Promise<ICreateDocumentResponseBody> {
 	const authorizationHeader = request.header("Authorization");
 	let newDocumentAccessToken: string | undefined;
@@ -142,7 +143,7 @@ async function generateCreateDocumentResponseBody(
 				documentId,
 				session,
 				redisCacheForGetSession,
-				isEphemeral ? ephemeralDocumentTTLWithLatencyMargin : undefined,
+				isEphemeral ? ephemeralDocumentTTLWithLatencyMargin : sessionCacheTTLSec,
 			);
 		}
 	}
@@ -368,6 +369,7 @@ export function create(
 					isEphemeral,
 					redisCacheForGetSession,
 					ephemeralDocumentTTLSec,
+					sessionCacheTTLSec,
 				);
 				return handleResponse(
 					Promise.all([createP, generateResponseBodyP]).then(

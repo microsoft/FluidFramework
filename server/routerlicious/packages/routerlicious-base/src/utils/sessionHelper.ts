@@ -360,7 +360,10 @@ export async function getSession(
 	sessionCacheTTLSec: number = defaultGetSessionCacheTtlInSeconds,
 	sessionCacheTTLForDeletedDocumentsSec: number = 20 * 60, // 20 minutes
 ): Promise<ISession> {
-	Lumberjack.info("Cache TTL for getSession", { sessionCacheTTLSec, sessionCacheTTLForDeletedDocumentsSec });
+	Lumberjack.info("Cache TTL for getSession", {
+		sessionCacheTTLSec,
+		sessionCacheTTLForDeletedDocumentsSec,
+	});
 	const baseLumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 
 	let document: IDocument | null;
