@@ -8,14 +8,21 @@ import { strict as assert, fail } from "node:assert";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import { SchemaFactoryAlpha, TreeViewConfiguration } from "../simple-tree/index.js";
+import {
+	SchemaFactoryAlpha,
+	TreeViewConfiguration,
+	type ConciseTree,
+	type TreeNode,
+	type VerboseTree,
+} from "../simple-tree/index.js";
 import { TreeFactory } from "../treeFactory.js";
 import { TableFactory } from "../tableSchema.js";
+import { TreeAlpha } from "../shared-tree/index.js";
 
 const treeFactory = new TreeFactory({});
 
 describe.only("table schema", () => {
-	it("Smoke test", () => {
+	function createTableTree() {
 		const schemaFactory = new SchemaFactoryAlpha("test");
 		class Cell extends schemaFactory.object("table-cell", {
 			value: schemaFactory.string,
@@ -33,29 +40,103 @@ describe.only("table schema", () => {
 			"tree",
 		);
 
-		const view = tree.viewWith(
+		const treeView = tree.viewWith(
 			new TreeViewConfiguration({
 				schema: Table,
 				enableSchemaValidation: true,
 			}),
 		);
 
-		// TODO: make initialization easier (shouldn't need to specify rows / columns).
-		// In fact, we really probably don't want to let users specify rows / columns.
-		view.initialize({
+		return {
+			Cell,
+			Column,
+			Row,
+			Table,
+			treeView,
+		};
+	}
+
+	/**
+	 * Compares a tree with an expected "concise" tree representation.
+	 * Fails if they are not equivalent.
+	 */
+	function assertEqualTrees(actual: TreeNode, expected: ConciseTree): void {
+		const actualVerbose = TreeAlpha.exportConcise(actual);
+		assert.deepEqual(actualVerbose, expected);
+	}
+
+	describe("Initialization", () => {
+		it("Empty", () => {
+			const { treeView } = createTableTree();
+
+			treeView.initialize({ rows: [], columns: [] });
+			assertEqualTrees(treeView.root, { columns: [], rows: [] });
+		});
+
+		it("Non-empty", () => {
+			const { treeView } = createTableTree();
+
+			treeView.initialize({
+				columns: [{ id: "column-0" }, { id: "column-1" }],
+				rows: [
+					{ id: "row-0", cells: {} },
+					{
+						id: "row-1",
+						cells: {
+							"column-1": { value: "Hello world!" },
+						},
+					},
+				],
+			});
+
+			assertEqualTrees(treeView.root, {
+				columns: [
+					{
+						id: "column-0",
+					},
+					{
+						id: "column-1",
+					},
+				],
+				rows: [
+					{
+						id: "row-0",
+						cells: {},
+					},
+					{
+						id: "row-1",
+						cells: {
+							"column-1": {
+								value: "Hello world!",
+							},
+						},
+					},
+				],
+			});
+		});
+	});
+
+	// Test TODOs:
+	// - insert rows
+	// - insert columns
+	// - insert cells
+	// - remove rows
+	// - remove columns
+	// - remove cells
+	// - move rows
+	// - move columns
+
+	it("Smoke test", () => {
+		const { treeView } = createTableTree();
+
+		treeView.initialize({ rows: [], columns: [] });
+
+		assertEqualTrees(treeView.root, {
 			rows: [],
 			columns: [],
 		});
 
-		// TODO: export verbose and use that output for comparison
-
-		// TODO: why is `view.root` an empty object?
-		assert.deepEqual(view.root, {
-			rows: [],
-			columns: [],
-		});
-
-		view.root.insertRows({
+		treeView.root.insertRows({
 			rows: [
 				{
 					id: "row-0",
@@ -63,13 +144,13 @@ describe.only("table schema", () => {
 				},
 			],
 		});
-		view.root.insertColumn({
+		treeView.root.insertColumn({
 			column: {
 				id: "column-0",
 			},
 		});
 
-		assert.deepEqual(view.root, {
+		assertEqualTrees(treeView.root, {
 			rows: [
 				{
 					id: "row-0",
@@ -83,14 +164,14 @@ describe.only("table schema", () => {
 			],
 		});
 
-		let cell00: Cell | undefined = view.root.getCell({ rowId: "row-0", columnId: "column-0" });
+		let cell00 = treeView.root.getCell({ rowId: "row-0", columnId: "column-0" });
 		assert.equal(cell00, undefined);
 
-		const column0: Column = view.root.getColumn("column-0") ?? fail("Column not found");
-		const row0: Row = view.root.getRow("row-0") ?? fail("Row not found");
+		const column0 = treeView.root.getColumn("column-0") ?? fail("Column not found");
+		const row0 = treeView.root.getRow("row-0") ?? fail("Row not found");
 		row0.setCell(column0, { value: "Hello world!" });
 
-		cell00 = view.root.getCell({ rowId: "row-0", columnId: "column-0" });
+		cell00 = treeView.root.getCell({ rowId: "row-0", columnId: "column-0" });
 		assert.equal(cell00?.value, "Hello world!");
 	});
 });
