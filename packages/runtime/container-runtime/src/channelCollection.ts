@@ -50,7 +50,6 @@ import {
 import {
 	GCDataBuilder,
 	RequestParser,
-	RuntimeHeaders,
 	SummaryTreeBuilder,
 	addBlobToSummary,
 	convertSnapshotTreeToSummaryTree,
@@ -105,6 +104,21 @@ import {
 	nonDataStorePaths,
 	rootHasIsolatedChannels,
 } from "./summary/index.js";
+
+/**
+ * Accepted header keys for requests coming to the runtime.
+ * @internal
+ */
+export enum RuntimeHeaders {
+	/**
+	 * True to wait for a data store to be created and loaded before returning it.
+	 */
+	wait = "wait",
+	/**
+	 * True if the request is coming from an IFluidHandle.
+	 */
+	viaHandle = "viaHandle",
+}
 
 /**
  * True if a tombstoned object should be returned without erroring
