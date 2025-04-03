@@ -648,7 +648,8 @@ function createInsertUiDiff(
 }
 
 /**
- * Removes the special objectIdKey field only intended for use by the LLM agent from the given object.
+ * Returns an object identical to the input except that the special 'objectIdKey' field (only intended for use by the LLM agent) is removed if present.
+ * @remarks The input object is not modified.
  */
 function removeAgentObjectIdField(oldValue: unknown): unknown {
 	if (typeof oldValue === "object" && oldValue !== null && !Array.isArray(oldValue)) {
