@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/merge-tree",
-	"version": "2.31.0",
+	"version": "2.32.0",
 	"description": "Merge tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -93,7 +93,7 @@
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"postpack": "tar -cvf ./merge-tree.test-files.tar ./src/test ./dist/test ./lib/test",
+		"pack:tests": "tar -cvf ./merge-tree.test-files.tar ./src/test ./dist/test ./lib/test",
 		"perf": "cross-env FLUID_TEST_VERBOSE=1 mocha \"dist/**/*.spec.*js\" --node-option unhandled-rejections=strict,expose-gc --exit --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 30000",
 		"perf:measure": "npm run perf -- --fgrep @Measurement",
 		"perf:profile": "node --inspect-brk ./node_modules/mocha/bin/mocha.js \"dist/**/*.spec.*js\" --node-option unhandled-rejections=strict,expose-gc --exit --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 30000",
@@ -154,7 +154,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.54.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
-		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@2.30.0",
+		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@2.31.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.50.1",
 		"@types/diff": "^3.5.1",

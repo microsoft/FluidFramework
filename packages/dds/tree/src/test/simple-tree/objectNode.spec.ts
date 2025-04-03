@@ -12,8 +12,10 @@ import {
 	SchemaFactoryAlpha,
 	typeNameSymbol,
 	typeSchemaSymbol,
+	type LeafSchema,
 	type NodeBuilderData,
 	type ObjectNodeSchema,
+	type SimpleObjectNodeSchema,
 	type TreeNodeSchema,
 	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
@@ -480,13 +482,13 @@ describeHydration(
 
 			// Explicit field
 			{
-				class RecursiveTest extends sf.object("RecursiveTest", {
+				class ExplicitField extends sf.object("WithField", {
 					f: sf.optional([() => SchemaFactory.null]),
 				}) {}
 
-				type Info = (typeof RecursiveTest)["info"];
-				const _check1: TreeNodeSchema = RecursiveTest;
-				const _check2: ObjectNodeSchema = RecursiveTest;
+				type Info = (typeof ExplicitField)["info"];
+				const _check1: TreeNodeSchema = ExplicitField;
+				const _check2: ObjectNodeSchema = ExplicitField;
 			}
 
 			// Non implicitly constructable
@@ -514,6 +516,63 @@ describeHydration(
 				type _check2 = requireAssignableTo<Info, Info2>;
 				const _check1: TreeNodeSchema = RecursiveTest;
 				const _check2: ObjectNodeSchema = RecursiveTest;
+			}
+
+			// Empty POJO mode
+			{
+				const Empty = sf.object("Empty", {});
+
+				type Info = (typeof Empty)["info"];
+				const _check1: TreeNodeSchema = Empty;
+				const _check2: ObjectNodeSchema = Empty;
+			}
+
+			// POJO mode with field
+			{
+				const ExplicitField = sf.object("WithField", {
+					f: SchemaFactory.null,
+				});
+
+				type Info = (typeof ExplicitField)["info"];
+				const _check1: TreeNodeSchema = ExplicitField;
+				// This tests the workaround in SchemaFactoryAlpha.object.
+				// This line fails to compile without the workaround.
+				const _check2: ObjectNodeSchema = ExplicitField;
+			}
+
+			// Explicit field POJO mode typing unit tests
+			{
+				type SchemaType = ObjectNodeSchema<string, { readonly f: LeafSchema<"null", null> }>;
+				// @ts-expect-error Missing workaround for https://github.com/microsoft/TypeScript/issues/59049#issuecomment-2773459693 so this fails.
+				type _check4 = requireAssignableTo<SchemaType, ObjectNodeSchema>;
+				// It does work for the different types that make up ObjectNodeSchema however:
+				type _check5 = requireAssignableTo<SchemaType, SimpleObjectNodeSchema>;
+			}
+
+			// ObjectNodeSchema assignability bug minimization
+			{
+				type RecordX = Record<string, unknown>;
+
+				// A type with complicated variance.
+				type Create<T extends RecordX> = (data: RecordX extends T ? never : T) => unknown;
+
+				// Two identical interfaces
+				interface X1<T extends RecordX = RecordX> extends Create<T> {}
+				interface X2<T extends RecordX = RecordX> extends Create<T> {}
+
+				// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+				type Input = { f: object };
+				// Compute two identical types using X1 and X2
+				type Result1 = X1<Input>;
+				type Result2 = X2<Input>;
+
+				// The identical types are not equal, nor are the identical interfaces.
+				type _check12 = requireAssignableTo<Result1, X2>;
+				// @ts-expect-error Missing workaround for https://github.com/microsoft/TypeScript/issues/59049#issuecomment-2773459693 so this fails.
+				type _check11 = requireAssignableTo<Result1, X1>; // Result from X1 is not assignable to X1, only X2
+				// @ts-expect-error Missing workaround for https://github.com/microsoft/TypeScript/issues/59049#issuecomment-2773459693 so this fails.
+				type _check22 = requireAssignableTo<Result2, X2>; // Result from X2 is not assignable to X2, only X1
+				type _check21 = requireAssignableTo<Result2, X1>;
 			}
 		});
 

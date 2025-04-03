@@ -56,6 +56,7 @@ export function create(
 	enableClientIPLogging?: boolean,
 	readinessCheck?: IReadinessCheck,
 	fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,
+	redisCacheForGetSession?: ICache,
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
@@ -175,6 +176,7 @@ export function create(
 		clusterDrainingChecker,
 		readinessCheck,
 		fluidAccessTokenGenerator,
+		redisCacheForGetSession,
 	);
 
 	app.use(routes.api);

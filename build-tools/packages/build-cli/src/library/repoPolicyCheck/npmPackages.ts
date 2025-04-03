@@ -804,11 +804,11 @@ export const handlers: Handler[] = [
 				const relativePkgDir = path.dirname(file).replace(/\\/g, "/");
 
 				// The directory field should be omitted from the root package, so consider this a policy failure.
-				if (relativePkgDir === ".") {
+				if (relativePkgDir === "." && json.repository.directory !== undefined) {
 					ret.push(
 						`repository.directory: "${json.repository.directory}" field is present but should be omitted from root package`,
 					);
-				} else if (json.repository?.directory !== relativePkgDir) {
+				} else if (relativePkgDir !== "." && json.repository?.directory !== relativePkgDir) {
 					ret.push(
 						`repository.directory: "${json.repository.directory}" !== "${relativePkgDir}"`,
 					);

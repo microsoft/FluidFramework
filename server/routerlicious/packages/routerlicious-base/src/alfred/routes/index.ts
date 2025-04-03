@@ -46,6 +46,7 @@ export function create(
 	clusterDrainingChecker?: IClusterDrainingChecker,
 	readinessCheck?: IReadinessCheck,
 	fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,
+	redisCacheForGetSession?: ICache,
 ) {
 	return {
 		api: api.create(
@@ -66,6 +67,7 @@ export function create(
 			clusterDrainingChecker,
 			readinessCheck,
 			fluidAccessTokenGenerator,
+			redisCacheForGetSession,
 		),
 	};
 }

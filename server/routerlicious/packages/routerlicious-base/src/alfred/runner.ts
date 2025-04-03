@@ -60,6 +60,7 @@ export class AlfredRunner implements IRunner {
 		private readonly enableClientIPLogging?: boolean,
 		private readonly readinessCheck?: IReadinessCheck,
 		private readonly fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,
+		private readonly redisCacheForGetSession?: ICache,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -91,6 +92,7 @@ export class AlfredRunner implements IRunner {
 				this.enableClientIPLogging,
 				this.readinessCheck,
 				this.fluidAccessTokenGenerator,
+				this.redisCacheForGetSession,
 			);
 			alfred.set("port", this.port);
 			this.server = this.serverFactory.create(alfred);

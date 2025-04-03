@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/bundle-size-tests",
-	"version": "2.31.0",
+	"version": "2.32.0",
 	"private": true,
 	"description": "A package for understanding the bundle size of Fluid Framework",
 	"homepage": "https://fluidframework.com",
@@ -16,20 +16,22 @@
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.json",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"build:test": "npm run build:test:esm",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
-		"clean": "rimraf --glob dist lib bundleAnalysis \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"clean": "rimraf --glob build dist lib bundleAnalysis \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"explore:tree": "npm run build && npm run webpack && source-map-explorer ./dist/sharedTree.js --html bundleAnalysis/reportTree.html",
+		"explore:tree": "fluid-build . --task webpack && source-map-explorer ./build/sharedTree.js --html bundleAnalysis/reportTree.html",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"prepack": "npm run webpack",
 		"test": "npm run test:mocha",
-		"test:mocha": "mocha",
+		"test:mocha": "npm run test:mocha:esm",
+		"test:mocha:esm": "mocha",
 		"webpack": "webpack",
 		"webpack:profile": "npm run webpack"
 	},
@@ -77,23 +79,13 @@
 	],
 	"fluidBuild": {
 		"tasks": {
-			"webpack": {
-				"dependsOn": [
-					"build"
-				]
-			},
-			"test:mocha": {
-				"dependsOn": [
-					"...",
-					"webpack"
-				]
-			},
-			"build:test": {
-				"dependsOn": [
-					"...",
-					"build:esnext"
-				]
-			}
+			"webpack": [
+				"^build:esnext"
+			],
+			"test:mocha:esm": [
+				"...",
+				"webpack"
+			]
 		}
 	},
 	"typeValidation": {

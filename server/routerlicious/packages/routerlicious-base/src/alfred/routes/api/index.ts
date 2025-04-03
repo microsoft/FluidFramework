@@ -45,6 +45,7 @@ export function create(
 	clusterDrainingChecker?: IClusterDrainingChecker,
 	readinessCheck?: IReadinessCheck,
 	fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,
+	redisCacheForGetSession?: ICache,
 ): Router {
 	const router: Router = Router();
 	const deltasRoute = deltas.create(
@@ -70,6 +71,7 @@ export function create(
 		tokenRevocationManager,
 		revokedTokenChecker,
 		clusterDrainingChecker,
+		redisCacheForGetSession,
 	);
 	const apiRoute = api.create(
 		config,
