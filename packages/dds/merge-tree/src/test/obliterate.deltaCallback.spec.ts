@@ -8,10 +8,10 @@ import { strict as assert } from "node:assert";
 import { MergeTreeDeltaCallback } from "../mergeTreeDeltaCallback.js";
 import { MergeTreeDeltaType } from "../ops.js";
 
-import { ReconnectTestHelper } from "./reconnectHelper.js";
+import { ClientTestHelper } from "./partialSyncHelper.js";
 import { useStrictPartialLengthChecks } from "./testUtils.js";
 
-describe("obliterate delta callback", () => {
+describe.only("obliterate delta callback", () => {
 	useStrictPartialLengthChecks();
 
 	let length: number;
@@ -41,7 +41,7 @@ describe("obliterate delta callback", () => {
 
 	describe("is invoked", () => {
 		it("on local obliterate", () => {
-			const helper = new ReconnectTestHelper();
+			const helper = new ClientTestHelper();
 
 			let count = 0;
 
@@ -63,7 +63,7 @@ describe("obliterate delta callback", () => {
 		});
 
 		it("on remote obliterate", () => {
-			const helper = new ReconnectTestHelper();
+			const helper = new ClientTestHelper();
 
 			let count = 0;
 
@@ -89,7 +89,7 @@ describe("obliterate delta callback", () => {
 		const text = "abcdef";
 
 		it("remove first", () => {
-			const helper = new ReconnectTestHelper();
+			const helper = new ClientTestHelper();
 
 			helper.clients.A.on("delta", cb);
 
@@ -107,7 +107,7 @@ describe("obliterate delta callback", () => {
 		});
 
 		it("obliterate first", () => {
-			const helper = new ReconnectTestHelper();
+			const helper = new ClientTestHelper();
 
 			helper.clients.A.on("delta", cb);
 
@@ -126,7 +126,7 @@ describe("obliterate delta callback", () => {
 	});
 
 	it("overlapping obliterate and obliterate", () => {
-		const helper = new ReconnectTestHelper();
+		const helper = new ClientTestHelper();
 
 		helper.clients.A.on("delta", cb);
 
@@ -149,7 +149,7 @@ describe("obliterate delta callback", () => {
 		const text = "abcdef";
 
 		it("insert first", () => {
-			const helper = new ReconnectTestHelper();
+			const helper = new ClientTestHelper();
 
 			helper.clients.A.on("delta", cb);
 
@@ -167,7 +167,7 @@ describe("obliterate delta callback", () => {
 		});
 
 		it("obliterate first", () => {
-			const helper = new ReconnectTestHelper();
+			const helper = new ClientTestHelper();
 
 			helper.clients.A.on("delta", cb);
 
