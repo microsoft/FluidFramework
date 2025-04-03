@@ -4,6 +4,7 @@
  */
 
 import { oob } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { Tree } from "./shared-tree/index.js";
 import {
@@ -94,8 +95,23 @@ export namespace TableFactory {
 	 * @sealed @internal
 	 */
 	export interface IColumn {
+		/**
+		 * The unique identifier of the column.
+		 * @remarks Uniquely identifies the node within the entire tree, not just the table.
+		 */
 		readonly id: string;
+
+		/**
+		 * Get the index of the column in its parent table.
+		 * @throws Throws an error if the column is not in a table.
+		 */
 		readonly index: number;
+
+		/**
+		 * Move a column to a new location in its parent table.
+		 * @param index - The index to move the column to.
+		 * @throws Throws an error if the column is not in a table.
+		 */
 		readonly moveTo: (index: number) => void;
 
 		// TODO
@@ -132,11 +148,12 @@ export namespace TableFactory {
 					return grandparent as TTable;
 				}
 			}
-			throw new Error("Column is not in a table");
+			throw new UsageError("Column is not in a table");
 		}
 
 		/**
-		 * TODO
+		 * Gets the list of columns in the parent table that contains the provided column.
+		 * @throws Throws an error if the column is not in a table.
 		 */
 		function getColumnList(column: Column): TreeArrayNode<typeof Column> {
 			return getTableParentOfColumn(column).columns as unknown as TreeArrayNode<typeof Column>;
@@ -154,11 +171,7 @@ export namespace TableFactory {
 		/**
 		 * The Column schema - this can include more properties as needed *
 		 */
-		class Column extends schemaFactory.object("Column", columnFields) {
-			/**
-			 * Get the index of the column in the table
-			 * @returns The index of the column in the table
-			 */
+		class Column extends schemaFactory.object("Column", columnFields) implements IColumn {
 			public get index(): number {
 				const columns = getColumnList(this);
 				if (columns !== undefined) {
@@ -167,10 +180,6 @@ export namespace TableFactory {
 				throw new Error("Column is not in a table");
 			}
 
-			/**
-			 * Move a column to a new location
-			 * @param index - The index to move the column to
-			 */
 			public moveTo(index: number): void {
 				const columns = getColumnList(this);
 
