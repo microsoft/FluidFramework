@@ -234,120 +234,17 @@ export interface ObliterateInfo {
 	stamp: SliceRemoveOperationStamp;
 	segmentGroup: SegmentGroup | undefined;
 	/**
+	 * Defined only for unacked obliterates.
+	 *
 	 * Contains all segments inserted into the range this obliterate affects where at the time of insertion,
-	 * this obliterate was the newest. (this information is relevant for the tiebreak policy of allowing last-obliterater to insert)
+	 * this obliterate was the newest concurrent obliterate that overlapped the insertion point (this information
+	 * is relevant for the tiebreak policy of allowing last-obliterater to insert).
 	 *
-	 * Defined iff this is a local obliterate (TODO: Maybe need for more?)
-	 *
-	 * We need to keep this around because on reconnect, outstanding local obliterates may have set `obliteratePrecedingInsertion` (tiebreak) on segments they no longer apply to,
-	 * since the reissued obliterate may affect a smaller range than the original one when content near the obliterate's endpoints
-	 * was removed by another client between the time of the original obliterate and reissuing.
+	 * We need to keep this around for unacked ops because on reconnect, outstanding local obliterates may have set `obliteratePrecedingInsertion`
+	 * (tiebreak) on segments they no longer apply to, since the reissued obliterate may affect a smaller range than the original one when content
+	 * near the obliterate's endpoints was removed by another client between the time of the original obliterate and reissuing.
 	 */
 	tiebreakTrackingGroup: ITrackingGroup | undefined;
-	// [
-	// 	{
-	// 		"type": "addText",
-	// 		"index": 0,
-	// 		"content": "ABCDEFGHIJKLMNOPQ",
-	// 		"clientId": "A"
-	// 	},
-	// 	{
-	// 		"type": "attach"
-	// 	},
-	// 	{
-	// 		"type": "addClient",
-	// 		"addedClientId": "D",
-	// 		"canBeStashed": false
-	// 	},
-	// 	{
-	// 		"type": "synchronize"
-	// 	},
-	// 	{
-	// 		"type": "changeConnectionState",
-	// 		"connected": false,
-	// 		"clientId": "B"
-	// 	},
-	// 	{
-	// 		"type": "obliterateRange",
-	// 		"start": {
-	// 			"pos": 3,
-	// 			"side": 1
-	// 		},
-	// 		"end": {
-	// 			"pos": 4,
-	// 			"side": 1
-	// 		},
-	// 		"clientId": "B"
-	// 	},
-	// 	{
-	// 		"type": "obliterateRange",
-	// 		"start": {
-	// 			"pos": 0,
-	// 			"side": 0
-	// 		},
-	// 		"end": {
-	// 			"pos": 6,
-	// 			"side": 1
-	// 		},
-	// 		"clientId": "D"
-	// 	},
-	// 	{
-	// 		"type": "obliterateRange",
-	// 		"start": {
-	// 			"pos": 2,
-	// 			"side": 0
-	// 		},
-	// 		"end": {
-	// 			"pos": 8,
-	// 			"side": 1
-	// 		},
-	// 		"clientId": "C"
-	// 	},
-	// 	{
-	// 		"type": "synchronize"
-	// 	},
-	// 	{
-	// 		"type": "removeRange",
-	// 		"start": 0,
-	// 		"end": 1,
-	// 		"clientId": "C"
-	// 	},
-	// 	{
-	// 		"type": "addText",
-	// 		"index": 0,
-	// 		"content": "01234567",
-	// 		"clientId": "C"
-	// 	},
-	// 	{
-	// 		"type": "synchronize"
-	// 	},
-	// 	{
-	// 		"type": "addText",
-	// 		"index": 4,
-	// 		"content": "should this go away",
-	// 		"clientId": "B"
-	// 	},
-	// 	{
-	// 		"type": "obliterateRange",
-	// 		"start": {
-	// 			"pos": 7,
-	// 			"side": 1
-	// 		},
-	// 		"end": {
-	// 			"pos": 9,
-	// 			"side": 0
-	// 		},
-	// 		"clientId": "A"
-	// 	},
-	// 	{
-	// 		"type": "changeConnectionState",
-	// 		"connected": true,
-	// 		"clientId": "B"
-	// 	},
-	// 	{
-	// 		"type": "synchronize"
-	// 	}
-	// ]
 }
 
 export interface SegmentGroup {

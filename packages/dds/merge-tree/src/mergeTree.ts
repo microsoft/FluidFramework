@@ -194,22 +194,6 @@ function ackSegment(
 				type: op.type === MergeTreeDeltaType.REMOVE ? "setRemove" : "sliceRemove",
 			};
 			segment.removes[segment.removes.length - 1] = removeStamp;
-
-			const { obliterateInfo } = segmentGroup;
-			const hasObliterateInfo = obliterateInfo !== undefined;
-			const isObliterate = op.type !== MergeTreeDeltaType.REMOVE;
-			assert(hasObliterateInfo === isObliterate, 0xa40 /* must have obliterate info */);
-			if (hasObliterateInfo) {
-				obliterateInfo.stamp = removeStamp as SliceRemoveOperationStamp;
-				// TODO: We should probably do this when acking the op rather than on each segment.
-				// Then we can assert we handle it once.
-				if (obliterateInfo.tiebreakTrackingGroup !== undefined) {
-					for (const segment of obliterateInfo.tiebreakTrackingGroup.tracked) {
-						segment.trackingCollection.unlink(obliterateInfo.tiebreakTrackingGroup);
-					}
-					obliterateInfo.tiebreakTrackingGroup = undefined;
-				}
-			}
 			break;
 		}
 
@@ -1297,10 +1281,9 @@ export class MergeTree {
 	}
 
 	/**
-	 * Assign sequence number to existing segment; update partial lengths to reflect the change
-	 * @param seq - sequence number given by server to pending segment
+	 * Assign sequence number to existing segments affected by an op; update partial lengths to reflect the change
 	 */
-	public ackPendingSegment(opArgs: IMergeTreeDeltaOpArgs): void {
+	public ackOp(opArgs: IMergeTreeDeltaOpArgs): void {
 		const seq = opArgs.sequencedMessage!.sequenceNumber;
 		const stamp: OperationStamp = {
 			seq,
@@ -1310,6 +1293,24 @@ export class MergeTree {
 		const nodesToUpdate: MergeBlock[] = [];
 		let overwrite = false;
 		if (pendingSegmentGroup !== undefined) {
+			const { obliterateInfo } = pendingSegmentGroup;
+			const hasObliterateInfo = obliterateInfo !== undefined;
+			const isObliterate =
+				opArgs.op.type === MergeTreeDeltaType.OBLITERATE ||
+				opArgs.op.type === MergeTreeDeltaType.OBLITERATE_SIDED;
+			assert(hasObliterateInfo === isObliterate, 0xa40 /* must have obliterate info */);
+			if (hasObliterateInfo) {
+				obliterateInfo.stamp = { ...stamp, type: "sliceRemove" };
+				assert(
+					obliterateInfo.tiebreakTrackingGroup !== undefined,
+					"obliterateInfo should have a tiebreak tracking group on ack",
+				);
+				for (const segment of obliterateInfo.tiebreakTrackingGroup.tracked) {
+					segment.trackingCollection.unlink(obliterateInfo.tiebreakTrackingGroup);
+				}
+				obliterateInfo.tiebreakTrackingGroup = undefined;
+			}
+
 			const deltaSegments: IMergeTreeSegmentDelta[] = [];
 			const overlappingRemoves: boolean[] = [];
 			pendingSegmentGroup.segments.map((pendingSegment: ISegmentLeaf) => {

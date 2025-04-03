@@ -789,14 +789,14 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	private ackPendingSegment(opArgs: IMergeTreeDeltaRemoteOpArgs): void {
 		if (opArgs.op.type === MergeTreeDeltaType.GROUP) {
 			for (const memberOp of opArgs.op.ops) {
-				this._mergeTree.ackPendingSegment({
+				this._mergeTree.ackOp({
 					groupOp: opArgs.op,
 					op: memberOp,
 					sequencedMessage: opArgs.sequencedMessage,
 				});
 			}
 		} else {
-			this._mergeTree.ackPendingSegment(opArgs);
+			this._mergeTree.ackOp(opArgs);
 		}
 	}
 

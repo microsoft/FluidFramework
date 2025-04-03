@@ -1189,7 +1189,7 @@ export function TestPack(verbose = true): {
 				}
 			}
 		}
-		cli.mergeTree.ackPendingSegment(createLocalOpArgs(MergeTreeDeltaType.INSERT, 3));
+		cli.mergeTree.ackOp(createLocalOpArgs(MergeTreeDeltaType.INSERT, 3));
 		if (verbose) {
 			log(cli.mergeTree.toString());
 			for (let clientId = 0; clientId < 4; clientId++) {
@@ -1238,7 +1238,7 @@ export function TestPack(verbose = true): {
 		cli.insertTextRemote(4, "HAS", undefined, 5, 1, "5");
 		cli.insertTextLocal(19, " LANDED");
 		cli.insertTextRemote(0, "yowza: ", undefined, 6, 4, "2");
-		cli.mergeTree.ackPendingSegment(createLocalOpArgs(MergeTreeDeltaType.INSERT, 7));
+		cli.mergeTree.ackOp(createLocalOpArgs(MergeTreeDeltaType.INSERT, 7));
 		if (verbose) {
 			log(cli.mergeTree.toString());
 			for (let clientId = 0; clientId < 6; clientId++) {
@@ -1272,7 +1272,7 @@ export function TestPack(verbose = true): {
 		}
 		cli.insertTextRemote(9, " chaser", undefined, 3, 2, "3");
 		cli.removeRangeLocal(12, 14);
-		cli.mergeTree.ackPendingSegment(createLocalOpArgs(MergeTreeDeltaType.REMOVE, 4));
+		cli.mergeTree.ackOp(createLocalOpArgs(MergeTreeDeltaType.REMOVE, 4));
 		if (verbose) {
 			log(cli.mergeTree.toString());
 			for (let clientId = 0; clientId < 4; clientId++) {
@@ -1283,9 +1283,9 @@ export function TestPack(verbose = true): {
 		}
 		cli.insertTextLocal(14, "*yolumba*");
 		cli.insertTextLocal(17, "-zanzibar-");
-		cli.mergeTree.ackPendingSegment(createLocalOpArgs(MergeTreeDeltaType.INSERT, 5));
+		cli.mergeTree.ackOp(createLocalOpArgs(MergeTreeDeltaType.INSERT, 5));
 		cli.insertTextRemote(2, "(aaa)", undefined, 6, 4, "2");
-		cli.mergeTree.ackPendingSegment(createLocalOpArgs(MergeTreeDeltaType.INSERT, 7));
+		cli.mergeTree.ackOp(createLocalOpArgs(MergeTreeDeltaType.INSERT, 7));
 		if (verbose) {
 			log(cli.mergeTree.toString());
 			for (let clientId = 0; clientId < 4; clientId++) {
