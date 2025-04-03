@@ -15,10 +15,9 @@ export {
 	TombstoneResponseHeaderKey,
 	InactiveResponseHeaderKey,
 	ICompressionRuntimeOptions,
-	CompressionAlgorithms,
 	RuntimeHeaderData,
-	disabledCompressionConfig,
 } from "./containerRuntime.js";
+export { CompressionAlgorithms, disabledCompressionConfig } from "./compatUtils.js";
 export {
 	ContainerMessageType,
 	UnknownContainerRuntimeMessage,
