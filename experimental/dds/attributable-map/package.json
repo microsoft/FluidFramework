@@ -51,7 +51,7 @@
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"postpack": "tar -cf ./map.test-files.tar ./src/test ./dist/test ./lib/test",
+		"pack:tests": "tar -cf ./map.test-files.tar ./src/test ./dist/test ./lib/test",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
 		"test:memory": "mocha --config ./src/test/memory/.mocharc.cjs",
@@ -99,7 +99,7 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
-		"@fluid-experimental/attributable-map-previous": "npm:@fluid-experimental/attributable-map@2.30.0",
+		"@fluid-experimental/attributable-map-previous": "npm:@fluid-experimental/attributable-map@2.31.0",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-private/test-dds-utils": "workspace:~",

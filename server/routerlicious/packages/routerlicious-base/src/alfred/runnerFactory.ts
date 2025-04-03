@@ -54,6 +54,7 @@ export class AlfredResources implements core.IResources {
 		public enableClientIPLogging?: boolean,
 		public readinessCheck?: IReadinessCheck,
 		public fluidAccessTokenGenerator?: core.IFluidAccessTokenGenerator,
+		public redisCacheForGetSession?: core.ICache,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined = config.get(
@@ -156,6 +157,26 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				  );
 		redisClientConnectionManagers.push(redisClientConnectionManagerForJwtCache);
 		const redisJwtCache = new services.RedisCache(redisClientConnectionManagerForJwtCache);
+
+		const redisClientConnectionManagerForGetSessionCache =
+			customizations?.redisClientConnectionManagerForJwtCache
+				? customizations.redisClientConnectionManagerForJwtCache
+				: new RedisClientConnectionManager(
+						undefined,
+						redisConfig2,
+						redisConfig2.enableClustering,
+						redisConfig2.slotsRefreshTimeout,
+						retryDelays,
+						redisConfig2.enableVerboseErrorLogging,
+				  );
+		redisClientConnectionManagers.push(redisClientConnectionManagerForGetSessionCache);
+		const redisGetSessionCache = new services.RedisCache(
+			redisClientConnectionManagerForGetSessionCache,
+			{
+				prefix: "getSession",
+				expireAfterSeconds: 5 * 60,
+			},
+		);
 
 		// Database connection for global db if enabled
 		let globalDbMongoManager;
@@ -419,6 +440,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			enableClientIPLogging,
 			customizations?.readinessCheck,
 			customizations?.fluidAccessTokenGenerator,
+			redisGetSessionCache,
 		);
 	}
 }
@@ -450,6 +472,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.enableClientIPLogging,
 			resources.readinessCheck,
 			resources.fluidAccessTokenGenerator,
+			resources.redisCacheForGetSession,
 		);
 	}
 }
