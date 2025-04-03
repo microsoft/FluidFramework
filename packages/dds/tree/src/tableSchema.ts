@@ -30,7 +30,7 @@ import {
 
 /**
  * Contains types and factories for creating schema to represent dynamic tabular data.
- * @alpha
+ * @internal
  */
 export namespace TableFactory {
 	const tableSchemaFactorySubScope = "table";
@@ -39,7 +39,7 @@ export namespace TableFactory {
 
 	/**
 	 * A key to uniquely identify a cell in a table.
-	 * @alpha @sealed
+	 * @internal @sealed
 	 */
 	export interface CellKey {
 		/**
@@ -55,7 +55,7 @@ export namespace TableFactory {
 
 	/**
 	 * {@link TableFactory.ITable.insertRows} parameters.
-	 * @alpha @sealed
+	 * @internal @sealed
 	 */
 	export interface InsertRowsParameters<TInsertableRow> {
 		/**
@@ -73,7 +73,7 @@ export namespace TableFactory {
 
 	/**
 	 * {@link TableFactory.ITable.insertColumn} parameters.
-	 * @alpha @sealed
+	 * @internal @sealed
 	 */
 	export interface InsertColumnParameters<TInsertableColumn> {
 		/**
@@ -91,7 +91,7 @@ export namespace TableFactory {
 
 	/**
 	 * A column in a table.
-	 * @alpha @sealed
+	 * @internal @sealed
 	 */
 	export interface IColumn {
 		readonly id: string;
@@ -103,7 +103,7 @@ export namespace TableFactory {
 
 	/**
 	 * Factory for creating new table column schema.
-	 * @alpha
+	 * @internal
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createColumnSchema<const TInputScope extends string | undefined>(
@@ -231,7 +231,7 @@ export namespace TableFactory {
 
 	/**
 	 * Base column schema type.
-	 * @alpha @sealed @system
+	 * @internal @sealed @system
 	 */
 	export type ColumnSchemaBase<TScope extends string | undefined> = ReturnType<
 		typeof createColumnSchema<TScope>
@@ -239,7 +239,7 @@ export namespace TableFactory {
 
 	/**
 	 * A row in a table.
-	 * @alpha @sealed
+	 * @internal @sealed
 	 */
 	export interface IRow<TCellInsertable, TCellValue, TColumnValue> {
 		readonly id: string;
@@ -255,7 +255,7 @@ export namespace TableFactory {
 
 	/**
 	 * Factory for creating new table row schema.
-	 * @alpha @sealed
+	 * @internal @sealed
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createRowSchema<
@@ -419,7 +419,7 @@ export namespace TableFactory {
 
 	/**
 	 * Base row schema type.
-	 * @alpha @sealed @system
+	 * @internal @sealed @system
 	 */
 	export type RowSchemaBase<
 		TScope extends string | undefined,
@@ -429,7 +429,7 @@ export namespace TableFactory {
 
 	/**
 	 * A table.
-	 * @alpha @sealed
+	 * @internal @sealed
 	 */
 	export interface ITable<
 		TCellSchema extends ImplicitAllowedTypes,
@@ -459,7 +459,7 @@ export namespace TableFactory {
 
 	/**
 	 * Factory for creating new table schema.
-	 * @alpha
+	 * @internal
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createTableSchema<
@@ -692,7 +692,7 @@ export namespace TableFactory {
 
 	/**
 	 * Base row schema type.
-	 * @alpha @sealed @system
+	 * @internal @sealed @system
 	 */
 	export type TableSchemaBase<
 		TScope extends string | undefined,
