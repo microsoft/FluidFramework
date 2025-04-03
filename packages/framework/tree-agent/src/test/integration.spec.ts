@@ -24,11 +24,12 @@ import { queryDomain } from "./utils.js";
 describe("Agent Editing Integration", () => {
 	for (const provider of ["openai", "anthropic", "gemini"] as const) {
 		for (const editingType of ["editing", "functioning"] as const) {
-			if (provider === "gemini" && editingType === "editing") {
-				// TODO: Gemini does not support editing
-				describe.skip("TODO Gemini does not support editing", () => {});
-			} else {
-				describe(`${editingType} agent via ${provider}`, () => {
+			{
+				// TODO: Gemini doesn't support the editing agent yet
+				const describeSuite =
+					provider === "gemini" && editingType === "editing" ? describe.skip : describe;
+
+				describeSuite(`${editingType} agent via ${provider}`, () => {
 					it("Table Domain", async () => {
 						const result = await queryDomain(
 							"table",
