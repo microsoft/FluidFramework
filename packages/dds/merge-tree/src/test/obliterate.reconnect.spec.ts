@@ -13,7 +13,7 @@ import { PartialSyncTestHelper as ReconnectTestHelper } from "./partialSyncHelpe
 import { Side } from "../sequencePlace.js";
 
 for (const incremental of [true, false]) {
-	describe.only(`obliterate partial lengths incremental = ${incremental}`, () => {
+	describe(`obliterate partial lengths incremental = ${incremental}`, () => {
 		useStrictPartialLengthChecks();
 
 		beforeEach(() => {

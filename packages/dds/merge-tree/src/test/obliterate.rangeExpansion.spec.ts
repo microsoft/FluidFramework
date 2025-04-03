@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { Side } from "../sequencePlace.js";
 import { itCorrectlyObliterates } from "./testUtils.js";
 
-describe.only("obliterate", () => {
+describe("obliterate", () => {
 	itCorrectlyObliterates({
 		title: "Obliterate adjacent insert",
 		action: (helper) => {
@@ -220,7 +220,7 @@ describe.only("obliterate", () => {
 	});
 });
 
-describe.only("overlapping edits", () => {
+describe("overlapping edits", () => {
 	itCorrectlyObliterates({
 		title: "overlapping obliterate and obliterate",
 		action: (helper) => {
@@ -319,7 +319,7 @@ describe.only("overlapping edits", () => {
 	});
 });
 
-describe.only("sided obliterates", () => {
+describe("sided obliterates", () => {
 	/**
 	 * All test cases will operate on the same numerical positions, but differ on their sidedness:
 	 * 1. A expand both endpoints, B expand neither endpoint = expand range on both endpoints

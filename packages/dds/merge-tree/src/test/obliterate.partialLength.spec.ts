@@ -12,7 +12,7 @@ import { TextSegment } from "../textSegment.js";
 import { TestClient } from "./testClient.js";
 import { useStrictPartialLengthChecks, validatePartialLengths } from "./testUtils.js";
 
-describe.only("obliterate partial lengths", () => {
+describe("obliterate partial lengths", () => {
 	let client: TestClient;
 	let refSeq: number;
 	let initialLocalSeq: number;
