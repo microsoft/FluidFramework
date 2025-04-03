@@ -90,7 +90,6 @@ const createAndConfigureHttpServer = (
 	// Log all socket.io requests and upgrades received by the HTTP server before they are passed to the Socket.io server.
 	server.on("request", (req, res) => {
 		if (req.url?.startsWith("/socket.io")) {
-			// Socket.io requests should not be logged
 			Lumberjack.info("Socket.io request received", {
 				url: req.url,
 				method: req.method,
@@ -100,7 +99,6 @@ const createAndConfigureHttpServer = (
 
 	server.on("upgrade", (req, socket, head) => {
 		if (req.url?.startsWith("/socket.io")) {
-			// Socket.io requests should not be logged
 			Lumberjack.info("WebSocket upgrade received", {
 				url: req.url,
 				method: req.method,
