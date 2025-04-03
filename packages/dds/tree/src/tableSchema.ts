@@ -189,7 +189,7 @@ export namespace TableFactory {
 
 	/**
 	 * Base column schema type.
-	 * @sealed @internal @system
+	 * @sealed @system @internal
 	 */
 	export type ColumnSchemaBase<TScope extends string | undefined> = ReturnType<
 		typeof createColumnSchema<TScope>
@@ -249,6 +249,7 @@ export namespace TableFactory {
 
 	/**
 	 * Factory for creating new table row schema.
+	 * @privateRemarks TODO: add overloads to make column schema optional.
 	 * @sealed @internal
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
@@ -396,7 +397,7 @@ export namespace TableFactory {
 
 	/**
 	 * Base row schema type.
-	 * @sealed @internal @system
+	 * @sealed @system @internal
 	 */
 	export type RowSchemaBase<
 		TScope extends string | undefined,
@@ -575,6 +576,7 @@ export namespace TableFactory {
 
 	/**
 	 * Factory for creating new table schema.
+	 * @privateRemarks TODO: add overloads to make column/row schema optional.
 	 * @internal
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
@@ -793,7 +795,7 @@ export namespace TableFactory {
 
 	/**
 	 * Base row schema type.
-	 * @sealed @internal @system
+	 * @sealed @system @internal
 	 */
 	export type TableSchemaBase<
 		TScope extends string | undefined,
