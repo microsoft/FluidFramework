@@ -132,7 +132,7 @@ class SharedTreeEditingAgent<
 				name: "EditJsonTree",
 				description: "An array of edits to a user's SharedTree domain",
 				schema: z.object({
-					edits: z.array(z.unknown()).describe(`An array of well-formed TreeEdits`),
+					edits: z.array(z.record(z.unknown())).describe(`An array of well-formed TreeEdits`),
 				}),
 			},
 		);
