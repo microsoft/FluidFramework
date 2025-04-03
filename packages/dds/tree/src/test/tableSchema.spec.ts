@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict as assert, fail } from "node:assert";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
@@ -82,5 +82,15 @@ describe.only("table schema", () => {
 				},
 			],
 		});
+
+		let cell00: Cell | undefined = view.root.getCell({ rowId: "row-0", columnId: "column-0" });
+		assert.equal(cell00, undefined);
+
+		const column0: Column = view.root.getColumn("column-0") ?? fail("Column not found");
+		const row0: Row = view.root.getRow("row-0") ?? fail("Row not found");
+		row0.setCell(column0, { value: "Hello world!" });
+
+		cell00 = view.root.getCell({ rowId: "row-0", columnId: "column-0" });
+		assert.equal(cell00?.value, "Hello world!");
 	});
 });

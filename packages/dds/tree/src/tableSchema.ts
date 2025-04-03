@@ -9,13 +9,19 @@ import { Tree } from "./shared-tree/index.js";
 import {
 	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
+	type InsertableObjectFromSchemaRecord,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type NodeKind,
 	type SchemaFactoryAlpha,
+	type ScopedSchemaName,
 	TreeArrayNode,
+	type TreeNode,
 	type TreeNodeFromImplicitAllowedTypes,
+	type TreeNodeSchemaClass,
 	// eslint-disable-next-line import/no-deprecated
 	typeNameSymbol,
 	typeSchemaSymbol,
+	type WithType,
 } from "./simple-tree/index.js";
 
 // TODOs
@@ -31,12 +37,12 @@ const tableSchemaSymbol: unique symbol = Symbol("Table Schema");
  */
 export interface CellKey {
 	/**
-	 * {@link IColumnData.id} of the containing {@link IColumn}.
+	 * {@link IColumn.id} of the containing {@link IColumn}.
 	 */
 	readonly columnId: string;
 
 	/**
-	 * {@link IRowData.id} of the containing {@link IRow}.
+	 * {@link IRow.id} of the containing {@link IRow}.
 	 */
 	readonly rowId: string;
 }
@@ -78,6 +84,18 @@ export interface InsertColumnParameters<TInsertableColumn> {
 }
 
 /**
+ * A column in a table.
+ * @alpha @sealed
+ */
+export interface IColumn {
+	readonly id: string;
+	readonly index: number;
+	readonly moveTo: (index: number) => void;
+
+	// TODO
+}
+
+/**
  * Factory for creating new table column schema.
  * @alpha
  */
@@ -86,6 +104,7 @@ export function createColumnSchema<const TInputScope extends string | undefined>
 	inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
 ) {
 	const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
+	type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
 
 	type TTable = TreeNodeFromImplicitAllowedTypes<
 		TableSchemaBase<TInputScope, ImplicitAllowedTypes>
@@ -182,26 +201,26 @@ export function createColumnSchema<const TInputScope extends string | undefined>
 		// #endregion
 	}
 
-	return Column;
+	// return Column;
 
-	// type ColumnValueType = TreeNode & IColumn & WithType<ScopedSchemaName<Scope, "Column">>;
-	// type ColumnInsertableType = InsertableObjectFromSchemaRecord<typeof columnFields>;
+	type ColumnValueType = TreeNode & IColumn & WithType<ScopedSchemaName<Scope, "Column">>;
+	type ColumnInsertableType = InsertableObjectFromSchemaRecord<typeof columnFields>;
 
-	// // Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
-	// // for the private brand field of TreeNode.
-	// // This numeric id doesn't seem to be stable over incremental builds, and thus causes diffs in the API extractor reports.
-	// // This is avoided by doing this type conversion.
-	// // The conversion is done via assignment instead of `as` to get stronger type safety.
-	// const ColumnSchemaType: TreeNodeSchemaClass<
-	// 	/* Name */ ScopedSchemaName<Scope, "Column">,
-	// 	/* Kind */ NodeKind.Object,
-	// 	/* TNode */ ColumnValueType,
-	// 	/* TInsertable */ object & ColumnInsertableType,
-	// 	/* ImplicitlyConstructable */ true,
-	// 	/* Info */ typeof columnFields
-	// > = Column;
+	// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
+	// for the private brand field of TreeNode.
+	// This numeric id doesn't seem to be stable over incremental builds, and thus causes diffs in the API extractor reports.
+	// This is avoided by doing this type conversion.
+	// The conversion is done via assignment instead of `as` to get stronger type safety.
+	const ColumnSchemaType: TreeNodeSchemaClass<
+		/* Name */ ScopedSchemaName<Scope, "Column">,
+		/* Kind */ NodeKind.Object,
+		/* TNode */ ColumnValueType,
+		/* TInsertable */ object & ColumnInsertableType,
+		/* ImplicitlyConstructable */ true,
+		/* Info */ typeof columnFields
+	> = Column;
 
-	// return ColumnSchemaType;
+	return ColumnSchemaType;
 }
 
 /**
@@ -213,8 +232,24 @@ export type ColumnSchemaBase<TScope extends string | undefined> = ReturnType<
 >;
 
 /**
+ * A row in a table.
+ * @alpha @sealed
+ */
+export interface IRow<TCellInsertable, TCellValue, TColumnValue> {
+	readonly id: string;
+	readonly index: number;
+	// TODO: variant that takes ID
+	readonly getCell: (column: TColumnValue) => TCellValue | undefined;
+
+	// TODO: variant that takes ID
+	setCell(column: TColumnValue, value: TCellInsertable | undefined): void;
+
+	// TODO
+}
+
+/**
  * Factory for creating new table row schema.
- * @alpha
+ * @alpha @sealed
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 export function createRowSchema<
@@ -227,7 +262,7 @@ export function createRowSchema<
 	columnSchema: TColumn,
 ) {
 	const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
-	// type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
+	type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
 
 	type CellValueType = TreeNodeFromImplicitAllowedTypes<TCell>;
 	type CellInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TCell>;
@@ -351,23 +386,27 @@ export function createRowSchema<
 		// #endregion
 	}
 
-	return Row;
-	// type RowValueType = TreeNodeFromImplicitAllowedTypes<typeof Row>;
-	// type RowInsertableType = InsertableObjectFromSchemaRecord<typeof rowFields>;
+	// return Row;
+	type RowValueType = TreeNode &
+		IRow<CellInsertableType, CellValueType, ColumnValueType> &
+		WithType<ScopedSchemaName<Scope, "Row">>;
+	type RowInsertableType = InsertableObjectFromSchemaRecord<typeof rowFields>;
 
-	// // Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
-	// // for the private brand field of TreeNode.
-	// // This numeric id doesn't seem to be stable over incremental builds, and thus causes diffs in the API extractor reports.
-	// // This is avoided by doing this type conversion.
-	// // The conversion is done via assignment instead of `as` to get stronger type safety.
-	// const RowSchemaType: TreeNodeSchemaClass<
-	// 	/* Name */ ScopedSchemaName<Scope, "Row">,
-	// 	/* Kind */ NodeKind.Object,
-	// 	/* TNode */ RowValueType,
-	// 	/* TInsertable */ object & RowInsertableType,
-	// 	/* ImplicitlyConstructable */ true,
-	// 	/* Info */ typeof rowFields
-	// > = Row;
+	// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
+	// for the private brand field of TreeNode.
+	// This numeric id doesn't seem to be stable over incremental builds, and thus causes diffs in the API extractor reports.
+	// This is avoided by doing this type conversion.
+	// The conversion is done via assignment instead of `as` to get stronger type safety.
+	const RowSchemaType: TreeNodeSchemaClass<
+		/* Name */ ScopedSchemaName<Scope, "Row">,
+		/* Kind */ NodeKind.Object,
+		/* TNode */ RowValueType,
+		/* TInsertable */ object & RowInsertableType,
+		/* ImplicitlyConstructable */ true,
+		/* Info */ typeof rowFields
+	> = Row;
+
+	return RowSchemaType;
 }
 
 /**
@@ -379,6 +418,34 @@ export type RowSchemaBase<
 	TCell extends ImplicitAllowedTypes,
 	TColumn extends ColumnSchemaBase<TScope> = ColumnSchemaBase<TScope>,
 > = ReturnType<typeof createRowSchema<TScope, TCell, TColumn>>;
+
+/**
+ * A table.
+ * @alpha @sealed
+ */
+export interface ITable<
+	TCellSchema extends ImplicitAllowedTypes,
+	TColumnSchema extends ImplicitAllowedTypes,
+	TRowSchema extends ImplicitAllowedTypes,
+> {
+	readonly rows: TreeArrayNode<TRowSchema>;
+	readonly columns: TreeArrayNode<TColumnSchema>;
+
+	readonly getRow: (id: string) => TreeNodeFromImplicitAllowedTypes<TRowSchema> | undefined;
+	readonly getColumn: (
+		id: string,
+	) => TreeNodeFromImplicitAllowedTypes<TColumnSchema> | undefined;
+	readonly getCell: (
+		key: CellKey,
+	) => TreeNodeFromImplicitAllowedTypes<TCellSchema> | undefined;
+
+	readonly insertColumn: (
+		params: InsertColumnParameters<InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema>>,
+	) => TreeNodeFromImplicitAllowedTypes<TColumnSchema>;
+	readonly insertRows: (
+		params: InsertRowsParameters<InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema>>,
+	) => TreeNodeFromImplicitAllowedTypes<TRowSchema>[];
+}
 
 /**
  * Factory for creating new table schema.
@@ -401,7 +468,7 @@ export function createTableSchema<
 	rowSchema: TRow,
 ) {
 	const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
-	// type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
+	type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
 
 	type CellValueType = TreeNodeFromImplicitAllowedTypes<TCell>;
 	// type CellInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TCell>;
@@ -588,27 +655,29 @@ export function createTableSchema<
 		// #endregion
 	}
 
-	return Table;
+	// return Table;
 
-	// type TableValueType = TreeNodeFromImplicitAllowedTypes<typeof Table>
-	// type TableInsertableType = InsertableObjectFromSchemaRecord<typeof tableFields>;
+	type TableValueType = TreeNode &
+		ITable<TCell, TColumn, TRow> &
+		WithType<ScopedSchemaName<Scope, "Table">>;
+	type TableInsertableType = InsertableObjectFromSchemaRecord<typeof tableFields>;
 
-	// // Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
-	// // for the private brand field of TreeNode.
-	// // This numeric id doesn't seem to be stable over incremental builds, and thus causes diffs in the API extractor reports.
-	// // This is avoided by doing this type conversion.
-	// // The conversion is done via assignment instead of `as` to get stronger type safety.
-	// const TableSchemaType: TreeNodeSchemaClass<
-	// 	/* Name */ ScopedSchemaName<Scope, "Table">,
-	// 	/* Kind */ NodeKind.Object,
-	// 	/* TNode */ TableValueType,
-	// 	/* TInsertable */ object & TableInsertableType,
-	// 	/* ImplicitlyConstructable */ true,
-	// 	/* Info */ typeof tableFields
-	// > = Table;
+	// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
+	// for the private brand field of TreeNode.
+	// This numeric id doesn't seem to be stable over incremental builds, and thus causes diffs in the API extractor reports.
+	// This is avoided by doing this type conversion.
+	// The conversion is done via assignment instead of `as` to get stronger type safety.
+	const TableSchemaType: TreeNodeSchemaClass<
+		/* Name */ ScopedSchemaName<Scope, "Table">,
+		/* Kind */ NodeKind.Object,
+		/* TNode */ TableValueType,
+		/* TInsertable */ object & TableInsertableType,
+		/* ImplicitlyConstructable */ true,
+		/* Info */ typeof tableFields
+	> = Table;
 
-	// // Return the table schema
-	// return TableSchemaType;
+	// Return the table schema
+	return TableSchemaType;
 }
 
 /**
