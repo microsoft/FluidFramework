@@ -320,7 +320,8 @@ export namespace TableFactory {
 		 * The Row schema - this is a map of Cells where the key is the column id
 		 */
 		class Row extends schemaFactory.object("Row", rowFields) {
-			/** Get a cell by the column
+			/**
+			 * Get a cell by the column
 			 * @param column - The column
 			 * @returns The cell if it exists, otherwise undefined
 			 */
@@ -503,13 +504,6 @@ export namespace TableFactory {
 		 * The Table schema
 		 */
 		class Table extends schemaFactory.object("Table", tableFields) {
-			public static create(): Table {
-				return new Table({
-					rows: [],
-					columns: [],
-				});
-			}
-
 			/**
 			 * Get a row by the id
 			 * @param id - The id of the row
