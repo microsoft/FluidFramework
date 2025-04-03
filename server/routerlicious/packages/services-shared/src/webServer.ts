@@ -93,7 +93,6 @@ const createAndConfigureHttpServer = (
 			const requestProperties = {
 				url: req.url,
 				method: req.method,
-				remoteAddress: req.socket.remoteAddress,
 			};
 			Lumberjack.info("Socket.io request received", requestProperties);
 
@@ -116,7 +115,6 @@ const createAndConfigureHttpServer = (
 			const requestProperties = {
 				url: req.url,
 				method: req.method,
-				remoteAddress: req.socket.remoteAddress,
 			};
 			Lumberjack.info("WebSocket upgrade received", requestProperties);
 
