@@ -101,6 +101,7 @@ async function generateCreateDocumentResponseBody(
 	isEphemeral: boolean,
 	redisCacheForGetSession?: ICache,
 	ephemeralDocumentTTLSec?: number,
+	sessionCacheTTLSec?: number,
 ): Promise<ICreateDocumentResponseBody> {
 	const authorizationHeader = request.header("Authorization");
 	let newDocumentAccessToken: string | undefined;
@@ -142,7 +143,7 @@ async function generateCreateDocumentResponseBody(
 				documentId,
 				session,
 				redisCacheForGetSession,
-				isEphemeral ? ephemeralDocumentTTLWithLatencyMargin : undefined,
+				isEphemeral ? ephemeralDocumentTTLWithLatencyMargin : sessionCacheTTLSec,
 			);
 		}
 	}
@@ -185,6 +186,10 @@ export function create(
 	);
 	const ephemeralDocumentTTLSec: number | undefined = config.get(
 		"storage:ephemeralDocumentTTLSec",
+	);
+	const sessionCacheTTLSec: number | undefined = config.get("alfred:sessionCacheTTLSec");
+	const sessionCacheTTLForDeletedDocumentsSec: number | undefined = config.get(
+		"alfred:sessionCacheTTLForDeletedDocumentsSec",
 	);
 
 	const ignoreEphemeralFlag: boolean = config.get("alfred:ignoreEphemeralFlag") ?? true;
@@ -364,6 +369,7 @@ export function create(
 					isEphemeral,
 					redisCacheForGetSession,
 					ephemeralDocumentTTLSec,
+					sessionCacheTTLSec,
 				);
 				return handleResponse(
 					Promise.all([createP, generateResponseBodyP]).then(
@@ -474,6 +480,8 @@ export function create(
 				readDocumentRetryDelay,
 				readDocumentMaxRetries,
 				redisCacheForGetSession,
+				sessionCacheTTLSec,
+				sessionCacheTTLForDeletedDocumentsSec,
 			);
 
 			const onSuccess = (result: ISession): void => {
