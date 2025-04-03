@@ -93,7 +93,7 @@ const createAndConfigureHttpServer = (
 			const requestProperties = {
 				url: req.url,
 				method: req.method,
-				isWebSocketUpgrade: req.headers.upgrade?.toLowerCase() === 'websocket',
+				isWebSocketUpgrade: req.headers.upgrade?.toLowerCase() === "websocket",
 			};
 			Lumberjack.info("Socket.io request received", requestProperties);
 
