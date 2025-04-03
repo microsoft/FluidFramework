@@ -110,7 +110,7 @@
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"postpack": "tar -cf ./tree.test-files.tar ./src/test ./dist/test ./lib/test",
+		"pack:tests": "tar -cf ./tree.test-files.tar ./src/test ./dist/test ./lib/test",
 		"test": "npm run test:mocha",
 		"test:benchmark:report": "mocha --exit --perfMode --parentProcess --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 60000",
 		"test:coverage": "c8 npm test",
