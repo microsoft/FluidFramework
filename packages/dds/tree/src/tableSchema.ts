@@ -24,7 +24,7 @@ import {
 	type WithType,
 } from "./simple-tree/index.js";
 
-// TODOs
+// Future improvement TODOs (ideally to be done before promoting these APIs to `@alpha`):
 // - Record-like type parameters
 // - Overloads to make Column/Row schema optional when constructing Tables
 
