@@ -175,6 +175,7 @@ import {
 	type ContainerRuntimeIdAllocationMessage,
 	type InboundSequencedContainerRuntimeMessage,
 	type LocalContainerRuntimeMessage,
+	type OutboundContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
 import { ISavedOpMetadata } from "./metadata.js";
@@ -191,7 +192,6 @@ import {
 	OpGroupingManager,
 	OpSplitter,
 	Outbox,
-	prepareOpPayloadForSubmit,
 	RemoteMessageProcessor,
 	serializeOpContents,
 	OpContentsSerializer,
@@ -2445,6 +2445,7 @@ export class ContainerRuntime
 	 * Parse an op's type and actual content from given serialized content
 	 * ! Note: this format needs to be in-line with what is set in the "ContainerRuntime.submit(...)" method
 	 */
+	// TODO: markfields: confirm Local- versus Outbound- ContainerRuntimeMessage typing
 	private parseLocalOpContent(serializedContents?: string): LocalContainerRuntimeMessage {
 		assert(serializedContents !== undefined, 0x6d5 /* content must be defined */);
 		const message = JSON.parse(serializedContents) as LocalContainerRuntimeMessage;
@@ -3274,7 +3275,7 @@ export class ContainerRuntime
 	private isContainerMessageDirtyable({
 		type,
 		contents,
-	}: LocalContainerRuntimeMessage): boolean {
+	}: OutboundContainerRuntimeMessage): boolean {
 		// Certain container runtime messages should not mark the container dirty such as the old built-in
 		// AgentScheduler and Garbage collector messages.
 		switch (type) {
@@ -4192,7 +4193,7 @@ export class ContainerRuntime
 	}
 
 	private submit(
-		containerRuntimeMessage: LocalContainerRuntimeMessage,
+		containerRuntimeMessage: OutboundContainerRuntimeMessage,
 		localOpMetadata: unknown = undefined,
 		metadata?: { localId: string; blobId?: string },
 	): void {
@@ -4251,18 +4252,11 @@ export class ContainerRuntime
 				});
 			}
 
-			//* TODO: Decode / pop LOM on the flip side
-
-			//* Naming?  Contents v. Message v. Op
-			const { serializedContents, wrappedLocalOpMetadata } = prepareOpPayloadForSubmit(
-				containerRuntimeMessage,
-				localOpMetadata,
-				this.opContentsSerializer,
-			);
 			const message: BatchMessage = {
-				contents: serializedContents,
+				// OpContentsSerializer will encode any handles present in this op before serializing to string
+				contents: serializeOpContents(containerRuntimeMessage, this.opContentsSerializer),
 				metadata,
-				localOpMetadata: wrappedLocalOpMetadata,
+				localOpMetadata,
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 			};
 			if (type === ContainerMessageType.BlobAttach) {
@@ -4380,9 +4374,10 @@ export class ContainerRuntime
 	}
 
 	private reSubmit(message: PendingMessageResubmitData): void {
-		const containerRuntimeMessage = (
-			message.localOpMetadata as { viableContent: LocalContainerRuntimeMessage }
-		).viableContent;
+		// Messages in the PendingStateManager and Outbox (both call resubmit) have serialized contents, so parse it here.
+		// Note that roundtripping handles through string like this means this parsed contents
+		// contains RemoteFluidObjectHandles, not the original handle.
+		const containerRuntimeMessage = this.parseLocalOpContent(message.content);
 		this.reSubmitCore(containerRuntimeMessage, message.localOpMetadata, message.opMetadata);
 	}
 
@@ -4448,12 +4443,10 @@ export class ContainerRuntime
 	}
 
 	private rollback(content: string | undefined, localOpMetadata: unknown): void {
-		const containerRuntimeMessage = (
-			localOpMetadata as { viableContent: LocalContainerRuntimeMessage }
-		).viableContent;
-
-		// Need to parse from string for back-compat
-		const { type, contents } = containerRuntimeMessage;
+		// Messages in the Outbox (which calls rollback) have serialized contents, so parse it here.
+		// Note that roundtripping handles through string like this means this parsed contents
+		// contains RemoteFluidObjectHandles, not the original handle.
+		const { type, contents } = this.parseLocalOpContent(content);
 		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp: {
 				// For operations, call rollbackDataStoreOp which will find the right store

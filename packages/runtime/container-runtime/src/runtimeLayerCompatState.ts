@@ -68,9 +68,6 @@ export const runtimeCompatDetailsForDataStore: ILayerCompatDetails = {
 	supportedFeatures: new Set<string>([
 		// The ContainerRuntime encodes handles now.  Eventually DataStore layer can require this feature and stop encoding on its side.
 		"encodeHandles",
-		// The ContainerRuntime preserves the original local op when resubmitting/rolling-back an op (as opposed to the string-roundtripped op with RemoteFluidObjectHandles).
-		// This will be needed by the DataStore layer to properly bind handles on resubmit, for example.
-		"preserveOriginalLocalOp",
 	]),
 };
 

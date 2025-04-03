@@ -57,7 +57,7 @@ import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, IFluidSerializer } from "./serializer.js";
 import { SummarySerializer } from "./summarySerializer.js";
 import { ISharedObject, ISharedObjectEvents } from "./types.js";
-import { bindHandles, parseHandles } from "./utils.js";
+import { makeHandlesSerializable, parseHandles } from "./utils.js";
 
 /**
  * Custom telemetry properties used in {@link SharedObjectCore} to instantiate {@link TelemetryEventBatcher} class.
@@ -458,12 +458,13 @@ export abstract class SharedObjectCore<
 	protected submitLocalMessage(content: unknown, localOpMetadata: unknown = undefined): void {
 		this.verifyNotClosed();
 		if (this.isAttached()) {
-			//* TODO: More efficient impl without cloning
-			// Bind the handles, but don't encode them yet.
-			bindHandles(content, this.serializer, this.handle);
-
+			// NOTE: We may also be encoding in the ContainerRuntime layer.
+			// Once the layer-compat window passes we can stop encoding here and only bind
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.services!.deltaConnection.submit(content, localOpMetadata);
+			this.services!.deltaConnection.submit(
+				makeHandlesSerializable(content, this.serializer, this.handle),
+				localOpMetadata,
+			);
 		}
 	}
 
