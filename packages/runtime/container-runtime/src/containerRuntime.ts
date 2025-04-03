@@ -193,8 +193,7 @@ import {
 	OpSplitter,
 	Outbox,
 	RemoteMessageProcessor,
-	serializeOpContents,
-	OpContentsSerializer,
+	OpSerializer,
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
@@ -1150,7 +1149,7 @@ export class ContainerRuntime
 	/**
 	 * For serializing ops - including encoding handles - during submit.
 	 */
-	private readonly opContentsSerializer: OpContentsSerializer;
+	private readonly opSerializer: OpSerializer;
 
 	/**
 	 * This is a proxy to the delta manager provided by the container context (innerDeltaManager). It restricts certain
@@ -1563,7 +1562,7 @@ export class ContainerRuntime
 		this._deltaManager = outerDeltaManager;
 
 		this.handleContext = new ContainerFluidHandleContext("", this);
-		this.opContentsSerializer = new OpContentsSerializer(this.IFluidHandleContext);
+		this.opSerializer = new OpSerializer(this.IFluidHandleContext);
 
 		if (summaryConfiguration.state === "enabled") {
 			validateSummaryHeuristicConfiguration(summaryConfiguration);
@@ -4184,7 +4183,7 @@ export class ContainerRuntime
 					contents: idRange,
 				};
 				const idAllocationBatchMessage: BatchMessage = {
-					contents: serializeOpContents(idAllocationMessage),
+					contents: this.opSerializer.stringify(idAllocationMessage),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				};
 				this.outbox.submitIdAllocation(idAllocationBatchMessage);
@@ -4247,14 +4246,14 @@ export class ContainerRuntime
 					contents: schemaChangeMessage,
 				};
 				this.outbox.submit({
-					contents: serializeOpContents(msg),
+					contents: this.opSerializer.stringify(msg),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				});
 			}
 
 			const message: BatchMessage = {
-				// OpContentsSerializer will encode any handles present in this op before serializing to string
-				contents: serializeOpContents(containerRuntimeMessage, this.opContentsSerializer),
+				// OpSerializer will encode any handles present in this op before serializing to string
+				contents: this.opSerializer.stringify(containerRuntimeMessage),
 				metadata,
 				localOpMetadata,
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
