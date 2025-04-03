@@ -132,8 +132,52 @@ describe.only("TableFactory unit tests", () => {
 			});
 		});
 
+		it("Insert new column into non-empty list", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({ rows: [], columns: [{ id: "column-a" }, { id: "column-b" }] });
+
+			treeView.root.insertColumn({ index: 1, column: { id: "column-c" } });
+
+			assertEqualTrees(treeView.root, {
+				columns: [
+					{
+						id: "column-a",
+					},
+					{
+						id: "column-c",
+					},
+					{
+						id: "column-b",
+					},
+				],
+				rows: [],
+			});
+		});
+
+		it("Append new column", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({ rows: [], columns: [{ id: "column-a" }, { id: "column-b" }] });
+
+			// By not specifying an index, the column should be appended to the end of the list.
+			treeView.root.insertColumn({ column: { id: "column-c" } });
+
+			assertEqualTrees(treeView.root, {
+				columns: [
+					{
+						id: "column-a",
+					},
+					{
+						id: "column-b",
+					},
+					{
+						id: "column-c",
+					},
+				],
+				rows: [],
+			});
+		});
+
 		// Test TODOs:
-		// - Success case: insert new column.
 		// - Failure case: insert column that already exist in the tree.
 	});
 
