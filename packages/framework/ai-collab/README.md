@@ -243,7 +243,7 @@ Debug Events in ai-collab have two different types of trace id's:
 - `eventFlowTraceId`: this field exists on all `EventFlowDebugEvents` and can be used to correlate all events from a particular event flow. Additionally all LLM api call events will contain the `eventFlowTraceId` field as well as a `triggeringEventFlowName` so you can link LLM API calls to a particular event flow.
 
 ## Ui Visualizations
-ai-collab provides an array of `UiDiff` objects with its response.Each of these objects allows developers to identify tree nodes that have been modified as a result of ai collaboration and visualize them according to their needs.
+ai-collab provides an array of `UiDiff` objects with its response. Each of these objects allows developers to identify tree nodes that have been modified as a result of ai collaboration and visualize them according to their needs.
 
 Every `UiDiff` will include either a single `NodePath` or multiple in the case of multiple nodes being targeted by a single edit created by the ai agent. A `NodePath` provides an array leading from the node targeted for modification (at the start of the array) all the way back to the root node passed to the ai-collab function call which will be at the end of the array, along with an explanation directly from the ai agent as to why is performed an edit.
 
