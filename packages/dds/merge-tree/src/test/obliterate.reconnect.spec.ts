@@ -9,9 +9,17 @@ import { MergeTree } from "../mergeTree.js";
 
 import { ClientTestHelper } from "./partialSyncHelper.js";
 import { useStrictPartialLengthChecks } from "./testUtils.js";
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 
-for (const incremental of [true, false]) {
-	describe(`obliterate partial lengths incremental = ${incremental}`, () => {
+for (const { incremental, mergeTreeEnableSidedObliterate } of generatePairwiseOptions({
+	incremental: [true, false],
+	mergeTreeEnableSidedObliterate: [
+		false,
+		// TODO:AB#31001: Enable this once sided obliterate supports reconnect.
+		// true,
+	],
+})) {
+	describe(`obliterate partial lengths incremental = ${incremental} enableSidedObliterate = ${mergeTreeEnableSidedObliterate}`, () => {
 		useStrictPartialLengthChecks();
 
 		beforeEach(() => {
@@ -23,7 +31,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("obliterate does not expand during rebase", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("B", 0, "ABCD");
 			helper.processAllOps();
@@ -39,7 +47,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("does delete reconnected insert into obliterate range if insert is rebased", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("B", 0, "ABCD");
 			helper.processAllOps();
@@ -56,7 +64,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("deletes reconnected insert into obliterate range when entire string deleted if rebased", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("B", 0, "ABCD");
 			helper.processAllOps();
@@ -73,7 +81,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("obliterates local segment while disconnected", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// [C]-D-(E)-F-H-G-B-A
 
@@ -96,7 +104,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("deletes concurrently inserted segment between separated group ops", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// B-A
 			// (B-C-A)
@@ -119,7 +127,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("removes correct number of pending segments", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// (BC)-[A]
 
@@ -139,7 +147,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("doesn't do obliterate ack traversal when starting segment has been acked", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// AB
 			// (E)-[F]-(G-D-(C-A)-B)
@@ -166,7 +174,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("does not delete reconnected insert at start of obliterate range if rebased", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("B", 0, "ABCD");
 			helper.processAllOps();
@@ -184,7 +192,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("does not delete reconnected insert at end of obliterate range", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("B", 0, "ABCD");
 			helper.processAllOps();

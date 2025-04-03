@@ -12,6 +12,7 @@ import { Side } from "../sequencePlace.js";
 
 import { ClientTestHelper } from "./partialSyncHelper.js";
 import { useStrictPartialLengthChecks } from "./testUtils.js";
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 
 /**
  * Some tests contain ASCII diagrams of the trees to make it easier to reason about
@@ -43,8 +44,11 @@ import { useStrictPartialLengthChecks } from "./testUtils.js";
  * removed by two clients.
  */
 
-for (const incremental of [true, false]) {
-	describe(`obliterate partial lengths incremental = ${incremental}`, () => {
+for (const { incremental, mergeTreeEnableSidedObliterate } of generatePairwiseOptions({
+	incremental: [true, false],
+	mergeTreeEnableSidedObliterate: [true, false],
+})) {
+	describe(`obliterate partial lengths incremental = ${incremental} enableSidedObliterate = ${mergeTreeEnableSidedObliterate}`, () => {
 		useStrictPartialLengthChecks();
 
 		beforeEach(() => {
@@ -56,7 +60,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("obliterate, then insert at the end of the string", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("A", 0, "01234567");
 			helper.processAllOps();
@@ -68,7 +72,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("insert, then obliterate at the end of the string", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("A", 0, "01234567");
 			helper.processAllOps();
@@ -80,7 +84,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("length of children does not differ from parent when overlapping remove+obliterate", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// ABCDEFGH
 			// I-[J]-(KLM-[ABC]-D-123456-E-[FG]-H)
@@ -101,7 +105,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("deletes concurrent insert that occurs after obliterate", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("B", 0, "ABCD");
 			helper.processAllOps();
@@ -116,7 +120,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("deletes concurrent insert that occurs before obliterate", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("B", 0, "ABCD");
 			helper.processAllOps();
@@ -131,7 +135,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("does not delete unacked segment at start of string", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("C", 0, "ABC");
 			helper.obliterateRange("C", 2, 3);
@@ -146,7 +150,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("throws when local obliterate has range end outside length of local string", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("B", 0, "A");
 			helper.insertText("C", 0, "B");
@@ -156,12 +160,15 @@ for (const incremental of [true, false]) {
 				assert.fail("should not be possible to obliterate outside local range");
 			} catch (error) {
 				assert(error instanceof LoggingError);
-				assert.equal(error.message, "RangeOutOfBounds");
+				assert.equal(
+					error.message,
+					mergeTreeEnableSidedObliterate ? "InvalidRange" : "RangeOutOfBounds",
+				);
 			}
 		});
 
 		it("does not delete when obliterate immediately after insert", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("C", 0, "A");
 			helper.obliterateRange("C", 0, 1);
@@ -178,7 +185,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("does not delete remote insert when between local insert+obliterate", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("C", 0, "A");
 			helper.insertText("B", 0, "X");
@@ -195,7 +202,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("does not delete remote insert when between local insert+obliterate", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("C", 0, "A");
 			helper.obliterateRange("C", 0, 1);
@@ -212,7 +219,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("does not delete remote insert when in middle of segment", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("C", 0, "ABC");
 			helper.obliterateRange("C", 2, 3);
@@ -228,7 +235,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("deletes segment inserted into locally obliterated segment", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("C", 0, "A");
 			helper.insertText("B", 0, "X");
@@ -244,7 +251,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("updates lengths after obliterated insertion", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("C", 0, "A");
 			helper.insertText("B", 0, "X");
@@ -265,7 +272,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("updates lengths when insertion causes tree to split", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("A", 0, "0");
 			helper.insertText("C", 0, "123");
@@ -285,7 +292,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("length of node split by insertion does not count remotely obliterated segments", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("A", 0, "1");
 			helper.insertText("A", 0, "2");
@@ -303,7 +310,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("length of node split by obliterate does not count remotely obliterated segments", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("A", 0, "1");
 			helper.insertText("A", 0, "2");
@@ -322,7 +329,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("counts remotely but not concurrently inserted segments for length when tree is split", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// a-b-c-d-e-123
 			// (a-b)-c-d-e-1-[2]-3
@@ -345,7 +352,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("does obliterate X for all clients", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("B", 0, "DE");
 			helper.obliterateRange("B", 0, 1);
@@ -361,7 +368,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("does not include remote but unacked segments in partial len calculation", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// 89-4567-123-X
 			// 8-(9-4-w-567-1)-23-Y-X
@@ -383,7 +390,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("correctly accounts for overlapping obliterate", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("B", 0, "AB");
 			helper.processAllOps();
@@ -399,7 +406,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("correctly accounts for overlapping obliterate and remove", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("B", 0, "AB");
 			helper.processAllOps();
@@ -415,7 +422,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("clones removes array during insert", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// the bug found here:
 			// the X was skipped over by client `A` because it had already been
@@ -439,7 +446,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("client partial lens consider overlapping obliterates", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("A", 0, "123");
 			helper.insertText("A", 0, "ABCDEF");
@@ -457,7 +464,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("client partial lens consider overlapping obliterates", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("C", 0, "X");
 			helper.insertText("C", 0, "ABCDEFG");
@@ -474,7 +481,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("tracks obliterate refSeq when acking op for partial len calculation", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			//   v-----------------------v
 			//           v--v
@@ -497,7 +504,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("does not have negative len when segment obliterated before insert", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// 1234567-D-C-AB
 			// 12-([3-X-45]-67)-D-C-AB
@@ -521,7 +528,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("does not have negative len when segment obliterated before insert", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// ABCDE-1-[2]-3
 			// (A-XX-B)-(CD)-E-1-3
@@ -544,7 +551,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("deletes segments between two obliterates with different seq", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// 90-8-1234-(5)-67-D-C-B-A
 			// 9-(EFG-[0-8-1234-(5)-67)]-D-C-B-A
@@ -569,7 +576,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("deletes inserted segment when obliterate of different seq in-between", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("A", 0, "AB");
 			helper.insertText("B", 0, "E");
@@ -587,7 +594,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("deletes inserted segment when obliterate of different seq in-between", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("A", 0, "ABC");
 			helper.obliterateRange("A", 1, 2);
@@ -604,7 +611,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("deletes inserted segment when obliterate of different seq in-between", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("A", 0, "ABC");
 			helper.obliterateRange("A", 1, 2);
@@ -621,7 +628,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("considers obliterated local segments as remotely obliterate", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// G-(H-F-I-C)-J-DE-A-(B)
 			// G-J-(H-F-I-CD)-E
@@ -643,7 +650,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("traverses hier block in obliterated when len at ref seq is >0 and len at len seq == 0", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("A", 0, "AB");
 			helper.insertText("A", 2, "CD");
@@ -665,7 +672,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("traverses hier block in obliterate when len at ref seq is >0 and len at len seq == 0", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// [E]-FGH-12-[A]-[B]-CD
 			// 3-4-F-[G-(H-1)-2]-CD
@@ -691,7 +698,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("ignores segments obliterated at insertion time for partial len calculations", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("B", 0, "ABC");
 			helper.insertText("A", 0, "DEF");
@@ -712,7 +719,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("accounts for overlapping obliterates from same client", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("A", 0, "AB");
 			helper.processAllOps();
@@ -730,7 +737,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("accounts for concurrently obliterated segments from the perspective of the inserting client for partial lengths", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("B", 0, "A");
 			helper.insertText("C", 0, "B");
@@ -749,7 +756,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("traverses segments when there is a local obliterate", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.insertText("A", 0, "AB");
 			helper.obliterateRange("A", 0, 1);
@@ -766,7 +773,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("keeps track of all obliterates on a segment", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// B-A
 			// (B-C-(A))
@@ -791,7 +798,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("many overlapping obliterates", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// EF-ABCD
 			// (1)-2-((E)-F-A)-B-(C)-D
@@ -813,7 +820,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("overlapping obliterates at start", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// 12345-B-A
 			// ((1-C-2)-3)-4-D-5-B-A
@@ -832,7 +839,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("partial lengths updated when local insert is acked", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// A-BCDEF
 			// (A-B-G-C)-D-I-E-H-F
@@ -856,7 +863,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("two local obliterates get different seq numbers after ack", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// C-AB
 			// (C-A)-D-(B)
@@ -879,7 +886,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("acks remote segment obliterated by local op", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// (D-C-A)-B
 			// (D-C-A)-B-E
@@ -902,7 +909,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("skips segments obliterated before refSeq when traversing for insertion", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// CDE-(A)-B
 			// C-(DE-F-(A)-B)
@@ -927,7 +934,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("applies correct obliterate when right segment has multiple obliterates", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// AB
 			// (A-C-D-(B))
@@ -951,7 +958,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("takes the correct remove clientId/stamp when multiple obliterates apply", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// AB
 			// (A-C-D-(B))
@@ -975,7 +982,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("selects clientId if 0", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// AB
 			// (A-D-E-(C)-B)
@@ -1000,7 +1007,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("obliterates unacked segment inside non-leaf-segment", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// FGHIJ-E-12345678-D-C-A-K-B
 			// FGHIJ-E-12345-(6-[7-L-8-D]-C)-A-K-B
@@ -1032,7 +1039,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("tracks length at seq of lower remove seq when overlapping", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// H-FG-A-CDE-B
 			// (H-F-[G-A)-C-I-D]-E-B
@@ -1060,7 +1067,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("segment obliterated on insert overlaps with local obliterate", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// AB
 			// ((A-C)-B)
@@ -1079,7 +1086,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("obliterates entire string when concurrent inserts inside range", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// GT
 			// (G-O-S-Y-T)
@@ -1098,7 +1105,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("obliterate ack traverses over non-obliterated remove", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// ABCDEFGH-1
 			// ABCDE-(F-[G]-2-H)-1
@@ -1124,7 +1131,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("overlapping remove and obliterate when remove happens last", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// FGH-E-D-BC-A
 			// ([F]-G)-H-E-D-B-I-C-A
@@ -1150,7 +1157,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("overlapping remove and obliterate when remove happens last _and_ partial length already exists", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// FGH-CDE-B-A
 			// [F-(GH)-C]-D-Z-E-B-A
@@ -1172,7 +1179,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("overlapping obliterate and remove when obliterate is larger than remove and happened last", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// H-CDEFG-B-A
 			// (H-C-[D]-E)-F-Z-G-B-A
@@ -1194,7 +1201,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("wasRemovedOnInsert computation remains accurate after leaf node is split", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// CD-B-A
 			// I-(C-(G)H-E)-F-D-B-A
@@ -1217,7 +1224,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("overlapping obliterates, segment is obliterated on insert and by local client", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// DEFG-BC-A
 			// v-----------v
@@ -1241,7 +1248,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("overlapping obliterates and remove", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// FGHIJKL-BCDE-A
 			// (FGHI-[JK-(L-B)-C]-D)-E-M-A
@@ -1263,7 +1270,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("does not mark obliterated on insert for non-acked obliterates", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// CDE-B-A
 			// I-((C-F)-G-D)-H-E-B-A
@@ -1286,7 +1293,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("partial len isLocal when seq is local but a non-local obliterate affects the segment", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// CDEFG-AB
 			// C-((D-I-E)-F)-G-A-H-B
@@ -1307,7 +1314,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("obliterated on insert by overlapping obliterates", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// B-DEFG-C-A
 			// ((B-D-H-E)-F-I-G-C)-A
@@ -1329,7 +1336,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("overlapping obliterates", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// ABCDEF
 			//   v-------------v
@@ -1353,7 +1360,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("overlapping obliterates", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// CDEF-AB
 			// v-------------------v
@@ -1378,7 +1385,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("overlapping remove and obliterate, local obliterate does not have a remote obliterated len", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			//      v-v------v-v
 			// G-(H-[F]-E)-D-[A]-B-I-C
@@ -1399,7 +1406,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("triple overlapping obliterate and overlapping remove", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// I-H-BCDEFG-A
 			//            v------------v
@@ -1429,7 +1436,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("triple overlapping obliterate with one being local", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// CDEFG-B-A
 			//   v--------v
@@ -1456,7 +1463,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("obliterate ack traversal is not stopped by obliterated segment", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// ABCD
 			// (A-(B)-E-C)-D-F
@@ -1479,7 +1486,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("updates partial lengths for segments when doing obliterate ack traversal", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// O-JKLMN-FGHI-E-CD-AB
 			//               v-v---v-----v
@@ -1511,7 +1518,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("combines remote obliterated length ", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// R-XYZ12-STUVW-LMNOP-DEFGHIJK-A-34567890-Q-BC
 			// v---------------v------------v------v--------v------------v
@@ -1563,7 +1570,7 @@ for (const incremental of [true, false]) {
 		});
 
 		it("three obliterates on same segment", () => {
-			const helper = new ClientTestHelper();
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			// A
 			// (C-B-D-((A)))
@@ -1583,7 +1590,7 @@ for (const incremental of [true, false]) {
 
 		describe("incremental partial length updates", () => {
 			it("obliterates concurrently inserted segment", () => {
-				const helper = new ClientTestHelper();
+				const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 				// (C-B-A)
 
@@ -1599,7 +1606,7 @@ for (const incremental of [true, false]) {
 			});
 
 			it("obliterates 2 concurrently inserted segments", () => {
-				const helper = new ClientTestHelper();
+				const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 				// (C-B-D-A)
 
@@ -1616,7 +1623,7 @@ for (const incremental of [true, false]) {
 			});
 
 			it("obliterates 4 concurrently inserted segments", () => {
-				const helper = new ClientTestHelper();
+				const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 				// I-F-(G-D-H-E-C-A)-B
 
@@ -1635,7 +1642,7 @@ for (const incremental of [true, false]) {
 			});
 
 			it("obliterates 3 concurrently inserted segments", () => {
-				const helper = new ClientTestHelper();
+				const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 				// I-G-(H-D-F-E-B)-C-A
 
@@ -1654,7 +1661,7 @@ for (const incremental of [true, false]) {
 			});
 
 			it("overlapping remove + obliterate, remove happened first", () => {
-				const helper = new ClientTestHelper();
+				const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 				// D-EFG-B-H-C-A
 				// I-D-([E]-F)-G-B-H-C-A
@@ -1676,7 +1683,7 @@ for (const incremental of [true, false]) {
 			});
 
 			it("overlapping remove + obliterate, remove happened last", () => {
-				const helper = new ClientTestHelper();
+				const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 				// DEFGH-C-B-A
 				// [D]-[E-(F)-G]-H-C-B-A
@@ -1698,7 +1705,7 @@ for (const incremental of [true, false]) {
 			});
 
 			it("segment inside locally obliterated segment group is split", () => {
-				const helper = new ClientTestHelper();
+				const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 				// CDEF-AB
 				// [C]-DE-(F-(G)-H-A)-B
@@ -1723,7 +1730,7 @@ for (const incremental of [true, false]) {
 			});
 
 			it("continues traversal past locally removed segment inserted before first obliterate", () => {
-				const helper = new ClientTestHelper();
+				const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 				// ABC
 				// (E-D-(A)-[B]-C)
@@ -1744,7 +1751,7 @@ for (const incremental of [true, false]) {
 			});
 
 			it("keeps track of remote obliterated length when hier node contains hier nodes", () => {
-				const helper = new ClientTestHelper();
+				const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 				// LMNO-HIJ-E-K-FG-D-C-AB
 				// lmnopq-L-[M]-NO-H-ghijk-I-(J-E-K-FG-D-C-A-a)-bc-ef-d-B
@@ -1789,7 +1796,7 @@ for (const incremental of [true, false]) {
 			});
 
 			it("combines remote obliterated length for parent node of tree with depth >=3", () => {
-				const helper = new ClientTestHelper();
+				const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 				// VWXYZ0-(K)-[L]-M-[N]-O-EFGHIJ-[A]-B-P-TU-QRS-CD
 				//                                      v-v------v------------v
