@@ -118,9 +118,10 @@ export abstract class SharedObjectCore<
 	private _isBoundToContext: boolean = false;
 
 	/**
-	 * If true, encode handles in ops. Otherwise, leave them be.
+	 * If true, only bind handles when submitting ops, and do not encode them.
+	 * Otherwise, bind and encode.
 	 */
-	private readonly encodeHandlesInOps: boolean;
+	private readonly skipHandleEncodingOnSubmit: boolean;
 
 	/**
 	 * Tracks error that closed this object.
@@ -167,10 +168,10 @@ export abstract class SharedObjectCore<
 		this.mc = loggerToMonitoringContext(this.logger);
 
 		const maybeRuntimeCompatDetails = this.runtime as FluidObject<ILayerCompatDetails>;
-		this.encodeHandlesInOps =
+		this.skipHandleEncodingOnSubmit =
 			maybeRuntimeCompatDetails?.ILayerCompatDetails?.supportedFeatures.has(
 				encodeHandlesInContainerRuntime,
-			) !== true;
+			) === true;
 
 		const { opProcessingHelper, callbacksHelper } = this.setUpSampledTelemetryHelpers();
 		this.opProcessingHelper = opProcessingHelper;
@@ -471,17 +472,17 @@ export abstract class SharedObjectCore<
 	protected submitLocalMessage(content: unknown, localOpMetadata: unknown = undefined): void {
 		this.verifyNotClosed();
 		if (this.isAttached()) {
-			let opContent = content;
-			if (this.encodeHandlesInOps) {
-				opContent = makeHandlesSerializable(content, this.serializer, this.handle);
-			} else {
+			let contentToSubmit = content;
+			if (this.skipHandleEncodingOnSubmit) {
 				bindHandles(content, this.serializer, this.handle);
+			} else {
+				contentToSubmit = makeHandlesSerializable(content, this.serializer, this.handle);
 			}
 
 			// NOTE: We may also be encoding in the ContainerRuntime layer.
 			// Once the layer-compat window passes we can stop encoding here and only bind
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.services!.deltaConnection.submit(opContent, localOpMetadata);
+			this.services!.deltaConnection.submit(contentToSubmit, localOpMetadata);
 		}
 	}
 
