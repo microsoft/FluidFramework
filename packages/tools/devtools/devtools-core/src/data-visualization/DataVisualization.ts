@@ -529,7 +529,7 @@ function isSharedObject(value: unknown): value is ISharedObject {
  * Determines whether or not the provided value is an {@link DataObject} using `instanceof`, for the purposes of this library.
  * @remarks
  * Uses `instanceof` over checking specific properties or methods, because we decided that a version mix-up with
- * @fluidframework/aqueduct is unlikely between devtools and end-user applications, and we don't support it anyway.
+ * {@link @fluidframework/aqueduct#}  is unlikely between devtools and end-user applications, and we don't support it anyway.
  */
 function isDataObject(value: unknown): value is DataObject {
 	if (value instanceof DataObject === false) {
