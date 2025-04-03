@@ -102,6 +102,9 @@ export function getSchemaIdentifier(content: TreeEditValue): string {
 			if (isFluidHandle(content)) {
 				return SchemaFactory.handle.identifier;
 			}
+			if (Tree.is(content, NodeKind.Map)) {
+				throw new UsageError("Map Nodes are not currently supported in this context");
+			}
 			return content[typeField];
 		}
 		default: {
