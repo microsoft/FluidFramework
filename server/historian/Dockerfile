@@ -3,6 +3,9 @@
 
 # DisableDockerDetector "No feasible secure solution for OSS repos yet"
 
+# Use the manifest digest's sha256 hash to ensure we are always using the same version of the base image.
+# That version of the base image must also be baked into the CI build agent by a repo maintainer.
+# This avoids throttling issues with Docker Hub by using an image baked into the pipeline build image.
 FROM node:20.19.0-bookworm-slim@sha256:990084211ea3d72132f286a038bf27e0f79b8cad532ae623b090f3486490e62e AS runnerbase
 
 ARG SETVERSION_VERSION=dev
