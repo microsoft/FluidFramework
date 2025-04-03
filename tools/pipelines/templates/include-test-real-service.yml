@@ -354,7 +354,7 @@ stages:
             addSpnToEnvironment: true
             scriptType: 'bash'
             scriptLocation: 'inlineScript'
-            scriptPath: |
+            inlineScript: |
               set -eu -o pipefail
 
               az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
