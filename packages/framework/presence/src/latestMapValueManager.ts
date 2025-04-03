@@ -21,6 +21,7 @@ import type {
 	LatestValueClientData,
 	LatestValueData,
 	LatestValueMetadata,
+	ValueTypeSchemaValidatorForKey,
 } from "./latestValueTypes.js";
 import type { ClientSessionId, ISessionClient, SpecificSessionClient } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
@@ -222,6 +223,7 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 				string | number
 			>,
 		) => void,
+		private readonly validator: ValueTypeSchemaValidatorForKey<T, K>,
 	) {
 		// All initial items are expected to be defined.
 		// TODO assert all defined and/or update type.
@@ -268,6 +270,7 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 		) => void,
 		thisArg?: unknown,
 	): void {
+		// TODO: This is a data read, so we need to validate.
 		for (const [key, item] of objectEntries(this.value.items)) {
 			if (item.value !== undefined) {
 				callbackfn(item.value, key, this);
@@ -275,7 +278,12 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 		}
 	}
 	public get(key: K): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> | undefined {
-		return this.value.items[key]?.value;
+		const data = this.value.items[key]?.value;
+		const valueValidator = this.validator(key, data);
+		if (valueValidator === undefined) {
+			throw new Error(`No validator for key ${key}`);
+		}
+		return valueValidator(data);
 	}
 	public has(key: K): boolean {
 		return this.value.items[key]?.value !== undefined;
@@ -361,6 +369,7 @@ class LatestMapValueManagerImpl<
 			InternalTypes.MapValueState<T, Keys>
 		>,
 		public readonly value: InternalTypes.MapValueState<T, Keys>,
+		validator: ValueTypeSchemaValidatorForKey<T, Keys>,
 		controlSettings: BroadcastControlSettings | undefined,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
@@ -373,6 +382,7 @@ class LatestMapValueManagerImpl<
 					allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
 				});
 			},
+			validator,
 		);
 	}
 
@@ -403,14 +413,17 @@ class LatestMapValueManagerImpl<
 		if (clientStateMap === undefined) {
 			throw new Error("No entry for client");
 		}
+
 		const items = new Map<Keys, LatestValueData<T>>();
 		for (const [key, item] of objectEntries(clientStateMap.items)) {
-			const value = item.value;
-			if (value !== undefined) {
-				items.set(key, {
-					value,
-					metadata: { revision: item.rev, timestamp: item.timestamp },
-				});
+			if (item.value !== undefined) {
+				const value = item.value;
+				if (value !== undefined) {
+					items.set(key, {
+						value,
+						metadata: { revision: item.rev, timestamp: item.timestamp },
+					});
+				}
 			}
 		}
 		return items;
@@ -457,7 +470,10 @@ class LatestMapValueManagerImpl<
 			const item = value.items[key]!;
 			const hadPriorValue = currentState.items[key]?.value;
 			currentState.items[key] = item;
-			const metadata = { revision: item.rev, timestamp: item.timestamp };
+			const metadata = {
+				revision: item.rev,
+				timestamp: item.timestamp,
+			};
 			if (item.value !== undefined) {
 				const itemValue = item.value;
 				const updatedItem = {
@@ -485,6 +501,13 @@ class LatestMapValueManagerImpl<
 }
 
 /**
+ * Utility type for a function that accepts either initial values or a schema validator
+ */
+// type InitialValuesOrValidator<T, Keys extends string | number> =
+// 	| { initialValues: { [K in Keys]: JsonSerializable<T> & JsonDeserialized<T> } }
+// 	| { validator: KeyValueTypeSchemaValidator<T, Keys> };
+
+/**
  * Factory for creating a {@link LatestMapValueManager}.
  *
  * @alpha
@@ -494,6 +517,7 @@ export function LatestMap<
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
 >(
+	validator: ValueTypeSchemaValidatorForKey<T, Keys>,
 	initialValues?: {
 		[K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
 	},
@@ -512,7 +536,11 @@ export function LatestMap<
 	// LatestMapValueManager takes ownership of values within initialValues.
 	if (initialValues !== undefined) {
 		for (const key of objectKeys(initialValues)) {
-			value.items[key] = { rev: 0, timestamp, value: initialValues[key] };
+			value.items[key] = {
+				rev: 0,
+				timestamp,
+				value: initialValues[key],
+			};
 		}
 	}
 	const factory = (
@@ -535,6 +563,7 @@ export function LatestMap<
 				key,
 				datastoreFromHandle(datastoreHandle),
 				value,
+				validator,
 				controls,
 			),
 		),
