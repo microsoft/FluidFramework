@@ -116,6 +116,22 @@ describe.only("TableFactory unit tests", () => {
 	});
 
 	describe("Insert column", () => {
+		it("Insert new column into empty list", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({ rows: [], columns: [] });
+
+			treeView.root.insertColumn({ index: 0, column: { id: "column-0" } });
+
+			assertEqualTrees(treeView.root, {
+				columns: [
+					{
+						id: "column-0",
+					},
+				],
+				rows: [],
+			});
+		});
+
 		// Test TODOs:
 		// - Success case: insert new column.
 		// - Failure case: insert column that already exist in the tree.
