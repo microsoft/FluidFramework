@@ -182,10 +182,150 @@ describe.only("TableFactory unit tests", () => {
 	});
 
 	describe("Insert rows", () => {
+		it("Insert empty rows list", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({ rows: [], columns: [] });
+
+			treeView.root.insertRows({ index: 0, rows: [] });
+
+			assertEqualTrees(treeView.root, {
+				columns: [],
+				rows: [],
+			});
+		});
+
+		it("Insert single row into empty list", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({ rows: [], columns: [] });
+
+			treeView.root.insertRows({
+				index: 0,
+				rows: [
+					{
+						id: "row-0",
+						cells: {},
+					},
+				],
+			});
+
+			assertEqualTrees(treeView.root, {
+				columns: [],
+				rows: [
+					{
+						id: "row-0",
+						cells: {},
+					},
+				],
+			});
+		});
+
+		it("Insert rows into non-empty list", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({
+				rows: [
+					{
+						id: "row-a",
+						cells: {},
+					},
+					{
+						id: "row-b",
+						cells: {},
+					},
+				],
+				columns: [],
+			});
+
+			treeView.root.insertRows({
+				index: 1,
+				rows: [
+					{
+						id: "row-c",
+						cells: {},
+					},
+					{
+						id: "row-d",
+						cells: {},
+					},
+				],
+			});
+
+			assertEqualTrees(treeView.root, {
+				columns: [],
+				rows: [
+					{
+						id: "row-a",
+						cells: {},
+					},
+					{
+						id: "row-c",
+						cells: {},
+					},
+					{
+						id: "row-d",
+						cells: {},
+					},
+					{
+						id: "row-b",
+						cells: {},
+					},
+				],
+			});
+		});
+
+		it("Append rows", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({
+				rows: [
+					{
+						id: "row-a",
+						cells: {},
+					},
+					{
+						id: "row-b",
+						cells: {},
+					},
+				],
+				columns: [],
+			});
+
+			// By not specifying an index, the column should be appended to the end of the list.
+			treeView.root.insertRows({
+				rows: [
+					{
+						id: "row-c",
+						cells: {},
+					},
+					{
+						id: "row-d",
+						cells: {},
+					},
+				],
+			});
+
+			assertEqualTrees(treeView.root, {
+				columns: [],
+				rows: [
+					{
+						id: "row-a",
+						cells: {},
+					},
+					{
+						id: "row-b",
+						cells: {},
+					},
+					{
+						id: "row-c",
+						cells: {},
+					},
+					{
+						id: "row-d",
+						cells: {},
+					},
+				],
+			});
+		});
+
 		// Test TODOs:
-		// - Success case: insert empty list.
-		// - Success case: insert single row.
-		// - Success case: insert multiple rows.
 		// - Failure case: insert row(s) that already exist in the tree.
 	});
 
