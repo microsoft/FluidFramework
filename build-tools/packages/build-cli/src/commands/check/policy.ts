@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
 import * as fs from "node:fs";
 import { EOL as newline } from "node:os";
 import * as path from "node:path";
 import { Flags } from "@oclif/core";
-import { readJson } from "fs-extra/esm";
 
 import {
 	BaseCommand,
@@ -97,16 +97,6 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			required: false,
 			char: "p",
 		}),
-		exclusions: Flags.file({
-			description: `Path to the exclusions.json file.`,
-			exists: true,
-			char: "e",
-			deprecated: {
-				message:
-					"Configure exclusions using the policy.exclusions field in the fluid-build config.",
-				version: "0.26.0",
-			},
-		}),
 		stdin: Flags.boolean({
 			description: `Read list of files from stdin.`,
 			required: false,
@@ -147,10 +137,20 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			this.exit(0);
 		}
 
+		const context = await this.getContext();
+		const { policy } = context.flubConfig;
+		const gitRoot = context.repo.resolvedRoot;
+
 		const pathRegex: RegExp =
 			this.flags.path === undefined
-				? new RegExp(`${process.cwd()}.*`, "i")
+				? new RegExp(`${path.relative(gitRoot, process.cwd())}.?`, "i")
 				: new RegExp(this.flags.path, "i");
+
+		if (this.flags.path === undefined) {
+			this.info(`Filtering to files under the current path.`);
+		} else {
+			this.info(`Filtering file paths by regex: ${pathRegex}`);
+		}
 
 		if (this.flags.handler !== undefined) {
 			const handlerRegex: RegExp = new RegExp(this.flags.handler, "i");
@@ -158,22 +158,11 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			handlersToRun = handlersToRun.filter((h) => handlerRegex.test(h.name));
 		}
 
-		if (this.flags.path !== undefined) {
-			this.info(`Filtering file paths by regex: ${pathRegex}`);
-		}
-
 		if (this.flags.fix) {
 			this.info("Resolving errors if possible.");
 		}
 
-		const context = await this.getContext();
-		const { policy } = context.flubConfig;
-
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const rawExclusions: string[] =
-			this.flags.exclusions === undefined
-				? policy?.exclusions
-				: await readJson(this.flags.exclusions);
+		const rawExclusions: string[] = policy?.exclusions ?? [];
 
 		const exclusions: RegExp[] = rawExclusions.map((e) => new RegExp(e, "i"));
 		const rawHandlerExclusions = policy?.handlerExclusions;
@@ -186,7 +175,6 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		}
 
 		const filePathsToCheck: string[] = [];
-		const gitRoot = context.repo.resolvedRoot;
 
 		if (this.flags.stdin) {
 			const stdInput = await readStdin();
@@ -325,6 +313,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		const { exclusions, gitRoot, pathRegex } = commandContext;
 
 		const filePath = path.join(gitRoot, inputPath).trim().replace(/\\/g, "/");
+		assert(path.isAbsolute(filePath) === true);
 
 		if (!pathRegex.test(inputPath) || !fs.existsSync(filePath)) {
 			return;

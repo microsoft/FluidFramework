@@ -8,7 +8,7 @@ import path from "node:path";
 import { Handler, readFile, writeFile } from "./common.js";
 
 const serverPath = "server/routerlicious/";
-const serverDockerfilePath = `${serverPath}Dockerfile`;
+const serverDockerfilePath = (sPath: string): string => path.posix.join(sPath, "Dockerfile");
 
 function getDockerfileCopyText(packageFilePath: string): string {
 	const packageDir = packageFilePath.split("/").slice(0, -1).join("/");
@@ -28,11 +28,15 @@ export const handler: Handler = {
 	name: "dockerfile-packages",
 	match: /^(server\/routerlicious\/packages)\/.*\/package\.json/i,
 	handler: async (file: string, gitRoot: string): Promise<string | undefined> => {
-		const repoRelative = path.relative(gitRoot, file);
+		// const relativePath = path.relative(process.cwd(), file);
 		// strip server path since all paths are relative to server directory
-		const dockerfileCopyText = getDockerfileCopyText(repoRelative.replace(serverPath, ""));
+		const dockerfileCopyText = getDockerfileCopyText(
+			path.relative(gitRoot, file).replace(serverPath, ""),
+		);
 		const dockerfileContents = getOrAddLocalMap("dockerfileContents", () =>
-			fs.readFileSync(serverDockerfilePath),
+			fs.readFileSync(
+				serverDockerfilePath(path.relative(process.cwd(), path.join(gitRoot, serverPath))),
+			),
 		);
 
 		if (!dockerfileContents.includes(dockerfileCopyText)) {
@@ -42,9 +46,11 @@ export const handler: Handler = {
 	resolver: (file: string, gitRoot: string): { resolved: boolean } => {
 		const repoRelative = path.relative(gitRoot, file);
 		const dockerfileCopyText = getDockerfileCopyText(repoRelative);
-
+		const dockerFilePath = serverDockerfilePath(
+			path.relative(process.cwd(), path.join(gitRoot, serverPath)),
+		);
 		// add to Dockerfile
-		let dockerfileContents = readFile(serverDockerfilePath);
+		let dockerfileContents = readFile(dockerFilePath);
 
 		if (!dockerfileContents.includes(dockerfileCopyText)) {
 			// regex basically find the last of 3 or more consecutive COPY package lines
@@ -63,7 +69,7 @@ export const handler: Handler = {
 				// eslint-disable-next-line unicorn/prefer-string-slice
 				dockerfileContents.substring(insertIndex, dockerfileContents.length);
 
-			writeFile(serverDockerfilePath, dockerfileContents);
+			writeFile(dockerFilePath, dockerfileContents);
 		}
 
 		return { resolved: true };
