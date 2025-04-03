@@ -1596,8 +1596,6 @@ export class MergeTree {
 			const refSeqStamp: OperationStamp = {
 				seq: perspective.refSeq,
 				clientId: stamp.clientId,
-				// TODO: Seems wrong to have localSeq here actually
-				localSeq: stamp.localSeq,
 			};
 			newSegment.insertionRefSeqStamp = refSeqStamp;
 
