@@ -115,9 +115,7 @@ export const visualizeDataObject: VisualizeDataObject = async (
 	dataObject: DataObject,
 	visualizeChildData: VisualizeChildData,
 ): Promise<FluidObjectTreeNode> => {
-	/**
-	 * @remarks Double-casted without additional check to avoid redundancy as multiple type checks are done prior to assigning the corresponding visualizer.
-	 */
+	// Double-casted without additional check to avoid redundancy as multiple type checks are done prior to assigning the corresponding visualizer.
 	const dataObjectRoot = (dataObject as unknown as { readonly root: ISharedDirectory }).root;
 	const renderedChildData = await visualizeDirectory(dataObjectRoot, visualizeChildData);
 	return {
