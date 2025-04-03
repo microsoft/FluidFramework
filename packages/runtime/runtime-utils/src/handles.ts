@@ -17,6 +17,17 @@ export interface ISerializedHandle {
 
 	// URL to the object. Relative URLs are relative to the handle context passed to the stringify.
 	url: string;
+
+	/**
+	 * The handle may contain metadata, generated and interpreted by the subsystem that the handle
+	 * relates to.  For instance, the BlobManager uses this to distinguish blob handles which may
+	 * not yet have an attached blob yet.
+	 *
+	 * @remarks
+	 * Will only exist if the handle has metadata, will be omitted entirely from the serialized format
+	 * if the handle has no metadata.
+	 */
+	readonly metadata?: Readonly<Record<string, string | number | boolean>> | undefined;
 }
 
 /**

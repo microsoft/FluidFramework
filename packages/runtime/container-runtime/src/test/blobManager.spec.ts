@@ -22,6 +22,7 @@ import {
 import {
 	type IFluidHandleContext,
 	type IFluidHandleInternal,
+	type IFluidHandleInternalWithMetadata,
 } from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { IClientDetails, SummaryType } from "@fluidframework/driver-definitions";
@@ -149,18 +150,18 @@ export class MockRuntime
 	public async createBlob(
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
-	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
+	): Promise<IFluidHandleInternalWithMetadata<ArrayBufferLike>> {
 		const P = this.blobManager.createBlob(blob, signal);
 		this.handlePs.push(P);
 		return P;
 	}
 
 	public async getBlob(
-		blobHandle: IFluidHandleInternal<ArrayBufferLike>,
+		blobHandle: IFluidHandleInternalWithMetadata<ArrayBufferLike>,
 	): Promise<ArrayBufferLike> {
 		const pathParts = blobHandle.absolutePath.split("/");
 		const blobId = pathParts[2];
-		return this.blobManager.getBlob(blobId);
+		return this.blobManager.getBlob(blobId, blobHandle.metadata);
 	}
 
 	public async getPendingLocalState(): Promise<(unknown[] | IPendingBlobs | undefined)[]> {

@@ -7,6 +7,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	IFluidHandleContext,
 	type IFluidHandleInternal,
+	type IFluidHandleInternalWithMetadata,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, shallowCloneObject } from "@fluidframework/core-utils/internal";
 import {
@@ -55,6 +56,11 @@ export interface IFluidSerializer {
 	 */
 	parse(value: string): unknown;
 }
+
+const isFluidHandleInternalWithMetadata = (
+	fluidHandleInternal: IFluidHandleInternal,
+): fluidHandleInternal is IFluidHandleInternalWithMetadata =>
+	"metadata" in fluidHandleInternal && fluidHandleInternal.metadata !== undefined;
 
 /**
  * Data Store serializer implementation
@@ -142,7 +148,7 @@ export class FluidSerializer implements IFluidSerializer {
 				? value.url
 				: generateHandleContextPath(value.url, this.context);
 
-			return new RemoteFluidObjectHandle(absolutePath, this.root);
+			return new RemoteFluidObjectHandle(absolutePath, this.root, value.metadata);
 		} else {
 			return value;
 		}
@@ -200,9 +206,15 @@ export class FluidSerializer implements IFluidSerializer {
 		bind: IFluidHandleInternal,
 	): ISerializedHandle {
 		bind.bind(handle);
-		return {
-			type: "__fluid_handle__",
-			url: handle.absolutePath,
-		};
+		return isFluidHandleInternalWithMetadata(handle)
+			? {
+					type: "__fluid_handle__",
+					url: handle.absolutePath,
+					metadata: handle.metadata,
+				}
+			: {
+					type: "__fluid_handle__",
+					url: handle.absolutePath,
+				};
 	}
 }

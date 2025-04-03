@@ -102,6 +102,21 @@ export interface IFluidHandleInternal<
 }
 
 /**
+ * @internal
+ */
+export interface IFluidHandleInternalWithMetadata<
+	// REVIEW: Constrain `T` to something? How do we support dds and datastores safely?
+	out T = unknown, // FluidObject & IFluidLoadable,
+> extends IFluidHandleInternal<T> {
+	/**
+	 * The handle may contain metadata, generated and interpreted by the subsystem that the handle
+	 * relates to.  For instance, the BlobManager uses this to distinguish blob handles which may
+	 * not yet have an attached blob yet.
+	 */
+	readonly metadata: Readonly<Record<string, number | boolean | string>> | undefined;
+}
+
+/**
  * Symbol which must only be used on an {@link (IFluidHandle:interface)}, and is used to identify such objects.
  *
  * @remarks
