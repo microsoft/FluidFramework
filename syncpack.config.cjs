@@ -195,7 +195,6 @@ module.exports = {
 				"@fluidframework/common-utils",
 				"@fluidframework/eslint-config-fluid",
 				"@fluidframework/protocol-definitions",
-				"@fluidframework/test-tools",
 			],
 			packages: ["**"],
 		},

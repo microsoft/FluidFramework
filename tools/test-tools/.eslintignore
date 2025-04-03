@@ -1,0 +1,2 @@
+# Right now we don't have the right eslint setup to lint (c)js files, so ignore them for now.
+getBaseJestConfig.cjs

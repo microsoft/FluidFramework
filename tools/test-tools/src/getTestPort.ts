@@ -7,27 +7,36 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 
+const defaultPort = 8081;
+const commonErrorString = `Using default port ${defaultPort}. If you encounter port collisions, be sure to run assign-test-ports.`;
+
 /**
  * Get the port for the pkg from the mapping.  Use a default if the file or the entry doesn't exist
  * (e.g. an individual test is being run and the file was never generated), which should presumably
  * not lead to collisions.
  */
-export function getTestPort(pkgName: string): string {
-	let mappedPort: string;
+export function getTestPort(pkgName: string): number {
+	let mappedPort: number;
 
 	try {
-		const portMapPath: string = fs
+		const portMapRaw: string = fs
 			.readFileSync(path.join(os.tmpdir(), "testportmap.json"))
 			.toString();
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const testPortsJson = JSON.parse(portMapPath);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-		mappedPort = testPortsJson[pkgName];
+		const testPortsJson = JSON.parse(portMapRaw) as Record<string, string>;
+		const portForPackage: string | undefined = testPortsJson[pkgName];
+		if (portForPackage === undefined) {
+			mappedPort = defaultPort;
+		} else if (Number.isFinite(portForPackage)) {
+			mappedPort = Number.parseInt(portForPackage, 10);
+		} else {
+			console.warn(`Found invalid port '${portForPackage}' for package '${pkgName}' in port map. ${commonErrorString}`);
+			mappedPort = defaultPort;
+		}
 	} catch {
 		console.warn(
-			"Port mapping not available, using default port of 8081. If you encounter port collisions, be sure to run assign-test-ports.",
+			`Port mapping not available. ${commonErrorString}`,
 		);
-		mappedPort = "8081";
+		mappedPort = defaultPort;
 	}
 	return mappedPort;
 }
