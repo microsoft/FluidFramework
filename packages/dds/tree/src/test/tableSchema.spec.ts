@@ -15,7 +15,7 @@ import {
 	type TreeNode,
 } from "../simple-tree/index.js";
 import { TreeFactory } from "../treeFactory.js";
-import { TableFactory } from "../tableSchema.js";
+import { TableSchema } from "../tableSchema.js";
 import { TreeAlpha } from "../shared-tree/index.js";
 
 const treeFactory = new TreeFactory({});
@@ -27,11 +27,11 @@ describe.only("TableFactory unit tests", () => {
 			value: schemaFactory.string,
 		}) {}
 
-		class Column extends TableFactory.createColumnSchema(schemaFactory) {}
+		class Column extends TableSchema.createColumn(schemaFactory) {}
 
-		class Row extends TableFactory.createRowSchema(schemaFactory, Cell, Column) {}
+		class Row extends TableSchema.createRow(schemaFactory, Cell, Column) {}
 
-		class Table extends TableFactory.createTableSchema(schemaFactory, Cell, Column, Row) {}
+		class Table extends TableSchema.createTable(schemaFactory, Cell, Column, Row) {}
 
 		// TODO: use `independentView` to avoid needing Fluid goo
 		const tree = treeFactory.create(

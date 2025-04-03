@@ -23,7 +23,6 @@ import {
 } from "./simple-tree/index.js";
 
 // TODOs before merge:
-// - "TableSchema" and "createFoo"
 // - methods on interfaces
 // - Custom fields on Table/Row/Column (props pattern)
 
@@ -36,7 +35,7 @@ import {
  * Contains types and factories for creating schema to represent dynamic tabular data.
  * @internal
  */
-export namespace TableFactory {
+export namespace TableSchema {
 	const tableSchemaFactorySubScope = "table";
 
 	const tableSchemaSymbol: unique symbol = Symbol("Table Schema");
@@ -45,7 +44,7 @@ export namespace TableFactory {
 
 	/**
 	 * A column in a table.
-	 * @remarks Implemented by the schema class returned from {@link TableFactory.createColumnSchema}.
+	 * @remarks Implemented by the schema class returned from {@link TableSchema.createColumn}.
 	 * @sealed @internal
 	 */
 	export interface IColumn {
@@ -67,7 +66,7 @@ export namespace TableFactory {
 	 * @internal
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
-	export function createColumnSchema<const TInputScope extends string | undefined>(
+	export function createColumn<const TInputScope extends string | undefined>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
 	) {
 		const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
@@ -151,7 +150,7 @@ export namespace TableFactory {
 	 * @sealed @system @internal
 	 */
 	export type ColumnSchemaBase<TScope extends string | undefined> = ReturnType<
-		typeof createColumnSchema<TScope>
+		typeof createColumn<TScope>
 	>;
 
 	// #endregion
@@ -160,7 +159,7 @@ export namespace TableFactory {
 
 	/**
 	 * A row in a table.
-	 * @remarks Implemented by the schema class returned from {@link TableFactory.createRowSchema}.
+	 * @remarks Implemented by the schema class returned from {@link TableSchema.createRow}.
 	 * @sealed @internal
 	 */
 	export interface IRow<TCellInsertable, TCellValue, TColumnValue> {
@@ -185,7 +184,7 @@ export namespace TableFactory {
 
 		/**
 		 * Sets the cell in the specified column.
-		 * @remarks To delete a cell, call {@link TableFactory.IRow.deleteCell} instead.
+		 * @remarks To delete a cell, call {@link TableSchema.IRow.deleteCell} instead.
 		 * @privateRemarks TODO: add overload that takes column ID.
 		 */
 		readonly setCell: (column: TColumnValue, value: TCellInsertable) => void;
@@ -203,7 +202,7 @@ export namespace TableFactory {
 	 * @sealed @internal
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
-	export function createRowSchema<
+	export function createRow<
 		const TInputScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
 		const TColumn extends ColumnSchemaBase<TInputScope> = ColumnSchemaBase<TInputScope>,
@@ -318,7 +317,7 @@ export namespace TableFactory {
 		TScope extends string | undefined,
 		TCell extends ImplicitAllowedTypes,
 		TColumn extends ColumnSchemaBase<TScope> = ColumnSchemaBase<TScope>,
-	> = ReturnType<typeof createRowSchema<TScope, TCell, TColumn>>;
+	> = ReturnType<typeof createRow<TScope, TCell, TColumn>>;
 
 	// #endregion
 
@@ -330,18 +329,18 @@ export namespace TableFactory {
 	 */
 	export interface CellKey {
 		/**
-		 * {@link TableFactory.IColumn.id} of the containing {@link TableFactory.IColumn}.
+		 * {@link TableSchema.IColumn.id} of the containing {@link TableSchema.IColumn}.
 		 */
 		readonly columnId: string;
 
 		/**
-		 * {@link TableFactory.IRow.id} of the containing {@link TableFactory.IRow}.
+		 * {@link TableSchema.IRow.id} of the containing {@link TableSchema.IRow}.
 		 */
 		readonly rowId: string;
 	}
 
 	/**
-	 * {@link TableFactory.ITable.insertColumn} parameters.
+	 * {@link TableSchema.ITable.insertColumn} parameters.
 	 * @sealed @internal
 	 */
 	export interface InsertColumnParameters<TInsertableColumn> {
@@ -359,7 +358,7 @@ export namespace TableFactory {
 	}
 
 	/**
-	 * {@link TableFactory.ITable.insertRows} parameters.
+	 * {@link TableSchema.ITable.insertRows} parameters.
 	 * @sealed @internal
 	 */
 	export interface InsertRowsParameters<TInsertableRow> {
@@ -377,7 +376,7 @@ export namespace TableFactory {
 	}
 
 	/**
-	 * {@link TableFactory.ITable.setCell} parameters.
+	 * {@link TableSchema.ITable.setCell} parameters.
 	 * @sealed @internal
 	 */
 	export interface SetCellParameters<TInsertableCell> {
@@ -412,14 +411,14 @@ export namespace TableFactory {
 		readonly rows: TreeArrayNode<TRowSchema>;
 
 		/**
-		 * Gets a table column by its {@link TableFactory.IRow.id}.
+		 * Gets a table column by its {@link TableSchema.IRow.id}.
 		 */
 		readonly getColumn: (
 			id: string,
 		) => TreeNodeFromImplicitAllowedTypes<TColumnSchema> | undefined;
 
 		/**
-		 * Gets a table row by its {@link TableFactory.IRow.id}.
+		 * Gets a table row by its {@link TableSchema.IRow.id}.
 		 */
 		readonly getRow: (id: string) => TreeNodeFromImplicitAllowedTypes<TRowSchema> | undefined;
 
@@ -452,7 +451,7 @@ export namespace TableFactory {
 
 		/**
 		 * Sets the cell at the specified location in the table.
-		 * @remarks To delete a cell, call {@link TableFactory.ITable.deleteCell} instead.
+		 * @remarks To delete a cell, call {@link TableSchema.ITable.deleteCell} instead.
 		 * @privateRemarks TODO: add overload that takes column/row nodes?
 		 */
 		readonly setCell: (
@@ -495,7 +494,7 @@ export namespace TableFactory {
 	 * @internal
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
-	export function createTableSchema<
+	export function createTable<
 		const TInputScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
 		const TColumn extends ColumnSchemaBase<TInputScope> = ColumnSchemaBase<TInputScope>,
@@ -702,7 +701,7 @@ export namespace TableFactory {
 		TCell extends ImplicitAllowedTypes,
 		TColumn extends ColumnSchemaBase<TScope> = ColumnSchemaBase<TScope>,
 		TRow extends RowSchemaBase<TScope, TCell, TColumn> = RowSchemaBase<TScope, TCell, TColumn>,
-	> = ReturnType<typeof createTableSchema<TScope, TCell, TColumn, TRow>>;
+	> = ReturnType<typeof createTable<TScope, TCell, TColumn, TRow>>;
 
 	// #endregion
 }

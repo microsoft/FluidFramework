@@ -291,4 +291,4 @@ export type { MapNodeInsertableData } from "./simple-tree/index.js";
 
 export { JsonAsTree } from "./jsonDomainSchema.js";
 export { FluidSerializableAsTree } from "./serializableDomainSchema.js";
-export { TableFactory } from "./tableSchema.js";
+export { TableSchema } from "./tableSchema.js";
