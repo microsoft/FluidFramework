@@ -15,19 +15,31 @@ import { validateUsageError } from "../../utils.js";
 const sf = new SchemaFactory("integration");
 
 describe("simple-tree API integration tests", () => {
-	it("making a recursive unhydrated object node errors", () => {
-		class O extends sf.objectRecursive("O", {
-			recursive: sf.optionalRecursive([() => O]),
-		}) {}
-		{
-			type _check = ValidateRecursiveSchema<typeof O>;
-		}
+	class O extends sf.objectRecursive("O", {
+		recursive: sf.optionalRecursive([() => O]),
+	}) {}
+	{
+		type _check = ValidateRecursiveSchema<typeof O>;
+	}
+
+	it("making a recursive unhydrated and un-parented object node errors", () => {
 		const obj = new O({ recursive: undefined });
 		assert.throws(
 			() => {
 				obj.recursive = obj;
 			},
 			validateUsageError(/recursive/),
+		);
+	});
+
+	it("making a recursive unhydrated and and parented object node errors", () => {
+		const obj = new O({ recursive: undefined });
+		const objOuter = new O({ recursive: obj });
+		assert.throws(
+			() => {
+				obj.recursive = obj;
+			},
+			validateUsageError(/more than one place/),
 		);
 	});
 });

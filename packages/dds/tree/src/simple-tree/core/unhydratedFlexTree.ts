@@ -157,7 +157,7 @@ export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
 			let n: UnhydratedFlexTreeNode | undefined = parent.parent;
 			while (n !== undefined) {
 				if (n === this) {
-					throw new UsageError("A node may not be inserted into the tree more than once");
+					throw new UsageError("A node may not be recursively inserted into the tree");
 				}
 				// This cast is safe because the parent (if it exists) of an unhydrated flex node is always another unhydrated flex node.
 				n = n.parentField.parent.parent as UnhydratedFlexTreeNode | undefined;
