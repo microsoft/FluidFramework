@@ -111,7 +111,7 @@ export namespace TableFactory {
 		/**
 		 * Move a column to a new location in its parent table.
 		 * @param index - The index to move the column to.
-		 * @throws Throws an error if the column is not in a table.
+		 * @throws Throws an error if the column is not in a table, or if the index is out of bounds.
 		 */
 		readonly moveTo: (index: number) => void;
 	}
@@ -151,7 +151,7 @@ export namespace TableFactory {
 		}
 
 		/**
-		 * Gets the list of columns in the parent table that contains the provided column.
+		 * Gets the list of columns to which the provided column belongs in the parent table.
 		 * @throws Throws an error if the column is not in a table.
 		 */
 		function getColumnList(column: Column): TreeArrayNode<typeof Column> {
@@ -247,18 +247,50 @@ export namespace TableFactory {
 
 	/**
 	 * A row in a table.
+	 * @remarks Implemented by the schema class returned from {@link TableFactory.createRowSchema}.
 	 * @sealed @internal
 	 */
 	export interface IRow<TCellInsertable, TCellValue, TColumnValue> {
+		/**
+		 * The unique identifier of the row.
+		 * @remarks Uniquely identifies the node within the entire tree, not just the table.
+		 */
 		readonly id: string;
+
+		/**
+		 * Get the index of the row in its parent table.
+		 * @throws Throws an error if the row is not in a table.
+		 */
 		readonly index: number;
-		// TODO: variant that takes ID
+
+		/**
+		 * Gets the cell in the specified column
+		 * @returns The cell if it exists, otherwise undefined.
+		 * @privateRemarks TODO: add overload that takes column ID.
+		 */
 		readonly getCell: (column: TColumnValue) => TCellValue | undefined;
 
-		// TODO: variant that takes ID
-		setCell(column: TColumnValue, value: TCellInsertable | undefined): void;
+		/**
+		 * Sets the cell in the specified column.
+		 * @remarks To delete a cell, call {@link TableFactory.IRow.deleteCell} instead.
+		 * @privateRemarks TODO: add overload that takes column ID.
+		 */
+		readonly setCell: (column: TColumnValue, value: TCellInsertable | undefined) => void;
 
 		// TODO
+
+		/**
+		 * Deletes the cell in the specified column.
+		 * @privateRemarks TODO: add overload that takes column ID.
+		 */
+		readonly deleteCell: (column: TColumnValue) => void;
+
+		/**
+		 * Moves the row to a new location in its parent table.
+		 * @param index - The index to move the row to.
+		 * @throws Throws an error if the row is not in a table, or if the specified index is out of bounds.
+		 */
+		readonly moveTo: (index: number) => void;
 	}
 
 	/**
@@ -308,7 +340,8 @@ export namespace TableFactory {
 		}
 
 		/**
-		 * TODO
+		 * Gets the list of rows to which the provided row belongs in the parent table.
+		 * @throws Throws an error if the column is not in a table.
 		 */
 		function getRowList(row: Row): TreeArrayNode<typeof Row> {
 			return getTableParentOfRow(row).rows as unknown as TreeArrayNode<typeof Row>;
@@ -327,38 +360,23 @@ export namespace TableFactory {
 		/**
 		 * The Row schema - this is a map of Cells where the key is the column id
 		 */
-		class Row extends schemaFactory.object("Row", rowFields) {
-			/**
-			 * Get a cell by the column
-			 * @param column - The column
-			 * @returns The cell if it exists, otherwise undefined
-			 */
+		class Row
+			extends schemaFactory.object("Row", rowFields)
+			implements IRow<CellInsertableType, CellValueType, ColumnValueType>
+		{
 			public getCell(column: ColumnValueType): CellValueType | undefined {
 				return this.cells.get(column.id) as CellValueType | undefined;
 			}
 
-			/**
-			 * Set the value of a cell in the row
-			 * @param column - The column
-			 * @param value - The value to set
-			 */
 			public setCell(column: ColumnValueType, value: CellInsertableType | undefined): void {
 				this.cells.set(column.id, value);
 			}
 
-			/**
-			 * Delete a cell from the row
-			 * @param column - The column
-			 */
 			public deleteCell(column: ColumnValueType): void {
 				if (!this.cells.has(column.id)) return;
 				this.cells.delete(column.id);
 			}
 
-			/**
-			 * Move a row to a new location
-			 * @param index - The index to move the row to
-			 */
 			public moveTo(index: number): void {
 				const rows = getRowList(this);
 
@@ -380,10 +398,6 @@ export namespace TableFactory {
 				rows.moveToIndex(adjustedIndex, this.index);
 			}
 
-			/**
-			 * Get the index of the row in the table
-			 * @returns The index of the row in the table
-			 */
 			public get index(): number {
 				const rows = getRowList(this);
 				return rows.indexOf(this);
