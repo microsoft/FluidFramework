@@ -9,6 +9,7 @@ import {
 	type ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { encodeHandlesInContainerRuntime } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { pkgVersion } from "./packageVersion.js";
@@ -65,10 +66,7 @@ export const runtimeCompatDetailsForDataStore: ILayerCompatDetails = {
 	/**
 	 * The features supported by the Runtime layer across the Runtime / DataStore boundary.
 	 */
-	supportedFeatures: new Set<string>([
-		// The ContainerRuntime encodes handles now.  Eventually DataStore layer can require this feature and stop encoding on its side.
-		"encodeHandlesInOps",
-	]),
+	supportedFeatures: new Set<string>([encodeHandlesInContainerRuntime]),
 };
 
 /**

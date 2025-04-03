@@ -20,6 +20,20 @@ import {
 import { RemoteFluidObjectHandle } from "./remoteFluidObjectHandle.js";
 
 /**
+ * Encodes the given IFluidHandle into a JSON-serializable form,
+ * @param handle - The IFluidHandle to serialize.
+ * @returns The serialized handle.
+ *
+ * @internal
+ */
+export function encodeHandleForSerialization(handle: IFluidHandleInternal): ISerializedHandle {
+	return {
+		type: "__fluid_handle__",
+		url: handle.absolutePath,
+	};
+}
+
+/**
  * Base serializer implementation. Used for op content serialization in ContainerRuntime, and DDS serialization for summaries.
  * @internal
  */
@@ -94,7 +108,7 @@ export class FluidSerializerBase {
 		// If 'value' is an IFluidHandle return its encoded form.
 		if (isFluidHandle(value)) {
 			assert(bind !== undefined, 0xa93 /* Cannot encode a handle without a bind context */);
-			return this.serializeHandle(toFluidHandleInternal(value), bind);
+			return this.encodeAndBindHandle(toFluidHandleInternal(value), bind);
 		}
 		return value;
 	};
@@ -174,14 +188,11 @@ export class FluidSerializerBase {
 	 * @param bind - The binding context for the handle (the handle will become attached whenever this context is attached).
 	 * @returns The serialized handle.
 	 */
-	protected serializeHandle(
+	protected encodeAndBindHandle(
 		handle: IFluidHandleInternal,
 		bind: IFluidHandleInternal,
 	): ISerializedHandle {
 		bind.bind(handle);
-		return {
-			type: "__fluid_handle__",
-			url: handle.absolutePath,
-		};
+		return encodeHandleForSerialization(handle);
 	}
 }

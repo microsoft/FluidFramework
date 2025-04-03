@@ -15,7 +15,7 @@ export {
 export { BatchMessage, IBatch, IBatchCheckpoint, IChunkedOp } from "./definitions.js";
 export { DuplicateBatchDetector } from "./duplicateBatchDetector.js";
 export {
-	OpSerializer,
+	serializeOp,
 	ensureContentsDeserialized,
 } from "./opSerialization.js";
 export { Outbox, getLongStack } from "./outbox.js";

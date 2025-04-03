@@ -193,7 +193,7 @@ import {
 	OpSplitter,
 	Outbox,
 	RemoteMessageProcessor,
-	OpSerializer,
+	serializeOp,
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
@@ -1147,11 +1147,6 @@ export class ContainerRuntime
 	private readonly handleContext: ContainerFluidHandleContext;
 
 	/**
-	 * For serializing ops - including encoding handles - during submit.
-	 */
-	private readonly opSerializer: OpSerializer;
-
-	/**
 	 * This is a proxy to the delta manager provided by the container context (innerDeltaManager). It restricts certain
 	 * accesses such as sets "read-only" mode for the summarizer client. This is the default delta manager that should
 	 * be used unless the innerDeltaManager is required.
@@ -1562,7 +1557,6 @@ export class ContainerRuntime
 		this._deltaManager = outerDeltaManager;
 
 		this.handleContext = new ContainerFluidHandleContext("", this);
-		this.opSerializer = new OpSerializer(this.IFluidHandleContext);
 
 		if (summaryConfiguration.state === "enabled") {
 			validateSummaryHeuristicConfiguration(summaryConfiguration);
@@ -4183,7 +4177,7 @@ export class ContainerRuntime
 					contents: idRange,
 				};
 				const idAllocationBatchMessage: BatchMessage = {
-					contents: this.opSerializer.stringify(idAllocationMessage),
+					contents: serializeOp(idAllocationMessage),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				};
 				this.outbox.submitIdAllocation(idAllocationBatchMessage);
@@ -4246,14 +4240,15 @@ export class ContainerRuntime
 					contents: schemaChangeMessage,
 				};
 				this.outbox.submit({
-					contents: this.opSerializer.stringify(msg),
+					contents: serializeOp(msg),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				});
 			}
 
 			const message: BatchMessage = {
 				// OpSerializer will encode any handles present in this op before serializing to string
-				contents: this.opSerializer.stringify(containerRuntimeMessage),
+				// Note: handles may already have been encoded by the DDS layer, but encoding handles is idempotent so there's no problem.
+				contents: serializeOp(containerRuntimeMessage),
 				metadata,
 				localOpMetadata,
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
