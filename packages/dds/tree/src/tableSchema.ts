@@ -39,7 +39,7 @@ export namespace TableFactory {
 
 	/**
 	 * A key to uniquely identify a cell in a table.
-	 * @internal @sealed
+	 * @sealed @internal
 	 */
 	export interface CellKey {
 		/**
@@ -55,7 +55,7 @@ export namespace TableFactory {
 
 	/**
 	 * {@link TableFactory.ITable.insertRows} parameters.
-	 * @internal @sealed
+	 * @sealed @internal
 	 */
 	export interface InsertRowsParameters<TInsertableRow> {
 		/**
@@ -73,7 +73,7 @@ export namespace TableFactory {
 
 	/**
 	 * {@link TableFactory.ITable.insertColumn} parameters.
-	 * @internal @sealed
+	 * @sealed @internal
 	 */
 	export interface InsertColumnParameters<TInsertableColumn> {
 		/**
@@ -91,7 +91,7 @@ export namespace TableFactory {
 
 	/**
 	 * A column in a table.
-	 * @internal @sealed
+	 * @sealed @internal
 	 */
 	export interface IColumn {
 		readonly id: string;
@@ -231,7 +231,7 @@ export namespace TableFactory {
 
 	/**
 	 * Base column schema type.
-	 * @internal @sealed @system
+	 * @sealed @internal @system
 	 */
 	export type ColumnSchemaBase<TScope extends string | undefined> = ReturnType<
 		typeof createColumnSchema<TScope>
@@ -239,7 +239,7 @@ export namespace TableFactory {
 
 	/**
 	 * A row in a table.
-	 * @internal @sealed
+	 * @sealed @internal
 	 */
 	export interface IRow<TCellInsertable, TCellValue, TColumnValue> {
 		readonly id: string;
@@ -255,7 +255,7 @@ export namespace TableFactory {
 
 	/**
 	 * Factory for creating new table row schema.
-	 * @internal @sealed
+	 * @sealed @internal
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createRowSchema<
@@ -419,7 +419,7 @@ export namespace TableFactory {
 
 	/**
 	 * Base row schema type.
-	 * @internal @sealed @system
+	 * @sealed @internal @system
 	 */
 	export type RowSchemaBase<
 		TScope extends string | undefined,
@@ -429,7 +429,7 @@ export namespace TableFactory {
 
 	/**
 	 * A table.
-	 * @internal @sealed
+	 * @sealed @internal
 	 */
 	export interface ITable<
 		TCellSchema extends ImplicitAllowedTypes,
@@ -692,7 +692,7 @@ export namespace TableFactory {
 
 	/**
 	 * Base row schema type.
-	 * @internal @sealed @system
+	 * @sealed @internal @system
 	 */
 	export type TableSchemaBase<
 		TScope extends string | undefined,
