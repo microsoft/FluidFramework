@@ -22,9 +22,15 @@ import {
 	type WithType,
 } from "./simple-tree/index.js";
 
+// TODOs before merge:
+// - "TableSchema" and "createFoo"
+// - methods on interfaces
+// - Custom fields on Table/Row/Column (props pattern)
+
 // Future improvement TODOs (ideally to be done before promoting these APIs to `@alpha`):
-// - Record-like type parameters
+// - Record-like type parameters / input parameters?
 // - Overloads to make Column/Row schema optional when constructing Tables
+// - Move `@system` types into separate / sub scope
 
 /**
  * Contains types and factories for creating schema to represent dynamic tabular data.
@@ -54,13 +60,6 @@ export namespace TableFactory {
 		 * @throws Throws an error if the column is not in a table.
 		 */
 		readonly index: number;
-
-		/**
-		 * Move a column to a new location in its parent table.
-		 * @param index - The index to move the column to.
-		 * @throws Throws an error if the column is not in a table, or if the index is out of bounds.
-		 */
-		readonly moveTo: (index: number) => void;
 	}
 
 	/**
@@ -115,7 +114,7 @@ export namespace TableFactory {
 		} as const satisfies Record<string, ImplicitFieldSchema>;
 
 		/**
-		 * The Column schema - this can include more properties as needed *
+		 * A column in a table.
 		 */
 		class Column extends schemaFactory.object("Column", columnFields) implements IColumn {
 			public get index(): number {
@@ -124,28 +123,6 @@ export namespace TableFactory {
 					return columns.indexOf(this);
 				}
 				throw new Error("Column is not in a table");
-			}
-
-			public moveTo(index: number): void {
-				const columns = getColumnList(this);
-
-				// If the index is greater than the current index, move it to the right
-				const adjustedIndex = index > this.index ? index + 1 : index;
-
-				// Make sure the index is within the bounds of the table
-				if (adjustedIndex < 0 && this.index > 0) {
-					columns.moveToStart(this.index);
-					return;
-				}
-				if (adjustedIndex > columns.length - 1 && this.index < columns.length - 1) {
-					columns.moveToEnd(this.index);
-					return;
-				}
-				if (adjustedIndex < 0 || adjustedIndex >= columns.length) {
-					// TODO: what do array nodes do in this case? We should probably do the same here.
-					return; // If the index is out of bounds, do nothing
-				}
-				columns.moveToIndex(adjustedIndex, this.index);
 			}
 		}
 
@@ -211,22 +188,13 @@ export namespace TableFactory {
 		 * @remarks To delete a cell, call {@link TableFactory.IRow.deleteCell} instead.
 		 * @privateRemarks TODO: add overload that takes column ID.
 		 */
-		readonly setCell: (column: TColumnValue, value: TCellInsertable | undefined) => void;
-
-		// TODO
+		readonly setCell: (column: TColumnValue, value: TCellInsertable) => void;
 
 		/**
 		 * Deletes the cell in the specified column.
 		 * @privateRemarks TODO: add overload that takes column ID.
 		 */
 		readonly deleteCell: (column: TColumnValue) => void;
-
-		/**
-		 * Moves the row to a new location in its parent table.
-		 * @param index - The index to move the row to.
-		 * @throws Throws an error if the row is not in a table, or if the specified index is out of bounds.
-		 */
-		readonly moveTo: (index: number) => void;
 	}
 
 	/**
@@ -242,7 +210,7 @@ export namespace TableFactory {
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
 		cellSchema: TCell,
-		columnSchema: TColumn,
+		_columnSchema: TColumn,
 	) {
 		const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
 		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
@@ -312,27 +280,6 @@ export namespace TableFactory {
 			public deleteCell(column: ColumnValueType): void {
 				if (!this.cells.has(column.id)) return;
 				this.cells.delete(column.id);
-			}
-
-			public moveTo(index: number): void {
-				const rows = getRowList(this);
-
-				// If the index is greater than the current index, move it to the right
-				const adjustedIndex = index > this.index ? index + 1 : index;
-
-				// Make sure the index is within the bounds of the table
-				if (adjustedIndex < 0 && this.index > 0) {
-					rows.moveToStart(this.index);
-					return;
-				}
-				if (adjustedIndex > rows.length - 1 && this.index < rows.length - 1) {
-					rows.moveToEnd(this.index);
-					return;
-				}
-				if (adjustedIndex < 0 || index >= rows.length) {
-					return; // If the index is out of bounds, do nothing
-				}
-				rows.moveToIndex(adjustedIndex, this.index);
 			}
 
 			public get index(): number {
@@ -559,7 +506,7 @@ export namespace TableFactory {
 		>,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
-		cellSchema: TCell,
+		_cellSchema: TCell,
 		columnSchema: TColumn,
 		rowSchema: TRow,
 	) {

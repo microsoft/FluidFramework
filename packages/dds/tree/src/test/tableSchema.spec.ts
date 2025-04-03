@@ -330,8 +330,51 @@ describe.only("TableFactory unit tests", () => {
 	});
 
 	describe("Set cell", () => {
+		it("Append rows", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({
+				columns: [
+					{
+						id: "column-0",
+					},
+				],
+				rows: [
+					{
+						id: "row-0",
+						cells: {},
+					},
+				],
+			});
+
+			// By not specifying an index, the column should be appended to the end of the list.
+			treeView.root.setCell({
+				key: {
+					rowId: "row-0",
+					columnId: "column-0",
+				},
+				cell: { value: "Hello world!" },
+			});
+
+			assertEqualTrees(treeView.root, {
+				columns: [
+					{
+						id: "column-0",
+					},
+				],
+				rows: [
+					{
+						id: "row-0",
+						cells: {
+							"column-0": {
+								value: "Hello world!",
+							},
+						},
+					},
+				],
+			});
+		});
+
 		// Test TODOs:
-		// - Success case: insert new cell.
 		// - Failure case: insert cell that already exist in the tree.
 		// - Failure case: Insert cell with invalid row/column id.
 	});
@@ -355,20 +398,6 @@ describe.only("TableFactory unit tests", () => {
 		// - Success case: valid key with existing data.
 		// - Success case: valid key with no data.
 		// - Failure case: invalid key
-	});
-
-	describe("Move column", () => {
-		// Test TODOs:
-		// - Success case: move existing column to valid index.
-		// - Failure case: move existing column to invalid index.
-		// - Failure case: move non-existing column.
-	});
-
-	describe("Move row", () => {
-		// Test TODOs:
-		// - Success case: move existing row to valid index.
-		// - Failure case: move existing row to invalid index.
-		// - Failure case: move non-existing row.
 	});
 
 	// TODO: remove me
