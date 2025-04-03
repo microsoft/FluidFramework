@@ -93,14 +93,14 @@ export class HandleCache implements IVectorConsumer<Handle> {
 		// Coercing 'position' to an Uint32 allows us to handle a negative 'position' value
 		// with the same logic that handles 'position' >= length.
 		const _position = position >>> 0;
-	
+
 		// TODO: To bound memory usage, there should be a limit on the maximum size of
 		//       handle[].
-	
+
 		// TODO: To reduce MergeTree lookups, this code should opportunistically grow
 		//       the cache to the next MergeTree segment boundary (within the limits of
 		//       the handle cache).
-	
+
 		if (_position < this.start) {
 			// Prepend new handles to the beginning of the array
 			const newHandles = this.getHandles(_position, this.start);
@@ -111,7 +111,7 @@ export class HandleCache implements IVectorConsumer<Handle> {
 			return this.handles[0];
 		} else {
 			ensureRange(_position, this.vector.getLength());
-	
+
 			// Append new handles to the end of the array
 			const newHandles = this.getHandles(this.start + this.handles.length, _position + 1);
 			for (const handle of newHandles) {
