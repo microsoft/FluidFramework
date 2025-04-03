@@ -459,25 +459,75 @@ export namespace TableFactory {
 		TColumnSchema extends ImplicitAllowedTypes,
 		TRowSchema extends ImplicitAllowedTypes,
 	> {
-		readonly rows: TreeArrayNode<TRowSchema>;
+		/**
+		 * The table's columns.
+		 */
 		readonly columns: TreeArrayNode<TColumnSchema>;
 
+		/**
+		 * The table's rows.
+		 */
+		readonly rows: TreeArrayNode<TRowSchema>;
+
+		/**
+		 * Gets a table row by its {@link TableFactory.IRow.id}.
+		 */
 		readonly getRow: (id: string) => TreeNodeFromImplicitAllowedTypes<TRowSchema> | undefined;
+
+		/**
+		 * Gets a table column by its {@link TableFactory.IRow.id}.
+		 */
 		readonly getColumn: (
 			id: string,
 		) => TreeNodeFromImplicitAllowedTypes<TColumnSchema> | undefined;
+
+		/**
+		 * Gets a cell in the table by column and row IDs.
+		 * @param key - A key that uniquely distinguishes a cell in the table, represented as a combination of the column ID and row ID.
+		 * @privateRemarks TODO: add overload that takes row and column nodes.
+		 */
 		readonly getCell: (
 			key: CellKey,
 		) => TreeNodeFromImplicitAllowedTypes<TCellSchema> | undefined;
 
+		/**
+		 * Inserts a column into the table.
+		 */
 		readonly insertColumn: (
 			params: InsertColumnParameters<
 				InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema>
 			>,
 		) => TreeNodeFromImplicitAllowedTypes<TColumnSchema>;
+
+		/**
+		 * Inserts 0 or more rows into the table.
+		 */
 		readonly insertRows: (
 			params: InsertRowsParameters<InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema>>,
 		) => TreeNodeFromImplicitAllowedTypes<TRowSchema>[];
+
+		/**
+		 * Removes the specified column from the table.
+		 * @remarks Note: this does not remove any cells from the table's rows.
+		 * @privateRemarks
+		 * TODO:
+		 * - Policy for when the column is not in the table.
+		 * - Actually remove corresponding cells from table rows.
+		 */
+		readonly removeColumn: (column: TreeNodeFromImplicitAllowedTypes<TColumnSchema>) => void;
+
+		/**
+		 * Deletes 0 or more rows from the table.
+		 * @privateRemarks TODO: policy for when 1 or more rows are not in the table.
+		 */
+		readonly deleteRows: (
+			rows: readonly TreeNodeFromImplicitAllowedTypes<TRowSchema>[],
+		) => void;
+
+		/**
+		 * Deletes all rows from the table.
+		 */
+		readonly deleteAllRows: () => void;
 	}
 
 	/**
@@ -525,11 +575,10 @@ export namespace TableFactory {
 		/**
 		 * The Table schema
 		 */
-		class Table extends schemaFactory.object("Table", tableFields) {
-			/**
-			 * Get a row by the id
-			 * @param id - The id of the row
-			 */
+		class Table
+			extends schemaFactory.object("Table", tableFields)
+			implements ITable<TCell, TColumn, TRow>
+		{
 			public getRow(id: string): RowValueType | undefined {
 				// TypeScript is unable to narrow the types correctly here, hence the casts.
 				// See: https://github.com/microsoft/TypeScript/issues/52144
@@ -538,10 +587,6 @@ export namespace TableFactory {
 					| undefined;
 			}
 
-			/**
-			 * Get a cell by its "key" in the table.
-			 * @param key - A key that uniquely distinguishes a cell in the table, represented as a combination of the column ID and row ID.
-			 */
 			public getCell(key: CellKey): CellValueType | undefined {
 				const { columnId, rowId } = key;
 				const row = this.getRow(rowId);
@@ -555,12 +600,6 @@ export namespace TableFactory {
 				return undefined;
 			}
 
-			/**
-			 * Insert a row at a specific location
-			 * @param index - The index to insert the row at
-			 * @param rows - The rows to insert
-			 * If no rows are provided, a new row will be created.
-			 */
 			public insertRows({
 				index,
 				rows,
@@ -582,10 +621,6 @@ export namespace TableFactory {
 				return rows as unknown as RowValueType[];
 			}
 
-			/**
-			 * Delete a row from the table
-			 * @param rows - The rows to delete
-			 */
 			public deleteRows(rows: readonly RowValueType[]): void {
 				// If there are no rows to delete, do nothing
 				if (rows.length === 0) {
@@ -609,16 +644,10 @@ export namespace TableFactory {
 				});
 			}
 
-			/**
-			 * Delete all rows from the table
-			 */
 			public deleteAllRows(): void {
 				this.rows.removeRange();
 			}
 
-			/**
-			 * Insert a column at a specific location.
-			 */
 			public insertColumn({
 				column,
 				index,
@@ -640,10 +669,6 @@ export namespace TableFactory {
 				return column as ColumnValueType;
 			}
 
-			/**
-			 * Get a column by the id
-			 * @param id - The id of the column
-			 */
 			public getColumn(id: string): ColumnValueType | undefined {
 				// TypeScript is unable to narrow the types correctly here, hence the casts.
 				// See: https://github.com/microsoft/TypeScript/issues/52144
@@ -652,11 +677,6 @@ export namespace TableFactory {
 					| undefined;
 			}
 
-			/**
-			 * Delete a column header/object from the table
-			 * DOES NOT DELETE THE CELLS IN THE ROWS
-			 * @param column - The column to delete
-			 */
 			public removeColumn(column: ColumnValueType): void {
 				const index = this.columns.indexOf(column);
 				// If the column is not in the table, do nothing
