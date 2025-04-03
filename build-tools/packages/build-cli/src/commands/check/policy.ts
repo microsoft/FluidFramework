@@ -148,7 +148,9 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		}
 
 		const pathRegex: RegExp =
-			this.flags.path === undefined ? /.?/ : new RegExp(this.flags.path, "i");
+			this.flags.path === undefined
+				? new RegExp(`${process.cwd()}.*`, "i")
+				: new RegExp(this.flags.path, "i");
 
 		if (this.flags.handler !== undefined) {
 			const handlerRegex: RegExp = new RegExp(this.flags.handler, "i");
@@ -255,9 +257,10 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 					return true;
 				})
 				.map(async (handler): Promise<{ handler: Handler; result: string | undefined }> => {
-					const result = await runWithPerf(handler.name, "handle", async () =>
-						handler.handler(relPath, gitRoot),
-					);
+					const result = await runWithPerf(handler.name, "handle", async () => {
+						// Pass the handler the absolute file path and the absolute path to the git root
+						return handler.handler(file, gitRoot);
+					});
 					return { handler, result };
 				}),
 		);
@@ -273,7 +276,8 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 					// Resolvers are expected to be run serially to avoid any conflicts.
 					// eslint-disable-next-line no-await-in-loop
 					const resolveResult = await runWithPerf(handler.name, "resolve", async () =>
-						resolver(relPath, gitRoot),
+						// Pass the resolver the absolute file path and the absolute path to the git root
+						resolver(file, gitRoot),
 					);
 
 					if (resolveResult?.message !== undefined) {

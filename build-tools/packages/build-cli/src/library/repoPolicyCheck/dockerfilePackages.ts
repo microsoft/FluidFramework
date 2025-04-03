@@ -4,6 +4,7 @@
  */
 
 import fs from "node:fs";
+import path from "node:path";
 import { Handler, readFile, writeFile } from "./common.js";
 
 const serverPath = "server/routerlicious/";
@@ -26,10 +27,10 @@ function getOrAddLocalMap(key: string, getter: () => Buffer): Buffer {
 export const handler: Handler = {
 	name: "dockerfile-packages",
 	match: /^(server\/routerlicious\/packages)\/.*\/package\.json/i,
-	handler: async (file: string): Promise<string | undefined> => {
+	handler: async (file: string, gitRoot: string): Promise<string | undefined> => {
+		const repoRelative = path.relative(gitRoot, file);
 		// strip server path since all paths are relative to server directory
-		const dockerfileCopyText = getDockerfileCopyText(file.replace(serverPath, ""));
-
+		const dockerfileCopyText = getDockerfileCopyText(repoRelative.replace(serverPath, ""));
 		const dockerfileContents = getOrAddLocalMap("dockerfileContents", () =>
 			fs.readFileSync(serverDockerfilePath),
 		);
@@ -38,8 +39,9 @@ export const handler: Handler = {
 			return "Routerlicious Dockerfile missing COPY command for this package";
 		}
 	},
-	resolver: (file: string): { resolved: boolean } => {
-		const dockerfileCopyText = getDockerfileCopyText(file);
+	resolver: (file: string, gitRoot: string): { resolved: boolean } => {
+		const repoRelative = path.relative(gitRoot, file);
+		const dockerfileCopyText = getDockerfileCopyText(repoRelative);
 
 		// add to Dockerfile
 		let dockerfileContents = readFile(serverDockerfilePath);
