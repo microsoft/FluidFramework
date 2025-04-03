@@ -256,7 +256,6 @@ export class FluidDataStoreRuntime
 		// Validate that the Runtime is compatible with this DataStore.
 		const maybeRuntimeCompatDetails = dataStoreContext as FluidObject<ILayerCompatDetails>;
 		validateRuntimeCompatibility(
-			//* TODO: Can I read features off here and use that to drive behavior on this side?
 			maybeRuntimeCompatDetails.ILayerCompatDetails,
 			this.dispose.bind(this),
 		);
