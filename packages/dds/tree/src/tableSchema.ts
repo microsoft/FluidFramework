@@ -539,7 +539,9 @@ export namespace TableFactory {
 		 * @remarks To delete a cell, call {@link TableFactory.ITable.deleteCell} instead.
 		 * @privateRemarks TODO: add overload that takes column/row nodes?
 		 */
-		readonly setCell: (params: SetCellParameters<InsertableTreeNodeFromImplicitAllowedTypes<TCellSchema>>) => void;
+		readonly setCell: (
+			params: SetCellParameters<InsertableTreeNodeFromImplicitAllowedTypes<TCellSchema>>,
+		) => void;
 
 		/**
 		 * Removes the specified column from the table.
@@ -620,7 +622,6 @@ export namespace TableFactory {
 			extends schemaFactory.object("Table", tableFields)
 			implements ITable<TCell, TColumn, TRow>
 		{
-
 			public getColumn(id: string): ColumnValueType | undefined {
 				// TypeScript is unable to narrow the types correctly here, hence the casts.
 				// See: https://github.com/microsoft/TypeScript/issues/52144
@@ -649,7 +650,6 @@ export namespace TableFactory {
 				// If the cell does not exist return undefined
 				return undefined;
 			}
-
 
 			public insertColumn({
 				column,
