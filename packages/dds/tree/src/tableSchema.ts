@@ -41,24 +41,6 @@ export namespace TableFactory {
 	// #region Column
 
 	/**
-	 * {@link TableFactory.ITable.insertColumn} parameters.
-	 * @sealed @internal
-	 */
-	export interface InsertColumnParameters<TInsertableColumn> {
-		/**
-		 * The index at which to insert the new column.
-		 * @remarks If not provided, the column will be appended to the end of the table.
-		 */
-		// TODO: document bounds policy
-		readonly index?: number | undefined;
-
-		/**
-		 * The column to insert.
-		 */
-		readonly column: TInsertableColumn;
-	}
-
-	/**
 	 * A column in a table.
 	 * @remarks Implemented by the schema class returned from {@link TableFactory.createColumnSchema}.
 	 * @sealed @internal
@@ -443,6 +425,24 @@ export namespace TableFactory {
 	}
 
 	/**
+	 * {@link TableFactory.ITable.insertColumn} parameters.
+	 * @sealed @internal
+	 */
+	export interface InsertColumnParameters<TInsertableColumn> {
+		/**
+		 * The index at which to insert the new column.
+		 * @remarks If not provided, the column will be appended to the end of the table.
+		 */
+		// TODO: document bounds policy
+		readonly index?: number | undefined;
+
+		/**
+		 * The column to insert.
+		 */
+		readonly column: TInsertableColumn;
+	}
+
+	/**
 	 * {@link TableFactory.ITable.insertRows} parameters.
 	 * @sealed @internal
 	 */
@@ -458,6 +458,22 @@ export namespace TableFactory {
 		 * The rows to insert.
 		 */
 		readonly rows: TInsertableRow[];
+	}
+
+	/**
+	 * {@link TableFactory.ITable.setCell} parameters.
+	 * @sealed @internal
+	 */
+	export interface SetCellParameters<TInsertableCell> {
+		/**
+		 * The key to uniquely identify a cell in a table.
+		 */
+		readonly key: CellKey;
+
+		/**
+		 * The cell to set.
+		 */
+		readonly cell: TInsertableCell;
 	}
 
 	/**
@@ -480,16 +496,16 @@ export namespace TableFactory {
 		readonly rows: TreeArrayNode<TRowSchema>;
 
 		/**
-		 * Gets a table row by its {@link TableFactory.IRow.id}.
-		 */
-		readonly getRow: (id: string) => TreeNodeFromImplicitAllowedTypes<TRowSchema> | undefined;
-
-		/**
 		 * Gets a table column by its {@link TableFactory.IRow.id}.
 		 */
 		readonly getColumn: (
 			id: string,
 		) => TreeNodeFromImplicitAllowedTypes<TColumnSchema> | undefined;
+
+		/**
+		 * Gets a table row by its {@link TableFactory.IRow.id}.
+		 */
+		readonly getRow: (id: string) => TreeNodeFromImplicitAllowedTypes<TRowSchema> | undefined;
 
 		/**
 		 * Gets a cell in the table by column and row IDs.
@@ -502,6 +518,7 @@ export namespace TableFactory {
 
 		/**
 		 * Inserts a column into the table.
+		 * @throws Throws an error if the column is already in the tree.
 		 */
 		readonly insertColumn: (
 			params: InsertColumnParameters<
@@ -511,10 +528,18 @@ export namespace TableFactory {
 
 		/**
 		 * Inserts 0 or more rows into the table.
+		 * @throws Throws an error if any of the rows are already in the tree.
 		 */
 		readonly insertRows: (
 			params: InsertRowsParameters<InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema>>,
 		) => TreeNodeFromImplicitAllowedTypes<TRowSchema>[];
+
+		/**
+		 * Sets the cell at the specified location in the table.
+		 * @remarks To delete a cell, call {@link TableFactory.ITable.deleteCell} instead.
+		 * @privateRemarks TODO: add overload that takes column/row nodes?
+		 */
+		readonly setCell: (params: SetCellParameters<InsertableTreeNodeFromImplicitAllowedTypes<TCellSchema>>) => void;
 
 		/**
 		 * Removes the specified column from the table.
@@ -538,6 +563,12 @@ export namespace TableFactory {
 		 * Deletes all rows from the table.
 		 */
 		readonly deleteAllRows: () => void;
+
+		/**
+		 * Deletes the cell at the specified location in the table.
+		 * @privateRemarks TODO: add overload that takes column/row nodes?
+		 */
+		readonly deleteCell: (key: CellKey) => void;
 	}
 
 	/**
@@ -564,7 +595,7 @@ export namespace TableFactory {
 		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
 
 		type CellValueType = TreeNodeFromImplicitAllowedTypes<TCell>;
-		// type CellInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TCell>;
+		type CellInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TCell>;
 
 		type ColumnValueType = TreeNodeFromImplicitAllowedTypes<TColumn>;
 		type ColumnInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TColumn>;
@@ -589,6 +620,15 @@ export namespace TableFactory {
 			extends schemaFactory.object("Table", tableFields)
 			implements ITable<TCell, TColumn, TRow>
 		{
+
+			public getColumn(id: string): ColumnValueType | undefined {
+				// TypeScript is unable to narrow the types correctly here, hence the casts.
+				// See: https://github.com/microsoft/TypeScript/issues/52144
+				return this.columns.find((column) => (column as ColumnValueType).id === id) as
+					| ColumnValueType
+					| undefined;
+			}
+
 			public getRow(id: string): RowValueType | undefined {
 				// TypeScript is unable to narrow the types correctly here, hence the casts.
 				// See: https://github.com/microsoft/TypeScript/issues/52144
@@ -610,6 +650,28 @@ export namespace TableFactory {
 				return undefined;
 			}
 
+
+			public insertColumn({
+				column,
+				index,
+			}: InsertColumnParameters<ColumnInsertableType>): ColumnValueType {
+				if (index === undefined) {
+					// TypeScript is unable to narrow the types correctly here, hence the cast.
+					// See: https://github.com/microsoft/TypeScript/issues/52144
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					this.columns.insertAtEnd(column as any);
+				} else {
+					// TypeScript is unable to narrow the types correctly here, hence the cast.
+					// See: https://github.com/microsoft/TypeScript/issues/52144
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					this.columns.insertAt(index, column as any);
+				}
+
+				// TODO: verify this
+				// Inserting the input node into the tree hydrates it, making it usable as a node.
+				return column as ColumnValueType;
+			}
+
 			public insertRows({
 				index,
 				rows,
@@ -629,6 +691,24 @@ export namespace TableFactory {
 				// TODO: verify this
 				// Inserting the input nodes into the tree hydrates them, making them usable as nodes.
 				return rows as unknown as RowValueType[];
+			}
+
+			public setCell({ key, cell }: SetCellParameters<CellInsertableType>): void {
+				const { columnId, rowId } = key;
+				const row = this.getRow(rowId);
+				if (row !== undefined) {
+					const column = this.getColumn(columnId);
+					if (column !== undefined) {
+						row.setCell(column, cell);
+					}
+				}
+			}
+
+			public removeColumn(column: ColumnValueType): void {
+				const index = this.columns.indexOf(column);
+				// If the column is not in the table, do nothing
+				if (index === -1) return;
+				this.columns.removeAt(index);
 			}
 
 			public deleteRows(rows: readonly RowValueType[]): void {
@@ -658,40 +738,15 @@ export namespace TableFactory {
 				this.rows.removeRange();
 			}
 
-			public insertColumn({
-				column,
-				index,
-			}: InsertColumnParameters<ColumnInsertableType>): ColumnValueType {
-				if (index === undefined) {
-					// TypeScript is unable to narrow the types correctly here, hence the cast.
-					// See: https://github.com/microsoft/TypeScript/issues/52144
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					this.columns.insertAtEnd(column as any);
-				} else {
-					// TypeScript is unable to narrow the types correctly here, hence the cast.
-					// See: https://github.com/microsoft/TypeScript/issues/52144
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					this.columns.insertAt(index, column as any);
+			public deleteCell(key: CellKey): void {
+				const { columnId, rowId } = key;
+				const row = this.getRow(rowId);
+				if (row !== undefined) {
+					const column = this.getColumn(columnId);
+					if (column !== undefined) {
+						row.deleteCell(column);
+					}
 				}
-
-				// TODO: verify this
-				// Inserting the input node into the tree hydrates it, making it usable as a node.
-				return column as ColumnValueType;
-			}
-
-			public getColumn(id: string): ColumnValueType | undefined {
-				// TypeScript is unable to narrow the types correctly here, hence the casts.
-				// See: https://github.com/microsoft/TypeScript/issues/52144
-				return this.columns.find((column) => (column as ColumnValueType).id === id) as
-					| ColumnValueType
-					| undefined;
-			}
-
-			public removeColumn(column: ColumnValueType): void {
-				const index = this.columns.indexOf(column);
-				// If the column is not in the table, do nothing
-				if (index === -1) return;
-				this.columns.removeAt(index);
 			}
 
 			// TODO: verify this works
