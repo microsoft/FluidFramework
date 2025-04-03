@@ -3,6 +3,9 @@
 
 # DisableDockerDetector "No feasible secure solution for OSS repos yet"
 
+# Use the manifest digest's sha256 hash to ensure we are always using the same version of the base image.
+# That version of the base image must also be baked into the CI build agent by a repo maintainer.
+# This avoids throttling issues with Docker Hub by using an image baked into the pipeline build image.
 FROM alpine:3.12@sha256:c75ac27b49326926b803b9ed43bf088bc220d22556de1bc5f72d742c91398f69
 
 # Install Git and OpenSSH so we can run a git server
