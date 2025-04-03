@@ -4,7 +4,6 @@
  */
 
 import { oob } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { Tree } from "./shared-tree/index.js";
 import {
@@ -32,12 +31,11 @@ import {
 
 /**
  * Contains types and factories for creating schema to represent dynamic tabular data.
+ * @privateRemarks TODO: document in more detail and add `@example`s.
  * @internal
  */
 export namespace TableSchema {
 	const tableSchemaFactorySubScope = "table";
-
-	const tableSchemaSymbol: unique symbol = Symbol("Table Schema");
 
 	// #region Column
 
@@ -52,12 +50,6 @@ export namespace TableSchema {
 		 * @remarks Uniquely identifies the node within the entire tree, not just the table.
 		 */
 		readonly id: string;
-
-		/**
-		 * Get the index of the column in its parent table.
-		 * @throws Throws an error if the column is not in a table.
-		 */
-		readonly index: number;
 	}
 
 	/**
@@ -71,37 +63,6 @@ export namespace TableSchema {
 		const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
 		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
 
-		type TTable = TreeNodeFromImplicitAllowedTypes<
-			TableSchemaBase<TInputScope, ImplicitAllowedTypes>
-		>;
-
-		/**
-		 * Get the parent table of the provided column.
-		 * @throws Throws an error if the column is not in a table.
-		 */
-		function getTableParentOfColumn(column: Column): TTable {
-			const parent = Tree.parent(column);
-			if (parent !== undefined) {
-				const grandparent = Tree.parent(parent);
-				if (
-					grandparent !== undefined &&
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					(Tree.schema(grandparent) as any)[tableSchemaSymbol] === true
-				) {
-					return grandparent as TTable;
-				}
-			}
-			throw new UsageError("Column is not in a table");
-		}
-
-		/**
-		 * Gets the list of columns to which the provided column belongs in the parent table.
-		 * @throws Throws an error if the column is not in a table.
-		 */
-		function getColumnList(column: Column): TreeArrayNode<typeof Column> {
-			return getTableParentOfColumn(column).columns as unknown as TreeArrayNode<typeof Column>;
-		}
-
 		/**
 		 * {@link Column} fields.
 		 * @remarks Extracted for re-use in returned type signature defined later in this function.
@@ -114,15 +75,7 @@ export namespace TableSchema {
 		/**
 		 * A column in a table.
 		 */
-		class Column extends schemaFactory.object("Column", columnFields) implements IColumn {
-			public get index(): number {
-				const columns = getColumnList(this);
-				if (columns !== undefined) {
-					return columns.indexOf(this);
-				}
-				throw new Error("Column is not in a table");
-			}
-		}
+		class Column extends schemaFactory.object("Column", columnFields) implements IColumn {}
 
 		type ColumnValueType = TreeNode & IColumn & WithType<ScopedSchemaName<Scope, "Column">>;
 		type ColumnInsertableType = InsertableObjectFromSchemaRecord<typeof columnFields>;
@@ -169,12 +122,6 @@ export namespace TableSchema {
 		readonly id: string;
 
 		/**
-		 * Get the index of the row in its parent table.
-		 * @throws Throws an error if the row is not in a table.
-		 */
-		readonly index: number;
-
-		/**
 		 * Gets the cell in the specified column
 		 * @returns The cell if it exists, otherwise undefined.
 		 * @privateRemarks TODO: add overload that takes column ID.
@@ -217,38 +164,6 @@ export namespace TableSchema {
 		type CellInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TCell>;
 
 		type ColumnValueType = TreeNodeFromImplicitAllowedTypes<TColumn>;
-		// type ColumnInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TColumn>;
-
-		type TTable = TreeNodeFromImplicitAllowedTypes<
-			TableSchemaBase<TInputScope, TCell, TColumn>
-		>;
-
-		/**
-		 * Get the parent table of the provided row.
-		 * @throws Throws an error if the row is not in a table.
-		 */
-		function getTableParentOfRow(row: Row): TTable {
-			const parent = Tree.parent(row);
-			if (parent !== undefined) {
-				const grandparent = Tree.parent(parent);
-				if (
-					grandparent !== undefined &&
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					(Tree.schema(grandparent) as any)[tableSchemaSymbol] === true
-				) {
-					return grandparent as TTable;
-				}
-			}
-			throw new Error("Row is not in a table");
-		}
-
-		/**
-		 * Gets the list of rows to which the provided row belongs in the parent table.
-		 * @throws Throws an error if the column is not in a table.
-		 */
-		function getRowList(row: Row): TreeArrayNode<typeof Row> {
-			return getTableParentOfRow(row).rows as unknown as TreeArrayNode<typeof Row>;
-		}
 
 		/**
 		 * {@link Row} fields.
@@ -278,11 +193,6 @@ export namespace TableSchema {
 			public deleteCell(column: ColumnValueType): void {
 				if (!this.cells.has(column.id)) return;
 				this.cells.delete(column.id);
-			}
-
-			public get index(): number {
-				const rows = getRowList(this);
-				return rows.indexOf(this);
 			}
 		}
 
@@ -467,7 +377,9 @@ export namespace TableSchema {
 		 * Deletes 0 or more rows from the table.
 		 * @privateRemarks TODO: policy for when 1 or more rows are not in the table.
 		 */
-		deleteRows: (rows: readonly TreeNodeFromImplicitAllowedTypes<TRowSchema>[]) => void;
+		deleteRows: (
+			rows: readonly TreeNodeFromImplicitAllowedTypes<TRowSchema>[],
+		) => void;
 
 		/**
 		 * Deletes all rows from the table.
@@ -576,7 +488,6 @@ export namespace TableSchema {
 					this.columns.insertAt(index, column as any);
 				}
 
-				// TODO: verify this
 				// Inserting the input node into the tree hydrates it, making it usable as a node.
 				return column as ColumnValueType;
 			}
@@ -597,7 +508,6 @@ export namespace TableSchema {
 					this.rows.insertAt(index, TreeArrayNode.spread(rows) as any);
 				}
 
-				// TODO: verify this
 				// Inserting the input nodes into the tree hydrates them, making them usable as nodes.
 				return rows as unknown as RowValueType[];
 			}
@@ -657,9 +567,6 @@ export namespace TableSchema {
 					}
 				}
 			}
-
-			// TODO: verify this works
-			public static readonly [tableSchemaSymbol] = true;
 		}
 
 		type TableValueType = TreeNode &
