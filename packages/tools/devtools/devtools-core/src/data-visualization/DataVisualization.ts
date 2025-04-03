@@ -247,7 +247,7 @@ export class DataVisualizerGraph
 	 * {@link VisualizableFluidObject} if one does not already exist.
 	 */
 	private registerVisualizerForVisualizableObject(
-		visualObject: VisualizableFluidObject,
+		visualizableObject: VisualizableFluidObject,
 	): FluidObjectId {
 		if (!this.visualizerNodes.has(visualObject.id)) {
 			// Create visualizer node for the shared object
