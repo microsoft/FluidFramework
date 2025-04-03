@@ -135,6 +135,10 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 			),
 		);
 
+		if (this.client.metadata?.modelName !== undefined) {
+			this.options?.log?.(`# Model\n\n`);
+			this.options?.log?.(`${this.client.metadata?.modelName}\n\n`);
+		}
 		this.options?.log?.(`# System Prompt\n\n${systemPrompt}\n\n`);
 		this.options?.log?.(`# User Prompt\n\n`);
 		if (this.options?.domainHints === undefined) {

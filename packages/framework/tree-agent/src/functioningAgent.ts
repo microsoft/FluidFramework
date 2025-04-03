@@ -219,7 +219,9 @@ ${stringified}
 
 You may set the \`root\` property to be a new root object if necessary, but you must ensure that the new object is one of the types allowed at the root of the tree (\`${rootTypes.map((t) => getFriendlySchemaName(t)).join(" | ")}\`).
 
-${objectIdExplanation}There is a notable restriction: the arrays in the tree cannot be mutated in the normal way.
+${objectIdExplanation}### Editing Arrays
+
+There is a notable restriction: the arrays in the tree cannot be mutated in the normal way.
 Instead, they must be mutated via methods on the following TypeScript interface:
 
 \`\`\`typescript
@@ -227,6 +229,8 @@ ${getTreeArrayNodeDocumentation(arrayInterfaceName)}
 \`\`\`
 
 Outside of mutation, they behave like normal JavaScript arrays - you can create them, read from them, and call non-mutating methods on them (e.g. \`concat\`, \`map\`, \`filter\`, \`find\`, \`forEach\`, \`indexOf\`, \`slice\`, \`join\`, etc.).
+
+## Additional Notes
 
 Before outputting the ${functionName} function, you should check that it is valid according to both the application tree's schema and the restrictions of the editing language (e.g. the array methods you are allowed to use).
 

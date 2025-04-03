@@ -104,7 +104,6 @@ class SharedTreeEditingAgent<
 						);
 					} catch (error: unknown) {
 						if (error instanceof UsageError) {
-							this.prompting.branch.dispose();
 							this.options?.log?.(`### Edit ${editIndex + 1} Error\n\n`);
 							this.options?.log?.(
 								`\`\`\`JSON\n${JSON.stringify(edits[editIndex])}\n\`\`\`\n\n`,
@@ -127,7 +126,6 @@ class SharedTreeEditingAgent<
 					);
 					editIndex += 1;
 				}
-				this.treeView.merge(this.prompting.branch);
 				return `After running your function, the new state of the tree is:\n\n\`\`\`JSON\n${this.stringifyTree(this.prompting.branch.root, this.prompting.idGenerator)}\n\`\`\``;
 			},
 			{
