@@ -467,7 +467,6 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.startupCheck,
 			resources.tokenRevocationManager,
 			resources.revokedTokenChecker,
-			undefined,
 			resources.clusterDrainingChecker,
 			resources.enableClientIPLogging,
 			resources.readinessCheck,
