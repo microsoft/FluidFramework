@@ -25,7 +25,7 @@ import { toRemovalInfo } from "../segmentInfos.js";
 import { Side } from "../sequencePlace.js";
 import { TextSegment } from "../textSegment.js";
 
-import { ClientTestHelper } from "./partialSyncHelper.js";
+import { ClientTestHelper } from "./clientTestHelper.js";
 import { TestClient } from "./testClient.js";
 import { createClientsAtInitialState } from "./testClientLogger.js";
 import { validateRefCount } from "./testUtils.js";

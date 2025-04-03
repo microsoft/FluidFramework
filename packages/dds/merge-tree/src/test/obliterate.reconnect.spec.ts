@@ -5,11 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
+
 import { MergeTree } from "../mergeTree.js";
 
-import { ClientTestHelper } from "./partialSyncHelper.js";
+import { ClientTestHelper } from "./clientTestHelper.js";
 import { useStrictPartialLengthChecks } from "./testUtils.js";
-import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 
 for (const { incremental, mergeTreeEnableSidedObliterate } of generatePairwiseOptions({
 	incremental: [true, false],

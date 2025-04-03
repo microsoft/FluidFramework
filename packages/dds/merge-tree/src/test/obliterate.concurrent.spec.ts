@@ -5,14 +5,14 @@
 
 import { strict as assert } from "node:assert";
 
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
 import { MergeTree } from "../mergeTree.js";
 import { Side } from "../sequencePlace.js";
 
-import { ClientTestHelper } from "./partialSyncHelper.js";
+import { ClientTestHelper } from "./clientTestHelper.js";
 import { useStrictPartialLengthChecks } from "./testUtils.js";
-import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 
 /**
  * Some tests contain ASCII diagrams of the trees to make it easier to reason about

@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { Side } from "../sequencePlace.js";
 
-import { ClientTestHelper } from "./partialSyncHelper.js";
+import { ClientTestHelper } from "./clientTestHelper.js";
 
 function createObliterateTestBody({ action, expectedText }: ObliterateTestArgs): () => void {
 	return () => {

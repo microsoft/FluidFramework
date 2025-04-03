@@ -187,7 +187,7 @@ export class ClientTestHelper {
 	 * processAllOps()
 	 * ```
 	 *
-	 * for the test-runtime-mocks will...
+	 * the test-runtime-mocks will...
 	 *
 	 * - have none of B's local ops be receieved by A in the processAllOps() line
 	 * - have B not receive A's local op 1

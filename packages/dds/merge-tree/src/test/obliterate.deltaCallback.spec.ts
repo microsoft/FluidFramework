@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { MergeTreeDeltaCallback } from "../mergeTreeDeltaCallback.js";
 import { MergeTreeDeltaType } from "../ops.js";
 
-import { ClientTestHelper } from "./partialSyncHelper.js";
+import { ClientTestHelper } from "./clientTestHelper.js";
 import { useStrictPartialLengthChecks } from "./testUtils.js";
 
 for (const mergeTreeEnableSidedObliterate of [true, false]) {
