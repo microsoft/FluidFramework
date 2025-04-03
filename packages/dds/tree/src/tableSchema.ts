@@ -23,7 +23,6 @@ import {
 } from "./simple-tree/index.js";
 
 // TODOs before merge:
-// - methods on interfaces
 // - Custom fields on Table/Row/Column (props pattern)
 
 // Future improvement TODOs (ideally to be done before promoting these APIs to `@alpha`):
@@ -180,20 +179,20 @@ export namespace TableSchema {
 		 * @returns The cell if it exists, otherwise undefined.
 		 * @privateRemarks TODO: add overload that takes column ID.
 		 */
-		readonly getCell: (column: TColumnValue) => TCellValue | undefined;
+		getCell(column: TColumnValue): TCellValue | undefined;
 
 		/**
 		 * Sets the cell in the specified column.
 		 * @remarks To delete a cell, call {@link TableSchema.IRow.deleteCell} instead.
 		 * @privateRemarks TODO: add overload that takes column ID.
 		 */
-		readonly setCell: (column: TColumnValue, value: TCellInsertable) => void;
+		setCell(column: TColumnValue, value: TCellInsertable): void;
 
 		/**
 		 * Deletes the cell in the specified column.
 		 * @privateRemarks TODO: add overload that takes column ID.
 		 */
-		readonly deleteCell: (column: TColumnValue) => void;
+		deleteCell(column: TColumnValue): void;
 	}
 
 	/**
@@ -413,50 +412,46 @@ export namespace TableSchema {
 		/**
 		 * Gets a table column by its {@link TableSchema.IRow.id}.
 		 */
-		readonly getColumn: (
-			id: string,
-		) => TreeNodeFromImplicitAllowedTypes<TColumnSchema> | undefined;
+		getColumn(id: string): TreeNodeFromImplicitAllowedTypes<TColumnSchema> | undefined;
 
 		/**
 		 * Gets a table row by its {@link TableSchema.IRow.id}.
 		 */
-		readonly getRow: (id: string) => TreeNodeFromImplicitAllowedTypes<TRowSchema> | undefined;
+		getRow(id: string): TreeNodeFromImplicitAllowedTypes<TRowSchema> | undefined;
 
 		/**
 		 * Gets a cell in the table by column and row IDs.
 		 * @param key - A key that uniquely distinguishes a cell in the table, represented as a combination of the column ID and row ID.
 		 * @privateRemarks TODO: add overload that takes row and column nodes.
 		 */
-		readonly getCell: (
-			key: CellKey,
-		) => TreeNodeFromImplicitAllowedTypes<TCellSchema> | undefined;
+		getCell(key: CellKey): TreeNodeFromImplicitAllowedTypes<TCellSchema> | undefined;
 
 		/**
 		 * Inserts a column into the table.
 		 * @throws Throws an error if the column is already in the tree.
 		 */
-		readonly insertColumn: (
+		insertColumn(
 			params: InsertColumnParameters<
 				InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema>
 			>,
-		) => TreeNodeFromImplicitAllowedTypes<TColumnSchema>;
+		): TreeNodeFromImplicitAllowedTypes<TColumnSchema>;
 
 		/**
 		 * Inserts 0 or more rows into the table.
 		 * @throws Throws an error if any of the rows are already in the tree.
 		 */
-		readonly insertRows: (
+		insertRows(
 			params: InsertRowsParameters<InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema>>,
-		) => TreeNodeFromImplicitAllowedTypes<TRowSchema>[];
+		): TreeNodeFromImplicitAllowedTypes<TRowSchema>[];
 
 		/**
 		 * Sets the cell at the specified location in the table.
 		 * @remarks To delete a cell, call {@link TableSchema.ITable.deleteCell} instead.
 		 * @privateRemarks TODO: add overload that takes column/row nodes?
 		 */
-		readonly setCell: (
+		setCell(
 			params: SetCellParameters<InsertableTreeNodeFromImplicitAllowedTypes<TCellSchema>>,
-		) => void;
+		): void;
 
 		/**
 		 * Removes the specified column from the table.
@@ -466,26 +461,24 @@ export namespace TableSchema {
 		 * - Policy for when the column is not in the table.
 		 * - Actually remove corresponding cells from table rows.
 		 */
-		readonly removeColumn: (column: TreeNodeFromImplicitAllowedTypes<TColumnSchema>) => void;
+		removeColumn: (column: TreeNodeFromImplicitAllowedTypes<TColumnSchema>) => void;
 
 		/**
 		 * Deletes 0 or more rows from the table.
 		 * @privateRemarks TODO: policy for when 1 or more rows are not in the table.
 		 */
-		readonly deleteRows: (
-			rows: readonly TreeNodeFromImplicitAllowedTypes<TRowSchema>[],
-		) => void;
+		deleteRows: (rows: readonly TreeNodeFromImplicitAllowedTypes<TRowSchema>[]) => void;
 
 		/**
 		 * Deletes all rows from the table.
 		 */
-		readonly deleteAllRows: () => void;
+		deleteAllRows: () => void;
 
 		/**
 		 * Deletes the cell at the specified location in the table.
 		 * @privateRemarks TODO: add overload that takes column/row nodes?
 		 */
-		readonly deleteCell: (key: CellKey) => void;
+		deleteCell: (key: CellKey) => void;
 	}
 
 	/**
