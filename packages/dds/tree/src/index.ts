@@ -291,5 +291,4 @@ export type { MapNodeInsertableData } from "./simple-tree/index.js";
 
 export { JsonAsTree } from "./jsonDomainSchema.js";
 export { FluidSerializableAsTree } from "./serializableDomainSchema.js";
-// eslint-disable-next-line no-restricted-syntax -- Changes to these will update the derived API reports
-export * from "./tableSchema.js";
+export { TableFactory } from "./tableSchema.js";

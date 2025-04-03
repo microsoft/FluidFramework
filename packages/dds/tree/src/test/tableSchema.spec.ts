@@ -10,7 +10,7 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 
 import { SchemaFactoryAlpha, TreeViewConfiguration } from "../simple-tree/index.js";
 import { TreeFactory } from "../treeFactory.js";
-import { createColumnSchema, createRowSchema, createTableSchema } from "../tableSchema.js";
+import { TableFactory } from "../tableSchema.js";
 
 const treeFactory = new TreeFactory({});
 
@@ -21,11 +21,11 @@ describe.only("table schema", () => {
 			value: schemaFactory.string,
 		}) {}
 
-		class Column extends createColumnSchema(schemaFactory) {}
+		class Column extends TableFactory.createColumnSchema(schemaFactory) {}
 
-		class Row extends createRowSchema(schemaFactory, Cell, Column) {}
+		class Row extends TableFactory.createRowSchema(schemaFactory, Cell, Column) {}
 
-		class Table extends createTableSchema(schemaFactory, Cell, Column, Row) {}
+		class Table extends TableFactory.createTableSchema(schemaFactory, Cell, Column, Row) {}
 
 		// TODO: use `independentView` to avoid needing Fluid goo
 		const tree = treeFactory.create(
