@@ -25,6 +25,7 @@ import {
 	type Perspective,
 } from "../perspective.js";
 import type { OperationStamp } from "../stamps.js";
+import { PartialSyncTestHelper as ReconnectTestHelper } from "./partialSyncHelper.js";
 
 import { loadText } from "./text.js";
 
@@ -256,3 +257,34 @@ export function useStrictPartialLengthChecks(): void {
 		PartialSequenceLengths.options.verifyExpected = undefined;
 	});
 }
+
+function createObliterateTestBody({ action, expectedText }: ObliterateTestArgs): () => void {
+	return () => {
+		const events: number[] = [];
+
+		const helper = new ReconnectTestHelper({
+			mergeTreeEnableSidedObliterate: true,
+		});
+		helper.clients.A.on("delta", (opArgs, deltaArgs) => {
+			events.push(deltaArgs.operation);
+		});
+		action(helper);
+		helper.processAllOps();
+
+		helper.logger.validate({ baseText: expectedText });
+	};
+}
+
+interface ObliterateTestArgs {
+	title: string;
+	action: (helper: ReconnectTestHelper) => void;
+	expectedText: string;
+}
+
+export function itCorrectlyObliterates(args: ObliterateTestArgs): Mocha.Test {
+	return it(args.title, createObliterateTestBody(args));
+}
+itCorrectlyObliterates.skip = (args: ObliterateTestArgs) =>
+	it.skip(args.title, createObliterateTestBody(args));
+itCorrectlyObliterates.only = (args: ObliterateTestArgs) =>
+	it.only(args.title, createObliterateTestBody(args));

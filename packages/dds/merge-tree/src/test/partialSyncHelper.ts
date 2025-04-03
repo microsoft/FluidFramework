@@ -7,13 +7,24 @@ import { strict as assert } from "node:assert";
 
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
-import type { IMergeTreeOptions, InteriorSequencePlace } from "../index.js";
+import type { IMergeTreeOp, IMergeTreeOptions, InteriorSequencePlace } from "../index.js";
 
 import type { TestClient } from "./testClient.js";
 import { TestClientLogger, createClientsAtInitialState } from "./testClientLogger.js";
+import type { SegmentGroup } from "../mergeTreeNodes.js";
 
 const ClientIds = ["A", "B", "C", "D"] as const;
 type ClientName = (typeof ClientIds)[number];
+
+function isClientId(s: unknown): s is ClientName {
+	return ClientIds.includes(s as ClientName);
+}
+
+function clientName(client: TestClient): ClientName {
+	const { longClientId } = client;
+	assert(isClientId(longClientId), "Client ID is not a valid client name");
+	return longClientId;
+}
 
 /**
  * Like `ReconnectHelper`, but:
@@ -36,6 +47,10 @@ export class PartialSyncTestHelper {
 	clientToLastAppliedSeq = new Map<ClientName, number>();
 
 	perClientOps: ISequencedDocumentMessage[][];
+	disconnectedClientOps = new Map<
+		ClientName,
+		{ op: IMergeTreeOp; segmentGroup: SegmentGroup }[]
+	>();
 
 	private seq: number = 0;
 
@@ -45,7 +60,8 @@ export class PartialSyncTestHelper {
 				initialState: "",
 				options: {
 					mergeTreeEnableObliterate: true,
-					mergeTreeEnableSidedObliterate: true,
+					// mergeTreeEnableSidedObliterate: true,
+					mergeTreeEnableObliterateReconnect: true,
 					...options,
 				},
 			},
@@ -55,24 +71,36 @@ export class PartialSyncTestHelper {
 		this.perClientOps = this.clients.all.map(() => []);
 	}
 
-	private addMessage(message: ISequencedDocumentMessage): void {
-		this.ops.push(message);
-		// This implementation (specifically, that of applying ops / synchronizing clients) assumes messages
-		// are pushed sequentially starting with seq 1.
-		assert(
-			message.sequenceNumber === this.ops.length,
-			"Partial sync test helper invariant violated",
-		);
+	private addMessage(client: TestClient, op: IMergeTreeOp): void {
+		const disconnectedQueue = this.disconnectedClientOps.get(clientName(client));
+		if (disconnectedQueue !== undefined) {
+			// Client is not currently connected.
+			const segmentGroup = client.peekPendingSegmentGroups();
+			assert(segmentGroup !== undefined, "Client should have a pending segment group");
+			disconnectedQueue.push({ op, segmentGroup });
+		} else {
+			const message = client.makeOpMessage(op, ++this.seq);
+			this.ops.push(message);
+			// This implementation (specifically, that of applying ops / synchronizing clients) assumes messages
+			// are pushed sequentially starting with seq 1.
+			assert(
+				message.sequenceNumber === this.ops.length,
+				"Partial sync test helper invariant violated",
+			);
+		}
 	}
 
 	public insertText(clientName: ClientName, pos: number, text: string): void {
 		const client = this.clients[clientName];
-		this.addMessage(client.makeOpMessage(client.insertTextLocal(pos, text), ++this.seq));
+		const insertOp = client.insertTextLocal(pos, text);
+		if (insertOp) {
+			this.addMessage(client, insertOp);
+		}
 	}
 
 	public removeRange(clientName: ClientName, start: number, end: number): void {
 		const client = this.clients[clientName];
-		this.addMessage(client.makeOpMessage(client.removeRangeLocal(start, end), ++this.seq));
+		this.addMessage(client, client.removeRangeLocal(start, end));
 	}
 
 	public obliterateRange(
@@ -81,13 +109,7 @@ export class PartialSyncTestHelper {
 		end: number | InteriorSequencePlace,
 	): void {
 		const client = this.clients[clientName];
-		this.addMessage(
-			client.makeOpMessage(
-				// TODO: remove type assertions when sidedness is enabled
-				client.obliterateRangeLocal(start as number, end as number),
-				++this.seq,
-			),
-		);
+		this.addMessage(client, client.obliterateRangeLocal(start, end));
 	}
 
 	public advanceClientToSeq(clientName: ClientName, seq: number): void {
@@ -129,5 +151,75 @@ export class PartialSyncTestHelper {
 		for (const name of ClientIds) {
 			this.advanceClientToSeq(name, latestSeq);
 		}
+	}
+
+	/**
+	 * Causes the provided clients to "disconnect" by isolating their outbound queue from the op stream.
+	 * These clients will still receive ops from this helper just like all other clients.
+	 * When a client reconnects (see {@link reconnect}), the helper will rebase all of the client's pending ops (that they submitted since
+	 * `disconnect` was called) and re-add them to the op stream.
+	 *
+	 * BEWARE: This is slightly different from what the mocks in test-runtime-utils do in two ways:
+	 *
+	 * 1. Those mocks actually wipe outstanding ops submitted by the disconnected clients from the op stream and rebases those as well.
+	 * 2. Those mocks freeze the inbound queue of the disconnected clients as well as the outbound queue.
+	 *
+	 * E.g. (pseudocode; syntax is different for those mocks and these):
+	 *
+	 * ```typescript
+	 * B.submitLocalOp1()
+	 * B.submitLocalOp2()
+	 * disconnect(B)
+	 * A.submitLocalOp1()
+	 * B.submitLocalOp3()
+	 * processAllOps()
+	 * ```
+	 *
+	 * for the test-runtime-mocks will...
+	 *
+	 * - have none of B's local ops be receieved by A in the processAllOps() line
+	 * - have B not receive A's local op 1
+	 *
+	 * whereas this helper will...
+	 *
+	 * - have B's local ops 1 and 2 be received by A, but not its third local op
+	 * - have B receive acks for its first two local ops as well as A's op in the processAllOps() line
+	 *
+	 * This operation is a no-op if called multiple times on the same client with no intervening reconnects.
+	 */
+	public disconnect(...clientNames: ClientName[]): void {
+		for (const clientName of clientNames) {
+			const client = this.clients[clientName];
+			if (this.isDisconnected(client)) {
+				continue;
+			}
+			this.disconnectedClientOps.set(clientName, []);
+		}
+	}
+
+	/**
+	 * Reconnects clients which have been disconnected. No-ops on any client which is already connected.
+	 * For disconnected clients, any pending ops they have will be resubmitted using the resubmit flow, see {@link disconnect} for details and an example.
+	 *
+	 * @remarks
+	 * If reconnecting multiple clients, the order that their ops will be resubmitted in will match the order in the array
+	 */
+	public reconnect(...clientNames: ClientName[]): void {
+		for (const clientName of clientNames) {
+			const submittedOps = this.disconnectedClientOps.get(clientName);
+			if (submittedOps === undefined) {
+				continue;
+			}
+			this.disconnectedClientOps.delete(clientName);
+			const client = this.clients[clientName];
+			for (const { op, segmentGroup } of submittedOps) {
+				const rebasedOp = client.regeneratePendingOp(op, segmentGroup);
+				this.addMessage(client, rebasedOp);
+			}
+		}
+	}
+
+	private isDisconnected(client: TestClient): boolean {
+		return this.disconnectedClientOps.has(clientName(client));
 	}
 }

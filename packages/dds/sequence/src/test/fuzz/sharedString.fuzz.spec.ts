@@ -12,6 +12,7 @@ import {
 	defaultFuzzOptions,
 	makeIntervalOperationGenerator,
 } from "./fuzzUtils.js";
+import { useStrictPartialLengthChecks } from "@fluidframework/merge-tree/internal/test";
 
 describe("SharedString fuzz testing", () => {
 	createDDSFuzzSuite(
@@ -41,6 +42,7 @@ describe("SharedString fuzz with stashing", () => {
 });
 
 describe("SharedString fuzz with obliterate", () => {
+	useStrictPartialLengthChecks();
 	const model: typeof baseSharedStringModel = {
 		...baseSharedStringModel,
 		generatorFactory: () =>
@@ -65,12 +67,16 @@ describe("SharedString fuzz with obliterate", () => {
 		{
 			...defaultFuzzOptions,
 			// Sided obliterate doesn't support reconnect yet.
-			reconnectProbability: 0,
+			// reconnectProbability: 0,
 			// Uncomment this line to replay a specific seed from its failure file:
-			// replay: 0,
+			// replay: 4,
 			// TODO:AB#7220: This seed should be enabled. The failure here is unrelated to obliterate.
 			skip: [51],
 		},
+		// 0x54e: 7, 22, 28, 36, 46, 66, 71, 73, 94,
+		// 0xa3f: 17, 29,
+		// On reconnect, obliterate applied to new segments: 19, 50, 52, 59, 74, 76
+		// Generic eventual consistency issue: 34, 58, 90
 	);
 });
 

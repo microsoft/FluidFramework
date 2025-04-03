@@ -2606,7 +2606,17 @@ export class MergeTree {
 		return segRef;
 	}
 
-	// Segments should either be removed remotely, removed locally, or inserted locally
+	/**
+	 * Segments should either be removed remotely, removed locally, or inserted locally
+	 *
+	 * See description of {@link normalizeSegmentsOnRebase}.
+	 *
+	 * This normalizes a block of adjacent segments whose positions have collapsed between the time of the original submission and now
+	 * such that removed segments come after ones that still exist.
+	 *
+	 * TODO:AB#34898: It looks like this method has some bugs, search code for this tag for an example test that demonstrates
+	 * segment normalization yielding an order that remote clients wouldn't have seen.
+	 */
 	private normalizeAdjacentSegments(affectedSegments: DoublyLinkedList<ISegmentLeaf>): void {
 		// Eagerly demand this since we're about to shift elements in the list around
 		const currentOrder = Array.from(affectedSegments, ({ data: seg }) => ({
@@ -2615,9 +2625,9 @@ export class MergeTree {
 			ordinal: seg.ordinal,
 		}));
 
-		// Last segment which was not removed.
+		// Last segment which was not affected locally.
 		let lastLocalSegment = affectedSegments.last;
-		while (lastLocalSegment !== undefined && isRemoved(lastLocalSegment.data)) {
+		while (lastLocalSegment !== undefined && isRemovedAndAcked(lastLocalSegment.data)) {
 			lastLocalSegment = lastLocalSegment.prev;
 		}
 

@@ -11,7 +11,7 @@ import { MergeTree } from "../mergeTree.js";
 import { Side } from "../sequencePlace.js";
 
 import { PartialSyncTestHelper } from "./partialSyncHelper.js";
-import { ReconnectTestHelper } from "./reconnectHelper.js";
+import { PartialSyncTestHelper as ReconnectTestHelper } from "./partialSyncHelper.js";
 import { useStrictPartialLengthChecks } from "./testUtils.js";
 
 /**
@@ -45,7 +45,7 @@ import { useStrictPartialLengthChecks } from "./testUtils.js";
  */
 
 for (const incremental of [true, false]) {
-	describe(`obliterate partial lengths incremental = ${incremental}`, () => {
+	describe.only(`obliterate partial lengths incremental = ${incremental}`, () => {
 		useStrictPartialLengthChecks();
 
 		beforeEach(() => {
@@ -1846,7 +1846,7 @@ for (const incremental of [true, false]) {
 				// Strict partial lengths checks reported an inconsistency when B applies A's
 				// obliterateRange op for the length of the string at refSeq 4.
 				// With strict partial lengths disabled, this manifested in 0x4bc on the subsequent op application.
-				const helper = new PartialSyncTestHelper();
+				const helper = new PartialSyncTestHelper({ mergeTreeEnableSidedObliterate: true });
 
 				helper.insertText("D", 0, "ABCDEFGH");
 				helper.processAllOps();
@@ -1874,7 +1874,7 @@ for (const incremental of [true, false]) {
 			});
 
 			it("Avoids adding entries for insert with subsequent removal", () => {
-				const helper = new PartialSyncTestHelper();
+				const helper = new PartialSyncTestHelper({ mergeTreeEnableSidedObliterate: true });
 				helper.insertText("D", 0, "bZL4aQd");
 				helper.processAllOps();
 				helper.insertText("A", 0, "8mvaLcEa4nwhELu");
@@ -1913,7 +1913,7 @@ for (const incremental of [true, false]) {
 			// Once fuzz testing more meaninfully leverages ops being sent to different clients at different types (partial
 			// synchronization), it's probably fine to remove this.
 			it("fuzz regression: Local obliterate wins post-insertion of segment previously thought to have won", () => {
-				const helper = new PartialSyncTestHelper();
+				const helper = new PartialSyncTestHelper({ mergeTreeEnableSidedObliterate: true });
 
 				helper.insertText("A", 0, "Hx15J");
 				helper.processAllOps();
@@ -1950,7 +1950,7 @@ for (const incremental of [true, false]) {
 
 			// Simpler version of the above test which has the same root cause but reproduces a slightly different failure mode.
 			it("Local obliterate wins post-insertion of segment previously thought to have won", () => {
-				const helper = new PartialSyncTestHelper();
+				const helper = new PartialSyncTestHelper({ mergeTreeEnableSidedObliterate: true });
 				helper.insertText("A", 0, "1xx2");
 				helper.processAllOps();
 				// A and B both obliterate the 'xx' segment with an expanding obliterate, then try to insert

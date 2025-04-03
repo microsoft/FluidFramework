@@ -8,10 +8,10 @@ import { strict as assert } from "node:assert";
 import { MergeTreeDeltaCallback } from "../mergeTreeDeltaCallback.js";
 import { MergeTreeDeltaType } from "../ops.js";
 
-import { ReconnectTestHelper } from "./reconnectHelper.js";
+import { PartialSyncTestHelper as ReconnectTestHelper } from "./partialSyncHelper.js";
 import { useStrictPartialLengthChecks } from "./testUtils.js";
 
-describe("obliterate delta callback", () => {
+describe.only("obliterate delta callback", () => {
 	useStrictPartialLengthChecks();
 
 	let length: number;

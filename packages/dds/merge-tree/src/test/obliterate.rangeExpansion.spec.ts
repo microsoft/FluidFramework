@@ -6,41 +6,9 @@
 import { strict as assert } from "node:assert";
 
 import { Side } from "../sequencePlace.js";
+import { itCorrectlyObliterates } from "./testUtils.js";
 
-import { ReconnectTestHelper } from "./reconnectHelper.js";
-
-function createObliterateTestBody({ action, expectedText }: ObliterateTestArgs): () => void {
-	return () => {
-		const events: number[] = [];
-
-		const helper = new ReconnectTestHelper({
-			mergeTreeEnableSidedObliterate: true,
-		});
-		helper.clients.A.on("delta", (opArgs, deltaArgs) => {
-			events.push(deltaArgs.operation);
-		});
-		action(helper);
-		helper.processAllOps();
-
-		helper.logger.validate({ baseText: expectedText });
-	};
-}
-
-interface ObliterateTestArgs {
-	title: string;
-	action: (helper: ReconnectTestHelper) => void;
-	expectedText: string;
-}
-
-function itCorrectlyObliterates(args: ObliterateTestArgs): Mocha.Test {
-	return it(args.title, createObliterateTestBody(args));
-}
-itCorrectlyObliterates.skip = (args: ObliterateTestArgs) =>
-	it.skip(args.title, createObliterateTestBody(args));
-itCorrectlyObliterates.only = (args: ObliterateTestArgs) =>
-	it.only(args.title, createObliterateTestBody(args));
-
-describe("obliterate", () => {
+describe.only("obliterate", () => {
 	itCorrectlyObliterates({
 		title: "Obliterate adjacent insert",
 		action: (helper) => {
@@ -252,7 +220,7 @@ describe("obliterate", () => {
 	});
 });
 
-describe("overlapping edits", () => {
+describe.only("overlapping edits", () => {
 	itCorrectlyObliterates({
 		title: "overlapping obliterate and obliterate",
 		action: (helper) => {
@@ -351,47 +319,7 @@ describe("overlapping edits", () => {
 	});
 });
 
-describe.skip("reconnect", () => {
-	itCorrectlyObliterates({
-		title: "add text, disconnect, obliterate, reconnect, insert adjacent to obliterated range",
-		action: (helper) => {
-			helper.insertText("A", 0, "hello world");
-			helper.processAllOps();
-			helper.disconnect(["C"]);
-			const op = helper.obliterateRangeLocal(
-				"C",
-				{ pos: 1, side: Side.After },
-				{ pos: 4, side: Side.After },
-			);
-			helper.reconnect(["C"]);
-			helper.submitDisconnectedOp("C", op);
-			helper.processAllOps();
-			// inserting adjacent to the obliterated range start
-			helper.insertText("A", 2, "123");
-		},
-		expectedText: "heo world",
-	});
-	itCorrectlyObliterates({
-		title: "add text, disconnect, obliterate, insert adjacent to obliterated range, reconnect",
-		action: (helper) => {
-			helper.insertText("A", 0, "hello world");
-			helper.processAllOps();
-			helper.disconnect(["C"]);
-			const op = helper.obliterateRangeLocal(
-				"C",
-				{ pos: 1, side: Side.After },
-				{ pos: 4, side: Side.After },
-			);
-			// inserting adjacent to the obliterated range start
-			helper.insertText("A", 2, "123");
-			helper.reconnect(["C"]);
-			helper.submitDisconnectedOp("C", op);
-		},
-		expectedText: "heo world",
-	});
-});
-
-describe("sided obliterates", () => {
+describe.only("sided obliterates", () => {
 	/**
 	 * All test cases will operate on the same numerical positions, but differ on their sidedness:
 	 * 1. A expand both endpoints, B expand neither endpoint = expand range on both endpoints
