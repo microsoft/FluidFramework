@@ -186,6 +186,10 @@ export function create(
 	const ephemeralDocumentTTLSec: number | undefined = config.get(
 		"storage:ephemeralDocumentTTLSec",
 	);
+	const sessionCacheTTLSec: number | undefined = config.get("alfred:sessionCacheTTLSec");
+	const sessionCacheTTLForDeletedDocumentsSec: number | undefined = config.get(
+		"alfred:sessionCacheTTLForDeletedDocumentsSec",
+	);
 
 	const ignoreEphemeralFlag: boolean = config.get("alfred:ignoreEphemeralFlag") ?? true;
 	// Whether to enforce server-generated document ids in create doc flow
@@ -474,6 +478,8 @@ export function create(
 				readDocumentRetryDelay,
 				readDocumentMaxRetries,
 				redisCacheForGetSession,
+				sessionCacheTTLSec,
+				sessionCacheTTLForDeletedDocumentsSec,
 			);
 
 			const onSuccess = (result: ISession): void => {
