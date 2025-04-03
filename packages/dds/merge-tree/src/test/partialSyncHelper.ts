@@ -73,7 +73,6 @@ export class ClientTestHelper {
 				initialState: "",
 				options: {
 					mergeTreeEnableObliterate: true,
-					// mergeTreeEnableSidedObliterate: true,
 					mergeTreeEnableObliterateReconnect: true,
 					...options,
 				},
