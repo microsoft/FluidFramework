@@ -22,6 +22,7 @@ import type {
 	IPersistedCache,
 	OdspResourceTokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
+import { SharingLinkScope } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	OdspTokenConfig,
 	OdspTokenManager,
@@ -397,12 +398,14 @@ export class OdspTestDriver implements ITestDriver {
 		return new this.api.OdspDriverUrlResolver();
 	}
 
+	sharingLinkKind = { scope: SharingLinkScope.organization };
 	createCreateNewRequest(testId: string): IRequest {
 		return this.api.createOdspCreateContainerRequest(
 			this.config.siteUrl,
 			this.config.driveId,
 			this.config.directory,
 			`${testId}.tstFluid`,
+			this.sharingLinkKind,
 		);
 	}
 
