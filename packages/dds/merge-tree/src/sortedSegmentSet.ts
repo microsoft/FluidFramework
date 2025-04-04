@@ -57,7 +57,7 @@ export class SortedSegmentSet<
 		return 0;
 	}
 
-	public onItemsShuffled(): void {
+	public onSortOrderChange(): void {
 		this.sortedItems.sort((a, b) => this.compare(a, b));
 	}
 

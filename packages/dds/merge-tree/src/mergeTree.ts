@@ -535,7 +535,7 @@ class Obliterates {
 	}
 
 	public onNormalize(): void {
-		this.startOrdered.onItemsShuffled();
+		this.startOrdered.onSortOrderChange();
 	}
 
 	public addOrUpdate(obliterateInfo: ObliterateInfo): void {
@@ -571,27 +571,43 @@ class Obliterates {
 		return overlapping;
 	}
 
-	public remove(obliterateInfo: ObliterateInfo) {
-		if (obliterateInfo.stamp.seq !== UnassignedSequenceNumber) {
-			// TODO: Asymptotics are not good and could be improved with a tree instead. OTOH it doesn't really
-			// matter since we only use this for reconnect right now and we don't put unacked ones in here (which is
-			// weird, but it is indeed technically unnecessary...).
-			const listNode = this.seqOrdered.find((node) => node.data === obliterateInfo);
-			assert(listNode !== undefined, "obliterateInfo not found");
-			this.seqOrdered.remove(listNode);
-		}
+	/**
+	 *
+	 * @privateRemarks
+	 * This data structure could support removing non-local obliterates if we wanted it to, but when adding support for that
+	 * we should reconsider the indexing structure for seq ordered obliterates (right now it would be an O(# obliterates) operation)
+	 */
+	public removeLocalObliterate(obliterateInfo: ObliterateInfo) {
+		assert(obliterateInfo.stamp.seq === UnassignedSequenceNumber, "Expected local obliterate");
 		this.startOrdered.remove(obliterateInfo.start);
 	}
 
+	/**
+	 * @returns an iterator over the `ObliterateInfo` for all obliterates in the collab window. Obliterates are not guaranteed to be ordered.
+	 * The iterator is not guaranteed to be valid over edits to the set of obliterates.
+	 */
 	public [Symbol.iterator](): IterableIterator<ObliterateInfo> {
-		return Array.from(this.startOrdered.items, (start) => {
-			const info = start.properties?.obliterate as ObliterateInfo;
-			assert(
-				info !== undefined && info.start !== undefined && info.end !== undefined,
-				"Expected obliterateInfo endpoint to map to its obliterate",
-			);
-			return info;
-		})[Symbol.iterator]();
+		let index = 0;
+		const { items: starts } = this.startOrdered;
+		const iterator: IterableIterator<ObliterateInfo> = {
+			next(): IteratorResult<ObliterateInfo> {
+				if (index < starts.length) {
+					const start = starts[index++];
+					const info = start.properties?.obliterate as ObliterateInfo;
+					assert(
+						info !== undefined && info.start !== undefined && info.end !== undefined,
+						"Expected obliterateInfo endpoint to map to its obliterate",
+					);
+					return { value: info, done: false };
+				}
+
+				return { value: undefined, done: true };
+			},
+			[Symbol.iterator]() {
+				return this;
+			},
+		};
+		return iterator;
 	}
 }
 
@@ -657,13 +673,14 @@ export class MergeTree {
 		this.attributionPolicy = options?.attribution?.policyFactory?.();
 	}
 
-	public remapObliterate(existing: ObliterateInfo, newObliterate: ObliterateInfo): void {
-		this.obliterates.remove(existing);
-		this.obliterates.addOrUpdate(newObliterate);
-	}
-
-	public removeObliterate(existing: ObliterateInfo): void {
-		this.obliterates.remove(existing);
+	public rebaseObliterateTo(
+		existing: ObliterateInfo,
+		newObliterate: ObliterateInfo | undefined,
+	): void {
+		this.obliterates.removeLocalObliterate(existing);
+		if (newObliterate !== undefined) {
+			this.obliterates.addOrUpdate(newObliterate);
+		}
 	}
 
 	private _root: IRootMergeBlock;

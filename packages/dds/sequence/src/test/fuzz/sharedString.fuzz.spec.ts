@@ -12,7 +12,6 @@ import {
 	defaultFuzzOptions,
 	makeIntervalOperationGenerator,
 } from "./fuzzUtils.js";
-import { useStrictPartialLengthChecks } from "@fluidframework/merge-tree/internal/test";
 
 describe("SharedString fuzz testing", () => {
 	createDDSFuzzSuite(

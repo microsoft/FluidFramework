@@ -847,6 +847,50 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return this._mergeTree.getPosition(segment, perspective);
 	}
 
+	/**
+	 * Rebases a sided local reference to the best fitting position in the current tree.
+	 */
+	private rebaseSidedLocalReference(
+		ref: LocalReferencePosition,
+		reconnectingPerspective: Perspective,
+		slidePreference: SlidingPreference,
+	): RebasedObliterateEndpoint {
+		const oldSegment = ref.getSegment();
+		const oldOffset = ref.getOffset();
+		assert(oldSegment !== undefined && oldOffset !== undefined, "Invalid old reference");
+		const useNewSlidingBehavior = true;
+		let { segment: newSegment, offset: newOffset } = getSlideToSegoff(
+			{ segment: oldSegment, offset: oldOffset },
+			slidePreference,
+			reconnectingPerspective,
+			useNewSlidingBehavior,
+		);
+
+		newSegment ??=
+			slidePreference === SlidingPreference.FORWARD
+				? this._mergeTree.endOfTree
+				: this._mergeTree.startOfTree;
+
+		assert(
+			isSegmentLeaf(newSegment) && newOffset !== undefined,
+			"Invalid new segment on rebase",
+		);
+
+		const { side } = ref.properties ?? {};
+		assert(side !== undefined, "Side should have been set on sided local reference");
+
+		const newSide =
+			newSegment === oldSegment
+				? ref.properties!.side
+				: // If the reference slid to a new position, the closest fit to the original position will be independent of
+					// the original side and "in the direction of where the reference was".
+					slidePreference === SlidingPreference.FORWARD
+					? Side.Before
+					: Side.After;
+
+		return { segment: newSegment, offset: newOffset, side: newSide };
+	}
+
 	private computeNewObliterateEndpoints(obliterateInfo: ObliterateInfo): {
 		start: RebasedObliterateEndpoint;
 		end: RebasedObliterateEndpoint;
@@ -858,60 +902,20 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			obliterateInfo.stamp.localSeq! - 1,
 		);
 
-		const startRef = obliterateInfo.start;
-
-		const oldStartSegment = startRef.getSegment();
-		const oldStartOffset = startRef.getOffset();
-		assert(
-			oldStartSegment !== undefined && oldStartOffset !== undefined,
-			"Invalid old start reference",
-		);
-		const useNewSlidingBehavior = true;
-		let { segment: newStartSegment, offset: newStartOffset } = getSlideToSegoff(
-			{ segment: oldStartSegment, offset: oldStartOffset },
+		const newStart = this.rebaseSidedLocalReference(
+			obliterateInfo.start,
+			reconnectingPerspective,
 			SlidingPreference.FORWARD,
+		);
+		const newEnd = this.rebaseSidedLocalReference(
+			obliterateInfo.end,
 			reconnectingPerspective,
-			useNewSlidingBehavior,
-		);
-
-		newStartSegment ??= this._mergeTree.endOfTree;
-
-		assert(
-			isSegmentLeaf(newStartSegment) && newStartOffset !== undefined,
-			"Invalid new start segment",
-		);
-
-		assert(startRef.properties!.side !== undefined, "Side should have been set on reference");
-
-		const newStartSide =
-			newStartSegment !== oldStartSegment ? Side.Before : startRef.properties!.side;
-
-		const endRef = obliterateInfo.end;
-		const oldEndSegment = endRef.getSegment();
-		const oldEndOffset = endRef.getOffset();
-		assert(
-			oldEndSegment !== undefined && oldEndOffset !== undefined,
-			"Invalid old start reference",
-		);
-		let { segment: newEndSegment, offset: newEndOffset } = getSlideToSegoff(
-			{ segment: oldEndSegment, offset: oldEndOffset },
 			SlidingPreference.BACKWARD,
-			reconnectingPerspective,
-			useNewSlidingBehavior,
 		);
-
-		newEndSegment ??= this._mergeTree.startOfTree;
-		assert(
-			isSegmentLeaf(newEndSegment) && newEndOffset !== undefined,
-			"Invalid new start segment",
-		);
-
-		assert(endRef.properties!.side !== undefined, "Side should have been set on reference");
-		const newEndSide = newEndSegment !== oldEndSegment ? Side.After : endRef.properties!.side;
 
 		return {
-			start: { segment: newStartSegment, offset: newStartOffset, side: newStartSide },
-			end: { segment: newEndSegment, offset: newEndOffset, side: newEndSide },
+			start: newStart,
+			end: newEnd,
 		};
 	}
 
@@ -953,20 +957,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			);
 			assert(obliterateInfo.stamp.localSeq === segmentGroup.localSeq, "Local seq mismatch");
 
-			const createLocalRef = (
-				seg: ISegmentPrivate,
-				offset: number,
-				side: Side,
-			): LocalReferencePosition => {
-				return this._mergeTree.createLocalReferencePosition(
-					seg,
-					offset,
-					ReferenceType.StayOnRemove,
-					{
-						side,
-					},
-				);
-			};
 			const cachedNewPositions = this.cachedObliterateRebases.get(
 				obliterateInfo.stamp.localSeq,
 			);
@@ -980,11 +970,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			} = cachedNewPositions;
 
 			const { currentSeq, clientId } = this.getCollabWindow();
-			const reconnectingPerspective = new LocalReconnectingPerspective(
-				currentSeq,
-				clientId,
-				obliterateInfo.stamp.localSeq! - 1,
-			);
 
 			if (newEndSegment.ordinal < newStartSegment.ordinal) {
 				for (const segment of segmentGroup.segments) {
@@ -1003,7 +988,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					segment.removes.pop();
 				}
 
-				this._mergeTree.removeObliterate(obliterateInfo);
+				this._mergeTree.rebaseObliterateTo(obliterateInfo, undefined);
 				return [];
 			}
 
@@ -1011,6 +996,21 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				obliterateInfo.tiebreakTrackingGroup !== undefined,
 				"Tiebreak tracking group missing",
 			);
+
+			const createLocalRef = (
+				seg: ISegmentPrivate,
+				offset: number,
+				side: Side,
+			): LocalReferencePosition => {
+				return this._mergeTree.createLocalReferencePosition(
+					seg,
+					offset,
+					ReferenceType.StayOnRemove,
+					{
+						side,
+					},
+				);
+			};
 			const newObliterate: ObliterateInfo = {
 				// Recreate the start position using the perspective that other clients will see.
 				// This may not be at the same position as the original reference, since the segment the original reference was on could have been removed.
@@ -1059,8 +1059,14 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				}
 			}
 
-			this._mergeTree.remapObliterate(obliterateInfo, newObliterate);
+			this._mergeTree.rebaseObliterateTo(obliterateInfo, newObliterate);
 			this._mergeTree.pendingSegments.push(newObliterate.segmentGroup);
+
+			const reconnectingPerspective = new LocalReconnectingPerspective(
+				currentSeq,
+				clientId,
+				obliterateInfo.stamp.localSeq! - 1,
+			);
 
 			const newStartPos =
 				this._mergeTree.getPosition(newStartSegment, reconnectingPerspective) + newStartOffset;
@@ -1194,23 +1200,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				}
 			}
 
-			// TODO: Obliterate handling is generally wrong here.
-			// We potentially need to adjust the metadata in the tree about the obliterate to account for removals between the original submission and now.
-			// Ex: in the string 'ABCDEFGH' with an original sided obliterate like this:
-			// A - B - C - D - E - F - G - H
-			//          ^         ^
-			// it's possible by the time we reconnect, someone has removed 'BCD' and we now have:
-			// A - D - E - F - G - H
-			// Question is: where do we put the reference? We can no longer cause other clients to place it on 'C' like we did originally.
-			// Our only options are these spaces:
-			// A - E - F - G - H
-			// Effectively, we can either expand the sided obliterate to retain the same start side (after 'A' rather than after 'C') or we can shrink it but will need to swap the side (before 'E').
-			//
-			// TODO: Come up with convincing argument, but erring on the side of shrinking seems like the right choice. This probably won't affect clients that aim to use the 'LWW'-ness of the obliterate,
-			// since even in that case, removals beyond the adjacent obliterate probably indicate that the context which should be slice removed has changed since the obliterate was originally submitted.
-			//
-			// In the same scenario, another problem is that other clients will also not think that we removed the 'D' segment, so we will need to remove the pending local removal mark.
-			// TODO: Is that accounted for already?
 			if (newOp) {
 				const newSegmentGroup: SegmentGroup = {
 					segments: [],
