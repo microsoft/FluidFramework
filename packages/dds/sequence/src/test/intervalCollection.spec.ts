@@ -1492,6 +1492,25 @@ describe("SharedString interval collections", () => {
 			assertSequenceIntervals(sharedString2, collection2, [{ start: 5, end: 8 }]);
 			assertSequenceIntervals(sharedString, collection1, [{ start: 5, end: 8 }]);
 		});
+
+		it("can rebase an interval endpoint onto a locally inserted segment which is the best fit", () => {
+			collection1.removeIntervalById(interval.getIntervalId());
+			containerRuntime1.connected = false;
+			sharedString.insertText(7, "irst f"); // makes "hello first friend"
+			// with an interval around "irst fr"
+			interval = collection1.add({ start: 6, end: 14 });
+			sharedString2.removeRange(0, 7); // removes "hello f", where the "f" is an endpoint of the interval
+			containerRuntimeFactory.processAllMessages();
+			containerRuntime1.connected = true;
+			containerRuntimeFactory.processAllMessages();
+			assert.equal(sharedString.getText(), "irst friend");
+			assert.equal(sharedString2.getText(), "irst friend");
+
+			// At the time the addInterval operation is rebased, the 'irst f' segment has only been inserted locally.
+			// Nonetheless, it should still be a valid slide target for the rebased interval.
+			assertSequenceIntervals(sharedString2, collection2, [{ start: 0, end: 7 }]);
+			assertSequenceIntervals(sharedString, collection1, [{ start: 0, end: 7 }]);
+		});
 	});
 
 	describe("querying intervals with index API's", () => {

@@ -14,7 +14,7 @@ import {
 	UniversalSequenceNumber,
 } from "./constants.js";
 import { LocalReferenceCollection, type LocalReferencePosition } from "./localReference.js";
-import { TrackingGroupCollection } from "./mergeTreeTracking.js";
+import { TrackingGroupCollection, type ITrackingGroup } from "./mergeTreeTracking.js";
 import { IJSONSegment, IMarkerDef, ReferenceType } from "./ops.js";
 import { computeHierarchicalOrdinal } from "./ordinal.js";
 import type { PartialSequenceLengths } from "./partialLengths.js";
@@ -32,6 +32,8 @@ import {
 	type IMergeNodeInfo,
 	type IHasRemovalInfo,
 	type SegmentWithInfo,
+	ISegmentObliterateInfo,
+	hasObliterateTiebreakInfo,
 } from "./segmentInfos.js";
 import { PropertiesManager } from "./segmentPropertiesManager.js";
 import type { OperationStamp, SliceRemoveOperationStamp } from "./stamps.js";
@@ -91,9 +93,17 @@ export interface ISegmentPrivate extends ISegmentInternal {
 	 *
 	 * See the test case "obliterate with mismatched final states" for an example of such a scenario.
 	 *
-	 * TODO:AB#29553: This property is not persisted in the summary, but it should be.
+	 * TODO:AB#29553: This property is not persisted in the V1 summary, but it should be.
 	 */
 	obliteratePrecedingInsertion?: ObliterateInfo;
+	/**
+	 * Populated iff this segment was inserted into a range concurrently removed by a local obliterate operation.
+	 * This field is unset once the newest such overlapping obliterate is acked, and allows recomputing {@link obliteratePrecedingInsertion}
+	 * if that local obliterate is resubmitted.
+	 *
+	 * TODO:AB#29553: This property is not persisted in the V1 summary, but it should be.
+	 */
+	insertionRefSeqStamp?: OperationStamp;
 }
 /**
  * Segment leafs are segments that have both IMergeNodeInfo and IHasInsertionInfo. This means they
@@ -232,6 +242,18 @@ export interface ObliterateInfo {
 	refSeq: number;
 	stamp: SliceRemoveOperationStamp;
 	segmentGroup: SegmentGroup | undefined;
+	/**
+	 * Defined only for unacked obliterates.
+	 *
+	 * Contains all segments inserted into the range this obliterate affects where at the time of insertion,
+	 * this obliterate was the newest concurrent obliterate that overlapped the insertion point (this information
+	 * is relevant for the tiebreak policy of allowing last-obliterater to insert).
+	 *
+	 * We need to keep this around for unacked ops because on reconnect, outstanding local obliterates may have set `obliteratePrecedingInsertion`
+	 * (tiebreak) on segments they no longer apply to, since the reissued obliterate may affect a smaller range than the original one when content
+	 * near the obliterate's endpoints was removed by another client between the time of the original obliterate and reissuing.
+	 */
+	tiebreakTrackingGroup: ITrackingGroup | undefined;
 }
 
 export interface SegmentGroup {
@@ -421,6 +443,12 @@ export abstract class BaseSegment implements ISegment {
 		if (isRemoved(this)) {
 			overwriteInfo<IHasRemovalInfo>(leafSegment, {
 				removes: [...this.removes],
+			});
+		}
+		if (hasObliterateTiebreakInfo(this)) {
+			overwriteInfo<ISegmentObliterateInfo>(leafSegment, {
+				obliteratePrecedingInsertion: this.obliteratePrecedingInsertion,
+				insertionRefSeqStamp: this.insertionRefSeqStamp,
 			});
 		}
 

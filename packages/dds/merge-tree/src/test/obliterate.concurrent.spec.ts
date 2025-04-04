@@ -1852,6 +1852,7 @@ for (const { incremental, mergeTreeEnableSidedObliterate } of generatePairwiseOp
 				// Strict partial lengths checks reported an inconsistency when B applies A's
 				// obliterateRange op for the length of the string at refSeq 4.
 				// With strict partial lengths disabled, this manifested in 0x4bc on the subsequent op application.
+
 				const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate: true });
 
 				helper.insertText("D", 0, "ABCDEFGH");

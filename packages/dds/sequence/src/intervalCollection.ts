@@ -28,6 +28,7 @@ import {
 	endpointPosAndSide,
 	PropertiesManager,
 	type ISegmentInternal,
+	createLocalReconnectingPerspective,
 	createMap,
 } from "@fluidframework/merge-tree/internal";
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -1209,6 +1210,7 @@ export class IntervalCollection
 			getSlideToSegoff(
 				{ segment, offset },
 				undefined,
+				createLocalReconnectingPerspective(this.client.getCurrentSeq(), clientId, localSeq),
 				this.options.mergeTreeReferencesCanSlideToEndpoint,
 			) ?? segment;
 
@@ -1850,6 +1852,7 @@ export class IntervalCollection
 		const newSegoff = getSlideToSegoff(
 			segoff,
 			slidingPreference,
+			undefined,
 			this.options.mergeTreeReferencesCanSlideToEndpoint,
 		);
 		const value: { segment: ISegment | undefined; offset: number | undefined } | undefined =
