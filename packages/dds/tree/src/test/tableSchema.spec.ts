@@ -20,7 +20,7 @@ import { TreeAlpha } from "../shared-tree/index.js";
 
 const treeFactory = new TreeFactory({});
 
-describe.only("TableFactory unit tests", () => {
+describe("TableFactory unit tests", () => {
 	function createTableTree() {
 		const schemaFactory = new SchemaFactoryAlpha("test");
 		class Cell extends schemaFactory.object("table-cell", {
