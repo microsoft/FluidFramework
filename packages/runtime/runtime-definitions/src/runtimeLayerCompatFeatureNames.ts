@@ -9,4 +9,4 @@
  *
  * @internal
  */
-export const encodeHandlesInContainerRuntime = "encodeHandlesInContainerRuntime";
+export const encodeHandlesInContainerRuntime = "encodeHandlesInContainerRuntime" as const;
