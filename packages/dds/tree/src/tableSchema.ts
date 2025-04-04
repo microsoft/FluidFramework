@@ -263,7 +263,6 @@ export namespace TableSchema {
 		 * The index at which to insert the new column.
 		 * @remarks If not provided, the column will be appended to the end of the table.
 		 */
-		// TODO: document bounds policy
 		readonly index?: number | undefined;
 
 		/**
@@ -281,7 +280,6 @@ export namespace TableSchema {
 		 * The index at which to insert the new rows.
 		 * @remarks If not provided, the rows will be appended to the end of the table.
 		 */
-		// TODO: document bounds policy
 		readonly index?: number | undefined;
 
 		/**
@@ -344,7 +342,7 @@ export namespace TableSchema {
 
 		/**
 		 * Inserts a column into the table.
-		 * @throws Throws an error if the column is already in the tree.
+		 * @throws Throws an error if the column is already in the tree, or if the specified index is out of range.
 		 */
 		insertColumn(
 			params: InsertColumnParameters<
@@ -354,7 +352,7 @@ export namespace TableSchema {
 
 		/**
 		 * Inserts 0 or more rows into the table.
-		 * @throws Throws an error if any of the rows are already in the tree.
+		 * @throws Throws an error if any of the rows are already in the tree, or if the specified index is out of range.
 		 */
 		insertRows(
 			params: InsertRowsParameters<InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema>>,
