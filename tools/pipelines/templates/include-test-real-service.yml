@@ -369,7 +369,7 @@ stages:
               set -eu -o pipefail
 
               # might need to install dependencies here
-              pnpm run trips-setup $SYSTEM_ACCESSTOKEN
+              npm run trips-setup $SYSTEM_ACCESSTOKEN
 
         # run the test
         - task: Npm@1
