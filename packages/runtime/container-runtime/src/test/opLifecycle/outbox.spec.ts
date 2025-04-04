@@ -19,11 +19,8 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	CompressionAlgorithms,
-	ICompressionRuntimeOptions,
-	makeLegacySendBatchFn,
-} from "../../containerRuntime.js";
+import { CompressionAlgorithms } from "../../compatUtils.js";
+import { ICompressionRuntimeOptions, makeLegacySendBatchFn } from "../../containerRuntime.js";
 import { ContainerMessageType } from "../../messageTypes.js";
 import { asBatchMetadata, asEmptyBatchLocalOpMetadata } from "../../metadata.js";
 import {

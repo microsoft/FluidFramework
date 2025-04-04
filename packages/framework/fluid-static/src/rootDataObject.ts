@@ -18,7 +18,6 @@ import type {
 	SharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
 
-import { compatibilityModeRuntimeOptions } from "./compatibilityConfiguration.js";
 import type {
 	CompatibilityMode,
 	ContainerSchema,
@@ -211,7 +210,8 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		};
 		super({
 			registryEntries: [rootDataObjectFactory.registryEntry],
-			runtimeOptions: compatibilityModeRuntimeOptions[compatibilityMode],
+			// Set the compatibility mode to the one provided by the user and ensure that it's a valid semver version.
+			runtimeOptions: { compatibilityMode: `${compatibilityMode}.0.0` },
 			provideEntryPoint,
 		});
 		this.rootDataObjectFactory = rootDataObjectFactory;
