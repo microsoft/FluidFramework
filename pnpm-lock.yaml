@@ -8825,9 +8825,6 @@ importers:
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
-      '@fluidframework/container-runtime':
-        specifier: workspace:~
-        version: link:../../runtime/container-runtime
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
@@ -14648,6 +14645,9 @@ importers:
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/runtime-utils
+      '@fluidframework/shared-object-base':
+        specifier: workspace:~
+        version: link:../../dds/shared-object-base
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
