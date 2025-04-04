@@ -1,10 +1,8 @@
 ---
 "@fluidframework/datastore": minor
 "@fluidframework/test-runtime-utils": minor
----
----
-"section": legacy
-includeInReleaseNotes: false
+"__section": legacy
+"__includeInReleaseNotes": false
 ---
 
 New ILayerCompatDetails property on FluidDataStoreRuntime, MockFluidDataStoreContext and MockFluidDataStoreRuntime
@@ -15,4 +13,4 @@ A new optional property, `ILayerCompatDetails`, has been added to `FluidDataStor
 `ILayerCompatDetails` has also been added to `MockFluidDataStoreRuntime` and `MockFluidDataStoreContext` which are used for
 testing.
 
-Important: this property is intended for use by Fluid Framework code only. No code outside the Fluid Framework should use or depend on this property in any way.
+Important: this property is intended for use by fluid Framework code only. No code outside the FluidFramework should use or depend on this property in any way.

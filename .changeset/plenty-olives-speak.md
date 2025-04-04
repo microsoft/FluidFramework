@@ -1,9 +1,7 @@
 ---
 "fluid-framework": minor
 "@fluidframework/tree": minor
----
----
-"section": tree
+"__section": tree
 ---
 
 `TreeAlpha.exportConcise` now supports `undefined`

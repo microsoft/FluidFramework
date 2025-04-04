@@ -1,9 +1,7 @@
 ---
 "fluid-framework": minor
 "@fluidframework/tree": minor
----
----
-"section": tree
+"__section": tree
 ---
 
 Improved type checking for recursive object schema Fields
@@ -52,4 +50,4 @@ This change will also result in much nicer IntelliSense and type errors while fi
 
 There are still several cases which compile but violate this policy regarding recursive schema and can cause issues when exporting schema;
 these should be migrated to the above pattern as well.
-It is still valid to use non-recursive structurally named array and map schema inline; this change does not impact them.
+It is still valid to use non-recursive structurally named array and map schema inline. This change does not impact them.

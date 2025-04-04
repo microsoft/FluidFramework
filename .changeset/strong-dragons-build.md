@@ -1,9 +1,7 @@
 ---
 "fluid-framework": minor
 "@fluidframework/tree": minor
----
----
-"section": tree
+"__section": tree
 ---
 
 Improvements to typing of object node schema

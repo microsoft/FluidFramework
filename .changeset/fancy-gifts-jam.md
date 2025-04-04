@@ -1,12 +1,10 @@
 ---
 "@fluidframework/tree": minor
 "fluid-framework": minor
----
----
-"section": tree
+"__section": tree
 ---
 
-Performance enhancements in SharedTree branch-related ops processing
+Performance enhancements in Shared Tree branch-related ops processing
 
 SharedTree leverages the "op bunching" feature where contiguous ops in a grouped batch are bunched and processed together
 to asymptotically improve the performance of processing ops.

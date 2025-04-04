@@ -1,8 +1,6 @@
 ---
 "@fluid-experimental/tree-react-api": minor
----
----
-"section": other
+"__section": other
 ---
 
 Simplify experimental tree data object implementation
