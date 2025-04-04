@@ -1210,7 +1210,6 @@ export class IntervalCollection
 			getSlideToSegoff(
 				{ segment, offset },
 				undefined,
-				// undefined,
 				createLocalReconnectingPerspective(this.client.getCurrentSeq(), clientId, localSeq),
 				this.options.mergeTreeReferencesCanSlideToEndpoint,
 			) ?? segment;
