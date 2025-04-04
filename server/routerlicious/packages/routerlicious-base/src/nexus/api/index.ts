@@ -8,15 +8,16 @@ import cors from "cors";
 import { Router } from "express";
 import { Provider } from "nconf";
 import * as api from "./api";
-import type { TypedEventEmitter } from "@fluidframework/common-utils";
-import type { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
+// import type { TypedEventEmitter } from "@fluidframework/common-utils";
+// import type { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
+import type { Emitter } from "@socket.io/redis-emitter";
 
 export function create(
 	config: Provider,
 	tenantManager: core.ITenantManager,
 	tenantThrottlers: Map<string, core.IThrottler>,
 	storage: core.IDocumentStorage,
-	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+	collaborationSessionEventEmitter?: Emitter, // TypedEventEmitter<ICollaborationSessionEvents>,
 ): Router {
 	const router = Router();
 

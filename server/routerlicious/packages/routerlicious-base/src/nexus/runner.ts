@@ -4,7 +4,7 @@
  */
 
 import cluster from "cluster";
-import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { Deferred } from "@fluidframework/common-utils";
 import {
 	ICache,
 	IClientManager,
@@ -29,11 +29,12 @@ import { createMetricClient } from "@fluidframework/server-services";
 import { LumberEventName, Lumberjack, LogLevel } from "@fluidframework/server-services-telemetry";
 import {
 	configureWebSocketServices,
-	ICollaborationSessionEvents,
+	// ICollaborationSessionEvents,
 } from "@fluidframework/server-lambdas";
 import * as app from "./app";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 import { Constants } from "../utils";
+import type { Emitter } from "@socket.io/redis-emitter";
 
 export class NexusRunner implements IRunner {
 	private server?: IWebServer;
@@ -61,7 +62,7 @@ export class NexusRunner implements IRunner {
 		private readonly socketTracker?: IWebSocketTracker,
 		private readonly tokenRevocationManager?: ITokenRevocationManager,
 		private readonly revokedTokenChecker?: IRevokedTokenChecker,
-		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+		private readonly collaborationSessionEventEmitter?: Emitter, // TypedEventEmitter<ICollaborationSessionEvents>,
 		private readonly clusterDrainingChecker?: IClusterDrainingChecker,
 		private readonly collaborationSessionTracker?: ICollaborationSessionTracker,
 		private readonly readinessCheck?: IReadinessCheck,
@@ -134,10 +135,9 @@ export class NexusRunner implements IRunner {
 				this.verifyMaxMessageSize,
 				this.socketTracker,
 				this.revokedTokenChecker,
-				this.collaborationSessionEventEmitter,
+				undefined, // this.collaborationSessionEventEmitter,
 				this.clusterDrainingChecker,
 				this.collaborationSessionTracker,
-				this.config.get("nexus:notificationsApi:useSocketIoRedisEmitter") ?? false, // TODO Remove
 			);
 
 			if (this.tokenRevocationManager) {

@@ -41,6 +41,7 @@ export {
 	createNackMessage,
 	createRoomJoinMessage,
 	createRoomLeaveMessage,
+	createRuntimeMessage,
 	createSessionMetric,
 	generateClientId,
 	isDocumentSessionValid,

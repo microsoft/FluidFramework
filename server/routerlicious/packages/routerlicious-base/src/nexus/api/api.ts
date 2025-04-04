@@ -8,15 +8,16 @@ import {
 	throttle,
 	IThrottleMiddlewareOptions,
 	verifyStorageToken,
-	RedisClientConnectionManager,
+	// RedisClientConnectionManager,
 } from "@fluidframework/server-services-utils";
 import * as core from "@fluidframework/server-services-core";
 import {
-	IBroadcastSignalEventPayload,
+	// IBroadcastSignalEventPayload,
 	IRoom,
 	IRuntimeSignalEnvelope,
-	type ICollaborationSessionEvents,
-	RedisEventEmitter,
+	createRuntimeMessage,
+	// type ICollaborationSessionEvents,
+	// RedisEventEmitter,
 } from "@fluidframework/server-lambdas";
 import { Router, type Request, type Response } from "express";
 import winston from "winston";
@@ -24,15 +25,15 @@ import { Provider } from "nconf";
 import { Constants } from "../../utils";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { NetworkError } from "@fluidframework/server-services-client";
-import type { TypedEventEmitter } from "@fluidframework/common-utils";
-import { Emitter } from "@socket.io/redis-emitter";
+// import type { TypedEventEmitter } from "@fluidframework/common-utils";
+import type { Emitter } from "@socket.io/redis-emitter";
 
 export function create(
 	config: Provider,
 	tenantManager: core.ITenantManager,
 	tenantThrottlers: Map<string, core.IThrottler>,
 	storage: core.IDocumentStorage,
-	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+	collaborationSessionEventEmitter?: Emitter, // TypedEventEmitter<ICollaborationSessionEvents>,
 ): Router {
 	const router: Router = Router();
 
@@ -84,7 +85,7 @@ async function handleBroadcastSignal(
 	response: Response,
 	config: Provider,
 	storage: core.IDocumentStorage,
-	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+	collaborationSessionEventEmitter?: Emitter, // TypedEventEmitter<ICollaborationSessionEvents>,
 ): Promise<void> {
 	const tenantId = request.params.tenantId;
 	const documentId = request.params.id;
@@ -109,7 +110,7 @@ async function handleBroadcastSignal(
 
 	const deltaStreamUrl: string = config.get("worker:deltaStreamUrl");
 	const document = await storage.getDocument(tenantId, documentId);
-	if (!document || !document.session.isSessionActive) {
+	if (!document?.session.isSessionActive) {
 		Lumberjack.error("Document not found", { tenantId, documentId });
 		throw new NetworkError(404, "Document not found");
 	}
@@ -127,34 +128,16 @@ async function handleBroadcastSignal(
 		return;
 	}
 
-	const signalRoom: IRoom = { tenantId, documentId };
-	const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
+	// const signalRoom: IRoom = { tenantId, documentId };
+	// const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
+
 	Lumberjack.info("Broadcasting signal to socket", { tenantId, documentId });
 
-	// TODO: Modify this if this works. this is just a test to see if redis emitter works
-	// without the need to rebuild r11s, FRS and redeploy.
-	const useSocketIoRedisEmitter = config.get("nexus:notificationsApi:useSocketIoRedisEmitter");
-	if (useSocketIoRedisEmitter) {
-		const redisConfig = config.get("redis");
-		const redisClientConnectionManager = new RedisClientConnectionManager(
-			undefined,
-			redisConfig,
-			redisConfig.enableClustering,
-			redisConfig.slotsRefreshTimeout,
-			undefined /* retryDelays */,
-			redisConfig.enableVerboseErrorLogging,
-		);
-		const redisEmitter = new Emitter(redisClientConnectionManager.getRedisClient());
-		redisEmitter.to(getRoomId(signalRoom)).emit("broadcastSignal", payload);
-		return;
-	}
-
-	if (collaborationSessionEventEmitter instanceof RedisEventEmitter) {
-		Lumberjack.info("Emitting signal to room", { tenantId, documentId });
-		await collaborationSessionEventEmitter.publish("broadcastSignal", payload);
-	} else {
-		collaborationSessionEventEmitter.emit("broadcastSignal", payload);
-	}
+	// redisEmitter.to(getRoomId(signalRoom)).emit("broadcastSignal", payload);
+	const signalMessage = createRuntimeMessage(signalContent);
+	collaborationSessionEventEmitter
+		.to(getRoomId({ tenantId, documentId }))
+		.emit("signal", signalMessage);
 }
 
 const getRoomId = (room: IRoom): string => `${room.tenantId}/${room.documentId}`;

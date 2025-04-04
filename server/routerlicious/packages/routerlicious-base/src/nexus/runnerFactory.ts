@@ -5,8 +5,8 @@
 
 import * as os from "os";
 import cluster from "cluster";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ICollaborationSessionEvents, RedisEventEmitter } from "@fluidframework/server-lambdas";
+// import { TypedEventEmitter } from "@fluidframework/common-utils";
+// import { ICollaborationSessionEvents, RedisEventEmitter } from "@fluidframework/server-lambdas";
 import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
 import {
 	LocalNodeFactory,
@@ -29,6 +29,7 @@ import { INexusResourcesCustomizations } from "./customizations";
 import { OrdererManager, type IOrdererManagerOptions } from "./ordererManager";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
 import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
+import { Emitter } from "@socket.io/redis-emitter";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
 	private readonly webSocketServer: ws.Server;
@@ -75,7 +76,7 @@ export class NexusResources implements core.IResources {
 		public socketTracker?: core.IWebSocketTracker,
 		public tokenRevocationManager?: core.ITokenRevocationManager,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
-		public collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+		public collaborationSessionEventEmitter?: Emitter, // TypedEventEmitter<ICollaborationSessionEvents>,
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
 		public clusterDrainingChecker?: core.IClusterDrainingChecker,
 		public collaborationSessionTracker?: core.ICollaborationSessionTracker,
@@ -583,10 +584,13 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 
 		const startupCheck = new StartupCheck();
 
-		const collaborationSessionEventEmitter = new RedisEventEmitter(
-			redisClientConnectionManagerForPub,
-			redisClientConnectionManagerForSub,
+		const collaborationSessionEventEmitter = new Emitter(
+			redisClientConnectionManagerForPub.getRedisClient(),
 		);
+		// new RedisEventEmitter(
+		// 	redisClientConnectionManagerForPub,
+		// 	redisClientConnectionManagerForSub,
+		// );
 
 		return new NexusResources(
 			config,
