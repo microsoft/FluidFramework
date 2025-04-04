@@ -535,9 +535,8 @@ function isDataObject(value: unknown): value is DataObject {
 	if (
 		value instanceof DataObject ||
 		(typeof (value as DataObject).initializeInternal === "function" &&
-			typeof (
-				value as { getUninitializedErrorString(): string }
-			).getUninitializedErrorString) === "function"
+			typeof (value as { getUninitializedErrorString(): string })
+				.getUninitializedErrorString) === "function"
 	) {
 		// If root is missing, throw an error instead of returning false
 		const root = (value as { readonly root?: ISharedDirectory }).root;
