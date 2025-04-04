@@ -16,11 +16,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { type IPendingRuntimeState } from "@fluidframework/container-runtime/internal/test/containerRuntime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import type {
-	ConfigTypes,
-	IConfigProviderBase,
-	IFluidHandle,
-} from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type {
 	ISharedMap,
 	ISharedDirectory,
@@ -37,15 +33,11 @@ import {
 
 import { MockDetachedBlobStorage, driverSupportsBlobs } from "./mockDetachedBlobStorage.js";
 
-const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-	getRawConfig: (name: string): ConfigTypes => settings[name],
-});
-
 const mapId = "map";
 const directoryId = "directoryKey";
-for (const enableBlobPlaceholdersFlag of [false, true]) {
+for (const createBlobPlaceholders of [false, true]) {
 	describeCompat(
-		`blob handle isAttached (blob placeholders: ${enableBlobPlaceholdersFlag})`,
+		`blob handle isAttached (blob placeholders: ${createBlobPlaceholders})`,
 		"NoCompat",
 		(getTestObjectProvider, apis) => {
 			const { SharedMap, SharedDirectory } = apis.dds;
@@ -54,16 +46,11 @@ for (const enableBlobPlaceholdersFlag of [false, true]) {
 				[directoryId, SharedDirectory.getFactory()],
 			];
 
-			const featureFlags = enableBlobPlaceholdersFlag
-				? {
-						"Fluid.Runtime.UploadBlobPlaceholders": true,
-					}
-				: {};
 			const testContainerConfig: ITestContainerConfig = {
 				fluidDataObjectType: DataObjectFactoryType.Test,
 				registry,
-				loaderProps: {
-					configProvider: configProvider(featureFlags),
+				runtimeOptions: {
+					createBlobPlaceholders,
 				},
 			};
 
@@ -87,7 +74,7 @@ for (const enableBlobPlaceholdersFlag of [false, true]) {
 				});
 
 				it("blob is aborted before uploading", async function () {
-					if (enableBlobPlaceholdersFlag) {
+					if (createBlobPlaceholders) {
 						// Blob placeholders doesn't support abort
 						this.skip();
 					}
@@ -118,7 +105,7 @@ for (const enableBlobPlaceholdersFlag of [false, true]) {
 				});
 
 				it("blob is aborted after upload succeds", async function () {
-					if (enableBlobPlaceholdersFlag) {
+					if (createBlobPlaceholders) {
 						// Blob placeholders doesn't support abort
 						this.skip();
 					}
