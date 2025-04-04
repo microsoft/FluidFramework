@@ -6,7 +6,6 @@
 import { strict as assert, fail } from "node:assert";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	SchemaFactoryAlpha,
@@ -14,11 +13,8 @@ import {
 	type ConciseTree,
 	type TreeNode,
 } from "../simple-tree/index.js";
-import { TreeFactory } from "../treeFactory.js";
 import { TableSchema } from "../tableSchema.js";
-import { TreeAlpha } from "../shared-tree/index.js";
-
-const treeFactory = new TreeFactory({});
+import { independentView, TreeAlpha } from "../shared-tree/index.js";
 
 describe("TableFactory unit tests", () => {
 	function createTableTree() {
@@ -33,17 +29,12 @@ describe("TableFactory unit tests", () => {
 
 		class Table extends TableSchema.createTable(schemaFactory, Cell, Column, Row) {}
 
-		// TODO: use `independentView` to avoid needing Fluid goo
-		const tree = treeFactory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-
-		const treeView = tree.viewWith(
+		const treeView = independentView(
 			new TreeViewConfiguration({
 				schema: Table,
 				enableSchemaValidation: true,
 			}),
+			{ idCompressor: createIdCompressor() },
 		);
 
 		return {
