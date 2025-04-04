@@ -15,31 +15,50 @@ import { validateUsageError } from "../../utils.js";
 const sf = new SchemaFactory("integration");
 
 describe("simple-tree API integration tests", () => {
-	class O extends sf.objectRecursive("O", {
-		recursive: sf.optionalRecursive([() => O]),
-	}) {}
-	{
-		type _check = ValidateRecursiveSchema<typeof O>;
-	}
-
-	it("making a recursive unhydrated and un-parented object node errors", () => {
-		const obj = new O({ recursive: undefined });
-		assert.throws(
-			() => {
-				obj.recursive = obj;
-			},
-			validateUsageError(/recursive/),
-		);
+	describe("recursive unhydrated nodes", () => {
+		class O extends sf.objectRecursive("O", {
+			recursive: sf.optionalRecursive([() => O]),
+		}) {}
+		{
+			type _check = ValidateRecursiveSchema<typeof O>;
+		}
+		it("making a recursive unhydrated and un-parented object node errors", () => {
+			const obj = new O({ recursive: undefined });
+			assert.throws(
+				() => {
+					obj.recursive = obj;
+				},
+				validateUsageError(/under itself/),
+			);
+		});
 	});
 
-	it("making a recursive unhydrated and and parented object node errors", () => {
-		const obj = new O({ recursive: undefined });
-		const objOuter = new O({ recursive: obj });
-		assert.throws(
-			() => {
-				obj.recursive = obj;
-			},
-			validateUsageError(/more than one place/),
-		);
+	describe("multi parenting unhydrated nodes", () => {
+		class O extends sf.object("O", {
+			prop: sf.optional(sf.string),
+		}) {}
+
+		class A extends sf.array("A", O) {}
+
+		it("multi parenting an unhydrated node on edit errors", () => {
+			const obj = new O({ prop: "o" });
+			const array = new A([obj]);
+			assert.throws(
+				() => {
+					array.insertAtEnd(obj);
+				},
+				validateUsageError(/more than one place/),
+			);
+		});
+
+		it("multi parenting an unhydrated node on create errors", () => {
+			const obj = new O({ prop: "o" });
+			assert.throws(
+				() => {
+					new A([obj, obj]);
+				},
+				validateUsageError(/more than one place/),
+			);
+		});
 	});
 });

@@ -152,15 +152,23 @@ export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
 		if (parent !== undefined) {
 			assert(index !== undefined, 0xa08 /* Expected index */);
 			if (this.location !== unparentedLocation) {
-				throw new UsageError("A node may not be in more than one place in the tree");
+				throw new UsageError(
+					"A node may not be in more than one place in a tree or in more than one tree",
+				);
 			}
 			let n: UnhydratedFlexTreeNode | undefined = parent.parent;
 			while (n !== undefined) {
 				if (n === this) {
-					throw new UsageError("A node may not be recursively inserted into the tree");
+					throw new UsageError(
+						"A node may not be inserted into a location that is under itself",
+					);
 				}
-				// This cast is safe because the parent (if it exists) of an unhydrated flex node is always another unhydrated flex node.
-				n = n.parentField.parent.parent as UnhydratedFlexTreeNode | undefined;
+				const p: FlexTreeNode | undefined = n.parentField.parent.parent;
+				assert(
+					p === undefined || p instanceof UnhydratedFlexTreeNode,
+					"Unhydrated node's parent should be an unhydrated node",
+				);
+				n = p;
 			}
 			this.location = { parent, index };
 		} else {
