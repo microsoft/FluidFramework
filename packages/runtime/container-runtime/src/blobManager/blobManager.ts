@@ -88,7 +88,7 @@ export class BlobHandle extends FluidHandleBase<ArrayBufferLike> {
 		}
 	}
 
-	public bind(handle: IFluidHandleInternal): void {
+	public bind(): void {
 		throw new Error("Cannot bind to blob handle");
 	}
 }
