@@ -45,7 +45,6 @@ import {
 	IntervalType,
 	endReferenceSlidingPreference,
 	startReferenceSlidingPreference,
-	type IIntervalHelpers,
 } from "./intervalUtils.js";
 
 function compareSides(sideA: Side, sideB: Side): number {
@@ -291,7 +290,7 @@ export class SequenceIntervalClass implements SequenceInterval {
 	/**
 	 * {@inheritDoc IInterval.clone}
 	 */
-	public clone(): SequenceInterval {
+	public clone(): SequenceIntervalClass {
 		return new SequenceIntervalClass(
 			this.client,
 			this.start,
@@ -604,7 +603,7 @@ export function createSequenceInterval(
 	op?: ISequencedDocumentMessage,
 	fromSnapshot?: boolean,
 	useNewSlidingBehavior: boolean = false,
-): SequenceInterval {
+): SequenceIntervalClass {
 	const { startPos, startSide, endPos, endSide } = endpointPosAndSide(
 		start ?? "start",
 		end ?? "end",
@@ -676,10 +675,3 @@ export function createSequenceInterval(
 	);
 	return ival;
 }
-
-/**
- * @internal
- */
-export const sequenceIntervalHelpers: IIntervalHelpers = {
-	create: createSequenceInterval,
-};

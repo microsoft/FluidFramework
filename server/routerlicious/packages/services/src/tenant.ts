@@ -260,7 +260,9 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			undefined /* refreshTokenIfNeeded */,
 			logHttpMetrics,
 		);
-		await restWrapper.post(`/api/tenants/${encodeURIComponent(tenantId)}/validate`, { token });
+		await restWrapper.post(`/api/tenants/${encodeURIComponent(tenantId)}/validate`, {
+			token,
+		});
 	}
 
 	public async getKey(tenantId: string, includeDisabledTenant = false): Promise<string> {

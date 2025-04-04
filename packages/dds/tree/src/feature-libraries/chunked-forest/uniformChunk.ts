@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, compareArrays, oob } from "@fluidframework/core-utils/internal";
+import { assert, compareArrays, oob, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
@@ -19,7 +19,7 @@ import {
 	cursorChunk,
 	dummyRoot,
 } from "../../core/index.js";
-import { ReferenceCountedBase, fail, hasSome } from "../../util/index.js";
+import { ReferenceCountedBase, hasSome } from "../../util/index.js";
 import { SynchronousCursor, prefixFieldPath, prefixPath } from "../treeCursorUtils.js";
 
 import type { SessionSpaceCompressedId, IIdCompressor } from "@fluidframework/id-compressor";

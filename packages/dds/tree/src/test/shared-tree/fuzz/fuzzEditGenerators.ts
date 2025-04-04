@@ -25,7 +25,7 @@ import type {
 } from "../../../core/index.js";
 import { type DownPath, toDownPath } from "../../../feature-libraries/index.js";
 import { Tree, type ITreePrivate, type SharedTree } from "../../../shared-tree/index.js";
-import { fail, getOrCreate, makeArray } from "../../../util/index.js";
+import { getOrCreate, makeArray } from "../../../util/index.js";
 
 import {
 	type FuzzNode,
@@ -485,7 +485,7 @@ export const makeTreeEditGenerator = (
 					),
 				};
 			default:
-				fail("Unknown field type");
+				assert.fail("Unknown field type");
 		}
 	}
 
@@ -916,7 +916,7 @@ function trySelectTreeField(
 				break;
 			}
 			default:
-				fail(`Invalid option: ${option}`);
+				assert.fail(`Invalid option: ${option}`);
 		}
 	}
 
