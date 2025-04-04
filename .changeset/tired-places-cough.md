@@ -13,8 +13,7 @@ This allows inspecting the content saved in a shared tree in a generic way that 
 
 This can be combined with the existing `generateSchemaFromSimpleSchema` to generate a schema that can be used with [`IIree.viewWith`](https://fluidframework.com/docs/api/fluid-framework/viewabletree-interface#viewwith-methodsignature) to allow constructing a [`TreeView`](https://fluidframework.com/docs/api/fluid-framework/treeview-interface) for any shared tree, regardless of its schema.
 
-Note that the resulting TypeScript typing for such a view will not be friendly: the TreeView APIs are designed for statically known schema. With care and a lot of type casts use is possible, but not recommended when avoidable: see declaimer on `generateSchemaFromSimpleSchema`.
-
+Note that the resulting TypeScript typing for such a view will not be friendly: the TreeView APIs are designed for statically known schema. With care and a lot of type casts use is possible, but not recommended when avoidable: see disclaimer on `generateSchemaFromSimpleSchema`.
 Example using `ITreeAlpha` and `generateSchemaFromSimpleSchema`:
 
 ```typescript
