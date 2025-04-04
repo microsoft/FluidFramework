@@ -474,7 +474,7 @@ for (const createBlobPlaceholders of [false, true]) {
 		});
 
 		it("reupload blob if expired", async function () {
-			// TODO: test fails with 0x38f, there are duplicate localIds in the opsInFlight so the second one chokes.
+			// TODO AB#35004: test fails with 0x38f, there are duplicate localIds in the opsInFlight so the second one chokes.
 			if (createBlobPlaceholders) {
 				this.skip();
 			}
@@ -506,7 +506,7 @@ for (const createBlobPlaceholders of [false, true]) {
 
 		it("upload fails gracefully", async function () {
 			if (createBlobPlaceholders) {
-				// TODO: Figure out how to notify customer of upload failure if we always give back a working handle.
+				// TODO AB#34918: Figure out how to notify customer of upload failure if we always give back a working handle.
 				this.skip();
 			}
 			await runtime.attach();
