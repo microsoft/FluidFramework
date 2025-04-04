@@ -36,6 +36,7 @@
 		"webpack:profile": "npm run webpack"
 	},
 	"dependencies": {
+		"@fluid-experimental/tree": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/azure-client": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
