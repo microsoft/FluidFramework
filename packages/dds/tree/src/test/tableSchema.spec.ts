@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "node:assert";
+import { strict as assert } from "node:assert";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	SchemaFactoryAlpha,
@@ -14,13 +13,10 @@ import {
 	type ConciseTree,
 	type TreeNode,
 } from "../simple-tree/index.js";
-import { TreeFactory } from "../treeFactory.js";
 import { TableSchema } from "../tableSchema.js";
-import { TreeAlpha } from "../shared-tree/index.js";
+import { independentView, TreeAlpha } from "../shared-tree/index.js";
 
-const treeFactory = new TreeFactory({});
-
-describe.only("TableFactory unit tests", () => {
+describe("TableFactory unit tests", () => {
 	function createTableTree() {
 		const schemaFactory = new SchemaFactoryAlpha("test");
 		class Cell extends schemaFactory.object("table-cell", {
@@ -39,17 +35,12 @@ describe.only("TableFactory unit tests", () => {
 
 		class Table extends TableSchema.createTable(schemaFactory, Cell, Column, Row) {}
 
-		// TODO: use `independentView` to avoid needing Fluid goo
-		const tree = treeFactory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-
-		const treeView = tree.viewWith(
+		const treeView = independentView(
 			new TreeViewConfiguration({
 				schema: Table,
 				enableSchemaValidation: true,
 			}),
+			{ idCompressor: createIdCompressor() },
 		);
 
 		return {
@@ -404,56 +395,5 @@ describe.only("TableFactory unit tests", () => {
 		// - Success case: valid key with existing data.
 		// - Success case: valid key with no data.
 		// - Failure case: invalid key
-	});
-
-	// TODO: remove me
-	it("Smoke test", () => {
-		const { treeView } = createTableTree();
-
-		treeView.initialize({ rows: [], columns: [] });
-
-		assertEqualTrees(treeView.root, {
-			rows: [],
-			columns: [],
-		});
-
-		treeView.root.insertRows({
-			rows: [
-				{
-					id: "row-0",
-					cells: {},
-				},
-			],
-		});
-		treeView.root.insertColumn({
-			column: {
-				id: "column-0",
-				fields: {},
-			},
-		});
-
-		assertEqualTrees(treeView.root, {
-			rows: [
-				{
-					id: "row-0",
-					cells: {},
-				},
-			],
-			columns: [
-				{
-					id: "column-0",
-				},
-			],
-		});
-
-		let cell00 = treeView.root.getCell({ rowId: "row-0", columnId: "column-0" });
-		assert.equal(cell00, undefined);
-
-		const column0 = treeView.root.getColumn("column-0") ?? fail("Column not found");
-		const row0 = treeView.root.getRow("row-0") ?? fail("Row not found");
-		row0.setCell(column0, { value: "Hello world!" });
-
-		cell00 = treeView.root.getCell({ rowId: "row-0", columnId: "column-0" });
-		assert.equal(cell00?.value, "Hello world!");
 	});
 });
