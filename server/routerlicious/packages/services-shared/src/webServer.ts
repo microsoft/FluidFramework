@@ -87,44 +87,6 @@ const createAndConfigureHttpServer = (
 	server.timeout =
 		httpServerConfig?.connectionTimeoutMs ?? defaultHttpServerConfig.connectionTimeoutMs;
 
-	// Log all socket.io requests and upgrades received by the HTTP server before they are passed to the Socket.io server.
-	server.on("request", (req, res) => {
-		if (req.url?.startsWith("/socket.io")) {
-			const requestProperties = {
-				url: req.url,
-				method: req.method,
-				isWebSocketUpgrade: req.headers.upgrade?.toLowerCase() === "websocket",
-			};
-			Lumberjack.info("Socket.io request received", requestProperties);
-
-			res.on("finish", () => {
-				Lumberjack.info("Socket.io request finished", {
-					...requestProperties,
-					statusCode: res.statusCode,
-				});
-			});
-
-			// Log any exceptions
-			res.on("error", (error) => {
-				Lumberjack.error("Socket.IO connection error", requestProperties, error);
-			});
-		}
-	});
-
-	server.on("upgrade", (req, socket, head) => {
-		if (req.url?.startsWith("/socket.io")) {
-			const requestProperties = {
-				url: req.url,
-				method: req.method,
-			};
-			Lumberjack.info("WebSocket upgrade received", requestProperties);
-
-			socket.on("error", (error) => {
-				Lumberjack.error("WebSocket upgrade error", requestProperties, error);
-			});
-		}
-	});
-
 	return server;
 };
 
