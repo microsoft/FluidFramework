@@ -55,7 +55,7 @@ import { v4 as uuid } from "uuid";
 
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, IFluidSerializer } from "./serializer.js";
-import { GCHandleVisitor } from "./summarySerializer.js";
+import { GCHandleVisitor } from "./gcHandleVisitor.js";
 import { ISharedObject, ISharedObjectEvents } from "./types.js";
 import { makeHandlesSerializable, parseHandles } from "./utils.js";
 
