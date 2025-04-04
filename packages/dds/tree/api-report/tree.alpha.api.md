@@ -253,6 +253,9 @@ export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(v
 export function getJsonSchema(schema: ImplicitAllowedTypes, options: Required<TreeSchemaEncodingOptions>): JsonTreeSchema;
 
 // @alpha
+export function getSimpleSchema(schema: ImplicitFieldSchema): SimpleTreeSchema;
+
+// @alpha
 export type HandleConverter<TCustom> = (data: IFluidHandle) => TCustom;
 
 // @alpha

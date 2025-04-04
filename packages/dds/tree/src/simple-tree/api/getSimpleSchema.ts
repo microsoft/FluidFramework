@@ -20,14 +20,6 @@ import { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
  * Note that all TreeNodeSchema get a {@link Context} cached on them as part of one time initialization which contains a map from identifier to all transitively referenced schema.
  * Perhaps exposing access to that would cover this use-case as well.
  *
- * If the main use for this is the "definitions" map, we should provide a better way to access it (that doesn't type erase the TreeNodeSchema down to SimpleNodeSchema).
- * TODO: Having TreeViewConfiguration implement SimpleTreeSchema directly but with more specific types would be a good way to do this.
- *
- * Note that all TreeNodeSchema get a {@link Context} cached on them as part of one time initialization which contains a map from identifier to all transitively referenced schema.
- * Perhaps exposing access to that would cover this use-case as well.
- *
- * TODO: does having this caching layer add value? Maybe this wrapper around toSimpleTreeSchema should be removed.
- *
  * @alpha
  */
 export function getSimpleSchema(schema: ImplicitFieldSchema): SimpleTreeSchema {

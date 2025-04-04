@@ -15,13 +15,13 @@ import { TreeViewConfigurationAlpha } from "./tree.js";
  */
 export interface TreeSchemaEncodingOptions extends TreeEncodingOptions {
 	/**
-	 * If true, use the stored keys of object nodes.
-	 * If false, use the property keys.
+	 * If true, fields with default providers (like {@link SchemaFactory.identifier}) will be required.
+	 * If false, they will be optional.
 	 * @remarks
 	 * Has no effect on {@link NodeKind}s other than {@link NodeKind.Object}.
 	 * @defaultValue false.
 	 */
-	readonly requireFieldWithDefaults?: boolean;
+	readonly requireFieldsWithDefaults?: boolean;
 }
 
 /**
@@ -72,7 +72,7 @@ export interface TreeSchemaEncodingOptions extends TreeEncodingOptions {
  * TODO:
  * This API should allow generating JSON schema for the whole matrix of combinations:
  *
- * 1. VerboseTree and ConciseTree
+ * 1. VerboseTree and (Done) ConciseTree
  * 2. (Done) With and without requiring values with defaults (for insertion vs reading)
  * 3. (Done) Using stored keys and property keys.
  *
