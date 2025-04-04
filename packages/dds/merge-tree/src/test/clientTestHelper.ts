@@ -8,10 +8,10 @@ import { strict as assert } from "node:assert";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import type { IMergeTreeOp, IMergeTreeOptions, InteriorSequencePlace } from "../index.js";
+import type { SegmentGroup } from "../mergeTreeNodes.js";
 
 import type { TestClient } from "./testClient.js";
 import { TestClientLogger, createClientsAtInitialState } from "./testClientLogger.js";
-import type { SegmentGroup } from "../mergeTreeNodes.js";
 
 const ClientIds = ["A", "B", "C", "D"] as const;
 type ClientName = (typeof ClientIds)[number];
@@ -20,21 +20,34 @@ function isClientId(s: unknown): s is ClientName {
 	return ClientIds.includes(s as ClientName);
 }
 
-function clientName(client: TestClient): ClientName {
+function clientNameOf(client: TestClient): ClientName {
 	const { longClientId } = client;
 	assert(isClientId(longClientId), "Client ID is not a valid client name");
 	return longClientId;
 }
 
 /**
- * Like `ReconnectHelper`, but:
- * - does not support reconnecting clients
- * - supports advancing only some clients to a given sequence number (not all clients must be synchronized at the same time).
+ * Helper for authoring tests which perform operations on a number of clients.
+ * This class essentially serves the role of the server in that it maintains a sequencing order of ops as well as information
+ * about the latest op that each client has applied.
+ *
+ * When using this class, *do not* perform operations which may submit ops on clients directly: it does not currently wire up client events
+ * to the server. Instead, use methods on the helper and pass the client name they should apply to as the first argument.
+ *
+ * It is analogous to MockContainerRuntimeFactory in the test-runtime-utils package, though the APIs are not completely equivalent
+ * (see for example differences noted on disconnect and reconnect).
+ *
+ * This helper is also designed to support advancing only some clients to a given sequence number
+ * (not all clients must be synchronized at the same time).
  *
  * This allows testing sequences of operations where clients have varying refSeqs, rather than having all clients advance refSeq
  * in lockstep.
+ *
+ * @remarks
+ * If we wired the server up to "delta" events on the client, it would be reasonable to rename this to `MockServer` and the API for tests
+ * would be a bit cleaner.
  */
-export class PartialSyncTestHelper {
+export class ClientTestHelper {
 	clients: Record<ClientName, TestClient> & { all: TestClient[] };
 
 	idxFromName(name: ClientName): number {
@@ -47,7 +60,7 @@ export class PartialSyncTestHelper {
 	clientToLastAppliedSeq = new Map<ClientName, number>();
 
 	perClientOps: ISequencedDocumentMessage[][];
-	disconnectedClientOps = new Map<
+	private readonly disconnectedClientOps = new Map<
 		ClientName,
 		{ op: IMergeTreeOp; segmentGroup: SegmentGroup }[]
 	>();
@@ -60,7 +73,6 @@ export class PartialSyncTestHelper {
 				initialState: "",
 				options: {
 					mergeTreeEnableObliterate: true,
-					// mergeTreeEnableSidedObliterate: true,
 					mergeTreeEnableObliterateReconnect: true,
 					...options,
 				},
@@ -72,13 +84,8 @@ export class PartialSyncTestHelper {
 	}
 
 	private addMessage(client: TestClient, op: IMergeTreeOp): void {
-		const disconnectedQueue = this.disconnectedClientOps.get(clientName(client));
-		if (disconnectedQueue !== undefined) {
-			// Client is not currently connected.
-			const segmentGroup = client.peekPendingSegmentGroups();
-			assert(segmentGroup !== undefined, "Client should have a pending segment group");
-			disconnectedQueue.push({ op, segmentGroup });
-		} else {
+		const disconnectedQueue = this.disconnectedClientOps.get(clientNameOf(client));
+		if (disconnectedQueue === undefined) {
 			const message = client.makeOpMessage(op, ++this.seq);
 			this.ops.push(message);
 			// This implementation (specifically, that of applying ops / synchronizing clients) assumes messages
@@ -87,6 +94,11 @@ export class PartialSyncTestHelper {
 				message.sequenceNumber === this.ops.length,
 				"Partial sync test helper invariant violated",
 			);
+		} else {
+			// Client is not currently connected.
+			const segmentGroup = client.peekPendingSegmentGroups();
+			assert(segmentGroup !== undefined, "Client should have a pending segment group");
+			disconnectedQueue.push({ op, segmentGroup });
 		}
 	}
 
@@ -175,7 +187,7 @@ export class PartialSyncTestHelper {
 	 * processAllOps()
 	 * ```
 	 *
-	 * for the test-runtime-mocks will...
+	 * the test-runtime-mocks will...
 	 *
 	 * - have none of B's local ops be receieved by A in the processAllOps() line
 	 * - have B not receive A's local op 1
@@ -220,6 +232,6 @@ export class PartialSyncTestHelper {
 	}
 
 	private isDisconnected(client: TestClient): boolean {
-		return this.disconnectedClientOps.has(clientName(client));
+		return this.disconnectedClientOps.has(clientNameOf(client));
 	}
 }

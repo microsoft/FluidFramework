@@ -25,7 +25,7 @@ import {
 	type Perspective,
 } from "../perspective.js";
 import type { OperationStamp } from "../stamps.js";
-import { PartialSyncTestHelper as ReconnectTestHelper } from "./partialSyncHelper.js";
+import { ClientTestHelper } from "./clientTestHelper.js";
 
 import { loadText } from "./text.js";
 
@@ -262,7 +262,7 @@ function createObliterateTestBody({ action, expectedText }: ObliterateTestArgs):
 	return () => {
 		const events: number[] = [];
 
-		const helper = new ReconnectTestHelper({
+		const helper = new ClientTestHelper({
 			mergeTreeEnableSidedObliterate: true,
 		});
 		helper.clients.A.on("delta", (opArgs, deltaArgs) => {
@@ -277,7 +277,7 @@ function createObliterateTestBody({ action, expectedText }: ObliterateTestArgs):
 
 interface ObliterateTestArgs {
 	title: string;
-	action: (helper: ReconnectTestHelper) => void;
+	action: (helper: ClientTestHelper) => void;
 	expectedText: string;
 }
 
