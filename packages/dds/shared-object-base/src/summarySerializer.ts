@@ -25,6 +25,12 @@ export class GCHandleVisitor extends FluidSerializer {
 		bind: IFluidHandleInternal,
 	): ISerializedHandle {
 		this.visitedHandles.add(handle.absolutePath);
-		return super.bindAndEncodeHandle(handle, bind);
+
+		// Just return a dummy value. The serialization itself is not used.
+		// It's especially important we don't bind since that has side effects that are irrelevant to GC.
+		return {
+			type: "__fluid_handle__",
+			url: "UNUSED (see GCHandleVisitor)",
+		};
 	}
 }
