@@ -40,7 +40,7 @@ import {
 	type Summarizable,
 } from "../../shared-tree-core/index.js";
 import { testIdCompressor } from "../utils.js";
-import { strict as assert } from "node:assert";
+import { strict as assert, fail } from "node:assert";
 import {
 	SharedObject,
 	type IChannelView,
@@ -51,6 +51,7 @@ import type {
 	ISummaryTreeWithStats,
 	IExperimentalIncrementalSummaryContext,
 	ITelemetryContext,
+	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	createIdCompressor,
@@ -273,9 +274,12 @@ export class TestSharedTreeCore extends SharedObject {
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
-		this.kernel.processCore(message, local, localOpMetadata);
+		fail("processCore should not be called on SharedTree");
 	}
 
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		this.kernel.processMessagesCore(messagesCollection);
+	}
 	protected onDisconnect(): void {}
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
