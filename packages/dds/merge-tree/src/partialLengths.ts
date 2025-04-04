@@ -1204,13 +1204,6 @@ export function verifyExpectedPartialLengths(
 				: new LocalReconnectingPerspective(refSeq, clientId, localSeq)
 			: new PriorPerspective(refSeq, clientId);
 
-	const perspective =
-		clientId === mergeTree.collabWindow.clientId
-			? localSeq === undefined
-				? new LocalDefaultPerspective(clientId)
-				: new LocalReconnectingPerspective(refSeq, clientId, localSeq)
-			: new PriorPerspective(refSeq, clientId);
-
 	while (nodesToVisit.length > 0) {
 		const thisNode = nodesToVisit.pop();
 		if (!thisNode) {
