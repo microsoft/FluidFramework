@@ -43,11 +43,16 @@ describe("SharedMap memory usage", () => {
 		new (class implements IMemoryTestObject {
 			public readonly title = "Create empty map";
 			public readonly minSampleCount = 500;
-
+			public readonly allowedDeviation = 10; // Example: Allow 10% deviation
 			private map: ISharedMap = createLocalMap("testMap");
 
 			public async run(): Promise<void> {
 				this.map = createLocalMap("testMap");
+			}
+			public afterIteration(): void {
+				if (process.env.SAVE_MEMORY_BASELINE) {
+					const memoryUsage = process.memoryUsage().heapUsed;
+				}
 			}
 		})(),
 	);
@@ -86,7 +91,6 @@ describe("SharedMap memory usage", () => {
 					}
 					this.map.clear();
 				}
-
 				public beforeIteration(): void {
 					this.map = createLocalMap("testMap");
 				}
