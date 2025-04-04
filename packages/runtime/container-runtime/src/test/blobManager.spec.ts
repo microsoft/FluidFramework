@@ -87,6 +87,7 @@ export class MockRuntime
 	public readonly clientDetails: IClientDetails = { capabilities: { interactive: true } };
 	constructor(
 		public mc: MonitoringContext,
+		createBlobPlaceholders: boolean,
 		blobManagerLoadInfo: IBlobManagerLoadInfo = {},
 		attached = false,
 		stashed: unknown[] = [[], {}],
@@ -105,6 +106,7 @@ export class MockRuntime
 			isBlobDeleted: (blobPath: string) => this.isBlobDeleted(blobPath),
 			runtime: this,
 			stashedBlobs: stashed[1] as IPendingBlobs | undefined,
+			createBlobPlaceholders,
 		});
 	}
 
@@ -329,19 +331,15 @@ export const validateSummary = (
 	return { ids, redirectTable };
 };
 
-for (const enableBlobPlaceholdersFlag of [false, true]) {
-	describe(`BlobManager (blob placeholders: ${enableBlobPlaceholdersFlag})`, () => {
+for (const createBlobPlaceholders of [false, true]) {
+	describe(`BlobManager (blob placeholders: ${createBlobPlaceholders})`, () => {
 		const handlePs: Promise<IFluidHandle<ArrayBufferLike>>[] = [];
 		const mockLogger = new MockLogger();
 		let runtime: MockRuntime;
 		let createBlob: (blob: ArrayBufferLike, signal?: AbortSignal) => Promise<void>;
 		let waitForBlob: (blob: ArrayBufferLike) => Promise<void>;
 		let mc: MonitoringContext;
-		let injectedSettings: Record<string, ConfigTypes> = enableBlobPlaceholdersFlag
-			? {
-					"Fluid.Runtime.UploadBlobPlaceholders": true,
-				}
-			: {};
+		let injectedSettings: Record<string, ConfigTypes> = {};
 
 		beforeEach(() => {
 			const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
@@ -351,7 +349,7 @@ for (const enableBlobPlaceholdersFlag of [false, true]) {
 				createChildLogger({ logger: mockLogger }),
 				configProvider(injectedSettings),
 			);
-			runtime = new MockRuntime(mc);
+			runtime = new MockRuntime(mc, createBlobPlaceholders);
 			handlePs.length = 0;
 
 			// ensures this blob will be processed next time runtime.processBlobs() is called
@@ -658,7 +656,7 @@ for (const enableBlobPlaceholdersFlag of [false, true]) {
 			assert.strictEqual(summaryData.ids.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 3);
 
-			const runtime2 = new MockRuntime(mc, summaryData, true);
+			const runtime2 = new MockRuntime(mc, createBlobPlaceholders, summaryData, true);
 			const summaryData2 = validateSummary(runtime2);
 			assert.strictEqual(summaryData2.ids.length, 1);
 			assert.strictEqual(summaryData2.redirectTable?.length, 3);
