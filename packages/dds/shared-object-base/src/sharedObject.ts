@@ -854,7 +854,7 @@ export abstract class SharedObject<
 	 * Calls the serializer over all data in this object that reference other GC nodes.
 	 * Derived classes must override this to provide custom list of references to other GC nodes.
 	 *
-	 * @remarks Serialization itself doesn't matter. We're tapping into the serialization infrastructure
+	 * @remarks Serialization itself doesn't matter (the result is ignored). We're tapping into the serialization infrastructure
 	 * as a way to visit all the content in this content that may reference other objects via handle.
 	 *
 	 * @param serializer - The "serializer" (more like handle visitor) to use.
