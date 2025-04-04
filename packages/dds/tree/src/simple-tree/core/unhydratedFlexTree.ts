@@ -152,9 +152,7 @@ export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
 		if (parent !== undefined) {
 			assert(index !== undefined, 0xa08 /* Expected index */);
 			if (this.location !== unparentedLocation) {
-				throw new UsageError(
-					"A node may not be in more than one place in a tree or in more than one tree",
-				);
+				throw new UsageError("A node may not be inserted if it's already in a tree");
 			}
 			let n: UnhydratedFlexTreeNode | undefined = parent.parent;
 			while (n !== undefined) {
