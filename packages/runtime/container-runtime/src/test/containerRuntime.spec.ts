@@ -3711,7 +3711,7 @@ describe("Runtime", () => {
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
 					compatibilityMode,
 					summaryOptions: {},
-					gcOptions: { gcSweep: true },
+					gcOptions: { enableGCSweep: true },
 					loadSequenceNumberVerification: "close",
 					flushMode: FlushMode.TurnBased,
 					compressionOptions: {

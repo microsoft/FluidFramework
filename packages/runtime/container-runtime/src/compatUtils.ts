@@ -128,7 +128,7 @@ const versionDependentOptionConfigMap: {
 		// TODO: Get actual version this should be enabled by default.
 		minVersionRequired: "2.10.0",
 		legacyConfig: {},
-		modernConfig: { gcSweep: true },
+		modernConfig: { enableGCSweep: true },
 	},
 };
 
