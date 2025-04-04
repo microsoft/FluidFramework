@@ -532,7 +532,7 @@ function isSharedObject(value: unknown): value is ISharedObject {
  * {@link @fluidframework/aqueduct#}  is unlikely between devtools and end-user applications, and we don't support it anyway.
  */
 function isDataObject(value: unknown): value is DataObject {
-	if (value instanceof DataObject === true) {
+	if (value instanceof DataObject) {
 		return true;
 	}
 
