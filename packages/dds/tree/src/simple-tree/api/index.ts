@@ -22,7 +22,7 @@ export {
 	SchemaFactory,
 	type ScopedSchemaName,
 	type SchemaFactoryObjectOptions,
-	type schemaStatics,
+	type SchemaStatics,
 } from "./schemaFactory.js";
 export { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
 export type {
@@ -136,6 +136,7 @@ export {
 } from "./transactionTypes.js";
 
 export { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
+export { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
 
 // Exporting the schema (RecursiveObject) to test that recursive types are working correctly.
 // These are `@internal` so they can't be included in the `InternalClassTreeTypes` due to https://github.com/microsoft/rushstack/issues/3639

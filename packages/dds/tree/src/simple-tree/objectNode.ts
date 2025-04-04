@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Lazy } from "@fluidframework/core-utils/internal";
+import { assert, Lazy, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { FieldKey, SchemaPolicy } from "../core/index.js";
@@ -44,7 +44,7 @@ import {
 	getOrCreateInnerNode,
 } from "./core/index.js";
 import { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
-import { type RestrictiveStringRecord, fail, type FlattenKeys } from "../util/index.js";
+import type { RestrictiveStringRecord, FlattenKeys } from "../util/index.js";
 import {
 	isObjectNodeSchema,
 	type ObjectNodeSchema,

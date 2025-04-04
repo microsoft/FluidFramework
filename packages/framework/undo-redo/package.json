@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/undo-redo",
-	"version": "2.31.0",
+	"version": "2.32.0",
 	"description": "Undo Redo",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -111,8 +111,8 @@
 		"@fluidframework/build-tools": "^0.54.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@fluidframework/undo-redo-previous": "npm:@fluidframework/undo-redo@2.30.0",
-		"@microsoft/api-extractor": "7.47.8",
+		"@fluidframework/undo-redo-previous": "npm:@fluidframework/undo-redo@2.31.0",
+		"@microsoft/api-extractor": "7.50.1",
 		"@types/diff": "^3.5.1",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
