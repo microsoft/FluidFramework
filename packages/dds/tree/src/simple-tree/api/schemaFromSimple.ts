@@ -33,7 +33,7 @@ const factory = new SchemaFactoryAlpha(undefined);
  * Editing through a view produced using this schema can easily violate invariants other users of the document might expect and must be done with great care.
  *
  * This API bakes in some arbitrary policy choices for how to handle data that is not included in the SimpleTreeSchema API, for example the value of `allowUnknownOptionalFields`.
- * If any particular choice is required for such cases, this APi should not be used.
+ * If any particular choice is required for such cases, this API should not be used.
  * @alpha
  */
 export function generateSchemaFromSimpleSchema(simple: SimpleTreeSchema): TreeSchema {
