@@ -569,7 +569,7 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 
 export function exportSimpleSchema(storedSchema: TreeStoredSchema): SimpleTreeSchema {
 	return {
-		...exportSimpleFieldSchemaStored(storedSchema.rootFieldSchema),
+		root: exportSimpleFieldSchemaStored(storedSchema.rootFieldSchema),
 		definitions: new Map(
 			[...storedSchema.nodeSchema].map(([key, schema]) => {
 				return [key, exportSimpleNodeSchemaStored(schema)];
