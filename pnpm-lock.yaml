@@ -41611,7 +41611,7 @@ snapshots:
       ky: 1.7.3
       registry-auth-token: 5.0.3
       registry-url: 6.0.1
-      semver: 7.7.1
+      semver: 7.6.3
 
   package-json@8.1.1:
     dependencies:
