@@ -358,6 +358,16 @@ stages:
               set -eu -o pipefail
 
               az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
+
+        - task: Bash@3
+          displayName: 'Run tenant setup script'
+          env:
+            SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+          inputs:
+            targetType: 'inline'
+            script: |
+              set -eu -o pipefail
+
               # might need to install dependencies here
               pnpm run trips-setup $SYSTEM_ACCESSTOKEN
 
