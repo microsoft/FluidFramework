@@ -50,6 +50,11 @@ export interface IHasInsertionInfo {
 	insert: InsertOperationStamp;
 }
 
+export type ISegmentObliterateInfo = Pick<
+	ISegmentPrivate,
+	"obliteratePrecedingInsertion" | "insertionRefSeqStamp"
+>;
+
 /**
  * Converts a segment-like object to an insertion info object if possible.
  *
@@ -74,6 +79,13 @@ export const toInsertionInfo = (segmentLike: unknown): IHasInsertionInfo | undef
  */
 export const isInserted = (segmentLike: unknown): segmentLike is IHasInsertionInfo =>
 	toInsertionInfo(segmentLike) !== undefined;
+
+export const hasObliterateTiebreakInfo = (
+	segmentLike: unknown,
+): segmentLike is ISegmentObliterateInfo =>
+	segmentLike !== undefined &&
+	hasProp(segmentLike, "obliteratePrecedingInsertion", "object") &&
+	hasProp(segmentLike, "insertionRefSeqStamp", "object");
 
 /**
  * Asserts that the segment has insertion info. Usage of this function should not produce a user facing error.
@@ -257,7 +269,11 @@ export function wasRemovedOnInsert(segment: IHasInsertionInfo & ISegmentPrivate)
 /**
  * A union type representing any segment info.
  */
-export type SegmentInfo = IMergeNodeInfo | IHasInsertionInfo | IHasRemovalInfo;
+export type SegmentInfo =
+	| IMergeNodeInfo
+	| IHasInsertionInfo
+	| IHasRemovalInfo
+	| ISegmentObliterateInfo;
 
 /**
  * A type representing a segment with additional info.

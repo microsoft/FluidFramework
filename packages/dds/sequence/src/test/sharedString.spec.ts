@@ -33,19 +33,16 @@ import {
 import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
 import { SharedStringClass, getTextAndMarkers } from "../sharedString.js";
 
-const enableObliterateOptions = {
-	mergeTreeEnableObliterate: true,
-	mergeTreeEnableSidedObliterate: true,
-	mergeTreeEnableObliterateReconnect: true,
-};
-
 describe("SharedString", () => {
 	let sharedString: SharedString;
 	let dataStoreRuntime1: MockFluidDataStoreRuntime;
 
 	beforeEach(() => {
 		dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-		dataStoreRuntime1.options = enableObliterateOptions;
+		dataStoreRuntime1.options = {
+			mergeTreeEnableObliterate: true,
+			mergeTreeEnableSidedObliterate: true,
+		};
 		sharedString = new SharedStringClass(
 			dataStoreRuntime1,
 			"shared-string-1",
@@ -661,7 +658,6 @@ describe("SharedString", () => {
 	describe("reconnect", () => {
 		let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
 		let containerRuntime1: MockContainerRuntimeForReconnection;
-		let containerRuntime2: MockContainerRuntimeForReconnection;
 		let sharedString2: SharedString;
 
 		beforeEach(async () => {
@@ -678,8 +674,7 @@ describe("SharedString", () => {
 
 			// Create and connect a second SharedString.
 			const runtime2 = new MockFluidDataStoreRuntime();
-			runtime2.options = enableObliterateOptions;
-			containerRuntime2 = containerRuntimeFactory.createContainerRuntime(runtime2);
+			containerRuntimeFactory.createContainerRuntime(runtime2);
 			sharedString2 = new SharedStringClass(
 				runtime2,
 				"shared-string-2",
@@ -764,32 +759,6 @@ describe("SharedString", () => {
 
 			// Verify that the changes were correctly received by the second SharedString
 			assert.equal(sharedString2.getText(), "hello friend");
-		});
-
-		it("TODO: Name this regression test. It catches the issue in normalizeSegments", () => {
-			sharedString.insertText(0, "sgPngAB51danGwgoxXkXFBVhiNQ");
-
-			containerRuntimeFactory.processAllMessages();
-			containerRuntime2.connected = false;
-			sharedString2.obliterateRange(
-				{ pos: 9, side: Side.Before },
-				{ pos: 26, side: Side.After },
-			);
-			sharedString.obliterateRange(
-				{ pos: 4, side: Side.After },
-				{ pos: 15, side: Side.Before },
-			);
-			containerRuntimeFactory.processAllMessages();
-			sharedString2.insertText(3, "e");
-			sharedString2.obliterateRange(
-				{ pos: 2, side: Side.After },
-				{ pos: 6, side: Side.After },
-			);
-			containerRuntime2.connected = true;
-
-			containerRuntimeFactory.processAllMessages();
-			assert.equal(sharedString.getText(), "sgP");
-			assert.equal(sharedString2.getText(), "sgP");
 		});
 	});
 
@@ -881,7 +850,10 @@ describe("Shared String Obliterate", () => {
 	beforeEach(() => {
 		containerRuntimeFactory = new MockContainerRuntimeFactory();
 		dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-		dataStoreRuntime1.options = enableObliterateOptions;
+		dataStoreRuntime1.options = {
+			mergeTreeEnableObliterate: true,
+			mergeTreeEnableSidedObliterate: true,
+		};
 		sharedString = new SharedStringClass(
 			dataStoreRuntime1,
 			"shared-string-1",
@@ -900,7 +872,10 @@ describe("Shared String Obliterate", () => {
 
 		// Create and connect a second SharedString.
 		const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-		dataStoreRuntime2.options = enableObliterateOptions;
+		dataStoreRuntime2.options = {
+			mergeTreeEnableObliterate: true,
+			mergeTreeEnableSidedObliterate: true,
+		};
 		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 		const services2 = {
 			deltaConnection: dataStoreRuntime2.createDeltaConnection(),

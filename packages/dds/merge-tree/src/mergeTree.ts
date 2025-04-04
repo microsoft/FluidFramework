@@ -1307,6 +1307,8 @@ export class MergeTree {
 				);
 				for (const segment of obliterateInfo.tiebreakTrackingGroup.tracked) {
 					segment.trackingCollection.unlink(obliterateInfo.tiebreakTrackingGroup);
+					assert(isSegmentLeaf(segment), "Expected segment leaf");
+					segment.insertionRefSeqStamp = undefined;
 				}
 				obliterateInfo.tiebreakTrackingGroup = undefined;
 			}
@@ -1594,16 +1596,16 @@ export class MergeTree {
 			}
 
 			insertPos += newSegment.cachedLength;
-			const refSeqStamp: OperationStamp = {
-				seq: perspective.refSeq,
-				clientId: stamp.clientId,
-			};
-			newSegment.insertionRefSeqStamp = refSeqStamp;
 
 			if (!this.options?.mergeTreeEnableObliterate || this.obliterates.empty()) {
 				saveIfLocal(newSegment);
 				continue;
 			}
+
+			const refSeqStamp: OperationStamp = {
+				seq: perspective.refSeq,
+				clientId: stamp.clientId,
+			};
 
 			const overlappingAckedObliterates: RemoveOperationStamp[] = [];
 			let oldest: ObliterateInfo | undefined;
@@ -1659,6 +1661,7 @@ export class MergeTree {
 					"Expected local obliterateinfo to have tiebreak group",
 				);
 				newest.tiebreakTrackingGroup.link(newSegment);
+				newSegment.insertionRefSeqStamp = refSeqStamp;
 			}
 			// See doc comment on obliteratePrecedingInsertion for more details: if the newest obliterate was performed
 			// by the same client that's inserting this segment, we let them insert into this range and therefore don't
@@ -2702,10 +2705,9 @@ export class MergeTree {
 			if (info.tiebreakTrackingGroup !== undefined) {
 				for (const segment of info.tiebreakTrackingGroup.tracked) {
 					// Recompute previous obliterate
-					assert(isSegmentLeaf(segment), "Expected segment leaf");
 					assert(
-						segment.insertionRefSeqStamp !== undefined,
-						"Expected insertion ref seq stamp",
+						isSegmentLeaf(segment) && segment.insertionRefSeqStamp !== undefined,
+						"Expected segment leaf with insertionRefSeqStamp",
 					);
 					// This may have changed as a result of segments shuffling: outstanding local obliterates that previously surrounded a segment may no longer surround it.
 					segment.obliteratePrecedingInsertion = this.computeObliteratePrecedingInsertion(

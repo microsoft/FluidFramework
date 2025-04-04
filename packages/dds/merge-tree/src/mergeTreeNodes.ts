@@ -32,6 +32,8 @@ import {
 	type IMergeNodeInfo,
 	type IHasRemovalInfo,
 	type SegmentWithInfo,
+	ISegmentObliterateInfo,
+	hasObliterateTiebreakInfo,
 } from "./segmentInfos.js";
 import { PropertiesManager } from "./segmentPropertiesManager.js";
 import type { OperationStamp, SliceRemoveOperationStamp } from "./stamps.js";
@@ -91,9 +93,16 @@ export interface ISegmentPrivate extends ISegmentInternal {
 	 *
 	 * See the test case "obliterate with mismatched final states" for an example of such a scenario.
 	 *
-	 * TODO:AB#29553: This property is not persisted in the summary, but it should be.
+	 * TODO:AB#29553: This property is not persisted in the V1 summary, but it should be.
 	 */
 	obliteratePrecedingInsertion?: ObliterateInfo;
+	/**
+	 * Populated iff this segment was inserted into a range concurrently removed by a local obliterate operation.
+	 * This field is unset once the newest such overlapping obliterate is acked, and allows recomputing {@link obliteratePrecedingInsertion}
+	 * if that local obliterate is resubmitted.
+	 *
+	 * TODO:AB#29553: This property is not persisted in the V1 summary, but it should be.
+	 */
 	insertionRefSeqStamp?: OperationStamp;
 }
 /**
@@ -430,11 +439,16 @@ export abstract class BaseSegment implements ISegment {
 
 		if (isInserted(this)) {
 			overwriteInfo<IHasInsertionInfo>(leafSegment, { insert: this.insert });
-			leafSegment.insertionRefSeqStamp = (this as any).insertionRefSeqStamp;
 		}
 		if (isRemoved(this)) {
 			overwriteInfo<IHasRemovalInfo>(leafSegment, {
 				removes: [...this.removes],
+			});
+		}
+		if (hasObliterateTiebreakInfo(this)) {
+			overwriteInfo<ISegmentObliterateInfo>(leafSegment, {
+				obliteratePrecedingInsertion: this.obliteratePrecedingInsertion,
+				insertionRefSeqStamp: this.insertionRefSeqStamp,
 			});
 		}
 

@@ -1082,8 +1082,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						lastRemove.type === "sliceRemove" && lastRemove.localSeq === segmentGroup.localSeq,
 						"Last remove should be the obliterate that is being resubmitted.",
 					);
-					// The original obliterate affected this segment, but it has since been removed and it's impossible to apply the
-					// local obliterate so that is so. We adjust the metadata on that segment now.
+					// The original obliterate affected this segment, but it has since been removed and overlapping removes
+					// are only possible when they are concurrent. We adjust the metadata on that segment now to reflect
+					// the fact that the obliterate no longer affects it.
 					segment.removes.pop();
 				}
 
@@ -1144,10 +1145,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			}
 
 			this._mergeTree.remapObliterate(obliterateInfo, newObliterate);
-			// TODO: Maybe this:
-			// if (newObliterate.segmentGroup.segments.length > 0) {
 			this._mergeTree.pendingSegments.push(newObliterate.segmentGroup);
-			// }
 
 			const newStartPos =
 				this._mergeTree.getPosition(newStartSegment, reconnectingPerspective) + newStartOffset;
