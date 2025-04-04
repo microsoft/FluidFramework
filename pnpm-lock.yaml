@@ -4324,7 +4324,7 @@ importers:
         version: 2.1.0
       axios:
         specifier: ^1.7.7
-        version: 1.7.9(debug@4.4.0)
+        version: 1.8.2(debug@4.4.0)
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
@@ -4987,7 +4987,7 @@ importers:
         version: link:../../../packages/utils/tool-utils
       axios:
         specifier: ^1.7.7
-        version: 1.7.9(debug@4.4.0)
+        version: 1.8.2(debug@4.4.0)
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -6347,7 +6347,7 @@ importers:
         version: link:../../../../packages/dds/shared-object-base
       axios:
         specifier: ^1.7.7
-        version: 1.7.9(debug@4.4.0)
+        version: 1.8.2(debug@4.4.0)
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -10216,7 +10216,7 @@ importers:
         version: 9.0.8
       axios:
         specifier: ^1.7.7
-        version: 1.7.9(debug@4.4.0)
+        version: 1.8.2(debug@4.4.0)
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -11956,7 +11956,7 @@ importers:
         version: link:../../utils/telemetry-utils
       axios:
         specifier: ^1.7.7
-        version: 1.7.9(debug@4.4.0)
+        version: 1.8.2(debug@4.4.0)
       lz4js:
         specifier: ^0.2.0
         version: 0.2.0
@@ -13014,7 +13014,7 @@ importers:
         version: link:../../../dds/tree
       axios:
         specifier: ^1.7.7
-        version: 1.7.9(debug@4.4.0)
+        version: 1.8.2(debug@4.4.0)
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -14142,7 +14142,7 @@ importers:
         version: 4.5.0
       axios:
         specifier: ^1.7.7
-        version: 1.7.9(debug@4.4.0)
+        version: 1.8.2(debug@4.4.0)
       semver:
         specifier: ^7.5.3
         version: 7.6.3
@@ -20315,6 +20315,12 @@ packages:
   axios@1.7.9:
     resolution: {integrity: sha512-LhLcE7Hbiryz8oMDdDptSrWowmB4Bl6RCt6sIJKpRB4XtVf0iEgewX3au/pJqm+Py1kCASkb/FFKjxQaLtxJvw==}
 
+  axios@1.8.2:
+    resolution: {integrity: sha512-ls4GYBm5aig9vWx8AWDSGLpnpDQRtWAfrjU+EuytuODrFBkqesN2RkOQCBzrA1RQNHw1SmRMSDDDSwzNAYQ6Rg==}
+
+  axios@1.8.4:
+    resolution: {integrity: sha512-eBSYY4Y68NNlHbHBMdeDmKNtDgXWhQsJcGqzO3iLUM0GraQFSS9cVgPX5I9b3lbdFKyYoAEGAZF1DwhTaljNAw==}
+
   azure-devops-node-api@11.2.0:
     resolution: {integrity: sha512-XdiGPhrpaT5J8wdERRKs5g8E0Zy1pvOYTli7z9E8nmOn3YGp4FhtjhrOyFmX/8veWCwdI69mCHKJw6l+4J/bHA==}
 
@@ -22368,8 +22374,8 @@ packages:
     resolution: {integrity: sha512-yDYSgNMraqvnxiEXO4hi88+YZxaHC6QKzb5N84iRCTDeRO7ZALpir/lVmf/uXUhnwUr2O4HU8s/n6x+yNjQkHw==}
     engines: {node: '>= 14.17'}
 
-  form-data@2.5.2:
-    resolution: {integrity: sha512-GgwY0PS7DbXqajuGf4OYlsrIu3zgxD6Vvql43IBhm6MahqA5SK/7mwhtNj2AdH2z35YR34ujJ7BN+3fFC3jP5Q==}
+  form-data@2.5.3:
+    resolution: {integrity: sha512-XHIrMD0NpDrNM/Ckf7XJiBbLl57KEhT3+i3yY+eWm+cqYZJQTZrKo8Y8AWKnuV5GT4scfuUGt9LzNoIx3dU1nQ==}
     engines: {node: '>= 0.12'}
 
   form-data@3.0.2:
@@ -22378,6 +22384,10 @@ packages:
 
   form-data@4.0.1:
     resolution: {integrity: sha512-tzN8e4TX8+kkxGPK8D5u0FNmjPUjw3lwC9lSLxxoB/+GtsJG91CO8bSWy73APlgAZzZbXEYZJuxjkHH2w+Ezhw==}
+    engines: {node: '>= 6'}
+
+  form-data@4.0.2:
+    resolution: {integrity: sha512-hGfm/slu0ZabnNt4oaRZ6uREyfCj6P4fT/n6A1rGV+Z0VdGXjfOhVUpkn6qVQONHGIFwmveGXyDs75+nr6FM8w==}
     engines: {node: '>= 6'}
 
   format@0.2.2:
@@ -31015,7 +31025,7 @@ snapshots:
       '@fluidframework/core-utils': 2.31.0
       '@fluidframework/driver-definitions': 2.31.0
       '@fluidframework/telemetry-utils': 2.31.0
-      axios: 1.7.9(debug@4.4.0)
+      axios: 1.8.2(debug@4.4.0)
       lz4js: 0.2.0
       uuid: 9.0.1
     transitivePeerDependencies:
@@ -31621,7 +31631,7 @@ snapshots:
       '@fluidframework/gitresources': 5.0.0
       '@fluidframework/protocol-base': 5.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      axios: 1.7.9(debug@4.4.0)
+      axios: 1.8.4(debug@4.4.0)
       crc-32: 1.2.0
       debug: 4.4.0(supports-color@8.1.1)
       json-stringify-safe: 5.0.1
@@ -31981,7 +31991,7 @@ snapshots:
   '@gitbeaker/core@35.8.1':
     dependencies:
       '@gitbeaker/requester-utils': 35.8.1
-      form-data: 4.0.1
+      form-data: 4.0.2
       li: 1.3.0
       mime: 3.0.0
       query-string: 7.1.3
@@ -32003,7 +32013,7 @@ snapshots:
 
   '@gitbeaker/requester-utils@35.8.1':
     dependencies:
-      form-data: 4.0.1
+      form-data: 4.0.2
       qs: 6.13.1
       xcase: 2.0.1
 
@@ -33532,7 +33542,7 @@ snapshots:
     dependencies:
       '@previewjs/serializable-values': 7.0.3
       '@previewjs/type-analyzer': 8.0.2
-      axios: 1.7.9(debug@4.4.0)
+      axios: 1.8.4(debug@4.4.0)
     transitivePeerDependencies:
       - debug
 
@@ -33575,7 +33585,7 @@ snapshots:
       acorn: 8.14.0
       acorn-jsx: 5.3.2(acorn@8.14.0)
       assert-never: 1.3.0
-      axios: 1.7.9(debug@4.4.0)
+      axios: 1.8.4(debug@4.4.0)
       exclusive-promises: 1.0.3
       express: 4.21.2
       fs-extra: 11.2.0
@@ -35300,15 +35310,7 @@ snapshots:
   axios@0.28.1(debug@4.4.0):
     dependencies:
       follow-redirects: 1.15.9(debug@4.4.0)
-      form-data: 4.0.1
-      proxy-from-env: 1.1.0
-    transitivePeerDependencies:
-      - debug
-
-  axios@1.7.9(debug@4.3.7):
-    dependencies:
-      follow-redirects: 1.15.9(debug@4.3.7)
-      form-data: 4.0.1
+      form-data: 4.0.2
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
       - debug
@@ -35317,6 +35319,30 @@ snapshots:
     dependencies:
       follow-redirects: 1.15.9(debug@4.4.0)
       form-data: 4.0.1
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
+
+  axios@1.8.2(debug@4.4.0):
+    dependencies:
+      follow-redirects: 1.15.9(debug@4.4.0)
+      form-data: 4.0.2
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
+
+  axios@1.8.4(debug@4.3.7):
+    dependencies:
+      follow-redirects: 1.15.9(debug@4.3.7)
+      form-data: 4.0.2
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
+
+  axios@1.8.4(debug@4.4.0):
+    dependencies:
+      follow-redirects: 1.15.9(debug@4.4.0)
+      form-data: 4.0.2
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
       - debug
@@ -37845,10 +37871,11 @@ snapshots:
 
   form-data-encoder@2.1.4: {}
 
-  form-data@2.5.2:
+  form-data@2.5.3:
     dependencies:
       asynckit: 0.4.0
       combined-stream: 1.0.8
+      es-set-tostringtag: 2.1.0
       mime-types: 2.1.35
       safe-buffer: 5.2.1
 
@@ -37862,6 +37889,13 @@ snapshots:
     dependencies:
       asynckit: 0.4.0
       combined-stream: 1.0.8
+      mime-types: 2.1.35
+
+  form-data@4.0.2:
+    dependencies:
+      asynckit: 0.4.0
+      combined-stream: 1.0.8
+      es-set-tostringtag: 2.1.0
       mime-types: 2.1.35
 
   format@0.2.2: {}
@@ -41608,7 +41642,7 @@ snapshots:
       ky: 1.7.3
       registry-auth-token: 5.0.3
       registry-url: 6.0.1
-      semver: 7.7.1
+      semver: 7.6.3
 
   package-json@8.1.1:
     dependencies:
@@ -43758,7 +43792,7 @@ snapshots:
       cookiejar: 2.1.4
       debug: 3.2.7
       extend: 3.0.2
-      form-data: 2.5.2
+      form-data: 2.5.3
       formidable: 1.2.6
       methods: 1.1.2
       mime: 1.6.0
@@ -43979,7 +44013,7 @@ snapshots:
       '@types/qs': 6.9.17
       caseless: 0.12.0
       concat-stream: 1.6.2
-      form-data: 2.5.2
+      form-data: 2.5.3
       http-basic: 8.1.3
       http-response-object: 3.0.2
       promise: 8.3.0
@@ -44784,7 +44818,7 @@ snapshots:
 
   wait-on@8.0.1:
     dependencies:
-      axios: 1.7.9(debug@4.4.0)
+      axios: 1.8.4(debug@4.4.0)
       joi: 17.13.3
       lodash: 4.17.21
       minimist: 1.2.8
@@ -44794,7 +44828,7 @@ snapshots:
 
   wait-on@8.0.1(debug@4.3.7):
     dependencies:
-      axios: 1.7.9(debug@4.3.7)
+      axios: 1.8.4(debug@4.3.7)
       joi: 17.13.3
       lodash: 4.17.21
       minimist: 1.2.8
