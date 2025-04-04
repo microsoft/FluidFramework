@@ -358,7 +358,8 @@ stages:
               set -eu -o pipefail
 
               az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
-              trips-setup $SYSTEM_ACCESSTOKEN
+              # might need to install dependencies here
+              pnpm run trips-setup $SYSTEM_ACCESSTOKEN
 
         # run the test
         - task: Npm@1
@@ -431,7 +432,7 @@ stages:
               set -eu -o pipefail
 
               az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
-              trips-cleanup $(stringBearerToken)
+              pnpm run trips-cleanup $(stringBearerToken)
 
         # Log Test Failures
         # - template: /tools/pipelines/templates/include-process-test-results.yml@self
