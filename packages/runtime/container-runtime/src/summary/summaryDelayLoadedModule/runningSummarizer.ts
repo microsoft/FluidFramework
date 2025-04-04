@@ -26,12 +26,9 @@ import {
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { opSize } from "../opProperties.js";
-
-import { SummarizeHeuristicRunner } from "./summarizerHeuristics.js";
+import { opSize } from "../../opProperties.js";
 import type {
 	ISummaryConfiguration,
-	EnqueueSummarizeResult,
 	IEnqueueSummarizeOptions,
 	IOnDemandSummarizeOptions,
 	IRefreshSummaryAckOptions,
@@ -39,39 +36,30 @@ import type {
 	ISummarizeHeuristicData,
 	ISummarizeHeuristicRunner,
 	ISummarizeOptions,
-	ISummarizeResults,
 	ISummarizeRunnerTelemetry,
 	ISummarizeTelemetryProperties,
 	ISummarizerRuntime,
 	ISummaryCancellationToken,
 	SubmitSummaryResult,
 	IRetriableFailureError,
-} from "./summarizerTypes.js";
+} from "../summarizerTypes.js";
+import { raceTimer, RetriableSummaryError, SummarizeReason } from "../summarizerUtils.js";
+
+import { defaultMaxAttempts, defaultMaxAttemptsForSubmitFailures } from "./summarizer.js";
+import { SummarizeHeuristicRunner } from "./summarizerHeuristics.js";
 import {
 	IAckedSummary,
 	IClientSummaryWatcher,
 	SummaryCollection,
 } from "./summaryCollection.js";
+import { SummaryGenerator } from "./summaryGenerator.js";
 import {
-	RetriableSummaryError,
-	SummarizeReason,
+	ISummarizeResults,
 	SummarizeResultBuilder,
-	SummaryGenerator,
-	raceTimer,
-} from "./summaryGenerator.js";
+	type EnqueueSummarizeResult,
+} from "./summaryResultBuilder.js";
 
 const maxSummarizeAckWaitTime = 10 * 60 * 1000; // 10 minutes
-
-/**
- * The maximum number of summarization attempts that will be done by default in case of failures
- * that can be retried.
- */
-export const defaultMaxAttempts = 2;
-/**
- * The default value for maximum number of summarization attempts that will be done for summarization failures where
- * submit fails and the failure can be retried.
- */
-export const defaultMaxAttemptsForSubmitFailures = 5;
 
 /**
  * An instance of RunningSummarizer manages the heuristics for summarizing.
