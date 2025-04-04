@@ -25,7 +25,7 @@ describe("getJsonSchema", () => {
 
 		const actual = getJsonSchema(Schema, {
 			useStoredKeys: false,
-			requireFieldWithDefaults: true,
+			requireFieldsWithDefaults: true,
 		});
 
 		const expected: JsonTreeSchema = {
@@ -56,7 +56,7 @@ describe("getJsonSchema", () => {
 
 		const actual = getJsonSchema(Schema, {
 			useStoredKeys: false,
-			requireFieldWithDefaults: true,
+			requireFieldsWithDefaults: true,
 		});
 
 		const expected: JsonTreeSchema = {
@@ -103,7 +103,7 @@ describe("getJsonSchema", () => {
 		assert.throws(() =>
 			getJsonSchema(Schema, {
 				useStoredKeys: false,
-				requireFieldWithDefaults: true,
+				requireFieldsWithDefaults: true,
 			}),
 		);
 	});
@@ -118,7 +118,7 @@ describe("getJsonSchema", () => {
 
 		const actual = getJsonSchema(Schema, {
 			useStoredKeys: false,
-			requireFieldWithDefaults: true,
+			requireFieldsWithDefaults: true,
 		});
 
 		const expected: JsonTreeSchema = {
@@ -164,7 +164,7 @@ describe("getJsonSchema", () => {
 
 		const actual = getJsonSchema(Schema, {
 			useStoredKeys: false,
-			requireFieldWithDefaults: true,
+			requireFieldsWithDefaults: true,
 		});
 		const expected: JsonTreeSchema = {
 			$defs: {
@@ -236,7 +236,7 @@ describe("getJsonSchema", () => {
 
 		const actual = getJsonSchema(Schema, {
 			useStoredKeys: false,
-			requireFieldWithDefaults: true,
+			requireFieldsWithDefaults: true,
 		});
 
 		const expected: JsonTreeSchema = {
@@ -324,7 +324,7 @@ describe("getJsonSchema", () => {
 
 		const actual = getJsonSchema(Schema, {
 			useStoredKeys: false,
-			requireFieldWithDefaults: true,
+			requireFieldsWithDefaults: true,
 		});
 
 		const expected: JsonTreeSchema = {
@@ -337,7 +337,7 @@ describe("getJsonSchema", () => {
 							$ref: "#/$defs/com.fluidframework.leaf.string",
 						},
 					},
-					required: [],
+					required: ["id"],
 					additionalProperties: false,
 				},
 				"com.fluidframework.leaf.string": {
@@ -358,7 +358,7 @@ describe("getJsonSchema", () => {
 
 		const actual = getJsonSchema(Schema, {
 			useStoredKeys: false,
-			requireFieldWithDefaults: true,
+			requireFieldsWithDefaults: true,
 		});
 
 		const expected: JsonTreeSchema = {
@@ -399,7 +399,7 @@ describe("getJsonSchema", () => {
 
 		const actual = getJsonSchema(Schema, {
 			useStoredKeys: false,
-			requireFieldWithDefaults: true,
+			requireFieldsWithDefaults: true,
 		});
 
 		const expected: JsonTreeSchema = {
@@ -443,22 +443,5 @@ describe("getJsonSchema", () => {
 		validator({ foo: { foo: 42 } }, false);
 		validator({ bar: "Hello world" }, false);
 		validator({ foo: { bar: "Hello world" } }, false);
-	});
-
-	it("JSON Schema cached on node schema", () => {
-		const schemaFactory = new SchemaFactory("test");
-		const Schema = schemaFactory.string;
-
-		const firstQuery = getJsonSchema(Schema, {
-			useStoredKeys: false,
-			requireFieldWithDefaults: true,
-		});
-		const secondQuery = getJsonSchema(Schema, {
-			useStoredKeys: false,
-			requireFieldWithDefaults: true,
-		});
-
-		// Object equality to ensure the same object is returned by subsequent calls.
-		return assert.equal(firstQuery, secondQuery);
 	});
 });

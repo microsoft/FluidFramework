@@ -36,7 +36,7 @@ import { LeafNodeSchema } from "../leafNodeSchema.js";
 /**
  * Generates a JSON Schema representation from a simple tree schema.
  * @remarks
- * This expect the data to be in the {@link ConciseTree} format.
+ * This expects the data to be in the {@link ConciseTree} format.
  *
  * This cannot handle the case where the root is undefined since undefined is not a concept in JSON.
  * This also cannot handle {@link SchemaStatics.handle} since they also are not supported in JSON.
@@ -172,7 +172,7 @@ export function convertObjectNodeSchema(
 
 		if (fieldSchema.kind !== FieldKind.Optional) {
 			if (
-				options.requireFieldWithDefaults ||
+				options.requireFieldsWithDefaults ||
 				fieldSchema.props?.defaultProvider === undefined
 			) {
 				required.push(key);

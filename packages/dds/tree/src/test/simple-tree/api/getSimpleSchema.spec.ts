@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 import {
 	FieldKind,
-	getSimpleSchema,
 	NodeKind,
 	SchemaFactory,
 	type SimpleLeafNodeSchema,
@@ -36,18 +35,18 @@ const simpleNumber: SimpleLeafNodeSchema = {
 describe("getSimpleSchema", () => {
 	it("non-copying", () => {
 		const Schema = schemaStatics.string;
+		const root = schemaStatics.optional(Schema);
 
-		const actual = toSimpleTreeSchema(Schema, false);
+		const actual = toSimpleTreeSchema(root, false);
 
 		const expected: SimpleTreeSchema = {
-			root: {
-				kind: FieldKind.Required,
-				metadata: {},
-				allowedTypesIdentifiers: new Set([Schema.identifier]),
-			},
+			root,
 			definitions: new Map([[Schema.identifier, Schema]]),
 		};
 		assert.deepEqual(actual, expected);
+
+		assert.equal(actual.root, root);
+		assert.equal(actual.definitions.get(Schema.identifier), Schema);
 	});
 
 	it("Field Schema", () => {
@@ -333,16 +332,5 @@ describe("getSimpleSchema", () => {
 			]),
 		};
 		assert.deepEqual(actual, expected);
-	});
-
-	it("Simple Schema cached", () => {
-		const schemaFactory = new SchemaFactory("test");
-		const Schema = schemaFactory.string;
-
-		const firstQuery = getSimpleSchema(Schema);
-		const secondQuery = getSimpleSchema(Schema);
-
-		// Object equality to ensure the same object is returned by subsequent calls.
-		return assert.equal(firstQuery, secondQuery);
 	});
 });
