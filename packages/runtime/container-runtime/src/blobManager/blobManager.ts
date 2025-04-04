@@ -579,7 +579,7 @@ export class BlobManager {
 					blob,
 					handleP: new Deferred(),
 					uploadP: this.uploadBlob(localId, blob),
-					attached: false,
+					attached: true,
 					acked: false,
 					opsent: false,
 				};
