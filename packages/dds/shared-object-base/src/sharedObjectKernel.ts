@@ -97,8 +97,13 @@ class SharedObjectFromKernel<
 	TOut extends object,
 	TEvent extends ISharedObjectEvents,
 > extends SharedObject<TEvent> {
-	// Lazy init here so correct kernel constructed in loadCore when loading from existing data.
-	private lazyData: FactoryOut<TOut> | undefined;
+	/**
+	 * Lazy init here so kernel can be constructed in loadCore when loading from existing data.
+	 *
+	 * Explicit initialization to undefined is done so Proxy knows this property is from this class (via `Reflect.has`),
+	 * not from the grafted APIs.
+	 */
+	private lazyData: FactoryOut<TOut> | undefined = undefined;
 
 	private readonly kernelArgs: KernelArgs;
 

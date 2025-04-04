@@ -161,18 +161,11 @@ export interface IMockContainerRuntimeOptions {
 	 * By default, the value is `false`
 	 */
 	readonly enableGroupedBatching?: boolean;
-	/**
-	 * Set this to true to use processMessages instead of process.
-	 *
-	 * By default, the value is `false`
-	 */
-	readonly useProcessMessages?: boolean;
 }
 
 const defaultMockContainerRuntimeOptions: Required<IMockContainerRuntimeOptions> = {
 	flushMode: FlushMode.Immediate,
 	enableGroupedBatching: false,
-	useProcessMessages: false,
 };
 
 const makeContainerRuntimeOptions = (

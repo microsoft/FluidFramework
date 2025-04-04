@@ -46,7 +46,6 @@ export class MockContainerRuntimeFactoryWithOpBunching extends MockContainerRunt
 	): MockContainerRuntimeWithOpBunching {
 		const containerRuntime = new MockContainerRuntimeWithOpBunching(dataStoreRuntime, this, {
 			...this.runtimeOptions,
-			useProcessMessages: true,
 		});
 		this.runtimes.add(containerRuntime);
 		return containerRuntime;

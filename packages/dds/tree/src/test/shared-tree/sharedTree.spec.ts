@@ -374,9 +374,7 @@ describe("SharedTree", () => {
 	describe("schema index summarization", () => {
 		describe("incrementally reuses previous blobs", () => {
 			it("on a client which never uploaded a blob", async () => {
-				const containerRuntimeFactory = new MockContainerRuntimeFactory({
-					useProcessMessages: true,
-				});
+				const containerRuntimeFactory = new MockContainerRuntimeFactory();
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 					idCompressor: createIdCompressor(),
 				});
@@ -500,6 +498,36 @@ describe("SharedTree", () => {
 		});
 	});
 
+	it("can load from summary", async () => {
+		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
+		const [tree1] = provider.trees;
+
+		const view1 = tree1.viewWith(
+			new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+		);
+		view1.initialize(["A"]);
+		await provider.ensureSynchronized();
+
+		// Have tree1 make a summary
+		await provider.summarize();
+
+		// Ensure all trees are now caught up
+		await provider.ensureSynchronized();
+
+		// Load the last summary
+		const view2 = (await provider.createTree()).viewWith(
+			new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			}),
+		);
+
+		// Check schema loaded
+		assert(view2.compatibility.isEquivalent);
+		// Check content loaded
+		assert.deepEqual([...view2.root], ["A"]);
+	});
+
 	it("can process ops after loading from summary", async () => {
 		const provider = await TestTreeProvider.create(3, SummarizeType.onDemand);
 		const [container1, container2, container3] = provider.containers;
@@ -606,7 +634,7 @@ describe("SharedTree", () => {
 			attachState: AttachState.Detached,
 		});
 		const tree = sharedTreeFactory.create(runtime, "tree");
-		const runtimeFactory = new MockContainerRuntimeFactory({ useProcessMessages: true });
+		const runtimeFactory = new MockContainerRuntimeFactory();
 		runtimeFactory.createContainerRuntime(runtime);
 
 		const view = tree.viewWith(
@@ -2167,7 +2195,7 @@ describe("SharedTree", () => {
 		const sharedTreeFactory = new TreeFactory({});
 		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
 		const tree = sharedTreeFactory.create(runtime, "tree");
-		const runtimeFactory = new MockContainerRuntimeFactory({ useProcessMessages: true });
+		const runtimeFactory = new MockContainerRuntimeFactory();
 		runtimeFactory.createContainerRuntime(runtime);
 		const view = tree.viewWith(new TreeViewConfiguration({ schema: StringArray }));
 		view.initialize([]);
