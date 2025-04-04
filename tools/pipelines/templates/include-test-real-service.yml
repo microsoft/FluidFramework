@@ -346,9 +346,7 @@ stages:
 
         # Retrieve a tenant from the TRIPS tenant pool
         - task: AzureCLI@2
-          displayName: 'Set up and retrieve tenant credentials'
-          env:
-            SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+          displayName: 'Log in to retrieve tenant credentials'
           inputs:
             azureSubscription: 'Fluid Framework Tests'
             addSpnToEnvironment: true
@@ -364,6 +362,7 @@ stages:
           env:
             SYSTEM_ACCESSTOKEN: $(System.AccessToken)
           inputs:
+            workingDirectory: ${{ parameters.testWorkspace }}
             targetType: 'inline'
             script: |
               set -eu -o pipefail
