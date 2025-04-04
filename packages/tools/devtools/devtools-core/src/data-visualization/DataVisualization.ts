@@ -532,24 +532,21 @@ function isSharedObject(value: unknown): value is ISharedObject {
  * {@link @fluidframework/aqueduct#}  is unlikely between devtools and end-user applications, and we don't support it anyway.
  */
 function isDataObject(value: unknown): value is DataObject {
-	if (value instanceof DataObject) {
+	if (
+		value instanceof DataObject ||
+		(typeof (value as DataObject).initializeInternal === "function" &&
+			typeof (
+				value as { getUninitializedErrorString(): string }
+			).getUninitializedErrorString()) === "function"
+	) {
+		// If root is missing, throw an error instead of returning false
+		const root = (value as { readonly root?: ISharedDirectory }).root;
+		if (!root) {
+			throw new Error("DataObject must have a `root` property, but it was undefined.");
+		}
+
 		return true;
 	}
 
-	if (
-		(value as DataObject).initializeInternal === undefined ||
-		(
-			value as DataObject as unknown as { getUninitializedErrorString(): string }
-		).getUninitializedErrorString() === undefined
-	) {
-		return false;
-	}
-
-	// If root is missing, throw an error instead of returning false
-	const root = (value as { readonly root?: ISharedDirectory }).root;
-	if (!root) {
-		throw new Error("DataObject must have a `root` property, but it was undefined.");
-	}
-
-	return true;
+	return false;
 }
