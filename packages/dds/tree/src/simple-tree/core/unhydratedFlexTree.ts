@@ -150,11 +150,24 @@ export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
 	public adoptBy(parent: UnhydratedFlexTreeField, index: number): void;
 	public adoptBy(parent: UnhydratedFlexTreeField | undefined, index?: number): void {
 		if (parent !== undefined) {
-			assert(
-				this.location === unparentedLocation,
-				0x98c /* Node may not be adopted if it already has a parent */,
-			);
 			assert(index !== undefined, 0xa08 /* Expected index */);
+			if (this.location !== unparentedLocation) {
+				throw new UsageError("A node may not be inserted if it's already in a tree");
+			}
+			let n: UnhydratedFlexTreeNode | undefined = parent.parent;
+			while (n !== undefined) {
+				if (n === this) {
+					throw new UsageError(
+						"A node may not be inserted into a location that is under itself",
+					);
+				}
+				const p: FlexTreeNode | undefined = n.parentField.parent.parent;
+				assert(
+					p === undefined || p instanceof UnhydratedFlexTreeNode,
+					"Unhydrated node's parent should be an unhydrated node",
+				);
+				n = p;
+			}
 			this.location = { parent, index };
 		} else {
 			assert(

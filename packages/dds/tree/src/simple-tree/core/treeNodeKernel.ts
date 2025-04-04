@@ -162,8 +162,12 @@ export class TreeNodeKernel {
 							const kernel = getKernel(treeNode);
 							kernel.#unhydratedEvents.value.emit("subtreeChangedAfterBatch");
 						}
-						// This cast is safe because the parent (if it exists) of an unhydrated flex node is always another unhydrated flex node.
-						n = n.parentField.parent.parent as UnhydratedFlexTreeNode | undefined;
+						const p: FlexTreeNode | undefined = n.parentField.parent.parent;
+						assert(
+							p === undefined || p instanceof UnhydratedFlexTreeNode,
+							"Unhydrated node's parent should be an unhydrated node",
+						);
+						n = p;
 					}
 				}),
 			};
