@@ -53,9 +53,9 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
+import { GCHandleVisitor } from "./gcHandleVisitor.js";
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, IFluidSerializer } from "./serializer.js";
-import { GCHandleVisitor } from "./gcHandleVisitor.js";
 import { ISharedObject, ISharedObjectEvents } from "./types.js";
 import { makeHandlesSerializable, parseHandles } from "./utils.js";
 
