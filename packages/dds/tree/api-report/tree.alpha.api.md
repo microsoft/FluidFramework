@@ -408,7 +408,7 @@ export class IterableTreeArrayContent<T> implements Iterable<T> {
 export interface ITree extends ViewableTree, IFluidLoadable {
 }
 
-// @alpha
+// @alpha @sealed
 export interface ITreeAlpha extends ITree {
     exportSimpleSchema(): SimpleTreeSchema;
     exportVerbose(): VerboseTree | undefined;
