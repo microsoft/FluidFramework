@@ -1707,6 +1707,9 @@ importers:
       '@types/node':
         specifier: ^18.19.39
         version: 18.19.39
+      '@types/sinon':
+        specifier: ^17.0.3
+        version: 17.0.3
       '@types/supertest':
         specifier: ^2.0.5
         version: 2.0.12
