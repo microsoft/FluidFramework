@@ -30,7 +30,6 @@ import {
 } from "./shared-tree/index.js";
 import type { ITree } from "./simple-tree/index.js";
 
-import { pkgVersion } from "./packageVersion.js";
 import { SharedTreeKernel } from "./shared-tree/index.js";
 import { Breakable } from "./util/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";

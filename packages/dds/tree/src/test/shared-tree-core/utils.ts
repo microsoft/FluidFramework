@@ -40,7 +40,7 @@ import {
 	type Summarizable,
 } from "../../shared-tree-core/index.js";
 import { testIdCompressor } from "../utils.js";
-import { strict as assert } from "node:assert";
+import { strict as assert, fail } from "node:assert";
 import {
 	SharedObject,
 	type IChannelView,
@@ -62,7 +62,7 @@ import type {
 	IFluidLoadable,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { Breakable, fail } from "../../util/index.js";
+import { Breakable } from "../../util/index.js";
 import { mockSerializer } from "../mockSerializer.js";
 
 const codecOptions: ICodecOptions = {
