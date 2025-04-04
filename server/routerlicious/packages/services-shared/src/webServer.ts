@@ -86,7 +86,6 @@ const createAndConfigureHttpServer = (
 	const server = http.createServer(requestListener);
 	server.timeout =
 		httpServerConfig?.connectionTimeoutMs ?? defaultHttpServerConfig.connectionTimeoutMs;
-
 	return server;
 };
 
