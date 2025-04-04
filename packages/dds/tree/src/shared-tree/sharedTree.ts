@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import type {
 	ErasedType,
 	IFluidHandle,
@@ -36,6 +36,7 @@ import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitio
 
 import { type ICodecOptions, noopValidator } from "../codec/index.js";
 import {
+	type FieldKey,
 	type GraphCommit,
 	type IEditableForest,
 	type ITreeCursor,
@@ -94,6 +95,7 @@ import {
 	type CustomTreeNode,
 	type CustomTreeValue,
 	type ITreeAlpha,
+	type SimpleObjectFieldSchema,
 } from "../simple-tree/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
@@ -102,7 +104,7 @@ import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { type TreeCheckout, type BranchableTree, createTreeCheckout } from "./treeCheckout.js";
-import { Breakable, breakingClass, fail, throwIfBroken } from "../util/index.js";
+import { Breakable, breakingClass, throwIfBroken } from "../util/index.js";
 
 /**
  * Copy of data from an {@link ITreePrivate} at some point in time.
@@ -500,14 +502,7 @@ export class SharedTreeKernel
 	}
 
 	public exportSimpleSchema(): SimpleTreeSchema {
-		return {
-			...exportSimpleFieldSchemaStored(this.storedSchema.rootFieldSchema),
-			definitions: new Map(
-				[...this.storedSchema.nodeSchema].map(([key, schema]) => {
-					return [key, exportSimpleNodeSchemaStored(schema)];
-				}),
-			),
-		};
+		return exportSimpleSchema(this.storedSchema);
 	}
 
 	@throwIfBroken
@@ -594,6 +589,17 @@ export class SharedTreeKernel
 	public onDisconnect(): void {}
 }
 
+export function exportSimpleSchema(storedSchema: TreeStoredSchema): SimpleTreeSchema {
+	return {
+		root: exportSimpleFieldSchemaStored(storedSchema.rootFieldSchema),
+		definitions: new Map(
+			[...storedSchema.nodeSchema].map(([key, schema]) => {
+				return [key, exportSimpleNodeSchemaStored(schema)];
+			}),
+		),
+	};
+}
+
 /**
  * Get a {@link BranchableTree} from a {@link ITree}.
  * @remarks The branch can be used for "version control"-style coordination of edits on the tree.
@@ -622,7 +628,7 @@ export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		return treeOrView.checkout as unknown as BranchableTree;
 	}
 	const kernel = (treeOrView as ITree as ITreePrivate).kernel;
-	assert(kernel instanceof SharedTreeKernel, "Invalid ITree");
+	assert(kernel instanceof SharedTreeKernel, 0xb56 /* Invalid ITree */);
 	// This cast is safe so long as TreeCheckout supports all the operations on the branch interface.
 	return kernel.checkout as unknown as BranchableTree;
 }
@@ -792,7 +798,7 @@ function verboseFromCursor(
 	const nodeSchema =
 		schema.get(reader.type) ?? fail(0xac9 /* missing schema for type in cursor */);
 	if (nodeSchema instanceof LeafNodeStoredSchema) {
-		return fields as CustomTreeValue<IFluidHandle>;
+		return fields as CustomTreeValue;
 	}
 
 	return {
@@ -820,30 +826,34 @@ function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFie
 		default:
 			fail(0xaca /* invalid field kind */);
 	}
-	return { kind, allowedTypes: schema.types };
+	return { kind, allowedTypesIdentifiers: schema.types, metadata: {} };
 }
 
 function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeSchema {
 	const arrayTypes = tryStoredSchemaAsArray(schema);
 	if (arrayTypes !== undefined) {
-		return { kind: NodeKind.Array, allowedTypes: arrayTypes };
+		return { kind: NodeKind.Array, allowedTypesIdentifiers: arrayTypes, metadata: {} };
 	}
 	if (schema instanceof ObjectNodeStoredSchema) {
-		const fields: Record<string, SimpleFieldSchema> = {};
-		for (const [key, field] of schema.objectNodeFields) {
-			fields[key] = exportSimpleFieldSchemaStored(field);
+		const fields = new Map<FieldKey, SimpleObjectFieldSchema>();
+		for (const [storedKey, field] of schema.objectNodeFields) {
+			fields.set(storedKey, { ...exportSimpleFieldSchemaStored(field), storedKey });
 		}
-		return { kind: NodeKind.Object, fields };
+		return { kind: NodeKind.Object, fields, metadata: {} };
 	}
 	if (schema instanceof MapNodeStoredSchema) {
 		assert(
 			schema.mapFields.kind === FieldKinds.optional.identifier,
 			0xa95 /* Invalid map schema */,
 		);
-		return { kind: NodeKind.Map, allowedTypes: schema.mapFields.types };
+		return {
+			kind: NodeKind.Map,
+			allowedTypesIdentifiers: schema.mapFields.types,
+			metadata: {},
+		};
 	}
 	if (schema instanceof LeafNodeStoredSchema) {
-		return { kind: NodeKind.Leaf, leafKind: schema.leafValue };
+		return { kind: NodeKind.Leaf, leafKind: schema.leafValue, metadata: {} };
 	}
 	fail(0xacb /* invalid schema kind */);
 }

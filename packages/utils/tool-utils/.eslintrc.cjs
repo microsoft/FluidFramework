@@ -11,6 +11,5 @@ module.exports = {
 	rules: {
 		// This package is intended to be used in node.js environments
 		"import/no-nodejs-modules": "off",
-		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},
 };

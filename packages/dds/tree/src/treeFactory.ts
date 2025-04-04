@@ -34,24 +34,7 @@ import { pkgVersion } from "./packageVersion.js";
 import { SharedTreeKernel } from "./shared-tree/index.js";
 import { Breakable } from "./util/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-
-/**
- * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
- * @alpha
- * @legacy
- */
-export const SharedTreeFactoryType = "https://graph.microsoft.com/types/tree";
-
-/**
- * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
- * @alpha
- * @legacy
- */
-export const SharedTreeAttributes: IChannelAttributes = {
-	type: SharedTreeFactoryType,
-	snapshotFormatVersion: "0.0.0",
-	packageVersion: pkgVersion,
-};
+import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
 
 /**
  * Creates a factory for shared tree kernels with the given options.

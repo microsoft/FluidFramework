@@ -48,19 +48,6 @@ export function asMutable<T>(readonly: T): Mutable<T> {
 export const clone = structuredClone;
 
 /**
- * Throw an error with a constant message.
- * @remarks
- * Works like {@link @fluidframework/core-utils/internal#assert}.
- */
-export function fail(message: string | number): never {
-	// Declaring this here aliased to a different name avoids the assert tagging objecting to the usages of `assert` below.
-	// Since users of `fail` do the assert message tagging instead, suppressing tagging errors here makes sense.
-	const assertNoTag: (condition: boolean, message: string | number) => asserts condition =
-		assert;
-	assertNoTag(false, message);
-}
-
-/**
  * Checks whether or not the given object is a `readonly` array.
  *
  * Note that this does NOT indicate if a given array should be treated as readonly.

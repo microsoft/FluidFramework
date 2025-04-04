@@ -21,6 +21,7 @@ export {
 	IScribeServerConfiguration,
 	IServerConfiguration,
 	IServiceConfiguration,
+	MaxKafkaMessageSize,
 } from "./configuration";
 export {
 	ICheckpointRepository,

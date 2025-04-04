@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob, debugAssert } from "@fluidframework/core-utils/internal";
+import { assert, oob, debugAssert, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
@@ -19,7 +19,6 @@ import {
 	detachedFieldAsKey,
 	rootField,
 } from "../core/index.js";
-import { fail } from "../util/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
@@ -182,7 +181,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 		const siblings = this.getField();
 		if (!(index in siblings)) {
 			throw new UsageError(
-				"A child does not exist at the specified index, check the status of a node using `Tree.status()`.",
+				`A child does not exist at index '${index}' in field containing ${siblings.length} nodes.`,
 			);
 		}
 		this.siblingStack.push(this.siblings);

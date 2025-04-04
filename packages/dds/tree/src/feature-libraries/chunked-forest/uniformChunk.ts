@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, compareArrays, oob } from "@fluidframework/core-utils/internal";
+import { assert, compareArrays, oob, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
@@ -19,7 +19,7 @@ import {
 	cursorChunk,
 	dummyRoot,
 } from "../../core/index.js";
-import { ReferenceCountedBase, fail, hasSome } from "../../util/index.js";
+import { ReferenceCountedBase, hasSome } from "../../util/index.js";
 import { SynchronousCursor, prefixFieldPath, prefixPath } from "../treeCursorUtils.js";
 
 import type { SessionSpaceCompressedId, IIdCompressor } from "@fluidframework/id-compressor";
@@ -233,9 +233,10 @@ class OffsetShape {
 	/**
 	 * @param shape - the shape of each child in this field
 	 * @param topLevelLength - number of top level nodes in this sequence chunk (either field within a chunk, or top level chunk)
-	 * @param offset - number of nodes before this in the parent's subtree
+	 * @param offset - number of nodes before this in the parent's subtree. The nodes are considered in depth first pre order
+	 * traversal, so a parent is the first node in its subtree (before its children) with offset 0
 	 * @param key - field key
-	 * @param indexOfParentField - index of node with this shape
+	 * @param indexOfParentField - index to this shape in the parent's array of fields
 	 */
 	public constructor(
 		public readonly shape: TreeShape,

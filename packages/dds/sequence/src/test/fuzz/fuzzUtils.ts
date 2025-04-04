@@ -9,8 +9,8 @@ import * as path from "path";
 import {
 	AcceptanceCondition,
 	AsyncGenerator,
-	AsyncReducer,
-	combineReducersAsync,
+	Reducer,
+	combineReducers,
 	createWeightedAsyncGenerator,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
@@ -27,13 +27,8 @@ import {
 } from "@fluidframework/datastore-definitions/internal";
 import { PropertySet, Side, type AdjustParams } from "@fluidframework/merge-tree/internal";
 
-import type {
-	InteriorSequencePlace,
-	MapLike,
-	SequenceInterval,
-	SharedStringClass,
-} from "../../index.js";
-import { type IIntervalCollection } from "../../intervalCollection.js";
+import type { InteriorSequencePlace, MapLike, SharedStringClass } from "../../index.js";
+import type { ISequenceIntervalCollection } from "../../intervalCollection.js";
 import { SharedStringRevertible, revertSharedStringRevertibles } from "../../revertibles.js";
 import { SharedStringFactory } from "../../sequenceFactory.js";
 import { ISharedString } from "../../sharedString.js";
@@ -236,46 +231,43 @@ type ClientOpState = FuzzTestState;
 
 export function makeReducer(
 	loggingInfo?: LoggingInfo,
-): AsyncReducer<Operation | RevertOperation, ClientOpState> {
+): Reducer<Operation | RevertOperation, ClientOpState> {
 	const withLogging =
-		<T>(baseReducer: AsyncReducer<T, ClientOpState>): AsyncReducer<T, ClientOpState> =>
-		async (state, operation) => {
+		<T>(baseReducer: Reducer<T, ClientOpState>): Reducer<T, ClientOpState> =>
+		(state, operation) => {
 			if (loggingInfo !== undefined) {
 				logCurrentState(state, loggingInfo);
 				console.log("-".repeat(20));
 				console.log("Next operation:", JSON.stringify(operation, undefined, 4));
 			}
-			await baseReducer(state, operation);
+			baseReducer(state, operation);
 		};
 
-	const reducer = combineReducersAsync<Operation | RevertOperation, ClientOpState>({
-		addText: async ({ client }, { index, content }) => {
+	const reducer = combineReducers<Operation | RevertOperation, ClientOpState>({
+		addText: ({ client }, { index, content }) => {
 			client.channel.insertText(index, content);
 		},
-		removeRange: async ({ client }, { start, end }) => {
+		removeRange: ({ client }, { start, end }) => {
 			client.channel.removeRange(start, end);
 		},
-		annotateRange: async ({ client }, { start, end, props }) => {
+		annotateRange: ({ client }, { start, end, props }) => {
 			const propertySet: PropertySet = {};
 			for (const { key, value } of props) {
 				propertySet[key] = value;
 			}
 			client.channel.annotateRange(start, end, propertySet);
 		},
-		annotateAdjustRange: async ({ client }, { start, end, adjust }) => {
+		annotateAdjustRange: ({ client }, { start, end, adjust }) => {
 			const adjustRange: MapLike<AdjustParams> = {};
 			for (const { key, value } of adjust) {
 				adjustRange[key] = value;
 			}
 			client.channel.annotateAdjustRange(start, end, adjustRange);
 		},
-		obliterateRange: async ({ client }, { start, end }) => {
+		obliterateRange: ({ client }, { start, end }) => {
 			client.channel.obliterateRange(start, end);
 		},
-		addInterval: async (
-			{ client },
-			{ start, end, collectionName, id, startSide, endSide },
-		) => {
+		addInterval: ({ client }, { start, end, collectionName, id, startSide, endSide }) => {
 			const collection = client.channel.getIntervalCollection(collectionName);
 			collection.add({
 				start: { pos: start, side: startSide },
@@ -283,11 +275,11 @@ export function makeReducer(
 				props: { intervalId: id },
 			});
 		},
-		deleteInterval: async ({ client }, { id, collectionName }) => {
+		deleteInterval: ({ client }, { id, collectionName }) => {
 			const collection = client.channel.getIntervalCollection(collectionName);
 			collection.removeIntervalById(id);
 		},
-		changeInterval: async (
+		changeInterval: (
 			{ client },
 			{ id, start, end, collectionName, startSide, endSide, properties },
 		) => {
@@ -302,7 +294,7 @@ export function makeReducer(
 				collection.change(id, { props: properties });
 			}
 		},
-		revertSharedStringRevertibles: async ({ client }, { editsToRevert }) => {
+		revertSharedStringRevertibles: ({ client }, { editsToRevert }) => {
 			assert(isRevertibleSharedString(client.channel));
 			client.channel.isCurrentRevert = true;
 			const few = client.channel.revertibles.splice(-editsToRevert, editsToRevert);
@@ -532,7 +524,7 @@ export function makeIntervalOperationGenerator(
 
 	const options = { ...defaultIntervalOperationGenerationConfig, ...(optionsParam ?? {}) };
 
-	function isNonEmpty(collection: IIntervalCollection<SequenceInterval>): boolean {
+	function isNonEmpty(collection: ISequenceIntervalCollection): boolean {
 		for (const _ of collection) {
 			return true;
 		}

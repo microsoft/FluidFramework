@@ -43,7 +43,7 @@ import {
 	fieldKindConfigurations,
 	makeFieldBatchCodec,
 	makeModularChangeCodecFamily,
-	MockNodeKeyManager,
+	MockNodeIdentifierManager,
 	jsonableTreeFromCursor,
 	cursorForJsonableTreeNode,
 } from "../../../feature-libraries/index.js";
@@ -52,6 +52,7 @@ import {
 	type ISharedTreeEditor,
 	Tree,
 	ForestTypeOptimized,
+	type ISharedTree,
 } from "../../../shared-tree/index.js";
 import {
 	MockTreeCheckout,
@@ -59,7 +60,6 @@ import {
 	forestWithContent,
 	mintRevisionTag,
 	testIdCompressor,
-	type SharedTreeWithConnectionStateSetter,
 } from "../../utils.js";
 import {
 	cursorFromInsertable,
@@ -110,7 +110,7 @@ function getIdentifierEncodingContext(id: string) {
 	const initialTree = cursorFromInsertable(
 		HasIdentifier,
 		new HasIdentifier({ identifier: id }),
-		new MockNodeKeyManager(),
+		new MockNodeIdentifierManager(),
 	);
 	const flexSchema = toStoredSchema(HasIdentifier);
 	const flexConfig: TreeStoredContent = {
@@ -166,9 +166,7 @@ describe("End to end chunked encoding", () => {
 		const checkout = new MockTreeCheckout(forest, {
 			editor: dummyEditor as unknown as ISharedTreeEditor,
 		});
-		checkout.editor
-			.sequenceField({ field: rootFieldKey, parent: undefined })
-			.insert(0, chunk.cursor());
+		checkout.editor.sequenceField({ field: rootFieldKey, parent: undefined }).insert(0, chunk);
 		// Check that inserted change contains chunk which is reference equal to the original chunk.
 		const { change: insertedChange, revision } = changeLog[0];
 		assert(insertedChange.builds !== undefined);
@@ -188,9 +186,7 @@ describe("End to end chunked encoding", () => {
 			initialTree: [],
 		});
 
-		checkout.editor
-			.sequenceField({ field: rootFieldKey, parent: undefined })
-			.insert(0, chunk.cursor());
+		checkout.editor.sequenceField({ field: rootFieldKey, parent: undefined }).insert(0, chunk);
 
 		const forestSummarizer = new ForestSummarizer(
 			checkout.forest,
@@ -276,8 +272,10 @@ describe("End to end chunked encoding", () => {
 
 		it("is the uncompressed value when it is an unknown  identifier", () => {
 			// generate an id from a different id compressor.
-			const nodeKeyManager = new MockNodeKeyManager();
-			const id = nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
+			const nodeKeyManager = new MockNodeIdentifierManager();
+			const id = nodeKeyManager.stabilizeNodeIdentifier(
+				nodeKeyManager.generateLocalNodeIdentifier(),
+			);
 
 			const { encoderContext, checkout } = getIdentifierEncodingContext(id);
 
@@ -353,8 +351,8 @@ describe("End to end chunked encoding", () => {
 			const id = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
 
 			// Create a stable id from a different source.
-			const nodeKeyManager = new MockNodeKeyManager();
-			const unknownStableId = nodeKeyManager.generateStableNodeKey();
+			const nodeKeyManager = new MockNodeIdentifierManager();
+			const unknownStableId = nodeKeyManager.generateStableNodeIdentifier();
 
 			const initialTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
@@ -404,10 +402,7 @@ describe("End to end chunked encoding", () => {
 				id: "test",
 				idCompressor: testIdCompressor,
 			});
-			const tree = factory.create(
-				runtime,
-				"TestSharedTree",
-			) as SharedTreeWithConnectionStateSetter;
+			const tree = factory.create(runtime, "TestSharedTree") as ISharedTree;
 
 			const stableId = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
 
