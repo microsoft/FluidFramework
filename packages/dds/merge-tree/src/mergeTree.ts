@@ -572,18 +572,18 @@ class Obliterates {
 	}
 
 	/**
-	 *
+	 * Remove a local obliterate from this data structure.
 	 * @privateRemarks
 	 * This data structure could support removing non-local obliterates if we wanted it to, but when adding support for that
 	 * we should reconsider the indexing structure for seq ordered obliterates (right now it would be an O(# obliterates) operation)
 	 */
-	public removeLocalObliterate(obliterateInfo: ObliterateInfo) {
+	public removeLocalObliterate(obliterateInfo: ObliterateInfo): void {
 		assert(obliterateInfo.stamp.seq === UnassignedSequenceNumber, "Expected local obliterate");
 		this.startOrdered.remove(obliterateInfo.start);
 	}
 
 	/**
-	 * @returns an iterator over the `ObliterateInfo` for all obliterates in the collab window. Obliterates are not guaranteed to be ordered.
+	 * Returns an iterator over the `ObliterateInfo` for all obliterates in the collab window. Obliterates are not guaranteed to be ordered.
 	 * The iterator is not guaranteed to be valid over edits to the set of obliterates.
 	 */
 	public [Symbol.iterator](): IterableIterator<ObliterateInfo> {
@@ -595,7 +595,7 @@ class Obliterates {
 					const start = starts[index++];
 					const info = start.properties?.obliterate as ObliterateInfo;
 					assert(
-						info !== undefined && info.start !== undefined && info.end !== undefined,
+						info?.start !== undefined && info?.end !== undefined,
 						"Expected obliterateInfo endpoint to map to its obliterate",
 					);
 					return { value: info, done: false };
@@ -1313,7 +1313,7 @@ export class MergeTree {
 		const nodesToUpdate: MergeBlock[] = [];
 		let overwrite = false;
 		if (pendingSegmentGroup !== undefined) {
-			const { obliterateInfo } = pendingSegmentGroup;
+			const { obliterateInfo, segments } = pendingSegmentGroup;
 			const hasObliterateInfo = obliterateInfo !== undefined;
 			const isObliterate =
 				opArgs.op.type === MergeTreeDeltaType.OBLITERATE ||
@@ -1321,6 +1321,7 @@ export class MergeTree {
 			assert(hasObliterateInfo === isObliterate, 0xa40 /* must have obliterate info */);
 			if (hasObliterateInfo) {
 				obliterateInfo.stamp = { ...stamp, type: "sliceRemove" };
+				this.obliterates.addOrUpdate(obliterateInfo);
 				assert(
 					obliterateInfo.tiebreakTrackingGroup !== undefined,
 					"obliterateInfo should have a tiebreak tracking group on ack",
@@ -1335,7 +1336,7 @@ export class MergeTree {
 
 			const deltaSegments: IMergeTreeSegmentDelta[] = [];
 			const overlappingRemoves: boolean[] = [];
-			pendingSegmentGroup.segments.map((pendingSegment: ISegmentLeaf) => {
+			segments.map((pendingSegment: ISegmentLeaf) => {
 				const overlappingRemove = !ackSegment(
 					pendingSegment,
 					pendingSegmentGroup,
@@ -1357,11 +1358,6 @@ export class MergeTree {
 				});
 			});
 
-			if (pendingSegmentGroup.obliterateInfo !== undefined) {
-				pendingSegmentGroup.obliterateInfo.stamp = { type: "sliceRemove", ...stamp };
-				this.obliterates.addOrUpdate(pendingSegmentGroup.obliterateInfo);
-			}
-
 			// Perform slides after all segments have been acked, so that
 			// positions after slide are final
 			if (
@@ -1369,7 +1365,7 @@ export class MergeTree {
 				opArgs.op.type === MergeTreeDeltaType.OBLITERATE ||
 				opArgs.op.type === MergeTreeDeltaType.OBLITERATE_SIDED
 			) {
-				this.slideAckedRemovedSegmentReferences(pendingSegmentGroup.segments);
+				this.slideAckedRemovedSegmentReferences(segments);
 			}
 
 			this.mergeTreeMaintenanceCallback?.(
@@ -1729,10 +1725,11 @@ export class MergeTree {
 	): ObliterateInfo | undefined {
 		let newest: ObliterateInfo | undefined;
 		for (const ob of this.obliterates.findOverlapping(segment)) {
-			if (opstampUtils.greaterThan(ob.stamp, refSeqStamp)) {
-				if (newest === undefined || opstampUtils.greaterThan(ob.stamp, newest.stamp)) {
-					newest = ob;
-				}
+			if (
+				opstampUtils.greaterThan(ob.stamp, refSeqStamp) &&
+				(newest === undefined || opstampUtils.greaterThan(ob.stamp, newest.stamp))
+			) {
+				newest = ob;
 			}
 		}
 		return newest;

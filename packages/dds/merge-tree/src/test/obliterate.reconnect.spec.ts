@@ -8,10 +8,10 @@ import { strict as assert } from "node:assert";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 
 import { MergeTree } from "../mergeTree.js";
-
-import { itCorrectlyObliterates, useStrictPartialLengthChecks } from "./testUtils.js";
 import { Side } from "../sequencePlace.js";
+
 import { ClientTestHelper } from "./clientTestHelper.js";
+import { itCorrectlyObliterates, useStrictPartialLengthChecks } from "./testUtils.js";
 
 for (const { incremental, mergeTreeEnableSidedObliterate } of generatePairwiseOptions({
 	incremental: [true, false],

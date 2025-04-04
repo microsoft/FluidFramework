@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { Side } from "../sequencePlace.js";
+
 import { itCorrectlyObliterates } from "./testUtils.js";
 
 describe("obliterate", () => {

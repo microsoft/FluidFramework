@@ -106,7 +106,11 @@ import * as opstampUtils from "./stamps.js";
 type IMergeTreeDeltaRemoteOpArgs = Omit<IMergeTreeDeltaOpArgs, "sequencedMessage"> &
 	Required<Pick<IMergeTreeDeltaOpArgs, "sequencedMessage">>;
 
-type RebasedObliterateEndpoint = { segment: ISegmentLeaf; offset: number; side: Side };
+interface RebasedObliterateEndpoint {
+	segment: ISegmentLeaf;
+	offset: number;
+	side: Side;
+}
 
 /**
  * A range [start, end)
@@ -859,6 +863,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		const oldOffset = ref.getOffset();
 		assert(oldSegment !== undefined && oldOffset !== undefined, "Invalid old reference");
 		const useNewSlidingBehavior = true;
+		// Destructuring segment + offset is convenient and segment is reassigned
+		// eslint-disable-next-line prefer-const
 		let { segment: newSegment, offset: newOffset } = getSlideToSegoff(
 			{ segment: oldSegment, offset: oldOffset },
 			slidePreference,
@@ -876,12 +882,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			"Invalid new segment on rebase",
 		);
 
-		const { side } = ref.properties ?? {};
+		const { side } = (ref.properties as { side: Side }) ?? {};
 		assert(side !== undefined, "Side should have been set on sided local reference");
 
-		const newSide =
+		const newSide: Side =
 			newSegment === oldSegment
-				? ref.properties!.side
+				? side
 				: // If the reference slid to a new position, the closest fit to the original position will be independent of
 					// the original side and "in the direction of where the reference was".
 					slidePreference === SlidingPreference.FORWARD
@@ -1065,7 +1071,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			const reconnectingPerspective = new LocalReconnectingPerspective(
 				currentSeq,
 				clientId,
-				obliterateInfo.stamp.localSeq! - 1,
+				obliterateInfo.stamp.localSeq - 1,
 			);
 
 			const newStartPos =
@@ -1345,7 +1351,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 	private pendingRebase: DoublyLinkedList<SegmentGroup> | undefined;
 
-	private cachedObliterateRebases: Map<
+	private readonly cachedObliterateRebases: Map<
 		number, // obliterateInfo.stamp.localSeq
 		{ start: RebasedObliterateEndpoint; end: RebasedObliterateEndpoint }
 	> = new Map();
@@ -1388,8 +1394,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			// Compute obliterate endpoint destinations before segments are normalized.
 			// Segment normalization can affect what should be the semantically correct segments for the endpoints to be placed on.
 			this.cachedObliterateRebases.clear();
-			for (const segmentGroup of [...this._mergeTree.pendingSegments, ...this.pendingRebase]) {
-				const { obliterateInfo } = segmentGroup.data;
+			for (const group of [...this._mergeTree.pendingSegments, ...this.pendingRebase]) {
+				const { obliterateInfo } = group.data;
 				if (obliterateInfo !== undefined) {
 					const { start, end } = this.computeNewObliterateEndpoints(obliterateInfo);
 					const { localSeq } = obliterateInfo.stamp;

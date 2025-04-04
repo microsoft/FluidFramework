@@ -25,8 +25,8 @@ import {
 	type Perspective,
 } from "../perspective.js";
 import type { OperationStamp } from "../stamps.js";
-import { ClientTestHelper } from "./clientTestHelper.js";
 
+import { ClientTestHelper } from "./clientTestHelper.js";
 import { loadText } from "./text.js";
 
 export function loadTextFromFile(
