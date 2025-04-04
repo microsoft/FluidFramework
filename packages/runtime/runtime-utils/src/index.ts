@@ -13,6 +13,7 @@ export {
 	responseToException,
 } from "./dataStoreHelpers.js";
 export {
+	encodeHandleForSerialization,
 	ISerializedHandle,
 	isSerializedHandle,
 	isFluidHandle,
