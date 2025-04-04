@@ -15265,6 +15265,9 @@ importers:
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../common/client-utils
+      '@fluidframework/aqueduct':
+        specifier: workspace:~
+        version: link:../../../framework/aqueduct
       '@fluidframework/cell':
         specifier: workspace:~
         version: link:../../../dds/cell
