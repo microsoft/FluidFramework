@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IAttachableNode } from "@fluidframework/core-interfaces/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
@@ -23,7 +23,7 @@ import { IFluidSerializer } from "./serializer.js";
 export function serializeHandles(
 	value: unknown,
 	serializer: IFluidSerializer,
-	bind: IFluidHandle,
+	bind: IAttachableNode,
 ): string | undefined {
 	return value === undefined ? value : serializer.stringify(value, bind);
 }
@@ -45,7 +45,7 @@ export function serializeHandles(
 export function makeHandlesSerializable(
 	value: unknown,
 	serializer: IFluidSerializer,
-	bind: IFluidHandle,
+	bind: IAttachableNode,
 ): unknown {
 	return serializer.encode(value, bind);
 }
@@ -89,7 +89,7 @@ export function createSingleBlobSummary(
 export function bindHandles(
 	value: unknown,
 	serializer: IFluidSerializer,
-	bind: IFluidHandle,
+	bind: IAttachableNode,
 ): void {
 	// N.B. AB#7316 this could be made more efficient by writing an ad hoc
 	// implementation that doesn't clone at all. Today the distinction between

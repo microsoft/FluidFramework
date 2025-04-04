@@ -13,7 +13,7 @@ import {
 	IResponse,
 } from "@fluidframework/core-interfaces";
 import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
-import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import type { IAttachableNode, IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
 	Deferred,
@@ -197,7 +197,7 @@ export class FluidDataStoreRuntime
 	public visibilityState: VisibilityState;
 	// A list of handles that are bound when the data store is not visible. We have to make them visible when the data
 	// store becomes visible.
-	private readonly pendingHandlesToMakeVisible: Set<IFluidHandleInternal> = new Set();
+	private readonly pendingHandlesToMakeVisible: Set<IAttachableNode> = new Set();
 
 	public readonly id: string;
 
@@ -581,7 +581,7 @@ export class FluidDataStoreRuntime
 			return;
 		}
 
-		this.bind(channel.handle);
+		this.bind(toFluidHandleInternal(channel.handle));
 
 		// If our data store is local then add the channel to the queue
 		if (!this.localChannelContextQueue.has(channel.id)) {
@@ -623,13 +623,13 @@ export class FluidDataStoreRuntime
 		this.makeVisibleAndAttachGraph();
 	}
 
-	public bind(handle: IFluidHandle): void {
+	public bind(node: IAttachableNode): void {
 		// If visible, attach the incoming handle's graph. Else, this will be done when we become visible.
 		if (this.visibilityState !== VisibilityState.NotVisible) {
-			toFluidHandleInternal(handle).attachGraph();
+			node.attachGraph();
 			return;
 		}
-		this.pendingHandlesToMakeVisible.add(toFluidHandleInternal(handle));
+		this.pendingHandlesToMakeVisible.add(node);
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string) {

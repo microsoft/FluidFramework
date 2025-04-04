@@ -5,7 +5,8 @@
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { IRequest, IResponse } from "@fluidframework/core-interfaces";
-import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import { IFluidHandleContext, type IAttachableNode } from "@fluidframework/core-interfaces/internal";
+import { fail } from "@fluidframework/core-utils/internal";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils/internal";
 
 export interface IContainerHandleContextRuntime {
@@ -34,7 +35,11 @@ export class ContainerFluidHandleContext implements IFluidHandleContext {
 	}
 
 	public attachGraph(): void {
-		throw new Error("can't attach container runtime form within container!");
+		fail("Can't attach container runtime from within container!");
+	}
+
+	public bind(node: IAttachableNode): void {
+		fail("Use alias instead of binding to the ContainerRuntime");
 	}
 
 	public get isAttached(): boolean {
