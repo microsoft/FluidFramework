@@ -120,7 +120,7 @@
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"axios": "^1.7.7",
+		"axios": "^1.8.4",
 		"lz4js": "^0.2.0",
 		"uuid": "^9.0.0"
 	},
