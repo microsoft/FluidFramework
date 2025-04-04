@@ -4246,7 +4246,7 @@ export class ContainerRuntime
 			}
 
 			const message: BatchMessage = {
-				// OpSerializer will encode any handles present in this op before serializing to string
+				// This will encode any handles present in this op before serializing to string
 				// Note: handles may already have been encoded by the DDS layer, but encoding handles is idempotent so there's no problem.
 				contents: serializeOp(containerRuntimeMessage),
 				metadata,

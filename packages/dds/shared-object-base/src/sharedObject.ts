@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitterEventType, type ILayerCompatDetails } from "@fluid-internal/client-utils";
+import { EventEmitterEventType } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseProperties, type ErasedType } from "@fluidframework/core-interfaces";
 import {
-	type FluidObject,
 	type IFluidHandleInternal,
 	type IFluidLoadable,
 } from "@fluidframework/core-interfaces/internal";
@@ -35,7 +34,6 @@ import {
 	totalBlobSizePropertyName,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
-	encodeHandlesInContainerRuntime,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	toDeltaManagerInternal,
@@ -59,7 +57,7 @@ import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, IFluidSerializer } from "./serializer.js";
 import { SummarySerializer } from "./summarySerializer.js";
 import { ISharedObject, ISharedObjectEvents } from "./types.js";
-import { bindHandles, makeHandlesSerializable, parseHandles } from "./utils.js";
+import { makeHandlesSerializable, parseHandles } from "./utils.js";
 
 /**
  * Custom telemetry properties used in {@link SharedObjectCore} to instantiate {@link TelemetryEventBatcher} class.
@@ -118,12 +116,6 @@ export abstract class SharedObjectCore<
 	private _isBoundToContext: boolean = false;
 
 	/**
-	 * If true, only bind handles when submitting ops, and do not encode them.
-	 * Otherwise, bind and encode.
-	 */
-	private readonly skipHandleEncodingOnSubmit: boolean;
-
-	/**
 	 * Tracks error that closed this object.
 	 */
 	private closeError?: ReturnType<typeof DataProcessingError.wrapIfUnrecognized>;
@@ -166,12 +158,6 @@ export abstract class SharedObjectCore<
 			},
 		});
 		this.mc = loggerToMonitoringContext(this.logger);
-
-		const maybeRuntimeCompatDetails = this.runtime as FluidObject<ILayerCompatDetails>;
-		this.skipHandleEncodingOnSubmit =
-			maybeRuntimeCompatDetails?.ILayerCompatDetails?.supportedFeatures.has(
-				encodeHandlesInContainerRuntime,
-			) === true;
 
 		const { opProcessingHelper, callbacksHelper } = this.setUpSampledTelemetryHelpers();
 		this.opProcessingHelper = opProcessingHelper;
@@ -472,15 +458,10 @@ export abstract class SharedObjectCore<
 	protected submitLocalMessage(content: unknown, localOpMetadata: unknown = undefined): void {
 		this.verifyNotClosed();
 		if (this.isAttached()) {
-			let contentToSubmit = content;
-			if (this.skipHandleEncodingOnSubmit) {
-				bindHandles(content, this.serializer, this.handle);
-			} else {
-				contentToSubmit = makeHandlesSerializable(content, this.serializer, this.handle);
-			}
-
 			// NOTE: We may also be encoding in the ContainerRuntime layer.
 			// Once the layer-compat window passes we can stop encoding here and only bind
+			const contentToSubmit = makeHandlesSerializable(content, this.serializer, this.handle);
+
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			this.services!.deltaConnection.submit(contentToSubmit, localOpMetadata);
 		}
