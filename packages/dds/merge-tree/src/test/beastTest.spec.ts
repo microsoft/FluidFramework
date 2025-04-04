@@ -306,10 +306,7 @@ function checkInsertMergeTree(
 	textSegment: TextSegment,
 	verbose = false,
 ): boolean {
-	let checkText = new MergeTreeTextHelper(mergeTree).getText(
-		UniversalSequenceNumber,
-		LocalClientId,
-	);
+	let checkText = new MergeTreeTextHelper(mergeTree).getText(mergeTree.localPerspective);
 	checkText = editFlat(checkText, pos, 0, textSegment.text);
 	const clockStart = clock();
 	mergeTree.insertSegments(
@@ -320,10 +317,7 @@ function checkInsertMergeTree(
 		undefined,
 	);
 	accumTime += elapsedMicroseconds(clockStart);
-	const updatedText = new MergeTreeTextHelper(mergeTree).getText(
-		UniversalSequenceNumber,
-		LocalClientId,
-	);
+	const updatedText = new MergeTreeTextHelper(mergeTree).getText(mergeTree.localPerspective);
 	const result = checkText === updatedText;
 	if (!result && verbose) {
 		log(`mismatch(o): ${checkText}`);
@@ -339,7 +333,7 @@ function checkMarkRemoveMergeTree(
 	verbose = false,
 ): boolean {
 	const helper = new MergeTreeTextHelper(mergeTree);
-	const origText = helper.getText(UniversalSequenceNumber, LocalClientId);
+	const origText = helper.getText(mergeTree.localPerspective);
 	const checkText = editFlat(origText, start, end - start);
 	const clockStart = clock();
 	mergeTree.markRangeRemoved(
@@ -350,7 +344,7 @@ function checkMarkRemoveMergeTree(
 		{ op: createRemoveRangeOp(start, end) },
 	);
 	accumTime += elapsedMicroseconds(clockStart);
-	const updatedText = helper.getText(UniversalSequenceNumber, LocalClientId);
+	const updatedText = helper.getText(mergeTree.localPerspective);
 	const result = checkText === updatedText;
 	if (!result && verbose) {
 		log(`mismatch(o): ${origText}`);
@@ -381,7 +375,7 @@ export function mergeTreeTest1(): void {
 	mergeTree.mapRange(printTextSegment, localPerspective, undefined);
 	const segoff = mergeTree.getContainingSegment(4, mergeTree.localPerspective);
 	log(mergeTree.getPosition(segoff.segment!, mergeTree.localPerspective));
-	log(new MergeTreeTextHelper(mergeTree).getText(UniversalSequenceNumber, LocalClientId));
+	log(new MergeTreeTextHelper(mergeTree).getText(mergeTree.localPerspective));
 	log(mergeTree.toString());
 	TestPack().firstTest();
 }

@@ -1197,6 +1197,12 @@ export function verifyExpectedPartialLengths(
 
 	let expected = 0;
 	const nodesToVisit: IMergeNode[] = [node];
+	const perspective =
+		clientId === mergeTree.collabWindow.clientId
+			? localSeq === undefined
+				? new LocalDefaultPerspective(clientId)
+				: new LocalReconnectingPerspective(refSeq, clientId, localSeq)
+			: new PriorPerspective(refSeq, clientId);
 
 	const perspective =
 		clientId === mergeTree.collabWindow.clientId

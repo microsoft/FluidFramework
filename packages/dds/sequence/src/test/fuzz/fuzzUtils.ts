@@ -27,13 +27,8 @@ import {
 } from "@fluidframework/datastore-definitions/internal";
 import { PropertySet, Side, type AdjustParams } from "@fluidframework/merge-tree/internal";
 
-import type {
-	InteriorSequencePlace,
-	MapLike,
-	SequenceInterval,
-	SharedStringClass,
-} from "../../index.js";
-import { type IIntervalCollection } from "../../intervalCollection.js";
+import type { InteriorSequencePlace, MapLike, SharedStringClass } from "../../index.js";
+import type { ISequenceIntervalCollection } from "../../intervalCollection.js";
 import { SharedStringRevertible, revertSharedStringRevertibles } from "../../revertibles.js";
 import { SharedStringFactory } from "../../sequenceFactory.js";
 import { ISharedString } from "../../sharedString.js";
@@ -530,7 +525,7 @@ export function makeIntervalOperationGenerator(
 
 	const options = { ...defaultIntervalOperationGenerationConfig, ...(optionsParam ?? {}) };
 
-	function isNonEmpty(collection: IIntervalCollection<SequenceInterval>): boolean {
+	function isNonEmpty(collection: ISequenceIntervalCollection): boolean {
 		for (const _ of collection) {
 			return true;
 		}

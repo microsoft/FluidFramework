@@ -3,18 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils/internal";
-import { fail } from "../../util/index.js";
+import { unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
-import { createFieldSchema, type FieldSchema, type AllowedTypes } from "../schemaTypes.js";
+import {
+	type FieldSchema,
+	type AllowedTypes,
+	type FieldSchemaAlpha,
+	FieldKind,
+} from "../schemaTypes.js";
 import { SchemaFactory } from "./schemaFactory.js";
 import type {
 	SimpleFieldSchema,
 	SimpleNodeSchema,
 	SimpleTreeSchema,
 } from "../simpleSchema.js";
+import { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
 
-const factory = new SchemaFactory(undefined);
+const factory = new SchemaFactoryAlpha(undefined);
 
 /**
  * Create {@link FieldSchema} from a SimpleTreeSchema.
@@ -25,9 +30,9 @@ const factory = new SchemaFactory(undefined);
  * will produce a poor TypeScript typing experience which is subject to change.
  *
  * Editing through a view produced using this schema can easily violate invariants other users of the document might expect and must be done with great care.
- * @internal
+ * @alpha
  */
-export function generateSchemaFromSimpleSchema(simple: SimpleTreeSchema): FieldSchema {
+export function generateSchemaFromSimpleSchema(simple: SimpleTreeSchema): FieldSchemaAlpha {
 	const context: Context = new Map(
 		[...simple.definitions].map(([id, schema]): [string, () => TreeNodeSchema] => [
 			id,
@@ -40,11 +45,19 @@ export function generateSchemaFromSimpleSchema(simple: SimpleTreeSchema): FieldS
 
 type Context = ReadonlyMap<string, () => TreeNodeSchema>;
 
-function generateFieldSchema(simple: SimpleFieldSchema, context: Context): FieldSchema {
-	return createFieldSchema(
-		simple.kind,
-		generateAllowedTypes(simple.allowedTypesIdentifiers, context),
-	);
+function generateFieldSchema(simple: SimpleFieldSchema, context: Context): FieldSchemaAlpha {
+	const allowed = generateAllowedTypes(simple.allowedTypesIdentifiers, context);
+	// Using createFieldSchema could work, but would require setting up the default providers.
+	switch (simple.kind) {
+		case FieldKind.Identifier:
+			return SchemaFactoryAlpha.identifier({ metadata: simple.metadata });
+		case FieldKind.Optional:
+			return SchemaFactoryAlpha.optional(allowed, { metadata: simple.metadata });
+		case FieldKind.Required:
+			return SchemaFactoryAlpha.required(allowed, { metadata: simple.metadata });
+		default:
+			return unreachableCase(simple.kind);
+	}
 }
 
 function generateAllowedTypes(allowed: ReadonlySet<string>, context: Context): AllowedTypes {
@@ -58,12 +71,20 @@ function generateNode(id: string, schema: SimpleNodeSchema, context: Context): T
 			for (const [key, field] of schema.fields) {
 				fields[key] = generateFieldSchema(field, context);
 			}
-			return factory.object(id, fields);
+			return factory.object(id, fields, { metadata: schema.metadata });
 		}
 		case NodeKind.Array:
-			return factory.array(id, generateAllowedTypes(schema.allowedTypesIdentifiers, context));
+			return factory.arrayAlpha(
+				id,
+				generateAllowedTypes(schema.allowedTypesIdentifiers, context),
+				{ metadata: schema.metadata },
+			);
 		case NodeKind.Map:
-			return factory.map(id, generateAllowedTypes(schema.allowedTypesIdentifiers, context));
+			return factory.mapAlpha(
+				id,
+				generateAllowedTypes(schema.allowedTypesIdentifiers, context),
+				{ metadata: schema.metadata },
+			);
 		case NodeKind.Leaf:
 			return (
 				SchemaFactory.leaves.find((leaf) => leaf.identifier === id) ??

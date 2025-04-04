@@ -1,6 +1,6 @@
 {
 	"name": "client-release-group-root",
-	"version": "2.31.0",
+	"version": "2.32.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -48,6 +48,7 @@
 		"checks:fix": "fluid-build --task checks:fix",
 		"ci:build": "fluid-build --task ci:build",
 		"ci:build:docs": "fluid-build --task ci:build:docs",
+		"ci:check:are-the-types-wrong": "pnpm run -r --parallel --no-bail --color check:are-the-types-wrong",
 		"ci:test:jest": "npm run test:jest:report",
 		"ci:test:jest:coverage": "c8 --no-clean npm run test:jest:report",
 		"ci:test:mocha": "npm run test:mocha",
@@ -170,7 +171,7 @@
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@microsoft/api-documenter": "^7.21.6",
-		"@microsoft/api-extractor": "7.47.8",
+		"@microsoft/api-extractor": "7.50.1",
 		"auto-changelog": "^2.4.0",
 		"c8": "^8.0.1",
 		"changesets-format-with-issue-links": "^0.3.0",
@@ -189,7 +190,7 @@
 	},
 	"packageManager": "pnpm@9.15.7+sha512.ed98f9c748442673c46964b70345bd2282c9b305e8eae539b34ab31d6ef24ef8dd59d8b55f27466f705500b009d9c113471cf87e544f3d5036b297330c26e996",
 	"engines": {
-		"node": ">=18.17.1",
+		"node": ">=20.15.1",
 		"pnpm": "9"
 	},
 	"fluidBuild": {
@@ -391,7 +392,7 @@
 			]
 		},
 		"patchedDependencies": {
-			"@microsoft/api-extractor@7.47.8": "patches/@microsoft__api-extractor@7.47.8.patch"
+			"@microsoft/api-extractor@7.50.1": "patches/@microsoft__api-extractor@7.50.1.patch"
 		}
 	}
 }

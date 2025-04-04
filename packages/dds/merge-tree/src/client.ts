@@ -25,7 +25,7 @@ import {
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
+import { MergeTreeTextHelper, type IMergeTreeTextHelper } from "./MergeTreeTextHelper.js";
 import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants.js";
 import { LocalReferencePosition, SlidingPreference } from "./localReference.js";
@@ -102,7 +102,6 @@ import { SnapshotV1 } from "./snapshotV1.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
 import type { OperationStamp } from "./stamps.js";
 import * as opstampUtils from "./stamps.js";
-import { IMergeTreeTextHelper } from "./textSegment.js";
 
 type IMergeTreeDeltaRemoteOpArgs = Omit<IMergeTreeDeltaOpArgs, "sequencedMessage"> &
 	Required<Pick<IMergeTreeDeltaOpArgs, "sequencedMessage">>;
@@ -1232,7 +1231,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					if (removeInfo !== undefined && opstampUtils.isAcked(removeInfo.removes[0])) {
 						assert(
 							removeInfo.removes[0].type === "sliceRemove",
-							"Remove on insertion must be caused by obliterate.",
+							0xb5c /* Remove on insertion must be caused by obliterate. */,
 						);
 						errorIfOptionNotTrue(
 							this._mergeTree.options,

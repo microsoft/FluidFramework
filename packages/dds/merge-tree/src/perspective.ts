@@ -13,6 +13,7 @@ import type { OperationStamp, RemoveOperationStamp } from "./stamps.js";
  * A perspective which includes some subset of operations known to the local client.
  *
  * This helps the local client reason about the state of other clients when they issued an operation.
+ * @internal
  */
 export interface Perspective {
 	/**
