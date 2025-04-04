@@ -21,13 +21,11 @@ import {
 	type WithType,
 } from "./simple-tree/index.js";
 
-// TODOs before merge:
-// - Custom fields on Table/Row/Column (props pattern)
-
 // Future improvement TODOs (ideally to be done before promoting these APIs to `@alpha`):
-// - Record-like type parameters / input parameters?
+// - Custom fields on Table/Row/Column (props pattern from Nick's demo)
 // - Overloads to make Column/Row schema optional when constructing Tables
-// - Move `@system` types into separate / sub scope
+// - Record-like type parameters / input parameters?
+// - Move `@system` types into separate / sub scope?
 
 /**
  * Contains types and factories for creating schema to represent dynamic tabular data.
