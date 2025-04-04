@@ -27,7 +27,13 @@ describe.only("TableFactory unit tests", () => {
 			value: schemaFactory.string,
 		}) {}
 
-		class Column extends TableSchema.createColumn(schemaFactory) {}
+		class ColumnFields extends schemaFactory.object("table-column-fields", {
+			label: schemaFactory.string,
+		}) {}
+		class Column extends TableSchema.createColumn(
+			schemaFactory,
+			schemaFactory.optional(ColumnFields),
+		) {}
 
 		class Row extends TableSchema.createRow(schemaFactory, Cell, Column) {}
 
@@ -73,10 +79,10 @@ describe.only("TableFactory unit tests", () => {
 		});
 
 		it("Non-empty", () => {
-			const { treeView } = createTableTree();
+			const { treeView, Table, Column } = createTableTree();
 
-			treeView.initialize({
-				columns: [{ id: "column-0" }, { id: "column-1" }],
+			treeView.initialize(new Table({
+				columns: [new Column({ id: "column-0" }), { id: "column-1" }],
 				rows: [
 					{ id: "row-0", cells: {} },
 					{
@@ -86,7 +92,7 @@ describe.only("TableFactory unit tests", () => {
 						},
 					},
 				],
-			});
+			}));
 
 			assertEqualTrees(treeView.root, {
 				columns: [
@@ -422,6 +428,7 @@ describe.only("TableFactory unit tests", () => {
 		treeView.root.insertColumn({
 			column: {
 				id: "column-0",
+				fields: {},
 			},
 		});
 

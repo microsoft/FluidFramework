@@ -10,11 +10,13 @@ import {
 	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
 	type InsertableObjectFromSchemaRecord,
+	type InsertableTreeFieldFromImplicitField,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeKind,
 	type SchemaFactoryAlpha,
 	type ScopedSchemaName,
 	TreeArrayNode,
+	type TreeFieldFromImplicitField,
 	type TreeNode,
 	type TreeNodeFromImplicitAllowedTypes,
 	type TreeNodeSchemaClass,
@@ -44,12 +46,18 @@ export namespace TableSchema {
 	 * @remarks Implemented by the schema class returned from {@link TableSchema.createColumn}.
 	 * @sealed @internal
 	 */
-	export interface IColumn {
+	export interface IColumn<TFieldsSchema extends ImplicitFieldSchema> {
 		/**
 		 * The unique identifier of the column.
 		 * @remarks Uniquely identifies the node within the entire tree, not just the table.
 		 */
 		readonly id: string;
+
+		/**
+		 * User-provided column fields.
+		 */
+		get fields(): TreeFieldFromImplicitField<TFieldsSchema>;
+		set fields(value: InsertableTreeFieldFromImplicitField<TFieldsSchema>);
 	}
 
 	/**
@@ -57,9 +65,10 @@ export namespace TableSchema {
 	 * @internal
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
-	export function createColumn<const TInputScope extends string | undefined>(
-		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
-	) {
+	export function createColumn<
+		const TInputScope extends string | undefined,
+		const TFields extends ImplicitFieldSchema,
+	>(inputSchemaFactory: SchemaFactoryAlpha<TInputScope>, fields: TFields) {
 		const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
 		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
 
@@ -70,15 +79,27 @@ export namespace TableSchema {
 		 */
 		const columnFields = {
 			id: schemaFactory.identifier,
+			fields,
 		} as const satisfies Record<string, ImplicitFieldSchema>;
 
 		/**
 		 * A column in a table.
 		 */
-		class Column extends schemaFactory.object("Column", columnFields) implements IColumn {}
+		class Column extends schemaFactory.object("Column", columnFields) {}
 
-		type ColumnValueType = TreeNode & IColumn & WithType<ScopedSchemaName<Scope, "Column">>;
+		type ColumnValueType = TreeNode &
+			IColumn<TFields> &
+			WithType<ScopedSchemaName<Scope, "Column">>;
 		type ColumnInsertableType = InsertableObjectFromSchemaRecord<typeof columnFields>;
+
+		// TypeScript is unable to narrow the type of `fields` correctly here.
+		// Derive a type that replaces the constructor of `Column` with one that returns a compatible type.
+		// See: https://github.com/microsoft/TypeScript/issues/52144
+		type ColumnModified = {
+			[K in keyof typeof Column]: (typeof Column)[K];
+		} & (new (
+			...args: ConstructorParameters<typeof Column>
+		) => Column & Pick<IColumn<TFields>, "fields">);
 
 		// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
 		// for the private brand field of TreeNode.
@@ -92,7 +113,7 @@ export namespace TableSchema {
 			/* TInsertable */ object & ColumnInsertableType,
 			/* ImplicitlyConstructable */ true,
 			/* Info */ typeof columnFields
-		> = Column;
+		> = Column as unknown as ColumnModified;
 
 		return ColumnSchemaType;
 	}
@@ -101,9 +122,10 @@ export namespace TableSchema {
 	 * Base column schema type.
 	 * @sealed @system @internal
 	 */
-	export type ColumnSchemaBase<TScope extends string | undefined> = ReturnType<
-		typeof createColumn<TScope>
-	>;
+	export type ColumnSchemaBase<
+		TScope extends string | undefined,
+		TFields extends ImplicitFieldSchema,
+	> = ReturnType<typeof createColumn<TScope, TFields>>;
 
 	// #endregion
 
@@ -151,7 +173,11 @@ export namespace TableSchema {
 	export function createRow<
 		const TInputScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
-		const TColumn extends ColumnSchemaBase<TInputScope> = ColumnSchemaBase<TInputScope>,
+		const TColumnFields extends ImplicitFieldSchema,
+		const TColumn extends ColumnSchemaBase<TInputScope, TColumnFields> = ColumnSchemaBase<
+			TInputScope,
+			TColumnFields
+		>,
 	>(
 		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
 		cellSchema: TCell,
@@ -225,7 +251,11 @@ export namespace TableSchema {
 	export type RowSchemaBase<
 		TScope extends string | undefined,
 		TCell extends ImplicitAllowedTypes,
-		TColumn extends ColumnSchemaBase<TScope> = ColumnSchemaBase<TScope>,
+		TColumnFields extends ImplicitFieldSchema,
+		TColumn extends ColumnSchemaBase<TScope, TColumnFields> = ColumnSchemaBase<
+			TScope,
+			TColumnFields
+		>,
 	> = ReturnType<typeof createRow<TScope, TCell, TColumn>>;
 
 	// #endregion
@@ -312,12 +342,12 @@ export namespace TableSchema {
 		/**
 		 * The table's columns.
 		 */
-		readonly columns: TreeArrayNode<TColumnSchema>;
+		columns: TreeArrayNode<TColumnSchema>;
 
 		/**
 		 * The table's rows.
 		 */
-		readonly rows: TreeArrayNode<TRowSchema>;
+		rows: TreeArrayNode<TRowSchema>;
 
 		/**
 		 * Gets a table column by its {@link TableSchema.IRow.id}.
@@ -377,9 +407,7 @@ export namespace TableSchema {
 		 * Deletes 0 or more rows from the table.
 		 * @privateRemarks TODO: policy for when 1 or more rows are not in the table.
 		 */
-		deleteRows: (
-			rows: readonly TreeNodeFromImplicitAllowedTypes<TRowSchema>[],
-		) => void;
+		deleteRows: (rows: readonly TreeNodeFromImplicitAllowedTypes<TRowSchema>[]) => void;
 
 		/**
 		 * Deletes all rows from the table.
@@ -402,7 +430,11 @@ export namespace TableSchema {
 	export function createTable<
 		const TInputScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
-		const TColumn extends ColumnSchemaBase<TInputScope> = ColumnSchemaBase<TInputScope>,
+		const TColumnFields extends ImplicitFieldSchema,
+		const TColumn extends ColumnSchemaBase<TInputScope, TColumnFields> = ColumnSchemaBase<
+			TInputScope,
+			TColumnFields
+		>,
 		const TRow extends RowSchemaBase<TInputScope, TCell, TColumn> = RowSchemaBase<
 			TInputScope,
 			TCell,
@@ -599,9 +631,13 @@ export namespace TableSchema {
 	export type TableSchemaBase<
 		TScope extends string | undefined,
 		TCell extends ImplicitAllowedTypes,
-		TColumn extends ColumnSchemaBase<TScope> = ColumnSchemaBase<TScope>,
+		TColumnFields extends ImplicitFieldSchema,
+		TColumn extends ColumnSchemaBase<TScope, TColumnFields> = ColumnSchemaBase<
+			TScope,
+			TColumnFields
+		>,
 		TRow extends RowSchemaBase<TScope, TCell, TColumn> = RowSchemaBase<TScope, TCell, TColumn>,
-	> = ReturnType<typeof createTable<TScope, TCell, TColumn, TRow>>;
+	> = ReturnType<typeof createTable<TScope, TCell, TColumnFields, TColumn, TRow>>;
 
 	// #endregion
 }
