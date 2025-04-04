@@ -858,102 +858,20 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			obliterateInfo.stamp.localSeq! - 1,
 		);
 
-		// const createRefFromSequencePlace = (
-		// 	place: InteriorSequencePlace,
-		// 	perspective: Perspective,
-		// ): LocalReferencePosition => {
-		// 	const { segment: placeSeg, offset: placeOffset } =
-		// 		this._mergeTree.getContainingSegment(place.pos, perspective);
-		// 	assert(
-		// 		isSegmentLeaf(placeSeg) && placeOffset !== undefined,
-		// 		0xa3f /* segments cannot be undefined */,
-		// 	);
-		// 	return this.createLocalReferencePosition(
-		// 		placeSeg,
-		// 		placeOffset,
-		// 		ReferenceType.StayOnRemove,
-		// 		{
-		// 			obliterate: newObliterate,
-		// 			side: place.side,
-		// 		},
-		// 	);
-		// };
-
-		// // Step 1: find the correct start point for the new op
-		// const startRef = obliterateInfo.start;
-		// const startSegment = startRef.getSegment();
-		// const startOffset = startRef.getOffset();
-		// assert(
-		// 	startSegment !== undefined && startOffset !== undefined,
-		// 	"Invalid start reference",
-		// );
-		// const startSegmentPos = this.findReconnectionPosition(
-		// 	startSegment,
-		// 	segmentGroup.localSeq,
-		// );
-
-		// const startSide = startRef.properties!.side;
-		// assert(startSide !== undefined, "Side should have been set on reference");
-		// const { segment: newStartSeg, offset: newStartOffset } =
-		// 	this._mergeTree.getContainingSegment(
-		// 		startSegmentPos + startOffset,
-		// 		reconnectingPerspective,
-		// 	);
-		// assert(
-		// 	newStartSeg !== undefined && newStartOffset !== undefined,
-		// 	"Invalid start segment",
-		// );
-		// // TODO: Settle on policy. The policy implemented here means we tend to 'shrink' obliterates when upon reconnecting we've found that
-		// // their original "after" endpoint no longer exists.
-		// const newPos = reconnectingPerspective.isSegmentPresent(newStartSeg)
-		// 	? startSegmentPos + newStartOffset
-		// 	: startSegmentPos;
-		// const newStartSide =
-		// 	startSide === Side.After && newStartSeg !== startSegment ? Side.Before : startSide;
-		// const newStartPlace: InteriorSequencePlace = {
-		// 	pos: newPos,
-		// 	side: newStartSide,
-		// };
-
-		// const endRef = obliterateInfo.end;
-		// const endSegment = endRef.getSegment();
-		// const endOffset = endRef.getOffset();
-		// assert(endSegment !== undefined && endOffset !== undefined, "Invalid end reference");
-		// const endSegmentPos = this.findReconnectionPosition(endSegment, segmentGroup.localSeq);
-
-		// const endSide = endRef.properties!.side;
-		// assert(endSide !== undefined, "Side should have been set on reference");
-		// const { segment: newEndSeg, offset: newEndOffset } =
-		// 	this._mergeTree.getContainingSegment(
-		// 		endSegmentPos + endOffset,
-		// 		reconnectingPerspective,
-		// 	);
-		// if (newEndSeg !== endSegment && )
-		// assert(newEndSeg !== undefined && newEndOffset !== undefined, "Invalid end segment");
-		// // TODO: Settle on policy. The policy implemented here means we tend to 'shrink' obliterates when upon reconnecting we've found that
-		// // their original "before" endpoint no longer exists.
-		// const newEndSide =
-		// 	endSide === Side.Before && newEndSeg !== endSegment ? Side.After : endSide;
-		// const newEndPlace: InteriorSequencePlace = {
-		// 	pos: endSegmentPos + newEndOffset!,
-		// 	side: newEndSide,
-		// };
-
 		const startRef = obliterateInfo.start;
 
-		// TODO: It seems plausible we could use findReconnectionPosition to accelerate this rather than getSlideToSegoff.
-		// TODO: Do we need to plumb perspectives through here? Plausibly either way on quick inspection.
 		const oldStartSegment = startRef.getSegment();
 		const oldStartOffset = startRef.getOffset();
 		assert(
 			oldStartSegment !== undefined && oldStartOffset !== undefined,
 			"Invalid old start reference",
 		);
+		const useNewSlidingBehavior = true;
 		let { segment: newStartSegment, offset: newStartOffset } = getSlideToSegoff(
 			{ segment: oldStartSegment, offset: oldStartOffset },
 			SlidingPreference.FORWARD,
 			reconnectingPerspective,
-			true, // useNewSlidingBehavior
+			useNewSlidingBehavior,
 		);
 
 		newStartSegment ??= this._mergeTree.endOfTree;
@@ -969,8 +887,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			newStartSegment !== oldStartSegment ? Side.Before : startRef.properties!.side;
 
 		const endRef = obliterateInfo.end;
-		// TODO: It seems plausible we could use findReconnectionPosition to accelerate this rather than getSlideToSegoff.
-		// TODO: Do we need to plumb perspectives through here? Plausibly either way on quick inspection.
 		const oldEndSegment = endRef.getSegment();
 		const oldEndOffset = endRef.getOffset();
 		assert(
@@ -981,7 +897,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			{ segment: oldEndSegment, offset: oldEndOffset },
 			SlidingPreference.BACKWARD,
 			reconnectingPerspective,
-			true, // useNewSlidingBehavior
+			useNewSlidingBehavior,
 		);
 
 		newEndSegment ??= this._mergeTree.startOfTree;
@@ -1480,7 +1396,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			this.lastNormalizationRefSeq === undefined ||
 			rebaseTo !== this.lastNormalizationRefSeq
 		) {
-			// Compute these now before slidey slidey happens
+			// Compute obliterate endpoint destinations before segments are normalized.
+			// Segment normalization can affect what should be the semantically correct segments for the endpoints to be placed on.
 			this.cachedObliterateRebases.clear();
 			for (const segmentGroup of [...this._mergeTree.pendingSegments, ...this.pendingRebase]) {
 				const { obliterateInfo } = segmentGroup.data;
