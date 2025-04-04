@@ -49,7 +49,7 @@ import {
 	ForestTypeReference,
 	getBranch,
 	type ITreePrivate,
-	SharedTree,
+	type SharedTree,
 	Tree,
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
@@ -87,7 +87,11 @@ import {
 	type TreeMockContainerRuntime,
 	type SharedTreeWithContainerRuntime,
 } from "../utils.js";
-import { configuredSharedTree, TreeFactory } from "../../treeFactory.js";
+import {
+	configuredSharedTree,
+	TreeFactory,
+	SharedTree as SharedTreeKind,
+} from "../../treeFactory.js";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import { TestAnchor } from "../testAnchor.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -338,6 +342,9 @@ describe("SharedTree", () => {
 		});
 	});
 
+	/**
+	 * Create a new summary, and assert that the SummaryType of the SchemaString is `summaryType`.
+	 */
 	async function validateSchemaStringType(
 		provider: ITestTreeProvider,
 		treeId: string,
@@ -348,27 +355,30 @@ describe("SharedTree", () => {
 
 		const { summaryTree } = await provider.summarize();
 
-		assert(
-			summaryTree.tree[".channels"].type === SummaryType.Tree,
+		assert.equal(
+			summaryTree.tree[".channels"].type,
+			SummaryType.Tree,
 			"Runtime summary tree not created for blob dds test",
 		);
 		const dataObjectTree = summaryTree.tree[".channels"].tree[id];
-		assert(
-			dataObjectTree.type === SummaryType.Tree,
+		assert.equal(
+			dataObjectTree.type,
+			SummaryType.Tree,
 			"Data store summary tree not created for blob dds test",
 		);
 		const dataObjectChannelsTree = dataObjectTree.tree[".channels"];
-		assert(
-			dataObjectChannelsTree.type === SummaryType.Tree,
+		assert.equal(
+			dataObjectChannelsTree.type,
+			SummaryType.Tree,
 			"Data store channels tree not created for blob dds test",
 		);
 		const ddsTree = dataObjectChannelsTree.tree[treeId];
-		assert(ddsTree.type === SummaryType.Tree, "Blob dds tree not created");
+		assert.equal(ddsTree.type, SummaryType.Tree, "Blob dds tree not created");
 		const indexes = ddsTree.tree.indexes;
-		assert(indexes.type === SummaryType.Tree, "Blob Indexes tree not created");
+		assert.equal(indexes.type, SummaryType.Tree, "Blob Indexes tree not created");
 		const schema = indexes.tree.Schema;
-		assert(schema.type === SummaryType.Tree, "Blob Schema tree not created");
-		assert(schema.tree.SchemaString.type === summaryType, "incorrect SchemaString type");
+		assert.equal(schema.type, SummaryType.Tree, "Blob Schema tree not created");
+		assert.equal(schema.tree.SchemaString.type, summaryType);
 	}
 
 	describe("schema index summarization", () => {
@@ -434,11 +444,12 @@ describe("SharedTree", () => {
 				);
 				containerRuntimeFactory.processAllMessages();
 				const indexes = summaryTree.summary.tree.indexes;
-				assert(indexes.type === SummaryType.Tree, "Indexes must be a tree");
+				assert.equal(indexes.type, SummaryType.Tree, "Indexes must be a tree");
 				const schemaBlob = indexes.tree.Schema;
-				assert(schemaBlob.type === SummaryType.Tree, "Blob Schema tree not created");
-				assert(
-					schemaBlob.tree.SchemaString.type === SummaryType.Handle,
+				assert.equal(schemaBlob.type, SummaryType.Tree, "Blob Schema tree not created");
+				assert.equal(
+					schemaBlob.tree.SchemaString.type,
+					SummaryType.Handle,
 					"schemaString should be a handle",
 				);
 			});
@@ -465,11 +476,12 @@ describe("SharedTree", () => {
 				await provider.ensureSynchronized();
 				const summaryTree = await provider.trees[0].summarize();
 				const indexes = summaryTree.summary.tree.indexes;
-				assert(indexes.type === SummaryType.Tree, "Indexes must be a tree");
+				assert.equal(indexes.type, SummaryType.Tree, "Indexes must be a tree");
 				const schemaBlob = indexes.tree.Schema;
 				assert(schemaBlob.type === SummaryType.Tree, "Blob Schema tree not created");
-				assert(
-					schemaBlob.tree.SchemaString.type === SummaryType.Blob,
+				assert.equal(
+					schemaBlob.tree.SchemaString.type,
+					SummaryType.Blob,
 					"schemaString should be a Blob",
 				);
 			});
@@ -1644,7 +1656,7 @@ describe("SharedTree", () => {
 			);
 			const dataStore = (await loadedContainer.getEntryPoint()) as TestFluidObjectInternal;
 			const tree = await dataStore.getInitialSharedObject("TestSharedTree");
-			assert(tree instanceof SharedTree);
+			assert(SharedTreeKind.is(tree));
 			const view = tree.viewWith(
 				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
 			);

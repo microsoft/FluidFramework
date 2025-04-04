@@ -208,7 +208,6 @@ describe("Fuzz - anchor stability", () => {
 				directory: failureDirectory,
 			},
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
-			containerRuntimeOptions: {},
 		});
 	});
 });

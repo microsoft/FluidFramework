@@ -89,7 +89,7 @@ export const treeKernelFactory: (
 
 /**
  * A channel factory that creates an {@link ITree}.
- * @deprecated Use the public APIs instead if a SHaredObject is needed, or construct the internal types directly if not.
+ * @deprecated Use the public APIs instead if a SharedObject is needed, or construct the internal types directly if not.
  */
 /* eslint-disable import/no-deprecated */
 export class TreeFactory implements IChannelFactory<SharedTreeImpl> {

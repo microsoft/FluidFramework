@@ -84,7 +84,6 @@ describe("Fuzz - move", () => {
 		idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		// TODO: AB#31176 tracks failing seeds when trying to synchronize with move edits.
 		skip: [4, 18],
-		containerRuntimeOptions: {},
 	};
 	createDDSFuzzSuite(model, options);
 });

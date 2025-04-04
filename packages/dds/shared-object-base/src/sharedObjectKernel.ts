@@ -19,6 +19,7 @@ import type { IIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+	type IExperimentalIncrementalSummaryContext,
 	type IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
@@ -56,7 +57,8 @@ export interface SharedKernel {
 	 */
 	summarizeCore(
 		serializer: IFluidSerializer,
-		telemetryContext?: ITelemetryContext,
+		telemetryContext: ITelemetryContext | undefined,
+		incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined,
 	): ISummaryTreeWithStats;
 
 	/**
@@ -152,8 +154,9 @@ class SharedObjectFromKernel<
 	protected override summarizeCore(
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): ISummaryTreeWithStats {
-		return this.kernel.summarizeCore(serializer, telemetryContext);
+		return this.kernel.summarizeCore(serializer, telemetryContext, incrementalSummaryContext);
 	}
 
 	protected override async loadCore(storage: IChannelStorageService): Promise<void> {
