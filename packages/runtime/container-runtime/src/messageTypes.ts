@@ -65,7 +65,10 @@ export enum ContainerMessageType {
  * IMPORTANT: when creating one to be serialized, set the properties in the order they appear here.
  * This way stringified values can be compared.
  */
-interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TContents> {
+interface TypedContainerRuntimeMessage<
+	TType extends ContainerMessageType | "groupedBatch",
+	TContents,
+> {
 	/**
 	 * Type of the op, within the ContainerRuntime's domain
 	 */
@@ -116,6 +119,10 @@ export type ContainerRuntimeDocumentSchemaMessage = TypedContainerRuntimeMessage
 	ContainerMessageType.DocumentSchemaChange,
 	IDocumentSchemaChangeMessage
 >;
+export type ContainerRuntimeGroupedBatchMessage = TypedContainerRuntimeMessage<
+	"groupedBatch",
+	[] //* ???
+>;
 
 /**
  * Represents an unrecognized TypedContainerRuntimeMessage, e.g. a message from a future version of the container runtime.
@@ -163,9 +170,10 @@ export type LocalContainerRuntimeMessage =
 	| ContainerRuntimeAliasMessage
 	| ContainerRuntimeIdAllocationMessage
 	| ContainerRuntimeGCMessage
+	| ContainerRuntimeDocumentSchemaMessage
+	| ContainerRuntimeGroupedBatchMessage //* Where else should this go?
 	// In rare cases (e.g. related to stashed ops) we could have a local message of an unknown type
-	| UnknownContainerRuntimeMessage
-	| ContainerRuntimeDocumentSchemaMessage;
+	| UnknownContainerRuntimeMessage;
 
 /**
  * A {@link TypedContainerRuntimeMessage} that is being sent to the server from the container runtime.

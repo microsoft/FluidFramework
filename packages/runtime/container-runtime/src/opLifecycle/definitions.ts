@@ -3,23 +3,40 @@
  * Licensed under the MIT License.
  */
 
-import { IBatchMessage } from "@fluidframework/container-definitions/internal";
+import type { IBatchMessage } from "@fluidframework/container-definitions/internal";
 
 import { CompressionAlgorithms } from "../containerRuntime.js";
+import type { LocalContainerRuntimeMessage } from "../messageTypes.js";
 
 /**
- * Batch message type used internally by the runtime
+ * Local Batch message, before it is virtualized and sent to the ordering service
  */
-export type BatchMessage = IBatchMessage & {
+export interface LocalBatchMessage {
+	viableOp: LocalContainerRuntimeMessage;
+	metadata?: Record<string, unknown>;
+	localOpMetadata?: unknown;
+	referenceSequenceNumber: number;
+	compression?: CompressionAlgorithms;
+}
+
+/**
+ * Virtualized Batch message, on its way out the door to the ordering service
+ */
+export type OutboundBatchMessage = IBatchMessage & {
 	localOpMetadata?: unknown;
 	referenceSequenceNumber: number;
 	compression?: CompressionAlgorithms;
 };
 
+//* Comment
+export type OutboundSingletonBatch = IBatch<[OutboundBatchMessage]>;
+
 /**
  * Batch interface used internally by the runtime.
  */
-export interface IBatch<TMessages extends BatchMessage[] = BatchMessage[]> {
+export interface IBatch<
+	TMessages extends LocalBatchMessage[] | OutboundBatchMessage[] = LocalBatchMessage[],
+> {
 	/**
 	 * Sum of the in-memory content sizes of all messages in the batch.
 	 * If the batch is compressed, this number reflects the post-compression size.
@@ -47,7 +64,7 @@ export interface IBatch<TMessages extends BatchMessage[] = BatchMessage[]> {
 }
 
 export interface IBatchCheckpoint {
-	rollback: (action: (message: BatchMessage) => void) => void;
+	rollback: (action: (message: LocalBatchMessage) => void) => void;
 }
 
 /**

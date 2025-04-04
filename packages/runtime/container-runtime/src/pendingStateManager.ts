@@ -23,7 +23,7 @@ import {
 import { asBatchMetadata, asEmptyBatchLocalOpMetadata } from "./metadata.js";
 import {
 	BatchId,
-	BatchMessage,
+	LocalBatchMessage,
 	getEffectiveBatchId,
 	BatchStartInfo,
 	InboundMessageResult,
@@ -38,7 +38,7 @@ import {
 export interface IPendingMessage {
 	type: "message";
 	referenceSequenceNumber: number;
-	content: string;
+	viableOp: LocalContainerRuntimeMessage;
 	localOpMetadata: unknown;
 	opMetadata: Record<string, unknown> | undefined;
 	sequenceNumber?: number;
@@ -92,31 +92,28 @@ export interface IPendingLocalState {
 /**
  * Info needed to replay/resubmit a pending message
  */
-export type PendingMessageResubmitData = Pick<
+export type PendingMessageResubmitData2 = Pick<
 	IPendingMessage,
-	"content" | "localOpMetadata" | "opMetadata"
+	"viableOp" | "localOpMetadata" | "opMetadata"
 >;
 
 export interface IRuntimeStateHandler {
 	connected(): boolean;
 	clientId(): string | undefined;
-	applyStashedOp(content: string): Promise<unknown>;
-	reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId): void;
+	applyStashedOp(viableOp: LocalContainerRuntimeMessage): Promise<unknown>;
+	reSubmitBatch(batch: PendingMessageResubmitData2[], batchId: BatchId): void;
 	isActiveConnection: () => boolean;
 	isAttached: () => boolean;
 }
 
 function isEmptyBatchPendingMessage(message: IPendingMessageFromStash): boolean {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-	const content = JSON.parse(message.content);
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-	return content.type === "groupedBatch" && content.contents?.length === 0;
+	return message.viableOp.type === "groupedBatch" && message.viableOp.contents.length === 0;
 }
 
-function buildPendingMessageContent(message: InboundSequencedContainerRuntimeMessage): string {
+function buildPendingMessageContent(message: { type: string; contents: unknown }): string {
 	// IMPORTANT: Order matters here, this must match the order of the properties used
 	// when submitting the message.
-	const { type, contents }: InboundContainerRuntimeMessage = message;
+	const { type, contents } = message;
 	// Any properties that are not defined, won't be emitted by stringify.
 	return JSON.stringify({ type, contents });
 }
@@ -205,6 +202,7 @@ export class PendingStateManager implements IDisposable {
 	 * Messages stashed from a previous container, now being rehydrated. Need to be resubmitted.
 	 */
 	private readonly initialMessages = new Deque<IPendingMessageFromStash>();
+	//* Deserialized yet?
 
 	/**
 	 * Sequenced local ops that are saved when stashing since pending ops may depend on them
@@ -305,7 +303,7 @@ export class PendingStateManager implements IDisposable {
 	 * @param ignoreBatchId - Whether to ignore the batchId in the batchStartInfo
 	 */
 	public onFlushBatch(
-		batch: BatchMessage[],
+		batch: LocalBatchMessage[],
 		clientSequenceNumber: number | undefined,
 		ignoreBatchId?: boolean,
 	): void {
@@ -325,7 +323,7 @@ export class PendingStateManager implements IDisposable {
 
 		for (const message of batch) {
 			const {
-				contents: content = "",
+				viableOp,
 				referenceSequenceNumber,
 				localOpMetadata,
 				metadata: opMetadata,
@@ -333,7 +331,7 @@ export class PendingStateManager implements IDisposable {
 			const pendingMessage: IPendingMessage = {
 				type: "message",
 				referenceSequenceNumber,
-				content,
+				viableOp,
 				localOpMetadata,
 				opMetadata,
 				// Note: We only will read this off the first message, but put it on all for simplicity
@@ -366,13 +364,14 @@ export class PendingStateManager implements IDisposable {
 			// We still need to track it for resubmission.
 			try {
 				if (isEmptyBatchPendingMessage(nextMessage)) {
+					//* FUTURE: Can we move this handling to CR?
 					nextMessage.localOpMetadata = { emptyBatch: true }; // equivalent to applyStashedOp for empty batch
 					patchbatchInfo(nextMessage); // Back compat
 					this.pendingMessages.push(nextMessage);
 					continue;
 				}
 				// applyStashedOp will cause the DDS to behave as if it has sent the op but not actually send it
-				const localOpMetadata = await this.stateHandler.applyStashedOp(nextMessage.content);
+				const localOpMetadata = await this.stateHandler.applyStashedOp(nextMessage.viableOp);
 				if (this.stateHandler.isAttached()) {
 					nextMessage.localOpMetadata = localOpMetadata;
 					// then we push onto pendingMessages which will cause PendingStateManager to resubmit when we connect
@@ -516,21 +515,22 @@ export class PendingStateManager implements IDisposable {
 		// because we don't have an incoming message to compare and pendingMessage is just a placeholder anyway.
 		if (message !== undefined) {
 			const messageContent = buildPendingMessageContent(message);
+			const pendingMessageContent = buildPendingMessageContent(pendingMessage.viableOp);
 
 			// Stringified content should match
 			// If it doesn't, collect as much info about the difference as possible (privacy-wise) and log it
-			if (pendingMessage.content !== messageContent) {
+			if (pendingMessageContent !== messageContent) {
 				const [pendingLength, incomingLength] = [
-					pendingMessage.content.length,
+					pendingMessageContent.length,
 					messageContent.length,
 				];
 				const [mismatchStartIndex, pendingChar, incomingChar] = findFirstCharacterMismatched(
-					pendingMessage.content,
+					pendingMessageContent,
 					messageContent,
 				);
 
 				const pendingContentObj = JSON.parse(
-					pendingMessage.content,
+					pendingMessageContent,
 				) as LocalContainerRuntimeMessage;
 				const incomingContentObj = JSON.parse(
 					messageContent,
@@ -683,7 +683,7 @@ export class PendingStateManager implements IDisposable {
 				this.stateHandler.reSubmitBatch(
 					[
 						{
-							content: pendingMessage.content,
+							viableOp: pendingMessage.viableOp,
 							localOpMetadata: pendingMessage.localOpMetadata,
 							opMetadata: pendingMessage.opMetadata,
 						},
@@ -699,12 +699,12 @@ export class PendingStateManager implements IDisposable {
 				0x554 /* Last pending message cannot be a batch begin */,
 			);
 
-			const batch: PendingMessageResubmitData[] = [];
+			const batch: PendingMessageResubmitData2[] = [];
 
 			// check is >= because batch end may be last pending message
 			while (remainingPendingMessagesCount >= 0) {
 				batch.push({
-					content: pendingMessage.content,
+					viableOp: pendingMessage.viableOp,
 					localOpMetadata: pendingMessage.localOpMetadata,
 					opMetadata: pendingMessage.opMetadata,
 				});

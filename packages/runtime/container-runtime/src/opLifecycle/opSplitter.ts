@@ -17,7 +17,11 @@ import {
 import { ContainerMessageType, ContainerRuntimeChunkedOpMessage } from "../messageTypes.js";
 
 import { estimateSocketSize } from "./batchManager.js";
-import { BatchMessage, IBatch, IChunkedOp } from "./definitions.js";
+import {
+	IChunkedOp,
+	type OutboundBatchMessage,
+	type OutboundSingletonBatch,
+} from "./definitions.js";
 
 export function isChunkedMessage(message: ISequencedDocumentMessage): boolean {
 	return isChunkedContents(message.contents);
@@ -95,6 +99,8 @@ export class OpSplitter {
 		map.push(chunkedContent.contents);
 	}
 
+	//* FUTURE: Rename and update comment since there's only one message
+
 	/**
 	 * Splits the first op of a compressed batch in chunks, sends the chunks separately and
 	 * returns a new batch composed of the last chunk and the rest of the ops in the original batch.
@@ -122,7 +128,7 @@ export class OpSplitter {
 	 * @param batch - the compressed batch which needs to be processed
 	 * @returns A batch with the last chunk of the original message
 	 */
-	public splitFirstBatchMessage(batch: IBatch): IBatch {
+	public splitFirstBatchMessage(batch: OutboundSingletonBatch): OutboundSingletonBatch {
 		assert(this.isBatchChunkingEnabled, 0x513 /* Chunking needs to be enabled */);
 		assert(
 			batch.contentSizeInBytes > 0 && batch.messages.length > 0,
@@ -144,7 +150,13 @@ export class OpSplitter {
 			0x518 /* First message in the batch needs to be chunkable */,
 		);
 
+		//* FUTURE: Unnecessary code!
 		const restOfMessages = batch.messages.slice(1); // we expect these to be empty ops, created to reserve sequence numbers
+		assert(
+			restOfMessages.length === 0,
+			"Expected a singleton batch with no extra ops after the first one",
+		);
+
 		const socketSize = estimateSocketSize(batch);
 		const chunks = splitOp(
 			firstMessage,
@@ -183,7 +195,7 @@ export class OpSplitter {
 		});
 
 		return {
-			messages: [lastChunk, ...restOfMessages],
+			messages: [lastChunk],
 			contentSizeInBytes: lastChunk.contents?.length ?? 0,
 			referenceSequenceNumber: batch.referenceSequenceNumber,
 		};
@@ -243,7 +255,7 @@ const chunkToBatchMessage = (
 	chunk: IChunkedOp,
 	referenceSequenceNumber: number,
 	metadata: Record<string, unknown> | undefined = undefined,
-): BatchMessage => {
+): OutboundBatchMessage => {
 	const payload: ContainerRuntimeChunkedOpMessage = {
 		type: ContainerMessageType.ChunkedOp,
 		contents: chunk,
@@ -268,7 +280,7 @@ const chunkToBatchMessage = (
  * @returns an array of chunked ops
  */
 export const splitOp = (
-	op: BatchMessage,
+	op: OutboundBatchMessage,
 	chunkSizeInBytes: number,
 	extraOp: boolean = false,
 ): IChunkedOp[] => {

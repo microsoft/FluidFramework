@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
-import { PendingMessageResubmitData, PendingStateManager } from "../pendingStateManager.js";
+import { PendingMessageResubmitData2, PendingStateManager } from "../pendingStateManager.js";
 
 import {
 	BatchManager,
@@ -25,7 +25,13 @@ import {
 	sequenceNumbersMatch,
 	type BatchId,
 } from "./batchManager.js";
-import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions.js";
+import {
+	LocalBatchMessage,
+	IBatch,
+	IBatchCheckpoint,
+	type OutboundBatchMessage,
+	type OutboundSingletonBatch,
+} from "./definitions.js";
 import { OpCompressor } from "./opCompressor.js";
 import { OpGroupingManager } from "./opGroupingManager.js";
 import { OpSplitter } from "./opSplitter.js";
@@ -50,14 +56,14 @@ export interface IOutboxParameters {
 	readonly submitBatchFn:
 		| ((batch: IBatchMessage[], referenceSequenceNumber?: number) => number)
 		| undefined;
-	readonly legacySendBatchFn: (batch: IBatch) => number;
+	readonly legacySendBatchFn: (batch: IBatch<OutboundBatchMessage[]>) => number;
 	readonly config: IOutboxConfig;
 	readonly compressor: OpCompressor;
 	readonly splitter: OpSplitter;
 	readonly logger: ITelemetryBaseLogger;
 	readonly groupingManager: OpGroupingManager;
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
-	readonly reSubmit: (message: PendingMessageResubmitData) => void;
+	readonly reSubmit: (message: PendingMessageResubmitData2) => void;
 	readonly opReentrancy: () => boolean;
 	readonly closeContainer: (error?: ICriticalContainerError) => void;
 }
@@ -247,25 +253,28 @@ export class Outbox {
 		throw errorWrapper.value;
 	}
 
-	public submit(message: BatchMessage): void {
+	public submit(message: LocalBatchMessage): void {
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.mainBatch, message);
 	}
 
-	public submitBlobAttach(message: BatchMessage): void {
+	public submitBlobAttach(message: LocalBatchMessage): void {
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.blobAttachBatch, message);
 	}
 
-	public submitIdAllocation(message: BatchMessage): void {
+	public submitIdAllocation(message: LocalBatchMessage): void {
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.idAllocationBatch, message);
 	}
 
-	private addMessageToBatchManager(batchManager: BatchManager, message: BatchMessage): void {
+	private addMessageToBatchManager(
+		batchManager: BatchManager,
+		message: LocalBatchMessage,
+	): void {
 		if (
 			!batchManager.push(
 				message,
@@ -274,7 +283,7 @@ export class Outbox {
 			)
 		) {
 			throw new GenericError("BatchTooLarge", /* error */ undefined, {
-				opSize: message.contents?.length ?? 0,
+				//* opSize: message.contents?.length ?? 0,
 				batchSize: batchManager.contentSizeInBytes,
 				count: batchManager.length,
 				limit: batchManager.options.hardLimit,
@@ -379,7 +388,10 @@ export class Outbox {
 			const processedBatch = disableGroupedBatching
 				? rawBatch
 				: this.compressAndChunkBatch(
-						shouldGroup ? this.params.groupingManager.groupBatch(rawBatch) : rawBatch,
+						//* REVISIT: this used to accept empty batch, but wouldn't ever happen right? I updated the type to be singleton only
+						shouldGroup
+							? this.params.groupingManager.groupBatch(rawBatch)
+							: (rawBatch as unknown as OutboundSingletonBatch), //* Fix up typing given grouping for compression
 					);
 			clientSequenceNumber = this.sendBatch(processedBatch);
 			assert(
@@ -408,8 +420,7 @@ export class Outbox {
 		this.rebasing = true;
 		for (const message of rawBatch.messages) {
 			this.params.reSubmit({
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				content: message.contents!,
+				viableOp: message.viableOp,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 			});
@@ -444,9 +455,8 @@ export class Outbox {
 	 * @returns Either (A) the original batch, (B) a compressed batch (same length as original)
 	 * or (C) a batch containing the last chunk.
 	 */
-	private compressAndChunkBatch(batch: IBatch): IBatch {
+	private compressAndChunkBatch(batch: OutboundSingletonBatch): OutboundSingletonBatch {
 		if (
-			batch.messages.length === 0 ||
 			this.params.config.compressionOptions === undefined ||
 			this.params.config.compressionOptions.minimumBatchSizeInBytes >
 				batch.contentSizeInBytes ||
@@ -486,7 +496,7 @@ export class Outbox {
 	 * @param batch - batch to be sent
 	 * @returns the clientSequenceNumber of the start of the batch, or undefined if nothing was sent
 	 */
-	private sendBatch(batch: IBatch): number | undefined {
+	private sendBatch(batch: IBatch<OutboundBatchMessage[]>): number | undefined {
 		const length = batch.messages.length;
 		if (length === 0) {
 			return undefined; // Nothing submitted

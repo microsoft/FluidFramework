@@ -14,7 +14,13 @@ import { ICompressionRuntimeOptions } from "../containerRuntime.js";
 import { asBatchMetadata, type IBatchMetadata } from "../metadata.js";
 import type { IPendingMessage } from "../pendingStateManager.js";
 
-import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions.js";
+import {
+	LocalBatchMessage,
+	IBatch,
+	IBatchCheckpoint,
+	type OutboundBatchMessage,
+} from "./definitions.js";
+import { serializeOp } from "./opSerialization.js";
 import type { BatchStartInfo } from "./remoteMessageProcessor.js";
 
 export interface IBatchManagerOptions {
@@ -83,7 +89,7 @@ const opOverhead = 200;
  * Helper class that manages partial batch & rollback.
  */
 export class BatchManager {
-	private pendingBatch: BatchMessage[] = [];
+	private pendingBatch: LocalBatchMessage[] = [];
 	private batchContentSize = 0;
 	private hasReentrantOps = false;
 
@@ -117,11 +123,14 @@ export class BatchManager {
 	constructor(public readonly options: IBatchManagerOptions) {}
 
 	public push(
-		message: BatchMessage,
+		message: LocalBatchMessage,
 		reentrant: boolean,
 		currentClientSequenceNumber?: number,
 	): boolean {
-		const contentSize = this.batchContentSize + (message.contents?.length ?? 0);
+		//* Any way at all to avoid this?  Or delay it?
+		const stringified = JSON.stringify(message.viableOp);
+
+		const contentSize = this.batchContentSize + (stringified?.length ?? 0);
 		const opCount = this.pendingBatch.length;
 		this.hasReentrantOps = this.hasReentrantOps || reentrant;
 
@@ -173,13 +182,15 @@ export class BatchManager {
 	 */
 	public checkpoint(): IBatchCheckpoint {
 		const startSequenceNumber = this.clientSequenceNumber;
+		const startingBatchContentSize = this.batchContentSize;
 		const startPoint = this.pendingBatch.length;
 		return {
-			rollback: (process: (message: BatchMessage) => void) => {
+			rollback: (process: (message: LocalBatchMessage) => void) => {
 				this.clientSequenceNumber = startSequenceNumber;
+				this.batchContentSize = startingBatchContentSize;
+
 				const rollbackOpsLifo = this.pendingBatch.splice(startPoint).reverse();
 				for (const message of rollbackOpsLifo) {
-					this.batchContentSize -= message.contents?.length ?? 0;
 					process(message);
 				}
 				const count = this.pendingBatch.length - startPoint;
@@ -187,7 +198,7 @@ export class BatchManager {
 					throw new LoggingError("Ops generated durning rollback", {
 						count,
 						...tagData(TelemetryDataTag.UserData, {
-							ops: JSON.stringify(this.pendingBatch.slice(startPoint).map((b) => b.contents)),
+							ops: serializeOp(this.pendingBatch.slice(startPoint).map((b) => b.viableOp)),
 						}),
 					});
 				}
@@ -234,7 +245,7 @@ const addBatchMetadata = (batch: IBatch, batchId?: BatchId): IBatch => {
  * @param batch - the batch to inspect
  * @returns An estimate of the payload size in bytes which will be produced when the batch is sent over the wire
  */
-export const estimateSocketSize = (batch: IBatch): number => {
+export const estimateSocketSize = (batch: IBatch<OutboundBatchMessage[]>): number => {
 	return batch.contentSizeInBytes + opOverhead * batch.messages.length;
 };
 

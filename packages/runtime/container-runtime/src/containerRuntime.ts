@@ -180,7 +180,7 @@ import {
 import { ISavedOpMetadata } from "./metadata.js";
 import {
 	BatchId,
-	BatchMessage,
+	LocalBatchMessage,
 	BatchStartInfo,
 	DuplicateBatchDetector,
 	ensureContentsDeserialized,
@@ -192,11 +192,11 @@ import {
 	OpSplitter,
 	Outbox,
 	RemoteMessageProcessor,
-	serializeOp,
+	type OutboundBatchMessage,
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
-	PendingMessageResubmitData,
+	PendingMessageResubmitData2,
 	IPendingLocalState,
 	PendingStateManager,
 } from "./pendingStateManager.js";
@@ -601,7 +601,7 @@ export const makeLegacySendBatchFn =
 		) => number,
 		deltaManager: Pick<IDeltaManager<unknown, unknown>, "flush">,
 	) =>
-	(batch: IBatch): number => {
+	(batch: IBatch<OutboundBatchMessage[]>): number => {
 		// Default to negative one to match Container.submitBatch behavior
 		let clientSequenceNumber: number = -1;
 		for (const message of batch.messages) {
@@ -2433,20 +2433,7 @@ export class ContainerRuntime
 		this.updateDocumentDirtyState(newState);
 	}
 
-	/**
-	 * Parse an op's type and actual content from given serialized content
-	 * ! Note: this format needs to be in-line with what is set in the "ContainerRuntime.submit(...)" method
-	 */
-	private parseLocalOpContent(serializedContents?: string): LocalContainerRuntimeMessage {
-		assert(serializedContents !== undefined, 0x6d5 /* content must be defined */);
-		const message = JSON.parse(serializedContents) as LocalContainerRuntimeMessage;
-		assert(message.type !== undefined, 0x6d6 /* incorrect op content format */);
-		return message;
-	}
-
-	private async applyStashedOp(serializedOpContent: string): Promise<unknown> {
-		// Pending State contains serialized contents, so parse it here.
-		const opContents = this.parseLocalOpContent(serializedOpContent);
+	private async applyStashedOp(opContents: LocalContainerRuntimeMessage): Promise<unknown> {
 		switch (opContents.type) {
 			case ContainerMessageType.FluidDataStoreOp:
 			case ContainerMessageType.Attach:
@@ -2481,6 +2468,9 @@ export class ContainerRuntime
 			case ContainerMessageType.GC: {
 				// GC op is only sent in summarizer which should never have stashed ops.
 				throw new LoggingError("GC op not expected to be stashed in summarizer");
+			}
+			case "groupedBatch": {
+				throw new LoggingError("Empty batch not expected (PSM deals with it)");
 			}
 			default: {
 				const error = getUnknownMessageTypeError(
@@ -3122,8 +3112,8 @@ export class ContainerRuntime
 				if (checkpoint) {
 					// This will throw and close the container if rollback fails
 					try {
-						checkpoint.rollback((message: BatchMessage) =>
-							this.rollback(message.contents, message.localOpMetadata),
+						checkpoint.rollback((message: LocalBatchMessage) =>
+							this.rollback(message.viableOp, message.localOpMetadata),
 						);
 						// reset the dirty state after rollback to what it was before to keep it consistent
 						if (this.dirtyContainer !== checkpointDirtyState) {
@@ -4174,8 +4164,8 @@ export class ContainerRuntime
 					type: ContainerMessageType.IdAllocation,
 					contents: idRange,
 				};
-				const idAllocationBatchMessage: BatchMessage = {
-					contents: serializeOp(idAllocationMessage),
+				const idAllocationBatchMessage: LocalBatchMessage = {
+					viableOp: idAllocationMessage,
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				};
 				this.outbox.submitIdAllocation(idAllocationBatchMessage);
@@ -4238,15 +4228,15 @@ export class ContainerRuntime
 					contents: schemaChangeMessage,
 				};
 				this.outbox.submit({
-					contents: serializeOp(msg),
+					viableOp: msg,
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				});
 			}
 
-			const message: BatchMessage = {
+			const message: LocalBatchMessage = {
 				// This will encode any handles present in this op before serializing to string
 				// Note: handles may already have been encoded by the DDS layer, but encoding handles is idempotent so there's no problem.
-				contents: serializeOp(containerRuntimeMessage),
+				viableOp: containerRuntimeMessage,
 				metadata,
 				localOpMetadata,
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
@@ -4353,7 +4343,7 @@ export class ContainerRuntime
 	 * @remarks - If the "Offline Load" feature is enabled, the batchId is included in the resubmitted messages,
 	 * for correlation to detect container forking.
 	 */
-	private reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId): void {
+	private reSubmitBatch(batch: PendingMessageResubmitData2[], batchId: BatchId): void {
 		this.batchRunner.run(() => {
 			for (const message of batch) {
 				this.reSubmit(message);
@@ -4365,12 +4355,8 @@ export class ContainerRuntime
 		this.flush(this.offlineEnabled ? batchId : undefined);
 	}
 
-	private reSubmit(message: PendingMessageResubmitData): void {
-		// Messages in the PendingStateManager and Outbox (both call resubmit) have serialized contents, so parse it here.
-		// Note that roundtripping handles through string like this means this parsed contents
-		// contains RemoteFluidObjectHandles, not the original handle.
-		const containerRuntimeMessage = this.parseLocalOpContent(message.content);
-		this.reSubmitCore(containerRuntimeMessage, message.localOpMetadata, message.opMetadata);
+	private reSubmit(message: PendingMessageResubmitData2): void {
+		this.reSubmitCore(message.viableOp, message.localOpMetadata, message.opMetadata);
 	}
 
 	/**
@@ -4426,6 +4412,11 @@ export class ContainerRuntime
 				// send any ops, as some other client already changed schema.
 				break;
 			}
+			case "groupedBatch": {
+				throw new LoggingError(
+					"Empty batches should be resubmitted as an empty array of messages, not the placeholder",
+				);
+			}
 			default: {
 				const error = getUnknownMessageTypeError(message.type, "reSubmitCore" /* codePath */);
 				this.closeFn(error);
@@ -4434,11 +4425,8 @@ export class ContainerRuntime
 		}
 	}
 
-	private rollback(content: string | undefined, localOpMetadata: unknown): void {
-		// Messages in the Outbox (which calls rollback) have serialized contents, so parse it here.
-		// Note that roundtripping handles through string like this means this parsed contents
-		// contains RemoteFluidObjectHandles, not the original handle.
-		const { type, contents } = this.parseLocalOpContent(content);
+	private rollback(viableOp: LocalContainerRuntimeMessage, localOpMetadata: unknown): void {
+		const { type, contents } = viableOp;
 		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp: {
 				// For operations, call rollbackDataStoreOp which will find the right store
