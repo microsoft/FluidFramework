@@ -11,6 +11,7 @@ import type {
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
+	IExperimentalIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
 import {
@@ -321,9 +322,15 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 	}
 	public summarizeCore(
 		serializer: IFluidSerializer,
-		telemetryContext?: ITelemetryContext,
+		telemetryContext: ITelemetryContext | undefined,
+		incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined,
 	): ISummaryTreeWithStats {
-		const result = this.data.kernel.summarizeCore(serializer, telemetryContext);
+		// TODO: determine if incrementalSummaryContext should be hidden from kernel on first summary after migration.
+		const result = this.data.kernel.summarizeCore(
+			serializer,
+			telemetryContext,
+			incrementalSummaryContext,
+		);
 		if (this.migrationSequenced !== undefined) {
 			addBlobToSummary(
 				result,
