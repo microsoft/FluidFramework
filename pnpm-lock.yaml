@@ -8825,9 +8825,6 @@ importers:
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
-      '@fluidframework/container-runtime':
-        specifier: workspace:~
-        version: link:../../runtime/container-runtime
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces

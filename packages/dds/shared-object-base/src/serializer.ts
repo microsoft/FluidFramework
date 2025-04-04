@@ -10,15 +10,14 @@ import {
 } from "@fluidframework/core-interfaces/internal";
 import { assert, shallowCloneObject } from "@fluidframework/core-utils/internal";
 import {
+	encodeHandleForSerialization,
 	generateHandleContextPath,
 	isSerializedHandle,
 	isFluidHandle,
 	toFluidHandleInternal,
 	type ISerializedHandle,
-	encodeHandleForSerialization,
+	RemoteFluidObjectHandle,
 } from "@fluidframework/runtime-utils/internal";
-
-import { RemoteFluidObjectHandle } from "./remoteObjectHandle.js";
 
 /**
  * @legacy
