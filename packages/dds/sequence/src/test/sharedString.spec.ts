@@ -39,10 +39,6 @@ describe("SharedString", () => {
 
 	beforeEach(() => {
 		dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-		dataStoreRuntime1.options = {
-			mergeTreeEnableObliterate: true,
-			mergeTreeEnableSidedObliterate: true,
-		};
 		sharedString = new SharedStringClass(
 			dataStoreRuntime1,
 			"shared-string-1",
