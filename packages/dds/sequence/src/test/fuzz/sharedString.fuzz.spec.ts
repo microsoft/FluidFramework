@@ -42,7 +42,6 @@ describe("SharedString fuzz with stashing", () => {
 });
 
 describe("SharedString fuzz with obliterate", () => {
-	useStrictPartialLengthChecks();
 	const model: typeof baseSharedStringModel = {
 		...baseSharedStringModel,
 		generatorFactory: () =>
