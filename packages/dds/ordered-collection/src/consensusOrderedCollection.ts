@@ -143,7 +143,7 @@ export class ConsensusOrderedCollection<T = any>
 			// clone the value to match the behavior of going thru the wire.
 			const addValue = this.deserializeValue(
 				this.serializeValue(value, this.serializer),
-				this.serializer
+				this.serializer,
 			) as T;
 			this.addCore(addValue);
 			return;
