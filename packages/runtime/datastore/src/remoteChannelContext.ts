@@ -4,7 +4,7 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
+import { assert, LazyPromise, shallowCloneObject } from "@fluidframework/core-utils/internal";
 import {
 	IChannel,
 	IFluidDataStoreRuntime,
@@ -25,6 +25,7 @@ import {
 	type IPendingMessagesState,
 	type IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
+import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	ITelemetryLoggerExt,
 	ThresholdCounter,
@@ -40,6 +41,52 @@ import {
 	summarizeChannelAsync,
 } from "./channelContext.js";
 import { ISharedObjectRegistry } from "./dataStoreRuntime.js";
+
+//* TODO: Don't duplicate this code
+//* Also, we just need traversal here, not replacing
+function recursivelyReplace<TContext = unknown>(
+	input: object,
+	replacer: (input: unknown, context?: TContext) => unknown,
+	context?: TContext,
+): unknown {
+	// Note: Caller is responsible for ensuring that `input` is defined / non-null.
+	//       (Required for Object.keys() below.)
+
+	// Execute the `replace` on the current input.  Note that Caller is responsible for ensuring that `input`
+	// is a non-null object.
+	const maybeReplaced = replacer(input, context);
+
+	// If either input or the replaced result is a Fluid Handle, there is no need to descend further.
+	// IFluidHandles are always leaves in the object graph, and the code below cannot deal with IFluidHandle's structure.
+	if (isFluidHandle(input) || isFluidHandle(maybeReplaced)) {
+		return maybeReplaced;
+	}
+
+	// Otherwise descend into the object graph looking for IFluidHandle instances.
+	let clone: object | undefined;
+	for (const key of Object.keys(input)) {
+		const value: unknown = input[key];
+		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+		if (!!value && typeof value === "object") {
+			// Note: Except for IFluidHandle, `input` must not contain circular references (as object must
+			//       be JSON serializable.)  Therefore, guarding against infinite recursion here would only
+			//       lead to a later error when attempting to stringify().
+			const replaced = recursivelyReplace(value, replacer, context);
+
+			// If the `replaced` object is different than the original `value` then the subgraph contained one
+			// or more handles.  If this happens, we need to return a clone of the `input` object where the
+			// current property is replaced by the `replaced` value.
+			if (replaced !== value) {
+				// Lazily create a shallow clone of the `input` object if we haven't done so already.
+				clone ??= shallowCloneObject(input);
+
+				// Overwrite the current property `key` in the clone with the `replaced` value.
+				clone[key] = replaced;
+			}
+		}
+	}
+	return clone ?? input;
+}
 
 export class RemoteChannelContext implements IChannelContext {
 	private isLoaded = false;
@@ -78,7 +125,24 @@ export class RemoteChannelContext implements IChannelContext {
 
 		this.services = createChannelServiceEndpoints(
 			dataStoreContext.connected,
-			submitFn,
+			(content: any, localOpMetaData: unknown) => {
+				const thisHandle = this.channel && toFluidHandleInternal(this.channel?.handle);
+				assert(
+					thisHandle !== undefined,
+					"Won't be submitting an op if the channel isn't loaded",
+				);
+				// content is the viable content, and handles have not yet been bound.
+				// Bind them now, but don't encode them.
+				recursivelyReplace(content, (input) => {
+					if (isFluidHandle(input)) {
+						// bind the handle to the channel context
+						thisHandle.bind(toFluidHandleInternal(input));
+					}
+					return input;
+				});
+				//* TODO: Wrap LOM
+				submitFn(content, localOpMetaData);
+			},
 			() => dirtyFn(this.id),
 			() => runtime.attachState !== AttachState.Detached,
 			storageService,
@@ -109,6 +173,8 @@ export class RemoteChannelContext implements IChannelContext {
 				this.pendingMessagesState !== undefined,
 				0xa6c /* pending messages state is undefined */,
 			);
+
+			//* TODO: Unwrap LOM (?)
 			for (const messageCollection of this.pendingMessagesState.messageCollections) {
 				this.services.deltaConnection.processMessages(messageCollection);
 			}
@@ -179,6 +245,7 @@ export class RemoteChannelContext implements IChannelContext {
 		const { envelope, messagesContent, local } = messageCollection;
 		this.summarizerNode.invalidate(envelope.sequenceNumber);
 
+		//* TODO: Unwrap LOM
 		if (this.isLoaded) {
 			this.services.deltaConnection.processMessages(messageCollection);
 		} else {
@@ -202,12 +269,14 @@ export class RemoteChannelContext implements IChannelContext {
 	public reSubmit(content: any, localOpMetadata: unknown) {
 		assert(this.isLoaded, 0x196 /* "Remote channel must be loaded when resubmitting op" */);
 
+		//* TODO: Unwrap LOM
 		this.services.deltaConnection.reSubmit(content, localOpMetadata);
 	}
 
 	public rollback(content: any, localOpMetadata: unknown) {
 		assert(this.isLoaded, 0x2f0 /* "Remote channel must be loaded when rolling back op" */);
 
+		//* TODO: Unwrap LOM
 		this.services.deltaConnection.rollback(content, localOpMetadata);
 	}
 

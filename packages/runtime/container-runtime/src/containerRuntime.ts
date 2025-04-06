@@ -89,6 +89,7 @@ import type {
 	IInboundSignalMessage,
 	IRuntimeMessagesContent,
 	ISummarizerNodeWithGC,
+	IFluidParentContext,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	FlushMode,
@@ -166,6 +167,7 @@ import {
 	IGarbageCollector,
 	gcGenerationOptionName,
 	type GarbageCollectionMessage,
+	type IGarbageCollectionRuntime,
 } from "./gc/index.js";
 import { InboundBatchAggregator } from "./inboundBatchAggregator.js";
 import {
@@ -716,8 +718,10 @@ export class ContainerRuntime
 	implements
 		IContainerRuntime,
 		IRuntime,
+		IGarbageCollectionRuntime,
 		ISummarizerRuntime,
 		ISummarizerInternalsProvider,
+		IFluidParentContext,
 		IProvideFluidHandleContext,
 		IProvideLayerCompatDetails
 {
@@ -4245,6 +4249,8 @@ export class ContainerRuntime
 				});
 			}
 
+			//* NEXT: Stop stringifying here and throughout op lifecycle,
+			//* so we can keep the viable contents all the way through to resubmit
 			const message: BatchMessage = {
 				// This will encode any handles present in this op before serializing to string
 				// Note: handles may already have been encoded by the DDS layer, but encoding handles is idempotent so there's no problem.

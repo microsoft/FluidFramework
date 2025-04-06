@@ -237,6 +237,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 				}
 				return createChannelServiceEndpoints(
 					dataStoreContext.connected,
+					//* TODO: Do the same as in remoteChannelContext (maybe move into createChannelServiceEndpoints?)
 					submitFn,
 					this.dirtyFn,
 					() => this.isGloballyVisible,
