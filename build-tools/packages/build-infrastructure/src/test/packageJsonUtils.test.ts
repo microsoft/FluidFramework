@@ -21,7 +21,7 @@ import { testDataPath } from "./init.js";
  * A transformer function that does nothing.
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const testTransformer = (_json: PackageJson): void => {
+const testTransformer = (json: PackageJson): void => {
 	// do nothing
 	return;
 };
