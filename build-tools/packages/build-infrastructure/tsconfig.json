@@ -7,6 +7,6 @@
 		"outDir": "./lib",
 		"types": ["node"],
 		"exactOptionalPropertyTypes": false,
-		"noUnusedLocals": false,
+		"noUnusedLocals": false, // Checked in lint instead
 	},
 }

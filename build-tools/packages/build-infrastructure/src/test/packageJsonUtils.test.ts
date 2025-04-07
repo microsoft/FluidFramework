@@ -20,7 +20,8 @@ import { testDataPath } from "./init.js";
 /**
  * A transformer function that does nothing.
  */
-const testTransformer = (json: PackageJson): void => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const testTransformer = (_json: PackageJson): void => {
 	// do nothing
 	return;
 };
@@ -28,6 +29,7 @@ const testTransformer = (json: PackageJson): void => {
 /**
  * A transformer function that does nothing.
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const testTransformerAsync = async (json: PackageJson): Promise<void> => {
 	// do nothing
 	return;
