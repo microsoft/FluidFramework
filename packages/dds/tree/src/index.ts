@@ -169,9 +169,12 @@ export {
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,
+	// Other
 	type VerboseTreeNode,
-	type EncodeOptions,
-	type ParseOptions,
+	type TreeEncodingOptions,
+	type TreeSchemaEncodingOptions,
+	type TreeSchema,
+	TreeViewConfigurationAlpha,
 	type VerboseTree,
 	extractPersistedSchema,
 	comparePersistedSchema,
@@ -292,3 +295,4 @@ export type { MapNodeInsertableData } from "./simple-tree/index.js";
 
 export { JsonAsTree } from "./jsonDomainSchema.js";
 export { FluidSerializableAsTree } from "./serializableDomainSchema.js";
+export { TableSchema } from "./tableSchema.js";

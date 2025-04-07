@@ -7,13 +7,13 @@ import { strict as assert } from "node:assert";
 
 import { Side } from "../sequencePlace.js";
 
-import { ReconnectTestHelper } from "./reconnectHelper.js";
+import { ClientTestHelper } from "./clientTestHelper.js";
 
 function createObliterateTestBody({ action, expectedText }: ObliterateTestArgs): () => void {
 	return () => {
 		const events: number[] = [];
 
-		const helper = new ReconnectTestHelper({
+		const helper = new ClientTestHelper({
 			mergeTreeEnableSidedObliterate: true,
 		});
 		helper.clients.A.on("delta", (opArgs, deltaArgs) => {
@@ -28,7 +28,7 @@ function createObliterateTestBody({ action, expectedText }: ObliterateTestArgs):
 
 interface ObliterateTestArgs {
 	title: string;
-	action: (helper: ReconnectTestHelper) => void;
+	action: (helper: ClientTestHelper) => void;
 	expectedText: string;
 }
 
@@ -357,37 +357,26 @@ describe.skip("reconnect", () => {
 		action: (helper) => {
 			helper.insertText("A", 0, "hello world");
 			helper.processAllOps();
-			helper.disconnect(["C"]);
-			const op = helper.obliterateRangeLocal(
-				"C",
-				{ pos: 1, side: Side.After },
-				{ pos: 4, side: Side.After },
-			);
-			helper.reconnect(["C"]);
-			helper.submitDisconnectedOp("C", op);
-			helper.processAllOps();
+			helper.disconnect("C");
+			helper.obliterateRange("C", { pos: 1, side: Side.After }, { pos: 4, side: Side.After });
 			// inserting adjacent to the obliterated range start
+			helper.reconnect("C");
 			helper.insertText("A", 2, "123");
 		},
-		expectedText: "heo world",
+		expectedText: "he world",
 	});
 	itCorrectlyObliterates({
 		title: "add text, disconnect, obliterate, insert adjacent to obliterated range, reconnect",
 		action: (helper) => {
 			helper.insertText("A", 0, "hello world");
 			helper.processAllOps();
-			helper.disconnect(["C"]);
-			const op = helper.obliterateRangeLocal(
-				"C",
-				{ pos: 1, side: Side.After },
-				{ pos: 4, side: Side.After },
-			);
+			helper.disconnect("C");
+			helper.obliterateRange("C", { pos: 1, side: Side.After }, { pos: 4, side: Side.After });
 			// inserting adjacent to the obliterated range start
 			helper.insertText("A", 2, "123");
-			helper.reconnect(["C"]);
-			helper.submitDisconnectedOp("C", op);
+			helper.reconnect("C");
 		},
-		expectedText: "heo world",
+		expectedText: "he world",
 	});
 });
 

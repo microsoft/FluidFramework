@@ -11,7 +11,7 @@ import type { TreeNodeSchema } from "../core/index.js";
 import {
 	customFromCursor,
 	replaceHandles,
-	type EncodeOptions,
+	type TreeEncodingOptions,
 	type HandleConverter,
 } from "./customTree.js";
 import { getUnhydratedContext } from "../createContext.js";
@@ -44,9 +44,9 @@ export type ConciseTree<THandle = IFluidHandle> =
 export function conciseFromCursor(
 	reader: ITreeCursor,
 	rootSchema: ImplicitAllowedTypes,
-	options: EncodeOptions,
+	options: TreeEncodingOptions,
 ): ConciseTree {
-	const config: Required<EncodeOptions> = {
+	const config: Required<TreeEncodingOptions> = {
 		useStoredKeys: false,
 		...options,
 	};
@@ -57,7 +57,7 @@ export function conciseFromCursor(
 
 function conciseFromCursorInner(
 	reader: ITreeCursor,
-	options: Required<EncodeOptions>,
+	options: Required<TreeEncodingOptions>,
 	schema: ReadonlyMap<string, TreeNodeSchema>,
 ): ConciseTree {
 	return customFromCursor(reader, options, schema, conciseFromCursorInner);

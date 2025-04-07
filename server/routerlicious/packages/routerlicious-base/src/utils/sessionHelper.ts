@@ -277,14 +277,14 @@ export function generateCacheKey(tenantId: string, documentId: string): string {
 
 /**
  * Get the session from cache if it exists. If it doesn't exist, return undefined.
- * If the session is "404", return "404" to indicate that the document is deleted.
+ * If the document is deleted, we store a session object with empty URLs and isSessionAlive=false.
  * @internal
  */
 async function getSessionFromCache(
 	tenantId: string,
 	documentId: string,
 	redisCacheForGetSession: ICache,
-): Promise<ISession | string | undefined> {
+): Promise<ISession | undefined> {
 	const session = await redisCacheForGetSession
 		.get(generateCacheKey(tenantId, documentId))
 		.catch((error) => {
@@ -292,9 +292,6 @@ async function getSessionFromCache(
 		});
 	try {
 		if (session) {
-			if (session === "404") {
-				return session;
-			}
 			const sessionObject = JSON.parse(session);
 			return sessionObject as ISession;
 		}
@@ -302,6 +299,16 @@ async function getSessionFromCache(
 		Lumberjack.error("Error parsing session from cache", { tenantId, documentId }, error);
 	}
 	return undefined;
+}
+
+function isSessionDeleted(session: ISession): boolean {
+	return (
+		session.ordererUrl === "" &&
+		session.historianUrl === "" &&
+		session.deltaStreamUrl === "" &&
+		session.isSessionAlive === false &&
+		session.isSessionActive === false
+	);
 }
 
 function getEphemeralContainerTtlInSeconds(documentExpirationTime: number): number {
@@ -312,24 +319,20 @@ function getEphemeralContainerTtlInSeconds(documentExpirationTime: number): numb
 }
 
 /**
- * Set the session to cache. If the session is "404", set it as "404" to indicate that the document is deleted.
+ * Set the session to cache.
  * @internal
  */
 export async function setGetSessionResultInCache(
 	tenantId: string,
 	documentId: string,
-	session: ISession | string,
+	session: ISession,
 	redisCacheForGetSession: ICache,
 	cacheTTLInSeconds: number = defaultGetSessionCacheTtlInSeconds,
 ): Promise<void> {
 	const cacheKey = generateCacheKey(tenantId, documentId);
 	try {
-		// If the document is deleted, we set the session as "404" in the cache for a longer time.
-		await redisCacheForGetSession.set(
-			cacheKey,
-			typeof session === "string" && session === "404" ? session : JSON.stringify(session),
-			typeof session === "string" && session === "404" ? 20 * 60 : cacheTTLInSeconds,
-		);
+		// If the document is deleted, we set the session with empty URLs and isSessionAlive=false.
+		await redisCacheForGetSession.set(cacheKey, JSON.stringify(session), cacheTTLInSeconds);
 	} catch (error) {
 		Lumberjack.error("Error setting session to cache", { tenantId, documentId }, error);
 	}
@@ -354,11 +357,25 @@ export async function getSession(
 	readDocumentRetryDelay: number = 150,
 	readDocumentMaxRetries: number = 2,
 	redisCacheForGetSession?: ICache,
+	sessionCacheTTLSec: number = defaultGetSessionCacheTtlInSeconds,
+	sessionCacheTTLForDeletedDocumentsSec: number = 20 * 60, // 20 minutes
 ): Promise<ISession> {
+	Lumberjack.info("Cache TTL for getSession", {
+		sessionCacheTTLSec,
+		sessionCacheTTLForDeletedDocumentsSec,
+	});
 	const baseLumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 
 	let document: IDocument | null;
 	const docDeletedError = new NetworkError(404, "Document is deleted and cannot be accessed.");
+	// For documents that are deleted, we cache a session object with empty URLs and isSessionAlive=false.
+	const deletedSessionForCache: ISession = {
+		ordererUrl: "",
+		historianUrl: "",
+		deltaStreamUrl: "",
+		isSessionAlive: false,
+		isSessionActive: false,
+	};
 
 	if (redisCacheForGetSession) {
 		const cachedSession = await getSessionFromCache(
@@ -366,12 +383,11 @@ export async function getSession(
 			documentId,
 			redisCacheForGetSession,
 		);
-		if (cachedSession && typeof cachedSession === "string" && cachedSession === "404") {
-			// Document is deleted and cannot be accessed.
-			connectionTrace?.stampStage("DocumentDeletedFoundInCache");
-			throw docDeletedError;
-		}
 		if (cachedSession && typeof cachedSession === "object") {
+			if (isSessionDeleted(cachedSession)) {
+				connectionTrace?.stampStage("DocumentDeletedFoundInCache");
+				throw docDeletedError;
+			}
 			connectionTrace?.stampStage("SessionFromCache");
 			return cachedSession;
 		}
@@ -392,8 +408,9 @@ export async function getSession(
 				await setGetSessionResultInCache(
 					tenantId,
 					documentId,
-					"404",
+					deletedSessionForCache,
 					redisCacheForGetSession,
+					sessionCacheTTLForDeletedDocumentsSec,
 				);
 			}
 			// Retry once in case of DB replication lag should be enough
@@ -410,7 +427,13 @@ export async function getSession(
 	if (document.scheduledDeletionTime !== undefined) {
 		connectionTrace?.stampStage("DocumentSoftDeleted");
 		if (redisCacheForGetSession) {
-			await setGetSessionResultInCache(tenantId, documentId, "404", redisCacheForGetSession);
+			await setGetSessionResultInCache(
+				tenantId,
+				documentId,
+				deletedSessionForCache,
+				redisCacheForGetSession,
+				sessionCacheTTLForDeletedDocumentsSec,
+			);
 		}
 		throw docDeletedError;
 	}
@@ -445,17 +468,18 @@ export async function getSession(
 				await setGetSessionResultInCache(
 					tenantId,
 					documentId,
-					"404",
+					deletedSessionForCache,
 					redisCacheForGetSession,
+					sessionCacheTTLForDeletedDocumentsSec,
 				);
 			}
 			throw docDeletedError;
 		}
 	}
 	// Handle the case where the document is ephemeral. Set the TTL to the time remaining before expiration.
-	const cacheTTLInSeconds = documentExpirationTime
+	const computedSessionCacheTTLSec: number = documentExpirationTime
 		? Math.floor(0.95 * getEphemeralContainerTtlInSeconds(documentExpirationTime))
-		: defaultGetSessionCacheTtlInSeconds;
+		: sessionCacheTTLSec;
 	connectionTrace?.stampStage("EphemeralExipiryChecked");
 
 	// Session can be undefined for documents that existed before the concept of service sessions.
@@ -489,7 +513,7 @@ export async function getSession(
 				documentId,
 				freshSession,
 				redisCacheForGetSession,
-				cacheTTLInSeconds,
+				computedSessionCacheTTLSec,
 			);
 		}
 		return freshSession;
@@ -505,7 +529,7 @@ export async function getSession(
 				documentId,
 				existingSession,
 				redisCacheForGetSession,
-				cacheTTLInSeconds,
+				computedSessionCacheTTLSec,
 			);
 		}
 		return existingSession;
@@ -540,7 +564,7 @@ export async function getSession(
 				documentId,
 				freshSession,
 				redisCacheForGetSession,
-				cacheTTLInSeconds,
+				computedSessionCacheTTLSec,
 			);
 		}
 		connectionTrace?.stampStage("UpdatedExistingSession");
