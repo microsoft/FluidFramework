@@ -241,6 +241,13 @@ export interface TreeNodeSchemaCore<
 	out TCustomMetadata = unknown,
 > extends SimpleNodeSchemaBase<Kind, TCustomMetadata> {
 	/**
+	 * The scope in which this document's schema is defined.
+	 * @remarks Schema defined with the same {@link SchemaFactory.scope | factory share the same scope}.
+	 * The {@link TreeNodeSchemaCore.identifier | identifier} of this schema includes this scope.
+	 */
+	readonly scope?: string;
+
+	/**
 	 * Unique (within a document's schema) identifier used to associate nodes with their schema.
 	 * @remarks
 	 * This is used when encoding nodes, and when decoding nodes to re-associate them with the schema.

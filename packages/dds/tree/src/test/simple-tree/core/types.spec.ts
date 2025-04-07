@@ -132,6 +132,7 @@ describe("simple-tree types", () => {
 
 			class Subclass extends TreeNodeValid<number> {
 				public static readonly kind = NodeKind.Array;
+				public static readonly scope = "";
 				public static readonly identifier = "Subclass";
 				public static readonly metadata = {};
 				public static readonly info = numberSchema;
@@ -232,6 +233,7 @@ describe("simple-tree types", () => {
 			const log: string[] = [];
 			class Subclass extends TreeNodeValid<number> {
 				public static readonly kind = NodeKind.Array;
+				public static readonly scope = "";
 				public static readonly identifier = "Subclass";
 				public static readonly metadata = {};
 				public static readonly info = numberSchema;
@@ -286,6 +288,7 @@ describe("simple-tree types", () => {
 			const log: string[] = [];
 			class Subclass extends TreeNodeValid<number> {
 				public static readonly kind = NodeKind.Array;
+				public static readonly scope = "";
 				public static readonly identifier = "Subclass";
 				public static readonly metadata = {};
 				public static readonly info = numberSchema;
