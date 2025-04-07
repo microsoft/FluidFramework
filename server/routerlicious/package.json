@@ -155,7 +155,9 @@
 				"dependsOn": [
 					"prettier",
 					"generate:packageList",
-					"check:versions"
+					"check:versions",
+					"layer-check",
+					"policy-check"
 				],
 				"script": false
 			}
