@@ -310,10 +310,11 @@ export class ConsensusOrderedCollection<T = any>
 			let value: IConsensusOrderedCollectionValue<T> | undefined;
 			switch (op.opName) {
 				case "add": {
-					if (op.deserializedValue === undefined) {
-						this.addCore(this.deserializeValue(op.value, this.serializer) as T);
-					} else {
+					if (op.deserializedValue !== undefined) {
 						this.addCore(op.deserializedValue);
+					} else {
+						assert(op.value !=== undefined, "Invalid add op with no value");
+						this.addCore(this.deserializeValue(op.value, this.serializer) as T);
 					}
 					break;
 				}
