@@ -4,11 +4,6 @@
  */
 
 export {
-	ICancellableSummarizerController,
-	neverCancelledSummaryToken,
-	RunWhileConnectedCoordinator,
-} from "./summaryDelayLoadedModule/index.js";
-export {
 	createRootSummarizerNode,
 	createRootSummarizerNodeWithGC,
 	IRefreshSummaryResult,
@@ -95,19 +90,24 @@ export {
 	SummarizeReason,
 } from "./summarizerUtils.js";
 export {
-	defaultMaxAttempts,
-	defaultMaxAttemptsForSubmitFailures,
-	Summarizer,
 	IConnectedEvents,
-	IBroadcastSummaryResult,
-	ISummarizeResults,
 	IConnectedState,
-	EnqueueSummarizeResult,
-	IAckSummaryResult,
-	INackSummaryResult,
 	ISummaryManagerConfig,
 	SummaryManager,
 	SummaryManagerState,
+} from "./summaryManager.js";
+export {
+	defaultMaxAttempts,
+	defaultMaxAttemptsForSubmitFailures,
+	ICancellableSummarizerController,
+	neverCancelledSummaryToken,
+	RunWhileConnectedCoordinator,
+	Summarizer,
+	IBroadcastSummaryResult,
+	ISummarizeResults,
+	EnqueueSummarizeResult,
+	IAckSummaryResult,
+	INackSummaryResult,
 	ISummarizerClientElection,
 	ISummarizerClientElectionEvents,
 	SummarizerClientElection,

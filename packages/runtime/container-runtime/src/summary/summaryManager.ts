@@ -22,17 +22,20 @@ import {
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { IThrottler } from "../../throttler.js";
+import { IThrottler } from "../throttler.js";
+
 import {
 	IEnqueueSummarizeOptions,
 	IOnDemandSummarizeOptions,
 	ISummarizer,
-} from "../summarizerTypes.js";
-
-import { Summarizer } from "./summarizer.js";
-import { ISummarizerClientElection } from "./summarizerClientElection.js";
-import { SummaryCollection } from "./summaryCollection.js";
-import type { EnqueueSummarizeResult, ISummarizeResults } from "./summaryResultBuilder.js";
+} from "./summarizerTypes.js";
+import { stopReasonCanRunLastSummary } from "./summarizerUtils.js";
+import type {
+	EnqueueSummarizeResult,
+	ISummarizerClientElection,
+	ISummarizeResults,
+	SummaryCollection,
+} from "./summaryDelayLoadedModule/index.js";
 
 const defaultInitialDelayMs = 5000;
 const defaultOpsToBypassInitialDelay = 4000;
@@ -283,7 +286,7 @@ export class SummaryManager
 					// which would happen when we have a high enough number of unsummarized ops.
 					if (
 						startWithInitialDelay ||
-						!Summarizer.stopReasonCanRunLastSummary(shouldSummarizeState.stopReason)
+						!stopReasonCanRunLastSummary(shouldSummarizeState.stopReason)
 					) {
 						this.state = SummaryManagerState.Starting;
 						summarizer.stop(shouldSummarizeState.stopReason);

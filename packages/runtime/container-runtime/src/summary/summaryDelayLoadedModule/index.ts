@@ -9,13 +9,6 @@ export {
 	Summarizer,
 } from "./summarizer.js";
 export {
-	IConnectedEvents,
-	IConnectedState,
-	ISummaryManagerConfig,
-	SummaryManager,
-	SummaryManagerState,
-} from "./summaryManager.js";
-export {
 	ISummarizerClientElection,
 	ISummarizerClientElectionEvents,
 	SummarizerClientElection,
@@ -51,7 +44,7 @@ export {
 	INackSummaryResult,
 	IBroadcastSummaryResult,
 	ISummarizeResults,
-} from "./summaryResultBuilder.js";
+} from "./summaryResultTypes.js";
 export { RunningSummarizer } from "./runningSummarizer.js";
 export {
 	SummarizeHeuristicData,

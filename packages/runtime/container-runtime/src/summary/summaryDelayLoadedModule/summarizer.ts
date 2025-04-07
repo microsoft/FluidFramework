@@ -36,11 +36,8 @@ import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator
 import { RunningSummarizer } from "./runningSummarizer.js";
 import { SummarizeHeuristicData } from "./summarizerHeuristics.js";
 import { SummaryCollection } from "./summaryCollection.js";
-import {
-	SummarizeResultBuilder,
-	type EnqueueSummarizeResult,
-	type ISummarizeResults,
-} from "./summaryResultBuilder.js";
+import { SummarizeResultBuilder } from "./summaryResultBuilder.js";
+import type { EnqueueSummarizeResult, ISummarizeResults } from "./summaryResultTypes.js";
 
 /**
  * The maximum number of summarization attempts that will be done by default in case of failures

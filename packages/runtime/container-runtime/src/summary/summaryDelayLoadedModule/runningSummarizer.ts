@@ -28,22 +28,22 @@ import {
 
 import { opSize } from "../../opProperties.js";
 import type {
-	ISummaryConfiguration,
 	IEnqueueSummarizeOptions,
 	IOnDemandSummarizeOptions,
 	IRefreshSummaryAckOptions,
+	IRetriableFailureError,
 	ISubmitSummaryOptions,
 	ISummarizeHeuristicData,
 	ISummarizeHeuristicRunner,
 	ISummarizeOptions,
+	ISummarizerRuntime,
 	ISummarizeRunnerTelemetry,
 	ISummarizeTelemetryProperties,
-	ISummarizerRuntime,
 	ISummaryCancellationToken,
+	ISummaryConfiguration,
 	SubmitSummaryResult,
-	IRetriableFailureError,
 } from "../summarizerTypes.js";
-import { raceTimer, RetriableSummaryError, SummarizeReason } from "../summarizerUtils.js";
+import { raceTimer, RetriableSummaryError, type SummarizeReason } from "../summarizerUtils.js";
 
 import { defaultMaxAttempts, defaultMaxAttemptsForSubmitFailures } from "./summarizer.js";
 import { SummarizeHeuristicRunner } from "./summarizerHeuristics.js";
@@ -53,11 +53,8 @@ import {
 	SummaryCollection,
 } from "./summaryCollection.js";
 import { SummaryGenerator } from "./summaryGenerator.js";
-import {
-	ISummarizeResults,
-	SummarizeResultBuilder,
-	type EnqueueSummarizeResult,
-} from "./summaryResultBuilder.js";
+import { SummarizeResultBuilder } from "./summaryResultBuilder.js";
+import type { EnqueueSummarizeResult, ISummarizeResults } from "./summaryResultTypes.js";
 
 const maxSummarizeAckWaitTime = 10 * 60 * 1000; // 10 minutes
 
