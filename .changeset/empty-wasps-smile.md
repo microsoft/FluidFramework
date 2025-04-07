@@ -6,7 +6,7 @@
 "section": tree
 ---
 
-Improved Type Checking for Recursive Object Schema Fields
+Improved type checking for recursive object schema Fields
 
 Most ways to provide incorrectly typed data for fields of [recursive object schema](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#objectrecursive-method) now produce simpler type errors without relying on [ValidateRecursiveSchema](https://fluidframework.com/docs/api/fluid-framework/validaterecursiveschema-typealias).
 
@@ -29,7 +29,8 @@ class Foo extends sf.objectRecursive("Foo", {
 }
 ```
 
-Such a schema is disallowed according to the documentation [recursive schema must explicitly declare a named class]((https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#schemafactory-remarks)).
+Such a schema is disallowed according to the documentation. See the
+["recursive schema must explicitly declare a named class"]((https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#schemafactory-remarks)) remarks.
 This restriction is necessary to avoid [generated `.d.ts` files replacing recursive references with `any`](https://github.com/microsoft/TypeScript/issues/55832).
 Fixing this code is now also necessary to avoid a compile error.
 
@@ -49,6 +50,6 @@ class Foo extends sf.objectRecursive("Foo", {
 
 This change will also result in much nicer IntelliSense and type errors while fixing the typing if the schema is exported.
 
-There are still several cases which compile but violate this policy regarding recursive schema and can cause issues when exporting schema:
-they should be migrated to the above pattern as well.
-It is still valid to use non-recursive structurally named array and map schema inline: this change does not impact them.
+There are still several cases which compile but violate this policy regarding recursive schema and can cause issues when exporting schema;
+these should be migrated to the above pattern as well.
+It is still valid to use non-recursive structurally named array and map schema inline; this change does not impact them.

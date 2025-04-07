@@ -153,7 +153,7 @@ export class SnapshotLoader {
 				);
 				assert(
 					spec.movedClientIds.length === spec.movedSeqs.length,
-					"Expected same length for client ids and seqs",
+					0xb5f /* Expected same length for client ids and seqs */,
 				);
 
 				removes.push(
