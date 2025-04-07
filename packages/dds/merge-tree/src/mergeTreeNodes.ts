@@ -37,6 +37,7 @@ import {
 } from "./segmentInfos.js";
 import { PropertiesManager } from "./segmentPropertiesManager.js";
 import type { OperationStamp, SliceRemoveOperationStamp } from "./stamps.js";
+import type { Side } from "./sequencePlace.js";
 
 /**
  * This interface exposes internal things to dds that leverage merge tree,
@@ -238,7 +239,9 @@ export interface InsertContext {
 
 export interface ObliterateInfo {
 	start: LocalReferencePosition;
+	startSide: Side;
 	end: LocalReferencePosition;
+	endSide: Side;
 	refSeq: number;
 	stamp: SliceRemoveOperationStamp;
 	segmentGroup: SegmentGroup | undefined;

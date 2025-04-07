@@ -2079,16 +2079,15 @@ export class MergeTree {
 				placeSeg,
 				placeOffset,
 				ReferenceType.StayOnRemove,
-				{
-					side: place.side,
-				},
+				undefined,
 			);
 		};
 
 		const obliterate: ObliterateInfo = {
 			start: createRefFromSequencePlace(start),
-
+			startSide: start.side,
 			end: createRefFromSequencePlace(end),
+			endSide: end.side,
 			refSeq: perspective.refSeq,
 			stamp,
 			segmentGroup: undefined,

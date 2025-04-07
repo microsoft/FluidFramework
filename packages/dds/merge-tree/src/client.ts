@@ -856,6 +856,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 */
 	private rebaseSidedLocalReference(
 		ref: LocalReferencePosition,
+		side: Side,
 		reconnectingPerspective: Perspective,
 		slidePreference: SlidingPreference,
 	): RebasedObliterateEndpoint {
@@ -882,9 +883,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			"Invalid new segment on rebase",
 		);
 
-		const { side } = (ref.properties as { side: Side }) ?? {};
-		assert(side !== undefined, "Side should have been set on sided local reference");
-
 		const newSide: Side =
 			newSegment === oldSegment
 				? side
@@ -910,11 +908,13 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 		const newStart = this.rebaseSidedLocalReference(
 			obliterateInfo.start,
+			obliterateInfo.startSide,
 			reconnectingPerspective,
 			SlidingPreference.FORWARD,
 		);
 		const newEnd = this.rebaseSidedLocalReference(
 			obliterateInfo.end,
+			obliterateInfo.endSide,
 			reconnectingPerspective,
 			SlidingPreference.BACKWARD,
 		);
@@ -1003,25 +1003,23 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				"Tiebreak tracking group missing",
 			);
 
-			const createLocalRef = (
-				seg: ISegmentPrivate,
-				offset: number,
-				side: Side,
-			): LocalReferencePosition => {
-				return this._mergeTree.createLocalReferencePosition(
-					seg,
-					offset,
-					ReferenceType.StayOnRemove,
-					{
-						side,
-					},
-				);
-			};
 			const newObliterate: ObliterateInfo = {
 				// Recreate the start position using the perspective that other clients will see.
 				// This may not be at the same position as the original reference, since the segment the original reference was on could have been removed.
-				start: createLocalRef(newStartSegment, newStartOffset, newStartSide),
-				end: createLocalRef(newEndSegment, newEndOffset, newEndSide),
+				start: this._mergeTree.createLocalReferencePosition(
+					newStartSegment,
+					newStartOffset,
+					ReferenceType.StayOnRemove,
+					undefined,
+				),
+				startSide: newStartSide,
+				end: this._mergeTree.createLocalReferencePosition(
+					newEndSegment,
+					newEndOffset,
+					ReferenceType.StayOnRemove,
+					undefined,
+				),
+				endSide: newEndSide,
 				refSeq: currentSeq,
 				// We reuse the localSeq from the original obliterate.
 				stamp: obliterateInfo.stamp,
