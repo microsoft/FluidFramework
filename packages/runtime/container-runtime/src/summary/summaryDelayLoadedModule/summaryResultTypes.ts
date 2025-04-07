@@ -3,17 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	SubmitSummaryFailureData,
 	SubmitSummaryResult,
 	SummarizeResultPart,
-} from "../index.js";
-
+} from "../summarizerTypes.js";
 import type {
 	ISummaryAckMessage,
 	ISummaryNackMessage,
 	ISummaryOpMessage,
-} from "./summaryCollection.js";
+} from "../summaryCollection.js";
 
 /**
  * @legacy

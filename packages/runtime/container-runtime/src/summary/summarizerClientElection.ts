@@ -9,13 +9,12 @@ import { IClientDetails } from "@fluidframework/driver-definitions";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import { summarizerClientType } from "../summarizerTypes.js";
-
 import {
 	IOrderedClientElection,
 	ISerializedElection,
 	ITrackedClient,
 } from "./orderedClientElection.js";
+import { summarizerClientType } from "./summarizerTypes.js";
 import { ISummaryCollectionOpEvents } from "./summaryCollection.js";
 
 export interface ISummarizerClientElectionEvents extends IEvent {

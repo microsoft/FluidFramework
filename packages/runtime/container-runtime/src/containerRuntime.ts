@@ -208,15 +208,11 @@ import {
 	validateLoaderCompatibility,
 } from "./runtimeLayerCompatState.js";
 import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
+// These types are imported as types here because they are present in summaryDelayLoadedModule, which is loaded dynamically when required.
 import type {
 	IDocumentSchemaChangeMessage,
 	IDocumentSchemaCurrent,
-	OrderedClientCollection,
-	OrderedClientElection,
 	Summarizer,
-	SummarizerClientElection,
-	SummaryCollection,
-	SummaryManager,
 	IDocumentSchemaFeatures,
 	EnqueueSummarizeResult,
 	ISerializedElection,
@@ -239,6 +235,7 @@ import {
 	ISummarizerRuntime,
 	ISummaryMetadataMessage,
 	IdCompressorMode,
+	OrderedClientElection,
 	RetriableSummaryError,
 	SubmitSummaryResult,
 	aliasBlobName,
@@ -254,6 +251,10 @@ import {
 	wrapSummaryInChannelsTree,
 	formCreateSummarizerFn,
 	summarizerRequestUrl,
+	SummaryManager,
+	SummarizerClientElection,
+	SummaryCollection,
+	OrderedClientCollection,
 	validateSummaryHeuristicConfiguration,
 	ISummaryConfiguration,
 	DefaultSummaryConfiguration,
@@ -1946,10 +1947,8 @@ export class ContainerRuntime
 							this.runtimeOptions.summaryOptions.initialSummarizerDelayMs ??
 							this.summaryConfiguration.initialSummarizerDelayMs,
 					};
-			const module = await import(
-				/* webpackChunkName: "summarizerDelayLoadedModule" */ "./summary/index.js"
-			);
-			const summaryCollection: SummaryCollection = new module.SummaryCollection(
+
+			const summaryCollection: SummaryCollection = new SummaryCollection(
 				this.deltaManager,
 				this.baseLogger,
 			);
@@ -1957,24 +1956,23 @@ export class ContainerRuntime
 				logger: this.baseLogger,
 				namespace: "OrderedClientElection",
 			});
-			const orderedClientCollection: OrderedClientCollection =
-				new module.OrderedClientCollection(
-					orderedClientLogger,
-					this.innerDeltaManager,
-					this._quorum,
-				);
+			const orderedClientCollection: OrderedClientCollection = new OrderedClientCollection(
+				orderedClientLogger,
+				this.innerDeltaManager,
+				this._quorum,
+			);
 			const orderedClientElectionForSummarizer: OrderedClientElection =
-				new module.OrderedClientElection(
+				new OrderedClientElection(
 					orderedClientLogger,
 					orderedClientCollection,
 					this.electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
-					module.SummarizerClientElection.isClientEligible,
+					SummarizerClientElection.isClientEligible,
 					this.mc.config.getBoolean(
 						"Fluid.ContainerRuntime.OrderedClientElection.EnablePerformanceEvents",
 					),
 				);
 
-			this.summarizerClientElection = new module.SummarizerClientElection(
+			this.summarizerClientElection = new SummarizerClientElection(
 				orderedClientLogger,
 				summaryCollection,
 				orderedClientElectionForSummarizer,
@@ -1983,6 +1981,9 @@ export class ContainerRuntime
 			const isSummarizerClient = this.clientDetails.type === summarizerClientType;
 
 			if (isSummarizerClient) {
+				const module = await import(
+					/* webpackChunkName: "summarizerDelayLoadedModule" */ "./summary/index.js"
+				);
 				this._summarizer = new module.Summarizer(
 					this /* ISummarizerRuntime */,
 					() => this.summaryConfiguration,
@@ -1998,9 +1999,7 @@ export class ContainerRuntime
 							() => this.innerDeltaManager.active,
 						),
 				);
-			} else if (
-				module.SummarizerClientElection.clientDetailsPermitElection(this.clientDetails)
-			) {
+			} else if (SummarizerClientElection.clientDetailsPermitElection(this.clientDetails)) {
 				// Only create a SummaryManager and SummarizerClientElection
 				// if summaries are enabled and we are not the summarizer client.
 				const defaultAction = (): void => {
@@ -2024,7 +2023,7 @@ export class ContainerRuntime
 				summaryCollection.on("default", defaultAction);
 
 				// Create the SummaryManager and mark the initial state
-				this.summaryManager = new module.SummaryManager(
+				this.summaryManager = new SummaryManager(
 					this.summarizerClientElection,
 					this, // IConnectedState
 					summaryCollection,

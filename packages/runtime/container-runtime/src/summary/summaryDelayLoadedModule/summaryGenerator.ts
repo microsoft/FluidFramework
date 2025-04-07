@@ -28,8 +28,8 @@ import {
 	raceTimer,
 	type SummarizeErrorCode,
 } from "../summarizerUtils.js";
+import type { IClientSummaryWatcher } from "../summaryCollection.js";
 
-import type { IClientSummaryWatcher } from "./summaryCollection.js";
 import { SummarizeResultBuilder } from "./summaryResultBuilder.js";
 import { type INackSummaryResult, type ISummarizeResults } from "./summaryResultTypes.js";
 

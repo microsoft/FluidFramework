@@ -24,17 +24,17 @@ import {
 
 import { IThrottler } from "../throttler.js";
 
+import type { ISummarizerClientElection } from "./summarizerClientElection.js";
 import {
 	IEnqueueSummarizeOptions,
 	IOnDemandSummarizeOptions,
 	ISummarizer,
 } from "./summarizerTypes.js";
 import { stopReasonCanRunLastSummary } from "./summarizerUtils.js";
+import type { SummaryCollection } from "./summaryCollection.js";
 import type {
 	EnqueueSummarizeResult,
-	ISummarizerClientElection,
 	ISummarizeResults,
-	SummaryCollection,
 } from "./summaryDelayLoadedModule/index.js";
 
 const defaultInitialDelayMs = 5000;

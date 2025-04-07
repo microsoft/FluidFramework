@@ -16,7 +16,7 @@ import {
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { summarizerClientType } from "../index.js";
+import { summarizerClientType } from "./index.js";
 
 // helper types for recursive readonly.
 // eslint-disable-next-line @typescript-eslint/ban-types

@@ -44,14 +44,14 @@ import type {
 	SubmitSummaryResult,
 } from "../summarizerTypes.js";
 import { raceTimer, RetriableSummaryError, type SummarizeReason } from "../summarizerUtils.js";
-
-import { defaultMaxAttempts, defaultMaxAttemptsForSubmitFailures } from "./summarizer.js";
-import { SummarizeHeuristicRunner } from "./summarizerHeuristics.js";
 import {
 	IAckedSummary,
 	IClientSummaryWatcher,
 	SummaryCollection,
-} from "./summaryCollection.js";
+} from "../summaryCollection.js";
+
+import { defaultMaxAttempts, defaultMaxAttemptsForSubmitFailures } from "./summarizer.js";
+import { SummarizeHeuristicRunner } from "./summarizerHeuristics.js";
 import { SummaryGenerator } from "./summaryGenerator.js";
 import { SummarizeResultBuilder } from "./summaryResultBuilder.js";
 import type { EnqueueSummarizeResult, ISummarizeResults } from "./summaryResultTypes.js";

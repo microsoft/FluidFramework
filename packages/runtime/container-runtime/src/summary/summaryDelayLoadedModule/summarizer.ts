@@ -35,7 +35,7 @@ import {
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator.js";
 import { RunningSummarizer } from "./runningSummarizer.js";
 import { SummarizeHeuristicData } from "./summarizerHeuristics.js";
-import { SummaryCollection } from "./summaryCollection.js";
+import { SummaryCollection } from "../summaryCollection.js";
 import { SummarizeResultBuilder } from "./summaryResultBuilder.js";
 import type { EnqueueSummarizeResult, ISummarizeResults } from "./summaryResultTypes.js";
 
