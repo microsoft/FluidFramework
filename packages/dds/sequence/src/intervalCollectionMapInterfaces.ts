@@ -14,11 +14,14 @@ import type {
 import {
 	ISerializedInterval,
 	IntervalDeltaOpType,
+	type SequenceIntervalClass,
 	SerializedIntervalDelta,
 } from "./intervals/index.js";
 
 export interface IMapMessageLocalMetadata {
 	localSeq: number;
+	original?: SequenceIntervalClass;
+	clone?: SequenceIntervalClass;
 }
 
 /**
