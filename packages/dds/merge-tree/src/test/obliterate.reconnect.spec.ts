@@ -322,7 +322,7 @@ describe("sided obliterate reconnect", () => {
 			helper.advanceClients("B");
 			// B recognizes an observer client at this seq will have '056inside the original obliterate789' and B's obliterate should additionally
 			// remove '5inside the original obliterate67'.
-			// It reconnects at this point and has a choice: it can either specify the startpoing of the obliterate as 'after the 0 character'
+			// It reconnects at this point and has a choice: it can either specify the startpoint of the obliterate as 'after the 0 character'
 			// (preserving the original side) or 'before the 5 character' (which will make its start endpoint no longer "sticky" like
 			// the original one). Seeing as the original startpoint has actually already been removed, we should choose the latter.
 			helper.reconnect("B");
@@ -349,7 +349,7 @@ describe("sided obliterate reconnect", () => {
 			helper.advanceClients("B");
 			// B recognizes an observer client at this seq will have '056inside the original obliterate789' and B's obliterate should additionally
 			// remove '5inside the original obliterate67'.
-			// It reconnects at this point and has a choice: it can either specify the startpoing of the obliterate as 'after the 0 character'
+			// It reconnects at this point and has a choice: it can either specify the startpoint of the obliterate as 'after the 0 character'
 			// (preserving the original side) or 'before the 5 character' (which will make its start endpoint no longer "sticky" like
 			// the original one). Seeing as the original startpoint has actually already been removed, we should choose the latter.
 			helper.reconnect("B");

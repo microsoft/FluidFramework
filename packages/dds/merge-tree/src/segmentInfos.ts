@@ -6,8 +6,13 @@
 import { assert, isObject } from "@fluidframework/core-utils/internal";
 
 import { UnassignedSequenceNumber } from "./constants.js";
-import { ISegmentInternal, ISegmentPrivate, MergeBlock } from "./mergeTreeNodes.js";
-import type { InsertOperationStamp, RemoveOperationStamp } from "./stamps.js";
+import {
+	ISegmentInternal,
+	ISegmentPrivate,
+	MergeBlock,
+	type ObliterateInfo,
+} from "./mergeTreeNodes.js";
+import type { InsertOperationStamp, OperationStamp, RemoveOperationStamp } from "./stamps.js";
 
 export interface StringToType {
 	"string": string;
@@ -50,10 +55,33 @@ export interface IHasInsertionInfo {
 	insert: InsertOperationStamp;
 }
 
-export type ISegmentObliterateInfo = Pick<
-	ISegmentPrivate,
-	"obliteratePrecedingInsertion" | "insertionRefSeqStamp"
->;
+export interface ISegmentInsideObliterateInfo {
+	/**
+	 * Populated iff this segment was inserted into a range affected by concurrent obliterates at the time of its insertion.
+	 * Contains information about the 'most recent' (i.e. 'winning' in the sense below) obliterate.
+	 *
+	 * BEWARE: We have opted for a certain form of last-write wins (LWW) semantics for obliterates:
+	 * the client which last obliterated a range is considered to have "won ownership" of that range and may insert into it
+	 * without that insertion being obliterated by other clients' concurrent obliterates.
+	 *
+	 * Therefore, this field can be populated even if the segment has not been obliterated (i.e. is still visible).
+	 * This happens precisely when the segment was inserted by the same client that 'won' the obliterate (in a scenario where
+	 * a client first issues a sided obliterate impacting a range, then inserts into that range before the server has acked the obliterate).
+	 *
+	 * See the test case "obliterate with mismatched final states" for an example of such a scenario.
+	 *
+	 * TODO:AB#29553: This property is not persisted in the V1 summary, but it should be.
+	 */
+	obliteratePrecedingInsertion?: ObliterateInfo;
+	/**
+	 * Populated iff this segment was inserted into a range concurrently removed by a local obliterate operation.
+	 * This field is unset once the newest such overlapping obliterate is acked, and allows recomputing {@link obliteratePrecedingInsertion}
+	 * if that local obliterate is resubmitted.
+	 *
+	 * TODO:AB#29553: This property is not persisted in the V1 summary, but it should be.
+	 */
+	insertionRefSeqStamp?: OperationStamp;
+}
 
 /**
  * Converts a segment-like object to an insertion info object if possible.
@@ -80,12 +108,10 @@ export const toInsertionInfo = (segmentLike: unknown): IHasInsertionInfo | undef
 export const isInserted = (segmentLike: unknown): segmentLike is IHasInsertionInfo =>
 	toInsertionInfo(segmentLike) !== undefined;
 
-export const hasObliterateTiebreakInfo = (
+export const isInsideObliterate = (
 	segmentLike: unknown,
-): segmentLike is ISegmentObliterateInfo =>
-	segmentLike !== undefined &&
-	hasProp(segmentLike, "obliteratePrecedingInsertion", "object") &&
-	hasProp(segmentLike, "insertionRefSeqStamp", "object");
+): segmentLike is ISegmentInsideObliterateInfo =>
+	segmentLike !== undefined && hasProp(segmentLike, "obliteratePrecedingInsertion", "object");
 
 /**
  * Asserts that the segment has insertion info. Usage of this function should not produce a user facing error.
@@ -273,7 +299,7 @@ export type SegmentInfo =
 	| IMergeNodeInfo
 	| IHasInsertionInfo
 	| IHasRemovalInfo
-	| ISegmentObliterateInfo;
+	| ISegmentInsideObliterateInfo;
 
 /**
  * A type representing a segment with additional info.
