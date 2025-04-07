@@ -10,6 +10,7 @@ import { fluidHandleSymbol } from "@fluidframework/core-interfaces";
 import type {
 	JsonTypeWith,
 	InternalUtilityTypes,
+	NonNullJsonObjectWith,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 /* eslint-disable jsdoc/require-jsdoc */
@@ -18,7 +19,7 @@ import type {
 export const boolean: boolean = true as boolean; // Use `as` to avoid type conversion to `true`
 export const number: number = 0;
 export const string: string = "";
-export const symbol = Symbol("symbol");
+export const symbol: symbol = Symbol("symbol");
 export const uniqueSymbol: unique symbol = Symbol("unique symbol");
 export const bigint: bigint = 0n;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -82,13 +83,16 @@ export const arrayOfUnknown: unknown[] = [unknownValueOfSimpleRecord];
 export const arrayOfFunctions = [aFunction];
 export const arrayOfFunctionsWithProperties = [functionWithProperties];
 export const arrayOfObjectAndFunctions = [objectAndFunction];
-export const arrayOfBigintAndObjects: (bigint | { property: string })[] = [
+export const arrayOfBigintOrObjects: (bigint | { property: string })[] = [
 	{ property: "string" },
 	bigint,
 ];
-export const arrayOfSymbolsAndObjects: (symbol | { property: string })[] = [Symbol("symbol")];
+export const arrayOfSymbolOrObjects: (symbol | { property: string })[] = [Symbol("symbol")];
+export const arrayOfBigintOrSymbols = [bigintOrSymbol];
+export const arrayOfNumberBigintOrSymbols = [numberOrBigintOrSymbol];
 
 export const readonlyArrayOfNumbers: readonly number[] = arrayOfNumbers;
+export const readonlyArrayOfObjects: readonly { property: string }[] = [];
 
 // #endregion
 
@@ -118,6 +122,7 @@ export const objectWithOptionalBigint: { bigint?: bigint } = { bigint: 0n };
 
 export const objectWithNumberKey = { 3: "value" };
 export const objectWithSymbolKey = { [symbol]: "value" };
+export const objectWithUniqueSymbolKey = { [uniqueSymbol]: "value" };
 
 export const objectWithArrayOfNumbers = { arrayOfNumbers };
 export const objectWithArrayOfNumbersSparse = { arrayOfNumbersSparse };
@@ -128,8 +133,8 @@ export const objectWithArrayOfUnknown = { arrayOfUnknown };
 export const objectWithArrayOfFunctions = { arrayOfFunctions };
 export const objectWithArrayOfFunctionsWithProperties = { arrayOfFunctionsWithProperties };
 export const objectWithArrayOfObjectAndFunctions = { arrayOfObjectAndFunctions };
-export const objectWithArrayOfBigintAndObjects = { arrayOfBigintAndObjects };
-export const objectWithArrayOfSymbolsAndObjects = { arrayOfSymbolsAndObjects };
+export const objectWithArrayOfBigintOrObjects = { arrayOfBigintOrObjects };
+export const objectWithArrayOfSymbolsOrObjects = { arrayOfSymbolOrObjects };
 export const objectWithReadonlyArrayOfNumbers = { readonlyArrayOfNumbers };
 
 export const objectWithUnknown = { unknown: "value" as unknown };
@@ -341,7 +346,7 @@ type ObjectWithPossibleRecursion = {
 export const objectWithPossibleRecursion: ObjectWithPossibleRecursion = {
 	recursive: { stop: "here" },
 };
-type ObjectWithOptionalRecursion = {
+export type ObjectWithOptionalRecursion = {
 	recursive?: ObjectWithOptionalRecursion;
 };
 export const objectWithOptionalRecursion: ObjectWithOptionalRecursion = {
@@ -427,11 +432,8 @@ assertIdenticalTypes(selfRecursiveObjectAndFunction, selfRecursiveFunctionWithPr
 
 /* eslint-enable @typescript-eslint/consistent-type-definitions */
 
-export interface SimpleObjectWithOptionalRecursion {
-	recursive?: SimpleObjectWithOptionalRecursion;
-}
 interface ObjectInheritingOptionalRecursionAndWithNestedSymbol
-	extends SimpleObjectWithOptionalRecursion {
+	extends ObjectWithOptionalRecursion {
 	complex: {
 		number: number;
 		symbol: symbol;
@@ -451,6 +453,8 @@ export const objectInheritingOptionalRecursionAndWithNestedSymbol: ObjectInherit
 	};
 
 export const simpleJson: JsonTypeWith<never> = { a: [{ b: { b2: 8 }, c: true }] };
+
+export const jsonObject: NonNullJsonObjectWith<never> = [simpleJson];
 
 // #endregion
 

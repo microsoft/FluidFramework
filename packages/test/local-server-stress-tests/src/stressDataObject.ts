@@ -11,7 +11,6 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import {
 	loadContainerRuntime,
-	RuntimeHeaders,
 	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import/no-deprecated
@@ -24,7 +23,7 @@ import type {
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import { RuntimeHeaders, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { timeoutAwait } from "@fluidframework/test-utils/internal";
 
 import { ddsModelMap } from "./ddsModels.js";
@@ -147,6 +146,10 @@ export class StressDataObject extends DataObject {
 			tag,
 			stressDataObject: maybe.StressDataObject,
 		});
+	}
+
+	public orderSequentially(act: () => void) {
+		this.context.containerRuntime.orderSequentially(act);
 	}
 }
 export type ContainerObjects =

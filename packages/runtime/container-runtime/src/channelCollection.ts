@@ -50,6 +50,7 @@ import {
 import {
 	GCDataBuilder,
 	RequestParser,
+	RuntimeHeaders,
 	SummaryTreeBuilder,
 	addBlobToSummary,
 	convertSnapshotTreeToSummaryTree,
@@ -104,21 +105,6 @@ import {
 	nonDataStorePaths,
 	rootHasIsolatedChannels,
 } from "./summary/index.js";
-
-/**
- * Accepted header keys for requests coming to the runtime.
- * @internal
- */
-export enum RuntimeHeaders {
-	/**
-	 * True to wait for a data store to be created and loaded before returning it.
-	 */
-	wait = "wait",
-	/**
-	 * True if the request is coming from an IFluidHandle.
-	 */
-	viaHandle = "viaHandle",
-}
 
 /**
  * True if a tombstoned object should be returned without erroring
@@ -625,7 +611,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		 * in the snapshot.
 		 * So, return short ids only if explicitly enabled via feature flags. Else, return uuid();
 		 */
-		if (this.mc.config.getBoolean("Fluid.Runtime.UseShortIds") === true) {
+		if (this.mc.config.getBoolean("Fluid.Runtime.IsShortIdEnabled") === true) {
 			// We use three non-overlapping namespaces:
 			// - detached state: even numbers
 			// - attached state: odd numbers
