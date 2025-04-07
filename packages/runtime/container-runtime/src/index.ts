@@ -27,7 +27,6 @@ export { IBlobManagerLoadInfo } from "./blobManager/index.js";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
 export {
 	detectOutboundReferences,
-	RuntimeHeaders,
 	ChannelCollectionFactory,
 	AllowTombstoneRequestHeaderKey,
 } from "./channelCollection.js";
