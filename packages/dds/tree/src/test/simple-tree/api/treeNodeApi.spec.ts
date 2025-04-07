@@ -347,7 +347,7 @@ describe("treeNodeApi", () => {
 			const view = getView(config, nodeKeyManager);
 			view.initialize({ identifier: id });
 
-			assert.equal(Tree.uncompressedId(view.root), id);
+			assert.equal(TreeAlpha.uncompressedId(view.root), id);
 		});
 
 		it("returns undefined when an identifier fieldkind does not exist.", () => {
@@ -358,7 +358,7 @@ describe("treeNodeApi", () => {
 			const view = getView(config);
 			view.initialize({ identifier: "testID" });
 
-			assert.equal(Tree.uncompressedId(view.root), undefined);
+			assert.equal(TreeAlpha.uncompressedId(view.root), undefined);
 		});
 
 		it("returns the original identifier value when the provided identifier is a valid stable id, but unknown by the idCompressor.", () => {
@@ -375,7 +375,7 @@ describe("treeNodeApi", () => {
 			const view = getView(config);
 			view.initialize({ identifier: stableNodeKey });
 
-			assert.equal(Tree.uncompressedId(view.root), stableNodeKey);
+			assert.equal(TreeAlpha.uncompressedId(view.root), stableNodeKey);
 		});
 
 		it("errors if multiple identifiers exist on the same node", () => {
@@ -392,7 +392,7 @@ describe("treeNodeApi", () => {
 				identifier2: "b",
 			});
 			assert.throws(
-				() => Tree.uncompressedId(view.root),
+				() => TreeAlpha.uncompressedId(view.root),
 				(error: Error) =>
 					validateAssertionError(
 						error,
@@ -407,7 +407,7 @@ describe("treeNodeApi", () => {
 			});
 			const view = getView(config);
 			view.initialize([1, 2, 3]);
-			assert.equal(Tree.uncompressedId(view.root), undefined);
+			assert.equal(TreeAlpha.uncompressedId(view.root), undefined);
 		});
 
 		describe("unhydrated", () => {
@@ -416,13 +416,13 @@ describe("treeNodeApi", () => {
 			}) {}
 			it("returns uncompressed string for unhydrated nodes", () => {
 				const node = new HasIdentifier({ identifier: "x" });
-				assert.equal(Tree.uncompressedId(node), "x");
+				assert.equal(TreeAlpha.uncompressedId(node), "x");
 			});
 			it("errors accessing defaulted", () => {
 				const node = new HasIdentifier({});
 				assert.throws(
 					() => {
-						Tree.uncompressedId(node);
+						TreeAlpha.uncompressedId(node);
 					},
 					validateUsageError(/default/),
 				);

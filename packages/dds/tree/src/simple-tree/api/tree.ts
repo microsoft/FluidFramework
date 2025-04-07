@@ -485,6 +485,16 @@ export interface TreeBranch extends IDisposable {
 	 * The {@link TreeBranch | main branch} cannot be disposed - attempting to do so will have no effect.
 	 */
 	dispose(error?: Error): void;
+
+	/**
+	 * Stabilizes a local identifier recognized by the SharedTree's idCompressor.
+	 * @param identifier - local node identifier that you want to stabilize.
+	 * 
+	 * @remarks
+	 * This method assumes that the identifier passed in will be a local node identifier recognized by the SharedTree's idCompressor, 
+	 * and will otherwise fail.
+	 */
+	stabilizeIdentifier(identifier: number): string;
 }
 
 /**

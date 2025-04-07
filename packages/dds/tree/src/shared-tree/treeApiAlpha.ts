@@ -50,9 +50,11 @@ import {
 	TreeCompressionStrategy,
 	type FieldBatch,
 	type FieldBatchEncodingContext,
+	type LocalNodeIdentifier,
 } from "../feature-libraries/index.js";
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
+import { Tree } from "./index.js";
 
 /**
  * Extensions to {@link Tree} and {@link TreeBeta} which are not yet stable.
@@ -204,6 +206,8 @@ export const TreeAlpha: {
 		compressedData: JsonCompatible<IFluidHandle>,
 		options: { idCompressor?: IIdCompressor } & ICodecOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+
+	uncompressedId(node: TreeNode): string | undefined
 } = {
 	branch(node: TreeNode): TreeBranch | undefined {
 		const kernel = getKernel(node);
@@ -312,6 +316,10 @@ export const TreeAlpha: {
 		const view = independentInitializedView(config, options, content);
 		return TreeBeta.clone<TSchema>(view.root);
 	},
+
+	uncompressedId(node: TreeNode): string | undefined {
+		return Tree.uncompressedId(node)
+	},
 };
 
 function exportConcise(node: TreeNode | TreeLeafValue, options?: EncodeOptions): ConciseTree;
@@ -371,8 +379,8 @@ const versionToFormat = {
 /**
  * Function which returns the idCompressor from a TreeView.
  * 
- * @param branch - TreeView for which you want to get the idCompressor from.
- * @returns the idCompressor associated with the treeView.
+ * @param branch - TreeBranch for which you want to get the idCompressor from.
+ * @returns a function which allows you to stabilize a local node identifier.
  * 
  * @remarks
  * We currently do not have any apis that support converting identifiers between uncompressed and compressed state.
@@ -380,6 +388,13 @@ const versionToFormat = {
  * 
  * @alpha
  */
-export function getIdCompressorFromView(branch: TreeBranch): void{
-	
+export function getIdCompressorFromView(branch: TreeBranch): (identifier: number) => string | undefined{
+	const nodeKeyManager = (branch as SchematizingSimpleTreeView<ImplicitFieldSchema>).nodeKeyManager
+	return (identifier: number) => {try {
+		return nodeKeyManager.stabilizeNodeIdentifier(
+			identifier as unknown as LocalNodeIdentifier
+		);
+	} catch {
+		return undefined;
+	}}
 }
