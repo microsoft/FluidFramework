@@ -1,7 +1,7 @@
 {
 	"globalHeaders": {
 		"cache-control": "must-revalidate, max-age=3600",
-		"Content-Security-Policy": "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; object-src 'none'; base-uri 'self';",
+		"Content-Security-Policy": "script-src 'self' 'strict-dynamic' https:; object-src 'none'; base-uri 'self';",
 		"Content-Security-Policy-Report-Only": "require-trusted-types-for 'script'; trusted-types default; report-uri https://csp.microsoft.com/report/FluidFramework-WW"
 	},
 	"navigationFallback": {
