@@ -52,7 +52,6 @@ function createBlobManager(overrides?: Partial<ConstructorParameters<typeof Blob
 			blobManagerLoadInfo: {},
 			stashedBlobs: undefined,
 			localBlobIdGenerator: undefined,
-			createBlobPlaceholders: false,
 
 			// overrides
 			...overrides,

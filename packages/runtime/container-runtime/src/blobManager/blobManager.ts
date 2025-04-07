@@ -235,8 +235,6 @@ export class BlobManager {
 		new Map();
 	public readonly stashedBlobsUploadP: Promise<(void | ICreateBlobResponse)[]>;
 
-	private readonly createBlobPlaceholders: boolean;
-
 	constructor(props: {
 		readonly routeContext: IFluidHandleContext;
 
@@ -262,7 +260,6 @@ export class BlobManager {
 		readonly runtime: IBlobManagerRuntime;
 		stashedBlobs: IPendingBlobs | undefined;
 		readonly localBlobIdGenerator?: (() => string) | undefined;
-		readonly createBlobPlaceholders: boolean;
 	}) {
 		const {
 			routeContext,
@@ -274,7 +271,6 @@ export class BlobManager {
 			runtime,
 			stashedBlobs,
 			localBlobIdGenerator,
-			createBlobPlaceholders,
 		} = props;
 		this.routeContext = routeContext;
 		this.storage = storage;
@@ -282,7 +278,6 @@ export class BlobManager {
 		this.isBlobDeleted = isBlobDeleted;
 		this.runtime = runtime;
 		this.localBlobIdGenerator = localBlobIdGenerator ?? uuid;
-		this.createBlobPlaceholders = createBlobPlaceholders;
 
 		this.mc = createChildMonitoringContext({
 			logger: this.runtime.baseLogger,
@@ -525,7 +520,7 @@ export class BlobManager {
 			0x385 /* For clarity and paranoid defense against adding future attachment states */,
 		);
 
-		return this.createBlobPlaceholders
+		return this.mc.config.getBoolean("Fluid.Runtime.UploadBlobPlaceholders") === true
 			? this.createBlobPlaceholder(blob)
 			: this.createBlobLegacy(blob, signal);
 	}
@@ -579,7 +574,7 @@ export class BlobManager {
 					blob,
 					handleP: new Deferred(),
 					uploadP: this.uploadBlob(localId, blob),
-					attached: true,
+					attached: false,
 					acked: false,
 					opsent: false,
 				};
