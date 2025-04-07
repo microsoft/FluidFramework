@@ -57,7 +57,11 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 		// window.
 		statesWorkspace.add(
 			"focus",
-			Latest<IFocusState>({ hasFocus: window.document.hasFocus() }),
+			Latest<IFocusState>(
+				{ hasFocus: window.document.hasFocus() },
+				// Does no actual validation - just casts the types.
+				(maybeValid) => maybeValid as IFocusState,
+			),
 		);
 
 		// Save a reference to the value manager for easy access within the FocusTracker.

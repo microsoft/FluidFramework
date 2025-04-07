@@ -6,13 +6,18 @@
 import type { InternalUtilityTypes } from "@fluidframework/core-interfaces/internal";
 import type { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { getUnexpectedLogErrorException } from "@fluidframework/test-utils/internal";
-import type { SinonFakeTimers } from "sinon";
+import type { SinonFakeTimers, SinonSpy } from "sinon";
 
 import { createPresenceManager } from "../presenceManager.js";
 
 import type { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
-import type { ClientConnectionId, ClientSessionId } from "@fluidframework/presence/alpha";
+import type {
+	ClientConnectionId,
+	ClientSessionId,
+	ValueTypeSchemaValidator,
+	ValueTypeSchemaValidatorForKey,
+} from "@fluidframework/presence/alpha";
 import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
 
 /**
@@ -152,4 +157,66 @@ export function assertFinalExpectations(
 	}
 	// Make sure all expected signals were sent.
 	runtime.assertAllSignalsSubmitted();
+}
+
+/**
+ * Creates a null validator (one that does nothing) for a given type T.
+ */
+export function createNullValidator<T extends object>(): ValueTypeSchemaValidator<T> {
+	const nullValidator: ValueTypeSchemaValidator<T> = (data: unknown) => {
+		return data as T;
+	};
+	return nullValidator;
+}
+
+/**
+ * Creates a null key validator (one that does nothing) for a given type T.
+ */
+export function createNullValidatorForKey<
+	T extends object,
+	K extends string | number,
+>(): ValueTypeSchemaValidatorForKey<T, K> {
+	const nullValidator: ValueTypeSchemaValidatorForKey<T, K> = (key: K, data: unknown) => {
+		return createNullValidator();
+	};
+	return nullValidator;
+}
+
+/**
+ * A validator function spy.
+ */
+export type ValidatorSpy = Pick<SinonSpy, "callCount">;
+
+/**
+ * Creates a validator and a spy for test purposes.
+ */
+export function createSpiedValidator<T extends object>(
+	validator: ValueTypeSchemaValidator<T>,
+): [ValueTypeSchemaValidator<T>, ValidatorSpy] {
+	const spy: ValidatorSpy = {
+		callCount: 0,
+	};
+
+	const nullValidatorSpy: ValueTypeSchemaValidator<T> = (data: unknown) => {
+		spy.callCount++;
+		return validator(data) as T;
+	};
+	return [nullValidatorSpy, spy];
+}
+
+/**
+ * TODO
+ */
+export function createSpiedKeyValidator<T extends object, K extends string | number>(
+	validator: ValueTypeSchemaValidatorForKey<T>,
+): [ValueTypeSchemaValidatorForKey<T, K>, ValidatorSpy] {
+	const spy: ValidatorSpy = {
+		callCount: 0,
+	};
+
+	const nullValidatorSpy: ValueTypeSchemaValidatorForKey<T, K> = (key: K, data: unknown) => {
+		spy.callCount++;
+		return createNullValidator();
+	};
+	return [nullValidatorSpy, spy];
 }

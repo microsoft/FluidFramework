@@ -62,6 +62,9 @@ export type {
 	LatestValueClientData,
 	LatestValueData,
 	LatestValueMetadata,
+	ValueTypeSchemaFixer,
+	ValueTypeSchemaValidator,
+	ValueTypeSchemaValidatorForKey,
 } from "./latestValueTypes.js";
 
 export {
