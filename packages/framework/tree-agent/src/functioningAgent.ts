@@ -203,7 +203,7 @@ function ${functionName}({ root, idMap, create }) {
 }
 \`\`\`\n\n`;
 
-		const rootTypes = [...schema.allowedTypesIdentifiers];
+		const rootTypes = [...schema.root.allowedTypesIdentifiers];
 		const prompt = `${this.getSystemPromptPreamble(domainTypes, domainRoot)}
 
 ## Editing

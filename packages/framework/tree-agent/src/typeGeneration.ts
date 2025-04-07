@@ -245,7 +245,7 @@ function generateEditTypes(
 	editTypeRecord.EditArray = editWrapper;
 
 	let domainRoot: string | undefined;
-	const domainRootTypes = Array.from(schema.allowedTypesIdentifiers, (t) => {
+	const domainRootTypes = Array.from(schema.root.allowedTypesIdentifiers, (t) => {
 		domainRoot = t;
 		return getOrCreateType(
 			schema.definitions,
