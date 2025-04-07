@@ -20,7 +20,12 @@ import {
 	DefaultSummaryConfiguration,
 	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
-import type { IErrorBase, IFluidHandle } from "@fluidframework/core-interfaces";
+import type {
+	ConfigTypes,
+	IConfigProviderBase,
+	IErrorBase,
+	IFluidHandle,
+} from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { ReferenceType } from "@fluidframework/merge-tree/internal";
@@ -45,10 +50,21 @@ import {
 	getUrlFromDetachedBlobStorage,
 } from "./mockDetachedBlobStorage.js";
 
+const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	getRawConfig: (name: string): ConfigTypes => settings[name],
+});
+
 function makeTestContainerConfig(
 	registry: ChannelFactoryRegistry,
-	createBlobPlaceholders: boolean,
+	enableBlobPlaceholdersFlag: boolean,
 ): ITestContainerConfig {
+	const loaderProps = enableBlobPlaceholdersFlag
+		? {
+				configProvider: configProvider({
+					"Fluid.Runtime.UploadBlobPlaceholders": true,
+				}),
+			}
+		: {};
 	return {
 		runtimeOptions: {
 			summaryOptions: {
@@ -65,10 +81,9 @@ function makeTestContainerConfig(
 					},
 				},
 			},
-			explicitSchemaControl: createBlobPlaceholders,
-			createBlobPlaceholders,
 		},
 		registry,
+		loaderProps,
 	};
 }
 
@@ -96,15 +111,15 @@ const ContainerStateEventsOrErrors: ExpectedEvents = {
 	],
 };
 
-for (const createBlobPlaceholders of [false, true]) {
+for (const enableBlobPlaceholdersFlag of [false, true]) {
 	describeCompat(
-		`blobs (blob placeholders: ${createBlobPlaceholders})`,
+		`blobs (blob placeholders: ${enableBlobPlaceholdersFlag})`,
 		"FullCompat",
 		(getTestObjectProvider, apis) => {
 			const { SharedString } = apis.dds;
 			const testContainerConfig = makeTestContainerConfig(
 				[["sharedString", SharedString.getFactory()]],
-				createBlobPlaceholders,
+				enableBlobPlaceholdersFlag,
 			);
 
 			let provider: ITestObjectProvider;
@@ -306,13 +321,13 @@ for (const createBlobPlaceholders of [false, true]) {
 	// this functionality was added in 0.47 and can be added to the compat-enabled
 	// tests above when the LTS version is bumped > 0.47
 	describeCompat(
-		`blobs (blob placeholders: ${createBlobPlaceholders})`,
+		`blobs (blob placeholders: ${enableBlobPlaceholdersFlag})`,
 		"NoCompat",
 		(getTestObjectProvider, apis) => {
 			const { SharedString } = apis.dds;
 			const testContainerConfig = makeTestContainerConfig(
 				[["sharedString", SharedString.getFactory()]],
-				createBlobPlaceholders,
+				enableBlobPlaceholdersFlag,
 			);
 
 			let provider: ITestObjectProvider;

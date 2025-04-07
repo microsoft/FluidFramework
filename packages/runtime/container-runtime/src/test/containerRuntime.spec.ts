@@ -1501,7 +1501,6 @@ describe("Runtime", () => {
 				enableRuntimeIdCompressor: undefined,
 				enableGroupedBatching: true, // Redundant, but makes the JSON.stringify yield the same result as the logs
 				explicitSchemaControl: false,
-				createBlobPlaceholders: false, // Redundant, but makes the JSON.stringify yield the same result as the logs
 			};
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
 

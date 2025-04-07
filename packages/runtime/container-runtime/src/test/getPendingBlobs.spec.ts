@@ -22,7 +22,7 @@ describe("getPendingLocalState", () => {
 
 	beforeEach(() => {
 		mc = mixinMonitoringContext(createChildLogger(), undefined);
-		runtime = new MockRuntime(mc, false /* createBlobPlaceholders */);
+		runtime = new MockRuntime(mc);
 	});
 
 	it("get blobs while uploading", async () => {
@@ -43,13 +43,7 @@ describe("getPendingLocalState", () => {
 		assert.strictEqual(summaryData.ids.length, 0);
 		assert.strictEqual(summaryData.redirectTable, undefined);
 
-		const runtime2 = new MockRuntime(
-			mc,
-			false, // createBlobPlaceholders
-			summaryData,
-			false,
-			pendingState,
-		);
+		const runtime2 = new MockRuntime(mc, summaryData, false, pendingState);
 		await runtime2.attach();
 		await runtime2.connect();
 		await runtime2.processAll();
@@ -78,13 +72,7 @@ describe("getPendingLocalState", () => {
 		assert.strictEqual(summaryData.ids.length, 0);
 		assert.strictEqual(summaryData.redirectTable, undefined);
 
-		const runtime2 = new MockRuntime(
-			mc,
-			false, // createBlobPlaceholders
-			summaryData,
-			false,
-			pendingState,
-		);
+		const runtime2 = new MockRuntime(mc, summaryData, false, pendingState);
 		await runtime2.attach();
 		await runtime2.connect();
 		await runtime2.processAll();
@@ -114,13 +102,7 @@ describe("getPendingLocalState", () => {
 		assert.strictEqual(summaryData.ids.length, 0);
 		assert.strictEqual(summaryData.redirectTable, undefined);
 
-		const runtime2 = new MockRuntime(
-			mc,
-			false, // createBlobPlaceholders
-			summaryData,
-			false,
-			pendingState,
-		);
+		const runtime2 = new MockRuntime(mc, summaryData, false, pendingState);
 		await runtime2.attach();
 		await runtime2.connect();
 		await runtime2.processAll();
@@ -154,13 +136,7 @@ describe("getPendingLocalState", () => {
 		assert.strictEqual(summaryData.ids.length, 0);
 		assert.strictEqual(summaryData.redirectTable, undefined);
 
-		const runtime2 = new MockRuntime(
-			mc,
-			false, // createBlobPlaceholders
-			summaryData,
-			false,
-			pendingState,
-		);
+		const runtime2 = new MockRuntime(mc, summaryData, false, pendingState);
 		await runtime2.attach();
 		await runtime2.connect();
 		await runtime2.processAll();
@@ -188,13 +164,7 @@ describe("getPendingLocalState", () => {
 		assert.strictEqual(summaryData.ids.length, 0);
 		assert.strictEqual(summaryData.redirectTable, undefined);
 
-		const runtime2 = new MockRuntime(
-			mc,
-			false, // createBlobPlaceholders
-			summaryData,
-			false,
-			pendingState,
-		);
+		const runtime2 = new MockRuntime(mc, summaryData, false, pendingState);
 		await runtime2.attach();
 		await runtime2.connect(0, true);
 		await runtime2.processAll();
@@ -218,13 +188,7 @@ describe("getPendingLocalState", () => {
 		assert.ok(pendingBlobs[Object.keys(pendingBlobs)[0]].storageId);
 		const summaryData = validateSummary(runtime);
 
-		const runtime2 = new MockRuntime(
-			mc,
-			false, // createBlobPlaceholders
-			summaryData,
-			false,
-			pendingState,
-		);
+		const runtime2 = new MockRuntime(mc, summaryData, false, pendingState);
 		await runtime2.attach();
 		assert.strictEqual(runtime2.unprocessedBlobs.size, 0);
 		await runtime2.connect();
@@ -251,13 +215,7 @@ describe("getPendingLocalState", () => {
 		assert.ok(pendingBlobs[Object.keys(pendingBlobs)[0]].storageId);
 		const summaryData = validateSummary(runtime);
 
-		const runtime2 = new MockRuntime(
-			mc,
-			false, // createBlobPlaceholders
-			summaryData,
-			false,
-			pendingState,
-		);
+		const runtime2 = new MockRuntime(mc, summaryData, false, pendingState);
 		await runtime2.attach();
 		await runtime2.connect();
 		await runtime2.processAll();

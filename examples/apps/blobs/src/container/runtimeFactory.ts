@@ -44,11 +44,6 @@ export class BlobCollectionContainerRuntimeFactory implements IRuntimeFactory {
 				[blobCollectionRegistryKey, Promise.resolve(blobCollectionFactory)],
 			]),
 			provideEntryPoint,
-			runtimeOptions: {
-				// To use the new experimental blob placeholders features, we need to set these flags.
-				explicitSchemaControl: true,
-				createBlobPlaceholders: true,
-			},
 			existing,
 		});
 

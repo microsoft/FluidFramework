@@ -29,7 +29,6 @@ describe("Runtime", () => {
 			compressionLz4: true,
 			idCompressorMode: "delayed",
 			// opGroupingEnabled: undefined,
-			createBlobPlaceholders: true,
 		},
 	};
 
@@ -38,7 +37,6 @@ describe("Runtime", () => {
 		compressionLz4: true,
 		opGroupingEnabled: false,
 		idCompressorMode: "delayed",
-		createBlobPlaceholders: true,
 		disallowedVersions: [],
 	};
 
@@ -303,7 +301,6 @@ describe("Runtime", () => {
 					compressionLz4: boolToProp(featuresModified.compressionLz4),
 					idCompressorMode: featuresModified.idCompressorMode,
 					opGroupingEnabled: boolToProp(featuresModified.opGroupingEnabled),
-					createBlobPlaceholders: boolToProp(featuresModified.createBlobPlaceholders),
 					disallowedVersions: arrayToProp(featuresModified.disallowedVersions),
 				},
 			};
@@ -460,12 +457,7 @@ describe("Runtime", () => {
 			true, // existing,
 			0, // snapshotSequenceNumber
 			undefined, // old schema,
-			{
-				...features,
-				idCompressorMode: undefined,
-				compressionLz4: false,
-				createBlobPlaceholders: false,
-			},
+			{ ...features, idCompressorMode: undefined, compressionLz4: false },
 			() => {
 				assert(false, "no changes!");
 			}, // onSchemaChange
@@ -481,12 +473,7 @@ describe("Runtime", () => {
 			true, // existing,
 			0, // snapshotSequenceNumber
 			newSchema, // old schema,
-			{
-				...features,
-				idCompressorMode: undefined,
-				compressionLz4: false,
-				createBlobPlaceholders: false,
-			},
+			{ ...features, idCompressorMode: undefined, compressionLz4: false },
 			() => {
 				assert(false, "no changes!");
 			}, // onSchemaChange
@@ -508,12 +495,7 @@ describe("Runtime", () => {
 			true, // existing,
 			0, // snapshotSequenceNumber
 			newSchema, // old schema,
-			{
-				...features,
-				idCompressorMode: "on",
-				compressionLz4: false,
-				createBlobPlaceholders: false,
-			},
+			{ ...features, idCompressorMode: "on", compressionLz4: false },
 			() => {
 				schemaChanged = true;
 			}, // onSchemaChange
@@ -552,7 +534,6 @@ describe("Runtime", () => {
 				idCompressorMode: undefined,
 				compressionLz4: false,
 				opGroupingEnabled: true,
-				createBlobPlaceholders: false,
 			},
 			() => (schemaChanged = true), // onSchemaChange
 		);
