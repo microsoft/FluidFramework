@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
-
-import { fail } from "./utils.js";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
 /**
  * Used for allocating IDs unique to a particular instance of the allocator.
@@ -44,6 +42,6 @@ export function idAllocatorFromState(state: IdAllocationState): IdAllocator {
 }
 
 export const fakeIdAllocator: IdAllocator = {
-	allocate: () => fail("Should not allocate IDs"),
+	allocate: () => fail(0xae6 /* Should not allocate IDs */),
 	getMaxId: () => 0,
 };

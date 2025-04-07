@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import {
 	AdaptedViewSchema,
 	type TreeNodeStoredSchema,
@@ -11,7 +12,6 @@ import {
 	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchema,
 } from "../../core/index.js";
-import { fail } from "../../util/index.js";
 import {
 	FieldKinds,
 	type FullSchemaPolicy,
@@ -28,7 +28,6 @@ import {
 	type ImplicitFieldSchema,
 } from "../schemaTypes.js";
 import { toStoredSchema } from "../toStoredSchema.js";
-import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { SchemaCompatibilityStatus } from "./tree.js";
 
 /**
@@ -250,7 +249,7 @@ export class ViewSchema {
 					this.viewSchemaAsStored.nodeSchema.get(adapter.output),
 				)
 			) {
-				fail("tree adapter for stored adapter.output should not be never");
+				fail(0xb3d /* tree adapter for stored adapter.output should not be never */);
 			}
 		}
 

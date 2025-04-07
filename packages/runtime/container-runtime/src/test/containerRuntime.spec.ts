@@ -1526,7 +1526,8 @@ describe("Runtime", () => {
 			it("Container load stats with feature gate overrides", async () => {
 				const featureGates = {
 					"Fluid.ContainerRuntime.IdCompressorEnabled": true,
-					"Fluid.ContainerRuntime.DisablePartialFlush": true,
+					"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs": 1337,
+					"Fluid.ContainerRuntime.DisableFlushBeforeProcess": true,
 				};
 				await ContainerRuntime.loadRuntime({
 					context: localGetMockContext(featureGates) as IContainerContext,
@@ -1543,7 +1544,8 @@ describe("Runtime", () => {
 						options: JSON.stringify(mergedRuntimeOptions),
 						idCompressorMode: "on",
 						featureGates: JSON.stringify({
-							disablePartialFlush: true,
+							closeSummarizerDelayOverride: 1337,
+							disableFlushBeforeProcess: true,
 						}),
 						groupedBatchingEnabled: true,
 					},
@@ -1737,7 +1739,7 @@ describe("Runtime", () => {
 						// Submit an op and yield for it to be flushed from outbox to pending state manager.
 						submitDataStoreOp(containerRuntime, "fakeId", "fakeContents");
 						await yieldEventLoop();
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+
 						return boundFn(...args);
 					};
 				};

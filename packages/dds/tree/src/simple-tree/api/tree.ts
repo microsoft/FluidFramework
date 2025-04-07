@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { IFluidLoadable, IDisposable, Listenable } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -19,6 +20,7 @@ import type {
 } from "../../shared-tree/index.js";
 
 import {
+	type FieldSchemaAlpha,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
@@ -27,18 +29,18 @@ import {
 	type TreeFieldFromImplicitField,
 	type UnsafeUnknownSchema,
 	FieldKind,
+	markSchemaMostDerived,
+	normalizeFieldSchema,
 } from "../schemaTypes.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import { toStoredSchema } from "../toStoredSchema.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
-import { assert } from "@fluidframework/core-utils/internal";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "../objectNodeTypes.js";
-import { markSchemaMostDerived } from "./schemaFactory.js";
-import { fail, getOrCreate } from "../../util/index.js";
+import { getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
 import type { VerboseTree } from "./verboseTree.js";
-import type { SimpleTreeSchema } from "./simpleSchema.js";
+import type { SimpleNodeSchema, SimpleTreeSchema } from "../simpleSchema.js";
 import type {
 	RunTransactionParams,
 	TransactionCallbackStatus,
@@ -264,7 +266,17 @@ export class TreeViewConfiguration<
 	public readonly preventAmbiguity: boolean;
 
 	/**
+	 * Construct a new {@link TreeViewConfiguration}.
+	 *
 	 * @param props - Property bag of configuration options.
+	 *
+	 * @remarks
+	 * Performing this construction deeply validates the provided schema.
+	 * This means that when this constructor is called, all {@link LazyItem} {@link TreeNodeSchema} references will be evaluated (using {@link evaluateLazySchema}).
+	 * This means that the declarations for all transitively reachable {@link TreeNodeSchema} must be available at this time.
+	 *
+	 * For example, a schema reachable from this configuration cannot reference this configuration during its declaration,
+	 * since this would be a cyclic dependency that will cause an error when constructing this configuration.
 	 */
 	public constructor(props: ITreeViewConfiguration<TSchema>) {
 		const config = { ...defaultTreeConfigurationOptions, ...props };
@@ -280,7 +292,7 @@ export class TreeViewConfiguration<
 			// This ensures if multiple schema extending the same schema factory generated class are present (or have been constructed, or get constructed in the future),
 			// an error is reported.
 
-			node: markSchemaMostDerived,
+			node: (schema) => markSchemaMostDerived(schema, true),
 			allowedTypes(types): void {
 				if (config.preventAmbiguity) {
 					checkUnion(types, ambiguityErrors);
@@ -297,6 +309,53 @@ export class TreeViewConfiguration<
 		// Eagerly perform this conversion to surface errors sooner.
 		toStoredSchema(config.schema);
 	}
+}
+
+/**
+ * {@link TreeViewConfiguration} extended with some alpha APIs.
+ * @sealed @alpha
+ */
+export class TreeViewConfigurationAlpha<
+		const TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
+	>
+	extends TreeViewConfiguration<TSchema>
+	implements TreeSchema
+{
+	/**
+	 * {@inheritDoc TreeSchema.root}
+	 */
+	public readonly root: FieldSchemaAlpha;
+	/**
+	 * {@inheritDoc TreeSchema.definitions}
+	 */
+	public readonly definitions: ReadonlyMap<string, SimpleNodeSchema & TreeNodeSchema>;
+
+	public constructor(props: ITreeViewConfiguration<TSchema>) {
+		super(props);
+		this.root = normalizeFieldSchema(props.schema);
+		const definitions = new Map<string, SimpleNodeSchema & TreeNodeSchema>();
+		walkFieldSchema(props.schema, {
+			node: (schema) =>
+				definitions.set(schema.identifier, schema as SimpleNodeSchema & TreeNodeSchema),
+		});
+		this.definitions = definitions;
+	}
+}
+
+/**
+ * {@link TreeViewConfigurationAlpha}
+ * @sealed @alpha
+ */
+export interface TreeSchema extends SimpleTreeSchema {
+	/**
+	 * {@inheritDoc SimpleTreeSchema.root}
+	 */
+	readonly root: FieldSchemaAlpha;
+
+	/**
+	 * {@inheritDoc SimpleTreeSchema.definitions}
+	 */
+	readonly definitions: ReadonlyMap<string, SimpleNodeSchema & TreeNodeSchema>;
 }
 
 /**
@@ -376,7 +435,7 @@ export function checkUnion(union: Iterable<TreeNodeSchema>, errors: string[]): v
 		// For each field of schema, remove schema from possiblyAmbiguous that do not have that field
 		for (const [key, field] of schema.fields) {
 			if (field.kind === FieldKind.Required) {
-				const withKey = allObjectKeys.get(key) ?? fail("missing schema");
+				const withKey = allObjectKeys.get(key) ?? fail(0xb35 /* missing schema */);
 				for (const candidate of possiblyAmbiguous) {
 					if (!withKey.has(candidate)) {
 						possiblyAmbiguous.delete(candidate);
@@ -725,12 +784,7 @@ export interface SchemaCompatibilityStatus {
  * Events for {@link TreeBranch}.
  * @sealed @alpha
  */
-export interface TreeBranchEvents {
-	/**
-	 * The stored schema for the document has changed.
-	 */
-	schemaChanged(): void;
-
+export interface TreeBranchEvents extends Omit<TreeViewEvents, "commitApplied"> {
 	/**
 	 * Fired when a change is made to the branch. Includes data about the change that is made which listeners
 	 * can use to filter on changes they care about (e.g. local vs. remote changes).

@@ -239,21 +239,21 @@ export async function loadChangesets(dir: string, log?: Logger): Promise<Changes
 		// eslint-disable-next-line no-await-in-loop
 		const rawFileContent = await readFile(file, { encoding: "utf8" });
 
-		// Parse out the first layer of metadata, which is the package --> change type mapping.
-		const firstParse = matter(rawFileContent);
-		const packageBumpTypeMetadata = firstParse.data;
+		// Parse the front matter
+		const { data: metadata, content: markdownContent } = matter(rawFileContent);
 
-		// If there is a second frontmatter section, parse it as the additional metadata.
-		const hasAdditionalMetadata = hasFrontMatter(firstParse.content);
+		// Split the metadata into package version bumps and Fluid-specific metadata
+		const packageBumpTypeMetadata: { [pkg: string]: VersionBumpType } = {};
+		const additionalMetadata: FluidCustomChangesetMetadata = {};
 
-		let markdownContent: string;
-		let additionalMetadata: FluidCustomChangesetMetadata | undefined;
-		if (hasAdditionalMetadata) {
-			const secondParse = matter(firstParse.content);
-			additionalMetadata = secondParse.data;
-			markdownContent = secondParse.content.trim();
-		} else {
-			markdownContent = firstParse.content.trim();
+		for (const [key, value] of Object.entries(metadata)) {
+			if (key.startsWith("__")) {
+				// Remove __ prefix and add to additional metadata
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+				additionalMetadata[key.slice(2) as keyof FluidCustomChangesetMetadata] = value;
+			} else {
+				packageBumpTypeMetadata[key] = value as VersionBumpType;
+			}
 		}
 
 		const paragraphs = markdownContent.trim().split("\n\n");
@@ -269,12 +269,12 @@ export async function loadChangesets(dir: string, log?: Logger): Promise<Changes
 		const newChangeset: Changeset = {
 			metadata: packageBumpTypeMetadata,
 			mainPackage: Object.keys(packageBumpTypeMetadata)[0],
-			additionalMetadata,
+			additionalMetadata:
+				Object.keys(additionalMetadata).length > 0 ? additionalMetadata : undefined,
 			body,
 			summary,
 			sourceFile: file,
 			commit,
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			changeTypes: [...new Set(Object.values(packageBumpTypeMetadata))],
 		};
 

@@ -1,11 +1,20 @@
 {
-	"extends": "../../../common/build/build-common/tsconfig.node16.json",
-	"include": ["src/**/*"],
-	"exclude": ["src/test/**/*"],
+	// This is not the common tsconfig file for this package.
+	// It is a special version to handle improper handling of exactOptionalPropertyTypes
+	// in upstream packages (mainly merge-tree and container-runtime).
+	// These dependencies can go away once experimentalAccess.ts is removed from the package.
+	// Ideally, tsconfig.main.json would be the tsconfig.json, but there are plenty of
+	// tools including api-extractor that would need reconfigured to use that pattern.
+	"extends": "./tsconfig.main.json",
+	"include": ["src/experimentalAccess.ts", "src/index.ts"],
+	"exclude": [],
 	"compilerOptions": {
-		"rootDir": "./src",
-		"outDir": "./lib",
-		"noImplicitAny": true,
-		"noImplicitOverride": true,
+		// Could alternatively build with exactOptionalPropertyTypes: false.
+		"skipLibCheck": true,
 	},
+	"references": [
+		{
+			"path": "./tsconfig.main.json",
+		},
+	],
 }

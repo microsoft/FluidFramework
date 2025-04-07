@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type Context,
 	type FlexTreeField,
-	type NodeKeyManager,
+	type NodeIdentifierManager,
 	getTreeContext,
 	type FlexTreeHydratedContext,
 	type FullSchemaPolicy,
@@ -43,7 +43,7 @@ export class CheckoutFlexTreeView<out TCheckout extends ITreeCheckout = ITreeChe
 		 */
 		public readonly checkout: TCheckout,
 		public readonly schema: FullSchemaPolicy,
-		public readonly nodeKeyManager: NodeKeyManager,
+		public readonly nodeKeyManager: NodeIdentifierManager,
 		private readonly onDispose?: () => void,
 	) {
 		this.context = getTreeContext(schema, this.checkout, nodeKeyManager);

@@ -207,7 +207,7 @@ async function publishTarball(
 		}
 	} catch (error) {
 		// Assume package or version is not published, so just continue and try to publish
-		log.verbose(`Caught error: ${error}`);
+		log.verbose(`Version appears unpublished; expected error: ${error}`);
 	}
 
 	const args = ["publish", tarball.fileName, "--access", "public"];
@@ -216,15 +216,32 @@ async function publishTarball(
 	}
 	const tarballDirectory = path.dirname(tarball.filePath);
 	log.verbose(`Executing publish command in ${tarballDirectory}: pnpm ${args.join(" ")}`);
-	const publishOutput = await execa("npm", args, {
-		cwd: tarballDirectory,
-	});
+	try {
+		const publishOutput = await execa("npm", args, {
+			cwd: tarballDirectory,
+		});
 
-	if (publishOutput.exitCode !== 0) {
-		log.warning(`Failed to publish ${tarball.name}`);
-		log.verbose(publishOutput.stderr);
-		return "Error";
+		if (publishOutput.exitCode !== 0) {
+			return handlePublishError(log, tarball.name, publishOutput.stderr);
+		}
+	} catch (error) {
+		const err = error as Error;
+		return handlePublishError(log, tarball.name, err.message, err.stack);
 	}
 
 	return "SuccessfullyPublished";
+}
+
+function handlePublishError(
+	log: Logger,
+	name: string,
+	message: string,
+	stack?: string,
+): "Error" {
+	log.warning(`Failed to publish '${name}'`);
+	log.verbose(message);
+	if (stack !== undefined) {
+		log.verbose(stack);
+	}
+	return "Error";
 }

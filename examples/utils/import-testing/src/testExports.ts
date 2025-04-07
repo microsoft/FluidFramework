@@ -49,7 +49,10 @@ import {
 	// // eslint-disable-next-line unused-imports/no-unused-imports
 	// InternalTypes,
 } from "@fluidframework/tree";
-import type { FixRecursiveArraySchema } from "@fluidframework/tree/alpha";
+import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
+import type { FixRecursiveArraySchema, ObjectNodeSchema } from "@fluidframework/tree/alpha";
+// eslint-disable-next-line import/no-internal-modules
+import type { requireAssignableTo } from "@fluidframework/tree/internal";
 
 // Due to limitation of the TypeScript compiler, errors like the following can be produced when exporting types from another package:
 // error TS2742: The inferred type of 'Inventory' cannot be named without a reference to '../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.
@@ -57,6 +60,7 @@ import type { FixRecursiveArraySchema } from "@fluidframework/tree/alpha";
 // Thus tests for this case are included here, in a package which uses tree.
 
 export const schema = new SchemaFactory("com.example");
+export const schemaAlpha = new SchemaFactoryAlpha("com.example");
 
 export const leafAlias = schema.number;
 
@@ -77,11 +81,15 @@ export class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList]
 export const POJO = schema.object("POJO", { stuff: [NodeMap, NodeList] });
 export type POJO = NodeFromSchema<typeof POJO>;
 
+export const POJOAlpha = schemaAlpha.object("POJO", { stuff: [NodeMap, NodeList] });
+{
+	type _check = requireAssignableTo<typeof POJOAlpha, ObjectNodeSchema>;
+}
+
 export const config = new TreeViewConfiguration({ schema: Canvas });
 
 // Recursive cases
 // This lint rule doesn't work well with our schema when using the lazy format
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 export class RecursiveObject extends schema.objectRecursive("RO", {
 	x: [() => RecursiveObject, schema.number],
 }) {}
@@ -100,10 +108,41 @@ export class RecursiveMap extends schema.mapRecursive("RM", [() => RecursiveMap]
  * Workaround to avoid
  * `error TS2310: Type 'RecursiveArray' recursively references itself as a base type.` in the d.ts file.
  */
-export declare const _RecursiveArrayWorkaround: FixRecursiveArraySchema<typeof RecursiveArray>;
+export declare type _RecursiveArrayWorkaround = FixRecursiveArraySchema<typeof RecursiveArray>;
 export class RecursiveArray extends schema.arrayRecursive("RA", [() => RecursiveArray]) {}
 {
 	type _check = ValidateRecursiveSchema<typeof RecursiveArray>;
 }
 
-/* eslint-enable @typescript-eslint/explicit-function-return-type */
+/**
+ * This is an anti-pattern: not creating a named class for schema that are part of the recursive path causes generated .d.ts files to get type `any`.
+ * This happens (without errors!) even if NoImplicitAny is enabled.
+ * See the [TypeScript Issue](https://github.com/microsoft/TypeScript/issues/55832) for more details.
+ */
+export const BadArraySelf = schema.arrayRecursive("BadArraySelf", [() => BadArraySelf]);
+{
+	type _check = ValidateRecursiveSchema<typeof BadArraySelf>;
+}
+
+export class GoodArraySelf extends schema.arrayRecursive("GoodArraySelf", [
+	() => GoodArraySelf,
+]) {}
+{
+	type _check = ValidateRecursiveSchema<typeof GoodArraySelf>;
+}
+
+/**
+ * {@link BadArraySelf} except co-recursive.
+ */
+export const BadArray = schema.arrayRecursive("FooList", [() => Foo]);
+{
+	type _check = ValidateRecursiveSchema<typeof BadArray>;
+}
+
+export class Foo extends schema.objectRecursive("Foo", {
+	// This can be a direct or lazy reference
+	fooList: [() => BadArray],
+}) {}
+{
+	type _check = ValidateRecursiveSchema<typeof Foo>;
+}

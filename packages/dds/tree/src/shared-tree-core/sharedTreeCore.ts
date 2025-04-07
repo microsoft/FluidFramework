@@ -6,7 +6,6 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type {
 	IExperimentalIncrementalSummaryContext,
 	IRuntimeMessageCollection,
@@ -14,7 +13,10 @@ import type {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import type {
+	IChannelView,
+	IFluidSerializer,
+} from "@fluidframework/shared-object-base/internal";
 
 import type { ICodecOptions, IJsonCodec } from "../codec/index.js";
 import {
@@ -51,7 +53,6 @@ import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 import { BranchCommitEnricher } from "./branchCommitEnricher.js";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import type { IFluidLoadable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import type { IChannelView } from "../shared-tree/index.js";
 
 // TODO: Organize this to be adjacent to persisted types.
 const summarizablesTreeKey = "indexes";
@@ -330,28 +331,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	}
 
 	/**
-	 * Process a message from the runtime.
-	 * @deprecated - Use processMessagesCore to process a bunch of messages together.
-	 */
-	public processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
-		this.processMessagesCore({
-			envelope: message,
-			local,
-			messagesContent: [
-				{
-					clientSequenceNumber: message.clientSequenceNumber,
-					contents: message.contents,
-					localOpMetadata,
-				},
-			],
-		});
-	}
-
-	/**
 	 * Process a bunch of messages from the runtime. SharedObject will call this method with a bunch of messages.
 	 */
 	public processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
@@ -370,13 +349,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			if (messagesSessionId !== undefined) {
 				assert(
 					messagesSessionId === sessionId,
-					"All messages in a bunch must have the same session ID",
+					0xad9 /* All messages in a bunch must have the same session ID */,
 				);
 			}
 			messagesSessionId = sessionId;
 		}
 
-		assert(messagesSessionId !== undefined, "Messages must have a session ID");
+		assert(messagesSessionId !== undefined, 0xada /* Messages must have a session ID */);
 
 		this.editManager.addSequencedChanges(
 			commits,

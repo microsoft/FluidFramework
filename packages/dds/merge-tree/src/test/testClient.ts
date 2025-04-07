@@ -40,6 +40,7 @@ import {
 import {
 	createAnnotateRangeOp,
 	createInsertSegmentOp,
+	createObliterateRangeOp,
 	createRemoveRangeOp,
 } from "../opBuilder.js";
 import {
@@ -50,17 +51,13 @@ import {
 	ReferenceType,
 	type IMergeTreeInsertMsg,
 } from "../ops.js";
+import { LocalReconnectingPerspective, PriorPerspective } from "../perspective.js";
 import { PropertySet } from "../properties.js";
 import { DetachedReferencePosition, refHasTileLabel } from "../referencePositions.js";
 import { MergeTreeRevertibleDriver } from "../revertibles.js";
-import {
-	assertInserted,
-	assertMergeNode,
-	isInserted,
-	isMoved,
-	isRemoved,
-} from "../segmentInfos.js";
+import { assertInserted, assertMergeNode, isRemoved } from "../segmentInfos.js";
 import { SnapshotLegacy } from "../snapshotlegacy.js";
+import type { OperationStamp } from "../stamps.js";
 import { TextSegment } from "../textSegment.js";
 
 import { TestSerializer } from "./testSerializer.js";
@@ -81,6 +78,10 @@ export function specToSegment(spec: IJSONSegment): ISegmentPrivate {
 }
 
 const random = makeRandom(0xdeadbeef, 0xfeedbed);
+
+function opStampToString(stamp: OperationStamp): string {
+	return stamp.seq === UnassignedSequenceNumber ? `L${stamp.localSeq}` : `${stamp.seq}`;
+}
 
 export class TestClient extends Client {
 	public static searchChunkSize = 256;
@@ -196,7 +197,7 @@ export class TestClient extends Client {
 	}
 
 	public getText(start?: number, end?: number): string {
-		return this.textHelper.getText(this.getCurrentSeq(), this.getClientId(), "", start, end);
+		return this.textHelper.getText(this.mergeTree.localPerspective, "", start, end);
 	}
 
 	public enqueueTestString(): void {
@@ -261,6 +262,18 @@ export class TestClient extends Client {
 		);
 	}
 
+	public obliterateRangeRemote(
+		start: number,
+		end: number,
+		seq: number,
+		refSeq: number,
+		longClientId: string,
+	): void {
+		this.applyMsg(
+			this.makeOpMessage(createObliterateRangeOp(start, end), seq, refSeq, longClientId),
+		);
+	}
+
 	public annotateRangeRemote(
 		start: number,
 		end: number,
@@ -302,7 +315,7 @@ export class TestClient extends Client {
 	public relText(clientId: number, refSeq: number): string {
 		return `cli: ${this.getLongClientId(
 			clientId,
-		)} refSeq: ${refSeq}: ${this.textHelper.getText(refSeq, clientId)}`;
+		)} refSeq: ${refSeq}: ${this.textHelper.getText(new PriorPerspective(refSeq, clientId))}`;
 	}
 
 	public makeOpMessage(
@@ -364,15 +377,9 @@ export class TestClient extends Client {
 		walkAllChildSegments(tree.root, (segment: ISegmentPrivate) => {
 			const prefixes: (string | undefined | number)[] = [];
 			assertInserted(segment);
-			prefixes.push(
-				segment.seq === UnassignedSequenceNumber ? `L${segment.localSeq}` : segment.seq,
-			);
+			prefixes.push(opStampToString(segment.insert));
 			if (isRemoved(segment)) {
-				prefixes.push(
-					segment.removedSeq === UnassignedSequenceNumber
-						? `L${segment.localRemovedSeq}`
-						: segment.removedSeq,
-				);
+				prefixes.push(opStampToString(segment.removes[0]));
 			}
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			test.push(`${prefixes.join(",")}:${(segment as any).text}`);
@@ -389,21 +396,18 @@ export class TestClient extends Client {
 		let segment: ISegmentPrivate | undefined;
 		let posAccumulated = 0;
 		let offset = pos;
-		const isInsertedInView = (seg: ISegmentPrivate): boolean =>
-			isInserted(seg) &&
-			((seg.seq !== UnassignedSequenceNumber && seg.seq <= seqNumberFrom) ||
-				(seg.localSeq !== undefined && seg.localSeq <= localSeq));
 
-		const isRemovedFromView = (s: ISegmentPrivate): boolean =>
-			isRemoved(s) &&
-			((s.removedSeq !== UnassignedSequenceNumber && s.removedSeq <= seqNumberFrom) ||
-				(s.localRemovedSeq !== undefined && s.localRemovedSeq <= localSeq));
+		const perspective = new LocalReconnectingPerspective(
+			seqNumberFrom,
+			this.getCollabWindow().clientId,
+			localSeq,
+		);
 
 		walkAllChildSegments(this.mergeTree.root, (seg) => {
 			assertInserted(seg);
 			segment = seg;
 
-			if (isInsertedInView(seg) && !isRemovedFromView(seg)) {
+			if (perspective.isSegmentPresent(seg)) {
 				posAccumulated += seg.cachedLength;
 				if (offset >= seg.cachedLength) {
 					offset -= seg.cachedLength;
@@ -426,17 +430,13 @@ export class TestClient extends Client {
 	public findReconnectionPosition(segment: ISegmentPrivate, localSeq: number): number {
 		const fasterComputedPosition = super.findReconnectionPosition(segment, localSeq);
 
+		const perspective = new LocalReconnectingPerspective(
+			Number.MAX_SAFE_INTEGER,
+			this.getCollabWindow().clientId,
+			localSeq,
+		);
 		let segmentPosition = 0;
-		const isInsertedInView = (seg: ISegmentPrivate): boolean =>
-			isInserted(seg) && (seg.localSeq === undefined || seg.localSeq <= localSeq);
-		const isRemovedFromView = (s: ISegmentPrivate): boolean =>
-			isRemoved(s) &&
-			(s.removedSeq !== UnassignedSequenceNumber ||
-				(s.localRemovedSeq !== undefined && s.localRemovedSeq <= localSeq));
-		const isMovedFromView = (s: ISegmentPrivate): boolean =>
-			isMoved(s) &&
-			(s.movedSeq !== UnassignedSequenceNumber ||
-				(s.localMovedSeq !== undefined && s.localMovedSeq <= localSeq));
+
 		/*
             Walk the segments up to the current segment, and calculate its
             position taking into account local segments that were modified,
@@ -448,12 +448,8 @@ export class TestClient extends Client {
 				return false;
 			}
 
-			// Otherwise, advance segmentPosition if the segment has been inserted and not removed
-			// with respect to the given 'localSeq'.
-			//
-			// Note that all ACKed / remote ops are applied and we only need concern ourself with
-			// determining if locally pending ops fall before/after the given 'localSeq'.
-			if (isInsertedInView(seg) && !isRemovedFromView(seg) && !isMovedFromView(seg)) {
+			// Otherwise, advance segmentPosition if the segment is visible at the given perspective.
+			if (perspective.isSegmentPresent(seg)) {
 				segmentPosition += seg.cachedLength;
 			}
 

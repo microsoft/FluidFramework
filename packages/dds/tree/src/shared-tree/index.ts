@@ -21,7 +21,7 @@ export {
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
-	type IChannelView,
+	exportSimpleSchema,
 } from "./sharedTree.js";
 
 export {

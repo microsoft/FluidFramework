@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert, oob, fail } from "@fluidframework/core-utils/internal";
 import type { TAnySchema } from "@sinclair/typebox";
 
 import {
@@ -30,7 +30,6 @@ import {
 	type JsonCompatibleReadOnly,
 	type Mutable,
 	brand,
-	fail,
 	idAllocatorFromMaxId,
 	newTupleBTree,
 } from "../../util/index.js";
@@ -177,7 +176,7 @@ function makeModularChangeCodec(
 				return encodeNodeChangesForJson(node, fieldContext);
 			},
 
-			decodeNode: () => fail("Should not decode nodes during field encoding"),
+			decodeNode: () => fail(0xb1e /* Should not decode nodes during field encoding */),
 		};
 
 		return encodeFieldChangesForJsonI(change, fieldContext);
@@ -193,7 +192,7 @@ function makeModularChangeCodec(
 			const { codec, compiledSchema } = getFieldChangesetCodec(fieldChange.fieldKind);
 			const encodedChange = codec.json.encode(fieldChange.change, context);
 			if (compiledSchema !== undefined && !compiledSchema.check(encodedChange)) {
-				fail("Encoded change didn't pass schema validation.");
+				fail(0xb1f /* Encoded change didn't pass schema validation. */);
 			}
 
 			const fieldKey: FieldKey = field;
@@ -238,7 +237,7 @@ function makeModularChangeCodec(
 		for (const field of encodedChange) {
 			const { codec, compiledSchema } = getFieldChangesetCodec(field.fieldKind);
 			if (compiledSchema !== undefined && !compiledSchema.check(field.change)) {
-				fail("Encoded change didn't pass schema validation.");
+				fail(0xb20 /* Encoded change didn't pass schema validation. */);
 			}
 
 			const fieldId: FieldId = {
@@ -249,7 +248,7 @@ function makeModularChangeCodec(
 			const fieldContext: FieldChangeEncodingContext = {
 				baseContext: context,
 
-				encodeNode: () => fail("Should not encode nodes during field decoding"),
+				encodeNode: () => fail(0xb21 /* Should not encode nodes during field decoding */),
 
 				decodeNode: (encodedNode: EncodedNodeChangeset): NodeId => {
 					const nodeId: NodeId = {

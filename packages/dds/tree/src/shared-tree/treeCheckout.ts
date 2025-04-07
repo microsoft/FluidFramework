@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import type { Listenable } from "@fluidframework/core-interfaces/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -47,7 +47,7 @@ import {
 	type FieldBatchCodec,
 	type TreeCompressionStrategy,
 	buildForest,
-	createNodeKeyManager,
+	createNodeIdentifierManager,
 	intoDelta,
 	jsonableTreeFromCursor,
 	makeFieldBatchCodec,
@@ -60,13 +60,7 @@ import {
 	type SharedTreeBranchChange,
 	type Transactor,
 } from "../shared-tree-core/index.js";
-import {
-	Breakable,
-	disposeSymbol,
-	fail,
-	getOrCreate,
-	type WithBreakable,
-} from "../util/index.js";
+import { Breakable, disposeSymbol, getOrCreate, type WithBreakable } from "../util/index.js";
 
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
@@ -524,7 +518,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					// original (reinstated) schema.
 					this.storedSchema.apply(change.innerChange.schema.new);
 				} else {
-					fail("Unknown Shared Tree change type.");
+					fail(0xad1 /* Unknown Shared Tree change type. */);
 				}
 			}
 		}
@@ -662,7 +656,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		const view = new SchematizingSimpleTreeView(
 			this,
 			config,
-			createNodeKeyManager(this.idCompressor),
+			createNodeIdentifierManager(this.idCompressor),
 			() => {
 				this.views.delete(view);
 			},

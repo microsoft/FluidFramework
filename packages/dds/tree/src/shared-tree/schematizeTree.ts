@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	AllowedUpdateType,
@@ -20,7 +20,7 @@ import {
 	defaultSchemaPolicy,
 	mapTreeFromCursor,
 } from "../feature-libraries/index.js";
-import { fail, isReadonlyArray } from "../util/index.js";
+import { isReadonlyArray } from "../util/index.js";
 
 import type { ITreeCheckout } from "./treeCheckout.js";
 import { toStoredSchema, type ViewSchema } from "../simple-tree/index.js";
@@ -180,6 +180,7 @@ export function initialize(checkout: ITreeCheckout, treeContent: TreeStoredConte
 		initializeContent(checkout, treeContent.schema, () => {
 			const field = { field: rootFieldKey, parent: undefined };
 			const content = normalizeNewFieldContent(treeContent.initialTree);
+			const contentChunk = checkout.forest.chunkField(content);
 
 			switch (checkout.storedSchema.rootFieldSchema.kind) {
 				case FieldKinds.optional.identifier: {
@@ -188,17 +189,17 @@ export function initialize(checkout: ITreeCheckout, treeContent: TreeStoredConte
 						content.getFieldLength() <= 1,
 						0x7f4 /* optional field content should normalize at most one item */,
 					);
-					fieldEditor.set(content.getFieldLength() === 0 ? undefined : content, true);
+					fieldEditor.set(contentChunk.topLevelLength === 0 ? undefined : contentChunk, true);
 					break;
 				}
 				case FieldKinds.sequence.identifier: {
 					const fieldEditor = checkout.editor.sequenceField(field);
 					// TODO: should do an idempotent edit here.
-					fieldEditor.insert(0, content);
+					fieldEditor.insert(0, contentChunk);
 					break;
 				}
 				default: {
-					fail("unexpected root field kind during initialize");
+					fail(0xac7 /* unexpected root field kind during initialize */);
 				}
 			}
 		});

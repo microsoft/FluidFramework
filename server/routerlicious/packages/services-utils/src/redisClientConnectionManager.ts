@@ -63,6 +63,7 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 			retryDelayOnMoved: 100,
 			maxRedirections: 16,
 		},
+		private readonly enableVerboseErrorLogging = false,
 	) {
 		this.enableClustering = enableClustering;
 		this.slotsRefreshTimeout = slotsRefreshTimeout;
@@ -188,35 +189,38 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 				return;
 			}
 
-			const commandName: string | undefined =
-				error.command?.name ?? error.lastNodeError?.command?.name;
-			const args: string[] = error.command?.args ?? error.lastNodeError?.command?.args ?? [];
+			if (this.enableVerboseErrorLogging) {
+				const commandName: string | undefined =
+					error.command?.name ?? error.lastNodeError?.command?.name;
+				const args: string[] =
+					error.command?.args ?? error.lastNodeError?.command?.args ?? [];
 
-			if (error.previousErrors) {
-				// Internally redact the previous errors of an exec command
-				lumberProperties.previousErrors = [];
-				error.previousErrors?.forEach((prevError) => {
-					if (prevError.command) {
-						const prevCommandName: string | undefined = prevError.command.name;
-						const prevArgs: string[] = prevError.command.args;
-						const prevArgsRedacted: string[] = prevArgs.map((arg, ind) =>
-							this.redactArg(arg, ind, prevCommandName ?? ""),
-						);
-						const prevErrorCopy = { ...prevError };
-						prevErrorCopy.command.args = prevArgsRedacted;
-						lumberProperties.previousErrors.push(prevErrorCopy);
-					}
-				});
+				if (error.previousErrors) {
+					// Internally redact the previous errors of an exec command
+					lumberProperties.previousErrors = [];
+					error.previousErrors?.forEach((prevError) => {
+						if (prevError.command) {
+							const prevCommandName: string | undefined = prevError.command.name;
+							const prevArgs: string[] = prevError.command.args;
+							const prevArgsRedacted: string[] = prevArgs.map((arg, ind) =>
+								this.redactArg(arg, ind, prevCommandName ?? ""),
+							);
+							const prevErrorCopy = { ...prevError };
+							prevErrorCopy.command.args = prevArgsRedacted;
+							lumberProperties.previousErrors.push(prevErrorCopy);
+						}
+					});
+				}
+				const argSizes: string[] = args.map((arg, ind) =>
+					this.redactArg(arg, ind, commandName ?? ""),
+				);
+
+				// Set additional logging info in lumberProperties
+				lumberProperties.commandName = commandName;
+				lumberProperties.commandArgSizes = argSizes;
+
+				Lumberjack.error(errorMessage, lumberProperties, error);
 			}
-			const argSizes: string[] = args.map((arg, ind) =>
-				this.redactArg(arg, ind, commandName ?? ""),
-			);
-
-			// Set additional logging info in lumberProperties
-			lumberProperties.commandName = commandName;
-			lumberProperties.commandArgSizes = argSizes;
-
-			Lumberjack.error(errorMessage, lumberProperties, error);
 		});
 	}
 }

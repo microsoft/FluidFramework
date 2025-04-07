@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert, oob, fail } from "@fluidframework/core-utils/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -15,17 +15,17 @@ import {
 	type ExclusiveMapTree,
 	type FieldKey,
 	type FieldKindIdentifier,
-	type FieldUpPath,
 	forbiddenFieldKindIdentifier,
 	type ITreeCursorSynchronous,
 	type MapTree,
+	type NormalizedFieldUpPath,
 	type SchemaPolicy,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	type Value,
 } from "../../core/index.js";
-import { brand, fail, getOrCreate, mapIterable } from "../../util/index.js";
+import { brand, getOrCreate, mapIterable } from "../../util/index.js";
 import {
 	type FlexTreeContext,
 	FlexTreeEntityKind,
@@ -79,7 +79,9 @@ export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
 	}
 
 	public get storedSchema(): TreeNodeStoredSchema {
-		return this.context.schema.nodeSchema.get(this.mapTree.type) ?? fail("missing schema");
+		return (
+			this.context.schema.nodeSchema.get(this.mapTree.type) ?? fail(0xb46 /* missing schema */)
+		);
 	}
 
 	public readonly [flexTreeMarker] = FlexTreeEntityKind.Node as const;
@@ -215,7 +217,7 @@ export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
 	public get anchorNode(): AnchorNode {
 		// This API is relevant to `LazyTreeNode`s, but not `UnhydratedFlexTreeNode`s.
 		// TODO: Refactor the FlexTreeNode interface so that stubbing this out isn't necessary.
-		return fail("UnhydratedFlexTreeNode does not implement anchorNode");
+		return fail(0xb47 /* UnhydratedFlexTreeNode does not implement anchorNode */);
 	}
 
 	private walkTree(): void {
@@ -294,10 +296,10 @@ const unparentedLocation: LocationInField = {
 		},
 		schema: brand(forbiddenFieldKindIdentifier),
 		get context(): never {
-			return fail("unsupported");
+			return fail(0xb48 /* unsupported */);
 		},
 		getFieldPath() {
-			fail("unsupported");
+			fail(0xb49 /* unsupported */);
 		},
 	},
 	index: -1,
@@ -392,7 +394,7 @@ class UnhydratedFlexTreeField implements FlexTreeField {
 		this.onEdit?.();
 	}
 
-	public getFieldPath(): FieldUpPath {
+	public getFieldPath(): NormalizedFieldUpPath {
 		throw unsupportedUsageError("Editing an array");
 	}
 
@@ -489,7 +491,7 @@ export class UnhydratedTreeSequenceField
 			this.edit((mapTrees) => {
 				removed = mapTrees.splice(index, count);
 			});
-			return removed ?? fail("Expected removed to be set by edit");
+			return removed ?? fail(0xb4a /* Expected removed to be set by edit */);
 		},
 	};
 

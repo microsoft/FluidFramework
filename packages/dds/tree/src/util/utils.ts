@@ -48,19 +48,6 @@ export function asMutable<T>(readonly: T): Mutable<T> {
 export const clone = structuredClone;
 
 /**
- * Throw an error with a constant message.
- * @remarks
- * Works like {@link @fluidframework/core-utils/internal#assert}.
- */
-export function fail(message: string | number): never {
-	// Declaring this here aliased to a different name avoids the assert tagging objecting to the usages of `assert` below.
-	// Since users of `fail` do the assert message tagging instead, suppressing tagging errors here makes sense.
-	const assertNoTag: (condition: boolean, message: string | number) => asserts condition =
-		assert;
-	assertNoTag(false, message);
-}
-
-/**
  * Checks whether or not the given object is a `readonly` array.
  *
  * Note that this does NOT indicate if a given array should be treated as readonly.
@@ -175,6 +162,24 @@ export function compareSets<T>({
 		}
 	}
 	return true;
+}
+
+/**
+ * Sets the value at `key` in map to value if not already present.
+ * Returns the value at `key` after setting it.
+ * This is equivalent to a get or default that adds the default to the map.
+ */
+export function getOrAddInMap<Key, Value>(
+	map: MapGetSet<Key, Value>,
+	key: Key,
+	value: Value,
+): Value {
+	const currentValue = map.get(key);
+	if (currentValue !== undefined) {
+		return currentValue;
+	}
+	map.set(key, value);
+	return value;
 }
 
 /**

@@ -232,24 +232,6 @@ declare type current_as_old_for_Interface_FieldProps = requireAssignableTo<TypeO
 declare type current_as_old_for_Interface_FieldSchemaMetadata = requireAssignableTo<TypeOnly<current.FieldSchemaMetadata>, TypeOnly<old.FieldSchemaMetadata>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_FieldSchemaUnsafe": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_FieldSchemaUnsafe = requireAssignableTo<TypeOnly<old.FieldSchemaUnsafe<never,never>>, TypeOnly<current.FieldSchemaUnsafe<never,never>>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_FieldSchemaUnsafe": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_FieldSchemaUnsafe = requireAssignableTo<TypeOnly<current.FieldSchemaUnsafe<never,never>>, TypeOnly<old.FieldSchemaUnsafe<never,never>>>
-
-/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
