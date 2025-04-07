@@ -3,14 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { RuntimeHeaders } from "@fluidframework/container-runtime/internal";
 import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
 import {
 	IFluidHandleContext,
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { FluidHandleBase, responseToException } from "@fluidframework/runtime-utils/internal";
+
+import { responseToException } from "./dataStoreHelpers.js";
+import { FluidHandleBase } from "./handles.js";
+import { RuntimeHeaders } from "./utils.js";
 
 /**
  * This handle is used to dynamically load a Fluid object on a remote client and is created on parsing a serialized
@@ -18,6 +20,8 @@ import { FluidHandleBase, responseToException } from "@fluidframework/runtime-ut
  * This class is used to generate an IFluidHandle when de-serializing any all handles (including handles to DDSes,
  * custom objects) that are stored in SharedObjects. The Data Store or SharedObject corresponding to the
  * IFluidHandle can be retrieved by calling `get` on it.
+ *
+ * @internal
  */
 export class RemoteFluidObjectHandle extends FluidHandleBase<FluidObject> {
 	public readonly isAttached = true;

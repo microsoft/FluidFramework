@@ -24,7 +24,7 @@ import {
 	type SharedTreeBranchChange,
 	onForkTransitive,
 } from "../../shared-tree-core/index.js";
-import { brand, fail } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 import { chunkFromJsonableTrees, failCodecFamily, mintRevisionTag } from "../utils.js";
 
 const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily);
@@ -107,7 +107,7 @@ describe("Branches", () => {
 		// Rebase the child onto the parent up to the first new commit
 		const parentCommit1 =
 			findAncestor(parent.getHead(), (c) => c.revision === tag1) ??
-			fail("Expected to find commit");
+			assert.fail("Expected to find commit");
 
 		child.rebaseOnto(parent, parentCommit1);
 		// Ensure that the changes are now present on the child

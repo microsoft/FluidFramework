@@ -26,6 +26,7 @@ export {
 	ChannelFactoryRegistry,
 	TestFluidObject,
 	TestFluidObjectFactory,
+	TestDataObjectKind,
 } from "./testFluidObject.js";
 export {
 	createDocumentId,
@@ -65,3 +66,5 @@ export {
 	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
+
+export { TestFluidObjectInternal } from "./testFluidObjectInternal.js";

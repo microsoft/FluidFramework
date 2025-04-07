@@ -5,7 +5,10 @@
 
 import type { IFluidHandleErased } from "@fluidframework/core-interfaces";
 import { IFluidHandle, fluidHandleSymbol } from "@fluidframework/core-interfaces";
-import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import type {
+	IFluidHandleInternal,
+	IFluidHandleInternalWithMetadata,
+} from "@fluidframework/core-interfaces/internal";
 
 /**
  * JSON serialized form of an IFluidHandle
@@ -36,6 +39,31 @@ export interface ISerializedHandle {
  */
 export const isSerializedHandle = (value: any): value is ISerializedHandle =>
 	value?.type === "__fluid_handle__";
+
+const isFluidHandleInternalWithMetadata = (
+	fluidHandleInternal: IFluidHandleInternal,
+): fluidHandleInternal is IFluidHandleInternalWithMetadata =>
+	"metadata" in fluidHandleInternal && fluidHandleInternal.metadata !== undefined;
+
+/**
+ * Encodes the given IFluidHandle into a JSON-serializable form,
+ * @param handle - The IFluidHandle to serialize.
+ * @returns The serialized handle.
+ *
+ * @internal
+ */
+export function encodeHandleForSerialization(handle: IFluidHandleInternal): ISerializedHandle {
+	return isFluidHandleInternalWithMetadata(handle)
+		? {
+				type: "__fluid_handle__",
+				url: handle.absolutePath,
+				metadata: handle.metadata,
+			}
+		: {
+				type: "__fluid_handle__",
+				url: handle.absolutePath,
+			};
+}
 
 /**
  * Setting to opt into compatibility with handles from before {@link fluidHandleSymbol} existed (Fluid Framework client 2.0.0-rc.3.0.0 and earlier).

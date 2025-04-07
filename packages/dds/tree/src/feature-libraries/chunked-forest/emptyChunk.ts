@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { fail } from "@fluidframework/core-utils/internal";
 import {
 	CursorLocationType,
 	CursorMarker,
@@ -15,7 +16,6 @@ import {
 	cursorChunk,
 	dummyRoot,
 } from "../../core/index.js";
-import { fail } from "../../util/index.js";
 import { prefixFieldPath } from "../treeCursorUtils.js";
 
 /**

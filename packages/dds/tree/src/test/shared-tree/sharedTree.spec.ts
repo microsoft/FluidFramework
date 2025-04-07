@@ -14,7 +14,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 import {
-	type ITestFluidObject,
+	type TestFluidObjectInternal,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
@@ -49,7 +49,7 @@ import {
 	ForestTypeReference,
 	getBranch,
 	type ITreePrivate,
-	type SharedTree,
+	SharedTree,
 	Tree,
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
@@ -66,7 +66,7 @@ import {
 	type TreeViewAlpha,
 	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
-import { brand, fail } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 import {
 	type ITestTreeProvider,
 	SharedTreeTestFactory,
@@ -97,6 +97,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { JsonAsTree } from "../../jsonDomainSchema.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toSimpleTreeSchema } from "../../simple-tree/api/index.js";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 
 const enableSchemaValidation = true;
 
@@ -342,7 +343,7 @@ describe("SharedTree", () => {
 		treeId: string,
 		summaryType: SummaryType,
 	) {
-		const a = (await provider.containers[0].getEntryPoint()) as ITestFluidObject;
+		const a = (await provider.containers[0].getEntryPoint()) as TestFluidObjectInternal;
 		const id = a.runtime.id;
 
 		const { summaryTree } = await provider.summarize();
@@ -1589,7 +1590,7 @@ describe("SharedTree", () => {
 			await provider.ensureSynchronized();
 
 			const pausedContainer: IContainerExperimental = provider.containers[0];
-			const url = (await pausedContainer.getAbsoluteUrl("")) ?? fail("didn't get url");
+			const url = (await pausedContainer.getAbsoluteUrl("")) ?? assert.fail("didn't get url");
 			const pausedTree = view1;
 			await provider.opProcessingController.pauseProcessing(pausedContainer);
 			pausedTree.root.insertAt(1, "b");
@@ -1611,8 +1612,9 @@ describe("SharedTree", () => {
 				undefined,
 				pendingOps,
 			);
-			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
-			const tree = await dataStore.getSharedObject<SharedTree>("TestSharedTree");
+			const dataStore = (await loadedContainer.getEntryPoint()) as TestFluidObjectInternal;
+			const tree = await dataStore.getInitialSharedObject("TestSharedTree");
+			assert(tree instanceof SharedTree);
 			const view = tree.viewWith(
 				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
 			);
@@ -1895,7 +1897,7 @@ describe("SharedTree", () => {
 			const provider = await TestTreeProvider.create(2);
 
 			const pausedContainer: IContainerExperimental = provider.containers[0];
-			const url = (await pausedContainer.getAbsoluteUrl("")) ?? fail("didn't get url");
+			const url = (await pausedContainer.getAbsoluteUrl("")) ?? assert.fail("didn't get url");
 			const pausedTree = provider.trees[0];
 			await provider.opProcessingController.pauseProcessing(pausedContainer);
 			const pausedView = pausedTree.viewWith(
@@ -1913,8 +1915,9 @@ describe("SharedTree", () => {
 				undefined,
 				pendingOps,
 			);
-			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
-			const tree = await dataStore.getSharedObject<ITreePrivate>("TestSharedTree");
+			const dataStore = (await loadedContainer.getEntryPoint()) as TestFluidObjectInternal;
+			const tree = (await dataStore.getInitialSharedObject("TestSharedTree")) as IChannel &
+				ITreePrivate;
 			await waitForContainerConnection(loadedContainer, true);
 			await provider.ensureSynchronized();
 
