@@ -27,6 +27,7 @@ import {
 	ITenantKeyGenerator,
 	isKeylessFluidAccessClaimEnabled,
 	generateToken,
+	getJtiClaimFromAccessToken,
 } from "@fluidframework/server-services-utils";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
@@ -244,6 +245,17 @@ export class TenantManager {
 		};
 	}
 
+	private logInvalidTokenJti(tenantId: string, token: string, status: number): void {
+		const jtiClaim = getJtiClaimFromAccessToken(token);
+		if (jtiClaim) {
+			Lumberjack.error("Token is invalid", {
+				tenantId,
+				jtiClaim,
+				status,
+			});
+		}
+	}
+
 	/**
 	 * Validates a tenant's API token
 	 */
@@ -289,11 +301,13 @@ export class TenantManager {
 							},
 						);
 					}
+					this.logInvalidTokenJti(tenantId, token, error.code);
 					throw error;
 				}
 				if (error.code === 401 || !tenantKeys.key2) {
 					// Trying key2 with an expired token won't help.
 					// Also, if there is no key2, don't bother validating.
+					this.logInvalidTokenJti(tenantId, token, error.code);
 					throw error;
 				}
 			}
@@ -329,6 +343,7 @@ export class TenantManager {
 						);
 					}
 				}
+				this.logInvalidTokenJti(tenantId, token, error.code);
 				throw error;
 			}
 		}

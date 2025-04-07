@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Lazy } from "@fluidframework/core-utils/internal";
+import { assert, Lazy, fail } from "@fluidframework/core-utils/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable, Off } from "@fluidframework/core-interfaces";
 import type { InternalTreeNode, TreeNode, Unhydrated } from "./types.js";
@@ -26,7 +26,6 @@ import {
 	type FlexTreeNode,
 } from "../../feature-libraries/index.js";
 import type { TreeNodeSchema } from "./treeNodeSchema.js";
-import { fail } from "../../util/index.js";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
 import { makeTree } from "../../feature-libraries/flex-tree/lazyNode.js";

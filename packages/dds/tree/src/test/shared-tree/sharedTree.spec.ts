@@ -14,7 +14,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 import {
-	type ITestFluidObject,
+	type TestFluidObjectInternal,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
@@ -66,7 +66,7 @@ import {
 	type TreeViewAlpha,
 	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
-import { brand, fail } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 import {
 	type ITestTreeProvider,
 	SharedTreeTestFactory,
@@ -87,7 +87,11 @@ import {
 	type TreeMockContainerRuntime,
 	type SharedTreeWithContainerRuntime,
 } from "../utils.js";
-import { configuredSharedTree, TreeFactory } from "../../treeFactory.js";
+import {
+	configuredSharedTree,
+	TreeFactory,
+	SharedTree as SharedTreeKind,
+} from "../../treeFactory.js";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import { TestAnchor } from "../testAnchor.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -97,6 +101,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { JsonAsTree } from "../../jsonDomainSchema.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toSimpleTreeSchema } from "../../simple-tree/api/index.js";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 
 const enableSchemaValidation = true;
 
@@ -337,37 +342,43 @@ describe("SharedTree", () => {
 		});
 	});
 
+	/**
+	 * Create a new summary, and assert that the SummaryType of the SchemaString is `summaryType`.
+	 */
 	async function validateSchemaStringType(
 		provider: ITestTreeProvider,
 		treeId: string,
 		summaryType: SummaryType,
 	) {
-		const a = (await provider.containers[0].getEntryPoint()) as ITestFluidObject;
+		const a = (await provider.containers[0].getEntryPoint()) as TestFluidObjectInternal;
 		const id = a.runtime.id;
 
 		const { summaryTree } = await provider.summarize();
 
-		assert(
-			summaryTree.tree[".channels"].type === SummaryType.Tree,
+		assert.equal(
+			summaryTree.tree[".channels"].type,
+			SummaryType.Tree,
 			"Runtime summary tree not created for blob dds test",
 		);
 		const dataObjectTree = summaryTree.tree[".channels"].tree[id];
-		assert(
-			dataObjectTree.type === SummaryType.Tree,
+		assert.equal(
+			dataObjectTree.type,
+			SummaryType.Tree,
 			"Data store summary tree not created for blob dds test",
 		);
 		const dataObjectChannelsTree = dataObjectTree.tree[".channels"];
-		assert(
-			dataObjectChannelsTree.type === SummaryType.Tree,
+		assert.equal(
+			dataObjectChannelsTree.type,
+			SummaryType.Tree,
 			"Data store channels tree not created for blob dds test",
 		);
 		const ddsTree = dataObjectChannelsTree.tree[treeId];
-		assert(ddsTree.type === SummaryType.Tree, "Blob dds tree not created");
+		assert.equal(ddsTree.type, SummaryType.Tree, "Blob dds tree not created");
 		const indexes = ddsTree.tree.indexes;
-		assert(indexes.type === SummaryType.Tree, "Blob Indexes tree not created");
+		assert.equal(indexes.type, SummaryType.Tree, "Blob Indexes tree not created");
 		const schema = indexes.tree.Schema;
-		assert(schema.type === SummaryType.Tree, "Blob Schema tree not created");
-		assert(schema.tree.SchemaString.type === summaryType, "incorrect SchemaString type");
+		assert.equal(schema.type, SummaryType.Tree, "Blob Schema tree not created");
+		assert.equal(schema.tree.SchemaString.type, summaryType);
 	}
 
 	describe("schema index summarization", () => {
@@ -433,11 +444,12 @@ describe("SharedTree", () => {
 				);
 				containerRuntimeFactory.processAllMessages();
 				const indexes = summaryTree.summary.tree.indexes;
-				assert(indexes.type === SummaryType.Tree, "Indexes must be a tree");
+				assert.equal(indexes.type, SummaryType.Tree, "Indexes must be a tree");
 				const schemaBlob = indexes.tree.Schema;
-				assert(schemaBlob.type === SummaryType.Tree, "Blob Schema tree not created");
-				assert(
-					schemaBlob.tree.SchemaString.type === SummaryType.Handle,
+				assert.equal(schemaBlob.type, SummaryType.Tree, "Blob Schema tree not created");
+				assert.equal(
+					schemaBlob.tree.SchemaString.type,
+					SummaryType.Handle,
 					"schemaString should be a handle",
 				);
 			});
@@ -464,11 +476,12 @@ describe("SharedTree", () => {
 				await provider.ensureSynchronized();
 				const summaryTree = await provider.trees[0].summarize();
 				const indexes = summaryTree.summary.tree.indexes;
-				assert(indexes.type === SummaryType.Tree, "Indexes must be a tree");
+				assert.equal(indexes.type, SummaryType.Tree, "Indexes must be a tree");
 				const schemaBlob = indexes.tree.Schema;
 				assert(schemaBlob.type === SummaryType.Tree, "Blob Schema tree not created");
-				assert(
-					schemaBlob.tree.SchemaString.type === SummaryType.Blob,
+				assert.equal(
+					schemaBlob.tree.SchemaString.type,
+					SummaryType.Blob,
 					"schemaString should be a Blob",
 				);
 			});
@@ -495,6 +508,36 @@ describe("SharedTree", () => {
 				await validateSchemaStringType(provider, provider.trees[0].id, SummaryType.Blob);
 			});
 		});
+	});
+
+	it("can load from summary", async () => {
+		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
+		const [tree1] = provider.trees;
+
+		const view1 = tree1.viewWith(
+			new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+		);
+		view1.initialize(["A"]);
+		await provider.ensureSynchronized();
+
+		// Have tree1 make a summary
+		await provider.summarize();
+
+		// Ensure all trees are now caught up
+		await provider.ensureSynchronized();
+
+		// Load the last summary
+		const view2 = (await provider.createTree()).viewWith(
+			new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			}),
+		);
+
+		// Check schema loaded
+		assert(view2.compatibility.isEquivalent);
+		// Check content loaded
+		assert.deepEqual([...view2.root], ["A"]);
 	});
 
 	it("can process ops after loading from summary", async () => {
@@ -1589,7 +1632,7 @@ describe("SharedTree", () => {
 			await provider.ensureSynchronized();
 
 			const pausedContainer: IContainerExperimental = provider.containers[0];
-			const url = (await pausedContainer.getAbsoluteUrl("")) ?? fail("didn't get url");
+			const url = (await pausedContainer.getAbsoluteUrl("")) ?? assert.fail("didn't get url");
 			const pausedTree = view1;
 			await provider.opProcessingController.pauseProcessing(pausedContainer);
 			pausedTree.root.insertAt(1, "b");
@@ -1611,8 +1654,9 @@ describe("SharedTree", () => {
 				undefined,
 				pendingOps,
 			);
-			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
-			const tree = await dataStore.getSharedObject<SharedTree>("TestSharedTree");
+			const dataStore = (await loadedContainer.getEntryPoint()) as TestFluidObjectInternal;
+			const tree = await dataStore.getInitialSharedObject("TestSharedTree");
+			assert(SharedTreeKind.is(tree));
 			const view = tree.viewWith(
 				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
 			);
@@ -1895,7 +1939,7 @@ describe("SharedTree", () => {
 			const provider = await TestTreeProvider.create(2);
 
 			const pausedContainer: IContainerExperimental = provider.containers[0];
-			const url = (await pausedContainer.getAbsoluteUrl("")) ?? fail("didn't get url");
+			const url = (await pausedContainer.getAbsoluteUrl("")) ?? assert.fail("didn't get url");
 			const pausedTree = provider.trees[0];
 			await provider.opProcessingController.pauseProcessing(pausedContainer);
 			const pausedView = pausedTree.viewWith(
@@ -1913,8 +1957,9 @@ describe("SharedTree", () => {
 				undefined,
 				pendingOps,
 			);
-			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
-			const tree = await dataStore.getSharedObject<ITreePrivate>("TestSharedTree");
+			const dataStore = (await loadedContainer.getEntryPoint()) as TestFluidObjectInternal;
+			const tree = (await dataStore.getInitialSharedObject("TestSharedTree")) as IChannel &
+				ITreePrivate;
 			await waitForContainerConnection(loadedContainer, true);
 			await provider.ensureSynchronized();
 
