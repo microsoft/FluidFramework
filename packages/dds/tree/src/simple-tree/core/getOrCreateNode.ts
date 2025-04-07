@@ -4,15 +4,13 @@
  */
 
 import type { TreeValue } from "../../core/index.js";
-import type { FlexTreeNode } from "../../feature-libraries/index.js";
-import { fail } from "../../util/index.js";
 import {
 	type InnerNode,
 	unhydratedFlexTreeNodeToTreeNode,
 	proxySlot,
+	createTreeNodeFromInner,
 } from "./treeNodeKernel.js";
-import { getSimpleNodeSchemaFromInnerNode } from "./schemaCaching.js";
-import type { TreeNode, InternalTreeNode } from "./types.js";
+import type { TreeNode } from "./types.js";
 import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
 
 /**
@@ -31,12 +29,5 @@ export function getOrCreateNodeFromInnerNode(flexNode: InnerNode): TreeNode | Tr
 		return cached;
 	}
 
-	const classSchema = getSimpleNodeSchemaFromInnerNode(flexNode) ?? fail("Missing schema");
-	const node = flexNode as unknown as InternalTreeNode;
-	// eslint-disable-next-line unicorn/prefer-ternary
-	if (typeof classSchema === "function") {
-		return new classSchema(node);
-	} else {
-		return (classSchema as { create(data: FlexTreeNode): TreeValue }).create(flexNode);
-	}
+	return createTreeNodeFromInner(flexNode);
 }

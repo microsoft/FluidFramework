@@ -26,6 +26,7 @@ export {
 	ChannelFactoryRegistry,
 	TestFluidObject,
 	TestFluidObjectFactory,
+	TestDataObjectKind,
 } from "./testFluidObject.js";
 export {
 	createDocumentId,
@@ -60,4 +61,10 @@ export {
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
 } from "./containerUtils.js";
-export { createContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
+export {
+	type ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
+	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
+	createContainerRuntimeFactoryWithDefaultDataStore,
+} from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
+
+export { TestFluidObjectInternal } from "./testFluidObjectInternal.js";

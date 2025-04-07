@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	type FieldKey,
@@ -12,7 +12,7 @@ import {
 	forEachField,
 	type Value,
 } from "../../../core/index.js";
-import { brand, fail } from "../../../util/index.js";
+import { brand } from "../../../util/index.js";
 
 import type { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
 import { type BufferFormat, IdentifierToken, Shape } from "./chunkEncodingGeneric.js";
@@ -138,7 +138,7 @@ export function encodeFieldShapes(
 		// key
 		encodeIdentifier(field.key, identifiers),
 		// shape
-		shapes.valueToIndex.get(field.shape.shape) ?? fail("missing shape"),
+		shapes.valueToIndex.get(field.shape.shape) ?? fail(0xb50 /* missing shape */),
 	]);
 }
 
@@ -167,5 +167,5 @@ function dedupShape(
 	shape: Shape<EncodedChunkShape>,
 	shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
 ): number {
-	return shapes.valueToIndex.get(shape) ?? fail("missing shape");
+	return shapes.valueToIndex.get(shape) ?? fail(0xb51 /* missing shape */);
 }

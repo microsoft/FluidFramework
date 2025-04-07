@@ -4,11 +4,11 @@
  */
 
 import { IsoBuffer, bufferToString } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 
 import type { ChangeEncodingContext } from "../core/index.js";
-import { type JsonCompatibleReadOnly, fail } from "../util/index.js";
+import type { JsonCompatibleReadOnly } from "../util/index.js";
 
 /**
  * Translates decoded data to encoded data.
@@ -203,7 +203,7 @@ export function makeCodecFamily<TDecoded, TContext>(
 	> = new Map();
 	for (const [formatVersion, codec] of registry) {
 		if (codecs.has(formatVersion)) {
-			fail("Duplicate codecs specified.");
+			fail(0xabf /* Duplicate codecs specified. */);
 		}
 		codecs.set(formatVersion, ensureBinaryEncoding(codec));
 	}
@@ -315,13 +315,13 @@ export function withSchemaValidation<
 		encode: (obj: TInMemoryFormat, context: TContext): TEncodedFormat => {
 			const encoded = codec.encode(obj, context);
 			if (!compiledFormat.check(encoded)) {
-				fail("Encoded schema should validate");
+				fail(0xac0 /* Encoded schema should validate */);
 			}
 			return encoded;
 		},
 		decode: (encoded: TValidate, context: TContext): TInMemoryFormat => {
 			if (!compiledFormat.check(encoded)) {
-				fail("Encoded schema should validate");
+				fail(0xac1 /* Encoded schema should validate */);
 			}
 			// TODO: would be nice to provide a more specific validate type to the inner codec than the outer one gets.
 			return codec.decode(encoded, context) as unknown as TInMemoryFormat;

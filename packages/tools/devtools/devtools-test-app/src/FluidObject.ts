@@ -11,6 +11,55 @@ import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import { type ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
+
+/**
+ * Additional Data Object added to the {@link AppData}.
+ */
+export class AppDataTwo extends DataObject {
+	/**
+	 * Key in the app's `rootMap` under which the SharedString object is stored.
+	 */
+	private readonly sharedTextKey = "shared-text";
+
+	public static readonly Name = "@devtools-example/test-app-2";
+
+	private _text: SharedString | undefined;
+
+	public get text(): SharedString {
+		if (this._text === undefined) {
+			throw new Error("The SharedString was not initialized correctly");
+		}
+		return this._text;
+	}
+
+	private static readonly factory = new DataObjectFactory(
+		AppDataTwo.Name,
+		AppDataTwo,
+		[SharedString.getFactory()],
+		{},
+	);
+
+	public static getFactory(): DataObjectFactory<AppDataTwo> {
+		return this.factory;
+	}
+
+	protected async initializingFirstTime(): Promise<void> {
+		// Create the shared objects and store their handles in the root SharedDirectory
+		const text = SharedString.create(this.runtime, this.sharedTextKey);
+
+		this.root.set(this.sharedTextKey, text.handle);
+		this.root.set("test-object-two", {
+			a: true,
+			b: "hello world",
+			c: 1,
+		});
+	}
+
+	protected async hasInitialized(): Promise<void> {
+		this._text = await this.root.get<IFluidHandle<SharedString>>(this.sharedTextKey)?.get();
+	}
+}
+
 /**
  * AppData uses the React CollaborativeTextArea to load a collaborative HTML <textarea>
  */
@@ -39,6 +88,11 @@ export class AppData extends DataObject {
 	 * Key in the app's `rootMap` under which the SharedDirectory object is stored.
 	 */
 	private readonly initialObjectsDirKey = "rootMap";
+
+	/**
+	 * Key in the app's `rootMap` under which the RootDataObject object is stored.
+	 */
+	private readonly dataObjectKey = "shared-data-object";
 
 	// previous app's `rootMap`
 	private readonly _initialObjects: Record<string, IFluidLoadable> = {};
@@ -92,6 +146,7 @@ export class AppData extends DataObject {
 			SharedTree.getFactory(),
 		],
 		{},
+		new Map([AppDataTwo.getFactory().registryEntry]),
 	);
 
 	public static getFactory(): DataObjectFactory<AppData> {
@@ -116,11 +171,13 @@ export class AppData extends DataObject {
 		}
 		this.populateSharedTree(sharedTree);
 
-		this.root.createSubDirectory(this.initialObjectsDirKey);
+		const appDataTwo = await AppDataTwo.getFactory().createChildInstance(this.context);
+
 		this.root.set(this.sharedTextKey, text.handle);
 		this.root.set(this.sharedCounterKey, counter.handle);
 		this.root.set(this.emojiMatrixKey, emojiMatrix.handle);
 		this.root.set(this.sharedTreeKey, sharedTree.handle);
+		this.root.set(this.dataObjectKey, appDataTwo.handle);
 
 		// Also set a couple of primitives for testing the debug view
 		this.root.set("numeric-value", 42);
@@ -134,7 +191,7 @@ export class AppData extends DataObject {
 			},
 		});
 
-		this._initialObjects[this.initialObjectsDirKey] = this.root.IFluidLoadable;
+		this._initialObjects[this.initialObjectsDirKey] = this.root;
 	}
 
 	protected async hasInitialized(): Promise<void> {
@@ -151,67 +208,79 @@ export class AppData extends DataObject {
 			throw new Error("SharedTree was not initialized");
 		} else {
 			this._sharedTree = sharedTree;
-
-			// We will always load the initial objects so they are available to the developer
-			const loadInitialObjectsP: Promise<void>[] = [];
-			const dir = this.root.getSubDirectory(this.initialObjectsDirKey);
-			if (dir === undefined) {
-				throw new Error("InitialObjects sub-directory was not initialized");
-			}
-
-			for (const [key, value] of dir.entries()) {
-				// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-				const loadDir = async () => {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-					const obj = await value.get();
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-					Object.assign(this._initialObjects, { [key]: obj });
-				};
-				loadInitialObjectsP.push(loadDir());
-			}
-
-			await Promise.all(loadInitialObjectsP);
 		}
 	}
 
 	private populateSharedTree(sharedTree: ITree): void {
-		// Set up SharedTree for visualization
-		const builder = new SchemaFactory("DefaultVisualizer_SharedTree_Test");
+		const builder = new SchemaFactory("TodoList_Schema");
 
-		// TODO: Maybe include example handle
-
-		class LeafSchema extends builder.object("leaf-item", {
-			leafField: [builder.boolean, builder.handle, builder.string],
+		class WorkItem extends builder.object("work-item", {
+			title: builder.string,
+			completed: builder.boolean,
+			dueDate: builder.string,
+			assignee: builder.string,
+			collaborators: builder.optional(builder.array(builder.string)),
 		}) {}
 
-		class ChildSchema extends builder.object("child-item", {
-			childField: [builder.string, builder.boolean],
-			childData: builder.optional(LeafSchema),
+		class PersonalItem extends builder.object("personal-item", {
+			title: builder.string,
+			completed: builder.boolean,
+			dueDate: builder.string,
+			location: builder.optional(builder.string),
+			with: builder.optional(builder.array(builder.string)),
 		}) {}
 
-		class RootNodeSchema extends builder.object("root-item", {
-			childrenOne: builder.array(ChildSchema),
-			childrenTwo: builder.number,
+		class TodoWorkspace extends builder.object("todo-workspace", {
+			categories: builder.object("todo-categories", {
+				work: [builder.map([WorkItem]), builder.array(WorkItem)],
+				personal: [builder.map([PersonalItem]), builder.array(PersonalItem)],
+			}),
 		}) {}
 
-		const config = new TreeViewConfiguration({ schema: RootNodeSchema });
-		const view = sharedTree.viewWith(config);
-		view.initialize({
-			childrenOne: [
-				{
-					childField: "Hello world!",
-					childData: {
-						leafField: "Hello world again!",
-					},
-				},
-				{
-					childField: true,
-					childData: {
-						leafField: false,
-					},
-				},
-			],
-			childrenTwo: 32,
+		const config = new TreeViewConfiguration({
+			schema: [TodoWorkspace],
 		});
+
+		const view = sharedTree.viewWith(config);
+		view.initialize(
+			new TodoWorkspace({
+				categories: {
+					work: [
+						{
+							title: "Submit a PR",
+							completed: false,
+							dueDate: "2026-01-01",
+							assignee: "Alice",
+							collaborators: ["Bob", "Charlie"],
+						},
+						{
+							title: "Review a PR",
+							completed: true,
+							dueDate: "2025-01-01",
+							assignee: "David",
+						},
+					],
+					personal: new Map([
+						[
+							"Health",
+							{
+								title: "Go to the gym",
+								completed: true,
+								dueDate: "2025-01-01",
+								with: ["Wayne", "Tyler"],
+							},
+						],
+						[
+							"Education",
+							{
+								title: "Finish reading the book",
+								completed: false,
+								dueDate: "2026-01-01",
+							},
+						],
+					]),
+				},
+			}),
+		);
 	}
 }

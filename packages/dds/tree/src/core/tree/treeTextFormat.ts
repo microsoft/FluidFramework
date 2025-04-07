@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "../../util/index.js";
+import { fail } from "@fluidframework/core-utils/internal";
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type { NodeData } from "./types.js";
@@ -90,7 +90,7 @@ export function getGenericTreeField<T>(
 
 	// Do not just read field and check for undefined: see warning on FieldMapObject.
 	if (Object.prototype.hasOwnProperty.call(children, key)) {
-		return children[key] ?? fail("This wont be undefined due to the check above");
+		return children[key] ?? fail(0xaed /* This wont be undefined due to the check above */);
 	}
 	// Handle missing field:
 	if (createIfMissing === false) {

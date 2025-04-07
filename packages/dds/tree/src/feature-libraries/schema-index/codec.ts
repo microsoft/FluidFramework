@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { fail } from "@fluidframework/core-utils/internal";
 import {
 	type ICodecOptions,
 	type IJsonCodec,
@@ -18,7 +19,7 @@ import {
 	storedSchemaDecodeDispatcher,
 	toTreeNodeSchemaDataFormat,
 } from "../../core/index.js";
-import { brand, fail } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 
 import { Format } from "./format.js";
 
@@ -27,7 +28,7 @@ export function encodeRepo(repo: TreeStoredSchema): Format {
 		Object.create(null);
 	const rootFieldSchema = encodeFieldSchema(repo.rootFieldSchema);
 	for (const name of [...repo.nodeSchema.keys()].sort()) {
-		const schema = repo.nodeSchema.get(name) ?? fail("missing schema");
+		const schema = repo.nodeSchema.get(name) ?? fail(0xb28 /* missing schema */);
 		Object.defineProperty(nodeSchema, name, {
 			enumerable: true,
 			configurable: true,

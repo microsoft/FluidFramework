@@ -19,8 +19,6 @@ export {
 } from "./opaque.js";
 export {
 	deleteFromNestedMap,
-	getOrAddInMap,
-	getOrAddInMapLazy,
 	getOrAddInNestedMap,
 	getOrDefaultInNestedMap,
 	forEachInNestedMap,
@@ -34,6 +32,7 @@ export {
 	mapNestedMap,
 	nestedMapToFlatList,
 	nestedMapFromFlatList,
+	getOrCreateInNestedMap,
 } from "./nestedMap.js";
 export { addToNestedSet, type NestedSet, nestedSetContains } from "./nestedSet.js";
 export { type OffsetList, OffsetListFactory } from "./offsetList.js";
@@ -56,9 +55,9 @@ export type {
 export { StackyIterator } from "./stackyIterator.js";
 export {
 	asMutable,
+	balancedReduce,
 	clone,
 	compareSets,
-	fail,
 	getOrAddEmptyToMap,
 	getOrCreate,
 	isJsonObject,
@@ -95,6 +94,7 @@ export {
 	hasSingle,
 	defineLazyCachedProperty,
 	copyPropertyIfDefined as copyProperty,
+	getOrAddInMap,
 } from "./utils.js";
 export { ReferenceCountedBase, type ReferenceCounted } from "./referenceCounting.js";
 
@@ -143,3 +143,5 @@ export {
 } from "./breakable.js";
 
 export { type TupleBTree, newTupleBTree, mergeTupleBTrees } from "./bTreeUtils.js";
+
+export { cloneWithReplacements } from "./cloneWithReplacements.js";

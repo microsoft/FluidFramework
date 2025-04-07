@@ -8,8 +8,8 @@ import {
 	type ExclusiveMapTree,
 	type FieldKey,
 	type FieldKindIdentifier,
-	type FieldUpPath,
 	type ITreeCursorSynchronous,
+	type NormalizedFieldUpPath,
 	type TreeNodeSchemaIdentifier,
 	type TreeValue,
 	anchorSlot,
@@ -255,7 +255,7 @@ export interface FlexTreeField extends FlexTreeEntity {
 	/**
 	 * Gets the FieldUpPath of a field.
 	 */
-	getFieldPath(): FieldUpPath;
+	getFieldPath(): NormalizedFieldUpPath;
 
 	/**
 	 * Schema for this entity.

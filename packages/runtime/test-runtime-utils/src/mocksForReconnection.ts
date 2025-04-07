@@ -27,14 +27,26 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 	/**
 	 * Contains messages from other clients that were sequenced while this runtime was marked as disconnected.
 	 */
-	private readonly pendingRemoteMessages: ISequencedDocumentMessage[] = [];
+	protected readonly pendingRemoteMessages: ISequencedDocumentMessage[] = [];
 
+	/**
+	 * Returns the connection state of the container runtime.
+	 * Any messages that are submitted while not connected will be resubmitted via the resubmit flow on reconnection.
+	 * Any messages received while disconnected will be processed on reconnection.
+	 * Also, the clientId of the runtime will change on reconnection.
+	 */
 	public get connected(): boolean {
 		return this._connected;
 	}
 
 	public set connected(connected: boolean) {
 		this.setConnectedState(connected);
+	}
+
+	protected processPendingMessages(pendingMessages: ISequencedDocumentMessage[]) {
+		for (const remoteMessage of pendingMessages) {
+			this.process(remoteMessage);
+		}
 	}
 
 	protected setConnectedState(connected: boolean): void {
@@ -46,9 +58,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 		this._connected = connected;
 
 		if (connected) {
-			for (const remoteMessage of this.pendingRemoteMessages) {
-				this.process(remoteMessage);
-			}
+			this.processPendingMessages(this.pendingRemoteMessages);
 			this.pendingRemoteMessages.length = 0;
 			this.deltaManager.clientSequenceNumber = 0;
 			// We should get a new clientId on reconnection.
@@ -79,7 +89,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 	}
 
 	private _connected = true;
-	private readonly processedOps?: ISequencedDocumentMessage[];
+	protected readonly processedOps?: ISequencedDocumentMessage[];
 	constructor(
 		dataStoreRuntime: MockFluidDataStoreRuntime,
 		protected override readonly factory: MockContainerRuntimeFactoryForReconnection,
@@ -109,6 +119,13 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 
 		this.addPendingMessage(messageContent, localOpMetadata, -1);
 		return -1;
+	}
+
+	override flush() {
+		// Flush messages only if we are connected, otherwise, just ignore it.
+		if (this.connected) {
+			super.flush();
+		}
 	}
 
 	public async initializeWithStashedOps(

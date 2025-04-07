@@ -80,6 +80,26 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
 			"kafka:lib:consumerGlobalAdditionalConfig",
 		);
 
+		// apiCounter configuration
+		const apiCounterEnabled = config.get("kafka:apiCounterEnabled") ?? false;
+		const apiCounterIntervalMS = config.get("kafka:apiCounterIntervalMS") ?? 60000;
+		const apiFailureRateTerminationThreshold =
+			config.get("kafka:apiFailureRateTerminationThreshold") ?? 2; // 1 means 100%, 2 means disabled
+		const apiMinimumCountToEnableTermination =
+			config.get("kafka:apiMinimumCountToEnableTermination") ?? 20;
+		const consecutiveFailedThresholdForLowerTotalRequests =
+			config.get("kafka:consecutiveFailedThresholdForLowerTotalRequests") ?? 3;
+		const ignoreAndSkipCheckpointOnKafkaErrorCodes =
+			config.get("kafka:ignoreAndSkipCheckpointOnKafkaErrorCodes") ?? [];
+
+		const apiCounterConfig = {
+			apiCounterEnabled,
+			apiCounterIntervalMS,
+			apiFailureRateTerminationThreshold,
+			apiMinimumCountToEnableTermination,
+			consecutiveFailedThresholdForLowerTotalRequests,
+		};
+
 		// Receive topic and group - for now we will assume an entry in config mapping
 		// to the given name. Later though the lambda config will likely be split from the stream config
 		const streamConfig = config.get(`lambdas:${this.name}`);
@@ -109,7 +129,15 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
 			additionalOptions: consumerGlobalAdditionalConfig,
 		};
 
-		const consumer = new RdkafkaConsumer(endpoints, clientId, receiveTopic, groupId, options);
+		const consumer = new RdkafkaConsumer(
+			endpoints,
+			clientId,
+			receiveTopic,
+			groupId,
+			apiCounterConfig,
+			ignoreAndSkipCheckpointOnKafkaErrorCodes,
+			options,
+		);
 
 		return new RdkafkaResources(lambdaFactory, consumer, config);
 	}

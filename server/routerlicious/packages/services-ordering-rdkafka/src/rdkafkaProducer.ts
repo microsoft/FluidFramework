@@ -11,6 +11,7 @@ import {
 	IProducer,
 	PendingBoxcar,
 	IContextErrorData,
+	MaxKafkaMessageSize,
 } from "@fluidframework/server-services-core";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
@@ -93,7 +94,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			reconnectOnNonFatalErrors: options?.reconnectOnNonFatalErrors ?? false,
 			enableIdempotence: options?.enableIdempotence ?? false,
 			pollIntervalMs: options?.pollIntervalMs ?? 10,
-			maxMessageSize: options?.maxMessageSize ?? Number.MAX_SAFE_INTEGER,
+			maxMessageSize: options?.maxMessageSize ?? MaxKafkaMessageSize,
 		};
 	}
 

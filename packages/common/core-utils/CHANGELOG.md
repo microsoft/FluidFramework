@@ -1,5 +1,47 @@
 # @fluidframework/core-utils
 
+## 2.31.0
+
+### Minor Changes
+
+- New alpha `onAssertionFailure` API ([#24089](https://github.com/microsoft/FluidFramework/pull/24089)) [5e933c7a7c](https://github.com/microsoft/FluidFramework/commit/5e933c7a7c31ef4a9f0a331604cf329156afb1aa)
+
+  A new `@alpha` API is added called `onAssertionFailure` which can be used to get a callback when an assertion fails indicating a bug in the Fluid Framework.
+  This callback is invoked before the exception is thrown, reducing the chances of the exception being lost or replaced with a different exception before making it to a catch block which reports it.
+  It can also be used to break into the debugger when the assertion occurs to aid in debugging the cause.
+
+  ```ts
+  import { onAssertionFailure } from "fluid-framework/alpha";
+
+  let firstAssertion: Error | undefined;
+
+  onAssertionFailure((error: Error) => {
+    const priorErrorNote =
+      firstAssertion === undefined
+        ? "Please report this bug."
+        : `Might be caused due to prior error ${JSON.stringify(
+            firstAssertion.message,
+          )} which should be investigated first.`;
+    const message = `Encountered Bug in Fluid Framework: ${error.message}\n${priorErrorNote}\n${error.stack}`;
+    console.error(message);
+
+    debugger;
+    firstAssertion ??= error;
+  });
+  ```
+
+## 2.30.0
+
+Dependency updates only.
+
+## 2.23.0
+
+Dependency updates only.
+
+## 2.22.0
+
+Dependency updates only.
+
 ## 2.21.0
 
 Dependency updates only.
@@ -48,9 +90,9 @@ Dependency updates only.
 
 ### Minor Changes
 
--   Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+- Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
 
-    Update package implementations to use TypeScript 5.4.5.
+  Update package implementations to use TypeScript 5.4.5.
 
 ## 2.0.0-rc.4.0.0
 
@@ -60,24 +102,24 @@ Dependency updates only.
 
 ### Major Changes
 
--   Packages now use package.json "exports" and require modern module resolution [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+- Packages now use package.json "exports" and require modern module resolution [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
 
-    Fluid Framework packages have been updated to use the [package.json "exports"
-    field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
-    TypeScript types and implementation code.
+  Fluid Framework packages have been updated to use the [package.json "exports"
+  field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
+  TypeScript types and implementation code.
 
-    This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
+  This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
 
-    -   `"moduleResolution": "Node16"` with `"module": "Node16"`
-    -   `"moduleResolution": "Bundler"` with `"module": "ESNext"`
+  - `"moduleResolution": "Node16"` with `"module": "Node16"`
+  - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 
-    We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
-    for use with modern versions of Node.js _and_ Bundlers.
-    [See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
-    regarding the module and moduleResolution options.
+  We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
+  for use with modern versions of Node.js _and_ Bundlers.
+  [See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
+  regarding the module and moduleResolution options.
 
-    **Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
-    to distinguish stable APIs from those that are in development.**
+  **Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
+  to distinguish stable APIs from those that are in development.**
 
 ## 2.0.0-rc.2.0.0
 
@@ -111,9 +153,9 @@ Dependency updates only.
 
 ### Major Changes
 
--   Minimum TypeScript version now 5.1.6 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+- Minimum TypeScript version now 5.1.6 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
-    The minimum supported TypeScript version for Fluid 2.0 clients is now 5.1.6.
+  The minimum supported TypeScript version for Fluid 2.0 clients is now 5.1.6.
 
 ## 2.0.0-internal.6.4.0
 
@@ -135,9 +177,9 @@ Dependency updates only.
 
 ### Major Changes
 
--   Upgraded typescript transpilation target to ES2020 [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+- Upgraded typescript transpilation target to ES2020 [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
 
-    Upgraded typescript transpilation target to ES2020. This is done in order to decrease the bundle sizes of Fluid Framework packages. This has provided size improvements across the board for ex. Loader, Driver, Runtime etc. Reduced bundle sizes helps to load lesser code in apps and hence also helps to improve the perf.If any app wants to target any older versions of browsers with which this target version is not compatible, then they can use packages like babel to transpile to a older target.
+  Upgraded typescript transpilation target to ES2020. This is done in order to decrease the bundle sizes of Fluid Framework packages. This has provided size improvements across the board for ex. Loader, Driver, Runtime etc. Reduced bundle sizes helps to load lesser code in apps and hence also helps to improve the perf.If any app wants to target any older versions of browsers with which this target version is not compatible, then they can use packages like babel to transpile to a older target.
 
 ## 2.0.0-internal.5.4.0
 
