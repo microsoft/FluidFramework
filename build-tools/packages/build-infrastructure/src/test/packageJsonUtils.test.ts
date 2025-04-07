@@ -13,15 +13,13 @@ import {
 	updatePackageJsonFile,
 	updatePackageJsonFileAsync,
 } from "../packageJsonUtils.js";
-import { type PackageJson } from "../types.js";
 
 import { testDataPath } from "./init.js";
 
 /**
  * A transformer function that does nothing.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const testTransformer = (json: PackageJson): void => {
+const testTransformer = (): void => {
 	// do nothing
 	return;
 };
@@ -29,8 +27,7 @@ const testTransformer = (json: PackageJson): void => {
 /**
  * A transformer function that does nothing.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const testTransformerAsync = async (json: PackageJson): Promise<void> => {
+const testTransformerAsync = async (): Promise<void> => {
 	// do nothing
 	return;
 };
