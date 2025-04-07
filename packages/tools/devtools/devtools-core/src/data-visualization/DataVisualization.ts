@@ -130,7 +130,7 @@ export interface DataVisualizerEvents extends IEvent {
 	 *
 	 * @eventProperty
 	 */
-	(event: "update", listener: (visualTree: FluidObjectNode) => void);
+	(event: "update", listener: (visualTree: FluidObjectNode) => void): unknown;
 }
 
 /**
