@@ -1546,7 +1546,7 @@ describe("SharedString interval collections", () => {
 	});
 
 	describe("maintain consistency between the collection label and that in interval properties", () => {
-		let collection;
+		let collection: ISequenceIntervalCollection;
 
 		beforeEach(() => {
 			sharedString.initializeLocal();
@@ -1555,19 +1555,15 @@ describe("SharedString interval collections", () => {
 		});
 
 		it("can not insert the interval which does not belong to this collection", () => {
-			assert.throws(
-				() => {
-					collection.add({
-						start: 1,
-						end: 1,
-						props: {
-							[reservedRangeLabelsKey]: ["test2"],
-						},
-					});
+			const interval = collection.add({
+				start: 1,
+				end: 1,
+				props: {
+					[reservedRangeLabelsKey]: ["test2"],
 				},
-				LoggingError,
-				"The collection is unable to add an interval which does not belong to it",
-			);
+			});
+
+			assert.deepStrictEqual(interval.properties[reservedRangeLabelsKey], ["test"]);
 		});
 
 		it("can not modify the interval's label after it has been inserted to the collection", () => {

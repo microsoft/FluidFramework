@@ -29,8 +29,11 @@ import {
 	addProperties,
 	copyPropertiesAndManager,
 	type ISegmentInternal,
+	UnassignedSequenceNumber,
+	UniversalSequenceNumber,
 } from "@fluidframework/merge-tree/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { v4 as uuid } from "uuid";
 
 import {
 	computeStickinessFromSide,
@@ -183,15 +186,32 @@ export interface SequenceInterval extends ISerializableInterval {
 }
 
 export class SequenceIntervalClass implements SequenceInterval {
+	readonly #props: {
+		propertyManager?: PropertiesManager;
+		properties: PropertySet;
+	} = { properties: createMap<any>() };
+
 	/**
 	 * {@inheritDoc ISerializableInterval.properties}
 	 */
-	public properties: PropertySet = createMap<any>();
+	public get properties(): Readonly<PropertySet> {
+		return this.#props.properties;
+	}
 
-	/**
-	 * {@inheritDoc ISerializableInterval.propertyManager}
-	 */
-	public propertyManager?: PropertiesManager;
+	public changeProperties(props: PropertySet | undefined, op?: ISequencedDocumentMessage) {
+		if (props !== undefined) {
+			this.#props.propertyManager ??= new PropertiesManager();
+			return this.#props.propertyManager.handleProperties(
+				{ props },
+				this.#props,
+				this.client.getCollabWindow().collaborating
+					? (op?.sequenceNumber ?? UnassignedSequenceNumber)
+					: UniversalSequenceNumber,
+				op?.minimumSequenceNumber ?? UniversalSequenceNumber,
+				this.client.getCollabWindow().collaborating,
+			);
+		}
+	}
 
 	/***/
 	public get stickiness(): IntervalStickiness {
@@ -223,7 +243,7 @@ export class SequenceIntervalClass implements SequenceInterval {
 		public readonly endSide: Side = Side.Before,
 	) {
 		if (props) {
-			this.properties = addProperties(this.properties, props);
+			this.#props.properties = addProperties(this.#props.properties, props);
 		}
 	}
 
@@ -489,8 +509,16 @@ export class SequenceIntervalClass implements SequenceInterval {
 			startSide ?? this.startSide,
 			endSide ?? this.endSide,
 		);
-		copyPropertiesAndManager(this, newInterval);
+		copyPropertiesAndManager(this.#props, newInterval.#props);
 		return newInterval;
+	}
+
+	public ackPropertiesChange(newProps: PropertySet, op: ISequencedDocumentMessage) {
+		this.#props.propertyManager ??= new PropertiesManager();
+		// Let the propertyManager prune its pending change-properties set.
+		this.#props.propertyManager.ack(op.sequenceNumber, op.minimumSequenceNumber, {
+			props: newProps,
+		});
 	}
 }
 
@@ -603,6 +631,7 @@ export function createSequenceInterval(
 	op?: ISequencedDocumentMessage,
 	fromSnapshot?: boolean,
 	useNewSlidingBehavior: boolean = false,
+	props?: PropertySet,
 ): SequenceIntervalClass {
 	const { startPos, startSide, endPos, endSide } = endpointPosAndSide(
 		start ?? "start",
@@ -669,7 +698,11 @@ export function createSequenceInterval(
 		startLref,
 		endLref,
 		intervalType,
-		rangeProp,
+		{
+			...props,
+			...rangeProp,
+			[reservedIntervalIdKey]: props?.[reservedIntervalIdKey] ?? uuid(),
+		},
 		startSide,
 		endSide,
 	);

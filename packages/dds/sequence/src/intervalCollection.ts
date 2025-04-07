@@ -17,8 +17,6 @@ import {
 	PropertySet,
 	ReferenceType,
 	SlidingPreference,
-	UnassignedSequenceNumber,
-	UniversalSequenceNumber,
 	addProperties,
 	getSlideToSegoff,
 	refTypeIncludesFlag,
@@ -26,12 +24,9 @@ import {
 	Side,
 	SequencePlace,
 	endpointPosAndSide,
-	PropertiesManager,
 	type ISegmentInternal,
-	createMap,
 } from "@fluidframework/merge-tree/internal";
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import {
 	IIntervalCollectionOperation,
@@ -64,7 +59,6 @@ import {
 	endReferenceSlidingPreference,
 	startReferenceSlidingPreference,
 	type ISerializableInterval,
-	type ISerializableIntervalPrivate,
 } from "./intervals/index.js";
 
 export const reservedIntervalIdKey = "intervalId";
@@ -248,13 +242,14 @@ export class LocalIntervalCollection {
 		this.removeIntervalListeners(interval);
 	}
 
-	public createInterval(
+	public addInterval(
 		start: SequencePlace,
 		end: SequencePlace,
 		intervalType: IntervalType,
+		props?: PropertySet,
 		op?: ISequencedDocumentMessage,
-	): SequenceIntervalClass {
-		return createSequenceInterval(
+	) {
+		const interval: SequenceIntervalClass = createSequenceInterval(
 			this.label,
 			start,
 			end,
@@ -263,39 +258,9 @@ export class LocalIntervalCollection {
 			op,
 			undefined,
 			this.options.mergeTreeReferencesCanSlideToEndpoint,
+			props,
 		);
-	}
-
-	public addInterval(
-		start: SequencePlace,
-		end: SequencePlace,
-		intervalType: IntervalType,
-		props?: PropertySet,
-		op?: ISequencedDocumentMessage,
-	) {
-		const interval: SequenceIntervalClass = this.createInterval(start, end, intervalType, op);
-		if (interval) {
-			if (!interval.properties) {
-				interval.properties = createMap<any>();
-			}
-
-			if (props) {
-				// This check is intended to prevent scenarios where a random interval is created and then
-				// inserted into a collection. The aim is to ensure that the collection is created first
-				// then the user can create/add intervals based on the collection
-				if (
-					props[reservedRangeLabelsKey] !== undefined &&
-					props[reservedRangeLabelsKey][0] !== this.label
-				) {
-					throw new LoggingError(
-						"Adding an interval that belongs to another interval collection is not permitted",
-					);
-				}
-				interval.properties = addProperties(interval.properties, props);
-			}
-			interval.properties[reservedIntervalIdKey] ??= uuid();
-			this.add(interval);
-		}
+		this.add(interval);
 		return interval;
 	}
 
@@ -1300,10 +1265,8 @@ export class IntervalCollection
 					undefined,
 					true,
 					this.options.mergeTreeReferencesCanSlideToEndpoint,
+					properties,
 				);
-				if (properties) {
-					interval.properties = addProperties(interval.properties, properties);
-				}
 				this.localCollection.add(interval);
 			}
 		}
@@ -1345,7 +1308,7 @@ export class IntervalCollection
 	/**
 	 * {@inheritdoc IIntervalCollection.getIntervalById}
 	 */
-	public getIntervalById(id: string): ISerializableIntervalPrivate | undefined {
+	public getIntervalById(id: string): SequenceIntervalClass | undefined {
 		if (!this.localCollection) {
 			throw new LoggingError("attach must be called before accessing intervals");
 		}
@@ -1518,14 +1481,7 @@ export class IntervalCollection
 			let deltaProps: PropertySet | undefined;
 			let newInterval: SequenceIntervalClass | undefined;
 			if (props !== undefined) {
-				interval.propertyManager ??= new PropertiesManager();
-				deltaProps = interval.propertyManager.handleProperties(
-					{ props },
-					interval,
-					this.isCollaborating ? UnassignedSequenceNumber : UniversalSequenceNumber,
-					UniversalSequenceNumber,
-					true,
-				);
+				deltaProps = interval.changeProperties(props);
 			}
 			if (start !== undefined && end !== undefined) {
 				newInterval = this.localCollection.changeInterval(interval, start, end);
@@ -1679,18 +1635,14 @@ export class IntervalCollection
 		// strip it out of the properties here.
 		const { [reservedIntervalIdKey]: id, ...newProps } = serializedInterval.properties ?? {};
 		assert(id !== undefined, 0x3fe /* id must exist on the interval */);
-		const interval: ISerializableIntervalPrivate | undefined = this.getIntervalById(id);
+		const interval: SequenceIntervalClass | undefined = this.getIntervalById(id);
 		if (!interval) {
 			// The interval has been removed locally; no-op.
 			return;
 		}
 
 		if (local) {
-			interval.propertyManager ??= new PropertiesManager();
-			// Let the propertyManager prune its pending change-properties set.
-			interval.propertyManager.ack(op.sequenceNumber, op.minimumSequenceNumber, {
-				props: newProps,
-			});
+			interval.ackPropertiesChange(newProps, op);
 
 			this.ackInterval(interval, op);
 		} else {
@@ -1718,14 +1670,8 @@ export class IntervalCollection
 						op,
 					) ?? interval;
 			}
-			newInterval.propertyManager ??= new PropertiesManager();
-			const deltaProps = newInterval.propertyManager.handleProperties(
-				{ props: newProps },
-				newInterval,
-				op.sequenceNumber,
-				op.minimumSequenceNumber,
-				true,
-			);
+			const deltaProps = newInterval.changeProperties(newProps, op);
+
 			if (this.onDeserialize) {
 				this.onDeserialize(newInterval);
 			}

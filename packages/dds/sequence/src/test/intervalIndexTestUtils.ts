@@ -66,8 +66,17 @@ let currentId = 0;
  */
 export function createTestSequenceInterval(client: TestClient, p1: number, p2: number) {
 	const id = `${currentId++}`;
-	const interval = createSequenceInterval(id, p1, p2, client, IntervalType.SlideOnRemove);
-	interval.properties[reservedIntervalIdKey] = id;
+	const interval = createSequenceInterval(
+		"test",
+		p1,
+		p2,
+		client,
+		IntervalType.SlideOnRemove,
+		undefined,
+		undefined,
+		undefined,
+		{ [reservedIntervalIdKey]: id },
+	);
 	return interval;
 }
 

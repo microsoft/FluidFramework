@@ -11,7 +11,6 @@ export {
 	IntervalType,
 	IntervalDeltaOpType,
 	IntervalStickiness,
-	ISerializableIntervalPrivate,
 	SerializedIntervalDelta,
 	CompressedSerializedInterval,
 	endReferenceSlidingPreference,
