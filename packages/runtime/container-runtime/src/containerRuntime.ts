@@ -1981,6 +1981,8 @@ export class ContainerRuntime
 			const isSummarizerClient = this.clientDetails.type === summarizerClientType;
 
 			if (isSummarizerClient) {
+				// We want to dynamically import any thing inside summaryDelayLoadedModule module only when we are the summarizer client,
+				// so that all non summarizer clients don't have to load the code inside this module.
 				const module = await import(
 					/* webpackChunkName: "summarizerDelayLoadedModule" */ "./summary/index.js"
 				);
