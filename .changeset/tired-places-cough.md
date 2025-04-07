@@ -6,9 +6,9 @@
 "section": tree
 ---
 
-Provide access to tree content and stored schema without requiring a compatible view schema
+Provide alpha APIs for accessing tree content and stored schema without requiring a compatible view schema
 
-Adds a `ITreeAlpha` interface (which `ITree` can be down-casted to) that provides access to both the tree content and the schema.
+Adds an `ITreeAlpha` interface (which `ITree` can be down-casted to) that provides access to both the tree content and the schema.
 This allows inspecting the content saved in a SharedTree in a generic way that can work on any SharedTree.
 
 This can be combined with the existing `generateSchemaFromSimpleSchema` to generate a schema that can be used with [`IIree.viewWith`](https://fluidframework.com/docs/api/fluid-framework/viewabletree-interface#viewwith-methodsignature) to allow constructing a [`TreeView`](https://fluidframework.com/docs/api/fluid-framework/treeview-interface) for any SharedTree, regardless of its schema.
