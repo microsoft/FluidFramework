@@ -3,17 +3,17 @@
 "@fluidframework/tree": minor
 ---
 ---
-"section": feature
+"section": tree
 ---
 
 Provide access to tree content and stored schema without requiring a compatible view schema
 
-Adds `ITreeAlpha` (Which ITree can be down casted to) that exposes access to both the tree content and the schema.
-This allows inspecting the content saved in a shared tree in a generic way that can work on any shared tree.
+Adds a `ITreeAlpha` interface (which `ITree` can be down-casted to) that provides access to both the tree content and the schema.
+This allows inspecting the content saved in a SharedTree in a generic way that can work on any SharedTree.
 
-This can be combined with the existing `generateSchemaFromSimpleSchema` to generate a schema that can be used with [`IIree.viewWith`](https://fluidframework.com/docs/api/fluid-framework/viewabletree-interface#viewwith-methodsignature) to allow constructing a [`TreeView`](https://fluidframework.com/docs/api/fluid-framework/treeview-interface) for any shared tree, regardless of its schema.
+This can be combined with the existing `generateSchemaFromSimpleSchema` to generate a schema that can be used with [`IIree.viewWith`](https://fluidframework.com/docs/api/fluid-framework/viewabletree-interface#viewwith-methodsignature) to allow constructing a [`TreeView`](https://fluidframework.com/docs/api/fluid-framework/treeview-interface) for any SharedTree, regardless of its schema.
 
-Note that the resulting TypeScript typing for such a view will not be friendly: the TreeView APIs are designed for statically known schema. With care and a lot of type casts use is possible, but not recommended when avoidable: see disclaimer on `generateSchemaFromSimpleSchema`.
+Note that the resulting TypeScript typing for such a view will not be friendly: the `TreeView` APIs are designed for statically known schema. Using them is possible with care and a lot of type casts but not recommended if it can be avoided: see disclaimer on `generateSchemaFromSimpleSchema`.
 Example using `ITreeAlpha` and `generateSchemaFromSimpleSchema`:
 
 ```typescript
