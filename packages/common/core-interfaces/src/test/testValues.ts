@@ -369,7 +369,7 @@ export const readonlyObjectWithOptionalRecursion: ReadonlyObjectWithOptionalRecu
 export const objectWithEmbeddedRecursion = {
 	outer: objectWithOptionalRecursion,
 };
-export const readonlyOjectWithEmbeddedRecursion = {
+export const readonlyObjectWithEmbeddedRecursion = {
 	outer: readonlyObjectWithOptionalRecursion,
 } as const;
 export const objectWithSelfReference: ObjectWithOptionalRecursion = {};

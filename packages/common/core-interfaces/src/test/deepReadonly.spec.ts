@@ -114,7 +114,7 @@ import {
 	objectWithOptionalRecursion,
 	readonlyObjectWithOptionalRecursion,
 	objectWithEmbeddedRecursion,
-	readonlyOjectWithEmbeddedRecursion,
+	readonlyObjectWithEmbeddedRecursion,
 	objectWithAlternatingRecursion,
 	readonlyObjectWithAlternatingRecursion,
 	objectWithSymbolOrRecursion,
@@ -753,7 +753,7 @@ describe("DeepReadonly", () => {
 		});
 		it("object with deep type recursion", () => {
 			const result = makeReadonly(objectWithEmbeddedRecursion);
-			assertIdenticalTypes(result, readonlyOjectWithEmbeddedRecursion);
+			assertIdenticalTypes(result, readonlyObjectWithEmbeddedRecursion);
 		});
 		it("object with alternating type recursion", () => {
 			const result = makeReadonly(objectWithAlternatingRecursion);

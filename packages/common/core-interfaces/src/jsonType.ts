@@ -49,7 +49,7 @@ export type NonNullJsonObjectWith<T> =
  * ```typescript
  * let x: ReadonlyJsonTypeWith<never> = { a: 1 };
  * ```
- * does not prevent later `x = 5`. (Does prevent )
+ * does not prevent later `x = 5`. (Does prevent `x.a = 2`.)
  *
  * @beta
  */
