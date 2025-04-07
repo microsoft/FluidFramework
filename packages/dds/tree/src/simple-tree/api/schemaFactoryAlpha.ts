@@ -83,6 +83,7 @@ export class SchemaFactoryAlpha<
 		readonly createFromInsertable: unknown;
 	} {
 		return objectSchema(
+			this.scope,
 			this.scoped2(name),
 			fields,
 			true,
@@ -196,7 +197,14 @@ export class SchemaFactoryAlpha<
 		allowedTypes: T,
 		options?: NodeSchemaOptions<TCustomMetadata>,
 	): MapNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
-		return mapSchema(this.scoped2(name), allowedTypes, true, true, options?.metadata);
+		return mapSchema(
+			this.scope,
+			this.scoped2(name),
+			allowedTypes,
+			true,
+			true,
+			options?.metadata,
+		);
 	}
 
 	/**
@@ -240,7 +248,14 @@ export class SchemaFactoryAlpha<
 		allowedTypes: T,
 		options?: NodeSchemaOptions<TCustomMetadata>,
 	): ArrayNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
-		return arraySchema(this.scoped2(name), allowedTypes, true, true, options?.metadata);
+		return arraySchema(
+			this.scope,
+			this.scoped2(name),
+			allowedTypes,
+			true,
+			true,
+			options?.metadata,
+		);
 	}
 
 	/**

@@ -50,6 +50,8 @@ export class LeafNodeSchema<Name extends string, const T extends ValueSchema>
 
 	public readonly metadata: NodeSchemaMetadata = {};
 
+	public static readonly scope = "com.fluidframework.leaf";
+
 	public constructor(name: Name, t: T) {
 		this.identifier = name;
 		this.info = t;
@@ -65,7 +67,7 @@ function makeLeaf<Name extends string, const T extends ValueSchema>(
 	t: T,
 ): LeafSchema<Name, TreeValue<T>> & SimpleLeafNodeSchema {
 	// Names in this domain follow https://en.wikipedia.org/wiki/Reverse_domain_name_notation
-	return new LeafNodeSchema(`com.fluidframework.leaf.${name}`, t);
+	return new LeafNodeSchema(`${LeafNodeSchema.scope}.${name}`, t);
 }
 
 /**

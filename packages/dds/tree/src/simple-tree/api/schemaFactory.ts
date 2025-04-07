@@ -626,6 +626,7 @@ export class SchemaFactory<
 		T
 	> {
 		return objectSchema(
+			this.scope,
 			this.scoped(name),
 			fields,
 			true,
@@ -766,6 +767,7 @@ export class SchemaFactory<
 		undefined
 	> {
 		return mapSchema(
+			this.scope,
 			this.scoped(name),
 			allowedTypes,
 			implicitlyConstructable,
@@ -919,7 +921,13 @@ export class SchemaFactory<
 		T,
 		undefined
 	> {
-		return arraySchema(this.scoped(name), allowedTypes, implicitlyConstructable, customizable);
+		return arraySchema(
+			this.scope,
+			this.scoped(name),
+			allowedTypes,
+			implicitlyConstructable,
+			customizable,
+		);
 	}
 
 	/**
