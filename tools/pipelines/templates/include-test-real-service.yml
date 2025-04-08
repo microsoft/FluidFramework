@@ -370,10 +370,12 @@ stages:
               echo "DEBUG"
               echo "test workspace: ${{ parameters.testWorkspace }}"
               echo "pack?: ${{ parameters.testWorkspace }}/pack"
-              echo "list: ls -a ${{ parameters.testWorkspace }}/pack"
+              echo "list:"
+              ls -a ${{ parameters.testWorkspace }}/pack
               echo "pipelineWorkspace: $(Pipeline.Workspace)"
               # might need to install dependencies here
-              pnpm run trips-setup $SYSTEM_ACCESSTOKEN
+              tar --extract --verbose --file ${{ parameters.testWorkspace }}/pack/ff-internal/trips-setup-0.0.1.tgz
+              npm run trips-setup $SYSTEM_ACCESSTOKEN
 
         # run the test
         - task: Npm@1
