@@ -68,6 +68,7 @@ COPY packages/routerlicious/package*.json packages/routerlicious/
 COPY packages/routerlicious-base/package*.json packages/routerlicious-base/
 COPY packages/services/package*.json packages/services/
 COPY packages/services-client/package*.json packages/services-client/
+COPY packages/services-core/package*.json packages/services-core/
 COPY packages/services-ordering-kafkanode/package*.json packages/services-ordering-kafkanode/
 COPY packages/services-ordering-rdkafka/package*.json packages/services-ordering-rdkafka/
 COPY packages/services-ordering-zookeeper/package*.json packages/services-ordering-zookeeper/
@@ -77,7 +78,6 @@ COPY packages/services-utils/package*.json packages/services-utils/
 COPY packages/test-utils/package*.json packages/test-utils/
 COPY packages/protocol-base/package*.json packages/protocol-base/
 COPY packages/tinylicious/package*.json packages/tinylicious/
-COPY packages/services-core/package*.json packages/services-core/
 
 ENV PNPM_HOME="/pnpm"
 # Add package dependency's executables to the PATH. We also add global pnpm executables by including $PNPM_HOME,
