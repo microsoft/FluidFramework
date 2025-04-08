@@ -282,8 +282,9 @@ export function getTscUtils(path: string): TscUtil {
 		tscUtilPathCache.set(path, tscUtil);
 		tscUtilLibPathCache.set(tsPath, tscUtil);
 		return tscUtil;
-	} catch (e) {
-		throw new Error(`Failed to load typescript module for ${path}: ${e.message}`);
+	} catch (e: any) {
+		e.message = `Failed to load typescript module for '${path}'. 'typescript' dependency may be missing.: ${e.message}`;
+		throw e;
 	}
 }
 
