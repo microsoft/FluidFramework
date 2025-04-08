@@ -119,7 +119,7 @@
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/benchmark": "^0.50.0",
-		"@fluid-tools/build-cli": "^0.54.0",
+		"@fluid-tools/build-cli": "^0.55.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.55.0",
 		"@fluidframework/core-utils-previous": "npm:@fluidframework/core-utils@2.31.0",

@@ -36,7 +36,7 @@
 		"@emotion/react": "^11.13.3",
 		"@emotion/styled": "^11.13.0",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.54.0",
+		"@fluid-tools/build-cli": "^0.55.0",
 		"@fluidframework/ai-collab": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.55.0",

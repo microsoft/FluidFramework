@@ -105,7 +105,7 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
-		"@fluid-tools/build-cli": "^0.54.0",
+		"@fluid-tools/build-cli": "^0.55.0",
 		"@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@2.31.0",
 		"@fluidframework/azure-local-service": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",

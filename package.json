@@ -164,7 +164,7 @@
 		"@biomejs/biome": "~1.9.3",
 		"@changesets/cli": "^2.27.8",
 		"@fluid-private/changelog-generator-wrapper": "workspace:~",
-		"@fluid-tools/build-cli": "^0.54.0",
+		"@fluid-tools/build-cli": "^0.55.0",
 		"@fluid-tools/markdown-magic": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.55.0",
