@@ -91,7 +91,7 @@ export class OpGroupingManager {
 	 * Converts the given batch into a "grouped batch" - a batch with a single message of type "groupedBatch",
 	 * with contents being an array of the original batch's messages.
 	 *
-	 * If the group only has 1 message, it is returned as-is.
+	 * If the batch already has only 1 message, it is returned as-is.
 	 *
 	 * @remarks - Remember that a BatchMessage has its content JSON serialized, so the incoming batch message contents
 	 * must be parsed first, and then the type and contents mentioned above are hidden in that JSON serialization.

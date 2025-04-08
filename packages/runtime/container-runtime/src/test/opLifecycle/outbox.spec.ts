@@ -1139,8 +1139,4 @@ describe("Outbox", () => {
 			validateCounts(2, 1, 0);
 		});
 	});
-
-	describe("virtualizeBatch", () => {
-		it("should virtualize a batch", () => {});
-	});
 });
