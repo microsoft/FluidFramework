@@ -1827,6 +1827,10 @@ export class ContainerRuntime
 			this.attachState !== AttachState.Attached || this.hasPendingMessages();
 		context.updateDirtyContainerState(this.dirtyContainer);
 
+		// Reference Sequence Number may have just changed, and it must be consistent across a batch, so flush now.
+		// This is coverage for old loaders that don't call ContainerRuntime.process for non-runtime messages.
+		this.deltaManager.on("op", () => this.flush());
+
 		if (this.summariesDisabled) {
 			this.mc.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
 		} else {
@@ -2641,7 +2645,7 @@ export class ContainerRuntime
 
 		if (!this.disableFlushBeforeProcess) {
 			// Reference Sequence Number may be about to change, and it must be consistent across a batch, so flush now
-			this.outbox.flush();
+			this.flush();
 		}
 
 		this.ensureNoDataModelChanges(() => {
