@@ -13,7 +13,12 @@ import {
 
 import type { LocalContainerRuntimeMessage } from "../messageTypes.js";
 
-import { IBatch, type LocalBatchMessage, type OutboundSingletonBatch } from "./definitions.js";
+import {
+	IBatch,
+	type LocalBatch,
+	type LocalBatchMessage,
+	type OutboundSingletonBatch,
+} from "./definitions.js";
 
 /**
  * Grouping makes assumptions about the shape of message contents. This interface codifies those assumptions, but does not validate them.
@@ -97,7 +102,7 @@ export class OpGroupingManager {
 	 * @remarks - Remember that a BatchMessage has its content JSON serialized, so the incoming batch message contents
 	 * must be parsed first, and then the type and contents mentioned above are hidden in that JSON serialization.
 	 */
-	public groupBatch(batch: IBatch): OutboundSingletonBatch {
+	public groupBatch(batch: LocalBatch): OutboundSingletonBatch {
 		assert(this.shouldGroup(batch), 0x946 /* cannot group the provided batch */);
 
 		if (batch.messages.length >= 1000) {
@@ -156,7 +161,7 @@ export class OpGroupingManager {
 		}));
 	}
 
-	public shouldGroup(batch: IBatch): boolean {
+	public shouldGroup(batch: LocalBatch): boolean {
 		return (
 			// Grouped batching must be enabled
 			this.config.groupedBatchingEnabled &&

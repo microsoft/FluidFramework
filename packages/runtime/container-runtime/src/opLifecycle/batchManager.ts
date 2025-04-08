@@ -19,8 +19,8 @@ import {
 	IBatch,
 	IBatchCheckpoint,
 	type OutboundBatchMessage,
+	type LocalBatch,
 } from "./definitions.js";
-import { serializeOp } from "./opSerialization.js";
 import type { BatchStartInfo } from "./remoteMessageProcessor.js";
 
 export interface IBatchManagerOptions {
@@ -127,10 +127,7 @@ export class BatchManager {
 		reentrant: boolean,
 		currentClientSequenceNumber?: number,
 	): boolean {
-		//* Any way at all to avoid this?  Or delay it?
-		const stringified = JSON.stringify(message.serializedOp);
-
-		const contentSize = this.batchContentSize + (stringified?.length ?? 0);
+		const contentSize = this.batchContentSize + (message.serializedOp?.length ?? 0);
 		const opCount = this.pendingBatch.length;
 		this.hasReentrantOps = this.hasReentrantOps || reentrant;
 
@@ -161,8 +158,8 @@ export class BatchManager {
 	/**
 	 * Gets the pending batch and clears state for the next batch.
 	 */
-	public popBatch(batchId?: BatchId): IBatch {
-		const batch: IBatch = {
+	public popBatch(batchId?: BatchId): LocalBatch {
+		const batch: LocalBatch = {
 			messages: this.pendingBatch,
 			contentSizeInBytes: this.batchContentSize,
 			referenceSequenceNumber: this.referenceSequenceNumber,
@@ -198,7 +195,9 @@ export class BatchManager {
 					throw new LoggingError("Ops generated durning rollback", {
 						count,
 						...tagData(TelemetryDataTag.UserData, {
-							ops: serializeOp(this.pendingBatch.slice(startPoint).map((b) => b.serializedOp)),
+							ops: JSON.stringify(
+								this.pendingBatch.slice(startPoint).map((b) => b.serializedOp),
+							),
 						}),
 					});
 				}
@@ -207,7 +206,7 @@ export class BatchManager {
 	}
 }
 
-const addBatchMetadata = (batch: IBatch, batchId?: BatchId): IBatch => {
+const addBatchMetadata = (batch: LocalBatch, batchId?: BatchId): LocalBatch => {
 	const batchEnd = batch.messages.length - 1;
 
 	const firstMsg = batch.messages[0];

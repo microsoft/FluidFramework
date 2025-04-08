@@ -150,7 +150,6 @@ export class OpSplitter {
 			0x518 /* First message in the batch needs to be chunkable */,
 		);
 
-		//* FUTURE: Unnecessary code!
 		const restOfMessages = batch.messages.slice(1); // we expect these to be empty ops, created to reserve sequence numbers
 		assert(
 			restOfMessages.length === 0,

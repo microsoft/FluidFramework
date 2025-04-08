@@ -28,14 +28,15 @@ export type OutboundBatchMessage = IBatchMessage & {
 };
 
 //* Comment
+export type LocalBatch = IBatch<LocalBatchMessage[]>;
+
+//* Comment
 export type OutboundSingletonBatch = IBatch<[OutboundBatchMessage]>;
 
 /**
  * Batch interface used internally by the runtime.
  */
-export interface IBatch<
-	TMessages extends LocalBatchMessage[] | OutboundBatchMessage[] = LocalBatchMessage[],
-> {
+export interface IBatch<TMessages extends LocalBatchMessage[] | OutboundBatchMessage[]> {
 	/**
 	 * Sum of the in-memory content sizes of all messages in the batch.
 	 * If the batch is compressed, this number reflects the post-compression size.

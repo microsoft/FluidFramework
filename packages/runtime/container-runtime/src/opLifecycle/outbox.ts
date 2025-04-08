@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
-import { PendingMessageResubmitData2, PendingStateManager } from "../pendingStateManager.js";
+import { PendingMessageResubmitData, PendingStateManager } from "../pendingStateManager.js";
 
 import {
 	BatchManager,
@@ -31,6 +31,7 @@ import {
 	IBatchCheckpoint,
 	type OutboundBatchMessage,
 	type OutboundSingletonBatch,
+	type LocalBatch,
 } from "./definitions.js";
 import { OpCompressor } from "./opCompressor.js";
 import { OpGroupingManager } from "./opGroupingManager.js";
@@ -63,7 +64,7 @@ export interface IOutboxParameters {
 	readonly logger: ITelemetryBaseLogger;
 	readonly groupingManager: OpGroupingManager;
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
-	readonly reSubmit: (message: PendingMessageResubmitData2) => void;
+	readonly reSubmit: (message: PendingMessageResubmitData) => void;
 	readonly opReentrancy: () => boolean;
 	readonly closeContainer: (error?: ICriticalContainerError) => void;
 }
@@ -283,7 +284,7 @@ export class Outbox {
 			)
 		) {
 			throw new GenericError("BatchTooLarge", /* error */ undefined, {
-				//* opSize: message.contents?.length ?? 0,
+				opSize: message.serializedOp?.length ?? 0,
 				batchSize: batchManager.contentSizeInBytes,
 				count: batchManager.length,
 				limit: batchManager.options.hardLimit,
@@ -413,14 +414,14 @@ export class Outbox {
 	 *
 	 * @param rawBatch - the batch to be rebased
 	 */
-	private rebase(rawBatch: IBatch, batchManager: BatchManager): void {
+	private rebase(rawBatch: LocalBatch, batchManager: BatchManager): void {
 		assert(!this.rebasing, 0x6fb /* Reentrancy */);
 		assert(batchManager.options.canRebase, 0x9a7 /* BatchManager does not support rebase */);
 
 		this.rebasing = true;
 		for (const message of rawBatch.messages) {
 			this.params.reSubmit({
-				viableOp: message.serializedOp,
+				content: message.serializedOp,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 			});

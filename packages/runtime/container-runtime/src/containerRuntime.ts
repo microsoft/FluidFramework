@@ -193,10 +193,11 @@ import {
 	Outbox,
 	RemoteMessageProcessor,
 	type OutboundBatchMessage,
+	serializeOp,
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
-	PendingMessageResubmitData2,
+	PendingMessageResubmitData,
 	IPendingLocalState,
 	PendingStateManager,
 } from "./pendingStateManager.js";
@@ -2433,7 +2434,20 @@ export class ContainerRuntime
 		this.updateDocumentDirtyState(newState);
 	}
 
-	private async applyStashedOp(opContents: LocalContainerRuntimeMessage): Promise<unknown> {
+	/**
+	 * Parse an op's type and actual content from given serialized content
+	 * ! Note: this format needs to be in-line with what is set in the "ContainerRuntime.submit(...)" method
+	 */
+	private parseLocalOpContent(serializedContents?: string): LocalContainerRuntimeMessage {
+		assert(serializedContents !== undefined, 0x6d5 /* content must be defined */);
+		const message = JSON.parse(serializedContents) as LocalContainerRuntimeMessage;
+		assert(message.type !== undefined, 0x6d6 /* incorrect op content format */);
+		return message;
+	}
+
+	private async applyStashedOp(serializedOpContent: string): Promise<unknown> {
+		// Pending State contains serialized contents, so parse it here.
+		const opContents = this.parseLocalOpContent(serializedOpContent);
 		switch (opContents.type) {
 			case ContainerMessageType.FluidDataStoreOp:
 			case ContainerMessageType.Attach:
@@ -2469,6 +2483,7 @@ export class ContainerRuntime
 				// GC op is only sent in summarizer which should never have stashed ops.
 				throw new LoggingError("GC op not expected to be stashed in summarizer");
 			}
+			//* Hmmm
 			case "groupedBatch": {
 				throw new LoggingError("Empty batch not expected (PSM deals with it)");
 			}
@@ -4165,7 +4180,7 @@ export class ContainerRuntime
 					contents: idRange,
 				};
 				const idAllocationBatchMessage: LocalBatchMessage = {
-					serializedOp: idAllocationMessage,
+					serializedOp: serializeOp(idAllocationMessage),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				};
 				this.outbox.submitIdAllocation(idAllocationBatchMessage);
@@ -4228,7 +4243,7 @@ export class ContainerRuntime
 					contents: schemaChangeMessage,
 				};
 				this.outbox.submit({
-					serializedOp: msg,
+					serializedOp: serializeOp(msg),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				});
 			}
@@ -4236,7 +4251,7 @@ export class ContainerRuntime
 			const message: LocalBatchMessage = {
 				// This will encode any handles present in this op before serializing to string
 				// Note: handles may already have been encoded by the DDS layer, but encoding handles is idempotent so there's no problem.
-				serializedOp: containerRuntimeMessage,
+				serializedOp: serializeOp(containerRuntimeMessage),
 				metadata,
 				localOpMetadata,
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
@@ -4343,7 +4358,7 @@ export class ContainerRuntime
 	 * @remarks - If the "Offline Load" feature is enabled, the batchId is included in the resubmitted messages,
 	 * for correlation to detect container forking.
 	 */
-	private reSubmitBatch(batch: PendingMessageResubmitData2[], batchId: BatchId): void {
+	private reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId): void {
 		this.batchRunner.run(() => {
 			for (const message of batch) {
 				this.reSubmit(message);
@@ -4355,8 +4370,12 @@ export class ContainerRuntime
 		this.flush(this.offlineEnabled ? batchId : undefined);
 	}
 
-	private reSubmit(message: PendingMessageResubmitData2): void {
-		this.reSubmitCore(message.viableOp, message.localOpMetadata, message.opMetadata);
+	private reSubmit(message: PendingMessageResubmitData): void {
+		// Messages in the PendingStateManager and Outbox (both call resubmit) have serialized contents, so parse it here.
+		// Note that roundtripping handles through string like this means this parsed contents
+		// contains RemoteFluidObjectHandles, not the original handle.
+		const containerRuntimeMessage = this.parseLocalOpContent(message.content);
+		this.reSubmitCore(containerRuntimeMessage, message.localOpMetadata, message.opMetadata);
 	}
 
 	/**
@@ -4425,8 +4444,11 @@ export class ContainerRuntime
 		}
 	}
 
-	private rollback(viableOp: LocalContainerRuntimeMessage, localOpMetadata: unknown): void {
-		const { type, contents } = viableOp;
+	private rollback(content: string | undefined, localOpMetadata: unknown): void {
+		// Messages in the Outbox (which calls rollback) have serialized contents, so parse it here.
+		// Note that roundtripping handles through string like this means this parsed contents
+		// contains RemoteFluidObjectHandles, not the original handle.
+		const { type, contents } = this.parseLocalOpContent(content);
 		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp: {
 				// For operations, call rollbackDataStoreOp which will find the right store

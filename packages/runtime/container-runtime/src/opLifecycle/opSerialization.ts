@@ -31,9 +31,7 @@ export function ensureContentsDeserialized(mutableMessage: ISequencedDocumentMes
  * Before submitting an op to the Outbox, its contents must be serialized using this function.
  * @remarks - The deserialization on process happens via the function {@link ensureContentsDeserialized}.
  */
-export function serializeOp(
-	op: LocalContainerRuntimeMessage | LocalContainerRuntimeMessage[], //* Janky
-): string {
+export function serializeOp(op: LocalContainerRuntimeMessage): string {
 	return JSON.stringify(
 		op,
 		// replacer:

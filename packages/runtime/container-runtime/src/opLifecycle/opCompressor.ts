@@ -59,7 +59,7 @@ export class OpCompressor {
 			},
 		];
 
-		const compressedBatch = {
+		const compressedBatch: OutboundSingletonBatch = {
 			contentSizeInBytes: compressedContent.length,
 			messages,
 			referenceSequenceNumber: batch.referenceSequenceNumber,
