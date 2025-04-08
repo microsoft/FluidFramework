@@ -800,7 +800,6 @@ export const handlers: Handler[] = [
 					ret.push(`repository.url: "${json.repository.url}" !== "${repository}"`);
 				}
 
-				// file is already relative to the repo root, so we can use it as-is.
 				const relativePkgDir = path.dirname(path.relative(gitRoot, file)).replace(/\\/g, "/");
 
 				// The directory field should be omitted from the root package, so consider this a policy failure.
