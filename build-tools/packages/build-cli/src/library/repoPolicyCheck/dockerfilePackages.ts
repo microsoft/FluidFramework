@@ -58,7 +58,7 @@ export const handler: Handler = {
 		if (!dockerfileContents.includes(dockerfileCopyText)) {
 			// regex basically find the last of 3 or more consecutive COPY package lines
 			const endOfCopyLinesRegex =
-				/(copy\s+server\/routerlicious\/packages\/.*\/package\*\.json\s+server\/routerlicious\/packages\/.*\/\s*\n){3,}[^\S\r]*(?<newline>\r?\n)+/gi;
+				/(copy\s+packages\/.*\/package\*\.json\s+packages\/.*\/\s*\n){3,}[^\S\r]*(?<newline>\r?\n)+/gi;
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const regexMatch = endOfCopyLinesRegex.exec(dockerfileContents)!;
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion

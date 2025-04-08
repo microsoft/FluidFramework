@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
 # DisableDockerDetector "No feasible secure solution for OSS repos yet"
 
 # Use the manifest digest's sha256 hash to ensure we are always using the same version of the base image.
@@ -74,6 +77,7 @@ COPY packages/services-utils/package*.json packages/services-utils/
 COPY packages/test-utils/package*.json packages/test-utils/
 COPY packages/protocol-base/package*.json packages/protocol-base/
 COPY packages/tinylicious/package*.json packages/tinylicious/
+COPY packages/services-core/package*.json packages/services-core/
 
 ENV PNPM_HOME="/pnpm"
 # Add package dependency's executables to the PATH. We also add global pnpm executables by including $PNPM_HOME,
