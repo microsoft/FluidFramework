@@ -313,7 +313,7 @@ export class ConsensusOrderedCollection<T = any>
 					if (op.deserializedValue !== undefined) {
 						this.addCore(op.deserializedValue);
 					} else {
-						assert(op.value !=== undefined, "Invalid add op with no value");
+						assert(op.value !== undefined, "Invalid add op with no value");
 						this.addCore(this.deserializeValue(op.value, this.serializer) as T);
 					}
 					break;
