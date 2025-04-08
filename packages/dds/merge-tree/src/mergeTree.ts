@@ -2769,50 +2769,70 @@ export class MergeTree {
 		}
 
 		let pos = 0;
+		const stack: { node: IMergeNode; childIndex: number }[] = [
+			{ node: this.root, childIndex: 0 },
+		]; // Use a stack for iterative traversal
 
-		depthFirstNodeWalk(
-			this.root,
-			this.root.children[0],
-			(node) => {
-				if (endPos <= pos) {
-					return NodeAction.Exit;
-				}
+		while (stack.length > 0) {
+			const entry = stack.pop()!;
+			const { node } = entry;
 
+			// Defensive check to ensure node is defined
+			if (!node) {
+				continue;
+			}
+
+			if (node.isLeaf()) {
+				// Process leaf nodes
 				const len = this.nodeLength(node, visibilityPerspective);
 				const lenAtRefSeq =
 					(visibilityPerspective === perspective ? len : this.nodeLength(node, perspective)) ??
 					0;
 
-				// NOTE: This code ensures that obliterates have a chance to mark segments which have been inserted locally
-				// as also having been obliterated on the local client. With the introduction of RemoteObliteratePerspective,
-				// it's feasible we could remove it if the `nodeLength` calculation also respects that perspective for blocks
-				// and not just leaves.
-				const isUnackedAndInObliterate =
-					visibilityPerspective !== perspective &&
-					(!node.isLeaf() || opstampUtils.isLocal(node.insert));
-				if (
-					(len === undefined && lenAtRefSeq === 0) ||
-					(len === 0 && !isUnackedAndInObliterate && lenAtRefSeq === 0)
-				) {
-					return NodeAction.Skip;
+				if ((len === undefined && lenAtRefSeq === 0) || (len === 0 && lenAtRefSeq === 0)) {
+					continue; // Skip nodes with no length
 				}
 
 				const nextPos = pos + lenAtRefSeq;
-				// start is beyond the current node, so we can skip it
+
 				if (start >= nextPos) {
-					pos = nextPos;
-					return NodeAction.Skip;
+					pos = nextPos; // Skip nodes before the start position
+					continue;
 				}
 
-				if (node.isLeaf()) {
-					if (leaf(node, pos, start - pos, endPos - pos) === false) {
-						return NodeAction.Exit;
-					}
-					pos = nextPos;
+				if (leaf(node, pos, start - pos, endPos - pos) === false) {
+					return; // Exit early if the leaf callback returns false
 				}
-			},
-			undefined,
-			post,
-		);
+
+				pos = nextPos;
+			} else {
+				// Process internal nodes
+				const len = this.nodeLength(node, visibilityPerspective);
+				const lenAtRefSeq =
+					(visibilityPerspective === perspective ? len : this.nodeLength(node, perspective)) ??
+					0;
+
+				if ((len === undefined && lenAtRefSeq === 0) || (len === 0 && lenAtRefSeq === 0)) {
+					continue; // Skip nodes with no length
+				}
+
+				const nextPos = pos + lenAtRefSeq;
+
+				if (start >= nextPos) {
+					pos = nextPos; // Skip nodes before the start position
+					continue;
+				}
+
+				// Push children onto the stack in reverse order for depth-first traversal
+				const children = node.children;
+				for (let i = children.length - 1; i >= 0; i--) {
+					stack.push({ node: children[i], childIndex: i });
+				}
+
+				if (post) {
+					post(node); // Call post-processing callback if provided
+				}
+			}
+		}
 	}
 }
