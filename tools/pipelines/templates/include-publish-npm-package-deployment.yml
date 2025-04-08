@@ -97,3 +97,18 @@ jobs:
           - template: /tools/pipelines/templates/include-git-tag-steps.yml@self
             parameters:
               tagName: ${{ parameters.tagName }}
+
+- job: TagRelease
+  displayName: Tag Release
+  dependsOn: publish_${{ replace(parameters.environment, '-', '_') }}
+  # Only tag the repo if a tag name if provided.
+  condition: and(succeeded(), ne(parameters.tagName, ''))
+  steps:
+  - checkout: self
+    clean: true
+    lfs: '${{ parameters.checkoutSubmodules }}'
+    submodules: '${{ parameters.checkoutSubmodules }}'
+  - template: /tools/pipelines/templates/include-use-node-version.yml@self
+  - template: /tools/pipelines/templates/include-git-tag-steps.yml@self
+    parameters:
+      tagName: ${{ parameters.tagName }}
