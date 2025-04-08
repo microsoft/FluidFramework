@@ -360,9 +360,9 @@ export class Outbox {
 		}
 
 		const rawBatch = batchManager.popBatch(resubmittingBatchId);
-		const shouldGroup =
-			!disableGroupedBatching && this.params.groupingManager.shouldGroup(rawBatch);
-		if (batchManager.options.canRebase && rawBatch.hasReentrantOps === true && shouldGroup) {
+		const canGroup =
+			!disableGroupedBatching && this.params.groupingManager.groupedBatchingEnabled();
+		if (batchManager.options.canRebase && rawBatch.hasReentrantOps === true && canGroup) {
 			assert(!this.rebasing, 0x6fa /* A rebased batch should never have reentrant ops */);
 			// If a batch contains reentrant ops (ops created as a result from processing another op)
 			// it needs to be rebased so that we can ensure consistent reference sequence numbers
@@ -376,11 +376,9 @@ export class Outbox {
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
 		if (this.params.shouldSend()) {
-			const processedBatch = disableGroupedBatching
-				? rawBatch
-				: this.compressAndChunkBatch(
-						shouldGroup ? this.params.groupingManager.groupBatch(rawBatch) : rawBatch,
-					);
+			const processedBatch = canGroup
+				? this.compressAndChunkBatch(this.params.groupingManager.groupBatch(rawBatch))
+				: rawBatch;
 			clientSequenceNumber = this.sendBatch(processedBatch);
 			assert(
 				clientSequenceNumber === undefined || clientSequenceNumber >= 0,
@@ -445,8 +443,8 @@ export class Outbox {
 	 * or (C) a batch containing the last chunk.
 	 */
 	private compressAndChunkBatch(batch: IBatch): IBatch {
+		assert(batch.messages.length === 1, "Expected a singleton batch");
 		if (
-			batch.messages.length === 0 ||
 			this.params.config.compressionOptions === undefined ||
 			this.params.config.compressionOptions.minimumBatchSizeInBytes >
 				batch.contentSizeInBytes ||
