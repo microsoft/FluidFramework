@@ -77,8 +77,6 @@ export type IContainerRuntimeOptionsVersionDependent = Required<
  * - minVersionRequired: The minimum version of the container runtime that is required to use the version-dependent option
  * - legacyConfig: The default config of the option when the runtime does not meets the min version requirement
  * - modernConfig: The default config of the option when the runtime meets the min version requirement
- *
- * TODO: Double check with feature owners that all minVersionRequired are correct
  */
 const versionDependentOptionConfigMap: {
 	[K in keyof IContainerRuntimeOptionsVersionDependent]: {
@@ -93,7 +91,6 @@ const versionDependentOptionConfigMap: {
 		modernConfig: true,
 	},
 	compressionOptions: {
-		// Note: compression was added earlier, but it should be only enabled by default when clients have access to grouped batching.
 		minVersionRequired: "2.0.0",
 		legacyConfig: disabledCompressionConfig,
 		modernConfig: enabledCompressionConfig,
@@ -125,7 +122,6 @@ const versionDependentOptionConfigMap: {
 	gcOptions: {
 		// Explicitly disable running Sweep in compat mode "2". Although sweep is supported in 2.x, it is disabled by default.
 		// This setting explicitly disables it to be extra safe.
-		// TODO: Get actual version this should be enabled by default.
 		minVersionRequired: "3.0.0",
 		legacyConfig: {},
 		modernConfig: { enableGCSweep: true },
