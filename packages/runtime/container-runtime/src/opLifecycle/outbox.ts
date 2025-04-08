@@ -365,7 +365,10 @@ export class Outbox {
 		if (
 			batchManager.options.canRebase &&
 			rawBatch.hasReentrantOps === true &&
-			groupingEnabled
+			// Rebase if the reentrant ops will be grouped together - this ensures the grouped batch has a singular referenceSequenceNumber.
+			// Otherwise, no concerns about reentrant ops.
+			groupingEnabled &&
+			rawBatch.messages.length > 1
 		) {
 			assert(!this.rebasing, 0x6fa /* A rebased batch should never have reentrant ops */);
 			// If a batch contains reentrant ops (ops created as a result from processing another op)
