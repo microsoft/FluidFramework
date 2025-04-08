@@ -367,8 +367,13 @@ stages:
             script: |
               set -eu -o pipefail
 
+              echo "DEBUG"
+              echo "test workspace: ${{ parameters.testWorkspace }}"
+              echo "pack?: ${{ parameters.testWorkspace }}/pack"
+              echo "list: ls -a ${{ parameters.testWorkspace }}/pack"
+              echo "pipelineWorkspace: $(Pipeline.Workspace)"
               # might need to install dependencies here
-              npm run trips-setup $SYSTEM_ACCESSTOKEN
+              pnpm run trips-setup $SYSTEM_ACCESSTOKEN
 
         # run the test
         - task: Npm@1
