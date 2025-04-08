@@ -5,6 +5,7 @@
 
 import { SnapshotLegacy as Snapshot } from "@fluidframework/merge-tree/internal/test";
 import * as mocks from "@fluidframework/test-runtime-utils/internal";
+import { MersenneTwister19937, Random } from "random-js";
 
 import { SharedStringFactory } from "../sequenceFactory.js";
 import { SharedStringClass } from "../sharedString.js";
@@ -23,12 +24,13 @@ export const supportedVersions = new Map<string, any>([
 ]);
 
 function createIntervals(sharedString) {
+	const rand = new Random(MersenneTwister19937.seed(0));
 	const collection1 = sharedString.getIntervalCollection("collection1");
-	collection1.add({ start: 1, end: 5 });
+	collection1.add({ start: 1, end: 5, id: rand.uuid4() });
 
 	const collection2 = sharedString.getIntervalCollection("collection2");
 	for (let i = 0; i < sharedString.getLength() - 5; i += 100) {
-		collection2.add({ start: i, end: i + 5 });
+		collection2.add({ start: i, end: i + 5, id: rand.uuid4() });
 	}
 }
 
