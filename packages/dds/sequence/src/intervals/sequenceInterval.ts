@@ -35,7 +35,7 @@ import {
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { computeStickinessFromSide, sidesFromStickiness } from "../intervalCollection.js";
+import { computeStickinessFromSide } from "../intervalCollection.js";
 
 import {
 	ISerializableInterval,
@@ -306,23 +306,26 @@ export class SequenceIntervalClass implements SequenceInterval {
 	/**
 	 * {@inheritDoc ISerializableInterval.serialize}
 	 */
-	public serialize(props?: PropertySet): ISerializedInterval {
-		const startPosition = this.client.localReferencePositionToPosition(this.start);
-		const endPosition = this.client.localReferencePositionToPosition(this.end);
-		const { startSide, endSide } = sidesFromStickiness(this.stickiness);
+	public serialize(propsOverride?: PropertySet): ISerializedInterval {
+		const startSegment: ISegmentInternal | undefined = this.start.getSegment();
+		const endSegment: ISegmentInternal | undefined = this.end.getSegment();
+		const startPosition =
+			startSegment?.endpointType ?? this.client.localReferencePositionToPosition(this.start);
+		const endPosition =
+			endSegment?.endpointType ?? this.client.localReferencePositionToPosition(this.end);
 		return {
 			end: endPosition,
 			intervalType: this.intervalType,
 			sequenceNumber: this.client.getCurrentSeq(),
 			start: startPosition,
 			stickiness: this.stickiness,
-			startSide,
-			endSide,
-			properties: addProperties(undefined, {
-				...(props ?? this.properties),
+			startSide: this.startSide,
+			endSide: this.endSide,
+			properties: {
+				...(propsOverride ?? this.properties),
 				[reservedIntervalIdKey]: this.id,
 				[reservedRangeLabelsKey]: [this.label],
-			}),
+			},
 		} satisfies ISerializedInterval;
 	}
 

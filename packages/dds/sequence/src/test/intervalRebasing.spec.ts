@@ -481,8 +481,8 @@ describe("interval rebasing", () => {
 		//   ^
 		clients[0].sharedString.insertText(0, "A");
 		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
-		collection_0.add({ start: 0, end: 0 });
-		collection_0.change("0", { start: 0, end: 0 });
+		const interval = collection_0.add({ start: 0, end: 0 });
+		collection_0.change(interval.getIntervalId(), { start: 0, end: 0 });
 		clients[0].containerRuntime.connected = false;
 		clients[0].sharedString.insertText(0, "B");
 		clients[0].containerRuntime.connected = true;
@@ -508,7 +508,8 @@ describe("interval rebasing", () => {
 		clients[0].sharedString.insertText(0, "A");
 		clients[2].sharedString.insertText(0, "B");
 		const collection_0 = clients[2].sharedString.getIntervalCollection("comments");
-		collection_0.add({ start: 0, end: 0 });
+		const interval = collection_0.add({ start: 0, end: 0 });
+		const intervalId = interval.getIntervalId();
 		containerRuntimeFactory.processAllMessages();
 		await assertConsistent(clients);
 		clients[1].sharedString.removeRange(0, 1);
@@ -517,7 +518,7 @@ describe("interval rebasing", () => {
 		await assertConsistent(clients);
 		clients[1].sharedString.removeRange(0, 1);
 		const collection_1 = clients[0].sharedString.getIntervalCollection("comments");
-		collection_1.change("0", { start: 0, end: 0 });
+		collection_1.change(intervalId, { start: 0, end: 0 });
 		clients[2].sharedString.insertText(0, "C");
 		containerRuntimeFactory.processAllMessages();
 		await assertConsistent(clients);
@@ -541,10 +542,10 @@ describe("interval rebasing", () => {
 		containerRuntimeFactory.processAllMessages();
 		await assertConsistent(clients);
 		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
-		collection_0.add({ start: 0, end: 0 });
+		const interval = collection_0.add({ start: 0, end: 0 });
 		clients[0].containerRuntime.connected = false;
 		clients[0].sharedString.insertText(1, "B");
-		collection_0.change("0", { start: 1, end: 1 });
+		collection_0.change(interval.getIntervalId(), { start: 1, end: 1 });
 		clients[0].containerRuntime.connected = true;
 		containerRuntimeFactory.processAllMessages();
 		await assertConsistent(clients);

@@ -214,7 +214,6 @@ export class LocalIntervalCollection {
 		id: string,
 		start: SequencePlace,
 		end: SequencePlace,
-		intervalType: IntervalType,
 		props?: PropertySet,
 		op?: ISequencedDocumentMessage,
 	) {
@@ -224,7 +223,7 @@ export class LocalIntervalCollection {
 			start,
 			end,
 			this.client,
-			intervalType,
+			IntervalType.SlideOnRemove,
 			op,
 			undefined,
 			this.options.mergeTreeReferencesCanSlideToEndpoint,
@@ -1330,7 +1329,6 @@ export class IntervalCollection
 			id ?? uuid(),
 			toSequencePlace(startPos, startSide),
 			toSequencePlace(endPos, endSide),
-			IntervalType.SlideOnRemove,
 			props,
 		);
 
@@ -1886,7 +1884,6 @@ export class IntervalCollection
 			id,
 			toSequencePlace(serializedInterval.start, serializedInterval.startSide ?? Side.Before),
 			toSequencePlace(serializedInterval.end, serializedInterval.endSide ?? Side.Before),
-			serializedInterval.intervalType,
 			properties,
 			op,
 		);
