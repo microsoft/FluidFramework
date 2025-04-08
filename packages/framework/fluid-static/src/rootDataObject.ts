@@ -33,6 +33,14 @@ import {
 } from "./utils.js";
 
 /**
+ * Maps CompatibilityMode to a valid semver strings that will be passed to the container runtime.
+ */
+const compatibilityModeVersionMap: Readonly<Record<CompatibilityMode, string>> = {
+	"1": "1.0.0",
+	"2": "2.0.0",
+};
+
+/**
  * Input props for {@link RootDataObject.initializingFirstTime}.
  */
 export interface RootDataObjectProps {
@@ -211,7 +219,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		super({
 			registryEntries: [rootDataObjectFactory.registryEntry],
 			// Set the compatibility mode to the one provided by the user and ensure that it's a valid semver version.
-			runtimeOptions: { compatibilityMode: `${compatibilityMode}.0.0` },
+			runtimeOptions: { compatibilityMode: compatibilityModeVersionMap[compatibilityMode] },
 			provideEntryPoint,
 		});
 		this.rootDataObjectFactory = rootDataObjectFactory;
