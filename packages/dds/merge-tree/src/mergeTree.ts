@@ -2789,7 +2789,18 @@ export class MergeTree {
 					(visibilityPerspective === perspective ? len : this.nodeLength(node, perspective)) ??
 					0;
 
-				if ((len === undefined && lenAtRefSeq === 0) || (len === 0 && lenAtRefSeq === 0)) {
+				// NOTE: This code ensures that obliterates have a chance to mark segments which have been inserted locally
+				// as also having been obliterated on the local client. With the introduction of RemoteObliteratePerspective,
+				// it's feasible we could remove it if the `nodeLength` calculation also respects that perspective for blocks
+				// and not just leaves.
+				const isUnackedAndInObliterate =
+					visibilityPerspective !== perspective &&
+					(!node.isLeaf() || opstampUtils.isLocal(node.insert));
+
+				if (
+					(len === undefined && lenAtRefSeq === 0) ||
+					(len === 0 && !isUnackedAndInObliterate && lenAtRefSeq === 0)
+				) {
 					continue; // Skip nodes with no length
 				}
 
