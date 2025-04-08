@@ -217,6 +217,17 @@ export class LocalIntervalCollection {
 		props?: PropertySet,
 		op?: ISequencedDocumentMessage,
 	) {
+		// This check is intended to prevent scenarios where a random interval is created and then
+		// inserted into a collection. The aim is to ensure that the collection is created first
+		// then the user can create/add intervals based on the collection
+		if (
+			props?.[reservedRangeLabelsKey] !== undefined &&
+			props[reservedRangeLabelsKey][0] !== this.label
+		) {
+			throw new LoggingError(
+				"Adding an interval that belongs to another interval collection is not permitted",
+			);
+		}
 		const interval: SequenceIntervalClass = createSequenceInterval(
 			this.label,
 			id,
@@ -229,6 +240,7 @@ export class LocalIntervalCollection {
 			this.options.mergeTreeReferencesCanSlideToEndpoint,
 			props,
 		);
+
 		this.add(interval);
 		return interval;
 	}

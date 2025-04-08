@@ -1552,6 +1552,22 @@ describe("SharedString interval collections", () => {
 			sharedString.insertText(0, "xyz");
 		});
 
+		it("can not insert the interval which does not belong to this collection", () => {
+			assert.throws(
+				() => {
+					collection.add({
+						start: 1,
+						end: 1,
+						props: {
+							[reservedRangeLabelsKey]: ["test2"],
+						},
+					});
+				},
+				LoggingError,
+				"The collection is unable to add an interval which does not belong to it",
+			);
+		});
+
 		it("can not modify the interval's label after it has been inserted to the collection", () => {
 			const id = collection.add({ start: 1, end: 1 }).getIntervalId();
 			assert.throws(
