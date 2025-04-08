@@ -22,6 +22,7 @@ import {
 	type FieldKind,
 	type FieldSchema,
 	type ImplicitAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
@@ -33,6 +34,7 @@ import {
 	type TreeFieldFromImplicitField,
 	type TreeLeafValue,
 	type TreeNodeFromImplicitAllowedTypes,
+	type UnannotateImplicitAllowedTypes,
 	areImplicitFieldSchemaEqual,
 	normalizeAllowedTypes,
 	// eslint-disable-next-line import/no-internal-modules
@@ -261,6 +263,21 @@ describe("schemaTypes", () => {
 
 			type TC = NodeFromSchema<typeof CustomizedBoth>;
 			type _checkC = requireAssignableTo<TC, CustomizedBoth>;
+		}
+
+		// UnannotateImplicitAllowedTypes
+		{
+			{
+				type T = TreeNodeSchema;
+				type _check = requireAssignableTo<T, UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>>
+			}
+
+			{
+				type T = AllowedTypes;
+				type _check = requireAssignableTo<T, UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>>
+			}
+
+			type _check2 = requireAssignableTo<UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>, ImplicitAllowedTypes>
 		}
 	}
 
