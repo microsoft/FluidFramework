@@ -148,6 +148,7 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 			this.options?.log?.(`## Prompt\n\n"${userPrompt}"\n\n`);
 		}
 
+		let loggedChainOfThought = false;
 		let responseMessage: AIMessage;
 		do {
 			responseMessage =
@@ -157,8 +158,21 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 				failUsage("LLM client must support function calling or tool use.");
 
 			messages.push(responseMessage);
+
 			// We start with one message, and then add two more for each subsequent correspondence
 			this.options?.log?.(`# LLM Response ${(messages.length - 1) / 2}\n\n`);
+
+			// This is a special case for Claude Sonnet, the only supported model that exposes its Chain of Thought.
+			if (!loggedChainOfThought) {
+				for (const c of responseMessage.content) {
+					if (typeof c === "object" && c.type === "thinking") {
+						this.options?.log?.(`${c.thoughts}\n\n----\n\n`);
+						loggedChainOfThought = true;
+						break;
+					}
+				}
+			}
+
 			this.options?.log?.(`${responseMessage.text}\n\n`);
 			if (responseMessage.tool_calls !== undefined && responseMessage.tool_calls.length > 0) {
 				for (const toolCall of responseMessage.tool_calls) {
@@ -241,9 +255,10 @@ ${domainSchemaString}
 
 If the user asks you a question about the tree, you should inspect the state of the tree and answer the question.
 If the user asks you to edit the tree, you should use the ${this.editingTool.name} tool to accomplish the user-specified goal.
-If you have already edited the tree, review the latest state of the tree to see if it satisfies the user's request.
-If necessary, edit it again, otherwise inform the user that the request has been satisfied.`;
+After editing the tree, review the latest state of the tree to see if it satisfies the user's request.
+If you receive an error, or the request is not satisfied, you may use the ${this.thinkingTool.name} tool to think about the problem more, and then attempt to edit the tree again.
+Once the tree is in the desired state, you should inform the user that the request has been completed.`;
 	}
 }
 
-const maxMessages = 10; // TODO: Allow caller to provide this
+const maxMessages = 20; // TODO: Allow caller to provide this

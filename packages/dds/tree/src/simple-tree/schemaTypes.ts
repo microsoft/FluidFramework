@@ -436,6 +436,7 @@ export function normalizeFieldSchema(schema: ImplicitFieldSchema): FieldSchemaAl
 		? (schema as FieldSchemaAlpha)
 		: createFieldSchema(FieldKind.Required, schema);
 }
+
 /**
  * Normalizes a {@link ImplicitAllowedTypes} to a set of {@link TreeNodeSchema}s, by eagerly evaluating any
  * lazy schema declarations.
