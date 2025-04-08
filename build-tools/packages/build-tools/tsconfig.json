@@ -6,7 +6,7 @@
 		"composite": true,
 		"noImplicitAny": false,
 		"noImplicitThis": true,
-		"noUnusedLocals": false,
+		"noUnusedLocals": false, // Checked in lint instead so unused variables do not block compilation
 		"strictBindCallApply": true,
 		"strictFunctionTypes": true,
 		"strictNullChecks": true,
