@@ -94,10 +94,6 @@ jobs:
               feedKind: ${{ parameters.feedKind }}
               publishFlags: ${{ parameters.publishFlags }}
 
-          - template: /tools/pipelines/templates/include-git-tag-steps.yml@self
-            parameters:
-              tagName: ${{ parameters.tagName }}
-
 - job: TagRelease
   displayName: Tag Release
   dependsOn: publish_${{ replace(parameters.environment, '-', '_') }}
@@ -106,8 +102,6 @@ jobs:
   steps:
   - checkout: self
     clean: true
-    lfs: '${{ parameters.checkoutSubmodules }}'
-    submodules: '${{ parameters.checkoutSubmodules }}'
   - template: /tools/pipelines/templates/include-git-tag-steps.yml@self
     parameters:
       tagName: ${{ parameters.tagName }}
