@@ -15,37 +15,38 @@ import {
 } from "../simple-tree/index.js";
 import { TableSchema } from "../tableSchema.js";
 import { independentView, TreeAlpha } from "../shared-tree/index.js";
+import { validateUsageError } from "./utils.js";
+
+const schemaFactory = new SchemaFactoryAlpha("test");
+class Cell extends schemaFactory.object("table-cell", {
+	value: schemaFactory.string,
+}) {}
+
+class Column extends TableSchema.createColumn(schemaFactory) {}
+
+class Row extends TableSchema.createRow(schemaFactory, Cell, Column) {}
+
+class Table extends TableSchema.createTable(schemaFactory, Cell, Column, Row) {}
+
+function createTableTree() {
+	const treeView = independentView(
+		new TreeViewConfiguration({
+			schema: Table,
+			enableSchemaValidation: true,
+		}),
+		{ idCompressor: createIdCompressor() },
+	);
+
+	return {
+		Cell,
+		Column,
+		Row,
+		Table,
+		treeView,
+	};
+}
 
 describe("TableFactory unit tests", () => {
-	function createTableTree() {
-		const schemaFactory = new SchemaFactoryAlpha("test");
-		class Cell extends schemaFactory.object("table-cell", {
-			value: schemaFactory.string,
-		}) {}
-
-		class Column extends TableSchema.createColumn(schemaFactory) {}
-
-		class Row extends TableSchema.createRow(schemaFactory, Cell, Column) {}
-
-		class Table extends TableSchema.createTable(schemaFactory, Cell, Column, Row) {}
-
-		const treeView = independentView(
-			new TreeViewConfiguration({
-				schema: Table,
-				enableSchemaValidation: true,
-			}),
-			{ idCompressor: createIdCompressor() },
-		);
-
-		return {
-			Cell,
-			Column,
-			Row,
-			Table,
-			treeView,
-		};
-	}
-
 	/**
 	 * Compares a tree with an expected "concise" tree representation.
 	 * Fails if they are not equivalent.
@@ -168,8 +169,17 @@ describe("TableFactory unit tests", () => {
 			});
 		});
 
-		// Test TODOs:
-		// - Failure case: insert column that already exist in the tree.
+		// TODO: There is currently no policy from prohibiting insertion of a column that already exists.
+		// Once that work if finished, the usage error in this test should be updated, and the test can be unskipped.
+		it.skip("Appending existing column fails.", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({ rows: [], columns: [{ id: "column-a" }, { id: "column-b" }] });
+
+			assert.throws(
+				() => treeView.root.insertColumn({ column: { id: "column-b" } }),
+				validateUsageError(/Placeholder usage error/),
+			);
+		});
 	});
 
 	describe("Insert rows", () => {
@@ -279,7 +289,6 @@ describe("TableFactory unit tests", () => {
 				columns: [],
 			});
 
-			// By not specifying an index, the column should be appended to the end of the list.
 			treeView.root.insertRows({
 				rows: [
 					{
@@ -316,8 +325,37 @@ describe("TableFactory unit tests", () => {
 			});
 		});
 
-		// Test TODOs:
-		// - Failure case: insert row(s) that already exist in the tree.
+		// TODO: There is currently no policy from prohibiting insertion of a row that already exists.
+		// Once that work if finished, the usage error in this test should be updated, and the test can be unskipped.
+		it.skip("Inserting row that already exists fails", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({
+				rows: [
+					{
+						id: "row-a",
+						cells: {},
+					},
+					{
+						id: "row-b",
+						cells: {},
+					},
+				],
+				columns: [],
+			});
+
+			assert.throws(
+				() =>
+					treeView.root.insertRows({
+						rows: [
+							{
+								id: "row-a",
+								cells: {},
+							},
+						],
+					}),
+				validateUsageError(/Placeholder usage error/),
+			);
+		});
 	});
 
 	describe("Set cell", () => {
@@ -365,29 +403,312 @@ describe("TableFactory unit tests", () => {
 			});
 		});
 
-		// Test TODOs:
-		// - Failure case: insert cell that already exist in the tree.
-		// - Failure case: Insert cell with invalid row/column id.
+		// TODO: There is currently no policy from prohibiting insertion of a cell that already exists.
+		// Once that work if finished, the usage error in this test should be updated, and the test can be unskipped.
+		it.skip("inserting cell that already exists fails.", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({
+				columns: [
+					{
+						id: "column-0",
+					},
+				],
+				rows: [
+					{
+						id: "row-0",
+						cells: {},
+					},
+				],
+			});
+
+			treeView.root.setCell({
+				key: {
+					rowId: "row-0",
+					columnId: "column-0",
+				},
+				cell: { value: "Hello world!" },
+			});
+
+			// Insert the same cell again.
+			assert.throws(
+				() =>
+					treeView.root.setCell({
+						key: {
+							rowId: "row-0",
+							columnId: "column-0",
+						},
+						cell: { value: "Hello world!" },
+					}),
+				validateUsageError(/Placeholder usage error/),
+			);
+		});
+
+		// TODO: There is currently no policy from prohibiting insertion of an invalid cell.
+		// Once that work if finished, the usage error in this test should be updated, and the test can be unskipped.
+		it.skip("inserting invalid cell fails.", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({
+				columns: [
+					{
+						id: "column-0",
+					},
+				],
+				rows: [
+					{
+						id: "row-0",
+						cells: {},
+					},
+				],
+			});
+
+			assert.throws(
+				() =>
+					treeView.root.setCell({
+						key: {
+							rowId: "row-1",
+							columnId: "column-1",
+						},
+						cell: { value: "Hello world!" },
+					}),
+				validateUsageError(/Placeholder usage error/),
+			);
+		});
 	});
 
 	describe("Remove column", () => {
-		// Test TODOs:
-		// - Success case: remove existing column.
-		// - Failure case: specified column does not exist in the table.
+		it("remove existing column", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({
+				columns: [
+					{
+						id: "column-0",
+					},
+				],
+				rows: [
+					{
+						id: "row-0",
+						cells: {},
+					},
+				],
+			});
+
+			treeView.root.removeColumn(treeView.root.columns[0]);
+			assertEqualTrees(treeView.root, {
+				columns: [],
+				rows: [
+					{
+						id: "row-0",
+						cells: {},
+					},
+				],
+			});
+		});
+
+		// TODO: There is currently no policy from prohibiting removal of non-existant columns.
+		// Once that work if finished, the usage error in this test should be updated, and the test can be unskipped.
+		it.skip("removing column that does not exist on table fails", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({
+				columns: [],
+				rows: [],
+			});
+
+			assert.throws(
+				() => treeView.root.removeColumn(new Column({ id: "unhydrated-column" })),
+				validateUsageError(/Placeholder usage error/),
+			);
+		});
 	});
 
 	describe("Delete rows", () => {
-		// Test TODOs:
-		// - Success case: delete empty list (no-op).
-		// - Success case: delete single row.
-		// - Success case: delete multiple rows.
-		// - Failure case: 1 or more specified rows do not exist in the table.
+		it("delete empty list", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({
+				columns: [],
+				rows: [],
+			});
+
+			treeView.root.deleteAllRows();
+			assertEqualTrees(treeView.root, {
+				columns: [],
+				rows: [],
+			});
+		});
+
+		it("delete single row", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({
+				columns: [],
+				rows: [
+					{
+						id: "row-0",
+						cells: {},
+					},
+				],
+			});
+
+			treeView.root.deleteRows([treeView.root.rows[0]]);
+			assertEqualTrees(treeView.root, {
+				columns: [],
+				rows: [],
+			});
+		});
+
+		it("delete multiple rows", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({
+				columns: [],
+				rows: [
+					{
+						id: "row-0",
+						cells: {},
+					},
+					{
+						id: "row-1",
+						cells: {},
+					},
+				],
+			});
+
+			treeView.root.deleteRows([treeView.root.rows[0], treeView.root.rows[1]]);
+			assertEqualTrees(treeView.root, {
+				columns: [],
+				rows: [],
+			});
+		});
+
+		it("deleting single row that doesn't exist on table fails", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({
+				columns: [],
+				rows: [],
+			});
+
+			assert.throws(
+				() => treeView.root.deleteRows([new Row({ id: "row-0", cells: {} })]),
+				validateUsageError(/Expected non-negative index, got -1./),
+			);
+		});
+
+		it("deleting multiple rows that doesn't exist on table fails", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({
+				columns: [],
+				rows: [],
+			});
+
+			assert.throws(
+				() =>
+					treeView.root.deleteRows([
+						new Row({ id: "row-0", cells: {} }),
+						new Row({ id: "row-1", cells: {} }),
+					]),
+				validateUsageError(/Expected non-negative index, got -1./),
+			);
+		});
 	});
 
 	describe("Delete cell", () => {
-		// Test TODOs:
-		// - Success case: valid key with existing data.
-		// - Success case: valid key with no data.
-		// - Failure case: invalid key
+		it("delete valid cell with existing data.", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({
+				columns: [
+					{
+						id: "column-0",
+					},
+				],
+				rows: [
+					{
+						id: "row-0",
+						cells: {},
+					},
+				],
+			});
+			const cellKey = {
+				rowId: "row-0",
+				columnId: "column-0",
+			};
+			treeView.root.setCell({
+				key: cellKey,
+				cell: { value: "Hello world!" },
+			});
+			treeView.root.deleteCell(cellKey);
+			assertEqualTrees(treeView.root, {
+				columns: [
+					{
+						id: "column-0",
+					},
+				],
+				rows: [
+					{
+						id: "row-0",
+						cells: {},
+					},
+				],
+			});
+		});
+
+		it("delete valid cell with no data.", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({
+				columns: [
+					{
+						id: "column-0",
+					},
+				],
+				rows: [
+					{
+						id: "row-0",
+						cells: {},
+					},
+				],
+			});
+			const cellKey = {
+				rowId: "row-0",
+				columnId: "column-0",
+			};
+			treeView.root.deleteCell(cellKey);
+			assertEqualTrees(treeView.root, {
+				columns: [
+					{
+						id: "column-0",
+					},
+				],
+				rows: [
+					{
+						id: "row-0",
+						cells: {},
+					},
+				],
+			});
+		});
+
+		// TODO: There is currently no usage error for deleting invalid cells.
+		// Once that work if finished, the usage error in this test should be updated, and the test can be unskipped.
+		it.skip("deleting invalid cell fails.", () => {
+			const { treeView } = createTableTree();
+			treeView.initialize({
+				columns: [
+					{
+						id: "column-0",
+					},
+				],
+				rows: [
+					{
+						id: "row-0",
+						cells: {},
+					},
+				],
+			});
+			const invalidCellKey = {
+				rowId: "invalid-row",
+				columnId: "invalid-column",
+			};
+
+			assert.throws(
+				() => treeView.root.deleteCell(invalidCellKey),
+				validateUsageError(/Placeholder usage error./),
+			);
+		});
 	});
 });
