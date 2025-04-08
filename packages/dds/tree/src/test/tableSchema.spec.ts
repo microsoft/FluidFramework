@@ -170,7 +170,7 @@ describe("TableFactory unit tests", () => {
 		});
 
 		// TODO: There is currently no policy from prohibiting insertion of a column that already exists.
-		// Once that work if finished, the usage error in this test should be updated, and the test can be unskipped.
+		// Once that work is finished, the usage error in this test should be updated, and the test can be unskipped.
 		it.skip("Appending existing column fails.", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({ rows: [], columns: [{ id: "column-a" }, { id: "column-b" }] });
@@ -326,7 +326,7 @@ describe("TableFactory unit tests", () => {
 		});
 
 		// TODO: There is currently no policy from prohibiting insertion of a row that already exists.
-		// Once that work if finished, the usage error in this test should be updated, and the test can be unskipped.
+		// Once that work is finished, the usage error in this test should be updated, and the test can be unskipped.
 		it.skip("Inserting row that already exists fails", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
@@ -404,7 +404,7 @@ describe("TableFactory unit tests", () => {
 		});
 
 		// TODO: There is currently no policy from prohibiting insertion of a cell that already exists.
-		// Once that work if finished, the usage error in this test should be updated, and the test can be unskipped.
+		// Once that work is finished, the usage error in this test should be updated, and the test can be unskipped.
 		it.skip("inserting cell that already exists fails.", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
@@ -444,7 +444,7 @@ describe("TableFactory unit tests", () => {
 		});
 
 		// TODO: There is currently no policy from prohibiting insertion of an invalid cell.
-		// Once that work if finished, the usage error in this test should be updated, and the test can be unskipped.
+		// Once that work is finished, the usage error in this test should be updated, and the test can be unskipped.
 		it.skip("inserting invalid cell fails.", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
@@ -505,7 +505,7 @@ describe("TableFactory unit tests", () => {
 		});
 
 		// TODO: There is currently no policy from prohibiting removal of non-existant columns.
-		// Once that work if finished, the usage error in this test should be updated, and the test can be unskipped.
+		// Once that work is finished, the usage error in this test should be updated, and the test can be unskipped.
 		it.skip("removing column that does not exist on table fails", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
@@ -684,7 +684,7 @@ describe("TableFactory unit tests", () => {
 		});
 
 		// TODO: There is currently no usage error for deleting invalid cells.
-		// Once that work if finished, the usage error in this test should be updated, and the test can be unskipped.
+		// Once that work is finished, the usage error in this test should be updated, and the test can be unskipped.
 		it.skip("deleting invalid cell fails.", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
