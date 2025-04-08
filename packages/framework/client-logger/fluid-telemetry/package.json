@@ -105,7 +105,7 @@
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "^0.54.0",
-		"@fluidframework/build-tools": "^0.54.0",
+		"@fluidframework/build-tools": "^0.55.0",
 		"@fluidframework/test-utils": "workspace:~",
 		"@fluidframework/tinylicious-client": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
