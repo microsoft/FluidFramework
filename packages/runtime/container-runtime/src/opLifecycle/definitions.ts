@@ -6,13 +6,12 @@
 import type { IBatchMessage } from "@fluidframework/container-definitions/internal";
 
 import { CompressionAlgorithms } from "../containerRuntime.js";
-import type { LocalContainerRuntimeMessage } from "../messageTypes.js";
 
 /**
  * Local Batch message, before it is virtualized and sent to the ordering service
  */
 export interface LocalBatchMessage {
-	viableOp: LocalContainerRuntimeMessage;
+	serializedOp: string;
 	metadata?: Record<string, unknown>;
 	localOpMetadata?: unknown;
 	referenceSequenceNumber: number;

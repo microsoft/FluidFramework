@@ -71,10 +71,10 @@ export class OpGroupingManager {
 			this.config.groupedBatchingEnabled,
 			0xa00 /* cannot create empty grouped batch when grouped batching is disabled */,
 		);
-		const viableOp = {
+		const serializedOp = JSON.stringify({
 			type: OpGroupingManager.groupedBatchOp, //* Could be a different "emptyBatch" type?
 			contents: [],
-		} satisfies LocalContainerRuntimeMessage;
+		} satisfies LocalContainerRuntimeMessage);
 
 		return {
 			contentSizeInBytes: 0,
@@ -83,7 +83,7 @@ export class OpGroupingManager {
 					metadata: { batchId: resubmittingBatchId },
 					localOpMetadata: { emptyBatch: true },
 					referenceSequenceNumber,
-					viableOp,
+					serializedOp,
 				},
 			],
 			referenceSequenceNumber,
@@ -123,7 +123,7 @@ export class OpGroupingManager {
 		const serializedContent = JSON.stringify({
 			type: OpGroupingManager.groupedBatchOp,
 			contents: batch.messages.map<IGroupedMessage>((message) => ({
-				contents: message.viableOp,
+				contents: message.serializedOp,
 				metadata: message.metadata,
 				compression: message.compression,
 			})),

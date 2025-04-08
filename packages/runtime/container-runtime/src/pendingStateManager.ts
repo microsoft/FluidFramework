@@ -323,7 +323,7 @@ export class PendingStateManager implements IDisposable {
 
 		for (const message of batch) {
 			const {
-				viableOp,
+				serializedOp: viableOp,
 				referenceSequenceNumber,
 				localOpMetadata,
 				metadata: opMetadata,

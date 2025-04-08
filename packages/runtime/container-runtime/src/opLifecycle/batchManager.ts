@@ -128,7 +128,7 @@ export class BatchManager {
 		currentClientSequenceNumber?: number,
 	): boolean {
 		//* Any way at all to avoid this?  Or delay it?
-		const stringified = JSON.stringify(message.viableOp);
+		const stringified = JSON.stringify(message.serializedOp);
 
 		const contentSize = this.batchContentSize + (stringified?.length ?? 0);
 		const opCount = this.pendingBatch.length;
@@ -198,7 +198,7 @@ export class BatchManager {
 					throw new LoggingError("Ops generated durning rollback", {
 						count,
 						...tagData(TelemetryDataTag.UserData, {
-							ops: serializeOp(this.pendingBatch.slice(startPoint).map((b) => b.viableOp)),
+							ops: serializeOp(this.pendingBatch.slice(startPoint).map((b) => b.serializedOp)),
 						}),
 					});
 				}

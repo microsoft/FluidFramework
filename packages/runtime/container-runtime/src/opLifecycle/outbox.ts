@@ -420,7 +420,7 @@ export class Outbox {
 		this.rebasing = true;
 		for (const message of rawBatch.messages) {
 			this.params.reSubmit({
-				viableOp: message.viableOp,
+				viableOp: message.serializedOp,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 			});
