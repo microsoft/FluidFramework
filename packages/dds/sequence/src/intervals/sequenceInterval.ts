@@ -622,6 +622,14 @@ function createPositionReference(
 	);
 }
 
+export function createTransientInterval(
+	start: SequencePlace | undefined,
+	end: SequencePlace | undefined,
+	client: Client,
+) {
+	return createSequenceInterval("transient", start, end, client, IntervalType.Transient);
+}
+
 export function createSequenceInterval(
 	label: string,
 	start: SequencePlace | undefined,
