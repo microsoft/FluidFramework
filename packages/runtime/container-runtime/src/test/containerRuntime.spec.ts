@@ -3656,45 +3656,6 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it("compatibilityMode = 2.0.0-internal.4.1.0", async () => {
-				const compatibilityMode = "2.0.0-internal.4.1.0";
-				const logger = new MockLogger();
-				await ContainerRuntime.loadRuntime({
-					context: getMockContext({ logger }) as IContainerContext,
-					registryEntries: [],
-					existing: false,
-					runtimeOptions: {
-						compatibilityMode,
-					},
-					provideEntryPoint: mockProvideEntryPoint,
-				});
-
-				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
-					compatibilityMode,
-					summaryOptions: {},
-					gcOptions: {},
-					loadSequenceNumberVerification: "close",
-					flushMode: FlushMode.Immediate,
-					compressionOptions: {
-						minimumBatchSizeInBytes: 614400,
-						compressionAlgorithm: CompressionAlgorithms.lz4,
-					},
-					maxBatchSizeInBytes: 716800,
-					chunkSizeInBytes: 204800,
-					enableRuntimeIdCompressor: undefined,
-					enableGroupedBatching: true,
-					explicitSchemaControl: false,
-				};
-
-				logger.assertMatchAny([
-					{
-						eventName: "ContainerRuntime:ContainerLoadStats",
-						category: "generic",
-						options: JSON.stringify(expectedRuntimeOptions),
-					},
-				]);
-			});
-
 			it("compatibilityMode = 2.20.0", async () => {
 				const compatibilityMode = "2.20.0";
 				const logger = new MockLogger();
@@ -3711,7 +3672,7 @@ describe("Runtime", () => {
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
 					compatibilityMode,
 					summaryOptions: {},
-					gcOptions: { enableGCSweep: true },
+					gcOptions: {},
 					loadSequenceNumberVerification: "close",
 					flushMode: FlushMode.TurnBased,
 					compressionOptions: {
@@ -3820,6 +3781,46 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined, // idCompressor is undefined, since that represents a logical state (off)
 					enableGroupedBatching: true,
 					explicitSchemaControl: false,
+				};
+
+				logger.assertMatchAny([
+					{
+						eventName: "ContainerRuntime:ContainerLoadStats",
+						category: "generic",
+						options: JSON.stringify(expectedRuntimeOptions),
+					},
+				]);
+			});
+
+			// Skipped since 3.0.0 is not an existing FF version yet
+			it.skip("compatibilityMode = 3.0.0", async () => {
+				const compatibilityMode = "3.0.0";
+				const logger = new MockLogger();
+				await ContainerRuntime.loadRuntime({
+					context: getMockContext({ logger }) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {
+						compatibilityMode,
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
+					compatibilityMode,
+					summaryOptions: {},
+					gcOptions: { enableGCSweep: true },
+					loadSequenceNumberVerification: "close",
+					flushMode: FlushMode.TurnBased,
+					compressionOptions: {
+						minimumBatchSizeInBytes: 614400,
+						compressionAlgorithm: CompressionAlgorithms.lz4,
+					},
+					maxBatchSizeInBytes: 716800,
+					chunkSizeInBytes: 204800,
+					enableRuntimeIdCompressor: "on",
+					enableGroupedBatching: true,
+					explicitSchemaControl: true,
 				};
 
 				logger.assertMatchAny([

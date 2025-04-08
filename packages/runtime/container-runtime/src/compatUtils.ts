@@ -88,19 +88,19 @@ const versionDependentOptionConfigMap: {
 	};
 } = {
 	enableGroupedBatching: {
-		minVersionRequired: "2.0.0-internal.4.1.0",
+		minVersionRequired: "2.0.0",
 		legacyConfig: false,
 		modernConfig: true,
 	},
 	compressionOptions: {
 		// Note: compression was added earlier, but it should be only enabled by default when clients have access to grouped batching.
-		minVersionRequired: "2.0.0-internal.4.1.0",
+		minVersionRequired: "2.0.0",
 		legacyConfig: disabledCompressionConfig,
 		modernConfig: enabledCompressionConfig,
 	},
 
 	enableRuntimeIdCompressor: {
-		minVersionRequired: "2.0.0-rc.2.0.0",
+		minVersionRequired: "2.0.0",
 		// For IdCompressorMode `undefined` represents a logical state (off). However, to satisfy the Required<>
 		// constraint we need to have it defined, so we trick the type checker here.
 		legacyConfig: undefined as unknown as "on" | "delayed",
@@ -126,7 +126,7 @@ const versionDependentOptionConfigMap: {
 		// Explicitly disable running Sweep in compat mode "2". Although sweep is supported in 2.x, it is disabled by default.
 		// This setting explicitly disables it to be extra safe.
 		// TODO: Get actual version this should be enabled by default.
-		minVersionRequired: "2.10.0",
+		minVersionRequired: "3.0.0",
 		legacyConfig: {},
 		modernConfig: { enableGCSweep: true },
 	},
