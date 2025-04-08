@@ -22,4 +22,5 @@ export {
 	createSequenceInterval,
 	createPositionReferenceFromSegoff,
 	createTransientInterval,
+	getSerializedProperties,
 } from "./sequenceInterval.js";

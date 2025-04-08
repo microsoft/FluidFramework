@@ -17,7 +17,6 @@ import {
 	PropertySet,
 	ReferenceType,
 	SlidingPreference,
-	addProperties,
 	getSlideToSegoff,
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
@@ -27,6 +26,7 @@ import {
 	type ISegmentInternal,
 } from "@fluidframework/merge-tree/internal";
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
+import { v4 as uuid } from "uuid";
 
 import {
 	IIntervalCollectionOperation,
@@ -57,11 +57,10 @@ import {
 	createPositionReferenceFromSegoff,
 	createSequenceInterval,
 	endReferenceSlidingPreference,
+	getSerializedProperties,
 	startReferenceSlidingPreference,
 	type ISerializableInterval,
 } from "./intervals/index.js";
-
-export const reservedIntervalIdKey = "intervalId";
 
 export type ISerializedIntervalCollectionV1 = ISerializedInterval[];
 
@@ -159,7 +158,6 @@ export function computeStickinessFromSide(
 }
 
 export class LocalIntervalCollection {
-	private static readonly legacyIdPrefix = "legacy";
 	public readonly overlappingIntervalsIndex: ISequenceOverlappingIntervalsIndex;
 	public readonly idIntervalIndex: IIdIntervalIndex;
 	public readonly endIntervalIndex: IEndpointIndex;
@@ -185,15 +183,6 @@ export class LocalIntervalCollection {
 		]);
 	}
 
-	public createLegacyId(
-		start: number | "start" | "end",
-		end: number | "start" | "end",
-	): string {
-		// Create a non-unique ID based on start and end to be used on intervals that come from legacy clients
-		// without ID's.
-		return `${LocalIntervalCollection.legacyIdPrefix}${start}-${end}`;
-	}
-
 	/**
 	 * Validates that a serialized interval has the ID property. Creates an ID
 	 * if one does not already exist
@@ -201,27 +190,6 @@ export class LocalIntervalCollection {
 	 * @param serializedInterval - The interval to be checked
 	 * @returns The interval's existing or newly created id
 	 */
-	public ensureSerializedId(serializedInterval: ISerializedInterval): string {
-		let id: string | undefined = serializedInterval.properties?.[reservedIntervalIdKey];
-		if (id === undefined) {
-			// Back-compat: 0.39 and earlier did not have IDs on intervals. If an interval from such a client
-			// comes over the wire, create a non-unique one based on start/end.
-			// This will allow all clients to refer to this interval consistently.
-			id = this.createLegacyId(serializedInterval.start, serializedInterval.end);
-			const newProps = {
-				[reservedIntervalIdKey]: id,
-			};
-			serializedInterval.properties = addProperties(serializedInterval.properties, newProps);
-		}
-		// Make the ID immutable for safety's sake.
-		Object.defineProperty(serializedInterval.properties, reservedIntervalIdKey, {
-			configurable: false,
-			enumerable: true,
-			writable: false,
-		});
-
-		return id;
-	}
 
 	private removeIntervalFromIndexes(interval: SequenceIntervalClass) {
 		for (const index of this.indexes) {
@@ -243,6 +211,7 @@ export class LocalIntervalCollection {
 	}
 
 	public addInterval(
+		id: string,
 		start: SequencePlace,
 		end: SequencePlace,
 		intervalType: IntervalType,
@@ -251,6 +220,7 @@ export class LocalIntervalCollection {
 	) {
 		const interval: SequenceIntervalClass = createSequenceInterval(
 			this.label,
+			id,
 			start,
 			end,
 			this.client,
@@ -1239,12 +1209,11 @@ export class IntervalCollection
 		);
 		if (this.savedSerializedIntervals) {
 			for (const serializedInterval of this.savedSerializedIntervals) {
-				this.localCollection.ensureSerializedId(serializedInterval);
+				const { id, properties } = getSerializedProperties(serializedInterval);
 				const {
 					start: startPos,
 					end: endPos,
 					intervalType,
-					properties,
 					startSide,
 					endSide,
 				} = serializedInterval;
@@ -1258,6 +1227,7 @@ export class IntervalCollection
 						: endPos;
 				const interval = createSequenceInterval(
 					label,
+					id,
 					start,
 					end,
 					client,
@@ -1330,10 +1300,12 @@ export class IntervalCollection
 	 * {@inheritdoc IIntervalCollection.add}
 	 */
 	public add({
+		id,
 		start,
 		end,
 		props,
 	}: {
+		id?: string;
 		start: SequencePlace;
 		end: SequencePlace;
 		props?: PropertySet;
@@ -1352,11 +1324,10 @@ export class IntervalCollection
 			0x793 /* start and end cannot be undefined because they were not passed in as undefined */,
 		);
 
-		const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
-
 		this.assertStickinessEnabled(start, end);
 
 		const interval: SequenceIntervalClass = this.localCollection.addInterval(
+			id ?? uuid(),
 			toSequencePlace(startPos, startSide),
 			toSequencePlace(endPos, endSide),
 			IntervalType.SlideOnRemove,
@@ -1368,16 +1339,7 @@ export class IntervalCollection
 				setSlideOnRemove(interval.start);
 				setSlideOnRemove(interval.end);
 			}
-			const serializedInterval: ISerializedInterval = {
-				start: startPos,
-				end: endPos,
-				intervalType: IntervalType.SlideOnRemove,
-				properties: { ...interval.properties },
-				sequenceNumber: this.client?.getCurrentSeq() ?? 0,
-				stickiness,
-				startSide,
-				endSide,
-			};
+			const serializedInterval: ISerializedInterval = interval.serialize();
 			const localSeq = this.getNextLocalSeq();
 			if (this.isCollaborating) {
 				this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
@@ -1490,7 +1452,8 @@ export class IntervalCollection
 					setSlideOnRemove(newInterval.end);
 				}
 			}
-			const serializedInterval: SerializedIntervalDelta = interval.serialize();
+			// Emit a property bag containing the ID and the other (if any) properties changed
+			const serializedInterval: SerializedIntervalDelta = interval.serialize(props ?? {});
 			const { startPos, startSide, endPos, endSide } = endpointPosAndSide(start, end);
 			const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
 			serializedInterval.start = startPos;
@@ -1498,11 +1461,6 @@ export class IntervalCollection
 			serializedInterval.startSide = startSide;
 			serializedInterval.endSide = endSide;
 			serializedInterval.stickiness = stickiness;
-			// Emit a property bag containing the ID and the other (if any) properties changed
-			serializedInterval.properties = {
-				[reservedIntervalIdKey]: interval.getIntervalId(),
-				...props,
-			};
 			const localSeq = this.getNextLocalSeq();
 			if (this.isCollaborating) {
 				this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
@@ -1571,7 +1529,7 @@ export class IntervalCollection
 
 	private removePendingChange(serializedInterval: SerializedIntervalDelta) {
 		// Change ops always have an ID.
-		const id: string = serializedInterval.properties?.[reservedIntervalIdKey];
+		const { id } = getSerializedProperties(serializedInterval);
 		if (serializedInterval.start !== undefined) {
 			this.removePendingChangeHelper(id, this.pendingChangesStart, serializedInterval);
 		}
@@ -1633,7 +1591,7 @@ export class IntervalCollection
 		// Note that the ID is in the property bag only to allow us to find the interval.
 		// This API cannot change the ID, and writing to the ID property will result in an exception. So we
 		// strip it out of the properties here.
-		const { [reservedIntervalIdKey]: id, ...newProps } = serializedInterval.properties ?? {};
+		const { id, properties } = getSerializedProperties(serializedInterval);
 		assert(id !== undefined, 0x3fe /* id must exist on the interval */);
 		const interval: SequenceIntervalClass | undefined = this.getIntervalById(id);
 		if (!interval) {
@@ -1642,7 +1600,7 @@ export class IntervalCollection
 		}
 
 		if (local) {
-			interval.ackPropertiesChange(newProps, op);
+			interval.ackPropertiesChange(properties, op);
 
 			this.ackInterval(interval, op);
 		} else {
@@ -1670,7 +1628,7 @@ export class IntervalCollection
 						op,
 					) ?? interval;
 			}
-			const deltaProps = newInterval.changeProperties(newProps, op);
+			const deltaProps = newInterval.changeProperties(properties, op);
 
 			if (this.onDeserialize) {
 				this.onDeserialize(newInterval);
@@ -1680,7 +1638,7 @@ export class IntervalCollection
 				this.emitChange(newInterval, interval, local, false, op);
 			}
 
-			const changedProperties = Object.keys(newProps).length > 0;
+			const changedProperties = Object.keys(properties).length > 0;
 			if (changedProperties) {
 				this.emit("propertyChanged", interval, deltaProps, local, op);
 				this.emit("changed", interval, deltaProps, undefined, local, false);
@@ -1726,12 +1684,11 @@ export class IntervalCollection
 		}
 
 		const { intervalType, properties, stickiness, startSide, endSide } = serializedInterval;
-
+		const { id } = getSerializedProperties(serializedInterval);
 		const { start: startRebased, end: endRebased } =
 			this.localSeqToRebasedInterval.get(localSeq) ?? this.computeRebasedPositions(localSeq);
 
-		const intervalId = properties?.[reservedIntervalIdKey];
-		const localInterval = this.localCollection?.idIntervalIndex.getIntervalById(intervalId);
+		const localInterval = this.localCollection?.idIntervalIndex.getIntervalById(id);
 
 		const rebased: SerializedIntervalDelta = {
 			start: startRebased,
@@ -1747,10 +1704,10 @@ export class IntervalCollection
 		if (
 			opName === "change" &&
 			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when .hasPendingChangeStart returns false.
-			(this.hasPendingChangeStart(intervalId) || this.hasPendingChangeEnd(intervalId))
+			(this.hasPendingChangeStart(id) || this.hasPendingChangeEnd(id))
 		) {
 			this.removePendingChange(serializedInterval);
-			this.addPendingChange(intervalId, rebased);
+			this.addPendingChange(id, rebased);
 		}
 
 		// if the interval slid off the string, rebase the op to be a noop and delete the interval.
@@ -1822,7 +1779,7 @@ export class IntervalCollection
 			endReferenceSlidingPreference(interval.stickiness),
 		);
 
-		const id = interval.properties[reservedIntervalIdKey];
+		const id = interval.getIntervalId();
 		const hasPendingStartChange = this.hasPendingChangeStart(id);
 		const hasPendingEndChange = this.hasPendingChangeEnd(id);
 
@@ -1906,13 +1863,14 @@ export class IntervalCollection
 		op: ISequencedDocumentMessage,
 		localOpMetadata: IMapMessageLocalMetadata | undefined,
 	) {
+		const { id, properties } = getSerializedProperties(serializedInterval);
+
 		if (local) {
 			assert(
 				localOpMetadata !== undefined,
 				0x553 /* op metadata should be defined for local op */,
 			);
 			this.localSeqToSerializedInterval.delete(localOpMetadata.localSeq);
-			const id: string = serializedInterval.properties?.[reservedIntervalIdKey];
 			const localInterval = this.getIntervalById(id);
 			if (localInterval) {
 				this.ackInterval(localInterval, op);
@@ -1924,13 +1882,12 @@ export class IntervalCollection
 			throw new LoggingError("attachSequence must be called");
 		}
 
-		this.localCollection.ensureSerializedId(serializedInterval);
-
 		const interval: SequenceIntervalClass = this.localCollection.addInterval(
+			id,
 			toSequencePlace(serializedInterval.start, serializedInterval.startSide ?? Side.Before),
 			toSequencePlace(serializedInterval.end, serializedInterval.endSide ?? Side.Before),
 			serializedInterval.intervalType,
-			serializedInterval.properties,
+			properties,
 			op,
 		);
 
@@ -1961,7 +1918,7 @@ export class IntervalCollection
 			throw new LoggingError("attach must be called prior to deleting intervals");
 		}
 
-		const id = this.localCollection.ensureSerializedId(serializedInterval);
+		const { id } = getSerializedProperties(serializedInterval);
 		const interval = this.localCollection.idIntervalIndex.getIntervalById(id);
 		if (interval) {
 			this.deleteExistingInterval(interval, local, op);

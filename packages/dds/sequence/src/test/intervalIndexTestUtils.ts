@@ -17,8 +17,6 @@ import {
 } from "../intervals/index.js";
 import type { ISharedString } from "../sharedString.js";
 
-const reservedIntervalIdKey = "intervalId";
-
 export interface RandomIntervalOptions {
 	random: IRandom;
 	count: number;
@@ -68,14 +66,11 @@ export function createTestSequenceInterval(client: TestClient, p1: number, p2: n
 	const id = `${currentId++}`;
 	const interval = createSequenceInterval(
 		"test",
+		id,
 		p1,
 		p2,
 		client,
 		IntervalType.SlideOnRemove,
-		undefined,
-		undefined,
-		undefined,
-		{ [reservedIntervalIdKey]: id },
 	);
 	return interval;
 }
