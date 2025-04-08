@@ -306,27 +306,38 @@ export class SequenceIntervalClass implements SequenceInterval {
 	/**
 	 * {@inheritDoc ISerializableInterval.serialize}
 	 */
-	public serialize(propsOverride?: PropertySet): ISerializedInterval {
+	public serialize(): ISerializedInterval {
+		return this.serializeDelta(this.properties, true, true) as ISerializedInterval;
+	}
+
+	public serializeDelta(
+		props: PropertySet | undefined,
+		includeStart: boolean,
+		includeEnd: boolean,
+	): SerializedIntervalDelta {
 		const startSegment: ISegmentInternal | undefined = this.start.getSegment();
 		const endSegment: ISegmentInternal | undefined = this.end.getSegment();
-		const startPosition =
-			startSegment?.endpointType ?? this.client.localReferencePositionToPosition(this.start);
-		const endPosition =
-			endSegment?.endpointType ?? this.client.localReferencePositionToPosition(this.end);
+		const startPosition = includeStart
+			? (startSegment?.endpointType ??
+				this.client.localReferencePositionToPosition(this.start))
+			: undefined;
+		const endPosition = includeEnd
+			? (endSegment?.endpointType ?? this.client.localReferencePositionToPosition(this.end))
+			: undefined;
 		return {
 			end: endPosition,
 			intervalType: this.intervalType,
 			sequenceNumber: this.client.getCurrentSeq(),
 			start: startPosition,
 			stickiness: this.stickiness,
-			startSide: this.startSide,
-			endSide: this.endSide,
+			startSide: includeStart ? this.startSide : undefined,
+			endSide: includeEnd ? this.endSide : undefined,
 			properties: {
-				...(propsOverride ?? this.properties),
+				...props,
 				[reservedIntervalIdKey]: this.id,
 				[reservedRangeLabelsKey]: [this.label],
 			},
-		} satisfies ISerializedInterval;
+		} satisfies SerializedIntervalDelta;
 	}
 
 	/**

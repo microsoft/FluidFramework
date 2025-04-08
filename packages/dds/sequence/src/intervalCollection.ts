@@ -1463,14 +1463,10 @@ export class IntervalCollection
 				}
 			}
 			// Emit a property bag containing the ID and the other (if any) properties changed
-			const serializedInterval: SerializedIntervalDelta = interval.serialize(props ?? {});
-			const { startPos, startSide, endPos, endSide } = endpointPosAndSide(start, end);
-			const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
-			serializedInterval.start = startPos;
-			serializedInterval.end = endPos;
-			serializedInterval.startSide = startSide;
-			serializedInterval.endSide = endSide;
-			serializedInterval.stickiness = stickiness;
+			const serializedInterval: SerializedIntervalDelta = (
+				newInterval ?? interval
+			).serializeDelta(props, start !== undefined, end !== undefined);
+
 			const localSeq = this.getNextLocalSeq();
 			if (this.isCollaborating) {
 				this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
