@@ -18,7 +18,7 @@ import type {
 	IEventProvider,
 	IFluidHandleContext,
 	IFluidHandleInternal,
-	IFluidHandleInternalWithMetadata,
+	IFluidHandleInternalPlaceholder,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
@@ -57,35 +57,6 @@ import {
 } from "./blobManagerSnapSum.js";
 
 /**
- * The BlobManager produces BlobHandles during operation. In older versions of Fluid, these
- * handles were assumed to only exist if their respective blob was attached and available to
- * remote clients - these handles are NOT annotated with metadata. Now, the handle may exist
- * prior to remote availability while the source client completes the upload/attach of the
- * blob - these handles ARE annotated with metadata.
- */
-interface IBlobManagerHandleMetadata {
-	/**
-	 * Notes that this is a blob handle, and also signifies that it was created after the change
-	 * to permit the handle's existence before the blob attach completes.
-	 */
-	readonly type: "blob";
-	/**
-	 * If present, we expect this handle's blob to already be blob-attached (the BlobAttach op
-	 * has been ack'd and we should be able to find it in the redirect table). Used in the
-	 * createBlobLegacy() flow.
-	 */
-	readonly attached?: true;
-}
-
-const isBlobManagerHandleMetadata = (
-	metadata: unknown,
-): metadata is IBlobManagerHandleMetadata =>
-	typeof metadata === "object" &&
-	metadata !== null &&
-	"type" in metadata &&
-	metadata.type === "blob";
-
-/**
  * This class represents blob (long string)
  * This object is used only when creating (writing) new blob and serialization purposes.
  * De-serialization process goes through FluidObjectHandle and request flow:
@@ -94,7 +65,7 @@ const isBlobManagerHandleMetadata = (
  */
 export class BlobHandle
 	extends FluidHandleBase<ArrayBufferLike>
-	implements IFluidHandleInternalWithMetadata<ArrayBufferLike>
+	implements IFluidHandleInternalPlaceholder<ArrayBufferLike>
 {
 	private attached: boolean = false;
 
@@ -104,19 +75,14 @@ export class BlobHandle
 
 	public readonly absolutePath: string;
 
-	public readonly metadata: Readonly<Record<string, string | number | boolean>>;
-
 	constructor(
 		public readonly path: string,
 		public readonly routeContext: IFluidHandleContext,
 		public get: () => Promise<ArrayBufferLike>,
-		attached: boolean,
+		public readonly placeholder: boolean,
 		private readonly onAttachGraph?: () => void,
 	) {
 		super();
-		this.metadata = (
-			attached ? { type: "blob", attached } : { type: "blob" }
-		) satisfies IBlobManagerHandleMetadata;
 		this.absolutePath = generateHandleContextPath(path, this.routeContext);
 	}
 
@@ -403,14 +369,10 @@ export class BlobManager {
 	/**
 	 * Retrieve the blob with the given local blob id.
 	 * @param blobId - The local blob id.  Likely coming from a handle.
-	 * @param handleMetadata - The metadata from the handle used to retrieve the blob.  Lets us know whether
-	 * the handle is expected to exist prior to the blob's attach and general availability to remote clients.
+	 * @param placeholder - Whether we are requesting a placeholder; a blob which may not be available yet.
 	 * @returns A promise which resolves to the blob contents
 	 */
-	public async getBlob(
-		blobId: string,
-		handleMetadata?: Readonly<Record<string, string | number | boolean>> | undefined,
-	): Promise<ArrayBufferLike> {
+	public async getBlob(blobId: string, placeholder: boolean): Promise<ArrayBufferLike> {
 		// Verify that the blob is not deleted, i.e., it has not been garbage collected. If it is, this will throw
 		// an error, failing the call.
 		this.verifyBlobNotDeleted(blobId);
@@ -433,10 +395,9 @@ export class BlobManager {
 			storageId = blobId;
 		} else {
 			const attachedStorageId = this.redirectTable.get(blobId);
-			if (!isBlobManagerHandleMetadata(handleMetadata) || handleMetadata.attached) {
-				// Only new blob handles NOT explicitly declared as attached (as annotated with metadata)
-				// are permitted to exist without yet knowing their storage id. Old handles and handles with
-				// this explicit annotation must already be associated with a storage id.
+			if (!placeholder) {
+				// Only blob handles explicitly marked as placeholder handles are permitted to exist without
+				// yet knowing their storage id. Otherwise they must already be associated with a storage id.
 				assert(attachedStorageId !== undefined, 0x11f /* "requesting unknown blobs" */);
 			}
 			// If we didn't find it in the redirectTable, assume the attach op is coming eventually and wait.
@@ -491,15 +452,15 @@ export class BlobManager {
 		return new BlobHandle(
 			getGCNodePathFromBlobId(localId),
 			this.routeContext,
-			async () => this.getBlob(localId),
-			true, // attached
+			async () => this.getBlob(localId, false),
+			false, // placeholder
 			callback,
 		);
 	}
 
 	private async createBlobDetached(
 		blob: ArrayBufferLike,
-	): Promise<IFluidHandleInternalWithMetadata<ArrayBufferLike>> {
+	): Promise<IFluidHandleInternalPlaceholder<ArrayBufferLike>> {
 		// Blobs created while the container is detached are stored in IDetachedBlobStorage.
 		// The 'IDocumentStorageService.createBlob()' call below will respond with a localId.
 		const response = await this.storage.createBlob(blob);
@@ -510,7 +471,7 @@ export class BlobManager {
 	public async createBlob(
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
-	): Promise<IFluidHandleInternalWithMetadata<ArrayBufferLike>> {
+	): Promise<IFluidHandleInternalPlaceholder<ArrayBufferLike>> {
 		if (this.runtime.attachState === AttachState.Detached) {
 			return this.createBlobDetached(blob);
 		}
@@ -533,7 +494,7 @@ export class BlobManager {
 	private async createBlobLegacy(
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
-	): Promise<IFluidHandleInternalWithMetadata<ArrayBufferLike>> {
+	): Promise<IFluidHandleInternalPlaceholder<ArrayBufferLike>> {
 		if (signal?.aborted) {
 			throw this.createAbortError();
 		}
@@ -566,14 +527,14 @@ export class BlobManager {
 
 	private createBlobPlaceholder(
 		blob: ArrayBufferLike,
-	): IFluidHandleInternalWithMetadata<ArrayBufferLike> {
+	): IFluidHandleInternalPlaceholder<ArrayBufferLike> {
 		const localId = this.localBlobIdGenerator();
 
 		return new BlobHandle(
 			getGCNodePathFromBlobId(localId),
 			this.routeContext,
 			async () => blob,
-			false, // attached
+			true, // placeholder
 			() => {
 				const pendingEntry: PendingBlob = {
 					blob,

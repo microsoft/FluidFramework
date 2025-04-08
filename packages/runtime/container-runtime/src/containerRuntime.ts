@@ -2260,19 +2260,12 @@ export class ContainerRuntime
 			}
 
 			if (id === blobManagerBasePath && requestParser.isLeaf(2)) {
-				if (
-					!this.blobManager.hasBlob(requestParser.pathParts[1]) &&
-					requestParser.headers?.[RuntimeHeaders.wait] === false
-				) {
+				const placeholder = requestParser.headers?.[RuntimeHeaders.wait] === true;
+				if (!this.blobManager.hasBlob(requestParser.pathParts[1]) && !placeholder) {
 					return create404Response(request);
 				}
 
-				const blob = await this.blobManager.getBlob(
-					requestParser.pathParts[1],
-					requestParser.headers?.[RuntimeHeaders.metadata] as
-						| Readonly<Record<string, string | number | boolean>>
-						| undefined,
-				);
+				const blob = await this.blobManager.getBlob(requestParser.pathParts[1], placeholder);
 
 				return {
 					status: 200,
