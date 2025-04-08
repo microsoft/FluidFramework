@@ -71,8 +71,11 @@ export class HandleCache implements IVectorConsumer<Handle> {
 
 	/**
 	 * Used by {@link HandleCache.cacheMiss} to retrieve handles for a range of positions.
+	 * @param start - The start position (inclusive).
+	 * @param end - The end position (exclusive).
+	 * @param handles - The array to populate with handles. Note that it is mutated in place.
 	 */
-	private getHandles(start: number, end: number, handles: Handle[]): Handle[] {
+	private getHandles(start: number, end: number, handles: Handle[]): void {
 		// TODO: This can be accelerated substantially using 'walkSegments()'.  The only catch
 		//       is that
 
@@ -84,8 +87,6 @@ export class HandleCache implements IVectorConsumer<Handle> {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			handles.push(asPerm.start + offset!);
 		}
-
-		return handles;
 	}
 
 	private cacheMiss(position: number): Handle {
