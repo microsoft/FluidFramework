@@ -368,13 +368,10 @@ stages:
               set -eu -o pipefail
 
               echo "DEBUG"
-              echo "test workspace: ${{ parameters.testWorkspace }}"
-              echo "pack?: ${{ parameters.testWorkspace }}/pack"
-              echo "list:"
-              ls -a ${{ parameters.testWorkspace }}/pack
-              echo "pipelineWorkspace: $(Pipeline.Workspace)"
+              echo "list test workspace:"
+              ls -a ${{ parameters.testWorkspace }}
               # might need to install dependencies here
-              tar --extract --verbose --file ${{ parameters.testWorkspace }}/pack/ff-internal/trips-setup-0.0.1.tgz
+              tar --extract --verbose --file ${{ parameters.testWorkspace }}/pack/ff-internal/trips-setup-0.0.1.tgz ./src/test
               npm run trips-setup $SYSTEM_ACCESSTOKEN
 
         # run the test
