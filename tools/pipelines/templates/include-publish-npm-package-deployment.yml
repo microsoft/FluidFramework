@@ -108,7 +108,6 @@ jobs:
     clean: true
     lfs: '${{ parameters.checkoutSubmodules }}'
     submodules: '${{ parameters.checkoutSubmodules }}'
-  - template: /tools/pipelines/templates/include-use-node-version.yml@self
   - template: /tools/pipelines/templates/include-git-tag-steps.yml@self
     parameters:
       tagName: ${{ parameters.tagName }}
