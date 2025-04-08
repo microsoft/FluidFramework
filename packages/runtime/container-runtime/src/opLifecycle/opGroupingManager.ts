@@ -11,7 +11,9 @@ import {
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { IBatch, type BatchMessage } from "./definitions.js";
+import type { LocalContainerRuntimeMessage } from "../messageTypes.js";
+
+import { IBatch, type LocalBatchMessage, type OutboundSingletonBatch } from "./definitions.js";
 
 /**
  * Grouping makes assumptions about the shape of message contents. This interface codifies those assumptions, but does not validate them.
@@ -22,7 +24,7 @@ interface IGroupedBatchMessageContents {
 }
 
 interface IGroupedMessage {
-	contents?: unknown;
+	contents?: unknown; //* Revisit name/type
 	metadata?: Record<string, unknown>;
 	compression?: string;
 }
@@ -63,15 +65,16 @@ export class OpGroupingManager {
 	public createEmptyGroupedBatch(
 		resubmittingBatchId: string,
 		referenceSequenceNumber: number,
-	): IBatch<[BatchMessage]> {
+	): IBatch<[LocalBatchMessage]> {
+		//* This seems wrong, regular Grouped Batches are Outbound
 		assert(
 			this.config.groupedBatchingEnabled,
 			0xa00 /* cannot create empty grouped batch when grouped batching is disabled */,
 		);
-		const serializedContent = JSON.stringify({
-			type: OpGroupingManager.groupedBatchOp,
+		const viableOp = {
+			type: OpGroupingManager.groupedBatchOp, //* Could be a different "emptyBatch" type?
 			contents: [],
-		});
+		} satisfies LocalContainerRuntimeMessage;
 
 		return {
 			contentSizeInBytes: 0,
@@ -80,7 +83,7 @@ export class OpGroupingManager {
 					metadata: { batchId: resubmittingBatchId },
 					localOpMetadata: { emptyBatch: true },
 					referenceSequenceNumber,
-					contents: serializedContent,
+					viableOp,
 				},
 			],
 			referenceSequenceNumber,
@@ -94,7 +97,7 @@ export class OpGroupingManager {
 	 * @remarks - Remember that a BatchMessage has its content JSON serialized, so the incoming batch message contents
 	 * must be parsed first, and then the type and contents mentioned above are hidden in that JSON serialization.
 	 */
-	public groupBatch(batch: IBatch): IBatch<[BatchMessage]> {
+	public groupBatch(batch: IBatch): OutboundSingletonBatch {
 		assert(this.shouldGroup(batch), 0x946 /* cannot group the provided batch */);
 
 		if (batch.messages.length >= 1000) {
@@ -120,13 +123,13 @@ export class OpGroupingManager {
 		const serializedContent = JSON.stringify({
 			type: OpGroupingManager.groupedBatchOp,
 			contents: batch.messages.map<IGroupedMessage>((message) => ({
-				contents: message.contents === undefined ? undefined : JSON.parse(message.contents),
+				contents: message.viableOp,
 				metadata: message.metadata,
 				compression: message.compression,
 			})),
 		});
 
-		const groupedBatch: IBatch<[BatchMessage]> = {
+		const groupedBatch: OutboundSingletonBatch = {
 			...batch,
 			messages: [
 				{

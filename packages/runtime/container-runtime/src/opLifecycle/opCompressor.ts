@@ -16,7 +16,7 @@ import { compress } from "lz4js";
 import { CompressionAlgorithms } from "../containerRuntime.js";
 
 import { estimateSocketSize } from "./batchManager.js";
-import { BatchMessage, IBatch } from "./definitions.js";
+import { type OutboundBatchMessage, type OutboundSingletonBatch } from "./definitions.js";
 
 /**
  * Compresses batches of ops. It generates a single compressed op that contains
@@ -38,7 +38,7 @@ export class OpCompressor {
 	 * @param batch - The batch to compress
 	 * @returns A batch of the same length as the input batch, containing a single compressed message followed by empty placeholders
 	 */
-	public compressBatch(batch: IBatch): IBatch<[BatchMessage]> {
+	public compressBatch(batch: OutboundSingletonBatch): OutboundSingletonBatch {
 		assert(
 			batch.contentSizeInBytes > 0 && batch.messages.length === 1,
 			0x5a4 /* Batch should not be empty and should contain a single message */,
@@ -50,7 +50,7 @@ export class OpCompressor {
 		const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
 		const duration = Date.now() - compressionStart;
 
-		const messages: [BatchMessage] = [
+		const messages: [OutboundBatchMessage] = [
 			{
 				...batch.messages[0],
 				contents: JSON.stringify({ packedContents: compressedContent }),
@@ -82,7 +82,7 @@ export class OpCompressor {
 	/**
 	 * Combine the batch's content strings into a single JSON string (a serialized array)
 	 */
-	private serializeBatchContents(batch: IBatch): string {
+	private serializeBatchContents(batch: OutboundSingletonBatch): string {
 		try {
 			// Yields a valid JSON array, since each message.contents is already serialized to JSON
 			return `[${batch.messages.map(({ contents }) => contents).join(",")}]`;
