@@ -18,6 +18,7 @@ import type {
 	SharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
 
+import { compatibilityModeRuntimeOptions } from "./compatibilityConfiguration.js";
 import type {
 	CompatibilityMode,
 	ContainerSchema,
@@ -31,14 +32,6 @@ import {
 	isSharedObjectKind,
 	parseDataObjectsFromSharedObjects,
 } from "./utils.js";
-
-/**
- * Maps CompatibilityMode to a valid semver strings that will be passed to the container runtime.
- */
-const compatibilityModeVersionMap: Readonly<Record<CompatibilityMode, string>> = {
-	"1": "1.0.0",
-	"2": "2.0.0",
-};
 
 /**
  * Input props for {@link RootDataObject.initializingFirstTime}.
@@ -218,8 +211,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		};
 		super({
 			registryEntries: [rootDataObjectFactory.registryEntry],
-			// Set the compatibility mode to the one provided by the user and ensure that it's a valid semver version.
-			runtimeOptions: { compatibilityMode: compatibilityModeVersionMap[compatibilityMode] },
+			runtimeOptions: compatibilityModeRuntimeOptions[compatibilityMode],
 			provideEntryPoint,
 		});
 		this.rootDataObjectFactory = rootDataObjectFactory;
