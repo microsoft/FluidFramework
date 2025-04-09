@@ -11,7 +11,7 @@ import type {
 	LatestValueManager,
 	StatesWorkspace,
 } from "@fluidframework/presence/alpha";
-import { Latest, SessionClientStatus } from "@fluidframework/presence/alpha";
+import { Latest, AttendeeStatus } from "@fluidframework/presence/alpha";
 
 /**
  * IFocusState is the data that individual session clients share via presence.
@@ -108,7 +108,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 		statuses.set(currentClient, this.focus.local.hasFocus);
 
 		for (const { client, value } of this.focus.clientValues()) {
-			if (client.getConnectionStatus() === SessionClientStatus.Connected) {
+			if (client.getConnectionStatus() === AttendeeStatus.Connected) {
 				const { hasFocus } = value;
 				statuses.set(client, hasFocus);
 			}

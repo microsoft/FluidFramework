@@ -13,7 +13,7 @@ export function acquirePresenceViaDataObject(fluidLoadable: ExperimentalPresence
 // @alpha @sealed
 export interface Attendee<SpecificAttendeeId extends AttendeeId = AttendeeId> {
     getConnectionId(): ClientConnectionId;
-    getConnectionStatus(): SessionClientStatus;
+    getConnectionStatus(): AttendeeStatus;
     readonly sessionId: SpecificAttendeeId;
 }
 
@@ -30,6 +30,15 @@ export interface AttendeeEvents {
 export type AttendeeId = SessionId & {
     readonly AttendeeId: "AttendeeId";
 };
+
+// @alpha
+export const AttendeeStatus: {
+    readonly Connected: "Connected";
+    readonly Disconnected: "Disconnected";
+};
+
+// @alpha
+export type AttendeeStatus = (typeof AttendeeStatus)[keyof typeof AttendeeStatus];
 
 // @alpha @sealed
 export interface BroadcastControls {
@@ -282,15 +291,6 @@ export interface Presence {
     getNotifications<NotificationsSchema extends NotificationsWorkspaceSchema>(notificationsId: StatesWorkspaceAddress, requestedContent: NotificationsSchema): NotificationsWorkspace<NotificationsSchema>;
     getStates<StatesSchema extends StatesWorkspaceSchema>(workspaceAddress: StatesWorkspaceAddress, requestedContent: StatesSchema, controls?: BroadcastControlSettings): StatesWorkspace<StatesSchema>;
 }
-
-// @alpha
-export const SessionClientStatus: {
-    readonly Connected: "Connected";
-    readonly Disconnected: "Disconnected";
-};
-
-// @alpha
-export type SessionClientStatus = (typeof SessionClientStatus)[keyof typeof SessionClientStatus];
 
 // @alpha @sealed
 export interface StatesWorkspace<TSchema extends StatesWorkspaceSchema, TManagerConstraints = unknown> {

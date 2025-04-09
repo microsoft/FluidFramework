@@ -11,7 +11,7 @@ import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { PostUpdateAction } from "./internalTypes.js";
 import type { AttendeeId, Presence, Attendee, AttendeeEvents } from "./presence.js";
-import { SessionClientStatus } from "./presence.js";
+import { AttendeeStatus } from "./presence.js";
 import type { PresenceStatesInternal } from "./presenceStates.js";
 import { TimerManager } from "./timerManager.js";
 import type { StatesWorkspace, StatesWorkspaceSchema } from "./types.js";
@@ -34,7 +34,7 @@ class SessionClient implements Attendee {
 	 */
 	public order: number = 0;
 
-	private connectionStatus: SessionClientStatus = SessionClientStatus.Disconnected;
+	private connectionStatus: AttendeeStatus = AttendeeStatus.Disconnected;
 
 	public constructor(
 		public readonly sessionId: AttendeeId,
@@ -48,16 +48,16 @@ class SessionClient implements Attendee {
 		return this.connectionId;
 	}
 
-	public getConnectionStatus(): SessionClientStatus {
+	public getConnectionStatus(): AttendeeStatus {
 		return this.connectionStatus;
 	}
 
 	public setConnected(): void {
-		this.connectionStatus = SessionClientStatus.Connected;
+		this.connectionStatus = AttendeeStatus.Connected;
 	}
 
 	public setDisconnected(): void {
-		this.connectionStatus = SessionClientStatus.Disconnected;
+		this.connectionStatus = AttendeeStatus.Disconnected;
 	}
 }
 
@@ -164,7 +164,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 
 	public onConnectionAdded(clientConnectionId: ClientConnectionId): void {
 		assert(
-			this.selfAttendee.getConnectionStatus() === SessionClientStatus.Disconnected,
+			this.selfAttendee.getConnectionStatus() === AttendeeStatus.Disconnected,
 			0xaad /* Local client should be 'Disconnected' before adding new connection. */,
 		);
 
@@ -176,7 +176,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 
 		// Mark 'Connected' remote attendees connections as stale
 		for (const staleConnectionClient of this.attendees.values()) {
-			if (staleConnectionClient.getConnectionStatus() === SessionClientStatus.Connected) {
+			if (staleConnectionClient.getConnectionStatus() === AttendeeStatus.Connected) {
 				this.staleConnectionClients.add(staleConnectionClient);
 			}
 		}
@@ -211,7 +211,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		// If the last known connectionID is different from the connection ID being removed, the attendee has reconnected,
 		// therefore we should not change the attendee connection status or emit a disconnect event.
 		const attendeeReconnected = attendee.getConnectionId() !== clientConnectionId;
-		const connected = attendee.getConnectionStatus() === SessionClientStatus.Connected;
+		const connected = attendee.getConnectionStatus() === AttendeeStatus.Connected;
 		if (!attendeeReconnected && connected) {
 			attendee.setDisconnected();
 			this.events.emit("attendeeDisconnected", attendee);
@@ -268,7 +268,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			// Update the order and current connection ID.
 			attendee.order = order;
 			// Known attendee is joining the session if they are currently disconnected
-			if (attendee.getConnectionStatus() === SessionClientStatus.Disconnected && isConnected) {
+			if (attendee.getConnectionStatus() === AttendeeStatus.Disconnected && isConnected) {
 				attendee.setConnected();
 				isJoining = true;
 			}

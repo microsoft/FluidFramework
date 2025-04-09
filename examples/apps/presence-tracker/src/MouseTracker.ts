@@ -11,7 +11,7 @@ import type {
 	LatestValueManager,
 	StatesWorkspace,
 } from "@fluidframework/presence/alpha";
-import { Latest, SessionClientStatus } from "@fluidframework/presence/alpha";
+import { Latest, AttendeeStatus } from "@fluidframework/presence/alpha";
 
 /**
  * IMousePosition is the data that individual session clients share via presence.
@@ -89,7 +89,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 		const statuses: Map<Attendee, IMousePosition> = new Map();
 
 		for (const { client, value } of this.cursor.clientValues()) {
-			if (client.getConnectionStatus() === SessionClientStatus.Connected) {
+			if (client.getConnectionStatus() === AttendeeStatus.Connected) {
 				statuses.set(client, value);
 			}
 		}

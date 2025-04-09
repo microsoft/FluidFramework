@@ -35,7 +35,7 @@ export type AttendeeId = SessionId & { readonly AttendeeId: "AttendeeId" };
  *
  * @alpha
  */
-export const SessionClientStatus = {
+export const AttendeeStatus = {
 	/**
 	 * The session client is connected to the Fluid service.
 	 */
@@ -59,8 +59,7 @@ export const SessionClientStatus = {
  *
  * @alpha
  */
-export type SessionClientStatus =
-	(typeof SessionClientStatus)[keyof typeof SessionClientStatus];
+export type AttendeeStatus = (typeof AttendeeStatus)[keyof typeof AttendeeStatus];
 
 /**
  * A client within a Fluid session (period of container connectivity to service).
@@ -94,7 +93,7 @@ export interface Attendee<SpecificAttendeeId extends AttendeeId = AttendeeId> {
 	 * @remarks
 	 * Connection ID will change on reconnect.
 	 *
-	 * If {@link Attendee.getConnectionStatus} is {@link (SessionClientStatus:variable).Disconnected}, this will represent the last known connection ID.
+	 * If {@link Attendee.getConnectionStatus} is {@link (AttendeeStatus:variable).Disconnected}, this will represent the last known connection ID.
 	 */
 	getConnectionId(): ClientConnectionId;
 
@@ -104,7 +103,7 @@ export interface Attendee<SpecificAttendeeId extends AttendeeId = AttendeeId> {
 	 * @returns Connection status of session client.
 	 *
 	 */
-	getConnectionStatus(): SessionClientStatus;
+	getConnectionStatus(): AttendeeStatus;
 }
 
 /**

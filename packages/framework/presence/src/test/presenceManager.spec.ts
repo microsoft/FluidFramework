@@ -10,7 +10,7 @@ import type { SinonFakeTimers } from "sinon";
 import { useFakeTimers } from "sinon";
 
 import type { ClientConnectionId } from "../baseTypes.js";
-import { SessionClientStatus, type Attendee } from "../presence.js";
+import { AttendeeStatus, type Attendee } from "../presence.js";
 import { createPresenceManager } from "../presenceManager.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
@@ -121,7 +121,7 @@ describe("Presence", () => {
 					actualAttendee: Attendee,
 					expectedConnectionId: ClientConnectionId,
 					expectedSessionId: string,
-					expectedConnectionStatus: SessionClientStatus = SessionClientStatus.Connected,
+					expectedConnectionStatus: AttendeeStatus = AttendeeStatus.Connected,
 				): void {
 					assert.equal(
 						actualAttendee.sessionId,
@@ -396,9 +396,9 @@ describe("Presence", () => {
 					});
 
 					for (const [status, setup] of [
-						[SessionClientStatus.Connected, () => {}] as const,
+						[AttendeeStatus.Connected, () => {}] as const,
 						[
-							SessionClientStatus.Disconnected,
+							AttendeeStatus.Disconnected,
 							() => runtime.removeMember(initialAttendeeConnectionId),
 						] as const,
 					]) {
@@ -474,7 +474,7 @@ describe("Presence", () => {
 							clock.tick(15_001);
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
-								SessionClientStatus.Connected,
+								AttendeeStatus.Connected,
 								"Attendee with stale connection should still be 'Connected' after 15s",
 							);
 
@@ -482,7 +482,7 @@ describe("Presence", () => {
 							clock.tick(15_001);
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
-								SessionClientStatus.Disconnected,
+								AttendeeStatus.Disconnected,
 								"Attendee with stale connection should be 'Disconnected' 30s after reconnection",
 							);
 							assert.strictEqual(
@@ -502,7 +502,7 @@ describe("Presence", () => {
 							// Verify - attendee with stale connection should still be 'Connected' if local client never reconnects
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
-								SessionClientStatus.Connected,
+								AttendeeStatus.Connected,
 								"Attendee with stale connection should still be 'Connected' after 30s",
 							);
 						});
@@ -521,7 +521,7 @@ describe("Presence", () => {
 							// Verify - attendee with stale connection should still be 'Connected' if local client never reconnects for at least 30s
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
-								SessionClientStatus.Connected,
+								AttendeeStatus.Connected,
 								"Attendee with stale connection should still be 'Connected' after 30s",
 							);
 						});
@@ -549,7 +549,7 @@ describe("Presence", () => {
 							// Verify - rejoining attendee should still be 'Connected' with no `attendeeJoined` announced
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
-								SessionClientStatus.Connected,
+								AttendeeStatus.Connected,
 								"Active attendee should still be 'Connected' 30s after reconnection",
 							);
 						});
@@ -595,7 +595,7 @@ describe("Presence", () => {
 							// Verify - active attendee should still be 'Connected'
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
-								SessionClientStatus.Connected,
+								AttendeeStatus.Connected,
 								"Active attendee should still be 'Connected' 30s after reconnection",
 							);
 						});
@@ -623,7 +623,7 @@ describe("Presence", () => {
 							// Verify - active attendee status should be 'Disconnected' and no other `attendeeDisconnected` should be announced.
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
-								SessionClientStatus.Disconnected,
+								AttendeeStatus.Disconnected,
 								"Attendee should be 'Disconnected'",
 							);
 							assert.strictEqual(
@@ -638,7 +638,7 @@ describe("Presence", () => {
 							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
-								SessionClientStatus.Connected,
+								AttendeeStatus.Connected,
 								"Known attendee is not connected",
 							);
 
@@ -657,7 +657,7 @@ describe("Presence", () => {
 							clock.tick(15_001);
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
-								SessionClientStatus.Connected,
+								AttendeeStatus.Connected,
 								"Attendee with stale connection should still be connected",
 							);
 
@@ -665,7 +665,7 @@ describe("Presence", () => {
 							clock.tick(15_001);
 							assert.equal(
 								knownAttendee.getConnectionStatus(),
-								SessionClientStatus.Disconnected,
+								AttendeeStatus.Disconnected,
 								"Attendee with stale connection has wrong status",
 							);
 							assert.strictEqual(
@@ -703,7 +703,7 @@ describe("Presence", () => {
 								disconnectedAttendee,
 								initialAttendeeConnectionId,
 								attendeeSessionId,
-								SessionClientStatus.Disconnected,
+								AttendeeStatus.Disconnected,
 							);
 						});
 
