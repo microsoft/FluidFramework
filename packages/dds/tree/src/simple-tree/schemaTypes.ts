@@ -80,14 +80,21 @@ export function isTreeNodeSchemaClass<
  */
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
-export type AllowedType = LazyItem<TreeNodeSchema> | AnnotatedAllowedType;
-
 /**
  * TODO
  */
 export interface AnnotatedAllowedTypes {
-	metadata: AllowedTypesMetadata;
-	type: readonly AnnotatedAllowedType[];
+	readonly metadata: AllowedTypesMetadata;
+	readonly types: readonly AnnotatedAllowedType[];
+}
+
+/**
+ * TODO
+ */
+export function isAnnotatedAllowedTypes(
+	allowedTypes: ImplicitAnnotatedAllowedTypes,
+): allowedTypes is AnnotatedAllowedTypes {
+	return "metadata" in allowedTypes && "types" in allowedTypes;
 }
 
 /**
@@ -99,16 +106,18 @@ interface AllowedTypesMetadata {}
  * TODO
  */
 
-export interface AnnotatedAllowedType {
-	metadata: AllowedTypeMetadata;
-	type: AllowedType;
+export interface AnnotatedAllowedType<
+	T extends LazyItem<TreeNodeSchema> = LazyItem<TreeNodeSchema>,
+> {
+	readonly metadata: AllowedTypeMetadata;
+	readonly type: T;
 }
 
 /**
  * TODO
  */
 export function isAnnotatedAllowedType(
-	allowedType: AllowedType,
+	allowedType: AnnotatedAllowedType | LazyItem<TreeNodeSchema>,
 ): allowedType is AnnotatedAllowedType {
 	return "metadata" in allowedType && "type" in allowedType;
 }
@@ -158,7 +167,10 @@ export enum FieldKind {
  * If an explicit stored key was specified in the schema, it will be used.
  * Otherwise, the stored key is the same as the property key.
  */
-export function getStoredKey(propertyKey: string, fieldSchema: ImplicitFieldSchema): FieldKey {
+export function getStoredKey(
+	propertyKey: string,
+	fieldSchema: ImplicitFieldSchema | ImplicitAnnotatedFieldSchema,
+): FieldKey {
 	return brand(getExplicitStoredKey(fieldSchema) ?? propertyKey);
 }
 
@@ -166,7 +178,11 @@ export function getStoredKey(propertyKey: string, fieldSchema: ImplicitFieldSche
  * Gets the {@link FieldProps.key | stored key} specified by the schema, if one was explicitly specified.
  * Otherwise, returns undefined.
  */
-export function getExplicitStoredKey(fieldSchema: ImplicitFieldSchema): string | undefined {
+export function getExplicitStoredKey(
+	fieldSchema: ImplicitFieldSchema | ImplicitAnnotatedFieldSchema,
+): string | undefined {
+	// TODO check if this just works as is
+	// it should right? since we're not changing anything about FieldSchemaAlpha really, just adding the annotations in a new property
 	return fieldSchema instanceof FieldSchema ? fieldSchema.props?.key : undefined;
 }
 
@@ -315,14 +331,15 @@ export interface FieldSchemaMetadata<TCustomMetadata = unknown> {
 
 /**
  * Package internal construction API.
+ * TODO do all the things
  */
 export let createFieldSchema: <
 	Kind extends FieldKind = FieldKind,
-	Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+	Types extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
 	TCustomMetadata = unknown,
 >(
 	kind: Kind,
-	allowedTypes: Types,
+	annotatedTypes: Types,
 	props?: FieldProps<TCustomMetadata>,
 ) => FieldSchemaAlpha<Kind, Types, TCustomMetadata>;
 
@@ -415,28 +432,41 @@ export class FieldSchema<
  */
 export class FieldSchemaAlpha<
 		Kind extends FieldKind = FieldKind,
-		Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+		Types extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
 		TCustomMetadata = unknown,
 	>
-	extends FieldSchema<Kind, Types, TCustomMetadata>
+	extends FieldSchema<Kind, UnannotateImplicitAllowedTypes<Types>, TCustomMetadata>
 	implements SimpleFieldSchema
 {
 	private readonly lazyIdentifiers: Lazy<ReadonlySet<string>>;
+	public readonly lazyAnnotatedTypes: Lazy<ReadonlyMap<TreeNodeSchema, AllowedTypeMetadata>>;
+	public readonly allowedTypesMetadata: AllowedTypesMetadata;
 
 	static {
 		createFieldSchema = <
 			Kind2 extends FieldKind = FieldKind,
-			Types2 extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+			Types2 extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
 			TCustomMetadata2 = unknown,
 		>(
 			kind: Kind2,
-			allowedTypes: Types2,
+			annotatedAllowedTypes: Types2,
 			props?: FieldProps<TCustomMetadata2>,
-		) => new FieldSchemaAlpha(kind, allowedTypes, props);
+		) => new FieldSchemaAlpha(kind, annotatedAllowedTypes, props);
 	}
 
-	protected constructor(kind: Kind, allowedTypes: Types, props?: FieldProps<TCustomMetadata>) {
-		super(kind, allowedTypes, props);
+	protected constructor(
+		kind: Kind,
+		public readonly annotatedAllowedTypes: Types,
+		props?: FieldProps<TCustomMetadata>,
+	) {
+		super(kind, unannotateImplicitAllowedTypes(annotatedAllowedTypes), props);
+
+		this.allowedTypesMetadata = isAnnotatedAllowedTypes(annotatedAllowedTypes)
+			? annotatedAllowedTypes.metadata
+			: {};
+		this.lazyAnnotatedTypes = new Lazy(() =>
+			extractAnnotationsFromAllowedTypes(this.annotatedAllowedTypes),
+		);
 		this.lazyIdentifiers = new Lazy(
 			() => new Set([...this.allowedTypeSet].map((t) => t.identifier)),
 		);
@@ -452,7 +482,7 @@ export class FieldSchemaAlpha<
  */
 export class ObjectFieldSchema<
 		Kind extends FieldKind = FieldKind,
-		Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+		Types extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
 		TCustomMetadata = unknown,
 	>
 	extends FieldSchemaAlpha<Kind, Types, TCustomMetadata>
@@ -471,9 +501,11 @@ export class ObjectFieldSchema<
 }
 
 /**
- * Normalizes a {@link ImplicitFieldSchema} to a {@link FieldSchema}.
+ * Normalizes a {@link ImplicitFieldSchema} or {@link ImplicitAnnotatedFieldSchema} to a {@link FieldSchema}.
  */
-export function normalizeFieldSchema(schema: ImplicitFieldSchema): FieldSchemaAlpha {
+export function normalizeFieldSchema(
+	schema: ImplicitFieldSchema | ImplicitAnnotatedFieldSchema,
+): FieldSchemaAlpha {
 	return schema instanceof FieldSchema
 		? (schema as FieldSchemaAlpha)
 		: createFieldSchema(FieldKind.Required, schema);
@@ -501,6 +533,56 @@ export function normalizeAllowedTypes(
 		normalized.add(evaluateLazySchema(types));
 	}
 	return normalized;
+}
+/**
+ * Converts an {@link ImplicitAnnotatedAllowedTypes} to an {@link ImplicitAllowedTypes}s, by removing
+ * any annotations.
+ *
+ * @internal
+ */
+export function unannotateImplicitAllowedTypes<Types extends ImplicitAnnotatedAllowedTypes>(
+	types: Types,
+): UnannotateImplicitAllowedTypes<Types> {
+	return (
+		isAnnotatedAllowedTypes(types)
+			? types.types.map((allowedType) =>
+					isAnnotatedAllowedType(allowedType) ? allowedType.type : allowedType,
+				)
+			: isReadonlyArray(types)
+				? types.map((allowedType) =>
+						isAnnotatedAllowedType(allowedType) ? allowedType.type : allowedType,
+					)
+				: isAnnotatedAllowedType(types)
+					? (evaluateLazySchema(types.type) as UnannotateImplicitAllowedTypes<Types>)
+					: types
+	) as UnannotateImplicitAllowedTypes<Types>;
+}
+
+function extractAnnotationsFromAllowedTypes(
+	types: ImplicitAnnotatedAllowedTypes,
+): ReadonlyMap<TreeNodeSchema, AllowedTypeMetadata> {
+	const typesWithoutAnnotation = isAnnotatedAllowedTypes(types) ? types.types : types;
+	const annotations = new Map<TreeNodeSchema, AllowedTypeMetadata>();
+	if (isReadonlyArray(typesWithoutAnnotation)) {
+		for (const annotatedType of typesWithoutAnnotation) {
+			if (isAnnotatedAllowedType(annotatedType)) {
+				annotations.set(evaluateLazySchema(annotatedType.type), annotatedType.metadata);
+			} else {
+				annotations.set(evaluateLazySchema(annotatedType), {});
+			}
+		}
+	} else {
+		if (isAnnotatedAllowedType(typesWithoutAnnotation)) {
+			annotations.set(
+				evaluateLazySchema(typesWithoutAnnotation.type),
+				typesWithoutAnnotation.metadata,
+			);
+		} else {
+			annotations.set(evaluateLazySchema(typesWithoutAnnotation), {});
+		}
+	}
+
+	return annotations;
 }
 
 /**
@@ -689,9 +771,43 @@ export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
  * TODO
  */
 export type ImplicitAnnotatedAllowedTypes =
+	| TreeNodeSchema
+	| AnnotatedAllowedType
 	| AnnotatedAllowedTypes
-	| AllowedTypes
 	| readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[];
+
+/**
+ * Returns an {@link ImplicitAllowedTypes} that is equivalent to the input without annotations.
+ */
+export type UnannotateImplicitAllowedTypes<T extends ImplicitAnnotatedAllowedTypes> =
+	T extends AnnotatedAllowedTypes
+		? UnannotateAllowedTypes<T>
+		: T extends AnnotatedAllowedType
+			? UnannotateAllowedType<T>
+			: T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]
+				? UnannotateAllowedTypesList<T>
+				: T extends TreeNodeSchema
+					? T
+					: never;
+
+type UnannotateAllowedTypesList<
+	T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[],
+> = {
+	[I in keyof T]: UnannotateAllowedTypeOrLazyItem<T[I]>;
+};
+
+type UnannotateAllowedTypeOrLazyItem<
+	T extends AnnotatedAllowedType | LazyItem<TreeNodeSchema>,
+> = T extends AnnotatedAllowedType<infer X> ? X : T;
+
+type UnannotateAllowedTypes<T extends AnnotatedAllowedTypes> =
+	UnannotateAllowedTypesList<T["types"]>;
+
+type UnannotateAllowedType<T extends AnnotatedAllowedType> = T extends AnnotatedAllowedType<
+	infer X
+>
+	? [X]
+	: T;
 
 /**
  * Schema for a field of a tree node.
@@ -700,6 +816,14 @@ export type ImplicitAnnotatedAllowedTypes =
  * @public
  */
 export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
+
+/**
+ * TODO
+ */
+export type ImplicitAnnotatedFieldSchema =
+	| FieldSchema
+	| FieldSchemaAlpha
+	| ImplicitAnnotatedAllowedTypes;
 
 /**
  * Converts an `ImplicitFieldSchema` to a property type suitable for reading a field with this that schema.
