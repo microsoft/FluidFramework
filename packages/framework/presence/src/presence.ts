@@ -80,11 +80,11 @@ export type SessionClientStatus =
  * @sealed
  * @alpha
  */
-export interface ISessionClient<SpecificSessionClientId extends AttendeeId = AttendeeId> {
+export interface ISessionClient<SpecificAttendeeId extends AttendeeId = AttendeeId> {
 	/**
 	 * The session ID of the client that is stable over all connections.
 	 */
-	readonly sessionId: SpecificSessionClientId;
+	readonly sessionId: SpecificAttendeeId;
 
 	/**
 	 * Get current client connection ID.
@@ -113,8 +113,8 @@ export interface ISessionClient<SpecificSessionClientId extends AttendeeId = Att
  *
  * @internal
  */
-export type SpecificSessionClient<SpecificSessionClientId extends AttendeeId> =
-	string extends SpecificSessionClientId ? never : ISessionClient<SpecificSessionClientId>;
+export type SpecificSessionClient<SpecificAttendeeId extends AttendeeId> =
+	string extends SpecificAttendeeId ? never : ISessionClient<SpecificAttendeeId>;
 
 /**
  * @sealed

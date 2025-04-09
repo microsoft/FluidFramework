@@ -122,10 +122,10 @@ export interface IPresence {
 }
 
 // @alpha @sealed
-export interface ISessionClient<SpecificSessionClientId extends AttendeeId = AttendeeId> {
+export interface ISessionClient<SpecificAttendeeId extends AttendeeId = AttendeeId> {
     getConnectionId(): ClientConnectionId;
     getConnectionStatus(): SessionClientStatus;
-    readonly sessionId: SpecificSessionClientId;
+    readonly sessionId: SpecificAttendeeId;
 }
 
 // @alpha
@@ -153,8 +153,8 @@ export interface LatestMapItemValueClientData<T, K extends string | number> exte
 }
 
 // @alpha @sealed
-export interface LatestMapValueClientData<T, Keys extends string | number, SpecificSessionClientId extends AttendeeId = AttendeeId> {
-    client: ISessionClient<SpecificSessionClientId>;
+export interface LatestMapValueClientData<T, Keys extends string | number, SpecificAttendeeId extends AttendeeId = AttendeeId> {
+    client: ISessionClient<SpecificAttendeeId>;
     // (undocumented)
     items: ReadonlyMap<Keys, LatestValueData<T>>;
 }

@@ -35,12 +35,12 @@ import { brandIVM } from "./valueManager.js";
 export interface LatestMapValueClientData<
 	T,
 	Keys extends string | number,
-	SpecificSessionClientId extends AttendeeId = AttendeeId,
+	SpecificAttendeeId extends AttendeeId = AttendeeId,
 > {
 	/**
 	 * Associated client.
 	 */
-	client: ISessionClient<SpecificSessionClientId>;
+	client: ISessionClient<SpecificAttendeeId>;
 
 	/**
 	 * @privateRemarks This could be regular map currently as no Map is
@@ -416,13 +416,13 @@ class LatestMapValueManagerImpl<
 		return items;
 	}
 
-	public update<SpecificSessionClientId extends AttendeeId>(
-		client: SpecificSessionClient<SpecificSessionClientId>,
+	public update<SpecificAttendeeId extends AttendeeId>(
+		client: SpecificSessionClient<SpecificAttendeeId>,
 		_received: number,
 		value: InternalTypes.MapValueState<T, string | number>,
 	): PostUpdateAction[] {
 		const allKnownStates = this.datastore.knownValues(this.key);
-		const attendeeId: SpecificSessionClientId = client.sessionId;
+		const attendeeId: SpecificAttendeeId = client.sessionId;
 		const currentState = (allKnownStates.states[attendeeId] ??=
 			// New client - prepare new client state directory
 			{
