@@ -76,7 +76,7 @@ export interface LatestMapItemRemovedClientData<K extends string | number> {
  * @sealed
  * @alpha
  */
-export interface LatestMapValueManagerEvents<T, K extends string | number> {
+export interface LatestMapEvents<T, K extends string | number> {
 	/**
 	 * Raised when any item's value for remote client is updated.
 	 * @param updates - Map of one or more values updated.
@@ -213,7 +213,7 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 	public constructor(
 		private readonly value: InternalTypes.MapValueState<T, K>,
 		private readonly emitter: IEmitter<
-			Pick<LatestMapValueManagerEvents<T, K>, "localItemUpdated" | "localItemRemoved">
+			Pick<LatestMapEvents<T, K>, "localItemUpdated" | "localItemRemoved">
 		>,
 		private readonly localUpdate: (
 			updates: InternalTypes.MapValueState<
@@ -318,7 +318,7 @@ export interface LatestMap<T, Keys extends string | number = string | number> {
 	/**
 	 * Events for LatestMap.
 	 */
-	readonly events: Listenable<LatestMapValueManagerEvents<T, Keys>>;
+	readonly events: Listenable<LatestMapEvents<T, Keys>>;
 
 	/**
 	 * Controls for management of sending updates.
@@ -351,7 +351,7 @@ class LatestMapValueManagerImpl<
 		LatestMap<T, Keys>,
 		Required<ValueManager<T, InternalTypes.MapValueState<T, Keys>>>
 {
-	public readonly events = createEmitter<LatestMapValueManagerEvents<T, Keys>>();
+	public readonly events = createEmitter<LatestMapEvents<T, Keys>>();
 	public readonly controls: OptionalBroadcastControl;
 
 	public constructor(

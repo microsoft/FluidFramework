@@ -137,7 +137,7 @@ export interface LatestMap<T, Keys extends string | number = string | number> {
     clientValue(client: ISessionClient): ReadonlyMap<Keys, LatestValueData<T>>;
     clientValues(): IterableIterator<LatestMapClientData<T, Keys>>;
     readonly controls: BroadcastControls;
-    readonly events: Listenable<LatestMapValueManagerEvents<T, Keys>>;
+    readonly events: Listenable<LatestMapEvents<T, Keys>>;
     readonly local: ValueMap<Keys, T>;
 }
 
@@ -146,6 +146,25 @@ export interface LatestMapClientData<T, Keys extends string | number, SpecificSe
     client: ISessionClient<SpecificSessionClientId>;
     // (undocumented)
     items: ReadonlyMap<Keys, LatestValueData<T>>;
+}
+
+// @alpha @sealed (undocumented)
+export interface LatestMapEvents<T, K extends string | number> {
+    // @eventProperty
+    itemRemoved: (removedItem: LatestMapItemRemovedClientData<K>) => void;
+    // @eventProperty
+    itemUpdated: (updatedItem: LatestMapItemUpdatedClientData<T, K>) => void;
+    // @eventProperty
+    localItemRemoved: (removedItem: {
+        key: K;
+    }) => void;
+    // @eventProperty
+    localItemUpdated: (updatedItem: {
+        value: InternalUtilityTypes.FullyReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+        key: K;
+    }) => void;
+    // @eventProperty
+    updated: (updates: LatestMapClientData<T, K>) => void;
 }
 
 // @alpha
@@ -167,25 +186,6 @@ export interface LatestMapItemRemovedClientData<K extends string | number> {
 export interface LatestMapItemUpdatedClientData<T, K extends string | number> extends LatestValueClientData<T> {
     // (undocumented)
     key: K;
-}
-
-// @alpha @sealed (undocumented)
-export interface LatestMapValueManagerEvents<T, K extends string | number> {
-    // @eventProperty
-    itemRemoved: (removedItem: LatestMapItemRemovedClientData<K>) => void;
-    // @eventProperty
-    itemUpdated: (updatedItem: LatestMapItemUpdatedClientData<T, K>) => void;
-    // @eventProperty
-    localItemRemoved: (removedItem: {
-        key: K;
-    }) => void;
-    // @eventProperty
-    localItemUpdated: (updatedItem: {
-        value: InternalUtilityTypes.FullyReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
-        key: K;
-    }) => void;
-    // @eventProperty
-    updated: (updates: LatestMapClientData<T, K>) => void;
 }
 
 // @alpha @sealed
