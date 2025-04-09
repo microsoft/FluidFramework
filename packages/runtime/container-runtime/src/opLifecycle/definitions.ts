@@ -20,7 +20,7 @@ export interface LocalBatchMessage {
 	/**
 	 * @deprecated Use serializedOp
 	 */
-	contents?: never; // To ensure proper conversion to/from OutboundBatchMessage
+	contents?: never; // To ensure we don't leave this one when converting from OutboundBatchMessage
 }
 
 /**
@@ -34,7 +34,7 @@ export type OutboundBatchMessage = IBatchMessage & {
 	/**
 	 * @deprecated Use serializedOp
 	 */
-	serializedOp?: never; // To ensure proper conversion to/from LocalBatchMessage
+	serializedOp?: never; // To ensure we don't leave this one when converting from LocalBatchMessage
 };
 
 //* Comment

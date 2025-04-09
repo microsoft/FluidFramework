@@ -378,8 +378,8 @@ export class Outbox {
 		if (
 			batchManager.options.canRebase &&
 			rawBatch.hasReentrantOps === true &&
-			// Rebase if the reentrant ops will be grouped together - this ensures the grouped batch has a singular referenceSequenceNumber.
-			// Otherwise, no concerns about reentrant ops.
+			// NOTE: This is too restrictive. We should rebase for any reentrant op, not just if it's going to be a grouped batch
+			// However there is some test that is depending on this behavior so we haven't removed these conditions yet. See AB#33427
 			groupingEnabled &&
 			rawBatch.messages.length > 1
 		) {
@@ -468,11 +468,12 @@ export class Outbox {
 		// Shallow copy the local batch, updating the messages to be outbound messages
 		const originalBatch: OutboundBatch = {
 			...localBatch,
-			messages: localBatch.messages.map<OutboundBatchMessage>((localMessage) => ({
-				...localMessage,
-				contents: localMessage.serializedOp,
-				serializedOp: undefined,
-			})),
+			messages: localBatch.messages.map<OutboundBatchMessage>(
+				({ serializedOp, ...message }) => ({
+					contents: serializedOp,
+					...message,
+				}),
+			),
 		};
 
 		const originalOrGroupedBatch = groupingEnabled
