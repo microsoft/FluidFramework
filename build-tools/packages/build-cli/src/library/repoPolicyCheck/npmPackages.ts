@@ -10,10 +10,10 @@ import { createRequire } from "node:module";
 import { EOL as newline } from "node:os";
 import path from "node:path";
 import {
+	findGitRootSync,
 	updatePackageJsonFile,
 	updatePackageJsonFileAsync,
 } from "@fluid-tools/build-infrastructure";
-import { findGitRootSync } from "@fluid-tools/build-infrastructure";
 import { PackageJson, getApiExtractorConfigFilePath } from "@fluidframework/build-tools";
 import { writeJson } from "fs-extra/esm";
 import JSON5 from "json5";
