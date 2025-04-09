@@ -131,6 +131,13 @@ export interface ISessionClient<SpecificSessionClientId extends ClientSessionId 
 // @alpha
 export function Latest<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestValueManager<T>>;
 
+// @alpha @sealed
+export interface LatestMapClientData<T, Keys extends string | number, SpecificSessionClientId extends ClientSessionId = ClientSessionId> {
+    client: ISessionClient<SpecificSessionClientId>;
+    // (undocumented)
+    items: ReadonlyMap<Keys, LatestValueData<T>>;
+}
+
 // @alpha
 export function latestMapFactory<T extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(initialValues?: {
     [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
@@ -153,17 +160,10 @@ export interface LatestMapItemUpdatedClientData<T, K extends string | number> ex
 }
 
 // @alpha @sealed
-export interface LatestMapValueClientData<T, Keys extends string | number, SpecificSessionClientId extends ClientSessionId = ClientSessionId> {
-    client: ISessionClient<SpecificSessionClientId>;
-    // (undocumented)
-    items: ReadonlyMap<Keys, LatestValueData<T>>;
-}
-
-// @alpha @sealed
 export interface LatestMapValueManager<T, Keys extends string | number = string | number> {
     clients(): ISessionClient[];
     clientValue(client: ISessionClient): ReadonlyMap<Keys, LatestValueData<T>>;
-    clientValues(): IterableIterator<LatestMapValueClientData<T, Keys>>;
+    clientValues(): IterableIterator<LatestMapClientData<T, Keys>>;
     readonly controls: BroadcastControls;
     readonly events: Listenable<LatestMapValueManagerEvents<T, Keys>>;
     readonly local: ValueMap<Keys, T>;
@@ -185,7 +185,7 @@ export interface LatestMapValueManagerEvents<T, K extends string | number> {
         key: K;
     }) => void;
     // @eventProperty
-    updated: (updates: LatestMapValueClientData<T, K>) => void;
+    updated: (updates: LatestMapClientData<T, K>) => void;
 }
 
 // @alpha @sealed
