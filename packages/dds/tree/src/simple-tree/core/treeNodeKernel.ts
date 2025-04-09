@@ -19,7 +19,6 @@ import {
 	assertFlexTreeEntityNotFreed,
 	ContextSlot,
 	flexTreeSlot,
-	isFreedSymbol,
 	LazyEntity,
 	TreeStatus,
 	treeStatusFromAnchorCache,
@@ -248,7 +247,7 @@ export class TreeNodeKernel {
 		const flex = this.#hydrationState.anchorNode.slots.get(flexTreeSlot);
 		if (flex !== undefined) {
 			assert(flex instanceof LazyEntity, 0x9b4 /* Unexpected flex node implementation */);
-			if (flex[isFreedSymbol]()) {
+			if (flex.isFreed()) {
 				return TreeStatus.Deleted;
 			}
 		}
