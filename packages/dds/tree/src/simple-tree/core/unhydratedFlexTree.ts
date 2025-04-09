@@ -154,19 +154,19 @@ export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
 			if (this.location !== unparentedLocation) {
 				throw new UsageError("A node may not be inserted if it's already in a tree");
 			}
-			let n: UnhydratedFlexTreeNode | undefined = parent.parent;
-			while (n !== undefined) {
-				if (n === this) {
+			let unhydratedNode: UnhydratedFlexTreeNode | undefined = parent.parent;
+			while (unhydratedNode !== undefined) {
+				if (unhydratedNode === this) {
 					throw new UsageError(
 						"A node may not be inserted into a location that is under itself",
 					);
 				}
-				const p: FlexTreeNode | undefined = n.parentField.parent.parent;
+				const parentNode: FlexTreeNode | undefined = unhydratedNode.parentField.parent.parent;
 				assert(
-					p === undefined || p instanceof UnhydratedFlexTreeNode,
+					parentNode === undefined || parentNode instanceof UnhydratedFlexTreeNode,
 					"Unhydrated node's parent should be an unhydrated node",
 				);
-				n = p;
+				unhydratedNode = parentNode;
 			}
 			this.location = { parent, index };
 		} else {
