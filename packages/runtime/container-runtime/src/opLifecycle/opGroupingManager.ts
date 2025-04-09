@@ -14,9 +14,7 @@ import {
 import type { LocalContainerRuntimeMessage } from "../messageTypes.js";
 
 import {
-	IBatch,
-	type LocalBatch,
-	type LocalBatchMessage,
+	type OutboundBatch,
 	type OutboundSingletonBatch,
 } from "./definitions.js";
 
@@ -70,7 +68,7 @@ export class OpGroupingManager {
 	public createEmptyGroupedBatch(
 		resubmittingBatchId: string,
 		referenceSequenceNumber: number,
-	): IBatch<[LocalBatchMessage]> {
+	): OutboundSingletonBatch {
 		//* This seems wrong, regular Grouped Batches are Outbound
 		assert(
 			this.config.groupedBatchingEnabled,
@@ -88,7 +86,7 @@ export class OpGroupingManager {
 					metadata: { batchId: resubmittingBatchId },
 					localOpMetadata: { emptyBatch: true },
 					referenceSequenceNumber,
-					serializedOp,
+					contents: serializedOp,
 				},
 			],
 			referenceSequenceNumber,
@@ -104,12 +102,11 @@ export class OpGroupingManager {
 	 * @remarks - Remember that a BatchMessage has its content JSON serialized, so the incoming batch message contents
 	 * must be parsed first, and then the type and contents mentioned above are hidden in that JSON serialization.
 	 */
-	public groupBatch(batch: LocalBatch): OutboundSingletonBatch {
+	public groupBatch(batch: OutboundBatch): OutboundSingletonBatch {
 		assert(this.groupedBatchingEnabled(), "grouping disabled!");
 		assert(batch.messages.length > 0, "Unexpected attempt to group an empty batch");
 
 		if (batch.messages.length === 1) {
-			//* We need to actuall convert between the two somewhere
 			return batch as OutboundSingletonBatch;
 		}
 
@@ -136,7 +133,7 @@ export class OpGroupingManager {
 		const serializedContent = JSON.stringify({
 			type: OpGroupingManager.groupedBatchOp,
 			contents: batch.messages.map<IGroupedMessage>((message) => ({
-				contents: message.serializedOp,
+				contents: message.contents,
 				metadata: message.metadata,
 				compression: message.compression,
 			})),

@@ -29,6 +29,7 @@ export type OutboundBatchMessage = IBatchMessage & {
 
 //* Comment
 export type LocalBatch = IBatch<LocalBatchMessage[]>;
+export type OutboundBatch = IBatch<OutboundBatchMessage[]>;
 
 //* Comment
 export type OutboundSingletonBatch = IBatch<[OutboundBatchMessage]>;

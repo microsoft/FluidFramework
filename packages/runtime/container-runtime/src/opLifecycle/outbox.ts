@@ -32,6 +32,7 @@ import {
 	type OutboundBatchMessage,
 	type OutboundSingletonBatch,
 	type LocalBatch,
+	type OutboundBatch,
 } from "./definitions.js";
 import { OpCompressor } from "./opCompressor.js";
 import { OpGroupingManager } from "./opGroupingManager.js";
@@ -353,8 +354,14 @@ export class Outbox {
 		if (this.params.shouldSend()) {
 			clientSequenceNumber = this.sendBatch(emptyGroupedBatch);
 		}
+
+		//* Messy.  Just get the empty message and pack it 2 different ways here or something
+		const forPsm = emptyGroupedBatch.messages.map<LocalBatchMessage>((message) => ({
+			...message,
+			serializedOp: JSON.parse(message.contents ?? "{}") as LocalBatchMessage["serializedOp"],
+		}));
 		this.params.pendingStateManager.onFlushBatch(
-			emptyGroupedBatch.messages, // This is the single empty Grouped Batch message
+			forPsm, // This is the single empty Grouped Batch message
 			clientSequenceNumber,
 		);
 		return;
@@ -393,7 +400,10 @@ export class Outbox {
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
 		if (this.params.shouldSend()) {
-			const virtualizedBatch = this.virtualizeBatch(rawBatch, groupingEnabled);
+			//* Is all this copying correct?
+			const outboundBatch = { ...rawBatch, messages: rawBatch.messages.map<OutboundBatchMessage>((localMessage) => ({ ...localMessage, contents: localMessage.serializedOp })) };
+			const virtualizedBatch = this.virtualizeBatch(outboundBatch, groupingEnabled);
+
 			clientSequenceNumber = this.sendBatch(virtualizedBatch);
 			assert(
 				clientSequenceNumber === undefined || clientSequenceNumber >= 0,
@@ -460,12 +470,11 @@ export class Outbox {
 	 * - (C) A compressed singleton batch
 	 * - (D) A singleton batch containing the last chunk.
 	 */
-	private virtualizeBatch(localBatch: LocalBatch, groupingEnabled: boolean): OutboundSingletonBatch {
+	private virtualizeBatch(originalBatch: OutboundBatch, groupingEnabled: boolean): OutboundBatch {
 		const originalOrGroupedBatch = groupingEnabled
-			? this.params.groupingManager.groupBatch(localBatch)
-			: localBatch;
+			? this.params.groupingManager.groupBatch(originalBatch)
+			: originalBatch;
 
-		//* Figure out conversion from Local -> Outbound
 		if (originalOrGroupedBatch.messages.length !== 1) {
 			// Compression requires a single message, so return early otherwise.
 			return originalOrGroupedBatch;
