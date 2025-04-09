@@ -14,7 +14,7 @@ import type {
 	BroadcastControlSettings,
 	Presence,
 	LatestMapItemUpdatedClientData,
-	LatestMapValueManager,
+	LatestMap,
 } from "@fluidframework/presence/alpha";
 import { StateFactory } from "@fluidframework/presence/alpha";
 
@@ -35,7 +35,7 @@ function createLatestMapManager(
 }
 
 describe("Presence", () => {
-	describe("LatestMapValueManager", () => {
+	describe("LatestMap", () => {
 		/**
 		 * See {@link checkCompiles} below
 		 */
@@ -43,7 +43,7 @@ describe("Presence", () => {
 
 		addControlsTests(createLatestMapManager);
 
-		function setupMapValueManager(): LatestMapValueManager<
+		function setupMapValueManager(): LatestMap<
 			{
 				x: number;
 				y: number;

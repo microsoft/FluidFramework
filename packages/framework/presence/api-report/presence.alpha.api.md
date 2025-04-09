@@ -131,6 +131,16 @@ export namespace InternalUtilityTypes {
 export function Latest<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestValueManager<T>>;
 
 // @alpha @sealed
+export interface LatestMap<T, Keys extends string | number = string | number> {
+    clients(): Attendee[];
+    clientValue(attendee: Attendee): ReadonlyMap<Keys, LatestValueData<T>>;
+    clientValues(): IterableIterator<LatestMapClientData<T, Keys>>;
+    readonly controls: BroadcastControls;
+    readonly events: Listenable<LatestMapValueManagerEvents<T, Keys>>;
+    readonly local: ValueMap<Keys, T>;
+}
+
+// @alpha @sealed
 export interface LatestMapClientData<T, Keys extends string | number, SpecificAttendeeId extends AttendeeId = AttendeeId> {
     attendee: Attendee<SpecificAttendeeId>;
     // (undocumented)
@@ -140,7 +150,7 @@ export interface LatestMapClientData<T, Keys extends string | number, SpecificAt
 // @alpha
 export function latestMapFactory<T extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(initialValues?: {
     [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
-}, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapValueManager<T, Keys>>;
+}, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
 
 // @alpha @sealed
 export interface LatestMapItemRemovedClientData<K extends string | number> {
@@ -156,16 +166,6 @@ export interface LatestMapItemRemovedClientData<K extends string | number> {
 export interface LatestMapItemUpdatedClientData<T, K extends string | number> extends LatestValueClientData<T> {
     // (undocumented)
     key: K;
-}
-
-// @alpha @sealed
-export interface LatestMapValueManager<T, Keys extends string | number = string | number> {
-    clients(): Attendee[];
-    clientValue(attendee: Attendee): ReadonlyMap<Keys, LatestValueData<T>>;
-    clientValues(): IterableIterator<LatestMapClientData<T, Keys>>;
-    readonly controls: BroadcastControls;
-    readonly events: Listenable<LatestMapValueManagerEvents<T, Keys>>;
-    readonly local: ValueMap<Keys, T>;
 }
 
 // @alpha @sealed (undocumented)
@@ -295,7 +295,7 @@ export interface PresenceEvents {
 // @alpha
 export const StateFactory: {
     latest<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestValueManager<T>>;
-    latestMap<T_1 extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(initialValues?: { [K in Keys]: JsonSerializable<T_1> & JsonDeserialized<T_1>; } | undefined, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T_1, Keys>, LatestMapValueManager<T_1, Keys>>;
+    latestMap<T_1 extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(initialValues?: { [K in Keys]: JsonSerializable<T_1> & JsonDeserialized<T_1>; } | undefined, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T_1, Keys>, LatestMap<T_1, Keys>>;
 };
 
 // @alpha @sealed
