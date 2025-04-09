@@ -265,7 +265,7 @@ stages:
           inputs:
             workingDirectory: ${{ parameters.testWorkspace }}
             targetType: 'inline'
-            script: 'npm install $(Initialize.testPackageTgz) ${{ parameters.loggerPackage }} ${{ parameters.tenantSetupPackage }}'
+            script: 'npm install $(Initialize.testPackageTgz) ${{ parameters.loggerPackage }}'
 
         # Download Test Files & Install Extra Dependencies
         # These steps are intended to include extra dependencies that are not available as
@@ -362,20 +362,12 @@ stages:
           env:
             SYSTEM_ACCESSTOKEN: $(System.AccessToken)
           inputs:
-            workingDirectory: $(Build.ArtifactStagingDirectory)
+            workingDirectory: ${{ parameters.testWorkspace }}
             targetType: 'inline'
             script: |
               set -eu -o pipefail
 
-              echo "DEBUG"
-              echo "list sources dir:"
-              ls -a $(Build.ArtifactStagingDirectory)
-              # might need to install dependencies here
-              echo "list of scripts:"
-              npm run
-              # I also think this is the wrong directory, but right idea
-              tar --extract --verbose --file ff-internal/trips-setup-0.0.1.tgz ./src/test
-              npm run trips-setup $SYSTEM_ACCESSTOKEN
+              npx --package=@ff-internal/trips-setup@0.0.1 -- trips-setup $SYSTEM_ACCESSTOKEN
 
         # run the test
         - task: Npm@1
@@ -438,7 +430,7 @@ stages:
 
         # Release the tenant back to the TRIPS tenant pool
         - task: AzureCLI@2
-          displayName: 'Cleanup resources'
+          displayName: 'Log in to release tenant credentials'
           inputs:
             azureSubscription: 'Fluid Framework Tests'
             addSpnToEnvironment: true
@@ -448,7 +440,15 @@ stages:
               set -eu -o pipefail
 
               az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
-              pnpm run trips-cleanup $(stringBearerToken)
+
+        - task: Bash@3
+          displayName: 'Release tenant credentials'
+          inputs:
+            targetType: 'inline'
+            script: |
+              set -eu -o pipefail
+
+              npx --package=@ff-internal/trips-setup@0.0.1 -- trips-cleanup $(stringBearerToken)
 
         # Log Test Failures
         # - template: /tools/pipelines/templates/include-process-test-results.yml@self
