@@ -16,6 +16,8 @@ export interface LocalBatchMessage {
 	localOpMetadata?: unknown;
 	referenceSequenceNumber: number;
 	compression?: CompressionAlgorithms;
+
+	contents?: never; // To ensure proper conversion to/from OutboundBatchMessage
 }
 
 /**
@@ -25,6 +27,8 @@ export type OutboundBatchMessage = IBatchMessage & {
 	localOpMetadata?: unknown;
 	referenceSequenceNumber: number;
 	compression?: CompressionAlgorithms;
+
+	serializedOp?: never; // To ensure proper conversion to/from LocalBatchMessage
 };
 
 //* Comment

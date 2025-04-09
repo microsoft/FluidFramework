@@ -346,22 +346,19 @@ export class Outbox {
 			referenceSequenceNumber !== undefined,
 			0xa01 /* reference sequence number should be defined */,
 		);
-		const emptyGroupedBatch = this.params.groupingManager.createEmptyGroupedBatch(
-			resubmittingBatchId,
-			referenceSequenceNumber,
-		);
+		const { outboundBatch, placeholderMessage } =
+			this.params.groupingManager.createEmptyGroupedBatch(
+				resubmittingBatchId,
+				referenceSequenceNumber,
+			);
 		let clientSequenceNumber: number | undefined;
 		if (this.params.shouldSend()) {
-			clientSequenceNumber = this.sendBatch(emptyGroupedBatch);
+			clientSequenceNumber = this.sendBatch(outboundBatch);
 		}
 
-		//* Messy.  Just get the empty message and pack it 2 different ways here or something
-		const forPsm = emptyGroupedBatch.messages.map<LocalBatchMessage>((message) => ({
-			...message,
-			serializedOp: JSON.parse(message.contents ?? "{}") as LocalBatchMessage["serializedOp"],
-		}));
+		// Push the empty batch placeholder to the PendingStateManager
 		this.params.pendingStateManager.onFlushBatch(
-			forPsm, // This is the single empty Grouped Batch message
+			[{ ...placeholderMessage, serializedOp: "", contents: undefined }], // placeholder message - serializedOp will never be used
 			clientSequenceNumber,
 		);
 		return;
@@ -400,9 +397,7 @@ export class Outbox {
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
 		if (this.params.shouldSend()) {
-			//* Is all this copying correct?
-			const outboundBatch = { ...rawBatch, messages: rawBatch.messages.map<OutboundBatchMessage>((localMessage) => ({ ...localMessage, contents: localMessage.serializedOp })) };
-			const virtualizedBatch = this.virtualizeBatch(outboundBatch, groupingEnabled);
+			const virtualizedBatch = this.virtualizeBatch(rawBatch, groupingEnabled);
 
 			clientSequenceNumber = this.sendBatch(virtualizedBatch);
 			assert(
@@ -462,7 +457,7 @@ export class Outbox {
 	 *
 	 * @remarks - If chunking happens, a side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.
 	 *
-	 * @param singletonBatch - Raw or Grouped batch to consider for compression/chunking
+	 * @param localBatch - Local Batch to be virtualized - i.e. transformed into an Outbound Batch
 	 * @param groupingEnabled - If true, Grouped batching is enabled.
 	 * @returns One of the following:
 	 * - (A) The original batch (Based on what's enabled)
@@ -470,7 +465,17 @@ export class Outbox {
 	 * - (C) A compressed singleton batch
 	 * - (D) A singleton batch containing the last chunk.
 	 */
-	private virtualizeBatch(originalBatch: OutboundBatch, groupingEnabled: boolean): OutboundBatch {
+	private virtualizeBatch(localBatch: LocalBatch, groupingEnabled: boolean): OutboundBatch {
+		// Shallow copy the local batch, updating the messages to be outbound messages
+		const originalBatch: OutboundBatch = {
+			...localBatch,
+			messages: localBatch.messages.map<OutboundBatchMessage>((localMessage) => ({
+				...localMessage,
+				contents: localMessage.serializedOp,
+				serializedOp: undefined,
+			})),
+		};
+
 		const originalOrGroupedBatch = groupingEnabled
 			? this.params.groupingManager.groupBatch(originalBatch)
 			: originalBatch;

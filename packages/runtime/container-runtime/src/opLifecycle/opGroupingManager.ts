@@ -11,10 +11,9 @@ import {
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import type { LocalContainerRuntimeMessage } from "../messageTypes.js";
-
 import {
 	type OutboundBatch,
+	type OutboundBatchMessage,
 	type OutboundSingletonBatch,
 } from "./definitions.js";
 
@@ -63,34 +62,33 @@ export class OpGroupingManager {
 	 * This is needed as a placeholder if a batch becomes empty on resubmit, but we are tracking batch IDs.
 	 * @param resubmittingBatchId - batch ID of the resubmitting batch
 	 * @param referenceSequenceNumber - reference sequence number
-	 * @returns - IBatch containing a single empty Grouped Batch op
+	 * @returns - The outbound batch as well as the interior placeholder message
 	 */
 	public createEmptyGroupedBatch(
 		resubmittingBatchId: string,
 		referenceSequenceNumber: number,
-	): OutboundSingletonBatch {
-		//* This seems wrong, regular Grouped Batches are Outbound
+	): { outboundBatch: OutboundSingletonBatch; placeholderMessage: OutboundBatchMessage } {
 		assert(
 			this.config.groupedBatchingEnabled,
 			0xa00 /* cannot create empty grouped batch when grouped batching is disabled */,
 		);
 		const serializedOp = JSON.stringify({
-			type: OpGroupingManager.groupedBatchOp, //* Could be a different "emptyBatch" type?
+			type: OpGroupingManager.groupedBatchOp,
 			contents: [],
-		} satisfies LocalContainerRuntimeMessage);
+		});
 
-		return {
+		const placeholderMessage: OutboundBatchMessage = {
+			metadata: { batchId: resubmittingBatchId },
+			localOpMetadata: { emptyBatch: true },
+			referenceSequenceNumber,
+			contents: serializedOp,
+		};
+		const outboundBatch: OutboundSingletonBatch = {
 			contentSizeInBytes: 0,
-			messages: [
-				{
-					metadata: { batchId: resubmittingBatchId },
-					localOpMetadata: { emptyBatch: true },
-					referenceSequenceNumber,
-					contents: serializedOp,
-				},
-			],
+			messages: [placeholderMessage],
 			referenceSequenceNumber,
 		};
+		return { outboundBatch, placeholderMessage };
 	}
 
 	/**
