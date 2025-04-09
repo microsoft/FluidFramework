@@ -362,14 +362,14 @@ stages:
           env:
             SYSTEM_ACCESSTOKEN: $(System.AccessToken)
           inputs:
-            workingDirectory: $(Build.SourcesDirectory)
+            workingDirectory: $(Build.ArtifactStagingDirectory)
             targetType: 'inline'
             script: |
               set -eu -o pipefail
 
               echo "DEBUG"
               echo "list sources dir:"
-              ls -a $(Build.SourcesDirectory)
+              ls -a $(Build.ArtifactStagingDirectory)
               # might need to install dependencies here
               echo "list of scripts:"
               npm run
