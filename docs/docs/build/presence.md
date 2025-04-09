@@ -49,7 +49,7 @@ Latest value manager retains the most recent atomic value each attendee has shar
 
 #### LatestMapValueManager
 
-Latest map value manager retains the most recent atomic value each attendee has shared under arbitrary keys. Values associated with a key may be nullified (appears as deleted). Use `LatestMap` to add one to `StatesWorkspace`.
+Latest map value manager retains the most recent atomic value each attendee has shared under arbitrary keys. Values associated with a key may be nullified (appears as deleted). Use `StateFactory.latest` to add one to `StatesWorkspace`.
 
 #### NotificationsManager
 

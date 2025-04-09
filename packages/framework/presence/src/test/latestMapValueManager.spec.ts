@@ -16,7 +16,7 @@ import type {
 	LatestMapItemValueClientData,
 	LatestMapValueManager,
 } from "@fluidframework/presence/alpha";
-import { LatestMap } from "@fluidframework/presence/alpha";
+import { StateFactory } from "@fluidframework/presence/alpha";
 
 const testWorkspaceName = "name:testWorkspaceA";
 
@@ -26,7 +26,7 @@ function createLatestMapManager(
 	valueControlSettings?: BroadcastControlSettings,
 ) {
 	const states = presence.getStates(testWorkspaceName, {
-		fixedMap: LatestMap(
+		fixedMap: StateFactory.latestMap(
 			{ key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } },
 			valueControlSettings,
 		),
@@ -52,7 +52,7 @@ describe("Presence", () => {
 		> {
 			const presence = createPresenceManager(new MockEphemeralRuntime());
 			const states = presence.getStates(testWorkspaceName, {
-				fixedMap: LatestMap({ key1: { x: 0, y: 0 } }),
+				fixedMap: StateFactory.latestMap({ key1: { x: 0, y: 0 } }),
 			});
 			return states.props.fixedMap;
 		}
@@ -99,7 +99,10 @@ export function checkCompiles(): void {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	const presence = {} as Presence;
 	const statesWorkspace = presence.getStates("name:testStatesWorkspaceWithLatestMap", {
-		fixedMap: LatestMap({ key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } }),
+		fixedMap: StateFactory.latestMap({
+			key1: { x: 0, y: 0 },
+			key2: { ref: "default", someId: 0 },
+		}),
 	});
 	// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
 	const workspace: typeof statesWorkspace = statesWorkspace;
@@ -130,7 +133,7 @@ export function checkCompiles(): void {
 		tilt?: number;
 	}
 
-	workspace.add("pointers", LatestMap<PointerData>({}));
+	workspace.add("pointers", StateFactory.latestMap<PointerData>({}));
 
 	const pointers = workspace.props.pointers;
 	const localPointers = pointers.local;

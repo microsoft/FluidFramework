@@ -214,7 +214,7 @@ async function start(): Promise<void> {
 		},
 	);
 
-	// lastDiceRolls is here just to demonstrate an example of LatestMap
+	// lastDiceRolls is here just to demonstrate an example of StateFactory.latestMap
 	// Its updates are only logged to the console.
 	states.lastDiceRolls.events.on("itemUpdated", (update) => {
 		console.log(
