@@ -15,16 +15,17 @@ import {
 	type SchemaFactoryObjectOptions,
 } from "./schemaFactory.js";
 import {
-	isAnnotatedAllowedType,
-	type AllowedType,
+	normalizeToAnnotatedAllowedType,
 	type AnnotatedAllowedType,
 	type ImplicitAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
+	type ImplicitAnnotatedFieldSchema,
 	type ImplicitFieldSchema,
 	type NodeSchemaOptions,
 } from "../schemaTypes.js";
 import { objectSchema } from "../objectNode.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
-import type { NodeKind, TreeNodeSchemaClass } from "../core/index.js";
+import type { NodeKind, TreeNodeSchema, TreeNodeSchemaClass } from "../core/index.js";
 import type {
 	ImplicitAllowedTypesUnsafe,
 	ImplicitFieldSchemaUnsafe,
@@ -37,6 +38,7 @@ import type { ObjectNodeSchema } from "../objectNodeTypes.js";
 import type { SimpleObjectNodeSchema } from "../simpleSchema.js";
 import type { ArrayNodeCustomizableSchema } from "../arrayNodeTypes.js";
 import type { MapNodeCustomizableSchema } from "../mapNodeTypes.js";
+import type { LazyItem } from "../flexList.js";
 
 /**
  * {@link SchemaFactory} with additional alpha APIs.
@@ -59,33 +61,22 @@ export class SchemaFactoryAlpha<
 
 	/**
 	 * Declares a type enablable in a set of {@link AllowedTypes}.
+	 * 
+	 * @remarks
+	 * t is frozen and should not be modified after being passed in.
 	 */
-	public enablable<const T extends AllowedType>(t: T): AnnotatedAllowedType {
-		const enablableType: AnnotatedAllowedType = isAnnotatedAllowedType(t)
-			? {
-					type: t.type,
-					metadata: {
-						...t.metadata,
-						enabledUponSchemaUpgrade: "TODO generate upgrade token",
-					},
-				}
-			: {
-					type: t,
-					metadata: {
-						enabledUponSchemaUpgrade: "TODO generate upgrade token",
-					},
-				};
-
-		// TODO would we prefer code conciseness over fewer calls to the type guard?
-		// const enablableType: AnnotatedAllowedType = {
-		// 	type: isAnnotatedAllowedType(t) ? t.type : t,
-		// 	metadata: {
-		// 		...(isAnnotatedAllowedType(t) ? t.metadata : {}),
-		// 		enabledUponSchemaUpgrade: "TODO",
-		// 	},
-		// };
-
-		return enablableType;
+	public enablable<const T extends LazyItem<TreeNodeSchema>>(
+		t: T | AnnotatedAllowedType<T>,
+	): AnnotatedAllowedType<T> {
+		Object.freeze(t);
+		const annotatedType = normalizeToAnnotatedAllowedType(t);
+		return {
+			type: annotatedType.type,
+			metadata: {
+				...annotatedType.metadata,
+				enabledUponSchemaUpgrade: "TODO generate upgrade token",
+			},
+		};
 	}
 
 	/**
@@ -95,9 +86,10 @@ export class SchemaFactoryAlpha<
 	 * @param fields - Schema for fields of the object node's schema. Defines what children can be placed under each key.
 	 * @param options - Additional options for the schema.
 	 */
-	public override object<
+	// TODO rename and consolidate with alpha, note that it's a breaking change in the changeset
+	public objectAlpha<
 		const Name extends TName,
-		const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
+		const T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
@@ -160,7 +152,7 @@ export class SchemaFactoryAlpha<
 		Pick<ObjectNodeSchema, "fields"> {
 		// TODO: syntax highting is vs code is broken here. Don't trust it. Use the compiler instead.
 		type TScopedName = ScopedSchemaName<TScope, Name>;
-		return this.object(
+		return this.objectAlpha(
 			name,
 			t as T & RestrictiveStringRecord<ImplicitFieldSchema>,
 			options,

@@ -510,6 +510,7 @@ export function normalizeFieldSchema(
 		? (schema as FieldSchemaAlpha)
 		: createFieldSchema(FieldKind.Required, schema);
 }
+
 /**
  * Normalizes a {@link ImplicitAllowedTypes} to a set of {@link TreeNodeSchema}s, by eagerly evaluating any
  * lazy schema declarations.
@@ -534,6 +535,19 @@ export function normalizeAllowedTypes(
 	}
 	return normalized;
 }
+
+/**
+ * Normalizes an allowed type to an {@link AnnotatedAllowedType}s, by adding empty annotations if they don't already exist.
+ *
+ * @internal
+ */
+export function normalizeToAnnotatedAllowedType<T extends LazyItem<TreeNodeSchema>>(type: T | AnnotatedAllowedType<T>): AnnotatedAllowedType<T> {
+	return isAnnotatedAllowedType(type) ? type : {
+		metadata: {},
+		type,
+	}
+}
+
 /**
  * Converts an {@link ImplicitAnnotatedAllowedTypes} to an {@link ImplicitAllowedTypes}s, by removing
  * any annotations.
