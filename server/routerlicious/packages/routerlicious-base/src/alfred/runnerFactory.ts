@@ -21,10 +21,7 @@ import {
 } from "./services";
 import { IAlfredResourcesCustomizations } from ".";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
-import {
-	closeRedisClientConnections,
-	StartupCheck,
-} from "@fluidframework/server-services-shared";
+import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
 
 /**
  * @internal
