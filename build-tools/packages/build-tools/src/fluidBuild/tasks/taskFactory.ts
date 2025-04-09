@@ -78,10 +78,16 @@ const executableToLeafTask: {
  * @param executable The command executable to find a matching task handler for.
  * @returns A `TaskHandler` for the task, if found. Otherwise `UnknownLeafTask` as the default handler.
  */
-function getTaskForExecutable(executable: string, context: BuildContext): TaskHandler {
+function getTaskForExecutable(
+	executable: string,
+	node: BuildPackage,
+	context: BuildContext,
+): TaskHandler {
 	const config = context.fluidBuildConfig;
 	const declarativeTasks = config?.declarativeTasks;
-	const taskMatch = declarativeTasks?.[executable];
+	const taskMatch =
+		node.pkg.packageJson.fluidBuild?.declarativeTasks?.[executable] ??
+		declarativeTasks?.[executable];
 
 	if (taskMatch !== undefined) {
 		return createDeclarativeTaskHandler(taskMatch);
@@ -171,7 +177,7 @@ export class TaskFactory {
 		).toLowerCase();
 
 		// Will return a task-specific handler or the UnknownLeafTask
-		const handler = getTaskForExecutable(executable, context);
+		const handler = getTaskForExecutable(executable, node, context);
 
 		// Invoke the function or constructor to create the task handler
 		if (isConstructorFunction(handler)) {

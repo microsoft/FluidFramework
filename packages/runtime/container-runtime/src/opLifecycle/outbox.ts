@@ -370,9 +370,16 @@ export class Outbox {
 		}
 
 		const rawBatch = batchManager.popBatch(resubmittingBatchId);
-		const shouldGroup =
-			!disableGroupedBatching && this.params.groupingManager.shouldGroup(rawBatch);
-		if (batchManager.options.canRebase && rawBatch.hasReentrantOps === true && shouldGroup) {
+		const groupingEnabled =
+			!disableGroupedBatching && this.params.groupingManager.groupedBatchingEnabled();
+		if (
+			batchManager.options.canRebase &&
+			rawBatch.hasReentrantOps === true &&
+			// Rebase if the reentrant ops will be grouped together - this ensures the grouped batch has a singular referenceSequenceNumber.
+			// Otherwise, no concerns about reentrant ops.
+			groupingEnabled &&
+			rawBatch.messages.length > 1
+		) {
 			assert(!this.rebasing, 0x6fa /* A rebased batch should never have reentrant ops */);
 			// If a batch contains reentrant ops (ops created as a result from processing another op)
 			// it needs to be rebased so that we can ensure consistent reference sequence numbers
@@ -386,15 +393,8 @@ export class Outbox {
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
 		if (this.params.shouldSend()) {
-			const processedBatch = disableGroupedBatching
-				? rawBatch
-				: this.compressAndChunkBatch(
-						//* REVISIT: this used to accept empty batch, but wouldn't ever happen right? I updated the type to be singleton only
-						shouldGroup
-							? this.params.groupingManager.groupBatch(rawBatch)
-							: (rawBatch as unknown as OutboundSingletonBatch), //* Fix up typing given grouping for compression
-					);
-			clientSequenceNumber = this.sendBatch(processedBatch);
+			const virtualizedBatch = this.virtualizeBatch(rawBatch, groupingEnabled);
+			clientSequenceNumber = this.sendBatch(virtualizedBatch);
 			assert(
 				clientSequenceNumber === undefined || clientSequenceNumber >= 0,
 				0x9d2 /* unexpected negative clientSequenceNumber (empty batch should yield undefined) */,
@@ -448,27 +448,44 @@ export class Outbox {
 	}
 
 	/**
-	 * As necessary and enabled, compresses and chunks the given batch.
+	 * As necessary and enabled, groups / compresses / chunks the given batch.
 	 *
 	 * @remarks - If chunking happens, a side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.
 	 *
-	 * @param batch - Raw or Grouped batch to consider for compression/chunking
-	 * @returns Either (A) the original batch, (B) a compressed batch (same length as original)
-	 * or (C) a batch containing the last chunk.
+	 * @param singletonBatch - Raw or Grouped batch to consider for compression/chunking
+	 * @param groupingEnabled - If true, Grouped batching is enabled.
+	 * @returns One of the following:
+	 * - (A) The original batch (Based on what's enabled)
+	 * - (B) A grouped batch (it's a singleton batch)
+	 * - (C) A compressed singleton batch
+	 * - (D) A singleton batch containing the last chunk.
 	 */
-	private compressAndChunkBatch(batch: OutboundSingletonBatch): OutboundSingletonBatch {
+	private virtualizeBatch(localBatch: LocalBatch, groupingEnabled: boolean): OutboundSingletonBatch {
+		const originalOrGroupedBatch = groupingEnabled
+			? this.params.groupingManager.groupBatch(localBatch)
+			: localBatch;
+
+		//* Figure out conversion from Local -> Outbound
+		if (originalOrGroupedBatch.messages.length !== 1) {
+			// Compression requires a single message, so return early otherwise.
+			return originalOrGroupedBatch;
+		}
+
+		// Regardless of whether we grouped or not, we now have a batch with a single message.
+		// Now proceed to compress/chunk it if necessary.
+		const singletonBatch = originalOrGroupedBatch as OutboundSingletonBatch;
+
 		if (
 			this.params.config.compressionOptions === undefined ||
 			this.params.config.compressionOptions.minimumBatchSizeInBytes >
-				batch.contentSizeInBytes ||
-			this.params.submitBatchFn === undefined ||
-			!this.params.groupingManager.groupedBatchingEnabled()
+				singletonBatch.contentSizeInBytes ||
+			this.params.submitBatchFn === undefined
 		) {
-			// Nothing to do if the batch is empty or if compression is disabled or not supported, or if we don't need to compress
-			return batch;
+			// Nothing to do if compression is disabled, unnecessary or unsupported.
+			return singletonBatch;
 		}
 
-		const compressedBatch = this.params.compressor.compressBatch(batch);
+		const compressedBatch = this.params.compressor.compressBatch(singletonBatch);
 
 		if (this.params.splitter.isBatchChunkingEnabled) {
 			return compressedBatch.contentSizeInBytes <= this.params.splitter.chunkSizeInBytes
@@ -478,13 +495,13 @@ export class Outbox {
 
 		if (compressedBatch.contentSizeInBytes >= this.params.config.maxBatchSizeInBytes) {
 			throw new GenericError("BatchTooLarge", /* error */ undefined, {
-				batchSize: batch.contentSizeInBytes,
+				batchSize: singletonBatch.contentSizeInBytes,
 				compressedBatchSize: compressedBatch.contentSizeInBytes,
 				count: compressedBatch.messages.length,
 				limit: this.params.config.maxBatchSizeInBytes,
 				chunkingEnabled: this.params.splitter.isBatchChunkingEnabled,
 				compressionOptions: JSON.stringify(this.params.config.compressionOptions),
-				socketSize: estimateSocketSize(batch),
+				socketSize: estimateSocketSize(singletonBatch),
 			});
 		}
 
