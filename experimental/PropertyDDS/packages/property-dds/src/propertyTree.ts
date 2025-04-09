@@ -217,8 +217,8 @@ export class SharedPropertyTree extends SharedObject {
 		// Backdoor to emit "partial_checkout" events on the socket. The delta manager at container runtime layer is
 		// a proxy and the delta manager at the container context layer is yet another proxy, so account for that.
 		if (!this.options.disablePartialCheckout) {
-			let dm = (this.deltaManager as any).deltaManager;
-			if (dm.deltaManager !== undefined) {
+			let dm = this.deltaManager as any;
+			while ("deltaManager" in dm && "connectionManager" in dm.deltaManager) {
 				dm = dm.deltaManager;
 			}
 			const socket = dm.connectionManager.connection.socket;

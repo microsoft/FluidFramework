@@ -824,7 +824,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	public loadSummary(summary: SharedTreeSummaryBase): void {
 		const { version: loadedSummaryVersion } = summary;
 
-		if (this.deltaManager.readOnlyInfo.readonly !== true && isUpdateRequired(loadedSummaryVersion, this.writeFormat)) {
+		if (this.runtime.readonly !== true && isUpdateRequired(loadedSummaryVersion, this.writeFormat)) {
 			this.submitOp({ type: SharedTreeOpType.Update, version: this.writeFormat });
 			this.logger.sendTelemetryEvent({
 				eventName: 'RequestVersionUpdate',

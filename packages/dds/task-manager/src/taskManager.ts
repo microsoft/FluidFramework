@@ -4,7 +4,6 @@
  */
 
 import { EventEmitter } from "@fluid-internal/client-utils";
-import { ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
@@ -109,13 +108,6 @@ export class TaskManagerClass
 	 */
 	private get clientId(): string | undefined {
 		return this.isAttached() ? this.runtime.clientId : placeholderClientId;
-	}
-
-	/**
-	 * Returns a ReadOnlyInfo object to determine current read/write permissions.
-	 */
-	private get readOnlyInfo(): ReadOnlyInfo {
-		return this.deltaManager.readOnlyInfo;
 	}
 
 	/**
@@ -297,11 +289,8 @@ export class TaskManagerClass
 			return true;
 		}
 
-		if (this.readOnlyInfo.readonly === true) {
-			const error =
-				this.readOnlyInfo.permissions === true
-					? new Error("Attempted to volunteer with read-only permissions")
-					: new Error("Attempted to volunteer in read-only state");
+		if (this.runtime.readonly === true) {
+			const error = new Error("Attempted to volunteer in read-only state");
 			throw error;
 		}
 
@@ -387,8 +376,8 @@ export class TaskManagerClass
 			return;
 		}
 
-		if (this.readOnlyInfo.readonly === true && this.readOnlyInfo.permissions === true) {
-			throw new Error("Attempted to subscribe with read-only permissions");
+		if (this.runtime.readonly === true) {
+			throw new Error("Attempted to subscribe with read-only");
 		}
 
 		const submitVolunteerOp = () => {
