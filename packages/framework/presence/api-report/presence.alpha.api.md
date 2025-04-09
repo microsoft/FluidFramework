@@ -5,10 +5,10 @@
 ```ts
 
 // @alpha
-export function acquirePresence(fluidContainer: IFluidContainer): IPresence;
+export function acquirePresence(fluidContainer: IFluidContainer): Presence;
 
 // @alpha
-export function acquirePresenceViaDataObject(fluidLoadable: ExperimentalPresenceDO): IPresence;
+export function acquirePresenceViaDataObject(fluidLoadable: ExperimentalPresenceDO): Presence;
 
 // @alpha
 export type AttendeeId = SessionId & {
@@ -109,16 +109,6 @@ export namespace InternalUtilityTypes {
     export type NotificationListeners<E> = {
         [P in string & keyof E as IsNotificationListener<E[P]> extends true ? P : never]: E[P];
     };
-}
-
-// @alpha @sealed
-export interface IPresence {
-    readonly events: Listenable<PresenceEvents>;
-    getAttendee(clientId: ClientConnectionId | AttendeeId): ISessionClient;
-    getAttendees(): ReadonlySet<ISessionClient>;
-    getMyself(): ISessionClient;
-    getNotifications<NotificationsSchema extends NotificationsWorkspaceSchema>(notificationsId: StatesWorkspaceAddress, requestedContent: NotificationsSchema): NotificationsWorkspace<NotificationsSchema>;
-    getStates<StatesSchema extends StatesWorkspaceSchema>(workspaceAddress: StatesWorkspaceAddress, requestedContent: StatesSchema, controls?: BroadcastControlSettings): StatesWorkspace<StatesSchema>;
 }
 
 // @alpha @sealed
@@ -272,6 +262,16 @@ export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSc
 export interface NotificationsWorkspaceSchema {
     // (undocumented)
     [key: string]: InternalTypes.ManagerFactory<typeof key, InternalTypes.ValueRequiredState<InternalTypes.NotificationType>, NotificationsManager<any>>;
+}
+
+// @alpha @sealed
+export interface Presence {
+    readonly events: Listenable<PresenceEvents>;
+    getAttendee(clientId: ClientConnectionId | AttendeeId): ISessionClient;
+    getAttendees(): ReadonlySet<ISessionClient>;
+    getMyself(): ISessionClient;
+    getNotifications<NotificationsSchema extends NotificationsWorkspaceSchema>(notificationsId: StatesWorkspaceAddress, requestedContent: NotificationsSchema): NotificationsWorkspace<NotificationsSchema>;
+    getStates<StatesSchema extends StatesWorkspaceSchema>(workspaceAddress: StatesWorkspaceAddress, requestedContent: StatesSchema, controls?: BroadcastControlSettings): StatesWorkspace<StatesSchema>;
 }
 
 // @alpha @sealed (undocumented)

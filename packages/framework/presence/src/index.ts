@@ -25,7 +25,7 @@ export type {
 
 export {
 	type AttendeeId,
-	type IPresence,
+	type Presence,
 	type ISessionClient,
 	type PresenceEvents,
 	SessionClientStatus,

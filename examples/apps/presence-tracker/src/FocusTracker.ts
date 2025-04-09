@@ -6,7 +6,7 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import type {
-	IPresence,
+	Presence,
 	ISessionClient,
 	LatestValueManager,
 	StatesWorkspace,
@@ -43,7 +43,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 	private readonly focus: LatestValueManager<IFocusState>;
 
 	constructor(
-		private readonly presence: IPresence,
+		private readonly presence: Presence,
 
 		/**
 		 * A states workspace that the FocusTracker will use to share focus states with other session clients.

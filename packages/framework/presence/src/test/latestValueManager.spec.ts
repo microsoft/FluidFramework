@@ -12,7 +12,7 @@ import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
 import type {
 	BroadcastControlSettings,
-	IPresence,
+	Presence,
 	LatestValueClientData,
 } from "@fluidframework/presence/alpha";
 import { Latest } from "@fluidframework/presence/alpha";
@@ -21,7 +21,7 @@ const testWorkspaceName = "name:testWorkspaceA";
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function createLatestManager(
-	presence: IPresence,
+	presence: Presence,
 	valueControlSettings?: BroadcastControlSettings,
 ) {
 	const states = presence.getStates(testWorkspaceName, {
@@ -38,7 +38,7 @@ describe("Presence", () => {
 		it("API use compiles", () => {});
 
 		describe("when initialized", () => {
-			let presence: IPresence;
+			let presence: Presence;
 
 			beforeEach(() => {
 				presence = createPresenceManager(new MockEphemeralRuntime());
@@ -103,7 +103,7 @@ describe("Presence", () => {
  */
 export function checkCompiles(): void {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-	const presence = {} as IPresence;
+	const presence = {} as Presence;
 	const statesWorkspace = presence.getStates("name:testStatesWorkspaceWithLatest", {
 		cursor: Latest({ x: 0, y: 0 }),
 		camera: Latest({ x: 0, y: 0, z: 0 }),

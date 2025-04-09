@@ -18,7 +18,7 @@ import {
 	acquirePresenceViaDataObject,
 	ExperimentalPresenceManager,
 	type ExperimentalPresenceDO,
-	type IPresence,
+	type Presence,
 	type ISessionClient,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/presence/alpha";
@@ -61,7 +61,7 @@ const getOrCreatePresenceContainer = async (
 	scopes?: ScopeType[],
 ): Promise<{
 	container: IFluidContainer;
-	presence: IPresence;
+	presence: Presence;
 	services: AzureContainerServices;
 	client: AzureClient;
 	containerId: string;
@@ -132,7 +132,7 @@ function isConnected(container: IFluidContainer | undefined): boolean {
 }
 
 class MessageHandler {
-	public presence: IPresence | undefined;
+	public presence: Presence | undefined;
 	public container: IFluidContainer | undefined;
 	public containerId: string | undefined;
 

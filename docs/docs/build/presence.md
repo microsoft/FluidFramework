@@ -19,7 +19,7 @@ The key scenarios that the new Presence APIs are suitable for includes:
 
 ## Concepts
 
-A session is a period of time when one or more clients are connected to a Fluid service. Session data and messages may be exchanged among clients, but will disappear once the no clients remain. (More specifically once no clients remain that have acquired the session `IPresence` interface.) Once fully implemented, no client will require container write permissions to use Presence features.
+A session is a period of time when one or more clients are connected to a Fluid service. Session data and messages may be exchanged among clients, but will disappear once the no clients remain. (More specifically once no clients remain that have acquired the session `Presence` interface.) Once fully implemented, no client will require container write permissions to use Presence features.
 
 ### Attendees
 

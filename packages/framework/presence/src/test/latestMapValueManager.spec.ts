@@ -12,7 +12,7 @@ import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
 import type {
 	BroadcastControlSettings,
-	IPresence,
+	Presence,
 	LatestMapItemValueClientData,
 	LatestMapValueManager,
 } from "@fluidframework/presence/alpha";
@@ -22,7 +22,7 @@ const testWorkspaceName = "name:testWorkspaceA";
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function createLatestMapManager(
-	presence: IPresence,
+	presence: Presence,
 	valueControlSettings?: BroadcastControlSettings,
 ) {
 	const states = presence.getStates(testWorkspaceName, {
@@ -97,7 +97,7 @@ describe("Presence", () => {
  */
 export function checkCompiles(): void {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-	const presence = {} as IPresence;
+	const presence = {} as Presence;
 	const statesWorkspace = presence.getStates("name:testStatesWorkspaceWithLatestMap", {
 		fixedMap: LatestMap({ key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } }),
 	});

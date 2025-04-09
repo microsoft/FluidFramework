@@ -6,7 +6,7 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEvent } from "@fluidframework/core-interfaces";
 import type {
-	IPresence,
+	Presence,
 	ISessionClient,
 	LatestValueManager,
 	StatesWorkspace,
@@ -44,7 +44,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	private readonly cursor: LatestValueManager<IMousePosition>;
 
 	constructor(
-		private readonly presence: IPresence,
+		private readonly presence: Presence,
 
 		/**
 		 * A states workspace that the MouseTracker will use to share mouse positions with other session clients.

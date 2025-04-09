@@ -4,7 +4,7 @@
  */
 
 import { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
-import type { IPresence, LatestValueManager } from "@fluidframework/presence/alpha";
+import type { Presence, LatestValueManager } from "@fluidframework/presence/alpha";
 
 import { ICustomUserDetails } from "./app.js";
 import { IDiceRollerController } from "./controller.js";
@@ -125,7 +125,7 @@ function addLogEntry(logDiv: HTMLDivElement, entry: string): void {
 
 function makePresenceView(
 	// Biome insist on no semicolon - https://dev.azure.com/fluidframework/internal/_workitems/edit/9083
-	presenceConfig?: { presence: IPresence; lastRoll: LatestValueManager<DiceValues> },
+	presenceConfig?: { presence: Presence; lastRoll: LatestValueManager<DiceValues> },
 	audience?: IAzureAudience,
 ): HTMLDivElement {
 	const presenceDiv = document.createElement("div");
@@ -198,7 +198,7 @@ function makePresenceView(
 export function makeAppView(
 	diceRollerControllers: IDiceRollerController[],
 	// Biome insist on no semicolon - https://dev.azure.com/fluidframework/internal/_workitems/edit/9083
-	presenceConfig?: { presence: IPresence; lastRoll: LatestValueManager<DiceValues> },
+	presenceConfig?: { presence: Presence; lastRoll: LatestValueManager<DiceValues> },
 	audience?: IAzureAudience,
 ): HTMLDivElement {
 	const diceRollerViews = diceRollerControllers.map((controller) =>

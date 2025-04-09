@@ -4,7 +4,7 @@
  */
 
 import {
-	IPresence,
+	Presence,
 	Latest,
 	type ISessionClient,
 	type StatesWorkspace,
@@ -24,7 +24,7 @@ const statesSchema = {
 export type UserPresence = StatesWorkspace<typeof statesSchema>;
 
 // Takes a presence object and returns the user presence object that contains the shared object states
-export function buildUserPresence(presence: IPresence): UserPresence {
+export function buildUserPresence(presence: Presence): UserPresence {
 	const states = presence.getStates(`name:user-avatar-states`, statesSchema);
 	return states;
 }
@@ -37,7 +37,7 @@ export class PresenceManager {
 	// A callback method to get updates when remote UserInfo changes
 	private userInfoCallback: (userInfoMap: Map<ISessionClient, User>) => void = () => {};
 
-	constructor(private readonly presence: IPresence) {
+	constructor(private readonly presence: Presence) {
 		// Address for the presence state, this is used to organize the presence states and avoid conflicts
 		const appSelectionWorkspaceAddress = "aiCollab:workspace";
 
@@ -82,7 +82,7 @@ export class PresenceManager {
 	}
 
 	// Returns the presence object
-	getPresence(): IPresence {
+	getPresence(): Presence {
 		return this.presence;
 	}
 

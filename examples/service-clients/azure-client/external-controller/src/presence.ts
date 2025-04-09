@@ -4,7 +4,7 @@
  */
 
 import {
-	IPresence,
+	Presence,
 	Latest,
 	LatestMap,
 	type StatesWorkspace,
@@ -45,7 +45,7 @@ const statesSchema = {
 
 export type DicePresence = StatesWorkspace<typeof statesSchema>;
 
-export function buildDicePresence(presence: IPresence): DicePresence {
+export function buildDicePresence(presence: Presence): DicePresence {
 	const states = presence.getStates("name:app-client-states", statesSchema);
 	return states;
 }

@@ -159,7 +159,7 @@ export interface PresenceEvents {
  * @sealed
  * @alpha
  */
-export interface IPresence {
+export interface Presence {
 	/**
 	 * Events for Presence.
 	 */

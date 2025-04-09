@@ -10,7 +10,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { PostUpdateAction } from "./internalTypes.js";
-import type { AttendeeId, IPresence, ISessionClient, PresenceEvents } from "./presence.js";
+import type { AttendeeId, Presence, ISessionClient, PresenceEvents } from "./presence.js";
 import { SessionClientStatus } from "./presence.js";
 import type { PresenceStatesInternal } from "./presenceStates.js";
 import { TimerManager } from "./timerManager.js";
@@ -65,9 +65,9 @@ class SessionClient implements ISessionClient {
  * @internal
  */
 export interface SystemWorkspace
-	// Portion of IPresence that is handled by SystemWorkspace along with
+	// Portion of Presence that is handled by SystemWorkspace along with
 	// responsiblity for emitting "attendeeJoined" events.
-	extends Pick<IPresence, "getAttendees" | "getAttendee" | "getMyself"> {
+	extends Pick<Presence, "getAttendees" | "getAttendee" | "getMyself"> {
 	/**
 	 * Must be called when the current client acquires a new connection.
 	 *
