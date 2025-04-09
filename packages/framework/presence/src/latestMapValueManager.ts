@@ -32,7 +32,7 @@ import { brandIVM } from "./valueManager.js";
  * @sealed
  * @alpha
  */
-export interface LatestMapValueClientData<
+export interface LatestMapClientData<
 	T,
 	Keys extends string | number,
 	SpecificAttendeeId extends AttendeeId = AttendeeId,
@@ -85,7 +85,7 @@ export interface LatestMapValueManagerEvents<T, K extends string | number> {
 	 *
 	 * @eventProperty
 	 */
-	updated: (updates: LatestMapValueClientData<T, K>) => void;
+	updated: (updates: LatestMapClientData<T, K>) => void;
 
 	/**
 	 * Raised when specific item's value of remote client is updated.
@@ -332,7 +332,7 @@ export interface LatestMapValueManager<T, Keys extends string | number = string 
 	/**
 	 * Iterable access to remote clients' map of values.
 	 */
-	clientValues(): IterableIterator<LatestMapValueClientData<T, Keys>>;
+	clientValues(): IterableIterator<LatestMapClientData<T, Keys>>;
 	/**
 	 * Array of known remote clients.
 	 */
@@ -378,7 +378,7 @@ class LatestMapValueManagerImpl<
 
 	public readonly local: ValueMap<Keys, T>;
 
-	public *clientValues(): IterableIterator<LatestMapValueClientData<T, Keys>> {
+	public *clientValues(): IterableIterator<LatestMapClientData<T, Keys>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		for (const attendeeId of objectKeys(allKnownStates.states)) {
 			if (attendeeId !== allKnownStates.self) {

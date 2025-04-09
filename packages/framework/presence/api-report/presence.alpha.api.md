@@ -130,6 +130,13 @@ export namespace InternalUtilityTypes {
 // @alpha
 export function Latest<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestValueManager<T>>;
 
+// @alpha @sealed
+export interface LatestMapClientData<T, Keys extends string | number, SpecificAttendeeId extends AttendeeId = AttendeeId> {
+    attendee: Attendee<SpecificAttendeeId>;
+    // (undocumented)
+    items: ReadonlyMap<Keys, LatestValueData<T>>;
+}
+
 // @alpha
 export function latestMapFactory<T extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(initialValues?: {
     [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
@@ -152,17 +159,10 @@ export interface LatestMapItemUpdatedClientData<T, K extends string | number> ex
 }
 
 // @alpha @sealed
-export interface LatestMapValueClientData<T, Keys extends string | number, SpecificAttendeeId extends AttendeeId = AttendeeId> {
-    attendee: Attendee<SpecificAttendeeId>;
-    // (undocumented)
-    items: ReadonlyMap<Keys, LatestValueData<T>>;
-}
-
-// @alpha @sealed
 export interface LatestMapValueManager<T, Keys extends string | number = string | number> {
     clients(): Attendee[];
     clientValue(attendee: Attendee): ReadonlyMap<Keys, LatestValueData<T>>;
-    clientValues(): IterableIterator<LatestMapValueClientData<T, Keys>>;
+    clientValues(): IterableIterator<LatestMapClientData<T, Keys>>;
     readonly controls: BroadcastControls;
     readonly events: Listenable<LatestMapValueManagerEvents<T, Keys>>;
     readonly local: ValueMap<Keys, T>;
@@ -184,7 +184,7 @@ export interface LatestMapValueManagerEvents<T, K extends string | number> {
         key: K;
     }) => void;
     // @eventProperty
-    updated: (updates: LatestMapValueClientData<T, K>) => void;
+    updated: (updates: LatestMapClientData<T, K>) => void;
 }
 
 // @alpha @sealed
@@ -292,6 +292,12 @@ export interface PresenceEvents {
     workspaceActivated: (workspaceAddress: WorkspaceAddress, type: "States" | "Notifications" | "Unknown") => void;
 }
 
+// @alpha
+export const StateFactory: {
+    latest<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestValueManager<T>>;
+    latestMap<T_1 extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(initialValues?: { [K in Keys]: JsonSerializable<T_1> & JsonDeserialized<T_1>; } | undefined, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T_1, Keys>, LatestMapValueManager<T_1, Keys>>;
+};
+
 // @alpha @sealed
 export interface StatesWorkspace<TSchema extends StatesWorkspaceSchema, TManagerConstraints = unknown> {
     add<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<any>, TManager extends TManagerConstraints>(key: TKey, manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is StatesWorkspace<TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>, TManagerConstraints>;
@@ -315,12 +321,6 @@ export interface StatesWorkspaceSchema {
     // (undocumented)
     [key: string]: StatesWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<any>>;
 }
-
-// @alpha
-export const StateFactory: {
-    latest<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestValueManager<T>>;
-    latestMap<T_1 extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(initialValues?: { [K in Keys]: JsonSerializable<T_1> & JsonDeserialized<T_1>; } | undefined, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T_1, Keys>, LatestMapValueManager<T_1, Keys>>;
-};
 
 // @alpha @sealed
 export interface ValueMap<K extends string | number, V> {
