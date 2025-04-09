@@ -800,9 +800,16 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * Revert an op
 	 */
 	protected rollback(content: any, localOpMetadata: unknown): void {
-		if (!this.intervalCollections.tryRollback(content, localOpMetadata)) {
-			this.client.rollback(content, localOpMetadata);
-		}
+		const originalRefSeq = this.inFlightRefSeqs.shift();
+		assert(
+			originalRefSeq !== undefined,
+			"Expected a recorded refSeq when rolling back an op ",
+		);
+		this.useResubmitRefSeq(originalRefSeq, () => {
+			if (!this.intervalCollections.tryRollback(content, localOpMetadata)) {
+				this.client.rollback(content, localOpMetadata);
+			}
+		});
 	}
 
 	/**
