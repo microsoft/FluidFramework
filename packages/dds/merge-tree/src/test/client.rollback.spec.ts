@@ -626,7 +626,7 @@ describe("client.rollback", () => {
 	 *          |            |            | BB          BBB
 	 * 2:0:B0@0 | BBBBBAAAAA | 2:0:B0@0   | BBAAAAA~~~~~BBB
 	 */
-	it.skip("Conflicting insert with winner split by rollback", () => {
+	it("Conflicting insert with winner split by rollback", () => {
 		const clients = createClientsAtInitialState({ initialState: "" }, "A", "B");
 		const logger = new TestClientLogger(clients.all);
 		let seq = 0;
