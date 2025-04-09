@@ -1,8 +1,7 @@
 {
 	"globalHeaders": {
 		"cache-control": "must-revalidate, max-age=3600",
-		"Content-Security-Policy": "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; object-src 'none'; base-uri 'self';",
-		"Content-Security-Policy-Report-Only": "require-trusted-types-for 'script'; trusted-types default; report-uri https://csp.microsoft.com/report/FluidFramework-WW"
+		"Content-Security-Policy-Report-Only": "script-src 'nonce-{nonce value}' 'unsafe-inline' 'strict-dynamic' https:; base-uri 'self'; object-src 'none';require-trusted-types-for 'script'; trusted-types default; report-uri https://csp.microsoft.com/report/FluidFramework-WW"
 	},
 	"navigationFallback": {
 		"rewrite": "/api/fallback"
