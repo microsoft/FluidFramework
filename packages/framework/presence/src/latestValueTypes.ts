@@ -115,6 +115,6 @@ export function isValueTypeSchemaValidator<T>(fn: unknown): fn is ValueTypeSchem
  * @alpha
  */
 export interface ValueManagerOptions<T extends object> {
-	validator?: ValueTypeSchemaValidator<T>;
-	controls?: BroadcastControlSettings;
+	validator?: ValueTypeSchemaValidator<T> | undefined;
+	controls?: BroadcastControlSettings | undefined;
 }

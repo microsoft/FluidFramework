@@ -131,7 +131,7 @@ export interface ISessionClient<SpecificSessionClientId extends ClientSessionId 
 }
 
 // @alpha
-export function Latest<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, { validator, controls }: ValueManagerOptions<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestValueManager<T>>;
+export function Latest<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, options?: ValueManagerOptions<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestValueManager<T>>;
 
 // @alpha
 export function LatestMap<T extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(initialValues?: {
@@ -324,9 +324,9 @@ export type SessionClientStatus = (typeof SessionClientStatus)[keyof typeof Sess
 // @alpha
 export interface ValueManagerOptions<T extends object> {
     // (undocumented)
-    controls?: BroadcastControlSettings;
+    controls?: BroadcastControlSettings | undefined;
     // (undocumented)
-    validator?: ValueTypeSchemaValidator<T>;
+    validator?: ValueTypeSchemaValidator<T> | undefined;
 }
 
 // @alpha @sealed

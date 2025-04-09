@@ -204,12 +204,15 @@ class LatestValueManagerImpl<T, Key extends string>
  */
 export function Latest<T extends object, Key extends string = string>(
 	initialValue: JsonSerializable<T> & JsonDeserialized<T> & object,
-	{ validator, controls }: ValueManagerOptions<T>,
+	options?: ValueManagerOptions<T>,
 ): InternalTypes.ManagerFactory<
 	Key,
 	InternalTypes.ValueRequiredState<T>,
 	LatestValueManager<T>
 > {
+	const validator = options?.validator;
+	const controls = options?.controls;
+
 	// LatestValueManager takes ownership of initialValue but makes a shallow
 	// copy for basic protection.
 	const value: InternalTypes.ValueRequiredState<T> = {
