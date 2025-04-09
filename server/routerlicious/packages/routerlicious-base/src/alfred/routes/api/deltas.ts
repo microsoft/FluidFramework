@@ -9,6 +9,7 @@ import {
 	IRevokedTokenChecker,
 	ITenantManager,
 	IThrottler,
+	type IDenyList,
 } from "@fluidframework/server-services-core";
 import {
 	verifyStorageToken,
@@ -23,6 +24,7 @@ import { Provider } from "nconf";
 import winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { Constants } from "../../../utils";
+import { handleDenyListResponse } from "../index";
 
 export function create(
 	config: Provider,
@@ -33,6 +35,7 @@ export function create(
 	clusterThrottlers: Map<string, IThrottler>,
 	jwtTokenCache?: ICache,
 	revokedTokenChecker?: IRevokedTokenChecker,
+	denyList?: IDenyList,
 ): Router {
 	const deltasCollectionName = config.get("mongo:collectionNames:deltas");
 	const rawDeltasCollectionName = config.get("mongo:collectionNames:rawdeltas");
@@ -93,6 +96,9 @@ export function create(
 			const to = stringToSequenceNumber(request.query.to);
 			const tenantId = request.params.tenantId || appTenants[0].id;
 			const documentId = request.params.id;
+			if (denyList) {
+				handleDenyListResponse(tenantId, documentId, denyList, response);
+			}
 
 			// Query for the deltas and return a filtered version of just the operations field
 			const deltasP = deltaService.getDeltasFromSummaryAndStorage(
@@ -118,6 +124,9 @@ export function create(
 		(request, response, next) => {
 			const tenantId = request.params.tenantId || appTenants[0].id;
 			const documentId = request.params.id;
+			if (denyList) {
+				handleDenyListResponse(tenantId, documentId, denyList, response);
+			}
 
 			// Query for the raw deltas (no from/to since we want all of them)
 			const deltasP = deltaService.getDeltas(rawDeltasCollectionName, tenantId, documentId);
@@ -157,6 +166,9 @@ export function create(
 			}
 
 			const tenantId = request.params.tenantId || appTenants[0].id;
+			if (denyList) {
+				handleDenyListResponse(tenantId, documentId, denyList, response);
+			}
 			const caller = request.query.caller?.toString();
 			const fetchReason = request.query.fetchReason?.toString();
 
