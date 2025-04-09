@@ -26,7 +26,7 @@ import type { NotificationsManager } from "./notificationsManager.js";
 export type PresenceWorkspaceAddress = `${string}:${string}`;
 
 /**
- * Single entry in {@link PresenceStatesSchema} or  {@link NotificationsWorkspaceSchema}.
+ * Single entry in {@link StatesWorkspaceSchema} or  {@link NotificationsWorkspaceSchema}.
  *
  * @alpha
  */
@@ -45,7 +45,7 @@ export type PresenceWorkspaceEntry<
  *
  * @alpha
  */
-export interface PresenceStatesSchema {
+export interface StatesWorkspaceSchema {
 	[key: string]: PresenceWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<any>>;
 }
 
@@ -55,7 +55,7 @@ export interface PresenceStatesSchema {
  * @sealed
  * @alpha
  */
-export type StatesWorkspaceEntries<TSchema extends PresenceStatesSchema> = {
+export type StatesWorkspaceEntries<TSchema extends StatesWorkspaceSchema> = {
 	/**
 	 * Registered `Value Manager`s
 	 */
@@ -77,7 +77,7 @@ export type StatesWorkspaceEntries<TSchema extends PresenceStatesSchema> = {
  * @alpha
  */
 export interface StatesWorkspace<
-	TSchema extends PresenceStatesSchema,
+	TSchema extends StatesWorkspaceSchema,
 	TManagerConstraints = unknown,
 > {
 	/**

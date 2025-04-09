@@ -8,7 +8,7 @@ import {
 	Latest,
 	type ISessionClient,
 	type StatesWorkspace,
-	type PresenceStatesSchema,
+	type StatesWorkspaceSchema,
 } from "@fluidframework/presence/alpha";
 
 import { getProfilePhoto } from "@/infra/authHelper";
@@ -19,7 +19,7 @@ export interface User {
 
 const statesSchema = {
 	onlineUsers: Latest({ photo: "" } satisfies User),
-} satisfies PresenceStatesSchema;
+} satisfies StatesWorkspaceSchema;
 
 export type UserPresence = StatesWorkspace<typeof statesSchema>;
 

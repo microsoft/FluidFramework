@@ -28,13 +28,13 @@ import type { SystemWorkspaceDatastore } from "./systemWorkspace.js";
 import { TimerManager } from "./timerManager.js";
 import type {
 	StatesWorkspace,
-	PresenceStatesSchema,
+	StatesWorkspaceSchema,
 	PresenceWorkspaceAddress,
 } from "./types.js";
 
 import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
 
-interface PresenceWorkspaceEntry<TSchema extends PresenceStatesSchema> {
+interface PresenceWorkspaceEntry<TSchema extends StatesWorkspaceSchema> {
 	public: StatesWorkspace<TSchema>;
 	internal: PresenceStatesInternal;
 }
@@ -46,7 +46,7 @@ interface SystemDatastore {
 type InternalWorkspaceAddress = `${"s" | "n"}:${PresenceWorkspaceAddress}`;
 
 type PresenceDatastore = SystemDatastore & {
-	[WorkspaceAddress: string]: ValueElementMap<PresenceStatesSchema>;
+	[WorkspaceAddress: string]: ValueElementMap<StatesWorkspaceSchema>;
 };
 
 interface GeneralDatastoreMessageContent {
@@ -97,7 +97,7 @@ function isPresenceMessage(
  */
 export interface PresenceDatastoreManager {
 	joinSession(clientId: ClientConnectionId): void;
-	getWorkspace<TSchema extends PresenceStatesSchema>(
+	getWorkspace<TSchema extends StatesWorkspaceSchema>(
 		internalWorkspaceAddress: InternalWorkspaceAddress,
 		requestedContent: TSchema,
 		controls?: BroadcastControlSettings,
@@ -151,7 +151,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	private readonly timer = new TimerManager();
 	private readonly workspaces = new Map<
 		string,
-		PresenceWorkspaceEntry<PresenceStatesSchema>
+		PresenceWorkspaceEntry<StatesWorkspaceSchema>
 	>();
 
 	public constructor(
@@ -161,7 +161,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		private readonly logger: ITelemetryLoggerExt | undefined,
 		private readonly events: IEmitter<Pick<PresenceEvents, "workspaceActivated">>,
 		systemWorkspaceDatastore: SystemWorkspaceDatastore,
-		systemWorkspace: PresenceWorkspaceEntry<PresenceStatesSchema>,
+		systemWorkspace: PresenceWorkspaceEntry<StatesWorkspaceSchema>,
 	) {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		this.datastore = { "system:presence": systemWorkspaceDatastore } as PresenceDatastore;
@@ -186,7 +186,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		} satisfies ClientJoinMessage["content"]);
 	}
 
-	public getWorkspace<TSchema extends PresenceStatesSchema>(
+	public getWorkspace<TSchema extends StatesWorkspaceSchema>(
 		internalWorkspaceAddress: InternalWorkspaceAddress,
 		requestedContent: TSchema,
 		controls?: BroadcastControlSettings,
@@ -196,7 +196,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			return existing.internal.ensureContent(requestedContent, controls);
 		}
 
-		let workspaceDatastore: ValueElementMap<PresenceStatesSchema> | undefined =
+		let workspaceDatastore: ValueElementMap<StatesWorkspaceSchema> | undefined =
 			this.datastore[internalWorkspaceAddress];
 		if (workspaceDatastore === undefined) {
 			workspaceDatastore = this.datastore[internalWorkspaceAddress] = {};

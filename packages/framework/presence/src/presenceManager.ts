@@ -28,7 +28,7 @@ import { createSystemWorkspace } from "./systemWorkspace.js";
 import type {
 	StatesWorkspace,
 	PresenceWorkspaceAddress,
-	PresenceStatesSchema,
+	StatesWorkspaceSchema,
 } from "./types.js";
 
 import type {
@@ -113,7 +113,7 @@ class PresenceManager implements IPresence, PresenceExtensionInterface {
 		return this.systemWorkspace.getMyself();
 	}
 
-	public getStates<TSchema extends PresenceStatesSchema>(
+	public getStates<TSchema extends StatesWorkspaceSchema>(
 		workspaceAddress: PresenceWorkspaceAddress,
 		requestedContent: TSchema,
 		controls?: BroadcastControlSettings,
@@ -125,7 +125,7 @@ class PresenceManager implements IPresence, PresenceExtensionInterface {
 		);
 	}
 
-	public getNotifications<TSchema extends PresenceStatesSchema>(
+	public getNotifications<TSchema extends StatesWorkspaceSchema>(
 		workspaceAddress: PresenceWorkspaceAddress,
 		requestedContent: TSchema,
 	): StatesWorkspace<TSchema> {

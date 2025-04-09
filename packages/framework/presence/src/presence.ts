@@ -12,7 +12,7 @@ import type {
 	NotificationsWorkspace,
 	NotificationsWorkspaceSchema,
 	StatesWorkspace,
-	PresenceStatesSchema,
+	StatesWorkspaceSchema,
 	PresenceWorkspaceAddress,
 } from "./types.js";
 
@@ -198,7 +198,7 @@ export interface IPresence {
 	 * @param controls - Optional settings for default broadcast controls
 	 * @returns A StatesWorkspace
 	 */
-	getStates<StatesSchema extends PresenceStatesSchema>(
+	getStates<StatesSchema extends StatesWorkspaceSchema>(
 		workspaceAddress: PresenceWorkspaceAddress,
 		requestedContent: StatesSchema,
 		controls?: BroadcastControlSettings,

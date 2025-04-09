@@ -18,7 +18,7 @@ export type {
 	NotificationsWorkspaceSchema,
 	StatesWorkspace,
 	StatesWorkspaceEntries,
-	PresenceStatesSchema,
+	StatesWorkspaceSchema,
 	PresenceWorkspaceAddress,
 	PresenceWorkspaceEntry,
 } from "./types.js";

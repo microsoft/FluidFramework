@@ -118,7 +118,7 @@ export interface IPresence {
     getAttendees(): ReadonlySet<ISessionClient>;
     getMyself(): ISessionClient;
     getNotifications<NotificationsSchema extends NotificationsWorkspaceSchema>(notificationsId: PresenceWorkspaceAddress, requestedContent: NotificationsSchema): NotificationsWorkspace<NotificationsSchema>;
-    getStates<StatesSchema extends PresenceStatesSchema>(workspaceAddress: PresenceWorkspaceAddress, requestedContent: StatesSchema, controls?: BroadcastControlSettings): StatesWorkspace<StatesSchema>;
+    getStates<StatesSchema extends StatesWorkspaceSchema>(workspaceAddress: PresenceWorkspaceAddress, requestedContent: StatesSchema, controls?: BroadcastControlSettings): StatesWorkspace<StatesSchema>;
 }
 
 // @alpha @sealed
@@ -284,12 +284,6 @@ export interface PresenceEvents {
 }
 
 // @alpha
-export interface PresenceStatesSchema {
-    // (undocumented)
-    [key: string]: PresenceWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<any>>;
-}
-
-// @alpha
 export type PresenceWorkspaceAddress = `${string}:${string}`;
 
 // @alpha
@@ -305,19 +299,25 @@ export const SessionClientStatus: {
 export type SessionClientStatus = (typeof SessionClientStatus)[keyof typeof SessionClientStatus];
 
 // @alpha @sealed
-export interface StatesWorkspace<TSchema extends PresenceStatesSchema, TManagerConstraints = unknown> {
+export interface StatesWorkspace<TSchema extends StatesWorkspaceSchema, TManagerConstraints = unknown> {
     add<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<any>, TManager extends TManagerConstraints>(key: TKey, manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is StatesWorkspace<TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>, TManagerConstraints>;
     readonly controls: BroadcastControls;
     readonly props: StatesWorkspaceEntries<TSchema>;
 }
 
 // @alpha @sealed
-export type StatesWorkspaceEntries<TSchema extends PresenceStatesSchema> = {
+export type StatesWorkspaceEntries<TSchema extends StatesWorkspaceSchema> = {
     /**
     * Registered `Value Manager`s
     */
     readonly [Key in keyof TSchema]: ReturnType<TSchema[Key]>["manager"] extends InternalTypes.StateValue<infer TManager> ? TManager : never;
 };
+
+// @alpha
+export interface StatesWorkspaceSchema {
+    // (undocumented)
+    [key: string]: PresenceWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<any>>;
+}
 
 // @alpha @sealed
 export interface ValueMap<K extends string | number, V> {

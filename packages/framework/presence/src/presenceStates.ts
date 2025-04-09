@@ -15,12 +15,12 @@ import { getOrCreateRecord, objectEntries } from "./internalUtils.js";
 import type { ClientSessionId, ISessionClient } from "./presence.js";
 import type { LocalStateUpdateOptions, StateDatastore } from "./stateDatastore.js";
 import { handleFromDatastore } from "./stateDatastore.js";
-import type { StatesWorkspace, PresenceStatesSchema } from "./types.js";
+import type { StatesWorkspace, StatesWorkspaceSchema } from "./types.js";
 import { unbrandIVM } from "./valueManager.js";
 
 /**
  * Extracts `Part` from {@link InternalTypes.ManagerFactory} return type
- * matching the {@link PresenceStatesSchema} `Keys` given.
+ * matching the {@link StatesWorkspaceSchema} `Keys` given.
  *
  * @remarks
  * If the `Part` is an optional property, undefined will be included in the
@@ -30,7 +30,7 @@ import { unbrandIVM } from "./valueManager.js";
  * @internal
  */
 export type MapSchemaElement<
-	TSchema extends PresenceStatesSchema,
+	TSchema extends StatesWorkspaceSchema,
 	Part extends keyof ReturnType<TSchema[keyof TSchema]>,
 	Keys extends keyof TSchema = keyof TSchema,
 > = ReturnType<TSchema[Keys]>[Part];
@@ -60,13 +60,13 @@ export interface PresenceRuntime {
 }
 
 type PresenceSubSchemaFromWorkspaceSchema<
-	TSchema extends PresenceStatesSchema,
+	TSchema extends StatesWorkspaceSchema,
 	Part extends keyof ReturnType<TSchema[keyof TSchema]>,
 > = {
 	[Key in keyof TSchema]: MapSchemaElement<TSchema, Part, Key>;
 };
 
-type MapEntries<TSchema extends PresenceStatesSchema> = PresenceSubSchemaFromWorkspaceSchema<
+type MapEntries<TSchema extends StatesWorkspaceSchema> = PresenceSubSchemaFromWorkspaceSchema<
 	TSchema,
 	"manager"
 >;
@@ -82,7 +82,7 @@ type MapEntries<TSchema extends PresenceStatesSchema> = PresenceSubSchemaFromWor
  *
  * @internal
  */
-export interface ValueElementMap<_TSchema extends PresenceStatesSchema> {
+export interface ValueElementMap<_TSchema extends StatesWorkspaceSchema> {
 	[key: string]: ClientRecord<InternalTypes.ValueDirectoryOrState<unknown>>;
 }
 
@@ -124,7 +124,7 @@ interface ValueUpdateRecord {
  * @internal
  */
 export interface PresenceStatesInternal {
-	ensureContent<TSchemaAdditional extends PresenceStatesSchema>(
+	ensureContent<TSchemaAdditional extends StatesWorkspaceSchema>(
 		content: TSchemaAdditional,
 		controls: BroadcastControlSettings | undefined,
 	): StatesWorkspace<TSchemaAdditional>;
@@ -209,7 +209,7 @@ export function mergeValueDirectory<
 export function mergeUntrackedDatastore(
 	key: string,
 	remoteAllKnownState: ClientUpdateRecord,
-	datastore: ValueElementMap<PresenceStatesSchema>,
+	datastore: ValueElementMap<StatesWorkspaceSchema>,
 	timeModifier: number,
 ): void {
 	const localAllKnownState = getOrCreateRecord(
@@ -237,11 +237,11 @@ const defaultAllowableUpdateLatencyMs = 60;
  * Produces the value type of a schema element or set of elements.
  */
 type SchemaElementValueType<
-	TSchema extends PresenceStatesSchema,
+	TSchema extends StatesWorkspaceSchema,
 	Keys extends keyof TSchema & string,
 > = Exclude<MapSchemaElement<TSchema, "initialData", Keys>, undefined>["value"];
 
-class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
+class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 	implements
 		PresenceStatesInternal,
 		StatesWorkspace<TSchema>,
@@ -383,7 +383,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		}
 	}
 
-	public ensureContent<TSchemaAdditional extends PresenceStatesSchema>(
+	public ensureContent<TSchemaAdditional extends StatesWorkspaceSchema>(
 		content: TSchemaAdditional,
 		controls: BroadcastControlSettings | undefined,
 	): StatesWorkspace<TSchema & TSchemaAdditional> {
@@ -431,9 +431,9 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
  * Create a new StatesWorkspace using the DataStoreRuntime provided.
  * @param initialContent - The initial value managers to register.
  */
-export function createPresenceStates<TSchema extends PresenceStatesSchema>(
+export function createPresenceStates<TSchema extends StatesWorkspaceSchema>(
 	runtime: PresenceRuntime,
-	datastore: ValueElementMap<PresenceStatesSchema>,
+	datastore: ValueElementMap<StatesWorkspaceSchema>,
 	initialContent: TSchema,
 	controls: BroadcastControlSettings | undefined,
 ): { public: StatesWorkspace<TSchema>; internal: PresenceStatesInternal } {
