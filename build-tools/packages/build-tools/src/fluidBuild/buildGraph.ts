@@ -220,6 +220,7 @@ export class BuildPackage {
 		}
 
 		const task = TaskFactory.Create(this, command, this.context, pendingInitDep, taskName);
+		this.tasks.set(taskName, task);
 		pendingInitDep.push(task);
 		return task;
 	}
