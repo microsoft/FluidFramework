@@ -50,7 +50,7 @@ export {
 	type LatestMapItemUpdatedClientData,
 	type LatestMapClientData,
 	type LatestMap,
-	type LatestMapValueManagerEvents,
+	type LatestMapEvents,
 	type ValueMap,
 } from "./latestMapValueManager.js";
 export {
