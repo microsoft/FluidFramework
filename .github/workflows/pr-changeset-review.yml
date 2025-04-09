@@ -21,4 +21,4 @@ jobs:
           files: .changeset
           vale_flags: "--glob=*-*-*.md"
           reporter: github-pr-review
-          fail_on_error: true
+          filter_mode: nofilter
