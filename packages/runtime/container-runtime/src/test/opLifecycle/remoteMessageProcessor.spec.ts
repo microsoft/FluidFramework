@@ -31,6 +31,10 @@ import {
 
 import { compressMultipleMessageBatch } from "./legacyCompression.js";
 
+function isSingletonBatch(batch: IBatch): batch is IBatch<[BatchMessage]> {
+	return batch.messages.length === 1;
+}
+
 describe("RemoteMessageProcessor", () => {
 	function getMessageProcessor(): RemoteMessageProcessor {
 		const logger = new MockLogger();
@@ -138,7 +142,7 @@ describe("RemoteMessageProcessor", () => {
 			let leadingChunkCount = 0;
 			const outboundMessages: IBatchMessage[] = [];
 			if (option.compressionAndChunking.compression) {
-				if (batch.messages.length === 1) {
+				if (isSingletonBatch(batch)) {
 					const compressor = new OpCompressor(mockLogger);
 					batch = compressor.compressBatch(batch);
 				} else {
