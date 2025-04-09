@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-internal-modules
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	SchemaFactoryAlpha,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/internal";
 
-import { fail, llmDefault } from "../../utils.js";
+import { fail } from "../../utils.js";
 
 // eslint-disable-next-line eslint-comments/disable-enable-pair
 /* eslint-disable jsdoc/require-jsdoc */
@@ -16,36 +18,34 @@ import { fail, llmDefault } from "../../utils.js";
 const sf = new SchemaFactoryAlpha("com.microsoft.fluid.tree-agent.text");
 
 export class Word extends sf.object("Word", {
-	characters: sf.string,
-	createdDate: sf.optional(sf.string, {
-		metadata: { custom: { [llmDefault]: () => new Date().toISOString() } },
+	characters: sf.required(sf.string, {
+		metadata: {
+			description:
+				"The characters that comprise the word. Only alphanumeric characters are permitted.",
+		},
 	}),
 }) {}
 
 export class Span extends sf.object("Span", {
-	identifier: sf.identifier,
 	words: sf.array(Word),
 	bold: sf.required(sf.boolean),
 	italic: sf.required(sf.boolean),
 	comments: sf.required(sf.array(sf.string), {
 		metadata: {
 			description:
-				"The identifiers of all comments that are associated with this decoration. The list of comments and their IDs is under the Page object.",
+				"The identifiers of all comments that are associated with this decoration. The list of comments and their respective IDs is under the Page object.",
 		},
 	}),
 }) {}
 
-// Not "Date" because that's a JS built-in
-export class D8 extends sf.object("D8", {
-	identifier: sf.identifier,
-	year: sf.number,
-	month: sf.number,
-	day: sf.number,
+export class Sentence extends sf.object("Sentence", {
+	words: sf.required(sf.array([Word, Span]), {
+		metadata: { description: "A sentence is a sequence of words" },
+	}),
 }) {}
 
 export class Paragraph extends sf.object("Paragraph", {
-	identifier: sf.identifier,
-	content: sf.array([Word, Span, D8]),
+	sentences: sf.array(Sentence),
 }) {}
 
 export class Comment extends sf.object("Comment", {
@@ -57,13 +57,11 @@ export class Comment extends sf.object("Comment", {
 	text: sf.string,
 }) {}
 
-export class Comments extends sf.array("Comments", Comment) {}
-
 export class Page extends sf.object(
 	"Page",
 	{
 		paragraphs: sf.array(Paragraph),
-		comments: Comments,
+		comments: sf.array(Comment),
 	},
 	{
 		metadata: {
@@ -82,34 +80,44 @@ export function stringifyPage(page: Page): string {
 		}
 	}
 	result += page.paragraphs
-		.map((p) => {
-			return p.content
-				.map((c) => {
-					if (c instanceof Word) {
-						return c.characters;
-					} else if (c instanceof Span) {
-						let text = c.words.map((w) => w.characters).join(" ");
-						if (c.bold) {
-							text = `**${text}**`;
-						}
-						if (c.italic) {
-							text = `_${text}_`;
-						}
-						if (c.comments.length > 0) {
-							const ids = c.comments
-								.map((id) => page.comments.map((co) => co.identifier).indexOf(id) + 1)
-								.join(",");
+		.map((paragraph) => {
+			return paragraph.sentences
+				.map((sentence) => {
+					return sentence.words
+						.map((wOrS) => {
+							if (wOrS instanceof Word) {
+								return stringifyWord(wOrS);
+							} else if (wOrS instanceof Span) {
+								let text = wOrS.words.map((w) => stringifyWord(w)).join(" ");
+								if (wOrS.bold) {
+									text = `**${text}**`;
+								}
+								if (wOrS.italic) {
+									text = `_${text}_`;
+								}
+								if (wOrS.comments.length > 0) {
+									const ids = wOrS.comments
+										.map((id) => page.comments.map((co) => co.identifier).indexOf(id) + 1)
+										.join(",");
 
-							text = `(${text})^${ids}`;
-						}
-						return text;
-					} else if (c instanceof D8) {
-						return `${c.month}/${c.day}/${c.year}`;
-					}
+									text = `(${text})^${ids}`;
+								}
+								return text;
+							}
+							return "";
+						})
+						.join(" ");
 				})
-				.join(" ");
+				.join(". ");
 		})
-		.join("\n");
+		.join("\n\n");
 
 	return result;
+}
+
+function stringifyWord(word: Word): string {
+	if (!/^[\dA-Za-z]+$/.test(word.characters)) {
+		throw new UsageError(`Word contains non-alphanumeric characters: ${word.characters}`);
+	}
+	return word.characters;
 }

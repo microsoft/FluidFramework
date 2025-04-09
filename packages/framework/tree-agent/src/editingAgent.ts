@@ -110,8 +110,8 @@ class SharedTreeEditingAgent<
 							);
 							this.options?.log?.(`#### Error\n\n`);
 							this.options?.log?.(`\`\`\`JSON\n${error.message}\n\`\`\`\n\n`);
-
-							return `Error when applying edit at index ${editIndex}: ${error.message}`;
+							this.setPrompting();
+							return `Error when applying edit at index ${editIndex}. The tree will be reset to its initial state. Please try again. Here is the error: ${error.message}`;
 						}
 						throw error;
 					}

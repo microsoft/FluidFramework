@@ -115,7 +115,8 @@ class SharedTreeFunctioningAgent<
 					this.options?.log?.(`### Error\n\n`);
 					const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
 					this.options?.log?.(`\`\`\`JSON\n${errorMessage}\n\`\`\`\n\n`);
-					return `Running the function produced an error: ${errorMessage}`;
+					this.setPrompting();
+					return `Running the function produced an error. The state of the tree will be reset to its initial state. Please try again. Here is the error: ${errorMessage}`;
 				}
 				this.options?.log?.(`### New Tree State\n\n`);
 				this.options?.log?.(

@@ -61,6 +61,15 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 		return this.#prompting ?? fail("Not currently processing a prompt");
 	}
 
+	// TODO: it's weird that this is called by subclasses. Refactor to make it more robust.
+	protected setPrompting(): void {
+		this.#prompting = {
+			branch: this.treeView.fork(),
+			idGenerator: new IdGenerator(),
+		};
+		this.#prompting.idGenerator.assignIds(this.#prompting.branch.root);
+	}
+
 	protected constructor(
 		public readonly client: BaseChatModel,
 		public readonly treeView: TreeView<TRoot>,
@@ -116,12 +125,7 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 	);
 
 	public async query(userPrompt: string): Promise<string | undefined> {
-		this.#prompting = {
-			branch: this.treeView.fork(),
-			idGenerator: new IdGenerator(),
-		};
-		this.#prompting.idGenerator.assignIds(this.#prompting.branch.root);
-
+		this.setPrompting();
 		const systemPrompt = this.getSystemPrompt(this.treeView);
 		const messages: (HumanMessage | AIMessage | ToolMessage)[] = [];
 		messages.push(new SystemMessage(systemPrompt));
@@ -166,7 +170,7 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 			if (!loggedChainOfThought) {
 				for (const c of responseMessage.content) {
 					if (typeof c === "object" && c.type === "thinking") {
-						this.options?.log?.(`${c.thoughts}\n\n----\n\n`);
+						this.options?.log?.(`${c.thinking}\n\n----\n\n`);
 						loggedChainOfThought = true;
 						break;
 					}
