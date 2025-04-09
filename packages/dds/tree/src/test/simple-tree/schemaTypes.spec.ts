@@ -21,6 +21,7 @@ import {
 	type AllowedTypes,
 	type FieldKind,
 	type FieldSchema,
+	type FieldSchemaAlpha,
 	type ImplicitAllowedTypes,
 	type ImplicitAnnotatedAllowedTypes,
 	type ImplicitFieldSchema,
@@ -269,15 +270,52 @@ describe("schemaTypes", () => {
 		{
 			{
 				type T = TreeNodeSchema;
-				type _check = requireAssignableTo<T, UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>>
+				type _check = requireAssignableTo<
+					T,
+					UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>
+				>;
 			}
 
 			{
 				type T = AllowedTypes;
-				type _check = requireAssignableTo<T, UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>>
+				type _check = requireAssignableTo<
+					T,
+					UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>
+				>;
 			}
 
-			type _check2 = requireAssignableTo<UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>, ImplicitAllowedTypes>
+			{
+				type _check = requireAssignableTo<
+					UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>,
+					ImplicitAllowedTypes
+				>;
+			}
+
+			{
+				type _check<T extends ImplicitAnnotatedAllowedTypes, U extends ImplicitAllowedTypes> = requireAssignableTo<UnannotateImplicitAllowedTypes<T>, U>;
+
+				type Foo = TreeNodeSchema;
+				type _check2 = requireAssignableTo<UnannotateImplicitAllowedTypes<Foo>, Foo>;
+
+			}
+
+			{
+				class Schema<T extends ImplicitAllowedTypes> {
+					public constructor(public readonly t: T) {}
+				}
+
+				class SchemaAlpha<T extends ImplicitAnnotatedAllowedTypes> extends Schema<UnannotateImplicitAllowedTypes<T>> {}
+
+				type Test = <const T extends ImplicitAllowedTypes>(
+					t: T,
+				) => FieldSchema<FieldKind.Optional, T>;
+
+				type TestAlpa = <const T extends ImplicitAnnotatedAllowedTypes>(
+					t: T,
+				) => FieldSchemaAlpha<FieldKind.Optional, T>;
+
+				type _check = requireAssignableTo<TestAlpa, Test>;
+			}
 		}
 	}
 
