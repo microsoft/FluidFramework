@@ -1,9 +1,7 @@
 ---
 "fluid-framework": minor
 "@fluidframework/tree": minor
----
----
-"section": tree
+"__section": tree
 ---
 
 Cleanup of several tree and schema alpha APIs for content import and export
