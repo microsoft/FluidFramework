@@ -28,7 +28,7 @@ import type {
  *
  * @alpha
  */
-export type ClientSessionId = SessionId & { readonly ClientSessionId: "ClientSessionId" };
+export type AttendeeId = SessionId & { readonly AttendeeId: "AttendeeId" };
 
 /**
  * The connection status of the {@link ISessionClient}.
@@ -80,9 +80,7 @@ export type SessionClientStatus =
  * @sealed
  * @alpha
  */
-export interface ISessionClient<
-	SpecificSessionClientId extends ClientSessionId = ClientSessionId,
-> {
+export interface ISessionClient<SpecificSessionClientId extends AttendeeId = AttendeeId> {
 	/**
 	 * The session ID of the client that is stable over all connections.
 	 */
@@ -115,7 +113,7 @@ export interface ISessionClient<
  *
  * @internal
  */
-export type SpecificSessionClient<SpecificSessionClientId extends ClientSessionId> =
+export type SpecificSessionClient<SpecificSessionClientId extends AttendeeId> =
 	string extends SpecificSessionClientId ? never : ISessionClient<SpecificSessionClientId>;
 
 /**
@@ -181,7 +179,7 @@ export interface IPresence {
 	 *
 	 * @param clientId - Client connection or session ID
 	 */
-	getAttendee(clientId: ClientConnectionId | ClientSessionId): ISessionClient;
+	getAttendee(clientId: ClientConnectionId | AttendeeId): ISessionClient;
 
 	/**
 	 * Get this client's session client.

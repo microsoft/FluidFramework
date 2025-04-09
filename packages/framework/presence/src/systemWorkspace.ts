@@ -10,12 +10,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { PostUpdateAction } from "./internalTypes.js";
-import type {
-	ClientSessionId,
-	IPresence,
-	ISessionClient,
-	PresenceEvents,
-} from "./presence.js";
+import type { AttendeeId, IPresence, ISessionClient, PresenceEvents } from "./presence.js";
 import { SessionClientStatus } from "./presence.js";
 import type { PresenceStatesInternal } from "./presenceStates.js";
 import { TimerManager } from "./timerManager.js";
@@ -28,7 +23,7 @@ import type { StatesWorkspace, StatesWorkspaceSchema } from "./types.js";
  */
 export interface SystemWorkspaceDatastore {
 	clientToSessionId: {
-		[ConnectionId: ClientConnectionId]: InternalTypes.ValueRequiredState<ClientSessionId>;
+		[ConnectionId: ClientConnectionId]: InternalTypes.ValueRequiredState<AttendeeId>;
 	};
 }
 
@@ -42,7 +37,7 @@ class SessionClient implements ISessionClient {
 	private connectionStatus: SessionClientStatus = SessionClientStatus.Disconnected;
 
 	public constructor(
-		public readonly sessionId: ClientSessionId,
+		public readonly sessionId: AttendeeId,
 		public connectionId: ClientConnectionId | undefined = undefined,
 	) {}
 
@@ -97,7 +92,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 	 * client that would be fine.
 	 * An entry is for session ID if the value's `sessionId` matches the key.
 	 */
-	private readonly attendees = new Map<ClientConnectionId | ClientSessionId, SessionClient>();
+	private readonly attendees = new Map<ClientConnectionId | AttendeeId, SessionClient>();
 
 	// When local client disconnects, we lose the connectivity status updates for remote attendees in the session.
 	// Upon reconnect, we mark all other attendees connections as stale and update their status to disconnected after 30 seconds of inactivity.
@@ -106,15 +101,15 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 	private readonly staleConnectionTimer = new TimerManager();
 
 	public constructor(
-		clientSessionId: ClientSessionId,
+		attendeeId: AttendeeId,
 		private readonly datastore: SystemWorkspaceDatastore,
 		private readonly events: IEmitter<
 			Pick<PresenceEvents, "attendeeJoined" | "attendeeDisconnected">
 		>,
 		private readonly audience: IAudience,
 	) {
-		this.selfAttendee = new SessionClient(clientSessionId);
-		this.attendees.set(clientSessionId, this.selfAttendee);
+		this.selfAttendee = new SessionClient(attendeeId);
+		this.attendees.set(attendeeId, this.selfAttendee);
 	}
 
 	public ensureContent<TSchemaAdditional extends StatesWorkspaceSchema>(
@@ -128,9 +123,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		_timeModifier: number,
 		remoteDatastore: {
 			clientToSessionId: {
-				[
-					ConnectionId: ClientConnectionId
-				]: InternalTypes.ValueRequiredState<ClientSessionId> & {
+				[ConnectionId: ClientConnectionId]: InternalTypes.ValueRequiredState<AttendeeId> & {
 					ignoreUnmonitored?: true;
 				};
 			};
@@ -142,9 +135,9 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		for (const [clientConnectionId, value] of Object.entries(
 			remoteDatastore.clientToSessionId,
 		)) {
-			const clientSessionId = value.value;
+			const attendeeId = value.value;
 			const { attendee, isJoining } = this.ensureAttendee(
-				clientSessionId,
+				attendeeId,
 				clientConnectionId,
 				/* order */ value.rev,
 				// If the attendee is present in audience OR if the attendee update is from the sending remote client itself,
@@ -157,7 +150,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 				postUpdateActions.push(() => this.events.emit("attendeeJoined", attendee));
 			}
 
-			const knownSessionId: InternalTypes.ValueRequiredState<ClientSessionId> | undefined =
+			const knownSessionId: InternalTypes.ValueRequiredState<AttendeeId> | undefined =
 				this.datastore.clientToSessionId[clientConnectionId];
 			if (knownSessionId === undefined) {
 				this.datastore.clientToSessionId[clientConnectionId] = value;
@@ -230,7 +223,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		return new Set(this.attendees.values());
 	}
 
-	public getAttendee(clientId: ClientConnectionId | ClientSessionId): ISessionClient {
+	public getAttendee(clientId: ClientConnectionId | AttendeeId): ISessionClient {
 		const attendee = this.attendees.get(clientId);
 		if (attendee) {
 			return attendee;
@@ -253,19 +246,19 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 	 * to map. If present, make sure the current connection ID is updated.
 	 */
 	private ensureAttendee(
-		clientSessionId: ClientSessionId,
+		attendeeId: AttendeeId,
 		clientConnectionId: ClientConnectionId,
 		order: number,
 		isConnected: boolean,
 	): { attendee: SessionClient; isJoining: boolean } {
-		let attendee = this.attendees.get(clientSessionId);
+		let attendee = this.attendees.get(attendeeId);
 		let isJoining = false;
 
 		if (attendee === undefined) {
 			// New attendee. Create SessionClient and add session ID based
 			// entry to map.
-			attendee = new SessionClient(clientSessionId, clientConnectionId);
-			this.attendees.set(clientSessionId, attendee);
+			attendee = new SessionClient(attendeeId, clientConnectionId);
+			this.attendees.set(attendeeId, attendee);
 			if (isConnected) {
 				attendee.setConnected();
 				isJoining = true;
@@ -300,7 +293,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
  * @internal
  */
 export function createSystemWorkspace(
-	clientSessionId: ClientSessionId,
+	attendeeId: AttendeeId,
 	datastore: SystemWorkspaceDatastore,
 	events: IEmitter<Pick<PresenceEvents, "attendeeJoined">>,
 	audience: IAudience,
@@ -311,7 +304,7 @@ export function createSystemWorkspace(
 		public: StatesWorkspace<StatesWorkspaceSchema>;
 	};
 } {
-	const workspace = new SystemWorkspaceImpl(clientSessionId, datastore, events, audience);
+	const workspace = new SystemWorkspaceImpl(attendeeId, datastore, events, audience);
 	return {
 		workspace,
 		statesEntry: {

@@ -12,7 +12,7 @@ import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { ClientRecord, PostUpdateAction } from "./internalTypes.js";
 import type { RecordEntryTypes } from "./internalUtils.js";
 import { getOrCreateRecord, objectEntries } from "./internalUtils.js";
-import type { ClientSessionId, ISessionClient } from "./presence.js";
+import type { AttendeeId, ISessionClient } from "./presence.js";
 import type { LocalStateUpdateOptions, StateDatastore } from "./stateDatastore.js";
 import { handleFromDatastore } from "./stateDatastore.js";
 import type { StatesWorkspace, StatesWorkspaceSchema } from "./types.js";
@@ -51,7 +51,7 @@ export interface RuntimeLocalUpdateOptions {
  * @internal
  */
 export interface PresenceRuntime {
-	readonly clientSessionId: ClientSessionId;
+	readonly attendeeId: AttendeeId;
 	lookupClient(clientId: ClientConnectionId): ISessionClient;
 	localUpdate(
 		states: { [key: string]: ClientUpdateEntry },
@@ -92,7 +92,7 @@ export interface ValueElementMap<_TSchema extends StatesWorkspaceSchema> {
 // type ValueElementMap<TSchema extends PresenceStatesNodeSchema> =
 // 	| {
 // 			[Key in keyof TSchema & string]?: {
-// 				[ClientSessionId: ClientSessionId]: InternalTypes.ValueDirectoryOrState<MapSchemaElement<TSchema,"value",Key>>;
+// 				[AttendeeId: AttendeeId]: InternalTypes.ValueDirectoryOrState<MapSchemaElement<TSchema,"value",Key>>;
 // 			};
 // 	  }
 // 	| {
@@ -217,10 +217,10 @@ export function mergeUntrackedDatastore(
 		key,
 		(): RecordEntryTypes<typeof datastore> => ({}),
 	);
-	for (const [clientSessionId, value] of objectEntries(remoteAllKnownState)) {
+	for (const [attendeeId, value] of objectEntries(remoteAllKnownState)) {
 		if (!("ignoreUnmonitored" in value)) {
-			localAllKnownState[clientSessionId] = mergeValueDirectory(
-				localAllKnownState[clientSessionId],
+			localAllKnownState[attendeeId] = mergeValueDirectory(
+				localAllKnownState[attendeeId],
 				value,
 				timeModifier,
 			);
@@ -268,7 +268,7 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 
 		// Prepare initial map content from initial state
 		{
-			const clientSessionId = this.runtime.clientSessionId;
+			const attendeeId = this.runtime.attendeeId;
 			// Empty record does not satisfy the type, but nodes will post loop.
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			const nodes = {} as MapEntries<TSchema>;
@@ -280,7 +280,7 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 				nodes[key as keyof TSchema] = newNodeData.manager;
 				if ("initialData" in newNodeData) {
 					const { value, allowableUpdateLatencyMs } = newNodeData.initialData;
-					(datastore[key] ??= {})[clientSessionId] = value;
+					(datastore[key] ??= {})[attendeeId] = value;
 					newValues[key] = value;
 					if (allowableUpdateLatencyMs !== undefined) {
 						cumulativeAllowableUpdateLatencyMs =
@@ -309,11 +309,11 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 	public knownValues<Key extends keyof TSchema & string>(
 		key: Key,
 	): {
-		self: ClientSessionId | undefined;
+		self: AttendeeId | undefined;
 		states: ClientRecord<SchemaElementValueType<TSchema, Key>>;
 	} {
 		return {
-			self: this.runtime.clientSessionId,
+			self: this.runtime.attendeeId,
 			// Caller must only use `key`s that are part of `this.datastore`.
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			states: this.datastore[key]!,
@@ -337,7 +337,7 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 
 	public update<Key extends keyof TSchema & string>(
 		key: Key,
-		clientId: ClientSessionId,
+		clientId: AttendeeId,
 		value: Exclude<MapSchemaElement<TSchema, "initialData", Key>, undefined>["value"],
 	): void {
 		// Callers my only use `key`s that are part of `this.datastore`.
@@ -372,7 +372,7 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 				// Already have received state from other clients. Kept in `all`.
 				// TODO: Send current `all` state to state manager.
 			}
-			datastoreValue[this.runtime.clientSessionId] = value;
+			datastoreValue[this.runtime.attendeeId] = value;
 			this.runtime.localUpdate(
 				{ [key]: value },
 				{
@@ -417,8 +417,8 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 				mergeUntrackedDatastore(key, remoteAllKnownState, this.datastore, timeModifier);
 			} else {
 				const node = unbrandIVM(brandedIVM);
-				for (const [clientSessionId, value] of objectEntries(remoteAllKnownState)) {
-					const client = this.runtime.lookupClient(clientSessionId);
+				for (const [attendeeId, value] of objectEntries(remoteAllKnownState)) {
+					const client = this.runtime.lookupClient(attendeeId);
 					postUpdateActions.push(...node.update(client, received, value));
 				}
 			}

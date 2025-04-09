@@ -22,7 +22,7 @@ import type {
 	LatestValueData,
 	LatestValueMetadata,
 } from "./latestValueTypes.js";
-import type { ClientSessionId, ISessionClient, SpecificSessionClient } from "./presence.js";
+import type { AttendeeId, ISessionClient, SpecificSessionClient } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
@@ -35,7 +35,7 @@ import { brandIVM } from "./valueManager.js";
 export interface LatestMapValueClientData<
 	T,
 	Keys extends string | number,
-	SpecificSessionClientId extends ClientSessionId = ClientSessionId,
+	SpecificSessionClientId extends AttendeeId = AttendeeId,
 > {
 	/**
 	 * Associated client.
@@ -380,9 +380,9 @@ class LatestMapValueManagerImpl<
 
 	public *clientValues(): IterableIterator<LatestMapValueClientData<T, Keys>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
-		for (const clientSessionId of objectKeys(allKnownStates.states)) {
-			if (clientSessionId !== allKnownStates.self) {
-				const client = this.datastore.lookupClient(clientSessionId);
+		for (const attendeeId of objectKeys(allKnownStates.states)) {
+			if (attendeeId !== allKnownStates.self) {
+				const client = this.datastore.lookupClient(attendeeId);
 				const items = this.clientValue(client);
 				yield { client, items };
 			}
@@ -392,14 +392,14 @@ class LatestMapValueManagerImpl<
 	public clients(): ISessionClient[] {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		return objectKeys(allKnownStates.states)
-			.filter((clientSessionId) => clientSessionId !== allKnownStates.self)
-			.map((clientSessionId) => this.datastore.lookupClient(clientSessionId));
+			.filter((attendeeId) => attendeeId !== allKnownStates.self)
+			.map((attendeeId) => this.datastore.lookupClient(attendeeId));
 	}
 
 	public clientValue(client: ISessionClient): ReadonlyMap<Keys, LatestValueData<T>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
-		const clientSessionId = client.sessionId;
-		const clientStateMap = allKnownStates.states[clientSessionId];
+		const attendeeId = client.sessionId;
+		const clientStateMap = allKnownStates.states[attendeeId];
 		if (clientStateMap === undefined) {
 			throw new Error("No entry for client");
 		}
@@ -416,14 +416,14 @@ class LatestMapValueManagerImpl<
 		return items;
 	}
 
-	public update<SpecificSessionClientId extends ClientSessionId>(
+	public update<SpecificSessionClientId extends AttendeeId>(
 		client: SpecificSessionClient<SpecificSessionClientId>,
 		_received: number,
 		value: InternalTypes.MapValueState<T, string | number>,
 	): PostUpdateAction[] {
 		const allKnownStates = this.datastore.knownValues(this.key);
-		const clientSessionId: SpecificSessionClientId = client.sessionId;
-		const currentState = (allKnownStates.states[clientSessionId] ??=
+		const attendeeId: SpecificSessionClientId = client.sessionId;
+		const currentState = (allKnownStates.states[attendeeId] ??=
 			// New client - prepare new client state directory
 			{
 				rev: value.rev,
@@ -478,7 +478,7 @@ class LatestMapValueManagerImpl<
 				);
 			}
 		}
-		this.datastore.update(this.key, clientSessionId, currentState);
+		this.datastore.update(this.key, attendeeId, currentState);
 		postUpdateActions.push(() => this.events.emit("updated", allUpdates));
 		return postUpdateActions;
 	}

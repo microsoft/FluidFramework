@@ -10,6 +10,11 @@ export function acquirePresence(fluidContainer: IFluidContainer): IPresence;
 // @alpha
 export function acquirePresenceViaDataObject(fluidLoadable: ExperimentalPresenceDO): IPresence;
 
+// @alpha
+export type AttendeeId = SessionId & {
+    readonly AttendeeId: "AttendeeId";
+};
+
 // @alpha @sealed
 export interface BroadcastControls {
     allowableUpdateLatencyMs: number | undefined;
@@ -22,11 +27,6 @@ export interface BroadcastControlSettings {
 
 // @alpha
 export type ClientConnectionId = string;
-
-// @alpha
-export type ClientSessionId = SessionId & {
-    readonly ClientSessionId: "ClientSessionId";
-};
 
 // @alpha @sealed
 export class ExperimentalPresenceDO {
@@ -114,7 +114,7 @@ export namespace InternalUtilityTypes {
 // @alpha @sealed
 export interface IPresence {
     readonly events: Listenable<PresenceEvents>;
-    getAttendee(clientId: ClientConnectionId | ClientSessionId): ISessionClient;
+    getAttendee(clientId: ClientConnectionId | AttendeeId): ISessionClient;
     getAttendees(): ReadonlySet<ISessionClient>;
     getMyself(): ISessionClient;
     getNotifications<NotificationsSchema extends NotificationsWorkspaceSchema>(notificationsId: StatesWorkspaceAddress, requestedContent: NotificationsSchema): NotificationsWorkspace<NotificationsSchema>;
@@ -122,7 +122,7 @@ export interface IPresence {
 }
 
 // @alpha @sealed
-export interface ISessionClient<SpecificSessionClientId extends ClientSessionId = ClientSessionId> {
+export interface ISessionClient<SpecificSessionClientId extends AttendeeId = AttendeeId> {
     getConnectionId(): ClientConnectionId;
     getConnectionStatus(): SessionClientStatus;
     readonly sessionId: SpecificSessionClientId;
@@ -153,7 +153,7 @@ export interface LatestMapItemValueClientData<T, K extends string | number> exte
 }
 
 // @alpha @sealed
-export interface LatestMapValueClientData<T, Keys extends string | number, SpecificSessionClientId extends ClientSessionId = ClientSessionId> {
+export interface LatestMapValueClientData<T, Keys extends string | number, SpecificSessionClientId extends AttendeeId = AttendeeId> {
     client: ISessionClient<SpecificSessionClientId>;
     // (undocumented)
     items: ReadonlyMap<Keys, LatestValueData<T>>;

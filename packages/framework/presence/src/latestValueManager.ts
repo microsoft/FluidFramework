@@ -121,10 +121,10 @@ class LatestValueManagerImpl<T, Key extends string>
 
 	public *clientValues(): IterableIterator<LatestValueClientData<T>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
-		for (const [clientSessionId, value] of objectEntries(allKnownStates.states)) {
-			if (clientSessionId !== allKnownStates.self) {
+		for (const [attendeeId, value] of objectEntries(allKnownStates.states)) {
+			if (attendeeId !== allKnownStates.self) {
 				yield {
-					client: this.datastore.lookupClient(clientSessionId),
+					client: this.datastore.lookupClient(attendeeId),
 					value: value.value,
 					metadata: { revision: value.rev, timestamp: value.timestamp },
 				};
@@ -135,8 +135,8 @@ class LatestValueManagerImpl<T, Key extends string>
 	public clients(): ISessionClient[] {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		return Object.keys(allKnownStates.states)
-			.filter((clientSessionId) => clientSessionId !== allKnownStates.self)
-			.map((clientSessionId) => this.datastore.lookupClient(clientSessionId));
+			.filter((attendeeId) => attendeeId !== allKnownStates.self)
+			.map((attendeeId) => this.datastore.lookupClient(attendeeId));
 	}
 
 	public clientValue(client: ISessionClient): LatestValueData<T> {
@@ -157,12 +157,12 @@ class LatestValueManagerImpl<T, Key extends string>
 		value: InternalTypes.ValueRequiredState<T>,
 	): PostUpdateAction[] {
 		const allKnownStates = this.datastore.knownValues(this.key);
-		const clientSessionId = client.sessionId;
-		const currentState = allKnownStates.states[clientSessionId];
+		const attendeeId = client.sessionId;
+		const currentState = allKnownStates.states[attendeeId];
 		if (currentState !== undefined && currentState.rev >= value.rev) {
 			return [];
 		}
-		this.datastore.update(this.key, clientSessionId, value);
+		this.datastore.update(this.key, attendeeId, value);
 		return [
 			() =>
 				this.events.emit("updated", {

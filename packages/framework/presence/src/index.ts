@@ -24,7 +24,7 @@ export type {
 } from "./types.js";
 
 export {
-	type ClientSessionId,
+	type AttendeeId,
 	type IPresence,
 	type ISessionClient,
 	type PresenceEvents,

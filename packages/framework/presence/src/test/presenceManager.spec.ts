@@ -146,14 +146,14 @@ describe("Presence", () => {
 
 					initialAttendeeSignal = generateBasicClientJoin(clock.now - 50, {
 						averageLatency: 50,
-						clientSessionId: attendeeSessionId,
+						attendeeId: attendeeSessionId,
 						clientConnectionId: initialAttendeeConnectionId,
 						updateProviders: ["client2"],
 					});
 
 					rejoinAttendeeSignal = generateBasicClientJoin(clock.now - 20, {
 						averageLatency: 20,
-						clientSessionId: attendeeSessionId, // Same session id
+						attendeeId: attendeeSessionId, // Same session id
 						clientConnectionId: rejoinAttendeeConnectionId, // Different connection id
 						connectionOrder: 1,
 						updateProviders: ["client2"],
@@ -254,7 +254,7 @@ describe("Presence", () => {
 						const collateralAttendeeConnectionId = "client3";
 						const collateralAttendeeSignal = generateBasicClientJoin(clock.now - 10, {
 							averageLatency: 40,
-							clientSessionId: attendeeSessionId,
+							attendeeId: attendeeSessionId,
 							clientConnectionId: rejoinAttendeeConnectionId,
 							connectionOrder: 1,
 							updateProviders: ["client2"],
@@ -293,7 +293,7 @@ describe("Presence", () => {
 						// Rejoin signal for the collateral attendee unknown to audience
 						const rejoinSignal = generateBasicClientJoin(clock.now - 10, {
 							averageLatency: 40,
-							clientSessionId: "collateral-id",
+							attendeeId: "collateral-id",
 							clientConnectionId: newAttendeeConnectionId,
 							updateProviders: [initialAttendeeConnectionId],
 							connectionOrder: 1,
@@ -309,7 +309,7 @@ describe("Presence", () => {
 						// Response signal sent by the initial attendee responding to the collateral attendees rejoin signal
 						const responseSignal = generateBasicClientJoin(clock.now - 5, {
 							averageLatency: 20,
-							clientSessionId: attendeeSessionId,
+							attendeeId: attendeeSessionId,
 							clientConnectionId: initialAttendeeConnectionId,
 							priorClientToSessionId: {
 								...initialAttendeeSignal.content.data["system:presence"].clientToSessionId,
