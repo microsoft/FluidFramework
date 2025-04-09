@@ -141,6 +141,8 @@ export class OpSplitter {
 			0x516 /* Chunk size needs to be smaller than the max batch size */,
 		);
 
+		// first message is the large compressed op to split, and we expect restOfMessages to be empty
+		// (but we keep it here to support a legacy test case, wherein it contains empty placeholder messages)
 		const [firstMessage, ...restOfMessages] = batch.messages;
 		assert(
 			(firstMessage.contents?.length ?? 0) >= this.chunkSizeInBytes,

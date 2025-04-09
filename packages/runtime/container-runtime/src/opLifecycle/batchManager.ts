@@ -178,20 +178,18 @@ export class BatchManager {
 	 */
 	public checkpoint(): IBatchCheckpoint {
 		const startSequenceNumber = this.clientSequenceNumber;
-		const startingBatchContentSize = this.batchContentSize;
 		const startPoint = this.pendingBatch.length;
 		return {
 			rollback: (process: (message: LocalBatchMessage) => void) => {
 				this.clientSequenceNumber = startSequenceNumber;
-				this.batchContentSize = startingBatchContentSize;
-
 				const rollbackOpsLifo = this.pendingBatch.splice(startPoint).reverse();
 				for (const message of rollbackOpsLifo) {
+					this.batchContentSize -= message.serializedOp?.length ?? 0;
 					process(message);
 				}
 				const count = this.pendingBatch.length - startPoint;
 				if (count !== 0) {
-					throw new LoggingError("Ops generated durning rollback", {
+					throw new LoggingError("Ops generated during rollback", {
 						count,
 						...tagData(TelemetryDataTag.UserData, {
 							ops: JSON.stringify(
