@@ -10,7 +10,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { PostUpdateAction } from "./internalTypes.js";
-import type { AttendeeId, Presence, ISessionClient, PresenceEvents } from "./presence.js";
+import type { AttendeeId, Presence, Attendee, PresenceEvents } from "./presence.js";
 import { SessionClientStatus } from "./presence.js";
 import type { PresenceStatesInternal } from "./presenceStates.js";
 import { TimerManager } from "./timerManager.js";
@@ -27,7 +27,7 @@ export interface SystemWorkspaceDatastore {
 	};
 }
 
-class SessionClient implements ISessionClient {
+class SessionClient implements Attendee {
 	/**
 	 * Order is used to track the most recent client connection
 	 * during a session.
@@ -219,11 +219,11 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		}
 	}
 
-	public getAttendees(): ReadonlySet<ISessionClient> {
+	public getAttendees(): ReadonlySet<Attendee> {
 		return new Set(this.attendees.values());
 	}
 
-	public getAttendee(clientId: ClientConnectionId | AttendeeId): ISessionClient {
+	public getAttendee(clientId: ClientConnectionId | AttendeeId): Attendee {
 		const attendee = this.attendees.get(clientId);
 		if (attendee) {
 			return attendee;
@@ -236,7 +236,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		throw new Error("Attendee not found");
 	}
 
-	public getMyself(): ISessionClient {
+	public getMyself(): Attendee {
 		return this.selfAttendee;
 	}
 

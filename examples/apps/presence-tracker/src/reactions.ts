@@ -4,7 +4,7 @@
  */
 
 import { Notifications } from "@fluidframework/presence/alpha";
-import type { Presence, ISessionClient } from "@fluidframework/presence/alpha";
+import type { Presence, Attendee } from "@fluidframework/presence/alpha";
 
 import type { IMousePosition, MouseTracker } from "./MouseTracker.js";
 
@@ -59,7 +59,7 @@ export function initializeReactions(presence: Presence, mouseTracker: MouseTrack
 /**
  * Renders reactions to the window using absolute positioning.
  */
-function onReaction(client: ISessionClient, position: IMousePosition, value: string): void {
+function onReaction(client: Attendee, position: IMousePosition, value: string): void {
 	const reactionDiv = document.createElement("div");
 	reactionDiv.className = "reaction";
 	reactionDiv.style.position = "absolute";

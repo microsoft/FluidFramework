@@ -6,7 +6,7 @@
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { ClientRecord } from "./internalTypes.js";
-import type { AttendeeId, ISessionClient } from "./presence.js";
+import type { AttendeeId, Attendee } from "./presence.js";
 
 // type StateDatastoreSchemaNode<
 // 	TValue extends InternalTypes.ValueDirectoryOrState<any> = InternalTypes.ValueDirectoryOrState<unknown>,
@@ -54,7 +54,7 @@ export interface StateDatastore<
 		self: AttendeeId | undefined;
 		states: ClientRecord<TValue>;
 	};
-	lookupClient(clientId: ClientConnectionId): ISessionClient;
+	lookupClient(clientId: ClientConnectionId): Attendee;
 }
 
 /**

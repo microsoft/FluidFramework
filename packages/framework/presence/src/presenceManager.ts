@@ -15,7 +15,7 @@ import { createChildMonitoringContext } from "@fluidframework/telemetry-utils/in
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type { IEphemeralRuntime } from "./internalTypes.js";
-import type { AttendeeId, Presence, ISessionClient, PresenceEvents } from "./presence.js";
+import type { AttendeeId, Presence, Attendee, PresenceEvents } from "./presence.js";
 import type { PresenceDatastoreManager } from "./presenceDatastoreManager.js";
 import { PresenceDatastoreManagerImpl } from "./presenceDatastoreManager.js";
 import type { SystemWorkspace, SystemWorkspaceDatastore } from "./systemWorkspace.js";
@@ -96,15 +96,15 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 		this.systemWorkspace.removeClientConnectionId(clientConnectionId);
 	}
 
-	public getAttendees(): ReadonlySet<ISessionClient> {
+	public getAttendees(): ReadonlySet<Attendee> {
 		return this.systemWorkspace.getAttendees();
 	}
 
-	public getAttendee(clientId: ClientConnectionId | AttendeeId): ISessionClient {
+	public getAttendee(clientId: ClientConnectionId | AttendeeId): Attendee {
 		return this.systemWorkspace.getAttendee(clientId);
 	}
 
-	public getMyself(): ISessionClient {
+	public getMyself(): Attendee {
 		return this.systemWorkspace.getMyself();
 	}
 

@@ -7,7 +7,7 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import type {
 	Presence,
-	ISessionClient,
+	Attendee,
 	LatestValueManager,
 	StatesWorkspace,
 } from "@fluidframework/presence/alpha";
@@ -99,8 +99,8 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 	/**
 	 * A map of session clients to focus status.
 	 */
-	public getFocusPresences(): Map<ISessionClient, boolean> {
-		const statuses: Map<ISessionClient, boolean> = new Map();
+	public getFocusPresences(): Map<Attendee, boolean> {
+		const statuses: Map<Attendee, boolean> = new Map();
 
 		// Include the local client in the map because this is used to render a
 		// dashboard of all connected clients.

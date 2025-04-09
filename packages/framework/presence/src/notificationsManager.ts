@@ -10,7 +10,7 @@ import type { JsonTypeWith } from "@fluidframework/core-interfaces/internal";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
-import type { ISessionClient } from "./presence.js";
+import type { Attendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
@@ -24,11 +24,7 @@ export interface NotificationsManagerEvents {
 	 *
 	 * @eventProperty
 	 */
-	unattendedNotification: (
-		name: string,
-		sender: ISessionClient,
-		...content: unknown[]
-	) => void;
+	unattendedNotification: (name: string, sender: Attendee, ...content: unknown[]) => void;
 }
 
 /**
@@ -55,7 +51,7 @@ export interface NotificationListenable<
 	on<K extends keyof InternalUtilityTypes.NotificationListeners<TListeners>>(
 		notificationName: K,
 		listener: (
-			sender: ISessionClient,
+			sender: Attendee,
 			...args: InternalUtilityTypes.JsonDeserializedParameters<TListeners[K]>
 		) => void,
 	): Off;
@@ -71,7 +67,7 @@ export interface NotificationListenable<
 	off<K extends keyof InternalUtilityTypes.NotificationListeners<TListeners>>(
 		notificationName: K,
 		listener: (
-			sender: ISessionClient,
+			sender: Attendee,
 			...args: InternalUtilityTypes.JsonDeserializedParameters<TListeners[K]>
 		) => void,
 	): void;
@@ -87,7 +83,7 @@ export type NotificationSubscriptions<
 	E extends InternalUtilityTypes.NotificationListeners<E>,
 > = {
 	[K in string & keyof InternalUtilityTypes.NotificationListeners<E>]: (
-		sender: ISessionClient,
+		sender: Attendee,
 		...args: InternalUtilityTypes.JsonDeserializedParameters<E[K]>
 	) => void;
 };
@@ -117,7 +113,7 @@ export interface NotificationEmitter<E extends InternalUtilityTypes.Notification
 	 */
 	unicast<K extends string & keyof InternalUtilityTypes.NotificationListeners<E>>(
 		notificationName: K,
-		targetClient: ISessionClient,
+		targetClient: Attendee,
 		...args: Parameters<E[K]>
 	): void;
 }
@@ -227,7 +223,7 @@ class NotificationsManagerImpl<
 	}
 
 	public update(
-		client: ISessionClient,
+		client: Attendee,
 		_received: number,
 		value: InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
 	): PostUpdateAction[] {

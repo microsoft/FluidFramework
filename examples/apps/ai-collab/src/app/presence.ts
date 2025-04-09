@@ -6,7 +6,7 @@
 import {
 	Presence,
 	Latest,
-	type ISessionClient,
+	type Attendee,
 	type StatesWorkspace,
 	type StatesWorkspaceSchema,
 } from "@fluidframework/presence/alpha";
@@ -33,9 +33,9 @@ export class PresenceManager {
 	// A PresenceState object to manage the presence of users within the app
 	private readonly usersState: UserPresence;
 	// A map of SessionClient to UserInfo, where users can share their info with other users
-	private readonly userInfoMap: Map<ISessionClient, User> = new Map();
+	private readonly userInfoMap: Map<Attendee, User> = new Map();
 	// A callback method to get updates when remote UserInfo changes
-	private userInfoCallback: (userInfoMap: Map<ISessionClient, User>) => void = () => {};
+	private userInfoCallback: (userInfoMap: Map<Attendee, User>) => void = () => {};
 
 	constructor(private readonly presence: Presence) {
 		// Address for the presence state, this is used to organize the presence states and avoid conflicts
@@ -87,12 +87,12 @@ export class PresenceManager {
 	}
 
 	// Allows the app to listen for updates to the userInfoMap
-	setUserInfoUpdateListener(callback: (userInfoMap: Map<ISessionClient, User>) => void): void {
+	setUserInfoUpdateListener(callback: (userInfoMap: Map<Attendee, User>) => void): void {
 		this.userInfoCallback = callback;
 	}
 
 	// Returns the UserInfo of given session clients
-	getUserInfo(sessionList: ISessionClient[]): User[] {
+	getUserInfo(sessionList: Attendee[]): User[] {
 		const userInfoList: User[] = [];
 
 		for (const sessionClient of sessionList) {

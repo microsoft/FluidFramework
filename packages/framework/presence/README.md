@@ -44,9 +44,9 @@ API documentation for **@fluidframework/presence** is available at <https://flui
 
 ### Attendees
 
-For the lifetime of a session, each client connecting will be established as a unique and stable `ISessionClient`. The representation is stable because it will remain the same `ISessionClient` instance independent of connection drops and reconnections.
+For the lifetime of a session, each client connecting will be established as a unique and stable `Attendee`. The representation is stable because it will remain the same `Attendee` instance independent of connection drops and reconnections.
 
-Client Ids maintained by `ISessionClient` may be used to associate `ISessionClient` with quorum, audience, and service audience members.
+Client Ids maintained by `Attendee` may be used to associate `Attendee` with quorum, audience, and service audience members.
 
 ### Workspaces
 

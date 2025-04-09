@@ -9,7 +9,7 @@ import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal
 import type { SinonFakeTimers, SinonSpy } from "sinon";
 import { useFakeTimers, spy } from "sinon";
 
-import type { ISessionClient, StatesWorkspaceAddress } from "../index.js";
+import type { Attendee, StatesWorkspaceAddress } from "../index.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import { assertFinalExpectations, prepareConnectedPresence } from "./testUtils.js";
@@ -167,7 +167,7 @@ describe("Presence", () => {
 					expectedValue: LatestMapValueExpected;
 			  };
 
-		function verifyState(attendee: ISessionClient, verifications: StateVerification[]): void {
+		function verifyState(attendee: Attendee, verifications: StateVerification[]): void {
 			assert.ok(attendee, "Eventing does not reflect new attendee");
 			assert.strictEqual(
 				attendee.sessionId,
@@ -258,7 +258,7 @@ describe("Presence", () => {
 				workspace.add(
 					"notifications",
 					Notifications<{ newId: (id: number) => void }>({
-						newId: (_client: ISessionClient, _id: number) => {},
+						newId: (_client: Attendee, _id: number) => {},
 					}),
 				);
 				notificationManager = workspace.props.notifications;
@@ -279,7 +279,7 @@ describe("Presence", () => {
 		function setupNotificationsWorkspace(): void {
 			const notificationsWorkspace = presence.getNotifications("name:testWorkspace", {
 				notifications: Notifications<{ newId: (id: number) => void }>({
-					newId: (_client: ISessionClient, _id: number) => {},
+					newId: (_client: Attendee, _id: number) => {},
 				}),
 			});
 			notificationManager = notificationsWorkspace.props.notifications;
@@ -303,7 +303,7 @@ describe("Presence", () => {
 			);
 		}
 
-		function getTestAttendee(): ISessionClient {
+		function getTestAttendee(): Attendee {
 			return presence.getAttendee("sessionId-1");
 		}
 
@@ -659,7 +659,7 @@ describe("Presence", () => {
 					// Once activated, register the notifications workspace and listener for it's event
 					const notificationsWorkspace = presence.getNotifications(workspaceAddress, {
 						notifications: Notifications<{ newId: (id: number) => void }>({
-							newId: (_client: ISessionClient, _id: number) => {},
+							newId: (_client: Attendee, _id: number) => {},
 						}),
 					});
 					notificationsWorkspace.props.notifications.notifications.on(

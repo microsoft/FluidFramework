@@ -8,11 +8,7 @@ import { strict as assert, fail } from "node:assert";
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
-import type {
-	ISessionClient,
-	NotificationsManager,
-	NotificationsWorkspace,
-} from "../index.js";
+import type { Attendee, NotificationsManager, NotificationsWorkspace } from "../index.js";
 import { Notifications } from "../index.js";
 import type { createPresenceManager } from "../presenceManager.js";
 
@@ -104,7 +100,7 @@ describe("Presence", () => {
 					},
 					"testEvents"
 				>({
-					newId: (_client: ISessionClient, _id: number) => {},
+					newId: (_client: Attendee, _id: number) => {},
 				}),
 			);
 
@@ -155,7 +151,7 @@ describe("Presence", () => {
 					},
 					"testEvents"
 				>({
-					newId: (_client: ISessionClient, _id: number) => {},
+					newId: (_client: Attendee, _id: number) => {},
 				}),
 			);
 
@@ -197,14 +193,14 @@ describe("Presence", () => {
 		});
 
 		it("raises named event when notification is received", async () => {
-			type EventCalls = { client: ISessionClient; id: number }[];
+			type EventCalls = { client: Attendee; id: number }[];
 			const eventHandlerCalls = {
 				original: [] as EventCalls,
 				secondary: [] as EventCalls,
 				tertiary: [] as EventCalls,
 			};
 
-			function originalEventHandler(client: ISessionClient, id: number): void {
+			function originalEventHandler(client: Attendee, id: number): void {
 				assert.equal(client.sessionId, "sessionId-3");
 				assert.equal(id, 42);
 				eventHandlerCalls.original.push({ client, id });
@@ -230,10 +226,10 @@ describe("Presence", () => {
 			});
 
 			const disconnectFunctions = [
-				testEvents.notifications.on("newId", (client: ISessionClient, id: number) => {
+				testEvents.notifications.on("newId", (client: Attendee, id: number) => {
 					eventHandlerCalls.secondary.push({ client, id });
 				}),
-				testEvents.notifications.on("newId", (client: ISessionClient, id: number) => {
+				testEvents.notifications.on("newId", (client: Attendee, id: number) => {
 					eventHandlerCalls.tertiary.push({ client, id });
 				}),
 			];
@@ -300,7 +296,7 @@ describe("Presence", () => {
 					},
 					"testEvents"
 				>({
-					newId: (client: ISessionClient, id: number) => {
+					newId: (client: Attendee, id: number) => {
 						fail(`Unexpected newId event`);
 					},
 				}),
@@ -353,7 +349,7 @@ describe("Presence", () => {
 		it("raises `unattendedEvent` event when recognized notification is received without listeners", async () => {
 			let unattendedEventCalled = false;
 
-			function newIdEventHandler(client: ISessionClient, id: number): void {
+			function newIdEventHandler(client: Attendee, id: number): void {
 				fail(`Unexpected newId event`);
 			}
 
@@ -419,7 +415,7 @@ describe("Presence", () => {
 		it("removed listeners are not called when related notification is received", async () => {
 			let originalEventHandlerCalled = false;
 
-			function originalEventHandler(client: ISessionClient, id: number): void {
+			function originalEventHandler(client: Attendee, id: number): void {
 				assert.equal(client.sessionId, "sessionId-3");
 				assert.equal(id, 44);
 				assert.equal(originalEventHandlerCalled, false);
@@ -447,7 +443,7 @@ describe("Presence", () => {
 
 			const disconnect = testEvents.notifications.on(
 				"newId",
-				(_client: ISessionClient, _id: number) => {
+				(_client: Attendee, _id: number) => {
 					fail(`Unexpected event raised on disconnected listener`);
 				},
 			);

@@ -19,7 +19,7 @@ import {
 	ExperimentalPresenceManager,
 	type ExperimentalPresenceDO,
 	type Presence,
-	type ISessionClient,
+	type Attendee,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/presence/alpha";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
@@ -159,14 +159,14 @@ class MessageHandler {
 				this.containerId = containerId;
 
 				// Listen for presence events to notify parent/orchestrator when a new attendee joins or leaves the session.
-				presence.events.on("attendeeJoined", (attendee: ISessionClient) => {
+				presence.events.on("attendeeJoined", (attendee: Attendee) => {
 					const m: MessageToParent = {
 						event: "attendeeJoined",
 						sessionId: attendee.sessionId,
 					};
 					send(m);
 				});
-				presence.events.on("attendeeDisconnected", (attendee: ISessionClient) => {
+				presence.events.on("attendeeDisconnected", (attendee: Attendee) => {
 					const m: MessageToParent = {
 						event: "attendeeDisconnected",
 						sessionId: attendee.sessionId,

@@ -10,7 +10,7 @@ import type { SinonFakeTimers } from "sinon";
 import { useFakeTimers } from "sinon";
 
 import type { ClientConnectionId } from "../baseTypes.js";
-import { SessionClientStatus, type ISessionClient } from "../presence.js";
+import { SessionClientStatus, type Attendee } from "../presence.js";
 import { createPresenceManager } from "../presenceManager.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
@@ -103,8 +103,8 @@ describe("Presence", () => {
 				// Processes join signals and returns the attendees that were announced via `attendeeJoined`
 				function processJoinSignals(
 					signals: ReturnType<typeof generateBasicClientJoin>[],
-				): ISessionClient[] {
-					const joinedAttendees: ISessionClient[] = [];
+				): Attendee[] {
+					const joinedAttendees: Attendee[] = [];
 					const cleanUpListener = presence.events.on("attendeeJoined", (attendee) => {
 						joinedAttendees.push(attendee);
 					});
@@ -118,7 +118,7 @@ describe("Presence", () => {
 				}
 
 				function verifyAttendee(
-					actualAttendee: ISessionClient,
+					actualAttendee: Attendee,
 					expectedConnectionId: ClientConnectionId,
 					expectedSessionId: string,
 					expectedConnectionStatus: SessionClientStatus = SessionClientStatus.Connected,
@@ -355,7 +355,7 @@ describe("Presence", () => {
 				});
 
 				describe("that is already known", () => {
-					let knownAttendee: ISessionClient | undefined;
+					let knownAttendee: Attendee | undefined;
 
 					beforeEach(() => {
 						// Setup known attendee
@@ -448,7 +448,7 @@ describe("Presence", () => {
 					// (e.g. being in audience, sending an update, or (re)joining the session) before their connection status set to "Disconnected".
 					// If an attendee with a stale connection becomes active, their "stale" status is removed.
 					describe("and then local client disconnects", () => {
-						let remoteDisconnectedAttendees: ISessionClient[];
+						let remoteDisconnectedAttendees: Attendee[];
 						beforeEach(() => {
 							// Setup
 							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
@@ -680,7 +680,7 @@ describe("Presence", () => {
 						it("is announced via `attendeeDisconnected`", () => {
 							// Setup
 							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
-							let disconnectedAttendee: ISessionClient | undefined;
+							let disconnectedAttendee: Attendee | undefined;
 							afterCleanUp.push(
 								presence.events.on("attendeeDisconnected", (attendee) => {
 									assert(
@@ -737,7 +737,7 @@ describe("Presence", () => {
 				});
 
 				describe("that is rejoining", () => {
-					let priorAttendee: ISessionClient | undefined;
+					let priorAttendee: Attendee | undefined;
 					beforeEach(() => {
 						// Setup prior attendee
 						const joinedAttendees = processJoinSignals([initialAttendeeSignal]);

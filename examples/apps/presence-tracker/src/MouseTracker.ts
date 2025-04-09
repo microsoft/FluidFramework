@@ -7,7 +7,7 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEvent } from "@fluidframework/core-interfaces";
 import type {
 	Presence,
-	ISessionClient,
+	Attendee,
 	LatestValueManager,
 	StatesWorkspace,
 } from "@fluidframework/presence/alpha";
@@ -85,8 +85,8 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	/**
 	 * A map of session clients to mouse positions.
 	 */
-	public getMousePresences(): Map<ISessionClient, IMousePosition> {
-		const statuses: Map<ISessionClient, IMousePosition> = new Map();
+	public getMousePresences(): Map<Attendee, IMousePosition> {
+		const statuses: Map<Attendee, IMousePosition> = new Map();
 
 		for (const { client, value } of this.cursor.clientValues()) {
 			if (client.getConnectionStatus() === SessionClientStatus.Connected) {

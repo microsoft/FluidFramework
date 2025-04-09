@@ -22,7 +22,7 @@ import type {
 	LatestValueData,
 	LatestValueMetadata,
 } from "./latestValueTypes.js";
-import type { AttendeeId, ISessionClient, SpecificAttendee } from "./presence.js";
+import type { AttendeeId, Attendee, SpecificAttendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
@@ -40,7 +40,7 @@ export interface LatestMapValueClientData<
 	/**
 	 * Associated client.
 	 */
-	client: ISessionClient<SpecificAttendeeId>;
+	client: Attendee<SpecificAttendeeId>;
 
 	/**
 	 * @privateRemarks This could be regular map currently as no Map is
@@ -67,7 +67,7 @@ export interface LatestMapItemValueClientData<T, K extends string | number>
  * @alpha
  */
 export interface LatestMapItemRemovedClientData<K extends string | number> {
-	client: ISessionClient;
+	client: Attendee;
 	key: K;
 	metadata: LatestValueMetadata;
 }
@@ -336,11 +336,11 @@ export interface LatestMapValueManager<T, Keys extends string | number = string 
 	/**
 	 * Array of known remote clients.
 	 */
-	clients(): ISessionClient[];
+	clients(): Attendee[];
 	/**
 	 * Access to a specific client's map of values.
 	 */
-	clientValue(client: ISessionClient): ReadonlyMap<Keys, LatestValueData<T>>;
+	clientValue(client: Attendee): ReadonlyMap<Keys, LatestValueData<T>>;
 }
 
 class LatestMapValueManagerImpl<
@@ -389,14 +389,14 @@ class LatestMapValueManagerImpl<
 		}
 	}
 
-	public clients(): ISessionClient[] {
+	public clients(): Attendee[] {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		return objectKeys(allKnownStates.states)
 			.filter((attendeeId) => attendeeId !== allKnownStates.self)
 			.map((attendeeId) => this.datastore.lookupClient(attendeeId));
 	}
 
-	public clientValue(client: ISessionClient): ReadonlyMap<Keys, LatestValueData<T>> {
+	public clientValue(client: Attendee): ReadonlyMap<Keys, LatestValueData<T>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const attendeeId = client.sessionId;
 		const clientStateMap = allKnownStates.states[attendeeId];

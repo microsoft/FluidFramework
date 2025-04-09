@@ -22,8 +22,8 @@ import type {
  * @remarks
  * Each client once connected to a session is given a unique identifier for the
  * duration of the session. If a client disconnects and reconnects, it will
- * retain its identifier. Prefer use of {@link ISessionClient} as a way to
- * identify clients in a session. {@link ISessionClient.sessionId} will provide
+ * retain its identifier. Prefer use of {@link Attendee} as a way to
+ * identify clients in a session. {@link Attendee.sessionId} will provide
  * the session ID.
  *
  * @alpha
@@ -31,7 +31,7 @@ import type {
 export type AttendeeId = SessionId & { readonly AttendeeId: "AttendeeId" };
 
 /**
- * The connection status of the {@link ISessionClient}.
+ * The connection status of the {@link Attendee}.
  *
  * @alpha
  */
@@ -48,7 +48,7 @@ export const SessionClientStatus = {
 } as const;
 
 /**
- * Represents the connection status of an {@link ISessionClient}.
+ * Represents the connection status of an {@link Attendee}.
  *
  * This type can be either `'Connected'` or `'Disconnected'`, indicating whether
  * the session client is currently connected to the Fluid service.
@@ -68,10 +68,10 @@ export type SessionClientStatus =
  * @remarks
  * Note: This is very preliminary session client representation.
  *
- * `ISessionClient` should be used as key to distinguish between different
+ * `Attendee` should be used as key to distinguish between different
  * clients as they join, rejoin, and disconnect from a session. While a
- * client's {@link ClientConnectionId} from {@link ISessionClient.getConnectionStatus}
- * may change over time, `ISessionClient` will be fixed.
+ * client's {@link ClientConnectionId} from {@link Attendee.getConnectionStatus}
+ * may change over time, `Attendee` will be fixed.
  *
  * @privateRemarks
  * As this is evolved, pay attention to how this relates to Audience, Service
@@ -80,7 +80,7 @@ export type SessionClientStatus =
  * @sealed
  * @alpha
  */
-export interface ISessionClient<SpecificAttendeeId extends AttendeeId = AttendeeId> {
+export interface Attendee<SpecificAttendeeId extends AttendeeId = AttendeeId> {
 	/**
 	 * The session ID of the client that is stable over all connections.
 	 */
@@ -94,7 +94,7 @@ export interface ISessionClient<SpecificAttendeeId extends AttendeeId = Attendee
 	 * @remarks
 	 * Connection ID will change on reconnect.
 	 *
-	 * If {@link ISessionClient.getConnectionStatus} is {@link (SessionClientStatus:variable).Disconnected}, this will represent the last known connection ID.
+	 * If {@link Attendee.getConnectionStatus} is {@link (SessionClientStatus:variable).Disconnected}, this will represent the last known connection ID.
 	 */
 	getConnectionId(): ClientConnectionId;
 
@@ -114,7 +114,7 @@ export interface ISessionClient<SpecificAttendeeId extends AttendeeId = Attendee
  * @internal
  */
 export type SpecificAttendee<SpecificAttendeeId extends AttendeeId> =
-	string extends SpecificAttendeeId ? never : ISessionClient<SpecificAttendeeId>;
+	string extends SpecificAttendeeId ? never : Attendee<SpecificAttendeeId>;
 
 /**
  * @sealed
@@ -126,14 +126,14 @@ export interface PresenceEvents {
 	 *
 	 * @eventProperty
 	 */
-	attendeeJoined: (attendee: ISessionClient) => void;
+	attendeeJoined: (attendee: Attendee) => void;
 
 	/**
 	 * Raised when client appears disconnected from session.
 	 *
 	 * @eventProperty
 	 */
-	attendeeDisconnected: (attendee: ISessionClient) => void;
+	attendeeDisconnected: (attendee: Attendee) => void;
 
 	/**
 	 * Raised when a workspace is activated within the session.
@@ -172,21 +172,21 @@ export interface Presence {
 	 * Attendee states are dynamic and will change as clients join and leave
 	 * the session.
 	 */
-	getAttendees(): ReadonlySet<ISessionClient>;
+	getAttendees(): ReadonlySet<Attendee>;
 
 	/**
 	 * Lookup a specific attendee in the session.
 	 *
 	 * @param clientId - Client connection or session ID
 	 */
-	getAttendee(clientId: ClientConnectionId | AttendeeId): ISessionClient;
+	getAttendee(clientId: ClientConnectionId | AttendeeId): Attendee;
 
 	/**
 	 * Get this client's session client.
 	 *
 	 * @returns This client's session client.
 	 */
-	getMyself(): ISessionClient;
+	getMyself(): Attendee;
 
 	/**
 	 * Acquires a StatesWorkspace from store or adds new one.

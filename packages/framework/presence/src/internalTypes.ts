@@ -7,7 +7,7 @@ import type { IContainerRuntime } from "@fluidframework/container-runtime-defini
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { AttendeeId, ISessionClient } from "./presence.js";
+import type { AttendeeId, Attendee } from "./presence.js";
 
 import type { IRuntimeInternal } from "@fluidframework/presence/internal/container-definitions/internal";
 
@@ -46,7 +46,7 @@ export interface ValueManager<
 > {
 	// Most value managers should provide value - implement Required<ValueManager<...>>
 	readonly value?: TValueState;
-	update(client: ISessionClient, received: number, value: TValueState): PostUpdateAction[];
+	update(client: Attendee, received: number, value: TValueState): PostUpdateAction[];
 }
 
 /**
