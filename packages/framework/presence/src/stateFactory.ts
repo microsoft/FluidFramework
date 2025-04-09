@@ -10,7 +10,7 @@ import type {
 
 import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import { latestMapFactory, type LatestMapValueManager } from "./latestMapValueManager.js";
+import { latestMapFactory, type LatestMap } from "./latestMapValueManager.js";
 import { Latest, type LatestValueManager } from "./latestValueManager.js";
 
 /**
@@ -42,7 +42,7 @@ export const StateFactory = {
 	): InternalTypes.ManagerFactory<
 		RegistrationKey,
 		InternalTypes.MapValueState<T, Keys>,
-		LatestMapValueManager<T, Keys>
+		LatestMap<T, Keys>
 	> {
 		return latestMapFactory<T, Keys, RegistrationKey>(initialValues, controls);
 	},

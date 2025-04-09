@@ -49,7 +49,7 @@ export {
 	type LatestMapItemRemovedClientData,
 	type LatestMapItemUpdatedClientData,
 	type LatestMapClientData,
-	type LatestMapValueManager,
+	type LatestMap,
 	type LatestMapValueManagerEvents,
 	type ValueMap,
 } from "./latestMapValueManager.js";

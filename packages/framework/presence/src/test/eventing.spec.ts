@@ -18,7 +18,7 @@ import {
 	Latest,
 	StateFactory,
 	Notifications,
-	type LatestMapValueManager,
+	type LatestMap,
 	type LatestValueManager,
 	type NotificationsManager,
 } from "@fluidframework/presence/alpha";
@@ -145,7 +145,7 @@ describe("Presence", () => {
 		let clock: SinonFakeTimers;
 		let presence: ReturnType<typeof prepareConnectedPresence>;
 		let latest: LatestValueManager<{ x: number; y: number; z: number }>;
-		let latestMap: LatestMapValueManager<{ a: number; b: number } | { c: number; d: number }>;
+		let latestMap: LatestMap<{ a: number; b: number } | { c: number; d: number }>;
 		let notificationManager: NotificationsManager<{ newId: (id: number) => void }>;
 
 		interface LatestMapValueExpected {

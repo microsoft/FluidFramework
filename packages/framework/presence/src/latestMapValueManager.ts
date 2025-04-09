@@ -314,7 +314,7 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
  * @sealed
  * @alpha
  */
-export interface LatestMapValueManager<T, Keys extends string | number = string | number> {
+export interface LatestMap<T, Keys extends string | number = string | number> {
 	/**
 	 * Events for LatestMap.
 	 */
@@ -348,7 +348,7 @@ class LatestMapValueManagerImpl<
 	RegistrationKey extends string,
 	Keys extends string | number = string | number,
 > implements
-		LatestMapValueManager<T, Keys>,
+		LatestMap<T, Keys>,
 		Required<ValueManager<T, InternalTypes.MapValueState<T, Keys>>>
 {
 	public readonly events = createEmitter<LatestMapValueManagerEvents<T, Keys>>();
@@ -485,7 +485,7 @@ class LatestMapValueManagerImpl<
 }
 
 /**
- * Factory for creating a {@link LatestMapValueManager}.
+ * Factory for creating a {@link LatestMap}.
  *
  * @alpha
  */
@@ -501,7 +501,7 @@ export function latestMapFactory<
 ): InternalTypes.ManagerFactory<
 	RegistrationKey,
 	InternalTypes.MapValueState<T, Keys>,
-	LatestMapValueManager<T, Keys>
+	LatestMap<T, Keys>
 > {
 	const timestamp = Date.now();
 	const value: InternalTypes.MapValueState<
@@ -509,7 +509,7 @@ export function latestMapFactory<
 		// This should be `Keys`, but will only work if properties are optional.
 		string | number
 	> = { rev: 0, items: {} };
-	// LatestMapValueManager takes ownership of values within initialValues.
+	// LatestMap takes ownership of values within initialValues.
 	if (initialValues !== undefined) {
 		for (const key of objectKeys(initialValues)) {
 			value.items[key] = { rev: 0, timestamp, value: initialValues[key] };
@@ -523,7 +523,7 @@ export function latestMapFactory<
 		>,
 	): {
 		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
-		manager: InternalTypes.StateValue<LatestMapValueManager<T, Keys>>;
+		manager: InternalTypes.StateValue<LatestMap<T, Keys>>;
 	} => ({
 		initialData: { value, allowableUpdateLatencyMs: controls?.allowableUpdateLatencyMs },
 		manager: brandIVM<
