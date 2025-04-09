@@ -18,35 +18,36 @@ import { independentView, TreeAlpha } from "../shared-tree/index.js";
 import { validateUsageError } from "./utils.js";
 
 const schemaFactory = new SchemaFactoryAlpha("test");
-class Cell extends schemaFactory.object("table-cell", {
-	value: schemaFactory.string,
-}) {}
-
-class Column extends TableSchema.createColumn(schemaFactory) {}
-
-class Row extends TableSchema.createRow(schemaFactory, Cell, Column) {}
-
-class Table extends TableSchema.createTable(schemaFactory, Cell, Column, Row) {}
-
-function createTableTree() {
-	const treeView = independentView(
-		new TreeViewConfiguration({
-			schema: Table,
-			enableSchemaValidation: true,
-		}),
-		{ idCompressor: createIdCompressor() },
-	);
-
-	return {
-		Cell,
-		Column,
-		Row,
-		Table,
-		treeView,
-	};
-}
 
 describe("TableFactory unit tests", () => {
+	function createTableTree() {
+		class Cell extends schemaFactory.object("table-cell", {
+			value: schemaFactory.string,
+		}) {}
+
+		class Column extends TableSchema.createColumn(schemaFactory) {}
+
+		class Row extends TableSchema.createRow(schemaFactory, Cell, Column) {}
+
+		class Table extends TableSchema.createTable(schemaFactory, Cell, Column, Row) {}
+
+		const treeView = independentView(
+			new TreeViewConfiguration({
+				schema: Table,
+				enableSchemaValidation: true,
+			}),
+			{ idCompressor: createIdCompressor() },
+		);
+
+		return {
+			Cell,
+			Column,
+			Row,
+			Table,
+			treeView,
+		};
+	}
+
 	/**
 	 * Compares a tree with an expected "concise" tree representation.
 	 * Fails if they are not equivalent.
@@ -507,7 +508,7 @@ describe("TableFactory unit tests", () => {
 		// TODO: There is currently no policy from prohibiting removal of non-existant columns.
 		// Once that work is finished, the usage error in this test should be updated, and the test can be unskipped.
 		it.skip("removing column that does not exist on table fails", () => {
-			const { treeView } = createTableTree();
+			const { treeView, Column } = createTableTree();
 			treeView.initialize({
 				columns: [],
 				rows: [],
@@ -536,18 +537,23 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("delete single row", () => {
-			const { treeView } = createTableTree();
+			const { treeView, Row } = createTableTree();
+			const row0 = new Row({ id: "row-0", cells: {} });
+			const row1 = new Row({ id: "row-1", cells: {} });
 			treeView.initialize({
 				columns: [],
-				rows: [
-					{
-						id: "row-0",
-						cells: {},
-					},
-				],
+				rows: [row0, row1],
 			});
 
-			treeView.root.deleteRows([treeView.root.rows[0]]);
+			// Delete row0
+			treeView.root.deleteRows([row0]);
+			assertEqualTrees(treeView.root, {
+				columns: [],
+				rows: [{ id: "row-1", cells: {} }],
+			});
+
+			// Delete row1
+			treeView.root.deleteRows([row1]);
 			assertEqualTrees(treeView.root, {
 				columns: [],
 				rows: [],
@@ -555,8 +561,19 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("delete multiple rows", () => {
-			const { treeView } = createTableTree();
+			const { treeView, Row } = createTableTree();
+			const row0 = new Row({ id: "row-0", cells: {} });
+			const row1 = new Row({ id: "row-1", cells: {} });
+			const row2 = new Row({ id: "row-2", cells: {} });
+			const row3 = new Row({ id: "row-3", cells: {} });
 			treeView.initialize({
+				columns: [],
+				rows: [row0, row1, row2, row3],
+			});
+
+			// Delete rows 1 and 3
+			treeView.root.deleteRows([row1, row3]);
+			assertEqualTrees(treeView.root, {
 				columns: [],
 				rows: [
 					{
@@ -564,13 +581,14 @@ describe("TableFactory unit tests", () => {
 						cells: {},
 					},
 					{
-						id: "row-1",
+						id: "row-2",
 						cells: {},
 					},
 				],
 			});
 
-			treeView.root.deleteRows([treeView.root.rows[0], treeView.root.rows[1]]);
+			// Delete rows 0 and 3
+			treeView.root.deleteRows([row0, row2]);
 			assertEqualTrees(treeView.root, {
 				columns: [],
 				rows: [],
@@ -578,7 +596,7 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("deleting single row that doesn't exist on table fails", () => {
-			const { treeView } = createTableTree();
+			const { treeView, Row } = createTableTree();
 			treeView.initialize({
 				columns: [],
 				rows: [],
@@ -591,7 +609,7 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("deleting multiple rows that doesn't exist on table fails", () => {
-			const { treeView } = createTableTree();
+			const { treeView, Row } = createTableTree();
 			treeView.initialize({
 				columns: [],
 				rows: [],
@@ -710,5 +728,35 @@ describe("TableFactory unit tests", () => {
 				validateUsageError(/Placeholder usage error./),
 			);
 		});
+	});
+
+	it("gets proper table elements with getter methods.", () => {
+		const { treeView, Column, Row, Cell } = createTableTree();
+
+		const cell0 = new Cell({ value: "Hello World!" });
+		const column0 = new Column({ id: "column-0" });
+		const row0 = new Row({ id: "row-0", cells: { "column-0": cell0 } });
+
+		treeView.initialize({
+			columns: [
+				{
+					id: "column-0",
+				},
+			],
+			rows: [
+				{
+					id: "row-0",
+					cells: { "column-0": { value: "Hello world!" } },
+				},
+			],
+		});
+
+		const cell = treeView.root.getCell({ columnId: "column-0", rowId: "row-0" });
+		const column = treeView.root.getColumn("column-1");
+		const row = treeView.root.getRow("row-0");
+
+		assert.equal(cell, cell0);
+		assert.equal(row, row0);
+		assert.equal(column, column0);
 	});
 });

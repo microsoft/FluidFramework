@@ -17,6 +17,7 @@ import {
 	TreeArrayNode,
 	type TreeNode,
 	type TreeNodeFromImplicitAllowedTypes,
+	type TreeNodeSchema,
 	type TreeNodeSchemaClass,
 	type WithType,
 } from "./simple-tree/index.js";
@@ -396,12 +397,70 @@ export namespace TableSchema {
 	}
 
 	/**
+	 * Factory for creating new table schema without specifying row or column schema.
+	 * @internal
+	 */
+	export function createTable<
+		const TInputScope extends string | undefined,
+		const TCell extends ImplicitAllowedTypes,
+	>(
+		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
+		_cellSchema: TCell,
+	): ReturnType<typeof createTableInternal<TInputScope, TCell>>;
+	/**
+	 * Factory for creating new table schema without specifyint row schema
+	 * @internal
+	 */
+	export function createTable<
+		const TInputScope extends string | undefined,
+		const TCell extends ImplicitAllowedTypes,
+		const TColumn extends ColumnSchemaBase<TInputScope>,
+	>(
+		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
+		_cellSchema: TCell,
+		columnSchema: TColumn,
+	): ReturnType<typeof createTableInternal<TInputScope, TCell, TColumn>>;
+	/**
 	 * Factory for creating new table schema.
-	 * @privateRemarks TODO: add overloads to make column/row schema optional.
+	 * @internal
+	 */
+	export function createTable<
+		const TInputScope extends string | undefined,
+		const TCell extends ImplicitAllowedTypes,
+		const TColumn extends ColumnSchemaBase<TInputScope>,
+		const TRow extends RowSchemaBase<TInputScope, TCell, TColumn>,
+	>(
+		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
+		_cellSchema: TCell,
+		columnSchema: TColumn,
+		rowSchema: TRow,
+	): ReturnType<typeof createTableInternal<TInputScope, TCell, TColumn, TRow>>;
+	export function createTable<
+		const TInputScope extends string | undefined,
+		const TCell extends ImplicitAllowedTypes,
+		const TColumn extends ColumnSchemaBase<TInputScope>,
+		const TRow extends RowSchemaBase<TInputScope, TCell, TColumn>,
+	>(
+		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
+		_cellSchema: TCell,
+		columnSchema?: TColumn,
+		rowSchema?: TRow,
+	): TreeNodeSchema {
+		const column = columnSchema ?? createColumn(inputSchemaFactory);
+		return createTableInternal(
+			inputSchemaFactory,
+			_cellSchema,
+			column as TColumn,
+			rowSchema ?? (createRow(inputSchemaFactory, _cellSchema, column) as TRow),
+		);
+	}
+
+	/**
+	 * Factory for creating new table schema.
 	 * @internal
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
-	export function createTable<
+	export function createTableInternal<
 		const TInputScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
 		const TColumn extends ColumnSchemaBase<TInputScope> = ColumnSchemaBase<TInputScope>,
