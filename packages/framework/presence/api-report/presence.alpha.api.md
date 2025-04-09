@@ -146,7 +146,7 @@ export interface LatestMapItemRemovedClientData<K extends string | number> {
 }
 
 // @alpha @sealed
-export interface LatestMapItemValueClientData<T, K extends string | number> extends LatestValueClientData<T> {
+export interface LatestMapItemUpdatedClientData<T, K extends string | number> extends LatestValueClientData<T> {
     // (undocumented)
     key: K;
 }
@@ -173,7 +173,7 @@ export interface LatestMapValueManagerEvents<T, K extends string | number> {
     // @eventProperty
     itemRemoved: (removedItem: LatestMapItemRemovedClientData<K>) => void;
     // @eventProperty
-    itemUpdated: (updatedItem: LatestMapItemValueClientData<T, K>) => void;
+    itemUpdated: (updatedItem: LatestMapItemUpdatedClientData<T, K>) => void;
     // @eventProperty
     localItemRemoved: (removedItem: {
         key: K;

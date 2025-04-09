@@ -47,7 +47,7 @@ export {
 export {
 	latestMapFactory,
 	type LatestMapItemRemovedClientData,
-	type LatestMapItemValueClientData,
+	type LatestMapItemUpdatedClientData,
 	type LatestMapValueClientData,
 	type LatestMapValueManager,
 	type LatestMapValueManagerEvents,
