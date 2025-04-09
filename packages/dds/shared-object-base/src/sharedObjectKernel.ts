@@ -217,7 +217,6 @@ export interface FactoryOut<T extends object> {
 }
 
 /**
- * TODO: Maybe move loadCore here.
  * @internal
  */
 export interface SharedKernelFactory<T extends object> {

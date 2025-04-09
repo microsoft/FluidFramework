@@ -17,8 +17,7 @@ import type { ISerializableValue, ISerializedValue } from "./internalInterfaces.
 
 /**
  * A local value to be stored in a container type Distributed Data Store (DDS).
- * @legacy
- * @alpha
+ * @internal
  */
 export interface ILocalValue {
 	/**

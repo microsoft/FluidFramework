@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { bufferToString } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type {
@@ -66,7 +67,7 @@ export function unsupportedAdapter<T>(value: T): never {
  *
  */
 export interface MigrationOptions<
-	in Before = never,
+	in Before extends object = never,
 	out After extends object = object,
 	out Common = unknown,
 > {
@@ -75,20 +76,76 @@ export interface MigrationOptions<
 	 */
 	readonly migrationIdentifier: string;
 	readonly defaultMigrated: boolean;
-	readonly to: SharedKernelFactory<After>;
+
+	/**
+	 * Used to create the "after" kernel when loading from summary after the migration.
+	 */
+	readonly to: SharedKernelFactory<After>; // Pick<SharedKernelFactory<After>, "loadCore">;
+
 	beforeAdapter(from: Before): Common;
 	afterAdapter(from: After): Common;
 
 	/**
 	 * Migrate all data, including non persisted things like event registrations to the new object.
 	 *
-	 * This should use editing APis which emit Ops to send the changes to remote clients.
+	 * This should use editing APIs which emit Ops to send the changes to remote clients.
 	 *
 	 * `to` is in the default initial state when this is called.
 	 *
-	 * TODO: How should this handle local ops? Copy state from before local ops, then rebase them?
+	 * This is for doing the migration as a local op:
+	 * when the first migration is sequenced (there might be multiple concurrent migrations) `migrated` will be called.
+	 *
+	 * This approach reduces the risk of clients desynchronizing due to handling the migration differently when triggered locally vs remotely.
+	 *
+	 * All event registrations should be moved to the new object.
+	 *
+	 *
+	 * TODO: Make this allocate kernel so it can handle existing pending local ops. Or customize "to"?
 	 */
 	migrate(from: Before, to: After, adaptedTo: Common): void;
+	// migrate(from: FactoryOut<Before>, adaptedTo: Common): FactoryOut<After>;
+
+	/**
+	 * A migration op has just been sequenced.
+	 *
+	 * `migrate` will always be called first. On clients not initiating a migration, this will be done immediately before `migrated`,
+	 * but on clients initiating a migration there may be some time and ops between.
+	 *
+	 * During a concurrent migration, its possible that the migration that triggered migrate was a local request to migrate,
+	 * but another clients remote migration was sequenced first, resulting in this call.
+	 */
+	migrated(from: FactoryOut<Before>, to: FactoryOut<After>, adaptedTo: Common): void;
+
+	/**
+	 * Migration has passed out of the collab window: no more "before" ops will be applied or resubmitted.
+	 *
+	 * All "before" pending local ops should have been sequenced (or resubmitted as after ops) by now.
+	 *
+	 * TODO: how does this relate to stashed ops?
+	 */
+	// migrationFinalized(to: FactoryOut<After>, adaptedTo: Common): void;
+
+	/**
+	 * An op was sequenced from a client that has not observed the migration when this client has already migrated.
+	 *
+	 * Iff the migration has already been sequenced, `before` will be undefined.
+	 */
+	applyOpDuringMigration(
+		to: FactoryOut<After>,
+		adaptedTo: Common,
+		beforeOp: IRuntimeMessageCollection,
+	): void;
+
+	/**
+	 * An op from before migration needs resubmit.
+	 */
+	resubmitOpDuringMigration(
+		to: FactoryOut<After>,
+		adaptedTo: Common,
+		beforeOp: { content: unknown; localOpMetadata: unknown },
+	): void;
+
+	// TODO: stashed ops
 }
 
 /**
@@ -145,6 +202,19 @@ export enum MigrationStatus {
 
 interface ShimData<TOut> extends FactoryOut<object> {
 	readonly adapter: TOut;
+
+	/**
+	 * Migration status related to sequenced ops.
+	 * @remarks
+	 * This part is what gets serialized in the summary thats not from the delegated kernels.
+	 */
+	readonly migrationSequenced: SequencedMigrationStatus;
+
+	/**
+	 * Local state related to migration.
+	 * @remarks
+	 * Set when local state is migrated (includes pending local migration or sequenced remote migration)
+	 */
 	migrated?: MigrationOptions;
 }
 
@@ -265,9 +335,208 @@ interface LocalOpMetadata {
 }
 
 enum MigrationPhase {
-	Before,
-	Migration,
-	After,
+	Before = "Before",
+	Migration = "Migration",
+	After = "After",
+}
+
+const PendingClients = Type.Object({
+	/**
+	 * sequence number of the first migration op.
+	 */
+	first: Type.Number(),
+
+	/**
+	 * Clients who have sequenced a migration op.
+	 */
+	migrated: Type.Array(Type.String(), {
+		minItems: 1,
+	}),
+});
+
+const MigrationSummary = Type.Object(
+	{
+		/**
+		 * Unique identifier for this migration.
+		 * @remarks
+		 * Since a given DDS may have multiple migrations, this is used to detect which migration this op is for.
+		 */
+		id: Type.String(),
+
+		/**
+		 * Of the migration system being used.
+		 * @remarks
+		 * Integer, counting up from one.
+		 * Every time a possibly breaking change is made to how migrations are handled.
+		 */
+		version: Type.Number({ minimum: 1, multipleOf: 1 }),
+
+		migrationTag: Type.Const<typeof migrationTag>(migrationTag),
+
+		/**
+		 * If undefined, the migration has passed the collaboration window: all ops are in the new format.
+		 *
+		 * If specified, lists clients which have had a migration sequenced.
+		 * @remarks
+		 * This is used to determine if a given op is from a client that has observed a migration and thus in the new format.
+		 */
+		pendingClients: Type.Optional(PendingClients),
+	},
+	{ additionalProperties: false },
+);
+
+type PendingClients = Static<typeof PendingClients>;
+type MigrationSummary = Static<typeof MigrationSummary>;
+
+const compiledMigrationSummary = TypeCompiler.Compile(MigrationSummary);
+
+/**
+ * Tracks migration related state.
+ * @remarks
+ * Contains no "local" state related to local ops: tracks only state derived from sequenced ops.
+ * This separation helps ensure this is consistent across all clients.
+ */
+class SequencedMigrationStatus {
+	/**
+	 * The first migration sequenced (lowest sequenceNumber) if any.
+	 */
+	private migrationSequenced:
+		| undefined
+		| {
+				migratedAt: number;
+				/**
+				 * Each client which has sequenced a migration op, mapped to the sequence number of that op.
+				 * @remarks
+				 * See {@link MigrationSummary.pendingClients}.
+				 */
+				allSequencedMigrations: Set<string>;
+		  }
+		| true;
+
+	private latestSequenceNumber: number;
+
+	public constructor(
+		pendingMigrations: PendingClients | undefined | true,
+		/**
+		 * The minimum sequence number for all connected clients.
+		 * @remarks
+		 * Use only for validation of inputs into sequenceOp, and to know when to stop tracking migration ops.
+		 */
+		private minimumSequenceNumber: number = Number.NEGATIVE_INFINITY,
+
+		/**
+		 * The reference sequence number the message was sent relative to.
+		 * @remarks
+		 * Use only for validation of inputs into sequenceOp.
+		 */
+		latestSequenceNumber?: number,
+	) {
+		if (pendingMigrations === undefined) {
+			this.migrationSequenced = undefined;
+			this.latestSequenceNumber = latestSequenceNumber ?? minimumSequenceNumber;
+		} else if (pendingMigrations === true) {
+			this.migrationSequenced = true;
+			this.latestSequenceNumber = latestSequenceNumber ?? minimumSequenceNumber;
+		} else {
+			this.latestSequenceNumber = latestSequenceNumber ?? pendingMigrations.first;
+			this.migrationSequenced = {
+				migratedAt: pendingMigrations.first,
+				allSequencedMigrations: new Set(pendingMigrations.migrated),
+			};
+			assert(this.latestSequenceNumber >= pendingMigrations.first, "Invalid sequence number");
+
+			if (this.minimumSequenceNumber >= this.migrationSequenced.migratedAt) {
+				this.migrationSequenced = true;
+			}
+		}
+		assert(this.latestSequenceNumber >= this.minimumSequenceNumber, "Invalid sequence number");
+	}
+
+	public sequenceOp(
+		clientId: string,
+		referenceSequenceNumber: number,
+		sequenceNumber: number,
+		minimumSequenceNumber: number,
+		isMigrationOp: boolean,
+	): MigrationPhase {
+		assert(
+			minimumSequenceNumber >= this.minimumSequenceNumber,
+			"Invalid minimum sequence number",
+		);
+		this.minimumSequenceNumber = minimumSequenceNumber;
+
+		// Allows equal due to batching
+		assert(sequenceNumber >= this.latestSequenceNumber, "Invalid sequence number");
+		this.latestSequenceNumber = sequenceNumber;
+
+		assert(
+			referenceSequenceNumber >= this.minimumSequenceNumber,
+			"Invalid reference sequence number",
+		);
+
+		try {
+			if (this.migrationSequenced === true) {
+				// All clients have observed the migration.
+				assert(!isMigrationOp, "Migration op should not occur after migration is finished");
+				return MigrationPhase.After;
+			} else if (this.migrationSequenced === undefined) {
+				if (isMigrationOp) {
+					this.migrationSequenced = {
+						migratedAt: sequenceNumber,
+						allSequencedMigrations: new Set([clientId]),
+					};
+					return MigrationPhase.Migration;
+				} else {
+					// No migration has been sequenced.
+					return MigrationPhase.Before;
+				}
+			} else {
+				if (referenceSequenceNumber >= this.migrationSequenced.migratedAt) {
+					// Client has observed the migration
+					assert(!isMigrationOp, "Migration op should not occur after migration is observed");
+					return MigrationPhase.After;
+				}
+
+				if (isMigrationOp) {
+					assert(
+						!this.migrationSequenced.allSequencedMigrations.has(clientId),
+						"Duplicate migration from client",
+					);
+					this.migrationSequenced.allSequencedMigrations.add(clientId);
+					return MigrationPhase.Migration;
+				}
+
+				// eslint-disable-next-line unicorn/prefer-ternary
+				if (this.migrationSequenced.allSequencedMigrations.has(clientId)) {
+					// This client did a local migration
+					return MigrationPhase.After;
+				} else {
+					// This client did not do a local migration, nor observe the first one.
+					return MigrationPhase.Before;
+				}
+			}
+		} finally {
+			if (
+				typeof this.migrationSequenced === "object" &&
+				minimumSequenceNumber >= this.migrationSequenced.migratedAt
+			) {
+				this.migrationSequenced = true;
+			}
+		}
+	}
+
+	public summarize(): PendingClients | undefined | true {
+		if (this.migrationSequenced === undefined) {
+			return undefined;
+		} else if (this.migrationSequenced === true) {
+			return true;
+		} else {
+			return {
+				first: this.migrationSequenced.migratedAt,
+				migrated: [...this.migrationSequenced.allSequencedMigrations],
+			};
+		}
+	}
 }
 
 /**
@@ -280,9 +549,6 @@ enum MigrationPhase {
 class MigrationShim<TFrom extends object, TOut extends object> implements SharedKernel {
 	// Lazy init here so correct kernel constructed in loadCore when loading from existing data.
 	#data: ShimData<TOut> | undefined;
-
-	private migrationSequenced: undefined | { sequenceNumber: number; clientId: string };
-
 	private readonly migrationOptions: MigrationOptions<TFrom, object, TOut>;
 
 	public readonly view: TOut & IMigrationShim;
@@ -331,12 +597,17 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 			telemetryContext,
 			incrementalSummaryContext,
 		);
-		if (this.migrationSequenced !== undefined) {
-			addBlobToSummary(
-				result,
-				this.migrationOptions.migrationIdentifier,
-				JSON.stringify(this.migrationSequenced),
-			);
+
+		const pending = this.data.migrationSequenced.summarize();
+		if (pending !== undefined) {
+			const m: MigrationSummary = {
+				id: this.migrationOptions.migrationIdentifier,
+				version: 1,
+				migrationTag: "26f3e70a-2e99-4d09-8923-5538f05a051a",
+				pendingClients: pending === true ? undefined : pending,
+			};
+			compiledMigrationSummary.Check(m);
+			addBlobToSummary(result, this.migrationOptions.migrationIdentifier, JSON.stringify(m));
 		}
 		return result;
 	}
@@ -346,8 +617,17 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 
 		const migrated = await storage.contains(this.migrationOptions.migrationIdentifier);
 
+		let pendingClients: PendingClients | undefined | true;
+		if (migrated) {
+			const buffer = await storage.readBlob(this.migrationOptions.migrationIdentifier);
+			const utf8 = bufferToString(buffer, "utf8");
+			const parsed: unknown = JSON.parse(utf8);
+			assert(compiledMigrationSummary.Check(parsed), "Invalid migration summary");
+			pendingClients = parsed.pendingClients ?? true;
+		}
+
 		// This could cause an upgrade if no beforeAdapter is provided. TODO: is that ok? Handle readonly.
-		this.#data = await this.initLoadCore(migrated, storage);
+		this.#data = await this.initLoadCore(pendingClients, storage);
 	}
 
 	public onDisconnect(): void {
@@ -398,7 +678,17 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 		messages: readonly IRuntimeMessagesContent[],
 		local: boolean,
 	): void {
-		this.data.kernel.processMessagesCore({
+		this.data.kernel.processMessagesCore(
+			this.delegatedMessagesCollection(envelope, messages, local),
+		);
+	}
+
+	private delegatedMessagesCollection(
+		envelope: ISequencedMessageEnvelope,
+		messages: readonly IRuntimeMessagesContent[],
+		local: boolean,
+	): IRuntimeMessageCollection {
+		return {
 			envelope,
 			local,
 			messagesContent: messages.map((message) => ({
@@ -406,7 +696,7 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 				contents: message.contents,
 				localOpMetadata: (message.localOpMetadata as LocalOpMetadata | undefined)?.inner,
 			})),
-		});
+		};
 	}
 
 	public processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
@@ -418,46 +708,82 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 
 		for (const message of messagesCollection.messagesContent) {
 			const migration = opMigrationId(message);
-			if (migration === this.migrationOptions.migrationIdentifier) {
-				if (this.migrationSequenced === undefined) {
-					if (!local) {
+			const isThisMigration = migration === this.migrationOptions.migrationIdentifier;
+
+			assert(envelope.clientId !== null, "server should not send messages to SharedObject");
+
+			const phase = this.data.migrationSequenced.sequenceOp(
+				envelope.clientId,
+				envelope.referenceSequenceNumber,
+				envelope.referenceSequenceNumber,
+				envelope.minimumSequenceNumber,
+				isThisMigration,
+			);
+
+			assert(local === (message.localOpMetadata !== undefined), "Invalid local op metadata");
+			if (local) {
+				const metadata = message.localOpMetadata as LocalOpMetadata;
+				assert(metadata.migrated === phase, "computed phase should match metadata");
+			}
+
+			switch (phase) {
+				case MigrationPhase.Before: {
+					assert(!isThisMigration, "Migration op should not be considered before migration");
+
+					if (this.data.migrated === undefined) {
+						this.delegatedMessagesCore(envelope, [message], local);
+					} else {
+						// A local migration is pending.
+
+						// TODO: apply this to the before version as well
+
+						this.data.migrated.applyOpDuringMigration(
+							this.data,
+							this.data.adapter,
+							this.delegatedMessagesCollection(envelope, [message], local),
+						);
+					}
+					break;
+				}
+				case MigrationPhase.Migration: {
+					assert(isThisMigration, "Migration should be from migration op");
+					if (this.data.migrated === undefined) {
+						assert(
+							!local,
+							"If local migration is sequence, should have already locally migrated",
+						);
 						this.upgrade(false);
 					}
-					assert(envelope.clientId !== null, "server should not migrate");
-					this.migrationSequenced = {
-						sequenceNumber: message.clientSequenceNumber,
-						clientId: envelope.clientId,
-					};
-				} else {
+
+					assert(
+						this.data.migrated !== undefined,
+						"Migration should have happened locally already",
+					);
+
+					// TODO: call this, passing before and after
+					// this.data.migrated.migrated()
+
 					// Concurrent migrations. Drop this one.
 					// Will also drop local ops that client made before observing the first migration ensuring loading up new DDS doesn't happen twice.
 					// Maybe telemetry here?
-					return;
 				}
-			} else {
-				// If migration !== undefined here, there could be a nested adapter (Which could be supported in the future) or mismatched adapters.
-				// For now, error in this case.
-				assert(migration === undefined, "Mismatched migration");
+				case MigrationPhase.After: {
+					assert(
+						this.data.migrated !== undefined,
+						"Migration should have happened locally already if migration has been sequenced",
+					);
 
-				if (this.migrationSequenced === undefined) {
-					// Before migration
-					this.delegatedMessagesCore(envelope, [message], local);
-				} else {
-					// Already migrated
-					if (
-						envelope.referenceSequenceNumber < this.migrationSequenced.sequenceNumber &&
-						envelope.clientId !== this.migrationSequenced.clientId
-					) {
-						// A migration happened that the client producing this op didn't know about (when it made this op).
-						// Drop the op: migrations are first write wins.
-						// Maybe telemetry here?
-						// TODO: In the future could allow an adapter to optionally handle this case by rebasing the op into the new format.
+					if (isThisMigration) {
+						// Drop redundant migration op which was concurrent with migration, and ordered later.
 						return;
-					} else {
-						// This op is after the migration from a client that observed the migration.
-						// Must be in new format, send to new kernel:
-						this.delegatedMessagesCore(envelope, [message], local);
 					}
+
+					this.delegatedMessagesCore(envelope, [message], local);
+
+					break;
+				}
+				default: {
+					unreachableCase(phase);
 				}
 			}
 		}
@@ -499,6 +825,8 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 	 * @remarks
 	 * This does not prevent the map APIs from being available:
 	 * until `viewWith` is called, the map APIs are still available and will be implemented on-top of the tree structure.
+	 *
+	 * TODO: comments like above should not be in terms of map and tree.
 	 */
 	private upgrade(doEdits: boolean): void {
 		const data = this.data;
@@ -510,7 +838,7 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 		const after = this.init(true);
 
 		if (doEdits) {
-			this.sendUpgrade(data.view as TFrom, after.view, after.adapter);
+			this.sendUpgrade(data.view as TFrom, after, after.adapter);
 		}
 
 		this.#data = after;
@@ -522,7 +850,8 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 	 * This does not prevent the map APIs from being available:
 	 * until `viewWith` is called, the map APIs are still available and will be implemented on-top of the tree structure.
 	 */
-	private sendUpgrade(from: TFrom, to: object, adaptedTo: TOut): void {
+	private sendUpgrade(from: TFrom, after: FactoryOut<object>, adaptedTo: TOut): void {
+		const to = after.view;
 		const op: MigrationOp = {
 			id: this.migrationOptions.migrationIdentifier,
 			migrationTag,
@@ -544,7 +873,7 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 		// This might be better from an events perspective.
 		// It would be a big change to how local ops during the migration (which thus need rebase) work.
 		if (this.kernelArgs.sharedObject.isAttached()) {
-			this.data.kernel.didAttach?.();
+			after.kernel.didAttach?.();
 		}
 		this.migrationOptions.migrate(from, to, adaptedTo);
 	}
@@ -564,6 +893,7 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 	private finishInit<T extends object>(
 		data: FactoryOut<T>,
 		migrated: MigrationOptions | undefined,
+		pendingClients: PendingClients | undefined | true,
 		adapterFunction: (from: T) => TOut,
 	): ShimData<TOut> {
 		// Create pre migration
@@ -576,23 +906,16 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 			kernel: data.kernel,
 			adapter,
 			migrated,
+			migrationSequenced: new SequencedMigrationStatus(pendingClients),
 		};
 	}
 
 	private async initLoadCore(
-		migrated: boolean,
+		pendingClients: PendingClients | undefined | true,
 		storage: IChannelStorageService,
 	): Promise<ShimData<TOut>> {
-		if (migrated) {
-			// Create post migration
-			const after = await this.migrationOptions.to.loadCore(
-				this.adjustedKernelArgs(true),
-				storage,
-			);
-			return this.finishInit(after, this.migrationOptions, (view) =>
-				this.migrationOptions.afterAdapter(view),
-			);
-		} else {
+		if (pendingClients === undefined) {
+			// Pre Migration
 			const before = await this.migrationSet.fromKernel.loadCore(
 				this.adjustedKernelArgs(false),
 				storage,
@@ -605,9 +928,9 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 				);
 				const after = this.migrationOptions.to.create(this.adjustedKernelArgs(true));
 				// TODO: document and test read only case
-				return this.finishInit(after, this.migrationOptions, (view) => {
+				return this.finishInit(after, this.migrationOptions, pendingClients, (view) => {
 					const adapter = this.migrationOptions.afterAdapter(view);
-					this.sendUpgrade(before.view, after.view, adapter);
+					this.sendUpgrade(before.view, after, adapter);
 					return adapter;
 				});
 			} else {
@@ -615,17 +938,27 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 				return this.finishInit(
 					before,
 					undefined,
+					pendingClients,
 					this.migrationOptions.beforeAdapter.bind(this.migrationOptions),
 				);
 			}
+		} else {
+			// Create post migration
+			const after = await this.migrationOptions.to.loadCore(
+				this.adjustedKernelArgs(true),
+				storage,
+			);
+			return this.finishInit(after, this.migrationOptions, pendingClients, (view) =>
+				this.migrationOptions.afterAdapter(view),
+			);
 		}
 	}
 
-	private init(migrated: boolean): ShimData<TOut> {
-		if (migrated) {
+	private init(locallyMigrated: boolean): ShimData<TOut> {
+		if (locallyMigrated) {
 			// Create post migration
 			const after = this.migrationOptions.to.create(this.adjustedKernelArgs(true));
-			return this.finishInit(after, this.migrationOptions, (view) =>
+			return this.finishInit(after, this.migrationOptions, undefined, (view) =>
 				this.migrationOptions.afterAdapter(view),
 			);
 		} else {
@@ -638,9 +971,9 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 				);
 				const after = this.migrationOptions.to.create(this.adjustedKernelArgs(true));
 				// TODO: document and test read only case
-				return this.finishInit(after, this.migrationOptions, (view) => {
+				return this.finishInit(after, this.migrationOptions, undefined, (view) => {
 					const adapter = this.migrationOptions.afterAdapter(view);
-					this.sendUpgrade(before.view, after.view, adapter);
+					this.sendUpgrade(before.view, after, adapter);
 					return adapter;
 				});
 			} else {
@@ -648,18 +981,17 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 				return this.finishInit(
 					before,
 					undefined,
+					undefined,
 					this.migrationOptions.beforeAdapter.bind(this.migrationOptions),
 				);
 			}
 		}
 	}
 
-	private get data(): FactoryOut<object> & {
-		readonly adapter: TOut;
-		migrated?: MigrationOptions;
-	} {
+	private get data(): ShimData<TOut> {
 		if (this.#data === undefined) {
-			this.#data = this.init(this.migrationOptions.defaultMigrated);
+			// TODO: can we create post migration somehow? Maybe create logic/factory should create the final shared object directly and skip the shim?
+			this.#data = this.init(false);
 		}
 		return this.#data;
 	}

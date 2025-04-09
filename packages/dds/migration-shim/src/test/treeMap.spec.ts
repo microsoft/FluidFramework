@@ -8,7 +8,11 @@ import { strict as assert } from "node:assert";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import type { IChannelServices } from "@fluidframework/datastore-definitions/internal";
+import { onAssertionFailure } from "@fluidframework/core-utils/internal";
+import type {
+	IChannel,
+	IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
 import {
 	SharedDirectory,
 	SharedMap,
@@ -27,6 +31,7 @@ import {
 	type ITestFluidObject,
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
+	TestFluidObjectInternal,
 	TestObjectProvider,
 	type fluidEntryPoint,
 } from "@fluidframework/test-utils/internal";
@@ -34,6 +39,10 @@ import { TreeViewConfiguration, type ITree } from "@fluidframework/tree/internal
 
 import { MigrationStatus, shimInfo, type IMigrationShim } from "../shim.js";
 import { MapAdapterRoot, MapToTree, TreeFromMap, treeFromMapPartial } from "../treeMap.js";
+
+onAssertionFailure((error) => {
+	debugger;
+});
 
 describe("treeMap", () => {
 	it("conversion", () => {
@@ -295,7 +304,11 @@ describe("treeMap", () => {
 		const containerRuntimeFactory = (): fluidEntryPoint =>
 			new TestContainerRuntimeFactory(
 				"@fluid-example/test-dataStore",
-				new TestFluidObjectFactory(registry),
+				new TestFluidObjectFactory(
+					registry,
+					"TestFluidObjectFactory",
+					TestFluidObjectInternal,
+				),
 				{
 					enableRuntimeIdCompressor: "on",
 				},
@@ -307,8 +320,9 @@ describe("treeMap", () => {
 		const containerErrors: unknown[] = [];
 		logErrors(container, containerErrors);
 
-		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-		const a = await dataObject.getSharedObject<ISharedMap & IMigrationShim>(mapId);
+		const dataObject = await container.getEntryPoint();
+		assert(dataObject instanceof TestFluidObjectInternal);
+		const a = (await dataObject.getInitialSharedObject(mapId)) as ISharedMap & IMigrationShim;
 
 		assert.deepEqual(containerErrors, []);
 		await objProvider.ensureSynchronized();
@@ -343,6 +357,8 @@ describe("treeMap", () => {
 		await objProvider.ensureSynchronized();
 		assert.deepEqual(containerErrors, []);
 
+		// TODO: explicit control of summarization, and test with and without a summary here (after conversion).
+
 		container.close();
 
 		assert.deepEqual(containerErrors, []);
@@ -358,8 +374,11 @@ describe("treeMap", () => {
 		const container2 = await objProvider.loadTestContainer();
 		logErrors(container2, containerErrors);
 
-		const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const tree = await dataObject2.getSharedObject<ITree & IMigrationShim>(mapId);
+		const dataObject2 = await container2.getEntryPoint();
+		assert(dataObject2 instanceof TestFluidObjectInternal);
+		const tree = (await dataObject2.getInitialSharedObject(mapId)) as IChannel &
+			ITree &
+			IMigrationShim;
 
 		assert.deepEqual(containerErrors, []);
 		await objProvider.ensureSynchronized();
@@ -367,5 +386,5 @@ describe("treeMap", () => {
 
 		const view = tree.viewWith(config);
 		assert.equal(view.root.get("K"), "V2");
-	});
+	}).timeout(0);
 });

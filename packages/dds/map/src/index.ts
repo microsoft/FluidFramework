@@ -33,8 +33,21 @@ export type {
 	IDirectoryNewStorageFormat,
 	IDirectoryDataObject,
 } from "./directory.js";
-export type { ISerializableValue } from "./internalInterfaces.js";
-export { type IMapOperation, type IMapKeyOperation, mapKernelFactory } from "./mapKernel.js";
+export type { ILocalValue } from "./localValues.js";
+export type {
+	ISerializableValue,
+	IMapClearLocalOpMetadata,
+	IMapKeyEditLocalOpMetadata,
+	IMapKeyAddLocalOpMetadata,
+	ISerializedValue,
+} from "./internalInterfaces.js";
+export {
+	type IMapOperation,
+	type IMapKeyOperation,
+	mapKernelFactory,
+	type MapLocalOpMetadata,
+	type MapKeyLocalOpMetadata,
+} from "./mapKernel.js";
 export type {
 	IMapClearOperation,
 	IMapDeleteOperation,

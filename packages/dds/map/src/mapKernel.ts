@@ -87,8 +87,17 @@ export type IMapDataObjectSerializable = Record<string, ISerializableValue>;
  */
 export type IMapDataObjectSerialized = Record<string, ISerializedValue>;
 
-type MapKeyLocalOpMetadata = IMapKeyEditLocalOpMetadata | IMapKeyAddLocalOpMetadata;
-type MapLocalOpMetadata = IMapClearLocalOpMetadata | MapKeyLocalOpMetadata;
+/**
+ * Metadata for a key based operation.
+ * @internal
+ */
+export type MapKeyLocalOpMetadata = IMapKeyEditLocalOpMetadata | IMapKeyAddLocalOpMetadata;
+
+/**
+ * Metadata for an op.
+ * @internal
+ */
+export type MapLocalOpMetadata = IMapClearLocalOpMetadata | MapKeyLocalOpMetadata;
 
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access */
 

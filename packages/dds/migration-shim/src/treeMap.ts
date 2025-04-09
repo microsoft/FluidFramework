@@ -5,13 +5,19 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { assert } from "@fluidframework/core-utils/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import {
 	mapKernelFactory,
 	SharedMap,
+	type IMapOperation,
 	type ISharedMap,
 	type ISharedMapCore,
+	type MapLocalOpMetadata,
 } from "@fluidframework/map/internal";
+import type { IRuntimeMessageCollection } from "@fluidframework/runtime-definitions/internal";
 import type {
+	FactoryOut,
 	ISharedObjectKind,
 	SharedKernelFactory,
 	SharedObjectKind,
@@ -193,7 +199,55 @@ const mapToTreeOptions: MigrationOptions<ISharedMapCore, ITree, ISharedMapCore> 
 		(adaptedTo as TreeMapAdapter).data.view.root = convert(from);
 	},
 	defaultMigrated: false,
+
+	migrated(
+		from: FactoryOut<ISharedMapCore>,
+		to: FactoryOut<ITree>,
+		adaptedTo: ISharedMapCore,
+	): void {
+		// throw new Error("Function not implemented.");
+	},
+	applyOpDuringMigration(
+		to: FactoryOut<ITree>,
+		adaptedTo: ISharedMapCore,
+		messagesCollection: IRuntimeMessageCollection,
+	): void {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+		assert(messagesCollection.envelope.type === MessageType.Operation, "unexpected op type");
+		for (const message of messagesCollection.messagesContent) {
+			const content = message.contents as IMapOperation;
+			const localOpMetadata = message.localOpMetadata as MapLocalOpMetadata | undefined;
+			const local = messagesCollection.local;
+			assert(
+				local === (localOpMetadata !== undefined),
+				"localOpMetadata undefined iff op is local",
+			);
+			applyOp(to, adaptedTo, {
+				content,
+				localOpMetadata,
+			});
+		}
+	},
+	resubmitOpDuringMigration(
+		to: FactoryOut<ITree>,
+		adaptedTo: ISharedMapCore,
+		beforeOp: { content: unknown; localOpMetadata: unknown },
+	): void {
+		throw new Error("Function not implemented.");
+	},
 };
+
+function applyOp(
+	to: FactoryOut<ITree>,
+	adaptedTo: ISharedMapCore,
+	beforeOp: {
+		content: IMapOperation;
+		localOpMetadata: MapLocalOpMetadata | undefined;
+	},
+): void {
+	// TODO: implement last write wins tree adapter with special kernel to allow injection of sequenced ops and removal of local ops.
+	throw new Error("Function not implemented.");
+}
 
 const mapToTree: MigrationSet<ISharedMap, ISharedMap, ITree> = {
 	fromKernel: mapKernelFactory as SharedKernelFactory<ISharedMap>,
@@ -235,6 +289,24 @@ const mapToTreeOptionsPhase2: MigrationOptions<ISharedMapCore, ITree, ITree> = {
 		view.dispose();
 	},
 	defaultMigrated: true,
+
+	migrated(from: FactoryOut<ISharedMapCore>, to: FactoryOut<ITree>, adaptedTo: ITree): void {
+		// throw new Error("Function not implemented.");
+	},
+	applyOpDuringMigration(
+		to: FactoryOut<ITree>,
+		adaptedTo: ITree,
+		beforeOp: IRuntimeMessageCollection,
+	): void {
+		throw new Error("Function not implemented.");
+	},
+	resubmitOpDuringMigration(
+		to: FactoryOut<ITree>,
+		adaptedTo: ITree,
+		beforeOp: { content: unknown; localOpMetadata: unknown },
+	): void {
+		throw new Error("Function not implemented.");
+	},
 };
 
 const mapToTreePhase2: MigrationSet<ISharedMapCore, ITree, ITree> = {
