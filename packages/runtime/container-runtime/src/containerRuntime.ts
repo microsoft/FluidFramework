@@ -175,17 +175,15 @@ import {
 	type ContainerRuntimeIdAllocationMessage,
 	type InboundSequencedContainerRuntimeMessage,
 	type LocalContainerRuntimeMessage,
-	type OutboundContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
 import { ISavedOpMetadata } from "./metadata.js";
 import {
 	BatchId,
-	BatchMessage,
+	LocalBatchMessage,
 	BatchStartInfo,
 	DuplicateBatchDetector,
 	ensureContentsDeserialized,
-	IBatch,
 	IBatchCheckpoint,
 	OpCompressor,
 	OpDecompressor,
@@ -194,6 +192,7 @@ import {
 	Outbox,
 	RemoteMessageProcessor,
 	serializeOp,
+	type OutboundBatch,
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
@@ -602,7 +601,7 @@ export const makeLegacySendBatchFn =
 		) => number,
 		deltaManager: Pick<IDeltaManager<unknown, unknown>, "flush">,
 	) =>
-	(batch: IBatch): number => {
+	(batch: OutboundBatch): number => {
 		// Default to negative one to match Container.submitBatch behavior
 		let clientSequenceNumber: number = -1;
 		for (const message of batch.messages) {
@@ -2447,7 +2446,6 @@ export class ContainerRuntime
 	 * Parse an op's type and actual content from given serialized content
 	 * ! Note: this format needs to be in-line with what is set in the "ContainerRuntime.submit(...)" method
 	 */
-	// TODO: markfields: confirm Local- versus Outbound- ContainerRuntimeMessage typing
 	private parseLocalOpContent(serializedContents?: string): LocalContainerRuntimeMessage {
 		assert(serializedContents !== undefined, 0x6d5 /* content must be defined */);
 		const message = JSON.parse(serializedContents) as LocalContainerRuntimeMessage;
@@ -3133,8 +3131,8 @@ export class ContainerRuntime
 				if (checkpoint) {
 					// This will throw and close the container if rollback fails
 					try {
-						checkpoint.rollback((message: BatchMessage) =>
-							this.rollback(message.contents, message.localOpMetadata),
+						checkpoint.rollback((message: LocalBatchMessage) =>
+							this.rollback(message.serializedOp, message.localOpMetadata),
 						);
 						// reset the dirty state after rollback to what it was before to keep it consistent
 						if (this.dirtyContainer !== checkpointDirtyState) {
@@ -3277,7 +3275,7 @@ export class ContainerRuntime
 	private isContainerMessageDirtyable({
 		type,
 		contents,
-	}: OutboundContainerRuntimeMessage): boolean {
+	}: LocalContainerRuntimeMessage): boolean {
 		// Certain container runtime messages should not mark the container dirty such as the old built-in
 		// AgentScheduler and Garbage collector messages.
 		switch (type) {
@@ -4185,8 +4183,8 @@ export class ContainerRuntime
 					type: ContainerMessageType.IdAllocation,
 					contents: idRange,
 				};
-				const idAllocationBatchMessage: BatchMessage = {
-					contents: serializeOp(idAllocationMessage),
+				const idAllocationBatchMessage: LocalBatchMessage = {
+					serializedOp: serializeOp(idAllocationMessage),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				};
 				this.outbox.submitIdAllocation(idAllocationBatchMessage);
@@ -4195,7 +4193,7 @@ export class ContainerRuntime
 	}
 
 	private submit(
-		containerRuntimeMessage: OutboundContainerRuntimeMessage,
+		containerRuntimeMessage: LocalContainerRuntimeMessage,
 		localOpMetadata: unknown = undefined,
 		metadata?: { localId: string; blobId?: string },
 	): void {
@@ -4249,15 +4247,15 @@ export class ContainerRuntime
 					contents: schemaChangeMessage,
 				};
 				this.outbox.submit({
-					contents: serializeOp(msg),
+					serializedOp: serializeOp(msg),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				});
 			}
 
-			const message: BatchMessage = {
+			const message: LocalBatchMessage = {
 				// This will encode any handles present in this op before serializing to string
 				// Note: handles may already have been encoded by the DDS layer, but encoding handles is idempotent so there's no problem.
-				contents: serializeOp(containerRuntimeMessage),
+				serializedOp: serializeOp(containerRuntimeMessage),
 				metadata,
 				localOpMetadata,
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,

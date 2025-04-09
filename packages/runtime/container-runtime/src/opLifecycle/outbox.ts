@@ -25,7 +25,14 @@ import {
 	sequenceNumbersMatch,
 	type BatchId,
 } from "./batchManager.js";
-import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions.js";
+import {
+	LocalBatchMessage,
+	IBatchCheckpoint,
+	type OutboundBatchMessage,
+	type OutboundSingletonBatch,
+	type LocalBatch,
+	type OutboundBatch,
+} from "./definitions.js";
 import { OpCompressor } from "./opCompressor.js";
 import { OpGroupingManager } from "./opGroupingManager.js";
 import { OpSplitter } from "./opSplitter.js";
@@ -50,7 +57,7 @@ export interface IOutboxParameters {
 	readonly submitBatchFn:
 		| ((batch: IBatchMessage[], referenceSequenceNumber?: number) => number)
 		| undefined;
-	readonly legacySendBatchFn: (batch: IBatch) => number;
+	readonly legacySendBatchFn: (batch: OutboundBatch) => number;
 	readonly config: IOutboxConfig;
 	readonly compressor: OpCompressor;
 	readonly splitter: OpSplitter;
@@ -247,25 +254,28 @@ export class Outbox {
 		throw errorWrapper.value;
 	}
 
-	public submit(message: BatchMessage): void {
+	public submit(message: LocalBatchMessage): void {
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.mainBatch, message);
 	}
 
-	public submitBlobAttach(message: BatchMessage): void {
+	public submitBlobAttach(message: LocalBatchMessage): void {
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.blobAttachBatch, message);
 	}
 
-	public submitIdAllocation(message: BatchMessage): void {
+	public submitIdAllocation(message: LocalBatchMessage): void {
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.idAllocationBatch, message);
 	}
 
-	private addMessageToBatchManager(batchManager: BatchManager, message: BatchMessage): void {
+	private addMessageToBatchManager(
+		batchManager: BatchManager,
+		message: LocalBatchMessage,
+	): void {
 		if (
 			!batchManager.push(
 				message,
@@ -274,7 +284,7 @@ export class Outbox {
 			)
 		) {
 			throw new GenericError("BatchTooLarge", /* error */ undefined, {
-				opSize: message.contents?.length ?? 0,
+				opSize: message.serializedOp?.length ?? 0,
 				batchSize: batchManager.contentSizeInBytes,
 				count: batchManager.length,
 				limit: batchManager.options.hardLimit,
@@ -335,16 +345,19 @@ export class Outbox {
 			referenceSequenceNumber !== undefined,
 			0xa01 /* reference sequence number should be defined */,
 		);
-		const emptyGroupedBatch = this.params.groupingManager.createEmptyGroupedBatch(
-			resubmittingBatchId,
-			referenceSequenceNumber,
-		);
+		const { outboundBatch, placeholderMessage } =
+			this.params.groupingManager.createEmptyGroupedBatch(
+				resubmittingBatchId,
+				referenceSequenceNumber,
+			);
 		let clientSequenceNumber: number | undefined;
 		if (this.params.shouldSend()) {
-			clientSequenceNumber = this.sendBatch(emptyGroupedBatch);
+			clientSequenceNumber = this.sendBatch(outboundBatch);
 		}
+
+		// Push the empty batch placeholder to the PendingStateManager
 		this.params.pendingStateManager.onFlushBatch(
-			emptyGroupedBatch.messages, // This is the single empty Grouped Batch message
+			[{ ...placeholderMessage, serializedOp: "", contents: undefined }], // placeholder message - serializedOp will never be used
 			clientSequenceNumber,
 		);
 		return;
@@ -365,8 +378,8 @@ export class Outbox {
 		if (
 			batchManager.options.canRebase &&
 			rawBatch.hasReentrantOps === true &&
-			// Rebase if the reentrant ops will be grouped together - this ensures the grouped batch has a singular referenceSequenceNumber.
-			// Otherwise, no concerns about reentrant ops.
+			// NOTE: This is too restrictive. We should rebase for any reentrant op, not just if it's going to be a grouped batch
+			// However there is some test that is depending on this behavior so we haven't removed these conditions yet. See AB#33427
 			groupingEnabled &&
 			rawBatch.messages.length > 1
 		) {
@@ -384,6 +397,7 @@ export class Outbox {
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
 		if (this.params.shouldSend()) {
 			const virtualizedBatch = this.virtualizeBatch(rawBatch, groupingEnabled);
+
 			clientSequenceNumber = this.sendBatch(virtualizedBatch);
 			assert(
 				clientSequenceNumber === undefined || clientSequenceNumber >= 0,
@@ -404,15 +418,14 @@ export class Outbox {
 	 *
 	 * @param rawBatch - the batch to be rebased
 	 */
-	private rebase(rawBatch: IBatch, batchManager: BatchManager): void {
+	private rebase(rawBatch: LocalBatch, batchManager: BatchManager): void {
 		assert(!this.rebasing, 0x6fb /* Reentrancy */);
 		assert(batchManager.options.canRebase, 0x9a7 /* BatchManager does not support rebase */);
 
 		this.rebasing = true;
 		for (const message of rawBatch.messages) {
 			this.params.reSubmit({
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				content: message.contents!,
+				content: message.serializedOp,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 			});
@@ -443,7 +456,7 @@ export class Outbox {
 	 *
 	 * @remarks - If chunking happens, a side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.
 	 *
-	 * @param singletonBatch - Raw or Grouped batch to consider for compression/chunking
+	 * @param localBatch - Local Batch to be virtualized - i.e. transformed into an Outbound Batch
 	 * @param groupingEnabled - If true, Grouped batching is enabled.
 	 * @returns One of the following:
 	 * - (A) The original batch (Based on what's enabled)
@@ -451,10 +464,21 @@ export class Outbox {
 	 * - (C) A compressed singleton batch
 	 * - (D) A singleton batch containing the last chunk.
 	 */
-	private virtualizeBatch(localBatch: IBatch, groupingEnabled: boolean): IBatch {
+	private virtualizeBatch(localBatch: LocalBatch, groupingEnabled: boolean): OutboundBatch {
+		// Shallow copy the local batch, updating the messages to be outbound messages
+		const originalBatch: OutboundBatch = {
+			...localBatch,
+			messages: localBatch.messages.map<OutboundBatchMessage>(
+				({ serializedOp, ...message }) => ({
+					contents: serializedOp,
+					...message,
+				}),
+			),
+		};
+
 		const originalOrGroupedBatch = groupingEnabled
-			? this.params.groupingManager.groupBatch(localBatch)
-			: localBatch;
+			? this.params.groupingManager.groupBatch(originalBatch)
+			: originalBatch;
 
 		if (originalOrGroupedBatch.messages.length !== 1) {
 			// Compression requires a single message, so return early otherwise.
@@ -463,7 +487,7 @@ export class Outbox {
 
 		// Regardless of whether we grouped or not, we now have a batch with a single message.
 		// Now proceed to compress/chunk it if necessary.
-		const singletonBatch = originalOrGroupedBatch as IBatch<[BatchMessage]>;
+		const singletonBatch = originalOrGroupedBatch as OutboundSingletonBatch;
 
 		if (
 			this.params.config.compressionOptions === undefined ||
@@ -480,7 +504,7 @@ export class Outbox {
 		if (this.params.splitter.isBatchChunkingEnabled) {
 			return compressedBatch.contentSizeInBytes <= this.params.splitter.chunkSizeInBytes
 				? compressedBatch
-				: this.params.splitter.splitFirstBatchMessage(compressedBatch);
+				: this.params.splitter.splitSingletonBatchMessage(compressedBatch);
 		}
 
 		if (compressedBatch.contentSizeInBytes >= this.params.config.maxBatchSizeInBytes) {
@@ -504,7 +528,7 @@ export class Outbox {
 	 * @param batch - batch to be sent
 	 * @returns the clientSequenceNumber of the start of the batch, or undefined if nothing was sent
 	 */
-	private sendBatch(batch: IBatch): number | undefined {
+	private sendBatch(batch: OutboundBatch): number | undefined {
 		const length = batch.messages.length;
 		if (length === 0) {
 			return undefined; // Nothing submitted
