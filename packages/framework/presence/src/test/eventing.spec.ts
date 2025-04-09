@@ -9,7 +9,7 @@ import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal
 import type { SinonFakeTimers, SinonSpy } from "sinon";
 import { useFakeTimers, spy } from "sinon";
 
-import type { ISessionClient, PresenceWorkspaceAddress } from "../index.js";
+import type { ISessionClient, StatesWorkspaceAddress } from "../index.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import { assertFinalExpectations, prepareConnectedPresence } from "./testUtils.js";
@@ -655,20 +655,18 @@ describe("Presence", () => {
 			it("from unregistered workspace triggers 'workspaceActivated' event", async () => {
 				// Setup
 				notificationSpy = spy();
-				const workspaceActivatedEventSpy = spy(
-					(workspaceAddress: PresenceWorkspaceAddress) => {
-						// Once activated, register the notifications workspace and listener for it's event
-						const notificationsWorkspace = presence.getNotifications(workspaceAddress, {
-							notifications: Notifications<{ newId: (id: number) => void }>({
-								newId: (_client: ISessionClient, _id: number) => {},
-							}),
-						});
-						notificationsWorkspace.props.notifications.notifications.on(
-							"newId",
-							notificationSpy,
-						);
-					},
-				);
+				const workspaceActivatedEventSpy = spy((workspaceAddress: StatesWorkspaceAddress) => {
+					// Once activated, register the notifications workspace and listener for it's event
+					const notificationsWorkspace = presence.getNotifications(workspaceAddress, {
+						notifications: Notifications<{ newId: (id: number) => void }>({
+							newId: (_client: ISessionClient, _id: number) => {},
+						}),
+					});
+					notificationsWorkspace.props.notifications.notifications.on(
+						"newId",
+						notificationSpy,
+					);
+				});
 				presence.events.on("workspaceActivated", (workspaceAddress, type) => {
 					if (workspaceAddress === "name:testWorkspace" && type === "Notifications") {
 						workspaceActivatedEventSpy(workspaceAddress);

@@ -23,7 +23,7 @@ import type { NotificationsManager } from "./notificationsManager.js";
  *
  * @alpha
  */
-export type PresenceWorkspaceAddress = `${string}:${string}`;
+export type StatesWorkspaceAddress = `${string}:${string}`;
 
 /**
  * Single entry in {@link StatesWorkspaceSchema} or  {@link NotificationsWorkspaceSchema}.

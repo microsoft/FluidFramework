@@ -27,7 +27,7 @@ import type { SystemWorkspace, SystemWorkspaceDatastore } from "./systemWorkspac
 import { createSystemWorkspace } from "./systemWorkspace.js";
 import type {
 	StatesWorkspace,
-	PresenceWorkspaceAddress,
+	StatesWorkspaceAddress,
 	StatesWorkspaceSchema,
 } from "./types.js";
 
@@ -114,7 +114,7 @@ class PresenceManager implements IPresence, PresenceExtensionInterface {
 	}
 
 	public getStates<TSchema extends StatesWorkspaceSchema>(
-		workspaceAddress: PresenceWorkspaceAddress,
+		workspaceAddress: StatesWorkspaceAddress,
 		requestedContent: TSchema,
 		controls?: BroadcastControlSettings,
 	): StatesWorkspace<TSchema> {
@@ -126,7 +126,7 @@ class PresenceManager implements IPresence, PresenceExtensionInterface {
 	}
 
 	public getNotifications<TSchema extends StatesWorkspaceSchema>(
-		workspaceAddress: PresenceWorkspaceAddress,
+		workspaceAddress: StatesWorkspaceAddress,
 		requestedContent: TSchema,
 	): StatesWorkspace<TSchema> {
 		return this.datastoreManager.getWorkspace(`n:${workspaceAddress}`, requestedContent);

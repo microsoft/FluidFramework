@@ -117,8 +117,8 @@ export interface IPresence {
     getAttendee(clientId: ClientConnectionId | ClientSessionId): ISessionClient;
     getAttendees(): ReadonlySet<ISessionClient>;
     getMyself(): ISessionClient;
-    getNotifications<NotificationsSchema extends NotificationsWorkspaceSchema>(notificationsId: PresenceWorkspaceAddress, requestedContent: NotificationsSchema): NotificationsWorkspace<NotificationsSchema>;
-    getStates<StatesSchema extends StatesWorkspaceSchema>(workspaceAddress: PresenceWorkspaceAddress, requestedContent: StatesSchema, controls?: BroadcastControlSettings): StatesWorkspace<StatesSchema>;
+    getNotifications<NotificationsSchema extends NotificationsWorkspaceSchema>(notificationsId: StatesWorkspaceAddress, requestedContent: NotificationsSchema): NotificationsWorkspace<NotificationsSchema>;
+    getStates<StatesSchema extends StatesWorkspaceSchema>(workspaceAddress: StatesWorkspaceAddress, requestedContent: StatesSchema, controls?: BroadcastControlSettings): StatesWorkspace<StatesSchema>;
 }
 
 // @alpha @sealed
@@ -280,11 +280,8 @@ export interface PresenceEvents {
     attendeeDisconnected: (attendee: ISessionClient) => void;
     // @eventProperty
     attendeeJoined: (attendee: ISessionClient) => void;
-    workspaceActivated: (workspaceAddress: PresenceWorkspaceAddress, type: "States" | "Notifications" | "Unknown") => void;
+    workspaceActivated: (workspaceAddress: StatesWorkspaceAddress, type: "States" | "Notifications" | "Unknown") => void;
 }
-
-// @alpha
-export type PresenceWorkspaceAddress = `${string}:${string}`;
 
 // @alpha
 export type PresenceWorkspaceEntry<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<unknown>, TManager = unknown> = InternalTypes.ManagerFactory<TKey, TValue, TManager>;
@@ -304,6 +301,9 @@ export interface StatesWorkspace<TSchema extends StatesWorkspaceSchema, TManager
     readonly controls: BroadcastControls;
     readonly props: StatesWorkspaceEntries<TSchema>;
 }
+
+// @alpha
+export type StatesWorkspaceAddress = `${string}:${string}`;
 
 // @alpha @sealed
 export type StatesWorkspaceEntries<TSchema extends StatesWorkspaceSchema> = {
