@@ -20,7 +20,7 @@ export type {
 	StatesWorkspaceEntries,
 	StatesWorkspaceSchema,
 	StatesWorkspaceAddress,
-	PresenceWorkspaceEntry,
+	StatesWorkspaceEntry,
 } from "./types.js";
 
 export {

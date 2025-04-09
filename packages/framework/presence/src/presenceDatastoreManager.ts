@@ -34,7 +34,7 @@ import type {
 
 import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
 
-interface PresenceWorkspaceEntry<TSchema extends StatesWorkspaceSchema> {
+interface StatesWorkspaceEntry<TSchema extends StatesWorkspaceSchema> {
 	public: StatesWorkspace<TSchema>;
 	internal: PresenceStatesInternal;
 }
@@ -149,10 +149,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	private returnedMessages = 0;
 	private refreshBroadcastRequested = false;
 	private readonly timer = new TimerManager();
-	private readonly workspaces = new Map<
-		string,
-		PresenceWorkspaceEntry<StatesWorkspaceSchema>
-	>();
+	private readonly workspaces = new Map<string, StatesWorkspaceEntry<StatesWorkspaceSchema>>();
 
 	public constructor(
 		private readonly clientSessionId: ClientSessionId,
@@ -161,7 +158,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		private readonly logger: ITelemetryLoggerExt | undefined,
 		private readonly events: IEmitter<Pick<PresenceEvents, "workspaceActivated">>,
 		systemWorkspaceDatastore: SystemWorkspaceDatastore,
-		systemWorkspace: PresenceWorkspaceEntry<StatesWorkspaceSchema>,
+		systemWorkspace: StatesWorkspaceEntry<StatesWorkspaceSchema>,
 	) {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		this.datastore = { "system:presence": systemWorkspaceDatastore } as PresenceDatastore;

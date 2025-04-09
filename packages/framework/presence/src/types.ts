@@ -30,7 +30,7 @@ export type StatesWorkspaceAddress = `${string}:${string}`;
  *
  * @alpha
  */
-export type PresenceWorkspaceEntry<
+export type StatesWorkspaceEntry<
 	TKey extends string,
 	TValue extends InternalTypes.ValueDirectoryOrState<unknown>,
 	TManager = unknown,
@@ -46,7 +46,7 @@ export type PresenceWorkspaceEntry<
  * @alpha
  */
 export interface StatesWorkspaceSchema {
-	[key: string]: PresenceWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<any>>;
+	[key: string]: StatesWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<any>>;
 }
 
 /**

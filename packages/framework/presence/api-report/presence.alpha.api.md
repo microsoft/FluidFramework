@@ -284,9 +284,6 @@ export interface PresenceEvents {
 }
 
 // @alpha
-export type PresenceWorkspaceEntry<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<unknown>, TManager = unknown> = InternalTypes.ManagerFactory<TKey, TValue, TManager>;
-
-// @alpha
 export const SessionClientStatus: {
     readonly Connected: "Connected";
     readonly Disconnected: "Disconnected";
@@ -314,9 +311,12 @@ export type StatesWorkspaceEntries<TSchema extends StatesWorkspaceSchema> = {
 };
 
 // @alpha
+export type StatesWorkspaceEntry<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<unknown>, TManager = unknown> = InternalTypes.ManagerFactory<TKey, TValue, TManager>;
+
+// @alpha
 export interface StatesWorkspaceSchema {
     // (undocumented)
-    [key: string]: PresenceWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<any>>;
+    [key: string]: StatesWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<any>>;
 }
 
 // @alpha @sealed
