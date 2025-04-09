@@ -22,3 +22,14 @@ export {
 	type IChannelView,
 } from "./utils.js";
 export { ValueType } from "./valueType.js";
+export {
+	SharedKernel,
+	makeChannelFactory,
+	thisWrap,
+	KernelArgs,
+	makeSharedObjectKind,
+	SharedKernelFactory,
+	FactoryOut,
+	SharedObjectOptions,
+	mergeAPIs,
+} from "./sharedObjectKernel.js";

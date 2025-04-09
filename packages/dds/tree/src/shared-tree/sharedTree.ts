@@ -19,6 +19,7 @@ import {
 	type IChannelView,
 	type IFluidSerializer,
 	type ISharedObject,
+	type SharedKernel,
 } from "@fluidframework/shared-object-base/internal";
 import {
 	UsageError,
@@ -208,6 +209,7 @@ function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
 
 /**
  * Shared object wrapping {@link SharedTreeKernel}.
+ * @deprecated Use the public APIs instead if a SharedObject is needed, or construct the internal types directly if not.
  */
 export class SharedTree extends SharedObject implements ISharedTree {
 	private readonly breaker: Breakable = new Breakable("Shared Tree");
@@ -320,11 +322,16 @@ export class SharedTree extends SharedObject implements ISharedTree {
  * TODO: detail compatibility requirements.
  */
 @breakingClass
-class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange> {
+export class SharedTreeKernel
+	extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>
+	implements SharedKernel
+{
 	public readonly checkout: TreeCheckout;
 	public get storedSchema(): TreeStoredSchemaRepository {
 		return this.checkout.storedSchema;
 	}
+
+	public readonly view: ITreePrivate;
 
 	public constructor(
 		breaker: Breakable,
@@ -459,6 +466,21 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 				}
 			}
 		});
+
+		this.view = {
+			contentSnapshot: () => this.contentSnapshot(),
+			exportSimpleSchema: () => this.exportSimpleSchema(),
+			exportVerbose: () => this.exportVerbose(),
+			viewWith: this.viewWith.bind(this),
+			handle: sharedObject.handle,
+			get IFluidLoadable() {
+				return sharedObject;
+			},
+			id: sharedObject.id,
+			attributes: sharedObject.attributes,
+			isAttached: () => sharedObject.isAttached(),
+			kernel: this,
+		};
 	}
 
 	public exportVerbose(): VerboseTree | undefined {
