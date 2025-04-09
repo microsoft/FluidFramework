@@ -213,6 +213,19 @@ export class IntervalCollectionMap {
 		return false;
 	}
 
+	public tryRollback(content: any, localOpMetadata: unknown) {
+		if (isMapOperation(content)) {
+			const localValue = this.data.get(content.key);
+
+			assert(localValue !== undefined, "Local value expected on rollback");
+
+			localValue.rollback(content.value, localOpMetadata as IMapMessageLocalMetadata);
+
+			return true;
+		}
+		return false;
+	}
+
 	public tryApplyStashedOp(op: unknown): boolean {
 		if (isMapOperation(op)) {
 			const { value, key } = op;

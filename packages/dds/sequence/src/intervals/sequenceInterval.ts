@@ -219,7 +219,11 @@ export class SequenceIntervalClass implements SequenceInterval {
 		return this.#props.properties;
 	}
 
-	public changeProperties(props: PropertySet | undefined, op?: ISequencedDocumentMessage) {
+	public changeProperties(
+		props: PropertySet | undefined,
+		op?: ISequencedDocumentMessage,
+		rollback?: boolean,
+	) {
 		if (props !== undefined) {
 			this.#props.propertyManager ??= new PropertiesManager();
 			return this.#props.propertyManager.handleProperties(
@@ -230,6 +234,7 @@ export class SequenceIntervalClass implements SequenceInterval {
 					: UniversalSequenceNumber,
 				op?.minimumSequenceNumber ?? UniversalSequenceNumber,
 				this.client.getCollabWindow().collaborating,
+				rollback,
 			);
 		}
 	}

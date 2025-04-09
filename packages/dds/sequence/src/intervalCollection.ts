@@ -7,7 +7,7 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	Client,
@@ -1126,6 +1126,44 @@ export class IntervalCollection
 		return true;
 	}
 
+	public rollback(
+		op: IIntervalCollectionTypeOperationValue,
+		localOpMetadata: IMapMessageLocalMetadata,
+	) {
+		const { id, properties } = getSerializedProperties(op.value);
+		switch (op.opName) {
+			case "add": {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const interval = this.getIntervalById(id)!;
+				this.deleteExistingInterval(interval, false, undefined);
+				if (this.isCollaborating) {
+					this.localSeqToSerializedInterval.delete(localOpMetadata.localSeq);
+				}
+				break;
+			}
+			case "change": {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const interval = this.getIntervalById(id)!;
+				if (Object.keys(properties).length > 0) {
+					interval.changeProperties(properties, undefined, true);
+				}
+				break;
+			}
+			case "delete": {
+				this.add({
+					id,
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					start: toOptionalSequencePlace(op.value.start, op.value.startSide)!,
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					end: toOptionalSequencePlace(op.value.end, op.value.endSide)!,
+				});
+				break;
+			}
+			default:
+				unreachableCase(op.opName);
+		}
+	}
+
 	private rebasePositionWithSegmentSlide(
 		pos: number | "start" | "end",
 		seqNumberFrom: number,
@@ -1317,11 +1355,13 @@ export class IntervalCollection
 		start,
 		end,
 		props,
+		rollback,
 	}: {
 		id?: string;
 		start: SequencePlace;
 		end: SequencePlace;
 		props?: PropertySet;
+		rollback?: boolean;
 	}): SequenceIntervalClass {
 		if (!this.localCollection) {
 			throw new LoggingError("attach must be called prior to adding intervals");
@@ -1353,19 +1393,19 @@ export class IntervalCollection
 			}
 			const serializedInterval: ISerializedInterval = interval.serialize();
 			const localSeq = this.getNextLocalSeq();
-			if (this.isCollaborating) {
+			if (this.isCollaborating && rollback !== true) {
 				this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
-			}
 
-			this.submitDelta(
-				{
-					opName: "add",
-					value: serializedInterval,
-				},
-				{
-					localSeq,
-				},
-			);
+				this.submitDelta(
+					{
+						opName: "add",
+						value: serializedInterval,
+					},
+					{
+						localSeq,
+					},
+				);
+			}
 		}
 
 		this.emit("addInterval", interval, true, undefined);
