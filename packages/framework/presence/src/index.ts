@@ -14,7 +14,7 @@
 export type { ClientConnectionId } from "./baseTypes.js";
 
 export type {
-	PresenceNotifications,
+	NotificationsWorkspace,
 	PresenceNotificationsSchema,
 	PresenceStates,
 	PresenceStatesEntries,

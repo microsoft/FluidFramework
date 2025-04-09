@@ -8,7 +8,11 @@ import { strict as assert, fail } from "node:assert";
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
-import type { ISessionClient, NotificationsManager, PresenceNotifications } from "../index.js";
+import type {
+	ISessionClient,
+	NotificationsManager,
+	NotificationsWorkspace,
+} from "../index.js";
 import { Notifications } from "../index.js";
 import type { createPresenceManager } from "../presenceManager.js";
 
@@ -29,7 +33,7 @@ describe("Presence", () => {
 		let clock: SinonFakeTimers;
 		let presence: ReturnType<typeof createPresenceManager>;
 		// eslint-disable-next-line @typescript-eslint/ban-types
-		let notificationsWorkspace: PresenceNotifications<{}>;
+		let notificationsWorkspace: NotificationsWorkspace<{}>;
 
 		before(async () => {
 			clock = useFakeTimers();

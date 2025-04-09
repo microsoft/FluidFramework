@@ -39,7 +39,7 @@ A states workspace, `PresenceStates`, allows sharing of simple data across atten
 
 #### Notifications Workspace
 
-A notifications workspace, `PresenceNotifications`, is similar to states workspace, but is dedicated to notification use-cases via `NotificationsManager`.
+A notifications workspace, `NotificationsWorkspace`, is similar to states workspace, but is dedicated to notification use-cases via `NotificationsManager`.
 
 ### Value Managers
 
@@ -53,7 +53,7 @@ Latest map value manager retains the most recent atomic value each attendee has 
 
 #### NotificationsManager
 
-Notifications value managers are special case where no data is retained during a session and all interactions appear as events that are sent and received. Notifications value managers may be mixed into a `PresenceStates` workspace for convenience. They are the only type of value managers permitted in a `PresenceNotifications` workspace. Use `Notifications` to add one to `PresenceNotifications` or `PresenceStates` workspace.
+Notifications value managers are special case where no data is retained during a session and all interactions appear as events that are sent and received. Notifications value managers may be mixed into a `PresenceStates` workspace for convenience. They are the only type of value managers permitted in a `NotificationsWorkspace` workspace. Use `Notifications` to add one to `NotificationsWorkspace` or `PresenceStates` workspace.
 
 ## Onboarding
 

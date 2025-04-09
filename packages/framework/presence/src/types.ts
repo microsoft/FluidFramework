@@ -110,12 +110,12 @@ export interface PresenceStates<
 
 // #endregion PresenceStates
 
-// #region PresenceNotifications
+// #region NotificationsWorkspace
 
 /**
- * Schema for a {@link PresenceNotifications} workspace.
+ * Schema for a {@link NotificationsWorkspace} workspace.
  *
- * Keys of schema are the keys of the {@link PresenceNotifications} providing access to {@link NotificationsManager}s.
+ * Keys of schema are the keys of the {@link NotificationsWorkspace} providing access to {@link NotificationsManager}s.
  *
  * @alpha
  */
@@ -128,21 +128,21 @@ export interface PresenceNotificationsSchema {
 }
 
 /**
- * `PresenceNotifications` maintains a registry of {@link NotificationsManager}s
+ * `NotificationsWorkspace` maintains a registry of {@link NotificationsManager}s
  * that facilitate messages across client members in a session.
  *
  * @privateRemarks
  * This should be kept mostly in sync with {@link PresenceStates}. Notably the
  * return type of `add` is limited here and the `controls` property is omitted.
  * The `PresenceStatesImpl` class implements `PresenceStates` and therefore
- * `PresenceNotifications`, so long as this is proper subset.
+ * `NotificationsWorkspace`, so long as this is proper subset.
  *
  * @sealed
  * @alpha
  */
-export interface PresenceNotifications<TSchema extends PresenceNotificationsSchema> {
+export interface NotificationsWorkspace<TSchema extends PresenceNotificationsSchema> {
 	/**
-	 * Registers a new `Value Manager` with the {@link PresenceNotifications}.
+	 * Registers a new `Value Manager` with the {@link NotificationsWorkspace}.
 	 * @param key - new unique key for the `Value Manager` within the workspace
 	 * @param manager - factory for creating a `Value Manager`
 	 */
@@ -153,7 +153,7 @@ export interface PresenceNotifications<TSchema extends PresenceNotificationsSche
 	>(
 		key: TKey,
 		manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>,
-	): asserts this is PresenceNotifications<
+	): asserts this is NotificationsWorkspace<
 		TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>
 	>;
 
@@ -163,4 +163,4 @@ export interface PresenceNotifications<TSchema extends PresenceNotificationsSche
 	readonly props: PresenceStatesEntries<TSchema>;
 }
 
-// #endregion PresenceNotifications
+// #endregion NotificationsWorkspace

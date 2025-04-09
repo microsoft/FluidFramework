@@ -7,7 +7,7 @@ import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal
 import { describe, it, after, afterEach, before, beforeEach } from "mocha";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
-import { Latest, Notifications, type PresenceNotifications } from "../index.js";
+import { Latest, Notifications, type NotificationsWorkspace } from "../index.js";
 import type { createPresenceManager } from "../presenceManager.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
@@ -730,7 +730,7 @@ describe("Presence", () => {
 
 				// Configure a notifications workspace
 				// eslint-disable-next-line @typescript-eslint/ban-types
-				const notificationsWorkspace: PresenceNotifications<{}> = presence.getNotifications(
+				const notificationsWorkspace: NotificationsWorkspace<{}> = presence.getNotifications(
 					"name:testNotificationWorkspace",
 					{},
 				);
@@ -845,7 +845,7 @@ describe("Presence", () => {
 				}); // will be queued, deadline is 1110
 
 				// eslint-disable-next-line @typescript-eslint/ban-types
-				const notificationsWorkspace: PresenceNotifications<{}> = presence.getNotifications(
+				const notificationsWorkspace: NotificationsWorkspace<{}> = presence.getNotifications(
 					"name:testNotificationWorkspace",
 					{},
 				);

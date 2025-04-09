@@ -9,7 +9,7 @@ import type { SessionId } from "@fluidframework/id-compressor";
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type {
-	PresenceNotifications,
+	NotificationsWorkspace,
 	PresenceNotificationsSchema,
 	PresenceStates,
 	PresenceStatesSchema,
@@ -214,5 +214,5 @@ export interface IPresence {
 	getNotifications<NotificationsSchema extends PresenceNotificationsSchema>(
 		notificationsId: PresenceWorkspaceAddress,
 		requestedContent: NotificationsSchema,
-	): PresenceNotifications<NotificationsSchema>;
+	): NotificationsWorkspace<NotificationsSchema>;
 }
