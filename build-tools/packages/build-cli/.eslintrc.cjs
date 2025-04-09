@@ -16,6 +16,9 @@ module.exports = {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
+		// Catch unused variables in at lint time instead of compile time
+		"@typescript-eslint/no-unused-vars": "error",
+
 		// This rule is often triggered when using custom Flags, so disabling.
 		"object-shorthand": "off",
 
