@@ -26,7 +26,7 @@ import type { NotificationsManager } from "./notificationsManager.js";
 export type PresenceWorkspaceAddress = `${string}:${string}`;
 
 /**
- * Single entry in {@link PresenceStatesSchema} or  {@link PresenceNotificationsSchema}.
+ * Single entry in {@link PresenceStatesSchema} or  {@link NotificationsWorkspaceSchema}.
  *
  * @alpha
  */
@@ -119,7 +119,7 @@ export interface PresenceStates<
  *
  * @alpha
  */
-export interface PresenceNotificationsSchema {
+export interface NotificationsWorkspaceSchema {
 	[key: string]: InternalTypes.ManagerFactory<
 		typeof key,
 		InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
@@ -140,7 +140,7 @@ export interface PresenceNotificationsSchema {
  * @sealed
  * @alpha
  */
-export interface NotificationsWorkspace<TSchema extends PresenceNotificationsSchema> {
+export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSchema> {
 	/**
 	 * Registers a new `Value Manager` with the {@link NotificationsWorkspace}.
 	 * @param key - new unique key for the `Value Manager` within the workspace

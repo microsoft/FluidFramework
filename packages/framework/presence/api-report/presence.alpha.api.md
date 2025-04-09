@@ -117,7 +117,7 @@ export interface IPresence {
     getAttendee(clientId: ClientConnectionId | ClientSessionId): ISessionClient;
     getAttendees(): ReadonlySet<ISessionClient>;
     getMyself(): ISessionClient;
-    getNotifications<NotificationsSchema extends PresenceNotificationsSchema>(notificationsId: PresenceWorkspaceAddress, requestedContent: NotificationsSchema): NotificationsWorkspace<NotificationsSchema>;
+    getNotifications<NotificationsSchema extends NotificationsWorkspaceSchema>(notificationsId: PresenceWorkspaceAddress, requestedContent: NotificationsSchema): NotificationsWorkspace<NotificationsSchema>;
     getStates<StatesSchema extends PresenceStatesSchema>(workspaceAddress: PresenceWorkspaceAddress, requestedContent: StatesSchema, controls?: BroadcastControlSettings): PresenceStates<StatesSchema>;
 }
 
@@ -263,9 +263,15 @@ export type NotificationSubscriptions<E extends InternalUtilityTypes.Notificatio
 };
 
 // @alpha @sealed
-export interface NotificationsWorkspace<TSchema extends PresenceNotificationsSchema> {
+export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSchema> {
     add<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<any>, TManager extends NotificationsManager<any>>(key: TKey, manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is NotificationsWorkspace<TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>>;
     readonly props: PresenceStatesEntries<TSchema>;
+}
+
+// @alpha
+export interface NotificationsWorkspaceSchema {
+    // (undocumented)
+    [key: string]: InternalTypes.ManagerFactory<typeof key, InternalTypes.ValueRequiredState<InternalTypes.NotificationType>, NotificationsManager<any>>;
 }
 
 // @alpha @sealed (undocumented)
@@ -275,12 +281,6 @@ export interface PresenceEvents {
     // @eventProperty
     attendeeJoined: (attendee: ISessionClient) => void;
     workspaceActivated: (workspaceAddress: PresenceWorkspaceAddress, type: "States" | "Notifications" | "Unknown") => void;
-}
-
-// @alpha
-export interface PresenceNotificationsSchema {
-    // (undocumented)
-    [key: string]: InternalTypes.ManagerFactory<typeof key, InternalTypes.ValueRequiredState<InternalTypes.NotificationType>, NotificationsManager<any>>;
 }
 
 // @alpha @sealed

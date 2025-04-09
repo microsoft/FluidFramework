@@ -10,7 +10,7 @@ import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type {
 	NotificationsWorkspace,
-	PresenceNotificationsSchema,
+	NotificationsWorkspaceSchema,
 	PresenceStates,
 	PresenceStatesSchema,
 	PresenceWorkspaceAddress,
@@ -211,7 +211,7 @@ export interface IPresence {
 	 * @param requestedContent - Requested notifications for the workspace
 	 * @returns A Notifications workspace
 	 */
-	getNotifications<NotificationsSchema extends PresenceNotificationsSchema>(
+	getNotifications<NotificationsSchema extends NotificationsWorkspaceSchema>(
 		notificationsId: PresenceWorkspaceAddress,
 		requestedContent: NotificationsSchema,
 	): NotificationsWorkspace<NotificationsSchema>;
