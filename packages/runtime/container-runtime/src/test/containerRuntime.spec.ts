@@ -14,6 +14,7 @@ import { AttachState, ICriticalContainerError } from "@fluidframework/container-
 import {
 	ContainerErrorTypes,
 	IContainerContext,
+	type IBatchMessage,
 } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
@@ -304,7 +305,7 @@ describe("Runtime", () => {
 			});
 		});
 
-		describe("Flushing and Replaying", () => {
+		describe("Batching", () => {
 			it("Default flush mode", async () => {
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext() as IContainerContext,
@@ -445,6 +446,90 @@ describe("Runtime", () => {
 						assert(submittedOps[1].metadata?.batchId === undefined, "Expected no batchId (1)");
 					}
 				});
+
+			for (const skipSafetyFlushDuringProcessStack of [true, undefined]) {
+				it("Inbound (non-runtime) op triggers flush due to refSeq changing", async () => {
+					const submittedBatches: {
+						messages: IBatchMessage[];
+						referenceSequenceNumber: number;
+					}[] = [];
+
+					const mockContext = getMockContext({
+						settings: {
+							"Fluid.ContainerRuntime.DisableFlushBeforeProcess":
+								skipSafetyFlushDuringProcessStack,
+						},
+					});
+					(
+						mockContext as { submitBatchFn: IContainerContext["submitBatchFn"] }
+					).submitBatchFn = (
+						messages: IBatchMessage[],
+						referenceSequenceNumber: number = -1,
+					) => {
+						submittedOps.push(...messages); // Reusing submittedOps since submitFn won't be invoked due to submitBatchFn's presence
+						submittedBatches.push({ messages, referenceSequenceNumber });
+						return 999; // CSN not used in test asserts below
+					};
+
+					const containerRuntime = await ContainerRuntime.loadRuntime({
+						context: mockContext as IContainerContext,
+						registryEntries: [],
+						existing: false,
+						runtimeOptions: {},
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+
+					// Define resubmit and setConnectionState on channel collection
+					// defineResubmitAndSetConnectionState(containerRuntime);
+
+					// Submit the first message
+					submitDataStoreOp(containerRuntime, "1", "testMessage1");
+					assert.strictEqual(submittedOps.length, 0, "No ops submitted yet");
+
+					// Bump lastSequenceNumber and trigger the "op" event artificially to simulate processing a non-runtime op
+					const mockDeltaManager = mockContext.deltaManager as MockDeltaManager;
+					++mockDeltaManager.lastSequenceNumber;
+					mockDeltaManager.emit("op", {
+						clientId: mockClientId,
+						sequenceNumber: mockDeltaManager.lastSequenceNumber,
+						clientSequenceNumber: 1,
+						type: MessageType.Operation,
+						contents: JSON.stringify({
+							type: "nonRuntimeOp",
+							contents: "nonRuntimeOpContent",
+						}),
+					});
+
+					const expectedSubmitCount = skipSafetyFlushDuringProcessStack ? 0 : 1;
+					assert.strictEqual(
+						submittedOps.length,
+						expectedSubmitCount,
+						"Submitted op count wrong after first op",
+					);
+
+					// Submit some more messages.  If we didn't flush on "op", this would throw
+					// Then wait for flush to get triggered, will flush only the 2nd message
+					// Note: We have to submit multiple here to trigger maybeSubmitPartialBatch in the case skipSafetyFlushDuringProcessStack: true
+					submitDataStoreOp(containerRuntime, "2", "testMessage2");
+					submitDataStoreOp(containerRuntime, "3", "testMessage3");
+					await Promise.resolve();
+
+					// Validate that the messages were submitted (as a grouped batch)
+					assert.strictEqual(submittedOps.length, 2, "Two messages should be submitted");
+					assert(
+						(submittedOps[1] as { contents: string }).contents.includes("groupedBatch"),
+						"Expected a groupedBatch",
+					);
+					assert.deepEqual(
+						submittedBatches,
+						[
+							{ messages: [submittedOps[0]], referenceSequenceNumber: 0 }, // The first op
+							{ messages: [submittedOps[1]], referenceSequenceNumber: 1 }, // The other two in a grouped batch
+						],
+						"Two batches should be submitted with different refSeq",
+					);
+				});
+			}
 		});
 
 		describe("orderSequentially", () => {
