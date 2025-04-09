@@ -36,7 +36,7 @@ export type {
 	BroadcastControlSettings,
 } from "./broadcastControls.js";
 
-export { acquirePresence } from "./experimentalAccess.js";
+export { getPresence } from "./experimentalAccess.js";
 
 export {
 	acquirePresenceViaDataObject,

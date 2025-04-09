@@ -5,9 +5,6 @@
 ```ts
 
 // @alpha
-export function acquirePresence(fluidContainer: IFluidContainer): Presence;
-
-// @alpha
 export function acquirePresenceViaDataObject(fluidLoadable: ExperimentalPresenceDO): Presence;
 
 // @alpha @sealed
@@ -59,6 +56,9 @@ export class ExperimentalPresenceDO {
 
 // @alpha
 export const ExperimentalPresenceManager: SharedObjectKind<IFluidLoadable & ExperimentalPresenceDO>;
+
+// @alpha
+export function getPresence(fluidContainer: IFluidContainer): Presence;
 
 // @alpha
 export namespace InternalTypes {
