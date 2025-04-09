@@ -28,7 +28,7 @@ export type {
 export { SharedMap } from "./mapFactory.js";
 export { SharedDirectory } from "./directoryFactory.js";
 
-// Legacy exports that should be deprecated and removed.
+// Legacy exports that should be deprecated and removed as part of AB#8004 or AB#35245
 export type { ISerializableValue } from "./internalInterfaces.js";
 export { MapFactory } from "./mapFactory.js";
 export { DirectoryFactory } from "./directoryFactory.js";
