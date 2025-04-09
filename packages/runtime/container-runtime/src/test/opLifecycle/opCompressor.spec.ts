@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { ContainerMessageType } from "../../index.js";
 import { BatchMessage, IBatch, OpCompressor } from "../../opLifecycle/index.js";
@@ -17,6 +18,9 @@ describe("OpCompressor", () => {
 		compressor = new OpCompressor(mockLogger);
 		mockLogger.clear();
 	});
+
+	const createSingletonBatch = (messageSize: number) =>
+		createBatch(1, messageSize) as IBatch<[BatchMessage]>;
 
 	const createBatch = (length: number, messageSize: number) => {
 		const messages = Array.from({ length }, () =>
@@ -43,9 +47,9 @@ describe("OpCompressor", () => {
 	describe("Compressing batches", () => {
 		for (const batch of [
 			// batch with one small message
-			createBatch(1, 100 * 1024),
+			createSingletonBatch(100 * 1024),
 			// batch with one large message
-			createBatch(1, 100 * 100 * 1024),
+			createSingletonBatch(100 * 100 * 1024),
 		]) {
 			it(`Batch of ${batch.messages.length} ops of total size ${toMB(
 				batch.contentSizeInBytes,
@@ -70,13 +74,13 @@ describe("OpCompressor", () => {
 			)} MB`, () => {
 				assert.throws(
 					() => {
-						compressor.compressBatch(batch);
+						compressor.compressBatch(batch as IBatch<[BatchMessage]>); // The need to cast indicates this is not going to work
 					},
 					(error: Error) => {
-						assert.strictEqual(
-							error.message,
-							"0x5a4" /* Batch should not be empty and should contain a single message */,
-						);
+						validateAssertionError(
+							error,
+							"Batch should not be empty and should contain a single message",
+						); // 0x5a4
 						return true;
 					},
 					"Expected error was not thrown",

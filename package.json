@@ -1,6 +1,6 @@
 {
 	"name": "client-release-group-root",
-	"version": "2.31.0",
+	"version": "2.32.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -49,6 +49,7 @@
 		"checks:fix": "fluid-build --task checks:fix",
 		"ci:build": "fluid-build --task ci:build",
 		"ci:build:docs": "fluid-build --task ci:build:docs",
+		"ci:check:are-the-types-wrong": "pnpm run -r --parallel --no-bail --color check:are-the-types-wrong",
 		"ci:test:jest": "npm run test:jest:report",
 		"ci:test:jest:coverage": "c8 --no-clean npm run test:jest:report",
 		"ci:test:mocha": "npm run test:mocha",
@@ -164,10 +165,10 @@
 		"@biomejs/biome": "~1.9.3",
 		"@changesets/cli": "^2.27.8",
 		"@fluid-private/changelog-generator-wrapper": "workspace:~",
-		"@fluid-tools/build-cli": "^0.54.0",
+		"@fluid-tools/build-cli": "^0.55.0",
 		"@fluid-tools/markdown-magic": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.54.0",
+		"@fluidframework/build-tools": "^0.55.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@microsoft/api-documenter": "^7.21.6",

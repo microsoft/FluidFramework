@@ -187,8 +187,8 @@ importers:
         specifier: ^3.2.2
         version: 3.2.4
       axios:
-        specifier: ^1.7.7
-        version: 1.7.7(debug@4.3.4)
+        specifier: ^1.8.4
+        version: 1.8.4(debug@4.3.4)
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -1022,8 +1022,8 @@ importers:
         specifier: ^0.10.2
         version: 0.10.3
       axios:
-        specifier: ^1.7.7
-        version: 1.7.7(debug@4.3.4)
+        specifier: ^1.8.4
+        version: 1.8.4(debug@4.3.4)
       debug:
         specifier: ^4.3.4
         version: 4.3.4
@@ -1140,8 +1140,8 @@ importers:
         specifier: ^3.2.0
         version: 3.2.0
       axios:
-        specifier: ^1.7.7
-        version: 1.7.7(debug@4.3.4)
+        specifier: ^1.8.4
+        version: 1.8.4(debug@4.3.4)
       crc-32:
         specifier: 1.2.0
         version: 1.2.0
@@ -1199,7 +1199,7 @@ importers:
         version: 9.0.2
       axios-mock-adapter:
         specifier: ^1.19.0
-        version: 1.21.5(axios@1.7.7(debug@4.3.4))
+        version: 1.21.5(axios@1.8.4(debug@4.3.4))
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -1641,8 +1641,8 @@ importers:
         specifier: ^9.0.2
         version: 9.0.2
       axios:
-        specifier: ^1.7.7
-        version: 1.7.7(debug@4.3.4)
+        specifier: ^1.8.4
+        version: 1.8.4(debug@4.3.4)
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -1707,6 +1707,9 @@ importers:
       '@types/node':
         specifier: ^18.19.39
         version: 18.19.39
+      '@types/sinon':
+        specifier: ^17.0.3
+        version: 17.0.3
       '@types/supertest':
         specifier: ^2.0.5
         version: 2.0.12
@@ -2022,8 +2025,8 @@ importers:
         specifier: ^4.2.1
         version: 4.3.0
       axios:
-        specifier: ^1.7.7
-        version: 1.7.7(debug@4.3.4)
+        specifier: ^1.8.4
+        version: 1.8.4(debug@4.3.4)
       body-parser:
         specifier: ^1.20.3
         version: 1.20.3
@@ -3977,8 +3980,8 @@ packages:
     peerDependencies:
       axios: '>= 0.17.0'
 
-  axios@1.7.7:
-    resolution: {integrity: sha512-S4kL7XrjgBmvdGut0sN3yJxqYzrDOnivkBiN0OFs6hLiUam3UPvswUo0kqGyhqUZGEOytHyumEdXsAkgCOUf3Q==}
+  axios@1.8.4:
+    resolution: {integrity: sha512-eBSYY4Y68NNlHbHBMdeDmKNtDgXWhQsJcGqzO3iLUM0GraQFSS9cVgPX5I9b3lbdFKyYoAEGAZF1DwhTaljNAw==}
 
   azure-devops-node-api@11.2.0:
     resolution: {integrity: sha512-XdiGPhrpaT5J8wdERRKs5g8E0Zy1pvOYTli7z9E8nmOn3YGp4FhtjhrOyFmX/8veWCwdI69mCHKJw6l+4J/bHA==}
@@ -9964,7 +9967,7 @@ snapshots:
       '@types/semver': 7.5.6
       assert: 2.1.0
       async: 3.2.5
-      axios: 1.7.7(debug@4.3.4)
+      axios: 1.8.4(debug@4.3.4)
       buffer: 6.0.3
       double-ended-queue: 2.1.0-0
       events: 3.3.0
@@ -10100,7 +10103,7 @@ snapshots:
       '@fluidframework/gitresources': 5.0.0
       '@fluidframework/protocol-base': 5.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      axios: 1.7.7(debug@4.3.4)
+      axios: 1.8.4(debug@4.3.4)
       crc-32: 1.2.0
       debug: 4.3.4
       json-stringify-safe: 5.0.1
@@ -10234,7 +10237,7 @@ snapshots:
       '@socket.io/redis-emitter': 4.1.1
       '@types/lodash': 4.14.202
       amqplib: 0.10.3
-      axios: 1.7.7(debug@4.3.4)
+      axios: 1.8.4(debug@4.3.4)
       debug: 4.3.4
       events: 3.3.0
       ioredis: 5.3.2
@@ -12512,13 +12515,13 @@ snapshots:
     dependencies:
       possible-typed-array-names: 1.0.0
 
-  axios-mock-adapter@1.21.5(axios@1.7.7(debug@4.3.4)):
+  axios-mock-adapter@1.21.5(axios@1.8.4(debug@4.3.4)):
     dependencies:
-      axios: 1.7.7(debug@4.3.4)
+      axios: 1.8.4(debug@4.3.4)
       fast-deep-equal: 3.1.3
       is-buffer: 2.0.5
 
-  axios@1.7.7(debug@4.3.4):
+  axios@1.8.4(debug@4.3.4):
     dependencies:
       follow-redirects: 1.15.6(debug@4.3.4)
       form-data: 4.0.0

@@ -93,7 +93,7 @@
 		"@types/node": "^18.19.39",
 		"@types/supertest": "^2.0.5",
 		"@types/uuid": "^9.0.2",
-		"axios": "^1.7.7",
+		"axios": "^1.8.4",
 		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.55.0",
