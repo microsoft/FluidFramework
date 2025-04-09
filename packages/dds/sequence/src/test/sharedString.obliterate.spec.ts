@@ -86,6 +86,8 @@ describe("Shared String Obliterate", () => {
 		runtimeA.connected = false;
 		A.obliterateRange({ pos: 3, side: Side.After }, { pos: 6, side: Side.After });
 		runtimeA.connected = true;
+
+		processAllMessages(containerRuntimeFactory, clients);
 		await assertConsistent(clients);
 	});
 });
