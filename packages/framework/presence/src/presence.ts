@@ -113,7 +113,7 @@ export interface ISessionClient<SpecificAttendeeId extends AttendeeId = Attendee
  *
  * @internal
  */
-export type SpecificSessionClient<SpecificAttendeeId extends AttendeeId> =
+export type SpecificAttendee<SpecificAttendeeId extends AttendeeId> =
 	string extends SpecificAttendeeId ? never : ISessionClient<SpecificAttendeeId>;
 
 /**

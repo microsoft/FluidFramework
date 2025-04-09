@@ -22,7 +22,7 @@ import type {
 	LatestValueData,
 	LatestValueMetadata,
 } from "./latestValueTypes.js";
-import type { AttendeeId, ISessionClient, SpecificSessionClient } from "./presence.js";
+import type { AttendeeId, ISessionClient, SpecificAttendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
@@ -417,7 +417,7 @@ class LatestMapValueManagerImpl<
 	}
 
 	public update<SpecificAttendeeId extends AttendeeId>(
-		client: SpecificSessionClient<SpecificAttendeeId>,
+		client: SpecificAttendee<SpecificAttendeeId>,
 		_received: number,
 		value: InternalTypes.MapValueState<T, string | number>,
 	): PostUpdateAction[] {
