@@ -2483,10 +2483,6 @@ export class ContainerRuntime
 				// GC op is only sent in summarizer which should never have stashed ops.
 				throw new LoggingError("GC op not expected to be stashed in summarizer");
 			}
-			//* Hmmm
-			case "groupedBatch": {
-				throw new LoggingError("Empty batch not expected (PSM deals with it)");
-			}
 			default: {
 				const error = getUnknownMessageTypeError(
 					opContents.type,
@@ -4430,11 +4426,6 @@ export class ContainerRuntime
 				// on a first occasion (any ops sent after reconnect). There is a good chance, though, that it will not want to
 				// send any ops, as some other client already changed schema.
 				break;
-			}
-			case "groupedBatch": {
-				throw new LoggingError(
-					"Empty batches should be resubmitted as an empty array of messages, not the placeholder",
-				);
 			}
 			default: {
 				const error = getUnknownMessageTypeError(message.type, "reSubmitCore" /* codePath */);

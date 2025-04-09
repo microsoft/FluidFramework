@@ -122,7 +122,7 @@ describe("Outbox", () => {
 	): Partial<OpSplitter> => ({
 		chunkSizeInBytes,
 		isBatchChunkingEnabled: enabled,
-		splitFirstBatchMessage: (batch: IBatch): IBatch => {
+		splitSingletonBatchMessage: (batch: IBatch): IBatch => {
 			state.batchesSplit.push(batch);
 			return batch;
 		},

@@ -240,7 +240,7 @@ describe("OpSplitter", () => {
 
 		// Empty batch
 		assert.throws(() =>
-			opSplitter.splitFirstBatchMessage({
+			opSplitter.splitSingletonBatchMessage({
 				messages: [compressedMessage],
 				contentSizeInBytes: 0,
 				referenceSequenceNumber: 0,
@@ -249,7 +249,7 @@ describe("OpSplitter", () => {
 
 		// Empty batch
 		assert.throws(() =>
-			opSplitter.splitFirstBatchMessage({
+			opSplitter.splitSingletonBatchMessage({
 				messages: [],
 				contentSizeInBytes: 1,
 				referenceSequenceNumber: 0,
@@ -258,7 +258,7 @@ describe("OpSplitter", () => {
 
 		// Batch is too small to be chunked
 		assert.throws(() =>
-			opSplitter.splitFirstBatchMessage({
+			opSplitter.splitSingletonBatchMessage({
 				messages: [compressedMessage],
 				contentSizeInBytes: 1,
 				referenceSequenceNumber: 0,
@@ -267,7 +267,7 @@ describe("OpSplitter", () => {
 
 		// Batch is not compressed
 		assert.throws(() =>
-			opSplitter.splitFirstBatchMessage({
+			opSplitter.splitSingletonBatchMessage({
 				messages: [regularMessage],
 				contentSizeInBytes: 3,
 				referenceSequenceNumber: 0,
@@ -282,7 +282,7 @@ describe("OpSplitter", () => {
 				0,
 				maxBatchSizeInBytes,
 				mockLogger,
-			).splitFirstBatchMessage({
+			).splitSingletonBatchMessage({
 				messages: [compressedMessage],
 				contentSizeInBytes: 3,
 				referenceSequenceNumber: 0,
@@ -291,18 +291,22 @@ describe("OpSplitter", () => {
 
 		// Old loader
 		assert.throws(() =>
-			new OpSplitter([], undefined, 0, maxBatchSizeInBytes, mockLogger).splitFirstBatchMessage(
-				{
-					messages: [compressedMessage],
-					contentSizeInBytes: 3,
-					referenceSequenceNumber: 0,
-				},
-			),
+			new OpSplitter(
+				[],
+				undefined,
+				0,
+				maxBatchSizeInBytes,
+				mockLogger,
+			).splitSingletonBatchMessage({
+				messages: [compressedMessage],
+				contentSizeInBytes: 3,
+				referenceSequenceNumber: 0,
+			}),
 		);
 
 		// Misconfigured op splitter
 		assert.throws(() =>
-			new OpSplitter([], mockSubmitBatchFn, 2, 1, mockLogger).splitFirstBatchMessage({
+			new OpSplitter([], mockSubmitBatchFn, 2, 1, mockLogger).splitSingletonBatchMessage({
 				messages: [compressedMessage],
 				contentSizeInBytes: 3,
 				referenceSequenceNumber: 0,
@@ -317,7 +321,7 @@ describe("OpSplitter", () => {
 				Number.POSITIVE_INFINITY,
 				maxBatchSizeInBytes,
 				mockLogger,
-			).splitFirstBatchMessage({
+			).splitSingletonBatchMessage({
 				messages: [compressedMessage],
 				contentSizeInBytes: 3,
 				referenceSequenceNumber: 0,
@@ -341,7 +345,7 @@ describe("OpSplitter", () => {
 				const largeMessage = generateChunkableOp(100);
 				const emptyMessage = generateChunkableOp(0);
 
-				const result = opSplitter.splitFirstBatchMessage({
+				const result = opSplitter.splitSingletonBatchMessage({
 					messages: [largeMessage, emptyMessage, emptyMessage, emptyMessage],
 					contentSizeInBytes: largeMessage.contents?.length ?? 0,
 					referenceSequenceNumber: 0,
@@ -405,7 +409,7 @@ describe("OpSplitter", () => {
 				);
 				const largeMessage = generateChunkableOp(100);
 
-				const result = opSplitter.splitFirstBatchMessage({
+				const result = opSplitter.splitSingletonBatchMessage({
 					messages: [largeMessage],
 					contentSizeInBytes: largeMessage.contents?.length ?? 0,
 					referenceSequenceNumber: 0,

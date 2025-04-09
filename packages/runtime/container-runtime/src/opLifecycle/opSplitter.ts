@@ -99,11 +99,9 @@ export class OpSplitter {
 		map.push(chunkedContent.contents);
 	}
 
-	//* FUTURE: Rename and update comment since there's only one message
-
 	/**
-	 * Splits the first op of a compressed batch in chunks, sends the chunks separately and
-	 * returns a new batch composed of the last chunk and the rest of the ops in the original batch.
+	 * Takes a singleton batch, and splits the interior message into chunks, sending the chunks separately and
+	 * returning a new singleton batch containing the last chunk.
 	 *
 	 * A compressed batch is formed by one large op at the first position.
 	 *
@@ -114,21 +112,15 @@ export class OpSplitter {
 	 * This will ensure that the batch semantics of the original (non-compressed) batch are preserved, as the original chunked op
 	 * will be unrolled by the runtime when the first message in the batch is processed (as it is the last chunk).
 	 *
-	 * To handle legacy compressed batches with empty placeholders this method can attach the empty placeholder ops at the end
-	 * of the result batch, ensuring that the batch semantics are preserved.
-	 *
 	 * To illustrate the current functionality, if the input is `[largeOp]`, `largeOp` will be split into `[chunk1, chunk2, chunk3, chunk4]`.
 	 * `chunk1`, `chunk2` and `chunk3` will be sent individually and `[chunk4]` will be returned.
 	 *
-	 * With the legacy code, if the input is `[largeOp, emptyOp, emptyOp]`, `largeOp` will be split into `[chunk1, chunk2, chunk3, chunk4]`.
-	 * `chunk1`, `chunk2` and `chunk3` will be sent individually and `[chunk4, emptyOp, emptyOp]` will be returned.
-	 *
 	 * @remarks - A side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.
 	 *
-	 * @param batch - the compressed batch which needs to be processed
-	 * @returns A batch with the last chunk of the original message
+	 * @param batch - the compressed batch which needs to be split into chunks before being sent over the wire
+	 * @returns A batch with the last chunk in place of the original complete compressed content
 	 */
-	public splitFirstBatchMessage(batch: OutboundSingletonBatch): OutboundSingletonBatch {
+	public splitSingletonBatchMessage(batch: OutboundSingletonBatch): OutboundSingletonBatch {
 		assert(this.isBatchChunkingEnabled, 0x513 /* Chunking needs to be enabled */);
 		assert(
 			batch.contentSizeInBytes > 0 && batch.messages.length > 0,
@@ -144,13 +136,11 @@ export class OpSplitter {
 			0x516 /* Chunk size needs to be smaller than the max batch size */,
 		);
 
-		const firstMessage = batch.messages[0]; // we expect this to be the large compressed op, which needs to be split
+		const [firstMessage, ...restOfMessages] = batch.messages.slice(1);
 		assert(
 			(firstMessage.contents?.length ?? 0) >= this.chunkSizeInBytes,
 			0x518 /* First message in the batch needs to be chunkable */,
 		);
-
-		const restOfMessages = batch.messages.slice(1); // we expect these to be empty ops, created to reserve sequence numbers
 		assert(
 			restOfMessages.length === 0,
 			"Expected a singleton batch with no extra ops after the first one",

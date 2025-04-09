@@ -26,7 +26,7 @@ interface IGroupedBatchMessageContents {
 }
 
 interface IGroupedMessage {
-	contents?: unknown; //* Revisit name/type
+	contents?: unknown;
 	metadata?: Record<string, unknown>;
 	compression?: string;
 }

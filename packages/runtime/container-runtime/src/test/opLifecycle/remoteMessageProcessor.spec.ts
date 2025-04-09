@@ -161,7 +161,7 @@ describe("RemoteMessageProcessor", () => {
 						Number.POSITIVE_INFINITY,
 						mockLogger,
 					);
-					batch = splitter.splitFirstBatchMessage(batch);
+					batch = splitter.splitSingletonBatchMessage(batch);
 				}
 			}
 			let startSeqNum = outboundMessages.length + 1;
