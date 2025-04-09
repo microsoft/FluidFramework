@@ -193,7 +193,7 @@ import {
 	OpSplitter,
 	Outbox,
 	RemoteMessageProcessor,
-	serializeOpContents,
+	serializeOp,
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
@@ -2447,7 +2447,7 @@ export class ContainerRuntime
 	}
 
 	private async applyStashedOp(serializedOpContent: string): Promise<unknown> {
-		// Need to parse from string for back-compat
+		// Pending State contains serialized contents, so parse it here.
 		const opContents = this.parseLocalOpContent(serializedOpContent);
 		switch (opContents.type) {
 			case ContainerMessageType.FluidDataStoreOp:
@@ -4177,7 +4177,7 @@ export class ContainerRuntime
 					contents: idRange,
 				};
 				const idAllocationBatchMessage: BatchMessage = {
-					contents: serializeOpContents(idAllocationMessage),
+					contents: serializeOp(idAllocationMessage),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				};
 				this.outbox.submitIdAllocation(idAllocationBatchMessage);
@@ -4240,13 +4240,15 @@ export class ContainerRuntime
 					contents: schemaChangeMessage,
 				};
 				this.outbox.submit({
-					contents: serializeOpContents(msg),
+					contents: serializeOp(msg),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				});
 			}
 
 			const message: BatchMessage = {
-				contents: serializeOpContents(containerRuntimeMessage),
+				// This will encode any handles present in this op before serializing to string
+				// Note: handles may already have been encoded by the DDS layer, but encoding handles is idempotent so there's no problem.
+				contents: serializeOp(containerRuntimeMessage),
 				metadata,
 				localOpMetadata,
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
@@ -4366,7 +4368,9 @@ export class ContainerRuntime
 	}
 
 	private reSubmit(message: PendingMessageResubmitData): void {
-		// Need to parse from string for back-compat
+		// Messages in the PendingStateManager and Outbox (both call resubmit) have serialized contents, so parse it here.
+		// Note that roundtripping handles through string like this means this parsed contents
+		// contains RemoteFluidObjectHandles, not the original handle.
 		const containerRuntimeMessage = this.parseLocalOpContent(message.content);
 		this.reSubmitCore(containerRuntimeMessage, message.localOpMetadata, message.opMetadata);
 	}
@@ -4433,7 +4437,9 @@ export class ContainerRuntime
 	}
 
 	private rollback(content: string | undefined, localOpMetadata: unknown): void {
-		// Need to parse from string for back-compat
+		// Messages in the Outbox (which calls rollback) have serialized contents, so parse it here.
+		// Note that roundtripping handles through string like this means this parsed contents
+		// contains RemoteFluidObjectHandles, not the original handle.
 		const { type, contents } = this.parseLocalOpContent(content);
 		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp: {

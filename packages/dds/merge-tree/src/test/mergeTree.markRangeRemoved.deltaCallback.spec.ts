@@ -71,7 +71,7 @@ describe("MergeTree", () => {
 
 			// In order for the removed segment to unlinked by zamboni, we need to ACK the segment
 			// and advance the collaboration window's minSeq past the removedSeq.
-			mergeTree.ackPendingSegment({
+			mergeTree.ackOp({
 				op: {
 					pos1: start,
 					pos2: end,
