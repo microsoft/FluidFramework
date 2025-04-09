@@ -19,12 +19,25 @@ import {
 	getBooleanFromConfig,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
-import { Router } from "express";
+import { Router, Response } from "express";
 import { Provider } from "nconf";
 import winston from "winston";
-import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { IAlfredTenant, NetworkError } from "@fluidframework/server-services-client";
 import { Constants } from "../../../utils";
-import { handleDenyListResponse } from "../index";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
+
+function handleDenyListResponse(tenantId: string, documentId: string, response: Response) {
+	Lumberjack.error("Document is in the deny list", {
+		tenantId,
+		documentId,
+	});
+	handleResponse(
+		Promise.reject(
+			new NetworkError(500, `Unable to process request for document id: ${documentId}`),
+		),
+		response,
+	);
+}
 
 export function create(
 	config: Provider,
@@ -96,8 +109,9 @@ export function create(
 			const to = stringToSequenceNumber(request.query.to);
 			const tenantId = request.params.tenantId || appTenants[0].id;
 			const documentId = request.params.id;
-			if (denyList) {
-				handleDenyListResponse(tenantId, documentId, denyList, response);
+			if (denyList?.isDenied(tenantId, documentId)) {
+				handleDenyListResponse(tenantId, documentId, response);
+				return;
 			}
 
 			// Query for the deltas and return a filtered version of just the operations field
@@ -124,8 +138,9 @@ export function create(
 		(request, response, next) => {
 			const tenantId = request.params.tenantId || appTenants[0].id;
 			const documentId = request.params.id;
-			if (denyList) {
-				handleDenyListResponse(tenantId, documentId, denyList, response);
+			if (denyList?.isDenied(tenantId, documentId)) {
+				handleDenyListResponse(tenantId, documentId, response);
+				return;
 			}
 
 			// Query for the raw deltas (no from/to since we want all of them)
@@ -166,8 +181,9 @@ export function create(
 			}
 
 			const tenantId = request.params.tenantId || appTenants[0].id;
-			if (denyList) {
-				handleDenyListResponse(tenantId, documentId, denyList, response);
+			if (denyList?.isDenied(tenantId, documentId)) {
+				handleDenyListResponse(tenantId, documentId, response);
+				return;
 			}
 			const caller = request.query.caller?.toString();
 			const fetchReason = request.query.fetchReason?.toString();

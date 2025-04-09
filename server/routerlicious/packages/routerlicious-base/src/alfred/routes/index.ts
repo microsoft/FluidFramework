@@ -22,36 +22,12 @@ import {
 } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
-import { IAlfredTenant, NetworkError } from "@fluidframework/server-services-client";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { IDocumentDeleteService } from "../services";
 import * as api from "./api";
-import { handleResponse } from "@fluidframework/server-services-shared";
-import type { Response } from "express";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
-
 export interface IRoutes {
 	agent: Router;
 	api: Router;
-}
-
-export function handleDenyListResponse(
-	tenantId: string,
-	documentId: string,
-	denyList: IDenyList,
-	response: Response,
-) {
-	if (denyList?.isDenied(tenantId, documentId)) {
-		Lumberjack.error("Document is in the deny list", {
-			tenantId,
-			documentId,
-		});
-		handleResponse(
-			Promise.reject(
-				new NetworkError(500, `Unable to process request for document id: ${documentId}`),
-			),
-			response,
-		);
-	}
 }
 
 export function create(
