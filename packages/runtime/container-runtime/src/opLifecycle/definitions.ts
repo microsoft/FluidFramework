@@ -32,7 +32,7 @@ export type OutboundBatchMessage = IBatchMessage & {
 	compression?: CompressionAlgorithms;
 
 	/**
-	 * @deprecated Use serializedOp
+	 * @deprecated Use contents
 	 */
 	serializedOp?: never; // To ensure we don't leave this one when converting from LocalBatchMessage
 };

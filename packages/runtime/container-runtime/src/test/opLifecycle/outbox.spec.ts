@@ -187,10 +187,9 @@ describe("Outbox", () => {
 			};
 		}
 
-		return messages.map<OutboundBatchMessage>((message) => ({
+		return messages.map<OutboundBatchMessage>(({serializedOp, ...message}) => ({
+			contents: serializedOp,
 			...message,
-			contents: message.serializedOp,
-			serializedOp: undefined,
 		}));
 	};
 	const toOutboundBatch = (messages: LocalBatchMessage[]): OutboundBatch => ({

@@ -306,7 +306,7 @@ describe("BatchManager", () => {
 				// Generate ops during rollback
 				batchManager.push(smallMessage(), /* reentrant */ false);
 			});
-		}, /Error: Ops generated durning rollback/);
+		}, /Error: Ops generated during rollback/);
 	});
 
 	it("Popping the batch then rolling is not allowed", () => {
@@ -325,6 +325,6 @@ describe("BatchManager", () => {
 				// Generate ops during rollback
 				batchManager.push(smallMessage(), /* reentrant */ false);
 			});
-		}, /Error: Ops generated durning rollback/);
+		}, /Error: Ops generated during rollback/);
 	});
 });
