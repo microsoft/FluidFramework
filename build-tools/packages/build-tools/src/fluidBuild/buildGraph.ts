@@ -514,12 +514,17 @@ export class BuildGraph {
 	}
 
 	private async isUpToDate() {
-		const isUpToDateP = new Array<Promise<boolean>>();
-		this.buildPackages.forEach((node) => {
-			isUpToDateP.push(node.isUpToDate());
-		});
-		const isUpToDateArr = await Promise.all(isUpToDateP);
-		return isUpToDateArr.every((isUpToDate) => isUpToDate);
+		try {
+			const isUpToDateP = new Array<Promise<boolean>>();
+			this.buildPackages.forEach((node) => {
+				isUpToDateP.push(node.isUpToDate());
+			});
+			const isUpToDateArr = await Promise.all(isUpToDateP);
+			return isUpToDateArr.every((isUpToDate) => isUpToDate);
+		} catch {
+			// If checking the up-to-date state fails, we assume that the build is not up to date.
+			return false;
+		}
 	}
 
 	public async checkInstall() {

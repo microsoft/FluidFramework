@@ -1057,6 +1057,25 @@ describe("Outbox", () => {
 			validateCounts(0, 0, 2);
 		});
 
+		it("batch has a single reentrant op - don't rebase", () => {
+			const outbox = getOutbox({
+				context: getMockContext(),
+				opGroupingConfig: {
+					groupedBatchingEnabled: true,
+				},
+			});
+
+			const messages = [createMessage(ContainerMessageType.FluidDataStoreOp, "0")];
+
+			state.isReentrant = true;
+			outbox.submit(messages[0]);
+			state.isReentrant = false;
+
+			outbox.flush();
+
+			validateCounts(1, 1, 0);
+		});
+
 		it("should group the batch", () => {
 			const outbox = getOutbox({
 				context: getMockContext(),
