@@ -187,7 +187,7 @@ describe("Outbox", () => {
 			};
 		}
 
-		return messages.map<OutboundBatchMessage>(({serializedOp, ...message}) => ({
+		return messages.map<OutboundBatchMessage>(({ serializedOp, ...message }) => ({
 			contents: serializedOp,
 			...message,
 		}));
