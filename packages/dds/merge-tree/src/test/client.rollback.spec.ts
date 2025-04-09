@@ -637,7 +637,7 @@ describe("client.rollback", () => {
 		const rollbackOp = clients.B.insertTextLocal(2, "RRRRR");
 		clients.B.rollback(rollbackOp, clients.B.peekPendingSegmentGroups());
 
-		for (const op of [...ops]) {
+		for (const op of ops) {
 			for (const c of clients.all) {
 				c.applyMsg(op);
 			}
