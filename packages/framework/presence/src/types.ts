@@ -55,7 +55,7 @@ export interface PresenceStatesSchema {
  * @sealed
  * @alpha
  */
-export type PresenceStatesEntries<TSchema extends PresenceStatesSchema> = {
+export type StatesWorkspaceEntries<TSchema extends PresenceStatesSchema> = {
 	/**
 	 * Registered `Value Manager`s
 	 */
@@ -100,7 +100,7 @@ export interface StatesWorkspace<
 	/**
 	 * Registry of `Value Manager`s.
 	 */
-	readonly props: PresenceStatesEntries<TSchema>;
+	readonly props: StatesWorkspaceEntries<TSchema>;
 
 	/**
 	 * Default controls for management of broadcast updates.
@@ -160,7 +160,7 @@ export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSc
 	/**
 	 * Registry of `Value Manager`s.
 	 */
-	readonly props: PresenceStatesEntries<TSchema>;
+	readonly props: StatesWorkspaceEntries<TSchema>;
 }
 
 // #endregion NotificationsWorkspace

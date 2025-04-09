@@ -265,7 +265,7 @@ export type NotificationSubscriptions<E extends InternalUtilityTypes.Notificatio
 // @alpha @sealed
 export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSchema> {
     add<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<any>, TManager extends NotificationsManager<any>>(key: TKey, manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is NotificationsWorkspace<TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>>;
-    readonly props: PresenceStatesEntries<TSchema>;
+    readonly props: StatesWorkspaceEntries<TSchema>;
 }
 
 // @alpha
@@ -282,14 +282,6 @@ export interface PresenceEvents {
     attendeeJoined: (attendee: ISessionClient) => void;
     workspaceActivated: (workspaceAddress: PresenceWorkspaceAddress, type: "States" | "Notifications" | "Unknown") => void;
 }
-
-// @alpha @sealed
-export type PresenceStatesEntries<TSchema extends PresenceStatesSchema> = {
-    /**
-    * Registered `Value Manager`s
-    */
-    readonly [Key in keyof TSchema]: ReturnType<TSchema[Key]>["manager"] extends InternalTypes.StateValue<infer TManager> ? TManager : never;
-};
 
 // @alpha
 export interface PresenceStatesSchema {
@@ -316,8 +308,16 @@ export type SessionClientStatus = (typeof SessionClientStatus)[keyof typeof Sess
 export interface StatesWorkspace<TSchema extends PresenceStatesSchema, TManagerConstraints = unknown> {
     add<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<any>, TManager extends TManagerConstraints>(key: TKey, manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is StatesWorkspace<TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>, TManagerConstraints>;
     readonly controls: BroadcastControls;
-    readonly props: PresenceStatesEntries<TSchema>;
+    readonly props: StatesWorkspaceEntries<TSchema>;
 }
+
+// @alpha @sealed
+export type StatesWorkspaceEntries<TSchema extends PresenceStatesSchema> = {
+    /**
+    * Registered `Value Manager`s
+    */
+    readonly [Key in keyof TSchema]: ReturnType<TSchema[Key]>["manager"] extends InternalTypes.StateValue<infer TManager> ? TManager : never;
+};
 
 // @alpha @sealed
 export interface ValueMap<K extends string | number, V> {

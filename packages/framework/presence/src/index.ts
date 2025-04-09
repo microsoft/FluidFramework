@@ -17,7 +17,7 @@ export type {
 	NotificationsWorkspace,
 	NotificationsWorkspaceSchema,
 	StatesWorkspace,
-	PresenceStatesEntries,
+	StatesWorkspaceEntries,
 	PresenceStatesSchema,
 	PresenceWorkspaceAddress,
 	PresenceWorkspaceEntry,
