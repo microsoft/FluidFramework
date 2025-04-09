@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import type {
 	JsonDeserialized,
 	JsonSerializable,
@@ -9,9 +10,8 @@ import type {
 
 import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import { LatestMap, type LatestMapValueManager } from "./latestMapValueManager.js";
+import { latestMapFactory, type LatestMapValueManager } from "./latestMapValueManager.js";
 import { Latest, type LatestValueManager } from "./latestValueManager.js";
-
 
 /**
  * Factory for creating presence state objects.
@@ -19,7 +19,6 @@ import { Latest, type LatestValueManager } from "./latestValueManager.js";
  * @alpha
  */
 export const StateFactory = {
-
 	latest<T extends object, Key extends string = string>(
 		initialValue: JsonSerializable<T> & JsonDeserialized<T> & object,
 		controls?: BroadcastControlSettings,
@@ -28,7 +27,7 @@ export const StateFactory = {
 		InternalTypes.ValueRequiredState<T>,
 		LatestValueManager<T>
 	> {
-		return Latest<T, Key>(initialValue, controls)
+		return Latest<T, Key>(initialValue, controls);
 	},
 
 	latestMap<
@@ -45,6 +44,6 @@ export const StateFactory = {
 		InternalTypes.MapValueState<T, Keys>,
 		LatestMapValueManager<T, Keys>
 	> {
-		return LatestMap<T, Keys, RegistrationKey>(initialValues, controls);
-	}
-}
+		return latestMapFactory<T, Keys, RegistrationKey>(initialValues, controls);
+	},
+};

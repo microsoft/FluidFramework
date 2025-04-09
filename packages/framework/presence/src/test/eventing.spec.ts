@@ -16,7 +16,7 @@ import { assertFinalExpectations, prepareConnectedPresence } from "./testUtils.j
 
 import {
 	Latest,
-	LatestMap,
+	StateFactory,
 	Notifications,
 	type LatestMapValueManager,
 	type LatestValueManager,
@@ -248,8 +248,8 @@ describe("Presence", () => {
 			notifications,
 		}: { notifications?: true } = {}): void {
 			const states = presence.getStates("name:testWorkspace", {
-				latest: Latest({ x: 0, y: 0, z: 0 }),
-				latestMap: LatestMap({ key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } }),
+				latest: StateFactory.latest({ x: 0, y: 0, z: 0 }),
+				latestMap: StateFactory.latestMap({ key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } }),
 			});
 			latest = states.props.latest;
 			latestMap = states.props.latestMap;
@@ -270,7 +270,7 @@ describe("Presence", () => {
 				latest: Latest({ x: 0, y: 0, z: 0 }),
 			});
 			const latesetMapStates = presence.getStates("name:testWorkspace2", {
-				latestMap: LatestMap({ key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } }),
+				latestMap: StateFactory.latestMap({ key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } }),
 			});
 			latest = latestsStates.props.latest;
 			latestMap = latesetMapStates.props.latestMap;

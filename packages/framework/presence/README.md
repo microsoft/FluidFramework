@@ -69,9 +69,9 @@ A notifications workspace, `PresenceNotifications`, is similar to states workspa
 
 Latest value manager retains the most recent atomic value each attendee has shared. Use `Latest` to add one to `PresenceStates` workspace.
 
-#### LatestMapValueManager
+#### LatestMap
 
-Latest map value manager retains the most recent atomic value each attendee has shared under arbitrary keys. Values associated with a key may be nullified (appears as deleted). Use `LatestMap` to add one to `PresenceStates` workspace.
+Latest map value manager retains the most recent atomic value each attendee has shared under arbitrary keys. Values associated with a key may be nullified (appears as deleted). Use `StateFactory.latestMap` to add one to `PresenceStates` workspace.
 
 #### NotificationsManager
 

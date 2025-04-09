@@ -45,7 +45,7 @@ export {
 } from "./datastorePresenceManagerFactory.js";
 
 export {
-	LatestMap,
+	latestMapFactory,
 	type LatestMapItemRemovedClientData,
 	type LatestMapItemValueClientData,
 	type LatestMapValueClientData,
@@ -72,6 +72,7 @@ export {
 	type NotificationsManager,
 	type NotificationsManagerEvents,
 } from "./notificationsManager.js";
+export { StateFactory } from "./stateFactory.js";
 
 export type { InternalTypes } from "./exposedInternalTypes.js";
 export type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
