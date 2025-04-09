@@ -61,7 +61,7 @@ While this package is developing as experimental and other Fluid Framework inter
 
 ```typescript
 import {
-	acquirePresenceViaDataObject,
+	getPresenceViaDataObject,
 	ExperimentalPresenceManager,
 } from "@fluidframework/presence/alpha";
 
@@ -71,7 +71,7 @@ const containerSchema = {
 	},
 } satisfies ContainerSchema;
 
-const presence = await acquirePresenceViaDataObject(container.initialObjects.presence);
+const presence = await getPresenceViaDataObject(container.initialObjects.presence);
 ```
 
 ## Limitations

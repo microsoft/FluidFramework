@@ -12,7 +12,7 @@ import {
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map/legacy";
 import {
-	acquirePresenceViaDataObject,
+	getPresenceViaDataObject,
 	ExperimentalPresenceManager,
 } from "@fluidframework/presence/alpha";
 import { createChildLogger } from "@fluidframework/telemetry-utils/legacy";
@@ -182,7 +182,7 @@ async function start(): Promise<void> {
 
 	// Biome insist on no semicolon - https://dev.azure.com/fluidframework/internal/_workitems/edit/9083
 	const lastRoll: { die1?: DieValue; die2?: DieValue } = {};
-	const presence = acquirePresenceViaDataObject(container.initialObjects.presence);
+	const presence = getPresenceViaDataObject(container.initialObjects.presence);
 	const states = buildDicePresence(presence).props;
 
 	// Initialize Devtools

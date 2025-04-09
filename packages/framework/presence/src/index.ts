@@ -39,7 +39,7 @@ export type {
 export { getPresence } from "./experimentalAccess.js";
 
 export {
-	acquirePresenceViaDataObject,
+	getPresenceViaDataObject,
 	type ExperimentalPresenceDO,
 	ExperimentalPresenceManager,
 } from "./datastorePresenceManagerFactory.js";

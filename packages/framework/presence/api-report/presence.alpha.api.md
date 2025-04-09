@@ -4,9 +4,6 @@
 
 ```ts
 
-// @alpha
-export function acquirePresenceViaDataObject(fluidLoadable: ExperimentalPresenceDO): Presence;
-
 // @alpha @sealed
 export interface Attendee<SpecificAttendeeId extends AttendeeId = AttendeeId> {
     getConnectionId(): ClientConnectionId;
@@ -59,6 +56,9 @@ export const ExperimentalPresenceManager: SharedObjectKind<IFluidLoadable & Expe
 
 // @alpha
 export function getPresence(fluidContainer: IFluidContainer): Presence;
+
+// @alpha
+export function getPresenceViaDataObject(fluidLoadable: ExperimentalPresenceDO): Presence;
 
 // @alpha
 export namespace InternalTypes {

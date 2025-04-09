@@ -15,7 +15,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import {
-	acquirePresenceViaDataObject,
+	getPresenceViaDataObject,
 	ExperimentalPresenceManager,
 	type ExperimentalPresenceDO,
 	type Presence,
@@ -107,7 +107,7 @@ const getOrCreatePresenceContainer = async (
 		"Container is not attached after attach is called",
 	);
 
-	const presence = acquirePresenceViaDataObject(
+	const presence = getPresenceViaDataObject(
 		container.initialObjects.presence as ExperimentalPresenceDO,
 	);
 	return {

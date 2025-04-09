@@ -67,7 +67,7 @@ class PresenceManagerFactory {
  * Brand for Experimental Presence Data Object.
  *
  * @remarks
- * See {@link acquirePresenceViaDataObject} for example usage.
+ * See {@link getPresenceViaDataObject} for example usage.
  *
  * @sealed
  * @alpha
@@ -100,14 +100,14 @@ export const ExperimentalPresenceManager =
  * ```
  * then
  * ```typescript
- * const presence = acquirePresenceViaDataObject(
+ * const presence = getPresenceViaDataObject(
  * 	container.initialObjects.experimentalPresence,
  * 	);
  * ```
  *
  * @alpha
  */
-export function acquirePresenceViaDataObject(fluidLoadable: ExperimentalPresenceDO): Presence {
+export function getPresenceViaDataObject(fluidLoadable: ExperimentalPresenceDO): Presence {
 	if (fluidLoadable instanceof PresenceManagerDataObject) {
 		return fluidLoadable.presenceManager();
 	}

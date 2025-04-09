@@ -4,7 +4,7 @@
  */
 
 import {
-	acquirePresenceViaDataObject,
+	getPresenceViaDataObject,
 	ExperimentalPresenceManager,
 } from "@fluidframework/presence/alpha";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
@@ -57,7 +57,7 @@ async function start() {
 	}
 
 	// Retrieve a reference to the presence APIs via the data object.
-	const presence = acquirePresenceViaDataObject(container.initialObjects.presence);
+	const presence = getPresenceViaDataObject(container.initialObjects.presence);
 
 	// Get the states workspace for the tracker data. This workspace will be created if it doesn't exist.
 	// We create it with no states; we will pass the workspace to the Mouse and Focus trackers, and they will create value

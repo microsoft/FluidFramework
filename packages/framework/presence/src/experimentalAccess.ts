@@ -69,7 +69,7 @@ export function getPresence(fluidContainer: IFluidContainer): Presence {
 
 	assert(
 		isContainerExtensionStore(innerContainer),
-		0xa39 /* Container does not support extensions. Use acquirePresenceViaDataObject. */,
+		0xa39 /* Container does not support extensions. Use getPresenceViaDataObject. */,
 	);
 
 	const presence = innerContainer.acquireExtension(
