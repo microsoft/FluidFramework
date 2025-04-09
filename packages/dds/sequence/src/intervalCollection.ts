@@ -1136,16 +1136,25 @@ export class IntervalCollection
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const interval = this.getIntervalById(id)!;
 				this.deleteExistingInterval(interval, false, undefined);
-				if (this.isCollaborating) {
-					this.localSeqToSerializedInterval.delete(localOpMetadata.localSeq);
-				}
 				break;
 			}
 			case "change": {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const interval = this.getIntervalById(id)!;
-				if (Object.keys(properties).length > 0) {
-					interval.changeProperties(properties, undefined, true);
+				const start = toOptionalSequencePlace(
+					localOpMetadata.previous?.start,
+					localOpMetadata.previous?.startSide,
+				);
+				const end = toOptionalSequencePlace(
+					localOpMetadata.previous?.end,
+					localOpMetadata.previous?.endSide,
+				);
+				this.change(id, {
+					start,
+					end,
+					props: Object.keys(properties).length > 0 ? properties : undefined,
+					rollback: true,
+				});
+				if (this.isCollaborating) {
+					this.localSeqToSerializedInterval.delete(localOpMetadata.localSeq);
 				}
 				break;
 			}
@@ -1156,6 +1165,7 @@ export class IntervalCollection
 					start: toOptionalSequencePlace(op.value.start, op.value.startSide)!,
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					end: toOptionalSequencePlace(op.value.end, op.value.endSide)!,
+					props: Object.keys(properties).length > 0 ? properties : undefined,
 					rollback: true,
 				});
 				break;
@@ -1465,7 +1475,12 @@ export class IntervalCollection
 	 */
 	public change(
 		id: string,
-		{ start, end, props }: { start?: SequencePlace; end?: SequencePlace; props?: PropertySet },
+		{
+			start,
+			end,
+			props,
+			rollback,
+		}: { start?: SequencePlace; end?: SequencePlace; props?: PropertySet; rollback?: boolean },
 	): SequenceIntervalClass | undefined {
 		if (!this.localCollection) {
 			throw new LoggingError("Attach must be called before accessing intervals");
@@ -1496,7 +1511,7 @@ export class IntervalCollection
 			let deltaProps: PropertySet | undefined;
 			let newInterval: SequenceIntervalClass | undefined;
 			if (props !== undefined) {
-				deltaProps = interval.changeProperties(props);
+				deltaProps = interval.changeProperties(props, undefined, rollback);
 			}
 			if (start !== undefined && end !== undefined) {
 				newInterval = this.localCollection.changeInterval(interval, start, end);
@@ -1505,25 +1520,28 @@ export class IntervalCollection
 					setSlideOnRemove(newInterval.end);
 				}
 			}
-			// Emit a property bag containing the ID and the other (if any) properties changed
-			const serializedInterval: SerializedIntervalDelta = (
-				newInterval ?? interval
-			).serializeDelta(props, start !== undefined, end !== undefined);
 
-			const localSeq = this.getNextLocalSeq();
-			if (this.isCollaborating) {
+			if (this.isCollaborating && rollback !== true) {
+				// Emit a property bag containing the ID and the other (if any) properties changed
+				const serializedInterval: SerializedIntervalDelta = (
+					newInterval ?? interval
+				).serializeDelta(props, start !== undefined, end !== undefined);
+				const localSeq = this.getNextLocalSeq();
+
 				this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
-			}
+				this.addPendingChange(id, serializedInterval);
 
-			this.submitDelta(
-				{
-					opName: "change",
-					value: serializedInterval,
-				},
-				{
-					localSeq,
-				},
-			);
+				this.submitDelta(
+					{
+						opName: "change",
+						value: serializedInterval,
+					},
+					{
+						localSeq,
+						previous: interval.serialize(),
+					},
+				);
+			}
 			if (deltaProps !== undefined) {
 				this.emit("propertyChanged", interval, deltaProps, true, undefined);
 				this.emit(
@@ -1536,7 +1554,6 @@ export class IntervalCollection
 				);
 			}
 			if (newInterval) {
-				this.addPendingChange(id, serializedInterval);
 				this.emitChange(newInterval, interval, true, false);
 				this.client?.removeLocalReferencePosition(interval.start);
 				this.client?.removeLocalReferencePosition(interval.end);

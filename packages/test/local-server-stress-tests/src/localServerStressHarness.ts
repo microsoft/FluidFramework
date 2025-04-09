@@ -706,9 +706,6 @@ async function runInStateWithClient<Result>(
 	state.channel = channel;
 	try {
 		return await callback(state);
-	} catch (error) {
-		debugger;
-		throw error;
 	} finally {
 		// This code is explicitly trying to "update" to the old value.
 
