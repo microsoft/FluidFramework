@@ -4,14 +4,8 @@
  */
 
 import { EventEmitter } from "@fluid-example/example-utils";
-import {
-	IFluidHandle,
-	IFluidLoadable,
-} from "@fluidframework/core-interfaces";
-import {
-	FluidDataStoreRuntime,
-	FluidObjectHandle,
-} from "@fluidframework/datastore/legacy";
+import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore/legacy";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/legacy";
 import { ISharedMap, SharedMap } from "@fluidframework/map/legacy";
 import {
