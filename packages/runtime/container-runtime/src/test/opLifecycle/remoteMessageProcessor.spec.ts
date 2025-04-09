@@ -162,7 +162,7 @@ describe("RemoteMessageProcessor", () => {
 						Number.POSITIVE_INFINITY,
 						mockLogger,
 					);
-					//* Need to have the legacy code somewhere
+					// NOTE: This function still supports batches with empty placeholder ops, we just need to cast to use it.
 					batch = splitter.splitSingletonBatchMessage(batch as OutboundSingletonBatch);
 				}
 			}

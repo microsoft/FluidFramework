@@ -37,11 +37,21 @@ export type OutboundBatchMessage = IBatchMessage & {
 	serializedOp?: never; // To ensure we don't leave this one when converting from LocalBatchMessage
 };
 
-//* Comment
+/**
+ * A batch of messages we have accumulated locally, but haven't sent to the ordering service yet.
+ */
 export type LocalBatch = IBatch<LocalBatchMessage[]>;
+
+/**
+ * A batch of messages that has been virtualized as needed (grouped, compressed, chunked)
+ * and is ready to be sent to the ordering service.
+ */
 export type OutboundBatch = IBatch<OutboundBatchMessage[]>;
 
-//* Comment
+/**
+ * An {@link OutboundBatch} with exactly one message
+ * This type is helpful as Grouping yields this kind of batch, and Compression only operates on this type of batch.
+ */
 export type OutboundSingletonBatch = IBatch<[OutboundBatchMessage]>;
 
 /**

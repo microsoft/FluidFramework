@@ -117,6 +117,11 @@ export class OpSplitter {
 	 *
 	 * @remarks - A side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.
 	 *
+	 * @privateRemarks
+	 * This maintains support for splitting a compressed batch with multiple messages (empty placeholders after the first),
+	 * but this is only used for Unit Tests so the typing has been updated to preclude that.
+	 * That code should be moved out of this function into a test helper.
+	 *
 	 * @param batch - the compressed batch which needs to be split into chunks before being sent over the wire
 	 * @returns A batch with the last chunk in place of the original complete compressed content
 	 */
