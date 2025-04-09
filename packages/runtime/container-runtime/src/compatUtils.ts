@@ -97,11 +97,14 @@ const versionDependentOptionConfigMap: {
 	},
 
 	enableRuntimeIdCompressor: {
+		// We do not yet want to enable idCompressor by default since it will increase bundle sizes,
+		// and not all customers will benefit from it. Therefore, we will require customers to explicitly
+		// enable it. We are keeping it as a version-dependent option as this may change in the future.
 		minVersionRequired: "2.0.0",
-		// For IdCompressorMode `undefined` represents a logical state (off). However, to satisfy the Required<>
+		// Additionally, for IdCompressorMode `undefined` represents a logical state (off). However, to satisfy the Required<>
 		// constraint we need to have it defined, so we trick the type checker here.
 		legacyConfig: undefined as unknown as "on" | "delayed",
-		modernConfig: "on",
+		modernConfig: undefined as unknown as "on" | "delayed",
 	},
 	explicitSchemaControl: {
 		// This option is unique since it was actually introduced before 2.0.0, but its purpose is to prevent 1.x clients from
