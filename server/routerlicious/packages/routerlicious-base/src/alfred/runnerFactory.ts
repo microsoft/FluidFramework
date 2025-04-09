@@ -23,7 +23,6 @@ import { IAlfredResourcesCustomizations } from ".";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
 import {
 	closeRedisClientConnections,
-	DenyList,
 	StartupCheck,
 } from "@fluidframework/server-services-shared";
 
@@ -420,7 +419,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		}
 		const startupCheck = new StartupCheck();
 		const denyListConfig = config.get("documentDenyList");
-		const denyList: core.IDenyList = new DenyList(denyListConfig);
+		const denyList: core.IDenyList = new utils.DenyList(denyListConfig);
 
 		return new AlfredResources(
 			config,

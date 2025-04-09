@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { DenyList } from "../index";
+import { DenyList } from "../denyList";
 
 // TODO: Remove duplicate code in Historian
 describe("denyList", () => {
