@@ -131,15 +131,15 @@ export interface LatestMapEvents<T, K extends string | number> {
  * @sealed
  * @alpha
  */
-export interface ValueMap<K extends string | number, V> {
+export interface StateMap<K extends string | number, V> {
 	/**
-	 * ${@link ValueMap.delete}s all elements in the ValueMap.
+	 * ${@link StateMap.delete}s all elements in the StateMap.
 	 * @remarks This is not yet implemented.
 	 */
 	clear(): void;
 
 	/**
-	 * @returns true if an element in the ValueMap existed and has been removed, or false if
+	 * @returns true if an element in the StateMap existed and has been removed, or false if
 	 * the element does not exist.
 	 * @remarks No entry is fully removed. Instead an undefined placeholder is locally and
 	 * transmitted to all other clients. For better performance limit the number of deleted
@@ -150,19 +150,19 @@ export interface ValueMap<K extends string | number, V> {
 	delete(key: K): boolean;
 
 	/**
-	 * Executes a provided function once per each key/value pair in the ValueMap, in arbitrary order.
+	 * Executes a provided function once per each key/value pair in the StateMap, in arbitrary order.
 	 */
 	forEach(
 		callbackfn: (
 			value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>>,
 			key: K,
-			map: ValueMap<K, V>,
+			map: StateMap<K, V>,
 		) => void,
 		thisArg?: unknown,
 	): void;
 
 	/**
-	 * Returns a specified element from the ValueMap object.
+	 * Returns a specified element from the StateMap object.
 	 * @returns Returns the element associated with the specified key. If no element is associated with the specified key, undefined is returned.
 	 */
 	get(key: K): InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>> | undefined;
@@ -173,7 +173,7 @@ export interface ValueMap<K extends string | number, V> {
 	has(key: K): boolean;
 
 	/**
-	 * Adds a new element with a specified key and value to the ValueMap. If an element with the same key already exists, the element will be updated.
+	 * Adds a new element with a specified key and value to the StateMap. If an element with the same key already exists, the element will be updated.
 	 * The value will be transmitted to all other connected clients.
 	 *
 	 * @remarks Manager assumes ownership of the value and its references.
@@ -183,7 +183,7 @@ export interface ValueMap<K extends string | number, V> {
 	set(key: K, value: JsonSerializable<V> & JsonDeserialized<V>): this;
 
 	/**
-	 * @returns the number of elements in the ValueMap.
+	 * @returns the number of elements in the StateMap.
 	 */
 	readonly size: number;
 
@@ -208,7 +208,7 @@ export interface ValueMap<K extends string | number, V> {
 	// values(): IterableIterator<InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>>>;
 }
 
-class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
+class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	private countDefined: number;
 	public constructor(
 		private readonly value: InternalTypes.MapValueState<T, K>,
@@ -264,7 +264,7 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 		callbackfn: (
 			value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>,
 			key: K,
-			map: ValueMap<K, T>,
+			map: StateMap<K, T>,
 		) => void,
 		thisArg?: unknown,
 	): void {
@@ -328,7 +328,7 @@ export interface LatestMap<T, Keys extends string | number = string | number> {
 	/**
 	 * Current value map for this client.
 	 */
-	readonly local: ValueMap<Keys, T>;
+	readonly local: StateMap<Keys, T>;
 	/**
 	 * Iterable access to remote clients' map of values.
 	 */
@@ -376,7 +376,7 @@ class LatestMapValueManagerImpl<
 		);
 	}
 
-	public readonly local: ValueMap<Keys, T>;
+	public readonly local: StateMap<Keys, T>;
 
 	public *clientValues(): IterableIterator<LatestMapClientData<T, Keys>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
