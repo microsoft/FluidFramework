@@ -7,7 +7,7 @@ import {
 	IPresence,
 	Latest,
 	LatestMap,
-	type PresenceStates,
+	type StatesWorkspace,
 	type PresenceStatesSchema,
 } from "@fluidframework/presence/alpha";
 
@@ -43,7 +43,7 @@ const statesSchema = {
 	lastDiceRolls: LatestMap<{ value: DieValue }, `die${number}`>(),
 } satisfies PresenceStatesSchema;
 
-export type DicePresence = PresenceStates<typeof statesSchema>;
+export type DicePresence = StatesWorkspace<typeof statesSchema>;
 
 export function buildDicePresence(presence: IPresence): DicePresence {
 	const states = presence.getStates("name:app-client-states", statesSchema);

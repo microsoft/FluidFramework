@@ -7,7 +7,7 @@ import {
 	IPresence,
 	Latest,
 	type ISessionClient,
-	type PresenceStates,
+	type StatesWorkspace,
 	type PresenceStatesSchema,
 } from "@fluidframework/presence/alpha";
 
@@ -21,7 +21,7 @@ const statesSchema = {
 	onlineUsers: Latest({ photo: "" } satisfies User),
 } satisfies PresenceStatesSchema;
 
-export type UserPresence = PresenceStates<typeof statesSchema>;
+export type UserPresence = StatesWorkspace<typeof statesSchema>;
 
 // Takes a presence object and returns the user presence object that contains the shared object states
 export function buildUserPresence(presence: IPresence): UserPresence {

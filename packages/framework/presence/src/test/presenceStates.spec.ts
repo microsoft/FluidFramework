@@ -14,7 +14,7 @@ import type { IPresence } from "../presence.js";
 import { addControlsTests } from "./broadcastControlsTests.js";
 
 describe("Presence", () => {
-	describe("PresenceStates", () => {
+	describe("StatesWorkspace", () => {
 		/**
 		 * See {@link checkCompiles} below
 		 */

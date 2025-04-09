@@ -17,7 +17,7 @@ import type { ClientSessionId, ISessionClient } from "./presence.js";
 //  */
 // export interface StateDatastoreSchema {
 // 	// This type is not precise. It may
-// 	// need to be replaced with PresenceStates schema pattern
+// 	// need to be replaced with StatesWorkspace schema pattern
 // 	// similar to what is commented out.
 // 	[key: string]: InternalTypes.ValueDirectoryOrState<unknown>;
 // 	// [key: string]: StateDatastoreSchemaNode;

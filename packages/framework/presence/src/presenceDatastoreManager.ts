@@ -27,7 +27,7 @@ import {
 import type { SystemWorkspaceDatastore } from "./systemWorkspace.js";
 import { TimerManager } from "./timerManager.js";
 import type {
-	PresenceStates,
+	StatesWorkspace,
 	PresenceStatesSchema,
 	PresenceWorkspaceAddress,
 } from "./types.js";
@@ -35,7 +35,7 @@ import type {
 import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
 
 interface PresenceWorkspaceEntry<TSchema extends PresenceStatesSchema> {
-	public: PresenceStates<TSchema>;
+	public: StatesWorkspace<TSchema>;
 	internal: PresenceStatesInternal;
 }
 
@@ -101,7 +101,7 @@ export interface PresenceDatastoreManager {
 		internalWorkspaceAddress: InternalWorkspaceAddress,
 		requestedContent: TSchema,
 		controls?: BroadcastControlSettings,
-	): PresenceStates<TSchema>;
+	): StatesWorkspace<TSchema>;
 	processSignal(message: IExtensionMessage, local: boolean): void;
 }
 
@@ -190,7 +190,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		internalWorkspaceAddress: InternalWorkspaceAddress,
 		requestedContent: TSchema,
 		controls?: BroadcastControlSettings,
-	): PresenceStates<TSchema> {
+	): StatesWorkspace<TSchema> {
 		const existing = this.workspaces.get(internalWorkspaceAddress);
 		if (existing) {
 			return existing.internal.ensureContent(requestedContent, controls);

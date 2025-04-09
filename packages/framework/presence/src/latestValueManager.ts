@@ -48,7 +48,7 @@ export interface LatestValueManagerEvents<T> {
  * Value manager that provides the latest known value from this client to others and read access to their values.
  * All participant clients must provide a value.
  *
- * @remarks Create using {@link Latest} registered to {@link PresenceStates}.
+ * @remarks Create using {@link Latest} registered to {@link StatesWorkspace}.
  *
  * @sealed
  * @alpha

@@ -35,25 +35,25 @@ There are two types of workspaces: States and Notifications.
 
 #### States Workspace
 
-A states workspace, `PresenceStates`, allows sharing of simple data across attendees where each attendee maintains their own data values that others may read, but not change. This is distinct from a Fluid DDS where data values might be manipulated by multiple clients and one ultimate value is derived. Shared, independent values are maintained by value managers that specialize in incrementality and history of values.
+A `StatesWorkspace`, allows sharing of simple data across attendees where each attendee maintains their own data values that others may read, but not change. This is distinct from a Fluid DDS where data values might be manipulated by multiple clients and one ultimate value is derived. Shared, independent values are maintained by value managers that specialize in incrementality and history of values.
 
 #### Notifications Workspace
 
-A notifications workspace, `NotificationsWorkspace`, is similar to states workspace, but is dedicated to notification use-cases via `NotificationsManager`.
+A `NotificationsWorkspace`, is similar to states workspace, but is dedicated to notification use-cases via `NotificationsManager`.
 
 ### Value Managers
 
 #### LatestValueManager
 
-Latest value manager retains the most recent atomic value each attendee has shared. Use `Latest` to add one to `PresenceStates` workspace.
+Latest value manager retains the most recent atomic value each attendee has shared. Use `Latest` to add one to `StatesWorkspace`.
 
 #### LatestMapValueManager
 
-Latest map value manager retains the most recent atomic value each attendee has shared under arbitrary keys. Values associated with a key may be nullified (appears as deleted). Use `LatestMap` to add one to `PresenceStates` workspace.
+Latest map value manager retains the most recent atomic value each attendee has shared under arbitrary keys. Values associated with a key may be nullified (appears as deleted). Use `LatestMap` to add one to `StatesWorkspace`.
 
 #### NotificationsManager
 
-Notifications value managers are special case where no data is retained during a session and all interactions appear as events that are sent and received. Notifications value managers may be mixed into a `PresenceStates` workspace for convenience. They are the only type of value managers permitted in a `NotificationsWorkspace` workspace. Use `Notifications` to add one to `NotificationsWorkspace` or `PresenceStates` workspace.
+Notifications value managers are special case where no data is retained during a session and all interactions appear as events that are sent and received. Notifications value managers may be mixed into a `StatesWorkspace` for convenience. They are the only type of value managers permitted in a `NotificationsWorkspace`. Use `Notifications` to add one to `NotificationsWorkspace` or `StatesWorkspace`.
 
 ## Onboarding
 

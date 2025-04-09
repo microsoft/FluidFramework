@@ -309,7 +309,7 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
  * Entries in the map may vary over time and by client, but all values are expected to
  * be of the same type, which may be a union type.
  *
- * @remarks Create using {@link LatestMap} registered to {@link PresenceStates}.
+ * @remarks Create using {@link LatestMap} registered to {@link StatesWorkspace}.
  *
  * @sealed
  * @alpha

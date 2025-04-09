@@ -9,7 +9,7 @@ import type {
 	IPresence,
 	ISessionClient,
 	LatestValueManager,
-	PresenceStates,
+	StatesWorkspace,
 } from "@fluidframework/presence/alpha";
 import { Latest, SessionClientStatus } from "@fluidframework/presence/alpha";
 
@@ -50,7 +50,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 		 * A states workspace that the MouseTracker will use to share mouse positions with other session clients.
 		 */
 		// eslint-disable-next-line @typescript-eslint/ban-types -- empty object is the correct typing
-		readonly statesWorkspace: PresenceStates<{}>,
+		readonly statesWorkspace: StatesWorkspace<{}>,
 	) {
 		super();
 

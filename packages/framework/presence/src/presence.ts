@@ -11,7 +11,7 @@ import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type {
 	NotificationsWorkspace,
 	NotificationsWorkspaceSchema,
-	PresenceStates,
+	StatesWorkspace,
 	PresenceStatesSchema,
 	PresenceWorkspaceAddress,
 } from "./types.js";
@@ -191,18 +191,18 @@ export interface IPresence {
 	getMyself(): ISessionClient;
 
 	/**
-	 * Acquires a PresenceStates workspace from store or adds new one.
+	 * Acquires a StatesWorkspace from store or adds new one.
 	 *
-	 * @param workspaceAddress - Address of the requested PresenceStates Workspace
+	 * @param workspaceAddress - Address of the requested StatesWorkspace
 	 * @param requestedContent - Requested states for the workspace
 	 * @param controls - Optional settings for default broadcast controls
-	 * @returns A PresenceStates workspace
+	 * @returns A StatesWorkspace
 	 */
 	getStates<StatesSchema extends PresenceStatesSchema>(
 		workspaceAddress: PresenceWorkspaceAddress,
 		requestedContent: StatesSchema,
 		controls?: BroadcastControlSettings,
-	): PresenceStates<StatesSchema>;
+	): StatesWorkspace<StatesSchema>;
 
 	/**
 	 * Acquires a Notifications workspace from store or adds new one.

@@ -36,12 +36,12 @@ export type PresenceWorkspaceEntry<
 	TManager = unknown,
 > = InternalTypes.ManagerFactory<TKey, TValue, TManager>;
 
-// #region PresenceStates
+// #region StatesWorkspace
 
 /**
- * Schema for a {@link PresenceStates} workspace.
+ * Schema for a {@link StatesWorkspace} workspace.
  *
- * Keys of schema are the keys of the {@link PresenceStates} providing access to `Value Manager`s.
+ * Keys of schema are the keys of the {@link StatesWorkspace} providing access to `Value Manager`s.
  *
  * @alpha
  */
@@ -50,7 +50,7 @@ export interface PresenceStatesSchema {
 }
 
 /**
- * Map of `Value Manager`s registered with {@link PresenceStates}.
+ * Map of `Value Manager`s registered with {@link StatesWorkspace}.
  *
  * @sealed
  * @alpha
@@ -67,7 +67,7 @@ export type PresenceStatesEntries<TSchema extends PresenceStatesSchema> = {
 };
 
 /**
- * `PresenceStates` maintains a registry of `Value Manager`s that all share and provide access to
+ * `StatesWorkspace` maintains a registry of `Value Manager`s that all share and provide access to
  * presence state values across client members in a session.
  *
  * `Value Manager`s offer variations on how to manage states, but all share same principle that
@@ -76,12 +76,12 @@ export type PresenceStatesEntries<TSchema extends PresenceStatesSchema> = {
  * @sealed
  * @alpha
  */
-export interface PresenceStates<
+export interface StatesWorkspace<
 	TSchema extends PresenceStatesSchema,
 	TManagerConstraints = unknown,
 > {
 	/**
-	 * Registers a new `Value Manager` with the {@link PresenceStates}.
+	 * Registers a new `Value Manager` with the {@link StatesWorkspace}.
 	 * @param key - new unique key for the `Value Manager` within the workspace
 	 * @param manager - factory for creating a `Value Manager`
 	 */
@@ -92,7 +92,7 @@ export interface PresenceStates<
 	>(
 		key: TKey,
 		manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>,
-	): asserts this is PresenceStates<
+	): asserts this is StatesWorkspace<
 		TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>,
 		TManagerConstraints
 	>;
@@ -108,7 +108,7 @@ export interface PresenceStates<
 	readonly controls: BroadcastControls;
 }
 
-// #endregion PresenceStates
+// #endregion StatesWorkspace
 
 // #region NotificationsWorkspace
 
@@ -132,9 +132,9 @@ export interface NotificationsWorkspaceSchema {
  * that facilitate messages across client members in a session.
  *
  * @privateRemarks
- * This should be kept mostly in sync with {@link PresenceStates}. Notably the
+ * This should be kept mostly in sync with {@link StatesWorkspace}. Notably the
  * return type of `add` is limited here and the `controls` property is omitted.
- * The `PresenceStatesImpl` class implements `PresenceStates` and therefore
+ * The `PresenceStatesImpl` class implements `StatesWorkspace` and therefore
  * `NotificationsWorkspace`, so long as this is proper subset.
  *
  * @sealed

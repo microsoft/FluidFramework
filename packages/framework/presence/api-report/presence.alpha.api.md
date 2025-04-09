@@ -118,7 +118,7 @@ export interface IPresence {
     getAttendees(): ReadonlySet<ISessionClient>;
     getMyself(): ISessionClient;
     getNotifications<NotificationsSchema extends NotificationsWorkspaceSchema>(notificationsId: PresenceWorkspaceAddress, requestedContent: NotificationsSchema): NotificationsWorkspace<NotificationsSchema>;
-    getStates<StatesSchema extends PresenceStatesSchema>(workspaceAddress: PresenceWorkspaceAddress, requestedContent: StatesSchema, controls?: BroadcastControlSettings): PresenceStates<StatesSchema>;
+    getStates<StatesSchema extends PresenceStatesSchema>(workspaceAddress: PresenceWorkspaceAddress, requestedContent: StatesSchema, controls?: BroadcastControlSettings): StatesWorkspace<StatesSchema>;
 }
 
 // @alpha @sealed
@@ -284,13 +284,6 @@ export interface PresenceEvents {
 }
 
 // @alpha @sealed
-export interface PresenceStates<TSchema extends PresenceStatesSchema, TManagerConstraints = unknown> {
-    add<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<any>, TManager extends TManagerConstraints>(key: TKey, manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is PresenceStates<TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>, TManagerConstraints>;
-    readonly controls: BroadcastControls;
-    readonly props: PresenceStatesEntries<TSchema>;
-}
-
-// @alpha @sealed
 export type PresenceStatesEntries<TSchema extends PresenceStatesSchema> = {
     /**
     * Registered `Value Manager`s
@@ -318,6 +311,13 @@ export const SessionClientStatus: {
 
 // @alpha
 export type SessionClientStatus = (typeof SessionClientStatus)[keyof typeof SessionClientStatus];
+
+// @alpha @sealed
+export interface StatesWorkspace<TSchema extends PresenceStatesSchema, TManagerConstraints = unknown> {
+    add<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<any>, TManager extends TManagerConstraints>(key: TKey, manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is StatesWorkspace<TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>, TManagerConstraints>;
+    readonly controls: BroadcastControls;
+    readonly props: PresenceStatesEntries<TSchema>;
+}
 
 // @alpha @sealed
 export interface ValueMap<K extends string | number, V> {
