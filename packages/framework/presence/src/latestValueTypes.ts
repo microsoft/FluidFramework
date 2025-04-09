@@ -105,9 +105,9 @@ export interface ValueTypeSchemaValidatorMetadata {
  * Type guard that checks if a value is a value type schema validator.
  * @param fn - A function that may be a schema validator.
  */
-export function isValueTypeSchemaValidator<T>(fn: unknown): fn is ValueTypeSchemaValidator<T> {
-	return typeof fn === "function";
-}
+// export function isValueTypeSchemaValidator<T>(fn: unknown): fn is ValueTypeSchemaValidator<T> {
+// 	return typeof fn === "function";
+// }
 
 /**
  * Options that can be provided to a value manager. TODO: Add details.

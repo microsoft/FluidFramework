@@ -33,7 +33,6 @@ export namespace InternalTypes {
 		/**
 		 * Contains the validated data, or `undefined` if the value has not been validated.
 		 */
-		// valid?: JsonDeserialized<TValue> | undefined;
 		valid?: TValue | undefined;
 	}
 
@@ -45,7 +44,6 @@ export namespace InternalTypes {
 		/**
 		 * Contains the validated data, or `undefined` if the value has not been validated.
 		 */
-		// valid?: JsonDeserialized<TValue> | undefined;
 		valid?: TValue | undefined;
 	}
 
