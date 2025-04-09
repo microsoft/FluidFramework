@@ -55,7 +55,7 @@ export interface LatestMapValueClientData<
  * @sealed
  * @alpha
  */
-export interface LatestMapItemValueClientData<T, K extends string | number>
+export interface LatestMapItemUpdatedClientData<T, K extends string | number>
 	extends LatestValueClientData<T> {
 	key: K;
 }
@@ -93,7 +93,7 @@ export interface LatestMapValueManagerEvents<T, K extends string | number> {
 	 *
 	 * @eventProperty
 	 */
-	itemUpdated: (updatedItem: LatestMapItemValueClientData<T, K>) => void;
+	itemUpdated: (updatedItem: LatestMapItemUpdatedClientData<T, K>) => void;
 
 	/**
 	 * Raised when specific item of remote client is removed.
