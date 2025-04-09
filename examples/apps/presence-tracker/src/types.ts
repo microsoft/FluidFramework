@@ -9,8 +9,8 @@ import { Value } from "@sinclair/typebox/value";
 export type IMousePosition = Static<typeof IMousePosition>;
 
 export const IMousePosition = Type.Object({
-	x: Type.Readonly(Type.Number()),
-	y: Type.Readonly(Type.Number()),
+	x: Type.Number(),
+	y: Type.Number(),
 });
 
 export const IMousePositionValidator: ValueTypeSchemaValidator<IMousePosition> = (

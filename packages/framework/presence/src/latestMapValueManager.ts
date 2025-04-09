@@ -21,7 +21,8 @@ import type {
 	LatestValueClientData,
 	LatestValueData,
 	LatestValueMetadata,
-	ValueTypeSchemaValidatorForKey,
+	ValueManagerOptions,
+	ValueTypeSchemaValidator,
 } from "./latestValueTypes.js";
 import type { ClientSessionId, ISessionClient, SpecificSessionClient } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
@@ -223,7 +224,7 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 				string | number
 			>,
 		) => void,
-		private readonly validator: ValueTypeSchemaValidatorForKey<T, K>,
+		private readonly validator: ValueTypeSchemaValidator<T> | undefined,
 	) {
 		// All initial items are expected to be defined.
 		// TODO assert all defined and/or update type.
@@ -279,11 +280,12 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 	}
 	public get(key: K): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> | undefined {
 		const data = this.value.items[key]?.value;
-		const valueValidator = this.validator(key, data);
-		if (valueValidator === undefined) {
-			throw new Error(`No validator for key ${key}`);
+		if (this.validator === undefined) {
+			return data;
 		}
-		return valueValidator(data);
+		const maybeValid = this.validator(data, { key });
+		// TODO: Cast shouldn't be necessary.
+		return maybeValid as InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> | undefined;
 	}
 	public has(key: K): boolean {
 		return this.value.items[key]?.value !== undefined;
@@ -369,7 +371,7 @@ class LatestMapValueManagerImpl<
 			InternalTypes.MapValueState<T, Keys>
 		>,
 		public readonly value: InternalTypes.MapValueState<T, Keys>,
-		validator: ValueTypeSchemaValidatorForKey<T, Keys>,
+		validator: ValueTypeSchemaValidator<T> | undefined,
 		controlSettings: BroadcastControlSettings | undefined,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
@@ -517,16 +519,18 @@ export function LatestMap<
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
 >(
-	validator: ValueTypeSchemaValidatorForKey<T, Keys>,
 	initialValues?: {
 		[K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
 	},
-	controls?: BroadcastControlSettings,
+	options?: ValueManagerOptions<T> | undefined,
 ): InternalTypes.ManagerFactory<
 	RegistrationKey,
 	InternalTypes.MapValueState<T, Keys>,
 	LatestMapValueManager<T, Keys>
 > {
+	const validator = options?.validator;
+	const controls = options?.controls;
+
 	const timestamp = Date.now();
 	const value: InternalTypes.MapValueState<
 		T,

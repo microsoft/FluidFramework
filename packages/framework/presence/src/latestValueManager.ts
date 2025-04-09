@@ -20,6 +20,7 @@ import { objectEntries } from "./internalUtils.js";
 import type {
 	LatestValueClientData,
 	LatestValueData,
+	ValueManagerOptions,
 	ValueTypeSchemaValidator,
 } from "./latestValueTypes.js";
 import type { ISessionClient } from "./presence.js";
@@ -103,7 +104,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		private readonly key: Key,
 		private readonly datastore: StateDatastore<Key, InternalTypes.ValueRequiredState<T>>,
 		public readonly value: InternalTypes.ValueRequiredState<T>,
-		private readonly validator: ValueTypeSchemaValidator<T>,
+		private readonly validator: ValueTypeSchemaValidator<T> | undefined,
 		controlSettings: BroadcastControlSettings | undefined,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
@@ -128,7 +129,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		const allKnownStates = this.datastore.knownValues(this.key);
 		for (const [clientSessionId, value] of objectEntries(allKnownStates.states)) {
 			if (clientSessionId !== allKnownStates.self) {
-				if (value.valid !== true) {
+				if (value.valid !== true && this.validator !== undefined) {
 					const validData = this.validator(value.value);
 					if (validData === undefined) {
 						throw new Error("Data failed runtime validation.");
@@ -159,7 +160,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			throw new Error("No entry for clientId");
 		}
 
-		if (clientState.valid !== true) {
+		if (clientState.valid !== true && this.validator !== undefined) {
 			const validData = this.validator(clientState);
 			if (validData === undefined) {
 				throw new Error("Data failed runtime validation.");
@@ -203,8 +204,7 @@ class LatestValueManagerImpl<T, Key extends string>
  */
 export function Latest<T extends object, Key extends string = string>(
 	initialValue: JsonSerializable<T> & JsonDeserialized<T> & object,
-	validator: ValueTypeSchemaValidator<T>,
-	controls?: BroadcastControlSettings,
+	{ validator, controls }: ValueManagerOptions<T>,
 ): InternalTypes.ManagerFactory<
 	Key,
 	InternalTypes.ValueRequiredState<T>,

@@ -60,7 +60,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 			Latest<IFocusState>(
 				{ hasFocus: window.document.hasFocus() },
 				// Does no actual validation - just casts the types.
-				(maybeValid) => maybeValid as IFocusState,
+				{ validator: (maybeValid) => maybeValid as IFocusState },
 			),
 		);
 

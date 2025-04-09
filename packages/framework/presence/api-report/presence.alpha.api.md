@@ -81,11 +81,13 @@ export namespace InternalTypes {
     export type ValueDirectoryOrState<T> = ValueRequiredState<T> | ValueDirectory<T>;
     // (undocumented)
     export interface ValueOptionalState<TValue> extends ValueStateMetadata {
+        valid?: TValue | undefined;
         // (undocumented)
         value?: JsonDeserialized<TValue>;
     }
     // (undocumented)
     export interface ValueRequiredState<TValue> extends ValueStateMetadata {
+        valid?: TValue | undefined;
         // (undocumented)
         value: JsonDeserialized<TValue>;
     }
@@ -129,12 +131,12 @@ export interface ISessionClient<SpecificSessionClientId extends ClientSessionId 
 }
 
 // @alpha
-export function Latest<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, validator: ValueTypeSchemaValidator<T>, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestValueManager<T>>;
+export function Latest<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, { validator, controls }: ValueManagerOptions<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestValueManager<T>>;
 
 // @alpha
-export function LatestMap<T extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(validator: ValueTypeSchemaValidatorForKey<T, Keys>, initialValues?: {
+export function LatestMap<T extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(initialValues?: {
     [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
-}, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapValueManager<T, Keys>>;
+}, options?: ValueManagerOptions<T> | undefined): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapValueManager<T, Keys>>;
 
 // @alpha @sealed
 export interface LatestMapItemRemovedClientData<K extends string | number> {
@@ -319,6 +321,14 @@ export const SessionClientStatus: {
 // @alpha
 export type SessionClientStatus = (typeof SessionClientStatus)[keyof typeof SessionClientStatus];
 
+// @alpha
+export interface ValueManagerOptions<T extends object> {
+    // (undocumented)
+    controls?: BroadcastControlSettings;
+    // (undocumented)
+    validator?: ValueTypeSchemaValidator<T>;
+}
+
 // @alpha @sealed
 export interface ValueMap<K extends string | number, V> {
     clear(): void;
@@ -335,12 +345,11 @@ export interface ValueMap<K extends string | number, V> {
 }
 
 // @alpha
-export type ValueTypeSchemaFixer<T> = (invalidData: unknown) => T | undefined;
+export type ValueTypeSchemaValidator<T> = (unvalidatedData: unknown, metadata?: ValueTypeSchemaValidatorMetadata) => T | undefined;
 
 // @alpha
-export type ValueTypeSchemaValidator<T> = (unvalidatedData: unknown, fixer?: ValueTypeSchemaFixer<T>) => T | undefined;
-
-// @alpha
-export type ValueTypeSchemaValidatorForKey<T, Keys extends string | number = string | number> = (key: Keys, unvalidatedData: unknown) => ValueTypeSchemaValidator<InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>> | undefined;
+export interface ValueTypeSchemaValidatorMetadata {
+    key?: string | number;
+}
 
 ```

@@ -5,6 +5,7 @@
 
 import type { JsonDeserialized } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
+import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { ISessionClient } from "./presence.js";
 
@@ -73,13 +74,6 @@ export interface LatestValueClientData<T> extends LatestValueData<T> {
 // }
 
 /**
- * A function that can adjust or fix data that fails validation.
- *
- * @alpha
- */
-export type ValueTypeSchemaFixer<T> = (invalidData: unknown) => T | undefined;
-
-/**
  * A validator function that can optionally be provided to do runtime validation of the custom data stored in a
  * presence workspace and managed by a value manager.
  *
@@ -87,19 +81,40 @@ export type ValueTypeSchemaFixer<T> = (invalidData: unknown) => T | undefined;
  */
 export type ValueTypeSchemaValidator<T> = (
 	unvalidatedData: unknown,
-	fixer?: ValueTypeSchemaFixer<T>,
-) => T | undefined;
+	metadata?: ValueTypeSchemaValidatorMetadata,
+) =>
+	| T
+	// | ValueTypeSchemaValidator<InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>>
+	| undefined;
 
 /**
- * A
+ * Optional metadata that is passed to a {@link ValueTypeSchemaValidator}.
+ *
+ * @alpha
+ *
+ * TODO: What else needs to be in the metadata?
+ */
+export interface ValueTypeSchemaValidatorMetadata {
+	/**
+	 * If the value being validated is a LatestValueMap value, this will be set to the value of the corresponding key.
+	 */
+	key?: string | number;
+}
+
+/**
+ * Type guard that checks if a value is a value type schema validator.
+ * @param fn - A function that may be a schema validator.
+ */
+export function isValueTypeSchemaValidator<T>(fn: unknown): fn is ValueTypeSchemaValidator<T> {
+	return typeof fn === "function";
+}
+
+/**
+ * Options that can be provided to a value manager. TODO: Add details.
+ *
  * @alpha
  */
-export type ValueTypeSchemaValidatorForKey<
-	T,
-	Keys extends string | number = string | number,
-> = (
-	key: Keys,
-	unvalidatedData: unknown,
-) =>
-	| ValueTypeSchemaValidator<InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>>
-	| undefined;
+export interface ValueManagerOptions<T extends object> {
+	validator?: ValueTypeSchemaValidator<T>;
+	controls?: BroadcastControlSettings;
+}
