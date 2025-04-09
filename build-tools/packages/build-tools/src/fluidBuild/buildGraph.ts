@@ -228,7 +228,7 @@ export class BuildPackage {
 		return task;
 	}
 
-	// Create or return and existing task with a name.  If it is a script, it will also create an return the pre/post script task if it exists
+	// Create or return and existing task with a name.  If it is a script, it will also create and return the pre/post script task if it exists
 	private getTask(taskName: string, pendingInitDep: Task[] | undefined): Task | undefined {
 		const existing = this.targetTasks.get(taskName);
 		if (existing) {
