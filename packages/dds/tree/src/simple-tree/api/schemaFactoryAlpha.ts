@@ -61,7 +61,7 @@ export class SchemaFactoryAlpha<
 
 	/**
 	 * Declares a type enablable in a set of {@link AllowedTypes}.
-	 * 
+	 *
 	 * @remarks
 	 * t is frozen and should not be modified after being passed in.
 	 */

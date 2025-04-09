@@ -388,10 +388,15 @@ export function objectSchema<
 		> = new Map(
 			Array.from(flexKeyMap, ([key, value]) => [
 				key as string,
-				new ObjectFieldSchema(value.schema.kind, value.schema.allowedTypes, {
-					...value.schema.props,
-					key: getStoredKey(key as string, value.schema),
-				}),
+				new ObjectFieldSchema(
+					value.schema.kind,
+					value.schema.allowedTypes,
+					(value.schema as FieldSchemaAlpha).annotatedAllowedTypes,
+					{
+						...value.schema.props,
+						key: getStoredKey(key as string, value.schema),
+					},
+				),
 			]),
 		);
 		public static readonly flexKeyMap: SimpleKeyMap = flexKeyMap;

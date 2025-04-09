@@ -329,19 +329,51 @@ export interface FieldSchemaMetadata<TCustomMetadata = unknown> {
 	readonly description?: string | undefined;
 }
 
-/**
- * Package internal construction API.
- * TODO do all the things
- */
-export let createFieldSchema: <
-	Kind extends FieldKind = FieldKind,
-	Types extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
+export function createFieldSchema<
+	Kind extends FieldKind,
+	Types extends ImplicitAllowedTypes,
 	TCustomMetadata = unknown,
 >(
 	kind: Kind,
 	annotatedTypes: Types,
 	props?: FieldProps<TCustomMetadata>,
-) => FieldSchemaAlpha<Kind, Types, TCustomMetadata>;
+): FieldSchemaAlpha<Kind, Types, TCustomMetadata>;
+
+export function createFieldSchema<
+	Kind extends FieldKind,
+	Types extends ImplicitAnnotatedAllowedTypes,
+	TCustomMetadata = unknown,
+>(
+	kind: Kind,
+	annotatedTypes: Types,
+	props?: FieldProps<TCustomMetadata>,
+): FieldSchemaAlpha<Kind, UnannotateImplicitAllowedTypes<Types>, TCustomMetadata>;
+
+export function createFieldSchema<
+	Kind extends FieldKind,
+	Types extends ImplicitAnnotatedAllowedTypes,
+	TCustomMetadata = unknown,
+>(
+	kind: Kind,
+	annotatedTypes: Types,
+	props?: FieldProps<TCustomMetadata>,
+): FieldSchemaAlpha<Kind, UnannotateImplicitAllowedTypes<Types>, TCustomMetadata> {
+	return createFieldSchemaPrivate(kind, annotatedTypes, props);
+}
+
+/**
+ * Package internal construction API.
+ * TODO do all the things
+ */
+let createFieldSchemaPrivate: <
+	Kind extends FieldKind,
+	Types extends ImplicitAnnotatedAllowedTypes,
+	TCustomMetadata,
+>(
+	kind: Kind,
+	annotatedTypes: Types,
+	props?: FieldProps<TCustomMetadata>,
+) => FieldSchemaAlpha<Kind, UnannotateImplicitAllowedTypes<Types>, TCustomMetadata>;
 
 /**
  * All policy for a specific field,
@@ -432,10 +464,10 @@ export class FieldSchema<
  */
 export class FieldSchemaAlpha<
 		Kind extends FieldKind = FieldKind,
-		Types extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
+		Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 		TCustomMetadata = unknown,
 	>
-	extends FieldSchema<Kind, UnannotateImplicitAllowedTypes<Types>, TCustomMetadata>
+	extends FieldSchema<Kind, Types, TCustomMetadata>
 	implements SimpleFieldSchema
 {
 	private readonly lazyIdentifiers: Lazy<ReadonlySet<string>>;
@@ -443,23 +475,30 @@ export class FieldSchemaAlpha<
 	public readonly allowedTypesMetadata: AllowedTypesMetadata;
 
 	static {
-		createFieldSchema = <
-			Kind2 extends FieldKind = FieldKind,
-			Types2 extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
-			TCustomMetadata2 = unknown,
+		createFieldSchemaPrivate = <
+			Kind2 extends FieldKind,
+			Types2 extends ImplicitAnnotatedAllowedTypes,
+			TCustomMetadata2,
 		>(
 			kind: Kind2,
 			annotatedAllowedTypes: Types2,
 			props?: FieldProps<TCustomMetadata2>,
-		) => new FieldSchemaAlpha(kind, annotatedAllowedTypes, props);
+		) =>
+			new FieldSchemaAlpha(
+				kind,
+				unannotateImplicitAllowedTypes(annotatedAllowedTypes),
+				annotatedAllowedTypes,
+				props,
+			);
 	}
 
 	protected constructor(
 		kind: Kind,
-		public readonly annotatedAllowedTypes: Types,
+		types: Types,
+		public readonly annotatedAllowedTypes: ImplicitAnnotatedAllowedTypes,
 		props?: FieldProps<TCustomMetadata>,
 	) {
-		super(kind, unannotateImplicitAllowedTypes(annotatedAllowedTypes), props);
+		super(kind, types, props);
 
 		this.allowedTypesMetadata = isAnnotatedAllowedTypes(annotatedAllowedTypes)
 			? annotatedAllowedTypes.metadata
@@ -482,7 +521,7 @@ export class FieldSchemaAlpha<
  */
 export class ObjectFieldSchema<
 		Kind extends FieldKind = FieldKind,
-		Types extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
+		Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 		TCustomMetadata = unknown,
 	>
 	extends FieldSchemaAlpha<Kind, Types, TCustomMetadata>
@@ -493,9 +532,10 @@ export class ObjectFieldSchema<
 	public constructor(
 		kind: Kind,
 		allowedTypes: Types,
+		annotatedTypes: ImplicitAnnotatedAllowedTypes,
 		props: FieldProps<TCustomMetadata> & { readonly key: string },
 	) {
-		super(kind, allowedTypes, props);
+		super(kind, allowedTypes, annotatedTypes, props);
 		this.storedKey = props.key;
 	}
 }
@@ -541,11 +581,15 @@ export function normalizeAllowedTypes(
  *
  * @internal
  */
-export function normalizeToAnnotatedAllowedType<T extends LazyItem<TreeNodeSchema>>(type: T | AnnotatedAllowedType<T>): AnnotatedAllowedType<T> {
-	return isAnnotatedAllowedType(type) ? type : {
-		metadata: {},
-		type,
-	}
+export function normalizeToAnnotatedAllowedType<T extends LazyItem<TreeNodeSchema>>(
+	type: T | AnnotatedAllowedType<T>,
+): AnnotatedAllowedType<T> {
+	return isAnnotatedAllowedType(type)
+		? type
+		: {
+				metadata: {},
+				type,
+			};
 }
 
 /**
@@ -814,8 +858,9 @@ type UnannotateAllowedTypeOrLazyItem<
 	T extends AnnotatedAllowedType | LazyItem<TreeNodeSchema>,
 > = T extends AnnotatedAllowedType<infer X> ? X : T;
 
-type UnannotateAllowedTypes<T extends AnnotatedAllowedTypes> =
-	UnannotateAllowedTypesList<T["types"]>;
+type UnannotateAllowedTypes<T extends AnnotatedAllowedTypes> = UnannotateAllowedTypesList<
+	T["types"]
+>;
 
 type UnannotateAllowedType<T extends AnnotatedAllowedType> = T extends AnnotatedAllowedType<
 	infer X
