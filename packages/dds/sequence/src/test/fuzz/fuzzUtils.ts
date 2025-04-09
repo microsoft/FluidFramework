@@ -421,6 +421,7 @@ function setSharedStringRuntimeOptions(runtime: IFluidDataStoreRuntime) {
 	runtime.options.mergeTreeEnableObliterate = true;
 	runtime.options.mergeTreeEnableAnnotateAdjust = true;
 	runtime.options.mergeTreeEnableSidedObliterate = true;
+	runtime.options.mergeTreeEnableObliterateReconnect = true;
 }
 export class SharedStringFuzzFactory extends SharedStringFactory {
 	public async load(

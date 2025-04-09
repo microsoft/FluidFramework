@@ -14,7 +14,12 @@ import { ICompressionRuntimeOptions } from "../containerRuntime.js";
 import { asBatchMetadata, type IBatchMetadata } from "../metadata.js";
 import type { IPendingMessage } from "../pendingStateManager.js";
 
-import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions.js";
+import {
+	LocalBatchMessage,
+	IBatchCheckpoint,
+	type LocalBatch,
+	type OutboundBatch,
+} from "./definitions.js";
 import type { BatchStartInfo } from "./remoteMessageProcessor.js";
 
 export interface IBatchManagerOptions {
@@ -83,7 +88,7 @@ const opOverhead = 200;
  * Helper class that manages partial batch & rollback.
  */
 export class BatchManager {
-	private pendingBatch: BatchMessage[] = [];
+	private pendingBatch: LocalBatchMessage[] = [];
 	private batchContentSize = 0;
 	private hasReentrantOps = false;
 
@@ -117,11 +122,11 @@ export class BatchManager {
 	constructor(public readonly options: IBatchManagerOptions) {}
 
 	public push(
-		message: BatchMessage,
+		message: LocalBatchMessage,
 		reentrant: boolean,
 		currentClientSequenceNumber?: number,
 	): boolean {
-		const contentSize = this.batchContentSize + (message.contents?.length ?? 0);
+		const contentSize = this.batchContentSize + (message.serializedOp?.length ?? 0);
 		const opCount = this.pendingBatch.length;
 		this.hasReentrantOps = this.hasReentrantOps || reentrant;
 
@@ -152,8 +157,8 @@ export class BatchManager {
 	/**
 	 * Gets the pending batch and clears state for the next batch.
 	 */
-	public popBatch(batchId?: BatchId): IBatch {
-		const batch: IBatch = {
+	public popBatch(batchId?: BatchId): LocalBatch {
+		const batch: LocalBatch = {
 			messages: this.pendingBatch,
 			contentSizeInBytes: this.batchContentSize,
 			referenceSequenceNumber: this.referenceSequenceNumber,
@@ -175,19 +180,21 @@ export class BatchManager {
 		const startSequenceNumber = this.clientSequenceNumber;
 		const startPoint = this.pendingBatch.length;
 		return {
-			rollback: (process: (message: BatchMessage) => void) => {
+			rollback: (process: (message: LocalBatchMessage) => void) => {
 				this.clientSequenceNumber = startSequenceNumber;
 				const rollbackOpsLifo = this.pendingBatch.splice(startPoint).reverse();
 				for (const message of rollbackOpsLifo) {
-					this.batchContentSize -= message.contents?.length ?? 0;
+					this.batchContentSize -= message.serializedOp?.length ?? 0;
 					process(message);
 				}
 				const count = this.pendingBatch.length - startPoint;
 				if (count !== 0) {
-					throw new LoggingError("Ops generated durning rollback", {
+					throw new LoggingError("Ops generated during rollback", {
 						count,
 						...tagData(TelemetryDataTag.UserData, {
-							ops: JSON.stringify(this.pendingBatch.slice(startPoint).map((b) => b.contents)),
+							ops: JSON.stringify(
+								this.pendingBatch.slice(startPoint).map((b) => b.serializedOp),
+							),
 						}),
 					});
 				}
@@ -196,7 +203,7 @@ export class BatchManager {
 	}
 }
 
-const addBatchMetadata = (batch: IBatch, batchId?: BatchId): IBatch => {
+const addBatchMetadata = (batch: LocalBatch, batchId?: BatchId): LocalBatch => {
 	const batchEnd = batch.messages.length - 1;
 
 	const firstMsg = batch.messages[0];
@@ -234,7 +241,7 @@ const addBatchMetadata = (batch: IBatch, batchId?: BatchId): IBatch => {
  * @param batch - the batch to inspect
  * @returns An estimate of the payload size in bytes which will be produced when the batch is sent over the wire
  */
-export const estimateSocketSize = (batch: IBatch): number => {
+export const estimateSocketSize = (batch: OutboundBatch): number => {
 	return batch.contentSizeInBytes + opOverhead * batch.messages.length;
 };
 
