@@ -10,7 +10,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { PostUpdateAction } from "./internalTypes.js";
-import type { AttendeeId, Presence, Attendee, PresenceEvents } from "./presence.js";
+import type { AttendeeId, Presence, Attendee, AttendeeEvents } from "./presence.js";
 import { SessionClientStatus } from "./presence.js";
 import type { PresenceStatesInternal } from "./presenceStates.js";
 import { TimerManager } from "./timerManager.js";
@@ -104,7 +104,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		attendeeId: AttendeeId,
 		private readonly datastore: SystemWorkspaceDatastore,
 		private readonly events: IEmitter<
-			Pick<PresenceEvents, "attendeeJoined" | "attendeeDisconnected">
+			Pick<AttendeeEvents, "attendeeJoined" | "attendeeDisconnected">
 		>,
 		private readonly audience: IAudience,
 	) {
@@ -295,7 +295,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 export function createSystemWorkspace(
 	attendeeId: AttendeeId,
 	datastore: SystemWorkspaceDatastore,
-	events: IEmitter<Pick<PresenceEvents, "attendeeJoined">>,
+	events: IEmitter<Pick<AttendeeEvents, "attendeeJoined">>,
 	audience: IAudience,
 ): {
 	workspace: SystemWorkspace;

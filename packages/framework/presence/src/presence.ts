@@ -120,7 +120,7 @@ export type SpecificAttendee<SpecificAttendeeId extends AttendeeId> =
  * @sealed
  * @alpha
  */
-export interface PresenceEvents {
+export interface AttendeeEvents {
 	/**
 	 * Raised when new client joins session.
 	 *
@@ -163,7 +163,7 @@ export interface Presence {
 	/**
 	 * Events for Presence.
 	 */
-	readonly events: Listenable<PresenceEvents>;
+	readonly events: Listenable<AttendeeEvents>;
 
 	/**
 	 * Get all attendees in the session.

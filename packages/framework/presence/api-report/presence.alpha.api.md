@@ -17,6 +17,15 @@ export interface Attendee<SpecificAttendeeId extends AttendeeId = AttendeeId> {
     readonly sessionId: SpecificAttendeeId;
 }
 
+// @alpha @sealed (undocumented)
+export interface AttendeeEvents {
+    // @eventProperty
+    attendeeDisconnected: (attendee: Attendee) => void;
+    // @eventProperty
+    attendeeJoined: (attendee: Attendee) => void;
+    workspaceActivated: (workspaceAddress: StatesWorkspaceAddress, type: "States" | "Notifications" | "Unknown") => void;
+}
+
 // @alpha
 export type AttendeeId = SessionId & {
     readonly AttendeeId: "AttendeeId";
@@ -266,21 +275,12 @@ export interface NotificationsWorkspaceSchema {
 
 // @alpha @sealed
 export interface Presence {
-    readonly events: Listenable<PresenceEvents>;
+    readonly events: Listenable<AttendeeEvents>;
     getAttendee(clientId: ClientConnectionId | AttendeeId): Attendee;
     getAttendees(): ReadonlySet<Attendee>;
     getMyself(): Attendee;
     getNotifications<NotificationsSchema extends NotificationsWorkspaceSchema>(notificationsId: StatesWorkspaceAddress, requestedContent: NotificationsSchema): NotificationsWorkspace<NotificationsSchema>;
     getStates<StatesSchema extends StatesWorkspaceSchema>(workspaceAddress: StatesWorkspaceAddress, requestedContent: StatesSchema, controls?: BroadcastControlSettings): StatesWorkspace<StatesSchema>;
-}
-
-// @alpha @sealed (undocumented)
-export interface PresenceEvents {
-    // @eventProperty
-    attendeeDisconnected: (attendee: Attendee) => void;
-    // @eventProperty
-    attendeeJoined: (attendee: Attendee) => void;
-    workspaceActivated: (workspaceAddress: StatesWorkspaceAddress, type: "States" | "Notifications" | "Unknown") => void;
 }
 
 // @alpha

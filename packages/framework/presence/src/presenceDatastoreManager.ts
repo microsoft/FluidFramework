@@ -12,7 +12,7 @@ import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type { IEphemeralRuntime, PostUpdateAction } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
-import type { AttendeeId, Attendee, PresenceEvents } from "./presence.js";
+import type { AttendeeId, Attendee, AttendeeEvents } from "./presence.js";
 import type {
 	ClientUpdateEntry,
 	RuntimeLocalUpdateOptions,
@@ -156,7 +156,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		private readonly runtime: IEphemeralRuntime,
 		private readonly lookupClient: (clientId: AttendeeId) => Attendee,
 		private readonly logger: ITelemetryLoggerExt | undefined,
-		private readonly events: IEmitter<Pick<PresenceEvents, "workspaceActivated">>,
+		private readonly events: IEmitter<Pick<AttendeeEvents, "workspaceActivated">>,
 		systemWorkspaceDatastore: SystemWorkspaceDatastore,
 		systemWorkspace: StatesWorkspaceEntry<StatesWorkspaceSchema>,
 	) {
