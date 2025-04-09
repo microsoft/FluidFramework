@@ -137,7 +137,7 @@ export interface LatestMap<T, Keys extends string | number = string | number> {
     clientValues(): IterableIterator<LatestMapClientData<T, Keys>>;
     readonly controls: BroadcastControls;
     readonly events: Listenable<LatestMapEvents<T, Keys>>;
-    readonly local: ValueMap<Keys, T>;
+    readonly local: StateMap<Keys, T>;
 }
 
 // @alpha @sealed
@@ -323,11 +323,11 @@ export interface StatesWorkspaceSchema {
 }
 
 // @alpha @sealed
-export interface ValueMap<K extends string | number, V> {
+export interface StateMap<K extends string | number, V> {
     clear(): void;
     // (undocumented)
     delete(key: K): boolean;
-    forEach(callbackfn: (value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>>, key: K, map: ValueMap<K, V>) => void, thisArg?: unknown): void;
+    forEach(callbackfn: (value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>>, key: K, map: StateMap<K, V>) => void, thisArg?: unknown): void;
     get(key: K): InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>> | undefined;
     // (undocumented)
     has(key: K): boolean;
