@@ -142,6 +142,11 @@ export class BatchManager {
 
 		this.batchContentSize = contentSize;
 		this.pendingBatch.push(message);
+
+		if (this.rollingback) {
+			throw new LoggingError("Ops generated durning rollback");
+		}
+
 		return true;
 	}
 
@@ -168,6 +173,7 @@ export class BatchManager {
 		return addBatchMetadata(batch, batchId);
 	}
 
+	private rollingback = false;
 	/**
 	 * Capture the pending state at this point
 	 */
@@ -176,12 +182,14 @@ export class BatchManager {
 		const startPoint = this.pendingBatch.length;
 		return {
 			rollback: (process: (message: BatchMessage) => void) => {
+				this.rollingback = true;
 				this.clientSequenceNumber = startSequenceNumber;
 				const rollbackOpsLifo = this.pendingBatch.splice(startPoint).reverse();
 				for (const message of rollbackOpsLifo) {
 					this.batchContentSize -= message.contents?.length ?? 0;
 					process(message);
 				}
+				this.rollingback = false;
 				const count = this.pendingBatch.length - startPoint;
 				if (count !== 0) {
 					throw new LoggingError("Ops generated durning rollback", {

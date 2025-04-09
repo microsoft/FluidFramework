@@ -1156,6 +1156,7 @@ export class IntervalCollection
 					start: toOptionalSequencePlace(op.value.start, op.value.startSide)!,
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					end: toOptionalSequencePlace(op.value.end, op.value.endSide)!,
+					rollback: true,
 				});
 				break;
 			}
