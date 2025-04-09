@@ -14,8 +14,9 @@ import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/in
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { CompressionAlgorithms } from "../../containerRuntime.js";
+import type { ContainerRuntimeChunkedOpMessage } from "../../messageTypes.js";
 import {
-	BatchMessage,
+	OutboundBatchMessage,
 	IChunkedOp,
 	OpSplitter,
 	isChunkedMessage,
@@ -250,7 +251,7 @@ describe("OpSplitter", () => {
 		// Empty batch
 		assert.throws(() =>
 			opSplitter.splitSingletonBatchMessage({
-				messages: [],
+				messages: [] as unknown as [OutboundBatchMessage], // to test the runtime validation
 				contentSizeInBytes: 1,
 				referenceSequenceNumber: 0,
 			}),
@@ -331,79 +332,14 @@ describe("OpSplitter", () => {
 
 	describe("Compressed batches", () => {
 		for (const extraOp of [false, true]) {
-			it(`Split compressed batch with multiple messages with${
-				extraOp ? "" : "out"
-			} extra empty op.`, () => {
+			it(`Split compressed batch with single message ${
+				extraOp ? "with" : "without"
+			} extra chunked op.`, () => {
 				const chunkSize = 20;
 				const opSplitter = new OpSplitter(
 					[],
 					mockSubmitBatchFn,
 					chunkSize,
-					extraOp ? chunkSize * 2 : maxBatchSizeInBytes,
-					mockLogger,
-				);
-				const largeMessage = generateChunkableOp(100);
-				const emptyMessage = generateChunkableOp(0);
-
-				const result = opSplitter.splitSingletonBatchMessage({
-					messages: [largeMessage, emptyMessage, emptyMessage, emptyMessage],
-					contentSizeInBytes: largeMessage.contents?.length ?? 0,
-					referenceSequenceNumber: 0,
-				});
-
-				assert.equal(batchesSubmitted.length, 5 + (extraOp ? 1 : 0));
-				for (const batch of batchesSubmitted) {
-					assert.equal(batch.messages.length, 1);
-					assert.equal(typeFromBatchedOp(batch.messages[0]), ContainerMessageType.ChunkedOp);
-					assert.equal(batch.referenceSequenceNumber, 0);
-				}
-
-				assert.equal(result.messages.length, 4);
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				const lastChunk = JSON.parse(result.messages[0].contents!).contents as IChunkedOp;
-				assert.equal(lastChunk.chunkId, lastChunk.totalChunks);
-				assert.deepStrictEqual(
-					result.messages.slice(1),
-					Array.from({ length: 3 }).fill(emptyMessage),
-				);
-				assert.equal(
-					!extraOp ||
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-						JSON.parse(result.messages[0].contents!).contents?.contents?.length === 0,
-					true,
-				);
-				assert.notEqual(result.contentSizeInBytes, largeMessage.contents?.length ?? 0);
-				const contentSentSeparately = batchesSubmitted.map(
-					(x) =>
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-						(JSON.parse((x.messages[0] as BatchMessage).contents!).contents as IChunkedOp)
-							.contents,
-				);
-				const sentContent = [...contentSentSeparately, lastChunk.contents].reduce(
-					(accumulator, current) => `${accumulator}${current}`,
-				);
-				assert.equal(sentContent, largeMessage.contents);
-
-				assert(
-					mockLogger.matchEvents([
-						{
-							eventName: "OpSplitter:CompressedChunkedBatch",
-							length: result.messages.length,
-							chunks: 100 / 20 + 1 + (extraOp ? 1 : 0),
-							chunkSizeInBytes: 20,
-						},
-					]),
-				);
-			});
-
-			it(`Split compressed batch with single message with${
-				extraOp ? "" : "out"
-			} extra empty op.`, () => {
-				const chunkSize = 20;
-				const opSplitter = new OpSplitter(
-					[],
-					mockSubmitBatchFn,
-					20,
 					extraOp ? chunkSize * 2 : maxBatchSizeInBytes,
 					mockLogger,
 				);
@@ -424,21 +360,24 @@ describe("OpSplitter", () => {
 
 				assert.equal(result.messages.length, 1);
 				assert.notEqual(result.contentSizeInBytes, largeMessage.contents?.length ?? 0);
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				const lastChunk = JSON.parse(result.messages[0].contents!).contents as IChunkedOp;
+				const lastChunk = (
+					JSON.parse(result.messages[0].contents!) as ContainerRuntimeChunkedOpMessage
+				).contents;
 				assert.equal(lastChunk.chunkId, lastChunk.totalChunks);
 				assert.equal(
 					!extraOp ||
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-						JSON.parse(result.messages[0].contents!).contents?.contents?.length === 0,
+						(JSON.parse(result.messages[0].contents!) as ContainerRuntimeChunkedOpMessage)
+							.contents?.contents?.length === 0,
 					true,
 				);
 				assert.notEqual(result.contentSizeInBytes, largeMessage.contents?.length ?? 0);
 				const contentSentSeparately = batchesSubmitted.map(
 					(x) =>
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-						(JSON.parse((x.messages[0] as BatchMessage).contents!).contents as IChunkedOp)
-							.contents,
+						(
+							JSON.parse(
+								(x.messages[0] as OutboundBatchMessage).contents!,
+							) as ContainerRuntimeChunkedOpMessage
+						).contents.contents,
 				);
 				const sentContent = [...contentSentSeparately, lastChunk.contents].reduce(
 					(accumulator, current) => `${accumulator}${current}`,
@@ -458,7 +397,10 @@ describe("OpSplitter", () => {
 			});
 		}
 	});
-	const assertSameMessage = (result: ISequencedDocumentMessage, original: BatchMessage) => {
+	const assertSameMessage = (
+		result: ISequencedDocumentMessage,
+		original: OutboundBatchMessage,
+	) => {
 		assert.deepStrictEqual(result.contents, JSON.parse(original.contents!));
 		// type = "component" is used to force 1.3 to crash on compressed & chunked ops, as it does not understand it.
 		// 2.x does not care about type, as it will get right type after decompressing the op.
@@ -468,7 +410,7 @@ describe("OpSplitter", () => {
 		assert.strictEqual(result.compression, original.compression);
 	};
 
-	const generateChunkableOp = (contentSizeInBytes: number): BatchMessage => {
+	const generateChunkableOp = (contentSizeInBytes: number): OutboundBatchMessage => {
 		const contents = {
 			// There should be a type here, but there is no validation for that,
 			// and tests would need to be adjusted (sizing and assumptions) if we add it here.

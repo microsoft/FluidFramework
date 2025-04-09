@@ -27,7 +27,6 @@ import {
 } from "./batchManager.js";
 import {
 	LocalBatchMessage,
-	IBatch,
 	IBatchCheckpoint,
 	type OutboundBatchMessage,
 	type OutboundSingletonBatch,
@@ -58,7 +57,7 @@ export interface IOutboxParameters {
 	readonly submitBatchFn:
 		| ((batch: IBatchMessage[], referenceSequenceNumber?: number) => number)
 		| undefined;
-	readonly legacySendBatchFn: (batch: IBatch<OutboundBatchMessage[]>) => number;
+	readonly legacySendBatchFn: (batch: OutboundBatch) => number;
 	readonly config: IOutboxConfig;
 	readonly compressor: OpCompressor;
 	readonly splitter: OpSplitter;
@@ -528,7 +527,7 @@ export class Outbox {
 	 * @param batch - batch to be sent
 	 * @returns the clientSequenceNumber of the start of the batch, or undefined if nothing was sent
 	 */
-	private sendBatch(batch: IBatch<OutboundBatchMessage[]>): number | undefined {
+	private sendBatch(batch: OutboundBatch): number | undefined {
 		const length = batch.messages.length;
 		if (length === 0) {
 			return undefined; // Nothing submitted

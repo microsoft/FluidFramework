@@ -13,9 +13,11 @@ export {
 	IBatchManagerOptions,
 } from "./batchManager.js";
 export {
+	LocalBatch,
 	LocalBatchMessage,
+	OutboundBatch,
 	OutboundBatchMessage,
-	IBatch,
+	OutboundSingletonBatch,
 	IBatchCheckpoint,
 	IChunkedOp,
 } from "./definitions.js";

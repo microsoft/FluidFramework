@@ -87,7 +87,7 @@ import {
 	type LocalContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
-import type { BatchMessage, InboundMessageResult } from "../opLifecycle/index.js";
+import type { InboundMessageResult, LocalBatchMessage } from "../opLifecycle/index.js";
 import {
 	IPendingLocalState,
 	IPendingMessage,
@@ -902,7 +902,7 @@ describe("Runtime", () => {
 					get pendingMessagesCount() {
 						return pendingMessages;
 					},
-					onFlushBatch: (batch: BatchMessage[], _csn?: number) =>
+					onFlushBatch: (batch: LocalBatchMessage[], _csn?: number) =>
 						(pendingMessages += batch.length),
 				} satisfies Partial<PendingStateManager> as unknown as PendingStateManager;
 			};
@@ -963,7 +963,10 @@ describe("Runtime", () => {
 			};
 
 			const addPendingMessage = (pendingStateManager: PendingStateManager): void =>
-				pendingStateManager.onFlushBatch([{ referenceSequenceNumber: 0 }], 1);
+				pendingStateManager.onFlushBatch(
+					[{ serializedOp: "", referenceSequenceNumber: 0 }],
+					1,
+				);
 
 			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(

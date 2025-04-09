@@ -136,14 +136,10 @@ export class OpSplitter {
 			0x516 /* Chunk size needs to be smaller than the max batch size */,
 		);
 
-		const [firstMessage, ...restOfMessages] = batch.messages.slice(1);
+		const [firstMessage, ...restOfMessages] = batch.messages;
 		assert(
 			(firstMessage.contents?.length ?? 0) >= this.chunkSizeInBytes,
 			0x518 /* First message in the batch needs to be chunkable */,
-		);
-		assert(
-			restOfMessages.length === 0,
-			"Expected a singleton batch with no extra ops after the first one",
 		);
 
 		const socketSize = estimateSocketSize(batch);
@@ -184,7 +180,7 @@ export class OpSplitter {
 		});
 
 		return {
-			messages: [lastChunk],
+			messages: [lastChunk, ...restOfMessages],
 			contentSizeInBytes: lastChunk.contents?.length ?? 0,
 			referenceSequenceNumber: batch.referenceSequenceNumber,
 		};

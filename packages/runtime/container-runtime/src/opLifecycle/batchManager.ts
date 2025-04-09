@@ -16,10 +16,9 @@ import type { IPendingMessage } from "../pendingStateManager.js";
 
 import {
 	LocalBatchMessage,
-	IBatch,
 	IBatchCheckpoint,
-	type OutboundBatchMessage,
 	type LocalBatch,
+	type OutboundBatch,
 } from "./definitions.js";
 import type { BatchStartInfo } from "./remoteMessageProcessor.js";
 
@@ -244,7 +243,7 @@ const addBatchMetadata = (batch: LocalBatch, batchId?: BatchId): LocalBatch => {
  * @param batch - the batch to inspect
  * @returns An estimate of the payload size in bytes which will be produced when the batch is sent over the wire
  */
-export const estimateSocketSize = (batch: IBatch<OutboundBatchMessage[]>): number => {
+export const estimateSocketSize = (batch: OutboundBatch): number => {
 	return batch.contentSizeInBytes + opOverhead * batch.messages.length;
 };
 

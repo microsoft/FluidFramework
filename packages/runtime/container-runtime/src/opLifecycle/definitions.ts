@@ -17,6 +17,9 @@ export interface LocalBatchMessage {
 	referenceSequenceNumber: number;
 	compression?: CompressionAlgorithms;
 
+	/**
+	 * @deprecated Use serializedOp
+	 */
 	contents?: never; // To ensure proper conversion to/from OutboundBatchMessage
 }
 
@@ -28,6 +31,9 @@ export type OutboundBatchMessage = IBatchMessage & {
 	referenceSequenceNumber: number;
 	compression?: CompressionAlgorithms;
 
+	/**
+	 * @deprecated Use serializedOp
+	 */
 	serializedOp?: never; // To ensure proper conversion to/from LocalBatchMessage
 };
 
@@ -41,7 +47,7 @@ export type OutboundSingletonBatch = IBatch<[OutboundBatchMessage]>;
 /**
  * Batch interface used internally by the runtime.
  */
-export interface IBatch<TMessages extends LocalBatchMessage[] | OutboundBatchMessage[]> {
+interface IBatch<TMessages extends LocalBatchMessage[] | OutboundBatchMessage[]> {
 	/**
 	 * Sum of the in-memory content sizes of all messages in the batch.
 	 * If the batch is compressed, this number reflects the post-compression size.
