@@ -22,15 +22,11 @@ import { LatestMap } from "@fluidframework/presence/alpha";
 const testWorkspaceName = "name:testWorkspaceA";
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-function createLatestMapManager(
-	presence: IPresence,
-	valueControlSettings?: BroadcastControlSettings,
-) {
+function createLatestMapManager(presence: IPresence, controls?: BroadcastControlSettings) {
 	const states = presence.getStates(testWorkspaceName, {
 		fixedMap: LatestMap(
-			createNullValidator,
 			{ key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } },
-			valueControlSettings,
+			{ validator: createNullValidator(), controls },
 		),
 	});
 	return states.props.fixedMap;
@@ -101,7 +97,7 @@ export function checkCompiles(): void {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	const presence = {} as IPresence;
 	const statesWorkspace = presence.getStates("name:testStatesWorkspaceWithLatestMap", {
-		fixedMap: LatestMap(createNullValidator, {
+		fixedMap: LatestMap({
 			key1: { x: 0, y: 0 },
 			key2: { ref: "default", someId: 0 },
 		}),
@@ -135,7 +131,7 @@ export function checkCompiles(): void {
 		tilt?: number;
 	}
 
-	workspace.add("pointers", LatestMap<PointerData>(createNullValidator, {}));
+	workspace.add("pointers", LatestMap<PointerData>({}));
 
 	const pointers = workspace.props.pointers;
 	const localPointers = pointers.local;

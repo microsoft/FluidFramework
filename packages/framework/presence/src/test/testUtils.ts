@@ -16,7 +16,6 @@ import type {
 	ClientConnectionId,
 	ClientSessionId,
 	ValueTypeSchemaValidator,
-	ValueTypeSchemaValidatorForKey,
 } from "@fluidframework/presence/alpha";
 import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
 
@@ -170,19 +169,6 @@ export function createNullValidator<T extends object>(): ValueTypeSchemaValidato
 }
 
 /**
- * Creates a null key validator (one that does nothing) for a given type T.
- */
-export function createNullValidatorForKey<
-	T extends object,
-	K extends string | number,
->(): ValueTypeSchemaValidatorForKey<T, K> {
-	const nullValidator: ValueTypeSchemaValidatorForKey<T, K> = (key: K, data: unknown) => {
-		return createNullValidator();
-	};
-	return nullValidator;
-}
-
-/**
  * A validator function spy.
  */
 export type ValidatorSpy = Pick<SinonSpy, "callCount">;
@@ -200,23 +186,6 @@ export function createSpiedValidator<T extends object>(
 	const nullValidatorSpy: ValueTypeSchemaValidator<T> = (data: unknown) => {
 		spy.callCount++;
 		return validator(data) as T;
-	};
-	return [nullValidatorSpy, spy];
-}
-
-/**
- * TODO
- */
-export function createSpiedKeyValidator<T extends object, K extends string | number>(
-	validator: ValueTypeSchemaValidatorForKey<T>,
-): [ValueTypeSchemaValidatorForKey<T, K>, ValidatorSpy] {
-	const spy: ValidatorSpy = {
-		callCount: 0,
-	};
-
-	const nullValidatorSpy: ValueTypeSchemaValidatorForKey<T, K> = (key: K, data: unknown) => {
-		spy.callCount++;
-		return createNullValidator();
 	};
 	return [nullValidatorSpy, spy];
 }

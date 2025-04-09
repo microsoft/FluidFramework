@@ -14,7 +14,6 @@ import {
 	LatestMap,
 	// type PresenceStates,
 	type ValueTypeSchemaValidator,
-	type ValueTypeSchemaValidatorForKey,
 	// SessionClientStatus,
 	// type ClientConnectionId,
 	// type ISessionClient,
@@ -25,8 +24,6 @@ import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import {
 	assertFinalExpectations,
 	createNullValidator,
-	createNullValidatorForKey,
-	createSpiedKeyValidator,
 	createSpiedValidator,
 	// generateBasicClientJoin,
 	prepareConnectedPresence,
@@ -98,7 +95,10 @@ describe("Presence", () => {
 				// Setup
 				// Configure a state workspace
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 }, validatorFunction, { allowableUpdateLatencyMs: 0 }),
+					count: Latest(
+						{ num: 0 },
+						{ validator: validatorFunction, controls: { allowableUpdateLatencyMs: 0 } },
+					),
 				});
 
 				const { count } = stateWorkspace.props;
@@ -118,7 +118,10 @@ describe("Presence", () => {
 				// Setup
 				// Configure a state workspace
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 }, validatorFunction, { allowableUpdateLatencyMs: 0 }),
+					count: Latest(
+						{ num: 0 },
+						{ validator: validatorFunction, controls: { allowableUpdateLatencyMs: 0 } },
+					),
 				});
 
 				const { count } = stateWorkspace.props;
@@ -140,7 +143,10 @@ describe("Presence", () => {
 				// Setup
 				// Configure a state workspace
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 }, validatorFunction, { allowableUpdateLatencyMs: 0 }),
+					count: Latest(
+						{ num: 0 },
+						{ validator: validatorFunction, controls: { allowableUpdateLatencyMs: 0 } },
+					),
 				});
 
 				const { count } = stateWorkspace.props;
@@ -161,15 +167,15 @@ describe("Presence", () => {
 		// TODO: tests are failing
 		describe.skip("LatestMapValueManager", () => {
 			// let stateWorkspace: PresenceStates<{ num: 0 }>;
-			let validatorFunction: ValueTypeSchemaValidatorForKey<{ num: number }, string>;
+			let validatorFunction: ValueTypeSchemaValidator<{ num: number }>;
 			let validatorSpy: ValidatorSpy;
 
 			beforeEach(() => {
 				// Ignore submitted signals
 				runtime.submitSignal = () => {};
 
-				[validatorFunction, validatorSpy] = createSpiedKeyValidator<{ num: number }, string>(
-					createNullValidatorForKey(),
+				[validatorFunction, validatorSpy] = createSpiedValidator<{ num: number }>(
+					createNullValidator(),
 				);
 
 				assert.equal(validatorSpy.callCount, 0);
@@ -180,9 +186,8 @@ describe("Presence", () => {
 				// Configure a state workspace
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
 					count: LatestMap(
-						validatorFunction,
 						{ "key1": { num: 0 } },
-						{ allowableUpdateLatencyMs: 0 },
+						{ validator: validatorFunction, controls: { allowableUpdateLatencyMs: 0 } },
 					),
 				});
 
@@ -203,9 +208,8 @@ describe("Presence", () => {
 				// Configure a state workspace
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
 					count: LatestMap(
-						validatorFunction,
 						{ "key1": { num: 0 } },
-						{ allowableUpdateLatencyMs: 0 },
+						{ validator: validatorFunction, controls: { allowableUpdateLatencyMs: 0 } },
 					),
 				});
 

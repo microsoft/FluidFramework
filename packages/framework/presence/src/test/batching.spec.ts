@@ -17,6 +17,8 @@ import {
 	prepareConnectedPresence,
 } from "./testUtils.js";
 
+const validator = createNullValidator();
+
 describe("Presence", () => {
 	describe("batching", () => {
 		let runtime: MockEphemeralRuntime;
@@ -147,7 +149,7 @@ describe("Presence", () => {
 				// Configure a state workspace
 				// SIGNAL #1 - intial data is sent immediately
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 }, createNullValidator(), { allowableUpdateLatencyMs: 0 }),
+					count: Latest({ num: 0 }, { validator, controls: { allowableUpdateLatencyMs: 0 } }),
 				});
 
 				const { count } = stateWorkspace.props;
@@ -196,10 +198,7 @@ describe("Presence", () => {
 
 				// Configure a state workspace
 				presence.getStates("name:testStateWorkspace", {
-					count: Latest(
-						{ num: 0 },
-						createNullValidator() /* default allowableUpdateLatencyMs = 60 */,
-					),
+					count: Latest({ num: 0 }, { validator /* default allowableUpdateLatencyMs = 60 */ }),
 				}); // will be queued; deadline is now 1070
 
 				// SIGNAL #1
@@ -273,10 +272,7 @@ describe("Presence", () => {
 
 				// Configure a state workspace
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest(
-						{ num: 0 },
-						createNullValidator() /* default allowableUpdateLatencyMs = 60 */,
-					),
+					count: Latest({ num: 0 }, { validator /* default allowableUpdateLatencyMs = 60 */ }),
 				}); // will be queued; deadline is now 1070
 
 				const { count } = stateWorkspace.props;
@@ -378,7 +374,10 @@ describe("Presence", () => {
 
 				// Configure a state workspace
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 }, createNullValidator(), { allowableUpdateLatencyMs: 100 }),
+					count: Latest(
+						{ num: 0 },
+						{ validator, controls: { allowableUpdateLatencyMs: 100 } },
+					),
 				});
 
 				const { count } = stateWorkspace.props;
@@ -497,10 +496,15 @@ describe("Presence", () => {
 				// SIGNAL #1 - this signal is not queued because it contains a value manager with a latency of 0,
 				// so the initial data will be sent immediately.
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 }, createNullValidator(), { allowableUpdateLatencyMs: 100 }),
-					immediateUpdate: Latest({ num: 0 }, createNullValidator(), {
-						allowableUpdateLatencyMs: 0,
-					}),
+					count: Latest({ num: 0 }, { controls: { allowableUpdateLatencyMs: 100 } }),
+					immediateUpdate: Latest(
+						{ num: 0 },
+						{
+							controls: {
+								allowableUpdateLatencyMs: 0,
+							},
+						},
+					),
 				});
 
 				const { count, immediateUpdate } = stateWorkspace.props;
@@ -586,10 +590,8 @@ describe("Presence", () => {
 
 				// Configure a state workspace
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 }, createNullValidator(), { allowableUpdateLatencyMs: 100 }),
-					note: Latest({ message: "" }, createNullValidator(), {
-						allowableUpdateLatencyMs: 50,
-					}),
+					count: Latest({ num: 0 }, { controls: { allowableUpdateLatencyMs: 100 } }),
+					note: Latest({ message: "" }, { controls: { allowableUpdateLatencyMs: 50 } }),
 				}); // will be queued, deadline is set to 1060
 
 				const { count, note } = stateWorkspace.props;
@@ -660,13 +662,11 @@ describe("Presence", () => {
 
 				// Configure two state workspaces
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 }, createNullValidator(), { allowableUpdateLatencyMs: 100 }),
+					count: Latest({ num: 0 }, { controls: { allowableUpdateLatencyMs: 100 } }),
 				}); // will be queued, deadline is 1110
 
 				const stateWorkspace2 = presence.getStates("name:testStateWorkspace2", {
-					note: Latest({ message: "" }, createNullValidator(), {
-						allowableUpdateLatencyMs: 60,
-					}),
+					note: Latest({ message: "" }, { controls: { allowableUpdateLatencyMs: 60 } }),
 				}); // will be queued, deadline is 1070
 
 				const { count } = stateWorkspace.props;
@@ -857,7 +857,7 @@ describe("Presence", () => {
 
 				// Configure a state workspace
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 }, createNullValidator(), { allowableUpdateLatencyMs: 100 }),
+					count: Latest({ num: 0 }, { controls: { allowableUpdateLatencyMs: 100 } }),
 				}); // will be queued, deadline is 1110
 
 				// eslint-disable-next-line @typescript-eslint/ban-types

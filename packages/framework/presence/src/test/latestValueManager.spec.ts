@@ -9,7 +9,6 @@ import { createPresenceManager } from "../presenceManager.js";
 
 import { addControlsTests } from "./broadcastControlsTests.js";
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
-import { createNullValidator } from "./testUtils.js";
 
 import type {
 	BroadcastControlSettings,
@@ -26,7 +25,7 @@ function createLatestManager(
 	valueControlSettings?: BroadcastControlSettings,
 ) {
 	const states = presence.getStates("name:testWorkspaceA", {
-		camera: Latest({ x: 0, y: 0, z: 0 }, createNullValidator(), valueControlSettings),
+		camera: Latest({ x: 0, y: 0, z: 0 }, { controls: valueControlSettings }),
 	});
 	return states.props.camera;
 }
@@ -47,28 +46,28 @@ describe("Presence", () => {
 
 			it("can set and get empty object as initial value", () => {
 				const states = presence.getStates(testWorkspaceName, {
-					obj: Latest({}, createNullValidator()),
+					obj: Latest({}),
 				});
 				assert.deepStrictEqual(states.props.obj.local, {});
 			});
 
 			it("can set and get object with properties as initial value", () => {
 				const states = presence.getStates(testWorkspaceName, {
-					obj: Latest({ x: 0, y: 0, z: 0 }, createNullValidator()),
+					obj: Latest({ x: 0, y: 0, z: 0 }),
 				});
 				assert.deepStrictEqual(states.props.obj.local, { x: 0, y: 0, z: 0 });
 			});
 
 			it("can set and get empty array as initial value", () => {
 				const states = presence.getStates(testWorkspaceName, {
-					arr: Latest([], createNullValidator()),
+					arr: Latest([]),
 				});
 				assert.deepStrictEqual(states.props.arr.local, []);
 			});
 
 			it("can set and get array with elements as initial value", () => {
 				const states = presence.getStates(testWorkspaceName, {
-					arr: Latest([1, 2, 3], createNullValidator()),
+					arr: Latest([1, 2, 3]),
 				});
 				assert.deepStrictEqual(states.props.arr.local, [1, 2, 3]);
 			});
@@ -106,14 +105,14 @@ export function checkCompiles(): void {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	const presence = {} as IPresence;
 	const statesWorkspace = presence.getStates("name:testStatesWorkspaceWithLatest", {
-		cursor: Latest({ x: 0, y: 0 }, createNullValidator()),
-		camera: Latest({ x: 0, y: 0, z: 0 }, createNullValidator()),
+		cursor: Latest({ x: 0, y: 0 }),
+		camera: Latest({ x: 0, y: 0, z: 0 }),
 	});
 	// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
 	const workspace: typeof statesWorkspace = statesWorkspace;
 	const props = workspace.props;
 
-	workspace.add("caret", Latest({ id: "", pos: 0 }, createNullValidator()));
+	workspace.add("caret", Latest({ id: "", pos: 0 }));
 
 	const fakeAdd =
 		workspace.props.caret.local.pos + props.camera.local.z + props.cursor.local.x;
