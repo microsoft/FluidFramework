@@ -47,42 +47,6 @@ describe("OpGroupingManager", () => {
 		};
 	};
 
-	describe("Configs", () => {
-		interface ConfigOption {
-			enabled: boolean;
-			tooSmall?: boolean;
-			reentrant?: boolean;
-			reentryEnabled?: boolean;
-			expectedResult: boolean;
-		}
-		const options: ConfigOption[] = [
-			{ enabled: false, expectedResult: false },
-			{ enabled: true, tooSmall: true, expectedResult: false },
-			{ enabled: true, reentrant: true, expectedResult: true },
-			{ enabled: true, expectedResult: true },
-		];
-
-		for (const option of options) {
-			it(`shouldGroup: groupedBatchingEnabled [${option.enabled}] tooSmall [${
-				option.tooSmall === true
-			}] reentrant [${option.reentrant === true}]`, () => {
-				assert.strictEqual(
-					new OpGroupingManager(
-						{
-							groupedBatchingEnabled: option.enabled,
-						},
-						mockLogger,
-					).shouldGroup(
-						option.tooSmall
-							? createBatch(1, option.reentrant)
-							: createBatch(5, option.reentrant),
-					),
-					option.expectedResult,
-				);
-			});
-		}
-	});
-
 	describe("groupBatch", () => {
 		it("grouped batching disabled", () => {
 			assert.throws(() => {
@@ -154,30 +118,34 @@ describe("OpGroupingManager", () => {
 			]);
 		});
 
-		it("should group on empty batch", () => {
+		it("should throw for an empty batch", () => {
+			const emptyBatch: IBatch = {
+				messages: [],
+				contentSizeInBytes: 0,
+				referenceSequenceNumber: 0,
+			};
+			assert.throws(
+				() => {
+					new OpGroupingManager(
+						{
+							groupedBatchingEnabled: true,
+						},
+						mockLogger,
+					).groupBatch(emptyBatch);
+				},
+				{ message: "Unexpected attempt to group an empty batch" },
+			);
+		});
+
+		it("singleton batch is returned as-is", () => {
+			const original = createBatch(1);
 			const result = new OpGroupingManager(
 				{
 					groupedBatchingEnabled: true,
 				},
 				mockLogger,
-			).shouldGroup({
-				messages: [],
-				contentSizeInBytes: 0,
-				referenceSequenceNumber: 0,
-				hasReentrantOps: false,
-			});
-			assert.strictEqual(result, true);
-		});
-
-		it("grouped batching enabled, not large enough", () => {
-			assert.throws(() => {
-				new OpGroupingManager(
-					{
-						groupedBatchingEnabled: true,
-					},
-					mockLogger,
-				).groupBatch(createBatch(1));
-			});
+			).groupBatch(original);
+			assert.equal(result, original, "Expected the original batch to be returned");
 		});
 
 		it("grouped batching enabled, op metadata not allowed", () => {
