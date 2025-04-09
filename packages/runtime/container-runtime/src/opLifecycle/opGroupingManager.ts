@@ -91,11 +91,18 @@ export class OpGroupingManager {
 	 * Converts the given batch into a "grouped batch" - a batch with a single message of type "groupedBatch",
 	 * with contents being an array of the original batch's messages.
 	 *
+	 * If the batch already has only 1 message, it is returned as-is.
+	 *
 	 * @remarks - Remember that a BatchMessage has its content JSON serialized, so the incoming batch message contents
 	 * must be parsed first, and then the type and contents mentioned above are hidden in that JSON serialization.
 	 */
 	public groupBatch(batch: IBatch): IBatch<[BatchMessage]> {
-		assert(this.shouldGroup(batch), 0x946 /* cannot group the provided batch */);
+		assert(this.groupedBatchingEnabled(), "grouping disabled!");
+		assert(batch.messages.length > 0, "Unexpected attempt to group an empty batch");
+
+		if (batch.messages.length === 1) {
+			return batch as IBatch<[BatchMessage]>;
+		}
 
 		if (batch.messages.length >= 1000) {
 			this.logger.sendTelemetryEvent({
@@ -153,16 +160,6 @@ export class OpGroupingManager {
 		}));
 	}
 
-	public shouldGroup(batch: IBatch): boolean {
-		return (
-			// Grouped batching must be enabled
-			this.config.groupedBatchingEnabled &&
-			// The number of ops in the batch must be 2 or more
-			// or be empty (to allow for empty batches to be grouped)
-			batch.messages.length !== 1
-			// Support for reentrant batches will be on by default
-		);
-	}
 	public groupedBatchingEnabled(): boolean {
 		return this.config.groupedBatchingEnabled;
 	}
