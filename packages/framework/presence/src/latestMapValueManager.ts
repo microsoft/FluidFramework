@@ -17,11 +17,7 @@ import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { objectEntries, objectKeys } from "./internalUtils.js";
-import type {
-	LatestClientData,
-	LatestValueData,
-	LatestValueMetadata,
-} from "./latestValueTypes.js";
+import type { LatestClientData, LatestData, LatestValueMetadata } from "./latestValueTypes.js";
 import type { ClientSessionId, ISessionClient, SpecificSessionClient } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
@@ -46,7 +42,7 @@ export interface LatestMapClientData<
 	 * @privateRemarks This could be regular map currently as no Map is
 	 * stored internally and a new instance is created for every request.
 	 */
-	items: ReadonlyMap<Keys, LatestValueData<T>>;
+	items: ReadonlyMap<Keys, LatestData<T>>;
 }
 
 /**
@@ -340,7 +336,7 @@ export interface LatestMap<T, Keys extends string | number = string | number> {
 	/**
 	 * Access to a specific client's map of values.
 	 */
-	clientValue(client: ISessionClient): ReadonlyMap<Keys, LatestValueData<T>>;
+	clientValue(client: ISessionClient): ReadonlyMap<Keys, LatestData<T>>;
 }
 
 class LatestMapValueManagerImpl<
@@ -396,14 +392,14 @@ class LatestMapValueManagerImpl<
 			.map((clientSessionId) => this.datastore.lookupClient(clientSessionId));
 	}
 
-	public clientValue(client: ISessionClient): ReadonlyMap<Keys, LatestValueData<T>> {
+	public clientValue(client: ISessionClient): ReadonlyMap<Keys, LatestData<T>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientSessionId = client.sessionId;
 		const clientStateMap = allKnownStates.states[clientSessionId];
 		if (clientStateMap === undefined) {
 			throw new Error("No entry for client");
 		}
-		const items = new Map<Keys, LatestValueData<T>>();
+		const items = new Map<Keys, LatestData<T>>();
 		for (const [key, item] of objectEntries(clientStateMap.items)) {
 			const value = item.value;
 			if (value !== undefined) {
@@ -449,7 +445,7 @@ class LatestMapValueManagerImpl<
 		}
 		const allUpdates = {
 			client,
-			items: new Map<Keys, LatestValueData<T>>(),
+			items: new Map<Keys, LatestData<T>>(),
 		};
 		const postUpdateActions: PostUpdateAction[] = [];
 		for (const key of updatedItemKeys) {
