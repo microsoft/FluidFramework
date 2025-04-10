@@ -1824,108 +1824,6 @@ export class ContainerRuntime
 			this.deltaManager.on("op", () => this.flush());
 		}
 
-		if (this.summariesDisabled) {
-			this.mc.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
-		} else {
-			const orderedClientLogger = createChildLogger({
-				logger: this.baseLogger,
-				namespace: "OrderedClientElection",
-			});
-			const orderedClientCollection = new OrderedClientCollection(
-				orderedClientLogger,
-				this.innerDeltaManager,
-				this._quorum,
-			);
-			const orderedClientElectionForSummarizer = new OrderedClientElection(
-				orderedClientLogger,
-				orderedClientCollection,
-				electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
-				SummarizerClientElection.isClientEligible,
-				this.mc.config.getBoolean(
-					"Fluid.ContainerRuntime.OrderedClientElection.EnablePerformanceEvents",
-				),
-			);
-
-			this.summarizerClientElection = new SummarizerClientElection(
-				orderedClientLogger,
-				summaryCollection,
-				orderedClientElectionForSummarizer,
-				maxOpsSinceLastSummary,
-			);
-
-			if (isSummarizerClient) {
-				this._summarizer = new Summarizer(
-					this /* ISummarizerRuntime */,
-					() => summaryConfiguration,
-					this /* ISummarizerInternalsProvider */,
-					this.handleContext,
-					summaryCollection,
-
-					async (runtime: IConnectableRuntime) =>
-						RunWhileConnectedCoordinator.create(
-							runtime,
-							// Summarization runs in summarizer client and needs access to the real (non-proxy) active
-							// information. The proxy delta manager would always return false for summarizer client.
-							() => this.innerDeltaManager.active,
-						),
-				);
-			} else if (SummarizerClientElection.clientDetailsPermitElection(this.clientDetails)) {
-				// Only create a SummaryManager and SummarizerClientElection
-				// if summaries are enabled and we are not the summarizer client.
-				const defaultAction = (): void => {
-					if (summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
-						this.mc.logger.sendTelemetryEvent({ eventName: "SummaryStatus:Behind" });
-						// unregister default to no log on every op after falling behind
-						// and register summary ack handler to re-register this handler
-						// after successful summary
-						summaryCollection.once(MessageType.SummaryAck, () => {
-							this.mc.logger.sendTelemetryEvent({
-								eventName: "SummaryStatus:CaughtUp",
-							});
-							// we've caught up, so re-register the default action to monitor for
-							// falling behind, and unregister ourself
-							summaryCollection.on("default", defaultAction);
-						});
-						summaryCollection.off("default", defaultAction);
-					}
-				};
-
-				summaryCollection.on("default", defaultAction);
-
-				// Create the SummaryManager and mark the initial state
-				this.summaryManager = new SummaryManager(
-					this.summarizerClientElection,
-					this, // IConnectedState
-					summaryCollection,
-					this.baseLogger,
-					formCreateSummarizerFn(loader),
-					new Throttler(
-						60 * 1000, // 60 sec delay window
-						30 * 1000, // 30 sec max delay
-						// throttling function increases exponentially (0ms, 40ms, 80ms, 160ms, etc)
-						formExponentialFn({ coefficient: 20, initialDelay: 0 }),
-					),
-					{
-						initialDelayMs: initialSummarizerDelayMs,
-					},
-				);
-				// Forward events from SummaryManager
-				for (const eventName of [
-					"summarize",
-					"summarizeAllAttemptsFailed",
-					"summarizerStop",
-					"summarizerStart",
-					"summarizerStartupFailed",
-				]) {
-					this.summaryManager?.on(eventName, (...args: unknown[]) => {
-						this.emit(eventName, ...args);
-					});
-				}
-
-				this.summaryManager.start();
-			}
-		}
-
 		// logging hardware telemetry
 		this.baseLogger.send({
 			category: "generic",
@@ -2044,128 +1942,128 @@ export class ContainerRuntime
 	private async initializeSummarizer(loader: ILoader): Promise<void> {
 		if (this.summariesDisabled) {
 			this.mc.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
-		} else {
-			const { maxOpsSinceLastSummary = 0, initialSummarizerDelayMs = 0 } = isSummariesDisabled(
-				this.summaryConfiguration,
-			)
-				? {}
-				: {
-						...this.summaryConfiguration,
-						initialSummarizerDelayMs:
-							// back-compat: initialSummarizerDelayMs was moved from ISummaryRuntimeOptions
-							//   to ISummaryConfiguration in 0.60.
-							this.runtimeOptions.summaryOptions.initialSummarizerDelayMs ??
-							this.summaryConfiguration.initialSummarizerDelayMs,
-					};
+			return;
+		}
 
-			const summaryCollection: SummaryCollection = new SummaryCollection(
-				this.deltaManager,
-				this.baseLogger,
-			);
-			const orderedClientLogger = createChildLogger({
-				logger: this.baseLogger,
-				namespace: "OrderedClientElection",
-			});
-			const orderedClientCollection: OrderedClientCollection = new OrderedClientCollection(
-				orderedClientLogger,
-				this.innerDeltaManager,
-				this._quorum,
-			);
-			const orderedClientElectionForSummarizer: OrderedClientElection =
-				new OrderedClientElection(
-					orderedClientLogger,
-					orderedClientCollection,
-					this.electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
-					SummarizerClientElection.isClientEligible,
-					this.mc.config.getBoolean(
-						"Fluid.ContainerRuntime.OrderedClientElection.EnablePerformanceEvents",
-					),
-				);
-
-			this.summarizerClientElection = new SummarizerClientElection(
-				orderedClientLogger,
-				summaryCollection,
-				orderedClientElectionForSummarizer,
-				maxOpsSinceLastSummary,
-			);
-			const isSummarizerClient = this.clientDetails.type === summarizerClientType;
-
-			if (isSummarizerClient) {
-				// We want to dynamically import any thing inside summaryDelayLoadedModule module only when we are the summarizer client,
-				// so that all non summarizer clients don't have to load the code inside this module.
-				const module = await import(
-					/* webpackChunkName: "summarizerDelayLoadedModule" */ "./summary/index.js"
-				);
-				this._summarizer = new module.Summarizer(
-					this /* ISummarizerRuntime */,
-					() => this.summaryConfiguration,
-					this /* ISummarizerInternalsProvider */,
-					this.handleContext,
-					summaryCollection,
-
-					async (runtime: IConnectableRuntime) =>
-						module.RunWhileConnectedCoordinator.create(
-							runtime,
-							// Summarization runs in summarizer client and needs access to the real (non-proxy) active
-							// information. The proxy delta manager would always return false for summarizer client.
-							() => this.innerDeltaManager.active,
-						),
-				);
-			} else if (SummarizerClientElection.clientDetailsPermitElection(this.clientDetails)) {
-				// Only create a SummaryManager and SummarizerClientElection
-				// if summaries are enabled and we are not the summarizer client.
-				const defaultAction = (): void => {
-					if (summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
-						this.mc.logger.sendTelemetryEvent({ eventName: "SummaryStatus:Behind" });
-						// unregister default to no log on every op after falling behind
-						// and register summary ack handler to re-register this handler
-						// after successful summary
-						summaryCollection.once(MessageType.SummaryAck, () => {
-							this.mc.logger.sendTelemetryEvent({
-								eventName: "SummaryStatus:CaughtUp",
-							});
-							// we've caught up, so re-register the default action to monitor for
-							// falling behind, and unregister ourself
-							summaryCollection.on("default", defaultAction);
-						});
-						summaryCollection.off("default", defaultAction);
-					}
+		const { maxOpsSinceLastSummary = 0, initialSummarizerDelayMs = 0 } = isSummariesDisabled(
+			this.summaryConfiguration,
+		)
+			? {}
+			: {
+					...this.summaryConfiguration,
+					initialSummarizerDelayMs:
+						// back-compat: initialSummarizerDelayMs was moved from ISummaryRuntimeOptions
+						//   to ISummaryConfiguration in 0.60.
+						this.runtimeOptions.summaryOptions.initialSummarizerDelayMs ??
+						this.summaryConfiguration.initialSummarizerDelayMs,
 				};
 
-				summaryCollection.on("default", defaultAction);
+		const summaryCollection: SummaryCollection = new SummaryCollection(
+			this.deltaManager,
+			this.baseLogger,
+		);
+		const orderedClientLogger = createChildLogger({
+			logger: this.baseLogger,
+			namespace: "OrderedClientElection",
+		});
+		const orderedClientCollection = new OrderedClientCollection(
+			orderedClientLogger,
+			this.innerDeltaManager,
+			this._quorum,
+		);
+		const orderedClientElectionForSummarizer = new OrderedClientElection(
+			orderedClientLogger,
+			orderedClientCollection,
+			this.electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
+			SummarizerClientElection.isClientEligible,
+			this.mc.config.getBoolean(
+				"Fluid.ContainerRuntime.OrderedClientElection.EnablePerformanceEvents",
+			),
+		);
 
-				// Create the SummaryManager and mark the initial state
-				this.summaryManager = new SummaryManager(
-					this.summarizerClientElection,
-					this, // IConnectedState
-					summaryCollection,
-					this.baseLogger,
-					formCreateSummarizerFn(loader),
-					new Throttler(
-						60 * 1000, // 60 sec delay window
-						30 * 1000, // 30 sec max delay
-						// throttling function increases exponentially (0ms, 40ms, 80ms, 160ms, etc)
-						formExponentialFn({ coefficient: 20, initialDelay: 0 }),
+		this.summarizerClientElection = new SummarizerClientElection(
+			orderedClientLogger,
+			summaryCollection,
+			orderedClientElectionForSummarizer,
+			maxOpsSinceLastSummary,
+		);
+
+		const isSummarizerClient = this.clientDetails.type === summarizerClientType;
+		if (isSummarizerClient) {
+			// We want to dynamically import any thing inside summaryDelayLoadedModule module only when we are the summarizer client,
+			// so that all non summarizer clients don't have to load the code inside this module.
+			const module = await import(
+				/* webpackChunkName: "summarizerDelayLoadedModule" */ "./summary/index.js"
+			);
+			this._summarizer = new module.Summarizer(
+				this /* ISummarizerRuntime */,
+				() => this.summaryConfiguration,
+				this /* ISummarizerInternalsProvider */,
+				this.handleContext,
+				summaryCollection,
+
+				async (runtime: IConnectableRuntime) =>
+					module.RunWhileConnectedCoordinator.create(
+						runtime,
+						// Summarization runs in summarizer client and needs access to the real (non-proxy) active
+						// information. The proxy delta manager would always return false for summarizer client.
+						() => this.innerDeltaManager.active,
 					),
-					{
-						initialDelayMs: initialSummarizerDelayMs,
-					},
-				);
-				// Forward events from SummaryManager
-				for (const eventName of [
-					"summarize",
-					"summarizeAllAttemptsFailed",
-					"summarizerStop",
-					"summarizerStart",
-					"summarizerStartupFailed",
-				]) {
-					this.summaryManager?.on(eventName, (...args: unknown[]) => {
-						this.emit(eventName, ...args);
+			);
+		} else if (SummarizerClientElection.clientDetailsPermitElection(this.clientDetails)) {
+			// Only create a SummaryManager and SummarizerClientElection
+			// if summaries are enabled and we are not the summarizer client.
+			const defaultAction = (): void => {
+				if (summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
+					this.mc.logger.sendTelemetryEvent({ eventName: "SummaryStatus:Behind" });
+					// unregister default to no log on every op after falling behind
+					// and register summary ack handler to re-register this handler
+					// after successful summary
+					summaryCollection.once(MessageType.SummaryAck, () => {
+						this.mc.logger.sendTelemetryEvent({
+							eventName: "SummaryStatus:CaughtUp",
+						});
+						// we've caught up, so re-register the default action to monitor for
+						// falling behind, and unregister ourself
+						summaryCollection.on("default", defaultAction);
 					});
+					summaryCollection.off("default", defaultAction);
 				}
+			};
 
-				this.summaryManager.start();
+			summaryCollection.on("default", defaultAction);
+
+			// Create the SummaryManager and mark the initial state
+			this.summaryManager = new SummaryManager(
+				this.summarizerClientElection,
+				this, // IConnectedState
+				summaryCollection,
+				this.baseLogger,
+				formCreateSummarizerFn(loader),
+				new Throttler(
+					60 * 1000, // 60 sec delay window
+					30 * 1000, // 30 sec max delay
+					// throttling function increases exponentially (0ms, 40ms, 80ms, 160ms, etc)
+					formExponentialFn({ coefficient: 20, initialDelay: 0 }),
+				),
+				{
+					initialDelayMs: initialSummarizerDelayMs,
+				},
+			);
+			// Forward events from SummaryManager
+			for (const eventName of [
+				"summarize",
+				"summarizeAllAttemptsFailed",
+				"summarizerStop",
+				"summarizerStart",
+				"summarizerStartupFailed",
+			]) {
+				this.summaryManager?.on(eventName, (...args: unknown[]) => {
+					this.emit(eventName, ...args);
+				});
 			}
+
+			this.summaryManager.start();
 		}
 	}
 
