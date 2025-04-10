@@ -739,20 +739,15 @@ describe("TableFactory unit tests", () => {
 
 		treeView.initialize({
 			columns: [
-				{
-					id: "column-0",
-				},
+				column0,
 			],
 			rows: [
-				{
-					id: "row-0",
-					cells: { "column-0": { value: "Hello world!" } },
-				},
+				row0,
 			],
 		});
 
 		const cell = treeView.root.getCell({ columnId: "column-0", rowId: "row-0" });
-		const column = treeView.root.getColumn("column-1");
+		const column = treeView.root.getColumn("column-0");
 		const row = treeView.root.getRow("row-0");
 
 		assert.equal(cell, cell0);
