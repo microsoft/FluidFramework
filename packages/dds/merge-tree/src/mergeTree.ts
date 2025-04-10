@@ -1844,7 +1844,7 @@ export class MergeTree {
 		for (childIndex = 0; childIndex < block.childCount; childIndex++) {
 			child = children[childIndex];
 			// removed blocks below the min seq will have an undefined length, and be skipped
-			// however if it is the last block in the tree we don't want to skip it, so we correctly
+			// however if it is the last block in the layer of the tree we don't want to skip it, so we correctly
 			// walk down the far edge of the tree.
 			const isLastChildOfLastBlock = isLastBlock && childIndex === block.childCount - 1;
 			const len =
