@@ -508,16 +508,15 @@ export class Outbox {
 		// Now proceed to compress/chunk it if necessary.
 		const singletonBatch = originalOrGroupedBatch as OutboundSingletonBatch;
 
+		const compressionThreshold = this.params.config.compressionOptions.minimumBatchSizeInBytes;
 		if (
-			this.params.config.compressionOptions === undefined ||
-			this.params.config.compressionOptions.minimumBatchSizeInBytes >
-				singletonBatch.contentSizeInBytes ||
+			compressionThreshold > singletonBatch.contentSizeInBytes ||
 			this.params.submitBatchFn === undefined
 		) {
-			//* TODO: If Compression is disabled, then we need to check socketSize v. maxBatchSizeInBytes
-			//* TODO: Check this copilot code :)
+			//* TODO: Double-check the logic and error/props
+			const compressionEnabled = Number.isFinite(compressionThreshold);
 			const socketSize = estimateSocketSize(singletonBatch);
-			if (socketSize >= this.params.config.maxBatchSizeInBytes) {
+			if (!compressionEnabled && socketSize >= this.params.config.maxBatchSizeInBytes) {
 				throw new GenericError("BatchTooLarge", /* error */ undefined, {
 					batchSize: singletonBatch.contentSizeInBytes,
 					socketSize,
