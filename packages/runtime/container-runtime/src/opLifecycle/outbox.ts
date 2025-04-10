@@ -522,6 +522,7 @@ export class Outbox {
 				},
 			);
 			this.logger.sendErrorEvent({ eventName: "BatchTooLarge" }, dpe);
+			throw dpe;
 		}
 
 		return compressedBatch;

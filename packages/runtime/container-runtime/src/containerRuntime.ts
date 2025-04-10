@@ -3114,7 +3114,11 @@ export class ContainerRuntime
 			this.outbox.flush(resubmittingBatchId);
 			assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
 		} catch (error) {
-			const error2 = normalizeError(error);
+			const error2 = normalizeError(error, {
+				props: {
+					orderSequentiallyCalls: this.batchRunner.runs,
+				},
+			});
 			this.closeFn(error2);
 			throw error2;
 		}
