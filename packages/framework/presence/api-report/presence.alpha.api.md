@@ -128,8 +128,16 @@ export interface ISessionClient<SpecificSessionClientId extends ClientSessionId 
     readonly sessionId: SpecificSessionClientId;
 }
 
-// @alpha
-export function Latest<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestValueManager<T>>;
+// @alpha @sealed
+export interface Latest<T> {
+    clients(): ISessionClient[];
+    clientValue(client: ISessionClient): LatestValueData<T>;
+    clientValues(): IterableIterator<LatestValueClientData<T>>;
+    readonly controls: BroadcastControls;
+    readonly events: Listenable<LatestValueManagerEvents<T>>;
+    get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
+    set local(value: JsonSerializable<T> & JsonDeserialized<T>);
+}
 
 // @alpha @sealed
 export interface LatestMap<T, Keys extends string | number = string | number> {
@@ -188,6 +196,9 @@ export interface LatestMapItemUpdatedClientData<T, K extends string | number> ex
     key: K;
 }
 
+// @alpha
+export function latestStateFactory<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
+
 // @alpha @sealed
 export interface LatestValueClientData<T> extends LatestValueData<T> {
     // (undocumented)
@@ -200,17 +211,6 @@ export interface LatestValueData<T> {
     metadata: LatestValueMetadata;
     // (undocumented)
     value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
-}
-
-// @alpha @sealed
-export interface LatestValueManager<T> {
-    clients(): ISessionClient[];
-    clientValue(client: ISessionClient): LatestValueData<T>;
-    clientValues(): IterableIterator<LatestValueClientData<T>>;
-    readonly controls: BroadcastControls;
-    readonly events: Listenable<LatestValueManagerEvents<T>>;
-    get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
-    set local(value: JsonSerializable<T> & JsonDeserialized<T>);
 }
 
 // @alpha @sealed (undocumented)
@@ -321,7 +321,7 @@ export type SessionClientStatus = (typeof SessionClientStatus)[keyof typeof Sess
 
 // @alpha
 export const StateFactory: {
-    latest<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestValueManager<T>>;
+    latest<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
     latestMap<T_1 extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(initialValues?: { [K in Keys]: JsonSerializable<T_1> & JsonDeserialized<T_1>; } | undefined, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T_1, Keys>, LatestMap<T_1, Keys>>;
 };
 

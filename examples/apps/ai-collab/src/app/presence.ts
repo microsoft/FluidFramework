@@ -5,7 +5,7 @@
 
 import {
 	IPresence,
-	Latest,
+	StateFactory,
 	type ISessionClient,
 	type PresenceStates,
 	type PresenceStatesSchema,
@@ -18,7 +18,7 @@ export interface User {
 }
 
 const statesSchema = {
-	onlineUsers: Latest({ photo: "" } satisfies User),
+	onlineUsers: StateFactory.latest({ photo: "" } satisfies User),
 } satisfies PresenceStatesSchema;
 
 export type UserPresence = PresenceStates<typeof statesSchema>;

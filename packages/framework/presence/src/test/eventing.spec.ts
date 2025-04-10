@@ -15,11 +15,10 @@ import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import { assertFinalExpectations, prepareConnectedPresence } from "./testUtils.js";
 
 import {
-	Latest,
 	StateFactory,
 	Notifications,
 	type LatestMap,
-	type LatestValueManager,
+	type Latest,
 	type NotificationsManager,
 } from "@fluidframework/presence/alpha";
 
@@ -144,7 +143,7 @@ describe("Presence", () => {
 		let logger: EventAndErrorTrackingLogger;
 		let clock: SinonFakeTimers;
 		let presence: ReturnType<typeof prepareConnectedPresence>;
-		let latest: LatestValueManager<{ x: number; y: number; z: number }>;
+		let latest: Latest<{ x: number; y: number; z: number }>;
 		let latestMap: LatestMap<{ a: number; b: number } | { c: number; d: number }>;
 		let notificationManager: NotificationsManager<{ newId: (id: number) => void }>;
 
@@ -267,7 +266,7 @@ describe("Presence", () => {
 
 		function setupMultipleStatesWorkspaces(): void {
 			const latestsStates = presence.getStates("name:testWorkspace1", {
-				latest: Latest({ x: 0, y: 0, z: 0 }),
+				latest: StateFactory.latest({ x: 0, y: 0, z: 0 }),
 			});
 			const latesetMapStates = presence.getStates("name:testWorkspace2", {
 				latestMap: StateFactory.latestMap({ key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } }),
