@@ -180,18 +180,9 @@ export class Outbox {
 	constructor(private readonly params: IOutboxParameters) {
 		this.logger = createChildLogger({ logger: params.logger, namespace: "Outbox" });
 
-		const isCompressionEnabled =
-			this.params.config.compressionOptions.minimumBatchSizeInBytes !==
-			Number.POSITIVE_INFINITY;
-		// We need to allow infinite size batches if we enable compression
-		const hardLimit = isCompressionEnabled
-			? Number.POSITIVE_INFINITY
-			: this.params.config.maxBatchSizeInBytes;
-
-		this.mainBatch = new BatchManager({ hardLimit, canRebase: true });
-		this.blobAttachBatch = new BatchManager({ hardLimit, canRebase: true });
+		this.mainBatch = new BatchManager({ canRebase: true });
+		this.blobAttachBatch = new BatchManager({ canRebase: true });
 		this.idAllocationBatch = new BatchManager({
-			hardLimit,
 			canRebase: false,
 			ignoreBatchId: true,
 		});

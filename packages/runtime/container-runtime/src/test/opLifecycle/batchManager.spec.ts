@@ -10,10 +10,8 @@ import { BatchManager, generateBatchId } from "../../opLifecycle/index.js";
 import type { IBatchManagerOptions, LocalBatchMessage } from "../../opLifecycle/index.js";
 
 describe("BatchManager", () => {
-	const hardLimit = 950 * 1024;
 	const smallMessageSize = 10;
 	const defaultOptions: IBatchManagerOptions = {
-		hardLimit,
 		canRebase: true,
 	};
 
@@ -22,22 +20,6 @@ describe("BatchManager", () => {
 	const smallMessage = (): LocalBatchMessage => ({
 		serializedOp: generateStringOfSize(smallMessageSize),
 		referenceSequenceNumber: 0,
-	});
-
-	it("BatchManager: 'infinity' hard limit allows everything", () => {
-		const message: LocalBatchMessage = {
-			serializedOp: generateStringOfSize(1024),
-			referenceSequenceNumber: 0,
-		};
-		const batchManager = new BatchManager({
-			...defaultOptions,
-			hardLimit: Number.POSITIVE_INFINITY,
-		});
-
-		for (let i = 1; i <= 10; i++) {
-			assert.equal(batchManager.push(message, /* reentrant */ false), true);
-			assert.equal(batchManager.length, i);
-		}
 	});
 
 	for (const includeBatchId of [true, false])

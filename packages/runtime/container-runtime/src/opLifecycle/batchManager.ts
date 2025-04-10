@@ -18,7 +18,6 @@ import { LocalBatchMessage, IBatchCheckpoint, type LocalBatch } from "./definiti
 import type { BatchStartInfo } from "./remoteMessageProcessor.js";
 
 export interface IBatchManagerOptions {
-	readonly hardLimit: number; //* TODO: Remove
 	readonly compressionOptions?: ICompressionRuntimeOptions;
 
 	/**
