@@ -17,6 +17,7 @@ import {
 
 import {
 	SharedTree as SharedTreeImpl,
+	type ISharedTree,
 	type SharedTreeOptions,
 	type SharedTreeOptionsInternal,
 } from "./shared-tree/index.js";
@@ -27,7 +28,7 @@ import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttribu
 /**
  * A channel factory that creates an {@link ITree}.
  */
-export class TreeFactory implements IChannelFactory<ITree> {
+export class TreeFactory implements IChannelFactory<ISharedTree> {
 	public static Type: string = SharedTreeFactoryType;
 	public readonly type: string = SharedTreeFactoryType;
 
@@ -40,13 +41,13 @@ export class TreeFactory implements IChannelFactory<ITree> {
 		id: string,
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
-	): Promise<SharedTreeImpl> {
+	): Promise<ISharedTree> {
 		const tree = new SharedTreeImpl(id, runtime, channelAttributes, this.options);
 		await tree.load(services);
 		return tree;
 	}
 
-	public create(runtime: IFluidDataStoreRuntime, id: string): SharedTreeImpl {
+	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree {
 		const tree = new SharedTreeImpl(id, runtime, this.attributes, this.options);
 		tree.initializeLocal();
 		return tree;
