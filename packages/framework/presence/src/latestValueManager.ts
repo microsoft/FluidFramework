@@ -17,7 +17,7 @@ import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
-import type { LatestValueClientData, LatestValueData } from "./latestValueTypes.js";
+import type { LatestClientData, LatestValueData } from "./latestValueTypes.js";
 import type { Attendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
@@ -26,13 +26,13 @@ import { brandIVM } from "./valueManager.js";
  * @sealed
  * @alpha
  */
-export interface LatestValueManagerEvents<T> {
+export interface LatestEvents<T> {
 	/**
 	 * Raised when remote client's value is updated, which may be the same value.
 	 *
 	 * @eventProperty
 	 */
-	updated: (update: LatestValueClientData<T>) => void;
+	updated: (update: LatestClientData<T>) => void;
 
 	/**
 	 * Raised when local client's value is updated, which may be the same value.
@@ -57,7 +57,7 @@ export interface Latest<T> {
 	/**
 	 * Events for Latest.
 	 */
-	readonly events: Listenable<LatestValueManagerEvents<T>>;
+	readonly events: Listenable<LatestEvents<T>>;
 
 	/**
 	 * Controls for management of sending updates.
@@ -76,7 +76,7 @@ export interface Latest<T> {
 	/**
 	 * Iterable access to remote clients' values.
 	 */
-	clientValues(): IterableIterator<LatestValueClientData<T>>;
+	clientValues(): IterableIterator<LatestClientData<T>>;
 	/**
 	 * Array of known remote clients.
 	 */
@@ -90,7 +90,7 @@ export interface Latest<T> {
 class LatestValueManagerImpl<T, Key extends string>
 	implements Latest<T>, Required<ValueManager<T, InternalTypes.ValueRequiredState<T>>>
 {
-	public readonly events = createEmitter<LatestValueManagerEvents<T>>();
+	public readonly events = createEmitter<LatestEvents<T>>();
 	public readonly controls: OptionalBroadcastControl;
 
 	public constructor(
@@ -117,7 +117,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		this.events.emit("localUpdated", { value });
 	}
 
-	public *clientValues(): IterableIterator<LatestValueClientData<T>> {
+	public *clientValues(): IterableIterator<LatestClientData<T>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		for (const [attendeeId, value] of objectEntries(allKnownStates.states)) {
 			if (attendeeId !== allKnownStates.self) {

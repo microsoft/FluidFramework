@@ -43,6 +43,6 @@ export interface LatestValueData<T> {
  * @sealed
  * @alpha
  */
-export interface LatestValueClientData<T> extends LatestValueData<T> {
+export interface LatestClientData<T> extends LatestValueData<T> {
 	attendee: Attendee;
 }

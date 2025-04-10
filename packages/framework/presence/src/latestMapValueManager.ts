@@ -18,7 +18,7 @@ import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { objectEntries, objectKeys } from "./internalUtils.js";
 import type {
-	LatestValueClientData,
+	LatestClientData,
 	LatestValueData,
 	LatestValueMetadata,
 } from "./latestValueTypes.js";
@@ -56,7 +56,7 @@ export interface LatestMapClientData<
  * @alpha
  */
 export interface LatestMapItemUpdatedClientData<T, K extends string | number>
-	extends LatestValueClientData<T> {
+	extends LatestClientData<T> {
 	key: K;
 }
 
