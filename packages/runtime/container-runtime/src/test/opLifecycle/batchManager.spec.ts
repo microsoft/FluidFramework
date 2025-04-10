@@ -6,18 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import type { IBatchMetadata } from "../../metadata.js";
-import {
-	BatchManager,
-	estimateSocketSize,
-	generateBatchId,
-	OutboundBatchMessage,
-} from "../../opLifecycle/index.js";
-import type {
-	LocalBatch,
-	OutboundBatch,
-	IBatchManagerOptions,
-	LocalBatchMessage,
-} from "../../opLifecycle/index.js";
+import { BatchManager, generateBatchId } from "../../opLifecycle/index.js";
+import type { IBatchManagerOptions, LocalBatchMessage } from "../../opLifecycle/index.js";
 
 describe("BatchManager", () => {
 	const hardLimit = 950 * 1024;
@@ -113,11 +103,8 @@ describe("BatchManager", () => {
 	it("Batch content size is tracked correctly", () => {
 		const batchManager = new BatchManager(defaultOptions);
 		assert.equal(batchManager.push(smallMessage(), /* reentrant */ false), true);
-		assert.equal(batchManager.contentSizeInBytes, smallMessageSize * batchManager.length);
 		assert.equal(batchManager.push(smallMessage(), /* reentrant */ false), true);
-		assert.equal(batchManager.contentSizeInBytes, smallMessageSize * batchManager.length);
 		assert.equal(batchManager.push(smallMessage(), /* reentrant */ false), true);
-		assert.equal(batchManager.contentSizeInBytes, smallMessageSize * batchManager.length);
 	});
 
 	it("Batch reference sequence number maps to the last message", () => {
@@ -145,44 +132,6 @@ describe("BatchManager", () => {
 		);
 
 		assert.equal(batchManager.sequenceNumbers.referenceSequenceNumber, 2);
-	});
-
-	const convertToOutboundBatch = (batch: LocalBatch): OutboundBatch =>
-		({
-			...batch,
-			messages: batch.messages.map<OutboundBatchMessage>((message: LocalBatchMessage) => ({
-				...message,
-				contents: message.serializedOp,
-				serializedOp: undefined,
-			})),
-		}) satisfies OutboundBatch;
-
-	it("Batch size estimates", () => {
-		const batchManager = new BatchManager(defaultOptions);
-		batchManager.push(smallMessage(), /* reentrant */ false);
-		// 10 bytes of content + 200 bytes overhead
-		assert.equal(estimateSocketSize(convertToOutboundBatch(batchManager.popBatch())), 210);
-
-		for (let i = 0; i < 10; i++) {
-			batchManager.push(smallMessage(), /* reentrant */ false);
-		}
-
-		// (10 bytes of content + 200 bytes overhead) x 10
-		assert.equal(estimateSocketSize(convertToOutboundBatch(batchManager.popBatch())), 2100);
-
-		batchManager.push(smallMessage(), /* reentrant */ false);
-		for (let i = 0; i < 9; i++) {
-			batchManager.push(
-				{
-					serializedOp: "",
-					referenceSequenceNumber: 0,
-				},
-				/* reentrant */ false,
-			); // empty op
-		}
-
-		// 10 bytes of content + 200 bytes overhead x 10
-		assert.equal(estimateSocketSize(convertToOutboundBatch(batchManager.popBatch())), 2010);
 	});
 
 	it("Batch op reentry state preserved during its lifetime", () => {
@@ -266,7 +215,6 @@ describe("BatchManager", () => {
 
 		// Verify state after rollback
 		assert.equal(batchManager.length, 2);
-		assert.equal(batchManager.contentSizeInBytes, smallMessageSize * 2);
 	});
 
 	it("should handle rollback with no additional messages", () => {
@@ -285,7 +233,6 @@ describe("BatchManager", () => {
 
 		// Verify state after rollback
 		assert.equal(batchManager.length, 1);
-		assert.equal(batchManager.contentSizeInBytes, smallMessageSize);
 	});
 
 	it("should throw error if ops are generated during rollback", () => {

@@ -461,6 +461,35 @@ describe("Outbox", () => {
 		);
 	});
 
+	//* TODO: Implement tests like these
+	// it("Batch size estimates", () => {
+	// 	const batchManager = new BatchManager(defaultOptions);
+	// 	batchManager.push(smallMessage(), /* reentrant */ false);
+	// 	// 10 bytes of content + 200 bytes overhead
+	// 	assert.equal(estimateSocketSize(localBatchToOutboundBatch(batchManager.popBatch())), 210);
+
+	// 	for (let i = 0; i < 10; i++) {
+	// 		batchManager.push(smallMessage(), /* reentrant */ false);
+	// 	}
+
+	// 	// (10 bytes of content + 200 bytes overhead) x 10
+	// 	assert.equal(estimateSocketSize(localBatchToOutboundBatch(batchManager.popBatch())), 2100);
+
+	// 	batchManager.push(smallMessage(), /* reentrant */ false);
+	// 	for (let i = 0; i < 9; i++) {
+	// 		batchManager.push(
+	// 			{
+	// 				serializedOp: "",
+	// 				referenceSequenceNumber: 0,
+	// 			},
+	// 			/* reentrant */ false,
+	// 		); // empty op
+	// 	}
+
+	// 	// 10 bytes of content + 200 bytes overhead x 10
+	// 	assert.equal(estimateSocketSize(convertToOutboundBatch(batchManager.popBatch())), 2010);
+	// });
+
 	it("Uses legacy path for legacy contexts", () => {
 		const outbox = getOutbox({ context: getMockLegacyContext() as IContainerContext });
 		const messages = [

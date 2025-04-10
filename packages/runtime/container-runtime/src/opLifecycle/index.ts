@@ -7,7 +7,6 @@ export {
 	BatchId,
 	BatchManager,
 	BatchSequenceNumbers,
-	estimateSocketSize,
 	getEffectiveBatchId,
 	generateBatchId,
 	IBatchManagerOptions,

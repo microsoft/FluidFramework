@@ -40,7 +40,8 @@ export type OutboundBatchMessage = IBatchMessage & {
 /**
  * A batch of messages we have accumulated locally, but haven't sent to the ordering service yet.
  */
-export type LocalBatch = IBatch<LocalBatchMessage[]>;
+export type LocalBatch = Omit<IBatch<LocalBatchMessage[]>, "contentSizeInBytes">;
+//* TODO: Consider other ways to build up these types
 
 /**
  * A batch of messages that has been virtualized as needed (grouped, compressed, chunked)
