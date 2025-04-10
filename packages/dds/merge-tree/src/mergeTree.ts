@@ -1846,9 +1846,9 @@ export class MergeTree {
 			// removed blocks below the min seq will have an undefined length, and be skipped
 			// however if it is the last block in the tree we don't want to skip it, so we correctly
 			// walk down the far edge of the tree.
-			const isLastChild = childIndex === block.childCount - 1;
+			const isLastChildOfLastBlock = isLastBlock && childIndex === block.childCount - 1;
 			const len =
-				this.nodeLength(child, perspective) ?? (isLastBlock && isLastChild ? 0 : undefined);
+				this.nodeLength(child, perspective) ?? (isLastChildOfLastBlock ? 0 : undefined);
 
 			if (len === undefined) {
 				// if the seg len is undefined, the segment
@@ -1883,7 +1883,7 @@ export class MergeTree {
 						perspective,
 						stamp,
 						context,
-						isLastBlock && isLastChild,
+						isLastChildOfLastBlock,
 					);
 					hadChanges ||= insertResult.hadChanges;
 					if (insertResult.remainder === undefined) {
