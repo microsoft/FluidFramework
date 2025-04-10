@@ -7,7 +7,7 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	Client,
@@ -30,7 +30,6 @@ import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/intern
 import { v4 as uuid } from "uuid";
 
 import {
-	IIntervalCollectionOperation,
 	IMapMessageLocalMetadata,
 	SequenceOptions,
 	type IIntervalCollectionTypeOperationValue,
@@ -49,7 +48,6 @@ import {
 import {
 	CompressedSerializedInterval,
 	ISerializedInterval,
-	IntervalDeltaOpType,
 	IntervalStickiness,
 	IntervalType,
 	SequenceInterval,
@@ -351,55 +349,6 @@ export class LocalIntervalCollection {
 		interval.removePositionChangeListeners();
 	}
 }
-
-const rebase: IIntervalCollectionOperation["rebase"] = (collection, op, localOpMetadata) => {
-	const { localSeq } = localOpMetadata;
-	const rebasedValue = collection.rebaseLocalInterval(op.opName, op.value, localSeq);
-	if (rebasedValue === undefined) {
-		return undefined;
-	}
-	const rebasedOp = { ...op, value: rebasedValue };
-	return { rebasedOp, rebasedLocalOpMetadata: localOpMetadata };
-};
-
-export const opsMap: Record<IntervalDeltaOpType, IIntervalCollectionOperation> = {
-	[IntervalDeltaOpType.ADD]: {
-		process: (collection, params, local, op, localOpMetadata) => {
-			// if params is undefined, the interval was deleted during
-			// rebasing
-			if (!params) {
-				return;
-			}
-			assert(op !== undefined, 0x3fb /* op should exist here */);
-			collection.ackAdd(params, local, op, localOpMetadata);
-		},
-		rebase,
-	},
-
-	[IntervalDeltaOpType.DELETE]: {
-		process: (collection, params, local, op) => {
-			assert(op !== undefined, 0x3fc /* op should exist here */);
-			collection.ackDelete(params, local, op);
-		},
-		rebase: (collection, op, localOpMetadata) => {
-			// Deletion of intervals is based on id, so requires no rebasing.
-			return { rebasedOp: op, rebasedLocalOpMetadata: localOpMetadata };
-		},
-	},
-
-	[IntervalDeltaOpType.CHANGE]: {
-		process: (collection, params, local, op, localOpMetadata) => {
-			// if params is undefined, the interval was deleted during
-			// rebasing
-			if (!params) {
-				return;
-			}
-			assert(op !== undefined, 0x3fd /* op should exist here */);
-			collection.ackChange(params, local, op, localOpMetadata);
-		},
-		rebase,
-	},
-};
 
 /**
  * @legacy
@@ -1126,6 +1075,79 @@ export class IntervalCollection
 		return true;
 	}
 
+	public process(
+		op: IIntervalCollectionTypeOperationValue,
+		local: boolean,
+		message: ISequencedDocumentMessage,
+		localOpMetadata: IMapMessageLocalMetadata,
+	) {
+		const { opName, value } = op;
+		switch (opName) {
+			case "add": {
+				this.ackAdd(value, local, message, localOpMetadata);
+				break;
+			}
+
+			case "delete": {
+				this.ackDelete(value, local, message);
+				break;
+			}
+
+			case "change": {
+				this.ackChange(value, local, message, localOpMetadata);
+				break;
+			}
+			default:
+				unreachableCase(opName);
+		}
+	}
+
+	public resubmitMessage(
+		op: IIntervalCollectionTypeOperationValue,
+		localOpMetadata: IMapMessageLocalMetadata,
+	): void {
+		const { opName, value } = op;
+		const { localSeq } = localOpMetadata;
+		const rebasedValue =
+			opName === "delete" ? value : this.rebaseLocalInterval(opName, value, localSeq);
+		if (rebasedValue === undefined) {
+			return undefined;
+		}
+
+		this.submitDelta({ opName, value: rebasedValue as any }, localOpMetadata);
+	}
+
+	public applyStashedOp(op: IIntervalCollectionTypeOperationValue): void {
+		const { opName, value } = op;
+		const { id, properties } = getSerializedProperties(value);
+		switch (opName) {
+			case "add": {
+				this.add({
+					id,
+					// Todo: we should improve typing so we know add ops always have start and end
+					start: toSequencePlace(value.start, value.startSide),
+					end: toSequencePlace(value.end, value.endSide),
+					props: properties,
+				});
+				break;
+			}
+			case "change": {
+				this.change(id, {
+					start: toOptionalSequencePlace(value.start, value.startSide),
+					end: toOptionalSequencePlace(value.end, value.endSide),
+					props: properties,
+				});
+				break;
+			}
+			case "delete": {
+				this.removeIntervalById(id);
+				break;
+			}
+			default:
+				throw new Error("unknown ops should not be stashed");
+		}
+	}
+
 	private rebasePositionWithSegmentSlide(
 		pos: number | "start" | "end",
 		seqNumberFrom: number,
@@ -1577,7 +1599,7 @@ export class IntervalCollection
 	}
 
 	public ackChange(
-		serializedInterval: ISerializedInterval,
+		serializedInterval: SerializedIntervalDelta,
 		local: boolean,
 		op: ISequencedDocumentMessage,
 		localOpMetadata: IMapMessageLocalMetadata | undefined,
@@ -1911,7 +1933,7 @@ export class IntervalCollection
 	}
 
 	public ackDelete(
-		serializedInterval: ISerializedInterval,
+		serializedInterval: SerializedIntervalDelta,
 		local: boolean,
 		op: ISequencedDocumentMessage,
 	): void {
