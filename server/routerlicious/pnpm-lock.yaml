@@ -220,8 +220,8 @@ importers:
         specifier: ^2.4.11
         version: 2.4.11
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.0
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: 0.52.0-315632
@@ -262,9 +262,6 @@ importers:
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.2
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -420,8 +417,8 @@ importers:
         specifier: ^11.0.0
         version: 11.0.0
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.0
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: 0.52.0-315632
@@ -456,9 +453,6 @@ importers:
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.2
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -556,8 +550,8 @@ importers:
         specifier: ^0.1.0
         version: 0.1.0
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.0
+        specifier: ^11.1.0
+        version: 11.1.0
       ws:
         specifier: ^7.5.10
         version: 7.5.10
@@ -580,9 +574,6 @@ importers:
       '@types/mocha':
         specifier: ^10.0.1
         version: 10.0.1
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.2
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -871,8 +862,8 @@ importers:
         specifier: ^0.1.0
         version: 0.1.0
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.0
+        specifier: ^11.1.0
+        version: 11.1.0
       winston:
         specifier: ^3.6.0
         version: 3.9.0
@@ -949,9 +940,6 @@ importers:
       '@types/supertest':
         specifier: ^2.0.5
         version: 2.0.12
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.2
       '@types/ws':
         specifier: ^6.0.1
         version: 6.0.4
@@ -1052,8 +1040,8 @@ importers:
         specifier: ^0.1.3
         version: 0.1.3
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.0
+        specifier: ^11.1.0
+        version: 11.1.0
       winston:
         specifier: ^3.6.0
         version: 3.9.0
@@ -1094,9 +1082,6 @@ importers:
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.2
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -1161,8 +1146,8 @@ importers:
         specifier: ^0.1.0
         version: 0.1.0
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.0
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: 0.52.0-315632
@@ -1194,9 +1179,6 @@ importers:
       '@types/node':
         specifier: ^18.19.39
         version: 18.19.39
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.2
       axios-mock-adapter:
         specifier: ^1.19.0
         version: 1.21.5(axios@1.8.4(debug@4.3.4))
@@ -1592,8 +1574,8 @@ importers:
         specifier: ^4.2.4
         version: 4.2.4
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.0
+        specifier: ^11.1.0
+        version: 11.1.0
       winston:
         specifier: ^3.6.0
         version: 3.9.0
@@ -1637,9 +1619,6 @@ importers:
       '@types/supertest':
         specifier: ^2.0.5
         version: 2.0.12
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.2
       axios:
         specifier: ^1.8.4
         version: 1.8.4(debug@4.3.4)
@@ -1683,8 +1662,8 @@ importers:
         specifier: ^8.1.0
         version: 8.1.0
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.0
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: 0.52.0-315632
@@ -1713,9 +1692,6 @@ importers:
       '@types/supertest':
         specifier: ^2.0.5
         version: 2.0.12
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.2
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -1786,8 +1762,8 @@ importers:
         specifier: ^1.0.0
         version: 1.0.1
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.0
+        specifier: ^11.1.0
+        version: 11.1.0
       winston:
         specifier: ^3.6.0
         version: 3.9.0
@@ -1843,9 +1819,6 @@ importers:
       '@types/supertest':
         specifier: ^2.0.5
         version: 2.0.12
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.2
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -1919,8 +1892,8 @@ importers:
         specifier: ^1.1.3
         version: 1.1.3
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.0
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: 0.52.0-315632
@@ -1952,9 +1925,6 @@ importers:
       '@types/string-hash':
         specifier: ^1.1.1
         version: 1.1.1
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.2
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -2076,8 +2046,8 @@ importers:
         specifier: ^1.0.0
         version: 1.0.1
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
       winston:
         specifier: ^3.6.0
         version: 3.9.0
@@ -2136,9 +2106,6 @@ importers:
       '@types/split':
         specifier: ^0.3.28
         version: 0.3.28
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.2
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -2555,6 +2522,7 @@ packages:
   '@humanwhocodes/config-array@0.11.14':
     resolution: {integrity: sha512-3T8LkOmg45BV5FICb15QQMsyUSWrQ8AygVfC7ZG32zOalnqrilm018ZVCw0eapXux8FtA33q8PSRSstjee3jSg==}
     engines: {node: '>=10.10.0'}
+    deprecated: Use @eslint/config-array instead
 
   '@humanwhocodes/module-importer@1.0.1':
     resolution: {integrity: sha512-bxveV4V8v5Yb4ncFTT3rPSgZBOpCkjfK0y4oVVVJwIuDVBRMDXrPyXRL988i5ap9m9bnyEEjWfm5WkBmtffLfA==}
@@ -2562,6 +2530,7 @@ packages:
 
   '@humanwhocodes/object-schema@2.0.2':
     resolution: {integrity: sha512-6EwiSjwWYP7pTckG6I5eyFANjPhmPjUX9JRLUSfNPC7FX7zK9gyZAfUEaECL6ALTpGX5AjnBq3C9XmVWPitNpw==}
+    deprecated: Use @eslint/object-schema instead
 
   '@inquirer/checkbox@4.0.6':
     resolution: {integrity: sha512-PgP35JfmGjHU0LSXOyRew0zHuA9N6OJwOlos1fZ20b7j8ISeAdib3L+n0jIxBtX958UeEpte6xhG/gxJ5iUqMw==}
@@ -3491,9 +3460,6 @@ packages:
 
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
-
-  '@types/uuid@9.0.2':
-    resolution: {integrity: sha512-kNnC1GFBLuhImSnV7w4njQkUiJi0ZXUycu1rUaouPqiKlXkh77JKgdRnTAp1x5eBwcIwbtI+3otwzuIDEuDoxQ==}
 
   '@types/webidl-conversions@7.0.3':
     resolution: {integrity: sha512-CiJJvcRtIgzadHCYXw7dqEnMNRjhGZlYK05Mj9OyktqV8uVT8fD2BFOB7S1uwBE3Kj2Z+4UyPmFw/Ixgw/LAlA==}
@@ -5000,6 +4966,7 @@ packages:
   eslint@8.55.0:
     resolution: {integrity: sha512-iyUUAM0PCKj5QpwGfmCAG9XXbZCWsqP/eWAWrG/W0umvjuLRBECwSFdt+rCntju0xEH7teIABPwXpahftIaTdA==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
 
   espree@9.6.1:
@@ -5420,6 +5387,7 @@ packages:
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
+    deprecated: Glob versions prior to v9 are no longer supported
 
   glob@8.1.0:
     resolution: {integrity: sha512-r8hpEjiQEYlF2QU0df3dS+nxxSIreXQS1qRhMJM0Q5NDdR386C7jb7Hwwod8Fgiuex+k0GFjgft18yvxm5XoCQ==}
@@ -5649,6 +5617,7 @@ packages:
 
   inflight@1.0.6:
     resolution: {integrity: sha512-k92I/b08q4wvFscXCLvqfsHCrjrF7yiXsQuIVvVE7N82W3+aqpzuUdBbfhWcy/FZR3/4IgflMgKLOsvPDrGCJA==}
+    deprecated: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
 
   inherits@2.0.4:
     resolution: {integrity: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==}
@@ -6153,10 +6122,12 @@ packages:
   level-codec@9.0.2:
     resolution: {integrity: sha512-UyIwNb1lJBChJnGfjmO0OR+ezh2iVu1Kas3nvBS/BzGnx79dv6g7unpKIDNPMhfdTEGoc7mC8uAu51XEtX+FHQ==}
     engines: {node: '>=6'}
+    deprecated: Superseded by level-transcoder (https://github.com/Level/community#faq)
 
   level-errors@2.0.1:
     resolution: {integrity: sha512-UVprBJXite4gPS+3VznfgDSU8PTRuVX0NXwoWW50KLxd2yw4Y1t2JUR5In1itQnudZqRMT9DlAM3Q//9NCjCFw==}
     engines: {node: '>=6'}
+    deprecated: Superseded by abstract-level (https://github.com/Level/community#faq)
 
   level-iterator-stream@2.0.3:
     resolution: {integrity: sha512-I6Heg70nfF+e5Y3/qfthJFexhRw/Gi3bIymCoXAlijZdAcLaPuWSJs3KXyTYf23ID6g0o2QF62Yh+grOXY3Rig==}
@@ -6224,6 +6195,7 @@ packages:
 
   lodash.get@4.4.2:
     resolution: {integrity: sha512-z+Uw/vLuy6gQe8cfaFWD7p0wVv8fJl3mbzXh33RS+0oW2wvUqiRXiQ69gLWSLpgB5/6sU+r6BlQR0MBILadqTQ==}
+    deprecated: This package is deprecated. Use the optional chaining (?.) operator instead.
 
   lodash.includes@4.3.0:
     resolution: {integrity: sha512-W3Bx6mdkRTGtlJISOvVD/lbqjTlPPUDTMnlXZFnVwi9NKJ6tiAk6LVdlhZMm17VZisqhKcgzpO5Wz91PCt5b0w==}
@@ -6236,6 +6208,7 @@ packages:
 
   lodash.isequal@4.5.0:
     resolution: {integrity: sha512-pDo3lu8Jhfjqls6GkMgpahsF9kCyayhgykjyLMNFTKWrpVdAQtYyB4muAMWozBB4ig/dtWAmsMxLEI8wuz+DYQ==}
+    deprecated: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
 
   lodash.isinteger@4.0.4:
     resolution: {integrity: sha512-DBwtEWN2caHQ9/imiNeEA5ys1JoRtRfY3d7V9wkqtbycnAmTvRRmbHKDV4a0EYc678/dia0jrte4tjYwVBaZUA==}
@@ -6873,6 +6846,7 @@ packages:
 
   npmlog@4.1.2:
     resolution: {integrity: sha512-2uUqazuKlTaSI/dC8AzicUck7+IrEaOnN/e0jd3Xtt1KcGpwx30v50mL7oPyr/h9bL3E4aZccVwpwP+5W9Vjkg==}
+    deprecated: This package is no longer supported.
 
   npmlog@6.0.2:
     resolution: {integrity: sha512-/vBvz5Jfr9dT/aFWd0FIRf+T/Q2WBsLENygUaFUqstqsycmZAP/t5BvFJTK0viFmSUxiUKTUplWy5vt+rvKIxg==}
@@ -8084,7 +8058,7 @@ packages:
   superagent@3.8.3:
     resolution: {integrity: sha512-GLQtLMCoEIK4eDv6OGtkOoSMt3D+oq0y3dsxMuYuDvaNUvuT8eFBuLmfR0iYYzHC1e8hpzC6ZsxbuP6DIalMFA==}
     engines: {node: '>= 4.0'}
-    deprecated: Please upgrade to v7.0.2+ of superagent.  We have fixed numerous issues with streams, form-data, attach(), filesystem errors not bubbling up (ENOENT on attach()), and all tests are now passing.  See the releases tab for more information at <https://github.com/visionmedia/superagent/releases>.
+    deprecated: Please upgrade to v9.0.0+ as we have fixed a public vulnerability with formidable dependency. Note that v9.0.0+ requires Node.js v14.18.0+. See https://github.com/ladjs/superagent/pull/1800 for insight. This project is supported and maintained by the team at Forward Email @ https://forwardemail.net
 
   supertest@3.4.2:
     resolution: {integrity: sha512-WZWbwceHUo2P36RoEIdXvmqfs47idNNZjCuJOqDz6rvtkk8ym56aU5oglORCpPeXGxT7l9rkJ41+O1lffQXYSA==}
@@ -8508,13 +8482,13 @@ packages:
     resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
 
+  uuid@11.1.0:
+    resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
+    hasBin: true
+
   uuid@3.4.0:
     resolution: {integrity: sha512-HjSDRw6gZE5JMggctHBcjVak08+KEVhSIiDzFnT9S9aegmp85S/bReBVTb4QTFaRNptJ9kuYaNhnbNEOkbKb/A==}
     deprecated: Please upgrade  to version 7 or higher.  Older versions may use Math.random() in certain circumstances, which is known to be problematic.  See https://v8.dev/blog/math-random for details.
-    hasBin: true
-
-  uuid@9.0.0:
-    resolution: {integrity: sha512-MXcSTerfPa4uqyzStbRoTgt5XIe3x5+42+q1sDuy3R5MDk66URdLMOZe5aPX/SQd+kuYAh0FdP/pO28IkQyTeg==}
     hasBin: true
 
   uuid@9.0.1:
@@ -11922,8 +11896,6 @@ snapshots:
   '@types/ungap__structured-clone@1.2.0': {}
 
   '@types/unist@3.0.3': {}
-
-  '@types/uuid@9.0.2': {}
 
   '@types/webidl-conversions@7.0.3': {}
 
@@ -17935,9 +17907,9 @@ snapshots:
 
   utils-merge@1.0.1: {}
 
-  uuid@3.4.0: {}
+  uuid@11.1.0: {}
 
-  uuid@9.0.0: {}
+  uuid@3.4.0: {}
 
   uuid@9.0.1: {}
 
