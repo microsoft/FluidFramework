@@ -22,8 +22,6 @@ The following API changes have been made to improve clarity and consistency:
 | `IPresence` | `Presence` |
 | `ISessionClient` | `Attendee` |
 | `SessionClientStatus` | `AttendeeStatus` |
-| `SpecificSessionClientId` | `SpecificAttendeeId` |
-| `SpecificSessionClient` | `SpecificAttendee` |
 | `acquirePresence` | `getPresence` |
 | `acquirePresenceViaDataObject` | `getPresenceViaDataObject` |
 
@@ -40,8 +38,6 @@ The following API changes have been made to improve clarity and consistency:
     "IPresence": "Presence",
     "ISessionClient": "Attendee",
     "SessionClientStatus": "AttendeeStatus",
-    "SpecificSessionClientId": "SpecificAttendeeId",
-    "SpecificSessionClient": "SpecificAttendee",
     "acquirePresence": "getPresence",
     "acquirePresenceViaDataObject": "getPresenceViaDataObject"
 }
