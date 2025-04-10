@@ -27,6 +27,7 @@ import { Deferred } from "@fluidframework/core-utils/internal";
 import { IClientDetails, SummaryType } from "@fluidframework/driver-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
+import { isFluidHandleInternalPlaceholder } from "@fluidframework/runtime-utils/internal";
 import {
 	LoggingError,
 	MockLogger,
@@ -104,6 +105,7 @@ export class MockRuntime
 			isBlobDeleted: (blobPath: string) => this.isBlobDeleted(blobPath),
 			runtime: this,
 			stashedBlobs: stashed[1] as IPendingBlobs | undefined,
+			createBlobPlaceholders: false,
 		});
 	}
 
@@ -160,7 +162,10 @@ export class MockRuntime
 	): Promise<ArrayBufferLike> {
 		const pathParts = blobHandle.absolutePath.split("/");
 		const blobId = pathParts[2];
-		return this.blobManager.getBlob(blobId);
+		const placeholder = isFluidHandleInternalPlaceholder(blobHandle)
+			? blobHandle.placeholder
+			: false;
+		return this.blobManager.getBlob(blobId, placeholder);
 	}
 
 	public async getPendingLocalState(): Promise<(unknown[] | IPendingBlobs | undefined)[]> {
@@ -743,7 +748,7 @@ describe("BlobManager", () => {
 		});
 
 		await assert.rejects(
-			async () => runtime.blobManager.getBlob(someId),
+			async () => runtime.blobManager.getBlob(someId, false),
 			(e: Error) => e.message === "BOOM!",
 			"Expected getBlob to throw with test error message",
 		);
