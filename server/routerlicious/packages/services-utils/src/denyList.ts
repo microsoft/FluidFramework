@@ -7,7 +7,6 @@ import { IDenyList } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import type { RequestHandler } from "express";
 
-// TODO: Remove duplicate code in Historian
 export class DenyList implements IDenyList {
 	private readonly blockedDocuments: Set<string>;
 	private readonly blockedTenants: Set<string>;
