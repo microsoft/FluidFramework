@@ -33,7 +33,6 @@ import {
 	type Log,
 	type SharedTreeSemanticAgent,
 } from "./agent.js";
-import { objectIdType, objectIdKey } from "./agentEditTypes.js";
 import { IdGenerator } from "./idGenerator.js";
 import { generateEditTypesForPrompt } from "./typeGeneration.js";
 import {
@@ -103,7 +102,6 @@ class SharedTreeFunctioningAgent<
 					set root(value: InsertableField<TRoot>) {
 						branch.root = value;
 					},
-					idMap: idGenerator,
 					create,
 				};
 				const code = processLlmCode(functionCode);
@@ -173,21 +171,6 @@ class SharedTreeFunctioningAgent<
 			treeObjects.push({ type, id });
 		});
 
-		const objectIdExplanation =
-			treeObjects[0] === undefined
-				? ""
-				: `All objects within the initial tree above have a unique \`${objectIdType}\`, which is printed as a comment in the JSON.
-You can use the \`${objectIdType}\` as the lookup key in the readonly JavaScript Map<${objectIdType}, object>, which is provided via the "idMap" property to the first argument of the \`${functionName}\` function.
-For example:
-
-\`\`\`javascript
-function ${functionName}({ root, idMap, create }) {
-	// This retrieves the ${treeObjects[0].type} object with the ${objectIdType} "${treeObjects[0].id}" in the initial tree.
-	const ${uncapitalize(treeObjects[0].type)} = idMap.get("${treeObjects[0].id}");
-	// ...
-}
-\`\`\`\n\n`;
-
 		const builderExplanation =
 			treeObjects[0] === undefined
 				? ""
@@ -196,7 +179,7 @@ The builders are available on the "create" property on the first argument of the
 For example:
 
 \`\`\`javascript
-function ${functionName}({ root, idMap, create }) {
+function ${functionName}({ root, create }) {
 	// This creates a new ${treeObjects[0].type} object:
 	const ${uncapitalize(treeObjects[0].type)} = create.${treeObjects[0].type}({ /* ...properties... */ });
 	// Don't do this:
@@ -220,7 +203,7 @@ ${stringified}
 
 You may set the \`root\` property to be a new root object if necessary, but you must ensure that the new object is one of the types allowed at the root of the tree (\`${rootTypes.map((t) => getFriendlySchemaName(t)).join(" | ")}\`).
 
-${objectIdExplanation}### Editing Arrays
+### Editing Arrays
 
 There is a notable restriction: the arrays in the tree cannot be mutated in the normal way.
 Instead, they must be mutated via methods on the following TypeScript interface:
@@ -252,14 +235,16 @@ ${builderExplanation}Finally, double check that the edits would accomplish the u
 			id: string,
 		) => object | void,
 	): string {
+		const indexReplacementKey = "_27bb216b474d45e6aaee14d1ec267b96";
 		const stringified = super.stringifyTree(root, idGenerator, (object, id) => {
+			const key = Tree.key(object);
 			return {
-				[objectIdKey]: id,
+				[indexReplacementKey]: typeof key === "number" ? key : undefined,
 				...(visitObject?.(object, id) ?? object),
 			};
 		});
 
-		return stringified.replace(new RegExp(`"${objectIdKey}":`, "g"), `// ${objectIdType}:`);
+		return stringified.replace(new RegExp(`"${indexReplacementKey}":`, "g"), `// Index:`);
 	}
 }
 
@@ -292,7 +277,7 @@ function processLlmCode(code: string): string {
  * @privateRemarks TODO: How do we keep this in sync with the actual `TreeArrayNode` docs if/when those docs change?
  */
 function getTreeArrayNodeDocumentation(typeName: string): string {
-	return `/** A special array which implements 'readonly T[]' and provides custom array mutation APIs. */
+	return `/** A special type of array which implements 'readonly T[]' (i.e. it supports all read-only JS array methods) and provides custom array mutation APIs. */
 export interface ${typeName}<T> extends ReadonlyArray<T> {
 	/**
 	 * Inserts new item(s) at a specified location.
@@ -301,18 +286,6 @@ export interface ${typeName}<T> extends ReadonlyArray<T> {
 	 * @throws Throws if \`index\` is not in the range [0, \`array.length\`).
 	 */
 	insertAt(index: number, ...value: readonly T[]): void;
-
-	/**
-	 * Inserts new item(s) at the start of the array.
-	 * @param value - The content to insert.
-	 */
-	insertAtStart(...value: readonly T[]): void;
-
-	/**
-	 * Inserts new item(s) at the end of the array.
-	 * @param value - The content to insert.
-	 */
-	insertAtEnd(...value: readonly T[]): void;
 
 	/**
 	 * Removes the item at the specified location.
@@ -338,78 +311,6 @@ export interface ${typeName}<T> extends ReadonlyArray<T> {
 	removeRange(start?: number, end?: number): void;
 
 	/**
-	 * Moves the specified item to the start of the array.
-	 * @param sourceIndex - The index of the item to move.
-	 * @throws Throws if \`sourceIndex\` is not in the range [0, \`array.length\`).
-	 */
-	moveToStart(sourceIndex: number): void;
-
-	/**
-	 * Moves the specified item to the start of the array.
-	 * @param sourceIndex - The index of the item to move.
-	 * @param source - The source array to move the item out of.
-	 * @throws Throws if \`sourceIndex\` is not in the range [0, \`array.length\`).
-	 */
-	moveToStart(sourceIndex: number, source: ${typeName}<T>): void;
-
-	/**
-	 * Moves the specified item to the end of the array.
-	 * @param sourceIndex - The index of the item to move.
-	 * @throws Throws if \`sourceIndex\` is not in the range [0, \`array.length\`).
-	 */
-	moveToEnd(sourceIndex: number): void;
-
-	/**
-	 * Moves the specified item to the end of the array.
-	 * @param sourceIndex - The index of the item to move.
-	 * @param source - The source array to move the item out of.
-	 * @throws Throws if \`sourceIndex\` is not in the range [0, \`array.length\`).
-	 */
-	moveToEnd(sourceIndex: number, source: ${typeName}<T>): void;
-
-	/**
-	 * Moves the specified item to the desired location in the array.
-	 *
-	 * WARNING - This API is easily misused.
-	 * Please read the documentation for the \`destinationGap\` parameter carefully.
-	 *
-	 * @param destinationGap - The location *between* existing items that the moved item should be moved to.
-	 *
-	 * WARNING - \`destinationGap\` describes a location between existing items *prior to applying the move operation*.
-	 *
-	 * For example, if the array contains items \`[(A, B, C)]\` before the move, the \`destinationGap\` must be one of the following:
-	 *
-	 * - \`0\` (between the start of the array and \`A\`'s original position)
-	 * - \`1\` (between \`A\`'s original position and \`B\`'s original position)
-	 * - \`2\` (between \`B\`'s original position and \`C\`'s original position)
-	 * - \`3\` (between \`C\`'s original position and the end of the array)
-	 *
-	 * So moving \`A\` between \`B\` and \`C\` would require \`destinationGap\` to be \`2\`.
-	 *
-	 * This interpretation of \`destinationGap\` makes it easy to specify the desired destination relative to a sibling item that is not being moved,
-	 * or relative to the start or end of the array:
-	 *
-	 * - Move to the start of the array: \`array.moveToIndex(0, ...)\` (see also \`moveToStart\`)
-	 * - Move to before some item X: \`array.moveToIndex(indexOfX, ...)\`
-	 * - Move to after some item X: \`array.moveToIndex(indexOfX + 1, ...)\`
-	 * - Move to the end of the array: \`array.moveToIndex(array.length, ...)\` (see also \`moveToEnd\`)
-	 *
-	 * This interpretation of \`destinationGap\` does however make it less obvious how to move an item relative to its current position:
-	 *
-	 * - Move item B before its predecessor: \`array.moveToIndex(indexOfB - 1, ...)\`
-	 * - Move item B after its successor: \`array.moveToIndex(indexOfB + 2, ...)\`
-	 *
-	 * Notice the asymmetry between \`-1\` and \`+2\` in the above examples.
-	 * In such scenarios, it can often be easier to approach such edits by swapping adjacent items:
-	 * If items A and B are adjacent, such that A precedes B,
-	 * then they can be swapped with \`array.moveToIndex(indexOfA, indexOfB)\`.
-	 *
-	 * @param sourceIndex - The index of the item to move.
-	 * @throws Throws if any of the input indices are not in the range [0, \`array.length\`).
-	 */
-	moveToIndex(destinationGap: number, sourceIndex: number): void;
-
-	/**
 	 * Moves the specified item to the desired location in the array.
 	 *
 	 * WARNING - This API is easily misused.
@@ -447,51 +348,11 @@ export interface ${typeName}<T> extends ReadonlyArray<T> {
 	 * then they can be swapped with \`array.moveToIndex(indexOfA, indexOfB)\`.
 	 *
 	 * @param sourceIndex - The index of the item to move.
-	 * @param source - The source array to move the item out of.
+	 * @param source - The optional source array to move the item out of (defaults to this array).
 	 * @throws Throws if any of the source index is not in the range [0, \`array.length\`),
 	 * or if the index is not in the range [0, \`array.length\`].
 	 */
-	moveToIndex(destinationGap: number, sourceIndex: number, source: ${typeName}<T>): void;
-
-	/**
-	 * Moves the specified items to the start of the array.
-	 * @param sourceStart - The starting index of the range to move (inclusive).
-	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @throws Throws if either of the input indices are not in the range [0, \`array.length\`) or if \`sourceStart\` is greater than \`sourceEnd\`.
-	 * if any of the input indices are not in the range [0, \`array.length\`], or if \`sourceStart\` is greater than \`sourceEnd\`.
-	 */
-	moveRangeToStart(sourceStart: number, sourceEnd: number): void;
-
-	/**
-	 * Moves the specified items to the start of the array.
-	 * @param sourceStart - The starting index of the range to move (inclusive).
-	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @param source - The source array to move items out of.
-	 * @throws Throws if the types of any of the items being moved are not allowed in the destination array,
-	 * if either of the input indices are not in the range [0, \`array.length\`) or if \`sourceStart\` is greater than \`sourceEnd\`.
-	 * if any of the input indices are not in the range [0, \`array.length\`], or if \`sourceStart\` is greater than \`sourceEnd\`.
-	 */
-	moveRangeToStart(sourceStart: number, sourceEnd: number, source: ${typeName}<T>): void;
-
-	/**
-	 * Moves the specified items to the end of the array.
-	 * @param sourceStart - The starting index of the range to move (inclusive).
-	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @throws Throws if either of the input indices are not in the range [0, \`array.length\`) or if \`sourceStart\` is greater than \`sourceEnd\`.
-	 * if any of the input indices are not in the range [0, \`array.length\`], or if \`sourceStart\` is greater than \`sourceEnd\`.
-	 */
-	moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
-
-	/**
-	 * Moves the specified items to the end of the array.
-	 * @param sourceStart - The starting index of the range to move (inclusive).
-	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @param source - The source array to move items out of.
-	 * @throws Throws if the types of any of the items being moved are not allowed in the destination array,
-	 * if either of the input indices are not in the range [0, \`array.length\`) or if \`sourceStart\` is greater than \`sourceEnd\`.
-	 * if any of the input indices are not in the range [0, \`array.length\`], or if \`sourceStart\` is greater than \`sourceEnd\`.
-	 */
-	moveRangeToEnd(sourceStart: number, sourceEnd: number, source: ${typeName}<T>): void;
+	moveToIndex(destinationGap: number, sourceIndex: number, source?: ${typeName}<T>): void;
 
 	/**
 	 * Moves the specified items to the desired location within the array.
@@ -532,51 +393,7 @@ export interface ${typeName}<T> extends ReadonlyArray<T> {
 	 *
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @throws Throws if any of the input indices are not in the range [0, \`array.length\`) or if \`sourceStart\` is greater than \`sourceEnd\`.
-	 * if any of the input indices are not in the range [0, \`array.length\`], or if \`sourceStart\` is greater than \`sourceEnd\`.
-	 */
-	moveRangeToIndex(destinationGap: number, sourceStart: number, sourceEnd: number): void;
-
-	/**
-	 * Moves the specified items to the desired location within the array.
-	 *
-	 * WARNING - This API is easily misused.
-	 * Please read the documentation for the \`destinationGap\` parameter carefully.
-	 *
-	 * @param destinationGap - The location *between* existing items that the moved item should be moved to.
-	 *
-	 * WARNING - \`destinationGap\` describes a location between existing items *prior to applying the move operation*.
-	 *
-	 * For example, if the array contains items \`[A, B, C]\` before the move, the \`destinationGap\` must be one of the following:
-	 *
-	 * - \`0\` (between the start of the array and \`A\`'s original position)
-	 * - \`1\` (between \`A\`'s original position and \`B\`'s original position)
-	 * - \`2\` (between \`B\`'s original position and \`C\`'s original position)
-	 * - \`3\` (between \`C\`'s original position and the end of the array)
-	 *
-	 * So moving \`A\` between \`B\` and \`C\` would require \`destinationGap\` to be \`2\`.
-	 *
-	 * This interpretation of \`destinationGap\` makes it easy to specify the desired destination relative to a sibling item that is not being moved,
-	 * or relative to the start or end of the array:
-	 *
-	 * - Move to the start of the array: \`array.moveToIndex(0, ...)\` (see also \`moveToStart\`)
-	 * - Move to before some item X: \`array.moveToIndex(indexOfX, ...)\`
-	 * - Move to after some item X: \`array.moveToIndex(indexOfX + 1\`, ...)
-	 * - Move to the end of the array: \`array.moveToIndex(array.length, ...)\` (see also \`moveToEnd\`)
-	 *
-	 * This interpretation of \`destinationGap\` does however make it less obvious how to move an item relative to its current position:
-	 *
-	 * - Move item B before its predecessor: \`array.moveToIndex(indexOfB - 1, ...)\`
-	 * - Move item B after its successor: \`array.moveToIndex(indexOfB + 2, ...)\`
-	 *
-	 * Notice the asymmetry between \`-1\` and \`+2\` in the above examples.
-	 * In such scenarios, it can often be easier to approach such edits by swapping adjacent items:
-	 * If items A and B are adjacent, such that A precedes B,
-	 * then they can be swapped with \`array.moveToIndex(indexOfA, indexOfB)\`.
-	 *
-	 * @param sourceStart - The starting index of the range to move (inclusive).
-	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @param source - The source array to move items out of.
+	 * @param source - The optional source array to move items out of (defaults to this array).
 	 * @throws Throws if the types of any of the items being moved are not allowed in the destination array,
 	 * if any of the input indices are not in the range [0, \`array.length\`], or if \`sourceStart\` is greater than \`sourceEnd\`.
 	 */
@@ -584,13 +401,8 @@ export interface ${typeName}<T> extends ReadonlyArray<T> {
 		destinationGap: number,
 		sourceStart: number,
 		sourceEnd: number,
-		source: ${typeName}<T>,
+		source?: ${typeName}<T>,
 	): void;
-
-	/**
-	 * Returns a custom IterableIterator which throws usage errors if concurrent editing and iteration occurs.
-	 */
-	values(): IterableIterator<T>;
 }`;
 }
 

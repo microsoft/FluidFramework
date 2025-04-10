@@ -63,6 +63,9 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 
 	// TODO: it's weird that this is called by subclasses. Refactor to make it more robust.
 	protected setPrompting(): void {
+		if (this.#prompting !== undefined) {
+			this.prompting.branch.dispose();
+		}
 		this.#prompting = {
 			branch: this.treeView.fork(),
 			idGenerator: new IdGenerator(),
@@ -224,6 +227,7 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 		return JSON.stringify(
 			root,
 			(_, value: unknown) => {
+				// TODO: Is this array check correct? What about POJO array nodes?
 				if (typeof value === "object" && !Array.isArray(value) && value !== null) {
 					const objectNode = value as TreeObjectNode<
 						RestrictiveStringRecord<ImplicitFieldSchema>

@@ -212,10 +212,11 @@ export function describeIntegrationTests(
 		});
 
 		after(() => {
+			const filteredResults = results.filter((r) => r.name !== "");
 			assert(startTime !== undefined, "Expected startTime to be set");
 			let table = "| Test Name | Provider | Editing Type | Score | Elapsed Time (seconds) |\n";
 			table += "| --- | --- | --- | ---:| ---:|\n";
-			for (const result of results.filter((r) => r.name !== "")) {
+			for (const result of filteredResults) {
 				table += `| ${result.name} | ${result.provider} | ${result.editingType} | ${(result.score * 100).toFixed(2)}% | ${Math.ceil(result.duration / 1000)} |\n`;
 			}
 			const resultsFile = openSync(
@@ -225,7 +226,7 @@ export function describeIntegrationTests(
 			appendFileSync(resultsFile, "# Results\n\n", { encoding: "utf8" });
 			appendFileSync(
 				resultsFile,
-				`Total score: ${(results.reduce((a, b) => a + b.score, 0) * 100).toFixed(2)}%\n\n`,
+				`Total score: ${((filteredResults.reduce((a, b) => a + b.score, 0) / filteredResults.length) * 100).toFixed(2)}%\n\n`,
 			);
 			appendFileSync(resultsFile, "## Test Cases\n\n", { encoding: "utf8" });
 			appendFileSync(resultsFile, table, { encoding: "utf8" });
@@ -256,7 +257,7 @@ export function describeIntegrationTests(
 					}
 				}
 			}
-			await Promise.allSettled(promises);
+			await handleAllSettledResults(promises);
 		});
 
 		for (const editingType of ["editing", "functioning"] as const) {
@@ -279,7 +280,7 @@ export function describeIntegrationTests(
 								promises.push(runTest(test, provider, editingType, result));
 							}
 						}
-						await Promise.allSettled(promises);
+						await handleAllSettledResults(promises);
 					});
 					for (const test of grouped) {
 						describe(test.name, () => {
@@ -296,7 +297,7 @@ export function describeIntegrationTests(
 									results.push(result);
 									promises.push(runTest(test, provider, editingType, result));
 								}
-								await Promise.allSettled(promises);
+								await handleAllSettledResults(promises);
 							});
 							for (const provider of ["openai", "anthropic", "gemini"] as const) {
 								it(`via ${provider}`, async () => {
@@ -331,7 +332,7 @@ export function describeIntegrationTests(
 								promises.push(runTest(test, provider, editingType, result));
 							}
 						}
-						await Promise.allSettled(promises);
+						await handleAllSettledResults(promises);
 					});
 					for (const provider of ["openai", "anthropic", "gemini"] as const) {
 						describe(`via ${provider}`, () => {
@@ -348,7 +349,7 @@ export function describeIntegrationTests(
 									results.push(result);
 									promises.push(runTest(test, provider, editingType, result));
 								}
-								await Promise.allSettled(promises);
+								await handleAllSettledResults(promises);
 							});
 							for (const test of grouped) {
 								it(test.name, async () => {
@@ -534,4 +535,15 @@ function scoreFields(
 	}
 
 	return score;
+}
+
+async function handleAllSettledResults(promises: Promise<unknown>[]): Promise<void> {
+	const results = await Promise.allSettled(promises);
+	const errors = results
+		.filter((result): result is PromiseRejectedResult => result.status === "rejected")
+		.map((result) => result.reason as unknown);
+
+	if (errors.length > 0) {
+		throw new Error(`Multiple errors occurred: ${errors.join("; ")}`);
+	}
 }
