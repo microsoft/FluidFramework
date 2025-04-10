@@ -53,7 +53,7 @@ A notifications workspace, `PresenceNotifications`, is similar to states workspa
 
 #### NotificationsManager
 
-Notifications are special case where no data is retained during a session and all interactions appear as events that are sent and received. Notifications may be mixed into a `PresenceStates` workspace for convenience. `NotificationsManager` is the only  presence object permitted in a `PresenceNotifications` workspace. Use `Notifications` to add one to `PresenceNotifications` or `PresenceStates` workspace.
+Notifications are special case where no data is retained during a session and all interactions appear as events that are sent and received. Notifications may be mixed into a `PresenceStates` workspace for convenience. `NotificationsManager` is the only presence object permitted in a `PresenceNotifications` workspace. Use `Notifications` to add one to `PresenceNotifications` or `PresenceStates` workspace.
 
 ## Onboarding
 
