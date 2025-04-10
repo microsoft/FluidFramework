@@ -7,7 +7,10 @@ import { strict as assert, fail } from "node:assert";
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { createNodeIdentifierManager, MockNodeIdentifierManager } from "../../feature-libraries/index.js";
+import {
+	createNodeIdentifierManager,
+	MockNodeIdentifierManager,
+} from "../../feature-libraries/index.js";
 import {
 	SchematizingSimpleTreeView,
 	// eslint-disable-next-line import/no-internal-modules
@@ -920,22 +923,18 @@ describe("SchematizingSimpleTreeView", () => {
 
 			// We cannot use a mock node key manager here, as it does not fail when stabilizing unknown ids.
 			const idCompressor = createIdCompressor();
-			const nodeKeyManager = createNodeIdentifierManager(idCompressor)
+			const nodeKeyManager = createNodeIdentifierManager(idCompressor);
 			const id = nodeKeyManager.stabilizeNodeIdentifier(
 				nodeKeyManager.generateLocalNodeIdentifier(),
-			);			const treeView = getView(
+			);
+			const treeView = getView(
 				new TreeViewConfiguration({ schema: schemaWithIdentifier }),
 				nodeKeyManager,
 			);
 			treeView.initialize({ identifier: id });
 
 			const compressedIdentifier = Tree.shortId(treeView.root);
-			assert.throws(
-				() => treeView.stabilizeIdentifier(
-					compressedIdentifier as number + 1,
-				),				
-			);
-			
+			assert.throws(() => treeView.stabilizeIdentifier((compressedIdentifier as number) + 1));
 		});
 	});
 });
