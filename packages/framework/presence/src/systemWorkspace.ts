@@ -14,7 +14,7 @@ import type {
 	ClientSessionId,
 	IPresence,
 	ISessionClient,
-	PresenceEvents,
+	PresenceAttendeeEvents,
 } from "./presence.js";
 import { SessionClientStatus } from "./presence.js";
 import type { PresenceStatesInternal } from "./presenceStates.js";
@@ -72,7 +72,7 @@ class SessionClient implements ISessionClient {
 export interface SystemWorkspace
 	// Portion of IPresence that is handled by SystemWorkspace along with
 	// responsiblity for emitting "attendeeJoined" events.
-	extends Pick<IPresence, "getAttendees" | "getAttendee" | "getMyself"> {
+	extends Pick<IPresence["attendees"], "getAttendees" | "getAttendee" | "getMyself"> {
 	/**
 	 * Must be called when the current client acquires a new connection.
 	 *
@@ -109,7 +109,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		clientSessionId: ClientSessionId,
 		private readonly datastore: SystemWorkspaceDatastore,
 		private readonly events: IEmitter<
-			Pick<PresenceEvents, "attendeeJoined" | "attendeeDisconnected">
+			Pick<PresenceAttendeeEvents, "attendeeJoined" | "attendeeDisconnected">
 		>,
 		private readonly audience: IAudience,
 	) {
@@ -302,7 +302,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 export function createSystemWorkspace(
 	clientSessionId: ClientSessionId,
 	datastore: SystemWorkspaceDatastore,
-	events: IEmitter<Pick<PresenceEvents, "attendeeJoined">>,
+	events: IEmitter<Pick<PresenceAttendeeEvents, "attendeeJoined">>,
 	audience: IAudience,
 ): {
 	workspace: SystemWorkspace;

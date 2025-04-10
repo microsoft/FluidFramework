@@ -48,7 +48,10 @@ describe("Presence", () => {
 			presence = prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
 
 			// Get a notifications workspace
-			notificationsWorkspace = presence.getNotifications("name:testNotificationWorkspace", {});
+			notificationsWorkspace = presence.notifications.getWorkspace(
+				"name:testNotificationWorkspace",
+				{},
+			);
 		});
 
 		afterEach(function (done: Mocha.Done) {
@@ -187,7 +190,7 @@ describe("Presence", () => {
 			]);
 
 			// Act & Verify
-			testEvents.emit.unicast("newId", presence.getMyself(), 42);
+			testEvents.emit.unicast("newId", presence.attendees.getMyself(), 42);
 
 			assertFinalExpectations(runtime, logger);
 		});

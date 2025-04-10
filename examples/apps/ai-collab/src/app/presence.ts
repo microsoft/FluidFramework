@@ -25,7 +25,7 @@ export type UserPresence = PresenceStates<typeof statesSchema>;
 
 // Takes a presence object and returns the user presence object that contains the shared object states
 export function buildUserPresence(presence: IPresence): UserPresence {
-	const states = presence.getStates(`name:user-avatar-states`, statesSchema);
+	const states = presence.states.getWorkspace(`name:user-avatar-states`, statesSchema);
 	return states;
 }
 
@@ -42,7 +42,7 @@ export class PresenceManager {
 		const appSelectionWorkspaceAddress = "aiCollab:workspace";
 
 		// Initialize presence state for the app selection workspace
-		this.usersState = presence.getStates(
+		this.usersState = presence.states.getWorkspace(
 			appSelectionWorkspaceAddress, // Workspace address
 			statesSchema, // Workspace schema
 		);
@@ -77,7 +77,10 @@ export class PresenceManager {
 			this.usersState.props.onlineUsers.local = { photo: photoUrl };
 		}
 
-		this.userInfoMap.set(this.presence.getMyself(), this.usersState.props.onlineUsers.local);
+		this.userInfoMap.set(
+			this.presence.attendees.getMyself(),
+			this.usersState.props.onlineUsers.local,
+		);
 		this.userInfoCallback(this.userInfoMap);
 	}
 
@@ -100,7 +103,7 @@ export class PresenceManager {
 			try {
 				const userInfo = this.usersState.props.onlineUsers.clientValue(sessionClient).value;
 				// If the user is local user, then add it to the beginning of the list
-				if (sessionClient.sessionId === this.presence.getMyself().sessionId) {
+				if (sessionClient.sessionId === this.presence.attendees.getMyself().sessionId) {
 					userInfoList.push(userInfo);
 				} else {
 					// If the user is remote user, then add it to the end of the list

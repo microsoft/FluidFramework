@@ -21,7 +21,7 @@ describe("Presence", () => {
 		it("API use compiles", () => {});
 
 		addControlsTests((presence, controlSettings) => {
-			return presence.getStates("name:testWorkspaceA", {}, controlSettings);
+			return presence.states.getWorkspace("name:testWorkspaceA", {}, controlSettings);
 		});
 	});
 });
@@ -47,7 +47,7 @@ declare function createValueManager<T, Key extends string>(
 export function checkCompiles(): void {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	const presence = {} as IPresence;
-	const statesWorkspace = presence.getStates("name:testWorkspaceA", {
+	const statesWorkspace = presence.states.getWorkspace("name:testWorkspaceA", {
 		cursor: createValueManager({ x: 0, y: 0 }),
 		// eslint-disable-next-line prefer-object-spread
 		camera: Object.assign({ instanceBase: undefined as unknown as new () => unknown }, () => ({

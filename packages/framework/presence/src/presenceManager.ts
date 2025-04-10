@@ -49,6 +49,10 @@ export type PresenceExtensionInterface = Required<
  * The Presence manager
  */
 class PresenceManager implements IPresence, PresenceExtensionInterface {
+	public readonly attendees: IPresence["attendees"];
+	public readonly states: IPresence["states"];
+	public readonly notifications: IPresence["notifications"];
+
 	private readonly datastoreManager: PresenceDatastoreManager;
 	private readonly systemWorkspace: SystemWorkspace;
 
@@ -69,6 +73,19 @@ class PresenceManager implements IPresence, PresenceExtensionInterface {
 			this.events,
 			this.mc?.logger,
 		);
+
+		this.attendees = {
+			events: this.events,
+			getAttendees: this.getAttendees.bind(this),
+			getAttendee: this.getAttendee.bind(this),
+			getMyself: this.getMyself.bind(this),
+		};
+		this.states = {
+			getWorkspace: this.getStates.bind(this),
+		};
+		this.notifications = {
+			getWorkspace: this.getNotifications.bind(this),
+		};
 
 		runtime.on("connected", this.onConnect.bind(this));
 
@@ -101,19 +118,19 @@ class PresenceManager implements IPresence, PresenceExtensionInterface {
 		this.systemWorkspace.removeClientConnectionId(clientConnectionId);
 	}
 
-	public getAttendees(): ReadonlySet<ISessionClient> {
+	private getAttendees(): ReadonlySet<ISessionClient> {
 		return this.systemWorkspace.getAttendees();
 	}
 
-	public getAttendee(clientId: ClientConnectionId | ClientSessionId): ISessionClient {
+	private getAttendee(clientId: ClientConnectionId | ClientSessionId): ISessionClient {
 		return this.systemWorkspace.getAttendee(clientId);
 	}
 
-	public getMyself(): ISessionClient {
+	private getMyself(): ISessionClient {
 		return this.systemWorkspace.getMyself();
 	}
 
-	public getStates<TSchema extends PresenceStatesSchema>(
+	private getStates<TSchema extends PresenceStatesSchema>(
 		workspaceAddress: PresenceWorkspaceAddress,
 		requestedContent: TSchema,
 		controls?: BroadcastControlSettings,
@@ -125,7 +142,7 @@ class PresenceManager implements IPresence, PresenceExtensionInterface {
 		);
 	}
 
-	public getNotifications<TSchema extends PresenceStatesSchema>(
+	private getNotifications<TSchema extends PresenceStatesSchema>(
 		workspaceAddress: PresenceWorkspaceAddress,
 		requestedContent: TSchema,
 	): PresenceStates<TSchema> {

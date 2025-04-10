@@ -142,7 +142,7 @@ describe("Presence", () => {
 
 				// Configure a state workspace
 				// SIGNAL #1 - intial data is sent immediately
-				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
+				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
 					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 0 }),
 				});
 
@@ -191,7 +191,7 @@ describe("Presence", () => {
 				]);
 
 				// Configure a state workspace
-				presence.getStates("name:testStateWorkspace", {
+				presence.states.getWorkspace("name:testStateWorkspace", {
 					count: Latest({ num: 0 } /* default allowableUpdateLatencyMs = 60 */),
 				}); // will be queued; deadline is now 1070
 
@@ -265,7 +265,7 @@ describe("Presence", () => {
 				);
 
 				// Configure a state workspace
-				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
+				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
 					count: Latest({ num: 0 } /* default allowableUpdateLatencyMs = 60 */),
 				}); // will be queued; deadline is now 1070
 
@@ -367,7 +367,7 @@ describe("Presence", () => {
 				);
 
 				// Configure a state workspace
-				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
+				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
 					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
 				});
 
@@ -486,7 +486,7 @@ describe("Presence", () => {
 				// Configure a state workspace
 				// SIGNAL #1 - this signal is not queued because it contains a value manager with a latency of 0,
 				// so the initial data will be sent immediately.
-				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
+				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
 					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
 					immediateUpdate: Latest({ num: 0 }, { allowableUpdateLatencyMs: 0 }),
 				});
@@ -573,7 +573,7 @@ describe("Presence", () => {
 				);
 
 				// Configure a state workspace
-				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
+				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
 					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
 					note: Latest({ message: "" }, { allowableUpdateLatencyMs: 50 }),
 				}); // will be queued, deadline is set to 1060
@@ -645,11 +645,11 @@ describe("Presence", () => {
 				]);
 
 				// Configure two state workspaces
-				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
+				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
 					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
 				}); // will be queued, deadline is 1110
 
-				const stateWorkspace2 = presence.getStates("name:testStateWorkspace2", {
+				const stateWorkspace2 = presence.states.getWorkspace("name:testStateWorkspace2", {
 					note: Latest({ message: "" }, { allowableUpdateLatencyMs: 60 }),
 				}); // will be queued, deadline is 1070
 
@@ -730,10 +730,8 @@ describe("Presence", () => {
 
 				// Configure a notifications workspace
 				// eslint-disable-next-line @typescript-eslint/ban-types
-				const notificationsWorkspace: PresenceNotifications<{}> = presence.getNotifications(
-					"name:testNotificationWorkspace",
-					{},
-				);
+				const notificationsWorkspace: PresenceNotifications<{}> =
+					presence.notifications.getWorkspace("name:testNotificationWorkspace", {});
 
 				notificationsWorkspace.add(
 					"testEvents",
@@ -840,15 +838,13 @@ describe("Presence", () => {
 				);
 
 				// Configure a state workspace
-				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
+				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
 					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
 				}); // will be queued, deadline is 1110
 
 				// eslint-disable-next-line @typescript-eslint/ban-types
-				const notificationsWorkspace: PresenceNotifications<{}> = presence.getNotifications(
-					"name:testNotificationWorkspace",
-					{},
-				);
+				const notificationsWorkspace: PresenceNotifications<{}> =
+					presence.notifications.getWorkspace("name:testNotificationWorkspace", {});
 
 				notificationsWorkspace.add(
 					"testEvents",

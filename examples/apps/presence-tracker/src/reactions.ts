@@ -17,7 +17,7 @@ export function initializeReactions(presence: IPresence, mouseTracker: MouseTrac
 	// Create a notifications workspace to send reactions-related notifications. This workspace will be created if it
 	// doesn't exist. We also create a Notifications value manager. You can also
 	// add value managers to the workspace later.
-	const notificationsWorkspace = presence.getNotifications(
+	const notificationsWorkspace = presence.notifications.getWorkspace(
 		// A unique key identifying this workspace.
 		"name:reactions",
 		{
@@ -46,7 +46,7 @@ export function initializeReactions(presence: IPresence, mouseTracker: MouseTrac
 		const reactionValue = selectedReaction.textContent;
 
 		// Check that we're connected before sending notifications.
-		if (presence.getMyself().getConnectionStatus() === "Connected") {
+		if (presence.attendees.getMyself().getConnectionStatus() === "Connected") {
 			notificationsWorkspace.props.reactions.emit.broadcast(
 				"reaction",
 				mouseTracker.getMyMousePosition(),

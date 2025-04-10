@@ -113,12 +113,22 @@ export namespace InternalUtilityTypes {
 
 // @alpha @sealed
 export interface IPresence {
+    // (undocumented)
+    readonly attendees: {
+        readonly events: Listenable<PresenceAttendeeEvents>;
+        getAttendees(): ReadonlySet<ISessionClient>;
+        getAttendee(clientId: ClientConnectionId | ClientSessionId): ISessionClient;
+        getMyself(): ISessionClient;
+    };
     readonly events: Listenable<PresenceEvents>;
-    getAttendee(clientId: ClientConnectionId | ClientSessionId): ISessionClient;
-    getAttendees(): ReadonlySet<ISessionClient>;
-    getMyself(): ISessionClient;
-    getNotifications<NotificationsSchema extends PresenceNotificationsSchema>(notificationsId: PresenceWorkspaceAddress, requestedContent: NotificationsSchema): PresenceNotifications<NotificationsSchema>;
-    getStates<StatesSchema extends PresenceStatesSchema>(workspaceAddress: PresenceWorkspaceAddress, requestedContent: StatesSchema, controls?: BroadcastControlSettings): PresenceStates<StatesSchema>;
+    // (undocumented)
+    readonly notifications: {
+        getWorkspace<NotificationsSchema extends PresenceNotificationsSchema>(notificationsId: PresenceWorkspaceAddress, requestedContent: NotificationsSchema): PresenceNotifications<NotificationsSchema>;
+    };
+    // (undocumented)
+    readonly states: {
+        getWorkspace<TSchema extends PresenceStatesSchema>(workspaceAddress: PresenceWorkspaceAddress, requestedContent: TSchema, controls?: BroadcastControlSettings): PresenceStates<TSchema>;
+    };
 }
 
 // @alpha @sealed
@@ -263,11 +273,15 @@ export type NotificationSubscriptions<E extends InternalUtilityTypes.Notificatio
 };
 
 // @alpha @sealed (undocumented)
-export interface PresenceEvents {
+export interface PresenceAttendeeEvents {
     // @eventProperty
     attendeeDisconnected: (attendee: ISessionClient) => void;
     // @eventProperty
     attendeeJoined: (attendee: ISessionClient) => void;
+}
+
+// @alpha @sealed (undocumented)
+export interface PresenceEvents {
     workspaceActivated: (workspaceAddress: PresenceWorkspaceAddress, type: "States" | "Notifications" | "Unknown") => void;
 }
 
