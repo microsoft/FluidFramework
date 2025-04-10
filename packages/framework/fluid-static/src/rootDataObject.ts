@@ -35,6 +35,7 @@ import {
 
 /**
  * Input props for {@link RootDataObject.initializingFirstTime}.
+ * @internal
  */
 export interface RootDataObjectProps {
 	/**
@@ -48,8 +49,9 @@ export interface RootDataObjectProps {
 /**
  * The entry-point/root collaborative object of the {@link IFluidContainer | Fluid Container}.
  * Abstracts the dynamic code required to build a Fluid Container into a static representation for end customers.
+ * @internal
  */
-class RootDataObject
+export class RootDataObject
 	extends DataObject<{ InitialState: RootDataObjectProps }>
 	implements IRootDataObject
 {
@@ -158,8 +160,9 @@ class RootDataObject
 const rootDataStoreId = "rootDOId";
 
 /**
- * Creates an {@link @fluidframework/aqueduct#BaseContainerRuntimeFactory} for a container with a single
- * {@link IRootDataObject}, which is constructed from the provided schema.
+ * Creates an {@link @fluidframework/aqueduct#BaseContainerRuntimeFactory} which constructs containers
+ * with a single {@link IRootDataObject} as their entry point, where the root data object's registry
+ * and initial objects are configured based on the provided schema.
  *
  * @internal
  */
@@ -167,20 +170,28 @@ export function createDOProviderContainerRuntimeFactory(props: {
 	schema: ContainerSchema;
 	compatibilityMode: CompatibilityMode;
 }): IRuntimeFactory {
-	return new DOProviderContainerRuntimeFactory(props.schema, props.compatibilityMode);
+	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(props.schema);
+	const rootDataObjectFactory = new DataObjectFactory(
+		"rootDO",
+		RootDataObject,
+		sharedObjects,
+		{},
+		registryEntries,
+	);
+	return new DOProviderContainerRuntimeFactory(
+		props.schema,
+		props.compatibilityMode,
+		rootDataObjectFactory,
+	);
 }
 
 /**
- * Container code that provides a single {@link IRootDataObject}.
- *
- * @remarks
- *
- * This data object is dynamically customized (registry and initial objects) based on the schema provided.
- * to the container runtime factory.
+ * Factory for Container Runtime instances that provide a single {@link IRootDataObject}
+ * as their entry point.
  *
  * @internal
  */
-class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
+export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	private readonly rootDataObjectFactory: DataObjectFactory<
 		RootDataObject,
 		{
@@ -190,15 +201,28 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 
 	private readonly initialObjects: LoadableObjectKindRecord;
 
-	public constructor(schema: ContainerSchema, compatibilityMode: CompatibilityMode) {
-		const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
-		const rootDataObjectFactory = new DataObjectFactory(
-			"rootDO",
+	/**
+	 * Create a new instance of a container runtime factory.
+	 * @remarks
+	 * The caller is responsible for making sure that the provided root data object factory is configured
+	 * appropriately based on the schema of the container (e.g. its registry entries contain all the
+	 * DataStore/DDS types that the schema says can be constructed).
+	 *
+	 * Most scenarios probably want to use {@link createDOProviderContainerRuntimeFactory} instead,
+	 * since it takes care of constructing the root data object factory based on the schema.
+	 *
+	 * @param schema - The schema for the container
+	 * @param compatibilityMode - Compatibility mode
+	 * @param rootDataObjectFactory - A factory that can construct the root data object.
+	 */
+	public constructor(
+		schema: ContainerSchema,
+		compatibilityMode: CompatibilityMode,
+		rootDataObjectFactory: DataObjectFactory<
 			RootDataObject,
-			sharedObjects,
-			{},
-			registryEntries,
-		);
+			{ InitialState: RootDataObjectProps }
+		>,
+	) {
 		const provideEntryPoint = async (
 			containerRuntime: IContainerRuntime,
 			// eslint-disable-next-line unicorn/consistent-function-scoping

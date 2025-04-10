@@ -23,6 +23,7 @@ export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 /**
  * A mapping of string identifiers to classes that will later be used to instantiate a corresponding `DataObject`
  * or `SharedObject`.
+ * @internal
  */
 export type LoadableObjectKindRecord = Record<string, SharedObjectKind>;
 
