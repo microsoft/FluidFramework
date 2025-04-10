@@ -14,7 +14,6 @@ import type {
 	FieldKindIdentifier,
 	RevisionInfo,
 	RevisionMetadataSource,
-	TaggedChange,
 } from "../../../core/index.js";
 import type {
 	ComposeNodeManager,

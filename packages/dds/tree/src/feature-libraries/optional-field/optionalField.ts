@@ -177,7 +177,26 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					}
 				}
 			} else {
-				composedReplace = change1.valueReplace;
+				if (change1.valueReplace.src !== undefined && change2.valueReplace?.src === "self") {
+					// A node is being attached with ID `change1.valueReplace.src`--call that A,
+					// then detached with ID `change2.valueReplace.dst`--call that B,
+					// then attached again with ID B (yes, the same one, because change2 is a pin).
+					// We could return a changeset that conveys the node is attached with ID A (this is what the `else` branch does).
+					// Instead we want to inform the node manager of the transfer from A to B and return a changeset that conveys the node is attached with ID B.
+					// While both option have identical merge semantics, we prefer the latter in order to ensure a normalized output.
+					// The normalized form uses the earliest known detached node ID as the destination of detaches and the last known detached node ID as the source of attaches.
+					nodeManager.composeAttachDetach(
+						change1.valueReplace.src,
+						change2.valueReplace.dst,
+						1,
+					);
+					composedReplace = {
+						...change1.valueReplace,
+						src: change2.valueReplace.dst,
+					};
+				} else {
+					composedReplace = change1.valueReplace;
+				}
 			}
 		} else {
 			// eslint-disable-next-line unicorn/prefer-ternary
