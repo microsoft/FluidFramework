@@ -51,7 +51,7 @@ export class RemoteFluidObjectHandle extends FluidHandleBase<FluidObject> {
 				url: this.absolutePath,
 				headers: {
 					[RuntimeHeaders.viaHandle]: true,
-					[RuntimeHeaders.wait]: this.placeholder,
+					[RuntimeHeaders.placeholder]: this.placeholder,
 				},
 			};
 			this.objectP = this.routeContext.resolveHandle(request).then<FluidObject>((response) => {
