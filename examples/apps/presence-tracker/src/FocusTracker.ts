@@ -7,11 +7,11 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import type {
 	Attendee,
-	LatestValueManager,
+	Latest,
 	Presence,
 	StatesWorkspace,
 } from "@fluidframework/presence/alpha";
-import { Latest, AttendeeStatus } from "@fluidframework/presence/alpha";
+import { StateFactory, AttendeeStatus } from "@fluidframework/presence/alpha";
 
 /**
  * IFocusState is the data that individual session clients share via presence.
@@ -40,7 +40,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 	/**
 	 * A value manager that tracks the latest focus state of connected session clients.
 	 */
-	private readonly focus: LatestValueManager<IFocusState>;
+	private readonly focus: Latest<IFocusState>;
 
 	constructor(
 		private readonly presence: Presence,
@@ -53,11 +53,11 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 	) {
 		super();
 
-		// Create a Latest value manager to track the focus state. The value is initialized with current focus state of the
+		// Use StateFactory.latest to track the focus state. The value is initialized with current focus state of the
 		// window.
 		statesWorkspace.add(
 			"focus",
-			Latest<IFocusState>({ hasFocus: window.document.hasFocus() }),
+			StateFactory.latest<IFocusState>({ hasFocus: window.document.hasFocus() }),
 		);
 
 		// Save a reference to the value manager for easy access within the FocusTracker.

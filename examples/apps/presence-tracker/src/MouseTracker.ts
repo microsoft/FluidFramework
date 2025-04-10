@@ -8,10 +8,10 @@ import type { IEvent } from "@fluidframework/core-interfaces";
 import type {
 	Presence,
 	Attendee,
-	LatestValueManager,
+	Latest,
 	StatesWorkspace,
 } from "@fluidframework/presence/alpha";
-import { Latest, AttendeeStatus } from "@fluidframework/presence/alpha";
+import { StateFactory, AttendeeStatus } from "@fluidframework/presence/alpha";
 
 /**
  * IMousePosition is the data that individual session clients share via presence.
@@ -41,7 +41,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	/**
 	 * A value manager that tracks the latest mouse position  of connected session clients.
 	 */
-	private readonly cursor: LatestValueManager<IMousePosition>;
+	private readonly cursor: Latest<IMousePosition>;
 
 	constructor(
 		private readonly presence: Presence,
@@ -54,8 +54,8 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	) {
 		super();
 
-		// Create a Latest value manager to track the mouse position.
-		statesWorkspace.add("cursor", Latest<IMousePosition>({ x: 0, y: 0 }));
+		// Uase StateFactory.latest to track the mouse position.
+		statesWorkspace.add("cursor", StateFactory.latest<IMousePosition>({ x: 0, y: 0 }));
 
 		// Save a reference to the value manager for easy access within the MouseTracker.
 		this.cursor = statesWorkspace.props.cursor;

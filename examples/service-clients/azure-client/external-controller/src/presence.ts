@@ -22,8 +22,9 @@ export interface DiceValues {
  * the values of two dice as last rolled by clients). No practical application
  * would need both of these states.
  *
- * The first state, lastRoll, is using the simpler {@link @fluidframework/presence#Latest | Latest}
- * pattern (-\> {@link @fluidframework/presence#LatestValueManager | LatestValueManager}) where
+ * The first state, lastRoll, is using the simpler
+ * {@link @fluidframework/presence#StateFactory.latest | StateFactory.latest}
+ * pattern (-\> {@link @fluidframework/presence#Latest| Latest}) where
  * all dice values are updated as a whole ({@link DiceValues} structure which has optional values).
  * If any part of the data is updated, then the entire data structure is shared. This means
  * keeping a local copy of the data structure or recomposing it each time making an update.

@@ -54,8 +54,8 @@ export {
 	type StateMap,
 } from "./latestMapValueManager.js";
 export {
-	Latest,
-	type LatestValueManager,
+	latestStateFactory,
+	type Latest,
 	type LatestValueManagerEvents,
 } from "./latestValueManager.js";
 export type {

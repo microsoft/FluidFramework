@@ -43,13 +43,13 @@ A `NotificationsWorkspace`, is similar to states workspace, but is dedicated to 
 
 ### Value Managers
 
-#### LatestValueManager
+#### Latest
 
-Latest value manager retains the most recent atomic value each attendee has shared. Use `Latest` to add one to `StatesWorkspace`.
+`Latest` retains the most recent atomic value each attendee has shared. Use `Latest` to add one to `StatesWorkspace`.
 
 #### LatestMap
 
-Latest map value manager retains the most recent atomic value each attendee has shared under arbitrary keys. Values associated with a key may be nullified (appears as deleted). Use `StateFactory.latest` to add one to `StatesWorkspace`.
+`LatestMap` retains the most recent atomic value each attendee has shared under arbitrary keys. Values associated with a key may be nullified (appears as deleted). Use `StateFactory.latest` to add one to `StatesWorkspace`.
 
 #### NotificationsManager
 
@@ -87,19 +87,19 @@ Current API does not provide a mechanism to validate that state and notification
 Example:
 
 ```typescript
-presence.getStates("app:v1states", { myState: Latest({ x: 0 }) });
+presence.getStates("app:v1states", { myState: StateFactory.latest({ x: 0 }) });
 ```
 
 is incompatible with
 
 ```typescript
-presence.getStates("app:v1states", { myState: Latest({ x: "text" }) });
+presence.getStates("app:v1states", { myState: StateFactory.latest({ x: "text" }) });
 ```
 
 as "app:v1states"+"myState" have different value type expectations: `{x: number}` versus `{x: string}`.
 
 ```typescript
-presence.getStates("app:v1states", { myState2: Latest({ x: true }) });
+presence.getStates("app:v1states", { myState2: StateFactory.latest({ x: true }) });
 ```
 
 would be compatible with both of the prior schemas as "myState2" is a different name. Though in this situation none of the different clients would be able to observe each other.
@@ -119,7 +119,7 @@ The `allowableUpdateLatencyMs` property configures how long a local update may b
 Notifications are never queued; they effectively always have an `allowableUpdateLatencyMs` of 0. However, they may be grouped with other updates that were already queued.
 
 Note that due to throttling, clients will not receive updates for every intermediate value set by another client. For example,
-with `Latest*ValueManagers`, the only value sent is the value at the time the outgoing grouped message is sent. Previous
+with `Latest` and `LatestMap`, the only value sent is the value at the time the outgoing grouped message is sent. Previous
 values set by the client will not be broadcast or seen by other clients.
 
 #### Example
@@ -132,9 +132,9 @@ const stateWorkspace = presence.getStates(
 	"app:v1states",
 	{
 		// This value manager has an allowable latency of 100ms.
-		position: Latest({ x: 0, y: 0 }, { allowableUpdateLatencyMs: 100 }),
+		position: StateFactory.latest({ x: 0, y: 0 }, { allowableUpdateLatencyMs: 100 }),
 		// This value manager uses the workspace default.
-		count: Latest({ num: 0 }),
+		count: StateFactory.latest({ num: 0 }),
 	},
 	// Specify the default for all value managers in this workspace to 200ms,
 	// overriding the default value of 60ms.

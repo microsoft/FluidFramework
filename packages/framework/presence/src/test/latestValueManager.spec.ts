@@ -15,7 +15,7 @@ import type {
 	Presence,
 	LatestValueClientData,
 } from "@fluidframework/presence/alpha";
-import { Latest } from "@fluidframework/presence/alpha";
+import { StateFactory } from "@fluidframework/presence/alpha";
 
 const testWorkspaceName = "name:testWorkspaceA";
 
@@ -25,13 +25,13 @@ function createLatestManager(
 	valueControlSettings?: BroadcastControlSettings,
 ) {
 	const states = presence.getStates(testWorkspaceName, {
-		camera: Latest({ x: 0, y: 0, z: 0 }, valueControlSettings),
+		camera: StateFactory.latest({ x: 0, y: 0, z: 0 }, valueControlSettings),
 	});
 	return states.props.camera;
 }
 
 describe("Presence", () => {
-	describe("LatestValueManager", () => {
+	describe("Latest", () => {
 		/**
 		 * See {@link checkCompiles} below
 		 */
@@ -46,28 +46,28 @@ describe("Presence", () => {
 
 			it("can set and get empty object as initial value", () => {
 				const states = presence.getStates(testWorkspaceName, {
-					obj: Latest({}),
+					obj: StateFactory.latest({}),
 				});
 				assert.deepStrictEqual(states.props.obj.local, {});
 			});
 
 			it("can set and get object with properties as initial value", () => {
 				const states = presence.getStates(testWorkspaceName, {
-					obj: Latest({ x: 0, y: 0, z: 0 }),
+					obj: StateFactory.latest({ x: 0, y: 0, z: 0 }),
 				});
 				assert.deepStrictEqual(states.props.obj.local, { x: 0, y: 0, z: 0 });
 			});
 
 			it("can set and get empty array as initial value", () => {
 				const states = presence.getStates(testWorkspaceName, {
-					arr: Latest([]),
+					arr: StateFactory.latest([]),
 				});
 				assert.deepStrictEqual(states.props.arr.local, []);
 			});
 
 			it("can set and get array with elements as initial value", () => {
 				const states = presence.getStates(testWorkspaceName, {
-					arr: Latest([1, 2, 3]),
+					arr: StateFactory.latest([1, 2, 3]),
 				});
 				assert.deepStrictEqual(states.props.arr.local, [1, 2, 3]);
 			});
@@ -79,7 +79,7 @@ describe("Presence", () => {
 			// Setup
 			const presence = createPresenceManager(new MockEphemeralRuntime());
 			const states = presence.getStates(testWorkspaceName, {
-				camera: Latest({ x: 0, y: 0, z: 0 }),
+				camera: StateFactory.latest({ x: 0, y: 0, z: 0 }),
 			});
 			const camera = states.props.camera;
 
@@ -105,14 +105,14 @@ export function checkCompiles(): void {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	const presence = {} as Presence;
 	const statesWorkspace = presence.getStates("name:testStatesWorkspaceWithLatest", {
-		cursor: Latest({ x: 0, y: 0 }),
-		camera: Latest({ x: 0, y: 0, z: 0 }),
+		cursor: StateFactory.latest({ x: 0, y: 0 }),
+		camera: StateFactory.latest({ x: 0, y: 0, z: 0 }),
 	});
 	// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
 	const workspace: typeof statesWorkspace = statesWorkspace;
 	const props = workspace.props;
 
-	workspace.add("caret", Latest({ id: "", pos: 0 }));
+	workspace.add("caret", StateFactory.latest({ id: "", pos: 0 }));
 
 	const fakeAdd =
 		workspace.props.caret.local.pos + props.camera.local.z + props.cursor.local.x;

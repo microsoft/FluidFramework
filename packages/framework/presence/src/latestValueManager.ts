@@ -48,14 +48,14 @@ export interface LatestValueManagerEvents<T> {
  * Value manager that provides the latest known value from this client to others and read access to their values.
  * All participant clients must provide a value.
  *
- * @remarks Create using {@link Latest} registered to {@link StatesWorkspace}.
+ * @remarks Create using {@link latestStateFactory} registered to {@link StatesWorkspace}.
  *
  * @sealed
  * @alpha
  */
-export interface LatestValueManager<T> {
+export interface Latest<T> {
 	/**
-	 * Events for Latest value manager.
+	 * Events for Latest.
 	 */
 	readonly events: Listenable<LatestValueManagerEvents<T>>;
 
@@ -88,9 +88,7 @@ export interface LatestValueManager<T> {
 }
 
 class LatestValueManagerImpl<T, Key extends string>
-	implements
-		LatestValueManager<T>,
-		Required<ValueManager<T, InternalTypes.ValueRequiredState<T>>>
+	implements Latest<T>, Required<ValueManager<T, InternalTypes.ValueRequiredState<T>>>
 {
 	public readonly events = createEmitter<LatestValueManagerEvents<T>>();
 	public readonly controls: OptionalBroadcastControl;
@@ -175,19 +173,15 @@ class LatestValueManagerImpl<T, Key extends string>
 }
 
 /**
- * Factory for creating a {@link LatestValueManager}.
+ * Factory for creating a {@link Latest}.
  *
  * @alpha
  */
-export function Latest<T extends object, Key extends string = string>(
+export function latestStateFactory<T extends object, Key extends string = string>(
 	initialValue: JsonSerializable<T> & JsonDeserialized<T> & object,
 	controls?: BroadcastControlSettings,
-): InternalTypes.ManagerFactory<
-	Key,
-	InternalTypes.ValueRequiredState<T>,
-	LatestValueManager<T>
-> {
-	// LatestValueManager takes ownership of initialValue but makes a shallow
+): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>> {
+	// Latest takes ownership of initialValue but makes a shallow
 	// copy for basic protection.
 	const value: InternalTypes.ValueRequiredState<T> = {
 		rev: 0,
@@ -202,7 +196,7 @@ export function Latest<T extends object, Key extends string = string>(
 		>,
 	): {
 		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
-		manager: InternalTypes.StateValue<LatestValueManager<T>>;
+		manager: InternalTypes.StateValue<Latest<T>>;
 	} => ({
 		initialData: { value, allowableUpdateLatencyMs: controls?.allowableUpdateLatencyMs },
 		manager: brandIVM<LatestValueManagerImpl<T, Key>, T, InternalTypes.ValueRequiredState<T>>(

@@ -11,7 +11,7 @@ import type {
 import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import { latestMapFactory, type LatestMap } from "./latestMapValueManager.js";
-import { Latest, type LatestValueManager } from "./latestValueManager.js";
+import { latestStateFactory, type Latest } from "./latestValueManager.js";
 
 /**
  * Factory for creating presence state objects.
@@ -22,12 +22,8 @@ export const StateFactory = {
 	latest<T extends object, Key extends string = string>(
 		initialValue: JsonSerializable<T> & JsonDeserialized<T> & object,
 		controls?: BroadcastControlSettings,
-	): InternalTypes.ManagerFactory<
-		Key,
-		InternalTypes.ValueRequiredState<T>,
-		LatestValueManager<T>
-	> {
-		return Latest<T, Key>(initialValue, controls);
+	): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>> {
+		return latestStateFactory<T, Key>(initialValue, controls);
 	},
 
 	latestMap<

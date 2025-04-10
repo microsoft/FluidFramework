@@ -127,8 +127,16 @@ export namespace InternalUtilityTypes {
     };
 }
 
-// @alpha
-export function Latest<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestValueManager<T>>;
+// @alpha @sealed
+export interface Latest<T> {
+    clients(): Attendee[];
+    clientValue(attendee: Attendee): LatestValueData<T>;
+    clientValues(): IterableIterator<LatestValueClientData<T>>;
+    readonly controls: BroadcastControls;
+    readonly events: Listenable<LatestValueManagerEvents<T>>;
+    get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
+    set local(value: JsonSerializable<T> & JsonDeserialized<T>);
+}
 
 // @alpha @sealed
 export interface LatestMap<T, Keys extends string | number = string | number> {
@@ -187,6 +195,9 @@ export interface LatestMapItemUpdatedClientData<T, K extends string | number> ex
     key: K;
 }
 
+// @alpha
+export function latestStateFactory<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
+
 // @alpha @sealed
 export interface LatestValueClientData<T> extends LatestValueData<T> {
     // (undocumented)
@@ -199,17 +210,6 @@ export interface LatestValueData<T> {
     metadata: LatestValueMetadata;
     // (undocumented)
     value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
-}
-
-// @alpha @sealed
-export interface LatestValueManager<T> {
-    clients(): Attendee[];
-    clientValue(attendee: Attendee): LatestValueData<T>;
-    clientValues(): IterableIterator<LatestValueClientData<T>>;
-    readonly controls: BroadcastControls;
-    readonly events: Listenable<LatestValueManagerEvents<T>>;
-    get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
-    set local(value: JsonSerializable<T> & JsonDeserialized<T>);
 }
 
 // @alpha @sealed (undocumented)
@@ -294,9 +294,24 @@ export interface PresenceEvents {
 
 // @alpha
 export const StateFactory: {
-    latest<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestValueManager<T>>;
+    latest<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
     latestMap<T_1 extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(initialValues?: { [K in Keys]: JsonSerializable<T_1> & JsonDeserialized<T_1>; } | undefined, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T_1, Keys>, LatestMap<T_1, Keys>>;
 };
+
+// @alpha @sealed
+export interface StateMap<K extends string | number, V> {
+    clear(): void;
+    // (undocumented)
+    delete(key: K): boolean;
+    forEach(callbackfn: (value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>>, key: K, map: StateMap<K, V>) => void, thisArg?: unknown): void;
+    get(key: K): InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>> | undefined;
+    // (undocumented)
+    has(key: K): boolean;
+    keys(): IterableIterator<K>;
+    set(key: K, value: JsonSerializable<V> & JsonDeserialized<V>): this;
+    // (undocumented)
+    readonly size: number;
+}
 
 // @alpha @sealed
 export interface StatesWorkspace<TSchema extends StatesWorkspaceSchema, TManagerConstraints = unknown> {
@@ -320,21 +335,6 @@ export type StatesWorkspaceEntry<TKey extends string, TValue extends InternalTyp
 export interface StatesWorkspaceSchema {
     // (undocumented)
     [key: string]: StatesWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<any>>;
-}
-
-// @alpha @sealed
-export interface StateMap<K extends string | number, V> {
-    clear(): void;
-    // (undocumented)
-    delete(key: K): boolean;
-    forEach(callbackfn: (value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>>, key: K, map: StateMap<K, V>) => void, thisArg?: unknown): void;
-    get(key: K): InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>> | undefined;
-    // (undocumented)
-    has(key: K): boolean;
-    keys(): IterableIterator<K>;
-    set(key: K, value: JsonSerializable<V> & JsonDeserialized<V>): this;
-    // (undocumented)
-    readonly size: number;
 }
 
 // @alpha
