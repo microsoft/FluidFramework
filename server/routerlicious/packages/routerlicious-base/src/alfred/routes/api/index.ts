@@ -78,6 +78,7 @@ export function create(
 		revokedTokenChecker,
 		clusterDrainingChecker,
 		redisCacheForGetSession,
+		denyList,
 	);
 	const apiRoute = api.create(
 		config,
@@ -89,6 +90,7 @@ export function create(
 		revokedTokenChecker,
 		collaborationSessionEventEmitter,
 		fluidAccessTokenGenerator,
+		denyList,
 	);
 
 	const healthCheckEndpoints = createHealthCheckEndpoints(

@@ -5,7 +5,7 @@
 
 // TODO: Remove duplicate code in Historian
 /*
- * Interface for a deny list. The goal is to deny requests for given tenantId, documentId pairs
+ * Interface for a deny list. The goal is to deny requests for given tenantId, documentId
  * that have potential to cause service disruption.
  * That could happen, for example, due to very large summary sizes. While we should always
  * identify and fix causes that lead a document to get into such state, this is a protection
@@ -15,7 +15,12 @@
  */
 export interface IDenyList {
 	/**
-	 * Checks if a given tenantId, documentId pair is denied.
+	 * Checks if a given tenantId is denied.
 	 */
-	isDenied(tenantId: string, documentId: string): boolean;
+	isTenantDenied(tenantId: string): boolean;
+
+	/**
+	 * Checks if a given documentId is denied.
+	 */
+	isDocumentDenied(documentId: string): boolean;
 }

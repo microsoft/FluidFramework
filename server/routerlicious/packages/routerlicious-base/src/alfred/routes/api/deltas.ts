@@ -17,27 +17,14 @@ import {
 	IThrottleMiddlewareOptions,
 	getParam,
 	getBooleanFromConfig,
+	denyListMiddleware,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
-import { Router, Response } from "express";
+import { Router } from "express";
 import { Provider } from "nconf";
 import winston from "winston";
-import { IAlfredTenant, NetworkError } from "@fluidframework/server-services-client";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { Constants } from "../../../utils";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
-
-function handleDenyListResponse(tenantId: string, documentId: string, response: Response) {
-	Lumberjack.error("Document is in the deny list", {
-		tenantId,
-		documentId,
-	});
-	handleResponse(
-		Promise.reject(
-			new NetworkError(500, `Unable to process request for document id: ${documentId}`),
-		),
-		response,
-	);
-}
 
 export function create(
 	config: Provider,
@@ -104,15 +91,12 @@ export function create(
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const from = stringToSequenceNumber(request.query.from);
 			const to = stringToSequenceNumber(request.query.to);
 			const tenantId = request.params.tenantId || appTenants[0].id;
 			const documentId = request.params.id;
-			if (denyList?.isDenied(tenantId, documentId)) {
-				handleDenyListResponse(tenantId, documentId, response);
-				return;
-			}
 
 			// Query for the deltas and return a filtered version of just the operations field
 			const deltasP = deltaService.getDeltasFromSummaryAndStorage(
@@ -135,13 +119,10 @@ export function create(
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const tenantId = request.params.tenantId || appTenants[0].id;
 			const documentId = request.params.id;
-			if (denyList?.isDenied(tenantId, documentId)) {
-				handleDenyListResponse(tenantId, documentId, response);
-				return;
-			}
 
 			// Query for the raw deltas (no from/to since we want all of them)
 			const deltasP = deltaService.getDeltas(rawDeltasCollectionName, tenantId, documentId);
@@ -167,6 +148,7 @@ export function create(
 			getDeltasTenantThrottleOptions,
 		),
 		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const documentId = request.params.id;
 			let from = stringToSequenceNumber(request.query.from);
@@ -181,10 +163,6 @@ export function create(
 			}
 
 			const tenantId = request.params.tenantId || appTenants[0].id;
-			if (denyList?.isDenied(tenantId, documentId)) {
-				handleDenyListResponse(tenantId, documentId, response);
-				return;
-			}
 			const caller = request.query.caller?.toString();
 			const fetchReason = request.query.fetchReason?.toString();
 

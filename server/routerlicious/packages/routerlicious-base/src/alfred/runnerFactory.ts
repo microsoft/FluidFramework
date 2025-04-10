@@ -415,8 +415,12 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			});
 		}
 		const startupCheck = new StartupCheck();
-		const denyListConfig = config.get("documentDenyList");
-		const denyList: core.IDenyList = new utils.DenyList(denyListConfig);
+		const documentsDenyListConfig = config.get("documentDenyList");
+		const tenantsDenyListConfig = config.get("tenantsDenyList");
+		const denyList: core.IDenyList = new utils.DenyList(
+			tenantsDenyListConfig,
+			documentsDenyListConfig,
+		);
 
 		return new AlfredResources(
 			config,
