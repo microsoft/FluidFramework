@@ -207,7 +207,7 @@ export const TreeAlpha: {
 		options: { idCompressor?: IIdCompressor } & ICodecOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
-	uncompressedId(node: TreeNode): string | undefined
+	longId(node: TreeNode): string | undefined;
 } = {
 	branch(node: TreeNode): TreeBranch | undefined {
 		const kernel = getKernel(node);
@@ -317,8 +317,8 @@ export const TreeAlpha: {
 		return TreeBeta.clone<TSchema>(view.root);
 	},
 
-	uncompressedId(node: TreeNode): string | undefined {
-		return Tree.uncompressedId(node)
+	longId(node: TreeNode): string | undefined {
+		return Tree.longId(node);
 	},
 };
 
@@ -378,23 +378,28 @@ const versionToFormat = {
 
 /**
  * Function which returns the idCompressor from a TreeView.
- * 
+ *
  * @param branch - TreeBranch for which you want to get the idCompressor from.
  * @returns a function which allows you to stabilize a local node identifier.
- * 
+ *
  * @remarks
  * We currently do not have any apis that support converting identifiers between uncompressed and compressed state.
  * This function can be used for use cases involving identifiers that our api does not support.
- * 
+ *
  * @alpha
  */
-export function getIdCompressorFromView(branch: TreeBranch): (identifier: number) => string | undefined{
-	const nodeKeyManager = (branch as SchematizingSimpleTreeView<ImplicitFieldSchema>).nodeKeyManager
-	return (identifier: number) => {try {
-		return nodeKeyManager.stabilizeNodeIdentifier(
-			identifier as unknown as LocalNodeIdentifier
-		);
-	} catch {
-		return undefined;
-	}}
+export function getIdCompressorFromView(
+	branch: TreeBranch,
+): (identifier: number) => string | undefined {
+	const nodeKeyManager = (branch as SchematizingSimpleTreeView<ImplicitFieldSchema>)
+		.nodeKeyManager;
+	return (identifier: number) => {
+		try {
+			return nodeKeyManager.stabilizeNodeIdentifier(
+				identifier as unknown as LocalNodeIdentifier,
+			);
+		} catch {
+			return undefined;
+		}
+	};
 }

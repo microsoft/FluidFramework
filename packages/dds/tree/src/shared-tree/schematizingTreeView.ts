@@ -489,7 +489,9 @@ export class SchematizingSimpleTreeView<
 	}
 
 	public stabilizeIdentifier(identifier: number): StableNodeIdentifier {
-		return this.nodeKeyManager.stabilizeNodeIdentifier(identifier as unknown as LocalNodeIdentifier)
+		return this.nodeKeyManager.stabilizeNodeIdentifier(
+			identifier as unknown as LocalNodeIdentifier,
+		);
 	}
 
 	// #endregion Branching

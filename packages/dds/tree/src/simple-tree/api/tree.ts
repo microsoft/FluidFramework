@@ -489,9 +489,9 @@ export interface TreeBranch extends IDisposable {
 	/**
 	 * Stabilizes a local identifier recognized by the SharedTree's idCompressor.
 	 * @param identifier - local node identifier that you want to stabilize.
-	 * 
+	 *
 	 * @remarks
-	 * This method assumes that the identifier passed in will be a local node identifier recognized by the SharedTree's idCompressor, 
+	 * This method assumes that the identifier passed in will be a local node identifier recognized by the SharedTree's idCompressor,
 	 * and will otherwise fail.
 	 */
 	stabilizeIdentifier(identifier: number): string;
