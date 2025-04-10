@@ -1130,8 +1130,10 @@ export class IntervalCollection
 		op: IIntervalCollectionTypeOperationValue,
 		localOpMetadata: IMapMessageLocalMetadata,
 	) {
+		const { opName } = op;
 		const { id, properties } = getSerializedProperties(op.value);
-		switch (op.opName) {
+		const { localSeq, previous } = localOpMetadata;
+		switch (opName) {
 			case "add": {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const interval = this.getIntervalById(id)!;
@@ -1139,14 +1141,10 @@ export class IntervalCollection
 				break;
 			}
 			case "change": {
-				const start = toOptionalSequencePlace(
-					localOpMetadata.previous?.start,
-					localOpMetadata.previous?.startSide,
-				);
-				const end = toOptionalSequencePlace(
-					localOpMetadata.previous?.end,
-					localOpMetadata.previous?.endSide,
-				);
+				assert(previous !== undefined, "must have previous for change");
+
+				const start = toOptionalSequencePlace(previous.start, previous.startSide);
+				const end = toOptionalSequencePlace(previous.end, previous.endSide);
 				this.change(id, {
 					start,
 					end,
@@ -1154,24 +1152,23 @@ export class IntervalCollection
 					rollback: true,
 				});
 				if (this.isCollaborating) {
-					this.localSeqToSerializedInterval.delete(localOpMetadata.localSeq);
+					this.localSeqToSerializedInterval.delete(localSeq);
 				}
 				break;
 			}
 			case "delete": {
+				assert(previous !== undefined, "must have previous for delete");
 				this.add({
 					id,
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					start: toOptionalSequencePlace(op.value.start, op.value.startSide)!,
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					end: toOptionalSequencePlace(op.value.end, op.value.endSide)!,
+					start: toSequencePlace(previous.start, previous.startSide),
+					end: toSequencePlace(previous.end, previous.endSide),
 					props: Object.keys(properties).length > 0 ? properties : undefined,
 					rollback: true,
 				});
 				break;
 			}
 			default:
-				unreachableCase(op.opName);
+				unreachableCase(opName);
 		}
 	}
 
@@ -1445,6 +1442,7 @@ export class IntervalCollection
 					},
 					{
 						localSeq: this.getNextLocalSeq(),
+						previous: interval.serialize(),
 					},
 				);
 			} else {
