@@ -9,7 +9,7 @@ import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal
 import type { SinonFakeTimers, SinonSpy } from "sinon";
 import { useFakeTimers, spy } from "sinon";
 
-import type { Attendee, StatesWorkspaceAddress } from "../index.js";
+import type { Attendee, WorkspaceAddress } from "../index.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import { assertFinalExpectations, prepareConnectedPresence } from "./testUtils.js";
@@ -655,7 +655,7 @@ describe("Presence", () => {
 			it("from unregistered workspace triggers 'workspaceActivated' event", async () => {
 				// Setup
 				notificationSpy = spy();
-				const workspaceActivatedEventSpy = spy((workspaceAddress: StatesWorkspaceAddress) => {
+				const workspaceActivatedEventSpy = spy((workspaceAddress: WorkspaceAddress) => {
 					// Once activated, register the notifications workspace and listener for it's event
 					const notificationsWorkspace = presence.getNotifications(workspaceAddress, {
 						notifications: Notifications<{ newId: (id: number) => void }>({

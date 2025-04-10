@@ -26,11 +26,7 @@ import {
 } from "./presenceStates.js";
 import type { SystemWorkspaceDatastore } from "./systemWorkspace.js";
 import { TimerManager } from "./timerManager.js";
-import type {
-	StatesWorkspace,
-	StatesWorkspaceSchema,
-	StatesWorkspaceAddress,
-} from "./types.js";
+import type { StatesWorkspace, StatesWorkspaceSchema, WorkspaceAddress } from "./types.js";
 
 import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
 
@@ -43,7 +39,7 @@ interface SystemDatastore {
 	"system:presence": SystemWorkspaceDatastore;
 }
 
-type InternalWorkspaceAddress = `${"s" | "n"}:${StatesWorkspaceAddress}`;
+type InternalWorkspaceAddress = `${"s" | "n"}:${WorkspaceAddress}`;
 
 type PresenceDatastore = SystemDatastore & {
 	[WorkspaceAddress: string]: ValueElementMap<StatesWorkspaceSchema>;
@@ -400,7 +396,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			// Separate internal type prefix from public workspace address
 			const match = workspaceAddress.match(/^([^:]):([^:]+:.+)$/) as
 				| null
-				| [string, string, StatesWorkspaceAddress];
+				| [string, string, WorkspaceAddress];
 
 			if (match === null) {
 				continue;

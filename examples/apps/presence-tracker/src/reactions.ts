@@ -4,7 +4,7 @@
  */
 
 import { Notifications } from "@fluidframework/presence/alpha";
-import type { Presence, Attendee } from "@fluidframework/presence/alpha";
+import type { Attendee, Presence } from "@fluidframework/presence/alpha";
 
 import type { IMousePosition, MouseTracker } from "./MouseTracker.js";
 

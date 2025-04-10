@@ -13,7 +13,7 @@ import type {
 	NotificationsWorkspaceSchema,
 	StatesWorkspace,
 	StatesWorkspaceSchema,
-	StatesWorkspaceAddress,
+	WorkspaceAddress,
 } from "./types.js";
 
 /**
@@ -147,7 +147,7 @@ export interface PresenceEvents {
 	 * are missed.
 	 */
 	workspaceActivated: (
-		workspaceAddress: StatesWorkspaceAddress,
+		workspaceAddress: WorkspaceAddress,
 		type: "States" | "Notifications" | "Unknown",
 	) => void;
 }
@@ -196,7 +196,7 @@ export interface Presence {
 	 * @returns A StatesWorkspace
 	 */
 	getStates<StatesSchema extends StatesWorkspaceSchema>(
-		workspaceAddress: StatesWorkspaceAddress,
+		workspaceAddress: WorkspaceAddress,
 		requestedContent: StatesSchema,
 		controls?: BroadcastControlSettings,
 	): StatesWorkspace<StatesSchema>;
@@ -209,7 +209,7 @@ export interface Presence {
 	 * @returns A Notifications workspace
 	 */
 	getNotifications<NotificationsSchema extends NotificationsWorkspaceSchema>(
-		notificationsId: StatesWorkspaceAddress,
+		notificationsId: WorkspaceAddress,
 		requestedContent: NotificationsSchema,
 	): NotificationsWorkspace<NotificationsSchema>;
 }

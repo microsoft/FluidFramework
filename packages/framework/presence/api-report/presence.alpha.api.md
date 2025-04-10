@@ -279,8 +279,8 @@ export interface Presence {
     getAttendee(clientId: ClientConnectionId | AttendeeId): Attendee;
     getAttendees(): ReadonlySet<Attendee>;
     getMyself(): Attendee;
-    getNotifications<NotificationsSchema extends NotificationsWorkspaceSchema>(notificationsId: StatesWorkspaceAddress, requestedContent: NotificationsSchema): NotificationsWorkspace<NotificationsSchema>;
-    getStates<StatesSchema extends StatesWorkspaceSchema>(workspaceAddress: StatesWorkspaceAddress, requestedContent: StatesSchema, controls?: BroadcastControlSettings): StatesWorkspace<StatesSchema>;
+    getNotifications<NotificationsSchema extends NotificationsWorkspaceSchema>(notificationsId: WorkspaceAddress, requestedContent: NotificationsSchema): NotificationsWorkspace<NotificationsSchema>;
+    getStates<StatesSchema extends StatesWorkspaceSchema>(workspaceAddress: WorkspaceAddress, requestedContent: StatesSchema, controls?: BroadcastControlSettings): StatesWorkspace<StatesSchema>;
 }
 
 // @alpha @sealed (undocumented)
@@ -289,7 +289,7 @@ export interface PresenceEvents {
     attendeeDisconnected: (attendee: Attendee) => void;
     // @eventProperty
     attendeeJoined: (attendee: Attendee) => void;
-    workspaceActivated: (workspaceAddress: StatesWorkspaceAddress, type: "States" | "Notifications" | "Unknown") => void;
+    workspaceActivated: (workspaceAddress: WorkspaceAddress, type: "States" | "Notifications" | "Unknown") => void;
 }
 
 // @alpha @sealed
@@ -298,9 +298,6 @@ export interface StatesWorkspace<TSchema extends StatesWorkspaceSchema, TManager
     readonly controls: BroadcastControls;
     readonly props: StatesWorkspaceEntries<TSchema>;
 }
-
-// @alpha
-export type StatesWorkspaceAddress = `${string}:${string}`;
 
 // @alpha @sealed
 export type StatesWorkspaceEntries<TSchema extends StatesWorkspaceSchema> = {
@@ -333,5 +330,8 @@ export interface ValueMap<K extends string | number, V> {
     // (undocumented)
     readonly size: number;
 }
+
+// @alpha
+export type WorkspaceAddress = `${string}:${string}`;
 
 ```

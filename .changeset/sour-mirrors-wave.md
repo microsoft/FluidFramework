@@ -1,5 +1,4 @@
 ---
-"@fluidframework/azure-end-to-end-tests": minor
 "@fluidframework/presence": minor
 ---
 ---
@@ -8,27 +7,43 @@
 
 Presence API renames
 
-List of Presence API changes:
+The following API changes have been made to improve clarity and consistency:
 
+| Original | New |
+|----------|-----|
+| `PresenceNotifications` | `NotificationsWorkspace` |
+| `PresenceNotificationsSchema` | `NotificationsWorkspaceSchema` |
+| `PresenceStates` | `StatesWorkspace` |
+| `PresenceStatesEntries` | `StatesWorkspaceEntries` |
+| `PresenceStatesSchema` | `StatesWorkspaceSchema` |
+| `PresenceWorkspaceAddress` | `WorkspaceAddress` |
+| `PresenceWorkspaceEntry` | `StatesWorkspaceEntry` |
+| `ClientSessionId` | `AttendeeId` |
+| `IPresence` | `Presence` |
+| `ISessionClient` | `Attendee` |
+| `SessionClientStatus` | `AttendeeStatus` |
+| `SpecificSessionClientId` | `SpecificAttendeeId` |
+| `SpecificSessionClient` | `SpecificAttendee` |
+| `acquirePresence` | `getPresence` |
+| `acquirePresenceViaDataObject` | `getPresenceViaDataObject` |
+
+```json
+{
+    "PresenceNotifications": "NotificationsWorkspace",
+    "PresenceNotificationsSchema": "NotificationsWorkspaceSchema",
+    "PresenceStates": "StatesWorkspace",
+    "PresenceStatesEntries": "StatesWorkspaceEntries",
+    "PresenceStatesSchema": "StatesWorkspaceSchema",
+    "PresenceWorkspaceAddress": "WorkspaceAddress",
+    "PresenceWorkspaceEntry": "StatesWorkspaceEntry",
+    "ClientSessionId": "AttendeeId",
+    "IPresence": "Presence",
+    "ISessionClient": "Attendee",
+    "SessionClientStatus": "AttendeeStatus",
+    "SpecificSessionClientId": "SpecificAttendeeId",
+    "SpecificSessionClient": "SpecificAttendee",
+    "acquirePresence": "getPresence",
+    "acquirePresenceViaDataObject": "getPresenceViaDataObject"
+}
 ```
-export type {
-    PresenceNotifications -> NotificationsWorkspace,
-    PresenceNotificationsSchema -> NotificationsWorkspaceSchema,
-    PresenceStates -> StatesWorkspace,
-    PresenceStatesEntries -> StatesWorkspaceEntries,
-    PresenceStatesSchema -> StatesWorkspaceSchema,
-    PresenceWorkspaceAddress -> StatesWorkspaceAddress,
-    PresenceWorkspaceEntry -> StatesWorkspaceEntry,
-} from "./types.js";
-
-export {
-    type ClientSessionId -> AttendeeId,
-    type IPresence -> Presence,
-    type ISessionClient -> Attendee,
-    SessionClientStatus -> AttendeeStatus,
-} from "./presence.js";
-
-export { acquirePresence -> getPresence } from "./experimentalAccess.js";
-```
-
-Also changed adjacent API to the ones mentioned above, such as `SpecificSessionClientId` to `SpecificAttendeeId`, `SpecificSessionClient` to `SpecificAttendee`, and `acquirePresenceViaDataObject` to `getPresenceViaDataObject`.
+The JSON table above can be used to automate most of these replacements in your codebase. You can implement a simple script that reads this JSON and performs the necessary replacements in your files.
