@@ -281,7 +281,7 @@ export function getDefaultBumpTypeForBranch(
  * @internal
  */
 export function getReleaseSourceForReleaseGroup(
-	releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
+	_releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
 ): ReleaseSource {
 	// All packages and release groups use release branches.
 	return "releaseBranches";

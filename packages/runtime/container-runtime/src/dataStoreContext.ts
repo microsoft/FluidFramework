@@ -9,8 +9,6 @@ import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	IDisposable,
-	IRequest,
-	IResponse,
 	ITelemetryBaseProperties,
 	type IEvent,
 } from "@fluidframework/core-interfaces";
@@ -794,15 +792,6 @@ export abstract class FluidDataStoreContext
 		messageTimestampMs?: number,
 	): void {
 		this.parentContext.addedGCOutboundRoute(fromPath, toPath, messageTimestampMs);
-	}
-
-	// eslint-disable-next-line jsdoc/require-description
-	/**
-	 * @deprecated 0.18.Should call request on the runtime directly
-	 */
-	public async request(request: IRequest): Promise<IResponse> {
-		const runtime = await this.realize();
-		return runtime.request(request);
 	}
 
 	public submitMessage(type: string, content: unknown, localOpMetadata: unknown): void {
