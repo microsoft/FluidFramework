@@ -282,10 +282,11 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 	 * Apply all the divergent changes on the given branch to this branch.
 	 *
 	 * @param branch - the branch to merge into this branch
-	 * @returns the net change to this branch and the commits that were added to this branch by the merge,
-	 * or undefined if nothing changed
+	 * @returns the commits that were added to this branch by the merge, or undefined if nothing changed
 	 */
-	public merge(branch: SharedTreeBranch<TEditor, TChange>): void {
+	public merge(
+		branch: SharedTreeBranch<TEditor, TChange>,
+	): { sourceCommits: GraphCommit<TChange>[] } | undefined {
 		this.assertNotDisposed();
 		branch.assertNotDisposed();
 
@@ -316,6 +317,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 		this.#events.emit("beforeChange", changeEvent);
 		this.head = rebaseResult.newSourceHead;
 		this.#events.emit("afterChange", changeEvent);
+		return { sourceCommits };
 	}
 
 	/** Rebase `branchHead` onto `onto`, but return undefined if nothing changed */

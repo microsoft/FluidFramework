@@ -14,7 +14,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { AllowedUpdateType, anchorSlot, type SchemaPolicy } from "../core/index.js";
 import {
-	type NodeKeyManager,
+	type NodeIdentifierManager,
 	defaultSchemaPolicy,
 	ContextSlot,
 	cursorForMapTreeNode,
@@ -117,7 +117,7 @@ export class SchematizingSimpleTreeView<
 	public constructor(
 		public readonly checkout: TreeCheckout,
 		public readonly config: TreeViewConfiguration<ReadSchema<TRootSchema>>,
-		public readonly nodeKeyManager: NodeKeyManager,
+		public readonly nodeKeyManager: NodeIdentifierManager,
 		private readonly onDispose?: () => void,
 	) {
 		this.breaker = checkout.breaker;
@@ -509,7 +509,7 @@ export function requireSchema(
 	checkout: ITreeCheckout,
 	viewSchema: ViewSchema,
 	onDispose: () => void,
-	nodeKeyManager: NodeKeyManager,
+	nodeKeyManager: NodeIdentifierManager,
 	schemaPolicy: FullSchemaPolicy,
 ): CheckoutFlexTreeView {
 	const slots = checkout.forest.anchors.slots;

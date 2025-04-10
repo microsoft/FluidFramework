@@ -120,7 +120,7 @@ export const baseModel: DDSFuzzModel<SharedNothingFactory, Operation | ChangeCon
 		workloadName: "test",
 		factory: new SharedNothingFactory(),
 		generatorFactory: () => noopGenerator,
-		reducer: async (state, op) => {},
+		reducer: (state, op) => {},
 		validateConsistency: () => {},
 		minimizationTransforms: [],
 	};

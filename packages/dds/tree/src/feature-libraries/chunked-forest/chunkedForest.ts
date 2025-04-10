@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert, oob, fail } from "@fluidframework/core-utils/internal";
 import type { Listenable } from "@fluidframework/core-interfaces";
 import { createEmitter } from "@fluid-internal/client-utils";
 
@@ -32,11 +32,11 @@ import {
 	rootFieldKey,
 	type ChunkedCursor,
 	type TreeChunk,
+	type DeltaDetachedNodeId,
 } from "../../core/index.js";
 import {
 	assertValidRange,
 	brand,
-	fail,
 	getLast,
 	getOrAddEmptyToMap,
 	hasSome,
@@ -153,7 +153,7 @@ export class ChunkedForest implements IEditableForest {
 			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
 				this.attachEdit(source, count, destination);
 			},
-			detach(source: Range, destination: FieldKey): void {
+			detach(source: Range, destination: FieldKey, id: DeltaDetachedNodeId): void {
 				this.detachEdit(source, destination);
 			},
 			/**
@@ -213,6 +213,7 @@ export class ChunkedForest implements IEditableForest {
 				newContentSource: FieldKey,
 				range: Range,
 				oldContentDestination: FieldKey,
+				oldContentId: DeltaDetachedNodeId,
 			): void {
 				assert(
 					newContentSource !== oldContentDestination,

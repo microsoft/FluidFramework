@@ -39,7 +39,6 @@ export { type FlexTreeNodeEvents } from "./treeEvents.js";
 
 export {
 	assertFlexTreeEntityNotFreed,
-	isFreedSymbol,
 	LazyEntity,
 } from "./lazyEntity.js";
 

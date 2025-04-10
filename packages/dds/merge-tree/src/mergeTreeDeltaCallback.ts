@@ -140,15 +140,11 @@ export interface IMergeTreeDeltaOpArgs {
 	 * This field is omitted for deltas corresponding to unacknowledged changes.
 	 */
 	readonly sequencedMessage?: ISequencedDocumentMessage;
-}
 
-/**
- * @internal
- */
-export interface IMergeTreeClientSequenceArgs {
-	readonly clientId: number;
-	readonly referenceSequenceNumber: number;
-	readonly sequenceNumber: number;
+	/**
+	 * Set to true if this delta is being performed as part of a rollback of unsent local changes.
+	 */
+	readonly rollback?: true;
 }
 
 /**

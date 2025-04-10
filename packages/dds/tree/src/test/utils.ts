@@ -39,11 +39,11 @@ import {
 import {
 	type ChannelFactoryRegistry,
 	type ITestContainerConfig,
-	type ITestFluidObject,
 	type ITestObjectProvider,
 	type SummaryInfo,
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
+	TestFluidObjectInternal,
 	TestObjectProvider,
 	createSummarizer,
 	summarizeNow,
@@ -92,18 +92,19 @@ import {
 	type RevertibleAlphaFactory,
 	type DeltaDetachedNodeChanges,
 	type DeltaDetachedNodeRename,
+	type NormalizedFieldUpPath,
 	type ExclusiveMapTree,
 } from "../core/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
-	type NodeKeyManager,
+	type NodeIdentifierManager,
 	buildForest,
 	defaultSchemaPolicy,
 	jsonableTreeFromFieldCursor,
 	jsonableTreeFromForest,
 	mapRootChanges,
 	mapTreeFromCursor,
-	MockNodeKeyManager,
+	MockNodeIdentifierManager,
 	cursorForMapTreeField,
 	type IDefaultEditBuilder,
 	type TreeChunk,
@@ -172,6 +173,8 @@ import {
 	MockContainerRuntimeFactoryWithOpBunching,
 	type MockContainerRuntimeWithOpBunching,
 } from "./mocksForOpBunching.js";
+import { configureDebugAsserts } from "@fluidframework/core-utils/internal";
+import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 
 // Testing utilities
 
@@ -261,7 +264,11 @@ export class TestTreeProvider {
 		const containerRuntimeFactory = () =>
 			new TestContainerRuntimeFactory(
 				"@fluid-example/test-dataStore",
-				new TestFluidObjectFactory(registry),
+				new TestFluidObjectFactory(
+					registry,
+					"TestFluidObjectFactory",
+					TestFluidObjectInternal,
+				),
 				{
 					summaryOptions: {
 						summaryConfigOverrides:
@@ -275,10 +282,7 @@ export class TestTreeProvider {
 
 		if (summarizeType === SummarizeType.onDemand) {
 			const container = await objProvider.makeTestContainer();
-			const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-			const firstTree = await dataObject.getSharedObject<SharedTree & ISharedObject>(
-				TestTreeProvider.treeId,
-			);
+			const firstTree = await this.getTree(container);
 			const { summarizer } = await createSummarizer(objProvider, container);
 			const provider = new TestTreeProvider(objProvider, [
 				container,
@@ -296,6 +300,13 @@ export class TestTreeProvider {
 			}
 			return provider;
 		}
+	}
+
+	private static async getTree(container: IContainer): Promise<SharedTree> {
+		const dataObject = await container.getEntryPoint();
+		assert(dataObject instanceof TestFluidObjectInternal);
+		const tree = await dataObject.getInitialSharedObject(TestTreeProvider.treeId);
+		return tree as SharedTree;
 	}
 
 	/**
@@ -320,10 +331,9 @@ export class TestTreeProvider {
 				: await this.provider.loadTestContainer();
 
 		this._containers.push(container);
-		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-		return (this._trees[this.trees.length] = await dataObject.getSharedObject<
-			SharedTree & ISharedObject
-		>(TestTreeProvider.treeId));
+		const tree = await TestTreeProvider.getTree(container);
+		this._trees[this.trees.length] = tree;
+		return tree;
 	}
 
 	/**
@@ -369,21 +379,27 @@ export class TestTreeProvider {
 	}
 }
 
-export interface ConnectionSetter {
-	readonly setConnected: (connectionState: boolean) => void;
-}
-
-export type SharedTreeWithConnectionStateSetter = ISharedTree & ConnectionSetter;
+/**
+ * A type with subset of functionalities of mock container runtime that can help tests control
+ * the processing of messages and the connection state of the runtime.
+ */
+export type TreeMockContainerRuntime = Pick<
+	MockContainerRuntimeWithOpBunching,
+	"connected" | "pauseInboundProcessing" | "resumeInboundProcessing" | "flush"
+>;
+export type SharedTreeWithContainerRuntime = ISharedTree & {
+	containerRuntime: TreeMockContainerRuntime;
+};
 
 /**
  * A test helper class that creates one or more SharedTrees connected to mock services.
  */
 export class TestTreeProviderLite {
-	private static readonly treeId = "TestSharedTree";
 	private readonly runtimeFactory: MockContainerRuntimeFactoryWithOpBunching;
-	public readonly trees: readonly SharedTreeWithConnectionStateSetter[];
+	public readonly trees: readonly SharedTreeWithContainerRuntime[];
 	public readonly logger: IMockLoggerExt = createMockLoggerExt();
-	private readonly containerRuntimes: Set<MockContainerRuntimeWithOpBunching> = new Set();
+	private readonly containerRuntimeMap: Map<string, MockContainerRuntimeWithOpBunching> =
+		new Map();
 
 	/**
 	 * Create a new {@link TestTreeProviderLite} with a number of trees pre-initialized.
@@ -413,7 +429,7 @@ export class TestTreeProviderLite {
 			flushMode,
 		});
 		assert(trees >= 1, "Must initialize provider with at least one tree");
-		const t: SharedTreeWithConnectionStateSetter[] = [];
+		const t: SharedTreeWithContainerRuntime[] = [];
 		const random = useDeterministicSessionIds ? makeRandom(0xdeadbeef) : makeRandom();
 		for (let i = 0; i < trees; i++) {
 			const sessionId = random.uuid4() as SessionId;
@@ -423,38 +439,50 @@ export class TestTreeProviderLite {
 				idCompressor: createIdCompressor(sessionId),
 				logger: this.logger,
 			});
-			const tree = this.factory.create(
-				runtime,
-				TestTreeProviderLite.treeId,
-			) as SharedTreeWithConnectionStateSetter;
+			const tree = this.factory.create(runtime, `tree-${i}`) as ISharedTree;
 			const containerRuntime = this.runtimeFactory.createContainerRuntime(runtime);
-			this.containerRuntimes.add(containerRuntime);
+			this.containerRuntimeMap.set(tree.id, containerRuntime);
 			tree.connect({
 				deltaConnection: runtime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			});
-			(tree as Mutable<SharedTreeWithConnectionStateSetter>).setConnected = (
-				connectionState: boolean,
-			) => {
-				containerRuntime.connected = connectionState;
-			};
-			t.push(tree);
+			(tree as Mutable<SharedTreeWithContainerRuntime>).containerRuntime = containerRuntime;
+			t.push(tree as SharedTreeWithContainerRuntime);
 		}
 		this.trees = t;
 	}
 
-	public processMessages(count?: number): void {
-		// In TurnBased mode, flush the messages from all the runtimes before processing the messages.
-		// Note that this does not preserve the order in which the messages were sent. To do so, tests should
-		// flush messages from individual runtimes in the order they were created.
-		if (this.flushMode === FlushMode.TurnBased) {
-			this.containerRuntimes.forEach((containerRuntime) => {
+	/**
+	 * Synchronize messages across all trees. This involves optionally flushing any messages sent by the trees so
+	 * that they are sequenced. Then, the runtime processes the messages. Flushing is needed in TurnBased mode only
+	 * where messages are not automatically flushed. In Immediate mode, each message is flushed immediately.
+	 * @param options - The options to use when synchronizing messages.
+	 * - count: The number of messages to synchronize. If not provided, all messages are synchronized.
+	 * - flush: Whether or not to flush the messages before processing them. Defaults to true. In TurnBased mode,
+	 * messages are not automatically flushed so this should either be set to true or the test should manually
+	 * flush the messages before calling this method.
+	 * @remarks
+	 * - Trees that are not connected will not flush outbound messages or process inbound messages. They will be queued
+	 * and will be processed when they are reconnected (unless their inbound processing is paused. See below).
+	 * - Trees whose inbound processing is paused will not process inbound messages but will queue them. Any queued
+	 * messages will be processed when inbound processing is resumed (unless they are not connected. See above).
+	 * - Flushing does not preserve the order in which the messages were sent. To do so, tests should flush the messages
+	 * from the trees in the order they were sent.
+	 */
+	public synchronizeMessages(options?: { count?: number; flush?: boolean }): void {
+		const flush = options?.flush ?? true;
+		if (flush) {
+			this.containerRuntimeMap.forEach((containerRuntime) => {
 				containerRuntime.flush();
 			});
 		}
-		this.runtimeFactory.processSomeMessages(
-			count ?? this.runtimeFactory.outstandingMessageCount,
-		);
+
+		const count = options?.count;
+		if (count !== undefined) {
+			this.runtimeFactory.processSomeMessages(count);
+		} else {
+			this.runtimeFactory.processAllMessages();
+		}
 	}
 
 	public get minimumSequenceNumber(): number {
@@ -778,7 +806,7 @@ export function flexTreeViewWithContent(
 		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
-		nodeKeyManager?: NodeKeyManager;
+		nodeKeyManager?: NodeIdentifierManager;
 	},
 ): CheckoutFlexTreeView {
 	const view = checkoutWithContent(
@@ -788,7 +816,7 @@ export function flexTreeViewWithContent(
 	return new CheckoutFlexTreeView(
 		view,
 		defaultSchemaPolicy,
-		args?.nodeKeyManager ?? new MockNodeKeyManager(),
+		args?.nodeKeyManager ?? new MockNodeIdentifierManager(),
 	);
 }
 
@@ -1195,7 +1223,7 @@ export function treeTestFactory(
  */
 export function getView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
-	nodeKeyManager?: NodeKeyManager,
+	nodeKeyManager?: NodeIdentifierManager,
 	logger?: ITelemetryLoggerExt,
 ): SchematizingSimpleTreeView<TSchema> {
 	const checkout = createTreeCheckout(
@@ -1211,7 +1239,7 @@ export function getView<const TSchema extends ImplicitFieldSchema>(
 	return new SchematizingSimpleTreeView<TSchema>(
 		checkout,
 		config,
-		nodeKeyManager ?? new MockNodeKeyManager(),
+		nodeKeyManager ?? new MockNodeIdentifierManager(),
 	);
 }
 
@@ -1222,7 +1250,11 @@ export function viewCheckout<const TSchema extends ImplicitFieldSchema>(
 	checkout: TreeCheckout,
 	config: TreeViewConfiguration<TSchema>,
 ): SchematizingSimpleTreeView<TSchema> {
-	return new SchematizingSimpleTreeView<TSchema>(checkout, config, new MockNodeKeyManager());
+	return new SchematizingSimpleTreeView<TSchema>(
+		checkout,
+		config,
+		new MockNodeIdentifierManager(),
+	);
 }
 
 /**
@@ -1325,12 +1357,26 @@ function normalizeNewFieldContent(
  */
 export function moveWithin(
 	editor: IDefaultEditBuilder,
-	field: FieldUpPath,
+	field: NormalizedFieldUpPath,
 	sourceIndex: number,
 	count: number,
 	destIndex: number,
 ) {
 	editor.move(field, sourceIndex, count, field, destIndex);
+}
+
+/**
+ * Invoke inside a describe block for benchmarks to add hooks that configure things for maximum performance if isInPerformanceTestingMode,
+ * and enable debug asserts otherwise.
+ */
+export function configureBenchmarkHooks(): void {
+	let debugBefore: boolean;
+	before(() => {
+		debugBefore = configureDebugAsserts(!isInPerformanceTestingMode);
+	});
+	after(() => {
+		assert.equal(configureDebugAsserts(debugBefore), !isInPerformanceTestingMode);
+	});
 }
 
 export function chunkFromJsonTrees(field: JsonCompatible[]): TreeChunk {

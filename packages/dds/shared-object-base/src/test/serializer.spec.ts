@@ -5,9 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import {
+	isFluidHandle,
+	RemoteFluidObjectHandle,
+} from "@fluidframework/runtime-utils/internal";
 
-import { RemoteFluidObjectHandle } from "../remoteObjectHandle.js";
 import { FluidSerializer } from "../serializer.js";
 import { makeHandlesSerializable, parseHandles } from "../utils.js";
 

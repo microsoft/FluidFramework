@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert, oob, fail } from "@fluidframework/core-utils/internal";
 import type { TAnySchema } from "@sinclair/typebox";
 
 import {
@@ -30,7 +30,6 @@ import {
 	type JsonCompatibleReadOnly,
 	type Mutable,
 	brand,
-	fail,
 	idAllocatorFromMaxId,
 	newTupleBTree,
 } from "../../util/index.js";

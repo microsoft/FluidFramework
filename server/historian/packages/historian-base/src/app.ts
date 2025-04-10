@@ -9,6 +9,7 @@ import {
 	IRevokedTokenChecker,
 	IDocumentManager,
 	IReadinessCheck,
+	type IDenyList,
 } from "@fluidframework/server-services-core";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
@@ -24,7 +25,7 @@ import {
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
 import { RestLessServer, createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 import * as routes from "./routes";
-import { ICache, IDenyList, ITenantService, ISimplifiedCustomDataRetriever } from "./services";
+import { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "./services";
 import { Constants, getDocumentIdFromRequest, getTenantIdFromRequest } from "./utils";
 
 export function create(

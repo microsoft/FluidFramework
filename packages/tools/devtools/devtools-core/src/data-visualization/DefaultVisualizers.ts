@@ -104,6 +104,28 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
 };
 
 /**
+ * Default {@link VisualizeSharedObject} for {@link DataObject}.
+ * @remarks This takes in a `root` of type {@link ISharedDirectory} from {@link DataObject} and visualizes its children.
+ */
+export const visualizeDataObject: VisualizeSharedObject = async (
+	dataObjectRoot: ISharedObject,
+	visualizeChildData: VisualizeChildData,
+): Promise<FluidObjectTreeNode> => {
+	const renderedChildData = (await visualizeSharedDirectory(
+		dataObjectRoot,
+		visualizeChildData,
+	)) as FluidObjectTreeNode; // TODO: Refactor the visualizer to accept generic type to avoid type casting.
+
+	return {
+		fluidObjectId: dataObjectRoot.id,
+		children: renderedChildData.children,
+		metadata: renderedChildData.metadata,
+		typeMetadata: "DataObject",
+		nodeKind: VisualNodeKind.FluidTreeNode,
+	};
+};
+
+/**
  * Default {@link VisualizeSharedObject} for {@link SharedCounter}.
  */
 export const visualizeSharedCounter: VisualizeSharedObject = async (
@@ -120,7 +142,7 @@ export const visualizeSharedCounter: VisualizeSharedObject = async (
 };
 
 /**
- * Default {@link VisualizeSharedObject} for {@link SharedCounter}.
+ * Default {@link VisualizeSharedObject} for {@link SharedDirectory}.
  */
 export const visualizeSharedDirectory: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
@@ -272,8 +294,8 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	 * Since the {@link SimpleTreeSchema.allowedTypes} of each children node is only accessible at the parent field level,
 	 * each node's allowed types are computed at the parent field level.
 	 */
-	const allowedTypes = treeSimpleSchema.allowedTypes;
-	const isRequired = treeSimpleSchema.kind === FieldKind.Required;
+	const allowedTypes = treeSimpleSchema.root.allowedTypesIdentifiers;
+	const isRequired = treeSimpleSchema.root.kind === FieldKind.Required;
 
 	if (treeView === undefined) {
 		return {
@@ -336,6 +358,7 @@ export const visualizeUnknownSharedObject: VisualizeSharedObject = async (
 
 /**
  * List of default visualizers included in the library.
+ * @remarks {@link @fluidframework/aqueduct#DataObject} does not have type information, thus not included in the list.
  */
 export const defaultVisualizers: Record<string, VisualizeSharedObject> = {
 	[SharedCell.getFactory().type]: visualizeSharedCell,

@@ -27,6 +27,7 @@ import {
 	ITenantKeyGenerator,
 	isKeylessFluidAccessClaimEnabled,
 	generateToken,
+	getJtiClaimFromAccessToken,
 } from "@fluidframework/server-services-utils";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
@@ -158,6 +159,7 @@ export class TenantManager {
 		ver: string = "1.0",
 		jti: string = uuid(),
 		includeDisabledTenant = false,
+		forceGenerateTokenWithPrivateKey = false,
 	): Promise<IFluidAccessToken> {
 		const lumberProperties = {
 			[BaseTelemetryProperties.tenantId]: tenantId,
@@ -180,6 +182,19 @@ export class TenantManager {
 		// If the tenant is a keyless tenant, always use the private keys to sign the token
 		const isTenantPrivateKeyAccessEnabled =
 			this.isTenantPrivateKeyAccessEnabled(tenantDocument);
+
+		// If private keys access is not enabled, and the requester is trying to generate a token with private keys, throw an error.
+		// The forceGenerateTokenWithPrivateKey flag is not used anywhere ahead as private keys are given preference to sign tokens over shared keys if both are enabled.
+		if (!isTenantPrivateKeyAccessEnabled && forceGenerateTokenWithPrivateKey) {
+			Lumberjack.error(
+				`Tenant ${tenantId} does not have private key access enabled. Cannot sign token with private key.`,
+				lumberProperties,
+			);
+			throw new NetworkError(
+				400,
+				`Tenant ${tenantId} does not have private key access enabled.`,
+			);
+		}
 
 		const keys = this.decryptKeys(
 			tenantDocument,
@@ -230,6 +245,17 @@ export class TenantManager {
 		};
 	}
 
+	private logInvalidTokenJti(tenantId: string, token: string, status: number): void {
+		const jtiClaim = getJtiClaimFromAccessToken(token);
+		if (jtiClaim) {
+			Lumberjack.error("Token is invalid", {
+				tenantId,
+				jtiClaim,
+				status,
+			});
+		}
+	}
+
 	/**
 	 * Validates a tenant's API token
 	 */
@@ -275,11 +301,13 @@ export class TenantManager {
 							},
 						);
 					}
+					this.logInvalidTokenJti(tenantId, token, error.code);
 					throw error;
 				}
 				if (error.code === 401 || !tenantKeys.key2) {
 					// Trying key2 with an expired token won't help.
 					// Also, if there is no key2, don't bother validating.
+					this.logInvalidTokenJti(tenantId, token, error.code);
 					throw error;
 				}
 			}
@@ -315,6 +343,7 @@ export class TenantManager {
 						);
 					}
 				}
+				this.logInvalidTokenJti(tenantId, token, error.code);
 				throw error;
 			}
 		}

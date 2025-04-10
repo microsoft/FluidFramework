@@ -31,7 +31,7 @@ import {
 	cursorFromInsertable,
 	getStoredSchema,
 	numberSchema,
-	SchemaFactory,
+	SchemaFactoryAlpha,
 	stringSchema,
 	toStoredSchema,
 	type ImplicitFieldSchema,
@@ -123,7 +123,7 @@ export function treeContentFromTestTree(testData: TestTree): TreeStoredContent {
 	};
 }
 
-const factory = new SchemaFactory("test");
+const factory = new SchemaFactoryAlpha("test");
 export class Minimal extends factory.object("minimal", {}) {}
 export class Minimal2 extends factory.object("minimal2", {}) {}
 export class HasMinimalValueField extends factory.object("hasMinimalValueField", {
@@ -132,6 +132,29 @@ export class HasMinimalValueField extends factory.object("hasMinimalValueField",
 export class HasRenamedField extends factory.object("hasRenamedField", {
 	field: factory.required(Minimal, { key: "stored-name" }),
 }) {}
+
+export class HasDescriptions extends factory.object(
+	"hasDescriptions",
+	{
+		field: factory.required(Minimal, { metadata: { description: "the field" } }),
+	},
+	{ metadata: { description: "root object" } },
+) {}
+
+export class HasAllMetadata extends factory.object(
+	"hasDescriptions",
+	{
+		field: factory.required(Minimal, {
+			metadata: { description: "the field", custom: "CustomField" },
+			key: "stored-name",
+		}),
+	},
+	{
+		metadata: { description: "root object", custom: "CustomNode" },
+		allowUnknownOptionalFields: true,
+	},
+) {}
+
 export class HasAmbiguousField extends factory.object("hasAmbiguousField", {
 	field: [Minimal, Minimal2],
 }) {}
@@ -209,6 +232,16 @@ export const testSimpleTrees: readonly TestSimpleTree[] = [
 		HasAmbiguousField,
 		() => ({ field: new Minimal({}) }),
 		true,
+	),
+	testSimpleTree("hasDescriptions", HasDescriptions, { field: {} }),
+	testSimpleTree("hasAllMetadata", HasAllMetadata, { field: {} }),
+	testSimpleTree(
+		"hasAllMetadataRootField",
+		SchemaFactoryAlpha.optional(HasAllMetadata, {
+			key: "unused root key",
+			metadata: { description: "root field", custom: "root field custom" },
+		}),
+		{ field: {} },
 	),
 	testSimpleTree("hasNumericValueField", HasNumericValueField, { field: 5 }),
 	testSimpleTree("hasPolymorphicValueField", HasPolymorphicValueField, { field: 5 }),

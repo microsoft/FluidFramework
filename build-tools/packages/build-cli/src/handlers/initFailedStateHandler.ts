@@ -18,8 +18,8 @@ export abstract class InitFailedStateHandler extends BaseStateHandler {
 		state: MachineState,
 		machine: Machine<unknown>,
 		testMode: boolean,
-		log: CommandLogger,
-		data: unknown,
+		_log: CommandLogger,
+		_data: unknown,
 	): Promise<boolean> {
 		switch (state) {
 			case "Init": {

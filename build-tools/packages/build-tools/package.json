@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/build-tools",
-	"version": "0.55.0",
+	"version": "0.56.0",
 	"description": "Fluid Build tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -88,6 +88,6 @@
 		"mocha": "^10.7.3"
 	},
 	"engines": {
-		"node": ">=18.17.1"
+		"node": ">=20.15.1"
 	}
 }

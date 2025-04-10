@@ -209,24 +209,6 @@ declare type current_as_old_for_Interface_IFluidModuleWithDetails = requireAssig
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_ILoaderOptions": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_ILoaderOptions = requireAssignableTo<TypeOnly<old.ILoaderOptions>, TypeOnly<current.ILoaderOptions>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_ILoaderOptions": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_ILoaderOptions = requireAssignableTo<TypeOnly<current.ILoaderOptions>, TypeOnly<old.ILoaderOptions>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_ILoaderProps": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_ILoaderProps = requireAssignableTo<TypeOnly<old.ILoaderProps>, TypeOnly<current.ILoaderProps>>

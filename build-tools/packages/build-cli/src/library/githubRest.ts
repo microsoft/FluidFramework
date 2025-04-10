@@ -189,7 +189,6 @@ export async function getCommentBody(
 		pull_number: prNumber,
 	});
 
-	let commentBody: string | undefined;
 	// Check the comments to find the comment with the identifier.
 	for (const comment of comments) {
 		if (comment.body.startsWith(commentIdentifier)) {

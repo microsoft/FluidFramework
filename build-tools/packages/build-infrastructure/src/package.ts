@@ -6,8 +6,8 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 
-// Imports are written this way for CJS/ESM compat
 import fsePkg from "fs-extra";
+// eslint-disable-next-line import/no-named-as-default-member -- Imports are written this way for CJS/ESM compat
 const { readJsonSync } = fsePkg;
 import colors from "picocolors";
 

@@ -5,7 +5,6 @@
 
 import safeStringify from "json-stringify-safe";
 import { v4 as uuid } from "uuid";
-import { performance } from "@fluidframework/common-utils";
 import { LumberEventName } from "./lumberEventNames";
 import {
 	LogLevel,
@@ -16,6 +15,8 @@ import {
 	ILumberFormatter,
 } from "./resources";
 
+const performanceNow = () => globalThis.performance.now();
+
 // Lumber represents the telemetry data being captured, and it uses a list of
 // ILumberjackEngine to emit the data according to the engine implementation.
 // Lumber should be created through Lumberjack. Additional properties can be set through
@@ -25,7 +26,7 @@ import {
  * @internal
  */
 export class Lumber<T extends string = LumberEventName> {
-	private readonly _startTime = performance.now();
+	private readonly _startTime = performanceNow();
 	private _properties = new Map<string, any>();
 	private _durationInMs?: number;
 	private _successful?: boolean;
@@ -157,7 +158,7 @@ export class Lumber<T extends string = LumberEventName> {
 
 		const durationOverwrite = parseFloat(this.properties.get("durationInMs"));
 		this._durationInMs = isNaN(durationOverwrite)
-			? performance.now() - this._startTime
+			? performanceNow() - this._startTime
 			: durationOverwrite;
 
 		if (this._formatters) {

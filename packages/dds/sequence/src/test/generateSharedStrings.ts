@@ -10,11 +10,6 @@ import { MersenneTwister19937, Random } from "random-js";
 import { SharedStringFactory } from "../sequenceFactory.js";
 import { SharedStringClass } from "../sharedString.js";
 
-import {
-	SharedStringWithV1IntervalCollection,
-	V1IntervalCollectionSharedStringFactory,
-} from "./v1IntervalCollectionHelpers.js";
-
 export const LocationBase: string = "src/test/snapshots/";
 
 export const supportedVersions = new Map<string, any>([
@@ -25,7 +20,7 @@ export const supportedVersions = new Map<string, any>([
 	["legacy", { catchUpBlobName: "randomNameForCatchUpOps" }],
 	["legacyWithCatchUp", {}],
 	["v1", { newMergeTreeSnapshotFormat: true }],
-	["v1Intervals", {}],
+	["v1Intervals", { intervalSerializationFormat: "1" }],
 ]);
 
 function createIntervals(sharedString) {
@@ -53,15 +48,6 @@ export function* generateStrings(): Generator<{
 				dataStoreRuntime,
 				documentId,
 				SharedStringFactory.Attributes,
-			);
-			string.initializeLocal();
-			return string;
-		};
-		const createNewV1SharedString = (): SharedStringWithV1IntervalCollection => {
-			const string = new SharedStringWithV1IntervalCollection(
-				dataStoreRuntime,
-				documentId,
-				V1IntervalCollectionSharedStringFactory.Attributes,
 			);
 			string.initializeLocal();
 			return string;
@@ -160,7 +146,7 @@ export function* generateStrings(): Generator<{
 		};
 
 		if (version === "v1Intervals") {
-			sharedString = createNewV1SharedString();
+			sharedString = createNewSharedString();
 			// SharedString with V1 intervals
 			for (let i = 0; i < Snapshot.sizeOfFirstChunk / insertText.length / 2; i++) {
 				sharedString.insertText(0, `${insertText}${i}`);

@@ -4,21 +4,21 @@
  */
 
 import {
-	DataObject,
-	DataObjectFactory,
+	PureDataObjectFactory,
+	TreeDataObject,
 	createDataObjectKind,
 } from "@fluidframework/aqueduct/internal";
-import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type {
-	ITree,
 	SchemaCompatibilityStatus,
 	TreeViewConfiguration,
 	TreeFieldFromImplicitField,
 	TreeView,
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
+	ITree,
 } from "@fluidframework/tree";
 import { configuredSharedTree, typeboxValidator } from "@fluidframework/tree/internal";
 import * as React from "react";
@@ -33,89 +33,77 @@ const SharedTree = configuredSharedTree({
 
 /**
  * Defines a DataObject for a {@link @fluidframework/tree#SharedTree} with a built in {@link @fluidframework/tree#TreeViewConfiguration}.
- * @param key - See {@link ITreeDataObject.key}.
- * @param treeConfiguration - See {@link ITreeDataObject.config}.
+ * @param treeConfiguration - See {@link IReactTreeDataObject.config}.
  * @param createInitialTree - Function which populates the tree with initial data on document create.
  * @returns A {@link @fluidframework/fluid-static#DataObjectClass} to allow easy use of a SharedTree in a ContainerSchema.
  * @public
  */
 export function treeDataObject<TSchema extends ImplicitFieldSchema>(
-	key: string,
 	treeConfiguration: TreeViewConfiguration<TSchema>,
 	createInitialTree: () => InsertableTreeFieldFromImplicitField<TSchema>,
 ): SharedObjectKind<IReactTreeDataObject<TSchema> & IFluidLoadable> {
-	return treeDataObjectInternal(key, treeConfiguration, createInitialTree);
+	return treeDataObjectInternal(treeConfiguration, createInitialTree);
 }
 
 /**
  * Defines a DataObject for a {@link @fluidframework/tree#SharedTree} with a built in {@link @fluidframework/tree#TreeViewConfiguration}.
- * @param key - See {@link ITreeDataObject.key}.
- * @param treeConfiguration - See {@link ITreeDataObject.config}.
+ * @param treeConfiguration - See {@link IReactTreeDataObject.config}.
  * @param createInitialTree - Function which populates the tree with initial data on document create.
  * @returns A {@link @fluidframework/fluid-static#DataObjectClass} to allow easy use of a SharedTree in a ContainerSchema.
  * @internal
  */
 export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(
-	key: string,
 	treeConfiguration: TreeViewConfiguration<TSchema>,
 	createInitialTree: () => InsertableTreeFieldFromImplicitField<TSchema>,
-): SharedObjectKind<IReactTreeDataObject<TSchema> & IFluidLoadable & DataObject> & {
+): SharedObjectKind<
+	IReactTreeDataObject<TSchema> & IFluidLoadable & TreeDataObject<TreeView<TSchema>>
+> & {
 	readonly factory: IFluidDataStoreFactory;
 } {
-	class SchemaAwareTreeDataObject extends TreeDataObject<TSchema> {
-		public readonly key = key;
-		public readonly config = treeConfiguration;
-		protected readonly createInitialTree = createInitialTree;
+	class SchemaAwareTreeDataObject extends ReactTreeDataObject<TSchema> {
+		public override readonly config = treeConfiguration;
 
-		public static readonly factory = new DataObjectFactory(
-			`TreeDataObject:${key}`,
+		public static readonly factory = new PureDataObjectFactory<ReactTreeDataObject<TSchema>>(
+			`TreeDataObject`,
 			SchemaAwareTreeDataObject,
 			[SharedTree.getFactory()],
 			{},
 		);
+
+		// Populate tree with initial data on document create
+		protected override async initializingFirstTime(): Promise<void> {
+			this.treeView.initialize(createInitialTree());
+		}
 	}
 	return createDataObjectKind(SchemaAwareTreeDataObject);
 }
 
 /**
- * A schema-aware Tree DataObject.
- * @remarks
- * Allows for the Tree's schema to be baked into the container schema.
+ * A schema-aware tree-backed DataObject, extended with a React Component to view the tree.
+ * @remarks Allows for the Tree's schema to be baked into the container schema.
  * @public
  */
-export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
+export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> {
 	/**
-	 * The key under the root DataObject in which the {@link @fluidframework/tree#SharedTree} is stored.
-	 */
-	readonly key: string;
-
-	/**
-	 * TreeViewConfiguration used to initialize new documents, as well as to interpret (schematize) existing ones.
+	 * The configuration used to initialize new documents, as well as to interpret (schematize) existing ones.
 	 *
 	 * @remarks
 	 * The fact that a single view schema is provided here (on the data object) makes it impossible to try and apply multiple different schema.
 	 * Since the view schema currently does not provide any adapters for handling differences between view and stored schema,
-	 * its also impossible for this single view schema to handle multiple different stored schema.
-	 * Therefor, with this current API, two different applications (or different versions of the same application)
+	 * it's also impossible for this single view schema to handle multiple different stored schema.
+	 * Therefore, with this current API, two different applications (or different versions of the same application)
 	 * with differing stored schema requirements (as implied by their view schema) can not collaborate on the same tree.
-	 * The only schema evolution thats currently possible is upgrading the schema to one that supports a superset of what the old schema allowed,
+	 * The only schema evolution that's currently possible is upgrading the schema to one that supports a superset of what the old schema allowed,
 	 * and collaborating between clients which have view schema that exactly correspond to that stored schema.
 	 * Future work on tree as well as these utilities should address this limitation.
 	 */
 	readonly config: TreeViewConfiguration<TSchema>;
 
 	/**
-	 * The TreeView.
+	 * The schema-aware view of the tree.
 	 */
-	readonly tree: TreeView<TSchema>;
-}
+	readonly treeView: TreeView<TSchema>;
 
-/**
- * {@link ITreeDataObject} extended with a React Component to view the tree.
- * @public
- */
-export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema>
-	extends ITreeDataObject<TSchema> {
 	/**
 	 * React component which handles schematizing trees.
 	 * This includes displaying errors when the document can not be viewed using the view schema.
@@ -150,44 +138,17 @@ export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
  * Generic DataObject for shared trees.
  * @internal
  */
-export abstract class TreeDataObject<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema>
-	extends DataObject
+export abstract class ReactTreeDataObject<
+		TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
+	>
+	extends TreeDataObject<TreeView<TSchema>>
 	implements IReactTreeDataObject<TSchema>
 {
-	#tree?: TreeView<TSchema>;
-
-	public get tree(): TreeView<TSchema> {
-		if (this.#tree === undefined) throw new Error(this.getUninitializedErrorString("tree"));
-		return this.#tree;
-	}
-
-	protected override async initializingFirstTime(): Promise<void> {
-		const tree = SharedTree.create(this.runtime);
-		this.#tree = tree.viewWith(this.config);
-		// Initialize the tree content and schema.
-		this.#tree.initialize(this.createInitialTree());
-		this.root.set(this.key, tree.handle);
-	}
-
-	protected override async initializingFromExisting(): Promise<void> {
-		const handle = this.root.get<IFluidHandle<ITree>>(this.key);
-		if (handle === undefined)
-			throw new Error("map should be populated on creation by 'initializingFirstTime'");
-
-		// the TreeView exposes this via `compatibility` which is explicitly handled by TreeViewComponent.
-		const iTree = await handle.get();
-		this.#tree = iTree.viewWith(this.config);
-	}
-
-	protected override async hasInitialized(): Promise<void> {
-		if (this.#tree === undefined) throw new Error(this.getUninitializedErrorString("tree"));
-	}
-
-	public abstract readonly key: string;
-
 	public abstract readonly config: TreeViewConfiguration<TSchema>;
 
-	protected abstract createInitialTree(): InsertableTreeFieldFromImplicitField<TSchema>;
+	public override generateView(tree: ITree): TreeView<TSchema> {
+		return tree.viewWith(this.config);
+	}
 
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
 	public readonly TreeViewComponent = ({
@@ -253,9 +214,9 @@ function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 	viewComponent: ViewComponent,
 	errorComponent,
 }: TreeViewProps<TSchema> & {
-	tree: TreeDataObject<TSchema>;
+	tree: ReactTreeDataObject<TSchema>;
 }) {
-	const view = tree.tree;
+	const view = tree.treeView;
 
 	const compatibility = useViewCompatibility(view);
 	const root = useViewRoot(view);

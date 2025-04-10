@@ -12,6 +12,8 @@ import {
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
 import { NodeKind, type TreeNodeSchema, type TreeNodeSchemaNonClass } from "./core/index.js";
+import type { NodeSchemaMetadata, TreeLeafValue } from "./schemaTypes.js";
+import type { SimpleLeafNodeSchema } from "./simpleSchema.js";
 
 /**
  * Instances of this class are schema for leaf nodes.
@@ -44,9 +46,14 @@ export class LeafNodeSchema<Name extends string, const T extends ValueSchema>
 		return data;
 	}
 
+	public readonly leafKind: ValueSchema;
+
+	public readonly metadata: NodeSchemaMetadata = {};
+
 	public constructor(name: Name, t: T) {
 		this.identifier = name;
 		this.info = t;
+		this.leafKind = t;
 	}
 }
 
@@ -56,16 +63,30 @@ export class LeafNodeSchema<Name extends string, const T extends ValueSchema>
 function makeLeaf<Name extends string, const T extends ValueSchema>(
 	name: Name,
 	t: T,
-): TreeNodeSchema<
-	`com.fluidframework.leaf.${Name}`,
-	NodeKind.Leaf,
-	TreeValue<T>,
-	TreeValue<T>,
-	true
-> {
+): LeafSchema<Name, TreeValue<T>> & SimpleLeafNodeSchema {
 	// Names in this domain follow https://en.wikipedia.org/wiki/Reverse_domain_name_notation
 	return new LeafNodeSchema(`com.fluidframework.leaf.${name}`, t);
 }
+
+/**
+ * A {@link TreeNodeSchema} for a {@link TreeLeafValue}.
+ * @remarks
+ * This is just a more specific alias for a particular {@link TreeNodeSchemaNonClass}.
+ * It only exists to make the API (particularly errors, IntelliSense, and generated .d.ts files) more readable.
+ *
+ * See {@link SchemaFactory} and its various properties for actual leaf schema objects.
+ * @privateRemarks
+ * This is an interface so its name will show up in things like type errors instead of the fully expanded TreeNodeSchemaNonClass.
+ * @system @sealed @public
+ */
+export interface LeafSchema<Name extends string, T extends TreeLeafValue>
+	extends TreeNodeSchemaNonClass<
+		`com.fluidframework.leaf.${Name}`,
+		NodeKind.Leaf,
+		/* TNode */ T,
+		/* TInsertable */ T,
+		/* ImplicitlyConstructable */ true
+	> {}
 
 // Leaf schema shared between all SchemaFactory instances.
 export const stringSchema = makeLeaf("string", ValueSchema.String);

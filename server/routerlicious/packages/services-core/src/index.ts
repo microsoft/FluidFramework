@@ -21,6 +21,7 @@ export {
 	IScribeServerConfiguration,
 	IServerConfiguration,
 	IServiceConfiguration,
+	MaxKafkaMessageSize,
 } from "./configuration";
 export {
 	ICheckpointRepository,
@@ -182,3 +183,4 @@ export { IClusterDrainingChecker, clusterDrainingRetryTimeInMs } from "./cluster
 export { IWebSocketTracker } from "./webSocketTracker";
 export { IReadinessCheck, IReadinessStatus, ICheck } from "./readinessCheck";
 export { IFluidAccessToken, IFluidAccessTokenGenerator } from "./fluidAccessTokenGenerator";
+export { IDenyList } from "./denyList";

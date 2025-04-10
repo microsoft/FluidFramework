@@ -167,8 +167,8 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 
 	// This should not be called due to processPackages being overridden instead.
 	protected override async processPackage<TPkg extends Package>(
-		pkg: TPkg,
-		kind: PackageKind,
+		_pkg: TPkg,
+		_kind: PackageKind,
 	): Promise<void> {
 		throw new Error("Method not implemented.");
 	}
@@ -227,7 +227,7 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 			return errors;
 		}
 
-		for (const [pkg, data] of dataMap) {
+		for (const [, data] of dataMap) {
 			errors.push(...this.tagAsserts(collected, data));
 		}
 

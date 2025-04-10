@@ -17,6 +17,7 @@ import {
 	IClusterDrainingChecker,
 	IFluidAccessTokenGenerator,
 	IReadinessCheck,
+	type IDenyList,
 } from "@fluidframework/server-services-core";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
@@ -59,6 +60,8 @@ export function create(
 	enableClientIPLogging?: boolean,
 	readinessCheck?: IReadinessCheck,
 	fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,
+	redisCacheForGetSession?: ICache,
+	denyList?: IDenyList,
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
@@ -179,6 +182,8 @@ export function create(
 		clusterDrainingChecker,
 		readinessCheck,
 		fluidAccessTokenGenerator,
+		redisCacheForGetSession,
+		denyList,
 	);
 
 	app.use(routes.api);

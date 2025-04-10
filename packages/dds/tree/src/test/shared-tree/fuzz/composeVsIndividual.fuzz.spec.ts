@@ -8,7 +8,7 @@ import { strict as assert, fail } from "node:assert";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	type AsyncGenerator,
-	combineReducersAsync,
+	combineReducers,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import {
@@ -50,11 +50,8 @@ interface BranchedTreeFuzzTestState extends FuzzTestState {
 	branch?: FuzzTransactionView;
 }
 
-const fuzzComposedVsIndividualReducer = combineReducersAsync<
-	Operation,
-	BranchedTreeFuzzTestState
->({
-	treeEdit: async (state, { edit }) => {
+const fuzzComposedVsIndividualReducer = combineReducers<Operation, BranchedTreeFuzzTestState>({
+	treeEdit: (state, { edit }) => {
 		switch (edit.type) {
 			case "fieldEdit": {
 				const tree = state.branch;
@@ -67,28 +64,28 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<
 		}
 		return state;
 	},
-	transactionBoundary: async (state, operation) => {
+	transactionBoundary: (state, operation) => {
 		assert.fail(
 			"Transactions are simulated manually in these tests and should not be generated.",
 		);
 	},
-	undoRedo: async (state, { operation }) => {
+	undoRedo: (state, { operation }) => {
 		const tree = state.main ?? assert.fail();
 		assert(isRevertibleSharedTreeView(tree.checkout));
 		applyUndoRedoEdit(tree.checkout.undoStack, tree.checkout.redoStack, operation);
 		return state;
 	},
-	synchronizeTrees: async (state) => {
+	synchronizeTrees: (state) => {
 		applySynchronizationOp(state);
 		return state;
 	},
-	schemaChange: async (state, operation) => {
+	schemaChange: (state, operation) => {
 		return state;
 	},
-	constraint: async (state, operation) => {
+	constraint: (state, operation) => {
 		applyConstraint(state, operation);
 	},
-	forkMergeOperation: async (state, operation) => {
+	forkMergeOperation: (state, operation) => {
 		return applyForkMergeOperation(state, operation);
 	},
 });

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
@@ -19,9 +19,9 @@ import {
 import {
 	isTreeValue,
 	valueSchemaAllows,
-	type NodeKeyManager,
+	type NodeIdentifierManager,
 } from "../feature-libraries/index.js";
-import { brand, fail, isReadonlyArray, find, hasSome, hasSingle } from "../util/index.js";
+import { brand, isReadonlyArray, find, hasSome, hasSingle } from "../util/index.js";
 
 import { nullSchema } from "./leafNodeSchema.js";
 import {
@@ -104,19 +104,19 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 export function mapTreeFromNodeData(
 	data: InsertableContent,
 	allowedTypes: ImplicitAllowedTypes,
-	context?: NodeKeyManager,
+	context?: NodeIdentifierManager,
 	schemaValidationPolicy?: SchemaAndPolicy,
 ): ExclusiveMapTree;
 export function mapTreeFromNodeData(
 	data: InsertableContent | undefined,
 	allowedTypes: ImplicitFieldSchema,
-	context?: NodeKeyManager,
+	context?: NodeIdentifierManager,
 	schemaValidationPolicy?: SchemaAndPolicy,
 ): ExclusiveMapTree | undefined;
 export function mapTreeFromNodeData(
 	data: InsertableContent | undefined,
 	allowedTypes: ImplicitFieldSchema,
-	context?: NodeKeyManager,
+	context?: NodeIdentifierManager,
 	schemaValidationPolicy?: SchemaAndPolicy,
 ): ExclusiveMapTree | undefined {
 	const normalizedFieldSchema = normalizeFieldSchema(allowedTypes);
@@ -638,7 +638,7 @@ function allowsValue(schema: TreeNodeSchema, value: TreeValue): boolean {
 export function addDefaultsToMapTree(
 	mapTree: ExclusiveMapTree,
 	allowedTypes: ImplicitAllowedTypes,
-	context: NodeKeyManager | undefined,
+	context: NodeIdentifierManager | undefined,
 ): void {
 	const schema =
 		find(normalizeAllowedTypes(allowedTypes), (s) => s.identifier === mapTree.type) ??
@@ -695,7 +695,7 @@ export function addDefaultsToMapTree(
  */
 function provideDefault(
 	fieldProvider: FieldProvider,
-	context: NodeKeyManager | undefined,
+	context: NodeIdentifierManager | undefined,
 ): InsertableContent | undefined {
 	if (context !== undefined) {
 		return fieldProvider(context);

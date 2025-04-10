@@ -78,7 +78,7 @@ describe("MergeTree.Client", () => {
 					// TODO: The type here is probably MergeTreeDeltaType but
 					// omitting GROUP, given the typing of the rollback method.
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-					clients[msg![0].clientId!].rollback?.(
+					clients[msg![0].clientId!].rollback(
 						{ type: (msg![0].contents as { type?: unknown }).type },
 						msg![1],
 					);

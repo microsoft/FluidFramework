@@ -16,12 +16,13 @@ import { compress } from "lz4js";
 import { CompressionAlgorithms } from "../containerRuntime.js";
 
 import { estimateSocketSize } from "./batchManager.js";
-import { BatchMessage, IBatch } from "./definitions.js";
+import { type OutboundBatchMessage, type OutboundSingletonBatch } from "./definitions.js";
 
 /**
- * Compresses batches of ops. It generates a single compressed op that contains
- * the contents of each op in the batch. It then submits empty ops for each original
- * op to reserve sequence numbers.
+ * Compresses batches of ops.
+ *
+ * @remarks Only single-message batches are supported
+ * Use opGroupingManager to group a batch into a singleton batch suitable for compression.
  */
 export class OpCompressor {
 	private readonly logger: ITelemetryLoggerExt;
@@ -31,14 +32,12 @@ export class OpCompressor {
 	}
 
 	/**
-	 * Combines the contents of the batch into a single JSON string and compresses it, putting
-	 * the resulting string as the first message of the batch. The rest of the messages are
-	 * empty placeholders to reserve sequence numbers.
-	 * This should only take a single message batch and compress it.
-	 * @param batch - The batch to compress
-	 * @returns A batch of the same length as the input batch, containing a single compressed message followed by empty placeholders
+	 * Combines the contents of the singleton batch into a single JSON string and compresses it, putting
+	 * the resulting string as the message contents in place of the original uncompressed payload.
+	 * @param batch - The batch to compress. Must have only 1 message
+	 * @returns A singleton batch containing a single compressed message
 	 */
-	public compressBatch(batch: IBatch): IBatch<[BatchMessage]> {
+	public compressBatch(batch: OutboundSingletonBatch): OutboundSingletonBatch {
 		assert(
 			batch.contentSizeInBytes > 0 && batch.messages.length === 1,
 			0x5a4 /* Batch should not be empty and should contain a single message */,
@@ -50,7 +49,7 @@ export class OpCompressor {
 		const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
 		const duration = Date.now() - compressionStart;
 
-		const messages: [BatchMessage] = [
+		const messages: [OutboundBatchMessage] = [
 			{
 				...batch.messages[0],
 				contents: JSON.stringify({ packedContents: compressedContent }),
@@ -59,7 +58,7 @@ export class OpCompressor {
 			},
 		];
 
-		const compressedBatch = {
+		const compressedBatch: OutboundSingletonBatch = {
 			contentSizeInBytes: compressedContent.length,
 			messages,
 			referenceSequenceNumber: batch.referenceSequenceNumber,
@@ -82,13 +81,15 @@ export class OpCompressor {
 	/**
 	 * Combine the batch's content strings into a single JSON string (a serialized array)
 	 */
-	private serializeBatchContents(batch: IBatch): string {
+	private serializeBatchContents(batch: OutboundSingletonBatch): string {
+		const [message, ...none] = batch.messages;
+		assert(none.length === 0, "Batch should only contain a single message");
 		try {
-			// Yields a valid JSON array, since each message.contents is already serialized to JSON
-			return `[${batch.messages.map(({ contents }) => contents).join(",")}]`;
+			// This is expressed as a JSON array, for legacy reasons
+			return `[${message.contents}]`;
 		} catch (newError: unknown) {
 			if ((newError as Partial<Error>).message === "Invalid string length") {
-				// This is how JSON.stringify signals that
+				// This is how string interpolation signals that
 				// the content size exceeds its capacity
 				const error = new UsageError("Payload too large");
 				this.logger.sendErrorEvent(

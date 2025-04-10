@@ -18,7 +18,7 @@ export interface IMessageRelayEvents<
 	/**
 	 * Emitted when a message is received from the external sender.
 	 */
-	(event: "message", listener: (message: TMessage) => void);
+	(event: "message", listener: (message: TMessage) => void): unknown;
 }
 
 /**

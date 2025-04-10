@@ -6,24 +6,14 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { EventEmitter } from "@fluid-example/example-utils";
-import {
-	IFluidHandle,
-	IFluidLoadable,
-	IRequest,
-	IResponse,
-} from "@fluidframework/core-interfaces";
-import {
-	FluidDataStoreRuntime,
-	FluidObjectHandle,
-	mixinRequestHandler,
-} from "@fluidframework/datastore/legacy";
+import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore/legacy";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/legacy";
 import { ISharedMap, SharedMap } from "@fluidframework/map/legacy";
 import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/legacy";
-import { create404Response } from "@fluidframework/runtime-utils/legacy";
 // eslint-disable-next-line import/no-internal-modules -- #26904: `sequence` internals used in examples
 import { reservedRangeLabelsKey } from "@fluidframework/sequence/internal";
 import { ReferenceType, SharedString } from "@fluidframework/sequence/legacy";
@@ -120,12 +110,6 @@ export class ProseMirror
 		// eslint-disable-next-line @typescript-eslint/dot-notation
 		window["easyComponent"] = this;
 	}
-
-	public async request(req: IRequest): Promise<IResponse> {
-		return req.url === "" || req.url === "/" || req.url.startsWith("/?")
-			? { mimeType: "fluid/object", status: 200, value: this }
-			: create404Response(req);
-	}
 }
 
 /**
@@ -140,17 +124,7 @@ export class ProseMirrorFactory implements IFluidDataStoreFactory {
 	}
 
 	public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
-		// request mixin in
-		const runtimeClass = mixinRequestHandler(
-			async (request: IRequest, runtimeArg: FluidDataStoreRuntime) => {
-				// The provideEntryPoint callback below always returns ProseMirror, so this cast is safe
-				const dataObject = (await runtimeArg.entryPoint.get()) as ProseMirror;
-				return dataObject.request?.(request);
-			},
-			FluidDataStoreRuntime,
-		);
-
-		return new runtimeClass(
+		return new FluidDataStoreRuntime(
 			context,
 			new Map(
 				[SharedMap.getFactory(), SharedString.getFactory()].map((factory) => [

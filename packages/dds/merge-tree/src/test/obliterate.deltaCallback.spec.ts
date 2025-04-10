@@ -8,155 +8,142 @@ import { strict as assert } from "node:assert";
 import { MergeTreeDeltaCallback } from "../mergeTreeDeltaCallback.js";
 import { MergeTreeDeltaType } from "../ops.js";
 
-import { ReconnectTestHelper } from "./reconnectHelper.js";
+import { ClientTestHelper } from "./clientTestHelper.js";
 import { useStrictPartialLengthChecks } from "./testUtils.js";
 
-describe("obliterate delta callback", () => {
-	useStrictPartialLengthChecks();
+for (const mergeTreeEnableSidedObliterate of [true, false]) {
+	describe(`obliterate delta callback enableSidedObliterate = ${mergeTreeEnableSidedObliterate}`, () => {
+		useStrictPartialLengthChecks();
 
-	let length: number;
-	let cb: MergeTreeDeltaCallback;
+		let length: number;
+		let cb: MergeTreeDeltaCallback;
 
-	beforeEach(() => {
-		length = 0;
-		cb = (opArgs, deltaArgs): void => {
-			switch (opArgs.op.type) {
-				case MergeTreeDeltaType.INSERT: {
-					for (const { segment } of deltaArgs.deltaSegments) {
-						length += segment.cachedLength;
+		beforeEach(() => {
+			length = 0;
+			cb = (opArgs, deltaArgs): void => {
+				switch (opArgs.op.type) {
+					case MergeTreeDeltaType.INSERT: {
+						for (const { segment } of deltaArgs.deltaSegments) {
+							length += segment.cachedLength;
+						}
+						break;
 					}
-					break;
-				}
-				case MergeTreeDeltaType.REMOVE:
-				case MergeTreeDeltaType.OBLITERATE: {
-					for (const { segment } of deltaArgs.deltaSegments) {
-						length -= segment.cachedLength;
+					case MergeTreeDeltaType.REMOVE:
+					case MergeTreeDeltaType.OBLITERATE_SIDED:
+					case MergeTreeDeltaType.OBLITERATE: {
+						for (const { segment } of deltaArgs.deltaSegments) {
+							length -= segment.cachedLength;
+						}
+						break;
 					}
-					break;
+					default:
 				}
-				default:
-			}
-		};
-	});
+			};
+		});
 
-	describe("is invoked", () => {
-		it("on local obliterate", () => {
-			const helper = new ReconnectTestHelper();
+		describe("is invoked", () => {
+			it("on local obliterate", () => {
+				const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
-			let count = 0;
+				let count = 0;
 
-			helper.clients.A.on("delta", (opArgs, deltaArgs) => {
-				if (opArgs.op.type === MergeTreeDeltaType.OBLITERATE) {
-					count += 1;
-				}
+				helper.clients.A.on("delta", (opArgs, deltaArgs) => {
+					if (
+						opArgs.op.type === MergeTreeDeltaType.OBLITERATE ||
+						opArgs.op.type === MergeTreeDeltaType.OBLITERATE_SIDED
+					) {
+						count += 1;
+					}
+				});
+
+				helper.insertText("A", 0, "a");
+				assert.equal(count, 0);
+				helper.obliterateRange("A", 0, 1);
+				assert.equal(count, 1);
+				helper.processAllOps();
+				assert.equal(count, 1);
+				assert.equal(helper.clients.A.getText(), "");
+
+				helper.logger.validate();
 			});
 
-			helper.insertText("A", 0, "a");
-			assert.equal(count, 0);
-			helper.obliterateRange("A", 0, 1);
-			assert.equal(count, 1);
-			helper.processAllOps();
-			assert.equal(count, 1);
-			assert.equal(helper.clients.A.getText(), "");
+			it("on remote obliterate", () => {
+				const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
-			helper.logger.validate();
+				let count = 0;
+
+				helper.clients.A.on("delta", (opArgs, deltaArgs) => {
+					if (
+						opArgs.op.type === MergeTreeDeltaType.OBLITERATE ||
+						opArgs.op.type === MergeTreeDeltaType.OBLITERATE_SIDED
+					) {
+						count += 1;
+					}
+				});
+
+				helper.insertText("B", 0, "a");
+				assert.equal(count, 0);
+				helper.obliterateRange("B", 0, 1);
+				assert.equal(count, 0);
+				helper.processAllOps();
+				assert.equal(count, 1);
+				assert.equal(helper.clients.A.getText(), "");
+
+				helper.logger.validate();
+			});
 		});
 
-		it("on remote obliterate", () => {
-			const helper = new ReconnectTestHelper();
+		describe("overlapping obliterate and remove", () => {
+			const text = "abcdef";
 
-			let count = 0;
+			it("remove first", () => {
+				const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
-			helper.clients.A.on("delta", (opArgs, deltaArgs) => {
-				if (opArgs.op.type === MergeTreeDeltaType.OBLITERATE) {
-					count += 1;
-				}
+				helper.clients.A.on("delta", cb);
+
+				helper.insertText("A", 0, text);
+				helper.processAllOps();
+				assert.equal(length, text.length);
+				helper.removeRange("B", 0, text.length);
+				helper.obliterateRange("C", 0, text.length);
+				helper.processAllOps();
+				assert.equal(length, 0);
+
+				helper.logger.validate();
+
+				helper.clients.A.off("delta", cb);
 			});
 
-			helper.insertText("B", 0, "a");
-			assert.equal(count, 0);
-			helper.obliterateRange("B", 0, 1);
-			assert.equal(count, 0);
-			helper.processAllOps();
-			assert.equal(count, 1);
-			assert.equal(helper.clients.A.getText(), "");
+			it("obliterate first", () => {
+				const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
-			helper.logger.validate();
+				helper.clients.A.on("delta", cb);
+
+				helper.insertText("B", 0, text);
+				helper.processAllOps();
+				assert.equal(length, text.length);
+				helper.obliterateRange("C", 0, text.length);
+				helper.removeRange("B", 0, text.length);
+				helper.processAllOps();
+				assert.equal(length, 0);
+
+				helper.logger.validate();
+
+				helper.clients.A.off("delta", cb);
+			});
 		});
-	});
 
-	describe("overlapping obliterate and remove", () => {
-		const text = "abcdef";
-
-		it("remove first", () => {
-			const helper = new ReconnectTestHelper();
+		it("overlapping obliterate and obliterate", () => {
+			const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
 			helper.clients.A.on("delta", cb);
 
-			helper.insertText("A", 0, text);
-			helper.processAllOps();
-			assert.equal(length, text.length);
-			helper.removeRange("B", 0, text.length);
-			helper.obliterateRange("C", 0, text.length);
-			helper.processAllOps();
-			assert.equal(length, 0);
-
-			helper.logger.validate();
-
-			helper.clients.A.off("delta", cb);
-		});
-
-		it("obliterate first", () => {
-			const helper = new ReconnectTestHelper();
-
-			helper.clients.A.on("delta", cb);
+			const text = "abcdef";
 
 			helper.insertText("B", 0, text);
 			helper.processAllOps();
 			assert.equal(length, text.length);
-			helper.obliterateRange("C", 0, text.length);
-			helper.removeRange("B", 0, text.length);
-			helper.processAllOps();
-			assert.equal(length, 0);
-
-			helper.logger.validate();
-
-			helper.clients.A.off("delta", cb);
-		});
-	});
-
-	it("overlapping obliterate and obliterate", () => {
-		const helper = new ReconnectTestHelper();
-
-		helper.clients.A.on("delta", cb);
-
-		const text = "abcdef";
-
-		helper.insertText("B", 0, text);
-		helper.processAllOps();
-		assert.equal(length, text.length);
-		helper.obliterateRange("B", 0, text.length);
-		helper.obliterateRange("C", 0, text.length);
-		helper.processAllOps();
-		assert.equal(length, 0);
-
-		helper.logger.validate();
-
-		helper.clients.A.off("delta", cb);
-	});
-
-	describe("insert into obliterated range", () => {
-		const text = "abcdef";
-
-		it("insert first", () => {
-			const helper = new ReconnectTestHelper();
-
-			helper.clients.A.on("delta", cb);
-
-			helper.insertText("B", 0, text);
-			helper.processAllOps();
-			assert.equal(length, text.length);
-			helper.insertText("B", 3, text);
+			helper.obliterateRange("B", 0, text.length);
 			helper.obliterateRange("C", 0, text.length);
 			helper.processAllOps();
 			assert.equal(length, 0);
@@ -166,22 +153,44 @@ describe("obliterate delta callback", () => {
 			helper.clients.A.off("delta", cb);
 		});
 
-		it("obliterate first", () => {
-			const helper = new ReconnectTestHelper();
+		describe("insert into obliterated range", () => {
+			const text = "abcdef";
 
-			helper.clients.A.on("delta", cb);
+			it("insert first", () => {
+				const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
 
-			helper.insertText("B", 0, text);
-			helper.processAllOps();
-			assert.equal(length, text.length);
-			helper.obliterateRange("C", 0, text.length);
-			helper.insertText("B", 3, text);
-			helper.processAllOps();
-			assert.equal(length, 0);
+				helper.clients.A.on("delta", cb);
 
-			helper.logger.validate();
+				helper.insertText("B", 0, text);
+				helper.processAllOps();
+				assert.equal(length, text.length);
+				helper.insertText("B", 3, text);
+				helper.obliterateRange("C", 0, text.length);
+				helper.processAllOps();
+				assert.equal(length, 0);
 
-			helper.clients.A.off("delta", cb);
+				helper.logger.validate();
+
+				helper.clients.A.off("delta", cb);
+			});
+
+			it("obliterate first", () => {
+				const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate });
+
+				helper.clients.A.on("delta", cb);
+
+				helper.insertText("B", 0, text);
+				helper.processAllOps();
+				assert.equal(length, text.length);
+				helper.obliterateRange("C", 0, text.length);
+				helper.insertText("B", 3, text);
+				helper.processAllOps();
+				assert.equal(length, 0);
+
+				helper.logger.validate();
+
+				helper.clients.A.off("delta", cb);
+			});
 		});
 	});
-});
+}

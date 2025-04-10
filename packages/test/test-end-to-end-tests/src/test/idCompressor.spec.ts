@@ -1119,7 +1119,7 @@ describeCompat(
 			if (provider.driver.type !== "odsp") {
 				this.skip();
 			}
-			configProvider.set("Fluid.Runtime.UseShortIds", true);
+			configProvider.set("Fluid.Runtime.IsShortIdEnabled", true);
 		});
 
 		/**

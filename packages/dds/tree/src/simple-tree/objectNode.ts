@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Lazy } from "@fluidframework/core-utils/internal";
+import { assert, Lazy, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { FieldKey, SchemaPolicy } from "../core/index.js";
@@ -27,6 +27,8 @@ import {
 	type ImplicitAllowedTypes,
 	FieldKind,
 	type NodeSchemaMetadata,
+	type FieldSchemaAlpha,
+	ObjectFieldSchema,
 } from "./schemaTypes.js";
 import {
 	type TreeNodeSchema,
@@ -42,7 +44,7 @@ import {
 	getOrCreateInnerNode,
 } from "./core/index.js";
 import { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
-import { type RestrictiveStringRecord, fail, type FlattenKeys } from "../util/index.js";
+import type { RestrictiveStringRecord, FlattenKeys } from "../util/index.js";
 import {
 	isObjectNodeSchema,
 	type ObjectNodeSchema,
@@ -50,16 +52,21 @@ import {
 } from "./objectNodeTypes.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import { getUnhydratedContext } from "./createContext.js";
+import type { SimpleObjectFieldSchema } from "./simpleSchema.js";
 
 /**
  * Generates the properties for an ObjectNode from its field schema object.
  * @system @public
  */
-export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = {
-	-readonly [Property in keyof T]: Property extends string
-		? TreeFieldFromImplicitField<T[Property]>
-		: unknown;
-};
+export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> =
+	RestrictiveStringRecord<ImplicitFieldSchema> extends T
+		? // eslint-disable-next-line @typescript-eslint/ban-types
+			{}
+		: {
+				-readonly [Property in keyof T]: Property extends string
+					? TreeFieldFromImplicitField<T[Property]>
+					: unknown;
+			};
 
 /**
  * A {@link TreeNode} which modules a JavaScript object.
@@ -112,12 +119,21 @@ export type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSche
  * To prevent extraneous properties in literals for the fields of an empty object from compiling, the empty case is special cased to produce `Record<string, never>`.
  * More details at {@link https://mercury.com/blog/creating-an-emptyobject-type-in-typescript}.
  *
+ * Additionally when T is exactly `RestrictiveStringRecord<ImplicitFieldSchema>` produce just `never` so that it is assignable to the insertable for any given object type.
+ *
+ * Separating `{}` from `RestrictiveStringRecord<ImplicitFieldSchema>` is a bit messy since both extend each-other despite them being very different types.
+ * A third dummy type `{ arbitraryKey: "arbitraryValue" }` is used to resolve this.
+ *
  * @system @public
  */
 export type InsertableObjectFromSchemaRecord<
 	T extends RestrictiveStringRecord<ImplicitFieldSchema>,
-> = Record<string, never> extends T
-	? Record<string, never>
+> = RestrictiveStringRecord<ImplicitFieldSchema> extends T
+	? { arbitraryKey: "arbitraryValue" } extends T
+		? // {} case
+			Record<string, never>
+		: // RestrictiveStringRecord<ImplicitFieldSchema> case
+			never
 	: FlattenKeys<
 			{
 				readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<
@@ -340,6 +356,9 @@ export function objectSchema<
 	metadata?: NodeSchemaMetadata<TCustomMetadata>,
 ): ObjectNodeSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
 	ObjectNodeSchemaInternalData {
+	// Field set can't be modified after this since derived data is stored in maps.
+	Object.freeze(info);
+
 	// Ensure no collisions between final set of property keys, and final set of stored keys (including those
 	// implicitly derived from property keys)
 	assertUniqueKeys(identifier, info);
@@ -363,8 +382,17 @@ export function objectSchema<
 	let unhydratedContext: Context;
 
 	class CustomObjectNode extends CustomObjectNodeBase<T> {
-		public static readonly fields: ReadonlyMap<string, FieldSchema> = new Map(
-			Array.from(flexKeyMap, ([key, value]) => [key as string, value.schema]),
+		public static readonly fields: ReadonlyMap<
+			string,
+			FieldSchemaAlpha & SimpleObjectFieldSchema
+		> = new Map(
+			Array.from(flexKeyMap, ([key, value]) => [
+				key as string,
+				new ObjectFieldSchema(value.schema.kind, value.schema.allowedTypes, {
+					...value.schema.props,
+					key: getStoredKey(key as string, value.schema),
+				}),
+			]),
 		);
 		public static readonly flexKeyMap: SimpleKeyMap = flexKeyMap;
 		public static readonly storedKeyToPropertyKey: ReadonlyMap<FieldKey, string> = new Map<
@@ -464,8 +492,7 @@ export function objectSchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
-		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> | undefined =
-			metadata;
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {

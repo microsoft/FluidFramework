@@ -294,7 +294,7 @@ describe("SharedTreeCore", () => {
 			}),
 		);
 		view1.initialize(["A", "B"]);
-		provider.processMessages();
+		provider.synchronizeMessages();
 		const view2 = provider.trees[1].viewWith(
 			new TreeViewConfiguration({
 				schema: StringArray,
@@ -315,7 +315,7 @@ describe("SharedTreeCore", () => {
 			return Tree.runTransaction.rollback;
 		});
 
-		provider.processMessages();
+		provider.synchronizeMessages();
 		assert.deepEqual([...root1], ["A", "B"]);
 		assert.deepEqual([...root2], ["A", "B"]);
 
@@ -324,7 +324,7 @@ describe("SharedTreeCore", () => {
 			root1.insertAtEnd("C");
 		});
 
-		provider.processMessages();
+		provider.synchronizeMessages();
 		assert.deepEqual([...root1], ["A", "B", "C"]);
 		assert.deepEqual([...root2], ["A", "B", "C"]);
 	});
@@ -338,7 +338,7 @@ describe("SharedTreeCore", () => {
 			}),
 		);
 		view1.initialize(["A", "B"]);
-		provider.processMessages();
+		provider.synchronizeMessages();
 		const view2 = provider.trees[1].viewWith(
 			new TreeViewConfiguration({
 				schema: StringArray,
@@ -362,7 +362,7 @@ describe("SharedTreeCore", () => {
 		assert.deepEqual([...root1], ["B"]);
 		assert.deepEqual([...root2], ["A", "B"]);
 
-		provider.processMessages();
+		provider.synchronizeMessages();
 
 		assert.deepEqual([...root1], ["B"]);
 		assert.deepEqual([...root2], ["B"]);
@@ -372,7 +372,7 @@ describe("SharedTreeCore", () => {
 			root1.insertAtEnd("C");
 		});
 
-		provider.processMessages();
+		provider.synchronizeMessages();
 		assert.deepEqual([...root2], ["B", "C"]);
 		assert.deepEqual([...root2], ["B", "C"]);
 	});

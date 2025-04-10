@@ -3,8 +3,7 @@
 	"extends": "./api-extractor-base.json",
 	"mainEntryPointFilePath": "<projectFolder>/dist/index.d.ts",
 	"apiReport": {
-		"enabled": true,
-		"reportVariants": ["public", "beta", "alpha"] // TODO: add "complete"?
+		"enabled": true
 	},
 	// API-Extractor uses the presence of this file in an npm package to determine whether or not its API members
 	// should be considered when making decisions about reports and rollups in consuming packages.

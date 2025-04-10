@@ -10,10 +10,10 @@ import { createRequire } from "node:module";
 import { EOL as newline } from "node:os";
 import path from "node:path";
 import {
+	findGitRootSync,
 	updatePackageJsonFile,
 	updatePackageJsonFileAsync,
 } from "@fluid-tools/build-infrastructure";
-import { findGitRootSync } from "@fluid-tools/build-infrastructure";
 import { PackageJson, getApiExtractorConfigFilePath } from "@fluidframework/build-tools";
 import { writeJson } from "fs-extra/esm";
 import JSON5 from "json5";
@@ -804,11 +804,11 @@ export const handlers: Handler[] = [
 				const relativePkgDir = path.dirname(file).replace(/\\/g, "/");
 
 				// The directory field should be omitted from the root package, so consider this a policy failure.
-				if (relativePkgDir === ".") {
+				if (relativePkgDir === "." && json.repository.directory !== undefined) {
 					ret.push(
 						`repository.directory: "${json.repository.directory}" field is present but should be omitted from root package`,
 					);
-				} else if (json.repository?.directory !== relativePkgDir) {
+				} else if (relativePkgDir !== "." && json.repository?.directory !== relativePkgDir) {
 					ret.push(
 						`repository.directory: "${json.repository.directory}" !== "${relativePkgDir}"`,
 					);

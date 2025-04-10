@@ -3,14 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { TypedEventEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
 import { AttachState, IAudience } from "@fluidframework/container-definitions";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	IDisposable,
-	IRequest,
-	IResponse,
 	ITelemetryBaseProperties,
 	type IEvent,
 } from "@fluidframework/core-interfaces";
@@ -77,6 +75,10 @@ import {
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 
+import {
+	runtimeCompatDetailsForDataStore,
+	validateDatastoreCompatibility,
+} from "./runtimeLayerCompatState.js";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	ReadFluidDataStoreAttributes,
@@ -276,6 +278,14 @@ export abstract class FluidDataStoreContext
 
 	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined {
 		return this.registry;
+	}
+
+	/**
+	 * The compatibility details of the Runtime layer that is exposed to the DataStore layer
+	 * for validating DataStore-Runtime compatibility.
+	 */
+	public get ILayerCompatDetails(): ILayerCompatDetails {
+		return runtimeCompatDetailsForDataStore;
 	}
 
 	private baseSnapshotSequenceNumber: number | undefined;
@@ -573,6 +583,7 @@ export abstract class FluidDataStoreContext
 
 		const channel = await factory.instantiateDataStore(this, existing);
 		assert(channel !== undefined, 0x140 /* "undefined channel on datastore context" */);
+
 		await this.bindRuntime(channel, existing);
 		// This data store may have been disposed before the channel is created during realization. If so,
 		// dispose the channel now.
@@ -605,30 +616,6 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
-	 * back-compat ADO 21575: This is temporary and will be removed once the compat requirement across Runtime and
-	 * Datastore boundary is satisfied.
-	 * Process the messages to maintain backwards compatibility. The `processMessages` function is added to
-	 * IFluidDataStoreChannel in 2.5.0. For channels before that, call `process` for each message.
-	 */
-	private processMessagesCompat(
-		channel: IFluidDataStoreChannel,
-		messageCollection: IRuntimeMessageCollection,
-	): void {
-		if (channel.processMessages === undefined) {
-			const { envelope, messagesContent, local } = messageCollection;
-			for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
-				channel.process(
-					{ ...envelope, contents, clientSequenceNumber },
-					local,
-					localOpMetadata,
-				);
-			}
-		} else {
-			channel.processMessages(messageCollection);
-		}
-	}
-
-	/**
 	 * Process messages for this data store. The messages here are contiguous messages for this data store in a batch.
 	 * @param messageCollection - The collection of messages to process.
 	 */
@@ -643,7 +630,7 @@ export abstract class FluidDataStoreContext
 
 		if (this.loaded) {
 			assert(this.channel !== undefined, 0xa68 /* Channel is not loaded */);
-			this.processMessagesCompat(this.channel, messageCollection);
+			this.channel.processMessages(messageCollection);
 		} else {
 			assert(!local, 0x142 /* "local store channel is not loaded" */);
 			assert(
@@ -807,15 +794,6 @@ export abstract class FluidDataStoreContext
 		this.parentContext.addedGCOutboundRoute(fromPath, toPath, messageTimestampMs);
 	}
 
-	// eslint-disable-next-line jsdoc/require-description
-	/**
-	 * @deprecated 0.18.Should call request on the runtime directly
-	 */
-	public async request(request: IRequest): Promise<IResponse> {
-		const runtime = await this.realize();
-		return runtime.request(request);
-	}
-
 	public submitMessage(type: string, content: unknown, localOpMetadata: unknown): void {
 		this.verifyNotClosed("submitMessage");
 		assert(!!this.channel, 0x146 /* "Channel must exist when submitting message" */);
@@ -849,12 +827,6 @@ export abstract class FluidDataStoreContext
 		}
 	}
 
-	/**
-	 * Submits the signal to be sent to other clients.
-	 * @param type - Type of the signal.
-	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
-	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
-	 */
 	public submitSignal(type: string, content: unknown, targetClientId?: string): void {
 		this.verifyNotClosed("submitSignal");
 
@@ -881,7 +853,7 @@ export abstract class FluidDataStoreContext
 		for (const messageCollection of this.pendingMessagesState.messageCollections) {
 			// Only process ops whose seq number is greater than snapshot sequence number from which it loaded.
 			if (messageCollection.envelope.sequenceNumber > baseSequenceNumber) {
-				this.processMessagesCompat(channel, messageCollection);
+				channel.processMessages(messageCollection);
 			}
 		}
 
@@ -890,6 +862,13 @@ export abstract class FluidDataStoreContext
 	}
 
 	protected completeBindingRuntime(channel: IFluidDataStoreChannel): void {
+		// Validate that the DataStore is compatible with this Runtime.
+		const maybeDataStoreCompatDetails = channel as FluidObject<ILayerCompatDetails>;
+		validateDatastoreCompatibility(
+			maybeDataStoreCompatDetails.ILayerCompatDetails,
+			this.dispose.bind(this),
+		);
+
 		// And now mark the runtime active
 		this.loaded = true;
 		this.channel = channel;
@@ -1035,6 +1014,7 @@ export abstract class FluidDataStoreContext
 				callSite,
 				undefined /* sequencedMessage */,
 				safeTelemetryProps,
+				30 /* stackTraceLimit */,
 			);
 
 			this.mc.logger.sendTelemetryEvent(

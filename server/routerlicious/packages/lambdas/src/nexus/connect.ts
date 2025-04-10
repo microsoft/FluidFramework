@@ -26,6 +26,7 @@ import {
 	type IWebSocket,
 	ICollaborationSessionClient,
 	clusterDrainingRetryTimeInMs,
+	type IDenyList,
 } from "@fluidframework/server-services-core";
 import {
 	CommonProperties,
@@ -406,7 +407,9 @@ async function checkClusterDraining(
 	}
 	let clusterInDraining = false;
 	try {
-		clusterInDraining = await clusterDrainingChecker.isClusterDraining();
+		clusterInDraining = await clusterDrainingChecker.isClusterDraining({
+			tenantId: message.tenantId,
+		});
 	} catch (error) {
 		Lumberjack.error(
 			"Failed to get cluster draining status. Will allow requests to proceed.",
@@ -417,7 +420,6 @@ async function checkClusterDraining(
 	}
 
 	if (clusterInDraining) {
-		// TODO: add a new error class
 		Lumberjack.info("Reject connect document request because cluster is draining.", {
 			...properties,
 			tenantId: message.tenantId,
@@ -648,6 +650,7 @@ export async function connectDocument(
 	lambdaConnectionStateTrackers: INexusLambdaConnectionStateTrackers,
 	message: IConnect,
 	properties: Record<string, any>,
+	denyList?: IDenyList,
 ): Promise<IConnectedClient> {
 	const { isTokenExpiryEnabled, maxTokenLifetimeSec } = lambdaSettings;
 	const { expirationTimer } = lambdaConnectionStateTrackers;
@@ -675,6 +678,21 @@ export async function connectDocument(
 		tenantId = claims.tenantId;
 		documentId = claims.documentId;
 		connectionTrace.stampStage(ConnectDocumentStage.TokenVerified);
+		if (denyList?.isTenantDenied(tenantId)) {
+			Lumberjack.error("Tenant is in the deny list", {
+				...properties,
+				tenantId,
+			});
+			throw new NetworkError(500, `Unable to process request for tenant id: ${tenantId}`);
+		}
+		if (denyList?.isDocumentDenied(documentId)) {
+			Lumberjack.error("Document is in the deny list", {
+				...properties,
+				tenantId,
+				documentId,
+			});
+			throw new NetworkError(500, `Unable to process request for document id: ${documentId}`);
+		}
 
 		await checkClusterDraining(lambdaDependencies, message, properties);
 

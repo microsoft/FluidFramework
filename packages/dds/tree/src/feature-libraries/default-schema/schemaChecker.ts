@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import {
 	type MapTree,
 	type TreeFieldStoredSchema,
@@ -14,7 +14,6 @@ import {
 	type SchemaAndPolicy,
 } from "../../core/index.js";
 import { allowsValue } from "../valueUtilities.js";
-import { fail } from "../../util/index.js";
 
 export const enum SchemaValidationErrors {
 	NoError,
