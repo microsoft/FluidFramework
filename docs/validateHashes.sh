@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -eu -o pipefail
 # This script validates the hashes of inline scripts in the index.html file against the configured hashes in the staticwebapp.config.json file.
 indexFile="build/index.html"
 configFile="static/staticwebapp.config.json"
@@ -36,7 +36,7 @@ fi
 done < "$tmpHashesFile"
 
 if [ "$fail" -ne 0 ]; then
-echo "Inline script hashes do not match configured values."
+echo "Inline script hashes do not match configured values. Override the hashes in $configFile with the extracted hashes."
 exit 1
 fi
 
