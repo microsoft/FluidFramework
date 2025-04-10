@@ -41,7 +41,7 @@ export type PresenceWorkspaceEntry<
 /**
  * Schema for a {@link PresenceStates} workspace.
  *
- * Keys of schema are the keys of the {@link PresenceStates} providing access to `Value Manager`s.
+ * Keys of schema are the keys of the {@link PresenceStates} providing access to State objects.
  *
  * @alpha
  */
@@ -50,14 +50,14 @@ export interface PresenceStatesSchema {
 }
 
 /**
- * Map of `Value Manager`s registered with {@link PresenceStates}.
+ * Map of State objects registered with {@link PresenceStates}.
  *
  * @sealed
  * @alpha
  */
 export type PresenceStatesEntries<TSchema extends PresenceStatesSchema> = {
 	/**
-	 * Registered `Value Manager`s
+	 * Registered State objects.
 	 */
 	readonly [Key in keyof TSchema]: ReturnType<
 		TSchema[Key]
@@ -67,10 +67,10 @@ export type PresenceStatesEntries<TSchema extends PresenceStatesSchema> = {
 };
 
 /**
- * `PresenceStates` maintains a registry of `Value Manager`s that all share and provide access to
+ * `PresenceStates` maintains a registry of State objects that all share and provide access to
  * presence state values across client members in a session.
  *
- * `Value Manager`s offer variations on how to manage states, but all share same principle that
+ * State objects offer variations on how to manage states, but all share same principle that
  * each client's state is independent and may only be updated by originating client.
  *
  * @sealed
@@ -81,9 +81,9 @@ export interface PresenceStates<
 	TManagerConstraints = unknown,
 > {
 	/**
-	 * Registers a new `Value Manager` with the {@link PresenceStates}.
-	 * @param key - new unique key for the `Value Manager` within the workspace
-	 * @param manager - factory for creating a `Value Manager`
+	 * Registers a new State object with the {@link PresenceStates}.
+	 * @param key - new unique key for the State object within the workspace
+	 * @param manager - factory for creating a State object
 	 */
 	add<
 		TKey extends string,
@@ -98,7 +98,7 @@ export interface PresenceStates<
 	>;
 
 	/**
-	 * Registry of `Value Manager`s.
+	 * Registry of State.
 	 */
 	readonly props: PresenceStatesEntries<TSchema>;
 
@@ -142,9 +142,9 @@ export interface PresenceNotificationsSchema {
  */
 export interface PresenceNotifications<TSchema extends PresenceNotificationsSchema> {
 	/**
-	 * Registers a new `Value Manager` with the {@link PresenceNotifications}.
-	 * @param key - new unique key for the `Value Manager` within the workspace
-	 * @param manager - factory for creating a `Value Manager`
+	 * Registers a new `NotificationsManager` with the {@link PresenceNotifications}.
+	 * @param key - new unique key for the `NotificationsManager` within the workspace
+	 * @param manager - factory for creating a `NotificationsManager`
 	 */
 	add<
 		TKey extends string,
@@ -158,7 +158,7 @@ export interface PresenceNotifications<TSchema extends PresenceNotificationsSche
 	>;
 
 	/**
-	 * Registry of `Value Manager`s.
+	 * Registry of `NotificationsManager`s.
 	 */
 	readonly props: PresenceStatesEntries<TSchema>;
 }

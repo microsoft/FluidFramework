@@ -293,7 +293,7 @@ export interface PresenceStates<TSchema extends PresenceStatesSchema, TManagerCo
 // @alpha @sealed
 export type PresenceStatesEntries<TSchema extends PresenceStatesSchema> = {
     /**
-    * Registered `Value Manager`s
+    * Registered State objects.
     */
     readonly [Key in keyof TSchema]: ReturnType<TSchema[Key]>["manager"] extends InternalTypes.StateValue<infer TManager> ? TManager : never;
 };

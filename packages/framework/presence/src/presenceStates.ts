@@ -293,7 +293,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 			}
 			this.nodes = nodes;
 			// props is the public view of nodes that limits the entries types to
-			// the public interface of the value manager with an additional type
+			// the public interface of the State object with an additional type
 			// filter that beguiles the type system. So just reinterpret cast.
 			this.props = this.nodes as unknown as PresenceStates<TSchema>["props"];
 
@@ -397,7 +397,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 			} else {
 				const node = unbrandIVM(brandedIVM);
 				if (!(node instanceof nodeFactory.instanceBase)) {
-					throw new TypeError(`State "${key}" previously created by different value manager.`);
+					throw new TypeError(`State "${key}" previously created by different State object.`);
 				}
 			}
 		}
@@ -429,7 +429,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 
 /**
  * Create a new PresenceStates using the DataStoreRuntime provided.
- * @param initialContent - The initial value managers to register.
+ * @param initialContent - The initial state to register.
  */
 export function createPresenceStates<TSchema extends PresenceStatesSchema>(
 	runtime: PresenceRuntime,

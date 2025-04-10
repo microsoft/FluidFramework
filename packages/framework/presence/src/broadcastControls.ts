@@ -4,7 +4,7 @@
  */
 
 /**
- * Common controls for Value Managers.
+ * Common controls for States.
  *
  * @sealed
  * @alpha

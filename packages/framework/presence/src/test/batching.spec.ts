@@ -484,7 +484,7 @@ describe("Presence", () => {
 				);
 
 				// Configure a state workspace
-				// SIGNAL #1 - this signal is not queued because it contains a value manager with a latency of 0,
+				// SIGNAL #1 - this signal is not queued because it contains a State object with a latency of 0,
 				// so the initial data will be sent immediately.
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
 					count: StateFactory.latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
