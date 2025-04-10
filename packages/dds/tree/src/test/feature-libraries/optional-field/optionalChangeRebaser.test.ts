@@ -69,10 +69,10 @@ import {
 	makeFieldBatchCodec,
 	type DefaultChangeset,
 } from "../../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
 import {
 	ModularChangeFamily,
 	type FieldEditDescription,
+	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
 	fieldKindConfigurations,
@@ -88,6 +88,7 @@ import {
 	isModularEmpty,
 	normalizeDelta,
 	removeAliases,
+	// eslint-disable-next-line import/no-internal-modules
 } from "../modular-schema/modularChangesetUtil.js";
 
 type RevisionTagMinter = () => RevisionTag;
@@ -160,23 +161,23 @@ function getMaxId(...changes: OptionalChangeset[]): ChangesetLocalId | undefined
 	return max;
 }
 
-function invert(
-	change: TaggedChange<OptionalChangeset>,
-	revision: RevisionTag | undefined,
-	isRollback: boolean,
-): OptionalChangeset {
-	const inverted = optionalChangeRebaser.invert(
-		change.change,
-		isRollback,
-		idAllocatorFromMaxId(),
+// function invert(
+// 	change: TaggedChange<OptionalChangeset>,
+// 	revision: RevisionTag | undefined,
+// 	isRollback: boolean,
+// ): OptionalChangeset {
+// 	const inverted = optionalChangeRebaser.invert(
+// 		change.change,
+// 		isRollback,
+// 		idAllocatorFromMaxId(),
 
-		revision,
-		failInvertManager,
-		defaultRevisionMetadataFromChanges([change]),
-	);
-	verifyContextChain(change, makeAnonChange(inverted));
-	return inverted;
-}
+// 		revision,
+// 		failInvertManager,
+// 		defaultRevisionMetadataFromChanges([change]),
+// 	);
+// 	verifyContextChain(change, makeAnonChange(inverted));
+// 	return inverted;
+// }
 
 function invertModular(
 	change: TaggedChange<ModularChangeset>,
@@ -186,33 +187,33 @@ function invertModular(
 	return family.invert(change, isRollback, revision);
 }
 
-function rebase(
-	change: OptionalChangeset,
-	base: TaggedChange<OptionalChangeset>,
-	metadataArg?: RebaseRevisionMetadata,
-	rebaseChild: NodeChangeRebaser = (id, baseId) => id,
-): OptionalChangeset {
-	deepFreeze(change);
-	deepFreeze(base);
+// function rebase(
+// 	change: OptionalChangeset,
+// 	base: TaggedChange<OptionalChangeset>,
+// 	metadataArg?: RebaseRevisionMetadata,
+// 	rebaseChild: NodeChangeRebaser = (id, baseId) => id,
+// ): OptionalChangeset {
+// 	deepFreeze(change);
+// 	deepFreeze(base);
 
-	const metadata =
-		metadataArg ??
-		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([base]), undefined, [
-			base.revision,
-		]);
-	const moveEffects = failRebaseManager;
-	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
-	const rebased = optionalChangeRebaser.rebase(
-		change,
-		base.change,
-		rebaseChild,
-		idAllocator,
-		moveEffects,
-		metadata,
-	);
-	verifyContextChain(base, makeAnonChange(rebased));
-	return rebased;
-}
+// 	const metadata =
+// 		metadataArg ??
+// 		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([base]), undefined, [
+// 			base.revision,
+// 		]);
+// 	const moveEffects = failRebaseManager;
+// 	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
+// 	const rebased = optionalChangeRebaser.rebase(
+// 		change,
+// 		base.change,
+// 		rebaseChild,
+// 		idAllocator,
+// 		moveEffects,
+// 		metadata,
+// 	);
+// 	verifyContextChain(base, makeAnonChange(rebased));
+// 	return rebased;
+// }
 
 function rebaseModular(
 	change: TaggedChange<ModularChangeset>,
@@ -242,24 +243,24 @@ function rebaseComposedModular(
 	return rebaseModular(change, composed, metadata);
 }
 
-function compose(
-	change1: TaggedChange<OptionalChangeset>,
-	change2: TaggedChange<OptionalChangeset>,
-	metadata?: RevisionMetadataSource,
-	composeChild: NodeChangeComposer = TestNodeId.composeChild,
-): OptionalChangeset {
-	verifyContextChain(change1, change2);
-	const moveEffects = failComposeManager;
-	const idAllocator = idAllocatorFromMaxId(getMaxId(change1.change, change2.change));
-	return optionalChangeRebaser.compose(
-		change1.change,
-		change2.change,
-		composeChild,
-		idAllocator,
-		moveEffects,
-		metadata ?? defaultRevisionMetadataFromChanges([change1, change2]),
-	);
-}
+// function compose(
+// 	change1: TaggedChange<OptionalChangeset>,
+// 	change2: TaggedChange<OptionalChangeset>,
+// 	metadata?: RevisionMetadataSource,
+// 	composeChild: NodeChangeComposer = TestNodeId.composeChild,
+// ): OptionalChangeset {
+// 	verifyContextChain(change1, change2);
+// 	const moveEffects = failComposeManager;
+// 	const idAllocator = idAllocatorFromMaxId(getMaxId(change1.change, change2.change));
+// 	return optionalChangeRebaser.compose(
+// 		change1.change,
+// 		change2.change,
+// 		composeChild,
+// 		idAllocator,
+// 		moveEffects,
+// 		metadata ?? defaultRevisionMetadataFromChanges([change1, change2]),
+// 	);
+// }
 
 function composeModular(
 	change1: TaggedChange<ModularChangeset>,
@@ -276,36 +277,36 @@ function composeModular(
 
 type OptionalFieldTestState = FieldStateTree<string | undefined, DefaultChangeset>;
 
-function computeChildChangeInputContext(inputState: OptionalFieldTestState): number[] {
-	// This is effectively a filter of the intentions from all edits such that it only includes
-	// intentions for edits which modify the same child as the final one in the changeset.
-	// Note: this takes a dependency on the fact that `generateChildStates` doesn't set matching string
-	// content for what are meant to represent different nodes.
-	const states = getSequentialStates(inputState);
-	const finalContent = states.at(-1)?.content;
-	assert(
-		finalContent !== undefined,
-		"Child change input context should only be computed when the optional field has content.",
-	);
-	const intentions: number[] = [];
-	let currentContent: string | undefined;
-	for (const state of states) {
-		if (state.mostRecentEdit !== undefined && currentContent === finalContent) {
-			const fieldChange = state.mostRecentEdit.changeset.change.fieldChanges.get(rootFieldKey);
-			if (fieldChange === undefined) {
-				continue;
-			}
-			const optionalFieldChange = fieldChange.change as OptionalChangeset;
-			if (optionalFieldChange.childChange !== undefined) {
-				intentions.push(state.mostRecentEdit.intention);
-			}
-		}
+// function computeChildChangeInputContext(inputState: OptionalFieldTestState): number[] {
+// 	// This is effectively a filter of the intentions from all edits such that it only includes
+// 	// intentions for edits which modify the same child as the final one in the changeset.
+// 	// Note: this takes a dependency on the fact that `generateChildStates` doesn't set matching string
+// 	// content for what are meant to represent different nodes.
+// 	const states = getSequentialStates(inputState);
+// 	const finalContent = states.at(-1)?.content;
+// 	assert(
+// 		finalContent !== undefined,
+// 		"Child change input context should only be computed when the optional field has content.",
+// 	);
+// 	const intentions: number[] = [];
+// 	let currentContent: string | undefined;
+// 	for (const state of states) {
+// 		if (state.mostRecentEdit !== undefined && currentContent === finalContent) {
+// 			const fieldChange = state.mostRecentEdit.changeset.change.fieldChanges.get(rootFieldKey);
+// 			if (fieldChange === undefined) {
+// 				continue;
+// 			}
+// 			const optionalFieldChange = fieldChange.change as OptionalChangeset;
+// 			if (optionalFieldChange.childChange !== undefined) {
+// 				intentions.push(state.mostRecentEdit.intention);
+// 			}
+// 		}
 
-		currentContent = state.content;
-	}
+// 		currentContent = state.content;
+// 	}
 
-	return intentions;
-}
+// 	return intentions;
+// }
 
 type WrappedChangeset = ChangesetWrapper<OptionalChangeset>;
 
@@ -338,9 +339,10 @@ const generateChildStates: ChildStateGenerator<string | undefined, DefaultChange
 		tagFromIntention: (intention: number) => RevisionTag,
 		mintIntention: () => number,
 	): Iterable<OptionalFieldTestState> {
-		const mintId: () => ChangeAtomId = () => {
+		const mintId = (revision: RevisionTag): ChangeAtomId => {
 			return {
 				localId: mintIntention() as ChangesetLocalId,
+				revision,
 			};
 		};
 		const edits = getSequentialEdits(state);
@@ -356,7 +358,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, DefaultChange
 					// This no-op change is used to force ModularChangeFamily to generate a shallow optional changeset with a child change.
 					// Otherwise, it would generate a generic changeset.
 					change: brand(optional.changeHandler.createEmpty()),
-					revision: revision,
+					revision,
 				};
 				const nestedFieldEdit: FieldEditDescription = {
 					type: "field",
@@ -365,8 +367,8 @@ const generateChildStates: ChildStateGenerator<string | undefined, DefaultChange
 						field: brand("foo"),
 					},
 					fieldKind: optional.identifier,
-					change: brand(OptionalChange.clear(true, mintId())),
-					revision: revision,
+					change: brand(OptionalChange.clear(true, mintId(revision))),
+					revision,
 				};
 				const modularEdit = editor.buildChanges([fieldEdit, nestedFieldEdit]);
 				yield {
@@ -384,13 +386,13 @@ const generateChildStates: ChildStateGenerator<string | undefined, DefaultChange
 			{
 				const intention = mintIntention();
 				const revision = tagFromIntention(intention);
-				const detach = mintId();
+				const detach = mintId(revision);
 				const fieldEdit: FieldEditDescription = {
 					type: "field",
 					field: { parent: undefined, field: rootFieldKey },
 					fieldKind: optional.identifier,
 					change: brand(OptionalChange.clear(false, detach)),
-					revision: revision,
+					revision,
 				};
 				const modularEdit = editor.buildChanges([fieldEdit]);
 				yield {
@@ -409,13 +411,13 @@ const generateChildStates: ChildStateGenerator<string | undefined, DefaultChange
 			// as a concurrent set operation may populate the field.
 			const intention = mintIntention();
 			const revision = tagFromIntention(intention);
-			const detach = mintId();
+			const detach = mintId(revision);
 			const fieldEdit: FieldEditDescription = {
 				type: "field",
 				field: { parent: undefined, field: rootFieldKey },
 				fieldKind: optional.identifier,
 				change: brand(OptionalChange.clear(true, detach)),
-				revision: revision,
+				revision,
 			};
 			const modularEdit = editor.buildChanges([fieldEdit]);
 			yield {
@@ -432,7 +434,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, DefaultChange
 		for (const value of ["A", "B"]) {
 			const setIntention = mintIntention();
 			const setRevision = tagFromIntention(setIntention);
-			const [fill, detach] = [mintId(), mintId()];
+			const [fill, detach] = [mintId(setRevision), mintId(setRevision)];
 			// Using length of the input context guarantees set operations generated at different times also have different
 			// values, which should tend to be easier to debug.
 			// This also makes the logic to determine intentions simpler.

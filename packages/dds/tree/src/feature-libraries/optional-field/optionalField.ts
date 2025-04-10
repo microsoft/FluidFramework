@@ -180,6 +180,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				composedReplace = change1.valueReplace;
 			}
 		} else {
+			// eslint-disable-next-line unicorn/prefer-ternary
 			if (isReplaceEffectful(change2.valueReplace)) {
 				composedReplace = {
 					...change2.valueReplace,
