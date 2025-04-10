@@ -56,10 +56,10 @@ export {
 export {
 	latestStateFactory,
 	type Latest,
-	type LatestValueManagerEvents,
+	type LatestEvents,
 } from "./latestValueManager.js";
 export type {
-	LatestValueClientData,
+	LatestClientData,
 	LatestValueData,
 	LatestValueMetadata,
 } from "./latestValueTypes.js";

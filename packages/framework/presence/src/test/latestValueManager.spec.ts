@@ -13,7 +13,7 @@ import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import type {
 	BroadcastControlSettings,
 	IPresence,
-	LatestValueClientData,
+	LatestClientData,
 } from "@fluidframework/presence/alpha";
 import { StateFactory } from "@fluidframework/presence/alpha";
 
@@ -123,7 +123,7 @@ export function checkCompiles(): void {
 
 	function logClientValue<
 		T /* following extends should not be required: */ extends Record<string, unknown>,
-	>({ client, value }: Pick<LatestValueClientData<T>, "client" | "value">): void {
+	>({ client, value }: Pick<LatestClientData<T>, "client" | "value">): void {
 		console.log(client.sessionId, value);
 	}
 

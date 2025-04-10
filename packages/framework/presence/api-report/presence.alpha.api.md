@@ -132,11 +132,27 @@ export interface ISessionClient<SpecificSessionClientId extends ClientSessionId 
 export interface Latest<T> {
     clients(): ISessionClient[];
     clientValue(client: ISessionClient): LatestValueData<T>;
-    clientValues(): IterableIterator<LatestValueClientData<T>>;
+    clientValues(): IterableIterator<LatestClientData<T>>;
     readonly controls: BroadcastControls;
-    readonly events: Listenable<LatestValueManagerEvents<T>>;
+    readonly events: Listenable<LatestEvents<T>>;
     get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
     set local(value: JsonSerializable<T> & JsonDeserialized<T>);
+}
+
+// @alpha @sealed
+export interface LatestClientData<T> extends LatestValueData<T> {
+    // (undocumented)
+    client: ISessionClient;
+}
+
+// @alpha @sealed (undocumented)
+export interface LatestEvents<T> {
+    // @eventProperty
+    localUpdated: (update: {
+        value: InternalUtilityTypes.FullyReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+    }) => void;
+    // @eventProperty
+    updated: (update: LatestClientData<T>) => void;
 }
 
 // @alpha @sealed
@@ -191,7 +207,7 @@ export interface LatestMapItemRemovedClientData<K extends string | number> {
 }
 
 // @alpha @sealed
-export interface LatestMapItemUpdatedClientData<T, K extends string | number> extends LatestValueClientData<T> {
+export interface LatestMapItemUpdatedClientData<T, K extends string | number> extends LatestClientData<T> {
     // (undocumented)
     key: K;
 }
@@ -200,27 +216,11 @@ export interface LatestMapItemUpdatedClientData<T, K extends string | number> ex
 export function latestStateFactory<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
 
 // @alpha @sealed
-export interface LatestValueClientData<T> extends LatestValueData<T> {
-    // (undocumented)
-    client: ISessionClient;
-}
-
-// @alpha @sealed
 export interface LatestValueData<T> {
     // (undocumented)
     metadata: LatestValueMetadata;
     // (undocumented)
     value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
-}
-
-// @alpha @sealed (undocumented)
-export interface LatestValueManagerEvents<T> {
-    // @eventProperty
-    localUpdated: (update: {
-        value: InternalUtilityTypes.FullyReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
-    }) => void;
-    // @eventProperty
-    updated: (update: LatestValueClientData<T>) => void;
 }
 
 // @alpha @sealed
