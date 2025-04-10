@@ -507,9 +507,9 @@ export class Outbox {
 		}
 
 		if (compressedBatch.contentSizeInBytes >= this.params.config.maxBatchSizeInBytes) {
-			const dpe = DataProcessingError.create(
-				"Compressed batch still too large",
-				"flush",
+			throw DataProcessingError.create(
+				"BatchTooLarge",
+				"compressionInsufficient",
 				/* sequencedMessage */ undefined,
 				{
 					batchSize: singletonBatch.contentSizeInBytes,
@@ -521,8 +521,6 @@ export class Outbox {
 					socketSize: estimateSocketSize(singletonBatch),
 				},
 			);
-			this.logger.sendErrorEvent({ eventName: "BatchTooLarge" }, dpe);
-			throw dpe;
 		}
 
 		return compressedBatch;

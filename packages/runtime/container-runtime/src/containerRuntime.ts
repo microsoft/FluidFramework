@@ -369,7 +369,7 @@ export interface IContainerRuntimeOptions {
 	 * regardless of the overhead of an individual op.
 	 *
 	 * Any value of `chunkSizeInBytes` exceeding {@link IContainerRuntimeOptions.maxBatchSizeInBytes} will disable this feature, therefore if a compressed batch's content
-	 * size exceeds {@link IContainerRuntimeOptions.maxBatchSizeInBytes} after compression, the container will close with an instance of `GenericError` with
+	 * size exceeds {@link IContainerRuntimeOptions.maxBatchSizeInBytes} after compression, the container will close with an instance of `DataProcessingError` with
 	 * the `BatchTooLarge` message.
 	 */
 	readonly chunkSizeInBytes?: number;
