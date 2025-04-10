@@ -61,7 +61,7 @@ export {
 export type {
 	LatestClientData,
 	LatestData,
-	LatestValueMetadata,
+	LatestMetadata,
 } from "./latestValueTypes.js";
 
 export {
