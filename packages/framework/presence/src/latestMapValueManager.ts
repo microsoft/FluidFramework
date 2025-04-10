@@ -17,7 +17,7 @@ import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { objectEntries, objectKeys } from "./internalUtils.js";
-import type { LatestClientData, LatestData, LatestValueMetadata } from "./latestValueTypes.js";
+import type { LatestClientData, LatestData, LatestMetadata } from "./latestValueTypes.js";
 import type { AttendeeId, Attendee, SpecificAttendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
@@ -65,7 +65,7 @@ export interface LatestMapItemUpdatedClientData<T, K extends string | number>
 export interface LatestMapItemRemovedClientData<K extends string | number> {
 	attendee: Attendee;
 	key: K;
-	metadata: LatestValueMetadata;
+	metadata: LatestMetadata;
 }
 
 /**

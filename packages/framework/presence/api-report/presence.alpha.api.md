@@ -147,7 +147,7 @@ export interface LatestClientData<T> extends LatestData<T> {
 // @alpha @sealed
 export interface LatestData<T> {
     // (undocumented)
-    metadata: LatestValueMetadata;
+    metadata: LatestMetadata;
     // (undocumented)
     value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
 }
@@ -210,7 +210,7 @@ export interface LatestMapItemRemovedClientData<K extends string | number> {
     // (undocumented)
     key: K;
     // (undocumented)
-    metadata: LatestValueMetadata;
+    metadata: LatestMetadata;
 }
 
 // @alpha @sealed
@@ -219,14 +219,14 @@ export interface LatestMapItemUpdatedClientData<T, K extends string | number> ex
     key: K;
 }
 
-// @alpha
-export function latestStateFactory<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
-
 // @alpha @sealed
-export interface LatestValueMetadata {
+export interface LatestMetadata {
     revision: number;
     timestamp: number;
 }
+
+// @alpha
+export function latestStateFactory<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
 
 // @alpha @sealed
 export interface NotificationEmitter<E extends InternalUtilityTypes.NotificationListeners<E>> {
