@@ -9,7 +9,7 @@ import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitio
 import { encodeHandleForSerialization } from "@fluidframework/runtime-utils/internal";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
-import { ContainerMessageType, OutboundContainerRuntimeMessage } from "../../messageTypes.js";
+import { ContainerMessageType, LocalContainerRuntimeMessage } from "../../messageTypes.js";
 import { ensureContentsDeserialized, serializeOp } from "../../opLifecycle/index.js";
 
 describe("opSerialization", () => {
@@ -48,7 +48,7 @@ describe("opSerialization", () => {
 
 	describe("serializeOp", () => {
 		it("should serialize an op with no handles just like JSON.stringify", () => {
-			const op: OutboundContainerRuntimeMessage = {
+			const op: LocalContainerRuntimeMessage = {
 				type: ContainerMessageType.Alias,
 				contents: { internalId: "123", alias: "testAlias" },
 			};
@@ -62,7 +62,7 @@ describe("opSerialization", () => {
 			const mockHandle = new MockHandle({});
 			Object.assign(mockHandle, { foo: "should not be serialized" });
 
-			const op: OutboundContainerRuntimeMessage = {
+			const op: LocalContainerRuntimeMessage = {
 				type: ContainerMessageType.FluidDataStoreOp,
 				contents: { address: "123", contents: { hereIsAHandle: mockHandle } },
 			};
@@ -81,7 +81,7 @@ describe("opSerialization", () => {
 		});
 
 		it("should encode an object with already-encoded handles equivalently to JSON.stringify", () => {
-			const op: OutboundContainerRuntimeMessage = {
+			const op: LocalContainerRuntimeMessage = {
 				type: ContainerMessageType.FluidDataStoreOp,
 				contents: {
 					address: "123",
