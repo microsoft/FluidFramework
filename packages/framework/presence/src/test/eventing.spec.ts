@@ -15,8 +15,8 @@ import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import { assertFinalExpectations, prepareConnectedPresence } from "./testUtils.js";
 
 import {
-	StateFactory,
 	Notifications,
+	StateFactory,
 	type LatestMap,
 	type Latest,
 	type NotificationsManager,

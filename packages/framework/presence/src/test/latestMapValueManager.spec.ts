@@ -13,8 +13,8 @@ import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import type {
 	BroadcastControlSettings,
 	Presence,
-	LatestMapItemUpdatedClientData,
 	LatestMap,
+	LatestMapItemUpdatedClientData,
 } from "@fluidframework/presence/alpha";
 import { StateFactory } from "@fluidframework/presence/alpha";
 
