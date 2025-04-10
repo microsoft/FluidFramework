@@ -738,12 +738,8 @@ describe("TableFactory unit tests", () => {
 		const row0 = new Row({ id: "row-0", cells: { "column-0": cell0 } });
 
 		treeView.initialize({
-			columns: [
-				column0,
-			],
-			rows: [
-				row0,
-			],
+			columns: [column0],
+			rows: [row0],
 		});
 
 		const cell = treeView.root.getCell({ columnId: "column-0", rowId: "row-0" });
