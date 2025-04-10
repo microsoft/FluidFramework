@@ -69,6 +69,7 @@ export {
 	independentInitializedView,
 	type ViewContent,
 	TreeAlpha,
+	getIdCompressorFromView,
 	independentView,
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,

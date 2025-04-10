@@ -49,9 +49,11 @@ import {
 	TreeCompressionStrategy,
 	type FieldBatch,
 	type FieldBatchEncodingContext,
+	type LocalNodeIdentifier,
 } from "../feature-libraries/index.js";
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
+import { Tree } from "./index.js";
 
 /**
  * Extensions to {@link Tree} and {@link TreeBeta} which are not yet stable.
@@ -203,6 +205,8 @@ export const TreeAlpha: {
 		compressedData: JsonCompatible<IFluidHandle>,
 		options: { idCompressor?: IIdCompressor } & ICodecOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+
+	longId(node: TreeNode): string | undefined;
 } = {
 	branch(node: TreeNode): TreeBranch | undefined {
 		const kernel = getKernel(node);
@@ -311,6 +315,10 @@ export const TreeAlpha: {
 		const view = independentInitializedView(config, options, content);
 		return TreeBeta.clone<TSchema>(view.root);
 	},
+
+	longId(node: TreeNode): string | undefined {
+		return Tree.longId(node);
+	},
 };
 
 function exportConcise(
@@ -369,3 +377,31 @@ const versionToFormat = {
 	v2_2: 1,
 	v2_3: 1,
 };
+
+/**
+ * Function which returns the idCompressor from a TreeView.
+ *
+ * @param branch - TreeBranch for which you want to get the idCompressor from.
+ * @returns a function which allows you to stabilize a local node identifier.
+ *
+ * @remarks
+ * We currently do not have any apis that support converting identifiers between uncompressed and compressed state.
+ * This function can be used for use cases involving identifiers that our api does not support.
+ *
+ * @alpha
+ */
+export function getIdCompressorFromView(
+	branch: TreeBranch,
+): (identifier: number) => string | undefined {
+	const nodeKeyManager = (branch as SchematizingSimpleTreeView<ImplicitFieldSchema>)
+		.nodeKeyManager;
+	return (identifier: number) => {
+		try {
+			return nodeKeyManager.stabilizeNodeIdentifier(
+				identifier as unknown as LocalNodeIdentifier,
+			);
+		} catch {
+			return undefined;
+		}
+	};
+}
