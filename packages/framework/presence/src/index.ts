@@ -60,7 +60,7 @@ export {
 } from "./latestValueManager.js";
 export type {
 	LatestClientData,
-	LatestValueData,
+	LatestData,
 	LatestValueMetadata,
 } from "./latestValueTypes.js";
 

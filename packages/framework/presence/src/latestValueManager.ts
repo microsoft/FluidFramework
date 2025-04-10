@@ -17,7 +17,7 @@ import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
-import type { LatestClientData, LatestValueData } from "./latestValueTypes.js";
+import type { LatestClientData, LatestData } from "./latestValueTypes.js";
 import type { Attendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
@@ -84,7 +84,7 @@ export interface Latest<T> {
 	/**
 	 * Access to a specific attendee's value.
 	 */
-	clientValue(attendee: Attendee): LatestValueData<T>;
+	clientValue(attendee: Attendee): LatestData<T>;
 }
 
 class LatestValueManagerImpl<T, Key extends string>
@@ -137,7 +137,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			.map((attendeeId) => this.datastore.lookupClient(attendeeId));
 	}
 
-	public clientValue(attendee: Attendee): LatestValueData<T> {
+	public clientValue(attendee: Attendee): LatestData<T> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientState = allKnownStates.states[attendee.attendeeId];
 		if (clientState === undefined) {

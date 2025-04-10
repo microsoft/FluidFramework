@@ -130,7 +130,7 @@ export namespace InternalUtilityTypes {
 // @alpha @sealed
 export interface Latest<T> {
     clients(): Attendee[];
-    clientValue(attendee: Attendee): LatestValueData<T>;
+    clientValue(attendee: Attendee): LatestData<T>;
     clientValues(): IterableIterator<LatestClientData<T>>;
     readonly controls: BroadcastControls;
     readonly events: Listenable<LatestEvents<T>>;
@@ -139,9 +139,17 @@ export interface Latest<T> {
 }
 
 // @alpha @sealed
-export interface LatestClientData<T> extends LatestValueData<T> {
+export interface LatestClientData<T> extends LatestData<T> {
     // (undocumented)
     attendee: Attendee;
+}
+
+// @alpha @sealed
+export interface LatestData<T> {
+    // (undocumented)
+    metadata: LatestValueMetadata;
+    // (undocumented)
+    value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
 }
 
 // @alpha @sealed (undocumented)
@@ -157,7 +165,7 @@ export interface LatestEvents<T> {
 // @alpha @sealed
 export interface LatestMap<T, Keys extends string | number = string | number> {
     clients(): Attendee[];
-    clientValue(attendee: Attendee): ReadonlyMap<Keys, LatestValueData<T>>;
+    clientValue(attendee: Attendee): ReadonlyMap<Keys, LatestData<T>>;
     clientValues(): IterableIterator<LatestMapClientData<T, Keys>>;
     readonly controls: BroadcastControls;
     readonly events: Listenable<LatestMapEvents<T, Keys>>;
@@ -168,7 +176,7 @@ export interface LatestMap<T, Keys extends string | number = string | number> {
 export interface LatestMapClientData<T, Keys extends string | number, SpecificAttendeeId extends AttendeeId = AttendeeId> {
     attendee: Attendee<SpecificAttendeeId>;
     // (undocumented)
-    items: ReadonlyMap<Keys, LatestValueData<T>>;
+    items: ReadonlyMap<Keys, LatestData<T>>;
 }
 
 // @alpha @sealed (undocumented)
@@ -213,14 +221,6 @@ export interface LatestMapItemUpdatedClientData<T, K extends string | number> ex
 
 // @alpha
 export function latestStateFactory<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
-
-// @alpha @sealed
-export interface LatestValueData<T> {
-    // (undocumented)
-    metadata: LatestValueMetadata;
-    // (undocumented)
-    value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
-}
 
 // @alpha @sealed
 export interface LatestValueMetadata {

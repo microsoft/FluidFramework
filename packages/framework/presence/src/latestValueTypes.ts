@@ -32,7 +32,7 @@ export interface LatestValueMetadata {
  * @sealed
  * @alpha
  */
-export interface LatestValueData<T> {
+export interface LatestData<T> {
 	value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
 	metadata: LatestValueMetadata;
 }
@@ -43,6 +43,6 @@ export interface LatestValueData<T> {
  * @sealed
  * @alpha
  */
-export interface LatestClientData<T> extends LatestValueData<T> {
+export interface LatestClientData<T> extends LatestData<T> {
 	attendee: Attendee;
 }
