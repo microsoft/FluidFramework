@@ -73,7 +73,7 @@ A notifications workspace, `PresenceNotifications`, is similar to states workspa
 
 `LatestMap` retains the most recent atomic value each attendee has shared under arbitrary keys. Values associated with a key may be nullified (appears as deleted). Use `StateFactory.latestMap` to add one to `PresenceStates` workspace.
 
-### NotificationsManager
+#### NotificationsManager
 
 Notifications are special case where no data is retained during a session and all interactions appear as events that are sent and received. Notifications may be mixed into a `PresenceStates` workspace for convenience. `NotificationsManager` is the only  presence object permitted in a `PresenceNotifications` workspace. Use `Notifications` to add one to `PresenceNotifications` or `PresenceStates` workspace.
 
