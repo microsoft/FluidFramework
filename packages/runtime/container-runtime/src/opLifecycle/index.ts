@@ -12,7 +12,15 @@ export {
 	generateBatchId,
 	IBatchManagerOptions,
 } from "./batchManager.js";
-export { BatchMessage, IBatch, IBatchCheckpoint, IChunkedOp } from "./definitions.js";
+export {
+	LocalBatch,
+	LocalBatchMessage,
+	OutboundBatch,
+	OutboundBatchMessage,
+	OutboundSingletonBatch,
+	IBatchCheckpoint,
+	IChunkedOp,
+} from "./definitions.js";
 export { DuplicateBatchDetector } from "./duplicateBatchDetector.js";
 export {
 	serializeOp,

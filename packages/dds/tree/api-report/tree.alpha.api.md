@@ -253,6 +253,9 @@ export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(v
 export function getJsonSchema(schema: ImplicitAllowedTypes, options: Required<TreeSchemaEncodingOptions>): JsonTreeSchema;
 
 // @alpha
+export function getSimpleSchema(schema: ImplicitFieldSchema): SimpleTreeSchema;
+
+// @alpha
 export type HandleConverter<TCustom> = (data: IFluidHandle) => TCustom;
 
 // @alpha
@@ -403,6 +406,12 @@ export class IterableTreeArrayContent<T> implements Iterable<T> {
 
 // @public @sealed
 export interface ITree extends ViewableTree, IFluidLoadable {
+}
+
+// @alpha @sealed
+export interface ITreeAlpha extends ITree {
+    exportSimpleSchema(): SimpleTreeSchema;
+    exportVerbose(): VerboseTree | undefined;
 }
 
 // @public
