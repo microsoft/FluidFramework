@@ -24,17 +24,22 @@ import {
 	ICompressionRuntimeOptions,
 	makeLegacySendBatchFn,
 } from "../../containerRuntime.js";
-import { ContainerMessageType } from "../../messageTypes.js";
+import {
+	ContainerMessageType,
+	type LocalContainerRuntimeMessage,
+} from "../../messageTypes.js";
 import { asBatchMetadata, asEmptyBatchLocalOpMetadata } from "../../metadata.js";
 import {
-	BatchMessage,
+	OutboundBatchMessage,
 	BatchSequenceNumbers,
-	IBatch,
 	OpCompressor,
 	OpGroupingManager,
 	type OpGroupingManagerConfig,
 	OpSplitter,
+	type OutboundSingletonBatch,
 	Outbox,
+	type LocalBatchMessage,
+	type OutboundBatch,
 } from "../../opLifecycle/index.js";
 import {
 	PendingMessageResubmitData,
@@ -42,10 +47,9 @@ import {
 	type IPendingMessage,
 } from "../../pendingStateManager.js";
 
-function typeFromBatchedOp(op: IBatchMessage) {
-	assert(op.contents !== undefined);
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-	return JSON.parse(op.contents).type as string;
+function typeFromBatchedOp(op: LocalBatchMessage): string {
+	assert(op.serializedOp !== undefined, "PRECONDITION: serializedOp is undefined");
+	return (JSON.parse(op.serializedOp) as LocalContainerRuntimeMessage).type;
 }
 
 describe("Outbox", () => {
@@ -54,8 +58,8 @@ describe("Outbox", () => {
 		deltaManagerFlushCalls: number;
 		canSendOps: boolean;
 		batchesSubmitted: { messages: IBatchMessage[]; referenceSequenceNumber?: number }[];
-		batchesCompressed: IBatch[];
-		batchesSplit: IBatch[];
+		batchesCompressed: OutboundSingletonBatch[];
+		batchesSplit: OutboundSingletonBatch[];
 		individualOpsSubmitted: unknown[];
 		pendingOpContents: Partial<IPendingMessage & { batchStartCsn: number }>[];
 		opsSubmitted: number;
@@ -87,9 +91,9 @@ describe("Outbox", () => {
 				state.opsSubmitted++;
 				return state.opsSubmitted;
 			},
-			submitBatchFn: (batch: IBatchMessage[], referenceSequenceNumber?: number): number => {
-				state.batchesSubmitted.push({ messages: batch, referenceSequenceNumber });
-				state.opsSubmitted += batch.length;
+			submitBatchFn: (messages: IBatchMessage[], referenceSequenceNumber?: number): number => {
+				state.batchesSubmitted.push({ messages, referenceSequenceNumber });
+				state.opsSubmitted += messages.length;
 				return state.opsSubmitted;
 			},
 		}) satisfies Partial<IContainerContext> as IContainerContext;
@@ -110,7 +114,7 @@ describe("Outbox", () => {
 	});
 
 	const getMockCompressor = (): Partial<OpCompressor> => ({
-		compressBatch: (batch: IBatch<[BatchMessage]>): IBatch<[BatchMessage]> => {
+		compressBatch: (batch: OutboundSingletonBatch): OutboundSingletonBatch => {
 			state.batchesCompressed.push(batch);
 			return batch;
 		},
@@ -122,7 +126,7 @@ describe("Outbox", () => {
 	): Partial<OpSplitter> => ({
 		chunkSizeInBytes,
 		isBatchChunkingEnabled: enabled,
-		splitFirstBatchMessage: (batch: IBatch): IBatch => {
+		splitSingletonBatchMessage: (batch: OutboundSingletonBatch): OutboundSingletonBatch => {
 			state.batchesSplit.push(batch);
 			return batch;
 		},
@@ -130,9 +134,12 @@ describe("Outbox", () => {
 
 	const getMockPendingStateManager = (): Partial<PendingStateManager> => ({
 		// Similar implementation as the real PSM - queue each message 1-by-1
-		onFlushBatch: (batch: BatchMessage[], clientSequenceNumber: number | undefined): void => {
+		onFlushBatch: (
+			batch: LocalBatchMessage[],
+			clientSequenceNumber: number | undefined,
+		): void => {
 			for (const {
-				contents: content = "",
+				serializedOp: content,
 				referenceSequenceNumber,
 				metadata: opMetadata,
 				localOpMetadata,
@@ -147,18 +154,18 @@ describe("Outbox", () => {
 		},
 	});
 
-	const createMessage = (type: ContainerMessageType, contents: string): BatchMessage => ({
-		contents: JSON.stringify({ type, contents }),
+	const createMessage = (type: ContainerMessageType, contents: string): LocalBatchMessage => ({
+		serializedOp: JSON.stringify({ type, contents }),
 		metadata: undefined,
 		localOpMetadata: {},
 		referenceSequenceNumber: Number.POSITIVE_INFINITY,
 	});
 
-	const batchedMessage = (
-		message: BatchMessage,
+	const toSubmittedMessage = (
+		message: LocalBatchMessage | OutboundBatchMessage,
 		batchMarker: boolean | undefined = undefined,
-	) => ({
-		contents: message.contents,
+	): IBatchMessage => ({
+		contents: "serializedOp" in message ? message.serializedOp : message.contents,
 		metadata:
 			batchMarker === undefined
 				? message.metadata
@@ -167,7 +174,8 @@ describe("Outbox", () => {
 		referenceSequenceNumber: message.referenceSequenceNumber,
 	});
 
-	const addBatchMetadata = (messages: BatchMessage[]): BatchMessage[] => {
+	// Also converts to an OutboundBatchMessage
+	const addBatchMetadata = (messages: LocalBatchMessage[]): OutboundBatchMessage[] => {
 		if (messages.length > 1) {
 			messages[0].metadata = {
 				...messages[0].metadata,
@@ -179,12 +187,15 @@ describe("Outbox", () => {
 			};
 		}
 
-		return messages;
+		return messages.map<OutboundBatchMessage>(({ serializedOp, ...message }) => ({
+			contents: serializedOp,
+			...message,
+		}));
 	};
-	const toBatch = (messages: BatchMessage[]): IBatch => ({
+	const toOutboundBatch = (messages: LocalBatchMessage[]): OutboundBatch => ({
 		messages: addBatchMetadata(messages),
 		contentSizeInBytes: messages
-			.map((message) => message.contents?.length ?? 0)
+			.map((message) => message.serializedOp?.length ?? 0)
 			.reduce((a, b) => a + b, 0),
 		referenceSequenceNumber:
 			messages.length === 0 ? undefined : messages[0].referenceSequenceNumber,
@@ -290,15 +301,16 @@ describe("Outbox", () => {
 		// Not Flushed
 		outbox.submit(messages[5]);
 
-		assert.equal(state.opsSubmitted, messages.length - 1);
+		assert.equal(state.opsSubmitted, messages.length - 1); // -1 for the non-flushed message
 		assert.equal(state.individualOpsSubmitted.length, 0);
 		assert.deepEqual(
 			state.batchesSubmitted.map((x) => x.messages),
 			[
-				[batchedMessage(messages[2], true), batchedMessage(messages[3], false)],
-				[batchedMessage(messages[0], true), batchedMessage(messages[1], false)],
-				[batchedMessage(messages[4])], // The last message was not batched
+				[toSubmittedMessage(messages[2], true), toSubmittedMessage(messages[3], false)],
+				[toSubmittedMessage(messages[0], true), toSubmittedMessage(messages[1], false)],
+				[toSubmittedMessage(messages[4])], // The last message was not batched
 			],
+			"Submitted batches are incorrect",
 		);
 		assert.equal(state.deltaManagerFlushCalls, 0);
 
@@ -316,12 +328,13 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
-				content: message.contents,
+				content: message.serializedOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 				batchStartCsn: csn,
 			})),
+			"Pending messages are incorrect",
 		);
 	});
 
@@ -433,13 +446,13 @@ describe("Outbox", () => {
 		assert.equal(state.opsSubmitted, 2);
 		assert.deepEqual(
 			state.batchesSubmitted.map((x) => x.messages),
-			[[batchedMessage(messages[0]), batchedMessage(messages[1])]],
+			[[toSubmittedMessage(messages[0]), toSubmittedMessage(messages[1])]],
 		);
 		// All three pending
 		assert.deepEqual(
 			state.pendingOpContents,
 			messages.map<Partial<IPendingMessage>>((message, i) => ({
-				content: message.contents,
+				content: message.serializedOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
@@ -488,7 +501,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
-				content: message.contents,
+				content: message.serializedOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
@@ -524,7 +537,7 @@ describe("Outbox", () => {
 		outbox.flush();
 
 		const groupedMessages = opGroupingManager.groupBatch(
-			toBatch([messages[0], messages[1], messages[3]]),
+			toOutboundBatch([messages[0], messages[1], messages[3]]),
 		);
 
 		// Submits 2 ops, one for the id allocation and one for the grouped batch
@@ -532,10 +545,13 @@ describe("Outbox", () => {
 		assert.equal(state.batchesSubmitted.length, 2);
 		assert.equal(state.individualOpsSubmitted.length, 0);
 		assert.equal(state.deltaManagerFlushCalls, 0);
-		assert.deepEqual(state.batchesCompressed, [toBatch([messages[2]]), groupedMessages]);
+		assert.deepEqual(state.batchesCompressed, [
+			toOutboundBatch([messages[2]]),
+			groupedMessages,
+		]);
 		assert.deepEqual(
 			state.batchesSubmitted.map((x) => x.messages),
-			[[batchedMessage(messages[2])], [batchedMessage(groupedMessages.messages[0])]],
+			[[toSubmittedMessage(messages[2])], [toSubmittedMessage(groupedMessages.messages[0])]],
 		);
 
 		// Note the expected CSN here is fixed to the batch's starting CSN
@@ -550,7 +566,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
-				content: message.contents,
+				content: message.serializedOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
@@ -591,11 +607,11 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.batchesSubmitted.map((x) => x.messages),
 			[
-				[batchedMessage(messages[2])],
+				[toSubmittedMessage(messages[2])],
 				[
-					batchedMessage(messages[0], true),
-					batchedMessage(messages[1]),
-					batchedMessage(messages[3], false),
+					toSubmittedMessage(messages[0], true),
+					toSubmittedMessage(messages[1]),
+					toSubmittedMessage(messages[3], false),
 				],
 			],
 		);
@@ -612,7 +628,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
-				content: message.contents,
+				content: message.serializedOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
@@ -647,7 +663,7 @@ describe("Outbox", () => {
 		assert.throws(() => outbox.flush());
 		// The batch is compressed
 		assert.deepEqual(state.batchesCompressed, [
-			opGroupingManager.groupBatch(toBatch(messages)),
+			opGroupingManager.groupBatch(toOutboundBatch(messages)),
 		]);
 		// The batch is not persisted
 		assert.deepEqual(state.pendingOpContents, []);
@@ -683,14 +699,17 @@ describe("Outbox", () => {
 		outbox.flush();
 
 		const groupedMessages = opGroupingManager.groupBatch(
-			toBatch([messages[0], messages[1], messages[3]]),
+			toOutboundBatch([messages[0], messages[1], messages[3]]),
 		);
 
-		assert.deepEqual(state.batchesCompressed, [toBatch([messages[2]]), groupedMessages]);
-		assert.deepEqual(state.batchesSplit, [toBatch([messages[2]]), groupedMessages]);
+		assert.deepEqual(state.batchesCompressed, [
+			toOutboundBatch([messages[2]]),
+			groupedMessages,
+		]);
+		assert.deepEqual(state.batchesSplit, [toOutboundBatch([messages[2]]), groupedMessages]);
 		assert.deepEqual(
 			state.batchesSubmitted.map((x) => x.messages),
-			[[batchedMessage(messages[2])], [batchedMessage(groupedMessages.messages[0])]],
+			[[toSubmittedMessage(messages[2])], [toSubmittedMessage(groupedMessages.messages[0])]],
 		);
 
 		// Note the expected CSN here is fixed to the batch's starting CSN
@@ -705,7 +724,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
-				content: message.contents,
+				content: message.serializedOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
@@ -744,14 +763,17 @@ describe("Outbox", () => {
 		outbox.flush();
 
 		const groupedMessages = opGroupingManager.groupBatch(
-			toBatch([messages[0], messages[1], messages[3]]),
+			toOutboundBatch([messages[0], messages[1], messages[3]]),
 		);
 
-		assert.deepEqual(state.batchesCompressed, [toBatch([messages[2]]), groupedMessages]);
+		assert.deepEqual(state.batchesCompressed, [
+			toOutboundBatch([messages[2]]),
+			groupedMessages,
+		]);
 		assert.deepEqual(state.batchesSplit, []);
 		assert.deepEqual(
 			state.batchesSubmitted.map((x) => x.messages),
-			[[batchedMessage(messages[2])], [batchedMessage(groupedMessages.messages[0])]],
+			[[toSubmittedMessage(messages[2])], [toSubmittedMessage(groupedMessages.messages[0])]],
 		);
 	});
 
@@ -805,7 +827,7 @@ describe("Outbox", () => {
 		assert.equal(state.batchesSubmitted.length, 2);
 		assert.deepEqual(
 			state.batchesSubmitted.map((x) => x.messages),
-			[[batchedMessage(messages[0])], [batchedMessage(messages[1])]],
+			[[toSubmittedMessage(messages[0])], [toSubmittedMessage(messages[1])]],
 		);
 		assert.deepEqual(
 			state.batchesSubmitted.map((x) => x.referenceSequenceNumber),
@@ -816,7 +838,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			rawMessagesInFlushOrder.map((message, i) => ({
-				content: message.contents,
+				content: message.serializedOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
@@ -860,7 +882,7 @@ describe("Outbox", () => {
 				referenceSequenceNumber: 1,
 			},
 		],
-	]) {
+	] as LocalBatchMessage[][]) {
 		it("Flushes all batches when an out of order message is detected in either flow (if partial flushing is enabled)", () => {
 			const outbox = getOutbox({
 				context: getMockContext(),
@@ -880,7 +902,7 @@ describe("Outbox", () => {
 			assert.equal(state.batchesSubmitted.length, 1);
 			assert.deepEqual(
 				state.batchesSubmitted.map((x) => x.messages),
-				[[batchedMessage(ops[0]), batchedMessage(ops[1])]],
+				[[toSubmittedMessage(ops[0]), toSubmittedMessage(ops[1])]],
 			);
 
 			mockLogger.assertMatch([
@@ -896,7 +918,7 @@ describe("Outbox", () => {
 			context: getMockContext(),
 			flushPartialBatches: true,
 		});
-		const messages: BatchMessage[] = [
+		const messages: LocalBatchMessage[] = [
 			{
 				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
 				referenceSequenceNumber: 0,
@@ -968,11 +990,11 @@ describe("Outbox", () => {
 			state.batchesSubmitted.map((x) => x.messages),
 			[
 				[
-					batchedMessage(messages[0], true),
-					batchedMessage(messages[2]),
-					batchedMessage(messages[4], false),
+					toSubmittedMessage(messages[0], true),
+					toSubmittedMessage(messages[2]),
+					toSubmittedMessage(messages[4], false),
 				],
-				[batchedMessage(messages[1], true), batchedMessage(messages[3], false)],
+				[toSubmittedMessage(messages[1], true), toSubmittedMessage(messages[3], false)],
 			],
 		);
 
@@ -989,7 +1011,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
-				content: message.contents,
+				content: message.serializedOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,

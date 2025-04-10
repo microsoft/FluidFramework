@@ -108,9 +108,7 @@ export interface ITree extends ViewableTree, IFluidLoadable {}
 
 /**
  * {@link ITree} extended with some alpha APIs.
- * @privateRemarks
- * TODO: Promote this to alpha.
- * @internal
+ * @sealed @alpha
  */
 export interface ITreeAlpha extends ITree {
 	/**

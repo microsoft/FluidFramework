@@ -20,7 +20,7 @@ import { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
  * Note that all TreeNodeSchema get a {@link Context} cached on them as part of one time initialization which contains a map from identifier to all transitively referenced schema.
  * Perhaps exposing access to that would cover this use-case as well.
  *
- * @internal
+ * @alpha
  */
 export function getSimpleSchema(schema: ImplicitFieldSchema): SimpleTreeSchema {
 	return toSimpleTreeSchema(schema, true);
