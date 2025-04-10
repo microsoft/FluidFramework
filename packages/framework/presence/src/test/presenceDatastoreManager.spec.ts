@@ -314,8 +314,8 @@ describe("Presence", () => {
 				// Setup
 				const listener = spy();
 				presence.events.on("workspaceActivated", listener);
-				presence.getStates("name:testStateWorkspace", {});
-				presence.getNotifications("name:testNotificationWorkspace", {});
+				presence.states.getWorkspace("name:testStateWorkspace", {});
+				presence.notifications.getWorkspace("name:testNotificationWorkspace", {});
 
 				// Act
 				presence.processSignal(

@@ -108,16 +108,16 @@ Current API does not provide a mechanism to validate that state and notification
 Example:
 
 ```typescript
-presence.getStates("app:v1states", { myState: Latest({x: 0})});
+presence.states.getWorkspace("app:v1states", { myState: Latest({x: 0})});
 ```
  is incompatible with
 ```typescript
-presence.getStates("app:v1states", { myState: Latest({x: "text"})});
+presence.states.getWorkspace("app:v1states", { myState: Latest({x: "text"})});
 ```
 as "app:v1states"+"myState" have different value type expectations: `{x: number}` versus `{x: string}`.
 
 ```typescript
-presence.getStates("app:v1states", { myState2: Latest({x: true})});
+presence.states.getWorkspace("app:v1states", { myState2: Latest({x: true})});
 ```
  would be compatible with both of the prior schemas as "myState2" is a different name. Though in this situation none of the different clients would be able to observe each other.
 
@@ -146,7 +146,7 @@ You can configure the grouping and throttling behavior using the `allowableUpdat
 
 ```ts
 // Configure a states workspace
-const stateWorkspace = presence.getStates("app:v1states",
+const stateWorkspace = presence.states.getWorkspace("app:v1states",
 	{
 		// This value manager has an allowable latency of 100ms.
 		position: Latest({ x: 0, y: 0 }, { allowableUpdateLatencyMs: 100 }),

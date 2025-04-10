@@ -247,7 +247,7 @@ describe("Presence", () => {
 		function setupSharedStatesWorkspace({
 			notifications,
 		}: { notifications?: true } = {}): void {
-			const states = presence.getStates("name:testWorkspace", {
+			const states = presence.states.getWorkspace("name:testWorkspace", {
 				latest: Latest({ x: 0, y: 0, z: 0 }),
 				latestMap: LatestMap({ key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } }),
 			});
@@ -266,10 +266,10 @@ describe("Presence", () => {
 		}
 
 		function setupMultipleStatesWorkspaces(): void {
-			const latestsStates = presence.getStates("name:testWorkspace1", {
+			const latestsStates = presence.states.getWorkspace("name:testWorkspace1", {
 				latest: Latest({ x: 0, y: 0, z: 0 }),
 			});
-			const latesetMapStates = presence.getStates("name:testWorkspace2", {
+			const latesetMapStates = presence.states.getWorkspace("name:testWorkspace2", {
 				latestMap: LatestMap({ key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } }),
 			});
 			latest = latestsStates.props.latest;
@@ -277,11 +277,14 @@ describe("Presence", () => {
 		}
 
 		function setupNotificationsWorkspace(): void {
-			const notificationsWorkspace = presence.getNotifications("name:testWorkspace", {
-				notifications: Notifications<{ newId: (id: number) => void }>({
-					newId: (_client: ISessionClient, _id: number) => {},
-				}),
-			});
+			const notificationsWorkspace = presence.notifications.getWorkspace(
+				"name:testWorkspace",
+				{
+					notifications: Notifications<{ newId: (id: number) => void }>({
+						newId: (_client: ISessionClient, _id: number) => {},
+					}),
+				},
+			);
 			notificationManager = notificationsWorkspace.props.notifications;
 		}
 
@@ -304,7 +307,7 @@ describe("Presence", () => {
 		}
 
 		function getTestAttendee(): ISessionClient {
-			return presence.getAttendee("sessionId-1");
+			return presence.attendees.getAttendee("sessionId-1");
 		}
 
 		describe("states workspace", () => {
@@ -350,7 +353,7 @@ describe("Presence", () => {
 					latest.events.on("updated", latestUpdatedEventSpy);
 					latestMap.events.on("updated", latestMapUpdatedEventSpy);
 					latestMap.events.on("itemUpdated", itemUpdatedEventSpy);
-					presence.events.on("attendeeJoined", atteendeeEventSpy);
+					presence.attendees.events.on("attendeeJoined", atteendeeEventSpy);
 				}
 
 				it("'latest' update comes before 'latestMap' update in single workspace", async () => {
@@ -579,7 +582,7 @@ describe("Presence", () => {
 				notificationManager.notifications.on("newId", notificationSpy);
 				latest.events.on("updated", latestSpy);
 				latestMap.events.on("updated", latestMapSpy);
-				presence.events.on("attendeeJoined", attendeeSpy);
+				presence.attendees.events.on("attendeeJoined", attendeeSpy);
 			}
 
 			function assertSpies(): void {
@@ -658,11 +661,14 @@ describe("Presence", () => {
 				const workspaceActivatedEventSpy = spy(
 					(workspaceAddress: PresenceWorkspaceAddress) => {
 						// Once activated, register the notifications workspace and listener for it's event
-						const notificationsWorkspace = presence.getNotifications(workspaceAddress, {
-							notifications: Notifications<{ newId: (id: number) => void }>({
-								newId: (_client: ISessionClient, _id: number) => {},
-							}),
-						});
+						const notificationsWorkspace = presence.notifications.getWorkspace(
+							workspaceAddress,
+							{
+								notifications: Notifications<{ newId: (id: number) => void }>({
+									newId: (_client: ISessionClient, _id: number) => {},
+								}),
+							},
+						);
 						notificationsWorkspace.props.notifications.notifications.on(
 							"newId",
 							notificationSpy,

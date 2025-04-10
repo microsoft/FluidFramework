@@ -24,7 +24,7 @@ function createLatestManager(
 	presence: IPresence,
 	valueControlSettings?: BroadcastControlSettings,
 ) {
-	const states = presence.getStates(testWorkspaceName, {
+	const states = presence.states.getWorkspace(testWorkspaceName, {
 		camera: Latest({ x: 0, y: 0, z: 0 }, valueControlSettings),
 	});
 	return states.props.camera;
@@ -45,28 +45,28 @@ describe("Presence", () => {
 			});
 
 			it("can set and get empty object as initial value", () => {
-				const states = presence.getStates(testWorkspaceName, {
+				const states = presence.states.getWorkspace(testWorkspaceName, {
 					obj: Latest({}),
 				});
 				assert.deepStrictEqual(states.props.obj.local, {});
 			});
 
 			it("can set and get object with properties as initial value", () => {
-				const states = presence.getStates(testWorkspaceName, {
+				const states = presence.states.getWorkspace(testWorkspaceName, {
 					obj: Latest({ x: 0, y: 0, z: 0 }),
 				});
 				assert.deepStrictEqual(states.props.obj.local, { x: 0, y: 0, z: 0 });
 			});
 
 			it("can set and get empty array as initial value", () => {
-				const states = presence.getStates(testWorkspaceName, {
+				const states = presence.states.getWorkspace(testWorkspaceName, {
 					arr: Latest([]),
 				});
 				assert.deepStrictEqual(states.props.arr.local, []);
 			});
 
 			it("can set and get array with elements as initial value", () => {
-				const states = presence.getStates(testWorkspaceName, {
+				const states = presence.states.getWorkspace(testWorkspaceName, {
 					arr: Latest([1, 2, 3]),
 				});
 				assert.deepStrictEqual(states.props.arr.local, [1, 2, 3]);
@@ -78,7 +78,7 @@ describe("Presence", () => {
 		it("localUpdate event is fired with new value when local value is updated", () => {
 			// Setup
 			const presence = createPresenceManager(new MockEphemeralRuntime());
-			const states = presence.getStates(testWorkspaceName, {
+			const states = presence.states.getWorkspace(testWorkspaceName, {
 				camera: Latest({ x: 0, y: 0, z: 0 }),
 			});
 			const camera = states.props.camera;
@@ -104,7 +104,7 @@ describe("Presence", () => {
 export function checkCompiles(): void {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	const presence = {} as IPresence;
-	const statesWorkspace = presence.getStates("name:testStatesWorkspaceWithLatest", {
+	const statesWorkspace = presence.states.getWorkspace("name:testStatesWorkspaceWithLatest", {
 		cursor: Latest({ x: 0, y: 0 }),
 		camera: Latest({ x: 0, y: 0, z: 0 }),
 	});

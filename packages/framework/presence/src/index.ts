@@ -27,6 +27,7 @@ export {
 	type ClientSessionId,
 	type IPresence,
 	type ISessionClient,
+	type PresenceAttendeeEvents,
 	type PresenceEvents,
 	SessionClientStatus,
 } from "./presence.js";
