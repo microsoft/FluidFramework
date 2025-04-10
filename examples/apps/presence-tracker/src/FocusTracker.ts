@@ -38,7 +38,7 @@ export interface IFocusTrackerEvents extends IEvent {
  */
 export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 	/**
-	 * A value manager that tracks the latest focus state of connected session clients.
+	 * State that tracks the latest focus state of connected session clients.
 	 */
 	private readonly focus: Latest<IFocusState>;
 
@@ -60,15 +60,15 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 			StateFactory.latest<IFocusState>({ hasFocus: window.document.hasFocus() }),
 		);
 
-		// Save a reference to the value manager for easy access within the FocusTracker.
+		// Save a reference to the focus state for easy access within the FocusTracker.
 		this.focus = statesWorkspace.props.focus;
 
-		// When the focus value manager is updated, the FocusTracker should emit the focusChanged event.
+		// When the focus state is updated, the FocusTracker should emit the focusChanged event.
 		this.focus.events.on("updated", ({ attendee, value }) => {
 			this.emit("focusChanged", this.focus.local);
 		});
 
-		// Listen to the local focus and blur events. On each event, update the local focus state in the value manager, then
+		// Listen to the local focus and blur events. On each event, update the local focus state, then
 		// emit the focusChanged event with the local data.
 		window.addEventListener("focus", () => {
 			this.focus.local = {

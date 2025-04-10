@@ -323,7 +323,7 @@ export interface StatesWorkspace<TSchema extends StatesWorkspaceSchema, TManager
 // @alpha @sealed
 export type StatesWorkspaceEntries<TSchema extends StatesWorkspaceSchema> = {
     /**
-    * Registered `Value Manager`s
+    * Registered State objects.
     */
     readonly [Key in keyof TSchema]: ReturnType<TSchema[Key]>["manager"] extends InternalTypes.StateValue<infer TManager> ? TManager : never;
 };

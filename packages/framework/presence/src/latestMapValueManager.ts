@@ -300,7 +300,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 }
 
 /**
- * Value manager that provides a `Map` of latest known values from this client to
+ * State that provides a `Map` of latest known values from this client to
  * others and read access to their values.
  * Entries in the map may vary over time and by client, but all values are expected to
  * be of the same type, which may be a union type.

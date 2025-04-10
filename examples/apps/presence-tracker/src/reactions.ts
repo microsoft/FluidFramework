@@ -15,8 +15,8 @@ import type { IMousePosition, MouseTracker } from "./MouseTracker.js";
  */
 export function initializeReactions(presence: Presence, mouseTracker: MouseTracker) {
 	// Create a notifications workspace to send reactions-related notifications. This workspace will be created if it
-	// doesn't exist. We also create a Notifications value manager. You can also
-	// add value managers to the workspace later.
+	// doesn't exist. We also create a NotificationsManager. You can also
+	// add presence objects to the workspace later.
 	const notificationsWorkspace = presence.getNotifications(
 		// A unique key identifying this workspace.
 		"name:reactions",

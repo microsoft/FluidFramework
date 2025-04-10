@@ -14,7 +14,7 @@ import { latestMapFactory, type LatestMap } from "./latestMapValueManager.js";
 import { latestStateFactory, type Latest } from "./latestValueManager.js";
 
 /**
- * Factory for creating presence state objects.
+ * Factory for creating presence State objects.
  *
  * @alpha
  */

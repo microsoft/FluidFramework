@@ -44,7 +44,7 @@ export interface ValueManager<
 	TValueState extends
 		InternalTypes.ValueDirectoryOrState<TValue> = InternalTypes.ValueDirectoryOrState<TValue>,
 > {
-	// Most value managers should provide value - implement Required<ValueManager<...>>
+	// State objects should provide value - implement Required<ValueManager<...>>
 	readonly value?: TValueState;
 	update(attendee: Attendee, received: number, value: TValueState): PostUpdateAction[];
 }
