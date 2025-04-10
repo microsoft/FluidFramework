@@ -82,9 +82,9 @@ export interface LatestValueManager<T> {
 	 */
 	clients(): Attendee[];
 	/**
-	 * Access to a specific client's value.
+	 * Access to a specific attendee's value.
 	 */
-	clientValue(client: Attendee): LatestValueData<T>;
+	clientValue(attendee: Attendee): LatestValueData<T>;
 }
 
 class LatestValueManagerImpl<T, Key extends string>
@@ -124,7 +124,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		for (const [attendeeId, value] of objectEntries(allKnownStates.states)) {
 			if (attendeeId !== allKnownStates.self) {
 				yield {
-					client: this.datastore.lookupClient(attendeeId),
+					attendee: this.datastore.lookupClient(attendeeId),
 					value: value.value,
 					metadata: { revision: value.rev, timestamp: value.timestamp },
 				};
@@ -139,9 +139,9 @@ class LatestValueManagerImpl<T, Key extends string>
 			.map((attendeeId) => this.datastore.lookupClient(attendeeId));
 	}
 
-	public clientValue(client: Attendee): LatestValueData<T> {
+	public clientValue(attendee: Attendee): LatestValueData<T> {
 		const allKnownStates = this.datastore.knownValues(this.key);
-		const clientState = allKnownStates.states[client.sessionId];
+		const clientState = allKnownStates.states[attendee.attendeeId];
 		if (clientState === undefined) {
 			throw new Error("No entry for clientId");
 		}
@@ -152,12 +152,12 @@ class LatestValueManagerImpl<T, Key extends string>
 	}
 
 	public update(
-		client: Attendee,
+		attendee: Attendee,
 		_received: number,
 		value: InternalTypes.ValueRequiredState<T>,
 	): PostUpdateAction[] {
 		const allKnownStates = this.datastore.knownValues(this.key);
-		const attendeeId = client.sessionId;
+		const attendeeId = attendee.attendeeId;
 		const currentState = allKnownStates.states[attendeeId];
 		if (currentState !== undefined && currentState.rev >= value.rev) {
 			return [];
@@ -166,7 +166,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		return [
 			() =>
 				this.events.emit("updated", {
-					client,
+					attendee,
 					value: value.value,
 					metadata: { revision: value.rev, timestamp: value.timestamp },
 				}),

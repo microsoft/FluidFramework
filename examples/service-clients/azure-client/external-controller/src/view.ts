@@ -112,7 +112,7 @@ export function makeDiceValuesView(
 ): void {
 	const children = makeDiceHeaderElement();
 	for (const clientValue of lastRoll.clientValues()) {
-		children.push(...makeDiceValueElement(clientValue.client.sessionId, clientValue.value));
+		children.push(...makeDiceValueElement(clientValue.attendee.attendeeId, clientValue.value));
 	}
 	target.replaceChildren(...children);
 }
@@ -167,7 +167,7 @@ function makePresenceView(
 	if (audience !== undefined) {
 		presenceConfig.presence.events.on("attendeeJoined", (attendee) => {
 			const name = audience.getMembers().get(attendee.getConnectionId())?.name;
-			const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} 🔗 with id ${attendee.sessionId} joined`;
+			const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} 🔗 with id ${attendee.attendeeId} joined`;
 			addLogEntry(logContentDiv, update);
 		});
 
@@ -176,7 +176,7 @@ function makePresenceView(
 			const self = audience.getMyself();
 			if (self && attendee !== presenceConfig.presence.getAttendee(self.currentConnection)) {
 				const name = audience.getMembers().get(attendee.getConnectionId())?.name;
-				const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} ⛓️‍💥 with id ${attendee.sessionId} left`;
+				const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} ⛓️‍💥 with id ${attendee.attendeeId} left`;
 				addLogEntry(logContentDiv, update);
 			}
 		});
@@ -184,8 +184,8 @@ function makePresenceView(
 	logDiv.append(logHeaderDiv, logContentDiv);
 
 	presenceConfig.lastRoll.events.on("updated", (update) => {
-		const connected = update.client.getConnectionStatus() === "Connected" ? "🔗" : "⛓️‍💥";
-		const updateText = `updated ${update.client.sessionId.slice(0, 8)}'s ${connected} last rolls to ${JSON.stringify(update.value)}`;
+		const connected = update.attendee.getConnectionStatus() === "Connected" ? "🔗" : "⛓️‍💥";
+		const updateText = `updated ${update.attendee.attendeeId.slice(0, 8)}'s ${connected} last rolls to ${JSON.stringify(update.value)}`;
 		addLogEntry(logContentDiv, updateText);
 
 		makeDiceValuesView(statesContentDiv, presenceConfig.lastRoll);

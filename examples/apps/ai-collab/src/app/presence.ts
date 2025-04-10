@@ -50,7 +50,7 @@ export class PresenceManager {
 		// Listen for updates to the userInfo property in the presence state
 		this.usersState.props.onlineUsers.events.on("updated", (update) => {
 			// The remote client that updated the userInfo property
-			const remoteSessionClient = update.client;
+			const remoteSessionClient = update.attendee;
 			// The new value of the userInfo property
 			const remoteUserInfo = update.value;
 
@@ -100,7 +100,7 @@ export class PresenceManager {
 			try {
 				const userInfo = this.usersState.props.onlineUsers.clientValue(sessionClient).value;
 				// If the user is local user, then add it to the beginning of the list
-				if (sessionClient.sessionId === this.presence.getMyself().sessionId) {
+				if (sessionClient.attendeeId === this.presence.getMyself().attendeeId) {
 					userInfoList.push(userInfo);
 				} else {
 					// If the user is remote user, then add it to the end of the list
@@ -108,7 +108,7 @@ export class PresenceManager {
 				}
 			} catch (error) {
 				console.error(
-					`Error: ${error} when getting user info for session client: ${sessionClient.sessionId}`,
+					`Error: ${error} when getting user info for session client: ${sessionClient.attendeeId}`,
 				);
 			}
 		}

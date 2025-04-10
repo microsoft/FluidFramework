@@ -162,18 +162,18 @@ class MessageHandler {
 				presence.events.on("attendeeJoined", (attendee: Attendee) => {
 					const m: MessageToParent = {
 						event: "attendeeJoined",
-						sessionId: attendee.sessionId,
+						attendeeId: attendee.attendeeId,
 					};
 					send(m);
 				});
 				presence.events.on("attendeeDisconnected", (attendee: Attendee) => {
 					const m: MessageToParent = {
 						event: "attendeeDisconnected",
-						sessionId: attendee.sessionId,
+						attendeeId: attendee.attendeeId,
 					};
 					send(m);
 				});
-				send({ event: "ready", containerId, sessionId: presence.getMyself().sessionId });
+				send({ event: "ready", containerId, attendeeId: presence.getMyself().attendeeId });
 
 				break;
 			}
@@ -192,7 +192,7 @@ class MessageHandler {
 				this.container.disconnect();
 				send({
 					event: "disconnectedSelf",
-					sessionId: this.presence.getMyself().sessionId,
+					attendeeId: this.presence.getMyself().attendeeId,
 				});
 
 				break;

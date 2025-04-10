@@ -6,7 +6,7 @@
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { ClientRecord } from "./internalTypes.js";
-import type { AttendeeId, Attendee } from "./presence.js";
+import type { Attendee, AttendeeId } from "./presence.js";
 
 // type StateDatastoreSchemaNode<
 // 	TValue extends InternalTypes.ValueDirectoryOrState<any> = InternalTypes.ValueDirectoryOrState<unknown>,

@@ -10,7 +10,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { PostUpdateAction } from "./internalTypes.js";
-import type { AttendeeId, Presence, Attendee, AttendeeEvents } from "./presence.js";
+import type { Attendee, PresenceEvents, AttendeeId, Presence } from "./presence.js";
 import { AttendeeStatus } from "./presence.js";
 import type { PresenceStatesInternal } from "./presenceStates.js";
 import { TimerManager } from "./timerManager.js";
@@ -37,7 +37,7 @@ class SessionClient implements Attendee {
 	private connectionStatus: AttendeeStatus = AttendeeStatus.Disconnected;
 
 	public constructor(
-		public readonly sessionId: AttendeeId,
+		public readonly attendeeId: AttendeeId,
 		public connectionId: ClientConnectionId | undefined = undefined,
 	) {}
 
@@ -90,7 +90,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 	 * session. The map covers entries for both session ids and connection
 	 * ids, which are never expected to collide, but if they did for same
 	 * client that would be fine.
-	 * An entry is for session ID if the value's `sessionId` matches the key.
+	 * An entry is for session ID if the value's `attendeeId` matches the key.
 	 */
 	private readonly attendees = new Map<ClientConnectionId | AttendeeId, SessionClient>();
 
@@ -104,7 +104,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		attendeeId: AttendeeId,
 		private readonly datastore: SystemWorkspaceDatastore,
 		private readonly events: IEmitter<
-			Pick<AttendeeEvents, "attendeeJoined" | "attendeeDisconnected">
+			Pick<PresenceEvents, "attendeeJoined" | "attendeeDisconnected">
 		>,
 		private readonly audience: IAudience,
 	) {
@@ -171,7 +171,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		this.datastore.clientToSessionId[clientConnectionId] = {
 			rev: this.selfAttendee.order++,
 			timestamp: Date.now(),
-			value: this.selfAttendee.sessionId,
+			value: this.selfAttendee.attendeeId,
 		};
 
 		// Mark 'Connected' remote attendees connections as stale
@@ -295,7 +295,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 export function createSystemWorkspace(
 	attendeeId: AttendeeId,
 	datastore: SystemWorkspaceDatastore,
-	events: IEmitter<Pick<AttendeeEvents, "attendeeJoined">>,
+	events: IEmitter<Pick<PresenceEvents, "attendeeJoined">>,
 	audience: IAudience,
 ): {
 	workspace: SystemWorkspace;

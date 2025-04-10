@@ -38,11 +38,11 @@ export interface LatestValueData<T> {
 }
 
 /**
- * State of a specific client's value and its metadata.
+ * State of a specific attendee's value and its metadata.
  *
  * @sealed
  * @alpha
  */
 export interface LatestValueClientData<T> extends LatestValueData<T> {
-	client: Attendee;
+	attendee: Attendee;
 }

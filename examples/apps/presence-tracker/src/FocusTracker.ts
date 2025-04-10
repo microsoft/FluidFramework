@@ -6,9 +6,9 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import type {
-	Presence,
 	Attendee,
 	LatestValueManager,
+	Presence,
 	StatesWorkspace,
 } from "@fluidframework/presence/alpha";
 import { Latest, AttendeeStatus } from "@fluidframework/presence/alpha";
@@ -64,7 +64,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 		this.focus = statesWorkspace.props.focus;
 
 		// When the focus value manager is updated, the FocusTracker should emit the focusChanged event.
-		this.focus.events.on("updated", ({ client, value }) => {
+		this.focus.events.on("updated", ({ attendee, value }) => {
 			this.emit("focusChanged", this.focus.local);
 		});
 
@@ -107,10 +107,10 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 		const currentClient = this.presence.getMyself();
 		statuses.set(currentClient, this.focus.local.hasFocus);
 
-		for (const { client, value } of this.focus.clientValues()) {
-			if (client.getConnectionStatus() === AttendeeStatus.Connected) {
+		for (const { attendee, value } of this.focus.clientValues()) {
+			if (attendee.getConnectionStatus() === AttendeeStatus.Connected) {
 				const { hasFocus } = value;
-				statuses.set(client, hasFocus);
+				statuses.set(attendee, hasFocus);
 			}
 		}
 

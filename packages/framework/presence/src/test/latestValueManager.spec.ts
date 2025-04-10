@@ -123,8 +123,8 @@ export function checkCompiles(): void {
 
 	function logClientValue<
 		T /* following extends should not be required: */ extends Record<string, unknown>,
-	>({ client, value }: Pick<LatestValueClientData<T>, "client" | "value">): void {
-		console.log(client.sessionId, value);
+	>({ attendee, value }: Pick<LatestValueClientData<T>, "attendee" | "value">): void {
+		console.log(attendee.attendeeId, value);
 	}
 
 	// Create new cursor state
@@ -134,17 +134,17 @@ export function checkCompiles(): void {
 	cursor.local = { x: 1, y: 2 };
 
 	// Listen to others cursor updates
-	const cursorUpdatedOff = cursor.events.on("updated", ({ client, value }) =>
-		console.log(`client ${client.sessionId}'s cursor is now at (${value.x},${value.y})`),
+	const cursorUpdatedOff = cursor.events.on("updated", ({ attendee, value }) =>
+		console.log(`attendee ${attendee.attendeeId}'s cursor is now at (${value.x},${value.y})`),
 	);
 	cursorUpdatedOff();
 
-	for (const client of cursor.clients()) {
-		logClientValue({ client, ...cursor.clientValue(client) });
+	for (const attendee of cursor.clients()) {
+		logClientValue({ attendee, ...cursor.clientValue(attendee) });
 	}
 
 	// Enumerate all cursor values
-	for (const { client, value } of cursor.clientValues()) {
-		logClientValue({ client, value });
+	for (const { attendee, value } of cursor.clientValues()) {
+		logClientValue({ attendee, value });
 	}
 }

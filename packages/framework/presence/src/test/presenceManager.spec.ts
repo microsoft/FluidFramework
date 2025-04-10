@@ -80,7 +80,7 @@ describe("Presence", () => {
 			const afterCleanUp: (() => void)[] = [];
 
 			beforeEach(() => {
-				presence = prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
+				presence = prepareConnectedPresence(runtime, "attendeeId-2", "client2", clock, logger);
 			});
 
 			afterEach(() => {
@@ -91,7 +91,7 @@ describe("Presence", () => {
 			});
 
 			describe("attendee", () => {
-				const attendeeSessionId = "sessionId-4";
+				const attendeeSessionId = "attendeeId-4";
 				const initialAttendeeConnectionId = "client4";
 				// Note: this connection id exists in the mock runtime audience since
 				// initialization, but should go unnoticed by the presence manager
@@ -124,7 +124,7 @@ describe("Presence", () => {
 					expectedConnectionStatus: AttendeeStatus = AttendeeStatus.Connected,
 				): void {
 					assert.equal(
-						actualAttendee.sessionId,
+						actualAttendee.attendeeId,
 						expectedSessionId,
 						"Attendee has wrong session id",
 					);

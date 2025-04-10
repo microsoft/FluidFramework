@@ -34,7 +34,7 @@ describe("Presence", () => {
 			clock.setSystemTime(initialTime);
 
 			// Set up the presence connection.
-			presence = prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
+			presence = prepareConnectedPresence(runtime, "attendeeId-2", "client2", clock, logger);
 		});
 
 		afterEach(() => {
@@ -62,13 +62,13 @@ describe("Presence", () => {
 										"client2": {
 											"rev": 0,
 											"timestamp": 1000,
-											"value": "sessionId-2",
+											"value": "attendeeId-2",
 										},
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"count": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 0,
 											"timestamp": 1010,
 											"value": {
@@ -91,13 +91,13 @@ describe("Presence", () => {
 										"client2": {
 											"rev": 0,
 											"timestamp": 1000,
-											"value": "sessionId-2",
+											"value": "attendeeId-2",
 										},
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"count": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 1,
 											"timestamp": 1020,
 											"value": {
@@ -120,13 +120,13 @@ describe("Presence", () => {
 										"client2": {
 											"rev": 0,
 											"timestamp": 1000,
-											"value": "sessionId-2",
+											"value": "attendeeId-2",
 										},
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"count": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 2,
 											"timestamp": 1020,
 											"value": {
@@ -171,13 +171,13 @@ describe("Presence", () => {
 									"client2": {
 										"rev": 0,
 										"timestamp": 1000,
-										"value": "sessionId-2",
+										"value": "attendeeId-2",
 									},
 								},
 							},
 							"s:name:testStateWorkspace": {
 								"count": {
-									"sessionId-2": {
+									"attendeeId-2": {
 										"rev": 0,
 										"timestamp": 1010,
 										"value": {
@@ -215,13 +215,13 @@ describe("Presence", () => {
 										"client2": {
 											"rev": 0,
 											"timestamp": 1000,
-											"value": "sessionId-2",
+											"value": "attendeeId-2",
 										},
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"count": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 3,
 											"timestamp": 1060,
 											"value": {
@@ -244,13 +244,13 @@ describe("Presence", () => {
 										"client2": {
 											"rev": 0,
 											"timestamp": 1000,
-											"value": "sessionId-2",
+											"value": "attendeeId-2",
 										},
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"count": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 6,
 											"timestamp": 1140,
 											"value": {
@@ -317,13 +317,13 @@ describe("Presence", () => {
 										"client2": {
 											"rev": 0,
 											"timestamp": 1000,
-											"value": "sessionId-2",
+											"value": "attendeeId-2",
 										},
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"count": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 2,
 											"timestamp": 1100,
 											"value": {
@@ -346,13 +346,13 @@ describe("Presence", () => {
 										"client2": {
 											"rev": 0,
 											"timestamp": 1000,
-											"value": "sessionId-2",
+											"value": "attendeeId-2",
 										},
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"count": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 5,
 											"timestamp": 1220,
 											"value": {
@@ -416,13 +416,13 @@ describe("Presence", () => {
 										"client2": {
 											"rev": 0,
 											"timestamp": 1000,
-											"value": "sessionId-2",
+											"value": "attendeeId-2",
 										},
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"count": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 0,
 											"timestamp": 1010,
 											"value": {
@@ -431,7 +431,7 @@ describe("Presence", () => {
 										},
 									},
 									"immediateUpdate": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 0,
 											"timestamp": 1010,
 											"value": {
@@ -454,13 +454,13 @@ describe("Presence", () => {
 										"client2": {
 											"rev": 0,
 											"timestamp": 1000,
-											"value": "sessionId-2",
+											"value": "attendeeId-2",
 										},
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"count": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 2,
 											"timestamp": 1100,
 											"value": {
@@ -469,7 +469,7 @@ describe("Presence", () => {
 										},
 									},
 									"immediateUpdate": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 1,
 											"timestamp": 1110,
 											"value": {
@@ -520,13 +520,13 @@ describe("Presence", () => {
 										"client2": {
 											"rev": 0,
 											"timestamp": 1000,
-											"value": "sessionId-2",
+											"value": "attendeeId-2",
 										},
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"count": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 2,
 											"timestamp": 1050,
 											"value": {
@@ -535,7 +535,7 @@ describe("Presence", () => {
 										},
 									},
 									"note": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 1,
 											"timestamp": 1020,
 											"value": {
@@ -555,12 +555,12 @@ describe("Presence", () => {
 							"data": {
 								"system:presence": {
 									"clientToSessionId": {
-										"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
+										"client2": { "rev": 0, "timestamp": 1000, "value": "attendeeId-2" },
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"note": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 2,
 											"timestamp": 1060,
 											"value": { "message": "final message" },
@@ -614,13 +614,13 @@ describe("Presence", () => {
 									"client2": {
 										"rev": 0,
 										"timestamp": 1000,
-										"value": "sessionId-2",
+										"value": "attendeeId-2",
 									},
 								},
 							},
 							"s:name:testStateWorkspace": {
 								"count": {
-									"sessionId-2": {
+									"attendeeId-2": {
 										"rev": 2,
 										"timestamp": 1050,
 										"value": {
@@ -631,7 +631,7 @@ describe("Presence", () => {
 							},
 							"s:name:testStateWorkspace2": {
 								"note": {
-									"sessionId-2": {
+									"attendeeId-2": {
 										"rev": 2,
 										"timestamp": 1060,
 										"value": {
@@ -686,12 +686,12 @@ describe("Presence", () => {
 							"data": {
 								"system:presence": {
 									"clientToSessionId": {
-										"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
+										"client2": { "rev": 0, "timestamp": 1000, "value": "attendeeId-2" },
 									},
 								},
 								"n:name:testNotificationWorkspace": {
 									"testEvents": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 0,
 											"timestamp": 0,
 											"value": { "name": "newId", "args": [77] },
@@ -710,12 +710,12 @@ describe("Presence", () => {
 							"data": {
 								"system:presence": {
 									"clientToSessionId": {
-										"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
+										"client2": { "rev": 0, "timestamp": 1000, "value": "attendeeId-2" },
 									},
 								},
 								"n:name:testNotificationWorkspace": {
 									"testEvents": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 0,
 											"timestamp": 0,
 											"value": { "name": "newId", "args": [88] },
@@ -775,13 +775,13 @@ describe("Presence", () => {
 										"client2": {
 											"rev": 0,
 											"timestamp": 1000,
-											"value": "sessionId-2",
+											"value": "attendeeId-2",
 										},
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"count": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 3,
 											"timestamp": 1040,
 											"value": {
@@ -792,7 +792,7 @@ describe("Presence", () => {
 								},
 								"n:name:testNotificationWorkspace": {
 									"testEvents": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 0,
 											"timestamp": 0,
 											"value": {
@@ -817,13 +817,13 @@ describe("Presence", () => {
 										"client2": {
 											"rev": 0,
 											"timestamp": 1000,
-											"value": "sessionId-2",
+											"value": "attendeeId-2",
 										},
 									},
 								},
 								"n:name:testNotificationWorkspace": {
 									"testEvents": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 0,
 											"timestamp": 0,
 											"value": {
@@ -867,7 +867,7 @@ describe("Presence", () => {
 				const { count } = stateWorkspace.props;
 				const { testEvents } = notificationsWorkspace.props;
 
-				testEvents.notifications.on("newId", (client, newId) => {
+				testEvents.notifications.on("newId", (attendee, newId) => {
 					// do nothing
 				});
 

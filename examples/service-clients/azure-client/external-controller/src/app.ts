@@ -218,7 +218,7 @@ async function start(): Promise<void> {
 	// Its updates are only logged to the console.
 	states.lastDiceRolls.events.on("itemUpdated", (update) => {
 		console.log(
-			`Client ${update.client.sessionId.slice(0, 8)}'s ${update.key} rolled to ${update.value.value}`,
+			`Client ${update.attendee.attendeeId.slice(0, 8)}'s ${update.key} rolled to ${update.value.value}`,
 		);
 	});
 

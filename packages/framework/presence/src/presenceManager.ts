@@ -15,7 +15,7 @@ import { createChildMonitoringContext } from "@fluidframework/telemetry-utils/in
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type { IEphemeralRuntime } from "./internalTypes.js";
-import type { AttendeeId, Presence, Attendee, AttendeeEvents } from "./presence.js";
+import type { AttendeeId, Presence, Attendee, PresenceEvents } from "./presence.js";
 import type { PresenceDatastoreManager } from "./presenceDatastoreManager.js";
 import { PresenceDatastoreManagerImpl } from "./presenceDatastoreManager.js";
 import type { SystemWorkspace, SystemWorkspaceDatastore } from "./systemWorkspace.js";
@@ -47,7 +47,7 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 	private readonly datastoreManager: PresenceDatastoreManager;
 	private readonly systemWorkspace: SystemWorkspace;
 
-	public readonly events = createEmitter<AttendeeEvents>();
+	public readonly events = createEmitter<PresenceEvents>();
 
 	private readonly mc: MonitoringContext | undefined = undefined;
 
@@ -152,7 +152,7 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 function setupSubComponents(
 	attendeeId: AttendeeId,
 	runtime: IEphemeralRuntime,
-	events: IEmitter<AttendeeEvents>,
+	events: IEmitter<PresenceEvents>,
 	logger: ITelemetryLoggerExt | undefined,
 ): [PresenceDatastoreManager, SystemWorkspace] {
 	const systemWorkspaceDatastore: SystemWorkspaceDatastore = {

@@ -24,10 +24,10 @@ export type {
 } from "./types.js";
 
 export {
+	type Attendee,
 	type AttendeeId,
 	type Presence,
-	type Attendee,
-	type AttendeeEvents,
+	type PresenceEvents,
 	AttendeeStatus,
 } from "./presence.js";
 

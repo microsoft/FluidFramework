@@ -23,7 +23,7 @@ import type {
  * Each client once connected to a session is given a unique identifier for the
  * duration of the session. If a client disconnects and reconnects, it will
  * retain its identifier. Prefer use of {@link Attendee} as a way to
- * identify clients in a session. {@link Attendee.sessionId} will provide
+ * identify clients in a session. {@link Attendee.attendeeId} will provide
  * the session ID.
  *
  * @alpha
@@ -37,12 +37,12 @@ export type AttendeeId = SessionId & { readonly AttendeeId: "AttendeeId" };
  */
 export const AttendeeStatus = {
 	/**
-	 * The session client is connected to the Fluid service.
+	 * The attendee is connected to the Fluid service.
 	 */
 	Connected: "Connected",
 
 	/**
-	 * The session client is not connected to the Fluid service.
+	 * The attendee is not connected to the Fluid service.
 	 */
 	Disconnected: "Disconnected",
 } as const;
@@ -51,7 +51,7 @@ export const AttendeeStatus = {
  * Represents the connection status of an {@link Attendee}.
  *
  * This type can be either `'Connected'` or `'Disconnected'`, indicating whether
- * the session client is currently connected to the Fluid service.
+ * the attendee is currently connected to the Fluid service.
  *
  * When `'Disconnected'`:
  * - State changes are kept locally and communicated to others upon reconnect.
@@ -65,7 +65,7 @@ export type AttendeeStatus = (typeof AttendeeStatus)[keyof typeof AttendeeStatus
  * A client within a Fluid session (period of container connectivity to service).
  *
  * @remarks
- * Note: This is very preliminary session client representation.
+ * Note: This is very preliminary attendee representation.
  *
  * `Attendee` should be used as key to distinguish between different
  * clients as they join, rejoin, and disconnect from a session. While a
@@ -83,7 +83,7 @@ export interface Attendee<SpecificAttendeeId extends AttendeeId = AttendeeId> {
 	/**
 	 * The session ID of the client that is stable over all connections.
 	 */
-	readonly sessionId: SpecificAttendeeId;
+	readonly attendeeId: SpecificAttendeeId;
 
 	/**
 	 * Get current client connection ID.
@@ -98,16 +98,16 @@ export interface Attendee<SpecificAttendeeId extends AttendeeId = AttendeeId> {
 	getConnectionId(): ClientConnectionId;
 
 	/**
-	 * Get connection status of session client.
+	 * Get connection status of attendee.
 	 *
-	 * @returns Connection status of session client.
+	 * @returns Connection status of attendee.
 	 *
 	 */
 	getConnectionStatus(): AttendeeStatus;
 }
 
 /**
- * Utility type limiting to a specific session client. (A session client with
+ * Utility type limiting to a specific attendee. (A attendee with
  * a specific session ID - not just any session ID.)
  *
  * @internal
@@ -119,7 +119,7 @@ export type SpecificAttendee<SpecificAttendeeId extends AttendeeId> =
  * @sealed
  * @alpha
  */
-export interface AttendeeEvents {
+export interface PresenceEvents {
 	/**
 	 * Raised when new client joins session.
 	 *
@@ -162,7 +162,7 @@ export interface Presence {
 	/**
 	 * Events for Presence.
 	 */
-	readonly events: Listenable<AttendeeEvents>;
+	readonly events: Listenable<PresenceEvents>;
 
 	/**
 	 * Get all attendees in the session.
@@ -181,9 +181,9 @@ export interface Presence {
 	getAttendee(clientId: ClientConnectionId | AttendeeId): Attendee;
 
 	/**
-	 * Get this client's session client.
+	 * Get this client's attendee.
 	 *
-	 * @returns This client's session client.
+	 * @returns This client's attendee.
 	 */
 	getMyself(): Attendee;
 

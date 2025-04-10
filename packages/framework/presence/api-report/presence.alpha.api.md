@@ -6,18 +6,9 @@
 
 // @alpha @sealed
 export interface Attendee<SpecificAttendeeId extends AttendeeId = AttendeeId> {
+    readonly attendeeId: SpecificAttendeeId;
     getConnectionId(): ClientConnectionId;
     getConnectionStatus(): AttendeeStatus;
-    readonly sessionId: SpecificAttendeeId;
-}
-
-// @alpha @sealed (undocumented)
-export interface AttendeeEvents {
-    // @eventProperty
-    attendeeDisconnected: (attendee: Attendee) => void;
-    // @eventProperty
-    attendeeJoined: (attendee: Attendee) => void;
-    workspaceActivated: (workspaceAddress: StatesWorkspaceAddress, type: "States" | "Notifications" | "Unknown") => void;
 }
 
 // @alpha
@@ -147,7 +138,7 @@ export function LatestMap<T extends object, Keys extends string | number = strin
 // @alpha @sealed
 export interface LatestMapItemRemovedClientData<K extends string | number> {
     // (undocumented)
-    client: Attendee;
+    attendee: Attendee;
     // (undocumented)
     key: K;
     // (undocumented)
@@ -162,7 +153,7 @@ export interface LatestMapItemValueClientData<T, K extends string | number> exte
 
 // @alpha @sealed
 export interface LatestMapValueClientData<T, Keys extends string | number, SpecificAttendeeId extends AttendeeId = AttendeeId> {
-    client: Attendee<SpecificAttendeeId>;
+    attendee: Attendee<SpecificAttendeeId>;
     // (undocumented)
     items: ReadonlyMap<Keys, LatestValueData<T>>;
 }
@@ -170,7 +161,7 @@ export interface LatestMapValueClientData<T, Keys extends string | number, Speci
 // @alpha @sealed
 export interface LatestMapValueManager<T, Keys extends string | number = string | number> {
     clients(): Attendee[];
-    clientValue(client: Attendee): ReadonlyMap<Keys, LatestValueData<T>>;
+    clientValue(attendee: Attendee): ReadonlyMap<Keys, LatestValueData<T>>;
     clientValues(): IterableIterator<LatestMapValueClientData<T, Keys>>;
     readonly controls: BroadcastControls;
     readonly events: Listenable<LatestMapValueManagerEvents<T, Keys>>;
@@ -199,7 +190,7 @@ export interface LatestMapValueManagerEvents<T, K extends string | number> {
 // @alpha @sealed
 export interface LatestValueClientData<T> extends LatestValueData<T> {
     // (undocumented)
-    client: Attendee;
+    attendee: Attendee;
 }
 
 // @alpha @sealed
@@ -213,7 +204,7 @@ export interface LatestValueData<T> {
 // @alpha @sealed
 export interface LatestValueManager<T> {
     clients(): Attendee[];
-    clientValue(client: Attendee): LatestValueData<T>;
+    clientValue(attendee: Attendee): LatestValueData<T>;
     clientValues(): IterableIterator<LatestValueClientData<T>>;
     readonly controls: BroadcastControls;
     readonly events: Listenable<LatestValueManagerEvents<T>>;
@@ -240,7 +231,7 @@ export interface LatestValueMetadata {
 // @alpha @sealed
 export interface NotificationEmitter<E extends InternalUtilityTypes.NotificationListeners<E>> {
     broadcast<K extends string & keyof InternalUtilityTypes.NotificationListeners<E>>(notificationName: K, ...args: Parameters<E[K]>): void;
-    unicast<K extends string & keyof InternalUtilityTypes.NotificationListeners<E>>(notificationName: K, targetClient: Attendee, ...args: Parameters<E[K]>): void;
+    unicast<K extends string & keyof InternalUtilityTypes.NotificationListeners<E>>(notificationName: K, targetAttendee: Attendee, ...args: Parameters<E[K]>): void;
 }
 
 // @alpha @sealed
@@ -284,12 +275,21 @@ export interface NotificationsWorkspaceSchema {
 
 // @alpha @sealed
 export interface Presence {
-    readonly events: Listenable<AttendeeEvents>;
+    readonly events: Listenable<PresenceEvents>;
     getAttendee(clientId: ClientConnectionId | AttendeeId): Attendee;
     getAttendees(): ReadonlySet<Attendee>;
     getMyself(): Attendee;
     getNotifications<NotificationsSchema extends NotificationsWorkspaceSchema>(notificationsId: StatesWorkspaceAddress, requestedContent: NotificationsSchema): NotificationsWorkspace<NotificationsSchema>;
     getStates<StatesSchema extends StatesWorkspaceSchema>(workspaceAddress: StatesWorkspaceAddress, requestedContent: StatesSchema, controls?: BroadcastControlSettings): StatesWorkspace<StatesSchema>;
+}
+
+// @alpha @sealed (undocumented)
+export interface PresenceEvents {
+    // @eventProperty
+    attendeeDisconnected: (attendee: Attendee) => void;
+    // @eventProperty
+    attendeeJoined: (attendee: Attendee) => void;
+    workspaceActivated: (workspaceAddress: StatesWorkspaceAddress, type: "States" | "Notifications" | "Unknown") => void;
 }
 
 // @alpha @sealed

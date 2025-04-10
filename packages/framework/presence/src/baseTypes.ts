@@ -11,7 +11,7 @@
  * connection. If a client disconnects and reconnects, it will be given a new
  * identifier. Prefer use of {@link Attendee} as a way to identify clients
  * in a session. {@link Attendee.getConnectionId} will provide the current
- * connection identifier for a logical session client.
+ * connection identifier for a logical attendee.
  *
  * @privateRemarks
  * This represents what is commonly `clientId` in Fluid code. Ideally this is

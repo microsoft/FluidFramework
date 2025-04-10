@@ -86,7 +86,7 @@ async function start() {
 	// Setting "fluid*" and these helpers are just for our test automation
 	const buildAttendeeMap = () => {
 		return [...presence.getAttendees()].reduce((map, a) => {
-			map[a.sessionId] = a.getConnectionStatus();
+			map[a.attendeeId] = a.getConnectionStatus();
 			return map;
 		}, {});
 	};
@@ -109,18 +109,18 @@ async function start() {
 	window["fluidSessionAttendees"] = buildAttendeeMap();
 	window["fluidSessionAttendeeCount"] = presence.getAttendees().size;
 	presence.events.on("attendeeJoined", (attendee) => {
-		console.log(`Attendee joined: ${attendee.sessionId}`);
+		console.log(`Attendee joined: ${attendee.attendeeId}`);
 		window["fluidSessionAttendees"] = buildAttendeeMap();
 		window["fluidSessionAttendeeCount"] = presence.getAttendees().size;
 		window["fluidAttendeeJoinedCalled"] = true;
 	});
 	presence.events.on("attendeeDisconnected", (attendee) => {
-		console.log(`Attendee left: ${attendee.sessionId}`);
+		console.log(`Attendee left: ${attendee.attendeeId}`);
 		window["fluidSessionAttendees"] = buildAttendeeMap();
 		window["fluidSessionAttendeeCount"] = presence.getAttendees().size;
 		window["fluidAttendeeDisconnectedCalled"] = true;
 	});
-	window["fluidSessionId"] = presence.getMyself().sessionId;
+	window["fluidSessionId"] = presence.getMyself().attendeeId;
 	// Always set last as it is used as fence for load completion
 	window["fluidContainerId"] = id;
 	/* eslint-enable @typescript-eslint/dot-notation */

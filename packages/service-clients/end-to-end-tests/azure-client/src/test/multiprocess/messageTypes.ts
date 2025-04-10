@@ -26,23 +26,23 @@ export type MessageFromChild =
 	| ErrorEvent;
 interface AttendeeDisconnectedEvent {
 	event: "attendeeDisconnected";
-	sessionId: AttendeeId;
+	attendeeId: AttendeeId;
 }
 
 interface AttendeeJoinedEvent {
 	event: "attendeeJoined";
-	sessionId: AttendeeId;
+	attendeeId: AttendeeId;
 }
 
 interface ReadyEvent {
 	event: "ready";
 	containerId: string;
-	sessionId: AttendeeId;
+	attendeeId: AttendeeId;
 }
 
 interface DisconnectedSelfEvent {
 	event: "disconnectedSelf";
-	sessionId: AttendeeId;
+	attendeeId: AttendeeId;
 }
 interface ErrorEvent {
 	event: "error";
