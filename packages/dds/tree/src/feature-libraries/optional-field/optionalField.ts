@@ -181,7 +181,16 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			}
 		} else {
 			if (isReplaceEffectful(change2.valueReplace)) {
-				composedReplace = change2.valueReplace;
+				composedReplace = {
+					...change2.valueReplace,
+					// If change1 is not effectful but it has an intention to clear the (currently empty) field,
+					// then we need to preserve that intention.
+					dst: change1.valueReplace?.dst ?? change2.valueReplace.dst,
+				};
+			} else {
+				// Just because neither of the changes are effectful does not mean they have no change intentions.
+				// If one of them has an intention to clear the (currently empty) field then we need to preserve that.
+				composedReplace = change1.valueReplace ?? change2.valueReplace;
 			}
 		}
 

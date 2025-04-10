@@ -2943,7 +2943,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	}
 }
 
-function buildModularChangesetFromField(props: {
+export function buildModularChangesetFromField(props: {
 	path: FieldUpPath;
 	fieldChange: FieldChange;
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>;

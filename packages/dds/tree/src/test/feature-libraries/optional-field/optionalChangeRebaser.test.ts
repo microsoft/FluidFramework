@@ -1,450 +1,487 @@
-// XXX
-// /*!
-//  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
-//  * Licensed under the MIT License.
-//  */
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
-// import { strict as assert } from "node:assert";
+import { strict as assert } from "node:assert";
 
-// import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
-// import {
-// 	type ChangeAtomId,
-// 	type ChangeAtomIdMap,
-// 	type ChangesetLocalId,
-// 	type DeltaFieldChanges,
-// 	type RevisionMetadataSource,
-// 	type RevisionTag,
-// 	type TaggedChange,
-// 	type TreeNodeSchemaIdentifier,
-// 	makeAnonChange,
-// 	tagChange,
-// 	tagRollbackInverse,
-// } from "../../../core/index.js";
-// import {
-// 	type NodeChangeComposer,
-// 	type NodeChangeRebaser,
-// 	type NodeId,
-// 	type RebaseRevisionMetadata,
-// 	type ToDelta,
-// 	rebaseRevisionMetadataFromInfo,
-// 	// eslint-disable-next-line import/no-internal-modules
-// } from "../../../feature-libraries/modular-schema/index.js";
-// import {
-// 	type OptionalChangeset,
-// 	optionalChangeRebaser,
-// 	optionalFieldEditor,
-// 	optionalFieldIntoDelta,
-// 	// eslint-disable-next-line import/no-internal-modules
-// } from "../../../feature-libraries/optional-field/index.js";
-// import {
-// 	brand,
-// 	forEachInNestedMap,
-// 	idAllocatorFromMaxId,
-// 	setInNestedMap,
-// } from "../../../util/index.js";
-// import {
-// 	type ChildStateGenerator,
-// 	type FieldStateTree,
-// 	generatePossibleSequenceOfEdits,
-// 	getSequentialEdits,
-// 	getSequentialStates,
-// } from "../../exhaustiveRebaserUtils.js";
-// import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js";
-// // TODO: Throughout this file, we use TestChange as the child change type.
-// // This is the same approach used in sequenceChangeRebaser.spec.ts, but it requires casting in this file
-// // since OptionalChangeset is not generic over the child changeset type.
-// // Search this file for "as any" and "as NodeChangeset"
-// import { TestChange } from "../../testChange.js";
-// import {
-// 	defaultRevInfosFromChanges,
-// 	defaultRevisionMetadataFromChanges,
-// 	isDeltaVisible,
-// } from "../../utils.js";
-// import { TestNodeId } from "../../testNodeId.js";
-// import { Change, assertTaggedEqual, verifyContextChain } from "./optionalFieldUtils.js";
-// import { ChangesetWrapper } from "../../changesetWrapper.js";
-// import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
-// import {
-// 	failComposeManager,
-// 	failInvertManager,
-// 	failRebaseManager,
-// 	// eslint-disable-next-line import/no-internal-modules
-// } from "../modular-schema/nodeQueryUtils.js";
+import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
+import {
+	type ChangeAtomId,
+	type ChangesetLocalId,
+	type DeltaFieldChanges,
+	type RevisionMetadataSource,
+	type RevisionTag,
+	type TaggedChange,
+	makeAnonChange,
+	rootFieldKey,
+	tagChange,
+} from "../../../core/index.js";
+import {
+	type FieldKindConfiguration,
+	type ModularChangeset,
+	type NodeChangeComposer,
+	type NodeChangeRebaser,
+	type NodeId,
+	type RebaseRevisionMetadata,
+	type ToDelta,
+	makeModularChangeCodecFamily,
+	rebaseRevisionMetadataFromInfo,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/modular-schema/index.js";
+import {
+	type OptionalChangeset,
+	optionalChangeRebaser,
+	optionalFieldEditor,
+	optionalFieldIntoDelta,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/optional-field/index.js";
+import { brand, fail, idAllocatorFromMaxId } from "../../../util/index.js";
+import {
+	type ChildStateGenerator,
+	type FieldStateTree,
+	getSequentialEdits,
+	getSequentialStates,
+} from "../../exhaustiveRebaserUtils.js";
+import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js";
+// TODO: Throughout this file, we use TestChange as the child change type.
+// This is the same approach used in sequenceChangeRebaser.spec.ts, but it requires casting in this file
+// since OptionalChangeset is not generic over the child changeset type.
+// Search this file for "as any" and "as NodeChangeset"
+import {
+	chunkFromJsonTrees,
+	defaultRevInfosFromChanges,
+	defaultRevisionMetadataFromChanges,
+	testRevisionTagCodec,
+} from "../../utils.js";
+import { TestNodeId } from "../../testNodeId.js";
+import { verifyContextChain } from "./optionalFieldUtils.js";
+import { ChangesetWrapper } from "../../changesetWrapper.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+import {
+	failComposeManager,
+	failInvertManager,
+	failRebaseManager,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../modular-schema/nodeQueryUtils.js";
+import {
+	intoDelta,
+	makeFieldBatchCodec,
+	type DefaultChangeset,
+} from "../../../feature-libraries/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import {
+	ModularChangeFamily,
+	type FieldEditDescription,
+} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+import {
+	fieldKindConfigurations,
+	fieldKinds,
+	optional,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/default-schema/defaultFieldKinds.js";
+import { ajvValidator } from "../../codec/index.js";
+import type { ICodecOptions } from "../../../index.js";
+import {
+	assertEqual,
+	empty,
+	isModularEmpty,
+	normalizeDelta,
+	removeAliases,
+} from "../modular-schema/modularChangesetUtil.js";
 
-// type RevisionTagMinter = () => RevisionTag;
+type RevisionTagMinter = () => RevisionTag;
 
-// function makeRevisionTagMinter(prefix = "rev"): RevisionTagMinter {
-// 	// Rather than use UUIDs, allocate these sequentially for an easier time debugging tests.
-// 	let currentRevision = 0;
-// 	return () => `${prefix}${currentRevision++}` as unknown as RevisionTag;
-// }
+function makeRevisionTagMinter(prefix = "rev"): RevisionTagMinter {
+	// Rather than use UUIDs, allocate these sequentially for an easier time debugging tests.
+	let currentRevision = 0;
+	return () => `${prefix}${currentRevision++}` as unknown as RevisionTag;
+}
 
-// const type: TreeNodeSchemaIdentifier = brand("Node");
-// const mintRevisionTag = makeRevisionTagMinter();
-// const tag1 = mintRevisionTag();
+const mintRevisionTag = makeRevisionTagMinter();
+const tag1 = mintRevisionTag();
 
-// const OptionalChange = {
-// 	set(
-// 		value: string,
-// 		wasEmpty: boolean,
-// 		ids: {
-// 			fill: ChangeAtomId;
-// 			detach: ChangeAtomId;
-// 		},
-// 	) {
-// 		return optionalFieldEditor.set(wasEmpty, ids);
-// 	},
+const OptionalChange = {
+	set(
+		wasEmpty: boolean,
+		ids: {
+			fill: ChangeAtomId;
+			detach: ChangeAtomId;
+		},
+	) {
+		return optionalFieldEditor.set(wasEmpty, ids);
+	},
 
-// 	clear(wasEmpty: boolean, detachId: ChangeAtomId) {
-// 		return optionalFieldEditor.clear(wasEmpty, detachId);
-// 	},
+	clear(wasEmpty: boolean, detachId: ChangeAtomId) {
+		return optionalFieldEditor.clear(wasEmpty, detachId);
+	},
 
-// 	buildChildChange(childChange: NodeId) {
-// 		return optionalFieldEditor.buildChildChanges([[0, childChange]]);
-// 	},
-// };
+	buildChildChange(childChange: NodeId) {
+		return optionalFieldEditor.buildChildChanges([[0, childChange]]);
+	},
+};
 
-// function toDelta(
-// 	change: OptionalChangeset,
-// 	deltaFromChild: ToDelta = TestNodeId.deltaFromChild,
-// ): DeltaFieldChanges {
-// 	return optionalFieldIntoDelta(change, deltaFromChild);
-// }
+function toDelta(
+	change: OptionalChangeset,
+	deltaFromChild: ToDelta = TestNodeId.deltaFromChild,
+): DeltaFieldChanges {
+	return optionalFieldIntoDelta(change, deltaFromChild);
+}
 
-// function toDeltaWrapped(change: TaggedChange<WrappedChangeset>) {
-// 	return ChangesetWrapper.toDelta(change.change, (c, deltaFromChild) =>
-// 		toDelta(c, deltaFromChild),
-// 	);
-// }
+function toDeltaWrapped(change: TaggedChange<WrappedChangeset>) {
+	return ChangesetWrapper.toDelta(change.change, (c, deltaFromChild) =>
+		toDelta(c, deltaFromChild),
+	);
+}
 
-// function getMaxId(...changes: OptionalChangeset[]): ChangesetLocalId | undefined {
-// 	let max: ChangesetLocalId | undefined;
-// 	const ingest = (candidate: ChangesetLocalId | undefined) => {
-// 		if (max === undefined || (candidate !== undefined && candidate > max)) {
-// 			max = candidate;
-// 		}
-// 	};
+function getMaxId(...changes: OptionalChangeset[]): ChangesetLocalId | undefined {
+	let max: ChangesetLocalId | undefined;
+	const ingest = (candidate: ChangesetLocalId | undefined) => {
+		if (max === undefined || (candidate !== undefined && candidate > max)) {
+			max = candidate;
+		}
+	};
 
-// 	for (const change of changes) {
-// 		for (const [src, dst] of change.moves) {
-// 			ingest(src.localId);
-// 			ingest(dst.localId);
-// 		}
+	for (const change of changes) {
+		if (change.childChange !== undefined) {
+			// Child changes do not need to be ingested for this test file, as TestChange (which is used as a child)
+			// doesn't have any `ChangesetLocalId`s.
+			ingest(change.childChange.localId);
+		}
 
-// 		for (const [id] of change.childChanges) {
-// 			if (id !== "self") {
-// 				// Child changes do not need to be ingested for this test file, as TestChange (which is used as a child)
-// 				// doesn't have any `ChangesetLocalId`s.
-// 				ingest(id.localId);
-// 			}
-// 		}
+		if (change.valueReplace !== undefined) {
+			ingest(change.valueReplace.dst.localId);
+			if (change.valueReplace.src !== undefined && change.valueReplace.src !== "self") {
+				ingest(change.valueReplace.src.localId);
+			}
+		}
+	}
 
-// 		if (change.valueReplace !== undefined) {
-// 			ingest(change.valueReplace.dst.localId);
-// 			if (change.valueReplace.src !== undefined && change.valueReplace.src !== "self") {
-// 				ingest(change.valueReplace.src.localId);
-// 			}
-// 		}
-// 	}
+	return max;
+}
 
-// 	return max;
-// }
+function invert(
+	change: TaggedChange<OptionalChangeset>,
+	revision: RevisionTag | undefined,
+	isRollback: boolean,
+): OptionalChangeset {
+	const inverted = optionalChangeRebaser.invert(
+		change.change,
+		isRollback,
+		idAllocatorFromMaxId(),
 
-// function invert(
-// 	change: TaggedChange<OptionalChangeset>,
-// 	revision: RevisionTag | undefined,
-// 	isRollback: boolean,
-// ): OptionalChangeset {
-// 	const inverted = optionalChangeRebaser.invert(
-// 		change.change,
-// 		isRollback,
-// 		idAllocatorFromMaxId(),
+		revision,
+		failInvertManager,
+		defaultRevisionMetadataFromChanges([change]),
+	);
+	verifyContextChain(change, makeAnonChange(inverted));
+	return inverted;
+}
 
-// 		revision,
-// 		failInvertManager,
-// 		defaultRevisionMetadataFromChanges([change]),
-// 	);
-// 	verifyContextChain(change, makeAnonChange(inverted));
-// 	return inverted;
-// }
+function invertModular(
+	change: TaggedChange<ModularChangeset>,
+	revision: RevisionTag,
+	isRollback: boolean,
+): ModularChangeset {
+	return family.invert(change, isRollback, revision);
+}
 
-// function invertWrapped(
-// 	change: TaggedChange<WrappedChangeset>,
-// 	revision: RevisionTag,
-// 	isRollback: boolean,
-// ): WrappedChangeset {
-// 	return ChangesetWrapper.invert(change, invert, revision, isRollback);
-// }
+function rebase(
+	change: OptionalChangeset,
+	base: TaggedChange<OptionalChangeset>,
+	metadataArg?: RebaseRevisionMetadata,
+	rebaseChild: NodeChangeRebaser = (id, baseId) => id,
+): OptionalChangeset {
+	deepFreeze(change);
+	deepFreeze(base);
 
-// function rebase(
-// 	change: OptionalChangeset,
-// 	base: TaggedChange<OptionalChangeset>,
-// 	metadataArg?: RebaseRevisionMetadata,
-// 	rebaseChild: NodeChangeRebaser = (id, baseId) => id,
-// ): OptionalChangeset {
-// 	deepFreeze(change);
-// 	deepFreeze(base);
+	const metadata =
+		metadataArg ??
+		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([base]), undefined, [
+			base.revision,
+		]);
+	const moveEffects = failRebaseManager;
+	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
+	const rebased = optionalChangeRebaser.rebase(
+		change,
+		base.change,
+		rebaseChild,
+		idAllocator,
+		moveEffects,
+		metadata,
+	);
+	verifyContextChain(base, makeAnonChange(rebased));
+	return rebased;
+}
 
-// 	const metadata =
-// 		metadataArg ??
-// 		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([base]), undefined, [
-// 			base.revision,
-// 		]);
-// 	const moveEffects = failRebaseManager;
-// 	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
-// 	const rebased = optionalChangeRebaser.rebase(
-// 		change,
-// 		base.change,
-// 		rebaseChild,
-// 		idAllocator,
-// 		moveEffects,
-// 		metadata,
-// 	);
-// 	verifyContextChain(base, makeAnonChange(rebased));
-// 	return rebased;
-// }
+function rebaseModular(
+	change: TaggedChange<ModularChangeset>,
+	base: TaggedChange<ModularChangeset>,
+	metadataArg?: RebaseRevisionMetadata,
+): ModularChangeset {
+	const metadata =
+		metadataArg ??
+		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([base]), undefined, [
+			base.revision,
+		]);
+	return family.rebase(change, base, metadata);
+}
 
-// function rebaseWrapped(
-// 	change: TaggedChange<WrappedChangeset>,
-// 	base: TaggedChange<WrappedChangeset>,
-// 	metadataArg?: RebaseRevisionMetadata,
-// ): WrappedChangeset {
-// 	return ChangesetWrapper.rebase(change, base, (c, b, rebaseChild) =>
-// 		rebase(c.change, b, metadataArg, rebaseChild),
-// 	);
-// }
+function rebaseComposedModular(
+	metadata: RebaseRevisionMetadata,
+	change: TaggedChange<ModularChangeset>,
+	...baseChanges: TaggedChange<ModularChangeset>[]
+): ModularChangeset {
+	const composed =
+		baseChanges.length === 0
+			? makeAnonChange(empty())
+			: baseChanges.reduce((change1, change2) =>
+					makeAnonChange(composeModular(change1, change2)),
+				);
 
-// function rebaseWrappedTagged(
-// 	change: TaggedChange<WrappedChangeset>,
-// 	base: TaggedChange<WrappedChangeset>,
-// ): TaggedChange<WrappedChangeset> {
-// 	return tagChange(rebaseWrapped(change, base), change.revision);
-// }
+	return rebaseModular(change, composed, metadata);
+}
 
-// function rebaseComposedWrapped(
-// 	metadata: RebaseRevisionMetadata,
-// 	change: TaggedChange<WrappedChangeset>,
-// 	...baseChanges: TaggedChange<WrappedChangeset>[]
-// ): WrappedChangeset {
-// 	const composed =
-// 		baseChanges.length === 0
-// 			? makeAnonChange(ChangesetWrapper.create(Change.empty()))
-// 			: baseChanges.reduce((change1, change2) =>
-// 					makeAnonChange(composeWrapped(change1, change2)),
-// 				);
+function compose(
+	change1: TaggedChange<OptionalChangeset>,
+	change2: TaggedChange<OptionalChangeset>,
+	metadata?: RevisionMetadataSource,
+	composeChild: NodeChangeComposer = TestNodeId.composeChild,
+): OptionalChangeset {
+	verifyContextChain(change1, change2);
+	const moveEffects = failComposeManager;
+	const idAllocator = idAllocatorFromMaxId(getMaxId(change1.change, change2.change));
+	return optionalChangeRebaser.compose(
+		change1.change,
+		change2.change,
+		composeChild,
+		idAllocator,
+		moveEffects,
+		metadata ?? defaultRevisionMetadataFromChanges([change1, change2]),
+	);
+}
 
-// 	return rebaseWrapped(change, composed, metadata);
-// }
-
-// function compose(
-// 	change1: TaggedChange<OptionalChangeset>,
-// 	change2: TaggedChange<OptionalChangeset>,
-// 	metadata?: RevisionMetadataSource,
-// 	composeChild: NodeChangeComposer = TestNodeId.composeChild,
-// ): OptionalChangeset {
-// 	verifyContextChain(change1, change2);
-// 	const moveEffects = failComposeManager;
-// 	const idAllocator = idAllocatorFromMaxId(getMaxId(change1.change, change2.change));
-// 	return optionalChangeRebaser.compose(
-// 		change1.change,
-// 		change2.change,
-// 		composeChild,
-// 		idAllocator,
-// 		moveEffects,
-// 		metadata ?? defaultRevisionMetadataFromChanges([change1, change2]),
-// 	);
-// }
-
-// function composeWrapped(
-// 	change1: TaggedChange<WrappedChangeset>,
-// 	change2: TaggedChange<WrappedChangeset>,
-// 	metadata?: RevisionMetadataSource,
-// ): WrappedChangeset {
-// 	return ChangesetWrapper.compose(change1, change2, (c1, c2, composeChild) =>
-// 		compose(c1, c2, metadata, composeChild),
-// 	);
-// }
+function composeModular(
+	change1: TaggedChange<ModularChangeset>,
+	change2: TaggedChange<ModularChangeset>,
+	metadata?: RevisionMetadataSource,
+): ModularChangeset {
+	return family.compose([change1, change2]);
+}
 
 // function isWrappedChangeEmpty(change: WrappedChangeset): boolean {
 // 	const delta = toDeltaWrapped(makeAnonChange(change));
 // 	return delta === undefined || !isDeltaVisible(delta);
 // }
 
-// function assertWrappedChangesetsEquivalent(
-// 	change1: TaggedChange<WrappedChangeset>,
-// 	change2: TaggedChange<WrappedChangeset>,
-// ) {
-// 	assert.deepEqual(toDeltaWrapped(change1), toDeltaWrapped(change2));
-// }
+type OptionalFieldTestState = FieldStateTree<string | undefined, DefaultChangeset>;
 
-// type OptionalFieldTestState = FieldStateTree<string | undefined, WrappedChangeset>;
+function computeChildChangeInputContext(inputState: OptionalFieldTestState): number[] {
+	// This is effectively a filter of the intentions from all edits such that it only includes
+	// intentions for edits which modify the same child as the final one in the changeset.
+	// Note: this takes a dependency on the fact that `generateChildStates` doesn't set matching string
+	// content for what are meant to represent different nodes.
+	const states = getSequentialStates(inputState);
+	const finalContent = states.at(-1)?.content;
+	assert(
+		finalContent !== undefined,
+		"Child change input context should only be computed when the optional field has content.",
+	);
+	const intentions: number[] = [];
+	let currentContent: string | undefined;
+	for (const state of states) {
+		if (state.mostRecentEdit !== undefined && currentContent === finalContent) {
+			const fieldChange = state.mostRecentEdit.changeset.change.fieldChanges.get(rootFieldKey);
+			if (fieldChange === undefined) {
+				continue;
+			}
+			const optionalFieldChange = fieldChange.change as OptionalChangeset;
+			if (optionalFieldChange.childChange !== undefined) {
+				intentions.push(state.mostRecentEdit.intention);
+			}
+		}
 
-// function computeChildChangeInputContext(inputState: OptionalFieldTestState): number[] {
-// 	// This is effectively a filter of the intentions from all edits such that it only includes
-// 	// intentions for edits which modify the same child as the final one in the changeset.
-// 	// Note: this takes a dependency on the fact that `generateChildStates` doesn't set matching string
-// 	// content for what are meant to represent different nodes.
-// 	const states = getSequentialStates(inputState);
-// 	const finalContent = states.at(-1)?.content;
-// 	assert(
-// 		finalContent !== undefined,
-// 		"Child change input context should only be computed when the optional field has content.",
-// 	);
-// 	const intentions: number[] = [];
-// 	let currentContent: string | undefined;
-// 	for (const state of states) {
-// 		if (
-// 			state.mostRecentEdit !== undefined &&
-// 			currentContent === finalContent &&
-// 			state.mostRecentEdit.changeset.change.fieldChange.childChanges.length > 0
-// 		) {
-// 			intentions.push(state.mostRecentEdit.intention);
-// 		}
+		currentContent = state.content;
+	}
 
-// 		currentContent = state.content;
-// 	}
+	return intentions;
+}
 
-// 	return intentions;
-// }
+type WrappedChangeset = ChangesetWrapper<OptionalChangeset>;
 
-// type WrappedChangeset = ChangesetWrapper<OptionalChangeset>;
+const codecOptions: ICodecOptions = {
+	jsonValidator: ajvValidator,
+};
 
-// /**
-//  * See {@link ChildStateGenerator}
-//  */
-// const generateChildStates: ChildStateGenerator<string | undefined, WrappedChangeset> =
-// 	function* (
-// 		state: OptionalFieldTestState,
-// 		tagFromIntention: (intention: number) => RevisionTag,
-// 		mintIntention: () => number,
-// 	): Iterable<OptionalFieldTestState> {
-// 		const mintId: () => ChangeAtomId = () => {
-// 			return {
-// 				localId: mintIntention() as ChangesetLocalId,
-// 			};
-// 		};
-// 		const edits = getSequentialEdits(state);
-// 		if (state.content !== undefined) {
-// 			const changeChildIntention = mintIntention();
-// 			const nodeId: NodeId = { localId: brand(0) };
-// 			yield {
-// 				content: state.content,
-// 				mostRecentEdit: {
-// 					changeset: tagWrappedChangeInline(
-// 						ChangesetWrapper.create(OptionalChange.buildChildChange(nodeId), [
-// 							nodeId,
-// 							TestChange.mint(computeChildChangeInputContext(state), changeChildIntention),
-// 						]),
-// 						tagFromIntention(changeChildIntention),
-// 					),
-// 					intention: changeChildIntention,
-// 					description: `ChildChange${changeChildIntention}`,
-// 				},
-// 				parent: state,
-// 			};
+const fieldKindConfiguration: FieldKindConfiguration =
+	fieldKindConfigurations.get(4) ?? fail("Field kind configuration not found");
+assert(
+	fieldKindConfigurations.get(5) === undefined,
+	"There's a newer configuration. It probably should be used.",
+);
 
-// 			const setUndefinedIntention = mintIntention();
-// 			yield {
-// 				content: undefined,
-// 				mostRecentEdit: {
-// 					changeset: tagWrappedChangeInline(
-// 						ChangesetWrapper.create(OptionalChange.clear(false, mintId())),
-// 						tagFromIntention(setUndefinedIntention),
-// 					),
-// 					intention: setUndefinedIntention,
-// 					description: "Remove",
-// 				},
-// 				parent: state,
-// 			};
-// 		} else {
-// 			// Even if there is no content, optional field supports an explicit clear operation with LWW semantics,
-// 			// as a concurrent set operation may populate the field.
-// 			const setUndefinedIntention = mintIntention();
-// 			yield {
-// 				content: undefined,
-// 				mostRecentEdit: {
-// 					changeset: tagWrappedChangeInline(
-// 						ChangesetWrapper.create(OptionalChange.clear(true, mintId())),
-// 						tagFromIntention(setUndefinedIntention),
-// 					),
-// 					intention: setUndefinedIntention,
-// 					description: "Remove",
-// 				},
-// 				parent: state,
-// 			};
-// 		}
+const codec = makeModularChangeCodecFamily(
+	new Map([[1, fieldKindConfiguration]]),
+	testRevisionTagCodec,
+	makeFieldBatchCodec(codecOptions, 1),
+	codecOptions,
+);
+const family = new ModularChangeFamily(fieldKinds, codec);
+const editor = family.buildEditor(() => undefined);
 
-// 		for (const value of ["A", "B"]) {
-// 			const setIntention = mintIntention();
-// 			const [fill, detach] = [mintId(), mintId()];
-// 			// Using length of the input context guarantees set operations generated at different times also have different
-// 			// values, which should tend to be easier to debug.
-// 			// This also makes the logic to determine intentions simpler.
-// 			const newContents = `${value},${edits.length}`;
-// 			yield {
-// 				content: newContents,
-// 				mostRecentEdit: {
-// 					changeset: tagWrappedChangeInline(
-// 						ChangesetWrapper.create(
-// 							OptionalChange.set(newContents, state.content === undefined, {
-// 								fill,
-// 								detach,
-// 							}),
-// 						),
-// 						tagFromIntention(setIntention),
-// 					),
-// 					intention: setIntention,
-// 					description: `Set${newContents}`,
-// 				},
-// 				parent: state,
-// 			};
-// 		}
+/**
+ * See {@link ChildStateGenerator}
+ */
+const generateChildStates: ChildStateGenerator<string | undefined, DefaultChangeset> =
+	function* (
+		state: OptionalFieldTestState,
+		tagFromIntention: (intention: number) => RevisionTag,
+		mintIntention: () => number,
+	): Iterable<OptionalFieldTestState> {
+		const mintId: () => ChangeAtomId = () => {
+			return {
+				localId: mintIntention() as ChangesetLocalId,
+			};
+		};
+		const edits = getSequentialEdits(state);
+		if (state.content !== undefined) {
+			// Nested Change
+			{
+				const intention = mintIntention();
+				const revision = tagFromIntention(intention);
+				const fieldEdit: FieldEditDescription = {
+					type: "field",
+					field: { parent: undefined, field: rootFieldKey },
+					fieldKind: optional.identifier,
+					// This no-op change is used to force ModularChangeFamily to generate a shallow optional changeset with a child change.
+					// Otherwise, it would generate a generic changeset.
+					change: brand(optional.changeHandler.createEmpty()),
+					revision: revision,
+				};
+				const nestedFieldEdit: FieldEditDescription = {
+					type: "field",
+					field: {
+						parent: { parent: undefined, parentField: rootFieldKey, parentIndex: 0 },
+						field: brand("foo"),
+					},
+					fieldKind: optional.identifier,
+					change: brand(OptionalChange.clear(true, mintId())),
+					revision: revision,
+				};
+				const modularEdit = editor.buildChanges([fieldEdit, nestedFieldEdit]);
+				yield {
+					content: state.content,
+					mostRecentEdit: {
+						changeset: tagChange(modularEdit, revision),
+						intention,
+						description: `ChildChange${intention}`,
+					},
+					parent: state,
+				};
+			}
 
-// 		if (state.mostRecentEdit !== undefined) {
-// 			const undoIntention = mintIntention();
-// 			// We don't use the `invert` helper here, as `TestChange.invert` has logic to negate the intention
-// 			// of the most recent edit. Instead, we want to mint a new intention. Having correct composition for
-// 			// the 'negate' operation is already tested via sandwich rebasing.
-// 			const invertTestChangeViaNewIntention = (change: TestChange): TestChange => {
-// 				if ("inputContext" in change) {
-// 					return {
-// 						inputContext: change.outputContext,
-// 						outputContext: [...change.outputContext, undoIntention],
-// 						intentions: [undoIntention],
-// 					};
-// 				}
-// 				return TestChange.emptyChange;
-// 			};
+			// Clear Populated Field
+			{
+				const intention = mintIntention();
+				const revision = tagFromIntention(intention);
+				const detach = mintId();
+				const fieldEdit: FieldEditDescription = {
+					type: "field",
+					field: { parent: undefined, field: rootFieldKey },
+					fieldKind: optional.identifier,
+					change: brand(OptionalChange.clear(false, detach)),
+					revision: revision,
+				};
+				const modularEdit = editor.buildChanges([fieldEdit]);
+				yield {
+					content: undefined,
+					mostRecentEdit: {
+						changeset: tagChange(modularEdit, revision),
+						intention,
+						description: "Remove",
+					},
+					parent: state,
+				};
+			}
+		} else {
+			// Clear Empty Field
+			// Even if there is no content, optional field supports an explicit clear operation with LWW semantics,
+			// as a concurrent set operation may populate the field.
+			const intention = mintIntention();
+			const revision = tagFromIntention(intention);
+			const detach = mintId();
+			const fieldEdit: FieldEditDescription = {
+				type: "field",
+				field: { parent: undefined, field: rootFieldKey },
+				fieldKind: optional.identifier,
+				change: brand(OptionalChange.clear(true, detach)),
+				revision: revision,
+			};
+			const modularEdit = editor.buildChanges([fieldEdit]);
+			yield {
+				content: undefined,
+				mostRecentEdit: {
+					changeset: tagChange(modularEdit, revision),
+					intention,
+					description: "Remove",
+				},
+				parent: state,
+			};
+		}
 
-// 			const invertedNodeChanges: ChangeAtomIdMap<TestChange> = new Map();
-// 			forEachInNestedMap(state.mostRecentEdit.changeset.change.nodes, (node, revision, id) => {
-// 				const invertedNode = invertTestChangeViaNewIntention(node);
-// 				setInNestedMap(invertedNodeChanges, revision, id, invertedNode);
-// 			});
+		for (const value of ["A", "B"]) {
+			const setIntention = mintIntention();
+			const setRevision = tagFromIntention(setIntention);
+			const [fill, detach] = [mintId(), mintId()];
+			// Using length of the input context guarantees set operations generated at different times also have different
+			// values, which should tend to be easier to debug.
+			// This also makes the logic to determine intentions simpler.
+			const newContents = `${value},${edits.length}`;
+			const build = editor.buildTrees(
+				fill.localId,
+				chunkFromJsonTrees([newContents]),
+				setRevision,
+			);
+			const fieldEdit: FieldEditDescription = {
+				type: "field",
+				field: { parent: undefined, field: rootFieldKey },
+				fieldKind: optional.identifier,
+				change: brand(
+					OptionalChange.set(state.content === undefined, {
+						fill,
+						detach,
+					}),
+				),
+				revision: setRevision,
+			};
+			const modularEdit = editor.buildChanges([build, fieldEdit]);
+			yield {
+				content: newContents,
+				mostRecentEdit: {
+					changeset: tagChange(modularEdit, setRevision),
+					intention: setIntention,
+					description: `Set${newContents}`,
+				},
+				parent: state,
+			};
+		}
 
-// 			const inverseChangeset: WrappedChangeset = {
-// 				fieldChange: invert(
-// 					tagChange(
-// 						state.mostRecentEdit.changeset.change.fieldChange,
-// 						state.mostRecentEdit.changeset.revision,
-// 					),
-// 					tagFromIntention(undoIntention),
-// 					false,
-// 				),
-// 				nodes: invertedNodeChanges,
-// 			};
+		if (state.mostRecentEdit !== undefined) {
+			const undoIntention = mintIntention();
+			const undoRevision = tagFromIntention(undoIntention);
+			const modularEdit = family.invert(state.mostRecentEdit.changeset, false, undoRevision);
 
-// 			yield {
-// 				content: state.parent?.content,
-// 				mostRecentEdit: {
-// 					changeset: tagWrappedChangeInline(inverseChangeset, tagFromIntention(undoIntention)),
-// 					intention: undoIntention,
-// 					description: `Undo:${state.mostRecentEdit.description}`,
-// 				},
-// 				parent: state,
-// 			};
-// 		}
-// 	};
+			yield {
+				content: state.parent?.content,
+				mostRecentEdit: {
+					changeset: tagChange(modularEdit, undoRevision),
+					intention: undoIntention,
+					description: `Undo:${state.mostRecentEdit.description}`,
+				},
+				parent: state,
+			};
+		}
+	};
 
 // /**
 //  * Runs a suite of axiomatic tests which use combinations of single edits that are valid to apply from an initial state.
@@ -548,61 +585,73 @@
 // 	});
 // }
 
-// export function testRebaserAxioms() {
-// 	describe("Rebaser Axioms", () => {
-// 		describe("Using valid edits from an undefined field", () => {
-// 			runSingleEditRebaseAxiomSuite({ content: undefined });
-// 		});
+export function testRebaserAxioms() {
+	describe("Rebaser Axioms", () => {
+		// describe("Using valid edits from an undefined field", () => {
+		// 	runSingleEditRebaseAxiomSuite({ content: undefined });
+		// });
 
-// 		describe("Using valid edits from a field with content", () => {
-// 			runSingleEditRebaseAxiomSuite({ content: "A" });
-// 		});
+		// describe("Using valid edits from a field with content", () => {
+		// 	runSingleEditRebaseAxiomSuite({ content: "A" });
+		// });
 
-// 		describeStress("Exhaustive", ({ stressMode }) => {
-// 			runExhaustiveComposeRebaseSuite(
-// 				[{ content: undefined }, { content: "A" }],
-// 				generateChildStates,
-// 				{
-// 					rebase: rebaseWrapped,
-// 					rebaseComposed: rebaseComposedWrapped,
-// 					compose: composeWrapped,
-// 					invert: invertWrapped,
-// 					inlineRevision: inlineRevisionWrapped,
-// 					assertEqual: assertWrappedEqual,
-// 					createEmpty: () => ChangesetWrapper.create(Change.empty()),
-// 					isEmpty: isWrappedChangeEmpty,
-// 					assertChangesetsEquivalent: assertWrappedChangesetsEquivalent,
-// 				},
-// 				{
-// 					numberOfEditsToRebase: 3,
-// 					numberOfEditsToRebaseOver: stressMode !== StressMode.Short ? 5 : 3,
-// 					numberOfEditsToVerifyAssociativity: stressMode !== StressMode.Short ? 6 : 3,
-// 				},
-// 			);
-// 		});
-// 	});
-// }
+		describeStress("Exhaustive", ({ stressMode }) => {
+			runExhaustiveComposeRebaseSuite(
+				[{ content: undefined }, { content: "A" }],
+				generateChildStates,
+				{
+					rebase: rebaseModular,
+					rebaseComposed: rebaseComposedModular,
+					compose: composeModular,
+					invert: invertModular,
+					inlineRevision: inlineRevisionModular,
+					assertEqual: assertModularEqual,
+					createEmpty: empty,
+					isEmpty: isModularEmpty,
+					assertChangesetsEquivalent: assertModularChangesetsEquivalent,
+				},
+				{
+					numberOfEditsToRebase: 3,
+					numberOfEditsToRebaseOver: stressMode !== StressMode.Short ? 5 : 3,
+					numberOfEditsToVerifyAssociativity: stressMode !== StressMode.Short ? 6 : 3,
+					groupSubSuites: false,
+				},
+			);
+		});
+	});
+}
 
-// function assertWrappedEqual(
-// 	a: TaggedChange<WrappedChangeset> | undefined,
-// 	b: TaggedChange<WrappedChangeset> | undefined,
-// ): void {
-// 	if (a === undefined || b === undefined) {
-// 		assert.equal(a, b);
-// 		return;
-// 	}
+export function assertModularChangesetsEquivalent(
+	change1: TaggedChange<ModularChangeset>,
+	change2: TaggedChange<ModularChangeset>,
+) {
+	const actualDelta = normalizeDelta(intoDelta(change1));
+	const expectedDelta = normalizeDelta(intoDelta(change2));
+	assertEqual(actualDelta, expectedDelta);
+}
 
-// 	ChangesetWrapper.assertEqual(a.change, b.change, (fieldA, fieldB) =>
-// 		assertTaggedEqual({ ...a, change: fieldA }, { ...b, change: fieldB }),
-// 	);
-// }
+function assertModularEqual(
+	a: TaggedChange<ModularChangeset> | undefined,
+	b: TaggedChange<ModularChangeset> | undefined,
+): void {
+	if (a === undefined || b === undefined) {
+		assert.equal(a, b);
+		return;
+	}
 
-// function inlineRevisionWrapped(
-// 	change: WrappedChangeset,
-// 	revision: RevisionTag,
-// ): WrappedChangeset {
-// 	return ChangesetWrapper.inlineRevision(change, revision, inlineRevision);
-// }
+	// Removing aliases ensures that we don't consider the changesets different if they only differ in their aliases.
+	// It also means that we risk treating some changesets that are the same (once you consider aliases) as different.
+	const aWithoutAliases = { ...a, change: removeAliases(a.change) };
+	const bWithoutAliases = { ...b, change: removeAliases(b.change) };
+	assertEqual(aWithoutAliases, bWithoutAliases);
+}
+
+function inlineRevisionModular(
+	change: ModularChangeset,
+	revision: RevisionTag,
+): ModularChangeset {
+	return family.changeRevision(change, revision);
+}
 
 // function inlineRevision(change: OptionalChangeset, revision: RevisionTag): OptionalChangeset {
 // 	return optionalChangeRebaser.replaceRevisions(change, new Set([undefined]), revision);
@@ -613,7 +662,7 @@
 // 	revision: RevisionTag,
 // 	rollbackOf?: RevisionTag,
 // ): TaggedChange<WrappedChangeset> {
-// 	const inlined = inlineRevisionWrapped(change, revision);
+// 	const inlined = inlineRevisionModular(change, revision);
 // 	return rollbackOf !== undefined
 // 		? tagRollbackInverse(inlined, revision, rollbackOf)
 // 		: tagChange(inlined, revision);
