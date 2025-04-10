@@ -8,7 +8,7 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import {
-	ChannelCollection,
+	ComposableChannelCollection,
 	ChannelCollectionFactory,
 	ISummarizer,
 	SummaryCollection,
@@ -66,8 +66,8 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 	const dataStoreFactory = new ChannelCollectionFactory(
 		[[testObjectFactory.type, Promise.resolve(testObjectFactory)]],
 		async (runtime: IFluidDataStoreChannel) => runtime,
-		(...args: ConstructorParameters<typeof ChannelCollection>) =>
-			new ChannelCollection(...args),
+		(...args: ConstructorParameters<typeof ComposableChannelCollection>) =>
+			new ComposableChannelCollection(...args),
 	);
 
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({

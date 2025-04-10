@@ -45,6 +45,7 @@ export {
 	gcTreeKey,
 } from "./garbageCollectionDefinitions.js";
 export type {
+	FluidDataStoreMessage,
 	IAttachMessage,
 	IEnvelope,
 	IInboundSignalMessage,

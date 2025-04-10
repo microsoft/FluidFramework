@@ -33,7 +33,8 @@ import {
 	readAndParse,
 } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import {
+import type {
+	FluidDataStoreMessage,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	IGarbageCollectionData,
@@ -53,12 +54,12 @@ import {
 	ISummarizeResult,
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
-	channelsTreeName,
 	IInboundSignalMessage,
-	type IPendingMessagesState,
-	type IRuntimeMessageCollection,
-	type IFluidDataStoreFactory,
+	IPendingMessagesState,
+	IRuntimeMessageCollection,
+	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/internal";
+import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
 	isSnapshotFetchRequiredForLoadingGroupId,
@@ -956,19 +957,19 @@ export abstract class FluidDataStoreContext
 		return {};
 	}
 
-	public reSubmit(type: string, contents: unknown, localOpMetadata: unknown): void {
+	public reSubmit(message: FluidDataStoreMessage, localOpMetadata: unknown): void {
 		assert(!!this.channel, 0x14b /* "Channel must exist when resubmitting ops" */);
-		this.channel.reSubmit(type, contents, localOpMetadata);
+		this.channel.reSubmit(message.type, message.content, localOpMetadata);
 	}
 
-	public rollback(type: string, contents: unknown, localOpMetadata: unknown): void {
+	public rollback(message: FluidDataStoreMessage, localOpMetadata: unknown): void {
 		if (!this.channel) {
 			throw new Error("Channel must exist when rolling back ops");
 		}
 		if (!this.channel.rollback) {
 			throw new Error("Channel doesn't support rollback");
 		}
-		this.channel.rollback(type, contents, localOpMetadata);
+		this.channel.rollback(message.type, message.content, localOpMetadata);
 	}
 
 	public async applyStashedOp(contents: unknown): Promise<unknown> {

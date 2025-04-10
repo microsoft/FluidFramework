@@ -113,6 +113,16 @@ export enum DataStoreMessageType {
 }
 
 /**
+ * Outgoing {@link FluidDataStoreRuntime} message structures.
+ * @internal
+ *
+ * @privateRemarks The types here are required to satisfy {@link @fluidframework/runtime-definitions#FluidDataStoreMessage} interface.
+ */
+export type LocalFluidDataStoreRuntimeMessage =
+	| { type: DataStoreMessageType.ChannelOp; content: IEnvelope }
+	| { type: DataStoreMessageType.Attach; content: IAttachMessage };
+
+/**
  * @legacy
  * @alpha
  */
@@ -1049,8 +1059,12 @@ export class FluidDataStoreRuntime
 		}
 	}
 
+	/**
+	 * @deprecated No implementation required and will be removed in 2.50.
+	 */
 	public submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
-		this.submit(type, content, localOpMetadata);
+		this.verifyNotClosed();
+		this.submit({ type, content }, localOpMetadata);
 	}
 
 	/**
@@ -1112,7 +1126,7 @@ export class FluidDataStoreRuntime
 			type: channel.attributes.type,
 		};
 		this.pendingAttach.add(channel.id);
-		this.submit(DataStoreMessageType.Attach, message);
+		this.submit({ type: DataStoreMessageType.Attach, content: message });
 
 		const context = this.contexts.get(channel.id) as LocalChannelContextBase;
 		context.makeVisible();
@@ -1120,16 +1134,15 @@ export class FluidDataStoreRuntime
 
 	private submitChannelOp(address: string, contents: any, localOpMetadata: unknown) {
 		const envelope: IEnvelope = { address, contents };
-		this.submit(DataStoreMessageType.ChannelOp, envelope, localOpMetadata);
+		this.verifyNotClosed();
+		this.submit({ type: DataStoreMessageType.ChannelOp, content: envelope }, localOpMetadata);
 	}
 
 	private submit(
-		type: DataStoreMessageType,
-		content: any,
+		message: LocalFluidDataStoreRuntimeMessage,
 		localOpMetadata: unknown = undefined,
 	): void {
-		this.verifyNotClosed();
-		this.dataStoreContext.submitMessage(type, content, localOpMetadata);
+		this.dataStoreContext.submitMessage(message.type, message.content, localOpMetadata);
 	}
 
 	/**
@@ -1138,6 +1151,11 @@ export class FluidDataStoreRuntime
 	 * This typically happens when we reconnect and there are unacked messages.
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
+	 *
+	 * @privateRemarks
+	 * `type` parameter's type of `DataStoreMessageType` is a covariance exception
+	 * over `string` that `IFluidDataStoreChannel` specifies. (`unreachableCase`
+	 * might be reachable over time without better typing in this area.)
 	 */
 	public reSubmit(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
 		this.verifyNotClosed();
@@ -1153,7 +1171,7 @@ export class FluidDataStoreRuntime
 			}
 			case DataStoreMessageType.Attach:
 				// For Attach messages, just submit them again.
-				this.submit(type, content, localOpMetadata);
+				this.submit({ type, content }, localOpMetadata);
 				break;
 			default:
 				unreachableCase(type);
@@ -1164,8 +1182,12 @@ export class FluidDataStoreRuntime
 	 * Revert a local op.
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
+	 *
+	 * @privateRemarks
+	 * `type` parameter's type of `DataStoreMessageType` is a covariance exception
+	 * over `string` that `IFluidDataStoreChannel` specifies.
 	 */
-	public rollback?(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
+	public rollback(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
 		this.verifyNotClosed();
 
 		switch (type) {

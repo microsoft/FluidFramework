@@ -15,6 +15,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { LazyPromise } from "@fluidframework/core-utils/internal";
+import type { LocalFluidDataStoreRuntimeMessage } from "@fluidframework/datastore/internal";
 import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore/internal";
 import { ISummaryBlob, SummaryType } from "@fluidframework/driver-definitions";
 import {
@@ -22,10 +23,9 @@ import {
 	IBlob,
 	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
-import {
+import type {
 	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
-	CreateSummarizerNodeSource,
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
@@ -33,8 +33,11 @@ import {
 	IFluidParentContext,
 	IGarbageCollectionDetailsBase,
 	SummarizeInternalFn,
+	IContainerRuntimeBase,
+} from "@fluidframework/runtime-definitions/internal";
+import {
+	CreateSummarizerNodeSource,
 	channelsTreeName,
-	type IContainerRuntimeBase,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -376,11 +379,14 @@ describe("Data Store Context Tests", () => {
 				});
 				await localDataStoreContext.realize();
 
-				localDataStoreContext.submitMessage(
-					DataStoreMessageType.ChannelOp,
-					"summarizer message",
-					{},
-				);
+				const message = {
+					type: DataStoreMessageType.ChannelOp,
+					content: {
+						address: "address",
+						contents: "summarizer message",
+					},
+				} satisfies LocalFluidDataStoreRuntimeMessage;
+				localDataStoreContext.submitMessage(message.type, message.content, {});
 
 				const expectedEvents = [
 					{
@@ -417,11 +423,14 @@ describe("Data Store Context Tests", () => {
 
 				let eventCount = 0;
 				for (let i = 0; i < 15; i++) {
-					localDataStoreContext.submitMessage(
-						DataStoreMessageType.ChannelOp,
-						`summarizer message ${i}`,
-						{},
-					);
+					const message = {
+						type: DataStoreMessageType.ChannelOp,
+						content: {
+							address: "address",
+							contents: `summarizer message ${i}`,
+						},
+					} satisfies LocalFluidDataStoreRuntimeMessage;
+					localDataStoreContext.submitMessage(message.type, message.content, {});
 				}
 				for (const event of mockLogger.events) {
 					if (

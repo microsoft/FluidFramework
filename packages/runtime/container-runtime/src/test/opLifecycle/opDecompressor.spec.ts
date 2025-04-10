@@ -7,7 +7,10 @@ import { strict as assert } from "node:assert";
 
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import type { IEnvelope } from "@fluidframework/runtime-definitions/internal";
+import type {
+	FluidDataStoreMessage,
+	IEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { compress } from "lz4js";
 
@@ -28,7 +31,7 @@ function generateCompressedBatchMessage(length: number): ISequencedDocumentMessa
 		// Actual Op and contents aren't important. Values are not realistic.
 		batch.push({
 			type: ContainerMessageType.FluidDataStoreOp,
-			contents: `value${i}` as unknown as IEnvelope,
+			contents: `value${i}` as unknown as IEnvelope<FluidDataStoreMessage>,
 		});
 	}
 

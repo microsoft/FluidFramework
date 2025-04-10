@@ -8,6 +8,7 @@ export {
 	DataStoreMessageType,
 	FluidDataStoreRuntime,
 	ISharedObjectRegistry,
+	type LocalFluidDataStoreRuntimeMessage,
 	mixinRequestHandler,
 	mixinSummaryHandler,
 } from "./dataStoreRuntime.js";
