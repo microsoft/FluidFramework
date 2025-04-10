@@ -3645,7 +3645,7 @@ describe("Runtime", () => {
 					},
 					maxBatchSizeInBytes: 716800,
 					chunkSizeInBytes: 204800,
-					enableRuntimeIdCompressor: "on",
+					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
 				};
@@ -3684,7 +3684,7 @@ describe("Runtime", () => {
 					},
 					maxBatchSizeInBytes: 716800,
 					chunkSizeInBytes: 204800,
-					enableRuntimeIdCompressor: "on",
+					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
 				};
@@ -3713,7 +3713,7 @@ describe("Runtime", () => {
 						flushMode: FlushMode.Immediate,
 						maxBatchSizeInBytes: 100,
 						chunkSizeInBytes: 200,
-						enableRuntimeIdCompressor: undefined,
+						enableRuntimeIdCompressor: "on",
 						enableGroupedBatching: false, // By turning off batching, we will also disable compression automatically
 						explicitSchemaControl: false,
 					},
@@ -3732,7 +3732,7 @@ describe("Runtime", () => {
 					},
 					maxBatchSizeInBytes: 100,
 					chunkSizeInBytes: 200,
-					enableRuntimeIdCompressor: undefined,
+					enableRuntimeIdCompressor: "on",
 					enableGroupedBatching: false,
 					explicitSchemaControl: false,
 				};
@@ -3821,7 +3821,7 @@ describe("Runtime", () => {
 					},
 					maxBatchSizeInBytes: 716800,
 					chunkSizeInBytes: 204800,
-					enableRuntimeIdCompressor: "on",
+					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
 				};
