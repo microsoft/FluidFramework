@@ -131,6 +131,7 @@ import {
 	raiseConnectedEvent,
 	wrapError,
 	tagCodeArtifacts,
+	normalizeError,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -1780,7 +1781,6 @@ export class ContainerRuntime
 			}),
 			reSubmit: this.reSubmit.bind(this),
 			opReentrancy: () => this.dataModelChangeRunner.running,
-			closeContainer: this.closeFn,
 		});
 
 		this._quorum = quorum;
@@ -3099,17 +3099,25 @@ export class ContainerRuntime
 	/**
 	 * Flush the pending ops manually.
 	 * This method is expected to be called at the end of a batch.
+	 * @remarks - If it throws (e.g. if the batch is too large to send), the container will be closed.
+	 *
 	 * @param resubmittingBatchId - If defined, indicates this is a resubmission of a batch
 	 * with the given Batch ID, which must be preserved
 	 */
 	private flush(resubmittingBatchId?: BatchId): void {
-		assert(
-			!this.batchRunner.running,
-			0x24c /* "Cannot call `flush()` while manually accumulating a batch (e.g. under orderSequentially) */,
-		);
+		try {
+			assert(
+				!this.batchRunner.running,
+				0x24c /* "Cannot call `flush()` while manually accumulating a batch (e.g. under orderSequentially) */,
+			);
 
-		this.outbox.flush(resubmittingBatchId);
-		assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
+			this.outbox.flush(resubmittingBatchId);
+			assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
+		} catch (error) {
+			const error2 = normalizeError(error);
+			this.closeFn(error2);
+			throw error2;
+		}
 	}
 
 	/**
@@ -4275,8 +4283,11 @@ export class ContainerRuntime
 				this.scheduleFlush();
 			}
 		} catch (error) {
-			this.closeFn(error as GenericError);
-			throw error;
+			const dpe = DataProcessingError.wrapIfUnrecognized(error, "ContainerRuntime.submit", {
+				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+			});
+			this.closeFn(dpe);
+			throw dpe;
 		}
 
 		if (this.isContainerMessageDirtyable(containerRuntimeMessage)) {
@@ -4295,11 +4306,7 @@ export class ContainerRuntime
 		// eslint-disable-next-line unicorn/consistent-function-scoping -- Separate `flush` method already exists in outer scope
 		const flush = (): void => {
 			this.flushTaskExists = false;
-			try {
-				this.flush();
-			} catch (error) {
-				this.closeFn(error as GenericError);
-			}
+			this.flush();
 		};
 
 		switch (this.flushMode) {
