@@ -12,7 +12,6 @@ tmpHashesFile="generated_hashes.txt"
 # Extract inline scripts and compute hashes
 awk 'BEGIN { RS="</script>"; FS="<script[^>]*>" }
 NF>1 { print $2 }' "$indexFile" | while read -r scriptContent; do
-echo "Script: $scriptContent"
 if [[ "$scriptContent" != "" ]]; then
 echo "$scriptContent" | tr -d '\n'| openssl dgst -sha256 -binary | openssl base64 | sed 's/^/sha256-/' >> "$tmpHashesFile"
 fi
@@ -41,4 +40,4 @@ echo "Inline script hashes do not match configured values."
 exit 1
 fi
 
-echo "All inline script hashes are valid!"
+echo "All inline script hashes are valid."
