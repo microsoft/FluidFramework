@@ -32,7 +32,7 @@ export function createOdspCreateContainerRequest(
 ): IRequest;
 
 /**
- * Overloaded version of createOdspCreateContainerRequest that takes in containerPackageInfo
+ * Create the request object with url and headers for creating a new file on OneDrive Sharepoint
  * @param siteUrl - Base url for OneDrive
  * @param driveId - drive identifier
  * @param filePath - path where file needs to be created
@@ -53,7 +53,7 @@ export function createOdspCreateContainerRequest(
 	filePath: string,
 	fileName: string,
 	createShareLinkType: ISharingLinkKind | undefined,
-	containerPackageInfo?: IContainerPackageInfo | undefined,
+	containerPackageInfo: IContainerPackageInfo | undefined,
 ): IRequest;
 
 /**
