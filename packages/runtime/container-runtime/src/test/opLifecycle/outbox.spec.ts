@@ -39,6 +39,7 @@ import {
 	Outbox,
 	type LocalBatchMessage,
 	type OutboundBatch,
+	localBatchToOutboundBatch,
 } from "../../opLifecycle/index.js";
 import {
 	PendingMessageResubmitData,
@@ -174,7 +175,7 @@ describe("Outbox", () => {
 	});
 
 	// Also converts to an OutboundBatchMessage
-	const addBatchMetadata = (messages: LocalBatchMessage[]): OutboundBatchMessage[] => {
+	const addBatchMetadata = (messages: OutboundBatchMessage[]): void => {
 		if (messages.length > 1) {
 			messages[0].metadata = {
 				...messages[0].metadata,
@@ -185,21 +186,18 @@ describe("Outbox", () => {
 				batch: false,
 			};
 		}
-
-		return messages.map<OutboundBatchMessage>(({ serializedOp, ...message }) => ({
-			contents: serializedOp,
-			...message,
-		}));
 	};
-	const toOutboundBatch = (messages: LocalBatchMessage[]): OutboundBatch => ({
-		messages: addBatchMetadata(messages),
-		contentSizeInBytes: messages
-			.map((message) => message.serializedOp?.length ?? 0)
-			.reduce((a, b) => a + b, 0),
-		referenceSequenceNumber:
-			messages.length === 0 ? undefined : messages[0].referenceSequenceNumber,
-		hasReentrantOps: false,
-	});
+	const toOutboundBatch = (messages: LocalBatchMessage[]): OutboundBatch => {
+		const outbound = localBatchToOutboundBatch({
+			messages,
+			referenceSequenceNumber:
+				messages.length === 0 ? undefined : messages[0].referenceSequenceNumber,
+			hasReentrantOps: false,
+		});
+
+		addBatchMetadata(outbound.messages);
+		return outbound;
+	};
 
 	const DefaultCompressionOptions = {
 		minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
@@ -272,6 +270,29 @@ describe("Outbox", () => {
 		state.isReentrant = false;
 		currentSeqNumbers = {};
 		mockLogger.clear();
+	});
+
+	it("localBatchToOutboundBatch", () => {
+		const localMessages: LocalBatchMessage[] = [
+			{ serializedOp: "hello", referenceSequenceNumber: 4 },
+			{ serializedOp: "world", referenceSequenceNumber: 4 },
+			{ serializedOp: "!", referenceSequenceNumber: 4 },
+		];
+		const localBatch = {
+			messages: localMessages,
+			referenceSequenceNumber: localMessages[0].referenceSequenceNumber,
+			hasReentrantOps: false,
+		};
+		const outboundBatch = localBatchToOutboundBatch(localBatch);
+
+		// Check that contentSizeInBytes and messages' contents are set propertly
+		assert.equal(outboundBatch.contentSizeInBytes, 11);
+		assert.equal(outboundBatch.messages.length, 3);
+		assert.deepEqual(
+			localMessages.map((m) => m.serializedOp),
+			outboundBatch.messages.map((m) => m.contents),
+			"Serialized contents do not match",
+		);
 	});
 
 	it("Sending batches", () => {

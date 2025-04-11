@@ -75,13 +75,6 @@ describe("BatchManager", () => {
 		assert.equal(serialized, `{"batchId":"3627a2a9-963f-4e3b-a4d2-a31b1267ef29_[123]"}`);
 	});
 
-	it("Batch content size is tracked correctly", () => {
-		const batchManager = new BatchManager(defaultOptions);
-		batchManager.push(smallMessage(), /* reentrant */ false);
-		batchManager.push(smallMessage(), /* reentrant */ false);
-		batchManager.push(smallMessage(), /* reentrant */ false);
-	});
-
 	it("Batch reference sequence number maps to the last message", () => {
 		const batchManager = new BatchManager(defaultOptions);
 		batchManager.push(
