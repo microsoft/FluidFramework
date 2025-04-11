@@ -18,13 +18,13 @@ import {
 	IClusterDrainingChecker,
 	IFluidAccessTokenGenerator,
 	IReadinessCheck,
+	type IDenyList,
 } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { IDocumentDeleteService } from "../services";
 import * as api from "./api";
-
 export interface IRoutes {
 	agent: Router;
 	api: Router;
@@ -50,6 +50,7 @@ export function create(
 	readinessCheck?: IReadinessCheck,
 	fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,
 	redisCacheForGetSession?: ICache,
+	denyList?: IDenyList,
 ) {
 	return {
 		api: api.create(
@@ -72,6 +73,7 @@ export function create(
 			readinessCheck,
 			fluidAccessTokenGenerator,
 			redisCacheForGetSession,
+			denyList,
 		),
 	};
 }

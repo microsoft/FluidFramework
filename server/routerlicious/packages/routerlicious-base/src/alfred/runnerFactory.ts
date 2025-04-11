@@ -55,6 +55,7 @@ export class AlfredResources implements core.IResources {
 		public readinessCheck?: IReadinessCheck,
 		public fluidAccessTokenGenerator?: core.IFluidAccessTokenGenerator,
 		public redisCacheForGetSession?: core.ICache,
+		public denyList?: core.IDenyList,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined = config.get(
@@ -437,6 +438,12 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			});
 		}
 		const startupCheck = new StartupCheck();
+		const documentsDenyListConfig = config.get("documentDenyList");
+		const tenantsDenyListConfig = config.get("tenantsDenyList");
+		const denyList: core.IDenyList = new utils.DenyList(
+			tenantsDenyListConfig,
+			documentsDenyListConfig,
+		);
 
 		return new AlfredResources(
 			config,
@@ -464,6 +471,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			customizations?.readinessCheck,
 			customizations?.fluidAccessTokenGenerator,
 			redisGetSessionCache,
+			denyList,
 		);
 	}
 }
@@ -496,6 +504,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.readinessCheck,
 			resources.fluidAccessTokenGenerator,
 			resources.redisCacheForGetSession,
+			resources.denyList,
 		);
 	}
 }

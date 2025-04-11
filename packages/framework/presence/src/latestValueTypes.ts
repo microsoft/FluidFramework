@@ -6,7 +6,7 @@
 import type { JsonDeserialized } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
-import type { ISessionClient } from "./presence.js";
+import type { Attendee } from "./presence.js";
 
 /**
  * Metadata for the value state.
@@ -38,11 +38,11 @@ export interface LatestData<T> {
 }
 
 /**
- * State of a specific client's value and its metadata.
+ * State of a specific attendee's value and its metadata.
  *
  * @sealed
  * @alpha
  */
 export interface LatestClientData<T> extends LatestData<T> {
-	client: ISessionClient;
+	attendee: Attendee;
 }
