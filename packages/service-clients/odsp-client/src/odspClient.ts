@@ -36,6 +36,7 @@ import {
 import {
 	OdspDocumentServiceFactory,
 	OdspDriverUrlResolver,
+	// The comment will be removed up when the deprecated code is removed in AB#31049
 	// eslint-disable-next-line import/no-deprecated
 	createOdspCreateContainerRequest,
 	createOdspUrl,
@@ -210,6 +211,7 @@ export class OdspClient {
 		const attach = async (
 			odspProps?: ContainerAttachProps<OdspContainerAttachProps>,
 		): Promise<string> => {
+			// The comment will be removed up when the deprecated code is removed in AB#31049
 			// eslint-disable-next-line import/no-deprecated
 			const createNewRequest: IRequest = createOdspCreateContainerRequest(
 				connection.siteUrl,
