@@ -146,10 +146,11 @@ import {
 	loadBlobManagerLoadInfo,
 	type IBlobManagerLoadInfo,
 } from "./blobManager/index.js";
+import type { AddressedSignalEnvelope, IFluidRootParentContext } from "./channelCollection.js";
 import {
 	ChannelCollection,
 	getSummaryForDatastores,
-	wrapContext,
+	formParentContext,
 } from "./channelCollection.js";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry.js";
 import { ContainerFluidHandleContext } from "./containerHandleContext.js";
@@ -172,11 +173,14 @@ import {
 import { InboundBatchAggregator } from "./inboundBatchAggregator.js";
 import {
 	ContainerMessageType,
+	type ContainerRuntimeAliasMessage,
+	type ContainerRuntimeDataStoreOpMessage,
 	type ContainerRuntimeDocumentSchemaMessage,
 	ContainerRuntimeGCMessage,
 	type ContainerRuntimeIdAllocationMessage,
 	type InboundSequencedContainerRuntimeMessage,
 	type LocalContainerRuntimeMessage,
+	type OutboundContainerRuntimeAttachMessage,
 	type UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
 import { ISavedOpMetadata } from "./metadata.js";
@@ -718,6 +722,7 @@ export class ContainerRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents>
 	implements
 		IContainerRuntime,
+		Omit<IFluidRootParentContext, "submitSignal">,
 		IRuntime,
 		ISummarizerRuntime,
 		ISummarizerInternalsProvider,
@@ -1064,7 +1069,9 @@ export class ContainerRuntime
 		referenceSequenceNumber?: number,
 	) => number;
 	/**
-	 * Do not call directly - use submitAddressesSignal
+	 * Do not call without first calling
+	 * signalTelemetryManager.applyTrackingToBroadcastSignalEnvelope
+	 * when targetClientId is undefined.
 	 */
 	private readonly submitSignalFn: (content: ISignalEnvelope, targetClientId?: string) => void;
 	public readonly disposeFn: (error?: ICriticalContainerError) => void;
@@ -1660,25 +1667,28 @@ export class ContainerRuntime
 			async () => this.garbageCollector.getBaseGCDetails(),
 		);
 
-		const parentContext = wrapContext(this);
+		const parentContext = formParentContext<IFluidRootParentContext>(this, {
+			submitMessage: this.submitMessage.bind(this),
+
+			// Due to a mismatch between different layers in terms of
+			// what is the interface of passing signals, we need the
+			// downstream stores to wrap the signal.
+			submitSignal: (envelope: AddressedSignalEnvelope, targetClientId?: string): void => {
+				// verifyNotClosed is called in FluidDataStoreContext, which is *the* expected caller.
+				assert(
+					!envelope.address.startsWith("/"),
+					"Addresses beginning with '/' are reserved for container use",
+				);
+				if (targetClientId === undefined) {
+					this.signalTelemetryManager.applyTrackingToBroadcastSignalEnvelope(envelope);
+				}
+				this.submitSignalFn(envelope, targetClientId);
+			},
+		});
 
 		if (snapshotWithContents !== undefined) {
 			this.isSnapshotInstanceOfISnapshot = true;
 		}
-
-		// Due to a mismatch between different layers in terms of
-		// what is the interface of passing signals, we need the
-		// downstream stores to wrap the signal.
-		parentContext.submitSignal = (type: string, content: unknown, targetClientId?: string) => {
-			// Future: Can the `content` argument type be IEnvelope?
-			// verifyNotClosed is called in FluidDataStoreContext, which is *the* expected caller.
-			const envelope1 = content as IEnvelope;
-			const envelope2 = createNewSignalEnvelope(envelope1.address, type, envelope1.contents);
-			if (targetClientId === undefined) {
-				this.signalTelemetryManager.applyTrackingToBroadcastSignalEnvelope(envelope2);
-			}
-			this.submitSignalFn(envelope2, targetClientId);
-		};
 
 		let snapshot: ISnapshot | ISnapshotTree | undefined = getSummaryForDatastores(
 			baseSnapshot,
@@ -1702,7 +1712,6 @@ export class ContainerRuntime
 				}),
 			(path: string) => this.garbageCollector.isNodeDeleted(path),
 			new Map<string, string>(dataStoreAliasMap),
-			async (runtime: ChannelCollection) => provideEntryPoint,
 		);
 
 		this.blobManager = new BlobManager({
@@ -4181,17 +4190,13 @@ export class ContainerRuntime
 	}
 
 	public submitMessage(
-		type:
-			| ContainerMessageType.FluidDataStoreOp
-			| ContainerMessageType.Alias
-			| ContainerMessageType.Attach,
-		// TODO: better typing
-		// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
-		contents: any,
+		containerRuntimeMessage:
+			| ContainerRuntimeDataStoreOpMessage
+			| OutboundContainerRuntimeAttachMessage
+			| ContainerRuntimeAliasMessage,
 		localOpMetadata: unknown = undefined,
 	): void {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		this.submit({ type, contents }, localOpMetadata);
+		this.submit(containerRuntimeMessage, localOpMetadata);
 	}
 
 	public async uploadBlob(
@@ -4433,7 +4438,7 @@ export class ContainerRuntime
 			case ContainerMessageType.Alias: {
 				// For Operations, call resubmitDataStoreOp which will find the right store
 				// and trigger resubmission on it.
-				this.channelCollection.reSubmit(message.type, message.contents, localOpMetadata);
+				this.channelCollection.reSubmitContainerMessage(message, localOpMetadata);
 				break;
 			}
 			case ContainerMessageType.IdAllocation: {
@@ -4481,7 +4486,7 @@ export class ContainerRuntime
 			case ContainerMessageType.FluidDataStoreOp: {
 				// For operations, call rollbackDataStoreOp which will find the right store
 				// and trigger rollback on it.
-				this.channelCollection.rollback(type, contents, localOpMetadata);
+				this.channelCollection.rollbackDataStoreOp(contents, localOpMetadata);
 				break;
 			}
 			default: {
@@ -4730,7 +4735,7 @@ export class ContainerRuntime
 	}
 }
 
-export function createNewSignalEnvelope(
+function createNewSignalEnvelope(
 	address: string | undefined,
 	type: string,
 	content: unknown,
