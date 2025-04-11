@@ -15,7 +15,6 @@ import {
 	disabledCompressionConfig,
 } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase, IErrorBase } from "@fluidframework/core-interfaces";
-import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
@@ -137,8 +136,26 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 			// Let the ops flush, which will close the container
 			await provider.ensureSynchronized();
 
-			const error = await errorP;
-			assert.equal(error?.errorType, FluidErrorTypes.genericError);
+			const { errorType, dataProcessingCodepath, errorDetails } = (await errorP) as any;
+			assert.deepEqual(
+				{ errorType, dataProcessingCodepath, errorDetails },
+				{
+					errorType: "dataProcessingError",
+					dataProcessingCodepath: "CannotSend",
+					errorDetails: {
+						opCount: 1,
+						contentSizeInBytes: 1048789,
+						socketSize: 1048989,
+						maxBatchSizeInBytes: 716800,
+						groupedBatchingEnabled: true,
+						compressionOptions:
+							'{"minimumBatchSizeInBytes":null,"compressionAlgorithm":"lz4"}',
+						chunkingEnabled: true,
+						chunkSizeInBytes: 200,
+					},
+				},
+				"Error not as expected",
+			);
 		},
 	);
 
@@ -248,13 +265,29 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 			await provider.ensureSynchronized();
 
 			assert(localContainer.closed, "Local Container should be closed during flush");
-			const localContainerClosedWithError = await errorP;
-			assert.equal(
-				localContainerClosedWithError?.errorType,
-				FluidErrorTypes.genericError,
+			const { errorType, dataProcessingCodepath, errorDetails } = (await errorP) as any;
+			assert.deepEqual(
+				{ errorType, dataProcessingCodepath, errorDetails },
+				{
+					errorType: "dataProcessingError",
+					dataProcessingCodepath: "CannotSend",
+					errorDetails: {
+						opCount: 1,
+						contentSizeInBytes: 15729276,
+						socketSize: 15729476,
+						maxBatchSizeInBytes: 716800,
+						groupedBatchingEnabled: true,
+						compressionOptions:
+							'{"minimumBatchSizeInBytes":null,"compressionAlgorithm":"lz4"}',
+						chunkingEnabled: true,
+						chunkSizeInBytes: 200,
+					},
+				},
 				"Error not as expected",
 			);
-			remoteMap.delete("test"); // So we can assert the map is empty
+
+			// Confirm the remote map didn't receive any of the large ops
+			remoteMap.delete("test"); // So we can just check for empty on the next line
 			assert(remoteMap.size === 0, "Remote map should not have received any of the large ops");
 		},
 	);

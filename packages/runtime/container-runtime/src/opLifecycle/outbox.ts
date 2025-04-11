@@ -4,13 +4,16 @@
  */
 
 import { IBatchMessage } from "@fluidframework/container-definitions/internal";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import {
+	ITelemetryBaseLogger,
+	type ITelemetryBaseProperties,
+} from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
 	DataProcessingError,
-	GenericError,
 	UsageError,
 	createChildLogger,
+	type IFluidErrorBase,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -105,7 +108,10 @@ export function getLongStack<T>(action: () => T, length: number = 50): T {
 	}
 }
 
-function localBatchToOutboundBatch(localBatch: LocalBatch): OutboundBatch {
+/**
+ * Convert from local batch to outbound batch, including computing contentSizeInBytes.
+ */
+export function localBatchToOutboundBatch(localBatch: LocalBatch): OutboundBatch {
 	// Shallow copy each message as we switch types
 	const outboundMessages = localBatch.messages.map<OutboundBatchMessage>(
 		({ serializedOp, ...message }) => ({
@@ -507,22 +513,11 @@ export class Outbox {
 		// Now proceed to compress/chunk it if necessary.
 		const singletonBatch = originalOrGroupedBatch as OutboundSingletonBatch;
 
-		const compressionThreshold = this.params.config.compressionOptions.minimumBatchSizeInBytes;
 		if (
-			compressionThreshold > singletonBatch.contentSizeInBytes ||
+			this.params.config.compressionOptions.minimumBatchSizeInBytes >
+				singletonBatch.contentSizeInBytes ||
 			this.params.submitBatchFn === undefined
 		) {
-			//* TODO: Double-check the logic and error/props
-			const compressionEnabled = Number.isFinite(compressionThreshold);
-			const socketSize = estimateSocketSize(singletonBatch);
-			if (!compressionEnabled && socketSize >= this.params.config.maxBatchSizeInBytes) {
-				throw new GenericError("BatchTooLarge", /* error */ undefined, {
-					batchSize: singletonBatch.contentSizeInBytes,
-					socketSize,
-					limit: this.params.config.maxBatchSizeInBytes,
-				});
-			}
-
 			// Nothing to do if compression is disabled, unnecessary or unsupported.
 			return singletonBatch;
 		}
@@ -535,21 +530,11 @@ export class Outbox {
 				: this.params.splitter.splitSingletonBatchMessage(compressedBatch);
 		}
 
-		if (estimateSocketSize(compressedBatch) >= this.params.config.maxBatchSizeInBytes) {
-			throw DataProcessingError.create(
-				"BatchTooLarge",
-				"compressionInsufficient",
-				/* sequencedMessage */ undefined,
-				{
-					batchSize: singletonBatch.contentSizeInBytes,
-					compressedBatchSize: compressedBatch.contentSizeInBytes,
-					count: compressedBatch.messages.length,
-					limit: this.params.config.maxBatchSizeInBytes,
-					chunkingEnabled: this.params.splitter.isBatchChunkingEnabled,
-					compressionOptions: JSON.stringify(this.params.config.compressionOptions),
-					socketSize: estimateSocketSize(singletonBatch),
-				},
-			);
+		// We want to distinguish this "BatchTooLarge" case from the generic "BatchTooLarge" case in sendBatch
+		if (compressedBatch.contentSizeInBytes >= this.params.config.maxBatchSizeInBytes) {
+			throw this.makeBatchTooLargeError(compressedBatch, "CompressionInsufficient", {
+				uncompressedSizeInBytes: singletonBatch.contentSizeInBytes,
+			});
 		}
 
 		return compressedBatch;
@@ -569,19 +554,7 @@ export class Outbox {
 
 		const socketSize = estimateSocketSize(batch);
 		if (socketSize >= this.params.config.maxBatchSizeInBytes) {
-			this.logger.sendPerformanceEvent({
-				eventName: "LargeBatch",
-				details: {
-					opCount: batch.messages.length,
-					contentSizeInBytes: batch.contentSizeInBytes,
-					socketSize,
-					maxBatchSizeInBytes: this.params.config.maxBatchSizeInBytes,
-					groupedBatchingEnabled: this.params.groupingManager.groupedBatchingEnabled(),
-					compressionOptions: JSON.stringify(this.params.config.compressionOptions),
-					chunkingEnabled: this.params.splitter.isBatchChunkingEnabled,
-					chunkSizeInBytes: this.params.splitter.chunkSizeInBytes,
-				},
-			});
+			throw this.makeBatchTooLargeError(batch, "CannotSend");
 		}
 
 		let clientSequenceNumber: number;
@@ -611,6 +584,31 @@ export class Outbox {
 		clientSequenceNumber -= length - 1;
 		assert(clientSequenceNumber >= 0, 0x3d0 /* clientSequenceNumber can't be negative */);
 		return clientSequenceNumber;
+	}
+
+	private makeBatchTooLargeError(
+		batch: OutboundBatch,
+		codepath: string,
+		moreDetails?: ITelemetryBaseProperties,
+	): IFluidErrorBase {
+		return DataProcessingError.create(
+			"BatchTooLarge",
+			codepath,
+			/* sequencedMessage */ undefined,
+			{
+				errorDetails: {
+					opCount: batch.messages.length,
+					contentSizeInBytes: batch.contentSizeInBytes,
+					socketSize: estimateSocketSize(batch),
+					maxBatchSizeInBytes: this.params.config.maxBatchSizeInBytes,
+					groupedBatchingEnabled: this.params.groupingManager.groupedBatchingEnabled(),
+					compressionOptions: JSON.stringify(this.params.config.compressionOptions),
+					chunkingEnabled: this.params.splitter.isBatchChunkingEnabled,
+					chunkSizeInBytes: this.params.splitter.chunkSizeInBytes,
+					...moreDetails,
+				},
+			},
+		);
 	}
 
 	/**

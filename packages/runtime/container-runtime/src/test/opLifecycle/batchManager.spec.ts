@@ -6,7 +6,12 @@
 import { strict as assert } from "node:assert";
 
 import type { IBatchMetadata } from "../../metadata.js";
-import { BatchManager, generateBatchId } from "../../opLifecycle/index.js";
+import {
+	BatchManager,
+	estimateSocketSize,
+	generateBatchId,
+	localBatchToOutboundBatch,
+} from "../../opLifecycle/index.js";
 import type { IBatchManagerOptions, LocalBatchMessage } from "../../opLifecycle/index.js";
 
 describe("BatchManager", () => {
@@ -93,6 +98,34 @@ describe("BatchManager", () => {
 		);
 
 		assert.equal(batchManager.sequenceNumbers.referenceSequenceNumber, 2);
+	});
+
+	it("Batch size estimates", () => {
+		const batchManager = new BatchManager(defaultOptions);
+		batchManager.push(smallMessage(), /* reentrant */ false);
+		// 10 bytes of content + 200 bytes overhead
+		assert.equal(estimateSocketSize(localBatchToOutboundBatch(batchManager.popBatch())), 210);
+
+		for (let i = 0; i < 10; i++) {
+			batchManager.push(smallMessage(), /* reentrant */ false);
+		}
+
+		// (10 bytes of content + 200 bytes overhead) x 10
+		assert.equal(estimateSocketSize(localBatchToOutboundBatch(batchManager.popBatch())), 2100);
+
+		batchManager.push(smallMessage(), /* reentrant */ false);
+		for (let i = 0; i < 9; i++) {
+			batchManager.push(
+				{
+					serializedOp: "",
+					referenceSequenceNumber: 0,
+				},
+				/* reentrant */ false,
+			); // empty op
+		}
+
+		// 10 bytes of content + 200 bytes overhead x 10
+		assert.equal(estimateSocketSize(localBatchToOutboundBatch(batchManager.popBatch())), 2010);
 	});
 
 	it("Batch op reentry state preserved during its lifetime", () => {
