@@ -612,20 +612,7 @@ describe("client.rollback", () => {
 		logger.validate({ baseText: "124abc5" });
 	});
 
-	/*
-	 * op       | client A   | op         | client B
-	 * L:0:A0@0 | _____      |            |
-	 *          | AAAAA      |            |
-	 *          | _____      | L:0:B0@0   | _____
-	 *          | AAAAA      |            | BBBBB
-	 *          | _____      | L:0:B0@2   | __________
-	 *          | AAAAA      |            | BBRRRRRBBB
-	 *          | _____      | L:0:B1@2,7 | __~~~~~___
-	 *          | AAAAA      |            | BB     BBB
-	 * 1:0:A0@0 | AAAAA      | 1:0:A0@0   | __AAAAA~~~~~___
-	 *          |            |            | BB          BBB
-	 * 2:0:B0@0 | BBBBBAAAAA | 2:0:B0@0   | BBAAAAA~~~~~BBB
-	 */
+
 	it("Conflicting insert with winner split by rollback", () => {
 		const clients = createClientsAtInitialState({ initialState: "" }, "A", "B");
 		const logger = new TestClientLogger(clients.all);
