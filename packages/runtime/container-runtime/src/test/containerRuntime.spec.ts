@@ -543,10 +543,7 @@ describe("Runtime", () => {
 						const error = getFirstContainerError();
 						assert(isFluidError(error));
 						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
-						assert.strictEqual(
-							error.message,
-							`${expectedOrderSequentiallyErrorMessage}: 0x24c`,
-						);
+						assert.strictEqual(error.message, "0x24c");
 						assert.strictEqual(error.getTelemetryProperties().orderSequentiallyCalls, 1);
 					});
 
@@ -563,10 +560,7 @@ describe("Runtime", () => {
 						const error = getFirstContainerError();
 						assert(isFluidError(error));
 						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
-						assert.strictEqual(
-							error.message,
-							`${expectedOrderSequentiallyErrorMessage}: 0x24c`,
-						);
+						assert.strictEqual(error.message, "0x24c");
 						assert.strictEqual(error.getTelemetryProperties().orderSequentiallyCalls, 2);
 					});
 
@@ -585,10 +579,7 @@ describe("Runtime", () => {
 						const error = getFirstContainerError();
 						assert(isFluidError(error));
 						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
-						assert.strictEqual(
-							error.message,
-							`${expectedOrderSequentiallyErrorMessage}: 0x24c`,
-						);
+						assert.strictEqual(error.message, "0x24c");
 						assert.strictEqual(error.getTelemetryProperties().orderSequentiallyCalls, 2);
 					});
 
