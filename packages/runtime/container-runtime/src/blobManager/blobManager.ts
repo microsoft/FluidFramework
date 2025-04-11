@@ -318,14 +318,16 @@ export class BlobManager {
 					expired,
 				});
 				if (expired) {
+					pendingEntry.attached = true;
+					const newLocalId = this.localBlobIdGenerator();
 					// reupload blob and reset previous fields
-					this.pendingBlobs.set(localId, {
+					this.pendingBlobs.set(newLocalId, {
 						...pendingEntry,
 						storageId: undefined,
 						uploadTime: undefined,
 						minTTLInSeconds: undefined,
 						opsent: false,
-						uploadP: this.uploadBlob(localId, pendingEntry.blob),
+						uploadP: this.uploadBlob(newLocalId, pendingEntry.blob),
 					});
 					return;
 				}
