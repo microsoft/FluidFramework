@@ -369,14 +369,16 @@
 			"@fluentui/react-positioning>@floating-ui/dom": "~1.5.4",
 			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
 			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0",
-			"socket.io-client": "~4.7.5"
+			"socket.io-client": "~4.7.5",
+			"jest-environment-jsdom>jsdom": "^22.1.0"
 		},
 		"peerDependencyComments": [
 			"@types/node is ignored because it is usually not needed by packages, and if it is, then the package will hit a compilation failure.",
 			"Peer dependencies on fluid-framework are never fulfilled since that's an in-repo dependency; we expect a customer using some packages to install it as a dependency.",
 			"markdown-magic is provided by another dependency so is ignored here.",
 			"oclif includes some AWS-related features, but we don't use them, so we ignore @aws-sdk peer dependencies.",
-			"The react-split-pane package used by devtools-view has a peer dependency on React 16, but it doesn't seem to be maintained and it works fine with React 18. TODO: AB#18876"
+			"The react-split-pane package used by devtools-view has a peer dependency on React 16, but it doesn't seem to be maintained and it works fine with React 18. TODO: AB#18876",
+			"jsdom added support for crypto.randomUUID https://github.com/jsdom/jsdom/pull/3551 which landed in 22.1.0"
 		],
 		"peerDependencyRules": {
 			"allowedVersions": {
