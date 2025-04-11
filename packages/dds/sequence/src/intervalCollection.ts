@@ -1457,7 +1457,8 @@ export class IntervalCollection
 			if (props !== undefined) {
 				deltaProps = interval.changeProperties(props);
 			}
-			if (start !== undefined && end !== undefined) {
+			const changeEndpoints = start !== undefined && end !== undefined;
+			if (changeEndpoints) {
 				newInterval = this.localCollection.changeInterval(interval, start, end);
 				if (!this.isCollaborating && newInterval !== undefined) {
 					setSlideOnRemove(newInterval.start);
@@ -1467,7 +1468,10 @@ export class IntervalCollection
 			// Emit a property bag containing the ID and the other (if any) properties changed
 			const serializedInterval: SerializedIntervalDelta = (
 				newInterval ?? interval
-			).serializeDelta(props, start !== undefined, end !== undefined);
+			).serializeDelta({
+				props,
+				includeEndpoints: changeEndpoints,
+			});
 
 			const localSeq = this.getNextLocalSeq();
 			if (this.isCollaborating) {
