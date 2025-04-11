@@ -7,6 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { normalizeFieldSchema, type ImplicitFieldSchema } from "../schemaTypes.js";
 import type {
 	SimpleArrayNodeSchema,
+	SimpleFieldSchema,
 	SimpleLeafNodeSchema,
 	SimpleMapNodeSchema,
 	SimpleNodeSchema,
@@ -51,7 +52,7 @@ export function toSimpleTreeSchema(
 					nodeSchema instanceof MapNodeSchema ||
 					nodeSchema instanceof LeafNodeSchema ||
 					nodeSchema instanceof ObjectNodeSchema,
-				"Invalid schema",
+				0xb60 /* Invalid schema */,
 			);
 			const outSchema = copySchemaObjects ? copySimpleNodeSchema(nodeSchema) : nodeSchema;
 			definitions.set(nodeSchema.identifier, outSchema);
@@ -59,10 +60,14 @@ export function toSimpleTreeSchema(
 	});
 
 	return {
-		kind: normalizedSchema.kind,
-		allowedTypesIdentifiers: normalizedSchema.allowedTypesIdentifiers,
+		root: copySchemaObjects
+			? ({
+					allowedTypesIdentifiers: normalizedSchema.allowedTypesIdentifiers,
+					kind: normalizedSchema.kind,
+					metadata: normalizedSchema.metadata,
+				} satisfies SimpleFieldSchema)
+			: normalizedSchema,
 		definitions,
-		metadata: normalizedSchema.metadata,
 	};
 }
 

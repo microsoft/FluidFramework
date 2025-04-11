@@ -18,7 +18,6 @@
 export { SequenceOptions } from "./intervalCollectionMapInterfaces.js";
 export {
 	IInterval,
-	Interval,
 	IntervalOpType,
 	IntervalType,
 	ISerializableInterval,
@@ -26,8 +25,6 @@ export {
 	SequenceInterval,
 	SerializedIntervalDelta,
 	IntervalStickiness,
-	IIntervalHelpers,
-	sequenceIntervalHelpers,
 } from "./intervals/index.js";
 export {
 	DeserializeCallback,
@@ -35,8 +32,6 @@ export {
 	IIntervalCollection,
 	ISequenceIntervalCollection,
 	ISequenceIntervalCollectionEvents,
-	IntervalLocator,
-	intervalLocatorFromEndpoint,
 } from "./intervalCollection.js";
 export {
 	IntervalIndex,
@@ -44,15 +39,9 @@ export {
 	SequenceIntervalIndexes,
 	IOverlappingIntervalsIndex,
 	ISequenceOverlappingIntervalsIndex,
+	IEndpointIndex,
 	createOverlappingIntervalsIndex,
 	createOverlappingSequenceIntervalsIndex,
-	IEndpointInRangeIndex,
-	IStartpointInRangeIndex,
-	createEndpointInRangeIndex,
-	createStartpointInRangeIndex,
-	IIdIntervalIndex,
-	createIdIntervalIndex,
-	IEndpointIndex,
 	createEndpointIndex,
 } from "./intervalIndex/index.js";
 export {

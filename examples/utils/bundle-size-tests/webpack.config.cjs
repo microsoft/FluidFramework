@@ -73,10 +73,12 @@ module.exports = {
 		connectionState: "./src/connectionState",
 		containerRuntime: "./src/containerRuntimeBundle",
 		debugAssert: "./src/debugAssert",
+		directory: "./src/sharedDirectory",
+		experimentalSharedTree: "./src/experimentalSharedTree",
 		fluidFramework: "./src/fluidFramework",
 		loader: "./src/loader",
-		map: "./src/map",
-		matrix: "./src/matrix",
+		map: "./src/sharedMap",
+		matrix: "./src/sharedMatrix",
 		odspClient: "./src/odspClient",
 		odspDriver: "./src/odspDriver",
 		odspPrefetchSnapshot: "./src/odspPrefetchSnapshot",
@@ -92,7 +94,7 @@ module.exports = {
 		extensions: [".tsx", ".ts", ".js"],
 	},
 	output: {
-		path: path.resolve(__dirname, "dist"),
+		path: path.resolve(__dirname, "build"),
 		library: "bundle",
 	},
 	node: false,
@@ -116,8 +118,9 @@ module.exports = {
 			 * IMPORTANT: Do not add any new exceptions to this list without first doing a deep investigation on why a PR adds a new duplication, this hides a bundle size issue
 			 */
 			exclude: (instance) =>
-				// object-is depends on es-abstract 1.18.0-next, which does not satisfy the semver of other packages. We should be able to remove this when es-abstract moves to 1.18.0
-				instance.name === "es-abstract",
+				// @fluidframework/server-services-client pulls in uuid 9.0.1, and thus bundles using it get this package duplicated until the version of server used in client gets updated.
+				// This should not impact size sensitive application as they typically don't include a copy of the server.
+				instance.name === "uuid",
 		}),
 		new BundleAnalyzerPlugin({
 			analyzerMode: "static",

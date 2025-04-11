@@ -64,8 +64,6 @@ describe("SharedString fuzz with obliterate", () => {
 		{ ...model, workloadName: "SharedString with obliterate" },
 		{
 			...defaultFuzzOptions,
-			// Sided obliterate doesn't support reconnect yet.
-			reconnectProbability: 0,
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 0,
 			// TODO:AB#7220: This seed should be enabled. The failure here is unrelated to obliterate.
@@ -96,11 +94,7 @@ describe("SharedString fuzz testing with rebased batches", () => {
 	);
 });
 
-// todo: potentially related to AB#7050
-//
-// `intervalRebasing.spec.ts` contains some reduced tests exhibiting the crashes
-// linked to AB#7050
-describe.skip("SharedString fuzz testing with rebased batches and reconnect", () => {
+describe("SharedString fuzz testing with rebased batches and reconnect", () => {
 	createDDSFuzzSuite(
 		{
 			...baseSharedStringModel,

@@ -138,7 +138,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 			} catch {}
 
 			const error = await errorEvent;
-			assert.equal(error?.errorType, FluidErrorTypes.genericError);
+			assert.equal(error?.errorType, FluidErrorTypes.dataProcessingError);
 			assert.ok(error.getTelemetryProperties?.().opSize ?? 0 > maxMessageSizeInBytes);
 
 			// Limit has to be around 1Mb, but we should not assume here precise number.
