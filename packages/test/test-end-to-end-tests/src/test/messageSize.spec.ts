@@ -136,25 +136,31 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 			// Let the ops flush, which will close the container
 			await provider.ensureSynchronized();
 
-			const { errorType, dataProcessingCodepath, errorDetails } = (await errorP) as any;
+			const {
+				errorType,
+				dataProcessingCodepath,
+				errorDetails: { opCount, contentSizeInBytes, socketSize },
+			} = (await errorP) as any;
 			assert.deepEqual(
-				{ errorType, dataProcessingCodepath, errorDetails },
+				{
+					errorType,
+					dataProcessingCodepath,
+					errorDetails: { opCount, contentSizeInBytes, socketSize },
+				},
 				{
 					errorType: "dataProcessingError",
 					dataProcessingCodepath: "CannotSend",
 					errorDetails: {
 						opCount: 1,
 						contentSizeInBytes: 1048789,
-						socketSize: 1048989,
-						maxBatchSizeInBytes: 716800,
-						groupedBatchingEnabled: true,
-						compressionOptions:
-							'{"minimumBatchSizeInBytes":null,"compressionAlgorithm":"lz4"}',
-						chunkingEnabled: true,
-						chunkSizeInBytes: 200,
+						socketSize: 1048989, // > maxMessageSizeInBytes: 716800
 					},
 				},
 				"Error not as expected",
+			);
+			assert(
+				socketSize > maxMessageSizeInBytes,
+				"Socket size should be larger than maxMessageSizeInBytes",
 			);
 		},
 	);
@@ -265,25 +271,31 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 			await provider.ensureSynchronized();
 
 			assert(localContainer.closed, "Local Container should be closed during flush");
-			const { errorType, dataProcessingCodepath, errorDetails } = (await errorP) as any;
+			const {
+				errorType,
+				dataProcessingCodepath,
+				errorDetails: { opCount, contentSizeInBytes, socketSize },
+			} = (await errorP) as any;
 			assert.deepEqual(
-				{ errorType, dataProcessingCodepath, errorDetails },
+				{
+					errorType,
+					dataProcessingCodepath,
+					errorDetails: { opCount, contentSizeInBytes, socketSize },
+				},
 				{
 					errorType: "dataProcessingError",
 					dataProcessingCodepath: "CannotSend",
 					errorDetails: {
 						opCount: 1,
 						contentSizeInBytes: 15729276,
-						socketSize: 15729476,
-						maxBatchSizeInBytes: 716800,
-						groupedBatchingEnabled: true,
-						compressionOptions:
-							'{"minimumBatchSizeInBytes":null,"compressionAlgorithm":"lz4"}',
-						chunkingEnabled: true,
-						chunkSizeInBytes: 200,
+						socketSize: 15729476, // > maxMessageSizeInBytes: 716800
 					},
 				},
 				"Error not as expected",
+			);
+			assert(
+				socketSize > maxMessageSizeInBytes,
+				"Socket size should be larger than maxMessageSizeInBytes",
 			);
 
 			// Confirm the remote map didn't receive any of the large ops

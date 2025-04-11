@@ -573,12 +573,15 @@ describe("Outbox", () => {
 		);
 	});
 
-	it("Compress only if the batch is larger than the configured limit", () => {
+	it("Does not compress if the batch is smaller than the configured limit", () => {
 		const outbox = getOutbox({
 			context: getMockContext(),
-			maxBatchSize: 1,
+			maxBatchSize: 1024,
+			opGroupingConfig: {
+				groupedBatchingEnabled: true, // Required for compression
+			},
 			compressionOptions: {
-				minimumBatchSizeInBytes: 1024,
+				minimumBatchSizeInBytes: 512,
 				compressionAlgorithm: CompressionAlgorithms.lz4,
 			},
 		});
@@ -597,22 +600,15 @@ describe("Outbox", () => {
 
 		outbox.flush();
 
-		assert.equal(state.opsSubmitted, messages.length);
+		assert.equal(
+			state.opsSubmitted,
+			2,
+			"Expected 2 ops to be submitted, on ID Allocation and one for the grouped batch",
+		);
 		assert.equal(state.batchesSubmitted.length, 2);
 		assert.equal(state.individualOpsSubmitted.length, 0);
 		assert.equal(state.deltaManagerFlushCalls, 0);
 		assert.deepEqual(state.batchesCompressed, []);
-		assert.deepEqual(
-			state.batchesSubmitted.map((x) => x.messages),
-			[
-				[toSubmittedMessage(messages[2])],
-				[
-					toSubmittedMessage(messages[0], true),
-					toSubmittedMessage(messages[1]),
-					toSubmittedMessage(messages[3], false),
-				],
-			],
-		);
 
 		// Note the expected CSN here is fixed to the batch's starting CSN
 		const expectedMessageOrderWithCsn = [
@@ -658,7 +654,13 @@ describe("Outbox", () => {
 		outbox.submit(messages[1]);
 		outbox.submit(messages[2]);
 
-		assert.throws(() => outbox.flush());
+		assert.throws(
+			() => outbox.flush(),
+			(e: Error) =>
+				"dataProcessingCodepath" in e &&
+				e.dataProcessingCodepath === "CompressionInsufficient",
+			"Expected 'CompressionInsufficient' error",
+		);
 		// The batch is compressed
 		assert.deepEqual(state.batchesCompressed, [
 			opGroupingManager.groupBatch(toOutboundBatch(messages)),
@@ -670,7 +672,7 @@ describe("Outbox", () => {
 	it("Chunks when compression is enabled, compressed batch is larger than the threshold and chunking is enabled", () => {
 		const outbox = getOutbox({
 			context: getMockContext(),
-			maxBatchSize: 1,
+			maxBatchSize: 1024,
 			compressionOptions: {
 				minimumBatchSizeInBytes: 1,
 				compressionAlgorithm: CompressionAlgorithms.lz4,
@@ -734,7 +736,7 @@ describe("Outbox", () => {
 	it("Does not chunk when compression and grouping are enabled, compressed batch is smaller than the threshold and chunking is enabled", () => {
 		const outbox = getOutbox({
 			context: getMockContext(),
-			maxBatchSize: 1,
+			maxBatchSize: 1024,
 			compressionOptions: {
 				minimumBatchSizeInBytes: 1,
 				compressionAlgorithm: CompressionAlgorithms.lz4,
