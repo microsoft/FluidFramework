@@ -29,7 +29,7 @@ describe("Runtime", () => {
 			compressionLz4: true,
 			idCompressorMode: "delayed",
 			// opGroupingEnabled: undefined,
-			createBlobPlaceholders: true,
+			// createBlobPlaceholders: true,
 		},
 	};
 
@@ -38,7 +38,7 @@ describe("Runtime", () => {
 		compressionLz4: true,
 		opGroupingEnabled: false,
 		idCompressorMode: "delayed",
-		createBlobPlaceholders: true,
+		createBlobPlaceholders: false,
 		disallowedVersions: [],
 	};
 
@@ -460,12 +460,7 @@ describe("Runtime", () => {
 			true, // existing,
 			0, // snapshotSequenceNumber
 			undefined, // old schema,
-			{
-				...features,
-				idCompressorMode: undefined,
-				compressionLz4: false,
-				createBlobPlaceholders: false,
-			},
+			{ ...features, idCompressorMode: undefined, compressionLz4: false },
 			() => {
 				assert(false, "no changes!");
 			}, // onSchemaChange
@@ -481,12 +476,7 @@ describe("Runtime", () => {
 			true, // existing,
 			0, // snapshotSequenceNumber
 			newSchema, // old schema,
-			{
-				...features,
-				idCompressorMode: undefined,
-				compressionLz4: false,
-				createBlobPlaceholders: false,
-			},
+			{ ...features, idCompressorMode: undefined, compressionLz4: false },
 			() => {
 				assert(false, "no changes!");
 			}, // onSchemaChange
@@ -508,12 +498,7 @@ describe("Runtime", () => {
 			true, // existing,
 			0, // snapshotSequenceNumber
 			newSchema, // old schema,
-			{
-				...features,
-				idCompressorMode: "on",
-				compressionLz4: false,
-				createBlobPlaceholders: false,
-			},
+			{ ...features, idCompressorMode: "on", compressionLz4: false },
 			() => {
 				schemaChanged = true;
 			}, // onSchemaChange
@@ -552,7 +537,6 @@ describe("Runtime", () => {
 				idCompressorMode: undefined,
 				compressionLz4: false,
 				opGroupingEnabled: true,
-				createBlobPlaceholders: false,
 			},
 			() => (schemaChanged = true), // onSchemaChange
 		);
