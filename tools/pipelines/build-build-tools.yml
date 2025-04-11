@@ -117,6 +117,5 @@ extends:
     taskLintName: ci:eslint
     poolBuild: Large-eastus2
     checkoutSubmodules: true
-    taskBundleAnalysis: false
     checks:
     - checks
