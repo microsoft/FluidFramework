@@ -7,11 +7,11 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEvent } from "@fluidframework/core-interfaces";
 import type {
 	Attendee,
-	Presence,
 	Latest,
+	Presence,
 	StatesWorkspace,
 } from "@fluidframework/presence/alpha";
-import { AttendeeStatus, StateFactory,  } from "@fluidframework/presence/alpha";
+import { AttendeeStatus, StateFactory } from "@fluidframework/presence/alpha";
 
 /**
  * IMousePosition is the data that individual session clients share via presence.
