@@ -447,8 +447,10 @@ describe("Runtime", () => {
 					}
 				});
 
+			// NOTE: This test is examining a case that only occurs with an old Loader that doesn't tell ContainerRuntime when processing system ops.
+			// In other words, when the MockDeltaManager bumps its lastSequenceNumber, ContainerRuntime.process would be called in the current code, but not with legacy loader.
 			for (const skipSafetyFlushDuringProcessStack of [true, undefined]) {
-				it("Inbound (non-runtime) op triggers flush due to refSeq changing", async () => {
+				it(`Inbound (non-runtime) op triggers flush due to refSeq changing [skipSafetyFlush=${skipSafetyFlushDuringProcessStack}]`, async () => {
 					const submittedBatches: {
 						messages: IBatchMessage[];
 						referenceSequenceNumber: number;
@@ -479,52 +481,48 @@ describe("Runtime", () => {
 						provideEntryPoint: mockProvideEntryPoint,
 					});
 
-					// Define resubmit and setConnectionState on channel collection
-					// defineResubmitAndSetConnectionState(containerRuntime);
-
 					// Submit the first message
 					submitDataStoreOp(containerRuntime, "1", "testMessage1");
 					assert.strictEqual(submittedOps.length, 0, "No ops submitted yet");
 
 					// Bump lastSequenceNumber and trigger the "op" event artificially to simulate processing a non-runtime op
+					// When [skipSafetyFlushDuringProcessStack: FALSE], this will trigger a flush, which allows us to safely submit more ops next
 					const mockDeltaManager = mockContext.deltaManager as MockDeltaManager;
 					++mockDeltaManager.lastSequenceNumber;
 					mockDeltaManager.emit("op", {
 						clientId: mockClientId,
 						sequenceNumber: mockDeltaManager.lastSequenceNumber,
 						clientSequenceNumber: 1,
-						type: MessageType.Operation,
-						contents: JSON.stringify({
-							type: "nonRuntimeOp",
-							contents: "nonRuntimeOpContent",
-						}),
+						type: MessageType.ClientJoin,
+						contents: "test content",
 					});
 
 					const expectedSubmitCount = skipSafetyFlushDuringProcessStack ? 0 : 1;
-					assert.strictEqual(
+					assert.equal(
 						submittedOps.length,
 						expectedSubmitCount,
 						"Submitted op count wrong after first op",
 					);
 
-					// Submit some more messages.  If we didn't flush on "op", this would throw
-					// Then wait for flush to get triggered, will flush only the 2nd message
-					// Note: We have to submit multiple here to trigger maybeSubmitPartialBatch in the case skipSafetyFlushDuringProcessStack: true
+					// Submit the second message
+					// When [skipSafetyFlushDuringProcessStack: TRUE], this will trigger a flush via Outbox.maybeFlushPartialBatch
 					submitDataStoreOp(containerRuntime, "2", "testMessage2");
-					submitDataStoreOp(containerRuntime, "3", "testMessage3");
+					assert.equal(
+						submittedOps.length,
+						1,
+						"By now we expect the first op to have been submitted in both configurations",
+					);
+
+					// Wait for the next tick for the second message to be flushed
 					await Promise.resolve();
 
-					// Validate that the messages were submitted (as a grouped batch)
-					assert.strictEqual(submittedOps.length, 2, "Two messages should be submitted");
-					assert(
-						(submittedOps[1] as { contents: string }).contents.includes("groupedBatch"),
-						"Expected a groupedBatch",
-					);
+					// Validate that the messages were submitted
+					assert.equal(submittedOps.length, 2, "Two messages should be submitted");
 					assert.deepEqual(
 						submittedBatches,
 						[
 							{ messages: [submittedOps[0]], referenceSequenceNumber: 0 }, // The first op
-							{ messages: [submittedOps[1]], referenceSequenceNumber: 1 }, // The other two in a grouped batch
+							{ messages: [submittedOps[1]], referenceSequenceNumber: 1 }, // The second op
 						],
 						"Two batches should be submitted with different refSeq",
 					);
