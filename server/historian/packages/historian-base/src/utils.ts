@@ -40,6 +40,7 @@ export const Constants = Object.freeze({
 	IsEphemeralContainer: "Is-Ephemeral-Container",
 	isInitialSummary: "isInitialSummary",
 	SimplifiedCustomData: "Simplified-Custom-Data",
+	invalidTokenCachePrefix: "invalidTokenCache",
 });
 
 export function getTokenLifetimeInSec(token: string): number | undefined {
