@@ -485,7 +485,7 @@ export const baseModel: Omit<
 						op.start = toSequencePlace(startPos - 1, startSide);
 					}
 					if (typeof endPos === "number" && endPos > 0) {
-						op.start = toSequencePlace(endPos - 1, endSide);
+						op.end = toSequencePlace(endPos - 1, endSide);
 					}
 					break;
 				}
@@ -505,7 +505,7 @@ export const baseModel: Omit<
 			const { endPos, endSide } = endpointPosAndSide(op.start, op.end);
 
 			if (typeof endPos === "number" && endPos > 0) {
-				op.start = toSequencePlace(endPos - 1, endSide);
+				op.end = toSequencePlace(endPos - 1, endSide);
 			}
 		},
 	],
