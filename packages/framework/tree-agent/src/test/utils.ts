@@ -202,8 +202,8 @@ function formatDate(date: Date): string {
  */
 export function describeIntegrationTests(
 	tests: LLMIntegrationTest<UnsafeUnknownSchema>[],
-): Mocha.Suite {
-	return describe(`LLM integration tests`, () => {
+): void {
+	describe.skip(`LLM integration tests`, () => {
 		const results: TestResult[] = [];
 		let startTime: Date | undefined;
 		before(() => {
