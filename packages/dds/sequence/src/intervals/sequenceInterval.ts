@@ -290,7 +290,7 @@ export class SequenceIntervalClass implements SequenceInterval {
 	/**
 	 * {@inheritDoc IInterval.clone}
 	 */
-	public clone(): SequenceInterval {
+	public clone(): SequenceIntervalClass {
 		return new SequenceIntervalClass(
 			this.client,
 			this.start,
@@ -569,7 +569,7 @@ function createPositionReference(
 				referenceSequenceNumber: op.referenceSequenceNumber,
 				clientId: op.clientId,
 			});
-			segoff = getSlideToSegoff(segoff, slidingPreference, useNewSlidingBehavior);
+			segoff = getSlideToSegoff(segoff, slidingPreference, undefined, useNewSlidingBehavior);
 		}
 	} else {
 		assert(
@@ -603,7 +603,7 @@ export function createSequenceInterval(
 	op?: ISequencedDocumentMessage,
 	fromSnapshot?: boolean,
 	useNewSlidingBehavior: boolean = false,
-): SequenceInterval {
+): SequenceIntervalClass {
 	const { startPos, startSide, endPos, endSide } = endpointPosAndSide(
 		start ?? "start",
 		end ?? "end",

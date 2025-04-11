@@ -84,10 +84,10 @@ import {
 import {
 	ContainerMessageType,
 	type InboundSequencedContainerRuntimeMessage,
-	type OutboundContainerRuntimeMessage,
+	type LocalContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
-import type { BatchMessage, InboundMessageResult } from "../opLifecycle/index.js";
+import type { InboundMessageResult, LocalBatchMessage } from "../opLifecycle/index.js";
 import {
 	IPendingLocalState,
 	IPendingMessage,
@@ -543,10 +543,7 @@ describe("Runtime", () => {
 						const error = getFirstContainerError();
 						assert(isFluidError(error));
 						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
-						assert.strictEqual(
-							error.message,
-							`${expectedOrderSequentiallyErrorMessage}: 0x24c`,
-						);
+						assert.strictEqual(error.message, "0x24c");
 						assert.strictEqual(error.getTelemetryProperties().orderSequentiallyCalls, 1);
 					});
 
@@ -563,10 +560,7 @@ describe("Runtime", () => {
 						const error = getFirstContainerError();
 						assert(isFluidError(error));
 						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
-						assert.strictEqual(
-							error.message,
-							`${expectedOrderSequentiallyErrorMessage}: 0x24c`,
-						);
+						assert.strictEqual(error.message, "0x24c");
 						assert.strictEqual(error.getTelemetryProperties().orderSequentiallyCalls, 2);
 					});
 
@@ -585,10 +579,7 @@ describe("Runtime", () => {
 						const error = getFirstContainerError();
 						assert(isFluidError(error));
 						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
-						assert.strictEqual(
-							error.message,
-							`${expectedOrderSequentiallyErrorMessage}: 0x24c`,
-						);
+						assert.strictEqual(error.message, "0x24c");
 						assert.strictEqual(error.getTelemetryProperties().orderSequentiallyCalls, 2);
 					});
 
@@ -902,7 +893,7 @@ describe("Runtime", () => {
 					get pendingMessagesCount() {
 						return pendingMessages;
 					},
-					onFlushBatch: (batch: BatchMessage[], _csn?: number) =>
+					onFlushBatch: (batch: LocalBatchMessage[], _csn?: number) =>
 						(pendingMessages += batch.length),
 				} satisfies Partial<PendingStateManager> as unknown as PendingStateManager;
 			};
@@ -963,7 +954,10 @@ describe("Runtime", () => {
 			};
 
 			const addPendingMessage = (pendingStateManager: PendingStateManager): void =>
-				pendingStateManager.onFlushBatch([{ referenceSequenceNumber: 0 }], 1);
+				pendingStateManager.onFlushBatch(
+					[{ serializedOp: "", referenceSequenceNumber: 0 }],
+					1,
+				);
 
 			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(
@@ -1770,7 +1764,7 @@ describe("Runtime", () => {
 				// processing requires creation of data store context and runtime as well.
 				type ContainerRuntimeWithSubmit = Omit<ContainerRuntime, "submit"> & {
 					submit(
-						containerRuntimeMessage: OutboundContainerRuntimeMessage,
+						containerRuntimeMessage: LocalContainerRuntimeMessage,
 						localOpMetadata: unknown,
 						metadata: Record<string, unknown> | undefined,
 					): void;

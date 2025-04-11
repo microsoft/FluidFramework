@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Lazy } from "@fluidframework/core-utils/internal";
+import { assert, Lazy, fail } from "@fluidframework/core-utils/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable, Off } from "@fluidframework/core-interfaces";
 import type { InternalTreeNode, TreeNode, Unhydrated } from "./types.js";
@@ -19,14 +19,12 @@ import {
 	assertFlexTreeEntityNotFreed,
 	ContextSlot,
 	flexTreeSlot,
-	isFreedSymbol,
 	LazyEntity,
 	TreeStatus,
 	treeStatusFromAnchorCache,
 	type FlexTreeNode,
 } from "../../feature-libraries/index.js";
 import type { TreeNodeSchema } from "./treeNodeSchema.js";
-import { fail } from "../../util/index.js";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
 import { makeTree } from "../../feature-libraries/flex-tree/lazyNode.js";
@@ -156,15 +154,20 @@ export class TreeNodeKernel {
 						changedFields,
 					});
 
-					let n: UnhydratedFlexTreeNode | undefined = innerNode;
-					while (n !== undefined) {
-						const treeNode = unhydratedFlexTreeNodeToTreeNodeInternal.get(n);
+					let unhydratedNode: UnhydratedFlexTreeNode | undefined = innerNode;
+					while (unhydratedNode !== undefined) {
+						const treeNode = unhydratedFlexTreeNodeToTreeNodeInternal.get(unhydratedNode);
 						if (treeNode !== undefined) {
 							const kernel = getKernel(treeNode);
 							kernel.#unhydratedEvents.value.emit("subtreeChangedAfterBatch");
 						}
-						// This cast is safe because the parent (if it exists) of an unhydrated flex node is always another unhydrated flex node.
-						n = n.parentField.parent.parent as UnhydratedFlexTreeNode | undefined;
+						const parentNode: FlexTreeNode | undefined =
+							unhydratedNode.parentField.parent.parent;
+						assert(
+							parentNode === undefined || parentNode instanceof UnhydratedFlexTreeNode,
+							"Unhydrated node's parent should be an unhydrated node",
+						);
+						unhydratedNode = parentNode;
 					}
 				}),
 			};
@@ -244,7 +247,7 @@ export class TreeNodeKernel {
 		const flex = this.#hydrationState.anchorNode.slots.get(flexTreeSlot);
 		if (flex !== undefined) {
 			assert(flex instanceof LazyEntity, 0x9b4 /* Unexpected flex node implementation */);
-			if (flex[isFreedSymbol]()) {
+			if (flex.isFreed()) {
 				return TreeStatus.Deleted;
 			}
 		}
