@@ -9,11 +9,11 @@ import type { SessionId } from "@fluidframework/id-compressor";
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type {
-	PresenceNotifications,
-	PresenceNotificationsSchema,
-	PresenceStates,
-	PresenceStatesSchema,
-	PresenceWorkspaceAddress,
+	NotificationsWorkspace,
+	NotificationsWorkspaceSchema,
+	StatesWorkspace,
+	StatesWorkspaceSchema,
+	WorkspaceAddress,
 } from "./types.js";
 
 /**
@@ -22,36 +22,36 @@ import type {
  * @remarks
  * Each client once connected to a session is given a unique identifier for the
  * duration of the session. If a client disconnects and reconnects, it will
- * retain its identifier. Prefer use of {@link ISessionClient} as a way to
- * identify clients in a session. {@link ISessionClient.sessionId} will provide
+ * retain its identifier. Prefer use of {@link Attendee} as a way to
+ * identify clients in a session. {@link Attendee.attendeeId} will provide
  * the session ID.
  *
  * @alpha
  */
-export type ClientSessionId = SessionId & { readonly ClientSessionId: "ClientSessionId" };
+export type AttendeeId = SessionId & { readonly AttendeeId: "AttendeeId" };
 
 /**
- * The connection status of the {@link ISessionClient}.
+ * The connection status of the {@link Attendee}.
  *
  * @alpha
  */
-export const SessionClientStatus = {
+export const AttendeeStatus = {
 	/**
-	 * The session client is connected to the Fluid service.
+	 * The attendee is connected to the Fluid service.
 	 */
 	Connected: "Connected",
 
 	/**
-	 * The session client is not connected to the Fluid service.
+	 * The attendee is not connected to the Fluid service.
 	 */
 	Disconnected: "Disconnected",
 } as const;
 
 /**
- * Represents the connection status of an {@link ISessionClient}.
+ * Represents the connection status of an {@link Attendee}.
  *
  * This type can be either `'Connected'` or `'Disconnected'`, indicating whether
- * the session client is currently connected to the Fluid service.
+ * the attendee is currently connected to the Fluid service.
  *
  * When `'Disconnected'`:
  * - State changes are kept locally and communicated to others upon reconnect.
@@ -59,19 +59,18 @@ export const SessionClientStatus = {
  *
  * @alpha
  */
-export type SessionClientStatus =
-	(typeof SessionClientStatus)[keyof typeof SessionClientStatus];
+export type AttendeeStatus = (typeof AttendeeStatus)[keyof typeof AttendeeStatus];
 
 /**
  * A client within a Fluid session (period of container connectivity to service).
  *
  * @remarks
- * Note: This is very preliminary session client representation.
+ * Note: This is very preliminary attendee representation.
  *
- * `ISessionClient` should be used as key to distinguish between different
+ * `Attendee` should be used as key to distinguish between different
  * clients as they join, rejoin, and disconnect from a session. While a
- * client's {@link ClientConnectionId} from {@link ISessionClient.getConnectionStatus}
- * may change over time, `ISessionClient` will be fixed.
+ * client's {@link ClientConnectionId} from {@link Attendee.getConnectionStatus}
+ * may change over time, `Attendee` will be fixed.
  *
  * @privateRemarks
  * As this is evolved, pay attention to how this relates to Audience, Service
@@ -80,13 +79,11 @@ export type SessionClientStatus =
  * @sealed
  * @alpha
  */
-export interface ISessionClient<
-	SpecificSessionClientId extends ClientSessionId = ClientSessionId,
-> {
+export interface Attendee<SpecificAttendeeId extends AttendeeId = AttendeeId> {
 	/**
 	 * The session ID of the client that is stable over all connections.
 	 */
-	readonly sessionId: SpecificSessionClientId;
+	readonly attendeeId: SpecificAttendeeId;
 
 	/**
 	 * Get current client connection ID.
@@ -96,27 +93,27 @@ export interface ISessionClient<
 	 * @remarks
 	 * Connection ID will change on reconnect.
 	 *
-	 * If {@link ISessionClient.getConnectionStatus} is {@link (SessionClientStatus:variable).Disconnected}, this will represent the last known connection ID.
+	 * If {@link Attendee.getConnectionStatus} is {@link (AttendeeStatus:variable).Disconnected}, this will represent the last known connection ID.
 	 */
 	getConnectionId(): ClientConnectionId;
 
 	/**
-	 * Get connection status of session client.
+	 * Get connection status of attendee.
 	 *
-	 * @returns Connection status of session client.
+	 * @returns Connection status of attendee.
 	 *
 	 */
-	getConnectionStatus(): SessionClientStatus;
+	getConnectionStatus(): AttendeeStatus;
 }
 
 /**
- * Utility type limiting to a specific session client. (A session client with
+ * Utility type limiting to a specific attendee. (A attendee with
  * a specific session ID - not just any session ID.)
  *
  * @internal
  */
-export type SpecificSessionClient<SpecificSessionClientId extends ClientSessionId> =
-	string extends SpecificSessionClientId ? never : ISessionClient<SpecificSessionClientId>;
+export type SpecificAttendee<SpecificAttendeeId extends AttendeeId> =
+	string extends SpecificAttendeeId ? never : Attendee<SpecificAttendeeId>;
 
 /**
  * @sealed
@@ -128,14 +125,14 @@ export interface PresenceEvents {
 	 *
 	 * @eventProperty
 	 */
-	attendeeJoined: (attendee: ISessionClient) => void;
+	attendeeJoined: (attendee: Attendee) => void;
 
 	/**
 	 * Raised when client appears disconnected from session.
 	 *
 	 * @eventProperty
 	 */
-	attendeeDisconnected: (attendee: ISessionClient) => void;
+	attendeeDisconnected: (attendee: Attendee) => void;
 
 	/**
 	 * Raised when a workspace is activated within the session.
@@ -150,7 +147,7 @@ export interface PresenceEvents {
 	 * are missed.
 	 */
 	workspaceActivated: (
-		workspaceAddress: PresenceWorkspaceAddress,
+		workspaceAddress: WorkspaceAddress,
 		type: "States" | "Notifications" | "Unknown",
 	) => void;
 }
@@ -161,7 +158,7 @@ export interface PresenceEvents {
  * @sealed
  * @alpha
  */
-export interface IPresence {
+export interface Presence {
 	/**
 	 * Events for Presence.
 	 */
@@ -174,35 +171,35 @@ export interface IPresence {
 	 * Attendee states are dynamic and will change as clients join and leave
 	 * the session.
 	 */
-	getAttendees(): ReadonlySet<ISessionClient>;
+	getAttendees(): ReadonlySet<Attendee>;
 
 	/**
 	 * Lookup a specific attendee in the session.
 	 *
 	 * @param clientId - Client connection or session ID
 	 */
-	getAttendee(clientId: ClientConnectionId | ClientSessionId): ISessionClient;
+	getAttendee(clientId: ClientConnectionId | AttendeeId): Attendee;
 
 	/**
-	 * Get this client's session client.
+	 * Get this client's attendee.
 	 *
-	 * @returns This client's session client.
+	 * @returns This client's attendee.
 	 */
-	getMyself(): ISessionClient;
+	getMyself(): Attendee;
 
 	/**
-	 * Acquires a PresenceStates workspace from store or adds new one.
+	 * Acquires a StatesWorkspace from store or adds new one.
 	 *
-	 * @param workspaceAddress - Address of the requested PresenceStates Workspace
+	 * @param workspaceAddress - Address of the requested StatesWorkspace
 	 * @param requestedContent - Requested states for the workspace
 	 * @param controls - Optional settings for default broadcast controls
-	 * @returns A PresenceStates workspace
+	 * @returns A StatesWorkspace
 	 */
-	getStates<StatesSchema extends PresenceStatesSchema>(
-		workspaceAddress: PresenceWorkspaceAddress,
+	getStates<StatesSchema extends StatesWorkspaceSchema>(
+		workspaceAddress: WorkspaceAddress,
 		requestedContent: StatesSchema,
 		controls?: BroadcastControlSettings,
-	): PresenceStates<StatesSchema>;
+	): StatesWorkspace<StatesSchema>;
 
 	/**
 	 * Acquires a Notifications workspace from store or adds new one.
@@ -211,8 +208,8 @@ export interface IPresence {
 	 * @param requestedContent - Requested notifications for the workspace
 	 * @returns A Notifications workspace
 	 */
-	getNotifications<NotificationsSchema extends PresenceNotificationsSchema>(
-		notificationsId: PresenceWorkspaceAddress,
+	getNotifications<NotificationsSchema extends NotificationsWorkspaceSchema>(
+		notificationsId: WorkspaceAddress,
 		requestedContent: NotificationsSchema,
-	): PresenceNotifications<NotificationsSchema>;
+	): NotificationsWorkspace<NotificationsSchema>;
 }

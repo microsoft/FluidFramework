@@ -80,6 +80,7 @@ export class NexusResources implements core.IResources {
 		public clusterDrainingChecker?: core.IClusterDrainingChecker,
 		public collaborationSessionTracker?: core.ICollaborationSessionTracker,
 		public readinessCheck?: IReadinessCheck,
+		public denyList?: core.IDenyList,
 	) {}
 
 	public async dispose(): Promise<void> {
@@ -582,6 +583,12 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			  );
 
 		const startupCheck = new StartupCheck();
+		const documentsDenyListConfig = config.get("documentDenyList");
+		const tenantsDenyListConfig = config.get("tenantsDenyList");
+		const denyList: core.IDenyList = new utils.DenyList(
+			tenantsDenyListConfig,
+			documentsDenyListConfig,
+		);
 
 		return new NexusResources(
 			config,
@@ -613,6 +620,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			customizations?.clusterDrainingChecker,
 			collaborationSessionTracker,
 			customizations?.readinessCheck,
+			denyList,
 		);
 	}
 }
@@ -646,6 +654,7 @@ export class NexusRunnerFactory implements core.IRunnerFactory<NexusResources> {
 			resources.clusterDrainingChecker,
 			resources.collaborationSessionTracker,
 			resources.readinessCheck,
+			resources.denyList,
 		);
 	}
 }
