@@ -306,13 +306,15 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 					};
 					// Cache the token in the invalid token cache
 					// to avoid hitting the endpoint again with the same token.
-					this.invalidTokenCache?.set(token, JSON.stringify(errorToCache)).catch((e) => {
-						Lumberjack.error(
-							"Failed to set token in invalid token cache",
-							{ tenantId },
-							e,
-						);
-					});
+					this.invalidTokenCache
+						?.set(token, JSON.stringify(errorToCache))
+						.catch((err) => {
+							Lumberjack.error(
+								"Failed to set token in invalid token cache",
+								{ tenantId },
+								err,
+							);
+						});
 				}
 			}
 			throw error;
