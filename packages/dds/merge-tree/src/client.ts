@@ -1345,7 +1345,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		);
 	}
 
-	private lastNormalizationRefSeq: number | undefined;
+	private lastNormalization: undefined | { refSeq: number; localRefSeq: number };
 
 	private pendingRebase: DoublyLinkedList<SegmentGroup> | undefined;
 
@@ -1384,10 +1384,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			this.pendingRebase = this._mergeTree.pendingSegments.splice(firstGroupNode);
 		}
 
-		const rebaseTo = this.getCollabWindow().currentSeq;
+		const collabWindow = this.getCollabWindow();
 		if (
-			this.lastNormalizationRefSeq === undefined ||
-			rebaseTo !== this.lastNormalizationRefSeq
+			this.lastNormalization === undefined ||
+			collabWindow.currentSeq !== this.lastNormalization.refSeq ||
+			collabWindow.localSeq !== this.lastNormalization.localRefSeq
 		) {
 			// Compute obliterate endpoint destinations before segments are normalized.
 			// Segment normalization can affect what should be the semantically correct segments for the endpoints to be placed on.
@@ -1404,7 +1405,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			this.emit("normalize", this);
 
 			this._mergeTree.normalizeSegmentsOnRebase();
-			this.lastNormalizationRefSeq = rebaseTo;
+			this.lastNormalization = {
+				refSeq: collabWindow.currentSeq,
+				localRefSeq: collabWindow.localSeq,
+			};
 		}
 
 		const opList: IMergeTreeDeltaOp[] = [];

@@ -48,8 +48,8 @@ import {
 	ForestTypeOptimized,
 	ForestTypeReference,
 	getBranch,
+	type ISharedTree,
 	type ITreePrivate,
-	type SharedTree,
 	Tree,
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
@@ -92,15 +92,22 @@ import {
 	TreeFactory,
 	SharedTree as SharedTreeKind,
 } from "../../treeFactory.js";
-import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import {
+	SharedObjectCore,
+	type ISharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
 import { TestAnchor } from "../testAnchor.js";
 // eslint-disable-next-line import/no-internal-modules
 import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/leafNodeSchema.js";
 import { singleJsonCursor } from "../json/index.js";
 import { AttachState } from "@fluidframework/container-definitions";
 import { JsonAsTree } from "../../jsonDomainSchema.js";
-// eslint-disable-next-line import/no-internal-modules
-import { toSimpleTreeSchema } from "../../simple-tree/api/index.js";
+import {
+	asTreeViewAlpha,
+	toSimpleTreeSchema,
+	type ITree,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../simple-tree/api/index.js";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 
 const enableSchemaValidation = true;
@@ -108,7 +115,7 @@ const enableSchemaValidation = true;
 const DebugSharedTree = configuredSharedTree({
 	jsonValidator: typeboxValidator,
 	forest: ForestTypeReference,
-}) as ISharedObjectKind<unknown> as ISharedObjectKind<SharedTree>;
+}) as ISharedObjectKind<unknown> as ISharedObjectKind<ISharedTree>;
 
 class MockSharedTreeRuntime extends MockFluidDataStoreRuntime {
 	public constructor() {
@@ -661,6 +668,7 @@ describe("SharedTree", () => {
 		view.root.insertAtEnd("b");
 
 		const tree2 = sharedTreeFactory.create(runtime, "tree2");
+		assert(tree2 instanceof SharedObjectCore);
 		await tree2.load({
 			deltaConnection: runtime.createDeltaConnection(),
 			objectStorage: MockStorage.createFromSummary((await tree.summarize()).summary),
@@ -727,7 +735,7 @@ describe("SharedTree", () => {
 	});
 
 	it("can summarize local edits in the attach summary", async () => {
-		const onCreate = (tree: SharedTree) => {
+		const onCreate = (tree: ITreePrivate) => {
 			const view = tree.viewWith(
 				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
 			);
@@ -764,7 +772,7 @@ describe("SharedTree", () => {
 	});
 
 	it("can tolerate local edits submitted as part of a transaction in the attach summary", async () => {
-		const onCreate = (tree: SharedTree) => {
+		const onCreate = (tree: ITreePrivate) => {
 			// Schematize uses a transaction as well
 			const view = tree.viewWith(
 				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
@@ -804,7 +812,7 @@ describe("SharedTree", () => {
 	// AB#5745: Enable this test once it passes.
 	// TODO: above mentioned task is done, but this still fails. Fix it.
 	it.skip("can tolerate incomplete transactions when attaching", async () => {
-		const onCreate = (tree: SharedTree) => {
+		const onCreate = (tree: ITreePrivate) => {
 			const view = tree.viewWith(
 				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
 			);
@@ -902,7 +910,7 @@ describe("SharedTree", () => {
 	});
 
 	it("can process changes while detached", async () => {
-		const onCreate = (t: SharedTree) => {
+		const onCreate = (t: ITree) => {
 			const viewInit = t.viewWith(
 				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
 			);
@@ -1781,7 +1789,7 @@ describe("SharedTree", () => {
 	});
 
 	it("process changes while detached", async () => {
-		const onCreate = (parentTree: SharedTree) => {
+		const onCreate = (parentTree: ISharedTree) => {
 			const parentView = parentTree.viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
@@ -2209,7 +2217,9 @@ describe("SharedTree", () => {
 		const tree = sharedTreeFactory.create(runtime, "tree");
 		const runtimeFactory = new MockContainerRuntimeFactory();
 		runtimeFactory.createContainerRuntime(runtime);
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: StringArray }));
+		const view = asTreeViewAlpha(
+			tree.viewWith(new TreeViewConfiguration({ schema: StringArray })),
+		);
 		view.initialize([]);
 		assert.throws(
 			() => {
@@ -2230,6 +2240,7 @@ describe("SharedTree", () => {
 		const schema = sf.object("myObject", {});
 		const config = new TreeViewConfiguration({ schema, enableSchemaValidation });
 		const view = tree.viewWith(config);
+		assert(view instanceof SchematizingSimpleTreeView);
 
 		view.initialize({});
 		assert.equal(view.breaker, tree.kernel.breaker);

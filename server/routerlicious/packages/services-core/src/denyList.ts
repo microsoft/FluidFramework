@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// TODO: Remove duplicate code in Historian
 /*
  * Interface for a deny list. The goal is to deny requests for given tenantId, documentId
  * that have potential to cause service disruption.

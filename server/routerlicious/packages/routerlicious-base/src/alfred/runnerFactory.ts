@@ -241,7 +241,30 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		// This.nodeTracker.on("invalidate", (id) => this.emit("invalidate", id));
 
 		const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
-		const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl);
+		const redisClientConnectionManagerForInvalidTokenCache =
+			customizations?.redisClientConnectionManagerForInvalidTokenCache
+				? customizations.redisClientConnectionManagerForInvalidTokenCache
+				: new RedisClientConnectionManager(
+						undefined,
+						redisConfig2,
+						redisConfig2.enableClustering,
+						redisConfig2.slotsRefreshTimeout,
+						undefined /* retryDelays */,
+						redisConfig2.enableVerboseErrorLogging,
+				  );
+		redisClientConnectionManagers.push(redisClientConnectionManagerForInvalidTokenCache);
+		const redisCacheForInvalidToken = new services.RedisCache(
+			redisClientConnectionManagerForInvalidTokenCache,
+			{
+				expireAfterSeconds: redisConfig2.keyExpireAfterSeconds,
+				prefix: Constants.invalidTokenCachePrefix,
+			},
+		);
+		const tenantManager = new services.TenantManager(
+			authEndpoint,
+			internalHistorianUrl,
+			redisCacheForInvalidToken,
+		);
 
 		// Redis connection for throttling.
 		const redisConfigForThrottling = config.get("redisForThrottling");

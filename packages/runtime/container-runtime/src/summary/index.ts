@@ -4,31 +4,6 @@
  */
 
 export {
-	IOrderedClientCollection,
-	IOrderedClientElection,
-	ISerializedElection,
-	ITrackedClient,
-	OrderedClientCollection,
-	OrderedClientElection,
-} from "./orderedClientElection.js";
-export {
-	defaultMaxAttemptsForSubmitFailures,
-	RunningSummarizer,
-} from "./runningSummarizer.js";
-export {
-	ICancellableSummarizerController,
-	neverCancelledSummaryToken,
-	RunWhileConnectedCoordinator,
-} from "./runWhileConnectedCoordinator.js";
-export { Summarizer } from "./summarizer.js";
-export {
-	ISummarizerClientElection,
-	ISummarizerClientElectionEvents,
-	SummarizerClientElection,
-	summarizerClientType,
-} from "./summarizerClientElection.js";
-export { SummarizeHeuristicData, SummarizeHeuristicRunner } from "./summarizerHeuristics.js";
-export {
 	createRootSummarizerNode,
 	createRootSummarizerNodeWithGC,
 	IRefreshSummaryResult,
@@ -36,6 +11,7 @@ export {
 	IRootSummarizerNodeWithGC,
 } from "./summarizerNode/index.js";
 export {
+	summarizerClientType,
 	IConnectableRuntime,
 	IGeneratedSummaryStats,
 	IRefreshSummaryAckOptions,
@@ -43,19 +19,14 @@ export {
 	ISummarizeAttempt,
 	ISummarizeHeuristicData,
 	ISummarizer,
-	ISummarizeResults,
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
 	ISummaryCancellationToken,
 	SubmitSummaryResult,
-	EnqueueSummarizeResult,
-	IAckSummaryResult,
 	IBaseSummarizeResult,
-	IBroadcastSummaryResult,
 	ICancellationToken,
 	IEnqueueSummarizeOptions,
 	IGenerateSummaryTreeResult,
-	INackSummaryResult,
 	IOnDemandSummarizeOptions,
 	ISubmitSummaryOpResult,
 	ISummarizeOptions,
@@ -72,6 +43,14 @@ export {
 	type ISummaryBaseConfiguration,
 } from "./summarizerTypes.js";
 export {
+	IOrderedClientCollection,
+	IOrderedClientElection,
+	ISerializedElection,
+	ITrackedClient,
+	OrderedClientCollection,
+	OrderedClientElection,
+} from "./orderedClientElection.js";
+export {
 	IAckedSummary,
 	ISummaryCollectionOpEvents,
 	ISummaryOpMessage,
@@ -83,6 +62,11 @@ export {
 	OpActionEventListener,
 	OpActionEventName,
 } from "./summaryCollection.js";
+export {
+	ISummarizerClientElection,
+	ISummarizerClientElectionEvents,
+	SummarizerClientElection,
+} from "./summarizerClientElection.js";
 export {
 	aliasBlobName,
 	chunksBlobName,
@@ -125,7 +109,11 @@ export {
 	IDocumentSchemaChangeMessage,
 	IDocumentSchemaFeatures,
 } from "./documentSchema.js";
-export { getFailMessage, RetriableSummaryError, SummarizeReason } from "./summaryGenerator.js";
+export {
+	getFailMessage,
+	RetriableSummaryError,
+	SummarizeReason,
+} from "./summarizerUtils.js";
 export {
 	IConnectedEvents,
 	IConnectedState,
@@ -133,3 +121,19 @@ export {
 	SummaryManager,
 	SummaryManagerState,
 } from "./summaryManager.js";
+export {
+	defaultMaxAttempts,
+	defaultMaxAttemptsForSubmitFailures,
+	ICancellableSummarizerController,
+	neverCancelledSummaryToken,
+	RunWhileConnectedCoordinator,
+	Summarizer,
+	IBroadcastSummaryResult,
+	ISummarizeResults,
+	EnqueueSummarizeResult,
+	IAckSummaryResult,
+	INackSummaryResult,
+	RunningSummarizer,
+	SummarizeHeuristicData,
+	SummarizeHeuristicRunner,
+} from "./summaryDelayLoadedModule/index.js";

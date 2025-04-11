@@ -33,6 +33,7 @@ export interface INexusResourcesCustomizations {
 	redisClientConnectionManagerForLogging?: IRedisClientConnectionManager;
 	redisClientConnectionManagerForSub?: IRedisClientConnectionManager;
 	redisClientConnectionManagerForPub?: IRedisClientConnectionManager;
+	redisClientConnectionManagerForInvalidTokenCache?: IRedisClientConnectionManager;
 	customCreateSocketIoAdapter?: SocketIoAdapterCreator;
 	readinessCheck?: IReadinessCheck;
 }

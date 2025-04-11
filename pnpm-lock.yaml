@@ -154,8 +154,8 @@ importers:
         specifier: ^11.0.0
         version: 11.1.0
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -184,9 +184,6 @@ importers:
       '@types/jsrsasign':
         specifier: ^10.5.12
         version: 10.5.15
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
@@ -280,9 +277,6 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.3(@types/react@18.3.15)
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
@@ -293,8 +287,8 @@ importers:
         specifier: ^0.0.1
         version: 0.0.1
       next:
-        specifier: ^14.2.8
-        version: 14.2.20(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.82.0)
+        specifier: ^14.2.27
+        version: 14.2.27(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.82.0)
       notistack:
         specifier: ^3.0.1
         version: 3.0.1(csstype@3.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -320,8 +314,8 @@ importers:
         specifier: ~5.4.5
         version: 5.4.5
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
 
   examples/apps/attributable-map:
     dependencies:
@@ -462,8 +456,8 @@ importers:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -716,8 +710,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.97.1)
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -752,9 +746,6 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.3(@types/react@18.3.15)
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -879,8 +870,8 @@ importers:
         specifier: ^0.20.0
         version: 0.20.2
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -918,9 +909,6 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.3(@types/react@18.3.15)
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -1181,8 +1169,8 @@ importers:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -1217,9 +1205,6 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.3(@types/react@18.3.15)
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -1517,8 +1502,8 @@ importers:
         specifier: ^2.1.0
         version: 2.1.0
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -1553,9 +1538,6 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.3(@types/react@18.3.15)
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -3852,8 +3834,8 @@ importers:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -3891,9 +3873,6 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.3(@types/react@18.3.15)
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -4332,8 +4311,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/framework/fluid-framework
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -4383,9 +4362,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -4728,8 +4704,8 @@ importers:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -4758,9 +4734,6 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.3(@types/react@18.3.15)
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -4886,8 +4859,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/drivers/tinylicious-driver
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -4910,9 +4883,6 @@ importers:
       '@microsoft/api-extractor':
         specifier: 7.50.1
         version: 7.50.1(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.10.1)
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
@@ -5004,8 +4974,8 @@ importers:
         specifier: ^0.1.0
         version: 0.1.0
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
       webpack-dev-server:
         specifier: ~4.15.2
         version: 4.15.2(webpack-cli@5.1.4)(webpack@5.97.1)
@@ -5043,9 +5013,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -5279,8 +5246,8 @@ importers:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -5315,9 +5282,6 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.3(@types/react@18.3.15)
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -5460,8 +5424,8 @@ importers:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -5496,9 +5460,6 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.3(@types/react@18.3.15)
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -5623,8 +5584,8 @@ importers:
         specifier: ^2.1.0
         version: 2.1.0
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -5656,9 +5617,6 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.3(@types/react@18.3.15)
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -5901,8 +5859,8 @@ importers:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -6131,7 +6089,7 @@ importers:
         specifier: ^4.17.21
         version: 4.17.21
       semver:
-        specifier: ^7.5.3
+        specifier: ^7.7.1
         version: 7.7.1
       traverse:
         specifier: 0.6.6
@@ -6162,8 +6120,8 @@ importers:
         specifier: ^18.19.0
         version: 18.19.67
       '@types/semver':
-        specifier: ^7.5.0
-        version: 7.5.8
+        specifier: ^7.7.0
+        version: 7.7.0
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
@@ -6228,7 +6186,7 @@ importers:
         specifier: 3.0.1
         version: 3.0.1
       semver:
-        specifier: ^7.5.3
+        specifier: ^7.7.1
         version: 7.7.1
       traverse:
         specifier: 0.6.6
@@ -6268,8 +6226,8 @@ importers:
         specifier: ^18.19.0
         version: 18.19.67
       '@types/semver':
-        specifier: ^7.5.0
-        version: 7.5.8
+        specifier: ^7.7.0
+        version: 7.7.0
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
@@ -6364,8 +6322,8 @@ importers:
         specifier: ^2.0.4
         version: 2.1.0
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -6427,9 +6385,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       chai:
         specifier: ^4.2.0
         version: 4.5.0
@@ -6482,7 +6437,7 @@ importers:
         specifier: ^4.17.21
         version: 4.17.21
       semver:
-        specifier: ^7.5.3
+        specifier: ^7.7.1
         version: 7.7.1
       traverse:
         specifier: 0.6.6
@@ -6994,8 +6949,8 @@ importers:
         specifier: ^6.0.0
         version: 6.0.0
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -7051,9 +7006,6 @@ importers:
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -7915,8 +7867,8 @@ importers:
         specifier: workspace:~
         version: link:../shared-object-base
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -7954,9 +7906,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -8405,8 +8354,8 @@ importers:
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -8447,9 +8396,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -8717,8 +8663,8 @@ importers:
         specifier: ^2.1.0-0
         version: 2.1.0-0
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -8774,9 +8720,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -8850,8 +8793,8 @@ importers:
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -8895,9 +8838,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       benchmark:
         specifier: ^2.1.4
         version: 2.1.4
@@ -9186,8 +9126,8 @@ importers:
         specifier: ^10.8.2
         version: 10.8.2
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -9219,9 +9159,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -9301,8 +9238,8 @@ importers:
         specifier: ^1.2.0
         version: 1.2.1
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -9367,9 +9304,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       ajv:
         specifier: ^8.12.0
         version: 8.17.1
@@ -9747,8 +9681,8 @@ importers:
         specifier: ^11.0.0
         version: 11.1.0
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -9786,9 +9720,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -9856,8 +9787,8 @@ importers:
         specifier: ~4.7.5
         version: 4.7.5
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -9895,9 +9826,6 @@ importers:
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -10169,8 +10097,8 @@ importers:
         specifier: ~4.7.5
         version: 4.7.5
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -10211,9 +10139,6 @@ importers:
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       axios:
         specifier: ^1.8.4
         version: 1.8.4(debug@4.4.0)
@@ -10354,8 +10279,8 @@ importers:
         specifier: ^11.0.0
         version: 11.1.0
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -10393,9 +10318,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
@@ -10454,8 +10376,8 @@ importers:
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -10484,9 +10406,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
@@ -10527,8 +10446,8 @@ importers:
         specifier: ^0.1.1
         version: 0.1.1(typescript@5.4.5)(zod@3.24.0)
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
       zod:
         specifier: ^3.23.8
         version: 3.24.0
@@ -10569,9 +10488,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -10936,8 +10852,8 @@ importers:
         specifier: ^2.8.11
         version: 2.8.18(tslib@1.14.1)
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -10978,9 +10894,6 @@ importers:
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       chai:
         specifier: ^4.2.0
         version: 4.5.0
@@ -11849,8 +11762,8 @@ importers:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -11900,9 +11813,6 @@ importers:
       '@types/ungap__structured-clone':
         specifier: ^1.2.0
         version: 1.2.0
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -11961,8 +11871,8 @@ importers:
         specifier: ^0.2.0
         version: 0.2.0
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -12000,9 +11910,6 @@ importers:
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -12137,8 +12044,8 @@ importers:
         specifier: ^0.2.0
         version: 0.2.0
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -12194,9 +12101,6 @@ importers:
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -12322,8 +12226,8 @@ importers:
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -12367,9 +12271,6 @@ importers:
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -12480,8 +12381,8 @@ importers:
         specifier: ^1.8.0
         version: 1.8.0
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -12522,9 +12423,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -12762,8 +12660,8 @@ importers:
         specifier: ^11.0.0
         version: 11.1.0
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -12801,9 +12699,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -12904,9 +12799,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
@@ -12938,8 +12830,8 @@ importers:
         specifier: ~5.4.5
         version: 5.4.5
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
 
   packages/service-clients/end-to-end-tests/azure-client:
     dependencies:
@@ -13037,8 +12929,8 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -13067,9 +12959,6 @@ importers:
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -13152,8 +13041,8 @@ importers:
         specifier: ^18.0.1
         version: 18.0.1
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -13176,9 +13065,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -13234,8 +13120,8 @@ importers:
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -13270,9 +13156,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -13629,8 +13512,8 @@ importers:
         specifier: workspace:~
         version: link:../../dds/tree
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -13641,9 +13524,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -14144,11 +14024,11 @@ importers:
         specifier: ^1.8.4
         version: 1.8.4(debug@4.4.0)
       semver:
-        specifier: ^7.5.3
+        specifier: ^7.7.1
         version: 7.7.1
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -14174,9 +14054,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
@@ -14334,7 +14211,7 @@ importers:
         specifier: ^10.8.2
         version: 10.8.2
       semver:
-        specifier: ^7.5.3
+        specifier: ^7.7.1
         version: 7.7.1
       sinon:
         specifier: ^18.0.1
@@ -14346,8 +14223,8 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -14376,9 +14253,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -14661,8 +14535,8 @@ importers:
         specifier: ^10.8.2
         version: 10.8.2
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -14703,9 +14577,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -14830,7 +14701,7 @@ importers:
         specifier: ^4.1.2
         version: 4.1.2
       semver:
-        specifier: ^7.5.3
+        specifier: ^7.7.1
         version: 7.7.1
     devDependencies:
       '@arethetypeswrong/cli':
@@ -14867,11 +14738,8 @@ importers:
         specifier: ^18.19.0
         version: 18.19.67
       '@types/semver':
-        specifier: ^7.5.0
-        version: 7.5.8
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
+        specifier: ^7.7.0
+        version: 7.7.0
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -14909,8 +14777,8 @@ importers:
         specifier: ~5.4.5
         version: 5.4.5
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
       webpack:
         specifier: ^5.94.0
         version: 5.97.1(webpack-cli@5.1.4)
@@ -15078,9 +14946,6 @@ importers:
       '@microsoft/1ds-post-js':
         specifier: ^3.2.13
         version: 3.2.18(tslib@1.14.1)
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -15091,8 +14956,8 @@ importers:
         specifier: ^1.10.0
         version: 1.14.1
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -16194,8 +16059,8 @@ importers:
         specifier: ^4.3.4
         version: 4.4.0(supports-color@8.1.1)
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -16236,9 +16101,6 @@ importers:
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -18596,59 +18458,59 @@ packages:
       '@types/react':
         optional: true
 
-  '@next/env@14.2.20':
-    resolution: {integrity: sha512-JfDpuOCB0UBKlEgEy/H6qcBSzHimn/YWjUHzKl1jMeUO+QVRdzmTTl8gFJaNO87c8DXmVKhFCtwxQ9acqB3+Pw==}
+  '@next/env@14.2.27':
+    resolution: {integrity: sha512-VLGHu7aBMK0rmSEPjx6qb4njGYfEfN5HpeYV32II1dNZZvPxqa+RfWVgPf4q6hmicavceAGeQneTxofx7Zm/yw==}
 
-  '@next/swc-darwin-arm64@14.2.20':
-    resolution: {integrity: sha512-WDfq7bmROa5cIlk6ZNonNdVhKmbCv38XteVFYsxea1vDJt3SnYGgxLGMTXQNfs5OkFvAhmfKKrwe7Y0Hs+rWOg==}
+  '@next/swc-darwin-arm64@14.2.27':
+    resolution: {integrity: sha512-WKJsKqY1f8NkwcfVbUtoTjJ5e8Q2kEFhjM7tVFA3jqesetBR2EegUTed1Ov7lZebQ7XRrphAg665egiCLc9+Iw==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [darwin]
 
-  '@next/swc-darwin-x64@14.2.20':
-    resolution: {integrity: sha512-XIQlC+NAmJPfa2hruLvr1H1QJJeqOTDV+v7tl/jIdoFvqhoihvSNykLU/G6NMgoeo+e/H7p/VeWSOvMUHKtTIg==}
+  '@next/swc-darwin-x64@14.2.27':
+    resolution: {integrity: sha512-fsXAM07rt7FQ/dpPFk+YZ8LVQ48xP37KzPFAwdQFmVzNLgizdUyNSg9zwu7l0ziMtHFBofYgBXayg9qAxIhorQ==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [darwin]
 
-  '@next/swc-linux-arm64-gnu@14.2.20':
-    resolution: {integrity: sha512-pnzBrHTPXIMm5QX3QC8XeMkpVuoAYOmyfsO4VlPn+0NrHraNuWjdhe+3xLq01xR++iCvX+uoeZmJDKcOxI201Q==}
+  '@next/swc-linux-arm64-gnu@14.2.27':
+    resolution: {integrity: sha512-yMIvV5nTOk4p0TDhd9DU6QswEm8YjZnr1o9ZI7A6jh25JHvPsIvjgyTVSlnrGFKlNNtOOJCIv5mwVU7+4VZvsg==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
 
-  '@next/swc-linux-arm64-musl@14.2.20':
-    resolution: {integrity: sha512-WhJJAFpi6yqmUx1momewSdcm/iRXFQS0HU2qlUGlGE/+98eu7JWLD5AAaP/tkK1mudS/rH2f9E3WCEF2iYDydQ==}
+  '@next/swc-linux-arm64-musl@14.2.27':
+    resolution: {integrity: sha512-gpOtTwE9GUkp+VNPwTYFn1fN1UINQTulbgO8UJzBgi77g/+T+yQxfBsKUy2H96aKjoMT/AYfn3yyomNXXVoZZg==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
 
-  '@next/swc-linux-x64-gnu@14.2.20':
-    resolution: {integrity: sha512-ao5HCbw9+iG1Kxm8XsGa3X174Ahn17mSYBQlY6VGsdsYDAbz/ZP13wSLfvlYoIDn1Ger6uYA+yt/3Y9KTIupRg==}
+  '@next/swc-linux-x64-gnu@14.2.27':
+    resolution: {integrity: sha512-b7bogYfYyutEhyDST5qpBkmVENZz1mVOO2632KerJjwWgr2cdycAPU33VmpTVvTs/fT8+oeoUuZ31aQV6cUhpw==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
 
-  '@next/swc-linux-x64-musl@14.2.20':
-    resolution: {integrity: sha512-CXm/kpnltKTT7945np6Td3w7shj/92TMRPyI/VvveFe8+YE+/YOJ5hyAWK5rpx711XO1jBCgXl211TWaxOtkaA==}
+  '@next/swc-linux-x64-musl@14.2.27':
+    resolution: {integrity: sha512-yGZX038wBDSRJ7tbZ6OFZtCUvLXZDVpw9rEgNUK/0PL++65hENaiMXhxJtupeCFqzHdMuJwrCnEW29saF4NmEw==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
 
-  '@next/swc-win32-arm64-msvc@14.2.20':
-    resolution: {integrity: sha512-upJn2HGQgKNDbXVfIgmqT2BN8f3z/mX8ddoyi1I565FHbfowVK5pnMEwauvLvaJf4iijvuKq3kw/b6E9oIVRWA==}
+  '@next/swc-win32-arm64-msvc@14.2.27':
+    resolution: {integrity: sha512-yRY9RzPpk+Jex4DthdKja8C3evh6jB+22AeVd6yTbcnGAFGXQWJTs6DfEcEfeFpqIEcIGbWYq7pinz6vRv7tJA==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [win32]
 
-  '@next/swc-win32-ia32-msvc@14.2.20':
-    resolution: {integrity: sha512-igQW/JWciTGJwj3G1ipalD2V20Xfx3ywQy17IV0ciOUBbFhNfyU1DILWsTi32c8KmqgIDviUEulW/yPb2FF90w==}
+  '@next/swc-win32-ia32-msvc@14.2.27':
+    resolution: {integrity: sha512-VSqDGpoKoUgkE2Ba4/89ZchktDOwPhKy3HgQgTf3gOhK/ZEibujLJN4qzp3rSIadn4cXUID3PmuEEM6uRPA7nQ==}
     engines: {node: '>= 10'}
     cpu: [ia32]
     os: [win32]
 
-  '@next/swc-win32-x64-msvc@14.2.20':
-    resolution: {integrity: sha512-AFmqeLW6LtxeFTuoB+MXFeM5fm5052i3MU6xD0WzJDOwku6SkZaxb1bxjBaRC8uNqTRTSPl0yMFtjNowIVI67w==}
+  '@next/swc-win32-x64-msvc@14.2.27':
+    resolution: {integrity: sha512-bK46G4uS5SVlq88FnxyupRuuaCfHPtB/7heBRAZCiHD9GdVktadjiQPCzlXWTKgv6pJxP8bE7J9GGDwodtn9Mw==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
@@ -19597,8 +19459,8 @@ packages:
   '@types/semver-utils@1.1.3':
     resolution: {integrity: sha512-T+YwkslhsM+CeuhYUxyAjWm7mJ5am/K10UX40RuA6k6Lc7eGtq8iY2xOzy7Vq0GOqhl/xZl5l2FwURZMTPTUww==}
 
-  '@types/semver@7.5.8':
-    resolution: {integrity: sha512-I8EUhyrgfLrcTkzV3TSsGyl1tSuPrEDzr0yd5m90UgNxQkyDXULk3b6MlQqTCpZpNtWe1K0hzclnZkTcLBe2UQ==}
+  '@types/semver@7.7.0':
+    resolution: {integrity: sha512-k107IF4+Xr7UHjwDc7Cfd6PRQfbdkiRabXGRjo07b4WyPahFBZCZ1sE+BNxYIJPPg73UkfOsVOLwqVc/6ETrIA==}
 
   '@types/send@0.17.4':
     resolution: {integrity: sha512-x2EM6TJOybec7c52BX0ZspPodMsQUd5L6PRwOunVyVUhXiBSKf3AezDL8Dgvgt5o0UfKNfuA0eMLr2wLT4AiBA==}
@@ -19650,9 +19512,6 @@ packages:
 
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
-
-  '@types/uuid@9.0.8':
-    resolution: {integrity: sha512-jg+97EGIcY9AGHJJRaaPVgetKDsrTgbRjQ5Msgjh/DQKEFl0DtyRr/VCOyD1T2R1MNeWPK/u7JoGhlDZnKBAfA==}
 
   '@types/valid-url@1.0.7':
     resolution: {integrity: sha512-tgsWVG80dM5PVEBSbXUttPJTBCOo0IKbBh4R4z/SHsC5C81A3aaUH4fsbj+JYk7fopApU/Mao1c0EWTE592TSg==}
@@ -24605,8 +24464,8 @@ packages:
     resolution: {integrity: sha512-dBpDMdxv9Irdq66304OLfEmQ9tbNRFnFTuZiLo+bD+r332bBmMJ8GBLXklIXXgxd3+v9+KUnZaUR5PJMa75Gsg==}
     engines: {node: '>= 0.4.0'}
 
-  next@14.2.20:
-    resolution: {integrity: sha512-yPvIiWsiyVYqJlSQxwmzMIReXn5HxFNq4+tlVQ812N1FbvhmE+fDpIAD7bcS2mGYQwPJ5vAsQouyme2eKsxaug==}
+  next@14.2.27:
+    resolution: {integrity: sha512-xmTsnu6rbXVaupRmU2k3BHVpQp7kK+/Ge9XYZlwXQNS2IPP/U9ToDoO6tTSzZIV36fmDBnwKqBUd7KuFXTi0Mw==}
     engines: {node: '>=18.17.0'}
     hasBin: true
     peerDependencies:
@@ -27441,6 +27300,10 @@ packages:
   utils-merge@1.0.1:
     resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
+
+  uuid@11.1.0:
+    resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
+    hasBin: true
 
   uuid@8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
@@ -31300,7 +31163,7 @@ snapshots:
       '@fluidframework/server-services-client': 5.0.0
       '@fluidframework/server-services-core': 5.0.0
       '@fluidframework/server-services-telemetry': 5.0.0
-      '@types/semver': 7.5.8
+      '@types/semver': 7.7.0
       assert: 2.1.0
       async: 3.2.6
       axios: 1.8.4(debug@4.4.0)
@@ -32806,33 +32669,33 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.3.15
 
-  '@next/env@14.2.20': {}
+  '@next/env@14.2.27': {}
 
-  '@next/swc-darwin-arm64@14.2.20':
+  '@next/swc-darwin-arm64@14.2.27':
     optional: true
 
-  '@next/swc-darwin-x64@14.2.20':
+  '@next/swc-darwin-x64@14.2.27':
     optional: true
 
-  '@next/swc-linux-arm64-gnu@14.2.20':
+  '@next/swc-linux-arm64-gnu@14.2.27':
     optional: true
 
-  '@next/swc-linux-arm64-musl@14.2.20':
+  '@next/swc-linux-arm64-musl@14.2.27':
     optional: true
 
-  '@next/swc-linux-x64-gnu@14.2.20':
+  '@next/swc-linux-x64-gnu@14.2.27':
     optional: true
 
-  '@next/swc-linux-x64-musl@14.2.20':
+  '@next/swc-linux-x64-musl@14.2.27':
     optional: true
 
-  '@next/swc-win32-arm64-msvc@14.2.20':
+  '@next/swc-win32-arm64-msvc@14.2.27':
     optional: true
 
-  '@next/swc-win32-ia32-msvc@14.2.20':
+  '@next/swc-win32-ia32-msvc@14.2.27':
     optional: true
 
-  '@next/swc-win32-x64-msvc@14.2.20':
+  '@next/swc-win32-x64-msvc@14.2.27':
     optional: true
 
   '@nodelib/fs.scandir@2.1.5':
@@ -34200,7 +34063,7 @@ snapshots:
 
   '@types/semver-utils@1.1.3': {}
 
-  '@types/semver@7.5.8': {}
+  '@types/semver@7.7.0': {}
 
   '@types/send@0.17.4':
     dependencies:
@@ -34257,8 +34120,6 @@ snapshots:
   '@types/unist@2.0.11': {}
 
   '@types/unist@3.0.3': {}
-
-  '@types/uuid@9.0.8': {}
 
   '@types/valid-url@1.0.7': {}
 
@@ -34470,7 +34331,7 @@ snapshots:
     dependencies:
       '@eslint-community/eslint-utils': 4.4.1(eslint@8.55.0)
       '@types/json-schema': 7.0.15
-      '@types/semver': 7.5.8
+      '@types/semver': 7.7.0
       '@typescript-eslint/scope-manager': 5.59.11
       '@typescript-eslint/types': 5.59.11
       '@typescript-eslint/typescript-estree': 5.59.11(typescript@5.4.5)
@@ -34485,7 +34346,7 @@ snapshots:
     dependencies:
       '@eslint-community/eslint-utils': 4.4.1(eslint@8.55.0)
       '@types/json-schema': 7.0.15
-      '@types/semver': 7.5.8
+      '@types/semver': 7.7.0
       '@typescript-eslint/scope-manager': 5.62.0
       '@typescript-eslint/types': 5.62.0
       '@typescript-eslint/typescript-estree': 5.62.0(typescript@5.4.5)
@@ -34500,7 +34361,7 @@ snapshots:
     dependencies:
       '@eslint-community/eslint-utils': 4.4.1(eslint@8.55.0)
       '@types/json-schema': 7.0.15
-      '@types/semver': 7.5.8
+      '@types/semver': 7.7.0
       '@typescript-eslint/scope-manager': 6.7.5
       '@typescript-eslint/types': 6.7.5
       '@typescript-eslint/typescript-estree': 6.7.5(typescript@5.4.5)
@@ -40546,9 +40407,9 @@ snapshots:
 
   netmask@2.0.2: {}
 
-  next@14.2.20(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.82.0):
+  next@14.2.27(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.82.0):
     dependencies:
-      '@next/env': 14.2.20
+      '@next/env': 14.2.27
       '@swc/helpers': 0.5.5
       busboy: 1.6.0
       caniuse-lite: 1.0.30001687
@@ -40558,15 +40419,15 @@ snapshots:
       react-dom: 18.3.1(react@18.3.1)
       styled-jsx: 5.1.1(babel-plugin-macros@3.1.0)(react@18.3.1)
     optionalDependencies:
-      '@next/swc-darwin-arm64': 14.2.20
-      '@next/swc-darwin-x64': 14.2.20
-      '@next/swc-linux-arm64-gnu': 14.2.20
-      '@next/swc-linux-arm64-musl': 14.2.20
-      '@next/swc-linux-x64-gnu': 14.2.20
-      '@next/swc-linux-x64-musl': 14.2.20
-      '@next/swc-win32-arm64-msvc': 14.2.20
-      '@next/swc-win32-ia32-msvc': 14.2.20
-      '@next/swc-win32-x64-msvc': 14.2.20
+      '@next/swc-darwin-arm64': 14.2.27
+      '@next/swc-darwin-x64': 14.2.27
+      '@next/swc-linux-arm64-gnu': 14.2.27
+      '@next/swc-linux-arm64-musl': 14.2.27
+      '@next/swc-linux-x64-gnu': 14.2.27
+      '@next/swc-linux-x64-musl': 14.2.27
+      '@next/swc-win32-arm64-msvc': 14.2.27
+      '@next/swc-win32-ia32-msvc': 14.2.27
+      '@next/swc-win32-x64-msvc': 14.2.27
       sass: 1.82.0
     transitivePeerDependencies:
       - '@babel/core'
@@ -44082,6 +43943,8 @@ snapshots:
   utila@0.4.0: {}
 
   utils-merge@1.0.1: {}
+
+  uuid@11.1.0: {}
 
   uuid@8.3.2: {}
 

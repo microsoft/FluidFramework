@@ -17,7 +17,7 @@ import { type IDisposable, disposeSymbol } from "../../util/index.js";
 import type { NodeIdentifierManager } from "../node-identifier/index.js";
 
 import type { FlexTreeField } from "./flexTreeTypes.js";
-import { type LazyEntity, prepareForEditSymbol } from "./lazyEntity.js";
+import type { LazyEntity } from "./lazyEntity.js";
 import { makeField } from "./lazyField.js";
 import type { ITreeCheckout } from "../../shared-tree/index.js";
 
@@ -120,7 +120,7 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 	private prepareForEdit(): void {
 		assert(this.disposed === false, 0x802 /* use after dispose */);
 		for (const target of this.withCursors) {
-			target[prepareForEditSymbol]();
+			target.prepareForEdit();
 		}
 		assert(this.withCursors.size === 0, 0x773 /* prepareForEdit should remove all cursors */);
 	}

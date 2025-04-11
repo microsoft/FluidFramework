@@ -17,6 +17,7 @@ import {
 	chunkFromJsonTrees,
 	createTestUndoRedoStacks,
 	expectJsonTree,
+	getView,
 	moveWithin,
 	TestTreeProviderLite,
 } from "../utils.js";
@@ -491,9 +492,25 @@ describe("Undo and redo", () => {
 		const sharedTreeFactory = new TreeFactory({});
 		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
 		const tree = sharedTreeFactory.create(runtime, "tree");
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: Schema }));
+		const view = asTreeViewAlpha(tree.viewWith(new TreeViewConfiguration({ schema: Schema })));
 		view.initialize({ foo: 1 });
 		assert.equal(tree.isAttached(), false);
+		let revertible: Revertible | undefined;
+		view.events.on("changed", (_, getRevertible) => {
+			revertible = getRevertible?.();
+		});
+		view.root.foo = 2;
+		assert.equal(view.root.foo, 2);
+		assert(revertible !== undefined);
+		revertible.revert();
+		assert.equal(view.root.foo, 1);
+	});
+
+	it("can undo while independent", () => {
+		const sf = new SchemaFactory(undefined);
+		class Schema extends sf.object("Object", { foo: sf.number }) {}
+		const view = getView(new TreeViewConfiguration({ schema: Schema }));
+		view.initialize({ foo: 1 });
 		let revertible: Revertible | undefined;
 		view.events.on("changed", (_, getRevertible) => {
 			revertible = getRevertible?.();

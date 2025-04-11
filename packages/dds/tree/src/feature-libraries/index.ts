@@ -164,7 +164,6 @@ export {
 	assertFlexTreeEntityNotFreed,
 	flexTreeSlot,
 	getSchemaAndPolicy,
-	isFreedSymbol,
 	LazyEntity,
 	treeStatusFromAnchorCache,
 	indexForAt,

@@ -412,6 +412,9 @@
 			"windows": {
 				"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha.cmd",
 			},
+			"linux": {
+				"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
+			},
 			"sourceMaps": true,
 			"program": "${file}",
 			"args": [

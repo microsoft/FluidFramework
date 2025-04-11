@@ -8,10 +8,11 @@ import {
 	IThrottler,
 	IRevokedTokenChecker,
 	IDocumentManager,
+	type IDenyList,
 } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import * as nconf from "nconf";
-import { ICache, IDenyList, ITenantService, ISimplifiedCustomDataRetriever } from "../services";
+import { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../services";
 /* eslint-disable import/no-internal-modules */
 import * as blobs from "./git/blobs";
 import * as commits from "./git/commits";

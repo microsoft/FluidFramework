@@ -178,8 +178,8 @@ importers:
         specifier: workspace:~
         version: link:../services-telemetry
       '@types/semver':
-        specifier: ^7.5.0
-        version: 7.5.0
+        specifier: ^7.7.0
+        version: 7.7.0
       assert:
         specifier: ^2.0.0
         version: 2.0.0
@@ -211,8 +211,8 @@ importers:
         specifier: ^8.1.4
         version: 8.1.4
       semver:
-        specifier: ^7.5.3
-        version: 7.5.3
+        specifier: ^7.7.1
+        version: 7.7.1
       serialize-error:
         specifier: ^8.1.0
         version: 8.1.0
@@ -220,8 +220,8 @@ importers:
         specifier: ^2.4.11
         version: 2.4.11
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.0
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: 0.52.0-315632
@@ -262,9 +262,6 @@ importers:
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.2
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -420,8 +417,8 @@ importers:
         specifier: ^11.0.0
         version: 11.0.0
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.0
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: 0.52.0-315632
@@ -456,9 +453,6 @@ importers:
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.2
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -556,8 +550,8 @@ importers:
         specifier: ^0.1.0
         version: 0.1.0
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.0
+        specifier: ^11.1.0
+        version: 11.1.0
       ws:
         specifier: ^7.5.10
         version: 7.5.10
@@ -580,9 +574,6 @@ importers:
       '@types/mocha':
         specifier: ^10.0.1
         version: 10.0.1
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.2
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -871,8 +862,8 @@ importers:
         specifier: ^0.1.0
         version: 0.1.0
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.0
+        specifier: ^11.1.0
+        version: 11.1.0
       winston:
         specifier: ^3.6.0
         version: 3.9.0
@@ -949,9 +940,6 @@ importers:
       '@types/supertest':
         specifier: ^2.0.5
         version: 2.0.12
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.2
       '@types/ws':
         specifier: ^6.0.1
         version: 6.0.4
@@ -1052,8 +1040,8 @@ importers:
         specifier: ^0.1.3
         version: 0.1.3
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.0
+        specifier: ^11.1.0
+        version: 11.1.0
       winston:
         specifier: ^3.6.0
         version: 3.9.0
@@ -1094,9 +1082,6 @@ importers:
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.2
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -1161,8 +1146,8 @@ importers:
         specifier: ^0.1.0
         version: 0.1.0
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.0
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: 0.52.0-315632
@@ -1194,9 +1179,6 @@ importers:
       '@types/node':
         specifier: ^18.19.39
         version: 18.19.39
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.2
       axios-mock-adapter:
         specifier: ^1.19.0
         version: 1.21.5(axios@1.8.4(debug@4.3.4))
@@ -1592,8 +1574,8 @@ importers:
         specifier: ^4.2.4
         version: 4.2.4
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.0
+        specifier: ^11.1.0
+        version: 11.1.0
       winston:
         specifier: ^3.6.0
         version: 3.9.0
@@ -1637,9 +1619,6 @@ importers:
       '@types/supertest':
         specifier: ^2.0.5
         version: 2.0.12
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.2
       axios:
         specifier: ^1.8.4
         version: 1.8.4(debug@4.3.4)
@@ -1683,8 +1662,8 @@ importers:
         specifier: ^8.1.0
         version: 8.1.0
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.0
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: 0.52.0-315632
@@ -1713,9 +1692,6 @@ importers:
       '@types/supertest':
         specifier: ^2.0.5
         version: 2.0.12
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.2
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -1786,8 +1762,8 @@ importers:
         specifier: ^1.0.0
         version: 1.0.1
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.0
+        specifier: ^11.1.0
+        version: 11.1.0
       winston:
         specifier: ^3.6.0
         version: 3.9.0
@@ -1843,9 +1819,6 @@ importers:
       '@types/supertest':
         specifier: ^2.0.5
         version: 2.0.12
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.2
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -1919,8 +1892,8 @@ importers:
         specifier: ^1.1.3
         version: 1.1.3
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.0
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: 0.52.0-315632
@@ -1952,9 +1925,6 @@ importers:
       '@types/string-hash':
         specifier: ^1.1.1
         version: 1.1.1
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.2
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -2076,8 +2046,8 @@ importers:
         specifier: ^1.0.0
         version: 1.0.1
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.0
+        version: 11.1.0
       winston:
         specifier: ^3.6.0
         version: 3.9.0
@@ -2136,9 +2106,6 @@ importers:
       '@types/split':
         specifier: ^0.3.28
         version: 0.3.28
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.2
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -2555,6 +2522,7 @@ packages:
   '@humanwhocodes/config-array@0.11.14':
     resolution: {integrity: sha512-3T8LkOmg45BV5FICb15QQMsyUSWrQ8AygVfC7ZG32zOalnqrilm018ZVCw0eapXux8FtA33q8PSRSstjee3jSg==}
     engines: {node: '>=10.10.0'}
+    deprecated: Use @eslint/config-array instead
 
   '@humanwhocodes/module-importer@1.0.1':
     resolution: {integrity: sha512-bxveV4V8v5Yb4ncFTT3rPSgZBOpCkjfK0y4oVVVJwIuDVBRMDXrPyXRL988i5ap9m9bnyEEjWfm5WkBmtffLfA==}
@@ -2562,6 +2530,7 @@ packages:
 
   '@humanwhocodes/object-schema@2.0.2':
     resolution: {integrity: sha512-6EwiSjwWYP7pTckG6I5eyFANjPhmPjUX9JRLUSfNPC7FX7zK9gyZAfUEaECL6ALTpGX5AjnBq3C9XmVWPitNpw==}
+    deprecated: Use @eslint/object-schema instead
 
   '@inquirer/checkbox@4.0.6':
     resolution: {integrity: sha512-PgP35JfmGjHU0LSXOyRew0zHuA9N6OJwOlos1fZ20b7j8ISeAdib3L+n0jIxBtX958UeEpte6xhG/gxJ5iUqMw==}
@@ -3453,11 +3422,8 @@ packages:
   '@types/semver-utils@1.1.3':
     resolution: {integrity: sha512-T+YwkslhsM+CeuhYUxyAjWm7mJ5am/K10UX40RuA6k6Lc7eGtq8iY2xOzy7Vq0GOqhl/xZl5l2FwURZMTPTUww==}
 
-  '@types/semver@7.5.0':
-    resolution: {integrity: sha512-G8hZ6XJiHnuhQKR7ZmysCeJWE08o8T0AXtk5darsCaTVsYZhhgUrq53jizaR2FvsoeCwJhlmwTjkXBY5Pn/ZHw==}
-
-  '@types/semver@7.5.6':
-    resolution: {integrity: sha512-dn1l8LaMea/IjDoHNd9J52uBbInB796CDffS6VdIxvqYCPSG0V0DzHp76GpaWnlhg88uYyPbXCDIowa86ybd5A==}
+  '@types/semver@7.7.0':
+    resolution: {integrity: sha512-k107IF4+Xr7UHjwDc7Cfd6PRQfbdkiRabXGRjo07b4WyPahFBZCZ1sE+BNxYIJPPg73UkfOsVOLwqVc/6ETrIA==}
 
   '@types/send@0.17.1':
     resolution: {integrity: sha512-Cwo8LE/0rnvX7kIIa3QHCkcuF21c05Ayb0ZfxPiv0W8VRiZiNW/WuRupHKpqqGVGf7SUA44QSOUKaEd9lIrd/Q==}
@@ -3491,9 +3457,6 @@ packages:
 
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
-
-  '@types/uuid@9.0.2':
-    resolution: {integrity: sha512-kNnC1GFBLuhImSnV7w4njQkUiJi0ZXUycu1rUaouPqiKlXkh77JKgdRnTAp1x5eBwcIwbtI+3otwzuIDEuDoxQ==}
 
   '@types/webidl-conversions@7.0.3':
     resolution: {integrity: sha512-CiJJvcRtIgzadHCYXw7dqEnMNRjhGZlYK05Mj9OyktqV8uVT8fD2BFOB7S1uwBE3Kj2Z+4UyPmFw/Ixgw/LAlA==}
@@ -5000,6 +4963,7 @@ packages:
   eslint@8.55.0:
     resolution: {integrity: sha512-iyUUAM0PCKj5QpwGfmCAG9XXbZCWsqP/eWAWrG/W0umvjuLRBECwSFdt+rCntju0xEH7teIABPwXpahftIaTdA==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
 
   espree@9.6.1:
@@ -5420,6 +5384,7 @@ packages:
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
+    deprecated: Glob versions prior to v9 are no longer supported
 
   glob@8.1.0:
     resolution: {integrity: sha512-r8hpEjiQEYlF2QU0df3dS+nxxSIreXQS1qRhMJM0Q5NDdR386C7jb7Hwwod8Fgiuex+k0GFjgft18yvxm5XoCQ==}
@@ -5649,6 +5614,7 @@ packages:
 
   inflight@1.0.6:
     resolution: {integrity: sha512-k92I/b08q4wvFscXCLvqfsHCrjrF7yiXsQuIVvVE7N82W3+aqpzuUdBbfhWcy/FZR3/4IgflMgKLOsvPDrGCJA==}
+    deprecated: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
 
   inherits@2.0.4:
     resolution: {integrity: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==}
@@ -6153,10 +6119,12 @@ packages:
   level-codec@9.0.2:
     resolution: {integrity: sha512-UyIwNb1lJBChJnGfjmO0OR+ezh2iVu1Kas3nvBS/BzGnx79dv6g7unpKIDNPMhfdTEGoc7mC8uAu51XEtX+FHQ==}
     engines: {node: '>=6'}
+    deprecated: Superseded by level-transcoder (https://github.com/Level/community#faq)
 
   level-errors@2.0.1:
     resolution: {integrity: sha512-UVprBJXite4gPS+3VznfgDSU8PTRuVX0NXwoWW50KLxd2yw4Y1t2JUR5In1itQnudZqRMT9DlAM3Q//9NCjCFw==}
     engines: {node: '>=6'}
+    deprecated: Superseded by abstract-level (https://github.com/Level/community#faq)
 
   level-iterator-stream@2.0.3:
     resolution: {integrity: sha512-I6Heg70nfF+e5Y3/qfthJFexhRw/Gi3bIymCoXAlijZdAcLaPuWSJs3KXyTYf23ID6g0o2QF62Yh+grOXY3Rig==}
@@ -6224,6 +6192,7 @@ packages:
 
   lodash.get@4.4.2:
     resolution: {integrity: sha512-z+Uw/vLuy6gQe8cfaFWD7p0wVv8fJl3mbzXh33RS+0oW2wvUqiRXiQ69gLWSLpgB5/6sU+r6BlQR0MBILadqTQ==}
+    deprecated: This package is deprecated. Use the optional chaining (?.) operator instead.
 
   lodash.includes@4.3.0:
     resolution: {integrity: sha512-W3Bx6mdkRTGtlJISOvVD/lbqjTlPPUDTMnlXZFnVwi9NKJ6tiAk6LVdlhZMm17VZisqhKcgzpO5Wz91PCt5b0w==}
@@ -6236,6 +6205,7 @@ packages:
 
   lodash.isequal@4.5.0:
     resolution: {integrity: sha512-pDo3lu8Jhfjqls6GkMgpahsF9kCyayhgykjyLMNFTKWrpVdAQtYyB4muAMWozBB4ig/dtWAmsMxLEI8wuz+DYQ==}
+    deprecated: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
 
   lodash.isinteger@4.0.4:
     resolution: {integrity: sha512-DBwtEWN2caHQ9/imiNeEA5ys1JoRtRfY3d7V9wkqtbycnAmTvRRmbHKDV4a0EYc678/dia0jrte4tjYwVBaZUA==}
@@ -6873,6 +6843,7 @@ packages:
 
   npmlog@4.1.2:
     resolution: {integrity: sha512-2uUqazuKlTaSI/dC8AzicUck7+IrEaOnN/e0jd3Xtt1KcGpwx30v50mL7oPyr/h9bL3E4aZccVwpwP+5W9Vjkg==}
+    deprecated: This package is no longer supported.
 
   npmlog@6.0.2:
     resolution: {integrity: sha512-/vBvz5Jfr9dT/aFWd0FIRf+T/Q2WBsLENygUaFUqstqsycmZAP/t5BvFJTK0viFmSUxiUKTUplWy5vt+rvKIxg==}
@@ -7709,23 +7680,18 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
-  semver@7.5.3:
-    resolution: {integrity: sha512-QBlUtyVk/5EeHbi7X0fw6liDZc7BBmEaSYn01fMU1OUYbf6GPsbTtd8WmnqbI20SeycoHSeiybkE/q1Q+qlThQ==}
-    engines: {node: '>=10'}
-    hasBin: true
-
   semver@7.5.4:
     resolution: {integrity: sha512-1bCSESV6Pv+i21Hvpxp3Dx+pSD8lIPt8uVjRrxAUt/nbswYc+tK6Y2btiULjd4+fnq15PX+nqQDC7Oft7WkwcA==}
     engines: {node: '>=10'}
     hasBin: true
 
-  semver@7.6.0:
-    resolution: {integrity: sha512-EnwXhrlwXMk9gKu5/flx5sv/an57AkRplG3hTK68W7FRDN+k+OWBj65M7719OkA82XLBxrcX0KSHj+X5COhOVg==}
+  semver@7.6.3:
+    resolution: {integrity: sha512-oVekP1cKtI+CTDvHWYFUcMtsK/00wmAEfyqKfNdARm8u1wNVhSgaX7A8d4UuIlUI5e84iEwOhs7ZPYRmzU9U6A==}
     engines: {node: '>=10'}
     hasBin: true
 
-  semver@7.6.3:
-    resolution: {integrity: sha512-oVekP1cKtI+CTDvHWYFUcMtsK/00wmAEfyqKfNdARm8u1wNVhSgaX7A8d4UuIlUI5e84iEwOhs7ZPYRmzU9U6A==}
+  semver@7.7.1:
+    resolution: {integrity: sha512-hlq8tAfn0m/61p4BVRcPzIGr6LKiMwo4VM6dGi6pt4qcRkmNzTcWq6eCEjEh+qXjkMDvPlOFFSGwQjoEa6gyMA==}
     engines: {node: '>=10'}
     hasBin: true
 
@@ -8084,7 +8050,7 @@ packages:
   superagent@3.8.3:
     resolution: {integrity: sha512-GLQtLMCoEIK4eDv6OGtkOoSMt3D+oq0y3dsxMuYuDvaNUvuT8eFBuLmfR0iYYzHC1e8hpzC6ZsxbuP6DIalMFA==}
     engines: {node: '>= 4.0'}
-    deprecated: Please upgrade to v7.0.2+ of superagent.  We have fixed numerous issues with streams, form-data, attach(), filesystem errors not bubbling up (ENOENT on attach()), and all tests are now passing.  See the releases tab for more information at <https://github.com/visionmedia/superagent/releases>.
+    deprecated: Please upgrade to v9.0.0+ as we have fixed a public vulnerability with formidable dependency. Note that v9.0.0+ requires Node.js v14.18.0+. See https://github.com/ladjs/superagent/pull/1800 for insight. This project is supported and maintained by the team at Forward Email @ https://forwardemail.net
 
   supertest@3.4.2:
     resolution: {integrity: sha512-WZWbwceHUo2P36RoEIdXvmqfs47idNNZjCuJOqDz6rvtkk8ym56aU5oglORCpPeXGxT7l9rkJ41+O1lffQXYSA==}
@@ -8508,13 +8474,13 @@ packages:
     resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
 
+  uuid@11.1.0:
+    resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
+    hasBin: true
+
   uuid@3.4.0:
     resolution: {integrity: sha512-HjSDRw6gZE5JMggctHBcjVak08+KEVhSIiDzFnT9S9aegmp85S/bReBVTb4QTFaRNptJ9kuYaNhnbNEOkbKb/A==}
     deprecated: Please upgrade  to version 7 or higher.  Older versions may use Math.random() in certain circumstances, which is known to be problematic.  See https://v8.dev/blog/math-random for details.
-    hasBin: true
-
-  uuid@9.0.0:
-    resolution: {integrity: sha512-MXcSTerfPa4uqyzStbRoTgt5XIe3x5+42+q1sDuy3R5MDk66URdLMOZe5aPX/SQd+kuYAh0FdP/pO28IkQyTeg==}
     hasBin: true
 
   uuid@9.0.1:
@@ -9311,7 +9277,7 @@ snapshots:
       outdent: 0.5.0
       prettier: 2.8.8
       resolve-from: 5.0.0
-      semver: 7.6.0
+      semver: 7.7.1
 
   '@changesets/assemble-release-plan@6.0.4':
     dependencies:
@@ -9320,7 +9286,7 @@ snapshots:
       '@changesets/should-skip-package': 0.1.1
       '@changesets/types': 6.0.0
       '@manypkg/get-packages': 1.1.3
-      semver: 7.6.0
+      semver: 7.7.1
 
   '@changesets/changelog-git@0.2.0':
     dependencies:
@@ -9343,7 +9309,7 @@ snapshots:
       '@changesets/types': 6.0.0
       '@changesets/write': 0.3.2
       '@manypkg/get-packages': 1.1.3
-      '@types/semver': 7.5.6
+      '@types/semver': 7.7.0
       ansi-colors: 4.1.3
       ci-info: 3.8.0
       enquirer: 2.3.6
@@ -9355,7 +9321,7 @@ snapshots:
       package-manager-detector: 0.2.0
       picocolors: 1.1.0
       resolve-from: 5.0.0
-      semver: 7.6.0
+      semver: 7.7.1
       spawndamnit: 2.0.0
       term-size: 2.2.1
 
@@ -9378,7 +9344,7 @@ snapshots:
       '@changesets/types': 6.0.0
       '@manypkg/get-packages': 1.1.3
       picocolors: 1.1.0
-      semver: 7.6.0
+      semver: 7.7.1
 
   '@changesets/get-release-plan@4.0.4':
     dependencies:
@@ -9751,7 +9717,7 @@ snapshots:
       '@oclif/plugin-commands': 4.1.17
       '@oclif/plugin-help': 6.2.22
       '@oclif/plugin-not-found': 3.2.37(@types/node@18.19.39)
-      semver: 7.6.3
+      semver: 7.7.1
       table: 6.9.0
     transitivePeerDependencies:
       - '@types/node'
@@ -9767,7 +9733,7 @@ snapshots:
       '@oclif/plugin-commands': 4.1.17
       '@oclif/plugin-help': 6.2.22
       '@oclif/plugin-not-found': 3.2.37(@types/node@22.10.7)
-      semver: 7.6.3
+      semver: 7.7.1
       table: 6.9.0
     transitivePeerDependencies:
       - '@types/node'
@@ -9904,7 +9870,7 @@ snapshots:
       '@typescript-eslint/eslint-plugin': 6.7.5(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0)(typescript@5.1.6)
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.1.6)
       eslint-config-prettier: 9.0.0(eslint@8.55.0)
-      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0)
       eslint-plugin-eslint-comments: 3.2.0(eslint@8.55.0)
       eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
       eslint-plugin-jsdoc: 46.8.2(eslint@8.55.0)
@@ -9964,7 +9930,7 @@ snapshots:
       '@fluidframework/server-services-client': 5.0.0
       '@fluidframework/server-services-core': 5.0.0
       '@fluidframework/server-services-telemetry': 5.0.0
-      '@types/semver': 7.5.6
+      '@types/semver': 7.7.0
       assert: 2.1.0
       async: 3.2.5
       axios: 1.8.4(debug@4.3.4)
@@ -9974,7 +9940,7 @@ snapshots:
       json-stringify-safe: 5.0.1
       lodash: 4.17.21
       nconf: 0.12.1
-      semver: 7.6.0
+      semver: 7.7.1
       sha.js: 2.4.11
       uuid: 9.0.1
     transitivePeerDependencies:
@@ -10792,7 +10758,7 @@ snapshots:
 
   '@npmcli/fs@3.1.0':
     dependencies:
-      semver: 7.6.3
+      semver: 7.7.1
 
   '@npmcli/git@4.1.0':
     dependencies:
@@ -10802,7 +10768,7 @@ snapshots:
       proc-log: 3.0.0
       promise-inflight: 1.0.1
       promise-retry: 2.0.1
-      semver: 7.6.3
+      semver: 7.7.1
       which: 3.0.1
     transitivePeerDependencies:
       - bluebird
@@ -10842,7 +10808,7 @@ snapshots:
       is-wsl: 2.2.0
       lilconfig: 3.1.3
       minimatch: 9.0.5
-      semver: 7.6.3
+      semver: 7.7.1
       string-width: 4.2.3
       supports-color: 8.1.1
       widest-line: 3.1.0
@@ -11882,9 +11848,7 @@ snapshots:
 
   '@types/semver-utils@1.1.3': {}
 
-  '@types/semver@7.5.0': {}
-
-  '@types/semver@7.5.6': {}
+  '@types/semver@7.7.0': {}
 
   '@types/send@0.17.1':
     dependencies:
@@ -11923,8 +11887,6 @@ snapshots:
 
   '@types/unist@3.0.3': {}
 
-  '@types/uuid@9.0.2': {}
-
   '@types/webidl-conversions@7.0.3': {}
 
   '@types/whatwg-url@8.2.2':
@@ -11951,7 +11913,7 @@ snapshots:
       graphemer: 1.4.0
       ignore: 5.3.0
       natural-compare: 1.4.0
-      semver: 7.6.0
+      semver: 7.7.1
       ts-api-utils: 1.0.3(typescript@5.1.6)
     optionalDependencies:
       typescript: 5.1.6
@@ -12012,7 +11974,7 @@ snapshots:
       debug: 4.4.0(supports-color@8.1.1)
       globby: 11.1.0
       is-glob: 4.0.3
-      semver: 7.6.3
+      semver: 7.7.1
       tsutils: 3.21.0(typescript@5.1.6)
     optionalDependencies:
       typescript: 5.1.6
@@ -12026,7 +11988,7 @@ snapshots:
       debug: 4.4.0(supports-color@8.1.1)
       globby: 11.1.0
       is-glob: 4.0.3
-      semver: 7.6.3
+      semver: 7.7.1
       ts-api-utils: 1.0.3(typescript@5.1.6)
     optionalDependencies:
       typescript: 5.1.6
@@ -12037,13 +11999,13 @@ snapshots:
     dependencies:
       '@eslint-community/eslint-utils': 4.4.0(eslint@8.55.0)
       '@types/json-schema': 7.0.15
-      '@types/semver': 7.5.6
+      '@types/semver': 7.7.0
       '@typescript-eslint/scope-manager': 5.59.11
       '@typescript-eslint/types': 5.59.11
       '@typescript-eslint/typescript-estree': 5.59.11(typescript@5.1.6)
       eslint: 8.55.0
       eslint-scope: 5.1.1
-      semver: 7.6.3
+      semver: 7.7.1
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -12052,12 +12014,12 @@ snapshots:
     dependencies:
       '@eslint-community/eslint-utils': 4.4.0(eslint@8.55.0)
       '@types/json-schema': 7.0.15
-      '@types/semver': 7.5.6
+      '@types/semver': 7.7.0
       '@typescript-eslint/scope-manager': 6.7.5
       '@typescript-eslint/types': 6.7.5
       '@typescript-eslint/typescript-estree': 6.7.5(typescript@5.1.6)
       eslint: 8.55.0
-      semver: 7.6.3
+      semver: 7.7.1
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -12560,7 +12522,7 @@ snapshots:
     dependencies:
       arg-parser: 1.2.0
       commander: 9.5.0
-      semver: 7.6.3
+      semver: 7.7.1
 
   binary-extensions@2.2.0: {}
 
@@ -12695,7 +12657,7 @@ snapshots:
 
   builtins@5.0.1:
     dependencies:
-      semver: 7.6.3
+      semver: 7.7.1
 
   bytes@3.0.0: {}
 
@@ -13593,12 +13555,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1)(eslint@8.55.0):
+  eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0):
     dependencies:
       debug: 4.3.4
       enhanced-resolve: 5.17.1
       eslint: 8.55.0
-      eslint-module-utils: 2.8.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
+      eslint-module-utils: 2.8.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
       eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
       fast-glob: 3.3.2
       get-tsconfig: 4.7.2
@@ -13610,14 +13572,14 @@ snapshots:
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-module-utils@2.8.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0):
+  eslint-module-utils@2.8.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.1.6)
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -13633,11 +13595,11 @@ snapshots:
       doctrine: 3.0.0
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.8.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
+      eslint-module-utils: 2.8.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
       get-tsconfig: 4.7.2
       is-glob: 4.0.3
       minimatch: 3.1.2
-      semver: 7.6.3
+      semver: 7.7.1
     transitivePeerDependencies:
       - '@typescript-eslint/parser'
       - eslint-import-resolver-typescript
@@ -13654,7 +13616,7 @@ snapshots:
       eslint: 8.55.0
       esquery: 1.5.0
       is-builtin-module: 3.2.1
-      semver: 7.6.0
+      semver: 7.7.1
       spdx-expression-parse: 3.0.1
     transitivePeerDependencies:
       - supports-color
@@ -13708,7 +13670,7 @@ snapshots:
       read-pkg-up: 7.0.1
       regexp-tree: 0.1.27
       regjsparser: 0.10.0
-      semver: 7.6.0
+      semver: 7.7.1
       strip-indent: 3.0.0
 
   eslint-plugin-unused-imports@3.0.0(@typescript-eslint/eslint-plugin@6.7.5(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0):
@@ -14547,7 +14509,7 @@ snapshots:
       fengari: 0.1.4
       fengari-interop: 0.1.3(fengari@0.1.4)
       ioredis: 5.3.2
-      semver: 7.6.0
+      semver: 7.7.1
 
   ioredis@5.3.2:
     dependencies:
@@ -14906,7 +14868,7 @@ snapshots:
       jws: 3.2.2
       lodash: 4.17.21
       ms: 2.1.3
-      semver: 7.5.4
+      semver: 7.7.1
 
   jsonwebtoken@9.0.2:
     dependencies:
@@ -14919,7 +14881,7 @@ snapshots:
       lodash.isstring: 4.0.1
       lodash.once: 4.1.1
       ms: 2.1.3
-      semver: 7.6.0
+      semver: 7.7.1
 
   jsrsasign@11.0.0: {}
 
@@ -15184,7 +15146,7 @@ snapshots:
 
   make-dir@4.0.0:
     dependencies:
-      semver: 7.6.0
+      semver: 7.7.1
 
   make-error@1.3.6: {}
 
@@ -15840,7 +15802,7 @@ snapshots:
       nopt: 6.0.0
       npmlog: 6.0.2
       rimraf: 3.0.2
-      semver: 7.6.3
+      semver: 7.7.1
       tar: 6.2.1
       which: 2.0.2
     transitivePeerDependencies:
@@ -15878,13 +15840,13 @@ snapshots:
     dependencies:
       hosted-git-info: 6.1.1
       is-core-module: 2.13.1
-      semver: 7.6.3
+      semver: 7.7.1
       validate-npm-package-license: 3.0.4
 
   normalize-package-data@6.0.2:
     dependencies:
       hosted-git-info: 7.0.2
-      semver: 7.6.3
+      semver: 7.7.1
       validate-npm-package-license: 3.0.4
 
   normalize-path@3.0.0: {}
@@ -15928,7 +15890,7 @@ snapshots:
       rc-config-loader: 4.1.3
       remote-git-tags: 3.0.0
       rimraf: 5.0.5
-      semver: 7.6.3
+      semver: 7.7.1
       semver-utils: 1.1.4
       source-map-support: 0.5.21
       spawn-please: 2.0.2
@@ -15942,7 +15904,7 @@ snapshots:
 
   npm-install-checks@6.1.1:
     dependencies:
-      semver: 7.6.3
+      semver: 7.7.1
 
   npm-normalize-package-bin@3.0.1: {}
 
@@ -15950,7 +15912,7 @@ snapshots:
     dependencies:
       hosted-git-info: 6.1.1
       proc-log: 3.0.0
-      semver: 7.6.3
+      semver: 7.7.1
       validate-npm-package-name: 5.0.0
 
   npm-packlist@7.0.4:
@@ -15962,7 +15924,7 @@ snapshots:
       npm-install-checks: 6.1.1
       npm-normalize-package-bin: 3.0.1
       npm-package-arg: 10.1.0
-      semver: 7.6.3
+      semver: 7.7.1
 
   npm-registry-fetch@14.0.5:
     dependencies:
@@ -16070,7 +16032,7 @@ snapshots:
       got: 13.0.0
       lodash: 4.17.21
       normalize-package-data: 6.0.2
-      semver: 7.6.3
+      semver: 7.7.1
       sort-package-json: 2.14.0
       tiny-jsonc: 1.0.2
       validate-npm-package-name: 5.0.1
@@ -16100,7 +16062,7 @@ snapshots:
       got: 13.0.0
       lodash: 4.17.21
       normalize-package-data: 6.0.2
-      semver: 7.6.3
+      semver: 7.7.1
       sort-package-json: 2.14.0
       tiny-jsonc: 1.0.2
       validate-npm-package-name: 5.0.1
@@ -16213,14 +16175,14 @@ snapshots:
       ky: 1.7.4
       registry-auth-token: 5.0.2
       registry-url: 6.0.1
-      semver: 7.6.3
+      semver: 7.7.1
 
   package-json@8.1.1:
     dependencies:
       got: 12.6.1
       registry-auth-token: 5.0.2
       registry-url: 6.0.1
-      semver: 7.6.3
+      semver: 7.7.1
 
   package-manager-detector@0.2.0: {}
 
@@ -16442,7 +16404,7 @@ snapshots:
       pm2-deploy: 1.0.2
       pm2-multimeter: 0.1.2
       promptly: 2.2.0
-      semver: 7.6.0
+      semver: 7.7.1
       source-map-support: 0.5.21
       sprintf-js: 1.1.2
       vizion: 2.2.1
@@ -16979,7 +16941,7 @@ snapshots:
 
   semver-diff@4.0.0:
     dependencies:
-      semver: 7.6.3
+      semver: 7.7.1
 
   semver-utils@1.1.4: {}
 
@@ -16991,19 +16953,13 @@ snapshots:
     dependencies:
       lru-cache: 6.0.0
 
-  semver@7.5.3:
-    dependencies:
-      lru-cache: 6.0.0
-
   semver@7.5.4:
     dependencies:
       lru-cache: 6.0.0
 
-  semver@7.6.0:
-    dependencies:
-      lru-cache: 6.0.0
-
   semver@7.6.3: {}
+
+  semver@7.7.1: {}
 
   send@0.19.0:
     dependencies:
@@ -17278,7 +17234,7 @@ snapshots:
       get-stdin: 9.0.0
       git-hooks-list: 3.1.0
       is-plain-obj: 4.1.0
-      semver: 7.6.3
+      semver: 7.7.1
       sort-object-keys: 1.1.3
       tinyglobby: 0.2.10
 
@@ -17658,7 +17614,7 @@ snapshots:
       chalk: 4.1.2
       enhanced-resolve: 5.17.1
       micromatch: 4.0.8
-      semver: 7.6.0
+      semver: 7.7.1
       source-map: 0.7.4
       typescript: 5.1.6
       webpack: 5.94.0(webpack-cli@5.1.4)
@@ -17896,7 +17852,7 @@ snapshots:
       is-yarn-global: 0.4.1
       latest-version: 7.0.0
       pupa: 3.1.0
-      semver: 7.6.3
+      semver: 7.7.1
       semver-diff: 4.0.0
       xdg-basedir: 5.1.0
 
@@ -17935,9 +17891,9 @@ snapshots:
 
   utils-merge@1.0.1: {}
 
-  uuid@3.4.0: {}
+  uuid@11.1.0: {}
 
-  uuid@9.0.0: {}
+  uuid@3.4.0: {}
 
   uuid@9.0.1: {}
 

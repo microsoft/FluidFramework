@@ -201,3 +201,11 @@ export interface ITenantManager {
 export interface ITenantConfigManager {
 	getTenantStorageName(tenantId: string): Promise<string>;
 }
+
+export interface IInvalidTokenError {
+	// The error code to be cached
+	code: number;
+
+	// The error message to be cached
+	message: string;
+}

@@ -251,7 +251,7 @@ describe("SharedTreeCore", () => {
 			{
 				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: MockStorage.createFromSummary(
-					tree1.summarizeCore(mockSerializer).summary,
+					tree1.kernel.summarizeCore(mockSerializer).summary,
 				),
 			},
 			factory.attributes,

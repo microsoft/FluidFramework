@@ -1,8 +1,6 @@
 ---
 "@fluidframework/container-loader": minor
----
----
-"section": feature
+"__section": feature
 ---
 
 Blobs in Detached Container Supported by Default

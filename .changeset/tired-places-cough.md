@@ -1,9 +1,7 @@
 ---
 "fluid-framework": minor
 "@fluidframework/tree": minor
----
----
-"section": tree
+"__section": tree
 ---
 
 Provide alpha APIs for accessing tree content and stored schema without requiring a compatible view schema
