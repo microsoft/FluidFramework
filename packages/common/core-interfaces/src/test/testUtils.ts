@@ -12,7 +12,7 @@ import type { InternalUtilityTypes } from "../exposedInternalUtilityTypes.js";
  * types (especially first type) is `{}` (which is a special type and may be
  * produced during type manipulation intentionally or not).
  */
-export function assertIdenticalTypes<T, U>(
+export function assertIdenticalTypes<const T, const U>(
 	_actual: T & InternalUtilityTypes.IfSameType<T, U>,
 	_expected: U & InternalUtilityTypes.IfSameType<T, U>,
 ): InternalUtilityTypes.IfSameType<T, U> {

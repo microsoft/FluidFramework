@@ -13,20 +13,21 @@ import {
 
 import { IntervalNode, IntervalTree } from "../intervalTree.js";
 import {
-	IIntervalHelpers,
 	ISerializableInterval,
 	IntervalType,
 	SequenceInterval,
-	sequenceIntervalHelpers,
+	createSequenceInterval,
 } from "../intervals/index.js";
 import { ISharedString } from "../sharedString.js";
 
 import { IntervalIndex, type SequenceIntervalIndex } from "./intervalIndex.js";
 
 /**
+ * The generic version of this interface is deprecated and will be removed in a future release.
+ * Use {@link ISequenceOverlappingIntervalsIndex} instead.
  * @legacy
  * @alpha
- * @deprecated The generic version of this interface is no longer used and will be removed. Use {@link ISequenceOverlappingIntervalsIndex} instead.
+ * @remarks The generic version of this interface is no longer used and will be removed. Use {@link ISequenceOverlappingIntervalsIndex} instead.
  */
 export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 	extends IntervalIndex<TInterval> {
@@ -72,11 +73,9 @@ export interface ISequenceOverlappingIntervalsIndex extends SequenceIntervalInde
 export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsIndex {
 	protected readonly intervalTree = new IntervalTree<SequenceInterval>();
 	protected readonly client: Client;
-	protected readonly helpers: IIntervalHelpers<SequenceInterval>;
 
-	constructor(client: Client, helpers: IIntervalHelpers<SequenceInterval>) {
+	constructor(client: Client) {
 		this.client = client;
-		this.helpers = helpers;
 	}
 
 	public map(fn: (interval: SequenceInterval) => void) {
@@ -109,7 +108,7 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 				});
 			}
 		} else {
-			const transientInterval: SequenceInterval = this.helpers.create(
+			const transientInterval: SequenceInterval = createSequenceInterval(
 				"transient",
 				start ?? "start",
 				end ?? "end",
@@ -185,7 +184,7 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 		) {
 			return [];
 		}
-		const transientInterval = this.helpers.create(
+		const transientInterval = createSequenceInterval(
 			"transient",
 			start,
 			end,
@@ -214,5 +213,5 @@ export function createOverlappingIntervalsIndex(
 	sharedString: ISharedString,
 ): ISequenceOverlappingIntervalsIndex {
 	const client = (sharedString as unknown as { client: Client }).client;
-	return new OverlappingIntervalsIndex(client, sequenceIntervalHelpers);
+	return new OverlappingIntervalsIndex(client);
 }

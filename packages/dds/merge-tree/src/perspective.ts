@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { NonCollabClient } from "./constants.js";
 import { seqLTE, type ISegment } from "./mergeTreeNodes.js";
 import { isInserted, isRemoved } from "./segmentInfos.js";
 import * as opstampUtils from "./stamps.js";
@@ -12,6 +13,7 @@ import type { OperationStamp, RemoveOperationStamp } from "./stamps.js";
  * A perspective which includes some subset of operations known to the local client.
  *
  * This helps the local client reason about the state of other clients when they issued an operation.
+ * @internal
  */
 export interface Perspective {
 	/**
@@ -116,6 +118,21 @@ export class LocalReconnectingPerspective extends PerspectiveBase implements Per
 }
 
 /**
+ * A perspective which includes edits which were either:
+ * - acked and at or before some reference sequence number
+ * - unacked, but at or before some local sequence number
+ *
+ * @internal
+ */
+export function createLocalReconnectingPerspective(
+	refSeq: number,
+	clientId: number,
+	localSeq: number,
+): Perspective {
+	return new LocalReconnectingPerspective(refSeq, clientId, localSeq);
+}
+
+/**
  * A perspective which includes all known edits.
  *
  * This is the perspective that the application sees.
@@ -168,3 +185,8 @@ function isRemoveOperationStamp(stamp: OperationStamp): stamp is RemoveOperation
 	const { type } = stamp as unknown as RemoveOperationStamp;
 	return type === "setRemove" || type === "sliceRemove";
 }
+
+export const allAckedChangesPerspective = new PriorPerspective(
+	Number.MAX_SAFE_INTEGER,
+	NonCollabClient,
+);

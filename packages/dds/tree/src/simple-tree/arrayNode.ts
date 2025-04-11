@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Lazy, oob } from "@fluidframework/core-utils/internal";
+import { Lazy, oob, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyKey, type ExclusiveMapTree } from "../core/index.js";
@@ -38,7 +38,6 @@ import {
 	type TreeNodeSchemaClass,
 } from "./core/index.js";
 import { type InsertableContent, mapTreeFromNodeData } from "./toMapTree.js";
-import { fail } from "../util/index.js";
 import {
 	getKernel,
 	UnhydratedFlexTreeNode,

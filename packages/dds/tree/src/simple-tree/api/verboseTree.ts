@@ -5,7 +5,7 @@
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	aboveRootPlaceholder,
@@ -16,7 +16,7 @@ import {
 	type ITreeCursorSynchronous,
 	type TreeNodeSchemaIdentifier,
 } from "../../core/index.js";
-import { brand, fail } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 import type {
 	TreeLeafValue,
 	ImplicitFieldSchema,
@@ -41,8 +41,9 @@ import {
 	customFromCursor,
 	replaceHandles,
 	type CustomTreeNode,
-	type EncodeOptions,
 	type HandleConverter,
+	type SchemalessParseOptions,
+	type TreeEncodingOptions,
 } from "./customTree.js";
 import { getUnhydratedContext } from "../createContext.js";
 
@@ -111,39 +112,13 @@ export interface VerboseTreeNode<THandle = IFluidHandle> {
 }
 
 /**
- * Options for how to interpret a `VerboseTree` when schema information is available.
- * @alpha
- */
-export interface ParseOptions {
-	/**
-	 * If true, interpret the input keys of object nodes as stored keys.
-	 * If false, interpret them as property keys.
-	 * @defaultValue false.
-	 */
-	readonly useStoredKeys?: boolean;
-}
-
-/**
- * Options for how to interpret a `VerboseTree` without relying on schema.
- */
-export interface SchemalessParseOptions {
-	/**
-	 * Converts stored keys into whatever key the tree is using in its encoding.
-	 */
-	keyConverter?: {
-		parse(type: string, inputKey: string): FieldKey;
-		encode(type: string, key: FieldKey): string;
-	};
-}
-
-/**
  * Use info from `schema` to convert `options` to {@link SchemalessParseOptions}.
  */
 export function applySchemaToParserOptions(
 	schema: ImplicitFieldSchema,
-	options: ParseOptions,
+	options: TreeEncodingOptions,
 ): SchemalessParseOptions {
-	const config: Required<ParseOptions> = {
+	const config: Required<TreeEncodingOptions> = {
 		useStoredKeys: false,
 		...options,
 	};
@@ -305,9 +280,9 @@ function verboseTreeAdapter(options: SchemalessParseOptions): CursorAdapter<Verb
 export function verboseFromCursor(
 	reader: ITreeCursor,
 	rootSchema: ImplicitAllowedTypes,
-	options: EncodeOptions,
+	options: TreeEncodingOptions,
 ): VerboseTree {
-	const config: Required<EncodeOptions> = {
+	const config: Required<TreeEncodingOptions> = {
 		useStoredKeys: false,
 		...options,
 	};
@@ -319,7 +294,7 @@ export function verboseFromCursor(
 
 function verboseFromCursorInner(
 	reader: ITreeCursor,
-	options: Required<EncodeOptions>,
+	options: Required<TreeEncodingOptions>,
 	schema: ReadonlyMap<string, TreeNodeSchema>,
 ): VerboseTree {
 	const fields = customFromCursor(reader, options, schema, verboseFromCursorInner);

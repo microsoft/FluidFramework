@@ -458,11 +458,12 @@ export abstract class SharedObjectCore<
 	protected submitLocalMessage(content: unknown, localOpMetadata: unknown = undefined): void {
 		this.verifyNotClosed();
 		if (this.isAttached()) {
+			// NOTE: We may also be encoding in the ContainerRuntime layer.
+			// Once the layer-compat window passes we can stop encoding here and only bind
+			const contentToSubmit = makeHandlesSerializable(content, this.serializer, this.handle);
+
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.services!.deltaConnection.submit(
-				makeHandlesSerializable(content, this.serializer, this.handle),
-				localOpMetadata,
-			);
+			this.services!.deltaConnection.submit(contentToSubmit, localOpMetadata);
 		}
 	}
 

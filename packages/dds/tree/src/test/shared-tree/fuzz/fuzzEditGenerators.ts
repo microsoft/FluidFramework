@@ -24,8 +24,8 @@ import type {
 	TreeNodeSchemaIdentifier,
 } from "../../../core/index.js";
 import { type DownPath, toDownPath } from "../../../feature-libraries/index.js";
-import { Tree, type ITreePrivate, type SharedTree } from "../../../shared-tree/index.js";
-import { fail, getOrCreate, makeArray } from "../../../util/index.js";
+import { Tree, type ISharedTree, type ITreePrivate } from "../../../shared-tree/index.js";
+import { getOrCreate, makeArray } from "../../../util/index.js";
 
 import {
 	type FuzzNode,
@@ -102,7 +102,7 @@ export interface FuzzTestState extends DDSFuzzTestState<TreeFactory> {
 	 * SharedTrees undergoing a transaction will have a forked view in {@link transactionViews} instead,
 	 * which should be used in place of this view until the transaction is complete.
 	 */
-	clientViews?: Map<SharedTree, FuzzView>;
+	clientViews?: Map<ISharedTree, FuzzView>;
 	/**
 	 * Schematized view of clients undergoing transactions with their nodeSchemas.
 	 * Edits to this view are not visible to other clients until the transaction is closed.
@@ -118,7 +118,7 @@ export interface FuzzTestState extends DDSFuzzTestState<TreeFactory> {
 	 * SharedTrees undergoing a transaction will have a forked view in {@link transactionViews} instead,
 	 * which should be used in place of this view until the transaction is complete.
 	 */
-	forkedViews?: Map<SharedTree, FuzzView[]>;
+	forkedViews?: Map<ISharedTree, FuzzView[]>;
 }
 
 export function viewFromState(
@@ -485,7 +485,7 @@ export const makeTreeEditGenerator = (
 					),
 				};
 			default:
-				fail("Unknown field type");
+				assert.fail("Unknown field type");
 		}
 	}
 
@@ -916,7 +916,7 @@ function trySelectTreeField(
 				break;
 			}
 			default:
-				fail(`Invalid option: ${option}`);
+				assert.fail(`Invalid option: ${option}`);
 		}
 	}
 

@@ -32,6 +32,7 @@ export interface IAlfredResourcesCustomizations {
 	redisClientConnectionManagerForJwtCache?: IRedisClientConnectionManager;
 	redisClientConnectionManagerForThrottling?: IRedisClientConnectionManager;
 	redisClientConnectionManagerForInvalidTokenCache?: IRedisClientConnectionManager;
+	redisClientConnectionManagerForGetSession?: IRedisClientConnectionManager;
 	readinessCheck?: IReadinessCheck;
 	fluidAccessTokenGenerator?: IFluidAccessTokenGenerator;
 }

@@ -137,6 +137,7 @@ export {
 	type InsertableTreeNodeFromAllowedTypesUnsafe,
 	type FieldSchemaAlphaUnsafe,
 	type ArrayNodeCustomizableSchemaUnsafe,
+	type MapNodeCustomizableSchemaUnsafe,
 	// System types (not in Internal types for various reasons, like doc links or cannot be named errors).
 	type typeSchemaSymbol,
 	type TreeNodeSchemaNonClass,
@@ -168,9 +169,12 @@ export {
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,
+	// Other
 	type VerboseTreeNode,
-	type EncodeOptions,
-	type ParseOptions,
+	type TreeEncodingOptions,
+	type TreeSchemaEncodingOptions,
+	type TreeSchema,
+	TreeViewConfigurationAlpha,
 	type VerboseTree,
 	extractPersistedSchema,
 	comparePersistedSchema,
@@ -211,7 +215,7 @@ export {
 	asTreeViewAlpha,
 	type NodeSchemaOptions,
 	type NodeSchemaMetadata,
-	type schemaStatics,
+	type SchemaStatics,
 	type ITreeAlpha,
 	type TransactionConstraint,
 	type NodeInDocumentConstraint,
@@ -233,6 +237,9 @@ export {
 	type ArrayNodeCustomizableSchema,
 	type ArrayNodePojoEmulationSchema,
 	ArrayNodeSchema,
+	type MapNodeCustomizableSchema,
+	type MapNodePojoEmulationSchema,
+	MapNodeSchema,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
@@ -287,3 +294,4 @@ export type { MapNodeInsertableData } from "./simple-tree/index.js";
 
 export { JsonAsTree } from "./jsonDomainSchema.js";
 export { FluidSerializableAsTree } from "./serializableDomainSchema.js";
+export { TableSchema } from "./tableSchema.js";
