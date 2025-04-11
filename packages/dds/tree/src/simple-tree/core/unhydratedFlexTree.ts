@@ -73,7 +73,7 @@ interface LocationInField {
  *
  * Create a `UnhydratedFlexTreeNode` by calling {@link getOrCreate}.
  */
-export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
+export class UnhydratedFlexTreeNode implements FlexTreeNode {
 	public get schema(): TreeNodeSchemaIdentifier {
 		return this.mapTree.type;
 	}
@@ -276,6 +276,10 @@ export class UnhydratedContext implements FlexTreeContext {
 		public readonly schemaPolicy: SchemaPolicy,
 		public readonly schema: TreeStoredSchema,
 	) {}
+
+	public isDisposed(): boolean {
+		return false;
+	}
 
 	public isHydrated(): this is FlexTreeHydratedContext {
 		return false;

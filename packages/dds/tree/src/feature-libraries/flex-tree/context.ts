@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, debugAssert } from "@fluidframework/core-utils/internal";
 
 import {
 	type ForestEvents,
@@ -43,6 +43,11 @@ export interface FlexTreeContext {
 	 * If false, this context was created for use in a unhydrated tree, and the full document schema is unknown.
 	 */
 	isHydrated(): this is FlexTreeHydratedContext;
+
+	/**
+	 * If true, none of the nodes in this context can be used.
+	 */
+	isDisposed(): boolean;
 }
 
 /**
@@ -106,7 +111,12 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 	}
 
 	public isHydrated(): this is FlexTreeHydratedContext {
+		debugAssert(() => !this.disposed || "Disposed");
 		return true;
+	}
+
+	public isDisposed(): boolean {
+		return this.disposed;
 	}
 
 	public get schema(): TreeStoredSchema {
