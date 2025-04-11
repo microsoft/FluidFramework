@@ -22,7 +22,6 @@ import {
 	IRevokedTokenChecker,
 	ICollaborationSessionTracker,
 	IReadinessCheck,
-	type IDenyList,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -65,7 +64,6 @@ export class NexusRunner implements IRunner {
 		private readonly clusterDrainingChecker?: IClusterDrainingChecker,
 		private readonly collaborationSessionTracker?: ICollaborationSessionTracker,
 		private readonly readinessCheck?: IReadinessCheck,
-		private readonly denyList?: IDenyList,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -126,7 +124,6 @@ export class NexusRunner implements IRunner {
 				this.collaborationSessionEventEmitter,
 				this.clusterDrainingChecker,
 				this.collaborationSessionTracker,
-				this.denyList,
 			);
 
 			if (this.tokenRevocationManager) {

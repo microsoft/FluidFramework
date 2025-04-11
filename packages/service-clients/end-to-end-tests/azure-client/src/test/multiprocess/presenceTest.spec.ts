@@ -63,7 +63,7 @@ describe(`Presence with AzureClient`, () => {
 					(resolve, reject) => {
 						child.once("message", (msg: MessageFromChild) => {
 							if (msg.event === "ready" && msg.containerId) {
-								containerCreatorSessionId = msg.attendeeId;
+								containerCreatorSessionId = msg.sessionId;
 								resolve(msg.containerId);
 							} else {
 								reject(new Error(`Non-ready message from child0: ${JSON.stringify(msg)}`));
@@ -152,10 +152,7 @@ describe(`Presence with AzureClient`, () => {
 				timeoutPromise(
 					(resolve) => {
 						child.on("message", (msg: MessageFromChild) => {
-							if (
-								msg.event === "attendeeDisconnected" &&
-								msg.attendeeId === creatorSessionId
-							) {
+							if (msg.event === "attendeeDisconnected" && msg.sessionId === creatorSessionId) {
 								resolve();
 							}
 						});

@@ -4,7 +4,7 @@
  */
 
 import {
-	getPresenceViaDataObject,
+	acquirePresenceViaDataObject,
 	ExperimentalPresenceManager,
 } from "@fluidframework/presence/alpha";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
@@ -57,7 +57,7 @@ async function start() {
 	}
 
 	// Retrieve a reference to the presence APIs via the data object.
-	const presence = getPresenceViaDataObject(container.initialObjects.presence);
+	const presence = acquirePresenceViaDataObject(container.initialObjects.presence);
 
 	// Get the states workspace for the tracker data. This workspace will be created if it doesn't exist.
 	// We create it with no states; we will pass the workspace to the Mouse and Focus trackers, and they will create value
@@ -86,7 +86,7 @@ async function start() {
 	// Setting "fluid*" and these helpers are just for our test automation
 	const buildAttendeeMap = () => {
 		return [...presence.getAttendees()].reduce((map, a) => {
-			map[a.attendeeId] = a.getConnectionStatus();
+			map[a.sessionId] = a.getConnectionStatus();
 			return map;
 		}, {});
 	};
@@ -109,18 +109,18 @@ async function start() {
 	window["fluidSessionAttendees"] = buildAttendeeMap();
 	window["fluidSessionAttendeeCount"] = presence.getAttendees().size;
 	presence.events.on("attendeeJoined", (attendee) => {
-		console.log(`Attendee joined: ${attendee.attendeeId}`);
+		console.log(`Attendee joined: ${attendee.sessionId}`);
 		window["fluidSessionAttendees"] = buildAttendeeMap();
 		window["fluidSessionAttendeeCount"] = presence.getAttendees().size;
 		window["fluidAttendeeJoinedCalled"] = true;
 	});
 	presence.events.on("attendeeDisconnected", (attendee) => {
-		console.log(`Attendee left: ${attendee.attendeeId}`);
+		console.log(`Attendee left: ${attendee.sessionId}`);
 		window["fluidSessionAttendees"] = buildAttendeeMap();
 		window["fluidSessionAttendeeCount"] = presence.getAttendees().size;
 		window["fluidAttendeeDisconnectedCalled"] = true;
 	});
-	window["fluidSessionId"] = presence.getMyself().attendeeId;
+	window["fluidSessionId"] = presence.getMyself().sessionId;
 	// Always set last as it is used as fence for load completion
 	window["fluidContainerId"] = id;
 	/* eslint-enable @typescript-eslint/dot-notation */

@@ -12,7 +12,7 @@ import { createPresenceManager } from "../presenceManager.js";
 
 import type { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
-import type { ClientConnectionId, AttendeeId } from "@fluidframework/presence/alpha";
+import type { ClientConnectionId, ClientSessionId } from "@fluidframework/presence/alpha";
 import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
 
 /**
@@ -39,14 +39,14 @@ export function createInstanceOf<T>(): T {
 export function generateBasicClientJoin(
 	fixedTime: number,
 	{
-		attendeeId = "attendeeId-2",
+		clientSessionId = "sessionId-2",
 		clientConnectionId = "client2",
 		updateProviders = ["client0", "client1", "client3"],
 		connectionOrder = 0,
 		averageLatency = 0,
 		priorClientToSessionId = {},
 	}: {
-		attendeeId?: string;
+		clientSessionId?: string;
 		clientConnectionId?: ClientConnectionId;
 		updateProviders?: string[];
 		connectionOrder?: number;
@@ -68,7 +68,7 @@ export function generateBasicClientJoin(
 						[clientConnectionId]: {
 							"rev": connectionOrder,
 							"timestamp": fixedTime,
-							"value": attendeeId,
+							"value": clientSessionId,
 						},
 					},
 				},
@@ -84,14 +84,14 @@ export function generateBasicClientJoin(
  * Prepares an instance of presence as it would be if initialized while connected.
  *
  * @param runtime - the mock runtime
- * @param attendeeId - the client session id given to presence
+ * @param clientSessionId - the client session id given to presence
  * @param clientConnectionId - the client connection id
  * @param clock - the fake timer.
  * @param logger - optional logger to track telemetry events
  */
 export function prepareConnectedPresence(
 	runtime: MockEphemeralRuntime,
-	attendeeId: string,
+	clientSessionId: string,
 	clientConnectionId: ClientConnectionId,
 	clock: Omit<SinonFakeTimers, "restore">,
 	logger?: EventAndErrorTrackingLogger,
@@ -113,13 +113,13 @@ export function prepareConnectedPresence(
 	}
 
 	const expectedClientJoin = generateBasicClientJoin(clock.now, {
-		attendeeId,
+		clientSessionId,
 		clientConnectionId,
 		updateProviders: quorumClientIds,
 	});
 	runtime.signalsExpected.push([expectedClientJoin.type, expectedClientJoin.content]);
 
-	const presence = createPresenceManager(runtime, attendeeId as AttendeeId);
+	const presence = createPresenceManager(runtime, clientSessionId as ClientSessionId);
 
 	// Validate expectations post initialization to make sure logger
 	// and runtime are left in a clean expectation state.

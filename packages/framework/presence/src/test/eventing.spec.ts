@@ -9,7 +9,7 @@ import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal
 import type { SinonFakeTimers, SinonSpy } from "sinon";
 import { useFakeTimers, spy } from "sinon";
 
-import type { Attendee, WorkspaceAddress } from "../index.js";
+import type { ISessionClient, PresenceWorkspaceAddress } from "../index.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import { assertFinalExpectations, prepareConnectedPresence } from "./testUtils.js";
@@ -32,13 +32,13 @@ const attendeeUpdate = {
 		"client1": {
 			"rev": 0,
 			"timestamp": 0,
-			"value": "attendeeId-1",
+			"value": "sessionId-1",
 		},
 	},
 } as const;
 const latestUpdate = {
 	"latest": {
-		"attendeeId-1": {
+		"sessionId-1": {
 			"rev": 1,
 			"timestamp": 0,
 			"value": { x: 1, y: 1, z: 1 },
@@ -47,7 +47,7 @@ const latestUpdate = {
 } as const;
 const latestMapUpdate = {
 	"latestMap": {
-		"attendeeId-1": {
+		"sessionId-1": {
 			"rev": 1,
 			"items": {
 				"key1": {
@@ -66,7 +66,7 @@ const latestMapUpdate = {
 } as const;
 const latestUpdateRev2 = {
 	"latest": {
-		"attendeeId-1": {
+		"sessionId-1": {
 			"rev": 2,
 			"timestamp": 50,
 			"value": { x: 2, y: 2, z: 2 },
@@ -75,7 +75,7 @@ const latestUpdateRev2 = {
 } as const;
 const itemRemovedMapUpdate = {
 	"latestMap": {
-		"attendeeId-1": {
+		"sessionId-1": {
 			"rev": 2,
 			"items": {
 				"key2": {
@@ -88,7 +88,7 @@ const itemRemovedMapUpdate = {
 } as const;
 const itemRemovedAndItemUpdatedMapUpdate = {
 	"latestMap": {
-		"attendeeId-1": {
+		"sessionId-1": {
 			"rev": 2,
 			"items": {
 				"key2": {
@@ -106,7 +106,7 @@ const itemRemovedAndItemUpdatedMapUpdate = {
 };
 const itemUpdatedAndItemRemoveddMapUpdate = {
 	"latestMap": {
-		"attendeeId-1": {
+		"sessionId-1": {
 			"rev": 2,
 			"items": {
 				"key1": {
@@ -128,7 +128,7 @@ const latestMapItemRemovedAndLatestUpdate = {
 } as const;
 const notificationsUpdate = {
 	"notifications": {
-		"attendeeId-1": {
+		"sessionId-1": {
 			"rev": 0,
 			"timestamp": 0,
 			"value": { "name": "newId", "args": [42] },
@@ -166,12 +166,12 @@ describe("Presence", () => {
 					expectedValue: LatestMapValueExpected;
 			  };
 
-		function verifyState(attendee: Attendee, verifications: StateVerification[]): void {
+		function verifyState(attendee: ISessionClient, verifications: StateVerification[]): void {
 			assert.ok(attendee, "Eventing does not reflect new attendee");
 			assert.strictEqual(
-				attendee.attendeeId,
-				"attendeeId-1",
-				"Eventing does not reflect new attendee's attendeeId",
+				attendee.sessionId,
+				"sessionId-1",
+				"Eventing does not reflect new attendee's sessionId",
 			);
 			assert.strictEqual(
 				attendee.getConnectionId(),
@@ -216,7 +216,7 @@ describe("Presence", () => {
 		beforeEach(() => {
 			logger = new EventAndErrorTrackingLogger();
 			runtime = new MockEphemeralRuntime(logger);
-			presence = prepareConnectedPresence(runtime, "attendeeId-2", "client2", clock, logger);
+			presence = prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
 		});
 
 		afterEach(function (done: Mocha.Done) {
@@ -257,7 +257,7 @@ describe("Presence", () => {
 				workspace.add(
 					"notifications",
 					Notifications<{ newId: (id: number) => void }>({
-						newId: (_attendee: Attendee, _id: number) => {},
+						newId: (_client: ISessionClient, _id: number) => {},
 					}),
 				);
 				notificationManager = workspace.props.notifications;
@@ -278,7 +278,7 @@ describe("Presence", () => {
 		function setupNotificationsWorkspace(): void {
 			const notificationsWorkspace = presence.getNotifications("name:testWorkspace", {
 				notifications: Notifications<{ newId: (id: number) => void }>({
-					newId: (_attendee: Attendee, _id: number) => {},
+					newId: (_client: ISessionClient, _id: number) => {},
 				}),
 			});
 			notificationManager = notificationsWorkspace.props.notifications;
@@ -302,8 +302,8 @@ describe("Presence", () => {
 			);
 		}
 
-		function getTestAttendee(): Attendee {
-			return presence.getAttendee("attendeeId-1");
+		function getTestAttendee(): ISessionClient {
+			return presence.getAttendee("sessionId-1");
 		}
 
 		describe("states workspace", () => {
@@ -654,18 +654,20 @@ describe("Presence", () => {
 			it("from unregistered workspace triggers 'workspaceActivated' event", async () => {
 				// Setup
 				notificationSpy = spy();
-				const workspaceActivatedEventSpy = spy((workspaceAddress: WorkspaceAddress) => {
-					// Once activated, register the notifications workspace and listener for it's event
-					const notificationsWorkspace = presence.getNotifications(workspaceAddress, {
-						notifications: Notifications<{ newId: (id: number) => void }>({
-							newId: (_attendee: Attendee, _id: number) => {},
-						}),
-					});
-					notificationsWorkspace.props.notifications.notifications.on(
-						"newId",
-						notificationSpy,
-					);
-				});
+				const workspaceActivatedEventSpy = spy(
+					(workspaceAddress: PresenceWorkspaceAddress) => {
+						// Once activated, register the notifications workspace and listener for it's event
+						const notificationsWorkspace = presence.getNotifications(workspaceAddress, {
+							notifications: Notifications<{ newId: (id: number) => void }>({
+								newId: (_client: ISessionClient, _id: number) => {},
+							}),
+						});
+						notificationsWorkspace.props.notifications.notifications.on(
+							"newId",
+							notificationSpy,
+						);
+					},
+				);
 				presence.events.on("workspaceActivated", (workspaceAddress, type) => {
 					if (workspaceAddress === "name:testWorkspace" && type === "Notifications") {
 						workspaceActivatedEventSpy(workspaceAddress);

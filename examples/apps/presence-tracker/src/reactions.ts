@@ -4,7 +4,7 @@
  */
 
 import { Notifications } from "@fluidframework/presence/alpha";
-import type { Attendee, Presence } from "@fluidframework/presence/alpha";
+import type { IPresence, ISessionClient } from "@fluidframework/presence/alpha";
 
 import type { IMousePosition, MouseTracker } from "./MouseTracker.js";
 
@@ -13,7 +13,7 @@ import type { IMousePosition, MouseTracker } from "./MouseTracker.js";
  * relevant event handlers. Reaction elements are added to the DOM in response to incoming notifications. These DOM
  * elements are automatically removed after a timeout.
  */
-export function initializeReactions(presence: Presence, mouseTracker: MouseTracker) {
+export function initializeReactions(presence: IPresence, mouseTracker: MouseTracker) {
 	// Create a notifications workspace to send reactions-related notifications. This workspace will be created if it
 	// doesn't exist. We also create a NotificationsManager. You can also
 	// add presence objects to the workspace later.
@@ -59,7 +59,7 @@ export function initializeReactions(presence: Presence, mouseTracker: MouseTrack
 /**
  * Renders reactions to the window using absolute positioning.
  */
-function onReaction(client: Attendee, position: IMousePosition, value: string): void {
+function onReaction(client: ISessionClient, position: IMousePosition, value: string): void {
 	const reactionDiv = document.createElement("div");
 	reactionDiv.className = "reaction";
 	reactionDiv.style.position = "absolute";

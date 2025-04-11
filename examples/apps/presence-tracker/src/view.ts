@@ -35,7 +35,7 @@ function getFocusPresencesString(
 	const focusString: string[] = [];
 
 	focusTracker.getFocusPresences().forEach((hasFocus, sessionClient) => {
-		const prefix = `User session ${sessionClient.attendeeId}:`;
+		const prefix = `User session ${sessionClient.sessionId}:`;
 		if (hasFocus) {
 			focusString.push(`${prefix} has focus`);
 		} else {
@@ -56,7 +56,7 @@ export function renderMousePresence(
 		for (const [sessionClient, mousePosition] of mouseTracker.getMousePresences()) {
 			if (focusTracker.getFocusPresences().get(sessionClient) === true) {
 				const posDiv = document.createElement("div");
-				posDiv.textContent = `/${sessionClient.attendeeId}`;
+				posDiv.textContent = `/${sessionClient.sessionId}`;
 				posDiv.style.position = "absolute";
 				posDiv.style.left = `${mousePosition.x}px`;
 				posDiv.style.top = `${mousePosition.y - 6}px`;

@@ -23,39 +23,39 @@ import type { NotificationsManager } from "./notificationsManager.js";
  *
  * @alpha
  */
-export type WorkspaceAddress = `${string}:${string}`;
+export type PresenceWorkspaceAddress = `${string}:${string}`;
 
 /**
- * Single entry in {@link StatesWorkspaceSchema} or  {@link NotificationsWorkspaceSchema}.
+ * Single entry in {@link PresenceStatesSchema} or  {@link PresenceNotificationsSchema}.
  *
  * @alpha
  */
-export type StatesWorkspaceEntry<
+export type PresenceWorkspaceEntry<
 	TKey extends string,
 	TValue extends InternalTypes.ValueDirectoryOrState<unknown>,
 	TManager = unknown,
 > = InternalTypes.ManagerFactory<TKey, TValue, TManager>;
 
-// #region StatesWorkspace
+// #region PresenceStates
 
 /**
- * Schema for a {@link StatesWorkspace} workspace.
+ * Schema for a {@link PresenceStates} workspace.
  *
- * Keys of schema are the keys of the {@link StatesWorkspace} providing access to State objects.
+ * Keys of schema are the keys of the {@link PresenceStates} providing access to State objects.
  *
  * @alpha
  */
-export interface StatesWorkspaceSchema {
-	[key: string]: StatesWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<any>>;
+export interface PresenceStatesSchema {
+	[key: string]: PresenceWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<any>>;
 }
 
 /**
- * Map of State objects registered with {@link StatesWorkspace}.
+ * Map of State objects registered with {@link PresenceStates}.
  *
  * @sealed
  * @alpha
  */
-export type StatesWorkspaceEntries<TSchema extends StatesWorkspaceSchema> = {
+export type PresenceStatesEntries<TSchema extends PresenceStatesSchema> = {
 	/**
 	 * Registered State objects.
 	 */
@@ -67,7 +67,7 @@ export type StatesWorkspaceEntries<TSchema extends StatesWorkspaceSchema> = {
 };
 
 /**
- * `StatesWorkspace` maintains a registry of State objects that all share and provide access to
+ * `PresenceStates` maintains a registry of State objects that all share and provide access to
  * presence state values across client members in a session.
  *
  * State objects offer variations on how to manage states, but all share same principle that
@@ -76,12 +76,12 @@ export type StatesWorkspaceEntries<TSchema extends StatesWorkspaceSchema> = {
  * @sealed
  * @alpha
  */
-export interface StatesWorkspace<
-	TSchema extends StatesWorkspaceSchema,
+export interface PresenceStates<
+	TSchema extends PresenceStatesSchema,
 	TManagerConstraints = unknown,
 > {
 	/**
-	 * Registers a new State object with the {@link StatesWorkspace}.
+	 * Registers a new State object with the {@link PresenceStates}.
 	 * @param key - new unique key for the State object within the workspace
 	 * @param manager - factory for creating a State object
 	 */
@@ -92,7 +92,7 @@ export interface StatesWorkspace<
 	>(
 		key: TKey,
 		manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>,
-	): asserts this is StatesWorkspace<
+	): asserts this is PresenceStates<
 		TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>,
 		TManagerConstraints
 	>;
@@ -100,7 +100,7 @@ export interface StatesWorkspace<
 	/**
 	 * Registry of State.
 	 */
-	readonly props: StatesWorkspaceEntries<TSchema>;
+	readonly props: PresenceStatesEntries<TSchema>;
 
 	/**
 	 * Default controls for management of broadcast updates.
@@ -108,18 +108,18 @@ export interface StatesWorkspace<
 	readonly controls: BroadcastControls;
 }
 
-// #endregion StatesWorkspace
+// #endregion PresenceStates
 
-// #region NotificationsWorkspace
+// #region PresenceNotifications
 
 /**
- * Schema for a {@link NotificationsWorkspace} workspace.
+ * Schema for a {@link PresenceNotifications} workspace.
  *
- * Keys of schema are the keys of the {@link NotificationsWorkspace} providing access to {@link NotificationsManager}s.
+ * Keys of schema are the keys of the {@link PresenceNotifications} providing access to {@link NotificationsManager}s.
  *
  * @alpha
  */
-export interface NotificationsWorkspaceSchema {
+export interface PresenceNotificationsSchema {
 	[key: string]: InternalTypes.ManagerFactory<
 		typeof key,
 		InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
@@ -128,21 +128,21 @@ export interface NotificationsWorkspaceSchema {
 }
 
 /**
- * `NotificationsWorkspace` maintains a registry of {@link NotificationsManager}s
+ * `PresenceNotifications` maintains a registry of {@link NotificationsManager}s
  * that facilitate messages across client members in a session.
  *
  * @privateRemarks
- * This should be kept mostly in sync with {@link StatesWorkspace}. Notably the
+ * This should be kept mostly in sync with {@link PresenceStates}. Notably the
  * return type of `add` is limited here and the `controls` property is omitted.
- * The `PresenceStatesImpl` class implements `StatesWorkspace` and therefore
- * `NotificationsWorkspace`, so long as this is proper subset.
+ * The `PresenceStatesImpl` class implements `PresenceStates` and therefore
+ * `PresenceNotifications`, so long as this is proper subset.
  *
  * @sealed
  * @alpha
  */
-export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSchema> {
+export interface PresenceNotifications<TSchema extends PresenceNotificationsSchema> {
 	/**
-	 * Registers a new `NotificationsManager` with the {@link NotificationsWorkspace}.
+	 * Registers a new `NotificationsManager` with the {@link PresenceNotifications}.
 	 * @param key - new unique key for the `NotificationsManager` within the workspace
 	 * @param manager - factory for creating a `NotificationsManager`
 	 */
@@ -153,14 +153,14 @@ export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSc
 	>(
 		key: TKey,
 		manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>,
-	): asserts this is NotificationsWorkspace<
+	): asserts this is PresenceNotifications<
 		TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>
 	>;
 
 	/**
 	 * Registry of `NotificationsManager`s.
 	 */
-	readonly props: StatesWorkspaceEntries<TSchema>;
+	readonly props: PresenceStatesEntries<TSchema>;
 }
 
-// #endregion NotificationsWorkspace
+// #endregion PresenceNotifications

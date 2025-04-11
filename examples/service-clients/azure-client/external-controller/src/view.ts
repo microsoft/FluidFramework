@@ -4,7 +4,7 @@
  */
 
 import { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
-import type { Latest, Presence } from "@fluidframework/presence/alpha";
+import type { IPresence, Latest } from "@fluidframework/presence/alpha";
 
 import { ICustomUserDetails } from "./app.js";
 import { IDiceRollerController } from "./controller.js";
@@ -112,7 +112,7 @@ export function makeDiceValuesView(
 ): void {
 	const children = makeDiceHeaderElement();
 	for (const clientValue of lastRoll.clientValues()) {
-		children.push(...makeDiceValueElement(clientValue.attendee.attendeeId, clientValue.value));
+		children.push(...makeDiceValueElement(clientValue.client.sessionId, clientValue.value));
 	}
 	target.replaceChildren(...children);
 }
@@ -125,7 +125,7 @@ function addLogEntry(logDiv: HTMLDivElement, entry: string): void {
 
 function makePresenceView(
 	// Biome insist on no semicolon - https://dev.azure.com/fluidframework/internal/_workitems/edit/9083
-	presenceConfig?: { presence: Presence; lastRoll: Latest<DiceValues> },
+	presenceConfig?: { presence: IPresence; lastRoll: Latest<DiceValues> },
 	audience?: IAzureAudience,
 ): HTMLDivElement {
 	const presenceDiv = document.createElement("div");
@@ -167,7 +167,7 @@ function makePresenceView(
 	if (audience !== undefined) {
 		presenceConfig.presence.events.on("attendeeJoined", (attendee) => {
 			const name = audience.getMembers().get(attendee.getConnectionId())?.name;
-			const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} 🔗 with id ${attendee.attendeeId} joined`;
+			const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} 🔗 with id ${attendee.sessionId} joined`;
 			addLogEntry(logContentDiv, update);
 		});
 
@@ -176,7 +176,7 @@ function makePresenceView(
 			const self = audience.getMyself();
 			if (self && attendee !== presenceConfig.presence.getAttendee(self.currentConnection)) {
 				const name = audience.getMembers().get(attendee.getConnectionId())?.name;
-				const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} ⛓️‍💥 with id ${attendee.attendeeId} left`;
+				const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} ⛓️‍💥 with id ${attendee.sessionId} left`;
 				addLogEntry(logContentDiv, update);
 			}
 		});
@@ -184,8 +184,8 @@ function makePresenceView(
 	logDiv.append(logHeaderDiv, logContentDiv);
 
 	presenceConfig.lastRoll.events.on("updated", (update) => {
-		const connected = update.attendee.getConnectionStatus() === "Connected" ? "🔗" : "⛓️‍💥";
-		const updateText = `updated ${update.attendee.attendeeId.slice(0, 8)}'s ${connected} last rolls to ${JSON.stringify(update.value)}`;
+		const connected = update.client.getConnectionStatus() === "Connected" ? "🔗" : "⛓️‍💥";
+		const updateText = `updated ${update.client.sessionId.slice(0, 8)}'s ${connected} last rolls to ${JSON.stringify(update.value)}`;
 		addLogEntry(logContentDiv, updateText);
 
 		makeDiceValuesView(statesContentDiv, presenceConfig.lastRoll);
@@ -198,7 +198,7 @@ function makePresenceView(
 export function makeAppView(
 	diceRollerControllers: IDiceRollerController[],
 	// Biome insist on no semicolon - https://dev.azure.com/fluidframework/internal/_workitems/edit/9083
-	presenceConfig?: { presence: Presence; lastRoll: Latest<DiceValues> },
+	presenceConfig?: { presence: IPresence; lastRoll: Latest<DiceValues> },
 	audience?: IAzureAudience,
 ): HTMLDivElement {
 	const diceRollerViews = diceRollerControllers.map((controller) =>

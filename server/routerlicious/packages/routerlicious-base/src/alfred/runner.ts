@@ -21,7 +21,6 @@ import {
 	IRevokedTokenChecker,
 	IFluidAccessTokenGenerator,
 	IReadinessCheck,
-	type IDenyList,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -64,7 +63,6 @@ export class AlfredRunner implements IRunner {
 		private readonly readinessCheck?: IReadinessCheck,
 		private readonly fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,
 		private readonly redisCacheForGetSession?: ICache,
-		private readonly denyList?: IDenyList,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -98,7 +96,6 @@ export class AlfredRunner implements IRunner {
 				this.readinessCheck,
 				this.fluidAccessTokenGenerator,
 				this.redisCacheForGetSession,
-				this.denyList,
 			);
 			alfred.set("port", this.port);
 			this.server = this.serverFactory.create(alfred);

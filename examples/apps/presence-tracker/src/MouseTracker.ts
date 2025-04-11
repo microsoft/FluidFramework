@@ -44,13 +44,13 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	private readonly cursor: Latest<IMousePosition>;
 
 	constructor(
-		private readonly presence: Presence,
+		private readonly presence: IPresence,
 
 		/**
 		 * A states workspace that the MouseTracker will use to share mouse positions with other session clients.
 		 */
 		// eslint-disable-next-line @typescript-eslint/ban-types -- empty object is the correct typing
-		readonly statesWorkspace: StatesWorkspace<{}>,
+		readonly statesWorkspace: PresenceStates<{}>,
 	) {
 		super();
 
@@ -85,12 +85,12 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	/**
 	 * A map of session clients to mouse positions.
 	 */
-	public getMousePresences(): Map<Attendee, IMousePosition> {
-		const statuses: Map<Attendee, IMousePosition> = new Map();
+	public getMousePresences(): Map<ISessionClient, IMousePosition> {
+		const statuses: Map<ISessionClient, IMousePosition> = new Map();
 
-		for (const { attendee, value } of this.cursor.clientValues()) {
-			if (attendee.getConnectionStatus() === AttendeeStatus.Connected) {
-				statuses.set(attendee, value);
+		for (const { client, value } of this.cursor.clientValues()) {
+			if (client.getConnectionStatus() === SessionClientStatus.Connected) {
+				statuses.set(client, value);
 			}
 		}
 		return statuses;

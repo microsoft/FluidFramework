@@ -13,7 +13,7 @@ import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
 import { BasicDataStoreFactory, LoadableFluidObject } from "./datastoreSupport.js";
-import type { Presence } from "./presence.js";
+import type { IPresence } from "./presence.js";
 import { createPresenceManager } from "./presenceManager.js";
 
 import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
@@ -32,9 +32,9 @@ function assertSignalMessageIsValid(
 class PresenceManagerDataObject extends LoadableFluidObject {
 	// Creation of presence manager is deferred until first acquisition to avoid
 	// instantiations and stand-up by Summarizer that has no actual use.
-	private _presenceManager: Presence | undefined;
+	private _presenceManager: IPresence | undefined;
 
-	public presenceManager(): Presence {
+	public presenceManager(): IPresence {
 		if (!this._presenceManager) {
 			// TODO: investigate if ContainerExtensionStore (path-based address routing for
 			// Signals) is readily detectable here and use that presence manager directly.
@@ -50,7 +50,7 @@ class PresenceManagerDataObject extends LoadableFluidObject {
 }
 
 /**
- * Factory class to create {@link Presence} in own data store.
+ * Factory class to create {@link IPresence} in own data store.
  */
 class PresenceManagerFactory {
 	public is(value: IFluidLoadable | ExperimentalPresenceDO): value is ExperimentalPresenceDO {
@@ -67,7 +67,7 @@ class PresenceManagerFactory {
  * Brand for Experimental Presence Data Object.
  *
  * @remarks
- * See {@link getPresenceViaDataObject} for example usage.
+ * See {@link acquirePresenceViaDataObject} for example usage.
  *
  * @sealed
  * @alpha
@@ -88,7 +88,7 @@ export const ExperimentalPresenceManager =
 	>;
 
 /**
- * Acquire Presence from a DataStore based Presence Manager
+ * Acquire IPresence from a DataStore based Presence Manager
  *
  * @example
  * ```typescript
@@ -100,14 +100,16 @@ export const ExperimentalPresenceManager =
  * ```
  * then
  * ```typescript
- * const presence = getPresenceViaDataObject(
+ * const presence = acquirePresenceViaDataObject(
  * 	container.initialObjects.experimentalPresence,
  * 	);
  * ```
  *
  * @alpha
  */
-export function getPresenceViaDataObject(fluidLoadable: ExperimentalPresenceDO): Presence {
+export function acquirePresenceViaDataObject(
+	fluidLoadable: ExperimentalPresenceDO,
+): IPresence {
 	if (fluidLoadable instanceof PresenceManagerDataObject) {
 		return fluidLoadable.presenceManager();
 	}

@@ -68,4 +68,3 @@ export {
 export { ITenantKeyGenerator, TenantKeyGenerator } from "./tenantKeyGenerator";
 export { ResponseSizeMiddleware } from "./responseSizeMiddleware";
 export { logHttpMetrics } from "./httpRequestMetricsLogger";
-export { DenyList, denyListMiddleware } from "./denyList";

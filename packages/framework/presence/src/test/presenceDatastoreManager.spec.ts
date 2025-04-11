@@ -52,14 +52,14 @@ describe("Presence", () => {
 
 		it("sends join when connected during initialization", () => {
 			// Setup, Act (call to createPresenceManager), & Verify (post createPresenceManager call)
-			prepareConnectedPresence(runtime, "attendeeId-2", "client2", clock, logger);
+			prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
 		});
 
 		describe("responds to ClientJoin", () => {
 			let presence: ReturnType<typeof createPresenceManager>;
 
 			beforeEach(() => {
-				presence = prepareConnectedPresence(runtime, "attendeeId-2", "client2", clock, logger);
+				presence = prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
 
 				// Pass a little time (to mimic reality)
 				clock.tick(10);
@@ -85,7 +85,7 @@ describe("Presence", () => {
 									"client2": {
 										"rev": 0,
 										"timestamp": initialTime,
-										"value": "attendeeId-2",
+										"value": "sessionId-2",
 									},
 								},
 							},
@@ -155,7 +155,7 @@ describe("Presence", () => {
 									"client2": {
 										"rev": 0,
 										"timestamp": initialTime,
-										"value": "attendeeId-2",
+										"value": "sessionId-2",
 									},
 								},
 							},
@@ -182,14 +182,14 @@ describe("Presence", () => {
 					"client1": {
 						"rev": 0,
 						"timestamp": 0,
-						"value": "attendeeId-1",
+						"value": "sessionId-1",
 					},
 				},
 			};
 
 			const statesWorkspaceUpdate = {
 				"latest": {
-					"attendeeId-1": {
+					"sessionId-1": {
 						"rev": 1,
 						"timestamp": 0,
 						"value": {},
@@ -199,7 +199,7 @@ describe("Presence", () => {
 
 			const notificationsWorkspaceUpdate = {
 				"testEvents": {
-					"attendeeId-1": {
+					"sessionId-1": {
 						"rev": 0,
 						"timestamp": 0,
 						"value": {},
@@ -209,7 +209,7 @@ describe("Presence", () => {
 			};
 
 			beforeEach(() => {
-				presence = prepareConnectedPresence(runtime, "attendeeId-2", "client2", clock, logger);
+				presence = prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
 
 				// Pass a little time (to mimic reality)
 				clock.tick(10);
@@ -291,7 +291,7 @@ describe("Presence", () => {
 								"system:presence": systemWorkspaceUpdate,
 								"u:name:testUnknownWorkspace": {
 									"latest": {
-										"attendeeId-1": {
+										"sessionId-1": {
 											"rev": 1,
 											"timestamp": 0,
 											"value": { x: 1, y: 1, z: 1 },

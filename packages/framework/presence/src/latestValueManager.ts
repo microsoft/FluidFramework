@@ -18,7 +18,7 @@ import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
 import type { LatestClientData, LatestData } from "./latestValueTypes.js";
-import type { Attendee } from "./presence.js";
+import type { ISessionClient } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
@@ -48,7 +48,7 @@ export interface LatestEvents<T> {
  * State that provides the latest known value from this client to others and read access to their values.
  * All participant clients must provide a value.
  *
- * @remarks Create using {@link latestStateFactory} registered to {@link StatesWorkspace}.
+ * @remarks Create using {@link latestStateFactory} registered to {@link PresenceStates}.
  *
  * @sealed
  * @alpha
@@ -80,11 +80,11 @@ export interface Latest<T> {
 	/**
 	 * Array of known remote clients.
 	 */
-	clients(): Attendee[];
+	clients(): ISessionClient[];
 	/**
-	 * Access to a specific attendee's value.
+	 * Access to a specific client's value.
 	 */
-	clientValue(attendee: Attendee): LatestData<T>;
+	clientValue(client: ISessionClient): LatestData<T>;
 }
 
 class LatestValueManagerImpl<T, Key extends string>
@@ -119,10 +119,10 @@ class LatestValueManagerImpl<T, Key extends string>
 
 	public *clientValues(): IterableIterator<LatestClientData<T>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
-		for (const [attendeeId, value] of objectEntries(allKnownStates.states)) {
-			if (attendeeId !== allKnownStates.self) {
+		for (const [clientSessionId, value] of objectEntries(allKnownStates.states)) {
+			if (clientSessionId !== allKnownStates.self) {
 				yield {
-					attendee: this.datastore.lookupClient(attendeeId),
+					client: this.datastore.lookupClient(clientSessionId),
 					value: value.value,
 					metadata: { revision: value.rev, timestamp: value.timestamp },
 				};
@@ -130,16 +130,16 @@ class LatestValueManagerImpl<T, Key extends string>
 		}
 	}
 
-	public clients(): Attendee[] {
+	public clients(): ISessionClient[] {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		return Object.keys(allKnownStates.states)
-			.filter((attendeeId) => attendeeId !== allKnownStates.self)
-			.map((attendeeId) => this.datastore.lookupClient(attendeeId));
+			.filter((clientSessionId) => clientSessionId !== allKnownStates.self)
+			.map((clientSessionId) => this.datastore.lookupClient(clientSessionId));
 	}
 
-	public clientValue(attendee: Attendee): LatestData<T> {
+	public clientValue(client: ISessionClient): LatestData<T> {
 		const allKnownStates = this.datastore.knownValues(this.key);
-		const clientState = allKnownStates.states[attendee.attendeeId];
+		const clientState = allKnownStates.states[client.sessionId];
 		if (clientState === undefined) {
 			throw new Error("No entry for clientId");
 		}
@@ -150,21 +150,21 @@ class LatestValueManagerImpl<T, Key extends string>
 	}
 
 	public update(
-		attendee: Attendee,
+		client: ISessionClient,
 		_received: number,
 		value: InternalTypes.ValueRequiredState<T>,
 	): PostUpdateAction[] {
 		const allKnownStates = this.datastore.knownValues(this.key);
-		const attendeeId = attendee.attendeeId;
-		const currentState = allKnownStates.states[attendeeId];
+		const clientSessionId = client.sessionId;
+		const currentState = allKnownStates.states[clientSessionId];
 		if (currentState !== undefined && currentState.rev >= value.rev) {
 			return [];
 		}
-		this.datastore.update(this.key, attendeeId, value);
+		this.datastore.update(this.key, clientSessionId, value);
 		return [
 			() =>
 				this.events.emit("updated", {
-					attendee,
+					client,
 					value: value.value,
 					metadata: { revision: value.rev, timestamp: value.timestamp },
 				}),

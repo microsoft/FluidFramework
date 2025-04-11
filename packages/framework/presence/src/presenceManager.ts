@@ -20,7 +20,11 @@ import type { PresenceDatastoreManager } from "./presenceDatastoreManager.js";
 import { PresenceDatastoreManagerImpl } from "./presenceDatastoreManager.js";
 import type { SystemWorkspace, SystemWorkspaceDatastore } from "./systemWorkspace.js";
 import { createSystemWorkspace } from "./systemWorkspace.js";
-import type { StatesWorkspace, WorkspaceAddress, StatesWorkspaceSchema } from "./types.js";
+import type {
+	PresenceStates,
+	PresenceWorkspaceAddress,
+	PresenceStatesSchema,
+} from "./types.js";
 
 import type {
 	IContainerExtension,
@@ -39,7 +43,7 @@ export type PresenceExtensionInterface = Required<
 /**
  * The Presence manager
  */
-class PresenceManager implements Presence, PresenceExtensionInterface {
+class PresenceManager implements IPresence, PresenceExtensionInterface {
 	private readonly datastoreManager: PresenceDatastoreManager;
 	private readonly systemWorkspace: SystemWorkspace;
 
@@ -47,7 +51,7 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 
 	private readonly mc: MonitoringContext | undefined = undefined;
 
-	public constructor(runtime: IEphemeralRuntime, attendeeId: AttendeeId) {
+	public constructor(runtime: IEphemeralRuntime, clientSessionId: ClientSessionId) {
 		const logger = runtime.logger;
 		if (logger) {
 			this.mc = createChildMonitoringContext({ logger, namespace: "Presence" });
@@ -55,7 +59,7 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 		}
 
 		[this.datastoreManager, this.systemWorkspace] = setupSubComponents(
-			attendeeId,
+			clientSessionId,
 			runtime,
 			this.events,
 			this.mc?.logger,
@@ -92,23 +96,23 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 		this.systemWorkspace.removeClientConnectionId(clientConnectionId);
 	}
 
-	public getAttendees(): ReadonlySet<Attendee> {
+	public getAttendees(): ReadonlySet<ISessionClient> {
 		return this.systemWorkspace.getAttendees();
 	}
 
-	public getAttendee(clientId: ClientConnectionId | AttendeeId): Attendee {
+	public getAttendee(clientId: ClientConnectionId | ClientSessionId): ISessionClient {
 		return this.systemWorkspace.getAttendee(clientId);
 	}
 
-	public getMyself(): Attendee {
+	public getMyself(): ISessionClient {
 		return this.systemWorkspace.getMyself();
 	}
 
-	public getStates<TSchema extends StatesWorkspaceSchema>(
-		workspaceAddress: WorkspaceAddress,
+	public getStates<TSchema extends PresenceStatesSchema>(
+		workspaceAddress: PresenceWorkspaceAddress,
 		requestedContent: TSchema,
 		controls?: BroadcastControlSettings,
-	): StatesWorkspace<TSchema> {
+	): PresenceStates<TSchema> {
 		return this.datastoreManager.getWorkspace(
 			`s:${workspaceAddress}`,
 			requestedContent,
@@ -116,10 +120,10 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 		);
 	}
 
-	public getNotifications<TSchema extends StatesWorkspaceSchema>(
-		workspaceAddress: WorkspaceAddress,
+	public getNotifications<TSchema extends PresenceStatesSchema>(
+		workspaceAddress: PresenceWorkspaceAddress,
 		requestedContent: TSchema,
-	): StatesWorkspace<TSchema> {
+	): PresenceStates<TSchema> {
 		return this.datastoreManager.getWorkspace(`n:${workspaceAddress}`, requestedContent);
 	}
 
@@ -146,7 +150,7 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
  * attendee management. It is registered with the PresenceDatastoreManager.
  */
 function setupSubComponents(
-	attendeeId: AttendeeId,
+	clientSessionId: ClientSessionId,
 	runtime: IEphemeralRuntime,
 	events: IEmitter<PresenceEvents>,
 	logger: ITelemetryLoggerExt | undefined,
@@ -155,13 +159,13 @@ function setupSubComponents(
 		clientToSessionId: {},
 	};
 	const systemWorkspaceConfig = createSystemWorkspace(
-		attendeeId,
+		clientSessionId,
 		systemWorkspaceDatastore,
 		events,
 		runtime.getAudience(),
 	);
 	const datastoreManager = new PresenceDatastoreManagerImpl(
-		attendeeId,
+		clientSessionId,
 		runtime,
 		systemWorkspaceConfig.workspace.getAttendee.bind(systemWorkspaceConfig.workspace),
 		logger,
@@ -179,7 +183,7 @@ function setupSubComponents(
  */
 export function createPresenceManager(
 	runtime: IEphemeralRuntime,
-	attendeeId: AttendeeId = createSessionId() as AttendeeId,
-): Presence & PresenceExtensionInterface {
-	return new PresenceManager(runtime, attendeeId);
+	clientSessionId: ClientSessionId = createSessionId() as ClientSessionId,
+): IPresence & PresenceExtensionInterface {
+	return new PresenceManager(runtime, clientSessionId);
 }

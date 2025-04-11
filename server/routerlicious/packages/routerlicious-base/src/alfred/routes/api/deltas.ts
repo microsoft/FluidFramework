@@ -9,7 +9,6 @@ import {
 	IRevokedTokenChecker,
 	ITenantManager,
 	IThrottler,
-	type IDenyList,
 } from "@fluidframework/server-services-core";
 import {
 	verifyStorageToken,
@@ -17,7 +16,6 @@ import {
 	IThrottleMiddlewareOptions,
 	getParam,
 	getBooleanFromConfig,
-	denyListMiddleware,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
@@ -35,7 +33,6 @@ export function create(
 	clusterThrottlers: Map<string, IThrottler>,
 	jwtTokenCache?: ICache,
 	revokedTokenChecker?: IRevokedTokenChecker,
-	denyList?: IDenyList,
 ): Router {
 	const deltasCollectionName = config.get("mongo:collectionNames:deltas");
 	const rawDeltasCollectionName = config.get("mongo:collectionNames:rawdeltas");
@@ -91,7 +88,6 @@ export function create(
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
-		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const from = stringToSequenceNumber(request.query.from);
 			const to = stringToSequenceNumber(request.query.to);
@@ -119,7 +115,6 @@ export function create(
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
-		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const tenantId = request.params.tenantId || appTenants[0].id;
 			const documentId = request.params.id;
@@ -148,7 +143,6 @@ export function create(
 			getDeltasTenantThrottleOptions,
 		),
 		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
-		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const documentId = request.params.id;
 			let from = stringToSequenceNumber(request.query.from);

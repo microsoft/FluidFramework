@@ -9,12 +9,12 @@ import type {
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 import type { InternalTypes } from "../exposedInternalTypes.js";
-import type { Presence } from "../presence.js";
+import type { IPresence } from "../presence.js";
 
 import { addControlsTests } from "./broadcastControlsTests.js";
 
 describe("Presence", () => {
-	describe("StatesWorkspace", () => {
+	describe("PresenceStates", () => {
 		/**
 		 * See {@link checkCompiles} below
 		 */
@@ -46,7 +46,7 @@ declare function createValueManager<T, Key extends string>(
  */
 export function checkCompiles(): void {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-	const presence = {} as Presence;
+	const presence = {} as IPresence;
 	const statesWorkspace = presence.getStates("name:testWorkspaceA", {
 		cursor: createValueManager({ x: 0, y: 0 }),
 		// eslint-disable-next-line prefer-object-spread
