@@ -14,9 +14,8 @@ import {
 	ISerializedElection,
 	ITrackedClient,
 } from "./orderedClientElection.js";
+import { summarizerClientType } from "./summarizerTypes.js";
 import { ISummaryCollectionOpEvents } from "./summaryCollection.js";
-
-export const summarizerClientType = "summarizer";
 
 export interface ISummarizerClientElectionEvents extends IEvent {
 	(event: "electedSummarizerChanged", handler: () => void): void;

@@ -22,6 +22,7 @@ import {
 	verifyToken,
 	verifyStorageToken,
 	logHttpMetrics,
+	denyListMiddleware,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import {
@@ -54,6 +55,7 @@ export function create(
 	revokedTokenChecker?: core.IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	fluidAccessTokenGenerator?: core.IFluidAccessTokenGenerator,
+	denyList?: core.IDenyList,
 ): Router {
 	const router: Router = Router();
 
@@ -95,6 +97,7 @@ export function create(
 			"/tenants/:tenantId/accesstoken",
 			validateRequestParams("tenantId"),
 			throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+			denyListMiddleware(denyList, true /* skipDocumentCheck */),
 			// eslint-disable-next-line @typescript-eslint/no-misused-promises
 			async (request, response) => {
 				const tenantId = request.params.tenantId;
@@ -117,6 +120,7 @@ export function create(
 		"/:tenantId/:id/root",
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+		denyListMiddleware(denyList),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
 			const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
@@ -146,6 +150,7 @@ export function create(
 		"/:tenantId/:id/blobs",
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+		denyListMiddleware(denyList),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
 			const tenantId = request.params.tenantId;
@@ -173,6 +178,7 @@ export function create(
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		verifyStorageToken(tenantManager, config),
+		denyListMiddleware(denyList),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
 			const tenantId = request.params.tenantId;
