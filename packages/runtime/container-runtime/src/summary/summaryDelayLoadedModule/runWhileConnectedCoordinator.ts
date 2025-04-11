@@ -6,7 +6,7 @@
 import type { SummarizerStopReason } from "@fluidframework/container-runtime-definitions/internal";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 
-import { IConnectableRuntime, ISummaryCancellationToken } from "./summarizerTypes.js";
+import { IConnectableRuntime, ISummaryCancellationToken } from "../summarizerTypes.js";
 
 /**
  * Similar to AbortController, but using promise instead of events
