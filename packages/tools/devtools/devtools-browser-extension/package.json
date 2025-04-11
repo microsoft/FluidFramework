@@ -80,11 +80,10 @@
 		"@fluidframework/devtools-core": "workspace:~",
 		"@microsoft/1ds-core-js": "^3.2.13",
 		"@microsoft/1ds-post-js": "^3.2.13",
-		"@types/uuid": "^9.0.2",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1",
 		"tslib": "^1.10.0",
-		"uuid": "^9.0.0"
+		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
