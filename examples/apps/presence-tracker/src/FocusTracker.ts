@@ -6,12 +6,12 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import type {
-	IPresence,
-	ISessionClient,
+	Attendee,
 	LatestValueManager,
-	PresenceStates,
+	Presence,
+	StatesWorkspace,
 } from "@fluidframework/presence/alpha";
-import { Latest, SessionClientStatus } from "@fluidframework/presence/alpha";
+import { Latest, AttendeeStatus } from "@fluidframework/presence/alpha";
 
 /**
  * IFocusState is the data that individual session clients share via presence.
@@ -43,13 +43,13 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 	private readonly focus: LatestValueManager<IFocusState>;
 
 	constructor(
-		private readonly presence: IPresence,
+		private readonly presence: Presence,
 
 		/**
 		 * A states workspace that the FocusTracker will use to share focus states with other session clients.
 		 */
 		// eslint-disable-next-line @typescript-eslint/ban-types -- empty object is the correct typing
-		readonly statesWorkspace: PresenceStates<{}>,
+		readonly statesWorkspace: StatesWorkspace<{}>,
 	) {
 		super();
 
@@ -64,7 +64,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 		this.focus = statesWorkspace.props.focus;
 
 		// When the focus value manager is updated, the FocusTracker should emit the focusChanged event.
-		this.focus.events.on("updated", ({ client, value }) => {
+		this.focus.events.on("updated", ({ attendee, value }) => {
 			this.emit("focusChanged", this.focus.local);
 		});
 
@@ -99,18 +99,18 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 	/**
 	 * A map of session clients to focus status.
 	 */
-	public getFocusPresences(): Map<ISessionClient, boolean> {
-		const statuses: Map<ISessionClient, boolean> = new Map();
+	public getFocusPresences(): Map<Attendee, boolean> {
+		const statuses: Map<Attendee, boolean> = new Map();
 
 		// Include the local client in the map because this is used to render a
 		// dashboard of all connected clients.
 		const currentClient = this.presence.getMyself();
 		statuses.set(currentClient, this.focus.local.hasFocus);
 
-		for (const { client, value } of this.focus.clientValues()) {
-			if (client.getConnectionStatus() === SessionClientStatus.Connected) {
+		for (const { attendee, value } of this.focus.clientValues()) {
+			if (attendee.getConnectionStatus() === AttendeeStatus.Connected) {
 				const { hasFocus } = value;
-				statuses.set(client, hasFocus);
+				statuses.set(attendee, hasFocus);
 			}
 		}
 

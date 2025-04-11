@@ -12,7 +12,7 @@ import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
 import type {
 	BroadcastControlSettings,
-	IPresence,
+	Presence,
 	LatestMapItemValueClientData,
 	LatestMapValueManager,
 } from "@fluidframework/presence/alpha";
@@ -22,7 +22,7 @@ const testWorkspaceName = "name:testWorkspaceA";
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function createLatestMapManager(
-	presence: IPresence,
+	presence: Presence,
 	valueControlSettings?: BroadcastControlSettings,
 ) {
 	const states = presence.getStates(testWorkspaceName, {
@@ -97,7 +97,7 @@ describe("Presence", () => {
  */
 export function checkCompiles(): void {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-	const presence = {} as IPresence;
+	const presence = {} as Presence;
 	const statesWorkspace = presence.getStates("name:testStatesWorkspaceWithLatestMap", {
 		fixedMap: LatestMap({ key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } }),
 	});
@@ -136,14 +136,14 @@ export function checkCompiles(): void {
 	const localPointers = pointers.local;
 
 	function logClientValue<T>({
-		client,
+		attendee,
 		key,
 		value,
 	}: Pick<
 		LatestMapItemValueClientData<T, string | number>,
-		"client" | "key" | "value"
+		"attendee" | "key" | "value"
 	>): void {
-		console.log(client.sessionId, key, value);
+		console.log(attendee.attendeeId, key, value);
 	}
 
 	localPointers.set("pen", { x: 1, y: 2 });
@@ -151,22 +151,22 @@ export function checkCompiles(): void {
 	const pointerItemUpdatedOff = pointers.events.on("itemUpdated", logClientValue);
 	pointerItemUpdatedOff();
 
-	for (const client of pointers.clients()) {
-		const items = pointers.clientValue(client);
+	for (const attendee of pointers.clients()) {
+		const items = pointers.clientValue(attendee);
 		for (const [key, { value }] of items.entries()) {
-			logClientValue({ client, key, value });
+			logClientValue({ attendee, key, value });
 		}
 	}
 
-	for (const { client, items } of pointers.clientValues()) {
-		for (const [key, { value }] of items.entries()) logClientValue({ client, key, value });
+	for (const { attendee, items } of pointers.clientValues()) {
+		for (const [key, { value }] of items.entries()) logClientValue({ attendee, key, value });
 	}
 
-	pointers.events.on("itemRemoved", ({ client, key }) =>
-		logClientValue<string>({ client, key, value: "<removed>" }),
+	pointers.events.on("itemRemoved", ({ attendee, key }) =>
+		logClientValue<string>({ attendee, key, value: "<removed>" }),
 	);
 
-	pointers.events.on("updated", ({ client, items }) => {
-		for (const [key, { value }] of items.entries()) logClientValue({ client, key, value });
+	pointers.events.on("updated", ({ attendee, items }) => {
+		for (const [key, { value }] of items.entries()) logClientValue({ attendee, key, value });
 	});
 }
