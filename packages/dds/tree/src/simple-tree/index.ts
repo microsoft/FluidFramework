@@ -100,7 +100,6 @@ export {
 	type ReadonlyMapInlined,
 	type TreeNodeSchemaClassUnsafe,
 	type TreeNodeSchemaUnsafe,
-	type AllowedTypesUnsafe,
 	type ImplicitAllowedTypesUnsafe,
 	type ImplicitFieldSchemaUnsafe,
 	type TreeNodeSchemaNonClassUnsafe,

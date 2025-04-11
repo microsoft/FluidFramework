@@ -76,7 +76,6 @@ export type {
 	ReadonlyMapInlined,
 	TreeNodeSchemaClassUnsafe,
 	TreeNodeSchemaUnsafe,
-	AllowedTypesUnsafe,
 	ImplicitAllowedTypesUnsafe,
 	ImplicitFieldSchemaUnsafe,
 	TreeNodeSchemaNonClassUnsafe,
