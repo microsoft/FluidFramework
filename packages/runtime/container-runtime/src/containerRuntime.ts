@@ -346,8 +346,10 @@ export interface ICompressionRuntimeOptions {
  */
 export interface IContainerRuntimeOptions {
 	/**
-	 * Compatibility mode is used to determine the default configuration for version-dependent options. It can be considered as the
-	 * "minimum version required" of the FF runtime for a client to collaborate in a session.
+	 * compatibilityMode is used to determine the default configuration for version-dependent options (see {@link IContainerRuntimeOptionsVersionDependent}
+	 * for more details on version-dependent options). compatibilityMode can be considered the minimum version of the FF runtime that we should maintain
+	 * compatibility with.
+	 *
 	 * It is a string that must be a valid semver version. It must include the minor and patch indicators as well (i.e. 1.0 is not acceptable, but 1.0.0 is).
 	 * For example, use "2.0.0" to set the default configuration for clients running at least the 2.0.0 version
 	 * of the FF runtime.

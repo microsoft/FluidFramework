@@ -43,6 +43,11 @@ const defaultConfigsForPreFF3: IContainerRuntimeOptionsVersionDependent = {
 
 /**
  * Subset of the IContainerRuntimeOptionsInternal properties which are version-dependent.
+ * Version-dependent properties are related to changes that require the container runtime to at least be a certain version
+ * in order to function properly and not break older clients.
+ * For example, let's say that feature foo was added in 2.0 which introduces a new op type. Along feature foo, option bar
+ * was added to enable/disable foo since clients prior to 2.0 would not understand the new op type. In this case, bar is
+ * considered a version-dependent option since it is related to ensuring feature foo does not break older clients.
  *
  * @remarks
  * When a new option is added to IContainerRuntimeOptionsInternal, we must consider if it's a version-dependent option.
@@ -52,6 +57,8 @@ const defaultConfigsForPreFF3: IContainerRuntimeOptionsVersionDependent = {
  * Note: We use `Omit` instead of `Pick` to ensure that all new options are included in this type by default. If any new properties
  * are added to IContainerRuntimeOptionsInternal, they will be included in this type unless explicitly omitted. This will prevent
  * us from forgetting to account for any new properties in the future.
+ *
+ * @internal
  */
 export type IContainerRuntimeOptionsVersionDependent = Required<
 	Omit<
