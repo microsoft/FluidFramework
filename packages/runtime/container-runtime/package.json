@@ -184,8 +184,8 @@
 		"@tylerbu/sorted-btree-es6": "^1.8.0",
 		"double-ended-queue": "^2.1.0-0",
 		"lz4js": "^0.2.0",
-		"semver": "^7.5.3",
-		"uuid": "^9.0.0"
+		"semver": "^7.7.1",
+		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",
@@ -205,9 +205,8 @@
 		"@types/lz4js": "^0.2.0",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
-		"@types/semver": "^7.5.0",
+		"@types/semver": "^7.7.0",
 		"@types/sinon": "^17.0.3",
-		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",

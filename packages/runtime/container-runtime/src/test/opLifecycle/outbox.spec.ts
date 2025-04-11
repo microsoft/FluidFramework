@@ -5,7 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
 	IDeltaManager,
 	IBatchMessage,
@@ -247,7 +246,6 @@ describe("Outbox", () => {
 				state.opsResubmitted++;
 			},
 			opReentrancy: () => state.isReentrant,
-			closeContainer: (error?: ICriticalContainerError) => {},
 		});
 	};
 

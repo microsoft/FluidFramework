@@ -26,52 +26,37 @@ import {
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { opSize } from "../opProperties.js";
-
-import { SummarizeHeuristicRunner } from "./summarizerHeuristics.js";
+import { opSize } from "../../opProperties.js";
 import type {
-	ISummaryConfiguration,
-	EnqueueSummarizeResult,
 	IEnqueueSummarizeOptions,
 	IOnDemandSummarizeOptions,
 	IRefreshSummaryAckOptions,
+	IRetriableFailureError,
 	ISubmitSummaryOptions,
 	ISummarizeHeuristicData,
 	ISummarizeHeuristicRunner,
 	ISummarizeOptions,
-	ISummarizeResults,
+	ISummarizerRuntime,
 	ISummarizeRunnerTelemetry,
 	ISummarizeTelemetryProperties,
-	ISummarizerRuntime,
 	ISummaryCancellationToken,
+	ISummaryConfiguration,
 	SubmitSummaryResult,
-	IRetriableFailureError,
-} from "./summarizerTypes.js";
+} from "../summarizerTypes.js";
+import { raceTimer, RetriableSummaryError, type SummarizeReason } from "../summarizerUtils.js";
 import {
 	IAckedSummary,
 	IClientSummaryWatcher,
 	SummaryCollection,
-} from "./summaryCollection.js";
-import {
-	RetriableSummaryError,
-	SummarizeReason,
-	SummarizeResultBuilder,
-	SummaryGenerator,
-	raceTimer,
-} from "./summaryGenerator.js";
+} from "../summaryCollection.js";
+
+import { defaultMaxAttempts, defaultMaxAttemptsForSubmitFailures } from "./summarizer.js";
+import { SummarizeHeuristicRunner } from "./summarizerHeuristics.js";
+import { SummaryGenerator } from "./summaryGenerator.js";
+import { SummarizeResultBuilder } from "./summaryResultBuilder.js";
+import type { EnqueueSummarizeResult, ISummarizeResults } from "./summaryResultTypes.js";
 
 const maxSummarizeAckWaitTime = 10 * 60 * 1000; // 10 minutes
-
-/**
- * The maximum number of summarization attempts that will be done by default in case of failures
- * that can be retried.
- */
-export const defaultMaxAttempts = 2;
-/**
- * The default value for maximum number of summarization attempts that will be done for summarization failures where
- * submit fails and the failure can be retried.
- */
-export const defaultMaxAttemptsForSubmitFailures = 5;
 
 /**
  * An instance of RunningSummarizer manages the heuristics for summarizing.
