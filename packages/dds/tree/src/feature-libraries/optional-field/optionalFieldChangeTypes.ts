@@ -43,7 +43,9 @@ export interface Replace {
 
 	/**
 	 * The ID for the node to put in this field, or undefined if the field should be emptied.
-	 * Will be "self" when the intention is to keep the current node in this field.
+	 * Will be "self" when the intention is to pin the current node down in this field.
+	 *
+	 * TODO: Just use src=dst to represent pinning.
 	 */
 	readonly src?: RegisterId;
 
