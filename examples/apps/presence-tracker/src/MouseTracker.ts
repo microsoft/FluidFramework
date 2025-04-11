@@ -6,12 +6,12 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEvent } from "@fluidframework/core-interfaces";
 import type {
-	IPresence,
-	ISessionClient,
+	Presence,
+	Attendee,
 	LatestValueManager,
-	PresenceStates,
+	StatesWorkspace,
 } from "@fluidframework/presence/alpha";
-import { Latest, SessionClientStatus } from "@fluidframework/presence/alpha";
+import { Latest, AttendeeStatus } from "@fluidframework/presence/alpha";
 
 /**
  * IMousePosition is the data that individual session clients share via presence.
@@ -44,13 +44,13 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	private readonly cursor: LatestValueManager<IMousePosition>;
 
 	constructor(
-		private readonly presence: IPresence,
+		private readonly presence: Presence,
 
 		/**
 		 * A states workspace that the MouseTracker will use to share mouse positions with other session clients.
 		 */
 		// eslint-disable-next-line @typescript-eslint/ban-types -- empty object is the correct typing
-		readonly statesWorkspace: PresenceStates<{}>,
+		readonly statesWorkspace: StatesWorkspace<{}>,
 	) {
 		super();
 
@@ -85,12 +85,12 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	/**
 	 * A map of session clients to mouse positions.
 	 */
-	public getMousePresences(): Map<ISessionClient, IMousePosition> {
-		const statuses: Map<ISessionClient, IMousePosition> = new Map();
+	public getMousePresences(): Map<Attendee, IMousePosition> {
+		const statuses: Map<Attendee, IMousePosition> = new Map();
 
-		for (const { client, value } of this.cursor.clientValues()) {
-			if (client.getConnectionStatus() === SessionClientStatus.Connected) {
-				statuses.set(client, value);
+		for (const { attendee, value } of this.cursor.clientValues()) {
+			if (attendee.getConnectionStatus() === AttendeeStatus.Connected) {
+				statuses.set(attendee, value);
 			}
 		}
 		return statuses;

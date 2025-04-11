@@ -14,21 +14,21 @@
 export type { ClientConnectionId } from "./baseTypes.js";
 
 export type {
-	PresenceNotifications,
-	PresenceNotificationsSchema,
-	PresenceStates,
-	PresenceStatesEntries,
-	PresenceStatesSchema,
-	PresenceWorkspaceAddress,
-	PresenceWorkspaceEntry,
+	NotificationsWorkspace,
+	NotificationsWorkspaceSchema,
+	StatesWorkspace,
+	StatesWorkspaceEntries,
+	StatesWorkspaceSchema,
+	StatesWorkspaceEntry,
+	WorkspaceAddress,
 } from "./types.js";
 
 export {
-	type ClientSessionId,
-	type IPresence,
-	type ISessionClient,
+	type Attendee,
+	type AttendeeId,
+	type Presence,
 	type PresenceEvents,
-	SessionClientStatus,
+	AttendeeStatus,
 } from "./presence.js";
 
 export type {
@@ -36,10 +36,10 @@ export type {
 	BroadcastControlSettings,
 } from "./broadcastControls.js";
 
-export { acquirePresence } from "./experimentalAccess.js";
+export { getPresence } from "./experimentalAccess.js";
 
 export {
-	acquirePresenceViaDataObject,
+	getPresenceViaDataObject,
 	type ExperimentalPresenceDO,
 	ExperimentalPresenceManager,
 } from "./datastorePresenceManagerFactory.js";
