@@ -35,6 +35,7 @@ export {
 	IGCMetadata,
 	GCFeatureMatrix,
 	GCVersion,
+	IGarbageCollectionRuntime,
 	IGCRuntimeOptions,
 	IMarkPhaseStats,
 	ISweepPhaseStats,
