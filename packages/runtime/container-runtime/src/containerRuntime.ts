@@ -334,6 +334,13 @@ export interface ICompressionRuntimeOptions {
 
 /**
  * Options for container runtime.
+ *
+ * @privateRemarks If any new properties are added to this interface (or IContainerRuntimeOptionsInternal), then we will also need
+ * to make changes in compatUtils.ts.
+ * If the new property is not considered version-dependent, then it must be explicity omitted from IContainerRuntimeOptionsVersionDependent.
+ * If it is considered version-dependent, then a corresponding entry must be added to `versionDependentOptionConfigMap` with the appropriate compat
+ * configuration info.
+ *
  * @legacy
  * @alpha
  */

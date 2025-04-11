@@ -27,12 +27,31 @@ import { pkgVersion } from "./packageVersion.js";
 export const defaultCompatibilityMode = "pre-3.0-default";
 
 /**
+ * The current default set of configurations if no compatibility mode is provided.
+ * Since both compatibilityMode and the cross-client compat policy was introduced during 2.x's lifespan, we will maintain the
+ * set of default configurations that were in place before compatibilityMode and the policy were introduced.
+ * TODO: This can be removed after 3.0 is released.
+ */
+const defaultConfigsForPreFF3: IContainerRuntimeOptionsVersionDependent = {
+	gcOptions: {},
+	flushMode: FlushMode.TurnBased,
+	compressionOptions: enabledCompressionConfig,
+	enableRuntimeIdCompressor: undefined as unknown as "on" | "delayed",
+	enableGroupedBatching: true,
+	explicitSchemaControl: false,
+};
+
+/**
  * Subset of the IContainerRuntimeOptionsInternal properties which are version-dependent.
  *
  * @remarks
  * When a new option is added to IContainerRuntimeOptionsInternal, we must consider if it's a version-dependent option.
  * If it's considered version-dependent, then a corresponding entry must be added to `versionDependentOptionConfigs`. If not, then
  * it must be omitted from this type.
+ *
+ * Note: We use `Omit` instead of `Pick` to ensure that all new options are included in this type by default. If any new properties
+ * are added to IContainerRuntimeOptionsInternal, they will be included in this type unless explicitly omitted. This will prevent
+ * us from forgetting to account for any new properties in the future.
  */
 export type IContainerRuntimeOptionsVersionDependent = Required<
 	Omit<
@@ -130,22 +149,14 @@ const versionDependentOptionConfigMap: {
 export function getConfigsForCompatMode(
 	compatibilityMode: Required<IContainerRuntimeOptionsInternal>["compatibilityMode"],
 ): IContainerRuntimeOptionsVersionDependent {
-	const defaultConfigs = {
-		gcOptions: {},
-		flushMode: FlushMode.TurnBased,
-		compressionOptions: enabledCompressionConfig,
-		enableRuntimeIdCompressor: undefined as unknown as "on" | "delayed",
-		enableGroupedBatching: true,
-		explicitSchemaControl: false,
-	};
-
 	// TODO: Remove this block after 3.0 is released.
 	// Note: we compare `compatibilityMode` with the exact string "pre-3.0-default" in case we modify `defaultCompatibilityMode` in the future,
 	// but forget to remove this block.
 	if (compatibilityMode === "pre-3.0-default") {
-		return defaultConfigs;
+		return defaultConfigsForPreFF3;
 	}
 
+	const defaultConfigs = {};
 	for (const key of Object.keys(versionDependentOptionConfigMap)) {
 		const config =
 			versionDependentOptionConfigMap[key as keyof IContainerRuntimeOptionsVersionDependent];
@@ -157,7 +168,7 @@ export function getConfigsForCompatMode(
 				: semver.gte(compatibilityMode, config.minVersionForModernConfig);
 		defaultConfigs[key] = isModernConfig ? config.modernConfig : config.legacyConfig;
 	}
-	return defaultConfigs;
+	return defaultConfigs as IContainerRuntimeOptionsVersionDependent;
 }
 
 /**
