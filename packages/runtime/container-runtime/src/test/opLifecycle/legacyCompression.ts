@@ -7,7 +7,7 @@ import { IsoBuffer } from "@fluid-internal/client-utils";
 import { compress } from "lz4js";
 
 import { CompressionAlgorithms } from "../../index.js";
-import type { OutboundBatchMessage, OutboundBatch } from "../../opLifecycle/index.js";
+import type { BatchMessage, IBatch } from "../../opLifecycle/index.js";
 
 /**
  * The code in this file recreates the legacy flow for batches that have multiple messages.
@@ -17,7 +17,7 @@ import type { OutboundBatchMessage, OutboundBatch } from "../../opLifecycle/inde
 /**
  * Combine the batch's content strings into a single JSON string (a serialized array)
  */
-function serializeBatchContents(batch: OutboundBatch): string {
+function serializeBatchContents(batch: IBatch): string {
 	// Yields a valid JSON array, since each message.contents is already serialized to JSON
 	return `[${batch.messages.map(({ contents }) => contents).join(",")}]`;
 }
@@ -30,12 +30,12 @@ function serializeBatchContents(batch: OutboundBatch): string {
  * @param batch - batch with messages that are going to be compressed
  * @returns compresed batch with empty placeholder messages
  */
-export function compressMultipleMessageBatch(batch: OutboundBatch): OutboundBatch {
+export function compressMultipleMessageBatch(batch: IBatch): IBatch {
 	const contentsAsBuffer = new TextEncoder().encode(serializeBatchContents(batch));
 	const compressedContents = compress(contentsAsBuffer);
 	const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
 
-	const messages: OutboundBatchMessage[] = [];
+	const messages: BatchMessage[] = [];
 	messages.push({
 		...batch.messages[0],
 		contents: JSON.stringify({ packedContents: compressedContent }),
@@ -52,7 +52,7 @@ export function compressMultipleMessageBatch(batch: OutboundBatch): OutboundBatc
 		});
 	}
 
-	const compressedBatch: OutboundBatch = {
+	const compressedBatch: IBatch = {
 		contentSizeInBytes: compressedContent.length,
 		messages,
 		referenceSequenceNumber: batch.referenceSequenceNumber,

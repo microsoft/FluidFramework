@@ -138,6 +138,7 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
+			denyList,
 			ephemeralDocumentTTLSec,
 		});
 		return service.deleteRef(ref);

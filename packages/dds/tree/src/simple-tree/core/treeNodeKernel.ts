@@ -154,20 +154,15 @@ export class TreeNodeKernel {
 						changedFields,
 					});
 
-					let unhydratedNode: UnhydratedFlexTreeNode | undefined = innerNode;
-					while (unhydratedNode !== undefined) {
-						const treeNode = unhydratedFlexTreeNodeToTreeNodeInternal.get(unhydratedNode);
+					let n: UnhydratedFlexTreeNode | undefined = innerNode;
+					while (n !== undefined) {
+						const treeNode = unhydratedFlexTreeNodeToTreeNodeInternal.get(n);
 						if (treeNode !== undefined) {
 							const kernel = getKernel(treeNode);
 							kernel.#unhydratedEvents.value.emit("subtreeChangedAfterBatch");
 						}
-						const parentNode: FlexTreeNode | undefined =
-							unhydratedNode.parentField.parent.parent;
-						assert(
-							parentNode === undefined || parentNode instanceof UnhydratedFlexTreeNode,
-							"Unhydrated node's parent should be an unhydrated node",
-						);
-						unhydratedNode = parentNode;
+						// This cast is safe because the parent (if it exists) of an unhydrated flex node is always another unhydrated flex node.
+						n = n.parentField.parent.parent as UnhydratedFlexTreeNode | undefined;
 					}
 				}),
 			};
