@@ -17,20 +17,10 @@ import {
 import { Table } from "./tableSchema.js";
 
 /**
- * Props used when creating a new todo item.
- */
-export interface TodoItemProps {
-	/**
-	 * The initial text to populate the todo item's title with.
-	 * This value will be inserted into the shared string at index 0.
-	 */
-	readonly startingText: string;
-}
-/**
- * A data object for managing a shared todo list using `SharedTree`.
+ * A data object for managing a shared table using `SharedTree`.
  *
  * @remarks
- * This class is responsible for initializing the tree with a predefined schema (`TodoList`)
+ * This class is responsible for initializing the tree with a predefined schema (`Table`)
  */
 export class TableDataObject extends TreeDataObject<TreeView<typeof Table>> {
 	public readonly config = new TreeViewConfiguration({ schema: Table });
@@ -42,14 +32,14 @@ export class TableDataObject extends TreeDataObject<TreeView<typeof Table>> {
 	 * Converts the underlying ITree into a typed TreeView using the provided schema configuration.
 	 *
 	 * @param tree - The ITree instance to view.
-	 * @returns A typed TreeView using the TodoList schema.
+	 * @returns A typed TreeView using the Table schema.
 	 */
 	public override generateView(tree: ITree): TreeView<typeof Table> {
 		return tree.viewWith(this.config) as unknown as TreeView<typeof Table>;
 	}
 
 	/**
-	 * Initializes the tree with a default title and empty todo item list.
+	 * Initializes the tree with an empty table.
 	 * @remarks Called during the initial creation of the data object.
 	 */
 	public override async initializingFirstTime(): Promise<void> {

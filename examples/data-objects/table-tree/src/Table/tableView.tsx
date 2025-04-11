@@ -14,9 +14,6 @@ import {
 } from "@fluentui/react-components";
 import React from "react";
 
-// eslint-disable-next-line import/no-unassigned-import
-import "./style.css";
-
 import { useTree } from "../Utils/index.js";
 
 import type { Column, Row } from "./tableSchema.js";
@@ -84,7 +81,7 @@ export const TableView: React.FC<TableProps> = (props: TableProps) => {
 	const rows = Array.from(tableModel.treeView.root.rows);
 
 	return (
-		<div className="todo-view">
+		<div>
 			<Table aria-label="Fluid-based dynamic table">
 				<TableHeaderView columns={columns} />
 				<TableBody>
