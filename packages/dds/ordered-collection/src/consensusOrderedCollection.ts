@@ -45,7 +45,7 @@ interface IConsensusOrderedCollectionValue<T> {
 interface IConsensusOrderedCollectionAddOperation<T> {
 	opName: "add";
 	// serialized value
-	value: string;
+	value?: string;
 	deserializedValue?: T;
 }
 
@@ -138,19 +138,19 @@ export class ConsensusOrderedCollection<T = any>
 	 * Add a value to the consensus collection.
 	 */
 	public async add(value: T): Promise<void> {
-		const valueSer = this.serializeValue(value, this.serializer);
-
 		if (!this.isAttached()) {
 			// For the case where this is not attached yet, explicitly JSON
 			// clone the value to match the behavior of going thru the wire.
-			const addValue = this.deserializeValue(valueSer, this.serializer) as T;
+			const addValue = this.deserializeValue(
+				this.serializeValue(value, this.serializer),
+				this.serializer,
+			) as T;
 			this.addCore(addValue);
 			return;
 		}
 
 		await this.submit<IConsensusOrderedCollectionAddOperation<T>>({
 			opName: "add",
-			value: valueSer,
 			deserializedValue: value,
 		});
 	}
@@ -183,6 +183,13 @@ export class ConsensusOrderedCollection<T = any>
 		}
 
 		return true;
+	}
+
+	/**
+	 * Return the size of the collection
+	 */
+	public size?(): number {
+		return this.data.size();
 	}
 
 	/**
@@ -310,10 +317,10 @@ export class ConsensusOrderedCollection<T = any>
 			let value: IConsensusOrderedCollectionValue<T> | undefined;
 			switch (op.opName) {
 				case "add": {
-					if (op.deserializedValue === undefined) {
-						this.addCore(this.deserializeValue(op.value, this.serializer) as T);
-					} else {
+					if (op.deserializedValue !== undefined) {
 						this.addCore(op.deserializedValue);
+					} else if (op.value !== undefined) {
+						this.addCore(this.deserializeValue(op.value, this.serializer) as T);
 					}
 					break;
 				}
