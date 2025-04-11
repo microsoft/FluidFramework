@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	ICache,
 	IDeltaService,
@@ -19,10 +18,10 @@ import {
 	IReadinessCheck,
 	type IDenyList,
 } from "@fluidframework/server-services-core";
-import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import cors from "cors";
 import { Router } from "express";
 import { Provider } from "nconf";
+import type { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { IDocumentDeleteService } from "../../services";
 import * as api from "./api";
@@ -45,7 +44,7 @@ export function create(
 	startupCheck: IReadinessCheck,
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
-	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+	collaborationSessionEventEmitter?: RedisEmitter,
 	clusterDrainingChecker?: IClusterDrainingChecker,
 	readinessCheck?: IReadinessCheck,
 	fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,
