@@ -62,9 +62,12 @@ import {
 	type TreeNode,
 	type TreeNodeSchema,
 } from "../../../simple-tree/index.js";
-import type { TreeFactory } from "../../../treeFactory.js";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 
-const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<TreeFactory>>({
+const syncFuzzReducer = combineReducers<
+	Operation,
+	DDSFuzzTestState<IChannelFactory<ISharedTree>>
+>({
 	treeEdit: (state, { edit, forkedViewIndex }) => {
 		switch (edit.type) {
 			case "fieldEdit": {
@@ -96,18 +99,20 @@ const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<TreeFactory>
 		applyForkMergeOperation(state, operation);
 	},
 });
-export const fuzzReducer: Reducer<Operation, DDSFuzzTestState<TreeFactory>> = (
-	state,
-	operation,
-) => syncFuzzReducer(state, operation);
+export const fuzzReducer: Reducer<
+	Operation,
+	DDSFuzzTestState<IChannelFactory<ISharedTree>>
+> = (state, operation) => syncFuzzReducer(state, operation);
 
-export function checkTreesAreSynchronized(trees: readonly Client<TreeFactory>[]) {
+export function checkTreesAreSynchronized(
+	trees: readonly Client<IChannelFactory<ISharedTree>>[],
+) {
 	for (const tree of trees) {
 		validateFuzzTreeConsistency(trees[0], tree);
 	}
 }
 
-export function applySynchronizationOp(state: DDSFuzzTestState<TreeFactory>) {
+export function applySynchronizationOp(state: DDSFuzzTestState<IChannelFactory<ISharedTree>>) {
 	state.containerRuntimeFactory.processAllMessages();
 	const connectedClients = state.clients.filter((client) => client.containerRuntime.connected);
 	if (connectedClients.length > 0) {

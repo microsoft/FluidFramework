@@ -86,6 +86,7 @@ import {
 	expectEqualPaths,
 	type TreeMockContainerRuntime,
 	type SharedTreeWithContainerRuntime,
+	DefaultTestSharedTreeKind,
 } from "../utils.js";
 import {
 	configuredSharedTree,
@@ -95,6 +96,7 @@ import {
 import {
 	SharedObjectCore,
 	type ISharedObjectKind,
+	type SharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
 import { TestAnchor } from "../testAnchor.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -115,7 +117,7 @@ const enableSchemaValidation = true;
 const DebugSharedTree = configuredSharedTree({
 	jsonValidator: typeboxValidator,
 	forest: ForestTypeReference,
-}) as ISharedObjectKind<unknown> as ISharedObjectKind<ISharedTree>;
+}) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
 
 class MockSharedTreeRuntime extends MockFluidDataStoreRuntime {
 	public constructor() {
@@ -2212,9 +2214,8 @@ describe("SharedTree", () => {
 	});
 
 	it("throws an error if attaching during a transaction", () => {
-		const sharedTreeFactory = new TreeFactory({});
 		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
-		const tree = sharedTreeFactory.create(runtime, "tree");
+		const tree = DefaultTestSharedTreeKind.getFactory().create(runtime, "tree");
 		const runtimeFactory = new MockContainerRuntimeFactory();
 		runtimeFactory.createContainerRuntime(runtime);
 		const view = asTreeViewAlpha(

@@ -147,7 +147,6 @@ import {
 	toStoredSchema,
 	type TreeView,
 	type TreeBranchEvents,
-	type ITree,
 } from "../simple-tree/index.js";
 import {
 	Breakable,
@@ -174,8 +173,19 @@ import {
 } from "./mocksForOpBunching.js";
 import { configureDebugAsserts } from "@fluidframework/core-utils/internal";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+import type {
+	ISharedObjectKind,
+	SharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
 
 // Testing utilities
+
+/**
+ * A SharedObjectKind typed to return `ISharedTree` and configured with a `jsonValidator`.
+ */
+export const DefaultTestSharedTreeKind = configuredSharedTree({
+	jsonValidator: typeboxValidator,
+}) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
 
 /**
  * A {@link IJsonCodec} implementation which fails on encode and decode.
@@ -248,9 +258,7 @@ export class TestTreeProvider {
 	public static async create(
 		trees = 0,
 		summarizeType: SummarizeType = SummarizeType.disabled,
-		factory: IChannelFactory<ITree> = configuredSharedTree({
-			jsonValidator: typeboxValidator,
-		}).getFactory(),
+		factory: IChannelFactory<ISharedTree> = DefaultTestSharedTreeKind.getFactory(),
 	): Promise<ITestTreeProvider> {
 		// The on-demand summarizer shares a container with the first tree, so at least one tree and container must be created right away.
 		assert(
@@ -304,8 +312,11 @@ export class TestTreeProvider {
 	private static async getTree(container: IContainer): Promise<ISharedTree> {
 		const dataObject = await container.getEntryPoint();
 		assert(dataObject instanceof TestFluidObjectInternal);
-		const tree = await dataObject.getInitialSharedObject(TestTreeProvider.treeId);
-		return tree as ISharedTree;
+		const tree = await dataObject.getInitialSharedObjectTyped(
+			DefaultTestSharedTreeKind,
+			TestTreeProvider.treeId,
+		);
+		return tree;
 	}
 
 	/**
@@ -387,7 +398,7 @@ export type TreeMockContainerRuntime = Pick<
 	"connected" | "pauseInboundProcessing" | "resumeInboundProcessing" | "flush"
 >;
 export type SharedTreeWithContainerRuntime = ISharedTree & {
-	containerRuntime: TreeMockContainerRuntime;
+	readonly containerRuntime: TreeMockContainerRuntime;
 };
 
 /**
@@ -418,9 +429,7 @@ export class TestTreeProviderLite {
 	 */
 	public constructor(
 		trees = 1,
-		private readonly factory = configuredSharedTree({
-			jsonValidator: typeboxValidator,
-		}).getFactory(),
+		private readonly factory = DefaultTestSharedTreeKind.getFactory(),
 		useDeterministicSessionIds = true,
 		private readonly flushMode: FlushMode = FlushMode.Immediate,
 	) {
@@ -438,7 +447,7 @@ export class TestTreeProviderLite {
 				idCompressor: createIdCompressor(sessionId),
 				logger: this.logger,
 			});
-			const tree = this.factory.create(runtime, `tree-${i}`) as ISharedTree;
+			const tree = this.factory.create(runtime, `tree-${i}`);
 			const containerRuntime = this.runtimeFactory.createContainerRuntime(runtime);
 			this.containerRuntimeMap.set(tree.id, containerRuntime);
 			tree.connect({

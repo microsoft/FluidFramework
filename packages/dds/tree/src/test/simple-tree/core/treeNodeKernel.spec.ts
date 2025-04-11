@@ -5,16 +5,13 @@
 
 import { strict as assert } from "node:assert";
 
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-
 import { SchemaFactory, TreeViewConfiguration } from "../../../simple-tree/index.js";
 // TODO: test other things from "treeNodeKernel" file.
 // eslint-disable-next-line import/no-internal-modules
 import { isTreeNode } from "../../../simple-tree/core/treeNodeKernel.js";
 
 import { hydrate } from "../utils.js";
-import { TreeFactory } from "../../../treeFactory.js";
+import { getView } from "../../utils.js";
 
 describe("simple-tree proxies", () => {
 	const sb = new SchemaFactory("test");
@@ -46,13 +43,8 @@ describe("simple-tree proxies", () => {
 
 	it("Marinated isTreeNode - initialize", () => {
 		const config = new TreeViewConfiguration({ schema: sb.optional(schema) });
-		const factory = new TreeFactory({});
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
 
-		const view = tree.viewWith(config);
+		const view = getView(config);
 
 		view.initialize(undefined);
 		const root = new schema({ object: { content: 6 } });
@@ -64,13 +56,8 @@ describe("simple-tree proxies", () => {
 
 	it("Marinated isTreeNode - inserted", () => {
 		const config = new TreeViewConfiguration({ schema });
-		const factory = new TreeFactory({});
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
 
-		const view = tree.viewWith(config);
+		const view = getView(config);
 		const inner = { content: 6 };
 		const root = new schema({ object: inner });
 		assert(isTreeNode(root));

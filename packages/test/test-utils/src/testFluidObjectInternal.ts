@@ -21,7 +21,10 @@ import {
 	IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { create404Response } from "@fluidframework/runtime-utils/internal";
-import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
+import type {
+	ISharedObject,
+	SharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
 
 /**
  * A test Fluid object that will create a shared object for each key-value pair in the factoryEntries passed to load.
@@ -67,6 +70,22 @@ export class TestFluidObjectInternal implements IFluidLoadable {
 	 */
 	public async getInitialSharedObject(id: string): Promise<IChannel> {
 		return (await this.runtime.getChannel(id)) ?? fail("Shared object not found");
+	}
+
+	/**
+	 * Retrieves a shared object with the given id.
+	 * @param kind - The kind of object to retrieve.
+	 * @param id - The id of the shared object to retrieve.
+	 */
+	public async getInitialSharedObjectTyped<T>(
+		kind: SharedObjectKind<T>,
+		id: string,
+	): Promise<IChannel & T> {
+		const result = (await this.runtime.getChannel(id)) ?? fail("Shared object not found");
+		if (kind.is(result)) {
+			return result;
+		}
+		return fail("Wrong kind of shared object");
 	}
 
 	public async request(request: IRequest): Promise<IResponse> {
