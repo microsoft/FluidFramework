@@ -227,7 +227,7 @@ testFileSystems.forEach((fileSystem) => {
 				stat: fsSpy.stat.callCount,
 			});
 			beforeEach(async () => {
-				documentId =crypto.randomUUID();
+				documentId = crypto.randomUUID();
 				// Spy on memfs volume to record number of calls to storage.
 				fsSpy = getFsSpy();
 				const repoManagerFactory = new IsomorphicGitManagerFactory(
