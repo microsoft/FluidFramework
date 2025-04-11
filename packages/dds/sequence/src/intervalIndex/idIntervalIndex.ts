@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { reservedIntervalIdKey } from "../intervalCollection.js";
 import { type SequenceIntervalClass } from "../intervals/index.js";
 
 import { type SequenceIntervalIndex } from "./intervalIndex.js";
@@ -26,12 +25,6 @@ class IdIntervalIndex implements IIdIntervalIndex, Iterable<SequenceIntervalClas
 			id !== undefined,
 			0x2c0 /* "ID must be created before adding interval to collection" */,
 		);
-		// Make the ID immutable.
-		Object.defineProperty(interval.properties, reservedIntervalIdKey, {
-			configurable: false,
-			enumerable: true,
-			writable: false,
-		});
 		this.intervalIdMap.set(id, interval);
 	}
 

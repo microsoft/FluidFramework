@@ -19,6 +19,7 @@ import {
 
 export interface IMapMessageLocalMetadata {
 	localSeq: number;
+	previous?: ISerializedInterval;
 }
 
 /**

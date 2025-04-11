@@ -797,6 +797,22 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 
 	/**
+	 * Revert an op
+	 */
+	protected rollback(content: any, localOpMetadata: unknown): void {
+		const originalRefSeq = this.inFlightRefSeqs.shift();
+		assert(
+			originalRefSeq !== undefined,
+			"Expected a recorded refSeq when rolling back an op ",
+		);
+		this.useResubmitRefSeq(originalRefSeq, () => {
+			if (!this.intervalCollections.tryRollback(content, localOpMetadata)) {
+				this.client.rollback(content, localOpMetadata);
+			}
+		});
+	}
+
+	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
 	 */
 	protected async loadCore(storage: IChannelStorageService) {

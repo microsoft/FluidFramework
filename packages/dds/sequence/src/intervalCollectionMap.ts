@@ -14,7 +14,6 @@ import { makeSerializable } from "./IntervalCollectionValues.js";
 import {
 	IntervalCollection,
 	opsMap,
-	reservedIntervalIdKey,
 	toOptionalSequencePlace,
 	toSequencePlace,
 	type ISerializedIntervalCollectionV1,
@@ -26,6 +25,7 @@ import {
 	ISerializableIntervalCollection,
 	SequenceOptions,
 } from "./intervalCollectionMapInterfaces.js";
+import { getSerializedProperties } from "./intervals/index.js";
 
 function isMapOperation(op: unknown): op is IMapOperation {
 	return typeof op === "object" && op !== null && "type" in op && op.type === "act";
@@ -213,34 +213,47 @@ export class IntervalCollectionMap {
 		return false;
 	}
 
+	public tryRollback(content: any, localOpMetadata: unknown) {
+		if (isMapOperation(content)) {
+			const localValue = this.data.get(content.key);
+
+			assert(localValue !== undefined, "Local value expected on rollback");
+
+			localValue.rollback(content.value, localOpMetadata as IMapMessageLocalMetadata);
+
+			return true;
+		}
+		return false;
+	}
+
 	public tryApplyStashedOp(op: unknown): boolean {
 		if (isMapOperation(op)) {
 			const { value, key } = op;
 			const map = this.get(key);
+			const { id, properties } = getSerializedProperties(value.value);
 
 			switch (value.opName) {
 				case "add": {
 					map.add({
+						id,
 						// Todo: we should improve typing so we know add ops always have start and end
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						start: toSequencePlace(value.value.start!, value.value.startSide),
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						end: toSequencePlace(value.value.end!, value.value.endSide),
-						props: value.value.properties,
+						props: properties,
 					});
 					return true;
 				}
 				case "change": {
-					const { [reservedIntervalIdKey]: id, ...props } = value.value.properties ?? {};
 					map.change(id, {
 						start: toOptionalSequencePlace(value.value.start, value.value.startSide),
 						end: toOptionalSequencePlace(value.value.end, value.value.endSide),
-						props,
+						props: properties,
 					});
 					return true;
 				}
 				case "delete": {
-					const { [reservedIntervalIdKey]: id } = value.value.properties ?? {};
 					map.removeIntervalById(id);
 					return true;
 				}

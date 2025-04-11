@@ -612,6 +612,7 @@ describe("client.rollback", () => {
 		logger.validate({ baseText: "124abc5" });
 	});
 
+
 	it("Conflicting insert with winner split by rollback", () => {
 		const clients = createClientsAtInitialState({ initialState: "" }, "A", "B");
 		const logger = new TestClientLogger(clients.all);

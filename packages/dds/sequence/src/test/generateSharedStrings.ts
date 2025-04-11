@@ -26,11 +26,11 @@ export const supportedVersions = new Map<string, any>([
 function createIntervals(sharedString) {
 	const rand = new Random(MersenneTwister19937.seed(0));
 	const collection1 = sharedString.getIntervalCollection("collection1");
-	collection1.add({ start: 1, end: 5, props: { intervalId: rand.uuid4() } });
+	collection1.add({ start: 1, end: 5, id: rand.uuid4() });
 
 	const collection2 = sharedString.getIntervalCollection("collection2");
 	for (let i = 0; i < sharedString.getLength() - 5; i += 100) {
-		collection2.add({ start: i, end: i + 5, props: { intervalId: rand.uuid4() } });
+		collection2.add({ start: i, end: i + 5, id: rand.uuid4() });
 	}
 }
 
