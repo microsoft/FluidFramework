@@ -115,6 +115,28 @@
 	"engines": {
 		"node": ">=14.17.0"
 	},
+	"fluidBuild": {
+		"tasks": {
+			"build": {
+				"dependsOn": [
+					"^build",
+					"build:docs",
+					"checks"
+				],
+				"script": false
+			},
+			"checks": {
+				"dependsOn": [
+					"prettier",
+					"generate:packageList",
+					"check:versions",
+					"layer-check",
+					"policy-check"
+				],
+				"script": false
+			}
+		}
+	},
 	"pnpm": {
 		"commentsOverrides": [
 			"@types/node is overridden to v18 to ensure all packages are building using the v18 types.",
@@ -139,28 +161,6 @@
 		},
 		"patchedDependencies": {
 			"@microsoft/api-extractor@7.45.1": "patches/@microsoft__api-extractor@7.45.1.patch"
-		}
-	},
-	"fluidBuild": {
-		"tasks": {
-			"build": {
-				"dependsOn": [
-					"^build",
-					"build:docs",
-					"checks"
-				],
-				"script": false
-			},
-			"checks": {
-				"dependsOn": [
-					"prettier",
-					"generate:packageList",
-					"check:versions",
-					"layer-check",
-					"policy-check"
-				],
-				"script": false
-			}
 		}
 	}
 }
