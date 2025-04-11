@@ -29,6 +29,7 @@ import { INexusResourcesCustomizations } from "./customizations";
 import { OrdererManager, type IOrdererManagerOptions } from "./ordererManager";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
 import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
+import { Constants } from "../utils";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
 	private readonly webSocketServer: ws.Server;
@@ -310,7 +311,30 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 
 		const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
 		const authEndpoint = config.get("auth:endpoint");
-		const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl);
+		const redisClientConnectionManagerForInvalidTokenCache =
+			customizations?.redisClientConnectionManagerForInvalidTokenCache
+				? customizations.redisClientConnectionManagerForInvalidTokenCache
+				: new RedisClientConnectionManager(
+						undefined,
+						redisConfig2,
+						redisConfig2.enableClustering,
+						redisConfig2.slotsRefreshTimeout,
+						undefined /* retryDelays */,
+						redisConfig2.enableVerboseErrorLogging,
+				  );
+		redisClientConnectionManagers.push(redisClientConnectionManagerForInvalidTokenCache);
+		const redisCacheForInvalidToken = new services.RedisCache(
+			redisClientConnectionManagerForInvalidTokenCache,
+			{
+				expireAfterSeconds: redisConfig2.keyExpireAfterSeconds,
+				prefix: Constants.invalidTokenCachePrefix,
+			},
+		);
+		const tenantManager = new services.TenantManager(
+			authEndpoint,
+			internalHistorianUrl,
+			redisCacheForInvalidToken,
+		);
 
 		// Redis connection for throttling.
 		const redisConfigForThrottling = config.get("redisForThrottling");
