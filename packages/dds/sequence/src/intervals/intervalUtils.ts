@@ -7,14 +7,11 @@
 
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	PropertiesManager,
 	PropertySet,
 	SlidingPreference,
 	SequencePlace,
 	Side,
 } from "@fluidframework/merge-tree/internal";
-
-import type { SequenceIntervalClass } from "./sequenceInterval.js";
 
 /**
  * Basic interval abstraction
@@ -170,10 +167,6 @@ export interface ISerializableInterval extends IInterval {
 	 */
 	getIntervalId(): string;
 }
-
-export type ISerializableIntervalPrivate = SequenceIntervalClass & {
-	propertyManager?: PropertiesManager;
-};
 
 /**
  * Represents a change that should be applied to an existing interval.
