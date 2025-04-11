@@ -172,10 +172,14 @@ export class RiddlerService implements ITenantService, ITenantConfigManager {
 				// In case of a 401 or 403 error, we cache the token in the invalid token cache
 				// to avoid hitting the endpoint again with the same token.
 				if (error.code === 401 || error.code === 403) {
+					const errorToCache: IInvalidTokenError = {
+						code: error.code,
+						message: error.message,
+					};
 					// Cache the token in the invalid token cache
 					// to avoid hitting the endpoint again with the same token.
 					this.redisCacheForInvalidToken
-						?.set(token, JSON.stringify(error))
+						?.set(token, JSON.stringify(errorToCache))
 						.catch((error) => {
 							Lumberjack.error(
 								`Error caching invalid token error to redis`,
