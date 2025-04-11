@@ -12,7 +12,7 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import type { Revertible } from "../../../core/index.js";
 import type { DownPath } from "../../../feature-libraries/index.js";
-import { Tree, type SharedTree } from "../../../shared-tree/index.js";
+import { Tree, type ISharedTree } from "../../../shared-tree/index.js";
 import { validateFuzzTreeConsistency } from "../../utils.js";
 
 import {
@@ -190,7 +190,7 @@ export function applySchemaOp(state: FuzzTestState, operation: SchemaChange) {
 export function applyForkMergeOperation(state: FuzzTestState, branchEdit: ForkMergeOperation) {
 	switch (branchEdit.contents.type) {
 		case "fork": {
-			const forkedViews = state.forkedViews ?? new Map<SharedTree, FuzzView[]>();
+			const forkedViews = state.forkedViews ?? new Map<ISharedTree, FuzzView[]>();
 			const clientForkedViews = forkedViews.get(state.client.channel) ?? [];
 
 			if (branchEdit.contents.branchNumber !== undefined) {
@@ -211,7 +211,7 @@ export function applyForkMergeOperation(state: FuzzTestState, branchEdit: ForkMe
 		}
 		case "merge": {
 			const forkBranchIndex = branchEdit.contents.forkBranch;
-			const forkedViews = state.forkedViews ?? new Map<SharedTree, FuzzView[]>();
+			const forkedViews = state.forkedViews ?? new Map<ISharedTree, FuzzView[]>();
 			const clientForkedViews = forkedViews.get(state.client.channel) ?? [];
 
 			const baseBranch =

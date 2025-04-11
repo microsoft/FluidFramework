@@ -85,7 +85,6 @@ trigger:
     - experimental
     - fluidBuild.config.cjs
     - layerInfo.json
-    - lerna.json
     - LICENSE
     - NOTICE.md
     - packages
@@ -149,7 +148,6 @@ pr:
     - experimental
     - fluidBuild.config.cjs
     - layerInfo.json
-    - lerna.json
     - LICENSE
     - NOTICE.md
     - packages
