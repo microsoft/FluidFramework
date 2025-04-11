@@ -765,6 +765,29 @@ describe("BlobManager", () => {
 		);
 	});
 
+	it("waits for placeholder blobs without error", async () => {
+		await runtime.attach();
+
+		// Part of remoteUpload, but stop short of processing the message
+		const response = await runtime.storage.createBlob(IsoBuffer.from("blob", "utf8"));
+		const op = { metadata: { localId: uuid(), blobId: response.id } };
+
+		await assert.rejects(
+			runtime.blobManager.getBlob(op.metadata.localId, false),
+			"Rejects when attempting to get non-existent, non-placeholder blobs",
+		);
+
+		// Try to get the blob that we haven't processed the attach op for yet, as a placeholder
+		// Simulating having found this ID in a placeholder handle that the remote client would have sent
+		const blobP = runtime.blobManager.getBlob(op.metadata.localId, true);
+
+		// Process the op as if it were arriving from the remote client, which should cause the blobP promise to resolve
+		runtime.blobManager.processBlobAttachMessage(op as ISequencedMessageEnvelope, false);
+
+		// Await the promise to confirm it settles and does not reject
+		await blobP;
+	});
+
 	describe("Abort Signal", () => {
 		it("abort before upload", async () => {
 			await runtime.attach();
