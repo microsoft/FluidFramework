@@ -254,7 +254,6 @@ describe("RemoteMessageProcessor", () => {
 		// Use BatchManager.popBatch to get the right batch metadata included
 		const batchManager = new BatchManager({
 			canRebase: false,
-			hardLimit: Number.MAX_VALUE,
 		});
 		batchManager.push({ serializedOp: "A1", referenceSequenceNumber }, false /* reentrant */);
 		batchManager.push({ serializedOp: "A2", referenceSequenceNumber }, false /* reentrant */);
@@ -427,7 +426,6 @@ describe("RemoteMessageProcessor", () => {
 			let csn = 1;
 			const batchManager = new BatchManager({
 				canRebase: false,
-				hardLimit: Number.MAX_VALUE,
 			});
 			batchManager.push(
 				{ serializedOp: "A1", referenceSequenceNumber: 1 },
@@ -483,7 +481,6 @@ describe("RemoteMessageProcessor", () => {
 			let csn = 1;
 			const batchManager = new BatchManager({
 				canRebase: false,
-				hardLimit: Number.MAX_VALUE,
 			});
 			batchManager.push(
 				{ serializedOp: "A1", referenceSequenceNumber: 1 },

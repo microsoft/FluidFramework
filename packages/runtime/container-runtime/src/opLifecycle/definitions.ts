@@ -45,25 +45,29 @@ export type LocalBatch = IBatch<LocalBatchMessage[]>;
 /**
  * A batch of messages that has been virtualized as needed (grouped, compressed, chunked)
  * and is ready to be sent to the ordering service.
+ * At the very least, the op contents have been serialized to string.
  */
-export type OutboundBatch = IBatch<OutboundBatchMessage[]>;
+export interface OutboundBatch<
+	TMessages extends OutboundBatchMessage[] = OutboundBatchMessage[],
+> extends IBatch<TMessages> {
+	/**
+	 * Sum of the in-memory content sizes of all messages in the batch.
+	 * If the batch is compressed, this number reflects the post-compression size.
+	 */
+	readonly contentSizeInBytes: number;
+}
 
 /**
  * An {@link OutboundBatch} with exactly one message
  * This type is helpful as Grouping yields this kind of batch, and Compression only operates on this type of batch.
  */
-export type OutboundSingletonBatch = IBatch<[OutboundBatchMessage]>;
+export type OutboundSingletonBatch = OutboundBatch<[OutboundBatchMessage]>;
 
 /**
  * Base batch interface used internally by the runtime.
  * See {@link LocalBatch} and {@link OutboundBatch} for the concrete types.
  */
 interface IBatch<TMessages extends LocalBatchMessage[] | OutboundBatchMessage[]> {
-	/**
-	 * Sum of the in-memory content sizes of all messages in the batch.
-	 * If the batch is compressed, this number reflects the post-compression size.
-	 */
-	readonly contentSizeInBytes: number;
 	/**
 	 * All the messages in the batch
 	 */
