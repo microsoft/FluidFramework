@@ -101,7 +101,7 @@
 		"@fluidframework/test-utils": "workspace:~",
 		"nconf": "^0.12.0",
 		"proper-lockfile": "^4.1.2",
-		"semver": "^7.5.3"
+		"semver": "^7.7.1"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",
@@ -115,7 +115,7 @@
 		"@types/mocha": "^10.0.10",
 		"@types/nock": "^9.3.0",
 		"@types/node": "^18.19.0",
-		"@types/semver": "^7.5.0",
+		"@types/semver": "^7.7.0",
 		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
