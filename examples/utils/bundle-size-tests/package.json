@@ -80,6 +80,13 @@
 	],
 	"fluidBuild": {
 		"tasks": {
+			"build": {
+				"dependsOn": [
+					"...",
+					"webpack"
+				],
+				"script": false
+			},
 			"webpack": [
 				"^build:esnext"
 			],
