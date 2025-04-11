@@ -35,7 +35,7 @@ export class RemoteFluidObjectHandle extends FluidHandleBase<FluidObject> {
 	constructor(
 		public readonly absolutePath: string,
 		public readonly routeContext: IFluidHandleContext,
-		public readonly metadata?: Readonly<Record<string, string | number | boolean>> | undefined,
+		public readonly placeholder: boolean,
 	) {
 		super();
 		assert(
@@ -51,7 +51,7 @@ export class RemoteFluidObjectHandle extends FluidHandleBase<FluidObject> {
 				url: this.absolutePath,
 				headers: {
 					[RuntimeHeaders.viaHandle]: true,
-					[RuntimeHeaders.metadata]: this.metadata,
+					[RuntimeHeaders.placeholder]: this.placeholder,
 				},
 			};
 			this.objectP = this.routeContext.resolveHandle(request).then<FluidObject>((response) => {

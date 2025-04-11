@@ -23,9 +23,9 @@ export enum RuntimeHeaders {
 	 */
 	viaHandle = "viaHandle",
 	/**
-	 * Contains the metadata record, if one exists.
+	 * True if the request is coming from a placeholder handle.
 	 */
-	metadata = "metadata",
+	placeholder = "placeholder",
 }
 
 /**

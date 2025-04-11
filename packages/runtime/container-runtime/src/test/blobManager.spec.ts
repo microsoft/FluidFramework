@@ -17,12 +17,12 @@ import { ConfigTypes, IConfigProviderBase, IErrorBase } from "@fluidframework/co
 import {
 	type IFluidHandleContext,
 	type IFluidHandleInternal,
-	type IFluidHandleInternalWithMetadata,
 } from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { IClientDetails, SummaryType } from "@fluidframework/driver-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
+import { isFluidHandleInternalPlaceholder } from "@fluidframework/runtime-utils/internal";
 import {
 	LoggingError,
 	MockLogger,
@@ -147,18 +147,21 @@ export class MockRuntime
 	public async createBlob(
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
-	): Promise<IFluidHandleInternalWithMetadata<ArrayBufferLike>> {
+	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		const P = this.blobManager.createBlob(blob, signal);
 		this.handlePs.push(P);
 		return P;
 	}
 
 	public async getBlob(
-		blobHandle: IFluidHandleInternalWithMetadata<ArrayBufferLike>,
+		blobHandle: IFluidHandleInternal<ArrayBufferLike>,
 	): Promise<ArrayBufferLike> {
 		const pathParts = blobHandle.absolutePath.split("/");
 		const blobId = pathParts[2];
-		return this.blobManager.getBlob(blobId, blobHandle.metadata);
+		const placeholder = isFluidHandleInternalPlaceholder(blobHandle)
+			? blobHandle.placeholder
+			: false;
+		return this.blobManager.getBlob(blobId, placeholder);
 	}
 
 	public async getPendingLocalState(): Promise<(unknown[] | IPendingBlobs | undefined)[]> {
@@ -757,7 +760,7 @@ for (const createBlobPlaceholders of [false, true]) {
 			});
 
 			await assert.rejects(
-				async () => runtime.blobManager.getBlob(someId),
+				async () => runtime.blobManager.getBlob(someId, false),
 				(e: Error) => e.message === "BOOM!",
 				"Expected getBlob to throw with test error message",
 			);

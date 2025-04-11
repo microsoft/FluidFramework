@@ -7,7 +7,7 @@ import type { IFluidHandleErased } from "@fluidframework/core-interfaces";
 import { IFluidHandle, fluidHandleSymbol } from "@fluidframework/core-interfaces";
 import type {
 	IFluidHandleInternal,
-	IFluidHandleInternalWithMetadata,
+	IFluidHandleInternalPlaceholder,
 } from "@fluidframework/core-interfaces/internal";
 
 /**
@@ -22,15 +22,15 @@ export interface ISerializedHandle {
 	url: string;
 
 	/**
-	 * The handle may contain metadata, generated and interpreted by the subsystem that the handle
+	 * The handle may be a placeholder, as determined by and resolvable by the subsystem that the handle
 	 * relates to.  For instance, the BlobManager uses this to distinguish blob handles which may
 	 * not yet have an attached blob yet.
 	 *
 	 * @remarks
-	 * Will only exist if the handle has metadata, will be omitted entirely from the serialized format
-	 * if the handle has no metadata.
+	 * Will only exist if the handle is a placeholder, will be omitted entirely from the serialized format
+	 * if the handle is not a placeholder.
 	 */
-	readonly metadata?: Readonly<Record<string, string | number | boolean>> | undefined;
+	readonly placeholder?: true;
 }
 
 /**
@@ -40,10 +40,13 @@ export interface ISerializedHandle {
 export const isSerializedHandle = (value: any): value is ISerializedHandle =>
 	value?.type === "__fluid_handle__";
 
-const isFluidHandleInternalWithMetadata = (
+/**
+ * @internal
+ */
+export const isFluidHandleInternalPlaceholder = (
 	fluidHandleInternal: IFluidHandleInternal,
-): fluidHandleInternal is IFluidHandleInternalWithMetadata =>
-	"metadata" in fluidHandleInternal && fluidHandleInternal.metadata !== undefined;
+): fluidHandleInternal is IFluidHandleInternalPlaceholder =>
+	"placeholder" in fluidHandleInternal && fluidHandleInternal.placeholder === true;
 
 /**
  * Encodes the given IFluidHandle into a JSON-serializable form,
@@ -53,11 +56,11 @@ const isFluidHandleInternalWithMetadata = (
  * @internal
  */
 export function encodeHandleForSerialization(handle: IFluidHandleInternal): ISerializedHandle {
-	return isFluidHandleInternalWithMetadata(handle)
+	return isFluidHandleInternalPlaceholder(handle)
 		? {
 				type: "__fluid_handle__",
 				url: handle.absolutePath,
-				metadata: handle.metadata,
+				placeholder: true,
 			}
 		: {
 				type: "__fluid_handle__",
