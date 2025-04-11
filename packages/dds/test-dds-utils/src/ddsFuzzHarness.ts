@@ -71,6 +71,7 @@ import { DDSFuzzHandle } from "./ddsFuzzHandle.js";
  */
 export interface DDSRandom extends IRandom {
 	handle(): IFluidHandle;
+	clone(seed: number): DDSRandom;
 }
 
 /**
@@ -1407,28 +1408,32 @@ export async function runTestForSeed<
 	const summarizerClient = initialClient;
 	const handles = Array.from({ length: 5 }).map(() => uuid());
 	let handleGenerated = false;
+	const makeHandleRandom = (r: IRandom) => {
+		return () => {
+			handleGenerated = true;
+			return new DDSFuzzHandle(
+				r.pick(handles),
+				// this is wonky, as get on this handle will always resolve via
+				// the summarizer client, but since we just return the absolute path
+				// it doesn't really matter, and remote handles will use
+				// the right handle context when they are deserialized
+				// by the dds.
+				//
+				// we re-used this hack a few time below, because
+				// we don't have the real client
+				initialState.summarizerClient.dataStoreRuntime,
+			);
+		};
+	};
+	const clone = (newSeed: number): DDSRandom => {
+		const c = random.clone(newSeed);
+		return { ...c, handle: makeHandleRandom(c), clone };
+	};
 	const initialState: DDSFuzzTestState<TChannelFactory> = {
 		clients,
 		summarizerClient,
 		containerRuntimeFactory,
-		random: {
-			...random,
-			handle: () => {
-				handleGenerated = true;
-				return new DDSFuzzHandle(
-					random.pick(handles),
-					// this is wonky, as get on this handle will always resolve via
-					// the summarizer client, but since we just return the absolute path
-					// it doesn't really matter, and remote handles will use
-					// the right handle context when they are deserialized
-					// by the dds.
-					//
-					// we re-used this hack a few time below, because
-					// we don't have the real client
-					initialState.summarizerClient.dataStoreRuntime,
-				);
-			},
-		},
+		random: clone(seed),
 		client: makeUnreachableCodePathProxy("client"),
 		isDetached: startDetached,
 	};

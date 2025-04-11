@@ -6,7 +6,11 @@
 import { promises as fs, mkdirSync, writeFileSync } from "fs";
 import path from "path";
 
-import { combineReducers, combineReducersAsync } from "./combineReducers.js";
+import {
+	combineReducers,
+	combineReducersAsync,
+	type BaseOperation,
+} from "./combineReducers.js";
 import {
 	AsyncGenerator,
 	AsyncReducer,
@@ -16,6 +20,8 @@ import {
 	SaveInfo,
 	done,
 } from "./types.js";
+
+type RealOperation<T extends BaseOperation> = T & { debug?: boolean; seed: number };
 
 /**
  * Performs random actions on a set of clients.
@@ -89,7 +95,7 @@ export async function performFuzzActionsAsync<
  * @internal
  */
 export async function performFuzzActionsAsync<
-	TOperation extends { type: string | number },
+	TOperation extends BaseOperation,
 	TState extends BaseFuzzTestState,
 >(
 	generator: AsyncGenerator<TOperation, TState>,
@@ -105,20 +111,37 @@ export async function performFuzzActionsAsync<
 		typeof reducerOrMap === "function"
 			? reducerOrMap
 			: combineReducersAsync<TOperation, TState>(reducerOrMap);
-	const applyOperation: (operation: TOperation) => Promise<TState> = async (op) =>
-		(await reducer(state, op)) ?? state;
+	const applyOperation = async (reduceState: TState, op: RealOperation<TOperation>) => {
+		const seededState: TState = { ...reduceState, random: initialState.random.clone(op.seed) };
+		return (await reducer(seededState, op)) ?? seededState;
+	};
+
+	const runGenerator = async (
+		genState: TState,
+	): Promise<RealOperation<TOperation> | typeof done> => {
+		const seed = initialState.random.real();
+		const seededState: TState = {
+			...genState,
+			random: initialState.random.clone(seed),
+		};
+		const op = await generator(seededState);
+		if (op === done) {
+			return op;
+		}
+		return { seed, ...op };
+	};
 
 	try {
 		for (
-			let operation = await generator(state);
+			let operation = await runGenerator(state);
 			operation !== done;
-			operation = await generator(state)
+			operation = await runGenerator(state)
 		) {
 			operations.push(operation);
-			if ("debug" in operation && operation.debug === true) {
+			if (operation.debug === true) {
 				debugger;
 			}
-			state = (await applyOperation(operation)) ?? state;
+			state = await applyOperation(state, operation);
 		}
 	} catch (err) {
 		if (saveInfo.saveOnFailure !== false) {
@@ -220,7 +243,7 @@ export function performFuzzActions<
  * @internal
  */
 export function performFuzzActions<
-	TOperation extends { type: string | number },
+	TOperation extends BaseOperation,
 	TState extends BaseFuzzTestState,
 >(
 	generator: Generator<TOperation, TState>,
