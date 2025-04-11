@@ -10,7 +10,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { PostUpdateAction } from "./internalTypes.js";
-import type { Attendee, PresenceEvents, AttendeeId, Presence } from "./presence.js";
+import type { Attendee, AttendeeId, Presence, PresenceEvents } from "./presence.js";
 import { AttendeeStatus } from "./presence.js";
 import type { PresenceStatesInternal } from "./presenceStates.js";
 import { TimerManager } from "./timerManager.js";

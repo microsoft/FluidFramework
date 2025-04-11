@@ -11,7 +11,7 @@ import type {
 	Latest,
 	StatesWorkspace,
 } from "@fluidframework/presence/alpha";
-import { StateFactory, AttendeeStatus } from "@fluidframework/presence/alpha";
+import { AttendeeStatus, StateFactory } from "@fluidframework/presence/alpha";
 
 /**
  * IMousePosition is the data that individual session clients share via presence.

@@ -15,6 +15,7 @@ import type {
 	Presence,
 	LatestMap,
 	LatestMapItemUpdatedClientData,
+	Presence,
 } from "@fluidframework/presence/alpha";
 import { StateFactory } from "@fluidframework/presence/alpha";
 

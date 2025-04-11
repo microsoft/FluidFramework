@@ -14,6 +14,7 @@ import type {
 	BroadcastControlSettings,
 	Presence,
 	LatestClientData,
+	Presence,
 } from "@fluidframework/presence/alpha";
 import { StateFactory } from "@fluidframework/presence/alpha";
 
