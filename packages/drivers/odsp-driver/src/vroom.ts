@@ -13,7 +13,6 @@ import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import { EpochTracker } from "./epochTracker.js";
 import { mockify } from "./mockify.js";
@@ -83,7 +82,7 @@ export const fetchJoinSession = mockify(
 				...tokenRefreshProps,
 			},
 			async (event) => {
-				const formBoundary = uuid();
+				const formBoundary = crypto.randomUUID();
 				let postBody = `--${formBoundary}\r\n`;
 				postBody += `Authorization: ${authHeader}\r\n`;
 				postBody += `X-HTTP-Method-Override: POST\r\n`;

@@ -53,8 +53,7 @@
 		"@fluidframework/tree": "workspace:~",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1",
-		"tiny-typed-emitter": "^2.1.0",
-		"uuid": "^11.1.0"
+		"tiny-typed-emitter": "^2.1.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",

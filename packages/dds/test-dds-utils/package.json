@@ -93,8 +93,7 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"mocha": "^10.8.2",
-		"uuid": "^11.1.0"
+		"mocha": "^10.8.2"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",

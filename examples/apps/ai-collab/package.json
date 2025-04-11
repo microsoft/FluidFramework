@@ -65,8 +65,7 @@
 		"rimraf": "^4.4.0",
 		"tinylicious": "^5.0.0",
 		"typechat": "^0.1.1",
-		"typescript": "~5.4.5",
-		"uuid": "^11.1.0"
+		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
 		"disabled": true,

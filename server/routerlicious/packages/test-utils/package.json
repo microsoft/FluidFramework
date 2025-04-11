@@ -65,8 +65,7 @@
 		"ioredis": "^5.2.3",
 		"ioredis-mock": "^8.8.2",
 		"lodash": "^4.17.21",
-		"string-hash": "^1.1.3",
-		"uuid": "^11.1.0"
+		"string-hash": "^1.1.3"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "0.52.0-315632",

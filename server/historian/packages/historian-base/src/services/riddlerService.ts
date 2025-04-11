@@ -5,7 +5,6 @@
 
 import { ITenantConfig, ITenantConfigManager } from "@fluidframework/server-services-core";
 import { BasicRestWrapper, RestWrapper } from "@fluidframework/server-services-client";
-import { v4 as uuid } from "uuid";
 import {
 	BaseTelemetryProperties,
 	Lumberjack,
@@ -36,7 +35,7 @@ export class RiddlerService implements ITenantService, ITenantConfigManager {
 			undefined,
 			() =>
 				getGlobalTelemetryContext().getProperties().correlationId ??
-				uuid() /* getCorrelationId */,
+				crypto.randomUUID() /* getCorrelationId */,
 			() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
 			undefined /* refreshTokenIfNeeded */,
 			logHttpMetrics,

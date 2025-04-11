@@ -31,7 +31,6 @@ import {
 	normalizeError,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts.js";
 import { ClpCompliantAppHeader } from "./contractsPublic.js";
@@ -94,7 +93,7 @@ export class EpochTracker implements IPersistedFileCache {
 
 	private readonly snapshotCacheExpiryTimeoutMs: number;
 	public readonly rateLimiter: RateLimiter;
-	private readonly driverId = uuid();
+	private readonly driverId = crypto.randomUUID();
 	// This tracks the request number made by the driver instance.
 	private networkCallNumber = 1;
 	constructor(

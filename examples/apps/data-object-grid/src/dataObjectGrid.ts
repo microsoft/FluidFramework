@@ -7,7 +7,6 @@ import type { EventEmitter } from "@fluid-example/example-utils";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { Serializable } from "@fluidframework/datastore-definitions/legacy";
 import { Layout } from "react-grid-layout";
-import { v4 as uuid } from "uuid";
 
 import { dataObjectRegistry, registryEntries } from "./dataObjectRegistry.js";
 
@@ -100,7 +99,7 @@ export class DataObjectGrid extends DataObject implements IDataObjectGrid {
 		}
 
 		const serializableData = await itemMapEntry.create(this.context);
-		const id = uuid();
+		const id = crypto.randomUUID();
 		const newItem: IDataObjectGridItem = {
 			id,
 			type,

@@ -7,7 +7,6 @@ import { EventEmitter } from "@fluid-example/example-utils";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/legacy";
 import { SharedString } from "@fluidframework/sequence/legacy";
-import { v4 as uuid } from "uuid";
 
 import type { IInventoryItem, IInventoryList } from "../modelInterfaces.js";
 
@@ -59,7 +58,7 @@ export class InventoryList extends DataObject implements IInventoryList {
 		nameString.insertText(0, name);
 		const quantityMap: ISharedMap = SharedMap.create(this.runtime);
 		quantityMap.set(quantityKey, quantity);
-		const id = uuid();
+		const id = crypto.randomUUID();
 		this.root.set(id, { name: nameString.handle, quantity: quantityMap.handle });
 	};
 

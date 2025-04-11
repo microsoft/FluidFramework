@@ -44,7 +44,6 @@ import {
 	createChildMonitoringContext,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import { IBlobMetadata } from "../metadata.js";
 
@@ -237,7 +236,7 @@ export class BlobManager {
 		this.blobRequested = blobRequested;
 		this.isBlobDeleted = isBlobDeleted;
 		this.runtime = runtime;
-		this.localBlobIdGenerator = localBlobIdGenerator ?? uuid;
+		this.localBlobIdGenerator = localBlobIdGenerator ?? crypto.randomUUID.bind(crypto);
 
 		this.mc = createChildMonitoringContext({
 			logger: this.runtime.baseLogger,

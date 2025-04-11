@@ -5,7 +5,6 @@
 
 import type { ITelemetryBaseProperties, Tagged } from "@fluidframework/core-interfaces";
 import type { ILoggingError } from "@fluidframework/core-interfaces/internal";
-import { v4 as uuid } from "uuid";
 
 import { type IFluidErrorBase, hasErrorInstanceId, isFluidError } from "./fluidErrorBase.js";
 import { convertToBasePropertyType } from "./logger.js";
@@ -394,7 +393,7 @@ export class LoggingError
 	extends Error
 	implements ILoggingError, Omit<IFluidErrorBase, "errorType">
 {
-	private _errorInstanceId = uuid();
+	private _errorInstanceId: string = crypto.randomUUID();
 	public get errorInstanceId(): string {
 		return this._errorInstanceId;
 	}

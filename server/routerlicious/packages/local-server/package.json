@@ -67,8 +67,7 @@
 		"@fluidframework/server-test-utils": "workspace:~",
 		"debug": "^4.3.4",
 		"events_pkg": "npm:events@^3.1.0",
-		"jsrsasign": "^11.0.0",
-		"uuid": "^11.1.0"
+		"jsrsasign": "^11.0.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "0.52.0-315632",

@@ -5,7 +5,6 @@
 
 import type { EventEmitter } from "@fluid-example/example-utils";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
-import { v4 as uuid } from "uuid";
 
 /**
  * IContact describes the public, read-only API surface for a single contact
@@ -77,7 +76,7 @@ export class ContactCollection extends DataObject implements IContactCollection 
 	}
 
 	public readonly addContact = (name: string, phone: string) => {
-		const id = uuid();
+		const id = crypto.randomUUID();
 		this.root.set(id, { name, phone });
 	};
 

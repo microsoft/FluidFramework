@@ -34,7 +34,6 @@ import { Request, Router } from "express";
 import sillyname from "sillyname";
 import { Provider } from "nconf";
 import winston from "winston";
-import { v4 as uuid } from "uuid";
 import { Constants } from "../../../utils";
 import {
 	craftClientJoinMessage,
@@ -390,7 +389,7 @@ const uploadBlob = async (
 		undefined,
 		() =>
 			getGlobalTelemetryContext().getProperties().correlationId ??
-			uuid() /* getCorrelationId */,
+			crypto.randomUUID() /* getCorrelationId */,
 		() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
 		undefined /* refreshTokenIfNeeded */,
 		logHttpMetrics /* logHttpMetrics */,

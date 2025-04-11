@@ -35,12 +35,11 @@ import {
 	createChildLogger,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import { IAgentScheduler, IAgentSchedulerEvents } from "./agent.js";
 
 // Note: making sure this ID is unique and does not collide with storage provided clientID
-const UnattachedClientId = `${uuid()}_unattached`;
+const UnattachedClientId = `${crypto.randomUUID()}_unattached`;
 
 const mapWait = async <T = unknown>(map: ISharedMap, key: string): Promise<T> => {
 	const maybeValue = map.get<T>(key);

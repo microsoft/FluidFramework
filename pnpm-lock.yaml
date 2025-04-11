@@ -153,9 +153,6 @@ importers:
       jsrsasign:
         specifier: ^11.0.0
         version: 11.1.0
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -313,9 +310,6 @@ importers:
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
 
   examples/apps/attributable-map:
     dependencies:
@@ -455,9 +449,6 @@ importers:
       react-dom:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -709,9 +700,6 @@ importers:
       style-loader:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.97.1)
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -869,9 +857,6 @@ importers:
       scheduler:
         specifier: ^0.20.0
         version: 0.20.2
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -1168,9 +1153,6 @@ importers:
       react-dom:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -1501,9 +1483,6 @@ importers:
       tiny-typed-emitter:
         specifier: ^2.1.0
         version: 2.1.0
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -3827,9 +3806,6 @@ importers:
       react-dom:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -4304,9 +4280,6 @@ importers:
       fluid-framework:
         specifier: workspace:~
         version: link:../../../../packages/framework/fluid-framework
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -4697,9 +4670,6 @@ importers:
       react-dom:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -4852,9 +4822,6 @@ importers:
       '@fluidframework/tinylicious-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/tinylicious-driver
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -4967,9 +4934,6 @@ importers:
       sillyname:
         specifier: ^0.1.0
         version: 0.1.0
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
       webpack-dev-server:
         specifier: ~4.15.2
         version: 4.15.2(webpack-cli@5.1.4)(webpack@5.97.1)
@@ -5239,9 +5203,6 @@ importers:
       react-dom:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -5417,9 +5378,6 @@ importers:
       react-dom:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -5577,9 +5535,6 @@ importers:
       tiny-typed-emitter:
         specifier: ^2.1.0
         version: 2.1.0
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -5852,9 +5807,6 @@ importers:
       react-dom:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -6942,9 +6894,6 @@ importers:
       lru-cache:
         specifier: ^6.0.0
         version: 6.0.0
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -7042,6 +6991,9 @@ importers:
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
+      uuid:
+        specifier: ^11.1.0
+        version: 11.1.0
 
   experimental/framework/data-objects:
     dependencies:
@@ -7860,9 +7812,6 @@ importers:
       '@fluidframework/shared-object-base':
         specifier: workspace:~
         version: link:../shared-object-base
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -8347,9 +8296,6 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -8656,9 +8602,6 @@ importers:
       double-ended-queue:
         specifier: ^2.1.0-0
         version: 2.1.0-0
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -8786,9 +8729,6 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -9119,9 +9059,6 @@ importers:
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -9231,9 +9168,6 @@ importers:
       '@ungap/structured-clone':
         specifier: ^1.2.0
         version: 1.2.1
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -9674,9 +9608,6 @@ importers:
       jsrsasign:
         specifier: ^11.0.0
         version: 11.1.0
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -9780,9 +9711,6 @@ importers:
       socket.io-client:
         specifier: ~4.7.5
         version: 4.7.5
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -10090,9 +10018,6 @@ importers:
       socket.io-client:
         specifier: ~4.7.5
         version: 4.7.5
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -10272,9 +10197,6 @@ importers:
       jsrsasign:
         specifier: ^11.0.0
         version: 11.1.0
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -10369,9 +10291,6 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -10439,9 +10358,6 @@ importers:
       typechat:
         specifier: ^0.1.1
         version: 0.1.1(typescript@5.4.5)(zod@3.24.0)
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
       zod:
         specifier: ^3.23.8
         version: 3.24.0
@@ -10845,9 +10761,6 @@ importers:
       '@microsoft/applicationinsights-web':
         specifier: ^2.8.11
         version: 2.8.18(tslib@1.14.1)
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -11755,9 +11668,6 @@ importers:
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -11864,9 +11774,6 @@ importers:
       lz4js:
         specifier: ^0.2.0
         version: 0.2.0
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -12037,9 +11944,6 @@ importers:
       lz4js:
         specifier: ^0.2.0
         version: 0.2.0
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -12219,9 +12123,6 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -12374,9 +12275,6 @@ importers:
       '@tylerbu/sorted-btree-es6':
         specifier: ^1.8.0
         version: 1.8.0
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -12653,9 +12551,6 @@ importers:
       jsrsasign:
         specifier: ^11.0.0
         version: 11.1.0
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -12823,9 +12718,6 @@ importers:
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
 
   packages/service-clients/end-to-end-tests/azure-client:
     dependencies:
@@ -12922,9 +12814,6 @@ importers:
       tinylicious:
         specifier: ^5.0.0
         version: 5.0.0
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -13034,9 +12923,6 @@ importers:
       sinon:
         specifier: ^18.0.1
         version: 18.0.1
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -13113,9 +12999,6 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -13505,9 +13388,6 @@ importers:
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../dds/tree
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -14020,9 +13900,6 @@ importers:
       semver:
         specifier: ^7.7.1
         version: 7.7.1
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -14216,9 +14093,6 @@ importers:
       tinylicious:
         specifier: ^5.0.0
         version: 5.0.0
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -14528,9 +14402,6 @@ importers:
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -14770,9 +14641,6 @@ importers:
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
       webpack:
         specifier: ^5.94.0
         version: 5.97.1(webpack-cli@5.1.4)
@@ -14949,9 +14817,6 @@ importers:
       tslib:
         specifier: ^1.10.0
         version: 1.14.1
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -16052,9 +15917,6 @@ importers:
       debug:
         specifier: ^4.3.4
         version: 4.4.0(supports-color@8.1.1)
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1

@@ -53,9 +53,6 @@ importers:
       '@types/supertest':
         specifier: ^2.0.7
         version: 2.0.12
-      '@types/uuid':
-        specifier: ^3.4.4
-        version: 3.4.10
       '@types/winston':
         specifier: ^2.4.4
         version: 2.4.4
@@ -128,9 +125,6 @@ importers:
       nconf:
         specifier: ^0.11.4
         version: 0.11.4
-      uuid:
-        specifier: ^3.3.2
-        version: 3.4.0
       winston:
         specifier: ^3.6.0
         version: 3.8.2
@@ -162,9 +156,6 @@ importers:
       '@types/supertest':
         specifier: ^2.0.7
         version: 2.0.12
-      '@types/uuid':
-        specifier: ^3.4.4
-        version: 3.4.10
       '@types/winston':
         specifier: ^2.4.4
         version: 2.4.4
@@ -270,9 +261,6 @@ importers:
       split:
         specifier: ^1.0.0
         version: 1.0.1
-      uuid:
-        specifier: ^3.3.2
-        version: 3.4.0
       winston:
         specifier: ^3.6.0
         version: 3.8.2
@@ -322,9 +310,6 @@ importers:
       '@types/supertest':
         specifier: ^2.0.7
         version: 2.0.12
-      '@types/uuid':
-        specifier: ^3.4.4
-        version: 3.4.10
       '@types/winston':
         specifier: ^2.4.4
         version: 2.4.4
@@ -1533,9 +1518,6 @@ packages:
 
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
-
-  '@types/uuid@3.4.10':
-    resolution: {integrity: sha512-BgeaZuElf7DEYZhWYDTc/XcLZXdVgFkVSTa13BqKvbnmUrxr3TJFKofUxCtDO9UQOdhnV+HPOESdHiHKZOJV1A==}
 
   '@types/winston@2.4.4':
     resolution: {integrity: sha512-BVGCztsypW8EYwJ+Hq+QNYiT/MUyCif0ouBH+flrY66O5W+KIXAMML6E/0fJpm7VjIzgangahl5S03bJJQGrZw==}
@@ -5594,10 +5576,6 @@ packages:
     resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
 
-  uuid@3.4.0:
-    resolution: {integrity: sha512-HjSDRw6gZE5JMggctHBcjVak08+KEVhSIiDzFnT9S9aegmp85S/bReBVTb4QTFaRNptJ9kuYaNhnbNEOkbKb/A==}
-    hasBin: true
-
   uuid@9.0.1:
     resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
     hasBin: true
@@ -8115,8 +8093,6 @@ snapshots:
   '@types/ungap__structured-clone@1.2.0': {}
 
   '@types/unist@3.0.3': {}
-
-  '@types/uuid@3.4.10': {}
 
   '@types/winston@2.4.4':
     dependencies:
@@ -12990,8 +12966,6 @@ snapshots:
       which-typed-array: 1.1.14
 
   utils-merge@1.0.1: {}
-
-  uuid@3.4.0: {}
 
   uuid@9.0.1: {}
 

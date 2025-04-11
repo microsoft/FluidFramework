@@ -22,7 +22,6 @@ import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import {
 	IOdspSummaryPayload,
@@ -88,7 +87,7 @@ function convertCreateNewSummaryTreeToTreeAndBlobsCore(
 					typeof summaryObject.content === "string"
 						? stringToBuffer(summaryObject.content, "utf8")
 						: summaryObject.content;
-				const blobId = uuid();
+				const blobId = crypto.randomUUID();
 				treeNode.blobs[key] = blobId;
 				blobs.set(blobId, contentBuffer);
 				break;
@@ -234,7 +233,7 @@ export async function createNewFluidContainerCore<T>(args: {
 				let url: string;
 				let headers: { [index: string]: string };
 				let addInBody = false;
-				const formBoundary = uuid();
+				const formBoundary = crypto.randomUUID();
 				const urlObj = new URL(initialUrl);
 				urlObj.searchParams.set("ump", "1");
 				const authInBodyUrl = urlObj.href;

@@ -155,8 +155,7 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"double-ended-queue": "^2.1.0-0",
-		"uuid": "^11.1.0"
+		"double-ended-queue": "^2.1.0-0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",

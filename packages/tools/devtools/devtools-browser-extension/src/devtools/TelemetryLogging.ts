@@ -15,7 +15,6 @@ import {
 	type IXHROverride,
 	PostChannel,
 } from "@microsoft/1ds-post-js";
-import { v4 as uuidv4 } from "uuid";
 
 import { formatDevtoolsScriptMessageForLogging } from "./Logging.js";
 
@@ -134,14 +133,14 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 		let continuityID = localStorage.getItem(this.CONTINUITY_ID_KEY);
 
 		if (continuityID === null || continuityID === "") {
-			continuityID = uuidv4();
+			continuityID = crypto.randomUUID();
 			localStorage.setItem(this.CONTINUITY_ID_KEY, continuityID);
 		}
 
 		return continuityID;
 	}
 	private generateIdentifiers(): void {
-		this.sessionID = uuidv4();
+		this.sessionID = crypto.randomUUID();
 		this.continuityID = this.getOrCreateContinuityID();
 	}
 

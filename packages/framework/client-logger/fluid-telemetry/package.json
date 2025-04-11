@@ -96,8 +96,7 @@
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
-		"@microsoft/applicationinsights-web": "^2.8.11",
-		"uuid": "^11.1.0"
+		"@microsoft/applicationinsights-web": "^2.8.11"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",

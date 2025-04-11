@@ -104,7 +104,6 @@ import {
 	type ITelemetryErrorEventExt,
 } from "@fluidframework/telemetry-utils/internal";
 import structuredClone from "@ungap/structured-clone";
-import { v4 as uuid } from "uuid";
 
 import {
 	AttachProcessProps,
@@ -850,7 +849,7 @@ export class Container
 			});
 		};
 
-		this._containerId = uuid();
+		this._containerId = crypto.randomUUID();
 
 		this.client = Container.setupClient(
 			this._containerId,

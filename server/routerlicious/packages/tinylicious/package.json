@@ -67,7 +67,6 @@
 		"nconf": "^0.12.0",
 		"socket.io": "^4.8.0",
 		"split": "^1.0.0",
-		"uuid": "^11.1.0",
 		"winston": "^3.6.0"
 	},
 	"devDependencies": {

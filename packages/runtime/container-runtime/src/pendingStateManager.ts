@@ -13,7 +13,6 @@ import {
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
-import { v4 as uuid } from "uuid";
 
 import {
 	type InboundContainerRuntimeMessage,
@@ -317,7 +316,7 @@ export class PendingStateManager implements IDisposable {
 		const batchWasSent = clientSequenceNumber !== undefined;
 		const [clientId, batchStartCsn] = batchWasSent
 			? [this.stateHandler.clientId(), clientSequenceNumber]
-			: [uuid(), -1]; // -1 will indicate not a real clientId/CSN pair
+			: [crypto.randomUUID(), -1]; // -1 will indicate not a real clientId/CSN pair
 		assert(
 			clientId !== undefined,
 			0xa33 /* clientId (from stateHandler) could only be undefined if we've never connected, but we have a CSN so we know that's not the case */,
@@ -751,6 +750,6 @@ function patchbatchInfo(
 	const batchInfo: IPendingMessageFromStash["batchInfo"] = message.batchInfo;
 	if (batchInfo === undefined) {
 		// Using uuid guarantees uniqueness, retaining existing behavior
-		message.batchInfo = { clientId: uuid(), batchStartCsn: -1, length: -1 };
+		message.batchInfo = { clientId: crypto.randomUUID(), batchStartCsn: -1, length: -1 };
 	}
 }

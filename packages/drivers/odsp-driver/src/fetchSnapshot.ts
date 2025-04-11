@@ -30,7 +30,6 @@ import {
 	loggerToMonitoringContext,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import {
 	ISnapshotContentsWithProps,
@@ -608,7 +607,7 @@ function getFormBodyAndHeaders(
 		[index: string]: string;
 	};
 } {
-	const formBoundary = uuid();
+	const formBoundary = crypto.randomUUID();
 	const formParams: string[] = [];
 	formParams.push(
 		`--${formBoundary}`,

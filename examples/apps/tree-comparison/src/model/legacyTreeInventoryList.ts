@@ -17,7 +17,6 @@ import {
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { TypedEmitter } from "tiny-typed-emitter";
-import { v4 as uuid } from "uuid";
 
 import type {
 	IInventoryItem,
@@ -90,7 +89,7 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 					definition: "id",
 					// In a real-world scenario, this is probably a known unique inventory ID (rather than
 					// randomly generated).  Randomly generating here just for convenience.
-					payload: uuid(),
+					payload: crypto.randomUUID(),
 				},
 				name: {
 					definition: "name",
@@ -137,7 +136,7 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 								definition: "id",
 								// In a real-world scenario, this is probably a known unique inventory ID (rather than
 								// randomly generated).  Randomly generating here just for convenience.
-								payload: uuid(),
+								payload: crypto.randomUUID(),
 							},
 							name: {
 								definition: "name",
@@ -154,7 +153,7 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 						traits: {
 							id: {
 								definition: "id",
-								payload: uuid(),
+								payload: crypto.randomUUID(),
 							},
 							name: {
 								definition: "name",

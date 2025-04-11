@@ -17,7 +17,6 @@ import {
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import { IDevServerUser, IRouterliciousRouteOptions, RouteOptions } from "./loader.js";
 
@@ -30,7 +29,7 @@ export function getDocumentServiceFactory(
 	odspPersistantCache?: IPersistedCache,
 	odspHostStoragePolicy?: HostStoragePolicy,
 ): IDocumentServiceFactory {
-	const userId = uuid();
+	const userId = crypto.randomUUID();
 	const match = userId.match(/^([\da-f]{8})-([\da-f]{4})/);
 	const userName = match !== null ? match[0] : userId; // Just use the first two segments of the (fake) userId as a fake name.
 

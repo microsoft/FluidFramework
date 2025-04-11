@@ -25,7 +25,6 @@ import {
 	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import { Socket } from "socket.io-client";
-import { v4 as uuid } from "uuid";
 
 import { IFlushOpsResponse, IGetOpsResponse, IOdspSocketError } from "./contracts.js";
 import { EpochTracker } from "./epochTracker.js";
@@ -281,7 +280,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		);
 
 		const socket = socketReference.socket;
-		const connectionId = uuid();
+		const connectionId = crypto.randomUUID();
 		const connectMessage: IConnect = {
 			client,
 			id: documentId,
@@ -426,7 +425,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	) {
 		super(socket, documentId, logger, false, connectionId);
 		this.socketReference = socketReference;
-		this.requestOpsNoncePrefix = `${uuid()}-`;
+		this.requestOpsNoncePrefix = `${crypto.randomUUID()}-`;
 	}
 
 	/**

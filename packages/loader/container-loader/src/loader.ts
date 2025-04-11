@@ -34,7 +34,6 @@ import {
 	mixinMonitoringContext,
 	sessionStorageConfigProvider,
 } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import { Container } from "./container.js";
 import { DebugLogger } from "./debugLogger.js";
@@ -285,7 +284,7 @@ export class Loader implements IHostLoader {
 		} = loaderProps;
 
 		const telemetryProps = {
-			loaderId: uuid(),
+			loaderId: crypto.randomUUID(),
 			loaderVersion: pkgVersion,
 		};
 

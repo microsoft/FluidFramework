@@ -48,8 +48,7 @@
 		"assert": "^2.0.0",
 		"axios": "^1.8.4",
 		"events_pkg": "npm:events@^3.1.0",
-		"fluid-framework": "workspace:~",
-		"uuid": "^11.1.0"
+		"fluid-framework": "workspace:~"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",

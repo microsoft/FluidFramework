@@ -75,8 +75,7 @@
 		"@tylerbu/sorted-btree-es6": "^1.8.0",
 		"buffer": "^6.0.3",
 		"denque": "^1.5.1",
-		"lru-cache": "^6.0.0",
-		"uuid": "^11.1.0"
+		"lru-cache": "^6.0.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",
@@ -112,7 +111,8 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.4.5"
+		"typescript": "~5.4.5",
+		"uuid": "^11.1.0"
 	},
 	"typeValidation": {
 		"disabled": true,

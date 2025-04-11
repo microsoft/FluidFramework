@@ -9,7 +9,6 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { type ISharedCell, SharedCell } from "@fluidframework/cell/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { type ISharedString, SharedString } from "@fluidframework/sequence/legacy";
-import { v4 as uuid } from "uuid";
 
 import type { IInventoryItem, IInventoryList } from "../modelInterfaces.js";
 
@@ -67,7 +66,7 @@ export class InventoryList extends DataObject implements IInventoryList {
 			this.runtime,
 		) as ISharedCell<number>;
 		quantityCell.set(quantity);
-		const id = uuid();
+		const id = crypto.randomUUID();
 		this.root.set(id, { name: nameString.handle, quantity: quantityCell.handle });
 	};
 
