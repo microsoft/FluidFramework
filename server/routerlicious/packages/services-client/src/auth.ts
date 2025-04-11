@@ -95,7 +95,7 @@ export function generateToken(
 		iat: now,
 		exp: now + lifetime,
 		ver,
-		jti:crypto.randomUUID(),
+		jti: crypto.randomUUID(),
 	};
 
 	const utf8Key = { utf8: key };
@@ -112,8 +112,8 @@ export function generateToken(
  */
 export function generateUser(): IUser {
 	const randomUser = {
-		id:crypto.randomUUID(),
-		name:crypto.randomUUID(),
+		id: crypto.randomUUID(),
+		name: crypto.randomUUID(),
 	};
 
 	return randomUser;

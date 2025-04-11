@@ -34,7 +34,7 @@ export class Lumber<T extends string = LumberEventName> {
 	private _logLevel?: LogLevel;
 	private _completed = false;
 	public readonly timestamp = Date.now();
-	public readonly id =crypto.randomUUID();
+	public readonly id = crypto.randomUUID();
 
 	public get properties(): Map<string, any> {
 		return this._properties;

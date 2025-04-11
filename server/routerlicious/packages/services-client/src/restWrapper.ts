@@ -195,7 +195,7 @@ export class BasicRestWrapper extends RestWrapper {
 		canRetry = true,
 	): Promise<T> {
 		const options = { ...requestConfig };
-		const correlationId = this.getCorrelationId?.() ??crypto.randomUUID();
+		const correlationId = this.getCorrelationId?.() ?? crypto.randomUUID();
 		options.headers = this.generateHeaders(
 			options.headers,
 			correlationId,

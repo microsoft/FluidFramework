@@ -273,7 +273,7 @@ export class TestHistorian implements IHistorian {
 	}
 
 	public async createTree(tree: ICreateTreeParams): Promise<ITree> {
-		const _id =crypto.randomUUID();
+		const _id = crypto.randomUUID();
 		await this.trees.insertOne({
 			_id,
 			...tree,

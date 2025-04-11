@@ -156,7 +156,7 @@ export class TenantManager {
 		user?: IUser,
 		lifetime: number = 60 * 60,
 		ver: string = "1.0",
-		jti: string =crypto.randomUUID(),
+		jti: string = crypto.randomUUID(),
 		includeDisabledTenant = false,
 		forceGenerateTokenWithPrivateKey = false,
 	): Promise<IFluidAccessToken> {

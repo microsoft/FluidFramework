@@ -121,7 +121,7 @@ export function generateToken(
 	user?: IUser,
 	lifetime: number = 60 * 60,
 	ver: string = "1.0",
-	jti: string =crypto.randomUUID(),
+	jti: string = crypto.randomUUID(),
 	isKeylessAccessToken = false,
 ): string {
 	let userClaim = user ? user : generateUser();
@@ -151,8 +151,8 @@ export function generateToken(
  */
 export function generateUser(): IUser {
 	const randomUser = {
-		id:crypto.randomUUID(),
-		name:crypto.randomUUID(),
+		id: crypto.randomUUID(),
+		name: crypto.randomUUID(),
 	};
 
 	return randomUser;

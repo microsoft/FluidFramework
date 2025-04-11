@@ -48,8 +48,8 @@ describe("AsyncContext", function () {
 			const main = (id: string) => {
 				contextProvider.bindContext(id, () => helper());
 			};
-			const id1 =crypto.randomUUID();
-			const id2 =crypto.randomUUID();
+			const id1 = crypto.randomUUID();
+			const id2 = crypto.randomUUID();
 			main(id1); // 0
 			main(id2); // 1
 			main(id1); // 2
@@ -71,8 +71,8 @@ describe("AsyncContext", function () {
 					contextProvider.bindContext(id, () => helper().then(resolve));
 				});
 			};
-			const id1 =crypto.randomUUID();
-			const id2 =crypto.randomUUID();
+			const id1 = crypto.randomUUID();
+			const id2 = crypto.randomUUID();
 			await main(id1); // 0
 			await main(id2); // 1
 			await main(id1); // 2
@@ -100,8 +100,8 @@ describe("AsyncContext", function () {
 					contextProvider.bindContext(innerId, () => helper());
 				});
 			};
-			const id1 =crypto.randomUUID();
-			const id2 =crypto.randomUUID();
+			const id1 = crypto.randomUUID();
+			const id2 = crypto.randomUUID();
 			main(id1, id2);
 			assert.strictEqual(logger.events.length, 2);
 			assert.strictEqual(logger.events[0], id1);
@@ -123,16 +123,16 @@ describe("AsyncContext", function () {
 					helper();
 				});
 			};
-			const uniqueProperty1 =crypto.randomUUID();
-			const uniqueProperty2 =crypto.randomUUID();
-			const overwrittenProperty =crypto.randomUUID();
+			const uniqueProperty1 = crypto.randomUUID();
+			const uniqueProperty2 = crypto.randomUUID();
+			const overwrittenProperty = crypto.randomUUID();
 			const props1 = {
 				uniqueProperty1,
 				overwrittenProperty,
 			};
 			const props2 = {
 				uniqueProperty2,
-				overwrittenProperty:crypto.randomUUID(),
+				overwrittenProperty: crypto.randomUUID(),
 			};
 			main(props1, props2);
 			assert.strictEqual(logger.events.length, 3);
@@ -179,8 +179,8 @@ describe("AsyncContext", function () {
 			const main = (correlationId: string) => {
 				telemetryContext.bindProperties({ correlationId }, () => helper());
 			};
-			const id1 =crypto.randomUUID();
-			const id2 =crypto.randomUUID();
+			const id1 = crypto.randomUUID();
+			const id2 = crypto.randomUUID();
 			main(id1); // 0
 			main(id2); // 1
 			main(id1); // 2
@@ -204,8 +204,8 @@ describe("AsyncContext", function () {
 					);
 				});
 			};
-			const id1 =crypto.randomUUID();
-			const id2 =crypto.randomUUID();
+			const id1 = crypto.randomUUID();
+			const id2 = crypto.randomUUID();
 			await main(id1); // 0
 			await main(id2); // 1
 			await main(id1); // 2
@@ -238,10 +238,10 @@ describe("AsyncContext", function () {
 					helper();
 				});
 			};
-			const correlationId1 =crypto.randomUUID();
-			const correlationId2 =crypto.randomUUID();
-			const documentId1 =crypto.randomUUID();
-			const documentId2 =crypto.randomUUID();
+			const correlationId1 = crypto.randomUUID();
+			const correlationId2 = crypto.randomUUID();
+			const documentId1 = crypto.randomUUID();
+			const documentId2 = crypto.randomUUID();
 			const props1 = {
 				correlationId: correlationId1,
 				documentId: documentId1,

@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-
 // TODO: documentation
 // eslint-disable-next-line jsdoc/require-description
 /**
  * @internal
  */
-export const generateClientId = (): string =>crypto.randomUUID();
+export const generateClientId = (): string => crypto.randomUUID();

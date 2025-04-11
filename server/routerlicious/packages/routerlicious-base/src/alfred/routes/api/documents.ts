@@ -314,8 +314,8 @@ export function create(
 			}
 			// If enforcing server generated document id, ignore id parameter
 			const id = enforceServerGeneratedDocumentId
-				?crypto.randomUUID()
-				: (request.body.id as string) ||crypto.randomUUID();
+				? crypto.randomUUID()
+				: (request.body.id as string) || crypto.randomUUID();
 
 			// Summary information
 			const summary = request.body.enableAnyBinaryBlobOnFirstSummary

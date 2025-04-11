@@ -240,7 +240,7 @@ export function configureWebSocketServices(
 				connectionMessage.id,
 				connectionMessage.tenantId,
 			);
-			const correlationId =crypto.randomUUID();
+			const correlationId = crypto.randomUUID();
 			const properties = {
 				...baseLumberjackProperties,
 				[CommonProperties.clientDriverVersion]: driverVersion,

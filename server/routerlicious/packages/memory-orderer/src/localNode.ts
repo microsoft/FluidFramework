@@ -38,7 +38,7 @@ import { Socket } from "./socket";
 // Rather than creating one per? I'm in some ways on this path.
 
 class RemoteSubscriber implements ISubscriber {
-	public id =crypto.randomUUID();
+	public id = crypto.randomUUID();
 
 	constructor(private readonly socket: Socket<INodeMessage>) {}
 
