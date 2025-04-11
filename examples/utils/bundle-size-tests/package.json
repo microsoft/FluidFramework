@@ -80,6 +80,10 @@
 	],
 	"fluidBuild": {
 		"tasks": {
+			"build:test": [
+				"...",
+				"webpack"
+			],
 			"webpack": [
 				"^build:esnext"
 			],
