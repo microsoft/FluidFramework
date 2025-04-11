@@ -22,6 +22,10 @@ export enum RuntimeHeaders {
 	 * True if the request is coming from an IFluidHandle.
 	 */
 	viaHandle = "viaHandle",
+	/**
+	 * True if the request is coming from a placeholder handle.
+	 */
+	placeholder = "placeholder",
 }
 
 /**

@@ -316,6 +316,11 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 				mainDataStore._root.set("blob1", blobHandle1);
 				mainDataStore._root.delete("blob1");
 
+				// With placeholder blobs enabled, calls to uploadBlob() won't actually upload/dedupe until the handle is
+				// attached. Set/delete the second handle to permit the dedupe to complete.
+				mainDataStore._root.set("blob2", blobHandle2);
+				mainDataStore._root.delete("blob2");
+
 				// Summarize so that the above attachment blobs are marked unreferenced.
 				await provider.ensureSynchronized();
 				await summarizeNow(summarizer);
