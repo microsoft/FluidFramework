@@ -7,6 +7,7 @@ import type { IBuildMetrics } from "../library/azureDevops/getBaselineBuildMetri
 import type {
 	CodeCoverageChangeForPackages,
 	CodeCoverageComparison,
+	CodeCoverageComparisonForPackages,
 } from "./compareCodeCoverage.js";
 
 const codeCoverageDetailsHeader = `<table><tr><th>Metric Name</th><th>Baseline coverage</th><th>PR coverage</th><th>Coverage Diff</th></tr>`;
@@ -68,13 +69,15 @@ const getSummaryFooter = (baselineBuildInfo: IBuildMetrics): string => {
 };
 
 const getCodeCoverageSummary = (
-	codeCoverageComparisonReport: CodeCoverageComparison[],
+	codeCoverageComparisonReport: CodeCoverageComparisonForPackages[],
 ): string => {
 	const summary = codeCoverageComparisonReport
 		.sort(
 			(report1, report2) =>
-				// Sort the diff summary of packages based on the total coverage diff(branch coverage)
-				report1.branchCoverageDiff - report2.branchCoverageDiff,
+				// Sort the diff summary of packages based on the total coverage diff(branch + method coverage)
+				report1.branchCoverageDiff +
+				report1.methodCoverageDiff -
+				(report2.branchCoverageDiff + report2.methodCoverageDiff),
 		)
 		.map((coverageReport) => getCodeCoverageSummaryForPackages(coverageReport))
 		.reduce((prev, current) => prev + current);
@@ -82,16 +85,36 @@ const getCodeCoverageSummary = (
 	return summary;
 };
 
-const getCodeCoverageSummaryForPackages = (coverageReport: CodeCoverageComparison): string => {
+const getCodeCoverageSummaryForPackages = (
+	coverageReport: CodeCoverageComparisonForPackages,
+): string => {
 	const metrics = codeCoverageDetailsHeader + getMetricRows(coverageReport);
 
-	return `<details><summary><b>${getGlyphForHtml(coverageReport.branchCoverageDiff)} ${
-		coverageReport.packagePath
+	return `<details><summary><b>${getGlyphForHtml(coverageReport.branchCoverageDiff + coverageReport.methodCoverageDiff)} ${
+		coverageReport.path
 	}:</b> <br> &nbsp;Branch Coverage Change: ${formatDiff(
 		coverageReport.branchCoverageDiff,
-	)}</summary>${metrics}</table></details>`;
+	)} &nbsp;Method Coverage Change: ${formatDiff(
+		coverageReport.methodCoverageDiff,
+	)}</summary>${metrics}</table><b>Files Details:</b>&Tab;${getCodeCoverageSummaryForFiles(coverageReport.filesCoverageComparison)}</details>`;
 };
 
+const getCodeCoverageSummaryForFiles = (coverageReport: CodeCoverageComparison[]): string => {
+	let summary = "";
+	for (const fileCoverageReport of coverageReport) {
+		const fileMetrics = codeCoverageDetailsHeader + getMetricRows(fileCoverageReport);
+
+		const filesSummary = `<details><summary><b>${getGlyphForHtml(
+			fileCoverageReport.branchCoverageDiff + fileCoverageReport.methodCoverageDiff,
+		)} ${fileCoverageReport.path}:</b> <br> &nbsp;Branch Coverage Change: ${formatDiff(
+			fileCoverageReport.branchCoverageDiff,
+		)} &nbsp;Method Coverage Change: ${formatDiff(
+			fileCoverageReport.methodCoverageDiff,
+		)}</summary>${fileMetrics}</table></details>`;
+		summary += filesSummary;
+	}
+	return summary;
+};
 const getGlyphForHtml = (codeCoverageDiff: number): string => {
 	if (codeCoverageDiff === 0) {
 		return "&rarr;";
@@ -116,10 +139,22 @@ const getMetricRows = (codeCoverageComparisonReport: CodeCoverageComparison): st
 		codeCoverageComparisonReport.branchCoverageDiff,
 	);
 
-	return `<tr>
+	const glyphForMethodCoverage = getGlyphForHtml(
+		codeCoverageComparisonReport.methodCoverageDiff,
+	);
+
+	return (
+		`<tr>
     <td>Branch Coverage</td>
     <td>${codeCoverageComparisonReport.branchCoverageInBaseline.toFixed(2)}%</td>
     <td>${codeCoverageComparisonReport.branchCoverageInPr.toFixed(2)}%</td>
     <td>${glyphForBranchCoverage} ${formatDiff(codeCoverageComparisonReport.branchCoverageDiff)}</td>
-  </tr>`;
+  </tr>` +
+		`<tr>
+    <td>Method Coverage</td>
+    <td>${codeCoverageComparisonReport.methodCoverageInBaseline.toFixed(2)}%</td>
+    <td>${codeCoverageComparisonReport.methodCoverageInPr.toFixed(2)}%</td>
+    <td>${glyphForMethodCoverage} ${formatDiff(codeCoverageComparisonReport.methodCoverageDiff)}</td>
+  </tr>`
+	);
 };
