@@ -10,7 +10,7 @@ import type { SinonFakeTimers } from "sinon";
 import { useFakeTimers } from "sinon";
 
 import type { ClientConnectionId } from "../baseTypes.js";
-import { SessionClientStatus, type ISessionClient } from "../presence.js";
+import { AttendeeStatus, type Attendee } from "../presence.js";
 import { createPresenceManager } from "../presenceManager.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
@@ -80,7 +80,7 @@ describe("Presence", () => {
 			const afterCleanUp: (() => void)[] = [];
 
 			beforeEach(() => {
-				presence = prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
+				presence = prepareConnectedPresence(runtime, "attendeeId-2", "client2", clock, logger);
 			});
 
 			afterEach(() => {
@@ -91,7 +91,7 @@ describe("Presence", () => {
 			});
 
 			describe("attendee", () => {
-				const attendeeSessionId = "sessionId-4";
+				const attendeeSessionId = "attendeeId-4";
 				const initialAttendeeConnectionId = "client4";
 				// Note: this connection id exists in the mock runtime audience since
 				// initialization, but should go unnoticed by the presence manager
@@ -103,8 +103,8 @@ describe("Presence", () => {
 				// Processes join signals and returns the attendees that were announced via `attendeeJoined`
 				function processJoinSignals(
 					signals: ReturnType<typeof generateBasicClientJoin>[],
-				): ISessionClient[] {
-					const joinedAttendees: ISessionClient[] = [];
+				): Attendee[] {
+					const joinedAttendees: Attendee[] = [];
 					const cleanUpListener = presence.events.on("attendeeJoined", (attendee) => {
 						joinedAttendees.push(attendee);
 					});
@@ -118,13 +118,13 @@ describe("Presence", () => {
 				}
 
 				function verifyAttendee(
-					actualAttendee: ISessionClient,
+					actualAttendee: Attendee,
 					expectedConnectionId: ClientConnectionId,
 					expectedSessionId: string,
-					expectedConnectionStatus: SessionClientStatus = SessionClientStatus.Connected,
+					expectedConnectionStatus: AttendeeStatus = AttendeeStatus.Connected,
 				): void {
 					assert.equal(
-						actualAttendee.sessionId,
+						actualAttendee.attendeeId,
 						expectedSessionId,
 						"Attendee has wrong session id",
 					);
@@ -146,14 +146,14 @@ describe("Presence", () => {
 
 					initialAttendeeSignal = generateBasicClientJoin(clock.now - 50, {
 						averageLatency: 50,
-						clientSessionId: attendeeSessionId,
+						attendeeId: attendeeSessionId,
 						clientConnectionId: initialAttendeeConnectionId,
 						updateProviders: ["client2"],
 					});
 
 					rejoinAttendeeSignal = generateBasicClientJoin(clock.now - 20, {
 						averageLatency: 20,
-						clientSessionId: attendeeSessionId, // Same session id
+						attendeeId: attendeeSessionId, // Same session id
 						clientConnectionId: rejoinAttendeeConnectionId, // Different connection id
 						connectionOrder: 1,
 						updateProviders: ["client2"],
@@ -254,7 +254,7 @@ describe("Presence", () => {
 						const collateralAttendeeConnectionId = "client3";
 						const collateralAttendeeSignal = generateBasicClientJoin(clock.now - 10, {
 							averageLatency: 40,
-							clientSessionId: attendeeSessionId,
+							attendeeId: attendeeSessionId,
 							clientConnectionId: rejoinAttendeeConnectionId,
 							connectionOrder: 1,
 							updateProviders: ["client2"],
@@ -293,7 +293,7 @@ describe("Presence", () => {
 						// Rejoin signal for the collateral attendee unknown to audience
 						const rejoinSignal = generateBasicClientJoin(clock.now - 10, {
 							averageLatency: 40,
-							clientSessionId: "collateral-id",
+							attendeeId: "collateral-id",
 							clientConnectionId: newAttendeeConnectionId,
 							updateProviders: [initialAttendeeConnectionId],
 							connectionOrder: 1,
@@ -309,7 +309,7 @@ describe("Presence", () => {
 						// Response signal sent by the initial attendee responding to the collateral attendees rejoin signal
 						const responseSignal = generateBasicClientJoin(clock.now - 5, {
 							averageLatency: 20,
-							clientSessionId: attendeeSessionId,
+							attendeeId: attendeeSessionId,
 							clientConnectionId: initialAttendeeConnectionId,
 							priorClientToSessionId: {
 								...initialAttendeeSignal.content.data["system:presence"].clientToSessionId,
@@ -355,7 +355,7 @@ describe("Presence", () => {
 				});
 
 				describe("that is already known", () => {
-					let knownAttendee: ISessionClient | undefined;
+					let knownAttendee: Attendee | undefined;
 
 					beforeEach(() => {
 						// Setup known attendee
@@ -396,9 +396,9 @@ describe("Presence", () => {
 					});
 
 					for (const [status, setup] of [
-						[SessionClientStatus.Connected, () => {}] as const,
+						[AttendeeStatus.Connected, () => {}] as const,
 						[
-							SessionClientStatus.Disconnected,
+							AttendeeStatus.Disconnected,
 							() => runtime.removeMember(initialAttendeeConnectionId),
 						] as const,
 					]) {
@@ -448,7 +448,7 @@ describe("Presence", () => {
 					// (e.g. being in audience, sending an update, or (re)joining the session) before their connection status set to "Disconnected".
 					// If an attendee with a stale connection becomes active, their "stale" status is removed.
 					describe("and then local client disconnects", () => {
-						let remoteDisconnectedAttendees: ISessionClient[];
+						let remoteDisconnectedAttendees: Attendee[];
 						beforeEach(() => {
 							// Setup
 							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
@@ -474,7 +474,7 @@ describe("Presence", () => {
 							clock.tick(15_001);
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
-								SessionClientStatus.Connected,
+								AttendeeStatus.Connected,
 								"Attendee with stale connection should still be 'Connected' after 15s",
 							);
 
@@ -482,7 +482,7 @@ describe("Presence", () => {
 							clock.tick(15_001);
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
-								SessionClientStatus.Disconnected,
+								AttendeeStatus.Disconnected,
 								"Attendee with stale connection should be 'Disconnected' 30s after reconnection",
 							);
 							assert.strictEqual(
@@ -502,7 +502,7 @@ describe("Presence", () => {
 							// Verify - attendee with stale connection should still be 'Connected' if local client never reconnects
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
-								SessionClientStatus.Connected,
+								AttendeeStatus.Connected,
 								"Attendee with stale connection should still be 'Connected' after 30s",
 							);
 						});
@@ -521,7 +521,7 @@ describe("Presence", () => {
 							// Verify - attendee with stale connection should still be 'Connected' if local client never reconnects for at least 30s
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
-								SessionClientStatus.Connected,
+								AttendeeStatus.Connected,
 								"Attendee with stale connection should still be 'Connected' after 30s",
 							);
 						});
@@ -549,7 +549,7 @@ describe("Presence", () => {
 							// Verify - rejoining attendee should still be 'Connected' with no `attendeeJoined` announced
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
-								SessionClientStatus.Connected,
+								AttendeeStatus.Connected,
 								"Active attendee should still be 'Connected' 30s after reconnection",
 							);
 						});
@@ -595,7 +595,7 @@ describe("Presence", () => {
 							// Verify - active attendee should still be 'Connected'
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
-								SessionClientStatus.Connected,
+								AttendeeStatus.Connected,
 								"Active attendee should still be 'Connected' 30s after reconnection",
 							);
 						});
@@ -623,7 +623,7 @@ describe("Presence", () => {
 							// Verify - active attendee status should be 'Disconnected' and no other `attendeeDisconnected` should be announced.
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
-								SessionClientStatus.Disconnected,
+								AttendeeStatus.Disconnected,
 								"Attendee should be 'Disconnected'",
 							);
 							assert.strictEqual(
@@ -638,7 +638,7 @@ describe("Presence", () => {
 							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
-								SessionClientStatus.Connected,
+								AttendeeStatus.Connected,
 								"Known attendee is not connected",
 							);
 
@@ -657,7 +657,7 @@ describe("Presence", () => {
 							clock.tick(15_001);
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
-								SessionClientStatus.Connected,
+								AttendeeStatus.Connected,
 								"Attendee with stale connection should still be connected",
 							);
 
@@ -665,7 +665,7 @@ describe("Presence", () => {
 							clock.tick(15_001);
 							assert.equal(
 								knownAttendee.getConnectionStatus(),
-								SessionClientStatus.Disconnected,
+								AttendeeStatus.Disconnected,
 								"Attendee with stale connection has wrong status",
 							);
 							assert.strictEqual(
@@ -680,7 +680,7 @@ describe("Presence", () => {
 						it("is announced via `attendeeDisconnected`", () => {
 							// Setup
 							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
-							let disconnectedAttendee: ISessionClient | undefined;
+							let disconnectedAttendee: Attendee | undefined;
 							afterCleanUp.push(
 								presence.events.on("attendeeDisconnected", (attendee) => {
 									assert(
@@ -703,7 +703,7 @@ describe("Presence", () => {
 								disconnectedAttendee,
 								initialAttendeeConnectionId,
 								attendeeSessionId,
-								SessionClientStatus.Disconnected,
+								AttendeeStatus.Disconnected,
 							);
 						});
 
@@ -737,7 +737,7 @@ describe("Presence", () => {
 				});
 
 				describe("that is rejoining", () => {
-					let priorAttendee: ISessionClient | undefined;
+					let priorAttendee: Attendee | undefined;
 					beforeEach(() => {
 						// Setup prior attendee
 						const joinedAttendees = processJoinSignals([initialAttendeeSignal]);

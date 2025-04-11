@@ -4,11 +4,11 @@
  */
 
 import {
-	IPresence,
+	Presence,
 	Latest,
-	type ISessionClient,
-	type PresenceStates,
-	type PresenceStatesSchema,
+	type Attendee,
+	type StatesWorkspace,
+	type StatesWorkspaceSchema,
 } from "@fluidframework/presence/alpha";
 
 import { getProfilePhoto } from "@/infra/authHelper";
@@ -19,12 +19,12 @@ export interface User {
 
 const statesSchema = {
 	onlineUsers: Latest({ photo: "" } satisfies User),
-} satisfies PresenceStatesSchema;
+} satisfies StatesWorkspaceSchema;
 
-export type UserPresence = PresenceStates<typeof statesSchema>;
+export type UserPresence = StatesWorkspace<typeof statesSchema>;
 
 // Takes a presence object and returns the user presence object that contains the shared object states
-export function buildUserPresence(presence: IPresence): UserPresence {
+export function buildUserPresence(presence: Presence): UserPresence {
 	const states = presence.getStates(`name:user-avatar-states`, statesSchema);
 	return states;
 }
@@ -33,11 +33,11 @@ export class PresenceManager {
 	// A PresenceState object to manage the presence of users within the app
 	private readonly usersState: UserPresence;
 	// A map of SessionClient to UserInfo, where users can share their info with other users
-	private readonly userInfoMap: Map<ISessionClient, User> = new Map();
+	private readonly userInfoMap: Map<Attendee, User> = new Map();
 	// A callback method to get updates when remote UserInfo changes
-	private userInfoCallback: (userInfoMap: Map<ISessionClient, User>) => void = () => {};
+	private userInfoCallback: (userInfoMap: Map<Attendee, User>) => void = () => {};
 
-	constructor(private readonly presence: IPresence) {
+	constructor(private readonly presence: Presence) {
 		// Address for the presence state, this is used to organize the presence states and avoid conflicts
 		const appSelectionWorkspaceAddress = "aiCollab:workspace";
 
@@ -50,7 +50,7 @@ export class PresenceManager {
 		// Listen for updates to the userInfo property in the presence state
 		this.usersState.props.onlineUsers.events.on("updated", (update) => {
 			// The remote client that updated the userInfo property
-			const remoteSessionClient = update.client;
+			const remoteSessionClient = update.attendee;
 			// The new value of the userInfo property
 			const remoteUserInfo = update.value;
 
@@ -82,17 +82,17 @@ export class PresenceManager {
 	}
 
 	// Returns the presence object
-	getPresence(): IPresence {
+	getPresence(): Presence {
 		return this.presence;
 	}
 
 	// Allows the app to listen for updates to the userInfoMap
-	setUserInfoUpdateListener(callback: (userInfoMap: Map<ISessionClient, User>) => void): void {
+	setUserInfoUpdateListener(callback: (userInfoMap: Map<Attendee, User>) => void): void {
 		this.userInfoCallback = callback;
 	}
 
 	// Returns the UserInfo of given session clients
-	getUserInfo(sessionList: ISessionClient[]): User[] {
+	getUserInfo(sessionList: Attendee[]): User[] {
 		const userInfoList: User[] = [];
 
 		for (const sessionClient of sessionList) {
@@ -100,7 +100,7 @@ export class PresenceManager {
 			try {
 				const userInfo = this.usersState.props.onlineUsers.clientValue(sessionClient).value;
 				// If the user is local user, then add it to the beginning of the list
-				if (sessionClient.sessionId === this.presence.getMyself().sessionId) {
+				if (sessionClient.attendeeId === this.presence.getMyself().attendeeId) {
 					userInfoList.push(userInfo);
 				} else {
 					// If the user is remote user, then add it to the end of the list
@@ -108,7 +108,7 @@ export class PresenceManager {
 				}
 			} catch (error) {
 				console.error(
-					`Error: ${error} when getting user info for session client: ${sessionClient.sessionId}`,
+					`Error: ${error} when getting user info for session client: ${sessionClient.attendeeId}`,
 				);
 			}
 		}

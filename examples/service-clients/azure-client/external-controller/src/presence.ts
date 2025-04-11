@@ -4,11 +4,11 @@
  */
 
 import {
-	IPresence,
+	Presence,
 	Latest,
 	LatestMap,
-	type PresenceStates,
-	type PresenceStatesSchema,
+	type StatesWorkspace,
+	type StatesWorkspaceSchema,
 } from "@fluidframework/presence/alpha";
 
 import type { DieValue } from "./controller.js";
@@ -41,11 +41,11 @@ const statesSchema = {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	lastRoll: Latest({} as DiceValues),
 	lastDiceRolls: LatestMap<{ value: DieValue }, `die${number}`>(),
-} satisfies PresenceStatesSchema;
+} satisfies StatesWorkspaceSchema;
 
-export type DicePresence = PresenceStates<typeof statesSchema>;
+export type DicePresence = StatesWorkspace<typeof statesSchema>;
 
-export function buildDicePresence(presence: IPresence): DicePresence {
+export function buildDicePresence(presence: Presence): DicePresence {
 	const states = presence.getStates("name:app-client-states", statesSchema);
 	return states;
 }
