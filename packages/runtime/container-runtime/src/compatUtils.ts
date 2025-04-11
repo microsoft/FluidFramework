@@ -4,7 +4,12 @@
  */
 
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
-import * as semver from "semver";
+// eslint-disable-next-line import/no-internal-modules
+import semverGte from "semver/functions/gte.js";
+// eslint-disable-next-line import/no-internal-modules
+import semverLte from "semver/functions/lte.js";
+// eslint-disable-next-line import/no-internal-modules
+import semverValid from "semver/functions/valid.js";
 
 import {
 	disabledCompressionConfig,
@@ -172,7 +177,7 @@ export function getConfigsForCompatMode(
 		const isModernConfig =
 			config.minVersionForModernConfig === undefined
 				? false // If the minVersionForModernConfig is undefined, we always use the legacy config
-				: semver.gte(compatibilityMode, config.minVersionForModernConfig);
+				: semverGte(compatibilityMode, config.minVersionForModernConfig);
 		defaultConfigs[key] = isModernConfig ? config.modernConfig : config.legacyConfig;
 	}
 	return defaultConfigs as IContainerRuntimeOptionsVersionDependent;
@@ -189,7 +194,7 @@ export function isValidCompatMode(
 		// TODO: We can remove the first condition after 3.0 is released and the defaultCompatibilityMode is set to "2.0.0".
 		compatibilityMode === defaultCompatibilityMode ||
 		(compatibilityMode !== undefined &&
-			semver.valid(compatibilityMode) !== null &&
-			semver.lte(compatibilityMode, pkgVersion))
+			semverValid(compatibilityMode) !== null &&
+			semverLte(compatibilityMode, pkgVersion))
 	);
 }
