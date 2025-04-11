@@ -148,7 +148,6 @@ export function create(
 			documentManager,
 			cache,
 			allowDisabledTenant: true,
-			denyList,
 			ephemeralDocumentTTLSec,
 		});
 		const deletionPs = [service.deleteSummary(softDelete)];
