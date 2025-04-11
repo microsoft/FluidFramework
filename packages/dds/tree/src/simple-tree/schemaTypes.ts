@@ -78,7 +78,7 @@ export function isTreeNodeSchemaClass<
  * Code reading data from this should use `normalizeAllowedTypes` to ensure consistent handling, caching, nice errors etc.
  * @system @public
  */
-export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
+export type AllowedTypes<T = TreeNodeSchema> = readonly LazyItem<T>[];
 
 /**
  * Kind of a field on a node.
@@ -640,7 +640,7 @@ export function markSchemaMostDerived(
  * Code reading data from this should use `normalizeAllowedTypes` to ensure consistent handling, caching, nice errors etc.
  * @public
  */
-export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
+export type ImplicitAllowedTypes<T = TreeNodeSchema> = AllowedTypes | T;
 
 /**
  * Schema for a field of a tree node.

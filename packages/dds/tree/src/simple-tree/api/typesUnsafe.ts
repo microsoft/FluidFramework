@@ -6,6 +6,7 @@
 import type { RestrictiveStringRecord, UnionToIntersection } from "../../util/index.js";
 
 import type {
+	AllowedTypes,
 	ApplyKind,
 	ApplyKindInput,
 	FieldKind,
@@ -157,14 +158,6 @@ export type TreeFieldFromImplicitFieldUnsafe<TSchema extends ImplicitFieldSchema
 			: unknown;
 
 /**
- * {@link Unenforced} version of {@link AllowedTypes}.
- * @remarks
- * Do not use this type directly: it is only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
- * @system @public
- */
-export type AllowedTypesUnsafe = readonly LazyItem<TreeNodeSchemaUnsafe>[];
-
-/**
  * {@link Unenforced} version of {@link ImplicitAllowedTypes}.
  * @remarks
  * Do not use this type directly: it is only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
@@ -176,8 +169,7 @@ export type AllowedTypesUnsafe = readonly LazyItem<TreeNodeSchemaUnsafe>[];
  */
 export type ImplicitAllowedTypesUnsafe =
 	| TreeNodeSchemaUnsafe
-	// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
-	| readonly LazyItem<Unenforced<TreeNodeSchema>>[];
+	| AllowedTypes<Unenforced<TreeNodeSchema>>;
 
 /**
  * {@link Unenforced} version of {@link ImplicitFieldSchema}.
@@ -203,7 +195,7 @@ export type TreeNodeFromImplicitAllowedTypesUnsafe<
 	TSchema extends ImplicitAllowedTypesUnsafe,
 > = TSchema extends TreeNodeSchemaUnsafe
 	? NodeFromSchemaUnsafe<TSchema>
-	: TSchema extends AllowedTypesUnsafe
+	: TSchema extends AllowedTypes<TreeNodeSchemaUnsafe>
 		? NodeFromSchemaUnsafe<FlexListToUnion<TSchema>>
 		: unknown;
 
@@ -218,7 +210,7 @@ export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
 	TSchema extends ImplicitAllowedTypesUnsafe,
 > = [TSchema] extends [TreeNodeSchemaUnsafe]
 	? InsertableTypedNodeUnsafe<TSchema>
-	: [TSchema] extends [AllowedTypesUnsafe]
+	: [TSchema] extends [AllowedTypes<TreeNodeSchemaUnsafe>]
 		? InsertableTreeNodeFromAllowedTypesUnsafe<TSchema>
 		: never;
 
@@ -227,13 +219,14 @@ export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
  * @see {@link Input}
  * @system @public
  */
-export type InsertableTreeNodeFromAllowedTypesUnsafe<TList extends AllowedTypesUnsafe> =
-	TList extends readonly [
-		LazyItem<infer TSchema extends TreeNodeSchemaUnsafe>,
-		...infer Rest extends AllowedTypesUnsafe,
-	]
-		? InsertableTypedNodeUnsafe<TSchema> | InsertableTreeNodeFromAllowedTypesUnsafe<Rest>
-		: never;
+export type InsertableTreeNodeFromAllowedTypesUnsafe<
+	TList extends AllowedTypes<TreeNodeSchemaUnsafe>,
+> = TList extends readonly [
+	LazyItem<infer TSchema extends TreeNodeSchemaUnsafe>,
+	...infer Rest extends AllowedTypes<TreeNodeSchemaUnsafe>,
+]
+	? InsertableTypedNodeUnsafe<TSchema> | InsertableTreeNodeFromAllowedTypesUnsafe<Rest>
+	: never;
 
 /**
  * {@link Unenforced} version of {@link InsertableTypedNode}.
