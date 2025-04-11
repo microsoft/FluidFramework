@@ -132,19 +132,13 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 
 			const largeString = generateStringOfSize(maxMessageSizeInBytes + 1);
 			const messageCount = 1;
-			try {
-				setMapKeys(localMap, messageCount, largeString);
-				assert(false, "should throw");
-			} catch {}
+			setMapKeys(localMap, messageCount, largeString);
+
+			// Let the ops flush, which will close the container
+			await provider.ensureSynchronized();
 
 			const error = await errorEvent;
 			assert.equal(error?.errorType, FluidErrorTypes.genericError);
-			assert.ok(error.getTelemetryProperties?.().opSize ?? 0 > maxMessageSizeInBytes);
-
-			// Limit has to be around 1Mb, but we should not assume here precise number.
-			const limit = error.getTelemetryProperties?.().limit as number;
-			assert(limit > maxMessageSizeInBytes / 2);
-			assert(limit < maxMessageSizeInBytes * 2);
 		},
 	);
 
@@ -247,8 +241,21 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 
 			const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
 			const messageCount = 3; // Will result in a 15 MB payload
-			assert.throws(() => setMapKeys(localMap, messageCount, largeString));
+			setMapKeys(localMap, messageCount, largeString);
+
+			// Let the ops flush, which will close the container
+			const errorEvent = containerError(localContainer);
 			await provider.ensureSynchronized();
+
+			assert(localContainer.closed, "Local Container should be closed during flush");
+			const localContainerClosedWithError = await errorEvent;
+			assert.equal(
+				localContainerClosedWithError?.errorType,
+				FluidErrorTypes.genericError,
+				"Error not as expected",
+			);
+			remoteMap.delete("test"); // So we can assert the map is empty
+			assert(remoteMap.size === 0, "Remote map should not have received any of the large ops");
 		},
 	);
 
