@@ -17,11 +17,7 @@ export {
 	type IFluidContainerInternal,
 	type InitialObjects,
 } from "./fluidContainer.js";
-export {
-	createDOProviderContainerRuntimeFactory,
-	RootDataObject,
-	type RootDataObjectProps,
-} from "./rootDataObject.js";
+export { createDOProviderContainerRuntimeFactory } from "./rootDataObject.js";
 export { createServiceAudience } from "./serviceAudience.js";
 export type {
 	CompatibilityMode,
@@ -34,7 +30,6 @@ export type {
 	IServiceAudience,
 	IServiceAudienceEvents,
 	LoadableObjectRecord,
-	LoadableObjectKindRecord,
 	MemberChangedListener,
 	Myself,
 } from "./types.js";

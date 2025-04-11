@@ -10,9 +10,12 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
+import { FluidDataStoreRegistry } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject, IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type { IDirectory } from "@fluidframework/map/internal";
+import type { IFluidDataStoreRegistry } from "@fluidframework/runtime-definitions/internal";
 import type {
 	ISharedObjectKind,
 	SharedObjectKind,
@@ -35,9 +38,8 @@ import {
 
 /**
  * Input props for {@link RootDataObject.initializingFirstTime}.
- * @internal
  */
-export interface RootDataObjectProps {
+interface RootDataObjectProps {
 	/**
 	 * Initial object structure with which the {@link RootDataObject} will be first-time initialized.
 	 *
@@ -49,9 +51,8 @@ export interface RootDataObjectProps {
 /**
  * The entry-point/root collaborative object of the {@link IFluidContainer | Fluid Container}.
  * Abstracts the dynamic code required to build a Fluid Container into a static representation for end customers.
- * @internal
  */
-export class RootDataObject
+class RootDataObject
 	extends DataObject<{ InitialState: RootDataObjectProps }>
 	implements IRootDataObject
 {
@@ -162,7 +163,7 @@ const rootDataStoreId = "rootDOId";
 /**
  * Creates an {@link @fluidframework/aqueduct#BaseContainerRuntimeFactory} which constructs containers
  * with a single {@link IRootDataObject} as their entry point, where the root data object's registry
- * and initial objects are configured based on the provided schema.
+ * and initial objects are configured based on the provided schema (and optionally, data store registry).
  *
  * @internal
  */
@@ -176,22 +177,18 @@ export function createDOProviderContainerRuntimeFactory(props: {
 	 */
 	compatibilityMode: CompatibilityMode;
 	/**
-	 * Optional factory for the root data object.
-	 * If not provided, a default factory will be created based on the schema.
+	 * Optional registry of data stores to pass to the DataObject factory.
+	 * If not provided, one will be created based on the schema.
 	 */
-	rootDataObjectFactory?: DataObjectFactory<
-		RootDataObject,
-		{ InitialState: RootDataObjectProps }
-	>;
+	rootDataStoreRegistry?: IFluidDataStoreRegistry;
 }): IRuntimeFactory {
 	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(props.schema);
-	const rootDataObjectFactory =
-		props.rootDataObjectFactory ??
-		new DataObjectFactory("rootDO", RootDataObject, sharedObjects, {}, registryEntries);
+	const registry = props.rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
+
 	return new DOProviderContainerRuntimeFactory(
 		props.schema,
 		props.compatibilityMode,
-		rootDataObjectFactory,
+		new RootDataObjectFactory(sharedObjects, registry),
 	);
 }
 
@@ -258,5 +255,26 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		await this.rootDataObjectFactory.createRootInstance(rootDataStoreId, runtime, {
 			initialObjects: this.initialObjects,
 		});
+	}
+}
+
+/**
+ * Factory that creates instances of a root data object.
+ */
+class RootDataObjectFactory extends DataObjectFactory<
+	RootDataObject,
+	{ InitialState: RootDataObjectProps }
+> {
+	public constructor(
+		sharedObjects: readonly IChannelFactory[] = [],
+		private readonly dataStoreRegistry: IFluidDataStoreRegistry,
+	) {
+		// Note: we're passing `undefined` registry entries to the base class so it won't create a registry itself,
+		// and instead we override the necessary methods in this class to use the registry received in the constructor.
+		super("rootDO", RootDataObject, sharedObjects, {}, undefined);
+	}
+
+	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry {
+		return this.dataStoreRegistry;
 	}
 }
