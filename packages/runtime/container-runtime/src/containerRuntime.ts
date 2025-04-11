@@ -21,6 +21,7 @@ import type {
 	IRuntime,
 	IDeltaManager,
 	IDeltaManagerFull,
+	ILoader,
 } from "@fluidframework/container-definitions/internal";
 import { isIDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import type {
@@ -131,6 +132,7 @@ import {
 	raiseConnectedEvent,
 	wrapError,
 	tagCodeArtifacts,
+	normalizeError,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -175,17 +177,15 @@ import {
 	type ContainerRuntimeIdAllocationMessage,
 	type InboundSequencedContainerRuntimeMessage,
 	type LocalContainerRuntimeMessage,
-	type OutboundContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
 import { ISavedOpMetadata } from "./metadata.js";
 import {
 	BatchId,
-	BatchMessage,
+	LocalBatchMessage,
 	BatchStartInfo,
 	DuplicateBatchDetector,
 	ensureContentsDeserialized,
-	IBatch,
 	IBatchCheckpoint,
 	OpCompressor,
 	OpDecompressor,
@@ -194,6 +194,7 @@ import {
 	Outbox,
 	RemoteMessageProcessor,
 	serializeOp,
+	type OutboundBatch,
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
@@ -207,37 +208,36 @@ import {
 	validateLoaderCompatibility,
 } from "./runtimeLayerCompatState.js";
 import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
+// These types are imported as types here because they are present in summaryDelayLoadedModule, which is loaded dynamically when required.
+import type {
+	IDocumentSchemaChangeMessage,
+	IDocumentSchemaCurrent,
+	Summarizer,
+	IDocumentSchemaFeatures,
+	EnqueueSummarizeResult,
+	ISerializedElection,
+	ISummarizeResults,
+} from "./summary/index.js";
 import {
 	DocumentsSchemaController,
-	EnqueueSummarizeResult,
 	IBaseSummarizeResult,
 	IConnectableRuntime,
 	IContainerRuntimeMetadata,
 	ICreateContainerMetadata,
-	type IDocumentSchemaChangeMessage,
-	type IDocumentSchemaCurrent,
 	IEnqueueSummarizeOptions,
 	IGenerateSummaryTreeResult,
 	IGeneratedSummaryStats,
 	IOnDemandSummarizeOptions,
 	IRefreshSummaryAckOptions,
 	IRootSummarizerNodeWithGC,
-	ISerializedElection,
 	ISubmitSummaryOptions,
-	ISummarizeResults,
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
 	ISummaryMetadataMessage,
 	IdCompressorMode,
-	OrderedClientCollection,
 	OrderedClientElection,
 	RetriableSummaryError,
-	RunWhileConnectedCoordinator,
 	SubmitSummaryResult,
-	Summarizer,
-	SummarizerClientElection,
-	SummaryCollection,
-	SummaryManager,
 	aliasBlobName,
 	chunksBlobName,
 	recentBatchInfoBlobName,
@@ -249,9 +249,12 @@ import {
 	rootHasIsolatedChannels,
 	summarizerClientType,
 	wrapSummaryInChannelsTree,
-	type IDocumentSchemaFeatures,
 	formCreateSummarizerFn,
 	summarizerRequestUrl,
+	SummaryManager,
+	SummarizerClientElection,
+	SummaryCollection,
+	OrderedClientCollection,
 	validateSummaryHeuristicConfiguration,
 	ISummaryConfiguration,
 	DefaultSummaryConfiguration,
@@ -369,7 +372,7 @@ export interface IContainerRuntimeOptions {
 	 * regardless of the overhead of an individual op.
 	 *
 	 * Any value of `chunkSizeInBytes` exceeding {@link IContainerRuntimeOptions.maxBatchSizeInBytes} will disable this feature, therefore if a compressed batch's content
-	 * size exceeds {@link IContainerRuntimeOptions.maxBatchSizeInBytes} after compression, the container will close with an instance of `GenericError` with
+	 * size exceeds {@link IContainerRuntimeOptions.maxBatchSizeInBytes} after compression, the container will close with an instance of `DataProcessingError` with
 	 * the `BatchTooLarge` message.
 	 */
 	readonly chunkSizeInBytes?: number;
@@ -602,7 +605,7 @@ export const makeLegacySendBatchFn =
 		) => number,
 		deltaManager: Pick<IDeltaManager<unknown, unknown>, "flush">,
 	) =>
-	(batch: IBatch): number => {
+	(batch: OutboundBatch): number => {
 		// Default to negative one to match Container.submitBatch behavior
 		let clientSequenceNumber: number = -1;
 		for (const message of batch.messages) {
@@ -1033,7 +1036,7 @@ export class ContainerRuntime
 		await runtime.pendingStateManager.applyStashedOpsAt(runtimeSequenceNumber ?? 0);
 
 		// Initialize the base state of the runtime before it's returned.
-		await runtime.initializeBaseState();
+		await runtime.initializeBaseState(context.loader);
 
 		return runtime;
 	}
@@ -1167,13 +1170,13 @@ export class ContainerRuntime
 	// internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
 	private readonly mc: MonitoringContext;
 
-	private readonly summarizerClientElection?: SummarizerClientElection;
+	private summarizerClientElection?: SummarizerClientElection;
 	/**
 	 * summaryManager will only be created if this client is permitted to spawn a summarizing client
 	 * It is created only by interactive client, i.e. summarizer client, as well as non-interactive bots
 	 * do not create it (see SummarizerClientElection.clientDetailsPermitElection() for details)
 	 */
-	private readonly summaryManager?: SummaryManager;
+	private summaryManager?: SummaryManager;
 
 	private readonly summarizerNode: IRootSummarizerNodeWithGC;
 
@@ -1235,7 +1238,7 @@ export class ContainerRuntime
 	 * It is created only by summarizing container (i.e. one with clientType === "summarizer")
 	 */
 
-	private readonly _summarizer?: Summarizer;
+	private _summarizer?: Summarizer;
 	private readonly deltaScheduler: DeltaScheduler;
 	private readonly inboundBatchAggregator: InboundBatchAggregator;
 	private readonly blobManager: BlobManager;
@@ -1315,11 +1318,11 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * If true, will skip Outbox flushing before processing an incoming message,
+	 * If true, will skip Outbox flushing before processing an incoming message (and on DeltaManager "op" event for loader back-compat),
 	 * and instead the Outbox will check for a split batch on every submit.
 	 * This is a kill-bit switch for this simplification of logic, in case it causes unexpected issues.
 	 */
-	private readonly disableFlushBeforeProcess: boolean;
+	private readonly skipSafetyFlushDuringProcessStack: boolean;
 
 	/***/
 	protected constructor(
@@ -1328,10 +1331,10 @@ export class ContainerRuntime
 
 		private readonly metadata: IContainerRuntimeMetadata | undefined,
 
-		electedSummarizerData: ISerializedElection | undefined,
+		private readonly electedSummarizerData: ISerializedElection | undefined,
 		chunks: [string, string[]][],
 		dataStoreAliasMap: [string, string][],
-		runtimeOptions: Readonly<Required<IContainerRuntimeOptionsInternal>>,
+		private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptionsInternal>>,
 		private readonly containerScope: FluidObject,
 		// Create a custom ITelemetryBaseLogger to output telemetry events.
 		public readonly baseLogger: ITelemetryBaseLogger,
@@ -1348,8 +1351,8 @@ export class ContainerRuntime
 			request: IRequest,
 			runtime: IContainerRuntime,
 		) => Promise<IResponse>,
-		// eslint-disable-next-line unicorn/no-object-as-default-parameter
-		summaryConfiguration: ISummaryConfiguration = {
+		// // eslint-disable-next-line unicorn/no-object-as-default-parameter
+		private readonly summaryConfiguration: ISummaryConfiguration = {
 			// the defaults
 			...DefaultSummaryConfiguration,
 			// the runtime configuration overrides
@@ -1373,7 +1376,6 @@ export class ContainerRuntime
 			deltaManager,
 			quorum,
 			audience,
-			loader,
 			pendingLocalState,
 			supportedFeatures,
 			snapshotWithContents,
@@ -1558,23 +1560,11 @@ export class ContainerRuntime
 
 		this.handleContext = new ContainerFluidHandleContext("", this);
 
-		if (summaryConfiguration.state === "enabled") {
-			validateSummaryHeuristicConfiguration(summaryConfiguration);
+		if (this.summaryConfiguration.state === "enabled") {
+			validateSummaryHeuristicConfiguration(this.summaryConfiguration);
 		}
 
-		this.summariesDisabled = isSummariesDisabled(summaryConfiguration);
-		const { maxOpsSinceLastSummary = 0, initialSummarizerDelayMs = 0 } = isSummariesDisabled(
-			summaryConfiguration,
-		)
-			? {}
-			: {
-					...summaryConfiguration,
-					initialSummarizerDelayMs:
-						// back-compat: initialSummarizerDelayMs was moved from ISummaryRuntimeOptions
-						//   to ISummaryConfiguration in 0.60.
-						runtimeOptions.summaryOptions.initialSummarizerDelayMs ??
-						summaryConfiguration.initialSummarizerDelayMs,
-				};
+		this.summariesDisabled = isSummariesDisabled(this.summaryConfiguration);
 
 		this.maxConsecutiveReconnects =
 			this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? defaultMaxConsecutiveReconnects;
@@ -1756,7 +1746,7 @@ export class ContainerRuntime
 
 		const legacySendBatchFn = makeLegacySendBatchFn(submitFn, this.innerDeltaManager);
 
-		this.disableFlushBeforeProcess =
+		this.skipSafetyFlushDuringProcessStack =
 			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableFlushBeforeProcess") === true;
 
 		this.outbox = new Outbox({
@@ -1770,7 +1760,7 @@ export class ContainerRuntime
 				compressionOptions,
 				maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
 				// If we disable flush before process, we must be ready to flush partial batches
-				flushPartialBatches: this.disableFlushBeforeProcess,
+				flushPartialBatches: this.skipSafetyFlushDuringProcessStack,
 			},
 			logger: this.mc.logger,
 			groupingManager: opGroupingManager,
@@ -1781,7 +1771,6 @@ export class ContainerRuntime
 			}),
 			reSubmit: this.reSubmit.bind(this),
 			opReentrancy: () => this.dataModelChangeRunner.running,
-			closeContainer: this.closeFn,
 		});
 
 		this._quorum = quorum;
@@ -1821,112 +1810,18 @@ export class ContainerRuntime
 		);
 		this.closeSummarizerDelayMs =
 			closeSummarizerDelayOverride ?? defaultCloseSummarizerDelayMs;
-		const summaryCollection = new SummaryCollection(this.deltaManager, this.baseLogger);
 
 		this.dirtyContainer =
 			this.attachState !== AttachState.Attached || this.hasPendingMessages();
 		context.updateDirtyContainerState(this.dirtyContainer);
 
-		if (this.summariesDisabled) {
-			this.mc.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
-		} else {
-			const orderedClientLogger = createChildLogger({
-				logger: this.baseLogger,
-				namespace: "OrderedClientElection",
-			});
-			const orderedClientCollection = new OrderedClientCollection(
-				orderedClientLogger,
-				this.innerDeltaManager,
-				this._quorum,
-			);
-			const orderedClientElectionForSummarizer = new OrderedClientElection(
-				orderedClientLogger,
-				orderedClientCollection,
-				electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
-				SummarizerClientElection.isClientEligible,
-				this.mc.config.getBoolean(
-					"Fluid.ContainerRuntime.OrderedClientElection.EnablePerformanceEvents",
-				),
-			);
-
-			this.summarizerClientElection = new SummarizerClientElection(
-				orderedClientLogger,
-				summaryCollection,
-				orderedClientElectionForSummarizer,
-				maxOpsSinceLastSummary,
-			);
-
-			if (isSummarizerClient) {
-				this._summarizer = new Summarizer(
-					this /* ISummarizerRuntime */,
-					() => summaryConfiguration,
-					this /* ISummarizerInternalsProvider */,
-					this.handleContext,
-					summaryCollection,
-
-					async (runtime: IConnectableRuntime) =>
-						RunWhileConnectedCoordinator.create(
-							runtime,
-							// Summarization runs in summarizer client and needs access to the real (non-proxy) active
-							// information. The proxy delta manager would always return false for summarizer client.
-							() => this.innerDeltaManager.active,
-						),
-				);
-			} else if (SummarizerClientElection.clientDetailsPermitElection(this.clientDetails)) {
-				// Only create a SummaryManager and SummarizerClientElection
-				// if summaries are enabled and we are not the summarizer client.
-				const defaultAction = (): void => {
-					if (summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
-						this.mc.logger.sendTelemetryEvent({ eventName: "SummaryStatus:Behind" });
-						// unregister default to no log on every op after falling behind
-						// and register summary ack handler to re-register this handler
-						// after successful summary
-						summaryCollection.once(MessageType.SummaryAck, () => {
-							this.mc.logger.sendTelemetryEvent({
-								eventName: "SummaryStatus:CaughtUp",
-							});
-							// we've caught up, so re-register the default action to monitor for
-							// falling behind, and unregister ourself
-							summaryCollection.on("default", defaultAction);
-						});
-						summaryCollection.off("default", defaultAction);
-					}
-				};
-
-				summaryCollection.on("default", defaultAction);
-
-				// Create the SummaryManager and mark the initial state
-				this.summaryManager = new SummaryManager(
-					this.summarizerClientElection,
-					this, // IConnectedState
-					summaryCollection,
-					this.baseLogger,
-					formCreateSummarizerFn(loader),
-					new Throttler(
-						60 * 1000, // 60 sec delay window
-						30 * 1000, // 30 sec max delay
-						// throttling function increases exponentially (0ms, 40ms, 80ms, 160ms, etc)
-						formExponentialFn({ coefficient: 20, initialDelay: 0 }),
-					),
-					{
-						initialDelayMs: initialSummarizerDelayMs,
-					},
-				);
-				// Forward events from SummaryManager
-				for (const eventName of [
-					"summarize",
-					"summarizeAllAttemptsFailed",
-					"summarizerStop",
-					"summarizerStart",
-					"summarizerStartupFailed",
-				]) {
-					this.summaryManager?.on(eventName, (...args: unknown[]) => {
-						this.emit(eventName, ...args);
-					});
-				}
-
-				this.summaryManager.start();
-			}
+		if (!this.skipSafetyFlushDuringProcessStack) {
+			// Reference Sequence Number may have just changed, and it must be consistent across a batch,
+			// so we should flush now to clear the way for the next ops.
+			// NOTE: This will be redundant whenever CR.process was called for the op (since we flush there too) -
+			// But we need this coverage for old loaders that don't call ContainerRuntime.process for non-runtime messages.
+			// (We have to call flush _before_ processing a runtime op, but after is ok for non-runtime op)
+			this.deltaManager.on("op", () => this.flush());
 		}
 
 		// logging hardware telemetry
@@ -1951,7 +1846,7 @@ export class ContainerRuntime
 			featureGates: JSON.stringify({
 				...featureGatesForTelemetry,
 				closeSummarizerDelayOverride,
-				disableFlushBeforeProcess: this.disableFlushBeforeProcess,
+				disableFlushBeforeProcess: this.skipSafetyFlushDuringProcessStack,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
@@ -2029,7 +1924,9 @@ export class ContainerRuntime
 	/**
 	 * Initializes the state from the base snapshot this container runtime loaded from.
 	 */
-	private async initializeBaseState(): Promise<void> {
+	private async initializeBaseState(loader: ILoader): Promise<void> {
+		await this.initializeSummarizer(loader);
+
 		if (
 			this.sessionSchema.idCompressorMode === "on" ||
 			(this.sessionSchema.idCompressorMode === "delayed" && this.connected)
@@ -2040,6 +1937,134 @@ export class ContainerRuntime
 		}
 
 		await this.garbageCollector.initializeBaseState();
+	}
+
+	private async initializeSummarizer(loader: ILoader): Promise<void> {
+		if (this.summariesDisabled) {
+			this.mc.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
+			return;
+		}
+
+		const { maxOpsSinceLastSummary = 0, initialSummarizerDelayMs = 0 } = isSummariesDisabled(
+			this.summaryConfiguration,
+		)
+			? {}
+			: {
+					...this.summaryConfiguration,
+					initialSummarizerDelayMs:
+						// back-compat: initialSummarizerDelayMs was moved from ISummaryRuntimeOptions
+						//   to ISummaryConfiguration in 0.60.
+						this.runtimeOptions.summaryOptions.initialSummarizerDelayMs ??
+						this.summaryConfiguration.initialSummarizerDelayMs,
+				};
+
+		const summaryCollection: SummaryCollection = new SummaryCollection(
+			this.deltaManager,
+			this.baseLogger,
+		);
+		const orderedClientLogger = createChildLogger({
+			logger: this.baseLogger,
+			namespace: "OrderedClientElection",
+		});
+		const orderedClientCollection = new OrderedClientCollection(
+			orderedClientLogger,
+			this.innerDeltaManager,
+			this._quorum,
+		);
+		const orderedClientElectionForSummarizer = new OrderedClientElection(
+			orderedClientLogger,
+			orderedClientCollection,
+			this.electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
+			SummarizerClientElection.isClientEligible,
+			this.mc.config.getBoolean(
+				"Fluid.ContainerRuntime.OrderedClientElection.EnablePerformanceEvents",
+			),
+		);
+
+		this.summarizerClientElection = new SummarizerClientElection(
+			orderedClientLogger,
+			summaryCollection,
+			orderedClientElectionForSummarizer,
+			maxOpsSinceLastSummary,
+		);
+
+		const isSummarizerClient = this.clientDetails.type === summarizerClientType;
+		if (isSummarizerClient) {
+			// We want to dynamically import any thing inside summaryDelayLoadedModule module only when we are the summarizer client,
+			// so that all non summarizer clients don't have to load the code inside this module.
+			const module = await import(
+				/* webpackChunkName: "summarizerDelayLoadedModule" */ "./summary/index.js"
+			);
+			this._summarizer = new module.Summarizer(
+				this /* ISummarizerRuntime */,
+				() => this.summaryConfiguration,
+				this /* ISummarizerInternalsProvider */,
+				this.handleContext,
+				summaryCollection,
+
+				async (runtime: IConnectableRuntime) =>
+					module.RunWhileConnectedCoordinator.create(
+						runtime,
+						// Summarization runs in summarizer client and needs access to the real (non-proxy) active
+						// information. The proxy delta manager would always return false for summarizer client.
+						() => this.innerDeltaManager.active,
+					),
+			);
+		} else if (SummarizerClientElection.clientDetailsPermitElection(this.clientDetails)) {
+			// Only create a SummaryManager and SummarizerClientElection
+			// if summaries are enabled and we are not the summarizer client.
+			const defaultAction = (): void => {
+				if (summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
+					this.mc.logger.sendTelemetryEvent({ eventName: "SummaryStatus:Behind" });
+					// unregister default to no log on every op after falling behind
+					// and register summary ack handler to re-register this handler
+					// after successful summary
+					summaryCollection.once(MessageType.SummaryAck, () => {
+						this.mc.logger.sendTelemetryEvent({
+							eventName: "SummaryStatus:CaughtUp",
+						});
+						// we've caught up, so re-register the default action to monitor for
+						// falling behind, and unregister ourself
+						summaryCollection.on("default", defaultAction);
+					});
+					summaryCollection.off("default", defaultAction);
+				}
+			};
+
+			summaryCollection.on("default", defaultAction);
+
+			// Create the SummaryManager and mark the initial state
+			this.summaryManager = new SummaryManager(
+				this.summarizerClientElection,
+				this, // IConnectedState
+				summaryCollection,
+				this.baseLogger,
+				formCreateSummarizerFn(loader),
+				new Throttler(
+					60 * 1000, // 60 sec delay window
+					30 * 1000, // 30 sec max delay
+					// throttling function increases exponentially (0ms, 40ms, 80ms, 160ms, etc)
+					formExponentialFn({ coefficient: 20, initialDelay: 0 }),
+				),
+				{
+					initialDelayMs: initialSummarizerDelayMs,
+				},
+			);
+			// Forward events from SummaryManager
+			for (const eventName of [
+				"summarize",
+				"summarizeAllAttemptsFailed",
+				"summarizerStop",
+				"summarizerStart",
+				"summarizerStartupFailed",
+			]) {
+				this.summaryManager?.on(eventName, (...args: unknown[]) => {
+					this.emit(eventName, ...args);
+				});
+			}
+
+			this.summaryManager.start();
+		}
 	}
 
 	public dispose(error?: Error): void {
@@ -2438,7 +2463,6 @@ export class ContainerRuntime
 	 * Parse an op's type and actual content from given serialized content
 	 * ! Note: this format needs to be in-line with what is set in the "ContainerRuntime.submit(...)" method
 	 */
-	// TODO: markfields: confirm Local- versus Outbound- ContainerRuntimeMessage typing
 	private parseLocalOpContent(serializedContents?: string): LocalContainerRuntimeMessage {
 		assert(serializedContents !== undefined, 0x6d5 /* content must be defined */);
 		const message = JSON.parse(serializedContents) as LocalContainerRuntimeMessage;
@@ -2639,9 +2663,9 @@ export class ContainerRuntime
 
 		this.verifyNotClosed();
 
-		if (!this.disableFlushBeforeProcess) {
+		if (!this.skipSafetyFlushDuringProcessStack) {
 			// Reference Sequence Number may be about to change, and it must be consistent across a batch, so flush now
-			this.outbox.flush();
+			this.flush();
 		}
 
 		this.ensureNoDataModelChanges(() => {
@@ -3092,17 +3116,29 @@ export class ContainerRuntime
 	/**
 	 * Flush the pending ops manually.
 	 * This method is expected to be called at the end of a batch.
+	 * @remarks - If it throws (e.g. if the batch is too large to send), the container will be closed.
+	 *
 	 * @param resubmittingBatchId - If defined, indicates this is a resubmission of a batch
 	 * with the given Batch ID, which must be preserved
 	 */
 	private flush(resubmittingBatchId?: BatchId): void {
-		assert(
-			!this.batchRunner.running,
-			0x24c /* "Cannot call `flush()` while manually accumulating a batch (e.g. under orderSequentially) */,
-		);
+		try {
+			assert(
+				!this.batchRunner.running,
+				0x24c /* "Cannot call `flush()` while manually accumulating a batch (e.g. under orderSequentially) */,
+			);
 
-		this.outbox.flush(resubmittingBatchId);
-		assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
+			this.outbox.flush(resubmittingBatchId);
+			assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
+		} catch (error) {
+			const error2 = normalizeError(error, {
+				props: {
+					orderSequentiallyCalls: this.batchRunner.runs,
+				},
+			});
+			this.closeFn(error2);
+			throw error2;
+		}
 	}
 
 	/**
@@ -3124,8 +3160,8 @@ export class ContainerRuntime
 				if (checkpoint) {
 					// This will throw and close the container if rollback fails
 					try {
-						checkpoint.rollback((message: BatchMessage) =>
-							this.rollback(message.contents, message.localOpMetadata),
+						checkpoint.rollback((message: LocalBatchMessage) =>
+							this.rollback(message.serializedOp, message.localOpMetadata),
 						);
 						// reset the dirty state after rollback to what it was before to keep it consistent
 						if (this.dirtyContainer !== checkpointDirtyState) {
@@ -3268,7 +3304,7 @@ export class ContainerRuntime
 	private isContainerMessageDirtyable({
 		type,
 		contents,
-	}: OutboundContainerRuntimeMessage): boolean {
+	}: LocalContainerRuntimeMessage): boolean {
 		// Certain container runtime messages should not mark the container dirty such as the old built-in
 		// AgentScheduler and Garbage collector messages.
 		switch (type) {
@@ -4176,8 +4212,8 @@ export class ContainerRuntime
 					type: ContainerMessageType.IdAllocation,
 					contents: idRange,
 				};
-				const idAllocationBatchMessage: BatchMessage = {
-					contents: serializeOp(idAllocationMessage),
+				const idAllocationBatchMessage: LocalBatchMessage = {
+					serializedOp: serializeOp(idAllocationMessage),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				};
 				this.outbox.submitIdAllocation(idAllocationBatchMessage);
@@ -4186,7 +4222,7 @@ export class ContainerRuntime
 	}
 
 	private submit(
-		containerRuntimeMessage: OutboundContainerRuntimeMessage,
+		containerRuntimeMessage: LocalContainerRuntimeMessage,
 		localOpMetadata: unknown = undefined,
 		metadata?: { localId: string; blobId?: string },
 	): void {
@@ -4240,15 +4276,15 @@ export class ContainerRuntime
 					contents: schemaChangeMessage,
 				};
 				this.outbox.submit({
-					contents: serializeOp(msg),
+					serializedOp: serializeOp(msg),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				});
 			}
 
-			const message: BatchMessage = {
+			const message: LocalBatchMessage = {
 				// This will encode any handles present in this op before serializing to string
 				// Note: handles may already have been encoded by the DDS layer, but encoding handles is idempotent so there's no problem.
-				contents: serializeOp(containerRuntimeMessage),
+				serializedOp: serializeOp(containerRuntimeMessage),
 				metadata,
 				localOpMetadata,
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
@@ -4268,8 +4304,11 @@ export class ContainerRuntime
 				this.scheduleFlush();
 			}
 		} catch (error) {
-			this.closeFn(error as GenericError);
-			throw error;
+			const dpe = DataProcessingError.wrapIfUnrecognized(error, "ContainerRuntime.submit", {
+				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+			});
+			this.closeFn(dpe);
+			throw dpe;
 		}
 
 		if (this.isContainerMessageDirtyable(containerRuntimeMessage)) {
@@ -4288,11 +4327,7 @@ export class ContainerRuntime
 		// eslint-disable-next-line unicorn/consistent-function-scoping -- Separate `flush` method already exists in outer scope
 		const flush = (): void => {
 			this.flushTaskExists = false;
-			try {
-				this.flush();
-			} catch (error) {
-				this.closeFn(error as GenericError);
-			}
+			this.flush();
 		};
 
 		switch (this.flushMode) {
