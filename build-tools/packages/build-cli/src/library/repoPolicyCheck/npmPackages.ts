@@ -362,7 +362,7 @@ async function ensurePrivatePackagesComputed(): Promise<Set<string>> {
 	const packageJsons = await repo.getFiles("**/package.json");
 
 	for (const filePath of packageJsons) {
-		const packageJson = JSON.parse(readFile(filePath)) as PackageJson;
+		const packageJson = JSON.parse(readFile(path.resolve(baseDir, filePath))) as PackageJson;
 		if (packageJson.private ?? false) {
 			computedPrivatePackages.add(packageJson.name);
 		}
@@ -768,7 +768,7 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-metadata-and-sorting",
 		match,
-		handler: async (file: string): Promise<string | undefined> => {
+		handler: async (file: string, gitRoot: string): Promise<string | undefined> => {
 			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file)) as PackageJson;
@@ -800,8 +800,7 @@ export const handlers: Handler[] = [
 					ret.push(`repository.url: "${json.repository.url}" !== "${repository}"`);
 				}
 
-				// file is already relative to the repo root, so we can use it as-is.
-				const relativePkgDir = path.dirname(file).replace(/\\/g, "/");
+				const relativePkgDir = path.dirname(path.relative(gitRoot, file)).replace(/\\/g, "/");
 
 				// The directory field should be omitted from the root package, so consider this a policy failure.
 				if (relativePkgDir === "." && json.repository.directory !== undefined) {
