@@ -7,9 +7,10 @@ import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import * as semver from "semver";
 
 import {
-	type ICompressionRuntimeOptions,
-	type IContainerRuntimeOptionsInternal,
-} from "./containerRuntime.js";
+	disabledCompressionConfig,
+	enabledCompressionConfig,
+} from "./compressionDefinitions.js";
+import { type IContainerRuntimeOptionsInternal } from "./containerRuntime.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
@@ -24,30 +25,6 @@ import { pkgVersion } from "./packageVersion.js";
  * TODO: This should be updated to "2.0.0" when 3.0 is released.
  */
 export const defaultCompatibilityMode = "pre-3.0-default";
-
-/**
- * Available compression algorithms for op compression.
- * @legacy
- * @alpha
- */
-export enum CompressionAlgorithms {
-	lz4 = "lz4",
-}
-
-/**
- * @legacy
- * @alpha
- */
-export const disabledCompressionConfig: ICompressionRuntimeOptions = {
-	minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
-	compressionAlgorithm: CompressionAlgorithms.lz4,
-};
-
-export const enabledCompressionConfig = {
-	// Batches with content size exceeding this value will be compressed
-	minimumBatchSizeInBytes: 614400,
-	compressionAlgorithm: CompressionAlgorithms.lz4,
-};
 
 /**
  * Subset of the IContainerRuntimeOptionsInternal properties which are version-dependent.
@@ -117,7 +94,7 @@ const versionDependentOptionConfigMap: {
 		// and not all customers will benefit from it. Therefore, we will require customers to explicitly
 		// enable it. We are keeping it as a version-dependent option as this may change in the future.
 		minVersionForModernConfig: undefined,
-		// Additionally, for IdCompressorMode `undefined` represents a logical state (off). However, to satisfy the Required<>
+		// For IdCompressorMode, `undefined` represents a logical state (off). However, to satisfy the Required<>
 		// constraint we need to have it defined, so we trick the type checker here.
 		legacyConfig: undefined as unknown as "on" | "delayed",
 		modernConfig: "on",

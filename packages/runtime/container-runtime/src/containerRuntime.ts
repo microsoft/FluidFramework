@@ -150,13 +150,12 @@ import {
 	wrapContext,
 } from "./channelCollection.js";
 import {
-	CompressionAlgorithms,
 	defaultCompatibilityMode,
-	disabledCompressionConfig,
 	getConfigsForCompatMode,
 	isValidCompatMode,
 	type IContainerRuntimeOptionsVersionDependent,
 } from "./compatUtils.js";
+import { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry.js";
 import { ContainerFluidHandleContext } from "./containerHandleContext.js";
 import { channelToDataStore } from "./dataStore.js";

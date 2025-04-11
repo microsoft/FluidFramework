@@ -72,7 +72,8 @@ import {
 import { SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
 
 import { ChannelCollection } from "../channelCollection.js";
-import { CompressionAlgorithms, defaultCompatibilityMode } from "../compatUtils.js";
+import { defaultCompatibilityMode } from "../compatUtils.js";
+import { CompressionAlgorithms } from "../compressionDefinitions.js";
 import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,

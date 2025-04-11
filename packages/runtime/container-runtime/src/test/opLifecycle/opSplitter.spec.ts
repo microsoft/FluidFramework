@@ -13,7 +13,7 @@ import { ContainerMessageType } from "@fluidframework/container-runtime-previous
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
-import { CompressionAlgorithms } from "../../compatUtils.js";
+import { CompressionAlgorithms } from "../../compressionDefinitions.js";
 import type { ContainerRuntimeChunkedOpMessage } from "../../messageTypes.js";
 import {
 	OutboundBatchMessage,

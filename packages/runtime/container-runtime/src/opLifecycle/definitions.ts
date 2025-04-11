@@ -5,7 +5,7 @@
 
 import type { IBatchMessage } from "@fluidframework/container-definitions/internal";
 
-import { CompressionAlgorithms } from "../compatUtils.js";
+import { CompressionAlgorithms } from "../compressionDefinitions.js";
 
 /**
  * Local Batch message, before it is virtualized and sent to the ordering service

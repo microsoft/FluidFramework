@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { decompress } from "lz4js";
 
-import { CompressionAlgorithms } from "../compatUtils.js";
+import { CompressionAlgorithms } from "../compressionDefinitions.js";
 import { IBatchMetadata } from "../metadata.js";
 
 /**
