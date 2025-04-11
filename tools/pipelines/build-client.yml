@@ -178,28 +178,32 @@ variables:
 extends:
   template: /tools/pipelines/templates/build-npm-client-package.yml@self
   parameters:
+    ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+      # Overriding some variables should only be possible in the internal project
+      releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+      publishOverride: ${{ parameters.publishOverride }}
+      packageTypesOverride: ${{ parameters.packageTypesOverride }}
+      # disabling code coverage for internal project since we don't use it
+      testCoverage: false
+      # We only care about pipeline run telemetry for the automated (not manual) runs on the internal project,
+      # not for any runs in the public one.
+      # We also don't batch commits for the automated pipeline runs, so the only reason we see for is IndividualCI.
+      telemetry: ${{ eq(variables['Build.Reason'], 'IndividualCI') }}
+    ${{ else }}:
+      reportCodeCoverageComparison: ${{ eq(variables['Build.Reason'], 'PullRequest') }}
     publish: ${{ variables.publish }}
-    publishOverride: ${{ parameters.publishOverride }}
-    releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
-    packageTypesOverride: ${{ parameters.packageTypesOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     interdependencyRange: ${{ parameters.interdependencyRange }}
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
-    testCoverage: ${{ eq(variables['System.TeamProject'], 'public' ) }} # disabling code coverage for internal project since we don't use it
-    reportCodeCoverageComparison: ${{ eq(variables['Build.Reason'], 'PullRequest') }}
     buildDirectory: .
     tagName: client
     isReleaseGroup: true
     poolBuild: Large-eastus2
     checkoutSubmodules: true
-    taskBundleAnalysis: true
     taskLint: false # Linting is captured by `ci:build` via fluid-build
     taskBuildDocs: true
     publishDocs: true
-    # We only care about pipeline run telemetry for the CI runs on the internal project, not for PR runs in the public
-    # one. And since we don't batch commits for CI pipeline runs, the only reason we see for automated runs is IndividualCI.
-    telemetry: ${{ eq(variables['Build.Reason'], 'IndividualCI') }}
     taskTest:
     # This check must be run after the build, since it relies on built files being present. Eventually it might be moved
     # to the "pack" stage since it can use the already-packed packages in that case. As it is the pipeline packs some
