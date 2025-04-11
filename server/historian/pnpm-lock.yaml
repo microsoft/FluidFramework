@@ -81,7 +81,7 @@ importers:
   packages/historian:
     dependencies:
       '@fluidframework/historian-base':
-        specifier: ^0.0.1
+        specifier: workspace:~
         version: link:../historian-base
       '@fluidframework/server-services-shared':
         specifier: 6.0.0-287165
