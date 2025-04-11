@@ -527,6 +527,8 @@ extends:
                 - output: pipelineArtifact
                   displayName: Publish Artifacts - bundle-analysis
                   targetPath: $(Build.ArtifactStagingDirectory)/bundleAnalysis
+                  # NOTE: this artifact name is used by build-cli, don't change it without careful consideration
+                  # of what else we need to update
                   artifactName: bundleAnalysis
                   sbomEnabled: false
                   publishLocation: pipeline
