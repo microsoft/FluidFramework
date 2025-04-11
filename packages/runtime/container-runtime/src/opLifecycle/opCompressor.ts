@@ -7,7 +7,7 @@ import { IsoBuffer } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	UsageError,
+	DataProcessingError,
 	createChildLogger,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
@@ -87,23 +87,23 @@ export class OpCompressor {
 		try {
 			// This is expressed as a JSON array, for legacy reasons
 			return `[${message.contents}]`;
-		} catch (newError: unknown) {
-			if ((newError as Partial<Error>).message === "Invalid string length") {
+		} catch (error: unknown) {
+			if ((error as Partial<Error>).message === "Invalid string length") {
 				// This is how string interpolation signals that
 				// the content size exceeds its capacity
-				const error = new UsageError("Payload too large");
+				const dpe = DataProcessingError.create("Payload too large", "OpCompressor");
 				this.logger.sendErrorEvent(
 					{
 						eventName: "BatchTooLarge",
 						size: batch.contentSizeInBytes,
 						length: batch.messages.length,
 					},
-					error,
+					dpe,
 				);
-				throw error;
+				throw dpe;
 			}
 
-			throw newError;
+			throw error;
 		}
 	}
 }

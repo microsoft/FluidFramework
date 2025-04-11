@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
@@ -65,7 +64,6 @@ export interface IOutboxParameters {
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
 	readonly reSubmit: (message: PendingMessageResubmitData) => void;
 	readonly opReentrancy: () => boolean;
-	readonly closeContainer: (error?: ICriticalContainerError) => void;
 }
 
 /**
@@ -322,15 +320,16 @@ export class Outbox {
 	/**
 	 * Flush all the batches to the ordering service.
 	 * This method is expected to be called at the end of a batch.
+	 *
+	 * @throws If called from a reentrant context, or if the batch being flushed is too large.
 	 * @param resubmittingBatchId - If defined, indicates this is a resubmission of a batch
 	 * with the given Batch ID, which must be preserved
 	 */
 	public flush(resubmittingBatchId?: BatchId): void {
-		if (this.isContextReentrant()) {
-			const error = new UsageError("Flushing is not supported inside DDS event handlers");
-			this.params.closeContainer(error);
-			throw error;
-		}
+		assert(
+			!this.isContextReentrant(),
+			"Flushing must not happen while incoming changes are being processed",
+		);
 
 		this.flushAll(resubmittingBatchId);
 	}
@@ -538,15 +537,20 @@ export class Outbox {
 
 		//* TODO: Why isn't this socketSize?
 		if (compressedBatch.contentSizeInBytes >= this.params.config.maxBatchSizeInBytes) {
-			throw new GenericError("BatchTooLarge", /* error */ undefined, {
-				batchSize: singletonBatch.contentSizeInBytes,
-				compressedBatchSize: compressedBatch.contentSizeInBytes,
-				count: compressedBatch.messages.length,
-				limit: this.params.config.maxBatchSizeInBytes,
-				chunkingEnabled: this.params.splitter.isBatchChunkingEnabled,
-				compressionOptions: JSON.stringify(this.params.config.compressionOptions),
-				socketSize: estimateSocketSize(singletonBatch),
-			});
+			throw DataProcessingError.create(
+				"BatchTooLarge",
+				"compressionInsufficient",
+				/* sequencedMessage */ undefined,
+				{
+					batchSize: singletonBatch.contentSizeInBytes,
+					compressedBatchSize: compressedBatch.contentSizeInBytes,
+					count: compressedBatch.messages.length,
+					limit: this.params.config.maxBatchSizeInBytes,
+					chunkingEnabled: this.params.splitter.isBatchChunkingEnabled,
+					compressionOptions: JSON.stringify(this.params.config.compressionOptions),
+					socketSize: estimateSocketSize(singletonBatch),
+				},
+			);
 		}
 
 		return compressedBatch;
