@@ -103,7 +103,7 @@
 		"commander": "^5.1.0",
 		"ps-node": "^0.1.6",
 		"start-server-and-test": "^2.0.3",
-		"tinylicious": "^5.0.0"
+		"tinylicious": "^6.0.0-332234"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",

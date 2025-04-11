@@ -121,7 +121,7 @@
 		"rimraf": "^4.4.0",
 		"sinon": "^18.0.1",
 		"start-server-and-test": "^2.0.3",
-		"tinylicious": "^5.0.0",
+		"tinylicious": "^6.0.0-332234",
 		"tslib": "^1.10.0",
 		"typescript": "~5.4.5"
 	},
