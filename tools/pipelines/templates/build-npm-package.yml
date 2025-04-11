@@ -43,10 +43,14 @@ parameters:
   type: boolean
   default: false
 
+# TODO: build-bundle-size-artifacts.yml is the only pipeline that overrides this with true.
+# If we remove it, we should just remove this parameter.
 - name: taskPublishBundleSizeArtifacts
   type: boolean
   default: false
 
+# TODO: build-bundle-size-artifacts.yml is the only pipeline that overrides this with false.
+# If we remove it, we should just remove this parameter.
 - name: taskPack
   type: boolean
   default: true

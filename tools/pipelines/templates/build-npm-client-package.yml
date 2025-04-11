@@ -40,18 +40,6 @@ parameters:
   default:
   - nyc
 
-- name: taskBundleAnalysis
-  type: boolean
-  default: false
-
-- name: taskPublishBundleSizeArtifacts
-  type: boolean
-  default: false
-
-- name: taskPack
-  type: boolean
-  default: true
-
 - name: poolBuild
   type: object
   default: Small-eastus2
@@ -74,9 +62,11 @@ parameters:
 
 - name: publishOverride
   type: string
+  default: default
 
 - name: releaseBuildOverride
   type: string
+  default: none
 
 - name: tagName
   type: string
@@ -134,6 +124,7 @@ parameters:
 # Indicates if tests should be run with code coverage analysis.
 - name: testCoverage
   type: boolean
+  default: true
 
 # Indicates if we should report the code coverage comparison and report metrics on the PR.
 - name: reportCodeCoverageComparison
@@ -334,19 +325,14 @@ extends:
                   buildDirectory: '${{ parameters.buildDirectory }}'
                   packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
 
-              # This check is a workaround. We don't want to set versions for the build-bundle-size-and-code-coverage-artifacts
-              # pipeline because it is special - it runs a client build but doesn't publish anything. Working around this properly is
-              # challenging and would create a much bigger change. Since this is the only pipeline that sets these variables to
-              # true, we use that to determine whether to set versions.
-              - ${{ if eq(parameters.taskPublishBundleSizeArtifacts, false) }}:
-                  - template: /tools/pipelines/templates/include-set-package-version.yml@self
-                    parameters:
-                      buildDirectory: '${{ parameters.buildDirectory }}'
-                      buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-                      buildToolsVersionToInstall: '${{ parameters.buildToolsVersionToInstall }}'
-                      tagName: '${{ parameters.tagName }}'
-                      interdependencyRange: '${{ parameters.interdependencyRange }}'
-                      packageTypesOverride: '${{ parameters.packageTypesOverride }}'
+              - template: /tools/pipelines/templates/include-set-package-version.yml@self
+                parameters:
+                  buildDirectory: '${{ parameters.buildDirectory }}'
+                  buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+                  buildToolsVersionToInstall: '${{ parameters.buildToolsVersionToInstall }}'
+                  tagName: '${{ parameters.tagName }}'
+                  interdependencyRange: '${{ parameters.interdependencyRange }}'
+                  packageTypesOverride: '${{ parameters.packageTypesOverride }}'
 
               # Build and Lint
               - template: /tools/pipelines/templates/include-build-lint.yml@self
@@ -379,82 +365,80 @@ extends:
                   targetFolder: $(Build.ArtifactStagingDirectory)/build_output_archive
 
               # Pack
-              - ${{ if ne(parameters.taskPack, false) }}:
-                  - task: Bash@3
-                    displayName: npm pack
-                    env:
-                      PACKAGE_MANAGER: '${{ parameters.packageManager }}'
-                      RELEASE_GROUP: '${{ parameters.tagName }}'
-                      STAGING_PATH: $(Build.ArtifactStagingDirectory)
-                    inputs:
-                      targetType: filePath
-                      workingDirectory: '${{ parameters.buildDirectory }}'
-                      filePath: $(Build.SourcesDirectory)/scripts/pack-packages.sh
+              - task: Bash@3
+                displayName: npm pack
+                env:
+                  PACKAGE_MANAGER: '${{ parameters.packageManager }}'
+                  RELEASE_GROUP: '${{ parameters.tagName }}'
+                  STAGING_PATH: $(Build.ArtifactStagingDirectory)
+                inputs:
+                  targetType: filePath
+                  workingDirectory: '${{ parameters.buildDirectory }}'
+                  filePath: $(Build.SourcesDirectory)/scripts/pack-packages.sh
 
-                  # At this point we want to publish the artifact with npm-packed packages, and the one with test files,
-                  # but as part of 1ES migration that's now part of templateContext.outputs below.
+              # At this point we want to publish the artifact with npm-packed packages, and the one with test files,
+              # but as part of 1ES migration that's now part of templateContext.outputs below.
 
               # Collect/publish/run bundle analysis
-              - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
-                  - task: Npm@1
-                    displayName: 'Calculate bundle sizes'
-                    inputs:
-                      command: custom
-                      workingDir: '${{ parameters.buildDirectory }}'
-                      customCommand: 'run bundle-analysis:collect'
+              - task: Npm@1
+                displayName: 'Calculate bundle sizes'
+                inputs:
+                  command: custom
+                  workingDir: '${{ parameters.buildDirectory }}'
+                  customCommand: 'run bundle-analysis:collect'
 
-                  # Copy files so all artifacts we publish end up under the same parent folder.
-                  # The sourceFolder should be wherever the 'npm run bundle-analysis:collect' task places its output.
-                  - task: CopyFiles@2
-                    displayName: Copy bundle size files to artifact staging directory
-                    inputs:
-                      sourceFolder: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
-                      targetFolder: $(Build.ArtifactStagingDirectory)/bundleAnalysis
+              # Copy files so all artifacts we publish end up under the same parent folder.
+              # The sourceFolder should be wherever the 'npm run bundle-analysis:collect' task places its output.
+              - task: CopyFiles@2
+                displayName: Copy bundle size files to artifact staging directory
+                inputs:
+                  sourceFolder: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
+                  targetFolder: $(Build.ArtifactStagingDirectory)/bundleAnalysis
 
-                  # At this point we want to publish the artifact with the bundle size analysis,
-                  # but as part of 1ES migration that's now part of templateContext.outputs below.
+              # At this point we want to publish the artifact with the bundle size analysis,
+              # but as part of 1ES migration that's now part of templateContext.outputs below.
 
-                  - task: Npm@1
-                    displayName: (PR only) Compare bundle sizes against baseline
-                    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
-                    continueOnError: true
-                    env:
-                      ADO_API_TOKEN: $(System.AccessToken)
-                      DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)
-                      TARGET_BRANCH_NAME: '$(targetBranchName)'
-                    inputs:
-                      command: custom
-                      workingDir: '${{ parameters.buildDirectory }}'
-                      customCommand: 'run bundle-analysis:run'
+              - task: Npm@1
+                displayName: (PR only) Compare bundle sizes against baseline
+                condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+                continueOnError: true
+                env:
+                  ADO_API_TOKEN: $(System.AccessToken)
+                  DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)
+                  TARGET_BRANCH_NAME: '$(targetBranchName)'
+                inputs:
+                  command: custom
+                  workingDir: '${{ parameters.buildDirectory }}'
+                  customCommand: 'run bundle-analysis:run'
 
-                  - ${{ if and(or(eq(variables['Build.Reason'], 'IndividualCI'), eq(variables['Build.Reason'], 'BatchedCI')), eq(variables['System.TeamProject'], 'internal')) }}:
-                      - task: Bash@3
-                        displayName: List report.json
-                        inputs:
-                          targetType: inline
-                          workingDirectory: '${{ parameters.buildDirectory }}'
-                          script: |
-                            set -eu -o pipefail
-                            echo "Build Directory is ${{ parameters.buildDirectory }}";
-                            BUNDLE_SIZE_TESTS_DIR="$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests";
-                            echo "Contents of $BUNDLE_SIZE_TESTS_DIR:";
-                            ls -la $BUNDLE_SIZE_TESTS_DIR;
+              - ${{ if and(or(eq(variables['Build.Reason'], 'IndividualCI'), eq(variables['Build.Reason'], 'BatchedCI')), eq(variables['System.TeamProject'], 'internal')) }}:
+                - task: Bash@3
+                  displayName: List files in bundle-size-tests output
+                  inputs:
+                    targetType: inline
+                    workingDirectory: '${{ parameters.buildDirectory }}'
+                    script: |
+                      set -eu -o pipefail
+                      echo "Build Directory is ${{ parameters.buildDirectory }}";
+                      BUNDLE_SIZE_TESTS_DIR="$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests";
+                      echo "Contents of $BUNDLE_SIZE_TESTS_DIR:";
+                      ls -la $BUNDLE_SIZE_TESTS_DIR;
 
-                      - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
-                        parameters:
-                          pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
+                - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
+                  parameters:
+                    pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
 
-                      - task: Bash@3
-                        displayName: Write bundle sizes measurements to Aria/Kusto
-                        inputs:
-                          targetType: inline
-                          workingDirectory: $(pathToTelemetryGenerator)
-                          script: |
-                            set -eu -o pipefail
-                            echo "Writing the following performance tests results to Aria/Kusto"
-                            echo "Report Size:"
-                            ls -la '$(Build.SourcesDirectory)/examples/utils/bundle-size-tests/bundleAnalysis/report.json';
-                            npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/bundleSizeHandler.js" --dir '$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests';
+                - task: Bash@3
+                  displayName: Write bundle sizes measurements to Aria/Kusto
+                  inputs:
+                    targetType: inline
+                    workingDirectory: $(pathToTelemetryGenerator)
+                    script: |
+                      set -eu -o pipefail
+                      echo "Writing the following performance tests results to Aria/Kusto"
+                      echo "Report Size:"
+                      ls -la '$(Build.SourcesDirectory)/examples/utils/bundle-size-tests/bundleAnalysis/report.json';
+                      npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/bundleSizeHandler.js" --dir '$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests';
 
               # Docs
               - ${{ if ne(parameters.taskBuildDocs, false) }}:
@@ -527,28 +511,25 @@ extends:
                   artifactName: build_output_archive
                   publishLocation: pipeline
 
-                - ${{ if ne(parameters.taskPack, false) }}:
-                    - output: pipelineArtifact
-                      displayName: Publish Artifact - pack
-                      targetPath: $(Build.ArtifactStagingDirectory)/pack
-                      artifactName: pack
-                      publishLocation: pipeline
+                - output: pipelineArtifact
+                  displayName: Publish Artifact - pack
+                  targetPath: $(Build.ArtifactStagingDirectory)/pack
+                  artifactName: pack
+                  publishLocation: pipeline
 
-                    - output: pipelineArtifact
-                      displayName: Publish Artifact - Test Files
-                      targetPath: $(Build.ArtifactStagingDirectory)/test-files
-                      artifactName: test-files
-                      publishLocation: pipeline
-                      sbomEnabled: false
+                - output: pipelineArtifact
+                  displayName: Publish Artifact - Test Files
+                  targetPath: $(Build.ArtifactStagingDirectory)/test-files
+                  artifactName: test-files
+                  publishLocation: pipeline
+                  sbomEnabled: false
 
-                - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
-                    - output: pipelineArtifact
-                      displayName: Publish Artifacts - bundle-analysis
-                      condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true) )
-                      targetPath: $(Build.ArtifactStagingDirectory)/bundleAnalysis
-                      artifactName: bundleAnalysis
-                      sbomEnabled: false
-                      publishLocation: pipeline
+                - output: pipelineArtifact
+                  displayName: Publish Artifacts - bundle-analysis
+                  targetPath: $(Build.ArtifactStagingDirectory)/bundleAnalysis
+                  artifactName: bundleAnalysis
+                  sbomEnabled: false
+                  publishLocation: pipeline
 
                 - ${{ if or(eq(parameters.publishDocs, true), eq(parameters.taskBuildDocs, true)) }}:
                     - output: pipelineArtifact
