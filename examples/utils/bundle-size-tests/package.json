@@ -80,7 +80,7 @@
 	],
 	"fluidBuild": {
 		"tasks": {
-			"build": {
+			"build:test": {
 				"dependsOn": [
 					"...",
 					"webpack"
