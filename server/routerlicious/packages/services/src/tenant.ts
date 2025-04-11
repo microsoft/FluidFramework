@@ -249,7 +249,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		return gitManager;
 	}
 
-	private convertInvalidTokenErrorToNetworkError(cachedInvalidTokenError: string): void {
+	private throwInvalidTokenErrorAsNetworkError(cachedInvalidTokenError: string): void {
 		try {
 			const errorObject: IInvalidTokenError = JSON.parse(cachedInvalidTokenError);
 			const networkError = new NetworkError(
@@ -274,7 +274,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		if (this.invalidTokenCache) {
 			const cachedInvalidTokenError = await this.invalidTokenCache.get(token);
 			if (cachedInvalidTokenError) {
-				this.convertInvalidTokenErrorToNetworkError(cachedInvalidTokenError);
+				this.throwInvalidTokenErrorAsNetworkError(cachedInvalidTokenError);
 			}
 		}
 		const restWrapper = new BasicRestWrapper(
