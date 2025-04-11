@@ -1,7 +1,7 @@
 name: "pr-changeset-review"
 
 # This workflow runs lint-like checks against changesets in PRs. The linting tool used is called Vale. The worflow will
-# add comments for any issues warnings or errors that Vale finds in the changeset.
+# add comments for any warnings or errors that Vale finds in the changeset.
 
 # To run vale locally against changesets, you can use `pnpm run check:changesets`.
 
