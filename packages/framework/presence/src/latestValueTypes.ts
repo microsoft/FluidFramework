@@ -5,9 +5,8 @@
 
 import type { JsonDeserialized } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
+import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { ISessionClient } from "./presence.js";
-
-import type { InternalUtilityTypes } from "@fluidframework/presence/internal/exposedUtilityTypes";
 
 /**
  * Metadata for the value state.

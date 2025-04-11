@@ -6,7 +6,6 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type {
 	IExperimentalIncrementalSummaryContext,
 	IRuntimeMessageCollection,
@@ -329,28 +328,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			policy: schemaAndPolicy.policy,
 		});
 		this.resubmitMachine.onCommitSubmitted(enrichedCommit);
-	}
-
-	/**
-	 * Process a message from the runtime.
-	 * @deprecated - Use processMessagesCore to process a bunch of messages together.
-	 */
-	public processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
-		this.processMessagesCore({
-			envelope: message,
-			local,
-			messagesContent: [
-				{
-					clientSequenceNumber: message.clientSequenceNumber,
-					contents: message.contents,
-					localOpMetadata,
-				},
-			],
-		});
 	}
 
 	/**

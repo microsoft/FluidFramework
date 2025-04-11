@@ -22,6 +22,7 @@ import {
 	type TreeView,
 } from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";
+import { SharedTreeAttributes } from "../../sharedTreeAttributes.js";
 
 const builder = new SchemaFactory("test");
 class Bar extends builder.object("bar", {
@@ -40,7 +41,7 @@ function createConnectedTree(
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
 		idCompressor: createIdCompressor(),
 	});
-	const tree = new SharedTree(id, dataStoreRuntime, new TreeFactory({}).attributes, {});
+	const tree = new SharedTree(id, dataStoreRuntime, SharedTreeAttributes, {});
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),

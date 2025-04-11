@@ -31,6 +31,7 @@ export interface IAlfredResourcesCustomizations {
 	clusterDrainingChecker?: IClusterDrainingChecker;
 	redisClientConnectionManagerForJwtCache?: IRedisClientConnectionManager;
 	redisClientConnectionManagerForThrottling?: IRedisClientConnectionManager;
+	redisClientConnectionManagerForGetSession?: IRedisClientConnectionManager;
 	readinessCheck?: IReadinessCheck;
 	fluidAccessTokenGenerator?: IFluidAccessTokenGenerator;
 }
