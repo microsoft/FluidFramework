@@ -107,7 +107,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 	};
 
-	const containerError = async (container: IContainer) =>
+	const captureContainerCloseError = async (container: IContainer) =>
 		new Promise<IErrorBase | undefined>((resolve) =>
 			container.once("closed", (error) => {
 				resolve(error);
@@ -128,7 +128,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 			const maxMessageSizeInBytes = 1024 * 1024; // 1Mb
 			await setupContainers(configWithCompressionDisabled);
 
-			const errorEvent = containerError(localContainer);
+			const errorP = captureContainerCloseError(localContainer);
 
 			const largeString = generateStringOfSize(maxMessageSizeInBytes + 1);
 			const messageCount = 1;
@@ -137,7 +137,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 			// Let the ops flush, which will close the container
 			await provider.ensureSynchronized();
 
-			const error = await errorEvent;
+			const error = await errorP;
 			assert.equal(error?.errorType, FluidErrorTypes.genericError);
 		},
 	);
@@ -244,11 +244,11 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 			setMapKeys(localMap, messageCount, largeString);
 
 			// Let the ops flush, which will close the container
-			const errorEvent = containerError(localContainer);
+			const errorP = captureContainerCloseError(localContainer);
 			await provider.ensureSynchronized();
 
 			assert(localContainer.closed, "Local Container should be closed during flush");
-			const localContainerClosedWithError = await errorEvent;
+			const localContainerClosedWithError = await errorP;
 			assert.equal(
 				localContainerClosedWithError?.errorType,
 				FluidErrorTypes.genericError,

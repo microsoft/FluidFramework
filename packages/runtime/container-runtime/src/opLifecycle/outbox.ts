@@ -535,8 +535,7 @@ export class Outbox {
 				: this.params.splitter.splitSingletonBatchMessage(compressedBatch);
 		}
 
-		//* TODO: Why isn't this socketSize?
-		if (compressedBatch.contentSizeInBytes >= this.params.config.maxBatchSizeInBytes) {
+		if (estimateSocketSize(compressedBatch) >= this.params.config.maxBatchSizeInBytes) {
 			throw DataProcessingError.create(
 				"BatchTooLarge",
 				"compressionInsufficient",
