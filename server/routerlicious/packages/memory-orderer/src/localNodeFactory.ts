@@ -12,7 +12,6 @@ import {
 	ICheckpointRepository,
 	CheckpointService,
 } from "@fluidframework/server-services-core";
-import { v4 as uuid } from "uuid";
 import { IConcreteNodeFactory } from "./interfaces";
 import { LocalNode } from "./localNode";
 
@@ -38,7 +37,7 @@ export class LocalNodeFactory implements IConcreteNodeFactory {
 
 	public async create(): Promise<LocalNode> {
 		const node = LocalNode.connect(
-			`${this.hostname}-${uuid()}`,
+			`${this.hostname}-${crypto.randomUUID()}`,
 			this.address,
 			this.storage,
 			this.databaseManager,

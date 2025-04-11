@@ -8,7 +8,6 @@ import {
 	createChildLogger,
 	raiseConnectedEvent,
 } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import {
 	type IMockContainerRuntimeIdAllocationMessage,
@@ -62,7 +61,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			this.pendingRemoteMessages.length = 0;
 			this.deltaManager.clientSequenceNumber = 0;
 			// We should get a new clientId on reconnection.
-			this.clientId = uuid();
+			this.clientId = crypto.randomUUID();
 			// Update the clientId in FluidDataStoreRuntime.
 			this.dataStoreRuntime.clientId = this.clientId;
 			this.factory.quorum.addMember(this.clientId, {});

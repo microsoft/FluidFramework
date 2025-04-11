@@ -14,7 +14,6 @@ import {
 } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/legacy";
 import { TypedEmitter } from "tiny-typed-emitter";
-import { v4 as uuid } from "uuid";
 
 import type {
 	IInventoryItem,
@@ -109,7 +108,7 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 		this.inventoryItemList.insertAtEnd({
 			// In a real-world scenario, this is probably a known unique inventory ID (rather than
 			// randomly generated).  Randomly generating here just for convenience.
-			id: uuid(),
+			id: crypto.randomUUID(),
 			name,
 			quantity,
 		});
@@ -126,12 +125,12 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 			new InventorySchema({
 				inventoryItemList: [
 					{
-						id: uuid(),
+						id: crypto.randomUUID(),
 						name: "nut",
 						quantity: 0,
 					},
 					{
-						id: uuid(),
+						id: crypto.randomUUID(),
 						name: "bolt",
 						quantity: 0,
 					},

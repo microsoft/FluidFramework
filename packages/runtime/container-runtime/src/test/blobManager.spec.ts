@@ -36,7 +36,6 @@ import {
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import Sinon from "sinon";
-import { v4 as uuid } from "uuid";
 
 import {
 	BlobManager,
@@ -288,7 +287,7 @@ export class MockRuntime
 		blob: ArrayBufferLike,
 	): Promise<{ metadata: { localId: string; blobId: string } }> {
 		const response = await this.storage.createBlob(blob);
-		const op = { metadata: { localId: uuid(), blobId: response.id } };
+		const op = { metadata: { localId: crypto.randomUUID(), blobId: response.id } };
 		this.blobManager.processBlobAttachMessage(op as ISequencedMessageEnvelope, false);
 		return op;
 	}

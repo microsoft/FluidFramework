@@ -59,8 +59,7 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tinylicious-driver": "workspace:~",
 		"react": "^18.3.1",
-		"react-dom": "^18.3.1",
-		"uuid": "^11.1.0"
+		"react-dom": "^18.3.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",

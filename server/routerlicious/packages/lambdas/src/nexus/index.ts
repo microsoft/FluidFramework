@@ -13,7 +13,6 @@ import {
 	NackErrorType,
 } from "@fluidframework/protocol-definitions";
 import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
-import { v4 as uuid } from "uuid";
 import * as core from "@fluidframework/server-services-core";
 import {
 	BaseTelemetryProperties,
@@ -241,7 +240,7 @@ export function configureWebSocketServices(
 				connectionMessage.id,
 				connectionMessage.tenantId,
 			);
-			const correlationId = uuid();
+			const correlationId =crypto.randomUUID();
 			const properties = {
 				...baseLumberjackProperties,
 				[CommonProperties.clientDriverVersion]: driverVersion,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { NIL, v4 } from 'uuid';
+import { NIL } from 'uuid';
 
 import { assertWithMessage } from './Common.js';
 import { StableId, UuidString } from './Identifiers.js';
@@ -67,7 +67,7 @@ export function isUuidString(str: string): str is UuidString {
  * Generate a random stable ID
  */
 export function generateStableId(): StableId {
-	return assertIsStableId(v4());
+	return assertIsStableId(crypto.randomUUID());
 }
 
 /**

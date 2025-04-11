@@ -38,7 +38,6 @@ import {
 	TelemetryDataTag,
 	tagData,
 } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import { LoaderContainerTracker } from "./loaderContainerTracker.js";
 import { LocalCodeLoader, fluidEntryPoint } from "./localCodeLoader.js";
@@ -270,7 +269,7 @@ export interface ITestContainerConfig {
 /**
  * @internal
  */
-export const createDocumentId = (): string => uuid();
+export const createDocumentId = (): string => crypto.randomUUID();
 
 /**
  * Used to retrieve, update, and reset document id based on the type of driver being used.

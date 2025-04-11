@@ -44,7 +44,6 @@ import {
 	safeRaiseEvent,
 	EventEmitterWithErrorHandling,
 } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import {
 	IConnectionDetailsInternal,
@@ -223,8 +222,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	public readonly closeAbortController = new AbortController();
 
-	private readonly deltaStorageDelayId = uuid();
-	private readonly deltaStreamDelayId = uuid();
+	private readonly deltaStorageDelayId = crypto.randomUUID();
+	private readonly deltaStreamDelayId = crypto.randomUUID();
 
 	private messageBuffer: IDocumentMessage[] = [];
 

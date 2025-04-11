@@ -13,7 +13,6 @@ import {
 	ITreeEntry,
 	TreeEntry,
 } from "@fluidframework/driver-definitions/internal";
-import { v4 as uuid } from "uuid";
 
 import { buildGitTreeHierarchy } from "./protocol/index.js";
 
@@ -29,7 +28,7 @@ function flattenCore(
 		if (treeEntry.type === TreeEntry.Blob) {
 			const blob = treeEntry.value;
 			const buffer = stringToBuffer(blob.contents, blob.encoding);
-			const id = uuid();
+			const id = crypto.randomUUID();
 			blobMap.set(id, buffer);
 
 			const entry: IGitTreeEntry = {

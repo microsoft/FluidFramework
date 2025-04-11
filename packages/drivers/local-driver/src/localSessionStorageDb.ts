@@ -6,7 +6,6 @@
 import { EventEmitter } from "@fluid-internal/client-utils";
 import { ICollection, IDb } from "@fluidframework/server-services-core";
 import { ITestDbFactory } from "@fluidframework/server-test-utils";
-import { v4 as uuid } from "uuid";
 
 /**
  * A collection for local session storage, where data is stored in the browser
@@ -242,7 +241,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 		for (const value of values) {
 			if (value) {
 				if (!value._id) {
-					value._id = uuid();
+					value._id = crypto.randomUUID();
 				}
 				sessionStorage.setItem(`${this.collectionName}-${value._id}`, JSON.stringify(value));
 			}

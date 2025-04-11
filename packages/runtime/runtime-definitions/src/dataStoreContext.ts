@@ -280,7 +280,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * It could be in compact form (non-negative integer, opportunistic), but it could also be UUID string.
 	 * UUIDs generated will have low entropy in groups and will compress well.
 	 * It can be leveraged anywhere in container where container unique IDs are required, i.e. any place
-	 * that uses uuid() and stores result in container is likely candidate to start leveraging this API.
+	 * that uses crypto.randomUUID() and stores result in container is likely candidate to start leveraging this API.
 	 * If you always want to convert to string, instead of doing String(generateDocumentUniqueId()), consider
 	 * doing encodeCompactIdToString(generateDocumentUniqueId()).
 	 *

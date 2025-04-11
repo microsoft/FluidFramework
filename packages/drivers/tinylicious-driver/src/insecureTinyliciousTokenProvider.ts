@@ -6,7 +6,6 @@
 import { ITokenClaims, ScopeType } from "@fluidframework/driver-definitions/internal";
 import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 import { KJUR as jsrsasign } from "jsrsasign";
-import { v4 as uuid } from "uuid";
 
 /**
  * As the name implies this is not secure and should not be used in production. It simply makes the example easier
@@ -52,7 +51,7 @@ export class InsecureTinyliciousTokenProvider implements ITokenProvider {
 		lifetime: number = 60 * 60,
 		ver: string = "1.0",
 	): string {
-		const userId = uuid();
+		const userId = crypto.randomUUID();
 		const match = userId.match(/^([\da-f]{8})-([\da-f]{4})/);
 		const userName = match === null ? userId : match[0]; // Just use the first two segments of the (fake) userId as a fake name.
 

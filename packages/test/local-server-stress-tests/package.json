@@ -82,8 +82,7 @@
 		"@fluidframework/server-local-server": "^5.0.0",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@fluidframework/tree": "workspace:~",
-		"uuid": "^11.1.0"
+		"@fluidframework/tree": "workspace:~"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",

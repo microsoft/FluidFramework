@@ -51,7 +51,6 @@ import {
 	type ICustomData,
 	type IFluidErrorBase,
 } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, IFluidSerializer } from "./serializer.js";
@@ -150,7 +149,7 @@ export abstract class SharedObjectCore<
 			logger: runtime.logger,
 			properties: {
 				all: {
-					sharedObjectId: uuid(),
+					sharedObjectId: crypto.randomUUID(),
 					...tagCodeArtifacts({
 						ddsType: this.attributes.type,
 					}),

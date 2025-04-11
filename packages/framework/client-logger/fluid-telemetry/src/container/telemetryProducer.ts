@@ -4,7 +4,6 @@
  */
 
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { v4 as uuid } from "uuid";
 
 import type { IFluidTelemetry } from "../index.js";
 
@@ -28,7 +27,7 @@ export class ContainerEventTelemetryProducer {
 	/**
 	 * Unique identifier for the instance of the container that this class is generating telemetry for.
 	 */
-	private readonly containerInstanceId = uuid();
+	private readonly containerInstanceId = crypto.randomUUID();
 
 	public constructor(private readonly containerId: string) {}
 

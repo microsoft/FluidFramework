@@ -26,7 +26,6 @@ import {
 	MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import { type ISummaryConfiguration } from "../../index.js";
 import {
@@ -154,7 +153,7 @@ export class MockContainerRuntimeForSummarizer
 	}
 
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
-		const handle = uuid();
+		const handle = crypto.randomUUID();
 		const summaryMessage: ISummaryContent = {
 			handle,
 			head: "",

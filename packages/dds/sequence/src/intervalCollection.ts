@@ -32,7 +32,6 @@ import {
 	createMap,
 } from "@fluidframework/merge-tree/internal";
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import {
 	IIntervalCollectionOperation,
@@ -294,7 +293,7 @@ export class LocalIntervalCollection {
 				}
 				interval.properties = addProperties(interval.properties, props);
 			}
-			interval.properties[reservedIntervalIdKey] ??= uuid();
+			interval.properties[reservedIntervalIdKey] ??= crypto.randomUUID();
 			this.add(interval);
 		}
 		return interval;

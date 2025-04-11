@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
 import type { RequestHandler, Request, Response } from "express";
 import {
 	CorrelationIdHeaderName,
@@ -99,7 +98,7 @@ export const bindTelemetryContext = (): RequestHandler => {
 		const telemetryContextProperties = getTelemetryContextPropertiesWithHttpInfo(req, res);
 		// Generate entry correlation-id if not provided in request.
 		if (!telemetryContextProperties.correlationId) {
-			telemetryContextProperties.correlationId = uuid();
+			telemetryContextProperties.correlationId =crypto.randomUUID();
 		}
 		// Assign response headers for client telemetry purposes.
 		res.setHeader(CorrelationIdHeaderName, telemetryContextProperties.correlationId);

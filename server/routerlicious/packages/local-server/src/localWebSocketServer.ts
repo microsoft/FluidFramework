@@ -7,7 +7,6 @@ import events_pkg from "events_pkg";
 const { EventEmitter } = events_pkg;
 import { IPubSub, ISubscriber, WebSocketSubscriber } from "@fluidframework/server-memory-orderer";
 import { IWebSocket, IWebSocketServer } from "@fluidframework/server-services-core";
-import { v4 as uuid } from "uuid";
 
 /**
  * @internal
@@ -89,7 +88,7 @@ export class LocalWebSocketServer implements IWebSocketServer {
 	}
 
 	public createConnection(): LocalWebSocket {
-		const socket = new LocalWebSocket(uuid(), this);
+		const socket = new LocalWebSocket(crypto.randomUUID(), this);
 		const mockRequest = { url: "TestWebSocket" };
 		this.events.emit("connection", socket, mockRequest);
 		return socket;

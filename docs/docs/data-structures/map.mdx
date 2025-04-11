@@ -447,7 +447,7 @@ const { container, services } = await client.getContainer(id, schema);
 const initialMap = container.initialObjects.initialMap;
 
 const newTask = await container.create(SharedMap);
-const newTaskId = uuid();
+const newTaskId = crypto.randomUUID();
 
 initialMap.set(newTaskId, newTask.handle);
 ```

@@ -18,7 +18,6 @@ import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts.js";
 import { EpochTracker } from "./epochTracker.js";
@@ -71,7 +70,7 @@ export class OdspDeltaStorageService {
 					reason: scenarioName,
 				},
 				async (event) => {
-					const formBoundary = uuid();
+					const formBoundary = crypto.randomUUID();
 					let postBody = `--${formBoundary}\r\n`;
 					postBody += `Authorization: ${authHeader}\r\n`;
 					postBody += `X-HTTP-Method-Override: GET\r\n`;

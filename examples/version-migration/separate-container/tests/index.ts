@@ -26,7 +26,6 @@ import {
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { v4 as uuid } from "uuid";
 
 import { inventoryListDataTransformationCallback } from "../src/dataTransform.js";
 import { DemoCodeLoader } from "../src/demoCodeLoader.js";
@@ -69,7 +68,7 @@ const loaderProps: ILoaderProps = {
 };
 
 const createDetachedCallback = makeCreateDetachedContainerCallback(loaderProps, () =>
-	createLocalResolverCreateNewRequest(uuid()),
+	createLocalResolverCreateNewRequest(crypto.randomUUID()),
 );
 
 const importDataCallback: ImportDataCallback = async (

@@ -4,7 +4,6 @@
  */
 
 import { assert, expect } from 'chai';
-import { v4 as uuidv4 } from 'uuid';
 
 import { walkTree } from '../EditUtilities.js';
 import {
@@ -253,7 +252,7 @@ describe('TreeCompression', () => {
 		const context = makeNodeIdContext();
 		const makeLeaf = (): PlaceholderTree => ({
 			identifier: context.generateNodeId(),
-			definition: uuidv4() as Definition,
+			definition: crypto.randomUUID() as Definition,
 			traits: {},
 		});
 
@@ -265,10 +264,10 @@ describe('TreeCompression', () => {
 
 			return {
 				identifier: context.generateNodeId(),
-				definition: uuidv4() as Definition,
+				definition: crypto.randomUUID() as Definition,
 				traits: {
-					[uuidv4() as TraitLabel]: [makeTreeWithHeight(height - 1)],
-					[uuidv4() as TraitLabel]: [makeTreeWithHeight(height - 1)],
+					[crypto.randomUUID() as TraitLabel]: [makeTreeWithHeight(height - 1)],
+					[crypto.randomUUID() as TraitLabel]: [makeTreeWithHeight(height - 1)],
 				},
 			};
 		};

@@ -20,7 +20,6 @@ import { createChildLogger } from "@fluidframework/telemetry-utils/legacy";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import type { ContainerSchema } from "fluid-framework";
 import { IFluidContainer } from "fluid-framework";
-import { v4 as uuid } from "uuid";
 
 import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider.js";
 import {
@@ -45,8 +44,8 @@ const userDetails: ICustomUserDetails = {
 const useAzure = process.env.FLUID_CLIENT === "azure";
 
 const user = {
-	id: uuid(),
-	name: uuid(),
+	id: crypto.randomUUID(),
+	name: crypto.randomUUID(),
 };
 
 const azureUser = {

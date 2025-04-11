@@ -4,7 +4,6 @@
  */
 
 import { AsyncLocalStorage } from "async_hooks";
-import { v4 as uuid } from "uuid";
 import type { Request, Response, NextFunction } from "express";
 import { CorrelationIdHeaderName } from "@fluidframework/server-services-client";
 import { getGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";
@@ -75,7 +74,7 @@ export const bindCorrelationId =
 	(req: Request, res: Response, next: NextFunction): void => {
 		const telemetryContextProperties = getTelemetryContextPropertiesWithHttpInfo(req, res);
 		const id: string =
-			telemetryContextProperties.correlationId ?? req.header(headerName) ?? uuid();
+			telemetryContextProperties.correlationId ?? req.header(headerName) ??crypto.randomUUID();
 		res.setHeader(headerName, id);
 		if (altAsyncLocalStorage) {
 			altAsyncLocalStorage.run(id, () => next());

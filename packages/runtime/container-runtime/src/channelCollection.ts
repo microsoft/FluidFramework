@@ -74,7 +74,6 @@ import {
 	tagCodeArtifacts,
 	type ITelemetryPropertiesExt,
 } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import {
 	DeletedResponseHeaderKey,
@@ -609,7 +608,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		/**
 		 * There is currently a bug where certain data store ids such as "[" are getting converted to ASCII characters
 		 * in the snapshot.
-		 * So, return short ids only if explicitly enabled via feature flags. Else, return uuid();
+		 * So, return short ids only if explicitly enabled via feature flags. Else, return crypto.randomUUID();
 		 */
 		if (this.mc.config.getBoolean("Fluid.Runtime.IsShortIdEnabled") === true) {
 			// We use three non-overlapping namespaces:
@@ -627,7 +626,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			}
 			return id;
 		}
-		return uuid();
+		return crypto.randomUUID();
 	}
 
 	public createDetachedDataStore(

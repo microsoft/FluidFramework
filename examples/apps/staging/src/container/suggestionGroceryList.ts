@@ -5,7 +5,6 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEventProvider } from "@fluidframework/core-interfaces";
-import { v4 as uuid } from "uuid";
 
 import { getChangesFromHealthBot } from "./getChangesFromHealthBot.js";
 import type { IGroceryItem, IGroceryList } from "./groceryList/index.js";
@@ -90,7 +89,7 @@ export class SuggestionGroceryList implements ISuggestionGroceryList {
 		if (this._inStagingMode) {
 			// Use timestamp as a hack for a consistent sortable order.  Prefixed with 'z' to sort last.
 			const suggestedAddition = new SuggestionGroceryItem(
-				`z${Date.now()}-${uuid()}`,
+				`z${Date.now()}-${crypto.randomUUID()}`,
 				name,
 				"add",
 				() => {

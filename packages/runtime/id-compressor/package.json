@@ -132,8 +132,7 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"@tylerbu/sorted-btree-es6": "^1.8.0",
-		"uuid": "^11.1.0"
+		"@tylerbu/sorted-btree-es6": "^1.8.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",

@@ -85,7 +85,6 @@ import {
 	raiseConnectedEvent,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import { IChannelContext, summarizeChannel } from "./channelContext.js";
 import {
@@ -264,7 +263,7 @@ export class FluidDataStoreRuntime
 			logger: dataStoreContext.baseLogger,
 			namespace: "FluidDataStoreRuntime",
 			properties: {
-				all: { dataStoreId: uuid(), dataStoreVersion: pkgVersion },
+				all: { dataStoreId: crypto.randomUUID(), dataStoreVersion: pkgVersion },
 			},
 		});
 
@@ -482,7 +481,7 @@ export class FluidDataStoreRuntime
 			/**
 			 * There is currently a bug where certain data store ids such as "[" are getting converted to ASCII characters
 			 * in the snapshot.
-			 * So, return short ids only if explicitly enabled via feature flags. Else, return uuid();
+			 * So, return short ids only if explicitly enabled via feature flags. Else, return crypto.randomUUID();
 			 */
 			if (this.mc.config.getBoolean("Fluid.Runtime.IsShortIdEnabled") === true) {
 				// We use three non-overlapping namespaces:
@@ -496,13 +495,14 @@ export class FluidDataStoreRuntime
 					id = encodeCompactIdToString(2 * this.contexts.size, "_");
 				} else {
 					// Due to back-compat, we could not depend yet on generateDocumentUniqueId() being there.
-					// We can remove the need to leverage uuid() as fall-back in couple releases.
+					// We can remove the need to leverage crypto.randomUUID() as fall-back in couple releases.
 					const res =
-						this.dataStoreContext.containerRuntime.generateDocumentUniqueId?.() ?? uuid();
+						this.dataStoreContext.containerRuntime.generateDocumentUniqueId?.() ??
+						crypto.randomUUID();
 					id = typeof res === "number" ? encodeCompactIdToString(2 * res + 1, "_") : res;
 				}
 			} else {
-				id = uuid();
+				id = crypto.randomUUID();
 			}
 			assert(!id.includes("/"), 0x8fc /* slash */);
 		}

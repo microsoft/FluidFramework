@@ -69,8 +69,7 @@
 		"json-stringify-safe": "^5.0.1",
 		"jsrsasign": "^11.0.0",
 		"jwt-decode": "^4.0.0",
-		"sillyname": "^0.1.0",
-		"uuid": "^11.1.0"
+		"sillyname": "^0.1.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "0.52.0-315632",

@@ -6,7 +6,6 @@
 import { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definitions";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { jwtDecode } from "jwt-decode";
-import { v4 as uuid } from "uuid";
 import { NetworkError } from "./error";
 
 /**
@@ -96,7 +95,7 @@ export function generateToken(
 		iat: now,
 		exp: now + lifetime,
 		ver,
-		jti: uuid(),
+		jti:crypto.randomUUID(),
 	};
 
 	const utf8Key = { utf8: key };
@@ -113,8 +112,8 @@ export function generateToken(
  */
 export function generateUser(): IUser {
 	const randomUser = {
-		id: uuid(),
-		name: uuid(),
+		id:crypto.randomUUID(),
+		name:crypto.randomUUID(),
 	};
 
 	return randomUser;

@@ -22,7 +22,6 @@ import {
 } from "@fluidframework/server-services-core";
 import * as _ from "lodash";
 import sillyname from "sillyname";
-import { v4 as uuid } from "uuid";
 import { debug } from "./debug";
 import {
 	IConcreteNode,
@@ -39,7 +38,7 @@ import { Socket } from "./socket";
 // Rather than creating one per? I'm in some ways on this path.
 
 class RemoteSubscriber implements ISubscriber {
-	public id = uuid();
+	public id =crypto.randomUUID();
 
 	constructor(private readonly socket: Socket<INodeMessage>) {}
 

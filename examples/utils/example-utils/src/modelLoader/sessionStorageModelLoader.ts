@@ -13,7 +13,6 @@ import {
 	createLocalResolverCreateNewRequest,
 } from "@fluidframework/local-driver/legacy";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { v4 as uuid } from "uuid";
 
 import { IDetachedModel, IModelLoader } from "./interfaces.js";
 import { ModelLoader } from "./modelLoader.js";
@@ -36,7 +35,7 @@ export class SessionStorageModelLoader<ModelType> implements IModelLoader<ModelT
 	}
 
 	public async createDetached(version: string): Promise<IDetachedModel<ModelType>> {
-		const documentId = uuid();
+		const documentId = crypto.randomUUID();
 		const modelLoader = new ModelLoader<ModelType>({
 			urlResolver,
 			documentServiceFactory: new LocalDocumentServiceFactory(localServer),

@@ -34,7 +34,6 @@ import * as _ from "lodash";
 import * as winston from "winston";
 import { ITenantRepository } from "./mongoTenantRepository";
 import type { IUser, ScopeType } from "@fluidframework/protocol-definitions";
-import { v4 as uuid } from "uuid";
 
 /**
  * Tenant details stored to the document database
@@ -157,7 +156,7 @@ export class TenantManager {
 		user?: IUser,
 		lifetime: number = 60 * 60,
 		ver: string = "1.0",
-		jti: string = uuid(),
+		jti: string =crypto.randomUUID(),
 		includeDisabledTenant = false,
 		forceGenerateTokenWithPrivateKey = false,
 	): Promise<IFluidAccessToken> {

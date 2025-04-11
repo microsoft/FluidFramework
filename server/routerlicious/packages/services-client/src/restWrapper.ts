@@ -12,7 +12,6 @@ import {
 	RawAxiosRequestHeaders,
 	type AxiosResponse,
 } from "axios";
-import { v4 as uuid } from "uuid";
 import { debug } from "./debug";
 import { createFluidServiceNetworkError, INetworkErrorDetails } from "./error";
 import { CorrelationIdHeaderName, TelemetryContextHeaderName } from "./constants";
@@ -196,7 +195,7 @@ export class BasicRestWrapper extends RestWrapper {
 		canRetry = true,
 	): Promise<T> {
 		const options = { ...requestConfig };
-		const correlationId = this.getCorrelationId?.() ?? uuid();
+		const correlationId = this.getCorrelationId?.() ??crypto.randomUUID();
 		options.headers = this.generateHeaders(
 			options.headers,
 			correlationId,

@@ -119,8 +119,7 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
-		"debug": "^4.3.4",
-		"uuid": "^11.1.0"
+		"debug": "^4.3.4"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",

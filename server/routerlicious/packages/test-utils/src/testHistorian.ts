@@ -32,7 +32,6 @@ import {
 	NetworkError,
 } from "@fluidframework/server-services-client";
 import { ICollection, IDb } from "@fluidframework/server-services-core";
-import { v4 as uuid } from "uuid";
 import { TestDb } from "./testCollection";
 
 /**
@@ -274,7 +273,7 @@ export class TestHistorian implements IHistorian {
 	}
 
 	public async createTree(tree: ICreateTreeParams): Promise<ITree> {
-		const _id = uuid();
+		const _id =crypto.randomUUID();
 		await this.trees.insertOne({
 			_id,
 			...tree,

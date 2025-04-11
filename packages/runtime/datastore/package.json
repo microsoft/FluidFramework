@@ -127,8 +127,7 @@
 		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/telemetry-utils": "workspace:~",
-		"uuid": "^11.1.0"
+		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",

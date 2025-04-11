@@ -12,7 +12,6 @@ import {
 	ScopeType,
 } from "@fluidframework/driver-definitions/internal";
 import { createGenericNetworkError } from "@fluidframework/driver-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import { IOdspSocketError } from "../../contracts.js";
 import { pkgVersion as driverVersion } from "../../packageVersion.js";
@@ -136,7 +135,7 @@ export class ClientSocketMock extends TypedEventEmitter<SocketMockEvents> {
 					case "connect_document_success": {
 						const iConnected: IConnected = this.mockSocketConnectResponse.connect_document
 							.connectMessage ?? {
-							clientId: uuid(),
+							clientId: crypto.randomUUID(),
 							existing: true,
 							initialClients: [],
 							initialMessages: [],

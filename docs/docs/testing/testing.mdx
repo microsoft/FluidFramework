@@ -101,7 +101,6 @@ function createAzureClient(): AzureClient {
 Your test can then call this function to create a client object without concerning itself about the underlying service. This [mocha](https://mochajs.org/) test example creates the service client before running any tests, and uses the [uuid](https://github.com/uuidjs/uuid) package to generate a random `documentId` for each test. You can substitute other libraries or implementations. There is a single test that uses the service client to create a container which passes as long as no errors are thrown.
 
 ```typescript
-import { v4 as uuid } from "uuid";
 
 // ...
 
@@ -109,7 +108,7 @@ describe("ClientTest", () => {
 	const client = createAzureClient();
 	let documentId: string;
 	beforeEach("initializeDocumentId", () => {
-		documentId = uuid();
+		documentId = crypto.randomUUID();
 	});
 
 	it("can create Azure container successfully", async () => {

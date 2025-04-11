@@ -165,8 +165,7 @@
 		"@sinclair/typebox": "^0.34.13",
 		"@tylerbu/sorted-btree-es6": "^1.8.0",
 		"@types/ungap__structured-clone": "^1.2.0",
-		"@ungap/structured-clone": "^1.2.0",
-		"uuid": "^11.1.0"
+		"@ungap/structured-clone": "^1.2.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",

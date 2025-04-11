@@ -27,7 +27,6 @@ import {
 	mixinMonitoringContext,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import { Container } from "../container.js";
 import { Loader, type ICodeDetailsLoader } from "../loader.js";
@@ -155,7 +154,7 @@ describe("loader unit test", () => {
 
 	it("serialize and rehydrateDetachedContainerFromSnapshot while attaching with valid format and attachment blobs", async () => {
 		const resolvedUrl: IResolvedUrl = {
-			id: uuid(),
+			id: crypto.randomUUID(),
 			endpoints: {},
 			tokens: {},
 			type: "fluid",
@@ -170,7 +169,7 @@ describe("loader unit test", () => {
 						resolvedUrl,
 						connectToStorage: async () =>
 							failSometimeProxy<IDocumentStorageService>({
-								createBlob: async () => ({ id: uuid() }),
+								createBlob: async () => ({ id: crypto.randomUUID() }),
 							}),
 					}),
 			}),

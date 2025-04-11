@@ -33,7 +33,6 @@ import {
 	waitForContainerConnection,
 	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import { wrapObjectAndOverride } from "../mocking.js";
 import { TestPersistedCache } from "../testPersistedCache.js";
@@ -166,7 +165,7 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
 		// setup
 		{
 			const dataStore = await getContainerEntryPointBackCompat<ITestDataObject>(container2);
-			const sharedString = SharedString.create(dataStore._runtime, uuid());
+			const sharedString = SharedString.create(dataStore._runtime, crypto.randomUUID());
 			dataStore._root.set("sharedString", sharedString.handle);
 
 			const blob = await dataStore._runtime.uploadBlob(stringToBuffer(testString, "utf-8"));

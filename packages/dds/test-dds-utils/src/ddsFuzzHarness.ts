@@ -53,7 +53,6 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 import type { IMockContainerRuntimeOptions } from "@fluidframework/test-runtime-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import {
 	type Client,
@@ -1405,7 +1404,7 @@ export async function runTestForSeed<
 				),
 			);
 	const summarizerClient = initialClient;
-	const handles = Array.from({ length: 5 }).map(() => uuid());
+	const handles = Array.from({ length: 5 }).map(() => crypto.randomUUID());
 	let handleGenerated = false;
 	const initialState: DDSFuzzTestState<TChannelFactory> = {
 		clients,

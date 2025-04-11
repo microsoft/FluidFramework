@@ -14,7 +14,6 @@ import {
 import { InsecureUrlResolver } from "@fluidframework/driver-utils/internal";
 import { IRouterliciousDriverPolicies } from "@fluidframework/routerlicious-driver/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import {
 	RouterliciousDriverApi,
@@ -181,8 +180,8 @@ export class RouterliciousTestDriver implements ITestDriver {
 
 	createDocumentServiceFactory(): IDocumentServiceFactory {
 		const tokenProvider = new InsecureTokenProvider(this.tenantSecret, {
-			id: uuid(),
-			name: uuid(),
+			id: crypto.randomUUID(),
+			name: crypto.randomUUID(),
 		});
 
 		return new this.api.RouterliciousDocumentServiceFactory(

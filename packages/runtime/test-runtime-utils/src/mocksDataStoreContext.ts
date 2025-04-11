@@ -31,7 +31,6 @@ import {
 	ITelemetryLoggerExt,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 /**
  * @legacy
@@ -42,7 +41,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public packagePath: readonly string[] = undefined as any;
 
 	public options: Record<string | number, any> = {};
-	public clientId: string | undefined = uuid();
+	public clientId: string | undefined = crypto.randomUUID();
 	public clientDetails: IClientDetails;
 	public connected: boolean = true;
 	public baseSnapshot: ISnapshotTree | undefined;
@@ -73,7 +72,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public scope: FluidObject = undefined as any;
 
 	constructor(
-		public readonly id: string = uuid(),
+		public readonly id: string = crypto.randomUUID(),
 		public readonly existing: boolean = false,
 		public readonly baseLogger: ITelemetryLoggerExt = createChildLogger({
 			namespace: "fluid:MockFluidDataStoreContext",

@@ -16,7 +16,6 @@ import {
 	TreeViewNode,
 } from "@fluid-experimental/tree";
 import { TypedEmitter } from "tiny-typed-emitter";
-import { v4 as uuid } from "uuid";
 
 import type {
 	IInventoryItem,
@@ -81,7 +80,7 @@ export class LegacyTreeInventoryListController extends EventEmitter implements I
 								definition: "id",
 								// In a real-world scenario, this is probably a known unique inventory ID (rather than
 								// randomly generated).  Randomly generating here just for convenience.
-								payload: uuid(),
+								payload: crypto.randomUUID(),
 							},
 							name: {
 								definition: "name",
@@ -98,7 +97,7 @@ export class LegacyTreeInventoryListController extends EventEmitter implements I
 						traits: {
 							id: {
 								definition: "id",
-								payload: uuid(),
+								payload: crypto.randomUUID(),
 							},
 							name: {
 								definition: "name",
@@ -205,7 +204,7 @@ export class LegacyTreeInventoryListController extends EventEmitter implements I
 					definition: "id",
 					// In a real-world scenario, this is probably a known unique inventory ID (rather than
 					// randomly generated).  Randomly generating here just for convenience.
-					payload: uuid(),
+					payload: crypto.randomUUID(),
 				},
 				name: {
 					definition: "name",

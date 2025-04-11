@@ -51,7 +51,6 @@ import {
 	type Lumber,
 } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
-import { v4 as uuid } from "uuid";
 import {
 	Constants,
 	generateCacheKey,
@@ -315,8 +314,8 @@ export function create(
 			}
 			// If enforcing server generated document id, ignore id parameter
 			const id = enforceServerGeneratedDocumentId
-				? uuid()
-				: (request.body.id as string) || uuid();
+				?crypto.randomUUID()
+				: (request.body.id as string) ||crypto.randomUUID();
 
 			// Summary information
 			const summary = request.body.enableAnyBinaryBlobOnFirstSummary

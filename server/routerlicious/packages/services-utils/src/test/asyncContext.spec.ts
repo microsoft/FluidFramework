@@ -4,7 +4,6 @@
  */
 
 import { ITelemetryContextProperties } from "@fluidframework/server-services-telemetry";
-import { v4 as uuid } from "uuid";
 import assert from "assert";
 import {
 	AsyncLocalStorageContextProvider,
@@ -49,8 +48,8 @@ describe("AsyncContext", function () {
 			const main = (id: string) => {
 				contextProvider.bindContext(id, () => helper());
 			};
-			const id1 = uuid();
-			const id2 = uuid();
+			const id1 =crypto.randomUUID();
+			const id2 =crypto.randomUUID();
 			main(id1); // 0
 			main(id2); // 1
 			main(id1); // 2
@@ -72,8 +71,8 @@ describe("AsyncContext", function () {
 					contextProvider.bindContext(id, () => helper().then(resolve));
 				});
 			};
-			const id1 = uuid();
-			const id2 = uuid();
+			const id1 =crypto.randomUUID();
+			const id2 =crypto.randomUUID();
 			await main(id1); // 0
 			await main(id2); // 1
 			await main(id1); // 2
@@ -101,8 +100,8 @@ describe("AsyncContext", function () {
 					contextProvider.bindContext(innerId, () => helper());
 				});
 			};
-			const id1 = uuid();
-			const id2 = uuid();
+			const id1 =crypto.randomUUID();
+			const id2 =crypto.randomUUID();
 			main(id1, id2);
 			assert.strictEqual(logger.events.length, 2);
 			assert.strictEqual(logger.events[0], id1);
@@ -124,16 +123,16 @@ describe("AsyncContext", function () {
 					helper();
 				});
 			};
-			const uniqueProperty1 = uuid();
-			const uniqueProperty2 = uuid();
-			const overwrittenProperty = uuid();
+			const uniqueProperty1 =crypto.randomUUID();
+			const uniqueProperty2 =crypto.randomUUID();
+			const overwrittenProperty =crypto.randomUUID();
 			const props1 = {
 				uniqueProperty1,
 				overwrittenProperty,
 			};
 			const props2 = {
 				uniqueProperty2,
-				overwrittenProperty: uuid(),
+				overwrittenProperty:crypto.randomUUID(),
 			};
 			main(props1, props2);
 			assert.strictEqual(logger.events.length, 3);
@@ -180,8 +179,8 @@ describe("AsyncContext", function () {
 			const main = (correlationId: string) => {
 				telemetryContext.bindProperties({ correlationId }, () => helper());
 			};
-			const id1 = uuid();
-			const id2 = uuid();
+			const id1 =crypto.randomUUID();
+			const id2 =crypto.randomUUID();
 			main(id1); // 0
 			main(id2); // 1
 			main(id1); // 2
@@ -205,8 +204,8 @@ describe("AsyncContext", function () {
 					);
 				});
 			};
-			const id1 = uuid();
-			const id2 = uuid();
+			const id1 =crypto.randomUUID();
+			const id2 =crypto.randomUUID();
 			await main(id1); // 0
 			await main(id2); // 1
 			await main(id1); // 2
@@ -239,10 +238,10 @@ describe("AsyncContext", function () {
 					helper();
 				});
 			};
-			const correlationId1 = uuid();
-			const correlationId2 = uuid();
-			const documentId1 = uuid();
-			const documentId2 = uuid();
+			const correlationId1 =crypto.randomUUID();
+			const correlationId2 =crypto.randomUUID();
+			const documentId1 =crypto.randomUUID();
+			const documentId2 =crypto.randomUUID();
 			const props1 = {
 				correlationId: correlationId1,
 				documentId: documentId1,

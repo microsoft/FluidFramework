@@ -4,7 +4,6 @@
  */
 
 import safeStringify from "json-stringify-safe";
-import { v4 as uuid } from "uuid";
 import { LumberEventName } from "./lumberEventNames";
 import {
 	LogLevel,
@@ -35,7 +34,7 @@ export class Lumber<T extends string = LumberEventName> {
 	private _logLevel?: LogLevel;
 	private _completed = false;
 	public readonly timestamp = Date.now();
-	public readonly id = uuid();
+	public readonly id =crypto.randomUUID();
 
 	public get properties(): Map<string, any> {
 		return this._properties;

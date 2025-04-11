@@ -129,8 +129,7 @@
 		"@fluidframework/server-services-core": "^5.0.0",
 		"@fluidframework/server-test-utils": "^5.0.0",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"jsrsasign": "^11.0.0",
-		"uuid": "^11.1.0"
+		"jsrsasign": "^11.0.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",

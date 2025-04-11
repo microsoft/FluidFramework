@@ -16,7 +16,6 @@ import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { SchemaFactory, SharedTree, TreeViewConfiguration } from "fluid-framework";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedMap } from "fluid-framework/legacy";
-import { v4 as uuid } from "uuid";
 
 import { AzureClient } from "../AzureClient.js";
 import type { AzureLocalConnectionConfig } from "../interfaces.js";
@@ -31,8 +30,8 @@ function createAzureClient(
 		tokenProvider: new InsecureTokenProvider(
 			"fooBar",
 			{
-				id: uuid(),
-				name: uuid(),
+				id: crypto.randomUUID(),
+				name: crypto.randomUUID(),
 			},
 			props.scopes,
 		),

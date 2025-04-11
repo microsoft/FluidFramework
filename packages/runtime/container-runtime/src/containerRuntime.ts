@@ -134,7 +134,6 @@ import {
 	tagCodeArtifacts,
 	normalizeError,
 } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import { BindBatchTracker } from "./batchTracker.js";
 import {
@@ -1141,7 +1140,7 @@ export class ContainerRuntime
 	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.generateDocumentUniqueId}
 	 */
 	public generateDocumentUniqueId(): string | number {
-		return this._idCompressor?.generateDocumentUniqueId() ?? uuid();
+		return this._idCompressor?.generateDocumentUniqueId() ?? crypto.randomUUID();
 	}
 
 	public get IFluidHandleContext(): IFluidHandleContext {
@@ -1500,7 +1499,7 @@ export class ContainerRuntime
 			}),
 		});
 
-		this.telemetryDocumentId = metadata?.telemetryDocumentId ?? uuid();
+		this.telemetryDocumentId = metadata?.telemetryDocumentId ?? crypto.randomUUID();
 
 		const opGroupingManager = new OpGroupingManager(
 			{

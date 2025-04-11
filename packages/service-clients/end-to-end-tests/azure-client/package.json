@@ -88,8 +88,7 @@
 		"moment": "^2.21.0",
 		"sinon": "^18.0.1",
 		"start-server-and-test": "^2.0.3",
-		"tinylicious": "^5.0.0",
-		"uuid": "^11.1.0"
+		"tinylicious": "^5.0.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",

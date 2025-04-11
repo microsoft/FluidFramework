@@ -4,7 +4,6 @@
  */
 
 import assert from "assert";
-import { v4 as uuid } from "uuid";
 import { SinonSpiedInstance, restore, spy } from "sinon";
 import { Provider } from "nconf";
 import { RedisOptions } from "ioredis-mock";
@@ -228,13 +227,13 @@ testFileSystems.forEach((fileSystem) => {
 				stat: fsSpy.stat.callCount,
 			});
 			beforeEach(async () => {
-				documentId = uuid();
+				documentId =crypto.randomUUID();
 				// Spy on memfs volume to record number of calls to storage.
 				fsSpy = getFsSpy();
 				const repoManagerFactory = new IsomorphicGitManagerFactory(
 					{
 						useRepoOwner: true,
-						baseDir: `/${uuid()}/tmp`,
+						baseDir: `/${crypto.randomUUID()}/tmp`,
 					},
 					{
 						defaultFileSystemManagerFactory: fsManagerFactory,

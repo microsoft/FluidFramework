@@ -9,7 +9,6 @@ import {
 	convertFirstSummaryWholeSummaryTreeToSummaryTree,
 } from "@fluidframework/server-services-client";
 import { Router } from "express";
-import { v4 as uuid } from "uuid";
 import winston from "winston";
 
 export function create(storage: IDocumentStorage): Router {
@@ -35,7 +34,7 @@ export function create(storage: IDocumentStorage): Router {
 	router.post("/:tenantId", (request, response, next) => {
 		// Tenant and document
 		const tenantId = request.params.tenantId;
-		const id = request.body.id || uuid();
+		const id = request.body.id ||crypto.randomUUID();
 
 		// Summary information
 		const summary = request.body.enableAnyBinaryBlobOnFirstSummary

@@ -16,7 +16,6 @@ import type {
 	ChatCompletionCreateParams,
 	// eslint-disable-next-line import/no-internal-modules
 } from "openai/resources/index.mjs";
-import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 
 import type {
@@ -135,9 +134,9 @@ export async function generateTreeEdits(
 
 	const tokensUsed = { inputTokens: 0, outputTokens: 0 };
 
-	const debugLogTraceId = uuidv4();
+	const debugLogTraceId = crypto.randomUUID();
 
-	const coreEventFlowTraceId = uuidv4();
+	const coreEventFlowTraceId = crypto.randomUUID();
 	options.debugEventLogHandler?.({
 		...generateDebugEvent("CORE_EVENT_LOOP_STARTED", debugLogTraceId),
 		eventFlowName: EventFlowDebugNames.CORE_EVENT_LOOP,
@@ -304,7 +303,7 @@ async function* generateEdits(
 			options.prompt.systemRoleContext,
 		);
 
-		const generatePlanningPromptEventFlowId = uuidv4();
+		const generatePlanningPromptEventFlowId = crypto.randomUUID();
 		debugOptions?.eventLogHandler?.({
 			...generateDebugEvent("GENERATE_PLANNING_PROMPT_STARTED", debugOptions.traceId),
 			eventFlowName: EventFlowDebugNames.GENERATE_PLANNING_PROMPT,
@@ -353,7 +352,7 @@ async function* generateEdits(
 
 		const schema = types[rootTypeName] ?? fail("Root type not found.");
 
-		const generateTreeEditEventFlowId = uuidv4();
+		const generateTreeEditEventFlowId = crypto.randomUUID();
 		debugOptions?.eventLogHandler?.({
 			...generateDebugEvent("GENERATE_TREE_EDIT_STARTED", debugOptions.traceId),
 			eventFlowName: EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT,
@@ -424,7 +423,7 @@ async function* generateEdits(
 				.describe('Whether the user\'s goal was met in the "after" tree.'),
 		});
 
-		const finalReviewEventFlowTraceId = uuidv4();
+		const finalReviewEventFlowTraceId = crypto.randomUUID();
 		debugOptions?.eventLogHandler?.({
 			...generateDebugEvent("FINAL_REVIEW_STARTED", debugOptions.traceId),
 			eventFlowName: EventFlowDebugNames.FINAL_REVIEW,

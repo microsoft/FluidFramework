@@ -178,8 +178,7 @@
 		"@ungap/structured-clone": "^1.2.0",
 		"debug": "^4.3.4",
 		"double-ended-queue": "^2.1.0-0",
-		"events_pkg": "npm:events@^3.1.0",
-		"uuid": "^11.1.0"
+		"events_pkg": "npm:events@^3.1.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",

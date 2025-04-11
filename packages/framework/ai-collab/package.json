@@ -117,7 +117,6 @@
 		"fastest-levenshtein": "^1.0.16",
 		"openai": "^4.67.3",
 		"typechat": "^0.1.1",
-		"uuid": "^11.1.0",
 		"zod": "^3.23.8"
 	},
 	"devDependencies": {

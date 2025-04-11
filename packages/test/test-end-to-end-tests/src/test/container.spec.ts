@@ -65,7 +65,6 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import { useFakeTimers } from "sinon";
-import { v4 as uuid } from "uuid";
 
 import { wrapObjectAndOverride } from "../mocking.js";
 
@@ -786,7 +785,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 	// Temporary disable since we reverted the fix that caused an increase in loader bundle size.
 	// Tracking alternative fix in AB#4129.
 	it.skip("clientDetailsOverride does not cause client details of other containers with the same loader to change", async function () {
-		const documentId = uuid();
+		const documentId = crypto.randomUUID();
 		const client: IClient = {
 			details: {
 				capabilities: { interactive: true },

@@ -17,7 +17,6 @@ import {
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base/internal";
-import { v4 as uuid } from "uuid";
 
 import {
 	ConsensusCallback,
@@ -387,12 +386,12 @@ export class ConsensusOrderedCollection<T = any>
 	private async acquireInternal(): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
 		if (!this.isAttached()) {
 			// can be undefined if queue is empty
-			return this.acquireCore(uuid(), idForLocalUnattachedClient);
+			return this.acquireCore(crypto.randomUUID(), idForLocalUnattachedClient);
 		}
 
 		return this.submit<IConsensusOrderedCollectionAcquireOperation>({
 			opName: "acquire",
-			acquireId: uuid(),
+			acquireId: crypto.randomUUID(),
 		});
 	}
 
