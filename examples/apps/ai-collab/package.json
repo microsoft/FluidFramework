@@ -63,7 +63,7 @@
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1",
 		"rimraf": "^4.4.0",
-		"tinylicious": "^5.0.0",
+		"tinylicious": "^6.0.0-332234",
 		"typechat": "^0.1.1",
 		"typescript": "~5.4.5",
 		"uuid": "^11.1.0"

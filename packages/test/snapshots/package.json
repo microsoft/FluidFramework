@@ -80,7 +80,7 @@
 		"@fluidframework/register-collection": "workspace:~",
 		"@fluidframework/replay-driver": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
-		"@fluidframework/server-local-server": "^5.0.0",
+		"@fluidframework/server-local-server": "^6.0.0-332234",
 		"@fluidframework/test-utils": "workspace:~",
 		"mocha": "^10.8.2"
 	},

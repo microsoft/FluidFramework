@@ -97,7 +97,7 @@
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/server-local-server": "^5.0.0",
+		"@fluidframework/server-local-server": "^6.0.0-332234",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/tool-utils": "workspace:~",

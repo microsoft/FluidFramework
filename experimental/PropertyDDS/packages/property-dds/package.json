@@ -86,7 +86,7 @@
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
-		"@fluidframework/server-local-server": "^5.0.0",
+		"@fluidframework/server-local-server": "^6.0.0-332234",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.50.1",

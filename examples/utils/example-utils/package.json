@@ -68,7 +68,7 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
-		"@fluidframework/server-local-server": "^5.0.0",
+		"@fluidframework/server-local-server": "^6.0.0-332234",
 		"@fluidframework/task-manager": "workspace:~",
 		"@fluidframework/tinylicious-driver": "workspace:~",
 		"react": "^18.3.1",
