@@ -122,11 +122,13 @@ export class Package {
 		[this._packageJson, this._indent] = readPackageJsonAndIndent(packageJsonFileName);
 		const pnpmWorkspacePath = path.join(this.directory, "pnpm-workspace.yaml");
 		const yarnLockPath = path.join(this.directory, "yarn.lock");
-		this.packageManager = existsSync(pnpmWorkspacePath)
-			? "pnpm"
-			: existsSync(yarnLockPath)
-				? "yarn"
-				: "npm";
+		this.packageManager = monoRepo
+			? monoRepo.packageManager
+			: existsSync(pnpmWorkspacePath)
+				? "pnpm"
+				: existsSync(yarnLockPath)
+					? "yarn"
+					: "npm";
 		traceInit(`${this.nameColored}: Package loaded`);
 		Object.assign(this, additionalProperties);
 	}
