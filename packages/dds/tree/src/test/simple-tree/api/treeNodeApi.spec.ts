@@ -347,7 +347,7 @@ describe("treeNodeApi", () => {
 			const view = getView(config, nodeKeyManager);
 			view.initialize({ identifier: id });
 
-			assert.equal(TreeAlpha.longId(view.root), id);
+			assert.equal(TreeAlpha.identifier(view.root), id);
 		});
 
 		it("returns undefined when an identifier fieldkind does not exist.", () => {
@@ -358,7 +358,7 @@ describe("treeNodeApi", () => {
 			const view = getView(config);
 			view.initialize({ identifier: "testID" });
 
-			assert.equal(TreeAlpha.longId(view.root), undefined);
+			assert.equal(TreeAlpha.identifier(view.root), undefined);
 		});
 
 		it("returns the original identifier value when the provided identifier is a valid stable id, but unknown by the idCompressor.", () => {
@@ -375,7 +375,7 @@ describe("treeNodeApi", () => {
 			const view = getView(config);
 			view.initialize({ identifier: stableNodeKey });
 
-			assert.equal(TreeAlpha.longId(view.root), stableNodeKey);
+			assert.equal(TreeAlpha.identifier(view.root), stableNodeKey);
 		});
 
 		it("errors if multiple identifiers exist on the same node", () => {
@@ -392,7 +392,7 @@ describe("treeNodeApi", () => {
 				identifier2: "b",
 			});
 			assert.throws(
-				() => TreeAlpha.longId(view.root),
+				() => TreeAlpha.identifier(view.root),
 				(error: Error) =>
 					validateAssertionError(
 						error,
@@ -407,7 +407,7 @@ describe("treeNodeApi", () => {
 			});
 			const view = getView(config);
 			view.initialize([1, 2, 3]);
-			assert.equal(TreeAlpha.longId(view.root), undefined);
+			assert.equal(TreeAlpha.identifier(view.root), undefined);
 		});
 
 		describe("unhydrated", () => {
@@ -416,13 +416,13 @@ describe("treeNodeApi", () => {
 			}) {}
 			it("returns uncompressed string for unhydrated nodes", () => {
 				const node = new HasIdentifier({ identifier: "x" });
-				assert.equal(TreeAlpha.longId(node), "x");
+				assert.equal(TreeAlpha.identifier(node), "x");
 			});
 			it("errors accessing defaulted", () => {
 				const node = new HasIdentifier({});
 				assert.throws(
 					() => {
-						TreeAlpha.longId(node);
+						TreeAlpha.identifier(node);
 					},
 					validateUsageError(/default/),
 				);

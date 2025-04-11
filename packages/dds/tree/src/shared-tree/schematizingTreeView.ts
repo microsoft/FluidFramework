@@ -488,9 +488,17 @@ export class SchematizingSimpleTreeView<
 		getCheckout(context).rebase(this.checkout);
 	}
 
-	public stabilizeIdentifier(identifier: number): StableNodeIdentifier {
-		return this.nodeKeyManager.stabilizeNodeIdentifier(
-			identifier as unknown as LocalNodeIdentifier,
+	// TODO: figure out if we want to return string (instead of StableNodeIdentifier), and if this should be public
+	public stabilizeIdentifier(identifier: number): StableNodeIdentifier | undefined {
+		return this.nodeKeyManager.tryStabilizeNodeIdentifier(
+			identifier,
+		);
+	}
+
+	// TODO: figure out if we want to return number (instead of LocalNodeIdentifier), and if this should be public
+	public localizeIdentifier(identifier: string): LocalNodeIdentifier | undefined {
+		return this.nodeKeyManager.tryLocalizeNodeIdentifier(
+			identifier,
 		);
 	}
 

@@ -8,7 +8,6 @@ import { strict as assert, fail } from "node:assert";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	createNodeIdentifierManager,
 	MockNodeIdentifierManager,
 } from "../../feature-libraries/index.js";
 import {
@@ -42,7 +41,6 @@ import {
 	type TreeCheckout,
 	type TreeStoredContent,
 } from "../../shared-tree/index.js";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
 const schema = new SchemaFactory("com.example");
 const config = new TreeViewConfiguration({ schema: schema.number });
@@ -921,9 +919,7 @@ describe("SchematizingSimpleTreeView", () => {
 				identifier: schema.identifier,
 			});
 
-			// We cannot use a mock node key manager here, as it does not fail when stabilizing unknown ids.
-			const idCompressor = createIdCompressor();
-			const nodeKeyManager = createNodeIdentifierManager(idCompressor);
+			const nodeKeyManager = new MockNodeIdentifierManager()
 			const id = nodeKeyManager.stabilizeNodeIdentifier(
 				nodeKeyManager.generateLocalNodeIdentifier(),
 			);

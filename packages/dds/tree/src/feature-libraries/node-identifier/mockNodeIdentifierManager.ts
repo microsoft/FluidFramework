@@ -12,6 +12,7 @@ import {
 	type NodeIdentifierManager,
 } from "./nodeIdentifierManager.js";
 import { brand, extractFromOpaque, fail } from "../../util/index.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Mock {@link NodeIdentifierManager} that generates deterministic {@link StableNodeIdentifier}s and {@link LocalNodeIdentifier}s.
@@ -49,9 +50,20 @@ export class MockNodeIdentifierManager implements NodeIdentifierManager {
 			: undefined;
 	}
 
+	public tryStabilizeNodeIdentifier(key: number): StableNodeIdentifier | undefined {
+		try {
+			return brand(this.getId(extractFromOpaque(key as unknown as LocalNodeIdentifier)))
+		} catch  {
+			return undefined
+		}
+	}
+
 	public getId(offset: number): StableId {
 		assert(offset >= 0, 0x6e7 /* UUID offset may not be negative */);
 		assert(offset < 281_474_976_710_656, 0x6e8 /* UUID offset must be at most 16^12 */);
+		if(offset >= this.count){
+			throw new UsageError("Invalid local id.")
+		}
 		return assertIsStableId(
 			`a110ca7e-add1-4000-8000-${Math.round(offset).toString(16).padStart(12, "0")}`,
 		);

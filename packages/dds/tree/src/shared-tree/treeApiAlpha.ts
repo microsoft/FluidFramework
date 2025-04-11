@@ -54,7 +54,7 @@ import {
 } from "../feature-libraries/index.js";
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
-import { Tree } from "./index.js";
+import { treeApi } from "./treeApi.js";
 
 /**
  * Extensions to {@link Tree} and {@link TreeBeta} which are not yet stable.
@@ -207,7 +207,7 @@ export const TreeAlpha: {
 		options: { idCompressor?: IIdCompressor } & ICodecOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
-	longId(node: TreeNode): string | undefined;
+	identifier(node: TreeNode): string | undefined;
 } = {
 	branch(node: TreeNode): TreeBranch | undefined {
 		const kernel = getKernel(node);
@@ -317,8 +317,8 @@ export const TreeAlpha: {
 		return TreeBeta.clone<TSchema>(view.root);
 	},
 
-	longId(node: TreeNode): string | undefined {
-		return Tree.longId(node);
+	identifier(node: TreeNode): string | undefined {
+		return treeApi.identifier(node);
 	},
 };
 

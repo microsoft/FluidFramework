@@ -494,7 +494,7 @@ export interface TreeBranch extends IDisposable {
 	 * This method assumes that the identifier passed in will be a local node identifier recognized by the SharedTree's idCompressor,
 	 * and will otherwise fail.
 	 */
-	stabilizeIdentifier(identifier: number): string;
+	stabilizeIdentifier(identifier: number): string | undefined;
 }
 
 /**

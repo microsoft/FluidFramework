@@ -124,7 +124,7 @@ export interface TreeNodeApi {
 	 */
 	shortId(node: TreeNode): number | string | undefined;
 
-	longId(node: TreeNode): string | undefined;
+	identifier(node: TreeNode): string | undefined;
 }
 
 /**
@@ -221,7 +221,7 @@ export const treeNodeApi: TreeNodeApi = {
 	shortId(node: TreeNode): number | string | undefined {
 		return getIdentifier(node, true);
 	},
-	longId(node: TreeNode): string | undefined {
+	identifier(node: TreeNode): string | undefined {
 		const identifier = getIdentifier(node, false);
 		if (typeof identifier === "number") {
 			throw new TypeError("identifier should be uncompressed.");
