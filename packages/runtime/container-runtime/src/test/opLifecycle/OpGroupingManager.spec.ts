@@ -10,10 +10,10 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { ContainerMessageType } from "../../index.js";
 import {
-	BatchMessage,
-	IBatch,
+	OutboundBatchMessage,
 	OpGroupingManager,
 	isGroupedBatch,
+	type OutboundBatch,
 } from "../../opLifecycle/index.js";
 
 describe("OpGroupingManager", () => {
@@ -23,11 +23,11 @@ describe("OpGroupingManager", () => {
 		hasReentrantOps?: boolean,
 		opHasMetadata: boolean = false,
 		batchId?: string,
-	): IBatch => ({
+	): OutboundBatch => ({
 		...messagesToBatch(Array.from({ length }, () => createMessage(opHasMetadata, batchId))),
 		hasReentrantOps,
 	});
-	const messagesToBatch = (messages: BatchMessage[]): IBatch => ({
+	const messagesToBatch = (messages: OutboundBatchMessage[]): OutboundBatch => ({
 		messages,
 		contentSizeInBytes: messages
 			.map((message) => JSON.stringify(message).length)
@@ -102,24 +102,26 @@ describe("OpGroupingManager", () => {
 
 		it("create empty batch", () => {
 			const batchId = "batchId";
+			const expectedPlaceholderMessage: OutboundBatchMessage = {
+				contents: '{"type":"groupedBatch","contents":[]}',
+				metadata: { batchId },
+				localOpMetadata: { emptyBatch: true },
+				referenceSequenceNumber: 0,
+			};
+
 			const result = new OpGroupingManager(
 				{
 					groupedBatchingEnabled: true,
 				},
 				mockLogger,
 			).createEmptyGroupedBatch(batchId, 0);
-			assert.deepStrictEqual(result.messages, [
-				{
-					contents: '{"type":"groupedBatch","contents":[]}',
-					metadata: { batchId },
-					localOpMetadata: { emptyBatch: true },
-					referenceSequenceNumber: 0,
-				},
-			]);
+
+			assert.deepStrictEqual(result.outboundBatch.messages, [expectedPlaceholderMessage]);
+			assert.deepStrictEqual(result.placeholderMessage, expectedPlaceholderMessage);
 		});
 
 		it("should throw for an empty batch", () => {
-			const emptyBatch: IBatch = {
+			const emptyBatch: OutboundBatch = {
 				messages: [],
 				contentSizeInBytes: 0,
 				referenceSequenceNumber: 0,

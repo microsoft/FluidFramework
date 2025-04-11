@@ -129,6 +129,7 @@ export function create(
 		authorization: string | undefined,
 		ref: string,
 	): Promise<void> {
+		// Do not pass the denyList to the git service, as it is not needed for delete operations
 		const service = await utils.createGitService({
 			config,
 			tenantId,
@@ -137,7 +138,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			denyList,
 			ephemeralDocumentTTLSec,
 		});
 		return service.deleteRef(ref);

@@ -136,6 +136,7 @@ export function create(
 		authorization: string | undefined,
 		softDelete: boolean,
 	): Promise<boolean[]> {
+		// Do not pass the denyList to the git service, as it is not needed for delete operations
 		const service = await utils.createGitService({
 			config,
 			tenantId,
@@ -145,7 +146,6 @@ export function create(
 			documentManager,
 			cache,
 			allowDisabledTenant: true,
-			denyList,
 			ephemeralDocumentTTLSec,
 		});
 		const deletionPs = [service.deleteSummary(softDelete)];
