@@ -167,17 +167,27 @@ const rootDataStoreId = "rootDOId";
  * @internal
  */
 export function createDOProviderContainerRuntimeFactory(props: {
+	/**
+	 * The schema for the container
+	 */
 	schema: ContainerSchema;
+	/**
+	 * Compatibility mode
+	 */
 	compatibilityMode: CompatibilityMode;
+	/**
+	 * Optional factory for the root data object.
+	 * If not provided, a default factory will be created based on the schema.
+	 */
+	rootDataObjectFactory?: DataObjectFactory<
+		RootDataObject,
+		{ InitialState: RootDataObjectProps }
+	>;
 }): IRuntimeFactory {
 	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(props.schema);
-	const rootDataObjectFactory = new DataObjectFactory(
-		"rootDO",
-		RootDataObject,
-		sharedObjects,
-		{},
-		registryEntries,
-	);
+	const rootDataObjectFactory =
+		props.rootDataObjectFactory ??
+		new DataObjectFactory("rootDO", RootDataObject, sharedObjects, {}, registryEntries);
 	return new DOProviderContainerRuntimeFactory(
 		props.schema,
 		props.compatibilityMode,
@@ -188,10 +198,8 @@ export function createDOProviderContainerRuntimeFactory(props: {
 /**
  * Factory for Container Runtime instances that provide a single {@link IRootDataObject}
  * as their entry point.
- *
- * @internal
  */
-export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
+class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	private readonly rootDataObjectFactory: DataObjectFactory<
 		RootDataObject,
 		{
@@ -209,7 +217,7 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
 	 * DataStore/DDS types that the schema says can be constructed).
 	 *
 	 * Most scenarios probably want to use {@link createDOProviderContainerRuntimeFactory} instead,
-	 * since it takes care of constructing the root data object factory based on the schema.
+	 * since it can take care of constructing the root data object factory based on the schema.
 	 *
 	 * @param schema - The schema for the container
 	 * @param compatibilityMode - Compatibility mode

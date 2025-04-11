@@ -19,7 +19,6 @@ export {
 } from "./fluidContainer.js";
 export {
 	createDOProviderContainerRuntimeFactory,
-	DOProviderContainerRuntimeFactory,
 	RootDataObject,
 	type RootDataObjectProps,
 } from "./rootDataObject.js";
