@@ -137,6 +137,13 @@ stages:
           env:
             INSTRUMENTATION_KEY: $(INSTRUMENTATION_KEY)
 
+        - task: Bash@3
+          displayName: 'Check inline script hashes correctness'
+          inputs:
+            targetType: 'filePath'
+            workingDirectory: $(Build.SourcesDirectory)/docs
+            filePath: '$(Build.SourcesDirectory)/docs/validateHashes.sh'
+
         # Run the tests
         - task: Npm@1
           displayName: Run tests
