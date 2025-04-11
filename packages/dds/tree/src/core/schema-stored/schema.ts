@@ -14,7 +14,7 @@ import {
 	PersistedValueSchema,
 	type TreeNodeSchemaDataFormat,
 	type TreeNodeSchemaIdentifier,
-} from "./format.js";
+} from "./formatV1.js";
 import type { Multiplicity } from "./multiplicity.js";
 
 /**

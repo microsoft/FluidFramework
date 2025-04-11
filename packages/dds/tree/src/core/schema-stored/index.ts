@@ -34,7 +34,7 @@ export {
 } from "./storedSchemaRepository.js";
 export { Multiplicity } from "./multiplicity.js";
 
-export type { TreeNodeSchemaIdentifier, FieldKey, FieldKindIdentifier } from "./format.js";
+export type { TreeNodeSchemaIdentifier, FieldKey, FieldKindIdentifier } from "./formatV1.js";
 
-import * as schemaFormat from "./format.js";
+import * as schemaFormat from "./formatV1.js";
 export { schemaFormat };

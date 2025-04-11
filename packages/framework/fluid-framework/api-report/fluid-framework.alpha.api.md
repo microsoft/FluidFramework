@@ -954,6 +954,7 @@ export enum NodeKind {
 export interface NodeSchemaMetadata<out TCustomMetadata = unknown> {
     readonly custom?: TCustomMetadata | undefined;
     readonly description?: string | undefined;
+    readonly persistedData?: string | undefined;
 }
 
 // @public @sealed
