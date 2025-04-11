@@ -9,12 +9,7 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { ContainerMessageType } from "../../index.js";
-import {
-	OutboundBatchMessage,
-	OpCompressor,
-	type OutboundBatch,
-	type OutboundSingletonBatch,
-} from "../../opLifecycle/index.js";
+import { BatchMessage, IBatch, OpCompressor } from "../../opLifecycle/index.js";
 
 describe("OpCompressor", () => {
 	let compressor: OpCompressor;
@@ -25,7 +20,7 @@ describe("OpCompressor", () => {
 	});
 
 	const createSingletonBatch = (messageSize: number) =>
-		createBatch(1, messageSize) as OutboundSingletonBatch;
+		createBatch(1, messageSize) as IBatch<[BatchMessage]>;
 
 	const createBatch = (length: number, messageSize: number) => {
 		const messages = Array.from({ length }, () =>
@@ -33,7 +28,7 @@ describe("OpCompressor", () => {
 		);
 		return messagesToBatch(messages);
 	};
-	const messagesToBatch = (messages: OutboundBatchMessage[]): OutboundBatch => ({
+	const messagesToBatch = (messages: BatchMessage[]): IBatch => ({
 		messages,
 		contentSizeInBytes: messages
 			.map((message) => JSON.stringify(message).length)
@@ -79,7 +74,7 @@ describe("OpCompressor", () => {
 			)} MB`, () => {
 				assert.throws(
 					() => {
-						compressor.compressBatch(batch as OutboundSingletonBatch); // The need to cast indicates this is not going to work
+						compressor.compressBatch(batch as IBatch<[BatchMessage]>); // The need to cast indicates this is not going to work
 					},
 					(error: Error) => {
 						validateAssertionError(

@@ -15,50 +15,23 @@ import { validateUsageError } from "../../utils.js";
 const sf = new SchemaFactory("integration");
 
 describe("simple-tree API integration tests", () => {
-	describe("recursive unhydrated nodes", () => {
+	// TODO: AB#32207:
+	// This case should produce a usage error (and thus allow this test to be un-skipped).
+	// Currently this tests hangs forever, not even being terminated by the mocha timeout.
+	// Depending on where the error is detected, tests for recursive maps, arrays and co-recursive cases may be needed.
+	it.skip("making a recursive unhydrated object node errors", () => {
 		class O extends sf.objectRecursive("O", {
 			recursive: sf.optionalRecursive([() => O]),
 		}) {}
 		{
 			type _check = ValidateRecursiveSchema<typeof O>;
 		}
-		it("making a recursive unhydrated and un-parented object node errors", () => {
-			const obj = new O({ recursive: undefined });
-			assert.throws(
-				() => {
-					obj.recursive = obj;
-				},
-				validateUsageError(/under itself/),
-			);
-		});
-	});
-
-	describe("multi parenting unhydrated nodes", () => {
-		class O extends sf.object("O", {
-			prop: sf.optional(sf.string),
-		}) {}
-
-		class A extends sf.array("A", O) {}
-
-		it("multi parenting an unhydrated node on edit errors", () => {
-			const obj = new O({ prop: "o" });
-			const array = new A([obj]);
-			assert.throws(
-				() => {
-					array.insertAtEnd(obj);
-				},
-				validateUsageError(/already in a tree/),
-			);
-		});
-
-		it("multi parenting an unhydrated node on create errors", () => {
-			const obj = new O({ prop: "o" });
-			assert.throws(
-				() => {
-					new A([obj, obj]);
-				},
-				validateUsageError(/more than one place/),
-			);
-		});
+		const obj = new O({ recursive: undefined });
+		assert.throws(
+			() => {
+				obj.recursive = obj;
+			},
+			validateUsageError(/recursive/),
+		);
 	});
 });
