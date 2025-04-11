@@ -41,7 +41,6 @@ export {
 	ISequenceOverlappingIntervalsIndex,
 	IEndpointIndex,
 	createOverlappingIntervalsIndex,
-	createOverlappingSequenceIntervalsIndex,
 	createEndpointIndex,
 } from "./intervalIndex/index.js";
 export {

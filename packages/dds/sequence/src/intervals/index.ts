@@ -11,7 +11,6 @@ export {
 	IntervalType,
 	IntervalDeltaOpType,
 	IntervalStickiness,
-	ISerializableIntervalPrivate,
 	SerializedIntervalDelta,
 	CompressedSerializedInterval,
 	endReferenceSlidingPreference,
@@ -22,4 +21,6 @@ export {
 	SequenceIntervalClass,
 	createSequenceInterval,
 	createPositionReferenceFromSegoff,
+	createTransientInterval,
+	getSerializedProperties,
 } from "./sequenceInterval.js";
