@@ -119,7 +119,7 @@ export async function performFuzzActionsAsync<
 	const runGenerator = async (
 		genState: TState,
 	): Promise<RealOperation<TOperation> | typeof done> => {
-		const seed = initialState.random.real();
+		const seed = initialState.random.integer(0, Number.MAX_SAFE_INTEGER);
 		const seededState: TState = {
 			...genState,
 			random: initialState.random.clone(seed),
