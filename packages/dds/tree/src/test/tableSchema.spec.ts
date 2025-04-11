@@ -172,7 +172,7 @@ describe("TableFactory unit tests", () => {
 
 		// TODO: There is currently no policy from prohibiting insertion of a column that already exists.
 		// Once that work is finished, the usage error in this test should be updated, and the test can be unskipped.
-		it.skip("Appending existing column fails.", () => {
+		it.skip("Appending existing column errors", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({ rows: [], columns: [{ id: "column-a" }, { id: "column-b" }] });
 
@@ -360,7 +360,7 @@ describe("TableFactory unit tests", () => {
 	});
 
 	describe("Set cell", () => {
-		it("Append rows", () => {
+		it("set cell in a valid location", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
 				columns: [
@@ -404,49 +404,9 @@ describe("TableFactory unit tests", () => {
 			});
 		});
 
-		// TODO: There is currently no policy from prohibiting insertion of a cell that already exists.
-		// Once that work is finished, the usage error in this test should be updated, and the test can be unskipped.
-		it.skip("inserting cell that already exists fails.", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({
-				columns: [
-					{
-						id: "column-0",
-					},
-				],
-				rows: [
-					{
-						id: "row-0",
-						cells: {},
-					},
-				],
-			});
-
-			treeView.root.setCell({
-				key: {
-					rowId: "row-0",
-					columnId: "column-0",
-				},
-				cell: { value: "Hello world!" },
-			});
-
-			// Insert the same cell again.
-			assert.throws(
-				() =>
-					treeView.root.setCell({
-						key: {
-							rowId: "row-0",
-							columnId: "column-0",
-						},
-						cell: { value: "Hello world!" },
-					}),
-				validateUsageError(/Placeholder usage error/),
-			);
-		});
-
 		// TODO: There is currently no policy from prohibiting insertion of an invalid cell.
 		// Once that work is finished, the usage error in this test should be updated, and the test can be unskipped.
-		it.skip("inserting invalid cell fails.", () => {
+		it.skip("setting cell in an invalid location errors", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
 				columns: [
@@ -507,7 +467,7 @@ describe("TableFactory unit tests", () => {
 
 		// TODO: There is currently no policy from prohibiting removal of non-existant columns.
 		// Once that work is finished, the usage error in this test should be updated, and the test can be unskipped.
-		it.skip("removing column that does not exist on table fails", () => {
+		it.skip("removing column that does not exist on table errors", () => {
 			const { treeView, Column } = createTableTree();
 			treeView.initialize({
 				columns: [],
@@ -521,22 +481,22 @@ describe("TableFactory unit tests", () => {
 		});
 	});
 
-	describe("Delete rows", () => {
-		it("delete empty list", () => {
+	describe("Remove rows", () => {
+		it("remove empty list", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
 				columns: [],
 				rows: [],
 			});
 
-			treeView.root.deleteAllRows();
+			treeView.root.removeAllRows();
 			assertEqualTrees(treeView.root, {
 				columns: [],
 				rows: [],
 			});
 		});
 
-		it("delete single row", () => {
+		it("remove single row", () => {
 			const { treeView, Row } = createTableTree();
 			const row0 = new Row({ id: "row-0", cells: {} });
 			const row1 = new Row({ id: "row-1", cells: {} });
@@ -545,22 +505,22 @@ describe("TableFactory unit tests", () => {
 				rows: [row0, row1],
 			});
 
-			// Delete row0
-			treeView.root.deleteRows([row0]);
+			// Remove row0
+			treeView.root.removeRows([row0]);
 			assertEqualTrees(treeView.root, {
 				columns: [],
 				rows: [{ id: "row-1", cells: {} }],
 			});
 
-			// Delete row1
-			treeView.root.deleteRows([row1]);
+			// Remove row1
+			treeView.root.removeRows([row1]);
 			assertEqualTrees(treeView.root, {
 				columns: [],
 				rows: [],
 			});
 		});
 
-		it("delete multiple rows", () => {
+		it("remove multiple rows", () => {
 			const { treeView, Row } = createTableTree();
 			const row0 = new Row({ id: "row-0", cells: {} });
 			const row1 = new Row({ id: "row-1", cells: {} });
@@ -571,8 +531,8 @@ describe("TableFactory unit tests", () => {
 				rows: [row0, row1, row2, row3],
 			});
 
-			// Delete rows 1 and 3
-			treeView.root.deleteRows([row1, row3]);
+			// Remove rows 1 and 3
+			treeView.root.removeRows([row1, row3]);
 			assertEqualTrees(treeView.root, {
 				columns: [],
 				rows: [
@@ -587,15 +547,15 @@ describe("TableFactory unit tests", () => {
 				],
 			});
 
-			// Delete rows 0 and 3
-			treeView.root.deleteRows([row0, row2]);
+			// Remove rows 0 and 3
+			treeView.root.removeRows([row0, row2]);
 			assertEqualTrees(treeView.root, {
 				columns: [],
 				rows: [],
 			});
 		});
 
-		it("deleting single row that doesn't exist on table fails", () => {
+		it("removing single row that doesn't exist on table errors", () => {
 			const { treeView, Row } = createTableTree();
 			treeView.initialize({
 				columns: [],
@@ -603,12 +563,12 @@ describe("TableFactory unit tests", () => {
 			});
 
 			assert.throws(
-				() => treeView.root.deleteRows([new Row({ id: "row-0", cells: {} })]),
+				() => treeView.root.removeRows([new Row({ id: "row-0", cells: {} })]),
 				validateUsageError(/Expected non-negative index, got -1./),
 			);
 		});
 
-		it("deleting multiple rows that doesn't exist on table fails", () => {
+		it("removing multiple rows that doesn't exist on table errors", () => {
 			const { treeView, Row } = createTableTree();
 			treeView.initialize({
 				columns: [],
@@ -617,17 +577,19 @@ describe("TableFactory unit tests", () => {
 
 			assert.throws(
 				() =>
-					treeView.root.deleteRows([
+					treeView.root.removeRows([
 						new Row({ id: "row-0", cells: {} }),
 						new Row({ id: "row-1", cells: {} }),
 					]),
+				// TODO: The usage error here comes from the arrayNode layer.
+				// Once removeRows gets updated to return a usage error that makes more sense, update usage error here.
 				validateUsageError(/Expected non-negative index, got -1./),
 			);
 		});
 	});
 
-	describe("Delete cell", () => {
-		it("delete valid cell with existing data.", () => {
+	describe("Remove cell", () => {
+		it("remove cell in valid location with existing data", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
 				columns: [
@@ -650,7 +612,7 @@ describe("TableFactory unit tests", () => {
 				key: cellKey,
 				cell: { value: "Hello world!" },
 			});
-			treeView.root.deleteCell(cellKey);
+			treeView.root.removeCell(cellKey);
 			assertEqualTrees(treeView.root, {
 				columns: [
 					{
@@ -666,7 +628,7 @@ describe("TableFactory unit tests", () => {
 			});
 		});
 
-		it("delete valid cell with no data.", () => {
+		it("remove cell in valid location with no data", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
 				columns: [
@@ -685,7 +647,7 @@ describe("TableFactory unit tests", () => {
 				rowId: "row-0",
 				columnId: "column-0",
 			};
-			treeView.root.deleteCell(cellKey);
+			treeView.root.removeCell(cellKey);
 			assertEqualTrees(treeView.root, {
 				columns: [
 					{
@@ -703,7 +665,7 @@ describe("TableFactory unit tests", () => {
 
 		// TODO: There is currently no usage error for deleting invalid cells.
 		// Once that work is finished, the usage error in this test should be updated, and the test can be unskipped.
-		it.skip("deleting invalid cell fails.", () => {
+		it.skip("removing cell from nonexistent row and column errors", () => {
 			const { treeView } = createTableTree();
 			treeView.initialize({
 				columns: [
@@ -724,13 +686,13 @@ describe("TableFactory unit tests", () => {
 			};
 
 			assert.throws(
-				() => treeView.root.deleteCell(invalidCellKey),
+				() => treeView.root.removeCell(invalidCellKey),
 				validateUsageError(/Placeholder usage error./),
 			);
 		});
 	});
 
-	it("gets proper table elements with getter methods.", () => {
+	it("gets proper table elements with getter methods", () => {
 		const { treeView, Column, Row, Cell } = createTableTree();
 
 		const cell0 = new Cell({ value: "Hello World!" });
