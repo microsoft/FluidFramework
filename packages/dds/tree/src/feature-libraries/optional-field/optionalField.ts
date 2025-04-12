@@ -276,6 +276,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				// This branch deals with case (S▼S▼S).
 				// Pinning the node twice is equivalent to pinning it once.
 				composedSrc = "self";
+				// Note that we must preserve the detach ID from change1
+				// because that's the ID that should be used if the composed changeset were to be rebased over a change that attaches a different node in place of S.
 				composedDst = replace1.dst;
 			} else if (replace1.src === "self") {
 				// This branch deals with cases (S▼S C) and (S▼S _).
@@ -304,6 +306,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				composedSrc = replace2.dst;
 				// However, we need to inform the node manager of the rename
 				nodeManager.composeAttachDetach(replace1.src, replace2.dst, 1);
+				// In case (A S▼S), A is detached using the detach ID from change1
+				// In case (_ S▼S), the detach ID from change1 is the ID that should be used if the composed changeset were to be rebased over a change that attaches a node in the field.
 				composedDst = replace1.dst;
 			} else {
 				// This branch deals with the remaining 10 cases:
@@ -353,6 +357,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						// This branch deals with cases (S B S) and (S _ S) (i.e, the "Yes" column).
 						// Both cases are equivalent to pinning the node S.
 						composedSrc = "self";
+						// The detach ID from change1 is the one that should be used if the composed changeset were to be rebased over a change that attaches a different node in place of S.
 						composedDst = replace1.dst;
 					} else {
 						// This branch deals with the remaining 5 cases (ie., the "No" column):
@@ -363,6 +368,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						// (_ B _)
 						// In all cases, change2 has the final word as to whether and what to attach.
 						composedSrc = replace2.src;
+						// In cases (A ...), A is detached using the detach ID from change1
+						// In cases (_ ...), the detach ID from change1 is the ID that should be used if the composed changeset were to be rebased over a change that attaches a node in the field.
 						composedDst = replace1.dst;
 					}
 				}
