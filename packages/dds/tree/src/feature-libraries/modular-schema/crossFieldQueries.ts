@@ -84,7 +84,7 @@ export interface ComposeNodeManager {
 	): void;
 
 	/**
-	 * Must be called by a field kind when composing a detach in the base changeset with nested changes the new changeset.
+	 * Must be called by a field kind when composing an attach in the base changeset with nested changes the new changeset.
 	 * @param baseAttachId - The ID of the attach in the base changeset.
 	 * @param newChanges - The ID of the nested changes associated with this node in the new changeset.
 	 */

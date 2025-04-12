@@ -179,7 +179,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		// |   F   |   T   |   T   |    N     |         |
 		// +-------+-------+-------+----------+---------+
 		// The other base patterns are similar but with fewer possibilities since there are fewer nodes.
-		// This yields the following cases:
+		// This yields the following 15 cases:
 		// ├─ Base pattern (A B C)
 		// │  ├─ (A B C)
 		// │  ├─ (A S S)
@@ -245,7 +245,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		//    ├─ (_▲_ _) <- new
 		//    ├─ (_ _▲_) <- new
 		//    └─ (_▲_▲_) <- new
-		const composed: Mutable<OptionalChangeset> = {};
 		let composedReplace: Mutable<Replace> | undefined;
 		if (change1.valueReplace === undefined || change2.valueReplace === undefined) {
 			// In this branch, at most one of the changes has intentions regarding content of the field.
@@ -387,100 +386,91 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			}
 		}
 
-		// if (isReplaceEffectful(change1.valueReplace)) {
-		// 	const baseAttachId = change1.valueReplace?.src;
-		// 	if (baseAttachId !== undefined) {
-		// 		const newDetachId = getEffectfulDst(change2.valueReplace);
-		// 		if (newDetachId !== undefined) {
-		// 			nodeManager.composeAttachDetach(baseAttachId, newDetachId, 1);
-		// 		}
-		// 		if (change2.childChange !== undefined) {
-		// 			nodeManager.sendNewChangesToBaseSourceLocation(baseAttachId, change2.childChange);
-		// 		}
-		// 	}
+		// Note that when it comes to managing child changes, differences in intentions do not matter given identical effect.
+		// This means that we only have to consider the following 15 cases:
+		// (A B C)
+		// (A S S)
+		// (S B S)
+		// (S S C)
+		// (S S S)
+		// (_ B C)
+		// (_ S S)
+		// (A _ C)
+		// (S _ S)
+		// (A B _)
+		// (S S _)
+		// (A _ _)
+		// (_ B _)
+		// (_ _ C)
+		// (_ _ _)
 
-		// 	if (isReplaceEffectful(change2.valueReplace)) {
-		// 		composedReplace = {
-		// 			isEmpty: change1.valueReplace.isEmpty,
-		// 			dst: change1.valueReplace.dst,
-		// 		};
-
-		// 		if (
-		// 			change2.valueReplace.src !== undefined &&
-		// 			nodeManager.composeDetachAttach(
-		// 				change1.valueReplace.dst,
-		// 				change2.valueReplace.src,
-		// 				1,
-		// 			)
-		// 		) {
-		// 			composedReplace.src = "self";
-		// 		} else {
-		// 			const composedSrc = change2.valueReplace.src;
-		// 			if (composedSrc !== undefined) {
-		// 				composedReplace.src = composedSrc;
-		// 			}
-		// 		}
-		// 	} else {
-		// 		if (change1.valueReplace.src !== undefined && change2.valueReplace?.src === "self") {
-		// 			// A node is being attached with ID `change1.valueReplace.src`--call that A,
-		// 			// then detached with ID `change2.valueReplace.dst`--call that B,
-		// 			// then attached again with ID B (yes, the same one, because change2 is a pin).
-		// 			// We could return a changeset that conveys the node is attached with ID A (this is what the `else` branch does).
-		// 			// Instead we want to inform the node manager of the transfer from A to B and return a changeset that conveys the node is attached with ID B.
-		// 			// While both option have identical merge semantics, we prefer the latter in order to ensure a normalized output.
-		// 			// The normalized form uses the earliest known detached node ID as the destination of detaches and the last known detached node ID as the source of attaches.
-		// 			nodeManager.composeAttachDetach(
-		// 				change1.valueReplace.src,
-		// 				change2.valueReplace.dst,
-		// 				1,
-		// 			);
-		// 			composedReplace = {
-		// 				...change1.valueReplace,
-		// 				src: change2.valueReplace.dst,
-		// 			};
-		// 		} else {
-		// 			composedReplace = change1.valueReplace;
-		// 		}
-		// 	}
-		// } else {
-		// 	// eslint-disable-next-line unicorn/prefer-ternary
-		// 	if (isReplaceEffectful(change2.valueReplace)) {
-		// 		composedReplace = {
-		// 			...change2.valueReplace,
-		// 			// If change1 is not effectful but it has an intention to clear the (currently empty) field,
-		// 			// then we need to preserve that intention.
-		// 			dst: change1.valueReplace?.dst ?? change2.valueReplace.dst,
-		// 		};
-		// 	} else {
-		// 		// Just because neither of the changes are effectful does not mean they have no change intentions.
-		// 		// If one of them has an intention to clear the (currently empty) field then we need to preserve that.
-		// 		composedReplace = change1.valueReplace ?? change2.valueReplace;
-		// 	}
-		// }
-
-		if (composedReplace !== undefined) {
-			composed.valueReplace = composedReplace;
-		}
-
-		let newChild: NodeId | undefined;
+		// Fields are responsible for composing the child changes for nodes are attached in context 1.
+		// In optional fields, that would be node A if it exists.
+		let newChildChangesForA: NodeId | undefined;
+		// If A did exist, the new changes would come from wherever node A is being sent by change1.
+		// eslint-disable-next-line unicorn/prefer-ternary
 		if (isReplaceEffectful(change1.valueReplace)) {
-			// change1 replaced the node in this field, so change2.child refers to a detached node in the composed input context.
-			if (!change1.valueReplace.isEmpty) {
-				newChild = nodeManager.getNewChangesForBaseDetach(change1.valueReplace.dst, 1).value;
-			}
+			// This branch deals with the cases A exists and is being detached (and not reattached) by change1:
+			// (A B C)
+			// (A S S)
+			// (S B S)
+			// (A _ C)
+			// (S _ S)
+			// (A B _)
+			// (A _ _)
+			newChildChangesForA = nodeManager.getNewChangesForBaseDetach(
+				change1.valueReplace.dst,
+				1,
+			).value;
 		} else {
-			newChild = change2.childChange;
+			// This branch deals with the 8 remaining cases which can be organized as follows:
+			// ├─ A does not exist:
+			// |  ├─ (_ B C)
+			// |  ├─ (_ S S)
+			// |  ├─ (_ B _)
+			// |  ├─ (_ _ C)
+			// |  └─ (_ _ _)
+			// └─ A does exist and is not being detached by change1:
+			//    ├─ (S S C)
+			//    ├─ (S S _)
+			//    └─ (S S S)
+			// In the first group of cases, change2.childChange will be undefined because the field in change2's input context.
+			// In the second group of cases, change2.childChange represents the new child changes (if any) for node A.
+			// In both cases, it's safe to use change2.childChange.
+			newChildChangesForA = change2.childChange;
 		}
 
 		let composedChild: NodeId | undefined;
-		if (change1.childChange !== undefined || newChild !== undefined) {
-			composedChild = composeChild(change1.childChange, newChild);
+		if (change1.childChange !== undefined || newChildChangesForA !== undefined) {
+			composedChild = composeChild(change1.childChange, newChildChangesForA);
 		}
 
+		// Fields are also responsible for sending new child changes to the node manager for nodes that are being attached by change1.
+		if (change2.childChange !== undefined && isReplaceEffectful(change1.valueReplace)) {
+			// The presence of new child implies that there is some node B present in the field in context 2.
+			// The fact that the change1 has a shallow effect implies that node B was attached by change1.
+			// This branch therefore deals with the following cases:
+			// (A B C)
+			// (A B _)
+			// (A S S)
+			// (_ S S)
+			// (S B S)
+			// (_ B C)
+			// (_ B _)
+			assert(change1.valueReplace.src !== undefined, "Replace1.src should be defined");
+			nodeManager.sendNewChangesToBaseSourceLocation(
+				change1.valueReplace.src,
+				change2.childChange,
+			);
+		}
+
+		const composed: Mutable<OptionalChangeset> = {};
+		if (composedReplace !== undefined) {
+			composed.valueReplace = composedReplace;
+		}
 		if (composedChild !== undefined) {
 			composed.childChange = composedChild;
 		}
-
 		return composed;
 	},
 
