@@ -46,7 +46,7 @@ export type {
 export { LogLevel } from "./logger.js";
 export type { FluidObjectProviderKeys, FluidObject, FluidObjectKeys } from "./provider.js";
 export type { ConfigTypes, IConfigProviderBase } from "./config.js";
-export type { ISignalEnvelope } from "./messages.js";
+export type { ISignalEnvelope, TypedMessage } from "./messages.js";
 export type { ErasedType } from "./erasedType.js";
 
 export type {

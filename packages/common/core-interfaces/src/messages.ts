@@ -4,6 +4,28 @@
  */
 
 /**
+ * A message that has a string `type` associated with `content`.
+ *
+ * @remarks
+ * This type is meant to be used indirectly. Most commonly as a constraint
+ * for generics of message structures.
+ *
+ * @legacy
+ * @alpha
+ */
+export interface TypedMessage {
+	/**
+	 * The type of the message.
+	 */
+	type: string;
+
+	/**
+	 * The contents of the message.
+	 */
+	content: unknown;
+}
+
+/**
  * @internal
  *
  * @privateRemarks
@@ -13,7 +35,7 @@
  *
  * See at `server/routerlicious/packages/lambdas/src/utils/messageGenerator.ts`.
  */
-export interface ISignalEnvelope {
+export interface ISignalEnvelope<TMessage extends TypedMessage = TypedMessage> {
 	/**
 	 * The target for the envelope, undefined for the container
 	 */
@@ -27,9 +49,5 @@ export interface ISignalEnvelope {
 	/**
 	 * The contents of the envelope
 	 */
-	contents: {
-		type: string;
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		content: any;
-	};
+	contents: TMessage;
 }
