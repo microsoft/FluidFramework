@@ -18,7 +18,8 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
-import { PendingMessageResubmitData, PendingStateManager } from "../pendingStateManager.js";
+import type { LocalContainerRuntimeMessage } from "../messageTypes.js";
+import { PendingMessageResubmitData2, PendingStateManager } from "../pendingStateManager.js";
 
 import {
 	BatchManager,
@@ -36,6 +37,7 @@ import {
 } from "./definitions.js";
 import { OpCompressor } from "./opCompressor.js";
 import { OpGroupingManager } from "./opGroupingManager.js";
+import { serializeOp } from "./opSerialization.js";
 import { OpSplitter } from "./opSplitter.js";
 
 export interface IOutboxConfig {
@@ -65,7 +67,7 @@ export interface IOutboxParameters {
 	readonly logger: ITelemetryBaseLogger;
 	readonly groupingManager: OpGroupingManager;
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
-	readonly reSubmit: (message: PendingMessageResubmitData) => void;
+	readonly reSubmit: (message: PendingMessageResubmitData2) => void;
 	readonly opReentrancy: () => boolean;
 }
 
@@ -115,7 +117,7 @@ export function localBatchToOutboundBatch(localBatch: LocalBatch): OutboundBatch
 	// Shallow copy each message as we switch types
 	const outboundMessages = localBatch.messages.map<OutboundBatchMessage>(
 		({ serializedOp, ...message }) => ({
-			contents: serializedOp,
+			contents: serializeOp(serializedOp),
 			...message,
 		}),
 	);
@@ -389,7 +391,13 @@ export class Outbox {
 
 		// Push the empty batch placeholder to the PendingStateManager
 		this.params.pendingStateManager.onFlushBatch(
-			[{ ...placeholderMessage, serializedOp: "", contents: undefined }], // placeholder message - serializedOp will never be used
+			[
+				{
+					...placeholderMessage,
+					serializedOp: undefined as unknown as LocalContainerRuntimeMessage, //* Better idea?
+					contents: undefined,
+				},
+			], // placeholder message - serializedOp will never be used
 			clientSequenceNumber,
 		);
 		return;
@@ -457,7 +465,7 @@ export class Outbox {
 		this.rebasing = true;
 		for (const message of rawBatch.messages) {
 			this.params.reSubmit({
-				content: message.serializedOp,
+				viableOp: message.serializedOp,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 			});
