@@ -1037,10 +1037,7 @@ describe("Runtime", () => {
 			};
 
 			const addPendingMessage = (pendingStateManager: PendingStateManager): void =>
-				pendingStateManager.onFlushBatch(
-					[{ serializedOp: "", referenceSequenceNumber: 0 }],
-					1,
-				);
+				pendingStateManager.onFlushBatch([{ runtimeOp: "", referenceSequenceNumber: 0 }], 1);
 
 			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(

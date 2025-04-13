@@ -116,7 +116,7 @@ export function getLongStack<T>(action: () => T, length: number = 50): T {
 export function localBatchToOutboundBatch(localBatch: LocalBatch): OutboundBatch {
 	// Shallow copy each message as we switch types
 	const outboundMessages = localBatch.messages.map<OutboundBatchMessage>(
-		({ serializedOp, ...message }) => ({
+		({ runtimeOp: serializedOp, ...message }) => ({
 			contents: serializeOp(serializedOp),
 			...message,
 		}),
@@ -394,7 +394,7 @@ export class Outbox {
 			[
 				{
 					...placeholderMessage,
-					serializedOp: undefined as unknown as LocalContainerRuntimeMessage, //* Better idea?
+					runtimeOp: undefined as unknown as LocalContainerRuntimeMessage, //* Better idea?
 					contents: undefined,
 				},
 			], // placeholder message - serializedOp will never be used
@@ -465,7 +465,7 @@ export class Outbox {
 		this.rebasing = true;
 		for (const message of rawBatch.messages) {
 			this.params.reSubmit({
-				viableOp: message.serializedOp,
+				viableOp: message.runtimeOp,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 			});

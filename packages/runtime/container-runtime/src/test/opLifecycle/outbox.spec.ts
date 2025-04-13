@@ -48,8 +48,8 @@ import {
 } from "../../pendingStateManager.js";
 
 function typeFromBatchedOp(op: LocalBatchMessage): string {
-	assert(op.serializedOp !== undefined, "PRECONDITION: serializedOp is undefined");
-	return (JSON.parse(op.serializedOp) as LocalContainerRuntimeMessage).type;
+	assert(op.runtimeOp !== undefined, "PRECONDITION: serializedOp is undefined");
+	return (JSON.parse(op.runtimeOp) as LocalContainerRuntimeMessage).type;
 }
 
 describe("Outbox", () => {
@@ -139,7 +139,7 @@ describe("Outbox", () => {
 			clientSequenceNumber: number | undefined,
 		): void => {
 			for (const {
-				serializedOp: content,
+				runtimeOp: content,
 				referenceSequenceNumber,
 				metadata: opMetadata,
 				localOpMetadata,
@@ -155,7 +155,7 @@ describe("Outbox", () => {
 	});
 
 	const createMessage = (type: ContainerMessageType, contents: string): LocalBatchMessage => ({
-		serializedOp: JSON.stringify({ type, contents }),
+		runtimeOp: JSON.stringify({ type, contents }),
 		metadata: undefined,
 		localOpMetadata: {},
 		referenceSequenceNumber: Number.POSITIVE_INFINITY,
@@ -165,7 +165,7 @@ describe("Outbox", () => {
 		message: LocalBatchMessage | OutboundBatchMessage,
 		batchMarker: boolean | undefined = undefined,
 	): IBatchMessage => ({
-		contents: "serializedOp" in message ? message.serializedOp : message.contents,
+		contents: "serializedOp" in message ? message.runtimeOp : message.contents,
 		metadata:
 			batchMarker === undefined
 				? message.metadata
@@ -274,9 +274,9 @@ describe("Outbox", () => {
 
 	it("localBatchToOutboundBatch", () => {
 		const localMessages: LocalBatchMessage[] = [
-			{ serializedOp: "hello", referenceSequenceNumber: 4 },
-			{ serializedOp: "world", referenceSequenceNumber: 4 },
-			{ serializedOp: "!", referenceSequenceNumber: 4 },
+			{ runtimeOp: "hello", referenceSequenceNumber: 4 },
+			{ runtimeOp: "world", referenceSequenceNumber: 4 },
+			{ runtimeOp: "!", referenceSequenceNumber: 4 },
 		];
 		const localBatch = {
 			messages: localMessages,
@@ -289,7 +289,7 @@ describe("Outbox", () => {
 		assert.equal(outboundBatch.contentSizeInBytes, 11);
 		assert.equal(outboundBatch.messages.length, 3);
 		assert.deepEqual(
-			localMessages.map((m) => m.serializedOp),
+			localMessages.map((m) => m.runtimeOp),
 			outboundBatch.messages.map((m) => m.contents),
 			"Serialized contents do not match",
 		);
@@ -347,7 +347,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
-				content: message.serializedOp,
+				content: message.runtimeOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
@@ -471,7 +471,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			messages.map<Partial<IPendingMessage>>((message, i) => ({
-				content: message.serializedOp,
+				content: message.runtimeOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
@@ -520,7 +520,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
-				content: message.serializedOp,
+				content: message.runtimeOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
@@ -585,7 +585,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
-				content: message.serializedOp,
+				content: message.runtimeOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
@@ -643,7 +643,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
-				content: message.serializedOp,
+				content: message.runtimeOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
@@ -745,7 +745,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
-				content: message.serializedOp,
+				content: message.runtimeOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
@@ -859,7 +859,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			rawMessagesInFlushOrder.map((message, i) => ({
-				content: message.serializedOp,
+				content: message.runtimeOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
@@ -1032,7 +1032,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
-				content: message.serializedOp,
+				content: message.runtimeOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,

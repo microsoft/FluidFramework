@@ -95,9 +95,9 @@ describe("Pending State Manager", () => {
 
 			assert.strictEqual(rollbackCalled, true);
 			assert.strictEqual(rollbackContent.length, 3);
-			assert.strictEqual(rollbackContent[0].serializedOp, "33");
-			assert.strictEqual(rollbackContent[1].serializedOp, "22");
-			assert.strictEqual(rollbackContent[2].serializedOp, "11");
+			assert.strictEqual(rollbackContent[0].runtimeOp, "33");
+			assert.strictEqual(rollbackContent[1].runtimeOp, "22");
+			assert.strictEqual(rollbackContent[2].runtimeOp, "11");
 			assert.strictEqual(batchManager.empty, true);
 		});
 
@@ -110,8 +110,8 @@ describe("Pending State Manager", () => {
 
 			assert.strictEqual(rollbackCalled, true);
 			assert.strictEqual(rollbackContent.length, 2);
-			assert.strictEqual(rollbackContent[0].serializedOp, "33");
-			assert.strictEqual(rollbackContent[1].serializedOp, "22");
+			assert.strictEqual(rollbackContent[0].runtimeOp, "33");
+			assert.strictEqual(rollbackContent[1].runtimeOp, "22");
 			assert.strictEqual(batchManager.empty, false);
 		});
 
@@ -155,7 +155,7 @@ describe("Pending State Manager", () => {
 		) => {
 			pendingStateManager.onFlushBatch(
 				messages.map<LocalBatchMessage>((message) => ({
-					serializedOp: JSON.stringify({ type: message.type, contents: message.contents }),
+					runtimeOp: JSON.stringify({ type: message.type, contents: message.contents }),
 					referenceSequenceNumber: message.referenceSequenceNumber!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
 					metadata: message.metadata as Record<string, unknown> | undefined,
 					localOpMetadata,
@@ -446,7 +446,7 @@ describe("Pending State Manager", () => {
 				pendingStateManager.onFlushBatch(
 					[
 						{
-							serializedOp: JSON.stringify({ contents: message.contents, type: message.type }),
+							runtimeOp: JSON.stringify({ contents: message.contents, type: message.type }),
 							referenceSequenceNumber: 0,
 						},
 					],
@@ -490,7 +490,7 @@ describe("Pending State Manager", () => {
 				pendingStateManager.onFlushBatch(
 					[
 						{
-							serializedOp: JSON.stringify({
+							runtimeOp: JSON.stringify({
 								type: message.type,
 								contents: message.contents,
 								somethingElse: 123, // Unexpected key
@@ -707,7 +707,7 @@ describe("Pending State Manager", () => {
 			];
 			pendingStateManager.onFlushBatch(
 				messages.map<LocalBatchMessage>((message) => ({
-					serializedOp: JSON.stringify({ type: message.type, contents: message.contents }),
+					runtimeOp: JSON.stringify({ type: message.type, contents: message.contents }),
 					referenceSequenceNumber: message.referenceSequenceNumber,
 				})),
 				0,
@@ -723,7 +723,7 @@ describe("Pending State Manager", () => {
 			pendingStateManager.onFlushBatch(
 				[
 					{
-						serializedOp: JSON.stringify({ type: "groupedBatch", contents: [] }),
+						runtimeOp: JSON.stringify({ type: "groupedBatch", contents: [] }),
 						referenceSequenceNumber: 0,
 						metadata: { emptyBatch: true, batchId: "batchId" },
 					},
@@ -853,7 +853,7 @@ describe("Pending State Manager", () => {
 				pendingStateManager.onFlushBatch(
 					[
 						{
-							serializedOp: message.content,
+							runtimeOp: message.content,
 							referenceSequenceNumber: message.referenceSequenceNumber,
 						},
 					],
@@ -893,7 +893,7 @@ describe("Pending State Manager", () => {
 				pendingStateManager.onFlushBatch(
 					[
 						{
-							serializedOp: message.content,
+							runtimeOp: message.content,
 							referenceSequenceNumber: message.referenceSequenceNumber,
 						},
 					],
@@ -997,7 +997,7 @@ describe("Pending State Manager", () => {
 				pendingStateManager.onFlushBatch(
 					[
 						{
-							serializedOp: message.content,
+							runtimeOp: message.content,
 							referenceSequenceNumber: message.referenceSequenceNumber,
 						},
 					],

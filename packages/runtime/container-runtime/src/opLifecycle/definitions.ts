@@ -14,7 +14,7 @@ import type { LocalContainerRuntimeMessage } from "../messageTypes.js";
 export interface LocalBatchMessage {
 	//* Comments throughout!
 	//* Rename
-	serializedOp: LocalContainerRuntimeMessage;
+	runtimeOp: LocalContainerRuntimeMessage;
 	metadata?: Record<string, unknown>;
 	localOpMetadata?: unknown;
 	referenceSequenceNumber: number;

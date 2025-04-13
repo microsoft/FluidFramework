@@ -159,9 +159,7 @@ export class BatchManager {
 					throw new LoggingError("Ops generated during rollback", {
 						count,
 						...tagData(TelemetryDataTag.UserData, {
-							ops: serializeOp(
-								...this.pendingBatch.slice(startPoint).map((b) => b.serializedOp),
-							),
+							ops: serializeOp(...this.pendingBatch.slice(startPoint).map((b) => b.runtimeOp)),
 						}),
 					});
 				}

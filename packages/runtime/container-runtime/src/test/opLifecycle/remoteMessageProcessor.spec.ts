@@ -255,16 +255,16 @@ describe("RemoteMessageProcessor", () => {
 		const batchManager = new BatchManager({
 			canRebase: false,
 		});
-		batchManager.push({ serializedOp: "A1", referenceSequenceNumber }, false /* reentrant */);
-		batchManager.push({ serializedOp: "A2", referenceSequenceNumber }, false /* reentrant */);
-		batchManager.push({ serializedOp: "A3", referenceSequenceNumber }, false /* reentrant */);
+		batchManager.push({ runtimeOp: "A1", referenceSequenceNumber }, false /* reentrant */);
+		batchManager.push({ runtimeOp: "A2", referenceSequenceNumber }, false /* reentrant */);
+		batchManager.push({ runtimeOp: "A3", referenceSequenceNumber }, false /* reentrant */);
 		const batchA = batchManager.popBatch();
-		batchManager.push({ serializedOp: "B1", referenceSequenceNumber }, false /* reentrant */);
+		batchManager.push({ runtimeOp: "B1", referenceSequenceNumber }, false /* reentrant */);
 		const batchB = batchManager.popBatch();
-		batchManager.push({ serializedOp: "C1", referenceSequenceNumber }, false /* reentrant */);
-		batchManager.push({ serializedOp: "C2", referenceSequenceNumber }, false /* reentrant */);
+		batchManager.push({ runtimeOp: "C1", referenceSequenceNumber }, false /* reentrant */);
+		batchManager.push({ runtimeOp: "C2", referenceSequenceNumber }, false /* reentrant */);
 		const batchC = batchManager.popBatch("C" /* batchId */);
-		batchManager.push({ serializedOp: "D1", referenceSequenceNumber }, false /* reentrant */);
+		batchManager.push({ runtimeOp: "D1", referenceSequenceNumber }, false /* reentrant */);
 		const batchD = batchManager.popBatch("D" /* batchId */);
 
 		const processor = getMessageProcessor();
@@ -275,7 +275,7 @@ describe("RemoteMessageProcessor", () => {
 			...batchB.messages,
 			...batchC.messages,
 			...batchD.messages,
-		].map(({ serializedOp, metadata, referenceSequenceNumber: refSeq }) => {
+		].map(({ runtimeOp: serializedOp, metadata, referenceSequenceNumber: refSeq }) => {
 			const sequencedMessage: Partial<ISequencedDocumentMessage> = {
 				clientId: "CLIENT_ID",
 				clientSequenceNumber: csn++,
@@ -428,25 +428,25 @@ describe("RemoteMessageProcessor", () => {
 				canRebase: false,
 			});
 			batchManager.push(
-				{ serializedOp: "A1", referenceSequenceNumber: 1 },
+				{ runtimeOp: "A1", referenceSequenceNumber: 1 },
 				false /* reentrant */,
 			);
 			batchManager.push(
-				{ serializedOp: "A2", referenceSequenceNumber: 1 },
+				{ runtimeOp: "A2", referenceSequenceNumber: 1 },
 				false /* reentrant */,
 			);
 			batchManager.push(
-				{ serializedOp: "A3", referenceSequenceNumber: 1 },
+				{ runtimeOp: "A3", referenceSequenceNumber: 1 },
 				false /* reentrant */,
 			);
 			const batchA = batchManager.popBatch();
 			batchA.messages[2].metadata = undefined; // Wipe out the ending metadata so the next batch's start shows up mid-batch
 			batchManager.push(
-				{ serializedOp: "B1", referenceSequenceNumber: 1 },
+				{ runtimeOp: "B1", referenceSequenceNumber: 1 },
 				false /* reentrant */,
 			);
 			batchManager.push(
-				{ serializedOp: "B2", referenceSequenceNumber: 1 },
+				{ runtimeOp: "B2", referenceSequenceNumber: 1 },
 				false /* reentrant */,
 			);
 			const batchB = batchManager.popBatch();
@@ -483,15 +483,15 @@ describe("RemoteMessageProcessor", () => {
 				canRebase: false,
 			});
 			batchManager.push(
-				{ serializedOp: "A1", referenceSequenceNumber: 1 },
+				{ runtimeOp: "A1", referenceSequenceNumber: 1 },
 				false /* reentrant */,
 			);
 			batchManager.push(
-				{ serializedOp: "A2", referenceSequenceNumber: 1 },
+				{ runtimeOp: "A2", referenceSequenceNumber: 1 },
 				false /* reentrant */,
 			);
 			batchManager.push(
-				{ serializedOp: "A3", referenceSequenceNumber: 1 },
+				{ runtimeOp: "A3", referenceSequenceNumber: 1 },
 				false /* reentrant */,
 			);
 			const batchA = batchManager.popBatch();

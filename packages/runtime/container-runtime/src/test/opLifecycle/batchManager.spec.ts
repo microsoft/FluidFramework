@@ -23,7 +23,7 @@ describe("BatchManager", () => {
 	const generateStringOfSize = (sizeInBytes: number): string => "0".repeat(sizeInBytes);
 
 	const smallMessage = (): LocalBatchMessage => ({
-		serializedOp: generateStringOfSize(smallMessageSize),
+		runtimeOp: generateStringOfSize(smallMessageSize),
 		referenceSequenceNumber: 0,
 	});
 
@@ -110,7 +110,7 @@ describe("BatchManager", () => {
 		for (let i = 0; i < 9; i++) {
 			batchManager.push(
 				{
-					serializedOp: "",
+					runtimeOp: "",
 					referenceSequenceNumber: 0,
 				},
 				/* reentrant */ false,
