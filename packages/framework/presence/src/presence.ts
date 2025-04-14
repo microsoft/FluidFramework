@@ -121,20 +121,6 @@ export type SpecificAttendee<SpecificAttendeeId extends AttendeeId> =
  */
 export interface PresenceEvents {
 	/**
-	 * Raised when new client joins session.
-	 *
-	 * @eventProperty
-	 */
-	attendeeJoined: (attendee: Attendee) => void;
-
-	/**
-	 * Raised when client appears disconnected from session.
-	 *
-	 * @eventProperty
-	 */
-	attendeeDisconnected: (attendee: Attendee) => void;
-
-	/**
 	 * Raised when a workspace is activated within the session.
 	 *
 	 * "Activated" means that a workspace is being used by a client and this
@@ -153,6 +139,26 @@ export interface PresenceEvents {
 }
 
 /**
+ * @sealed
+ * @alpha
+ */
+export interface PresenceAttendeeEvents {
+	/**
+	 * Raised when new client joins session.
+	 *
+	 * @eventProperty
+	 */
+	attendeeJoined: (attendee: Attendee) => void;
+
+	/**
+	 * Raised when client appears disconnected from session.
+	 *
+	 * @eventProperty
+	 */
+	attendeeDisconnected: (attendee: Attendee) => void;
+}
+
+/**
  * Presence represents known clients within a session and their custom states and notifications.
  *
  * @sealed
@@ -164,52 +170,63 @@ export interface Presence {
 	 */
 	readonly events: Listenable<PresenceEvents>;
 
-	/**
-	 * Get all attendees in the session.
-	 *
-	 * @remarks
-	 * Attendee states are dynamic and will change as clients join and leave
-	 * the session.
-	 */
-	getAttendees(): ReadonlySet<Attendee>;
+	readonly attendees: {
+		/**
+		 * Events for attendees.
+		 */
+		readonly events: Listenable<PresenceAttendeeEvents>;
 
-	/**
-	 * Lookup a specific attendee in the session.
-	 *
-	 * @param clientId - Client connection or session ID
-	 */
-	getAttendee(clientId: ClientConnectionId | AttendeeId): Attendee;
+		/**
+		 * Get all attendees in the session.
+		 *
+		 * @remarks
+		 * Attendee states are dynamic and will change as clients join and leave
+		 * the session.
+		 */
+		getAttendees(): ReadonlySet<Attendee>;
 
-	/**
-	 * Get this client's attendee.
-	 *
-	 * @returns This client's attendee.
-	 */
-	getMyself(): Attendee;
+		/**
+		 * Lookup a specific attendee in the session.
+		 *
+		 * @param clientId - Client connection or session ID
+		 */
+		getAttendee(clientId: ClientConnectionId | AttendeeId): Attendee;
 
-	/**
-	 * Acquires a StatesWorkspace from store or adds new one.
-	 *
-	 * @param workspaceAddress - Address of the requested StatesWorkspace
-	 * @param requestedContent - Requested states for the workspace
-	 * @param controls - Optional settings for default broadcast controls
-	 * @returns A StatesWorkspace
-	 */
-	getStates<StatesSchema extends StatesWorkspaceSchema>(
-		workspaceAddress: WorkspaceAddress,
-		requestedContent: StatesSchema,
-		controls?: BroadcastControlSettings,
-	): StatesWorkspace<StatesSchema>;
+		/**
+		 * Get this client's attendee.
+		 *
+		 * @returns This client's attendee.
+		 */
+		getMyself(): Attendee;
+	};
 
-	/**
-	 * Acquires a Notifications workspace from store or adds new one.
-	 *
-	 * @param workspaceAddress - Address of the requested Notifications Workspace
-	 * @param requestedContent - Requested notifications for the workspace
-	 * @returns A Notifications workspace
-	 */
-	getNotifications<NotificationsSchema extends NotificationsWorkspaceSchema>(
-		notificationsId: WorkspaceAddress,
-		requestedContent: NotificationsSchema,
-	): NotificationsWorkspace<NotificationsSchema>;
+	readonly states: {
+		/**
+		 * Acquires a StatesWorkspace from store or adds new one.
+		 *
+		 * @param workspaceAddress - Address of the requested StatesWorkspace
+		 * @param requestedContent - Requested states for the workspace
+		 * @param controls - Optional settings for default broadcast controls
+		 * @returns A StatesWorkspace
+		 */
+		getWorkspace<StatesSchema extends StatesWorkspaceSchema>(
+			workspaceAddress: WorkspaceAddress,
+			requestedContent: StatesSchema,
+			controls?: BroadcastControlSettings,
+		): StatesWorkspace<StatesSchema>;
+	};
+
+	readonly notifications: {
+		/**
+		 * Acquires a Notifications workspace from store or adds new one.
+		 *
+		 * @param workspaceAddress - Address of the requested Notifications Workspace
+		 * @param requestedContent - Requested notifications for the workspace
+		 * @returns A Notifications workspace
+		 */
+		getWorkspace<NotificationsSchema extends NotificationsWorkspaceSchema>(
+			notificationsId: WorkspaceAddress,
+			requestedContent: NotificationsSchema,
+		): NotificationsWorkspace<NotificationsSchema>;
+	};
 }

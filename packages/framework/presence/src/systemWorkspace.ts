@@ -10,7 +10,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { PostUpdateAction } from "./internalTypes.js";
-import type { Attendee, AttendeeId, Presence, PresenceEvents } from "./presence.js";
+import type { Attendee, AttendeeId, Presence, PresenceAttendeeEvents } from "./presence.js";
 import { AttendeeStatus } from "./presence.js";
 import type { PresenceStatesInternal } from "./presenceStates.js";
 import { TimerManager } from "./timerManager.js";
@@ -67,7 +67,7 @@ class SessionClient implements Attendee {
 export interface SystemWorkspace
 	// Portion of Presence that is handled by SystemWorkspace along with
 	// responsiblity for emitting "attendeeJoined" events.
-	extends Pick<Presence, "getAttendees" | "getAttendee" | "getMyself"> {
+	extends Pick<Presence["attendees"], "getAttendees" | "getAttendee" | "getMyself"> {
 	/**
 	 * Must be called when the current client acquires a new connection.
 	 *
@@ -104,7 +104,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		attendeeId: AttendeeId,
 		private readonly datastore: SystemWorkspaceDatastore,
 		private readonly events: IEmitter<
-			Pick<PresenceEvents, "attendeeJoined" | "attendeeDisconnected">
+			Pick<PresenceAttendeeEvents, "attendeeJoined" | "attendeeDisconnected">
 		>,
 		private readonly audience: IAudience,
 	) {
@@ -295,7 +295,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 export function createSystemWorkspace(
 	attendeeId: AttendeeId,
 	datastore: SystemWorkspaceDatastore,
-	events: IEmitter<Pick<PresenceEvents, "attendeeJoined">>,
+	events: IEmitter<Pick<PresenceAttendeeEvents, "attendeeJoined">>,
 	audience: IAudience,
 ): {
 	workspace: SystemWorkspace;

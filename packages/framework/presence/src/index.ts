@@ -28,6 +28,7 @@ export {
 	type AttendeeId,
 	AttendeeStatus,
 	type Presence,
+	type PresenceAttendeeEvents,
 	type PresenceEvents,
 } from "./presence.js";
 

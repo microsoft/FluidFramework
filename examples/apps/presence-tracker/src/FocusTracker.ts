@@ -104,7 +104,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 
 		// Include the local client in the map because this is used to render a
 		// dashboard of all connected clients.
-		const currentClient = this.presence.getMyself();
+		const currentClient = this.presence.attendees.getMyself();
 		statuses.set(currentClient, this.focus.local.hasFocus);
 
 		for (const { attendee, value } of this.focus.clientValues()) {

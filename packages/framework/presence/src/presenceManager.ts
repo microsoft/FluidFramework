@@ -40,6 +40,10 @@ export type PresenceExtensionInterface = Required<
  * The Presence manager
  */
 class PresenceManager implements Presence, PresenceExtensionInterface {
+	public readonly attendees: Presence["attendees"];
+	public readonly states: Presence["states"];
+	public readonly notifications: Presence["notifications"];
+
 	private readonly datastoreManager: PresenceDatastoreManager;
 	private readonly systemWorkspace: SystemWorkspace;
 
@@ -60,6 +64,19 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 			this.events,
 			this.mc?.logger,
 		);
+
+		this.attendees = {
+			events: this.events,
+			getAttendees: this.getAttendees.bind(this),
+			getAttendee: this.getAttendee.bind(this),
+			getMyself: this.getMyself.bind(this),
+		};
+		this.states = {
+			getWorkspace: this.getStates.bind(this),
+		};
+		this.notifications = {
+			getWorkspace: this.getNotifications.bind(this),
+		};
 
 		runtime.on("connected", this.onConnect.bind(this));
 
@@ -92,19 +109,19 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 		this.systemWorkspace.removeClientConnectionId(clientConnectionId);
 	}
 
-	public getAttendees(): ReadonlySet<Attendee> {
+	private getAttendees(): ReadonlySet<Attendee> {
 		return this.systemWorkspace.getAttendees();
 	}
 
-	public getAttendee(clientId: ClientConnectionId | AttendeeId): Attendee {
+	private getAttendee(clientId: ClientConnectionId | AttendeeId): Attendee {
 		return this.systemWorkspace.getAttendee(clientId);
 	}
 
-	public getMyself(): Attendee {
+	private getMyself(): Attendee {
 		return this.systemWorkspace.getMyself();
 	}
 
-	public getStates<TSchema extends StatesWorkspaceSchema>(
+	private getStates<TSchema extends StatesWorkspaceSchema>(
 		workspaceAddress: WorkspaceAddress,
 		requestedContent: TSchema,
 		controls?: BroadcastControlSettings,
@@ -116,7 +133,7 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 		);
 	}
 
-	public getNotifications<TSchema extends StatesWorkspaceSchema>(
+	private getNotifications<TSchema extends StatesWorkspaceSchema>(
 		workspaceAddress: WorkspaceAddress,
 		requestedContent: TSchema,
 	): StatesWorkspace<TSchema> {

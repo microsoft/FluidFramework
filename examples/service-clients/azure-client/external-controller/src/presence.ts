@@ -43,6 +43,6 @@ const statesSchema = {
 export type DicePresence = StatesWorkspace<typeof statesSchema>;
 
 export function buildDicePresence(presence: Presence): DicePresence {
-	const states = presence.getStates("name:app-client-states", statesSchema);
+	const states = presence.states.getWorkspace("name:app-client-states", statesSchema);
 	return states;
 }

@@ -25,7 +25,7 @@ function createLatestMapManager(
 	presence: Presence,
 	valueControlSettings?: BroadcastControlSettings,
 ) {
-	const states = presence.getStates(testWorkspaceName, {
+	const states = presence.states.getWorkspace(testWorkspaceName, {
 		fixedMap: StateFactory.latestMap(
 			{ key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } },
 			valueControlSettings,
@@ -51,7 +51,7 @@ describe("Presence", () => {
 			string
 		> {
 			const presence = createPresenceManager(new MockEphemeralRuntime());
-			const states = presence.getStates(testWorkspaceName, {
+			const states = presence.states.getWorkspace(testWorkspaceName, {
 				fixedMap: StateFactory.latestMap({ key1: { x: 0, y: 0 } }),
 			});
 			return states.props.fixedMap;
@@ -98,12 +98,15 @@ describe("Presence", () => {
 export function checkCompiles(): void {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	const presence = {} as Presence;
-	const statesWorkspace = presence.getStates("name:testStatesWorkspaceWithLatestMap", {
-		fixedMap: StateFactory.latestMap({
-			key1: { x: 0, y: 0 },
-			key2: { ref: "default", someId: 0 },
-		}),
-	});
+	const statesWorkspace = presence.states.getWorkspace(
+		"name:testStatesWorkspaceWithLatestMap",
+		{
+			fixedMap: StateFactory.latestMap({
+				key1: { x: 0, y: 0 },
+				key2: { ref: "default", someId: 0 },
+			}),
+		},
+	);
 	// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
 	const workspace: typeof statesWorkspace = statesWorkspace;
 	const props = workspace.props;
