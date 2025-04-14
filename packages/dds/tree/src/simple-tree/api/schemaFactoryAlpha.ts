@@ -16,9 +16,9 @@ import {
 } from "./schemaFactory.js";
 import {
 	normalizeToAnnotatedAllowedType,
+	unannotateSchemaRecord,
 	type AnnotatedAllowedType,
 	type ImplicitAllowedTypes,
-	type ImplicitAnnotatedAllowedTypes,
 	type ImplicitAnnotatedFieldSchema,
 	type ImplicitFieldSchema,
 	type NodeSchemaOptions,
@@ -89,11 +89,11 @@ export class SchemaFactoryAlpha<
 	// TODO rename and consolidate with alpha, note that it's a breaking change in the changeset
 	public objectAlpha<
 		const Name extends TName,
-		const T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
+		const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
-		fields: T,
+		fields: RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
 		options?: SchemaFactoryObjectOptions<TCustomMetadata>,
 	): ObjectNodeSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> & {
 		/**

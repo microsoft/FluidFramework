@@ -17,6 +17,7 @@ import {
 	type requireTrue,
 	type areOnlyKeys,
 	getOrCreate,
+	type RestrictiveStringRecord,
 } from "../util/index.js";
 import type {
 	Unhydrated,
@@ -169,7 +170,7 @@ export enum FieldKind {
  */
 export function getStoredKey(
 	propertyKey: string,
-	fieldSchema: ImplicitFieldSchema | ImplicitAnnotatedFieldSchema,
+	fieldSchema: ImplicitAnnotatedFieldSchema,
 ): FieldKey {
 	return brand(getExplicitStoredKey(fieldSchema) ?? propertyKey);
 }
@@ -179,10 +180,8 @@ export function getStoredKey(
  * Otherwise, returns undefined.
  */
 export function getExplicitStoredKey(
-	fieldSchema: ImplicitFieldSchema | ImplicitAnnotatedFieldSchema,
+	fieldSchema: ImplicitAnnotatedFieldSchema,
 ): string | undefined {
-	// TODO check if this just works as is
-	// it should right? since we're not changing anything about FieldSchemaAlpha really, just adding the annotations in a new property
 	return fieldSchema instanceof FieldSchema ? fieldSchema.props?.key : undefined;
 }
 
@@ -363,7 +362,6 @@ export function createFieldSchema<
 
 /**
  * Package internal construction API.
- * TODO do all the things
  */
 let createFieldSchemaPrivate: <
 	Kind extends FieldKind,
@@ -614,6 +612,17 @@ export function unannotateImplicitAllowedTypes<Types extends ImplicitAnnotatedAl
 					? (evaluateLazySchema(types.type) as UnannotateImplicitAllowedTypes<Types>)
 					: types
 	) as UnannotateImplicitAllowedTypes<Types>;
+}
+
+/**
+ * TODO
+ */
+export function unannotateSchemaRecord<
+	Schema extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
+>(schemaRecord: Schema): UnannotateSchemaRecord<Schema> {
+	return Object.entries(schemaRecord).map(([_, schema]) =>
+		schema instanceof FieldSchema ? schema : unannotateImplicitAllowedTypes(schema),
+	) as UnannotateSchemaRecord<Schema>;
 }
 
 function extractAnnotationsFromAllowedTypes(
@@ -879,10 +888,22 @@ export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 /**
  * TODO
  */
-export type ImplicitAnnotatedFieldSchema =
-	| FieldSchema
-	| FieldSchemaAlpha
-	| ImplicitAnnotatedAllowedTypes;
+export type ImplicitAnnotatedFieldSchema = FieldSchema | ImplicitAnnotatedAllowedTypes;
+
+/**
+ * TODO
+ */
+type UnannotateImplicitFieldSchema<T extends ImplicitAnnotatedFieldSchema> =
+	T extends ImplicitAnnotatedAllowedTypes ? UnannotateImplicitAllowedTypes<T> : T;
+
+/**
+ * TODO
+ */
+export type UnannotateSchemaRecord<
+	T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
+> = {
+	readonly [P in Extract<keyof T, string>]: UnannotateImplicitFieldSchema<T[P]>;
+};
 
 /**
  * Converts an `ImplicitFieldSchema` to a property type suitable for reading a field with this that schema.

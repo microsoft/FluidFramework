@@ -29,6 +29,9 @@ import {
 	type NodeSchemaMetadata,
 	type FieldSchemaAlpha,
 	ObjectFieldSchema,
+	type ImplicitAnnotatedFieldSchema,
+	type UnannotateSchemaRecord,
+	unannotateSchemaRecord,
 } from "./schemaTypes.js";
 import {
 	type TreeNodeSchema,
@@ -163,7 +166,9 @@ export type SimpleKeyMap = ReadonlyMap<
 /**
  * Caches the mappings from property keys to stored keys for the provided object field schemas in {@link simpleKeyToFlexKeyCache}.
  */
-function createFlexKeyMapping(fields: Record<string, ImplicitFieldSchema>): SimpleKeyMap {
+function createFlexKeyMapping(
+	fields: Record<string, ImplicitAnnotatedFieldSchema>,
+): SimpleKeyMap {
 	const keyMap: Map<string | symbol, { storedKey: FieldKey; schema: FieldSchema }> = new Map();
 	for (const [propertyKey, fieldSchema] of Object.entries(fields)) {
 		const storedKey = getStoredKey(propertyKey, fieldSchema);
@@ -350,7 +355,7 @@ export function objectSchema<
 	const TCustomMetadata = unknown,
 >(
 	identifier: TName,
-	info: T,
+	info: RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
 	implicitlyConstructable: ImplicitlyConstructable,
 	allowUnknownOptionalFields: boolean,
 	metadata?: NodeSchemaMetadata<TCustomMetadata>,
@@ -491,7 +496,8 @@ export function objectSchema<
 		}
 
 		public static readonly identifier = identifier;
-		public static readonly info = info;
+		public static readonly info = unannotateSchemaRecord(info) as T;
+		public static readonly annotatedInfo = info;
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
@@ -523,7 +529,7 @@ const targetToProxy: WeakMap<object, TreeNode> = new WeakMap();
  */
 function assertUniqueKeys<
 	const Name extends number | string,
-	const Fields extends RestrictiveStringRecord<ImplicitFieldSchema>,
+	const Fields extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
 >(schemaName: Name, fields: Fields): void {
 	// Verify that there are no duplicates among the explicitly specified stored keys.
 	const explicitStoredKeys = new Set<string>();
