@@ -138,6 +138,9 @@ export interface Latest<T> {
     set local(value: JsonSerializable<T> & JsonDeserialized<T>);
 }
 
+// @alpha
+export function latest<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
+
 // @alpha @sealed
 export interface LatestClientData<T> extends LatestData<T> {
     // (undocumented)
@@ -172,6 +175,11 @@ export interface LatestMap<T, Keys extends string | number = string | number> {
     readonly local: StateMap<Keys, T>;
 }
 
+// @alpha
+export function latestMap<T extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(initialValues?: {
+    [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
+}, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
+
 // @alpha @sealed
 export interface LatestMapClientData<T, Keys extends string | number, SpecificAttendeeId extends AttendeeId = AttendeeId> {
     attendee: Attendee<SpecificAttendeeId>;
@@ -198,11 +206,6 @@ export interface LatestMapEvents<T, K extends string | number> {
     updated: (updates: LatestMapClientData<T, K>) => void;
 }
 
-// @alpha
-export function latestMapFactory<T extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(initialValues?: {
-    [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
-}, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
-
 // @alpha @sealed
 export interface LatestMapItemRemovedClientData<K extends string | number> {
     // (undocumented)
@@ -224,9 +227,6 @@ export interface LatestMetadata {
     revision: number;
     timestamp: number;
 }
-
-// @alpha
-export function latestStateFactory<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
 
 // @alpha @sealed
 export interface NotificationEmitter<E extends InternalUtilityTypes.NotificationListeners<E>> {
@@ -294,8 +294,8 @@ export interface PresenceEvents {
 
 // @alpha
 export const StateFactory: {
-    latest<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
-    latestMap<T_1 extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(initialValues?: { [K in Keys]: JsonSerializable<T_1> & JsonDeserialized<T_1>; } | undefined, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T_1, Keys>, LatestMap<T_1, Keys>>;
+    latest: typeof latest;
+    latestMap: typeof latestMap;
 };
 
 // @alpha @sealed

@@ -12,7 +12,6 @@ import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
 import type {
 	BroadcastControlSettings,
-	Presence,
 	LatestClientData,
 	Presence,
 } from "@fluidframework/presence/alpha";

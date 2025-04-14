@@ -48,7 +48,7 @@ export interface LatestEvents<T> {
  * State that provides the latest known value from this client to others and read access to their values.
  * All participant clients must provide a value.
  *
- * @remarks Create using {@link latestStateFactory} registered to {@link StatesWorkspace}.
+ * @remarks Create using {@link latest} registered to {@link StatesWorkspace}.
  *
  * @sealed
  * @alpha
@@ -177,7 +177,7 @@ class LatestValueManagerImpl<T, Key extends string>
  *
  * @alpha
  */
-export function latestStateFactory<T extends object, Key extends string = string>(
+export function latest<T extends object, Key extends string = string>(
 	initialValue: JsonSerializable<T> & JsonDeserialized<T> & object,
 	controls?: BroadcastControlSettings,
 ): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>> {
