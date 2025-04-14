@@ -132,6 +132,7 @@ import {
 	raiseConnectedEvent,
 	wrapError,
 	tagCodeArtifacts,
+	normalizeError,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -371,7 +372,7 @@ export interface IContainerRuntimeOptions {
 	 * regardless of the overhead of an individual op.
 	 *
 	 * Any value of `chunkSizeInBytes` exceeding {@link IContainerRuntimeOptions.maxBatchSizeInBytes} will disable this feature, therefore if a compressed batch's content
-	 * size exceeds {@link IContainerRuntimeOptions.maxBatchSizeInBytes} after compression, the container will close with an instance of `GenericError` with
+	 * size exceeds {@link IContainerRuntimeOptions.maxBatchSizeInBytes} after compression, the container will close with an instance of `DataProcessingError` with
 	 * the `BatchTooLarge` message.
 	 */
 	readonly chunkSizeInBytes?: number;
@@ -1746,6 +1747,7 @@ export class ContainerRuntime
 		const legacySendBatchFn = makeLegacySendBatchFn(submitFn, this.innerDeltaManager);
 
 		this.skipSafetyFlushDuringProcessStack =
+			// Keep the old flag name even though we renamed the class member (it shipped in 2.31.0)
 			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableFlushBeforeProcess") === true;
 
 		this.outbox = new Outbox({
@@ -1770,7 +1772,6 @@ export class ContainerRuntime
 			}),
 			reSubmit: this.reSubmit.bind(this),
 			opReentrancy: () => this.dataModelChangeRunner.running,
-			closeContainer: this.closeFn,
 		});
 
 		this._quorum = quorum;
@@ -3116,17 +3117,29 @@ export class ContainerRuntime
 	/**
 	 * Flush the pending ops manually.
 	 * This method is expected to be called at the end of a batch.
+	 * @remarks - If it throws (e.g. if the batch is too large to send), the container will be closed.
+	 *
 	 * @param resubmittingBatchId - If defined, indicates this is a resubmission of a batch
 	 * with the given Batch ID, which must be preserved
 	 */
 	private flush(resubmittingBatchId?: BatchId): void {
-		assert(
-			!this.batchRunner.running,
-			0x24c /* "Cannot call `flush()` while manually accumulating a batch (e.g. under orderSequentially) */,
-		);
+		try {
+			assert(
+				!this.batchRunner.running,
+				0x24c /* "Cannot call `flush()` while manually accumulating a batch (e.g. under orderSequentially) */,
+			);
 
-		this.outbox.flush(resubmittingBatchId);
-		assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
+			this.outbox.flush(resubmittingBatchId);
+			assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
+		} catch (error) {
+			const error2 = normalizeError(error, {
+				props: {
+					orderSequentiallyCalls: this.batchRunner.runs,
+				},
+			});
+			this.closeFn(error2);
+			throw error2;
+		}
 	}
 
 	/**
@@ -4292,8 +4305,11 @@ export class ContainerRuntime
 				this.scheduleFlush();
 			}
 		} catch (error) {
-			this.closeFn(error as GenericError);
-			throw error;
+			const dpe = DataProcessingError.wrapIfUnrecognized(error, "ContainerRuntime.submit", {
+				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+			});
+			this.closeFn(dpe);
+			throw dpe;
 		}
 
 		if (this.isContainerMessageDirtyable(containerRuntimeMessage)) {
@@ -4312,11 +4328,7 @@ export class ContainerRuntime
 		// eslint-disable-next-line unicorn/consistent-function-scoping -- Separate `flush` method already exists in outer scope
 		const flush = (): void => {
 			this.flushTaskExists = false;
-			try {
-				this.flush();
-			} catch (error) {
-				this.closeFn(error as GenericError);
-			}
+			this.flush();
 		};
 
 		switch (this.flushMode) {
