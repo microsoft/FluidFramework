@@ -15,17 +15,21 @@ import { Client, assertConsistent, assertSequenceIntervals } from "./intervalTes
 import { constructClient, constructClients, loadClient } from "./multiClientTestUtils.js";
 
 describe("interval rebasing", () => {
-	let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
-	let clients: Client[];
-
 	useStrictPartialLengthChecks();
 
-	beforeEach(() => {
-		containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
-		clients = constructClients(containerRuntimeFactory);
-	});
+	function setup3Clients(): {
+		containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
+		clients: Client[];
+	} {
+		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+		return {
+			containerRuntimeFactory,
+			clients: constructClients(containerRuntimeFactory),
+		};
+	}
 
 	it("does not crash for an interval that lies on segment that has been removed locally", async () => {
+		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[0].sharedString.insertText(0, "A");
 		clients[1].containerRuntime.connected = false;
 		clients[1].sharedString.insertText(0, "01234");
@@ -49,6 +53,7 @@ describe("interval rebasing", () => {
 	});
 
 	it("does not crash when entire string on which interval lies is concurrently removed", async () => {
+		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[0].sharedString.insertText(0, "a");
 		clients[1].sharedString.insertText(0, "a");
 		containerRuntimeFactory.processAllMessages();
@@ -63,6 +68,7 @@ describe("interval rebasing", () => {
 	});
 
 	it("does not crash when interval is removed before reconnect when string is concurrently removed", async () => {
+		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[0].sharedString.insertText(0, "A");
 		clients[1].sharedString.insertText(0, "B");
 		containerRuntimeFactory.processAllMessages();
@@ -78,6 +84,7 @@ describe("interval rebasing", () => {
 	});
 
 	it("does not crash when interval slides off end of string", async () => {
+		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[0].sharedString.insertText(0, "012Z45");
 		clients[2].sharedString.insertText(0, "X");
 		containerRuntimeFactory.processAllMessages();
@@ -103,6 +110,7 @@ describe("interval rebasing", () => {
 	it("handles basic interval sliding for obliterate", async () => {
 		// A-(BC)
 
+		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[0].sharedString.insertText(0, "ABC");
 		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
 		collection_0.add({
@@ -117,6 +125,7 @@ describe("interval rebasing", () => {
 	it("reference is -1 for obliterated segment", async () => {
 		// (L-PC-F)
 
+		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[1].sharedString.insertText(0, "F");
 		clients[0].sharedString.insertText(0, "PC");
 		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
@@ -132,6 +141,7 @@ describe("interval rebasing", () => {
 	});
 
 	it("slides to correct final destination", async () => {
+		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[0].sharedString.insertText(0, "A");
 		containerRuntimeFactory.processAllMessages();
 		await assertConsistent(clients);
@@ -150,6 +160,7 @@ describe("interval rebasing", () => {
 	});
 
 	it("does not slide to invalid position when 0-length interval", async () => {
+		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[0].sharedString.insertText(0, "A");
 		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
 		// A 0-length interval is required here to reproduce this error. If in
@@ -178,6 +189,7 @@ describe("interval rebasing", () => {
 	});
 
 	it("is consistent for full stickiness", async () => {
+		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[0].sharedString.insertText(0, "A");
 		clients[0].sharedString.insertText(0, "BC");
 		containerRuntimeFactory.processAllMessages();
@@ -197,6 +209,7 @@ describe("interval rebasing", () => {
 	it("keeps obliterate segment group the same across multiple reconnects", async () => {
 		// A-C
 		// (A-B-C)
+		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[0].sharedString.insertText(0, "C");
 		clients[0].sharedString.insertText(0, "A");
 		containerRuntimeFactory.processAllMessages();
@@ -214,6 +227,7 @@ describe("interval rebasing", () => {
 	it("doesn't crash for empty pending segment group", async () => {
 		// A
 		// ((A))-[D]
+		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[0].sharedString.insertText(0, "A");
 		containerRuntimeFactory.processAllMessages();
 		await assertConsistent(clients);
@@ -236,6 +250,7 @@ describe("interval rebasing", () => {
 		// D-C-AB
 		// E-HIJ-FG-D-C-AB
 		//   ^----------^
+		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[2].sharedString.insertText(0, "AB");
 		clients[0].sharedString.insertText(0, "C");
 		containerRuntimeFactory.processAllMessages();
@@ -260,6 +275,7 @@ describe("interval rebasing", () => {
 		// All that's necessary is that the "R" segment is zamboni'd.
 		// However, due to zamboni's fragility, some care needs to be taken for that to happen.
 		// See AB#7048 for more details.
+		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 		const A = constructClient(containerRuntimeFactory, "A");
 		A.sharedString.insertText(0, "Rr");
 		A.sharedString.connect(A.services);
@@ -290,6 +306,7 @@ describe("interval rebasing", () => {
 		// Note: all 3 clients submit edits. When debugging this test, it might be helpful to
 		// add a 4th client that doesn't submit any edits. E.g.:
 		// clients = constructClients(containerRuntimeFactory, 4);
+		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[0].sharedString.insertText(0, "000");
 		containerRuntimeFactory.processAllMessages();
 		clients[0].containerRuntime.connected = false;
@@ -312,6 +329,7 @@ describe("interval rebasing", () => {
 	it("doesn't create empty segment group when obliterated segment was obliterated by other client during reconnect", async () => {
 		// A
 		// ((A))-[D]
+		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[0].sharedString.insertText(0, "A");
 		containerRuntimeFactory.processAllMessages();
 		await assertConsistent(clients);
@@ -331,20 +349,10 @@ describe("interval rebasing", () => {
 		await assertConsistent(clients);
 	});
 
-	// todo: a failing obliterate reconnect test. when rebasing the op,
-	// the character "C" has been concurrently obliterated, so the reconnect
-	// position of "B" is computed to be 0, rather than 1
-	//
-	// at the time of writing, i'm not sure of a good solution. either we could
-	// change calculation of reconnection position in some way or we could not
-	// concurrently obliterate "C" in this context.
-	//
-	// in both cases, it's not clear to me how we detect when we're reconnecting
-	//
-	// ADO#3714
-	it.skip("...", async () => {
+	it("reconnected obliterate still removes content it intended to remove", async () => {
 		// AB
 		// A-C-B
+		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[0].sharedString.insertText(0, "AB");
 		containerRuntimeFactory.processAllMessages();
 		await assertConsistent(clients);
@@ -360,8 +368,8 @@ describe("interval rebasing", () => {
 		await assertConsistent(clients);
 	});
 
-	// todo: ADO#3714 Failing obliterate reconnect test
-	it.skip("...", async () => {
+	it("Obliterate reconnect regression test", async () => {
+		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[0].sharedString.insertText(0, "AB");
 		clients[1].sharedString.insertText(0, "CD");
 		clients[1].sharedString.insertText(1, "E");
@@ -382,6 +390,7 @@ describe("interval rebasing", () => {
 	});
 
 	it("slides two refs on same segment to different segments", async () => {
+		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[0].sharedString.insertText(0, "AB");
 		clients[0].sharedString.insertText(0, "C");
 		const collection_1 = clients[0].sharedString.getIntervalCollection("comments");
@@ -404,6 +413,7 @@ describe("interval rebasing", () => {
 	});
 
 	it("maintains sliding preference on references after ack", async () => {
+		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[1].sharedString.insertText(0, "ABC");
 		containerRuntimeFactory.processAllMessages();
 		await assertConsistent(clients);
@@ -420,6 +430,7 @@ describe("interval rebasing", () => {
 	});
 
 	it("maintains sliding preference on references after reconnect with special endpoint segment", async () => {
+		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[0].sharedString.insertText(0, "D");
 		clients[0].containerRuntime.connected = false;
 		const collection_1 = clients[0].sharedString.getIntervalCollection("comments");
@@ -434,6 +445,7 @@ describe("interval rebasing", () => {
 	});
 
 	it("maintains sliding preference on references after reconnect", async () => {
+		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[0].sharedString.insertText(0, "D");
 		clients[0].containerRuntime.connected = false;
 		const collection_1 = clients[0].sharedString.getIntervalCollection("comments");
@@ -447,11 +459,8 @@ describe("interval rebasing", () => {
 		await assertConsistent(clients);
 	});
 
-	// todo: potentially related to AB#7050
-	//
-	// this is a reduced fuzz test from the suite
-	// `SharedString with rebasing and reconnect`
-	it.skip("...", async () => {
+	it("Can resubmit insert op at the end of the string", async () => {
+		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 		const A = constructClient(containerRuntimeFactory, "A");
 
 		A.sharedString.insertText(0, "ABCDEF");
@@ -479,6 +488,7 @@ describe("interval rebasing", () => {
 	it("slides to correct segment when inserting segment while disconnected after changing interval", async () => {
 		// B-A
 		//   ^
+		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[0].sharedString.insertText(0, "A");
 		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
 		const interval = collection_0.add({ start: 0, end: 0 });
@@ -505,6 +515,7 @@ describe("interval rebasing", () => {
 		//     ^
 		// (B)-(A)-C
 		//         ^
+		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[0].sharedString.insertText(0, "A");
 		clients[2].sharedString.insertText(0, "B");
 		const collection_0 = clients[2].sharedString.getIntervalCollection("comments");
@@ -538,6 +549,7 @@ describe("interval rebasing", () => {
 	it("changing interval endpoint while disconnected to segment also inserted while disconnected", async () => {
 		// AC
 		// A-B-C
+		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[0].sharedString.insertText(0, "AC");
 		containerRuntimeFactory.processAllMessages();
 		await assertConsistent(clients);
@@ -562,6 +574,7 @@ describe("interval rebasing", () => {
 	it("delete and insert text into range containing interval while disconnected", async () => {
 		// 012
 		// (0)-x-12
+		const { containerRuntimeFactory, clients } = setup3Clients();
 		clients[0].containerRuntime.connected = false;
 		const intervals = clients[0].sharedString.getIntervalCollection("comments");
 		clients[0].sharedString.insertText(0, "012");

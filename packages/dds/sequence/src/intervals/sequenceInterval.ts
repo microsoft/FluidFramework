@@ -307,21 +307,26 @@ export class SequenceIntervalClass implements SequenceInterval {
 	 * {@inheritDoc ISerializableInterval.serialize}
 	 */
 	public serialize(): ISerializedInterval {
-		return this.serializeDelta(this.properties, true, true) as ISerializedInterval;
+		return this.serializeDelta({
+			props: this.properties,
+			includeEndpoints: true,
+		}) as ISerializedInterval;
 	}
 
-	public serializeDelta(
-		props: PropertySet | undefined,
-		includeStart: boolean,
-		includeEnd: boolean,
-	): SerializedIntervalDelta {
+	public serializeDelta({
+		props,
+		includeEndpoints,
+	}: {
+		props: PropertySet | undefined;
+		includeEndpoints: boolean;
+	}): SerializedIntervalDelta {
 		const startSegment: ISegmentInternal | undefined = this.start.getSegment();
 		const endSegment: ISegmentInternal | undefined = this.end.getSegment();
-		const startPosition = includeStart
+		const startPosition = includeEndpoints
 			? (startSegment?.endpointType ??
 				this.client.localReferencePositionToPosition(this.start))
 			: undefined;
-		const endPosition = includeEnd
+		const endPosition = includeEndpoints
 			? (endSegment?.endpointType ?? this.client.localReferencePositionToPosition(this.end))
 			: undefined;
 		return {
@@ -330,8 +335,8 @@ export class SequenceIntervalClass implements SequenceInterval {
 			sequenceNumber: this.client.getCurrentSeq(),
 			start: startPosition,
 			stickiness: this.stickiness,
-			startSide: includeStart ? this.startSide : undefined,
-			endSide: includeEnd ? this.endSide : undefined,
+			startSide: includeEndpoints ? this.startSide : undefined,
+			endSide: includeEndpoints ? this.endSide : undefined,
 			properties: {
 				...props,
 				[reservedIntervalIdKey]: this.id,
