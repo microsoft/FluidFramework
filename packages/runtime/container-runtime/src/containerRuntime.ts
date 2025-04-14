@@ -350,12 +350,17 @@ export interface ICompressionRuntimeOptions {
  */
 export interface IContainerRuntimeOptions {
 	/**
-	 * compatibilityMode is used to determine the default configuration for version-dependent options (see {@link IContainerRuntimeOptionsVersionDependent}
-	 * for more details on version-dependent options). compatibilityMode can be considered the minimum version of the FF runtime that we should maintain
-	 * compatibility with.
+	 * compatibilityMode is used to determine the default configuration for version-dependent options. compatibilityMode can be considered the
+	 * minimum version of the FF runtime that we should maintain compatibility with.
 	 *
-	 * It is a string that must be a valid semver version. It must include the minor and patch indicators as well (i.e. 1.0 is not acceptable, but 1.0.0 is).
-	 * For example, use "2.0.0" to set the default configuration for clients running at least the 2.0.0 version
+	 * Version-dependent properties are related to changes that require the container runtime to at least be a certain version
+	 * in order to function properly and not break older clients.
+	 * For example, let's say that feature foo was added in 2.0 which introduces a new op type. Along feature foo, option bar
+	 * was added to enable/disable foo since clients prior to 2.0 would not understand the new op type. In this case, bar is
+	 * considered a version-dependent option since it is related to ensuring feature foo does not break older clients.
+	 *
+	 * compatibilityMode accepts a string that must be in valid semver format. It must include the minor and patch indicators as well (i.e. 1.0
+	 * is not acceptable, but 1.0.0 is). For example, use "2.0.0" to set the default configuration for clients running at least the 2.0.0 version
 	 * of the FF runtime.
 	 */
 	readonly compatibilityMode?: string;
