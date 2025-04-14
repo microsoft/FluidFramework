@@ -77,7 +77,7 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/server-local-server": "^5.0.0",
 		"@fluidframework/tinylicious-driver": "workspace:~",
-		"uuid": "^11.1.0"
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",
@@ -87,6 +87,7 @@
 		"@fluidframework/build-tools": "^0.55.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@microsoft/api-extractor": "7.50.1",
+		"@types/uuid": "^9.0.2",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",
