@@ -16,12 +16,12 @@ import {
 
 import { ContainerMessageType, ContainerRuntimeChunkedOpMessage } from "../messageTypes.js";
 
+import { estimateSocketSize } from "./batchManager.js";
 import {
 	IChunkedOp,
 	type OutboundBatchMessage,
 	type OutboundSingletonBatch,
 } from "./definitions.js";
-import { estimateSocketSize } from "./outbox.js";
 
 export function isChunkedMessage(message: ISequencedDocumentMessage): boolean {
 	return isChunkedContents(message.contents);

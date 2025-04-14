@@ -7,6 +7,7 @@ export {
 	BatchId,
 	BatchManager,
 	BatchSequenceNumbers,
+	estimateSocketSize,
 	getEffectiveBatchId,
 	generateBatchId,
 	IBatchManagerOptions,
@@ -25,12 +26,7 @@ export {
 	serializeOp,
 	ensureContentsDeserialized,
 } from "./opSerialization.js";
-export {
-	estimateSocketSize,
-	localBatchToOutboundBatch,
-	Outbox,
-	getLongStack,
-} from "./outbox.js";
+export { Outbox, getLongStack } from "./outbox.js";
 export { OpCompressor } from "./opCompressor.js";
 export { OpDecompressor } from "./opDecompressor.js";
 export { OpSplitter, splitOp, isChunkedMessage } from "./opSplitter.js";
