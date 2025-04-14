@@ -831,7 +831,6 @@ export const shortCodeMap = {
 	"0x5dd": "cannot group ops with metadata",
 	"0x5df": "Summarize should not be called when not tracking the summary",
 	"0x5e0": "Used route should always be an absolute route",
-	"0x5e2": "interval ID should not be undefined",
 	"0x5e6": "Requested coded for unsupported format.",
 	"0x5ea": "Tried to encode unsupported fieldKind",
 	"0x5ec": "The attribution for summarization should not be local type",
