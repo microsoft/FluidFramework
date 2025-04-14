@@ -158,7 +158,11 @@ export const assertSequenceIntervals = (
 		const overlappingIntervalsIndex = createOverlappingIntervalsIndex(sharedString);
 		intervalCollection.attachIndex(overlappingIntervalsIndex);
 		const overlapping = overlappingIntervalsIndex.findOverlappingIntervals("start", "end");
-		assert.deepEqual(actual, overlapping, "Interval search returned inconsistent results");
+		assert.deepEqual(
+			actual.map((i) => i.serialize()),
+			overlapping.map((i) => i.serialize()),
+			"Interval search returned inconsistent results",
+		);
 		intervalCollection.detachIndex(overlappingIntervalsIndex);
 	}
 	assert.strictEqual(

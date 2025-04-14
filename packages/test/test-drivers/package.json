@@ -70,7 +70,7 @@
 		"agentkeepalive": "^4.5.0",
 		"axios": "^1.8.4",
 		"semver": "^7.7.1",
-		"uuid": "^11.1.0"
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",
@@ -81,6 +81,7 @@
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@microsoft/api-extractor": "7.50.1",
 		"@types/node": "^18.19.0",
+		"@types/uuid": "^9.0.2",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",
