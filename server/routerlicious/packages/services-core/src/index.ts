@@ -152,6 +152,7 @@ export {
 	ITenantStorage,
 	ITenantPrivateKeys,
 	KeyName,
+	IInvalidTokenError,
 } from "./tenant";
 export {
 	IThrottleAndUsageStorageManager,
