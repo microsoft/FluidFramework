@@ -1850,7 +1850,6 @@ export class MergeTree {
 			const len =
 				this.nodeLength(child, perspective) ?? (isLastChildOfLastBlock ? 0 : undefined);
 
-
 			if (len === undefined) {
 				// if the seg len is undefined, the segment
 				// will be removed, so should just be skipped for now
