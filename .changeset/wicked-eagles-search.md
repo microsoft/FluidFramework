@@ -3,7 +3,7 @@
 "__section": deprecation
 ---
 
-The containerPackageInfo parameter in createOdspCreateContainerRequest() is now deprecated.
+The containerPackageInfo parameter in createOdspCreateContainerRequest() is now deprecated
 
 The `containerPackageInfo` parameter in `createOdspCreateContainerRequest()` is now deprecated and will be removed in version 2.40.0.
 
