@@ -217,6 +217,7 @@ export class LocalIntervalCollection {
 		end: SequencePlace,
 		props?: PropertySet,
 		op?: ISequencedDocumentMessage,
+		rollback?: boolean,
 	) {
 		// This check is intended to prevent scenarios where a random interval is created and then
 		// inserted into a collection. The aim is to ensure that the collection is created first
@@ -240,6 +241,7 @@ export class LocalIntervalCollection {
 			undefined,
 			this.options.mergeTreeReferencesCanSlideToEndpoint,
 			props,
+			rollback,
 		);
 
 		this.add(interval);
@@ -1130,8 +1132,8 @@ export class IntervalCollection
 		op: IIntervalCollectionTypeOperationValue,
 		localOpMetadata: IMapMessageLocalMetadata,
 	) {
-		const { opName } = op;
-		const { id, properties } = getSerializedProperties(op.value);
+		const { opName, value } = op;
+		const { id, properties } = getSerializedProperties(value);
 		const { localSeq, previous } = localOpMetadata;
 		switch (opName) {
 			case "add": {
@@ -1143,16 +1145,22 @@ export class IntervalCollection
 			case "change": {
 				assert(previous !== undefined, "must have previous for change");
 
-				const start = toOptionalSequencePlace(previous.start, previous.startSide);
-				const end = toOptionalSequencePlace(previous.end, previous.endSide);
+				const endpointsChanged = value.start !== undefined && value.end !== undefined;
+				const start = endpointsChanged
+					? toOptionalSequencePlace(previous.start, previous.startSide)
+					: undefined;
+				const end = endpointsChanged
+					? toOptionalSequencePlace(previous.end, previous.endSide)
+					: undefined;
 				this.change(id, {
 					start,
 					end,
 					props: Object.keys(properties).length > 0 ? properties : undefined,
 					rollback: true,
 				});
-				if (this.isCollaborating) {
-					this.localSeqToSerializedInterval.delete(localSeq);
+				this.localSeqToSerializedInterval.delete(localSeq);
+				if (endpointsChanged) {
+					this.removePendingChange(value);
 				}
 				break;
 			}
@@ -1392,6 +1400,8 @@ export class IntervalCollection
 			toSequencePlace(startPos, startSide),
 			toSequencePlace(endPos, endSide),
 			props,
+			undefined,
+			rollback,
 		);
 
 		if (interval) {

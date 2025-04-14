@@ -578,6 +578,7 @@ export function createPositionReferenceFromSegoff(
 	fromSnapshot?: boolean,
 	slidingPreference?: SlidingPreference,
 	canSlideToEndpoint?: boolean,
+	rollback?: boolean,
 ): LocalReferencePosition {
 	if (segoff === "start" || segoff === "end") {
 		return client.createLocalReferencePosition(
@@ -611,7 +612,8 @@ export function createPositionReferenceFromSegoff(
 		!op &&
 		!localSeq &&
 		!fromSnapshot &&
-		!refTypeIncludesFlag(refType, ReferenceType.Transient)
+		!refTypeIncludesFlag(refType, ReferenceType.Transient) &&
+		!rollback
 	) {
 		throw new UsageError("Non-transient references need segment");
 	}
@@ -629,6 +631,7 @@ function createPositionReference(
 	slidingPreference?: SlidingPreference,
 	exclusive: boolean = false,
 	useNewSlidingBehavior: boolean = false,
+	rollback?: boolean,
 ): LocalReferencePosition {
 	let segoff;
 
@@ -666,6 +669,7 @@ function createPositionReference(
 		fromSnapshot,
 		slidingPreference,
 		exclusive,
+		rollback,
 	);
 }
 
@@ -695,6 +699,7 @@ export function createSequenceInterval(
 	fromSnapshot?: boolean,
 	useNewSlidingBehavior: boolean = false,
 	props?: PropertySet,
+	rollback?: boolean,
 ): SequenceIntervalClass {
 	const { startPos, startSide, endPos, endSide } = endpointPosAndSide(
 		start ?? "start",
@@ -736,6 +741,7 @@ export function createSequenceInterval(
 		startReferenceSlidingPreference(stickiness),
 		startReferenceSlidingPreference(stickiness) === SlidingPreference.BACKWARD,
 		useNewSlidingBehavior,
+		rollback,
 	);
 
 	const endLref = createPositionReference(
@@ -748,6 +754,7 @@ export function createSequenceInterval(
 		endReferenceSlidingPreference(stickiness),
 		endReferenceSlidingPreference(stickiness) === SlidingPreference.FORWARD,
 		useNewSlidingBehavior,
+		rollback,
 	);
 
 	const rangeProp = {
