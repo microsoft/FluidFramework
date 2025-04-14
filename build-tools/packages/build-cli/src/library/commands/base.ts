@@ -70,11 +70,6 @@ export abstract class BaseCommand<T extends typeof Command>
 			hidden: true,
 			helpGroup: "GLOBAL",
 		}),
-		searchPath: Flags.string({
-			description: "The path to build project. Used for testing.",
-			hidden: true,
-			multiple: false,
-		}),
 	} as const;
 
 	protected flags!: Flags<T>;
