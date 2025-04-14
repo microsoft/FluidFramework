@@ -8,6 +8,11 @@ import {
 	getAllDependencies,
 	setDependencyRange,
 } from "@fluid-tools/build-infrastructure";
+import {
+	RangeOperator,
+	type RangeOperatorWithVersion,
+	RangeOperators,
+} from "@fluid-tools/version-tools";
 import { type Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import type { PackageName } from "@rushstack/node-core-library";
@@ -18,53 +23,60 @@ import { releaseGroupNameFlag, testModeFlag } from "../../../flags.js";
 import { BaseCommandWithBuildProject } from "../../../library/index.js";
 
 /**
- * Update the dependency version of a specified package or release group. That is, if one or more packages in the repo
- * depend on package A, then this command will update the dependency range on package A. The dependencies and the
- * packages updated can be filtered using various flags.
- *
- * @remarks
- *
- * This command is roughly equivalent to `fluid-bump-version --dep`.
+ * Update the dependency version that a release group has on another release group. That is, if one or more packages in
+ * the release group depend on package A in another release group, then this command will update the dependency range on
+ * package A and all other packages in that release group.
  */
 export default class ModifyFluidDepsCommand extends BaseCommandWithBuildProject<
 	typeof ModifyFluidDepsCommand
 > {
 	static readonly description =
-		"Update the dependency version of a specified package or release group. That is, if one or more packages in the repo depend on package A, then this command will update the dependency range on package A. The dependencies and the packages updated can be filtered using various flags.\n\nTo learn more see the detailed documentation at https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/bumpDetails.md";
+		"Update the dependency version that a release group has on another release group. That is, if one or more packages in the release group depend on package A in another release group, then this command will update the dependency range on package A and all other packages in that release group.\n\nTo learn more see the detailed documentation at https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/bumpDetails.md";
 
 	static readonly flags = {
-		on: releaseGroupNameFlag({ required: true }),
-		releaseGroup: releaseGroupNameFlag({ required: true }),
-		prerelease: Flags.boolean({
-			dependsOn: ["updateType"],
-			description: "Treat prerelease versions as valid versions to update to.",
+		releaseGroup: releaseGroupNameFlag({
+			required: false,
+			multiple: true,
+			description:
+				"A release group whose packages will be updated. This can be specified multiple times to updates dependencies for multiple release groups.",
 		}),
+		on: releaseGroupNameFlag({
+			required: true,
+			char: undefined,
+			description:
+				"A release group that contains dependent packages. Packages that depend on packages in this release group will be updated.",
+		}),
+		prerelease: Flags.boolean({
+			description:
+				"Update to the latest prerelease version, which might be an earlier release than latest.",
+		}),
+		dependencyRange: Flags.custom<RangeOperator>({
+			char: "d",
+			description:
+				'Controls the type of dependency that is used when updating packages. Use "" (the empty string) to indicate exact dependencies. Note that dependencies on pre-release versions will always be exact.',
+			default: "^",
+			options: [...RangeOperators],
+		})(),
 		testMode: testModeFlag,
 		...BaseCommandWithBuildProject.flags,
 	} as const;
 
 	static readonly examples = [
-		// {
-		// 	description:
-		// 		"Bump dependencies on @fluidframework/build-common to the latest release version across all release groups.",
-		// 	command: "<%= config.bin %> <%= command.id %> @fluidframework/build-common -t latest",
-		// },
-		// {
-		// 	description:
-		// 		"Bump dependencies on @fluidframework/build-common to the next minor version in the azure release group.",
-		// 	command:
-		// 		"<%= config.bin %> <%= command.id %> @fluidframework/build-common -t minor -g azure",
-		// },
-		// {
-		// 	description:
-		// 		"Bump dependencies on packages in the server release group to the greatest released version in the client release group. Include pre-release versions.",
-		// 	command: "<%= config.bin %> <%= command.id %> server -g client -t greatest --prerelease",
-		// },
-		// {
-		// 	description:
-		// 		"Bump dependencies on server packages to the current version across the repo, replacing any pre-release ranges with release ranges.",
-		// 	command: "<%= config.bin %> <%= command.id %> server -t latest",
-		// },
+		{
+			description:
+				"Update 'client' dependencies on packages in the 'build-tools' release group to the latest release version.",
+			command: "<%= config.bin %> <%= command.id %> -g client --on build-tools",
+		},
+		{
+			description:
+				"Update 'client' dependencies on packages in the 'server' release group to the latest version. Include pre-release versions.",
+			command: "<%= config.bin %> <%= command.id %> -g client --on build-tools --prerelease",
+		},
+		{
+			description:
+				"Update 'client' dependencies on packages in the 'server' release group to the latest version. Include pre-release versions.",
+			command: "<%= config.bin %> <%= command.id %> -g client --on server",
+		},
 	];
 
 	/**
@@ -74,13 +86,18 @@ export default class ModifyFluidDepsCommand extends BaseCommandWithBuildProject<
 		const { flags } = this;
 
 		const buildProject = this.getBuildProject(flags.searchPath);
-		const releaseGroup = buildProject.releaseGroups.get(flags.releaseGroup);
+		const releaseGroups =
+			flags.releaseGroup === undefined
+				? [...buildProject.releaseGroups.values()]
+				: flags.releaseGroup.map((rg) => {
+						const found = buildProject.releaseGroups.get(rg);
+						if (found === undefined) {
+							this.error(`Release group not found: '${flags.releaseGroup}'`);
+						}
+						return found;
+					});
+		const packagesToUpdate = releaseGroups.flatMap((rg) => rg.packages);
 		const dependencyReleaseGroup = buildProject.releaseGroups.get(flags.on);
-
-		if (releaseGroup === undefined) {
-			this.error(`Release group not found: '${flags.releaseGroup}'`);
-		}
-
 		if (dependencyReleaseGroup === undefined) {
 			this.error(`Release group not found: '${flags.on}'`);
 		}
@@ -89,18 +106,18 @@ export default class ModifyFluidDepsCommand extends BaseCommandWithBuildProject<
 			this.log(chalk.yellowBright(`Running in test mode. No changes will be made.`));
 		}
 
-		// Get all the deps of the release group being updated
-		const depsToUpdate = getAllDependencies(buildProject, releaseGroup.packages);
+		// Get all the deps of the release groups being updated
+		const depsToUpdate = getAllDependencies(buildProject, packagesToUpdate);
 
 		if (!depsToUpdate.releaseGroups.includes(dependencyReleaseGroup)) {
 			this.error(
-				`Release group '${releaseGroup}' has no dependencies on '${dependencyReleaseGroup}'`,
+				`Selected release groups have no dependencies on '${dependencyReleaseGroup}'`,
 			);
 		}
 
 		this.logHr();
 		this.log(
-			`Updating dependencies on '${chalk.blue(dependencyReleaseGroup.name)}' in the '${chalk.blue(releaseGroup.name)}' release group`,
+			`Updating dependencies on '${chalk.blue(dependencyReleaseGroup.name)}' in the '${chalk.blue(releaseGroups.map((rg) => rg.name).join(", "))}' release group`,
 		);
 		this.log(`Prerelease: ${flags.prerelease ? chalk.green("yes") : "no"}`);
 		this.logHr();
@@ -121,11 +138,9 @@ export default class ModifyFluidDepsCommand extends BaseCommandWithBuildProject<
 		const newVersion = [...versionSet][0];
 		this.info(`Found updated version ${newVersion}`);
 
-		await setDependencyRange(
-			releaseGroup.packages,
-			dependencyReleaseGroup.packages,
-			`^${newVersion}`,
-		);
+		const newRange =
+			`${flags.prerelease ? "" : flags.dependencyRange}${newVersion}` as RangeOperatorWithVersion;
+		await setDependencyRange(packagesToUpdate, dependencyReleaseGroup.packages, newRange);
 	}
 }
 
