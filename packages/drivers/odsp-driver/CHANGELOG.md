@@ -2,7 +2,15 @@
 
 ## 2.32.0
 
-Dependency updates only.
+### Minor Changes
+
+- The containerPackageInfo parameter in createOdspCreateContainerRequest() is now deprecated ([#23919](https://github.com/microsoft/FluidFramework/pull/23919)) [42b26b7f18](https://github.com/microsoft/FluidFramework/commit/42b26b7f18ede4471d4426c542345bc66b56e923)
+
+  The `containerPackageInfo` parameter in `createOdspCreateContainerRequest()` is now deprecated and will be removed in version 2.40.0.
+
+  The name of the containerPackage can no longer be sent through the request. Instead, it can be added in the constructor of `OdspDriverUrlResolverForShareLink`.
+
+  See [issue #23882](https://github.com/microsoft/FluidFramework/issues/23882) for more details.
 
 ## 2.31.0
 

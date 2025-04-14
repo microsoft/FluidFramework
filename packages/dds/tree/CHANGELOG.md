@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- Cleanup of several tree and schema alpha APIs for content import and export ([#24255](https://github.com/microsoft/FluidFramework/pull/24255)) [c6563e57ac](https://github.com/microsoft/FluidFramework/commit/c6563e57ac42f002f844aea4d9d6e849908ae1b2)
+- Cleanup of several tree and schema alpha APIs for content import and export ([#24350](https://github.com/microsoft/FluidFramework/pull/24350)) [fe924a173b](https://github.com/microsoft/FluidFramework/commit/fe924a173b71abd96ba76da787eec3b4c077d32b)
 
   A new `TreeSchema` type has been introduced which extends `SimpleTreeSchema` but contains `TreeNodeSchema` instead of `SimpleNodeSchema`.
 
@@ -22,7 +22,7 @@
 
   Now that `getJsonSchema` takes in configuration options, its results are no longer cached.
 
-- Provide alpha APIs for accessing tree content and stored schema without requiring a compatible view schema ([#24225](https://github.com/microsoft/FluidFramework/pull/24225)) [18b6e05e4e](https://github.com/microsoft/FluidFramework/commit/18b6e05e4e85fdc1a6d373b15c2bfcc191ea1bc3)
+- Provide alpha APIs for accessing tree content and stored schema without requiring a compatible view schema ([#24350](https://github.com/microsoft/FluidFramework/pull/24350)) [fe924a173b](https://github.com/microsoft/FluidFramework/commit/fe924a173b71abd96ba76da787eec3b4c077d32b)
 
   Adds an `ITreeAlpha` interface (which `ITree` can be down-casted to) that provides access to both the tree content and the schema.
   This allows inspecting the content saved in a SharedTree in a generic way that can work on any SharedTree.
