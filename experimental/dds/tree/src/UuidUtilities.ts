@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { NIL } from 'uuid';
-
 import { assertWithMessage } from './Common.js';
 import { StableId, UuidString } from './Identifiers.js';
 
@@ -26,7 +24,7 @@ function isHexadecimalCharacter(charCode: number): boolean {
 }
 
 /** The null (lowest/all-zeros) UUID */
-export const nilUuid = assertIsUuidString(NIL);
+export const nilUuid = assertIsUuidString('00000000-0000-0000-0000-000000000000');
 
 /**
  * Asserts that the given string is a UUID
