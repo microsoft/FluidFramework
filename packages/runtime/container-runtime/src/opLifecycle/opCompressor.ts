@@ -83,7 +83,7 @@ export class OpCompressor {
 	 */
 	private serializeBatchContents(batch: OutboundSingletonBatch): string {
 		const [message, ...none] = batch.messages;
-		assert(none.length === 0, "Batch should only contain a single message");
+		assert(none.length === 0, 0xb78 /* Batch should only contain a single message */);
 		try {
 			// This is expressed as a JSON array, for legacy reasons
 			return `[${message.contents}]`;

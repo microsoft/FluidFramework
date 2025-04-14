@@ -334,7 +334,7 @@ export class Outbox {
 	public flush(resubmittingBatchId?: BatchId): void {
 		assert(
 			!this.isContextReentrant(),
-			"Flushing must not happen while incoming changes are being processed",
+			0xb7b /* Flushing must not happen while incoming changes are being processed */,
 		);
 
 		this.flushAll(resubmittingBatchId);
