@@ -1,9 +1,5 @@
 # @fluid-example/multiview-coordinate-model
 
-## 2.32.0
-
-Dependency updates only.
-
 ## 2.31.0
 
 Dependency updates only.

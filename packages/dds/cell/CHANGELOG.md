@@ -1,9 +1,5 @@
 # @fluidframework/cell
 
-## 2.32.0
-
-Dependency updates only.
-
 ## 2.31.0
 
 Dependency updates only.

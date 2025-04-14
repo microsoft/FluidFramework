@@ -1,49 +1,5 @@
 # fluid-framework
 
-## 2.32.0
-
-### Minor Changes
-
-- Cleanup of several tree and schema alpha APIs for content import and export ([#24255](https://github.com/microsoft/FluidFramework/pull/24255)) [c6563e57ac](https://github.com/microsoft/FluidFramework/commit/c6563e57ac42f002f844aea4d9d6e849908ae1b2)
-
-  A new `TreeSchema` type has been introduced which extends `SimpleTreeSchema` but contains `TreeNodeSchema` instead of `SimpleNodeSchema`.
-
-  `TreeViewConfigurationAlpha` is added which is just `TreeViewConfiguration` but implementing `TreeSchema`.
-
-  `SimpleTreeSchema` was modified to have a `root` property instead of implementing `SimpleFieldSchema` directly:
-  this makes it possible for `TreeViewConfigurationAlpha` to implement `TreeSchema` which extends `SimpleTreeSchema`.
-
-  `generateSchemaFromSimpleSchema` now returns the new `TreeSchema` type.
-
-  `EncodeOptions` and `ParseOptions` have been unified as `TreeEncodingOptions` which covers both the encoding and parsing cases.
-
-  `getJsonSchema` now takes in `ImplicitAllowedTypes` instead of `ImplicitFieldSchema` since it can't handle optional roots.
-  `getJsonSchema` also takes in the new `TreeSchemaEncodingOptions` to provide options for how to handle stored keys vs property keys, and fields with defaults.
-
-  Now that `getJsonSchema` takes in configuration options, its results are no longer cached.
-
-- Provide alpha APIs for accessing tree content and stored schema without requiring a compatible view schema ([#24225](https://github.com/microsoft/FluidFramework/pull/24225)) [18b6e05e4e](https://github.com/microsoft/FluidFramework/commit/18b6e05e4e85fdc1a6d373b15c2bfcc191ea1bc3)
-
-  Adds an `ITreeAlpha` interface (which `ITree` can be down-casted to) that provides access to both the tree content and the schema.
-  This allows inspecting the content saved in a SharedTree in a generic way that can work on any SharedTree.
-
-  This can be combined with the existing `generateSchemaFromSimpleSchema` to generate a schema that can be used with [`IIree.viewWith`](https://fluidframework.com/docs/api/fluid-framework/viewabletree-interface#viewwith-methodsignature) to allow constructing a [`TreeView`](https://fluidframework.com/docs/api/fluid-framework/treeview-interface) for any SharedTree, regardless of its schema.
-
-  Note that the resulting TypeScript typing for such a view will not be friendly: the `TreeView` APIs are designed for statically known schema. Using them is possible with care and a lot of type casts but not recommended if it can be avoided: see disclaimer on `generateSchemaFromSimpleSchema`.
-  Example using `ITreeAlpha` and `generateSchemaFromSimpleSchema`:
-
-  ```typescript
-  const viewAlpha = tree as ITreeAlpha;
-  const treeSchema = generateSchemaFromSimpleSchema(
-    viewAlpha.exportSimpleSchema(),
-  );
-  const config = new TreeViewConfiguration({ schema: treeSchema.root });
-  const view = viewAlpha.viewWith(config);
-  ```
-
-  `getSimpleSchema` is also added as an `@alpha` API to provide a way to clone schema into the simple schema formats.
-  Note that when using (or copying) a view schema as a simple schema, more metadata will be preserved than when deriving one from the stored schema using `ITreeAlpha`.
-
 ## 2.31.0
 
 ### Minor Changes
