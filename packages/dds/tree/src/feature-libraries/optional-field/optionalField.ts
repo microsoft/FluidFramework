@@ -262,6 +262,9 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					) {
 						// This branch deals with cases (S B S) and (S _ S) (i.e, the "Yes" column).
 						// Both cases are equivalent to pinning the node S.
+						// We use the following normalization rules:
+						// 1. Detaches should the earliest possible ID for a node (i.e., before any renames).
+						// 2. Attaches should the latest possible ID for a node (i.e., after any renames).
 						composedDst = replace1.dst;
 						composedSrc = replace2.src;
 					} else {
