@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import type { ReleaseGroupName } from "@fluid-tools/build-infrastructure";
 import { MonoRepo, Package } from "@fluidframework/build-tools";
 import { Args } from "@oclif/core";
 import { PackageName } from "@rushstack/node-core-library";
 import * as semver from "semver";
 // eslint-disable-next-line import/no-deprecated
 import { Context, isMonoRepoKind } from "./library/index.js";
-import type { ReleaseGroupName } from "@fluid-tools/build-infrastructure";
 
 /**
  * Creates a CLI argument for package or release group names. It's a factory function so that commands can override the
@@ -57,6 +57,4 @@ export const semverArg = Args.custom<semver.SemVer, { loose?: boolean }>({
 	},
 });
 
-export const releaseGroupOrPackageArg = Args.custom<ReleaseGroupName|PackageName>({
-
-})
+export const releaseGroupOrPackageArg = Args.custom<ReleaseGroupName | PackageName>({});

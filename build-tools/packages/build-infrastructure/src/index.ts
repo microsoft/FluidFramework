@@ -17,6 +17,7 @@
 export {
 	getAllDependencies,
 	loadBuildProject,
+	setDependencyRange,
 } from "./buildProject.js";
 export {
 	type ReleaseGroupDefinition,

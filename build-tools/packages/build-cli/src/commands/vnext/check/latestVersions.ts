@@ -34,11 +34,6 @@ export default class LatestVersionsCommand extends BaseCommandWithBuildProject<
 			hidden: true,
 			multiple: true,
 		}),
-		searchPath: Flags.string({
-			description: "The path to build project. Used for testing.",
-			hidden: true,
-			multiple: false,
-		}),
 		...BaseCommandWithBuildProject.flags,
 	} as const;
 
