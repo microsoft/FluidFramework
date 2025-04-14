@@ -21,7 +21,9 @@ import {
 } from "../modular-schema/index.js";
 
 import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormatV2.js";
-import type { OptionalChangeset, RegisterId, Replace } from "./optionalFieldChangeTypes.js";
+import type { OptionalChangeset, Replace } from "./optionalFieldChangeTypes.js";
+
+type RegisterId = ChangeAtomId | "self";
 
 function makeRegisterIdCodec(
 	changeAtomIdCodec: IJsonCodec<
@@ -95,7 +97,8 @@ export function makeOptionalFieldCodec(
 					dst: changeAtomIdCodec.decode(encoded.r.d, context.baseContext),
 				};
 				if (encoded.r.s !== undefined) {
-					replace.src = registerIdCodec.decode(encoded.r.s, context.baseContext);
+					const register = registerIdCodec.decode(encoded.r.s, context.baseContext);
+					replace.src = register === "self" ? replace.dst : register;
 				}
 				decoded.valueReplace = replace;
 			}

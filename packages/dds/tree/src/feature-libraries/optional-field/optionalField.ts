@@ -11,12 +11,12 @@ import {
 	type DeltaFieldChanges,
 	type DeltaMark,
 	type RevisionTag,
+	areEqualChangeAtomIdOpts,
 	areEqualChangeAtomIds,
 	makeChangeAtomId,
 	replaceAtomRevisions,
-	taggedAtomId,
 } from "../../core/index.js";
-import { type IdAllocator, type Mutable, SizedNestedMap } from "../../util/index.js";
+import type { IdAllocator, Mutable } from "../../util/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
 import {
 	type FieldChangeHandler,
@@ -35,103 +35,8 @@ import {
 	CrossFieldTarget,
 } from "../modular-schema/index.js";
 
-import type { OptionalChangeset, RegisterId, Replace } from "./optionalFieldChangeTypes.js";
+import type { OptionalChangeset, Replace } from "./optionalFieldChangeTypes.js";
 import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";
-
-export interface IRegisterMap<T> {
-	set(id: RegisterId, childChange: T): void;
-	get(id: RegisterId): T | undefined;
-	delete(id: RegisterId): boolean;
-	keys(): Iterable<RegisterId>;
-	values(): Iterable<T>;
-	entries(): Iterable<[RegisterId, T]>;
-	readonly size: number;
-}
-
-export class RegisterMap<T> implements IRegisterMap<T> {
-	private readonly nestedMapData = new SizedNestedMap<
-		ChangesetLocalId | "self",
-		RevisionTag | undefined,
-		T
-	>();
-
-	public clone(): RegisterMap<T> {
-		const clone = new RegisterMap<T>();
-		for (const [id, t] of this.entries()) {
-			clone.set(id, t);
-		}
-		return clone;
-	}
-
-	public set(id: RegisterId, childChange: T): void {
-		if (id === "self") {
-			this.nestedMapData.set("self", undefined, childChange);
-		} else {
-			this.nestedMapData.set(id.localId, id.revision, childChange);
-		}
-	}
-
-	public get(id: RegisterId): T | undefined {
-		return id === "self"
-			? this.nestedMapData.tryGet(id, undefined)
-			: this.nestedMapData.tryGet(id.localId, id.revision);
-	}
-
-	public has(id: RegisterId): boolean {
-		return this.get(id) !== undefined;
-	}
-
-	public delete(id: RegisterId): boolean {
-		return id === "self"
-			? this.nestedMapData.delete("self", undefined)
-			: this.nestedMapData.delete(id.localId, id.revision);
-	}
-
-	public keys(): Iterable<RegisterId> {
-		const changeIds: RegisterId[] = [];
-		for (const [localId, nestedMap] of this.nestedMapData) {
-			if (localId === "self") {
-				changeIds.push("self");
-			} else {
-				for (const [revisionTag, _] of nestedMap) {
-					changeIds.push(
-						revisionTag === undefined ? { localId } : { localId, revision: revisionTag },
-					);
-				}
-			}
-		}
-
-		return changeIds;
-	}
-	public values(): Iterable<T> {
-		return this.nestedMapData.values();
-	}
-	public entries(): Iterable<[RegisterId, T]> {
-		const entries: [RegisterId, T][] = [];
-		for (const changeId of this.keys()) {
-			if (changeId === "self") {
-				const entry = this.nestedMapData.tryGet("self", undefined);
-				assert(
-					entry !== undefined,
-					0x770 /* Entry should not be undefined when iterating keys. */,
-				);
-				entries.push(["self", entry]);
-			} else {
-				const entry = this.nestedMapData.tryGet(changeId.localId, changeId.revision);
-				assert(
-					entry !== undefined,
-					0x771 /* Entry should not be undefined when iterating keys. */,
-				);
-				entries.push([changeId, entry]);
-			}
-		}
-
-		return entries;
-	}
-	public get size(): number {
-		return this.nestedMapData.size;
-	}
-}
 
 export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	compose: (
@@ -270,15 +175,17 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			const replace1 = change1.valueReplace;
 			const replace2 = change2.valueReplace;
 			let composedDst: ChangeAtomId;
-			let composedSrc: RegisterId | undefined;
-			if (replace1.src === "self" && replace2.src === "self") {
+			let composedSrc: ChangeAtomId | undefined;
+			if (isPin(replace1, nodeManager) && isPin(replace2, nodeManager)) {
 				// This branch deals with case (S▼S▼S).
 				// Pinning the node twice is equivalent to pinning it once.
-				composedSrc = "self";
-				// Note that we must preserve the detach ID from change1
-				// because that's the ID that should be used if the composed changeset were to be rebased over a change that attaches a different node in place of S.
+				// Since there are multiple IDs to referer to the same node, there are multiple ways to represent the same pin intention.
+				// We use the following normalization rules:
+				// 1. Detaches should the earliest possible ID for a node (i.e., before any renames).
+				// 2. Attaches should the latest possible ID for a node (i.e., after any renames).
 				composedDst = replace1.dst;
-			} else if (replace1.src === "self") {
+				composedSrc = replace2.src;
+			} else if (isPin(replace1, nodeManager)) {
 				// This branch deals with cases (S▼S C) and (S▼S _).
 				// In both cases, the pin intention is made irrelevant by replace2 since it detaches the pinned node,
 				// and the replace2 has the last word of whether and which node should be attached to the field.
@@ -292,7 +199,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				composedDst = replace1.dst;
 				// However, we need to inform the node manager of the rename
 				nodeManager.composeAttachDetach(replace1.dst, replace2.dst, 1);
-			} else if (replace2.src === "self") {
+			} else if (isPin(replace2, nodeManager)) {
 				// This branch deals with cases (A S▼S) and (_ S▼S).
 				assert(replace1.src !== undefined, "Replace1.src should be defined");
 				// In both cases, node S should be attached to the field.
@@ -301,8 +208,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				// We use the following normalization rules:
 				// 1. Detaches should the earliest possible ID for a node (i.e., before any renames).
 				// 2. Attaches should the latest possible ID for a node (i.e., after any renames).
-				// In this situation, rule 2 applies, so we use replace2.dst.
-				composedSrc = replace2.dst;
+				// In this situation, rule 2 applies, so we use replace2.src.
+				composedSrc = replace2.src;
 				// However, we need to inform the node manager of the rename
 				nodeManager.composeAttachDetach(replace1.src, replace2.dst, 1);
 				// In case (A S▼S), A is detached using the detach ID from change1
@@ -355,9 +262,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					) {
 						// This branch deals with cases (S B S) and (S _ S) (i.e, the "Yes" column).
 						// Both cases are equivalent to pinning the node S.
-						composedSrc = "self";
-						// The detach ID from change1 is the one that should be used if the composed changeset were to be rebased over a change that attaches a different node in place of S.
 						composedDst = replace1.dst;
+						composedSrc = replace2.src;
 					} else {
 						// This branch deals with the remaining 5 cases (ie., the "No" column):
 						// (A B C)
@@ -379,7 +285,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			};
 			if (composedSrc !== undefined) {
 				assert(
-					!areEqualRegisterIdsOpt(composedReplace.dst, composedReplace.src),
+					!areEqualChangeAtomIdOpts(composedReplace.dst, composedReplace.src),
 					"Pins should be represented explicitly",
 				);
 				composedReplace.src = composedSrc;
@@ -484,46 +390,38 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		const inverted: Mutable<OptionalChangeset> = {};
 		let childChange = change.childChange;
 
-		if (change.valueReplace !== undefined) {
-			if (isReplaceEffectful(change.valueReplace)) {
-				const replace: Mutable<Replace> =
-					change.valueReplace.src === undefined
-						? {
-								isEmpty: true,
-								dst: makeChangeAtomId(genId.allocate(), revision),
-							}
-						: {
-								isEmpty: false,
-								dst: isRollback
-									? change.valueReplace.src
-									: makeChangeAtomId(genId.allocate(), revision),
-							};
-				if (!change.valueReplace.isEmpty) {
-					replace.src = change.valueReplace.dst;
+		if (isReplaceEffectful(change.valueReplace)) {
+			const replace: Mutable<Replace> =
+				change.valueReplace.src === undefined
+					? {
+							isEmpty: true,
+							dst: makeChangeAtomId(genId.allocate(), revision),
+						}
+					: {
+							isEmpty: false,
+							dst: isRollback
+								? change.valueReplace.src
+								: makeChangeAtomId(genId.allocate(), revision),
+						};
+			if (!change.valueReplace.isEmpty) {
+				replace.src = change.valueReplace.dst;
 
-					// XXX: We should use a new attach ID
-					nodeManager.invertDetach(
-						change.valueReplace.dst,
-						1,
-						change.childChange,
-						change.valueReplace.dst,
-					);
-					childChange = undefined;
-				}
-
-				if (change.valueReplace.src !== undefined) {
-					// XXX: If we use a new detach ID, need to update the `invertRenames` flag.
-					childChange = nodeManager.invertAttach(change.valueReplace.src, 1, true).value;
-				}
-
-				inverted.valueReplace = replace;
-			} else if (!isRollback && change.valueReplace.src === "self") {
-				inverted.valueReplace = {
-					isEmpty: false,
-					src: "self",
-					dst: makeChangeAtomId(genId.allocate(), revision),
-				};
+				// XXX: We should use a new attach ID
+				nodeManager.invertDetach(
+					change.valueReplace.dst,
+					1,
+					change.childChange,
+					change.valueReplace.dst,
+				);
+				childChange = undefined;
 			}
+
+			if (change.valueReplace.src !== undefined) {
+				// XXX: If we use a new detach ID, need to update the `invertRenames` flag.
+				childChange = nodeManager.invertAttach(change.valueReplace.src, 1, true).value;
+			}
+
+			inverted.valueReplace = replace;
 		}
 
 		if (childChange !== undefined) {
@@ -561,7 +459,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			};
 
 			if (change.valueReplace.src !== undefined) {
-				replace.src = rebaseReplaceSource(change.valueReplace.src, overChange.valueReplace);
+				replace.src = rebaseReplaceSource(change.valueReplace, overChange.valueReplace);
 			}
 			rebased.valueReplace = replace;
 		}
@@ -611,16 +509,17 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 };
 
 function rebaseReplaceSource(
-	source: RegisterId,
+	source: Replace,
 	baseReplace: Replace | undefined,
-): RegisterId {
-	if (source === "self" && baseReplace !== undefined) {
-		return baseReplace.dst;
-	} else if (areEqualRegisterIdsOpt(baseReplace?.src, source)) {
-		// XXX: Consider renames when comparing register IDs
-		return "self";
+): ChangeAtomId | undefined {
+	// eslint-disable-next-line unicorn/prefer-ternary
+	if (areEqualChangeAtomIdOpts(baseReplace?.src, source.src)) {
+		// If the base change attaches the node that the rebased change is trying to attach,
+		// then the rebased change becomes a pin.
+		// XXX: Consider renames when comparing register IDs (remember to use the last know ID for the node).
+		return source.dst;
 	} else {
-		return source;
+		return source.src;
 	}
 }
 
@@ -635,34 +534,10 @@ function replaceReplaceRevisions(
 	};
 
 	if (replace.src !== undefined) {
-		updated.src = replaceRegisterRevisions(replace.src, oldRevisions, newRevision);
+		updated.src = replaceAtomRevisions(replace.src, oldRevisions, newRevision);
 	}
 
 	return updated;
-}
-
-function replaceRegisterRevisions(
-	register: RegisterId,
-	oldRevisions: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag | undefined,
-): RegisterId {
-	return register === "self"
-		? register
-		: replaceAtomRevisions(register, oldRevisions, newRevision);
-}
-
-function areEqualRegisterIds(id1: RegisterId, id2: RegisterId): boolean {
-	return id1 === "self" || id2 === "self" ? id1 === id2 : areEqualChangeAtomIds(id1, id2);
-}
-
-function areEqualRegisterIdsOpt(
-	id1: RegisterId | undefined,
-	id2: RegisterId | undefined,
-): boolean {
-	if (id1 === undefined || id2 === undefined) {
-		return id1 === id2;
-	}
-	return areEqualRegisterIds(id1, id2);
 }
 
 type EffectfulReplace =
@@ -682,24 +557,27 @@ function isReplaceEffectful(replace: Replace | undefined): replace is EffectfulR
 		return false;
 	}
 
-	if (replace.src === "self") {
+	if (isPin(replace)) {
 		return false;
 	}
 	return !replace.isEmpty || replace.src !== undefined;
 }
 
 function getEffectfulDst(replace: Replace | undefined): ChangeAtomId | undefined {
-	return replace === undefined || replace.isEmpty || replace.src === "self"
-		? undefined
-		: replace.dst;
+	return replace === undefined || replace.isEmpty || isPin(replace) ? undefined : replace.dst;
 }
 
-export function taggedRegister(id: RegisterId, revision: RevisionTag | undefined): RegisterId {
-	if (id === "self") {
-		return id;
+function isPin(
+	replace: Replace,
+	nodeManager?: ComposeNodeManager,
+): replace is Replace & { isEmpty: false; src: ChangeAtomId } {
+	if (replace.src === undefined) {
+		return false;
 	}
-
-	return taggedAtomId(id, revision);
+	if (nodeManager !== undefined) {
+		return nodeManager.composeDetachAttach(replace.dst, replace.src, 1);
+	}
+	return areEqualChangeAtomIds(replace.dst, replace.src);
 }
 
 export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
@@ -817,7 +695,7 @@ function getCrossFieldKeys(change: OptionalChangeset): CrossFieldKeyRange[] {
 			count: 1,
 		});
 
-		if (change.valueReplace.src !== undefined && change.valueReplace.src !== "self") {
+		if (change.valueReplace.src !== undefined) {
 			keys.push({
 				key: { ...change.valueReplace.src, target: CrossFieldTarget.Destination },
 				count: 1,

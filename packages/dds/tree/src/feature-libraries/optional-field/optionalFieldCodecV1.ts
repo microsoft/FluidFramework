@@ -7,10 +7,12 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { TAnySchema } from "@sinclair/typebox";
 
 import type { IJsonCodec } from "../../codec/index.js";
-import type {
-	ChangeEncodingContext,
-	EncodedRevisionTag,
-	RevisionTag,
+import {
+	areEqualChangeAtomIdOpts,
+	type ChangeAtomId,
+	type ChangeEncodingContext,
+	type EncodedRevisionTag,
+	type RevisionTag,
 } from "../../core/index.js";
 import type { Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
@@ -20,7 +22,18 @@ import {
 } from "../modular-schema/index.js";
 
 import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormatV1.js";
-import type { Move, OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes.js";
+import type { OptionalChangeset } from "./optionalFieldChangeTypes.js";
+
+/**
+ * Uniquely identifies a register within the scope of this changeset.
+ * The sentinel value "self" is used for the active register, which is a universally shared register
+ * (as in, any changeset referring to "self" refers to the register containing the active value of the field).
+ *
+ * See the model description in {@link OptionalChangeset} for more details.
+ */
+export type RegisterId = ChangeAtomId | "self";
+
+export type Move = readonly [src: ChangeAtomId, dst: ChangeAtomId];
 
 function makeRegisterIdCodec(
 	revisionTagCodec: IJsonCodec<
@@ -79,7 +92,11 @@ export function makeOptionalFieldCodec(
 
 				// When the source of the replace is "self", the destination is a reserved ID that will only be used if
 				// the tree in the field is concurrently replaced.
-				if (change.valueReplace.isEmpty || change.valueReplace.src === "self") {
+				if (
+					change.valueReplace.isEmpty ||
+					// XXX: Consider renames
+					areEqualChangeAtomIdOpts(change.valueReplace.dst, change.valueReplace.src)
+				) {
 					encoded.d = registerIdCodec.encode(change.valueReplace.dst, context.baseContext);
 				} else {
 					encoded.m.push([
@@ -138,7 +155,7 @@ export function makeOptionalFieldCodec(
 					);
 					const reserved = registerIdCodec.decode(encoded.d, context.baseContext);
 					assert(reserved !== "self", 0x8d3 /* Invalid reserved detach ID */);
-					decoded.valueReplace = { isEmpty: false, dst: reserved, src: "self" };
+					decoded.valueReplace = { isEmpty: false, dst: reserved, src: reserved };
 				} else {
 					assert(
 						encoded.d === undefined,
@@ -160,7 +177,7 @@ export function makeOptionalFieldCodec(
 				decoded.valueReplace = {
 					isEmpty: true,
 					dst: reserved,
-					src: attached,
+					src: attached === "self" ? reserved : attached,
 				};
 			} else if (detached !== undefined) {
 				assert(

@@ -9,7 +9,6 @@ import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils
 import {
 	type ChangeAtomId,
 	type ChangesetLocalId,
-	type DeltaFieldChanges,
 	type RevisionMetadataSource,
 	type RevisionTag,
 	type TaggedChange,
@@ -20,28 +19,22 @@ import {
 import {
 	type FieldKindConfiguration,
 	type ModularChangeset,
-	type NodeChangeComposer,
-	type NodeChangeRebaser,
 	type NodeId,
 	type RebaseRevisionMetadata,
-	type ToDelta,
 	makeModularChangeCodecFamily,
 	rebaseRevisionMetadataFromInfo,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
 	type OptionalChangeset,
-	optionalChangeRebaser,
 	optionalFieldEditor,
-	optionalFieldIntoDelta,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
-import { brand, fail, idAllocatorFromMaxId } from "../../../util/index.js";
+import { brand, fail } from "../../../util/index.js";
 import {
 	type ChildStateGenerator,
 	type FieldStateTree,
 	getSequentialEdits,
-	getSequentialStates,
 } from "../../exhaustiveRebaserUtils.js";
 import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js";
 // TODO: Throughout this file, we use TestChange as the child change type.
@@ -51,19 +44,9 @@ import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js"
 import {
 	chunkFromJsonTrees,
 	defaultRevInfosFromChanges,
-	defaultRevisionMetadataFromChanges,
 	testRevisionTagCodec,
 } from "../../utils.js";
-import { TestNodeId } from "../../testNodeId.js";
-import { verifyContextChain } from "./optionalFieldUtils.js";
-import { ChangesetWrapper } from "../../changesetWrapper.js";
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
-import {
-	failComposeManager,
-	failInvertManager,
-	failRebaseManager,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../modular-schema/nodeQueryUtils.js";
+import type { ChangesetWrapper } from "../../changesetWrapper.js";
 import {
 	intoDelta,
 	makeFieldBatchCodec,
@@ -122,44 +105,44 @@ const OptionalChange = {
 	},
 };
 
-function toDelta(
-	change: OptionalChangeset,
-	deltaFromChild: ToDelta = TestNodeId.deltaFromChild,
-): DeltaFieldChanges {
-	return optionalFieldIntoDelta(change, deltaFromChild);
-}
+// function toDelta(
+// 	change: OptionalChangeset,
+// 	deltaFromChild: ToDelta = TestNodeId.deltaFromChild,
+// ): DeltaFieldChanges {
+// 	return optionalFieldIntoDelta(change, deltaFromChild);
+// }
 
-function toDeltaWrapped(change: TaggedChange<WrappedChangeset>) {
-	return ChangesetWrapper.toDelta(change.change, (c, deltaFromChild) =>
-		toDelta(c, deltaFromChild),
-	);
-}
+// function toDeltaWrapped(change: TaggedChange<WrappedChangeset>) {
+// 	return ChangesetWrapper.toDelta(change.change, (c, deltaFromChild) =>
+// 		toDelta(c, deltaFromChild),
+// 	);
+// }
 
-function getMaxId(...changes: OptionalChangeset[]): ChangesetLocalId | undefined {
-	let max: ChangesetLocalId | undefined;
-	const ingest = (candidate: ChangesetLocalId | undefined) => {
-		if (max === undefined || (candidate !== undefined && candidate > max)) {
-			max = candidate;
-		}
-	};
+// function getMaxId(...changes: OptionalChangeset[]): ChangesetLocalId | undefined {
+// 	let max: ChangesetLocalId | undefined;
+// 	const ingest = (candidate: ChangesetLocalId | undefined) => {
+// 		if (max === undefined || (candidate !== undefined && candidate > max)) {
+// 			max = candidate;
+// 		}
+// 	};
 
-	for (const change of changes) {
-		if (change.childChange !== undefined) {
-			// Child changes do not need to be ingested for this test file, as TestChange (which is used as a child)
-			// doesn't have any `ChangesetLocalId`s.
-			ingest(change.childChange.localId);
-		}
+// 	for (const change of changes) {
+// 		if (change.childChange !== undefined) {
+// 			// Child changes do not need to be ingested for this test file, as TestChange (which is used as a child)
+// 			// doesn't have any `ChangesetLocalId`s.
+// 			ingest(change.childChange.localId);
+// 		}
 
-		if (change.valueReplace !== undefined) {
-			ingest(change.valueReplace.dst.localId);
-			if (change.valueReplace.src !== undefined && change.valueReplace.src !== "self") {
-				ingest(change.valueReplace.src.localId);
-			}
-		}
-	}
+// 		if (change.valueReplace !== undefined) {
+// 			ingest(change.valueReplace.dst.localId);
+// 			if (change.valueReplace.src !== undefined && change.valueReplace.src !== "self") {
+// 				ingest(change.valueReplace.src.localId);
+// 			}
+// 		}
+// 	}
 
-	return max;
-}
+// 	return max;
+// }
 
 // function invert(
 // 	change: TaggedChange<OptionalChangeset>,

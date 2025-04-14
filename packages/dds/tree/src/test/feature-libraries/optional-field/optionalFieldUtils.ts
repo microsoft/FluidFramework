@@ -18,8 +18,6 @@ import {
 } from "../../../core/index.js";
 import {
 	type OptionalChangeset,
-	type RegisterId,
-	RegisterMap,
 	optionalChangeRebaser,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
@@ -27,7 +25,7 @@ import type {
 	Replace,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
-import type { Mutable } from "../../../util/index.js";
+import { SizedNestedMap, type Mutable } from "../../../util/index.js";
 import type { NodeId } from "../../../feature-libraries/index.js";
 
 export const Change = {
@@ -42,14 +40,14 @@ export const Change = {
 	 * @param isEmpty - Whether the field is empty in the context that the changeset is authored for.
 	 */
 	replace: (
-		inboundSrc: RegisterId | ChangesetLocalId | ChangeAtomId,
+		inboundSrc: ChangesetLocalId | ChangeAtomId,
 		outboundDst: ChangesetLocalId | ChangeAtomId,
 		isEmpty: boolean,
 	): OptionalChangeset => {
 		return {
 			valueReplace: {
 				isEmpty,
-				src: inboundSrc === "self" ? inboundSrc : asChangeAtomId(inboundSrc),
+				src: asChangeAtomId(inboundSrc),
 				dst: asChangeAtomId(outboundDst),
 			},
 		};
@@ -80,8 +78,9 @@ export const Change = {
 	 * @param outboundDst - The detached node ID to associate with whichever node (if any) happens to be in the field when the changeset applies.
 	 */
 	pin: (dst: ChangeAtomId | ChangesetLocalId): OptionalChangeset => {
+		const id = asChangeAtomId(dst);
 		return {
-			valueReplace: { isEmpty: false, dst: asChangeAtomId(dst), src: "self" },
+			valueReplace: { isEmpty: false, dst: id, src: id },
 		};
 	},
 	/**
@@ -156,6 +155,97 @@ export function assertEqual(
 	assertTaggedEqual(makeAnonChange(a), makeAnonChange(b));
 }
 
+type RegisterId = ChangeAtomId | "self";
+
+interface IRegisterMap<T> {
+	set(id: RegisterId, childChange: T): void;
+	get(id: RegisterId): T | undefined;
+	delete(id: RegisterId): boolean;
+	keys(): Iterable<RegisterId>;
+	values(): Iterable<T>;
+	entries(): Iterable<[RegisterId, T]>;
+	readonly size: number;
+}
+
+class RegisterMap<T> implements IRegisterMap<T> {
+	private readonly nestedMapData = new SizedNestedMap<
+		ChangesetLocalId | "self",
+		RevisionTag | undefined,
+		T
+	>();
+
+	public clone(): RegisterMap<T> {
+		const clone = new RegisterMap<T>();
+		for (const [id, t] of this.entries()) {
+			clone.set(id, t);
+		}
+		return clone;
+	}
+
+	public set(id: RegisterId, childChange: T): void {
+		if (id === "self") {
+			this.nestedMapData.set("self", undefined, childChange);
+		} else {
+			this.nestedMapData.set(id.localId, id.revision, childChange);
+		}
+	}
+
+	public get(id: RegisterId): T | undefined {
+		return id === "self"
+			? this.nestedMapData.tryGet(id, undefined)
+			: this.nestedMapData.tryGet(id.localId, id.revision);
+	}
+
+	public has(id: RegisterId): boolean {
+		return this.get(id) !== undefined;
+	}
+
+	public delete(id: RegisterId): boolean {
+		return id === "self"
+			? this.nestedMapData.delete("self", undefined)
+			: this.nestedMapData.delete(id.localId, id.revision);
+	}
+
+	public keys(): Iterable<RegisterId> {
+		const changeIds: RegisterId[] = [];
+		for (const [localId, nestedMap] of this.nestedMapData) {
+			if (localId === "self") {
+				changeIds.push("self");
+			} else {
+				for (const [revisionTag, _] of nestedMap) {
+					changeIds.push(
+						revisionTag === undefined ? { localId } : { localId, revision: revisionTag },
+					);
+				}
+			}
+		}
+
+		return changeIds;
+	}
+	public values(): Iterable<T> {
+		return this.nestedMapData.values();
+	}
+	public entries(): Iterable<[RegisterId, T]> {
+		const entries: [RegisterId, T][] = [];
+		for (const changeId of this.keys()) {
+			if (changeId === "self") {
+				const entry = this.nestedMapData.tryGet("self", undefined);
+				assert(entry !== undefined, "Entry should not be undefined when iterating keys.");
+				entries.push(["self", entry]);
+			} else {
+				const entry = this.nestedMapData.tryGet(changeId.localId, changeId.revision);
+				assert(entry !== undefined, "Entry should not be undefined when iterating keys.");
+				entries.push([changeId, entry]);
+			}
+		}
+
+		return entries;
+	}
+	public get size(): number {
+		return this.nestedMapData.size;
+	}
+}
+
 export function taggedRegister(id: RegisterId, revision: RevisionTag | undefined): RegisterId {
 	if (id === "self") {
 		return id;
@@ -170,13 +260,13 @@ function getTouchedRegisters({ change, revision }: TaggedChange<OptionalChangese
 } {
 	const src = new RegisterMap<true>();
 	const dst = new RegisterMap<true>();
-	if (change.valueReplace !== undefined && change.valueReplace.src !== "self") {
+	if (change.valueReplace !== undefined) {
 		if (change.valueReplace.isEmpty === false) {
 			src.set(taggedRegister("self", revision), true);
-			dst.set(taggedRegister(change.valueReplace.dst, revision), true);
+			dst.set(taggedAtomId(change.valueReplace.dst, revision), true);
 		}
 		if (change.valueReplace.src !== undefined) {
-			src.set(taggedRegister(change.valueReplace.src, revision), true);
+			src.set(taggedAtomId(change.valueReplace.src, revision), true);
 			dst.set(taggedRegister("self", revision), true);
 		}
 	}
