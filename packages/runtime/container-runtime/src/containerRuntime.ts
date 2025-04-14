@@ -1792,6 +1792,7 @@ export class ContainerRuntime
 		const legacySendBatchFn = makeLegacySendBatchFn(submitFn, this.innerDeltaManager);
 
 		this.skipSafetyFlushDuringProcessStack =
+			// Keep the old flag name even though we renamed the class member (it shipped in 2.31.0)
 			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableFlushBeforeProcess") === true;
 
 		this.outbox = new Outbox({

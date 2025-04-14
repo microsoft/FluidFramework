@@ -36,6 +36,7 @@ import {
 	Outbox,
 	type LocalBatchMessage,
 	type OutboundBatch,
+	localBatchToOutboundBatch,
 } from "../../opLifecycle/index.js";
 import {
 	PendingMessageResubmitData,
@@ -171,7 +172,7 @@ describe("Outbox", () => {
 	});
 
 	// Also converts to an OutboundBatchMessage
-	const addBatchMetadata = (messages: LocalBatchMessage[]): OutboundBatchMessage[] => {
+	const addBatchMetadata = (messages: OutboundBatchMessage[]): void => {
 		if (messages.length > 1) {
 			messages[0].metadata = {
 				...messages[0].metadata,
@@ -182,21 +183,18 @@ describe("Outbox", () => {
 				batch: false,
 			};
 		}
-
-		return messages.map<OutboundBatchMessage>(({ serializedOp, ...message }) => ({
-			contents: serializedOp,
-			...message,
-		}));
 	};
-	const toOutboundBatch = (messages: LocalBatchMessage[]): OutboundBatch => ({
-		messages: addBatchMetadata(messages),
-		contentSizeInBytes: messages
-			.map((message) => message.serializedOp?.length ?? 0)
-			.reduce((a, b) => a + b, 0),
-		referenceSequenceNumber:
-			messages.length === 0 ? undefined : messages[0].referenceSequenceNumber,
-		hasReentrantOps: false,
-	});
+	const toOutboundBatch = (messages: LocalBatchMessage[]): OutboundBatch => {
+		const outbound = localBatchToOutboundBatch({
+			messages,
+			referenceSequenceNumber:
+				messages.length === 0 ? undefined : messages[0].referenceSequenceNumber,
+			hasReentrantOps: false,
+		});
+
+		addBatchMetadata(outbound.messages);
+		return outbound;
+	};
 
 	const DefaultCompressionOptions = {
 		minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
@@ -269,6 +267,29 @@ describe("Outbox", () => {
 		state.isReentrant = false;
 		currentSeqNumbers = {};
 		mockLogger.clear();
+	});
+
+	it("localBatchToOutboundBatch", () => {
+		const localMessages: LocalBatchMessage[] = [
+			{ serializedOp: "hello", referenceSequenceNumber: 4 },
+			{ serializedOp: "world", referenceSequenceNumber: 4 },
+			{ serializedOp: "!", referenceSequenceNumber: 4 },
+		];
+		const localBatch = {
+			messages: localMessages,
+			referenceSequenceNumber: localMessages[0].referenceSequenceNumber,
+			hasReentrantOps: false,
+		};
+		const outboundBatch = localBatchToOutboundBatch(localBatch);
+
+		// Check that contentSizeInBytes and messages' contents are set propertly
+		assert.equal(outboundBatch.contentSizeInBytes, 11);
+		assert.equal(outboundBatch.messages.length, 3);
+		assert.deepEqual(
+			localMessages.map((m) => m.serializedOp),
+			outboundBatch.messages.map((m) => m.contents),
+			"Serialized contents do not match",
+		);
 	});
 
 	it("Sending batches", () => {
@@ -570,12 +591,15 @@ describe("Outbox", () => {
 		);
 	});
 
-	it("Compress only if the batch is larger than the configured limit", () => {
+	it("Does not compress if the batch is smaller than the configured limit", () => {
 		const outbox = getOutbox({
 			context: getMockContext(),
-			maxBatchSize: 1,
+			maxBatchSize: 1024,
+			opGroupingConfig: {
+				groupedBatchingEnabled: true, // Required for compression
+			},
 			compressionOptions: {
-				minimumBatchSizeInBytes: 1024,
+				minimumBatchSizeInBytes: 512,
 				compressionAlgorithm: CompressionAlgorithms.lz4,
 			},
 		});
@@ -594,22 +618,15 @@ describe("Outbox", () => {
 
 		outbox.flush();
 
-		assert.equal(state.opsSubmitted, messages.length);
+		assert.equal(
+			state.opsSubmitted,
+			2,
+			"Expected 2 ops to be submitted, on ID Allocation and one for the grouped batch",
+		);
 		assert.equal(state.batchesSubmitted.length, 2);
 		assert.equal(state.individualOpsSubmitted.length, 0);
 		assert.equal(state.deltaManagerFlushCalls, 0);
 		assert.deepEqual(state.batchesCompressed, []);
-		assert.deepEqual(
-			state.batchesSubmitted.map((x) => x.messages),
-			[
-				[toSubmittedMessage(messages[2])],
-				[
-					toSubmittedMessage(messages[0], true),
-					toSubmittedMessage(messages[1]),
-					toSubmittedMessage(messages[3], false),
-				],
-			],
-		);
 
 		// Note the expected CSN here is fixed to the batch's starting CSN
 		const expectedMessageOrderWithCsn = [
@@ -655,7 +672,13 @@ describe("Outbox", () => {
 		outbox.submit(messages[1]);
 		outbox.submit(messages[2]);
 
-		assert.throws(() => outbox.flush());
+		assert.throws(
+			() => outbox.flush(),
+			(e: Error) =>
+				"dataProcessingCodepath" in e &&
+				e.dataProcessingCodepath === "CompressionInsufficient",
+			"Expected 'CompressionInsufficient' error",
+		);
 		// The batch is compressed
 		assert.deepEqual(state.batchesCompressed, [
 			opGroupingManager.groupBatch(toOutboundBatch(messages)),
@@ -667,7 +690,7 @@ describe("Outbox", () => {
 	it("Chunks when compression is enabled, compressed batch is larger than the threshold and chunking is enabled", () => {
 		const outbox = getOutbox({
 			context: getMockContext(),
-			maxBatchSize: 1,
+			maxBatchSize: 1024,
 			compressionOptions: {
 				minimumBatchSizeInBytes: 1,
 				compressionAlgorithm: CompressionAlgorithms.lz4,
@@ -731,7 +754,7 @@ describe("Outbox", () => {
 	it("Does not chunk when compression and grouping are enabled, compressed batch is smaller than the threshold and chunking is enabled", () => {
 		const outbox = getOutbox({
 			context: getMockContext(),
-			maxBatchSize: 1,
+			maxBatchSize: 1024,
 			compressionOptions: {
 				minimumBatchSizeInBytes: 1,
 				compressionAlgorithm: CompressionAlgorithms.lz4,
