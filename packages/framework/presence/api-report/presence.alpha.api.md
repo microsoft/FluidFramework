@@ -129,11 +129,11 @@ export namespace InternalUtilityTypes {
 
 // @alpha @sealed
 export interface Latest<T> {
-    clients(): Attendee[];
-    clientValue(attendee: Attendee): LatestData<T>;
-    clientValues(): IterableIterator<LatestClientData<T>>;
     readonly controls: BroadcastControls;
     readonly events: Listenable<LatestEvents<T>>;
+    getRemote(attendee: Attendee): LatestData<T>;
+    getRemoteClients(): Attendee[];
+    getRemotes(): IterableIterator<LatestClientData<T>>;
     get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
     set local(value: JsonSerializable<T> & JsonDeserialized<T>);
 }
@@ -167,11 +167,11 @@ export interface LatestEvents<T> {
 
 // @alpha @sealed
 export interface LatestMap<T, Keys extends string | number = string | number> {
-    clients(): Attendee[];
-    clientValue(attendee: Attendee): ReadonlyMap<Keys, LatestData<T>>;
-    clientValues(): IterableIterator<LatestMapClientData<T, Keys>>;
     readonly controls: BroadcastControls;
     readonly events: Listenable<LatestMapEvents<T, Keys>>;
+    getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T>>;
+    getRemoteClients(): Attendee[];
+    getRemotes(): IterableIterator<LatestMapClientData<T, Keys>>;
     readonly local: StateMap<Keys, T>;
 }
 

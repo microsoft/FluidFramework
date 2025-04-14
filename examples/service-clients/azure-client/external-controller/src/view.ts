@@ -111,7 +111,7 @@ export function makeDiceValuesView(
 	lastRoll: Latest<DiceValues>,
 ): void {
 	const children = makeDiceHeaderElement();
-	for (const clientValue of lastRoll.clientValues()) {
+	for (const clientValue of lastRoll.getRemotes()) {
 		children.push(...makeDiceValueElement(clientValue.attendee.attendeeId, clientValue.value));
 	}
 	target.replaceChildren(...children);

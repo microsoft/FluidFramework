@@ -328,15 +328,15 @@ export interface LatestMap<T, Keys extends string | number = string | number> {
 	/**
 	 * Iterable access to remote clients' map of values.
 	 */
-	clientValues(): IterableIterator<LatestMapClientData<T, Keys>>;
+	getRemotes(): IterableIterator<LatestMapClientData<T, Keys>>;
 	/**
 	 * Array of known remote clients.
 	 */
-	clients(): Attendee[];
+	getRemoteClients(): Attendee[];
 	/**
 	 * Access to a specific client's map of values.
 	 */
-	clientValue(attendee: Attendee): ReadonlyMap<Keys, LatestData<T>>;
+	getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T>>;
 }
 
 class LatestMapValueManagerImpl<
@@ -374,25 +374,25 @@ class LatestMapValueManagerImpl<
 
 	public readonly local: StateMap<Keys, T>;
 
-	public *clientValues(): IterableIterator<LatestMapClientData<T, Keys>> {
+	public *getRemotes(): IterableIterator<LatestMapClientData<T, Keys>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		for (const attendeeId of objectKeys(allKnownStates.states)) {
 			if (attendeeId !== allKnownStates.self) {
 				const attendee = this.datastore.lookupClient(attendeeId);
-				const items = this.clientValue(attendee);
+				const items = this.getRemote(attendee);
 				yield { attendee, items };
 			}
 		}
 	}
 
-	public clients(): Attendee[] {
+	public getRemoteClients(): Attendee[] {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		return objectKeys(allKnownStates.states)
 			.filter((attendeeId) => attendeeId !== allKnownStates.self)
 			.map((attendeeId) => this.datastore.lookupClient(attendeeId));
 	}
 
-	public clientValue(attendee: Attendee): ReadonlyMap<Keys, LatestData<T>> {
+	public getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const attendeeId = attendee.attendeeId;
 		const clientStateMap = allKnownStates.states[attendeeId];

@@ -101,7 +101,7 @@ export class PresenceManager {
 		for (const sessionClient of sessionList) {
 			// If local user or remote user is connected, then only add it to the list
 			try {
-				const userInfo = this.usersState.props.onlineUsers.clientValue(sessionClient).value;
+				const userInfo = this.usersState.props.onlineUsers.getRemote(sessionClient).value;
 				// If the user is local user, then add it to the beginning of the list
 				if (sessionClient.attendeeId === this.presence.attendees.getMyself().attendeeId) {
 					userInfoList.push(userInfo);

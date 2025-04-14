@@ -178,7 +178,7 @@ describe("Presence", () => {
 				switch (manager) {
 					case "latest": {
 						assert.deepEqual(
-							latest.clientValue(attendee).value,
+							latest.getRemote(attendee).value,
 							expectedValue,
 							"Eventing does not reflect latest value",
 						);
@@ -186,12 +186,12 @@ describe("Presence", () => {
 					}
 					case "latestMap": {
 						assert.deepEqual(
-							latestMap.clientValue(attendee).get("key1")?.value,
+							latestMap.getRemote(attendee).get("key1")?.value,
 							expectedValue.key1,
 							"Eventing does not reflect latest map value",
 						);
 						assert.deepEqual(
-							latestMap.clientValue(attendee).get("key2")?.value,
+							latestMap.getRemote(attendee).get("key2")?.value,
 							expectedValue.key2,
 							"Eventing does not reflect latest map value",
 						);

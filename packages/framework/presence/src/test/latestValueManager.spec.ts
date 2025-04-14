@@ -139,12 +139,12 @@ export function checkCompiles(): void {
 	);
 	cursorUpdatedOff();
 
-	for (const attendee of cursor.clients()) {
-		logClientValue({ attendee, ...cursor.clientValue(attendee) });
+	for (const attendee of cursor.getRemoteClients()) {
+		logClientValue({ attendee, ...cursor.getRemote(attendee) });
 	}
 
 	// Enumerate all cursor values
-	for (const { attendee, value } of cursor.clientValues()) {
+	for (const { attendee, value } of cursor.getRemotes()) {
 		logClientValue({ attendee, value });
 	}
 }

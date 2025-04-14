@@ -76,15 +76,15 @@ export interface Latest<T> {
 	/**
 	 * Iterable access to remote clients' values.
 	 */
-	clientValues(): IterableIterator<LatestClientData<T>>;
+	getRemotes(): IterableIterator<LatestClientData<T>>;
 	/**
 	 * Array of known remote clients.
 	 */
-	clients(): Attendee[];
+	getRemoteClients(): Attendee[];
 	/**
 	 * Access to a specific attendee's value.
 	 */
-	clientValue(attendee: Attendee): LatestData<T>;
+	getRemote(attendee: Attendee): LatestData<T>;
 }
 
 class LatestValueManagerImpl<T, Key extends string>
@@ -117,7 +117,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		this.events.emit("localUpdated", { value });
 	}
 
-	public *clientValues(): IterableIterator<LatestClientData<T>> {
+	public *getRemotes(): IterableIterator<LatestClientData<T>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		for (const [attendeeId, value] of objectEntries(allKnownStates.states)) {
 			if (attendeeId !== allKnownStates.self) {
@@ -130,14 +130,14 @@ class LatestValueManagerImpl<T, Key extends string>
 		}
 	}
 
-	public clients(): Attendee[] {
+	public getRemoteClients(): Attendee[] {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		return Object.keys(allKnownStates.states)
 			.filter((attendeeId) => attendeeId !== allKnownStates.self)
 			.map((attendeeId) => this.datastore.lookupClient(attendeeId));
 	}
 
-	public clientValue(attendee: Attendee): LatestData<T> {
+	public getRemote(attendee: Attendee): LatestData<T> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientState = allKnownStates.states[attendee.attendeeId];
 		if (clientState === undefined) {

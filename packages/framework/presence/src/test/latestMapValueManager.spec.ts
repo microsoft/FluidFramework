@@ -157,14 +157,14 @@ export function checkCompiles(): void {
 	const pointerItemUpdatedOff = pointers.events.on("itemUpdated", logClientValue);
 	pointerItemUpdatedOff();
 
-	for (const attendee of pointers.clients()) {
-		const items = pointers.clientValue(attendee);
+	for (const attendee of pointers.getRemoteClients()) {
+		const items = pointers.getRemote(attendee);
 		for (const [key, { value }] of items.entries()) {
 			logClientValue({ attendee, key, value });
 		}
 	}
 
-	for (const { attendee, items } of pointers.clientValues()) {
+	for (const { attendee, items } of pointers.getRemotes()) {
 		for (const [key, { value }] of items.entries()) logClientValue({ attendee, key, value });
 	}
 
