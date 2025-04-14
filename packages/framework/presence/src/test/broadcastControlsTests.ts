@@ -16,27 +16,27 @@ const testDefaultAllowableUpdateLatencyMs = 100;
 /**
  * Adds set of test for common {@link BroadcastControls} implementations.
  *
- * @param createControls - Function to create the `controls` provider object
+ * @param createSettings - Function to create the `settings` provider object
  */
-export function addControlsTests(
-	createControls: (
+export function addSettingsTests(
+	createSettings: (
 		presence: Presence,
 		controlSettings?: BroadcastControlSettings,
-	) => { controls: BroadcastControls },
+	) => { settings: BroadcastControls },
 ): void {
-	describe("controls allowableUpdateLatencyMs", () => {
+	describe("settings allowableUpdateLatencyMs", () => {
 		it("can be specified during create", () => {
 			// Setup
 			const presence = createPresenceManager(new MockEphemeralRuntime());
 
 			// Act
-			const controlsProvider = createControls(presence, {
+			const settingsProvider = createSettings(presence, {
 				allowableUpdateLatencyMs: testDefaultAllowableUpdateLatencyMs,
 			});
 
 			// Verify
 			assert.equal(
-				controlsProvider.controls.allowableUpdateLatencyMs,
+				settingsProvider.settings.allowableUpdateLatencyMs,
 				testDefaultAllowableUpdateLatencyMs,
 			);
 		});
@@ -44,40 +44,40 @@ export function addControlsTests(
 		it("can be changed", () => {
 			// Setup
 			const presence = createPresenceManager(new MockEphemeralRuntime());
-			const controlsProvider = createControls(presence, {
+			const controlsProvider = createSettings(presence, {
 				allowableUpdateLatencyMs: testDefaultAllowableUpdateLatencyMs,
 			});
 
 			// Act
-			controlsProvider.controls.allowableUpdateLatencyMs = 200;
+			controlsProvider.settings.allowableUpdateLatencyMs = 200;
 
 			// Verify
-			assert.equal(controlsProvider.controls.allowableUpdateLatencyMs, 200);
+			assert.equal(controlsProvider.settings.allowableUpdateLatencyMs, 200);
 		});
 
 		it("can be reset to system default", () => {
 			// Setup
 			// First read value of system default from init without any settings
 			let presence = createPresenceManager(new MockEphemeralRuntime());
-			let controlsProvider = createControls(presence, undefined);
-			const systemDefault = controlsProvider.controls.allowableUpdateLatencyMs;
+			let settingsProvider = createSettings(presence, undefined);
+			const systemDefault = settingsProvider.settings.allowableUpdateLatencyMs;
 			assert.notEqual(
 				testDefaultAllowableUpdateLatencyMs,
 				systemDefault,
 				"test internal error: Test value matches system default value",
 			);
 
-			// Recreate controls with custom settings specified
+			// Recreate settings with custom controls specified
 			presence = createPresenceManager(new MockEphemeralRuntime());
-			controlsProvider = createControls(presence, {
+			settingsProvider = createSettings(presence, {
 				allowableUpdateLatencyMs: testDefaultAllowableUpdateLatencyMs,
 			});
 
 			// Act
-			controlsProvider.controls.allowableUpdateLatencyMs = undefined;
+			settingsProvider.settings.allowableUpdateLatencyMs = undefined;
 
 			// Verify
-			assert.equal(controlsProvider.controls.allowableUpdateLatencyMs, systemDefault);
+			assert.equal(settingsProvider.settings.allowableUpdateLatencyMs, systemDefault);
 		});
 	});
 }

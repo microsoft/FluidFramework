@@ -11,7 +11,7 @@ import type {
 import type { InternalTypes } from "../exposedInternalTypes.js";
 import type { Presence } from "../presence.js";
 
-import { addControlsTests } from "./broadcastControlsTests.js";
+import { addSettingsTests } from "./broadcastControlsTests.js";
 
 describe("Presence", () => {
 	describe("StatesWorkspace", () => {
@@ -20,7 +20,7 @@ describe("Presence", () => {
 		 */
 		it("API use compiles", () => {});
 
-		addControlsTests((presence, controlSettings) => {
+		addSettingsTests((presence, controlSettings) => {
 			return presence.states.getWorkspace("name:testWorkspaceA", {}, controlSettings);
 		});
 	});

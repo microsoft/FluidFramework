@@ -160,11 +160,11 @@ const stateWorkspace = presence.states.getWorkspace("app:v1states",
 
 // Temporarily set count updates to send as soon as possible
 const countState = stateWorkspace.props.count;
-countState.controls.allowableUpdateLatencyMs = 0;
+countState.settings.allowableUpdateLatencyMs = 0;
 countState.local = { num: 5000 };
 
 // Reset the update latency to the workspace default
-countState.controls.allowableUpdateLatencyMs = undefined;
+countState.settings.allowableUpdateLatencyMs = undefined;
 ```
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->

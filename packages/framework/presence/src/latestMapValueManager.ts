@@ -317,9 +317,9 @@ export interface LatestMap<T, Keys extends string | number = string | number> {
 	readonly events: Listenable<LatestMapEvents<T, Keys>>;
 
 	/**
-	 * Controls for management of sending updates.
+	 * Settings for management of sending updates.
 	 */
-	readonly controls: BroadcastControls;
+	readonly settings: BroadcastControls;
 
 	/**
 	 * Current value map for this client.
@@ -348,7 +348,7 @@ class LatestMapValueManagerImpl<
 		Required<ValueManager<T, InternalTypes.MapValueState<T, Keys>>>
 {
 	public readonly events = createEmitter<LatestMapEvents<T, Keys>>();
-	public readonly controls: OptionalBroadcastControl;
+	public readonly settings: OptionalBroadcastControl;
 
 	public constructor(
 		private readonly key: RegistrationKey,
@@ -359,14 +359,14 @@ class LatestMapValueManagerImpl<
 		public readonly value: InternalTypes.MapValueState<T, Keys>,
 		controlSettings: BroadcastControlSettings | undefined,
 	) {
-		this.controls = new OptionalBroadcastControl(controlSettings);
+		this.settings = new OptionalBroadcastControl(controlSettings);
 
 		this.local = new ValueMapImpl<T, Keys>(
 			value,
 			this.events,
 			(updates: InternalTypes.MapValueState<T, Keys>) => {
 				datastore.localUpdate(key, updates, {
-					allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
+					allowableUpdateLatencyMs: this.settings.allowableUpdateLatencyMs,
 				});
 			},
 		);
@@ -493,7 +493,7 @@ export function latestMap<
 	initialValues?: {
 		[K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
 	},
-	controls?: BroadcastControlSettings,
+	settings?: BroadcastControlSettings,
 ): InternalTypes.ManagerFactory<
 	RegistrationKey,
 	InternalTypes.MapValueState<T, Keys>,
@@ -521,7 +521,7 @@ export function latestMap<
 		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
 		manager: InternalTypes.StateValue<LatestMap<T, Keys>>;
 	} => ({
-		initialData: { value, allowableUpdateLatencyMs: controls?.allowableUpdateLatencyMs },
+		initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
 		manager: brandIVM<
 			LatestMapValueManagerImpl<T, RegistrationKey, Keys>,
 			T,
@@ -531,7 +531,7 @@ export function latestMap<
 				key,
 				datastoreFromHandle(datastoreHandle),
 				value,
-				controls,
+				settings,
 			),
 		),
 	});

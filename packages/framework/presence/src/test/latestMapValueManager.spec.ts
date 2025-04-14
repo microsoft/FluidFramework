@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { createPresenceManager } from "../presenceManager.js";
 
-import { addControlsTests } from "./broadcastControlsTests.js";
+import { addSettingsTests } from "./broadcastControlsTests.js";
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
 import type {
@@ -41,7 +41,7 @@ describe("Presence", () => {
 		 */
 		it("API use compiles", () => {});
 
-		addControlsTests(createLatestMapManager);
+		addSettingsTests(createLatestMapManager);
 
 		function setupMapValueManager(): LatestMap<
 			{

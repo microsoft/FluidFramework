@@ -96,7 +96,7 @@ export interface PresenceDatastoreManager {
 	getWorkspace<TSchema extends StatesWorkspaceSchema>(
 		internalWorkspaceAddress: InternalWorkspaceAddress,
 		requestedContent: TSchema,
-		controls?: BroadcastControlSettings,
+		settings?: BroadcastControlSettings,
 	): StatesWorkspace<TSchema>;
 	processSignal(message: IExtensionMessage, local: boolean): void;
 }
@@ -182,11 +182,11 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	public getWorkspace<TSchema extends StatesWorkspaceSchema>(
 		internalWorkspaceAddress: InternalWorkspaceAddress,
 		requestedContent: TSchema,
-		controls?: BroadcastControlSettings,
+		settings?: BroadcastControlSettings,
 	): StatesWorkspace<TSchema> {
 		const existing = this.workspaces.get(internalWorkspaceAddress);
 		if (existing) {
-			return existing.internal.ensureContent(requestedContent, controls);
+			return existing.internal.ensureContent(requestedContent, settings);
 		}
 
 		let workspaceDatastore: ValueElementMap<StatesWorkspaceSchema> | undefined =
@@ -225,7 +225,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			},
 			workspaceDatastore,
 			requestedContent,
-			controls,
+			settings,
 		);
 
 		this.workspaces.set(internalWorkspaceAddress, entry);

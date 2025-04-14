@@ -4,7 +4,7 @@
  */
 
 /**
- * Common controls for States objects.
+ * Common settings for States objects.
  *
  * @sealed
  * @alpha

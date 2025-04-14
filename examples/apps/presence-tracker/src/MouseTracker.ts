@@ -102,7 +102,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	 * @param latency - the maximum allowable latency for updates. Set to undefined to revert to the default value.
 	 */
 	public setAllowableLatency(latency: number | undefined): void {
-		this.cursor.controls.allowableUpdateLatencyMs = latency;
+		this.cursor.settings.allowableUpdateLatencyMs = latency;
 	}
 
 	/**
