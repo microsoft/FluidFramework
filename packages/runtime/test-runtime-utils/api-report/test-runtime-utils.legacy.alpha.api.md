@@ -338,6 +338,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     IFluidHandleContext: IFluidHandleContext;
     // (undocumented)
+    ILayerCompatDetails?: unknown;
+    // (undocumented)
     isLocalDataStore: boolean;
     // (undocumented)
     makeLocallyVisible(): void;
@@ -442,6 +444,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
+    // (undocumented)
+    ILayerCompatDetails?: unknown;
     // (undocumented)
     get isAttached(): boolean;
     // (undocumented)

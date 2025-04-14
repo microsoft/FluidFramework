@@ -50,7 +50,7 @@
 		"@fluidframework/server-services-utils": "workspace:~",
 		"@fluidframework/server-test-utils": "workspace:~",
 		"agentkeepalive": "^4.2.1",
-		"axios": "^1.7.7",
+		"axios": "^1.8.4",
 		"body-parser": "^1.20.3",
 		"charwise": "^3.0.1",
 		"compression": "^1.7.2",
@@ -67,7 +67,7 @@
 		"nconf": "^0.12.0",
 		"socket.io": "^4.8.0",
 		"split": "^1.0.0",
-		"uuid": "^9.0.0",
+		"uuid": "^11.1.0",
 		"winston": "^3.6.0"
 	},
 	"devDependencies": {
@@ -89,7 +89,6 @@
 		"@types/node": "^18.19.39",
 		"@types/rimraf": "^3.0.0",
 		"@types/split": "^0.3.28",
-		"@types/uuid": "^9.0.2",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",

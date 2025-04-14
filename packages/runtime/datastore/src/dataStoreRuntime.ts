@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { TypedEventEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
 import { AttachState, IAudience } from "@fluidframework/container-definitions";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import {
@@ -88,6 +88,11 @@ import {
 import { v4 as uuid } from "uuid";
 
 import { IChannelContext, summarizeChannel } from "./channelContext.js";
+import {
+	dataStoreCompatDetailsForRuntime,
+	// dataStoreCompatDetailsForRuntime,
+	validateRuntimeCompatibility,
+} from "./dataStoreLayerCompatState.js";
 import { FluidObjectHandle } from "./fluidHandle.js";
 import {
 	LocalChannelContext,
@@ -220,6 +225,15 @@ export class FluidDataStoreRuntime
 	private localChangesTelemetryCount: number;
 
 	/**
+	 * The compatibility details of the DataStore layer that is exposed to the Runtime layer
+	 * for validating Runtime-DataStore compatibility.
+	 * @remarks This is for internal use only.
+	 * The type of this should be ILayerCompatDetails. However, ILayerCompatDetails is internal and this class
+	 * is currently marked as legacy alpha. So, using unknown here.
+	 */
+	public readonly ILayerCompatDetails?: unknown = dataStoreCompatDetailsForRuntime;
+
+	/**
 	 * Create an instance of a DataStore runtime.
 	 *
 	 * @param dataStoreContext - Context object for the runtime.
@@ -241,6 +255,13 @@ export class FluidDataStoreRuntime
 		assert(
 			!dataStoreContext.id.includes("/"),
 			0x30e /* Id cannot contain slashes. DataStoreContext should have validated this. */,
+		);
+
+		// Validate that the Runtime is compatible with this DataStore.
+		const maybeRuntimeCompatDetails = dataStoreContext as FluidObject<ILayerCompatDetails>;
+		validateRuntimeCompatibility(
+			maybeRuntimeCompatDetails.ILayerCompatDetails,
+			this.dispose.bind(this),
 		);
 
 		this.mc = createChildMonitoringContext({
@@ -463,11 +484,11 @@ export class FluidDataStoreRuntime
 			this.validateChannelId(id);
 		} else {
 			/**
-			 * There is currently a bug where certain data store ids such as "[" are getting converted to ASCII characters
-			 * in the snapshot.
-			 * So, return short ids only if explicitly enabled via feature flags. Else, return uuid();
+			 * Return uuid if short-ids are explicitly disabled via feature flags.
 			 */
-			if (this.mc.config.getBoolean("Fluid.Runtime.IsShortIdEnabled") === true) {
+			if (this.mc.config.getBoolean("Fluid.Runtime.DisableShortIds") === true) {
+				id = uuid();
+			} else {
 				// We use three non-overlapping namespaces:
 				// - detached state: even numbers
 				// - attached state: odd numbers
@@ -484,8 +505,6 @@ export class FluidDataStoreRuntime
 						this.dataStoreContext.containerRuntime.generateDocumentUniqueId?.() ?? uuid();
 					id = typeof res === "number" ? encodeCompactIdToString(2 * res + 1, "_") : res;
 				}
-			} else {
-				id = uuid();
 			}
 			assert(!id.includes("/"), 0x8fc /* slash */);
 		}
