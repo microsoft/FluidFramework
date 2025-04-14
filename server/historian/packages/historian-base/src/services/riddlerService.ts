@@ -180,11 +180,11 @@ export class RiddlerService implements ITenantService, ITenantConfigManager {
 					// to avoid hitting the endpoint again with the same token.
 					this.redisCacheForInvalidToken
 						?.set(token, JSON.stringify(errorToCache))
-						.catch((error) => {
+						.catch((err) => {
 							Lumberjack.error(
 								`Error caching invalid token error to redis`,
 								lumberProperties,
-								error,
+								err,
 							);
 						});
 				}
