@@ -26,9 +26,9 @@ export type {
 export {
 	type Attendee,
 	type AttendeeId,
+	AttendeeStatus,
 	type Presence,
 	type PresenceEvents,
-	AttendeeStatus,
 } from "./presence.js";
 
 export type {
@@ -44,24 +44,24 @@ export {
 	ExperimentalPresenceManager,
 } from "./datastorePresenceManagerFactory.js";
 
-export {
+export type {
+	latestMap,
 	LatestMap,
-	type LatestMapItemRemovedClientData,
-	type LatestMapItemValueClientData,
-	type LatestMapValueClientData,
-	type LatestMapValueManager,
-	type LatestMapValueManagerEvents,
-	type ValueMap,
+	LatestMapClientData,
+	LatestMapEvents,
+	LatestMapItemRemovedClientData,
+	LatestMapItemUpdatedClientData,
+	StateMap,
 } from "./latestMapValueManager.js";
-export {
+export type {
+	latest,
 	Latest,
-	type LatestValueManager,
-	type LatestValueManagerEvents,
+	LatestEvents,
 } from "./latestValueManager.js";
 export type {
-	LatestValueClientData,
-	LatestValueData,
-	LatestValueMetadata,
+	LatestClientData,
+	LatestData,
+	LatestMetadata,
 } from "./latestValueTypes.js";
 
 export {
@@ -72,6 +72,8 @@ export {
 	type NotificationsManager,
 	type NotificationsManagerEvents,
 } from "./notificationsManager.js";
+
+export { StateFactory } from "./stateFactory.js";
 
 export type { InternalTypes } from "./exposedInternalTypes.js";
 export type { InternalUtilityTypes } from "./exposedUtilityTypes.js";

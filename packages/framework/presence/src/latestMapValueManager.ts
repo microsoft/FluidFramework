@@ -17,11 +17,7 @@ import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { objectEntries, objectKeys } from "./internalUtils.js";
-import type {
-	LatestValueClientData,
-	LatestValueData,
-	LatestValueMetadata,
-} from "./latestValueTypes.js";
+import type { LatestClientData, LatestData, LatestMetadata } from "./latestValueTypes.js";
 import type { AttendeeId, Attendee, SpecificAttendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
@@ -32,7 +28,7 @@ import { brandIVM } from "./valueManager.js";
  * @sealed
  * @alpha
  */
-export interface LatestMapValueClientData<
+export interface LatestMapClientData<
 	T,
 	Keys extends string | number,
 	SpecificAttendeeId extends AttendeeId = AttendeeId,
@@ -46,7 +42,7 @@ export interface LatestMapValueClientData<
 	 * @privateRemarks This could be regular map currently as no Map is
 	 * stored internally and a new instance is created for every request.
 	 */
-	items: ReadonlyMap<Keys, LatestValueData<T>>;
+	items: ReadonlyMap<Keys, LatestData<T>>;
 }
 
 /**
@@ -55,8 +51,8 @@ export interface LatestMapValueClientData<
  * @sealed
  * @alpha
  */
-export interface LatestMapItemValueClientData<T, K extends string | number>
-	extends LatestValueClientData<T> {
+export interface LatestMapItemUpdatedClientData<T, K extends string | number>
+	extends LatestClientData<T> {
 	key: K;
 }
 
@@ -69,14 +65,14 @@ export interface LatestMapItemValueClientData<T, K extends string | number>
 export interface LatestMapItemRemovedClientData<K extends string | number> {
 	attendee: Attendee;
 	key: K;
-	metadata: LatestValueMetadata;
+	metadata: LatestMetadata;
 }
 
 /**
  * @sealed
  * @alpha
  */
-export interface LatestMapValueManagerEvents<T, K extends string | number> {
+export interface LatestMapEvents<T, K extends string | number> {
 	/**
 	 * Raised when any item's value for remote client is updated.
 	 * @param updates - Map of one or more values updated.
@@ -85,7 +81,7 @@ export interface LatestMapValueManagerEvents<T, K extends string | number> {
 	 *
 	 * @eventProperty
 	 */
-	updated: (updates: LatestMapValueClientData<T, K>) => void;
+	updated: (updates: LatestMapClientData<T, K>) => void;
 
 	/**
 	 * Raised when specific item's value of remote client is updated.
@@ -93,7 +89,7 @@ export interface LatestMapValueManagerEvents<T, K extends string | number> {
 	 *
 	 * @eventProperty
 	 */
-	itemUpdated: (updatedItem: LatestMapItemValueClientData<T, K>) => void;
+	itemUpdated: (updatedItem: LatestMapItemUpdatedClientData<T, K>) => void;
 
 	/**
 	 * Raised when specific item of remote client is removed.
@@ -131,15 +127,15 @@ export interface LatestMapValueManagerEvents<T, K extends string | number> {
  * @sealed
  * @alpha
  */
-export interface ValueMap<K extends string | number, V> {
+export interface StateMap<K extends string | number, V> {
 	/**
-	 * ${@link ValueMap.delete}s all elements in the ValueMap.
+	 * ${@link StateMap.delete}s all elements in the StateMap.
 	 * @remarks This is not yet implemented.
 	 */
 	clear(): void;
 
 	/**
-	 * @returns true if an element in the ValueMap existed and has been removed, or false if
+	 * @returns true if an element in the StateMap existed and has been removed, or false if
 	 * the element does not exist.
 	 * @remarks No entry is fully removed. Instead an undefined placeholder is locally and
 	 * transmitted to all other clients. For better performance limit the number of deleted
@@ -150,19 +146,19 @@ export interface ValueMap<K extends string | number, V> {
 	delete(key: K): boolean;
 
 	/**
-	 * Executes a provided function once per each key/value pair in the ValueMap, in arbitrary order.
+	 * Executes a provided function once per each key/value pair in the StateMap, in arbitrary order.
 	 */
 	forEach(
 		callbackfn: (
 			value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>>,
 			key: K,
-			map: ValueMap<K, V>,
+			map: StateMap<K, V>,
 		) => void,
 		thisArg?: unknown,
 	): void;
 
 	/**
-	 * Returns a specified element from the ValueMap object.
+	 * Returns a specified element from the StateMap object.
 	 * @returns Returns the element associated with the specified key. If no element is associated with the specified key, undefined is returned.
 	 */
 	get(key: K): InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>> | undefined;
@@ -173,7 +169,7 @@ export interface ValueMap<K extends string | number, V> {
 	has(key: K): boolean;
 
 	/**
-	 * Adds a new element with a specified key and value to the ValueMap. If an element with the same key already exists, the element will be updated.
+	 * Adds a new element with a specified key and value to the StateMap. If an element with the same key already exists, the element will be updated.
 	 * The value will be transmitted to all other connected clients.
 	 *
 	 * @remarks Manager assumes ownership of the value and its references.
@@ -183,7 +179,7 @@ export interface ValueMap<K extends string | number, V> {
 	set(key: K, value: JsonSerializable<V> & JsonDeserialized<V>): this;
 
 	/**
-	 * @returns the number of elements in the ValueMap.
+	 * @returns the number of elements in the StateMap.
 	 */
 	readonly size: number;
 
@@ -208,12 +204,12 @@ export interface ValueMap<K extends string | number, V> {
 	// values(): IterableIterator<InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>>>;
 }
 
-class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
+class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	private countDefined: number;
 	public constructor(
 		private readonly value: InternalTypes.MapValueState<T, K>,
 		private readonly emitter: IEmitter<
-			Pick<LatestMapValueManagerEvents<T, K>, "localItemUpdated" | "localItemRemoved">
+			Pick<LatestMapEvents<T, K>, "localItemUpdated" | "localItemRemoved">
 		>,
 		private readonly localUpdate: (
 			updates: InternalTypes.MapValueState<
@@ -264,7 +260,7 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 		callbackfn: (
 			value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>,
 			key: K,
-			map: ValueMap<K, T>,
+			map: StateMap<K, T>,
 		) => void,
 		thisArg?: unknown,
 	): void {
@@ -304,21 +300,21 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 }
 
 /**
- * Value manager that provides a `Map` of latest known values from this client to
+ * State that provides a `Map` of latest known values from this client to
  * others and read access to their values.
  * Entries in the map may vary over time and by client, but all values are expected to
  * be of the same type, which may be a union type.
  *
- * @remarks Create using {@link LatestMap} registered to {@link StatesWorkspace}.
+ * @remarks Create using {@link StateFactory.latestMap} registered to {@link StatesWorkspace}.
  *
  * @sealed
  * @alpha
  */
-export interface LatestMapValueManager<T, Keys extends string | number = string | number> {
+export interface LatestMap<T, Keys extends string | number = string | number> {
 	/**
-	 * Events for LatestMap value manager.
+	 * Events for LatestMap.
 	 */
-	readonly events: Listenable<LatestMapValueManagerEvents<T, Keys>>;
+	readonly events: Listenable<LatestMapEvents<T, Keys>>;
 
 	/**
 	 * Controls for management of sending updates.
@@ -328,11 +324,11 @@ export interface LatestMapValueManager<T, Keys extends string | number = string 
 	/**
 	 * Current value map for this client.
 	 */
-	readonly local: ValueMap<Keys, T>;
+	readonly local: StateMap<Keys, T>;
 	/**
 	 * Iterable access to remote clients' map of values.
 	 */
-	clientValues(): IterableIterator<LatestMapValueClientData<T, Keys>>;
+	clientValues(): IterableIterator<LatestMapClientData<T, Keys>>;
 	/**
 	 * Array of known remote clients.
 	 */
@@ -340,7 +336,7 @@ export interface LatestMapValueManager<T, Keys extends string | number = string 
 	/**
 	 * Access to a specific client's map of values.
 	 */
-	clientValue(attendee: Attendee): ReadonlyMap<Keys, LatestValueData<T>>;
+	clientValue(attendee: Attendee): ReadonlyMap<Keys, LatestData<T>>;
 }
 
 class LatestMapValueManagerImpl<
@@ -348,10 +344,10 @@ class LatestMapValueManagerImpl<
 	RegistrationKey extends string,
 	Keys extends string | number = string | number,
 > implements
-		LatestMapValueManager<T, Keys>,
+		LatestMap<T, Keys>,
 		Required<ValueManager<T, InternalTypes.MapValueState<T, Keys>>>
 {
-	public readonly events = createEmitter<LatestMapValueManagerEvents<T, Keys>>();
+	public readonly events = createEmitter<LatestMapEvents<T, Keys>>();
 	public readonly controls: OptionalBroadcastControl;
 
 	public constructor(
@@ -376,9 +372,9 @@ class LatestMapValueManagerImpl<
 		);
 	}
 
-	public readonly local: ValueMap<Keys, T>;
+	public readonly local: StateMap<Keys, T>;
 
-	public *clientValues(): IterableIterator<LatestMapValueClientData<T, Keys>> {
+	public *clientValues(): IterableIterator<LatestMapClientData<T, Keys>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		for (const attendeeId of objectKeys(allKnownStates.states)) {
 			if (attendeeId !== allKnownStates.self) {
@@ -396,14 +392,14 @@ class LatestMapValueManagerImpl<
 			.map((attendeeId) => this.datastore.lookupClient(attendeeId));
 	}
 
-	public clientValue(attendee: Attendee): ReadonlyMap<Keys, LatestValueData<T>> {
+	public clientValue(attendee: Attendee): ReadonlyMap<Keys, LatestData<T>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const attendeeId = attendee.attendeeId;
 		const clientStateMap = allKnownStates.states[attendeeId];
 		if (clientStateMap === undefined) {
 			throw new Error("No entry for attendee");
 		}
-		const items = new Map<Keys, LatestValueData<T>>();
+		const items = new Map<Keys, LatestData<T>>();
 		for (const [key, item] of objectEntries(clientStateMap.items)) {
 			const value = item.value;
 			if (value !== undefined) {
@@ -449,7 +445,7 @@ class LatestMapValueManagerImpl<
 		}
 		const allUpdates = {
 			attendee,
-			items: new Map<Keys, LatestValueData<T>>(),
+			items: new Map<Keys, LatestData<T>>(),
 		};
 		const postUpdateActions: PostUpdateAction[] = [];
 		for (const key of updatedItemKeys) {
@@ -485,11 +481,11 @@ class LatestMapValueManagerImpl<
 }
 
 /**
- * Factory for creating a {@link LatestMapValueManager}.
+ * Factory for creating a {@link LatestMap} State object.
  *
  * @alpha
  */
-export function LatestMap<
+export function latestMap<
 	T extends object,
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
@@ -501,7 +497,7 @@ export function LatestMap<
 ): InternalTypes.ManagerFactory<
 	RegistrationKey,
 	InternalTypes.MapValueState<T, Keys>,
-	LatestMapValueManager<T, Keys>
+	LatestMap<T, Keys>
 > {
 	const timestamp = Date.now();
 	const value: InternalTypes.MapValueState<
@@ -509,7 +505,7 @@ export function LatestMap<
 		// This should be `Keys`, but will only work if properties are optional.
 		string | number
 	> = { rev: 0, items: {} };
-	// LatestMapValueManager takes ownership of values within initialValues.
+	// LatestMap takes ownership of values within initialValues.
 	if (initialValues !== undefined) {
 		for (const key of objectKeys(initialValues)) {
 			value.items[key] = { rev: 0, timestamp, value: initialValues[key] };
@@ -523,7 +519,7 @@ export function LatestMap<
 		>,
 	): {
 		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
-		manager: InternalTypes.StateValue<LatestMapValueManager<T, Keys>>;
+		manager: InternalTypes.StateValue<LatestMap<T, Keys>>;
 	} => ({
 		initialData: { value, allowableUpdateLatencyMs: controls?.allowableUpdateLatencyMs },
 		manager: brandIVM<

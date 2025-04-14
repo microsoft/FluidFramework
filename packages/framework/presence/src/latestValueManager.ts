@@ -17,7 +17,7 @@ import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
-import type { LatestValueClientData, LatestValueData } from "./latestValueTypes.js";
+import type { LatestClientData, LatestData } from "./latestValueTypes.js";
 import type { Attendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
@@ -26,13 +26,13 @@ import { brandIVM } from "./valueManager.js";
  * @sealed
  * @alpha
  */
-export interface LatestValueManagerEvents<T> {
+export interface LatestEvents<T> {
 	/**
 	 * Raised when remote client's value is updated, which may be the same value.
 	 *
 	 * @eventProperty
 	 */
-	updated: (update: LatestValueClientData<T>) => void;
+	updated: (update: LatestClientData<T>) => void;
 
 	/**
 	 * Raised when local client's value is updated, which may be the same value.
@@ -45,19 +45,19 @@ export interface LatestValueManagerEvents<T> {
 }
 
 /**
- * Value manager that provides the latest known value from this client to others and read access to their values.
+ * State that provides the latest known value from this client to others and read access to their values.
  * All participant clients must provide a value.
  *
- * @remarks Create using {@link Latest} registered to {@link StatesWorkspace}.
+ * @remarks Create using {@link StateFactory.latest} registered to {@link StatesWorkspace}.
  *
  * @sealed
  * @alpha
  */
-export interface LatestValueManager<T> {
+export interface Latest<T> {
 	/**
-	 * Events for Latest value manager.
+	 * Events for Latest.
 	 */
-	readonly events: Listenable<LatestValueManagerEvents<T>>;
+	readonly events: Listenable<LatestEvents<T>>;
 
 	/**
 	 * Controls for management of sending updates.
@@ -76,7 +76,7 @@ export interface LatestValueManager<T> {
 	/**
 	 * Iterable access to remote clients' values.
 	 */
-	clientValues(): IterableIterator<LatestValueClientData<T>>;
+	clientValues(): IterableIterator<LatestClientData<T>>;
 	/**
 	 * Array of known remote clients.
 	 */
@@ -84,15 +84,13 @@ export interface LatestValueManager<T> {
 	/**
 	 * Access to a specific attendee's value.
 	 */
-	clientValue(attendee: Attendee): LatestValueData<T>;
+	clientValue(attendee: Attendee): LatestData<T>;
 }
 
 class LatestValueManagerImpl<T, Key extends string>
-	implements
-		LatestValueManager<T>,
-		Required<ValueManager<T, InternalTypes.ValueRequiredState<T>>>
+	implements Latest<T>, Required<ValueManager<T, InternalTypes.ValueRequiredState<T>>>
 {
-	public readonly events = createEmitter<LatestValueManagerEvents<T>>();
+	public readonly events = createEmitter<LatestEvents<T>>();
 	public readonly controls: OptionalBroadcastControl;
 
 	public constructor(
@@ -119,7 +117,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		this.events.emit("localUpdated", { value });
 	}
 
-	public *clientValues(): IterableIterator<LatestValueClientData<T>> {
+	public *clientValues(): IterableIterator<LatestClientData<T>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		for (const [attendeeId, value] of objectEntries(allKnownStates.states)) {
 			if (attendeeId !== allKnownStates.self) {
@@ -139,7 +137,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			.map((attendeeId) => this.datastore.lookupClient(attendeeId));
 	}
 
-	public clientValue(attendee: Attendee): LatestValueData<T> {
+	public clientValue(attendee: Attendee): LatestData<T> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientState = allKnownStates.states[attendee.attendeeId];
 		if (clientState === undefined) {
@@ -175,19 +173,15 @@ class LatestValueManagerImpl<T, Key extends string>
 }
 
 /**
- * Factory for creating a {@link LatestValueManager}.
+ * Factory for creating a {@link Latest} State object.
  *
  * @alpha
  */
-export function Latest<T extends object, Key extends string = string>(
+export function latest<T extends object, Key extends string = string>(
 	initialValue: JsonSerializable<T> & JsonDeserialized<T> & object,
 	controls?: BroadcastControlSettings,
-): InternalTypes.ManagerFactory<
-	Key,
-	InternalTypes.ValueRequiredState<T>,
-	LatestValueManager<T>
-> {
-	// LatestValueManager takes ownership of initialValue but makes a shallow
+): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>> {
+	// Latest takes ownership of initialValue but makes a shallow
 	// copy for basic protection.
 	const value: InternalTypes.ValueRequiredState<T> = {
 		rev: 0,
@@ -202,7 +196,7 @@ export function Latest<T extends object, Key extends string = string>(
 		>,
 	): {
 		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
-		manager: InternalTypes.StateValue<LatestValueManager<T>>;
+		manager: InternalTypes.StateValue<Latest<T>>;
 	} => ({
 		initialData: { value, allowableUpdateLatencyMs: controls?.allowableUpdateLatencyMs },
 		manager: brandIVM<LatestValueManagerImpl<T, Key>, T, InternalTypes.ValueRequiredState<T>>(

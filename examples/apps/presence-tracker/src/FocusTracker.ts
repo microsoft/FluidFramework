@@ -7,11 +7,11 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import type {
 	Attendee,
-	LatestValueManager,
+	Latest,
 	Presence,
 	StatesWorkspace,
 } from "@fluidframework/presence/alpha";
-import { Latest, AttendeeStatus } from "@fluidframework/presence/alpha";
+import { AttendeeStatus, StateFactory } from "@fluidframework/presence/alpha";
 
 /**
  * IFocusState is the data that individual session clients share via presence.
@@ -38,9 +38,9 @@ export interface IFocusTrackerEvents extends IEvent {
  */
 export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 	/**
-	 * A value manager that tracks the latest focus state of connected session clients.
+	 * State that tracks the latest focus state of connected session clients.
 	 */
-	private readonly focus: LatestValueManager<IFocusState>;
+	private readonly focus: Latest<IFocusState>;
 
 	constructor(
 		private readonly presence: Presence,
@@ -53,22 +53,22 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 	) {
 		super();
 
-		// Create a Latest value manager to track the focus state. The value is initialized with current focus state of the
+		// Create a Latest state object to track the focus state. The value is initialized with current focus state of the
 		// window.
 		statesWorkspace.add(
 			"focus",
-			Latest<IFocusState>({ hasFocus: window.document.hasFocus() }),
+			StateFactory.latest<IFocusState>({ hasFocus: window.document.hasFocus() }),
 		);
 
-		// Save a reference to the value manager for easy access within the FocusTracker.
+		// Save a reference to the focus state for easy access within the FocusTracker.
 		this.focus = statesWorkspace.props.focus;
 
-		// When the focus value manager is updated, the FocusTracker should emit the focusChanged event.
+		// When the focus state is updated, the FocusTracker should emit the focusChanged event.
 		this.focus.events.on("updated", ({ attendee, value }) => {
 			this.emit("focusChanged", this.focus.local);
 		});
 
-		// Listen to the local focus and blur events. On each event, update the local focus state in the value manager, then
+		// Listen to the local focus and blur events. On each event, update the local focus state, then
 		// emit the focusChanged event with the local data.
 		window.addEventListener("focus", () => {
 			this.focus.local = {

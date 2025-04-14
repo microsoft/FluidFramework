@@ -35,25 +35,25 @@ There are two types of workspaces: States and Notifications.
 
 #### States Workspace
 
-A `StatesWorkspace`, allows sharing of simple data across attendees where each attendee maintains their own data values that others may read, but not change. This is distinct from a Fluid DDS where data values might be manipulated by multiple clients and one ultimate value is derived. Shared, independent values are maintained by value managers that specialize in incrementality and history of values.
+A `StatesWorkspace`, allows sharing of simple data across attendees where each attendee maintains their own data values that others may read, but not change. This is distinct from a Fluid DDS where data values might be manipulated by multiple clients and one ultimate value is derived. Shared, independent values are maintained by State objects that specialize in incrementality and history of values.
 
 #### Notifications Workspace
 
 A `NotificationsWorkspace`, is similar to states workspace, but is dedicated to notification use-cases via `NotificationsManager`.
 
-### Value Managers
+### States
 
-#### LatestValueManager
+#### Latest
 
-Latest value manager retains the most recent atomic value each attendee has shared. Use `Latest` to add one to `StatesWorkspace`.
+`Latest` retains the most recent atomic value each attendee has shared. Use `Latest` to add one to `StatesWorkspace`.
 
-#### LatestMapValueManager
+#### LatestMap
 
-Latest map value manager retains the most recent atomic value each attendee has shared under arbitrary keys. Values associated with a key may be nullified (appears as deleted). Use `LatestMap` to add one to `StatesWorkspace`.
+`LatestMap` retains the most recent atomic value each attendee has shared under arbitrary keys. Values associated with a key may be nullified (appears as deleted). Use `StateFactory.latest` to add one to `StatesWorkspace`.
 
 #### NotificationsManager
 
-Notifications value managers are special case where no data is retained during a session and all interactions appear as events that are sent and received. Notifications value managers may be mixed into a `StatesWorkspace` for convenience. They are the only type of value managers permitted in a `NotificationsWorkspace`. Use `Notifications` to add one to `NotificationsWorkspace` or `StatesWorkspace`.
+Notifications are special case where no data is retained during a session and all interactions appear as events that are sent and received. Notifications may be mixed into a `StatesWorkspace` for convenience. `NotificationsManager` is the only presence object permitted in a `NotificationsWorkspace`. Use `Notifications` to add one to `NotificationsWorkspace` or `StatesWorkspace`.
 
 ## Onboarding
 
@@ -87,19 +87,19 @@ Current API does not provide a mechanism to validate that state and notification
 Example:
 
 ```typescript
-presence.getStates("app:v1states", { myState: Latest({ x: 0 }) });
+presence.getStates("app:v1states", { myState: StateFactory.latest({ x: 0 }) });
 ```
 
 is incompatible with
 
 ```typescript
-presence.getStates("app:v1states", { myState: Latest({ x: "text" }) });
+presence.getStates("app:v1states", { myState: StateFactory.latest({ x: "text" }) });
 ```
 
 as "app:v1states"+"myState" have different value type expectations: `{x: number}` versus `{x: string}`.
 
 ```typescript
-presence.getStates("app:v1states", { myState2: Latest({ x: true }) });
+presence.getStates("app:v1states", { myState2: StateFactory.latest({ x: true }) });
 ```
 
 would be compatible with both of the prior schemas as "myState2" is a different name. Though in this situation none of the different clients would be able to observe each other.
@@ -114,12 +114,12 @@ Notifications are fundamentally unreliable at this time as there are no built-in
 
 Presence updates are grouped together and throttled to prevent flooding the network with messages when presence values are rapidly updated. This means the presence infrastructure will not immediately broadcast updates but will broadcast them after a configurable delay.
 
-The `allowableUpdateLatencyMs` property configures how long a local update may be delayed under normal circumstances, enabling grouping with other updates. The default `allowableUpdateLatencyMs` is **60 milliseconds** but may be (1) specified during configuration of a [States Workspace](#states-workspace) or [Value Manager](#value-managers) and/or (2) updated later using the `controls` member of Workspace or Value Manager. [States Workspace](#states-workspace) configuration applies when a Value Manager does not have its own setting.
+The `allowableUpdateLatencyMs` property configures how long a local update may be delayed under normal circumstances, enabling grouping with other updates. The default `allowableUpdateLatencyMs` is **60 milliseconds** but may be (1) specified during configuration of a [States Workspace](#states-workspace) or [States](#states) and/or (2) updated later using the `controls` member of Workspace or States. [States Workspace](#states-workspace) configuration applies when States do not have their own setting.
 
 Notifications are never queued; they effectively always have an `allowableUpdateLatencyMs` of 0. However, they may be grouped with other updates that were already queued.
 
 Note that due to throttling, clients will not receive updates for every intermediate value set by another client. For example,
-with `Latest*ValueManagers`, the only value sent is the value at the time the outgoing grouped message is sent. Previous
+with `Latest` and `LatestMap`, the only value sent is the value at the time the outgoing grouped message is sent. Previous
 values set by the client will not be broadcast or seen by other clients.
 
 #### Example
@@ -131,12 +131,12 @@ You can configure the grouping and throttling behavior using the `allowableUpdat
 const stateWorkspace = presence.getStates(
 	"app:v1states",
 	{
-		// This value manager has an allowable latency of 100ms.
-		position: Latest({ x: 0, y: 0 }, { allowableUpdateLatencyMs: 100 }),
-		// This value manager uses the workspace default.
-		count: Latest({ num: 0 }),
+		// This Latest state has an allowable latency of 100ms.
+		position: StateFactory.latest({ x: 0, y: 0 }, { allowableUpdateLatencyMs: 100 }),
+		// This Latest state uses the workspace default.
+		count: StateFactory.latest({ num: 0 }),
 	},
-	// Specify the default for all value managers in this workspace to 200ms,
+	// Specify the default for all state in this workspace to 200ms,
 	// overriding the default value of 60ms.
 	{ allowableUpdateLatencyMs: 200 },
 );

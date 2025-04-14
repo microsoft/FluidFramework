@@ -11,6 +11,24 @@ The following API changes have been made to improve clarity and consistency:
 
 | Original | New |
 |----------|-----|
+| `acquirePresence` | `getPresence` |
+| `acquirePresenceViaDataObject` | `getPresenceViaDataObject` |
+| `ClientSessionId` | `AttendeeId` |
+| `IPresence` | `Presence` |
+| `ISessionClient` | `Attendee` |
+| `Latest` (import) | `StateFactory` |
+| `Latest` (call) | `StateFactory.latest` |
+| `LatestMap` (import) | `StateFactory` |
+| `LatestMap` (call) | `StateFactory.latestMap` |
+| `LatestMapItemValueClientData` | `LatestMapItemUpdatedClientData` |
+| `LatestMapValueClientData` | `LatestMapClientData` |
+| `LatestMapValueManager` | `LatestMap` |
+| `LatestMapValueManagerEvents` | `LatestMapEvents` |
+| `LatestValueClientData` | `LatestClientData` |
+| `LatestValueData` | `LatestData` |
+| `LatestValueManager` | `Latest` |
+| `LatestValueManagerEvents` | `LatestEvents` |
+| `LatestValueMetadata` | `LatestMetadata` |
 | `PresenceNotifications` | `NotificationsWorkspace` |
 | `PresenceNotificationsSchema` | `NotificationsWorkspaceSchema` |
 | `PresenceStates` | `StatesWorkspace` |
@@ -18,15 +36,27 @@ The following API changes have been made to improve clarity and consistency:
 | `PresenceStatesSchema` | `StatesWorkspaceSchema` |
 | `PresenceWorkspaceAddress` | `WorkspaceAddress` |
 | `PresenceWorkspaceEntry` | `StatesWorkspaceEntry` |
-| `ClientSessionId` | `AttendeeId` |
-| `IPresence` | `Presence` |
-| `ISessionClient` | `Attendee` |
 | `SessionClientStatus` | `AttendeeStatus` |
-| `acquirePresence` | `getPresence` |
-| `acquirePresenceViaDataObject` | `getPresenceViaDataObject` |
+| `ValueMap` | `StateMap` |
 
 ```json
 {
+    "acquirePresence": "getPresence",
+    "acquirePresenceViaDataObject": "getPresenceViaDataObject",
+    "ClientSessionId": "AttendeeId",
+    "IPresence": "Presence",
+    "ISessionClient": "Attendee",
+    "Latest": "StateFactory",
+    "LatestMap": "StateFactory",
+    "LatestMapItemValueClientData": "LatestMapItemUpdatedClientData",
+    "LatestMapValueClientData": "LatestMapClientData",
+    "LatestMapValueManager": "LatestMap",
+    "LatestMapValueManagerEvents": "LatestMapEvents",
+    "LatestValueClientData": "LatestClientData",
+    "LatestValueData": "LatestData",
+    "LatestValueManager": "Latest",
+    "LatestValueManagerEvents": "LatestEvents",
+    "LatestValueMetadata": "LatestMetadata",
     "PresenceNotifications": "NotificationsWorkspace",
     "PresenceNotificationsSchema": "NotificationsWorkspaceSchema",
     "PresenceStates": "StatesWorkspace",
@@ -34,12 +64,10 @@ The following API changes have been made to improve clarity and consistency:
     "PresenceStatesSchema": "StatesWorkspaceSchema",
     "PresenceWorkspaceAddress": "WorkspaceAddress",
     "PresenceWorkspaceEntry": "StatesWorkspaceEntry",
-    "ClientSessionId": "AttendeeId",
-    "IPresence": "Presence",
-    "ISessionClient": "Attendee",
     "SessionClientStatus": "AttendeeStatus",
-    "acquirePresence": "getPresence",
-    "acquirePresenceViaDataObject": "getPresenceViaDataObject"
+    "ValueMap": "StateMap"
 }
 ```
 The JSON table above can be used to automate most of these replacements in your codebase. You can implement a simple script that reads this JSON and performs the necessary replacements in your files.
+
+Note: To fully replace OLD `Latest` and `LatestMap` functions, you should import `StateFactory` and call `StateFactory.latest` and `StateFactory.latestMap` respectively. NEW `Latest` and `LatestMap` APIs replace `LatestValueManager` and `LatestMapValueManager`.

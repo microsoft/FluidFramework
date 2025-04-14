@@ -8,10 +8,10 @@ import type { IEvent } from "@fluidframework/core-interfaces";
 import type {
 	Presence,
 	Attendee,
-	LatestValueManager,
+	Latest,
 	StatesWorkspace,
 } from "@fluidframework/presence/alpha";
-import { Latest, AttendeeStatus } from "@fluidframework/presence/alpha";
+import { AttendeeStatus, StateFactory } from "@fluidframework/presence/alpha";
 
 /**
  * IMousePosition is the data that individual session clients share via presence.
@@ -39,9 +39,9 @@ export interface IMouseTrackerEvents extends IEvent {
  */
 export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	/**
-	 * A value manager that tracks the latest mouse position  of connected session clients.
+	 * State that tracks the latest mouse position  of connected session clients.
 	 */
-	private readonly cursor: LatestValueManager<IMousePosition>;
+	private readonly cursor: Latest<IMousePosition>;
 
 	constructor(
 		private readonly presence: Presence,
@@ -54,13 +54,13 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	) {
 		super();
 
-		// Create a Latest value manager to track the mouse position.
-		statesWorkspace.add("cursor", Latest<IMousePosition>({ x: 0, y: 0 }));
+		// Create a Latest state object to track the mouse position.
+		statesWorkspace.add("cursor", StateFactory.latest<IMousePosition>({ x: 0, y: 0 }));
 
-		// Save a reference to the value manager for easy access within the MouseTracker.
+		// Save a reference to the cursor state for easy access within the MouseTracker.
 		this.cursor = statesWorkspace.props.cursor;
 
-		// When the cursor value manager is updated, the MouseTracker should emit the mousePositionChanged event.
+		// When the cursor state is updated, the MouseTracker should emit the mousePositionChanged event.
 		this.cursor.events.on("updated", () => {
 			this.emit("mousePositionChanged");
 		});
@@ -71,7 +71,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 			this.emit("mousePositionChanged");
 		});
 
-		// Listen to the local mousemove event and update the local position in the value manager
+		// Listen to the local mousemove event and update the local position in the cursor state.
 		window.addEventListener("mousemove", (e) => {
 			// Alert all connected clients that there has been a change to this client's mouse position
 			this.cursor.local = {

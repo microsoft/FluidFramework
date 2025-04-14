@@ -5,7 +5,7 @@
 
 import {
 	Presence,
-	Latest,
+	StateFactory,
 	type Attendee,
 	type StatesWorkspace,
 	type StatesWorkspaceSchema,
@@ -18,7 +18,7 @@ export interface User {
 }
 
 const statesSchema = {
-	onlineUsers: Latest({ photo: "" } satisfies User),
+	onlineUsers: StateFactory.latest({ photo: "" } satisfies User),
 } satisfies StatesWorkspaceSchema;
 
 export type UserPresence = StatesWorkspace<typeof statesSchema>;

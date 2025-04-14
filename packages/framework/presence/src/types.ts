@@ -41,7 +41,7 @@ export type StatesWorkspaceEntry<
 /**
  * Schema for a {@link StatesWorkspace} workspace.
  *
- * Keys of schema are the keys of the {@link StatesWorkspace} providing access to `Value Manager`s.
+ * Keys of schema are the keys of the {@link StatesWorkspace} providing access to State objects.
  *
  * @alpha
  */
@@ -50,14 +50,14 @@ export interface StatesWorkspaceSchema {
 }
 
 /**
- * Map of `Value Manager`s registered with {@link StatesWorkspace}.
+ * Map of State objects registered with {@link StatesWorkspace}.
  *
  * @sealed
  * @alpha
  */
 export type StatesWorkspaceEntries<TSchema extends StatesWorkspaceSchema> = {
 	/**
-	 * Registered `Value Manager`s
+	 * Registered State objects.
 	 */
 	readonly [Key in keyof TSchema]: ReturnType<
 		TSchema[Key]
@@ -67,10 +67,10 @@ export type StatesWorkspaceEntries<TSchema extends StatesWorkspaceSchema> = {
 };
 
 /**
- * `StatesWorkspace` maintains a registry of `Value Manager`s that all share and provide access to
+ * `StatesWorkspace` maintains a registry of State objects that all share and provide access to
  * presence state values across client members in a session.
  *
- * `Value Manager`s offer variations on how to manage states, but all share same principle that
+ * State objects offer variations on how to manage states, but all share same principle that
  * each client's state is independent and may only be updated by originating client.
  *
  * @sealed
@@ -81,9 +81,9 @@ export interface StatesWorkspace<
 	TManagerConstraints = unknown,
 > {
 	/**
-	 * Registers a new `Value Manager` with the {@link StatesWorkspace}.
-	 * @param key - new unique key for the `Value Manager` within the workspace
-	 * @param manager - factory for creating a `Value Manager`
+	 * Registers a new State object with the {@link StatesWorkspace}.
+	 * @param key - new unique key for the State object within the workspace
+	 * @param manager - factory for creating a State object
 	 */
 	add<
 		TKey extends string,
@@ -98,7 +98,7 @@ export interface StatesWorkspace<
 	>;
 
 	/**
-	 * Registry of `Value Manager`s.
+	 * Registry of State objects.
 	 */
 	readonly props: StatesWorkspaceEntries<TSchema>;
 
@@ -142,9 +142,9 @@ export interface NotificationsWorkspaceSchema {
  */
 export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSchema> {
 	/**
-	 * Registers a new `Value Manager` with the {@link NotificationsWorkspace}.
-	 * @param key - new unique key for the `Value Manager` within the workspace
-	 * @param manager - factory for creating a `Value Manager`
+	 * Registers a new `NotificationsManager` with the {@link NotificationsWorkspace}.
+	 * @param key - new unique key for the `NotificationsManager` within the workspace
+	 * @param manager - factory for creating a `NotificationsManager`
 	 */
 	add<
 		TKey extends string,
@@ -158,7 +158,7 @@ export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSc
 	>;
 
 	/**
-	 * Registry of `Value Manager`s.
+	 * Registry of `NotificationsManager`s.
 	 */
 	readonly props: StatesWorkspaceEntries<TSchema>;
 }
