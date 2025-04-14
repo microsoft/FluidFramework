@@ -44,19 +44,19 @@ export {
 	ExperimentalPresenceManager,
 } from "./datastorePresenceManagerFactory.js";
 
-export {
+export type {
 	latestMap,
-	type LatestMapItemRemovedClientData,
-	type LatestMapItemUpdatedClientData,
-	type LatestMapClientData,
-	type LatestMap,
-	type LatestMapEvents,
-	type StateMap,
+	LatestMapItemRemovedClientData,
+	LatestMapItemUpdatedClientData,
+	LatestMapClientData,
+	LatestMap,
+	LatestMapEvents,
+	StateMap,
 } from "./latestMapValueManager.js";
-export {
+export type {
 	latest,
-	type Latest,
-	type LatestEvents,
+	Latest,
+	LatestEvents,
 } from "./latestValueManager.js";
 export type {
 	LatestClientData,
