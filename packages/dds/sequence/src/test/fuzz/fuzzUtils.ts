@@ -30,22 +30,20 @@ import {
 	PropertySet,
 	Side,
 	type AdjustParams,
+	type InteriorSequencePlace,
+	type MapLike,
+	type SequencePlace,
 } from "@fluidframework/merge-tree/internal";
 
-import type {
-	InteriorSequencePlace,
-	MapLike,
-	SharedStringClass,
-	SequencePlace,
-} from "../../index.js";
 import {
+	IntervalCollection,
 	toSequencePlace,
 	ISequenceIntervalCollection,
 	toOptionalSequencePlace,
 } from "../../intervalCollection.js";
 import { SharedStringRevertible, revertSharedStringRevertibles } from "../../revertibles.js";
 import { SharedStringFactory } from "../../sequenceFactory.js";
-import { ISharedString } from "../../sharedString.js";
+import { ISharedString, type SharedStringClass } from "../../sharedString.js";
 import { _dirname } from "../dirname.cjs";
 import { assertEquivalentSharedStrings } from "../intervalTestUtils.js";
 
@@ -280,11 +278,13 @@ export function makeReducer(
 			client.channel.obliterateRange(start, end);
 		},
 		addInterval: ({ client }, { start, end, collectionName, id }) => {
-			const collection = client.channel.getIntervalCollection(collectionName);
+			const collection = client.channel.getIntervalCollection(
+				collectionName,
+			) as IntervalCollection;
 			collection.add({
+				id,
 				start,
 				end,
-				props: { intervalId: id },
 			});
 		},
 		deleteInterval: ({ client }, { id, collectionName }) => {
