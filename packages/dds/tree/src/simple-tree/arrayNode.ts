@@ -1068,6 +1068,7 @@ export function arraySchema<
 	const ImplicitlyConstructable extends boolean,
 	const TCustomMetadata = unknown,
 >(
+	scope: string | undefined,
 	identifier: TName,
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
@@ -1162,6 +1163,7 @@ export function arraySchema<
 		}
 
 		public static readonly identifier = identifier;
+		public static readonly scope = scope;
 		public static readonly info = info;
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
