@@ -53,7 +53,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 	) {
 		super();
 
-		// Use StateFactory.latest to track the focus state. The value is initialized with current focus state of the
+		// Create a Latest state object to track the focus state. The value is initialized with current focus state of the
 		// window.
 		statesWorkspace.add(
 			"focus",
