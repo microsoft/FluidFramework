@@ -1339,7 +1339,7 @@ export class IntervalCollection
 		this.assertStickinessEnabled(start, end);
 
 		const interval: SequenceIntervalClass = this.localCollection.addInterval(
-			id ?? uuid(),
+			id ?? crypto.randomUUID(),
 			toSequencePlace(startPos, startSide),
 			toSequencePlace(endPos, endSide),
 			props,

@@ -33,7 +33,6 @@ import {
 	UniversalSequenceNumber,
 } from "@fluidframework/merge-tree/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import { computeStickinessFromSide } from "../intervalCollection.js";
 
@@ -455,7 +454,7 @@ export class SequenceIntervalClass implements SequenceInterval {
 
 		return new SequenceIntervalClass(
 			this.client,
-			uuid(),
+			crypto.randomUUID(),
 			this.label,
 			newStart,
 			newEnd,
@@ -671,7 +670,7 @@ export function createTransientInterval(
 ) {
 	return createSequenceInterval(
 		"transient",
-		uuid(),
+		crypto.randomUUID(),
 		start,
 		end,
 		client,
