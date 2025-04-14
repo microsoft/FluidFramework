@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { ContainerMessageType } from "../../index.js";
 import {
@@ -126,14 +127,17 @@ describe("OpGroupingManager", () => {
 				contentSizeInBytes: 0,
 				referenceSequenceNumber: 0,
 			};
-			assert.throws(() => {
-				new OpGroupingManager(
-					{
-						groupedBatchingEnabled: true,
-					},
-					mockLogger,
-				).groupBatch(emptyBatch);
-			});
+			assert.throws(
+				() => {
+					new OpGroupingManager(
+						{
+							groupedBatchingEnabled: true,
+						},
+						mockLogger,
+					).groupBatch(emptyBatch);
+				},
+				(e: Error) => validateAssertionError(e, "Unexpected attempt to group an empty batch"),
+			);
 		});
 
 		it("singleton batch is returned as-is", () => {
