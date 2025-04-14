@@ -131,9 +131,9 @@ You can configure the grouping and throttling behavior using the `allowableUpdat
 const stateWorkspace = presence.getStates(
 	"app:v1states",
 	{
-		// This latest state has an allowable latency of 100ms.
+		// This Latest state has an allowable latency of 100ms.
 		position: StateFactory.latest({ x: 0, y: 0 }, { allowableUpdateLatencyMs: 100 }),
-		// This latest state uses the workspace default.
+		// This Latest state uses the workspace default.
 		count: StateFactory.latest({ num: 0 }),
 	},
 	// Specify the default for all state in this workspace to 200ms,

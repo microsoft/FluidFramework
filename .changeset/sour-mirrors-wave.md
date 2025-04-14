@@ -16,8 +16,10 @@ The following API changes have been made to improve clarity and consistency:
 | `ClientSessionId` | `AttendeeId` |
 | `IPresence` | `Presence` |
 | `ISessionClient` | `Attendee` |
-| `Latest` | `latestStateFactory` |
-| `LatestMap` | `latestMapFactory` |
+| `Latest` (import) | `StateFactory` |
+| `Latest` (call) | `StateFactory.latest` |
+| `LatestMap` (import) | `StateFactory` |
+| `LatestMap` (call) | `StateFactory.latestMap` |
 | `LatestMapItemValueClientData` | `LatestMapItemUpdatedClientData` |
 | `LatestMapValueClientData` | `LatestMapClientData` |
 | `LatestMapValueManager` | `LatestMap` |
@@ -44,8 +46,8 @@ The following API changes have been made to improve clarity and consistency:
     "ClientSessionId": "AttendeeId",
     "IPresence": "Presence",
     "ISessionClient": "Attendee",
-    "Latest": "latestStateFactory",
-    "LatestMap": "latestMapFactory",
+    "Latest": "StateFactory",
+    "LatestMap": "StateFactory",
     "LatestMapItemValueClientData": "LatestMapItemUpdatedClientData",
     "LatestMapValueClientData": "LatestMapClientData",
     "LatestMapValueManager": "LatestMap",
@@ -67,3 +69,5 @@ The following API changes have been made to improve clarity and consistency:
 }
 ```
 The JSON table above can be used to automate most of these replacements in your codebase. You can implement a simple script that reads this JSON and performs the necessary replacements in your files.
+
+Note: To fully replace OLD `Latest` and `LatestMap` functions, you should import `StateFactory` and call `StateFactory.latest` and `StateFactory.latestMap` respectively. NEW `Latest` and `LatestMap` APIs replace `LatestValueManager` and `LatestMapValueManager`.
