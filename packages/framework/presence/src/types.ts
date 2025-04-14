@@ -98,7 +98,7 @@ export interface StatesWorkspace<
 	>;
 
 	/**
-	 * Registry of State.
+	 * Registry of State objects.
 	 */
 	readonly props: StatesWorkspaceEntries<TSchema>;
 

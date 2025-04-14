@@ -429,7 +429,7 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 
 /**
  * Create a new StatesWorkspace using the DataStoreRuntime provided.
- * @param initialContent - The initial state to register.
+ * @param initialContent - The initial State objects to register.
  */
 export function createPresenceStates<TSchema extends StatesWorkspaceSchema>(
 	runtime: PresenceRuntime,

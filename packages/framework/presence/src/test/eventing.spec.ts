@@ -14,13 +14,8 @@ import type { Attendee, WorkspaceAddress } from "../index.js";
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import { assertFinalExpectations, prepareConnectedPresence } from "./testUtils.js";
 
-import {
-	Notifications,
-	StateFactory,
-	type LatestMap,
-	type Latest,
-	type NotificationsManager,
-} from "@fluidframework/presence/alpha";
+import type { Latest, LatestMap, NotificationsManager } from "@fluidframework/presence/alpha";
+import { Notifications, StateFactory } from "@fluidframework/presence/alpha";
 
 const datastoreUpdateType = "Pres:DatastoreUpdate";
 

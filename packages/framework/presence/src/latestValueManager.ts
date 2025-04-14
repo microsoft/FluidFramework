@@ -48,7 +48,7 @@ export interface LatestEvents<T> {
  * State that provides the latest known value from this client to others and read access to their values.
  * All participant clients must provide a value.
  *
- * @remarks Create using {@link latest} registered to {@link StatesWorkspace}.
+ * @remarks Create using {@link StateFactory.latest} registered to {@link StatesWorkspace}.
  *
  * @sealed
  * @alpha
@@ -173,7 +173,7 @@ class LatestValueManagerImpl<T, Key extends string>
 }
 
 /**
- * Factory for creating a {@link Latest}.
+ * Factory for creating a {@link Latest} State object.
  *
  * @alpha
  */

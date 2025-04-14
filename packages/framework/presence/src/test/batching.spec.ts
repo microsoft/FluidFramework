@@ -7,7 +7,8 @@ import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal
 import { describe, it, after, afterEach, before, beforeEach } from "mocha";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
-import { Notifications, StateFactory, type NotificationsWorkspace } from "../index.js";
+import type { NotificationsWorkspace } from "../index.js";
+import { Notifications, StateFactory } from "../index.js";
 import type { createPresenceManager } from "../presenceManager.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";

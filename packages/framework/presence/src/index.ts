@@ -26,9 +26,9 @@ export type {
 export {
 	type Attendee,
 	type AttendeeId,
+	AttendeeStatus,
 	type Presence,
 	type PresenceEvents,
-	AttendeeStatus,
 } from "./presence.js";
 
 export type {
@@ -46,11 +46,11 @@ export {
 
 export type {
 	latestMap,
+	LatestMap,
+	LatestMapClientData,
+	LatestMapEvents,
 	LatestMapItemRemovedClientData,
 	LatestMapItemUpdatedClientData,
-	LatestMapClientData,
-	LatestMap,
-	LatestMapEvents,
 	StateMap,
 } from "./latestMapValueManager.js";
 export type {
@@ -72,6 +72,8 @@ export {
 	type NotificationsManager,
 	type NotificationsManagerEvents,
 } from "./notificationsManager.js";
+
 export { StateFactory } from "./stateFactory.js";
+
 export type { InternalTypes } from "./exposedInternalTypes.js";
 export type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
