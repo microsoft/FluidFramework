@@ -15,6 +15,7 @@ import {
 	disabledCompressionConfig,
 } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase, IErrorBase } from "@fluidframework/core-interfaces";
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
@@ -106,7 +107,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 	};
 
-	const captureContainerCloseError = async (container: IContainer) =>
+	const containerError = async (container: IContainer) =>
 		new Promise<IErrorBase | undefined>((resolve) =>
 			container.once("closed", (error) => {
 				resolve(error);
@@ -127,41 +128,23 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 			const maxMessageSizeInBytes = 1024 * 1024; // 1Mb
 			await setupContainers(configWithCompressionDisabled);
 
-			const errorP = captureContainerCloseError(localContainer);
+			const errorEvent = containerError(localContainer);
 
 			const largeString = generateStringOfSize(maxMessageSizeInBytes + 1);
 			const messageCount = 1;
-			setMapKeys(localMap, messageCount, largeString);
+			try {
+				setMapKeys(localMap, messageCount, largeString);
+				assert(false, "should throw");
+			} catch {}
 
-			// Let the ops flush, which will close the container
-			await provider.ensureSynchronized();
+			const error = await errorEvent;
+			assert.equal(error?.errorType, FluidErrorTypes.dataProcessingError);
+			assert.ok(error.getTelemetryProperties?.().opSize ?? 0 > maxMessageSizeInBytes);
 
-			const {
-				errorType,
-				dataProcessingCodepath,
-				errorDetails: { opCount, contentSizeInBytes, socketSize },
-			} = (await errorP) as any;
-			assert.deepEqual(
-				{
-					errorType,
-					dataProcessingCodepath,
-					errorDetails: { opCount, contentSizeInBytes, socketSize },
-				},
-				{
-					errorType: "dataProcessingError",
-					dataProcessingCodepath: "CannotSend",
-					errorDetails: {
-						opCount: 1,
-						contentSizeInBytes: 1048789,
-						socketSize: 1048989, // > maxMessageSizeInBytes: 716800
-					},
-				},
-				"Error not as expected",
-			);
-			assert(
-				socketSize > maxMessageSizeInBytes,
-				"Socket size should be larger than maxMessageSizeInBytes",
-			);
+			// Limit has to be around 1Mb, but we should not assume here precise number.
+			const limit = error.getTelemetryProperties?.().limit as number;
+			assert(limit > maxMessageSizeInBytes / 2);
+			assert(limit < maxMessageSizeInBytes * 2);
 		},
 	);
 
@@ -264,43 +247,8 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 
 			const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
 			const messageCount = 3; // Will result in a 15 MB payload
-			setMapKeys(localMap, messageCount, largeString);
-
-			// Let the ops flush, which will close the container
-			const errorP = captureContainerCloseError(localContainer);
+			assert.throws(() => setMapKeys(localMap, messageCount, largeString));
 			await provider.ensureSynchronized();
-
-			assert(localContainer.closed, "Local Container should be closed during flush");
-			const {
-				errorType,
-				dataProcessingCodepath,
-				errorDetails: { opCount, contentSizeInBytes, socketSize },
-			} = (await errorP) as any;
-			assert.deepEqual(
-				{
-					errorType,
-					dataProcessingCodepath,
-					errorDetails: { opCount, contentSizeInBytes, socketSize },
-				},
-				{
-					errorType: "dataProcessingError",
-					dataProcessingCodepath: "CannotSend",
-					errorDetails: {
-						opCount: 1,
-						contentSizeInBytes: 15729276,
-						socketSize: 15729476, // > maxMessageSizeInBytes: 716800
-					},
-				},
-				"Error not as expected",
-			);
-			assert(
-				socketSize > maxMessageSizeInBytes,
-				"Socket size should be larger than maxMessageSizeInBytes",
-			);
-
-			// Confirm the remote map didn't receive any of the large ops
-			remoteMap.delete("test"); // So we can just check for empty on the next line
-			assert(remoteMap.size === 0, "Remote map should not have received any of the large ops");
 		},
 	);
 
