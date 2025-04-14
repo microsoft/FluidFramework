@@ -606,11 +606,11 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	 */
 	protected createDataStoreId(): string {
 		/**
-		 * There is currently a bug where certain data store ids such as "[" are getting converted to ASCII characters
-		 * in the snapshot.
-		 * So, return short ids only if explicitly enabled via feature flags. Else, return crypto.randomUUID();
+		 * Return uuid if short-ids are explicitly disabled via feature flags.
 		 */
-		if (this.mc.config.getBoolean("Fluid.Runtime.IsShortIdEnabled") === true) {
+		if (this.mc.config.getBoolean("Fluid.Runtime.DisableShortIds") === true) {
+			return crypto.randomUUID();
+		} else {
 			// We use three non-overlapping namespaces:
 			// - detached state: even numbers
 			// - attached state: odd numbers
@@ -626,7 +626,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			}
 			return id;
 		}
-		return crypto.randomUUID();
 	}
 
 	public createDetachedDataStore(

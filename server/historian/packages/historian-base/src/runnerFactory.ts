@@ -91,7 +91,32 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		// Create services
 		const riddlerEndpoint = config.get("riddler");
 		const alfredEndpoint = config.get("alfred");
-		const riddler = new historianServices.RiddlerService(riddlerEndpoint, tenantCache);
+
+		const redisClientConnectionManagerForInvalidTokenCache =
+			customizations?.redisClientConnectionManagerForInvalidTokenCache
+				? customizations.redisClientConnectionManagerForInvalidTokenCache
+				: new RedisClientConnectionManager(
+						undefined,
+						redisConfig,
+						redisConfig.enableClustering,
+						redisConfig.slotsRefreshTimeout,
+						undefined /* retryDelays */,
+						redisConfig.enableVerboseErrorLogging,
+				  );
+		redisClientConnectionManagers.push(redisClientConnectionManagerForInvalidTokenCache);
+		const redisCacheForInvalidToken = new services.RedisCache(
+			redisClientConnectionManagerForInvalidTokenCache,
+			{
+				expireAfterSeconds: redisConfig.keyExpireAfterSeconds,
+				prefix: Constants.invalidTokenCachePrefix,
+			},
+		);
+
+		const riddler = new historianServices.RiddlerService(
+			riddlerEndpoint,
+			tenantCache,
+			redisCacheForInvalidToken,
+		);
 
 		// Redis connection for throttling.
 		const redisConfigForThrottling = config.get("redisForThrottling");
