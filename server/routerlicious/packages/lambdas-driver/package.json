@@ -64,9 +64,9 @@
 		"serialize-error": "^8.1.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "0.52.0-315632",
+		"@fluid-tools/build-cli": "^0.52.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.52.0-315632",
+		"@fluidframework/build-tools": "^0.52.0",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/server-lambdas-driver-previous": "npm:@fluidframework/server-lambdas-driver@5.0.0",
 		"@fluidframework/server-test-utils": "workspace:~",
