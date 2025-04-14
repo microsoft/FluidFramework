@@ -476,11 +476,7 @@ for (const createBlobPlaceholders of [false, true]) {
 			assert.strictEqual(summaryData.redirectTable?.length, 1);
 		});
 
-		it("reupload blob if expired", async function () {
-			// TODO AB#35004: test fails with 0x38f, there are duplicate localIds in the opsInFlight so the second one chokes.
-			if (createBlobPlaceholders) {
-				this.skip();
-			}
+		it("reupload blob if expired", async () => {
 			await runtime.attach();
 			await runtime.connect();
 			runtime.attachedStorage.minTTL = 0.001; // force expired TTL being less than connection time (50ms)

@@ -201,6 +201,8 @@ export class BlobManager {
 		new Map();
 	public readonly stashedBlobsUploadP: Promise<(void | ICreateBlobResponse)[]>;
 
+	private readonly tombstoneBlobs: Set<string> = new Set();
+
 	private readonly createBlobPlaceholders: boolean;
 
 	constructor(props: {
@@ -614,6 +616,7 @@ export class BlobManager {
 	}
 
 	private deletePendingBlob(id: string): void {
+		this.tombstoneBlobs.add(id);
 		if (this.pendingBlobs.delete(id) && !this.hasPendingBlobs) {
 			this.publicEvents.emit("noPendingBlobs");
 		}
@@ -624,11 +627,14 @@ export class BlobManager {
 		response: ICreateBlobResponseWithTTL,
 	): ICreateBlobResponseWithTTL | undefined {
 		const entry = this.pendingBlobs.get(localId);
-		if (entry === undefined && this.pendingStashedBlobs.has(localId)) {
+		if (
+			entry === undefined &&
+			(this.tombstoneBlobs.has(localId) || this.pendingStashedBlobs.has(localId))
+		) {
 			// The blob was already processed and deleted. This can happen if the blob was reuploaded by
-			// the stashing process and the original upload was processed before the stashed upload.
+			// the stashing or resubmit process and the original upload was processed.
 			this.mc.logger.sendTelemetryEvent({
-				eventName: "StashedBlobAlreadyProcessed",
+				eventName: "BlobAlreadyProcessed",
 				localId,
 			});
 			return;
@@ -733,10 +739,13 @@ export class BlobManager {
 				// storage ID is already in flight and any op containing this local ID will be sequenced after that.
 				for (const pendingLocalId of waitingBlobs) {
 					const entry = this.pendingBlobs.get(pendingLocalId);
-					assert(
-						entry !== undefined,
-						0x38f /* local online BlobAttach op with no pending blob entry */,
-					);
+					if (entry === undefined) {
+						assert(
+							this.tombstoneBlobs.has(pendingLocalId),
+							"local online BlobAttach op with no pending blob entry",
+						);
+						return;
+					}
 					this.setRedirection(pendingLocalId, blobId);
 					entry.acked = true;
 					entry.handleP.resolve(this.getBlobHandle(pendingLocalId));
