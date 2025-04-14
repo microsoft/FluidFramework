@@ -119,7 +119,7 @@
 		"mocha": "^10.8.2",
 		"rimraf": "^4.4.0",
 		"start-server-and-test": "^2.0.3",
-		"tinylicious": "^5.0.0",
+		"tinylicious": "^6.0.0-332234",
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {

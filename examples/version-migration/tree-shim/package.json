@@ -82,7 +82,7 @@
 		"rimraf": "^4.4.0",
 		"start-server-and-test": "^2.0.3",
 		"style-loader": "^4.0.0",
-		"tinylicious": "^5.0.0",
+		"tinylicious": "^6.0.0-332234",
 		"ts-jest": "^29.1.1",
 		"ts-loader": "^9.5.1",
 		"typescript": "~5.4.5",

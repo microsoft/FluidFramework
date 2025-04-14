@@ -75,7 +75,7 @@
 		"@fluidframework/register-collection": "workspace:~",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/server-local-server": "^5.0.0",
+		"@fluidframework/server-local-server": "^6.0.0-332234",
 		"@fluidframework/tinylicious-driver": "workspace:~",
 		"uuid": "^11.1.0"
 	},
