@@ -119,6 +119,26 @@ export type SpecificAttendee<SpecificAttendeeId extends AttendeeId> =
  * @sealed
  * @alpha
  */
+export interface AttendeesEvents {
+	/**
+	 * Raised when new client joins session.
+	 *
+	 * @eventProperty
+	 */
+	attendeeJoined: (attendee: Attendee) => void;
+
+	/**
+	 * Raised when client appears disconnected from session.
+	 *
+	 * @eventProperty
+	 */
+	attendeeDisconnected: (attendee: Attendee) => void;
+}
+
+/**
+ * @sealed
+ * @alpha
+ */
 export interface PresenceEvents {
 	/**
 	 * Raised when a workspace is activated within the session.
@@ -136,26 +156,6 @@ export interface PresenceEvents {
 		workspaceAddress: WorkspaceAddress,
 		type: "States" | "Notifications" | "Unknown",
 	) => void;
-}
-
-/**
- * @sealed
- * @alpha
- */
-export interface AttendeesEvents {
-	/**
-	 * Raised when new client joins session.
-	 *
-	 * @eventProperty
-	 */
-	attendeeJoined: (attendee: Attendee) => void;
-
-	/**
-	 * Raised when client appears disconnected from session.
-	 *
-	 * @eventProperty
-	 */
-	attendeeDisconnected: (attendee: Attendee) => void;
 }
 
 /**
