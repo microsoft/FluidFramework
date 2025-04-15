@@ -6,6 +6,8 @@
 parameters:
 - name: tagName
   type: string
+- name: version
+  type: string
 
 steps:
 # Assumes that the repo is already checked out
