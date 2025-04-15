@@ -2459,7 +2459,20 @@ export class ContainerRuntime
 		this.updateDocumentDirtyState(newState);
 	}
 
-	private async applyStashedOp(opContents: LocalContainerRuntimeMessage): Promise<unknown> {
+	/**
+	 * Parse an op's type and actual content from given serialized content
+	 * ! Note: this format needs to be in-line with what is set in the "ContainerRuntime.submit(...)" method
+	 */
+	private parseLocalOpContent(serializedContents?: string): LocalContainerRuntimeMessage {
+		assert(serializedContents !== undefined, 0x6d5 /* content must be defined */);
+		const message = JSON.parse(serializedContents) as LocalContainerRuntimeMessage;
+		assert(message.type !== undefined, 0x6d6 /* incorrect op content format */);
+		return message;
+	}
+
+	private async applyStashedOp(serializedOpContent: string): Promise<unknown> {
+		// Pending State contains serialized contents, so parse it here.
+		const opContents = this.parseLocalOpContent(serializedOpContent);
 		switch (opContents.type) {
 			case ContainerMessageType.FluidDataStoreOp:
 			case ContainerMessageType.Attach:

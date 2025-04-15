@@ -116,8 +116,8 @@ export function getLongStack<T>(action: () => T, length: number = 50): T {
 export function localBatchToOutboundBatch(localBatch: LocalBatch): OutboundBatch {
 	// Shallow copy each message as we switch types
 	const outboundMessages = localBatch.messages.map<OutboundBatchMessage>(
-		({ runtimeOp: serializedOp, ...message }) => ({
-			contents: serializeOp(serializedOp),
+		({ runtimeOp, ...message }) => ({
+			contents: serializeOp(runtimeOp),
 			...message,
 		}),
 	);

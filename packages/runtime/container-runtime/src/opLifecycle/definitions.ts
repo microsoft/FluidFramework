@@ -13,7 +13,6 @@ import type { LocalContainerRuntimeMessage } from "../messageTypes.js";
  */
 export interface LocalBatchMessage {
 	//* Comments throughout!
-	//* Rename
 	runtimeOp: LocalContainerRuntimeMessage;
 	metadata?: Record<string, unknown>;
 	localOpMetadata?: unknown;
