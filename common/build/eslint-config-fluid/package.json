@@ -59,5 +59,13 @@
 		"sort-json": "^2.0.1",
 		"typescript": "~5.1.6"
 	},
-	"packageManager": "pnpm@9.15.3+sha512.1f79bc245a66eb0b07c5d4d83131240774642caaa86ef7d0434ab47c0d16f66b04e21e0c086eb61e62c77efc4d7f7ec071afad3796af64892fae66509173893a"
+	"packageManager": "pnpm@9.15.3+sha512.1f79bc245a66eb0b07c5d4d83131240774642caaa86ef7d0434ab47c0d16f66b04e21e0c086eb61e62c77efc4d7f7ec071afad3796af64892fae66509173893a",
+	"pnpm": {
+		"commentsOverrides": [
+			"serialize-javascript - CVE-2024-11831 comes from mocha 10.4.0, which in turn comes from mocha-multi-reporters 1.5.1 (which has no updated version at this time)"
+		],
+		"overrides": {
+			"serialize-javascript": "^6.0.2"
+		}
+	}
 }
