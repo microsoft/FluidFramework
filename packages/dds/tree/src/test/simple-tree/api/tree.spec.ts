@@ -408,7 +408,7 @@ describe("simple-tree tree", () => {
 		// TODO: Identifier roots should be able to be defaulted, but currently throw a usage error.
 		it.skip("adds identifier to unpopulated root", () => {
 			const config = new TreeViewConfiguration({ schema: schema.identifier });
-			const view = getViewConfigured(config);
+			const view = getView(config);
 			view.initialize(undefined);
 			assert.equal(view.root, "beefbeef-beef-4000-8000-000000000001");
 		});
