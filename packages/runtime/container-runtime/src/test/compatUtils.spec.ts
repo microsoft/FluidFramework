@@ -15,7 +15,7 @@ import {
 } from "../compatUtils.js";
 import { enabledCompressionConfig } from "../compressionDefinitions.js";
 
-describe("compatUtils", () => {
+describe.only("compatUtils", () => {
 	describe("getConfigsForCompatMode", () => {
 		it("returns correct configs for compatibilityMode = defaultCompatibilityMode", () => {
 			const result = getConfigsForCompatMode(
@@ -36,38 +36,38 @@ describe("compatUtils", () => {
 			featureA: {
 				"0.5.0": "a1",
 				"2.0.0": "a2",
-				"5.0.0": "a3",
 				"8.0.0": "a4",
+				"5.0.0": "a3",
 			},
 			featureB: {
 				"0.0.1": "b1",
 				"3.0.0": "b2",
-				"6.0.0": "b3",
 				"9.0.0": "b4",
+				"6.0.0": "b3",
 			},
 			featureC: {
 				"1.0.0": "c1",
 				"4.0.0": "c2",
-				"7.0.0": "c3",
 				"10.0.0": "c4",
+				"7.0.0": "c3",
 			},
 			featureD: {
+				"5.5.0": "d3",
 				"0.1.0": "d1",
 				"2.5.0": "d2",
-				"5.5.0": "d3",
 				"8.5.0": "d4",
 			},
 			featureE: {
-				"0.9.0": "e1",
 				"3.5.0": "e2",
-				"6.5.0": "e3",
 				"9.5.0": "e4",
+				"6.5.0": "e3",
+				"0.9.0": "e1",
 			},
 			featureF: {
-				"1.5.0": "f1",
 				"4.5.0": "f2",
-				"7.5.0": "f3",
+				"1.5.0": "f1",
 				"10.5.0": "f4",
+				"7.5.0": "f3",
 			},
 		};
 
