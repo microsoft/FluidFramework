@@ -73,7 +73,7 @@ export type IContainerRuntimeOptionsVersionDependent = Required<
 /**
  * String in a valid semver format.
  */
-type SemanticVersion =
+export type SemanticVersion =
 	| `${number}.${number}.${number}`
 	| `${number}.${number}.${number}-${string}`;
 
@@ -131,6 +131,7 @@ const versionDependentOptionConfigMap: {
  */
 export function getConfigsForCompatMode(
 	compatibilityMode: Required<IContainerRuntimeOptionsInternal>["compatibilityMode"],
+	configMap = versionDependentOptionConfigMap,
 ): IContainerRuntimeOptionsVersionDependent {
 	// TODO: Remove this block after 3.0 is released.
 	// Note: we compare `compatibilityMode` with the exact string "pre-3.0-default" in case we modify `defaultCompatibilityMode` in the future,
@@ -141,9 +142,8 @@ export function getConfigsForCompatMode(
 
 	const defaultConfigs = {};
 	// Iterate over versionDependentOptionConfigMap to get default values for each version-dependent option.
-	for (const key of Object.keys(versionDependentOptionConfigMap)) {
-		const config =
-			versionDependentOptionConfigMap[key as keyof IContainerRuntimeOptionsVersionDependent];
+	for (const key of Object.keys(configMap)) {
+		const config = configMap[key as keyof IContainerRuntimeOptionsVersionDependent];
 		// For each conifg, we iterate over the keys and check if compatibilityMode is greater than or equal to the version.
 		// If so, we set it as the default value for the option. At the end of the loop we should have the most recent default
 		// value that is compatible with the version specified as the compatibilityMode.
