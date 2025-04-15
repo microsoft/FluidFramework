@@ -744,7 +744,7 @@ export class BlobManager {
 							this.tombstoneBlobs.has(pendingLocalId),
 							"local online BlobAttach op with no pending blob entry",
 						);
-						return;
+						continue;
 					}
 					this.setRedirection(pendingLocalId, blobId);
 					entry.acked = true;
