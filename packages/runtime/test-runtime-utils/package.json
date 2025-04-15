@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/test-runtime-utils",
-	"version": "2.32.0",
+	"version": "2.33.0",
 	"description": "Fluid runtime test utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
