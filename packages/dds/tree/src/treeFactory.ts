@@ -28,7 +28,7 @@ import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttribu
 /**
  * A channel factory that creates an {@link ITree}.
  */
-export class TreeFactory implements IChannelFactory<ISharedTree> {
+class TreeFactory implements IChannelFactory<ISharedTree> {
 	public static Type: string = SharedTreeFactoryType;
 	public readonly type: string = SharedTreeFactoryType;
 

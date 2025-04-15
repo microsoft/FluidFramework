@@ -120,7 +120,6 @@ import {
 	CheckoutFlexTreeView,
 	type ITreePrivate,
 	type ITreeCheckout,
-	SharedTree,
 	type SharedTreeContentSnapshot,
 	type TreeCheckout,
 	createTreeCheckout,
@@ -137,7 +136,6 @@ import {
 import type {
 	ForestOptions,
 	ISharedTree,
-	SharedTreeOptions,
 	SharedTreeOptionsInternal,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../shared-tree/sharedTree.js";
@@ -148,6 +146,7 @@ import {
 	toStoredSchema,
 	type TreeView,
 	type TreeBranchEvents,
+	type ITree,
 } from "../simple-tree/index.js";
 import {
 	Breakable,
@@ -166,7 +165,7 @@ import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 import type { Transactor } from "../shared-tree-core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { FieldChangeDelta } from "../feature-libraries/modular-schema/fieldChangeHandler.js";
-import { TreeFactory, configuredSharedTree } from "../treeFactory.js";
+import { configuredSharedTree } from "../treeFactory.js";
 import { JsonAsTree } from "../jsonDomainSchema.js";
 import {
 	MockContainerRuntimeFactoryWithOpBunching,
@@ -259,7 +258,7 @@ export class TestTreeProvider {
 	public static async create(
 		trees = 0,
 		summarizeType: SummarizeType = SummarizeType.disabled,
-		factory: IChannelFactory<ISharedTree> = DefaultTestSharedTreeKind.getFactory(),
+		factory: IChannelFactory<ITree> = DefaultTestSharedTreeKind.getFactory(),
 	): Promise<ITestTreeProvider> {
 		// The on-demand summarizer shares a container with the first tree, so at least one tree and container must be created right away.
 		assert(
@@ -430,7 +429,7 @@ export class TestTreeProviderLite {
 	 */
 	public constructor(
 		trees = 1,
-		private readonly factory = DefaultTestSharedTreeKind.getFactory(),
+		private readonly factory: IChannelFactory<ITree> = DefaultTestSharedTreeKind.getFactory(),
 		useDeterministicSessionIds = true,
 		private readonly flushMode: FlushMode = FlushMode.Immediate,
 	) {
@@ -584,7 +583,9 @@ export function assertDeltaEqual(a: DeltaRoot, b: DeltaRoot): void {
 /**
  * A test helper that allows custom code to be injected when a tree is created/loaded.
  */
-export class SharedTreeTestFactory extends TreeFactory {
+export class SharedTreeTestFactory implements IChannelFactory<ISharedTree> {
+	private readonly inner: IChannelFactory<ISharedTree>;
+
 	/**
 	 * @param onCreate - Called once for each created tree (not called for trees loaded from summaries).
 	 * @param onLoad - Called once for each tree that is loaded from a summary.
@@ -594,22 +595,32 @@ export class SharedTreeTestFactory extends TreeFactory {
 		protected readonly onLoad?: (tree: ISharedTree) => void,
 		options: SharedTreeOptionsInternal = {},
 	) {
-		super({ ...options, jsonValidator: typeboxValidator });
+		this.inner = configuredSharedTree({
+			...options,
+			jsonValidator: typeboxValidator,
+		}).getFactory() as IChannelFactory<ISharedTree>;
 	}
 
-	public override async load(
+	public get type(): string {
+		return this.inner.type;
+	}
+	public get attributes(): IChannelAttributes {
+		return this.inner.attributes;
+	}
+
+	public async load(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
 	): Promise<ISharedTree> {
-		const tree = await super.load(runtime, id, services, channelAttributes);
+		const tree = await this.inner.load(runtime, id, services, channelAttributes);
 		this.onLoad?.(tree);
 		return tree;
 	}
 
-	public override create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree {
-		const tree = super.create(runtime, id);
+	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree {
+		const tree = this.inner.create(runtime, id);
 		this.onCreate(tree);
 		return tree;
 	}
@@ -646,8 +657,8 @@ export function validateTreeConsistency(treeA: ITreePrivate, treeB: ITreePrivate
 }
 
 export function validateFuzzTreeConsistency(
-	treeA: Client<TreeFactory>,
-	treeB: Client<TreeFactory>,
+	treeA: Client<IChannelFactory<ISharedTree>>,
+	treeB: Client<IChannelFactory<ISharedTree>>,
 ): void {
 	validateSnapshotConsistency(
 		treeA.channel.contentSnapshot(),
@@ -1182,45 +1193,6 @@ export function mintRevisionTag(): RevisionTag {
 }
 
 export const testRevisionTagCodec = new RevisionTagCodec(testIdCompressor);
-
-// Session ids used for the created trees' IdCompressors must be deterministic.
-// TestTreeProviderLite does this by default.
-// Test trees which manually create their data store runtime must set up their trees'
-// session ids explicitly.
-// Note: trees which simulate attach scenarios using the mocks should finalize ids created
-// while detached. This is only relevant for attach scenarios as the mocks set up appropriate
-// finalization when messages are processed.
-const testSessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
-
-/**
- * Simple non-factory based wrapper around `new SharedTree` with test appropriate defaults.
- *
- * See TestTreeProvider, TestTreeProviderLite and TreeFactory for other ways to build trees.
- *
- * If what is needed is a view, see options to create one without making a SharedTree instance.
- */
-export function treeTestFactory(
-	options: {
-		id?: string;
-		runtime?: IFluidDataStoreRuntime;
-		attributes?: IChannelAttributes;
-		options?: SharedTreeOptions;
-		telemetryContextPrefix?: string;
-	} = {},
-): ISharedTree {
-	return new SharedTree(
-		options.id ?? "tree",
-		options.runtime ??
-			new MockFluidDataStoreRuntime({
-				idCompressor: createIdCompressor(testSessionId),
-				clientId: "test-client",
-				id: "test",
-			}),
-		options.attributes ?? new TreeFactory({}).attributes,
-		options.options ?? { jsonValidator: typeboxValidator },
-		options.telemetryContextPrefix,
-	);
-}
 
 /**
  * Given the TreeViewConfiguration, returns an uninitialized view.
