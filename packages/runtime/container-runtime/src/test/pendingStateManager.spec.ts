@@ -19,7 +19,7 @@ import Deque from "double-ended-queue";
 import type { InboundSequencedContainerRuntimeMessage } from "../messageTypes.js";
 import {
 	BatchManager,
-	BatchMessage,
+	LocalBatchMessage,
 	type InboundMessageResult,
 } from "../opLifecycle/index.js";
 import {
@@ -45,15 +45,15 @@ describe("Pending State Manager", () => {
 
 	describe("Rollback", () => {
 		let rollbackCalled: boolean;
-		let rollbackContent: BatchMessage[];
+		let rollbackContent: LocalBatchMessage[];
 		let rollbackShouldThrow: boolean;
 		let batchManager: BatchManager;
 
 		function getMessage(payload: string) {
-			return { contents: payload } as unknown as BatchMessage;
+			return { serializedOp: payload } as unknown as LocalBatchMessage;
 		}
 
-		const rollBackCallback = (m: BatchMessage) => {
+		const rollBackCallback = (m: LocalBatchMessage) => {
 			rollbackCalled = true;
 			rollbackContent.push(m);
 			if (rollbackShouldThrow) {
@@ -66,7 +66,7 @@ describe("Pending State Manager", () => {
 			rollbackContent = [];
 			rollbackShouldThrow = false;
 
-			batchManager = new BatchManager({ hardLimit: 950 * 1024, canRebase: true });
+			batchManager = new BatchManager({ canRebase: true });
 		});
 
 		it("should do nothing when rolling back empty pending stack", () => {
@@ -95,9 +95,9 @@ describe("Pending State Manager", () => {
 
 			assert.strictEqual(rollbackCalled, true);
 			assert.strictEqual(rollbackContent.length, 3);
-			assert.strictEqual(rollbackContent[0].contents, "33");
-			assert.strictEqual(rollbackContent[1].contents, "22");
-			assert.strictEqual(rollbackContent[2].contents, "11");
+			assert.strictEqual(rollbackContent[0].serializedOp, "33");
+			assert.strictEqual(rollbackContent[1].serializedOp, "22");
+			assert.strictEqual(rollbackContent[2].serializedOp, "11");
 			assert.strictEqual(batchManager.empty, true);
 		});
 
@@ -110,8 +110,8 @@ describe("Pending State Manager", () => {
 
 			assert.strictEqual(rollbackCalled, true);
 			assert.strictEqual(rollbackContent.length, 2);
-			assert.strictEqual(rollbackContent[0].contents, "33");
-			assert.strictEqual(rollbackContent[1].contents, "22");
+			assert.strictEqual(rollbackContent[0].serializedOp, "33");
+			assert.strictEqual(rollbackContent[1].serializedOp, "22");
 			assert.strictEqual(batchManager.empty, false);
 		});
 
@@ -154,8 +154,8 @@ describe("Pending State Manager", () => {
 			localOpMetadata?: unknown,
 		) => {
 			pendingStateManager.onFlushBatch(
-				messages.map<BatchMessage>((message) => ({
-					contents: JSON.stringify({ type: message.type, contents: message.contents }),
+				messages.map<LocalBatchMessage>((message) => ({
+					serializedOp: JSON.stringify({ type: message.type, contents: message.contents }),
 					referenceSequenceNumber: message.referenceSequenceNumber!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
 					metadata: message.metadata as Record<string, unknown> | undefined,
 					localOpMetadata,
@@ -446,7 +446,7 @@ describe("Pending State Manager", () => {
 				pendingStateManager.onFlushBatch(
 					[
 						{
-							contents: JSON.stringify({ contents: message.contents, type: message.type }),
+							serializedOp: JSON.stringify({ contents: message.contents, type: message.type }),
 							referenceSequenceNumber: 0,
 						},
 					],
@@ -490,7 +490,7 @@ describe("Pending State Manager", () => {
 				pendingStateManager.onFlushBatch(
 					[
 						{
-							contents: JSON.stringify({
+							serializedOp: JSON.stringify({
 								type: message.type,
 								contents: message.contents,
 								somethingElse: 123, // Unexpected key
@@ -552,6 +552,7 @@ describe("Pending State Manager", () => {
 			});
 
 			it("findFirstCharacterMismatched", () => {
+				const nonAsciiChar = String.fromCodePoint(0x80);
 				const testCases = [
 					{ input: ["", ""], expected: [-1] },
 					{ input: ["", "b"], expected: [0, undefined, "b"] },
@@ -560,6 +561,7 @@ describe("Pending State Manager", () => {
 					{ input: ["xyz", "xy"], expected: [2, "z", undefined] },
 					{ input: ["xy", "xxx"], expected: [1, "y", "x"] },
 					{ input: ["xyz", "xyz"], expected: [-1] },
+					{ input: ["QQ", `Q${nonAsciiChar}`], expected: [1, "Q", "[non-ASCII]"] },
 				];
 				for (const {
 					input: [a, b],
@@ -704,8 +706,8 @@ describe("Pending State Manager", () => {
 				},
 			];
 			pendingStateManager.onFlushBatch(
-				messages.map<BatchMessage>((message) => ({
-					contents: JSON.stringify({ type: message.type, contents: message.contents }),
+				messages.map<LocalBatchMessage>((message) => ({
+					serializedOp: JSON.stringify({ type: message.type, contents: message.contents }),
 					referenceSequenceNumber: message.referenceSequenceNumber,
 				})),
 				0,
@@ -721,7 +723,7 @@ describe("Pending State Manager", () => {
 			pendingStateManager.onFlushBatch(
 				[
 					{
-						contents: JSON.stringify({ type: "groupedBatch", contents: [] }),
+						serializedOp: JSON.stringify({ type: "groupedBatch", contents: [] }),
 						referenceSequenceNumber: 0,
 						metadata: { emptyBatch: true, batchId: "batchId" },
 					},
@@ -851,7 +853,7 @@ describe("Pending State Manager", () => {
 				pendingStateManager.onFlushBatch(
 					[
 						{
-							contents: message.content,
+							serializedOp: message.content,
 							referenceSequenceNumber: message.referenceSequenceNumber,
 						},
 					],
@@ -891,7 +893,7 @@ describe("Pending State Manager", () => {
 				pendingStateManager.onFlushBatch(
 					[
 						{
-							contents: message.content,
+							serializedOp: message.content,
 							referenceSequenceNumber: message.referenceSequenceNumber,
 						},
 					],
@@ -995,7 +997,7 @@ describe("Pending State Manager", () => {
 				pendingStateManager.onFlushBatch(
 					[
 						{
-							contents: message.content,
+							serializedOp: message.content,
 							referenceSequenceNumber: message.referenceSequenceNumber,
 						},
 					],

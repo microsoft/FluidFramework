@@ -3,14 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { TypedEventEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
 import { AttachState, IAudience } from "@fluidframework/container-definitions";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	IDisposable,
-	IRequest,
-	IResponse,
 	ITelemetryBaseProperties,
 	type IEvent,
 } from "@fluidframework/core-interfaces";
@@ -77,6 +75,10 @@ import {
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 
+import {
+	runtimeCompatDetailsForDataStore,
+	validateDatastoreCompatibility,
+} from "./runtimeLayerCompatState.js";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	ReadFluidDataStoreAttributes,
@@ -276,6 +278,14 @@ export abstract class FluidDataStoreContext
 
 	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined {
 		return this.registry;
+	}
+
+	/**
+	 * The compatibility details of the Runtime layer that is exposed to the DataStore layer
+	 * for validating DataStore-Runtime compatibility.
+	 */
+	public get ILayerCompatDetails(): ILayerCompatDetails {
+		return runtimeCompatDetailsForDataStore;
 	}
 
 	private baseSnapshotSequenceNumber: number | undefined;
@@ -573,6 +583,7 @@ export abstract class FluidDataStoreContext
 
 		const channel = await factory.instantiateDataStore(this, existing);
 		assert(channel !== undefined, 0x140 /* "undefined channel on datastore context" */);
+
 		await this.bindRuntime(channel, existing);
 		// This data store may have been disposed before the channel is created during realization. If so,
 		// dispose the channel now.
@@ -783,15 +794,6 @@ export abstract class FluidDataStoreContext
 		this.parentContext.addedGCOutboundRoute(fromPath, toPath, messageTimestampMs);
 	}
 
-	// eslint-disable-next-line jsdoc/require-description
-	/**
-	 * @deprecated 0.18.Should call request on the runtime directly
-	 */
-	public async request(request: IRequest): Promise<IResponse> {
-		const runtime = await this.realize();
-		return runtime.request(request);
-	}
-
 	public submitMessage(type: string, content: unknown, localOpMetadata: unknown): void {
 		this.verifyNotClosed("submitMessage");
 		assert(!!this.channel, 0x146 /* "Channel must exist when submitting message" */);
@@ -860,6 +862,13 @@ export abstract class FluidDataStoreContext
 	}
 
 	protected completeBindingRuntime(channel: IFluidDataStoreChannel): void {
+		// Validate that the DataStore is compatible with this Runtime.
+		const maybeDataStoreCompatDetails = channel as FluidObject<ILayerCompatDetails>;
+		validateDatastoreCompatibility(
+			maybeDataStoreCompatDetails.ILayerCompatDetails,
+			this.dispose.bind(this),
+		);
+
 		// And now mark the runtime active
 		this.loaded = true;
 		this.channel = channel;
@@ -1005,6 +1014,7 @@ export abstract class FluidDataStoreContext
 				callSite,
 				undefined /* sequencedMessage */,
 				safeTelemetryProps,
+				30 /* stackTraceLimit */,
 			);
 
 			this.mc.logger.sendTelemetryEvent(

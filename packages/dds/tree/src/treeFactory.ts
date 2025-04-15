@@ -17,35 +17,18 @@ import {
 
 import {
 	SharedTree as SharedTreeImpl,
+	type ISharedTree,
 	type SharedTreeOptions,
 	type SharedTreeOptionsInternal,
 } from "./shared-tree/index.js";
 import type { ITree } from "./simple-tree/index.js";
 
-import { pkgVersion } from "./packageVersion.js";
-
-/**
- * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
- * @alpha
- * @legacy
- */
-export const SharedTreeFactoryType = "https://graph.microsoft.com/types/tree";
-
-/**
- * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
- * @alpha
- * @legacy
- */
-export const SharedTreeAttributes: IChannelAttributes = {
-	type: SharedTreeFactoryType,
-	snapshotFormatVersion: "0.0.0",
-	packageVersion: pkgVersion,
-};
+import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
 
 /**
  * A channel factory that creates an {@link ITree}.
  */
-export class TreeFactory implements IChannelFactory<ITree> {
+export class TreeFactory implements IChannelFactory<ISharedTree> {
 	public static Type: string = SharedTreeFactoryType;
 	public readonly type: string = SharedTreeFactoryType;
 
@@ -58,13 +41,13 @@ export class TreeFactory implements IChannelFactory<ITree> {
 		id: string,
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
-	): Promise<SharedTreeImpl> {
+	): Promise<ISharedTree> {
 		const tree = new SharedTreeImpl(id, runtime, channelAttributes, this.options);
 		await tree.load(services);
 		return tree;
 	}
 
-	public create(runtime: IFluidDataStoreRuntime, id: string): SharedTreeImpl {
+	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree {
 		const tree = new SharedTreeImpl(id, runtime, this.attributes, this.options);
 		tree.initializeLocal();
 		return tree;

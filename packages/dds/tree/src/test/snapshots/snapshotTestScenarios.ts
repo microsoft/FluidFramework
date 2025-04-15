@@ -4,8 +4,6 @@
  */
 
 import { strict as assert } from "node:assert";
-import type { SessionId } from "@fluidframework/id-compressor";
-import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { typeboxValidator } from "../../external-utilities/index.js";
@@ -15,19 +13,9 @@ import {
 	type SharedTreeOptions,
 	Tree,
 } from "../../shared-tree/index.js";
-import { TestTreeProviderLite, treeTestFactory } from "../utils.js";
+import { createSnapshotCompressor, TestTreeProviderLite, treeTestFactory } from "../utils.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";
-
-// Session ids used for the created trees' IdCompressors must be deterministic.
-// TestTreeProviderLite does this by default.
-// Test trees which manually create their data store runtime must set up their trees'
-// session ids explicitly.
-export const snapshotSessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
-
-export function createSnapshotCompressor() {
-	return createAlwaysFinalizedIdCompressor(snapshotSessionId);
-}
 
 const enableSchemaValidation = true;
 
@@ -61,7 +49,7 @@ export function generateTestTrees(options: SharedTreeOptions) {
 				);
 				view.initialize({});
 
-				provider.processMessages();
+				provider.synchronizeMessages();
 
 				await takeSnapshot(provider.trees[0], "final");
 			},
@@ -86,7 +74,7 @@ export function generateTestTrees(options: SharedTreeOptions) {
 				);
 				view.initialize(new NodeSchema({ foo: ["a", "b", "c"], bar: ["d", "e", "f"] }));
 				view.root.bar.moveRangeToIndex(1, 1, 3, view.root.foo);
-				provider.processMessages();
+				provider.synchronizeMessages();
 				await takeSnapshot(provider.trees[0], "tree-0-final");
 			},
 		},
@@ -103,17 +91,17 @@ export function generateTestTrees(options: SharedTreeOptions) {
 					}),
 				);
 				view.initialize([]);
-				provider.processMessages();
+				provider.synchronizeMessages();
 
 				// Insert node
 				view.root.insertAtStart("42");
-				provider.processMessages();
+				provider.synchronizeMessages();
 
 				await takeSnapshot(provider.trees[0], "tree-0-after-insert");
 
 				// Remove node
 				view.root.removeRange(0, 1);
-				provider.processMessages();
+				provider.synchronizeMessages();
 
 				await takeSnapshot(provider.trees[0], "tree-0-final");
 				await takeSnapshot(provider.trees[1], "tree-1-final");
@@ -139,7 +127,7 @@ export function generateTestTrees(options: SharedTreeOptions) {
 				);
 				view1.initialize(undefined);
 				view1.root = new MapNode([]);
-				provider.processMessages();
+				provider.synchronizeMessages();
 
 				const tree2 = provider.trees[1];
 				const view2 = tree2.viewWith(
@@ -160,7 +148,7 @@ export function generateTestTrees(options: SharedTreeOptions) {
 
 				view1.root?.set("root 3 child", 44);
 
-				provider.processMessages();
+				provider.synchronizeMessages();
 
 				// EditManager snapshot should involve information about rebasing tree1's edits (a transaction with root & child changes)
 				// over tree2's edits (a root change and a child change outside of the transaction).
@@ -180,7 +168,7 @@ export function generateTestTrees(options: SharedTreeOptions) {
 						}),
 					);
 					view1.initialize([0, 1, 2, 3]);
-					provider.processMessages();
+					provider.synchronizeMessages();
 					const view2 = provider.trees[1].viewWith(
 						new TreeViewConfiguration({
 							schema: [sf.array(sf.number)],
@@ -193,11 +181,11 @@ export function generateTestTrees(options: SharedTreeOptions) {
 							enableSchemaValidation,
 						}),
 					);
-					provider.processMessages();
+					provider.synchronizeMessages();
 					view1.root.removeAt(index);
 					view2.root.removeAt(index);
 					view3.root.removeAt(index);
-					provider.processMessages();
+					provider.synchronizeMessages();
 					await takeSnapshot(provider.trees[0], `index-${index}`);
 				}
 			},
@@ -215,7 +203,7 @@ export function generateTestTrees(options: SharedTreeOptions) {
 					}),
 				);
 				view1.initialize([]);
-				provider.processMessages();
+				provider.synchronizeMessages();
 
 				const branch1 = getBranch(tree1);
 				const tree2 = branch1.branch();
@@ -230,7 +218,7 @@ export function generateTestTrees(options: SharedTreeOptions) {
 				tree2.rebaseOnto(branch1);
 				branch1.merge(tree2, false);
 
-				provider.processMessages();
+				provider.synchronizeMessages();
 				await takeSnapshot(tree1, "tree2");
 
 				assert.deepEqual(view1.root, ["x", "y", "a", "b", "c"]);
@@ -244,7 +232,7 @@ export function generateTestTrees(options: SharedTreeOptions) {
 				tree3.rebaseOnto(branch1);
 				branch1.merge(tree3);
 
-				provider.processMessages();
+				provider.synchronizeMessages();
 				await takeSnapshot(tree1, "tree3");
 			},
 		},
@@ -298,7 +286,7 @@ export function generateTestTrees(options: SharedTreeOptions) {
 					}
 
 					view.initialize(generateTreeRecursively(mapKeys, startingHeight, { value: 1 }));
-					provider.processMessages();
+					provider.synchronizeMessages();
 					return tree;
 				}
 
@@ -321,10 +309,10 @@ export function generateTestTrees(options: SharedTreeOptions) {
 					}),
 				);
 				view.initialize({ handleField: undefined });
-				provider.processMessages();
+				provider.synchronizeMessages();
 
 				view.root.handleField = tree.handle;
-				provider.processMessages();
+				provider.synchronizeMessages();
 
 				await takeSnapshot(tree, "final");
 			},
@@ -347,7 +335,7 @@ export function generateTestTrees(options: SharedTreeOptions) {
 					}),
 				);
 				view.initialize(new Array([]));
-				provider.processMessages();
+				provider.synchronizeMessages();
 
 				// We must make this shallow change to the sequence field as part of the same transaction as the
 				// nested change. Otherwise, the nested change will be represented using the generic field kind.
@@ -360,7 +348,7 @@ export function generateTestTrees(options: SharedTreeOptions) {
 					innerArray.push(new SequenceMap([]));
 				});
 
-				provider.processMessages();
+				provider.synchronizeMessages();
 				await takeSnapshot(tree, "final");
 			},
 		},
@@ -377,7 +365,7 @@ export function generateTestTrees(options: SharedTreeOptions) {
 					}),
 				);
 				view.initialize(undefined);
-				provider.processMessages();
+				provider.synchronizeMessages();
 				await takeSnapshot(tree, "final");
 			},
 		},

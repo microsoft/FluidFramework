@@ -15,13 +15,14 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { typeboxValidator } from "../../external-utilities/index.js";
-import { type ISharedTree, SharedTree } from "../../shared-tree/index.js";
+import type { ISharedTree } from "../../shared-tree/index.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
 	type TreeView,
 } from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";
+import { DefaultTestSharedTreeKind } from "../utils.js";
 
 const builder = new SchemaFactory("test");
 class Bar extends builder.object("bar", {
@@ -40,14 +41,13 @@ function createConnectedTree(
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
 		idCompressor: createIdCompressor(),
 	});
-	const tree = new SharedTree(id, dataStoreRuntime, new TreeFactory({}).attributes, {});
+	const tree = DefaultTestSharedTreeKind.getFactory().create(dataStoreRuntime, id);
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(undefined),
 	};
 	tree.connect(services);
-	tree.initializeLocal();
 	return tree;
 }
 

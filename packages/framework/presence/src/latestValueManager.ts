@@ -13,15 +13,14 @@ import { shallowCloneObject } from "@fluidframework/core-utils/internal";
 
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
+import type { InternalTypes } from "./exposedInternalTypes.js";
+import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
 import type { LatestValueClientData, LatestValueData } from "./latestValueTypes.js";
 import type { ISessionClient } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
-
-import type { InternalTypes } from "@fluidframework/presence/internal/exposedInternalTypes";
-import type { InternalUtilityTypes } from "@fluidframework/presence/internal/exposedUtilityTypes";
 
 /**
  * @sealed

@@ -3,69 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { getOrCreate } from "../../util/index.js";
-import type { TreeNodeSchema } from "../core/index.js";
 import type { ImplicitFieldSchema } from "../schemaTypes.js";
-import type { SimpleTreeSchema } from "./simpleSchema.js";
+import type { SimpleTreeSchema } from "../simpleSchema.js";
 import { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
 
 /**
- * Cache in which the results of {@link getSimpleSchema} saved.
- */
-const simpleSchemaCache = new WeakMap<TreeNodeSchema, SimpleTreeSchema>();
-
-/**
- * Creates a simplified representation of the provided {@link TreeNodeSchema}.
+ * Copies data from {@link ImplicitFieldSchema} to create  a {@link SimpleTreeSchema} out of new plain JavaScript objects, Sets and Maps.
  *
- * @remarks Caches the result on the input schema for future calls.
+ * @remarks
+ * See also {@link TreeViewConfigurationAlpha} which implements {@link SimpleTreeSchema} as a way to get a `SimpleTreeSchema` without copying the node and field schema and without losing as much type information.
  *
- * @example
- *
- * A Shared Tree schema like the following:
- *
- * ```typescript
- * class MyObject extends schemaFactory.object("MyObject", {
- * 	foo: schemaFactory.number,
- * 	bar: schemaFactory.optional(schemaFactory.string),
- * });
- * ```
- *
- * Will yield JSON Schema like the following:
- *
- * ```typescript
- * {
- * 	definitions: [
- * 		["com.fluidframework.leaf.number", {
- * 			kind: "leaf",
- * 			type: "number",
- * 		}],
- * 		["com.fluidframework.leaf.string", {
- * 			kind: "leaf",
- * 			type: "string",
- * 		}],
- * 		["com.myapp.MyObject", {
- * 			kind: "object",
- * 			fields: {
- * 				foo: {
- * 					kind: "required",
- * 					allowedTypes: ["com.fluidframework.leaf.number"]
- * 				},
- * 				bar: {
- * 					kind: "optional",
- * 					allowedTypes: ["com.fluidframework.leaf.string"]
- * 				},
- * 			},
- * 		}],
- * 	],
- * 	allowedTypes: ["com.myapp.MyObject"],
- * }
- * ```
- *
- * @privateRemarks In the future, we may wish to move this to a more discoverable API location.
+ * @privateRemarks
+ * In the future, we may wish to move this to a more discoverable API location.
  * For now, while still an experimental API, it is surfaced as a free function.
  *
- * @internal
+ * Note that all TreeNodeSchema get a {@link Context} cached on them as part of one time initialization which contains a map from identifier to all transitively referenced schema.
+ * Perhaps exposing access to that would cover this use-case as well.
+ *
+ * @alpha
  */
 export function getSimpleSchema(schema: ImplicitFieldSchema): SimpleTreeSchema {
-	return getOrCreate(simpleSchemaCache, schema, () => toSimpleTreeSchema(schema));
+	return toSimpleTreeSchema(schema, true);
 }

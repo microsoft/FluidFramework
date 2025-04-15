@@ -4,10 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-// Include this unused import to avoid TypeScript generating an inline import for IFluidHandle in the d.ts file
-// which degrades the API-Extractor report quality since API-Extractor can not tell the inline import is the same as the non-inline one.
-// eslint-disable-next-line unused-imports/no-unused-imports
-import type { IFluidHandle as _dummyImport } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import type { TreeValue } from "../../core/index.js";
@@ -27,6 +24,7 @@ import {
 	nullSchema,
 	numberSchema,
 	stringSchema,
+	type LeafSchema,
 } from "../leafNodeSchema.js";
 import {
 	FieldKind,
@@ -40,6 +38,7 @@ import {
 	getDefaultProvider,
 	type NodeSchemaOptions,
 	markSchemaMostDerived,
+	type FieldSchemaAlpha,
 } from "../schemaTypes.js";
 import type {
 	NodeKind,
@@ -71,7 +70,9 @@ import type {
 	TreeArrayNodeUnsafe,
 	TreeMapNodeUnsafe,
 	TreeObjectNodeUnsafe,
-	Unenforced,
+	ImplicitAllowedTypesUnsafe,
+	ImplicitFieldSchemaUnsafe,
+	FieldSchemaAlphaUnsafe,
 } from "./typesUnsafe.js";
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
 import { isLazy } from "../flexList.js";
@@ -175,7 +176,7 @@ export type ScopedSchemaName<
  * As a workaround, we have this type as a third place which can be linked.
  * @system @sealed @public
  */
-export const schemaStatics = {
+export interface SchemaStatics {
 	/**
 	 * {@link TreeNodeSchema} for holding a JavaScript `string`.
 	 *
@@ -189,7 +190,7 @@ export const schemaStatics = {
 	 * We should be much more clear about what happens if you use problematic values.
 	 * We should validate and/or normalize them when inserting content.
 	 */
-	string: stringSchema,
+	readonly string: LeafSchema<"string", string>;
 
 	/**
 	 * {@link TreeNodeSchema} for holding a JavaScript `number`.
@@ -205,12 +206,12 @@ export const schemaStatics = {
 	 * We should be much more clear about what happens if you use problematic values.
 	 * We should validate and/or normalize them when inserting content.
 	 */
-	number: numberSchema,
+	readonly number: LeafSchema<"number", number>;
 
 	/**
 	 * {@link TreeNodeSchema} for holding a boolean.
 	 */
-	boolean: booleanSchema,
+	readonly boolean: LeafSchema<"boolean", boolean>;
 
 	/**
 	 * {@link TreeNodeSchema} for JavaScript `null`.
@@ -220,17 +221,24 @@ export const schemaStatics = {
 	 * This {@link TreeNodeSchema} node provides the option to include nulls in trees when desired.
 	 * Unless directly inter-operating with existing data using null, consider other approaches, like wrapping the value in an optional field, or using a more specifically named empty object node.
 	 */
-	null: nullSchema,
+	// eslint-disable-next-line @rushstack/no-new-null
+	readonly null: LeafSchema<"null", null>;
 
 	/**
 	 * {@link TreeNodeSchema} for holding an {@link @fluidframework/core-interfaces#(IFluidHandle:interface)}.
 	 */
-	handle: handleSchema,
+	readonly handle: LeafSchema<"handle", IFluidHandle>;
 
 	/**
 	 * {@link AllowedTypes} for holding any of the leaf types.
 	 */
-	leaves: [stringSchema, numberSchema, booleanSchema, nullSchema, handleSchema],
+	readonly leaves: readonly [
+		SchemaStatics["string"],
+		SchemaStatics["number"],
+		SchemaStatics["boolean"],
+		SchemaStatics["null"],
+		SchemaStatics["handle"],
+	];
 
 	/**
 	 * Make a field optional instead of the default, which is required.
@@ -241,18 +249,10 @@ export const schemaStatics = {
 	 * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
 	 * See {@link FieldSchemaMetadata.custom}.
 	 */
-	optional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
+	readonly optional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		t: T,
 		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
-	): FieldSchema<FieldKind.Optional, T, TCustomMetadata> => {
-		const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => {
-			return undefined;
-		});
-		return createFieldSchema(FieldKind.Optional, t, {
-			defaultProvider: defaultOptionalProvider,
-			...props,
-		});
-	},
+	) => FieldSchema<FieldKind.Optional, T, TCustomMetadata>;
 
 	/**
 	 * Make a field explicitly required.
@@ -267,41 +267,114 @@ export const schemaStatics = {
 	 * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
 	 * See {@link FieldSchemaMetadata.custom}.
 	 */
+	readonly required: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
+		t: T,
+		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	) => FieldSchema<FieldKind.Required, T, TCustomMetadata>;
+
+	/**
+	 * {@link SchemaStatics.optional} except tweaked to work better for recursive types.
+	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
+	 * @remarks
+	 * This version of {@link SchemaStatics.optional} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
+	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
+	 */
+	readonly optionalRecursive: <
+		const T extends ImplicitAllowedTypesUnsafe,
+		const TCustomMetadata = unknown,
+	>(
+		t: T,
+		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	) => FieldSchemaUnsafe<FieldKind.Optional, T, TCustomMetadata>;
+
+	/**
+	 * {@link SchemaStatics.required} except tweaked to work better for recursive types.
+	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
+	 * @remarks
+	 * This version of {@link SchemaStatics.required} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
+	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
+	 */
+	readonly requiredRecursive: <
+		const T extends ImplicitAllowedTypesUnsafe,
+		const TCustomMetadata = unknown,
+	>(
+		t: T,
+		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	) => FieldSchemaUnsafe<FieldKind.Required, T, TCustomMetadata>;
+}
+
+const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => {
+	return undefined;
+});
+
+/**
+ * Implementation of {@link SchemaStatics}.
+ * @remarks
+ * Entries can use more specific types than {@link SchemaStatics} requires to be more useful for non-public consumers.
+ * Additional non-public members are in {@link schemaStatics}.
+ */
+export const schemaStaticsBase = {
+	string: stringSchema,
+	number: numberSchema,
+	boolean: booleanSchema,
+	null: nullSchema,
+	handle: handleSchema,
+	leaves: [stringSchema, numberSchema, booleanSchema, nullSchema, handleSchema],
+
+	optional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
+		t: T,
+		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	): FieldSchemaAlpha<FieldKind.Optional, T, TCustomMetadata> => {
+		return createFieldSchema(FieldKind.Optional, t, {
+			defaultProvider: defaultOptionalProvider,
+			...props,
+		});
+	},
+
 	required: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		t: T,
 		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
-	): FieldSchema<FieldKind.Required, T, TCustomMetadata> => {
+	): FieldSchemaAlpha<FieldKind.Required, T, TCustomMetadata> => {
 		return createFieldSchema(FieldKind.Required, t, props);
 	},
 
-	/**
-	 * {@link schemaStatics.optional} except tweaked to work better for recursive types.
-	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
-	 * @remarks
-	 * This version of {@link schemaStatics.optional} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
-	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
-	 */
-	optionalRecursive: <const T extends Unenforced<ImplicitAllowedTypes>>(
+	optionalRecursive: <
+		const T extends ImplicitAllowedTypesUnsafe,
+		const TCustomMetadata = unknown,
+	>(
 		t: T,
-		props?: Omit<FieldProps, "defaultProvider">,
-	): FieldSchemaUnsafe<FieldKind.Optional, T> => {
-		return createFieldSchemaUnsafe(FieldKind.Optional, t, props);
+		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	): FieldSchemaAlphaUnsafe<FieldKind.Optional, T, TCustomMetadata> => {
+		return createFieldSchemaUnsafe(FieldKind.Optional, t, {
+			defaultProvider: defaultOptionalProvider,
+			...props,
+		});
 	},
 
-	/**
-	 * {@link schemaStatics.required} except tweaked to work better for recursive types.
-	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
-	 * @remarks
-	 * This version of {@link schemaStatics.required} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
-	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
-	 */
-	requiredRecursive: <const T extends Unenforced<ImplicitAllowedTypes>>(
+	requiredRecursive: <
+		const T extends ImplicitAllowedTypesUnsafe,
+		const TCustomMetadata = unknown,
+	>(
 		t: T,
-		props?: Omit<FieldProps, "defaultProvider">,
-	): FieldSchemaUnsafe<FieldKind.Required, T> => {
+		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	): FieldSchemaAlphaUnsafe<FieldKind.Required, T, TCustomMetadata> => {
 		return createFieldSchemaUnsafe(FieldKind.Required, t, props);
 	},
+} as const satisfies SchemaStatics;
+
+/**
+ * Unstable extensions to {@link schemaStaticsBase}.
+ */
+export const schemaStatics = {
+	...schemaStaticsBase,
+	identifier: <const TCustomMetadata = unknown>(
+		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	): FieldSchemaAlpha<FieldKind.Identifier, typeof stringSchema, TCustomMetadata> => {
+		return createFieldSchema(FieldKind.Identifier, stringSchema, props);
+	},
 } as const;
+
+const schemaStaticsPublic: SchemaStatics = schemaStatics;
 
 // TODO:
 // SchemaFactory.array references should link to the correct overloads, however the syntax for this does not seems to work currently for methods unless the they are not qualified with the class.
@@ -383,7 +456,8 @@ export const schemaStatics = {
  *
  * 8. IntelliSense: Shows internal type generation logic: `object & TreeNode & ObjectFromSchemaRecord<{}> & WithType<"test.x">`.
  *
- * 9. Recursion: Unsupported: Generated `.d.ts` files replace recursive references with `any`, breaking the use of recursive schema across compilation boundaries.
+ * 9. Recursion: Unsupported: [Generated `.d.ts` files replace recursive references with `any`](https://github.com/microsoft/TypeScript/issues/55832),
+ * breaking the use of recursive schema across compilation boundaries.
  *
  * Note that while "POJO Emulation" nodes act a lot like POJO objects, they are not true POJO objects:
  *
@@ -413,7 +487,8 @@ export const schemaStatics = {
 export class SchemaFactory<
 	out TScope extends string | undefined = string | undefined,
 	TName extends number | string = string,
-> {
+> implements SchemaStatics
+{
 	/**
 	 * TODO:
 	 * If users of this generate the same name because two different schema with the same identifier were used,
@@ -471,64 +546,64 @@ export class SchemaFactory<
 	}
 
 	/**
-	 * {@inheritDoc schemaStatics.string}
+	 * {@inheritDoc SchemaStatics.string}
 	 */
-	public readonly string = stringSchema;
+	public readonly string = schemaStaticsPublic.string;
 
 	/**
-	 * {@inheritDoc schemaStatics.number}
+	 * {@inheritDoc SchemaStatics.number}
 	 */
-	public readonly number = numberSchema;
+	public readonly number = schemaStaticsPublic.number;
 
 	/**
-	 * {@inheritDoc schemaStatics.boolean}
+	 * {@inheritDoc SchemaStatics.boolean}
 	 */
-	public readonly boolean = booleanSchema;
+	public readonly boolean = schemaStaticsPublic.boolean;
 
 	/**
-	 * {@inheritDoc schemaStatics.null}
+	 * {@inheritDoc SchemaStatics.null}
 	 */
-	public readonly null = nullSchema;
+	public readonly null = schemaStaticsPublic.null;
 
 	/**
-	 * {@inheritDoc schemaStatics.handle}
+	 * {@inheritDoc SchemaStatics.handle}
 	 */
-	public readonly handle = handleSchema;
+	public readonly handle = schemaStaticsPublic.handle;
 
 	/**
-	 * {@inheritDoc schemaStatics.leaves}
+	 * {@inheritDoc SchemaStatics.leaves}
 	 */
-	public readonly leaves = schemaStatics.leaves;
+	public readonly leaves = schemaStaticsPublic.leaves;
 
 	/**
-	 * {@inheritDoc schemaStatics.string}
+	 * {@inheritDoc SchemaStatics.string}
 	 */
-	public static readonly string = stringSchema;
+	public static readonly string = schemaStaticsPublic.string;
 
 	/**
-	 * {@inheritDoc schemaStatics.number}
+	 * {@inheritDoc SchemaStatics.number}
 	 */
-	public static readonly number = numberSchema;
+	public static readonly number = schemaStaticsPublic.number;
 
 	/**
-	 * {@inheritDoc schemaStatics.boolean}
+	 * {@inheritDoc SchemaStatics.boolean}
 	 */
-	public static readonly boolean = booleanSchema;
+	public static readonly boolean = schemaStaticsPublic.boolean;
 
 	/**
-	 * {@inheritDoc schemaStatics.null}
+	 * {@inheritDoc SchemaStatics.null}
 	 */
-	public static readonly null = nullSchema;
+	public static readonly null = schemaStaticsPublic.null;
 
 	/**
-	 * {@inheritDoc schemaStatics.handle}
+	 * {@inheritDoc SchemaStatics.handle}
 	 */
-	public static readonly handle = handleSchema;
+	public static readonly handle = schemaStaticsPublic.handle;
 
 	/**
-	 * {@inheritDoc schemaStatics.leaves}
+	 * {@inheritDoc SchemaStatics.leaves}
 	 */
-	public static readonly leaves = schemaStatics.leaves;
+	public static readonly leaves = schemaStaticsPublic.leaves;
 
 	/**
 	 * Define a {@link TreeNodeSchemaClass} for a {@link TreeObjectNode}.
@@ -848,44 +923,44 @@ export class SchemaFactory<
 	}
 
 	/**
-	 * {@inheritDoc schemaStatics.optional}
+	 * {@inheritDoc SchemaStatics.optional}
 	 */
-	public readonly optional = schemaStatics.optional;
+	public readonly optional = schemaStaticsPublic.optional;
 
 	/**
-	 * {@inheritDoc schemaStatics.required}
+	 * {@inheritDoc SchemaStatics.required}
 	 */
-	public readonly required = schemaStatics.required;
+	public readonly required = schemaStaticsPublic.required;
 
 	/**
-	 * {@inheritDoc schemaStatics.optionalRecursive}
+	 * {@inheritDoc SchemaStatics.optionalRecursive}
 	 */
-	public readonly optionalRecursive = schemaStatics.optionalRecursive;
+	public readonly optionalRecursive = schemaStaticsPublic.optionalRecursive;
 
 	/**
-	 * {@inheritDoc schemaStatics.requiredRecursive}
+	 * {@inheritDoc SchemaStatics.requiredRecursive}
 	 */
-	public readonly requiredRecursive = schemaStatics.requiredRecursive;
+	public readonly requiredRecursive = schemaStaticsPublic.requiredRecursive;
 
 	/**
-	 * {@inheritDoc schemaStatics.optional}
+	 * {@inheritDoc SchemaStatics.optional}
 	 */
-	public static readonly optional = schemaStatics.optional;
+	public static readonly optional = schemaStaticsPublic.optional;
 
 	/**
-	 * {@inheritDoc schemaStatics.required}
+	 * {@inheritDoc SchemaStatics.required}
 	 */
-	public static readonly required = schemaStatics.required;
+	public static readonly required = schemaStaticsPublic.required;
 
 	/**
-	 * {@inheritDoc schemaStatics.optionalRecursive}
+	 * {@inheritDoc SchemaStatics.optionalRecursive}
 	 */
-	public static readonly optionalRecursive = schemaStatics.optionalRecursive;
+	public static readonly optionalRecursive = schemaStaticsPublic.optionalRecursive;
 
 	/**
-	 * {@inheritDoc schemaStatics.requiredRecursive}
+	 * {@inheritDoc SchemaStatics.requiredRecursive}
 	 */
-	public static readonly requiredRecursive = schemaStatics.requiredRecursive;
+	public static readonly requiredRecursive = schemaStaticsPublic.requiredRecursive;
 
 	/**
 	 * A special field which holds a unique identifier for an object node.
@@ -933,7 +1008,7 @@ export class SchemaFactory<
 	 */
 	public objectRecursive<
 		const Name extends TName,
-		const T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>,
+		const T extends RestrictiveStringRecord<ImplicitFieldSchemaUnsafe>,
 	>(
 		name: Name,
 		t: T,
@@ -967,10 +1042,10 @@ export class SchemaFactory<
 	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-	public arrayRecursive<
-		const Name extends TName,
-		const T extends Unenforced<ImplicitAllowedTypes>,
-	>(name: Name, allowedTypes: T) {
+	public arrayRecursive<const Name extends TName, const T extends ImplicitAllowedTypesUnsafe>(
+		name: Name,
+		allowedTypes: T,
+	) {
 		const RecursiveArray = this.namedArray(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
@@ -1010,7 +1085,7 @@ export class SchemaFactory<
 	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-	public mapRecursive<Name extends TName, const T extends Unenforced<ImplicitAllowedTypes>>(
+	public mapRecursive<Name extends TName, const T extends ImplicitAllowedTypesUnsafe>(
 		name: Name,
 		allowedTypes: T,
 	) {

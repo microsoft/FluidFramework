@@ -72,3 +72,6 @@ export {
 	type NotificationsManager,
 	type NotificationsManagerEvents,
 } from "./notificationsManager.js";
+
+export type { InternalTypes } from "./exposedInternalTypes.js";
+export type { InternalUtilityTypes } from "./exposedUtilityTypes.js";

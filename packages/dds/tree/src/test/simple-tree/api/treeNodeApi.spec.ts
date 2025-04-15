@@ -217,12 +217,12 @@ describe("treeNodeApi", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				identifier: schema.identifier,
 			});
-			const nodeKeyManager = new MockNodeIdentifierManager();
+			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+			const view = getView(config);
+			const nodeKeyManager = view.nodeKeyManager;
 			const id = nodeKeyManager.stabilizeNodeIdentifier(
 				nodeKeyManager.generateLocalNodeIdentifier(),
 			);
-			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
-			const view = getView(config, nodeKeyManager);
 			view.initialize({ identifier: id });
 
 			assert.equal(Tree.shortId(view.root), nodeKeyManager.localizeNodeIdentifier(id));
@@ -315,9 +315,9 @@ describe("treeNodeApi", () => {
 
 			// TODO: this policy seems questionable, but its whats implemented, and is documented in TreeStatus.new
 			it("returns string when unhydrated then local id when hydrated", () => {
-				const nodeKeyManager = new MockNodeIdentifierManager();
 				const config = new TreeViewConfiguration({ schema: HasIdentifier });
-				const view = getView(config, nodeKeyManager);
+				const view = getView(config);
+				const nodeKeyManager = view.nodeKeyManager;
 				view.initialize({});
 				const identifier = view.root.identifier;
 				const shortId = Tree.shortId(view.root);
@@ -1269,6 +1269,10 @@ describe("treeNodeApi", () => {
 					});
 				}
 			}
+		});
+
+		it("export-undefined", () => {
+			assert.equal(TreeAlpha.exportConcise(undefined), undefined);
 		});
 	});
 
