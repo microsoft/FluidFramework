@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/app-integration-external-views",
-	"version": "2.32.0",
+	"version": "2.33.0",
 	"private": true,
 	"description": "Minimal Fluid Container & Data Object sample to implement a collaborative dice roller as a standalone app.",
 	"homepage": "https://fluidframework.com",
@@ -55,7 +55,7 @@
 		"@fluidframework/tinylicious-driver": "workspace:~",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1",
-		"uuid": "^11.1.0"
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",

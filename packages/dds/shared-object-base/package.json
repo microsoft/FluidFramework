@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/shared-object-base",
-	"version": "2.32.0",
+	"version": "2.33.0",
 	"description": "Fluid base class for shared distributed data structures",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -126,7 +126,7 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"uuid": "^11.1.0"
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",
@@ -143,6 +143,7 @@
 		"@types/benchmark": "^2.1.0",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
+		"@types/uuid": "^9.0.2",
 		"benchmark": "^2.1.4",
 		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",

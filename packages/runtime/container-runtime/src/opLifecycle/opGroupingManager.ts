@@ -101,8 +101,8 @@ export class OpGroupingManager {
 	 * must be parsed first, and then the type and contents mentioned above are hidden in that JSON serialization.
 	 */
 	public groupBatch(batch: OutboundBatch): OutboundSingletonBatch {
-		assert(this.groupedBatchingEnabled(), "grouping disabled!");
-		assert(batch.messages.length > 0, "Unexpected attempt to group an empty batch");
+		assert(this.groupedBatchingEnabled(), 0xb79 /* grouping disabled! */);
+		assert(batch.messages.length > 0, 0xb7a /* Unexpected attempt to group an empty batch */);
 
 		if (batch.messages.length === 1) {
 			return batch as OutboundSingletonBatch;

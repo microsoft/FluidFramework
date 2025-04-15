@@ -164,7 +164,7 @@ export class UnhydratedFlexTreeNode implements FlexTreeNode {
 				const parentNode: FlexTreeNode | undefined = unhydratedNode.parentField.parent.parent;
 				assert(
 					parentNode === undefined || parentNode instanceof UnhydratedFlexTreeNode,
-					"Unhydrated node's parent should be an unhydrated node",
+					0xb77 /* Unhydrated node's parent should be an unhydrated node */,
 				);
 				unhydratedNode = parentNode;
 			}

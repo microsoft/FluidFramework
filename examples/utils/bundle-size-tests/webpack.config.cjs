@@ -117,10 +117,7 @@ module.exports = {
 			 * We try to avoid duplicate packages, but sometimes we have to allow them since the duplication is coming from a third party library we do not control
 			 * IMPORTANT: Do not add any new exceptions to this list without first doing a deep investigation on why a PR adds a new duplication, this hides a bundle size issue
 			 */
-			exclude: (instance) =>
-				// @fluidframework/server-services-client pulls in uuid 9.0.1, and thus bundles using it get this package duplicated until the version of server used in client gets updated.
-				// This should not impact size sensitive application as they typically don't include a copy of the server.
-				instance.name === "uuid",
+			exclude: (instance) => false,
 		}),
 		new BundleAnalyzerPlugin({
 			analyzerMode: "static",
