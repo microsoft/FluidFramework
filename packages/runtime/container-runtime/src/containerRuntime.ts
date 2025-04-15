@@ -156,7 +156,6 @@ import {
 	getConfigsForCompatMode,
 	isValidCompatMode,
 	type IContainerRuntimeOptionsVersionDependent,
-	type SemanticVersion,
 } from "./compatUtils.js";
 import { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry.js";
@@ -681,22 +680,6 @@ export interface LoadContainerRuntimeParams {
 	 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 * */
 	requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
-
-	/**
-	 * compatibilityMode is used to determine the default configuration for version-dependent options. compatibilityMode can be considered the
-	 * minimum version of the FF runtime that we should maintain compatibility with.
-	 *
-	 * Version-dependent properties are related to changes that require the container runtime to at least be a certain version
-	 * in order to function properly and not break older clients.
-	 * For example, let's say that feature foo was added in 2.0 which introduces a new op type. Along feature foo, option bar
-	 * was added to enable/disable foo since clients prior to 2.0 would not understand the new op type. In this case, bar is
-	 * considered a version-dependent option since it is related to ensuring feature foo does not break older clients.
-	 *
-	 * compatibilityMode accepts a string that must be in valid semver format. It must include the minor and patch indicators as well (i.e. 1.0
-	 * is not acceptable, but 1.0.0 is). For example, use "2.0.0" to set the default configuration for clients running at least the 2.0.0 version
-	 * of the FF runtime.
-	 */
-	compatibilityMode?: string;
 }
 /**
  * This is meant to be used by a {@link @fluidframework/container-definitions#IRuntimeFactory} to instantiate a container runtime.
@@ -792,8 +775,8 @@ export class ContainerRuntime
 		// For example, if compatibility mode is set to "1.0.0", the default configs will ensure compatibility with FF runtime
 		// 1.0.0 or later. If the compatibility mode is set to "2.10.0", the default values will be generated to ensure compatibility
 		// with FF runtime 2.10.0 or later.
-		const compatibilityMode = (params.compatibilityMode ??
-			defaultCompatibilityMode) as SemanticVersion;
+		// TODO: We will add in a way for users to pass in compatibilityMode in a follow up PR.
+		const compatibilityMode = defaultCompatibilityMode;
 		if (!isValidCompatMode(compatibilityMode)) {
 			throw new UsageError(
 				`Invalid compatibility mode: ${compatibilityMode}. It must be an existing FF version (i.e. 2.22.1).`,

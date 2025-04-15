@@ -331,7 +331,6 @@ export function loadContainerRuntime(params: LoadContainerRuntimeParams): Promis
 
 // @alpha
 export interface LoadContainerRuntimeParams {
-    compatibilityMode?: string;
     containerScope?: FluidObject;
     context: IContainerContext;
     existing: boolean;

@@ -5,7 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-
 import {
 	getConfigsForCompatMode,
 	type IConfigMap,
