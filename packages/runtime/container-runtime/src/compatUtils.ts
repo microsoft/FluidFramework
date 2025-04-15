@@ -71,81 +71,51 @@ export type IContainerRuntimeOptionsVersionDependent = Required<
 >;
 
 /**
- * Default configurations for version-dependent options based on the compatibilityMode.
- */
-interface IVersionDependentOptionConfig<
-	K extends keyof IContainerRuntimeOptionsVersionDependent,
-> {
-	/**
-	 * The minimum version of the container runtime that is required to use the modern config for the
-	 * option. This will compared with the compatibilityMode to determine if the modern or back-compat config
-	 * should be used by default.
-	 * This should be undefined if no versions are ready to use the modern config by default. In this case,
-	 * we will always default to the back-compat config.
-	 */
-	minVersionForModernConfig: string | undefined;
-	/**
-	 * The default config for the version-dependent option that ensures clients that do not understand the
-	 * modern config will not break.
-	 * This is the config that will be used by default when the compatibilityMode is less than minVersionForModernConfig.
-	 */
-	backCompatConfig: IContainerRuntimeOptionsVersionDependent[K];
-	/**
-	 * The default config for the version-dependent option when all clients are expected to understand the modern config.
-	 * This is the config that will be used by default when the compatibilityMode is at least minVersionForModernConfig.
-	 */
-	modernConfig: IContainerRuntimeOptionsVersionDependent[K];
-}
-
-/**
  * Mapping of version-dependent options to their compatibility related configs.
+ *
+ * Each key in this map corresponds to a property in IContainerRuntimeOptionsVersionDependent.
+ * The value is an object that maps a version string to the default value for that property when using compatibilityMode of at least that version.
  */
 const versionDependentOptionConfigMap: {
-	[K in keyof IContainerRuntimeOptionsVersionDependent]: IVersionDependentOptionConfig<K>;
+	[K in keyof IContainerRuntimeOptionsVersionDependent]: {
+		[version: string]: IContainerRuntimeOptionsVersionDependent[K];
+	};
 } = {
 	enableGroupedBatching: {
-		minVersionForModernConfig: "2.0.0",
-		backCompatConfig: false,
-		modernConfig: true,
+		"1.0.0": false,
+		"2.0.0": true,
 	},
 	compressionOptions: {
-		minVersionForModernConfig: "2.0.0",
-		backCompatConfig: disabledCompressionConfig,
-		modernConfig: enabledCompressionConfig,
+		"1.0.0": disabledCompressionConfig,
+		"2.0.0": enabledCompressionConfig,
 	},
-
 	enableRuntimeIdCompressor: {
+		// For IdCompressorMode, `undefined` represents a logical state (off). However, to satisfy the Required<>
+		// constraint we need to have it defined, so we trick the type checker here.
+		"1.0.0": undefined as unknown as "on" | "delayed",
 		// We do not yet want to enable idCompressor by default since it will increase bundle sizes,
 		// and not all customers will benefit from it. Therefore, we will require customers to explicitly
 		// enable it. We are keeping it as a version-dependent option as this may change in the future.
-		minVersionForModernConfig: undefined,
-		// For IdCompressorMode, `undefined` represents a logical state (off). However, to satisfy the Required<>
-		// constraint we need to have it defined, so we trick the type checker here.
-		backCompatConfig: undefined as unknown as "on" | "delayed",
-		modernConfig: "on",
 	},
 	explicitSchemaControl: {
 		// This option is unique since it was actually introduced before 2.0.0, but its purpose is to prevent 1.x clients from
 		// joining a session. Therefore, we will have it be `true` when the compatibility mode is set to >=2.0.0 and we do not
 		// want any 1.x clients to join.
-		minVersionForModernConfig: "2.0.0",
-		backCompatConfig: false,
-		modernConfig: true,
+		"1.0.0": false,
+		"2.0.0": true,
 	},
 	flushMode: {
 		// Note: 1.x clients are compatible with TurnBased flushing, but here we elect to remain on Immediate flush mode
 		// as a work-around for inability to send batches larger than 1Mb. Immediate flushing keeps batches smaller as
 		// fewer messages will be included per flush.
-		minVersionForModernConfig: "2.0.0",
-		backCompatConfig: FlushMode.Immediate,
-		modernConfig: FlushMode.TurnBased,
+		"1.0.0": FlushMode.Immediate,
+		"2.0.0": FlushMode.TurnBased,
 	},
 	gcOptions: {
+		"1.0.0": {},
 		// Explicitly disable running Sweep in compat mode "2". Although sweep is supported in 2.x, it is disabled by default.
 		// This setting explicitly disables it to be extra safe.
-		minVersionForModernConfig: "3.0.0",
-		backCompatConfig: {},
-		modernConfig: { enableGCSweep: true },
+		"3.0.0": { enableGCSweep: true },
 	},
 };
 
@@ -163,16 +133,22 @@ export function getConfigsForCompatMode(
 	}
 
 	const defaultConfigs = {};
+	// Iterate over versionDependentOptionConfigMap to get default values for each version-dependent option.
 	for (const key of Object.keys(versionDependentOptionConfigMap)) {
 		const config =
 			versionDependentOptionConfigMap[key as keyof IContainerRuntimeOptionsVersionDependent];
-		// If the compatibility mode is greater than or equal to the minimum version
-		// required for this option, use the "modern" config value, otherwise use the "back-compat" config value
-		const isModernConfig =
-			config.minVersionForModernConfig === undefined
-				? false // If the minVersionForModernConfig is undefined, we always use the back-compat config
-				: semverGte(compatibilityMode, config.minVersionForModernConfig);
-		defaultConfigs[key] = isModernConfig ? config.modernConfig : config.backCompatConfig;
+		// For each conifg, we iterate over the keys and check if compatibilityMode is greater than or equal to the version.
+		// If so, we set it as the default value for the option. At the end of the loop we should have the most recent default
+		// value that is compatible with the version specified as the compatibilityMode.
+		for (const version of Object.keys(config)) {
+			if (semverGte(compatibilityMode, version)) {
+				defaultConfigs[key] = config[version];
+			} else {
+				// If the compatibility mode is less than the version, we break out of the loop since we don't need to check
+				// any later versions.
+				break;
+			}
+		}
 	}
 	return defaultConfigs as IContainerRuntimeOptionsVersionDependent;
 }
