@@ -85,7 +85,6 @@ import {
 	raiseConnectedEvent,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import { IChannelContext, summarizeChannel } from "./channelContext.js";
 import {
@@ -264,7 +263,7 @@ export class FluidDataStoreRuntime
 			logger: dataStoreContext.baseLogger,
 			namespace: "FluidDataStoreRuntime",
 			properties: {
-				all: { dataStoreId: uuid(), dataStoreVersion: pkgVersion },
+				all: { dataStoreId: crypto.randomUUID(), dataStoreVersion: pkgVersion },
 			},
 		});
 
@@ -483,7 +482,7 @@ export class FluidDataStoreRuntime
 			 * Return uuid if short-ids are explicitly disabled via feature flags.
 			 */
 			if (this.mc.config.getBoolean("Fluid.Runtime.DisableShortIds") === true) {
-				id = uuid();
+				id = crypto.randomUUID();
 			} else {
 				// We use three non-overlapping namespaces:
 				// - detached state: even numbers
@@ -496,9 +495,10 @@ export class FluidDataStoreRuntime
 					id = encodeCompactIdToString(2 * this.contexts.size, "_");
 				} else {
 					// Due to back-compat, we could not depend yet on generateDocumentUniqueId() being there.
-					// We can remove the need to leverage uuid() as fall-back in couple releases.
+					// We can remove the need to leverage crypto.randomUUID() as fall-back in couple releases.
 					const res =
-						this.dataStoreContext.containerRuntime.generateDocumentUniqueId?.() ?? uuid();
+						this.dataStoreContext.containerRuntime.generateDocumentUniqueId?.() ??
+						crypto.randomUUID();
 					id = typeof res === "number" ? encodeCompactIdToString(2 * res + 1, "_") : res;
 				}
 			}

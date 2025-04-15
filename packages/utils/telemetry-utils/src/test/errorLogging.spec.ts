@@ -16,7 +16,6 @@ import type {
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
 import sinon from "sinon";
-import { v4 as uuid } from "uuid";
 
 import {
 	type IFluidErrorAnnotations,
@@ -652,7 +651,7 @@ class TestFluidError implements IFluidErrorBase {
 		this.errorType = errorProps.errorType;
 		this.message = errorProps.message;
 		this.stack = errorProps.stack;
-		this.errorInstanceId = uuid();
+		this.errorInstanceId = crypto.randomUUID();
 
 		this.atpStub = sinon.stub(this, "addTelemetryProperties");
 		this.gtpSpy = sinon.spy(this, "getTelemetryProperties");

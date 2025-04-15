@@ -27,7 +27,6 @@ import {
 	createLocalReconnectingPerspective,
 } from "@fluidframework/merge-tree/internal";
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import {
 	IIntervalCollectionOperation,
@@ -1340,7 +1339,7 @@ export class IntervalCollection
 		this.assertStickinessEnabled(start, end);
 
 		const interval: SequenceIntervalClass = this.localCollection.addInterval(
-			id ?? uuid(),
+			id ?? crypto.randomUUID(),
 			toSequencePlace(startPos, startSide),
 			toSequencePlace(endPos, endSide),
 			props,

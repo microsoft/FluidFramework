@@ -30,7 +30,6 @@ import {
 	UsageError,
 	type IFluidErrorBase,
 } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import { ISerializableBlobContents } from "./containerStorageAdapter.js";
 import type {
@@ -141,7 +140,7 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): SnapshotWithBl
 	const treeNode: ISnapshotTree = {
 		blobs: {},
 		trees: {},
-		id: uuid(),
+		id: crypto.randomUUID(),
 		unreferenced: summary.unreferenced,
 		groupId: summary.groupId,
 	};
@@ -158,7 +157,7 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): SnapshotWithBl
 				break;
 			}
 			case SummaryType.Blob: {
-				const blobId = uuid();
+				const blobId = crypto.randomUUID();
 				treeNode.blobs[key] = blobId;
 				const contentString: string =
 					summaryObject.content instanceof Uint8Array

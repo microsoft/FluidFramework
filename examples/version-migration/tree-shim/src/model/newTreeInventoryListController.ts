@@ -12,7 +12,6 @@ import {
 	TreeViewConfiguration,
 } from "@fluidframework/tree";
 import { TypedEmitter } from "tiny-typed-emitter";
-import { v4 as uuid } from "uuid";
 
 import type {
 	IInventoryItem,
@@ -144,7 +143,7 @@ export class NewTreeInventoryListController extends EventEmitter implements IInv
 		this._inventoryItemList.insertAtEnd({
 			// In a real-world scenario, this is probably a known unique inventory ID (rather than
 			// randomly generated).  Randomly generating here just for convenience.
-			id: uuid(),
+			id: crypto.randomUUID(),
 			name,
 			quantity,
 		});

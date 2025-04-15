@@ -219,9 +219,6 @@ importers:
       sha.js:
         specifier: ^2.4.11
         version: 2.4.11
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.52.0
@@ -416,9 +413,6 @@ importers:
       jsrsasign:
         specifier: ^11.0.0
         version: 11.0.0
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.52.0
@@ -549,9 +543,6 @@ importers:
       sillyname:
         specifier: ^0.1.0
         version: 0.1.0
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
       ws:
         specifier: ^7.5.10
         version: 7.5.10
@@ -861,9 +852,6 @@ importers:
       sillyname:
         specifier: ^0.1.0
         version: 0.1.0
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
       winston:
         specifier: ^3.6.0
         version: 3.9.0
@@ -1039,9 +1027,6 @@ importers:
       telegrafjs:
         specifier: ^0.1.3
         version: 0.1.3
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
       winston:
         specifier: ^3.6.0
         version: 3.9.0
@@ -1145,9 +1130,6 @@ importers:
       sillyname:
         specifier: ^0.1.0
         version: 0.1.0
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.52.0
@@ -1573,9 +1555,6 @@ importers:
       socket.io-parser:
         specifier: ^4.2.4
         version: 4.2.4
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
       winston:
         specifier: ^3.6.0
         version: 3.9.0
@@ -1661,9 +1640,6 @@ importers:
       serialize-error:
         specifier: ^8.1.0
         version: 8.1.0
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.52.0
@@ -1761,9 +1737,6 @@ importers:
       split:
         specifier: ^1.0.0
         version: 1.0.1
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
       winston:
         specifier: ^3.6.0
         version: 3.9.0
@@ -1891,9 +1864,6 @@ importers:
       string-hash:
         specifier: ^1.1.3
         version: 1.1.3
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.52.0
@@ -2045,9 +2015,6 @@ importers:
       split:
         specifier: ^1.0.0
         version: 1.0.1
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
       winston:
         specifier: ^3.6.0
         version: 3.9.0
@@ -8465,10 +8432,6 @@ packages:
   utils-merge@1.0.1:
     resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
-
-  uuid@11.1.0:
-    resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
-    hasBin: true
 
   uuid@3.4.0:
     resolution: {integrity: sha512-HjSDRw6gZE5JMggctHBcjVak08+KEVhSIiDzFnT9S9aegmp85S/bReBVTb4QTFaRNptJ9kuYaNhnbNEOkbKb/A==}
@@ -17923,8 +17886,6 @@ snapshots:
       which-typed-array: 1.1.14
 
   utils-merge@1.0.1: {}
-
-  uuid@11.1.0: {}
 
   uuid@3.4.0: {}
 

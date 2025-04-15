@@ -24,7 +24,6 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { default as Axios, AxiosResponse, type AxiosRequestConfig } from "axios";
-import { v4 as uuid } from "uuid";
 
 import { createAzureTokenProvider } from "./AzureTokenFactory.js";
 
@@ -57,8 +56,8 @@ export function createAzureClient(
 		? (process.env.azure__fluid__relay__service__tenantId as string)
 		: "frs-client-tenant";
 	const user = {
-		id: id ?? uuid(),
-		name: name ?? uuid(),
+		id: id ?? crypto.randomUUID(),
+		name: name ?? crypto.randomUUID(),
 	};
 	const endPoint = process.env.azure__fluid__relay__service__endpoint as string;
 	if (useAzure && endPoint === undefined) {
@@ -120,8 +119,8 @@ export function createAzureClientLegacy(
 		? (process.env.azure__fluid__relay__service__tenantId as string)
 		: "frs-client-tenant";
 	const user = {
-		id: userID ?? uuid(),
-		name: userName ?? uuid(),
+		id: userID ?? crypto.randomUUID(),
+		name: userName ?? crypto.randomUUID(),
 	};
 	const endPoint = process.env.azure__fluid__relay__service__endpoint as string;
 	if (useAzure && endPoint === undefined) {
@@ -185,8 +184,8 @@ export async function createContainerFromPayload(
 		? (process.env.azure__fluid__relay__service__tenantId as string)
 		: "local";
 	const user = {
-		id: userID ?? uuid(),
-		name: userName ?? uuid(),
+		id: userID ?? crypto.randomUUID(),
+		name: userName ?? crypto.randomUUID(),
 	};
 	const endPoint = useAzure
 		? (process.env.azure__fluid__relay__service__endpoint as string)

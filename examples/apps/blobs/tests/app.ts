@@ -24,7 +24,6 @@ import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server"
 
 import { createElement } from "react";
 import { createRoot } from "react-dom/client";
-import { v4 as uuid } from "uuid";
 
 import {
 	BlobCollectionContainerRuntimeFactory,
@@ -59,7 +58,7 @@ async function createContainerAndRenderInElement(element: HTMLDivElement): Promi
 			codeLoader,
 		});
 		attach = () => {
-			const documentId = uuid();
+			const documentId = crypto.randomUUID();
 			container
 				.attach(createLocalResolverCreateNewRequest(documentId))
 				.then(() => {

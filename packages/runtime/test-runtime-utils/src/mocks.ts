@@ -68,7 +68,6 @@ import {
 	toFluidHandleInternal,
 } from "@fluidframework/runtime-utils/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import { deepFreeze } from "./deepFreeze.js";
 import { MockDeltaManager } from "./mockDeltas.js";
@@ -229,7 +228,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		this.dataStoreRuntime.quorum = factory.quorum;
 		this.dataStoreRuntime.containerRuntime = this;
 		// FluidDataStoreRuntime already creates a clientId, reuse that so they are in sync.
-		this.clientId = this.dataStoreRuntime.clientId ?? uuid();
+		this.clientId = this.dataStoreRuntime.clientId ?? crypto.randomUUID();
 		factory.quorum.addMember(this.clientId, {});
 		this.runtimeOptions = makeContainerRuntimeOptions(mockContainerRuntimeOptions);
 		assert(
@@ -820,11 +819,11 @@ export class MockFluidDataStoreRuntime
 		registry?: readonly IChannelFactory[];
 	}) {
 		super();
-		this.clientId = overrides?.clientId ?? uuid();
+		this.clientId = overrides?.clientId ?? crypto.randomUUID();
 		this.entryPoint = toFluidHandleInternal(
 			overrides?.entryPoint ?? new MockHandle(null as unknown as FluidObject, "", ""),
 		);
-		this.id = overrides?.id ?? uuid();
+		this.id = overrides?.id ?? crypto.randomUUID();
 		const childLoggerProps: Parameters<typeof createChildLogger>[0] = {
 			namespace: "fluid:MockFluidDataStoreRuntime",
 		};
@@ -927,7 +926,7 @@ export class MockFluidDataStoreRuntime
 
 		const factory = this.registry.get(type);
 		assert(factory !== undefined, "type missing from registry");
-		return factory.create(this, id ?? uuid());
+		return factory.create(this, id ?? crypto.randomUUID());
 	}
 
 	/**

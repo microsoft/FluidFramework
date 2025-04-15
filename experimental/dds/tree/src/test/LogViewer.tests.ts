@@ -7,7 +7,6 @@ import { strict as assert } from 'assert';
 
 import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
-import { v4 as uuidv4 } from 'uuid';
 
 import { StableRange } from '../ChangeTypes.js';
 import { copyPropertyIfDefined, fail } from '../Common.js';
@@ -752,7 +751,7 @@ describe('CachingLogViewer', () => {
 			sequenceNumber: number,
 			referenceSequenceNumber?: number
 		): Edit<unknown> {
-			const id = String(sequenceNumber ?? uuidv4()) as EditId;
+			const id = String(sequenceNumber ?? crypto.randomUUID()) as EditId;
 			const edit = { changes: [ChangeInternal.setPayload(simpleLogBaseView.root, id)], id };
 			logViewer.log.addSequencedEdit(edit, {
 				sequenceNumber,
@@ -770,7 +769,7 @@ describe('CachingLogViewer', () => {
 			expect(logViewer.earliestSequencedEditInMemory()).undefined;
 
 			// Non-sequenced edit
-			logViewer.log.addLocalEdit({ id: uuidv4() as EditId, changes: [] });
+			logViewer.log.addLocalEdit({ id: crypto.randomUUID() as EditId, changes: [] });
 			expect(logViewer.earliestSequencedEditInMemory()).undefined;
 
 			// First sequenced edit
@@ -779,7 +778,7 @@ describe('CachingLogViewer', () => {
 			expect(logViewer.earliestSequencedEditInMemory()).deep.equals(expected);
 
 			// Non-sequenced edit
-			logViewer.log.addLocalEdit({ id: uuidv4() as EditId, changes: [] });
+			logViewer.log.addLocalEdit({ id: crypto.randomUUID() as EditId, changes: [] });
 			expect(logViewer.earliestSequencedEditInMemory()).deep.equals(expected);
 
 			// Second sequenced edit
@@ -792,7 +791,7 @@ describe('CachingLogViewer', () => {
 			expect(logViewer.getEditResultFromSequenceNumber(42)).undefined;
 
 			// Non-sequenced edit
-			logViewer.log.addLocalEdit({ id: uuidv4() as EditId, changes: [] });
+			logViewer.log.addLocalEdit({ id: crypto.randomUUID() as EditId, changes: [] });
 			expect(logViewer.getEditResultFromSequenceNumber(42)).undefined;
 
 			// First sequenced edit
@@ -835,7 +834,7 @@ describe('CachingLogViewer', () => {
 			}
 
 			// Non-sequenced edit
-			const nonSeqEdit = { id: uuidv4() as EditId, changes: [] };
+			const nonSeqEdit = { id: crypto.randomUUID() as EditId, changes: [] };
 			logViewer.log.addLocalEdit(nonSeqEdit);
 			expectReconciliationPath(nonSeqEdit, []);
 

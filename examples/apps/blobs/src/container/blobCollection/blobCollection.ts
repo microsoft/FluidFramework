@@ -16,7 +16,6 @@ import type {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/legacy";
-import { v4 as uuid } from "uuid";
 
 import type { IBlobCollection, IBlobCollectionEvents, IBlobRecord } from "./interface.js";
 
@@ -79,7 +78,7 @@ class BlobCollection implements IBlobCollection {
 			.then(this.uploadArrayBuffer)
 			.then((handle) => {
 				// Use timestamp as a hack for a consistent sortable order.
-				this.sharedMap.set(`${Date.now()}-${uuid()}`, handle);
+				this.sharedMap.set(`${Date.now()}-${crypto.randomUUID()}`, handle);
 			})
 			.catch(console.error);
 	};

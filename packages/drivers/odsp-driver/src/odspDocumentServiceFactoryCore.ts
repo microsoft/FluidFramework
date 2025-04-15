@@ -30,7 +30,6 @@ import {
 	TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import { useCreateNewModule } from "./createFile/index.js";
 import { ICacheAndTracker, createOdspCacheAndTracker } from "./epochTracker.js";
@@ -234,7 +233,7 @@ export class OdspDocumentServiceFactoryCore
 	) {
 		if (this.hostPolicy.isolateSocketCache === true) {
 			// create the key to separate the socket reuse cache
-			this.socketReferenceKeyPrefix = uuid();
+			this.socketReferenceKeyPrefix = crypto.randomUUID();
 		}
 		// Set enableRedeemFallback by default as true.
 		this.hostPolicy.enableRedeemFallback = this.hostPolicy.enableRedeemFallback ?? true;

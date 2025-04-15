@@ -19,7 +19,6 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { stub } from "sinon";
 import { Socket } from "socket.io-client";
-import { v4 as uuid } from "uuid";
 
 import { EpochTracker } from "../../epochTracker.js";
 import { mockify } from "../../mockify.js";
@@ -64,8 +63,8 @@ describe("OdspDocumentDeltaConnection tests", () => {
 
 	beforeEach(async () => {
 		logger = new MockLogger().toTelemetryLogger();
-		documentId = uuid();
-		tenantId = uuid();
+		documentId = crypto.randomUUID();
+		tenantId = crypto.randomUUID();
 		// use null logger here as we expect errors
 		epochTracker = new EpochTracker(
 			localCache,

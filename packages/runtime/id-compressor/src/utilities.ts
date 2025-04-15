@@ -5,7 +5,6 @@
 
 /* eslint-disable no-bitwise */
 import { assert } from "@fluidframework/core-utils/internal";
-import { v4 } from "uuid";
 
 import { LocalCompressedId, NumericUuid } from "./identifiers.js";
 import { SessionId, StableId } from "./types/index.js";
@@ -33,7 +32,7 @@ function isHexadecimalCharacter(charCode: number): boolean {
  * @alpha
  */
 export function createSessionId(): SessionId {
-	return assertIsStableId(v4()) as SessionId;
+	return assertIsStableId(crypto.randomUUID()) as SessionId;
 }
 
 /**
@@ -58,7 +57,7 @@ export function assertIsSessionId(stableId: string): SessionId {
  * @internal
  */
 export function generateStableId(): StableId {
-	return assertIsStableId(v4());
+	return assertIsStableId(crypto.randomUUID());
 }
 
 /**

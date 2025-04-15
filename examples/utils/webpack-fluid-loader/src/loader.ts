@@ -37,7 +37,6 @@ import {
 import { RequestParser } from "@fluidframework/runtime-utils/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import sillyname from "sillyname";
-import { v4 as uuid } from "uuid";
 import { Port } from "webpack-dev-server";
 
 import {
@@ -435,7 +434,9 @@ async function attachContainer(
 					serializedState: snapshot,
 				});
 				const newLeftDiv =
-					rightDiv !== undefined ? makeSideBySideDiv(uuid()) : document.createElement("div");
+					rightDiv !== undefined
+						? makeSideBySideDiv(crypto.randomUUID())
+						: document.createElement("div");
 				currentLeftDiv.replaceWith(newLeftDiv);
 				currentLeftDiv = newLeftDiv;
 				// Load and render the component.

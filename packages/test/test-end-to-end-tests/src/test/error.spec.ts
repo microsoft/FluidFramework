@@ -20,7 +20,6 @@ import {
 	LocalCodeLoader,
 	TestFluidObjectFactory,
 } from "@fluidframework/test-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import { wrapObjectAndOverride } from "../mocking.js";
 
@@ -43,7 +42,7 @@ describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 				[provider.defaultCodeDetails, new TestFluidObjectFactory([])],
 			]),
 		});
-		fileName = uuid();
+		fileName = crypto.randomUUID();
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 		loaderContainerTracker.addContainer(container);
 		await container.attach(provider.driver.createCreateNewRequest(fileName));

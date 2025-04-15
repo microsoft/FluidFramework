@@ -6,7 +6,6 @@
 import type { IUser } from "@fluidframework/driver-definitions";
 import type { ITokenClaims, ScopeType } from "@fluidframework/driver-definitions/internal";
 import { KJUR as jsrsasign } from "jsrsasign";
-import { v4 as uuid } from "uuid";
 
 /**
  * IMPORTANT: This function is duplicated in ./packages/runtime/test-runtime-utils/src/generateToken.ts. There is no
@@ -79,7 +78,7 @@ export function generateToken(
 		iat: now,
 		exp: now + lifetime,
 		ver,
-		jti: uuid(),
+		jti: crypto.randomUUID(),
 	};
 
 	const utf8Key = { utf8: key };
@@ -100,8 +99,8 @@ export function generateToken(
  */
 export function generateUser(): IUser {
 	const randomUser = {
-		id: uuid(),
-		name: uuid(),
+		id: crypto.randomUUID(),
+		name: crypto.randomUUID(),
 	};
 
 	return randomUser;

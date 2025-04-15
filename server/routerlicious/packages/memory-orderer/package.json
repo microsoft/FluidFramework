@@ -74,7 +74,6 @@
 		"events": "^3.1.0",
 		"lodash": "^4.17.21",
 		"sillyname": "^0.1.0",
-		"uuid": "^11.1.0",
 		"ws": "^7.5.10"
 	},
 	"devDependencies": {

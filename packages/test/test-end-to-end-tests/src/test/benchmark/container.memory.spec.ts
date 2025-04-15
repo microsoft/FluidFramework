@@ -21,7 +21,6 @@ import {
 	LocalCodeLoader,
 	TestFluidObjectFactory,
 } from "@fluidframework/test-utils/internal";
-import { v4 as uuid } from "uuid";
 
 const codeDetails: IFluidCodeDetails = { package: "test" };
 
@@ -51,7 +50,7 @@ describeCompat("Container - memory usage benchmarks", "NoCompat", (getTestObject
 		loaderContainerTracker.add(loader);
 		const container = await loader.createDetachedContainer(codeDetails);
 
-		fileName = uuid();
+		fileName = crypto.randomUUID();
 		await container.attach(provider.driver.createCreateNewRequest(fileName));
 		assert(container.resolvedUrl);
 		containerUrl = container.resolvedUrl;

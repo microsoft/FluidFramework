@@ -173,11 +173,11 @@ function makeLargeTestTree(testTree: TestTree, nodesPerTrait = 10, traitsPerLeve
 	// ensure uuids for traits and definitions are stable
 	const compressor = new IdCompressor(specialSession, 0);
 	const uuidv4 = (): string => compressor.decompress(compressor.generateCompressedId());
-	const definition = uuidv4() as Definition;
+	const definition = crypto.randomUUID() as Definition;
 
 	const traitLabels: TraitLabel[] = [];
 	for (let i = 0; i < traitsPerLevel; i++) {
-		traitLabels.push(uuidv4() as TraitLabel);
+		traitLabels.push(crypto.randomUUID() as TraitLabel);
 	}
 
 	return {

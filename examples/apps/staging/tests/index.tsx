@@ -19,7 +19,6 @@ import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server"
 
 import { createElement } from "react";
 import { createRoot } from "react-dom/client";
-import { v4 as uuid } from "uuid";
 
 import {
 	GroceryListContainerRuntimeFactory,
@@ -55,7 +54,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 			codeLoader,
 		});
 		groceryList = (await container.getEntryPoint()) as ISuggestionGroceryList;
-		const documentId = uuid();
+		const documentId = crypto.randomUUID();
 		await container.attach(createLocalResolverCreateNewRequest(documentId));
 		if (container.resolvedUrl === undefined) {
 			throw new Error("Resolved Url not available on attached container");

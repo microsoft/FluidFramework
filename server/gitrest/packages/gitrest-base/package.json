@@ -76,7 +76,6 @@
 		"object-sizeof": "^1.6.3",
 		"prettier": "~3.0.3",
 		"split": "^1.0.0",
-		"uuid": "^3.3.2",
 		"winston": "^3.6.0"
 	},
 	"devDependencies": {
@@ -95,7 +94,6 @@
 		"@types/rimraf": "^3.0.2",
 		"@types/sinon": "^17.0.3",
 		"@types/supertest": "^2.0.7",
-		"@types/uuid": "^3.4.4",
 		"@types/winston": "^2.4.4",
 		"async": "^3.2.2",
 		"c8": "^8.0.1",

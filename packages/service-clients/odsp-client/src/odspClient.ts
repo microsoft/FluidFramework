@@ -44,7 +44,6 @@ import {
 } from "@fluidframework/odsp-driver/internal";
 import type { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import type { TokenResponse } from "./interfaces.js";
 import type {
@@ -217,7 +216,7 @@ export class OdspClient {
 				connection.siteUrl,
 				connection.driveId,
 				odspProps?.filePath ?? "",
-				odspProps?.fileName ?? uuid(),
+				odspProps?.fileName ?? crypto.randomUUID(),
 			);
 			if (container.attachState !== AttachState.Detached) {
 				throw new Error("Cannot attach container. Container is not in detached state");

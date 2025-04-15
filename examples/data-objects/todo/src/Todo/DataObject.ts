@@ -14,7 +14,6 @@ import {
 	type ITree,
 	type TreeView,
 } from "@fluidframework/tree/legacy";
-import { v4 as uuid } from "uuid";
 
 import { TodoItem, TodoList } from "./index.js";
 
@@ -90,7 +89,7 @@ export class TodoListDataObject extends TreeDataObject<TreeView<typeof TodoList>
 		// TODO: We should consider creating a separate field for date, so that we do not need to
 		// concatenate it to the id.
 		// Generate an ID that we can sort on later, and store the handle.
-		const id = `${Date.now()}-${uuid()}`;
+		const id = `${Date.now()}-${crypto.randomUUID()}`;
 
 		this.treeView.root.items.set(id, todoItem);
 	}

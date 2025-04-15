@@ -18,7 +18,6 @@ import type {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/legacy";
-import { v4 as uuid } from "uuid";
 
 import type {
 	IDisposableParent,
@@ -76,7 +75,7 @@ class GroceryList implements IGroceryList {
 
 	public readonly addItem = (name: string) => {
 		// Use timestamp as a hack for a consistent sortable order.
-		this.map.set(`${Date.now()}-${uuid()}`, name);
+		this.map.set(`${Date.now()}-${crypto.randomUUID()}`, name);
 	};
 
 	public readonly getItems = (): IGroceryItem[] => {
@@ -149,9 +148,9 @@ export class GroceryListFactory implements IFluidDataStoreFactory {
 			map = runtime.createChannel(mapId, mapFactory.type) as ISharedMap;
 			// Use timestamp as a hack for a consistent sortable order.
 			const timestamp = Date.now();
-			map.set(`${timestamp}-${uuid()}`, "apple");
-			map.set(`${timestamp + 1}-${uuid()}`, "banana");
-			map.set(`${timestamp + 2}-${uuid()}`, "chocolate");
+			map.set(`${timestamp}-${crypto.randomUUID()}`, "apple");
+			map.set(`${timestamp + 1}-${crypto.randomUUID()}`, "banana");
+			map.set(`${timestamp + 2}-${crypto.randomUUID()}`, "chocolate");
 			map.bindToContext();
 		}
 

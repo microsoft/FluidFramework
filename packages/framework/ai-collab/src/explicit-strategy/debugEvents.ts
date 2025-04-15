@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuidv4 } from "uuid";
-
 import type { DebugEvent, EventFlowDebugEvent } from "../aiCollabApi.js";
 
 /**
@@ -289,7 +287,7 @@ export function generateDebugEvent<Tevent extends string>(
 ): DebugEvent & { eventName: Tevent } {
 	const event = {
 		eventName,
-		id: uuidv4(),
+		id: crypto.randomUUID(),
 		traceId,
 		timestamp: new Date().toISOString(),
 	};

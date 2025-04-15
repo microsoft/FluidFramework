@@ -19,7 +19,6 @@ import {
 	SharedObject,
 	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
-import { v4 as uuid } from "uuid";
 
 import { InkFactory } from "./inkFactory.js";
 import {
@@ -143,7 +142,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
 	 */
 	public createStroke(pen: IPen): IInkStroke {
 		const createStrokeOperation: ICreateStrokeOperation = {
-			id: uuid(),
+			id: crypto.randomUUID(),
 			pen,
 			time: Date.now(),
 			type: "createStroke",

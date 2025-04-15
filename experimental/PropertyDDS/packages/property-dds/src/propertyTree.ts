@@ -31,7 +31,6 @@ import { SharedObject, IFluidSerializer } from "@fluidframework/shared-object-ba
 import axios from "axios";
 import lodash from "lodash";
 import { Packr } from "msgpackr";
-import { v4 as uuidv4 } from "uuid";
 
 // eslint-disable-next-line @typescript-eslint/unbound-method -- 'lodash' import workaround.
 const { isEmpty, findIndex, find, isEqual, range, cloneDeep } = lodash;
@@ -305,7 +304,7 @@ export class SharedPropertyTree extends SharedObject {
 			op: OpKind.ChangeSet,
 			changeSet,
 			metadata,
-			guid: uuidv4(),
+			guid: crypto.randomUUID(),
 			remoteHeadGuid: this.headCommitGuid,
 			referenceGuid:
 				this.localChanges.length > 0

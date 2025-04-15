@@ -6,7 +6,6 @@
 import { strict as assert } from 'assert';
 
 import { BenchmarkType, benchmark, isInPerformanceTestingMode } from '@fluid-tools/benchmark';
-import { v4 } from 'uuid';
 
 import { Forest, ForestNode } from '../Forest.js';
 import { Definition, NodeId, TraitLabel } from '../Identifiers.js';
@@ -124,17 +123,17 @@ function buildRandomTree(testTree: TestTree, size: number): [RevisionView, NodeI
 	}
 
 	function getLabel(): TraitLabel {
-		return v4() as TraitLabel;
+		return crypto.randomUUID() as TraitLabel;
 	}
 
 	const rootId = getId();
-	const root: ChangeNode = { traits: {}, definition: v4() as Definition, identifier: rootId };
+	const root: ChangeNode = { traits: {}, definition: crypto.randomUUID() as Definition, identifier: rootId };
 	const ids = [rootId];
 	let f = RevisionView.fromTree(root).openForTransaction();
 
 	for (let i = 1; i < size; i++) {
 		const label = getLabel();
-		const def: Definition = v4() as Definition;
+		const def: Definition = crypto.randomUUID() as Definition;
 		const id = getId();
 
 		const newNode: TreeViewNode = {

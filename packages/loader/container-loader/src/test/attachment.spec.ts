@@ -12,7 +12,6 @@ import {
 	IDocumentStorageService,
 	type ICreateBlobResponse,
 } from "@fluidframework/driver-definitions/internal";
-import { v4 as uuid } from "uuid";
 
 import {
 	AttachProcessProps,
@@ -152,8 +151,8 @@ describe("runRetriableAttachProcess", () => {
 			const blobCount = 10;
 			const detachedBlobStorage = createDetachStorage(blobCount);
 			const storageAdapter = addCallCounts({
-				createBlob: async () => ({ id: uuid() }),
-				uploadSummaryWithContext: async () => uuid(),
+				createBlob: async () => ({ id: crypto.randomUUID() }),
+				uploadSummaryWithContext: async () => crypto.randomUUID(),
 			});
 			await runRetriableAttachProcess({
 				initialAttachmentData: initial,
@@ -333,7 +332,7 @@ describe("runRetriableAttachProcess", () => {
 					},
 					createOrGetStorageService: async () =>
 						createProxyWithFailDefault<IDocumentStorageService>({
-							createBlob: async () => ({ id: uuid() }),
+							createBlob: async () => ({ id: crypto.randomUUID() }),
 						}),
 					detachedBlobStorage,
 				});
@@ -376,7 +375,9 @@ describe("runRetriableAttachProcess", () => {
 						return emptySummary;
 					},
 					createOrGetStorageService: async () => ({
-						createBlob: async (): Promise<ICreateBlobResponse> => ({ id: uuid() }),
+						createBlob: async (): Promise<ICreateBlobResponse> => ({
+							id: crypto.randomUUID(),
+						}),
 						uploadSummaryWithContext: async (): Promise<string> => {
 							throw error;
 						},
@@ -411,8 +412,8 @@ describe("runRetriableAttachProcess", () => {
 			const blobCount = 10;
 			const detachedBlobStorage = createDetachStorage(blobCount);
 			const storageAdapter = addCallCounts({
-				createBlob: async () => ({ id: uuid() }),
-				uploadSummaryWithContext: async () => uuid(),
+				createBlob: async () => ({ id: crypto.randomUUID() }),
+				uploadSummaryWithContext: async () => crypto.randomUUID(),
 			});
 			await runRetriableAttachProcess({
 				initialAttachmentData: initial,
@@ -465,7 +466,7 @@ describe("runRetriableAttachProcess", () => {
 					createOrGetStorageService: async () =>
 						// only the summary should be left to upload
 						createProxyWithFailDefault<IDocumentStorageService>({
-							uploadSummaryWithContext: async () => uuid(),
+							uploadSummaryWithContext: async () => crypto.randomUUID(),
 						}),
 				}),
 			);

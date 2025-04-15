@@ -74,7 +74,6 @@ import {
 	tagCodeArtifacts,
 	type ITelemetryPropertiesExt,
 } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import {
 	DeletedResponseHeaderKey,
@@ -610,7 +609,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		 * Return uuid if short-ids are explicitly disabled via feature flags.
 		 */
 		if (this.mc.config.getBoolean("Fluid.Runtime.DisableShortIds") === true) {
-			return uuid();
+			return crypto.randomUUID();
 		} else {
 			// We use three non-overlapping namespaces:
 			// - detached state: even numbers

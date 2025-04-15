@@ -4,7 +4,6 @@
  */
 
 import { compareArrays } from '@fluidframework/core-utils/internal';
-import { v4 as uuidv4 } from 'uuid';
 
 import { BuildNode, BuildTreeNode, Change, HasVariadicTraits, StablePlace, StableRange } from './ChangeTypes.js';
 import { Mutable, copyPropertyIfDefined, fail } from './Common.js';
@@ -56,7 +55,7 @@ export function newEdit<TEdit>(changes: readonly TEdit[]): Edit<TEdit> {
  * Generates a new edit object from the supplied changes.
  */
 export function newEditId(): EditId {
-	return uuidv4() as EditId;
+	return crypto.randomUUID() as EditId;
 }
 
 /**

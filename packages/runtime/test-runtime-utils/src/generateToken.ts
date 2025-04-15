@@ -5,7 +5,6 @@
 
 import type { ITokenClaims, ScopeType } from "@fluidframework/driver-definitions/internal";
 import { KJUR as jsrsasign } from "jsrsasign";
-import { v4 as uuid } from "uuid";
 
 import { IInsecureUser } from "./insecureUsers.js";
 
@@ -76,7 +75,7 @@ export function generateToken(
 		iat: now,
 		exp: now + lifetime,
 		ver,
-		jti: uuid(),
+		jti: crypto.randomUUID(),
 	};
 
 	const utf8Key = { utf8: key };
@@ -94,8 +93,8 @@ export function generateToken(
  */
 export function generateUser(): IInsecureUser {
 	const randomUser = {
-		id: uuid(),
-		name: uuid(),
+		id: crypto.randomUUID(),
+		name: crypto.randomUUID(),
 	};
 
 	return randomUser;

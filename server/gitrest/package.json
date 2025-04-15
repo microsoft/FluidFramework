@@ -59,7 +59,6 @@
 		"@types/node": "^18.17.1",
 		"@types/rimraf": "^3.0.2",
 		"@types/supertest": "^2.0.7",
-		"@types/uuid": "^3.4.4",
 		"@types/winston": "^2.4.4",
 		"async": "^3.2.2",
 		"c8": "^8.0.1",
