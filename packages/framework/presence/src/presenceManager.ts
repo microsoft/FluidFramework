@@ -124,12 +124,12 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 	private getStates<TSchema extends StatesWorkspaceSchema>(
 		workspaceAddress: WorkspaceAddress,
 		requestedContent: TSchema,
-		settings?: BroadcastControlSettings,
+		controls?: BroadcastControlSettings,
 	): StatesWorkspace<TSchema> {
 		return this.datastoreManager.getWorkspace(
 			`s:${workspaceAddress}`,
 			requestedContent,
-			settings,
+			controls,
 		);
 	}
 

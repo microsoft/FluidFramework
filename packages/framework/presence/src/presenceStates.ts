@@ -126,7 +126,7 @@ interface ValueUpdateRecord {
 export interface PresenceStatesInternal {
 	ensureContent<TSchemaAdditional extends StatesWorkspaceSchema>(
 		content: TSchemaAdditional,
-		settings: BroadcastControlSettings | undefined,
+		controls: BroadcastControlSettings | undefined,
 	): StatesWorkspace<TSchemaAdditional>;
 	processUpdate(
 		received: number,
@@ -253,7 +253,7 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 	private readonly nodes: MapEntries<TSchema>;
 	public readonly props: StatesWorkspace<TSchema>["props"];
 
-	public readonly settings: RequiredBroadcastControl;
+	public readonly controls: RequiredBroadcastControl;
 
 	public constructor(
 		private readonly runtime: PresenceRuntime,
@@ -261,9 +261,9 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 		initialContent: TSchema,
 		controlsSettings: BroadcastControlSettings | undefined,
 	) {
-		this.settings = new RequiredBroadcastControl(defaultAllowableUpdateLatencyMs);
+		this.controls = new RequiredBroadcastControl(defaultAllowableUpdateLatencyMs);
 		if (controlsSettings?.allowableUpdateLatencyMs !== undefined) {
-			this.settings.allowableUpdateLatencyMs = controlsSettings.allowableUpdateLatencyMs;
+			this.controls.allowableUpdateLatencyMs = controlsSettings.allowableUpdateLatencyMs;
 		}
 
 		// Prepare initial map content from initial state
@@ -300,7 +300,7 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 			if (anyInitialValues) {
 				this.runtime.localUpdate(newValues, {
 					allowableUpdateLatencyMs:
-						cumulativeAllowableUpdateLatencyMs ?? this.settings.allowableUpdateLatencyMs,
+						cumulativeAllowableUpdateLatencyMs ?? this.controls.allowableUpdateLatencyMs,
 				});
 			}
 		}
@@ -330,7 +330,7 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 			{
 				...options,
 				allowableUpdateLatencyMs:
-					options.allowableUpdateLatencyMs ?? this.settings.allowableUpdateLatencyMs,
+					options.allowableUpdateLatencyMs ?? this.controls.allowableUpdateLatencyMs,
 			},
 		);
 	}
@@ -377,7 +377,7 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 				{ [key]: value },
 				{
 					allowableUpdateLatencyMs:
-						allowableUpdateLatencyMs ?? this.settings.allowableUpdateLatencyMs,
+						allowableUpdateLatencyMs ?? this.controls.allowableUpdateLatencyMs,
 				},
 			);
 		}
@@ -385,10 +385,10 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 
 	public ensureContent<TSchemaAdditional extends StatesWorkspaceSchema>(
 		content: TSchemaAdditional,
-		settings: BroadcastControlSettings | undefined,
+		controls: BroadcastControlSettings | undefined,
 	): StatesWorkspace<TSchema & TSchemaAdditional> {
-		if (settings?.allowableUpdateLatencyMs !== undefined) {
-			this.settings.allowableUpdateLatencyMs = settings.allowableUpdateLatencyMs;
+		if (controls?.allowableUpdateLatencyMs !== undefined) {
+			this.controls.allowableUpdateLatencyMs = controls.allowableUpdateLatencyMs;
 		}
 		for (const [key, nodeFactory] of Object.entries(content)) {
 			const brandedIVM = this.nodes[key];
@@ -435,9 +435,9 @@ export function createPresenceStates<TSchema extends StatesWorkspaceSchema>(
 	runtime: PresenceRuntime,
 	datastore: ValueElementMap<StatesWorkspaceSchema>,
 	initialContent: TSchema,
-	settings: BroadcastControlSettings | undefined,
+	controls: BroadcastControlSettings | undefined,
 ): { public: StatesWorkspace<TSchema>; internal: PresenceStatesInternal } {
-	const impl = new PresenceStatesImpl<TSchema>(runtime, datastore, initialContent, settings);
+	const impl = new PresenceStatesImpl<TSchema>(runtime, datastore, initialContent, controls);
 
 	return {
 		public: impl,

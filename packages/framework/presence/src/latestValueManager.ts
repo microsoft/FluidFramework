@@ -60,9 +60,9 @@ export interface Latest<T> {
 	readonly events: Listenable<LatestEvents<T>>;
 
 	/**
-	 * Settings for management of sending updates.
+	 * Controls for management of sending updates.
 	 */
-	readonly settings: BroadcastControls;
+	readonly controls: BroadcastControls;
 
 	/**
 	 * Current state for this client.
@@ -91,7 +91,7 @@ class LatestValueManagerImpl<T, Key extends string>
 	implements Latest<T>, Required<ValueManager<T, InternalTypes.ValueRequiredState<T>>>
 {
 	public readonly events = createEmitter<LatestEvents<T>>();
-	public readonly settings: OptionalBroadcastControl;
+	public readonly controls: OptionalBroadcastControl;
 
 	public constructor(
 		private readonly key: Key,
@@ -99,7 +99,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		public readonly value: InternalTypes.ValueRequiredState<T>,
 		controlSettings: BroadcastControlSettings | undefined,
 	) {
-		this.settings = new OptionalBroadcastControl(controlSettings);
+		this.controls = new OptionalBroadcastControl(controlSettings);
 	}
 
 	public get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> {
@@ -111,7 +111,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		this.value.timestamp = Date.now();
 		this.value.value = value;
 		this.datastore.localUpdate(this.key, this.value, {
-			allowableUpdateLatencyMs: this.settings.allowableUpdateLatencyMs,
+			allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
 		});
 
 		this.events.emit("localUpdated", { value });
@@ -179,7 +179,7 @@ class LatestValueManagerImpl<T, Key extends string>
  */
 export function latest<T extends object, Key extends string = string>(
 	initialValue: JsonSerializable<T> & JsonDeserialized<T> & object,
-	settings?: BroadcastControlSettings,
+	controls?: BroadcastControlSettings,
 ): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>> {
 	// Latest takes ownership of initialValue but makes a shallow
 	// copy for basic protection.
@@ -198,9 +198,9 @@ export function latest<T extends object, Key extends string = string>(
 		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
 		manager: InternalTypes.StateValue<Latest<T>>;
 	} => ({
-		initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
+		initialData: { value, allowableUpdateLatencyMs: controls?.allowableUpdateLatencyMs },
 		manager: brandIVM<LatestValueManagerImpl<T, Key>, T, InternalTypes.ValueRequiredState<T>>(
-			new LatestValueManagerImpl(key, datastoreFromHandle(datastoreHandle), value, settings),
+			new LatestValueManagerImpl(key, datastoreFromHandle(datastoreHandle), value, controls),
 		),
 	});
 	return Object.assign(factory, { instanceBase: LatestValueManagerImpl });

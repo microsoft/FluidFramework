@@ -103,9 +103,9 @@ export interface StatesWorkspace<
 	readonly props: StatesWorkspaceEntries<TSchema>;
 
 	/**
-	 * Default settings for management of broadcast updates.
+	 * Default controls for management of broadcast updates.
 	 */
-	readonly settings: BroadcastControls;
+	readonly controls: BroadcastControls;
 }
 
 // #endregion StatesWorkspace
@@ -133,7 +133,7 @@ export interface NotificationsWorkspaceSchema {
  *
  * @privateRemarks
  * This should be kept mostly in sync with {@link StatesWorkspace}. Notably the
- * return type of `add` is limited here and the `settings` property is omitted.
+ * return type of `add` is limited here and the `controls` property is omitted.
  * The `PresenceStatesImpl` class implements `StatesWorkspace` and therefore
  * `NotificationsWorkspace`, so long as this is proper subset.
  *

@@ -206,13 +206,13 @@ export interface Presence {
 		 *
 		 * @param workspaceAddress - Address of the requested StatesWorkspace
 		 * @param requestedContent - Requested states for the workspace
-		 * @param settings - Optional settings for default broadcast controls
+		 * @param controls - Optional settings for default broadcast controls
 		 * @returns A StatesWorkspace
 		 */
 		getWorkspace<StatesSchema extends StatesWorkspaceSchema>(
 			workspaceAddress: WorkspaceAddress,
 			requestedContent: StatesSchema,
-			settings?: BroadcastControlSettings,
+			controls?: BroadcastControlSettings,
 		): StatesWorkspace<StatesSchema>;
 	};
 

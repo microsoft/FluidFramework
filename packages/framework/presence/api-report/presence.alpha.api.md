@@ -129,17 +129,17 @@ export namespace InternalUtilityTypes {
 
 // @alpha @sealed
 export interface Latest<T> {
+    readonly controls: BroadcastControls;
     readonly events: Listenable<LatestEvents<T>>;
     getRemote(attendee: Attendee): LatestData<T>;
     getRemoteClients(): Attendee[];
     getRemotes(): IterableIterator<LatestClientData<T>>;
     get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
     set local(value: JsonSerializable<T> & JsonDeserialized<T>);
-    readonly settings: BroadcastControls;
 }
 
 // @alpha
-export function latest<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, settings?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
+export function latest<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
 
 // @alpha @sealed
 export interface LatestClientData<T> extends LatestData<T> {
@@ -167,18 +167,18 @@ export interface LatestEvents<T> {
 
 // @alpha @sealed
 export interface LatestMap<T, Keys extends string | number = string | number> {
+    readonly controls: BroadcastControls;
     readonly events: Listenable<LatestMapEvents<T, Keys>>;
     getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T>>;
     getRemoteClients(): Attendee[];
     getRemotes(): IterableIterator<LatestMapClientData<T, Keys>>;
     readonly local: StateMap<Keys, T>;
-    readonly settings: BroadcastControls;
 }
 
 // @alpha
 export function latestMap<T extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(initialValues?: {
     [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
-}, settings?: BroadcastControlSettings): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
+}, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
 
 // @alpha @sealed
 export interface LatestMapClientData<T, Keys extends string | number, SpecificAttendeeId extends AttendeeId = AttendeeId> {
@@ -289,7 +289,7 @@ export interface Presence {
     };
     // (undocumented)
     readonly states: {
-        getWorkspace<StatesSchema extends StatesWorkspaceSchema>(workspaceAddress: WorkspaceAddress, requestedContent: StatesSchema, settings?: BroadcastControlSettings): StatesWorkspace<StatesSchema>;
+        getWorkspace<StatesSchema extends StatesWorkspaceSchema>(workspaceAddress: WorkspaceAddress, requestedContent: StatesSchema, controls?: BroadcastControlSettings): StatesWorkspace<StatesSchema>;
     };
 }
 
@@ -330,8 +330,8 @@ export interface StateMap<K extends string | number, V> {
 // @alpha @sealed
 export interface StatesWorkspace<TSchema extends StatesWorkspaceSchema, TManagerConstraints = unknown> {
     add<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<any>, TManager extends TManagerConstraints>(key: TKey, manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is StatesWorkspace<TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>, TManagerConstraints>;
+    readonly controls: BroadcastControls;
     readonly props: StatesWorkspaceEntries<TSchema>;
-    readonly settings: BroadcastControls;
 }
 
 // @alpha @sealed
