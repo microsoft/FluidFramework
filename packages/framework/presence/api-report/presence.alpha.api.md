@@ -16,6 +16,14 @@ export type AttendeeId = SessionId & {
     readonly AttendeeId: "AttendeeId";
 };
 
+// @alpha @sealed (undocumented)
+export interface AttendeesEvents {
+    // @eventProperty
+    attendeeDisconnected: (attendee: Attendee) => void;
+    // @eventProperty
+    attendeeJoined: (attendee: Attendee) => void;
+}
+
 // @alpha
 export const AttendeeStatus: {
     readonly Connected: "Connected";
@@ -277,7 +285,7 @@ export interface NotificationsWorkspaceSchema {
 export interface Presence {
     // (undocumented)
     readonly attendees: {
-        readonly events: Listenable<PresenceAttendeeEvents>;
+        readonly events: Listenable<AttendeesEvents>;
         getAttendees(): ReadonlySet<Attendee>;
         getAttendee(clientId: ClientConnectionId | AttendeeId): Attendee;
         getMyself(): Attendee;
@@ -285,20 +293,12 @@ export interface Presence {
     readonly events: Listenable<PresenceEvents>;
     // (undocumented)
     readonly notifications: {
-        getWorkspace<NotificationsSchema extends NotificationsWorkspaceSchema>(notificationsId: WorkspaceAddress, requestedContent: NotificationsSchema): NotificationsWorkspace<NotificationsSchema>;
+        getWorkspace<NotificationsSchema extends NotificationsWorkspaceSchema>(notificationsId: WorkspaceAddress, requestedNotifications: NotificationsSchema): NotificationsWorkspace<NotificationsSchema>;
     };
     // (undocumented)
     readonly states: {
-        getWorkspace<StatesSchema extends StatesWorkspaceSchema>(workspaceAddress: WorkspaceAddress, requestedContent: StatesSchema, controls?: BroadcastControlSettings): StatesWorkspace<StatesSchema>;
+        getWorkspace<StatesSchema extends StatesWorkspaceSchema>(workspaceAddress: WorkspaceAddress, requestedStates: StatesSchema, controls?: BroadcastControlSettings): StatesWorkspace<StatesSchema>;
     };
-}
-
-// @alpha @sealed (undocumented)
-export interface PresenceAttendeeEvents {
-    // @eventProperty
-    attendeeDisconnected: (attendee: Attendee) => void;
-    // @eventProperty
-    attendeeJoined: (attendee: Attendee) => void;
 }
 
 // @alpha @sealed (undocumented)

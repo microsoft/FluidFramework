@@ -4,13 +4,13 @@
  */
 
 import type { IAudience } from "@fluidframework/container-definitions";
-import type { IEmitter } from "@fluidframework/core-interfaces/internal";
+import type { IEmitter, Listenable } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { PostUpdateAction } from "./internalTypes.js";
-import type { Attendee, AttendeeId, Presence, PresenceAttendeeEvents } from "./presence.js";
+import type { Attendee, AttendeesEvents, AttendeeId, Presence } from "./presence.js";
 import { AttendeeStatus } from "./presence.js";
 import type { PresenceStatesInternal } from "./presenceStates.js";
 import { TimerManager } from "./timerManager.js";
@@ -67,7 +67,7 @@ class SessionClient implements Attendee {
 export interface SystemWorkspace
 	// Portion of Presence that is handled by SystemWorkspace along with
 	// responsiblity for emitting "attendeeJoined" events.
-	extends Pick<Presence["attendees"], "getAttendees" | "getAttendee" | "getMyself"> {
+	extends Exclude<Presence["attendees"], never> {
 	/**
 	 * Must be called when the current client acquires a new connection.
 	 *
@@ -103,9 +103,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 	public constructor(
 		attendeeId: AttendeeId,
 		private readonly datastore: SystemWorkspaceDatastore,
-		private readonly events: IEmitter<
-			Pick<PresenceAttendeeEvents, "attendeeJoined" | "attendeeDisconnected">
-		>,
+		public readonly events: Listenable<AttendeesEvents> & IEmitter<AttendeesEvents>,
 		private readonly audience: IAudience,
 	) {
 		this.selfAttendee = new SessionClient(attendeeId);
@@ -295,7 +293,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 export function createSystemWorkspace(
 	attendeeId: AttendeeId,
 	datastore: SystemWorkspaceDatastore,
-	events: IEmitter<Pick<PresenceAttendeeEvents, "attendeeJoined">>,
+	events: Listenable<AttendeesEvents> & IEmitter<AttendeesEvents>,
 	audience: IAudience,
 ): {
 	workspace: SystemWorkspace;

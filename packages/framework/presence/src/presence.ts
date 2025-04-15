@@ -37,12 +37,12 @@ export type AttendeeId = SessionId & { readonly AttendeeId: "AttendeeId" };
  */
 export const AttendeeStatus = {
 	/**
-	 * The attendee is connected to the Fluid service.
+	 * The {@link Attendee} is connected to the Fluid service.
 	 */
 	Connected: "Connected",
 
 	/**
-	 * The attendee is not connected to the Fluid service.
+	 * The {@link Attendee} is not connected to the Fluid service.
 	 */
 	Disconnected: "Disconnected",
 } as const;
@@ -67,7 +67,7 @@ export type AttendeeStatus = (typeof AttendeeStatus)[keyof typeof AttendeeStatus
  * @remarks
  * Note: This is very preliminary attendee representation.
  *
- * `Attendee` should be used as key to distinguish between different
+ * {@link Attendee} should be used as key to distinguish between different
  * clients as they join, rejoin, and disconnect from a session. While a
  * client's {@link ClientConnectionId} from {@link Attendee.getConnectionStatus}
  * may change over time, `Attendee` will be fixed.
@@ -142,7 +142,7 @@ export interface PresenceEvents {
  * @sealed
  * @alpha
  */
-export interface PresenceAttendeeEvents {
+export interface AttendeesEvents {
 	/**
 	 * Raised when new client joins session.
 	 *
@@ -172,12 +172,12 @@ export interface Presence {
 
 	readonly attendees: {
 		/**
-		 * Events for attendees.
+		 * Events for {@link Attendee}s.
 		 */
-		readonly events: Listenable<PresenceAttendeeEvents>;
+		readonly events: Listenable<AttendeesEvents>;
 
 		/**
-		 * Get all attendees in the session.
+		 * Get all {@link Attendee}s in the session.
 		 *
 		 * @remarks
 		 * Attendee states are dynamic and will change as clients join and leave
@@ -186,14 +186,14 @@ export interface Presence {
 		getAttendees(): ReadonlySet<Attendee>;
 
 		/**
-		 * Lookup a specific attendee in the session.
+		 * Lookup a specific {@link Attendee} in the session.
 		 *
 		 * @param clientId - Client connection or session ID
 		 */
 		getAttendee(clientId: ClientConnectionId | AttendeeId): Attendee;
 
 		/**
-		 * Get this client's attendee.
+		 * Get this client's {@link Attendee}.
 		 *
 		 * @returns This client's attendee.
 		 */
@@ -205,13 +205,13 @@ export interface Presence {
 		 * Acquires a StatesWorkspace from store or adds new one.
 		 *
 		 * @param workspaceAddress - Address of the requested StatesWorkspace
-		 * @param requestedContent - Requested states for the workspace
+		 * @param requestedStates - Requested states for the workspace
 		 * @param controls - Optional settings for default broadcast controls
 		 * @returns A StatesWorkspace
 		 */
 		getWorkspace<StatesSchema extends StatesWorkspaceSchema>(
 			workspaceAddress: WorkspaceAddress,
-			requestedContent: StatesSchema,
+			requestedStates: StatesSchema,
 			controls?: BroadcastControlSettings,
 		): StatesWorkspace<StatesSchema>;
 	};
@@ -221,12 +221,12 @@ export interface Presence {
 		 * Acquires a Notifications workspace from store or adds new one.
 		 *
 		 * @param workspaceAddress - Address of the requested Notifications Workspace
-		 * @param requestedContent - Requested notifications for the workspace
+		 * @param requestedNotifications - Requested notifications for the workspace
 		 * @returns A Notifications workspace
 		 */
 		getWorkspace<NotificationsSchema extends NotificationsWorkspaceSchema>(
 			notificationsId: WorkspaceAddress,
-			requestedContent: NotificationsSchema,
+			requestedNotifications: NotificationsSchema,
 		): NotificationsWorkspace<NotificationsSchema>;
 	};
 }

@@ -33,7 +33,6 @@ The following API changes have been made to improve clarity and consistency:
 | `LatestMapValueManager.clients` | `LatestMap.getRemoteClients` |
 | `LatestMapValueManager.clientValue` | `LatestMap.getRemote` |
 | `LatestMapValueManager.clientValues` | `LatestMap.getRemotes` |
-| `LatestMapValueManager.controls` | `LatestMap.settings` |
 | `LatestMapValueManagerEvents` | `LatestMapEvents` |
 | `LatestValueClientData` | `LatestClientData` |
 | `LatestValueData` | `LatestData` |
@@ -41,9 +40,10 @@ The following API changes have been made to improve clarity and consistency:
 | `LatestValueManager.clients` | `Latest.getRemoteClients` |
 | `LatestValueManager.clientValue` | `Latest.getRemote` |
 | `LatestValueManager.clientValues` | `Latest.getRemotes` |
-| `LatestValueManager.controls` | `Latest.settings` |
 | `LatestValueManagerEvents` | `LatestEvents` |
 | `LatestValueMetadata` | `LatestMetadata` |
+| `PresenceEvents.attendeeDisconnected` | `AttendeesEvents.attendeeDisconnected`|
+| `PresenceEvents.attendeeJoined` | `AttendeesEvents.attendeeJoined`|
 | `PresenceNotifications` | `NotificationsWorkspace` |
 | `PresenceNotificationsSchema` | `NotificationsWorkspaceSchema` |
 | `PresenceStates` | `StatesWorkspace` |
