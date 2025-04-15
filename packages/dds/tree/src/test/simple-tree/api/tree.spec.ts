@@ -283,7 +283,7 @@ describe("simple-tree tree", () => {
 			() => {
 				const view2 = tree.viewWith(config);
 			},
-			validateUsageError(/second view/),
+			validateUsageError(/second tree view/),
 		);
 	});
 
