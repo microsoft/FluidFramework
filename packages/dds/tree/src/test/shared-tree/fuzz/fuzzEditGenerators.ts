@@ -65,7 +65,7 @@ import {
 	type TreeNode,
 	type TreeNodeSchema,
 } from "../../../simple-tree/index.js";
-import type { TreeFactory } from "../../../treeFactory.js";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 
 export type FuzzView = SchematizingSimpleTreeView<typeof fuzzFieldSchema> & {
 	/**
@@ -95,7 +95,7 @@ export type FuzzTransactionView = SchematizingSimpleTreeView<typeof fuzzFieldSch
 	currentSchema: FuzzNodeSchema;
 };
 
-export interface FuzzTestState extends DDSFuzzTestState<TreeFactory> {
+export interface FuzzTestState extends DDSFuzzTestState<IChannelFactory<ISharedTree>> {
 	/**
 	 * Schematized view of clients and their nodeSchemas. Created lazily by viewFromState.
 	 *
@@ -123,7 +123,7 @@ export interface FuzzTestState extends DDSFuzzTestState<TreeFactory> {
 
 export function viewFromState(
 	state: FuzzTestState,
-	client: Client<TreeFactory> = state.client,
+	client: Client<IChannelFactory<ISharedTree>> = state.client,
 	forkedBranchIndex?: number | undefined,
 ): FuzzView {
 	state.clientViews ??= new Map();
@@ -695,7 +695,7 @@ export const makeConstraintEditGenerator = (
 
 export function makeOpGenerator(
 	weightsArg: Partial<EditGeneratorOpWeights> = defaultEditGeneratorOpWeights,
-): AsyncGenerator<Operation, DDSFuzzTestState<TreeFactory>> {
+): AsyncGenerator<Operation, DDSFuzzTestState<IChannelFactory<ISharedTree>>> {
 	const weights = {
 		...defaultEditGeneratorOpWeights,
 		...weightsArg,
