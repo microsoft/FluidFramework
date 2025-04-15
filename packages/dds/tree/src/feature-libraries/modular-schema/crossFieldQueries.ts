@@ -109,6 +109,7 @@ export interface ComposeNodeManager {
 }
 
 export interface RebaseNodeManager {
+	// XXX: It's not clear whether the returned changes are already rebased or not.
 	/**
 	 * Must be called by a field kind when rebasing over an attach.
 	 * The returned child changes and detach intentions must be represented in the output changeset.
@@ -121,6 +122,9 @@ export interface RebaseNodeManager {
 		count: number,
 	): RangeQueryResult<ChangeAtomId, DetachedNodeEntry>;
 
+	// XXX: It's not clear if this must be called even when newDetachId and nodeChange are undefined.
+	// XXX: It's not clear if it's okay to call this once with a newDetachId then once with a nodeChange.
+	// XXX: It's not clear if nodeChange should be rebased already, or should not be rebased, or if it doesn't matter.
 	/**
 	 * Must be called by a field kind when rebasing over a detach.
 	 * The field kind must provide the nested changes and detach intentions associated with the node in the changeset being rebased.

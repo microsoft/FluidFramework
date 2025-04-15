@@ -624,10 +624,20 @@ function assertModularEqual(
 		return;
 	}
 
+	// Some changesets end up with different maxID values after rebase despite being otherwise equal.
+	const aMaxId = a.change.maxId;
+	const bMaxId = b.change.maxId;
+	const maxId =
+		aMaxId !== undefined || bMaxId !== undefined
+			? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				Math.max((aMaxId ?? bMaxId)!, (bMaxId ?? aMaxId)!)
+			: undefined;
+
 	// Removing aliases ensures that we don't consider the changesets different if they only differ in their aliases.
 	// It also means that we risk treating some changesets that are the same (once you consider aliases) as different.
-	const aWithoutAliases = { ...a, change: removeAliases(a.change) };
-	const bWithoutAliases = { ...b, change: removeAliases(b.change) };
+	const aWithoutAliases = { ...a, change: { ...removeAliases(a.change), maxId }, maxId };
+	const bWithoutAliases = { ...b, change: { ...removeAliases(b.change), maxId }, maxId };
+
 	assertEqual(aWithoutAliases, bWithoutAliases);
 }
 

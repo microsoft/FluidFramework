@@ -37,6 +37,7 @@ import {
 
 import type { OptionalChangeset, Replace } from "./optionalFieldChangeTypes.js";
 import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";
+import { base } from "../../simple-tree/api/testRecursiveDomain.js";
 
 export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	compose: (
@@ -435,36 +436,173 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	},
 
 	rebase: (
-		change: OptionalChangeset,
+		newChange: OptionalChangeset,
 		overChange: OptionalChangeset,
 		rebaseChild: NodeChangeRebaser,
 		_genId: IdAllocator,
 		nodeManager: RebaseNodeManager,
 	): OptionalChangeset => {
-		const rebased: Mutable<OptionalChangeset> = {};
+		// `newChange` can be any of the following 7 cases:
+		// (_ _)
+		// (_▲_)
+		// (A A)
+		// (A▼A)
+		// (A B)
+		// (A _)
+		// (_ B)
 
-		const baseChild = getBaseChildChange(overChange, nodeManager);
-		const rebasedChild = rebaseChild(change.childChange, baseChild);
-		if (isReplaceEffectful(overChange.valueReplace) && !overChange.valueReplace.isEmpty) {
-			// The child node was detached by overChange.
-			nodeManager.rebaseOverDetach(overChange.valueReplace.dst, 1, undefined, rebasedChild);
-		} else if (rebasedChild !== undefined) {
-			rebased.childChange = rebasedChild;
+		// The same is true for `overChange` but we don't care about intentions that have no effect.
+		const overReplace = isReplaceEffectful(overChange.valueReplace)
+			? overChange.valueReplace
+			: undefined;
+		// This makes (_ _) equivalent to (_▲_), and makes (A A) equivalent to (A▼A).
+		// This leaves us with the following 5 cases to consider for `overChange`:
+		// (_ _)
+		// (A A)
+		// (A C)
+		// (A _)
+		// (_ C)
+
+		// This does not however lead to 7*5=35 possible rebase cases because both input changes must have the same input context:
+		if (newChange.valueReplace?.isEmpty === true) {
+			assert(
+				overChange.valueReplace?.isEmpty !== false,
+				"Inconsistent input context: empty in newChange but populated in overChange",
+			);
+		} else if (newChange.valueReplace?.isEmpty === false) {
+			assert(
+				overChange.valueReplace?.isEmpty !== true,
+				"Inconsistent input context: populated in newChange but empty in overChange",
+			);
 		}
+		// This leaves us with 4*3=12 cases when the field is populated in the input context:
+		// +-------+   +-------+
+		// |  new  |   | over  |
+		// +-------+   +-------+
+		// | (A A) |   | (A A) |
+		// | (A▼A) | x | (A C) |
+		// | (A B) |   | (A _) |
+		// | (A _) |   +-------+
+		// +-------+
+		// And 3*2=6 cases when the field is empty in the input context:
+		// +-------+   +-------+
+		// |  new  |   | over  |
+		// +-------+   +-------+
+		// | (_ _) |   | (_ _) |
+		// | (_▲_) | x | (_ C) |
+		// | (_ B) |   +-------+
+		// +-------+
+		// For a total of 12+6=18 cases.
 
-		if (change.valueReplace !== undefined) {
+		const rebasedChildChangeForA = rebaseChild(newChange.childChange, overChange.childChange);
+		const rebased: Mutable<OptionalChangeset> = {};
+		if (newChange.valueReplace === undefined) {
+			// This branch deals with the 3+2=5 cases where `newChange` is (A A) or (_ _).
+			// There are no shallow change intentions to rebase.
+			// However, we need to inform the node manager of any child changes since they ought to be represented at the location of A in the input context of the rebased change.
+			if (overReplace !== undefined && !overReplace.isEmpty) {
+				// This branch deals with the following cases:
+				// (A A) ↷ (A C)
+				// (A A) ↷ (A _)
+				nodeManager.rebaseOverDetach(overReplace.dst, 1, undefined, rebasedChildChangeForA);
+			}
+		} else if (overReplace === undefined) {
+			// This branch deals with the 4+3=7 cases where `overChange` is (A A) or (_ _),
+			// though two of these cases have already be dealt with in the previous branch).
+			// There are no shallow change intentions to rebase over, so `newChange` shallow change intentions are unchanged.
+			rebased.valueReplace = newChange.valueReplace;
+		} else {
+			// This branch deals with the remaining 8 cases where both changesets have shallow change intentions:
+			// (A▼A) ↷ (A C)
+			// (A▼A) ↷ (A _)
+			// (A B) ↷ (A C)
+			// (A B) ↷ (A _)
+			// (A _) ↷ (A C)
+			// (A _) ↷ (A _)
+			// (_▲_) ↷ (_ C)
+			// (_ B) ↷ (_ C)
+
 			const replace: Mutable<Replace> = {
-				isEmpty:
-					overChange.valueReplace === undefined
-						? change.valueReplace.isEmpty
-						: overChange.valueReplace.src === undefined,
-				dst: change.valueReplace.dst,
+				// The `overChange` determines whether the field is empty in its output context
+				isEmpty: overReplace.src === undefined,
+				// There is no way for the `dst` field to be affected by the rebasing
+				dst: newChange.valueReplace.dst,
 			};
-
-			if (change.valueReplace.src !== undefined) {
-				replace.src = rebaseReplaceSource(change.valueReplace, overChange.valueReplace);
+			// We now turn our attention to the `src` field.
+			if (newChange.valueReplace.src === undefined) {
+				// This branch deals with the 2+1=3 cases where `newChange` is (A _) or (_▲_).
+				// `newChange` represent an intention to clear the field.
+				// This is unaffected by anything that `overChange` may do.
+			} else {
+				// This branch deals with the remaining 5 cases:
+				// (A▼A) ↷ (A C)
+				// (A▼A) ↷ (A _)
+				// (A B) ↷ (A C)
+				// (A B) ↷ (A _)
+				// (_ B) ↷ (_ C)
+				// In all cases, `newChange`'s intention to attach a node is unaffected by the rebasing,
+				// but it's possible that `overChange` has an impact on how the rebased change should refer to the node it attaches.
+				if (isPin(newChange.valueReplace)) {
+					// This branch deals with cases (A▼A) ↷ (A C) and (A▼A) ↷ (A _).
+					// In both cases, `overChange` detaches node A which is pinned by `newChange`.
+					// The rebased change should therefore attach A from wherever `overChange` has sent it.
+					replace.src = newChange.valueReplace.dst;
+					// We need to inform the node manager of any child changes since they ought to be represented at the location of A in the input context of the rebased change.
+					// We also need to inform the node manager that the rebased change needs to detach A from its new location.
+					nodeManager.rebaseOverDetach(
+						overReplace.dst,
+						1,
+						replace.dst,
+						rebasedChildChangeForA,
+					);
+				} else {
+					// This branch deals with the remaining 3 cases:
+					// (A B) ↷ (A _)
+					// (A B) ↷ (A C)
+					// (_ B) ↷ (_ C)
+					// Note that in the last two cases, it's possible for nodes B and C to actually be the same node.
+					// XXX: Consider renames when comparing register IDs (remember to use the last know ID for the node).
+					// eslint-disable-next-line unicorn/prefer-ternary
+					if (areEqualChangeAtomIdOpts(overReplace.src, newChange.valueReplace.src)) {
+						// This branch deal with the cases (A B) ↷ (A C) and (_ B) ↷ (_ C) where B and C are the same node.
+						// The rebased change becomes a pin, in which case its `src` must match its `dst`.
+						replace.src = newChange.valueReplace.dst;
+						// XXX: should rebaseOverDetach be called in this case as well?.
+					} else {
+						// This branch deals with the following cases where B and C are different nodes:
+						// (A B) ↷ (A _)
+						// (A B) ↷ (A C)
+						// (_ B) ↷ (_ C)
+						// In all other cases, the location of B is unaffected by the rebasing.
+						replace.src = newChange.valueReplace.src;
+						// We need to inform the node manager of any child changes since they ought to be represented at the location of A in the input context of the rebased change.
+						nodeManager.rebaseOverDetach(
+							overReplace.dst,
+							1,
+							undefined,
+							rebasedChildChangeForA,
+						);
+					}
+				}
 			}
 			rebased.valueReplace = replace;
+		}
+
+		// In this block we determine which child changes should be included in `rebased` if any.
+		if (overReplace !== undefined) {
+			if (overReplace.src !== undefined) {
+				// Some new node is attached by `overChange`.
+				// The rebased changeset must represent any nested changes for that node in as part of the field changeset.
+				const changesForAttachedNode = nodeManager.getNewChangesForBaseAttach(
+					overReplace.src,
+					1,
+				).value;
+				if (changesForAttachedNode?.nodeChange !== undefined) {
+					rebased.childChange = changesForAttachedNode.nodeChange;
+				}
+			}
+		} else if (rebasedChildChangeForA !== undefined) {
+			rebased.childChange = rebasedChildChangeForA;
 		}
 
 		return rebased;
@@ -715,23 +853,4 @@ function getNestedChanges(change: OptionalChangeset): NestedChangesIndices {
 	}
 
 	return [[change.childChange, 0]];
-}
-
-/**
- * Helper function for use in rebase which returns child change for the base changeset.
- */
-function getBaseChildChange(
-	baseChange: OptionalChangeset,
-	nodeManager: RebaseNodeManager,
-): NodeId | undefined {
-	const attachId = getEffectfulDst(baseChange.valueReplace);
-	if (attachId !== undefined) {
-		const movedChange = nodeManager.getNewChangesForBaseAttach(attachId, 1).value?.nodeChange;
-		if (movedChange !== undefined) {
-			assert(baseChange.childChange === undefined, "Unexpected child change");
-			return movedChange;
-		}
-	}
-
-	return baseChange.childChange;
 }

@@ -751,26 +751,21 @@ function verifyRebaseOverUndoRedoPair<TChangeset>(
 	const assertDeepEqual = getDefaultedEqualityAssert(fieldRebaser);
 	const editB = namedEditToRebaseOver.changeset;
 
-	const inverseEditB = rollback(fieldRebaser, editB);
-
-	// ((A ↷ B) ↷ B⁻¹) ↷ B
-	const actualChange = tagChange(
-		fieldRebaser.rebase(
-			mapTaggedChange(
-				edit,
-				fieldRebaser.rebase(
-					mapTaggedChange(edit, fieldRebaser.rebase(edit, editB)),
-					inverseEditB,
-				),
-			),
-			editB,
-		),
-		edit.revision,
-	);
+	const rollbackOfB = rollback(fieldRebaser, editB);
 
 	// A ↷ B
-	const expectedChange = tagChange(fieldRebaser.rebase(edit, editB), edit.revision);
-	assertDeepEqual(actualChange, expectedChange);
+	const rebasedOverDo = mapTaggedChange(edit, fieldRebaser.rebase(edit, editB));
+
+	// (A ↷ B) ↷ B⁻¹
+	const rebasedOverUndo = mapTaggedChange(
+		edit,
+		fieldRebaser.rebase(rebasedOverDo, rollbackOfB),
+	);
+
+	// ((A ↷ B) ↷ B⁻¹) ↷ B
+	const rebasedOverRedo = mapTaggedChange(edit, fieldRebaser.rebase(rebasedOverUndo, editB));
+
+	assertDeepEqual(rebasedOverRedo, rebasedOverDo);
 }
 
 function verifyRebaseOverDoUndoPairIsNoOp<TChangeset>(
@@ -782,13 +777,12 @@ function verifyRebaseOverDoUndoPairIsNoOp<TChangeset>(
 	const editB = namedEditToRebaseOver.changeset;
 
 	const invertedEditB = rollback(fieldRebaser, editB);
+	// (A ↷ B)
+	const afterFirstRebase = mapTaggedChange(edit, fieldRebaser.rebase(edit, editB));
 	// (A ↷ B) ↷ B⁻¹
-	const actualChange = tagChange(
-		fieldRebaser.rebase(
-			mapTaggedChange(edit, fieldRebaser.rebase(edit, editB)),
-			invertedEditB,
-		),
-		edit.revision,
+	const actualChange = mapTaggedChange(
+		edit,
+		fieldRebaser.rebase(afterFirstRebase, invertedEditB),
 	);
 
 	const expectedChange = tagChange(edit.change, edit.revision);
