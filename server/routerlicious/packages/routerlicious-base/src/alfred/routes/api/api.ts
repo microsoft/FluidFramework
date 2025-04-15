@@ -414,7 +414,7 @@ async function handleBroadcastSignal(
 		);
 		throw new NetworkError(
 			400,
-			`signalContent should contain 'contents.content' and 'contents.type' keys`,
+			"signalContent should contain 'contents.content' and 'contents.type' keys",
 		);
 	}
 	if (!collaborationSessionEventEmitter) {
@@ -422,32 +422,32 @@ async function handleBroadcastSignal(
 			tenantId,
 			documentId,
 		});
-		throw new NetworkError(500, `No emitter configured for the broadcast-signal endpoint`);
+		throw new NetworkError(500, "No emitter configured for the broadcast-signal endpoint");
 	}
 
-	const deltaStreamUrl: string = config.get("worker:deltaStreamUrl");
+	const serverUrl: string = config.get("worker:serverUrl");
 	const document = await storage?.getDocument(tenantId, documentId);
-	if (!document?.session?.isSessionActive) {
+	if (!document?.session?.isSessionAlive) {
 		Lumberjack.error("Document not found", { tenantId, documentId });
 		throw new NetworkError(404, "Document not found");
 	}
-	if (!document.session.isSessionAlive) {
-		Lumberjack.warning("Document session not alive", { tenantId, documentId });
-		throw new NetworkError(410, "Document session not alive");
+	if (!document.session.isSessionActive) {
+		Lumberjack.warning("Document session not active", { tenantId, documentId });
+		throw new NetworkError(410, "Document session not active");
 	}
-	if (document.session.deltaStreamUrl !== deltaStreamUrl) {
+	if (document.session.ordererUrl !== serverUrl) {
 		Lumberjack.info("Redirecting broadcast-signal to correct cluster", {
-			documentUrl: document.session.deltaStreamUrl,
-			currentUrl: deltaStreamUrl,
-			targetUrlAndPath: `${document.session.deltaStreamUrl}${request.originalUrl}`,
+			documentUrl: document.session.ordererUrl,
+			currentUrl: serverUrl,
+			targetUrlAndPath: `${document.session.ordererUrl}${request.originalUrl}`,
 		});
-		response.redirect(`${document.session.deltaStreamUrl}${request.originalUrl}`);
+		response.redirect(`${document.session.ordererUrl}${request.originalUrl}`);
 		return;
 	}
 
 	const signalMessage = createRuntimeMessage(signalContent);
 	const signalRoom: IRoom = { tenantId, documentId };
-	Lumberjack.info("Broadcasting signal to socket", { tenantId, documentId });
+	Lumberjack.info("Broadcasting signal to room", { tenantId, documentId });
 	collaborationSessionEventEmitter.to(getRoomId(signalRoom)).emit("signal", signalMessage);
 }
 

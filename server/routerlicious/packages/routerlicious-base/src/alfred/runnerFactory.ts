@@ -432,6 +432,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			undefined /* retryDelays */,
 			redisConfig.enableVerboseErrorLogging,
 		);
+		redisClientConnectionManagers.push(redisClientConnectionManagerForPub);
 
 		const redisEmitter = new RedisEmitter(redisClientConnectionManagerForPub.getRedisClient());
 

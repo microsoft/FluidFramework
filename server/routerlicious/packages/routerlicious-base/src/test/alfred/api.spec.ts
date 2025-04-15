@@ -1167,8 +1167,8 @@ describe("Routerlicious", () => {
 							documentId: "doc-1",
 							content: "Hello, World!",
 							session: {
-								ordererUrl: defaultProvider.get("worker:serverUrl"),
-								deltaStreamUrl: "http://localhost:3006",
+								ordererUrl: "http://localhost:3006",
+								deltaStreamUrl: defaultProvider.get("worker:deltaStreamUrl"),
 								historianUrl: defaultProvider.get("worker:blobStorageUrl"),
 								isSessionAlive: true,
 								isSessionActive: true,
@@ -1202,7 +1202,7 @@ describe("Routerlicious", () => {
 							},
 						};
 
-						const documentNoActiveSession = {
+						const documentNotFound = {
 							_id: "doc-1",
 							tenantId: appTenant1.id,
 							version: "1.0",
@@ -1210,7 +1210,7 @@ describe("Routerlicious", () => {
 							content: "Hello, World!",
 							session: {
 								ordererUrl: defaultProvider.get("worker:serverUrl"),
-								deltaStreamUrl: "http://localhost:3006",
+								deltaStreamUrl: defaultProvider.get("worker:deltaStreamUrl"),
 								historianUrl: defaultProvider.get("worker:blobStorageUrl"),
 								isSessionAlive: false,
 								isSessionActive: false,
@@ -1224,11 +1224,11 @@ describe("Routerlicious", () => {
 							.onFirstCall()
 							.returns(Promise.resolve(null))
 							.onSecondCall()
-							.returns(Promise.resolve(documentNoActiveSession));
+							.returns(Promise.resolve(documentNotFound));
 
 						await supertest
 							.post(
-								`/api/v1/${appTenant1.id}/${documentNoActiveSession._id}/broadcast-signal`,
+								`/api/v1/${appTenant1.id}/${documentNotFound._id}/broadcast-signal`,
 							)
 							.send(body)
 							.set("Authorization", tenantToken1)
@@ -1237,7 +1237,7 @@ describe("Routerlicious", () => {
 
 						await supertest
 							.post(
-								`/api/v1/${appTenant1.id}/${documentNoActiveSession._id}/broadcast-signal`,
+								`/api/v1/${appTenant1.id}/${documentNotFound._id}/broadcast-signal`,
 							)
 							.send(body)
 							.set("Authorization", tenantToken1)
@@ -1245,7 +1245,7 @@ describe("Routerlicious", () => {
 							.expect(404);
 					});
 
-					it("Document session not alive", async () => {
+					it("Document session not active", async () => {
 						const body = {
 							signalContent: {
 								contents: {
@@ -1254,7 +1254,7 @@ describe("Routerlicious", () => {
 								},
 							},
 						};
-						const documentNoSessionAlive = {
+						const documentNoActiveSession = {
 							_id: "doc-1",
 							tenantId: appTenant1.id,
 							version: "1.0",
@@ -1262,10 +1262,10 @@ describe("Routerlicious", () => {
 							content: "Hello, World!",
 							session: {
 								ordererUrl: defaultProvider.get("worker:serverUrl"),
-								deltaStreamUrl: "http://localhost:3006",
+								deltaStreamUrl: defaultProvider.get("worker:deltaStreamUrl"),
 								historianUrl: defaultProvider.get("worker:blobStorageUrl"),
-								isSessionAlive: false,
-								isSessionActive: true,
+								isSessionAlive: true,
+								isSessionActive: false,
 							},
 							createTime: Date.now(),
 							scribe: "",
@@ -1273,12 +1273,12 @@ describe("Routerlicious", () => {
 						};
 
 						Sinon.stub(defaultStorage, "getDocument").returns(
-							Promise.resolve(documentNoSessionAlive),
+							Promise.resolve(documentNoActiveSession),
 						);
 
 						await supertest
 							.post(
-								`/api/v1/${appTenant1.id}/${documentNoSessionAlive._id}/broadcast-signal`,
+								`/api/v1/${appTenant1.id}/${documentNoActiveSession._id}/broadcast-signal`,
 							)
 							.send(body)
 							.set("Authorization", tenantToken1)
