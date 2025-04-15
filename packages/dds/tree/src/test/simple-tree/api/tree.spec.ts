@@ -243,8 +243,7 @@ describe("simple-tree tree", () => {
 		assert(idFromInitialize !== idFromHydration);
 	});
 
-	// TODO: AB#9127: fix unhydrated custom identifier Tree.shortId case which blocks this from running.
-	it.skip("custom identifier copied from tree", () => {
+	it("custom identifier copied from tree", () => {
 		class HasId extends schema.object("hasID", { id: schema.identifier }) {}
 		const config = new TreeViewConfiguration({ schema: HasId, enableSchemaValidation: true });
 		const treeSrc = factory.create(
@@ -271,8 +270,7 @@ describe("simple-tree tree", () => {
 		assert.equal(idFromUnhydrated, idFromHydrated);
 	});
 
-	// TODO: AB#9128: this asserts instead of throwing a usage error.
-	it.skip("viewWith twice errors", () => {
+	it("viewWith twice errors", () => {
 		class Empty extends schema.object("Empty", {}) {}
 		const config = new TreeViewConfiguration({ schema: Empty });
 		const tree = factory.create(
@@ -281,9 +279,12 @@ describe("simple-tree tree", () => {
 		);
 
 		const view = tree.viewWith(config);
-		assert.throws(() => {
-			const view2 = tree.viewWith(config);
-		}, validateUsageError(/views/));
+		assert.throws(
+			() => {
+				const view2 = tree.viewWith(config);
+			},
+			validateUsageError(/second view/),
+		);
 	});
 
 	it("accessing view.root does not leak LazyEntities", () => {
