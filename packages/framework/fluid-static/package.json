@@ -119,7 +119,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.55.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
-		"@fluidframework/fluid-static-previous": "npm:@fluidframework/fluid-static@2.31.0",
+		"@fluidframework/fluid-static-previous": "npm:@fluidframework/fluid-static@2.32.0",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@microsoft/api-extractor": "7.50.1",
