@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import type {
 	ErasedType,
 	IFluidHandle,
@@ -103,7 +103,7 @@ import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { type TreeCheckout, type BranchableTree, createTreeCheckout } from "./treeCheckout.js";
-import { Breakable, breakingClass, fail, throwIfBroken } from "../util/index.js";
+import { Breakable, breakingClass, throwIfBroken } from "../util/index.js";
 
 /**
  * Copy of data from an {@link ITreePrivate} at some point in time.
@@ -250,7 +250,7 @@ export class SharedTree extends SharedObject implements ISharedTree {
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
-		this.kernel.processCore(message, local, localOpMetadata);
+		fail(0xb75 /* processCore should not be called on SharedTree */);
 	}
 
 	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
@@ -569,7 +569,7 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 
 export function exportSimpleSchema(storedSchema: TreeStoredSchema): SimpleTreeSchema {
 	return {
-		...exportSimpleFieldSchemaStored(storedSchema.rootFieldSchema),
+		root: exportSimpleFieldSchemaStored(storedSchema.rootFieldSchema),
 		definitions: new Map(
 			[...storedSchema.nodeSchema].map(([key, schema]) => {
 				return [key, exportSimpleNodeSchemaStored(schema)];
@@ -804,30 +804,34 @@ function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFie
 		default:
 			fail(0xaca /* invalid field kind */);
 	}
-	return { kind, allowedTypesIdentifiers: schema.types };
+	return { kind, allowedTypesIdentifiers: schema.types, metadata: {} };
 }
 
 function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeSchema {
 	const arrayTypes = tryStoredSchemaAsArray(schema);
 	if (arrayTypes !== undefined) {
-		return { kind: NodeKind.Array, allowedTypesIdentifiers: arrayTypes };
+		return { kind: NodeKind.Array, allowedTypesIdentifiers: arrayTypes, metadata: {} };
 	}
 	if (schema instanceof ObjectNodeStoredSchema) {
 		const fields = new Map<FieldKey, SimpleObjectFieldSchema>();
 		for (const [storedKey, field] of schema.objectNodeFields) {
 			fields.set(storedKey, { ...exportSimpleFieldSchemaStored(field), storedKey });
 		}
-		return { kind: NodeKind.Object, fields };
+		return { kind: NodeKind.Object, fields, metadata: {} };
 	}
 	if (schema instanceof MapNodeStoredSchema) {
 		assert(
 			schema.mapFields.kind === FieldKinds.optional.identifier,
 			0xa95 /* Invalid map schema */,
 		);
-		return { kind: NodeKind.Map, allowedTypesIdentifiers: schema.mapFields.types };
+		return {
+			kind: NodeKind.Map,
+			allowedTypesIdentifiers: schema.mapFields.types,
+			metadata: {},
+		};
 	}
 	if (schema instanceof LeafNodeStoredSchema) {
-		return { kind: NodeKind.Leaf, leafKind: schema.leafValue };
+		return { kind: NodeKind.Leaf, leafKind: schema.leafValue, metadata: {} };
 	}
 	fail(0xacb /* invalid schema kind */);
 }

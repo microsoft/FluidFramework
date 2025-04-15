@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	type TreeNodeSchema,
@@ -20,7 +20,6 @@ import {
 } from "./core/index.js";
 import { type FlexTreeNode, isFlexTreeNode } from "../feature-libraries/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { fail } from "../util/index.js";
 
 import { getSimpleNodeSchemaFromInnerNode } from "./core/index.js";
 import { markEager } from "./flexList.js";

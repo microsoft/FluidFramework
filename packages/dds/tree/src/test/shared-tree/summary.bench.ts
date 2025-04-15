@@ -32,7 +32,7 @@ import {
 	makeJsWideTreeWithEndValue,
 	WideRoot,
 } from "../scalableTestTrees.js";
-import { TreeFactory } from "../../treeFactory.js";
+import { configuredSharedTree } from "../../treeFactory.js";
 
 // TODO: these tests currently only cover tree content.
 // It might make sense to extend them to cover complex collaboration windows.
@@ -115,7 +115,7 @@ describe("Summary benchmarks", () => {
 			type: BenchmarkType,
 		) {
 			let summaryTree: ITree;
-			const factory = new TreeFactory({});
+			const factory = configuredSharedTree({}).getFactory();
 			benchmark({
 				title,
 				type,
@@ -182,7 +182,7 @@ function getSummaryTree<T extends ImplicitFieldSchema>(
 	const tree = provider.trees[0];
 	const view = tree.kernel.viewWith(new TreeViewConfiguration({ schema: content.schema }));
 	view.initialize(content.initialTree);
-	provider.processMessages();
+	provider.synchronizeMessages();
 	const { summary } = tree.getAttachSummary(true);
 	return summary;
 }

@@ -23,7 +23,7 @@ import {
 import { asBatchMetadata, asEmptyBatchLocalOpMetadata } from "./metadata.js";
 import {
 	BatchId,
-	BatchMessage,
+	LocalBatchMessage,
 	getEffectiveBatchId,
 	BatchStartInfo,
 	InboundMessageResult,
@@ -310,7 +310,7 @@ export class PendingStateManager implements IDisposable {
 	 * @param staged - Indicates whether batch is staged (not to be submitted while runtime is in Staging Mode)
 	 */
 	public onFlushBatch(
-		batch: BatchMessage[],
+		batch: LocalBatchMessage[],
 		clientSequenceNumber: number | undefined,
 		ignoreBatchId?: boolean,
 		staged: boolean = false,
@@ -334,7 +334,7 @@ export class PendingStateManager implements IDisposable {
 
 		for (const message of batch) {
 			const {
-				contents: content = "",
+				serializedOp: content,
 				referenceSequenceNumber,
 				localOpMetadata,
 				metadata: opMetadata,

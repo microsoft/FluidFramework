@@ -9,56 +9,60 @@ import type { FieldKind, FieldSchemaMetadata, NodeSchemaMetadata } from "./schem
 
 /*
  * TODO:
- * - Make TreeNodeSchema implement these interfaces directly.
  * - Customize their JSON serialization to use these formats or provide some other serialization scheme.
- * - Promote these to alpha
  */
 
 /**
- * Base interface for all {@link SimpleNodeSchema} implementations.
- *
- * @internal
+ * Base interface for {@link TreeNodeSchema} and {@link SimpleNodeSchema} types.
+ * Once simple schema is stable this doesn't have a reason to be kept `@system`, but it could be.
+ * @system
+ * @public
  * @sealed
  */
-export interface SimpleNodeSchemaBase<TNodeKind extends NodeKind> {
+export interface SimpleNodeSchemaBase<
+	out TNodeKind extends NodeKind,
+	out TCustomMetadata = unknown,
+> {
 	/**
-	 * The kind of {@link SimpleNodeSchema}.
+	 * The {@link NodeKind}.
 	 *
 	 * @remarks can be used to type-switch between implementations.
 	 */
 	readonly kind: TNodeKind;
 
 	/**
-	 * {@inheritDoc NodeSchemaMetadata}
+	 * User-provided {@link NodeSchemaMetadata} for this schema.
 	 */
-	readonly metadata?: NodeSchemaMetadata | undefined;
+	readonly metadata: NodeSchemaMetadata<TCustomMetadata>;
 }
 
 /**
  * A {@link SimpleNodeSchema} for an object node.
  *
- * @internal
+ * @alpha
  * @sealed
  */
-export interface SimpleObjectNodeSchema extends SimpleNodeSchemaBase<NodeKind.Object> {
+export interface SimpleObjectNodeSchema<out TCustomMetadata = unknown>
+	extends SimpleNodeSchemaBase<NodeKind.Object, TCustomMetadata> {
 	/**
 	 * Schemas for each of the object's fields, keyed off of schema's keys.
 	 * @remarks
 	 * The keys are the property keys if known, otherwise they are the stored keys.
+	 * Use {@link SimpleObjectFieldSchema.storedKey} to get the stored key.
 	 * @privateRemarks
-	 * TODO: Provide and link a way to translate between the stored keys and the property keys.
+	 * TODO: Provide and link a way to translate from stored keys to the property keys.
 	 * TODO: Consider adding `storedKeysToFields` or something similar to reduce confusion,
-	 * especially if/when TreeNodeSchema for objects implement this and likely provide more maps.
+	 * especially if/when TreeNodeSchema for objects provide more maps.
 	 */
 	readonly fields: ReadonlyMap<string, SimpleObjectFieldSchema>;
 }
 
 /**
- * A {@link SimpleNodeSchema} for an object node.
+ * A {@link SimpleFieldSchema} for an {@link SimpleObjectNodeSchema} field.
  * @remarks
  * The only other case fields are uses in the root schema.
  *
- * @internal
+ * @alpha
  * @sealed
  */
 export interface SimpleObjectFieldSchema extends SimpleFieldSchema {
@@ -73,10 +77,11 @@ export interface SimpleObjectFieldSchema extends SimpleFieldSchema {
 /**
  * A {@link SimpleNodeSchema} for an array node.
  *
- * @internal
+ * @alpha
  * @sealed
  */
-export interface SimpleArrayNodeSchema extends SimpleNodeSchemaBase<NodeKind.Array> {
+export interface SimpleArrayNodeSchema<out TCustomMetadata = unknown>
+	extends SimpleNodeSchemaBase<NodeKind.Array, TCustomMetadata> {
 	/**
 	 * The types allowed in the array.
 	 *
@@ -89,10 +94,11 @@ export interface SimpleArrayNodeSchema extends SimpleNodeSchemaBase<NodeKind.Arr
 /**
  * A {@link SimpleNodeSchema} for a map node.
  *
- * @internal
+ * @alpha
  * @sealed
  */
-export interface SimpleMapNodeSchema extends SimpleNodeSchemaBase<NodeKind.Map> {
+export interface SimpleMapNodeSchema<out TCustomMetadata = unknown>
+	extends SimpleNodeSchemaBase<NodeKind.Map, TCustomMetadata> {
 	/**
 	 * The types allowed as values in the map.
 	 *
@@ -105,7 +111,7 @@ export interface SimpleMapNodeSchema extends SimpleNodeSchemaBase<NodeKind.Map> 
 /**
  * A {@link SimpleNodeSchema} for a leaf node.
  *
- * @internal
+ * @alpha
  * @sealed
  */
 export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBase<NodeKind.Leaf> {
@@ -122,7 +128,12 @@ export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBase<NodeKind.Leaf
  * To be useful, this generally needs to be used as a part of a complete {@link SimpleTreeSchema}, which
  * contains backing {@link SimpleTreeSchema.definitions} for each referenced identifier.
  *
- * @internal
+ * Note that, as documented on {@link NodeKind}, more kinds of nodes may be added,
+ * and therefore code should not assume that switching over all these cases can be done exhaustively.
+ * @privateRemarks
+ * Because of the above mentioned extensibility of node kinds, does it make sense to stabilize this?
+ *
+ * @alpha
  */
 export type SimpleNodeSchema =
 	| SimpleLeafNodeSchema
@@ -133,11 +144,9 @@ export type SimpleNodeSchema =
 /**
  * A simple, shallow representation of a schema for a field.
  *
- * @privateRemarks This definition is incomplete, and references child types by identifiers.
+ * @remarks This definition is incomplete, and references child types by identifiers.
  * To be useful, this generally needs to be used as a part of a complete {@link SimpleTreeSchema}, which
  * contains backing {@link SimpleTreeSchema.definitions} for each referenced identifier.
- *
- * TODO: make these back into normal `remarks` once SimpleTreeSchema is not internal.
  *
  * @alpha
  * @sealed
@@ -152,16 +161,14 @@ export interface SimpleFieldSchema {
 	 * The types allowed under the field.
 	 *
 	 * @remarks Refers to the types by identifier.
-	 * @privateremarks
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
-	 * TODO: make these mack into normal `remarks` once SimpleTreeSchema is not internal.
 	 */
 	readonly allowedTypesIdentifiers: ReadonlySet<string>;
 
 	/**
 	 * {@inheritDoc FieldSchemaMetadata}
 	 */
-	readonly metadata?: FieldSchemaMetadata | undefined;
+	readonly metadata: FieldSchemaMetadata;
 }
 
 /**
@@ -170,25 +177,17 @@ export interface SimpleFieldSchema {
  * @remarks Contains the complete set of schema {@link SimpleTreeSchema.definitions} required to resolve references,
  * which are represented inline with identifiers.
  *
- * @internal
+ * @alpha
  * @sealed
  */
-export interface SimpleTreeSchema extends SimpleFieldSchema {
+export interface SimpleTreeSchema {
 	/**
-	 * The kind of tree field representing the root of the tree.
+	 * The tree field representing the root of the tree.
 	 */
-	readonly kind: FieldKind;
+	readonly root: SimpleFieldSchema;
 
 	/**
-	 * The types allowed under the tree root.
-	 *
-	 * @remarks Refers to the types by identifier.
-	 * Can be resolved via {@link SimpleTreeSchema.definitions}.
-	 */
-	readonly allowedTypesIdentifiers: ReadonlySet<string>;
-
-	/**
-	 * The complete set of node schema definitions recursively referenced by the tree's {@link SimpleTreeSchema.allowedTypesIdentifiers}.
+	 * The complete set of node schema definitions recursively referenced by the tree's {@link SimpleTreeSchema.root}.
 	 *
 	 * @remarks the keys are the schemas' {@link TreeNodeSchemaCore.identifier | identifiers}.
 	 */

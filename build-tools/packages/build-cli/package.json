@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-cli",
-	"version": "0.55.0",
+	"version": "0.56.0",
 	"description": "Build tools for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -85,7 +85,7 @@
 		"@fluidframework/build-tools": "workspace:~",
 		"@fluidframework/bundle-size-tools": "workspace:~",
 		"@inquirer/prompts": "^7.0.1",
-		"@microsoft/api-extractor": "^7.47.11",
+		"@microsoft/api-extractor": "^7.50.1",
 		"@oclif/core": "^4.0.30",
 		"@oclif/plugin-autocomplete": "^3.2.7",
 		"@oclif/plugin-commands": "^4.1.5",
@@ -130,7 +130,7 @@
 		"remark-toc": "^9.0.0",
 		"replace-in-file": "^7.2.0",
 		"resolve.exports": "^2.0.2",
-		"semver": "^7.6.3",
+		"semver": "^7.7.1",
 		"semver-utils": "^1.1.4",
 		"simple-git": "^3.27.0",
 		"sort-json": "^2.0.1",
@@ -158,7 +158,7 @@
 		"@types/node": "^18.19.59",
 		"@types/prettier": "^2.7.3",
 		"@types/prompts": "^2.4.9",
-		"@types/semver": "^7.5.8",
+		"@types/semver": "^7.7.0",
 		"@types/semver-utils": "^1.1.3",
 		"@types/sort-json": "^2.0.3",
 		"@types/unist": "^3.0.3",
@@ -182,7 +182,7 @@
 		"typescript": "~5.4.5"
 	},
 	"engines": {
-		"node": ">=18.17.1"
+		"node": ">=20.15.1"
 	},
 	"fluidBuild": {
 		"tasks": {

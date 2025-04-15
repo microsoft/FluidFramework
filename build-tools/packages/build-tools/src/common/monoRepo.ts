@@ -110,7 +110,7 @@ export class MonoRepo {
 	constructor(
 		public readonly kind: string,
 		public readonly repoPath: string,
-		private readonly packageManager: PackageManager,
+		public readonly packageManager: PackageManager,
 		packageDirs: string[],
 		ignoredDirs?: string[],
 		private readonly logger: Logger = defaultLogger,

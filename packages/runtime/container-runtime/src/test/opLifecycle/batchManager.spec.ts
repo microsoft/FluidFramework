@@ -5,69 +5,43 @@
 
 import { strict as assert } from "node:assert";
 
-import { ContainerMessageType } from "../../messageTypes.js";
 import type { IBatchMetadata } from "../../metadata.js";
 import {
 	BatchManager,
-	BatchMessage,
-	IBatchManagerOptions,
 	estimateSocketSize,
 	generateBatchId,
+	localBatchToOutboundBatch,
 } from "../../opLifecycle/index.js";
+import type { IBatchManagerOptions, LocalBatchMessage } from "../../opLifecycle/index.js";
 
 describe("BatchManager", () => {
-	const hardLimit = 950 * 1024;
 	const smallMessageSize = 10;
 	const defaultOptions: IBatchManagerOptions = {
-		hardLimit,
 		canRebase: true,
 	};
 
 	const generateStringOfSize = (sizeInBytes: number): string => "0".repeat(sizeInBytes);
 
-	const smallMessage = (): BatchMessage =>
-		({
-			contents: generateStringOfSize(smallMessageSize),
-			type: ContainerMessageType.FluidDataStoreOp,
-		}) as unknown as BatchMessage;
-
-	it("BatchManager: 'infinity' hard limit allows everything", () => {
-		const message = { contents: generateStringOfSize(1024) } as unknown as BatchMessage;
-		const batchManager = new BatchManager({
-			...defaultOptions,
-			hardLimit: Number.POSITIVE_INFINITY,
-		});
-
-		for (let i = 1; i <= 10; i++) {
-			assert.equal(batchManager.push(message, /* reentrant */ false), true);
-			assert.equal(batchManager.length, i);
-		}
+	const smallMessage = (): LocalBatchMessage => ({
+		serializedOp: generateStringOfSize(smallMessageSize),
+		referenceSequenceNumber: 0,
 	});
 
 	for (const includeBatchId of [true, false])
-		it(`Batch metadata is set correctly [with${includeBatchId ? "" : "out"} batchId]`, () => {
+		it(`Batch metadata is set correctly [${includeBatchId ? "with" : "without"} batchId]`, () => {
 			const batchManager = new BatchManager(defaultOptions);
 			const batchId = includeBatchId ? "BATCH_ID" : undefined;
-			assert.equal(
-				batchManager.push(
-					{ ...smallMessage(), referenceSequenceNumber: 0 },
-					/* reentrant */ false,
-				),
-				true,
+			batchManager.push(
+				{ ...smallMessage(), referenceSequenceNumber: 0 },
+				/* reentrant */ false,
 			);
-			assert.equal(
-				batchManager.push(
-					{ ...smallMessage(), referenceSequenceNumber: 1 },
-					/* reentrant */ false,
-				),
-				true,
+			batchManager.push(
+				{ ...smallMessage(), referenceSequenceNumber: 1 },
+				/* reentrant */ false,
 			);
-			assert.equal(
-				batchManager.push(
-					{ ...smallMessage(), referenceSequenceNumber: 2 },
-					/* reentrant */ false,
-				),
-				true,
+			batchManager.push(
+				{ ...smallMessage(), referenceSequenceNumber: 2 },
+				/* reentrant */ false,
 			);
 
 			const batch = batchManager.popBatch(batchId);
@@ -80,12 +54,9 @@ describe("BatchManager", () => {
 				],
 			);
 
-			assert.equal(
-				batchManager.push(
-					{ ...smallMessage(), referenceSequenceNumber: 0 },
-					/* reentrant */ false,
-				),
-				true,
+			batchManager.push(
+				{ ...smallMessage(), referenceSequenceNumber: 0 },
+				/* reentrant */ false,
 			);
 			const singleOpBatch = batchManager.popBatch(batchId);
 			assert.deepEqual(
@@ -104,38 +75,19 @@ describe("BatchManager", () => {
 		assert.equal(serialized, `{"batchId":"3627a2a9-963f-4e3b-a4d2-a31b1267ef29_[123]"}`);
 	});
 
-	it("Batch content size is tracked correctly", () => {
-		const batchManager = new BatchManager(defaultOptions);
-		assert.equal(batchManager.push(smallMessage(), /* reentrant */ false), true);
-		assert.equal(batchManager.contentSizeInBytes, smallMessageSize * batchManager.length);
-		assert.equal(batchManager.push(smallMessage(), /* reentrant */ false), true);
-		assert.equal(batchManager.contentSizeInBytes, smallMessageSize * batchManager.length);
-		assert.equal(batchManager.push(smallMessage(), /* reentrant */ false), true);
-		assert.equal(batchManager.contentSizeInBytes, smallMessageSize * batchManager.length);
-	});
-
 	it("Batch reference sequence number maps to the last message", () => {
 		const batchManager = new BatchManager(defaultOptions);
-		assert.equal(
-			batchManager.push(
-				{ ...smallMessage(), referenceSequenceNumber: 0 },
-				/* reentrant */ false,
-			),
-			true,
+		batchManager.push(
+			{ ...smallMessage(), referenceSequenceNumber: 0 },
+			/* reentrant */ false,
 		);
-		assert.equal(
-			batchManager.push(
-				{ ...smallMessage(), referenceSequenceNumber: 1 },
-				/* reentrant */ false,
-			),
-			true,
+		batchManager.push(
+			{ ...smallMessage(), referenceSequenceNumber: 1 },
+			/* reentrant */ false,
 		);
-		assert.equal(
-			batchManager.push(
-				{ ...smallMessage(), referenceSequenceNumber: 2 },
-				/* reentrant */ false,
-			),
-			true,
+		batchManager.push(
+			{ ...smallMessage(), referenceSequenceNumber: 2 },
+			/* reentrant */ false,
 		);
 
 		assert.equal(batchManager.sequenceNumbers.referenceSequenceNumber, 2);
@@ -145,86 +97,65 @@ describe("BatchManager", () => {
 		const batchManager = new BatchManager(defaultOptions);
 		batchManager.push(smallMessage(), /* reentrant */ false);
 		// 10 bytes of content + 200 bytes overhead
-		assert.equal(estimateSocketSize(batchManager.popBatch()), 210);
+		assert.equal(estimateSocketSize(localBatchToOutboundBatch(batchManager.popBatch())), 210);
 
 		for (let i = 0; i < 10; i++) {
 			batchManager.push(smallMessage(), /* reentrant */ false);
 		}
 
 		// (10 bytes of content + 200 bytes overhead) x 10
-		assert.equal(estimateSocketSize(batchManager.popBatch()), 2100);
+		assert.equal(estimateSocketSize(localBatchToOutboundBatch(batchManager.popBatch())), 2100);
 
 		batchManager.push(smallMessage(), /* reentrant */ false);
 		for (let i = 0; i < 9; i++) {
 			batchManager.push(
 				{
-					contents: undefined,
-					type: ContainerMessageType.FluidDataStoreOp,
-				} as unknown as BatchMessage,
+					serializedOp: "",
+					referenceSequenceNumber: 0,
+				},
 				/* reentrant */ false,
 			); // empty op
 		}
 
 		// 10 bytes of content + 200 bytes overhead x 10
-		assert.equal(estimateSocketSize(batchManager.popBatch()), 2010);
+		assert.equal(estimateSocketSize(localBatchToOutboundBatch(batchManager.popBatch())), 2010);
 	});
 
 	it("Batch op reentry state preserved during its lifetime", () => {
 		const batchManager = new BatchManager(defaultOptions);
-		assert.equal(
-			batchManager.push(
-				{ ...smallMessage(), referenceSequenceNumber: 0 },
-				/* reentrant */ false,
-			),
-			true,
+		batchManager.push(
+			{ ...smallMessage(), referenceSequenceNumber: 0 },
+			/* reentrant */ false,
 		);
-		assert.equal(
-			batchManager.push(
-				{ ...smallMessage(), referenceSequenceNumber: 1 },
-				/* reentrant */ false,
-			),
-			true,
+		batchManager.push(
+			{ ...smallMessage(), referenceSequenceNumber: 1 },
+			/* reentrant */ false,
 		);
-		assert.equal(
-			batchManager.push(
-				{ ...smallMessage(), referenceSequenceNumber: 2 },
-				/* reentrant */ false,
-			),
-			true,
+		batchManager.push(
+			{ ...smallMessage(), referenceSequenceNumber: 2 },
+			/* reentrant */ false,
 		);
 
 		assert.equal(batchManager.popBatch().hasReentrantOps, false);
 
-		assert.equal(
-			batchManager.push(
-				{ ...smallMessage(), referenceSequenceNumber: 0 },
-				/* reentrant */ false,
-			),
-			true,
+		batchManager.push(
+			{ ...smallMessage(), referenceSequenceNumber: 0 },
+			/* reentrant */ false,
 		);
-		assert.equal(
-			batchManager.push(
-				{ ...smallMessage(), referenceSequenceNumber: 1 },
-				/* reentrant */ true,
-				/* currentClientSequenceNumber */ undefined,
-			),
-			true,
+		batchManager.push(
+			{ ...smallMessage(), referenceSequenceNumber: 1 },
+			/* reentrant */ true,
+			/* currentClientSequenceNumber */ undefined,
 		);
-		assert.equal(
-			batchManager.push(
-				{ ...smallMessage(), referenceSequenceNumber: 2 },
-				/* reentrant */ false,
-			),
-			true,
+		batchManager.push(
+			{ ...smallMessage(), referenceSequenceNumber: 2 },
+			/* reentrant */ false,
 		);
 		assert.equal(batchManager.popBatch().hasReentrantOps, true);
 
-		assert.equal(
-			batchManager.push(
-				{ ...smallMessage(), referenceSequenceNumber: 0 },
-				/* reentrant */ false,
-			),
-			true,
+		batchManager.push(
+			{ ...smallMessage(), referenceSequenceNumber: 0 },
+			/* reentrant */ false,
 		);
 		assert.equal(batchManager.popBatch().hasReentrantOps, false);
 	});
@@ -250,7 +181,6 @@ describe("BatchManager", () => {
 
 		// Verify state after rollback
 		assert.equal(batchManager.length, 2);
-		assert.equal(batchManager.contentSizeInBytes, smallMessageSize * 2);
 	});
 
 	it("should handle rollback with no additional messages", () => {
@@ -269,7 +199,6 @@ describe("BatchManager", () => {
 
 		// Verify state after rollback
 		assert.equal(batchManager.length, 1);
-		assert.equal(batchManager.contentSizeInBytes, smallMessageSize);
 	});
 
 	it("should throw error if ops are generated during rollback", () => {
@@ -290,7 +219,7 @@ describe("BatchManager", () => {
 				// Generate ops during rollback
 				batchManager.push(smallMessage(), /* reentrant */ false);
 			});
-		}, /Error: Ops generated durning rollback/);
+		}, /Error: Ops generated during rollback/);
 	});
 
 	it("Popping the batch then rolling is not allowed", () => {
@@ -309,6 +238,6 @@ describe("BatchManager", () => {
 				// Generate ops during rollback
 				batchManager.push(smallMessage(), /* reentrant */ false);
 			});
-		}, /Error: Ops generated durning rollback/);
+		}, /Error: Ops generated during rollback/);
 	});
 });

@@ -183,17 +183,20 @@ export function breakingClass<Target extends abstract new (...args: any[]) => Wi
 	target: Target,
 	context: ClassDecoratorContext<Target>,
 ): Target {
-	abstract class DecoratedBreakable extends target {}
+	// This could extend target, but doing so adds an extra step in the prototype chain and makes the instances just show up as "DecoratedBreakable" in the debugger.
+	const DecoratedBreakable = target;
 
-	// Keep track of what keys we have seen,
-	// since we visit most derived properties first and need to avoid wrapping base properties overriding more derived ones.
-	const overriddenKeys: Set<string | symbol> = new Set();
+	// Keep track of what keys we have seen (and already wrapped if needed).
+	// Used to avoid rewrapping already wrapped properties.
+	// Preloaded with "constructor" to avoid wrapping the constructor as there is no need to set the broken flag when the constructor throws and does not return an object.
+	// Avoiding wrapping the constructor also avoids messing up the displayed name in the debugger.
+	const doNotWrap: Set<string | symbol> = new Set(["constructor"]);
 
 	let prototype: object | null = target.prototype;
 	while (prototype !== null) {
 		for (const key of Reflect.ownKeys(prototype)) {
-			if (!overriddenKeys.has(key)) {
-				overriddenKeys.add(key);
+			if (!doNotWrap.has(key)) {
+				doNotWrap.add(key);
 				const descriptor = Reflect.getOwnPropertyDescriptor(prototype, key);
 				if (descriptor !== undefined) {
 					// Method

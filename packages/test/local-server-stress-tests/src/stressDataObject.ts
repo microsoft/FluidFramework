@@ -24,7 +24,6 @@ import type {
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
-// eslint-disable-next-line import/no-deprecated
 import type {
 	// eslint-disable-next-line import/no-deprecated
 	IContainerRuntimeBaseExperimental,

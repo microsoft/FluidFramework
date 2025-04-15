@@ -27,6 +27,20 @@ export const isSerializedHandle = (value: any): value is ISerializedHandle =>
 	value?.type === "__fluid_handle__";
 
 /**
+ * Encodes the given IFluidHandle into a JSON-serializable form,
+ * @param handle - The IFluidHandle to serialize.
+ * @returns The serialized handle.
+ *
+ * @internal
+ */
+export function encodeHandleForSerialization(handle: IFluidHandleInternal): ISerializedHandle {
+	return {
+		type: "__fluid_handle__",
+		url: handle.absolutePath,
+	};
+}
+
+/**
  * Setting to opt into compatibility with handles from before {@link fluidHandleSymbol} existed (Fluid Framework client 2.0.0-rc.3.0.0 and earlier).
  *
  * Some code which uses this library might dynamically load multiple versions of it,

@@ -598,7 +598,7 @@ function mixinSynchronization<TOperation extends BaseOperation>(
 						await model.validateConsistency(client, validationClient);
 					} catch (error: unknown) {
 						if (error instanceof Error) {
-							error.message = `Comparing client ${validationClient.tag} vs client ${client.tag}\n${error.message}`;
+							error.message = `Comparing client ${client.tag} vs client ${validationClient.tag}\n${error.message}`;
 						}
 						throw error;
 					}

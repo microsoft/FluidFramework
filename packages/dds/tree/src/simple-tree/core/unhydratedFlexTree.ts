@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert, oob, fail } from "@fluidframework/core-utils/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -25,7 +25,7 @@ import {
 	type TreeStoredSchema,
 	type Value,
 } from "../../core/index.js";
-import { brand, fail, getOrCreate, mapIterable } from "../../util/index.js";
+import { brand, getOrCreate, mapIterable } from "../../util/index.js";
 import {
 	type FlexTreeContext,
 	FlexTreeEntityKind,
@@ -150,11 +150,24 @@ export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
 	public adoptBy(parent: UnhydratedFlexTreeField, index: number): void;
 	public adoptBy(parent: UnhydratedFlexTreeField | undefined, index?: number): void {
 		if (parent !== undefined) {
-			assert(
-				this.location === unparentedLocation,
-				0x98c /* Node may not be adopted if it already has a parent */,
-			);
 			assert(index !== undefined, 0xa08 /* Expected index */);
+			if (this.location !== unparentedLocation) {
+				throw new UsageError("A node may not be inserted if it's already in a tree");
+			}
+			let unhydratedNode: UnhydratedFlexTreeNode | undefined = parent.parent;
+			while (unhydratedNode !== undefined) {
+				if (unhydratedNode === this) {
+					throw new UsageError(
+						"A node may not be inserted into a location that is under itself",
+					);
+				}
+				const parentNode: FlexTreeNode | undefined = unhydratedNode.parentField.parent.parent;
+				assert(
+					parentNode === undefined || parentNode instanceof UnhydratedFlexTreeNode,
+					0xb77 /* Unhydrated node's parent should be an unhydrated node */,
+				);
+				unhydratedNode = parentNode;
+			}
 			this.location = { parent, index };
 		} else {
 			assert(
