@@ -15,7 +15,7 @@ import {
 } from "../compatUtils.js";
 import { enabledCompressionConfig } from "../compressionDefinitions.js";
 
-describe.only("compatUtils", () => {
+describe("compatUtils", () => {
 	describe("getConfigsForCompatMode", () => {
 		it("returns correct configs for compatibilityMode = defaultCompatibilityMode", () => {
 			const result = getConfigsForCompatMode(
