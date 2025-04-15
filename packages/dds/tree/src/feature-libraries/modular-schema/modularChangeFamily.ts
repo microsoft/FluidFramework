@@ -2519,7 +2519,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 			if (nodeChange !== undefined) {
 				setInChangeAtomIdMap(
 					this.table.rebasedRootNodes.nodeChanges,
-					baseDetachId,
+					baseAttachId,
 					nodeChange,
 				);
 			}
