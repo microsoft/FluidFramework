@@ -71,6 +71,13 @@ export type IContainerRuntimeOptionsVersionDependent = Required<
 >;
 
 /**
+ * String in a valid semver format.
+ */
+type SemanticVersion =
+	| `${number}.${number}.${number}`
+	| `${number}.${number}.${number}-${string}`;
+
+/**
  * Mapping of version-dependent options to their compatibility related configs.
  *
  * Each key in this map corresponds to a property in IContainerRuntimeOptionsVersionDependent.
@@ -78,7 +85,7 @@ export type IContainerRuntimeOptionsVersionDependent = Required<
  */
 const versionDependentOptionConfigMap: {
 	[K in keyof IContainerRuntimeOptionsVersionDependent]: {
-		[version: string]: IContainerRuntimeOptionsVersionDependent[K];
+		[version: SemanticVersion]: IContainerRuntimeOptionsVersionDependent[K];
 	};
 } = {
 	enableGroupedBatching: {
@@ -142,7 +149,7 @@ export function getConfigsForCompatMode(
 		// value that is compatible with the version specified as the compatibilityMode.
 		for (const version of Object.keys(config)) {
 			if (semverGte(compatibilityMode, version)) {
-				defaultConfigs[key] = config[version];
+				defaultConfigs[key] = config[version as SemanticVersion];
 			} else {
 				// If the compatibility mode is less than the version, we break out of the loop since we don't need to check
 				// any later versions.
