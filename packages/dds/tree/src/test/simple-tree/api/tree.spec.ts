@@ -12,12 +12,10 @@ import {
 	SchemaFactory,
 	TreeViewConfiguration,
 	type TreeNodeSchema,
-	type TreeView,
 } from "../../../simple-tree/index.js";
 import { TreeFactory } from "../../../treeFactory.js";
 import { getView, validateUsageError } from "../../utils.js";
-import { MockNodeIdentifierManager } from "../../../feature-libraries/index.js";
-import { Tree } from "../../../shared-tree/index.js";
+import { independentView, Tree } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { checkUnion } from "../../../simple-tree/api/tree.js";
 
@@ -32,33 +30,21 @@ const factory = new TreeFactory({});
 describe("simple-tree tree", () => {
 	it("ListRoot", () => {
 		const config = new TreeViewConfiguration({ schema: NodeList });
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view: TreeView<typeof NodeList> = tree.viewWith(config);
+		const view = getView(config);
 		view.initialize(new NodeList(["a", "b"]));
 		assert.deepEqual([...view.root], ["a", "b"]);
 	});
 
 	it("Implicit ListRoot", () => {
 		const config = new TreeViewConfiguration({ schema: NodeList });
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view: TreeView<typeof NodeList> = tree.viewWith(config);
+		const view = getView(config);
 		view.initialize(["a", "b"]);
 		assert.deepEqual([...view.root], ["a", "b"]);
 	});
 
 	it("ObjectRoot - Data", () => {
 		const config = new TreeViewConfiguration({ schema: Canvas });
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view: TreeView<typeof Canvas> = tree.viewWith(config);
+		const view = getView(config);
 		view.initialize({ stuff: ["a", "b"] });
 	});
 
@@ -90,12 +76,6 @@ describe("simple-tree tree", () => {
 	});
 
 	it("preventAmbiguity - example ambiguous", () => {
-		// TODO: this is left out of the example since we don't have a nice public facing way to create a test tree. We should fix that.
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-
 		const schemaFactory = new SchemaFactory("com.example");
 		class Feet extends schemaFactory.object("Feet", { length: schemaFactory.number }) {}
 		class Meters extends schemaFactory.object("Meters", { length: schemaFactory.number }) {}
@@ -104,7 +84,7 @@ describe("simple-tree tree", () => {
 			schema: [Feet, Meters],
 			preventAmbiguity: false,
 		});
-		const view = tree.viewWith(config);
+		const view = independentView(config, { idCompressor: createIdCompressor() });
 		// This is invalid since it is ambiguous which type of node is being constructed:
 		// view.initialize({ length: 5 });
 		// To work, an explicit type can be provided by using an {@link Unhydrated} Node:
@@ -112,12 +92,6 @@ describe("simple-tree tree", () => {
 	});
 
 	it("preventAmbiguity - example unambiguous", () => {
-		// TODO: this is left out of the example since we don't have a nice public facing way to create a test tree. We should fix that.
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-
 		const schemaFactory = new SchemaFactory("com.example");
 		class Feet extends schemaFactory.object("Feet", { length: schemaFactory.number }) {}
 		class Meters extends schemaFactory.object("Meters", {
@@ -131,7 +105,7 @@ describe("simple-tree tree", () => {
 			schema: [Feet, Meters],
 			preventAmbiguity: true,
 		});
-		const view = tree.viewWith(config);
+		const view = independentView(config, { idCompressor: createIdCompressor() });
 		// This now works, since the field is sufficient to determine this is a `Meters` node.
 		view.initialize({ meters: 5 });
 	});
@@ -249,11 +223,7 @@ describe("simple-tree tree", () => {
 	it("default identifier with schema validation", () => {
 		class HasId extends schema.object("hasID", { id: schema.identifier }) {}
 		const config = new TreeViewConfiguration({ schema: HasId, enableSchemaValidation: true });
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view = tree.viewWith(config);
+		const view = getView(config);
 		// TODO: Issues prevent this test from detecting the bug this would otherwise detect.
 		// This would error (due to schema validation being done before default is provided, see note on mapTreeFromNodeData),
 		// but this issue is not detected since we fail to validate the initial tree due to issue noted in isNodeInSchema ( AB#8197 )
@@ -317,11 +287,7 @@ describe("simple-tree tree", () => {
 
 	it("accessing view.root does not leak LazyEntities", () => {
 		const config = new TreeViewConfiguration({ schema: Canvas });
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view = tree.viewWith(config);
+		const view = getView(config);
 		view.initialize({ stuff: [] });
 		const _unused = view.root;
 		const context = view.getView().context;
@@ -336,11 +302,7 @@ describe("simple-tree tree", () => {
 
 	it("accessing root via Tree.parent does not leak LazyEntities", () => {
 		const config = new TreeViewConfiguration({ schema: Canvas });
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view = tree.viewWith(config);
+		const view = getView(config);
 		view.initialize({ stuff: [] });
 		const child = view.root.stuff;
 		Tree.parent(child);
@@ -356,32 +318,20 @@ describe("simple-tree tree", () => {
 
 	it("ObjectRoot - unhydrated", () => {
 		const config = new TreeViewConfiguration({ schema: Canvas });
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view: TreeView<typeof Canvas> = tree.viewWith(config);
+		const view = getView(config);
 		view.initialize(new Canvas({ stuff: ["a", "b"] }));
 	});
 
 	it("Union Root", () => {
 		const config = new TreeViewConfiguration({ schema: [schema.string, schema.number] });
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view = tree.viewWith(config);
+		const view = getView(config);
 		view.initialize("a");
 		assert.equal(view.root, "a");
 	});
 
 	it("optional Root - initialized to undefined", () => {
 		const config = new TreeViewConfiguration({ schema: schema.optional(schema.string) });
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view = tree.viewWith(config);
+		const view = getView(config);
 		// Note: the tree's schema hasn't been initialized at this point, so even though the view schema
 		// allows an optional field, explicit initialization must occur.
 		assert.throws(() => view.root, /Document is out of schema./);
@@ -391,22 +341,14 @@ describe("simple-tree tree", () => {
 
 	it("optional Root - initializing only schema", () => {
 		const config = new TreeViewConfiguration({ schema: schema.optional(schema.string) });
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view = tree.viewWith(config);
+		const view = getView(config);
 		view.upgradeSchema();
 		assert.equal(view.root, undefined);
 	});
 
 	it("optional Root - full", () => {
 		const config = new TreeViewConfiguration({ schema: schema.optional(schema.string) });
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view = tree.viewWith(config);
+		const view = getView(config);
 		view.initialize("x");
 		assert.equal(view.root, "x");
 	});
@@ -414,11 +356,7 @@ describe("simple-tree tree", () => {
 	it("Nested list", () => {
 		const nestedList = schema.array(schema.array(schema.string));
 		const config = new TreeViewConfiguration({ schema: nestedList });
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view = tree.viewWith(config);
+		const view = getView(config);
 		view.initialize([["a"]]);
 		assert.equal(view.root?.length, 1);
 		const child = view.root[0];
@@ -428,26 +366,51 @@ describe("simple-tree tree", () => {
 	});
 
 	describe("field defaults", () => {
-		it("adds identifier to unpopulated identifier fields.", () => {
+		it("initialize with identifier to unpopulated identifier fields.", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				identifier: schema.identifier,
 			});
-			const nodeKeyManager = new MockNodeIdentifierManager();
 			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
-			const view = getView(config, nodeKeyManager);
+			const view = getView(config);
 			view.initialize({ identifier: undefined });
-			assert.equal(view.root.identifier, "a110ca7e-add1-4000-8000-000000000000");
+			assert.equal(view.root.identifier, "beefbeef-beef-4000-8000-000000000001");
+		});
+
+		it("adds identifier to unpopulated identifier fields.", () => {
+			class SchemaWithIdentifier extends schema.object("parent", {
+				identifier: schema.identifier,
+			}) {}
+			const config = new TreeViewConfiguration({
+				schema: SchemaFactory.optional(SchemaWithIdentifier),
+			});
+			const view = getView(config);
+			view.initialize(undefined);
+			const toHydrate = new SchemaWithIdentifier({ identifier: undefined });
+
+			view.root = toHydrate;
+			assert.equal(toHydrate, view.root);
+			assert.equal(toHydrate.identifier, "beefbeef-beef-4000-8000-000000000004");
+
+			view.root = { identifier: undefined };
+			assert.equal(view.root?.identifier, "beefbeef-beef-4000-8000-000000000006");
 		});
 
 		it("populates field when no field defaulter is provided.", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				testOptionalField: schema.optional(schema.string),
 			});
-			const nodeKeyManager = new MockNodeIdentifierManager();
 			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
-			const view = getView(config, nodeKeyManager);
+			const view = getView(config);
 			view.initialize({ testOptionalField: undefined });
 			assert.equal(view.root.testOptionalField, undefined);
+		});
+
+		// TODO: Identifier roots should be able to be defaulted, but currently throw a usage error.
+		it.skip("adds identifier to unpopulated root", () => {
+			const config = new TreeViewConfiguration({ schema: schema.identifier });
+			const view = getView(config);
+			view.initialize(undefined);
+			assert.equal(view.root, "beefbeef-beef-4000-8000-000000000001");
 		});
 	});
 });
@@ -456,11 +419,7 @@ describe("object allocation tests", () => {
 	it("accessing leaf on object node does not allocate flex nodes", () => {
 		class TreeWithLeaves extends schema.object("TreeWithLeaves", { leaf: schema.number }) {}
 		const config = new TreeViewConfiguration({ schema: TreeWithLeaves });
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view = tree.viewWith(config);
+		const view = getView(config);
 		view.initialize({ leaf: 1 });
 		const context = view.getView().context;
 		// Note: access the root before trying to access just the leaf, to not count any object allocations that result from
@@ -481,11 +440,7 @@ describe("object allocation tests", () => {
 	it("accessing leaf on map node does not allocate flex nodes", () => {
 		class TreeWithLeaves extends schema.map("MapOfLeaves", schema.number) {}
 		const config = new TreeViewConfiguration({ schema: TreeWithLeaves });
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view = tree.viewWith(config);
+		const view = getView(config);
 		view.initialize(new Map([["1", 1]]));
 		const context = view.getView().context;
 		// Note: access the map that contains leaves before trying to access just the leaf at one of the keys, to not
@@ -506,11 +461,7 @@ describe("object allocation tests", () => {
 	it("accessing leaf on array node does not allocate flex nodes", () => {
 		class TreeWithLeaves extends schema.array("ArrayOfLeaves", schema.number) {}
 		const config = new TreeViewConfiguration({ schema: TreeWithLeaves });
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view = tree.viewWith(config);
+		const view = getView(config);
 		view.initialize([1, 2]);
 		const context = view.getView().context;
 		// Note: prior to taking the "before count", access the array that contains leaves *and the first leaf in it*,

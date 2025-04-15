@@ -29,14 +29,13 @@ import {
 	addProperties,
 	copyPropertiesAndManager,
 	type ISegmentInternal,
+	UnassignedSequenceNumber,
+	UniversalSequenceNumber,
 } from "@fluidframework/merge-tree/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { v4 as uuid } from "uuid";
 
-import {
-	computeStickinessFromSide,
-	reservedIntervalIdKey,
-	sidesFromStickiness,
-} from "../intervalCollection.js";
+import { computeStickinessFromSide } from "../intervalCollection.js";
 
 import {
 	ISerializableInterval,
@@ -45,6 +44,7 @@ import {
 	IntervalType,
 	endReferenceSlidingPreference,
 	startReferenceSlidingPreference,
+	type SerializedIntervalDelta,
 } from "./intervalUtils.js";
 
 function compareSides(sideA: Side, sideB: Side): number {
@@ -73,6 +73,30 @@ function maxSide(sideA: Side, sideB: Side): Side {
 	}
 
 	return Side.After;
+}
+
+const reservedIntervalIdKey = "intervalId";
+
+const legacyIdPrefix = "legacy";
+
+export function getSerializedProperties(
+	serializedInterval: ISerializedInterval | SerializedIntervalDelta,
+): {
+	id: string;
+	labels: string[];
+	properties: PropertySet;
+} {
+	const {
+		[reservedIntervalIdKey]: maybeId,
+		[reservedRangeLabelsKey]: labels,
+		...properties
+	} = serializedInterval.properties ?? {};
+	// Create a non-unique ID based on start and end to be used on intervals that come from legacy clients
+	// without ID's.
+	const id =
+		maybeId ?? `${legacyIdPrefix}${serializedInterval.start}-${serializedInterval.end}`;
+
+	return { id, labels, properties };
 }
 
 /**
@@ -183,15 +207,32 @@ export interface SequenceInterval extends ISerializableInterval {
 }
 
 export class SequenceIntervalClass implements SequenceInterval {
+	readonly #props: {
+		propertyManager?: PropertiesManager;
+		properties: PropertySet;
+	} = { properties: createMap<any>() };
+
 	/**
 	 * {@inheritDoc ISerializableInterval.properties}
 	 */
-	public properties: PropertySet = createMap<any>();
+	public get properties(): Readonly<PropertySet> {
+		return this.#props.properties;
+	}
 
-	/**
-	 * {@inheritDoc ISerializableInterval.propertyManager}
-	 */
-	public propertyManager?: PropertiesManager;
+	public changeProperties(props: PropertySet | undefined, op?: ISequencedDocumentMessage) {
+		if (props !== undefined) {
+			this.#props.propertyManager ??= new PropertiesManager();
+			return this.#props.propertyManager.handleProperties(
+				{ props },
+				this.#props,
+				this.client.getCollabWindow().collaborating
+					? (op?.sequenceNumber ?? UnassignedSequenceNumber)
+					: UniversalSequenceNumber,
+				op?.minimumSequenceNumber ?? UniversalSequenceNumber,
+				this.client.getCollabWindow().collaborating,
+			);
+		}
+	}
 
 	/***/
 	public get stickiness(): IntervalStickiness {
@@ -207,6 +248,8 @@ export class SequenceIntervalClass implements SequenceInterval {
 
 	constructor(
 		private readonly client: Client,
+		private readonly id: string,
+		private readonly label: string,
 		/**
 		 * Start endpoint of this interval.
 		 * @remarks This endpoint can be resolved into a character position using the SharedString it's a part of.
@@ -223,7 +266,7 @@ export class SequenceIntervalClass implements SequenceInterval {
 		public readonly endSide: Side = Side.Before,
 	) {
 		if (props) {
-			this.properties = addProperties(this.properties, props);
+			this.#props.properties = addProperties(this.#props.properties, props);
 		}
 	}
 
@@ -264,27 +307,42 @@ export class SequenceIntervalClass implements SequenceInterval {
 	 * {@inheritDoc ISerializableInterval.serialize}
 	 */
 	public serialize(): ISerializedInterval {
-		const startPosition = this.client.localReferencePositionToPosition(this.start);
-		const endPosition = this.client.localReferencePositionToPosition(this.end);
-		const { startSide, endSide } = sidesFromStickiness(this.stickiness);
-		const serializedInterval: ISerializedInterval = {
+		return this.serializeDelta({
+			props: this.properties,
+			includeEndpoints: true,
+		}) as ISerializedInterval;
+	}
+
+	public serializeDelta({
+		props,
+		includeEndpoints,
+	}: {
+		props: PropertySet | undefined;
+		includeEndpoints: boolean;
+	}): SerializedIntervalDelta {
+		const startSegment: ISegmentInternal | undefined = this.start.getSegment();
+		const endSegment: ISegmentInternal | undefined = this.end.getSegment();
+		const startPosition = includeEndpoints
+			? (startSegment?.endpointType ??
+				this.client.localReferencePositionToPosition(this.start))
+			: undefined;
+		const endPosition = includeEndpoints
+			? (endSegment?.endpointType ?? this.client.localReferencePositionToPosition(this.end))
+			: undefined;
+		return {
 			end: endPosition,
 			intervalType: this.intervalType,
 			sequenceNumber: this.client.getCurrentSeq(),
 			start: startPosition,
 			stickiness: this.stickiness,
-			startSide,
-			endSide,
-		};
-
-		if (this.properties) {
-			serializedInterval.properties = addProperties(
-				serializedInterval.properties,
-				this.properties,
-			);
-		}
-
-		return serializedInterval;
+			startSide: includeEndpoints ? this.startSide : undefined,
+			endSide: includeEndpoints ? this.endSide : undefined,
+			properties: {
+				...props,
+				[reservedIntervalIdKey]: this.id,
+				[reservedRangeLabelsKey]: [this.label],
+			},
+		} satisfies SerializedIntervalDelta;
 	}
 
 	/**
@@ -293,6 +351,8 @@ export class SequenceIntervalClass implements SequenceInterval {
 	public clone(): SequenceIntervalClass {
 		return new SequenceIntervalClass(
 			this.client,
+			this.id,
+			this.label,
 			this.start,
 			this.end,
 			this.intervalType,
@@ -367,9 +427,7 @@ export class SequenceIntervalClass implements SequenceInterval {
 	 * {@inheritDoc ISerializableInterval.getIntervalId}
 	 */
 	public getIntervalId(): string {
-		const id = this.properties?.[reservedIntervalIdKey];
-		assert(id !== undefined, 0x5e2 /* interval ID should not be undefined */);
-		return `${id}`;
+		return this.id;
 	}
 
 	/**
@@ -397,6 +455,8 @@ export class SequenceIntervalClass implements SequenceInterval {
 
 		return new SequenceIntervalClass(
 			this.client,
+			uuid(),
+			this.label,
 			newStart,
 			newEnd,
 			this.intervalType,
@@ -482,6 +542,8 @@ export class SequenceIntervalClass implements SequenceInterval {
 
 		const newInterval = new SequenceIntervalClass(
 			this.client,
+			this.id,
+			this.label,
 			startRef,
 			endRef,
 			this.intervalType,
@@ -489,8 +551,16 @@ export class SequenceIntervalClass implements SequenceInterval {
 			startSide ?? this.startSide,
 			endSide ?? this.endSide,
 		);
-		copyPropertiesAndManager(this, newInterval);
+		copyPropertiesAndManager(this.#props, newInterval.#props);
 		return newInterval;
+	}
+
+	public ackPropertiesChange(newProps: PropertySet, op: ISequencedDocumentMessage) {
+		this.#props.propertyManager ??= new PropertiesManager();
+		// Let the propertyManager prune its pending change-properties set.
+		this.#props.propertyManager.ack(op.sequenceNumber, op.minimumSequenceNumber, {
+			props: newProps,
+		});
 	}
 }
 
@@ -569,7 +639,7 @@ function createPositionReference(
 				referenceSequenceNumber: op.referenceSequenceNumber,
 				clientId: op.clientId,
 			});
-			segoff = getSlideToSegoff(segoff, slidingPreference, useNewSlidingBehavior);
+			segoff = getSlideToSegoff(segoff, slidingPreference, undefined, useNewSlidingBehavior);
 		}
 	} else {
 		assert(
@@ -594,8 +664,24 @@ function createPositionReference(
 	);
 }
 
+export function createTransientInterval(
+	start: SequencePlace | undefined,
+	end: SequencePlace | undefined,
+	client: Client,
+) {
+	return createSequenceInterval(
+		"transient",
+		uuid(),
+		start,
+		end,
+		client,
+		IntervalType.Transient,
+	);
+}
+
 export function createSequenceInterval(
 	label: string,
+	id: string,
 	start: SequencePlace | undefined,
 	end: SequencePlace | undefined,
 	client: Client,
@@ -603,6 +689,7 @@ export function createSequenceInterval(
 	op?: ISequencedDocumentMessage,
 	fromSnapshot?: boolean,
 	useNewSlidingBehavior: boolean = false,
+	props?: PropertySet,
 ): SequenceIntervalClass {
 	const { startPos, startSide, endPos, endSide } = endpointPosAndSide(
 		start ?? "start",
@@ -666,10 +753,14 @@ export function createSequenceInterval(
 
 	const ival = new SequenceIntervalClass(
 		client,
+		id,
+		label,
 		startLref,
 		endLref,
 		intervalType,
-		rangeProp,
+		props === undefined
+			? undefined
+			: { ...props, [reservedIntervalIdKey]: undefined, [reservedRangeLabelsKey]: undefined },
 		startSide,
 		endSide,
 	);
