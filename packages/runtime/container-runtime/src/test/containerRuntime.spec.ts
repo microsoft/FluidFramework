@@ -3810,7 +3810,7 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it("all options explicity undefined", async () => {
+			it("all options explicitly undefined", async () => {
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
