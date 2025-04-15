@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/id-compressor";
-export const pkgVersion = "2.32.0";
+export const pkgVersion = "2.32.1";
