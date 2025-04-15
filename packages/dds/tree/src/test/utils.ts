@@ -12,7 +12,6 @@ import type {
 import {
 	createMockLoggerExt,
 	type IMockLoggerExt,
-	type ITelemetryLoggerExt,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -1257,31 +1256,6 @@ export const snapshotSessionId = assertIsSessionId("beefbeef-beef-4000-8000-0000
 
 export function createSnapshotCompressor() {
 	return createAlwaysFinalizedIdCompressor(snapshotSessionId);
-}
-
-/**
- * {@link getView} but with more package internal specific customization.
- */
-export function getViewConfigured<const TSchema extends ImplicitFieldSchema>(
-	config: TreeViewConfiguration<TSchema>,
-	nodeKeyManager?: NodeIdentifierManager,
-	logger?: ITelemetryLoggerExt,
-): SchematizingSimpleTreeView<TSchema> {
-	const checkout = createTreeCheckout(
-		testIdCompressor,
-		mintRevisionTag,
-		testRevisionTagCodec,
-		{
-			forest: buildForest(),
-			schema: new TreeStoredSchemaRepository(),
-			logger,
-		},
-	);
-	return new SchematizingSimpleTreeView<TSchema>(
-		checkout,
-		config,
-		nodeKeyManager ?? new MockNodeIdentifierManager(),
-	);
 }
 
 /**

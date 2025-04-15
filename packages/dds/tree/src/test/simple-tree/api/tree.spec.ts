@@ -14,7 +14,7 @@ import {
 	type TreeNodeSchema,
 } from "../../../simple-tree/index.js";
 import { TreeFactory } from "../../../treeFactory.js";
-import { getView, getViewConfigured, validateUsageError } from "../../utils.js";
+import { getView, validateUsageError } from "../../utils.js";
 import { independentView, Tree } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { checkUnion } from "../../../simple-tree/api/tree.js";
