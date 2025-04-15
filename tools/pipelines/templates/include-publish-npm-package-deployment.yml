@@ -102,10 +102,10 @@ jobs:
   # Only tag the repo if a tag name is provided.
   condition: and(succeeded(), ne('${{ parameters.tagName }}', ''))
   variables:
+    version: $[ stageDependencies.build.build.outputs['SetVersion.version']]
     # The build stage/job already ran component governance tasks.
     # We don't need them again here even if we're checking out the repo.
-    - name: skipComponentGovernanceDetection
-      value: true
+    skipComponentGovernanceDetection: true
   steps:
   - checkout: self
     clean: true
