@@ -101,6 +101,8 @@ jobs:
   dependsOn: publish_${{ replace(parameters.environment, '-', '_') }}
   # Only tag the repo if a tag name is provided.
   condition: and(succeeded(), ne('${{ parameters.tagName }}', ''))
+  variables:
+    version: $[ stageDependencies.build.build.outputs['SetVersion.version']]
   steps:
   - checkout: self
     clean: true

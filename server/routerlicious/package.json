@@ -93,9 +93,9 @@
 	"devDependencies": {
 		"@changesets/cli": "^2.27.8",
 		"@fluid-private/changelog-generator-wrapper": "file:../../packages/tools/changelog-generator-wrapper",
-		"@fluid-tools/build-cli": "0.52.0-315632",
+		"@fluid-tools/build-cli": "^0.52.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.52.0-315632",
+		"@fluidframework/build-tools": "^0.52.0",
 		"@microsoft/api-documenter": "^7.21.6",
 		"@microsoft/api-extractor": "^7.45.1",
 		"c8": "^8.0.1",

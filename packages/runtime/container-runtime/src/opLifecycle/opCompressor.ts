@@ -7,7 +7,7 @@ import { IsoBuffer } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	UsageError,
+	DataProcessingError,
 	createChildLogger,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
@@ -15,8 +15,8 @@ import { compress } from "lz4js";
 
 import { CompressionAlgorithms } from "../containerRuntime.js";
 
-import { estimateSocketSize } from "./batchManager.js";
 import { type OutboundBatchMessage, type OutboundSingletonBatch } from "./definitions.js";
+import { estimateSocketSize } from "./outbox.js";
 
 /**
  * Compresses batches of ops.
@@ -83,27 +83,27 @@ export class OpCompressor {
 	 */
 	private serializeBatchContents(batch: OutboundSingletonBatch): string {
 		const [message, ...none] = batch.messages;
-		assert(none.length === 0, "Batch should only contain a single message");
+		assert(none.length === 0, 0xb78 /* Batch should only contain a single message */);
 		try {
 			// This is expressed as a JSON array, for legacy reasons
 			return `[${message.contents}]`;
-		} catch (newError: unknown) {
-			if ((newError as Partial<Error>).message === "Invalid string length") {
+		} catch (error: unknown) {
+			if ((error as Partial<Error>).message === "Invalid string length") {
 				// This is how string interpolation signals that
 				// the content size exceeds its capacity
-				const error = new UsageError("Payload too large");
+				const dpe = DataProcessingError.create("Payload too large", "OpCompressor");
 				this.logger.sendErrorEvent(
 					{
 						eventName: "BatchTooLarge",
 						size: batch.contentSizeInBytes,
 						length: batch.messages.length,
 					},
-					error,
+					dpe,
 				);
-				throw error;
+				throw dpe;
 			}
 
-			throw newError;
+			throw error;
 		}
 	}
 }

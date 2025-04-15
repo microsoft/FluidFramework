@@ -35,6 +35,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
+	flexTreeSlot,
 	MockNodeIdentifierManager,
 	TreeCompressionStrategy,
 	TreeStatus,
@@ -86,6 +87,7 @@ import {
 	expectEqualPaths,
 	type TreeMockContainerRuntime,
 	type SharedTreeWithContainerRuntime,
+	DefaultTestSharedTreeKind,
 } from "../utils.js";
 import {
 	configuredSharedTree,
@@ -95,6 +97,7 @@ import {
 import {
 	SharedObjectCore,
 	type ISharedObjectKind,
+	type SharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
 import { TestAnchor } from "../testAnchor.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -109,13 +112,16 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/api/index.js";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+import { configureDebugAsserts } from "@fluidframework/core-utils/internal";
+// eslint-disable-next-line import/no-internal-modules
+import { proxySlot } from "../../simple-tree/core/treeNodeKernel.js";
 
 const enableSchemaValidation = true;
 
 const DebugSharedTree = configuredSharedTree({
 	jsonValidator: typeboxValidator,
 	forest: ForestTypeReference,
-}) as ISharedObjectKind<unknown> as ISharedObjectKind<ISharedTree>;
+}) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
 
 class MockSharedTreeRuntime extends MockFluidDataStoreRuntime {
 	public constructor() {
@@ -127,6 +133,15 @@ class MockSharedTreeRuntime extends MockFluidDataStoreRuntime {
 }
 
 describe("SharedTree", () => {
+	let debugAssertsDefault: boolean;
+	beforeEach(() => {
+		debugAssertsDefault = configureDebugAsserts(true);
+	});
+
+	afterEach(() => {
+		configureDebugAsserts(debugAssertsDefault);
+	});
+
 	describe("viewWith", () => {
 		it("initialize tree", () => {
 			const tree = treeTestFactory();
@@ -158,9 +173,28 @@ describe("SharedTree", () => {
 			assert.deepEqual(view2.root, 10);
 		});
 
-		// TODO (AB#31456): Enable this test once the bug is fixed.
-		it.skip("initialize-dispose-view with object schema", () => {
+		it("re-view after view disposal with TreeNodes", () => {
 			const tree = treeTestFactory();
+
+			// Scan AnchorSet and check its slots for cached invalid data.
+			function checkAnchors(allowNodes: boolean) {
+				const anchors = tree.kernel.checkout.forest.anchors;
+				for (const anchor of anchors) {
+					const node = anchor.slots.get(flexTreeSlot);
+					if (node !== undefined) {
+						assert(node.context.isDisposed() === false);
+						assert(allowNodes);
+					}
+					const proxy = anchor.slots.get(proxySlot);
+					if (proxy !== undefined) {
+						assert.equal(Tree.status(proxy), TreeStatus.InDocument);
+						assert(allowNodes);
+					}
+				}
+			}
+
+			checkAnchors(false);
+
 			assert.deepEqual(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
 
 			const factory = new SchemaFactory("my-factory");
@@ -180,10 +214,27 @@ describe("SharedTree", () => {
 			view1.initialize(new MySchema({ number: 10 }));
 			assert.deepEqual(view1.root, expectedContents);
 
+			const root1 = view1.root;
+
+			assert(Tree.status(root1) === TreeStatus.InDocument);
+
+			checkAnchors(true);
+
 			view1.dispose();
 
+			assert(Tree.status(root1) === TreeStatus.Deleted);
+			assert.throws(() => root1.number, validateUsageError(/Deleted/));
+
+			checkAnchors(false);
+
 			const view2 = tree.viewWith(config);
-			assert.deepEqual(view2.root, expectedContents); // <-- This throws with assert 0x778
+
+			checkAnchors(false);
+
+			const root2 = view2.root;
+			assert.notEqual(root1, root2);
+			assert.equal(view2.root.number, 10);
+			assert.deepEqual(view2.root, expectedContents);
 		});
 
 		it("concurrent initialize", () => {
@@ -2212,9 +2263,8 @@ describe("SharedTree", () => {
 	});
 
 	it("throws an error if attaching during a transaction", () => {
-		const sharedTreeFactory = new TreeFactory({});
 		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
-		const tree = sharedTreeFactory.create(runtime, "tree");
+		const tree = DefaultTestSharedTreeKind.getFactory().create(runtime, "tree");
 		const runtimeFactory = new MockContainerRuntimeFactory();
 		runtimeFactory.createContainerRuntime(runtime);
 		const view = asTreeViewAlpha(

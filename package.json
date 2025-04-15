@@ -1,6 +1,6 @@
 {
 	"name": "client-release-group-root",
-	"version": "2.32.0",
+	"version": "2.33.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -11,6 +11,16 @@
 	"author": "Microsoft and contributors",
 	"scripts": {
 		"build": "fluid-build --task build",
+		"build-and-test": "fluid-build --task test --worker",
+		"build-and-test:cjs": "fluid-build --task test:cjs --worker",
+		"build-and-test:esm": "fluid-build --task test:esm --worker",
+		"build-and-test:jest": "fluid-build --task test:jest --worker",
+		"build-and-test:mocha": "fluid-build --task test:mocha --worker",
+		"build-and-test:mocha:cjs": "fluid-build --task test:mocha:cjs --worker",
+		"build-and-test:mocha:esm": "fluid-build --task test:mocha:esm --worker",
+		"build-and-test:unit": "fluid-build --task test:unit --worker",
+		"build-and-test:unit:cjs": "fluid-build --task test:unit:cjs --worker",
+		"build-and-test:unit:esm": "fluid-build --task test:unit:esm --worker",
 		"build:api": "fluid-build --task build:api",
 		"build:compile": "fluid-build --task compile",
 		"build:docs": "fluid-build --task build:docs",
@@ -27,20 +37,11 @@
 		"build:gendocs:server": "concurrently \"npm:build:gendocs:server:*\"",
 		"build:gendocs:server:routerlicious": "copyfiles \"server/routerlicious/**/*.api.json\" ./_api-extractor-temp/doc-models/ -e \"**/node_modules/**\" -f -V",
 		"build:readme": "markdown-magic --files \"**/*.md\" !docs",
-		"build-and-test": "fluid-build --task test --worker",
-		"build-and-test:cjs": "fluid-build --task test:cjs --worker",
-		"build-and-test:esm": "fluid-build --task test:esm --worker",
-		"build-and-test:jest": "fluid-build --task test:jest --worker",
-		"build-and-test:mocha": "fluid-build --task test:mocha --worker",
-		"build-and-test:mocha:cjs": "fluid-build --task test:mocha:cjs --worker",
-		"build-and-test:mocha:esm": "fluid-build --task test:mocha:esm --worker",
-		"build-and-test:unit": "fluid-build --task test:unit --worker",
-		"build-and-test:unit:cjs": "fluid-build --task test:unit:cjs --worker",
-		"build-and-test:unit:esm": "fluid-build --task test:unit:esm --worker",
 		"bundle-analysis:collect": "npm run webpack:profile && flub generate bundleStats",
 		"bundle-analysis:run": "flub run bundleStats --dangerfile build-tools/packages/build-cli/lib/library/dangerfile.cjs",
 		"changeset": "flub changeset add --releaseGroup client",
 		"check:are-the-types-wrong": "fluid-build --task check:are-the-types-wrong",
+		"check:changesets": "vale .changeset --glob=*-*-*.md",
 		"check:format:repo": "biome check .",
 		"check:versions": "flub check buildVersion -g client --path .",
 		"check:versions:fix": "flub check buildVersion -g client --path . --fix",
@@ -172,6 +173,7 @@
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@microsoft/api-documenter": "^7.21.6",
 		"@microsoft/api-extractor": "7.50.1",
+		"@vvago/vale": "^3.11.2",
 		"auto-changelog": "^2.4.0",
 		"c8": "^8.0.1",
 		"changesets-format-with-issue-links": "^0.3.0",
@@ -355,10 +357,12 @@
 			"@fluentui/react-positioning's dependency on @floating-ui/dom causes a peer dependency violation, so overriding it forces a version that meets peer dependency requirements is installed.",
 			"get-tsconfig has a bug below 4.7.3 which causes eslint to fail to resolve typescript configurations. See https://github.com/privatenumber/get-tsconfig/issues/67",
 			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently.",
-			"socket.io-client has an issue with 4.8.0 which breaks the build, so avoid it: https://github.com/socketio/socket.io/issues/5202"
+			"socket.io-client has an issue with 4.8.0 which breaks the build, so avoid it: https://github.com/socketio/socket.io/issues/5202",
+			"axios pre-1.0 needs an override to stay current on a version with no reported CVEs. Caret dependencies aren't enough on a pre-1.0 package."
 		],
 		"overrides": {
 			"@types/node@<18": "^18.19.0",
+			"esbuild": "^0.25.0",
 			"get-tsconfig": "^4.7.3",
 			"node-fetch": "^2.6.9",
 			"good-fences>nodegit": "npm:empty-npm-package@1.0.0",
@@ -369,7 +373,8 @@
 			"@fluentui/react-positioning>@floating-ui/dom": "~1.5.4",
 			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
 			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0",
-			"socket.io-client": "~4.7.5"
+			"socket.io-client": "~4.7.5",
+			"axios@<0.30.0": "^0.30.0"
 		},
 		"peerDependencyComments": [
 			"@types/node is ignored because it is usually not needed by packages, and if it is, then the package will hit a compilation failure.",

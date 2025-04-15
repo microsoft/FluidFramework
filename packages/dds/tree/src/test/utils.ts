@@ -12,7 +12,6 @@ import type {
 import {
 	createMockLoggerExt,
 	type IMockLoggerExt,
-	type ITelemetryLoggerExt,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -28,7 +27,7 @@ import type {
 	IChannelServices,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
-import type { SessionId } from "@fluidframework/id-compressor";
+import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import { assertIsStableId, createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
@@ -127,6 +126,7 @@ import {
 	createTreeCheckout,
 	type ISharedTreeEditor,
 	type ITreeCheckoutFork,
+	independentView,
 } from "../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeStoredContent } from "../shared-tree/schematizeTree.js";
@@ -135,6 +135,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../shared-tree/schematizingTreeView.js";
 import type {
+	ForestOptions,
 	ISharedTree,
 	SharedTreeOptions,
 	SharedTreeOptionsInternal,
@@ -147,7 +148,6 @@ import {
 	toStoredSchema,
 	type TreeView,
 	type TreeBranchEvents,
-	type ITree,
 } from "../simple-tree/index.js";
 import {
 	Breakable,
@@ -174,8 +174,19 @@ import {
 } from "./mocksForOpBunching.js";
 import { configureDebugAsserts } from "@fluidframework/core-utils/internal";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+import type {
+	ISharedObjectKind,
+	SharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
 
 // Testing utilities
+
+/**
+ * A SharedObjectKind typed to return `ISharedTree` and configured with a `jsonValidator`.
+ */
+export const DefaultTestSharedTreeKind = configuredSharedTree({
+	jsonValidator: typeboxValidator,
+}) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
 
 /**
  * A {@link IJsonCodec} implementation which fails on encode and decode.
@@ -248,9 +259,7 @@ export class TestTreeProvider {
 	public static async create(
 		trees = 0,
 		summarizeType: SummarizeType = SummarizeType.disabled,
-		factory: IChannelFactory<ITree> = configuredSharedTree({
-			jsonValidator: typeboxValidator,
-		}).getFactory(),
+		factory: IChannelFactory<ISharedTree> = DefaultTestSharedTreeKind.getFactory(),
 	): Promise<ITestTreeProvider> {
 		// The on-demand summarizer shares a container with the first tree, so at least one tree and container must be created right away.
 		assert(
@@ -304,8 +313,11 @@ export class TestTreeProvider {
 	private static async getTree(container: IContainer): Promise<ISharedTree> {
 		const dataObject = await container.getEntryPoint();
 		assert(dataObject instanceof TestFluidObjectInternal);
-		const tree = await dataObject.getInitialSharedObject(TestTreeProvider.treeId);
-		return tree as ISharedTree;
+		const tree = await dataObject.getInitialSharedObjectTyped(
+			DefaultTestSharedTreeKind,
+			TestTreeProvider.treeId,
+		);
+		return tree;
 	}
 
 	/**
@@ -387,7 +399,7 @@ export type TreeMockContainerRuntime = Pick<
 	"connected" | "pauseInboundProcessing" | "resumeInboundProcessing" | "flush"
 >;
 export type SharedTreeWithContainerRuntime = ISharedTree & {
-	containerRuntime: TreeMockContainerRuntime;
+	readonly containerRuntime: TreeMockContainerRuntime;
 };
 
 /**
@@ -418,9 +430,7 @@ export class TestTreeProviderLite {
 	 */
 	public constructor(
 		trees = 1,
-		private readonly factory = configuredSharedTree({
-			jsonValidator: typeboxValidator,
-		}).getFactory(),
+		private readonly factory = DefaultTestSharedTreeKind.getFactory(),
 		useDeterministicSessionIds = true,
 		private readonly flushMode: FlushMode = FlushMode.Immediate,
 	) {
@@ -438,7 +448,7 @@ export class TestTreeProviderLite {
 				idCompressor: createIdCompressor(sessionId),
 				logger: this.logger,
 			});
-			const tree = this.factory.create(runtime, `tree-${i}`) as ISharedTree;
+			const tree = this.factory.create(runtime, `tree-${i}`);
 			const containerRuntime = this.runtimeFactory.createContainerRuntime(runtime);
 			this.containerRuntimeMap.set(tree.id, containerRuntime);
 			tree.connect({
@@ -1220,28 +1230,32 @@ export function treeTestFactory(
  *
  * Typically, users will want to initialize the returned view with some content (thereby setting its schema) using `TreeView.initialize`.
  *
- * Like `SchematizingSimpleTreeView` but using internal types and defaults to test id compressor.
+ * Like `SchematizingSimpleTreeView` but using internal types and uses {@link createSnapshotCompressor}.
  */
 export function getView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
-	nodeKeyManager?: NodeIdentifierManager,
-	logger?: ITelemetryLoggerExt,
+	options: ForestOptions & {
+		idCompressor?: IIdCompressor | undefined;
+	} = {},
 ): SchematizingSimpleTreeView<TSchema> {
-	const checkout = createTreeCheckout(
-		testIdCompressor,
-		mintRevisionTag,
-		testRevisionTagCodec,
-		{
-			forest: buildForest(),
-			schema: new TreeStoredSchemaRepository(),
-			logger,
-		},
-	);
-	return new SchematizingSimpleTreeView<TSchema>(
-		checkout,
-		config,
-		nodeKeyManager ?? new MockNodeIdentifierManager(),
-	);
+	const view = independentView(config, {
+		idCompressor: createSnapshotCompressor(),
+		...options,
+	});
+	assert(view instanceof SchematizingSimpleTreeView);
+	return view;
+}
+
+/**
+ * Session ids used for the created trees' IdCompressors must be deterministic.
+ * TestTreeProviderLite does this by default.
+ * Test trees which manually create their data store runtime must set up their trees'
+ * session ids explicitly.
+ */
+export const snapshotSessionId = assertIsSessionId("beefbeef-beef-4000-8000-000000000001");
+
+export function createSnapshotCompressor() {
+	return createAlwaysFinalizedIdCompressor(snapshotSessionId);
 }
 
 /**

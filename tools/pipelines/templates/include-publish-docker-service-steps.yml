@@ -71,9 +71,6 @@ jobs:
               ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:latest,
               ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:$(containerTagSuffix)
 
-        - template: /tools/pipelines/templates/include-git-tag-steps.yml@self
-          parameters:
-            tagName: ${{ parameters.tagName }}
   # templateContext is available because our templates were migrated to extend 1ES templates for pipelines, so
   # the stage defined in this file ends up being passed to a 1ES template which provides this functionality.
   templateContext:
@@ -87,3 +84,18 @@ jobs:
     type: releaseJob
     # This template is only referenced when publishing docker images to the public container registry, so it's always "production"
     isProduction: true
+
+- job: TagRelease
+  displayName: Tag Release
+  # Note: must be kept in sync with the name of the deployment job above
+  dependsOn: publish_${{ replace(parameters.environment, '-', '_') }}
+  # Only tag the repo if a tag name is provided.
+  condition: and(succeeded(), ne('${{ parameters.tagName }}', ''))
+  variables:
+    version: $[ stageDependencies.build.build.outputs['SetVersion.version']]
+  steps:
+  - checkout: self
+    clean: true
+  - template: /tools/pipelines/templates/include-git-tag-steps.yml@self
+    parameters:
+      tagName: ${{ parameters.tagName }}
