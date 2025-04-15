@@ -24,16 +24,18 @@ import {
 
 import { IThrottler } from "../throttler.js";
 
-import { Summarizer } from "./summarizer.js";
-import { ISummarizerClientElection } from "./summarizerClientElection.js";
+import type { ISummarizerClientElection } from "./summarizerClientElection.js";
 import {
-	EnqueueSummarizeResult,
 	IEnqueueSummarizeOptions,
 	IOnDemandSummarizeOptions,
-	ISummarizeResults,
 	ISummarizer,
 } from "./summarizerTypes.js";
-import { SummaryCollection } from "./summaryCollection.js";
+import { stopReasonCanRunLastSummary } from "./summarizerUtils.js";
+import type { SummaryCollection } from "./summaryCollection.js";
+import type {
+	EnqueueSummarizeResult,
+	ISummarizeResults,
+} from "./summaryDelayLoadedModule/index.js";
 
 const defaultInitialDelayMs = 5000;
 const defaultOpsToBypassInitialDelay = 4000;
@@ -284,7 +286,7 @@ export class SummaryManager
 					// which would happen when we have a high enough number of unsummarized ops.
 					if (
 						startWithInitialDelay ||
-						!Summarizer.stopReasonCanRunLastSummary(shouldSummarizeState.stopReason)
+						!stopReasonCanRunLastSummary(shouldSummarizeState.stopReason)
 					) {
 						this.state = SummaryManagerState.Starting;
 						summarizer.stop(shouldSummarizeState.stopReason);

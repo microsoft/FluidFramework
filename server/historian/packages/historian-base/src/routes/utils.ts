@@ -21,13 +21,13 @@ import {
 	IRevokedTokenChecker,
 	IDocumentManager,
 	IThrottler,
+	type IDenyList,
 } from "@fluidframework/server-services-core";
 import {
 	ICache,
 	ITenantService,
 	RestGitService,
 	ITenantCustomDataExternal,
-	IDenyList,
 	ISimplifiedCustomDataRetriever,
 } from "../services";
 import { containsPathTraversal, parseToken } from "../utils";
@@ -61,7 +61,6 @@ export interface ICreateGitServiceArgs {
 	allowDisabledTenant?: boolean;
 	isEphemeralContainer?: boolean;
 	ephemeralDocumentTTLSec?: number; // 24 hours
-	denyList?: IDenyList;
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever;
 }
 
@@ -263,7 +262,6 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		allowDisabledTenant,
 		isEphemeralContainer,
 		ephemeralDocumentTTLSec,
-		denyList,
 		simplifiedCustomDataRetriever,
 	} = { ...createArgs };
 	if (!authorization) {
@@ -278,9 +276,6 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 	if (containsPathTraversal(documentId)) {
 		// Prevent attempted directory traversal.
 		throw new NetworkError(400, `Invalid document id: ${documentId}`);
-	}
-	if (denyList?.isDenied(tenantId, documentId)) {
-		throw new NetworkError(500, `Unable to process request for document id: ${documentId}`);
 	}
 	const details = await tenantService.getTenant(tenantId, token, allowDisabledTenant ?? false);
 	const customData: ITenantCustomDataExternal = details.customData;
