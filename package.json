@@ -361,6 +361,7 @@
 		],
 		"overrides": {
 			"@types/node@<18": "^18.19.0",
+			"esbuild": "^0.25.0",
 			"get-tsconfig": "^4.7.3",
 			"node-fetch": "^2.6.9",
 			"good-fences>nodegit": "npm:empty-npm-package@1.0.0",
