@@ -15,16 +15,16 @@ import { FluidSerializer } from "./serializer.js";
  * All that is needed is getSerializedRoutes() to get the routes. This strategy could be optimized if needed.
  */
 export class GCHandleVisitor extends FluidSerializer {
-	private readonly visitedHandles: Set<string> = new Set();
-	public getVisitedHandles(): string[] {
-		return [...this.visitedHandles];
+	private readonly visitedHandlePaths: Set<string> = new Set();
+	public getVisitedHandlePaths(): string[] {
+		return [...this.visitedHandlePaths];
 	}
 
 	protected bindAndEncodeHandle(
 		handle: IFluidHandleInternal,
 		bind: IFluidHandleInternal,
 	): ISerializedHandle {
-		this.visitedHandles.add(handle.absolutePath);
+		this.visitedHandlePaths.add(handle.absolutePath);
 
 		// Just return a dummy value. The serialization itself is not used.
 		// It's especially important we don't bind since that has side effects that are irrelevant to GC.

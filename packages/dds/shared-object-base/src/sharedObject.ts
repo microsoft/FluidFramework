@@ -838,7 +838,7 @@ export abstract class SharedObject<
 			this.processGCDataCore(handleVisitor);
 			// The GC data for this shared object contains a single GC node. The outbound routes of this node are the
 			// routes of handles serialized during summarization.
-			gcData = { gcNodes: { "/": handleVisitor.getVisitedHandles() } };
+			gcData = { gcNodes: { "/": handleVisitor.getVisitedHandlePaths() } };
 			assert(
 				this._isGCing,
 				0x079 /* "Possible re-entrancy! Summary should have been in progress." */,
