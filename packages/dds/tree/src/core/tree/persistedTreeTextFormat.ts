@@ -5,7 +5,7 @@
 
 import { type Static, type TSchema, Type } from "@sinclair/typebox";
 
-import { schemaFormat } from "../schema-stored/index.js";
+import { schemaFormatV1 as schemaFormat } from "../schema-stored/index.js";
 
 /**
  * This module contains persisted types for a simple, human-readable tree format.

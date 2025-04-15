@@ -28,7 +28,7 @@ import type {
 import type { CollabWindow } from "../incrementalSummarizationUtils.js";
 
 import { encodeRepo, makeSchemaCodec } from "./codec.js";
-import type { Format } from "./format.js";
+import type { Format } from "./formatV1.js";
 
 const schemaStringKey = "SchemaString";
 /**

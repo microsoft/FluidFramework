@@ -6,7 +6,7 @@
 import { type Static, Type } from "@sinclair/typebox";
 
 import { Versioned } from "../../codec/index.js";
-import { schemaFormat } from "../../core/index.js";
+import { schemaFormatV1 as schemaFormat } from "../../core/index.js";
 
 export const version = 1.0;
 

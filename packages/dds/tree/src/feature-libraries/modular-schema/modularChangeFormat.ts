@@ -5,7 +5,11 @@
 
 import { type ObjectOptions, type Static, Type } from "@sinclair/typebox";
 
-import { type ChangesetLocalId, RevisionTagSchema, schemaFormat } from "../../core/index.js";
+import {
+	type ChangesetLocalId,
+	RevisionTagSchema,
+	schemaFormatV1 as schemaFormat,
+} from "../../core/index.js";
 import {
 	type JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlySchema,

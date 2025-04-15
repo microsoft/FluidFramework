@@ -25,7 +25,7 @@ import {
 	initializeForest,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import type { Format } from "../feature-libraries/schema-index/format.js";
+import type { Format } from "../feature-libraries/schema-index/formatV1.js";
 import type {
 	TreeViewConfiguration,
 	ImplicitFieldSchema,

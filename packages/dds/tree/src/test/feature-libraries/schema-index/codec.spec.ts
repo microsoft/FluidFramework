@@ -14,7 +14,7 @@ import { allowsRepoSuperset, defaultSchemaPolicy } from "../../../feature-librar
 /* eslint-disable-next-line import/no-internal-modules */
 import { makeSchemaCodec } from "../../../feature-libraries/schema-index/codec.js";
 /* eslint-disable-next-line import/no-internal-modules */
-import { Format } from "../../../feature-libraries/schema-index/format.js";
+import { Format } from "../../../feature-libraries/schema-index/formatV1.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { type EncodingTestData, makeEncodingTestSuite } from "../../utils.js";
 // eslint-disable-next-line import/no-internal-modules

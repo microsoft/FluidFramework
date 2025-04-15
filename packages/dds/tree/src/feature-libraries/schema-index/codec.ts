@@ -15,16 +15,16 @@ import {
 	type TreeStoredSchema,
 	decodeFieldSchema,
 	encodeFieldSchema,
-	schemaFormat,
+	schemaFormatV1,
 	storedSchemaDecodeDispatcher,
 	toTreeNodeSchemaDataFormat,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
 
-import { Format } from "./format.js";
+import { Format } from "./formatV1.js";
 
 export function encodeRepo(repo: TreeStoredSchema): Format {
-	const nodeSchema: Record<string, schemaFormat.TreeNodeSchemaDataFormat> =
+	const nodeSchema: Record<string, schemaFormatV1.TreeNodeSchemaDataFormat> =
 		Object.create(null);
 	const rootFieldSchema = encodeFieldSchema(repo.rootFieldSchema);
 	for (const name of [...repo.nodeSchema.keys()].sort()) {
@@ -37,7 +37,7 @@ export function encodeRepo(repo: TreeStoredSchema): Format {
 		});
 	}
 	return {
-		version: schemaFormat.version,
+		version: schemaFormatV1.version,
 		nodes: nodeSchema,
 		root: rootFieldSchema,
 	};
@@ -58,7 +58,7 @@ function decode(f: Format): TreeStoredSchema {
  * Creates a codec which performs synchronous monolithic encoding of schema content.
  */
 export function makeSchemaCodec(options: ICodecOptions): IJsonCodec<TreeStoredSchema, Format> {
-	return makeVersionedValidatedCodec(options, new Set([schemaFormat.version]), Format, {
+	return makeVersionedValidatedCodec(options, new Set([schemaFormatV1.version]), Format, {
 		encode: (data: TreeStoredSchema) => encodeRepo(data),
 		decode: (data: Format) => decode(data),
 	});

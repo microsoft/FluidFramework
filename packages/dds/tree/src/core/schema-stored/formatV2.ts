@@ -47,12 +47,12 @@ export const FieldKindIdentifierSchema = brandedStringType<FieldKindIdentifier>(
  */
 export const TreeNodeSchemaIdentifierSchema = brandedStringType<TreeNodeSchemaIdentifier>();
 
-const PersistedMetadataSchema = Type.Union([Type.Undefined(), Type.String()]);
+export const PersistedMetadataFormat = Type.Union([Type.Undefined(), Type.String()]);
 
 const FieldSchemaFormatBase = Type.Object({
 	kind: FieldKindIdentifierSchema,
 	types: Type.Array(TreeNodeSchemaIdentifierSchema),
-	persistedData: PersistedMetadataSchema,
+	persistedData: PersistedMetadataFormat,
 });
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
@@ -92,7 +92,7 @@ export const TreeNodeSchemaDataFormat = Type.Object(
 		/**
 		 * Persisted metadata for this node.
 		 */
-		persistedData: PersistedMetadataSchema,
+		persistedData: PersistedMetadataFormat,
 	},
 	unionOptions,
 );
@@ -100,3 +100,5 @@ export const TreeNodeSchemaDataFormat = Type.Object(
 export type TreeNodeSchemaDataFormat = Static<typeof TreeNodeSchemaDataFormat>;
 
 export type FieldSchemaFormat = Static<typeof FieldSchemaFormat>;
+
+export type PersistedMetadataFormat = Static<typeof PersistedMetadataFormat>;
