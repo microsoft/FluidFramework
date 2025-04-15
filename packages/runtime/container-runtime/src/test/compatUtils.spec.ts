@@ -5,33 +5,15 @@
 
 import { strict as assert } from "node:assert";
 
-import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import {
-	defaultCompatibilityMode,
 	getConfigsForCompatMode,
 	type IConfigMap,
 	type SemanticVersion,
 } from "../compatUtils.js";
-import { enabledCompressionConfig } from "../compressionDefinitions.js";
 
 describe("compatUtils", () => {
 	describe("getConfigsForCompatMode", () => {
-		it("returns correct configs for compatibilityMode = defaultCompatibilityMode", () => {
-			const result = getConfigsForCompatMode(
-				defaultCompatibilityMode as SemanticVersion,
-				testConfigMap,
-			);
-			// We should return the hardcoded default configs for pre-3.0-default, even if using a different config map
-			assert.deepEqual(result, {
-				gcOptions: {},
-				flushMode: FlushMode.TurnBased,
-				compressionOptions: enabledCompressionConfig,
-				enableRuntimeIdCompressor: undefined as unknown as "on" | "delayed",
-				enableGroupedBatching: true,
-				explicitSchemaControl: false,
-			});
-		});
 		const testConfigMap: IConfigMap = {
 			featureA: {
 				"0.5.0": "a1",

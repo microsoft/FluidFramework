@@ -28,24 +28,8 @@ import { pkgVersion } from "./packageVersion.js";
  * by **default** will be in effect starting with 3.0. Importantly though, N/N-1 compatibility is still guaranteed with the
  * proper configurations set.
  *
- * TODO: This should be updated to "2.0.0" when 3.0 is released.
  */
-export const defaultCompatibilityMode = "pre-3.0-default";
-
-/**
- * The current default set of configurations if no compatibility mode is provided.
- * Since both compatibilityMode and the cross-client compat policy was introduced during 2.x's lifespan, we will maintain the
- * set of default configurations that were in place before compatibilityMode and the policy were introduced.
- * TODO: This can be removed after 3.0 is released.
- */
-const defaultConfigsForPreFF3: IContainerRuntimeOptionsVersionDependent = {
-	gcOptions: {},
-	flushMode: FlushMode.TurnBased,
-	compressionOptions: enabledCompressionConfig,
-	enableRuntimeIdCompressor: undefined as unknown as "on" | "delayed",
-	enableGroupedBatching: true,
-	explicitSchemaControl: false,
-};
+export const defaultCompatibilityMode = "2.0.0";
 
 /**
  * Subset of the IContainerRuntimeOptionsInternal properties which are version-dependent.
@@ -113,11 +97,12 @@ const versionDependentOptionConfigMap: {
 		// enable it. We are keeping it as a version-dependent option as this may change in the future.
 	},
 	explicitSchemaControl: {
+		"1.0.0": false,
 		// This option is unique since it was actually introduced before 2.0.0, but its purpose is to prevent 1.x clients from
 		// joining a session. Therefore, we will have it be `true` when the compatibility mode is set to >=2.0.0 and we do not
-		// want any 1.x clients to join.
-		"1.0.0": false,
-		"2.0.0": true,
+		// want any 1.x clients to join. However, since this was not part of the default configurations before 3.0.0, we will
+		// keep it false unless a customer uses a compatibilityMode of 2.0.1 or higher.
+		"2.0.1": true,
 	},
 	flushMode: {
 		// Note: 1.x clients are compatible with TurnBased flushing, but here we elect to remain on Immediate flush mode
@@ -141,13 +126,6 @@ export function getConfigsForCompatMode(
 	compatibilityMode: SemanticVersion,
 	configMap: IConfigMap = versionDependentOptionConfigMap,
 ): IContainerRuntimeOptionsVersionDependent {
-	// TODO: Remove this block after 3.0 is released.
-	// Note: we compare `compatibilityMode` with the exact string "pre-3.0-default" in case we modify `defaultCompatibilityMode` in the future,
-	// but forget to remove this block.
-	if (compatibilityMode === ("pre-3.0-default" as SemanticVersion)) {
-		return defaultConfigsForPreFF3;
-	}
-
 	const defaultConfigs = {};
 	// Iterate over versionDependentOptionConfigMap to get default values for each version-dependent option.
 	for (const key of Object.keys(configMap)) {
