@@ -28,7 +28,7 @@ import type {
 	IChannelServices,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
-import type { SessionId } from "@fluidframework/id-compressor";
+import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import { assertIsStableId, createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
@@ -127,6 +127,7 @@ import {
 	createTreeCheckout,
 	type ISharedTreeEditor,
 	type ITreeCheckoutFork,
+	independentView,
 } from "../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeStoredContent } from "../shared-tree/schematizeTree.js";
@@ -135,6 +136,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../shared-tree/schematizingTreeView.js";
 import type {
+	ForestOptions,
 	ISharedTree,
 	SharedTreeOptions,
 	SharedTreeOptionsInternal,
@@ -1229,9 +1231,38 @@ export function treeTestFactory(
  *
  * Typically, users will want to initialize the returned view with some content (thereby setting its schema) using `TreeView.initialize`.
  *
- * Like `SchematizingSimpleTreeView` but using internal types and defaults to test id compressor.
+ * Like `SchematizingSimpleTreeView` but using internal types and uses {@link createSnapshotCompressor}.
  */
 export function getView<const TSchema extends ImplicitFieldSchema>(
+	config: TreeViewConfiguration<TSchema>,
+	options: ForestOptions & {
+		idCompressor?: IIdCompressor | undefined;
+	} = {},
+): SchematizingSimpleTreeView<TSchema> {
+	const view = independentView(config, {
+		idCompressor: createSnapshotCompressor(),
+		...options,
+	});
+	assert(view instanceof SchematizingSimpleTreeView);
+	return view;
+}
+
+/**
+ * Session ids used for the created trees' IdCompressors must be deterministic.
+ * TestTreeProviderLite does this by default.
+ * Test trees which manually create their data store runtime must set up their trees'
+ * session ids explicitly.
+ */
+export const snapshotSessionId = assertIsSessionId("beefbeef-beef-4000-8000-000000000001");
+
+export function createSnapshotCompressor() {
+	return createAlwaysFinalizedIdCompressor(snapshotSessionId);
+}
+
+/**
+ * {@link getView} but with more package internal specific customization.
+ */
+export function getViewConfigured<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	nodeKeyManager?: NodeIdentifierManager,
 	logger?: ITelemetryLoggerExt,

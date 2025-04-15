@@ -35,6 +35,7 @@ import {
 	createTestUndoRedoStacks,
 	expectSchemaEqual,
 	getView,
+	getViewConfigured,
 	validateUsageError,
 	viewCheckout,
 } from "../utils.js";
@@ -1450,7 +1451,7 @@ function itView<
 		logger: IMockLoggerExt;
 	} {
 		const logger = createMockLoggerExt();
-		const view = getView(config, undefined, logger);
+		const view = getViewConfigured(config, undefined, logger);
 		if (fork) {
 			const treeBranch = getBranch(view).branch();
 			const viewBranch = treeBranch.viewWith(view.config);
