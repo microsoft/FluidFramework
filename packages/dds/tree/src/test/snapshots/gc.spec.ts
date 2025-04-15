@@ -14,13 +14,13 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import type { ISharedTree } from "../../shared-tree/index.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
 	type TreeView,
 } from "../../simple-tree/index.js";
 import { DefaultTestSharedTreeKind } from "../utils.js";
+import type { ISharedTree } from "../../treeFactory.js";
 
 const builder = new SchemaFactory("test");
 class Bar extends builder.object("bar", {

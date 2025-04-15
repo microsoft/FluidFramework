@@ -49,7 +49,6 @@ import {
 	ForestTypeOptimized,
 	ForestTypeReference,
 	getBranch,
-	type ISharedTree,
 	type ITreePrivate,
 	Tree,
 	type TreeCheckout,
@@ -90,7 +89,11 @@ import {
 	getView,
 	createSnapshotCompressor,
 } from "../utils.js";
-import { configuredSharedTree, SharedTree as SharedTreeKind } from "../../treeFactory.js";
+import {
+	configuredSharedTree,
+	SharedTree as SharedTreeKind,
+	type ISharedTree,
+} from "../../treeFactory.js";
 import {
 	SharedObjectCore,
 	type ISharedObjectKind,

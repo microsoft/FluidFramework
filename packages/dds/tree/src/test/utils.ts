@@ -135,7 +135,6 @@ import {
 } from "../shared-tree/schematizingTreeView.js";
 import type {
 	ForestOptions,
-	ISharedTree,
 	SharedTreeOptionsInternal,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../shared-tree/sharedTree.js";
@@ -165,7 +164,7 @@ import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 import type { Transactor } from "../shared-tree-core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { FieldChangeDelta } from "../feature-libraries/modular-schema/fieldChangeHandler.js";
-import { configuredSharedTree } from "../treeFactory.js";
+import { configuredSharedTree, type ISharedTree } from "../treeFactory.js";
 import { JsonAsTree } from "../jsonDomainSchema.js";
 import {
 	MockContainerRuntimeFactoryWithOpBunching,
