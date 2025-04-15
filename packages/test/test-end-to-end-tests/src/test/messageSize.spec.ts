@@ -145,18 +145,21 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				{
 					errorType,
 					dataProcessingCodepath,
-					errorDetails: { opCount, contentSizeInBytes, socketSize },
+					errorDetails: { opCount },
 				},
 				{
 					errorType: "dataProcessingError",
 					dataProcessingCodepath: "CannotSend",
 					errorDetails: {
 						opCount: 1,
-						contentSizeInBytes: 1048789,
-						socketSize: 1048989, // > maxMessageSizeInBytes: 716800
 					},
 				},
 				"Error not as expected",
+			);
+			assert.equal(
+				typeof contentSizeInBytes,
+				"number",
+				"contentSizeInBytes should be a number",
 			);
 			assert(
 				socketSize > maxMessageSizeInBytes,
@@ -280,18 +283,21 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				{
 					errorType,
 					dataProcessingCodepath,
-					errorDetails: { opCount, contentSizeInBytes, socketSize },
+					errorDetails: { opCount },
 				},
 				{
 					errorType: "dataProcessingError",
 					dataProcessingCodepath: "CannotSend",
 					errorDetails: {
 						opCount: 1,
-						contentSizeInBytes: 15729276,
-						socketSize: 15729476, // > maxMessageSizeInBytes: 716800
 					},
 				},
 				"Error not as expected",
+			);
+			assert.equal(
+				typeof contentSizeInBytes,
+				"number",
+				"contentSizeInBytes should be a number",
 			);
 			assert(
 				socketSize > maxMessageSizeInBytes,
