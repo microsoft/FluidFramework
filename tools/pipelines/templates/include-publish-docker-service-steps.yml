@@ -77,13 +77,14 @@ jobs:
   dependsOn: publish_${{ replace(parameters.environment, '-', '_') }}
   # Only tag the repo if a tag name is provided.
   condition: and(succeeded(), ne('${{ parameters.tagName }}', ''))
+  variables:
+    version: $[ stageDependencies.build.build.outputs['SetVersion.version']]
   steps:
   - checkout: self
     clean: true
   - template: /tools/pipelines/templates/include-git-tag-steps.yml@self
     parameters:
       tagName: ${{ parameters.tagName }}
-      version: $[ stageDependencies.build.build.outputs['SetVersion.version']]
 
   # templateContext is available because our templates were migrated to extend 1ES templates for pipelines, so
   # the stage defined in this file ends up being passed to a 1ES template which provides this functionality.
