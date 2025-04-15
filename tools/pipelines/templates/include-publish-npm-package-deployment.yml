@@ -107,3 +107,4 @@ jobs:
   - template: /tools/pipelines/templates/include-git-tag-steps.yml@self
     parameters:
       tagName: ${{ parameters.tagName }}
+      version: $[ stageDependencies.build.build.outputs['SetVersion.version']]

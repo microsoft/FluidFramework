@@ -17,7 +17,7 @@ steps:
       targetType: 'inline'
       script: |
         set -eu -o pipefail
-        tag=${{ parameters.tagName }}_v$(version)
+        tag=${{ parameters.tagName }}_v${{ parameters.version }}
         echo Tag=$tag
         git tag $tag
         git push origin $tag
