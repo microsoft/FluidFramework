@@ -35,7 +35,15 @@ export interface ShallowReadonlyOptions {
 }
 
 /**
- * Transforms type to a fully and deeply immutable type, with limitations.
+ * Transforms type to a shallowly immutable type.
+ *
+ * @remarks
+ * This utility type is similar to `Readonly<T>`, but also applies immutability to
+ * common generic types like `Map` and `Set`.
+ *
+ * Optionally, immutability can be applied to supported generics types. See
+ * {@link ShallowReadonlySupportedGenericsDefault} for generics that have
+ * immutability applied to generic type by default.
  *
  * @beta
  */

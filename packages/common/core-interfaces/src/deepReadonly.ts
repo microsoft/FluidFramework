@@ -49,6 +49,14 @@ export interface DeepReadonlyOptions {
 /**
  * Transforms type to a fully and deeply immutable type, with limitations.
  *
+ * @remarks
+ * This utility type is similar to a recursive `Readonly<T>`, but also
+ * applies immutability to common generic types like `Map` and `Set`.
+ *
+ * Optionally, immutability can be applied to supported generics types. See
+ * {@link DeepReadonlySupportedGenericsDefault} for generics that have
+ * immutability applied to generic type by default.
+ *
  * @beta
  */
 export type DeepReadonly<
