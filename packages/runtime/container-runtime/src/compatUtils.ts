@@ -78,10 +78,10 @@ interface IVersionDependentOptionConfig<
 > {
 	/**
 	 * The minimum version of the container runtime that is required to use the modern config for the
-	 * option. This will compared with the compatibilityMode to determine if the modern or legacy config
+	 * option. This will compared with the compatibilityMode to determine if the modern or back-compat config
 	 * should be used by default.
 	 * This should be undefined if no versions are ready to use the modern config by default. In this case,
-	 * we will always default to the legacy config.
+	 * we will always default to the back-compat config.
 	 */
 	minVersionForModernConfig: string | undefined;
 	/**
@@ -89,7 +89,7 @@ interface IVersionDependentOptionConfig<
 	 * modern config will not break.
 	 * This is the config that will be used by default when the compatibilityMode is less than minVersionForModernConfig.
 	 */
-	legacyConfig: IContainerRuntimeOptionsVersionDependent[K];
+	backCompatConfig: IContainerRuntimeOptionsVersionDependent[K];
 	/**
 	 * The default config for the version-dependent option when all clients are expected to understand the modern config.
 	 * This is the config that will be used by default when the compatibilityMode is at least minVersionForModernConfig.
@@ -105,12 +105,12 @@ const versionDependentOptionConfigMap: {
 } = {
 	enableGroupedBatching: {
 		minVersionForModernConfig: "2.0.0",
-		legacyConfig: false,
+		backCompatConfig: false,
 		modernConfig: true,
 	},
 	compressionOptions: {
 		minVersionForModernConfig: "2.0.0",
-		legacyConfig: disabledCompressionConfig,
+		backCompatConfig: disabledCompressionConfig,
 		modernConfig: enabledCompressionConfig,
 	},
 
@@ -121,7 +121,7 @@ const versionDependentOptionConfigMap: {
 		minVersionForModernConfig: undefined,
 		// For IdCompressorMode, `undefined` represents a logical state (off). However, to satisfy the Required<>
 		// constraint we need to have it defined, so we trick the type checker here.
-		legacyConfig: undefined as unknown as "on" | "delayed",
+		backCompatConfig: undefined as unknown as "on" | "delayed",
 		modernConfig: "on",
 	},
 	explicitSchemaControl: {
@@ -129,7 +129,7 @@ const versionDependentOptionConfigMap: {
 		// joining a session. Therefore, we will have it be `true` when the compatibility mode is set to >=2.0.0 and we do not
 		// want any 1.x clients to join.
 		minVersionForModernConfig: "2.0.0",
-		legacyConfig: false,
+		backCompatConfig: false,
 		modernConfig: true,
 	},
 	flushMode: {
@@ -137,14 +137,14 @@ const versionDependentOptionConfigMap: {
 		// as a work-around for inability to send batches larger than 1Mb. Immediate flushing keeps batches smaller as
 		// fewer messages will be included per flush.
 		minVersionForModernConfig: "2.0.0",
-		legacyConfig: FlushMode.Immediate,
+		backCompatConfig: FlushMode.Immediate,
 		modernConfig: FlushMode.TurnBased,
 	},
 	gcOptions: {
 		// Explicitly disable running Sweep in compat mode "2". Although sweep is supported in 2.x, it is disabled by default.
 		// This setting explicitly disables it to be extra safe.
 		minVersionForModernConfig: "3.0.0",
-		legacyConfig: {},
+		backCompatConfig: {},
 		modernConfig: { enableGCSweep: true },
 	},
 };
@@ -167,12 +167,12 @@ export function getConfigsForCompatMode(
 		const config =
 			versionDependentOptionConfigMap[key as keyof IContainerRuntimeOptionsVersionDependent];
 		// If the compatibility mode is greater than or equal to the minimum version
-		// required for this option, use the "modern" config value, otherwise use the "legacy" config value
+		// required for this option, use the "modern" config value, otherwise use the "back-compat" config value
 		const isModernConfig =
 			config.minVersionForModernConfig === undefined
-				? false // If the minVersionForModernConfig is undefined, we always use the legacy config
+				? false // If the minVersionForModernConfig is undefined, we always use the back-compat config
 				: semverGte(compatibilityMode, config.minVersionForModernConfig);
-		defaultConfigs[key] = isModernConfig ? config.modernConfig : config.legacyConfig;
+		defaultConfigs[key] = isModernConfig ? config.modernConfig : config.backCompatConfig;
 	}
 	return defaultConfigs as IContainerRuntimeOptionsVersionDependent;
 }
