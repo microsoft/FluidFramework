@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 // The semver package documents and encourages these imports for users that only need some of the semver functionality.
 // eslint-disable-next-line import/no-internal-modules
@@ -16,7 +17,10 @@ import {
 	disabledCompressionConfig,
 	enabledCompressionConfig,
 } from "./compressionDefinitions.js";
-import { type IContainerRuntimeOptionsInternal } from "./containerRuntime.js";
+import {
+	type IContainerRuntimeOptionsInternal,
+	type LoadContainerRuntimeParams,
+} from "./containerRuntime.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
@@ -66,7 +70,6 @@ export type IContainerRuntimeOptionsVersionDependent = Required<
 		| "maxBatchSizeInBytes"
 		| "loadSequenceNumberVerification"
 		| "summaryOptions"
-		| "compatibilityMode"
 	>
 >;
 
@@ -153,7 +156,7 @@ const versionDependentOptionConfigMap: {
  * Returns the default version-dependent configs for a given compatibility mode.
  */
 export function getConfigsForCompatMode(
-	compatibilityMode: Required<IContainerRuntimeOptionsInternal>["compatibilityMode"],
+	compatibilityMode: LoadContainerRuntimeParams["compatibilityMode"],
 ): IContainerRuntimeOptionsVersionDependent {
 	// TODO: Remove this block after 3.0 is released.
 	// Note: we compare `compatibilityMode` with the exact string "pre-3.0-default" in case we modify `defaultCompatibilityMode` in the future,
@@ -161,7 +164,7 @@ export function getConfigsForCompatMode(
 	if (compatibilityMode === "pre-3.0-default") {
 		return defaultConfigsForPreFF3;
 	}
-
+	assert(compatibilityMode !== undefined, "compatibilityMode should not be undefined");
 	const defaultConfigs = {};
 	for (const key of Object.keys(versionDependentOptionConfigMap)) {
 		const config =
@@ -182,7 +185,7 @@ export function getConfigsForCompatMode(
  * A valid compatibility mode is a string that is a valid semver version and is less than or equal to the current package version.
  */
 export function isValidCompatMode(
-	compatibilityMode: Required<IContainerRuntimeOptionsInternal["compatibilityMode"]>,
+	compatibilityMode: LoadContainerRuntimeParams["compatibilityMode"],
 ): boolean {
 	return (
 		// TODO: We can remove the first condition after 3.0 is released and the defaultCompatibilityMode is set to "2.0.0".

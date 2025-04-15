@@ -17,6 +17,7 @@ export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements
 
 // @alpha
 export interface BaseContainerRuntimeFactoryProps {
+    compatibilityMode?: string;
     // @deprecated (undocumented)
     dependencyContainer?: IFluidDependencySynthesizer;
     provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;

@@ -100,7 +100,6 @@ export interface ICompressionRuntimeOptions {
 // @alpha
 export interface IContainerRuntimeOptions {
     readonly chunkSizeInBytes?: number;
-    readonly compatibilityMode?: string;
     readonly compressionOptions?: ICompressionRuntimeOptions;
     // @deprecated
     readonly enableGroupedBatching?: boolean;
@@ -332,6 +331,7 @@ export function loadContainerRuntime(params: LoadContainerRuntimeParams): Promis
 
 // @alpha
 export interface LoadContainerRuntimeParams {
+    readonly compatibilityMode?: string;
     containerScope?: FluidObject;
     context: IContainerContext;
     existing: boolean;
