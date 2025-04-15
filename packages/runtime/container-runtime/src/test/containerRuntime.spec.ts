@@ -73,6 +73,7 @@ import {
 import { SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
 
 import { ChannelCollection } from "../channelCollection.js";
+import { getConfigsForCompatMode } from "../compatUtils.js";
 import { CompressionAlgorithms } from "../compressionDefinitions.js";
 import {
 	ContainerRuntime,
@@ -3616,6 +3617,7 @@ describe("Runtime", () => {
 			});
 		});
 
+		// TODO: Update these tests when compatibilityMode API is implemented
 		describe("Default Configurations", () => {
 			it("compatibilityMode not provided", async () => {
 				const logger = new MockLogger();
@@ -3652,15 +3654,15 @@ describe("Runtime", () => {
 				]);
 			});
 
-			// TODO: Unskip these tests once the API surface for compatibilityMode is implemented
-			it.skip("compatibilityMode = 1.0.0", async () => {
-				// const compatibilityMode = "1.0.0";
+			it("compatibilityMode = 1.0.0", async () => {
+				const compatibilityMode = "1.0.0";
+				const defaultRuntimeOptions = getConfigsForCompatMode(compatibilityMode);
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
 					registryEntries: [],
 					existing: false,
-					runtimeOptions: {},
+					runtimeOptions: defaultRuntimeOptions,
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 
@@ -3689,13 +3691,15 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it.skip("compatibilityMode = 2.0.0", async () => {
+			it("compatibilityMode = 2.0.0", async () => {
+				const compatibilityMode = "2.0.0";
+				const defaultRuntimeOptions = getConfigsForCompatMode(compatibilityMode);
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
 					registryEntries: [],
 					existing: false,
-					runtimeOptions: {},
+					runtimeOptions: defaultRuntimeOptions,
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 
@@ -3724,13 +3728,15 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it.skip("compatibilityMode = 2.20.0", async () => {
+			it("compatibilityMode = 2.20.0", async () => {
+				const compatibilityMode = "2.20.0";
+				const defaultRuntimeOptions = getConfigsForCompatMode(compatibilityMode);
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
 					registryEntries: [],
 					existing: false,
-					runtimeOptions: {},
+					runtimeOptions: defaultRuntimeOptions,
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 
@@ -3759,7 +3765,7 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it.skip("compatibilityMode = 2.0.0, with manual configs for each property", async () => {
+			it("compatibilityMode not provided, with manual configs for each property", async () => {
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -3804,7 +3810,7 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it.skip("all options explicity undefined", async () => {
+			it("all options explicity undefined", async () => {
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -3825,7 +3831,6 @@ describe("Runtime", () => {
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 
-				// TODO: This test will need to be updated when 3.0 is released.
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
 					summaryOptions: {},
 					gcOptions: {},
