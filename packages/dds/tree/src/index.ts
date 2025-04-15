@@ -169,9 +169,12 @@ export {
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,
+	// Other
 	type VerboseTreeNode,
-	type EncodeOptions,
-	type ParseOptions,
+	type TreeEncodingOptions,
+	type TreeSchemaEncodingOptions,
+	type TreeSchema,
+	TreeViewConfigurationAlpha,
 	type VerboseTree,
 	extractPersistedSchema,
 	comparePersistedSchema,
