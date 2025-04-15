@@ -46,6 +46,14 @@ export interface RootDataObjectProps {
 }
 
 /**
+ * Maps CompatibilityMode to a semver valid string that can be passed to the container runtime.
+ */
+const compatibilityModeToSemverVersion: Record<CompatibilityMode, string> = {
+	"1": "1.0.0",
+	"2": "2.0.0",
+};
+
+/**
  * The entry-point/root collaborative object of the {@link IFluidContainer | Fluid Container}.
  * Abstracts the dynamic code required to build a Fluid Container into a static representation for end customers.
  */
@@ -213,6 +221,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 			registryEntries: [rootDataObjectFactory.registryEntry],
 			runtimeOptions: compatibilityModeRuntimeOptions[compatibilityMode],
 			provideEntryPoint,
+			compatibilityMode: compatibilityModeToSemverVersion[compatibilityMode],
 		});
 		this.rootDataObjectFactory = rootDataObjectFactory;
 		this.initialObjects = schema.initialObjects;

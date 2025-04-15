@@ -61,6 +61,10 @@ export interface BaseContainerRuntimeFactoryProps {
 	 * created with this factory
 	 */
 	provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+	/**
+	 * The compatibility mode passed to the ContainerRuntime when instantiating it
+	 */
+	compatibilityMode?: string;
 }
 
 /**
@@ -88,6 +92,7 @@ export class BaseContainerRuntimeFactory
 	// eslint-disable-next-line import/no-deprecated
 	private readonly requestHandlers: RuntimeRequestHandler[];
 	private readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+	private readonly compatibilityMode?: string;
 
 	public constructor(props: BaseContainerRuntimeFactoryProps) {
 		super();
@@ -98,6 +103,7 @@ export class BaseContainerRuntimeFactory
 		this.provideEntryPoint = props.provideEntryPoint;
 		this.requestHandlers = props.requestHandlers ?? [];
 		this.registry = new FluidDataStoreRegistry(this.registryEntries);
+		this.compatibilityMode = props.compatibilityMode;
 	}
 
 	/**
@@ -146,6 +152,7 @@ export class BaseContainerRuntimeFactory
 			// eslint-disable-next-line import/no-deprecated
 			requestHandler: buildRuntimeRequestHandler(...this.requestHandlers),
 			provideEntryPoint: this.provideEntryPoint,
+			compatibilityMode: this.compatibilityMode,
 		});
 	}
 

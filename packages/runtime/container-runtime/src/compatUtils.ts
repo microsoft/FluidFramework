@@ -66,7 +66,6 @@ export type IContainerRuntimeOptionsVersionDependent = Required<
 		| "maxBatchSizeInBytes"
 		| "loadSequenceNumberVerification"
 		| "summaryOptions"
-		| "compatibilityMode"
 	>
 >;
 
@@ -155,7 +154,7 @@ export function getConfigsForCompatMode(
 		const config = configMap[key as keyof IContainerRuntimeOptionsVersionDependent];
 		// Sort the versions in ascending order so we can short circuit the loop.
 		const versions = Object.keys(config).sort((a, b) => (semverGte(b, a) ? -1 : 1));
-		// For each conifg, we iterate over the keys and check if compatibilityMode is greater than or equal to the version.
+		// For each config, we iterate over the keys and check if compatibilityMode is greater than or equal to the version.
 		// If so, we set it as the default value for the option. At the end of the loop we should have the most recent default
 		// value that is compatible with the version specified as the compatibilityMode.
 		for (const version of versions) {

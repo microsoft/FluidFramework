@@ -73,7 +73,6 @@ import {
 import { SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
 
 import { ChannelCollection } from "../channelCollection.js";
-import { defaultCompatibilityMode } from "../compatUtils.js";
 import { CompressionAlgorithms } from "../compressionDefinitions.js";
 import {
 	ContainerRuntime,
@@ -1566,7 +1565,6 @@ describe("Runtime", () => {
 			};
 
 			const defaultRuntimeOptions: IContainerRuntimeOptionsInternal = {
-				compatibilityMode: defaultCompatibilityMode,
 				summaryOptions: {},
 				gcOptions: {},
 				loadSequenceNumberVerification: "close",
@@ -3631,7 +3629,6 @@ describe("Runtime", () => {
 
 				// TODO: This test will need to be updated when 3.0 is released.
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
-					compatibilityMode: defaultCompatibilityMode,
 					summaryOptions: {},
 					gcOptions: {},
 					loadSequenceNumberVerification: "close",
@@ -3663,14 +3660,12 @@ describe("Runtime", () => {
 					context: getMockContext({ logger }) as IContainerContext,
 					registryEntries: [],
 					existing: false,
-					runtimeOptions: {
-						compatibilityMode,
-					},
+					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
+					compatibilityMode,
 				});
 
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
-					compatibilityMode,
 					summaryOptions: {},
 					gcOptions: {},
 					loadSequenceNumberVerification: "close",
@@ -3702,14 +3697,12 @@ describe("Runtime", () => {
 					context: getMockContext({ logger }) as IContainerContext,
 					registryEntries: [],
 					existing: false,
-					runtimeOptions: {
-						compatibilityMode,
-					},
+					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
+					compatibilityMode,
 				});
 
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
-					compatibilityMode,
 					summaryOptions: {},
 					gcOptions: {},
 					loadSequenceNumberVerification: "close",
@@ -3741,14 +3734,12 @@ describe("Runtime", () => {
 					context: getMockContext({ logger }) as IContainerContext,
 					registryEntries: [],
 					existing: false,
-					runtimeOptions: {
-						compatibilityMode,
-					},
+					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
+					compatibilityMode,
 				});
 
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
-					compatibilityMode,
 					summaryOptions: {},
 					gcOptions: {},
 					loadSequenceNumberVerification: "close",
@@ -3781,7 +3772,6 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {
-						compatibilityMode,
 						summaryOptions: { initialSummarizerDelayMs: 1 },
 						gcOptions: { enableGCSweep: true },
 						loadSequenceNumberVerification: "bypass",
@@ -3793,10 +3783,10 @@ describe("Runtime", () => {
 						explicitSchemaControl: false,
 					},
 					provideEntryPoint: mockProvideEntryPoint,
+					compatibilityMode,
 				});
 
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
-					compatibilityMode,
 					summaryOptions: { initialSummarizerDelayMs: 1 },
 					gcOptions: { enableGCSweep: true },
 					loadSequenceNumberVerification: "bypass",
@@ -3828,7 +3818,6 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {
-						compatibilityMode: undefined,
 						summaryOptions: undefined,
 						gcOptions: undefined,
 						loadSequenceNumberVerification: undefined,
@@ -3845,7 +3834,6 @@ describe("Runtime", () => {
 
 				// TODO: This test will need to be updated when 3.0 is released.
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
-					compatibilityMode: defaultCompatibilityMode,
 					summaryOptions: {},
 					gcOptions: {},
 					loadSequenceNumberVerification: "close",
@@ -3878,14 +3866,12 @@ describe("Runtime", () => {
 					context: getMockContext({ logger }) as IContainerContext,
 					registryEntries: [],
 					existing: false,
-					runtimeOptions: {
-						compatibilityMode,
-					},
+					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
+					compatibilityMode,
 				});
 
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
-					compatibilityMode,
 					summaryOptions: {},
 					gcOptions: { enableGCSweep: true },
 					loadSequenceNumberVerification: "close",
