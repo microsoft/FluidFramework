@@ -112,10 +112,11 @@ export function getLongStack<T>(action: () => T, length: number = 50): T {
  * Convert from local batch to outbound batch, including computing contentSizeInBytes.
  */
 export function localBatchToOutboundBatch({
-	staged,
+	staged: _staged, // Peel this off the incoming batch, it's irrelevant (see Note below)
 	...localBatch
 }: LocalBatch): OutboundBatch {
-	assert(!staged, "Shouldn't be converting a staged local batch to an outbound batch");
+	// Note: the staged property might be misleading here, in case a pre-staging batch is resubmitted during staging mode.
+	// It will be set to true, but the batch was not actually staged.
 
 	// Shallow copy each message as we switch types
 	const outboundMessages = localBatch.messages.map<OutboundBatchMessage>(
