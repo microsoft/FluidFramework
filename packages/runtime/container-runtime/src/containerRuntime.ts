@@ -156,6 +156,7 @@ import {
 	getConfigsForCompatMode,
 	isValidCompatMode,
 	type IContainerRuntimeOptionsVersionDependent,
+	type SemanticVersion,
 } from "./compatUtils.js";
 import { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry.js";
@@ -790,7 +791,8 @@ export class ContainerRuntime
 		// For example, if compatibility mode is set to "1.0.0", the default configs will ensure compatibility with FF runtime
 		// 1.0.0 or later. If the compatibility mode is set to "2.10.0", the default values will be generated to ensure compatibility
 		// with FF runtime 2.10.0 or later.
-		const compatibilityMode = runtimeOptions.compatibilityMode ?? defaultCompatibilityMode;
+		const compatibilityMode = (runtimeOptions.compatibilityMode ??
+			defaultCompatibilityMode) as SemanticVersion;
 		if (!isValidCompatMode(compatibilityMode)) {
 			throw new UsageError(
 				`Invalid compatibility mode: ${compatibilityMode}. It must be an existing FF version (i.e. 2.22.1).`,

@@ -78,6 +78,15 @@ export type SemanticVersion =
 	| `${number}.${number}.${number}-${string}`;
 
 /**
+ * Generic type for versionDependentOptionConfigMap (used for unit tests).
+ */
+export interface IConfigMap {
+	[key: string]: {
+		[version: SemanticVersion]: unknown;
+	};
+}
+
+/**
  * Mapping of version-dependent options to their compatibility related configs.
  *
  * Each key in this map corresponds to a property in IContainerRuntimeOptionsVersionDependent.
@@ -130,13 +139,13 @@ const versionDependentOptionConfigMap: {
  * Returns the default version-dependent configs for a given compatibility mode.
  */
 export function getConfigsForCompatMode(
-	compatibilityMode: Required<IContainerRuntimeOptionsInternal>["compatibilityMode"],
-	configMap = versionDependentOptionConfigMap,
+	compatibilityMode: SemanticVersion,
+	configMap: IConfigMap = versionDependentOptionConfigMap,
 ): IContainerRuntimeOptionsVersionDependent {
 	// TODO: Remove this block after 3.0 is released.
 	// Note: we compare `compatibilityMode` with the exact string "pre-3.0-default" in case we modify `defaultCompatibilityMode` in the future,
 	// but forget to remove this block.
-	if (compatibilityMode === "pre-3.0-default") {
+	if (compatibilityMode === ("pre-3.0-default" as SemanticVersion)) {
 		return defaultConfigsForPreFF3;
 	}
 
@@ -144,10 +153,12 @@ export function getConfigsForCompatMode(
 	// Iterate over versionDependentOptionConfigMap to get default values for each version-dependent option.
 	for (const key of Object.keys(configMap)) {
 		const config = configMap[key as keyof IContainerRuntimeOptionsVersionDependent];
+		// Sort the versions in ascending order so we can short circuit the loop.
+		const versions = Object.keys(config).sort((a, b) => (semverGte(b, a) ? 1 : 0));
 		// For each conifg, we iterate over the keys and check if compatibilityMode is greater than or equal to the version.
 		// If so, we set it as the default value for the option. At the end of the loop we should have the most recent default
 		// value that is compatible with the version specified as the compatibilityMode.
-		for (const version of Object.keys(config)) {
+		for (const version of versions) {
 			if (semverGte(compatibilityMode, version)) {
 				defaultConfigs[key] = config[version as SemanticVersion];
 			} else {
@@ -164,12 +175,10 @@ export function getConfigsForCompatMode(
  * Checks if the compatibility mode is valid.
  * A valid compatibility mode is a string that is a valid semver version and is less than or equal to the current package version.
  */
-export function isValidCompatMode(
-	compatibilityMode: Required<IContainerRuntimeOptionsInternal["compatibilityMode"]>,
-): boolean {
+export function isValidCompatMode(compatibilityMode: SemanticVersion): boolean {
 	return (
 		// TODO: We can remove the first condition after 3.0 is released and the defaultCompatibilityMode is set to "2.0.0".
-		compatibilityMode === defaultCompatibilityMode ||
+		compatibilityMode === (defaultCompatibilityMode as SemanticVersion) ||
 		(compatibilityMode !== undefined &&
 			semverValid(compatibilityMode) !== null &&
 			semverLte(compatibilityMode, pkgVersion))

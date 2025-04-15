@@ -8,19 +8,20 @@ import { strict as assert } from "node:assert";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import {
+	defaultCompatibilityMode,
 	getConfigsForCompatMode,
-	type IContainerRuntimeOptionsVersionDependent,
+	type IConfigMap,
 	type SemanticVersion,
 } from "../compatUtils.js";
-import {
-	disabledCompressionConfig,
-	enabledCompressionConfig,
-} from "../compressionDefinitions.js";
+import { enabledCompressionConfig } from "../compressionDefinitions.js";
 
 describe("compatUtils", () => {
 	describe("getConfigsForCompatMode", () => {
-		it('returns correct configs compatibilityMode "pre-3.0-default"', () => {
-			const result = getConfigsForCompatMode("pre-3.0-default", testConfigMap);
+		it("returns correct configs for compatibilityMode = defaultCompatibilityMode", () => {
+			const result = getConfigsForCompatMode(
+				defaultCompatibilityMode as SemanticVersion,
+				testConfigMap,
+			);
 			// We should return the hardcoded default configs for pre-3.0-default, even if using a different config map
 			assert.deepEqual(result, {
 				gcOptions: {},
@@ -31,117 +32,196 @@ describe("compatUtils", () => {
 				explicitSchemaControl: false,
 			});
 		});
-		const testConfigMap: {
-			[K in keyof IContainerRuntimeOptionsVersionDependent]: {
-				[version: SemanticVersion]: IContainerRuntimeOptionsVersionDependent[K];
-			};
-		} = {
-			enableGroupedBatching: {
-				"1.0.0": false,
-				"2.3.4": true,
+		const testConfigMap: IConfigMap = {
+			featureA: {
+				"0.5.0": "a1",
+				"2.0.0": "a2",
+				"5.0.0": "a3",
+				"8.0.0": "a4",
 			},
-			compressionOptions: {
-				"1.0.0": disabledCompressionConfig,
-				"2.1.0": enabledCompressionConfig,
+			featureB: {
+				"0.0.1": "b1",
+				"3.0.0": "b2",
+				"6.0.0": "b3",
+				"9.0.0": "b4",
 			},
-			enableRuntimeIdCompressor: {
-				"1.0.0": undefined as unknown as "on" | "delayed",
-				"2.20.0": "on",
+			featureC: {
+				"1.0.0": "c1",
+				"4.0.0": "c2",
+				"7.0.0": "c3",
+				"10.0.0": "c4",
 			},
-			explicitSchemaControl: {
-				"1.0.0": false,
-				"2.10.0": true,
+			featureD: {
+				"0.1.0": "d1",
+				"2.5.0": "d2",
+				"5.5.0": "d3",
+				"8.5.0": "d4",
 			},
-			flushMode: {
-				"1.0.0": FlushMode.Immediate,
-				"2.0.0": FlushMode.TurnBased,
+			featureE: {
+				"0.9.0": "e1",
+				"3.5.0": "e2",
+				"6.5.0": "e3",
+				"9.5.0": "e4",
 			},
-			gcOptions: {
-				"1.0.0": {},
-				"3.0.0": { enableGCSweep: true },
+			featureF: {
+				"1.5.0": "f1",
+				"4.5.0": "f2",
+				"7.5.0": "f3",
+				"10.5.0": "f4",
 			},
 		};
-		const testCases = [
+
+		const testCases: {
+			compatibilityMode: SemanticVersion;
+			expectedConfig: Record<string, string | undefined>;
+		}[] = [
 			{
-				compatibilityMode: "1.0.0",
+				compatibilityMode: "0.5.0",
 				expectedConfig: {
-					enableGroupedBatching: false,
-					compressionOptions: disabledCompressionConfig,
-					enableRuntimeIdCompressor: undefined,
-					explicitSchemaControl: false,
-					flushMode: FlushMode.Immediate,
-					gcOptions: {},
+					featureA: "a1",
+					featureB: "b1",
+					// featureC: undefined,
+					featureD: "d1",
+					// featureE: undefined,
+					// featureF: undefined,
 				},
 			},
 			{
-				compatibilityMode: "1.3.6",
+				compatibilityMode: "1.0.0",
 				expectedConfig: {
-					enableGroupedBatching: false,
-					compressionOptions: disabledCompressionConfig,
-					enableRuntimeIdCompressor: undefined,
-					explicitSchemaControl: false,
-					flushMode: FlushMode.Immediate,
-					gcOptions: {},
+					featureA: "a1",
+					featureB: "b1",
+					featureC: "c1",
+					featureD: "d1",
+					featureE: "e1",
+					// featureF: undefined,
+				},
+			},
+			{
+				compatibilityMode: "1.5.0",
+				expectedConfig: {
+					featureA: "a1",
+					featureB: "b1",
+					featureC: "c1",
+					featureD: "d1",
+					featureE: "e1",
+					featureF: "f1",
 				},
 			},
 			{
 				compatibilityMode: "2.0.0",
 				expectedConfig: {
-					enableGroupedBatching: false,
-					compressionOptions: disabledCompressionConfig,
-					enableRuntimeIdCompressor: undefined,
-					explicitSchemaControl: false,
-					flushMode: FlushMode.TurnBased,
-					gcOptions: {},
+					featureA: "a2",
+					featureB: "b1",
+					featureC: "c1",
+					featureD: "d1",
+					featureE: "e1",
+					featureF: "f1",
 				},
 			},
 			{
-				compatibilityMode: "2.5.1",
+				compatibilityMode: "2.1.5",
 				expectedConfig: {
-					enableGroupedBatching: true,
-					compressionOptions: enabledCompressionConfig,
-					enableRuntimeIdCompressor: undefined,
-					explicitSchemaControl: false,
-					flushMode: FlushMode.TurnBased,
-					gcOptions: {},
+					featureA: "a2",
+					featureB: "b1",
+					featureC: "c1",
+					featureD: "d1",
+					featureE: "e1",
+					featureF: "f1",
 				},
 			},
 			{
-				compatibilityMode: "2.10.5",
+				compatibilityMode: "2.5.0",
 				expectedConfig: {
-					enableGroupedBatching: true,
-					compressionOptions: enabledCompressionConfig,
-					enableRuntimeIdCompressor: undefined,
-					explicitSchemaControl: true,
-					flushMode: FlushMode.TurnBased,
-					gcOptions: {},
-				},
-			},
-			{
-				compatibilityMode: "2.50.4",
-				expectedConfig: {
-					enableGroupedBatching: true,
-					compressionOptions: enabledCompressionConfig,
-					enableRuntimeIdCompressor: "on",
-					explicitSchemaControl: true,
-					flushMode: FlushMode.TurnBased,
-					gcOptions: {},
+					featureA: "a2",
+					featureB: "b1",
+					featureC: "c1",
+					featureD: "d2",
+					featureE: "e1",
+					featureF: "f1",
 				},
 			},
 			{
 				compatibilityMode: "3.0.0",
 				expectedConfig: {
-					enableGroupedBatching: true,
-					compressionOptions: enabledCompressionConfig,
-					enableRuntimeIdCompressor: "on",
-					explicitSchemaControl: true,
-					flushMode: FlushMode.TurnBased,
-					gcOptions: { enableGCSweep: true },
+					featureA: "a2",
+					featureB: "b2",
+					featureC: "c1",
+					featureD: "d2",
+					featureE: "e1",
+					featureF: "f1",
+				},
+			},
+			{
+				compatibilityMode: "3.7.2",
+				expectedConfig: {
+					featureA: "a2",
+					featureB: "b2",
+					featureC: "c1",
+					featureD: "d2",
+					featureE: "e2",
+					featureF: "f1",
+				},
+			},
+			{
+				compatibilityMode: "5.0.1",
+				expectedConfig: {
+					featureA: "a3",
+					featureB: "b2",
+					featureC: "c2",
+					featureD: "d2",
+					featureE: "e2",
+					featureF: "f2",
+				},
+			},
+			{
+				compatibilityMode: "6.9.9",
+				expectedConfig: {
+					featureA: "a3",
+					featureB: "b3",
+					featureC: "c2",
+					featureD: "d3",
+					featureE: "e3",
+					featureF: "f2",
+				},
+			},
+			{
+				compatibilityMode: "8.2.3",
+				expectedConfig: {
+					featureA: "a4",
+					featureB: "b3",
+					featureC: "c3",
+					featureD: "d3",
+					featureE: "e3",
+					featureF: "f3",
+				},
+			},
+			{
+				compatibilityMode: "9.7.0",
+				expectedConfig: {
+					featureA: "a4",
+					featureB: "b4",
+					featureC: "c3",
+					featureD: "d4",
+					featureE: "e4",
+					featureF: "f3",
+				},
+			},
+			{
+				compatibilityMode: "10.0.0",
+				expectedConfig: {
+					featureA: "a4",
+					featureB: "b4",
+					featureC: "c4",
+					featureD: "d4",
+					featureE: "e4",
+					featureF: "f3",
 				},
 			},
 		];
+
 		for (const testCase of testCases) {
-			it(`returns correct configs compatibilityMode "${testCase.compatibilityMode}"`, () => {
+			it(`returns correct configs for compatibilityMode = "${testCase.compatibilityMode}"`, () => {
 				const config = getConfigsForCompatMode(testCase.compatibilityMode, testConfigMap);
 				assert.deepEqual(
 					config,
