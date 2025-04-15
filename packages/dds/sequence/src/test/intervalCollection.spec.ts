@@ -291,13 +291,13 @@ describe("SharedString interval collections", () => {
 			sharedString.removeRange(0, 1);
 			// [D]ABC
 			const collection = sharedString.getIntervalCollection("test");
-			collection.add({ start: 0, end: 0, props: { intervalId: "x" } });
+			collection.add({ start: 0, end: 0 });
 			//    x
 			// [D]ABC
 			sharedString.removeRange(0, 1);
 			//     x
 			// [D][A]BC
-			collection.add({ start: 0, end: 0, props: { intervalId: "y" } });
+			collection.add({ start: 0, end: 0 });
 			//     x y
 			// [D][A]BC
 			sharedString.removeRange(0, 1);
@@ -309,7 +309,7 @@ describe("SharedString interval collections", () => {
 			// x, y are detached
 			//                  [   ]
 			// string is PLMNOEFGHIJK
-			collection.add({ start: 7, end: 11, props: { intervalId: "z" } });
+			collection.add({ start: 7, end: 11 });
 			sharedString.removeRange(11, 12);
 			containerRuntimeFactory.processAllMessages();
 		});
@@ -1033,17 +1033,16 @@ describe("SharedString interval collections", () => {
 			});
 
 			it("retains intervalTree coherency when falling back to id comparison", () => {
-				const [idLowest, idMiddle, idLargest] = ["a", "b", "c"];
-				collection.add({ start: 0, end: 1, props: { intervalId: idLargest } });
-				collection.add({ start: 0, end: 2, props: { intervalId: idMiddle } });
-				collection.add({ start: 0, end: 3, props: { intervalId: idLowest } });
+				collection.add({ start: 0, end: 1 });
+				collection.add({ start: 0, end: 2 });
+				const lowest = collection.add({ start: 0, end: 3 });
 				sharedString.removeRange(1, 4);
 				assertSequenceIntervals(sharedString, collection, [
 					{ start: 0, end: 1 },
 					{ start: 0, end: 1 },
 					{ start: 0, end: 1 },
 				]);
-				collection.removeIntervalById(idLowest);
+				collection.removeIntervalById(lowest.getIntervalId());
 				assertSequenceIntervals(sharedString, collection, [
 					{ start: 0, end: 1 },
 					{ start: 0, end: 1 },
@@ -1056,10 +1055,9 @@ describe("SharedString interval collections", () => {
 			});
 
 			it("retains intervalTree coherency after slide when falling back to id comparison", () => {
-				const [idLowest, idMiddle, idLargest] = ["a", "b", "c"];
-				collection.add({ start: 0, end: 1, props: { intervalId: idLargest } });
-				collection.add({ start: 0, end: 2, props: { intervalId: idMiddle } });
-				collection.add({ start: 0, end: 3, props: { intervalId: idLowest } });
+				collection.add({ start: 0, end: 1 });
+				collection.add({ start: 0, end: 2 });
+				const lowest = collection.add({ start: 0, end: 3 });
 				sharedString.removeRange(1, 4);
 				assertSequenceIntervals(sharedString, collection, [
 					{ start: 0, end: 1 },
@@ -1072,7 +1070,7 @@ describe("SharedString interval collections", () => {
 					{ start: 0, end: 1 },
 					{ start: 0, end: 1 },
 				]);
-				collection.removeIntervalById(idLowest);
+				collection.removeIntervalById(lowest.getIntervalId());
 				assertSequenceIntervals(sharedString, collection, [
 					{ start: 0, end: 1 },
 					{ start: 0, end: 1 },
@@ -1492,6 +1490,25 @@ describe("SharedString interval collections", () => {
 			assertSequenceIntervals(sharedString2, collection2, [{ start: 5, end: 8 }]);
 			assertSequenceIntervals(sharedString, collection1, [{ start: 5, end: 8 }]);
 		});
+
+		it("can rebase an interval endpoint onto a locally inserted segment which is the best fit", () => {
+			collection1.removeIntervalById(interval.getIntervalId());
+			containerRuntime1.connected = false;
+			sharedString.insertText(7, "irst f"); // makes "hello first friend"
+			// with an interval around "irst fr"
+			interval = collection1.add({ start: 6, end: 14 });
+			sharedString2.removeRange(0, 7); // removes "hello f", where the "f" is an endpoint of the interval
+			containerRuntimeFactory.processAllMessages();
+			containerRuntime1.connected = true;
+			containerRuntimeFactory.processAllMessages();
+			assert.equal(sharedString.getText(), "irst friend");
+			assert.equal(sharedString2.getText(), "irst friend");
+
+			// At the time the addInterval operation is rebased, the 'irst f' segment has only been inserted locally.
+			// Nonetheless, it should still be a valid slide target for the rebased interval.
+			assertSequenceIntervals(sharedString2, collection2, [{ start: 0, end: 7 }]);
+			assertSequenceIntervals(sharedString, collection1, [{ start: 0, end: 7 }]);
+		});
 	});
 
 	describe("querying intervals with index API's", () => {
@@ -1546,7 +1563,7 @@ describe("SharedString interval collections", () => {
 	});
 
 	describe("maintain consistency between the collection label and that in interval properties", () => {
-		let collection;
+		let collection: ISequenceIntervalCollection;
 
 		beforeEach(() => {
 			sharedString.initializeLocal();
@@ -2338,7 +2355,7 @@ describe("the start and end positions of intervals are updated in response to ed
 				clients[0].sharedString.insertText(0, initialText);
 				containerRuntimeFactory.processAllMessages();
 				const collection = clients[0].sharedString.getIntervalCollection("test");
-				const initial = collection.add({ start, end, props: { intervalId: "0" } });
+				const initial = collection.add({ start, end });
 				const intervalId = initial.getIntervalId();
 
 				// remove the specified range
@@ -2368,7 +2385,7 @@ describe("the start and end positions of intervals are updated in response to ed
 				clients[0].containerRuntime.connected = false;
 
 				const collection = clients[0].sharedString.getIntervalCollection("test");
-				const initial = collection.add({ start, end, props: { intervalId: "0" } });
+				const initial = collection.add({ start, end });
 				const intervalId = initial.getIntervalId();
 
 				// remove the specified range
@@ -2391,7 +2408,7 @@ describe("the start and end positions of intervals are updated in response to ed
 				containerRuntimeFactory.processAllMessages();
 				clients[1].containerRuntime.connected = false;
 				const collection = clients[0].sharedString.getIntervalCollection("test");
-				const initial = collection.add({ start, end, props: { intervalId: "0" } });
+				const initial = collection.add({ start, end });
 				const intervalId = initial.getIntervalId();
 
 				// remove the specified range
@@ -2410,7 +2427,7 @@ describe("the start and end positions of intervals are updated in response to ed
 				containerRuntimeFactory.processAllMessages();
 
 				const collection = clients[0].sharedString.getIntervalCollection("test");
-				const initial = collection.add({ start, end, props: { intervalId: "0" } });
+				const initial = collection.add({ start, end });
 				const intervalId = initial.getIntervalId();
 				containerRuntimeFactory.processAllMessages();
 

@@ -7,13 +7,14 @@ import { strict as assert } from "node:assert";
 
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { ContainerMessageType } from "../../index.js";
 import {
-	BatchMessage,
-	IBatch,
+	OutboundBatchMessage,
 	OpGroupingManager,
 	isGroupedBatch,
+	type OutboundBatch,
 } from "../../opLifecycle/index.js";
 
 describe("OpGroupingManager", () => {
@@ -23,11 +24,11 @@ describe("OpGroupingManager", () => {
 		hasReentrantOps?: boolean,
 		opHasMetadata: boolean = false,
 		batchId?: string,
-	): IBatch => ({
+	): OutboundBatch => ({
 		...messagesToBatch(Array.from({ length }, () => createMessage(opHasMetadata, batchId))),
 		hasReentrantOps,
 	});
-	const messagesToBatch = (messages: BatchMessage[]): IBatch => ({
+	const messagesToBatch = (messages: OutboundBatchMessage[]): OutboundBatch => ({
 		messages,
 		contentSizeInBytes: messages
 			.map((message) => JSON.stringify(message).length)
@@ -46,42 +47,6 @@ describe("OpGroupingManager", () => {
 			referenceSequenceNumber: 0,
 		};
 	};
-
-	describe("Configs", () => {
-		interface ConfigOption {
-			enabled: boolean;
-			tooSmall?: boolean;
-			reentrant?: boolean;
-			reentryEnabled?: boolean;
-			expectedResult: boolean;
-		}
-		const options: ConfigOption[] = [
-			{ enabled: false, expectedResult: false },
-			{ enabled: true, tooSmall: true, expectedResult: false },
-			{ enabled: true, reentrant: true, expectedResult: true },
-			{ enabled: true, expectedResult: true },
-		];
-
-		for (const option of options) {
-			it(`shouldGroup: groupedBatchingEnabled [${option.enabled}] tooSmall [${
-				option.tooSmall === true
-			}] reentrant [${option.reentrant === true}]`, () => {
-				assert.strictEqual(
-					new OpGroupingManager(
-						{
-							groupedBatchingEnabled: option.enabled,
-						},
-						mockLogger,
-					).shouldGroup(
-						option.tooSmall
-							? createBatch(1, option.reentrant)
-							: createBatch(5, option.reentrant),
-					),
-					option.expectedResult,
-				);
-			});
-		}
-	});
 
 	describe("groupBatch", () => {
 		it("grouped batching disabled", () => {
@@ -138,46 +103,52 @@ describe("OpGroupingManager", () => {
 
 		it("create empty batch", () => {
 			const batchId = "batchId";
+			const expectedPlaceholderMessage: OutboundBatchMessage = {
+				contents: '{"type":"groupedBatch","contents":[]}',
+				metadata: { batchId },
+				localOpMetadata: { emptyBatch: true },
+				referenceSequenceNumber: 0,
+			};
+
 			const result = new OpGroupingManager(
 				{
 					groupedBatchingEnabled: true,
 				},
 				mockLogger,
 			).createEmptyGroupedBatch(batchId, 0);
-			assert.deepStrictEqual(result.messages, [
-				{
-					contents: '{"type":"groupedBatch","contents":[]}',
-					metadata: { batchId },
-					localOpMetadata: { emptyBatch: true },
-					referenceSequenceNumber: 0,
-				},
-			]);
+
+			assert.deepStrictEqual(result.outboundBatch.messages, [expectedPlaceholderMessage]);
+			assert.deepStrictEqual(result.placeholderMessage, expectedPlaceholderMessage);
 		});
 
-		it("should group on empty batch", () => {
+		it("should throw for an empty batch", () => {
+			const emptyBatch: OutboundBatch = {
+				messages: [],
+				contentSizeInBytes: 0,
+				referenceSequenceNumber: 0,
+			};
+			assert.throws(
+				() => {
+					new OpGroupingManager(
+						{
+							groupedBatchingEnabled: true,
+						},
+						mockLogger,
+					).groupBatch(emptyBatch);
+				},
+				(e: Error) => validateAssertionError(e, "Unexpected attempt to group an empty batch"),
+			);
+		});
+
+		it("singleton batch is returned as-is", () => {
+			const original = createBatch(1);
 			const result = new OpGroupingManager(
 				{
 					groupedBatchingEnabled: true,
 				},
 				mockLogger,
-			).shouldGroup({
-				messages: [],
-				contentSizeInBytes: 0,
-				referenceSequenceNumber: 0,
-				hasReentrantOps: false,
-			});
-			assert.strictEqual(result, true);
-		});
-
-		it("grouped batching enabled, not large enough", () => {
-			assert.throws(() => {
-				new OpGroupingManager(
-					{
-						groupedBatchingEnabled: true,
-					},
-					mockLogger,
-				).groupBatch(createBatch(1));
-			});
+			).groupBatch(original);
+			assert.equal(result, original, "Expected the original batch to be returned");
 		});
 
 		it("grouped batching enabled, op metadata not allowed", () => {

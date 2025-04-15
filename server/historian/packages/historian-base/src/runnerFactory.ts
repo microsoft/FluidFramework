@@ -8,12 +8,13 @@ import * as core from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import winston from "winston";
-import { RedisClientConnectionManager } from "@fluidframework/server-services-utils";
+import { DenyList, RedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import * as historianServices from "./services";
 import { normalizePort, Constants } from "./utils";
 import { HistorianRunner } from "./runner";
 import { IHistorianResourcesCustomizations } from "./customizations";
 import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
+import type { IDenyList } from "@fluidframework/server-services-core";
 
 export class HistorianResources implements core.IResources {
 	public webServerFactory: core.IWebServerFactory;
@@ -30,7 +31,7 @@ export class HistorianResources implements core.IResources {
 		public readonly redisClientConnectionManagers: utils.IRedisClientConnectionManager[],
 		public readonly cache?: historianServices.RedisCache,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
-		public readonly denyList?: historianServices.IDenyList,
+		public readonly denyList?: IDenyList,
 		public readonly ephemeralDocumentTTLSec?: number,
 		public readonly readinessCheck?: core.IReadinessCheck,
 		public readonly simplifiedCustomDataRetriever?: historianServices.ISimplifiedCustomDataRetriever,
@@ -90,7 +91,32 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		// Create services
 		const riddlerEndpoint = config.get("riddler");
 		const alfredEndpoint = config.get("alfred");
-		const riddler = new historianServices.RiddlerService(riddlerEndpoint, tenantCache);
+
+		const redisClientConnectionManagerForInvalidTokenCache =
+			customizations?.redisClientConnectionManagerForInvalidTokenCache
+				? customizations.redisClientConnectionManagerForInvalidTokenCache
+				: new RedisClientConnectionManager(
+						undefined,
+						redisConfig,
+						redisConfig.enableClustering,
+						redisConfig.slotsRefreshTimeout,
+						undefined /* retryDelays */,
+						redisConfig.enableVerboseErrorLogging,
+				  );
+		redisClientConnectionManagers.push(redisClientConnectionManagerForInvalidTokenCache);
+		const redisCacheForInvalidToken = new services.RedisCache(
+			redisClientConnectionManagerForInvalidTokenCache,
+			{
+				expireAfterSeconds: redisConfig.keyExpireAfterSeconds,
+				prefix: Constants.invalidTokenCachePrefix,
+			},
+		);
+
+		const riddler = new historianServices.RiddlerService(
+			riddlerEndpoint,
+			tenantCache,
+			redisCacheForInvalidToken,
+		);
 
 		// Redis connection for throttling.
 		const redisConfigForThrottling = config.get("redisForThrottling");
@@ -218,9 +244,11 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		const revokedTokenChecker: core.IRevokedTokenChecker | undefined =
 			customizations?.revokedTokenChecker ?? new utils.DummyRevokedTokenChecker();
 
-		const denyListConfig = config.get("documentDenyList");
-		const denyList: historianServices.IDenyList = new historianServices.DenyList(
-			denyListConfig,
+		const documentsDenyListConfig = config.get("documentDenyList");
+		const tenantsDenyListConfig = config.get("tenantsDenyList");
+		const denyList: core.IDenyList = new DenyList(
+			tenantsDenyListConfig,
+			documentsDenyListConfig,
 		);
 		const startupCheck = new StartupCheck();
 
