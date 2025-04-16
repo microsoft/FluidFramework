@@ -16,6 +16,16 @@ export type {
 } from "./browserPackage.js";
 export { isFluidBrowserPackage } from "./browserPackage.js";
 export type {
+	ClientConnectionId,
+	ContainerExtensionFactory,
+	ContainerExtensionId,
+	ContainerExtensionStore,
+	ContainerExtension,
+	ExtensionMessage,
+	ExtensionRuntime,
+	ExtensionRuntimeEvents,
+} from "./containerExtension.js";
+export type {
 	IConnectionDetails,
 	IDeltaManager,
 	IDeltaManagerEvents,
@@ -64,6 +74,7 @@ export type {
 	IContainerContext,
 	IProvideRuntimeFactory,
 	IRuntime,
+	IRuntimeInternal,
 	IGetPendingLocalStateProps,
 } from "./runtime.js";
 export { AttachState, IRuntimeFactory } from "./runtime.js";

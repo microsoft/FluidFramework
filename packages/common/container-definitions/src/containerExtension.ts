@@ -4,9 +4,14 @@
  */
 
 import type {
+	ITelemetryBaseLogger,
 	JsonDeserialized,
 	JsonSerializable,
+	Listenable,
 } from "@fluidframework/core-interfaces/internal";
+import type { IQuorumClients } from "@fluidframework/driver-definitions/internal";
+
+import type { IAudience } from "./audience.js";
 
 /**
  * While connected, the id of a client within a session.
@@ -16,12 +21,12 @@ import type {
 export type ClientConnectionId = string;
 
 /**
- * Common interface between incoming and outgoing extension signals.
+ * Common structure between incoming and outgoing extension signals.
  *
  * @sealed
  * @internal
  */
-export interface IExtensionMessage<TType extends string = string, TContent = unknown> {
+export interface ExtensionMessage<TType extends string = string, TContent = unknown> {
 	/**
 	 * Message type
 	 */
@@ -51,7 +56,7 @@ export interface IExtensionMessage<TType extends string = string, TContent = unk
  *
  * @internal
  */
-export interface IContainerExtension<TContext extends unknown[]> {
+export interface ContainerExtension<TContext extends unknown[]> {
 	/**
 	 * Notifies the extension of a new use context.
 	 *
@@ -66,21 +71,33 @@ export interface IContainerExtension<TContext extends unknown[]> {
 	 * @param signal - Signal content and metadata
 	 * @param local - True if signal was sent by this client
 	 */
-	processSignal?(address: string, signal: IExtensionMessage, local: boolean): void;
+	processSignal?(address: string, signal: ExtensionMessage, local: boolean): void;
+}
+
+/**
+ * Events emitted by the {@link ExtensionRuntime}.
+ *
+ * @internal
+ */
+export interface ExtensionRuntimeEvents {
+	"disconnected": () => void;
+	"connected": (clientId: ClientConnectionId) => void;
 }
 
 /**
  * Defines the runtime interface an extension may access.
- * In most cases this is a subset of {@link @fluidframework/container-runtime-definitions#IContainerRuntime}.
+ * In most cases this is a logical subset of {@link @fluidframework/container-runtime-definitions#IContainerRuntime}.
  *
  * @sealed
  * @internal
  */
-export interface IExtensionRuntime {
-	/**
-	 * {@inheritdoc @fluidframework/container-runtime-definitions#IContainerRuntime.clientId}
-	 */
-	get clientId(): ClientConnectionId | undefined;
+export interface ExtensionRuntime {
+	readonly isConnected: () => boolean;
+	readonly getClientId: () => ClientConnectionId | undefined;
+
+	readonly events: Listenable<ExtensionRuntimeEvents>;
+
+	readonly logger: ITelemetryBaseLogger;
 
 	/**
 	 * Submits a signal to be sent to other clients.
@@ -89,15 +106,22 @@ export interface IExtensionRuntime {
 	 * @param content - Custom content of the signal. Should be a JSON serializable object or primitive via {@link https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify|JSON.stringify}.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 *
-	 * Upon receipt of signal, {@link IContainerExtension.processSignal} will be called with the same
+	 * Upon receipt of signal, {@link ContainerExtension.processSignal} will be called with the same
 	 * address, type, and content (less any non-{@link https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify|JSON.stringify}-able data).
 	 */
-	submitAddressedSignal<T>(
+	submitAddressedSignal: <T>(
 		address: string,
 		type: string,
 		content: JsonSerializable<T>,
 		targetClientId?: ClientConnectionId,
-	): void;
+	) => void;
+
+	/**
+	 * The collection of write clients which were connected as of the current sequence number.
+	 * Also contains a map of key-value pairs that must be agreed upon by all clients before being accepted.
+	 */
+	getQuorum: () => IQuorumClients;
+	getAudience: () => IAudience;
 }
 
 /**
@@ -120,9 +144,9 @@ export interface IExtensionRuntime {
  * @internal
  */
 export type ContainerExtensionFactory<T, TContext extends unknown[]> = new (
-	runtime: IExtensionRuntime,
+	runtime: ExtensionRuntime,
 	...context: TContext
-) => { readonly interface: T; readonly extension: IContainerExtension<TContext> };
+) => { readonly interface: T; readonly extension: ContainerExtension<TContext> };
 
 /**
  * Unique identifier for extension
