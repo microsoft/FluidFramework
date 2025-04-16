@@ -199,7 +199,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				// In this situation, rule 1 applies, so we use replace1.dst.
 				composedDst = replace1.dst;
 				// However, we need to inform the node manager of the rename
-				nodeManager.composeAttachDetach(replace1.dst, replace2.dst, 1);
+				nodeManager.composeAttachDetach(replace1.src, replace2.dst, 1);
 			} else if (isPin(replace2, nodeManager)) {
 				// This branch deals with cases (A S▼S) and (_ S▼S).
 				assert(replace1.src !== undefined, "Replace1.src should be defined");
@@ -546,13 +546,13 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					// This branch deals with cases (A▼A) ↷ (A C) and (A▼A) ↷ (A _).
 					// In both cases, `overChange` detaches node A which is pinned by `newChange`.
 					// The rebased change should therefore attach A from wherever `overChange` has sent it.
-					replace.src = newChange.valueReplace.dst;
+					replace.src = overReplace.dst;
 					// We need to inform the node manager of any child changes since they ought to be represented at the location of A in the input context of the rebased change.
 					// We also need to inform the node manager that the rebased change needs to detach A from its new location.
 					nodeManager.rebaseOverDetach(
 						overReplace.dst,
 						1,
-						replace.dst,
+						overReplace.dst, // XXX: is it ok to reuse this ID? Doing so means that detach IDs are getting reused.
 						rebasedChildChangeForA,
 					);
 				} else {
@@ -562,11 +562,10 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					// (_ B) ↷ (_ C)
 					// Note that in the last two cases, it's possible for nodes B and C to actually be the same node.
 					// XXX: Consider renames when comparing register IDs (remember to use the last know ID for the node).
-					// eslint-disable-next-line unicorn/prefer-ternary
 					if (areEqualChangeAtomIdOpts(overReplace.src, newChange.valueReplace.src)) {
-						// This branch deal with the cases (A B) ↷ (A C) and (_ B) ↷ (_ C) where B and C are the same node.
+						// This branch deals with the cases (A B) ↷ (A C) and (_ B) ↷ (_ C) where B and C are the same node.
 						// The rebased change becomes a pin, in which case its `src` must match its `dst`.
-						replace.src = newChange.valueReplace.dst;
+						replace.src = replace.dst;
 						// XXX: should rebaseOverDetach be called in this case as well?.
 					} else {
 						// This branch deals with the following cases where B and C are different nodes:
