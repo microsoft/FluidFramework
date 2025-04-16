@@ -169,11 +169,11 @@ const rootDataStoreId = "rootDOId";
  */
 export function createDOProviderContainerRuntimeFactory(props: {
 	/**
-	 * The schema for the container
+	 * The schema for the container.
 	 */
 	schema: ContainerSchema;
 	/**
-	 * Compatibility mode
+	 * See {@link CompatibilityMode} and compatibilityModeRuntimeOptions for more details.
 	 */
 	compatibilityMode: CompatibilityMode;
 	/**
