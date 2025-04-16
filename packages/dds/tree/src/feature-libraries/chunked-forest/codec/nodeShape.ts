@@ -33,11 +33,11 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 	public constructor(
 		public readonly type: undefined | TreeNodeSchemaIdentifier,
 		public readonly value: EncodedValueShape,
-		public readonly fields: readonly KeyedFieldEncoder[],
+		public readonly fieldEncoders: readonly KeyedFieldEncoder[],
 		public readonly extraLocal: undefined | FieldEncoder,
 	) {
 		super();
-		this.explicitKeys = new Set(this.fields.map((f) => f.key));
+		this.explicitKeys = new Set(this.fieldEncoders.map((f) => f.key));
 	}
 
 	private getValueToEncode(cursor: ITreeCursorSynchronous, cache: EncoderCache): Value {
@@ -64,9 +64,9 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 			assert(cursor.type === this.type, 0x741 /* type must match shape */);
 		}
 		encodeValue(this.getValueToEncode(cursor, cache), this.value, outputBuffer);
-		for (const field of this.fields) {
-			cursor.enterField(brand(field.key));
-			field.shape.encodeField(cursor, cache, outputBuffer);
+		for (const fieldEncoder of this.fieldEncoders) {
+			cursor.enterField(brand(fieldEncoder.key));
+			fieldEncoder.encoder.encodeField(cursor, cache, outputBuffer);
 			cursor.exitField();
 		}
 
@@ -97,7 +97,7 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 			c: {
 				type: encodeOptionalIdentifier(this.type, identifiers),
 				value: this.value,
-				fields: encodeFieldShapes(this.fields, identifiers, shapes),
+				fields: encodeFieldShapes(this.fieldEncoders, identifiers, shapes),
 				extraFields: encodeOptionalFieldShape(this.extraLocal, shapes),
 			},
 		};
@@ -111,9 +111,9 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 			identifiers.add(this.type);
 		}
 
-		for (const field of this.fields) {
-			identifiers.add(field.key);
-			shapes(field.shape.shape);
+		for (const fieldEncoder of this.fieldEncoders) {
+			identifiers.add(fieldEncoder.key);
+			shapes(fieldEncoder.encoder.shape);
 		}
 
 		if (this.extraLocal !== undefined) {
@@ -127,18 +127,18 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 }
 
 export function encodeFieldShapes(
-	fields: readonly KeyedFieldEncoder[],
+	fieldEncoders: readonly KeyedFieldEncoder[],
 	identifiers: DeduplicationTable<string>,
 	shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
 ): EncodedFieldShape[] | undefined {
-	if (fields.length === 0) {
+	if (fieldEncoders.length === 0) {
 		return undefined;
 	}
-	return fields.map((field) => [
+	return fieldEncoders.map((fieldEncoder) => [
 		// key
-		encodeIdentifier(field.key, identifiers),
+		encodeIdentifier(fieldEncoder.key, identifiers),
 		// shape
-		shapes.valueToIndex.get(field.shape.shape) ?? fail(0xb50 /* missing shape */),
+		shapes.valueToIndex.get(fieldEncoder.encoder.shape) ?? fail(0xb50 /* missing shape */),
 	]);
 }
 
