@@ -400,8 +400,8 @@ export class PendingStateManager implements IDisposable {
 				const localOpMetadata = await this.stateHandler.applyStashedOp(nextMessage.content);
 				if (this.stateHandler.isAttached()) {
 					nextMessage.localOpMetadata = localOpMetadata;
-					// NOTE: This runtimeOp has been roundtripped through string, which is technically lossy,
-					// e.g. handles will be RemoteFluidObjectHandles instead of a handle backed directly by the target object
+					// NOTE: This runtimeOp has been roundtripped through string, which is technically lossy.
+					// e.g. At this point, handles are in their encoded form.
 					nextMessage.runtimeOp = JSON.parse(
 						nextMessage.content,
 					) as LocalContainerRuntimeMessage;
