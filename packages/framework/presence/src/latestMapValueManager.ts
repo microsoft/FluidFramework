@@ -330,9 +330,9 @@ export interface LatestMap<T, Keys extends string | number = string | number> {
 	 */
 	getRemotes(): IterableIterator<LatestMapClientData<T, Keys>>;
 	/**
-	 * Array of known remote clients.
+	 * Array of {@link Attendee}s that have provided states.
 	 */
-	getRemoteClients(): Attendee[];
+	getStateAttendees(): Attendee[];
 	/**
 	 * Access to a specific client's map of values.
 	 */
@@ -385,7 +385,7 @@ class LatestMapValueManagerImpl<
 		}
 	}
 
-	public getRemoteClients(): Attendee[] {
+	public getStateAttendees(): Attendee[] {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		return objectKeys(allKnownStates.states)
 			.filter((attendeeId) => attendeeId !== allKnownStates.self)

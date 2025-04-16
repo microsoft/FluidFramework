@@ -140,8 +140,8 @@ export interface Latest<T> {
     readonly controls: BroadcastControls;
     readonly events: Listenable<LatestEvents<T>>;
     getRemote(attendee: Attendee): LatestData<T>;
-    getRemoteClients(): Attendee[];
     getRemotes(): IterableIterator<LatestClientData<T>>;
+    getStateAttendees(): Attendee[];
     get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
     set local(value: JsonSerializable<T> & JsonDeserialized<T>);
 }
@@ -178,8 +178,8 @@ export interface LatestMap<T, Keys extends string | number = string | number> {
     readonly controls: BroadcastControls;
     readonly events: Listenable<LatestMapEvents<T, Keys>>;
     getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T>>;
-    getRemoteClients(): Attendee[];
     getRemotes(): IterableIterator<LatestMapClientData<T, Keys>>;
+    getStateAttendees(): Attendee[];
     readonly local: StateMap<Keys, T>;
 }
 

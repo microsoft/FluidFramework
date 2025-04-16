@@ -71,6 +71,7 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 			this.mc = createChildMonitoringContext({ logger, namespace: "Presence" });
 			this.mc.logger.sendTelemetryEvent({ eventName: "PresenceInstantiated" });
 		}
+
 		[this.datastoreManager, this.systemWorkspace] = setupSubComponents(
 			attendeeId,
 			runtime,

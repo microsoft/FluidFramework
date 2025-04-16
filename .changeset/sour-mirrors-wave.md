@@ -30,14 +30,14 @@ The following API changes have been made to improve clarity and consistency:
 | `LatestMapItemValueClientData` | `LatestMapItemUpdatedClientData` |
 | `LatestMapValueClientData` | `LatestMapClientData` |
 | `LatestMapValueManager` | `LatestMap` |
-| `LatestMapValueManager.clients` | `LatestMap.getRemoteClients` |
+| `LatestMapValueManager.clients` | `LatestMap.getStateAttendees` |
 | `LatestMapValueManager.clientValue` | `LatestMap.getRemote` |
 | `LatestMapValueManager.clientValues` | `LatestMap.getRemotes` |
 | `LatestMapValueManagerEvents` | `LatestMapEvents` |
 | `LatestValueClientData` | `LatestClientData` |
 | `LatestValueData` | `LatestData` |
 | `LatestValueManager` | `Latest` |
-| `LatestValueManager.clients` | `Latest.getRemoteClients` |
+| `LatestValueManager.clients` | `Latest.getStateAttendees` |
 | `LatestValueManager.clientValue` | `Latest.getRemote` |
 | `LatestValueManager.clientValues` | `Latest.getRemotes` |
 | `LatestValueManagerEvents` | `LatestEvents` |

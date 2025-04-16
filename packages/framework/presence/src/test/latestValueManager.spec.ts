@@ -139,7 +139,7 @@ export function checkCompiles(): void {
 	);
 	cursorUpdatedOff();
 
-	for (const attendee of cursor.getRemoteClients()) {
+	for (const attendee of cursor.getStateAttendees()) {
 		logClientValue({ attendee, ...cursor.getRemote(attendee) });
 	}
 

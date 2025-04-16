@@ -78,9 +78,9 @@ export interface Latest<T> {
 	 */
 	getRemotes(): IterableIterator<LatestClientData<T>>;
 	/**
-	 * Array of known remote clients.
+	 * Array of {@link Attendee}s that have provided states.
 	 */
-	getRemoteClients(): Attendee[];
+	getStateAttendees(): Attendee[];
 	/**
 	 * Access to a specific attendee's value.
 	 */
@@ -130,7 +130,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		}
 	}
 
-	public getRemoteClients(): Attendee[] {
+	public getStateAttendees(): Attendee[] {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		return Object.keys(allKnownStates.states)
 			.filter((attendeeId) => attendeeId !== allKnownStates.self)
