@@ -4,6 +4,7 @@
  */
 
 import {
+	type ChangeAtomId,
 	type DeltaDetachedNodeId,
 	type DeltaFieldChanges,
 	type DeltaFieldMap,
@@ -725,25 +726,37 @@ describe("ModularChangeFamily integration", () => {
 				{ parent: undefined, field: fieldC },
 				0,
 			);
-			editor.move(
-				{ parent: undefined, field: fieldA },
-				0,
-				1,
-				{ parent: undefined, field: fieldC },
-				0,
+
+			const [move1, move2] = getChanges();
+			const composed = family.compose([
+				tagChangeInline(move1, tag1),
+				tagChangeInline(move2, tag2),
+			]);
+
+			const id1: ChangeAtomId = { revision: tag1, localId: brand(0) };
+			const id2: ChangeAtomId = { revision: tag2, localId: brand(2) };
+
+			const expected = Change.build(
+				{
+					family,
+					maxId: 3,
+					revisions: [{ revision: tag1 }, { revision: tag2 }],
+					renames: [{ oldId: id1, newId: id2, count: 1 }],
+				},
+				Change.field(fieldA, sequence.identifier, [MarkMaker.remove(1, id1)]),
+				Change.field(fieldB, sequence.identifier, [
+					MarkMaker.rename(
+						1,
+						{ revision: tag1, localId: brand(1) },
+						{ revision: tag2, localId: brand(2) },
+					),
+				]),
+				Change.field(fieldC, sequence.identifier, [
+					MarkMaker.insert(1, { revision: tag2, localId: brand(3) }, { id: id2.localId }),
+				]),
 			);
 
-			const [move1, move2, expected] = getChanges();
-			const composed = family.compose([makeAnonChange(move1), makeAnonChange(move2)]);
-			const tagForCompare = mintRevisionTag();
-			family.validateChangeset(composed);
-			const actualDelta = normalizeDelta(
-				intoDelta(tagChangeInline(composed, tagForCompare), family.fieldKinds),
-			);
-			const expectedDelta = normalizeDelta(
-				intoDelta(tagChangeInline(expected, tagForCompare), family.fieldKinds),
-			);
-			assertEqual(actualDelta, expectedDelta);
+			assertEqual(composed, expected);
 		});
 	});
 

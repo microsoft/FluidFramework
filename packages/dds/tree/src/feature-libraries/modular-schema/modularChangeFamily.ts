@@ -3532,7 +3532,7 @@ function invertRootTable(change: ModularChangeset): RootNodeTable {
 	};
 }
 
-function renameNodes(
+export function renameNodes(
 	table: RootNodeTable,
 	oldId: ChangeAtomId,
 	newId: ChangeAtomId,

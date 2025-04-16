@@ -46,6 +46,8 @@ import {
 	getParentFieldId,
 	newRootTable,
 	normalizeFieldId,
+	renameNodes,
+	type RenameDescription,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { strict as assert } from "node:assert";
@@ -236,6 +238,7 @@ interface BuildArgs {
 	family: ModularChangeFamily;
 	maxId?: number;
 	revisions?: RevisionInfo[];
+	renames?: RenameDescription[];
 }
 
 function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): ModularChangeset {
@@ -258,7 +261,7 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 	const result: Mutable<ModularChangeset> = {
 		nodeChanges,
 		fieldChanges,
-		rootNodes: newRootTable(), // XXX
+		rootNodes: newRootTable(),
 		nodeToParent,
 		crossFieldKeys,
 		nodeAliases: newTupleBTree(),
@@ -267,6 +270,12 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 
 	if (args.revisions !== undefined) {
 		result.revisions = args.revisions;
+	}
+
+	if (args.renames !== undefined) {
+		for (const rename of args.renames) {
+			renameNodes(result.rootNodes, rename.oldId, rename.newId, rename.count);
+		}
 	}
 
 	return result;
