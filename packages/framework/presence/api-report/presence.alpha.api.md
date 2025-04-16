@@ -170,7 +170,7 @@ export interface LatestEvents<T> {
         value: InternalUtilityTypes.FullyReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
     }) => void;
     // @eventProperty
-    updated: (update: LatestClientData<T>) => void;
+    remoteUpdated: (update: LatestClientData<T>) => void;
 }
 
 // @alpha @sealed
@@ -198,10 +198,6 @@ export interface LatestMapClientData<T, Keys extends string | number, SpecificAt
 // @alpha @sealed (undocumented)
 export interface LatestMapEvents<T, K extends string | number> {
     // @eventProperty
-    itemRemoved: (removedItem: LatestMapItemRemovedClientData<K>) => void;
-    // @eventProperty
-    itemUpdated: (updatedItem: LatestMapItemUpdatedClientData<T, K>) => void;
-    // @eventProperty
     localItemRemoved: (removedItem: {
         key: K;
     }) => void;
@@ -211,7 +207,11 @@ export interface LatestMapEvents<T, K extends string | number> {
         key: K;
     }) => void;
     // @eventProperty
-    updated: (updates: LatestMapClientData<T, K>) => void;
+    remoteItemRemoved: (removedItem: LatestMapItemRemovedClientData<K>) => void;
+    // @eventProperty
+    remoteItemUpdated: (updatedItem: LatestMapItemUpdatedClientData<T, K>) => void;
+    // @eventProperty
+    remoteUpdated: (updates: LatestMapClientData<T, K>) => void;
 }
 
 // @alpha @sealed

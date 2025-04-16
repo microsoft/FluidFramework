@@ -48,7 +48,7 @@ export class PresenceManager {
 		);
 
 		// Listen for updates to the userInfo property in the presence state
-		this.usersState.props.onlineUsers.events.on("updated", (update) => {
+		this.usersState.props.onlineUsers.events.on("remoteUpdated", (update) => {
 			// The remote client that updated the userInfo property
 			const remoteSessionClient = update.attendee;
 			// The new value of the userInfo property

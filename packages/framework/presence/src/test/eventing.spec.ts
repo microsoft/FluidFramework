@@ -344,9 +344,9 @@ describe("Presence", () => {
 					itemUpdatedEventSpy = spy(verify);
 					atteendeeEventSpy = spy(verify);
 
-					latest.events.on("updated", latestUpdatedEventSpy);
-					latestMap.events.on("updated", latestMapUpdatedEventSpy);
-					latestMap.events.on("itemUpdated", itemUpdatedEventSpy);
+					latest.events.on("remoteUpdated", latestUpdatedEventSpy);
+					latestMap.events.on("remoteUpdated", latestMapUpdatedEventSpy);
+					latestMap.events.on("remoteItemUpdated", itemUpdatedEventSpy);
 					presence.attendees.events.on("attendeeConnected", atteendeeEventSpy);
 				}
 
@@ -423,9 +423,9 @@ describe("Presence", () => {
 						itemRemovedEventSpy = spy(verify);
 						latestUpdatedEventSpy = spy(verify);
 						latestMapUpdatedEventSpy = spy(verify);
-						latest.events.on("updated", latestUpdatedEventSpy);
-						latestMap.events.on("updated", latestMapUpdatedEventSpy);
-						latestMap.events.on("itemRemoved", itemRemovedEventSpy);
+						latest.events.on("remoteUpdated", latestUpdatedEventSpy);
+						latestMap.events.on("remoteUpdated", latestMapUpdatedEventSpy);
+						latestMap.events.on("remoteItemRemoved", itemRemovedEventSpy);
 					}
 
 					function assertSpies(): void {
@@ -495,9 +495,9 @@ describe("Presence", () => {
 						latestMapUpdatedEventSpy = spy(verify);
 						itemUpdatedEventSpy = spy(verify);
 
-						latestMap.events.on("updated", latestMapUpdatedEventSpy);
-						latestMap.events.on("itemUpdated", itemUpdatedEventSpy);
-						latestMap.events.on("itemRemoved", itemRemovedEventSpy);
+						latestMap.events.on("remoteUpdated", latestMapUpdatedEventSpy);
+						latestMap.events.on("remoteItemUpdated", itemUpdatedEventSpy);
+						latestMap.events.on("remoteItemRemoved", itemRemovedEventSpy);
 					}
 
 					function assertSpies(): void {
@@ -574,8 +574,8 @@ describe("Presence", () => {
 				latestMapSpy = spy(verify);
 
 				notificationManager.notifications.on("newId", notificationSpy);
-				latest.events.on("updated", latestSpy);
-				latestMap.events.on("updated", latestMapSpy);
+				latest.events.on("remoteUpdated", latestSpy);
+				latestMap.events.on("remoteUpdated", latestMapSpy);
 				presence.attendees.events.on("attendeeConnected", attendeeSpy);
 			}
 
