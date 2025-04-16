@@ -965,7 +965,7 @@ export class SchemaFactory<
 	/**
 	 * A special readonly field which holds an identifier string for an object node.
 	 * @remarks
-	 * The value of this field, a "node identifier", a string which identifies a node (or nodes) among all nodes in the tree.
+	 * The value of this field, a "node identifier", is a string which identifies a node (or nodes) among all nodes in the tree.
 	 * Node identifiers are strings, and can therefore be used as lookup keys in maps or written to a database.
 	 * When the node is constructed, the identifier field does not need to be specified.
 	 * When an identifier is not provided, the SharedTree will generate an identifier for the node automatically.
