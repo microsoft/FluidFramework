@@ -154,7 +154,7 @@ export function checkCompiles(): void {
 
 	localPointers.set("pen", { x: 1, y: 2 });
 
-	const pointerItemUpdatedOff = pointers.events.on("itemUpdated", logClientValue);
+	const pointerItemUpdatedOff = pointers.events.on("remoteItemUpdated", logClientValue);
 	pointerItemUpdatedOff();
 
 	for (const attendee of pointers.getStateAttendees()) {
@@ -168,11 +168,11 @@ export function checkCompiles(): void {
 		for (const [key, { value }] of items.entries()) logClientValue({ attendee, key, value });
 	}
 
-	pointers.events.on("itemRemoved", ({ attendee, key }) =>
+	pointers.events.on("remoteItemRemoved", ({ attendee, key }) =>
 		logClientValue<string>({ attendee, key, value: "<removed>" }),
 	);
 
-	pointers.events.on("updated", ({ attendee, items }) => {
+	pointers.events.on("remoteUpdated", ({ attendee, items }) => {
 		for (const [key, { value }] of items.entries()) logClientValue({ attendee, key, value });
 	});
 }

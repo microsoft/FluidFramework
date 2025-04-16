@@ -186,7 +186,7 @@ function makePresenceView(
 	}
 	logDiv.append(logHeaderDiv, logContentDiv);
 
-	presenceConfig.lastRoll.events.on("updated", (update) => {
+	presenceConfig.lastRoll.events.on("remoteUpdated", (update) => {
 		const connected = update.attendee.getConnectionStatus() === "Connected" ? "🔗" : "⛓️‍💥";
 		const updateText = `updated ${update.attendee.attendeeId.slice(0, 8)}'s ${connected} last rolls to ${JSON.stringify(update.value)}`;
 		addLogEntry(logContentDiv, updateText);

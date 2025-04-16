@@ -25,8 +25,12 @@ The following API changes have been made to improve clarity and consistency:
 | `ISessionClient` | `Attendee` |
 | `Latest` (import) | `StateFactory` |
 | `Latest` (call) | `StateFactory.latest` |
+| `LatestEvents.updated` | `LatestEvents.remoteUpdated` |
 | `LatestMap` (import) | `StateFactory` |
 | `LatestMap` (call) | `StateFactory.latestMap` |
+| `LatestMapEvents.itemRemoved` | `LatestMapEvents.remoteItemRemoved` |
+| `LatestMapEvents.itemUpdated` | `LatestMapEvents.remoteItemUpdated` |
+| `LatestMapEvents.updated` | `LatestMapEvents.remoteUpdated` |
 | `LatestMapItemValueClientData` | `LatestMapItemUpdatedClientData` |
 | `LatestMapValueClientData` | `LatestMapClientData` |
 | `LatestMapValueManager` | `LatestMap` |

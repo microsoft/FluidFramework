@@ -81,7 +81,7 @@ export interface LatestMapEvents<T, K extends string | number> {
 	 *
 	 * @eventProperty
 	 */
-	updated: (updates: LatestMapClientData<T, K>) => void;
+	remoteUpdated: (updates: LatestMapClientData<T, K>) => void;
 
 	/**
 	 * Raised when specific item's value of remote client is updated.
@@ -89,7 +89,7 @@ export interface LatestMapEvents<T, K extends string | number> {
 	 *
 	 * @eventProperty
 	 */
-	itemUpdated: (updatedItem: LatestMapItemUpdatedClientData<T, K>) => void;
+	remoteItemUpdated: (updatedItem: LatestMapItemUpdatedClientData<T, K>) => void;
 
 	/**
 	 * Raised when specific item of remote client is removed.
@@ -97,7 +97,7 @@ export interface LatestMapEvents<T, K extends string | number> {
 	 *
 	 * @eventProperty
 	 */
-	itemRemoved: (removedItem: LatestMapItemRemovedClientData<K>) => void;
+	remoteItemRemoved: (removedItem: LatestMapItemRemovedClientData<K>) => void;
 
 	/**
 	 * Raised when specific local item's value is updated.
@@ -462,11 +462,11 @@ class LatestMapValueManagerImpl<
 					value: itemValue,
 					metadata,
 				};
-				postUpdateActions.push(() => this.events.emit("itemUpdated", updatedItem));
+				postUpdateActions.push(() => this.events.emit("remoteItemUpdated", updatedItem));
 				allUpdates.items.set(key, { value: itemValue, metadata });
 			} else if (hadPriorValue !== undefined) {
 				postUpdateActions.push(() =>
-					this.events.emit("itemRemoved", {
+					this.events.emit("remoteItemRemoved", {
 						attendee,
 						key,
 						metadata,
@@ -475,7 +475,7 @@ class LatestMapValueManagerImpl<
 			}
 		}
 		this.datastore.update(this.key, attendeeId, currentState);
-		postUpdateActions.push(() => this.events.emit("updated", allUpdates));
+		postUpdateActions.push(() => this.events.emit("remoteUpdated", allUpdates));
 		return postUpdateActions;
 	}
 }

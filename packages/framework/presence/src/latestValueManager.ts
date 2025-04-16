@@ -32,7 +32,7 @@ export interface LatestEvents<T> {
 	 *
 	 * @eventProperty
 	 */
-	updated: (update: LatestClientData<T>) => void;
+	remoteUpdated: (update: LatestClientData<T>) => void;
 
 	/**
 	 * Raised when local client's value is updated, which may be the same value.
@@ -163,7 +163,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		this.datastore.update(this.key, attendeeId, value);
 		return [
 			() =>
-				this.events.emit("updated", {
+				this.events.emit("remoteUpdated", {
 					attendee,
 					value: value.value,
 					metadata: { revision: value.rev, timestamp: value.timestamp },

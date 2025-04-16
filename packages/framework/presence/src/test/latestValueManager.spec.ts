@@ -134,7 +134,7 @@ export function checkCompiles(): void {
 	cursor.local = { x: 1, y: 2 };
 
 	// Listen to others cursor updates
-	const cursorUpdatedOff = cursor.events.on("updated", ({ attendee, value }) =>
+	const cursorUpdatedOff = cursor.events.on("remoteUpdated", ({ attendee, value }) =>
 		console.log(`attendee ${attendee.attendeeId}'s cursor is now at (${value.x},${value.y})`),
 	);
 	cursorUpdatedOff();
