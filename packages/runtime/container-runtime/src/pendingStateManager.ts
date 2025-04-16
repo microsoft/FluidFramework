@@ -46,7 +46,7 @@ export interface IPendingMessage {
 	/**
 	 * The original runtime op that was submitted to the ContainerRuntime
 	 */
-	viableOp: LocalContainerRuntimeMessage | undefined; // Undefined for empty batches and when applying stashed ops
+	viableOp?: LocalContainerRuntimeMessage | undefined; // Undefined for empty batches and when applying stashed ops
 	localOpMetadata: unknown;
 	opMetadata: Record<string, unknown> | undefined;
 	sequenceNumber?: number;
@@ -103,7 +103,10 @@ export interface IPendingLocalState {
 export type PendingMessageResubmitData2 = Pick<
 	IPendingMessage,
 	"viableOp" | "localOpMetadata" | "opMetadata"
->;
+> & {
+	// Required (only missing for empty batch which will be sent as an empty array)
+	viableOp: LocalContainerRuntimeMessage;
+};
 
 export interface IRuntimeStateHandler {
 	connected(): boolean;
@@ -385,6 +388,9 @@ export class PendingStateManager implements IDisposable {
 				const localOpMetadata = await this.stateHandler.applyStashedOp(nextMessage.content);
 				if (this.stateHandler.isAttached()) {
 					nextMessage.localOpMetadata = localOpMetadata;
+					nextMessage.viableOp = JSON.parse(
+						nextMessage.content,
+					) as LocalContainerRuntimeMessage;
 					// then we push onto pendingMessages which will cause PendingStateManager to resubmit when we connect
 					patchbatchInfo(nextMessage); // Back compat
 					this.pendingMessages.push(nextMessage);
@@ -682,6 +688,11 @@ export class PendingStateManager implements IDisposable {
 				continue;
 			}
 
+			assert(
+				pendingMessage.viableOp !== undefined,
+				"viableOp is only undefined for empty batches",
+			);
+
 			/**
 			 * We must preserve the distinct batches on resubmit.
 			 * Note: It is not possible for the PendingStateManager to receive a partially acked batch. It will
@@ -713,12 +724,17 @@ export class PendingStateManager implements IDisposable {
 
 			// check is >= because batch end may be last pending message
 			while (remainingPendingMessagesCount >= 0) {
+				assert(
+					pendingMessage.viableOp !== undefined,
+					"viableOp is only undefined for empty batches",
+				);
 				batch.push({
 					viableOp: pendingMessage.viableOp,
 					localOpMetadata: pendingMessage.localOpMetadata,
 					opMetadata: pendingMessage.opMetadata,
 				});
 
+				// End of the batch
 				if (pendingMessage.opMetadata?.batch === false) {
 					break;
 				}

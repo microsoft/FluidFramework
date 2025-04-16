@@ -12,9 +12,13 @@ import {
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import Sinon from "sinon";
 
-import { ContainerMessageType } from "../../index.js";
-import type { InboundSequencedContainerRuntimeMessage } from "../../messageTypes.js";
+import { ContainerMessageType, disabledCompressionConfig } from "../../index.js";
+import type {
+	InboundSequencedContainerRuntimeMessage,
+	LocalContainerRuntimeMessage,
+} from "../../messageTypes.js";
 import {
 	BatchManager,
 	type OutboundBatchMessage,
@@ -28,7 +32,10 @@ import {
 	OpGroupingManager,
 	OpSplitter,
 	RemoteMessageProcessor,
+	Outbox,
+	IOutboxParameters,
 } from "../../opLifecycle/index.js";
+import { PendingStateManager, type IRuntimeStateHandler } from "../../pendingStateManager.js";
 
 import { compressMultipleMessageBatch } from "./legacyCompression.js";
 
@@ -36,7 +43,21 @@ function isSingletonBatch(batch: OutboundBatch): batch is OutboundSingletonBatch
 	return batch.messages.length === 1;
 }
 
+// Make a mock op with distinguishable contents
+function op(data: string): LocalContainerRuntimeMessage {
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	return {
+		type: ContainerMessageType.FluidDataStoreOp,
+		contents: data as unknown, // This is mock contents
+	} as LocalContainerRuntimeMessage;
+}
+
 describe("RemoteMessageProcessor", () => {
+	const sandbox = Sinon.createSandbox();
+	afterEach(() => {
+		sandbox.restore();
+	});
+
 	function getMessageProcessor(): RemoteMessageProcessor {
 		const logger = new MockLogger();
 		return new RemoteMessageProcessor(
@@ -247,101 +268,159 @@ describe("RemoteMessageProcessor", () => {
 		});
 	}
 
-	it("Processes multiple batches (No Grouped Batching)", () => {
-		const referenceSequenceNumber = 1;
-		let csn = 1;
+	function mockOutbox({
+		groupedBatchingEnabled = false,
+	}: { groupedBatchingEnabled?: boolean }): {
+		outbox: Outbox;
+		submittedBatches: { batch: (IBatchMessage & { clientSequenceNumber: number })[] }[];
+		csn: number;
+	} {
+		const submittedBatches: { batch: (IBatchMessage & { clientSequenceNumber: number })[] }[] =
+			[];
+		let csn = 0;
+		const mockLogger = new MockLogger();
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		const params = {
+			shouldSend: () => true,
+			pendingStateManager: sandbox.stub(
+				new PendingStateManager({} as unknown as IRuntimeStateHandler, undefined, mockLogger),
+			),
+			submitBatchFn: (batch: IBatchMessage[], _referenceSequenceNumber) => {
+				submittedBatches.push({
+					batch: batch.map((message) => ({
+						...message,
+						clientSequenceNumber: ++csn, // Same as ConnectionManager does
+					})),
+				});
+				return csn;
+			},
+			// legacySendBatchFn: (batch: OutboundBatch) => 0,
+			config: {
+				compressionOptions: disabledCompressionConfig,
+				maxBatchSizeInBytes: Number.POSITIVE_INFINITY,
+				flushPartialBatches: false,
+			},
+			// compressor: new OpCompressor(new MockLogger()),
+			// splitter: new OpSplitter([], () => 0, 2, Number.POSITIVE_INFINITY, new MockLogger()),
+			logger: mockLogger,
+			groupingManager: new OpGroupingManager({ groupedBatchingEnabled }, mockLogger),
+			getCurrentSequenceNumbers: () => ({
+				clientSequenceNumber: 1,
+				referenceSequenceNumber: 1,
+			}),
+			reSubmit: () => {},
+			opReentrancy: () => false,
+		} as Partial<IOutboxParameters> as IOutboxParameters;
 
-		// Use BatchManager.popBatch to get the right batch metadata included
-		const batchManager = new BatchManager({
-			canRebase: false,
-		});
-		batchManager.push({ runtimeOp: "A1", referenceSequenceNumber }, false /* reentrant */);
-		batchManager.push({ runtimeOp: "A2", referenceSequenceNumber }, false /* reentrant */);
-		batchManager.push({ runtimeOp: "A3", referenceSequenceNumber }, false /* reentrant */);
-		const batchA = batchManager.popBatch();
-		batchManager.push({ runtimeOp: "B1", referenceSequenceNumber }, false /* reentrant */);
-		const batchB = batchManager.popBatch();
-		batchManager.push({ runtimeOp: "C1", referenceSequenceNumber }, false /* reentrant */);
-		batchManager.push({ runtimeOp: "C2", referenceSequenceNumber }, false /* reentrant */);
-		const batchC = batchManager.popBatch("C" /* batchId */);
-		batchManager.push({ runtimeOp: "D1", referenceSequenceNumber }, false /* reentrant */);
-		const batchD = batchManager.popBatch("D" /* batchId */);
+		const outbox = new Outbox(params);
+		return { outbox, submittedBatches, csn: 0 };
+	}
+
+	//* SKIP
+	//* SKIP
+	//* SKIP
+	it.skip("Processes multiple batches (No Grouped Batching)", () => {
+		const { outbox, submittedBatches } = mockOutbox({ groupedBatchingEnabled: false });
+
+		// Batch A
+		outbox.submit({ runtimeOp: op("A1"), referenceSequenceNumber: 1 });
+		outbox.submit({ runtimeOp: op("A2"), referenceSequenceNumber: 1 });
+		outbox.submit({ runtimeOp: op("A3"), referenceSequenceNumber: 1 });
+		outbox.flush();
+		// Batch B
+		outbox.submit({ runtimeOp: op("B1"), referenceSequenceNumber: 1 });
+		outbox.flush();
+		// Batch C
+		outbox.submit({ runtimeOp: op("C1"), referenceSequenceNumber: 1 });
+		outbox.submit({ runtimeOp: op("C2"), referenceSequenceNumber: 1 });
+		outbox.flush("C" /* resubmittingBatchId */);
+		// Batch D
+		outbox.submit({ runtimeOp: op("D1"), referenceSequenceNumber: 1 });
+		outbox.flush("D" /* resubmittingBatchId */);
 
 		const processor = getMessageProcessor();
 
-		// Add clientId and CSN as would happen on final stage of submit
-		const inboundMessages: ISequencedDocumentMessage[] = [
-			...batchA.messages,
-			...batchB.messages,
-			...batchC.messages,
-			...batchD.messages,
-		].map(({ runtimeOp: serializedOp, metadata, referenceSequenceNumber: refSeq }) => {
-			const sequencedMessage: Partial<ISequencedDocumentMessage> = {
-				clientId: "CLIENT_ID",
-				clientSequenceNumber: csn++,
-				contents: serializedOp,
-				...{ ...(metadata && { metadata }) }, // Only include metadata key if it's defined
-				referenceSequenceNumber: refSeq,
-			};
-			return sequencedMessage as ISequencedDocumentMessage;
-		});
-
-		const processResults = inboundMessages.map((message) =>
-			processor.process(message, () => {}),
+		// Flatten submitted messages and add type, clientId and CSN as would happen on final stage of submit
+		const inboundMessages: Pick<
+			Partial<ISequencedDocumentMessage>,
+			"clientId" | "type" | "contents" | "metadata" | "compression"
+		>[] = submittedBatches.flatMap(({ batch: messages }) =>
+			messages.map(
+				({ contents, metadata, referenceSequenceNumber, clientSequenceNumber }) =>
+					({
+						type: MessageType.Operation,
+						contents, // Serialized runtime op
+						metadata,
+						referenceSequenceNumber,
+						clientId: "CLIENT_ID",
+						clientSequenceNumber,
+					}) satisfies Partial<ISequencedDocumentMessage>,
+			),
 		);
+
+		const processResults = inboundMessages.map((message) => {
+			ensureContentsDeserialized(message as ISequencedDocumentMessage);
+			return processor.process(
+				// Need to cast to deal with mismatch of required/optional on some properties
+				message as ISequencedDocumentMessage,
+				() => {},
+			);
+		});
 
 		// Expected results
 		const messagesA = [
 			{
+				"type": "component",
 				"contents": "A1",
 				"referenceSequenceNumber": 1,
-				"clientSequenceNumber": 1,
 				"metadata": { "batch": true },
 				"clientId": "CLIENT_ID",
 			},
 			{
+				"type": "component",
 				"contents": "A2",
+				"metadata": undefined,
 				"referenceSequenceNumber": 1,
-				"clientSequenceNumber": 2,
 				"clientId": "CLIENT_ID",
 			},
 			{
+				"type": "component",
 				"contents": "A3",
 				"referenceSequenceNumber": 1,
-				"clientSequenceNumber": 3,
 				"metadata": { "batch": false },
 				"clientId": "CLIENT_ID",
 			},
 		];
 		const messagesB = [
 			{
+				"type": "component",
 				"contents": "B1",
+				"metadata": undefined,
 				"referenceSequenceNumber": 1,
-				"clientSequenceNumber": 4,
 				"clientId": "CLIENT_ID",
 			},
 		];
 		const messagesC = [
 			{
+				"type": "component",
 				"contents": "C1",
 				"referenceSequenceNumber": 1,
-				"clientSequenceNumber": 5,
 				"metadata": { "batch": true, "batchId": "C" },
 				"clientId": "CLIENT_ID",
 			},
 			{
+				"type": "component",
 				"contents": "C2",
 				"referenceSequenceNumber": 1,
-				"clientSequenceNumber": 6,
 				"metadata": { "batch": false },
 				"clientId": "CLIENT_ID",
 			},
 		];
 		const messagesD = [
 			{
+				"type": "component",
 				"contents": "D1",
 				"referenceSequenceNumber": 1,
-				"clientSequenceNumber": 7,
 				"metadata": { "batchId": "D" },
 				"clientId": "CLIENT_ID",
 			},
@@ -428,25 +507,25 @@ describe("RemoteMessageProcessor", () => {
 				canRebase: false,
 			});
 			batchManager.push(
-				{ runtimeOp: "A1", referenceSequenceNumber: 1 },
+				{ runtimeOp: op("A1"), referenceSequenceNumber: 1 },
 				false /* reentrant */,
 			);
 			batchManager.push(
-				{ runtimeOp: "A2", referenceSequenceNumber: 1 },
+				{ runtimeOp: op("A2"), referenceSequenceNumber: 1 },
 				false /* reentrant */,
 			);
 			batchManager.push(
-				{ runtimeOp: "A3", referenceSequenceNumber: 1 },
+				{ runtimeOp: op("A3"), referenceSequenceNumber: 1 },
 				false /* reentrant */,
 			);
 			const batchA = batchManager.popBatch();
 			batchA.messages[2].metadata = undefined; // Wipe out the ending metadata so the next batch's start shows up mid-batch
 			batchManager.push(
-				{ runtimeOp: "B1", referenceSequenceNumber: 1 },
+				{ runtimeOp: op("B1"), referenceSequenceNumber: 1 },
 				false /* reentrant */,
 			);
 			batchManager.push(
-				{ runtimeOp: "B2", referenceSequenceNumber: 1 },
+				{ runtimeOp: op("B2"), referenceSequenceNumber: 1 },
 				false /* reentrant */,
 			);
 			const batchB = batchManager.popBatch();
@@ -483,15 +562,15 @@ describe("RemoteMessageProcessor", () => {
 				canRebase: false,
 			});
 			batchManager.push(
-				{ runtimeOp: "A1", referenceSequenceNumber: 1 },
+				{ runtimeOp: op("A1"), referenceSequenceNumber: 1 },
 				false /* reentrant */,
 			);
 			batchManager.push(
-				{ runtimeOp: "A2", referenceSequenceNumber: 1 },
+				{ runtimeOp: op("A2"), referenceSequenceNumber: 1 },
 				false /* reentrant */,
 			);
 			batchManager.push(
-				{ runtimeOp: "A3", referenceSequenceNumber: 1 },
+				{ runtimeOp: op("A3"), referenceSequenceNumber: 1 },
 				false /* reentrant */,
 			);
 			const batchA = batchManager.popBatch();

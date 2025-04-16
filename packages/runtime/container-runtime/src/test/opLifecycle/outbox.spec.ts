@@ -40,16 +40,26 @@ import {
 	type LocalBatchMessage,
 	type OutboundBatch,
 	localBatchToOutboundBatch,
+	serializeOp,
 } from "../../opLifecycle/index.js";
 import {
-	PendingMessageResubmitData,
+	PendingMessageResubmitData2,
 	PendingStateManager,
 	type IPendingMessage,
 } from "../../pendingStateManager.js";
 
-function typeFromBatchedOp(op: LocalBatchMessage): string {
-	assert(op.runtimeOp !== undefined, "PRECONDITION: serializedOp is undefined");
-	return (JSON.parse(op.runtimeOp) as LocalContainerRuntimeMessage).type;
+function typeFromBatchedOp(message: LocalBatchMessage): string {
+	assert(message.runtimeOp !== undefined, "PRECONDITION: serializedOp is undefined");
+	return message.runtimeOp.type;
+}
+
+// Make a mock op with distinguishable contents
+function op(data: string): LocalContainerRuntimeMessage {
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	return {
+		type: ContainerMessageType.FluidDataStoreOp,
+		contents: data as unknown,
+	} as LocalContainerRuntimeMessage;
 }
 
 describe("Outbox", () => {
@@ -139,13 +149,13 @@ describe("Outbox", () => {
 			clientSequenceNumber: number | undefined,
 		): void => {
 			for (const {
-				runtimeOp: content,
+				runtimeOp: viableOp,
 				referenceSequenceNumber,
 				metadata: opMetadata,
 				localOpMetadata,
 			} of batch)
 				state.pendingOpContents.push({
-					content,
+					viableOp,
 					referenceSequenceNumber,
 					opMetadata,
 					localOpMetadata,
@@ -154,8 +164,12 @@ describe("Outbox", () => {
 		},
 	});
 
-	const createMessage = (type: ContainerMessageType, contents: string): LocalBatchMessage => ({
-		runtimeOp: JSON.stringify({ type, contents }),
+	const createMessage = (
+		type: ContainerMessageType,
+		fakeContents: string,
+	): LocalBatchMessage => ({
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		runtimeOp: { type, contents: fakeContents as unknown } as LocalContainerRuntimeMessage,
 		metadata: undefined,
 		localOpMetadata: {},
 		referenceSequenceNumber: Number.POSITIVE_INFINITY,
@@ -165,7 +179,7 @@ describe("Outbox", () => {
 		message: LocalBatchMessage | OutboundBatchMessage,
 		batchMarker: boolean | undefined = undefined,
 	): IBatchMessage => ({
-		contents: "serializedOp" in message ? message.runtimeOp : message.contents,
+		contents: "runtimeOp" in message ? serializeOp(message.runtimeOp) : message.contents,
 		metadata:
 			batchMarker === undefined
 				? message.metadata
@@ -243,7 +257,7 @@ describe("Outbox", () => {
 				mockLogger,
 			),
 			getCurrentSequenceNumbers: () => currentSeqNumbers,
-			reSubmit: (message: PendingMessageResubmitData) => {
+			reSubmit: (message: PendingMessageResubmitData2) => {
 				state.opsResubmitted++;
 			},
 			opReentrancy: () => state.isReentrant,
@@ -274,9 +288,9 @@ describe("Outbox", () => {
 
 	it("localBatchToOutboundBatch", () => {
 		const localMessages: LocalBatchMessage[] = [
-			{ runtimeOp: "hello", referenceSequenceNumber: 4 },
-			{ runtimeOp: "world", referenceSequenceNumber: 4 },
-			{ runtimeOp: "!", referenceSequenceNumber: 4 },
+			{ runtimeOp: op("hello"), referenceSequenceNumber: 4 },
+			{ runtimeOp: op("world"), referenceSequenceNumber: 4 },
+			{ runtimeOp: op("!"), referenceSequenceNumber: 4 },
 		];
 		const localBatch = {
 			messages: localMessages,
@@ -286,10 +300,14 @@ describe("Outbox", () => {
 		const outboundBatch = localBatchToOutboundBatch(localBatch);
 
 		// Check that contentSizeInBytes and messages' contents are set propertly
-		assert.equal(outboundBatch.contentSizeInBytes, 11);
+		assert.equal(
+			outboundBatch.contentSizeInBytes,
+			JSON.stringify(op("")).length * 3 + "helloworld!".length,
+			"contentSizeInBytes is incorrect",
+		);
 		assert.equal(outboundBatch.messages.length, 3);
 		assert.deepEqual(
-			localMessages.map((m) => m.runtimeOp),
+			localMessages.map((m) => JSON.stringify(m.runtimeOp)),
 			outboundBatch.messages.map((m) => m.contents),
 			"Serialized contents do not match",
 		);
@@ -347,7 +365,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
-				content: message.runtimeOp,
+				viableOp: message.runtimeOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
@@ -471,7 +489,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			messages.map<Partial<IPendingMessage>>((message, i) => ({
-				content: message.runtimeOp,
+				viableOp: message.runtimeOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
@@ -520,7 +538,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
-				content: message.runtimeOp,
+				viableOp: message.runtimeOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
@@ -585,7 +603,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
-				content: message.runtimeOp,
+				viableOp: message.runtimeOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
@@ -643,7 +661,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
-				content: message.runtimeOp,
+				viableOp: message.runtimeOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
@@ -745,7 +763,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
-				content: message.runtimeOp,
+				viableOp: message.runtimeOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
@@ -859,7 +877,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			rawMessagesInFlushOrder.map((message, i) => ({
-				content: message.runtimeOp,
+				viableOp: message.runtimeOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
@@ -874,7 +892,7 @@ describe("Outbox", () => {
 		]);
 	});
 
-	for (const ops of [
+	for (const messages of [
 		[
 			{
 				...createMessage(ContainerMessageType.IdAllocation, "0"),
@@ -909,21 +927,21 @@ describe("Outbox", () => {
 				context: getMockContext(),
 				flushPartialBatches: true,
 			});
-			for (const op of ops) {
-				currentSeqNumbers.referenceSequenceNumber = op.referenceSequenceNumber;
-				if (typeFromBatchedOp(op) === ContainerMessageType.IdAllocation) {
-					outbox.submitIdAllocation(op);
+			for (const message of messages) {
+				currentSeqNumbers.referenceSequenceNumber = message.referenceSequenceNumber;
+				if (typeFromBatchedOp(message) === ContainerMessageType.IdAllocation) {
+					outbox.submitIdAllocation(message);
 				} else {
-					outbox.submit(op);
+					outbox.submit(message);
 				}
 			}
 
-			assert.equal(state.opsSubmitted, ops.length - 1);
+			assert.equal(state.opsSubmitted, messages.length - 1);
 			assert.equal(state.individualOpsSubmitted.length, 0);
 			assert.equal(state.batchesSubmitted.length, 1);
 			assert.deepEqual(
 				state.batchesSubmitted.map((x) => x.messages),
-				[[toSubmittedMessage(ops[0]), toSubmittedMessage(ops[1])]],
+				[[toSubmittedMessage(messages[0]), toSubmittedMessage(messages[1])]],
 			);
 
 			mockLogger.assertMatch([
@@ -1032,7 +1050,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
-				content: message.runtimeOp,
+				viableOp: message.runtimeOp,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,

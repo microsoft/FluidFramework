@@ -28,6 +28,7 @@ export {
 export {
 	estimateSocketSize,
 	localBatchToOutboundBatch,
+	IOutboxParameters,
 	Outbox,
 	getLongStack,
 } from "./outbox.js";
