@@ -739,7 +739,6 @@ export class ContainerRuntime
 		 */
 		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
-		compatibilityMode?: string;
 	}): Promise<ContainerRuntime> {
 		const {
 			context,

@@ -3858,7 +3858,6 @@ describe("Runtime", () => {
 
 			// Skipped since 3.0.0 is not an existing FF version yet
 			it.skip("compatibilityMode = 3.0.0", async () => {
-				const compatibilityMode = "3.0.0";
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -3866,7 +3865,6 @@ describe("Runtime", () => {
 					existing: false,
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
-					compatibilityMode,
 				});
 
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {

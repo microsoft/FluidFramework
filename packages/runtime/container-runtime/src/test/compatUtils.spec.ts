@@ -7,13 +7,13 @@ import { strict as assert } from "node:assert";
 
 import {
 	getConfigsForCompatMode,
-	type IConfigMap,
+	type ConfigMap,
 	type SemanticVersion,
 } from "../compatUtils.js";
 
 describe("compatUtils", () => {
 	describe("getConfigsForCompatMode", () => {
-		const testConfigMap: IConfigMap = {
+		const testConfigMap: ConfigMap<Record<string, unknown>> = {
 			featureA: {
 				"0.5.0": "a1",
 				"2.0.0": "a2",

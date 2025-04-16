@@ -29,7 +29,7 @@ import { pkgVersion } from "./packageVersion.js";
  * proper configurations set.
  *
  */
-export const defaultCompatibilityMode = "2.0.0";
+export const defaultCompatibilityMode = "2.0.0" as const;
 
 /**
  * Subset of the IContainerRuntimeOptionsInternal properties which are version-dependent.
@@ -63,11 +63,11 @@ export type SemanticVersion =
 /**
  * Generic type for versionDependentOptionConfigMap (used for unit tests).
  */
-export interface IConfigMap {
-	[key: string]: {
-		[version: SemanticVersion]: unknown;
+export type ConfigMap<T extends Record<string, unknown>> = {
+	[K in keyof T]: {
+		[version: SemanticVersion]: T[K];
 	};
-}
+};
 
 /**
  * Mapping of version-dependent options to their compatibility related configs.
@@ -75,11 +75,7 @@ export interface IConfigMap {
  * Each key in this map corresponds to a property in IContainerRuntimeOptionsVersionDependent.
  * The value is an object that maps a version string to the default value for that property when using compatibilityMode of at least that version.
  */
-const versionDependentOptionConfigMap: {
-	[K in keyof IContainerRuntimeOptionsVersionDependent]: {
-		[version: SemanticVersion]: IContainerRuntimeOptionsVersionDependent[K];
-	};
-} = {
+const versionDependentOptionConfigMap: ConfigMap<IContainerRuntimeOptionsVersionDependent> = {
 	enableGroupedBatching: {
 		"1.0.0": false,
 		"2.0.0": true,
@@ -122,14 +118,16 @@ const versionDependentOptionConfigMap: {
 /**
  * Returns the default version-dependent configs for a given compatibility mode.
  */
-export function getConfigsForCompatMode(
+export function getConfigsForCompatMode<
+	T extends Record<string, unknown> = IContainerRuntimeOptionsVersionDependent,
+>(
 	compatibilityMode: SemanticVersion,
-	configMap: IConfigMap = versionDependentOptionConfigMap,
+	configMap: ConfigMap<T> = versionDependentOptionConfigMap as unknown as ConfigMap<T>,
 ): IContainerRuntimeOptionsVersionDependent {
 	const defaultConfigs = {};
 	// Iterate over versionDependentOptionConfigMap to get default values for each version-dependent option.
 	for (const key of Object.keys(configMap)) {
-		const config = configMap[key as keyof IContainerRuntimeOptionsVersionDependent];
+		const config = configMap[key as keyof T];
 		// Sort the versions in ascending order so we can short circuit the loop.
 		const versions = Object.keys(config).sort((a, b) => (semverGte(b, a) ? -1 : 1));
 		// For each config, we iterate over the keys and check if compatibilityMode is greater than or equal to the version.
@@ -154,10 +152,8 @@ export function getConfigsForCompatMode(
  */
 export function isValidCompatMode(compatibilityMode: SemanticVersion): boolean {
 	return (
-		// TODO: We can remove the first condition after 3.0 is released and the defaultCompatibilityMode is set to "2.0.0".
-		compatibilityMode === (defaultCompatibilityMode as SemanticVersion) ||
-		(compatibilityMode !== undefined &&
-			semverValid(compatibilityMode) !== null &&
-			semverLte(compatibilityMode, pkgVersion))
+		compatibilityMode !== undefined &&
+		semverValid(compatibilityMode) !== null &&
+		semverLte(compatibilityMode, pkgVersion)
 	);
 }
