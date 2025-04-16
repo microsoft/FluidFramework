@@ -55,6 +55,7 @@ import {
 import {
 	ModularChangeFamily,
 	type FieldEditDescription,
+	type GlobalEditDescription,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
@@ -383,7 +384,60 @@ const generateChildStates: ChildStateGenerator<string | undefined, DefaultChange
 					mostRecentEdit: {
 						changeset: tagChange(modularEdit, revision),
 						intention,
-						description: "Remove",
+						description: "RemoveF",
+					},
+					parent: state,
+				};
+			}
+
+			// Pin node (no rename)
+			{
+				const intention = mintIntention();
+				const revision = tagFromIntention(intention);
+				const detach = mintId(revision);
+				const fieldEdit: FieldEditDescription = {
+					type: "field",
+					field: { parent: undefined, field: rootFieldKey },
+					fieldKind: optional.identifier,
+					change: brand(OptionalChange.set(false, { detach, fill: detach })),
+					revision,
+				};
+				const modularEdit = editor.buildChanges([fieldEdit]);
+				yield {
+					content: state.content,
+					mostRecentEdit: {
+						changeset: tagChange(modularEdit, revision),
+						intention,
+						description: "Pin",
+					},
+					parent: state,
+				};
+			}
+
+			// Pin node (with rename)
+			{
+				const intention = mintIntention();
+				const revision = tagFromIntention(intention);
+				const [detach, attach] = [mintId(revision), mintId(revision)];
+				const fieldEdit: FieldEditDescription = {
+					type: "field",
+					field: { parent: undefined, field: rootFieldKey },
+					fieldKind: optional.identifier,
+					change: brand(OptionalChange.set(false, { detach, fill: attach })),
+					revision,
+				};
+				const rename: GlobalEditDescription = {
+					type: "global",
+					renames: [{ count: 1, oldId: detach, newId: attach }],
+					revision,
+				};
+				const modularEdit = editor.buildChanges([fieldEdit, rename]);
+				yield {
+					content: state.content,
+					mostRecentEdit: {
+						changeset: tagChange(modularEdit, revision),
+						intention,
+						description: "RPin",
 					},
 					parent: state,
 				};
@@ -408,7 +462,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, DefaultChange
 				mostRecentEdit: {
 					changeset: tagChange(modularEdit, revision),
 					intention,
-					description: "Remove",
+					description: "RemoveE",
 				},
 				parent: state,
 			};

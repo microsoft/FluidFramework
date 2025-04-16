@@ -185,6 +185,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				// 2. Attaches should the latest possible ID for a node (i.e., after any renames).
 				composedDst = replace1.dst;
 				composedSrc = replace2.src;
+				// We need to inform the node manager of the rename
+				nodeManager.composeAttachDetach(composedDst, composedSrc, 1);
 			} else if (isPin(replace1, nodeManager)) {
 				// This branch deals with cases (S▼S C) and (S▼S _).
 				// In both cases, the pin intention is made irrelevant by replace2 since it detaches the pinned node,
@@ -691,7 +693,7 @@ function isPin(
 	replace: Replace,
 	nodeManager?: ComposeNodeManager,
 ): replace is Replace & { isEmpty: false; src: ChangeAtomId } {
-	if (replace.src === undefined) {
+	if (replace.src === undefined || replace.isEmpty) {
 		return false;
 	}
 	if (nodeManager !== undefined) {
