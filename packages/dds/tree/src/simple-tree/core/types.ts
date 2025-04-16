@@ -125,7 +125,7 @@ export interface TreeChangeEvents {
  * 2. Explicit construction of {@link Unhydrated} nodes using either {@link TreeNodeSchemaClass} as a constructor or {@link TreeNodeSchemaNonClass.create}.
  * Either way the {@link TreeNodeSchema} produced must be produced using a {@link SchemaFactory}.
  * 3. Implicit construction: Several APIs which logically require an unhydrated TreeNode also allow passing in a value which could be used to explicitly construct the node instead.
- * These APIs internally call the constructor with the provided value, so its really just a special case of the above option.
+ * These APIs internally call the constructor with the provided value, so it's really just a special case of the above option.
  * Note that when constructing nodes, sometimes implicit construction is not allowed
  * (either at runtime due to ambiguous types or at compile time due to TypeScript limitations):
  * in such cases, explicit construction must be used.
