@@ -2472,14 +2472,21 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 			result = this.table.entries.getFirst(baseAttachId, count);
 		}
 
+		// TODO: Consider moving these two checks into a separate method so that this function has no side effects.
 		if (result.value?.detachId !== undefined) {
-			// TODO: Consider moving this into a separate method so that this function has no side effects.
 			this.table.rebasedCrossFieldKeys.set(
 				{
 					target: CrossFieldTarget.Source,
 					...result.value.detachId,
 				},
 				result.length,
+				this.fieldId,
+			);
+		}
+
+		if (result.value?.nodeChange !== undefined) {
+			this.table.rebasedNodeToParent.set(
+				[result.value.nodeChange.revision, result.value.nodeChange.localId],
 				this.fieldId,
 			);
 		}
