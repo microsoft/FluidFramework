@@ -152,7 +152,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		private readonly runtime: IEphemeralRuntime,
 		private readonly lookupClient: (clientId: AttendeeId) => Attendee,
 		private readonly logger: ITelemetryLoggerExt | undefined,
-		private readonly events: IEmitter<Pick<PresenceEvents, "workspaceActivated">>,
+		private readonly events: IEmitter<PresenceEvents>,
 		systemWorkspaceDatastore: SystemWorkspaceDatastore,
 		systemWorkspace: StatesWorkspaceEntry<StatesWorkspaceSchema>,
 	) {
