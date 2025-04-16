@@ -28,6 +28,10 @@ describe("Local Server Stress", () => {
 		// only: [28],
 		saveFailures,
 		// saveSuccesses,
-		skip: [0, 13, 30, 45, 54, 56, 90, 99],
+		skip: [
+			...[0, 13, 45, 56], // Number of keys not same
+			...[30], // Number of subDirectories not same,
+			...[99], // Rollback op does not match last pending
+		],
 	});
 });

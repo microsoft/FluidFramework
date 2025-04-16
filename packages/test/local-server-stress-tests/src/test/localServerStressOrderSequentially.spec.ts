@@ -91,8 +91,11 @@ describe("Local Server Stress with rollback", () => {
 		// saveSuccesses,
 		configurations: { "Fluid.ContainerRuntime.EnableRollback": true },
 		skip: [
-			...[0, 2, 3, 7, 10, 13, 15, 26, 29, 38, 39, 52, 61, 66, 67, 75, 76, 82, 84, 88, 90], // RollbackError: Unsupported op type for rollback (shared intervals)
-			...[31], // MergeTree insert failed
+			...[15], // timeout
+			...[61, 82], //  Mismatch in pending changes
+			...[66], // interval start side not equal
+			...[76], //  Rollback op does not match last pending
+			...[84, 88], //  Startpoints of interval  different
 			...[12, 28, 32, 36, 44, 45, 55, 60, 89], //  Number of subDirectories not same
 		],
 	});
