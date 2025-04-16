@@ -94,6 +94,7 @@ import {
 	type DeltaDetachedNodeRename,
 	type NormalizedFieldUpPath,
 	type ExclusiveMapTree,
+	SchemaFormatVersion,
 } from "../core/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
@@ -611,7 +612,11 @@ export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): voi
 	assert.deepEqual(actual, expected);
 }
 
-const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
+// TODO: Test multiple schema formats.
+const schemaCodec = makeSchemaCodec(
+	{ jsonValidator: typeboxValidator },
+	SchemaFormatVersion.V1,
+);
 
 export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]): void {
 	if (trees.length > 1) {

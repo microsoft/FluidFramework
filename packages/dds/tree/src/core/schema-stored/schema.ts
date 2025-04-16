@@ -10,12 +10,29 @@ import { type MakeNominal, brand, invertMap } from "../../util/index.js";
 import {
 	type FieldKey,
 	type FieldKindIdentifier,
-	type FieldSchemaFormat,
+	type FieldSchemaFormat as FieldSchemaFormatV1,
 	PersistedValueSchema,
-	type TreeNodeSchemaDataFormat,
+	type TreeNodeSchemaDataFormat as TreeNodeSchemaDataFormatV1,
 	type TreeNodeSchemaIdentifier,
 } from "./formatV1.js";
+import type {
+	FieldSchemaFormat as FieldSchemaFormatV2,
+	TreeNodeSchemaDataFormat as TreeNodeSchemaDataFormatV2,
+	PersistedMetadataFormat,
+} from "./formatV2.js";
 import type { Multiplicity } from "./multiplicity.js";
+
+type FieldSchemaFormat = FieldSchemaFormatV1 | FieldSchemaFormatV2;
+
+/**
+ * Indicates the version of the Stored Schema format.
+ *
+ * @alpha
+ */
+export enum SchemaFormatVersion {
+	V1 = 1,
+	V2 = 2,
+}
 
 /**
  * Schema for what {@link TreeLeafValue} is allowed on a Leaf node.
@@ -120,6 +137,11 @@ export interface TreeFieldStoredSchema {
 	 * If not specified, types are unconstrained.
 	 */
 	readonly types: TreeTypeSet;
+
+	/**
+	 * Persisted metadata. Part of the v2 stored schema format.
+	 */
+	persistedData?: PersistedMetadataFormat;
 }
 
 /**
@@ -141,6 +163,7 @@ export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
 	kind: brand(forbiddenFieldKindIdentifier),
 	// This type set also forces the field to be empty not not allowing any types as all.
 	types: new Set(),
+	persistedData: undefined,
 };
 
 /**
@@ -155,15 +178,16 @@ export interface ErasedTreeNodeSchemaDataFormat
 	extends ErasedType<"TreeNodeSchemaDataFormat"> {}
 
 function toErasedTreeNodeSchemaDataFormat(
-	data: TreeNodeSchemaDataFormat,
+	data: TreeNodeSchemaDataFormatV1 | TreeNodeSchemaDataFormatV2,
 ): ErasedTreeNodeSchemaDataFormat {
 	return data as unknown as ErasedTreeNodeSchemaDataFormat;
 }
 
+// TODO: Should this always return a V1 Format?
 export function toTreeNodeSchemaDataFormat(
 	data: ErasedTreeNodeSchemaDataFormat,
-): TreeNodeSchemaDataFormat {
-	return data as unknown as TreeNodeSchemaDataFormat;
+): TreeNodeSchemaDataFormatV1 {
+	return data as unknown as TreeNodeSchemaDataFormatV1;
 }
 
 /**
@@ -203,7 +227,7 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 	}
 
 	public override encode(): ErasedTreeNodeSchemaDataFormat {
-		const fieldsObject: Record<string, FieldSchemaFormat> = Object.create(null);
+		const fieldsObject: Record<string, FieldSchemaFormatV1> = Object.create(null);
 		// Sort fields to ensure output is identical for for equivalent schema (since field order is not considered significant).
 		// This makes comparing schema easier, and ensures chunk reuse for schema summaries isn't needlessly broken.
 		for (const key of [...this.objectNodeFields.keys()].sort()) {
@@ -283,13 +307,13 @@ export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
 }
 
 export const storedSchemaDecodeDispatcher: DiscriminatedUnionDispatcher<
-	TreeNodeSchemaDataFormat,
+	TreeNodeSchemaDataFormatV1,
 	[],
 	TreeNodeStoredSchema
 > = new DiscriminatedUnionDispatcher({
 	leaf: (data: PersistedValueSchema) => new LeafNodeStoredSchema(decodeValueSchema(data)),
 	object: (
-		data: Record<TreeNodeSchemaIdentifier, FieldSchemaFormat>,
+		data: Record<TreeNodeSchemaIdentifier, FieldSchemaFormatV1>,
 	): TreeNodeStoredSchema => {
 		const map = new Map();
 		for (const [key, value] of Object.entries(data)) {
@@ -297,7 +321,7 @@ export const storedSchemaDecodeDispatcher: DiscriminatedUnionDispatcher<
 		}
 		return new ObjectNodeStoredSchema(map);
 	},
-	map: (data: FieldSchemaFormat) => new MapNodeStoredSchema(decodeFieldSchema(data)),
+	map: (data: FieldSchemaFormatV1) => new MapNodeStoredSchema(decodeFieldSchema(data)),
 });
 
 const valueSchemaEncode = new Map([
@@ -318,11 +342,12 @@ function decodeValueSchema(inMemory: PersistedValueSchema): ValueSchema {
 	return valueSchemaDecode.get(inMemory) ?? fail(0xae9 /* missing ValueSchema */);
 }
 
-export function encodeFieldSchema(schema: TreeFieldStoredSchema): FieldSchemaFormat {
+export function encodeFieldSchema(schema: TreeFieldStoredSchema): FieldSchemaFormatV2 {
 	return {
 		kind: schema.kind,
 		// Types are sorted by identifier to improve stability of persisted data to increase chance of schema blob reuse.
 		types: [...schema.types].sort(),
+		persistedData: schema.persistedData,
 	};
 }
 

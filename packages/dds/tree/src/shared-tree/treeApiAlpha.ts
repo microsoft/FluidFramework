@@ -39,7 +39,7 @@ import {
 } from "../simple-tree/index.js";
 import type { JsonCompatible } from "../util/index.js";
 import { noopValidator, type FluidClientVersion, type ICodecOptions } from "../codec/index.js";
-import type { ITreeCursorSynchronous } from "../core/index.js";
+import { SchemaFormatVersion, type ITreeCursorSynchronous } from "../core/index.js";
 import {
 	cursorForMapTreeField,
 	defaultSchemaPolicy,
@@ -303,7 +303,7 @@ export const TreeAlpha: {
 		} & ICodecOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
 		const content: ViewContent = {
-			schema: extractPersistedSchema(schema),
+			schema: extractPersistedSchema(schema, SchemaFormatVersion.V2),
 			tree: compressedData,
 			idCompressor: options.idCompressor ?? createIdCompressor(),
 		};

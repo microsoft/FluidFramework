@@ -19,6 +19,7 @@ import {
 	type MutableTreeStoredSchema,
 	type TreeStoredSchema,
 	schemaDataIsEmpty,
+	SchemaFormatVersion,
 } from "../../core/index.js";
 import type {
 	Summarizable,
@@ -29,6 +30,7 @@ import type { CollabWindow } from "../incrementalSummarizationUtils.js";
 
 import { encodeRepo, makeSchemaCodec } from "./codec.js";
 import type { Format } from "./formatV1.js";
+import type { JsonCompatible } from "../../util/index.js";
 
 const schemaStringKey = "SchemaString";
 /**
@@ -46,7 +48,11 @@ export class SchemaSummarizer implements Summarizable {
 		options: ICodecOptions,
 		collabWindow: CollabWindow,
 	) {
-		this.codec = makeSchemaCodec(options);
+		// TODO: Which format version should this use?
+		this.codec = makeSchemaCodec(options, SchemaFormatVersion.V1) as IJsonCodec<
+			TreeStoredSchema,
+			Format
+		>;
 		this.schema.events.on("afterSchemaChange", () => {
 			// Invalidate the cache, as we need to regenerate the blob if the schema changes
 			// We are assuming that schema changes from remote ops are valid, as we are in a summarization context.
@@ -116,6 +122,9 @@ export class SchemaSummarizer implements Summarizable {
  * @remarks
  * This can be used to help inspect schema for debugging, and to save a snapshot of schema to help detect and review changes to an applications schema.
  */
-export function encodeTreeSchema(schema: TreeStoredSchema): Format {
-	return encodeRepo(schema);
+export function encodeTreeSchema(
+	schema: TreeStoredSchema,
+	version: SchemaFormatVersion,
+): JsonCompatible {
+	return encodeRepo(schema, version);
 }

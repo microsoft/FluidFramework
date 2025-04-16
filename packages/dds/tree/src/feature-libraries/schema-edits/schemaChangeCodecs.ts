@@ -12,19 +12,24 @@ import {
 	makeCodecFamily,
 	withSchemaValidation,
 } from "../../codec/index.js";
-import { makeSchemaCodec } from "../schema-index/index.js";
+import { makeSchemaCodec, type FormatV1 } from "../schema-index/index.js";
 
 import { EncodedSchemaChange } from "./schemaChangeFormat.js";
 import type { SchemaChange } from "./schemaChangeTypes.js";
+import { SchemaFormatVersion } from "../../core/index.js";
 
 export function makeSchemaChangeCodecs(options: ICodecOptions): ICodecFamily<SchemaChange> {
-	return makeCodecFamily([[1, makeSchemaChangeCodec(options)]]);
+	return makeCodecFamily([
+		[1, makeSchemaChangeCodec(options)],
+		[4, makeSchemaChangeCodec(options)],
+	]);
 }
 
+// TODO: Support other formats
 function makeSchemaChangeCodec({
 	jsonValidator: validator,
 }: ICodecOptions): IJsonCodec<SchemaChange, EncodedSchemaChange> {
-	const schemaCodec = makeSchemaCodec({ jsonValidator: validator });
+	const schemaCodec = makeSchemaCodec({ jsonValidator: validator }, SchemaFormatVersion.V1);
 	const schemaChangeCodec: IJsonCodec<SchemaChange, EncodedSchemaChange> = {
 		encode: (schemaChange) => {
 			assert(
@@ -32,8 +37,8 @@ function makeSchemaChangeCodec({
 				0x933 /* Inverse schema changes should never be transmitted */,
 			);
 			return {
-				new: schemaCodec.encode(schemaChange.schema.new),
-				old: schemaCodec.encode(schemaChange.schema.old),
+				new: schemaCodec.encode(schemaChange.schema.new) as FormatV1,
+				old: schemaCodec.encode(schemaChange.schema.old) as FormatV1,
 			};
 		},
 		decode: (encoded) => {
