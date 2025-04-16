@@ -1039,7 +1039,11 @@ export class ModularChangeFamily
 		metadata: RebaseRevisionMetadata,
 	): void {
 		const baseChange = crossFieldTable.baseChange;
-		for (const [revision, localId, fieldKey] of crossFieldTable.affectedBaseFields.keys()) {
+		const baseFields = crossFieldTable.affectedBaseFields.clone();
+		crossFieldTable.affectedBaseFields.clear();
+
+		for (const fieldIdKey of baseFields.keys()) {
+			const [revision, localId, fieldKey] = fieldIdKey;
 			const baseNodeId =
 				localId !== undefined
 					? normalizeNodeId({ revision, localId }, baseChange.nodeAliases)
@@ -1059,7 +1063,7 @@ export class ModularChangeFamily
 			if (crossFieldTable.baseFieldToContext.has(baseFieldChange)) {
 				// XXX: Ensure when processing a field we remove its entry from affectedBaseFields
 				// so we avoid rerunning the field unnecessarily.
-				crossFieldTable.invalidatedFields.add(baseFieldChange);
+				crossFieldTable.affectedBaseFields.set(fieldIdKey, true);
 				continue;
 			}
 
@@ -1146,10 +1150,26 @@ export class ModularChangeFamily
 		rebaseMetadata: RebaseRevisionMetadata,
 		genId: IdAllocator,
 	): void {
-		const fieldsToUpdate = crossFieldTable.invalidatedFields;
-		crossFieldTable.invalidatedFields = new Set();
-		for (const field of fieldsToUpdate) {
-			this.rebaseInvalidatedField(field, crossFieldTable, rebaseMetadata, genId);
+		const baseFields = crossFieldTable.affectedBaseFields.clone();
+		crossFieldTable.affectedBaseFields.clear();
+		for (const baseFieldId of baseFields.keys()) {
+			const baseFieldChange = fieldChangeFromId(
+				crossFieldTable.baseChange.fieldChanges,
+				crossFieldTable.baseChange.nodeChanges,
+				fieldIdFromFieldIdKey(baseFieldId),
+			);
+
+			assert(
+				baseFieldChange !== undefined,
+				0x9c2 /* Cross field key registered for empty field */,
+			);
+
+			assert(
+				crossFieldTable.baseFieldToContext.has(baseFieldChange),
+				"Fields with no new change should already have been processed",
+			);
+
+			this.rebaseInvalidatedField(baseFieldChange, crossFieldTable, rebaseMetadata, genId);
 		}
 	}
 
@@ -1301,7 +1321,10 @@ export class ModularChangeFamily
 			metadata,
 		);
 
-		const rebasedField: FieldChange = { ...baseFieldChange, change: brand(rebasedChangeset) };
+		const rebasedField: FieldChange = {
+			...baseFieldChange,
+			change: brand(rebasedChangeset),
+		};
 		table.rebasedFields.add(rebasedField);
 		table.baseFieldToContext.set(baseFieldChange, {
 			newChange: fieldChange,
@@ -2561,6 +2584,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 			}
 		}
 
+		// XXX: Only need to do this if `nodeChange !== undefined || newDetachId !== undefined`
 		this.invalidateBaseFields(attachFields);
 
 		if (length < count) {
