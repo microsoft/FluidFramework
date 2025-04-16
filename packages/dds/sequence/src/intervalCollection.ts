@@ -1086,9 +1086,10 @@ export class IntervalCollection
 		const { localSeq, previous } = localOpMetadata;
 		switch (opName) {
 			case "add": {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const interval = this.getIntervalById(id)!;
-				this.deleteExistingInterval(interval, false, undefined);
+				const interval = this.getIntervalById(id);
+				if (interval) {
+					this.deleteExistingInterval({ interval, local: true, rollback: true });
+				}
 				break;
 			}
 			case "change": {
@@ -1453,11 +1454,17 @@ export class IntervalCollection
 		return interval;
 	}
 
-	private deleteExistingInterval(
-		interval: SequenceIntervalClass,
-		local: boolean,
-		op?: ISequencedDocumentMessage,
-	) {
+	private deleteExistingInterval({
+		interval,
+		local,
+		op,
+		rollback,
+	}: {
+		interval: SequenceIntervalClass;
+		local: boolean;
+		op?: ISequencedDocumentMessage;
+		rollback?: boolean;
+	}) {
 		if (!this.localCollection) {
 			throw new LoggingError("Attach must be called before accessing intervals");
 		}
@@ -1466,7 +1473,7 @@ export class IntervalCollection
 
 		if (interval) {
 			// Local ops get submitted to the server. Remote ops have the deserializer run.
-			if (local) {
+			if (local && rollback !== true) {
 				this.submitDelta(
 					{
 						opName: "delete",
@@ -1496,7 +1503,7 @@ export class IntervalCollection
 		}
 		const interval = this.localCollection.idIntervalIndex.getIntervalById(id);
 		if (interval) {
-			this.deleteExistingInterval(interval, true, undefined);
+			this.deleteExistingInterval({ interval, local: true });
 		}
 		return interval;
 	}
@@ -2018,7 +2025,7 @@ export class IntervalCollection
 		const { id } = getSerializedProperties(serializedInterval);
 		const interval = this.localCollection.idIntervalIndex.getIntervalById(id);
 		if (interval) {
-			this.deleteExistingInterval(interval, local, op);
+			this.deleteExistingInterval({ interval, local, op });
 		}
 	}
 
