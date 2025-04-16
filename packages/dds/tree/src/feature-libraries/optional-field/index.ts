@@ -4,10 +4,8 @@
  */
 
 export { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";
-export type { Move, OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes.js";
+export type { OptionalChangeset } from "./optionalFieldChangeTypes.js";
 export {
-	type IRegisterMap,
-	RegisterMap,
 	optionalChangeHandler,
 	optionalFieldEditor,
 	optionalChangeRebaser,

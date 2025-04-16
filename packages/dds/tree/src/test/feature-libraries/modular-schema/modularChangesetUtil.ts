@@ -5,6 +5,11 @@
 
 import type {
 	ChangeAtomId,
+	DeltaDetachedNodeId,
+	DeltaFieldChanges,
+	DeltaFieldMap,
+	DeltaMark,
+	DeltaRoot,
 	FieldKey,
 	FieldKindIdentifier,
 	RevisionInfo,
@@ -74,7 +79,7 @@ export function assertEqual<T>(actual: T, expected: T): void {
 	);
 }
 
-function empty(): ModularChangeset {
+export function empty(): ModularChangeset {
 	return {
 		fieldChanges: new Map(),
 		nodeChanges: newTupleBTree(),
@@ -83,6 +88,124 @@ function empty(): ModularChangeset {
 		nodeAliases: newTupleBTree(),
 		crossFieldKeys: newCrossFieldRangeTable(),
 	};
+}
+
+export function isModularEmpty(change: ModularChangeset): boolean {
+	if (change.builds !== undefined && change.builds.length > 0) {
+		return false;
+	}
+	if (change.refreshers !== undefined && change.refreshers.length > 0) {
+		return false;
+	}
+	if (change.destroys !== undefined && change.destroys.length > 0) {
+		return false;
+	}
+	if (
+		change.constraintViolationCount !== undefined ||
+		change.constraintViolationCountOnRevert !== undefined
+	) {
+		return false;
+	}
+	if (change.crossFieldKeys.entries().length > 0) {
+		return false;
+	}
+	if (change.fieldChanges.size > 0) {
+		return false;
+	}
+	if (change.nodeChanges.size > 0) {
+		return false;
+	}
+	if (change.rootNodes.nodeChanges.size > 0) {
+		return false;
+	}
+	return true;
+}
+
+export function normalizeDelta(
+	delta: DeltaRoot,
+	idAllocator?: IdAllocator,
+	idMap?: Map<number, number>,
+): DeltaRoot {
+	const genId = idAllocator ?? idAllocatorFromMaxId();
+	const map = idMap ?? new Map();
+
+	const normalized: Mutable<DeltaRoot> = {};
+	if (delta.fields !== undefined) {
+		normalized.fields = normalizeDeltaFieldMap(delta.fields, genId, map);
+	}
+	if (delta.build !== undefined && delta.build.length > 0) {
+		normalized.build = delta.build.map(({ id, trees }) => ({
+			id: normalizeDeltaDetachedNodeId(id, genId, map),
+			trees,
+		}));
+	}
+	if (delta.global !== undefined && delta.global.length > 0) {
+		normalized.global = delta.global.map(({ id, fields }) => ({
+			id: normalizeDeltaDetachedNodeId(id, genId, map),
+			fields: normalizeDeltaFieldMap(fields, genId, map),
+		}));
+	}
+	if (delta.rename !== undefined && delta.rename.length > 0) {
+		normalized.rename = delta.rename.map(({ oldId, count, newId }) => ({
+			oldId: normalizeDeltaDetachedNodeId(oldId, genId, map),
+			count,
+			newId: normalizeDeltaDetachedNodeId(newId, genId, map),
+		}));
+	}
+
+	return normalized;
+}
+
+function normalizeDeltaFieldMap(
+	delta: DeltaFieldMap,
+	genId: IdAllocator,
+	idMap: Map<number, number>,
+): DeltaFieldMap {
+	const normalized = new Map();
+	for (const [field, fieldChanges] of delta) {
+		normalized.set(field, normalizeDeltaFieldChanges(fieldChanges, genId, idMap));
+	}
+	return normalized;
+}
+
+function normalizeDeltaFieldChanges(
+	delta: DeltaFieldChanges,
+	genId: IdAllocator,
+	idMap: Map<number, number>,
+): DeltaFieldChanges {
+	if (delta.length > 0) {
+		return delta.map((mark) => normalizeDeltaMark(mark, genId, idMap));
+	}
+
+	return delta;
+}
+
+function normalizeDeltaMark(
+	delta: DeltaMark,
+	genId: IdAllocator,
+	idMap: Map<number, number>,
+): DeltaMark {
+	const normalized: Mutable<DeltaMark> = { ...delta };
+	if (normalized.attach !== undefined) {
+		normalized.attach = normalizeDeltaDetachedNodeId(normalized.attach, genId, idMap);
+	}
+	if (normalized.detach !== undefined) {
+		normalized.detach = normalizeDeltaDetachedNodeId(normalized.detach, genId, idMap);
+	}
+	if (normalized.fields !== undefined) {
+		normalized.fields = normalizeDeltaFieldMap(normalized.fields, genId, idMap);
+	}
+	return normalized;
+}
+
+function normalizeDeltaDetachedNodeId(
+	delta: DeltaDetachedNodeId,
+	genId: IdAllocator,
+	idMap: Map<number, number>,
+): DeltaDetachedNodeId {
+	const minor = idMap.get(delta.minor) ?? genId.allocate();
+	idMap.set(delta.minor, minor);
+	return { minor, major: delta.major };
 }
 
 function node(

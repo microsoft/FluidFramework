@@ -84,7 +84,7 @@ export interface ComposeNodeManager {
 	): void;
 
 	/**
-	 * Must be called by a field kind when composing a detach in the base changeset with nested changes the new changeset.
+	 * Must be called by a field kind when composing an attach in the base changeset with nested changes the new changeset.
 	 * @param baseAttachId - The ID of the attach in the base changeset.
 	 * @param newChanges - The ID of the nested changes associated with this node in the new changeset.
 	 */
@@ -100,15 +100,19 @@ export interface ComposeNodeManager {
 	 * @param baseDetachId - The ID of the detach in the base changeset.
 	 * @param newAttachId - The ID of the attach in the new changeset.
 	 * @param count - The number of nodes being detached then attached.
+	 * @param preserveRename - When false, the rename from `baseDetachId` to `newAttachId` (if any) will be removed.
+	 * Preserving the rename is needed when the field changeset need to keep referring to the node by both IDs.
 	 */
 	composeDetachAttach(
 		baseDetachId: ChangeAtomId,
 		newAttachId: ChangeAtomId,
 		count: number,
+		preserveRename: boolean,
 	): boolean;
 }
 
 export interface RebaseNodeManager {
+	// XXX: It's not clear whether the returned changes are already rebased or not.
 	/**
 	 * Must be called by a field kind when rebasing over an attach.
 	 * The returned child changes and detach intentions must be represented in the output changeset.
@@ -121,6 +125,9 @@ export interface RebaseNodeManager {
 		count: number,
 	): RangeQueryResult<ChangeAtomId, DetachedNodeEntry>;
 
+	// XXX: It's not clear if this must be called even when newDetachId and nodeChange are undefined.
+	// XXX: It's not clear if it's okay to call this once with a newDetachId then once with a nodeChange.
+	// XXX: It's not clear if nodeChange should be rebased already, or should not be rebased, or if it doesn't matter.
 	/**
 	 * Must be called by a field kind when rebasing over a detach.
 	 * The field kind must provide the nested changes and detach intentions associated with the node in the changeset being rebased.

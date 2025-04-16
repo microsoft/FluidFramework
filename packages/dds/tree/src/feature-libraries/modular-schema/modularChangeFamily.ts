@@ -92,6 +92,7 @@ import {
 	type RootNodeTable,
 } from "./modularChangeTypes.js";
 import {
+	makeChangeAtomId,
 	newChangeAtomIdTransform,
 	subtractChangeAtomIds,
 	type ChangeAtomIdRangeMap,
@@ -898,7 +899,13 @@ export class ModularChangeFamily
 		const genId: IdAllocator = idAllocatorFromState(idState);
 
 		const affectedBaseFields: TupleBTree<FieldIdKey, boolean> = newTupleBTree();
-		const rebasedRootNodes = rebaseRoots(change, over.change, affectedBaseFields);
+		const nodesToRebase: [newChangeset: NodeId, baseChangeset: NodeId][] = [];
+		const rebasedRootNodes = rebaseRoots(
+			change,
+			over.change,
+			affectedBaseFields,
+			nodesToRebase,
+		);
 		const crossFieldTable: RebaseTable = {
 			...newCrossFieldTable<FieldChange>(),
 			entries: newChangeAtomIdRangeMap(), // XXX: Handle splitting entries
@@ -927,8 +934,8 @@ export class ModularChangeFamily
 
 		const rebasedNodes: ChangeAtomIdBTree<NodeChangeset> = brand(change.nodeChanges.clone());
 
-		// XXX: Need to rebase detached node changes over attaches or changes to the same detached nodes
 		const rebasedFields = this.rebaseIntersectingFields(
+			nodesToRebase,
 			crossFieldTable,
 			rebasedNodes,
 			genId,
@@ -978,6 +985,7 @@ export class ModularChangeFamily
 	// This performs a first pass on all fields which have both new and base changes.
 	// TODO: Can we also handle additional passes in this method?
 	private rebaseIntersectingFields(
+		rootsChanges: [newChangeset: NodeId, baseChangeset: NodeId][],
 		crossFieldTable: RebaseTable,
 		rebasedNodes: ChangeAtomIdBTree<NodeChangeset>,
 		genId: IdAllocator,
@@ -1008,6 +1016,17 @@ export class ModularChangeFamily
 			setInChangeAtomIdMap(rebasedNodes, newId, rebasedNode);
 		}
 
+		for (const [newChildChange, baseChildChange] of rootsChanges) {
+			const rebasedNode = this.rebaseNodeChange(
+				newChildChange,
+				baseChildChange,
+				genId,
+				crossFieldTable,
+				metadata,
+			);
+
+			setInChangeAtomIdMap(rebasedNodes, newChildChange, rebasedNode);
+		}
 		return rebasedFields;
 	}
 
@@ -2524,7 +2543,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 			if (nodeChange !== undefined) {
 				setInChangeAtomIdMap(
 					this.table.rebasedRootNodes.nodeChanges,
-					baseDetachId,
+					baseAttachId,
 					nodeChange,
 				);
 			}
@@ -2699,6 +2718,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		baseDetachId: ChangeAtomId,
 		newAttachId: ChangeAtomId,
 		count: number,
+		preserveRename: boolean,
 	): boolean {
 		const renamedDetachEntry = firstAttachIdFromDetachId(
 			this.table.composedRootNodes,
@@ -2708,7 +2728,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 
 		assert(renamedDetachEntry.length === count, "XXX: Handle splitting");
 		const isReattachOfSameNodes = areEqualChangeAtomIds(renamedDetachEntry.value, newAttachId);
-		if (isReattachOfSameNodes) {
+		if (isReattachOfSameNodes && !preserveRename) {
 			// These nodes have been moved back to their original location, so the composed changeset should not have any renames for them.
 			// Note that deleting the rename from `this.table.composedRootNodes` would change the result of this method
 			// if it were rerun due to the field being invalidated, so we instead record that the rename should be deleted later.
@@ -2967,7 +2987,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	}
 }
 
-function buildModularChangesetFromField(props: {
+export function buildModularChangesetFromField(props: {
 	path: FieldUpPath;
 	fieldChange: FieldChange;
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>;
@@ -3335,6 +3355,7 @@ function rebaseRoots(
 	change: ModularChangeset,
 	base: ModularChangeset,
 	affectedBaseFields: TupleBTree<FieldIdKey, boolean>,
+	nodesToRebase: [newChangeset: NodeId, baseChangeset: NodeId][],
 ): RootNodeTable {
 	const rebasedRoots = cloneRootTable(change.rootNodes);
 	for (const renameEntry of change.rootNodes.oldToNewId.entries()) {
@@ -3375,8 +3396,26 @@ function rebaseRoots(
 		}
 	}
 
-	// XXX: Delete renames for nodes which are attached by `base`.
-	// XXX: Rebase root node changes
+	for (const [detachId, nodeId] of change.rootNodes.nodeChanges.entries()) {
+		const changes = base.rootNodes.nodeChanges.get(detachId);
+		if (changes !== undefined) {
+			nodesToRebase.push([nodeId, changes]);
+		}
+		const attachId = firstAttachIdFromDetachId(
+			base.rootNodes,
+			makeChangeAtomId(detachId[1], detachId[0]),
+			1,
+		).value;
+		const result = base.crossFieldKeys.getFirst(
+			{ target: CrossFieldTarget.Destination, ...attachId },
+			1,
+		);
+		if (result.value !== undefined) {
+			affectedBaseFields.set(fieldIdKeyFromFieldId(result.value), true);
+		} else {
+			setInChangeAtomIdMap(rebasedRoots.nodeChanges, attachId, nodeId);
+		}
+	}
 	return rebasedRoots;
 }
 
