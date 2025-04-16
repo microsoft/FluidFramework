@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line unicorn/prefer-node-protocol
 import { strict as assert } from "assert";
 
 import { SharedString } from "@fluidframework/sequence/internal";
@@ -18,19 +19,19 @@ import { UndoRedoStackManager } from "../undoRedoStackManager.js";
 const text =
 	"The SharedSegmentSequenceRevertible does the heavy lifting of tracking and reverting changes on the underlying SharedSegmentSequence. This is accomplished via TrackingGroup objects.";
 
-function insertTextAsChunks(sharedString: SharedString, targetLength = text.length) {
+function insertTextAsChunks(sharedString: SharedString, targetLength = text.length): number {
 	let chunks = 0;
 	while (sharedString.getLength() < targetLength && sharedString.getLength() < text.length) {
 		const len = (sharedString.getLength() % 13) + 1;
 		sharedString.insertText(
 			sharedString.getLength(),
-			text.substr(sharedString.getLength(), len),
+			text.slice(sharedString.getLength(), sharedString.getLength() + len),
 		);
 		chunks++;
 	}
 	return chunks;
 }
-function deleteTextByChunk(sharedString: SharedString, targetLength = 0) {
+function deleteTextByChunk(sharedString: SharedString, targetLength = 0): number {
 	let chunks = 0;
 	while (sharedString.getLength() > targetLength && sharedString.getLength() > 0) {
 		const len = (sharedString.getLength() % 17) + 1;
@@ -78,11 +79,15 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
 
 		assert.equal(sharedString.getText(), "");
 
-		while (undoRedoStack.undoOperation()) {}
+		while (undoRedoStack.undoOperation()) {
+			// intentionally empty
+		}
 
 		assert.equal(sharedString.getText(), text);
 
-		while (undoRedoStack.redoOperation()) {}
+		while (undoRedoStack.redoOperation()) {
+			// intentionally empty
+		}
 
 		assert.equal(sharedString.getText(), "");
 	});
@@ -94,11 +99,15 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
 
 		assert.equal(sharedString.getText(), text);
 
-		while (undoRedoStack.undoOperation()) {}
+		while (undoRedoStack.undoOperation()) {
+			// intentionally empty
+		}
 
 		assert.equal(sharedString.getText(), "");
 
-		while (undoRedoStack.redoOperation()) {}
+		while (undoRedoStack.redoOperation()) {
+			// intentionally empty
+		}
 
 		assert.equal(sharedString.getText(), text);
 	});
@@ -114,11 +123,15 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
 
 		assert.equal(sharedString.getText(), finalText);
 
-		while (undoRedoStack.undoOperation()) {}
+		while (undoRedoStack.undoOperation()) {
+			// intentionally empty
+		}
 
 		assert.equal(sharedString.getText(), "");
 
-		while (undoRedoStack.redoOperation()) {}
+		while (undoRedoStack.redoOperation()) {
+			// intentionally empty
+		}
 
 		assert.equal(sharedString.getText(), finalText, sharedString.getText());
 	}).timeout(4000); // double the default timeout. This test is a bit slow.

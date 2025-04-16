@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line unicorn/prefer-node-protocol
 import { strict as assert } from "assert";
 
 import { SharedMatrix } from "@fluidframework/matrix/internal";
