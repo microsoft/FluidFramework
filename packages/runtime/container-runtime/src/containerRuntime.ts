@@ -428,6 +428,15 @@ export interface IContainerRuntimeOptionsInternal extends IContainerRuntimeOptio
 	 * In that case, batched messages will be sent individually (but still all at the same time).
 	 */
 	readonly enableGroupedBatching?: boolean;
+
+	/**
+	 * When this property is enabled, runtime will use flexible address encoding
+	 * pattern to route messages to the correct channel or extensible location.
+	 * Minimum client runtime version is 2.33.
+	 * Client runtimes older than 2.33 will log errors receiving a signal with
+	 * path-based address and ultimately ignore the signal.
+	 */
+	readonly enablePathBasedAddressing?: boolean;
 }
 
 /**
@@ -658,6 +667,75 @@ export let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: s
 };
 
 /**
+ * Address parts extracted from an address using the pathed address format.
+ */
+interface PathedAddressInfo {
+	/**
+	 * First address in path - extracted from {@link PathedAddressInfo.fullAddress}
+	 */
+	top: string;
+	/**
+	 * When true, it is considered an error if {@link PathedAddressInfo.top} is not found as a destination
+	 */
+	critical: boolean;
+	/**
+	 * Address after {@link PathedAddressInfo.top} - extracted from {@link PathedAddressInfo.fullAddress}
+	 */
+	subaddress: string;
+	/**
+	 * Full original address
+	 */
+	fullAddress: string;
+}
+
+/**
+ * Mostly undefined address parts extracted from an address not using pathed address format.
+ */
+interface LegacyAddressInfo {
+	top: undefined;
+	critical: undefined;
+	subaddress: undefined;
+	fullAddress: string;
+}
+
+/**
+ * Union of the two address info types.
+ */
+type NonContainerAddressInfo = PathedAddressInfo | LegacyAddressInfo;
+
+type UnsequencedSignalEnvelope = Omit<ISignalEnvelope, "clientBroadcastSignalSequenceNumber">;
+
+function submitWithPathBasedSignalAddress(
+	submitUnsequencedSignalFn: (
+		contents: UnsequencedSignalEnvelope,
+		targetClientId?: string,
+	) => void,
+): (contents: UnsequencedSignalEnvelope, targetClientId?: string) => void {
+	return (envelope: UnsequencedSignalEnvelope, targetClientId?: string) => {
+		if (envelope.address === undefined) {
+			envelope.address = "/runtime";
+		} else if (!envelope.address.startsWith("/")) {
+			envelope.address = `/channels/${envelope.address}`;
+		}
+		submitUnsequencedSignalFn(envelope, targetClientId);
+	};
+}
+
+function submitAssertingLegacySignalAddressing(
+	submitUnsequencedSignalFn: (
+		contents: UnsequencedSignalEnvelope,
+		targetClientId?: string,
+	) => void,
+): (envelope: UnsequencedSignalEnvelope, targetClientId?: string) => void {
+	return (envelope: UnsequencedSignalEnvelope, targetClientId?: string) => {
+		if (envelope.address?.startsWith("/")) {
+			throw new Error("Path based addressing is not enabled");
+		}
+		submitUnsequencedSignalFn(envelope, targetClientId);
+	};
+}
+
+/**
  * This object holds the parameters necessary for the {@link loadContainerRuntime} function.
  * @legacy
  * @alpha
@@ -798,6 +876,7 @@ export class ContainerRuntime
 			chunkSizeInBytes = defaultChunkSizeInBytes,
 			enableGroupedBatching = true,
 			explicitSchemaControl = false,
+			enablePathBasedAddressing = false,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
 
 		const registry = new FluidDataStoreRegistry(registryEntries);
@@ -1000,6 +1079,7 @@ export class ContainerRuntime
 			enableRuntimeIdCompressor: enableRuntimeIdCompressor as "on" | "delayed",
 			enableGroupedBatching,
 			explicitSchemaControl,
+			enablePathBasedAddressing,
 		};
 
 		const runtime = new containerRuntimeCtor(
@@ -1067,10 +1147,10 @@ export class ContainerRuntime
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
 	) => number;
-	/**
-	 * Do not call directly - use submitAddressesSignal
-	 */
-	private readonly submitSignalFn: (content: ISignalEnvelope, targetClientId?: string) => void;
+	private readonly submitSignalFn: (
+		content: UnsequencedSignalEnvelope,
+		targetClientId?: string,
+	) => void;
 	public readonly disposeFn: (error?: ICriticalContainerError) => void;
 	public readonly closeFn: (error?: ICriticalContainerError) => void;
 
@@ -1420,7 +1500,21 @@ export class ContainerRuntime
 		this.submitSummaryFn =
 			submitSummaryFn ??
 			((summaryOp, refseq) => submitFn(MessageType.Summarize, summaryOp, false));
-		this.submitSignalFn = submitSignalFn;
+
+		const sequenceAndSubmitSignal = (
+			envelope: UnsequencedSignalEnvelope,
+			targetClientId?: string,
+		): void => {
+			if (targetClientId === undefined) {
+				this.signalTelemetryManager.applyTrackingToBroadcastSignalEnvelope(envelope);
+			}
+			submitSignalFn(envelope, targetClientId);
+		};
+		this.submitSignalFn = (
+			runtimeOptions.enablePathBasedAddressing
+				? submitWithPathBasedSignalAddress
+				: submitAssertingLegacySignalAddressing
+		)(sequenceAndSubmitSignal);
 
 		// TODO: After IContainerContext.options is removed, we'll just create a new blank object {} here.
 		// Values are generally expected to be set from the runtime side.
@@ -1678,9 +1772,6 @@ export class ContainerRuntime
 			// verifyNotClosed is called in FluidDataStoreContext, which is *the* expected caller.
 			const envelope1 = content as IEnvelope;
 			const envelope2 = createNewSignalEnvelope(envelope1.address, type, envelope1.contents);
-			if (targetClientId === undefined) {
-				this.signalTelemetryManager.applyTrackingToBroadcastSignalEnvelope(envelope2);
-			}
 			this.submitSignalFn(envelope2, targetClientId);
 		};
 
@@ -3100,22 +3191,67 @@ export class ContainerRuntime
 			);
 		}
 
-		if (envelope.address === undefined) {
+		const fullAddress = envelope.address;
+		if (fullAddress === undefined || fullAddress === "/runtime/") {
 			// No address indicates a container signal message.
 			this.emit("signal", transformed, local);
 			return;
 		}
 
-		// Due to a mismatch between different layers in terms of
-		// what is the interface of passing signals, we need to adjust
-		// the signal envelope before sending it to the datastores to be processed
-		const envelope2: IEnvelope = {
-			address: envelope.address,
-			contents: transformed.content,
+		// Note that this pattern allows for ! prefix in top-address but
+		// does not give it any more special treatment than without it.
+		const topAddressAndSubaddress = fullAddress.match(
+			/^\/(?<optional>[!?]?)(?<top>[^/]*)\/(?<subaddress>.*)$/,
+		);
+		const { optional, top, subaddress } = topAddressAndSubaddress?.groups ?? {
+			optional: undefined,
+			top: undefined,
+			subaddress: undefined,
 		};
-		transformed.content = envelope2;
+		this.routeNonContainerSignal(
+			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- cast required
+			{
+				top,
+				// Could just check !== "?", but would not correctly meet strict typing.
+				critical: optional === undefined ? undefined : optional !== "?",
+				subaddress,
+				fullAddress,
+			} as NonContainerAddressInfo,
+			transformed,
+			local,
+		);
+	}
 
-		this.channelCollection.processSignal(transformed, local);
+	private routeNonContainerSignal(
+		address: NonContainerAddressInfo,
+		signalMessage: IInboundSignalMessage,
+		local: boolean,
+	): void {
+		// channelCollection signals are identified by no top address (use full address) or by the top address of "channels".
+		const isChannelAddress = address.top === undefined || address.top === "channels";
+		if (isChannelAddress) {
+			// Due to a mismatch between different layers in terms of
+			// what is the interface of passing signals, we need to adjust
+			// the signal envelope before sending it to the datastores to be processed
+			const envelope: IEnvelope = {
+				address: address.subaddress ?? address.fullAddress,
+				contents: signalMessage.content,
+			};
+			signalMessage.content = envelope;
+
+			this.channelCollection.processSignal(signalMessage, local);
+			return;
+		}
+
+		if (address.critical) {
+			assert(!local, "No recipient found for critical local signal");
+			this.mc.logger.sendTelemetryEvent({
+				eventName: "SignalCriticalAddressNotFound",
+				...tagCodeArtifacts({
+					address: address.top,
+				}),
+			});
+		}
 	}
 
 	/**
@@ -3354,9 +3490,6 @@ export class ContainerRuntime
 	public submitSignal(type: string, content: unknown, targetClientId?: string): void {
 		this.verifyNotClosed();
 		const envelope = createNewSignalEnvelope(undefined /* address */, type, content);
-		if (targetClientId === undefined) {
-			this.signalTelemetryManager.applyTrackingToBroadcastSignalEnvelope(envelope);
-		}
 		this.submitSignalFn(envelope, targetClientId);
 	}
 
@@ -4738,8 +4871,8 @@ export function createNewSignalEnvelope(
 	address: string | undefined,
 	type: string,
 	content: unknown,
-): Omit<ISignalEnvelope, "broadcastSignalSequenceNumber"> {
-	const newEnvelope: Omit<ISignalEnvelope, "broadcastSignalSequenceNumber"> = {
+): UnsequencedSignalEnvelope {
+	const newEnvelope: UnsequencedSignalEnvelope = {
 		address,
 		contents: { type, content },
 	};

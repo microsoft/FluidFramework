@@ -1554,7 +1554,7 @@ describe("Runtime", () => {
 				mockLogger = new MockLogger();
 			});
 
-			const runtimeOptions: IContainerRuntimeOptionsInternal = {
+			const runtimeOptions = {
 				compressionOptions: {
 					minimumBatchSizeInBytes: 1024 * 1024,
 					compressionAlgorithm: CompressionAlgorithms.lz4,
@@ -1562,9 +1562,9 @@ describe("Runtime", () => {
 				chunkSizeInBytes: 800 * 1024,
 				flushMode: FlushModeExperimental.Async as unknown as FlushMode,
 				enableGroupedBatching: true,
-			};
+			} as const satisfies IContainerRuntimeOptionsInternal;
 
-			const defaultRuntimeOptions: IContainerRuntimeOptionsInternal = {
+			const defaultRuntimeOptions = {
 				summaryOptions: {},
 				gcOptions: {},
 				loadSequenceNumberVerification: "close",
@@ -1578,8 +1578,9 @@ describe("Runtime", () => {
 				enableRuntimeIdCompressor: undefined,
 				enableGroupedBatching: true, // Redundant, but makes the JSON.stringify yield the same result as the logs
 				explicitSchemaControl: false,
-			};
-			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
+				enablePathBasedAddressing: false,
+			} as const satisfies IContainerRuntimeOptionsInternal;
+			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions } as const;
 
 			it("Container load stats", async () => {
 				await ContainerRuntime.loadRuntime({

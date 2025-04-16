@@ -112,6 +112,7 @@ export function generateRuntimeOptions(
 		enableRuntimeIdCompressor: ["on", undefined, "delayed"],
 		enableGroupedBatching: [true, false],
 		explicitSchemaControl: [true, false],
+		enablePathBasedAddressing: [true, false],
 	};
 
 	const pairwiseOptions = generatePairwiseOptions<IContainerRuntimeOptionsInternal>(
