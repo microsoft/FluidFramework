@@ -37,12 +37,12 @@ export type AttendeeId = SessionId & { readonly AttendeeId: "AttendeeId" };
  */
 export const AttendeeStatus = {
 	/**
-	 * The attendee is connected to the Fluid service.
+	 * The {@link Attendee} is connected to the Fluid service.
 	 */
 	Connected: "Connected",
 
 	/**
-	 * The attendee is not connected to the Fluid service.
+	 * The {@link Attendee} is not connected to the Fluid service.
 	 */
 	Disconnected: "Disconnected",
 } as const;
@@ -67,7 +67,7 @@ export type AttendeeStatus = (typeof AttendeeStatus)[keyof typeof AttendeeStatus
  * @remarks
  * Note: This is very preliminary attendee representation.
  *
- * `Attendee` should be used as key to distinguish between different
+ * {@link Attendee} should be used as key to distinguish between different
  * clients as they join, rejoin, and disconnect from a session. While a
  * client's {@link ClientConnectionId} from {@link Attendee.getConnectionStatus}
  * may change over time, `Attendee` will be fixed.
@@ -119,13 +119,13 @@ export type SpecificAttendee<SpecificAttendeeId extends AttendeeId> =
  * @sealed
  * @alpha
  */
-export interface PresenceEvents {
+export interface AttendeesEvents {
 	/**
 	 * Raised when new client joins session.
 	 *
 	 * @eventProperty
 	 */
-	attendeeJoined: (attendee: Attendee) => void;
+	attendeeConnected: (attendee: Attendee) => void;
 
 	/**
 	 * Raised when client appears disconnected from session.
@@ -133,7 +133,13 @@ export interface PresenceEvents {
 	 * @eventProperty
 	 */
 	attendeeDisconnected: (attendee: Attendee) => void;
+}
 
+/**
+ * @sealed
+ * @alpha
+ */
+export interface PresenceEvents {
 	/**
 	 * Raised when a workspace is activated within the session.
 	 *
@@ -164,52 +170,63 @@ export interface Presence {
 	 */
 	readonly events: Listenable<PresenceEvents>;
 
-	/**
-	 * Get all attendees in the session.
-	 *
-	 * @remarks
-	 * Attendee states are dynamic and will change as clients join and leave
-	 * the session.
-	 */
-	getAttendees(): ReadonlySet<Attendee>;
+	readonly attendees: {
+		/**
+		 * Events for {@link Attendee}s.
+		 */
+		readonly events: Listenable<AttendeesEvents>;
 
-	/**
-	 * Lookup a specific attendee in the session.
-	 *
-	 * @param clientId - Client connection or session ID
-	 */
-	getAttendee(clientId: ClientConnectionId | AttendeeId): Attendee;
+		/**
+		 * Get all {@link Attendee}s in the session.
+		 *
+		 * @remarks
+		 * Attendee states are dynamic and will change as clients join and leave
+		 * the session.
+		 */
+		getAttendees(): ReadonlySet<Attendee>;
 
-	/**
-	 * Get this client's attendee.
-	 *
-	 * @returns This client's attendee.
-	 */
-	getMyself(): Attendee;
+		/**
+		 * Lookup a specific {@link Attendee} in the session.
+		 *
+		 * @param clientId - Client connection or session ID
+		 */
+		getAttendee(clientId: ClientConnectionId | AttendeeId): Attendee;
 
-	/**
-	 * Acquires a StatesWorkspace from store or adds new one.
-	 *
-	 * @param workspaceAddress - Address of the requested StatesWorkspace
-	 * @param requestedContent - Requested states for the workspace
-	 * @param controls - Optional settings for default broadcast controls
-	 * @returns A StatesWorkspace
-	 */
-	getStates<StatesSchema extends StatesWorkspaceSchema>(
-		workspaceAddress: WorkspaceAddress,
-		requestedContent: StatesSchema,
-		controls?: BroadcastControlSettings,
-	): StatesWorkspace<StatesSchema>;
+		/**
+		 * Get this client's {@link Attendee}.
+		 *
+		 * @returns This client's attendee.
+		 */
+		getMyself(): Attendee;
+	};
 
-	/**
-	 * Acquires a Notifications workspace from store or adds new one.
-	 *
-	 * @param workspaceAddress - Address of the requested Notifications Workspace
-	 * @param requestedContent - Requested notifications for the workspace
-	 * @returns A Notifications workspace
-	 */
-	getNotifications<NotificationsSchema extends NotificationsWorkspaceSchema>(
-		notificationsId: WorkspaceAddress,
-		requestedContent: NotificationsSchema,
-	): NotificationsWorkspace<NotificationsSchema>;
+	readonly states: {
+		/**
+		 * Acquires a StatesWorkspace from store or adds new one.
+		 *
+		 * @param workspaceAddress - Address of the requested StatesWorkspace
+		 * @param requestedStates - Requested states for the workspace
+		 * @param controls - Optional settings for default broadcast controls
+		 * @returns A StatesWorkspace
+		 */
+		getWorkspace<StatesSchema extends StatesWorkspaceSchema>(
+			workspaceAddress: WorkspaceAddress,
+			requestedStates: StatesSchema,
+			controls?: BroadcastControlSettings,
+		): StatesWorkspace<StatesSchema>;
+	};
+
+	readonly notifications: {
+		/**
+		 * Acquires a Notifications workspace from store or adds new one.
+		 *
+		 * @param workspaceAddress - Address of the requested Notifications Workspace
+		 * @param requestedNotifications - Requested notifications for the workspace
+		 * @returns A Notifications workspace
+		 */
+		getWorkspace<NotificationsSchema extends NotificationsWorkspaceSchema>(
+			notificationsId: WorkspaceAddress,
+			requestedNotifications: NotificationsSchema,
+		): NotificationsWorkspace<NotificationsSchema>;
+	};
 }

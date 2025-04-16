@@ -111,7 +111,7 @@ export function makeDiceValuesView(
 	lastRoll: Latest<DiceValues>,
 ): void {
 	const children = makeDiceHeaderElement();
-	for (const clientValue of lastRoll.clientValues()) {
+	for (const clientValue of lastRoll.getRemotes()) {
 		children.push(...makeDiceValueElement(clientValue.attendee.attendeeId, clientValue.value));
 	}
 	target.replaceChildren(...children);
@@ -165,16 +165,19 @@ function makePresenceView(
 	logContentDiv.style.overflowY = "scroll";
 	logContentDiv.style.border = "1px solid black";
 	if (audience !== undefined) {
-		presenceConfig.presence.events.on("attendeeJoined", (attendee) => {
+		presenceConfig.presence.attendees.events.on("attendeeConnected", (attendee) => {
 			const name = audience.getMembers().get(attendee.getConnectionId())?.name;
 			const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} 🔗 with id ${attendee.attendeeId} joined`;
 			addLogEntry(logContentDiv, update);
 		});
 
-		presenceConfig.presence.events.on("attendeeDisconnected", (attendee) => {
+		presenceConfig.presence.attendees.events.on("attendeeDisconnected", (attendee) => {
 			// Filter for remote attendees
 			const self = audience.getMyself();
-			if (self && attendee !== presenceConfig.presence.getAttendee(self.currentConnection)) {
+			if (
+				self &&
+				attendee !== presenceConfig.presence.attendees.getAttendee(self.currentConnection)
+			) {
 				const name = audience.getMembers().get(attendee.getConnectionId())?.name;
 				const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} ⛓️‍💥 with id ${attendee.attendeeId} left`;
 				addLogEntry(logContentDiv, update);

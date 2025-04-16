@@ -4,7 +4,7 @@
  */
 
 import { createEmitter } from "@fluid-internal/client-utils";
-import type { IEmitter } from "@fluidframework/core-interfaces/internal";
+import type { IEmitter, Listenable } from "@fluidframework/core-interfaces/internal";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
 import type {
 	ITelemetryLoggerExt,
@@ -15,7 +15,7 @@ import { createChildMonitoringContext } from "@fluidframework/telemetry-utils/in
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type { IEphemeralRuntime } from "./internalTypes.js";
-import type { Attendee, AttendeeId, Presence, PresenceEvents } from "./presence.js";
+import type { AttendeesEvents, AttendeeId, Presence, PresenceEvents } from "./presence.js";
 import type { PresenceDatastoreManager } from "./presenceDatastoreManager.js";
 import { PresenceDatastoreManagerImpl } from "./presenceDatastoreManager.js";
 import type { SystemWorkspace, SystemWorkspaceDatastore } from "./systemWorkspace.js";
@@ -43,7 +43,25 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 	private readonly datastoreManager: PresenceDatastoreManager;
 	private readonly systemWorkspace: SystemWorkspace;
 
-	public readonly events = createEmitter<PresenceEvents>();
+	public readonly events = createEmitter<PresenceEvents & AttendeesEvents>();
+
+	public readonly attendees: Presence["attendees"];
+
+	public readonly states = {
+		getWorkspace: <TSchema extends StatesWorkspaceSchema>(
+			workspaceAddress: WorkspaceAddress,
+			requestedContent: TSchema,
+			settings?: BroadcastControlSettings,
+		): StatesWorkspace<TSchema> =>
+			this.datastoreManager.getWorkspace(`s:${workspaceAddress}`, requestedContent, settings),
+	};
+	public readonly notifications = {
+		getWorkspace: <TSchema extends StatesWorkspaceSchema>(
+			workspaceAddress: WorkspaceAddress,
+			requestedContent: TSchema,
+		): StatesWorkspace<TSchema> =>
+			this.datastoreManager.getWorkspace(`n:${workspaceAddress}`, requestedContent),
+	};
 
 	private readonly mc: MonitoringContext | undefined = undefined;
 
@@ -60,6 +78,7 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 			this.events,
 			this.mc?.logger,
 		);
+		this.attendees = this.systemWorkspace;
 
 		runtime.on("connected", this.onConnect.bind(this));
 
@@ -91,38 +110,6 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 	private removeClientConnectionId(clientConnectionId: ClientConnectionId): void {
 		this.systemWorkspace.removeClientConnectionId(clientConnectionId);
 	}
-
-	public getAttendees(): ReadonlySet<Attendee> {
-		return this.systemWorkspace.getAttendees();
-	}
-
-	public getAttendee(clientId: ClientConnectionId | AttendeeId): Attendee {
-		return this.systemWorkspace.getAttendee(clientId);
-	}
-
-	public getMyself(): Attendee {
-		return this.systemWorkspace.getMyself();
-	}
-
-	public getStates<TSchema extends StatesWorkspaceSchema>(
-		workspaceAddress: WorkspaceAddress,
-		requestedContent: TSchema,
-		controls?: BroadcastControlSettings,
-	): StatesWorkspace<TSchema> {
-		return this.datastoreManager.getWorkspace(
-			`s:${workspaceAddress}`,
-			requestedContent,
-			controls,
-		);
-	}
-
-	public getNotifications<TSchema extends StatesWorkspaceSchema>(
-		workspaceAddress: WorkspaceAddress,
-		requestedContent: TSchema,
-	): StatesWorkspace<TSchema> {
-		return this.datastoreManager.getWorkspace(`n:${workspaceAddress}`, requestedContent);
-	}
-
 	/**
 	 * Check for Presence message and process it.
 	 *
@@ -148,7 +135,8 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 function setupSubComponents(
 	attendeeId: AttendeeId,
 	runtime: IEphemeralRuntime,
-	events: IEmitter<PresenceEvents>,
+	events: Listenable<PresenceEvents & AttendeesEvents> &
+		IEmitter<PresenceEvents & AttendeesEvents>,
 	logger: ITelemetryLoggerExt | undefined,
 ): [PresenceDatastoreManager, SystemWorkspace] {
 	const systemWorkspaceDatastore: SystemWorkspaceDatastore = {

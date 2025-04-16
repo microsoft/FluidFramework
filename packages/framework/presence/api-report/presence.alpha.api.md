@@ -16,6 +16,14 @@ export type AttendeeId = SessionId & {
     readonly AttendeeId: "AttendeeId";
 };
 
+// @alpha @sealed (undocumented)
+export interface AttendeesEvents {
+    // @eventProperty
+    attendeeConnected: (attendee: Attendee) => void;
+    // @eventProperty
+    attendeeDisconnected: (attendee: Attendee) => void;
+}
+
 // @alpha
 export const AttendeeStatus: {
     readonly Connected: "Connected";
@@ -129,11 +137,11 @@ export namespace InternalUtilityTypes {
 
 // @alpha @sealed
 export interface Latest<T> {
-    clients(): Attendee[];
-    clientValue(attendee: Attendee): LatestData<T>;
-    clientValues(): IterableIterator<LatestClientData<T>>;
     readonly controls: BroadcastControls;
     readonly events: Listenable<LatestEvents<T>>;
+    getRemote(attendee: Attendee): LatestData<T>;
+    getRemotes(): IterableIterator<LatestClientData<T>>;
+    getStateAttendees(): Attendee[];
     get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
     set local(value: JsonSerializable<T> & JsonDeserialized<T>);
 }
@@ -167,11 +175,11 @@ export interface LatestEvents<T> {
 
 // @alpha @sealed
 export interface LatestMap<T, Keys extends string | number = string | number> {
-    clients(): Attendee[];
-    clientValue(attendee: Attendee): ReadonlyMap<Keys, LatestData<T>>;
-    clientValues(): IterableIterator<LatestMapClientData<T, Keys>>;
     readonly controls: BroadcastControls;
     readonly events: Listenable<LatestMapEvents<T, Keys>>;
+    getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T>>;
+    getRemotes(): IterableIterator<LatestMapClientData<T, Keys>>;
+    getStateAttendees(): Attendee[];
     readonly local: StateMap<Keys, T>;
 }
 
@@ -275,20 +283,26 @@ export interface NotificationsWorkspaceSchema {
 
 // @alpha @sealed
 export interface Presence {
+    // (undocumented)
+    readonly attendees: {
+        readonly events: Listenable<AttendeesEvents>;
+        getAttendees(): ReadonlySet<Attendee>;
+        getAttendee(clientId: ClientConnectionId | AttendeeId): Attendee;
+        getMyself(): Attendee;
+    };
     readonly events: Listenable<PresenceEvents>;
-    getAttendee(clientId: ClientConnectionId | AttendeeId): Attendee;
-    getAttendees(): ReadonlySet<Attendee>;
-    getMyself(): Attendee;
-    getNotifications<NotificationsSchema extends NotificationsWorkspaceSchema>(notificationsId: WorkspaceAddress, requestedContent: NotificationsSchema): NotificationsWorkspace<NotificationsSchema>;
-    getStates<StatesSchema extends StatesWorkspaceSchema>(workspaceAddress: WorkspaceAddress, requestedContent: StatesSchema, controls?: BroadcastControlSettings): StatesWorkspace<StatesSchema>;
+    // (undocumented)
+    readonly notifications: {
+        getWorkspace<NotificationsSchema extends NotificationsWorkspaceSchema>(notificationsId: WorkspaceAddress, requestedNotifications: NotificationsSchema): NotificationsWorkspace<NotificationsSchema>;
+    };
+    // (undocumented)
+    readonly states: {
+        getWorkspace<StatesSchema extends StatesWorkspaceSchema>(workspaceAddress: WorkspaceAddress, requestedStates: StatesSchema, controls?: BroadcastControlSettings): StatesWorkspace<StatesSchema>;
+    };
 }
 
 // @alpha @sealed (undocumented)
 export interface PresenceEvents {
-    // @eventProperty
-    attendeeDisconnected: (attendee: Attendee) => void;
-    // @eventProperty
-    attendeeJoined: (attendee: Attendee) => void;
     workspaceActivated: (workspaceAddress: WorkspaceAddress, type: "States" | "Notifications" | "Unknown") => void;
 }
 

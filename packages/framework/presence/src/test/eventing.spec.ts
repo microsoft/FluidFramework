@@ -178,7 +178,7 @@ describe("Presence", () => {
 				switch (manager) {
 					case "latest": {
 						assert.deepEqual(
-							latest.clientValue(attendee).value,
+							latest.getRemote(attendee).value,
 							expectedValue,
 							"Eventing does not reflect latest value",
 						);
@@ -186,12 +186,12 @@ describe("Presence", () => {
 					}
 					case "latestMap": {
 						assert.deepEqual(
-							latestMap.clientValue(attendee).get("key1")?.value,
+							latestMap.getRemote(attendee).get("key1")?.value,
 							expectedValue.key1,
 							"Eventing does not reflect latest map value",
 						);
 						assert.deepEqual(
-							latestMap.clientValue(attendee).get("key2")?.value,
+							latestMap.getRemote(attendee).get("key2")?.value,
 							expectedValue.key2,
 							"Eventing does not reflect latest map value",
 						);
@@ -241,7 +241,7 @@ describe("Presence", () => {
 		function setupSharedStatesWorkspace({
 			notifications,
 		}: { notifications?: true } = {}): void {
-			const states = presence.getStates("name:testWorkspace", {
+			const states = presence.states.getWorkspace("name:testWorkspace", {
 				latest: StateFactory.latest({ x: 0, y: 0, z: 0 }),
 				latestMap: StateFactory.latestMap({ key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } }),
 			});
@@ -260,10 +260,10 @@ describe("Presence", () => {
 		}
 
 		function setupMultipleStatesWorkspaces(): void {
-			const latestsStates = presence.getStates("name:testWorkspace1", {
+			const latestsStates = presence.states.getWorkspace("name:testWorkspace1", {
 				latest: StateFactory.latest({ x: 0, y: 0, z: 0 }),
 			});
-			const latesetMapStates = presence.getStates("name:testWorkspace2", {
+			const latesetMapStates = presence.states.getWorkspace("name:testWorkspace2", {
 				latestMap: StateFactory.latestMap({ key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } }),
 			});
 			latest = latestsStates.props.latest;
@@ -271,11 +271,14 @@ describe("Presence", () => {
 		}
 
 		function setupNotificationsWorkspace(): void {
-			const notificationsWorkspace = presence.getNotifications("name:testWorkspace", {
-				notifications: Notifications<{ newId: (id: number) => void }>({
-					newId: (_attendee: Attendee, _id: number) => {},
-				}),
-			});
+			const notificationsWorkspace = presence.notifications.getWorkspace(
+				"name:testWorkspace",
+				{
+					notifications: Notifications<{ newId: (id: number) => void }>({
+						newId: (_attendee: Attendee, _id: number) => {},
+					}),
+				},
+			);
 			notificationManager = notificationsWorkspace.props.notifications;
 		}
 
@@ -298,7 +301,7 @@ describe("Presence", () => {
 		}
 
 		function getTestAttendee(): Attendee {
-			return presence.getAttendee("attendeeId-1");
+			return presence.attendees.getAttendee("attendeeId-1");
 		}
 
 		describe("states workspace", () => {
@@ -344,7 +347,7 @@ describe("Presence", () => {
 					latest.events.on("updated", latestUpdatedEventSpy);
 					latestMap.events.on("updated", latestMapUpdatedEventSpy);
 					latestMap.events.on("itemUpdated", itemUpdatedEventSpy);
-					presence.events.on("attendeeJoined", atteendeeEventSpy);
+					presence.attendees.events.on("attendeeConnected", atteendeeEventSpy);
 				}
 
 				it("'latest' update comes before 'latestMap' update in single workspace", async () => {
@@ -573,7 +576,7 @@ describe("Presence", () => {
 				notificationManager.notifications.on("newId", notificationSpy);
 				latest.events.on("updated", latestSpy);
 				latestMap.events.on("updated", latestMapSpy);
-				presence.events.on("attendeeJoined", attendeeSpy);
+				presence.attendees.events.on("attendeeConnected", attendeeSpy);
 			}
 
 			function assertSpies(): void {
@@ -651,11 +654,14 @@ describe("Presence", () => {
 				notificationSpy = spy();
 				const workspaceActivatedEventSpy = spy((workspaceAddress: WorkspaceAddress) => {
 					// Once activated, register the notifications workspace and listener for it's event
-					const notificationsWorkspace = presence.getNotifications(workspaceAddress, {
-						notifications: Notifications<{ newId: (id: number) => void }>({
-							newId: (_attendee: Attendee, _id: number) => {},
-						}),
-					});
+					const notificationsWorkspace = presence.notifications.getWorkspace(
+						workspaceAddress,
+						{
+							notifications: Notifications<{ newId: (id: number) => void }>({
+								newId: (_attendee: Attendee, _id: number) => {},
+							}),
+						},
+					);
 					notificationsWorkspace.props.notifications.notifications.on(
 						"newId",
 						notificationSpy,

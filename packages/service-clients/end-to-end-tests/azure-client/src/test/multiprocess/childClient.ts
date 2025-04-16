@@ -159,21 +159,25 @@ class MessageHandler {
 				this.containerId = containerId;
 
 				// Listen for presence events to notify parent/orchestrator when a new attendee joins or leaves the session.
-				presence.events.on("attendeeJoined", (attendee: Attendee) => {
+				presence.attendees.events.on("attendeeConnected", (attendee: Attendee) => {
 					const m: MessageToParent = {
-						event: "attendeeJoined",
+						event: "attendeeConnected",
 						attendeeId: attendee.attendeeId,
 					};
 					send(m);
 				});
-				presence.events.on("attendeeDisconnected", (attendee: Attendee) => {
+				presence.attendees.events.on("attendeeDisconnected", (attendee: Attendee) => {
 					const m: MessageToParent = {
 						event: "attendeeDisconnected",
 						attendeeId: attendee.attendeeId,
 					};
 					send(m);
 				});
-				send({ event: "ready", containerId, attendeeId: presence.getMyself().attendeeId });
+				send({
+					event: "ready",
+					containerId,
+					attendeeId: presence.attendees.getMyself().attendeeId,
+				});
 
 				break;
 			}
@@ -192,7 +196,7 @@ class MessageHandler {
 				this.container.disconnect();
 				send({
 					event: "disconnectedSelf",
-					attendeeId: this.presence.getMyself().attendeeId,
+					attendeeId: this.presence.attendees.getMyself().attendeeId,
 				});
 
 				break;

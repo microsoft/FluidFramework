@@ -67,7 +67,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 
 		// When an attendee disconnects, emit the mousePositionChanged event so client can update their rendered view
 		// accordingly.
-		this.presence.events.on("attendeeDisconnected", () => {
+		this.presence.attendees.events.on("attendeeDisconnected", () => {
 			this.emit("mousePositionChanged");
 		});
 
@@ -88,7 +88,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	public getMousePresences(): Map<Attendee, IMousePosition> {
 		const statuses: Map<Attendee, IMousePosition> = new Map();
 
-		for (const { attendee, value } of this.cursor.clientValues()) {
+		for (const { attendee, value } of this.cursor.getRemotes()) {
 			if (attendee.getConnectionStatus() === AttendeeStatus.Connected) {
 				statuses.set(attendee, value);
 			}
