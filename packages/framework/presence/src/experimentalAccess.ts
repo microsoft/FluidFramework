@@ -3,23 +3,21 @@
  * Licensed under the MIT License.
  */
 
+import type {
+	ContainerExtensionStore,
+	ContainerExtension,
+	ExtensionMessage,
+	ExtensionRuntime,
+} from "@fluidframework/container-definitions/internal";
 import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IFluidContainer } from "@fluidframework/fluid-static";
 import { isInternalFluidContainer } from "@fluidframework/fluid-static/internal";
 import type { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 
-import type { IEphemeralRuntime } from "./internalTypes.js";
 import type { Presence } from "./presence.js";
 import type { PresenceExtensionInterface } from "./presenceManager.js";
 import { createPresenceManager } from "./presenceManager.js";
-
-import type {
-	ContainerExtensionStore,
-	IContainerExtension,
-	IExtensionMessage,
-	IExtensionRuntime,
-} from "@fluidframework/presence/internal/container-definitions/internal";
 
 function isContainerExtensionStore(
 	manager: ContainerExtensionStore | IContainerRuntimeBase | IContainerExperimental,
@@ -30,16 +28,19 @@ function isContainerExtensionStore(
 /**
  * Common Presence manager for a container
  */
-class ContainerPresenceManager implements IContainerExtension<never> {
+class ContainerPresenceManager implements ContainerExtension<never> {
 	public readonly interface: Presence;
 	public readonly extension = this;
 	private readonly manager: PresenceExtensionInterface;
 
-	public constructor(runtime: IExtensionRuntime) {
-		// TODO create the appropriate ephemeral runtime (map address must be in submitSignal, etc.)
-		this.interface = this.manager = createPresenceManager(
-			runtime as unknown as IEphemeralRuntime,
-		);
+	public constructor(runtime: ExtensionRuntime) {
+		this.interface = this.manager = createPresenceManager({
+			...runtime,
+			submitSignal: (type, content, targetClientId) => {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- eslint see content as `any` (IntelliSense claims `JsonSerialized<TContent>` as expected)
+				runtime.submitAddressedSignal("", type, content, targetClientId);
+			},
+		});
 	}
 
 	public onNewContext(): void {
@@ -48,7 +49,7 @@ class ContainerPresenceManager implements IContainerExtension<never> {
 
 	public static readonly extensionId = "dis:bb89f4c0-80fd-4f0c-8469-4f2848ee7f4a";
 
-	public processSignal(address: string, message: IExtensionMessage, local: boolean): void {
+	public processSignal(address: string, message: ExtensionMessage, local: boolean): void {
 		this.manager.processSignal(address, message, local);
 	}
 }

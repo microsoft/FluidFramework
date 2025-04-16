@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { ExtensionMessage } from "@fluidframework/container-definitions/internal";
 import type { InternalUtilityTypes } from "@fluidframework/core-interfaces/internal";
 import type { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { getUnexpectedLogErrorException } from "@fluidframework/test-utils/internal";
@@ -12,8 +13,7 @@ import { createPresenceManager } from "../presenceManager.js";
 
 import type { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
-import type { ClientConnectionId, AttendeeId } from "@fluidframework/presence/alpha";
-import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
+import type { AttendeeId, ClientConnectionId } from "@fluidframework/presence/alpha";
 
 /**
  * Use to compile-time assert types of two variables are identical.
@@ -77,7 +77,7 @@ export function generateBasicClientJoin(
 			updateProviders,
 		},
 		clientId: clientConnectionId,
-	} satisfies IExtensionMessage<"Pres:ClientJoin">;
+	} satisfies ExtensionMessage<"Pres:ClientJoin">;
 }
 
 /**

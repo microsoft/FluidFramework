@@ -3,13 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import type { ExtensionRuntime } from "@fluidframework/container-definitions/internal";
+import type { JsonSerializable } from "@fluidframework/core-interfaces/internal";
 
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { AttendeeId, Attendee } from "./presence.js";
-
-import type { IRuntimeInternal } from "@fluidframework/presence/internal/container-definitions/internal";
 
 /**
  * @internal
@@ -30,11 +28,21 @@ export interface ClientRecord<TValue extends InternalTypes.ValueDirectoryOrState
  *
  * @internal
  */
-export type IEphemeralRuntime = Pick<
-	(IContainerRuntime & IRuntimeInternal) | IFluidDataStoreRuntime,
-	"clientId" | "connected" | "getAudience" | "getQuorum" | "off" | "on" | "submitSignal"
-> &
-	Partial<Pick<IFluidDataStoreRuntime, "logger">>;
+export type IEphemeralRuntime = Omit<ExtensionRuntime, "logger" | "submitAddressedSignal"> &
+	// Apart from tests, there is always a logger. So this could be promoted to required.
+	Partial<Pick<ExtensionRuntime, "logger">> & {
+		/**
+		 * Submits the signal to be sent to other clients.
+		 * @param type - Type of the signal.
+		 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
+		 * @param targetClientId - When specified, the signal is only sent to the provided client id.
+		 */
+		submitSignal: <TContent>(
+			type: string,
+			content: JsonSerializable<TContent>,
+			targetClientId?: string,
+		) => void;
+	};
 
 /**
  * @internal

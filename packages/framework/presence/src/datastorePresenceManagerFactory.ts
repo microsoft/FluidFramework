@@ -7,6 +7,11 @@
  * Hacky support for internal datastore based usages.
  */
 
+import { createEmitter } from "@fluid-internal/client-utils";
+import type {
+	ExtensionMessage,
+	ExtensionRuntimeEvents,
+} from "@fluidframework/container-definitions/internal";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
@@ -16,14 +21,12 @@ import { BasicDataStoreFactory, LoadableFluidObject } from "./datastoreSupport.j
 import type { Presence } from "./presence.js";
 import { createPresenceManager } from "./presenceManager.js";
 
-import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
-
 function assertSignalMessageIsValid(
-	message: IInboundSignalMessage | IExtensionMessage,
-): asserts message is IExtensionMessage {
+	message: IInboundSignalMessage | ExtensionMessage,
+): asserts message is ExtensionMessage {
 	assert(message.clientId !== null, 0xa58 /* Signal must have a client ID */);
 	// The other difference between messages is that `content` for
-	// IExtensionMessage is JsonDeserialized and we are fine assuming that.
+	// ExtensionMessage is JsonDeserialized and we are fine assuming that.
 }
 
 /**
@@ -38,7 +41,19 @@ class PresenceManagerDataObject extends LoadableFluidObject {
 		if (!this._presenceManager) {
 			// TODO: investigate if ContainerExtensionStore (path-based address routing for
 			// Signals) is readily detectable here and use that presence manager directly.
-			const manager = createPresenceManager(this.runtime);
+			const runtime = this.runtime;
+			const events = createEmitter<ExtensionRuntimeEvents>();
+			runtime.on("connected", (clientId) => events.emit("connected", clientId));
+			runtime.on("disconnected", () => events.emit("disconnected"));
+
+			const manager = createPresenceManager({
+				isConnected: () => runtime.connected,
+				getClientId: () => runtime.clientId,
+				events,
+				getQuorum: runtime.getQuorum.bind(runtime),
+				getAudience: runtime.getAudience.bind(runtime),
+				submitSignal: runtime.submitSignal.bind(runtime),
+			});
 			this.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
 				assertSignalMessageIsValid(message);
 				manager.processSignal("", message, local);

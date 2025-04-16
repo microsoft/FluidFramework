@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { ExtensionMessage } from "@fluidframework/container-definitions/internal";
 import type { IEmitter } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
@@ -27,8 +28,6 @@ import {
 import type { SystemWorkspaceDatastore } from "./systemWorkspace.js";
 import { TimerManager } from "./timerManager.js";
 import type { StatesWorkspace, StatesWorkspaceSchema, WorkspaceAddress } from "./types.js";
-
-import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
 
 interface StatesWorkspaceEntry<TSchema extends StatesWorkspaceSchema> {
 	public: StatesWorkspace<TSchema>;
@@ -98,7 +97,7 @@ export interface PresenceDatastoreManager {
 		requestedContent: TSchema,
 		controls?: BroadcastControlSettings,
 	): StatesWorkspace<TSchema>;
-	processSignal(message: IExtensionMessage, local: boolean): void;
+	processSignal(message: ExtensionMessage, local: boolean): void;
 }
 
 function mergeGeneralDatastoreMessageContent(
@@ -200,7 +199,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			options: RuntimeLocalUpdateOptions,
 		): void => {
 			// Check for connectivity before sending updates.
-			if (!this.runtime.connected) {
+			if (!this.runtime.isConnected()) {
 				return;
 			}
 
@@ -291,14 +290,14 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		}
 
 		// Check for connectivity before sending updates.
-		if (!this.runtime.connected) {
+		if (!this.runtime.isConnected()) {
 			// Clear the queued data since we're disconnected. We don't want messages
 			// to queue infinitely while disconnected.
 			this.queuedData = undefined;
 			return;
 		}
 
-		const clientConnectionId = this.runtime.clientId;
+		const clientConnectionId = this.runtime.getClientId();
 		assert(clientConnectionId !== undefined, 0xa59 /* Client connected without clientId */);
 		const currentClientToSessionValueState =
 			// When connected, `clientToSessionId` must always have current connection entry.
@@ -337,12 +336,12 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	}
 
 	public processSignal(
-		// Note: IInboundSignalMessage is used here in place of IExtensionMessage
-		// as IExtensionMessage's strictly JSON `content` creates type compatibility
+		// Note: IInboundSignalMessage is used here in place of ExtensionMessage
+		// as ExtensionMessage's strictly JSON `content` creates type compatibility
 		// issues with `AttendeeId` keys and really unknown value content.
-		// IExtensionMessage is a subset of IInboundSignalMessage so this is safe.
+		// ExtensionMessage is a subset of IInboundSignalMessage so this is safe.
 		// Change types of DatastoreUpdateMessage | ClientJoinMessage to
-		// IExtensionMessage<> derivatives to see the issues.
+		// ExtensionMessage<> derivatives to see the issues.
 		message: IInboundSignalMessage | DatastoreUpdateMessage | ClientJoinMessage,
 		local: boolean,
 	): void {
@@ -372,7 +371,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			// It is possible for some signals to come in while client is not connected due
 			// to how work is scheduled. If we are not connected, we can't respond to the
 			// join request. We will make our own Join request once we are connected.
-			if (this.runtime.connected) {
+			if (this.runtime.isConnected()) {
 				this.prepareJoinResponse(message.content.updateProviders, message.clientId);
 			}
 			// It is okay to continue processing the contained updates even if we are not
@@ -459,7 +458,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		// We must be connected to receive this message, so clientId should be defined.
 		// If it isn't then, not really a problem; just won't be in provider or quorum list.
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const clientId = this.runtime.clientId!;
+		const clientId = this.runtime.getClientId()!;
 		// const requestor = message.clientId;
 		if (updateProviders.includes(clientId)) {
 			// Send all current state to the new client
@@ -500,7 +499,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			setTimeout(() => {
 				// Make sure a broadcast is still needed and we are currently connected.
 				// If not connected, nothing we can do.
-				if (this.refreshBroadcastRequested && this.runtime.connected) {
+				if (this.refreshBroadcastRequested && this.runtime.isConnected()) {
 					this.broadcastAllKnownState();
 					this.logger?.sendTelemetryEvent({
 						eventName: "JoinResponse",
