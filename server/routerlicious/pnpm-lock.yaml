@@ -819,6 +819,9 @@ importers:
       '@fluidframework/server-services-utils':
         specifier: workspace:~
         version: link:../services-utils
+      '@socket.io/redis-emitter':
+        specifier: ^4.1.1
+        version: 4.1.1
       body-parser:
         specifier: ^1.20.3
         version: 1.20.3
