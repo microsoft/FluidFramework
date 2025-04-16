@@ -1091,7 +1091,7 @@ export class ModularChangeFamily
 				baseFieldChange.change,
 				rebaseChild,
 				genId,
-				new RebaseNodeManagerI(crossFieldTable),
+				new RebaseNodeManagerI(crossFieldTable, fieldId),
 				metadata,
 			);
 
@@ -1204,7 +1204,7 @@ export class ModularChangeFamily
 				baseChangeset,
 				rebaseChild,
 				genId,
-				new RebaseNodeManagerI(crossFieldTable, allowInval),
+				new RebaseNodeManagerI(crossFieldTable, context.fieldId, allowInval),
 				rebaseMetadata,
 			),
 		);
@@ -1297,7 +1297,7 @@ export class ModularChangeFamily
 					? baseNodeId
 					: undefined,
 			idAllocator,
-			new RebaseNodeManagerI(table),
+			new RebaseNodeManagerI(table, rebasedFieldId),
 			metadata,
 		);
 
@@ -1357,7 +1357,7 @@ export class ModularChangeFamily
 				change2: baseChangeset,
 			} = this.normalizeFieldChanges(fieldChange, baseChange);
 
-			const manager = new RebaseNodeManagerI(crossFieldTable);
+			const manager = new RebaseNodeManagerI(crossFieldTable, fieldId);
 
 			const rebasedField = changeHandler.rebaser.rebase(
 				fieldChangeset,
@@ -2437,6 +2437,7 @@ class InvertNodeManagerI implements InvertNodeManager {
 class RebaseNodeManagerI implements RebaseNodeManager {
 	public constructor(
 		private readonly table: RebaseTable,
+		private readonly fieldId: FieldId,
 		private readonly allowInval: boolean = true,
 	) {}
 
@@ -2477,16 +2478,39 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 			count,
 		);
 
+		let result: RangeQueryResult<ChangeAtomId, DetachedNodeEntry>;
+		// eslint-disable-next-line unicorn/prefer-ternary
 		if (newNodeId !== undefined || newRenameEntry.value !== undefined) {
-			return {
+			result = {
 				...newRenameEntry,
 				value: { detachId: newRenameEntry.value, nodeChange: newNodeId },
 			};
+		} else {
+			// This handles the case where the base changeset has moved these nodes,
+			// meaning they were attached in the input context of the base changeset.
+			result = this.table.entries.getFirst(baseAttachId, count);
 		}
 
-		// This handles the case where the base changeset has moved these nodes,
-		// meaning they were attached in the input context of the base changeset.
-		return this.table.entries.getFirst(baseAttachId, count);
+		// TODO: Consider moving these two checks into a separate method so that this function has no side effects.
+		if (result.value?.detachId !== undefined) {
+			this.table.rebasedCrossFieldKeys.set(
+				{
+					target: CrossFieldTarget.Source,
+					...result.value.detachId,
+				},
+				result.length,
+				this.fieldId,
+			);
+		}
+
+		if (result.value?.nodeChange !== undefined) {
+			this.table.rebasedNodeToParent.set(
+				[result.value.nodeChange.revision, result.value.nodeChange.localId],
+				this.fieldId,
+			);
+		}
+
+		return result;
 	}
 
 	// XXX: Support moving/deleting cross field keys
