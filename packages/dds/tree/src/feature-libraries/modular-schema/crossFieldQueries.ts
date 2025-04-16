@@ -100,11 +100,14 @@ export interface ComposeNodeManager {
 	 * @param baseDetachId - The ID of the detach in the base changeset.
 	 * @param newAttachId - The ID of the attach in the new changeset.
 	 * @param count - The number of nodes being detached then attached.
+	 * @param preserveRename - When false, the rename from `baseDetachId` to `newAttachId` (if any) will be removed.
+	 * Preserving the rename is needed when the field changeset need to keep referring to the node by both IDs.
 	 */
 	composeDetachAttach(
 		baseDetachId: ChangeAtomId,
 		newAttachId: ChangeAtomId,
 		count: number,
+		preserveRename: boolean,
 	): boolean;
 }
 

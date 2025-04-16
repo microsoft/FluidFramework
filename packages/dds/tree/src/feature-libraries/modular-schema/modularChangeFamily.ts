@@ -2718,6 +2718,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		baseDetachId: ChangeAtomId,
 		newAttachId: ChangeAtomId,
 		count: number,
+		preserveRename: boolean,
 	): boolean {
 		const renamedDetachEntry = firstAttachIdFromDetachId(
 			this.table.composedRootNodes,
@@ -2727,13 +2728,12 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 
 		assert(renamedDetachEntry.length === count, "XXX: Handle splitting");
 		const isReattachOfSameNodes = areEqualChangeAtomIds(renamedDetachEntry.value, newAttachId);
-		// [Yann]: The code below is undesirable because because fields should use the earliest ID for the detach and the latest ID for the attach.
-		// if (isReattachOfSameNodes) {
-		// 	// These nodes have been moved back to their original location, so the composed changeset should not have any renames for them.
-		// 	// Note that deleting the rename from `this.table.composedRootNodes` would change the result of this method
-		// 	// if it were rerun due to the field being invalidated, so we instead record that the rename should be deleted later.
-		// 	this.table.renamesToDelete.set(baseDetachId, count, true);
-		// }
+		if (isReattachOfSameNodes && !preserveRename) {
+			// These nodes have been moved back to their original location, so the composed changeset should not have any renames for them.
+			// Note that deleting the rename from `this.table.composedRootNodes` would change the result of this method
+			// if it were rerun due to the field being invalidated, so we instead record that the rename should be deleted later.
+			this.table.renamesToDelete.set(baseDetachId, count, true);
+		}
 
 		return isReattachOfSameNodes;
 	}

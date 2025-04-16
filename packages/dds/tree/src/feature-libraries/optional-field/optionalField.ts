@@ -37,7 +37,6 @@ import {
 
 import type { OptionalChangeset, Replace } from "./optionalFieldChangeTypes.js";
 import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";
-import { base } from "../../simple-tree/api/testRecursiveDomain.js";
 
 export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	compose: (
@@ -259,7 +258,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 					if (
 						replace2.src !== undefined &&
-						nodeManager.composeDetachAttach(replace1.dst, replace2.src, 1)
+						nodeManager.composeDetachAttach(replace1.dst, replace2.src, 1, true)
 					) {
 						// This branch deals with cases (S B S) and (S _ S) (i.e, the "Yes" column).
 						// Both cases are equivalent to pinning the node S.
@@ -648,21 +647,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	},
 };
 
-function rebaseReplaceSource(
-	source: Replace,
-	baseReplace: Replace | undefined,
-): ChangeAtomId | undefined {
-	// eslint-disable-next-line unicorn/prefer-ternary
-	if (areEqualChangeAtomIdOpts(baseReplace?.src, source.src)) {
-		// If the base change attaches the node that the rebased change is trying to attach,
-		// then the rebased change becomes a pin.
-		// XXX: Consider renames when comparing register IDs (remember to use the last know ID for the node).
-		return source.dst;
-	} else {
-		return source.src;
-	}
-}
-
 function replaceReplaceRevisions(
 	replace: Replace,
 	oldRevisions: Set<RevisionTag | undefined>,
@@ -703,10 +687,6 @@ function isReplaceEffectful(replace: Replace | undefined): replace is EffectfulR
 	return !replace.isEmpty || replace.src !== undefined;
 }
 
-function getEffectfulDst(replace: Replace | undefined): ChangeAtomId | undefined {
-	return replace === undefined || replace.isEmpty || isPin(replace) ? undefined : replace.dst;
-}
-
 function isPin(
 	replace: Replace,
 	nodeManager?: ComposeNodeManager,
@@ -715,7 +695,7 @@ function isPin(
 		return false;
 	}
 	if (nodeManager !== undefined) {
-		return nodeManager.composeDetachAttach(replace.dst, replace.src, 1);
+		return nodeManager.composeDetachAttach(replace.dst, replace.src, 1, true);
 	}
 	return areEqualChangeAtomIds(replace.dst, replace.src);
 }
