@@ -81,7 +81,7 @@ export function isTreeNodeSchemaClass<
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
 /**
- * Kind of a field on an {@link ObjectNode}.
+ * Kind of a field on an {@link TreeObjectNode}.
  * @remarks
  * More kinds may be added over time, so do not assume this is an exhaustive set.
  * See {@link FieldSchema} for where these are used, and {@link SchemaFactory} for how to create schema which use them.
