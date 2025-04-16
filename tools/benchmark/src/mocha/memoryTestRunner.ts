@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "node:fs";
-import path from "node:path";
 import type * as v8 from "node:v8";
 
 import { assert } from "chai";
