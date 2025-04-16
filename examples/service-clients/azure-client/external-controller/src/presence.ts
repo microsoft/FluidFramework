@@ -27,7 +27,7 @@ export interface DiceValues {
  * If any part of the data is updated, then the entire data structure is shared. This means
  * keeping a local copy of the data structure or recomposing it each time making an update.
  *
- * The second state, lastDiceRolls, is using {@link @fluidframework/presence#LatestMap| LatesttMap} where
+ * The second state, lastDiceRolls, is using {@link @fluidframework/presence#LatestMap| LatestMap} where
  * each die is updated independently. This allows for more granular updates, but also requires
  * more verbose setting/reading logic and use of boxed values (e.g. `{ value: DieValue}`). This
  * pattern more directly lends itself to handling arbitrary numbers of dice.
