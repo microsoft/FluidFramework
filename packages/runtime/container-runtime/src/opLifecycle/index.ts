@@ -14,6 +14,7 @@ export {
 export {
 	LocalBatch,
 	LocalBatchMessage,
+	LocalEmptyBatchPlaceholder,
 	OutboundBatch,
 	OutboundBatchMessage,
 	OutboundSingletonBatch,
@@ -28,7 +29,6 @@ export {
 export {
 	estimateSocketSize,
 	localBatchToOutboundBatch,
-	IOutboxParameters,
 	Outbox,
 	getLongStack,
 } from "./outbox.js";

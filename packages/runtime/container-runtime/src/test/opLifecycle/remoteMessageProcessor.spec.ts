@@ -12,12 +12,8 @@ import {
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
-import Sinon from "sinon";
 
-import {
-	ContainerMessageType,
-	// disabledCompressionConfig
-} from "../../index.js";
+import { ContainerMessageType } from "../../index.js";
 import type {
 	InboundContainerRuntimeMessage,
 	InboundSequencedContainerRuntimeMessage,
@@ -36,10 +32,7 @@ import {
 	OpGroupingManager,
 	OpSplitter,
 	RemoteMessageProcessor,
-	// Outbox,
-	// IOutboxParameters,
 } from "../../opLifecycle/index.js";
-// import { PendingStateManager, type IRuntimeStateHandler } from "../../pendingStateManager.js";
 
 import { compressMultipleMessageBatch } from "./legacyCompression.js";
 
@@ -57,11 +50,6 @@ function op(data: string): LocalContainerRuntimeMessage {
 }
 
 describe("RemoteMessageProcessor", () => {
-	const sandbox = Sinon.createSandbox();
-	afterEach(() => {
-		sandbox.restore();
-	});
-
 	function getMessageProcessor(): RemoteMessageProcessor {
 		const logger = new MockLogger();
 		return new RemoteMessageProcessor(
@@ -356,20 +344,11 @@ describe("RemoteMessageProcessor", () => {
 		];
 
 		const processor = getMessageProcessor();
-
-		// Flatten the batches into an array of messages
-		const inboundMessages: Pick<
-			ISequencedDocumentMessage,
-			"clientId" | "clientSequenceNumber" | "type" | "contents" | "metadata" | "compression"
-		>[] = testBatchesInput.flatMap(({ messages }) => messages);
-
-		const processResults = inboundMessages.map((message) => {
-			return processor.process(
-				// Need to cast to deal with mismatch of required/optional on some properties
-				message,
-				() => {},
-			);
-		});
+		const processResults = testBatchesInput.flatMap(({ messages }) =>
+			messages.map((message) => {
+				return processor.process(message as ISequencedDocumentMessage, () => {});
+			}),
+		);
 
 		assert.deepStrictEqual(processResults, expectedResults, "unexpected output from process");
 	});

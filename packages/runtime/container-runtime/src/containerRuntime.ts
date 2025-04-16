@@ -197,7 +197,7 @@ import {
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
-	PendingMessageResubmitData2,
+	PendingMessageResubmitData,
 	IPendingLocalState,
 	PendingStateManager,
 } from "./pendingStateManager.js";
@@ -4390,7 +4390,7 @@ export class ContainerRuntime
 	 * @remarks - If the "Offline Load" feature is enabled, the batchId is included in the resubmitted messages,
 	 * for correlation to detect container forking.
 	 */
-	private reSubmitBatch(batch: PendingMessageResubmitData2[], batchId: BatchId): void {
+	private reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId): void {
 		this.batchRunner.run(() => {
 			for (const message of batch) {
 				this.reSubmit(message);
@@ -4402,8 +4402,8 @@ export class ContainerRuntime
 		this.flush(this.offlineEnabled ? batchId : undefined);
 	}
 
-	private reSubmit(message: PendingMessageResubmitData2): void {
-		this.reSubmitCore(message.viableOp, message.localOpMetadata, message.opMetadata);
+	private reSubmit(message: PendingMessageResubmitData): void {
+		this.reSubmitCore(message.runtimeOp, message.localOpMetadata, message.opMetadata);
 	}
 
 	/**
@@ -4467,8 +4467,8 @@ export class ContainerRuntime
 		}
 	}
 
-	private rollback(viableOp: LocalContainerRuntimeMessage, localOpMetadata: unknown): void {
-		const { type, contents } = viableOp;
+	private rollback(runtimeOp: LocalContainerRuntimeMessage, localOpMetadata: unknown): void {
+		const { type, contents } = runtimeOp;
 		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp: {
 				// For operations, call rollbackDataStoreOp which will find the right store

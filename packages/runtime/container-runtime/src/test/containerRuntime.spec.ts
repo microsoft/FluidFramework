@@ -101,15 +101,6 @@ import {
 	type IRefreshSummaryAckOptions,
 } from "../summary/index.js";
 
-// Make a mock op with distinguishable contents
-function op(data: string = ""): LocalContainerRuntimeMessage {
-	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-	return {
-		type: ContainerMessageType.FluidDataStoreOp,
-		contents: data as unknown,
-	} as LocalContainerRuntimeMessage;
-}
-
 function submitDataStoreOp(
 	runtime: Pick<ContainerRuntime, "submitMessage">,
 	id: string,
@@ -1046,7 +1037,19 @@ describe("Runtime", () => {
 			};
 
 			const addPendingMessage = (pendingStateManager: PendingStateManager): void =>
-				pendingStateManager.onFlushBatch([{ runtimeOp: op(), referenceSequenceNumber: 0 }], 1);
+				pendingStateManager.onFlushBatch(
+					[
+						{
+							// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+							runtimeOp: {
+								type: ContainerMessageType.FluidDataStoreOp,
+								contents: "" as unknown,
+							} as LocalContainerRuntimeMessage,
+							referenceSequenceNumber: 0,
+						},
+					],
+					1,
+				);
 
 			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(

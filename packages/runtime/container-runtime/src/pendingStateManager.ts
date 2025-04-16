@@ -28,6 +28,7 @@ import {
 	BatchStartInfo,
 	InboundMessageResult,
 	serializeOp,
+	type LocalEmptyBatchPlaceholder,
 } from "./opLifecycle/index.js";
 
 /**
@@ -40,13 +41,14 @@ export interface IPendingMessage {
 	type: "message";
 	referenceSequenceNumber: number;
 	/**
-	 * Serialized copy of viableOp
+	 * Serialized copy of runtimeOp
 	 */
 	content: string;
 	/**
 	 * The original runtime op that was submitted to the ContainerRuntime
+	 * Unless this pending message came from stashed content, in which case this was roundtripped through string
 	 */
-	viableOp?: LocalContainerRuntimeMessage | undefined; // Undefined for empty batches and when applying stashed ops
+	runtimeOp?: LocalContainerRuntimeMessage | undefined; // Undefined for empty batches and initial messages before parsing
 	localOpMetadata: unknown;
 	opMetadata: Record<string, unknown> | undefined;
 	sequenceNumber?: number;
@@ -100,19 +102,19 @@ export interface IPendingLocalState {
 /**
  * Info needed to replay/resubmit a pending message
  */
-export type PendingMessageResubmitData2 = Pick<
+export type PendingMessageResubmitData = Pick<
 	IPendingMessage,
-	"viableOp" | "localOpMetadata" | "opMetadata"
+	"runtimeOp" | "localOpMetadata" | "opMetadata"
 > & {
-	// Required (only missing for empty batch which will be sent as an empty array)
-	viableOp: LocalContainerRuntimeMessage;
+	// Required (it's only missing on IPendingMessage for empty batch, which will be resubmitted as an empty array)
+	runtimeOp: LocalContainerRuntimeMessage;
 };
 
 export interface IRuntimeStateHandler {
 	connected(): boolean;
 	clientId(): string | undefined;
 	applyStashedOp(serializedOp: string): Promise<unknown>;
-	reSubmitBatch(batch: PendingMessageResubmitData2[], batchId: BatchId): void;
+	reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId): void;
 	isActiveConnection: () => boolean;
 	isAttached: () => boolean;
 }
@@ -308,6 +310,17 @@ export class PendingStateManager implements IDisposable {
 	public readonly dispose = (): void => this.disposeOnce.value;
 
 	/**
+	 * We've flushed an empty batch, and need to track it locally until the corresponding
+	 * ack is processed, to properly track batch IDs
+	 */
+	public onFlushEmptyBatch(
+		placeholder: LocalEmptyBatchPlaceholder,
+		clientSequenceNumber: number | undefined,
+	): void {
+		// We have to cast because runtimeOp doesn't apply for empty batches and is missing on LocalEmptyBatchPlaceholder
+		this.onFlushBatch([placeholder as LocalBatchMessage], clientSequenceNumber);
+	}
+	/**
 	 * The given batch has been flushed, and needs to be tracked locally until the corresponding
 	 * acks are processed, to ensure it is successfully sent.
 	 * @param batch - The batch that was flushed
@@ -336,7 +349,7 @@ export class PendingStateManager implements IDisposable {
 
 		for (const message of batch) {
 			const {
-				runtimeOp: viableOp,
+				runtimeOp,
 				referenceSequenceNumber,
 				localOpMetadata,
 				metadata: opMetadata,
@@ -344,8 +357,8 @@ export class PendingStateManager implements IDisposable {
 			const pendingMessage: IPendingMessage = {
 				type: "message",
 				referenceSequenceNumber,
-				content: serializeOp(viableOp),
-				viableOp,
+				content: serializeOp(runtimeOp),
+				runtimeOp,
 				localOpMetadata,
 				opMetadata,
 				// Note: We only will read this off the first message, but put it on all for simplicity
@@ -372,7 +385,6 @@ export class PendingStateManager implements IDisposable {
 					throw new Error("loaded from snapshot too recent to apply stashed ops");
 				}
 			}
-			//* Think about codepaths using stashed (serialized) pending state v. the original ones
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const nextMessage = this.initialMessages.shift()!;
 			// Nothing to apply if the message is an empty batch.
@@ -388,7 +400,9 @@ export class PendingStateManager implements IDisposable {
 				const localOpMetadata = await this.stateHandler.applyStashedOp(nextMessage.content);
 				if (this.stateHandler.isAttached()) {
 					nextMessage.localOpMetadata = localOpMetadata;
-					nextMessage.viableOp = JSON.parse(
+					// NOTE: This runtimeOp has been roundtripped through string, which is technically lossy,
+					// e.g. handles will be RemoteFluidObjectHandles instead of a handle backed directly by the target object
+					nextMessage.runtimeOp = JSON.parse(
 						nextMessage.content,
 					) as LocalContainerRuntimeMessage;
 					// then we push onto pendingMessages which will cause PendingStateManager to resubmit when we connect
@@ -689,7 +703,7 @@ export class PendingStateManager implements IDisposable {
 			}
 
 			assert(
-				pendingMessage.viableOp !== undefined,
+				pendingMessage.runtimeOp !== undefined,
 				"viableOp is only undefined for empty batches",
 			);
 
@@ -704,7 +718,7 @@ export class PendingStateManager implements IDisposable {
 				this.stateHandler.reSubmitBatch(
 					[
 						{
-							viableOp: pendingMessage.viableOp,
+							runtimeOp: pendingMessage.runtimeOp,
 							localOpMetadata: pendingMessage.localOpMetadata,
 							opMetadata: pendingMessage.opMetadata,
 						},
@@ -720,16 +734,16 @@ export class PendingStateManager implements IDisposable {
 				0x554 /* Last pending message cannot be a batch begin */,
 			);
 
-			const batch: PendingMessageResubmitData2[] = [];
+			const batch: PendingMessageResubmitData[] = [];
 
 			// check is >= because batch end may be last pending message
 			while (remainingPendingMessagesCount >= 0) {
 				assert(
-					pendingMessage.viableOp !== undefined,
+					pendingMessage.runtimeOp !== undefined,
 					"viableOp is only undefined for empty batches",
 				);
 				batch.push({
-					viableOp: pendingMessage.viableOp,
+					runtimeOp: pendingMessage.runtimeOp,
 					localOpMetadata: pendingMessage.localOpMetadata,
 					opMetadata: pendingMessage.opMetadata,
 				});

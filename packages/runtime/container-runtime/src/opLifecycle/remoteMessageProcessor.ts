@@ -76,10 +76,9 @@ export type InboundMessageResult =
 			length?: never;
 	  };
 
-function assertHasClientId(message: {
-	// eslint-disable-next-line @rushstack/no-new-null
-	clientId: string | null;
-}): asserts message is { clientId: string } {
+function assertHasClientId(
+	message: ISequencedDocumentMessage,
+): asserts message is ISequencedDocumentMessage & { clientId: string } {
 	assert(
 		message.clientId !== null,
 		0xa02 /* Server-generated message should not reach RemoteMessageProcessor */,
@@ -129,13 +128,10 @@ export class RemoteMessageProcessor {
 	 * or undefined if the batch is not yet complete.
 	 */
 	public process(
-		remoteMessageCopy: Pick<
-			ISequencedDocumentMessage,
-			"clientId" | "clientSequenceNumber" | "type" | "contents" | "metadata" | "compression"
-		>, //* FUTURE
+		remoteMessageCopy: ISequencedDocumentMessage,
 		logLegacyCase: (codePath: string) => void,
 	): InboundMessageResult | undefined {
-		let message = remoteMessageCopy as ISequencedDocumentMessage;
+		let message = remoteMessageCopy;
 
 		assertHasClientId(message);
 		const clientId = message.clientId;

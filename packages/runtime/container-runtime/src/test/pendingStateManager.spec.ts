@@ -742,23 +742,18 @@ describe("Pending State Manager", () => {
 			assert.strictEqual(resubmittedBatchIds[1], `${clientId}_[0]`);
 		});
 
-		//* Fix
-		// it("replays pending states with empty batch", () => {
-		// 	// Empty batch is reflected in the pending state manager as a single message
-		// 	// with the following metadata:
-		// 	pendingStateManager.onFlushBatch(
-		// 		[
-		// 			{
-		// 				runtimeOp: JSON.stringify({ type: "groupedBatch", contents: [] }),
-		// 				referenceSequenceNumber: 0,
-		// 				metadata: { emptyBatch: true, batchId: "batchId" },
-		// 			},
-		// 		],
-		// 		0,
-		// 	);
-		// 	pendingStateManager.replayPendingStates();
-		// 	assert.strictEqual(resubmittedBatchIds[0], "batchId");
-		// });
+		it("replays pending states with empty batch", () => {
+			pendingStateManager.onFlushEmptyBatch(
+				{
+					localOpMetadata: { emptyBatch: true },
+					referenceSequenceNumber: 0,
+					metadata: { batchId: "batchId" },
+				},
+				0,
+			);
+			pendingStateManager.replayPendingStates();
+			assert.strictEqual(resubmittedBatchIds[0], "batchId");
+		});
 	});
 
 	describe("applyStashedOpsAt", () => {
@@ -1008,7 +1003,6 @@ describe("Pending State Manager", () => {
 			);
 		}
 
-		//* TEST COVERAGE: This was the only test case that hit the applyStashedOp codepath...?
 		it("minimum sequence number can be retrieved from initial messages", async () => {
 			const pendingStateManager = createPendingStateManager(forInitialMessages);
 			await pendingStateManager.applyStashedOpsAt();

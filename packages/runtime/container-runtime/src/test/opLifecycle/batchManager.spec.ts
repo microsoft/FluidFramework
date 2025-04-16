@@ -29,7 +29,7 @@ function op(data: string = "Some Data"): LocalContainerRuntimeMessage {
 
 const generateStringOfSize = (sizeInBytes: number): string => "0".repeat(sizeInBytes);
 
-const sampleMessage = (size: number = 100): LocalBatchMessage => {
+const smallMessage = (size: number = 100): LocalBatchMessage => {
 	// JSON envelope of op returned by op fn above
 	const contentSize = (size ?? 0) - JSON.stringify(op("")).length; // (36 chars overhead per op)
 	return {
@@ -105,7 +105,7 @@ describe("BatchManager", () => {
 		assert.equal(
 			estimateSocketSize(
 				localBatchToOutboundBatch({
-					messages: [sampleMessage(40)],
+					messages: [smallMessage(40)],
 					referenceSequenceNumber: 0,
 				}),
 			),
@@ -114,7 +114,7 @@ describe("BatchManager", () => {
 
 		const messages: LocalBatchMessage[] = [];
 		for (let i = 0; i < 10; i++) {
-			messages.push(sampleMessage(40));
+			messages.push(smallMessage(40));
 		}
 
 		// (40 bytes of content + 200 bytes overhead) x 10
@@ -149,15 +149,15 @@ describe("BatchManager", () => {
 		const batchManager = new BatchManager(defaultOptions);
 
 		// Push initial messages
-		batchManager.push(sampleMessage(), /* reentrant */ false);
-		batchManager.push(sampleMessage(), /* reentrant */ false);
+		batchManager.push(smallMessage(), /* reentrant */ false);
+		batchManager.push(smallMessage(), /* reentrant */ false);
 
 		// Create checkpoint
 		const checkpoint = batchManager.checkpoint();
 
 		// Push more messages
-		batchManager.push(sampleMessage(), /* reentrant */ false);
-		batchManager.push(sampleMessage(), /* reentrant */ false);
+		batchManager.push(smallMessage(), /* reentrant */ false);
+		batchManager.push(smallMessage(), /* reentrant */ false);
 
 		// Rollback to checkpoint
 		checkpoint.rollback((message) => {
@@ -172,7 +172,7 @@ describe("BatchManager", () => {
 		const batchManager = new BatchManager(defaultOptions);
 
 		// Push initial messages
-		batchManager.push(sampleMessage(), /* reentrant */ false);
+		batchManager.push(smallMessage(), /* reentrant */ false);
 
 		// Create checkpoint
 		const checkpoint = batchManager.checkpoint();
@@ -190,19 +190,19 @@ describe("BatchManager", () => {
 		const batchManager = new BatchManager(defaultOptions);
 
 		// Push initial messages
-		batchManager.push(sampleMessage(), /* reentrant */ false);
+		batchManager.push(smallMessage(), /* reentrant */ false);
 
 		// Create checkpoint
 		const checkpoint = batchManager.checkpoint();
 
 		// Push more messages
-		batchManager.push(sampleMessage(), /* reentrant */ false);
+		batchManager.push(smallMessage(), /* reentrant */ false);
 
 		// Attempt rollback and generate ops during rollback
 		assert.throws(() => {
 			checkpoint.rollback((message) => {
 				// Generate ops during rollback
-				batchManager.push(sampleMessage(), /* reentrant */ false);
+				batchManager.push(smallMessage(), /* reentrant */ false);
 			});
 		}, /Error: Ops generated during rollback/);
 	});
@@ -218,7 +218,7 @@ describe("BatchManager", () => {
 		assert.throws(() => {
 			checkpoint.rollback((message) => {
 				// Generate ops during rollback
-				batchManager.push(sampleMessage(), /* reentrant */ false);
+				batchManager.push(smallMessage(), /* reentrant */ false);
 			});
 		}, /Error: Ops generated during rollback/);
 	});

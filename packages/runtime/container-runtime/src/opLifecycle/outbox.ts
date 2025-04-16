@@ -18,8 +18,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
-import type { LocalContainerRuntimeMessage } from "../messageTypes.js";
-import { PendingMessageResubmitData2, PendingStateManager } from "../pendingStateManager.js";
+import { PendingMessageResubmitData, PendingStateManager } from "../pendingStateManager.js";
 
 import {
 	BatchManager,
@@ -67,7 +66,7 @@ export interface IOutboxParameters {
 	readonly logger: ITelemetryBaseLogger;
 	readonly groupingManager: OpGroupingManager;
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
-	readonly reSubmit: (message: PendingMessageResubmitData2) => void;
+	readonly reSubmit: (message: PendingMessageResubmitData) => void;
 	readonly opReentrancy: () => boolean;
 }
 
@@ -390,14 +389,8 @@ export class Outbox {
 		}
 
 		// Push the empty batch placeholder to the PendingStateManager
-		this.params.pendingStateManager.onFlushBatch(
-			[
-				{
-					...placeholderMessage,
-					runtimeOp: undefined as unknown as LocalContainerRuntimeMessage, //* Better idea?
-					contents: undefined,
-				},
-			], // placeholder message - serializedOp will never be used
+		this.params.pendingStateManager.onFlushEmptyBatch(
+			placeholderMessage,
 			clientSequenceNumber,
 		);
 		return;
@@ -465,7 +458,7 @@ export class Outbox {
 		this.rebasing = true;
 		for (const message of rawBatch.messages) {
 			this.params.reSubmit({
-				viableOp: message.runtimeOp,
+				runtimeOp: message.runtimeOp,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 			});
