@@ -121,7 +121,7 @@ export interface MemoryTestObjectProps extends MochaExclusiveOptions, Titled, Be
 
 	/**
 	 * The baseline memory usage to compare against for the test, which is used to determine if the test regressed.
-	 * If not specified, the test will not be compared against a baseline and will only be run to
+	 * If not specified, the test will not be compared against a baseline and will only be run to measure the memory usage.
 	 */
 	readonly baselineMemoryUsage?: number;
 
@@ -202,21 +202,15 @@ export interface MemorySampleData {
  * @public
  */
 export function benchmarkMemory(testObject: IMemoryTestObject): Test {
-	const baselineFile = path.join(__dirname, "memory_baseline.json");
-	let storedBaselines: Record<string, number> = {};
 
-	if(fs.existsSync(baselineFile)) {
-		storedBaselines = JSON.parse(fs.readFileSync(baselineFile, "utf8"));
-	}
-
-	const baselineMemoryUsage = testObject.baselineMemoryUsage ?? storedBaselines[testObject.title] ?? 0;
+	const baselineMemoryUsage = testObject.baselineMemoryUsage ?? 0;
 	const args: Required<MemoryTestObjectProps> = {
 		maxBenchmarkDurationSeconds: testObject.maxBenchmarkDurationSeconds ?? 30,
 		minSampleCount: testObject.minSampleCount ?? 50,
 		maxRelativeMarginOfError: testObject.maxRelativeMarginOfError ?? 2.5,
 		only: testObject.only ?? false,
 		title: testObject.title,
-		baselineMemoryUsage: testObject.baselineMemoryUsage ?? 0,
+		baselineMemoryUsage,
 		type: testObject.type ?? BenchmarkType.Measurement,
 		samplePercentageToUse: testObject.samplePercentageToUse ?? 0.95,
 		category: testObject.category ?? "",
@@ -322,12 +316,7 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 						args.baselineMemoryUsage * (1 + args.allowedDeviation / 100);
 					const tolerance = args.baselineMemoryUsage * (args.allowedDeviation / 100);
 
-					if(process.env.LEARN_BASELINE) {
-						// Save the new baseline memory usage to the file
-						storedBaselines[testObject.title] = avgHeapUsed;
-						fs.writeFileSync(baselineFile, JSON.stringify(storedBaselines, null, 2));
-						console.log(`New baseline memory usage for ${testObject.title}: ${avgHeapUsed} bytes`);
-					} else if (avgHeapUsed > allowedMemoryUsage) {
+					if(process.env.ENABLE_MEM_REGRESSION && avgHeapUsed > allowedMemoryUsage) {
 						throw new Error(
 							`Memory Regression detected for ${testObject.title}: Used ${avgHeapUsed} bytes, exceeding the baseline of ${args.baselineMemoryUsage} bytes., with an allowed tolerance of ${tolerance} bytes.`,
 						);

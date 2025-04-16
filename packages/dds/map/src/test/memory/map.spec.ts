@@ -43,6 +43,7 @@ describe("SharedMap memory usage", () => {
 		new (class implements IMemoryTestObject {
 			public readonly title = "Create empty map";
 			public readonly minSampleCount = 500;
+			public readonly baselineMemoryUsage = 0; // Example: Baseline memory usage in bytes
 			public readonly allowedDeviation = 10; // Example: Allow 10% deviation
 			private map: ISharedMap = createLocalMap("testMap");
 
