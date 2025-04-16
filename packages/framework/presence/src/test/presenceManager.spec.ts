@@ -100,13 +100,13 @@ describe("Presence", () => {
 				let initialAttendeeSignal: ReturnType<typeof generateBasicClientJoin>;
 				let rejoinAttendeeSignal: ReturnType<typeof generateBasicClientJoin>;
 
-				// Processes join signals and returns the attendees that were announced via `attendeeJoined`
+				// Processes join signals and returns the attendees that were announced via `attendeeConnected`
 				function processJoinSignals(
 					signals: ReturnType<typeof generateBasicClientJoin>[],
 				): Attendee[] {
 					const joinedAttendees: Attendee[] = [];
 					const cleanUpListener = presence.attendees.events.on(
-						"attendeeJoined",
+						"attendeeConnected",
 						(attendee) => {
 							joinedAttendees.push(attendee);
 						},
@@ -178,7 +178,7 @@ describe("Presence", () => {
 				});
 
 				describe("that is joining", () => {
-					it('first time is announced via `attendeeJoined` with status "Connected"', () => {
+					it('first time is announced via `attendeeConnected` with status "Connected"', () => {
 						// Act - simulate join message from client
 						const joinedAttendees = processJoinSignals([initialAttendeeSignal]);
 						// Verify
@@ -190,7 +190,7 @@ describe("Presence", () => {
 						verifyAttendee(joinedAttendees[0], initialAttendeeConnectionId, attendeeSessionId);
 					});
 
-					it('second time is announced once via `attendeeJoined` with status "Connected" when prior is unknown', () => {
+					it('second time is announced once via `attendeeConnected` with status "Connected" when prior is unknown', () => {
 						// Setup
 						runtime.removeMember(initialAttendeeConnectionId);
 
@@ -206,7 +206,7 @@ describe("Presence", () => {
 						verifyAttendee(joinedAttendees[0], rejoinAttendeeConnectionId, attendeeSessionId);
 					});
 
-					it('second time is announced once via `attendeeJoined` with status "Connected" when prior is still connected', () => {
+					it('second time is announced once via `attendeeConnected` with status "Connected" when prior is still connected', () => {
 						// Act - simulate join message from client
 						const joinedAttendees = processJoinSignals([rejoinAttendeeSignal]);
 
@@ -220,7 +220,7 @@ describe("Presence", () => {
 						verifyAttendee(joinedAttendees[0], rejoinAttendeeConnectionId, attendeeSessionId);
 					});
 
-					it('first time is announced via `attendeeJoined` with status "Connected" even if unknown to audience', () => {
+					it('first time is announced via `attendeeConnected` with status "Connected" even if unknown to audience', () => {
 						// Setup - remove connection from audience
 						runtime.removeMember(initialAttendeeConnectionId);
 
@@ -237,7 +237,7 @@ describe("Presence", () => {
 						verifyAttendee(joinedAttendees[0], initialAttendeeConnectionId, attendeeSessionId);
 					});
 
-					it('second time is announced once via `attendeeJoined` with status "Connected" even if most recent unknown to audience', () => {
+					it('second time is announced once via `attendeeConnected` with status "Connected" even if most recent unknown to audience', () => {
 						// Setup - remove connection from audience
 						runtime.removeMember(rejoinAttendeeConnectionId);
 
@@ -252,7 +252,7 @@ describe("Presence", () => {
 						verifyAttendee(joinedAttendees[0], rejoinAttendeeConnectionId, attendeeSessionId);
 					});
 
-					it("as collateral and disconnected is NOT announced via `attendeeJoined`", () => {
+					it("as collateral and disconnected is NOT announced via `attendeeConnected`", () => {
 						// Setup - remove connections from audience
 						const collateralAttendeeConnectionId = "client3";
 						const collateralAttendeeSignal = generateBasicClientJoin(clock.now - 10, {
@@ -286,7 +286,7 @@ describe("Presence", () => {
 						verifyAttendee(joinedAttendees[0], rejoinAttendeeConnectionId, attendeeSessionId);
 					});
 
-					it("as collateral with old connection info and connected is NOT announced via `attendeeJoined`", () => {
+					it("as collateral with old connection info and connected is NOT announced via `attendeeConnected`", () => {
 						// Setup - generate signals
 
 						// Both connection Id's unkonwn to audience
@@ -372,7 +372,7 @@ describe("Presence", () => {
 
 					it('is NOT announced when "rejoined" with same connection (duplicate signal)', () => {
 						afterCleanUp.push(
-							presence.attendees.events.on("attendeeJoined", (attendee) => {
+							presence.attendees.events.on("attendeeConnected", (attendee) => {
 								assert.fail(
 									"Attendee should not be announced when rejoining with same connection",
 								);
@@ -385,12 +385,12 @@ describe("Presence", () => {
 					});
 
 					// To retain symmetry across Joined and Disconnected events, do not announce
-					// attendeeJoined when the attendee is already connected and we only see
+					// attendeeConnected when the attendee is already connected and we only see
 					// a connection id update. This can happen when audience removal is late.
-					it('is not announced via `attendeeJoined` when already "Connected"', () => {
+					it('is not announced via `attendeeConnected` when already "Connected"', () => {
 						// Setup
 						afterCleanUp.push(
-							presence.attendees.events.on("attendeeJoined", () => {
+							presence.attendees.events.on("attendeeConnected", () => {
 								assert.fail("No attendee should be announced in join processing");
 							}),
 						);
@@ -534,9 +534,9 @@ describe("Presence", () => {
 
 							// Setup - fail if attendee joined is announced
 							afterCleanUp.push(
-								presence.attendees.events.on("attendeeJoined", () => {
+								presence.attendees.events.on("attendeeConnected", () => {
 									assert.fail(
-										"No `attendeeJoined` should be announced for rejoining attendee that's already 'Connected'",
+										"No `attendeeConnected` should be announced for rejoining attendee that's already 'Connected'",
 									);
 								}),
 							);
@@ -549,7 +549,7 @@ describe("Presence", () => {
 							processJoinSignals([rejoinAttendeeSignal]);
 							clock.tick(600_000);
 
-							// Verify - rejoining attendee should still be 'Connected' with no `attendeeJoined` announced
+							// Verify - rejoining attendee should still be 'Connected' with no `attendeeConnected` announced
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
 								AttendeeStatus.Connected,
@@ -562,9 +562,9 @@ describe("Presence", () => {
 
 							// Setup - fail if attendee joined is announced
 							afterCleanUp.push(
-								presence.attendees.events.on("attendeeJoined", () => {
+								presence.attendees.events.on("attendeeConnected", () => {
 									assert.fail(
-										"No `attendeeJoined` should be announced for active attendee that's already 'Connected'",
+										"No `attendeeConnected` should be announced for active attendee that's already 'Connected'",
 									);
 								}),
 							);
@@ -757,7 +757,7 @@ describe("Presence", () => {
 					it("is NOT announced when rejoined with same connection (duplicate signal)", () => {
 						// Setup
 						afterCleanUp.push(
-							presence.attendees.events.on("attendeeJoined", (attendee) => {
+							presence.attendees.events.on("attendeeConnected", (attendee) => {
 								assert.fail(
 									"Attendee should not be announced when rejoining with same connection",
 								);

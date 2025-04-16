@@ -15,7 +15,7 @@ The following API changes have been made to improve clarity and consistency:
 | `acquirePresenceViaDataObject` | `getPresenceViaDataObject` |
 | `ClientSessionId` | `AttendeeId` |
 | `IPresence` | `Presence` |
-| `IPresence.events["attendeeJoined"]` | `Presence.attendees.events["attendeeJoined"]` |
+| `IPresence.events["attendeeJoined"]` | `Presence.attendees.events["attendeeConnected"]` |
 | `IPresence.events["attendeeDisconnected"]` | `Presence.attendees.events["attendeeDisconnected"]` |
 | `IPresence.getAttendee` | `Presence.attendees.getAttendee` |
 | `IPresence.getAttendees` | `Presence.attendees.getAttendees` |
@@ -43,7 +43,7 @@ The following API changes have been made to improve clarity and consistency:
 | `LatestValueManagerEvents` | `LatestEvents` |
 | `LatestValueMetadata` | `LatestMetadata` |
 | `PresenceEvents.attendeeDisconnected` | `AttendeesEvents.attendeeDisconnected`|
-| `PresenceEvents.attendeeJoined` | `AttendeesEvents.attendeeJoined`|
+| `PresenceEvents.attendeeJoined` | `AttendeesEvents.attendeeConnected`|
 | `PresenceNotifications` | `NotificationsWorkspace` |
 | `PresenceNotificationsSchema` | `NotificationsWorkspaceSchema` |
 | `PresenceStates` | `StatesWorkspace` |

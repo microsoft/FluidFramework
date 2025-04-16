@@ -18,10 +18,10 @@ const UserPresenceGroup: React.FC<UserPresenceProps> = ({ presenceManager }): JS
 	const [invalidations, setInvalidations] = useState(0);
 
 	useEffect(() => {
-		// Listen to the attendeeJoined event and update the presence group when a new attendee joins
+		// Listen to the attendeeConnected event and update the presence group when a new attendee joins
 		const unsubJoin = presenceManager
 			.getPresence()
-			.attendees.events.on("attendeeJoined", () => {
+			.attendees.events.on("attendeeConnected", () => {
 				setInvalidations(invalidations + Math.random());
 			});
 		// Listen to the attendeeDisconnected event and update the presence group when an attendee leaves

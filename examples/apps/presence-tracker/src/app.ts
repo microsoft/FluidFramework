@@ -108,11 +108,11 @@ async function start() {
 	window["fluidSessionAttendeeCheck"] = checkAttendees;
 	window["fluidSessionAttendees"] = buildAttendeeMap();
 	window["fluidSessionAttendeeCount"] = presence.attendees.getAttendees().size;
-	presence.attendees.events.on("attendeeJoined", (attendee) => {
+	presence.attendees.events.on("attendeeConnected", (attendee) => {
 		console.log(`Attendee joined: ${attendee.attendeeId}`);
 		window["fluidSessionAttendees"] = buildAttendeeMap();
 		window["fluidSessionAttendeeCount"] = presence.attendees.getAttendees().size;
-		window["fluidAttendeeJoinedCalled"] = true;
+		window["fluidattendeeConnectedCalled"] = true;
 	});
 	presence.attendees.events.on("attendeeDisconnected", (attendee) => {
 		console.log(`Attendee left: ${attendee.attendeeId}`);

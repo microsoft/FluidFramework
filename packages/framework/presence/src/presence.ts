@@ -125,7 +125,7 @@ export interface AttendeesEvents {
 	 *
 	 * @eventProperty
 	 */
-	attendeeJoined: (attendee: Attendee) => void;
+	attendeeConnected: (attendee: Attendee) => void;
 
 	/**
 	 * Raised when client appears disconnected from session.

@@ -347,7 +347,7 @@ describe("Presence", () => {
 					latest.events.on("updated", latestUpdatedEventSpy);
 					latestMap.events.on("updated", latestMapUpdatedEventSpy);
 					latestMap.events.on("itemUpdated", itemUpdatedEventSpy);
-					presence.attendees.events.on("attendeeJoined", atteendeeEventSpy);
+					presence.attendees.events.on("attendeeConnected", atteendeeEventSpy);
 				}
 
 				it("'latest' update comes before 'latestMap' update in single workspace", async () => {
@@ -576,7 +576,7 @@ describe("Presence", () => {
 				notificationManager.notifications.on("newId", notificationSpy);
 				latest.events.on("updated", latestSpy);
 				latestMap.events.on("updated", latestMapSpy);
-				presence.attendees.events.on("attendeeJoined", attendeeSpy);
+				presence.attendees.events.on("attendeeConnected", attendeeSpy);
 			}
 
 			function assertSpies(): void {

@@ -19,9 +19,9 @@ export type AttendeeId = SessionId & {
 // @alpha @sealed (undocumented)
 export interface AttendeesEvents {
     // @eventProperty
-    attendeeDisconnected: (attendee: Attendee) => void;
+    attendeeConnected: (attendee: Attendee) => void;
     // @eventProperty
-    attendeeJoined: (attendee: Attendee) => void;
+    attendeeDisconnected: (attendee: Attendee) => void;
 }
 
 // @alpha

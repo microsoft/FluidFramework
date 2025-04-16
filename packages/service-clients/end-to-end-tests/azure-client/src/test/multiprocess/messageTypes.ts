@@ -20,7 +20,7 @@ interface DisconnectSelfCommand {
 
 export type MessageFromChild =
 	| AttendeeDisconnectedEvent
-	| AttendeeJoinedEvent
+	| attendeeConnectedEvent
 	| ReadyEvent
 	| DisconnectedSelfEvent
 	| ErrorEvent;
@@ -29,8 +29,8 @@ interface AttendeeDisconnectedEvent {
 	attendeeId: AttendeeId;
 }
 
-interface AttendeeJoinedEvent {
-	event: "attendeeJoined";
+interface attendeeConnectedEvent {
+	event: "attendeeConnected";
 	attendeeId: AttendeeId;
 }
 

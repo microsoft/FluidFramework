@@ -66,7 +66,7 @@ class SessionClient implements Attendee {
  */
 export interface SystemWorkspace
 	// Portion of Presence that is handled by SystemWorkspace along with
-	// responsiblity for emitting "attendeeJoined" events.
+	// responsiblity for emitting "attendeeConnected" events.
 	extends Exclude<Presence["attendees"], never> {
 	/**
 	 * Must be called when the current client acquires a new connection.
@@ -145,7 +145,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			);
 			// If the attendee is joining the session, add them to the list of joining attendees to be announced later.
 			if (isJoining) {
-				postUpdateActions.push(() => this.events.emit("attendeeJoined", attendee));
+				postUpdateActions.push(() => this.events.emit("attendeeConnected", attendee));
 			}
 
 			const knownSessionId: InternalTypes.ValueRequiredState<AttendeeId> | undefined =
