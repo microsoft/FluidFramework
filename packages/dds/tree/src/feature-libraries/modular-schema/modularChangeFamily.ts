@@ -351,7 +351,7 @@ export class ModularChangeFamily
 			fieldChange2,
 			composeNodes,
 			genId,
-			new ComposeNodeManagerI(crossFieldTable, false),
+			new ComposeNodeManagerI(crossFieldTable, context.fieldId, false),
 			revisionMetadata,
 		);
 		composedChange.change = brand(amendedChange);
@@ -569,7 +569,7 @@ export class ModularChangeFamily
 			change2: change2Normalized,
 		} = this.normalizeFieldChanges(change1, change2);
 
-		const manager = new ComposeNodeManagerI(crossFieldTable);
+		const manager = new ComposeNodeManagerI(crossFieldTable, fieldId);
 
 		const composedChange = changeHandler.rebaser.compose(
 			change1Normalized,
@@ -2616,6 +2616,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 class ComposeNodeManagerI implements ComposeNodeManager {
 	public constructor(
 		private readonly table: ComposeTable,
+		private readonly fieldId: FieldId,
 		private readonly allowInval: boolean = true,
 	) {}
 
@@ -2631,20 +2632,31 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 
 		// XXX: This needs to look at all IDs in the range, not just the first.
 		// XXX: Also consider split renames.
+		// XXX: Do we need to dealias whenever pulling node IDs out of the root node table?
 		const detachedNodeId = getFromChangeAtomIdMap(
 			this.table.newChange.rootNodes.nodeChanges,
 			baseRenameEntry.value,
 		);
 
+		let result: RangeQueryResult<ChangeAtomId, NodeId>;
 		if (detachedNodeId !== undefined) {
-			// XXX: Do we need to dealias whenever pulling node IDs out of the root node table?
-			return { start: baseDetachId, value: detachedNodeId, length: 1 };
+			result = { start: baseDetachId, value: detachedNodeId, length: 1 };
+		} else {
+			// The base detach might be part of a move.
+			// We check if we've previously seen a node change at the move destination.
+			const entry = this.table.entries.getFirst(baseDetachId, count);
+			result = { ...entry, value: entry.value?.nodeChange };
 		}
 
-		// The base detach might be part of a move.
-		// We check if we've previously seen a node change at the move destination.
-		const result = this.table.entries.getFirst(baseDetachId, count);
-		return { ...result, value: result.value?.nodeChange };
+		// TODO: Consider moving this to a separate method so that this method can be side-effect free.
+		if (result.value !== undefined) {
+			// XXX: This creates an unnecessary entry if there is already a base changeset for this node.
+			this.table.composedNodeToParent.set(
+				[result.value.revision, result.value.localId],
+				this.fieldId,
+			);
+		}
+		return result;
 	}
 
 	public composeAttachDetach(
