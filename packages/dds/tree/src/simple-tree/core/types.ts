@@ -113,13 +113,23 @@ export interface TreeChangeEvents {
  * A non-{@link NodeKind.Leaf|leaf} SharedTree node. Includes objects, arrays, and maps.
  *
  * @remarks
- * Base type which all nodes implement.
+ * Base type which all nodes extend.
  *
- * This can be used as a type to indicate/document values which should be tree nodes.
+ * This type can be used as a type to indicate/document values which should be tree nodes.
  * Runtime use of this class object (for example when used with `instanceof` or extending it), is not currently supported.
  *
- * Instances of tree nodes must be created by opening an existing document, inserting values into the document,
- * or by using the constructors and create functions of {@link TreeNodeSchema} produced by {@link SchemaFactory}.
+ * There are three ways to get instances of TreeNode:
+ *
+ * 1. From a {@link TreeView} loading nodes from an existing document, or creating local copies of nodes inserted by a remote collaborator.
+ * This case provides an {@link InternalTreeNode} to the constructor: subclasses must not modify how the constructor handles this case.
+ * 2. Explicit construction of {@link Unhydrated} nodes using either {@link TreeNodeSchemaClass} as a constructor or {@link TreeNodeSchemaNonClass.create}.
+ * Either way the {@link TreeNodeSchema} produced must be produced using a {@link SchemaFactory}.
+ * 3. Implicit construction: Several APIs which logically require an unhydrated TreeNode also allow passing in a value which could be used to explicitly construct the node instead.
+ * These APIs internally call the constructor with the provided value, so its really just a special case of the above option.
+ * Note that when constructing nodes, sometimes implicit construction is not allowed
+ * (either at runtime due to ambiguous types or at compile time due to TypeScript limitations):
+ * in such cases, explicit construction must be used.
+ *
  * @privateRemarks
  * This is a class not an interface to enable stricter type checking (see {@link TreeNode.#brand})
  * and some runtime enforcement of schema class policy (see the the validation in the constructor).

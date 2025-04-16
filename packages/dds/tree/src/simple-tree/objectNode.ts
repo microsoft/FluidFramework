@@ -56,6 +56,10 @@ import type { SimpleObjectFieldSchema } from "./simpleSchema.js";
 
 /**
  * Generates the properties for an ObjectNode from its field schema object.
+ * @remarks
+ * Due to {@link https://github.com/microsoft/TypeScript/issues/43826}, we can't enable implicit construction of {@link TreeNode|TreeNodes} for setters.
+ * Therefore code assigning to these fields must explicitly construct nodes using the schema's constructor or create method,
+ * or using some other method like {@link TreeApi.create}.
  * @system @public
  */
 export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> =
@@ -69,14 +73,17 @@ export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFie
 			};
 
 /**
- * A {@link TreeNode} which modules a JavaScript object.
+ * A {@link TreeNode} which models a JavaScript object.
  * @remarks
- * Object nodes consist of a type which specifies which {@link TreeNodeSchema} they use (see {@link TreeNodeApi.schema}), and a collections of fields, each with a distinct `key` and its own {@link FieldSchema} defining what can be placed under that key.
+ * Object nodes consist of a type which specifies which {@link TreeNodeSchema} they use (see {@link TreeNodeApi.schema} and {@link SchemaFactory.object}),
+ * and a collections of fields, each with a distinct `key` and its own {@link FieldSchema} defining what can be placed under that key.
  *
  * All fields on an object node are exposed as own properties with string keys.
  * Non-empty fields are enumerable and empty optional fields are non-enumerable own properties with the value `undefined`.
  * No other own `own` or `enumerable` properties are included on object nodes unless the user of the node manually adds custom session only state.
  * This allows a majority of general purpose JavaScript object processing operations (like `for...in`, `Reflect.ownKeys()` and `Object.entries()`) to enumerate all the children.
+ *
+ * The API for fields is defined by {@link ObjectFromSchemaRecord}.
  * @public
  */
 export type TreeObjectNode<
