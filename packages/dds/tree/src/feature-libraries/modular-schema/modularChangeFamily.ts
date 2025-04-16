@@ -2473,6 +2473,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		}
 
 		if (result.value?.detachId !== undefined) {
+			// TODO: Consider moving this into a separate method so that this function has no side effects.
 			this.table.rebasedCrossFieldKeys.set(
 				{
 					target: CrossFieldTarget.Source,

@@ -278,8 +278,10 @@ export class ComposeQueue {
 		private readonly moveEffects: ComposeNodeManager,
 		private readonly revisionMetadata: RevisionMetadataSource,
 	) {
-		const queryFunc: NodeRangeQueryFunc = (id, count) =>
-			moveEffects.getNewChangesForBaseDetach(id, count).length;
+		const queryFunc: NodeRangeQueryFunc = (mark) =>
+			isDetach(mark)
+				? moveEffects.getNewChangesForBaseDetach(getDetachedNodeId(mark), mark.count).length
+				: mark.count;
 
 		this.baseMarks = new MarkQueue(baseMarks, queryFunc);
 		this.newMarks = new MarkQueue(newMarks, queryFunc);

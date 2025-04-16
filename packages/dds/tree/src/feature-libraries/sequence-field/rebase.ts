@@ -39,6 +39,7 @@ import {
 	cloneMark,
 	compareCellPositionsUsingTombstones,
 	extractMarkEffect,
+	getAttachedNodeId,
 	getDetachOutputCellId,
 	getDetachedNodeId,
 	getInputCellId,
@@ -113,8 +114,10 @@ class RebaseQueue {
 		private readonly metadata: RevisionMetadataSource,
 		private readonly moveEffects: RebaseNodeManager,
 	) {
-		const queryFunc: NodeRangeQueryFunc = (id, count) =>
-			moveEffects.getNewChangesForBaseAttach(id, count).length;
+		const queryFunc: NodeRangeQueryFunc = (mark) =>
+			isAttach(mark)
+				? moveEffects.getNewChangesForBaseAttach(getAttachedNodeId(mark), mark.count).length
+				: mark.count;
 
 		this.baseMarks = new MarkQueue(baseMarks, queryFunc);
 		this.newMarks = new MarkQueue(newMarks, queryFunc);
