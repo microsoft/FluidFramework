@@ -122,8 +122,8 @@ export function getConfigsForCompatMode<
 	T extends Record<string, unknown> = IContainerRuntimeOptionsVersionDependent,
 >(
 	compatibilityMode: SemanticVersion,
-	configMap: ConfigMap<T> = versionDependentOptionConfigMap as unknown as ConfigMap<T>,
-): IContainerRuntimeOptionsVersionDependent {
+	configMap: ConfigMap<T> = versionDependentOptionConfigMap as ConfigMap<T>,
+): T {
 	const defaultConfigs = {};
 	// Iterate over versionDependentOptionConfigMap to get default values for each version-dependent option.
 	for (const key of Object.keys(configMap)) {
@@ -143,7 +143,7 @@ export function getConfigsForCompatMode<
 			}
 		}
 	}
-	return defaultConfigs as IContainerRuntimeOptionsVersionDependent;
+	return defaultConfigs as T;
 }
 
 /**

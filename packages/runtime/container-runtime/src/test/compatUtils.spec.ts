@@ -13,7 +13,10 @@ import {
 
 describe("compatUtils", () => {
 	describe("getConfigsForCompatMode", () => {
-		const testConfigMap: ConfigMap<Record<string, unknown>> = {
+		interface ITestConfigMap {
+			[key: string]: string;
+		}
+		const testConfigMap: ConfigMap<ITestConfigMap> = {
 			featureA: {
 				"0.5.0": "a1",
 				"2.0.0": "a2",
@@ -203,7 +206,10 @@ describe("compatUtils", () => {
 
 		for (const testCase of testCases) {
 			it(`returns correct configs for compatibilityMode = "${testCase.compatibilityMode}"`, () => {
-				const config = getConfigsForCompatMode(testCase.compatibilityMode, testConfigMap);
+				const config = getConfigsForCompatMode<ITestConfigMap>(
+					testCase.compatibilityMode,
+					testConfigMap,
+				);
 				assert.deepEqual(
 					config,
 					testCase.expectedConfig,
