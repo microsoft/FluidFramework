@@ -24,6 +24,8 @@ import { timer } from "../timer";
 
 import { supportParentProcess } from "./runner";
 
+const ENABLE_MEM_REGRESSION = process.env.ENABLE_MEM_REGRESSION === "true";
+
 // TODO:
 // Much of the logic and interfaces here were duplicated from the runtime benchmark code.
 // This code should be either updated and/or deduplicated to reflect the major refactoring and improvements done to the runtime benchmark code.
@@ -200,7 +202,6 @@ export interface MemorySampleData {
  * @public
  */
 export function benchmarkMemory(testObject: IMemoryTestObject): Test {
-
 	const baselineMemoryUsage = testObject.baselineMemoryUsage ?? 0;
 	const args: Required<MemoryTestObjectProps> = {
 		maxBenchmarkDurationSeconds: testObject.maxBenchmarkDurationSeconds ?? 30,
@@ -314,7 +315,7 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 						args.baselineMemoryUsage * (1 + args.allowedDeviation / 100);
 					const tolerance = args.baselineMemoryUsage * (args.allowedDeviation / 100);
 
-					if(process.env.ENABLE_MEM_REGRESSION && avgHeapUsed > allowedMemoryUsage) {
+					if (ENABLE_MEM_REGRESSION && avgHeapUsed > allowedMemoryUsage) {
 						throw new Error(
 							`Memory Regression detected for ${testObject.title}: Used ${avgHeapUsed} bytes, exceeding the baseline of ${args.baselineMemoryUsage} bytes., with an allowed tolerance of ${tolerance} bytes.`,
 						);
