@@ -980,7 +980,7 @@ export class SchemaFactory<
 	 * In that case, if the user requires it to be unique, it is up to them to ensure uniqueness.
 	 * User-supplied identifiers may be read immediately, even before insertion into the tree.
 	 *
-	 * A node may have more than one identifier field (though note that this precludes the use of the `Tree.shortId()` API).
+	 * A node may have more than one identifier field (though note that this precludes the use of the {@link TreeNodeApi.shortId|Tree.shortId()} API).
 	 */
 	public get identifier(): FieldSchema<FieldKind.Identifier, typeof this.string> {
 		const defaultIdentifierProvider: DefaultProvider = getDefaultProvider(
