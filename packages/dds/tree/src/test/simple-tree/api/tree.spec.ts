@@ -15,7 +15,6 @@ import {
 } from "../../../simple-tree/index.js";
 import { TreeFactory } from "../../../treeFactory.js";
 import { getView, validateUsageError } from "../../utils.js";
-import { MockNodeIdentifierManager } from "../../../feature-libraries/index.js";
 import { independentView, Tree } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { checkUnion } from "../../../simple-tree/api/tree.js";
@@ -243,8 +242,7 @@ describe("simple-tree tree", () => {
 		assert(idFromInitialize !== idFromHydration);
 	});
 
-	// TODO: AB#9127: fix unhydrated custom identifier Tree.shortId case which blocks this from running.
-	it.skip("custom identifier copied from tree", () => {
+	it("custom identifier copied from tree", () => {
 		class HasId extends schema.object("hasID", { id: schema.identifier }) {}
 		const config = new TreeViewConfiguration({ schema: HasId, enableSchemaValidation: true });
 		const treeSrc = factory.create(
@@ -271,8 +269,7 @@ describe("simple-tree tree", () => {
 		assert.equal(idFromUnhydrated, idFromHydrated);
 	});
 
-	// TODO: AB#9128: this asserts instead of throwing a usage error.
-	it.skip("viewWith twice errors", () => {
+	it("viewWith twice errors", () => {
 		class Empty extends schema.object("Empty", {}) {}
 		const config = new TreeViewConfiguration({ schema: Empty });
 		const tree = factory.create(
@@ -281,9 +278,12 @@ describe("simple-tree tree", () => {
 		);
 
 		const view = tree.viewWith(config);
-		assert.throws(() => {
-			const view2 = tree.viewWith(config);
-		}, validateUsageError(/views/));
+		assert.throws(
+			() => {
+				const view2 = tree.viewWith(config);
+			},
+			validateUsageError(/second tree view/),
+		);
 	});
 
 	it("accessing view.root does not leak LazyEntities", () => {
@@ -367,26 +367,51 @@ describe("simple-tree tree", () => {
 	});
 
 	describe("field defaults", () => {
-		it("adds identifier to unpopulated identifier fields.", () => {
+		it("initialize with identifier to unpopulated identifier fields.", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				identifier: schema.identifier,
 			});
-			const nodeKeyManager = new MockNodeIdentifierManager();
 			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
-			const view = getView(config, nodeKeyManager);
+			const view = getView(config);
 			view.initialize({ identifier: undefined });
-			assert.equal(view.root.identifier, "a110ca7e-add1-4000-8000-000000000000");
+			assert.equal(view.root.identifier, "beefbeef-beef-4000-8000-000000000001");
+		});
+
+		it("adds identifier to unpopulated identifier fields.", () => {
+			class SchemaWithIdentifier extends schema.object("parent", {
+				identifier: schema.identifier,
+			}) {}
+			const config = new TreeViewConfiguration({
+				schema: SchemaFactory.optional(SchemaWithIdentifier),
+			});
+			const view = getView(config);
+			view.initialize(undefined);
+			const toHydrate = new SchemaWithIdentifier({ identifier: undefined });
+
+			view.root = toHydrate;
+			assert.equal(toHydrate, view.root);
+			assert.equal(toHydrate.identifier, "beefbeef-beef-4000-8000-000000000004");
+
+			view.root = { identifier: undefined };
+			assert.equal(view.root?.identifier, "beefbeef-beef-4000-8000-000000000006");
 		});
 
 		it("populates field when no field defaulter is provided.", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				testOptionalField: schema.optional(schema.string),
 			});
-			const nodeKeyManager = new MockNodeIdentifierManager();
 			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
-			const view = getView(config, nodeKeyManager);
+			const view = getView(config);
 			view.initialize({ testOptionalField: undefined });
 			assert.equal(view.root.testOptionalField, undefined);
+		});
+
+		// TODO: Identifier roots should be able to be defaulted, but currently throw a usage error.
+		it.skip("adds identifier to unpopulated root", () => {
+			const config = new TreeViewConfiguration({ schema: schema.identifier });
+			const view = getView(config);
+			view.initialize(undefined);
+			assert.equal(view.root, "beefbeef-beef-4000-8000-000000000001");
 		});
 	});
 });

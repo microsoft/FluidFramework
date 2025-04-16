@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Lazy, fail } from "@fluidframework/core-utils/internal";
+import { assert, Lazy, fail, debugAssert } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable, Off } from "@fluidframework/core-interfaces";
 import type { InternalTreeNode, TreeNode, Unhydrated } from "./types.js";
@@ -72,7 +73,7 @@ export function tryGetTreeNodeSchema(value: unknown): undefined | TreeNodeSchema
 /** The {@link HydrationState} of a {@link TreeNodeKernel} before the kernel is hydrated */
 interface UnhydratedState {
 	off: Off;
-	innerNode: UnhydratedFlexTreeNode;
+	readonly innerNode: UnhydratedFlexTreeNode;
 }
 
 /** The {@link HydrationState} of a {@link TreeNodeKernel} after the kernel is hydrated */
@@ -80,9 +81,9 @@ interface HydratedState {
 	/** The flex node for this kernel (lazy - undefined if it has not yet been demanded) */
 	innerNode?: FlexTreeNode;
 	/** The {@link AnchorNode} that this node is associated with. */
-	anchorNode: AnchorNode;
+	readonly anchorNode: AnchorNode;
 	/** All {@link Off | event deregistration functions} that should be run when the kernel is disposed. */
-	offAnchorNode: Set<Off>;
+	readonly offAnchorNode: Set<Off>;
 }
 
 /** State within a {@link TreeNodeKernel} that is related to the hydration process */
@@ -165,7 +166,7 @@ export class TreeNodeKernel {
 							unhydratedNode.parentField.parent.parent;
 						assert(
 							parentNode === undefined || parentNode instanceof UnhydratedFlexTreeNode,
-							"Unhydrated node's parent should be an unhydrated node",
+							0xb76 /* Unhydrated node's parent should be an unhydrated node */,
 						);
 						unhydratedNode = parentNode;
 					}
@@ -287,35 +288,46 @@ export class TreeNodeKernel {
 	 *
 	 * For hydrated nodes it returns a FlexTreeNode backed by the forest.
 	 * Note that for "marinated" nodes, this FlexTreeNode exists and returns it: it does not return the MapTreeNode which is the current InnerNode.
+	 *
+	 * If `allowDeleted` is false, this will throw a UsageError if the node is deleted.
 	 */
-	public getOrCreateInnerNode(allowFreed = false): InnerNode {
+	public getOrCreateInnerNode(allowDeleted = false): InnerNode {
 		if (!isHydrated(this.#hydrationState)) {
+			debugAssert(
+				() =>
+					this.#hydrationState.innerNode?.context.isDisposed() === false ||
+					"Unhydrated node should never be disposed",
+			);
 			return this.#hydrationState.innerNode; // Unhydrated case
 		}
 
-		if (this.#hydrationState.innerNode !== undefined) {
-			return this.#hydrationState.innerNode; // Cooked case
+		if (this.#hydrationState.innerNode === undefined) {
+			// Marinated case -> cooked
+			const anchorNode = this.#hydrationState.anchorNode;
+			// The proxy is bound to an anchor node, but it may or may not have an actual flex node yet
+			const flexNode = anchorNode.slots.get(flexTreeSlot);
+			if (flexNode !== undefined) {
+				// If the flex node already exists, use it...
+				this.#hydrationState.innerNode = flexNode;
+			} else {
+				// ...otherwise, the flex node must be created
+				const context =
+					anchorNode.anchorSet.slots.get(ContextSlot) ?? fail(0xb41 /* missing context */);
+				const cursor = context.checkout.forest.allocateCursor("getFlexNode");
+				context.checkout.forest.moveCursorToPath(anchorNode, cursor);
+				this.#hydrationState.innerNode = makeTree(context, cursor);
+				cursor.free();
+				// Calling this is a performance improvement, however, do this only after demand to avoid momentarily having no anchors to anchorNode
+				anchorForgetters?.get(this.node)?.();
+				if (!allowDeleted) {
+					assertFlexTreeEntityNotFreed(this.#hydrationState.innerNode);
+				}
+			}
 		}
 
-		// Marinated case -> cooked
-		const anchorNode = this.#hydrationState.anchorNode;
-		// The proxy is bound to an anchor node, but it may or may not have an actual flex node yet
-		const flexNode = anchorNode.slots.get(flexTreeSlot);
-		if (flexNode !== undefined) {
-			// If the flex node already exists, use it...
-			this.#hydrationState.innerNode = flexNode;
-		} else {
-			// ...otherwise, the flex node must be created
-			const context =
-				anchorNode.anchorSet.slots.get(ContextSlot) ?? fail(0xb41 /* missing context */);
-			const cursor = context.checkout.forest.allocateCursor("getFlexNode");
-			context.checkout.forest.moveCursorToPath(anchorNode, cursor);
-			this.#hydrationState.innerNode = makeTree(context, cursor);
-			cursor.free();
-			// Calling this is a performance improvement, however, do this only after demand to avoid momentarily having no anchors to anchorNode
-			anchorForgetters?.get(this.node)?.();
-			if (!allowFreed) {
-				assertFlexTreeEntityNotFreed(this.#hydrationState.innerNode);
+		if (!allowDeleted) {
+			if (this.#hydrationState.innerNode.context.isDisposed()) {
+				throw new UsageError("Cannot access a Deleted node.");
 			}
 		}
 
@@ -417,11 +429,15 @@ export const unhydratedFlexTreeNodeToTreeNode =
  */
 export const proxySlot = anchorSlot<TreeNode>();
 
+/**
+ * Dispose a TreeNode (if any) for an existing anchor without disposing the anchor.
+ */
 export function tryDisposeTreeNode(anchorNode: AnchorNode): void {
 	const treeNode = anchorNode.slots.get(proxySlot);
 	if (treeNode !== undefined) {
 		const kernel = getKernel(treeNode);
 		kernel.dispose();
+		anchorNode.slots.delete(proxySlot);
 	}
 }
 
@@ -454,10 +470,12 @@ export function getSimpleContextFromInnerNode(innerNode: InnerNode): Context {
  *
  * For hydrated nodes it returns a FlexTreeNode backed by the forest.
  * Note that for "marinated" nodes, this FlexTreeNode exists and returns it: it does not return the MapTreeNode which is the current InnerNode.
+ *
+ * If `allowDeleted` is false, this will throw a UsageError if the node is deleted.
  */
-export function getOrCreateInnerNode(treeNode: TreeNode, allowFreed = false): InnerNode {
+export function getOrCreateInnerNode(treeNode: TreeNode, allowDeleted = false): InnerNode {
 	const kernel = getKernel(treeNode);
-	return kernel.getOrCreateInnerNode(allowFreed);
+	return kernel.getOrCreateInnerNode(allowDeleted);
 }
 
 /**

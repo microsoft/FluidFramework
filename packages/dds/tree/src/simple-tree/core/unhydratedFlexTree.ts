@@ -73,7 +73,7 @@ interface LocationInField {
  *
  * Create a `UnhydratedFlexTreeNode` by calling {@link getOrCreate}.
  */
-export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
+export class UnhydratedFlexTreeNode implements FlexTreeNode {
 	public get schema(): TreeNodeSchemaIdentifier {
 		return this.mapTree.type;
 	}
@@ -164,7 +164,7 @@ export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
 				const parentNode: FlexTreeNode | undefined = unhydratedNode.parentField.parent.parent;
 				assert(
 					parentNode === undefined || parentNode instanceof UnhydratedFlexTreeNode,
-					"Unhydrated node's parent should be an unhydrated node",
+					0xb77 /* Unhydrated node's parent should be an unhydrated node */,
 				);
 				unhydratedNode = parentNode;
 			}
@@ -276,6 +276,10 @@ export class UnhydratedContext implements FlexTreeContext {
 		public readonly schemaPolicy: SchemaPolicy,
 		public readonly schema: TreeStoredSchema,
 	) {}
+
+	public isDisposed(): boolean {
+		return false;
+	}
 
 	public isHydrated(): this is FlexTreeHydratedContext {
 		return false;

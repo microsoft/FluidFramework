@@ -4,8 +4,6 @@
  */
 
 import { strict as assert } from "node:assert";
-import type { SessionId } from "@fluidframework/id-compressor";
-import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { typeboxValidator } from "../../external-utilities/index.js";
@@ -15,19 +13,9 @@ import {
 	type SharedTreeOptions,
 	Tree,
 } from "../../shared-tree/index.js";
-import { TestTreeProviderLite, treeTestFactory } from "../utils.js";
+import { createSnapshotCompressor, TestTreeProviderLite, treeTestFactory } from "../utils.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";
-
-// Session ids used for the created trees' IdCompressors must be deterministic.
-// TestTreeProviderLite does this by default.
-// Test trees which manually create their data store runtime must set up their trees'
-// session ids explicitly.
-export const snapshotSessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
-
-export function createSnapshotCompressor() {
-	return createAlwaysFinalizedIdCompressor(snapshotSessionId);
-}
 
 const enableSchemaValidation = true;
 

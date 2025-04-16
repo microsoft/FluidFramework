@@ -1,5 +1,9 @@
 # @fluid-internal/tablebench
 
+## 2.32.0
+
+Dependency updates only.
+
 ## 2.31.0
 
 Dependency updates only.
