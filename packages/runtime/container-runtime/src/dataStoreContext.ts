@@ -5,7 +5,12 @@
 
 import { TypedEventEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
 import { AttachState, IAudience } from "@fluidframework/container-definitions";
-import { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import {
+	IDeltaManager,
+	isIDeltaManagerFull,
+	type IDeltaManagerFull,
+	type ReadOnlyInfo,
+} from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	IDisposable,
@@ -76,6 +81,7 @@ import {
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 
+import { BaseDeltaManagerProxy } from "./deltaManagerProxies.js";
 import {
 	runtimeCompatDetailsForDataStore,
 	validateDatastoreCompatibility,
@@ -188,6 +194,40 @@ export interface IFluidDataStoreContextEvents extends IEvent {
 	(event: "attaching" | "attached", listener: () => void);
 }
 
+class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
+	constructor(base: IDeltaManagerFull) {
+		super(base);
+		this._readonly = base.readOnlyInfo.readonly === true;
+	}
+
+	public get readOnlyInfo(): ReadOnlyInfo {
+		if (this._readonly) {
+			if (this.deltaManager.readOnlyInfo.readonly === true) {
+				return this.deltaManager.readOnlyInfo;
+			}
+			return {
+				readonly: this._readonly,
+				forced: true,
+				permissions: false,
+				storageOnly: false,
+			};
+		} else {
+			if (this.deltaManager.readOnlyInfo.readonly !== true) {
+				return this.deltaManager.readOnlyInfo;
+			}
+			return { readonly: false };
+		}
+	}
+
+	private _readonly: boolean;
+	public setReadonly(readonly: boolean): void {
+		this._readonly = readonly;
+		if (this._readonly !== readonly) {
+			this.emit("readonly", readonly);
+		}
+	}
+}
+
 /**
  * Represents the context for the store. This context is passed to the store runtime.
  * @internal
@@ -217,8 +257,9 @@ export abstract class FluidDataStoreContext
 		return this.parentContext.baseLogger;
 	}
 
+	private readonly _deltaManager: ContextDeltaManagerProxy;
 	public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-		return this.parentContext.deltaManager;
+		return this._deltaManager;
 	}
 
 	public get readonly(): boolean | undefined {
@@ -424,6 +465,10 @@ export abstract class FluidDataStoreContext
 		// By default, a data store can log maximum 10 local changes telemetry in summarizer.
 		this.localChangesTelemetryCount =
 			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
+
+		assert(isIDeltaManagerFull(this.parentContext.deltaManager), "Invalid delta manager");
+
+		this._deltaManager = new ContextDeltaManagerProxy(this.parentContext.deltaManager);
 	}
 
 	public dispose(): void {
@@ -623,6 +668,7 @@ export abstract class FluidDataStoreContext
 		this.verifyNotClosed("setReadOnlyState", false /* checkTombstone */);
 
 		this.channel?.setReadOnlyState?.(readonly);
+		this._deltaManager.setReadonly(readonly);
 	}
 
 	/**
