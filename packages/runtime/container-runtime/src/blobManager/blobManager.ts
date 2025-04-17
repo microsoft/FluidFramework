@@ -177,6 +177,7 @@ export class BlobManager {
 	 * because we know that the server will not delete the blob corresponding to that storage ID.
 	 */
 	private readonly opsInFlight: Map<string, string[]> = new Map();
+	// private readonly opsInFlight: Map<string, Set<string>> = new Map();
 
 	private readonly sendBlobAttachOp: (localId: string, storageId?: string) => void;
 	private stopAttaching: boolean = false;
@@ -601,6 +602,11 @@ export class BlobManager {
 				...(this.opsInFlight.get(response.id) ?? []),
 				localId,
 			]);
+
+			// this.opsInFlight.set(
+			// 	response.id,
+			// 	this.opsInFlight.get(response.id)?.add(localId) ?? new Set([localId]),
+			// );
 		}
 		return response;
 	}
@@ -654,6 +660,7 @@ export class BlobManager {
 			assert(localId !== undefined, 0x50e /* local ID not present in blob attach message */);
 			const waitingBlobs = this.opsInFlight.get(blobId);
 			if (waitingBlobs !== undefined) {
+				console.log("waitingBlob size:", waitingBlobs);
 				// For each op corresponding to this storage ID that we are waiting for, resolve the pending blob.
 				// This is safe because the server will keep the blob alive and the op containing the local ID to
 				// storage ID is already in flight and any op containing this local ID will be sequenced after that.
