@@ -6,12 +6,12 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import type {
-	IPresence,
-	ISessionClient,
-	LatestValueManager,
-	PresenceStates,
+	Attendee,
+	Latest,
+	Presence,
+	StatesWorkspace,
 } from "@fluidframework/presence/alpha";
-import { Latest, SessionClientStatus } from "@fluidframework/presence/alpha";
+import { AttendeeStatus, StateFactory } from "@fluidframework/presence/alpha";
 
 /**
  * IFocusState is the data that individual session clients share via presence.
@@ -38,37 +38,37 @@ export interface IFocusTrackerEvents extends IEvent {
  */
 export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 	/**
-	 * A value manager that tracks the latest focus state of connected session clients.
+	 * State that tracks the latest focus state of connected session clients.
 	 */
-	private readonly focus: LatestValueManager<IFocusState>;
+	private readonly focus: Latest<IFocusState>;
 
 	constructor(
-		private readonly presence: IPresence,
+		private readonly presence: Presence,
 
 		/**
 		 * A states workspace that the FocusTracker will use to share focus states with other session clients.
 		 */
 		// eslint-disable-next-line @typescript-eslint/ban-types -- empty object is the correct typing
-		readonly statesWorkspace: PresenceStates<{}>,
+		readonly statesWorkspace: StatesWorkspace<{}>,
 	) {
 		super();
 
-		// Create a Latest value manager to track the focus state. The value is initialized with current focus state of the
+		// Create a Latest state object to track the focus state. The value is initialized with current focus state of the
 		// window.
 		statesWorkspace.add(
 			"focus",
-			Latest<IFocusState>({ hasFocus: window.document.hasFocus() }),
+			StateFactory.latest<IFocusState>({ hasFocus: window.document.hasFocus() }),
 		);
 
-		// Save a reference to the value manager for easy access within the FocusTracker.
+		// Save a reference to the focus state for easy access within the FocusTracker.
 		this.focus = statesWorkspace.props.focus;
 
-		// When the focus value manager is updated, the FocusTracker should emit the focusChanged event.
-		this.focus.events.on("updated", ({ client, value }) => {
+		// When the focus state is updated, the FocusTracker should emit the focusChanged event.
+		this.focus.events.on("remoteUpdated", ({ attendee, value }) => {
 			this.emit("focusChanged", this.focus.local);
 		});
 
-		// Listen to the local focus and blur events. On each event, update the local focus state in the value manager, then
+		// Listen to the local focus and blur events. On each event, update the local focus state, then
 		// emit the focusChanged event with the local data.
 		window.addEventListener("focus", () => {
 			this.focus.local = {
@@ -99,18 +99,18 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 	/**
 	 * A map of session clients to focus status.
 	 */
-	public getFocusPresences(): Map<ISessionClient, boolean> {
-		const statuses: Map<ISessionClient, boolean> = new Map();
+	public getFocusPresences(): Map<Attendee, boolean> {
+		const statuses: Map<Attendee, boolean> = new Map();
 
 		// Include the local client in the map because this is used to render a
 		// dashboard of all connected clients.
-		const currentClient = this.presence.getMyself();
+		const currentClient = this.presence.attendees.getMyself();
 		statuses.set(currentClient, this.focus.local.hasFocus);
 
-		for (const { client, value } of this.focus.clientValues()) {
-			if (client.getConnectionStatus() === SessionClientStatus.Connected) {
+		for (const { attendee, value } of this.focus.getRemotes()) {
+			if (attendee.getConnectionStatus() === AttendeeStatus.Connected) {
 				const { hasFocus } = value;
-				statuses.set(client, hasFocus);
+				statuses.set(attendee, hasFocus);
 			}
 		}
 

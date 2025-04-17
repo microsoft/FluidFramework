@@ -333,6 +333,8 @@ export type GarbageCollectionMessage = ISweepMessage | ITombstoneLoadedMessage;
 
 /**
  * Defines the APIs for the runtime object to be passed to the garbage collector.
+ *
+ * @internal
  */
 export interface IGarbageCollectionRuntime {
 	/**
