@@ -60,11 +60,11 @@ export const isFluidPlaceholderHandleInternal = (
 export const isFluidPlaceholderHandle = (
 	handle: IFluidHandle,
 ): handle is IFluidPlaceholderHandle =>
-	"state" in handle &&
-	(handle.state === "local" ||
-		handle.state === "shared" ||
-		handle.state === "placeholder" ||
-		handle.state === "failed");
+	"payloadState" in handle &&
+	(handle.payloadState === "local" ||
+		handle.payloadState === "shared" ||
+		handle.payloadState === "placeholder" ||
+		handle.payloadState === "failed");
 
 /**
  * Encodes the given IFluidHandle into a JSON-serializable form,
