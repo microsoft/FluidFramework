@@ -6,7 +6,7 @@
 import { createEmitter } from "@fluid-internal/client-utils";
 import type {
 	ContainerExtension,
-	ExtensionMessage,
+	InboundExtensionMessage,
 } from "@fluidframework/container-definitions/internal";
 import type { IEmitter, Listenable } from "@fluidframework/core-interfaces/internal";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
@@ -18,7 +18,7 @@ import { createChildMonitoringContext } from "@fluidframework/telemetry-utils/in
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
-import type { IEphemeralRuntime } from "./internalTypes.js";
+import type { ExtensionRuntimeProperties, IEphemeralRuntime } from "./internalTypes.js";
 import type { AttendeesEvents, AttendeeId, Presence, PresenceEvents } from "./presence.js";
 import type { PresenceDatastoreManager } from "./presenceDatastoreManager.js";
 import { PresenceDatastoreManagerImpl } from "./presenceDatastoreManager.js";
@@ -38,7 +38,7 @@ import type {
  * @internal
  */
 export type PresenceExtensionInterface = Required<
-	Pick<ContainerExtension<never>, "processSignal">
+	Pick<ContainerExtension<never, ExtensionRuntimeProperties>, "processSignal">
 >;
 
 /**
@@ -121,11 +121,25 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 	 * Check for Presence message and process it.
 	 *
 	 * @param address - Address of the message
-	 * @param message - Message to be processed
+	 * @param message - Unvalidated message to be processed
 	 * @param local - Whether the message originated locally (`true`) or remotely (`false`)
+	 *
+	 * @remarks
+	 * generic InboundExtensionMessage is used here in place of specific inbound
+	 * message types that are expected. This is to facilitate this code doing at
+	 * least some validation of the message type and content before use.
+	 * A better solution would be to brand the messages are validated/unvalidated.
 	 */
-	public processSignal(address: string, message: ExtensionMessage, local: boolean): void {
-		this.datastoreManager.processSignal(message, local);
+	public processSignal(
+		address: string,
+		message: InboundExtensionMessage,
+		local: boolean,
+	): void {
+		this.datastoreManager.processSignal(
+			message,
+			local,
+			/* optional */ address.startsWith("?"),
+		);
 	}
 }
 

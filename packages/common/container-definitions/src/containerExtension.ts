@@ -4,10 +4,12 @@
  */
 
 import type {
+	InternalUtilityTypes,
 	ITelemetryBaseLogger,
 	JsonDeserialized,
 	JsonSerializable,
 	Listenable,
+	TypedMessage,
 } from "@fluidframework/core-interfaces/internal";
 import type { IQuorumClients } from "@fluidframework/driver-definitions/internal";
 
@@ -23,32 +25,68 @@ export type ClientConnectionId = string;
 /**
  * Common structure between incoming and outgoing extension signals.
  *
+ * @remarks
+ * Do not use directly, use {@link OutboundExtensionMessage} or {@link InboundExtensionMessage} instead.
+ *
  * @sealed
  * @internal
  */
-export interface ExtensionMessage<TType extends string = string, TContent = unknown> {
-	/**
-	 * Message type
-	 */
-	type: TType;
+export type ExtensionMessage<
+	TMessage extends TypedMessage = {
+		type: string;
+		content: JsonSerializable<unknown> | JsonDeserialized<unknown>;
+	},
+> = // `TMessage extends TypedMessage` encourages processing union elements individually
+	TMessage extends TypedMessage
+		? InternalUtilityTypes.FlattenIntersection<
+				TMessage & {
+					/**
+					 * Client ID of the singular client the message is being (or has been) sent to.
+					 * May only be specified when IConnect.supportedFeatures['submit_signals_v2'] is true, will throw otherwise.
+					 */
+					targetClientId?: ClientConnectionId;
+				}
+			>
+		: never;
 
-	/**
-	 * Message content
-	 */
-	content: JsonDeserialized<TContent>;
+/**
+ * Outgoing extension signals.
+ *
+ * @sealed
+ * @internal
+ */
+export type OutboundExtensionMessage<TMessage extends TypedMessage = TypedMessage> =
+	ExtensionMessage<{ type: TMessage["type"]; content: JsonSerializable<TMessage["content"]> }>;
 
-	/**
-	 * The client ID that submitted the message.
-	 * For server generated messages the clientId will be null.
-	 */
-	// eslint-disable-next-line @rushstack/no-new-null
-	clientId: ClientConnectionId | null;
+/**
+ * Incoming extension signals.
+ *
+ * @sealed
+ * @internal
+ */
+export type InboundExtensionMessage<TMessage extends TypedMessage = TypedMessage> =
+	// `TMessage extends TypedMessage` encourages processing union elements individually
+	TMessage extends TypedMessage
+		? InternalUtilityTypes.FlattenIntersection<
+				ExtensionMessage<{
+					type: TMessage["type"];
+					content: JsonDeserialized<TMessage["content"]>;
+				}> & {
+					/**
+					 * The client ID that submitted the message.
+					 * For server generated messages the clientId will be null.
+					 */
+					// eslint-disable-next-line @rushstack/no-new-null
+					clientId: ClientConnectionId | null;
+				}
+			>
+		: never;
 
-	/**
-	 * Client ID of the singular client the message is being (or has been) sent to.
-	 * May only be specified when IConnect.supportedFeatures['submit_signals_v2'] is true, will throw otherwise.
-	 */
-	targetClientId?: ClientConnectionId;
+/**
+ * @internal
+ */
+export interface ExtensionRuntimeProperties {
+	SignalMessages: TypedMessage;
 }
 
 /**
@@ -56,22 +94,29 @@ export interface ExtensionMessage<TType extends string = string, TContent = unkn
  *
  * @internal
  */
-export interface ContainerExtension<TContext extends unknown[]> {
+export interface ContainerExtension<
+	TUseContext extends unknown[],
+	TRuntimeProperties extends ExtensionRuntimeProperties,
+> {
 	/**
 	 * Notifies the extension of a new use context.
 	 *
 	 * @param context - Context new reference to extension is acquired within
 	 */
-	onNewContext(...context: TContext): void;
+	onNewContext(...context: TUseContext): void;
 
 	/**
 	 * Callback for signal sent by this extension.
 	 *
 	 * @param address - Address of the signal
-	 * @param signal - Signal content and metadata
+	 * @param signalMessage - Unvalidated signal content and metadata
 	 * @param local - True if signal was sent by this client
 	 */
-	processSignal?(address: string, signal: ExtensionMessage, local: boolean): void;
+	processSignal?: (
+		address: string,
+		signalMessage: InboundExtensionMessage<TRuntimeProperties["SignalMessages"]>,
+		local: boolean,
+	) => void;
 }
 
 /**
@@ -91,7 +136,7 @@ export interface ExtensionRuntimeEvents {
  * @sealed
  * @internal
  */
-export interface ExtensionRuntime {
+export interface ExtensionRuntime<TRuntimeProperties extends ExtensionRuntimeProperties> {
 	readonly isConnected: () => boolean;
 	readonly getClientId: () => ClientConnectionId | undefined;
 
@@ -102,18 +147,14 @@ export interface ExtensionRuntime {
 	/**
 	 * Submits a signal to be sent to other clients.
 	 * @param address - Custom address for the signal.
-	 * @param type - Custom type of the signal.
-	 * @param content - Custom content of the signal. Should be a JSON serializable object or primitive via {@link https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify|JSON.stringify}.
-	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
+	 * @param message - Custom message content of the signal.
 	 *
 	 * Upon receipt of signal, {@link ContainerExtension.processSignal} will be called with the same
-	 * address, type, and content (less any non-{@link https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify|JSON.stringify}-able data).
+	 * address and message (less any non-{@link https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify|JSON.stringify}-able data).
 	 */
-	submitAddressedSignal: <T>(
+	submitAddressedSignal: (
 		address: string,
-		type: string,
-		content: JsonSerializable<T>,
-		targetClientId?: ClientConnectionId,
+		message: OutboundExtensionMessage<TRuntimeProperties["SignalMessages"]>,
 	) => void;
 
 	/**
@@ -143,10 +184,17 @@ export interface ExtensionRuntime {
  *
  * @internal
  */
-export type ContainerExtensionFactory<T, TContext extends unknown[]> = new (
-	runtime: ExtensionRuntime,
-	...context: TContext
-) => { readonly interface: T; readonly extension: ContainerExtension<TContext> };
+export type ContainerExtensionFactory<
+	T,
+	TUseContext extends unknown[],
+	TRuntimeProperties extends ExtensionRuntimeProperties,
+> = new (
+	runtime: ExtensionRuntime<TRuntimeProperties>,
+	...context: TUseContext
+) => {
+	readonly interface: T;
+	readonly extension: ContainerExtension<TUseContext, TRuntimeProperties>;
+};
 
 /**
  * Unique identifier for extension
@@ -178,9 +226,13 @@ export interface ContainerExtensionStore {
 	 * @param factory - Factory to create the extension if not found
 	 * @returns The extension
 	 */
-	acquireExtension<T, TContext extends unknown[]>(
+	acquireExtension<
+		T,
+		TUseContext extends unknown[],
+		TRuntimeProperties extends ExtensionRuntimeProperties,
+	>(
 		id: ContainerExtensionId,
-		factory: ContainerExtensionFactory<T, TContext>,
-		...context: TContext
+		factory: ContainerExtensionFactory<T, TUseContext, TRuntimeProperties>,
+		...context: TUseContext
 	): T;
 }

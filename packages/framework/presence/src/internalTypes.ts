@@ -3,11 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import type { ExtensionRuntime } from "@fluidframework/container-definitions/internal";
-import type { JsonSerializable } from "@fluidframework/core-interfaces/internal";
+import type { ExtensionRuntime as ContainerExtensionRuntime } from "@fluidframework/container-definitions/internal";
 
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { AttendeeId, Attendee } from "./presence.js";
+import type {
+	OutboundClientJoinMessage,
+	OutboundDatastoreUpdateMessage,
+	SignalMessages,
+} from "./protocol.js";
+
+/**
+ * @internal
+ */
+export interface ExtensionRuntimeProperties {
+	SignalMessages: SignalMessages;
+}
+/**
+ * @internal
+ */
+export type ExtensionRuntime = ContainerExtensionRuntime<ExtensionRuntimeProperties>;
 
 /**
  * @internal
@@ -37,10 +52,8 @@ export type IEphemeralRuntime = Omit<ExtensionRuntime, "logger" | "submitAddress
 		 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
 		 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 		 */
-		submitSignal: <TContent>(
-			type: string,
-			content: JsonSerializable<TContent>,
-			targetClientId?: string,
+		submitSignal: (
+			message: OutboundClientJoinMessage | OutboundDatastoreUpdateMessage,
 		) => void;
 	};
 

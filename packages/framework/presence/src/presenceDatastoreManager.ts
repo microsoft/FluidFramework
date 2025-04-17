@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { ExtensionMessage } from "@fluidframework/container-definitions/internal";
+import type { InboundExtensionMessage } from "@fluidframework/container-definitions/internal";
 import type { IEmitter } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
@@ -25,6 +24,14 @@ import {
 	mergeUntrackedDatastore,
 	mergeValueDirectory,
 } from "./presenceStates.js";
+import type {
+	GeneralDatastoreMessageContent,
+	InboundClientJoinMessage,
+	InboundDatastoreUpdateMessage,
+	OutboundDatastoreUpdateMessage,
+	SystemDatastore,
+} from "./protocol.js";
+import { datastoreUpdateMessageType, joinMessageType } from "./protocol.js";
 import type { SystemWorkspaceDatastore } from "./systemWorkspace.js";
 import { TimerManager } from "./timerManager.js";
 import type {
@@ -41,59 +48,24 @@ interface AnyWorkspaceEntry<TSchema extends StatesWorkspaceSchema> {
 	internal: PresenceStatesInternal;
 }
 
-interface SystemDatastore {
-	"system:presence": SystemWorkspaceDatastore;
-}
-
-type InternalWorkspaceAddress = `${"s" | "n"}:${WorkspaceAddress}`;
-
 type PresenceDatastore = SystemDatastore & {
 	[WorkspaceAddress: string]: ValueElementMap<StatesWorkspaceSchema>;
 };
 
-interface GeneralDatastoreMessageContent {
-	[WorkspaceAddress: string]: {
-		[StateValueManagerKey: string]: {
-			[AttendeeId: AttendeeId]: ClientUpdateEntry;
-		};
-	};
-}
-
-type DatastoreMessageContent = SystemDatastore & GeneralDatastoreMessageContent;
-
-const datastoreUpdateMessageType = "Pres:DatastoreUpdate";
+type InternalWorkspaceAddress = `${"s" | "n"}:${WorkspaceAddress}`;
 
 const internalWorkspaceTypes: Readonly<Record<string, "States" | "Notifications">> = {
 	s: "States",
 	n: "Notifications",
 } as const;
 
-interface DatastoreUpdateMessage extends IInboundSignalMessage {
-	type: typeof datastoreUpdateMessageType;
-	content: {
-		sendTimestamp: number;
-		avgLatency: number;
-		isComplete?: true;
-		data: DatastoreMessageContent;
-	};
-}
-
-const joinMessageType = "Pres:ClientJoin";
-interface ClientJoinMessage extends IInboundSignalMessage {
-	type: typeof joinMessageType;
-	content: {
-		updateProviders: ClientConnectionId[];
-		sendTimestamp: number;
-		avgLatency: number;
-		data: DatastoreMessageContent;
-	};
-}
-
+const knownMessageTypes = new Set([joinMessageType, datastoreUpdateMessageType]);
 function isPresenceMessage(
-	message: IInboundSignalMessage,
-): message is DatastoreUpdateMessage | ClientJoinMessage {
-	return message.type.startsWith("Pres:");
+	message: InboundExtensionMessage,
+): message is InboundDatastoreUpdateMessage | InboundClientJoinMessage {
+	return knownMessageTypes.has(message.type);
 }
+
 /**
  * @internal
  */
@@ -108,7 +80,7 @@ export interface PresenceDatastoreManager {
 		internalWorkspaceAddress: `n:${WorkspaceAddress}`,
 		requestedContent: TSchema,
 	): NotificationsWorkspace<TSchema>;
-	processSignal(message: ExtensionMessage, local: boolean): void;
+	processSignal(message: InboundExtensionMessage, local: boolean, optional: boolean): void;
 }
 
 function mergeGeneralDatastoreMessageContent(
@@ -182,12 +154,15 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		if (updateProviders.length > 3) {
 			updateProviders.length = 3;
 		}
-		this.runtime.submitSignal(joinMessageType, {
-			sendTimestamp: Date.now(),
-			avgLatency: this.averageLatency,
-			data: this.datastore,
-			updateProviders,
-		} satisfies ClientJoinMessage["content"]);
+		this.runtime.submitSignal({
+			type: joinMessageType,
+			content: {
+				sendTimestamp: Date.now(),
+				avgLatency: this.averageLatency,
+				data: this.datastore,
+				updateProviders,
+			},
+		});
 	}
 
 	public getWorkspace<TSchema extends StatesWorkspaceSchema>(
@@ -333,34 +308,33 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				},
 				...this.queuedData,
 			},
-		} satisfies DatastoreUpdateMessage["content"];
+		} satisfies OutboundDatastoreUpdateMessage["content"];
 		this.queuedData = undefined;
-		this.runtime.submitSignal(datastoreUpdateMessageType, newMessage);
+		this.runtime.submitSignal({ type: datastoreUpdateMessageType, content: newMessage });
 	}
 
 	private broadcastAllKnownState(): void {
-		this.runtime.submitSignal(datastoreUpdateMessageType, {
-			sendTimestamp: Date.now(),
-			avgLatency: this.averageLatency,
-			isComplete: true,
-			data: this.datastore,
-		} satisfies DatastoreUpdateMessage["content"]);
+		this.runtime.submitSignal({
+			type: datastoreUpdateMessageType,
+			content: {
+				sendTimestamp: Date.now(),
+				avgLatency: this.averageLatency,
+				isComplete: true,
+				data: this.datastore,
+			},
+		});
 		this.refreshBroadcastRequested = false;
 	}
 
 	public processSignal(
-		// Note: IInboundSignalMessage is used here in place of ExtensionMessage
-		// as ExtensionMessage's strictly JSON `content` creates type compatibility
-		// issues with `AttendeeId` keys and really unknown value content.
-		// ExtensionMessage is a subset of IInboundSignalMessage so this is safe.
-		// Change types of DatastoreUpdateMessage | ClientJoinMessage to
-		// ExtensionMessage<> derivatives to see the issues.
-		message: IInboundSignalMessage | DatastoreUpdateMessage | ClientJoinMessage,
+		message: InboundExtensionMessage,
 		local: boolean,
+		optional: boolean,
 	): void {
 		const received = Date.now();
 		assert(message.clientId !== null, 0xa3a /* Map received signal without clientId */);
 		if (!isPresenceMessage(message)) {
+			assert(optional, "Unrecognized message type in critical message");
 			return;
 		}
 		if (local) {
@@ -390,7 +364,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			// It is okay to continue processing the contained updates even if we are not
 			// connected.
 		} else {
-			assert(message.type === datastoreUpdateMessageType, 0xa3b /* Unexpected message type */);
 			if (message.content.isComplete) {
 				this.refreshBroadcastRequested = false;
 			}
@@ -423,7 +396,10 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		}
 
 		const postUpdateActions: PostUpdateAction[] = [];
-		for (const [workspaceAddress, remoteDatastore] of Object.entries(message.content.data)) {
+		// While the system workspace is processed here too, it is declared as
+		// conforming to the general schema. So drop its override.
+		const data = message.content.data as Omit<typeof message.content.data, "system:presence">;
+		for (const [workspaceAddress, remoteDatastore] of Object.entries(data)) {
 			// Direct to the appropriate Presence Workspace, if present.
 			const workspace = this.workspaces.get(workspaceAddress);
 			if (workspace) {

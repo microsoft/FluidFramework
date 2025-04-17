@@ -136,8 +136,8 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 			0,
 			`Missing signals [\n${this.signalsExpected
 				.map(
-					(a) =>
-						`\t{ type: ${a[0]}, content: ${JSON.stringify(a[1], undefined, "\t")}, targetClientId: ${a[2]} }`,
+					([m]) =>
+						`\t{ type: ${m.type}, content: ${JSON.stringify(m.content, undefined, "\t")}, targetClientId: ${m.targetClientId} }`,
 				)
 				.join(",\n\t")}\n]`,
 		);
