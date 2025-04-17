@@ -244,9 +244,6 @@ importers:
       semver:
         specifier: ^7.7.1
         version: 7.7.1
-      semver-utils:
-        specifier: ^1.1.4
-        version: 1.1.4
       simple-git:
         specifier: ^3.27.0
         version: 3.27.0
@@ -323,9 +320,6 @@ importers:
       '@types/semver':
         specifier: ^7.7.0
         version: 7.7.0
-      '@types/semver-utils':
-        specifier: ^1.1.3
-        version: 1.1.3
       '@types/sort-json':
         specifier: ^2.0.3
         version: 2.0.3
@@ -519,9 +513,6 @@ importers:
       typedoc-plugin-markdown:
         specifier: ^4.2.9
         version: 4.2.9(typedoc@0.26.10(typescript@5.4.5))
-      unionfs:
-        specifier: ^4.5.4
-        version: 4.5.4
 
   packages/build-tools:
     dependencies:
@@ -564,9 +555,6 @@ importers:
       json5:
         specifier: ^2.2.3
         version: 2.2.3
-      lodash:
-        specifier: ^4.17.21
-        version: 4.17.21
       lodash.isequal:
         specifier: ^4.5.0
         version: 4.5.0
@@ -594,9 +582,6 @@ importers:
       ts-deepmerge:
         specifier: ^7.0.1
         version: 7.0.1
-      ts-morph:
-        specifier: ^22.0.0
-        version: 22.0.0
       type-fest:
         specifier: ^2.19.0
         version: 2.19.0
@@ -628,9 +613,6 @@ importers:
       '@types/glob':
         specifier: ^7.2.0
         version: 7.2.0
-      '@types/lodash':
-        specifier: ^4.17.12
-        version: 4.17.12
       '@types/lodash.isequal':
         specifier: ^4.5.8
         version: 4.5.8
@@ -646,12 +628,6 @@ importers:
       '@types/semver':
         specifier: ^7.7.0
         version: 7.7.0
-      '@types/shelljs':
-        specifier: ^0.8.15
-        version: 0.8.15
-      concurrently:
-        specifier: ^8.2.2
-        version: 8.2.2
       eslint:
         specifier: ~8.57.0
         version: 8.57.0
@@ -707,9 +683,6 @@ importers:
       '@types/pako':
         specifier: ^2.0.3
         version: 2.0.3
-      concurrently:
-        specifier: ^8.2.2
-        version: 8.2.2
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -780,9 +753,6 @@ importers:
       chai:
         specifier: ^4.5.0
         version: 4.5.0
-      concurrently:
-        specifier: ^8.2.2
-        version: 8.2.2
       eslint:
         specifier: ~8.57.0
         version: 8.57.0
@@ -1965,9 +1935,6 @@ packages:
 
   '@types/semver@7.7.0':
     resolution: {integrity: sha512-k107IF4+Xr7UHjwDc7Cfd6PRQfbdkiRabXGRjo07b4WyPahFBZCZ1sE+BNxYIJPPg73UkfOsVOLwqVc/6ETrIA==}
-
-  '@types/shelljs@0.8.15':
-    resolution: {integrity: sha512-vzmnCHl6hViPu9GNLQJ+DZFd6BQI2DBTUeOvYHqkWQLMfKAAQYMb/xAmZkTogZI/vqXHCWkqDRymDI5p0QTi5Q==}
 
   '@types/sort-json@2.0.3':
     resolution: {integrity: sha512-Y5eKfh99uPF5tMJ68rODj63fqXPSEI0l2BldzKmc6wFsFknO+2lQvgrbbOpsyJXYr6YJBsTLHBEyh0Z2j83+rg==}
@@ -3472,6 +3439,7 @@ packages:
   eslint-plugin-i@2.29.0:
     resolution: {integrity: sha512-slGeTS3GQzx9267wLJnNYNO8X9EHGsc75AKIAFvnvMYEcTJKotPKL1Ru5PIGVHIVet+2DsugePWp8Oxpx8G22w==}
     engines: {node: '>=12'}
+    deprecated: Please migrate to the brand new `eslint-plugin-import-x` instead
     peerDependencies:
       eslint: ^7.2.0 || ^8
 
@@ -3835,9 +3803,6 @@ packages:
   fs-minipass@3.0.2:
     resolution: {integrity: sha512-2GAfyfoaCDRrM6jaOS3UsBts8yJ55VioXdWcOL7dK9zdAuKT71+WBA4ifnNYqVjYv+4SsPxjK0JT4yIIn4cA/g==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
-
-  fs-monkey@1.0.6:
-    resolution: {integrity: sha512-b1FMfwetIKymC0eioW7mTywihSQE4oLzQn1dB6rZB5fx/3NpNEdAWeCSMB+60/AeT0TCXsxzAlcYVEFCTAksWg==}
 
   fs.realpath@1.0.0:
     resolution: {integrity: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==}
@@ -6983,9 +6948,6 @@ packages:
   unified@11.0.5:
     resolution: {integrity: sha512-xKvGhPWw3k84Qjh8bI3ZeJjqnyadK+GEFtazSfZv/rKeTkTjOJho6mFqh2SM96iIcZokxiOpg78GazTSg8+KHA==}
 
-  unionfs@4.5.4:
-    resolution: {integrity: sha512-qI3RvJwwdFcWUdZz1dWgAyLSfGlY2fS2pstvwkZBUTnkxjcnIvzriBLtqJTKz9FtArAvJeiVCqHlxhOw8Syfyw==}
-
   unique-filename@2.0.1:
     resolution: {integrity: sha512-ODWHtkkdx3IAR+veKxFV+VBkUMcN+FaqzUUd7IZzt+0zhDZFPFxhlqwPF3YQvMHx1TD0tdgYl+kuPnJ8E6ql7A==}
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
@@ -7791,7 +7753,7 @@ snapshots:
       '@rushstack/eslint-patch': 1.4.0
       '@rushstack/eslint-plugin': 0.13.1(eslint@8.57.0)(typescript@5.4.5)
       '@rushstack/eslint-plugin-security': 0.7.1(eslint@8.57.0)(typescript@5.4.5)
-      '@typescript-eslint/eslint-plugin': 6.7.5(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0)(typescript@5.4.5)
+      '@typescript-eslint/eslint-plugin': 6.7.5(@typescript-eslint/parser@6.7.5(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0)(typescript@5.4.5)
       '@typescript-eslint/parser': 6.7.5(eslint@8.57.0)(typescript@5.4.5)
       eslint-config-prettier: 9.0.0(eslint@8.57.0)
       eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.57.0)(typescript@5.4.5))(eslint-plugin-i@2.29.0)(eslint@8.57.0)
@@ -8970,11 +8932,6 @@ snapshots:
 
   '@types/semver@7.7.0': {}
 
-  '@types/shelljs@0.8.15':
-    dependencies:
-      '@types/glob': 7.2.0
-      '@types/node': 18.19.60
-
   '@types/sort-json@2.0.3': {}
 
   '@types/ungap__structured-clone@1.2.0': {}
@@ -9007,10 +8964,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/eslint-plugin@6.7.5(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0)(typescript@5.4.5)':
+  '@typescript-eslint/eslint-plugin@6.7.5(@typescript-eslint/parser@6.7.5(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0)(typescript@5.4.5)':
     dependencies:
       '@eslint-community/regexpp': 4.10.0
-      '@typescript-eslint/parser': 6.21.0(eslint@8.57.0)(typescript@5.4.5)
+      '@typescript-eslint/parser': 6.7.5(eslint@8.57.0)(typescript@5.4.5)
       '@typescript-eslint/scope-manager': 6.7.5
       '@typescript-eslint/type-utils': 6.7.5(eslint@8.57.0)(typescript@5.4.5)
       '@typescript-eslint/utils': 6.7.5(eslint@8.57.0)(typescript@5.4.5)
@@ -11063,7 +11020,7 @@ snapshots:
       eslint: 8.57.0
       eslint-rule-composer: 0.3.0
     optionalDependencies:
-      '@typescript-eslint/eslint-plugin': 6.7.5(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0)(typescript@5.4.5)
+      '@typescript-eslint/eslint-plugin': 6.7.5(@typescript-eslint/parser@6.7.5(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0)(typescript@5.4.5)
 
   eslint-rule-composer@0.3.0: {}
 
@@ -11398,8 +11355,6 @@ snapshots:
   fs-minipass@3.0.2:
     dependencies:
       minipass: 5.0.0
-
-  fs-monkey@1.0.6: {}
 
   fs.realpath@1.0.0: {}
 
@@ -13466,7 +13421,7 @@ snapshots:
   normalize-package-data@3.0.3:
     dependencies:
       hosted-git-info: 4.1.0
-      is-core-module: 2.13.1
+      is-core-module: 2.15.1
       semver: 7.7.1
       validate-npm-package-license: 3.0.4
 
@@ -15208,10 +15163,6 @@ snapshots:
       is-plain-obj: 4.1.0
       trough: 2.2.0
       vfile: 6.0.2
-
-  unionfs@4.5.4:
-    dependencies:
-      fs-monkey: 1.0.6
 
   unique-filename@2.0.1:
     dependencies:

@@ -98,7 +98,6 @@
 		"@types/semver": "^7.7.0",
 		"c8": "^7.14.0",
 		"chai": "^4.5.0",
-		"concurrently": "^8.2.2",
 		"eslint": "~8.57.0",
 		"eslint-config-oclif": "^5.2.1",
 		"eslint-config-oclif-typescript": "^3.1.12",
