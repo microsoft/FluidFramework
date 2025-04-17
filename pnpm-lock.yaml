@@ -11569,7 +11569,7 @@ importers:
         version: 0.3.43(openai@4.90.0(encoding@0.1.13)(ws@8.18.0)(zod@3.24.0))
       langchain:
         specifier: ^0.3.19
-        version: 0.3.19(@langchain/anthropic@0.3.15(@langchain/core@0.3.43(openai@4.90.0(encoding@0.1.13)(ws@8.18.0)(zod@3.24.0)))(encoding@0.1.13))(@langchain/core@0.3.43(openai@4.90.0(encoding@0.1.13)(ws@8.18.0)(zod@3.24.0)))(@langchain/google-genai@0.2.2(@langchain/core@0.3.43(openai@4.90.0(encoding@0.1.13)(ws@8.18.0)(zod@3.24.0)))(zod@3.24.0))(axios@1.8.4)(encoding@0.1.13)(handlebars@4.7.8)(openai@4.90.0(encoding@0.1.13)(ws@8.18.0)(zod@3.24.0))(ws@8.18.0)
+        version: 0.3.19(@langchain/anthropic@0.3.15(@langchain/core@0.3.43(openai@4.90.0(encoding@0.1.13)(ws@8.18.0)(zod@3.24.0)))(encoding@0.1.13))(@langchain/core@0.3.43(openai@4.90.0(encoding@0.1.13)(ws@8.18.0)(zod@3.24.0)))(@langchain/google-genai@0.2.2(@langchain/core@0.3.43(openai@4.90.0(encoding@0.1.13)(ws@8.18.0)(zod@3.24.0)))(zod@3.24.0))(axios@0.30.0)(encoding@0.1.13)(handlebars@4.7.8)(openai@4.90.0(encoding@0.1.13)(ws@8.18.0)(zod@3.24.0))(ws@8.18.0)
       typechat:
         specifier: ^0.1.1
         version: 0.1.1(typescript@5.4.5)(zod@3.24.0)
@@ -23483,7 +23483,7 @@ packages:
       '@langchain/mistralai': '*'
       '@langchain/ollama': '*'
       '@langchain/xai': '*'
-      axios: '*'
+      axios: ^0.30.0
       cheerio: '*'
       handlebars: ^4.7.8
       peggy: ^3.0.2
@@ -24749,6 +24749,10 @@ packages:
     resolution: {integrity: sha512-ZBxxZ5sL2HghephhpGAQdoskxplTwr7ICaehZwLIlfL6acuVgZPm8yBNuRAFBGEqtD/hmUeq9eqLg2ys9Xr/yw==}
     engines: {node: '>=8'}
 
+  p-finally@1.0.0:
+    resolution: {integrity: sha512-LICb2p9CB7FS+0eR1oqWnHhp0FljGLZCWBE9aix0Uye9W8LTQPwMTYVGWQWIw9RdQiDg4+epXQODwIYJtSJaow==}
+    engines: {node: '>=4'}
+
   p-limit@2.3.0:
     resolution: {integrity: sha512-//88mFWSJx8lxCzwdAABTJL2MyWB12+eIY7MDL2SqLmAkeKU9qxRvWuSyTjm3FUmpBEMuFfckAIqEaVGUDxb6w==}
     engines: {node: '>=6'}
@@ -24787,6 +24791,10 @@ packages:
 
   p-retry@4.6.2:
     resolution: {integrity: sha512-312Id396EbJdvRONlngUx0NydfrIQ5lsYu0znKVUzVvArzEIt08V1qhtyESbGVd1FGX7UKtiFp5uwKZdM8wIuQ==}
+    engines: {node: '>=8'}
+
+  p-timeout@3.2.0:
+    resolution: {integrity: sha512-rhIwUycgwwKcP9yTOOFK/AKsAopjjCakVqLHePO3CC6Mir1Z99xT+R63jZxAT5lFZLa2inS5h+ZS2GvR99/FBg==}
     engines: {node: '>=8'}
 
   p-try@2.2.0:
@@ -38972,7 +38980,7 @@ snapshots:
 
   ky@1.7.3: {}
 
-  langchain@0.3.19(@langchain/anthropic@0.3.15(@langchain/core@0.3.43(openai@4.90.0(encoding@0.1.13)(ws@8.18.0)(zod@3.24.0)))(encoding@0.1.13))(@langchain/core@0.3.43(openai@4.90.0(encoding@0.1.13)(ws@8.18.0)(zod@3.24.0)))(@langchain/google-genai@0.2.2(@langchain/core@0.3.43(openai@4.90.0(encoding@0.1.13)(ws@8.18.0)(zod@3.24.0)))(zod@3.24.0))(axios@1.8.4)(encoding@0.1.13)(handlebars@4.7.8)(openai@4.90.0(encoding@0.1.13)(ws@8.18.0)(zod@3.24.0))(ws@8.18.0):
+  langchain@0.3.19(@langchain/anthropic@0.3.15(@langchain/core@0.3.43(openai@4.90.0(encoding@0.1.13)(ws@8.18.0)(zod@3.24.0)))(encoding@0.1.13))(@langchain/core@0.3.43(openai@4.90.0(encoding@0.1.13)(ws@8.18.0)(zod@3.24.0)))(@langchain/google-genai@0.2.2(@langchain/core@0.3.43(openai@4.90.0(encoding@0.1.13)(ws@8.18.0)(zod@3.24.0)))(zod@3.24.0))(axios@0.30.0)(encoding@0.1.13)(handlebars@4.7.8)(openai@4.90.0(encoding@0.1.13)(ws@8.18.0)(zod@3.24.0))(ws@8.18.0):
     dependencies:
       '@langchain/core': 0.3.43(openai@4.90.0(encoding@0.1.13)(ws@8.18.0)(zod@3.24.0))
       '@langchain/openai': 0.4.9(@langchain/core@0.3.43(openai@4.90.0(encoding@0.1.13)(ws@8.18.0)(zod@3.24.0)))(encoding@0.1.13)(ws@8.18.0)
@@ -38990,7 +38998,7 @@ snapshots:
     optionalDependencies:
       '@langchain/anthropic': 0.3.15(@langchain/core@0.3.43(openai@4.90.0(encoding@0.1.13)(ws@8.18.0)(zod@3.24.0)))(encoding@0.1.13)
       '@langchain/google-genai': 0.2.2(@langchain/core@0.3.43(openai@4.90.0(encoding@0.1.13)(ws@8.18.0)(zod@3.24.0)))(zod@3.24.0)
-      axios: 1.8.4(debug@4.4.0)
+      axios: 0.30.0(debug@4.4.0)
       handlebars: 4.7.8
     transitivePeerDependencies:
       - encoding
@@ -40658,6 +40666,8 @@ snapshots:
     dependencies:
       p-map: 2.1.0
 
+  p-finally@1.0.0: {}
+
   p-limit@2.3.0:
     dependencies:
       p-try: 2.2.0
@@ -40697,6 +40707,10 @@ snapshots:
     dependencies:
       '@types/retry': 0.12.0
       retry: 0.13.1
+
+  p-timeout@3.2.0:
+    dependencies:
+      p-finally: 1.0.0
 
   p-try@2.2.0: {}
 
