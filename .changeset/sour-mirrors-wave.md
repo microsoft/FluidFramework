@@ -1,15 +1,13 @@
 ---
 "@fluidframework/presence": minor
----
----
-"section": other
+"__section": other
 ---
 
-Presence API renames
+Presence APIs have been renamed
 
 The following API changes have been made to improve clarity and consistency:
 
-| Original | New |
+| Before 2.33.0 | 2.33.0 |
 |----------|-----|
 | `acquirePresence` | `getPresence` |
 | `acquirePresenceViaDataObject` | `getPresenceViaDataObject` |
@@ -58,4 +56,5 @@ The following API changes have been made to improve clarity and consistency:
 | `SessionClientStatus` | `AttendeeStatus` |
 | `ValueMap` | `StateMap` |
 
-Note: To fully replace OLD `Latest` and `LatestMap` functions, you should import `StateFactory` and call `StateFactory.latest` and `StateFactory.latestMap` respectively. NEW `Latest` and `LatestMap` APIs replace `LatestValueManager` and `LatestMapValueManager`.
+> [!NOTE]
+> To fully replace the former `Latest` and `LatestMap` functions, you should import `StateFactory` and call `StateFactory.latest` and `StateFactory.latestMap` respectively. The new `Latest` and `LatestMap` APIs replace `LatestValueManager` and `LatestMapValueManager` respectively.
