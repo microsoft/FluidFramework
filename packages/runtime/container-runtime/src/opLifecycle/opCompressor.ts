@@ -7,7 +7,7 @@ import { IsoBuffer } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	UsageError,
+	DataProcessingError,
 	createChildLogger,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
@@ -15,8 +15,8 @@ import { compress } from "lz4js";
 
 import { CompressionAlgorithms } from "../containerRuntime.js";
 
-import { estimateSocketSize } from "./batchManager.js";
-import { BatchMessage, IBatch } from "./definitions.js";
+import { type OutboundBatchMessage, type OutboundSingletonBatch } from "./definitions.js";
+import { estimateSocketSize } from "./outbox.js";
 
 /**
  * Compresses batches of ops.
@@ -37,7 +37,7 @@ export class OpCompressor {
 	 * @param batch - The batch to compress. Must have only 1 message
 	 * @returns A singleton batch containing a single compressed message
 	 */
-	public compressBatch(batch: IBatch<[BatchMessage]>): IBatch<[BatchMessage]> {
+	public compressBatch(batch: OutboundSingletonBatch): OutboundSingletonBatch {
 		assert(
 			batch.contentSizeInBytes > 0 && batch.messages.length === 1,
 			0x5a4 /* Batch should not be empty and should contain a single message */,
@@ -49,7 +49,7 @@ export class OpCompressor {
 		const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
 		const duration = Date.now() - compressionStart;
 
-		const messages: [BatchMessage] = [
+		const messages: [OutboundBatchMessage] = [
 			{
 				...batch.messages[0],
 				contents: JSON.stringify({ packedContents: compressedContent }),
@@ -58,7 +58,7 @@ export class OpCompressor {
 			},
 		];
 
-		const compressedBatch = {
+		const compressedBatch: OutboundSingletonBatch = {
 			contentSizeInBytes: compressedContent.length,
 			messages,
 			referenceSequenceNumber: batch.referenceSequenceNumber,
@@ -81,29 +81,29 @@ export class OpCompressor {
 	/**
 	 * Combine the batch's content strings into a single JSON string (a serialized array)
 	 */
-	private serializeBatchContents(batch: IBatch<[BatchMessage]>): string {
+	private serializeBatchContents(batch: OutboundSingletonBatch): string {
 		const [message, ...none] = batch.messages;
-		assert(none.length === 0, "Batch should only contain a single message");
+		assert(none.length === 0, 0xb78 /* Batch should only contain a single message */);
 		try {
 			// This is expressed as a JSON array, for legacy reasons
 			return `[${message.contents}]`;
-		} catch (newError: unknown) {
-			if ((newError as Partial<Error>).message === "Invalid string length") {
+		} catch (error: unknown) {
+			if ((error as Partial<Error>).message === "Invalid string length") {
 				// This is how string interpolation signals that
 				// the content size exceeds its capacity
-				const error = new UsageError("Payload too large");
+				const dpe = DataProcessingError.create("Payload too large", "OpCompressor");
 				this.logger.sendErrorEvent(
 					{
 						eventName: "BatchTooLarge",
 						size: batch.contentSizeInBytes,
 						length: batch.messages.length,
 					},
-					error,
+					dpe,
 				);
-				throw error;
+				throw dpe;
 			}
 
-			throw newError;
+			throw error;
 		}
 	}
 }

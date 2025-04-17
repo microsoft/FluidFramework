@@ -3,13 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	IChannelAttributes,
-	IChannelFactory,
-	IFluidDataStoreRuntime,
-	IChannelServices,
-	IChannelStorageService,
-} from "@fluidframework/datastore-definitions/internal";
+import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import {
 	type ISharedObjectKind,
@@ -21,8 +16,7 @@ import {
 } from "@fluidframework/shared-object-base/internal";
 
 import {
-	// eslint-disable-next-line import/no-deprecated
-	SharedTree as SharedTreeImpl,
+	SharedTreeKernel,
 	type ITreeInternal,
 	type ITreePrivate,
 	type SharedTreeOptions,
@@ -30,7 +24,6 @@ import {
 } from "./shared-tree/index.js";
 import type { ITree } from "./simple-tree/index.js";
 
-import { SharedTreeKernel } from "./shared-tree/index.js";
 import { Breakable } from "./util/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
@@ -86,38 +79,6 @@ function treeKernelFactoryPrivate(
 export const treeKernelFactory: (
 	options: SharedTreeOptions,
 ) => SharedKernelFactory<ITreeInternal> = treeKernelFactoryPrivate;
-
-/**
- * A channel factory that creates an {@link ITree}.
- * @deprecated Use the public APIs instead if a SharedObject is needed, or construct the internal types directly if not.
- */
-/* eslint-disable import/no-deprecated */
-export class TreeFactory implements IChannelFactory<SharedTreeImpl> {
-	public static Type: string = SharedTreeFactoryType;
-	public readonly type: string = SharedTreeFactoryType;
-
-	public readonly attributes: IChannelAttributes = SharedTreeAttributes;
-
-	public constructor(private readonly options: SharedTreeOptionsInternal) {}
-
-	public async load(
-		runtime: IFluidDataStoreRuntime,
-		id: string,
-		services: IChannelServices,
-		channelAttributes: Readonly<IChannelAttributes>,
-	): Promise<SharedTreeImpl> {
-		const tree = new SharedTreeImpl(id, runtime, channelAttributes, this.options);
-		await tree.load(services);
-		return tree;
-	}
-
-	public create(runtime: IFluidDataStoreRuntime, id: string): SharedTreeImpl {
-		const tree = new SharedTreeImpl(id, runtime, this.attributes, this.options);
-		tree.initializeLocal();
-		return tree;
-	}
-}
-/* eslint-enable import/no-deprecated */
 
 /**
  * SharedTree is a hierarchical data structure for collaboratively editing strongly typed JSON-like trees

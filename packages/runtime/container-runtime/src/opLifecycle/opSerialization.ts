@@ -10,7 +10,7 @@ import {
 	toFluidHandleInternal,
 } from "@fluidframework/runtime-utils/internal";
 
-import type { OutboundContainerRuntimeMessage } from "../messageTypes.js";
+import type { LocalContainerRuntimeMessage } from "../messageTypes.js";
 
 /**
  * Takes an incoming runtime message (outer type "op"), JSON.parses the message's contents in place,
@@ -31,7 +31,7 @@ export function ensureContentsDeserialized(mutableMessage: ISequencedDocumentMes
  * Before submitting an op to the Outbox, its contents must be serialized using this function.
  * @remarks - The deserialization on process happens via the function {@link ensureContentsDeserialized}.
  */
-export function serializeOp(op: OutboundContainerRuntimeMessage): string {
+export function serializeOp(op: LocalContainerRuntimeMessage): string {
 	return JSON.stringify(
 		op,
 		// replacer:

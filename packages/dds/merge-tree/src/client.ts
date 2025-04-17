@@ -862,7 +862,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	): RebasedObliterateEndpoint {
 		const oldSegment = ref.getSegment();
 		const oldOffset = ref.getOffset();
-		assert(oldSegment !== undefined && oldOffset !== undefined, "Invalid old reference");
+		assert(
+			oldSegment !== undefined && oldOffset !== undefined,
+			0xb61 /* Invalid old reference */,
+		);
 		const useNewSlidingBehavior = true;
 		// Destructuring segment + offset is convenient and segment is reassigned
 		// eslint-disable-next-line prefer-const
@@ -880,7 +883,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 		assert(
 			isSegmentLeaf(newSegment) && newOffset !== undefined,
-			"Invalid new segment on rebase",
+			0xb62 /* Invalid new segment on rebase */,
 		);
 
 		const newSide: Side =
@@ -959,16 +962,19 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			const obliterateInfo: ObliterateInfo | undefined = segmentGroup.obliterateInfo;
 			assert(
 				obliterateInfo !== undefined,
-				"Resubmitting obliterate op without obliterate info in segment group",
+				0xb63 /* Resubmitting obliterate op without obliterate info in segment group */,
 			);
-			assert(obliterateInfo.stamp.localSeq === segmentGroup.localSeq, "Local seq mismatch");
+			assert(
+				obliterateInfo.stamp.localSeq === segmentGroup.localSeq,
+				0xb64 /* Local seq mismatch */,
+			);
 
 			const cachedNewPositions = this.cachedObliterateRebases.get(
 				obliterateInfo.stamp.localSeq,
 			);
 			assert(
 				cachedNewPositions !== undefined,
-				"didn't compute new positions for obliterate on reconnect early enough",
+				0xb65 /* didn't compute new positions for obliterate on reconnect early enough */,
 			);
 			const {
 				start: { segment: newStartSegment, offset: newStartOffset, side: newStartSide },
@@ -981,12 +987,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				for (const segment of segmentGroup.segments) {
 					assert(
 						isRemovedAndAcked(segment),
-						"On reconnect, obliterate applied to new segments even though original ones were not removed.",
+						0xb66 /* On reconnect, obliterate applied to new segments even though original ones were not removed. */,
 					);
 					const lastRemove = segment.removes[segment.removes.length - 1];
 					assert(
 						lastRemove.type === "sliceRemove" && lastRemove.localSeq === segmentGroup.localSeq,
-						"Last remove should be the obliterate that is being resubmitted.",
+						0xb67 /* Last remove should be the obliterate that is being resubmitted. */,
 					);
 					// The original obliterate affected this segment, but it has since been removed and overlapping removes
 					// are only possible when they are concurrent. We adjust the metadata on that segment now to reflect
@@ -1000,7 +1006,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 			assert(
 				obliterateInfo.tiebreakTrackingGroup !== undefined,
-				"Tiebreak tracking group missing",
+				0xb68 /* Tiebreak tracking group missing */,
 			);
 
 			const newObliterate: ObliterateInfo = {
@@ -1050,12 +1056,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				} else {
 					assert(
 						isRemovedAndAcked(segment),
-						"On reconnect, obliterate applied to new segments even though original ones were not removed.",
+						0xb69 /* On reconnect, obliterate applied to new segments even though original ones were not removed. */,
 					);
 					const lastRemove = segment.removes[segment.removes.length - 1];
 					assert(
 						lastRemove.type === "sliceRemove" && lastRemove.localSeq === segmentGroup.localSeq,
-						"Last remove should be the obliterate that is being resubmitted.",
+						0xb6a /* Last remove should be the obliterate that is being resubmitted. */,
 					);
 					// The original obliterate affected this segment, but it has since been removed and it's impossible to apply the
 					// local obliterate so that is so. We adjust the metadata on that segment now.
@@ -1079,7 +1085,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			if (resetOp.type === MergeTreeDeltaType.OBLITERATE) {
 				assert(
 					newStartSide === Side.Before && newEndSide === Side.After,
-					"Non-sided obliterate should have start side before and end side after",
+					0xb6b /* Non-sided obliterate should have start side before and end side after */,
 				);
 				// Use a non-sided obliterate op if the original op was non-sided. Some combinations of feature flags disallow sided obliterate ops
 				// but allow non-sided ones, and if we convert a non-sided op to a sided one on reconnect, we may cause errors.
@@ -1116,7 +1122,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		)) {
 			assert(
 				segment.segmentGroups?.remove(segmentGroup) === true,
-				0x035 /* "Segment group not in segment pending queue" */,
+				0xb6c /* Segment group not in segment pending queue */,
 			);
 			const segmentPosition = this.findReconnectionPosition(segment, segmentGroup.localSeq);
 			let newOp: IMergeTreeDeltaOp | undefined;
@@ -1345,7 +1351,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		);
 	}
 
-	private lastNormalizationRefSeq: number | undefined;
+	private lastNormalization: undefined | { refSeq: number; localRefSeq: number };
 
 	private pendingRebase: DoublyLinkedList<SegmentGroup> | undefined;
 
@@ -1384,10 +1390,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			this.pendingRebase = this._mergeTree.pendingSegments.splice(firstGroupNode);
 		}
 
-		const rebaseTo = this.getCollabWindow().currentSeq;
+		const collabWindow = this.getCollabWindow();
 		if (
-			this.lastNormalizationRefSeq === undefined ||
-			rebaseTo !== this.lastNormalizationRefSeq
+			this.lastNormalization === undefined ||
+			collabWindow.currentSeq !== this.lastNormalization.refSeq ||
+			collabWindow.localSeq !== this.lastNormalization.localRefSeq
 		) {
 			// Compute obliterate endpoint destinations before segments are normalized.
 			// Segment normalization can affect what should be the semantically correct segments for the endpoints to be placed on.
@@ -1397,14 +1404,17 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				if (obliterateInfo !== undefined) {
 					const { start, end } = this.computeNewObliterateEndpoints(obliterateInfo);
 					const { localSeq } = obliterateInfo.stamp;
-					assert(localSeq !== undefined, "Local seq must be defined");
+					assert(localSeq !== undefined, 0xb6d /* Local seq must be defined */);
 					this.cachedObliterateRebases.set(localSeq, { start, end });
 				}
 			}
 			this.emit("normalize", this);
 
 			this._mergeTree.normalizeSegmentsOnRebase();
-			this.lastNormalizationRefSeq = rebaseTo;
+			this.lastNormalization = {
+				refSeq: collabWindow.currentSeq,
+				localRefSeq: collabWindow.localSeq,
+			};
 		}
 
 		const opList: IMergeTreeDeltaOp[] = [];

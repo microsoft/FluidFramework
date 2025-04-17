@@ -11,7 +11,6 @@ export {
 	SharedObjectKind,
 	createSharedObjectKind,
 } from "./sharedObject.js";
-export { SummarySerializer } from "./summarySerializer.js";
 export { ISharedObject, ISharedObjectEvents } from "./types.js";
 export {
 	createSingleBlobSummary,
