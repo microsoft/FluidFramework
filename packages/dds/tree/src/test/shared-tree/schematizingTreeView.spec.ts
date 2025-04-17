@@ -7,9 +7,7 @@ import { strict as assert, fail } from "node:assert";
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	MockNodeIdentifierManager,
-} from "../../feature-libraries/index.js";
+import { MockNodeIdentifierManager } from "../../feature-libraries/index.js";
 import {
 	SchematizingSimpleTreeView,
 	// eslint-disable-next-line import/no-internal-modules
@@ -919,7 +917,7 @@ describe("SchematizingSimpleTreeView", () => {
 				identifier: schema.identifier,
 			});
 
-			const nodeKeyManager = new MockNodeIdentifierManager()
+			const nodeKeyManager = new MockNodeIdentifierManager();
 			const id = nodeKeyManager.stabilizeNodeIdentifier(
 				nodeKeyManager.generateLocalNodeIdentifier(),
 			);

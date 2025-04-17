@@ -48,7 +48,7 @@ export {
 	type RunTransaction,
 } from "./treeApi.js";
 
-export { TreeAlpha, getStableIdentifierFromLocalIdentifier, getLocalNodeIdentifierFromStableIdentifier } from "./treeApiAlpha.js";
+export { TreeAlpha } from "./treeApiAlpha.js";
 
 export {
 	independentInitializedView,

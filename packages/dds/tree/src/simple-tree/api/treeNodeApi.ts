@@ -123,8 +123,6 @@ export interface TreeNodeApi {
 	 * The same node's identifier may, for example, be different across multiple sessions for the same client and document, or different across two clients in the same session.
 	 */
 	shortId(node: TreeNode): number | string | undefined;
-
-	identifier(node: TreeNode): string | undefined;
 }
 
 /**
@@ -219,14 +217,7 @@ export const treeNodeApi: TreeNodeApi = {
 		return tryGetSchema(node) ?? fail(0xb37 /* Not a tree node */);
 	},
 	shortId(node: TreeNode): number | string | undefined {
-		return getIdentifier(node, true);
-	},
-	identifier(node: TreeNode): string | undefined {
-		const identifier = getIdentifier(node, false);
-		if (typeof identifier === "number") {
-			throw new TypeError("identifier should be uncompressed.");
-		}
-		return identifier;
+		return getIdentifierFromNode(node, true);
 	},
 };
 
@@ -259,9 +250,27 @@ export function tryGetSchema(value: unknown): undefined | TreeNodeSchema {
 	}
 }
 
-// Helper function to for shortId and longId to get the identifier on the node.
-// Tries to return the compressed identifier if isCompressed is true, and the uncompressed identifier otherwise.
-function getIdentifier(node: TreeNode, isCompressed: boolean): number | string | undefined {
+/**
+ *
+ * Gets the identifier from a node.
+ *
+ * @param node - {@link TreeNode} where you want to extract the identifier from.
+ * @param isCompressed - boolean for whether or not to return the compressed identifier, if possible.
+ *
+ * @remarks
+ * If the node does not contain an identifier field, it returns undefined.
+ *
+ * If isCompressed is set to `true`:
+ * - If the node contains a compressible identifier known by the id compressor, the compressed identifier is returned.
+ * - If the node contains an identifier, but is not compressible or unknown by the id compressor, the uncompressed identifier is returned.
+ *
+ * If isCompressed is set to `false`:
+ * - If the node contains an identifier field, the uncompressed identifier is returned.
+ */
+export function getIdentifierFromNode(
+	node: TreeNode,
+	isCompressed: boolean,
+): number | string | undefined {
 	const schema = node[typeSchemaSymbol];
 	if (!isObjectNodeSchema(schema)) {
 		return undefined;

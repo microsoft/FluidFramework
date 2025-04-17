@@ -334,7 +334,7 @@ describe("treeNodeApi", () => {
 		});
 	});
 
-	describe("uncompressedId", () => {
+	describe("identifier", () => {
 		it("returns stable id when an identifier fieldkind exists.", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				identifier: schema.identifier,
@@ -411,14 +411,10 @@ describe("treeNodeApi", () => {
 		});
 
 		describe("unhydrated", () => {
-			class HasIdentifier extends schema.object("HasIdentifier", {
-				identifier: schema.identifier,
-			}) {}
-			it("returns uncompressed string for unhydrated nodes", () => {
-				const node = new HasIdentifier({ identifier: "x" });
-				assert.equal(TreeAlpha.identifier(node), "x");
-			});
 			it("errors accessing defaulted", () => {
+				class HasIdentifier extends schema.object("HasIdentifier", {
+					identifier: schema.identifier,
+				}) {}
 				const node = new HasIdentifier({});
 				assert.throws(
 					() => {
@@ -426,6 +422,185 @@ describe("treeNodeApi", () => {
 					},
 					validateUsageError(/default/),
 				);
+			});
+		});
+
+		describe("getShort", () => {
+			it("returns local id when an identifier fieldkind exists.", () => {
+				const schemaWithIdentifier = schema.object("parent", {
+					identifier: schema.identifier,
+				});
+				const nodeKeyManager = new MockNodeIdentifierManager();
+				const id = nodeKeyManager.stabilizeNodeIdentifier(
+					nodeKeyManager.generateLocalNodeIdentifier(),
+				);
+				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const view = getView(config, nodeKeyManager);
+				view.initialize({ identifier: id });
+
+				assert.equal(
+					TreeAlpha.identifier.getShort(view.root),
+					nodeKeyManager.localizeNodeIdentifier(id),
+				);
+			});
+
+			it("returns undefined when an identifier fieldkind does not exist.", () => {
+				const schemaWithIdentifier = schema.object("parent", {
+					identifier: schema.string,
+				});
+				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const view = getView(config);
+				view.initialize({ identifier: "testID" });
+
+				assert.equal(TreeAlpha.identifier.getShort(view.root), undefined);
+			});
+
+			it("returns the uncompressed identifier value when the provided identifier is an invalid stable id.", () => {
+				const schemaWithIdentifier = schema.object("parent", {
+					identifier: schema.identifier,
+				});
+				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const view = getView(config);
+				view.initialize({ identifier: "invalidUUID" });
+
+				assert.equal(TreeAlpha.identifier.getShort(view.root), "invalidUUID");
+			});
+
+			it("returns the uncompressed identifier value when the provided identifier is a valid stable id, but unknown by the idCompressor.", () => {
+				const schemaWithIdentifier = schema.object("parent", {
+					identifier: schema.identifier,
+				});
+				// Create a valid stableNodeKey which is not known by the tree's idCompressor.
+				const nodeKeyManager = new MockNodeIdentifierManager();
+				const stableNodeKey = nodeKeyManager.stabilizeNodeIdentifier(
+					nodeKeyManager.generateLocalNodeIdentifier(),
+				);
+
+				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const view = getView(config);
+				view.initialize({ identifier: stableNodeKey });
+
+				assert.equal(TreeAlpha.identifier.getShort(view.root), stableNodeKey);
+			});
+
+			it("errors if multiple identifiers exist on the same node", () => {
+				const config = new TreeViewConfiguration({
+					schema: schema.object("parent", {
+						identifier: schema.identifier,
+						identifier2: schema.identifier,
+					}),
+				});
+
+				const view = getView(config);
+				view.initialize({
+					identifier: "a",
+					identifier2: "b",
+				});
+				assert.throws(
+					() => TreeAlpha.identifier.getShort(view.root),
+					(error: Error) =>
+						validateAssertionError(
+							error,
+							/may not be called on a node with more than one identifier/,
+						),
+				);
+			});
+
+			it("Returns undefined for non-object nodes", () => {
+				const config = new TreeViewConfiguration({
+					schema: schema.array("parent", schema.number),
+				});
+				const view = getView(config);
+				view.initialize([1, 2, 3]);
+				assert.equal(TreeAlpha.identifier.getShort(view.root), undefined);
+			});
+
+			describe("unhydrated", () => {
+				class HasIdentifier extends schema.object("HasIdentifier", {
+					identifier: schema.identifier,
+				}) {}
+				it("returns uncompressed string for unhydrated nodes", () => {
+					const node = new HasIdentifier({ identifier: "x" });
+					assert.equal(TreeAlpha.identifier.getShort(node), "x");
+				});
+				it("errors accessing defaulted", () => {
+					const node = new HasIdentifier({});
+					assert.throws(
+						() => {
+							TreeAlpha.identifier.getShort(node);
+						},
+						validateUsageError(/default/),
+					);
+				});
+
+				// TODO: this policy seems questionable, but its whats implemented, and is documented in TreeStatus.new
+				it("returns string when unhydrated then local id when hydrated", () => {
+					const nodeKeyManager = new MockNodeIdentifierManager();
+					const config = new TreeViewConfiguration({ schema: HasIdentifier });
+					const view = getView(config, nodeKeyManager);
+					view.initialize({});
+					const identifier = view.root.identifier;
+					const shortId = TreeAlpha.identifier.getShort(view.root);
+					assert.equal(
+						shortId,
+						nodeKeyManager.localizeNodeIdentifier(identifier as StableNodeIdentifier),
+					);
+
+					const node = new HasIdentifier({ identifier });
+					assert.equal(TreeAlpha.identifier.getShort(node), identifier);
+					view.root = node;
+					assert.equal(TreeAlpha.identifier.getShort(node), shortId);
+				});
+			});
+		});
+
+		describe("shorten", () => {
+			it("returns the local identifier for a known, stable identifier.", () => {
+				const schemaWithIdentifier = schema.object("parent", {
+					identifier: schema.identifier,
+				});
+				const nodeKeyManager = new MockNodeIdentifierManager();
+				const id = nodeKeyManager.stabilizeNodeIdentifier(
+					nodeKeyManager.generateLocalNodeIdentifier(),
+				);
+				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const view = getView(config, nodeKeyManager);
+				view.initialize({ identifier: id });
+
+				assert.equal(
+					TreeAlpha.identifier.shorten(view, id),
+					nodeKeyManager.localizeNodeIdentifier(id),
+				);
+			});
+
+			it("returns undefined for a valid, but unknown stable identifier", () => {
+				const schemaWithIdentifier = schema.object("parent", {
+					identifier: schema.string,
+				});
+				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const view = getView(config);
+				view.initialize({ identifier: "testID" });
+
+				// create an nodeKeyManager unknown by the view.
+				const nodeKeyManager = new MockNodeIdentifierManager();
+				const id = nodeKeyManager.stabilizeNodeIdentifier(
+					nodeKeyManager.generateLocalNodeIdentifier(),
+				);
+
+				assert.equal(TreeAlpha.identifier.shorten(view, id), undefined);
+			});
+
+			it("returns undefined when the provided identifier is an invalid stable id.", () => {
+				const schemaWithIdentifier = schema.object("parent", {
+					identifier: schema.identifier,
+				});
+
+				const invalidId = "invalidUUID";
+				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const view = getView(config);
+				view.initialize({ identifier: invalidId });
+
+				assert.equal(TreeAlpha.identifier.shorten(view, invalidId), undefined);
 			});
 		});
 	});

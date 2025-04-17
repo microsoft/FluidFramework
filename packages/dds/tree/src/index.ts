@@ -69,8 +69,6 @@ export {
 	independentInitializedView,
 	type ViewContent,
 	TreeAlpha,
-	getLocalNodeIdentifierFromStableIdentifier,
-	getStableIdentifierFromLocalIdentifier,
 	independentView,
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
