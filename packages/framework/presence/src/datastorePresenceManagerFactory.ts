@@ -8,7 +8,10 @@
  */
 
 import { createEmitter } from "@fluid-internal/client-utils";
-import type { ExtensionRuntimeEvents } from "@fluidframework/container-definitions/internal";
+import type {
+	ExtensionRuntimeEvents,
+	RawInboundExtensionMessage,
+} from "@fluidframework/container-definitions/internal";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
@@ -18,24 +21,20 @@ import { BasicDataStoreFactory, LoadableFluidObject } from "./datastoreSupport.j
 import type { Presence } from "./presence.js";
 import { createPresenceManager } from "./presenceManager.js";
 import type {
-	InboundClientJoinMessage,
-	InboundDatastoreUpdateMessage,
 	OutboundClientJoinMessage,
 	OutboundDatastoreUpdateMessage,
+	SignalMessages,
 } from "./protocol.js";
 
 /**
  * This provides faux validation of the signal message.
- * This is needed while {@link InboundExtensionMessage} is fully typed even
- * though not validated as used by {@link ContainerExtension.processSignal}.
- * The preferred assertion that `message is InboundExtensionMessage`.
  */
 function assertSignalMessageIsValid(
-	message: IInboundSignalMessage | InboundClientJoinMessage | InboundDatastoreUpdateMessage,
-): asserts message is InboundClientJoinMessage | InboundDatastoreUpdateMessage {
+	message: IInboundSignalMessage | RawInboundExtensionMessage<SignalMessages>,
+): asserts message is RawInboundExtensionMessage<SignalMessages> {
 	assert(message.clientId !== null, 0xa58 /* Signal must have a client ID */);
 	// The other difference between messages is that `content` for
-	// InboundExtensionMessage is JsonDeserialized and we are fine assuming that.
+	// RawInboundExtensionMessage is JsonDeserialized and we are fine assuming that.
 }
 
 /**

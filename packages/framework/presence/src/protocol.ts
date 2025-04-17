@@ -4,8 +4,8 @@
  */
 
 import type {
-	InboundExtensionMessage,
 	OutboundExtensionMessage,
+	VerifiedInboundExtensionMessage,
 } from "@fluidframework/container-definitions/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
@@ -55,7 +55,8 @@ export type OutboundDatastoreUpdateMessage = OutboundExtensionMessage<DatastoreU
 /**
  * @internal
  */
-export type InboundDatastoreUpdateMessage = InboundExtensionMessage<DatastoreUpdateMessage>;
+export type InboundDatastoreUpdateMessage =
+	VerifiedInboundExtensionMessage<DatastoreUpdateMessage>;
 
 /**
  * @internal
@@ -79,7 +80,7 @@ export type OutboundClientJoinMessage = OutboundExtensionMessage<ClientJoinMessa
 /**
  * @internal
  */
-export type InboundClientJoinMessage = InboundExtensionMessage<ClientJoinMessage>;
+export type InboundClientJoinMessage = VerifiedInboundExtensionMessage<ClientJoinMessage>;
 
 /**
  * @internal

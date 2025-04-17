@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- BrandedType is a class declaration only
 import type {
+	BrandedType,
 	InternalUtilityTypes,
 	ITelemetryBaseLogger,
 	JsonDeserialized,
@@ -59,12 +61,54 @@ export type OutboundExtensionMessage<TMessage extends TypedMessage = TypedMessag
 	ExtensionMessage<{ type: TMessage["type"]; content: JsonSerializable<TMessage["content"]> }>;
 
 /**
- * Incoming extension signals.
+ * Brand for value that has not been verified.
+ *
+ * Usage:
+ *
+ * - Cast to with `as unknown as UnverifiedBrand<T>` when value of or containing expected type `T` is yet unknown.
+ *
+ * - Cast from with `as unknown` when "instance" will be parsed to `T`.
  *
  * @sealed
  * @internal
  */
-export type InboundExtensionMessage<TMessage extends TypedMessage = TypedMessage> =
+export declare class UnverifiedBrand<T> extends BrandedType<T> {
+	private readonly UnverifiedValue: T;
+	private constructor();
+}
+
+/**
+ * Unverified incoming extension signals.
+ *
+ * @sealed
+ * @internal
+ */
+export type RawInboundExtensionMessage<TMessage extends TypedMessage = TypedMessage> =
+	// `TMessage extends TypedMessage` encourages processing union elements individually
+	TMessage extends TypedMessage
+		? InternalUtilityTypes.FlattenIntersection<
+				ExtensionMessage<{
+					type: string;
+					content: JsonDeserialized<unknown>;
+				}> & {
+					/**
+					 * The client ID that submitted the message.
+					 * For server generated messages the clientId will be null.
+					 */
+					// eslint-disable-next-line @rushstack/no-new-null
+					clientId: ClientConnectionId | null;
+				}
+			> &
+				UnverifiedBrand<TMessage>
+		: never;
+
+/**
+ * Verified incoming extension signals.
+ *
+ * @sealed
+ * @internal
+ */
+export type VerifiedInboundExtensionMessage<TMessage extends TypedMessage = TypedMessage> =
 	// `TMessage extends TypedMessage` encourages processing union elements individually
 	TMessage extends TypedMessage
 		? InternalUtilityTypes.FlattenIntersection<
@@ -81,6 +125,16 @@ export type InboundExtensionMessage<TMessage extends TypedMessage = TypedMessage
 				}
 			>
 		: never;
+
+/**
+ * Incoming extension signal that may be of the known type or has not yet been validated.
+ *
+ * @sealed
+ * @internal
+ */
+export type InboundExtensionMessage<TMessage extends TypedMessage = TypedMessage> =
+	| RawInboundExtensionMessage<TMessage>
+	| VerifiedInboundExtensionMessage<TMessage>;
 
 /**
  * @internal
@@ -109,8 +163,9 @@ export interface ContainerExtension<
 	 * Callback for signal sent by this extension.
 	 *
 	 * @param address - Address of the signal
-	 * @param signalMessage - Unvalidated signal content and metadata
+	 * @param signalMessage - Signal unverified content and metadata
 	 * @param local - True if signal was sent by this client
+	 *
 	 */
 	processSignal?: (
 		address: string,
