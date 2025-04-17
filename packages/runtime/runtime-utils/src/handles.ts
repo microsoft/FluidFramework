@@ -23,8 +23,11 @@ export interface ISerializedHandle {
  * Is the input object a @see ISerializedHandle?
  * @internal
  */
-export const isSerializedHandle = (value: any): value is ISerializedHandle =>
-	value?.type === "__fluid_handle__";
+export const isSerializedHandle = (value: unknown): value is ISerializedHandle =>
+	typeof value === "object" &&
+	value !== null &&
+	"type" in value &&
+	value.type === "__fluid_handle__";
 
 /**
  * Encodes the given IFluidHandle into a JSON-serializable form,
