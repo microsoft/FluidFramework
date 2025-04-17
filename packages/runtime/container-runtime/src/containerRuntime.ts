@@ -7,7 +7,7 @@ import type {
 	ILayerCompatDetails,
 	IProvideLayerCompatDetails,
 } from "@fluid-internal/client-utils";
-import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
+import { createEmitter, Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
 import type {
 	IAudience,
 	ISelf,
@@ -16,12 +16,19 @@ import type {
 } from "@fluidframework/container-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 import type {
+	ContainerExtensionFactory,
+	ContainerExtensionId,
 	IContainerContext,
+	ExtensionRuntime,
+	ExtensionRuntimeEvents,
+	ExtensionRuntimeProperties,
 	IGetPendingLocalStateProps,
 	IRuntime,
+	IRuntimeInternal,
 	IDeltaManager,
 	IDeltaManagerFull,
 	ILoader,
+	OutboundExtensionMessage,
 } from "@fluidframework/container-definitions/internal";
 import { isIDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import type {
@@ -34,6 +41,7 @@ import type {
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
+	Listenable,
 } from "@fluidframework/core-interfaces";
 import type {
 	IErrorBase,
@@ -42,10 +50,12 @@ import type {
 	IProvideFluidHandleContext,
 	ISignalEnvelope,
 	JsonDeserialized,
+	TypedMessage,
 } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
 	Deferred,
+	Lazy,
 	LazyPromise,
 	PromiseCache,
 	delay,
@@ -273,6 +283,16 @@ import {
 	summarizerClientType,
 } from "./summary/index.js";
 import { Throttler, formExponentialFn } from "./throttler.js";
+
+/**
+ * A {@link ContainerExtension}'s factory function as stored in extension map.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- `any` required to allow typed factory to be assignable per ContainerExtension.processSignal
+type ExtensionEntry = ContainerExtensionFactory<unknown, unknown[], any> extends new (
+	...args: any[]
+) => infer T
+	? T
+	: never;
 
 /**
  * Creates an error object to be thrown / passed to Container's close fn in case of an unknown message type.
@@ -803,8 +823,8 @@ export class ContainerRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents>
 	implements
 		IContainerRuntime,
-		IRuntime,
 		IGarbageCollectionRuntime,
+		IRuntimeInternal,
 		ISummarizerRuntime,
 		ISummarizerInternalsProvider,
 		IFluidParentContext,
@@ -1460,6 +1480,8 @@ export class ContainerRuntime
 	 */
 	private readonly skipSafetyFlushDuringProcessStack: boolean;
 
+	private readonly extensions = new Map<ContainerExtensionId, ExtensionEntry>();
+
 	/***/
 	protected constructor(
 		context: IContainerContext,
@@ -1562,11 +1584,24 @@ export class ContainerRuntime
 			}
 			submitSignalFn(envelope, targetClientId);
 		};
-		this.submitSignalFn = (
-			runtimeOptions.pathBasedAddressing
-				? submitWithPathBasedSignalAddress
-				: submitAssertingLegacySignalAddressing
-		)(sequenceAndSubmitSignal);
+		const submitPathAddressedSignal =
+			submitWithPathBasedSignalAddress(sequenceAndSubmitSignal);
+		this.submitSignalFn = runtimeOptions.pathBasedAddressing
+			? submitPathAddressedSignal
+			: submitAssertingLegacySignalAddressing(sequenceAndSubmitSignal);
+		this.submitExtensionSignal = <TMessage extends TypedMessage>(
+			id: string,
+			subaddress: string,
+			message: OutboundExtensionMessage<TMessage>,
+		): void => {
+			this.verifyNotClosed();
+			const envelope = createNewSignalEnvelope(
+				`/ext/${id}/${subaddress}`,
+				message.type,
+				message.content,
+			);
+			submitPathAddressedSignal(envelope, message.targetClientId);
+		};
 
 		// TODO: After IContainerContext.options is removed, we'll just create a new blank object {} here.
 		// Values are generally expected to be set from the runtime side.
@@ -3317,6 +3352,20 @@ export class ContainerRuntime
 			return;
 		}
 
+		if (address.top === "ext") {
+			const idAndSubaddress = address.subaddress.match(
+				/^(?<id>[^/]*:[^/]*)\/(?<subaddress>.*)$/,
+			);
+			const { id, subaddress } = idAndSubaddress?.groups ?? {};
+			if (id !== undefined && subaddress !== undefined) {
+				const entry = this.extensions.get(id as ContainerExtensionId);
+				if (entry !== undefined) {
+					entry.extension.processSignal?.(subaddress, signalMessage, local);
+					return;
+				}
+			}
+		}
+
 		if (address.critical) {
 			assert(!local, "No recipient found for critical local signal");
 			this.mc.logger.sendTelemetryEvent({
@@ -4927,6 +4976,58 @@ export class ContainerRuntime
 		} else {
 			return this.summaryManager.enqueueSummarize(options);
 		}
+	}
+
+	// While internal, ContainerRuntime has not been converted to use the new events support.
+	// Recreate the required events (new pattern) with injected, wrapper new emitter.
+	// It is lazily create to avoid listeners (old events) that ultimately go nowhere.
+	private readonly lazyEventsForExtensions = new Lazy<Listenable<ExtensionRuntimeEvents>>(
+		() => {
+			const eventEmitter = createEmitter<ExtensionRuntimeEvents>();
+			this.on("connected", (clientId) => eventEmitter.emit("connected", clientId));
+			this.on("disconnected", () => eventEmitter.emit("disconnected"));
+			return eventEmitter;
+		},
+	);
+
+	private readonly submitExtensionSignal: <TMessage extends TypedMessage>(
+		id: string,
+		subaddress: string,
+		message: OutboundExtensionMessage<TMessage>,
+	) => void;
+
+	public acquireExtension<
+		T,
+		TUseContext extends unknown[],
+		TRuntimeProperties extends ExtensionRuntimeProperties,
+	>(
+		id: ContainerExtensionId,
+		factory: ContainerExtensionFactory<T, TUseContext, TRuntimeProperties>,
+		...context: TUseContext
+	): T {
+		let entry = this.extensions.get(id);
+		if (entry === undefined) {
+			const runtime = {
+				isConnected: () => this.connected,
+				getClientId: () => this.clientId,
+				events: this.lazyEventsForExtensions.value,
+				logger: this.baseLogger,
+				submitAddressedSignal: (
+					address: string,
+					message: OutboundExtensionMessage<TRuntimeProperties["SignalMessages"]>,
+				) => {
+					this.submitExtensionSignal(id, address, message);
+				},
+				getQuorum: this.getQuorum.bind(this),
+				getAudience: this.getAudience.bind(this),
+			} satisfies ExtensionRuntime<TRuntimeProperties>;
+			entry = new factory(runtime, ...context);
+			this.extensions.set(id, entry);
+		} else {
+			assert(entry instanceof factory, "Extension entry is not of the expected type");
+			entry.extension.onNewContext(...context);
+		}
+		return entry.interface as T;
 	}
 
 	private get groupedBatchingEnabled(): boolean {
