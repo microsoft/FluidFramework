@@ -52,7 +52,7 @@ import {
 	type ISharedTreeEditor,
 	Tree,
 	ForestTypeOptimized,
-	type ISharedTree,
+	type ITreePrivate,
 } from "../../../shared-tree/index.js";
 import {
 	MockTreeCheckout,
@@ -82,6 +82,7 @@ import { brand } from "../../../util/index.js";
 import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import { configuredSharedTree } from "../../../treeFactory.js";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 
 const options = {
 	jsonValidator: typeboxValidator,
@@ -402,7 +403,7 @@ describe("End to end chunked encoding", () => {
 				id: "test",
 				idCompressor: testIdCompressor,
 			});
-			const tree = factory.create(runtime, "TestSharedTree") as ISharedTree;
+			const tree = factory.create(runtime, "TestSharedTree") as ITreePrivate & IChannel;
 
 			const stableId = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
 
