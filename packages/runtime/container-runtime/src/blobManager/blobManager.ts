@@ -69,6 +69,15 @@ export interface IFluidPlaceholderHandle extends IFluidHandle {
 	readonly events: IEventProvider<IFluidPlaceholderHandleEvents>;
 }
 
+export const isIFluidPlaceholderHandle = (
+	handle: IFluidHandle,
+): handle is IFluidPlaceholderHandle =>
+	"state" in handle &&
+	(handle.state === "local" ||
+		handle.state === "shared" ||
+		handle.state === "placeholder" ||
+		handle.state === "failed");
+
 /**
  * This class represents blob (long string)
  * This object is used only when creating (writing) new blob and serialization purposes.

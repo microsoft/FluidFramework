@@ -10,6 +10,7 @@ export {
 	IBlobManagerEvents,
 	blobManagerBasePath,
 	isBlobPath,
+	isIFluidPlaceholderHandle,
 } from "./blobManager.js";
 export {
 	loadBlobManagerLoadInfo,

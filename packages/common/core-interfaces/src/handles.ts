@@ -4,6 +4,7 @@
  */
 
 import type { ErasedType } from "./erasedType.js";
+import type { IEvent, IEventProvider } from "./events.js";
 import type { IRequest, IResponse } from "./fluidRouter.js";
 
 /**
@@ -102,7 +103,9 @@ export interface IFluidHandleInternal<
 }
 
 /**
- * TODO: Better name to signal that this might be a placeholder - it's just placeholder-aware
+ * Information on whether the handle is a placeholder or not.
+ * @privateRemarks
+ * Contents to be merged with IFluidHandleInternal, and then this separate interface should be removed.
  * @internal
  */
 export interface IFluidPlaceholderHandleInternal<
@@ -114,6 +117,52 @@ export interface IFluidPlaceholderHandleInternal<
 	 * For instance, the BlobManager can generate handles before completing the blob upload/attach.
 	 */
 	readonly placeholder: boolean;
+}
+
+/**
+ * The state of the handle's payload.
+ * - "local" - The payload is only available to the local client, and not to remote collaborators
+ * - "shared" - The payload is availabe to both the local client and remote collaborators
+ * - "placeholder" - The payload is not yet available to the local client
+ * - "failed" - The payload is available to the local client but has failed in sharing to remote collaborators
+ * @legacy
+ * @alpha
+ */
+export type PayloadState = "local" | "shared" | "placeholder" | "failed";
+
+/**
+ * Events which fire as the handle's payload state transitions.
+ * @legacy
+ * @alpha
+ */
+export interface IFluidPlaceholderHandleEvents extends IEvent {
+	/**
+	 * Emitted when the payload becomes available to all clients.
+	 */
+	(event: "shared", listener: () => void);
+	/**
+	 * Emitted for locally created handles when the payload fails sharing to remote collaborators.
+	 */
+	(event: "failed", listener: (error: unknown) => void);
+}
+
+/**
+ * Observable state on the handle regarding its payload sharing state.
+ *
+ * @privateRemarks
+ * Contents to be merged to IFluidHandle, and then this separate interface should be removed.
+ * @legacy
+ * @alpha
+ */
+export interface IFluidPlaceholderHandle extends IFluidHandle {
+	/**
+	 * The current state of the handle's payload.
+	 */
+	readonly state: PayloadState;
+	/**
+	 * Event provider, with events that emit as the payload state transitions.
+	 */
+	readonly events: IEventProvider<IFluidPlaceholderHandleEvents>;
 }
 
 /**

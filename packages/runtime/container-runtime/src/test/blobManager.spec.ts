@@ -38,6 +38,7 @@ import {
 	BlobManager,
 	IBlobManagerLoadInfo,
 	IBlobManagerRuntime,
+	isIFluidPlaceholderHandle,
 	blobManagerBasePath,
 	redirectTableBlobName,
 	type IPendingBlobs,
@@ -507,27 +508,74 @@ for (const createBlobPlaceholders of [false, true]) {
 			assert.strictEqual(summaryData.redirectTable?.length, 1);
 		});
 
-		it("upload fails gracefully", async function () {
-			if (createBlobPlaceholders) {
-				// TODO AB#34918: Figure out how to notify customer of upload failure if we always give back a working handle.
-				this.skip();
-			}
+		it("upload fails gracefully", async () => {
 			await runtime.attach();
 			await runtime.connect();
 
-			const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
-			await runtime.processBlobs(false);
-			runtime.processOps();
-			try {
-				await handleP;
-				assert.fail("should fail");
-			} catch (error: unknown) {
-				assert.strictEqual((error as Error).message, "fake driver error");
+			if (createBlobPlaceholders) {
+				const handle = await runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+				assert.strict(isIFluidPlaceholderHandle(handle));
+				assert.strictEqual(handle.state, "local", "Handle should be in local state");
+				let failed = false;
+				const onFailed = (error: unknown): void => {
+					failed = true;
+					assert.strictEqual((error as Error).message, "fake driver error");
+				};
+				handle.events.once("failed", onFailed);
+				await runtime.processHandles();
+				await runtime.processBlobs(false);
+				runtime.processOps();
+				assert.strict(failed, "should fail");
+				assert.strictEqual(handle.state, "failed", "Handle should be in failed state");
+			} else {
+				// Without placeholder blobs, we don't get to see the handle at all so we can't inspect
+				// its state.
+				const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+				await runtime.processBlobs(false);
+				runtime.processOps();
+				try {
+					await handleP;
+					assert.fail("should fail");
+				} catch (error: unknown) {
+					assert.strictEqual((error as Error).message, "fake driver error");
+				}
+				await assert.rejects(handleP);
 			}
-			await assert.rejects(handleP);
 			const summaryData = validateSummary(runtime);
 			assert.strictEqual(summaryData.ids.length, 0);
 			assert.strictEqual(summaryData.redirectTable, undefined);
+		});
+
+		it("updates handle state after success", async () => {
+			await runtime.attach();
+			await runtime.connect();
+
+			if (createBlobPlaceholders) {
+				const handle = await runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+				assert.strict(isIFluidPlaceholderHandle(handle));
+				assert.strictEqual(handle.state, "local", "Handle should be in local state");
+				let shared = false;
+				const onShared = (): void => {
+					shared = true;
+				};
+				handle.events.once("shared", onShared);
+				await runtime.processHandles();
+				await runtime.processBlobs(true);
+				runtime.processOps();
+				assert.strict(shared, "should become shared");
+				assert.strictEqual(handle.state, "shared", "Handle should be in shared state");
+			} else {
+				// Without placeholder blobs, we don't get to see the handle before it reaches "shared" state
+				// but we can still verify it's in the expected state when we get it.
+				const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+				await runtime.processAll();
+				const handle = await handleP;
+				assert.strict(isIFluidPlaceholderHandle(handle));
+				assert.strictEqual(handle.state, "shared", "Handle should be in shared state");
+			}
+			const summaryData = validateSummary(runtime);
+			assert.strictEqual(summaryData.ids.length, 1);
+			assert.strictEqual(summaryData.redirectTable?.length, 1);
 		});
 
 		it.skip("upload fails and retries for retriable errors", async () => {

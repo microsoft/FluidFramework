@@ -7,6 +7,7 @@ import type { IFluidHandleErased } from "@fluidframework/core-interfaces";
 import { IFluidHandle, fluidHandleSymbol } from "@fluidframework/core-interfaces";
 import type {
 	IFluidHandleInternal,
+	IFluidPlaceholderHandle,
 	IFluidPlaceholderHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 
@@ -47,6 +48,23 @@ export const isFluidHandleInternalPlaceholder = (
 	fluidHandleInternal: IFluidHandleInternal,
 ): fluidHandleInternal is IFluidPlaceholderHandleInternal =>
 	"placeholder" in fluidHandleInternal && fluidHandleInternal.placeholder === true;
+
+/**
+ * Check if the handle is an IFluidPlaceholderHandle.
+ * @privateRemarks
+ * This should be true for locally-created BlobHandles currently. When IFluidPlaceholderHandle is merged
+ * to IFluidHandle, this type guard will no longer be necessary.
+ * @legacy
+ * @alpha
+ */
+export const isIFluidPlaceholderHandle = (
+	handle: IFluidHandle,
+): handle is IFluidPlaceholderHandle =>
+	"state" in handle &&
+	(handle.state === "local" ||
+		handle.state === "shared" ||
+		handle.state === "placeholder" ||
+		handle.state === "failed");
 
 /**
  * Encodes the given IFluidHandle into a JSON-serializable form,
