@@ -22,6 +22,7 @@ import type { ExtensionRuntimeProperties, IEphemeralRuntime } from "./internalTy
 import type { AttendeesEvents, AttendeeId, Presence, PresenceEvents } from "./presence.js";
 import type { PresenceDatastoreManager } from "./presenceDatastoreManager.js";
 import { PresenceDatastoreManagerImpl } from "./presenceDatastoreManager.js";
+import type { SignalMessages } from "./protocol.js";
 import type { SystemWorkspace, SystemWorkspaceDatastore } from "./systemWorkspace.js";
 import { createSystemWorkspace } from "./systemWorkspace.js";
 import type {
@@ -121,18 +122,12 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 	 * Check for Presence message and process it.
 	 *
 	 * @param address - Address of the message
-	 * @param message - Unvalidated message to be processed
+	 * @param message - Unverified message to be processed
 	 * @param local - Whether the message originated locally (`true`) or remotely (`false`)
-	 *
-	 * @remarks
-	 * generic InboundExtensionMessage is used here in place of specific inbound
-	 * message types that are expected. This is to facilitate this code doing at
-	 * least some validation of the message type and content before use.
-	 * A better solution would be to brand the messages are validated/unvalidated.
 	 */
 	public processSignal(
 		address: string,
-		message: InboundExtensionMessage,
+		message: InboundExtensionMessage<SignalMessages>,
 		local: boolean,
 	): void {
 		this.datastoreManager.processSignal(

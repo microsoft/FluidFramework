@@ -29,6 +29,7 @@ import type {
 	InboundClientJoinMessage,
 	InboundDatastoreUpdateMessage,
 	OutboundDatastoreUpdateMessage,
+	SignalMessages,
 	SystemDatastore,
 } from "./protocol.js";
 import { datastoreUpdateMessageType, joinMessageType } from "./protocol.js";
@@ -61,7 +62,7 @@ const internalWorkspaceTypes: Readonly<Record<string, "States" | "Notifications"
 
 const knownMessageTypes = new Set([joinMessageType, datastoreUpdateMessageType]);
 function isPresenceMessage(
-	message: InboundExtensionMessage,
+	message: InboundExtensionMessage<SignalMessages>,
 ): message is InboundDatastoreUpdateMessage | InboundClientJoinMessage {
 	return knownMessageTypes.has(message.type);
 }
@@ -80,7 +81,11 @@ export interface PresenceDatastoreManager {
 		internalWorkspaceAddress: `n:${WorkspaceAddress}`,
 		requestedContent: TSchema,
 	): NotificationsWorkspace<TSchema>;
-	processSignal(message: InboundExtensionMessage, local: boolean, optional: boolean): void;
+	processSignal(
+		message: InboundExtensionMessage<SignalMessages>,
+		local: boolean,
+		optional: boolean,
+	): void;
 }
 
 function mergeGeneralDatastoreMessageContent(
@@ -327,7 +332,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	}
 
 	public processSignal(
-		message: InboundExtensionMessage,
+		message: InboundExtensionMessage<SignalMessages>,
 		local: boolean,
 		optional: boolean,
 	): void {

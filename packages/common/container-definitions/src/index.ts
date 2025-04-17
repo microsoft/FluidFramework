@@ -27,6 +27,9 @@ export type {
 	ExtensionRuntimeProperties,
 	InboundExtensionMessage,
 	OutboundExtensionMessage,
+	RawInboundExtensionMessage,
+	UnverifiedBrand,
+	VerifiedInboundExtensionMessage,
 } from "./containerExtension.js";
 export type {
 	IConnectionDetails,
