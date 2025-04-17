@@ -152,7 +152,7 @@ export abstract class BaseDeltaManagerProxy
 	private readonly onDisconnect = (reason: string, error?: IAnyDriverError): void => {
 		this.emit("disconnect", reason, error);
 	};
-	private readonly onReadonly = (
+	protected onReadonly = (
 		readonly: boolean,
 		readonlyConnectionReason?: { reason: string; error?: IErrorBase },
 	): void => {

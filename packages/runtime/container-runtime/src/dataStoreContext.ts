@@ -197,29 +197,28 @@ export interface IFluidDataStoreContextEvents extends IEvent {
 class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
 	constructor(base: IDeltaManagerFull) {
 		super(base);
-		this._readonly = base.readOnlyInfo.readonly === true;
+		this._readonly = base.readOnlyInfo.readonly;
+		this.onReadonly = (readonly: boolean): void => {
+			this.setReadonly(readonly);
+		};
 	}
 
 	public get readOnlyInfo(): ReadOnlyInfo {
-		if (this._readonly) {
-			if (this.deltaManager.readOnlyInfo.readonly === true) {
-				return this.deltaManager.readOnlyInfo;
-			}
-			return {
-				readonly: this._readonly,
-				forced: true,
-				permissions: false,
-				storageOnly: false,
-			};
+		if (this._readonly === this.deltaManager.readOnlyInfo.readonly) {
+			return this.deltaManager.readOnlyInfo;
 		} else {
-			if (this.deltaManager.readOnlyInfo.readonly !== true) {
-				return this.deltaManager.readOnlyInfo;
-			}
-			return { readonly: false };
+			return this._readonly === true
+				? {
+						readonly: true,
+						forced: true,
+						permissions: false,
+						storageOnly: false,
+					}
+				: { readonly: this._readonly };
 		}
 	}
 
-	private _readonly: boolean;
+	private _readonly: boolean | undefined;
 	public setReadonly(readonly: boolean): void {
 		this._readonly = readonly;
 		if (this._readonly !== readonly) {
