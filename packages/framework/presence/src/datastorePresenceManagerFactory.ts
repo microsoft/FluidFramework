@@ -8,10 +8,7 @@
  */
 
 import { createEmitter } from "@fluid-internal/client-utils";
-import type {
-	ExtensionMessage,
-	ExtensionRuntimeEvents,
-} from "@fluidframework/container-definitions/internal";
+import type { ExtensionRuntimeEvents } from "@fluidframework/container-definitions/internal";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
@@ -20,13 +17,25 @@ import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import { BasicDataStoreFactory, LoadableFluidObject } from "./datastoreSupport.js";
 import type { Presence } from "./presence.js";
 import { createPresenceManager } from "./presenceManager.js";
+import type {
+	InboundClientJoinMessage,
+	InboundDatastoreUpdateMessage,
+	OutboundClientJoinMessage,
+	OutboundDatastoreUpdateMessage,
+} from "./protocol.js";
 
+/**
+ * This provides faux validation of the signal message.
+ * This is needed while {@link InboundExtensionMessage} is fully typed even
+ * though not validated as used by {@link ContainerExtension.processSignal}.
+ * The preferred assertion that `message is InboundExtensionMessage`.
+ */
 function assertSignalMessageIsValid(
-	message: IInboundSignalMessage | ExtensionMessage,
-): asserts message is ExtensionMessage {
+	message: IInboundSignalMessage | InboundClientJoinMessage | InboundDatastoreUpdateMessage,
+): asserts message is InboundClientJoinMessage | InboundDatastoreUpdateMessage {
 	assert(message.clientId !== null, 0xa58 /* Signal must have a client ID */);
 	// The other difference between messages is that `content` for
-	// ExtensionMessage is JsonDeserialized and we are fine assuming that.
+	// InboundExtensionMessage is JsonDeserialized and we are fine assuming that.
 }
 
 /**
@@ -52,7 +61,8 @@ class PresenceManagerDataObject extends LoadableFluidObject {
 				events,
 				getQuorum: runtime.getQuorum.bind(runtime),
 				getAudience: runtime.getAudience.bind(runtime),
-				submitSignal: runtime.submitSignal.bind(runtime),
+				submitSignal: (message: OutboundClientJoinMessage | OutboundDatastoreUpdateMessage) =>
+					runtime.submitSignal(message.type, message.content, message.targetClientId),
 			});
 			this.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
 				assertSignalMessageIsValid(message);
