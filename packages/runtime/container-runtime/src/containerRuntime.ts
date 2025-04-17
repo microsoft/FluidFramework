@@ -155,7 +155,7 @@ import {
 	defaultCompatibilityMode,
 	getConfigsForCompatMode,
 	isValidCompatMode,
-	type ContainerRuntimeOptionsVersionDependent,
+	type DocSchemaAffectingRuntimeOptions,
 } from "./compatUtils.js";
 import { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry.js";
@@ -341,8 +341,8 @@ export interface ICompressionRuntimeOptions {
  *
  * @privateRemarks If any new properties are added to this interface (or IContainerRuntimeOptionsInternal), then we will also need
  * to make changes in compatUtils.ts.
- * If the new property is not considered version-dependent, then it must be explicity omitted from ContainerRuntimeOptionsVersionDependent.
- * If it is considered version-dependent, then a corresponding entry must be added to `versionDependentOptionConfigMap` with the appropriate compat
+ * If the new property changes the DocumentSchema, then it must be explicity omitted from DocSchemaAffectingRuntimeOptions.
+ * If it does change the DocumentSchema, then a corresponding entry must be added to `docSchemaAffectingOptionsConfigMap` with the appropriate compat
  * configuration info.
  * If neither of the above is done, then the build will fail to compile.
  *
@@ -784,9 +784,9 @@ export class ContainerRuntime
 		}
 		const defaultVersionDependentConfigs = getConfigsForCompatMode(compatibilityMode);
 
-		// The following are the default values for the options that are non-version-dependent.
+		// The following are the default values for the options that do not affect the DocumentSchema.
 		const defaultConfigsNonVersionDependent: Required<
-			Omit<IContainerRuntimeOptionsInternal, keyof ContainerRuntimeOptionsVersionDependent>
+			Omit<IContainerRuntimeOptionsInternal, keyof DocSchemaAffectingRuntimeOptions>
 		> = {
 			summaryOptions: {},
 			loadSequenceNumberVerification: "close",

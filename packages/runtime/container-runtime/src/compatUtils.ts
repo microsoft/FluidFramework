@@ -32,18 +32,34 @@ import { pkgVersion } from "./packageVersion.js";
 export const defaultCompatibilityMode = "2.0.0" as const;
 
 /**
- * Subset of the IContainerRuntimeOptionsInternal properties which are version-dependent.
+ * String in a valid semver format.
+ */
+export type SemanticVersion =
+	| `${number}.${number}.${number}`
+	| `${number}.${number}.${number}-${string}`;
+
+/**
+ * Generic type for docSchemaAffectingOptionsConfigMap (used for unit tests).
+ */
+export type ConfigMap<T extends Record<string, unknown>> = {
+	[K in keyof T]: {
+		[version: SemanticVersion]: T[K];
+	};
+};
+
+/**
+ * Subset of the IContainerRuntimeOptionsInternal properties which affect the DocumentSchema.
  *
  * @remarks
- * When a new option is added to IContainerRuntimeOptionsInternal, we must consider if it's a version-dependent option.
- * If it's considered version-dependent, then a corresponding entry must be added to `versionDependentOptionConfigMap`. If not, then
+ * When a new option is added to IContainerRuntimeOptionsInternal, we must consider if it changes the DocumentSchema.
+ * If so, then a corresponding entry must be added to `docSchemaAffectingOptionsConfigMap` below. If not, then
  * it must be omitted from this type.
  *
  * Note: We use `Omit` instead of `Pick` to ensure that all new options are included in this type by default. If any new properties
  * are added to IContainerRuntimeOptionsInternal, they will be included in this type unless explicitly omitted. This will prevent
  * us from forgetting to account for any new properties in the future.
  */
-export type ContainerRuntimeOptionsVersionDependent = Required<
+export type DocSchemaAffectingRuntimeOptions = Required<
 	Omit<
 		IContainerRuntimeOptionsInternal,
 		| "chunkSizeInBytes"
@@ -54,31 +70,15 @@ export type ContainerRuntimeOptionsVersionDependent = Required<
 >;
 
 /**
- * String in a valid semver format.
- */
-export type SemanticVersion =
-	| `${number}.${number}.${number}`
-	| `${number}.${number}.${number}-${string}`;
-
-/**
- * Generic type for versionDependentOptionConfigMap (used for unit tests).
- */
-export type ConfigMap<T extends Record<string, unknown>> = {
-	[K in keyof T]: {
-		[version: SemanticVersion]: T[K];
-	};
-};
-
-/**
- * Mapping of version-dependent options to their compatibility related configs.
+ * Mapping of DocSchemaAffectingRuntimeOptions to their compatibility related configs.
  *
- * Each key in this map corresponds to a property in ContainerRuntimeOptionsVersionDependent.
+ * Each key in this map corresponds to a property in DocSchemaAffectingRuntimeOptions.
  * The value is an object that maps a version string to the default value for that property when using compatibilityMode of at least that version.
  *
  * For example if the compatibilityMode is "1.5.0", then the default value for `enableGroupedBatching` will be false. If the compatibilityMode is "2.0.0"
  * or later,then the default value for `enableGroupedBatching` will be true.
  */
-const versionDependentOptionConfigMap: ConfigMap<ContainerRuntimeOptionsVersionDependent> = {
+const docSchemaAffectingOptionsConfigMap: ConfigMap<DocSchemaAffectingRuntimeOptions> = {
 	enableGroupedBatching: {
 		"1.0.0": false,
 		"2.0.0": true,
@@ -93,7 +93,7 @@ const versionDependentOptionConfigMap: ConfigMap<ContainerRuntimeOptionsVersionD
 		"1.0.0": undefined as unknown as "on" | "delayed",
 		// We do not yet want to enable idCompressor by default since it will increase bundle sizes,
 		// and not all customers will benefit from it. Therefore, we will require customers to explicitly
-		// enable it. We are keeping it as a version-dependent option as this may change in the future.
+		// enable it. We are keeping it as a DocSchema affecting option for now as this may change in the future.
 	},
 	explicitSchemaControl: {
 		"1.0.0": false,
@@ -120,16 +120,16 @@ const versionDependentOptionConfigMap: ConfigMap<ContainerRuntimeOptionsVersionD
 };
 
 /**
- * Returns the default version-dependent configs for a given compatibility mode.
+ * Returns the default DocSchemaAffectingRuntimeOptions configuration for a given compatibility mode.
  */
 export function getConfigsForCompatMode<
-	T extends Record<string, unknown> = ContainerRuntimeOptionsVersionDependent,
+	T extends Record<string, unknown> = DocSchemaAffectingRuntimeOptions,
 >(
 	compatibilityMode: SemanticVersion,
-	configMap: ConfigMap<T> = versionDependentOptionConfigMap as ConfigMap<T>,
+	configMap: ConfigMap<T> = docSchemaAffectingOptionsConfigMap as ConfigMap<T>,
 ): T {
 	const defaultConfigs = {};
-	// Iterate over versionDependentOptionConfigMap to get default values for each version-dependent option.
+	// Iterate over docSchemaAffectingOptionsConfigMap to get default values for each option.
 	for (const key of Object.keys(configMap)) {
 		const config = configMap[key as keyof T];
 		// Sort the versions in ascending order so we can short circuit the loop.
