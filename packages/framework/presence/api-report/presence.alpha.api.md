@@ -63,7 +63,7 @@ export function getPresenceViaDataObject(fluidLoadable: ExperimentalPresenceDO):
 export namespace InternalTypes {
     export type ManagerFactory<TKey extends string, TValue extends ValueDirectoryOrState<any>, TManager> = {
         instanceBase: new (...args: any[]) => any;
-    } & ((key: TKey, datastoreHandle: StateDatastoreHandle<TKey, TValue>) => {
+    } & ((key: TKey, datastoreHandle: StateDatastoreHandle<TKey, TValue>, presence: Presence) => {
         initialData?: {
             value: TValue;
             allowableUpdateLatencyMs: number | undefined;
@@ -144,6 +144,7 @@ export interface Latest<T> {
     getStateAttendees(): Attendee[];
     get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
     set local(value: JsonSerializable<T> & JsonDeserialized<T>);
+    readonly presence: Presence;
 }
 
 // @alpha
@@ -181,6 +182,7 @@ export interface LatestMap<T, Keys extends string | number = string | number> {
     getRemotes(): IterableIterator<LatestMapClientData<T, Keys>>;
     getStateAttendees(): Attendee[];
     readonly local: StateMap<Keys, T>;
+    readonly presence: Presence;
 }
 
 // @alpha
@@ -256,6 +258,7 @@ export interface NotificationsManager<T extends InternalUtilityTypes.Notificatio
     readonly emit: NotificationEmitter<T>;
     readonly events: Listenable<NotificationsManagerEvents>;
     readonly notifications: NotificationListenable<T>;
+    readonly presence: Presence;
 }
 
 // @alpha @sealed (undocumented)

@@ -277,7 +277,7 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 			const newValues: { [key: string]: InternalTypes.ValueDirectoryOrState<unknown> } = {};
 			let cumulativeAllowableUpdateLatencyMs: number | undefined;
 			for (const [key, nodeFactory] of Object.entries(initialContent)) {
-				const newNodeData = nodeFactory(key, handleFromDatastore(this));
+				const newNodeData = nodeFactory(key, handleFromDatastore(this), this.presence);
 				nodes[key as keyof TSchema] = newNodeData.manager;
 				if ("initialData" in newNodeData) {
 					const { value, allowableUpdateLatencyMs } = newNodeData.initialData;
@@ -362,7 +362,7 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 		TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TValueManager>>
 	> {
 		assert(!(key in this.nodes), 0xa3c /* Already have entry for key in map */);
-		const nodeData = nodeFactory(key, handleFromDatastore(this));
+		const nodeData = nodeFactory(key, handleFromDatastore(this), this.presence);
 		this.nodes[key] = nodeData.manager;
 		if ("initialData" in nodeData) {
 			const { value, allowableUpdateLatencyMs } = nodeData.initialData;

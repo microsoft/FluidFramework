@@ -18,7 +18,7 @@ import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
 import type { LatestClientData, LatestData } from "./latestValueTypes.js";
-import type { Attendee } from "./presence.js";
+import type { Attendee, Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
@@ -65,6 +65,11 @@ export interface Latest<T> {
 	readonly controls: BroadcastControls;
 
 	/**
+	 * Root presence object
+	 */
+	readonly presence: Presence;
+
+	/**
 	 * Current state for this client.
 	 * State for this client that will be transmitted to all other connected clients.
 	 * @remarks Manager assumes ownership of the value and its references. Make a deep clone before
@@ -97,6 +102,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		private readonly key: Key,
 		private readonly datastore: StateDatastore<Key, InternalTypes.ValueRequiredState<T>>,
 		public readonly value: InternalTypes.ValueRequiredState<T>,
+		public readonly presence: Presence,
 		controlSettings: BroadcastControlSettings | undefined,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
@@ -194,13 +200,20 @@ export function latest<T extends object, Key extends string = string>(
 			Key,
 			InternalTypes.ValueRequiredState<T>
 		>,
+		presence: Presence,
 	): {
 		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
 		manager: InternalTypes.StateValue<Latest<T>>;
 	} => ({
 		initialData: { value, allowableUpdateLatencyMs: controls?.allowableUpdateLatencyMs },
 		manager: brandIVM<LatestValueManagerImpl<T, Key>, T, InternalTypes.ValueRequiredState<T>>(
-			new LatestValueManagerImpl(key, datastoreFromHandle(datastoreHandle), value, controls),
+			new LatestValueManagerImpl(
+				key,
+				datastoreFromHandle(datastoreHandle),
+				value,
+				presence,
+				controls,
+			),
 		),
 	});
 	return Object.assign(factory, { instanceBase: LatestValueManagerImpl });

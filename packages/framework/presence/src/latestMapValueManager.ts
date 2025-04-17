@@ -18,7 +18,7 @@ import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { objectEntries, objectKeys } from "./internalUtils.js";
 import type { LatestClientData, LatestData, LatestMetadata } from "./latestValueTypes.js";
-import type { AttendeeId, Attendee, SpecificAttendee } from "./presence.js";
+import type { AttendeeId, Attendee, Presence, SpecificAttendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
@@ -322,6 +322,11 @@ export interface LatestMap<T, Keys extends string | number = string | number> {
 	readonly controls: BroadcastControls;
 
 	/**
+	 * Root presence object
+	 */
+	readonly presence: Presence;
+
+	/**
 	 * Current value map for this client.
 	 */
 	readonly local: StateMap<Keys, T>;
@@ -356,6 +361,7 @@ class LatestMapValueManagerImpl<
 			RegistrationKey,
 			InternalTypes.MapValueState<T, Keys>
 		>,
+		public readonly presence: Presence,
 		public readonly value: InternalTypes.MapValueState<T, Keys>,
 		controlSettings: BroadcastControlSettings | undefined,
 	) {
@@ -517,6 +523,7 @@ export function latestMap<
 			RegistrationKey,
 			InternalTypes.MapValueState<T, Keys>
 		>,
+		presence: Presence,
 	): {
 		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
 		manager: InternalTypes.StateValue<LatestMap<T, Keys>>;
@@ -530,6 +537,7 @@ export function latestMap<
 			new LatestMapValueManagerImpl(
 				key,
 				datastoreFromHandle(datastoreHandle),
+				presence,
 				value,
 				controls,
 			),
