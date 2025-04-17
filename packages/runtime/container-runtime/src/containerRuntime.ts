@@ -157,7 +157,10 @@ import { ReportOpPerfTelemetry } from "./connectionTelemetry.js";
 import { ContainerFluidHandleContext } from "./containerHandleContext.js";
 import { channelToDataStore } from "./dataStore.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
-import { DeltaManagerPendingOpsProxy } from "./deltaManagerProxies.js";
+import {
+	DeltaManagerPendingOpsProxy,
+	DeltaManagerSummarizerProxy,
+} from "./deltaManagerProxies.js";
 import { DeltaScheduler } from "./deltaScheduler.js";
 import {
 	GCNodeType,
@@ -1086,7 +1089,7 @@ export class ContainerRuntime
 	}
 
 	public get readonly(): boolean {
-		return isReadonly(this.innerDeltaManager);
+		return isReadonly(this.deltaManager);
 	}
 
 	/**
@@ -1539,21 +1542,26 @@ export class ContainerRuntime
 			this.baseLogger,
 		);
 
-		let outerDeltaManager: IDeltaManagerFull = this.innerDeltaManager;
-		this.useDeltaManagerOpsProxy =
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.DeltaManagerOpsProxy") === true;
+		{
+			let outerDeltaManager: IDeltaManagerFull = this.innerDeltaManager;
+			this.useDeltaManagerOpsProxy =
+				this.mc.config.getBoolean("Fluid.ContainerRuntime.DeltaManagerOpsProxy") === true;
+			// The summarizerDeltaManager Proxy is used to lie to the summarizer to convince it is in the right state as a summarizer client.
+			outerDeltaManager = DeltaManagerSummarizerProxy.tryCreate(outerDeltaManager);
 
-		// The DeltaManagerPendingOpsProxy is used to control the minimum sequence number
-		// It allows us to lie to the layers below so that they can maintain enough local state for rebasing ops.
-		if (this.useDeltaManagerOpsProxy) {
-			const pendingOpsDeltaManagerProxy = new DeltaManagerPendingOpsProxy(
-				this.innerDeltaManager,
-				this.pendingStateManager,
-			);
-			outerDeltaManager = pendingOpsDeltaManagerProxy;
+			// The DeltaManagerPendingOpsProxy is used to control the minimum sequence number
+			// It allows us to lie to the layers below so that they can maintain enough local state for rebasing ops.
+			if (this.useDeltaManagerOpsProxy) {
+				const pendingOpsDeltaManagerProxy = new DeltaManagerPendingOpsProxy(
+					outerDeltaManager,
+					this.pendingStateManager,
+				);
+				outerDeltaManager = pendingOpsDeltaManagerProxy;
+			}
+
+			this._deltaManager = outerDeltaManager;
+			this._deltaManager.on("readonly", (readonly) => this.setReadOnlyState(readonly));
 		}
-
-		this._deltaManager = outerDeltaManager;
 
 		this.handleContext = new ContainerFluidHandleContext("", this);
 
@@ -1864,7 +1872,6 @@ export class ContainerRuntime
 		// If we loaded from pending state, then we need to skip any ops that are already accounted in such
 		// saved state, i.e. all the ops marked by Loader layer sa savedOp === true.
 		this.skipSavedCompressorOps = pendingRuntimeState?.pendingIdCompressorState !== undefined;
-		this.innerDeltaManager.on("readonly", (readonly) => this.setReadOnlyState(readonly));
 	}
 
 	public onSchemaChange(schema: IDocumentSchemaCurrent): void {
