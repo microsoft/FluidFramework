@@ -33,6 +33,8 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
+import { MockDeltaManager } from "./mockDeltas.js";
+
 /**
  * @legacy
  * @alpha
@@ -48,7 +50,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public readonly: boolean = false;
 	public baseSnapshot: ISnapshotTree | undefined;
 	public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> =
-		undefined as any;
+		new MockDeltaManager(() => this.clientId);
 	public containerRuntime: IContainerRuntimeBase = undefined as any;
 	public storage: IDocumentStorageService = undefined as any;
 	public IFluidDataStoreRegistry: IFluidDataStoreRegistry = undefined as any;
