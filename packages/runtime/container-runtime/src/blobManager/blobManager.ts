@@ -16,10 +16,12 @@ import {
 import type {
 	IEvent,
 	IEventProvider,
-	IFluidHandle,
 	IFluidHandleContext,
 	IFluidHandleInternal,
+	IFluidPlaceholderHandle,
+	IFluidPlaceholderHandleEvents,
 	IFluidPlaceholderHandleInternal,
+	PayloadState,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
@@ -56,27 +58,6 @@ import {
 	toRedirectTable,
 	type IBlobManagerLoadInfo,
 } from "./blobManagerSnapSum.js";
-
-export type PayloadState = "local" | "shared" | "placeholder" | "failed";
-
-export interface IFluidPlaceholderHandleEvents extends IEvent {
-	(event: "shared", listener: () => void);
-	(event: "failed", listener: (error: unknown) => void);
-}
-
-export interface IFluidPlaceholderHandle extends IFluidHandle {
-	readonly state: PayloadState;
-	readonly events: IEventProvider<IFluidPlaceholderHandleEvents>;
-}
-
-export const isIFluidPlaceholderHandle = (
-	handle: IFluidHandle,
-): handle is IFluidPlaceholderHandle =>
-	"state" in handle &&
-	(handle.state === "local" ||
-		handle.state === "shared" ||
-		handle.state === "placeholder" ||
-		handle.state === "failed");
 
 /**
  * This class represents blob (long string)

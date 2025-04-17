@@ -22,7 +22,10 @@ import { Deferred } from "@fluidframework/core-utils/internal";
 import { IClientDetails, SummaryType } from "@fluidframework/driver-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
-import { isFluidHandleInternalPlaceholder } from "@fluidframework/runtime-utils/internal";
+import {
+	isFluidPlaceholderHandle,
+	isFluidPlaceholderHandleInternal,
+} from "@fluidframework/runtime-utils/internal";
 import {
 	LoggingError,
 	MockLogger,
@@ -38,7 +41,6 @@ import {
 	BlobManager,
 	IBlobManagerLoadInfo,
 	IBlobManagerRuntime,
-	isIFluidPlaceholderHandle,
 	blobManagerBasePath,
 	redirectTableBlobName,
 	type IPendingBlobs,
@@ -159,7 +161,7 @@ export class MockRuntime
 	): Promise<ArrayBufferLike> {
 		const pathParts = blobHandle.absolutePath.split("/");
 		const blobId = pathParts[2];
-		const placeholder = isFluidHandleInternalPlaceholder(blobHandle)
+		const placeholder = isFluidPlaceholderHandleInternal(blobHandle)
 			? blobHandle.placeholder
 			: false;
 		return this.blobManager.getBlob(blobId, placeholder);
@@ -514,7 +516,7 @@ for (const createBlobPlaceholders of [false, true]) {
 
 			if (createBlobPlaceholders) {
 				const handle = await runtime.createBlob(IsoBuffer.from("blob", "utf8"));
-				assert.strict(isIFluidPlaceholderHandle(handle));
+				assert.strict(isFluidPlaceholderHandle(handle));
 				assert.strictEqual(handle.state, "local", "Handle should be in local state");
 				let failed = false;
 				const onFailed = (error: unknown): void => {
@@ -552,7 +554,7 @@ for (const createBlobPlaceholders of [false, true]) {
 
 			if (createBlobPlaceholders) {
 				const handle = await runtime.createBlob(IsoBuffer.from("blob", "utf8"));
-				assert.strict(isIFluidPlaceholderHandle(handle));
+				assert.strict(isFluidPlaceholderHandle(handle));
 				assert.strictEqual(handle.state, "local", "Handle should be in local state");
 				let shared = false;
 				const onShared = (): void => {
@@ -570,7 +572,7 @@ for (const createBlobPlaceholders of [false, true]) {
 				const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
 				await runtime.processAll();
 				const handle = await handleP;
-				assert.strict(isIFluidPlaceholderHandle(handle));
+				assert.strict(isFluidPlaceholderHandle(handle));
 				assert.strictEqual(handle.state, "shared", "Handle should be in shared state");
 			}
 			const summaryData = validateSummary(runtime);

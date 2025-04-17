@@ -44,7 +44,7 @@ export const isSerializedHandle = (value: any): value is ISerializedHandle =>
 /**
  * @internal
  */
-export const isFluidHandleInternalPlaceholder = (
+export const isFluidPlaceholderHandleInternal = (
 	fluidHandleInternal: IFluidHandleInternal,
 ): fluidHandleInternal is IFluidPlaceholderHandleInternal =>
 	"placeholder" in fluidHandleInternal && fluidHandleInternal.placeholder === true;
@@ -57,7 +57,7 @@ export const isFluidHandleInternalPlaceholder = (
  * @legacy
  * @alpha
  */
-export const isIFluidPlaceholderHandle = (
+export const isFluidPlaceholderHandle = (
 	handle: IFluidHandle,
 ): handle is IFluidPlaceholderHandle =>
 	"state" in handle &&
@@ -74,7 +74,7 @@ export const isIFluidPlaceholderHandle = (
  * @internal
  */
 export function encodeHandleForSerialization(handle: IFluidHandleInternal): ISerializedHandle {
-	return isFluidHandleInternalPlaceholder(handle)
+	return isFluidPlaceholderHandleInternal(handle)
 		? {
 				type: "__fluid_handle__",
 				url: handle.absolutePath,
