@@ -126,6 +126,7 @@ export function getConfigsForCompatMode<
 	T extends Record<string, unknown> = DocSchemaAffectingRuntimeOptions,
 >(
 	compatibilityMode: SemanticVersion,
+	// We allow passing in a custom configMap for unit tests. Otherwise, we should never need to pass in a configMap.
 	configMap: ConfigMap<T> = docSchemaAffectingOptionsConfigMap as ConfigMap<T>,
 ): T {
 	const defaultConfigs = {};
