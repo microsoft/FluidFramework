@@ -24,7 +24,7 @@ import type {
 	TreeNodeSchemaIdentifier,
 } from "../../../core/index.js";
 import { type DownPath, toDownPath } from "../../../feature-libraries/index.js";
-import { Tree, type ISharedTree, type ITreePrivate } from "../../../shared-tree/index.js";
+import { Tree, type ITreePrivate } from "../../../shared-tree/index.js";
 import { getOrCreate, makeArray } from "../../../util/index.js";
 
 import {
@@ -66,6 +66,7 @@ import {
 	type TreeNodeSchema,
 } from "../../../simple-tree/index.js";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import type { ISharedTree } from "../../../treeFactory.js";
 
 export type FuzzView = SchematizingSimpleTreeView<typeof fuzzFieldSchema> & {
 	/**

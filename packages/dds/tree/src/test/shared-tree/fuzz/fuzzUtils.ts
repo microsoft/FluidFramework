@@ -45,12 +45,12 @@ import {
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import type {
-	ISharedTree,
 	SharedTreeOptionsInternal,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../shared-tree/sharedTree.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
 import type { FuzzView } from "./fuzzEditGenerators.js";
+import type { ISharedTree } from "../../../treeFactory.js";
 
 const builder = new SchemaFactory("treeFuzz");
 export class GUIDNode extends builder.object("GuidNode" as string, {
