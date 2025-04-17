@@ -7,7 +7,11 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import type { RevisionTag } from "../../core/index.js";
 import type { IdAllocator, Mutable } from "../../util/index.js";
-import type { InvertNodeManager, NodeId } from "../modular-schema/index.js";
+import type {
+	ContextualizedFieldChange,
+	InvertNodeManager,
+	NodeId,
+} from "../modular-schema/index.js";
 
 import { MarkListFactory } from "./markListFactory.js";
 import {
@@ -43,7 +47,7 @@ import {
  * - Support for slices is not implemented.
  */
 export function invert(
-	change: Changeset,
+	{ change }: ContextualizedFieldChange<Changeset>,
 	isRollback: boolean,
 	genId: IdAllocator,
 	revision: RevisionTag | undefined,

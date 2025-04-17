@@ -27,6 +27,7 @@ export {
 	replaceAtomRevisions,
 	type ChangeAtomIdRangeMap,
 	newChangeAtomIdRangeMap,
+	newChangeAtomIdTransform,
 	compareRevisions,
 } from "./types.js";
 export { RevisionTagCodec } from "./revisionTagCodec.js";

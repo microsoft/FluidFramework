@@ -13,6 +13,7 @@ import {
 	NodeAttachState,
 	type NodeId,
 	type RebaseRevisionMetadata,
+	type ContextualizedFieldChange,
 } from "../modular-schema/index.js";
 
 import { MarkListFactory } from "./markListFactory.js";
@@ -60,8 +61,8 @@ import {
  * @returns A changeset that performs the changes in `change` but does so assuming `base` has been applied first.
  */
 export function rebase(
-	change: Changeset,
-	base: Changeset,
+	{ change }: ContextualizedFieldChange<Changeset>,
+	{ change: base }: ContextualizedFieldChange<Changeset>,
 	rebaseChild: NodeChangeRebaser,
 	genId: IdAllocator,
 	manager: RebaseNodeManager,

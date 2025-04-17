@@ -99,12 +99,12 @@ import { assertEqual, Change, removeAliases } from "./modularChangesetUtil.js";
 
 type SingleNodeChangeset = NodeId | undefined;
 const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
-	compose: (change1, change2, composeChild) =>
+	compose: ({ change: change1 }, { change: change2 }, composeChild) =>
 		change1 === undefined && change2 === undefined
 			? undefined
 			: composeChild(change1, change2),
-	invert: (change) => change,
-	rebase: (change, base, rebaseChild) => rebaseChild(change, base),
+	invert: ({ change }) => change,
+	rebase: ({ change }, { change: base }, rebaseChild) => rebaseChild(change, base),
 	prune: (change, pruneChild) => (change === undefined ? undefined : pruneChild(change)),
 	replaceRevisions: (change, oldRevisions, newRevision) =>
 		change !== undefined ? replaceAtomRevisions(change, oldRevisions, newRevision) : undefined,

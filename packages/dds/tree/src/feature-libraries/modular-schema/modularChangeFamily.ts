@@ -40,6 +40,10 @@ import {
 	type DeltaDetachedNodeRename,
 	newChangeAtomIdRangeMap,
 	offsetChangeAtomId,
+	type ChangeAtomIdRangeMap,
+	makeChangeAtomId,
+	subtractChangeAtomIds,
+	newChangeAtomIdTransform,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -56,6 +60,7 @@ import {
 	type TupleBTree,
 	RangeMap,
 	balancedReduce,
+	type RangeQueryEntry,
 } from "../../util/index.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
 
@@ -69,6 +74,7 @@ import {
 	setInCrossFieldMap,
 } from "./crossFieldQueries.js";
 import {
+	type ContextualizedFieldChange,
 	type FieldChangeHandler,
 	NodeAttachState,
 	type RebaseRevisionMetadata,
@@ -91,13 +97,6 @@ import {
 	type NodeId,
 	type RootNodeTable,
 } from "./modularChangeTypes.js";
-import {
-	makeChangeAtomId,
-	newChangeAtomIdTransform,
-	subtractChangeAtomIds,
-	type ChangeAtomIdRangeMap,
-} from "../../core/rebase/types.js";
-import type { RangeQueryEntry } from "../../util/rangeMap.js";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -346,9 +345,17 @@ export class ModularChangeFamily
 			return child1 ?? child2 ?? fail(0xb22 /* Should not compose two undefined nodes */);
 		};
 
-		const amendedChange = rebaser.compose(
+		const contextualizedFieldChange1 = contextualizeFieldChangeset(
 			fieldChange1,
+			crossFieldTable.baseChange,
+		);
+		const contextualizedFieldChange2 = contextualizeFieldChangeset(
 			fieldChange2,
+			crossFieldTable.newChange,
+		);
+		const amendedChange = rebaser.compose(
+			contextualizedFieldChange1,
+			contextualizedFieldChange2,
 			composeNodes,
 			genId,
 			new ComposeNodeManagerI(crossFieldTable, false),
@@ -572,8 +579,8 @@ export class ModularChangeFamily
 		const manager = new ComposeNodeManagerI(crossFieldTable);
 
 		const composedChange = changeHandler.rebaser.compose(
-			change1Normalized,
-			change2Normalized,
+			contextualizeFieldChangeset(change1Normalized, crossFieldTable.baseChange),
+			contextualizeFieldChangeset(change2Normalized, crossFieldTable.newChange),
 			(child1, child2) => {
 				if (child1 !== undefined && child2 !== undefined) {
 					setInChangeAtomIdMap(crossFieldTable.newToBaseNodeId, child2, child1);
@@ -776,7 +783,7 @@ export class ModularChangeFamily
 					this.fieldKinds,
 					fieldChange.fieldKind,
 				).rebaser.invert(
-					originalFieldChange,
+					contextualizeFieldChangeset(originalFieldChange, change.change),
 					isRollback,
 					genId,
 					revisionForInvert,
@@ -822,7 +829,7 @@ export class ModularChangeFamily
 				this.fieldKinds,
 				fieldChange.fieldKind,
 			).rebaser.invert(
-				fieldChange.change,
+				contextualizeFieldChangeset(fieldChange.change, crossFieldTable.change),
 				isRollback,
 				genId,
 				revisionForInvert,
@@ -1086,9 +1093,10 @@ export class ModularChangeFamily
 					: undefined;
 
 			const fieldId: FieldId = { nodeId: rebasedNodeId, field: fieldKey };
+
 			const rebasedField: unknown = handler.rebaser.rebase(
-				fieldChange.change,
-				baseFieldChange.change,
+				contextualizeFieldChangeset(fieldChange.change, crossFieldTable.newChange),
+				contextualizeFieldChangeset(baseFieldChange.change, crossFieldTable.baseChange),
 				rebaseChild,
 				genId,
 				new RebaseNodeManagerI(crossFieldTable, fieldId),
@@ -1200,8 +1208,8 @@ export class ModularChangeFamily
 
 		context.rebasedChange.change = brand(
 			changeHandler.rebaser.rebase(
-				fieldChangeset,
-				baseChangeset,
+				contextualizeFieldChangeset(fieldChangeset, crossFieldTable.newChange),
+				contextualizeFieldChangeset(baseChangeset, crossFieldTable.baseChange),
 				rebaseChild,
 				genId,
 				new RebaseNodeManagerI(crossFieldTable, context.fieldId, allowInval),
@@ -1290,8 +1298,8 @@ export class ModularChangeFamily
 		};
 
 		const rebasedChangeset = handler.rebaser.rebase(
-			handler.createEmpty(),
-			baseFieldChange.change,
+			contextualizeFieldChangeset(handler.createEmpty() as FieldChangeset, undefined),
+			contextualizeFieldChangeset(baseFieldChange.change, table.baseChange),
 			(_idNew, idBase) =>
 				idBase !== undefined && areEqualChangeAtomIds(idBase, baseNodeId)
 					? baseNodeId
@@ -1360,8 +1368,8 @@ export class ModularChangeFamily
 			const manager = new RebaseNodeManagerI(crossFieldTable, fieldId);
 
 			const rebasedField = changeHandler.rebaser.rebase(
-				fieldChangeset,
-				baseChangeset,
+				contextualizeFieldChangeset(fieldChangeset, crossFieldTable.newChange),
+				contextualizeFieldChangeset(baseChangeset, crossFieldTable.baseChange),
 				rebaseChild,
 				genId,
 				manager,
@@ -2306,6 +2314,27 @@ function newComposeTable(
 	};
 }
 
+export function contextualizeFieldChangeset<T>(
+	fieldChange: T,
+	modularChange?: ModularChangeset | undefined,
+): ContextualizedFieldChange<T> {
+	return {
+		change: fieldChange,
+		roots: {
+			areSameNodes: (oldId: ChangeAtomId, newId: ChangeAtomId, count: number = 1): boolean => {
+				if (modularChange === undefined) {
+					return false;
+				}
+				if (areEqualChangeAtomIds(oldId, newId)) {
+					return true;
+				}
+				const entry = modularChange.rootNodes.oldToNewId.getFirst(oldId, count);
+				return entry.length === count && areEqualChangeAtomIdOpts(entry.value, newId);
+			},
+		},
+	};
+}
+
 interface ComposeTable extends CrossFieldTable<FieldChange> {
 	// Entries are keyed on detach ID
 	readonly entries: CrossFieldMap<DetachedNodeEntry>;
@@ -2389,7 +2418,14 @@ class InvertNodeManagerI implements InvertNodeManager {
 			assert(attachEntry.length === count, "XXX");
 			if (attachEntry.value === undefined) {
 				// We are creating an attach for a node which was detached by the base changeset.
-				renameNodes(this.table.invertedRoots, detachId, newAttachId, count);
+				renameNodes(
+					this.table.invertedRoots,
+					detachId,
+					newAttachId,
+					count,
+					this.table.invertedRoots.newToOldId,
+					this.table.invertedRoots.oldToNewId,
+				);
 			} else {
 				// We are creating an attach for a node which was moved by the base changeset.
 			}

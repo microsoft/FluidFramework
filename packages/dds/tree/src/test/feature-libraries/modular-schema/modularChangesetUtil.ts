@@ -42,6 +42,7 @@ import {
 	newTupleBTree,
 } from "../../../util/index.js";
 import {
+	contextualizeFieldChangeset,
 	getChangeHandler,
 	getParentFieldId,
 	newRootTable,
@@ -355,8 +356,8 @@ function addNodeToField(
 	]);
 
 	return changeHandler.rebaser.compose(
-		fieldWithChange,
-		fieldChangeset,
+		contextualizeFieldChangeset(fieldWithChange),
+		contextualizeFieldChangeset(fieldChangeset),
 		(node1, node2) => node1 ?? node2 ?? fail("Should not compose two undefined nodes"),
 		idAllocator,
 		dummyComposeManager,

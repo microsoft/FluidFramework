@@ -12,6 +12,7 @@ import {
 } from "../../core/index.js";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
+	ContextualizedFieldChange,
 	FieldChangeHandler,
 	NestedChangesIndices,
 	NodeChangeComposer,
@@ -31,7 +32,7 @@ import { BTree } from "@tylerbu/sorted-btree-es6";
 export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 	rebaser: {
 		compose,
-		invert: (change: GenericChangeset): GenericChangeset => change,
+		invert: ({ change }): GenericChangeset => change,
 		rebase: rebaseGenericChange,
 		prune: pruneGenericChange,
 		replaceRevisions,
@@ -63,8 +64,8 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 };
 
 function compose(
-	change1: GenericChangeset,
-	change2: GenericChangeset,
+	{ change: change1 }: ContextualizedFieldChange<GenericChangeset>,
+	{ change: change2 }: ContextualizedFieldChange<GenericChangeset>,
 	composeChildren: NodeChangeComposer,
 ): GenericChangeset {
 	const composed = change1.clone();
@@ -83,8 +84,8 @@ function getNestedChanges(change: GenericChangeset): NestedChangesIndices {
 }
 
 function rebaseGenericChange(
-	change: GenericChangeset,
-	over: GenericChangeset,
+	{ change }: ContextualizedFieldChange<GenericChangeset>,
+	{ change: over }: ContextualizedFieldChange<GenericChangeset>,
 	rebaseChild: NodeChangeRebaser,
 ): GenericChangeset {
 	const rebased: GenericChangeset = new BTree();

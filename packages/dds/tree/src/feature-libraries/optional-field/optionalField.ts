@@ -33,6 +33,8 @@ import {
 	type InvertNodeManager,
 	type CrossFieldKeyRange,
 	CrossFieldTarget,
+	type ContextualizedFieldChange,
+	type RootsInfo,
 } from "../modular-schema/index.js";
 
 import type { OptionalChangeset, Replace } from "./optionalFieldChangeTypes.js";
@@ -40,8 +42,8 @@ import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";
 
 export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	compose: (
-		change1: OptionalChangeset,
-		change2: OptionalChangeset,
+		{ change: change1, roots: roots1 }: ContextualizedFieldChange<OptionalChangeset>,
+		{ change: change2, roots: roots2 }: ContextualizedFieldChange<OptionalChangeset>,
 		composeChild: NodeChangeComposer,
 		_genId: IdAllocator,
 		nodeManager: ComposeNodeManager,
@@ -176,7 +178,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			const replace2 = change2.valueReplace;
 			let composedDst: ChangeAtomId;
 			let composedSrc: ChangeAtomId | undefined;
-			if (isPin(replace1, nodeManager) && isPin(replace2, nodeManager)) {
+			if (isPin(replace1, roots1) && isPin(replace2, roots2)) {
 				// This branch deals with case (S▼S▼S).
 				// Pinning the node twice is equivalent to pinning it once.
 				// Since there are multiple IDs to referer to the same node, there are multiple ways to represent the same pin intention.
@@ -186,8 +188,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				composedDst = replace1.dst;
 				composedSrc = replace2.src;
 				// We need to inform the node manager of the rename
-				nodeManager.composeAttachDetach(composedDst, composedSrc, 1);
-			} else if (isPin(replace1, nodeManager)) {
+				nodeManager.composeAttachDetach(replace1.src, replace2.dst, 1);
+			} else if (isPin(replace1, roots1)) {
 				// This branch deals with cases (S▼S C) and (S▼S _).
 				// In both cases, the pin intention is made irrelevant by replace2 since it detaches the pinned node,
 				// and the replace2 has the last word of whether and which node should be attached to the field.
@@ -201,7 +203,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				composedDst = replace1.dst;
 				// However, we need to inform the node manager of the rename
 				nodeManager.composeAttachDetach(replace1.src, replace2.dst, 1);
-			} else if (isPin(replace2, nodeManager)) {
+			} else if (isPin(replace2, roots2)) {
 				// This branch deals with cases (A S▼S) and (_ S▼S).
 				assert(replace1.src !== undefined, "Replace1.src should be defined");
 				// In both cases, node S should be attached to the field.
@@ -320,7 +322,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		let newChildChangesForA: NodeId | undefined;
 		// If A did exist, the new changes would come from wherever node A is being sent by change1.
 		// eslint-disable-next-line unicorn/prefer-ternary
-		if (isReplaceEffectful(change1.valueReplace)) {
+		if (isReplaceEffectful(change1.valueReplace, roots1)) {
 			// This branch deals with the cases A exists and is being detached (and not reattached) by change1:
 			// (A B C)
 			// (A S S)
@@ -357,7 +359,10 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		}
 
 		// Fields are also responsible for sending new child changes to the node manager for nodes that are being attached by change1.
-		if (change2.childChange !== undefined && isReplaceEffectful(change1.valueReplace)) {
+		if (
+			change2.childChange !== undefined &&
+			isReplaceEffectful(change1.valueReplace, roots1)
+		) {
 			// The presence of new child implies that there is some node B present in the field in context 2.
 			// The fact that the change1 has a shallow effect implies that node B was attached by change1.
 			// This branch therefore deals with the following cases:
@@ -386,7 +391,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	},
 
 	invert: (
-		change: OptionalChangeset,
+		{ change, roots }: ContextualizedFieldChange<OptionalChangeset>,
 		isRollback: boolean,
 		genId: IdAllocator<ChangesetLocalId>,
 		revision: RevisionTag | undefined,
@@ -395,38 +400,36 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		const inverted: Mutable<OptionalChangeset> = {};
 		let childChange = change.childChange;
 
-		if (isReplaceEffectful(change.valueReplace)) {
-			const replace: Mutable<Replace> =
-				change.valueReplace.src === undefined
+		const replace = change.valueReplace;
+		if (isReplaceEffectful(replace, roots)) {
+			const invertedReplace: Mutable<Replace> =
+				replace.src === undefined
 					? {
 							isEmpty: true,
 							dst: makeChangeAtomId(genId.allocate(), revision),
 						}
 					: {
 							isEmpty: false,
-							dst: isRollback
-								? change.valueReplace.src
-								: makeChangeAtomId(genId.allocate(), revision),
+							dst: isRollback ? replace.src : makeChangeAtomId(genId.allocate(), revision),
 						};
-			if (!change.valueReplace.isEmpty) {
-				replace.src = change.valueReplace.dst;
+			if (!replace.isEmpty) {
+				invertedReplace.src = replace.dst;
 
 				// XXX: We should use a new attach ID
-				nodeManager.invertDetach(
-					change.valueReplace.dst,
-					1,
-					change.childChange,
-					change.valueReplace.dst,
-				);
+				nodeManager.invertDetach(replace.dst, 1, change.childChange, replace.dst);
 				childChange = undefined;
 			}
 
-			if (change.valueReplace.src !== undefined) {
+			if (replace.src !== undefined) {
 				// XXX: If we use a new detach ID, need to update the `invertRenames` flag.
-				childChange = nodeManager.invertAttach(change.valueReplace.src, 1, true).value;
+				childChange = nodeManager.invertAttach(replace.src, 1, true).value;
 			}
 
-			inverted.valueReplace = replace;
+			inverted.valueReplace = invertedReplace;
+		} else {
+			if (isPin(replace, roots) && !areEqualChangeAtomIds(replace.src, replace.dst)) {
+				nodeManager.invertDetach(replace.dst, 1, change.childChange, replace.src);
+			}
 		}
 
 		if (childChange !== undefined) {
@@ -437,8 +440,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	},
 
 	rebase: (
-		newChange: OptionalChangeset,
-		overChange: OptionalChangeset,
+		{ change: newChange, roots: newRoots }: ContextualizedFieldChange<OptionalChangeset>,
+		{ change: overChange, roots: overRoots }: ContextualizedFieldChange<OptionalChangeset>,
 		rebaseChild: NodeChangeRebaser,
 		_genId: IdAllocator,
 		nodeManager: RebaseNodeManager,
@@ -453,7 +456,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		// (_ B)
 
 		// The same is true for `overChange` but we don't care about intentions that have no effect.
-		const overReplace = isReplaceEffectful(overChange.valueReplace)
+		const overReplace = isReplaceEffectful(overChange.valueReplace, overRoots)
 			? overChange.valueReplace
 			: undefined;
 		// This makes (_ _) equivalent to (_▲_), and makes (A A) equivalent to (A▼A).
@@ -543,7 +546,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				// (_ B) ↷ (_ C)
 				// In all cases, `newChange`'s intention to attach a node is unaffected by the rebasing,
 				// but it's possible that `overChange` has an impact on how the rebased change should refer to the node it attaches.
-				if (isPin(newChange.valueReplace)) {
+				if (isPin(newChange.valueReplace, newRoots)) {
 					// This branch deals with cases (A▼A) ↷ (A C) and (A▼A) ↷ (A _).
 					// In both cases, `overChange` detaches node A which is pinned by `newChange`.
 					// The rebased change should therefore attach A from wherever `overChange` has sent it.
@@ -678,28 +681,28 @@ type EffectfulReplace =
 			dst: ChangeAtomId;
 	  };
 
-function isReplaceEffectful(replace: Replace | undefined): replace is EffectfulReplace {
+function isReplaceEffectful(
+	replace: Replace | undefined,
+	rootsInfo: RootsInfo,
+): replace is EffectfulReplace {
 	if (replace === undefined) {
 		return false;
 	}
 
-	if (isPin(replace)) {
+	if (isPin(replace, rootsInfo)) {
 		return false;
 	}
 	return !replace.isEmpty || replace.src !== undefined;
 }
 
 function isPin(
-	replace: Replace,
-	nodeManager?: ComposeNodeManager,
+	replace: Replace | undefined,
+	rootsInfo: RootsInfo,
 ): replace is Replace & { isEmpty: false; src: ChangeAtomId } {
-	if (replace.src === undefined || replace.isEmpty) {
+	if (replace?.src === undefined || replace.isEmpty) {
 		return false;
 	}
-	if (nodeManager !== undefined) {
-		return nodeManager.composeDetachAttach(replace.dst, replace.src, 1, true);
-	}
-	return areEqualChangeAtomIds(replace.dst, replace.src);
+	return rootsInfo.areSameNodes(replace.dst, replace.src);
 }
 
 export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
@@ -772,14 +775,16 @@ export function optionalFieldIntoDelta(
 	let markIsANoop = true;
 	const mark: Mutable<DeltaMark> = { count: 1 };
 
-	if (change.valueReplace !== undefined && isReplaceEffectful(change.valueReplace)) {
-		if (!change.valueReplace.isEmpty) {
-			mark.detach = nodeIdFromChangeAtom(change.valueReplace.dst);
+	const replace = change.valueReplace;
+	if (replace !== undefined && !areEqualChangeAtomIdOpts(replace.dst, replace.src)) {
+		if (!replace.isEmpty) {
+			mark.detach = nodeIdFromChangeAtom(replace.dst);
+			markIsANoop = false;
 		}
-		if (change.valueReplace.src !== undefined) {
-			mark.attach = nodeIdFromChangeAtom(change.valueReplace.src);
+		if (replace.src !== undefined) {
+			mark.attach = nodeIdFromChangeAtom(replace.src);
+			markIsANoop = false;
 		}
-		markIsANoop = false;
 	}
 
 	if (change.childChange !== undefined) {
