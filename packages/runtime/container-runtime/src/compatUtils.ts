@@ -36,14 +36,14 @@ export const defaultCompatibilityMode = "2.0.0" as const;
  *
  * @remarks
  * When a new option is added to IContainerRuntimeOptionsInternal, we must consider if it's a version-dependent option.
- * If it's considered version-dependent, then a corresponding entry must be added to `versionDependentOptionConfigs`. If not, then
+ * If it's considered version-dependent, then a corresponding entry must be added to `versionDependentOptionConfigMap`. If not, then
  * it must be omitted from this type.
  *
  * Note: We use `Omit` instead of `Pick` to ensure that all new options are included in this type by default. If any new properties
  * are added to IContainerRuntimeOptionsInternal, they will be included in this type unless explicitly omitted. This will prevent
  * us from forgetting to account for any new properties in the future.
  */
-export type IContainerRuntimeOptionsVersionDependent = Required<
+export type ContainerRuntimeOptionsVersionDependent = Required<
 	Omit<
 		IContainerRuntimeOptionsInternal,
 		| "chunkSizeInBytes"
@@ -72,10 +72,13 @@ export type ConfigMap<T extends Record<string, unknown>> = {
 /**
  * Mapping of version-dependent options to their compatibility related configs.
  *
- * Each key in this map corresponds to a property in IContainerRuntimeOptionsVersionDependent.
+ * Each key in this map corresponds to a property in ContainerRuntimeOptionsVersionDependent.
  * The value is an object that maps a version string to the default value for that property when using compatibilityMode of at least that version.
+ *
+ * For example if the compatibilityMode is "1.5.0", then the default value for `enableGroupedBatching` will be false. If the compatibilityMode is "2.0.0"
+ * or later,then the default value for `enableGroupedBatching` will be true.
  */
-const versionDependentOptionConfigMap: ConfigMap<IContainerRuntimeOptionsVersionDependent> = {
+const versionDependentOptionConfigMap: ConfigMap<ContainerRuntimeOptionsVersionDependent> = {
 	enableGroupedBatching: {
 		"1.0.0": false,
 		"2.0.0": true,
@@ -94,10 +97,11 @@ const versionDependentOptionConfigMap: ConfigMap<IContainerRuntimeOptionsVersion
 	},
 	explicitSchemaControl: {
 		"1.0.0": false,
-		// This option is unique since it was actually introduced before 2.0.0, but its purpose is to prevent 1.x clients from
-		// joining a session. Therefore, we will have it be `true` when the compatibility mode is set to >=2.0.0 and we do not
-		// want any 1.x clients to join. However, since this was not part of the default configurations before 3.0.0, we will
-		// keep it false unless a customer uses a compatibilityMode of 2.0.1 or higher.
+		// This option's intention is to prevent 1.x clients from joining sessions when enabled. Ideally, we would set this to true
+		// when the compatibility mode is set to >=2.0.0. However, this option is unique because it was not enabled by default prior
+		// to the implementation of compatibilityMode. Because `defaultCompatibilityMode` is set to "2.0.0", we need to ensure this option
+		// is not suddenly enabled by default unexpectedly. Therefore, we will set it to true starting at compatibilityMode>="2.0.1" to
+		// ensure that customers who do not provide compatibilityMode will not see any behavior change.
 		"2.0.1": true,
 	},
 	flushMode: {
@@ -119,7 +123,7 @@ const versionDependentOptionConfigMap: ConfigMap<IContainerRuntimeOptionsVersion
  * Returns the default version-dependent configs for a given compatibility mode.
  */
 export function getConfigsForCompatMode<
-	T extends Record<string, unknown> = IContainerRuntimeOptionsVersionDependent,
+	T extends Record<string, unknown> = ContainerRuntimeOptionsVersionDependent,
 >(
 	compatibilityMode: SemanticVersion,
 	configMap: ConfigMap<T> = versionDependentOptionConfigMap as ConfigMap<T>,
