@@ -4252,7 +4252,7 @@ export class ContainerRuntime
 
 		// Note that the real (non-proxy) delta manager is used here to get the readonly info. This is because
 		// container runtime's ability to submit ops depend on the actual readonly state of the delta manager.
-		if (this.readonly) {
+		if (this.innerDeltaManager.readOnlyInfo.readonly) {
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "SubmitOpInReadonly",
 				connected: this.connected,

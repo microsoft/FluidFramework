@@ -15,6 +15,7 @@ import {
 	FluidObject,
 	IDisposable,
 	ITelemetryBaseProperties,
+	type IErrorBase,
 	type IEvent,
 } from "@fluidframework/core-interfaces";
 import {
@@ -206,9 +207,7 @@ export interface IFluidDataStoreContextEvents extends IEvent {
 class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
 	constructor(base: IDeltaManagerFull) {
 		super(base, {
-			onReadonly: (readonly: boolean): void => {
-				this.setReadonly(readonly);
-			},
+			onReadonly: (readonly, reason): void => this.setReadonly(readonly, reason),
 		});
 		this._readonly = base.readOnlyInfo.readonly;
 	}
@@ -220,8 +219,8 @@ class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
 			return this._readonly === true
 				? {
 						readonly: true,
-						forced: true,
-						permissions: false,
+						forced: false,
+						permissions: undefined,
 						storageOnly: false,
 					}
 				: { readonly: this._readonly };
@@ -229,10 +228,13 @@ class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
 	}
 
 	private _readonly: boolean | undefined;
-	public setReadonly(readonly: boolean): void {
+	public setReadonly(
+		readonly: boolean,
+		readonlyConnectionReason?: { reason: string; error?: IErrorBase },
+	): void {
 		this._readonly = readonly;
 		if (this._readonly !== readonly) {
-			this.emit("readonly", readonly);
+			this.emit("readonly", readonly, readonlyConnectionReason);
 		}
 	}
 }
