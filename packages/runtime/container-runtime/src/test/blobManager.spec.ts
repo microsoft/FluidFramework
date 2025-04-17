@@ -517,7 +517,7 @@ for (const createBlobPlaceholders of [false, true]) {
 			if (createBlobPlaceholders) {
 				const handle = await runtime.createBlob(IsoBuffer.from("blob", "utf8"));
 				assert.strict(isFluidPlaceholderHandle(handle));
-				assert.strictEqual(handle.state, "local", "Handle should be in local state");
+				assert.strictEqual(handle.payloadState, "local", "Handle should be in local state");
 				let failed = false;
 				const onFailed = (error: unknown): void => {
 					failed = true;
@@ -528,7 +528,7 @@ for (const createBlobPlaceholders of [false, true]) {
 				await runtime.processBlobs(false);
 				runtime.processOps();
 				assert.strict(failed, "should fail");
-				assert.strictEqual(handle.state, "failed", "Handle should be in failed state");
+				assert.strictEqual(handle.payloadState, "failed", "Handle should be in failed state");
 			} else {
 				// Without placeholder blobs, we don't get to see the handle at all so we can't inspect
 				// its state.
@@ -555,7 +555,7 @@ for (const createBlobPlaceholders of [false, true]) {
 			if (createBlobPlaceholders) {
 				const handle = await runtime.createBlob(IsoBuffer.from("blob", "utf8"));
 				assert.strict(isFluidPlaceholderHandle(handle));
-				assert.strictEqual(handle.state, "local", "Handle should be in local state");
+				assert.strictEqual(handle.payloadState, "local", "Handle should be in local state");
 				let shared = false;
 				const onShared = (): void => {
 					shared = true;
@@ -565,7 +565,7 @@ for (const createBlobPlaceholders of [false, true]) {
 				await runtime.processBlobs(true);
 				runtime.processOps();
 				assert.strict(shared, "should become shared");
-				assert.strictEqual(handle.state, "shared", "Handle should be in shared state");
+				assert.strictEqual(handle.payloadState, "shared", "Handle should be in shared state");
 			} else {
 				// Without placeholder blobs, we don't get to see the handle before it reaches "shared" state
 				// but we can still verify it's in the expected state when we get it.
@@ -573,7 +573,7 @@ for (const createBlobPlaceholders of [false, true]) {
 				await runtime.processAll();
 				const handle = await handleP;
 				assert.strict(isFluidPlaceholderHandle(handle));
-				assert.strictEqual(handle.state, "shared", "Handle should be in shared state");
+				assert.strictEqual(handle.payloadState, "shared", "Handle should be in shared state");
 			}
 			const summaryData = validateSummary(runtime);
 			assert.strictEqual(summaryData.ids.length, 1);

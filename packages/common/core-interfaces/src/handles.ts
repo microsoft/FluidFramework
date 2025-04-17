@@ -158,7 +158,7 @@ export interface IFluidPlaceholderHandle extends IFluidHandle {
 	/**
 	 * The current state of the handle's payload.
 	 */
-	readonly state: PayloadState;
+	readonly payloadState: PayloadState;
 	/**
 	 * Event provider, with events that emit as the payload state transitions.
 	 */

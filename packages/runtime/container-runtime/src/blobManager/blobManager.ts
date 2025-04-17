@@ -82,7 +82,7 @@ export class BlobHandle
 	}
 
 	private _state: PayloadState = "local";
-	public get state(): PayloadState {
+	public get payloadState(): PayloadState {
 		return this._state;
 	}
 
