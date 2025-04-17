@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "@fluidframework/core-utils/internal";
+import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	type ICodecOptions,
 	type IJsonCodec,
@@ -35,7 +35,7 @@ export function encodeRepo(repo: TreeStoredSchema, version: SchemaFormatVersion)
 		case SchemaFormatVersion.V2:
 			return encodeRepoV2(repo);
 		default:
-			throw new Error("Should never reach this point.");
+			unreachableCase(version);
 	}
 }
 
@@ -120,6 +120,6 @@ export function makeSchemaCodec(
 				},
 			);
 		default:
-			fail("Unsupported version");
+			unreachableCase(version);
 	}
 }
