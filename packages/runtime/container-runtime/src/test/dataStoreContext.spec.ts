@@ -48,6 +48,7 @@ import {
 	isFluidError,
 } from "@fluidframework/telemetry-utils/internal";
 import {
+	MockDeltaManager,
 	MockFluidDataStoreRuntime,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
@@ -245,6 +246,7 @@ describe("Data Store Context Tests", () => {
 				parentContext = {
 					IFluidDataStoreRegistry: registryWithSubRegistries,
 					clientDetails: {} as unknown as IFluidParentContext["clientDetails"],
+					deltaManager: new MockDeltaManager(),
 				} satisfies Partial<IFluidParentContext> as unknown as IFluidParentContext;
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
@@ -541,6 +543,7 @@ describe("Data Store Context Tests", () => {
 				IFluidDataStoreRegistry: registry,
 				clientDetails: {} as unknown as IFluidParentContext["clientDetails"],
 				containerRuntime: parentContext as unknown as IContainerRuntimeBase,
+				deltaManager: new MockDeltaManager(),
 			} satisfies Partial<IFluidParentContext> as unknown as IFluidParentContext;
 		});
 
@@ -1036,6 +1039,7 @@ describe("Data Store Context Tests", () => {
 				IFluidDataStoreRegistry: registry,
 				baseLogger: createChildLogger(),
 				clientDetails: {} as unknown as IFluidParentContext["clientDetails"],
+				deltaManager: new MockDeltaManager(),
 			} satisfies Partial<IFluidParentContext> as unknown as IFluidParentContext;
 		});
 
