@@ -55,6 +55,13 @@ The following API changes have been made to improve clarity and consistency:
 | `PresenceWorkspaceEntry` | `StatesWorkspaceEntry` |
 | `SessionClientStatus` | `AttendeeStatus` |
 | `ValueMap` | `StateMap` |
+| - | `Latest.presence`|
+| - | `LatestMap.presence`|
+| - | `Notifications.presence`|
+| - | `NotificationsWorkspace.presence`|
+| - | `StatesWorkspace.presence`|
+
+
 
 > [!NOTE]
 > To fully replace the former `Latest` and `LatestMap` functions, you should import `StateFactory` and call `StateFactory.latest` and `StateFactory.latestMap` respectively. The new `Latest` and `LatestMap` APIs replace `LatestValueManager` and `LatestMapValueManager` respectively.
