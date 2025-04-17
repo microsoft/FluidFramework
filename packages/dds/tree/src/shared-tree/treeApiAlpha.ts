@@ -108,7 +108,7 @@ export interface IdentifierUtils {
 
 	/**
 	 * Returns the local node identifier as a number for a stable identifier known by the id compressor on the branch.
-	 * 
+	 *
 	 * If the id does not exist, or is unknown by the id compressor, it returns undefined.
 	 *
 	 * @param branch - TreeBranch from where you get the idCompressor to do the decompression.

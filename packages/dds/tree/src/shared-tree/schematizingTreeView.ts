@@ -20,8 +20,6 @@ import {
 	cursorForMapTreeNode,
 	type FullSchemaPolicy,
 	TreeStatus,
-	type LocalNodeIdentifier,
-	type StableNodeIdentifier,
 } from "../feature-libraries/index.js";
 import {
 	type FieldSchema,
@@ -486,16 +484,6 @@ export class SchematizingSimpleTreeView<
 
 	public rebaseOnto(context: TreeBranch): void {
 		getCheckout(context).rebase(this.checkout);
-	}
-
-	// TODO: figure out if we want to return string (instead of StableNodeIdentifier), and if this should be public
-	public stabilizeIdentifier(identifier: number): StableNodeIdentifier | undefined {
-		return this.nodeKeyManager.tryStabilizeNodeIdentifier(identifier);
-	}
-
-	// TODO: figure out if we want to return number (instead of LocalNodeIdentifier), and if this should be public
-	public localizeIdentifier(identifier: string): LocalNodeIdentifier | undefined {
-		return this.nodeKeyManager.tryLocalizeNodeIdentifier(identifier);
 	}
 
 	// #endregion Branching

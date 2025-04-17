@@ -35,7 +35,6 @@ import {
 import { insert } from "../sequenceRootUtils.js";
 import {
 	CheckoutFlexTreeView,
-	Tree,
 	type TreeCheckout,
 	type TreeStoredContent,
 } from "../../shared-tree/index.js";
@@ -887,48 +886,6 @@ describe("SchematizingSimpleTreeView", () => {
 
 				stack.unsubscribe();
 			});
-		});
-	});
-
-	describe("stabilizeIdentifier", () => {
-		it("stabilizes local node identifier", () => {
-			const schemaWithIdentifier = schemaFactory.object("parent", {
-				identifier: schema.identifier,
-			});
-			const nodeKeyManager = new MockNodeIdentifierManager();
-			const id = nodeKeyManager.stabilizeNodeIdentifier(
-				nodeKeyManager.generateLocalNodeIdentifier(),
-			);
-			const treeView = getView(
-				new TreeViewConfiguration({ schema: schemaWithIdentifier }),
-				nodeKeyManager,
-			);
-			treeView.initialize({ identifier: id });
-
-			const compressedIdentifier = Tree.shortId(treeView.root);
-			const stabilizedIdentifier = treeView.stabilizeIdentifier(
-				compressedIdentifier as number,
-			);
-			assert.equal(stabilizedIdentifier, id);
-		});
-
-		it("stabilizing an unknown local node identifier fails", () => {
-			const schemaWithIdentifier = schemaFactory.object("parent", {
-				identifier: schema.identifier,
-			});
-
-			const nodeKeyManager = new MockNodeIdentifierManager();
-			const id = nodeKeyManager.stabilizeNodeIdentifier(
-				nodeKeyManager.generateLocalNodeIdentifier(),
-			);
-			const treeView = getView(
-				new TreeViewConfiguration({ schema: schemaWithIdentifier }),
-				nodeKeyManager,
-			);
-			treeView.initialize({ identifier: id });
-
-			const compressedIdentifier = Tree.shortId(treeView.root);
-			assert.throws(() => treeView.stabilizeIdentifier((compressedIdentifier as number) + 1));
 		});
 	});
 });
