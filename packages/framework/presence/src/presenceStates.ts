@@ -12,7 +12,7 @@ import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { ClientRecord, PostUpdateAction } from "./internalTypes.js";
 import type { RecordEntryTypes } from "./internalUtils.js";
 import { getOrCreateRecord, objectEntries } from "./internalUtils.js";
-import type { AttendeeId, Attendee } from "./presence.js";
+import type { AttendeeId, Attendee, Presence } from "./presence.js";
 import type { LocalStateUpdateOptions, StateDatastore } from "./stateDatastore.js";
 import { handleFromDatastore } from "./stateDatastore.js";
 import type { StatesWorkspace, StatesWorkspaceSchema } from "./types.js";
@@ -258,6 +258,7 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 	public constructor(
 		private readonly runtime: PresenceRuntime,
 		private readonly datastore: ValueElementMap<TSchema>,
+		public readonly presence: Presence,
 		initialContent: TSchema,
 		controlsSettings: BroadcastControlSettings | undefined,
 	) {
@@ -436,8 +437,15 @@ export function createPresenceStates<TSchema extends StatesWorkspaceSchema>(
 	datastore: ValueElementMap<StatesWorkspaceSchema>,
 	initialContent: TSchema,
 	controls: BroadcastControlSettings | undefined,
+	presence: Presence,
 ): { public: StatesWorkspace<TSchema>; internal: PresenceStatesInternal } {
-	const impl = new PresenceStatesImpl<TSchema>(runtime, datastore, initialContent, controls);
+	const impl = new PresenceStatesImpl<TSchema>(
+		runtime,
+		datastore,
+		presence,
+		initialContent,
+		controls,
+	);
 
 	return {
 		public: impl,

@@ -227,6 +227,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			workspaceDatastore,
 			requestedContent,
 			controls,
+			this.presence,
 		);
 
 		this.workspaces.set(internalWorkspaceAddress, entry);

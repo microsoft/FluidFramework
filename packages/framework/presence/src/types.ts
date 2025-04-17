@@ -6,6 +6,7 @@
 import type { BroadcastControls } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { NotificationsManager } from "./notificationsManager.js";
+import type { Presence } from "./presence.js";
 
 /**
  * Unique address within a session.
@@ -106,6 +107,11 @@ export interface StatesWorkspace<
 	 * Default controls for management of broadcast updates.
 	 */
 	readonly controls: BroadcastControls;
+
+	/**
+	 * Root Presence object.
+	 */
+	readonly presence: Presence;
 }
 
 // #endregion StatesWorkspace
@@ -161,6 +167,11 @@ export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSc
 	 * Registry of `NotificationsManager`s.
 	 */
 	readonly props: StatesWorkspaceEntries<TSchema>;
+
+	/**
+	 * Root Presence object.
+	 */
+	readonly presence: Presence;
 }
 
 // #endregion NotificationsWorkspace
