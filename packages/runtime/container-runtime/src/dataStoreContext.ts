@@ -62,6 +62,7 @@ import {
 import {
 	addBlobToSummary,
 	isSnapshotFetchRequiredForLoadingGroupId,
+	summarizerClientType,
 } from "@fluidframework/runtime-utils/internal";
 import {
 	DataProcessingError,
@@ -87,7 +88,6 @@ import {
 	getAttributesFormatVersion,
 	getFluidDataStoreAttributes,
 	hasIsolatedChannels,
-	summarizerClientType,
 	wrapSummaryInChannelsTree,
 } from "./summary/index.js";
 
@@ -221,7 +221,7 @@ export abstract class FluidDataStoreContext
 		return this.parentContext.deltaManager;
 	}
 
-	public get readonly(): boolean {
+	public get readonly(): boolean | undefined {
 		return this.parentContext.readonly;
 	}
 
@@ -621,8 +621,6 @@ export abstract class FluidDataStoreContext
 
 	public setReadOnlyState(readonly: boolean): void {
 		this.verifyNotClosed("setReadOnlyState", false /* checkTombstone */);
-
-		// assert(this.readonly === readonly, "Unexpected readonly state");
 
 		this.channel?.setReadOnlyState?.(readonly);
 	}

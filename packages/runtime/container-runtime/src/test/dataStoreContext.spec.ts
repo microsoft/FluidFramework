@@ -39,6 +39,7 @@ import {
 import {
 	GCDataBuilder,
 	convertSummaryTreeToITree,
+	summarizerClientType,
 } from "@fluidframework/runtime-utils/internal";
 import {
 	MockLogger,
@@ -65,7 +66,6 @@ import {
 	WriteFluidDataStoreAttributes,
 	createRootSummarizerNodeWithGC,
 	dataStoreAttributesBlobName,
-	summarizerClientType,
 } from "../summary/index.js";
 
 import {

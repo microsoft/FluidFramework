@@ -33,8 +33,6 @@ import type {
 	ISummarizeResults,
 } from "./summaryDelayLoadedModule/index.js";
 
-export const summarizerClientType = "summarizer";
-
 /**
  * Similar to AbortSignal, but using promise instead of events
  * @param T - cancellation reason type

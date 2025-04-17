@@ -445,7 +445,7 @@ export interface IFluidParentContext
 	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
 	readonly connected: boolean;
-	readonly readonly: boolean;
+	readonly readonly?: boolean;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly storage: IDocumentStorageService;
 	readonly baseLogger: ITelemetryBaseLogger;

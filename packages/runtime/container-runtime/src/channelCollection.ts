@@ -136,9 +136,6 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 		get connected() {
 			return context.connected;
 		},
-		get readonly() {
-			return context.readonly;
-		},
 		deltaManager: context.deltaManager,
 		storage: context.storage,
 		baseLogger: context.baseLogger,
@@ -151,6 +148,9 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 		loadingGroupId: context.loadingGroupId,
 		get attachState() {
 			return context.attachState;
+		},
+		get readonly() {
+			return context.readonly;
 		},
 		containerRuntime: context.containerRuntime,
 		scope: context.scope,
@@ -1130,10 +1130,10 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 						...tagCodeArtifacts({
 							fluidDataStoreId,
 						}),
-						details: JSON.stringify({
+						details: {
 							runtimeReadonly: this.parentContext.readonly,
 							readonly,
-						}),
+						},
 					},
 					error,
 				);

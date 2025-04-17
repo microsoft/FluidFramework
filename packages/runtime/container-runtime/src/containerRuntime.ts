@@ -106,7 +106,9 @@ import {
 	calculateStats,
 	create404Response,
 	exceptionToResponse,
+	isReadonly,
 	seqFromTree,
+	summarizerClientType,
 } from "@fluidframework/runtime-utils/internal";
 import type {
 	IEventSampler,
@@ -244,7 +246,6 @@ import {
 	idCompressorBlobName,
 	metadataBlobName,
 	rootHasIsolatedChannels,
-	summarizerClientType,
 	wrapSummaryInChannelsTree,
 	formCreateSummarizerFn,
 	summarizerRequestUrl,
@@ -1085,10 +1086,7 @@ export class ContainerRuntime
 	}
 
 	public get readonly(): boolean {
-		return (
-			(this.innerDeltaManager.readOnlyInfo.readonly ?? false) ||
-			this.deltaManager.clientDetails.type === summarizerClientType
-		);
+		return isReadonly(this.innerDeltaManager);
 	}
 
 	/**

@@ -7,6 +7,7 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 import { IClientDetails } from "@fluidframework/driver-definitions";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
+import { summarizerClientType } from "@fluidframework/runtime-utils/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -14,7 +15,6 @@ import {
 	ISerializedElection,
 	ITrackedClient,
 } from "./orderedClientElection.js";
-import { summarizerClientType } from "./summarizerTypes.js";
 import { ISummaryCollectionOpEvents } from "./summaryCollection.js";
 
 export interface ISummarizerClientElectionEvents extends IEvent {

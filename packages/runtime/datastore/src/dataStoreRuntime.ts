@@ -73,6 +73,7 @@ import {
 	unpackChildNodesUsedRoutes,
 	toDeltaManagerErased,
 	encodeCompactIdToString,
+	isReadonly,
 } from "@fluidframework/runtime-utils/internal";
 import {
 	ITelemetryLoggerExt,
@@ -141,7 +142,7 @@ export class FluidDataStoreRuntime
 	}
 
 	public get readonly(): boolean {
-		return this.dataStoreContext.readonly;
+		return this.dataStoreContext.readonly ?? isReadonly(this.dataStoreContext.deltaManager);
 	}
 
 	public get clientId(): string | undefined {
@@ -1246,6 +1247,13 @@ export class FluidDataStoreRuntime
 		(this.dataStoreContext as any).once?.("attached", () => {
 			this.setAttachState(AttachState.Attached);
 		});
+
+		const layerCompat = this.dataStoreContext as FluidObject<ILayerCompatDetails>;
+		if (layerCompat.ILayerCompatDetails?.supportedFeatures.has("setReadonly") !== true) {
+			this.dataStoreContext.deltaManager.on("readonly", (readonly) =>
+				this.setReadOnlyState(readonly),
+			);
+		}
 	}
 
 	private verifyNotClosed() {

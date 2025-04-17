@@ -13,6 +13,7 @@ import type {
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { ISequencedClient } from "@fluidframework/driver-definitions";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
+import { summarizerClientType } from "@fluidframework/runtime-utils/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -25,7 +26,6 @@ import {
 	OrderedClientElection,
 	SummarizerClientElection,
 	SummaryManager,
-	summarizerClientType,
 } from "../../summary/index.js";
 
 import { TestQuorumClients } from "./testQuorumClients.js";

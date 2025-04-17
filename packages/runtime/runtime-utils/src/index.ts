@@ -45,6 +45,7 @@ export {
 	SummaryTreeBuilder,
 	TelemetryContext,
 	utf8ByteLength,
+	summarizerClientType,
 } from "./summaryUtils.js";
 export { unpackChildNodesUsedRoutes } from "./unpackUsedRoutes.js";
 export {
@@ -58,3 +59,5 @@ export {
 	toDeltaManagerErased,
 	toDeltaManagerInternal,
 } from "./deltaManager.js";
+
+export { isReadonly } from "./isReadOnly.js";
