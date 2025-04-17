@@ -39,7 +39,7 @@ export type SemanticVersion =
 	| `${number}.${number}.${number}-${string}`;
 
 /**
- * Generic type for docSchemaAffectingOptionsConfigMap (used for unit tests).
+ * Generic type for docSchemaAffectingOptionsConfigMap
  */
 export type ConfigMap<T extends Record<string, unknown>> = {
 	[K in keyof T]: {
@@ -113,8 +113,7 @@ const docSchemaAffectingOptionsConfigMap: ConfigMap<DocSchemaAffectingRuntimeOpt
 	},
 	gcOptions: {
 		"1.0.0": {},
-		// Explicitly disable running Sweep in compat mode "2". Although sweep is supported in 2.x, it is disabled by default.
-		// This setting explicitly disables it to be extra safe.
+		// Although sweep is supported in 2.x, it is disabled by default until compatibilityMode>=3.0.0 to be extra safe.
 		"3.0.0": { enableGCSweep: true },
 	},
 };
