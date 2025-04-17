@@ -13,6 +13,7 @@ import type { IChannelStorageService } from "@fluidframework/datastore-definitio
 import type {
 	IChannelView,
 	IFluidSerializer,
+	SharedKernel,
 } from "@fluidframework/shared-object-base/internal";
 import {
 	UsageError,

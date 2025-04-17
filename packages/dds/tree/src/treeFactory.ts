@@ -7,6 +7,7 @@ import type { IChannelStorageService } from "@fluidframework/datastore-definitio
 
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import {
+	type ISharedObject,
 	type ISharedObjectKind,
 	makeSharedObjectKind,
 	type KernelArgs,
@@ -27,6 +28,13 @@ import type { ITree } from "./simple-tree/index.js";
 import { Breakable } from "./util/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
+
+/**
+ * {@link ITreePrivate} extended with ISharedObject.
+ * @remarks
+ * This is used when integration testing this package with the Fluid runtime as it exposes the APIs the runtime consumes to manipulate the tree.
+ */
+export interface ISharedTree extends ISharedObject, ITreePrivate {}
 
 /**
  * Creates a factory for shared tree kernels with the given options.
