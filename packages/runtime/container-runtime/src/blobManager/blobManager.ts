@@ -19,7 +19,7 @@ import type {
 	IFluidHandle,
 	IFluidHandleContext,
 	IFluidHandleInternal,
-	IFluidHandleInternalPlaceholder,
+	IFluidPlaceholderHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
@@ -78,7 +78,7 @@ export interface IFluidPlaceholderHandle extends IFluidHandle {
  */
 export class BlobHandle
 	extends FluidHandleBase<ArrayBufferLike>
-	implements IFluidPlaceholderHandle, IFluidHandleInternalPlaceholder<ArrayBufferLike>
+	implements IFluidPlaceholderHandle, IFluidPlaceholderHandleInternal<ArrayBufferLike>
 {
 	private attached: boolean = false;
 
@@ -494,7 +494,7 @@ export class BlobManager {
 
 	private async createBlobDetached(
 		blob: ArrayBufferLike,
-	): Promise<IFluidHandleInternalPlaceholder<ArrayBufferLike>> {
+	): Promise<IFluidPlaceholderHandleInternal<ArrayBufferLike>> {
 		// Blobs created while the container is detached are stored in IDetachedBlobStorage.
 		// The 'IDocumentStorageService.createBlob()' call below will respond with a localId.
 		const response = await this.storage.createBlob(blob);
@@ -505,7 +505,7 @@ export class BlobManager {
 	public async createBlob(
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
-	): Promise<IFluidHandleInternalPlaceholder<ArrayBufferLike>> {
+	): Promise<IFluidPlaceholderHandleInternal<ArrayBufferLike>> {
 		if (this.runtime.attachState === AttachState.Detached) {
 			return this.createBlobDetached(blob);
 		}
@@ -528,7 +528,7 @@ export class BlobManager {
 	private async createBlobLegacy(
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
-	): Promise<IFluidHandleInternalPlaceholder<ArrayBufferLike>> {
+	): Promise<IFluidPlaceholderHandleInternal<ArrayBufferLike>> {
 		if (signal?.aborted) {
 			throw this.createAbortError();
 		}
@@ -561,7 +561,7 @@ export class BlobManager {
 
 	private createBlobPlaceholder(
 		blob: ArrayBufferLike,
-	): IFluidHandleInternalPlaceholder<ArrayBufferLike> {
+	): IFluidPlaceholderHandleInternal<ArrayBufferLike> {
 		const localId = this.localBlobIdGenerator();
 
 		const blobHandle = new BlobHandle(

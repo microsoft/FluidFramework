@@ -7,7 +7,7 @@ import type { IFluidHandleErased } from "@fluidframework/core-interfaces";
 import { IFluidHandle, fluidHandleSymbol } from "@fluidframework/core-interfaces";
 import type {
 	IFluidHandleInternal,
-	IFluidHandleInternalPlaceholder,
+	IFluidPlaceholderHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 
 /**
@@ -45,7 +45,7 @@ export const isSerializedHandle = (value: any): value is ISerializedHandle =>
  */
 export const isFluidHandleInternalPlaceholder = (
 	fluidHandleInternal: IFluidHandleInternal,
-): fluidHandleInternal is IFluidHandleInternalPlaceholder =>
+): fluidHandleInternal is IFluidPlaceholderHandleInternal =>
 	"placeholder" in fluidHandleInternal && fluidHandleInternal.placeholder === true;
 
 /**

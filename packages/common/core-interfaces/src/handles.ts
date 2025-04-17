@@ -105,7 +105,7 @@ export interface IFluidHandleInternal<
  * TODO: Better name to signal that this might be a placeholder - it's just placeholder-aware
  * @internal
  */
-export interface IFluidHandleInternalPlaceholder<
+export interface IFluidPlaceholderHandleInternal<
 	// REVIEW: Constrain `T` to something? How do we support dds and datastores safely?
 	out T = unknown, // FluidObject & IFluidLoadable,
 > extends IFluidHandleInternal<T> {
