@@ -115,7 +115,7 @@ export class AuthorizationError
 
 	// These properties are not assigned in this class, but instead assigned in the super constructor.
 	// When targeting ES 2022 or later, TypeScript generates ES6 class fields for these properties.
-	// This override the own properties dynamically created by the super constructor.
+	// This overrides the own properties dynamically created by the super constructor.
 	// To prevent this undesired overriding,
 	// these are declared using `declare` to indicate this definition is only for the TypeScript typing,
 	// and the actual fields come from elsewhere.
