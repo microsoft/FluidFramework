@@ -43,6 +43,9 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 		 * this avoids the need to explicitly include the key and shape in the encoded data for each node instance.
 		 * Instead, this information is here, and thus is encoded only once as part of the node shape.
 		 * These encoders will be used, even if the field they apply to is empty (which can add overhead for fields which are usually empty).
+		 *
+		 * Any fields not included here will be encoded using {@link NodeShape.otherFieldsEncoder}.
+		 * If {@link NodeShape.otherFieldsEncoder} is undefined, then this must handle all non-empty fields.
 		 */
 		public readonly specializedFieldEncoders: readonly KeyedFieldEncoder[],
 		/**
