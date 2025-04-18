@@ -137,7 +137,8 @@ export {
 	identifierFieldKindIdentifier,
 	storedEmptyFieldSchema,
 	type StoredSchemaCollection,
-	schemaFormat,
+	schemaFormatV1,
+	schemaFormatV2,
 	LeafNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
@@ -149,6 +150,7 @@ export {
 	type SchemaAndPolicy,
 	Multiplicity,
 	type SchemaPolicy,
+	SchemaFormatVersion,
 } from "./schema-stored/index.js";
 
 export {

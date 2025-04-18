@@ -174,7 +174,7 @@ export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>)
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
 // @alpha
-export function extractPersistedSchema(schema: ImplicitFieldSchema): JsonCompatible;
+export function extractPersistedSchema(schema: ImplicitFieldSchema, version: SchemaFormatVersion): JsonCompatible;
 
 // @alpha
 export type FactoryContent = IFluidHandle | string | number | boolean | null | Iterable<readonly [string, InsertableContent]> | readonly InsertableContent[] | FactoryContentObject;
@@ -963,6 +963,7 @@ export enum NodeKind {
 export interface NodeSchemaMetadata<out TCustomMetadata = unknown> {
     readonly custom?: TCustomMetadata | undefined;
     readonly description?: string | undefined;
+    readonly persistedData?: string | undefined;
 }
 
 // @public @sealed
@@ -1180,6 +1181,14 @@ export class SchemaFactoryAlpha<out TScope extends string | undefined = string |
 // @alpha
 export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown> extends NodeSchemaOptions<TCustomMetadata> {
     allowUnknownOptionalFields?: boolean;
+}
+
+// @alpha
+export enum SchemaFormatVersion {
+    // (undocumented)
+    V1 = 1,
+    // (undocumented)
+    V2 = 2
 }
 
 // @public @sealed

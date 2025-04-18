@@ -4,14 +4,14 @@
  */
 
 import type { ICodecOptions } from "../../codec/index.js";
-import type { TreeStoredSchema } from "../../core/index.js";
+import { SchemaFormatVersion, type TreeStoredSchema } from "../../core/index.js";
 import {
 	defaultSchemaPolicy,
 	encodeTreeSchema,
 	makeSchemaCodec,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import type { Format } from "../../feature-libraries/schema-index/index.js";
+import type { FormatV1 as Format } from "../../feature-libraries/schema-index/index.js";
 import type { JsonCompatible } from "../../util/index.js";
 import type { ImplicitFieldSchema } from "../schemaTypes.js";
 import { toStoredSchema } from "../toStoredSchema.js";
@@ -48,9 +48,12 @@ import { ViewSchema } from "./view.js";
  * Public API surface uses "persisted" terminology while internally we use "stored".
  * @alpha
  */
-export function extractPersistedSchema(schema: ImplicitFieldSchema): JsonCompatible {
+export function extractPersistedSchema(
+	schema: ImplicitFieldSchema,
+	version: SchemaFormatVersion,
+): JsonCompatible {
 	const stored = toStoredSchema(schema);
-	return encodeTreeSchema(stored);
+	return encodeTreeSchema(stored, version);
 }
 
 /**
@@ -89,7 +92,8 @@ export function comparePersistedSchema(
 	options: ICodecOptions,
 	canInitialize: boolean,
 ): SchemaCompatibilityStatus {
-	const schemaCodec = makeSchemaCodec(options);
+	// TODO: Switch on format?
+	const schemaCodec = makeSchemaCodec(options, SchemaFormatVersion.V1);
 	const stored = schemaCodec.decode(persisted as Format);
 	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, view);
 	return comparePersistedSchemaInternal(stored, viewSchema, canInitialize);

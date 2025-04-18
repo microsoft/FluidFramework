@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { SchemaFormatVersion } from "../../core/index.js";
 import { encodeTreeSchema } from "../../feature-libraries/index.js";
 import { testTrees } from "../testTrees.js";
 
@@ -13,7 +14,7 @@ describe("schema snapshots", () => {
 
 	for (const { name, schemaData } of testTrees) {
 		it(name, () => {
-			const encoded = encodeTreeSchema(schemaData);
+			const encoded = encodeTreeSchema(schemaData, SchemaFormatVersion.V2);
 			takeJsonSnapshot(encoded);
 		});
 	}

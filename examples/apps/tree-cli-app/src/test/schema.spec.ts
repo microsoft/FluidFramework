@@ -13,6 +13,7 @@ import {
 	type ICodecOptions,
 	type ImplicitFieldSchema,
 	type JsonCompatible,
+	SchemaFormatVersion,
 } from "@fluidframework/tree/alpha";
 
 import { List } from "../schema.js";
@@ -111,7 +112,7 @@ const historicalSchema: {
 
 describe("schema", () => {
 	it("current schema matches latest historical schema", () => {
-		const current = extractPersistedSchema(List);
+		const current = extractPersistedSchema(List, SchemaFormatVersion.V2);
 
 		// For compatibility with deep equality and simple objects, round trip via JSON to erase prototypes.
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

@@ -12,6 +12,7 @@ export {
 	type RevertibleFactory,
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
+	SchemaFormatVersion,
 } from "./core/index.js";
 
 import type {
