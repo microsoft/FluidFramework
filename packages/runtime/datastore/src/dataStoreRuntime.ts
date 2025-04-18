@@ -157,9 +157,8 @@ export class FluidDataStoreRuntime
 		return this.dataStoreContext.connected;
 	}
 
-	private readonly getReadonly: () => boolean;
 	public get readonly(): boolean {
-		return this.getReadonly();
+		return this._readonly;
 	}
 
 	public get clientId(): string | undefined {
@@ -280,9 +279,9 @@ export class FluidDataStoreRuntime
 		validateRuntimeCompatibility(ILayerCompatDetails, this.dispose.bind(this));
 
 		if (contextSupportsFeature(dataStoreContext, "setReadonly")) {
-			this.getReadonly = () => dataStoreContext.readonly;
+			this._readonly = dataStoreContext.readonly;
 		} else {
-			this.getReadonly = () => isReadonly(this.dataStoreContext.deltaManager);
+			this._readonly = isReadonly(this.dataStoreContext.deltaManager);
 			this.dataStoreContext.deltaManager.on("readonly", (readonly) =>
 				this.setReadOnlyState(readonly),
 			);
@@ -668,9 +667,11 @@ export class FluidDataStoreRuntime
 		raiseConnectedEvent(this.logger, this, connected, clientId);
 	}
 
+	private _readonly: boolean;
 	public setReadOnlyState(readonly: boolean) {
 		this.verifyNotClosed();
-		if (readonly !== this.readonly) {
+		if (readonly !== this._readonly) {
+			this._readonly = readonly;
 			this.emit("readonly", readonly);
 		}
 	}
