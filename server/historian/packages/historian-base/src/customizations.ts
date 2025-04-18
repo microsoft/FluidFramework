@@ -16,6 +16,7 @@ export interface IHistorianResourcesCustomizations {
 	revokedTokenChecker?: IRevokedTokenChecker;
 	redisClientConnectionManager?: IRedisClientConnectionManager;
 	redisClientConnectionManagerForThrottling?: IRedisClientConnectionManager;
+	redisClientConnectionManagerForInvalidTokenCache?: IRedisClientConnectionManager;
 	readinessCheck?: IReadinessCheck;
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever;
 }

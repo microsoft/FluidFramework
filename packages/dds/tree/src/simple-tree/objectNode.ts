@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Lazy } from "@fluidframework/core-utils/internal";
+import { assert, Lazy, fail, debugAssert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { FieldKey, SchemaPolicy } from "../core/index.js";
@@ -44,7 +44,7 @@ import {
 	getOrCreateInnerNode,
 } from "./core/index.js";
 import { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
-import { type RestrictiveStringRecord, fail, type FlattenKeys } from "../util/index.js";
+import type { RestrictiveStringRecord, FlattenKeys } from "../util/index.js";
 import {
 	isObjectNodeSchema,
 	type ObjectNodeSchema,
@@ -174,6 +174,8 @@ function createFlexKeyMapping(fields: Record<string, ImplicitFieldSchema>): Simp
 }
 
 /**
+ * Creates a proxy handler for the given schema.
+ *
  * @param allowAdditionalProperties - If true, setting of unexpected properties will be forwarded to the target object.
  * Otherwise setting of unexpected properties will error.
  * TODO: consider implementing this using `Object.preventExtension` instead.
@@ -196,9 +198,9 @@ function createProxyHandler(
 	const handler: ProxyHandler<TreeNode> = {
 		get(target, propertyKey, proxy): unknown {
 			const fieldInfo = schema.flexKeyMap.get(propertyKey);
-
 			if (fieldInfo !== undefined) {
 				const flexNode = getOrCreateInnerNode(proxy);
+				debugAssert(() => !flexNode.context.isDisposed() || "FlexTreeNode is disposed");
 				const field = flexNode.tryGetField(fieldInfo.storedKey);
 				if (field !== undefined) {
 					return getTreeNodeForField(field);

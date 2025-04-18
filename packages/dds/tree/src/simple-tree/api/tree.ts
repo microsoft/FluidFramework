@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { IFluidLoadable, IDisposable, Listenable } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -19,6 +20,7 @@ import type {
 } from "../../shared-tree/index.js";
 
 import {
+	type FieldSchemaAlpha,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
@@ -28,17 +30,17 @@ import {
 	type UnsafeUnknownSchema,
 	FieldKind,
 	markSchemaMostDerived,
+	normalizeFieldSchema,
 } from "../schemaTypes.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import { toStoredSchema } from "../toStoredSchema.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
-import { assert } from "@fluidframework/core-utils/internal";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "../objectNodeTypes.js";
-import { fail, getOrCreate } from "../../util/index.js";
+import { getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
 import type { VerboseTree } from "./verboseTree.js";
-import type { SimpleTreeSchema } from "../simpleSchema.js";
+import type { SimpleNodeSchema, SimpleTreeSchema } from "../simpleSchema.js";
 import type {
 	RunTransactionParams,
 	TransactionCallbackStatus,
@@ -75,21 +77,8 @@ export interface ViewableTree {
 	 * Only one schematized view may exist for a given ITree at a time.
 	 * If creating a second, the first must be disposed before calling `viewWith` again.
 	 *
-	 *
-	 * TODO: Provide a way to make a generic view schema for any document.
+	 * @privateRemarks
 	 * TODO: Support adapters for handling out-of-schema data.
-	 *
-	 * Doing initialization here allows a small API that is hard to use incorrectly.
-	 * Other approaches tend to have easy-to-make mistakes.
-	 * For example, having a separate initialization function means apps can forget to call it, making an app that can only open existing documents,
-	 * or call it unconditionally leaving an app that can only create new documents.
-	 * It also would require the schema to be passed into separate places and could cause issues if they didn't match.
-	 * Since the initialization function couldn't return a typed tree, the type checking wouldn't help catch that.
-	 * Also, if an app manages to create a document, but the initialization fails to get persisted, an app that only calls the initialization function
-	 * on the create code-path (for example how a schematized factory might do it),
-	 * would leave the document in an unusable state which could not be repaired when it is reopened (by the same or other clients).
-	 * Additionally, once out of schema content adapters are properly supported (with lazy document updates),
-	 * this initialization could become just another out of schema content adapter and this initialization is no longer a special case.
 	 */
 	viewWith<TRoot extends ImplicitFieldSchema>(
 		config: TreeViewConfiguration<TRoot>,
@@ -106,9 +95,7 @@ export interface ITree extends ViewableTree, IFluidLoadable {}
 
 /**
  * {@link ITree} extended with some alpha APIs.
- * @privateRemarks
- * TODO: Promote this to alpha.
- * @internal
+ * @sealed @alpha
  */
 export interface ITreeAlpha extends ITree {
 	/**
@@ -307,6 +294,53 @@ export class TreeViewConfiguration<
 		// Eagerly perform this conversion to surface errors sooner.
 		toStoredSchema(config.schema);
 	}
+}
+
+/**
+ * {@link TreeViewConfiguration} extended with some alpha APIs.
+ * @sealed @alpha
+ */
+export class TreeViewConfigurationAlpha<
+		const TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
+	>
+	extends TreeViewConfiguration<TSchema>
+	implements TreeSchema
+{
+	/**
+	 * {@inheritDoc TreeSchema.root}
+	 */
+	public readonly root: FieldSchemaAlpha;
+	/**
+	 * {@inheritDoc TreeSchema.definitions}
+	 */
+	public readonly definitions: ReadonlyMap<string, SimpleNodeSchema & TreeNodeSchema>;
+
+	public constructor(props: ITreeViewConfiguration<TSchema>) {
+		super(props);
+		this.root = normalizeFieldSchema(props.schema);
+		const definitions = new Map<string, SimpleNodeSchema & TreeNodeSchema>();
+		walkFieldSchema(props.schema, {
+			node: (schema) =>
+				definitions.set(schema.identifier, schema as SimpleNodeSchema & TreeNodeSchema),
+		});
+		this.definitions = definitions;
+	}
+}
+
+/**
+ * {@link TreeViewConfigurationAlpha}
+ * @sealed @alpha
+ */
+export interface TreeSchema extends SimpleTreeSchema {
+	/**
+	 * {@inheritDoc SimpleTreeSchema.root}
+	 */
+	readonly root: FieldSchemaAlpha;
+
+	/**
+	 * {@inheritDoc SimpleTreeSchema.definitions}
+	 */
+	readonly definitions: ReadonlyMap<string, SimpleNodeSchema & TreeNodeSchema>;
 }
 
 /**

@@ -108,7 +108,7 @@ export namespace InternalTypes {
 	export type StateValue<T> = T & StateValueBrand<T>;
 
 	/**
-	 * Package internal function declaration for value manager instantiation.
+	 * Package internal function declaration for state and notification instantiation.
 	 *
 	 * @system
 	 */

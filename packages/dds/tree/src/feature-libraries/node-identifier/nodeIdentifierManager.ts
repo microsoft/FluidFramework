@@ -46,46 +46,47 @@ export interface NodeIdentifierManager {
 export function createNodeIdentifierManager(
 	idCompressor?: IIdCompressor | undefined,
 ): NodeIdentifierManager {
-	return {
-		generateLocalNodeIdentifier: () => {
-			assert(
-				idCompressor !== undefined,
-				0x6e4 /* Runtime IdCompressor must be available to generate local node identifiers */,
-			);
-			return brand(idCompressor.generateCompressedId());
-		},
+	return new DefaultNodeIdentifierManager(idCompressor);
+}
 
-		localizeNodeIdentifier: (identifier: StableNodeIdentifier) => {
-			assert(
-				idCompressor !== undefined,
-				0x6e5 /* Runtime IdCompressor must be available to convert node identifiers */,
-			);
-			return brand(idCompressor.recompress(identifier));
-		},
-
-		stabilizeNodeIdentifier: (identifier: LocalNodeIdentifier) => {
-			assert(
-				idCompressor !== undefined,
-				0x6e6 /* Runtime IdCompressor must be available to convert node identifiers */,
-			);
-			return brand(
-				// TODO: The assert below is required for type safety but is maybe slow
-				assertIsStableId(idCompressor.decompress(extractFromOpaque(identifier))),
-			);
-		},
-		tryLocalizeNodeIdentifier: (identifier: string) => {
-			assert(
-				idCompressor !== undefined,
-				0x6e9 /* Runtime IdCompressor must be available to convert node identifiers */,
-			);
-			if (isStableNodeIdentifier(identifier)) {
-				const compressedIdentifier = idCompressor.tryRecompress(identifier);
-				if (compressedIdentifier !== undefined) {
-					return brand(compressedIdentifier);
-				}
+class DefaultNodeIdentifierManager implements NodeIdentifierManager {
+	public constructor(private readonly idCompressor: IIdCompressor | undefined) {}
+	public generateLocalNodeIdentifier(): LocalNodeIdentifier {
+		assert(
+			this.idCompressor !== undefined,
+			0x6e4 /* Runtime IdCompressor must be available to generate local node identifiers */,
+		);
+		return brand(this.idCompressor.generateCompressedId());
+	}
+	public localizeNodeIdentifier(identifier: StableNodeIdentifier): LocalNodeIdentifier {
+		assert(
+			this.idCompressor !== undefined,
+			0x6e5 /* Runtime IdCompressor must be available to convert node identifiers */,
+		);
+		return brand(this.idCompressor.recompress(identifier));
+	}
+	public stabilizeNodeIdentifier(identifier: LocalNodeIdentifier): StableNodeIdentifier {
+		assert(
+			this.idCompressor !== undefined,
+			0x6e6 /* Runtime IdCompressor must be available to convert node identifiers */,
+		);
+		return brand(
+			// TODO: The assert below is required for type safety but is maybe slow
+			assertIsStableId(this.idCompressor.decompress(extractFromOpaque(identifier))),
+		);
+	}
+	public tryLocalizeNodeIdentifier(identifier: string): LocalNodeIdentifier | undefined {
+		assert(
+			this.idCompressor !== undefined,
+			0x6e9 /* Runtime IdCompressor must be available to convert node identifiers */,
+		);
+		if (isStableNodeIdentifier(identifier)) {
+			const compressedIdentifier = this.idCompressor.tryRecompress(identifier);
+			if (compressedIdentifier !== undefined) {
+				return brand(compressedIdentifier);
 			}
-		},
-	};
+		}
+	}
 }
 
 export function isStableNodeIdentifier(

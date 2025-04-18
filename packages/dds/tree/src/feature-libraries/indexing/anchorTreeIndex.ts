@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
-import { disposeSymbol, fail, getOrCreate } from "../../util/index.js";
+import { assert, fail } from "@fluidframework/core-utils/internal";
+import { disposeSymbol, getOrCreate } from "../../util/index.js";
 import {
 	type Anchor,
 	type AnchorNode,
