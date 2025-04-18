@@ -320,9 +320,15 @@ export class PendingStateManager implements IDisposable {
 	public onFlushEmptyBatch(
 		placeholder: LocalEmptyBatchPlaceholder,
 		clientSequenceNumber: number | undefined,
+		staged: boolean = false,
 	): void {
 		// We have to cast because runtimeOp doesn't apply for empty batches and is missing on LocalEmptyBatchPlaceholder
-		this.onFlushBatch([placeholder as LocalBatchMessage], clientSequenceNumber);
+		this.onFlushBatch(
+			[placeholder satisfies Omit<LocalBatchMessage, "runtimeOp"> as LocalBatchMessage],
+			clientSequenceNumber,
+			undefined /* ignoreBatchId */,
+			staged,
+		);
 	}
 	/**
 	 * The given batch has been flushed, and needs to be tracked locally until the corresponding
