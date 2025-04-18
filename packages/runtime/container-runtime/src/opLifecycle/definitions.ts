@@ -6,21 +6,42 @@
 import type { IBatchMessage } from "@fluidframework/container-definitions/internal";
 
 import { CompressionAlgorithms } from "../compressionDefinitions.js";
+import type { LocalContainerRuntimeMessage } from "../messageTypes.js";
 
 /**
  * Local Batch message, before it is virtualized and sent to the ordering service
  */
 export interface LocalBatchMessage {
-	serializedOp: string;
+	/**
+	 * The original local op
+	 */
+	runtimeOp: LocalContainerRuntimeMessage;
+	/**
+	 * Optional metadata which is not to be serialized with the op, and is visible to the ordering service
+	 */
 	metadata?: Record<string, unknown>;
+	/**
+	 * Metadata used by this local client in flows such as rebase
+	 */
 	localOpMetadata?: unknown;
+	/**
+	 * Reference sequence number this op is based on
+	 */
 	referenceSequenceNumber: number;
-	compression?: CompressionAlgorithms;
 
 	/**
 	 * @deprecated Use serializedOp
 	 */
 	contents?: never; // To ensure we don't leave this one when converting from OutboundBatchMessage
+}
+
+/**
+ * Placeholder for an empty batch, for tracking the pending local empty batch
+ */
+export interface LocalEmptyBatchPlaceholder {
+	metadata?: Record<string, unknown>;
+	localOpMetadata: { emptyBatch: true };
+	referenceSequenceNumber: number;
 }
 
 /**
