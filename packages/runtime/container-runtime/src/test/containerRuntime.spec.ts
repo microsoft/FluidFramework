@@ -3626,7 +3626,7 @@ describe("Runtime", () => {
 			});
 		});
 
-		// TODO: Update these tests when compatibilityMode API is implemented
+		// TODO: Update these tests when compatibilityMode API is implemented - ADO:36088
 		describe("Default Configurations", () => {
 			it("compatibilityMode not provided", async () => {
 				const logger = new MockLogger();
