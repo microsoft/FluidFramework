@@ -325,14 +325,18 @@ extends:
                   buildDirectory: '${{ parameters.buildDirectory }}'
                   packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
 
-              - template: /tools/pipelines/templates/include-set-package-version.yml@self
-                parameters:
-                  buildDirectory: '${{ parameters.buildDirectory }}'
-                  buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-                  buildToolsVersionToInstall: '${{ parameters.buildToolsVersionToInstall }}'
-                  tagName: '${{ parameters.tagName }}'
-                  interdependencyRange: '${{ parameters.interdependencyRange }}'
-                  packageTypesOverride: '${{ parameters.packageTypesOverride }}'
+              # If we set versions when this runs in the public ADO project,
+              # PRs can end up with a few small differences in the pkgVersion files that look like spurious
+              # changes to bundle size, so skip the update when not in the internal project.
+              - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+                - template: /tools/pipelines/templates/include-set-package-version.yml@self
+                  parameters:
+                    buildDirectory: '${{ parameters.buildDirectory }}'
+                    buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+                    buildToolsVersionToInstall: '${{ parameters.buildToolsVersionToInstall }}'
+                    tagName: '${{ parameters.tagName }}'
+                    interdependencyRange: '${{ parameters.interdependencyRange }}'
+                    packageTypesOverride: '${{ parameters.packageTypesOverride }}'
 
               # Build and Lint
               - template: /tools/pipelines/templates/include-build-lint.yml@self
