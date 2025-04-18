@@ -152,6 +152,13 @@ import {
 	getSummaryForDatastores,
 	wrapContext,
 } from "./channelCollection.js";
+import {
+	defaultCompatibilityMode,
+	getConfigsForCompatMode,
+	isValidCompatMode,
+	type RuntimeOptionsAffectingDocSchema,
+} from "./compatUtils.js";
+import { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry.js";
 import { ContainerFluidHandleContext } from "./containerHandleContext.js";
 import { channelToDataStore } from "./dataStore.js";
@@ -332,6 +339,14 @@ export interface ICompressionRuntimeOptions {
 
 /**
  * Options for container runtime.
+ *
+ * @privateRemarks If any new properties are added to this interface (or IContainerRuntimeOptionsInternal), then we will also need
+ * to make changes in compatUtils.ts.
+ * If the new property changes the DocumentSchema, then it must be explicity omitted from RuntimeOptionsAffectingDocSchema.
+ * If it does change the DocumentSchema, then a corresponding entry must be added to `runtimeOptionsAffectingDocSchemaConfigMap` with the appropriate compat
+ * configuration info.
+ * If neither of the above is done, then the build will fail to compile.
+ *
  * @legacy
  * @alpha
  */
@@ -470,24 +485,6 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 };
 
 /**
- * Available compression algorithms for op compression.
- * @legacy
- * @alpha
- */
-export enum CompressionAlgorithms {
-	lz4 = "lz4",
-}
-
-/**
- * @legacy
- * @alpha
- */
-export const disabledCompressionConfig: ICompressionRuntimeOptions = {
-	minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
-	compressionAlgorithm: CompressionAlgorithms.lz4,
-};
-
-/**
  * @deprecated
  * Untagged logger is unsupported going forward. There are old loaders with old ContainerContexts that only
  * have the untagged logger, so to accommodate that scenario the below interface is used. It can be removed once
@@ -525,19 +522,11 @@ export interface IPendingRuntimeState {
 
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
 
-const defaultFlushMode = FlushMode.TurnBased;
-
 // The actual limit is 1Mb (socket.io and Kafka limits)
 // We can't estimate it fully, as we
 // - do not know what properties relay service will add
 // - we do not stringify final op, thus we do not know how much escaping will be added.
 const defaultMaxBatchSizeInBytes = 700 * 1024;
-
-const defaultCompressionConfig = {
-	// Batches with content size exceeding this value will be compressed
-	minimumBatchSizeInBytes: 614400,
-	compressionAlgorithm: CompressionAlgorithms.lz4,
-};
 
 const defaultChunkSizeInBytes = 204800;
 
@@ -784,20 +773,60 @@ export class ContainerRuntime
 
 		const mc = loggerToMonitoringContext(logger);
 
+		// Some options require a minimum version of the FF runtime to operate, so the default configs will be generated
+		// based on the compatibility mode.
+		// For example, if compatibility mode is set to "1.0.0", the default configs will ensure compatibility with FF runtime
+		// 1.0.0 or later. If the compatibility mode is set to "2.10.0", the default values will be generated to ensure compatibility
+		// with FF runtime 2.10.0 or later.
+		// TODO: We will add in a way for users to pass in compatibilityMode in a follow up PR.
+		const compatibilityMode = defaultCompatibilityMode;
+		if (!isValidCompatMode(compatibilityMode)) {
+			throw new UsageError(
+				`Invalid compatibility mode: ${compatibilityMode}. It must be an existing FF version (i.e. 2.22.1).`,
+			);
+		}
+		const defaultVersionDependentConfigs = getConfigsForCompatMode(compatibilityMode);
+
+		// The following are the default values for the options that do not affect the DocumentSchema.
+		const defaultConfigsNonVersionDependent: Required<
+			Omit<IContainerRuntimeOptionsInternal, keyof RuntimeOptionsAffectingDocSchema>
+		> = {
+			summaryOptions: {},
+			loadSequenceNumberVerification: "close",
+			maxBatchSizeInBytes: defaultMaxBatchSizeInBytes,
+			chunkSizeInBytes: defaultChunkSizeInBytes,
+		};
+
+		const defaultConfigs = {
+			...defaultVersionDependentConfigs,
+			...defaultConfigsNonVersionDependent,
+		};
+
+		// Here we set each option to its corresponding default config value if it's not provided in runtimeOptions.
+		// Note: We cannot do a simple object merge of defaultConfigs/runtimeOptions because in most cases we don't want
+		// a option that is undefined in runtimeOptions to override the default value (except for idCompressor, see below).
 		const {
-			summaryOptions = {},
-			gcOptions = {},
-			loadSequenceNumberVerification = "close",
-			flushMode = defaultFlushMode,
-			compressionOptions = runtimeOptions.enableGroupedBatching === false
-				? disabledCompressionConfig // Compression must be disabled if Grouping is disabled
-				: defaultCompressionConfig,
-			maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
-			enableRuntimeIdCompressor,
-			chunkSizeInBytes = defaultChunkSizeInBytes,
-			enableGroupedBatching = true,
-			explicitSchemaControl = false,
+			summaryOptions = defaultConfigs.summaryOptions,
+			gcOptions = defaultConfigs.gcOptions,
+			loadSequenceNumberVerification = defaultConfigs.loadSequenceNumberVerification,
+			maxBatchSizeInBytes = defaultConfigs.maxBatchSizeInBytes,
+			chunkSizeInBytes = defaultConfigs.chunkSizeInBytes,
+			explicitSchemaControl = defaultConfigs.explicitSchemaControl,
+			enableGroupedBatching = defaultConfigs.enableGroupedBatching,
+			flushMode = defaultConfigs.flushMode,
+			// If batching is disabled then we should disable compression as well. If batching is disabled and compression
+			// is enabled via runtimeOptions, we will throw an error later.
+			compressionOptions = enableGroupedBatching === false
+				? disabledCompressionConfig
+				: defaultConfigs.compressionOptions,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
+
+		// The logic for enableRuntimeIdCompressor is a bit different. Since `undefined` represents a logical state (off)
+		// we need to check it's explicitly set in runtimeOptions. If so, we should use that value even if it's undefined.
+		const enableRuntimeIdCompressor =
+			"enableRuntimeIdCompressor" in runtimeOptions
+				? runtimeOptions.enableRuntimeIdCompressor
+				: defaultConfigs.enableRuntimeIdCompressor;
 
 		const registry = new FluidDataStoreRegistry(registryEntries);
 
