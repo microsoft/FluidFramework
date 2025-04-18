@@ -162,7 +162,7 @@ export interface LatestData<T> {
     // (undocumented)
     metadata: LatestMetadata;
     // (undocumented)
-    value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
+    value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> | undefined;
 }
 
 // @alpha @sealed (undocumented)

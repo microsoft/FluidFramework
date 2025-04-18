@@ -127,9 +127,14 @@ class LatestValueManagerImpl<T, Key extends string>
 		const allKnownStates = this.datastore.knownValues(this.key);
 		for (const [attendeeId, value] of objectEntries(allKnownStates.states)) {
 			if (attendeeId !== allKnownStates.self) {
+				if (value.valid === true && this.validator !== undefined) {
+					const validData = this.validator(value.value);
+					value.valid = validData;
+				}
+
 				yield {
 					attendee: this.datastore.lookupClient(attendeeId),
-					value: value.value,
+					value: value.valid === undefined ? undefined : value.value,
 					metadata: { revision: value.rev, timestamp: value.timestamp },
 				};
 			}
@@ -150,16 +155,14 @@ class LatestValueManagerImpl<T, Key extends string>
 			throw new Error("No entry for clientId");
 		}
 
+		// If
 		if (clientState.valid !== true && this.validator !== undefined) {
 			const validData = this.validator(clientState);
-			if (validData === undefined) {
-				throw new Error("Data failed runtime validation.");
-			}
 			clientState.valid = validData;
 		}
 
 		return {
-			value: clientState.value,
+			value: clientState.valid === undefined ? undefined : clientState.value,
 			metadata: { revision: clientState.rev, timestamp: Date.now() },
 		};
 	}

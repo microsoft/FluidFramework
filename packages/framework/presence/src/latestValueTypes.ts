@@ -34,7 +34,7 @@ export interface LatestMetadata {
  * @alpha
  */
 export interface LatestData<T> {
-	value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
+	value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> | undefined;
 	metadata: LatestMetadata;
 }
 

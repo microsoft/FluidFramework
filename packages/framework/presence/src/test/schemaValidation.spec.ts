@@ -134,7 +134,7 @@ describe("Presence", () => {
 				value = count.getRemote(presence.attendees.getMyself());
 				value = count.getRemote(presence.attendees.getMyself());
 				assert.equal(validatorSpy.callCount, 1);
-				assert.equal(value.value.num, 84);
+				assert.equal(value.value?.num, 84);
 			});
 
 			// TODO: test is failing
@@ -158,7 +158,7 @@ describe("Presence", () => {
 				// Subsequent reads should not call the validator when there is no new data.
 				value = count.getRemote(presence.attendees.getMyself());
 				value = count.getRemote(presence.attendees.getMyself());
-				assert.equal(value.value.num, 84);
+				assert.equal(value.value?.num, 84);
 				assert.equal(validatorSpy.callCount, 1);
 			});
 		});
@@ -199,7 +199,7 @@ describe("Presence", () => {
 
 				// Reading the data should cause the validator to get called once.
 				assert.equal(validatorSpy.callCount, 1);
-				assert.equal(value.get("key1")?.value.num, 84);
+				assert.equal(value.get("key1")?.value?.num, 84);
 			});
 
 			it("validator is not called multiple times for the same data", () => {
@@ -223,7 +223,7 @@ describe("Presence", () => {
 				value = count.getRemote(presence.attendees.getMyself());
 				value = count.getRemote(presence.attendees.getMyself());
 				assert.equal(validatorSpy.callCount, 1);
-				assert.equal(value.get("key1")?.value.num, 84);
+				assert.equal(value.get("key1")?.value?.num, 84);
 			});
 		});
 	});
