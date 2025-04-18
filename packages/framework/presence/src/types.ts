@@ -109,7 +109,7 @@ export interface StatesWorkspace<
 	readonly controls: BroadcastControls;
 
 	/**
-	 * Root Presence object.
+	 * Containing {@link Presence}
 	 */
 	readonly presence: Presence;
 }
@@ -169,7 +169,7 @@ export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSc
 	readonly props: StatesWorkspaceEntries<TSchema>;
 
 	/**
-	 * Root Presence object.
+	 * Containing {@link Presence}
 	 */
 	readonly presence: Presence;
 }

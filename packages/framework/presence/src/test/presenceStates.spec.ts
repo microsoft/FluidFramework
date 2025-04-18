@@ -29,7 +29,7 @@ describe("Presence", () => {
 		it("API use compiles", () => {});
 
 		addControlsTests((presence, controlSettings) => {
-			return presence.states.getWorkspace("name:testWorkspaceA", {}, controlSettings);
+			return presence.states.getWorkspace(testWorkspaceName, {}, controlSettings);
 		});
 
 		it(".presence provides Presence it was created under", () => {
