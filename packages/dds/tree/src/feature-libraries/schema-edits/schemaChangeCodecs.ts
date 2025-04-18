@@ -19,10 +19,7 @@ import type { SchemaChange } from "./schemaChangeTypes.js";
 import { SchemaFormatVersion } from "../../core/index.js";
 
 export function makeSchemaChangeCodecs(options: ICodecOptions): ICodecFamily<SchemaChange> {
-	return makeCodecFamily([
-		[1, makeSchemaChangeCodec(options)],
-		[4, makeSchemaChangeCodec(options)],
-	]);
+	return makeCodecFamily([[1, makeSchemaChangeCodec(options)]]);
 }
 
 // TODO: Support other formats
