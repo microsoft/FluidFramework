@@ -4,7 +4,7 @@
 ---
 Expose `Presence` at Workspaces and State objects
 
-Users can now access Presence through `.presence()` all Workspaces and State objects:
+Users can now access `Presence` through `.presence` in all Workspaces and State objects:
 
 `Latest.presence`
 `LatestMap.presence`
