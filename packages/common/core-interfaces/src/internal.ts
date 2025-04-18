@@ -14,6 +14,7 @@ export * from "./index.js";
 // These types are not intended for direct use by customers and api-extractor will
 // flag misuse. If an externally visible version of these types is needed, import
 // from via /internal/exposedUtilityTypes rather than /internal.
+import type { DeepReadonly as ExposedDeepReadonly } from "./deepReadonly.js";
 import type { InternalUtilityTypes as ExposedInternalUtilityTypes } from "./exposedInternalUtilityTypes.js";
 import type {
 	JsonDeserialized as ExposedJsonDeserialized,
@@ -23,12 +24,20 @@ import type {
 	JsonSerializable as ExposedJsonSerializable,
 	JsonSerializableOptions,
 } from "./jsonSerializable.js";
-import type { JsonTypeWith as ExposedJsonTypeWith } from "./jsonType.js";
+import type {
+	JsonTypeWith as ExposedJsonTypeWith,
+	ReadonlyNonNullJsonObjectWith as ExposedReadonlyNonNullJsonObjectWith,
+} from "./jsonType.js";
 
 // Note: There are no docs for these re-exports. `@inheritdoc` cannot be used as:
 //   1. api-extractor does not support renames.
 //   2. api-extractor does not support package paths. ("Import paths are not supported")
 // Also not useful, at least in VS Code, as substitution is not made in place.
+
+/**
+ * @internal
+ */
+export type DeepReadonly<T> = ExposedDeepReadonly<T>;
 
 /**
  * @internal
@@ -56,6 +65,11 @@ export type JsonSerializable<
  * @internal
  */
 export type JsonTypeWith<T> = ExposedJsonTypeWith<T>;
+
+/**
+ * @internal
+ */
+export type ReadonlyNonNullJsonObjectWith<T> = ExposedReadonlyNonNullJsonObjectWith<T>;
 
 /**
  * @internal

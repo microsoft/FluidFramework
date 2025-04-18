@@ -9,12 +9,21 @@
 // Should a customer need access to these types, export should be relocated to
 // index.ts and retagged export from internal.ts may be removed.
 
+export type { DeepReadonly } from "./deepReadonly.js";
 export type { JsonDeserialized, JsonDeserializedOptions } from "./jsonDeserialized.js";
 export type { JsonSerializable, JsonSerializableOptions } from "./jsonSerializable.js";
 export type {
 	SerializationErrorPerNonPublicProperties,
 	SerializationErrorPerUndefinedArrayElement,
 } from "./jsonSerializationErrors.js";
-export type { JsonTypeWith, NonNullJsonObjectWith } from "./jsonType.js";
+export type {
+	JsonTypeWith,
+	NonNullJsonObjectWith,
+	ReadonlyJsonTypeWith,
+} from "./jsonType.js";
+export type { ShallowReadonly } from "./shallowReadonly.js";
 
-export type { InternalUtilityTypes } from "./exposedInternalUtilityTypes.js";
+export type {
+	InternalUtilityTypes,
+	ReadonlySupportedGenerics,
+} from "./exposedInternalUtilityTypes.js";
