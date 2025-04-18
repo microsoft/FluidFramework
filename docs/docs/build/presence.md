@@ -5,8 +5,7 @@ sidebar_postition: 10
 
 ## Overview
 
-We are introducing a new way to power your ephemeral experiences wth Fluid. Introducing the new Presence APIs (currently in alpha) that provide session-focused utilities for lightweight data sharing and messaging.
-
+We are introducing a new way to power your ephemeral experiences with Fluid. Introducing the new Presence APIs (currently in alpha) that provide session-focused utilities for lightweight data sharing and messaging.
 Collaborative features typically rely on each user maintaining their own temporary state, which is subsequently shared with others. For example, in applications featuring multiplayer cursors, the cursor position of each user signifies their state. This state can be further utilized for various purposes such as indicating typing activity or displaying a user's current selection. This concept is referred to as _presence_.
 
 By leveraging this shared state, applications can provide a seamless and interactive collaborative experience, ensuring that users are always aware of each other's actions and selections in real-time.
