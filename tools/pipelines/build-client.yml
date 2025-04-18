@@ -7,7 +7,7 @@ name: $(Build.BuildId)
 
 parameters:
 - name: releaseBuildOverride
-  displayName: Release Build (default = not released)
+  displayName: Release Build (default = not released) (has no effect on the public ADO project)
   type: string
   default: none
   values:
@@ -17,7 +17,7 @@ parameters:
 # Parameter for modifying the 'types' field in the package.json.
 # If the value `none` is provided, the 'types' field in package.json will remain unchanged.
 - name: packageTypesOverride
-  displayName: Change package types (default = none)
+  displayName: Change package types (default = none) (has no effect on the public ADO project)
   type: string
   default: none
   values:
@@ -28,7 +28,7 @@ parameters:
     # - public
     # - untrimmed
 - name: publishOverride
-  displayName: Publish Override (default = based on branch)
+  displayName: Publish Override (default = based on branch) (has no effect on the public ADO project)
   type: string
   default: default
   values:
@@ -183,7 +183,7 @@ extends:
       releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
       publishOverride: ${{ parameters.publishOverride }}
       packageTypesOverride: ${{ parameters.packageTypesOverride }}
-      # disabling code coverage for internal project since we don't use it
+      # disabling code coverage for internal project since we don't use it there
       testCoverage: false
       # We only care about pipeline run telemetry for the automated (not manual) runs on the internal project,
       # not for any runs in the public one.
