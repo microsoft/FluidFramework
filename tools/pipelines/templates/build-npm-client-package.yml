@@ -325,6 +325,12 @@ extends:
                   buildDirectory: '${{ parameters.buildDirectory }}'
                   packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
 
+              - template: /tools/pipelines/templates/include-install-build-tools.yml@self
+                parameters:
+                  buildDirectory: ${{ parameters.buildDirectory }}
+                  buildToolsVersionToInstall: repo
+                  pnpmStorePath: $(Pipeline.Workspace)/.pnpm-store
+
               # If we set versions when this runs in the public ADO project,
               # PRs can end up with a few small differences in the pkgVersion files that look like spurious
               # changes to bundle size, so skip the update when not in the internal project.
