@@ -240,6 +240,7 @@ export {
 	type MapNodeCustomizableSchema,
 	type MapNodePojoEmulationSchema,
 	MapNodeSchema,
+	type ObjectFromSchemaRecord,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
