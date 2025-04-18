@@ -26,8 +26,8 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { MergeTreeTextHelper, type IMergeTreeTextHelper } from "./MergeTreeTextHelper.js";
-import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";
-import { NonCollabClient, UniversalSequenceNumber } from "./constants.js";
+import { DoublyLinkedList, RedBlackTree, type ListNode } from "./collections/index.js";
+import { NonCollabClient, SquashClient, UniversalSequenceNumber } from "./constants.js";
 import { LocalReferencePosition, SlidingPreference } from "./localReference.js";
 import {
 	MergeTree,
@@ -48,6 +48,7 @@ import {
 	ISegmentAction,
 	ISegmentPrivate,
 	Marker,
+	MergeBlock,
 	SegmentGroup,
 	compareStrings,
 	isSegmentLeaf,
@@ -95,6 +96,7 @@ import {
 	overwriteInfo,
 	toRemovalInfo,
 	type IHasInsertionInfo,
+	type IHasRemovalInfo,
 } from "./segmentInfos.js";
 import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
 import { SnapshotLoader } from "./snapshotLoader.js";
@@ -148,6 +150,11 @@ export interface IClientEvents {
 }
 
 const UNBOUND_SEGMENT_ERROR = "The provided segment is not bound to this DDS.";
+
+/**
+ * TODO: Plumb this through with a proper API.
+ */
+const squash = true;
 
 /**
  * This class encapsulates a merge-tree, and provides a local client specific view over it and
@@ -991,13 +998,18 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					);
 					const lastRemove = segment.removes[segment.removes.length - 1];
 					assert(
-						lastRemove.type === "sliceRemove" && lastRemove.localSeq === segmentGroup.localSeq,
-						0xb67 /* Last remove should be the obliterate that is being resubmitted. */,
+						(lastRemove.type === "sliceRemove" &&
+							lastRemove.localSeq === segmentGroup.localSeq) ||
+							opstampUtils.isSquashedOp(lastRemove),
+						"Last remove should be the obliterate that is being resubmitted.",
 					);
+					// TODO: update below comment, it's wrong with squashing
 					// The original obliterate affected this segment, but it has since been removed and overlapping removes
 					// are only possible when they are concurrent. We adjust the metadata on that segment now to reflect
 					// the fact that the obliterate no longer affects it.
-					segment.removes.pop();
+					if (!opstampUtils.isSquashedOp(lastRemove)) {
+						segment.removes.pop();
+					}
 				}
 
 				this._mergeTree.rebaseObliterateTo(obliterateInfo, undefined);
@@ -1047,10 +1059,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					0x035 /* "Segment group not in segment pending queue" */,
 				);
 				if (
-					(segment.ordinal > newStartSegment.ordinal &&
+					!isRemovedAndAcked(segment) &&
+					((segment.ordinal > newStartSegment.ordinal &&
 						segment.ordinal < newEndSegment.ordinal) ||
-					(segment === newStartSegment && newStartSide === Side.Before) ||
-					(segment === newEndSegment && newEndSide === Side.After)
+						(segment === newStartSegment && newStartSide === Side.Before) ||
+						(segment === newEndSegment && newEndSide === Side.After))
 				) {
 					segment.segmentGroups.enqueue(newObliterate.segmentGroup);
 				} else {
@@ -1060,12 +1073,17 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					);
 					const lastRemove = segment.removes[segment.removes.length - 1];
 					assert(
-						lastRemove.type === "sliceRemove" && lastRemove.localSeq === segmentGroup.localSeq,
-						0xb6a /* Last remove should be the obliterate that is being resubmitted. */,
+						(lastRemove.type === "sliceRemove" &&
+							lastRemove.localSeq === segmentGroup.localSeq) ||
+							opstampUtils.isSquashedOp(lastRemove), // squash case -- TBD we almost certainly want more clear state here.
+						"Last remove should be the obliterate that is being resubmitted.",
 					);
-					// The original obliterate affected this segment, but it has since been removed and it's impossible to apply the
-					// local obliterate so that is so. We adjust the metadata on that segment now.
-					segment.removes.pop();
+
+					if (!opstampUtils.isSquashedOp(lastRemove)) {
+						// The original obliterate affected this segment, but it has since been removed and it's impossible to apply the
+						// local obliterate so that is so. We adjust the metadata on that segment now.
+						segment.removes.pop();
+					}
 				}
 			}
 
@@ -1154,12 +1172,17 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				}
 
 				case MergeTreeDeltaType.INSERT: {
+					if (isInserted(segment) && opstampUtils.isSquashedOp(segment.insert)) {
+						break;
+					}
 					assert(
 						isInserted(segment) && opstampUtils.isLocal(segment.insert),
 						0x037 /* "Segment already has assigned sequence number" */,
 					);
 					const removeInfo = toRemovalInfo(segment);
 
+					const unusedStamp: OperationStamp = { seq: 0, clientId: 0 };
+					// Logic here needs to be updated as well as for subsequent removal when the removal was local
 					if (removeInfo !== undefined && opstampUtils.isAcked(removeInfo.removes[0])) {
 						assert(
 							removeInfo.removes[0].type === "sliceRemove",
@@ -1181,6 +1204,33 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 								clientId: NonCollabClient,
 							},
 						});
+						this._mergeTree.blockUpdatePathLengths(segment.parent, unusedStamp, true);
+						break;
+					} else if (squash && removeInfo !== undefined) {
+						// TODO: I think this block is redundant with squashOps.
+						assert(
+							removeInfo.removes.length === 1,
+							"Expected only single remove for segment only ever defined locally that was not remotely obliterated",
+						);
+
+						overwriteInfo<IHasInsertionInfo & IHasRemovalInfo>(segment, {
+							insert: {
+								type: "insert",
+								seq: UniversalSequenceNumber,
+								localSeq: undefined,
+								clientId: NonCollabClient,
+							},
+							removes: [
+								{
+									type: "setRemove",
+									seq: UniversalSequenceNumber,
+									localSeq: undefined,
+									clientId: NonCollabClient,
+								},
+							],
+						});
+						this._mergeTree.blockUpdatePathLengths(segment.parent, unusedStamp, true);
+
 						break;
 					}
 
@@ -1360,6 +1410,75 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		{ start: RebasedObliterateEndpoint; end: RebasedObliterateEndpoint }
 	> = new Map();
 
+	private squashEdits(allPendingSegments: ListNode<SegmentGroup>[]): void {
+		// TODO: Add support for annotate
+		const squashedSegmentToTrackingGroups = new Map<
+			ISegmentLeaf,
+			{ insert?: SegmentGroup; remove?: SegmentGroup }
+		>();
+		for (const { data: group } of allPendingSegments) {
+			for (const segment of group.segments) {
+				if (opstampUtils.isLocal(segment.insert) && isRemoved(segment)) {
+					// No need to resubmit the insertion of this segment...
+					const lastRemove = segment.removes[segment.removes.length - 1];
+					if (opstampUtils.isLocal(lastRemove)) {
+						assert(
+							segment.removes.length === 1 ||
+								opstampUtils.isAcked(segment.removes[segment.removes.length - 2]),
+							"should only be one local remove",
+						);
+
+						//
+					}
+
+					const existingEntry = squashedSegmentToTrackingGroups.get(segment);
+					const groupEntry: { insert?: SegmentGroup; remove?: SegmentGroup } =
+						existingEntry ?? {};
+					if (!existingEntry) {
+						squashedSegmentToTrackingGroups.set(segment, groupEntry);
+					}
+
+					if (segment.insert.localSeq === group.localSeq) {
+						groupEntry.insert = group;
+					} else if (lastRemove.localSeq === group.localSeq) {
+						groupEntry.remove = group;
+					}
+				}
+			}
+		}
+
+		const blocksToUpdate = new Set<MergeBlock>();
+
+		for (const [segment] of squashedSegmentToTrackingGroups) {
+			overwriteInfo<IHasInsertionInfo & IHasRemovalInfo>(segment, {
+				insert: {
+					type: "insert",
+					seq: UniversalSequenceNumber,
+					localSeq: undefined,
+					clientId: SquashClient,
+				},
+				removes: [
+					{
+						type: "setRemove",
+						seq: UniversalSequenceNumber,
+						localSeq: undefined,
+						clientId: SquashClient,
+					},
+				],
+			});
+
+			// if (remove?.obliterateInfo !== undefined) {
+			// 	segment.segmentGroups?.remove(remove);
+			// }
+
+			blocksToUpdate.add(segment.parent);
+		}
+
+		for (const block of blocksToUpdate) {
+			this._mergeTree.blockUpdatePathLengths(block, { seq: 0, clientId: 0 }, true);
+		}
+	}
+
 	/**
 	 * Given a pending operation and segment group, regenerate the op, so it
 	 * can be resubmitted
@@ -1396,10 +1515,14 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			collabWindow.currentSeq !== this.lastNormalization.refSeq ||
 			collabWindow.localSeq !== this.lastNormalization.localRefSeq
 		) {
+			const allPendingSegments = [...this._mergeTree.pendingSegments, ...this.pendingRebase];
+			if (squash) {
+				this.squashEdits(allPendingSegments);
+			}
 			// Compute obliterate endpoint destinations before segments are normalized.
 			// Segment normalization can affect what should be the semantically correct segments for the endpoints to be placed on.
 			this.cachedObliterateRebases.clear();
-			for (const group of [...this._mergeTree.pendingSegments, ...this.pendingRebase]) {
+			for (const group of allPendingSegments) {
 				const { obliterateInfo } = group.data;
 				if (obliterateInfo !== undefined) {
 					const { start, end } = this.computeNewObliterateEndpoints(obliterateInfo);

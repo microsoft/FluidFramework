@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { UnassignedSequenceNumber } from "./constants.js";
+import {
+	SquashClient,
+	UnassignedSequenceNumber,
+	UniversalSequenceNumber,
+} from "./constants.js";
 
 /**
  * A stamp that identifies provenance of an operation performed on the MergeTree.
@@ -120,6 +124,10 @@ export function equal(a: OperationStamp, b: OperationStamp): boolean {
 
 export function isLocal(a: OperationStamp): boolean {
 	return a.seq === UnassignedSequenceNumber;
+}
+
+export function isSquashedOp(a: OperationStamp): boolean {
+	return a.clientId === SquashClient && a.seq === UniversalSequenceNumber;
 }
 
 export function isAcked(a: OperationStamp): boolean {

@@ -12,6 +12,7 @@ import {
 	Reducer,
 	combineReducers,
 	createWeightedAsyncGenerator,
+	done,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import {
@@ -26,8 +27,10 @@ import {
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import {
+	DetachedReferencePosition,
 	endpointPosAndSide,
 	PropertySet,
+	ReferenceType,
 	Side,
 	type AdjustParams,
 	type InteriorSequencePlace,
@@ -35,11 +38,12 @@ import {
 	type SequencePlace,
 } from "@fluidframework/merge-tree/internal";
 
+import type { LocalReferencePosition } from "../../index.js";
 import {
-	IntervalCollection,
-	toSequencePlace,
-	ISequenceIntervalCollection,
 	toOptionalSequencePlace,
+	toSequencePlace,
+	type IntervalCollection,
+	type ISequenceIntervalCollection,
 } from "../../intervalCollection.js";
 import { SharedStringRevertible, revertSharedStringRevertibles } from "../../revertibles.js";
 import { SharedStringFactory } from "../../sequenceFactory.js";
@@ -57,6 +61,17 @@ export function isRevertibleSharedString(s: ISharedString): s is RevertibleShare
 	return (s as RevertibleSharedString).revertibles !== undefined;
 }
 
+export type PoisonedSharedString = ISharedString & {
+	poisonedHandleLocations: LocalReferencePosition[];
+};
+
+export function isPoisonedSharedString(s: ISharedString): s is PoisonedSharedString {
+	return (
+		(s as PoisonedSharedString).poisonedHandleLocations !== undefined &&
+		Array.isArray((s as PoisonedSharedString).poisonedHandleLocations)
+	);
+}
+
 export interface RangeSpec {
 	start: number;
 	end: number;
@@ -70,6 +85,14 @@ export interface AddText {
 	type: "addText";
 	index: number;
 	content: string;
+	properties?: PropertySet;
+}
+
+export interface AddPoisonedText {
+	type: "addPoisonedText";
+	index: number;
+	content: string;
+	properties?: PropertySet;
 }
 
 export interface RemoveRange extends RangeSpec {
@@ -135,6 +158,7 @@ export type IntervalOperation = AddInterval | ChangeInterval | DeleteInterval;
 export type OperationWithRevert = IntervalOperation | RevertSharedStringRevertibles;
 export type TextOperation =
 	| AddText
+	| AddPoisonedText
 	| RemoveRange
 	| AnnotateRange
 	| AnnotateAdjustRange
@@ -159,6 +183,7 @@ export interface SharedStringOperationGenerationConfig {
 		removeRange: number;
 		annotateRange: number;
 		obliterateRange: number;
+		addPoisonedHandleText: number;
 	};
 	propertyNamePool?: string[];
 }
@@ -185,6 +210,7 @@ export const defaultSharedStringOperationGenerationConfig: Required<SharedString
 			removeRange: 1,
 			annotateRange: 1,
 			obliterateRange: 1,
+			addPoisonedHandleText: 1,
 		},
 		propertyNamePool: ["prop1", "prop2", "prop3"],
 	};
@@ -254,8 +280,22 @@ export function makeReducer(
 		};
 
 	const reducer = combineReducers<Operation | RevertOperation, ClientOpState>({
-		addText: ({ client }, { index, content }) => {
-			client.channel.insertText(index, content);
+		addText: ({ client }, { index, content, properties }) => {
+			client.channel.insertText(index, content, properties);
+		},
+		addPoisonedText: ({ client }, { index, content, properties }) => {
+			assert(isPoisonedSharedString(client.channel));
+			assert(content.length === 1);
+			client.channel.insertText(index, content, properties);
+			const { segment, offset } = client.channel.getContainingSegment(index);
+			assert(segment !== undefined && offset !== undefined);
+			const ref = client.channel.createLocalReferencePosition(
+				segment,
+				offset,
+				ReferenceType.Simple /* so that it detaches on remove */,
+				undefined,
+			);
+			client.channel.poisonedHandleLocations.push(ref);
 		},
 		removeRange: ({ client }, { start, end }) => {
 			client.channel.removeRange(start, end);
@@ -706,9 +746,19 @@ export function makeSharedStringOperationGenerator(
 		isShorterThanMaxLength,
 	} = createSharedStringGeneratorOperations(optionsParam);
 
+	async function addPoisonedHandleText(state: ClientOpState): Promise<AddPoisonedText> {
+		const { random, client } = state;
+		return {
+			type: "addPoisonedText",
+			index: random.integer(0, client.channel.getLength()),
+			content: random.string(1),
+			properties: { poison: state.random.poisonedHandle() },
+		};
+	}
+
 	const usableWeights =
 		optionsParam?.weights ?? defaultIntervalOperationGenerationConfig.weights;
-	return createWeightedAsyncGenerator<Operation, FuzzTestState>([
+	const regularGenerator = createWeightedAsyncGenerator<Operation, FuzzTestState>([
 		[addText, usableWeights.addText, isShorterThanMaxLength],
 		[
 			alwaysLeaveChar ? removeRangeLeaveChar : removeRange,
@@ -725,7 +775,42 @@ export function makeSharedStringOperationGenerator(
 		[obliterateRange, usableWeights.obliterateRange, hasNonzeroLength],
 		[annotateRange, usableWeights.annotateRange, hasNonzeroLength],
 		[annotateAdjustRange, usableWeights.annotateRange, hasNonzeroLength],
+		[
+			addPoisonedHandleText,
+			usableWeights.addPoisonedHandleText,
+			(state) => isShorterThanMaxLength(state) && state.client.stagingModeStatus === "staging",
+		],
 	]);
+
+	return async (state) => {
+		if (state.client.stagingModeStatus === "exiting") {
+			// Rather than generate a normal op, only generate ops which remove existing poisoned handles.
+			const {
+				client: { channel: sharedString },
+			} = state;
+			assert(isPoisonedSharedString(sharedString));
+			const { poisonedHandleLocations } = sharedString;
+			while (poisonedHandleLocations.length > 0) {
+				// TODO: look at alternative approaches to this. Mutating in a generator is not super great, but
+				// the alternative would be to check if each of these is still valid after every single reducer op that can remove content
+				// (maybe not that bad, but asymptotics are worse)
+				const lastPoisonedHandleLocation = poisonedHandleLocations.pop()!;
+				const pos = sharedString.localReferencePositionToPosition(lastPoisonedHandleLocation);
+				sharedString.removeLocalReferencePosition(lastPoisonedHandleLocation);
+				if (pos !== DetachedReferencePosition) {
+					return {
+						type: "removeRange",
+						start: pos,
+						end: pos + 1,
+					};
+				}
+			}
+
+			return done;
+		}
+
+		return regularGenerator(state);
+	};
 }
 
 export const baseSharedStringModel = {
