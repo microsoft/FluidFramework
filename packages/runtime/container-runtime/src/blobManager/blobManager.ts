@@ -18,7 +18,10 @@ import type {
 	IEventProvider,
 	IFluidHandleContext,
 	IFluidHandleInternal,
-	IFluidHandleInternalPlaceholder,
+	IFluidPlaceholderHandle,
+	IFluidPlaceholderHandleEvents,
+	IFluidPlaceholderHandleInternal,
+	PayloadState,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
@@ -65,12 +68,24 @@ import {
  */
 export class BlobHandle
 	extends FluidHandleBase<ArrayBufferLike>
-	implements IFluidHandleInternalPlaceholder<ArrayBufferLike>
+	implements
+		IFluidPlaceholderHandle<ArrayBufferLike>,
+		IFluidPlaceholderHandleInternal<ArrayBufferLike>
 {
 	private attached: boolean = false;
 
 	public get isAttached(): boolean {
 		return this.routeContext.isAttached && this.attached;
+	}
+
+	private readonly _events = new TypedEventEmitter<IFluidPlaceholderHandleEvents>();
+	public get events(): IEventProvider<IFluidPlaceholderHandleEvents> {
+		return this._events;
+	}
+
+	private _state: PayloadState = "local";
+	public get payloadState(): PayloadState {
+		return this._state;
 	}
 
 	public readonly absolutePath: string;
@@ -85,6 +100,16 @@ export class BlobHandle
 		super();
 		this.absolutePath = generateHandleContextPath(path, this.routeContext);
 	}
+
+	public readonly notifyShared = (): void => {
+		this._state = "shared";
+		this._events.emit("shared");
+	};
+
+	public readonly notifyFailed = (error: unknown): void => {
+		this._state = "failed";
+		this._events.emit("failed", error);
+	};
 
 	public attachGraph(): void {
 		if (!this.attached) {
@@ -138,6 +163,7 @@ export interface IBlobManagerEvents extends IEvent {
 }
 
 interface IBlobManagerInternalEvents extends IEvent {
+	(event: "uploadFailed", listener: (localId: string, error: unknown) => void);
 	(event: "handleAttached", listener: (pending: PendingBlob) => void);
 	(event: "processedBlobAttach", listener: (localId: string, storageId: string) => void);
 }
@@ -460,7 +486,7 @@ export class BlobManager {
 
 	private async createBlobDetached(
 		blob: ArrayBufferLike,
-	): Promise<IFluidHandleInternalPlaceholder<ArrayBufferLike>> {
+	): Promise<IFluidPlaceholderHandleInternal<ArrayBufferLike>> {
 		// Blobs created while the container is detached are stored in IDetachedBlobStorage.
 		// The 'IDocumentStorageService.createBlob()' call below will respond with a localId.
 		const response = await this.storage.createBlob(blob);
@@ -471,7 +497,7 @@ export class BlobManager {
 	public async createBlob(
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
-	): Promise<IFluidHandleInternalPlaceholder<ArrayBufferLike>> {
+	): Promise<IFluidPlaceholderHandleInternal<ArrayBufferLike>> {
 		if (this.runtime.attachState === AttachState.Detached) {
 			return this.createBlobDetached(blob);
 		}
@@ -494,7 +520,7 @@ export class BlobManager {
 	private async createBlobLegacy(
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
-	): Promise<IFluidHandleInternalPlaceholder<ArrayBufferLike>> {
+	): Promise<IFluidPlaceholderHandleInternal<ArrayBufferLike>> {
 		if (signal?.aborted) {
 			throw this.createAbortError();
 		}
@@ -527,10 +553,10 @@ export class BlobManager {
 
 	private createBlobPlaceholder(
 		blob: ArrayBufferLike,
-	): IFluidHandleInternalPlaceholder<ArrayBufferLike> {
+	): IFluidPlaceholderHandleInternal<ArrayBufferLike> {
 		const localId = this.localBlobIdGenerator();
 
-		return new BlobHandle(
+		const blobHandle = new BlobHandle(
 			getGCNodePathFromBlobId(localId),
 			this.routeContext,
 			async () => blob,
@@ -547,6 +573,24 @@ export class BlobManager {
 				this.pendingBlobs.set(localId, pendingEntry);
 			},
 		);
+
+		const onProcessedBlobAttach = (_localId: string, _storageId: string): void => {
+			if (_localId === localId) {
+				this.internalEvents.off("processedBlobAttach", onProcessedBlobAttach);
+				blobHandle.notifyShared();
+			}
+		};
+		this.internalEvents.on("processedBlobAttach", onProcessedBlobAttach);
+
+		const onUploadFailed = (_localId: string, error: unknown): void => {
+			if (_localId === localId) {
+				this.internalEvents.off("uploadFailed", onUploadFailed);
+				blobHandle.notifyFailed(error);
+			}
+		};
+		this.internalEvents.on("uploadFailed", onUploadFailed);
+
+		return blobHandle;
 	}
 
 	private async uploadBlob(
@@ -592,6 +636,7 @@ export class BlobManager {
 				// the promise but not throw any error outside.
 				this.pendingBlobs.get(localId)?.handleP.reject(error);
 				this.deletePendingBlob(localId);
+				this.internalEvents.emit("uploadFailed", localId);
 			},
 		);
 	}
@@ -665,7 +710,9 @@ export class BlobManager {
 			// an existing blob, we don't have to wait for the op to be ack'd since this step has already
 			// happened before and so, the server won't delete it.
 			this.setRedirection(localId, response.id);
-			entry.handleP.resolve(this.getBlobHandle(localId));
+			const blobHandle = this.getBlobHandle(localId);
+			blobHandle.notifyShared();
+			entry.handleP.resolve(blobHandle);
 			this.deletePendingBlobMaybe(localId);
 		} else {
 			// If there is already an op for this storage ID, append the local ID to the list. Once any op for
@@ -739,7 +786,9 @@ export class BlobManager {
 					);
 					this.setRedirection(pendingLocalId, blobId);
 					entry.acked = true;
-					entry.handleP.resolve(this.getBlobHandle(pendingLocalId));
+					const blobHandle = this.getBlobHandle(pendingLocalId);
+					blobHandle.notifyShared();
+					entry.handleP.resolve(blobHandle);
 					this.deletePendingBlobMaybe(pendingLocalId);
 				}
 				this.opsInFlight.delete(blobId);
@@ -747,7 +796,9 @@ export class BlobManager {
 			const localEntry = this.pendingBlobs.get(localId);
 			if (localEntry) {
 				localEntry.acked = true;
-				localEntry.handleP.resolve(this.getBlobHandle(localId));
+				const blobHandle = this.getBlobHandle(localId);
+				blobHandle.notifyShared();
+				localEntry.handleP.resolve(blobHandle);
 				this.deletePendingBlobMaybe(localId);
 			}
 		}

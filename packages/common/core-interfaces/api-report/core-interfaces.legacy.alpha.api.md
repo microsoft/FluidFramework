@@ -283,6 +283,18 @@ export interface IFluidLoadable extends IProvideFluidLoadable {
 }
 
 // @alpha
+export interface IFluidPlaceholderHandle<T> extends IFluidHandle<T> {
+    readonly events: IEventProvider<IFluidPlaceholderHandleEvents>;
+    readonly payloadState: PayloadState;
+}
+
+// @alpha
+export interface IFluidPlaceholderHandleEvents extends IEvent {
+    (event: "shared", listener: () => void): any;
+    (event: "failed", listener: (error: unknown) => void): any;
+}
+
+// @alpha
 export interface ILoggingError extends Error {
     getTelemetryProperties(): ITelemetryBaseProperties;
 }
@@ -387,6 +399,9 @@ export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
 // @public
 export type Off = () => void;
+
+// @alpha
+export type PayloadState = "local" | "shared" | "placeholder" | "failed";
 
 // @public
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
