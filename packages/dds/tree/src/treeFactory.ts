@@ -21,6 +21,7 @@ import {
 	type ITreePrivate,
 	type SharedTreeOptions,
 	type SharedTreeOptionsInternal,
+	type SharedTreeKernelView,
 } from "./shared-tree/index.js";
 import type { ITree } from "./simple-tree/index.js";
 
@@ -43,7 +44,7 @@ export interface ISharedTree extends ISharedObject, ITreePrivate {}
  */
 function treeKernelFactory(
 	options: SharedTreeOptionsInternal,
-): SharedKernelFactory<ITreePrivate> {
+): SharedKernelFactory<SharedTreeKernelView> {
 	function treeFromKernelArgs(args: KernelArgs): SharedTreeKernel {
 		if (args.idCompressor === undefined) {
 			throw new UsageError("IdCompressor must be enabled to use SharedTree");
@@ -61,7 +62,7 @@ function treeKernelFactory(
 	}
 
 	return {
-		create: (args: KernelArgs): FactoryOut<ITreePrivate> => {
+		create: (args: KernelArgs): FactoryOut<SharedTreeKernelView> => {
 			const k = treeFromKernelArgs(args);
 			return { kernel: k, view: k.view };
 		},
@@ -69,7 +70,7 @@ function treeKernelFactory(
 		async loadCore(
 			args: KernelArgs,
 			storage: IChannelStorageService,
-		): Promise<FactoryOut<ITreePrivate>> {
+		): Promise<FactoryOut<SharedTreeKernelView>> {
 			const k = treeFromKernelArgs(args);
 			await k.loadCore(storage);
 			return { kernel: k, view: k.view };

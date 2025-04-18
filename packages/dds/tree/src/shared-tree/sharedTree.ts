@@ -187,6 +187,8 @@ function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
 	return versions;
 }
 
+export type SharedTreeKernelView = Omit<ITreePrivate, keyof (IChannelView & IFluidLoadable)>;
+
 /**
  * SharedTreeCore, configured with a good set of indexes and field kinds which will maintain compatibility over time.
  *
@@ -209,7 +211,7 @@ export class SharedTreeKernel
 	 * It includes both the APIs used for internal testing, and public facing APIs (both stable and unstable).
 	 * Different users will have access to different subsets of this API, see {@link ITree}, {@link ITreeAlpha} and {@link ITreeInternal} which this {@link ITreePrivate} extends.
 	 */
-	public readonly view: ITreePrivate;
+	public readonly view: SharedTreeKernelView;
 
 	public constructor(
 		breaker: Breakable,
@@ -350,11 +352,6 @@ export class SharedTreeKernel
 			exportSimpleSchema: () => this.exportSimpleSchema(),
 			exportVerbose: () => this.exportVerbose(),
 			viewWith: this.viewWith.bind(this),
-			handle: sharedObject.handle,
-			IFluidLoadable: sharedObject,
-			id: sharedObject.id,
-			attributes: sharedObject.attributes,
-			isAttached: () => sharedObject.isAttached(),
 			kernel: this,
 		};
 	}

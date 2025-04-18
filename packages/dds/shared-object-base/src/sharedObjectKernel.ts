@@ -162,37 +162,8 @@ class SharedObjectFromKernel<
 		assert(this.#lazyData === undefined, "initializeData must be called first and only once");
 		this.#lazyData = data;
 
-		// Properties of ISharedObject that TOut is likely to implement by forwarding to `this`.
-		const skipForwarding: Set<keyof ISharedObject> = new Set([
-			"IFluidLoadable",
-			"isAttached",
-			"id",
-			"handle",
-			"attributes",
-		]);
-
-		// Do some sanity checks that the properties above, if present on thew view, match the properties on this.
-		{
-			const d = data as Partial<ISharedObject>;
-			assert(
-				d.IFluidLoadable === undefined || d.IFluidLoadable === this.IFluidLoadable,
-				"must match if provided",
-			);
-			// Not fully robust, but as much validation as is practical.
-			assert(
-				d.isAttached === undefined || d.isAttached() === this.isAttached(),
-				"must match if provided",
-			);
-			assert(d.id === undefined || d.id === this.id, "must match if provided");
-			assert(d.handle === undefined || d.handle === this.handle, "must match if provided");
-			assert(
-				d.attributes === undefined || d.attributes === this.attributes,
-				"must match if provided",
-			);
-		}
-
 		// Make `this` implement TOut.
-		mergeAPIs(this, data.view, skipForwarding);
+		mergeAPIs(this, data.view);
 	}
 
 	get #kernel(): SharedKernel {
@@ -284,36 +255,15 @@ export interface KernelArgs {
  *
  * Functions from `extra` are bound to the `extra` object and support {@link thisWrap}.
  *
- * When properties collide, some heuristics are used to determine if its valid, or to assert.
+ * When asserts when properties collide.
  * @internal
  */
 export function mergeAPIs<const Base extends object, const Extra extends object>(
 	base: Base,
 	extra: Extra,
-	skip: Set<string> = new Set(),
 ): asserts base is Base & Extra {
 	for (const [key, descriptor] of Object.entries(Object.getOwnPropertyDescriptors(extra))) {
-		if (skip.has(key)) {
-			continue;
-		}
-		if (Reflect.has(base, key)) {
-			// If the property is on both base and extra, do some validation to attempt to detect if they are clearly incompatible.
-			// These asserts cover cases currently not required, and likely to cause issues if used.
-			// They can be relaxed as needed with care.
-
-			const baseDescriptor = Object.getOwnPropertyDescriptor(base, key);
-			assert(baseDescriptor !== undefined, "merged properties must be own properties");
-			assert(
-				baseDescriptor.set === undefined && baseDescriptor.get === undefined,
-				"incompatible properties",
-			);
-			assert(descriptor.get === undefined, "incompatible properties");
-			assert(baseDescriptor.value === descriptor.value, "incompatible values");
-			assert(
-				baseDescriptor.enumerable === descriptor.enumerable,
-				"incompatible enumerability",
-			);
-		}
+		assert(!Reflect.has(base, key), "colliding properties");
 
 		let getter: () => unknown;
 		// Bind functions to the extra object and handle thisWrap.
