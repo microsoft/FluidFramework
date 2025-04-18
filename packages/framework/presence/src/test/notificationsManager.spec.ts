@@ -488,7 +488,7 @@ describe("Presence", () => {
 			assert(originalEventHandlerCalled, "originalEventHandler not called");
 		});
 
-		it("can access root presence object", () => {
+		it(".presence provides Presence it was created under", () => {
 			notificationsWorkspace.add(
 				"testEvents",
 				Notifications<

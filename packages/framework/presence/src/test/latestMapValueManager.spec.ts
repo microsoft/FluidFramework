@@ -88,7 +88,7 @@ describe("Presence", () => {
 			assert.strictEqual(localRemovalCount, 1);
 		});
 
-		it("can acces root presence object", () => {
+		it(".presence provides Presence it was created under", () => {
 			const presence = createPresenceManager(new MockEphemeralRuntime());
 			const states = presence.states.getWorkspace(testWorkspaceName, {
 				fixedMap: StateFactory.latestMap({ key1: { x: 0, y: 0 } }),

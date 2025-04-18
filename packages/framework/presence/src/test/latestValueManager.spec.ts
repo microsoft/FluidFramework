@@ -72,7 +72,7 @@ describe("Presence", () => {
 				assert.deepStrictEqual(states.props.arr.local, [1, 2, 3]);
 			});
 
-			it("can access root presence object", () => {
+			it(".presence provides Presence it was created under", () => {
 				const states = presence.states.getWorkspace(testWorkspaceName, {
 					camera: StateFactory.latest({ x: 0, y: 0, z: 0 }),
 				});

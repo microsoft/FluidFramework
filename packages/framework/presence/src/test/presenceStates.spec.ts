@@ -32,7 +32,7 @@ describe("Presence", () => {
 			return presence.states.getWorkspace("name:testWorkspaceA", {}, controlSettings);
 		});
 
-		it("can access root presence object", () => {
+		it(".presence provides Presence it was created under", () => {
 			const presence = createPresenceManager(new MockEphemeralRuntime());
 			const states = presence.states.getWorkspace(testWorkspaceName, {
 				obj: StateFactory.latest({}),

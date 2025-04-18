@@ -131,6 +131,11 @@ export interface NotificationsManager<
 	T extends InternalUtilityTypes.NotificationListeners<T>,
 > {
 	/**
+	 * Containing {@link Presence}
+	 */
+	readonly presence: Presence;
+
+	/**
 	 * Events for Notifications manager.
 	 */
 	readonly events: Listenable<NotificationsManagerEvents>;
@@ -144,11 +149,6 @@ export interface NotificationsManager<
 	 * Provides subscription to notifications from other clients.
 	 */
 	readonly notifications: NotificationListenable<T>;
-
-	/**
-	 * Root presence object
-	 */
-	readonly presence: Presence;
 }
 
 /**
