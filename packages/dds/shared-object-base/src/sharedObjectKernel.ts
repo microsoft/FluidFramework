@@ -215,6 +215,12 @@ class SharedObjectFromKernel<
 export const thisWrap: unique symbol = Symbol("selfWrap");
 
 /**
+ * A {@link SharedKernel} providing the implementation of some distributed data structure (DDS) and the needed runtime facing APIs,
+ * and a separate view object which exposes the app facing APIs (`T`)
+ * for reading and writing data which are specific to this particular data structure.
+ * @remarks
+ * Output from {@link SharedKernelFactory}.
+ * This is an alternative to defining DDSs by sub-classing {@link SharedObject}.
  * @internal
  */
 export interface FactoryOut<T extends object> {
@@ -223,6 +229,11 @@ export interface FactoryOut<T extends object> {
 }
 
 /**
+ * A factory for creating DDSs.
+ * @remarks
+ * Outputs {@link FactoryOut}.
+ * This is an alternative to directly implementing {@link @fluidframework/datastore-definitions#IChannelFactory}.
+ * Use with {@link makeSharedObjectKind} to create a {@link SharedObjectKind}.
  * @internal
  */
 export interface SharedKernelFactory<T extends object> {
@@ -235,15 +246,40 @@ export interface SharedKernelFactory<T extends object> {
 }
 
 /**
+ * Inputs for building a {@link SharedKernel} via {@link SharedKernelFactory}.
  * @internal
  */
 export interface KernelArgs {
+	/**
+	 * The shared object whose behavior is being implemented.
+	 */
 	readonly sharedObject: IChannelView & IFluidLoadable;
+	/**
+	 * {@inheritdoc SharedObject.serializer}
+	 */
 	readonly serializer: IFluidSerializer;
+	/**
+	 * {@inheritdoc SharedObjectCore.submitLocalMessage}
+	 */
 	readonly submitLocalMessage: (op: unknown, localOpMetadata: unknown) => void;
+	/**
+	 * Top level emitter for events for this object.
+	 * @remarks
+	 * This is needed since the separate kernel and view from {@link FactoryOut} currently have to be recombined,
+	 * and having this as its own thing helps accomplish that.
+	 */
 	readonly eventEmitter: TypedEventEmitter<ISharedObjectEvents>;
+	/**
+	 * {@inheritdoc SharedObjectCore.logger}
+	 */
 	readonly logger: ITelemetryLoggerExt;
+	/**
+	 * {@inheritdoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.idCompressor}
+	 */
 	readonly idCompressor: IIdCompressor | undefined;
+	/**
+	 * {@inheritdoc @fluidframework/container-definitions#IDeltaManager.lastSequenceNumber}
+	 */
 	readonly lastSequenceNumber: () => number;
 }
 
@@ -265,29 +301,39 @@ export function mergeAPIs<const Base extends object, const Extra extends object>
 	for (const [key, descriptor] of Object.entries(Object.getOwnPropertyDescriptors(extra))) {
 		assert(!Reflect.has(base, key), "colliding properties");
 
+		// Detect and special case functions.
+		// Currently this is done eagerly (when mergeAPIs is called) rather than lazily (when the property is read):
+		// this eager approach should result in slightly better performance,
+		// but if functions on `extra` are reassigned over time it will produce incorrect behavior.
+		// If this functionality is required, the design can be changed.
 		let getter: () => unknown;
 		// Bind functions to the extra object and handle thisWrap.
 		if (typeof descriptor.value === "function") {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const fromExtra: () => Extra | Base = descriptor.value;
-			getter = () => applyThisWrap(fromExtra, extra, base);
+			getter = () => forwardMethod(fromExtra, extra, base);
+			// To catch (and error on) cases where the function is reassigned and this this eager binding approach is not appropriate, make it non-writable.
+			Object.defineProperty(extra, key, { ...descriptor, writable: false });
 		} else {
 			getter = () => extra[key];
-			// If setters become required, support them here.
-			assert(descriptor.set === undefined, "setters not supported");
 		}
 
 		Object.defineProperty(base, key, {
 			configurable: false,
 			enumerable: descriptor.enumerable,
 			get: getter,
-			// Apply some restrictions preventing cases which are not expected to be needed
-			// This can catch some cases where base uses this property, but it hasn't been set yet.
+			// If setters become required, support them here.
 		});
 	}
 }
 
-function applyThisWrap<TArgs extends [], TReturn>(
+/**
+ * Wrap a method `f` of `oldThis` to be a method of `newThis`.
+ * @remarks
+ * The wrapped function will be called with `oldThis` as the `this` parameter.
+ * It also accounts for when `f` is marked with {@link thisWrap}.
+ */
+function forwardMethod<TArgs extends [], TReturn>(
 	f: (...args: TArgs) => TReturn,
 	oldThis: TReturn,
 	newThis: TReturn,
