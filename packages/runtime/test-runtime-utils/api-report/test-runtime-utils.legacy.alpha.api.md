@@ -196,7 +196,7 @@ export class MockDeltaConnection implements IDeltaConnection {
 
 // @alpha
 export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-    constructor(getClientId?: (() => string) | undefined);
+    constructor(getClientId?: (() => string | undefined) | undefined);
     // (undocumented)
     readonly active: boolean;
     // (undocumented)
@@ -354,6 +354,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     packagePath: readonly string[];
     // (undocumented)
+    readonly: boolean;
+    // (undocumented)
     scope: FluidObject;
     // (undocumented)
     setChannelDirty(address: string): void;
@@ -468,6 +470,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     quorum: MockQuorumClients;
     // (undocumented)
+    readonly: boolean;
+    // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     requestDataStore(request: IRequest): Promise<IResponse>;
@@ -485,6 +489,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
+    // (undocumented)
+    setReadOnlyState(readonly: boolean): void;
     // (undocumented)
     submitMessage(type: MessageType, content: any): null;
     // (undocumented)

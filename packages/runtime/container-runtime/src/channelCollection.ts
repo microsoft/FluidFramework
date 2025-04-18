@@ -149,6 +149,9 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 		get attachState() {
 			return context.attachState;
 		},
+		get readonly() {
+			return context.readonly;
+		},
 		containerRuntime: context.containerRuntime,
 		scope: context.scope,
 		gcThrowOnTombstoneUsage: context.gcThrowOnTombstoneUsage,
@@ -1109,6 +1112,28 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 							runtimeConnected: this.parentContext.connected,
 							connected,
 						}),
+					},
+					error,
+				);
+			}
+		}
+	}
+
+	public setReadOnlyState(readonly: boolean): void {
+		for (const [fluidDataStoreId, context] of this.contexts) {
+			try {
+				context.setReadOnlyState(readonly);
+			} catch (error) {
+				this.mc.logger.sendErrorEvent(
+					{
+						eventName: "SetReadOnlyStateError",
+						...tagCodeArtifacts({
+							fluidDataStoreId,
+						}),
+						details: {
+							runtimeReadonly: this.parentContext.readonly,
+							readonly,
+						},
 					},
 					error,
 				);

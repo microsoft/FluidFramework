@@ -18,7 +18,10 @@ import {
 	type ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions/internal";
 import { isFluidError } from "@fluidframework/telemetry-utils/internal";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockDeltaManager,
+	MockFluidDataStoreRuntime,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	FluidDataStoreContext,
@@ -89,6 +92,7 @@ describe("createChildDataStore", () => {
 					});
 				},
 			} satisfies Partial<IContainerRuntimeBase> as unknown as IContainerRuntimeBase,
+			deltaManager: new MockDeltaManager(),
 		} satisfies Partial<IFluidParentContext> as unknown as IFluidParentContext;
 
 		const context = new testContext(

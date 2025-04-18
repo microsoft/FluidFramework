@@ -35,6 +35,11 @@ import {
 import type { TelemetryEventPropertyTypeExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
+ * @internal
+ * */
+export const summarizerClientType = "summarizer";
+
+/**
  * Combines summary stats by adding their totals together.
  * Returns empty stats if called without args.
  * @param stats - stats to merge

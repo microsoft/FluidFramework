@@ -6,11 +6,13 @@
 import { type ILoader, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import type { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { DriverHeader } from "@fluidframework/driver-definitions/internal";
-import { responseToException } from "@fluidframework/runtime-utils/internal";
+import {
+	responseToException,
+	summarizerClientType,
+} from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	summarizerClientType,
 	type ISummarizer,
 	type ISummaryConfiguration,
 	type ISummaryConfigurationDisableSummarizer,

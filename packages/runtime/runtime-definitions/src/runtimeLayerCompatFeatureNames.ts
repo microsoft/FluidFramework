@@ -10,3 +10,9 @@
  * @internal
  */
 export const encodeHandlesInContainerRuntime = "encodeHandlesInContainerRuntime" as const;
+
+/**
+ *
+ * @internal
+ */
+export const setReadonly = "setReadonly" as const;

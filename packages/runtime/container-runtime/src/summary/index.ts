@@ -11,7 +11,6 @@ export {
 	IRootSummarizerNodeWithGC,
 } from "./summarizerNode/index.js";
 export {
-	summarizerClientType,
 	IConnectableRuntime,
 	IGeneratedSummaryStats,
 	IRefreshSummaryAckOptions,

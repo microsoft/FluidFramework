@@ -194,10 +194,10 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 	it("summarizer client should be read-only", async () => {
 		const { mainContainer, summarizer } = await createMainContainerAndSummarizer();
 		const dsContainer1 = (await mainContainer.getEntryPoint()) as ITestDataObject;
-		const readOnlyContainer1 = dsContainer1._context.deltaManager.readOnlyInfo.readonly;
+		const readOnlyContainer1 = dsContainer1._runtime.readonly;
 		assert(readOnlyContainer1 !== true, "Non-summarizer container 1 should not be readonly");
 
-		const readOnlySummarizer = (summarizer as any).runtime.deltaManager.readOnlyInfo.readonly;
+		const readOnlySummarizer = (summarizer as any).runtime.readonly;
 		assert(readOnlySummarizer === true, "Summarizer should be readonly");
 	});
 

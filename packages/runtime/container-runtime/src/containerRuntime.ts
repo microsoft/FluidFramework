@@ -107,7 +107,9 @@ import {
 	calculateStats,
 	create404Response,
 	exceptionToResponse,
+	isReadonly,
 	seqFromTree,
+	summarizerClientType,
 } from "@fluidframework/runtime-utils/internal";
 import type {
 	IEventSampler,
@@ -255,7 +257,6 @@ import {
 	idCompressorBlobName,
 	metadataBlobName,
 	rootHasIsolatedChannels,
-	summarizerClientType,
 	wrapSummaryInChannelsTree,
 	formCreateSummarizerFn,
 	summarizerRequestUrl,
@@ -1119,6 +1120,10 @@ export class ContainerRuntime
 		return this._getAttachState();
 	}
 
+	public get readonly(): boolean {
+		return isReadonly(this.deltaManager);
+	}
+
 	/**
 	 * Current session schema - defines what options are on & off.
 	 * It's overlap of document schema (controlled by summary & ops) and options controlling this session.
@@ -1569,26 +1574,25 @@ export class ContainerRuntime
 			this.baseLogger,
 		);
 
-		let outerDeltaManager: IDeltaManagerFull;
-		this.useDeltaManagerOpsProxy =
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.DeltaManagerOpsProxy") === true;
-		// The summarizerDeltaManager Proxy is used to lie to the summarizer to convince it is in the right state as a summarizer client.
-		const summarizerDeltaManagerProxy = new DeltaManagerSummarizerProxy(
-			this.innerDeltaManager,
-		);
-		outerDeltaManager = summarizerDeltaManagerProxy;
+		{
+			let outerDeltaManager: IDeltaManagerFull = this.innerDeltaManager;
+			this.useDeltaManagerOpsProxy =
+				this.mc.config.getBoolean("Fluid.ContainerRuntime.DeltaManagerOpsProxy") === true;
+			// The summarizerDeltaManager Proxy is used to lie to the summarizer to convince it is in the right state as a summarizer client.
+			outerDeltaManager = DeltaManagerSummarizerProxy.tryCreate(outerDeltaManager);
 
-		// The DeltaManagerPendingOpsProxy is used to control the minimum sequence number
-		// It allows us to lie to the layers below so that they can maintain enough local state for rebasing ops.
-		if (this.useDeltaManagerOpsProxy) {
-			const pendingOpsDeltaManagerProxy = new DeltaManagerPendingOpsProxy(
-				summarizerDeltaManagerProxy,
-				this.pendingStateManager,
-			);
-			outerDeltaManager = pendingOpsDeltaManagerProxy;
+			// The DeltaManagerPendingOpsProxy is used to control the minimum sequence number
+			// It allows us to lie to the layers below so that they can maintain enough local state for rebasing ops.
+			if (this.useDeltaManagerOpsProxy) {
+				const pendingOpsDeltaManagerProxy = new DeltaManagerPendingOpsProxy(
+					outerDeltaManager,
+					this.pendingStateManager,
+				);
+				outerDeltaManager = pendingOpsDeltaManagerProxy;
+			}
+
+			this._deltaManager = outerDeltaManager;
 		}
-
-		this._deltaManager = outerDeltaManager;
 
 		this.handleContext = new ContainerFluidHandleContext("", this);
 
@@ -1736,6 +1740,7 @@ export class ContainerRuntime
 			new Map<string, string>(dataStoreAliasMap),
 			async (runtime: ChannelCollection) => provideEntryPoint,
 		);
+		this._deltaManager.on("readonly", (readonly) => this.setReadOnlyState(readonly));
 
 		this.blobManager = new BlobManager({
 			routeContext: this.handleContext,
@@ -2575,6 +2580,10 @@ export class ContainerRuntime
 				});
 		}
 		return this._loadIdCompressor;
+	}
+
+	public setReadOnlyState(readonly: boolean): void {
+		this.channelCollection.setReadOnlyState(readonly);
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string): void {

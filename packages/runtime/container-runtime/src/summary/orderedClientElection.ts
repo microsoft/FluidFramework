@@ -10,13 +10,12 @@ import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { IEvent, IEventProvider, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { IClient, IQuorumClients, ISequencedClient } from "@fluidframework/driver-definitions";
+import { summarizerClientType } from "@fluidframework/runtime-utils/internal";
 import {
 	ITelemetryLoggerExt,
 	UsageError,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
-
-import { summarizerClientType } from "./index.js";
 
 // helper types for recursive readonly.
 // eslint-disable-next-line @typescript-eslint/ban-types
