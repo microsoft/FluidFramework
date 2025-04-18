@@ -90,6 +90,7 @@ import type {
 	IInboundSignalMessage,
 	IRuntimeMessagesContent,
 	ISummarizerNodeWithGC,
+	IFluidParentContext,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	FlushMode,
@@ -168,6 +169,7 @@ import {
 	IGarbageCollector,
 	gcGenerationOptionName,
 	type GarbageCollectionMessage,
+	type IGarbageCollectionRuntime,
 } from "./gc/index.js";
 import { InboundBatchAggregator } from "./inboundBatchAggregator.js";
 import {
@@ -193,7 +195,6 @@ import {
 	OpSplitter,
 	Outbox,
 	RemoteMessageProcessor,
-	serializeOp,
 	type OutboundBatch,
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
@@ -719,8 +720,10 @@ export class ContainerRuntime
 	implements
 		IContainerRuntime,
 		IRuntime,
+		IGarbageCollectionRuntime,
 		ISummarizerRuntime,
 		ISummarizerInternalsProvider,
+		IFluidParentContext,
 		IProvideFluidHandleContext,
 		IProvideLayerCompatDetails
 {
@@ -3162,7 +3165,7 @@ export class ContainerRuntime
 					// This will throw and close the container if rollback fails
 					try {
 						checkpoint.rollback((message: LocalBatchMessage) =>
-							this.rollback(message.serializedOp, message.localOpMetadata),
+							this.rollback(message.runtimeOp, message.localOpMetadata),
 						);
 						// reset the dirty state after rollback to what it was before to keep it consistent
 						if (this.dirtyContainer !== checkpointDirtyState) {
@@ -4214,7 +4217,7 @@ export class ContainerRuntime
 					contents: idRange,
 				};
 				const idAllocationBatchMessage: LocalBatchMessage = {
-					serializedOp: serializeOp(idAllocationMessage),
+					runtimeOp: idAllocationMessage,
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				};
 				this.outbox.submitIdAllocation(idAllocationBatchMessage);
@@ -4277,7 +4280,7 @@ export class ContainerRuntime
 					contents: schemaChangeMessage,
 				};
 				this.outbox.submit({
-					serializedOp: serializeOp(msg),
+					runtimeOp: msg,
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				});
 			}
@@ -4285,7 +4288,7 @@ export class ContainerRuntime
 			const message: LocalBatchMessage = {
 				// This will encode any handles present in this op before serializing to string
 				// Note: handles may already have been encoded by the DDS layer, but encoding handles is idempotent so there's no problem.
-				serializedOp: serializeOp(containerRuntimeMessage),
+				runtimeOp: containerRuntimeMessage,
 				metadata,
 				localOpMetadata,
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
@@ -4404,11 +4407,7 @@ export class ContainerRuntime
 	}
 
 	private reSubmit(message: PendingMessageResubmitData): void {
-		// Messages in the PendingStateManager and Outbox (both call resubmit) have serialized contents, so parse it here.
-		// Note that roundtripping handles through string like this means this parsed contents
-		// contains RemoteFluidObjectHandles, not the original handle.
-		const containerRuntimeMessage = this.parseLocalOpContent(message.content);
-		this.reSubmitCore(containerRuntimeMessage, message.localOpMetadata, message.opMetadata);
+		this.reSubmitCore(message.runtimeOp, message.localOpMetadata, message.opMetadata);
 	}
 
 	/**
@@ -4472,11 +4471,8 @@ export class ContainerRuntime
 		}
 	}
 
-	private rollback(content: string | undefined, localOpMetadata: unknown): void {
-		// Messages in the Outbox (which calls rollback) have serialized contents, so parse it here.
-		// Note that roundtripping handles through string like this means this parsed contents
-		// contains RemoteFluidObjectHandles, not the original handle.
-		const { type, contents } = this.parseLocalOpContent(content);
+	private rollback(runtimeOp: LocalContainerRuntimeMessage, localOpMetadata: unknown): void {
+		const { type, contents } = runtimeOp;
 		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp: {
 				// For operations, call rollbackDataStoreOp which will find the right store

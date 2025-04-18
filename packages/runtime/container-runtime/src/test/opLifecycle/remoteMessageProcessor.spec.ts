@@ -14,7 +14,11 @@ import {
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { ContainerMessageType } from "../../index.js";
-import type { InboundSequencedContainerRuntimeMessage } from "../../messageTypes.js";
+import type {
+	InboundContainerRuntimeMessage,
+	InboundSequencedContainerRuntimeMessage,
+	LocalContainerRuntimeMessage,
+} from "../../messageTypes.js";
 import {
 	BatchManager,
 	type OutboundBatchMessage,
@@ -34,6 +38,15 @@ import { compressMultipleMessageBatch } from "./legacyCompression.js";
 
 function isSingletonBatch(batch: OutboundBatch): batch is OutboundSingletonBatch {
 	return batch.messages.length === 1;
+}
+
+// Make a mock op with distinguishable contents
+function op(data: string): LocalContainerRuntimeMessage {
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	return {
+		type: ContainerMessageType.FluidDataStoreOp,
+		contents: data as unknown, // This is mock contents
+	} as LocalContainerRuntimeMessage;
 }
 
 describe("RemoteMessageProcessor", () => {
@@ -248,177 +261,96 @@ describe("RemoteMessageProcessor", () => {
 	}
 
 	it("Processes multiple batches (No Grouped Batching)", () => {
-		const referenceSequenceNumber = 1;
-		let csn = 1;
-
-		// Use BatchManager.popBatch to get the right batch metadata included
-		const batchManager = new BatchManager({
-			canRebase: false,
-		});
-		batchManager.push({ serializedOp: "A1", referenceSequenceNumber }, false /* reentrant */);
-		batchManager.push({ serializedOp: "A2", referenceSequenceNumber }, false /* reentrant */);
-		batchManager.push({ serializedOp: "A3", referenceSequenceNumber }, false /* reentrant */);
-		const batchA = batchManager.popBatch();
-		batchManager.push({ serializedOp: "B1", referenceSequenceNumber }, false /* reentrant */);
-		const batchB = batchManager.popBatch();
-		batchManager.push({ serializedOp: "C1", referenceSequenceNumber }, false /* reentrant */);
-		batchManager.push({ serializedOp: "C2", referenceSequenceNumber }, false /* reentrant */);
-		const batchC = batchManager.popBatch("C" /* batchId */);
-		batchManager.push({ serializedOp: "D1", referenceSequenceNumber }, false /* reentrant */);
-		const batchD = batchManager.popBatch("D" /* batchId */);
+		// Define the test messages grouped by batch
+		type TestMessageInput = Pick<
+			ISequencedDocumentMessage,
+			"clientId" | "clientSequenceNumber" | "type" | "contents" | "metadata" | "compression"
+		> & { contents: InboundContainerRuntimeMessage };
+		interface TestBatchInput {
+			messages: TestMessageInput[];
+			batchId?: string; // For flush call when resubmitting
+		}
+		let csn = 0;
+		// biome-ignore format: Easier to digest similarities/differences with single lines
+		const testBatchesInput: TestBatchInput[] = [
+			{ messages: [
+				{ contents: op("A1"), clientId: "CLIENT_ID", clientSequenceNumber: ++csn, type: MessageType.Operation, metadata: { batch: true } },
+				{ contents: op("A2"), clientId: "CLIENT_ID", clientSequenceNumber: ++csn, type: MessageType.Operation },
+				{ contents: op("A3"), clientId: "CLIENT_ID", clientSequenceNumber: ++csn, type: MessageType.Operation, metadata: { batch: false } }
+			] },
+			{ messages: [
+				{ contents: op("B1"), clientId: "CLIENT_ID", clientSequenceNumber: ++csn, type: MessageType.Operation }
+			] },
+			{ messages: [
+				{ contents: op("C1"), clientId: "CLIENT_ID", clientSequenceNumber: ++csn, type: MessageType.Operation, metadata: { batch: true, batchId: "C" } },
+				{ contents: op("C2"), clientId: "CLIENT_ID", clientSequenceNumber: ++csn, type: MessageType.Operation, metadata: { batch: false } }
+			], batchId: "C" },
+			{ messages: [
+				{ contents: op("D1"), clientId: "CLIENT_ID", clientSequenceNumber: ++csn, type: MessageType.Operation, metadata: { batchId: "D" } }
+			], batchId: "D" },
+		];
+		const unpackBatchMessage = (
+			batchIndex: number,
+			messageIndex: number,
+		): InboundSequencedContainerRuntimeMessage => {
+			const message = testBatchesInput[batchIndex].messages[messageIndex];
+			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+			return {
+				...message,
+				...message.contents,
+			} as Partial<InboundSequencedContainerRuntimeMessage> as InboundSequencedContainerRuntimeMessage;
+		};
+		// biome-ignore format: Easier to read leaving batchStart as single lines
+		const expectedResults: InboundMessageResult[] = [
+			{
+				type: "batchStartingMessage",
+				nextMessage: unpackBatchMessage(0, 0),
+				batchStart: { batchId: undefined, clientId: "CLIENT_ID", batchStartCsn: 1, keyMessage: unpackBatchMessage(0, 0) },
+			},
+			{
+				type: "nextBatchMessage",
+				nextMessage: unpackBatchMessage(0, 1),
+				batchEnd: false,
+			},
+			{
+				type: "nextBatchMessage",
+				nextMessage: unpackBatchMessage(0, 2),
+				batchEnd: true,
+			},
+			{
+				type: "fullBatch",
+				messages: [unpackBatchMessage(1, 0)],
+				batchStart: { batchId: undefined, clientId: "CLIENT_ID", batchStartCsn: 4, keyMessage: unpackBatchMessage(1, 0) },
+				groupedBatch: false,
+				length: 1,
+			},
+			{
+				type: "batchStartingMessage",
+				nextMessage: unpackBatchMessage(2, 0),
+				batchStart: { batchId: "C", clientId: "CLIENT_ID", batchStartCsn: 5, keyMessage: unpackBatchMessage(2, 0) },
+			},
+			{
+				type: "nextBatchMessage",
+				nextMessage: unpackBatchMessage(2, 1),
+				batchEnd: true,
+			},
+			{
+				type: "fullBatch",
+				messages: [unpackBatchMessage(3, 0)],
+				batchStart: { batchId: "D", clientId: "CLIENT_ID", batchStartCsn: 7, keyMessage: unpackBatchMessage(3, 0) },
+				groupedBatch: false,
+				length: 1,
+			},
+		];
 
 		const processor = getMessageProcessor();
-
-		// Add clientId and CSN as would happen on final stage of submit
-		const inboundMessages: ISequencedDocumentMessage[] = [
-			...batchA.messages,
-			...batchB.messages,
-			...batchC.messages,
-			...batchD.messages,
-		].map(({ serializedOp, metadata, referenceSequenceNumber: refSeq }) => {
-			const sequencedMessage: Partial<ISequencedDocumentMessage> = {
-				clientId: "CLIENT_ID",
-				clientSequenceNumber: csn++,
-				contents: serializedOp,
-				...{ ...(metadata && { metadata }) }, // Only include metadata key if it's defined
-				referenceSequenceNumber: refSeq,
-			};
-			return sequencedMessage as ISequencedDocumentMessage;
-		});
-
-		const processResults = inboundMessages.map((message) =>
-			processor.process(message, () => {}),
+		const processResults = testBatchesInput.flatMap(({ messages }) =>
+			messages.map((message) => {
+				return processor.process(message as ISequencedDocumentMessage, () => {});
+			}),
 		);
 
-		// Expected results
-		const messagesA = [
-			{
-				"contents": "A1",
-				"referenceSequenceNumber": 1,
-				"clientSequenceNumber": 1,
-				"metadata": { "batch": true },
-				"clientId": "CLIENT_ID",
-			},
-			{
-				"contents": "A2",
-				"referenceSequenceNumber": 1,
-				"clientSequenceNumber": 2,
-				"clientId": "CLIENT_ID",
-			},
-			{
-				"contents": "A3",
-				"referenceSequenceNumber": 1,
-				"clientSequenceNumber": 3,
-				"metadata": { "batch": false },
-				"clientId": "CLIENT_ID",
-			},
-		];
-		const messagesB = [
-			{
-				"contents": "B1",
-				"referenceSequenceNumber": 1,
-				"clientSequenceNumber": 4,
-				"clientId": "CLIENT_ID",
-			},
-		];
-		const messagesC = [
-			{
-				"contents": "C1",
-				"referenceSequenceNumber": 1,
-				"clientSequenceNumber": 5,
-				"metadata": { "batch": true, "batchId": "C" },
-				"clientId": "CLIENT_ID",
-			},
-			{
-				"contents": "C2",
-				"referenceSequenceNumber": 1,
-				"clientSequenceNumber": 6,
-				"metadata": { "batch": false },
-				"clientId": "CLIENT_ID",
-			},
-		];
-		const messagesD = [
-			{
-				"contents": "D1",
-				"referenceSequenceNumber": 1,
-				"clientSequenceNumber": 7,
-				"metadata": { "batchId": "D" },
-				"clientId": "CLIENT_ID",
-			},
-		];
-		const expectedInfo: Partial<InboundMessageResult>[] = [
-			// A
-			{
-				type: "batchStartingMessage",
-				batchStart: {
-					batchId: undefined,
-					clientId: "CLIENT_ID",
-					keyMessage: messagesA[0] as ISequencedDocumentMessage,
-					batchStartCsn: 1,
-				},
-			},
-			{ type: "nextBatchMessage", batchEnd: false },
-			{ type: "nextBatchMessage", batchEnd: true },
-			// B
-			{
-				type: "fullBatch",
-				batchStart: {
-					clientId: "CLIENT_ID",
-					batchId: undefined,
-					batchStartCsn: 4,
-					keyMessage: messagesB[0] as ISequencedDocumentMessage,
-				},
-				groupedBatch: false,
-				length: 1,
-			},
-			// C
-			{
-				type: "batchStartingMessage",
-				batchStart: {
-					batchId: "C",
-					clientId: "CLIENT_ID",
-					batchStartCsn: 5,
-					keyMessage: messagesC[0] as ISequencedDocumentMessage,
-				},
-			},
-			{ type: "nextBatchMessage", batchEnd: true },
-			// D
-			{
-				type: "fullBatch",
-				batchStart: {
-					clientId: "CLIENT_ID",
-					batchId: "D",
-					batchStartCsn: 7,
-					keyMessage: messagesD[0] as ISequencedDocumentMessage,
-				},
-				groupedBatch: false,
-				length: 1,
-			},
-		];
-		const expectedMessages = [...messagesA, ...messagesB, ...messagesC, ...messagesD];
-
-		assert.deepStrictEqual(
-			processResults.flatMap((result) =>
-				result?.type === "fullBatch" ? [...result.messages] : [result?.nextMessage],
-			),
-			expectedMessages,
-			"unexpected output from process",
-		);
-
-		// We checked messages in the previous assert, now clear them since they're not included in expectedInfo
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const clearMessages = (result: any): InboundMessageResult => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			delete result.messages;
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			delete result.nextMessage;
-			return result as InboundMessageResult;
-		};
-		assert.deepStrictEqual(
-			processResults.map((result) => clearMessages(result)),
-			expectedInfo,
-			"unexpected result info",
-		);
+		assert.deepStrictEqual(processResults, expectedResults, "unexpected output from process");
 	});
 
 	describe("Throws on invalid batches", () => {
@@ -428,25 +360,25 @@ describe("RemoteMessageProcessor", () => {
 				canRebase: false,
 			});
 			batchManager.push(
-				{ serializedOp: "A1", referenceSequenceNumber: 1 },
+				{ runtimeOp: op("A1"), referenceSequenceNumber: 1 },
 				false /* reentrant */,
 			);
 			batchManager.push(
-				{ serializedOp: "A2", referenceSequenceNumber: 1 },
+				{ runtimeOp: op("A2"), referenceSequenceNumber: 1 },
 				false /* reentrant */,
 			);
 			batchManager.push(
-				{ serializedOp: "A3", referenceSequenceNumber: 1 },
+				{ runtimeOp: op("A3"), referenceSequenceNumber: 1 },
 				false /* reentrant */,
 			);
 			const batchA = batchManager.popBatch();
 			batchA.messages[2].metadata = undefined; // Wipe out the ending metadata so the next batch's start shows up mid-batch
 			batchManager.push(
-				{ serializedOp: "B1", referenceSequenceNumber: 1 },
+				{ runtimeOp: op("B1"), referenceSequenceNumber: 1 },
 				false /* reentrant */,
 			);
 			batchManager.push(
-				{ serializedOp: "B2", referenceSequenceNumber: 1 },
+				{ runtimeOp: op("B2"), referenceSequenceNumber: 1 },
 				false /* reentrant */,
 			);
 			const batchB = batchManager.popBatch();
@@ -483,15 +415,15 @@ describe("RemoteMessageProcessor", () => {
 				canRebase: false,
 			});
 			batchManager.push(
-				{ serializedOp: "A1", referenceSequenceNumber: 1 },
+				{ runtimeOp: op("A1"), referenceSequenceNumber: 1 },
 				false /* reentrant */,
 			);
 			batchManager.push(
-				{ serializedOp: "A2", referenceSequenceNumber: 1 },
+				{ runtimeOp: op("A2"), referenceSequenceNumber: 1 },
 				false /* reentrant */,
 			);
 			batchManager.push(
-				{ serializedOp: "A3", referenceSequenceNumber: 1 },
+				{ runtimeOp: op("A3"), referenceSequenceNumber: 1 },
 				false /* reentrant */,
 			);
 			const batchA = batchManager.popBatch();
