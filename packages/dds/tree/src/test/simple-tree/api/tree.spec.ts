@@ -13,7 +13,7 @@ import {
 	TreeViewConfiguration,
 	type TreeNodeSchema,
 } from "../../../simple-tree/index.js";
-import { TreeFactory } from "../../../treeFactory.js";
+import { SharedTree } from "../../../treeFactory.js";
 import { getView, validateUsageError } from "../../utils.js";
 import { independentView, Tree } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -25,7 +25,7 @@ class NodeMap extends schema.map("NoteMap", schema.string) {}
 class NodeList extends schema.array("NoteList", schema.string) {}
 class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList] }) {}
 
-const factory = new TreeFactory({});
+const factory = SharedTree.getFactory();
 
 describe("simple-tree tree", () => {
 	it("ListRoot", () => {

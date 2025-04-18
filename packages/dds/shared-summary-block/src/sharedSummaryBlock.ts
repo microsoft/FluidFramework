@@ -75,9 +75,9 @@ export class SharedSummaryBlockClass extends SharedObject implements ISharedSumm
 	 */
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		const contentsBlob: ISharedSummaryBlockDataSerializable = {};
-		this.data.forEach((value, key) => {
+		for (const [key, value] of this.data.entries()) {
 			contentsBlob[key] = value;
-		});
+		}
 		return createSingleBlobSummary(snapshotFileName, JSON.stringify(contentsBlob));
 	}
 
@@ -97,16 +97,16 @@ export class SharedSummaryBlockClass extends SharedObject implements ISharedSumm
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
 	 */
-	protected onDisconnect() {}
+	protected onDisconnect(): void {}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
 	 */
-	protected processCore(message: ISequencedDocumentMessage, local: boolean) {
+	protected processCore(message: ISequencedDocumentMessage, local: boolean): void {
 		throw new Error("shared summary block should not generate any ops.");
 	}
 
-	protected applyStashedOp() {
+	protected applyStashedOp(): void {
 		throw new Error("not implemented");
 	}
 }

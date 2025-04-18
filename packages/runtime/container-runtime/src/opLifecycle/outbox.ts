@@ -36,6 +36,7 @@ import {
 } from "./definitions.js";
 import { OpCompressor } from "./opCompressor.js";
 import { OpGroupingManager } from "./opGroupingManager.js";
+import { serializeOp } from "./opSerialization.js";
 import { OpSplitter } from "./opSplitter.js";
 
 export interface IOutboxConfig {
@@ -120,8 +121,8 @@ export function localBatchToOutboundBatch({
 
 	// Shallow copy each message as we switch types
 	const outboundMessages = localBatch.messages.map<OutboundBatchMessage>(
-		({ serializedOp, ...message }) => ({
-			contents: serializedOp,
+		({ runtimeOp, ...message }) => ({
+			contents: serializeOp(runtimeOp),
 			...message,
 		}),
 	);
@@ -404,8 +405,8 @@ export class Outbox {
 		}
 
 		// Push the empty batch placeholder to the PendingStateManager
-		this.params.pendingStateManager.onFlushBatch(
-			[{ ...placeholderMessage, serializedOp: "", contents: undefined }], // placeholder message - serializedOp will never be used
+		this.params.pendingStateManager.onFlushEmptyBatch(
+			placeholderMessage,
 			clientSequenceNumber,
 			resubmittingStagedBatch,
 		);
@@ -491,7 +492,7 @@ export class Outbox {
 		this.rebasing = true;
 		for (const message of rawBatch.messages) {
 			this.params.reSubmit({
-				content: message.serializedOp,
+				runtimeOp: message.runtimeOp,
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 			});

@@ -164,8 +164,6 @@
 		"hotloop": "^1.2.0",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
-		"moment": "^2.21.0",
-		"replace-in-file": "^6.3.5",
 		"rimraf": "^4.4.0",
 		"ts-node": "^10.9.1",
 		"typescript": "~5.4.5"

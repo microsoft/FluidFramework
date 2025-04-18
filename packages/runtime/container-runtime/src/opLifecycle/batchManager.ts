@@ -15,6 +15,7 @@ import { asBatchMetadata, type IBatchMetadata } from "../metadata.js";
 import type { IPendingMessage } from "../pendingStateManager.js";
 
 import { LocalBatchMessage, IBatchCheckpoint, type LocalBatch } from "./definitions.js";
+import { serializeOp } from "./opSerialization.js";
 import type { BatchStartInfo } from "./remoteMessageProcessor.js";
 
 export interface IBatchManagerOptions {
@@ -160,9 +161,7 @@ export class BatchManager {
 					throw new LoggingError("Ops generated during rollback", {
 						count,
 						...tagData(TelemetryDataTag.UserData, {
-							ops: JSON.stringify(
-								this.pendingBatch.slice(startPoint).map((b) => b.serializedOp),
-							),
+							ops: serializeOp(this.pendingBatch.slice(startPoint).map((b) => b.runtimeOp)),
 						}),
 					});
 				}
