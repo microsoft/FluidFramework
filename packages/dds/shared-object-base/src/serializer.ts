@@ -243,6 +243,7 @@ export class FluidSerializer implements IFluidSerializer {
 		if (this.runtime.inStagingMode === true) {
 			this.deferedHandleMap.set(handle.absolutePath, handle);
 		} else {
+			//* NEXT: Remove this if-else, since SharedObjectHandle is handling this in its bind method
 			bind.bind(handle);
 		}
 		return encodeHandleForSerialization(handle);

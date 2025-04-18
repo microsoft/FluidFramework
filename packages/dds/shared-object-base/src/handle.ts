@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
+// eslint-disable-next-line import/no-deprecated
+import type { IFluidDataStoreRuntimeExperimental } from "@fluidframework/datastore-definitions/internal";
 
 import { ISharedObject } from "./types.js";
 
@@ -37,9 +39,10 @@ export class SharedObjectHandle extends FluidObjectHandle<ISharedObject> {
 	constructor(
 		protected readonly value: ISharedObject,
 		path: string,
-		routeContext: IFluidHandleContext,
+		// eslint-disable-next-line import/no-deprecated
+		private readonly runtime: IFluidDataStoreRuntimeExperimental,
 	) {
-		super(value, path, routeContext);
+		super(value, path, runtime.IFluidHandleContext);
 	}
 
 	/**
@@ -49,5 +52,13 @@ export class SharedObjectHandle extends FluidObjectHandle<ISharedObject> {
 	public attachGraph(): void {
 		this.value.bindToContext();
 		super.attachGraph();
+	}
+
+	public bind(handle: IFluidHandleInternal): void {
+		// We don't bind handles in staging mode to defer the attachment of any new objects
+		// until we've exited staging mode. This way if a new object is "squashed away" it will never sync.
+		if (this.runtime.inStagingMode !== true) {
+			super.bind(handle);
+		}
 	}
 }

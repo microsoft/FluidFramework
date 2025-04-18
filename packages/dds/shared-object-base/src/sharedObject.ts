@@ -20,6 +20,8 @@ import {
 	type IChannelFactory,
 	IFluidDataStoreRuntime,
 	type IDeltaHandler,
+	// eslint-disable-next-line import/no-deprecated
+	type IFluidDataStoreRuntimeExperimental,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	type IDocumentMessage,
@@ -144,7 +146,12 @@ export abstract class SharedObjectCore<
 
 		assert(!id.includes("/"), 0x304 /* Id cannot contain slashes */);
 
-		this.handle = new SharedObjectHandle(this, id, runtime.IFluidHandleContext);
+		this.handle = new SharedObjectHandle(
+			this,
+			id,
+			// eslint-disable-next-line import/no-deprecated
+			runtime as IFluidDataStoreRuntimeExperimental,
+		);
 
 		this.logger = createChildLogger({
 			logger: runtime.logger,
