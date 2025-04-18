@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 import {
 	isFluidHandle,
 	RemoteFluidObjectHandle,
@@ -40,11 +41,8 @@ describe("FluidSerializer", () => {
 
 	describe("vanilla JSON", () => {
 		const channelsRoutingContext = new MockHandleContext();
-		const serializer = new FluidSerializer({
-			channelsRoutingContext,
-			inStagingMode: false,
-		});
-		const handle = new RemoteFluidObjectHandle("/root", channelsRoutingContext);
+		const serializer = new FluidSerializer(channelsRoutingContext);
+		const bind = new FluidObjectHandle({}, "/", channelsRoutingContext);
 
 		// Start with the various JSON-serializable types.  A mix of "truthy" and "falsy" values
 		// are of particular interest.
@@ -65,7 +63,7 @@ describe("FluidSerializer", () => {
 		// Verify that `encode` is a no-op for these simple cases.
 		for (const input of simple) {
 			it(`${printHandle(input)} -> ${JSON.stringify(input)}`, () => {
-				const actual = serializer.encode(input, handle);
+				const actual = serializer.encode(input, bind);
 				assert.strictEqual(
 					actual,
 					input,
@@ -84,7 +82,7 @@ describe("FluidSerializer", () => {
 					"input must round-trip through decode(encode()).",
 				);
 
-				const stringified = serializer.stringify(input, handle);
+				const stringified = serializer.stringify(input, bind);
 				// Paranoid check that serializer.stringify() and JSON.stringify() agree.
 				assert.deepStrictEqual(
 					stringified,
@@ -123,7 +121,7 @@ describe("FluidSerializer", () => {
 
 		for (const input of tricky) {
 			it(`${printHandle(input)} -> ${JSON.stringify(input)}`, () => {
-				const actual = serializer.encode(input, handle);
+				const actual = serializer.encode(input, bind);
 				assert.strictEqual(
 					actual,
 					input,
@@ -142,7 +140,7 @@ describe("FluidSerializer", () => {
 					"input must round-trip through decode(encode()).",
 				);
 
-				const stringified = serializer.stringify(input, handle);
+				const stringified = serializer.stringify(input, bind);
 				// Check that serializer.stringify() and JSON.stringify() agree.
 				assert.deepStrictEqual(
 					stringified,
@@ -162,14 +160,15 @@ describe("FluidSerializer", () => {
 
 		// Undefined is extra special in that it can't be stringified at the root of the tree.
 		it("'undefined' must round-trip through decode(replaceHandes(...))", () => {
-			assert.strictEqual(serializer.encode(undefined, handle), undefined);
+			assert.strictEqual(serializer.encode(undefined, bind), undefined);
 			assert.strictEqual(serializer.decode(undefined), undefined);
 		});
 	});
 
 	describe("JSON w/embedded handles", () => {
 		const channelsRoutingContext = new MockHandleContext();
-		const serializer = new FluidSerializer({ channelsRoutingContext, inStagingMode: false });
+		const serializer = new FluidSerializer(channelsRoutingContext);
+		const bindSource = new FluidObjectHandle({}, "", channelsRoutingContext);
 		const handle = new RemoteFluidObjectHandle("/root", channelsRoutingContext);
 		const serializedHandle = {
 			type: "__fluid_handle__",
@@ -178,7 +177,7 @@ describe("FluidSerializer", () => {
 
 		function check(decodedForm, encodedForm): void {
 			it(`${printHandle(decodedForm)} -> ${JSON.stringify(encodedForm)}`, () => {
-				const replaced = serializer.encode(decodedForm, handle);
+				const replaced = serializer.encode(decodedForm, bindSource);
 				assert.notStrictEqual(
 					replaced,
 					decodedForm,
@@ -186,7 +185,7 @@ describe("FluidSerializer", () => {
 				);
 				assert.deepStrictEqual(replaced, encodedForm, "encode() must return expected output.");
 
-				const replacedTwice = serializer.encode(replaced, handle);
+				const replacedTwice = serializer.encode(replaced, bindSource);
 				assert.deepStrictEqual(replacedTwice, replaced, "encode should be idempotent");
 
 				const decodedRoundTrip = serializer.decode(replaced);
@@ -204,7 +203,7 @@ describe("FluidSerializer", () => {
 				const decodedTwice = serializer.decode(decodedRoundTrip);
 				assert.deepStrictEqual(decodedTwice, decodedRoundTrip, "decode should be idempotent");
 
-				const stringified = serializer.stringify(decodedForm, handle);
+				const stringified = serializer.stringify(decodedForm, bindSource);
 
 				// Note that we're using JSON.parse() in this test, so the handles remained serialized.
 				assert.deepStrictEqual(
@@ -248,7 +247,7 @@ describe("FluidSerializer", () => {
 			input.h = handle; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
 			input.o1.h = handle; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
 
-			const replaced = serializer.encode(input, handle);
+			const replaced = serializer.encode(input, bindSource);
 			assert.notStrictEqual(
 				replaced,
 				input,
@@ -267,7 +266,7 @@ describe("FluidSerializer", () => {
 				"input must round-trip through encode()/decode().",
 			);
 
-			const stringified = serializer.stringify(input, handle);
+			const stringified = serializer.stringify(input, bindSource);
 			const parsed = serializer.parse(stringified);
 			assert.deepStrictEqual(
 				parsed,
@@ -281,10 +280,7 @@ describe("FluidSerializer", () => {
 		const rootContext = new MockHandleContext("");
 		const dsContext = new MockHandleContext("/default", rootContext);
 		// Create serialized with a handle context whose parent is a root handle context.
-		const serializer = new FluidSerializer({
-			channelsRoutingContext: dsContext,
-			inStagingMode: false,
-		});
+		const serializer = new FluidSerializer(dsContext);
 
 		it("can parse handles with absolute path", () => {
 			const serializedHandle = JSON.stringify({
@@ -333,12 +329,9 @@ describe("FluidSerializer", () => {
 	});
 
 	describe("Utils", () => {
-		const serializer = new FluidSerializer({
-			channelsRoutingContext: new MockHandleContext(),
-			inStagingMode: false,
-		});
+		const serializer = new FluidSerializer(new MockHandleContext());
 		it("makeSerializable is idempotent", () => {
-			const bind = new RemoteFluidObjectHandle("/", new MockHandleContext());
+			const bind = new FluidObjectHandle({}, "/", new MockHandleContext());
 			const handle = new RemoteFluidObjectHandle("/okay", new MockHandleContext());
 			const input = { x: handle, y: 123 };
 			const serializedOnce = makeHandlesSerializable(input, serializer, bind) as {
