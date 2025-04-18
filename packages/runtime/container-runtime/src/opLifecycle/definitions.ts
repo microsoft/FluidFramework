@@ -28,6 +28,7 @@ export interface LocalBatchMessage {
 	 * Reference sequence number this op is based on
 	 */
 	referenceSequenceNumber: number;
+	staged?: boolean;
 
 	/**
 	 * @deprecated Use serializedOp
@@ -61,7 +62,9 @@ export type OutboundBatchMessage = IBatchMessage & {
 /**
  * A batch of messages we have accumulated locally, but haven't sent to the ordering service yet.
  */
-export type LocalBatch = IBatch<LocalBatchMessage[]>;
+export interface LocalBatch extends IBatch<LocalBatchMessage[]> {
+	staged?: boolean;
+}
 
 /**
  * A batch of messages that has been virtualized as needed (grouped, compressed, chunked)
@@ -108,6 +111,8 @@ interface IBatch<TMessages extends LocalBatchMessage[] | OutboundBatchMessage[]>
 	 * reference sequence number to be in agreement about the data model state.
 	 */
 	readonly hasReentrantOps?: boolean;
+
+	readonly staged?: boolean;
 }
 
 export interface IBatchCheckpoint {

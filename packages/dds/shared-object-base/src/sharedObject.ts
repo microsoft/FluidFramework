@@ -769,7 +769,7 @@ export abstract class SharedObject<
 	) {
 		super(id, runtime, attributes);
 
-		this._serializer = new FluidSerializer(this.runtime.channelsRoutingContext);
+		this._serializer = new FluidSerializer(this.runtime);
 	}
 
 	/**
@@ -834,7 +834,7 @@ export abstract class SharedObject<
 
 		let gcData: IGarbageCollectionData;
 		try {
-			const handleVisitor = new GCHandleVisitor(this.runtime.channelsRoutingContext);
+			const handleVisitor = new GCHandleVisitor(this.runtime);
 			this.processGCDataCore(handleVisitor);
 			// The GC data for this shared object contains a single GC node. The outbound routes of this node are the
 			// routes of handles serialized during summarization.

@@ -598,13 +598,15 @@ describe("Outbox", () => {
 		assert.equal(state.batchesSubmitted.length, 2);
 		assert.equal(state.individualOpsSubmitted.length, 0);
 		assert.equal(state.deltaManagerFlushCalls, 0);
-		assert.deepEqual(state.batchesCompressed, [
-			toOutboundBatch([messages[2]]),
-			groupedMessages,
-		]);
+		assert.deepEqual(
+			state.batchesCompressed,
+			[toOutboundBatch([messages[2]]), groupedMessages],
+			"Compressed batches don't match expected",
+		);
 		assert.deepEqual(
 			state.batchesSubmitted.map((x) => x.messages),
 			[[toSubmittedMessage(messages[2])], [toSubmittedMessage(groupedMessages.messages[0])]],
+			"Submitted batches don't match expected",
 		);
 
 		// Note the expected CSN here is fixed to the batch's starting CSN
@@ -625,6 +627,7 @@ describe("Outbox", () => {
 				opMetadata: message.metadata,
 				batchStartCsn: csn,
 			})),
+			"Pending messages don't match expected order/properties",
 		);
 	});
 
@@ -1134,7 +1137,7 @@ describe("Outbox", () => {
 			validateCounts(0, 0, 2);
 		});
 
-		it("batch has a single reentrant op - don't rebase", () => {
+		it("batch has a single reentrant op - do rebase", () => {
 			const outbox = getOutbox({
 				context: getMockContext(),
 				opGroupingConfig: {
@@ -1150,7 +1153,7 @@ describe("Outbox", () => {
 
 			outbox.flush();
 
-			validateCounts(1, 1, 0);
+			validateCounts(0, 0, 1);
 		});
 
 		it("should group the batch", () => {
