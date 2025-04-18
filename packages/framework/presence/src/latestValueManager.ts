@@ -55,6 +55,11 @@ export interface LatestEvents<T> {
  */
 export interface Latest<T> {
 	/**
+	 * Containing {@link Presence}
+	 */
+	readonly presence: Presence;
+
+	/**
 	 * Events for Latest.
 	 */
 	readonly events: Listenable<LatestEvents<T>>;
@@ -63,11 +68,6 @@ export interface Latest<T> {
 	 * Controls for management of sending updates.
 	 */
 	readonly controls: BroadcastControls;
-
-	/**
-	 * Root presence object
-	 */
-	readonly presence: Presence;
 
 	/**
 	 * Current state for this client.
@@ -102,10 +102,13 @@ class LatestValueManagerImpl<T, Key extends string>
 		private readonly key: Key,
 		private readonly datastore: StateDatastore<Key, InternalTypes.ValueRequiredState<T>>,
 		public readonly value: InternalTypes.ValueRequiredState<T>,
-		public readonly presence: Presence,
 		controlSettings: BroadcastControlSettings | undefined,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
+	}
+
+	public get presence(): Presence {
+		return this.datastore.presence;
 	}
 
 	public get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> {
@@ -200,20 +203,13 @@ export function latest<T extends object, Key extends string = string>(
 			Key,
 			InternalTypes.ValueRequiredState<T>
 		>,
-		presence: Presence,
 	): {
 		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
 		manager: InternalTypes.StateValue<Latest<T>>;
 	} => ({
 		initialData: { value, allowableUpdateLatencyMs: controls?.allowableUpdateLatencyMs },
 		manager: brandIVM<LatestValueManagerImpl<T, Key>, T, InternalTypes.ValueRequiredState<T>>(
-			new LatestValueManagerImpl(
-				key,
-				datastoreFromHandle(datastoreHandle),
-				value,
-				presence,
-				controls,
-			),
+			new LatestValueManagerImpl(key, datastoreFromHandle(datastoreHandle), value, controls),
 		),
 	});
 	return Object.assign(factory, { instanceBase: LatestValueManagerImpl });

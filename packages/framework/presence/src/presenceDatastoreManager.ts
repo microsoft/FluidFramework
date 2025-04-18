@@ -220,6 +220,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 
 		const entry = createPresenceStates(
 			{
+				presence: this.presence,
 				attendeeId: this.attendeeId,
 				lookupClient: this.lookupClient,
 				localUpdate,
@@ -227,7 +228,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			workspaceDatastore,
 			requestedContent,
 			controls,
-			this.presence,
 		);
 
 		this.workspaces.set(internalWorkspaceAddress, entry);

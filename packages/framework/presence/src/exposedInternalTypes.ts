@@ -8,8 +8,6 @@ import type {
 	JsonSerializable,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
-import type { Presence } from "./presence.js";
-
 /**
  * Collection of value types that are not intended to be used/imported
  * directly outside of this package.
@@ -113,7 +111,6 @@ export namespace InternalTypes {
 	> = { instanceBase: new (...args: any[]) => any } & ((
 		key: TKey,
 		datastoreHandle: StateDatastoreHandle<TKey, TValue>,
-		presence: Presence,
 	) => {
 		initialData?: { value: TValue; allowableUpdateLatencyMs: number | undefined };
 		manager: StateValue<TManager>;

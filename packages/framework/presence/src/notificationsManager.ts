@@ -210,7 +210,6 @@ class NotificationsManagerImpl<
 			Key,
 			InternalTypes.ValueRequiredState<InternalTypes.NotificationType>
 		>,
-		public readonly presence: Presence,
 		initialSubscriptions: Partial<NotificationSubscriptions<T>>,
 	) {
 		// Add event listeners provided at instantiation
@@ -226,6 +225,10 @@ class NotificationsManagerImpl<
 				this.notificationsInternal.on(name, value);
 			}
 		}
+	}
+
+	public get presence(): Presence {
+		return this.datastore.presence;
 	}
 
 	public update(
@@ -281,7 +284,6 @@ export function Notifications<
 			Key,
 			InternalTypes.ValueRequiredState<InternalTypes.NotificationType>
 		>,
-		presence: Presence,
 	): {
 		manager: InternalTypes.StateValue<NotificationsManager<T>>;
 	} => ({
@@ -293,7 +295,6 @@ export function Notifications<
 			new NotificationsManagerImpl(
 				key,
 				datastoreFromHandle(datastoreHandle),
-				presence,
 				initialSubscriptions,
 			),
 		),

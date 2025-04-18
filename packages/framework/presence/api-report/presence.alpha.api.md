@@ -63,7 +63,7 @@ export function getPresenceViaDataObject(fluidLoadable: ExperimentalPresenceDO):
 export namespace InternalTypes {
     export type ManagerFactory<TKey extends string, TValue extends ValueDirectoryOrState<any>, TManager> = {
         instanceBase: new (...args: any[]) => any;
-    } & ((key: TKey, datastoreHandle: StateDatastoreHandle<TKey, TValue>, presence: Presence) => {
+    } & ((key: TKey, datastoreHandle: StateDatastoreHandle<TKey, TValue>) => {
         initialData?: {
             value: TValue;
             allowableUpdateLatencyMs: number | undefined;

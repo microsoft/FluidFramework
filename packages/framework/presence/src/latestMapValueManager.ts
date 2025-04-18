@@ -312,6 +312,11 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
  */
 export interface LatestMap<T, Keys extends string | number = string | number> {
 	/**
+	 * Containing {@link Presence}
+	 */
+	readonly presence: Presence;
+
+	/**
 	 * Events for LatestMap.
 	 */
 	readonly events: Listenable<LatestMapEvents<T, Keys>>;
@@ -320,11 +325,6 @@ export interface LatestMap<T, Keys extends string | number = string | number> {
 	 * Controls for management of sending updates.
 	 */
 	readonly controls: BroadcastControls;
-
-	/**
-	 * Root presence object
-	 */
-	readonly presence: Presence;
 
 	/**
 	 * Current value map for this client.
@@ -361,7 +361,6 @@ class LatestMapValueManagerImpl<
 			RegistrationKey,
 			InternalTypes.MapValueState<T, Keys>
 		>,
-		public readonly presence: Presence,
 		public readonly value: InternalTypes.MapValueState<T, Keys>,
 		controlSettings: BroadcastControlSettings | undefined,
 	) {
@@ -380,6 +379,9 @@ class LatestMapValueManagerImpl<
 
 	public readonly local: StateMap<Keys, T>;
 
+	public get presence(): Presence {
+		return this.datastore.presence;
+	}
 	public *getRemotes(): IterableIterator<LatestMapClientData<T, Keys>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		for (const attendeeId of objectKeys(allKnownStates.states)) {
@@ -523,7 +525,6 @@ export function latestMap<
 			RegistrationKey,
 			InternalTypes.MapValueState<T, Keys>
 		>,
-		presence: Presence,
 	): {
 		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
 		manager: InternalTypes.StateValue<LatestMap<T, Keys>>;
@@ -537,7 +538,6 @@ export function latestMap<
 			new LatestMapValueManagerImpl(
 				key,
 				datastoreFromHandle(datastoreHandle),
-				presence,
 				value,
 				controls,
 			),

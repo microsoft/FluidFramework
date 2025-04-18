@@ -51,6 +51,7 @@ export interface RuntimeLocalUpdateOptions {
  * @internal
  */
 export interface PresenceRuntime {
+	readonly presence: Presence;
 	readonly attendeeId: AttendeeId;
 	lookupClient(clientId: ClientConnectionId): Attendee;
 	localUpdate(
@@ -258,7 +259,6 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 	public constructor(
 		private readonly runtime: PresenceRuntime,
 		private readonly datastore: ValueElementMap<TSchema>,
-		public readonly presence: Presence,
 		initialContent: TSchema,
 		controlsSettings: BroadcastControlSettings | undefined,
 	) {
@@ -277,7 +277,7 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 			const newValues: { [key: string]: InternalTypes.ValueDirectoryOrState<unknown> } = {};
 			let cumulativeAllowableUpdateLatencyMs: number | undefined;
 			for (const [key, nodeFactory] of Object.entries(initialContent)) {
-				const newNodeData = nodeFactory(key, handleFromDatastore(this), this.presence);
+				const newNodeData = nodeFactory(key, handleFromDatastore(this));
 				nodes[key as keyof TSchema] = newNodeData.manager;
 				if ("initialData" in newNodeData) {
 					const { value, allowableUpdateLatencyMs } = newNodeData.initialData;
@@ -305,6 +305,10 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 				});
 			}
 		}
+	}
+
+	public get presence(): Presence {
+		return this.runtime.presence;
 	}
 
 	public knownValues<Key extends keyof TSchema & string>(
@@ -362,7 +366,7 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 		TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TValueManager>>
 	> {
 		assert(!(key in this.nodes), 0xa3c /* Already have entry for key in map */);
-		const nodeData = nodeFactory(key, handleFromDatastore(this), this.presence);
+		const nodeData = nodeFactory(key, handleFromDatastore(this));
 		this.nodes[key] = nodeData.manager;
 		if ("initialData" in nodeData) {
 			const { value, allowableUpdateLatencyMs } = nodeData.initialData;
@@ -437,15 +441,8 @@ export function createPresenceStates<TSchema extends StatesWorkspaceSchema>(
 	datastore: ValueElementMap<StatesWorkspaceSchema>,
 	initialContent: TSchema,
 	controls: BroadcastControlSettings | undefined,
-	presence: Presence,
 ): { public: StatesWorkspace<TSchema>; internal: PresenceStatesInternal } {
-	const impl = new PresenceStatesImpl<TSchema>(
-		runtime,
-		datastore,
-		presence,
-		initialContent,
-		controls,
-	);
+	const impl = new PresenceStatesImpl<TSchema>(runtime, datastore, initialContent, controls);
 
 	return {
 		public: impl,
