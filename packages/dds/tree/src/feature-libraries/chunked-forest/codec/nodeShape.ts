@@ -27,17 +27,30 @@ import type { EncodedChunkShape, EncodedFieldShape, EncodedValueShape } from "./
 import { isStableId } from "@fluidframework/id-compressor/internal";
 
 export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
-	// TODO: Ensure uniform chunks, encoding and identifier generation sort fields the same.
-	private readonly explicitKeys: Set<FieldKey>;
+	/**
+	 * Set of field keys that are encoded using specialized encoders.
+	 * TODO: Ensure uniform chunks, encoding and identifier generation sort fields the same.
+	 */
+	private readonly specializedFieldKeys: Set<FieldKey>;
 
 	public constructor(
 		public readonly type: undefined | TreeNodeSchemaIdentifier,
 		public readonly value: EncodedValueShape,
-		public readonly fieldEncoders: readonly KeyedFieldEncoder[],
-		public readonly extraLocal: undefined | FieldEncoder,
+		/**
+		 * Encoders for a specific set of fields, by key, in the order they will be encoded. These are fields for which
+		 * special encoding is required. For example, nested arrays.
+		 * Any fields not included here will be encoded using {@link NodeShape.otherFieldsEncoder}.
+		 * If `otherFieldsEncoder` is undefined, then these must handle all non-empty fields.
+		 */
+		public readonly specializedFieldEncoders: readonly KeyedFieldEncoder[],
+		/**
+		 * Encoder for all other fields that are not in {@link NodeShape.specializedFieldEncoders}. These fields must
+		 * be encoded after the specialized fields.
+		 */
+		public readonly otherFieldsEncoder: undefined | FieldEncoder,
 	) {
 		super();
-		this.explicitKeys = new Set(this.fieldEncoders.map((f) => f.key));
+		this.specializedFieldKeys = new Set(this.specializedFieldEncoders.map((f) => f.key));
 	}
 
 	private getValueToEncode(cursor: ITreeCursorSynchronous, cache: EncoderCache): Value {
@@ -64,28 +77,28 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 			assert(cursor.type === this.type, 0x741 /* type must match shape */);
 		}
 		encodeValue(this.getValueToEncode(cursor, cache), this.value, outputBuffer);
-		for (const fieldEncoder of this.fieldEncoders) {
+		for (const fieldEncoder of this.specializedFieldEncoders) {
 			cursor.enterField(brand(fieldEncoder.key));
 			fieldEncoder.encoder.encodeField(cursor, cache, outputBuffer);
 			cursor.exitField();
 		}
 
-		const localBuffer: BufferFormat<EncodedChunkShape> = [];
+		const otherFieldsBuffer: BufferFormat<EncodedChunkShape> = [];
 
 		forEachField(cursor, () => {
 			const key = cursor.getFieldKey();
-			if (!this.explicitKeys.has(key)) {
+			if (!this.specializedFieldKeys.has(key)) {
 				assert(
-					this.extraLocal !== undefined,
+					this.otherFieldsEncoder !== undefined,
 					0x742 /* had extra local fields when shape does not support them */,
 				);
-				localBuffer.push(new IdentifierToken(key));
-				this.extraLocal.encodeField(cursor, cache, localBuffer);
+				otherFieldsBuffer.push(new IdentifierToken(key));
+				this.otherFieldsEncoder.encodeField(cursor, cache, otherFieldsBuffer);
 			}
 		});
 
-		if (this.extraLocal !== undefined) {
-			outputBuffer.push(localBuffer);
+		if (this.otherFieldsEncoder !== undefined) {
+			outputBuffer.push(otherFieldsBuffer);
 		}
 	}
 
@@ -97,8 +110,8 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 			c: {
 				type: encodeOptionalIdentifier(this.type, identifiers),
 				value: this.value,
-				fields: encodeFieldShapes(this.fieldEncoders, identifiers, shapes),
-				extraFields: encodeOptionalFieldShape(this.extraLocal, shapes),
+				fields: encodeFieldShapes(this.specializedFieldEncoders, identifiers, shapes),
+				extraFields: encodeOptionalFieldShape(this.otherFieldsEncoder, shapes),
 			},
 		};
 	}
@@ -111,13 +124,13 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 			identifiers.add(this.type);
 		}
 
-		for (const fieldEncoder of this.fieldEncoders) {
+		for (const fieldEncoder of this.specializedFieldEncoders) {
 			identifiers.add(fieldEncoder.key);
 			shapes(fieldEncoder.encoder.shape);
 		}
 
-		if (this.extraLocal !== undefined) {
-			shapes(this.extraLocal.shape);
+		if (this.otherFieldsEncoder !== undefined) {
+			shapes(this.otherFieldsEncoder.shape);
 		}
 	}
 
