@@ -41,6 +41,7 @@ import {
 	type FieldSchemaAlpha,
 	type ImplicitAnnotatedAllowedTypes,
 	type UnannotateImplicitAllowedTypes,
+	type UnannotateSchemaRecord,
 } from "../schemaTypes.js";
 import type {
 	NodeKind,
@@ -663,12 +664,36 @@ export class SchemaFactory<
 		true,
 		T
 	> {
-		return objectSchema(
+		// The compiler can't infer that UnannotateSchemaRecord<T> is equal to T so we have to do a bunch of typing to make the error go away.
+		const object: TreeNodeSchemaClass<
+			ScopedSchemaName<TScope, Name>,
+			NodeKind.Object,
+			TreeObjectNode<UnannotateSchemaRecord<T>, ScopedSchemaName<TScope, Name>>,
+			object & InsertableObjectFromSchemaRecord<UnannotateSchemaRecord<T>>,
+			true,
+			T
+		> = objectSchema(
 			this.scoped(name),
 			fields,
 			true,
 			defaultSchemaFactoryObjectOptions.allowUnknownOptionalFields,
 		);
+
+		return object as TreeNodeSchemaClass<
+			ScopedSchemaName<TScope, Name>,
+			NodeKind.Object,
+			TreeObjectNode<RestrictiveStringRecord<ImplicitFieldSchema>>,
+			unknown,
+			true,
+			T
+		> as TreeNodeSchemaClass<
+			ScopedSchemaName<TScope, Name>,
+			NodeKind.Object,
+			TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
+			object & InsertableObjectFromSchemaRecord<T>,
+			true,
+			T
+		>;
 	}
 
 	/**

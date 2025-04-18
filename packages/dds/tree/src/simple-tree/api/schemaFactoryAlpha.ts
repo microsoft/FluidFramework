@@ -89,11 +89,11 @@ export class SchemaFactoryAlpha<
 	// TODO rename and consolidate with alpha, note that it's a breaking change in the changeset
 	public objectAlpha<
 		const Name extends TName,
-		const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
+		const T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
-		fields: RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
+		fields: T,
 		options?: SchemaFactoryObjectOptions<TCustomMetadata>,
 	): ObjectNodeSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> & {
 		/**

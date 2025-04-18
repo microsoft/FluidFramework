@@ -89,7 +89,11 @@ describe("viewSchema", () => {
 
 			it("object", () => {
 				expectSelfEquivalent(
-					factory.object("foo", { x: factory.number, y: factory.number, baz: factory.string }),
+					factory.objectAlpha("foo", {
+						x: factory.number,
+						y: factory.number,
+						baz: factory.string,
+					}),
 				);
 			});
 
@@ -134,10 +138,10 @@ describe("viewSchema", () => {
 
 			// Add allowed types to object node
 			it("view: FlexibleObject ⊃ stored: StricterObject", () => {
-				class StricterObject extends factory.object("TestNode", {
+				class StricterObject extends factory.objectAlpha("TestNode", {
 					x: factory.number,
 				}) {}
-				class FlexibleObject extends factory.object("TestNode", {
+				class FlexibleObject extends factory.objectAlpha("TestNode", {
 					x: [factory.number, factory.string],
 				}) {}
 				expectCompatibility(
@@ -147,11 +151,11 @@ describe("viewSchema", () => {
 			});
 			// Add optional field to existing schema
 			it("view: optional 3d Point ⊃ stored: 2d Point", () => {
-				class Point2D extends factory.object("Point", {
+				class Point2D extends factory.objectAlpha("Point", {
 					x: factory.number,
 					y: factory.number,
 				}) {}
-				class Point3D extends factory.object("Point", {
+				class Point3D extends factory.objectAlpha("Point", {
 					x: factory.number,
 					y: factory.number,
 					z: factory.optional(factory.number),
@@ -202,7 +206,7 @@ describe("viewSchema", () => {
 
 		describe("allows viewing but not upgrading when the view schema has opted into allowing the differences", () => {
 			it("due to additional optional fields in the stored schema", () => {
-				class Point2D extends factory.object(
+				class Point2D extends factory.objectAlpha(
 					"Point",
 					{
 						x: factory.number,
@@ -210,7 +214,7 @@ describe("viewSchema", () => {
 					},
 					{ allowUnknownOptionalFields: true },
 				) {}
-				class Point3D extends factory.object("Point", {
+				class Point3D extends factory.objectAlpha("Point", {
 					x: factory.number,
 					y: factory.number,
 					z: factory.optional(factory.number),
@@ -241,7 +245,7 @@ describe("viewSchema", () => {
 					});
 
 					it("in an object", () => {
-						class IncompatibleObject1 extends factory.object("TestNode", {
+						class IncompatibleObject1 extends factory.objectAlpha("TestNode", {
 							x: factory.number,
 						}) {}
 						class IncompatibleObject2 extends factory.objectRecursive("TestNode", {
@@ -278,11 +282,11 @@ describe("viewSchema", () => {
 					});
 
 					it("view: 2d Point vs stored: required 3d Point", () => {
-						class Point2D extends factory.object("Point", {
+						class Point2D extends factory.objectAlpha("Point", {
 							x: factory.number,
 							y: factory.number,
 						}) {}
-						class Point3D extends factory.object("Point", {
+						class Point3D extends factory.objectAlpha("Point", {
 							x: factory.number,
 							y: factory.number,
 							z: factory.number,
@@ -302,11 +306,11 @@ describe("viewSchema", () => {
 				// Note: the decision to not allow is policy. See
 				// "allows viewing but not upgrading when the view schema has opted into allowing the differences" above.
 				it("stored schema has additional optional fields which view schema did not allow", () => {
-					class Point2D extends factory.object("Point", {
+					class Point2D extends factory.objectAlpha("Point", {
 						x: factory.number,
 						y: factory.number,
 					}) {}
-					class Point3D extends factory.object("Point", {
+					class Point3D extends factory.objectAlpha("Point", {
 						x: factory.number,
 						y: factory.number,
 						z: factory.optional(factory.number),
@@ -341,10 +345,10 @@ describe("viewSchema", () => {
 					});
 
 					it("in an object", () => {
-						class IncompatibleObject1 extends factory.object("TestNode", {
+						class IncompatibleObject1 extends factory.objectAlpha("TestNode", {
 							x: factory.number,
 						}) {}
-						class IncompatibleObject2 extends factory.object("TestNode", {
+						class IncompatibleObject2 extends factory.objectAlpha("TestNode", {
 							x: [factory.number, factory.string],
 						}) {}
 						expectCompatibility(

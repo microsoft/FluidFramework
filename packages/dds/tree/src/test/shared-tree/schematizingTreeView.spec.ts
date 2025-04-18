@@ -212,12 +212,12 @@ describe("SchematizingSimpleTreeView", () => {
 		// up a document that has been created and/or edited by a "newer" version of an application (which has
 		// expanded the schema to include more information).
 		const factory = new SchemaFactoryAlpha(undefined);
-		class PersonGeneralized extends factory.object("Person", {
+		class PersonGeneralized extends factory.objectAlpha("Person", {
 			name: factory.string,
 			age: factory.number,
 			address: factory.optional(factory.string),
 		}) {}
-		class PersonSpecific extends factory.object(
+		class PersonSpecific extends factory.objectAlpha(
 			"Person",
 			{
 				name: factory.string,

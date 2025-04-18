@@ -30,8 +30,8 @@ import {
 	type FieldSchemaAlpha,
 	ObjectFieldSchema,
 	type ImplicitAnnotatedFieldSchema,
-	type UnannotateSchemaRecord,
 	unannotateSchemaRecord,
+	type UnannotateSchemaRecord,
 } from "./schemaTypes.js";
 import {
 	type TreeNodeSchema,
@@ -151,6 +151,14 @@ export type InsertableObjectFromSchemaRecord<
 		>;
 
 /**
+ * TODO
+ * @alpha
+ */
+export type InsertableObjectFromAnnotatedSchemaRecord<
+	T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
+> = InsertableObjectFromSchemaRecord<UnannotateSchemaRecord<T>>;
+
+/**
  * Maps from simple field keys ("property" keys) to information about the field.
  *
  * @remarks
@@ -166,9 +174,7 @@ export type SimpleKeyMap = ReadonlyMap<
 /**
  * Caches the mappings from property keys to stored keys for the provided object field schemas in {@link simpleKeyToFlexKeyCache}.
  */
-function createFlexKeyMapping(
-	fields: Record<string, ImplicitAnnotatedFieldSchema>,
-): SimpleKeyMap {
+function createFlexKeyMapping(fields: Record<string, ImplicitFieldSchema>): SimpleKeyMap {
 	const keyMap: Map<string | symbol, { storedKey: FieldKey; schema: FieldSchema }> = new Map();
 	for (const [propertyKey, fieldSchema] of Object.entries(fields)) {
 		const storedKey = getStoredKey(propertyKey, fieldSchema);
@@ -350,12 +356,12 @@ abstract class CustomObjectNodeBase<
  */
 export function objectSchema<
 	TName extends string,
-	const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
+	const T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
 	const ImplicitlyConstructable extends boolean,
 	const TCustomMetadata = unknown,
 >(
 	identifier: TName,
-	info: RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
+	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
 	allowUnknownOptionalFields: boolean,
 	metadata?: NodeSchemaMetadata<TCustomMetadata>,
@@ -364,12 +370,14 @@ export function objectSchema<
 	// Field set can't be modified after this since derived data is stored in maps.
 	Object.freeze(info);
 
+	const unannotatedInfo = unannotateSchemaRecord(info);
+
 	// Ensure no collisions between final set of property keys, and final set of stored keys (including those
 	// implicitly derived from property keys)
-	assertUniqueKeys(identifier, info);
+	assertUniqueKeys(identifier, unannotatedInfo);
 
 	// Performance optimization: cache property key => stored key and schema.
-	const flexKeyMap: SimpleKeyMap = createFlexKeyMapping(info);
+	const flexKeyMap: SimpleKeyMap = createFlexKeyMapping(unannotatedInfo);
 
 	const identifierFieldKeys: FieldKey[] = [];
 	for (const item of flexKeyMap.values()) {
@@ -386,7 +394,7 @@ export function objectSchema<
 	let customizable: boolean;
 	let unhydratedContext: Context;
 
-	class CustomObjectNode extends CustomObjectNodeBase<T> {
+	class CustomObjectNode extends CustomObjectNodeBase<UnannotateSchemaRecord<T>> {
 		public static readonly fields: ReadonlyMap<
 			string,
 			FieldSchemaAlpha & SimpleObjectFieldSchema
@@ -496,8 +504,9 @@ export function objectSchema<
 		}
 
 		public static readonly identifier = identifier;
-		public static readonly info = unannotateSchemaRecord(info) as T;
-		public static readonly annotatedInfo = info;
+		public static readonly info = info;
+		// this might be better?
+		// public static readonly annotatedInfo = info;
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
@@ -515,8 +524,8 @@ export function objectSchema<
 	}
 	type Output = typeof CustomObjectNode &
 		(new (
-			input: InsertableObjectFromSchemaRecord<T> | InternalTreeNode,
-		) => TreeObjectNode<T, TName>);
+			input: InsertableObjectFromAnnotatedSchemaRecord<T> | InternalTreeNode,
+		) => TreeObjectNode<UnannotateSchemaRecord<T>, TName>);
 	return CustomObjectNode as Output;
 }
 
@@ -529,7 +538,7 @@ const targetToProxy: WeakMap<object, TreeNode> = new WeakMap();
  */
 function assertUniqueKeys<
 	const Name extends number | string,
-	const Fields extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
+	const Fields extends RestrictiveStringRecord<ImplicitFieldSchema>,
 >(schemaName: Name, fields: Fields): void {
 	// Verify that there are no duplicates among the explicitly specified stored keys.
 	const explicitStoredKeys = new Set<string>();

@@ -156,6 +156,7 @@ export {
 	type NodeFromSchema,
 	isTreeNodeSchemaClass,
 	type ImplicitFieldSchema,
+	type ImplicitAnnotatedFieldSchema,
 	type TreeFieldFromImplicitField,
 	type ImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
