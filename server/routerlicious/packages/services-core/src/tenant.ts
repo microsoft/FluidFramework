@@ -155,6 +155,11 @@ export interface ITenantManager {
 	createTenant(tenantId?: string): Promise<ITenantConfig & { key: string }>;
 
 	/**
+	 * Retrieves details for the given tenant from Riddler.
+	 */
+	getTenantfromRiddler(tenantId?: string): Promise<ITenantConfig>;
+
+	/**
 	 * Retrieves details for the given tenant
 	 */
 	getTenant(tenantId: string, documentId: string): Promise<ITenant>;
