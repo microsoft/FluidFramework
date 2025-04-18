@@ -165,7 +165,7 @@ export function manufactureHandle<T>(
 	runtime: IFluidDataStoreRuntime,
 	url: string,
 ): IFluidHandleInternal<T> {
-	const serializer = new FluidSerializer(runtime);
+	const serializer = new FluidSerializer(runtime.IFluidHandleContext);
 	const handle: IFluidHandleInternal<T> = parseHandles(
 		{ type: "__fluid_handle__", url },
 		serializer,
