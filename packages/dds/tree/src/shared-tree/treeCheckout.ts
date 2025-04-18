@@ -758,10 +758,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			"The source of the branch merge has been disposed and cannot be merged.",
 		);
 		this.editLock.checkUnlocked("Merging");
-		assert(
-			!this.transaction.isInProgress(),
-			0x9b0 /* Views cannot be merged into a view while it has a pending transaction */,
-		);
+		// assert(
+		// 	!this.transaction.isInProgress(),
+		// 	0x9b0 /* Views cannot be merged into a view while it has a pending transaction */,
+		// );
 		while (checkout.transaction.isInProgress()) {
 			checkout.transaction.commit();
 		}
