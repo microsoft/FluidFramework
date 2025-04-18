@@ -87,6 +87,15 @@ describe("Presence", () => {
 			mapVM.local.delete("key1");
 			assert.strictEqual(localRemovalCount, 1);
 		});
+
+		it("can acces root presence object", () => {
+			const presence = createPresenceManager(new MockEphemeralRuntime());
+			const states = presence.states.getWorkspace(testWorkspaceName, {
+				fixedMap: StateFactory.latestMap({ key1: { x: 0, y: 0 } }),
+			});
+
+			assert.strictEqual(states.props.fixedMap.presence, presence);
+		});
 	});
 });
 

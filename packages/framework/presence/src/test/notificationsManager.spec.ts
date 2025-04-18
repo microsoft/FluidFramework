@@ -487,5 +487,24 @@ describe("Presence", () => {
 			// Verify
 			assert(originalEventHandlerCalled, "originalEventHandler not called");
 		});
+
+		it("can access root presence object", () => {
+			notificationsWorkspace.add(
+				"testEvents",
+				Notifications<
+					// Below explicit generic specification should not be required.
+					{
+						newId: (id: number) => void;
+					},
+					"testEvents"
+				>(
+					// A default handler is not required
+					{},
+				),
+			);
+
+			assert.strictEqual(notificationsWorkspace.props.testEvents.presence, presence);
+			assert.strictEqual(notificationsWorkspace.presence, presence);
+		});
 	});
 });
