@@ -654,7 +654,6 @@ export class BlobManager {
 			assert(localId !== undefined, 0x50e /* local ID not present in blob attach message */);
 			const waitingBlobs = this.opsInFlight.get(blobId);
 			if (waitingBlobs !== undefined) {
-				console.log("waitingBlob size:", waitingBlobs);
 				// For each op corresponding to this storage ID that we are waiting for, resolve the pending blob.
 				// This is safe because the server will keep the blob alive and the op containing the local ID to
 				// storage ID is already in flight and any op containing this local ID will be sequenced after that.
