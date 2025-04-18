@@ -97,7 +97,7 @@
 		"concurrently": "^8.2.1",
 		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
-		"mocha": "^10.1.0",
+		"mocha": "^10.8.2",
 		"prettier": "~3.0.3",
 		"rimraf": "^5.0.0",
 		"sinon": "^19.0.2",
