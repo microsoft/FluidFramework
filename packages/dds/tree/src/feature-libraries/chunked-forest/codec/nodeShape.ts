@@ -28,7 +28,7 @@ import { isStableId } from "@fluidframework/id-compressor/internal";
 
 export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 	/**
-	 * Set of field keys that are encoded using specialized encoders.
+	 * Set of keys for fields that are encoded using {@link NodeShape.specializedFieldEncoders}.
 	 * TODO: Ensure uniform chunks, encoding and identifier generation sort fields the same.
 	 */
 	private readonly specializedFieldKeys: Set<FieldKey>;
