@@ -157,8 +157,8 @@ export function assertFinalExpectations(
 /**
  * Creates a null validator (one that does nothing) for a given type T.
  */
-export function createNullValidator<T extends object>(): ValueTypeSchemaValidator<T> {
-	const nullValidator: ValueTypeSchemaValidator<T> = (data: unknown) => {
+export function createNullValidator<T extends object>(): StateSchemaValidator<T> {
+	const nullValidator: StateSchemaValidator<T> = (data: unknown) => {
 		return data as T;
 	};
 	return nullValidator;
@@ -173,13 +173,13 @@ export type ValidatorSpy = Pick<SinonSpy, "callCount">;
  * Creates a validator and a spy for test purposes.
  */
 export function createSpiedValidator<T extends object>(
-	validator: ValueTypeSchemaValidator<T>,
-): [ValueTypeSchemaValidator<T>, ValidatorSpy] {
+	validator: StateSchemaValidator<T>,
+): [StateSchemaValidator<T>, ValidatorSpy] {
 	const spy: ValidatorSpy = {
 		callCount: 0,
 	};
 
-	const nullValidatorSpy: ValueTypeSchemaValidator<T> = (data: unknown) => {
+	const nullValidatorSpy: StateSchemaValidator<T> = (data: unknown) => {
 		spy.callCount++;
 		return validator(data) as T;
 	};

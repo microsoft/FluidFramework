@@ -17,7 +17,12 @@ import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
-import type { LatestClientData, LatestData } from "./latestValueTypes.js";
+import type {
+	LatestClientData,
+	LatestData,
+	StateSchemaValidator,
+	ValueManagerOptions,
+} from "./latestValueTypes.js";
 import type { Attendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
@@ -97,7 +102,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		private readonly key: Key,
 		private readonly datastore: StateDatastore<Key, InternalTypes.ValueRequiredState<T>>,
 		public readonly value: InternalTypes.ValueRequiredState<T>,
-		private readonly validator: ValueTypeSchemaValidator<T> | undefined,
+		private readonly validator: StateSchemaValidator<T> | undefined,
 		controlSettings: BroadcastControlSettings | undefined,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
@@ -189,8 +194,11 @@ class LatestValueManagerImpl<T, Key extends string>
  */
 export function latest<T extends object, Key extends string = string>(
 	initialValue: JsonSerializable<T> & JsonDeserialized<T> & object,
-	controls?: BroadcastControlSettings,
+	options?: ValueManagerOptions<T>,
 ): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>> {
+	const validator = options?.validator;
+	const controls = options?.controls;
+
 	// Latest takes ownership of initialValue but makes a shallow
 	// copy for basic protection.
 	const value: InternalTypes.ValueRequiredState<T> = {
@@ -208,7 +216,10 @@ export function latest<T extends object, Key extends string = string>(
 		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
 		manager: InternalTypes.StateValue<Latest<T>>;
 	} => ({
-		initialData: { value, allowableUpdateLatencyMs: controls?.allowableUpdateLatencyMs },
+		initialData: {
+			value,
+			allowableUpdateLatencyMs: controls?.allowableUpdateLatencyMs,
+		},
 		manager: brandIVM<LatestValueManagerImpl<T, Key>, T, InternalTypes.ValueRequiredState<T>>(
 			new LatestValueManagerImpl(
 				key,

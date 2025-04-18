@@ -38,16 +38,6 @@ export interface LatestData<T> {
 	metadata: LatestMetadata;
 }
 
-// /**
-//  * Validated state of a value and its metadata.
-//  *
-//  * @sealed
-//  * @alpha
-//  */
-// export interface LatestValueDataValidated<T> extends LatestValueData<T> {
-// 	hasBeenValidated: true;
-// }
-
 /**
  * State of a specific attendee's value and its metadata.
  *
@@ -58,38 +48,25 @@ export interface LatestClientData<T> extends LatestData<T> {
 	attendee: Attendee;
 }
 
-// /**
-//  * Validated state of a specific client's value and its metadata.
-//  *
-//  * @sealed
-//  * @alpha
-//  */
-// export interface LatestValueClientDataValidated<T> extends LatestValueClientData<T> {
-// 	hasBeenValidated: true;
-// }
-
 /**
  * A validator function that can optionally be provided to do runtime validation of the custom data stored in a
  * presence workspace and managed by a value manager.
  *
  * @alpha
  */
-export type ValueTypeSchemaValidator<T> = (
+export type StateSchemaValidator<T> = (
 	unvalidatedData: unknown,
-	metadata?: ValueTypeSchemaValidatorMetadata,
-) =>
-	| T
-	// | ValueTypeSchemaValidator<InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>>
-	| undefined;
+	metadata?: StateSchemaValidatorMetadata,
+) => T | undefined;
 
 /**
- * Optional metadata that is passed to a {@link ValueTypeSchemaValidator}.
+ * Optional metadata that is passed to a {@link StateSchemaValidator}.
  *
  * @alpha
  *
  * TODO: What else needs to be in the metadata?
  */
-export interface ValueTypeSchemaValidatorMetadata {
+export interface StateSchemaValidatorMetadata {
 	/**
 	 * If the value being validated is a LatestValueMap value, this will be set to the value of the corresponding key.
 	 */
@@ -97,12 +74,12 @@ export interface ValueTypeSchemaValidatorMetadata {
 }
 
 /**
- * Type guard that checks if a value is a value type schema validator.
+ * Type guard that checks if a value is a state schema validator.
  * @param fn - A function that may be a schema validator.
  */
-// export function isValueTypeSchemaValidator<T>(fn: unknown): fn is ValueTypeSchemaValidator<T> {
-// 	return typeof fn === "function";
-// }
+export function isStateSchemaValidator<T>(fn: unknown): fn is StateSchemaValidator<T> {
+	return typeof fn === "function";
+}
 
 /**
  * Options that can be provided to a value manager. TODO: Add details.
@@ -110,6 +87,6 @@ export interface ValueTypeSchemaValidatorMetadata {
  * @alpha
  */
 export interface ValueManagerOptions<T extends object> {
-	validator?: ValueTypeSchemaValidator<T> | undefined;
+	validator?: StateSchemaValidator<T> | undefined;
 	controls?: BroadcastControlSettings | undefined;
 }

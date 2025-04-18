@@ -13,7 +13,7 @@ import {
 	Latest,
 	LatestMap,
 	// type PresenceStates,
-	type ValueTypeSchemaValidator,
+	type StateSchemaValidator,
 	// SessionClientStatus,
 	// type ClientConnectionId,
 	// type ISessionClient,
@@ -77,7 +77,7 @@ describe("Presence", () => {
 
 		describe("LatestValueManager", () => {
 			// let stateWorkspace: PresenceStates<{ num: 0 }>;
-			let validatorFunction: ValueTypeSchemaValidator<{ num: number }>;
+			let validatorFunction: StateSchemaValidator<{ num: number }>;
 			let validatorSpy: ValidatorSpy;
 
 			beforeEach(() => {
@@ -167,7 +167,7 @@ describe("Presence", () => {
 		// TODO: tests are failing
 		describe.skip("LatestMapValueManager", () => {
 			// let stateWorkspace: PresenceStates<{ num: 0 }>;
-			let validatorFunction: ValueTypeSchemaValidator<{ num: number }>;
+			let validatorFunction: StateSchemaValidator<{ num: number }>;
 			let validatorSpy: ValidatorSpy;
 
 			beforeEach(() => {

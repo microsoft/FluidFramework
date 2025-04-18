@@ -1,4 +1,4 @@
-import type { ValueTypeSchemaValidator } from "@fluidframework/presence/alpha";
+import type { StateSchemaValidator } from "@fluidframework/presence/alpha";
 import { type Static, Type } from "@sinclair/typebox";
 // eslint-disable-next-line import/no-internal-modules
 import { Value } from "@sinclair/typebox/value";
@@ -13,9 +13,7 @@ export const IMousePosition = Type.Object({
 	y: Type.Number(),
 });
 
-export const IMousePositionValidator: ValueTypeSchemaValidator<IMousePosition> = (
-	maybeValid,
-) => {
+export const IMousePositionValidator: StateSchemaValidator<IMousePosition> = (maybeValid) => {
 	window.alert("Validator called");
 	console.debug(`Validator called with`, maybeValid);
 	// const isValid = Value.Parse(IMousePosition, maybeValid);

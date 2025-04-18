@@ -17,7 +17,13 @@ import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { objectEntries, objectKeys } from "./internalUtils.js";
-import type { LatestClientData, LatestData, LatestMetadata } from "./latestValueTypes.js";
+import type {
+	LatestClientData,
+	LatestData,
+	LatestMetadata,
+	StateSchemaValidator,
+	ValueManagerOptions,
+} from "./latestValueTypes.js";
 import type { AttendeeId, Attendee, SpecificAttendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
@@ -218,7 +224,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 				string | number
 			>,
 		) => void,
-		private readonly validator: ValueTypeSchemaValidator<T> | undefined,
+		private readonly validator: StateSchemaValidator<T> | undefined,
 	) {
 		// All initial items are expected to be defined.
 		// TODO assert all defined and/or update type.
@@ -365,7 +371,7 @@ class LatestMapValueManagerImpl<
 			InternalTypes.MapValueState<T, Keys>
 		>,
 		public readonly value: InternalTypes.MapValueState<T, Keys>,
-		validator: ValueTypeSchemaValidator<T> | undefined,
+		validator: StateSchemaValidator<T> | undefined,
 		controlSettings: BroadcastControlSettings | undefined,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
