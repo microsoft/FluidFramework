@@ -1038,7 +1038,16 @@ describe("Runtime", () => {
 
 			const addPendingMessage = (pendingStateManager: PendingStateManager): void =>
 				pendingStateManager.onFlushBatch(
-					[{ serializedOp: "", referenceSequenceNumber: 0 }],
+					[
+						{
+							// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+							runtimeOp: {
+								type: ContainerMessageType.FluidDataStoreOp,
+								contents: "" as unknown,
+							} as LocalContainerRuntimeMessage,
+							referenceSequenceNumber: 0,
+						},
+					],
 					1,
 				);
 
