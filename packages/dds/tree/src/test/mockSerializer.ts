@@ -32,7 +32,4 @@ class MockHandleContext implements IFluidHandleContext {
  *
  * Mainly useful when an IFluidSerializer is required but when handles being encoded don't need to be decoded and resolved.
  */
-export const mockSerializer = new FluidSerializer({
-	channelsRoutingContext: new MockHandleContext(),
-	inStagingMode: false,
-});
+export const mockSerializer = new FluidSerializer(new MockHandleContext());
