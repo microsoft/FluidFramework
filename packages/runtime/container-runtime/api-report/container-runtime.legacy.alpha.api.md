@@ -101,6 +101,7 @@ export interface ICompressionRuntimeOptions {
 export interface IContainerRuntimeOptions {
     readonly chunkSizeInBytes?: number;
     readonly compressionOptions?: ICompressionRuntimeOptions;
+    readonly createBlobPlaceholders?: boolean;
     // @deprecated
     readonly enableGroupedBatching?: boolean;
     readonly enableRuntimeIdCompressor?: IdCompressorMode;

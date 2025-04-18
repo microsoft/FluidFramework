@@ -101,6 +101,7 @@ import {
 import {
 	GCDataBuilder,
 	RequestParser,
+	RuntimeHeaders,
 	TelemetryContext,
 	addBlobToSummary,
 	addSummarizeResultToSummary,
@@ -402,6 +403,12 @@ export interface IContainerRuntimeOptions {
 	 * are engaged as they become available, without giving legacy clients any chance to fail predictably.
 	 */
 	readonly explicitSchemaControl?: boolean;
+
+	/**
+	 * Create blob placeholders when calling createBlob (default is false).
+	 * When enabled, createBlob will return a handle before the blob upload completes.
+	 */
+	readonly createBlobPlaceholders?: boolean;
 }
 
 /**
@@ -797,6 +804,7 @@ export class ContainerRuntime
 			chunkSizeInBytes = defaultChunkSizeInBytes,
 			enableGroupedBatching = true,
 			explicitSchemaControl = false,
+			createBlobPlaceholders = false,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
 
 		const registry = new FluidDataStoreRegistry(registryEntries);
@@ -973,6 +981,7 @@ export class ContainerRuntime
 				compressionLz4,
 				idCompressorMode,
 				opGroupingEnabled: enableGroupedBatching,
+				createBlobPlaceholders,
 				disallowedVersions: [],
 			},
 			(schema) => {
@@ -999,6 +1008,7 @@ export class ContainerRuntime
 			enableRuntimeIdCompressor: enableRuntimeIdCompressor as "on" | "delayed",
 			enableGroupedBatching,
 			explicitSchemaControl,
+			createBlobPlaceholders,
 		};
 
 		const runtime = new containerRuntimeCtor(
@@ -1733,6 +1743,7 @@ export class ContainerRuntime
 			isBlobDeleted: (blobPath: string) => this.garbageCollector.isNodeDeleted(blobPath),
 			runtime: this,
 			stashedBlobs: pendingRuntimeState?.pendingAttachmentBlobs,
+			createBlobPlaceholders: this.sessionSchema.createBlobPlaceholders === true,
 		});
 
 		this.deltaScheduler = new DeltaScheduler(
@@ -2278,7 +2289,16 @@ export class ContainerRuntime
 			}
 
 			if (id === blobManagerBasePath && requestParser.isLeaf(2)) {
-				const blob = await this.blobManager.getBlob(requestParser.pathParts[1]);
+				const localId = requestParser.pathParts[1];
+				const placeholder = requestParser.headers?.[RuntimeHeaders.placeholder] === true;
+				if (
+					!this.blobManager.hasBlob(localId) &&
+					requestParser.headers?.[RuntimeHeaders.wait] === false
+				) {
+					return create404Response(request);
+				}
+
+				const blob = await this.blobManager.getBlob(localId, placeholder);
 				return {
 					status: 200,
 					mimeType: "fluid/object",
