@@ -56,7 +56,8 @@ export class SharedObjectHandle extends FluidObjectHandle<ISharedObject> {
 
 	public bind(handle: IFluidHandleInternal): void {
 		// We don't bind handles in staging mode to defer the attachment of any new objects
-		// until we've exited staging mode. This way if a new object is "squashed away" it will never sync.
+		// until we've exited staging mode. This way if we discard changes or a new handle is not present in the final
+		// committed state, we will never end up attaching the discarded object.
 		if (this.runtime.inStagingMode !== true) {
 			super.bind(handle);
 		}
