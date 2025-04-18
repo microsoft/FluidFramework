@@ -10,7 +10,7 @@ import type { JsonTypeWith } from "@fluidframework/core-interfaces/internal";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
-import type { Attendee } from "./presence.js";
+import type { Attendee, Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
@@ -131,6 +131,11 @@ export interface NotificationsManager<
 	T extends InternalUtilityTypes.NotificationListeners<T>,
 > {
 	/**
+	 * Containing {@link Presence}
+	 */
+	readonly presence: Presence;
+
+	/**
 	 * Events for Notifications manager.
 	 */
 	readonly events: Listenable<NotificationsManagerEvents>;
@@ -220,6 +225,10 @@ class NotificationsManagerImpl<
 				this.notificationsInternal.on(name, value);
 			}
 		}
+	}
+
+	public get presence(): Presence {
+		return this.datastore.presence;
 	}
 
 	public update(

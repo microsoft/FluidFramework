@@ -12,7 +12,7 @@ import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type { IEphemeralRuntime, PostUpdateAction } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
-import type { AttendeeId, Attendee, PresenceEvents } from "./presence.js";
+import type { AttendeeId, Attendee, Presence, PresenceEvents } from "./presence.js";
 import type {
 	ClientUpdateEntry,
 	RuntimeLocalUpdateOptions,
@@ -153,6 +153,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		private readonly lookupClient: (clientId: AttendeeId) => Attendee,
 		private readonly logger: ITelemetryLoggerExt | undefined,
 		private readonly events: IEmitter<PresenceEvents>,
+		private readonly presence: Presence,
 		systemWorkspaceDatastore: SystemWorkspaceDatastore,
 		systemWorkspace: StatesWorkspaceEntry<StatesWorkspaceSchema>,
 	) {
@@ -219,6 +220,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 
 		const entry = createPresenceStates(
 			{
+				presence: this.presence,
 				attendeeId: this.attendeeId,
 				lookupClient: this.lookupClient,
 				localUpdate,

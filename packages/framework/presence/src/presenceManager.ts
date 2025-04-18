@@ -77,6 +77,7 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 			runtime,
 			this.events,
 			this.mc?.logger,
+			this,
 		);
 		this.attendees = this.systemWorkspace;
 
@@ -138,6 +139,7 @@ function setupSubComponents(
 	events: Listenable<PresenceEvents & AttendeesEvents> &
 		IEmitter<PresenceEvents & AttendeesEvents>,
 	logger: ITelemetryLoggerExt | undefined,
+	presence: Presence,
 ): [PresenceDatastoreManager, SystemWorkspace] {
 	const systemWorkspaceDatastore: SystemWorkspaceDatastore = {
 		clientToSessionId: {},
@@ -154,6 +156,7 @@ function setupSubComponents(
 		systemWorkspaceConfig.workspace.getAttendee.bind(systemWorkspaceConfig.workspace),
 		logger,
 		events,
+		presence,
 		systemWorkspaceDatastore,
 		systemWorkspaceConfig.statesEntry,
 	);

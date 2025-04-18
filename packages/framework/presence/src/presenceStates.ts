@@ -12,7 +12,7 @@ import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { ClientRecord, PostUpdateAction } from "./internalTypes.js";
 import type { RecordEntryTypes } from "./internalUtils.js";
 import { getOrCreateRecord, objectEntries } from "./internalUtils.js";
-import type { AttendeeId, Attendee } from "./presence.js";
+import type { AttendeeId, Attendee, Presence } from "./presence.js";
 import type { LocalStateUpdateOptions, StateDatastore } from "./stateDatastore.js";
 import { handleFromDatastore } from "./stateDatastore.js";
 import type { StatesWorkspace, StatesWorkspaceSchema } from "./types.js";
@@ -51,6 +51,7 @@ export interface RuntimeLocalUpdateOptions {
  * @internal
  */
 export interface PresenceRuntime {
+	readonly presence: Presence;
 	readonly attendeeId: AttendeeId;
 	lookupClient(clientId: ClientConnectionId): Attendee;
 	localUpdate(
@@ -304,6 +305,10 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 				});
 			}
 		}
+	}
+
+	public get presence(): Presence {
+		return this.runtime.presence;
 	}
 
 	public knownValues<Key extends keyof TSchema & string>(
