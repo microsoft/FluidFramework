@@ -962,7 +962,7 @@ export class MockFluidDataStoreRuntime
 		return;
 	}
 
-	public bind(handle: IFluidHandle): void {
+	public bind(): void {
 		return;
 	}
 
