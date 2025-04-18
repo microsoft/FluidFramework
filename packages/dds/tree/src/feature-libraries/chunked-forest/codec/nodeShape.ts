@@ -37,10 +37,12 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 		public readonly type: undefined | TreeNodeSchemaIdentifier,
 		public readonly value: EncodedValueShape,
 		/**
-		 * Encoders for a specific set of fields, by key, in the order they will be encoded. These are fields for which
-		 * special encoding is required. For example, nested arrays.
-		 * Any fields not included here will be encoded using {@link NodeShape.otherFieldsEncoder}.
-		 * If `otherFieldsEncoder` is undefined, then these must handle all non-empty fields.
+		 * Encoders for a specific set of fields, by key, in the order they will be encoded.
+		 * These are fields for which specialized encoding is provided as an optimization.
+		 * Using these for a given field instead of falling back to {@link NodeShape.specializedFieldEncoders} is often more efficient:
+		 * this avoids the need to explicitly include the key and shape in the encoded data for each node instance.
+		 * Instead, this information is here, and thus is encoded only once as part of the node shape.
+		 * These encoders will be used, even if the field they apply to is empty (which can add overhead for fields which are usually empty).
 		 */
 		public readonly specializedFieldEncoders: readonly KeyedFieldEncoder[],
 		/**
