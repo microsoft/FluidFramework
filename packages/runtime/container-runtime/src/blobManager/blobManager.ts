@@ -68,7 +68,9 @@ import {
  */
 export class BlobHandle
 	extends FluidHandleBase<ArrayBufferLike>
-	implements IFluidPlaceholderHandle, IFluidPlaceholderHandleInternal<ArrayBufferLike>
+	implements
+		IFluidPlaceholderHandle<ArrayBufferLike>,
+		IFluidPlaceholderHandleInternal<ArrayBufferLike>
 {
 	private attached: boolean = false;
 

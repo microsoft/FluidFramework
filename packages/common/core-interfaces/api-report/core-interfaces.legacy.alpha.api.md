@@ -283,7 +283,7 @@ export interface IFluidLoadable extends IProvideFluidLoadable {
 }
 
 // @alpha
-export interface IFluidPlaceholderHandle extends IFluidHandle {
+export interface IFluidPlaceholderHandle<T> extends IFluidHandle<T> {
     readonly events: IEventProvider<IFluidPlaceholderHandleEvents>;
     readonly payloadState: PayloadState;
 }

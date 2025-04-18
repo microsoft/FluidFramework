@@ -57,9 +57,9 @@ export const isFluidPlaceholderHandleInternal = (
  * @legacy
  * @alpha
  */
-export const isFluidPlaceholderHandle = (
-	handle: IFluidHandle,
-): handle is IFluidPlaceholderHandle =>
+export const isFluidPlaceholderHandle = <T>(
+	handle: IFluidHandle<T>,
+): handle is IFluidPlaceholderHandle<T> =>
 	"payloadState" in handle &&
 	(handle.payloadState === "local" ||
 		handle.payloadState === "shared" ||

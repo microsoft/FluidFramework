@@ -154,7 +154,7 @@ export interface IFluidPlaceholderHandleEvents extends IEvent {
  * @legacy
  * @alpha
  */
-export interface IFluidPlaceholderHandle extends IFluidHandle {
+export interface IFluidPlaceholderHandle<T> extends IFluidHandle<T> {
 	/**
 	 * The current state of the handle's payload.
 	 */
