@@ -11955,6 +11955,9 @@ importers:
       lz4js:
         specifier: ^0.2.0
         version: 0.2.0
+      semver:
+        specifier: ^7.7.1
+        version: 7.7.1
       uuid:
         specifier: ^9.0.0
         version: 9.0.1
@@ -12010,6 +12013,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/semver':
+        specifier: ^7.7.0
+        version: 7.7.0
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3

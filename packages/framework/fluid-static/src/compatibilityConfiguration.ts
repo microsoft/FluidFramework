@@ -12,8 +12,7 @@ import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import type { CompatibilityMode } from "./types.js";
 
 /**
- * The CompatibilityMode selected determines the set of runtime options to use. In "1" mode we support
- * full interop with true 1.x clients, while in "2" mode we only support interop with 2.x clients.
+ * Specifies the configured runtime options for each {@link CompatibilityMode}..
  */
 export const compatibilityModeRuntimeOptions: Record<
 	CompatibilityMode,
