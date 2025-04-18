@@ -6,21 +6,42 @@
 import type { IBatchMessage } from "@fluidframework/container-definitions/internal";
 
 import { CompressionAlgorithms } from "../containerRuntime.js";
+import type { LocalContainerRuntimeMessage } from "../messageTypes.js";
 
 /**
  * Local Batch message, before it is virtualized and sent to the ordering service
  */
 export interface LocalBatchMessage {
-	serializedOp: string;
+	/**
+	 * The original local op
+	 */
+	runtimeOp: LocalContainerRuntimeMessage;
+	/**
+	 * Optional metadata which is not to be serialized with the op, and is visible to the ordering service
+	 */
 	metadata?: Record<string, unknown>;
+	/**
+	 * Metadata used by this local client in flows such as rebase
+	 */
 	localOpMetadata?: unknown;
+	/**
+	 * Reference sequence number this op is based on
+	 */
 	referenceSequenceNumber: number;
-	compression?: CompressionAlgorithms;
 
 	/**
 	 * @deprecated Use serializedOp
 	 */
 	contents?: never; // To ensure we don't leave this one when converting from OutboundBatchMessage
+}
+
+/**
+ * Placeholder for an empty batch, for tracking the pending local empty batch
+ */
+export interface LocalEmptyBatchPlaceholder {
+	metadata?: Record<string, unknown>;
+	localOpMetadata: { emptyBatch: true };
+	referenceSequenceNumber: number;
 }
 
 /**
@@ -45,25 +66,29 @@ export type LocalBatch = IBatch<LocalBatchMessage[]>;
 /**
  * A batch of messages that has been virtualized as needed (grouped, compressed, chunked)
  * and is ready to be sent to the ordering service.
+ * At the very least, the op contents have been serialized to string.
  */
-export type OutboundBatch = IBatch<OutboundBatchMessage[]>;
+export interface OutboundBatch<
+	TMessages extends OutboundBatchMessage[] = OutboundBatchMessage[],
+> extends IBatch<TMessages> {
+	/**
+	 * Sum of the in-memory content sizes of all messages in the batch.
+	 * If the batch is compressed, this number reflects the post-compression size.
+	 */
+	readonly contentSizeInBytes: number;
+}
 
 /**
  * An {@link OutboundBatch} with exactly one message
  * This type is helpful as Grouping yields this kind of batch, and Compression only operates on this type of batch.
  */
-export type OutboundSingletonBatch = IBatch<[OutboundBatchMessage]>;
+export type OutboundSingletonBatch = OutboundBatch<[OutboundBatchMessage]>;
 
 /**
  * Base batch interface used internally by the runtime.
  * See {@link LocalBatch} and {@link OutboundBatch} for the concrete types.
  */
 interface IBatch<TMessages extends LocalBatchMessage[] | OutboundBatchMessage[]> {
-	/**
-	 * Sum of the in-memory content sizes of all messages in the batch.
-	 * If the batch is compressed, this number reflects the post-compression size.
-	 */
-	readonly contentSizeInBytes: number;
 	/**
 	 * All the messages in the batch
 	 */

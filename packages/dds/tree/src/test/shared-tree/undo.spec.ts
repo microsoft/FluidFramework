@@ -16,6 +16,7 @@ import { type JsonCompatible, brand } from "../../util/index.js";
 import {
 	chunkFromJsonTrees,
 	createTestUndoRedoStacks,
+	DefaultTestSharedTreeKind,
 	expectJsonTree,
 	getView,
 	moveWithin,
@@ -36,7 +37,6 @@ import {
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { initialize } from "../../shared-tree/schematizeTree.js";
-import { TreeFactory } from "../../treeFactory.js";
 
 const rootPath: NormalizedUpPath = {
 	detachedNodeId: undefined,
@@ -489,9 +489,8 @@ describe("Undo and redo", () => {
 	it("can undo while detached", () => {
 		const sf = new SchemaFactory(undefined);
 		class Schema extends sf.object("Object", { foo: sf.number }) {}
-		const sharedTreeFactory = new TreeFactory({});
 		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
-		const tree = sharedTreeFactory.create(runtime, "tree");
+		const tree = DefaultTestSharedTreeKind.getFactory().create(runtime, "tree");
 		const view = asTreeViewAlpha(tree.viewWith(new TreeViewConfiguration({ schema: Schema })));
 		view.initialize({ foo: 1 });
 		assert.equal(tree.isAttached(), false);
@@ -703,7 +702,7 @@ describe("Undo and redo", () => {
  * @param attachTree - whether or not the SharedTree should be attached to the Fluid runtime
  */
 export function createCheckout(json: JsonCompatible[], attachTree: boolean): ITreeCheckout {
-	const sharedTreeFactory = new TreeFactory({});
+	const sharedTreeFactory = DefaultTestSharedTreeKind.getFactory();
 	const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
 	const tree = sharedTreeFactory.create(runtime, "tree");
 	const runtimeFactory = new MockContainerRuntimeFactory();

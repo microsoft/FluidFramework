@@ -559,6 +559,10 @@ extends:
                 value: 'false'
               - name: COMMIT_SHA
                 value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
+              # The build job above already runs component governance tasks.
+              # We don't need them again during jobs that run tests even if we're checking out the repo.
+              - name: skipComponentGovernanceDetection
+                value: true
 
             steps:
               # Setup
@@ -719,6 +723,10 @@ extends:
                   value: 'false'
                 - name: COMMIT_SHA
                   value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
+                # The build job above already runs component governance tasks.
+                # We don't need them again during jobs that run tests even if we're checking out the repo.
+                - name: skipComponentGovernanceDetection
+                  value: true
               steps:
                 # Setup
                 - checkout: self

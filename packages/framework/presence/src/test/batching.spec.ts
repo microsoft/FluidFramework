@@ -7,7 +7,8 @@ import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal
 import { describe, it, after, afterEach, before, beforeEach } from "mocha";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
-import { Latest, Notifications, type PresenceNotifications } from "../index.js";
+import type { NotificationsWorkspace } from "../index.js";
+import { Notifications, StateFactory } from "../index.js";
 import type { createPresenceManager } from "../presenceManager.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
@@ -34,7 +35,7 @@ describe("Presence", () => {
 			clock.setSystemTime(initialTime);
 
 			// Set up the presence connection.
-			presence = prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
+			presence = prepareConnectedPresence(runtime, "attendeeId-2", "client2", clock, logger);
 		});
 
 		afterEach(() => {
@@ -48,7 +49,7 @@ describe("Presence", () => {
 			clock.restore();
 		});
 
-		describe("LatestValueManager", () => {
+		describe("Latest", () => {
 			it("sends signal immediately when allowable latency is 0", async () => {
 				runtime.signalsExpected.push(
 					[
@@ -62,13 +63,13 @@ describe("Presence", () => {
 										"client2": {
 											"rev": 0,
 											"timestamp": 1000,
-											"value": "sessionId-2",
+											"value": "attendeeId-2",
 										},
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"count": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 0,
 											"timestamp": 1010,
 											"value": {
@@ -91,13 +92,13 @@ describe("Presence", () => {
 										"client2": {
 											"rev": 0,
 											"timestamp": 1000,
-											"value": "sessionId-2",
+											"value": "attendeeId-2",
 										},
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"count": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 1,
 											"timestamp": 1020,
 											"value": {
@@ -120,13 +121,13 @@ describe("Presence", () => {
 										"client2": {
 											"rev": 0,
 											"timestamp": 1000,
-											"value": "sessionId-2",
+											"value": "attendeeId-2",
 										},
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"count": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 2,
 											"timestamp": 1020,
 											"value": {
@@ -142,8 +143,8 @@ describe("Presence", () => {
 
 				// Configure a state workspace
 				// SIGNAL #1 - intial data is sent immediately
-				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 0 }),
+				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
+					count: StateFactory.latest({ num: 0 }, { allowableUpdateLatencyMs: 0 }),
 				});
 
 				const { count } = stateWorkspace.props;
@@ -171,13 +172,13 @@ describe("Presence", () => {
 									"client2": {
 										"rev": 0,
 										"timestamp": 1000,
-										"value": "sessionId-2",
+										"value": "attendeeId-2",
 									},
 								},
 							},
 							"s:name:testStateWorkspace": {
 								"count": {
-									"sessionId-2": {
+									"attendeeId-2": {
 										"rev": 0,
 										"timestamp": 1010,
 										"value": {
@@ -191,8 +192,8 @@ describe("Presence", () => {
 				]);
 
 				// Configure a state workspace
-				presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 } /* default allowableUpdateLatencyMs = 60 */),
+				presence.states.getWorkspace("name:testStateWorkspace", {
+					count: StateFactory.latest({ num: 0 } /* default allowableUpdateLatencyMs = 60 */),
 				}); // will be queued; deadline is now 1070
 
 				// SIGNAL #1
@@ -215,13 +216,13 @@ describe("Presence", () => {
 										"client2": {
 											"rev": 0,
 											"timestamp": 1000,
-											"value": "sessionId-2",
+											"value": "attendeeId-2",
 										},
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"count": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 3,
 											"timestamp": 1060,
 											"value": {
@@ -244,13 +245,13 @@ describe("Presence", () => {
 										"client2": {
 											"rev": 0,
 											"timestamp": 1000,
-											"value": "sessionId-2",
+											"value": "attendeeId-2",
 										},
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"count": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 6,
 											"timestamp": 1140,
 											"value": {
@@ -265,8 +266,8 @@ describe("Presence", () => {
 				);
 
 				// Configure a state workspace
-				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 } /* default allowableUpdateLatencyMs = 60 */),
+				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
+					count: StateFactory.latest({ num: 0 } /* default allowableUpdateLatencyMs = 60 */),
 				}); // will be queued; deadline is now 1070
 
 				const { count } = stateWorkspace.props;
@@ -317,13 +318,13 @@ describe("Presence", () => {
 										"client2": {
 											"rev": 0,
 											"timestamp": 1000,
-											"value": "sessionId-2",
+											"value": "attendeeId-2",
 										},
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"count": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 2,
 											"timestamp": 1100,
 											"value": {
@@ -346,13 +347,13 @@ describe("Presence", () => {
 										"client2": {
 											"rev": 0,
 											"timestamp": 1000,
-											"value": "sessionId-2",
+											"value": "attendeeId-2",
 										},
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"count": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 5,
 											"timestamp": 1220,
 											"value": {
@@ -367,8 +368,8 @@ describe("Presence", () => {
 				);
 
 				// Configure a state workspace
-				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
+				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
+					count: StateFactory.latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
 				});
 
 				const { count } = stateWorkspace.props;
@@ -416,13 +417,13 @@ describe("Presence", () => {
 										"client2": {
 											"rev": 0,
 											"timestamp": 1000,
-											"value": "sessionId-2",
+											"value": "attendeeId-2",
 										},
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"count": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 0,
 											"timestamp": 1010,
 											"value": {
@@ -431,7 +432,7 @@ describe("Presence", () => {
 										},
 									},
 									"immediateUpdate": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 0,
 											"timestamp": 1010,
 											"value": {
@@ -454,13 +455,13 @@ describe("Presence", () => {
 										"client2": {
 											"rev": 0,
 											"timestamp": 1000,
-											"value": "sessionId-2",
+											"value": "attendeeId-2",
 										},
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"count": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 2,
 											"timestamp": 1100,
 											"value": {
@@ -469,7 +470,7 @@ describe("Presence", () => {
 										},
 									},
 									"immediateUpdate": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 1,
 											"timestamp": 1110,
 											"value": {
@@ -484,11 +485,11 @@ describe("Presence", () => {
 				);
 
 				// Configure a state workspace
-				// SIGNAL #1 - this signal is not queued because it contains a value manager with a latency of 0,
+				// SIGNAL #1 - this signal is not queued because it contains a State object with a latency of 0,
 				// so the initial data will be sent immediately.
-				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
-					immediateUpdate: Latest({ num: 0 }, { allowableUpdateLatencyMs: 0 }),
+				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
+					count: StateFactory.latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
+					immediateUpdate: StateFactory.latest({ num: 0 }, { allowableUpdateLatencyMs: 0 }),
 				});
 
 				const { count, immediateUpdate } = stateWorkspace.props;
@@ -520,13 +521,13 @@ describe("Presence", () => {
 										"client2": {
 											"rev": 0,
 											"timestamp": 1000,
-											"value": "sessionId-2",
+											"value": "attendeeId-2",
 										},
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"count": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 2,
 											"timestamp": 1050,
 											"value": {
@@ -535,7 +536,7 @@ describe("Presence", () => {
 										},
 									},
 									"note": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 1,
 											"timestamp": 1020,
 											"value": {
@@ -555,12 +556,12 @@ describe("Presence", () => {
 							"data": {
 								"system:presence": {
 									"clientToSessionId": {
-										"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
+										"client2": { "rev": 0, "timestamp": 1000, "value": "attendeeId-2" },
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"note": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 2,
 											"timestamp": 1060,
 											"value": { "message": "final message" },
@@ -573,9 +574,9 @@ describe("Presence", () => {
 				);
 
 				// Configure a state workspace
-				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
-					note: Latest({ message: "" }, { allowableUpdateLatencyMs: 50 }),
+				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
+					count: StateFactory.latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
+					note: StateFactory.latest({ message: "" }, { allowableUpdateLatencyMs: 50 }),
 				}); // will be queued, deadline is set to 1060
 
 				const { count, note } = stateWorkspace.props;
@@ -614,13 +615,13 @@ describe("Presence", () => {
 									"client2": {
 										"rev": 0,
 										"timestamp": 1000,
-										"value": "sessionId-2",
+										"value": "attendeeId-2",
 									},
 								},
 							},
 							"s:name:testStateWorkspace": {
 								"count": {
-									"sessionId-2": {
+									"attendeeId-2": {
 										"rev": 2,
 										"timestamp": 1050,
 										"value": {
@@ -631,7 +632,7 @@ describe("Presence", () => {
 							},
 							"s:name:testStateWorkspace2": {
 								"note": {
-									"sessionId-2": {
+									"attendeeId-2": {
 										"rev": 2,
 										"timestamp": 1060,
 										"value": {
@@ -645,12 +646,12 @@ describe("Presence", () => {
 				]);
 
 				// Configure two state workspaces
-				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
+				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
+					count: StateFactory.latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
 				}); // will be queued, deadline is 1110
 
-				const stateWorkspace2 = presence.getStates("name:testStateWorkspace2", {
-					note: Latest({ message: "" }, { allowableUpdateLatencyMs: 60 }),
+				const stateWorkspace2 = presence.states.getWorkspace("name:testStateWorkspace2", {
+					note: StateFactory.latest({ message: "" }, { allowableUpdateLatencyMs: 60 }),
 				}); // will be queued, deadline is 1070
 
 				const { count } = stateWorkspace.props;
@@ -686,12 +687,12 @@ describe("Presence", () => {
 							"data": {
 								"system:presence": {
 									"clientToSessionId": {
-										"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
+										"client2": { "rev": 0, "timestamp": 1000, "value": "attendeeId-2" },
 									},
 								},
 								"n:name:testNotificationWorkspace": {
 									"testEvents": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 0,
 											"timestamp": 0,
 											"value": { "name": "newId", "args": [77] },
@@ -710,12 +711,12 @@ describe("Presence", () => {
 							"data": {
 								"system:presence": {
 									"clientToSessionId": {
-										"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
+										"client2": { "rev": 0, "timestamp": 1000, "value": "attendeeId-2" },
 									},
 								},
 								"n:name:testNotificationWorkspace": {
 									"testEvents": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 0,
 											"timestamp": 0,
 											"value": { "name": "newId", "args": [88] },
@@ -730,10 +731,8 @@ describe("Presence", () => {
 
 				// Configure a notifications workspace
 				// eslint-disable-next-line @typescript-eslint/ban-types
-				const notificationsWorkspace: PresenceNotifications<{}> = presence.getNotifications(
-					"name:testNotificationWorkspace",
-					{},
-				);
+				const notificationsWorkspace: NotificationsWorkspace<{}> =
+					presence.notifications.getWorkspace("name:testNotificationWorkspace", {});
 
 				notificationsWorkspace.add(
 					"testEvents",
@@ -775,13 +774,13 @@ describe("Presence", () => {
 										"client2": {
 											"rev": 0,
 											"timestamp": 1000,
-											"value": "sessionId-2",
+											"value": "attendeeId-2",
 										},
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"count": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 3,
 											"timestamp": 1040,
 											"value": {
@@ -792,7 +791,7 @@ describe("Presence", () => {
 								},
 								"n:name:testNotificationWorkspace": {
 									"testEvents": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 0,
 											"timestamp": 0,
 											"value": {
@@ -817,13 +816,13 @@ describe("Presence", () => {
 										"client2": {
 											"rev": 0,
 											"timestamp": 1000,
-											"value": "sessionId-2",
+											"value": "attendeeId-2",
 										},
 									},
 								},
 								"n:name:testNotificationWorkspace": {
 									"testEvents": {
-										"sessionId-2": {
+										"attendeeId-2": {
 											"rev": 0,
 											"timestamp": 0,
 											"value": {
@@ -840,15 +839,13 @@ describe("Presence", () => {
 				);
 
 				// Configure a state workspace
-				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
+				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
+					count: StateFactory.latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
 				}); // will be queued, deadline is 1110
 
 				// eslint-disable-next-line @typescript-eslint/ban-types
-				const notificationsWorkspace: PresenceNotifications<{}> = presence.getNotifications(
-					"name:testNotificationWorkspace",
-					{},
-				);
+				const notificationsWorkspace: NotificationsWorkspace<{}> =
+					presence.notifications.getWorkspace("name:testNotificationWorkspace", {});
 
 				notificationsWorkspace.add(
 					"testEvents",
@@ -867,7 +864,7 @@ describe("Presence", () => {
 				const { count } = stateWorkspace.props;
 				const { testEvents } = notificationsWorkspace.props;
 
-				testEvents.notifications.on("newId", (client, newId) => {
+				testEvents.notifications.on("newId", (attendee, newId) => {
 					// do nothing
 				});
 

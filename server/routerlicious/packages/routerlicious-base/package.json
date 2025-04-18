@@ -67,6 +67,7 @@
 		"@fluidframework/server-services-shared": "workspace:~",
 		"@fluidframework/server-services-telemetry": "workspace:~",
 		"@fluidframework/server-services-utils": "workspace:~",
+		"@socket.io/redis-emitter": "^4.1.1",
 		"body-parser": "^1.20.3",
 		"bytes": "^3.0.0",
 		"compression": "^1.7.2",
@@ -86,9 +87,9 @@
 		"ws": "^7.5.10"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "0.52.0-315632",
+		"@fluid-tools/build-cli": "^0.56.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.52.0-315632",
+		"@fluidframework/build-tools": "^0.56.0",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/server-local-server": "workspace:~",
 		"@fluidframework/server-routerlicious-base-previous": "npm:@fluidframework/server-routerlicious-base@5.0.0",
