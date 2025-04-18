@@ -9,6 +9,7 @@ import { createPresenceManager } from "../presenceManager.js";
 
 import { addControlsTests } from "./broadcastControlsTests.js";
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
+import { createNullValidator } from "./testUtils.js";
 
 import type {
 	BroadcastControlSettings,
@@ -28,7 +29,7 @@ function createLatestMapManager(
 	const states = presence.states.getWorkspace(testWorkspaceName, {
 		fixedMap: StateFactory.latestMap(
 			{ key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } },
-			valueControlSettings,
+			{ validator: createNullValidator(), controls: valueControlSettings },
 		),
 	});
 	return states.props.fixedMap;

@@ -25,7 +25,7 @@ function createLatestManager(
 	valueControlSettings?: BroadcastControlSettings,
 ) {
 	const states = presence.states.getWorkspace(testWorkspaceName, {
-		camera: StateFactory.latest({ x: 0, y: 0, z: 0 }, valueControlSettings),
+		camera: StateFactory.latest({ x: 0, y: 0, z: 0 }, { controls: valueControlSettings }),
 	});
 	return states.props.camera;
 }
@@ -135,7 +135,9 @@ export function checkCompiles(): void {
 
 	// Listen to others cursor updates
 	const cursorUpdatedOff = cursor.events.on("remoteUpdated", ({ attendee, value }) =>
-		console.log(`attendee ${attendee.attendeeId}'s cursor is now at (${value.x},${value.y})`),
+		console.log(
+			`attendee ${attendee.attendeeId}'s cursor is now at (${value?.x},${value?.y})`,
+		),
 	);
 	cursorUpdatedOff();
 
