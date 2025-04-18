@@ -149,7 +149,7 @@ export interface Latest<T> {
 }
 
 // @alpha
-export function latest<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
+export function latest<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, options?: PresenceStateOptions<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
 
 // @alpha @sealed
 export interface LatestClientData<T> extends LatestData<T> {
@@ -188,7 +188,7 @@ export interface LatestMap<T, Keys extends string | number = string | number> {
 // @alpha
 export function latestMap<T extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(initialValues?: {
     [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
-}, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
+}, options?: PresenceStateOptions<T> | undefined): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
 
 // @alpha @sealed
 export interface LatestMapClientData<T, Keys extends string | number, SpecificAttendeeId extends AttendeeId = AttendeeId> {
@@ -309,6 +309,14 @@ export interface PresenceEvents {
 }
 
 // @alpha
+export interface PresenceStateOptions<T extends object> {
+    // (undocumented)
+    controls?: BroadcastControlSettings | undefined;
+    // (undocumented)
+    validator?: StateSchemaValidator<T> | undefined;
+}
+
+// @alpha
 export const StateFactory: {
     latest: typeof latest;
     latestMap: typeof latestMap;
@@ -327,6 +335,14 @@ export interface StateMap<K extends string | number, V> {
     set(key: K, value: JsonSerializable<V> & JsonDeserialized<V>): this;
     // (undocumented)
     readonly size: number;
+}
+
+// @alpha
+export type StateSchemaValidator<T> = (unvalidatedData: unknown, metadata?: StateSchemaValidatorMetadata) => T | undefined;
+
+// @alpha
+export interface StateSchemaValidatorMetadata {
+    key?: string | number;
 }
 
 // @alpha @sealed

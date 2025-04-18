@@ -25,7 +25,7 @@ function createLatestManager(
 	valueControlSettings?: BroadcastControlSettings,
 ) {
 	const states = presence.states.getWorkspace(testWorkspaceName, {
-		camera: StateFactory.latest({ x: 0, y: 0, z: 0 }, valueControlSettings),
+		camera: StateFactory.latest({ x: 0, y: 0, z: 0 }, { controls: valueControlSettings }),
 	});
 	return states.props.camera;
 }

@@ -29,7 +29,7 @@ function createLatestMapManager(
 	const states = presence.states.getWorkspace(testWorkspaceName, {
 		fixedMap: StateFactory.latestMap(
 			{ key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } },
-			{ validator: createNullValidator(), controls },
+			{ validator: createNullValidator(), controls: valueControlSettings },
 		),
 	});
 	return states.props.fixedMap;

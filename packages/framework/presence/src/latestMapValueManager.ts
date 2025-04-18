@@ -22,7 +22,7 @@ import type {
 	LatestData,
 	LatestMetadata,
 	StateSchemaValidator,
-	ValueManagerOptions,
+	PresenceStateOptions,
 } from "./latestValueTypes.js";
 import type { AttendeeId, Attendee, SpecificAttendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
@@ -514,7 +514,7 @@ export function latestMap<
 	initialValues?: {
 		[K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
 	},
-	options?: ValueManagerOptions<T> | undefined,
+	options?: PresenceStateOptions<T> | undefined,
 ): InternalTypes.ManagerFactory<
 	RegistrationKey,
 	InternalTypes.MapValueState<T, Keys>,

@@ -21,7 +21,7 @@ import type {
 	LatestClientData,
 	LatestData,
 	StateSchemaValidator,
-	ValueManagerOptions,
+	PresenceStateOptions,
 } from "./latestValueTypes.js";
 import type { Attendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
@@ -194,7 +194,7 @@ class LatestValueManagerImpl<T, Key extends string>
  */
 export function latest<T extends object, Key extends string = string>(
 	initialValue: JsonSerializable<T> & JsonDeserialized<T> & object,
-	options?: ValueManagerOptions<T>,
+	options?: PresenceStateOptions<T>,
 ): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>> {
 	const validator = options?.validator;
 	const controls = options?.controls;

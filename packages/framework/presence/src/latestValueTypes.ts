@@ -82,11 +82,11 @@ export function isStateSchemaValidator<T>(fn: unknown): fn is StateSchemaValidat
 }
 
 /**
- * Options that can be provided to a value manager. TODO: Add details.
+ * Options that can be provided to a Presence state manager. TODO: Add details.
  *
  * @alpha
  */
-export interface ValueManagerOptions<T extends object> {
+export interface PresenceStateOptions<T extends object> {
 	validator?: StateSchemaValidator<T> | undefined;
 	controls?: BroadcastControlSettings | undefined;
 }
