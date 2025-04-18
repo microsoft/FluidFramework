@@ -218,7 +218,7 @@ export class SharedPropertyTree extends SharedObject {
 		// a proxy and the delta manager at the container context layer is yet another proxy, so account for that.
 		if (!this.options.disablePartialCheckout) {
 			let dm = this.deltaManager as any;
-			while ("deltaManager" in dm && "connectionManager" in dm.deltaManager) {
+			while ("deltaManager" in dm && !("connectionManager" in dm)) {
 				dm = dm.deltaManager;
 			}
 			const socket = dm.connectionManager.connection.socket;

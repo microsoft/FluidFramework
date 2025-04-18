@@ -1560,7 +1560,6 @@ export class ContainerRuntime
 			}
 
 			this._deltaManager = outerDeltaManager;
-			this._deltaManager.on("readonly", (readonly) => this.setReadOnlyState(readonly));
 		}
 
 		this.handleContext = new ContainerFluidHandleContext("", this);
@@ -1709,6 +1708,7 @@ export class ContainerRuntime
 			new Map<string, string>(dataStoreAliasMap),
 			async (runtime: ChannelCollection) => provideEntryPoint,
 		);
+		this._deltaManager.on("readonly", (readonly) => this.setReadOnlyState(readonly));
 
 		this.blobManager = new BlobManager({
 			routeContext: this.handleContext,
