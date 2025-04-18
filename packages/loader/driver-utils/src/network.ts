@@ -112,8 +112,16 @@ export class AuthorizationError
 	implements IAuthorizationError, IFluidErrorBase
 {
 	readonly errorType = DriverErrorTypes.authorizationError;
-	readonly claims?: string;
-	readonly tenantId?: string;
+
+	// These properties are not assigned in this class, but instead assigned in the super constructor.
+	// When targeting ES 2022 or later, TypeScript generates ES6 class fields for these properties.
+	// This override the own properties dynamically created by the super constructor.
+	// To prevent this undesired overriding,
+	// // these are declared using `declare` to indicate this definition is only for the TypeScript typing,
+	// and the actual fields come from elsewhere.
+	declare readonly claims?: string;
+	declare readonly tenantId?: string;
+
 	readonly canRetry = false;
 
 	constructor(
