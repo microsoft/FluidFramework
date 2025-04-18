@@ -176,8 +176,7 @@ export class BlobManager {
 	 * we can resolve all pending blobs with the same storage ID even though they may have different local IDs. That's
 	 * because we know that the server will not delete the blob corresponding to that storage ID.
 	 */
-	private readonly opsInFlight: Map<string, string[]> = new Map();
-	// private readonly opsInFlight: Map<string, Set<string>> = new Map();
+	private readonly opsInFlight: Map<string, Set<string>> = new Map();
 
 	private readonly sendBlobAttachOp: (localId: string, storageId?: string) => void;
 	private stopAttaching: boolean = false;
@@ -598,15 +597,10 @@ export class BlobManager {
 			// If there is already an op for this storage ID, append the local ID to the list. Once any op for
 			// this storage ID is ack'd, all pending blobs for it can be resolved since the op will keep the
 			// blob alive in storage.
-			this.opsInFlight.set(response.id, [
-				...(this.opsInFlight.get(response.id) ?? []),
-				localId,
-			]);
-
-			// this.opsInFlight.set(
-			// 	response.id,
-			// 	this.opsInFlight.get(response.id)?.add(localId) ?? new Set([localId]),
-			// );
+			this.opsInFlight.set(
+				response.id,
+				this.opsInFlight.get(response.id)?.add(localId) ?? new Set([localId]),
+			);
 		}
 		return response;
 	}
