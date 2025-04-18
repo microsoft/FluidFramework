@@ -765,6 +765,9 @@ export abstract class SharedObject<
 		id: string,
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
+		/**
+		 * The prefix to use for telemetry events emitted by this object.
+		 */
 		private readonly telemetryContextPrefix: string,
 	) {
 		super(id, runtime, attributes);
