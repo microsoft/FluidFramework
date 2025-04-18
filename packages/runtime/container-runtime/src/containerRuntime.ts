@@ -1199,6 +1199,8 @@ export class ContainerRuntime
 	 */
 	private readonly innerDeltaManager: IDeltaManagerFull;
 
+	private readonly _context: IContainerContext;
+
 	// internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
 	private readonly mc: MonitoringContext;
 
@@ -1412,6 +1414,8 @@ export class ContainerRuntime
 			supportedFeatures,
 			snapshotWithContents,
 		} = context;
+
+		this._context = context;
 
 		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
 		this.disposeFn = disposeFn ?? closeFn;
@@ -2678,7 +2682,12 @@ export class ContainerRuntime
 		this.channelCollection.setConnectionState(connected, clientId);
 		this.garbageCollector.setConnectionState(connected, clientId);
 
-		raiseConnectedEvent(this.mc.logger, this, connected, clientId);
+		// 'connected' here is a lie sent to the runtime that indicates whether the container
+		// can send ops or not (connected && !readonly). We can get the actual connection
+		// state from the container context to raise connected events properly.
+		const actualConnected = this._context.connected;
+
+		raiseConnectedEvent(this.mc.logger, this, actualConnected, clientId);
 	}
 
 	public async notifyOpReplay(message: ISequencedDocumentMessage): Promise<void> {
