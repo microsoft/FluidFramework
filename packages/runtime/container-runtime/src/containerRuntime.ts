@@ -471,7 +471,7 @@ export interface IContainerRuntimeOptionsInternal extends IContainerRuntimeOptio
 	 * Client runtimes older than 2.33 will log errors receiving a signal with
 	 * path-based address and ultimately ignore the signal.
 	 */
-	readonly enablePathBasedAddressing?: boolean;
+	readonly pathBasedAddressing?: boolean;
 }
 
 /**
@@ -918,7 +918,7 @@ export class ContainerRuntime
 			compressionOptions = enableGroupedBatching === false
 				? disabledCompressionConfig
 				: defaultConfigs.compressionOptions,
-			enablePathBasedAddressing = false,
+			pathBasedAddressing = false,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
 
 		// The logic for enableRuntimeIdCompressor is a bit different. Since `undefined` represents a logical state (off)
@@ -1128,7 +1128,7 @@ export class ContainerRuntime
 			enableRuntimeIdCompressor: enableRuntimeIdCompressor as "on" | "delayed",
 			enableGroupedBatching,
 			explicitSchemaControl,
-			enablePathBasedAddressing,
+			pathBasedAddressing,
 		};
 
 		const runtime = new containerRuntimeCtor(
@@ -1563,7 +1563,7 @@ export class ContainerRuntime
 		};
 		const submitPathAddressedSignal =
 			submitWithPathBasedSignalAddress(sequenceAndSubmitSignal);
-		this.submitSignalFn = runtimeOptions.enablePathBasedAddressing
+		this.submitSignalFn = runtimeOptions.pathBasedAddressing
 			? submitPathAddressedSignal
 			: submitAssertingLegacySignalAddressing(sequenceAndSubmitSignal);
 		this.submitExtensionSignal = <TMessage extends TypedMessage>(

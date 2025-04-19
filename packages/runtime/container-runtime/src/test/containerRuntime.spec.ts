@@ -1590,7 +1590,7 @@ describe("Runtime", () => {
 				enableRuntimeIdCompressor: undefined,
 				enableGroupedBatching: true, // Redundant, but makes the JSON.stringify yield the same result as the logs
 				explicitSchemaControl: false,
-				enablePathBasedAddressing: false,
+				pathBasedAddressing: false,
 			} as const satisfies IContainerRuntimeOptionsInternal;
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions } as const;
 
@@ -3661,7 +3661,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: false,
-					enablePathBasedAddressing: false,
+					pathBasedAddressing: false,
 				};
 
 				logger.assertMatchAny([
@@ -3699,7 +3699,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: false,
 					explicitSchemaControl: false,
-					enablePathBasedAddressing: false,
+					pathBasedAddressing: false,
 				};
 
 				logger.assertMatchAny([
@@ -3737,7 +3737,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: false,
-					enablePathBasedAddressing: false,
+					pathBasedAddressing: false,
 				};
 
 				logger.assertMatchAny([
@@ -3775,7 +3775,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
-					enablePathBasedAddressing: false,
+					pathBasedAddressing: false,
 				};
 
 				logger.assertMatchAny([
@@ -3821,7 +3821,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: "on",
 					enableGroupedBatching: false,
 					explicitSchemaControl: true,
-					enablePathBasedAddressing: false,
+					pathBasedAddressing: false,
 				};
 
 				logger.assertMatchAny([
@@ -3868,7 +3868,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined, // idCompressor is undefined, since that represents a logical state (off)
 					enableGroupedBatching: true,
 					explicitSchemaControl: false,
-					enablePathBasedAddressing: false,
+					pathBasedAddressing: false,
 				};
 
 				logger.assertMatchAny([
@@ -3905,7 +3905,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
-					enablePathBasedAddressing: false,
+					pathBasedAddressing: false,
 				};
 
 				logger.assertMatchAny([

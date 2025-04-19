@@ -125,7 +125,7 @@ const runtimeOptionsAffectingDocSchemaConfigMap: ConfigMap<RuntimeOptionsAffecti
 			// Although sweep is supported in 2.x, it is disabled by default until compatibilityMode>=3.0.0 to be extra safe.
 			"3.0.0": { enableGCSweep: true },
 		},
-		enablePathBasedAddressing: {
+		pathBasedAddressing: {
 			"1.0.0": false,
 			// This option is under development and has no determined required version yet.
 		},
