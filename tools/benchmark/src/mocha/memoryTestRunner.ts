@@ -24,6 +24,8 @@ import { timer } from "../timer";
 
 import { supportParentProcess } from "./runner";
 
+const ENABLE_MEM_REGRESSION = process.env.ENABLE_MEM_REGRESSION === "true";
+
 // TODO:
 // Much of the logic and interfaces here were duplicated from the runtime benchmark code.
 // This code should be either updated and/or deduplicated to reflect the major refactoring and improvements done to the runtime benchmark code.
@@ -116,6 +118,17 @@ export interface MemoryTestObjectProps extends MochaExclusiveOptions, Titled, Be
 	 * Use a lower number to drop the highest/lowest measurements.
 	 */
 	samplePercentageToUse?: number;
+
+	/**
+	 * The baseline memory usage to compare against for the test, which is used to determine if the test regressed.
+	 * If not specified, the test will not be compared against a baseline and will only be run to measure the memory usage.
+	 */
+	readonly baselineMemoryUsage?: number;
+
+	/**
+	 * The allowed deviation from the baseline memory usage, as a percentage.
+	 */
+	allowedDeviation?: number;
 }
 
 /**
@@ -189,19 +202,23 @@ export interface MemorySampleData {
  * @public
  */
 export function benchmarkMemory(testObject: IMemoryTestObject): Test {
+	const baselineMemoryUsage = testObject.baselineMemoryUsage ?? 0;
 	const args: Required<MemoryTestObjectProps> = {
 		maxBenchmarkDurationSeconds: testObject.maxBenchmarkDurationSeconds ?? 30,
 		minSampleCount: testObject.minSampleCount ?? 50,
 		maxRelativeMarginOfError: testObject.maxRelativeMarginOfError ?? 2.5,
 		only: testObject.only ?? false,
 		title: testObject.title,
+		baselineMemoryUsage,
 		type: testObject.type ?? BenchmarkType.Measurement,
 		samplePercentageToUse: testObject.samplePercentageToUse ?? 0.95,
 		category: testObject.category ?? "",
+		allowedDeviation: testObject.allowedDeviation ?? 5, // Default to 5% deviation if not specified
 	};
 
 	return supportParentProcess({
 		title: qualifiedTitle({ ...testObject, testType: TestType.MemoryUsage }),
+		baselineMemoryUsage,
 		only: args.only,
 		run: async () => {
 			let runs = 0;
@@ -259,14 +276,11 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 
 						global.gc();
 						await testObject.run();
-
 						await testObject.afterIteration?.();
 
 						global.gc();
-
 						sample.after.memoryUsage.push(process.memoryUsage());
 						sample.after.heap.push(v8.getHeapStatistics());
-
 						sample.after.heapSpace.push(v8.getHeapSpaceStatistics());
 
 						runs++;
@@ -295,6 +309,17 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 						runs < args.minSampleCount ||
 						heapUsedStats.marginOfErrorPercent > args.maxRelativeMarginOfError
 					);
+
+					const avgHeapUsed = heapUsedStats.arithmeticMean;
+					const allowedMemoryUsage =
+						args.baselineMemoryUsage * (1 + args.allowedDeviation / 100);
+					const tolerance = args.baselineMemoryUsage * (args.allowedDeviation / 100);
+
+					if (ENABLE_MEM_REGRESSION && avgHeapUsed > allowedMemoryUsage) {
+						throw new Error(
+							`Memory Regression detected for ${testObject.title}: Used ${avgHeapUsed} bytes, exceeding the baseline of ${args.baselineMemoryUsage} bytes., with an allowed tolerance of ${tolerance} bytes.`,
+						);
+					}
 
 					benchmarkStats.customData["Heap Used Avg"] = {
 						rawValue: heapUsedStats.arithmeticMean,
