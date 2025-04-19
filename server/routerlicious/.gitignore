@@ -15,5 +15,5 @@ package-deps.json
 # Temporary api-extractor build artifacts
 _api-extractor-temp/**
 
-# Lerna Monorepo: Individual packages should not have package-locks
+# Monorepo: Individual packages should not have package-locks
 packages/*/package-lock.json
