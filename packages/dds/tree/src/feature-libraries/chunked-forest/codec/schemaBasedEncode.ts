@@ -122,7 +122,7 @@ export function treeShaper(
 
 		const objectNodeFields: KeyedFieldEncoder[] = [];
 		for (const [key, field] of schema.objectNodeFields ?? []) {
-			objectNodeFields.push({ key, shape: fieldHandler.shapeFromField(field) });
+			objectNodeFields.push({ key, encoder: fieldHandler.shapeFromField(field) });
 		}
 
 		const shape = new NodeShape(schemaName, false, objectNodeFields, undefined);

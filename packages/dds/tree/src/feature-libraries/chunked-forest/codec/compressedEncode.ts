@@ -66,7 +66,7 @@ export type Shape = ShapeGeneric<EncodedChunkShape>;
  */
 export interface KeyedFieldEncoder {
 	readonly key: FieldKey;
-	readonly shape: FieldEncoder;
+	readonly encoder: FieldEncoder;
 }
 
 /**

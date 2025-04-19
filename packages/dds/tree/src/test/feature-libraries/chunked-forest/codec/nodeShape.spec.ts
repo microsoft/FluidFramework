@@ -114,7 +114,7 @@ describe("nodeShape", () => {
 			);
 
 			// Shape which encodes to nothing.
-			const fieldShape1: FieldEncoder = asFieldEncoder(
+			const fieldEncoder1: FieldEncoder = asFieldEncoder(
 				new NodeShape(brand("1"), false, [], undefined),
 			);
 			// Shape which encodes to just the value.
@@ -128,9 +128,9 @@ describe("nodeShape", () => {
 				brand("type"),
 				true,
 				[
-					{ key: brand("nothing"), shape: fieldShape1 },
-					{ key: brand("shapeValueOnly"), shape: asFieldEncoder(shapeValueOnly) },
-					{ key: brand("shapeValues"), shape: shapeValues },
+					{ key: brand("nothing"), encoder: fieldEncoder1 },
+					{ key: brand("shapeValueOnly"), encoder: asFieldEncoder(shapeValueOnly) },
+					{ key: brand("shapeValues"), encoder: shapeValues },
 				],
 				undefined,
 			);

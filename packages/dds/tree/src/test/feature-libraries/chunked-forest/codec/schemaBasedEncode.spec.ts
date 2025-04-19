@@ -253,7 +253,7 @@ describe("schemaBasedEncoding", () => {
 				new NodeShape(
 					brand(HasOptionalField.identifier),
 					false,
-					[{ key: brand("field"), shape: cache.nestedArray(numericShape) }],
+					[{ key: brand("field"), encoder: cache.nestedArray(numericShape) }],
 					undefined,
 				),
 			);

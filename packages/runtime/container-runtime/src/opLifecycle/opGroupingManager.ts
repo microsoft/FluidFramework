@@ -12,8 +12,8 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
+	type LocalEmptyBatchPlaceholder,
 	type OutboundBatch,
-	type OutboundBatchMessage,
 	type OutboundSingletonBatch,
 } from "./definitions.js";
 
@@ -67,7 +67,10 @@ export class OpGroupingManager {
 	public createEmptyGroupedBatch(
 		resubmittingBatchId: string,
 		referenceSequenceNumber: number,
-	): { outboundBatch: OutboundSingletonBatch; placeholderMessage: OutboundBatchMessage } {
+	): {
+		outboundBatch: OutboundSingletonBatch;
+		placeholderMessage: LocalEmptyBatchPlaceholder;
+	} {
 		assert(
 			this.config.groupedBatchingEnabled,
 			0xa00 /* cannot create empty grouped batch when grouped batching is disabled */,
@@ -77,15 +80,14 @@ export class OpGroupingManager {
 			contents: [],
 		});
 
-		const placeholderMessage: OutboundBatchMessage = {
+		const placeholderMessage: LocalEmptyBatchPlaceholder = {
 			metadata: { batchId: resubmittingBatchId },
 			localOpMetadata: { emptyBatch: true },
 			referenceSequenceNumber,
-			contents: serializedOp,
 		};
 		const outboundBatch: OutboundSingletonBatch = {
 			contentSizeInBytes: 0,
-			messages: [placeholderMessage],
+			messages: [{ ...placeholderMessage, contents: serializedOp }],
 			referenceSequenceNumber,
 		};
 		return { outboundBatch, placeholderMessage };

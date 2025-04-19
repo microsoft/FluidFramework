@@ -118,6 +118,9 @@ describe("OpGroupingManager", () => {
 			).createEmptyGroupedBatch(batchId, 0);
 
 			assert.deepStrictEqual(result.outboundBatch.messages, [expectedPlaceholderMessage]);
+
+			// contents not included on the returned placeholder message
+			delete expectedPlaceholderMessage.contents;
 			assert.deepStrictEqual(result.placeholderMessage, expectedPlaceholderMessage);
 		});
 

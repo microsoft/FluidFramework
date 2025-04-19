@@ -10,10 +10,7 @@ import {
 	IAuthorizationError,
 	IGenericNetworkError,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	type AuthorizationError,
-	NonRetryableError,
-} from "@fluidframework/driver-utils/internal";
+import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import {
 	createOdspNetworkError,
 	throwOdspNetworkError,
@@ -272,19 +269,21 @@ describe("Odsp Error", () => {
 		throwOdspNetworkError(errorMessage, 401, testResponseWithInsufficientClaims);
 	}
 
-	it("Authorization error with insufficient claims first-class properties", async () => {
-		try {
-			throwAuthorizationErrorWithInsufficientClaims("TestMessage");
-		} catch (error: unknown) {
-			assert(isIAuthorizationError(error), "error should be a IAuthorizationError");
-			assert(error.message.includes("TestMessage"), "message should contain original message");
-			assert.equal((error as AuthorizationError).canRetry, false, "canRetry should be false");
-			assert.equal(
-				(error as AuthorizationError).claims,
-				'{"access_token":{"nbf":{"essential":true, "value":"1597959090"}}}',
-				"claims should be extracted from response",
-			);
-		}
+	it("Authorization error with insufficient claims first-class properties", () => {
+		assert.throws(
+			() => throwAuthorizationErrorWithInsufficientClaims("TestMessage"),
+			(error) => {
+				assert(isIAuthorizationError(error), "error should be a IAuthorizationError");
+				assert.match(error.message, /TestMessage/, "message should contain original message");
+				assert.equal(error.canRetry, false, "canRetry should be false");
+				assert.equal(
+					error.claims,
+					'{"access_token":{"nbf":{"essential":true, "value":"1597959090"}}}',
+					"claims should be extracted from response",
+				);
+				return true;
+			},
+		);
 	});
 
 	it("Authorization error with insufficient claims results in retry with claims passed in options", async () => {
@@ -322,23 +321,21 @@ describe("Odsp Error", () => {
 		throwOdspNetworkError(errorMessage, 401, testResponseWithRealm);
 	}
 
-	it("Authorization error with realm first-class properties", async () => {
-		try {
-			throwAuthorizationErrorWithRealm("TestMessage");
-		} catch (error: unknown) {
-			assert(isIAuthorizationError(error), "error should be a IAuthorizationError");
-			assert(error.message.includes("TestMessage"), "message should contain original message");
-			assert.strictEqual(
-				(error as AuthorizationError).canRetry,
-				false,
-				"canRetry should be false",
-			);
-			assert.strictEqual(
-				(error as AuthorizationError).tenantId,
-				"6c482541-f706-4168-9e58-8e35a9992f58",
-				"realm should be extracted from response",
-			);
-		}
+	it("Authorization error with realm first-class properties", () => {
+		assert.throws(
+			() => throwAuthorizationErrorWithRealm("TestMessage"),
+			(error) => {
+				assert(isIAuthorizationError(error), "error should be a IAuthorizationError");
+				assert.match(error.message, /TestMessage/, "message should contain original message");
+				assert.equal(error.canRetry, false, "canRetry should be false");
+				assert.equal(
+					error.tenantId,
+					"6c482541-f706-4168-9e58-8e35a9992f58",
+					"realm should be extracted from response",
+				);
+				return true;
+			},
+		);
 	});
 
 	it("Authorization error with realm results in retry and realm passed as tenant id", async () => {
