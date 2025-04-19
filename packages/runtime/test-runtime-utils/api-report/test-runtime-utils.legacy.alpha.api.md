@@ -360,9 +360,9 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     storage: IDocumentStorageService;
     // (undocumented)
-    submitMessage(type: string, content: any, localOpMetadata: unknown): void;
+    submitMessage(): void;
     // (undocumented)
-    submitSignal(type: string, content: any): void;
+    submitSignal(): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandleInternal<ArrayBufferLike>>;
 }
@@ -485,10 +485,10 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
-    // (undocumented)
+    // @deprecated (undocumented)
     submitMessage(type: MessageType, content: any): null;
     // (undocumented)
-    submitSignal(type: string, content: any): null;
+    submitSignal: IFluidDataStoreRuntime["submitSignal"];
     // (undocumented)
     summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
     // (undocumented)
