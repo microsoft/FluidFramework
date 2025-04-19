@@ -15,10 +15,9 @@ export {
 	TombstoneResponseHeaderKey,
 	InactiveResponseHeaderKey,
 	ICompressionRuntimeOptions,
-	CompressionAlgorithms,
 	RuntimeHeaderData,
-	disabledCompressionConfig,
 } from "./containerRuntime.js";
+export { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
 export {
 	ContainerMessageType,
 	ContainerRuntimeAliasMessage,
@@ -42,6 +41,7 @@ export {
 	IGCMetadata,
 	GCFeatureMatrix,
 	GCVersion,
+	IGarbageCollectionRuntime,
 	IGCRuntimeOptions,
 	IMarkPhaseStats,
 	ISweepPhaseStats,

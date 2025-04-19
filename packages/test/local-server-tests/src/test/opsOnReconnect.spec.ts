@@ -29,12 +29,12 @@ import {
 	FlushMode,
 	IEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
-import { createDataStoreFactory } from "@fluidframework/runtime-utils/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
+import { createDataStoreFactory } from "@fluidframework/test-utils/internal";
 import {
 	createAndAttachContainerUsingProps,
 	ITestFluidObject,

@@ -14,9 +14,8 @@ import {
 import { IntervalNode, IntervalTree } from "../intervalTree.js";
 import {
 	ISerializableInterval,
-	IntervalType,
 	SequenceInterval,
-	createSequenceInterval,
+	createTransientInterval,
 } from "../intervals/index.js";
 import { ISharedString } from "../sharedString.js";
 
@@ -108,12 +107,10 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 				});
 			}
 		} else {
-			const transientInterval: SequenceInterval = createSequenceInterval(
-				"transient",
+			const transientInterval: SequenceInterval = createTransientInterval(
 				start ?? "start",
 				end ?? "end",
 				this.client,
-				IntervalType.Transient,
 			);
 
 			if (start === undefined) {
@@ -184,13 +181,7 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 		) {
 			return [];
 		}
-		const transientInterval = createSequenceInterval(
-			"transient",
-			start,
-			end,
-			this.client,
-			IntervalType.Transient,
-		);
+		const transientInterval = createTransientInterval(start, end, this.client);
 
 		const overlappingIntervalNodes = this.intervalTree.match(transientInterval);
 		return overlappingIntervalNodes.map((node) => node.key);

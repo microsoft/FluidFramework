@@ -490,11 +490,11 @@ export class FluidDataStoreRuntime
 			this.validateChannelId(id);
 		} else {
 			/**
-			 * There is currently a bug where certain data store ids such as "[" are getting converted to ASCII characters
-			 * in the snapshot.
-			 * So, return short ids only if explicitly enabled via feature flags. Else, return uuid();
+			 * Return uuid if short-ids are explicitly disabled via feature flags.
 			 */
-			if (this.mc.config.getBoolean("Fluid.Runtime.IsShortIdEnabled") === true) {
+			if (this.mc.config.getBoolean("Fluid.Runtime.DisableShortIds") === true) {
+				id = uuid();
+			} else {
 				// We use three non-overlapping namespaces:
 				// - detached state: even numbers
 				// - attached state: odd numbers
@@ -511,8 +511,6 @@ export class FluidDataStoreRuntime
 						this.dataStoreContext.containerRuntime.generateDocumentUniqueId?.() ?? uuid();
 					id = typeof res === "number" ? encodeCompactIdToString(2 * res + 1, "_") : res;
 				}
-			} else {
-				id = uuid();
 			}
 			assert(!id.includes("/"), 0x8fc /* slash */);
 		}

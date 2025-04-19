@@ -6,12 +6,12 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEvent } from "@fluidframework/core-interfaces";
 import type {
-	IPresence,
-	ISessionClient,
-	LatestValueManager,
-	PresenceStates,
+	Presence,
+	Attendee,
+	Latest,
+	StatesWorkspace,
 } from "@fluidframework/presence/alpha";
-import { Latest, SessionClientStatus } from "@fluidframework/presence/alpha";
+import { AttendeeStatus, StateFactory } from "@fluidframework/presence/alpha";
 
 /**
  * IMousePosition is the data that individual session clients share via presence.
@@ -39,39 +39,39 @@ export interface IMouseTrackerEvents extends IEvent {
  */
 export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	/**
-	 * A value manager that tracks the latest mouse position  of connected session clients.
+	 * State that tracks the latest mouse position  of connected session clients.
 	 */
-	private readonly cursor: LatestValueManager<IMousePosition>;
+	private readonly cursor: Latest<IMousePosition>;
 
 	constructor(
-		private readonly presence: IPresence,
+		private readonly presence: Presence,
 
 		/**
 		 * A states workspace that the MouseTracker will use to share mouse positions with other session clients.
 		 */
 		// eslint-disable-next-line @typescript-eslint/ban-types -- empty object is the correct typing
-		readonly statesWorkspace: PresenceStates<{}>,
+		readonly statesWorkspace: StatesWorkspace<{}>,
 	) {
 		super();
 
-		// Create a Latest value manager to track the mouse position.
-		statesWorkspace.add("cursor", Latest<IMousePosition>({ x: 0, y: 0 }));
+		// Create a Latest state object to track the mouse position.
+		statesWorkspace.add("cursor", StateFactory.latest<IMousePosition>({ x: 0, y: 0 }));
 
-		// Save a reference to the value manager for easy access within the MouseTracker.
+		// Save a reference to the cursor state for easy access within the MouseTracker.
 		this.cursor = statesWorkspace.props.cursor;
 
-		// When the cursor value manager is updated, the MouseTracker should emit the mousePositionChanged event.
-		this.cursor.events.on("updated", () => {
+		// When the cursor state is updated, the MouseTracker should emit the mousePositionChanged event.
+		this.cursor.events.on("remoteUpdated", () => {
 			this.emit("mousePositionChanged");
 		});
 
 		// When an attendee disconnects, emit the mousePositionChanged event so client can update their rendered view
 		// accordingly.
-		this.presence.events.on("attendeeDisconnected", () => {
+		this.presence.attendees.events.on("attendeeDisconnected", () => {
 			this.emit("mousePositionChanged");
 		});
 
-		// Listen to the local mousemove event and update the local position in the value manager
+		// Listen to the local mousemove event and update the local position in the cursor state.
 		window.addEventListener("mousemove", (e) => {
 			// Alert all connected clients that there has been a change to this client's mouse position
 			this.cursor.local = {
@@ -85,12 +85,12 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	/**
 	 * A map of session clients to mouse positions.
 	 */
-	public getMousePresences(): Map<ISessionClient, IMousePosition> {
-		const statuses: Map<ISessionClient, IMousePosition> = new Map();
+	public getMousePresences(): Map<Attendee, IMousePosition> {
+		const statuses: Map<Attendee, IMousePosition> = new Map();
 
-		for (const { client, value } of this.cursor.clientValues()) {
-			if (client.getConnectionStatus() === SessionClientStatus.Connected) {
-				statuses.set(client, value);
+		for (const { attendee, value } of this.cursor.getRemotes()) {
+			if (attendee.getConnectionStatus() === AttendeeStatus.Connected) {
+				statuses.set(attendee, value);
 			}
 		}
 		return statuses;
