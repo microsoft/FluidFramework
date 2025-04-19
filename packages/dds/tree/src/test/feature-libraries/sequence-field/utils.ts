@@ -18,6 +18,7 @@ import {
 	type RevisionMetadataSource,
 	type RevisionTag,
 	type TaggedChange,
+	areEqualChangeAtomIds,
 	makeAnonChange,
 	mapTaggedChange,
 	newChangeAtomIdRangeMap,
@@ -874,6 +875,13 @@ function newRebaseManager(): TestRebaseManager {
 			fieldData: unknown,
 		): void {
 			this.isInvalidated = true;
+		},
+		areSameRenamedNodes(
+			baseDetachId: ChangeAtomId,
+			newAttachId: ChangeAtomId,
+			count: number,
+		): boolean {
+			return areEqualChangeAtomIds(baseDetachId, newAttachId);
 		},
 	};
 	return manager;

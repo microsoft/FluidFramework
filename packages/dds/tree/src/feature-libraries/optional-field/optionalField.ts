@@ -183,8 +183,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				// Pinning the node twice is equivalent to pinning it once.
 				// Since there are multiple IDs to referer to the same node, there are multiple ways to represent the same pin intention.
 				// We use the following normalization rules:
-				// 1. Detaches should the earliest possible ID for a node (i.e., before any renames).
-				// 2. Attaches should the latest possible ID for a node (i.e., after any renames).
+				// 1. Detaches should use the earliest possible ID for a node (i.e., before any renames).
+				// 2. Attaches should use the latest possible ID for a node (i.e., after any renames).
 				composedDst = replace1.dst;
 				composedSrc = replace2.src;
 				// We need to inform the node manager of the rename
@@ -197,8 +197,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				// Note that there are two ways to refer to S: replace1.dst and replace2.dst.
 				// While we could use either to generate a valid output, we must pick the one that leads to a normalized output.
 				// We use the following normalization rules:
-				// 1. Detaches should the earliest possible ID for a node (i.e., before any renames).
-				// 2. Attaches should the latest possible ID for a node (i.e., after any renames).
+				// 1. Detaches should use the earliest possible ID for a node (i.e., before any renames).
+				// 2. Attaches should use the latest possible ID for a node (i.e., after any renames).
 				// In this situation, rule 1 applies, so we use replace1.dst.
 				composedDst = replace1.dst;
 				// However, we need to inform the node manager of the rename
@@ -210,8 +210,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				// Note that there are two ways to refer to S: replace1.src and replace2.dst.
 				// While we could use either to generate a valid output, we must pick the one that leads to a normalized output.
 				// We use the following normalization rules:
-				// 1. Detaches should the earliest possible ID for a node (i.e., before any renames).
-				// 2. Attaches should the latest possible ID for a node (i.e., after any renames).
+				// 1. Detaches should use the earliest possible ID for a node (i.e., before any renames).
+				// 2. Attaches should use the latest possible ID for a node (i.e., after any renames).
 				// In this situation, rule 2 applies, so we use replace2.src.
 				composedSrc = replace2.src;
 				// However, we need to inform the node manager of the rename
@@ -267,8 +267,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						// This branch deals with cases (S B S) and (S _ S) (i.e, the "Yes" column).
 						// Both cases are equivalent to pinning the node S.
 						// We use the following normalization rules:
-						// 1. Detaches should the earliest possible ID for a node (i.e., before any renames).
-						// 2. Attaches should the latest possible ID for a node (i.e., after any renames).
+						// 1. Detaches should use the earliest possible ID for a node (i.e., before any renames).
+						// 2. Attaches should use the latest possible ID for a node (i.e., after any renames).
 						composedDst = replace1.dst;
 						composedSrc = replace2.src;
 					} else {
@@ -291,11 +291,15 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				dst: composedDst,
 			};
 			if (composedSrc !== undefined) {
-				assert(
-					!areEqualChangeAtomIdOpts(composedReplace.dst, composedReplace.src),
-					"Pins should be represented explicitly",
-				);
-				composedReplace.src = composedSrc;
+				if (areEqualChangeAtomIds(composedReplace.dst, composedSrc)) {
+					// We are composing a change and its rollback together, which amounts to a no-op.
+					// The reason we prefer a no-op as opposed to a pin is twofold:
+					// 1. A rollback is not a new intention to be composed with the existing one, so much as it is a retraction of the previous intention.
+					// 2. If we were to represent this composition as a pin, such a pin would use the same ID for its src and dst (see docs on `Replace.src`).
+					composedReplace = undefined;
+				} else {
+					composedReplace.src = composedSrc;
+				}
 			}
 		}
 
@@ -413,10 +417,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 							dst: isRollback ? replace.src : makeChangeAtomId(genId.allocate(), revision),
 						};
 			if (!replace.isEmpty) {
-				invertedReplace.src = replace.dst;
-
-				// XXX: We should use a new attach ID
-				nodeManager.invertDetach(replace.dst, 1, change.childChange, replace.dst);
+				invertedReplace.src = makeChangeAtomId(genId.allocate(), revision);
+				nodeManager.invertDetach(replace.dst, 1, change.childChange, invertedReplace.src);
 				childChange = undefined;
 			}
 
@@ -499,8 +501,9 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		// For a total of 12+6=18 cases.
 
 		const rebasedChildChangeForA = rebaseChild(newChange.childChange, overChange.childChange);
+		const newReplace = newChange.valueReplace;
 		const rebased: Mutable<OptionalChangeset> = {};
-		if (newChange.valueReplace === undefined) {
+		if (newReplace === undefined) {
 			// This branch deals with the 3+2=5 cases where `newChange` is (A A) or (_ _).
 			// There are no shallow change intentions to rebase.
 			// However, we need to inform the node manager of any child changes since they ought to be represented at the location of A in the input context of the rebased change.
@@ -514,7 +517,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			// This branch deals with the 4+3=7 cases where `overChange` is (A A) or (_ _),
 			// though two of these cases have already be dealt with in the previous branch).
 			// There are no shallow change intentions to rebase over, so `newChange` shallow change intentions are unchanged.
-			rebased.valueReplace = newChange.valueReplace;
+			rebased.valueReplace = newReplace;
 		} else {
 			// This branch deals with the remaining 8 cases where both changesets have shallow change intentions:
 			// (A▼A) ↷ (A C)
@@ -530,10 +533,10 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				// The `overChange` determines whether the field is empty in its output context
 				isEmpty: overReplace.src === undefined,
 				// There is no way for the `dst` field to be affected by the rebasing
-				dst: newChange.valueReplace.dst,
+				dst: newReplace.dst,
 			};
 			// We now turn our attention to the `src` field.
-			if (newChange.valueReplace.src === undefined) {
+			if (newReplace.src === undefined) {
 				// This branch deals with the 2+1=3 cases where `newChange` is (A _) or (_▲_).
 				// `newChange` represent an intention to clear the field.
 				// This is unaffected by anything that `overChange` may do.
@@ -546,17 +549,22 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				// (_ B) ↷ (_ C)
 				// In all cases, `newChange`'s intention to attach a node is unaffected by the rebasing,
 				// but it's possible that `overChange` has an impact on how the rebased change should refer to the node it attaches.
-				if (isPin(newChange.valueReplace, newRoots)) {
+				if (isPin(newReplace, newRoots)) {
 					// This branch deals with cases (A▼A) ↷ (A C) and (A▼A) ↷ (A _).
 					// In both cases, `overChange` detaches node A which is pinned by `newChange`.
 					// The rebased change should therefore attach A from wherever `overChange` has sent it.
-					replace.src = overReplace.dst;
-					// We need to inform the node manager of any child changes since they ought to be represented at the location of A in the input context of the rebased change.
-					// We also need to inform the node manager that the rebased change needs to detach A from its new location.
+					replace.src = newReplace.src;
 					nodeManager.rebaseOverDetach(
 						overReplace.dst,
 						1,
-						overReplace.dst, // XXX: is it ok to reuse this ID? Doing so means that detach IDs are getting reused.
+						// XXX: This is a dirty trick:
+						// We want to tell the MCF that we now want to detach the node being pinned with ID `replace.src`.
+						// We would normally do this by passing `replace.src` here, which would create the desired rename from `overReplace.dst` to `replace.src`.
+						// However, the MCF still has our old rename from `replace.dst` to `replace.src`.
+						// There's no way to tell the MCF that we don't want to keep the that old rename anymore.
+						// So instead, we pass `replace.dst` here to trick the MCF into building a rename chain from  `overReplace.dst` to `replace.dst` to `replace.src`
+						// which it will compress into a single rename from `overReplace.dst` to `replace.src`.
+						replace.dst,
 						rebasedChildChangeForA,
 					);
 				} else {
@@ -565,19 +573,24 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					// (A B) ↷ (A C)
 					// (_ B) ↷ (_ C)
 					// Note that in the last two cases, it's possible for nodes B and C to actually be the same node.
-					// XXX: Consider renames when comparing register IDs (remember to use the last know ID for the node).
-					if (areEqualChangeAtomIdOpts(overReplace.src, newChange.valueReplace.src)) {
+					if (
+						overReplace.src !== undefined &&
+						nodeManager.areSameRenamedNodes(overReplace.src, newReplace.src)
+					) {
 						// This branch deals with the cases (A B) ↷ (A C) and (_ B) ↷ (_ C) where B and C are the same node.
-						// The rebased change becomes a pin, in which case its `src` must match its `dst`.
-						replace.src = replace.dst;
-						// XXX: should rebaseOverDetach be called in this case as well?.
+						// The rebased change becomes a pin.
+						replace.src = newReplace.src;
+						// This is necessary to ensure that the rebased change contains a rename from `replace.dst` to `replace.src`.
+						// One way to rationalize this is that as a result of `overReplace` attaching the node in the field,
+						// the intention to attach that node now needs to account for it being attached and for it being detached with `replace.dst`.
+						nodeManager.rebaseOverDetach(replace.dst, 1, replace.src, undefined);
 					} else {
 						// This branch deals with the following cases where B and C are different nodes:
 						// (A B) ↷ (A _)
 						// (A B) ↷ (A C)
 						// (_ B) ↷ (_ C)
 						// In all other cases, the location of B is unaffected by the rebasing.
-						replace.src = newChange.valueReplace.src;
+						replace.src = newReplace.src;
 						// We need to inform the node manager of any child changes since they ought to be represented at the location of A in the input context of the rebased change.
 						nodeManager.rebaseOverDetach(
 							overReplace.dst,

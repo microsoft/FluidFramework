@@ -390,31 +390,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, DefaultChange
 				};
 			}
 
-			// Pin node (no rename)
-			{
-				const intention = mintIntention();
-				const revision = tagFromIntention(intention);
-				const detach = mintId(revision);
-				const fieldEdit: FieldEditDescription = {
-					type: "field",
-					field: { parent: undefined, field: rootFieldKey },
-					fieldKind: optional.identifier,
-					change: brand(OptionalChange.set(false, { detach, fill: detach })),
-					revision,
-				};
-				const modularEdit = editor.buildChanges([fieldEdit]);
-				yield {
-					content: state.content,
-					mostRecentEdit: {
-						changeset: tagChange(modularEdit, revision),
-						intention,
-						description: "Pin",
-					},
-					parent: state,
-				};
-			}
-
-			// Pin node (with rename)
+			// Pin node
 			{
 				const intention = mintIntention();
 				const revision = tagFromIntention(intention);
@@ -437,7 +413,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, DefaultChange
 					mostRecentEdit: {
 						changeset: tagChange(modularEdit, revision),
 						intention,
-						description: "RPin",
+						description: "Pin",
 					},
 					parent: state,
 				};

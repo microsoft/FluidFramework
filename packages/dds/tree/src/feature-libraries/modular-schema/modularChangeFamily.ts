@@ -2616,6 +2616,35 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		}
 	}
 
+	public areSameRenamedNodes(
+		baseId: ChangeAtomId,
+		newId: ChangeAtomId,
+		count: number = 1,
+	): boolean {
+		const oldIdFromBaseChange = firstDetachIdFromAttachId(
+			this.table.baseChange.rootNodes,
+			baseId,
+			count,
+		);
+		const oldIdFromNewChange = firstDetachIdFromAttachId(
+			this.table.newChange.rootNodes,
+			newId,
+			count,
+		);
+		if (!areEqualChangeAtomIdOpts(oldIdFromBaseChange.value, oldIdFromNewChange.value)) {
+			return false;
+		}
+		const minCount = Math.min(oldIdFromBaseChange.length, oldIdFromNewChange.length);
+		if (minCount < count) {
+			return this.areSameRenamedNodes(
+				offsetChangeAtomId(baseId, minCount),
+				offsetChangeAtomId(baseId, minCount),
+				count - minCount,
+			);
+		}
+		return true;
+	}
+
 	private invalidateBaseFields(fields: FieldId[]): void {
 		if (this.allowInval) {
 			for (const fieldId of fields) {

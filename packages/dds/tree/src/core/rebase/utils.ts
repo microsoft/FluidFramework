@@ -327,7 +327,9 @@ export function rebaseBranch<TChange>(
 			},
 		},
 		"sourceChange",
-		() => changeRebaser.compose(editsToCompose),
+		() => {
+			return changeRebaser.compose(editsToCompose);
+		}
 	);
 }
 
