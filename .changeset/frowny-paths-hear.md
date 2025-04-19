@@ -1,10 +1,11 @@
 ---
 "@fluidframework/datastore": minor
----
----
-"section": legacy
+"@fluidframework/test-runtime-utils": minor
+"__section": legacy
 ---
 
-Deprecate `FluidDataStoreRuntime.submitMessage`
+Deprecate submitMessage on FluidDataStoreRuntime and MockFluidDataStoreRuntime
 
-`FluidDataStoreRuntime.submitMessage` implementation is not required per `IFluidDataStoreChannel` and is now deprecated. `IFluidParentContext` (which is base interface for `IFluidDataStoreContext`) should always be used to access `submitMessage` functionality.
+Implementing `FluidDataStoreRuntime.submitMessage` is not required per `IFluidDataStoreChannel` and is now deprecated on `FluidDataStoreRuntime` and corresponding `MockFluidDataStoreRuntime`.
+
+See [issue #24406](https://github.com/microsoft/FluidFramework/issues/24406) for details and alternatives.

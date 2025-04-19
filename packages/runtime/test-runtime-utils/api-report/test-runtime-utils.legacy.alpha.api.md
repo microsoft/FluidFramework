@@ -485,10 +485,10 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
+    // @deprecated (undocumented)
+    submitMessage(type: MessageType, content: any): null;
     // (undocumented)
-    submitMessage(): null;
-    // (undocumented)
-    submitSignal(): null;
+    submitSignal: IFluidDataStoreRuntime["submitSignal"];
     // (undocumented)
     summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
     // (undocumented)
