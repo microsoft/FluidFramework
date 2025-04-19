@@ -72,15 +72,19 @@ export type RuntimeOptionsAffectingDocSchema = Required<
 /**
  * Mapping of RuntimeOptionsAffectingDocSchema to their compatibility related configs.
  *
- * Each key in this map corresponds to a property in RuntimeOptionsAffectingDocSchema. The value is an object that maps SemanticVersions
- * to the appropriate default value for that property to supporting that SemanticVersion. If clients running SemanticVersion X are able to understand
- * the format changes introduced by the property, then the default value for that SemanticVersion will enable the feature associated with the property.
- * Otherwise, the feature will be disabled.
+ * Each key in this map corresponds to a property in RuntimeOptionsAffectingDocSchema.
+ * The value is an object that maps SemanticVersions to the appropriate default value
+ * for that property to supporting that SemanticVersion. If clients running
+ * SemanticVersion X are able to understand the format changes introduced by the
+ * property, then the default value for that SemanticVersion will enable the feature
+ * associated with the property. Otherwise, the feature will be disabled.
  *
- * For example if the compatibilityMode is a 1.x version (i.e. "1.5.0"), then the default value for `enableGroupedBatching` will be false since 1.x
- * clients do not understand the document format when batching is enabled. If the compatibilityMode is a 2.x client (i.e. "2.0.0" or later), then the
- * default value for `enableGroupedBatching` will be true because clients running 2.0 or later will be able to understand the format changes associated
- * with the batching feature.
+ * For example if the compatibilityMode is a 1.x version (i.e. "1.5.0"), then the
+ * default value for `enableGroupedBatching` will be false since 1.x clients do not
+ * understand the document format when batching is enabled. If the compatibilityMode
+ * is a 2.x client (i.e. "2.0.0" or later), then the default value for
+ * `enableGroupedBatching` will be true because clients running 2.0 or later will be
+ * able to understand the format changes associated with the batching feature.
  */
 const runtimeOptionsAffectingDocSchemaConfigMap: ConfigMap<RuntimeOptionsAffectingDocSchema> =
 	{
@@ -120,6 +124,10 @@ const runtimeOptionsAffectingDocSchemaConfigMap: ConfigMap<RuntimeOptionsAffecti
 			"1.0.0": {},
 			// Although sweep is supported in 2.x, it is disabled by default until compatibilityMode>=3.0.0 to be extra safe.
 			"3.0.0": { enableGCSweep: true },
+		},
+		pathBasedAddressing: {
+			"1.0.0": false,
+			// This option is under development and has no determined required version yet.
 		},
 	};
 
