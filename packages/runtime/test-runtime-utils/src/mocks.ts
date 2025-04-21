@@ -841,6 +841,7 @@ export class MockFluidDataStoreRuntime
 			this.registry = new Map(registry.map((factory) => [factory.type, factory]));
 		}
 	}
+	public readonly: boolean = false;
 
 	public readonly entryPoint: IFluidHandleInternal<FluidObject>;
 
@@ -1037,6 +1038,10 @@ export class MockFluidDataStoreRuntime
 		}
 		this.deltaConnections.forEach((dc) => dc.setConnectionState(connected));
 		return;
+	}
+
+	public setReadOnlyState(readonly: boolean) {
+		this.readonly = readonly;
 	}
 
 	public async resolveHandle(request: IRequest): Promise<IResponse> {

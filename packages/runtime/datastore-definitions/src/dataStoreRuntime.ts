@@ -34,6 +34,7 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
 	(event: "op", listener: (message: ISequencedDocumentMessage) => void);
 	(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
 	(event: "connected", listener: (clientId: string) => void);
+	(event: "readonly", listener: (isReadOnly: boolean) => void);
 }
 
 /**
@@ -68,6 +69,8 @@ export interface IFluidDataStoreRuntime
 	readonly clientId: string | undefined;
 
 	readonly connected: boolean;
+
+	readonly readonly: boolean;
 
 	readonly logger: ITelemetryBaseLogger;
 

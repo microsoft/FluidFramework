@@ -56,6 +56,7 @@ import {
 	IInboundSignalMessage,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
+	setReadonly,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -122,6 +123,21 @@ export interface ISharedObjectRegistry {
 	get(name: string): IChannelFactory | undefined;
 }
 
+type RequireProps<T extends Record<never, unknown>, K extends keyof T> = Omit<T, K> &
+	Required<Pick<T, K>>;
+
+interface IFluidDataStoreContextFeaturesToTypes {
+	[setReadonly]: RequireProps<IFluidDataStoreContext, "readonly">;
+}
+
+function contextSupportsFeature<K extends keyof IFluidDataStoreContextFeaturesToTypes>(
+	obj: IFluidDataStoreContext,
+	feature: K,
+): obj is IFluidDataStoreContextFeaturesToTypes[K] {
+	const { ILayerCompatDetails } = obj as FluidObject<ILayerCompatDetails>;
+	return ILayerCompatDetails?.supportedFeatures.has(feature) ?? false;
+}
+
 /**
  * Base data store class
  * @legacy
@@ -138,6 +154,10 @@ export class FluidDataStoreRuntime
 
 	public get connected(): boolean {
 		return this.dataStoreContext.connected;
+	}
+
+	public get readonly(): boolean {
+		return this._readonly;
 	}
 
 	public get clientId(): string | undefined {
@@ -254,11 +274,17 @@ export class FluidDataStoreRuntime
 		);
 
 		// Validate that the Runtime is compatible with this DataStore.
-		const maybeRuntimeCompatDetails = dataStoreContext as FluidObject<ILayerCompatDetails>;
-		validateRuntimeCompatibility(
-			maybeRuntimeCompatDetails.ILayerCompatDetails,
-			this.dispose.bind(this),
-		);
+		const { ILayerCompatDetails } = dataStoreContext as FluidObject<ILayerCompatDetails>;
+		validateRuntimeCompatibility(ILayerCompatDetails, this.dispose.bind(this));
+
+		if (contextSupportsFeature(dataStoreContext, "setReadonly")) {
+			this._readonly = dataStoreContext.readonly;
+		} else {
+			this._readonly = this.dataStoreContext.deltaManager.readOnlyInfo.readonly === true;
+			this.dataStoreContext.deltaManager.on("readonly", (readonly) =>
+				this.setReadOnlyState(readonly),
+			);
+		}
 
 		this.mc = createChildMonitoringContext({
 			logger: dataStoreContext.baseLogger,
@@ -638,6 +664,15 @@ export class FluidDataStoreRuntime
 		}
 
 		raiseConnectedEvent(this.logger, this, connected, clientId);
+	}
+
+	private _readonly: boolean;
+	public setReadOnlyState(readonly: boolean) {
+		this.verifyNotClosed();
+		if (readonly !== this._readonly) {
+			this._readonly = readonly;
+			this.emit("readonly", readonly);
+		}
 	}
 
 	public getQuorum(): IQuorumClients {

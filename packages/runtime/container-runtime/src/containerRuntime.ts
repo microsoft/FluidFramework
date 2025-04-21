@@ -255,7 +255,6 @@ import {
 	idCompressorBlobName,
 	metadataBlobName,
 	rootHasIsolatedChannels,
-	summarizerClientType,
 	wrapSummaryInChannelsTree,
 	formCreateSummarizerFn,
 	summarizerRequestUrl,
@@ -267,6 +266,7 @@ import {
 	ISummaryConfiguration,
 	DefaultSummaryConfiguration,
 	isSummariesDisabled,
+	summarizerClientType,
 } from "./summary/index.js";
 import { Throttler, formExponentialFn } from "./throttler.js";
 
@@ -1119,6 +1119,10 @@ export class ContainerRuntime
 		return this._getAttachState();
 	}
 
+	public get readonly(): boolean {
+		return this.deltaManager.readOnlyInfo.readonly === true;
+	}
+
 	/**
 	 * Current session schema - defines what options are on & off.
 	 * It's overlap of document schema (controlled by summary & ops) and options controlling this session.
@@ -1736,6 +1740,7 @@ export class ContainerRuntime
 			new Map<string, string>(dataStoreAliasMap),
 			async (runtime: ChannelCollection) => provideEntryPoint,
 		);
+		this._deltaManager.on("readonly", (readonly) => this.setReadOnlyState(readonly));
 
 		this.blobManager = new BlobManager({
 			routeContext: this.handleContext,
@@ -2575,6 +2580,10 @@ export class ContainerRuntime
 				});
 		}
 		return this._loadIdCompressor;
+	}
+
+	public setReadOnlyState(readonly: boolean): void {
+		this.channelCollection.setReadOnlyState(readonly);
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string): void {

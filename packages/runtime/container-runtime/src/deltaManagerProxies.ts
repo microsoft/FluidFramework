@@ -99,7 +99,15 @@ export abstract class BaseDeltaManagerProxy
 		return this.deltaManager.readOnlyInfo;
 	}
 
-	constructor(protected readonly deltaManager: IDeltaManagerFull) {
+	constructor(
+		protected readonly deltaManager: IDeltaManagerFull,
+		overrides?: {
+			onReadonly?: (
+				readonly: boolean,
+				readonlyConnectionReason?: { reason: string; error?: IErrorBase },
+			) => void;
+		},
+	) {
 		super();
 
 		// We are expecting this class to have many listeners, so we suppress noisy "MaxListenersExceededWarning" logging.
@@ -111,6 +119,9 @@ export abstract class BaseDeltaManagerProxy
 		this.deltaManager.on("pong", this.onPong);
 		this.deltaManager.on("connect", this.onConnect);
 		this.deltaManager.on("disconnect", this.onDisconnect);
+		if (overrides?.onReadonly !== undefined) {
+			this.onReadonly = overrides.onReadonly;
+		}
 		this.deltaManager.on("readonly", this.onReadonly);
 	}
 

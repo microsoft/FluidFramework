@@ -24,8 +24,8 @@ import {
 	OrderedClientCollection,
 	OrderedClientElection,
 	SummarizerClientElection,
-	SummaryManager,
 	summarizerClientType,
+	SummaryManager,
 } from "../../summary/index.js";
 
 import { TestQuorumClients } from "./testQuorumClients.js";
