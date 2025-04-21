@@ -1,0 +1,66 @@
+.table-container {
+	padding: 1rem;
+	max-width: 100%;
+	overflow-x: auto;
+}
+
+.table-title {
+	font-size: 1.25rem;
+	margin-bottom: 1rem;
+	color: #2a2a2a;
+}
+
+.custom-table {
+	border-collapse: collapse;
+	width: 100%;
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.custom-header-row {
+	background-color: #f0f0f0;
+}
+
+.custom-header-cell {
+	font-weight: 600;
+	text-transform: capitalize;
+}
+
+.custom-table-row {
+	transition: background-color 0.2s ease-in-out;
+}
+
+.custom-table-row:hover {
+	background-color: #f1faff;
+}
+
+.custom-table-row.even {
+	background-color: #ffffff;
+}
+
+.custom-table-row.odd {
+	background-color: #f9f9f9;
+}
+
+.custom-cell {
+	vertical-align: middle;
+}
+
+.id-cell {
+	font-weight: 500;
+	color: #333;
+}
+
+.custom-input {
+	width: 100%;
+}
+
+.add-row-container {
+	display: flex;
+	gap: 0.75rem;
+	margin-top: 1.5rem;
+	align-items: center;
+}
+
+.add-row-input {
+	flex: 1;
+}
