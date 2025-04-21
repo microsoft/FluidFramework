@@ -516,7 +516,7 @@ class LatestMapValueManagerImpl<
 export interface LatestMapProps<
 	T extends object,
 	Keys extends string | number = string | number,
-> extends PresenceStateOptions<T> {
+> extends PresenceStateOptions {
 	initialValues?: {
 		[K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
 	};
@@ -538,7 +538,7 @@ export function latestMap<
 	InternalTypes.MapValueState<T, Keys>,
 	LatestMap<T, Keys>
 > {
-	const { controls, initialValues, validator } = props;
+	const { controls, initialValues } = props;
 
 	const timestamp = Date.now();
 	const value: InternalTypes.MapValueState<

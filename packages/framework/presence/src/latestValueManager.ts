@@ -202,7 +202,7 @@ class LatestValueManagerImpl<T, Key extends string>
 /**
  *
  */
-export interface LatestProps<T extends object> extends PresenceStateOptions<T> {
+export interface LatestProps<T extends object> extends PresenceStateOptions {
 	initialValue: JsonSerializable<T> & JsonDeserialized<T> & object;
 }
 
@@ -214,7 +214,7 @@ export interface LatestProps<T extends object> extends PresenceStateOptions<T> {
 export function latest<T extends object, Key extends string = string>(
 	props: LatestProps<T>,
 ): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>> {
-	const { controls, initialValue, validator } = props;
+	const { controls, initialValue } = props;
 
 	// Latest takes ownership of initialValue but makes a shallow
 	// copy for basic protection.

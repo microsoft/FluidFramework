@@ -86,7 +86,6 @@ export function isStateSchemaValidator<T>(fn: unknown): fn is StateSchemaValidat
  *
  * @alpha
  */
-export interface PresenceStateOptions<T extends object> {
-	validator?: StateSchemaValidator<T> | undefined;
+export interface PresenceStateOptions {
 	controls?: BroadcastControlSettings | undefined;
 }
