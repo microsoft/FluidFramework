@@ -2422,10 +2422,35 @@ class InvertNodeManagerI implements InvertNodeManager {
 		}
 
 		if (nodeChange !== undefined) {
-			// XXX: If there is no inverted attach for this entry we should put the node changes in a root entry
-			// XXX: Need to account for renames
-			// XXX: Add inval
-			setInCrossFieldMap(this.table.entries, detachId, count, nodeChange);
+			assert(count === 1, "A node change should only affect one node");
+			const attachEntry = firstAttachIdFromDetachId(
+				this.table.change.rootNodes,
+				detachId,
+				count,
+			);
+
+			// TODO: Consider combining this query with the one for the rename.
+			const attachFieldEntry = this.table.change.crossFieldKeys.getFirst(
+				{ target: CrossFieldTarget.Destination, ...attachEntry.value },
+				count,
+			);
+
+			if (attachFieldEntry.value !== undefined) {
+				setInCrossFieldMap(this.table.entries, attachEntry.value, count, nodeChange);
+				this.table.invalidatedFields.add(
+					fieldChangeFromId(
+						this.table.change.fieldChanges,
+						this.table.change.nodeChanges,
+						attachFieldEntry.value,
+					),
+				);
+			} else {
+				setInChangeAtomIdMap(
+					this.table.invertedRoots.nodeChanges,
+					attachEntry.value,
+					nodeChange,
+				);
+			}
 		}
 	}
 

@@ -901,7 +901,17 @@ describe("ModularChangeFamily integration", () => {
 
 			const expected: ModularChangeset = tagChangeInline(
 				Change.build(
-					{ family, maxId: 7 },
+					{
+						family,
+						maxId: 7,
+						renames: [
+							{
+								oldId: { revision: tag1, localId: brand(5) },
+								newId: { revision: tag2, localId: brand(5) },
+								count: 1,
+							},
+						],
+					},
 					Change.field(
 						fieldA,
 						sequence.identifier,
