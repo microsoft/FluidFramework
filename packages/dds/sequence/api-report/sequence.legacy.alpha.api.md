@@ -84,7 +84,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval> ex
     removeIntervalById(id: string): TInterval | undefined;
 }
 
-// @alpha
+// @alpha @deprecated
 export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
     (event: "changeInterval", listener: (interval: TInterval, previousInterval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined, slide: boolean) => void): void;
     (event: "addInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): void;
@@ -94,7 +94,7 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 
 export { InteriorSequencePlace }
 
-// @alpha
+// @alpha @deprecated
 export interface IntervalIndex<TInterval extends ISerializableInterval> {
     add(interval: TInterval): void;
     remove(interval: TInterval): void;
@@ -259,7 +259,7 @@ export interface ISerializedInterval {
     stickiness?: IntervalStickiness;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export interface ISharedIntervalCollection<TInterval extends ISerializableInterval> {
     // (undocumented)
     getIntervalCollection(label: string): IIntervalCollection<TInterval>;
