@@ -828,7 +828,17 @@ export class SchemaFactory<
 		T,
 		undefined
 	> {
-		return mapSchema(
+		// The compiler can't infer that UnannotateImplicitAllowedTypes<T> is equal to T so we have to do a bunch of typing to make the error go away.
+		const map: TreeNodeSchemaBoth<
+			ScopedSchemaName<TScope, Name>,
+			NodeKind.Map,
+			TreeMapNode<UnannotateImplicitAllowedTypes<T>> &
+				WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
+			MapNodeInsertableData<UnannotateImplicitAllowedTypes<T>>,
+			ImplicitlyConstructable,
+			T,
+			undefined
+		> = mapSchema(
 			this.scoped(name),
 			allowedTypes,
 			implicitlyConstructable,
@@ -836,6 +846,25 @@ export class SchemaFactory<
 			!customizable,
 			undefined,
 		);
+
+		return map as TreeNodeSchemaBoth<
+			ScopedSchemaName<TScope, Name>,
+			NodeKind.Map,
+			TreeMapNode<UnannotateImplicitAllowedTypes<T>> &
+				WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
+			MapNodeInsertableData<ImplicitAllowedTypes>,
+			ImplicitlyConstructable,
+			T,
+			undefined
+		> as TreeNodeSchemaBoth<
+			ScopedSchemaName<TScope, Name>,
+			NodeKind.Map,
+			TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
+			MapNodeInsertableData<T>,
+			ImplicitlyConstructable,
+			T,
+			undefined
+		>;
 	}
 
 	/**

@@ -92,6 +92,7 @@ export {
 	SchemaFactoryAlpha,
 	type SchemaFactoryObjectOptions,
 	type ImplicitFieldSchema,
+	type ImplicitAnnotatedFieldSchema,
 	type TreeFieldFromImplicitField,
 	type TreeChangeEvents,
 	type NodeFromSchema,
@@ -103,6 +104,7 @@ export {
 	type FieldSchemaAlpha,
 	type FieldSchemaMetadata,
 	type ImplicitAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
 	NodeKind,
@@ -115,6 +117,7 @@ export {
 	type InternalTreeNode,
 	type WithType,
 	type NodeChangedData,
+	type SchemaUpgradeToken,
 	// Types not really intended for public use, but used in links.
 	// Can not be moved to internalTypes since doing so causes app code to throw errors like:
 	// Error: src/simple-tree/objectNode.ts:72:1 - (ae-unresolved-link) The @link reference could not be resolved: The package "@fluidframework/tree" does not have an export "TreeNodeApi"
@@ -124,6 +127,10 @@ export {
 	// Can not be moved to internalTypes since doing so causes app code to throw errors like:
 	// error TS2742: The inferred type of 'Inventory' cannot be named without a reference to '../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.
 	type AllowedTypes,
+	type AnnotatedAllowedType,
+	type AnnotatedAllowedTypes,
+	type AllowedTypeMetadata,
+	type AllowedTypesMetadata,
 	type ImplicitAllowedTypesUnsafe,
 	type ImplicitFieldSchemaUnsafe,
 	type TreeObjectNodeUnsafe,
@@ -131,6 +138,7 @@ export {
 	type TreeArrayNodeUnsafe,
 	type TreeMapNodeUnsafe,
 	type InsertableObjectFromSchemaRecordUnsafe,
+	type InsertableObjectFromAnnotatedSchemaRecord,
 	type InsertableTreeFieldFromImplicitFieldUnsafe,
 	type FieldSchemaUnsafe,
 	type TreeNodeSchemaClassUnsafe,
@@ -138,6 +146,13 @@ export {
 	type FieldSchemaAlphaUnsafe,
 	type ArrayNodeCustomizableSchemaUnsafe,
 	type MapNodeCustomizableSchemaUnsafe,
+	type UnannotateImplicitAllowedTypes,
+	type UnannotateAllowedTypes,
+	type UnannotateAllowedType,
+	type UnannotateAllowedTypesList,
+	type UnannotateAllowedTypeOrLazyItem,
+	type UnannotateImplicitFieldSchema,
+	type UnannotateSchemaRecord,
 	// System types (not in Internal types for various reasons, like doc links or cannot be named errors).
 	type typeSchemaSymbol,
 	type TreeNodeSchemaNonClass,

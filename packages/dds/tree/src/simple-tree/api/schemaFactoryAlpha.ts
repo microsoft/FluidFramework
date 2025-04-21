@@ -16,9 +16,9 @@ import {
 } from "./schemaFactory.js";
 import {
 	normalizeToAnnotatedAllowedType,
-	unannotateSchemaRecord,
 	type AnnotatedAllowedType,
 	type ImplicitAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
 	type ImplicitAnnotatedFieldSchema,
 	type ImplicitFieldSchema,
 	type NodeSchemaOptions,
@@ -215,7 +215,7 @@ export class SchemaFactoryAlpha<
 	 */
 	public mapAlpha<
 		Name extends TName,
-		const T extends ImplicitAllowedTypes,
+		const T extends ImplicitAnnotatedAllowedTypes,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
