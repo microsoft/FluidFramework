@@ -800,7 +800,17 @@ describe("ModularChangeFamily integration", () => {
 
 			const expected = tagChangeInline(
 				Change.build(
-					{ family, maxId: 3 },
+					{
+						family,
+						maxId: 3,
+						renames: [
+							{
+								oldId: { revision: tag1, localId: brand(0) },
+								newId: { revision: tag2, localId: brand(0) },
+								count: 1,
+							},
+						],
+					},
 					Change.field(fieldA, sequence.identifier, fieldAExpected),
 					Change.field(
 						fieldB,

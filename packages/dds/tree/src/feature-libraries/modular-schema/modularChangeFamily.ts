@@ -780,7 +780,7 @@ export class ModularChangeFamily
 					isRollback,
 					genId,
 					revisionForInvert,
-					new InvertNodeManagerI(crossFieldTable),
+					new InvertNodeManagerI(crossFieldTable, context.fieldId),
 					revisionMetadata,
 				);
 				invertedField.change = brand(amendedChange);
@@ -817,7 +817,7 @@ export class ModularChangeFamily
 
 		for (const [field, fieldChange] of changes) {
 			const fieldId = { nodeId: parentId, field };
-			const manager = new InvertNodeManagerI(crossFieldTable);
+			const manager = new InvertNodeManagerI(crossFieldTable, fieldId);
 			const invertedChange = getChangeHandler(
 				this.fieldKinds,
 				fieldChange.fieldKind,
@@ -2391,7 +2391,10 @@ function newConstraintState(violationCount: number): ConstraintState {
 }
 
 class InvertNodeManagerI implements InvertNodeManager {
-	public constructor(private readonly table: InvertTable) {}
+	public constructor(
+		private readonly table: InvertTable,
+		private readonly fieldId: FieldId,
+	) {}
 
 	public invertDetach(
 		detachId: ChangeAtomId,
@@ -2449,11 +2452,15 @@ class InvertNodeManagerI implements InvertNodeManager {
 			detachEntry.value,
 		);
 
-		if (nodeId !== undefined) {
-			return { start: attachId, value: nodeId, length: 1 };
-		}
+		const result: RangeQueryResult<ChangeAtomId, NodeId> =
+			nodeId !== undefined
+				? { start: attachId, value: nodeId, length: 1 }
+				: this.table.entries.getFirst(attachId, count);
 
-		return this.table.entries.getFirst(attachId, count);
+		if (result.value !== undefined) {
+			setInChangeAtomIdMap(this.table.invertedNodeToParent, result.value, this.fieldId);
+		}
+		return result;
 	}
 }
 
@@ -2527,8 +2534,9 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		}
 
 		if (result.value?.nodeChange !== undefined) {
-			this.table.rebasedNodeToParent.set(
-				[result.value.nodeChange.revision, result.value.nodeChange.localId],
+			setInChangeAtomIdMap(
+				this.table.rebasedNodeToParent,
+				result.value.nodeChange,
 				this.fieldId,
 			);
 		}
@@ -2651,10 +2659,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		// TODO: Consider moving this to a separate method so that this method can be side-effect free.
 		if (result.value !== undefined) {
 			// XXX: This creates an unnecessary entry if there is already a base changeset for this node.
-			this.table.composedNodeToParent.set(
-				[result.value.revision, result.value.localId],
-				this.fieldId,
-			);
+			setInChangeAtomIdMap(this.table.composedNodeToParent, result.value, this.fieldId);
 		}
 		return result;
 	}
