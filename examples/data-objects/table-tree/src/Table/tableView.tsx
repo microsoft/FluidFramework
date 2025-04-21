@@ -35,6 +35,7 @@ interface TableRowViewProps {
 	onDragStart: (index: number) => void;
 	onDragOver: (event: DragEvent<HTMLTableRowElement>) => void;
 	onDrop: (index: number) => void;
+	onRemoveRow: (index: number) => void;
 }
 
 const TableRowView: React.FC<TableRowViewProps> = ({
@@ -44,6 +45,7 @@ const TableRowView: React.FC<TableRowViewProps> = ({
 	onDragStart,
 	onDragOver,
 	onDrop,
+	onRemoveRow,
 }) => {
 	return (
 		<TableRow
@@ -54,7 +56,19 @@ const TableRowView: React.FC<TableRowViewProps> = ({
 			onDrop={() => onDrop(index)}
 			className={`custom-table-row ${index % 2 === 0 ? "even" : "odd"}`}
 		>
-			<TableCell className="custom-cell id-cell">{row.id}</TableCell>
+			<TableCell className="custom-cell id-cell">
+				<span style={{ display: "flex", alignItems: "center" }}>
+				<Button
+						appearance="subtle"
+						size="small"
+						onClick={() => onRemoveRow(index)}
+						style={{ padding: "0 4px", lineHeight: 1, minWidth: "auto" }}
+					>
+						×
+					</Button>
+					{row.id}
+				</span>
+			</TableCell>
 			{columns.map((col) => {
 				const cell = row.getCell(col);
 				return (
@@ -94,6 +108,7 @@ const TableHeaderView: React.FC<{ columns: Column[] }> = ({ columns }) => (
 
 export const TableView: React.FC<TableProps> = ({ tableModel }) => {
 	const [newRowId, setNewRowId] = useState("");
+	const [newColumnId, setNewColumnId] = useState("");
 	const [draggedRowIndex, setDraggedRowIndex] = useState<number | null>(null);
 
 	useTree(tableModel.treeView.root);
@@ -115,6 +130,20 @@ export const TableView: React.FC<TableProps> = ({ tableModel }) => {
 		}
 	};
 
+	const handleRemoveRow = (index: number) => {
+		const row = rows[index];
+		if (row !== undefined) {
+			tableModel.treeView.root.rows.removeAt(index);
+		}
+	};
+
+	const handleAddColumn = () => {
+		if(newColumnId.trim() !== ""){
+			tableModel.treeView.root.insertColumn({ index: 0, column: {id: newColumnId} })
+		}
+		setNewColumnId("")
+	}
+
 	const handleDragStart = (index: number) => {
 		setDraggedRowIndex(index);
 	};
@@ -125,8 +154,6 @@ export const TableView: React.FC<TableProps> = ({ tableModel }) => {
 
 	const handleDrop = (targetIndex: number) => {
 		if (draggedRowIndex !== null && draggedRowIndex !== targetIndex) {
-			// When dragging downwards, inserting after target requires adding +1 to the gap,
-			// because the source is removed before being re-inserted
 			const destinationGap = draggedRowIndex < targetIndex ? targetIndex + 1 : targetIndex;
 			tableModel.treeView.root.rows.moveToIndex(destinationGap, draggedRowIndex);
 		}
@@ -149,6 +176,7 @@ export const TableView: React.FC<TableProps> = ({ tableModel }) => {
 							onDragStart={handleDragStart}
 							onDragOver={handleDragOver}
 							onDrop={handleDrop}
+							onRemoveRow={handleRemoveRow}
 						/>
 					))}
 				</TableBody>
@@ -164,6 +192,19 @@ export const TableView: React.FC<TableProps> = ({ tableModel }) => {
 				/>
 				<Button appearance="primary" onClick={handleAddRow} disabled={newRowId.trim() === ""}>
 					Add Row
+				</Button>
+			</div>
+
+			<div className="add-column-container">
+				<Input
+					type="text"
+					placeholder="Enter new column ID"
+					value={newColumnId}
+					onChange={(e) => setNewColumnId(e.target.value)}
+					className="add-column-input"
+				/>
+				<Button appearance="primary" onClick={handleAddColumn} disabled={newColumnId.trim() === ""}>
+					Add Column
 				</Button>
 			</div>
 		</div>
