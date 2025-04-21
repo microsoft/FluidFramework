@@ -42,7 +42,7 @@ export interface StateDatastore<
 	TKey extends string,
 	TValue extends InternalTypes.ValueDirectoryOrState<any>,
 > {
-	presence: Presence;
+	readonly presence: Presence;
 	localUpdate(
 		key: TKey,
 		value: TValue & {

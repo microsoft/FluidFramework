@@ -377,11 +377,12 @@ class LatestMapValueManagerImpl<
 		);
 	}
 
-	public readonly local: StateMap<Keys, T>;
-
 	public get presence(): Presence {
 		return this.datastore.presence;
 	}
+
+	public readonly local: StateMap<Keys, T>;
+
 	public *getRemotes(): IterableIterator<LatestMapClientData<T, Keys>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		for (const attendeeId of objectKeys(allKnownStates.states)) {
