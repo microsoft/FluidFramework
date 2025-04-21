@@ -153,11 +153,12 @@ import {
 	wrapContext,
 } from "./channelCollection.js";
 import {
-	defaultCompatibilityMode,
-	getConfigsForCompatMode,
-	isValidCompatMode,
+	defaultCompatibilityVersion,
+	getCompatibilityVersionDefaults,
+	isValidCompatVersion,
 	type RuntimeOptionsAffectingDocSchema,
 } from "./compatUtils.js";
+import type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
 import { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry.js";
 import { ContainerFluidHandleContext } from "./containerHandleContext.js";
@@ -319,32 +320,16 @@ export interface ISummaryRuntimeOptions {
 }
 
 /**
- * Options for op compression.
- * @legacy
- * @alpha
- */
-export interface ICompressionRuntimeOptions {
-	/**
-	 * The value the batch's content size must exceed for the batch to be compressed.
-	 * By default the value is 600 * 1024 = 614400 bytes. If the value is set to `Infinity`, compression will be disabled.
-	 */
-	readonly minimumBatchSizeInBytes: number;
-
-	/**
-	 * The compression algorithm that will be used to compress the op.
-	 * By default the value is `lz4` which is the only compression algorithm currently supported.
-	 */
-	readonly compressionAlgorithm: CompressionAlgorithms;
-}
-
-/**
  * Options for container runtime.
  *
- * @privateRemarks If any new properties are added to this interface (or IContainerRuntimeOptionsInternal), then we will also need
- * to make changes in compatUtils.ts.
- * If the new property changes the DocumentSchema, then it must be explicity omitted from RuntimeOptionsAffectingDocSchema.
- * If it does change the DocumentSchema, then a corresponding entry must be added to `runtimeOptionsAffectingDocSchemaConfigMap` with the appropriate compat
- * configuration info.
+ * @privateRemarks If any new properties are added to this interface (or
+ * {@link IContainerRuntimeOptionsInternal}), then we will also need to make
+ * changes in {@link file://./compatUtils.ts}.
+ * If the new property does not change the DocumentSchema, then it must be
+ * explicity omitted from {@link RuntimeOptionsAffectingDocSchema}.
+ * If it does change the DocumentSchema, then a corresponding entry must be
+ * added to `runtimeOptionsAffectingDocSchemaConfigMap` with the appropriate
+ * compat configuration info.
  * If neither of the above is done, then the build will fail to compile.
  *
  * @legacy
@@ -779,13 +764,14 @@ export class ContainerRuntime
 		// 1.0.0 or later. If the compatibility mode is set to "2.10.0", the default values will be generated to ensure compatibility
 		// with FF runtime 2.10.0 or later.
 		// TODO: We will add in a way for users to pass in compatibilityMode in a follow up PR.
-		const compatibilityMode = defaultCompatibilityMode;
-		if (!isValidCompatMode(compatibilityMode)) {
+		const compatibilityVersion = defaultCompatibilityVersion;
+		if (!isValidCompatVersion(compatibilityVersion)) {
 			throw new UsageError(
-				`Invalid compatibility mode: ${compatibilityMode}. It must be an existing FF version (i.e. 2.22.1).`,
+				`Invalid compatibility version: ${compatibilityVersion}. It must be an existing FF version (i.e. 2.22.1).`,
 			);
 		}
-		const defaultVersionDependentConfigs = getConfigsForCompatMode(compatibilityMode);
+		const defaultVersionDependentConfigs =
+			getCompatibilityVersionDefaults(compatibilityVersion);
 
 		// The following are the default values for the options that do not affect the DocumentSchema.
 		const defaultConfigsNonVersionDependent: Required<

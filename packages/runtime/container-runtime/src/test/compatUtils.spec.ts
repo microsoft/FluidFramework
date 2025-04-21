@@ -13,9 +13,15 @@ import {
 
 describe("compatUtils", () => {
 	describe("getConfigsForCompatMode", () => {
-		interface ITestConfigMap {
-			[key: string]: string;
-		}
+		// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- type required for ConfigMap processing
+		type ITestConfigMap = {
+			featureA: string;
+			featureB: string;
+			featureC: string;
+			featureD: string;
+			featureE: string;
+			featureF: string;
+		};
 		const testConfigMap: ConfigMap<ITestConfigMap> = {
 			featureA: {
 				"0.5.0": "a1",
@@ -24,7 +30,7 @@ describe("compatUtils", () => {
 				"5.0.0": "a3",
 			},
 			featureB: {
-				"0.0.1": "b1",
+				"0.0.0-defaults": "b1",
 				"3.0.0": "b2",
 				"9.0.0": "b4",
 				"6.0.0": "b3",
@@ -57,7 +63,7 @@ describe("compatUtils", () => {
 
 		const testCases: {
 			compatibilityMode: SemanticVersion;
-			expectedConfig: Record<string, string | undefined>;
+			expectedConfig: Partial<ITestConfigMap>;
 		}[] = [
 			{
 				compatibilityMode: "0.5.0",
@@ -206,10 +212,7 @@ describe("compatUtils", () => {
 
 		for (const testCase of testCases) {
 			it(`returns correct configs for compatibilityMode = "${testCase.compatibilityMode}"`, () => {
-				const config = getConfigsForCompatMode<ITestConfigMap>(
-					testCase.compatibilityMode,
-					testConfigMap,
-				);
+				const config = getConfigsForCompatMode(testCase.compatibilityMode, testConfigMap);
 				assert.deepEqual(
 					config,
 					testCase.expectedConfig,
