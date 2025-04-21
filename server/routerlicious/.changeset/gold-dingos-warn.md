@@ -1,5 +1,6 @@
 ---
 "@fluidframework/server-lambdas": minor
+"__section": fix
 ---
 
 Orderer Connection "error" listener disposed on disconnect

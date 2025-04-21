@@ -1,5 +1,6 @@
 ---
 "@fluidframework/server-services": minor
+"__section": feature
 ---
 
 Adds support for the tenant manager to use Riddler's new APIs

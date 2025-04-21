@@ -1,5 +1,6 @@
 ---
 "@fluidframework/server-services-shared": minor
+"__section": feature
 ---
 
 Added support for the creation of health-check endpoints - `/startup`, `/ready` and `/ping`.

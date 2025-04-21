@@ -1,5 +1,6 @@
 ---
 "@fluidframework/server-routerlicious-base": minor
+"__section": feature
 ---
 
 Added support for health endpoints for HTTP services.

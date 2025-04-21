@@ -1,9 +1,7 @@
 ---
 "@fluidframework/server-routerlicious-base": major
 "@fluidframework/server-services-shared": major
----
----
-"section": fix
+"__section": fix
 ---
 
 Surface internal error codes correctly

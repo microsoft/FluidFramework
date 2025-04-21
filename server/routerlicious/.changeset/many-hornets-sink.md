@@ -1,5 +1,6 @@
 ---
 "@fluidframework/server-lambdas": minor
+"__section": feature
 ---
 
 Optional session tracking added to Nexus Lambda

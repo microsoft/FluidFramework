@@ -1,5 +1,6 @@
 ---
 "@fluidframework/server-lambdas": minor
+"__section": feature
 ---
 
 Added a new event - `dispose` - which is triggered when `.dispose()` is called

@@ -1,5 +1,6 @@
 ---
 "@fluidframework/server-services-shared": minor
+"__section": feature
 ---
 
 Created a utility function for Redis connection handling

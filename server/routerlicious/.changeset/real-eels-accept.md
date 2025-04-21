@@ -1,5 +1,6 @@
 ---
 "@fluidframework/server-routerlicious-base": minor
+"__section": feature
 ---
 
 Adds a new resource type - IFluidAccessTokenGenerator
