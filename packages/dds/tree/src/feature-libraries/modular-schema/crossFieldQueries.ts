@@ -73,6 +73,7 @@ export interface ComposeNodeManager {
 
 	/**
 	 * Must be called by a field kind when composing an attach in the base changeset with a detach in the new changeset.
+	 * This allows Modular Change Family to keep track of how a given node is being renamed.
 	 * @param baseAttachId - The ID of the attach in the base changeset.
 	 * @param newDetachId - The ID of the detach in the new changeset.
 	 * @param count - The number of nodes being attached then detached.
@@ -85,6 +86,11 @@ export interface ComposeNodeManager {
 
 	/**
 	 * Must be called by a field kind when composing an attach in the base changeset with nested changes the new changeset.
+	 *
+	 * This is needed because child changes are represented at the location of the node they impact in the input context of a changeset.
+	 * So if the later of the two changes being composed carries nested changes for a node,
+	 * then in the composed changeset, these nested changes must to be represented at the location of that node in the input context of the composed changeset.
+	 *
 	 * @param baseAttachId - The ID of the attach in the base changeset.
 	 * @param newChanges - The ID of the nested changes associated with this node in the new changeset.
 	 */
@@ -95,6 +101,7 @@ export interface ComposeNodeManager {
 	 * Returns whether the node being attached is the same node being detached.
 	 */
 	// XXX: This should return a range result, since only some of the nodes might be the same?
+	// XXX: It doesn't seem like it should be mandatory to call this if you don't want the rename to be removed (e.g., optional field pin).
 	/**
 	 * Must be called by a field kind when composing a detach in the base changeset with an attach in the new changeset.
 	 * @param baseDetachId - The ID of the detach in the base changeset.
