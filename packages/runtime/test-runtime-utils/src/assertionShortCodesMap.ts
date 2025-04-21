@@ -1522,7 +1522,7 @@ export const shortCodeMap = {
 	"0xa33": "clientId (from stateHandler) could only be undefined if we've never connected, but we have a CSN so we know that's not the case",
 	"0xa34": "Should have found the batchId in batchIdBySeqNum map",
 	"0xa35": "batchIdsAll and batchIdsBySeqNum should be in sync",
-	"0xa39": "Container does not support extensions. Use acquirePresenceViaDataObject.",
+	"0xa39": "Container does not support extensions. Use getPresenceViaDataObject.",
 	"0xa3d": "Partial batch should have exactly one message",
 	"0xa3e": "Empty batch is always considered a full batch",
 	"0xa3f": "segments cannot be undefined",

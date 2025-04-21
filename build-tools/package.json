@@ -1,6 +1,6 @@
 {
 	"name": "build-tools-release-group-root",
-	"version": "0.56.0",
+	"version": "0.57.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
