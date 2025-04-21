@@ -12,7 +12,13 @@ import { Notifications, StateFactory } from "../index.js";
 import type { createPresenceManager } from "../presenceManager.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
-import { assertFinalExpectations, prepareConnectedPresence } from "./testUtils.js";
+import {
+	assertFinalExpectations,
+	createNullValidator,
+	prepareConnectedPresence,
+} from "./testUtils.js";
+
+const validator = createNullValidator();
 
 describe("Presence", () => {
 	describe("batching", () => {
@@ -144,7 +150,10 @@ describe("Presence", () => {
 				// Configure a state workspace
 				// SIGNAL #1 - intial data is sent immediately
 				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
-					count: StateFactory.latest({ num: 0 }, { allowableUpdateLatencyMs: 0 }),
+					count: StateFactory.latest(
+						{ num: 0 },
+						{ validator, controls: { allowableUpdateLatencyMs: 0 } },
+					),
 				});
 
 				const { count } = stateWorkspace.props;
@@ -369,7 +378,10 @@ describe("Presence", () => {
 
 				// Configure a state workspace
 				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
-					count: StateFactory.latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
+					count: StateFactory.latest(
+						{ num: 0 },
+						{ controls: { allowableUpdateLatencyMs: 100 } },
+					),
 				});
 
 				const { count } = stateWorkspace.props;
@@ -488,8 +500,14 @@ describe("Presence", () => {
 				// SIGNAL #1 - this signal is not queued because it contains a State object with a latency of 0,
 				// so the initial data will be sent immediately.
 				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
-					count: StateFactory.latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
-					immediateUpdate: StateFactory.latest({ num: 0 }, { allowableUpdateLatencyMs: 0 }),
+					count: StateFactory.latest(
+						{ num: 0 },
+						{ controls: { allowableUpdateLatencyMs: 100 } },
+					),
+					immediateUpdate: StateFactory.latest(
+						{ num: 0 },
+						{ controls: { allowableUpdateLatencyMs: 0 } },
+					),
 				});
 
 				const { count, immediateUpdate } = stateWorkspace.props;
@@ -575,8 +593,14 @@ describe("Presence", () => {
 
 				// Configure a state workspace
 				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
-					count: StateFactory.latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
-					note: StateFactory.latest({ message: "" }, { allowableUpdateLatencyMs: 50 }),
+					count: StateFactory.latest(
+						{ num: 0 },
+						{ controls: { allowableUpdateLatencyMs: 100 } },
+					),
+					note: StateFactory.latest(
+						{ message: "" },
+						{ controls: { allowableUpdateLatencyMs: 50 } },
+					),
 				}); // will be queued, deadline is set to 1060
 
 				const { count, note } = stateWorkspace.props;
@@ -647,11 +671,17 @@ describe("Presence", () => {
 
 				// Configure two state workspaces
 				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
-					count: StateFactory.latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
+					count: StateFactory.latest(
+						{ num: 0 },
+						{ controls: { allowableUpdateLatencyMs: 100 } },
+					),
 				}); // will be queued, deadline is 1110
 
 				const stateWorkspace2 = presence.states.getWorkspace("name:testStateWorkspace2", {
-					note: StateFactory.latest({ message: "" }, { allowableUpdateLatencyMs: 60 }),
+					note: StateFactory.latest(
+						{ message: "" },
+						{ controls: { allowableUpdateLatencyMs: 60 } },
+					),
 				}); // will be queued, deadline is 1070
 
 				const { count } = stateWorkspace.props;
@@ -840,7 +870,10 @@ describe("Presence", () => {
 
 				// Configure a state workspace
 				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
-					count: StateFactory.latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
+					count: StateFactory.latest(
+						{ num: 0 },
+						{ controls: { allowableUpdateLatencyMs: 100 } },
+					),
 				}); // will be queued, deadline is 1110
 
 				// eslint-disable-next-line @typescript-eslint/ban-types
