@@ -35,7 +35,7 @@ describe("Presence", () => {
 		it(".presence provides Presence it was created under", () => {
 			const presence = createPresenceManager(new MockEphemeralRuntime());
 			const states = presence.states.getWorkspace(testWorkspaceName, {
-				obj: StateFactory.latest({}),
+				obj: StateFactory.latest({ initialValue: {} }),
 			});
 			assert.strictEqual(states.presence, presence);
 		});

@@ -511,7 +511,9 @@ class LatestMapValueManagerImpl<
 }
 
 /**
- * Props passed to the {@link latestMap} function to
+ * Props passed to the {@link latestMap} function.
+ *
+ * @alpha
  */
 export interface LatestMapProps<
 	T extends object,

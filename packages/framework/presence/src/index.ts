@@ -52,11 +52,13 @@ export type {
 	LatestMapEvents,
 	LatestMapItemRemovedClientData,
 	LatestMapItemUpdatedClientData,
+	LatestMapProps,
 	StateMap,
 } from "./latestMapValueManager.js";
 export type {
 	latest,
 	Latest,
+	LatestProps,
 	LatestEvents,
 } from "./latestValueManager.js";
 export type {

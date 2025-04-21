@@ -200,7 +200,7 @@ class LatestValueManagerImpl<T, Key extends string>
 }
 
 /**
- *
+ * @alpha
  */
 export interface LatestProps<T extends object> extends PresenceStateOptions {
 	initialValue: JsonSerializable<T> & JsonDeserialized<T> & object;
@@ -233,18 +233,9 @@ export function latest<T extends object, Key extends string = string>(
 		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
 		manager: InternalTypes.StateValue<Latest<T>>;
 	} => ({
-		initialData: {
-			value,
-			allowableUpdateLatencyMs: controls?.allowableUpdateLatencyMs,
-		},
+		initialData: { value, allowableUpdateLatencyMs: controls?.allowableUpdateLatencyMs },
 		manager: brandIVM<LatestValueManagerImpl<T, Key>, T, InternalTypes.ValueRequiredState<T>>(
-			new LatestValueManagerImpl(
-				key,
-				datastoreFromHandle(datastoreHandle),
-				value,
-				validator,
-				controls,
-			),
+			new LatestValueManagerImpl(key, datastoreFromHandle(datastoreHandle), value, controls),
 		),
 	});
 	return Object.assign(factory, { instanceBase: LatestValueManagerImpl });

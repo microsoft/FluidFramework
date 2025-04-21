@@ -9,7 +9,6 @@ import { createPresenceManager } from "../presenceManager.js";
 
 import { addControlsTests } from "./broadcastControlsTests.js";
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
-import { createNullValidator } from "./testUtils.js";
 
 import type {
 	BroadcastControlSettings,
@@ -27,10 +26,10 @@ function createLatestMapManager(
 	valueControlSettings?: BroadcastControlSettings,
 ) {
 	const states = presence.states.getWorkspace(testWorkspaceName, {
-		fixedMap: StateFactory.latestMap(
-			{ key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } },
-			{ validator: createNullValidator(), controls: valueControlSettings },
-		),
+		fixedMap: StateFactory.latestMap({
+			initialValues: { key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } },
+			controls: valueControlSettings,
+		}),
 	});
 	return states.props.fixedMap;
 }
@@ -53,7 +52,7 @@ describe("Presence", () => {
 		> {
 			const presence = createPresenceManager(new MockEphemeralRuntime());
 			const states = presence.states.getWorkspace(testWorkspaceName, {
-				fixedMap: StateFactory.latestMap({ key1: { x: 0, y: 0 } }),
+				fixedMap: StateFactory.latestMap({ initialValues: { key1: { x: 0, y: 0 } } }),
 			});
 			return states.props.fixedMap;
 		}
@@ -92,7 +91,7 @@ describe("Presence", () => {
 		it(".presence provides Presence it was created under", () => {
 			const presence = createPresenceManager(new MockEphemeralRuntime());
 			const states = presence.states.getWorkspace(testWorkspaceName, {
-				fixedMap: StateFactory.latestMap({ key1: { x: 0, y: 0 } }),
+				fixedMap: StateFactory.latestMap({ initialValues: { key1: { x: 0, y: 0 } } }),
 			});
 
 			assert.strictEqual(states.props.fixedMap.presence, presence);
@@ -112,8 +111,10 @@ export function checkCompiles(): void {
 		"name:testStatesWorkspaceWithLatestMap",
 		{
 			fixedMap: StateFactory.latestMap({
-				key1: { x: 0, y: 0 },
-				key2: { ref: "default", someId: 0 },
+				initialValues: {
+					key1: { x: 0, y: 0 },
+					key2: { ref: "default", someId: 0 },
+				},
 			}),
 		},
 	);
@@ -146,7 +147,7 @@ export function checkCompiles(): void {
 		tilt?: number;
 	}
 
-	workspace.add("pointers", StateFactory.latestMap<PointerData>({}));
+	workspace.add("pointers", StateFactory.latestMap<PointerData>({ initialValues: {} }));
 
 	const pointers = workspace.props.pointers;
 	const localPointers = pointers.local;
