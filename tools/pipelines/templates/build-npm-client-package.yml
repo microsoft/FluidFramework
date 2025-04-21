@@ -507,7 +507,7 @@ extends:
                   script: |
                     # Note: deliberately not using `set -eu -o pipefail` because this script leverages the return code of grep
                     # even in an error case
-                    git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|.npmrc|build-tools/.npmrc|\(use.*' | grep '^\s' > git_status.log
+                    git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|.npmrc|build-tools/.npmrc|\(use.*' | grep '^\s' > git_status.log
                     if [ `cat git_status.log | wc -l` != "0" ]; then
                       cat git_status.log
                       echo "##vso[task.logissue type=error]Build should not create extraneous files"
@@ -576,6 +576,10 @@ extends:
                 value: 'false'
               - name: COMMIT_SHA
                 value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
+              # The build job above already runs component governance tasks.
+              # We don't need them again during jobs that run tests even if we're checking out the repo.
+              - name: skipComponentGovernanceDetection
+                value: true
 
             steps:
               # Setup
@@ -736,6 +740,10 @@ extends:
                   value: 'false'
                 - name: COMMIT_SHA
                   value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
+                # The build job above already runs component governance tasks.
+                # We don't need them again during jobs that run tests even if we're checking out the repo.
+                - name: skipComponentGovernanceDetection
+                  value: true
               steps:
                 # Setup
                 - checkout: self

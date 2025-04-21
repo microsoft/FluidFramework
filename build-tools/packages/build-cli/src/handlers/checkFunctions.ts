@@ -688,7 +688,7 @@ export const checkReleaseIsDone: StateHandlerFunction = async (
 
 	const { context, releaseGroup, releaseVersion } = data;
 
-	const wasReleased = await isReleased(context, releaseGroup, releaseVersion);
+	const wasReleased = await isReleased(context, releaseGroup, releaseVersion, log);
 	if (wasReleased) {
 		BaseStateHandler.signalSuccess(machine, state);
 	} else {

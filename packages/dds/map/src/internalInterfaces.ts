@@ -155,8 +155,6 @@ export interface ISerializableValue {
 
 /**
  * Serialized {@link ISerializableValue} counterpart.
- * @legacy
- * @alpha
  */
 export interface ISerializedValue {
 	/**

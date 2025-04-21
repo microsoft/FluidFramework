@@ -12,21 +12,21 @@ import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
 import type {
 	BroadcastControlSettings,
-	IPresence,
-	LatestMapItemValueClientData,
-	LatestMapValueManager,
+	LatestMap,
+	LatestMapItemUpdatedClientData,
+	Presence,
 } from "@fluidframework/presence/alpha";
-import { LatestMap } from "@fluidframework/presence/alpha";
+import { StateFactory } from "@fluidframework/presence/alpha";
 
 const testWorkspaceName = "name:testWorkspaceA";
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function createLatestMapManager(
-	presence: IPresence,
+	presence: Presence,
 	valueControlSettings?: BroadcastControlSettings,
 ) {
-	const states = presence.getStates(testWorkspaceName, {
-		fixedMap: LatestMap(
+	const states = presence.states.getWorkspace(testWorkspaceName, {
+		fixedMap: StateFactory.latestMap(
 			{ key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } },
 			valueControlSettings,
 		),
@@ -35,7 +35,7 @@ function createLatestMapManager(
 }
 
 describe("Presence", () => {
-	describe("LatestMapValueManager", () => {
+	describe("LatestMap", () => {
 		/**
 		 * See {@link checkCompiles} below
 		 */
@@ -43,7 +43,7 @@ describe("Presence", () => {
 
 		addControlsTests(createLatestMapManager);
 
-		function setupMapValueManager(): LatestMapValueManager<
+		function setupMapValueManager(): LatestMap<
 			{
 				x: number;
 				y: number;
@@ -51,8 +51,8 @@ describe("Presence", () => {
 			string
 		> {
 			const presence = createPresenceManager(new MockEphemeralRuntime());
-			const states = presence.getStates(testWorkspaceName, {
-				fixedMap: LatestMap({ key1: { x: 0, y: 0 } }),
+			const states = presence.states.getWorkspace(testWorkspaceName, {
+				fixedMap: StateFactory.latestMap({ key1: { x: 0, y: 0 } }),
 			});
 			return states.props.fixedMap;
 		}
@@ -87,6 +87,15 @@ describe("Presence", () => {
 			mapVM.local.delete("key1");
 			assert.strictEqual(localRemovalCount, 1);
 		});
+
+		it(".presence provides Presence it was created under", () => {
+			const presence = createPresenceManager(new MockEphemeralRuntime());
+			const states = presence.states.getWorkspace(testWorkspaceName, {
+				fixedMap: StateFactory.latestMap({ key1: { x: 0, y: 0 } }),
+			});
+
+			assert.strictEqual(states.props.fixedMap.presence, presence);
+		});
 	});
 });
 
@@ -97,10 +106,16 @@ describe("Presence", () => {
  */
 export function checkCompiles(): void {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-	const presence = {} as IPresence;
-	const statesWorkspace = presence.getStates("name:testStatesWorkspaceWithLatestMap", {
-		fixedMap: LatestMap({ key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } }),
-	});
+	const presence = {} as Presence;
+	const statesWorkspace = presence.states.getWorkspace(
+		"name:testStatesWorkspaceWithLatestMap",
+		{
+			fixedMap: StateFactory.latestMap({
+				key1: { x: 0, y: 0 },
+				key2: { ref: "default", someId: 0 },
+			}),
+		},
+	);
 	// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
 	const workspace: typeof statesWorkspace = statesWorkspace;
 	const props = workspace.props;
@@ -130,43 +145,43 @@ export function checkCompiles(): void {
 		tilt?: number;
 	}
 
-	workspace.add("pointers", LatestMap<PointerData>({}));
+	workspace.add("pointers", StateFactory.latestMap<PointerData>({}));
 
 	const pointers = workspace.props.pointers;
 	const localPointers = pointers.local;
 
 	function logClientValue<T>({
-		client,
+		attendee,
 		key,
 		value,
 	}: Pick<
-		LatestMapItemValueClientData<T, string | number>,
-		"client" | "key" | "value"
+		LatestMapItemUpdatedClientData<T, string | number>,
+		"attendee" | "key" | "value"
 	>): void {
-		console.log(client.sessionId, key, value);
+		console.log(attendee.attendeeId, key, value);
 	}
 
 	localPointers.set("pen", { x: 1, y: 2 });
 
-	const pointerItemUpdatedOff = pointers.events.on("itemUpdated", logClientValue);
+	const pointerItemUpdatedOff = pointers.events.on("remoteItemUpdated", logClientValue);
 	pointerItemUpdatedOff();
 
-	for (const client of pointers.clients()) {
-		const items = pointers.clientValue(client);
+	for (const attendee of pointers.getStateAttendees()) {
+		const items = pointers.getRemote(attendee);
 		for (const [key, { value }] of items.entries()) {
-			logClientValue({ client, key, value });
+			logClientValue({ attendee, key, value });
 		}
 	}
 
-	for (const { client, items } of pointers.clientValues()) {
-		for (const [key, { value }] of items.entries()) logClientValue({ client, key, value });
+	for (const { attendee, items } of pointers.getRemotes()) {
+		for (const [key, { value }] of items.entries()) logClientValue({ attendee, key, value });
 	}
 
-	pointers.events.on("itemRemoved", ({ client, key }) =>
-		logClientValue<string>({ client, key, value: "<removed>" }),
+	pointers.events.on("remoteItemRemoved", ({ attendee, key }) =>
+		logClientValue<string>({ attendee, key, value: "<removed>" }),
 	);
 
-	pointers.events.on("updated", ({ client, items }) => {
-		for (const [key, { value }] of items.entries()) logClientValue({ client, key, value });
+	pointers.events.on("remoteUpdated", ({ attendee, items }) => {
+		for (const [key, { value }] of items.entries()) logClientValue({ attendee, key, value });
 	});
 }
