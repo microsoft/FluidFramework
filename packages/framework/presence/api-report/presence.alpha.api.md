@@ -105,13 +105,11 @@ export namespace InternalTypes {
     export type ValueDirectoryOrState<T> = ValueRequiredState<T> | ValueDirectory<T>;
     // (undocumented)
     export interface ValueOptionalState<TValue> extends ValueStateMetadata {
-        valid?: TValue | undefined;
         // (undocumented)
         value?: JsonDeserialized<TValue>;
     }
     // (undocumented)
     export interface ValueRequiredState<TValue> extends ValueStateMetadata {
-        valid?: TValue | undefined;
         // (undocumented)
         value: JsonDeserialized<TValue>;
     }
@@ -150,7 +148,7 @@ export interface Latest<T> {
 }
 
 // @alpha
-export function latest<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, options?: PresenceStateOptions<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
+export function latest<T extends object, Key extends string = string>(props: LatestProps<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
 
 // @alpha @sealed
 export interface LatestClientData<T> extends LatestData<T> {
@@ -163,7 +161,7 @@ export interface LatestData<T> {
     // (undocumented)
     metadata: LatestMetadata;
     // (undocumented)
-    value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> | undefined;
+    value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
 }
 
 // @alpha @sealed (undocumented)
@@ -188,9 +186,7 @@ export interface LatestMap<T, Keys extends string | number = string | number> {
 }
 
 // @alpha
-export function latestMap<T extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(initialValues?: {
-    [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
-}, options?: PresenceStateOptions<T> | undefined): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
+export function latestMap<T extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(props: LatestMapProps<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
 
 // @alpha @sealed
 export interface LatestMapClientData<T, Keys extends string | number, SpecificAttendeeId extends AttendeeId = AttendeeId> {
@@ -234,10 +230,24 @@ export interface LatestMapItemUpdatedClientData<T, K extends string | number> ex
     key: K;
 }
 
+// @alpha
+export interface LatestMapProps<T extends object, Keys extends string | number = string | number> extends PresenceStateOptions {
+    // (undocumented)
+    initialValues?: {
+        [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
+    };
+}
+
 // @alpha @sealed
 export interface LatestMetadata {
     revision: number;
     timestamp: number;
+}
+
+// @alpha (undocumented)
+export interface LatestProps<T extends object> extends PresenceStateOptions {
+    // (undocumented)
+    initialValue: JsonSerializable<T> & JsonDeserialized<T> & object;
 }
 
 // @alpha @sealed
@@ -313,11 +323,9 @@ export interface PresenceEvents {
 }
 
 // @alpha
-export interface PresenceStateOptions<T extends object> {
+export interface PresenceStateOptions {
     // (undocumented)
     controls?: BroadcastControlSettings | undefined;
-    // (undocumented)
-    validator?: StateSchemaValidator<T> | undefined;
 }
 
 // @alpha
@@ -339,14 +347,6 @@ export interface StateMap<K extends string | number, V> {
     set(key: K, value: JsonSerializable<V> & JsonDeserialized<V>): this;
     // (undocumented)
     readonly size: number;
-}
-
-// @alpha
-export type StateSchemaValidator<T> = (unvalidatedData: unknown, metadata?: StateSchemaValidatorMetadata) => T | undefined;
-
-// @alpha
-export interface StateSchemaValidatorMetadata {
-    key?: string | number;
 }
 
 // @alpha @sealed

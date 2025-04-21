@@ -20,7 +20,6 @@ import { objectEntries } from "./internalUtils.js";
 import type {
 	LatestClientData,
 	LatestData,
-	StateSchemaValidator,
 	PresenceStateOptions,
 } from "./latestValueTypes.js";
 import type { Attendee, Presence } from "./presence.js";
@@ -107,7 +106,6 @@ class LatestValueManagerImpl<T, Key extends string>
 		private readonly key: Key,
 		private readonly datastore: StateDatastore<Key, InternalTypes.ValueRequiredState<T>>,
 		public readonly value: InternalTypes.ValueRequiredState<T>,
-		private readonly validator: StateSchemaValidator<T> | undefined,
 		controlSettings: BroadcastControlSettings | undefined,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
@@ -136,14 +134,9 @@ class LatestValueManagerImpl<T, Key extends string>
 		const allKnownStates = this.datastore.knownValues(this.key);
 		for (const [attendeeId, value] of objectEntries(allKnownStates.states)) {
 			if (attendeeId !== allKnownStates.self) {
-				if (value.valid === true && this.validator !== undefined) {
-					const validData = this.validator(value.value);
-					value.valid = validData;
-				}
-
 				yield {
 					attendee: this.datastore.lookupClient(attendeeId),
-					value: value.valid === undefined ? undefined : value.value,
+					value: value.value,
 					metadata: { revision: value.rev, timestamp: value.timestamp },
 				};
 			}
@@ -163,15 +156,8 @@ class LatestValueManagerImpl<T, Key extends string>
 		if (clientState === undefined) {
 			throw new Error("No entry for clientId");
 		}
-
-		// If
-		if (clientState.valid !== true && this.validator !== undefined) {
-			const validData = this.validator(clientState);
-			clientState.valid = validData;
-		}
-
 		return {
-			value: clientState.valid === undefined ? undefined : clientState.value,
+			value: clientState.value,
 			metadata: { revision: clientState.rev, timestamp: Date.now() },
 		};
 	}

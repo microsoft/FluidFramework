@@ -21,7 +21,6 @@ import type {
 	LatestClientData,
 	LatestData,
 	LatestMetadata,
-	StateSchemaValidator,
 	PresenceStateOptions,
 } from "./latestValueTypes.js";
 import type { AttendeeId, Attendee, Presence, SpecificAttendee } from "./presence.js";
@@ -224,7 +223,6 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 				string | number
 			>,
 		) => void,
-		private readonly validator: StateSchemaValidator<T> | undefined,
 	) {
 		// All initial items are expected to be defined.
 		// TODO assert all defined and/or update type.
@@ -271,7 +269,6 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 		) => void,
 		thisArg?: unknown,
 	): void {
-		// TODO: This is a data read, so we need to validate.
 		for (const [key, item] of objectEntries(this.value.items)) {
 			if (item.value !== undefined) {
 				callbackfn(item.value, key, this);
@@ -279,13 +276,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 		}
 	}
 	public get(key: K): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> | undefined {
-		const data = this.value.items[key]?.value;
-		if (this.validator === undefined) {
-			return data;
-		}
-		const maybeValid = this.validator(data, { key });
-		// TODO: Cast shouldn't be necessary.
-		return maybeValid as InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> | undefined;
+		return this.value.items[key]?.value;
 	}
 	public has(key: K): boolean {
 		return this.value.items[key]?.value !== undefined;
@@ -376,7 +367,6 @@ class LatestMapValueManagerImpl<
 			InternalTypes.MapValueState<T, Keys>
 		>,
 		public readonly value: InternalTypes.MapValueState<T, Keys>,
-		validator: StateSchemaValidator<T> | undefined,
 		controlSettings: BroadcastControlSettings | undefined,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
@@ -389,7 +379,6 @@ class LatestMapValueManagerImpl<
 					allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
 				});
 			},
-			validator,
 		);
 	}
 
@@ -426,14 +415,12 @@ class LatestMapValueManagerImpl<
 		}
 		const items = new Map<Keys, LatestData<T>>();
 		for (const [key, item] of objectEntries(clientStateMap.items)) {
-			if (item.value !== undefined) {
-				const value = item.value;
-				if (value !== undefined) {
-					items.set(key, {
-						value,
-						metadata: { revision: item.rev, timestamp: item.timestamp },
-					});
-				}
+			const value = item.value;
+			if (value !== undefined) {
+				items.set(key, {
+					value,
+					metadata: { revision: item.rev, timestamp: item.timestamp },
+				});
 			}
 		}
 		return items;
@@ -480,10 +467,7 @@ class LatestMapValueManagerImpl<
 			const item = value.items[key]!;
 			const hadPriorValue = currentState.items[key]?.value;
 			currentState.items[key] = item;
-			const metadata = {
-				revision: item.rev,
-				timestamp: item.timestamp,
-			};
+			const metadata = { revision: item.rev, timestamp: item.timestamp };
 			if (item.value !== undefined) {
 				const itemValue = item.value;
 				const updatedItem = {
@@ -578,7 +562,6 @@ export function latestMap<
 				key,
 				datastoreFromHandle(datastoreHandle),
 				value,
-				validator,
 				controls,
 			),
 		),

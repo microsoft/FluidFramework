@@ -65,8 +65,6 @@ export type {
 	LatestClientData,
 	LatestData,
 	LatestMetadata,
-	StateSchemaValidator,
-	StateSchemaValidatorMetadata,
 	PresenceStateOptions,
 } from "./latestValueTypes.js";
 
