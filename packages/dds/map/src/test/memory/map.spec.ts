@@ -44,16 +44,11 @@ describe("SharedMap memory usage", () => {
 			public readonly title = "Create empty map";
 			public readonly minSampleCount = 500;
 			public readonly baselineMemoryUsage = 0; // Example: Baseline memory usage in bytes
-			public readonly allowedDeviation = 10; // Example: Allow 10% deviation
+			public readonly allowedDeviationBytes = 10; // Example: Allow 10 bytes deviation from the baseline
 			private map: ISharedMap = createLocalMap("testMap");
 
 			public async run(): Promise<void> {
 				this.map = createLocalMap("testMap");
-			}
-			public afterIteration(): void {
-				if (process.env.SAVE_MEMORY_BASELINE) {
-					const memoryUsage = process.memoryUsage().heapUsed;
-				}
 			}
 		})(),
 	);

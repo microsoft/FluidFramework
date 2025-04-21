@@ -122,13 +122,15 @@ export interface MemoryTestObjectProps extends MochaExclusiveOptions, Titled, Be
 	/**
 	 * The baseline memory usage to compare against for the test, which is used to determine if the test regressed.
 	 * If not specified, the test will not be compared against a baseline and will only be run to measure the memory usage.
+	 * @remarks Should be specified in bytes.
 	 */
-	readonly baselineMemoryUsage?: number;
+	readonly baselineMemoryUsage?: number | undefined;
 
 	/**
-	 * The allowed deviation from the baseline memory usage, as a percentage.
-	 */
-	allowedDeviation?: number;
+	 * The allowed deviation from the `baselineMemoryUsage`, measured in bytes.
+	 * Has no effect if `baselineMemoryUsage` is not specified.
+	 * */
+	allowedDeviationBytes?: number;
 }
 
 /**
@@ -202,7 +204,10 @@ export interface MemorySampleData {
  * @public
  */
 export function benchmarkMemory(testObject: IMemoryTestObject): Test {
-	const baselineMemoryUsage = testObject.baselineMemoryUsage ?? 0;
+	// Setting to -1 to indicate that baselineMemoryUsage or allowedDeviationBytes variables are not set.
+	const baselineMemoryUsage = testObject.baselineMemoryUsage ?? -1;
+	const allowedDeviationBytes = testObject.allowedDeviationBytes ?? -1;
+
 	const args: Required<MemoryTestObjectProps> = {
 		maxBenchmarkDurationSeconds: testObject.maxBenchmarkDurationSeconds ?? 30,
 		minSampleCount: testObject.minSampleCount ?? 50,
@@ -213,7 +218,7 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 		type: testObject.type ?? BenchmarkType.Measurement,
 		samplePercentageToUse: testObject.samplePercentageToUse ?? 0.95,
 		category: testObject.category ?? "",
-		allowedDeviation: testObject.allowedDeviation ?? 5, // Default to 5% deviation if not specified
+		allowedDeviationBytes: testObject.allowedDeviationBytes ?? 5, // Default to 5% deviation if not specified
 	};
 
 	return supportParentProcess({
@@ -310,15 +315,30 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 						heapUsedStats.marginOfErrorPercent > args.maxRelativeMarginOfError
 					);
 
-					const avgHeapUsed = heapUsedStats.arithmeticMean;
-					const allowedMemoryUsage =
-						args.baselineMemoryUsage * (1 + args.allowedDeviation / 100);
-					const tolerance = args.baselineMemoryUsage * (args.allowedDeviation / 100);
-
-					if (ENABLE_MEM_REGRESSION && avgHeapUsed > allowedMemoryUsage) {
-						throw new Error(
-							`Memory Regression detected for ${testObject.title}: Used ${avgHeapUsed} bytes, exceeding the baseline of ${args.baselineMemoryUsage} bytes., with an allowed tolerance of ${tolerance} bytes.`,
-						);
+					if (baselineMemoryUsage >= 0 && allowedDeviationBytes >= 0) {
+						// Compare the average heap used to the baseline memory usage
+						const avgHeapUsed = heapUsedStats.arithmeticMean;
+						const lowerBound = baselineMemoryUsage - args.allowedDeviationBytes;
+						const upperBound = baselineMemoryUsage + args.allowedDeviationBytes;
+						const tolerance = (args.allowedDeviationBytes / baselineMemoryUsage) * 100;
+						// Throw errors on regressions/improvements if `ENABLE_MEM_REGRESSION` is set and a warning otherwise.
+						// This allows us to run the tests in CI without failing the build, but still get a warning.
+						if (avgHeapUsed > upperBound) {
+							const message = `Memory Regression detected for ${testObject.title}: Used ${avgHeapUsed} bytes, exceeding the ${tolerance}% tolerance of the baseline of ${args.baselineMemoryUsage} bytes.`;
+							if (ENABLE_MEM_REGRESSION) {
+								throw new Error(message);
+							} else {
+								console.warn(message);
+							}
+						}
+						if (avgHeapUsed < lowerBound) {
+							const message = `Possible memory improvement detected for ${testObject.title}: Used ${avgHeapUsed} bytes, below the ${tolerance}% allowed tolerance of the baseline of ${args.baselineMemoryUsage} bytes. Consider updating the baseline.`;
+							if (ENABLE_MEM_REGRESSION) {
+								throw new Error(message);
+							} else {
+								console.warn(message);
+							}
+						}
 					}
 
 					benchmarkStats.customData["Heap Used Avg"] = {
