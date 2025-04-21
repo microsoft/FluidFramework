@@ -18,7 +18,7 @@ import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
 import type { LatestRawClientData, LatestRawData } from "./latestValueTypes.js";
-import type { Attendee } from "./presence.js";
+import type { Attendee, Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
@@ -54,6 +54,11 @@ export interface LatestRawEvents<T> {
  * @alpha
  */
 export interface LatestRaw<T> {
+	/**
+	 * Containing {@link Presence}
+	 */
+	readonly presence: Presence;
+
 	/**
 	 * Events for LatestRaw.
 	 */
@@ -100,6 +105,10 @@ class LatestRawValueManagerImpl<T, Key extends string>
 		controlSettings: BroadcastControlSettings | undefined,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
+	}
+
+	public get presence(): Presence {
+		return this.datastore.presence;
 	}
 
 	public get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> {

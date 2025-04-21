@@ -151,6 +151,7 @@ export interface LatestMapRaw<T, Keys extends string | number = string | number>
     getRemotes(): IterableIterator<LatestMapRawClientData<T, Keys>>;
     getStateAttendees(): Attendee[];
     readonly local: StateMap<Keys, T>;
+    readonly presence: Presence;
 }
 
 // @alpha @sealed
@@ -204,6 +205,7 @@ export interface LatestRaw<T> {
     getStateAttendees(): Attendee[];
     get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
     set local(value: JsonSerializable<T> & JsonDeserialized<T>);
+    readonly presence: Presence;
 }
 
 // @alpha @sealed
@@ -256,6 +258,7 @@ export interface NotificationsManager<T extends InternalUtilityTypes.Notificatio
     readonly emit: NotificationEmitter<T>;
     readonly events: Listenable<NotificationsManagerEvents>;
     readonly notifications: NotificationListenable<T>;
+    readonly presence: Presence;
 }
 
 // @alpha @sealed (undocumented)
@@ -272,6 +275,7 @@ export type NotificationSubscriptions<E extends InternalUtilityTypes.Notificatio
 // @alpha @sealed
 export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSchema> {
     add<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<any>, TManager extends NotificationsManager<any>>(key: TKey, manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is NotificationsWorkspace<TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>>;
+    readonly presence: Presence;
     readonly props: StatesWorkspaceEntries<TSchema>;
 }
 
@@ -331,6 +335,7 @@ export interface StateMap<K extends string | number, V> {
 export interface StatesWorkspace<TSchema extends StatesWorkspaceSchema, TManagerConstraints = unknown> {
     add<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<any>, TManager extends TManagerConstraints>(key: TKey, manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is StatesWorkspace<TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>, TManagerConstraints>;
     readonly controls: BroadcastControls;
+    readonly presence: Presence;
     readonly props: StatesWorkspaceEntries<TSchema>;
 }
 
