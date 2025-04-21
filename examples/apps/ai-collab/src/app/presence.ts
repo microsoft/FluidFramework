@@ -18,7 +18,7 @@ export interface User {
 }
 
 const statesSchema = {
-	onlineUsers: StateFactory.latest({ photo: "" } satisfies User),
+	onlineUsers: StateFactory.latest({ initialValue: { photo: "" } satisfies User }),
 } satisfies StatesWorkspaceSchema;
 
 export type UserPresence = StatesWorkspace<typeof statesSchema>;

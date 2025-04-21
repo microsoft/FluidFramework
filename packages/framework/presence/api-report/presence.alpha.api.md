@@ -186,7 +186,7 @@ export interface LatestMap<T, Keys extends string | number = string | number> {
 }
 
 // @alpha
-export function latestMap<T extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(props: LatestMapProps<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
+export function latestMap<T extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(props?: LatestMapProps<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
 
 // @alpha @sealed
 export interface LatestMapClientData<T, Keys extends string | number, SpecificAttendeeId extends AttendeeId = AttendeeId> {

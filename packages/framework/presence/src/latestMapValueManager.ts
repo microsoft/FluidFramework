@@ -518,13 +518,14 @@ export function latestMap<
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
 >(
-	props: LatestMapProps<T, Keys>,
+	props?: LatestMapProps<T, Keys>,
 ): InternalTypes.ManagerFactory<
 	RegistrationKey,
 	InternalTypes.MapValueState<T, Keys>,
 	LatestMap<T, Keys>
 > {
-	const { controls, initialValues } = props;
+	const controls = props?.controls;
+	const initialValues = props?.initialValues;
 
 	const timestamp = Date.now();
 	const value: InternalTypes.MapValueState<
