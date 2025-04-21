@@ -2,7 +2,7 @@
 "@fluidframework/presence": minor
 "__section": other
 ---
-Expose `Presence` at Workspaces and State objects
+Presence object is now accessible from Workspaces and State objects
 
 Users can now access `Presence` through `.presence` in all Workspaces and State objects:
 
