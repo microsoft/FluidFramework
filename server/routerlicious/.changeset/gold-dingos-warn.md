@@ -1,5 +1,5 @@
 ---
-"@fluidframework/server-lambdas": minor
+"@fluidframework/server-lambdas": major
 "__section": fix
 ---
 

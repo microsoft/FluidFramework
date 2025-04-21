@@ -1,5 +1,5 @@
 ---
-"@fluidframework/server-services": minor
+"@fluidframework/server-services": major
 "__section": feature
 ---
 
