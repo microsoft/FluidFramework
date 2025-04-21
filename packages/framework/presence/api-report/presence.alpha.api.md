@@ -135,68 +135,33 @@ export namespace InternalUtilityTypes {
     };
 }
 
-// @alpha @sealed
-export interface Latest<T> {
-    readonly controls: BroadcastControls;
-    readonly events: Listenable<LatestEvents<T>>;
-    getRemote(attendee: Attendee): LatestData<T>;
-    getRemotes(): IterableIterator<LatestClientData<T>>;
-    getStateAttendees(): Attendee[];
-    get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
-    set local(value: JsonSerializable<T> & JsonDeserialized<T>);
-}
-
 // @alpha
-export function latest<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
-
-// @alpha @sealed
-export interface LatestClientData<T> extends LatestData<T> {
-    // (undocumented)
-    attendee: Attendee;
-}
-
-// @alpha @sealed
-export interface LatestData<T> {
-    // (undocumented)
-    metadata: LatestMetadata;
-    // (undocumented)
-    value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
-}
-
-// @alpha @sealed (undocumented)
-export interface LatestEvents<T> {
-    // @eventProperty
-    localUpdated: (update: {
-        value: InternalUtilityTypes.FullyReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
-    }) => void;
-    // @eventProperty
-    remoteUpdated: (update: LatestClientData<T>) => void;
-}
-
-// @alpha @sealed
-export interface LatestMap<T, Keys extends string | number = string | number> {
-    readonly controls: BroadcastControls;
-    readonly events: Listenable<LatestMapEvents<T, Keys>>;
-    getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T>>;
-    getRemotes(): IterableIterator<LatestMapClientData<T, Keys>>;
-    getStateAttendees(): Attendee[];
-    readonly local: StateMap<Keys, T>;
-}
+export function latest<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
 
 // @alpha
 export function latestMap<T extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(initialValues?: {
     [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
-}, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
+}, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
 
 // @alpha @sealed
-export interface LatestMapClientData<T, Keys extends string | number, SpecificAttendeeId extends AttendeeId = AttendeeId> {
+export interface LatestMapRaw<T, Keys extends string | number = string | number> {
+    readonly controls: BroadcastControls;
+    readonly events: Listenable<LatestMapRawEvents<T, Keys>>;
+    getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestRawData<T>>;
+    getRemotes(): IterableIterator<LatestMapRawClientData<T, Keys>>;
+    getStateAttendees(): Attendee[];
+    readonly local: StateMap<Keys, T>;
+}
+
+// @alpha @sealed
+export interface LatestMapRawClientData<T, Keys extends string | number, SpecificAttendeeId extends AttendeeId = AttendeeId> {
     attendee: Attendee<SpecificAttendeeId>;
     // (undocumented)
-    items: ReadonlyMap<Keys, LatestData<T>>;
+    items: ReadonlyMap<Keys, LatestRawData<T>>;
 }
 
 // @alpha @sealed (undocumented)
-export interface LatestMapEvents<T, K extends string | number> {
+export interface LatestMapRawEvents<T, K extends string | number> {
     // @eventProperty
     localItemRemoved: (removedItem: {
         key: K;
@@ -207,31 +172,66 @@ export interface LatestMapEvents<T, K extends string | number> {
         key: K;
     }) => void;
     // @eventProperty
-    remoteItemRemoved: (removedItem: LatestMapItemRemovedClientData<K>) => void;
+    remoteItemRemoved: (removedItem: LatestMapRawItemRemovedClientData<K>) => void;
     // @eventProperty
-    remoteItemUpdated: (updatedItem: LatestMapItemUpdatedClientData<T, K>) => void;
+    remoteItemUpdated: (updatedItem: LatestMapRawItemUpdatedClientData<T, K>) => void;
     // @eventProperty
-    remoteUpdated: (updates: LatestMapClientData<T, K>) => void;
+    remoteUpdated: (updates: LatestMapRawClientData<T, K>) => void;
 }
 
 // @alpha @sealed
-export interface LatestMapItemRemovedClientData<K extends string | number> {
+export interface LatestMapRawItemRemovedClientData<K extends string | number> {
     // (undocumented)
     attendee: Attendee;
     // (undocumented)
     key: K;
     // (undocumented)
-    metadata: LatestMetadata;
+    metadata: LatestRawMetadata;
 }
 
 // @alpha @sealed
-export interface LatestMapItemUpdatedClientData<T, K extends string | number> extends LatestClientData<T> {
+export interface LatestMapRawItemUpdatedClientData<T, K extends string | number> extends LatestRawClientData<T> {
     // (undocumented)
     key: K;
 }
 
 // @alpha @sealed
-export interface LatestMetadata {
+export interface LatestRaw<T> {
+    readonly controls: BroadcastControls;
+    readonly events: Listenable<LatestRawEvents<T>>;
+    getRemote(attendee: Attendee): LatestRawData<T>;
+    getRemotes(): IterableIterator<LatestRawClientData<T>>;
+    getStateAttendees(): Attendee[];
+    get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
+    set local(value: JsonSerializable<T> & JsonDeserialized<T>);
+}
+
+// @alpha @sealed
+export interface LatestRawClientData<T> extends LatestRawData<T> {
+    // (undocumented)
+    attendee: Attendee;
+}
+
+// @alpha @sealed
+export interface LatestRawData<T> {
+    // (undocumented)
+    metadata: LatestRawMetadata;
+    // (undocumented)
+    value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
+}
+
+// @alpha @sealed (undocumented)
+export interface LatestRawEvents<T> {
+    // @eventProperty
+    localUpdated: (update: {
+        value: InternalUtilityTypes.FullyReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+    }) => void;
+    // @eventProperty
+    remoteUpdated: (update: LatestRawClientData<T>) => void;
+}
+
+// @alpha @sealed
+export interface LatestRawMetadata {
     revision: number;
     timestamp: number;
 }

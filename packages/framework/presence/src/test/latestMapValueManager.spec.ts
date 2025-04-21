@@ -12,8 +12,8 @@ import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
 import type {
 	BroadcastControlSettings,
-	LatestMap,
-	LatestMapItemUpdatedClientData,
+	LatestMapRaw,
+	LatestMapRawItemUpdatedClientData,
 	Presence,
 } from "@fluidframework/presence/alpha";
 import { StateFactory } from "@fluidframework/presence/alpha";
@@ -43,7 +43,7 @@ describe("Presence", () => {
 
 		addControlsTests(createLatestMapManager);
 
-		function setupMapValueManager(): LatestMap<
+		function setupMapValueManager(): LatestMapRaw<
 			{
 				x: number;
 				y: number;
@@ -146,7 +146,7 @@ export function checkCompiles(): void {
 		key,
 		value,
 	}: Pick<
-		LatestMapItemUpdatedClientData<T, string | number>,
+		LatestMapRawItemUpdatedClientData<T, string | number>,
 		"attendee" | "key" | "value"
 	>): void {
 		console.log(attendee.attendeeId, key, value);

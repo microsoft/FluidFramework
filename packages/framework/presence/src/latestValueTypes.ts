@@ -14,7 +14,7 @@ import type { Attendee } from "./presence.js";
  * @sealed
  * @alpha
  */
-export interface LatestMetadata {
+export interface LatestRawMetadata {
 	/**
 	 * The revision number for value that increases as value is changed.
 	 */
@@ -32,9 +32,9 @@ export interface LatestMetadata {
  * @sealed
  * @alpha
  */
-export interface LatestData<T> {
+export interface LatestRawData<T> {
 	value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
-	metadata: LatestMetadata;
+	metadata: LatestRawMetadata;
 }
 
 /**
@@ -43,6 +43,6 @@ export interface LatestData<T> {
  * @sealed
  * @alpha
  */
-export interface LatestClientData<T> extends LatestData<T> {
+export interface LatestRawClientData<T> extends LatestRawData<T> {
 	attendee: Attendee;
 }

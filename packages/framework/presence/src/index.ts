@@ -47,22 +47,22 @@ export {
 
 export type {
 	latestMap,
-	LatestMap,
-	LatestMapClientData,
-	LatestMapEvents,
-	LatestMapItemRemovedClientData,
-	LatestMapItemUpdatedClientData,
+	LatestMapRaw,
+	LatestMapRawClientData,
+	LatestMapRawEvents,
+	LatestMapRawItemRemovedClientData,
+	LatestMapRawItemUpdatedClientData,
 	StateMap,
 } from "./latestMapValueManager.js";
 export type {
 	latest,
-	Latest,
-	LatestEvents,
+	LatestRaw,
+	LatestRawEvents,
 } from "./latestValueManager.js";
 export type {
-	LatestClientData,
-	LatestData,
-	LatestMetadata,
+	LatestRawClientData,
+	LatestRawData,
+	LatestRawMetadata,
 } from "./latestValueTypes.js";
 
 export {
