@@ -1573,20 +1573,17 @@ export class ContainerRuntime
 			this.baseLogger,
 		);
 
-		let outerDeltaManager: IDeltaManagerFull;
+		let outerDeltaManager: IDeltaManagerFull = this.innerDeltaManager;
 		this.useDeltaManagerOpsProxy =
 			this.mc.config.getBoolean("Fluid.ContainerRuntime.DeltaManagerOpsProxy") === true;
 		// The summarizerDeltaManager Proxy is used to lie to the summarizer to convince it is in the right state as a summarizer client.
-		const summarizerDeltaManagerProxy = new DeltaManagerSummarizerProxy(
-			this.innerDeltaManager,
-		);
-		outerDeltaManager = summarizerDeltaManagerProxy;
+		outerDeltaManager = DeltaManagerSummarizerProxy.wrapIfSummarizer(outerDeltaManager);
 
 		// The DeltaManagerPendingOpsProxy is used to control the minimum sequence number
 		// It allows us to lie to the layers below so that they can maintain enough local state for rebasing ops.
 		if (this.useDeltaManagerOpsProxy) {
 			const pendingOpsDeltaManagerProxy = new DeltaManagerPendingOpsProxy(
-				summarizerDeltaManagerProxy,
+				outerDeltaManager,
 				this.pendingStateManager,
 			);
 			outerDeltaManager = pendingOpsDeltaManagerProxy;
