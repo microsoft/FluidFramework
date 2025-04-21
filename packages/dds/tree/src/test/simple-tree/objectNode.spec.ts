@@ -530,7 +530,7 @@ describeHydration(
 			{
 				type TestObject = ObjectNodeSchema<
 					"x",
-					RestrictiveStringRecord<ImplicitFieldSchema>,
+					RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
 					false
 				>;
 				type _check1 = requireAssignableTo<TestObject, TreeNodeSchema>;

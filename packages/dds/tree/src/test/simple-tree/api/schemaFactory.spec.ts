@@ -376,7 +376,7 @@ describe("schemaFactory", () => {
 				},
 			};
 
-			class Foo extends factory.object(
+			class Foo extends factory.objectAlpha(
 				"Foo",
 				{ bar: factory.number },
 				{ metadata: fooMetadata },

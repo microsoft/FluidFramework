@@ -21,7 +21,6 @@ import {
 	type AllowedTypes,
 	type FieldKind,
 	type FieldSchema,
-	type FieldSchemaAlpha,
 	type ImplicitAllowedTypes,
 	type ImplicitAnnotatedAllowedTypes,
 	type ImplicitFieldSchema,
