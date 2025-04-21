@@ -18,6 +18,7 @@ import {
 } from "./compressionDefinitions.js";
 import type { IContainerRuntimeOptionsInternal } from "./containerRuntime.js";
 import { pkgVersion } from "./packageVersion.js";
+import type { IdCompressorMode } from "./summary/index.js";
 
 /**
  * Our policy is to support N/N-1 compatibility by default, where N is the most
@@ -97,8 +98,8 @@ export type RuntimeOptionsAffectingDocSchema = Required<
  * the format changes introduced by the property, then the default value for that SemanticVersion will enable the feature associated with the property.
  * Otherwise, the feature will be disabled.
  *
- * For example if the compatibilityMode is a 1.x version (i.e. "1.5.0"), then the default value for `enableGroupedBatching` will be false since 1.x
- * clients do not understand the document format when batching is enabled. If the compatibilityMode is a 2.x client (i.e. "2.0.0" or later), then the
+ * For example if the compatibilityVersion is a 1.x version (i.e. "1.5.0"), then the default value for `enableGroupedBatching` will be false since 1.x
+ * clients do not understand the document format when batching is enabled. If the compatibilityVersion is a 2.x client (i.e. "2.0.0" or later), then the
  * default value for `enableGroupedBatching` will be true because clients running 2.0 or later will be able to understand the format changes associated
  * with the batching feature.
  */
@@ -114,9 +115,9 @@ const runtimeOptionsAffectingDocSchemaConfigMap = {
 	enableRuntimeIdCompressor: {
 		// For IdCompressorMode, `undefined` represents a logical state (off).
 		// However, to satisfy the Required<> constraint while
-		// `exactOptionalPropertyTypes` is `false` (TODO: AB#34168), we need
+		// `exactOptionalPropertyTypes` is `false` (TODO: AB#8215), we need
 		// to have it defined, so we trick the type checker here.
-		"1.0.0": undefined as unknown as "on" | "delayed",
+		"1.0.0": undefined as unknown as Exclude<IdCompressorMode, undefined>,
 		// We do not yet want to enable idCompressor by default since it will
 		// increase bundle sizes, and not all customers will benefit from it.
 		// Therefore, we will require customers to explicitly enable it. We
@@ -146,7 +147,7 @@ const runtimeOptionsAffectingDocSchemaConfigMap = {
 	} as const,
 	gcOptions: {
 		"1.0.0": {},
-		// Although sweep is supported in 2.x, it is disabled by default until compatibilityMode>=3.0.0 to be extra safe.
+		// Although sweep is supported in 2.x, it is disabled by default until compatibilityVersion>=3.0.0 to be extra safe.
 		"3.0.0": { enableGCSweep: true },
 	} as const,
 } as const satisfies ConfigMap<RuntimeOptionsAffectingDocSchema>;
@@ -178,9 +179,9 @@ export function getConfigsForCompatMode<T extends Record<SemanticVersion, unknow
 		const config = configMap[key as keyof T];
 		// Sort the versions in ascending order so we can short circuit the loop.
 		const versions = Object.keys(config).sort((a, b) => (semverGte(b, a) ? -1 : 1));
-		// For each config, we iterate over the keys and check if compatibilityMode is greater than or equal to the version.
+		// For each config, we iterate over the keys and check if compatibilityVersion is greater than or equal to the version.
 		// If so, we set it as the default value for the option. At the end of the loop we should have the most recent default
-		// value that is compatible with the version specified as the compatibilityMode.
+		// value that is compatible with the version specified as the compatibilityVersion.
 		for (const version of versions) {
 			if (semverGte(compatibilityVersion, version)) {
 				defaultConfigs[key] = config[version as MinimumMinorSemanticVersion];

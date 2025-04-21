@@ -62,11 +62,11 @@ describe("compatUtils", () => {
 		};
 
 		const testCases: {
-			compatibilityMode: SemanticVersion;
+			compatibilityVersion: SemanticVersion;
 			expectedConfig: Partial<ITestConfigMap>;
 		}[] = [
 			{
-				compatibilityMode: "0.5.0",
+				compatibilityVersion: "0.5.0",
 				expectedConfig: {
 					featureA: "a1",
 					featureB: "b1",
@@ -77,7 +77,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityMode: "1.0.0",
+				compatibilityVersion: "1.0.0",
 				expectedConfig: {
 					featureA: "a1",
 					featureB: "b1",
@@ -88,7 +88,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityMode: "1.5.0",
+				compatibilityVersion: "1.5.0",
 				expectedConfig: {
 					featureA: "a1",
 					featureB: "b1",
@@ -99,7 +99,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityMode: "2.0.0",
+				compatibilityVersion: "2.0.0",
 				expectedConfig: {
 					featureA: "a2",
 					featureB: "b1",
@@ -110,7 +110,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityMode: "2.1.5",
+				compatibilityVersion: "2.1.5",
 				expectedConfig: {
 					featureA: "a2",
 					featureB: "b1",
@@ -121,7 +121,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityMode: "2.5.0",
+				compatibilityVersion: "2.5.0",
 				expectedConfig: {
 					featureA: "a2",
 					featureB: "b1",
@@ -132,7 +132,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityMode: "3.0.0",
+				compatibilityVersion: "3.0.0",
 				expectedConfig: {
 					featureA: "a2",
 					featureB: "b2",
@@ -143,7 +143,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityMode: "3.7.2",
+				compatibilityVersion: "3.7.2",
 				expectedConfig: {
 					featureA: "a2",
 					featureB: "b2",
@@ -154,7 +154,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityMode: "5.0.1",
+				compatibilityVersion: "5.0.1",
 				expectedConfig: {
 					featureA: "a3",
 					featureB: "b2",
@@ -165,7 +165,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityMode: "6.9.9",
+				compatibilityVersion: "6.9.9",
 				expectedConfig: {
 					featureA: "a3",
 					featureB: "b3",
@@ -176,7 +176,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityMode: "8.2.3",
+				compatibilityVersion: "8.2.3",
 				expectedConfig: {
 					featureA: "a4",
 					featureB: "b3",
@@ -187,7 +187,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityMode: "9.7.0",
+				compatibilityVersion: "9.7.0",
 				expectedConfig: {
 					featureA: "a4",
 					featureB: "b4",
@@ -198,7 +198,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityMode: "10.0.0",
+				compatibilityVersion: "10.0.0",
 				expectedConfig: {
 					featureA: "a4",
 					featureB: "b4",
@@ -211,12 +211,12 @@ describe("compatUtils", () => {
 		];
 
 		for (const testCase of testCases) {
-			it(`returns correct configs for compatibilityMode = "${testCase.compatibilityMode}"`, () => {
-				const config = getConfigsForCompatMode(testCase.compatibilityMode, testConfigMap);
+			it(`returns correct configs for compatibilityVersion = "${testCase.compatibilityVersion}"`, () => {
+				const config = getConfigsForCompatMode(testCase.compatibilityVersion, testConfigMap);
 				assert.deepEqual(
 					config,
 					testCase.expectedConfig,
-					`Failed for compatibilityMode: ${testCase.compatibilityMode}`,
+					`Failed for compatibilityVersion: ${testCase.compatibilityVersion}`,
 				);
 			});
 		}
