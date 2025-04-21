@@ -231,9 +231,10 @@ export interface LatestMapItemUpdatedClientData<T, K extends string | number> ex
 }
 
 // @alpha
-export interface LatestMapProps<T extends object, Keys extends string | number = string | number> extends PresenceStateOptions {
+export interface LatestMapProps<T extends object, Keys extends string | number = string | number> {
     // (undocumented)
-    initialValues?: {
+    controls?: BroadcastControlSettings | undefined;
+    local?: {
         [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
     };
 }
@@ -244,10 +245,11 @@ export interface LatestMetadata {
     timestamp: number;
 }
 
-// @alpha (undocumented)
-export interface LatestProps<T extends object> extends PresenceStateOptions {
+// @alpha
+export interface LatestProps<T extends object> {
     // (undocumented)
-    initialValue: JsonSerializable<T> & JsonDeserialized<T> & object;
+    controls?: BroadcastControlSettings | undefined;
+    local: JsonSerializable<T> & JsonDeserialized<T> & object;
 }
 
 // @alpha @sealed
@@ -320,12 +322,6 @@ export interface Presence {
 // @alpha @sealed (undocumented)
 export interface PresenceEvents {
     workspaceActivated: (workspaceAddress: WorkspaceAddress, type: "States" | "Notifications" | "Unknown") => void;
-}
-
-// @alpha
-export interface PresenceStateOptions {
-    // (undocumented)
-    controls?: BroadcastControlSettings | undefined;
 }
 
 // @alpha

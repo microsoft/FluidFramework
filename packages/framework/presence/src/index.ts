@@ -58,7 +58,7 @@ export type {
 export type {
 	latest,
 	Latest,
-	LatestProps,
+	LatestArguments as LatestProps,
 	LatestEvents,
 } from "./latestValueManager.js";
 export type {

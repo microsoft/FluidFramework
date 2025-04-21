@@ -182,9 +182,14 @@ class LatestValueManagerImpl<T, Key extends string>
 }
 
 /**
+ * Arguments that are passed to the {@link Latest} function.
+ *
  * @alpha
  */
-export interface LatestProps<T extends object> {
+export interface LatestArguments<T extends object> {
+	/**
+	 * The initial value of the local state.
+	 */
 	local: JsonSerializable<T> & JsonDeserialized<T> & object;
 	controls?: BroadcastControlSettings | undefined;
 }
@@ -195,7 +200,7 @@ export interface LatestProps<T extends object> {
  * @alpha
  */
 export function latest<T extends object, Key extends string = string>(
-	props: LatestProps<T>,
+	props: LatestArguments<T>,
 ): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>> {
 	const { controls, local: initialValue } = props;
 
