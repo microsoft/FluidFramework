@@ -1011,7 +1011,22 @@ export class SchemaFactory<
 		T,
 		undefined
 	> {
-		return arraySchema(this.scoped(name), allowedTypes, implicitlyConstructable, customizable);
+		const array = arraySchema(
+			this.scoped(name),
+			allowedTypes,
+			implicitlyConstructable,
+			customizable,
+		);
+
+		return array as TreeNodeSchemaBoth<
+			ScopedSchemaName<TScope, Name>,
+			NodeKind.Array,
+			TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>, NodeKind.Array>,
+			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+			ImplicitlyConstructable,
+			T,
+			undefined
+		>;
 	}
 
 	/**

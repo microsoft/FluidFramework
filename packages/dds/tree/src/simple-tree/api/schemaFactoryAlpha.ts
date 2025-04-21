@@ -259,7 +259,7 @@ export class SchemaFactoryAlpha<
 	 */
 	public arrayAlpha<
 		const Name extends TName,
-		const T extends ImplicitAllowedTypes,
+		const T extends ImplicitAnnotatedAllowedTypes,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
