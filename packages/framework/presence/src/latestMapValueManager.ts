@@ -514,12 +514,12 @@ class LatestMapValueManagerImpl<
  * Props passed to the {@link latestMap} function to
  */
 export interface LatestMapProps<
-T extends object,
-Keys extends string | number = string | number,
+	T extends object,
+	Keys extends string | number = string | number,
 > extends PresenceStateOptions<T> {
 	initialValues?: {
 		[K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
-	},
+	};
 }
 
 /**
@@ -532,14 +532,13 @@ export function latestMap<
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
 >(
-	props: LatestMapProps<T, Keys>
+	props: LatestMapProps<T, Keys>,
 ): InternalTypes.ManagerFactory<
 	RegistrationKey,
 	InternalTypes.MapValueState<T, Keys>,
 	LatestMap<T, Keys>
 > {
-	const {controls, initialValues, validator} = props;
-
+	const { controls, initialValues, validator } = props;
 
 	const timestamp = Date.now();
 	const value: InternalTypes.MapValueState<
