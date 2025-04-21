@@ -145,7 +145,7 @@ describe("Presence", () => {
 				// SIGNAL #1 - intial data is sent immediately
 				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
 					count: StateFactory.latest({
-						initialValue: { num: 0 },
+						local: { num: 0 },
 						controls: { allowableUpdateLatencyMs: 0 },
 					}),
 				});
@@ -197,7 +197,7 @@ describe("Presence", () => {
 				// Configure a state workspace
 				presence.states.getWorkspace("name:testStateWorkspace", {
 					count: StateFactory.latest({
-						initialValue: { num: 0 } /* default allowableUpdateLatencyMs = 60 */,
+						local: { num: 0 } /* default allowableUpdateLatencyMs = 60 */,
 					}),
 				}); // will be queued; deadline is now 1070
 
@@ -273,7 +273,7 @@ describe("Presence", () => {
 				// Configure a state workspace
 				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
 					count: StateFactory.latest({
-						initialValue: { num: 0 } /* default allowableUpdateLatencyMs = 60 */,
+						local: { num: 0 } /* default allowableUpdateLatencyMs = 60 */,
 					}),
 				}); // will be queued; deadline is now 1070
 
@@ -377,7 +377,7 @@ describe("Presence", () => {
 				// Configure a state workspace
 				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
 					count: StateFactory.latest({
-						initialValue: { num: 0 },
+						local: { num: 0 },
 						controls: { allowableUpdateLatencyMs: 100 },
 					}),
 				});
@@ -499,11 +499,11 @@ describe("Presence", () => {
 				// so the initial data will be sent immediately.
 				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
 					count: StateFactory.latest({
-						initialValue: { num: 0 },
+						local: { num: 0 },
 						controls: { allowableUpdateLatencyMs: 100 },
 					}),
 					immediateUpdate: StateFactory.latest({
-						initialValue: { num: 0 },
+						local: { num: 0 },
 						controls: { allowableUpdateLatencyMs: 0 },
 					}),
 				});
@@ -592,11 +592,11 @@ describe("Presence", () => {
 				// Configure a state workspace
 				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
 					count: StateFactory.latest({
-						initialValue: { num: 0 },
+						local: { num: 0 },
 						controls: { allowableUpdateLatencyMs: 100 },
 					}),
 					note: StateFactory.latest({
-						initialValue: { message: "" },
+						local: { message: "" },
 						controls: { allowableUpdateLatencyMs: 50 },
 					}),
 				}); // will be queued, deadline is set to 1060
@@ -670,14 +670,14 @@ describe("Presence", () => {
 				// Configure two state workspaces
 				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
 					count: StateFactory.latest({
-						initialValue: { num: 0 },
+						local: { num: 0 },
 						controls: { allowableUpdateLatencyMs: 100 },
 					}),
 				}); // will be queued, deadline is 1110
 
 				const stateWorkspace2 = presence.states.getWorkspace("name:testStateWorkspace2", {
 					note: StateFactory.latest({
-						initialValue: { message: "" },
+						local: { message: "" },
 						controls: { allowableUpdateLatencyMs: 60 },
 					}),
 				}); // will be queued, deadline is 1070
@@ -869,7 +869,7 @@ describe("Presence", () => {
 				// Configure a state workspace
 				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
 					count: StateFactory.latest({
-						initialValue: { num: 0 },
+						local: { num: 0 },
 						controls: { allowableUpdateLatencyMs: 100 },
 					}),
 				}); // will be queued, deadline is 1110

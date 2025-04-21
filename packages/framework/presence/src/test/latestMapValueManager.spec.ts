@@ -27,7 +27,7 @@ function createLatestMapManager(
 ) {
 	const states = presence.states.getWorkspace(testWorkspaceName, {
 		fixedMap: StateFactory.latestMap({
-			initialValues: { key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } },
+			local: { key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } },
 			controls: valueControlSettings,
 		}),
 	});
@@ -52,7 +52,7 @@ describe("Presence", () => {
 		> {
 			const presence = createPresenceManager(new MockEphemeralRuntime());
 			const states = presence.states.getWorkspace(testWorkspaceName, {
-				fixedMap: StateFactory.latestMap({ initialValues: { key1: { x: 0, y: 0 } } }),
+				fixedMap: StateFactory.latestMap({ local: { key1: { x: 0, y: 0 } } }),
 			});
 			return states.props.fixedMap;
 		}
@@ -91,7 +91,7 @@ describe("Presence", () => {
 		it(".presence provides Presence it was created under", () => {
 			const presence = createPresenceManager(new MockEphemeralRuntime());
 			const states = presence.states.getWorkspace(testWorkspaceName, {
-				fixedMap: StateFactory.latestMap({ initialValues: { key1: { x: 0, y: 0 } } }),
+				fixedMap: StateFactory.latestMap({ local: { key1: { x: 0, y: 0 } } }),
 			});
 
 			assert.strictEqual(states.props.fixedMap.presence, presence);
@@ -111,7 +111,7 @@ export function checkCompiles(): void {
 		"name:testStatesWorkspaceWithLatestMap",
 		{
 			fixedMap: StateFactory.latestMap({
-				initialValues: {
+				local: {
 					key1: { x: 0, y: 0 },
 					key2: { ref: "default", someId: 0 },
 				},
@@ -147,7 +147,7 @@ export function checkCompiles(): void {
 		tilt?: number;
 	}
 
-	workspace.add("pointers", StateFactory.latestMap<PointerData>({ initialValues: {} }));
+	workspace.add("pointers", StateFactory.latestMap<PointerData>({ local: {} }));
 
 	const pointers = workspace.props.pointers;
 	const localPointers = pointers.local;

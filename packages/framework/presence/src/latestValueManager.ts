@@ -17,11 +17,7 @@ import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
-import type {
-	LatestClientData,
-	LatestData,
-	PresenceStateOptions,
-} from "./latestValueTypes.js";
+import type { LatestClientData, LatestData } from "./latestValueTypes.js";
 import type { Attendee, Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
@@ -188,8 +184,9 @@ class LatestValueManagerImpl<T, Key extends string>
 /**
  * @alpha
  */
-export interface LatestProps<T extends object> extends PresenceStateOptions {
-	initialValue: JsonSerializable<T> & JsonDeserialized<T> & object;
+export interface LatestProps<T extends object> {
+	local: JsonSerializable<T> & JsonDeserialized<T> & object;
+	controls?: BroadcastControlSettings | undefined;
 }
 
 /**
@@ -200,7 +197,7 @@ export interface LatestProps<T extends object> extends PresenceStateOptions {
 export function latest<T extends object, Key extends string = string>(
 	props: LatestProps<T>,
 ): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>> {
-	const { controls, initialValue } = props;
+	const { controls, local: initialValue } = props;
 
 	// Latest takes ownership of initialValue but makes a shallow
 	// copy for basic protection.

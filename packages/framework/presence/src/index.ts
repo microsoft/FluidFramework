@@ -65,7 +65,6 @@ export type {
 	LatestClientData,
 	LatestData,
 	LatestMetadata,
-	PresenceStateOptions,
 } from "./latestValueTypes.js";
 
 export {

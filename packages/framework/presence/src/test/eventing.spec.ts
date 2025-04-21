@@ -242,9 +242,9 @@ describe("Presence", () => {
 			notifications,
 		}: { notifications?: true } = {}): void {
 			const states = presence.states.getWorkspace("name:testWorkspace", {
-				latest: StateFactory.latest({ initialValue: { x: 0, y: 0, z: 0 } }),
+				latest: StateFactory.latest({ local: { x: 0, y: 0, z: 0 } }),
 				latestMap: StateFactory.latestMap({
-					initialValues: { key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } },
+					local: { key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } },
 				}),
 			});
 			latest = states.props.latest;
@@ -263,11 +263,11 @@ describe("Presence", () => {
 
 		function setupMultipleStatesWorkspaces(): void {
 			const latestsStates = presence.states.getWorkspace("name:testWorkspace1", {
-				latest: StateFactory.latest({ initialValue: { x: 0, y: 0, z: 0 } }),
+				latest: StateFactory.latest({ local: { x: 0, y: 0, z: 0 } }),
 			});
 			const latesetMapStates = presence.states.getWorkspace("name:testWorkspace2", {
 				latestMap: StateFactory.latestMap({
-					initialValues: { key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } },
+					local: { key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } },
 				}),
 			});
 			latest = latestsStates.props.latest;

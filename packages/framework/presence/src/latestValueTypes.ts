@@ -5,7 +5,6 @@
 
 import type { JsonDeserialized } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
-import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { Attendee } from "./presence.js";
 
@@ -46,13 +45,4 @@ export interface LatestData<T> {
  */
 export interface LatestClientData<T> extends LatestData<T> {
 	attendee: Attendee;
-}
-
-/**
- * Options that can be provided to a Presence state manager. TODO: Add details.
- *
- * @alpha
- */
-export interface PresenceStateOptions {
-	controls?: BroadcastControlSettings | undefined;
 }

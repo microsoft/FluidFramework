@@ -21,7 +21,6 @@ import type {
 	LatestClientData,
 	LatestData,
 	LatestMetadata,
-	PresenceStateOptions,
 } from "./latestValueTypes.js";
 import type { AttendeeId, Attendee, Presence, SpecificAttendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
@@ -502,10 +501,11 @@ class LatestMapValueManagerImpl<
 export interface LatestMapProps<
 	T extends object,
 	Keys extends string | number = string | number,
-> extends PresenceStateOptions {
-	initialValues?: {
+> {
+	local?: {
 		[K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
 	};
+	controls?: BroadcastControlSettings | undefined;
 }
 
 /**
@@ -525,7 +525,7 @@ export function latestMap<
 	LatestMap<T, Keys>
 > {
 	const controls = props?.controls;
-	const initialValues = props?.initialValues;
+	const initialValues = props?.local;
 
 	const timestamp = Date.now();
 	const value: InternalTypes.MapValueState<
