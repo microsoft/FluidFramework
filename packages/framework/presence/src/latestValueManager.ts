@@ -23,7 +23,7 @@ import type {
 	StateSchemaValidator,
 	PresenceStateOptions,
 } from "./latestValueTypes.js";
-import type { Attendee } from "./presence.js";
+import type { Attendee, Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
@@ -59,6 +59,11 @@ export interface LatestEvents<T> {
  * @alpha
  */
 export interface Latest<T> {
+	/**
+	 * Containing {@link Presence}
+	 */
+	readonly presence: Presence;
+
 	/**
 	 * Events for Latest.
 	 */
@@ -106,6 +111,10 @@ class LatestValueManagerImpl<T, Key extends string>
 		controlSettings: BroadcastControlSettings | undefined,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
+	}
+
+	public get presence(): Presence {
+		return this.datastore.presence;
 	}
 
 	public get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> {

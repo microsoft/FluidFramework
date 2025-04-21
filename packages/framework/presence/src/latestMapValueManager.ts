@@ -24,7 +24,7 @@ import type {
 	StateSchemaValidator,
 	PresenceStateOptions,
 } from "./latestValueTypes.js";
-import type { AttendeeId, Attendee, SpecificAttendee } from "./presence.js";
+import type { AttendeeId, Attendee, Presence, SpecificAttendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
@@ -326,6 +326,11 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
  */
 export interface LatestMap<T, Keys extends string | number = string | number> {
 	/**
+	 * Containing {@link Presence}
+	 */
+	readonly presence: Presence;
+
+	/**
 	 * Events for LatestMap.
 	 */
 	readonly events: Listenable<LatestMapEvents<T, Keys>>;
@@ -386,6 +391,10 @@ class LatestMapValueManagerImpl<
 			},
 			validator,
 		);
+	}
+
+	public get presence(): Presence {
+		return this.datastore.presence;
 	}
 
 	public readonly local: StateMap<Keys, T>;
